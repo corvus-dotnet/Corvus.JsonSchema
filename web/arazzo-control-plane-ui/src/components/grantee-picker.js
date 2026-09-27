@@ -20,7 +20,7 @@
 // under membership (subset) matching a partial identity is BROADER than intended — every principal whose
 // stamped identity contains the resolved dimensions would match it.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 
 const SEARCH_LIMIT = 8;
 const DEBOUNCE_MS = 200;
@@ -101,27 +101,27 @@ class ArazzoGranteePicker extends ArazzoElement {
     this._built = true;
     const placeholder = this.getAttribute('placeholder') || 'Find a person, team, role…';
     const locked = this.getAttribute('kind');
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; position: relative; }
+      .row { display: flex; gap: 8px; align-items: stretch; }
+      .kind { width: 130px; flex: none; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
+      .q { flex: 1; min-width: 0; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
+      .results { position: absolute; z-index: 20; left: 0; right: 0; margin-top: 4px; list-style: none; padding: 4px; max-height: 280px; overflow-y: auto; background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: 0 6px 24px rgba(0,0,0,0.12); }
+      .results li { padding: 7px 9px; border-radius: var(--_radius); cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
+      .results li:hover, .results li[aria-selected="true"] { background: var(--_surface); }
+      .badge { font-size: 11px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); flex: none; }
+      .label { font-weight: 600; }
+      .ident { color: var(--_muted); font-size: 12px; }
+      .src { color: var(--_muted); font-size: 11px; margin-left: auto; flex: none; }
+      .partial { color: var(--_danger); border-color: var(--_danger); }
+      .chip { display: flex; gap: 8px; align-items: center; padding: 7px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); }
+      .chip .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .chip .ident { white-space: nowrap; }
+      .warn { color: var(--_danger); font-size: 12px; margin-top: 6px; }
+      .hint { color: var(--_muted); font-size: 12px; margin-top: 6px; }
+      .results li[aria-disabled="true"] { cursor: default; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; position: relative; }
-        .row { display: flex; gap: 8px; align-items: stretch; }
-        .kind { width: 130px; flex: none; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
-        .q { flex: 1; min-width: 0; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
-        .results { position: absolute; z-index: 20; left: 0; right: 0; margin-top: 4px; list-style: none; padding: 4px; max-height: 280px; overflow-y: auto; background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: 0 6px 24px rgba(0,0,0,0.12); }
-        .results li { padding: 7px 9px; border-radius: var(--_radius); cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
-        .results li:hover, .results li[aria-selected="true"] { background: var(--_surface); }
-        .badge { font-size: 11px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); flex: none; }
-        .label { font-weight: 600; }
-        .ident { color: var(--_muted); font-size: 12px; }
-        .src { color: var(--_muted); font-size: 11px; margin-left: auto; flex: none; }
-        .partial { color: var(--_danger); border-color: var(--_danger); }
-        .chip { display: flex; gap: 8px; align-items: center; padding: 7px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); }
-        .chip .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .chip .ident { white-space: nowrap; }
-        .warn { color: var(--_danger); font-size: 12px; margin-top: 6px; }
-        .hint { color: var(--_muted); font-size: 12px; margin-top: 6px; }
-      </style>
       <div class="picker">
         <div class="row">
           ${locked ? '' : `<select class="kind" aria-label="grantee kind"></select>`}
@@ -217,7 +217,7 @@ class ArazzoGranteePicker extends ArazzoElement {
     const list = this.$('.results');
     if (!list) return;
     if (!this._results.length) {
-      list.innerHTML = `<li role="option" aria-disabled="true" class="muted" style="cursor:default">No matches</li>`;
+      list.innerHTML = `<li role="option" aria-disabled="true" class="muted">No matches</li>`;
       this.showResults();
       return;
     }

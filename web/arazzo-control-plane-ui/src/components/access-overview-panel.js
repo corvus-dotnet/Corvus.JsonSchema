@@ -16,7 +16,7 @@
 // Events     : grantee-selected {grantee}, revoked {bindingId}, open-workflow {baseWorkflowId}, open-environment {environment},
 //              open-credential {sourceName, environment}, error {problem}
 
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, confirmDialog, define } from './base.js';
 import './grantee-picker.js';
 import './pager.js';
 
@@ -81,46 +81,43 @@ class ArazzoAccessOverview extends ArazzoElement {
   }
 
   render() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, PAGER_CSS, GRANTEE_CHIP_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .find { flex: none; display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+      .find label { font-weight: 600; white-space: nowrap; }
+      .find arazzo-grantee-picker { flex: 1; min-width: 0; }
+      .body { flex: 1; min-height: 0; overflow: auto; }
+      .empty { color: var(--_muted); padding: 12px 0; }
+      .who { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      h4 { margin: 20px 0 8px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--_muted); }
+      .section:first-of-type h4 { margin-top: 0; }
+      .grant { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 9px 11px; margin-bottom: 8px; }
+      .grant-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+      .grant-head .claim { font-weight: 600; }
+      .grant-head .grow { flex: 1; }
+      .verb { display: flex; gap: 10px; font-size: 13px; padding: 2px 0; }
+      .verb .v { width: 46px; color: var(--_muted); }
+      .verb .denied { color: var(--_muted); }
+      /* Unrestricted reach is the value a reviewer should slow down on — same amber alert as the grants list. */
+      .verb .wide { color: var(--arazzo-status-suspended, #b07d18); font-weight: 700; }
+      .row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--_border); }
+      .row:last-child { border-bottom: none; }
+      .row .grow { flex: 1; }
+      .row .sub { color: var(--_muted); font-size: 12px; }
+      .caps { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0; }
+      .cap { border: 1px solid var(--_border); border-radius: 999px; padding: 3px 10px; font-size: 12px; }
+      .cap.eligible { border-style: dashed; color: var(--_muted); }
+      .cap .until { color: var(--_muted); }
+      .grant.eligible { border-style: dashed; }
+      .pim { color: var(--_muted); font-size: 12px; padding: 2px 0; }
+      button.link { background: transparent; border-color: transparent; color: var(--_accent); padding: 3px 8px; }
+      button.link:hover { text-decoration: underline; }
+      button.revoke { color: var(--_danger); font-size: 12px; padding: 3px 9px; }
+      /* A section's pager is hidden when the list fits on one page (no prev, no next) so the overview stays quiet. */
+      .pager { flex: none; margin-top: 4px; }
+      .pager[hidden] { display: none; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        ${PAGER_CSS}
-        ${GRANTEE_CHIP_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .find { flex: none; display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
-        .find label { font-weight: 600; white-space: nowrap; }
-        .find arazzo-grantee-picker { flex: 1; min-width: 0; }
-        .body { flex: 1; min-height: 0; overflow: auto; }
-        .empty { color: var(--_muted); padding: 12px 0; }
-        .who { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-        h4 { margin: 20px 0 8px; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--_muted); }
-        .section:first-of-type h4 { margin-top: 0; }
-        .grant { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 9px 11px; margin-bottom: 8px; }
-        .grant-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-        .grant-head .claim { font-weight: 600; }
-        .grant-head .grow { flex: 1; }
-        .verb { display: flex; gap: 10px; font-size: 13px; padding: 2px 0; }
-        .verb .v { width: 46px; color: var(--_muted); }
-        .verb .denied { color: var(--_muted); }
-        /* Unrestricted reach is the value a reviewer should slow down on — same amber alert as the grants list. */
-        .verb .wide { color: var(--arazzo-status-suspended, #b07d18); font-weight: 700; }
-        .row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--_border); }
-        .row:last-child { border-bottom: none; }
-        .row .grow { flex: 1; }
-        .row .sub { color: var(--_muted); font-size: 12px; }
-        .caps { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0; }
-        .cap { border: 1px solid var(--_border); border-radius: 999px; padding: 3px 10px; font-size: 12px; }
-        .cap.eligible { border-style: dashed; color: var(--_muted); }
-        .cap .until { color: var(--_muted); }
-        .grant.eligible { border-style: dashed; }
-        .pim { color: var(--_muted); font-size: 12px; padding: 2px 0; }
-        button.link { background: transparent; border-color: transparent; color: var(--_accent); padding: 3px 8px; }
-        button.link:hover { text-decoration: underline; }
-        button.revoke { color: var(--_danger); font-size: 12px; padding: 3px 9px; }
-        /* A section's pager is hidden when the list fits on one page (no prev, no next) so the overview stays quiet. */
-        .pager { flex: none; margin-top: 4px; }
-        .pager[hidden] { display: none; }
-      </style>
       <div class="find">
         <label for="who">Find a grantee</label>
         <arazzo-grantee-picker id="who" placeholder="Find a person, team, role…"></arazzo-grantee-picker>

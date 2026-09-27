@@ -2,9 +2,10 @@
 //
 //   <script type="module" src="arazzo-control-plane.js"></script>
 //   <arazzo-control-plane base-url="/arazzo/v1" scopes="runs:read runs:write" theme="auto"></arazzo-control-plane>
-//   <script type="module">
-//     document.querySelector('arazzo-control-plane').authProvider = async () => `Bearer ${await app.token()}`;
-//   </script>
+//   <script type="module" src="app.js"></script>
+//
+//   // app.js (a module by URL: the kit's Content-Security-Policy admits no inline script, ADR 0073)
+//   document.querySelector('arazzo-control-plane').authProvider = async () => `Bearer ${await app.token()}`;
 //
 // Attributes : base-url, scopes (space-separated), theme (auto|light|dark), poll (ms; default 5000)
 // Properties : .client (override the auto-built one), .authProvider (() => Authorization header), .fetch
@@ -13,7 +14,7 @@
 // Importing this file registers every kit element (table, detail, dialogs, badge).
 
 import { ArazzoControlPlaneClient, RUN_STATUSES } from './arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './components/base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './components/base.js';
 import './components/runs-table.js';
 import './components/run-detail.js';
 import './components/purge-dialog.js';
@@ -141,35 +142,33 @@ class ArazzoControlPlane extends ArazzoElement {
 
   render() {
     const scopes = this.getAttribute('scopes') || '';
+    adoptStyles(this.shadowRoot, this.themeTokens(), SHARED_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .toolbar { flex: none; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+      .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+      .chip { font-size: 12px; padding: 4px 11px; border-radius: 999px; }
+      .chip[aria-pressed="true"] { background: var(--_accent); border-color: var(--_accent); color: #fff; }
+      .search { flex: 1; min-width: 160px; }
+      .search input { width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
+      .toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--_muted); white-space: nowrap; }
+      .grow { flex: 1; }
+      .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+      @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+      .layout > * { min-height: 0; }
+      .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+      /* When no run is selected the pane is empty; drop it from the grid so the table fills the whole row (not half). */
+      .detail-pane:empty { display: none; }
+      .placeholder { border: 1px dashed var(--_border); border-radius: var(--_radius); color: var(--_muted); padding: 28px; text-align: center; }
+      .timewindow { flex: none; display: block; margin-bottom: 12px; }
+      .timewindow summary { cursor: pointer; font-size: 13px; color: var(--_muted); padding: 2px 0; user-select: none; }
+      .timewindow[open] summary { margin-bottom: 6px; }
+      .timewindow .timefields { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+      .timewindow fieldset { display: flex; gap: 8px; flex-wrap: wrap; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 6px 10px; margin: 0; }
+      .timewindow legend { font-size: 11px; color: var(--_muted); padding: 0 4px; }
+      .timewindow label { font-size: 11px; color: var(--_muted); display: inline-flex; flex-direction: column; gap: 2px; }
+      .timewindow input { font: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--_text); }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${this.themeTokens()}
-        ${SHARED_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .toolbar { flex: none; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-        .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-        .chip { font-size: 12px; padding: 4px 11px; border-radius: 999px; }
-        .chip[aria-pressed="true"] { background: var(--_accent); border-color: var(--_accent); color: #fff; }
-        .search { flex: 1; min-width: 160px; }
-        .search input { width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
-        .toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--_muted); white-space: nowrap; }
-        .grow { flex: 1; }
-        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
-        .layout > * { min-height: 0; }
-        .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
-        /* When no run is selected the pane is empty; drop it from the grid so the table fills the whole row (not half). */
-        .detail-pane:empty { display: none; }
-        .placeholder { border: 1px dashed var(--_border); border-radius: var(--_radius); color: var(--_muted); padding: 28px; text-align: center; }
-        .timewindow { flex: none; display: block; margin-bottom: 12px; }
-        .timewindow summary { cursor: pointer; font-size: 13px; color: var(--_muted); padding: 2px 0; user-select: none; }
-        .timewindow[open] summary { margin-bottom: 6px; }
-        .timewindow .timefields { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
-        .timewindow fieldset { display: flex; gap: 8px; flex-wrap: wrap; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 6px 10px; margin: 0; }
-        .timewindow legend { font-size: 11px; color: var(--_muted); padding: 0 4px; }
-        .timewindow label { font-size: 11px; color: var(--_muted); display: inline-flex; flex-direction: column; gap: 2px; }
-        .timewindow input { font: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--_text); }
-      </style>
       <div class="toolbar" part="toolbar">
         <div class="chips" part="filters">
           <button class="chip status-chip" type="button" data-status="" aria-pressed="true">All</button>

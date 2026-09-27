@@ -17,7 +17,7 @@
 // blank working copy (create-from-version/Git ride the acquisition flows in later slices) and
 // emits `working-copy-created` with the FULL working copy, ready to open.
 
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
 import './input-dialog.js';
 import './catalog-table.js';
 import './pager.js';
@@ -181,38 +181,36 @@ class ArazzoWorkspaceTable extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+      .bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+      .bar h2 { margin: 0 auto 0 0; font-size: 13px; font-weight: 600; }
+      table { width: 100%; border-collapse: collapse; }
+      thead th {
+        text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted);
+        padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap;
+      }
+      tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
+      tbody tr:last-child td { border-bottom: none; }
+      tbody tr.selectable { cursor: pointer; }
+      tbody tr.selectable:hover { background: var(--_surface); }
+      tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
+      .name { font-weight: 600; }
+      .id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+      .prov { font-size: 12px; }
+      .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+      button.rowaction { font-size: 12px; padding: 2px 8px; }
+      .fromcat-dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: inherit; padding: 0; width: min(640px, 92vw); }
+      .fromcat-dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
+      .fc-body { padding: 14px; display: grid; gap: 10px; }
+      .fc-body h2 { margin: 0; font-size: 14px; }
+      .fc-hint { font-size: 12px; color: var(--_muted); }
+      .fc-body label { display: grid; gap: 4px; font-size: 12px; color: var(--_muted); }
+      .fc-body select, .fc-body input { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; }
+      .fc-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    `, PAGER_CSS);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
-        .bar h2 { margin: 0 auto 0 0; font-size: 13px; font-weight: 600; }
-        table { width: 100%; border-collapse: collapse; }
-        thead th {
-          text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted);
-          padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap;
-        }
-        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr.selectable { cursor: pointer; }
-        tbody tr.selectable:hover { background: var(--_surface); }
-        tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
-        .name { font-weight: 600; }
-        .id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-        .prov { font-size: 12px; }
-        .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-        button.rowaction { font-size: 12px; padding: 2px 8px; }
-        .fromcat-dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: inherit; padding: 0; width: min(640px, 92vw); }
-        .fromcat-dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
-        .fc-body { padding: 14px; display: grid; gap: 10px; }
-        .fc-body h2 { margin: 0; font-size: 14px; }
-        .fc-hint { font-size: 12px; color: var(--_muted); }
-        .fc-body label { display: grid; gap: 4px; font-size: 12px; color: var(--_muted); }
-        .fc-body select, .fc-body input { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; }
-        .fc-actions { display: flex; justify-content: flex-end; gap: 8px; }
-        ${PAGER_CSS}
-      </style>
       <div class="wrap" part="table">
         <div class="bar" part="actions">
           <h2>Working copies</h2>

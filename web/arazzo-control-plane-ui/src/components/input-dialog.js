@@ -15,7 +15,7 @@
 //              fields?: [{key, label, value?, placeholder?}], confirmLabel?, cancelLabel?, danger?})
 // Events     : (none; the promise is the contract)
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 
 class ArazzoInputDialog extends ArazzoElement {
   connectedCallback() {
@@ -57,25 +57,24 @@ class ArazzoInputDialog extends ArazzoElement {
 
   /** @private */
   render() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: var(--arazzo-text, inherit);
+               padding: 0; width: min(440px, 92vw); }
+      dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
+      .head { display: flex; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--_border); }
+      .head h2 { margin: 0; font-size: 14px; flex: 1; }
+      .body { padding: 14px; display: grid; gap: 10px; font-size: 13px; }
+      .message { color: var(--_muted); }
+      label { display: grid; gap: 4px; font-size: 12px; color: var(--_muted); }
+      input { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px;
+              background: var(--_bg); color: var(--arazzo-text, inherit); }
+      .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
+      button { font: inherit; font-size: 13px; padding: 5px 14px; border: 1px solid var(--_border); border-radius: 8px;
+               background: var(--_bg); color: inherit; cursor: pointer; }
+      button.confirm { border-color: var(--_accent); font-weight: 600; }
+      button.confirm.danger { background: var(--arazzo-danger, #d4351c); border-color: var(--arazzo-danger, #d4351c); color: #fff; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: var(--arazzo-text, inherit);
-                 padding: 0; width: min(440px, 92vw); }
-        dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
-        .head { display: flex; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--_border); }
-        .head h2 { margin: 0; font-size: 14px; flex: 1; }
-        .body { padding: 14px; display: grid; gap: 10px; font-size: 13px; }
-        .message { color: var(--_muted); }
-        label { display: grid; gap: 4px; font-size: 12px; color: var(--_muted); }
-        input { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px;
-                background: var(--_bg); color: var(--arazzo-text, inherit); }
-        .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
-        button { font: inherit; font-size: 13px; padding: 5px 14px; border: 1px solid var(--_border); border-radius: 8px;
-                 background: var(--_bg); color: inherit; cursor: pointer; }
-        button.confirm { border-color: var(--_accent); font-weight: 600; }
-        button.confirm.danger { background: var(--arazzo-danger, #d4351c); border-color: var(--arazzo-danger, #d4351c); color: #fff; }
-      </style>
       <dialog part="dialog"><div class="frame"></div></dialog>`;
     this.$('dialog').addEventListener('cancel', (e) => { e.preventDefault(); this.settle(null); });
   }

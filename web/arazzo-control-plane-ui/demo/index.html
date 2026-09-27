@@ -6,26 +6,7 @@
   <title>Arazzo Control Plane — UI kit demo</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="../src/arazzo-kit.css">
-  <style>
-    body { font-family: var(--arazzo-font); color: var(--arazzo-text); background: var(--arazzo-bg); margin: 0; }
-    .page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
-    header.top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
-    h1 { font-size: 20px; margin: 0; }
-    .sub { color: var(--arazzo-muted); font-size: 13px; }
-    .controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin: 16px 0 20px; padding: 12px 14px; border: 1px solid var(--arazzo-border); border-radius: var(--arazzo-radius); background: var(--arazzo-surface); }
-    .controls label { font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
-    .controls select { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--arazzo-border); background: var(--arazzo-bg); color: var(--arazzo-text); }
-    .note { font-size: 12px; color: var(--arazzo-muted); margin-top: 24px; }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-    .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--arazzo-border); }
-    .tabs button { font: inherit; font-size: 14px; cursor: pointer; border: none; background: none; color: var(--arazzo-muted); padding: 8px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-    .tabs button[aria-selected="true"] { color: var(--arazzo-text); border-bottom-color: var(--arazzo-accent); font-weight: 600; }
-    /* Secondary tab bar inside a grouped view (e.g. Security → Grants / Rules / Access overview). */
-    .subtabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
-    .subtabs button { font: inherit; font-size: 13px; cursor: pointer; border: 1px solid var(--arazzo-border); background: var(--arazzo-surface); color: var(--arazzo-muted); padding: 5px 12px; border-radius: 6px; }
-    .subtabs button[aria-selected="true"] { color: var(--arazzo-text); border-color: var(--arazzo-accent); background: color-mix(in srgb, var(--arazzo-accent) 12%, transparent); font-weight: 600; }
-    [hidden] { display: none !important; }
-  </style>
+  <link rel="stylesheet" href="./index.css">
 </head>
 <body>
   <div class="page">

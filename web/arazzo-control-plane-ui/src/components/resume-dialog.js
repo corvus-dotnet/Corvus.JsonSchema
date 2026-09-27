@@ -12,7 +12,7 @@
 //   RetryFaultedStep · Rewind {targetCursor} · Skip {targetCursor?, skipOutputs?} · StatePatch {patch[]}
 // The StatePatch editor is a validated raw RFC 6902 JSON array (a visual builder can come later).
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import './workflow-step-picker.js';
 import './value-editor.js';
 import './text-editor.js';
@@ -113,38 +113,37 @@ class ArazzoResumeDialog extends ArazzoElement {
 
   render() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      dialog {
+        border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg);
+        color: var(--_text); padding: 0; width: min(560px, 94vw);
+      }
+      dialog::backdrop { background: rgba(0,0,0,0.4); }
+      .head { padding: 14px 16px; border-bottom: 1px solid var(--_border); }
+      .head .title { font-weight: 700; font-size: 15px; }
+      .subhead { color: var(--_muted); font-size: 12px; margin-top: 2px; }
+      .content { padding: 16px; display: grid; gap: 14px; max-height: 60vh; overflow: auto; }
+      .modes { display: grid; gap: 6px; }
+      .mode {
+        display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start;
+        border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px 10px; cursor: pointer;
+      }
+      .mode:has(input:checked) { border-color: var(--_accent); background: color-mix(in srgb, var(--_accent) 8%, transparent); }
+      .mode .name { font-weight: 600; }
+      .mode .desc { font-size: 12px; color: var(--_muted); }
+      .fields { display: grid; gap: 10px; }
+      label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 4px; }
+      input[type="number"], textarea {
+        width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border);
+        border-radius: var(--_radius); background: var(--_bg); color: var(--_text);
+      }
+      textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
+      arazzo-text-editor.json-ed { display: block; height: 150px; min-height: 0; }
+      label.check { display: flex; gap: 8px; align-items: center; color: var(--_text); font-size: 13px; cursor: pointer; margin: 0; }
+      label.check input { width: auto; }
+      .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        dialog {
-          border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg);
-          color: var(--_text); padding: 0; width: min(560px, 94vw);
-        }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        .head { padding: 14px 16px; border-bottom: 1px solid var(--_border); }
-        .head .title { font-weight: 700; font-size: 15px; }
-        .subhead { color: var(--_muted); font-size: 12px; margin-top: 2px; }
-        .content { padding: 16px; display: grid; gap: 14px; max-height: 60vh; overflow: auto; }
-        .modes { display: grid; gap: 6px; }
-        .mode {
-          display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start;
-          border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px 10px; cursor: pointer;
-        }
-        .mode:has(input:checked) { border-color: var(--_accent); background: color-mix(in srgb, var(--_accent) 8%, transparent); }
-        .mode .name { font-weight: 600; }
-        .mode .desc { font-size: 12px; color: var(--_muted); }
-        .fields { display: grid; gap: 10px; }
-        label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 4px; }
-        input[type="number"], textarea {
-          width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border);
-          border-radius: var(--_radius); background: var(--_bg); color: var(--_text);
-        }
-        textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
-        arazzo-text-editor.json-ed { display: block; height: 150px; min-height: 0; }
-        label.check { display: flex; gap: 8px; align-items: center; color: var(--_text); font-size: 13px; cursor: pointer; margin: 0; }
-        label.check input { width: auto; }
-        .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
-      </style>
       <dialog part="dialog">
         <form method="dialog">
           <div class="head">

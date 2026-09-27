@@ -8,7 +8,7 @@
 //
 // External `.value` sets rebuild; internal edits mutate and emit (focus preserved).
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import './expression-input.js';
 
 class ArazzoOutputsEditor extends ArazzoElement {
@@ -44,25 +44,24 @@ class ArazzoOutputsEditor extends ArazzoElement {
   /** @private */
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      .rows { display: grid; gap: 8px; }
+      /* Same stacked-card shape as parameters: name + remove on the head line, the expression
+         full-width beneath. */
+      .orow { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); padding: 8px; display: grid; gap: 6px; }
+      .orow > * { min-width: 0; }
+      .ohead { display: grid; grid-template-columns: minmax(90px, 1fr) auto; gap: 6px; align-items: center; }
+      .ohead > * { min-width: 0; }
+      input.oname {
+        width: 100%; box-sizing: border-box; font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;
+        padding: 7px 9px; border: 1px solid var(--_border); border-radius: var(--_radius);
+        background-color: var(--_bg); color: var(--_text);
+      }
+      .add { margin-top: 6px; font-size: 12px; }
+      .empty { padding: 6px 0; font-size: 12px; text-align: left; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        .rows { display: grid; gap: 8px; }
-        /* Same stacked-card shape as parameters: name + remove on the head line, the expression
-           full-width beneath. */
-        .orow { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); padding: 8px; display: grid; gap: 6px; }
-        .orow > * { min-width: 0; }
-        .ohead { display: grid; grid-template-columns: minmax(90px, 1fr) auto; gap: 6px; align-items: center; }
-        .ohead > * { min-width: 0; }
-        input.oname {
-          width: 100%; box-sizing: border-box; font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;
-          padding: 7px 9px; border: 1px solid var(--_border); border-radius: var(--_radius);
-          background-color: var(--_bg); color: var(--_text);
-        }
-        .add { margin-top: 6px; font-size: 12px; }
-        .empty { padding: 6px 0; font-size: 12px; text-align: left; }
-      </style>
       <div class="rows" part="rows"></div>
       <button class="add ghost" type="button">+ Add output</button>
     `;

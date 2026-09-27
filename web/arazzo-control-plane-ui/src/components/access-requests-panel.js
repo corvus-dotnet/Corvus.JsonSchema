@@ -20,7 +20,7 @@
 // Capability is never ambient (§16.5.3): a grant is what lets a principal act, and only on the workflow it names.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, absoluteTime, relativeTime, countdown, confirmDialog, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, escapeHtml, absoluteTime, relativeTime, countdown, confirmDialog, define, toneCss } from './base.js';
 import './pager.js';
 import './workflow-id-input.js';
 import './access-request-dialog.js';
@@ -33,6 +33,8 @@ const STATUS_COLOR = {
   Withdrawn: 'var(--arazzo-muted, #6b7280)',
   Revoked: 'var(--arazzo-status-faulted, #d4351c)',
 };
+
+const STATUS_TONES = toneCss('.badge', STATUS_COLOR, 'var(--_muted)');
 
 const STATUS_FILTERS = ['', 'Pending', 'Approved', 'Eligible', 'Denied', 'Withdrawn', 'Revoked'];
 
@@ -283,62 +285,61 @@ class ArazzoAccessRequests extends ArazzoElement {
 
   renderShell() {
     const view = this.view;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      [part="panel"] { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .tabs { flex: none; display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--_border); }
+      /* When a host locks the view (e.g. the console's Approvals/Requests tabs pick mine|queue), hide the internal toggle. */
+      :host([hide-view-tabs]) .tabs { display: none; }
+      .tabs button { font: inherit; font-size: 14px; border: none; background: none; color: var(--_muted); padding: 8px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; border-radius: 0; }
+      .tabs button[aria-selected="true"] { color: var(--_text); border-bottom-color: var(--_accent); font-weight: 600; }
+      .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+      .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); flex-wrap: wrap; }
+      .tablescroll { flex: 1; min-height: 0; overflow: auto; }
+      .toolbar .grow { flex: 1; }
+      .toolbar .wf { min-width: 220px; flex: 1; }
+      select { font: inherit; font-size: 13px; padding: 5px 28px 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
+      table { width: 100%; border-collapse: collapse; }
+      thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+      tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; }
+      tbody tr:last-child td { border-bottom: none; }
+      .wf-id { font-weight: 600; }
+      .who { font-weight: 600; }
+      .sub { font-size: 11px; color: var(--_muted); }
+      .reason { font-size: 12px; color: var(--_muted); margin-top: 2px; max-width: 320px; }
+      .scopes { display: flex; gap: 4px; flex-wrap: wrap; }
+      .scope { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
+      .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+      .actions button { font-size: 12px; padding: 4px 9px; }
+      .actions button[disabled] { opacity: 0.45; cursor: not-allowed; }
+      .own-note { flex-basis: 100%; text-align: right; font-size: 11px; color: var(--_muted); }
+      .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+      .err { flex: none; margin: 10px 12px; }
+      .err:empty { display: none; }
+      .notice-banner { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--_muted); padding: 6px 10px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_surface); }
+      .notice-banner .spin { display: inline-block; animation: nb-spin 0.9s linear infinite; }
+      @keyframes nb-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .notice-banner .spin { animation: none; } }
+    `, PAGER_CSS, `
+      .pager { flex: none; }
+      dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
+      dialog::backdrop { background: rgba(0,0,0,0.4); }
+      dialog .dhead { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
+      dialog .dbody { padding: 14px 16px; display: grid; gap: 12px; }
+      dialog .dfoot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
+      dialog label { font-size: 12px; color: var(--_muted); display: grid; gap: 4px; }
+      dialog input, dialog textarea { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
+      dialog textarea { resize: vertical; min-height: 56px; }
+      .checks { display: grid; gap: 6px; }
+      .checks label { display: flex; gap: 8px; align-items: center; flex-direction: row; color: var(--_text); }
+      .dur { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+      .dur input { width: 90px; }
+      .dur-presets { display: flex; gap: 6px; }
+      .dur-presets button { font-size: 12px; padding: 3px 9px; }
+    `, STATUS_TONES);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        [part="panel"] { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-        .tabs { flex: none; display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--_border); }
-        /* When a host locks the view (e.g. the console's Approvals/Requests tabs pick mine|queue), hide the internal toggle. */
-        :host([hide-view-tabs]) .tabs { display: none; }
-        .tabs button { font: inherit; font-size: 14px; border: none; background: none; color: var(--_muted); padding: 8px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; border-radius: 0; }
-        .tabs button[aria-selected="true"] { color: var(--_text); border-bottom-color: var(--_accent); font-weight: 600; }
-        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); flex-wrap: wrap; }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
-        .toolbar .grow { flex: 1; }
-        .toolbar .wf { min-width: 220px; flex: 1; }
-        select { font: inherit; font-size: 13px; padding: 5px 28px 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
-        table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
-        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; }
-        tbody tr:last-child td { border-bottom: none; }
-        .wf-id { font-weight: 600; }
-        .who { font-weight: 600; }
-        .sub { font-size: 11px; color: var(--_muted); }
-        .reason { font-size: 12px; color: var(--_muted); margin-top: 2px; max-width: 320px; }
-        .scopes { display: flex; gap: 4px; flex-wrap: wrap; }
-        .scope { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
-        .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-        .actions button { font-size: 12px; padding: 4px 9px; }
-        .actions button[disabled] { opacity: 0.45; cursor: not-allowed; }
-        .own-note { flex-basis: 100%; text-align: right; font-size: 11px; color: var(--_muted); }
-        .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-        .err { flex: none; margin: 10px 12px; }
-        .err:empty { display: none; }
-        .notice-banner { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--_muted); padding: 6px 10px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_surface); }
-        .notice-banner .spin { display: inline-block; animation: nb-spin 0.9s linear infinite; }
-        @keyframes nb-spin { to { transform: rotate(360deg); } }
-        @media (prefers-reduced-motion: reduce) { .notice-banner .spin { animation: none; } }
-        ${PAGER_CSS}
-        .pager { flex: none; }
-        dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        dialog .dhead { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
-        dialog .dbody { padding: 14px 16px; display: grid; gap: 12px; }
-        dialog .dfoot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
-        dialog label { font-size: 12px; color: var(--_muted); display: grid; gap: 4px; }
-        dialog input, dialog textarea { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
-        dialog textarea { resize: vertical; min-height: 56px; }
-        .checks { display: grid; gap: 6px; }
-        .checks label { display: flex; gap: 8px; align-items: center; flex-direction: row; color: var(--_text); }
-        .dur { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
-        .dur input { width: 90px; }
-        .dur-presets { display: flex; gap: 6px; }
-        .dur-presets button { font-size: 12px; padding: 3px 9px; }
-      </style>
       <div part="panel">
         <div class="tabs" part="tabs" role="tablist">
           <button class="tab-mine" type="button" role="tab" aria-selected="${view === 'mine'}">My requests</button>
@@ -525,8 +526,7 @@ class ArazzoAccessRequests extends ArazzoElement {
   }
 
   statusBadge(r) {
-    const color = STATUS_COLOR[r.status] || 'var(--_muted)';
-    return `<span class="badge" part="status" style="background:${color}">${escapeHtml(r.status)}</span>`;
+    return `<span class="badge" part="status" data-tone="${escapeHtml(r.status)}">${escapeHtml(r.status)}</span>`;
   }
 
   wireRowActions() {

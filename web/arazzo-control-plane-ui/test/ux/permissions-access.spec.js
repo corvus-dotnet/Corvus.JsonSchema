@@ -40,7 +40,7 @@ async function useBuiltinSeeds(page, selectors) {
 // ---- Rules panel --------------------------------------------------------------------------------
 
 test('the Rules panel lists the seeded rules with expressions and a seed-derived footer count, and search narrows server-side', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Rules');
 
@@ -61,7 +61,7 @@ test('the Rules panel lists the seeded rules with expressions and a seed-derived
 });
 
 test('a rule is authored template-first: the ordered template is offered (orderings configured) and label-eq builds a simple-grammar expression with a suggested name', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Rules');
 
@@ -93,7 +93,7 @@ test('a rule is authored template-first: the ordered template is offered (orderi
 });
 
 test('editing a rule opens it in the detail pane with the name immutable, and Save persists the new expression', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Rules');
 
@@ -111,7 +111,7 @@ test('editing a rule opens it in the detail pane with the name immutable, and Sa
 });
 
 test('deleting a rule is confirm-gated: Cancel keeps it, confirming removes it from the list', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Rules');
 
@@ -135,7 +135,7 @@ test('deleting a rule is confirm-gated: Cancel keeps it, confirming removes it f
 // ---- Grants panel -------------------------------------------------------------------------------
 
 test('the Grants panel lists the seeded bindings with per-verb reach summaries and a seed-derived footer count', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Grants');
 
@@ -170,7 +170,7 @@ test('the Grants panel lists the seeded bindings with per-verb reach summaries a
 });
 
 test('a grant is authored via the grantee picker with per-verb reach and identity clauses, and re-opening it pins the identity read-only', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Grants');
 
@@ -229,7 +229,7 @@ test('a grant is authored via the grantee picker with per-verb reach and identit
 });
 
 test('a person is not offered as a grantee: the grants picker excludes people (per-person access goes through requests)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Grants');
 
@@ -249,7 +249,7 @@ test('a person is not offered as a grantee: the grants picker excludes people (p
 });
 
 test('New grant / New rule open in a modal, while editing an existing one stays in the detail pane', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
 
   // Grants: New grant opens a modal (matching the Catalog / Sources / Environments create flows); the
@@ -286,7 +286,7 @@ test('New grant / New rule open in a modal, while editing an existing one stays 
 });
 
 test('deleting a grant is confirm-gated and removes the binding from the list', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Grants');
 
@@ -305,7 +305,7 @@ test('deleting a grant is confirm-gated and removes the binding from the list', 
 // ---- Grantee picker (on the Access overview) ----------------------------------------------------
 
 test('the grantee picker merges directory and observed results with kind badges, and flags a partial identity through to the selection chip', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Access overview');
 
@@ -343,7 +343,7 @@ test('the grantee picker merges directory and observed results with kind badges,
 // ---- Access overview ----------------------------------------------------------------------------
 
 test('the Access overview aggregates one grantee: reach grants with inline Revoke, administered workflows, and usable credentials', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Access overview');
 
@@ -387,7 +387,7 @@ test('the Access overview aggregates one grantee: reach grants with inline Revok
 });
 
 test('the overview inline Revoke deletes the underlying binding: the overview refreshes and the Grants list agrees', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Access overview');
 
@@ -416,7 +416,7 @@ test('the overview inline Revoke deletes the underlying binding: the overview re
 });
 
 test('a team grantee resolves through its team-keyed binding and administered workflow, with empty sections stated honestly', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Access overview');
 
@@ -445,7 +445,7 @@ test('a team grantee resolves through its team-keyed binding and administered wo
 });
 
 test('under the built-in seeds the capability view resolves conferred vs eligible vs nothing: list wording, the eligible chip, and admin resolution', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Grants');
   await expect(page.locator('arazzo-grants-panel tbody tr.grow-row')).toHaveCount(7); // demo seed settled
@@ -494,7 +494,7 @@ test('under the built-in seeds the capability view resolves conferred vs eligibl
 // ---- Access requests ----------------------------------------------------------------------------
 
 test('the submit flow requests scoped, time-boxed access: write forces read, and the new request lands Pending then withdraws', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Workflow access');
 
   const panel = page.locator('arazzo-access-requests');
@@ -538,7 +538,7 @@ test('the submit flow requests scoped, time-boxed access: write forces read, and
 });
 
 test('the approver inbox offers approve / make-eligible / deny on each pending request; approve and deny transition through to inbox zero and revoke', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Workflow access');
 
   // The demo example seed's inbox holds a single pending request; this walkthrough needs the built-in seeds'
@@ -582,7 +582,7 @@ test('the approver inbox offers approve / make-eligible / deny on each pending r
 });
 
 test('independent decision end to end: a request you raised is non-actionable in your own inbox (server + shell agree)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   // The Operator persona (omar@ops) administers staging AND cannot promote directly, so he raises a request — then
   // that request lands in his OWN approver inbox, where the independent-decision rule must make it non-actionable.
   await openApp(page);
@@ -621,7 +621,7 @@ test('independent decision end to end: a request you raised is non-actionable in
 });
 
 test('approve-as-eligible captures an eligibility window and lands the request in the Eligible state (PIM, not active)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Workflow access');
 
   await useBuiltinSeeds(page, ['arazzo-access-requests']); // req-2004 is a built-in fixture
@@ -644,7 +644,7 @@ test('approve-as-eligible captures an eligibility window and lands the request i
 // ---- Persona gating -----------------------------------------------------------------------------
 
 test('personas re-gate the Security tab: the security admin authors, the operator gets a read-only pane, the team reader loses the tab', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
 
   // Administrator (security:write): both subtabs offer their New action.
@@ -685,7 +685,7 @@ test('personas re-gate the Security tab: the security admin authors, the operato
 // ---- Narrowing vs widening (§14.2 composition doctrine) -----------------------------------------
 
 test('the editor steers rule composition: an impossible pair is called out, a satisfiable pair NARROWS one grant, and a second grant for the same claim WIDENS', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Grants');
 

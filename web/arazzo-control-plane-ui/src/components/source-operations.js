@@ -13,7 +13,7 @@
 // action+channel for AsyncAPI, id, summary) WITHOUT the authoring gestures — no drag, no
 // click-to-add: this view answers "what does this source offer", not "bind a step".
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define, toneCss } from './base.js';
 
 const METHOD_COLOR = {
   GET: 'var(--arazzo-status-completed, #2a8a4a)',
@@ -22,6 +22,9 @@ const METHOD_COLOR = {
   PATCH: '#b57706',
   DELETE: 'var(--arazzo-status-failed, #c33)',
 };
+
+// A workflow operation (not an HTTP method) takes the tone 'workflow'.
+const METHOD_TONES = toneCss('.badge', { ...METHOD_COLOR, workflow: 'var(--arazzo-status-running, #7048b7)' }, 'var(--_muted)');
 
 class ArazzoSourceOperations extends ArazzoElement {
   constructor() {
@@ -72,21 +75,20 @@ class ArazzoSourceOperations extends ArazzoElement {
 
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      .filter { width: 100%; box-sizing: border-box; font: 12px var(--_font); padding: 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: inherit; margin-bottom: 6px; }
+      .ops { display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow: auto; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); padding: 4px; }
+      .op { display: grid; grid-template-columns: max-content 1fr; column-gap: 8px; align-items: baseline; padding: 5px 7px; border-radius: 6px; text-align: left; }
+      .op .badge { font-size: 10px; font-weight: 700; color: #fff; border-radius: 4px; padding: 1px 6px; text-transform: uppercase; }
+      .op .id { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+      .op .id .muted { color: var(--_muted); }
+      .op .id.deprecated { text-decoration: line-through; }
+      .op .summary { grid-column: 2; font-size: 11px; color: var(--_muted); overflow-wrap: anywhere; }
+      .empty, .loading { font-size: 12px; color: var(--_muted); padding: 8px; }
+      .error { font-size: 12px; color: var(--arazzo-status-faulted, #d4351c); padding: 8px; }
+    `, METHOD_TONES);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        .filter { width: 100%; box-sizing: border-box; font: 12px var(--_font); padding: 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: inherit; margin-bottom: 6px; }
-        .ops { display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow: auto; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); padding: 4px; }
-        .op { display: grid; grid-template-columns: max-content 1fr; column-gap: 8px; align-items: baseline; padding: 5px 7px; border-radius: 6px; text-align: left; }
-        .op .badge { font-size: 10px; font-weight: 700; color: #fff; border-radius: 4px; padding: 1px 6px; text-transform: uppercase; }
-        .op .id { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
-        .op .id .muted { color: var(--_muted); }
-        .op .id.deprecated { text-decoration: line-through; }
-        .op .summary { grid-column: 2; font-size: 11px; color: var(--_muted); overflow-wrap: anywhere; }
-        .empty, .loading { font-size: 12px; color: var(--_muted); padding: 8px; }
-        .error { font-size: 12px; color: var(--arazzo-status-faulted, #d4351c); padding: 8px; }
-      </style>
       <input class="filter" type="search" placeholder="Filter operations…" aria-label="Filter operations">
       <div class="ops"></div>
     `;
@@ -111,12 +113,11 @@ class ArazzoSourceOperations extends ArazzoElement {
     box.innerHTML = shown.map((op) => {
       const isHttp = op.kind === 'openapi';
       const badge = isHttp ? (op.method ?? '?') : (op.action ?? 'channel');
-      const badgeColor = isHttp ? (METHOD_COLOR[op.method] ?? 'var(--_muted)') : 'var(--arazzo-status-running, #7048b7)';
       const id = op.operationId ?? (isHttp ? op.path : op.channelPath) ?? '(unnamed)';
       const where = isHttp ? op.path : op.channelPath;
       return `
         <div class="op" part="operation">
-          <span class="badge" style="background:${badgeColor}">${escapeHtml(badge)}</span>
+          <span class="badge" data-tone="${isHttp ? escapeHtml(op.method) : 'workflow'}">${escapeHtml(badge)}</span>
           <span class="id${op.deprecated ? ' deprecated' : ''}">${escapeHtml(id)}${where && where !== id ? ` <span class="muted">${escapeHtml(where)}</span>` : ''}</span>
           ${op.summary ? `<span class="summary">${escapeHtml(op.summary)}</span>` : ''}
         </div>`;

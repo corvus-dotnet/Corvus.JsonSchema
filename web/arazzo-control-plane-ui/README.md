@@ -82,11 +82,12 @@ import '@corvus-dotnet/arazzo-control-plane-ui/kit.css';    // optional: app-wid
 ```
 ```html
 <arazzo-control-plane base-url="/arazzo/v1" scopes="runs:read runs:write" theme="auto"></arazzo-control-plane>
-<script type="module">
-  // The host owns its OAuth2/OIDC/mTLS session and hands the kit credentials.
-  document.querySelector('arazzo-control-plane').authProvider =
-    async () => `Bearer ${await myApp.getAccessToken()}`;
-</script>
+<script type="module" src="./app.js"></script>
+```
+```js
+// app.js. The host owns its OAuth2/OIDC/mTLS session and hands the kit credentials.
+document.querySelector('arazzo-control-plane').authProvider =
+  async () => `Bearer ${await myApp.getAccessToken()}`;
 ```
 
 Or compose just the pieces you want:
@@ -106,6 +107,16 @@ table.addEventListener('run-selected', (e) => console.log(e.detail.run));
 The kit is just static ESM, so any server can host it: copy `src/` to your static root, reference it from a
 CDN, or (for an ASP.NET host) drop the files under the host's `wwwroot`. There is no .NET package — the
 deliverable is the npm package.
+
+### Content-Security-Policy
+
+The kit runs under a strict policy, `script-src 'self'` and `style-src 'self'`, with no `'unsafe-inline'` and no
+`'unsafe-eval'`. It writes no `<style>` element, no style attribute, no inline script and no inline event handler.
+Each component styles its shadow root with constructable stylesheets (`adoptStyles` in `components/base.js`), which
+`style-src` does not govern, and sets any style chosen at render time through the CSSOM. A host page that serves the
+kit keeps to the same rules, and loads its scripts and stylesheets by URL. A .NET host gets the policy with
+`services.AddArazzoSecurityHeaders()` ([ADR 0073](../../docs/arazzo/adr/0073-browser-security-headers-and-a-strict-csp.md)),
+and `test/strict-csp.test.mjs` refuses any kit file that would break it.
 
 ## Auth
 

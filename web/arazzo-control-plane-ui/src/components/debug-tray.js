@@ -20,7 +20,7 @@
 //              output-override {stepId, outputs} (step over: the provided outputs, collected in the
 //              typed inline editor; the host forces them — Skip on a debug run, replay otherwise)
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import { actionEdgeId } from '../workflow-graph.js';
 import './value-editor.js';
 import './json-view.js';
@@ -117,52 +117,51 @@ class ArazzoDebugTray extends ArazzoElement {
   /** @private */
   render() {
     const trace = this._trace;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; font-size: 12px; }
+      .bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--_border); }
+      .bar input[type="range"] { flex: 1; min-width: 60px; accent-color: var(--_accent); }
+      .bar .chip { font-weight: 600; }
+      .bar button { font-size: 12px; padding: 2px 8px; }
+      .empty-note { padding: 10px; color: var(--_muted); }
+      .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); grid-template-rows: minmax(0, 1fr); gap: 0; max-height: var(--arazzo-tray-body-max, 34vh); overflow: hidden; }
+      .steps { overflow-y: auto; overflow-x: hidden; border-right: 1px solid var(--_border); }
+      .step { display: flex; gap: 6px; width: 100%; text-align: left; border: none; background: none; color: inherit;
+              font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 5px 8px; cursor: pointer; align-items: baseline; }
+      .step:hover { background: var(--_surface); }
+      .step.at { background: color-mix(in srgb, var(--_accent) 14%, transparent); }
+      .step .n { color: var(--_muted); width: 2ch; text-align: right; flex-shrink: 0; }
+      .step .nm { flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; }
+      .step .ok { color: var(--arazzo-status-completed, #2a8a4a); }
+      .step .bad { color: var(--arazzo-status-faulted, #d4351c); }
+      .step .act { color: var(--_muted); margin-left: auto; font-size: 11px; flex: 0 1 auto; min-width: 0;
+                   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45%; }
+      .ctx { overflow-y: auto; overflow-x: hidden; padding: 8px 10px; display: grid; gap: 8px; align-content: start; }
+      .ctx h4 { margin: 0; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); }
+      .ctx pre { margin: 0; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+      table { border-collapse: collapse; width: 100%; }
+      td { padding: 2px 6px; border-top: 1px solid var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; vertical-align: top; overflow-wrap: anywhere; }
+      td.v { width: 1%; white-space: nowrap; overflow-wrap: normal; }
+      td.sent { color: var(--_muted); border-top: none; padding-top: 0; }
+      .chip.warn { color: var(--arazzo-status-suspended, #b45309); }
+      .crumb { display: flex; gap: 8px; align-items: center; padding: 5px 10px; border-bottom: 1px dashed var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .crumb .up { font-size: 11px; padding: 1px 8px; }
+      .step .into { font-size: 11px; padding: 0 5px; flex-shrink: 0; }
+      .inject { display: grid; gap: 4px; border: 1px solid var(--_border); border-radius: 6px; padding: 6px; }
+      .inject input, .inject textarea { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 3px 5px; border: 1px solid var(--_border); border-radius: 4px; background: var(--_bg); color: inherit; }
+      .inject textarea { min-height: 44px; }
+      .inject button { justify-self: start; font-size: 11px; }
+      .inject .why { color: var(--_muted); font-size: 10.5px; }
+      .override { font-size: 11px; justify-self: start; }
+      .ovr-form { display: grid; gap: 6px; border: 1px solid var(--arazzo-status-suspended, #b45309); border-radius: 6px; padding: 8px; margin-top: 4px; }
+      .ovr-form[hidden] { display: none; }
+      .ovr-form .why { color: var(--_muted); font-size: 10.5px; }
+      .ovr-actions { display: flex; gap: 6px; }
+      .ovr-actions button { font-size: 11px; }
+      .ctx-into { font-size: 11px; justify-self: start; }
+      .inj-payload-slot { display: grid; gap: 3px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; font-size: 12px; }
-        .bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--_border); }
-        .bar input[type="range"] { flex: 1; min-width: 60px; accent-color: var(--_accent); }
-        .bar .chip { font-weight: 600; }
-        .bar button { font-size: 12px; padding: 2px 8px; }
-        .empty-note { padding: 10px; color: var(--_muted); }
-        .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); grid-template-rows: minmax(0, 1fr); gap: 0; max-height: var(--arazzo-tray-body-max, 34vh); overflow: hidden; }
-        .steps { overflow-y: auto; overflow-x: hidden; border-right: 1px solid var(--_border); }
-        .step { display: flex; gap: 6px; width: 100%; text-align: left; border: none; background: none; color: inherit;
-                font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 5px 8px; cursor: pointer; align-items: baseline; }
-        .step:hover { background: var(--_surface); }
-        .step.at { background: color-mix(in srgb, var(--_accent) 14%, transparent); }
-        .step .n { color: var(--_muted); width: 2ch; text-align: right; flex-shrink: 0; }
-        .step .nm { flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; }
-        .step .ok { color: var(--arazzo-status-completed, #2a8a4a); }
-        .step .bad { color: var(--arazzo-status-faulted, #d4351c); }
-        .step .act { color: var(--_muted); margin-left: auto; font-size: 11px; flex: 0 1 auto; min-width: 0;
-                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45%; }
-        .ctx { overflow-y: auto; overflow-x: hidden; padding: 8px 10px; display: grid; gap: 8px; align-content: start; }
-        .ctx h4 { margin: 0; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); }
-        .ctx pre { margin: 0; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
-        table { border-collapse: collapse; width: 100%; }
-        td { padding: 2px 6px; border-top: 1px solid var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; vertical-align: top; overflow-wrap: anywhere; }
-        td.v { width: 1%; white-space: nowrap; overflow-wrap: normal; }
-        td.sent { color: var(--_muted); border-top: none; padding-top: 0; }
-        .chip.warn { color: var(--arazzo-status-suspended, #b45309); }
-        .crumb { display: flex; gap: 8px; align-items: center; padding: 5px 10px; border-bottom: 1px dashed var(--_border); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .crumb .up { font-size: 11px; padding: 1px 8px; }
-        .step .into { font-size: 11px; padding: 0 5px; flex-shrink: 0; }
-        .inject { display: grid; gap: 4px; border: 1px solid var(--_border); border-radius: 6px; padding: 6px; }
-        .inject input, .inject textarea { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 3px 5px; border: 1px solid var(--_border); border-radius: 4px; background: var(--_bg); color: inherit; }
-        .inject textarea { min-height: 44px; }
-        .inject button { justify-self: start; font-size: 11px; }
-        .inject .why { color: var(--_muted); font-size: 10.5px; }
-        .override { font-size: 11px; justify-self: start; }
-        .ovr-form { display: grid; gap: 6px; border: 1px solid var(--arazzo-status-suspended, #b45309); border-radius: 6px; padding: 8px; margin-top: 4px; }
-        .ovr-form[hidden] { display: none; }
-        .ovr-form .why { color: var(--_muted); font-size: 10.5px; }
-        .ovr-actions { display: flex; gap: 6px; }
-        .ovr-actions button { font-size: 11px; }
-        .ctx-into { font-size: 11px; justify-self: start; }
-        .inj-payload-slot { display: grid; gap: 3px; }
-      </style>
       ${!trace ? '<div class="empty-note">No debug session — ▶ Run simulates the working copy against its scripted mocks.</div>' : `
       ${this._stack.length ? `<div class="crumb" part="crumb">
         <button class="up" type="button" title="Step out to the calling workflow">⬅ back</button>

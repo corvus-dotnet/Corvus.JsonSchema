@@ -15,7 +15,7 @@
 // registry rather than free-typing a name that may match nothing. The list endpoint is already reach-scoped
 // (§14.2), so an approver-scoped host simply sees the environments the server admits for them.
 
-import { ArazzoElement, SHARED_CSS, PICKER_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PICKER_CSS, escapeHtml, define } from './base.js';
 
 const SEARCH_LIMIT = 8;
 const DEBOUNCE_MS = 200;
@@ -74,14 +74,12 @@ class ArazzoEnvironmentPicker extends ArazzoElement {
   renderShell() {
     this._built = true;
     const placeholder = this.getAttribute('placeholder') || 'Find an environment…';
+    adoptStyles(this.shadowRoot, SHARED_CSS, PICKER_CSS, `
+      :host { display: block; position: relative; }
+      .chip { display: flex; gap: 8px; align-items: center; padding: 7px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); }
+      .chip .env { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        ${PICKER_CSS}
-        :host { display: block; position: relative; }
-        .chip { display: flex; gap: 8px; align-items: center; padding: 7px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); }
-        .chip .env { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-      </style>
       <div class="picker">
         <input class="q" type="search" part="input" autocomplete="off" role="combobox" aria-expanded="false"
                aria-autocomplete="list" placeholder="${escapeHtml(placeholder)}" aria-label="${escapeHtml(placeholder)}">

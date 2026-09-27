@@ -167,17 +167,82 @@ export const PICKER_CSS = `
   .results .src { color: var(--_muted); font-size: 11px; margin-left: auto; flex: none; }
 `;
 
+/** One parsed sheet per distinct CSS text, shared by every shadow root that adopts it. */
+const SHEETS = new Map();
+
+/** Sheets {@link adoptStyles} keeps when it replaces a root's list, the ones a helper adopted into a root it does not own. */
+const RETAINED_SHEETS = new WeakSet();
+
+/**
+ * The constructable stylesheet for a piece of CSS, parsed once and cached by its text. The kit styles its shadow roots
+ * with these rather than style elements (ADR 0073). A Content-Security-Policy's `style-src` does not govern a sheet
+ * built through the CSSOM, so the kit runs under `style-src 'self'` with no `'unsafe-inline'`, and a component's
+ * styles are parsed once for every instance rather than once for each. Pass fixed text (a module constant or a
+ * template literal with no substitutions); the cache holds one sheet for each distinct text it is given.
+ * @param {string} cssText
+ * @returns {CSSStyleSheet}
+ */
+export function styleSheet(cssText) {
+  let sheet = SHEETS.get(cssText);
+  if (!sheet) {
+    sheet = new CSSStyleSheet();
+    sheet.replaceSync(cssText);
+    SHEETS.set(cssText, sheet);
+  }
+  return sheet;
+}
+
+/**
+ * Style a shadow root (or the document) with the given CSS, in order, as adopted stylesheets. Call it where a render
+ * used to open its template with a style element. The root's list is only replaced when it changes, and a sheet a
+ * helper such as {@link confirmDialog} adopted into the root stays adopted.
+ * @param {ShadowRoot|Document} root
+ * @param {...string} cssTexts
+ */
+export function adoptStyles(root, ...cssTexts) {
+  const sheets = cssTexts.map(styleSheet);
+  const current = root.adoptedStyleSheets;
+  const kept = current.filter((sheet) => RETAINED_SHEETS.has(sheet) && !sheets.includes(sheet));
+  if (kept.length === 0 && current.length === sheets.length && sheets.every((sheet, i) => sheet === current[i])) return;
+  root.adoptedStyleSheets = [...sheets, ...kept];
+}
+
+/** Adopt one sheet into a root the caller does not own, and keep it there across the owner's {@link adoptStyles}. */
+function adoptRetained(root, cssText) {
+  const sheet = styleSheet(cssText);
+  RETAINED_SHEETS.add(sheet);
+  if (!root.adoptedStyleSheets.includes(sheet)) root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+}
+
+/**
+ * Rules that give `selector` the colour its `data-tone` attribute names in `tones`, and `fallback` for a tone the map
+ * does not name. A colour chosen at render time travels as a data attribute matched by a rule in the component's sheet,
+ * never as a style attribute, which the kit's Content-Security-Policy refuses (ADR 0073).
+ * @param {string} selector The element the tone colours, such as `.badge`.
+ * @param {Record<string, string | { color: string }>} tones Each tone's colour, or an entry carrying one.
+ * @param {string} fallback The colour of a tone the map does not name.
+ * @param {string} [property] The property the colour sets (default `background`).
+ * @returns {string}
+ */
+export function toneCss(selector, tones, fallback, property = 'background') {
+  const rules = Object.entries(tones).map(([tone, value]) =>
+    `${selector}[data-tone=${JSON.stringify(tone)}] { ${property}: ${typeof value === 'string' ? value : value.color}; }`);
+  return [`${selector}[data-tone] { ${property}: ${fallback}; }`, ...rules].join('\n');
+}
+
+/** Each {@link WorkflowRunStatus}'s themeable colour token (with a fallback). */
+export const STATUS_COLORS = Object.freeze({
+  Pending: 'var(--arazzo-status-pending, #9aa1ab)',
+  Running: 'var(--arazzo-status-running, #2f74d0)',
+  Suspended: 'var(--arazzo-status-suspended, #b07d18)',
+  Completed: 'var(--arazzo-status-completed, #2a8a4a)',
+  Cancelled: 'var(--arazzo-status-cancelled, #6b7280)',
+  Faulted: 'var(--arazzo-status-faulted, #d4351c)',
+});
+
 /** Maps a {@link WorkflowRunStatus} to its themeable colour token (with a fallback). */
 export function statusColor(status) {
-  const map = {
-    Pending: 'var(--arazzo-status-pending, #9aa1ab)',
-    Running: 'var(--arazzo-status-running, #2f74d0)',
-    Suspended: 'var(--arazzo-status-suspended, #b07d18)',
-    Completed: 'var(--arazzo-status-completed, #2a8a4a)',
-    Cancelled: 'var(--arazzo-status-cancelled, #6b7280)',
-    Faulted: 'var(--arazzo-status-faulted, #d4351c)',
-  };
-  return map[status] || 'var(--arazzo-muted, #6b7280)';
+  return STATUS_COLORS[status] || 'var(--arazzo-muted, #6b7280)';
 }
 
 /** HTML-escape a string for safe interpolation into innerHTML. */
@@ -269,7 +334,7 @@ function dimensionToKind(dimension) {
   }
 }
 
-/** Styles for {@link granteeChip}; include in a component's shadow `<style>` (alongside {@link SHARED_CSS}). */
+/** Styles for {@link granteeChip}; adopt them with {@link adoptStyles} alongside {@link SHARED_CSS}. */
 export const GRANTEE_CHIP_CSS = `
   .gchip { display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; }
   .gchip .gbadge { flex: none; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; padding: 1px 6px; border-radius: 999px; background: var(--_surface); color: var(--_muted); border: 1px solid var(--_border); }
@@ -317,6 +382,27 @@ export function absoluteTime(iso) {
   return Number.isNaN(t) ? String(iso) : new Date(t).toLocaleString();
 }
 
+/** Styles for {@link confirmDialog}, adopted into the root that hosts the dialog. */
+const CONFIRM_CSS = `
+  dialog.arazzo-confirm {
+    border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: var(--arazzo-radius, 8px);
+    background: var(--arazzo-bg, #fff); color: var(--arazzo-text, #1c2024); padding: 0;
+    width: min(420px, 92vw); font: 14px var(--arazzo-font, system-ui, sans-serif);
+  }
+  dialog.arazzo-confirm::backdrop { background: rgba(0,0,0,0.4); }
+  dialog.arazzo-confirm .head { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); }
+  dialog.arazzo-confirm .content { padding: 16px; line-height: 1.45; }
+  dialog.arazzo-confirm .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--arazzo-border, #e3e6ea); }
+  dialog.arazzo-confirm button { font: inherit; cursor: pointer; border: 1px solid var(--arazzo-border, #e3e6ea); background: var(--arazzo-bg, #fff); color: inherit; border-radius: var(--arazzo-radius, 8px); padding: 6px 12px; }
+  dialog.arazzo-confirm button.primary { background: var(--arazzo-accent, #3b6cf6); border-color: var(--arazzo-accent, #3b6cf6); color: #fff; }
+  dialog.arazzo-confirm button.danger { background: var(--arazzo-danger, #d4351c); border-color: var(--arazzo-danger, #d4351c); color: #fff; }
+  dialog.arazzo-confirm button.ghost { background: transparent; border-color: transparent; }
+  dialog.arazzo-confirm button:disabled { opacity: 0.45; cursor: not-allowed; }
+  dialog.arazzo-confirm .chal { display: block; margin-top: 12px; font-size: 12.5px; color: var(--arazzo-muted, #5f6672); }
+  dialog.arazzo-confirm .chal code { user-select: all; }
+  dialog.arazzo-confirm .chal-in { display: block; width: 100%; box-sizing: border-box; margin-top: 6px; font: inherit; padding: 7px 9px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: var(--arazzo-radius, 8px); background: var(--arazzo-bg, #fff); color: inherit; }
+`;
+
 /**
  * Show a themed, focus-trapped confirmation dialog inside `host`'s shadow root (never the browser's
  * built-in `confirm`), returning a promise that resolves `true` if confirmed, `false` otherwise. The
@@ -335,30 +421,12 @@ export function confirmDialog(host, options = {}) {
     challenge = null, challengeLabel = 'Type it to confirm',
   } = options;
   const root = host?.shadowRoot ?? document.body;
+  adoptRetained(host?.shadowRoot ?? document, CONFIRM_CSS);
   return new Promise((resolve) => {
     const dlg = document.createElement('dialog');
     dlg.className = 'arazzo-confirm';
     dlg.setAttribute('part', 'confirm');
     dlg.innerHTML = `
-      <style>
-        dialog.arazzo-confirm {
-          border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: var(--arazzo-radius, 8px);
-          background: var(--arazzo-bg, #fff); color: var(--arazzo-text, #1c2024); padding: 0;
-          width: min(420px, 92vw); font: 14px var(--arazzo-font, system-ui, sans-serif);
-        }
-        dialog.arazzo-confirm::backdrop { background: rgba(0,0,0,0.4); }
-        dialog.arazzo-confirm .head { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--arazzo-border, #e3e6ea); }
-        dialog.arazzo-confirm .content { padding: 16px; line-height: 1.45; }
-        dialog.arazzo-confirm .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--arazzo-border, #e3e6ea); }
-        dialog.arazzo-confirm button { font: inherit; cursor: pointer; border: 1px solid var(--arazzo-border, #e3e6ea); background: var(--arazzo-bg, #fff); color: inherit; border-radius: var(--arazzo-radius, 8px); padding: 6px 12px; }
-        dialog.arazzo-confirm button.primary { background: var(--arazzo-accent, #3b6cf6); border-color: var(--arazzo-accent, #3b6cf6); color: #fff; }
-        dialog.arazzo-confirm button.danger { background: var(--arazzo-danger, #d4351c); border-color: var(--arazzo-danger, #d4351c); color: #fff; }
-        dialog.arazzo-confirm button.ghost { background: transparent; border-color: transparent; }
-        dialog.arazzo-confirm button:disabled { opacity: 0.45; cursor: not-allowed; }
-        dialog.arazzo-confirm .chal { display: block; margin-top: 12px; font-size: 12.5px; color: var(--arazzo-muted, #5f6672); }
-        dialog.arazzo-confirm .chal code { user-select: all; }
-        dialog.arazzo-confirm .chal-in { display: block; width: 100%; box-sizing: border-box; margin-top: 6px; font: inherit; padding: 7px 9px; border: 1px solid var(--arazzo-border, #e3e6ea); border-radius: var(--arazzo-radius, 8px); background: var(--arazzo-bg, #fff); color: inherit; }
-      </style>
       <div class="head" part="confirm-title">${escapeHtml(title)}</div>
       <div class="content">${escapeHtml(message)}${challenge ? `
         <label class="chal">${escapeHtml(challengeLabel)} <code>${escapeHtml(challenge)}</code>

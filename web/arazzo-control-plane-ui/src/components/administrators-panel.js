@@ -19,7 +19,7 @@
 // administrator is refused (403), shown here as a plain banner, never a disclosure of who is. The set is never empty —
 // removing the last administrator is refused (409).
 
-import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, confirmDialog, define } from './base.js';
 import './grantee-picker.js';
 
 class ArazzoAdministratorsPanel extends ArazzoElement {
@@ -175,25 +175,23 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, GRANTEE_CHIP_CSS, `
+      /* overflow stays visible so the add-row's grantee-picker results dropdown isn't clipped by the card. */
+      .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); }
+      .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; display: flex; align-items: baseline; gap: 8px; }
+      .head .title { font-weight: 700; }
+      .head .base { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
+      .list { display: grid; }
+      .arow { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--_border); }
+      .arow:last-child { border-bottom: none; }
+      .grow { flex: 1; }
+      .add { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--_border); background: var(--_surface); border-radius: 0 0 var(--_radius) var(--_radius); }
+      .add .grant-in { flex: 1; }
+      .err { margin: 10px 12px; }
+      .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        ${GRANTEE_CHIP_CSS}
-        /* overflow stays visible so the add-row's grantee-picker results dropdown isn't clipped by the card. */
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); }
-        .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; display: flex; align-items: baseline; gap: 8px; }
-        .head .title { font-weight: 700; }
-        .head .base { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
-        .list { display: grid; }
-        .arow { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--_border); }
-        .arow:last-child { border-bottom: none; }
-        .grow { flex: 1; }
-        .add { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--_border); background: var(--_surface); border-radius: 0 0 var(--_radius) var(--_radius); }
-        .add .grant-in { flex: 1; }
-        .err { margin: 10px 12px; }
-        .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-      </style>
       <div class="panel" part="panel">
         <div class="head"><span class="title">Administrators</span><span class="base" part="base"></span></div>
         <div class="err"></div>

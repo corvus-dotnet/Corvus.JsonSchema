@@ -6,7 +6,7 @@
 //
 // Properties : .tags ([{ key, value }] — get returns the current non-empty rows; set re-seeds and re-renders)
 // Events     : tags-changed (on add / remove / input)
-import { ArazzoElement, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, escapeHtml, define } from './base.js';
 
 class ArazzoTagEditor extends ArazzoElement {
   constructor() {
@@ -54,18 +54,18 @@ class ArazzoTagEditor extends ArazzoElement {
   }
 
   render() {
+    adoptStyles(this.shadowRoot, `
+      :host { display: block; }
+      .tag-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+      .tag-row input { flex: 1 1 0; min-width: 0; padding: 4px 8px; border: 1px solid var(--_border, #ccc); border-radius: 6px; background: var(--_bg, #fff); color: var(--_text, #111); font: inherit; }
+      .eq { color: var(--_muted, #888); }
+      .rm { border: 1px solid var(--_border, #ccc); background: transparent; color: var(--_muted, #888); border-radius: 6px; cursor: pointer; padding: 2px 9px; line-height: 1.4; }
+      .rm:hover { color: var(--_text, #111); border-color: var(--_muted, #888); }
+      .add { border: 1px dashed var(--_border, #ccc); background: transparent; color: var(--_text, #111); border-radius: 6px; cursor: pointer; padding: 4px 10px; font: inherit; }
+      .add:hover { border-style: solid; }
+      .empty { color: var(--_muted, #888); margin-bottom: 6px; font-style: italic; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        :host { display: block; }
-        .tag-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-        .tag-row input { flex: 1 1 0; min-width: 0; padding: 4px 8px; border: 1px solid var(--_border, #ccc); border-radius: 6px; background: var(--_bg, #fff); color: var(--_text, #111); font: inherit; }
-        .eq { color: var(--_muted, #888); }
-        .rm { border: 1px solid var(--_border, #ccc); background: transparent; color: var(--_muted, #888); border-radius: 6px; cursor: pointer; padding: 2px 9px; line-height: 1.4; }
-        .rm:hover { color: var(--_text, #111); border-color: var(--_muted, #888); }
-        .add { border: 1px dashed var(--_border, #ccc); background: transparent; color: var(--_text, #111); border-radius: 6px; cursor: pointer; padding: 4px 10px; font: inherit; }
-        .add:hover { border-style: solid; }
-        .empty { color: var(--_muted, #888); margin-bottom: 6px; font-style: italic; }
-      </style>
       ${this._tags.length ? '' : '<div class="empty">No tags yet.</div>'}
       <div class="rows">
         ${this._tags.map((t, i) => `

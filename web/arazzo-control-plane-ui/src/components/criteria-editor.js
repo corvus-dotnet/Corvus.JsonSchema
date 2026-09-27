@@ -11,7 +11,7 @@
 // Emits `criteria-changed {criteria}` on every edit. External `.value` sets rebuild the rows;
 // internal edits mutate the model in place (no rebuild → focus is preserved while typing).
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import './expression-input.js';
 
 // The types the runtime evaluates. xpath is schema-valid Arazzo and round-trips untouched, but the
@@ -63,23 +63,22 @@ class ArazzoCriteriaEditor extends ArazzoElement {
   /** @private */
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      .rows { display: grid; gap: 10px; min-width: 0; }
+      .row, .row > div { min-width: 0; }
+      .row { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 6px; background: var(--_surface); }
+      .head { display: flex; gap: 6px; align-items: center; }
+      .head select { font-size: 12px; padding: 4px 26px 4px 8px; }
+      .head .grow { flex: 1; }
+      .vwrap { display: inline-flex; gap: 5px; align-items: center; font-size: 11px; color: var(--_muted); min-width: 0; }
+      .vwrap select { max-width: 130px; }
+      .unsupported { font-size: 11px; color: var(--arazzo-status-suspended, #b07d18); }
+      label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
+      .add { margin-top: 8px; font-size: 12px; }
+      .empty { padding: 10px; font-size: 12px; text-align: left; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        .rows { display: grid; gap: 10px; min-width: 0; }
-        .row, .row > div { min-width: 0; }
-        .row { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 6px; background: var(--_surface); }
-        .head { display: flex; gap: 6px; align-items: center; }
-        .head select { font-size: 12px; padding: 4px 26px 4px 8px; }
-        .head .grow { flex: 1; }
-        .vwrap { display: inline-flex; gap: 5px; align-items: center; font-size: 11px; color: var(--_muted); min-width: 0; }
-        .vwrap select { max-width: 130px; }
-        .unsupported { font-size: 11px; color: var(--arazzo-status-suspended, #b07d18); }
-        label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
-        .add { margin-top: 8px; font-size: 12px; }
-        .empty { padding: 10px; font-size: 12px; text-align: left; }
-      </style>
       <div class="rows" part="rows"></div>
       <button class="add ghost" type="button">+ Add criterion</button>
     `;

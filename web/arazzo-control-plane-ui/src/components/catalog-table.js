@@ -13,13 +13,15 @@
 // so this table pages with Prev/Next over the store cursor exactly like <arazzo-runs-table> — never loading the
 // whole catalog. Selecting a row opens the detail, which loads that base's full version list itself.
 
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, define, toneCss } from './base.js';
 import './pager.js';
 
 const STATUS_COLOR = {
   Active: 'var(--arazzo-status-completed, #2a8a4a)',
   Obsolete: 'var(--arazzo-status-cancelled, #6b7280)',
 };
+
+const STATUS_TONES = toneCss('.badge', STATUS_COLOR, 'var(--_muted)');
 
 class ArazzoCatalogTable extends ArazzoElement {
   static get observedAttributes() {
@@ -156,35 +158,34 @@ class ArazzoCatalogTable extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+      .tablescroll { flex: 1; min-height: 0; overflow: auto; }
+      table { width: 100%; border-collapse: collapse; }
+      thead th {
+        text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted);
+        padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap;
+        position: sticky; top: 0; z-index: 1;
+      }
+      tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
+      tbody tr:last-child td { border-bottom: none; }
+      tbody tr.selectable { cursor: pointer; }
+      tbody tr.selectable:hover { background: var(--_surface); }
+      tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
+      .wf { font-weight: 600; }
+      .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+      .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
+      .owner { font-size: 12px; }
+      .owner .team { color: var(--_muted); }
+      .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+      .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; }
+      .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+    `, PAGER_CSS, `
+      .pager { flex: none; }
+    `, STATUS_TONES);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        thead th {
-          text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted);
-          padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap;
-          position: sticky; top: 0; z-index: 1;
-        }
-        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr.selectable { cursor: pointer; }
-        tbody tr.selectable:hover { background: var(--_surface); }
-        tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
-        .wf { font-weight: 600; }
-        .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-        .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
-        .owner { font-size: 12px; }
-        .owner .team { color: var(--_muted); }
-        .tags { display: flex; gap: 4px; flex-wrap: wrap; }
-        .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; }
-        .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-        ${PAGER_CSS}
-        .pager { flex: none; }
-      </style>
       <div class="wrap" part="table">
         <div class="tablescroll">
           <table>
@@ -256,7 +257,7 @@ class ArazzoCatalogTable extends ArazzoElement {
       <tr part="row" class="${selectable ? 'selectable' : ''}" data-key="${escapeHtml(key)}"${sel}>
         <td part="cell" class="wf">${escapeHtml(v.title || v.baseWorkflowId)}<br><span class="muted ver">${escapeHtml(v.baseWorkflowId)}</span></td>
         <td part="cell" class="ver">v${escapeHtml(String(v.versionNumber))}</td>
-        <td part="cell"><span class="badge" part="status" style="background:${STATUS_COLOR[v.status] || 'var(--_muted)'}">${escapeHtml(v.status)}</span></td>
+        <td part="cell"><span class="badge" part="status" data-tone="${escapeHtml(v.status)}">${escapeHtml(v.status)}</span></td>
         <td part="cell">${owner}</td>
         <td part="cell" class="muted" title="${escapeHtml(absoluteTime(updated))}">${escapeHtml(relativeTime(updated))}</td>
         <td part="cell">${tags}</td>

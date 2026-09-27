@@ -5,11 +5,31 @@
 import { expect } from '@playwright/test';
 
 /** Collect console/page errors (ignoring benign resource-load 404s — the standalone demo has no
- *  BFF, so <arazzo-auth-status>'s /me probe 404s by design). Call assertClean(errors) at the end. */
-export function watchErrors(page) {
+ *  BFF, so <arazzo-auth-status>'s /me probe 404s by design) and every Content-Security-Policy violation
+ *  (ADR 0073), each reported with the element it names. Call before the first navigation, and call
+ *  assertClean(errors) at the end.
+ *
+ *  One violation is the browser's, not the kit's, and is left out: typing over a selection that spans
+ *  highlighted tokens in a CodeMirror editor, Chrome's contenteditable editing tries to add a style
+ *  attribute inside the editor's content to keep the removed token's colour. The policy refuses it and
+ *  CodeMirror redraws the line from its own state, so nothing is lost. Only the browser's editing writes
+ *  markup there, so a style-src-attr violation inside `.cm-content` is that one and no other. */
+export async function watchErrors(page) {
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('console', (m) => {
+    // A violation arrives below with its element; the console's copy of it carries none.
+    if (m.type() === 'error' && !/Failed to load resource|Content Security Policy/.test(m.text())) errors.push(m.text());
+  });
   page.on('pageerror', (e) => errors.push(String(e)));
+  await page.exposeFunction('__arazzoCspViolation', (violation) => errors.push(violation));
+  await page.addInitScript(() => {
+    document.addEventListener('securitypolicyviolation', (e) => {
+      const target = e.composedPath()[0];
+      const element = target instanceof Element ? target : null;
+      if (e.effectiveDirective === 'style-src-attr' && element?.closest('.cm-content')) return;
+      window.__arazzoCspViolation(`CSP ${e.effectiveDirective} refused ${e.blockedURI || 'inline'} at ${e.sourceFile || '?'}:${e.lineNumber} on ${element ? element.outerHTML.slice(0, 200) : String(target)}`);
+    }, true);
+  });
   return errors;
 }
 

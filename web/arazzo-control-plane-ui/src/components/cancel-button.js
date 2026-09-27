@@ -8,7 +8,7 @@
 //
 // The lowest-risk mutation, deliberately its own tiny element so a host can embed *just* cancel.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 
 class ArazzoCancelButton extends ArazzoElement {
   static get observedAttributes() {
@@ -28,20 +28,19 @@ class ArazzoCancelButton extends ArazzoElement {
   render() {
     const label = this.getAttribute('label') || 'Cancel';
     const disabled = this.hasAttribute('disabled');
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      dialog {
+        border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg);
+        color: var(--_text); padding: 0; width: min(420px, 92vw);
+      }
+      dialog::backdrop { background: rgba(0,0,0,0.4); }
+      .head { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
+      .content { padding: 16px; display: grid; gap: 10px; }
+      label { font-size: 12px; color: var(--_muted); }
+      textarea { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); resize: vertical; }
+      .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        dialog {
-          border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg);
-          color: var(--_text); padding: 0; width: min(420px, 92vw);
-        }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        .head { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
-        .content { padding: 16px; display: grid; gap: 10px; }
-        label { font-size: 12px; color: var(--_muted); }
-        textarea { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); resize: vertical; }
-        .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
-      </style>
       <button class="trigger" type="button" ${disabled ? 'disabled' : ''}>${escapeHtml(label)}</button>
       <dialog part="dialog">
         <form method="dialog">

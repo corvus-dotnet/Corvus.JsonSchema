@@ -9,7 +9,7 @@ import { watchErrors, assertClean, openTab } from './ux-helpers.js';
 // ---- Environments (§7.7) ------------------------------------------------------------------------
 
 test('creating an environment seats its creator as the sole administrator (§7.7)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Environments');
   const env = page.locator('arazzo-environments');
   await expect(env.locator('.erow').first()).toBeVisible();
@@ -37,7 +37,7 @@ test('creating an environment seats its creator as the sole administrator (§7.7
 });
 
 test('an environment administrator edits metadata and management tags, stamping the audit line', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Environments');
   const env = page.locator('arazzo-environments');
   await env.locator('.erow[data-name="staging"]').click();
@@ -62,7 +62,7 @@ test('an environment administrator edits metadata and management tags, stamping 
 });
 
 test('an environment administrator reads the budget three ways, tightens a limit, and is stopped at the ceiling (ADR 0068)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Environments');
   const env = page.locator('arazzo-environments');
   await env.locator('.erow[data-name="production"]').click();
@@ -91,7 +91,7 @@ test('an environment administrator reads the budget three ways, tightens a limit
 });
 
 test('deleting an environment is confirm-gated: cancel keeps it, confirm removes it', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Environments');
   const env = page.locator('arazzo-environments');
   await expect(env.locator('arazzo-pager .count')).toContainText('4 environments');
@@ -119,7 +119,7 @@ test('deleting an environment is confirm-gated: cancel keeps it, confirm removes
 // ---- Connections (§13 credential bindings) ------------------------------------------------------
 
 test('the connections list is status-first: seeded valid/expiring/expired badges, footer pills, and filters', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Connections');
   const table = page.locator('#view-credentials arazzo-credentials-table');
   const rows = table.locator('tbody tr[data-key]');
@@ -150,7 +150,7 @@ test('the connections list is status-first: seeded valid/expiring/expired badges
 });
 
 test('the credential editor is auth-kind driven: switching relabels the secret slots and config, preserving entries', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Connections');
   const table = page.locator('#view-credentials arazzo-credentials-table');
   await table.locator('tr[data-key="events@staging"]').click();
@@ -193,7 +193,7 @@ test('the credential editor is auth-kind driven: switching relabels the secret s
 });
 
 test('rotating a credential re-points the secretRef through the guided composer and stamps Rotated', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Connections');
   const table = page.locator('#view-credentials arazzo-credentials-table');
   await table.locator('tr[data-key="petstore@production"]').click();
@@ -231,7 +231,7 @@ test('rotating a credential re-points the secretRef through the guided composer 
 });
 
 test('editing a credential keeps usage immutable, edits management tags, and preserves unknown config keys', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Connections');
   const table = page.locator('#view-credentials arazzo-credentials-table');
   await table.locator('tr[data-key="billing@staging"]').click();
@@ -276,7 +276,7 @@ test('editing a credential keeps usage immutable, edits management tags, and pre
 });
 
 test('revoking a credential is confirm-gated and removes the binding from the worklist', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Connections');
   const table = page.locator('#view-credentials arazzo-credentials-table');
   const rows = table.locator('tbody tr[data-key]');
@@ -305,7 +305,7 @@ test('revoking a credential is confirm-gated and removes the binding from the wo
 // ---- Runners (§5.4 registry) --------------------------------------------------------------------
 
 test('the runner registry details each host: environment, transports, hosted versions, and staleness', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Runners');
   const runners = page.locator('arazzo-runners');
   await expect(runners.locator('.runner')).toHaveCount(3);
@@ -336,7 +336,7 @@ test('the runner registry details each host: environment, transports, hosted ver
 });
 
 test('the runner registry pages with the keyset cursor', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Runners');
   const list = page.locator('arazzo-runners .runner');
   await expect(list).toHaveCount(3);
@@ -371,7 +371,7 @@ test('the runner registry pages with the keyset cursor', async ({ page }) => {
 // ---- Runner authorizations (§5.5) ----------------------------------------------------------------
 
 test('authorizing a pending runner records the decision and stops offering Authorize (§5.5)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Runner auth');
   const inbox = page.locator('arazzo-runner-authorizations');
   const rows = inbox.locator('tbody tr[data-key]');
@@ -405,7 +405,7 @@ test('authorizing a pending runner records the decision and stops offering Autho
 });
 
 test('a revoked runner leaves the dispatchable set and may be re-authorized (§5.5)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Runner auth');
   const inbox = page.locator('arazzo-runner-authorizations');
   const rows = inbox.locator('tbody tr[data-key]');
@@ -443,7 +443,7 @@ test('a revoked runner leaves the dispatchable set and may be re-authorized (§5
 });
 
 test('a faulted runner can be quarantined (temporary, in-flight drains) and reinstated (§5.5)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Runner auth');
   const inbox = page.locator('arazzo-runner-authorizations');
   const rows = inbox.locator('tbody tr[data-key]');
@@ -484,7 +484,7 @@ test('a faulted runner can be quarantined (temporary, in-flight drains) and rein
 });
 
 test("the runner-authorization inbox narrows to one environment's queue per status", async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Runner auth');
   const inbox = page.locator('arazzo-runner-authorizations');
   const rows = inbox.locator('tbody tr[data-key]');

@@ -12,7 +12,7 @@
 // Properties : .options ([{ value, label }]), .value (the selected value), .disabled
 // Events     : mode-changed { value } — fired only on a user click that changes the value (not on set)
 
-import { ArazzoElement, SHARED_CSS, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, define } from './base.js';
 
 class ArazzoModeToggle extends ArazzoElement {
   constructor() {
@@ -39,17 +39,16 @@ class ArazzoModeToggle extends ArazzoElement {
 
   _renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: inline-block; }
+      .group { display: inline-flex; border: 1px solid var(--_border); border-radius: 6px; overflow: hidden; }
+      button { border: none; background: var(--_bg); color: inherit; font: 12px var(--_font); padding: 3px 12px; cursor: pointer; }
+      button + button { border-left: 1px solid var(--_border); }
+      button[aria-pressed="true"] { background: var(--_surface); font-weight: 600; }
+      button:not([aria-pressed="true"]):hover:not(:disabled) { background: var(--_surface); }
+      button:disabled { cursor: default; opacity: 0.6; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: inline-block; }
-        .group { display: inline-flex; border: 1px solid var(--_border); border-radius: 6px; overflow: hidden; }
-        button { border: none; background: var(--_bg); color: inherit; font: 12px var(--_font); padding: 3px 12px; cursor: pointer; }
-        button + button { border-left: 1px solid var(--_border); }
-        button[aria-pressed="true"] { background: var(--_surface); font-weight: 600; }
-        button:not([aria-pressed="true"]):hover:not(:disabled) { background: var(--_surface); }
-        button:disabled { cursor: default; opacity: 0.6; }
-      </style>
       <div class="group" role="group"></div>`;
   }
 

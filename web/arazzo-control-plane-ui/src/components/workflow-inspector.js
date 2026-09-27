@@ -10,7 +10,7 @@
 //   insp.value = wf;                                   // the workflow object (cloned in)
 //   insp.addEventListener('workflow-changed', (e) => { doc.workflows[i] = e.detail.workflow; });
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import { buildActionList, ACTION_LIST_CSS } from './action-list.js';
 import './schema-editor.js';
 import './outputs-editor.js';
@@ -67,31 +67,31 @@ class ArazzoWorkflowInspector extends ArazzoElement {
   /** @private */
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, ACTION_LIST_CSS, `
+      :host { display: block; }
+      .form { display: grid; gap: 12px; }
+      .form > * { min-width: 0; }
+      label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
+      h3 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); margin: 6px 0 0; border-top: 1px solid var(--_border); padding-top: 10px; }
+      h3.focused { color: var(--_accent); }
+      input[type="text"], textarea {
+        width: 100%; box-sizing: border-box; font: inherit; padding: 6px 9px;
+        border: 1px solid var(--_border); border-radius: var(--_radius);
+        background-color: var(--_bg); color: var(--_text);
+      }
+      textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
+      textarea.invalid { border-color: var(--_danger); }
+      .hint { font-size: 11px; color: var(--_muted); }
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+      .wparams { min-width: 0; }
+      .wparams > div > * { min-width: 0; }
+      .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+      .add-dep { font-size: 12px; max-width: 100%; min-width: 0; }
+      .chip.on { border-color: var(--_accent); color: var(--_accent); font-weight: 600; }
+      .addwp { font-size: 12px; justify-self: start; }
+      .wpvalue { display: block; min-width: 0; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        ${ACTION_LIST_CSS}
-        :host { display: block; }
-        .form { display: grid; gap: 12px; }
-        .form > * { min-width: 0; }
-        label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
-        h3 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); margin: 6px 0 0; border-top: 1px solid var(--_border); padding-top: 10px; }
-        h3.focused { color: var(--_accent); }
-        input[type="text"], textarea {
-          width: 100%; box-sizing: border-box; font: inherit; padding: 6px 9px;
-          border: 1px solid var(--_border); border-radius: var(--_radius);
-          background-color: var(--_bg); color: var(--_text);
-        }
-        textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
-        textarea.invalid { border-color: var(--_danger); }
-        .hint { font-size: 11px; color: var(--_muted); }
-        .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-        .wparams { min-width: 0; }
-        .wparams > div > * { min-width: 0; }
-        .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
-        .add-dep { font-size: 12px; max-width: 100%; min-width: 0; }
-        .chip.on { border-color: var(--_accent); color: var(--_accent); font-weight: 600; }
-      </style>
       <div class="form" part="form"></div>
     `;
   }
@@ -121,7 +121,7 @@ class ArazzoWorkflowInspector extends ArazzoElement {
       <h3 data-section="parameters">parameters</h3>
       <div class="hint">applied to every step in this workflow (a step's own parameter with the same name and location wins)</div>
       <div class="wparams"></div>
-      <button class="addwp ghost" type="button" style="font-size:12px; justify-self:start;">+ Add parameter</button>` : ''}
+      <button class="addwp ghost" type="button">+ Add parameter</button>` : ''}
 
       ${wants('inputs') ? `
       <h3 data-section="inputs">inputs (JSON Schema)</h3>
@@ -260,7 +260,7 @@ class ArazzoWorkflowInspector extends ArazzoElement {
           <select class="wpin">
             ${['', 'path', 'query', 'header', 'cookie', 'querystring'].map((v) => `<option value="${v}" ${v === (param.in ?? '') ? 'selected' : ''}>${v || '(in)'}</option>`).join('')}
           </select>
-          <arazzo-expression-input class="wpvalue" style="display:block; min-width:0;" placeholder="value or $expression"></arazzo-expression-input>
+          <arazzo-expression-input class="wpvalue" placeholder="value or $expression"></arazzo-expression-input>
           <button class="wpdel ghost" type="button" title="Remove">✕</button>`;
         row.querySelector('.wpname').addEventListener('input', (e) => { param.name = e.target.value; this._emit(); });
         row.querySelector('.wpin').addEventListener('change', (e) => {

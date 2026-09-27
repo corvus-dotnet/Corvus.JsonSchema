@@ -12,7 +12,7 @@
 // bundle lands — or if it fails to load — the value renders as the same themed <pre> these views
 // used before, so the component always shows the document.
 
-import { ArazzoElement, SHARED_CSS, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, define } from './base.js';
 
 class ArazzoJsonView extends ArazzoElement {
   static get observedAttributes() { return ['max-height']; }
@@ -69,18 +69,17 @@ class ArazzoJsonView extends ArazzoElement {
 
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      .scroll { max-height: var(--_maxh, 320px); overflow: auto; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); }
+      /* Once CodeMirror mounts it owns the scrolling (its .cm-scroller). The outer container must NOT also
+         scroll, or two nested scrollers fight and CM's viewport virtualisation paints the wrong lines. */
+      .scroll.cm-mounted { overflow: hidden; }
+      pre { margin: 0; padding: 10px 12px; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .cm-editor { font-size: 12px; }
+      .cm-editor .cm-content { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        .scroll { max-height: var(--_maxh, 320px); overflow: auto; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); }
-        /* Once CodeMirror mounts it owns the scrolling (its .cm-scroller). The outer container must NOT also
-           scroll, or two nested scrollers fight and CM's viewport virtualisation paints the wrong lines. */
-        .scroll.cm-mounted { overflow: hidden; }
-        pre { margin: 0; padding: 10px 12px; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .cm-editor { font-size: 12px; }
-        .cm-editor .cm-content { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      </style>
       <div class="scroll"><pre></pre></div>
     `;
     this.$('pre').textContent = this._value;
@@ -126,7 +125,7 @@ class ArazzoJsonView extends ArazzoElement {
       '&': { backgroundColor: 'transparent', color: 'var(--arazzo-text, inherit)', maxHeight: 'var(--_maxh, 320px)' },
       '.cm-scroller': { overflow: 'auto' },
       '.cm-content': { caretColor: 'transparent', color: 'var(--arazzo-text, inherit)' },
-      // The gutter MUST be themed here (a CM theme), not in the shadow <style>: CodeMirror's own base
+      // The gutter MUST be themed here (a CM theme), not in the shadow root's sheets: CodeMirror's own base
       // theme outranks a plain stylesheet rule and paints a light gutter, so on the dark theme the line
       // numbers showed dark-on-white. Match text-editor.js — surface background, muted numerals.
       '.cm-gutters': { backgroundColor: 'var(--arazzo-surface, #f7f8fa)', color: 'var(--arazzo-muted, #6b7280)', borderRight: '1px solid var(--arazzo-border, #e3e6ea)' },

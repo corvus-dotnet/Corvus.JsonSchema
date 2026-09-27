@@ -21,7 +21,7 @@
 // form — combiner-free schemas and already-baked descriptors are unchanged. It does NOT resolve `$ref` (that stays
 // the baked path's job), so a reference-rooted schema still degrades to the raw-JSON fallback.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import { normalizeDescriptor } from '../schema-descriptor.js';
 import './text-editor.js';
 
@@ -76,55 +76,54 @@ class ArazzoValueEditor extends ArazzoElement {
 
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      .fields { display: grid; gap: 10px; }
+      .field > label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 3px; }
+      .field > label.check { display: flex; gap: 8px; align-items: center; margin-bottom: 0; cursor: pointer; }
+      .field > label.check input { width: auto; }
+      .field .req { color: var(--_danger); font-weight: 700; }
+      .field.required > label { color: var(--_text); }
+      .field .desc { font-size: 11px; color: var(--_muted); margin-top: 2px; }
+      .field .hint { font-size: 11px; color: var(--_muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+      input[type="text"], input[type="number"], input[type="date"], input[type="datetime-local"], input[type="time"],
+      input[type="email"], input[type="url"], select, textarea {
+        width: 100%; font: inherit; padding: 7px 8px; border: 1px solid var(--_border);
+        border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text);
+      }
+      select { padding-right: 30px; }
+      textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
+      fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; margin: 0; display: grid; gap: 10px; }
+      input[type="number"] { max-width: 18ch; }
+      input[type="date"], input[type="time"], input[type="datetime-local"] { max-width: 26ch; }
+      legend { font-size: 12px; font-weight: 600; color: var(--_muted); padding: 0 4px; }
+      .array-items { display: grid; gap: 6px; }
+      .array-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: start; }
+      .array-row .rm { padding: 4px 8px; }
+      /* Collapsible item: a one-line summary (compressed) that expands into the edit form. */
+      .item { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; }
+      .item-head { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 6px 8px; background-color: var(--_surface); }
+      .item-summary { font-size: 13px; color: var(--_text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+      .item-summary.placeholder { color: var(--_muted); font-style: italic; }
+      .item-head button { padding: 3px 9px; font-size: 12px; }
+      .item-body { padding: 10px; border-top: 1px solid var(--_border); display: grid; gap: 10px; }
+      .map-row { display: grid; grid-template-columns: minmax(72px, 1fr) 2fr auto; gap: 6px; align-items: start; }
+      .map-row .rm, .array-row .rm { padding: 4px 8px; }
+      .union { display: grid; gap: 8px; }
+      .union-slot:empty { display: none; }
+      .union-slot { display: grid; gap: 10px; padding-left: 10px; border-left: 2px solid var(--_border); }
+      .empty { color: var(--_muted); font-size: 12px; }
+      .err { color: var(--_danger); font-size: 11px; margin-top: 3px; }
+      .array-row .err, .map-row .err, .item .err { grid-column: 1 / -1; }
+      .item .err { padding: 0 8px 8px; }
+      .validation-summary {
+        border: 1px solid var(--_danger); border-radius: var(--_radius);
+        background: color-mix(in srgb, var(--_danger) 8%, transparent);
+        color: var(--_text); padding: 8px 10px; margin-bottom: 10px; font-size: 12px;
+      }
+      .validation-summary ul { margin: 4px 0 0; padding-left: 18px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        .fields { display: grid; gap: 10px; }
-        .field > label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 3px; }
-        .field > label.check { display: flex; gap: 8px; align-items: center; margin-bottom: 0; cursor: pointer; }
-        .field > label.check input { width: auto; }
-        .field .req { color: var(--_danger); font-weight: 700; }
-        .field.required > label { color: var(--_text); }
-        .field .desc { font-size: 11px; color: var(--_muted); margin-top: 2px; }
-        .field .hint { font-size: 11px; color: var(--_muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
-        input[type="text"], input[type="number"], input[type="date"], input[type="datetime-local"], input[type="time"],
-        input[type="email"], input[type="url"], select, textarea {
-          width: 100%; font: inherit; padding: 7px 8px; border: 1px solid var(--_border);
-          border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text);
-        }
-        select { padding-right: 30px; }
-        textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
-        fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; margin: 0; display: grid; gap: 10px; }
-        input[type="number"] { max-width: 18ch; }
-        input[type="date"], input[type="time"], input[type="datetime-local"] { max-width: 26ch; }
-        legend { font-size: 12px; font-weight: 600; color: var(--_muted); padding: 0 4px; }
-        .array-items { display: grid; gap: 6px; }
-        .array-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: start; }
-        .array-row .rm { padding: 4px 8px; }
-        /* Collapsible item: a one-line summary (compressed) that expands into the edit form. */
-        .item { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; }
-        .item-head { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 6px 8px; background-color: var(--_surface); }
-        .item-summary { font-size: 13px; color: var(--_text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-        .item-summary.placeholder { color: var(--_muted); font-style: italic; }
-        .item-head button { padding: 3px 9px; font-size: 12px; }
-        .item-body { padding: 10px; border-top: 1px solid var(--_border); display: grid; gap: 10px; }
-        .map-row { display: grid; grid-template-columns: minmax(72px, 1fr) 2fr auto; gap: 6px; align-items: start; }
-        .map-row .rm, .array-row .rm { padding: 4px 8px; }
-        .union { display: grid; gap: 8px; }
-        .union-slot:empty { display: none; }
-        .union-slot { display: grid; gap: 10px; padding-left: 10px; border-left: 2px solid var(--_border); }
-        .empty { color: var(--_muted); font-size: 12px; }
-        .err { color: var(--_danger); font-size: 11px; margin-top: 3px; }
-        .array-row .err, .map-row .err, .item .err { grid-column: 1 / -1; }
-        .item .err { padding: 0 8px 8px; }
-        .validation-summary {
-          border: 1px solid var(--_danger); border-radius: var(--_radius);
-          background: color-mix(in srgb, var(--_danger) 8%, transparent);
-          color: var(--_text); padding: 8px 10px; margin-bottom: 10px; font-size: 12px;
-        }
-        .validation-summary ul { margin: 4px 0 0; padding-left: 18px; }
-      </style>
       <div class="validation-summary" part="validation-summary" hidden></div>
       <div class="root"></div>
     `;

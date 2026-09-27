@@ -350,7 +350,7 @@ credential). Layers, matching the canonical .NET BFF (Duende) pattern:
 
 **Browser security headers.** A secured host registers `services.AddArazzoSecurityHeaders()`
 ([ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md)), and a secured control plane does not map
-without it. Every response then carries a Content-Security-Policy with no inline script, `frame-ancestors 'none'`
+without it. Every response then carries a Content-Security-Policy with no inline script or style, `frame-ancestors 'none'`
 and `X-Frame-Options: DENY`, so a governance action cannot be clicked through a frame. A BFF whose sign-out form
 redirects to the identity provider names that provider's origin, since browsers hold the redirect to `form-action`:
 

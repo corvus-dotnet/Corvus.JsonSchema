@@ -32,7 +32,7 @@ async function selectStartNode(page) {
 // ── the workspace table ───────────────────────────────────────────────────────────────────────────
 
 test('New working copy opens on the "no workflows" state; adding a workflow gives a truly empty canvas (no superimposed start/end)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await page.goto('/demo/designer.html');
   const wctable = page.locator('arazzo-workspace-table');
   await expect(wctable.getByText('Order processing')).toBeVisible(); // the seed landed; the mock is ready
@@ -82,7 +82,7 @@ test('New working copy opens on the "no workflows" state; adding a workflow give
 });
 
 test('New working copy… carries a catalog version in: its document projects and its registry sources resolve without re-upload', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await page.goto('/demo/designer.html');
   const wctable = page.locator('arazzo-workspace-table');
   await expect(wctable.getByText('Order processing')).toBeVisible();
@@ -109,7 +109,7 @@ test('New working copy… carries a catalog version in: its document projects an
 });
 
 test('autosave narrates unsaved → saved, and editing info.title on the settings page renames the working copy', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await expect(page.locator('#save-status')).toHaveText('all changes saved');
 
@@ -132,7 +132,7 @@ test('autosave narrates unsaved → saved, and editing info.title on the setting
 // ── the step inspector ────────────────────────────────────────────────────────────────────────────
 
 test('selecting a step shows its binding and parameters; parameter, criteria, and outputs edits round-trip and the node chips track', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   const node = page.locator('#surface .node[data-id="validate-order"]');
   await node.click();
@@ -184,7 +184,7 @@ test('selecting a step shows its binding and parameters; parameter, criteria, an
 // ── canvas gestures ───────────────────────────────────────────────────────────────────────────────
 
 test('a dragged node position rides designerState: it survives leaving and re-opening the working copy', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   const node = page.locator('#surface .node[data-id="validate-order"]');
   await expect(node).toBeVisible();
@@ -213,7 +213,7 @@ test('a dragged node position rides designerState: it survives leaving and re-op
 });
 
 test('drawing from a success port authors a goto action edge (✓ always), the inspector edits it, and Delete removes it', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await expect(page.locator('#surface .node[data-id="validate-order"]')).toBeVisible();
 
@@ -264,7 +264,7 @@ test('drawing from a success port authors a goto action edge (✓ always), the i
 });
 
 test('deleting a step removes it with its action edges, and the toolbar undo/redo unwind and replay it', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   const nodes = page.locator('#surface .node');
   await expect(nodes).toHaveCount(7); // 5 steps + start/end pseudo-nodes
@@ -298,7 +298,7 @@ test('deleting a step removes it with its action edges, and the toolbar undo/red
 // ── the workflow inspector ────────────────────────────────────────────────────────────────────────
 
 test('the defaults card opens the whole-workflow editor and summary/description edits round-trip', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // place-order declares workflow-level failureActions, so the inherited-defaults card renders.
@@ -321,7 +321,7 @@ test('the defaults card opens the whole-workflow editor and summary/description 
 });
 
 test('the inputs schema editor authors a property of every primitive type and a oneOf combiner (§15-8, beyond smoke)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await selectStartNode(page);
 
@@ -373,7 +373,7 @@ test('the inputs schema editor authors a property of every primitive type and a 
 // ── the Text tab ──────────────────────────────────────────────────────────────────────────────────
 
 test('the text tab mirrors a canvas edit, and a typed text edit re-projects the canvas (round-trip)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // Canvas → text: edit a step description through the inspector…
@@ -400,7 +400,7 @@ test('the text tab mirrors a canvas edit, and a typed text edit re-projects the 
 });
 
 test('opening a working copy normalizes the placeholder-payload + replacements idiom to inline expressions', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // Author the legacy idiom through the Text tab (a real model edit): a literal placeholder payload
@@ -437,7 +437,7 @@ test('opening a working copy normalizes the placeholder-payload + replacements i
 });
 
 test('an invalid JSON text edit is guarded: the parse problem shows, the model survives, and re-entry restores the buffer', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await page.locator('#tab-text').click();
   await expect(page.locator('#text .cm-editor')).toBeVisible();
@@ -466,7 +466,7 @@ test('an invalid JSON text edit is guarded: the parse problem shows, the model s
 // ── the Sources panel ─────────────────────────────────────────────────────────────────────────────
 
 test('the acquisition dialog attaches a REGISTERED source by name (no re-upload) and its operations render for dragging', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await page.locator('[data-tab="sources"]').click();
   const browser = page.locator('arazzo-operation-browser');
@@ -496,7 +496,7 @@ test('the acquisition dialog attaches a REGISTERED source by name (no re-upload)
 });
 
 test('dragging an operation from the Sources rail creates auto-laid-out steps that are ALWAYS brought into view', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await page.locator('[data-tab="sources"]').click();
   const browser = page.locator('arazzo-operation-browser');
@@ -540,7 +540,7 @@ test('dragging an operation from the Sources rail creates auto-laid-out steps th
 });
 
 test('attaching a source declares it in sourceDescriptions, so leaving and returning raises no undeclared-source finding', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await page.locator('[data-tab="sources"]').click();
   const browser = page.locator('arazzo-operation-browser');
@@ -568,7 +568,7 @@ test('attaching a source declares it in sourceDescriptions, so leaving and retur
 });
 
 test('detaching a source that steps bind is confirm-gated with the consequence spelled out, and the toast restores it', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await page.locator('[data-tab="sources"]').click();
   const browser = page.locator('arazzo-operation-browser');
@@ -604,7 +604,7 @@ test('detaching a source that steps bind is confirm-gated with the consequence s
 });
 
 test('a jsonschema attachment (#94) lists distinctly in the rail and feeds the external-$ref type picker', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await page.locator('[data-tab="sources"]').click();
   const browser = page.locator('arazzo-operation-browser');
@@ -645,7 +645,7 @@ test('a jsonschema attachment (#94) lists distinctly in the rail and feeds the e
 // ── Problems ──────────────────────────────────────────────────────────────────────────────────────
 
 test('a dangling schemas/<name> $ref surfaces a positioned external-schema error that click-navigates to the inputs editor', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await selectStartNode(page);
 
@@ -677,7 +677,7 @@ test('a dangling schemas/<name> $ref surfaces a positioned external-schema error
 });
 
 test('the canvas key stays bounded on a narrow viewport and dismisses on any outside interaction', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await page.setViewportSize({ width: 390, height: 844 }); // phone-sized: the card must not own the canvas
   await openDesigner(page);
 
@@ -700,7 +700,7 @@ test('the canvas key stays bounded on a narrow viewport and dismisses on any out
 });
 
 test('GitHub source acquisition: after connecting, a branch is chosen and a file browsed for import', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // Open the acquisition dialog from the Sources rail, on its GitHub tab, and connect (the mock's

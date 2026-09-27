@@ -14,7 +14,7 @@
 // workflow catalog entry (<arazzo-catalog-detail>, locked to that workflow). An approval is capped to run access
 // (§16.5.2), so the form offers exactly the run verbs.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import './workflow-picker.js';
 
 // The three grant surfaces (§17.3): View (catalog:read — see the workflow's catalog entry; the least-privilege
@@ -77,35 +77,36 @@ class ArazzoAccessRequestDialog extends ArazzoElement {
 
   render() {
     const wfRow = this._lock
-      ? `<div><div class="sub" style="margin-bottom:4px">Workflow</div><div class="locked-wf">${escapeHtml(this._baseWorkflowId)}</div></div>`
+      ? `<div><div class="sub caption">Workflow</div><div class="locked-wf">${escapeHtml(this._baseWorkflowId)}</div></div>`
       : `<label>Workflow<arazzo-workflow-picker class="sub-wf" placeholder="Find a workflow…"></arazzo-workflow-picker></label>`;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
+      dialog::backdrop { background: rgba(0,0,0,0.4); }
+      .dhead { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
+      .dbody { padding: 14px 16px; display: grid; gap: 12px; }
+      .dfoot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
+      label { font-size: 12px; color: var(--_muted); display: grid; gap: 4px; }
+      input, textarea { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
+      textarea { resize: vertical; min-height: 56px; }
+      .locked-wf { font-weight: 600; font-size: 14px; }
+      .checks { display: grid; gap: 6px; }
+      .checks label { display: flex; gap: 8px; align-items: center; flex-direction: row; color: var(--_text); }
+      .dur { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+      .dur input { width: 90px; }
+      .dur-presets { display: flex; gap: 6px; }
+      .dur-presets button { font-size: 12px; padding: 3px 9px; }
+      .error-banner { margin: 0 16px 12px; }
+      .sub.caption { margin-bottom: 4px; }
+      .sub.caption.scopes-caption { margin-bottom: 6px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        .dhead { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
-        .dbody { padding: 14px 16px; display: grid; gap: 12px; }
-        .dfoot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
-        label { font-size: 12px; color: var(--_muted); display: grid; gap: 4px; }
-        input, textarea { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
-        textarea { resize: vertical; min-height: 56px; }
-        .locked-wf { font-weight: 600; font-size: 14px; }
-        .checks { display: grid; gap: 6px; }
-        .checks label { display: flex; gap: 8px; align-items: center; flex-direction: row; color: var(--_text); }
-        .dur { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
-        .dur input { width: 90px; }
-        .dur-presets { display: flex; gap: 6px; }
-        .dur-presets button { font-size: 12px; padding: 3px 9px; }
-        .error-banner { margin: 0 16px 12px; }
-      </style>
       <dialog part="dialog">
         <form method="dialog">
           <div class="dhead">Request workflow access</div>
           <div class="dbody">
             ${wfRow}
             <div>
-              <div class="sub" style="margin-bottom:6px">Scopes (capped to run access on approval)</div>
+              <div class="sub caption scopes-caption">Scopes (capped to run access on approval)</div>
               <div class="checks">
                 ${REQUESTABLE_SCOPES.map((s) => `<label><input type="checkbox" class="scope-cb" value="${s.scope}"${s.default ? ' checked' : ''}> ${escapeHtml(s.label)}</label>`).join('')}
               </div>

@@ -15,7 +15,7 @@
 // popup. The kit never sees a GitHub credential; identity comes resolved from the session, never
 // typed into a box.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 
 const CONNECT_TIMEOUT_MS = 120_000;
 
@@ -67,16 +67,15 @@ class ArazzoGitHubConnect extends ArazzoElement {
 
   render() {
     if (!this.shadowRoot.firstChild) {
+      adoptStyles(this.shadowRoot, SHARED_CSS, `
+        :host { display: inline-block; }
+        .row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--_border); border-radius: 999px; padding: 2px 10px; }
+        .chip .login { font-weight: 600; }
+        .muted-note { color: var(--_muted); }
+        button { font-size: 12px; }
+      `);
       this.shadowRoot.innerHTML = `
-        <style>
-          ${SHARED_CSS}
-          :host { display: inline-block; }
-          .row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-          .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--_border); border-radius: 999px; padding: 2px 10px; }
-          .chip .login { font-weight: 600; }
-          .muted-note { color: var(--_muted); }
-          button { font-size: 12px; }
-        </style>
         <div class="row" part="row"></div>`;
     }
 

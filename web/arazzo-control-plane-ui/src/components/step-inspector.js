@@ -15,7 +15,7 @@
 // stepId is displayed but not edited here: a rename rewrites goto targets and $steps expressions
 // document-wide — that is the document model's job (§5.2), not a field-level edit.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import { buildActionList, ACTION_LIST_CSS } from './action-list.js';
 import './expression-input.js';
 import './criteria-editor.js';
@@ -89,48 +89,48 @@ class ArazzoStepInspector extends ArazzoElement {
   /** @private */
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, ACTION_LIST_CSS, `
+      :host { display: block; }
+      .form { display: grid; gap: 12px; }
+      .form > *, .pair > *, .prow > *, .binding { min-width: 0; }
+      label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
+      h3 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); margin: 6px 0 0; border-top: 1px solid var(--_border); padding-top: 10px; }
+      input[type="text"], input[type="number"], textarea {
+        width: 100%; box-sizing: border-box; font: inherit; padding: 6px 9px;
+        border: 1px solid var(--_border); border-radius: var(--_radius);
+        background-color: var(--_bg); color: var(--_text);
+      }
+      textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
+      textarea.invalid { border-color: var(--_danger); }
+      .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      /* A parameter is a small card: name + in + remove on the head line, the value expression
+         full-width beneath — a narrow inspector rail never squeezes the editor. */
+      .prow { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); padding: 8px; display: grid; gap: 6px; }
+      .prow .phead { display: grid; grid-template-columns: minmax(80px, 1fr) auto auto; gap: 6px; align-items: center; }
+      .prow .pfixed { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+      .prow .phead:has(.pfixed) { grid-template-columns: minmax(0, 1fr) auto; }
+      .pmissing { display: flex; flex-wrap: wrap; gap: 4px; }
+      .pmissing .ghost { font-size: 11px; }
+      .prow .phead > * { min-width: 0; }
+      .prow input.pname { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .params { display: grid; gap: 8px; }
+      .addp { font-size: 12px; justify-self: start; }
+      .localize { font-size: 12px; }
+      .hint { font-size: 11px; color: var(--_muted); }
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+      .repls { min-width: 0; }
+      .rrow > * { min-width: 0; }
+      .rrow arazzo-expression-input { display: block; min-width: 0; }
+      .addpref { max-width: 100%; min-width: 0; font-size: 12px; }
+      .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+      /* The add action sits on its OWN line below the pills/empty-state text — inline it read as a
+         run-on sentence and misaligned the control (backlog #854). */
+      .add-dep { font-size: 12px; max-width: max-content; min-width: 0; flex-basis: 100%; margin-top: 4px; }
+      .chip.on { border-color: var(--_accent); color: var(--_accent); font-weight: 600; }
+      .addbar { display: flex; gap: 8px; align-items: center; }
+      .pair.spaced { margin-top: 6px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        ${ACTION_LIST_CSS}
-        :host { display: block; }
-        .form { display: grid; gap: 12px; }
-        .form > *, .pair > *, .prow > *, .binding { min-width: 0; }
-        label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
-        h3 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); margin: 6px 0 0; border-top: 1px solid var(--_border); padding-top: 10px; }
-        input[type="text"], input[type="number"], textarea {
-          width: 100%; box-sizing: border-box; font: inherit; padding: 6px 9px;
-          border: 1px solid var(--_border); border-radius: var(--_radius);
-          background-color: var(--_bg); color: var(--_text);
-        }
-        textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
-        textarea.invalid { border-color: var(--_danger); }
-        .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        /* A parameter is a small card: name + in + remove on the head line, the value expression
-           full-width beneath — a narrow inspector rail never squeezes the editor. */
-        .prow { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); padding: 8px; display: grid; gap: 6px; }
-        .prow .phead { display: grid; grid-template-columns: minmax(80px, 1fr) auto auto; gap: 6px; align-items: center; }
-        .prow .pfixed { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
-        .prow .phead:has(.pfixed) { grid-template-columns: minmax(0, 1fr) auto; }
-        .pmissing { display: flex; flex-wrap: wrap; gap: 4px; }
-        .pmissing .ghost { font-size: 11px; }
-        .prow .phead > * { min-width: 0; }
-        .prow input.pname { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .params { display: grid; gap: 8px; }
-        .addp { font-size: 12px; justify-self: start; }
-        .localize { font-size: 12px; }
-        .hint { font-size: 11px; color: var(--_muted); }
-        .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-        .repls { min-width: 0; }
-        .rrow > * { min-width: 0; }
-        .rrow arazzo-expression-input { display: block; min-width: 0; }
-        .addpref { max-width: 100%; min-width: 0; }
-        .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
-        /* The add action sits on its OWN line below the pills/empty-state text — inline it read as a
-           run-on sentence and misaligned the control (backlog #854). */
-        .add-dep { font-size: 12px; max-width: max-content; min-width: 0; flex-basis: 100%; margin-top: 4px; }
-        .chip.on { border-color: var(--_accent); color: var(--_accent); font-weight: 600; }
-      </style>
       <div class="form" part="form"></div>
     `;
   }
@@ -165,9 +165,9 @@ class ArazzoStepInspector extends ArazzoElement {
 
       <h3>parameters</h3>
       <div class="params"></div>
-      <div style="display:flex; gap:8px; align-items:center;">
+      <div class="addbar">
         <button class="addp ghost" type="button">+ Custom parameter (undeclared)</button>
-        <select class="addpref" hidden style="font-size:12px;"></select>
+        <select class="addpref" hidden></select>
       </div>
 
       ${showRequestBody ? `
@@ -315,7 +315,7 @@ class ArazzoStepInspector extends ArazzoElement {
             </select>
           </div>
         </div>
-        <div class="pair" style="margin-top:6px;">
+        <div class="pair spaced">
           <div>
             <label>correlationId (runtime expression)</label>
             <span class="corr-slot"></span>

@@ -21,7 +21,7 @@
 //           stays usable at hundreds — server-paged search). The claim is the immutable key, so it is read-only on edit.
 // The list is searched + paged server-side; "New grant" opens a blank pane; editing/deleting happen in the pane.
 
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, PICKER_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, PICKER_CSS, escapeHtml, confirmDialog, define } from './base.js';
 import './grantee-picker.js';
 import './pager.js';
 
@@ -408,94 +408,91 @@ class ArazzoGrantsPanel extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, PAGER_CSS, PICKER_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+      .layout > * { min-height: 0; }
+      .detail-pane { min-height: 0; overflow: auto; }
+      .detail-pane:empty { display: none; }
+      @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
+      .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+      .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+      .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
+      .toolbar .grow { flex: 1; }
+      .search { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; width: 160px; }
+      .err { flex: none; margin: 10px 12px; }
+      .err:empty { display: none; }
+      .tablescroll { flex: 1; min-height: 0; overflow: auto; }
+      table { width: 100%; border-collapse: collapse; }
+      thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+      tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; }
+      tbody tr:last-child td { border-bottom: none; }
+      tbody tr.selectable { cursor: pointer; }
+      tbody tr.selectable:hover { background: var(--_surface); }
+      tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
+      .claim { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .claim-and { font-weight: 400; color: var(--_muted); }
+      .verbs { color: var(--_muted); font-size: 12px; margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
+      .verbs b { color: var(--_text); font-weight: 600; text-transform: capitalize; }
+      .gdesc { color: var(--_muted); font-size: 12px; margin-top: 2px; }
+      .sysbadge { font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_muted); vertical-align: 1px; }
+      /* Wide reach is the row an administrator should slow down on — an amber alert, not quiet metadata. */
+      .sysbadge.warn { color: var(--arazzo-status-suspended, #b07d18); border-color: var(--arazzo-status-suspended, #b07d18); background: color-mix(in srgb, var(--arazzo-status-suspended, #b07d18) 12%, transparent); }
+      .claim-and.pin { font-size: 11px; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_muted); }
+      .gscopes { color: var(--_muted); font-size: 12px; margin-top: 2px; font-style: italic; }
+      .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+      .pager { flex: none; }
+
+      /* detail pane */
+      .detail { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
+      .dhead { padding: 12px 14px; border-bottom: 1px solid var(--_border); background: var(--_surface); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+      .dhead .grow { flex: 1; }
+      .dhead .close { font-size: 16px; line-height: 1; }
+      .content { padding: 14px; display: grid; gap: 14px; }
+      .section { display: grid; gap: 8px; }
+      .section > .slabel { font-weight: 600; font-size: 13px; }
+      .caveat { font-size: 12px; color: var(--_muted); border-left: 3px solid var(--_border); padding: 4px 0 4px 8px; }
+      .field { display: grid; gap: 4px; }
+      .field > span { font-size: 12px; color: var(--_muted); }
+      .field input, .field select { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); box-sizing: border-box; }
+      .field input[readonly] { background: var(--_surface); color: var(--_muted); }
+      .verb-row { display: grid; grid-template-columns: 70px 1fr; gap: 8px; align-items: start; }
+      .verb-row > .vname { text-transform: capitalize; font-weight: 600; font-size: 13px; padding-top: 8px; }
+      .scope-pick { display: grid; gap: 6px; margin-top: 6px; }
+      .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+      .conj { color: var(--_muted); font-weight: 700; }
+      .conj-hint { font-size: 11.5px; color: var(--_muted); margin-top: 4px; }
+      .conj-warn { font-size: 11.5px; color: var(--arazzo-status-suspended, #b45309); margin-top: 4px; }
+      .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: var(--_surface); border: 1px solid var(--_border); border-radius: 999px; padding: 2px 8px; }
+      .chip button { border: none; background: none; cursor: pointer; color: var(--_muted); font-size: 13px; line-height: 1; padding: 0; }
+      .clauses { display: grid; gap: 6px; }
+      .clause-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center; }
+      .clause-row input { font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); box-sizing: border-box; min-width: 0; }
+      .clause-del { border: 1px solid var(--_border); background: none; cursor: pointer; color: var(--_muted); border-radius: var(--_radius); padding: 6px 9px; line-height: 1; }
+      .clause-del:hover { color: var(--_text); }
+      .add-clause { justify-self: start; font: inherit; font-size: 12px; border: 1px dashed var(--_border); background: none; cursor: pointer; color: var(--_muted); border-radius: var(--_radius); padding: 6px 10px; }
+      .add-clause:hover { color: var(--_text); border-color: var(--_muted); }
+      .scope-empty { font-size: 12px; color: var(--_muted); }
+      .verb-mode { font: inherit; padding: 7px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
+      .rule-search { position: relative; }
+      .scope-input { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); box-sizing: border-box; }
+      .dfoot { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--_border); }
+      .dfoot .grow { flex: 1; }
+      .placeholder { color: var(--_muted); padding: 24px 14px; text-align: center; }
+
+      /* Create authors in a modal (matching the Catalog / Sources / Environments create flows);
+         edit stays in the detail pane. The .detail card fills the dialog, its header/footer pinned
+         and its content scrolling when the form is tall. */
+      .cmodal { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: var(--_text); padding: 0; width: min(620px, 94vw); max-height: 88vh; overflow: hidden; }
+      .cmodal::backdrop { background: rgb(0 0 0 / 0.4); }
+      .cmodal:not([open]) { display: none; }
+      .cmodal-body { display: flex; max-height: 88vh; }
+      .cmodal .detail { border: none; border-radius: 0; display: flex; flex-direction: column; max-height: 88vh; flex: 1; min-width: 0; }
+      .cmodal .dhead, .cmodal .dfoot { flex: none; }
+      .cmodal .content { flex: 1; min-height: 0; overflow-y: auto; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        ${PAGER_CSS}
-        ${PICKER_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
-        .layout > * { min-height: 0; }
-        .detail-pane { min-height: 0; overflow: auto; }
-        .detail-pane:empty { display: none; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
-        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
-        .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
-        .toolbar .grow { flex: 1; }
-        .search { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; width: 160px; }
-        .err { flex: none; margin: 10px 12px; }
-        .err:empty { display: none; }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
-        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; }
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr.selectable { cursor: pointer; }
-        tbody tr.selectable:hover { background: var(--_surface); }
-        tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
-        .claim { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .claim-and { font-weight: 400; color: var(--_muted); }
-        .verbs { color: var(--_muted); font-size: 12px; margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
-        .verbs b { color: var(--_text); font-weight: 600; text-transform: capitalize; }
-        .gdesc { color: var(--_muted); font-size: 12px; margin-top: 2px; }
-        .sysbadge { font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_muted); vertical-align: 1px; }
-        /* Wide reach is the row an administrator should slow down on — an amber alert, not quiet metadata. */
-        .sysbadge.warn { color: var(--arazzo-status-suspended, #b07d18); border-color: var(--arazzo-status-suspended, #b07d18); background: color-mix(in srgb, var(--arazzo-status-suspended, #b07d18) 12%, transparent); }
-        .claim-and.pin { font-size: 11px; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_muted); }
-        .gscopes { color: var(--_muted); font-size: 12px; margin-top: 2px; font-style: italic; }
-        .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-        .pager { flex: none; }
-
-        /* detail pane */
-        .detail { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        .dhead { padding: 12px 14px; border-bottom: 1px solid var(--_border); background: var(--_surface); font-weight: 700; display: flex; align-items: center; gap: 8px; }
-        .dhead .grow { flex: 1; }
-        .dhead .close { font-size: 16px; line-height: 1; }
-        .content { padding: 14px; display: grid; gap: 14px; }
-        .section { display: grid; gap: 8px; }
-        .section > .slabel { font-weight: 600; font-size: 13px; }
-        .caveat { font-size: 12px; color: var(--_muted); border-left: 3px solid var(--_border); padding: 4px 0 4px 8px; }
-        .field { display: grid; gap: 4px; }
-        .field > span { font-size: 12px; color: var(--_muted); }
-        .field input, .field select { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); box-sizing: border-box; }
-        .field input[readonly] { background: var(--_surface); color: var(--_muted); }
-        .verb-row { display: grid; grid-template-columns: 70px 1fr; gap: 8px; align-items: start; }
-        .verb-row > .vname { text-transform: capitalize; font-weight: 600; font-size: 13px; padding-top: 8px; }
-        .scope-pick { display: grid; gap: 6px; margin-top: 6px; }
-        .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-        .conj { color: var(--_muted); font-weight: 700; }
-        .conj-hint { font-size: 11.5px; color: var(--_muted); margin-top: 4px; }
-        .conj-warn { font-size: 11.5px; color: var(--arazzo-status-suspended, #b45309); margin-top: 4px; }
-        .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: var(--_surface); border: 1px solid var(--_border); border-radius: 999px; padding: 2px 8px; }
-        .chip button { border: none; background: none; cursor: pointer; color: var(--_muted); font-size: 13px; line-height: 1; padding: 0; }
-        .clauses { display: grid; gap: 6px; }
-        .clause-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center; }
-        .clause-row input { font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); box-sizing: border-box; min-width: 0; }
-        .clause-del { border: 1px solid var(--_border); background: none; cursor: pointer; color: var(--_muted); border-radius: var(--_radius); padding: 6px 9px; line-height: 1; }
-        .clause-del:hover { color: var(--_text); }
-        .add-clause { justify-self: start; font: inherit; font-size: 12px; border: 1px dashed var(--_border); background: none; cursor: pointer; color: var(--_muted); border-radius: var(--_radius); padding: 6px 10px; }
-        .add-clause:hover { color: var(--_text); border-color: var(--_muted); }
-        .scope-empty { font-size: 12px; color: var(--_muted); }
-        .verb-mode { font: inherit; padding: 7px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
-        .rule-search { position: relative; }
-        .scope-input { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); box-sizing: border-box; }
-        .dfoot { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--_border); }
-        .dfoot .grow { flex: 1; }
-        .placeholder { color: var(--_muted); padding: 24px 14px; text-align: center; }
-
-        /* Create authors in a modal (matching the Catalog / Sources / Environments create flows);
-           edit stays in the detail pane. The .detail card fills the dialog, its header/footer pinned
-           and its content scrolling when the form is tall. */
-        .cmodal { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: var(--_text); padding: 0; width: min(620px, 94vw); max-height: 88vh; overflow: hidden; }
-        .cmodal::backdrop { background: rgb(0 0 0 / 0.4); }
-        .cmodal:not([open]) { display: none; }
-        .cmodal-body { display: flex; max-height: 88vh; }
-        .cmodal .detail { border: none; border-radius: 0; display: flex; flex-direction: column; max-height: 88vh; flex: 1; min-width: 0; }
-        .cmodal .dhead, .cmodal .dfoot { flex: none; }
-        .cmodal .content { flex: 1; min-height: 0; overflow-y: auto; }
-      </style>
       <div class="layout" part="layout">
         <div class="wrap" part="panel">
           <div class="toolbar" part="toolbar">

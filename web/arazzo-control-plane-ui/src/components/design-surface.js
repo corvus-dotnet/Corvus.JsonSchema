@@ -37,7 +37,7 @@
 // Methods    : fit() — zoom/centre the whole graph into view; centerOn(id) — pan (at the current
 //              zoom) so a node/edge sits at the viewport centre.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import { layoutGraph, routeEdges, NODE_WIDTH, NODE_HEIGHT } from '../workflow-layout.js';
 import { START_ID } from '../workflow-graph.js';
 
@@ -206,143 +206,142 @@ class ArazzoDesignSurface extends ArazzoElement {
   /** @private */
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; min-height: 320px; }
+      svg { display: block; width: 100%; height: 100%; min-height: 320px; background: var(--_surface);
+            border: 1px solid var(--_border); border-radius: var(--_radius); cursor: grab;
+            touch-action: none; user-select: none; -webkit-user-select: none; }
+      svg:focus-visible { outline: 2px solid var(--_accent); outline-offset: 1px; }
+      svg.panning { cursor: grabbing; }
+
+      /* Nodes */
+      .node { cursor: pointer; }
+      .node .card { fill: var(--_bg); stroke: var(--_border); stroke-width: 1.25; rx: 10; }
+      .node:hover .card { stroke: var(--_accent); }
+      .node.selected rect.card, .node.selected circle.card { stroke: var(--_accent); stroke-width: 2; }
+      .node .label { font: 600 13px var(--_font); fill: var(--_text); }
+      .node .sub { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--_muted); }
+      .node .kbadge { rx: 4; }
+      .node .kbadge-text { font: 700 9px var(--_font); fill: #fff; }
+      .node.kind-operation .kbadge { fill: var(--_accent); }
+      .node.kind-channel .kbadge { fill: var(--arazzo-kind-channel, #8250df); }
+      .node.kind-workflow .kbadge { fill: var(--arazzo-kind-workflow, #0d8a8a); }
+      .node.kind-unknown .kbadge { fill: var(--_danger); }
+      .chip { font: 10px var(--_font); fill: var(--_muted); }
+      .chip.ghost { font-style: italic; opacity: 0.75; }
+      .chip.end { fill: var(--_text); font-weight: 700; }
+
+      /* Start/end pseudo-nodes (projection-only; never in the document) */
+      .node.pseudo circle.card { fill: var(--_surface); stroke-width: 2; }
+      .node.kind-start circle.card { stroke: var(--_accent); }
+      .node.kind-end circle.card { stroke: var(--_muted); }
+      .node.pseudo .glyph { font: 700 10px var(--_font); fill: var(--_accent); }
+      .node.pseudo .inner { fill: var(--_muted); }
+      .node.pseudo .plabel { font: 700 10px var(--_font); fill: var(--_muted);
+                             text-transform: uppercase; letter-spacing: 0.06em; }
+
+      /* Breakpoint dot — solid card-coloured fill so edges never show through it */
+      .bp { fill: var(--_bg); stroke: var(--_muted); stroke-width: 1; cursor: pointer; }
+      :host([no-breakpoints]) .bp { display: none; }
+      .bp:hover { stroke: var(--_danger); }
+      .node.bp-on .bp { fill: var(--_danger); stroke: var(--_danger); }
+
+      /* Ports */
+      .port { fill: var(--_bg); stroke-width: 1.5; cursor: crosshair; }
+      .port-success { stroke: var(--arazzo-status-completed, #2a8a4a); }
+      .port-failure { stroke: var(--arazzo-status-faulted, #d4351c); }
+      .port-entry { stroke: var(--_accent); }
+      .port:hover { stroke-width: 3; }
+      :host([readonly]) .port { display: none; }
+
+      /* Edges */
+      .edge .line { fill: none; stroke-width: 1.75; }
+      .edge .hit { fill: none; stroke: transparent; stroke-width: 14; cursor: pointer; }
+      .edge.selected .line { stroke-width: 3; }
+      .edge-seq .line { stroke: var(--_muted); stroke-dasharray: 4 4; opacity: 0.8; }
+      .edge-success .line { stroke: var(--arazzo-status-completed, #2a8a4a); }
+      .edge-failure .line { stroke: var(--arazzo-status-faulted, #d4351c); }
+      .edge.reusable .line { stroke-dasharray: 8 3; }
+      /* An action after a criteria-less catch-all can never fire (first-match-wins). */
+      .edge.unreachable { opacity: 0.35; }
+      .edge.unreachable .elabel { text-decoration: line-through; }
+      .elabel { paint-order: stroke; stroke: var(--_bg); stroke-width: 3px; stroke-linejoin: round;
+                font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--_muted);
+                paint-order: stroke; stroke: var(--_surface); stroke-width: 3; }
+      .elabel.ghost { font-style: italic; opacity: 0.8; }
+      marker path { fill: var(--_muted); }
+      marker.m-success path { fill: var(--arazzo-status-completed, #2a8a4a); }
+      marker.m-failure path { fill: var(--arazzo-status-faulted, #d4351c); }
+
+      /* Rubber band while drawing an edge (coloured by the edge kind being drawn) */
+      .rubber { fill: none; stroke: var(--_accent); stroke-width: 2; stroke-dasharray: 5 4; pointer-events: none; }
+      .retarget { fill: var(--_bg); stroke: var(--_accent); stroke-width: 2; cursor: grab; }
+      .retarget:hover { fill: var(--_accent); }
+      .rubber.rubber-success { stroke: var(--arazzo-status-completed, #2a8a4a); }
+      .rubber.rubber-failure { stroke: var(--arazzo-status-faulted, #d4351c); }
+      .node.link-target .card { stroke: var(--_accent); stroke-width: 2.5; }
+
+      /* Exit chips (goto another workflow) */
+      .exit-chip rect { fill: var(--_surface); stroke: var(--_border); stroke-dasharray: 3 3; rx: 12; }
+      .exit-chip text { font: 11px var(--_font); fill: var(--_muted); }
+      .exit-chip { cursor: pointer; }
+      /* A local target is navigable: solid outline, readable label, and a WF kind badge. */
+      .exit-chip.local rect { stroke: var(--arazzo-kind-workflow, #0d8a8a); stroke-dasharray: none; }
+      .exit-chip.local text { fill: var(--_text); }
+      .exit-chip .kbadge { fill: var(--arazzo-kind-workflow, #0d8a8a); stroke: none; stroke-dasharray: none; rx: 3; }
+      .exit-chip .kbadge-text { font: 700 9px var(--_font); fill: #fff; }
+
+      /* Workflow-defaults card (the inherited layer) */
+      .defaults rect.card { fill: var(--_bg); stroke: var(--_border); stroke-dasharray: 5 3; rx: 10; }
+      .defaults.selected rect.card { stroke: var(--_accent); stroke-width: 2; stroke-dasharray: none; }
+      .defaults .title { font: 700 11px var(--_font); fill: var(--_muted); letter-spacing: 0.04em; }
+      .defaults .row { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--_text); }
+      .defaults { cursor: pointer; }
+
+      /* Debug overlay */
+      svg.debugging .node:not(.st-active):not(.st-done-success):not(.st-done-failure) { opacity: 0.45; }
+      svg.debugging .edge { opacity: 0.3; }
+      svg.debugging .edge.lit { opacity: 1; }
+      /* Element-qualified so these beat the pseudo-node base strokes (.node.kind-end circle.card). */
+      .node.st-done-success rect.card, .node.st-done-success circle.card { stroke: var(--arazzo-status-completed, #2a8a4a); stroke-width: 2; }
+      .node.st-done-failure rect.card, .node.st-done-failure circle.card { stroke: var(--arazzo-status-faulted, #d4351c); stroke-width: 2; }
+      .node.st-skipped { opacity: 0.45; }
+      .node.st-active { opacity: 1; }
+      .node.st-active rect.card, .node.st-active circle.card { stroke: var(--_accent); stroke-width: 2.5; animation: arazzo-pulse 1.1s ease-in-out infinite; }
+      @keyframes arazzo-pulse {
+        0%, 100% { stroke-opacity: 1; }
+        50% { stroke-opacity: 0.35; }
+      }
+      @media (prefers-reduced-motion: reduce) { .node.st-active .card { animation: none; } }
+
+      /* Diff overlay (visual-diff §5). Colour AND a non-colour channel (dash pattern / badge / halo).
+         Colours come from dedicated --arazzo-diff-{added,removed,changed} tokens that DEFAULT to the status
+         palette through NESTED fallbacks (never :root aliases — those would freeze the root's status colours
+         and stop subtree theming); override those three tokens up-tree to restyle diff without touching status. */
+      svg.diffing .node:not(.df-added):not(.df-removed):not(.df-changed) { opacity: 0.6; }
+      svg.diffing .edge:not(.df-added):not(.df-removed):not(.df-changed) { opacity: 0.45; }
+      .node.df-added rect.card, .node.df-added circle.card { stroke: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); stroke-width: 2.5; }
+      .node.df-removed rect.card, .node.df-removed circle.card { stroke: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); stroke-width: 2.5; stroke-dasharray: 5 3; }
+      .node.df-changed rect.card, .node.df-changed circle.card { stroke: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); stroke-width: 2.5; }
+      .defaults.df-changed rect.card { stroke: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); stroke-width: 2.5; }
+      .df-badge { pointer-events: none; }
+      .df-badge circle { stroke: var(--_bg); stroke-width: 1.5; }
+      .df-badge text { font: 700 11px var(--_font); fill: #fff; }
+      .df-badge.df-added circle { fill: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); }
+      .df-badge.df-removed circle { fill: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); }
+      .df-badge.df-changed circle { fill: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); }
+      .df-note { pointer-events: none; font: 10px var(--_font); paint-order: stroke; stroke: var(--_surface);
+                 stroke-width: 3; fill: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); }
+      .df-halo { pointer-events: none; fill: none; stroke-width: 6; opacity: 0.4; }
+      .df-halo.df-added { stroke: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); }
+      .df-halo.df-removed { stroke: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); stroke-dasharray: 6 4; }
+      .df-halo.df-changed { stroke: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); stroke-dasharray: 2 4; }
+      /* Overlay (ghost) mode (§4.7): the base version solid, the other side's exclusives rendered
+         translucent on top — the same classification colour/pattern/badge, at half opacity. */
+      svg.diff-overlay .node.df-ghost, svg.diff-overlay .edge.df-ghost, svg.diff-overlay .exit-chip.df-ghost { opacity: 0.5; }
+      .empty { padding: 40px 12px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; min-height: 320px; }
-        svg { display: block; width: 100%; height: 100%; min-height: 320px; background: var(--_surface);
-              border: 1px solid var(--_border); border-radius: var(--_radius); cursor: grab;
-              touch-action: none; user-select: none; -webkit-user-select: none; }
-        svg:focus-visible { outline: 2px solid var(--_accent); outline-offset: 1px; }
-        svg.panning { cursor: grabbing; }
-
-        /* Nodes */
-        .node { cursor: pointer; }
-        .node .card { fill: var(--_bg); stroke: var(--_border); stroke-width: 1.25; rx: 10; }
-        .node:hover .card { stroke: var(--_accent); }
-        .node.selected rect.card, .node.selected circle.card { stroke: var(--_accent); stroke-width: 2; }
-        .node .label { font: 600 13px var(--_font); fill: var(--_text); }
-        .node .sub { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--_muted); }
-        .node .kbadge { rx: 4; }
-        .node .kbadge-text { font: 700 9px var(--_font); fill: #fff; }
-        .node.kind-operation .kbadge { fill: var(--_accent); }
-        .node.kind-channel .kbadge { fill: var(--arazzo-kind-channel, #8250df); }
-        .node.kind-workflow .kbadge { fill: var(--arazzo-kind-workflow, #0d8a8a); }
-        .node.kind-unknown .kbadge { fill: var(--_danger); }
-        .chip { font: 10px var(--_font); fill: var(--_muted); }
-        .chip.ghost { font-style: italic; opacity: 0.75; }
-        .chip.end { fill: var(--_text); font-weight: 700; }
-
-        /* Start/end pseudo-nodes (projection-only; never in the document) */
-        .node.pseudo circle.card { fill: var(--_surface); stroke-width: 2; }
-        .node.kind-start circle.card { stroke: var(--_accent); }
-        .node.kind-end circle.card { stroke: var(--_muted); }
-        .node.pseudo .glyph { font: 700 10px var(--_font); fill: var(--_accent); }
-        .node.pseudo .inner { fill: var(--_muted); }
-        .node.pseudo .plabel { font: 700 10px var(--_font); fill: var(--_muted);
-                               text-transform: uppercase; letter-spacing: 0.06em; }
-
-        /* Breakpoint dot — solid card-coloured fill so edges never show through it */
-        .bp { fill: var(--_bg); stroke: var(--_muted); stroke-width: 1; cursor: pointer; }
-        :host([no-breakpoints]) .bp { display: none; }
-        .bp:hover { stroke: var(--_danger); }
-        .node.bp-on .bp { fill: var(--_danger); stroke: var(--_danger); }
-
-        /* Ports */
-        .port { fill: var(--_bg); stroke-width: 1.5; cursor: crosshair; }
-        .port-success { stroke: var(--arazzo-status-completed, #2a8a4a); }
-        .port-failure { stroke: var(--arazzo-status-faulted, #d4351c); }
-        .port-entry { stroke: var(--_accent); }
-        .port:hover { stroke-width: 3; }
-        :host([readonly]) .port { display: none; }
-
-        /* Edges */
-        .edge .line { fill: none; stroke-width: 1.75; }
-        .edge .hit { fill: none; stroke: transparent; stroke-width: 14; cursor: pointer; }
-        .edge.selected .line { stroke-width: 3; }
-        .edge-seq .line { stroke: var(--_muted); stroke-dasharray: 4 4; opacity: 0.8; }
-        .edge-success .line { stroke: var(--arazzo-status-completed, #2a8a4a); }
-        .edge-failure .line { stroke: var(--arazzo-status-faulted, #d4351c); }
-        .edge.reusable .line { stroke-dasharray: 8 3; }
-        /* An action after a criteria-less catch-all can never fire (first-match-wins). */
-        .edge.unreachable { opacity: 0.35; }
-        .edge.unreachable .elabel { text-decoration: line-through; }
-        .elabel { paint-order: stroke; stroke: var(--_bg); stroke-width: 3px; stroke-linejoin: round;
-                  font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--_muted);
-                  paint-order: stroke; stroke: var(--_surface); stroke-width: 3; }
-        .elabel.ghost { font-style: italic; opacity: 0.8; }
-        marker path { fill: var(--_muted); }
-        marker.m-success path { fill: var(--arazzo-status-completed, #2a8a4a); }
-        marker.m-failure path { fill: var(--arazzo-status-faulted, #d4351c); }
-
-        /* Rubber band while drawing an edge (coloured by the edge kind being drawn) */
-        .rubber { fill: none; stroke: var(--_accent); stroke-width: 2; stroke-dasharray: 5 4; pointer-events: none; }
-        .retarget { fill: var(--_bg); stroke: var(--_accent); stroke-width: 2; cursor: grab; }
-        .retarget:hover { fill: var(--_accent); }
-        .rubber.rubber-success { stroke: var(--arazzo-status-completed, #2a8a4a); }
-        .rubber.rubber-failure { stroke: var(--arazzo-status-faulted, #d4351c); }
-        .node.link-target .card { stroke: var(--_accent); stroke-width: 2.5; }
-
-        /* Exit chips (goto another workflow) */
-        .exit-chip rect { fill: var(--_surface); stroke: var(--_border); stroke-dasharray: 3 3; rx: 12; }
-        .exit-chip text { font: 11px var(--_font); fill: var(--_muted); }
-        .exit-chip { cursor: pointer; }
-        /* A local target is navigable: solid outline, readable label, and a WF kind badge. */
-        .exit-chip.local rect { stroke: var(--arazzo-kind-workflow, #0d8a8a); stroke-dasharray: none; }
-        .exit-chip.local text { fill: var(--_text); }
-        .exit-chip .kbadge { fill: var(--arazzo-kind-workflow, #0d8a8a); stroke: none; stroke-dasharray: none; rx: 3; }
-        .exit-chip .kbadge-text { font: 700 9px var(--_font); fill: #fff; }
-
-        /* Workflow-defaults card (the inherited layer) */
-        .defaults rect.card { fill: var(--_bg); stroke: var(--_border); stroke-dasharray: 5 3; rx: 10; }
-        .defaults.selected rect.card { stroke: var(--_accent); stroke-width: 2; stroke-dasharray: none; }
-        .defaults .title { font: 700 11px var(--_font); fill: var(--_muted); letter-spacing: 0.04em; }
-        .defaults .row { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; fill: var(--_text); }
-        .defaults { cursor: pointer; }
-
-        /* Debug overlay */
-        svg.debugging .node:not(.st-active):not(.st-done-success):not(.st-done-failure) { opacity: 0.45; }
-        svg.debugging .edge { opacity: 0.3; }
-        svg.debugging .edge.lit { opacity: 1; }
-        /* Element-qualified so these beat the pseudo-node base strokes (.node.kind-end circle.card). */
-        .node.st-done-success rect.card, .node.st-done-success circle.card { stroke: var(--arazzo-status-completed, #2a8a4a); stroke-width: 2; }
-        .node.st-done-failure rect.card, .node.st-done-failure circle.card { stroke: var(--arazzo-status-faulted, #d4351c); stroke-width: 2; }
-        .node.st-skipped { opacity: 0.45; }
-        .node.st-active { opacity: 1; }
-        .node.st-active rect.card, .node.st-active circle.card { stroke: var(--_accent); stroke-width: 2.5; animation: arazzo-pulse 1.1s ease-in-out infinite; }
-        @keyframes arazzo-pulse {
-          0%, 100% { stroke-opacity: 1; }
-          50% { stroke-opacity: 0.35; }
-        }
-        @media (prefers-reduced-motion: reduce) { .node.st-active .card { animation: none; } }
-
-        /* Diff overlay (visual-diff §5). Colour AND a non-colour channel (dash pattern / badge / halo).
-           Colours come from dedicated --arazzo-diff-{added,removed,changed} tokens that DEFAULT to the status
-           palette through NESTED fallbacks (never :root aliases — those would freeze the root's status colours
-           and stop subtree theming); override those three tokens up-tree to restyle diff without touching status. */
-        svg.diffing .node:not(.df-added):not(.df-removed):not(.df-changed) { opacity: 0.6; }
-        svg.diffing .edge:not(.df-added):not(.df-removed):not(.df-changed) { opacity: 0.45; }
-        .node.df-added rect.card, .node.df-added circle.card { stroke: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); stroke-width: 2.5; }
-        .node.df-removed rect.card, .node.df-removed circle.card { stroke: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); stroke-width: 2.5; stroke-dasharray: 5 3; }
-        .node.df-changed rect.card, .node.df-changed circle.card { stroke: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); stroke-width: 2.5; }
-        .defaults.df-changed rect.card { stroke: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); stroke-width: 2.5; }
-        .df-badge { pointer-events: none; }
-        .df-badge circle { stroke: var(--_bg); stroke-width: 1.5; }
-        .df-badge text { font: 700 11px var(--_font); fill: #fff; }
-        .df-badge.df-added circle { fill: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); }
-        .df-badge.df-removed circle { fill: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); }
-        .df-badge.df-changed circle { fill: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); }
-        .df-note { pointer-events: none; font: 10px var(--_font); paint-order: stroke; stroke: var(--_surface);
-                   stroke-width: 3; fill: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); }
-        .df-halo { pointer-events: none; fill: none; stroke-width: 6; opacity: 0.4; }
-        .df-halo.df-added { stroke: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); }
-        .df-halo.df-removed { stroke: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); stroke-dasharray: 6 4; }
-        .df-halo.df-changed { stroke: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); stroke-dasharray: 2 4; }
-        /* Overlay (ghost) mode (§4.7): the base version solid, the other side's exclusives rendered
-           translucent on top — the same classification colour/pattern/badge, at half opacity. */
-        svg.diff-overlay .node.df-ghost, svg.diff-overlay .edge.df-ghost, svg.diff-overlay .exit-chip.df-ghost { opacity: 0.5; }
-        .empty { padding: 40px 12px; }
-      </style>
       <svg part="surface" tabindex="0" role="application" aria-label="Workflow design surface">
         <defs>
           <!-- userSpaceOnUse: a selected (thicker) line must NOT inflate its arrowhead. -->

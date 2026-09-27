@@ -2,9 +2,10 @@
 //
 //   <script type="module" src="arazzo-catalog.js"></script>
 //   <arazzo-catalog base-url="/arazzo/v1" scopes="catalog:read catalog:write catalog:purge" theme="auto"></arazzo-catalog>
-//   <script type="module">
-//     document.querySelector('arazzo-catalog').authProvider = async () => `Bearer ${await app.token()}`;
-//   </script>
+//   <script type="module" src="app.js"></script>
+//
+//   // app.js (a module by URL: the kit's Content-Security-Policy admits no inline script, ADR 0073)
+//   document.querySelector('arazzo-catalog').authProvider = async () => `Bearer ${await app.token()}`;
 //
 // Attributes : base-url, scopes (space-separated), theme (auto|light|dark)
 // Properties : .client (override the auto-built one), .authProvider (() => Authorization header), .fetch
@@ -13,7 +14,7 @@
 // The catalog sibling of <arazzo-control-plane>: same shell and theming, over the catalog surface.
 
 import { ArazzoControlPlaneClient, CATALOG_STATUSES } from './arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './components/base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, confirmDialog, define } from './components/base.js';
 import './components/catalog-table.js';
 import './components/catalog-detail.js';
 import './components/splitbar.js';
@@ -105,32 +106,30 @@ class ArazzoCatalog extends ArazzoElement {
 
   render() {
     const scopes = this.getAttribute('scopes') || '';
+    adoptStyles(this.shadowRoot, this.themeTokens(), SHARED_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .toolbar { flex: none; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+      .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+      .chip { font-size: 12px; padding: 4px 11px; border-radius: 999px; }
+      .chip[aria-pressed="true"] { background: var(--_accent); border-color: var(--_accent); color: #fff; }
+      .search { flex: 1; min-width: 150px; }
+      .search input { width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
+      .grow { flex: 1; }
+      .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+      /* When a row is open the detail pane is resizable: the splitbar drives --detail-w, which the
+         grid consumes (list | bar | detail). The bar and the gap collapse when nothing is selected. */
+      .layout .splitbar { display: none; }
+      @media (min-width: 880px) {
+        .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
+        .layout.has-selection .splitbar { display: block; }
+        .layout.has-selection > arazzo-catalog-table { margin-right: 14px; }
+        .layout.has-selection > .detail-pane { margin-left: 14px; }
+      }
+      .layout > * { min-height: 0; }
+      .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+      .detail-pane:empty { display: none; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${this.themeTokens()}
-        ${SHARED_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .toolbar { flex: none; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-        .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-        .chip { font-size: 12px; padding: 4px 11px; border-radius: 999px; }
-        .chip[aria-pressed="true"] { background: var(--_accent); border-color: var(--_accent); color: #fff; }
-        .search { flex: 1; min-width: 150px; }
-        .search input { width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
-        .grow { flex: 1; }
-        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
-        /* When a row is open the detail pane is resizable: the splitbar drives --detail-w, which the
-           grid consumes (list | bar | detail). The bar and the gap collapse when nothing is selected. */
-        .layout .splitbar { display: none; }
-        @media (min-width: 880px) {
-          .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
-          .layout.has-selection .splitbar { display: block; }
-          .layout.has-selection > arazzo-catalog-table { margin-right: 14px; }
-          .layout.has-selection > .detail-pane { margin-left: 14px; }
-        }
-        .layout > * { min-height: 0; }
-        .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
-        .detail-pane:empty { display: none; }
-      </style>
       <div class="toolbar" part="toolbar">
         <div class="chips" part="filters">
           <button class="chip status-chip" type="button" data-status="" aria-pressed="true">All</button>

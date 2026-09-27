@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 import { watchErrors, assertClean, openApp, fillJsonEditor } from './ux-helpers.js';
 
 test('the status chips filter the list and exactly one chip is pressed at a time', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   const rows = page.locator('arazzo-runs-table tbody tr[data-id]');
   await expect(rows.first()).toBeVisible();
@@ -21,7 +21,7 @@ test('the status chips filter the list and exactly one chip is pressed at a time
 });
 
 test('the workflow filter narrows by workflowId and the count footer reports the reach-bounded total', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   const rows = page.locator('arazzo-runs-table tbody tr[data-id]');
   await expect(rows.first()).toBeVisible();
@@ -38,7 +38,7 @@ test('the workflow filter narrows by workflowId and the count footer reports the
 });
 
 test('a suspended run shows its wait and pinned environment in the detail', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await page.locator('#view-runs .status-chip[data-status="Suspended"]').click();
   const rows = page.locator('arazzo-runs-table tbody tr[data-id]');
@@ -54,7 +54,7 @@ test('a suspended run shows its wait and pinned environment in the detail', asyn
 });
 
 test('a run faulted on its budget says why, what it was held to, and whether a resume would run (ADR 0068)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
 
   // Why, without opening it: the list names the fault type and its hover says what it means.
@@ -81,7 +81,7 @@ test('a run faulted on its budget says why, what it was held to, and whether a r
 });
 
 test('a run a re-budget cannot rescue has Resume disabled with the reason, and is re-run instead (ADR 0072)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await page.locator('arazzo-runs-table tbody tr[data-id="run-b0d9e702"]').click();
   const detail = page.locator('arazzo-run-detail');
@@ -114,7 +114,7 @@ test('a run a re-budget cannot rescue has Resume disabled with the reason, and i
 });
 
 test('resume offers all four modes and StatePatch takes an RFC 6902 document', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await page.locator('arazzo-runs-table tbody tr[data-id="run-b2c3d4e5"]').click();
   await page.locator('arazzo-run-detail').getByRole('button', { name: /resume/i }).click();
@@ -135,7 +135,7 @@ test('resume offers all four modes and StatePatch takes an RFC 6902 document', a
 });
 
 test('cancel is confirm-gated and marks the run cancelled', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await page.locator('#view-runs .status-chip[data-status="Running"]').click();
   const rows = page.locator('arazzo-runs-table tbody tr[data-id]');
@@ -157,7 +157,7 @@ test('cancel is confirm-gated and marks the run cancelled', async ({ page }) => 
 });
 
 test('purge is scope-gated, preset-driven, and reaps old terminal runs', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   const rows = page.locator('arazzo-runs-table tbody tr[data-id]');
   await expect(rows.first()).toBeVisible();
@@ -186,7 +186,7 @@ test('purge is scope-gated, preset-driven, and reaps old terminal runs', async (
 });
 
 test('the "Up to now" preset purges EVERY completed/cancelled run, including recent ones', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await expect(page.locator('arazzo-runs-table tbody tr[data-id]').first()).toBeVisible();
 

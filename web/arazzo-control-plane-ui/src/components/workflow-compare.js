@@ -31,7 +31,7 @@
 // Sides   : { label: string, document: object, workflowId?: string } — a per-side workflowId wins
 //           over the shared one (compare a renamed workflow across versions).
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import { projectWorkflow } from '../workflow-graph.js';
 import { diffWorkflowPair, buildGhostProjection } from '../workflow-diff.js';
 import { serializeDocument } from '../workflow-document-model.js';
@@ -126,80 +126,79 @@ class ArazzoWorkflowCompare extends ArazzoElement {
   }
 
   render() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: inherit; padding: 0;
+               width: min(94vw, 1500px); height: 86vh; max-height: 86vh; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+      dialog:not([open]) { display: none; }
+      dialog::backdrop { background: rgb(0 0 0 / 0.35); }
+      .head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--_border); }
+      .head h2 { margin: 0; font-size: 14px; }
+      .legend { margin: 0 auto 0 4px; font-size: 12px; color: var(--_muted); }
+      .modes { display: inline-flex; gap: 2px; }
+      .modes .mode[aria-pressed="true"] { background: var(--_surface); box-shadow: inset 0 0 0 1px var(--_border); }
+      .grid { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); min-height: 0; }
+      .grid.has-diff { grid-template-columns: var(--cl-w, 260px) minmax(0, 1fr); }
+      .grid:not(.has-diff) .changelist { display: none; }
+      .grid.cl-collapsed { --cl-w: 44px; }
+      .stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); min-width: 0; min-height: 0; }
+      .stage.is-overlay, .stage.is-text { grid-template-columns: minmax(0, 1fr); }
+      .textmerge { min-width: 0; min-height: 0; display: flex; flex-direction: column; font-size: 12px; }
+      .tm-bar { flex: none; display: flex; justify-content: flex-end; padding: 6px 10px; border-bottom: 1px solid var(--_border); }
+      .tm-apply { font: 12px var(--_font); padding: 3px 12px; border: 1px solid var(--_border); border-radius: 6px;
+                  background: var(--_accent, #3b6cf6); color: #fff; cursor: pointer; }
+      .tm-apply[disabled] { opacity: 0.5; cursor: default; background: var(--_bg); color: var(--_muted); }
+      .tm-view { flex: 1; min-height: 0; overflow: auto; }
+      .tm-view .cm-mergeView, .tm-view .cm-mergeViewEditors, .tm-view .cm-editor { height: 100%; }
+      .tm-unavailable { padding: 24px; color: var(--_muted); font-size: 13px; }
+      /* head · list · divider · detail. The detail row is a FIXED height the divider drives
+         (--cl-detail-h, persisted), so the author balances list vs detail; without a selection the
+         divider+detail rows collapse and the list takes the whole column. */
+      .changelist { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; min-height: 0; border-right: 1px solid var(--_border); }
+      .changelist:has(.cl-detail:not(:empty)) { grid-template-rows: auto minmax(0, 1fr) auto minmax(120px, var(--cl-detail-h, 240px)); }
+      .cl-split { display: none; }
+      .changelist:has(.cl-detail:not(:empty)) .cl-split { display: block; }
+      .grid.cl-collapsed .cl-split { display: none !important; }
+      .cl-detail { border-top: 1px solid var(--_border); background: var(--_bg); overflow: auto; padding: 8px 10px; font-size: 12px; }
+      .cl-detail:empty, .grid.cl-collapsed .cl-detail { display: none; }
+      .cl-detail .dh { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); margin: 0 0 6px; }
+      .cl-detail .fd { margin: 0 0 9px; }
+      .cl-detail .fk { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); margin-bottom: 2px; }
+      .cl-detail .fv { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; padding: 3px 6px; border-radius: 5px; border: 1px solid var(--_border); }
+      .cl-detail .fv.before { color: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); background: color-mix(in srgb, var(--arazzo-status-faulted, #d4351c) 8%, transparent); }
+      .cl-detail .fv.after { color: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); background: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 9%, transparent); margin-top: 3px; }
+      .cl-detail .fv.absent { color: var(--_muted); font-style: italic; background: none; }
+      .cl-detail .arrow { color: var(--_muted); font-size: 10px; margin: 1px 0; }
+      .cl-head { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--_border); font-size: 12px; }
+      .cl-title { margin-right: auto; font-weight: 600; }
+      .grid.cl-collapsed .cl-title, .grid.cl-collapsed .cl-prev, .grid.cl-collapsed .cl-next, .grid.cl-collapsed .cl-body { display: none; }
+      .cl-body { overflow: auto; padding: 4px 0 8px; }
+      .cl-group { padding: 6px 10px 2px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--_muted); }
+      .cl-item { display: flex; align-items: center; gap: 4px; padding-right: 6px; }
+      .cl-item:hover { background: var(--_surface); }
+      .cl-item.current { background: var(--_surface); box-shadow: inset 3px 0 0 var(--_accent); }
+      .cl-item.reviewed .cl-sel { opacity: 0.5; text-decoration: line-through; }
+      .cl-sel { flex: 1; min-width: 0; text-align: left; border: none; background: none; color: inherit; cursor: pointer;
+                font: 12px var(--_font); padding: 3px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .cl-take, .cl-keep { flex: none; font: 11px var(--_font); padding: 1px 6px; border: 1px solid var(--_border);
+                           border-radius: 5px; background: var(--_bg); color: inherit; cursor: pointer; }
+      .cl-take:hover:not([disabled]), .cl-keep:hover:not([disabled]) { background: var(--_surface); }
+      .cl-take[disabled], .cl-keep[disabled] { opacity: 0.4; cursor: default; }
+      .cl-route { flex: none; color: var(--_muted); cursor: help; padding: 0 4px; }
+      .grid:not(.merging) .cl-take, .grid:not(.merging) .cl-keep, .grid:not(.merging) .cl-route { display: none; }
+      .cl-mark { font-weight: 700; }
+      .cl-mark.added { color: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); }
+      .cl-mark.removed { color: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); }
+      .cl-mark.changed, .cl-mark.renamed, .cl-mark.moved { color: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); }
+      .side { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; }
+      .side + .side { border-left: 1px solid var(--_border); }
+      .side-head { padding: 6px 12px; font-size: 12px; color: var(--_muted); border-bottom: 1px solid var(--_border);
+                   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .side arazzo-design-surface { display: block; width: 100%; height: 100%; min-height: 0; }
+      .hl[aria-pressed="false"], .sync[aria-pressed="false"] { opacity: 0.55; text-decoration: line-through; }
+      .sync[aria-pressed="true"] { background: var(--_surface); box-shadow: inset 0 0 0 1px var(--_border); }
+      [hidden] { display: none !important; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: inherit; padding: 0;
-                 width: min(94vw, 1500px); height: 86vh; max-height: 86vh; display: grid; grid-template-rows: auto minmax(0, 1fr); }
-        dialog:not([open]) { display: none; }
-        dialog::backdrop { background: rgb(0 0 0 / 0.35); }
-        .head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--_border); }
-        .head h2 { margin: 0; font-size: 14px; }
-        .legend { margin: 0 auto 0 4px; font-size: 12px; color: var(--_muted); }
-        .modes { display: inline-flex; gap: 2px; }
-        .modes .mode[aria-pressed="true"] { background: var(--_surface); box-shadow: inset 0 0 0 1px var(--_border); }
-        .grid { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); min-height: 0; }
-        .grid.has-diff { grid-template-columns: var(--cl-w, 260px) minmax(0, 1fr); }
-        .grid:not(.has-diff) .changelist { display: none; }
-        .grid.cl-collapsed { --cl-w: 44px; }
-        .stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); min-width: 0; min-height: 0; }
-        .stage.is-overlay, .stage.is-text { grid-template-columns: minmax(0, 1fr); }
-        .textmerge { min-width: 0; min-height: 0; display: flex; flex-direction: column; font-size: 12px; }
-        .tm-bar { flex: none; display: flex; justify-content: flex-end; padding: 6px 10px; border-bottom: 1px solid var(--_border); }
-        .tm-apply { font: 12px var(--_font); padding: 3px 12px; border: 1px solid var(--_border); border-radius: 6px;
-                    background: var(--_accent, #3b6cf6); color: #fff; cursor: pointer; }
-        .tm-apply[disabled] { opacity: 0.5; cursor: default; background: var(--_bg); color: var(--_muted); }
-        .tm-view { flex: 1; min-height: 0; overflow: auto; }
-        .tm-view .cm-mergeView, .tm-view .cm-mergeViewEditors, .tm-view .cm-editor { height: 100%; }
-        .tm-unavailable { padding: 24px; color: var(--_muted); font-size: 13px; }
-        /* head · list · divider · detail. The detail row is a FIXED height the divider drives
-           (--cl-detail-h, persisted), so the author balances list vs detail; without a selection the
-           divider+detail rows collapse and the list takes the whole column. */
-        .changelist { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; min-height: 0; border-right: 1px solid var(--_border); }
-        .changelist:has(.cl-detail:not(:empty)) { grid-template-rows: auto minmax(0, 1fr) auto minmax(120px, var(--cl-detail-h, 240px)); }
-        .cl-split { display: none; }
-        .changelist:has(.cl-detail:not(:empty)) .cl-split { display: block; }
-        .grid.cl-collapsed .cl-split { display: none !important; }
-        .cl-detail { border-top: 1px solid var(--_border); background: var(--_bg); overflow: auto; padding: 8px 10px; font-size: 12px; }
-        .cl-detail:empty, .grid.cl-collapsed .cl-detail { display: none; }
-        .cl-detail .dh { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); margin: 0 0 6px; }
-        .cl-detail .fd { margin: 0 0 9px; }
-        .cl-detail .fk { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); margin-bottom: 2px; }
-        .cl-detail .fv { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; padding: 3px 6px; border-radius: 5px; border: 1px solid var(--_border); }
-        .cl-detail .fv.before { color: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); background: color-mix(in srgb, var(--arazzo-status-faulted, #d4351c) 8%, transparent); }
-        .cl-detail .fv.after { color: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); background: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 9%, transparent); margin-top: 3px; }
-        .cl-detail .fv.absent { color: var(--_muted); font-style: italic; background: none; }
-        .cl-detail .arrow { color: var(--_muted); font-size: 10px; margin: 1px 0; }
-        .cl-head { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--_border); font-size: 12px; }
-        .cl-title { margin-right: auto; font-weight: 600; }
-        .grid.cl-collapsed .cl-title, .grid.cl-collapsed .cl-prev, .grid.cl-collapsed .cl-next, .grid.cl-collapsed .cl-body { display: none; }
-        .cl-body { overflow: auto; padding: 4px 0 8px; }
-        .cl-group { padding: 6px 10px 2px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--_muted); }
-        .cl-item { display: flex; align-items: center; gap: 4px; padding-right: 6px; }
-        .cl-item:hover { background: var(--_surface); }
-        .cl-item.current { background: var(--_surface); box-shadow: inset 3px 0 0 var(--_accent); }
-        .cl-item.reviewed .cl-sel { opacity: 0.5; text-decoration: line-through; }
-        .cl-sel { flex: 1; min-width: 0; text-align: left; border: none; background: none; color: inherit; cursor: pointer;
-                  font: 12px var(--_font); padding: 3px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .cl-take, .cl-keep { flex: none; font: 11px var(--_font); padding: 1px 6px; border: 1px solid var(--_border);
-                             border-radius: 5px; background: var(--_bg); color: inherit; cursor: pointer; }
-        .cl-take:hover:not([disabled]), .cl-keep:hover:not([disabled]) { background: var(--_surface); }
-        .cl-take[disabled], .cl-keep[disabled] { opacity: 0.4; cursor: default; }
-        .cl-route { flex: none; color: var(--_muted); cursor: help; padding: 0 4px; }
-        .grid:not(.merging) .cl-take, .grid:not(.merging) .cl-keep, .grid:not(.merging) .cl-route { display: none; }
-        .cl-mark { font-weight: 700; }
-        .cl-mark.added { color: var(--arazzo-diff-added, var(--arazzo-status-completed, #2a8a4a)); }
-        .cl-mark.removed { color: var(--arazzo-diff-removed, var(--arazzo-status-faulted, #d4351c)); }
-        .cl-mark.changed, .cl-mark.renamed, .cl-mark.moved { color: var(--arazzo-diff-changed, var(--arazzo-status-suspended, #b07d18)); }
-        .side { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; }
-        .side + .side { border-left: 1px solid var(--_border); }
-        .side-head { padding: 6px 12px; font-size: 12px; color: var(--_muted); border-bottom: 1px solid var(--_border);
-                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .side arazzo-design-surface { display: block; width: 100%; height: 100%; min-height: 0; }
-        .hl[aria-pressed="false"], .sync[aria-pressed="false"] { opacity: 0.55; text-decoration: line-through; }
-        .sync[aria-pressed="true"] { background: var(--_surface); box-shadow: inset 0 0 0 1px var(--_border); }
-        [hidden] { display: none !important; }
-      </style>
       <dialog>
         <div class="head">
           <h2>Compare workflow versions</h2>

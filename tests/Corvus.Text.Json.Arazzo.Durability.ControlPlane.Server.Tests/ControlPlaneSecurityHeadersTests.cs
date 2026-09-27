@@ -25,6 +25,15 @@ public sealed class ControlPlaneSecurityHeadersTests
             .ShouldBe(ControlPlaneSecurityHeaders.DefaultContentSecurityPolicy);
 
     [TestMethod]
+    public void The_default_policy_admits_no_inline_script_or_style()
+    {
+        string policy = ControlPlaneSecurityHeaders.DefaultContentSecurityPolicy;
+        policy.ShouldContain("; script-src 'self'; ");
+        policy.ShouldContain("; style-src 'self'; ");
+        policy.ShouldNotContain("unsafe-");
+    }
+
+    [TestMethod]
     [DataRow("/page")]
     [DataRow("/arazzo/v1/catalog")]
     [DataRow("/nowhere")]
@@ -75,7 +84,7 @@ public sealed class ControlPlaneSecurityHeadersTests
         using HttpResponseMessage response = await app.GetTestClient().GetAsync("/page");
 
         Header(response, "Content-Security-Policy").ShouldBe(
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; "
+            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; "
             + "connect-src 'self' https://api.example.com; object-src 'none'; base-uri 'none'; "
             + "form-action 'self' https://id.example.com:8443; frame-ancestors https://portal.example.com");
         response.Headers.Contains("X-Frame-Options").ShouldBeFalse();

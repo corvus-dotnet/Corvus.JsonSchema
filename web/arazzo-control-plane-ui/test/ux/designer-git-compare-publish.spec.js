@@ -67,7 +67,7 @@ async function confirmGitDanger(page, titleFragment) {
 }
 
 test('the Git tab connects a GitHub identity through the brokered popup and binds the working copy to a branch', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await openGitTab(page);
 
@@ -114,7 +114,7 @@ test('the Git tab connects a GitHub identity through the brokered popup and bind
 });
 
 test('the browse tree and the new-branch form open as floating dropdowns, not inline', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await openGitTab(page);
   await connectGitHub(page);
@@ -149,7 +149,7 @@ test('the browse tree and the new-branch form open as floating dropdowns, not in
 });
 
 test('switching the working copy you are looking at resets the designer chrome (the Git panel does not linger)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await openGitTab(page);
   await expect(page.locator('aside .side-tabs [data-tab="git"]')).toHaveClass(/active/);
@@ -176,7 +176,7 @@ test('switching the working copy you are looking at resets the designer chrome (
 });
 
 test('the history renders as a headered list, newest first, and one selection arms Compare and Roll back', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await openGitTab(page);
   await connectGitHub(page);
@@ -219,7 +219,7 @@ test('the history renders as a headered list, newest first, and one selection ar
 });
 
 test('two history selections collapse Compare to the pair item, disable Roll back, and a third pick evicts the earliest', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await openGitTab(page);
   await connectGitHub(page);
@@ -261,7 +261,7 @@ test('two history selections collapse Compare to the pair item, disable Roll bac
 });
 
 test('comparing a commit with the working copy is a merge: Take pulls the commit\'s step into the live model', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await openGitTab(page);
   await connectGitHub(page);
@@ -302,7 +302,7 @@ test('comparing a commit with the working copy is a merge: Take pulls the commit
 });
 
 test('commit writes the document and scenario files to the branch as the signed-in user, with a draft PR', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await addStepFromRail(page); // a real canvas edit, autosave-flushed when the Git tab opens
   await openGitTab(page);
@@ -338,7 +338,7 @@ test('commit writes the document and scenario files to the branch as the signed-
 });
 
 test('pull (Load from branch) is danger-confirmed and replaces the working copy with the branch contents', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await addStepFromRail(page); // a local edit that the pull will discard (etag bumped by the flush)
 
@@ -368,7 +368,7 @@ test('pull (Load from branch) is danger-confirmed and replaces the working copy 
 });
 
 test('roll back replaces the working copy at the commit and never rebinds', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await openGitTab(page);
   await connectGitHub(page);
@@ -399,7 +399,7 @@ test('roll back replaces the working copy at the commit and never rebinds', asyn
 });
 
 test('publish validates + re-runs the suite server-side and mints a draft catalog version', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // The deliberate publish act opens the owner dialog (the server requires an owner email; two
@@ -424,7 +424,7 @@ test('publish validates + re-runs the suite server-side and mints a draft catalo
 });
 
 test('publish refuses a failing scenario suite with 422 and routes to the Scenarios panel', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // Make the seeded happy-path scenario fail deterministically: edit its expected outcome to
@@ -456,7 +456,7 @@ test('publish refuses a failing scenario suite with 422 and routes to the Scenar
 });
 
 test('publish refuses an invalid document with 422 and routes to the Problems panel', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await page.locator('#surface .node').first().waitFor({ state: 'attached' });
 

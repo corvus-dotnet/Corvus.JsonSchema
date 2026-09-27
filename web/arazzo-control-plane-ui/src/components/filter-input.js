@@ -19,7 +19,7 @@
 // its results render after the instant static matches, deduplicated by value — the GitHub pickers use it so an
 // owner-qualified query ('dotnet/run') reaches repositories the session's seed never contains.
 
-import { ArazzoElement, SHARED_CSS, PICKER_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PICKER_CSS, escapeHtml, define } from './base.js';
 
 class ArazzoFilterInput extends ArazzoElement {
   static get observedAttributes() {
@@ -87,24 +87,22 @@ class ArazzoFilterInput extends ArazzoElement {
 
   renderShell() {
     const placeholder = this.getAttribute('placeholder') || 'type to filter…';
+    adoptStyles(this.shadowRoot, SHARED_CSS, PICKER_CSS, `
+      /* The listbox rides the top layer (popover) so a scrolling dialog or sidebar never clips it;
+         position is set per open from the input's rect. The popover UA defaults are neutralized. */
+      .results { position: fixed; inset: auto; margin: 0; }
+      .results[popover]:not(:popover-open) { display: none; }
+      :host { display: block; position: relative; }
+      input {
+        width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border);
+        border-radius: var(--_radius); background: var(--_bg); color: var(--_text);
+      }
+      input:read-only, input:disabled { opacity: 0.7; cursor: default; }
+      /* Stack the value over its detail line (e.g. a repo's default branch and visibility). */
+      .results li .txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+      .results li .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        ${PICKER_CSS}
-        /* The listbox rides the top layer (popover) so a scrolling dialog or sidebar never clips it;
-           position is set per open from the input's rect. The popover UA defaults are neutralized. */
-        .results { position: fixed; inset: auto; margin: 0; }
-        .results[popover]:not(:popover-open) { display: none; }
-        :host { display: block; position: relative; }
-        input {
-          width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border);
-          border-radius: var(--_radius); background: var(--_bg); color: var(--_text);
-        }
-        input:read-only, input:disabled { opacity: 0.7; cursor: default; }
-        /* Stack the value over its detail line (e.g. a repo's default branch and visibility). */
-        .results li .txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-        .results li .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      </style>
       <input type="text" part="input" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off"
              placeholder="${escapeHtml(placeholder)}" aria-label="${escapeHtml(this.getAttribute('aria-label') || '')}"
              value="${escapeHtml(this.getAttribute('value') || '')}" spellcheck="false">

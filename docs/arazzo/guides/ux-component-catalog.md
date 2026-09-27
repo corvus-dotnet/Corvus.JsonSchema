@@ -35,6 +35,11 @@ not repeated per entry.
   absent attribute defers to the server.
 - **Theming.** Components read `--arazzo-*` tokens from a themed ancestor (via `SHARED_CSS`, `PAGER_CSS`,
   `PICKER_CSS`), so a host themes the whole kit at once.
+- **Styles.** A component styles its shadow root with `adoptStyles(this.shadowRoot, SHARED_CSS, ...)`, which
+  adopts one cached constructable stylesheet for each piece of CSS, never a `<style>` element or a style attribute.
+  The host's Content-Security-Policy refuses both ([ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md)).
+  A colour chosen at render time is a `data-tone` attribute matched by a `toneCss` rule, and a style set in code
+  goes through `element.style`.
 - **Dialogs.** `confirmDialog(host, {...})` shows a themed, focus-trapped confirmation inside the host's shadow
   root. The native `prompt` / `confirm` / `alert` are not used.
 - **Busy actions.** A user-triggered service call runs through `runAction(trigger, work)`, which blocks a

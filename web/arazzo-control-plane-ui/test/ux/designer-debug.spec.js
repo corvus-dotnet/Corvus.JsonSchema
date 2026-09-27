@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 import { watchErrors, assertClean, openDesigner, runAgainstMocks, runInDevelopment, fillJsonEditor, jsonEditorValue } from './ux-helpers.js';
 
 test('the run dialog offers only draft-run environments beside the mock target, with per-source readiness', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await page.locator('#simulate').click();
   const dlg = page.locator('#run-inputs-dialog');
@@ -55,7 +55,7 @@ test('the run dialog offers only draft-run environments beside the mock target, 
 });
 
 test('invalid JSON inputs keep the run dialog open until they parse', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   // order-with-compensation declares NO inputs schema, so the dialog serves the raw-JSON tier —
   // the one place a syntactically invalid value is possible (typed fields assemble best-effort).
@@ -82,7 +82,7 @@ test('invalid JSON inputs keep the run dialog open until they parse', async ({ p
 });
 
 test('a mock simulate lands the trace in the tray and scrubbing repaints the canvas overlay', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await runAgainstMocks(page);
 
@@ -124,7 +124,7 @@ test('a mock simulate lands the trace in the tray and scrubbing repaints the can
 });
 
 test("the context pane shows a step's sent request and its criterion truth table", async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // Stage REAL inputs through the typed form so the sent request is deterministic.
@@ -168,7 +168,7 @@ test("the context pane shows a step's sent request and its criterion truth table
 });
 
 test('a canvas breakpoint pauses ▶ before the step, live; clearing it lets the run flow on', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // Toggle the breakpoint dot on authorize-payment — the node adorns bp-on.
@@ -197,7 +197,7 @@ test('a canvas breakpoint pauses ▶ before the step, live; clearing it lets the
 });
 
 test('⏭ single-step advances exactly one step per press (twice)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // Pause before the FIRST step, so every ⏭ from here is a one-step budget replay.
@@ -223,7 +223,7 @@ test('⏭ single-step advances exactly one step per press (twice)', async ({ pag
 });
 
 test('double-clicking a node runs to before it (run-to-here)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // No session yet: run-to-here IS the session starter — the double tap composes
@@ -241,7 +241,7 @@ test('double-clicking a node runs to before it (run-to-here)', async ({ page }) 
 });
 
 test('step over provides outputs in the context pane and the replay marks the step skipped', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await runAgainstMocks(page);
   const tray = page.locator('#debugtray');
@@ -281,7 +281,7 @@ test('step over provides outputs in the context pane and the replay marks the st
 });
 
 test('the expression console evaluates against the frame at the scrub cursor on ⏎', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // ⏎ with no session explains itself rather than failing silently.
@@ -316,7 +316,7 @@ test('the expression console evaluates against the frame at the scrub cursor on 
 });
 
 test('§18 Stop cancels the debug run and detaches the dock', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await runInDevelopment(page);
   await expect(page.locator('#save-status')).toHaveText(/debug run suspended in development/i, { timeout: 5000 });
@@ -340,7 +340,7 @@ test('§18 Stop cancels the debug run and detaches the dock', async ({ page }) =
 });
 
 test('§18 tray ✕ Clear purges the debug run and empties the dock', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await runInDevelopment(page);
   await expect(page.locator('#save-status')).toHaveText(/debug run suspended in development/i, { timeout: 5000 });
@@ -361,7 +361,7 @@ test('§18 tray ✕ Clear purges the debug run and empties the dock', async ({ p
 });
 
 test('§18 Retry and Remediate appear only while the debug run is faulted', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
   await runInDevelopment(page, { transientFault: true });
 
@@ -385,7 +385,7 @@ test('§18 Retry and Remediate appear only while the debug run is faulted', asyn
 });
 
 test('the virtual clock advances past a retryAfter and the tray narrates it', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openDesigner(page);
 
   // No interactive clock-advance control exists in mock mode — the tray renders the trace's
@@ -432,7 +432,7 @@ test('the virtual clock advances past a retryAfter and the tray narrates it', as
 });
 
 test('a run may not START while the document has error findings — ▶/⏭ disable and lift once valid', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await page.goto('/demo/designer.html');
   const wctable = page.locator('arazzo-workspace-table');
   await expect(wctable.getByText('Order processing')).toBeVisible();

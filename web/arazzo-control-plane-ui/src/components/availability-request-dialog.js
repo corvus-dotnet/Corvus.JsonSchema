@@ -18,7 +18,7 @@
 // advisory pre-filter — the server still enforces readiness at approval time. Reusable by <arazzo-availability-requests>
 // (the "Request promotion…" button) and by a catalog-version entry (locked to that workflow + version).
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import './workflow-picker.js';
 
 /**
@@ -211,25 +211,25 @@ class ArazzoAvailabilityRequestDialog extends ArazzoElement {
 
   render() {
     const wfRow = this._lock
-      ? `<div><div class="sub" style="margin-bottom:4px">Version</div><div class="locked-wf">${escapeHtml(this._baseWorkflowId)} v${escapeHtml(this._versionNumber)}</div></div>`
+      ? `<div><div class="sub caption">Version</div><div class="locked-wf">${escapeHtml(this._baseWorkflowId)} v${escapeHtml(this._versionNumber)}</div></div>`
       : `<label>Workflow<arazzo-workflow-picker class="sub-wf" placeholder="Find a workflow…"></arazzo-workflow-picker></label>
          <label>Version<select class="ver-in" disabled><option value="">Choose a workflow first</option></select></label>`;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
+      dialog::backdrop { background: rgba(0,0,0,0.4); }
+      .dhead { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
+      .dbody { padding: 14px 16px; display: grid; gap: 12px; }
+      .dfoot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
+      label { font-size: 12px; color: var(--_muted); display: grid; gap: 4px; }
+      input, textarea, select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
+      select:disabled { background: var(--_surface); color: var(--_muted); cursor: default; }
+      textarea { resize: vertical; min-height: 56px; }
+      .locked-wf { font-weight: 600; font-size: 14px; }
+      button[disabled] { opacity: 0.5; cursor: not-allowed; }
+      .error-banner { margin: 0 16px 12px; }
+      .sub.caption { margin-bottom: 4px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        .dhead { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
-        .dbody { padding: 14px 16px; display: grid; gap: 12px; }
-        .dfoot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
-        label { font-size: 12px; color: var(--_muted); display: grid; gap: 4px; }
-        input, textarea, select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
-        select:disabled { background: var(--_surface); color: var(--_muted); cursor: default; }
-        textarea { resize: vertical; min-height: 56px; }
-        .locked-wf { font-weight: 600; font-size: 14px; }
-        button[disabled] { opacity: 0.5; cursor: not-allowed; }
-        .error-banner { margin: 0 16px 12px; }
-      </style>
       <dialog part="dialog">
         <form method="dialog">
           <div class="dhead">Request promotion</div>

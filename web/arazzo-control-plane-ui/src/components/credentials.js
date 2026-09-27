@@ -1,7 +1,7 @@
 // <arazzo-credentials> — the Sources management screen: the credential-rotation worklist as a master-detail surface.
 //
 //   <arazzo-credentials base-url="/arazzo/v1" scopes="credentials:read credentials:write"></arazzo-credentials>
-//   <script type="module">document.querySelector('arazzo-credentials').client = client;</script>
+//   <script type="module" src="app.js"></script>   // app.js: document.querySelector('arazzo-credentials').client = client;
 //
 // Attributes : base-url, scopes (space-separated)
 // Properties : .client (Layer-0 client), .authProvider (() => Authorization header), .fetch
@@ -14,7 +14,7 @@
 // editor dialog is reused for the Edit and Duplicate actions the detail pane raises.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, define } from './base.js';
 import './credentials-table.js';
 import './credential-detail.js';
 import './splitbar.js';
@@ -84,24 +84,23 @@ class ArazzoCredentials extends ArazzoElement {
   }
 
   render() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+      .layout .splitbar { display: none; }
+      @media (min-width: 880px) {
+        .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
+        .layout.has-selection .splitbar { display: block; }
+        .layout.has-selection > arazzo-credentials-table { margin-right: 14px; }
+        .layout.has-selection > .detail-pane { margin-left: 14px; }
+      }
+      .layout > * { min-height: 0; }
+      .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+      .detail-pane:empty { display: none; }
+      .bar { display: flex; margin-bottom: 10px; }
+      .bar .grow { flex: 1; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
-        .layout .splitbar { display: none; }
-        @media (min-width: 880px) {
-          .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
-          .layout.has-selection .splitbar { display: block; }
-          .layout.has-selection > arazzo-credentials-table { margin-right: 14px; }
-          .layout.has-selection > .detail-pane { margin-left: 14px; }
-        }
-        .layout > * { min-height: 0; }
-        .detail-pane { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
-        .detail-pane:empty { display: none; }
-        .bar { display: flex; margin-bottom: 10px; }
-        .bar .grow { flex: 1; }
-      </style>
       <div class="bar">
         <span class="grow"></span>
         <button class="new primary" type="button">New credential…</button>

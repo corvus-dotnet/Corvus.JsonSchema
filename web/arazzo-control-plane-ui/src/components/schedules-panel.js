@@ -14,7 +14,7 @@
 // runner registry to surface which environments are schedulable up front, and the create call is the authoritative gate.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, countdown, confirmDialog, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, countdown, confirmDialog, define } from './base.js';
 
 // A schedule is a durable run that sits Suspended on its timer between fires. "Suspended" reads as broken for a cron,
 // so a schedule parked on its timer is shown as "Waiting" (the ubiquitous-language term for why a run is suspended:
@@ -284,55 +284,54 @@ class ArazzoSchedules extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .panel { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
+      .head { flex: none; padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
+      .head .title { font-weight: 700; }
+      .head .grow { flex: 1; }
+      .flash { flex: none; margin: 10px 12px 0; font-size: 13px; padding: 8px 10px; border-radius: var(--_radius); border: 1px solid var(--_border); }
+      .flash.ok { color: var(--arazzo-status-completed, #1a7f37); border-color: currentColor; }
+      .flash.err { color: var(--arazzo-status-faulted, #b3261e); border-color: currentColor; }
+      .err { flex: none; margin: 10px 12px; }
+      .list { display: grid; flex: 1; min-height: 0; overflow: auto; }
+      .sched { padding: 11px 12px; border-bottom: 1px solid var(--_border); }
+      .sched:last-child { border-bottom: none; }
+      .shead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+      .sid { font-weight: 600; }
+      .senv { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_text); font-weight: 600; }
+      .sstatus { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; color: var(--_muted); }
+      .sstatus.running, .sstatus.suspended, .sstatus.pending { color: var(--arazzo-status-suspended, #b45309); }
+      .sstatus.cancelled, .sstatus.faulted { color: var(--arazzo-status-faulted, #b3261e); }
+      .sgrow { flex: 1; }
+      .actions { display: inline-flex; gap: 6px; }
+      .smeta { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 5px; color: var(--_muted); font-size: 12px; }
+      .smeta b { color: var(--_text); font-weight: 600; }
+      .smeta code, .cron { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    `, PAGER_CSS, `
+      .pager { flex: none; }
+      .skl { height: 16px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 11px 12px; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+      /* create modal */
+      .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 50; }
+      .modal { width: min(560px, 92vw); max-height: 90vh; overflow: auto; background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+      .modal .mhead { padding: 12px 14px; border-bottom: 1px solid var(--_border); font-weight: 700; }
+      .modal .mbody { padding: 14px; display: grid; gap: 10px; }
+      .modal .mfoot { padding: 12px 14px; border-top: 1px solid var(--_border); display: flex; justify-content: flex-end; gap: 8px; }
+      .field { display: grid; gap: 3px; }
+      .field label { font-size: 12px; color: var(--_muted); font-weight: 600; }
+      .field input[type=text], .field input[type=number], .field textarea { font: inherit; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_surface); color: var(--_text); }
+      .field textarea { min-height: 64px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+      .field arazzo-text-editor.json-ed { display: block; height: 120px; min-height: 0; }
+      .row2 { display: grid; grid-template-columns: 1fr 120px; gap: 10px; }
+      .row3 { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+      .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+      .hint { font-size: 12px; padding: 7px 9px; border-radius: 6px; border: 1px solid var(--_border); }
+      .hint.ok { color: var(--arazzo-status-completed, #1a7f37); border-color: currentColor; }
+      .hint.warn { color: var(--arazzo-status-suspended, #b45309); border-color: currentColor; }
+      .modal .merror { margin: 0 14px; color: var(--arazzo-status-faulted, #b3261e); font-size: 13px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .panel { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        .head { flex: none; padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
-        .head .title { font-weight: 700; }
-        .head .grow { flex: 1; }
-        .flash { flex: none; margin: 10px 12px 0; font-size: 13px; padding: 8px 10px; border-radius: var(--_radius); border: 1px solid var(--_border); }
-        .flash.ok { color: var(--arazzo-status-completed, #1a7f37); border-color: currentColor; }
-        .flash.err { color: var(--arazzo-status-faulted, #b3261e); border-color: currentColor; }
-        .err { flex: none; margin: 10px 12px; }
-        .list { display: grid; flex: 1; min-height: 0; overflow: auto; }
-        .sched { padding: 11px 12px; border-bottom: 1px solid var(--_border); }
-        .sched:last-child { border-bottom: none; }
-        .shead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-        .sid { font-weight: 600; }
-        .senv { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_text); font-weight: 600; }
-        .sstatus { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; color: var(--_muted); }
-        .sstatus.running, .sstatus.suspended, .sstatus.pending { color: var(--arazzo-status-suspended, #b45309); }
-        .sstatus.cancelled, .sstatus.faulted { color: var(--arazzo-status-faulted, #b3261e); }
-        .sgrow { flex: 1; }
-        .actions { display: inline-flex; gap: 6px; }
-        .smeta { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 5px; color: var(--_muted); font-size: 12px; }
-        .smeta b { color: var(--_text); font-weight: 600; }
-        .smeta code, .cron { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-        ${PAGER_CSS}
-        .pager { flex: none; }
-        .skl { height: 16px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 11px 12px; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-        /* create modal */
-        .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 50; }
-        .modal { width: min(560px, 92vw); max-height: 90vh; overflow: auto; background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
-        .modal .mhead { padding: 12px 14px; border-bottom: 1px solid var(--_border); font-weight: 700; }
-        .modal .mbody { padding: 14px; display: grid; gap: 10px; }
-        .modal .mfoot { padding: 12px 14px; border-top: 1px solid var(--_border); display: flex; justify-content: flex-end; gap: 8px; }
-        .field { display: grid; gap: 3px; }
-        .field label { font-size: 12px; color: var(--_muted); font-weight: 600; }
-        .field input[type=text], .field input[type=number], .field textarea { font: inherit; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_surface); color: var(--_text); }
-        .field textarea { min-height: 64px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-        .field arazzo-text-editor.json-ed { display: block; height: 120px; min-height: 0; }
-        .row2 { display: grid; grid-template-columns: 1fr 120px; gap: 10px; }
-        .row3 { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
-        .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
-        .hint { font-size: 12px; padding: 7px 9px; border-radius: 6px; border: 1px solid var(--_border); }
-        .hint.ok { color: var(--arazzo-status-completed, #1a7f37); border-color: currentColor; }
-        .hint.warn { color: var(--arazzo-status-suspended, #b45309); border-color: currentColor; }
-        .modal .merror { margin: 0 14px; color: var(--arazzo-status-faulted, #b3261e); font-size: 13px; }
-      </style>
       <div class="panel" part="panel">
         <div class="head">
           <span class="title">Schedules</span>

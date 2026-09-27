@@ -14,7 +14,7 @@
 // When the base workflow has more than one version, the header also offers "Compare with version…", which opens
 // the shared read-only <arazzo-workflow-compare> dialog on two versions' documents (visual-diff design §9.11).
 
-import { actorLabel, ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, define } from './base.js';
+import { actorLabel, ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, define, toneCss } from './base.js';
 import './tag-editor.js';
 import './administrators-panel.js';
 import './access-request-dialog.js';
@@ -41,6 +41,8 @@ const CRED_STATUS = {
   expiringSoon: { label: 'expiring', color: 'var(--arazzo-status-suspended, #b07d18)' },
   expired: { label: 'expired', color: 'var(--arazzo-status-faulted, #d4351c)' },
 };
+
+const CRED_TONES = toneCss('.bind .cred-badge', CRED_STATUS, 'var(--_muted)');
 
 const STATUS_COLOR = {
   Active: 'var(--arazzo-status-completed, #2a8a4a)',
@@ -171,84 +173,87 @@ class ArazzoCatalogDetail extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      /* overflow visible so the embedded administrators-panel's grantee-picker dropdown isn't clipped by the card. */
+      .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); }
+      /* Sticky header: stays put while the body/security sections scroll under it (.detail-pane is the scroll container).
+         The panel stays overflow:visible so the source credential / grantee popovers aren't clipped. */
+      header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; position: sticky; top: 0; z-index: 5; }
+      header .wf { font-weight: 700; font-size: 15px; }
+      header .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--_muted); }
+      header .vswitch { font-size: 12px; color: var(--_muted); display: inline-flex; gap: 5px; align-items: center; }
+      header .vswitch select { font: inherit; font-size: 12px; padding: 3px 22px 3px 6px; border: 1px solid var(--_border); border-radius: 6px; background-color: var(--_bg); color: var(--_text); background-position: right 6px center; background-size: 9px; }
+      header .grow { flex: 1; }
+      header .close { font-size: 16px; line-height: 1; }
+      .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
+      .evd { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
+      .evd-ok { background: var(--arazzo-status-completed, #2a8a4a); }
+      .evd-bad { background: var(--arazzo-status-faulted, #d4351c); }
+      dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; }
+      dt { color: var(--_muted); font-size: 12px; }
+      dd { margin: 0; font-size: 13px; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
+      .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
+      .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+      .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); }
+      .block { margin: 0 14px 14px; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); }
+      .block h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
+      .sources { display: flex; flex-direction: column; gap: 6px; }
+      .src { display: grid; gap: 6px; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--_border); }
+      .src:last-child { border-bottom: none; padding-bottom: 0; }
+      .src:first-child { padding-top: 0; }
+      .src-head { display: flex; align-items: center; gap: 8px; }
+      .src .name { font-weight: 600; }
+      .src .type { font-size: 11px; color: var(--_muted); border: 1px solid var(--_border); border-radius: 999px; padding: 0 6px; }
+      .src .grow { flex: 1; }
+      .src-binds { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+      .src-binds .muted { font-size: 12px; }
+      .bind { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; padding: 3px 8px; border: 1px solid var(--_border); border-radius: 999px; background: var(--_bg); color: var(--_text); cursor: pointer; }
+      .bind:hover { background: var(--_surface); }
+      .bind .cred-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 0 6px; border-radius: 999px; color: #fff; }
+      /* The source-head "＋" credential menu. The trigger is a plain .ghost button (no size override) so it matches
+         the Download button's height; the menu is a small absolutely-positioned popover of New / Copy-<env> actions. */
+      .src-menu-wrap { position: relative; display: inline-flex; }
+      .setup-menu { font-weight: 700; }
+      .cred-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; min-width: 168px; display: flex; flex-direction: column; padding: 4px; gap: 2px; background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
+      .cred-menu .menu-item { text-align: left; white-space: nowrap; border: 1px solid transparent; background: transparent; padding: 6px 10px; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; }
+      .cred-menu .menu-item:hover { background: var(--_surface); border-color: transparent; }
+      .downloads { display: flex; gap: 8px; flex-wrap: wrap; }
+      .avail-body { display: grid; gap: 8px; }
+      .avail-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; }
+      .avail-env { color: var(--arazzo-status-completed, #2a8a4a); border-color: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 50%, var(--_border)); }
+      .avail-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      /* The serverless section (ADR 0055): builds + deployments per (environment, runtime target). */
+      .srv-body { display: grid; gap: 10px; }
+      .srv-group h5 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
+      .srv-row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--_border); }
+      .srv-row:last-child { border-bottom: none; padding-bottom: 0; }
+      .srv-target { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+      .srv-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; background: var(--_muted); }
+      .srv-ok { background: var(--arazzo-status-completed, #2a8a4a); }
+      .srv-bad { background: var(--arazzo-status-faulted, #d4351c); }
+      .srv-run { background: var(--arazzo-status-running, #b88207); }
+      .srv-url { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .srv-fail { font-size: 12px; color: var(--arazzo-status-faulted, #d4351c); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .srv-grow { flex: 1; }
+      .srv-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--_border); }
+      .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+      .pad { padding: 14px; }
+      .verbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--_border); }
+      .verbar:not(:has(.vswitch:not([hidden]))) { display: none; }
+      .security { padding: 0 14px 14px; }
+      .security h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
+      .serverless { margin: 0 14px 14px; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); }
+      .serverless h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
+      .sectag-actions { margin-top: 10px; display: flex; gap: 8px; }
+      .skl.skl-id { display: inline-block; width: 140px; }
+      .skl.skl-60 { width: 60%; }
+      .skl.skl-40 { width: 40%; }
+      .avail-matrix { margin-top: 10px; }
+    `, CRED_TONES);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        /* overflow visible so the embedded administrators-panel's grantee-picker dropdown isn't clipped by the card. */
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); }
-        /* Sticky header: stays put while the body/security sections scroll under it (.detail-pane is the scroll container).
-           The panel stays overflow:visible so the source credential / grantee popovers aren't clipped. */
-        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; position: sticky; top: 0; z-index: 5; }
-        header .wf { font-weight: 700; font-size: 15px; }
-        header .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--_muted); }
-        header .vswitch { font-size: 12px; color: var(--_muted); display: inline-flex; gap: 5px; align-items: center; }
-        header .vswitch select { font: inherit; font-size: 12px; padding: 3px 22px 3px 6px; border: 1px solid var(--_border); border-radius: 6px; background-color: var(--_bg); color: var(--_text); background-position: right 6px center; background-size: 9px; }
-        header .grow { flex: 1; }
-        header .close { font-size: 16px; line-height: 1; }
-        .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
-        .evd { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
-        .evd-ok { background: var(--arazzo-status-completed, #2a8a4a); }
-        .evd-bad { background: var(--arazzo-status-faulted, #d4351c); }
-        dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; }
-        dt { color: var(--_muted); font-size: 12px; }
-        dd { margin: 0; font-size: 13px; }
-        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
-        .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
-        .tags { display: flex; gap: 4px; flex-wrap: wrap; }
-        .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); }
-        .block { margin: 0 14px 14px; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); }
-        .block h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
-        .sources { display: flex; flex-direction: column; gap: 6px; }
-        .src { display: grid; gap: 6px; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--_border); }
-        .src:last-child { border-bottom: none; padding-bottom: 0; }
-        .src:first-child { padding-top: 0; }
-        .src-head { display: flex; align-items: center; gap: 8px; }
-        .src .name { font-weight: 600; }
-        .src .type { font-size: 11px; color: var(--_muted); border: 1px solid var(--_border); border-radius: 999px; padding: 0 6px; }
-        .src .grow { flex: 1; }
-        .src-binds { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-        .src-binds .muted { font-size: 12px; }
-        .bind { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; padding: 3px 8px; border: 1px solid var(--_border); border-radius: 999px; background: var(--_bg); color: var(--_text); cursor: pointer; }
-        .bind:hover { background: var(--_surface); }
-        .bind .cred-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 0 6px; border-radius: 999px; color: #fff; }
-        /* The source-head "＋" credential menu. The trigger is a plain .ghost button (no size override) so it matches
-           the Download button's height; the menu is a small absolutely-positioned popover of New / Copy-<env> actions. */
-        .src-menu-wrap { position: relative; display: inline-flex; }
-        .setup-menu { font-weight: 700; }
-        .cred-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; min-width: 168px; display: flex; flex-direction: column; padding: 4px; gap: 2px; background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
-        .cred-menu .menu-item { text-align: left; white-space: nowrap; border: 1px solid transparent; background: transparent; padding: 6px 10px; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; }
-        .cred-menu .menu-item:hover { background: var(--_surface); border-color: transparent; }
-        .downloads { display: flex; gap: 8px; flex-wrap: wrap; }
-        .avail-body { display: grid; gap: 8px; }
-        .avail-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; }
-        .avail-env { color: var(--arazzo-status-completed, #2a8a4a); border-color: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 50%, var(--_border)); }
-        .avail-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-        /* The serverless section (ADR 0055): builds + deployments per (environment, runtime target). */
-        .srv-body { display: grid; gap: 10px; }
-        .srv-group h5 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
-        .srv-row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--_border); }
-        .srv-row:last-child { border-bottom: none; padding-bottom: 0; }
-        .srv-target { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-        .srv-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; background: var(--_muted); }
-        .srv-ok { background: var(--arazzo-status-completed, #2a8a4a); }
-        .srv-bad { background: var(--arazzo-status-faulted, #d4351c); }
-        .srv-run { background: var(--arazzo-status-running, #b88207); }
-        .srv-url { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .srv-fail { font-size: 12px; color: var(--arazzo-status-faulted, #d4351c); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .srv-grow { flex: 1; }
-        .srv-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-        .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--_border); }
-        .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-        .pad { padding: 14px; }
-        .verbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--_border); }
-        .verbar:not(:has(.vswitch:not([hidden]))) { display: none; }
-        .security { padding: 0 14px 14px; }
-        .security h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
-        .serverless { margin: 0 14px 14px; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); }
-        .serverless h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
-        .sectag-actions { margin-top: 10px; display: flex; gap: 8px; }
-      </style>
       <div class="panel" part="panel">
         <header part="header">
           <span class="badge" part="status"></span>
@@ -371,8 +376,8 @@ class ArazzoCatalogDetail extends ArazzoElement {
 
     if (this._loading && !this._version) {
       badge.style.display = 'none';
-      wf.innerHTML = '<span class="skl" style="width:140px;display:inline-block"></span>';
-      body.innerHTML = `<div class="pad"><div class="skl" style="width:60%"></div><br><div class="skl" style="width:40%"></div></div>`;
+      wf.innerHTML = '<span class="skl skl-id"></span>';
+      body.innerHTML = `<div class="pad"><div class="skl skl-60"></div><br><div class="skl skl-40"></div></div>`;
       return;
     }
 
@@ -539,7 +544,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
       }
       host.innerHTML = '<span class="muted">Bindings:</span>' + binds.map((b) => {
         const st = CRED_STATUS[b.credentialStatus] || { label: b.credentialStatus || '—', color: 'var(--_muted)' };
-        return `<button class="bind" type="button" data-key="${escapeHtml(`${b.sourceName}@${b.environment}`)}" title="View / rotate ${escapeHtml(b.environment)}">${escapeHtml(b.environment)} <span class="cred-badge" style="background:${st.color}">${escapeHtml(st.label)}</span></button>`;
+        return `<button class="bind" type="button" data-key="${escapeHtml(`${b.sourceName}@${b.environment}`)}" title="View / rotate ${escapeHtml(b.environment)}">${escapeHtml(b.environment)} <span class="cred-badge" data-tone="${escapeHtml(b.credentialStatus || '')}">${escapeHtml(st.label)}</span></button>`;
       }).join('');
       host.querySelectorAll('.bind').forEach((btn) => btn.addEventListener('click', () => {
         const b = binds.find((x) => `${x.sourceName}@${x.environment}` === btn.dataset.key);
@@ -602,7 +607,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
   renderAvailability() {
     return `<div class="block availability-block" part="availability"><h4>Availability</h4>
       <div class="avail-body"><span class="muted">Loading…</span></div>
-      <arazzo-availability-matrix class="avail-matrix" style="margin-top:10px;"></arazzo-availability-matrix>
+      <arazzo-availability-matrix class="avail-matrix"></arazzo-availability-matrix>
     </div>`;
   }
 

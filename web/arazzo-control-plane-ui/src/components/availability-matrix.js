@@ -17,7 +17,7 @@
 // withdraw is environment-administrator-gated server-side (a `403`/`409` is surfaced); the request path needs no scope.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
 import './availability-request-dialog.js';
 
 // A binding is usable by a workflow when it is unscoped (shared) or its usage names exactly this workflow — the
@@ -231,32 +231,31 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
+      .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
+      .head .title { font-weight: 700; }
+      .head .grow { flex: 1; }
+      .err { margin: 10px 12px; }
+      .scroll { overflow-x: auto; }
+      table { border-collapse: collapse; width: 100%; font-size: 13px; }
+      th, td { border-bottom: 1px solid var(--_border); padding: 8px 10px; text-align: left; vertical-align: top; }
+      thead th { background: var(--_surface); font-weight: 600; position: sticky; top: 0; }
+      th.env { white-space: nowrap; }
+      td.ver { white-space: nowrap; font-weight: 600; }
+      td.ver .vstatus { display: block; font-weight: 400; font-size: 11px; color: var(--_muted); }
+      tr.selected td { background: color-mix(in srgb, var(--_accent) 7%, transparent); }
+      .cell { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; min-width: 120px; }
+      .badge { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--_border); }
+      .badge.available { color: #1a7f37; border-color: currentColor; }
+      .badge.notready { color: var(--_muted); }
+      .cell .why { font-size: 10.5px; color: var(--_muted); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .cell button { font-size: 12px; padding: 3px 9px; }
+      .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
-        .head .title { font-weight: 700; }
-        .head .grow { flex: 1; }
-        .err { margin: 10px 12px; }
-        .scroll { overflow-x: auto; }
-        table { border-collapse: collapse; width: 100%; font-size: 13px; }
-        th, td { border-bottom: 1px solid var(--_border); padding: 8px 10px; text-align: left; vertical-align: top; }
-        thead th { background: var(--_surface); font-weight: 600; position: sticky; top: 0; }
-        th.env { white-space: nowrap; }
-        td.ver { white-space: nowrap; font-weight: 600; }
-        td.ver .vstatus { display: block; font-weight: 400; font-size: 11px; color: var(--_muted); }
-        tr.selected td { background: color-mix(in srgb, var(--_accent) 7%, transparent); }
-        .cell { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; min-width: 120px; }
-        .badge { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--_border); }
-        .badge.available { color: #1a7f37; border-color: currentColor; }
-        .badge.notready { color: var(--_muted); }
-        .cell .why { font-size: 10.5px; color: var(--_muted); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .cell button { font-size: 12px; padding: 3px 9px; }
-        .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-      </style>
       <div class="panel" part="panel">
         <div class="head"><span class="title">Promotion matrix</span><span class="grow"></span><button class="refresh ghost" type="button" title="Refresh">↻</button></div>
         <div class="err"></div>

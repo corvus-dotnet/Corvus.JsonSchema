@@ -16,7 +16,7 @@
 // the editor then keeps a LOCAL CM history so Ctrl-Z undoes typing, instead of delegating undo to the
 // host. The value/text-changed/setProblem contract is unchanged.
 
-import { ArazzoElement, SHARED_CSS, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, define } from './base.js';
 import { ArazzoExpressionInput } from './expression-input.js';
 
 const CHANGE_DEBOUNCE_MS = 400;
@@ -108,24 +108,23 @@ class ArazzoTextEditor extends ArazzoElement {
     this._built = true;
     const initial = this._pending ?? '';
     delete this._pending;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; height: 100%; min-height: 320px; }
+      .ted { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+      textarea, .cm-editor {
+        flex: 1; min-height: 0; width: 100%; box-sizing: border-box;
+        font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        border: 1px solid var(--_border); border-radius: var(--_radius);
+        background-color: var(--_bg); color: var(--_text);
+      }
+      textarea { padding: 10px; resize: none; }
+      .cm-editor { overflow: hidden; }
+      .cm-editor .cm-scroller { overflow: auto; }
+      .cm-editor.cm-focused { outline: 2px solid var(--_accent); outline-offset: 1px; }
+      .ted.invalid textarea, .ted.invalid .cm-editor { border-color: var(--_danger); }
+      .err { font-size: 11px; color: var(--_danger); padding-top: 4px; flex: none; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; height: 100%; min-height: 320px; }
-        .ted { height: 100%; display: flex; flex-direction: column; min-height: 0; }
-        textarea, .cm-editor {
-          flex: 1; min-height: 0; width: 100%; box-sizing: border-box;
-          font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
-          border: 1px solid var(--_border); border-radius: var(--_radius);
-          background-color: var(--_bg); color: var(--_text);
-        }
-        textarea { padding: 10px; resize: none; }
-        .cm-editor { overflow: hidden; }
-        .cm-editor .cm-scroller { overflow: auto; }
-        .cm-editor.cm-focused { outline: 2px solid var(--_accent); outline-offset: 1px; }
-        .ted.invalid textarea, .ted.invalid .cm-editor { border-color: var(--_danger); }
-        .err { font-size: 11px; color: var(--_danger); padding-top: 4px; flex: none; }
-      </style>
       <div class="ted" part="editor">
         <textarea spellcheck="false"></textarea>
         <div class="err" hidden part="error"></div>

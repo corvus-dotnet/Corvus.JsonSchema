@@ -13,7 +13,7 @@
 // Methods    : refresh()
 // Events     : run-trace {scenario, trace}, scenarios-changed {count}, error {problem}
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import './scenario-editor.js';
 
 class ArazzoScenarioPanel extends ArazzoElement {
@@ -65,26 +65,25 @@ class ArazzoScenarioPanel extends ArazzoElement {
 
   /** @private */
   render() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; font-size: 12px; }
+      .bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--_border); }
+      .bar .chip { font-weight: 600; }
+      .bar button { font-size: 12px; padding: 2px 10px; }
+      .empty-note { padding: 10px; color: var(--_muted); }
+      .sc { border-bottom: 1px solid var(--_border); }
+      .sc-head { display: flex; align-items: center; gap: 6px; padding: 6px 10px; }
+      .sc-head .name { font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+      .sc-head button { font-size: 11px; padding: 1px 7px; }
+      .verdicts { padding: 0 10px 8px 22px; display: grid; gap: 2px; }
+      .verdicts button { text-align: left; border: none; background: none; color: inherit; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; cursor: pointer; padding: 0; }
+      .ok { color: var(--arazzo-status-completed, #2a8a4a); }
+      .bad { color: var(--arazzo-status-faulted, #d4351c); }
+      textarea { width: calc(100% - 20px); margin: 0 10px 8px; box-sizing: border-box; font: 11px ui-monospace, Menlo, monospace; min-height: 130px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; }
+      textarea.invalid { border-color: var(--_danger); }
+      .desc { color: var(--_muted); padding: 0 10px 6px 22px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; font-size: 12px; }
-        .bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--_border); }
-        .bar .chip { font-weight: 600; }
-        .bar button { font-size: 12px; padding: 2px 10px; }
-        .empty-note { padding: 10px; color: var(--_muted); }
-        .sc { border-bottom: 1px solid var(--_border); }
-        .sc-head { display: flex; align-items: center; gap: 6px; padding: 6px 10px; }
-        .sc-head .name { font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; flex: 1; min-width: 0; overflow-wrap: anywhere; }
-        .sc-head button { font-size: 11px; padding: 1px 7px; }
-        .verdicts { padding: 0 10px 8px 22px; display: grid; gap: 2px; }
-        .verdicts button { text-align: left; border: none; background: none; color: inherit; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; cursor: pointer; padding: 0; }
-        .ok { color: var(--arazzo-status-completed, #2a8a4a); }
-        .bad { color: var(--arazzo-status-faulted, #d4351c); }
-        textarea { width: calc(100% - 20px); margin: 0 10px 8px; box-sizing: border-box; font: 11px ui-monospace, Menlo, monospace; min-height: 130px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; }
-        textarea.invalid { border-color: var(--_danger); }
-        .desc { color: var(--_muted); padding: 0 10px 6px 22px; }
-      </style>
       <div class="bar" part="controls">
         <span class="chip">${this._scenarios.length} scenario${this._scenarios.length === 1 ? '' : 's'}</span>
         <button class="runall" type="button" ${this._scenarios.length && !this._busy ? '' : 'disabled'} title="Run every scenario as a suite">▶ Run all</button>

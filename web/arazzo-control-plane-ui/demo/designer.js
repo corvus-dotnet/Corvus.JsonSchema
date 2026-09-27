@@ -24,6 +24,7 @@ import '/ui/src/components/resume-dialog.js';
 import '/ui/src/components/scenario-panel.js';
 import '/ui/src/components/auth-status.js';
 import { ArazzoControlPlaneClient } from '/ui/src/arazzo-client.js';
+import { escapeHtml } from '/ui/src/components/base.js';
 import { createMockControlPlane } from '/ui/demo/mock-api.js';
 
 // By default the designer runs standalone against the in-memory mock control plane. Adding ?live points the SAME
@@ -905,22 +906,22 @@ function showSelection(sel) {
       const refString = `$components.${kindKey}.${name}`;
 
       const view = document.createElement('div');
-      view.style.cssText = 'display:grid; gap:8px; padding:10px; min-width:0;';
+      view.className = 'ref-view';
       view.innerHTML = `
-        <div style="font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap:anywhere;">↺ ${refString} · shared</div>
-        <div style="display:grid; grid-template-columns:auto minmax(0,1fr); gap:4px 10px; font-size:12px;">
-          <span style="color:var(--arazzo-muted,#6b7280)">type</span><span>${resolved.type ?? ''}${resolved.stepId ? ` → ${resolved.stepId}` : ''}</span>
-          ${(resolved.criteria ?? []).map((c) => `<span style="color:var(--arazzo-muted,#6b7280)">when</span><span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; overflow-wrap:anywhere;">${c.condition ?? ''}</span>`).join('')}
-          ${resolved.criteria?.length ? '' : '<span style="color:var(--arazzo-muted,#6b7280)">when</span><span>always (catch-all)</span>'}
+        <div class="ref-name">↺ ${escapeHtml(refString)} · shared</div>
+        <div class="ref-grid">
+          <span class="ref-key">type</span><span>${escapeHtml(resolved.type ?? '')}${resolved.stepId ? ` → ${escapeHtml(resolved.stepId)}` : ''}</span>
+          ${(resolved.criteria ?? []).map((c) => `<span class="ref-key">when</span><span class="ref-condition">${escapeHtml(c.condition ?? '')}</span>`).join('')}
+          ${resolved.criteria?.length ? '' : '<span class="ref-key">when</span><span>always (catch-all)</span>'}
         </div>
-        <div style="display:flex; gap:6px;">
-          <button class="re-edit ghost" type="button" style="font-size:12px;">✎ Edit…</button>
+        <div class="ref-actions">
+          <button class="re-edit ghost" type="button">✎ Edit…</button>
         </div>
-        <div class="re-menu" hidden style="display:flex; gap:6px; padding-left:14px;">
-          <button class="re-all ghost" type="button" style="font-size:11px;" title="Edit the SHARED library action — every reference in the document follows">for all instances</button>
-          <button class="re-one ghost" type="button" style="font-size:11px;" title="Copy the shared action inline on this step so it can diverge — other references keep the shared one">just this instance</button>
+        <div class="re-menu" hidden>
+          <button class="re-all ghost" type="button" title="Edit the SHARED library action — every reference in the document follows">for all instances</button>
+          <button class="re-one ghost" type="button" title="Copy the shared action inline on this step so it can diverge — other references keep the shared one">just this instance</button>
         </div>
-        <div class="re-editor" hidden style="display:grid; gap:6px;"></div>`;
+        <div class="re-editor" hidden></div>`;
       view.querySelector('.re-menu').style.display = 'none';
       const menu = view.querySelector('.re-menu');
       view.querySelector('.re-edit').addEventListener('click', () => {

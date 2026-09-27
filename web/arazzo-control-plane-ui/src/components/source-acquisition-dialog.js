@@ -30,7 +30,7 @@
 // stored) or a workload credential binding (the filterable §13 picker) applies; otherwise the
 // fetch is anonymous. The effective mode is always named under the pickers.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import './github-connect.js';
 import './provider-connect.js';
 import './filter-input.js';
@@ -110,39 +110,38 @@ class ArazzoSourceAcquisitionDialog extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   render() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: inherit; padding: 0;
+               width: min(560px, 92vw); max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
+      dialog:not([open]) { display: none; }
+      dialog::backdrop { background: rgb(0 0 0 / 0.35); }
+      .head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--_border); }
+      .head h2 { margin: 0; font-size: 14px; }
+      .body { padding: 12px 14px; display: grid; gap: 10px; overflow-y: auto; overflow-x: hidden; flex: 1; min-height: 0; }
+      .body > * { min-width: 0; }
+      input, select, textarea, arazzo-filter-input { width: 100%; min-width: 0; box-sizing: border-box; }
+      label { display: grid; gap: 4px; font-size: 12px; color: var(--_muted); }
+      input, select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--arazzo-text, inherit); }
+      .tabs { display: flex; gap: 4px; }
+      .tabs button { font-size: 12px; padding: 4px 12px; opacity: 0.7; }
+      .tabs button.active { opacity: 1; border-color: var(--_accent); font-weight: 600; }
+      .mode[hidden] { display: none; }
+      .mode { display: grid; gap: 10px; }
+      .cred { display: grid; gap: 4px; }
+      .cred .hint { font-size: 11px; color: var(--_muted); }
+      .session-note { font-size: 11px; color: var(--_muted); border: 1px dashed var(--_border); border-radius: 6px; padding: 6px 8px; }
+      .link { font: inherit; font-size: 11px; padding: 0; background: none; border: none; color: var(--_accent); text-decoration: underline; cursor: pointer; }
+      textarea { font: inherit; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--arazzo-text, inherit); resize: vertical; }
+      .preview { font-size: 12px; border: 1px solid var(--_border); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }
+      .crumb { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--_muted); }
+      .crumb button { font-size: 11px; padding: 0 8px; }
+      .gh-tree { display: block; }
+      .gh-repo-label[hidden], .gh-branch-label[hidden], .gh-browser[hidden] { display: none; }
+      .preview .digest { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; overflow-wrap: anywhere; color: var(--_muted); }
+      .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
+      .error-banner[hidden] { display: none; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        dialog { border: 1px solid var(--_border); border-radius: 10px; background: var(--_bg); color: inherit; padding: 0;
-                 width: min(560px, 92vw); max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
-        dialog:not([open]) { display: none; }
-        dialog::backdrop { background: rgb(0 0 0 / 0.35); }
-        .head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--_border); }
-        .head h2 { margin: 0; font-size: 14px; }
-        .body { padding: 12px 14px; display: grid; gap: 10px; overflow-y: auto; overflow-x: hidden; flex: 1; min-height: 0; }
-        .body > * { min-width: 0; }
-        input, select, textarea, arazzo-filter-input { width: 100%; min-width: 0; box-sizing: border-box; }
-        label { display: grid; gap: 4px; font-size: 12px; color: var(--_muted); }
-        input, select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--arazzo-text, inherit); }
-        .tabs { display: flex; gap: 4px; }
-        .tabs button { font-size: 12px; padding: 4px 12px; opacity: 0.7; }
-        .tabs button.active { opacity: 1; border-color: var(--_accent); font-weight: 600; }
-        .mode[hidden] { display: none; }
-        .mode { display: grid; gap: 10px; }
-        .cred { display: grid; gap: 4px; }
-        .cred .hint { font-size: 11px; color: var(--_muted); }
-        .session-note { font-size: 11px; color: var(--_muted); border: 1px dashed var(--_border); border-radius: 6px; padding: 6px 8px; }
-        .link { font: inherit; font-size: 11px; padding: 0; background: none; border: none; color: var(--_accent); text-decoration: underline; cursor: pointer; }
-        textarea { font: inherit; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--arazzo-text, inherit); resize: vertical; }
-        .preview { font-size: 12px; border: 1px solid var(--_border); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }
-        .crumb { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--_muted); }
-        .crumb button { font-size: 11px; padding: 0 8px; }
-        .gh-tree { display: block; }
-        .gh-repo-label[hidden], .gh-branch-label[hidden], .gh-browser[hidden] { display: none; }
-        .preview .digest { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; overflow-wrap: anywhere; color: var(--_muted); }
-        .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
-        .error-banner[hidden] { display: none; }
-      </style>
       <dialog part="dialog">
         <div class="head"><h2>${this._target === 'register' ? 'Register a source' : 'Attach a source'}</h2><button class="x" type="button" title="Close">✕</button></div>
         <div class="body">

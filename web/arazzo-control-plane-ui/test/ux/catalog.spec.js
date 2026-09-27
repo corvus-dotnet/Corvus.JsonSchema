@@ -37,7 +37,7 @@ function workflowUpload(workflowId, sourceDescriptions) {
 }
 
 test('the free-text search narrows the catalog list to the matching workflow id', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Catalog');
   await expect(rows(page).first()).toBeVisible();
   const before = await rows(page).count();
@@ -56,7 +56,7 @@ test('the free-text search narrows the catalog list to the matching workflow id'
 });
 
 test('the detail header switches between the base workflow\'s versions; a single-version base hides the switcher', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   const detail = await openVersionDetail(page, 'nightly-reconcile');
 
   // nightly-reconcile has three versions; the switcher lists them all, newest first, with status.
@@ -79,7 +79,7 @@ test('the detail header switches between the base workflow\'s versions; a single
 });
 
 test('the compare-with picker offers only the sibling versions, never the version being viewed', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   const detail = await openVersionDetail(page, 'nightly-reconcile');
 
   // Viewing v3 (the representative): the picker holds the placeholder plus exactly v2 and v1.
@@ -100,7 +100,7 @@ test('the compare-with picker offers only the sibling versions, never the versio
 });
 
 test('the detail shows the content hash and offers every download: package, workflow, and each source document', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   const detail = await openVersionDetail(page, 'onboard-customer');
 
   // The seeded hash is the base+version padded to 64 chars, with a copy affordance beside it.
@@ -121,7 +121,7 @@ test('the detail shows the content hash and offers every download: package, work
 });
 
 test('the evidence badge attests the publish suite: green when all passed, red on a failure, absent without evidence', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   const detail = await openVersionDetail(page, 'nightly-reconcile');
 
   // nightly-reconcile v3 was published with a fully green attested suite.
@@ -145,7 +145,7 @@ test('the evidence badge attests the publish suite: green when all passed, red o
 });
 
 test('management tags edit through the tag editor and the save round-trips to the server', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   const detail = await openVersionDetail(page, 'onboard-customer');
 
   // With catalog:write the section is a live key=value editor, seeded from the version's tags.
@@ -167,7 +167,7 @@ test('management tags edit through the tag editor and the save round-trips to th
 });
 
 test('a management tag with the reserved sys: prefix is refused with a problem banner', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   const detail = await openVersionDetail(page, 'onboard-customer');
 
   const editor = detail.locator('#sectag-editor');
@@ -185,7 +185,7 @@ test('a management tag with the reserved sys: prefix is refused with a problem b
 });
 
 test('the embedded promotion matrix scopes to this version\'s row across every environment, and withdraw returns the cell to promotable', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   const detail = await openVersionDetail(page, 'nightly-reconcile');
   const matrix = detail.locator('arazzo-availability-matrix');
   await expect(matrix).toBeVisible();
@@ -216,7 +216,7 @@ test('the embedded promotion matrix scopes to this version\'s row across every e
 });
 
 test('the operator\'s request-promotion dialog offers only the environments where the version is ready', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await page.locator('#persona').selectOption('operator');
   await page.getByRole('tab', { name: 'Catalog' }).click();
@@ -248,7 +248,7 @@ test('the operator\'s request-promotion dialog offers only the environments wher
 });
 
 test('the add-workflow wizard hard-gates on readiness: sources credentialed only in different environments refuse to continue', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Catalog');
   await page.locator('arazzo-catalog .add-btn').click();
   const dlg = page.locator('arazzo-catalog-add-dialog');
@@ -277,7 +277,7 @@ test('the add-workflow wizard hard-gates on readiness: sources credentialed only
 });
 
 test('the wizard\'s administrators step names additional admins through the grantee picker, and review lists them', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Catalog');
   await page.locator('arazzo-catalog .add-btn').click();
   const dlg = page.locator('arazzo-catalog-add-dialog');
@@ -313,7 +313,7 @@ test('the wizard\'s administrators step names additional admins through the gran
 });
 
 test('the detail\'s administrators panel lists the §15 set and adds a directory grantee; a partial identity warns first', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   const detail = await openVersionDetail(page, 'onboard-customer');
   const panel = detail.locator('arazzo-administrators-panel');
   await expect(panel).toBeVisible();

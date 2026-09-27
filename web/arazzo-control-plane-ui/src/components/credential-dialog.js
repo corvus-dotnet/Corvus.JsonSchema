@@ -22,7 +22,7 @@
 // locator shape differs per store) that compose the canonical `secretRef` and preview exactly what is stored,
 // with a "Raw reference…" escape hatch for a value that does not fit the guided shape.
 
-import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, define } from './base.js';
 import './grantee-picker.js';
 import './tag-editor.js';
 import './environment-input.js';
@@ -731,57 +731,55 @@ class ArazzoCredentialDialog extends ArazzoElement {
 
   render() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, GRANTEE_CHIP_CSS, `
+      dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(620px, 94vw); }
+      dialog::backdrop { background: rgba(0,0,0,0.4); }
+      .head { padding: 14px 16px; border-bottom: 1px solid var(--_border); }
+      .title { font-weight: 700; font-size: 15px; }
+      .subhead { color: var(--_muted); font-size: 12px; margin-top: 2px; }
+      .content { padding: 16px; display: grid; gap: 14px; max-height: 64vh; overflow: auto; }
+      fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 12px; margin: 0; display: grid; gap: 10px; }
+      legend { font-size: 12px; font-weight: 600; color: var(--_muted); padding: 0 4px; }
+      label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 4px; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      input[type="text"], input[type="date"], select { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
+      input[readonly], select:disabled { background: var(--_surface); color: var(--_muted); cursor: default; }
+      .cfg-from { font-weight: 400; color: var(--_muted); font-size: 11px; }
+      .authkind-note { font-size: 11px; color: var(--_muted); margin-top: 4px; }
+      .authkind-note:empty { display: none; }
+      .server-note { font-size: 11px; color: var(--_muted); margin-top: 4px; }
+      .server-note:empty { display: none; }
+      .row { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; align-items: center; }
+      .row .rm, .reftop .rm { padding: 4px 10px; }
+      .refrow { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; display: grid; gap: 8px; background: var(--_bg); }
+      .reftop { display: grid; grid-template-columns: 1fr 1.2fr auto; gap: 8px; align-items: center; }
+      .slot-label { font-weight: 600; font-size: 13px; }
+      .slot-label .muted { font-weight: 400; }
+      .reffields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+      .reffield.wide { grid-column: 1 / -1; }
+      .reffield label { margin-bottom: 2px; }
+      .refpreview { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); word-break: break-all; }
+      .refpreview code { background: var(--_surface); padding: 1px 4px; border-radius: 4px; }
+      .refaccess { font-size: 11px; color: var(--_muted); line-height: 1.5; border-left: 2px solid var(--_accent); padding: 4px 0 4px 8px; }
+      .refaccess:empty { display: none; }
+      .refaccess strong { color: var(--_text); }
+      .refaccess code { background: var(--_surface); padding: 1px 4px; border-radius: 4px; word-break: break-all; }
+      .refhint { padding: 8px 2px; }
+      .config-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .config-fields:empty { display: none; }
+      .cfg-field { display: grid; gap: 4px; }
+      .cfg-field label { margin-bottom: 0; }
+      .config-extra { display: grid; gap: 8px; }
+      .config-extra:empty { display: none; }
+      .add { justify-self: start; font-size: 12px; }
+      .ro-label { color: var(--_muted); font-size: 12px; margin-right: 6px; }
+      .usage-mode { display: grid; gap: 4px; margin: 4px 0; }
+      .usage-mode .radio { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--_text); margin: 0; }
+      .usage-hint { font-size: 11px; color: var(--_muted); margin-top: 4px; }
+      .scopes-readonly { display: grid; gap: 4px; font-size: 13px; }
+      .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        ${GRANTEE_CHIP_CSS}
-        dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(620px, 94vw); }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        .head { padding: 14px 16px; border-bottom: 1px solid var(--_border); }
-        .title { font-weight: 700; font-size: 15px; }
-        .subhead { color: var(--_muted); font-size: 12px; margin-top: 2px; }
-        .content { padding: 16px; display: grid; gap: 14px; max-height: 64vh; overflow: auto; }
-        fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 12px; margin: 0; display: grid; gap: 10px; }
-        legend { font-size: 12px; font-weight: 600; color: var(--_muted); padding: 0 4px; }
-        label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 4px; }
-        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        input[type="text"], input[type="date"], select { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
-        input[readonly], select:disabled { background: var(--_surface); color: var(--_muted); cursor: default; }
-        .cfg-from { font-weight: 400; color: var(--_muted); font-size: 11px; }
-        .authkind-note { font-size: 11px; color: var(--_muted); margin-top: 4px; }
-        .authkind-note:empty { display: none; }
-        .server-note { font-size: 11px; color: var(--_muted); margin-top: 4px; }
-        .server-note:empty { display: none; }
-        .row { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; align-items: center; }
-        .row .rm, .reftop .rm { padding: 4px 10px; }
-        .refrow { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; display: grid; gap: 8px; background: var(--_bg); }
-        .reftop { display: grid; grid-template-columns: 1fr 1.2fr auto; gap: 8px; align-items: center; }
-        .slot-label { font-weight: 600; font-size: 13px; }
-        .slot-label .muted { font-weight: 400; }
-        .reffields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
-        .reffield.wide { grid-column: 1 / -1; }
-        .reffield label { margin-bottom: 2px; }
-        .refpreview { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); word-break: break-all; }
-        .refpreview code { background: var(--_surface); padding: 1px 4px; border-radius: 4px; }
-        .refaccess { font-size: 11px; color: var(--_muted); line-height: 1.5; border-left: 2px solid var(--_accent); padding: 4px 0 4px 8px; }
-        .refaccess:empty { display: none; }
-        .refaccess strong { color: var(--_text); }
-        .refaccess code { background: var(--_surface); padding: 1px 4px; border-radius: 4px; word-break: break-all; }
-        .refhint { padding: 8px 2px; }
-        .config-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .config-fields:empty { display: none; }
-        .cfg-field { display: grid; gap: 4px; }
-        .cfg-field label { margin-bottom: 0; }
-        .config-extra { display: grid; gap: 8px; }
-        .config-extra:empty { display: none; }
-        .add { justify-self: start; font-size: 12px; }
-        .ro-label { color: var(--_muted); font-size: 12px; margin-right: 6px; }
-        .usage-mode { display: grid; gap: 4px; margin: 4px 0; }
-        .usage-mode .radio { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--_text); margin: 0; }
-        .usage-hint { font-size: 11px; color: var(--_muted); margin-top: 4px; }
-        .scopes-readonly { display: grid; gap: 4px; font-size: 13px; }
-        .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
-      </style>
       <dialog part="dialog">
         <form method="dialog">
           <div class="head">

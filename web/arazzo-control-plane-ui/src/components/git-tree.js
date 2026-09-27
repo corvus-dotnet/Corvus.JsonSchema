@@ -11,7 +11,7 @@
 // Properties : .loader, .mode, .pickableFile
 // Events     : picked {path, entry} · error {error}
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 
 class ArazzoGitTree extends ArazzoElement {
   constructor() {
@@ -32,26 +32,25 @@ class ArazzoGitTree extends ArazzoElement {
 
   /** @private */
   render() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; font-size: 12px; }
+      .tree { max-height: 240px; overflow: auto; border: 1px solid var(--_border); border-radius: 6px; padding: 4px; }
+      ul { list-style: none; margin: 0; padding-left: 14px; }
+      ul.root { padding-left: 0; }
+      li { min-width: 0; }
+      button.entry { display: flex; gap: 6px; align-items: center; width: 100%; text-align: left; border: none;
+                     background: none; color: inherit; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+                     padding: 2px 4px; cursor: pointer; border-radius: 4px; min-width: 0; }
+      button.entry:hover { background: var(--_surface); }
+      button.entry:disabled { opacity: 0.45; cursor: default; }
+      button.entry .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .twist { width: 1em; flex-shrink: 0; color: var(--_muted); }
+      .spin { color: var(--_muted); font-size: 11px; padding-left: 20px; }
+      .pick-dir { font-size: 10.5px; padding: 0 6px; flex-shrink: 0; }
+      .mkdir .name { color: var(--_muted); }
+      .mkdir-name { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 2px 6px; border: 1px solid var(--_border); border-radius: 4px; background: var(--_bg); color: inherit; width: 100%; box-sizing: border-box; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; font-size: 12px; }
-        .tree { max-height: 240px; overflow: auto; border: 1px solid var(--_border); border-radius: 6px; padding: 4px; }
-        ul { list-style: none; margin: 0; padding-left: 14px; }
-        ul.root { padding-left: 0; }
-        li { min-width: 0; }
-        button.entry { display: flex; gap: 6px; align-items: center; width: 100%; text-align: left; border: none;
-                       background: none; color: inherit; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
-                       padding: 2px 4px; cursor: pointer; border-radius: 4px; min-width: 0; }
-        button.entry:hover { background: var(--_surface); }
-        button.entry:disabled { opacity: 0.45; cursor: default; }
-        button.entry .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .twist { width: 1em; flex-shrink: 0; color: var(--_muted); }
-        .spin { color: var(--_muted); font-size: 11px; padding-left: 20px; }
-        .pick-dir { font-size: 10.5px; padding: 0 6px; flex-shrink: 0; }
-        .mkdir .name { color: var(--_muted); }
-        .mkdir-name { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 2px 6px; border: 1px solid var(--_border); border-radius: 4px; background: var(--_bg); color: inherit; width: 100%; box-sizing: border-box; }
-      </style>
       <div class="tree" part="tree"><ul class="root"></ul></div>`;
     void this.renderLevel(this.$('ul.root'), '');
   }

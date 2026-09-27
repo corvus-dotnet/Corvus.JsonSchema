@@ -725,12 +725,13 @@ test('§3.4 save-as-scenario: an observed trace promotes to a saved scenario tha
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
-// ADR 0073: the kit runs under the Content-Security-Policy its host sends, with no inline script. The test proves the
-// policy is live (an injected inline script is refused and reported) before asserting the pages raised no violation of
-// their own, so a missing header fails it rather than passing it vacuously.
-for (const [path, ready] of [
-  ['/demo/index.html', 'arazzo-runs-table tbody tr[data-id]'],
-  ['/demo/designer.html', '#surface .node'],
+// ADR 0073: the kit runs under the Content-Security-Policy its host sends, with no inline script or style. The test
+// proves the policy is live (an injected inline script, style element and style attribute are each refused and
+// reported) before asserting the pages raised no violation of their own, so a missing or weakened header fails it
+// rather than passing it vacuously. It then proves the components are styled under it: their adopted stylesheets apply.
+for (const [path, ready, styled] of [
+  ['/demo/index.html', 'arazzo-runs-table tbody tr[data-id]', { selector: 'arazzo-status-badge .badge', property: 'border-top-left-radius', value: '999px' }],
+  ['/demo/designer.html', '#surface .node', { selector: '#toast', property: 'position', value: 'fixed' }],
 ]) {
   test(`${path} runs under the control plane's Content-Security-Policy with no violation`, async ({ page }) => {
     await page.addInitScript(() => {
@@ -740,22 +741,46 @@ for (const [path, ready] of [
       });
     });
     const response = await page.goto(path);
-    expect(response.headers()['content-security-policy']).toContain("script-src 'self'");
+    expect(response.headers()['content-security-policy']).toContain("script-src 'self'; style-src 'self';");
     await page.locator(ready).first().waitFor({ state: 'attached' });
 
-    // The policy is enforced: an inline script is refused and reported, and never runs.
+    // The policy is enforced: an inline script is refused and never runs, and an inline style element and style
+    // attribute are refused and never apply. Each refusal is reported.
     const injected = await page.evaluate(async () => {
       window.__injectedRan = false;
       const script = document.createElement('script');
       script.textContent = 'window.__injectedRan = true;';
       document.body.appendChild(script);
+      const probe = document.createElement('div');
+      probe.className = 'csp-probe';
+      document.body.appendChild(probe);
+      const style = document.createElement('style');
+      style.textContent = '.csp-probe { outline-width: 7px; }';
+      document.head.appendChild(style);
+      const host = document.createElement('div');
+      host.innerHTML = '<span style="outline-width: 9px"></span>';
+      document.body.appendChild(host);
       await new Promise((resolve) => setTimeout(resolve, 50));
-      return { ran: window.__injectedRan, violations: window.__cspViolations.splice(0) };
+      const result = {
+        ran: window.__injectedRan,
+        styleApplied: getComputedStyle(probe).outlineWidth === '7px',
+        attributeApplied: host.firstElementChild.style.outlineWidth === '9px',
+        violations: window.__cspViolations.splice(0),
+      };
+      script.remove(); probe.remove(); style.remove(); host.remove();
+      return result;
     });
     expect(injected.ran).toBe(false);
+    expect(injected.styleApplied).toBe(false);
+    expect(injected.attributeApplied).toBe(false);
     expect(injected.violations.some((v) => v.startsWith('script-src-elem inline'))).toBe(true);
+    expect(injected.violations.some((v) => v.startsWith('style-src-elem inline'))).toBe(true);
+    expect(injected.violations.some((v) => v.startsWith('style-src-attr inline'))).toBe(true);
 
     expect(await page.evaluate(() => window.__cspViolations), 'violations raised by the page itself').toEqual([]);
+
+    // The kit is styled under the policy: a component's adopted stylesheet and the page's own stylesheet apply.
+    await expect(page.locator(styled.selector).first()).toHaveCSS(styled.property, styled.value);
   });
 }
 

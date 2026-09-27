@@ -8,6 +8,8 @@
 // end-session redirect chain runs — a fetch would not navigate); signed out → a Sign-in link that returns here;
 // auth disabled (the endpoint 404s or the fetch fails, e.g. the standalone demo) → the element stays invisible so
 // hosts can drop it in unconditionally. Styled from the --arazzo-* custom properties that pierce the shadow boundary.
+import { adoptStyles } from './base.js';
+
 class ArazzoAuthStatus extends HTMLElement {
   constructor() {
     super();
@@ -21,17 +23,17 @@ class ArazzoAuthStatus extends HTMLElement {
   get logoutUrl() { return this.getAttribute('logout-url') || '/logout'; }
 
   connectedCallback() {
+    adoptStyles(this.shadowRoot, `
+      :host { display: none; }              /* invisible until /me resolves — auth-off hosts show nothing */
+      :host([data-state]) { display: inline-flex; align-items: center; gap: 8px; font-size: 13px;
+                            color: var(--arazzo-muted, #6b7280); }
+      strong { color: var(--arazzo-text, inherit); font-weight: 600; }
+      .linklike { font: inherit; font-size: 13px; cursor: pointer; border: none; background: none; padding: 0;
+                  color: var(--arazzo-accent, #3b6cf6); text-decoration: underline; }
+      .linklike:hover { text-decoration: none; }
+      .linklike:focus-visible { outline: 2px solid var(--arazzo-accent, #3b6cf6); outline-offset: 2px; border-radius: 2px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        :host { display: none; }              /* invisible until /me resolves — auth-off hosts show nothing */
-        :host([data-state]) { display: inline-flex; align-items: center; gap: 8px; font-size: 13px;
-                              color: var(--arazzo-muted, #6b7280); }
-        strong { color: var(--arazzo-text, inherit); font-weight: 600; }
-        .linklike { font: inherit; font-size: 13px; cursor: pointer; border: none; background: none; padding: 0;
-                    color: var(--arazzo-accent, #3b6cf6); text-decoration: underline; }
-        .linklike:hover { text-decoration: none; }
-        .linklike:focus-visible { outline: 2px solid var(--arazzo-accent, #3b6cf6); outline-offset: 2px; border-radius: 2px; }
-      </style>
       <span class="content"></span>`;
     void this.refresh();
   }

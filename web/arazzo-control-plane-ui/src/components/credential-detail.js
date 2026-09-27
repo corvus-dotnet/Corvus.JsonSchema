@@ -13,7 +13,7 @@
 // and non-secret metadata only — never secret material — and hosts the binding's governance actions (Edit / Duplicate /
 // Revoke) inline, gated by `credentials:write` (a read-only caller sees the record with no action controls).
 
-import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, relativeTime, absoluteTime, countdown, confirmDialog, copyToClipboard, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, relativeTime, absoluteTime, countdown, confirmDialog, copyToClipboard, define } from './base.js';
 
 const STATUS = {
   valid: { label: 'valid', color: 'var(--arazzo-status-completed, #2a8a4a)' },
@@ -85,33 +85,31 @@ class ArazzoCredentialDetail extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, GRANTEE_CHIP_CSS, `
+      .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); }
+      header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; }
+      header .src { font-weight: 700; font-size: 15px; }
+      header .env { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--_muted); }
+      header .grow { flex: 1; }
+      header .close { font-size: 16px; line-height: 1; }
+      .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
+      dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; }
+      dt { color: var(--_muted); font-size: 12px; }
+      dd { margin: 0; font-size: 13px; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
+      .refs, .cfg { display: grid; gap: 4px; }
+      .refs .r { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; align-items: baseline; }
+      .refs .role { color: var(--_muted); font-size: 12px; }
+      .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
+      .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+      .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); }
+      .note { margin: 0 14px 12px; font-size: 12px; color: var(--_muted); border-left: 3px solid var(--_border); padding: 4px 0 4px 8px; }
+      .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--_border); }
+      .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+      .pad { padding: 14px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        ${GRANTEE_CHIP_CSS}
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); }
-        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; }
-        header .src { font-weight: 700; font-size: 15px; }
-        header .env { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--_muted); }
-        header .grow { flex: 1; }
-        header .close { font-size: 16px; line-height: 1; }
-        .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
-        dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; }
-        dt { color: var(--_muted); font-size: 12px; }
-        dd { margin: 0; font-size: 13px; }
-        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
-        .refs, .cfg { display: grid; gap: 4px; }
-        .refs .r { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; align-items: baseline; }
-        .refs .role { color: var(--_muted); font-size: 12px; }
-        .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
-        .tags { display: flex; gap: 4px; flex-wrap: wrap; }
-        .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); }
-        .note { margin: 0 14px 12px; font-size: 12px; color: var(--_muted); border-left: 3px solid var(--_border); padding: 4px 0 4px 8px; }
-        .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--_border); }
-        .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-        .pad { padding: 14px; }
-      </style>
       <div class="panel" part="panel">
         <header part="header">
           <span class="badge" part="status"></span>

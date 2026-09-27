@@ -15,7 +15,7 @@
 // The host refreshes its save token from binding-saved/pulled (both bump the etag), and reloads its
 // model from pulled (the document changed underneath).
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import './github-connect.js';
 import './git-tree.js';
 import './input-dialog.js';
@@ -79,100 +79,101 @@ class ArazzoGitDialog extends ArazzoElement {
   }
 
   render() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      /* The panel lives in the designer's narrow sidebar: everything must fit its width, never clip. Selects carry
+         long options (repo, branch), so without min-width:0 they set a large min-content size that grid/flex items
+         refuse to shrink below — the classic horizontal-overflow trap. Force fields to fill and shrink. */
+      :host { display: block; min-width: 0; }
+      .panel, .body, fieldset, label, .two, .pathrow, .new-branch, .specs, .spec-row { min-width: 0; }
+      input, select, textarea, arazzo-filter-input { width: 100%; min-width: 0; box-sizing: border-box; }
+      .panel { background: var(--_bg); color: inherit; }
+      .head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--_border); }
+      .head h2 { margin: 0; font-size: 14px; }
+      .body { padding: 12px 14px; display: grid; gap: 12px; }
+      fieldset { border: 1px solid var(--_border); border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px; margin: 0; }
+      legend { font-size: 12px; color: var(--_muted); padding: 0 4px; }
+      .stage-hint { font-size: 12px; color: var(--_muted); border: 1px dashed var(--_border); border-radius: 8px; padding: 10px 12px; }
+      .stage-hint[hidden] { display: none; }
+      .paths-section { display: grid; gap: 8px; }
+      .paths-section[hidden] { display: none; }
+      label { display: grid; gap: 4px; font-size: 12px; color: var(--_muted); }
+      label.check { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+      label.check input { width: auto; }
+      input, select, textarea { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--arazzo-text, inherit); }
+      textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; min-height: 44px; }
+      /* minmax(0, …): a combo holding a long branch name must shrink below its content, never widen the panel. */
+      .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+      .row-actions { display: flex; gap: 8px; align-items: center; }
+      .hint { font-size: 11px; color: var(--_muted); }
+      /* The name gets its own full-width row; "from <base>" and the button wrap onto the next line,
+         so the name box is never squeezed and the button never has to wrap its label. */
+      /* The new-branch form floats as a dropdown anchored to the Branch field (like the browse trees
+         and the kit's pickers) instead of appearing inline and pushing the dialog's content around. */
+      .new-branch { position: fixed; inset: auto; margin: 0; z-index: 50; padding: 10px;
+                    background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius);
+                    box-shadow: 0 8px 24px rgb(0 0 0 / 0.28);
+                    display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+      .new-branch[popover]:not(:popover-open) { display: none; }
+      .new-branch[hidden] { display: none; }
+      .new-branch .nb-title { flex: 1 1 100%; font-weight: 600; font-size: 12px; }
+      .new-branch .nb-name { flex: 1 1 100%; min-width: 0; }
+      .new-branch .nb-base { flex: 1 1 12ch; min-width: 0; }
+      .new-branch .nb-create { flex: 0 0 auto; white-space: nowrap; }
+      .pathrow { display: flex; gap: 6px; align-items: center; }
+      /* The field (or the specs hint) takes the row so all three browse buttons right-align, and the
+         buttons share a min width so they read as one consistent control regardless of label. */
+      .pathrow input, .pathrow .specs-head { flex: 1; min-width: 0; }
+      /* Explicit colour so a browse button reads the same whether its row sits inside a <label>
+         (muted text) or the specs block (default text) — the base button inherits its colour. */
+      .pathrow .ghost { flex: 0 0 auto; font-size: 11px; min-width: 6.5em; text-align: center; color: var(--_text); }
+      /* The repo browser floats as a dropdown in the top layer (like the kit's pickers) instead of
+         expanding inline and pushing the dialog's content around. Positioned per open from its anchor. */
+      .tree-slot { position: fixed; inset: auto; margin: 0; z-index: 50; padding: 6px;
+                   background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius);
+                   box-shadow: 0 8px 24px rgb(0 0 0 / 0.28); overflow: auto; }
+      .tree-slot[popover]:not(:popover-open) { display: none; }
+      .tree-slot[hidden] { display: none; }
+      /* The tree-slot IS the bordered, scrolling dropdown; flatten the embedded git-tree (which is a
+         bordered scroll box in its own right, for standalone use) so the two do not double up into a
+         border-inside-a-border with a wasteful gap. The slot owns the frame, scroll, and padding. */
+      .tree-slot arazzo-git-tree::part(tree) { border: none; border-radius: 0; max-height: none; overflow: visible; padding: 0; }
+      .specs { display: grid; gap: 4px; }
+      .specs-head { font-size: 11px; }
+      .spec-rows { display: grid; gap: 4px; }
+      .spec-row { display: grid; grid-template-columns: minmax(9ch, auto) minmax(0, 1fr); gap: 8px; align-items: center; }
+      .spec-row .sname { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
+      .spec-row .stale { color: var(--_muted); font-size: 10.5px; }
+      .result, .load-result { font-size: 12px; border: 1px solid var(--_border); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }
+      .result[hidden], .load-result[hidden], .error-banner[hidden] { display: none; }
+      .result .file { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+      .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
+      /* History: the kit's headered list — title + count, actions in the header, rows below. */
+      .hist { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; }
+      .hist .head { padding: 8px 10px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
+      .hist .head .title { font-weight: 700; font-size: 12.5px; }
+      .hist .head .count { color: var(--_muted); font-size: 11.5px; }
+      .hist .head .grow { flex: 1; }
+      .hist .head button { font-size: 11.5px; }
+      .cmp-wrap { position: relative; }
+      .cmp-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; min-width: 208px; display: flex; flex-direction: column; padding: 4px; gap: 2px; background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
+      .cmp-menu .menu-item { text-align: left; white-space: nowrap; border: 1px solid transparent; background: transparent; padding: 6px 10px; border-radius: 6px; font: inherit; font-size: 12.5px; cursor: pointer; }
+      .cmp-menu .menu-item:hover:not(:disabled) { background: var(--_surface); }
+      .cmp-menu .menu-item:disabled { color: var(--_muted); cursor: default; }
+      .commits { display: grid; }
+      .hist-commit { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 6px 10px; cursor: pointer;
+                border-bottom: 1px solid var(--_border); }
+      .hist-commit:last-child { border-bottom: none; }
+      .hist-commit:hover { background: var(--_surface); }
+      .hist-commit[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); box-shadow: inset 3px 0 0 var(--_accent); }
+      .hist-commit .msg { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+      .hist-commit .meta { font-size: 11px; color: var(--_muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+      .history-more { border: none; border-top: 1px solid var(--_border); border-radius: 0; width: 100%; }
+      .history-empty { font-size: 11.5px; color: var(--_muted); padding: 8px 10px; }
+      .gh-link { margin-left: 6px; font-size: 11.5px; }
+      .muted.small { font-size: 11px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        /* The panel lives in the designer's narrow sidebar: everything must fit its width, never clip. Selects carry
-           long options (repo, branch), so without min-width:0 they set a large min-content size that grid/flex items
-           refuse to shrink below — the classic horizontal-overflow trap. Force fields to fill and shrink. */
-        :host { display: block; min-width: 0; }
-        .panel, .body, fieldset, label, .two, .pathrow, .new-branch, .specs, .spec-row { min-width: 0; }
-        input, select, textarea, arazzo-filter-input { width: 100%; min-width: 0; box-sizing: border-box; }
-        .panel { background: var(--_bg); color: inherit; }
-        .head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--_border); }
-        .head h2 { margin: 0; font-size: 14px; }
-        .body { padding: 12px 14px; display: grid; gap: 12px; }
-        fieldset { border: 1px solid var(--_border); border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px; margin: 0; }
-        legend { font-size: 12px; color: var(--_muted); padding: 0 4px; }
-        .stage-hint { font-size: 12px; color: var(--_muted); border: 1px dashed var(--_border); border-radius: 8px; padding: 10px 12px; }
-        .stage-hint[hidden] { display: none; }
-        .paths-section { display: grid; gap: 8px; }
-        .paths-section[hidden] { display: none; }
-        label { display: grid; gap: 4px; font-size: 12px; color: var(--_muted); }
-        label.check { display: flex; gap: 6px; align-items: center; cursor: pointer; }
-        label.check input { width: auto; }
-        input, select, textarea { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: var(--arazzo-text, inherit); }
-        textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; min-height: 44px; }
-        /* minmax(0, …): a combo holding a long branch name must shrink below its content, never widen the panel. */
-        .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
-        .row-actions { display: flex; gap: 8px; align-items: center; }
-        .hint { font-size: 11px; color: var(--_muted); }
-        /* The name gets its own full-width row; "from <base>" and the button wrap onto the next line,
-           so the name box is never squeezed and the button never has to wrap its label. */
-        /* The new-branch form floats as a dropdown anchored to the Branch field (like the browse trees
-           and the kit's pickers) instead of appearing inline and pushing the dialog's content around. */
-        .new-branch { position: fixed; inset: auto; margin: 0; z-index: 50; padding: 10px;
-                      background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius);
-                      box-shadow: 0 8px 24px rgb(0 0 0 / 0.28);
-                      display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-        .new-branch[popover]:not(:popover-open) { display: none; }
-        .new-branch[hidden] { display: none; }
-        .new-branch .nb-title { flex: 1 1 100%; font-weight: 600; font-size: 12px; }
-        .new-branch .nb-name { flex: 1 1 100%; min-width: 0; }
-        .new-branch .nb-base { flex: 1 1 12ch; min-width: 0; }
-        .new-branch .nb-create { flex: 0 0 auto; white-space: nowrap; }
-        .pathrow { display: flex; gap: 6px; align-items: center; }
-        /* The field (or the specs hint) takes the row so all three browse buttons right-align, and the
-           buttons share a min width so they read as one consistent control regardless of label. */
-        .pathrow input, .pathrow .specs-head { flex: 1; min-width: 0; }
-        /* Explicit colour so a browse button reads the same whether its row sits inside a <label>
-           (muted text) or the specs block (default text) — the base button inherits its colour. */
-        .pathrow .ghost { flex: 0 0 auto; font-size: 11px; min-width: 6.5em; text-align: center; color: var(--_text); }
-        /* The repo browser floats as a dropdown in the top layer (like the kit's pickers) instead of
-           expanding inline and pushing the dialog's content around. Positioned per open from its anchor. */
-        .tree-slot { position: fixed; inset: auto; margin: 0; z-index: 50; padding: 6px;
-                     background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius);
-                     box-shadow: 0 8px 24px rgb(0 0 0 / 0.28); overflow: auto; }
-        .tree-slot[popover]:not(:popover-open) { display: none; }
-        .tree-slot[hidden] { display: none; }
-        /* The tree-slot IS the bordered, scrolling dropdown; flatten the embedded git-tree (which is a
-           bordered scroll box in its own right, for standalone use) so the two do not double up into a
-           border-inside-a-border with a wasteful gap. The slot owns the frame, scroll, and padding. */
-        .tree-slot arazzo-git-tree::part(tree) { border: none; border-radius: 0; max-height: none; overflow: visible; padding: 0; }
-        .specs { display: grid; gap: 4px; }
-        .specs-head { font-size: 11px; }
-        .spec-rows { display: grid; gap: 4px; }
-        .spec-row { display: grid; grid-template-columns: minmax(9ch, auto) minmax(0, 1fr); gap: 8px; align-items: center; }
-        .spec-row .sname { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
-        .spec-row .stale { color: var(--_muted); font-size: 10.5px; }
-        .result, .load-result { font-size: 12px; border: 1px solid var(--_border); border-radius: 6px; padding: 8px 10px; display: grid; gap: 2px; }
-        .result[hidden], .load-result[hidden], .error-banner[hidden] { display: none; }
-        .result .file { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
-        .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--_border); }
-        /* History: the kit's headered list — title + count, actions in the header, rows below. */
-        .hist { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; }
-        .hist .head { padding: 8px 10px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
-        .hist .head .title { font-weight: 700; font-size: 12.5px; }
-        .hist .head .count { color: var(--_muted); font-size: 11.5px; }
-        .hist .head .grow { flex: 1; }
-        .hist .head button { font-size: 11.5px; }
-        .cmp-wrap { position: relative; }
-        .cmp-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; min-width: 208px; display: flex; flex-direction: column; padding: 4px; gap: 2px; background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
-        .cmp-menu .menu-item { text-align: left; white-space: nowrap; border: 1px solid transparent; background: transparent; padding: 6px 10px; border-radius: 6px; font: inherit; font-size: 12.5px; cursor: pointer; }
-        .cmp-menu .menu-item:hover:not(:disabled) { background: var(--_surface); }
-        .cmp-menu .menu-item:disabled { color: var(--_muted); cursor: default; }
-        .commits { display: grid; }
-        .hist-commit { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 6px 10px; cursor: pointer;
-                  border-bottom: 1px solid var(--_border); }
-        .hist-commit:last-child { border-bottom: none; }
-        .hist-commit:hover { background: var(--_surface); }
-        .hist-commit[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); box-shadow: inset 3px 0 0 var(--_accent); }
-        .hist-commit .msg { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-        .hist-commit .meta { font-size: 11px; color: var(--_muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-                        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-        .history-more { border: none; border-top: 1px solid var(--_border); border-radius: 0; width: 100%; }
-        .history-empty { font-size: 11.5px; color: var(--_muted); padding: 8px 10px; }
-      </style>
       <div class="panel" part="panel">
         <arazzo-input-dialog class="ask"></arazzo-input-dialog>
         <div class="body">
@@ -230,7 +231,7 @@ class ArazzoGitDialog extends ArazzoElement {
           </fieldset>
           <div class="stage-hint bound-hint" hidden>Save the binding — Load and Commit work against the bound branch.</div>
           <fieldset class="roundtrip-section" hidden>
-            <legend>Commit <a class="gh-link" target="_blank" rel="noopener" hidden style="margin-left:6px; font-size:11.5px;" title="Open the bound branch on GitHub">↗ Open on GitHub</a></legend>
+            <legend>Commit <a class="gh-link" target="_blank" rel="noopener" hidden title="Open the bound branch on GitHub">↗ Open on GitHub</a></legend>
             <label>Commit message <input class="c-message" type="text" placeholder="what changed"></label>
             <label class="check"><input class="c-pr" type="checkbox"> Open a draft pull request onto <arazzo-filter-input class="c-base" aria-label="Pull request base branch" placeholder="type to filter branches" title="Pick a repository first"></arazzo-filter-input></label>
             <div class="row-actions"><button class="commit" type="button" disabled title="Write the document, bound sources, and scenario files to the branch — authored as YOUR GitHub identity">⤒ Commit</button></div>
@@ -359,7 +360,7 @@ class ArazzoGitDialog extends ArazzoElement {
     const attached = (this._workingCopy?.sources ?? []).map((a) => a.name);
     const names = [...new Set([...attached, ...Object.keys(specPaths)])];
     if (names.length === 0) {
-      rows.innerHTML = '<span class="muted" style="font-size:11px">No sources attached — nothing to path-map.</span>';
+      rows.innerHTML = '<span class="muted small">No sources attached — nothing to path-map.</span>';
       return;
     }
 

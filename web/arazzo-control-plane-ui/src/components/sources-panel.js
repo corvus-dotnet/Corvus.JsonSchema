@@ -14,7 +14,7 @@
 // sourceDescriptions entry. Mutating controls are gated by sources:write.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
 import './tag-editor.js';
 import './pager.js';
 import './credential-dialog.js';
@@ -242,71 +242,70 @@ class ArazzoSources extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+      .layout .splitbar { display: none; }
+      @media (min-width: 880px) {
+        .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
+        .layout.has-selection .splitbar { display: block; }
+        .layout.has-selection > .wrap { margin-right: 14px; }
+        .layout.has-selection > .detail-pane { margin-left: 14px; }
+      }
+      .layout > * { min-height: 0; }
+
+      .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+      .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+      .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
+      .toolbar .grow { flex: 1; }
+      .err { flex: none; margin: 10px 12px; }
+      .err:empty { display: none; }
+      .tablescroll { flex: 1; min-height: 0; overflow: auto; }
+      table { width: 100%; border-collapse: collapse; }
+      thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+      tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
+      tbody tr:last-child td { border-bottom: none; }
+      tbody tr.selectable { cursor: pointer; }
+      tbody tr.selectable:hover { background: var(--_surface); }
+      tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
+      .sname { font-weight: 600; }
+      .scode { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
+      .sdesc { color: var(--_muted); overflow: hidden; text-overflow: ellipsis; }
+      .stime { color: var(--_muted); font-size: 12px; white-space: nowrap; }
+      .type-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); background: var(--_surface); text-transform: uppercase; letter-spacing: 0.03em; }
+    `, PAGER_CSS, `
+      .pager { flex: none; }
+      .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+
+      /* detail pane */
+      .detail-pane { min-height: 0; overflow: auto; }
+      .detail-pane:empty { display: none; }
+      .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
+      .detail .dhead { display: flex; align-items: baseline; gap: 8px; }
+      .detail .d-close { margin-left: auto; cursor: pointer; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_muted); width: 24px; height: 24px; line-height: 1; padding: 0; }
+      .detail .dtitle { font-weight: 700; font-size: 16px; }
+      .detail .dname { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
+      .detail .section { padding: 12px; border-top: 1px solid var(--_border); }
+      .detail .section:first-of-type { border-top: none; }
+      .detail .section h4 { margin: 0 0 8px; font-size: 13px; color: var(--_muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+      .field { display: grid; gap: 4px; margin-bottom: 10px; }
+      .field > span { font-size: 12px; color: var(--_muted); }
+      .field input, .field textarea, .field select { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
+      .field textarea { min-height: 52px; }
+      .field textarea.doc { min-height: 160px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre; }
+      .audit { color: var(--_muted); font-size: 12px; margin-top: 4px; }
+      .row-actions { display: flex; gap: 8px; justify-content: flex-end; }
+      pre.doc { margin: 0; max-height: 320px; overflow: auto; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+      .mtags code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+
+      dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(560px, 94vw); }
+      dialog::backdrop { background: rgba(0,0,0,0.4); }
+      .dlg-head { padding: 14px 16px; border-bottom: 1px solid var(--_border); font-weight: 700; font-size: 15px; }
+      .content { padding: 16px; display: grid; gap: 12px; }
+      .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
-        .layout .splitbar { display: none; }
-        @media (min-width: 880px) {
-          .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
-          .layout.has-selection .splitbar { display: block; }
-          .layout.has-selection > .wrap { margin-right: 14px; }
-          .layout.has-selection > .detail-pane { margin-left: 14px; }
-        }
-        .layout > * { min-height: 0; }
-
-        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
-        .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
-        .toolbar .grow { flex: 1; }
-        .err { flex: none; margin: 10px 12px; }
-        .err:empty { display: none; }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
-        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr.selectable { cursor: pointer; }
-        tbody tr.selectable:hover { background: var(--_surface); }
-        tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
-        .sname { font-weight: 600; }
-        .scode { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
-        .sdesc { color: var(--_muted); overflow: hidden; text-overflow: ellipsis; }
-        .stime { color: var(--_muted); font-size: 12px; white-space: nowrap; }
-        .type-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); background: var(--_surface); text-transform: uppercase; letter-spacing: 0.03em; }
-        ${PAGER_CSS}
-        .pager { flex: none; }
-        .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-
-        /* detail pane */
-        .detail-pane { min-height: 0; overflow: auto; }
-        .detail-pane:empty { display: none; }
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        .detail .dhead { display: flex; align-items: baseline; gap: 8px; }
-        .detail .d-close { margin-left: auto; cursor: pointer; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_muted); width: 24px; height: 24px; line-height: 1; padding: 0; }
-        .detail .dtitle { font-weight: 700; font-size: 16px; }
-        .detail .dname { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
-        .detail .section { padding: 12px; border-top: 1px solid var(--_border); }
-        .detail .section:first-of-type { border-top: none; }
-        .detail .section h4 { margin: 0 0 8px; font-size: 13px; color: var(--_muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
-        .field { display: grid; gap: 4px; margin-bottom: 10px; }
-        .field > span { font-size: 12px; color: var(--_muted); }
-        .field input, .field textarea, .field select { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
-        .field textarea { min-height: 52px; }
-        .field textarea.doc { min-height: 160px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre; }
-        .audit { color: var(--_muted); font-size: 12px; margin-top: 4px; }
-        .row-actions { display: flex; gap: 8px; justify-content: flex-end; }
-        pre.doc { margin: 0; max-height: 320px; overflow: auto; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_surface); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-        .mtags code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-
-        dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(560px, 94vw); }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        .dlg-head { padding: 14px 16px; border-bottom: 1px solid var(--_border); font-weight: 700; font-size: 15px; }
-        .content { padding: 16px; display: grid; gap: 12px; }
-        .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
-      </style>
       <div class="layout" part="layout">
         <div class="wrap" part="panel">
           <div class="toolbar" part="toolbar">

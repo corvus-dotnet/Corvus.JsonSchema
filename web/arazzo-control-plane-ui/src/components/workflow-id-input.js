@@ -12,7 +12,7 @@
 // <datalist>, capped so the dropdown stays small at any catalog size. Suggestions are best-effort — if the
 // catalog isn't reachable (e.g. no catalog:read) it silently stays a plain free-text input.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 
 const SUGGESTION_LIMIT = 10;
 
@@ -53,15 +53,14 @@ class ArazzoWorkflowIdInput extends ArazzoElement {
 
   renderShell() {
     const placeholder = this.getAttribute('placeholder') || 'Filter by workflowId…';
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      input {
+        width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border);
+        border-radius: var(--_radius); background: var(--_bg); color: var(--_text);
+      }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        input {
-          width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border);
-          border-radius: var(--_radius); background: var(--_bg); color: var(--_text);
-        }
-      </style>
       <input type="search" part="input" list="wf-id-options" placeholder="${escapeHtml(placeholder)}"
              aria-label="${escapeHtml(placeholder)}" value="${escapeHtml(this.getAttribute('value') || '')}">
       <datalist id="wf-id-options"></datalist>

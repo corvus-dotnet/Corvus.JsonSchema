@@ -37,7 +37,7 @@ async function openVersionDetail(page, baseWorkflowId) {
 // ---- Security area: sibling panels share the rule vocabulary ------------------------------------
 
 test('a rule created in the Rules panel is immediately offered by the Grants editor rule typeahead', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Rules');
 
@@ -71,7 +71,7 @@ test('a rule created in the Rules panel is immediately offered by the Grants edi
 // ---- Workflow access ⇄ Security: the approval is what writes the grant ---------------------------
 
 test('approving an access request writes the approval-service binding into the Grants panel; revoking the approval removes it', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Grants');
   await expect(page.locator('arazzo-grants-panel tbody tr.grow-row')).toHaveCount(7); // demo seed settled
@@ -110,7 +110,7 @@ test('approving an access request writes the approval-service binding into the G
 });
 
 test('the request loop crosses personas: the operator submits, the administrator approves, the operator sees Approved', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
 
   // The operator (omar@ops) requests time-boxed access to nightly-reconcile — a workflow he does
@@ -154,7 +154,7 @@ test('the request loop crosses personas: the operator submits, the administrator
 // ---- Catalog administrators ⇄ Access overview ---------------------------------------------------
 
 test('seating a team on a workflow admin set (Catalog) shows up in the team\'s Access overview Administers section', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
 
   // Seat the Payments team on onboard-customer's administrator set (§15).
   const detail = await openVersionDetail(page, 'onboard-customer');
@@ -183,7 +183,7 @@ test('seating a team on a workflow admin set (Catalog) shows up in the team\'s A
 // ---- Environments ⇄ Catalog promotion matrix -----------------------------------------------------
 
 test('a newly created environment appears as a promotion-matrix column in the catalog detail', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openTab(page, 'Environments');
 
   const envs = page.locator('arazzo-environments');
@@ -201,7 +201,7 @@ test('a newly created environment appears as a promotion-matrix column in the ca
 });
 
 test('making a version available from the matrix lists it under the environment\'s available versions', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
 
   // onboard-customer's sources (accounts + events) both carry workflow-usable staging credentials,
   // so (v1, staging) is Ready and the administrator gets the direct "Make available" action (§7.8).
@@ -227,7 +227,7 @@ test('making a version available from the matrix lists it under the environment\
 // ---- Security subtabs ⇄ Access overview: sub-tab activation refreshes a stale aggregation --------
 
 test('a grant deleted under the Grants subtab is gone from an already-open Access overview when its subtab is re-activated', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
   await selectSecurity(page, 'Access overview');
 
@@ -258,7 +258,7 @@ test('a grant deleted under the Grants subtab is gone from an already-open Acces
 // ---- Persona change resets pagination ------------------------------------------------------------
 
 test('a persona change resets a paged list to page 1 (a stale cursor must not carry over)', async ({ page }) => {
-  const errors = watchErrors(page);
+  const errors = await watchErrors(page);
   await openApp(page);
 
   // Shrink the page so the 14 seeded runs paginate, and walk to page 2.

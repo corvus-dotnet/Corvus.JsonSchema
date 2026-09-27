@@ -15,7 +15,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
 /// Browser security headers for every response the host serves (ADR 0073): a Content-Security-Policy under which the
-/// web kit runs with no inline script, a refusal to be framed, and the headers that stop content sniffing, referrer
+/// web kit runs with no inline script or style, a refusal to be framed, and the headers that stop content sniffing, referrer
 /// leakage and cross-origin window access. A host adds them with one registration,
 /// <see cref="ControlPlaneSecurityHeadersExtensions.AddArazzoSecurityHeaders"/>, and a secured control plane does not
 /// start without it.
@@ -27,15 +27,16 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// left as it is, so a host can serve one page under a policy of its own.
 /// </para>
 /// <para>
-/// <c>style-src</c> admits inline style until the kit's components carry their styles in constructable stylesheets
-/// (ADR 0073, second piece). Script is <c>'self'</c> alone: no inline script, no <c>eval</c>.
+/// Script and style are <c>'self'</c> alone: no inline script, no <c>eval</c>, no <c>&lt;style&gt;</c> element and no
+/// style attribute. The kit's components carry their styles in constructable stylesheets, which <c>style-src</c> does not
+/// govern.
 /// </para>
 /// </remarks>
 public sealed class ControlPlaneSecurityHeaders
 {
     /// <summary>The Content-Security-Policy sent when the host adds no sources.</summary>
     public const string DefaultContentSecurityPolicy =
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; "
+        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; "
         + "connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 
     private readonly Func<object, Task> applyCallback;
@@ -50,7 +51,7 @@ public sealed class ControlPlaneSecurityHeaders
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        StringBuilder policy = new("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'");
+        StringBuilder policy = new("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'");
         AppendSources(policy, options.ConnectSources, nameof(options.ConnectSources));
         policy.Append("; object-src 'none'; base-uri 'none'; form-action 'self'");
         AppendSources(policy, options.FormActionSources, nameof(options.FormActionSources));

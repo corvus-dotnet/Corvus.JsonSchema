@@ -375,6 +375,8 @@ public sealed class LiveCompositionTests
             response.StatusCode.ShouldBe(HttpStatusCode.OK, path);
             string policy = string.Join(",", response.Headers.GetValues("Content-Security-Policy"));
             policy.ShouldContain("script-src 'self';", customMessage: path);
+            policy.ShouldContain("style-src 'self';", customMessage: path);
+            policy.ShouldNotContain("unsafe-", customMessage: path);
             policy.ShouldContain("frame-ancestors 'none'", customMessage: path);
             string.Join(",", response.Headers.GetValues("X-Frame-Options")).ShouldBe("DENY", path);
             string.Join(",", response.Headers.GetValues("X-Content-Type-Options")).ShouldBe("nosniff", path);

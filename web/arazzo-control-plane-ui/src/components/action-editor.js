@@ -13,7 +13,7 @@
 //
 // External `.value` sets rebuild; internal edits mutate and emit (focus preserved while typing).
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import './criteria-editor.js';
 
 class ArazzoActionEditor extends ArazzoElement {
@@ -70,21 +70,20 @@ class ArazzoActionEditor extends ArazzoElement {
   /** @private */
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      .form { display: grid; gap: 10px; }
+      .form > *, .pair > * { min-width: 0; }
+      label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
+      input[type="text"], input[type="number"] {
+        width: 100%; box-sizing: border-box; font: inherit; padding: 6px 9px;
+        border: 1px solid var(--_border); border-radius: var(--_radius);
+        background-color: var(--_bg); color: var(--_text);
+      }
+      .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .crit label.section { margin-top: 2px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        .form { display: grid; gap: 10px; }
-        .form > *, .pair > * { min-width: 0; }
-        label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
-        input[type="text"], input[type="number"] {
-          width: 100%; box-sizing: border-box; font: inherit; padding: 6px 9px;
-          border: 1px solid var(--_border); border-radius: var(--_radius);
-          background-color: var(--_bg); color: var(--_text);
-        }
-        .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .crit label.section { margin-top: 2px; }
-      </style>
       <div class="form" part="form"></div>
     `;
   }

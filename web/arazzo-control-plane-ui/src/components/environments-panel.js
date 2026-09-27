@@ -15,7 +15,7 @@
 // never be left without an administrator. Mutating controls are gated by environments:write.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { actorLabel, ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
+import { actorLabel, ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
 import './tag-editor.js';
 import './administrators-panel.js';
 import './pager.js';
@@ -339,89 +339,88 @@ class ArazzoEnvironments extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      .opt { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px 10px; margin: 6px 0; display: grid; gap: 4px; }
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
+      .layout > * { min-height: 0; }
+      .detail-pane { min-height: 0; overflow: auto; }
+      .detail-pane:empty { display: none; }
+      .layout .splitbar { display: none; }
+      @media (min-width: 880px) {
+        .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
+        .layout.has-selection .splitbar { display: block; }
+        .layout.has-selection > .wrap { margin-right: 14px; }
+        .layout.has-selection > .detail-pane { margin-left: 14px; }
+      }
+
+      .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
+      /* The list is a bordered table, matching the Runs/Catalog/Sources lists. */
+      .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+      .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+      .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
+      .toolbar .grow { flex: 1; }
+      .err { flex: none; margin: 10px 12px; }
+      .err:empty { display: none; }
+      .tablescroll { flex: 1; min-height: 0; overflow: auto; }
+      table { width: 100%; border-collapse: collapse; }
+      thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+      tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
+      tbody tr:last-child td { border-bottom: none; }
+      tbody tr.selectable { cursor: pointer; }
+      tbody tr.selectable:hover { background: var(--_surface); }
+      tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
+      .ename { font-weight: 600; }
+      .ecode { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
+      .edesc { color: var(--_muted); overflow: hidden; text-overflow: ellipsis; }
+      .etime { color: var(--_muted); font-size: 12px; white-space: nowrap; }
+    `, PAGER_CSS, `
+      .pager { flex: none; }
+      .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+
+      /* detail pane */
+      .detail .dhead { display: flex; align-items: baseline; gap: 8px; }
+      .detail .dtitle { font-weight: 700; font-size: 16px; }
+      .detail .dname { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
+      .detail .d-close { margin-left: auto; cursor: pointer; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_muted); width: 24px; height: 24px; line-height: 1; padding: 0; }
+      .detail .section { padding: 12px; border-top: 1px solid var(--_border); }
+      .detail .section:first-of-type { border-top: none; }
+      .detail .section h4 { margin: 0 0 8px; font-size: 13px; color: var(--_muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+      .field { display: grid; gap: 4px; margin-bottom: 10px; }
+      /* The budget is a small table of six limits by three columns. One grid, so the columns line up down the
+         rows: the label sizes to its content, the three value columns share what is left and may shrink to
+         nothing, and an input fills its cell. A validation message takes a full row under its limit. */
+      .budget { display: grid; grid-template-columns: max-content repeat(3, minmax(0, 1fr)); gap: 6px 12px; align-items: center; margin: 4px 0 10px; font-size: 12.5px; }
+      .budget .bh { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
+      .budget .bl { color: var(--_muted); }
+      .budget .bv { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+      .budget input { width: 100%; min-width: 0; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+      .budget input[aria-invalid="true"] { border-color: var(--_danger); }
+      .budget .berr { grid-column: 1 / -1; color: var(--_danger); font-size: 12px; }
+      details.budget-create { margin: 6px 0 10px; }
+      details.budget-create summary { cursor: pointer; font-size: 13px; }
+      .budget-create .budget { grid-template-columns: max-content minmax(0, 1fr); margin-top: 8px; }
+      .field > span { font-size: 12px; color: var(--_muted); }
+      label.check { display: flex; gap: 8px; align-items: center; color: var(--_text); font-size: 13px; cursor: pointer; margin: 0 0 4px; }
+      label.check input { width: auto; }
+      .field input, .field textarea { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
+      .field textarea { min-height: 52px; }
+      .audit { color: var(--_muted); font-size: 12px; margin-top: 4px; }
+      .row-actions { display: flex; gap: 8px; justify-content: flex-end; }
+      .avail-row { display: flex; align-items: baseline; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--_border); }
+      .avail-row:last-child { border-bottom: none; }
+      .avail-wf { font-weight: 600; }
+      .avail-ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
+      .avail-when { margin-left: auto; color: var(--_muted); font-size: 12px; }
+
+      dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
+      dialog::backdrop { background: rgba(0,0,0,0.4); }
+      .dlg-head { padding: 14px 16px; border-bottom: 1px solid var(--_border); font-weight: 700; font-size: 15px; }
+      .content { padding: 16px; display: grid; gap: 12px; }
+      .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        .opt { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px 10px; margin: 6px 0; display: grid; gap: 4px; }
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 14px; }
-        .layout > * { min-height: 0; }
-        .detail-pane { min-height: 0; overflow: auto; }
-        .detail-pane:empty { display: none; }
-        .layout .splitbar { display: none; }
-        @media (min-width: 880px) {
-          .layout.has-selection { grid-template-columns: minmax(0, 1fr) auto var(--detail-w, 460px); gap: 0; }
-          .layout.has-selection .splitbar { display: block; }
-          .layout.has-selection > .wrap { margin-right: 14px; }
-          .layout.has-selection > .detail-pane { margin-left: 14px; }
-        }
-
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        /* The list is a bordered table, matching the Runs/Catalog/Sources lists. */
-        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
-        .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
-        .toolbar .grow { flex: 1; }
-        .err { flex: none; margin: 10px 12px; }
-        .err:empty { display: none; }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
-        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr.selectable { cursor: pointer; }
-        tbody tr.selectable:hover { background: var(--_surface); }
-        tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
-        .ename { font-weight: 600; }
-        .ecode { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
-        .edesc { color: var(--_muted); overflow: hidden; text-overflow: ellipsis; }
-        .etime { color: var(--_muted); font-size: 12px; white-space: nowrap; }
-        ${PAGER_CSS}
-        .pager { flex: none; }
-        .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-
-        /* detail pane */
-        .detail .dhead { display: flex; align-items: baseline; gap: 8px; }
-        .detail .dtitle { font-weight: 700; font-size: 16px; }
-        .detail .dname { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
-        .detail .d-close { margin-left: auto; cursor: pointer; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_muted); width: 24px; height: 24px; line-height: 1; padding: 0; }
-        .detail .section { padding: 12px; border-top: 1px solid var(--_border); }
-        .detail .section:first-of-type { border-top: none; }
-        .detail .section h4 { margin: 0 0 8px; font-size: 13px; color: var(--_muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
-        .field { display: grid; gap: 4px; margin-bottom: 10px; }
-        /* The budget is a small table of six limits by three columns. One grid, so the columns line up down the
-           rows: the label sizes to its content, the three value columns share what is left and may shrink to
-           nothing, and an input fills its cell. A validation message takes a full row under its limit. */
-        .budget { display: grid; grid-template-columns: max-content repeat(3, minmax(0, 1fr)); gap: 6px 12px; align-items: center; margin: 4px 0 10px; font-size: 12.5px; }
-        .budget .bh { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
-        .budget .bl { color: var(--_muted); }
-        .budget .bv { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-        .budget input { width: 100%; min-width: 0; box-sizing: border-box; font-variant-numeric: tabular-nums; }
-        .budget input[aria-invalid="true"] { border-color: var(--_danger); }
-        .budget .berr { grid-column: 1 / -1; color: var(--_danger); font-size: 12px; }
-        details.budget-create { margin: 6px 0 10px; }
-        details.budget-create summary { cursor: pointer; font-size: 13px; }
-        .budget-create .budget { grid-template-columns: max-content minmax(0, 1fr); margin-top: 8px; }
-        .field > span { font-size: 12px; color: var(--_muted); }
-        label.check { display: flex; gap: 8px; align-items: center; color: var(--_text); font-size: 13px; cursor: pointer; margin: 0 0 4px; }
-        label.check input { width: auto; }
-        .field input, .field textarea { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
-        .field textarea { min-height: 52px; }
-        .audit { color: var(--_muted); font-size: 12px; margin-top: 4px; }
-        .row-actions { display: flex; gap: 8px; justify-content: flex-end; }
-        .avail-row { display: flex; align-items: baseline; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--_border); }
-        .avail-row:last-child { border-bottom: none; }
-        .avail-wf { font-weight: 600; }
-        .avail-ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
-        .avail-when { margin-left: auto; color: var(--_muted); font-size: 12px; }
-
-        dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        .dlg-head { padding: 14px 16px; border-bottom: 1px solid var(--_border); font-weight: 700; font-size: 15px; }
-        .content { padding: 16px; display: grid; gap: 12px; }
-        .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
-      </style>
       <div class="layout" part="layout">
         <div class="wrap" part="panel">
           <div class="toolbar" part="toolbar">

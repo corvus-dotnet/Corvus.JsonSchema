@@ -16,7 +16,7 @@
 // `secretRef` and a derived `credentialStatus`, never a secret. The operator's question is "what's about to
 // break?", so status is the headline column (colour-coded) with an "N expiring / M expired" footer.
 
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, absoluteTime, countdown, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, absoluteTime, countdown, define, toneCss } from './base.js';
 import './pager.js';
 import './environment-picker.js';
 
@@ -25,6 +25,8 @@ const STATUS = {
   expiringSoon: { label: 'expiring soon', color: 'var(--arazzo-status-suspended, #b07d18)' },
   expired: { label: 'expired', color: 'var(--arazzo-status-faulted, #d4351c)' },
 };
+
+const STATUS_TONES = toneCss('.badge', STATUS, 'var(--_muted)');
 
 // The operator-friendly --status filter words map to the API's credentialStatus tokens.
 function normalizeStatus(value) {
@@ -161,35 +163,33 @@ class ArazzoCredentialsTable extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, GRANTEE_CHIP_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+      .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+      .tablescroll { flex: 1; min-height: 0; overflow: auto; }
+      .toolbar .grow { flex: 1; }
+      .toolbar label { font-size: 12px; color: var(--_muted); }
+      select { font: inherit; font-size: 13px; padding: 5px 28px 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
+      input.src { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); width: 140px; }
+      table { width: 100%; border-collapse: collapse; }
+      thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+      tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
+      tbody tr:last-child td { border-bottom: none; }
+      tbody tr.selectable { cursor: pointer; }
+      tbody tr.selectable:hover { background: var(--_surface); }
+      tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
+      .src-name { font-weight: 600; }
+      .ref { display: inline-block; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); }
+      .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
+      .grants { display: flex; gap: 4px; flex-wrap: wrap; }
+      .grant { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; }
+      .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+    `, PAGER_CSS, `
+      .pager { flex: none; }
+    `, STATUS_TONES);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        ${GRANTEE_CHIP_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
-        .toolbar .grow { flex: 1; }
-        .toolbar label { font-size: 12px; color: var(--_muted); }
-        select { font: inherit; font-size: 13px; padding: 5px 28px 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
-        input.src { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); width: 140px; }
-        table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
-        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr.selectable { cursor: pointer; }
-        tbody tr.selectable:hover { background: var(--_surface); }
-        tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
-        .src-name { font-weight: 600; }
-        .ref { display: inline-block; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); }
-        .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
-        .grants { display: flex; gap: 4px; flex-wrap: wrap; }
-        .grant { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; }
-        .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-        ${PAGER_CSS}
-        .pager { flex: none; }
-      </style>
       <div class="wrap" part="table">
         <div class="toolbar" part="toolbar">
           <label>Status
@@ -285,7 +285,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
 
   renderRow(b, selectable) {
     const key = `${b.sourceName}@${b.environment}`;
-    const status = STATUS[b.credentialStatus] || { label: b.credentialStatus, color: 'var(--_muted)' };
+    const status = STATUS[b.credentialStatus] || { label: b.credentialStatus };
     const ref = b.secretRefs?.[0]?.ref;
     const grants = b.usageGrantee && Array.isArray(b.usageGrantee.identity) && b.usageGrantee.identity.length > 0
       ? `<div class="grants">${granteeChip(b.usageGrantee)}</div>`
@@ -299,7 +299,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
         <td part="cell" class="src-name">${escapeHtml(b.sourceName)}${ref ? `<br><span class="ref">${escapeHtml(ref)}</span>` : ''}</td>
         <td part="cell">${escapeHtml(b.environment)}</td>
         <td part="cell">${escapeHtml(b.authKind)}</td>
-        <td part="cell"><span class="badge" part="status" style="background:${status.color}">${escapeHtml(status.label)}</span></td>
+        <td part="cell"><span class="badge" part="status" data-tone="${escapeHtml(b.credentialStatus || '')}">${escapeHtml(status.label)}</span></td>
         <td part="cell">${expires}</td>
         <td part="cell">${grants}</td>
       </tr>`;

@@ -15,7 +15,7 @@
 // The status picker offers only the operation's DECLARED responses — correct by construction: the
 // simulator faults on undeclared mock statuses.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import './value-editor.js';
 import './text-editor.js';
 
@@ -81,47 +81,46 @@ class ArazzoScenarioEditor extends ArazzoElement {
 
   render() {
     const s = this._working;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; font-size: 12px; }
+      .frame { border: 1px solid var(--_border); border-radius: 8px; margin: 0 10px 8px; padding: 8px; display: grid; gap: 8px; min-width: 0; position: relative; }
+      .frame-head { position: sticky; top: 0; z-index: 1; background: var(--_bg); font-size: 11px; font-weight: 600; padding: 2px 0 4px; border-bottom: 1px solid var(--_border); }
+      .frame-head .muted { font-weight: 400; }
+      .frame > *, section > *, .group > * { min-width: 0; }
+      .group { border: 1px solid var(--_border); border-radius: 6px; padding: 6px 8px 8px; display: grid; gap: 8px; }
+      .group.expect { border-color: color-mix(in srgb, var(--_accent) 45%, var(--_border)); }
+      .group-head { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--_muted); }
+      .group-head .sub { font-weight: 400; text-transform: none; letter-spacing: 0; }
+      h5 { margin: 0; font-size: 10.5px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
+      section { display: grid; gap: 4px; }
+      label.inline { display: grid; gap: 3px; font-size: 11px; color: var(--_muted); }
+      input, select, textarea { font: inherit; font-size: 11px; padding: 3px 5px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: var(--arazzo-text, inherit); min-width: 0; max-width: 100%; box-sizing: border-box; }
+      arazzo-text-editor.json { display: block; height: 260px; min-height: 0; }
+      .row { border: 1px solid var(--_border); border-radius: 6px; padding: 5px 6px; display: grid; gap: 5px; }
+      .row-head { display: flex; gap: 5px; align-items: center; }
+      .row-head select, .row-head input { flex: 1; min-width: 0; }
+      .row-head .del { flex: 0 0 auto; }
+      .resp { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 5px; align-items: start; }
+      .path-list { margin: 0; padding-left: 3ch; display: grid; gap: 3px; }
+      .path-list li::marker { color: var(--_muted); font-size: 11px; }
+      .path-list li > span { display: flex; gap: 4px; align-items: center; }
+      .path-list select { flex: 1; min-width: 0; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .row-line { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+      .kv-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) auto 6ch auto; gap: 3px 5px; align-items: center; }
+      .kv-grid .col { font-size: 10px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
+      .kv-grid select { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .add { justify-self: start; font-size: 11px; padding: 1px 7px; }
+      .foot { display: flex; gap: 8px; align-items: center; position: sticky; bottom: 0; z-index: 1; background: var(--_bg); padding: 6px 0 2px; border-top: 1px solid var(--_border); }
+      .helper { font-size: 10.5px; color: var(--_muted); }
+      .wait-hint { font-size: 11px; color: var(--arazzo-status-suspended, #b45309); }
+      .spacer { flex: 1; }
+      .error-banner[hidden] { display: none; }
+      label.check { display: flex; gap: 5px; align-items: center; color: var(--_text); cursor: pointer; font-size: 11px; }
+      label.check input { width: auto; }
+      button { font-size: 12px; }
+      button.ghost { padding: 1px 6px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; font-size: 12px; }
-        .frame { border: 1px solid var(--_border); border-radius: 8px; margin: 0 10px 8px; padding: 8px; display: grid; gap: 8px; min-width: 0; position: relative; }
-        .frame-head { position: sticky; top: 0; z-index: 1; background: var(--_bg); font-size: 11px; font-weight: 600; padding: 2px 0 4px; border-bottom: 1px solid var(--_border); }
-        .frame-head .muted { font-weight: 400; }
-        .frame > *, section > *, .group > * { min-width: 0; }
-        .group { border: 1px solid var(--_border); border-radius: 6px; padding: 6px 8px 8px; display: grid; gap: 8px; }
-        .group.expect { border-color: color-mix(in srgb, var(--_accent) 45%, var(--_border)); }
-        .group-head { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--_muted); }
-        .group-head .sub { font-weight: 400; text-transform: none; letter-spacing: 0; }
-        h5 { margin: 0; font-size: 10.5px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
-        section { display: grid; gap: 4px; }
-        label.inline { display: grid; gap: 3px; font-size: 11px; color: var(--_muted); }
-        input, select, textarea { font: inherit; font-size: 11px; padding: 3px 5px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: var(--arazzo-text, inherit); min-width: 0; max-width: 100%; box-sizing: border-box; }
-        arazzo-text-editor.json { display: block; height: 260px; min-height: 0; }
-        .row { border: 1px solid var(--_border); border-radius: 6px; padding: 5px 6px; display: grid; gap: 5px; }
-        .row-head { display: flex; gap: 5px; align-items: center; }
-        .row-head select, .row-head input { flex: 1; min-width: 0; }
-        .row-head .del { flex: 0 0 auto; }
-        .resp { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 5px; align-items: start; }
-        .path-list { margin: 0; padding-left: 3ch; display: grid; gap: 3px; }
-        .path-list li::marker { color: var(--_muted); font-size: 11px; }
-        .path-list li > span { display: flex; gap: 4px; align-items: center; }
-        .path-list select { flex: 1; min-width: 0; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .row-line { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .kv-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) auto 6ch auto; gap: 3px 5px; align-items: center; }
-        .kv-grid .col { font-size: 10px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
-        .kv-grid select { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .add { justify-self: start; font-size: 11px; padding: 1px 7px; }
-        .foot { display: flex; gap: 8px; align-items: center; position: sticky; bottom: 0; z-index: 1; background: var(--_bg); padding: 6px 0 2px; border-top: 1px solid var(--_border); }
-        .helper { font-size: 10.5px; color: var(--_muted); }
-        .wait-hint { font-size: 11px; color: var(--arazzo-status-suspended, #b45309); }
-        .spacer { flex: 1; }
-        .error-banner[hidden] { display: none; }
-        label.check { display: flex; gap: 5px; align-items: center; color: var(--_text); cursor: pointer; font-size: 11px; }
-        label.check input { width: auto; }
-        button { font-size: 12px; }
-        button.ghost { padding: 1px 6px; }
-      </style>
       <div class="frame" part="editor">
         <div class="frame-head">${this._isNew ? 'New scenario' : `Editing <span class="muted">${escapeHtml(this._working.name ?? '')}</span>`}</div>
         <div class="error-banner" hidden></div>

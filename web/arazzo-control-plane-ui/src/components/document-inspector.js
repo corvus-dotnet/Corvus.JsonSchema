@@ -14,7 +14,7 @@
 // Component keys are managed here (add/delete; rename = delete + re-add); the step/workflow
 // editors AUTHOR `$components.…` references against these keys and localize copies from them.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import { promptText } from './prompt.js';
 import './schema-editor.js';
 import './action-editor.js';
@@ -71,53 +71,54 @@ class ArazzoDocumentInspector extends ArazzoElement {
   /** @private */
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      .form { display: grid; gap: 12px; }
+      .form > * { min-width: 0; }
+      label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
+      h3 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); margin: 6px 0 0; border-top: 1px solid var(--_border); padding-top: 10px; }
+      h4 { font-size: 11px; color: var(--_muted); margin: 4px 0 2px; }
+      /* Each component kind is a delineated section: a bordered card with a headed, underlined title. */
+      .components { display: grid; gap: 14px; }
+      .component-group { border: 1px solid var(--_border); border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px;
+                         background: color-mix(in srgb, var(--_muted) 8%, transparent); }
+      .component-group > h4 { margin: 0; padding-bottom: 7px; border-bottom: 1px solid var(--_border); font-size: 11px;
+                              font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--_text); }
+      input[type="text"], select, textarea {
+        width: 100%; box-sizing: border-box; font: inherit; padding: 6px 9px;
+        border: 1px solid var(--_border); border-radius: var(--_radius);
+        background-color: var(--_bg); color: var(--_text);
+      }
+      textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
+      textarea.invalid { border-color: var(--_danger); }
+      .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .pair > * { min-width: 0; }
+      .row { display: grid; gap: 6px; align-items: center; margin-bottom: 6px; }
+      .row > * { min-width: 0; }
+      .hint { font-size: 11px; color: var(--_muted); }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
+      .srow { align-items: baseline; }
+      .add { font-size: 12px; justify-self: start; }
+      .entry { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 6px; min-width: 0; }
+      .entry > * { min-width: 0; }
+      .entry .ehead { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; }
+      .entry > summary.ehead::-webkit-details-marker { display: none; }
+      .entry > summary.ehead::before { content: '▸'; flex: none; color: var(--_muted); font-size: 10px; transition: transform 0.15s ease; }
+      .entry[open] > summary.ehead::before { transform: rotate(90deg); }
+      .entry:not([open]) > .econtent { display: none; }
+      .entry .ehead code { font-size: 12px; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+      .entry .ehead .spacer { flex: 1; }
+      .entry .edel { font-size: 11px; padding: 1px 7px; }
+      .entry.flash { animation: entry-flash 1.3s ease-out; }
+      @keyframes entry-flash {
+        0%, 30% { border-color: var(--_accent); box-shadow: inset 0 0 0 1px var(--_accent), 0 0 0 3px color-mix(in srgb, var(--_accent) 24%, transparent); }
+        100% { border-color: var(--_border); box-shadow: none; }
+      }
+      @media (prefers-reduced-motion: reduce) { .entry.flash { animation: none; } }
+      .row.srow { grid-template-columns: 1fr 1.4fr auto; }
+      .row.cprow { grid-template-columns: 1fr auto 1fr; margin-bottom: 0; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        .form { display: grid; gap: 12px; }
-        .form > * { min-width: 0; }
-        label { font-size: 11px; color: var(--_muted); display: block; margin-bottom: 2px; }
-        h3 { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--_muted); margin: 6px 0 0; border-top: 1px solid var(--_border); padding-top: 10px; }
-        h4 { font-size: 11px; color: var(--_muted); margin: 4px 0 2px; }
-        /* Each component kind is a delineated section: a bordered card with a headed, underlined title. */
-        .components { display: grid; gap: 14px; }
-        .component-group { border: 1px solid var(--_border); border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px;
-                           background: color-mix(in srgb, var(--_muted) 8%, transparent); }
-        .component-group > h4 { margin: 0; padding-bottom: 7px; border-bottom: 1px solid var(--_border); font-size: 11px;
-                                font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--_text); }
-        input[type="text"], select, textarea {
-          width: 100%; box-sizing: border-box; font: inherit; padding: 6px 9px;
-          border: 1px solid var(--_border); border-radius: var(--_radius);
-          background-color: var(--_bg); color: var(--_text);
-        }
-        textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
-        textarea.invalid { border-color: var(--_danger); }
-        .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .pair > * { min-width: 0; }
-        .row { display: grid; gap: 6px; align-items: center; margin-bottom: 6px; }
-        .row > * { min-width: 0; }
-        .hint { font-size: 11px; color: var(--_muted); }
-        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
-        .srow { align-items: baseline; }
-        .add { font-size: 12px; justify-self: start; }
-        .entry { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 6px; min-width: 0; }
-        .entry > * { min-width: 0; }
-        .entry .ehead { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; }
-        .entry > summary.ehead::-webkit-details-marker { display: none; }
-        .entry > summary.ehead::before { content: '▸'; flex: none; color: var(--_muted); font-size: 10px; transition: transform 0.15s ease; }
-        .entry[open] > summary.ehead::before { transform: rotate(90deg); }
-        .entry:not([open]) > .econtent { display: none; }
-        .entry .ehead code { font-size: 12px; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
-        .entry .ehead .spacer { flex: 1; }
-        .entry .edel { font-size: 11px; padding: 1px 7px; }
-        .entry.flash { animation: entry-flash 1.3s ease-out; }
-        @keyframes entry-flash {
-          0%, 30% { border-color: var(--_accent); box-shadow: inset 0 0 0 1px var(--_accent), 0 0 0 3px color-mix(in srgb, var(--_accent) 24%, transparent); }
-          100% { border-color: var(--_border); box-shadow: none; }
-        }
-        @media (prefers-reduced-motion: reduce) { .entry.flash { animation: none; } }
-      </style>
       <div class="form" part="form"></div>
     `;
   }
@@ -193,7 +194,7 @@ class ArazzoDocumentInspector extends ArazzoElement {
     box.innerHTML = sources.length === 0
       ? '<div class="hint">none yet — attach one from the Sources panel</div>'
       : sources.map((src) => `
-        <div class="row srow" style="grid-template-columns: 1fr 1.4fr auto;">
+        <div class="row srow">
           <span class="sname mono">${escapeHtml(src.name ?? '')}</span>
           <span class="surl mono muted">${escapeHtml(src.url ?? '')}</span>
           <span class="stype muted">${escapeHtml(src.type ?? 'openapi')}</span>
@@ -335,7 +336,7 @@ class ArazzoDocumentInspector extends ArazzoElement {
       });
     } else if (kind === 'parameters') {
       content.innerHTML = `
-        <div class="row" style="grid-template-columns: 1fr auto 1fr; margin-bottom: 0;">
+        <div class="row cprow">
           <input class="cpname" type="text" placeholder="name" value="${escapeHtml(value.name ?? '')}">
           <select class="cpin">
             ${['', 'path', 'query', 'header', 'cookie', 'querystring'].map((v) => `<option value="${v}" ${v === (value.in ?? '') ? 'selected' : ''}>${v || '(in)'}</option>`).join('')}

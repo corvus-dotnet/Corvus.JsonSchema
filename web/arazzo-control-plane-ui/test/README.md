@@ -6,6 +6,7 @@ Three tiers, fastest first. Run from the project root.
 |------|----------------|---------|------------------|
 | 1 | `ArazzoControlPlaneClient` behaviour against the in-memory mock (`client.test.mjs`) | `npm test` | no |
 | 2 | The client's requests match the OpenAPI contract — guards against drift from the generated .NET client (`conformance.test.mjs`) | `npm test` | no |
+| 2b | The kit's source meets its strict Content-Security-Policy (ADR 0073): no style element, style attribute, inline script or inline event handler (`strict-csp.test.mjs`) | `npm test` | no |
 | 3a | Components mounted in a real (headless Chromium) browser (`components/*.test.js`) | `npm run test:components` | yes |
 | 3b | End-to-end smoke of the live demo page (`smoke.spec.js`) | `npm run test:smoke` | yes |
 

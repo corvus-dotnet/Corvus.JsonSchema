@@ -43,6 +43,8 @@ export async function signIn(page, user = LIVE_USERS.admin) {
     await page.locator('#kc-login, input[name="login"]').first().click();
   }
   await expect(runsTab).toBeVisible({ timeout: 30_000 });
+  // The tabs are markup, visible before app.js has wired them; wait until it says it has.
+  await page.locator('body[data-ready="true"]').waitFor({ state: 'attached', timeout: 30_000 });
 }
 
 /**

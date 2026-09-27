@@ -10,7 +10,7 @@
 //
 // Destructive — runs:purge only. Two-step: configure a cutoff, then a strong confirm.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
 
 const PRESETS = [
   { label: 'Up to now', days: 0 },
@@ -54,21 +54,20 @@ class ArazzoPurgeDialog extends ArazzoElement {
 
   render() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 92vw); }
+      dialog::backdrop { background: rgba(0,0,0,0.4); }
+      .head { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
+      .content { padding: 16px; display: grid; gap: 12px; }
+      label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 4px; }
+      input { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
+      .presets { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+      .presets button { font-size: 12px; padding: 4px 10px; }
+      .warn { border-radius: var(--_radius); padding: 10px 12px; background: color-mix(in srgb, var(--_danger) 8%, transparent); border: 1px solid color-mix(in srgb, var(--_danger) 40%, transparent); font-size: 13px; }
+      .result { border-radius: var(--_radius); padding: 10px 12px; background: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 10%, transparent); border: 1px solid color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 40%, transparent); }
+      .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 92vw); }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        .head { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
-        .content { padding: 16px; display: grid; gap: 12px; }
-        label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 4px; }
-        input { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
-        .presets { display: flex; gap: 6px; flex-wrap: wrap; }
-        .presets button { font-size: 12px; padding: 4px 10px; }
-        .warn { border-radius: var(--_radius); padding: 10px 12px; background: color-mix(in srgb, var(--_danger) 8%, transparent); border: 1px solid color-mix(in srgb, var(--_danger) 40%, transparent); font-size: 13px; }
-        .result { border-radius: var(--_radius); padding: 10px 12px; background: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 10%, transparent); border: 1px solid color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 40%, transparent); }
-        .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
-      </style>
       <dialog part="dialog">
         <form method="dialog">
           <div class="head">Purge old runs</div>
@@ -77,7 +76,7 @@ class ArazzoPurgeDialog extends ArazzoElement {
             <div>
               <label for="olderThan">Older than</label>
               <input id="olderThan" type="datetime-local">
-              <div class="presets" style="margin-top:6px">
+              <div class="presets">
                 ${PRESETS.map((p) => `<button type="button" class="ghost preset" data-days="${p.days}">${escapeHtml(p.label)}</button>`).join('')}
               </div>
             </div>

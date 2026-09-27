@@ -16,7 +16,7 @@
 // the workflow versions it hosts (loaded / loading).
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
 import './pager.js';
 
 const DEFAULT_STALE_AFTER_SECONDS = 90;
@@ -182,52 +182,52 @@ class ArazzoRunners extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .panel { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
+      .head { flex: none; padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
+      .head .title { font-weight: 700; }
+      .head .grow { flex: 1; }
+      .head .count { color: var(--_muted); font-size: 12px; }
+      .err { flex: none; margin: 10px 12px; }
+      .list { display: grid; flex: 1; min-height: 0; overflow: auto; }
+      .runner { padding: 11px 12px; border-bottom: 1px solid var(--_border); }
+      .runner:last-child { border-bottom: none; }
+      .rhead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+      .rid { font-weight: 600; }
+      .renv { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_text); font-weight: 600; }
+      .rauth { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; color: var(--_muted); }
+      .rauth.authorized { color: var(--arazzo-status-completed, #1a7f37); }
+      .rauth.pending, .rauth.revoked { color: var(--arazzo-status-suspended, #b45309); }
+      .scap { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; color: var(--arazzo-accent, #3b6cf6); font-weight: 600; }
+      .raddr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
+      .health { flex: none; font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; display: inline-flex; align-items: center; gap: 5px; }
+      .health.online { color: #1a7f37; }
+      .health.stale { color: #b45309; }
+      .health .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+      .rgrow { flex: 1; }
+      .posture { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--_border); font-size: 12px; }
+      .posture .plabel { color: var(--_muted); text-transform: uppercase; letter-spacing: 0.04em; font-size: 11px; }
+      .pos-chip { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; }
+      .pos-ok { color: var(--arazzo-status-completed, #1a7f37); }
+      .pos-bad { color: var(--arazzo-status-faulted, #d4351c); }
+      .rmeta { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 5px; color: var(--_muted); font-size: 12px; }
+      .rmeta b { color: var(--_text); font-weight: 600; }
+      .badges { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+      .badge { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); }
+      .hosted { margin-top: 7px; display: grid; gap: 3px; }
+      .hv { font-size: 12px; display: flex; align-items: baseline; gap: 8px; }
+      .hv .wf { font-weight: 600; }
+      .hv .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--_muted); }
+      .hv .lstate { font-size: 11px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); }
+      .hv .lstate.loading { color: #b45309; border-color: currentColor; }
+    `, PAGER_CSS, `
+      .pager { flex: none; }
+      .skl { height: 16px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 11px 12px; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+      .muted.small { font-size: 12px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .panel { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        .head { flex: none; padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
-        .head .title { font-weight: 700; }
-        .head .grow { flex: 1; }
-        .head .count { color: var(--_muted); font-size: 12px; }
-        .err { flex: none; margin: 10px 12px; }
-        .list { display: grid; flex: 1; min-height: 0; overflow: auto; }
-        .runner { padding: 11px 12px; border-bottom: 1px solid var(--_border); }
-        .runner:last-child { border-bottom: none; }
-        .rhead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-        .rid { font-weight: 600; }
-        .renv { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_text); font-weight: 600; }
-        .rauth { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; color: var(--_muted); }
-        .rauth.authorized { color: var(--arazzo-status-completed, #1a7f37); }
-        .rauth.pending, .rauth.revoked { color: var(--arazzo-status-suspended, #b45309); }
-        .scap { font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; color: var(--arazzo-accent, #3b6cf6); font-weight: 600; }
-        .raddr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
-        .health { flex: none; font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; display: inline-flex; align-items: center; gap: 5px; }
-        .health.online { color: #1a7f37; }
-        .health.stale { color: #b45309; }
-        .health .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-        .rgrow { flex: 1; }
-        .posture { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--_border); font-size: 12px; }
-        .posture .plabel { color: var(--_muted); text-transform: uppercase; letter-spacing: 0.04em; font-size: 11px; }
-        .pos-chip { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; }
-        .pos-ok { color: var(--arazzo-status-completed, #1a7f37); }
-        .pos-bad { color: var(--arazzo-status-faulted, #d4351c); }
-        .rmeta { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 5px; color: var(--_muted); font-size: 12px; }
-        .rmeta b { color: var(--_text); font-weight: 600; }
-        .badges { display: inline-flex; gap: 4px; flex-wrap: wrap; }
-        .badge { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); }
-        .hosted { margin-top: 7px; display: grid; gap: 3px; }
-        .hv { font-size: 12px; display: flex; align-items: baseline; gap: 8px; }
-        .hv .wf { font-weight: 600; }
-        .hv .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--_muted); }
-        .hv .lstate { font-size: 11px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); }
-        .hv .lstate.loading { color: #b45309; border-color: currentColor; }
-        ${PAGER_CSS}
-        .pager { flex: none; }
-        .skl { height: 16px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 11px 12px; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-      </style>
       <div class="panel" part="panel">
         <div class="head">
           <span class="title">Runners</span>
@@ -320,7 +320,7 @@ class ArazzoRunners extends ArazzoElement {
     const transports = Array.isArray(r.transports) ? r.transports : [];
     const hosted = Array.isArray(r.hostedVersions) ? r.hostedVersions : [];
     const hostedHtml = hosted.length === 0
-      ? '<span class="muted" style="font-size:12px">No workflow versions loaded.</span>'
+      ? '<span class="muted small">No workflow versions loaded.</span>'
       : hosted.map((h) => `
         <div class="hv">
           <span class="wf">${escapeHtml(h.baseWorkflowId)}</span><span class="ver">v${escapeHtml(h.versionNumber)}</span>

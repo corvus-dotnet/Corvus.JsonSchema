@@ -11,7 +11,7 @@
 // itself, so dropping just this element gives a working remediation surface. Layer 2 listens to its
 // events to keep the runs list in sync.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, countdown, confirmDialog, copyToClipboard, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, countdown, confirmDialog, copyToClipboard, define } from './base.js';
 import './status-badge.js';
 import './resume-dialog.js';
 import './cancel-button.js';
@@ -146,69 +146,71 @@ class ArazzoRunDetail extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: visible; }
+      /* Sticky header: it stays put while the body scrolls under it (the .detail-pane is the scroll container). */
+      header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; position: sticky; top: 0; z-index: 5; }
+      header .wf { font-weight: 700; font-size: 15px; }
+      header .grow { flex: 1; }
+      header .close { font-size: 16px; line-height: 1; }
+      dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; }
+      dt { color: var(--_muted); font-size: 12px; }
+      dd { margin: 0; font-size: 13px; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
+      .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
+      .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+      .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); }
+      .block { margin: 0 14px 14px; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); }
+      .prog-steps { margin: 6px 0 0; padding-left: 20px; font-size: 12.5px; }
+      .prog-steps li { padding: 1px 0; }
+      .prog-steps li.dispatched { color: var(--_muted); }
+      /* The attested per-step journal: status glyph + attempt + duration, sharing the debug tray's grammar
+         (✓/✗/⏭ in the status palette, ↻N for a retried step). Absent for a run recorded before journaling. */
+      .jst { font-size: 12px; margin-right: 2px; }
+      .jst.ok { color: var(--arazzo-status-completed, #2a8a4a); }
+      .jst.bad { color: var(--arazzo-status-faulted, #d4351c); }
+      .jst.skip { color: var(--_muted); }
+      .jst.retry { color: var(--arazzo-status-suspended, #b58105); }
+      .jmeta { font-size: 11px; color: var(--_muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .prog-note { margin: 4px 0 0; font-size: 11.5px; color: var(--arazzo-status-suspended, #b45309); }
+      .pos-line { font-size: 13px; }
+      .pos { font-size: 11px; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_accent); white-space: nowrap; }
+      .pos.wait { color: var(--arazzo-status-suspended, #b45309); }
+      .pos.fault { color: var(--_danger); }
+      .pos.out { color: var(--_muted); cursor: pointer; }
+      /* §14: sensitive step outputs withheld from this caller — an amber held-back marker, never the payload. */
+      .pos.out.held { color: var(--arazzo-status-quarantined, #d97706); border-color: var(--arazzo-status-quarantined, #d97706); cursor: help; }
+      .step-out summary { cursor: pointer; list-style: none; }
+      .step-out summary::-webkit-details-marker { display: none; }
+      .step-out pre { margin: 4px 0 6px; padding: 8px 10px; background: var(--_surface); border: 1px solid var(--_border); border-radius: 6px; font-size: 11.5px; overflow-x: auto; }
+      .block h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
+      .fault { border-color: color-mix(in srgb, var(--arazzo-status-faulted, #d4351c) 40%, var(--_border)); }
+      .fault .err { color: var(--arazzo-status-faulted, #d4351c); font-family: ui-monospace, monospace; font-size: 12px; }
+      /* What one of the platform's own fault types means and what to do about it, under the recorded error. */
+      .fault .help { margin-top: 8px; font-size: 12.5px; display: grid; gap: 4px; }
+      .fault .help .remedy { color: var(--_muted); }
+      .fault .verdict { margin-top: 8px; font-size: 12.5px; font-weight: 600; }
+      .fault .verdict.yes { color: var(--arazzo-status-completed, #2a8a4a); }
+      .fault .verdict.no { color: var(--arazzo-status-suspended, #b45309); }
+      /* A budget is six label/value pairs. The grid sizes the label column to its content and lets values wrap. */
+      .limits { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; font-size: 12.5px; }
+      .limits dt { color: var(--_muted); font-size: 12px; }
+      .limits dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+      .limits.offered { margin-top: 6px; }
+      .link { background: none; border: 0; padding: 0; color: var(--_accent); cursor: pointer; font: inherit; text-decoration: underline; }
+      .why { font-size: 12px; color: var(--_muted); flex-basis: 100%; }
+      .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--_border); }
+      /* The buttons are a display:contents wrapper so resume/delete become direct flex children of .actions,
+         laid out with the persistent <arazzo-cancel-button> (which is never re-parented — see renderActions). */
+      .action-buttons { display: contents; }
+      .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+      .pad { padding: 14px; }
+      .skl.skl-id { display: inline-block; width: 140px; }
+      .skl.skl-60 { width: 60%; }
+      .skl.skl-40 { width: 40%; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: visible; }
-        /* Sticky header: it stays put while the body scrolls under it (the .detail-pane is the scroll container). */
-        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; position: sticky; top: 0; z-index: 5; }
-        header .wf { font-weight: 700; font-size: 15px; }
-        header .grow { flex: 1; }
-        header .close { font-size: 16px; line-height: 1; }
-        dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; }
-        dt { color: var(--_muted); font-size: 12px; }
-        dd { margin: 0; font-size: 13px; }
-        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
-        .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
-        .tags { display: flex; gap: 4px; flex-wrap: wrap; }
-        .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); }
-        .block { margin: 0 14px 14px; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); }
-        .prog-steps { margin: 6px 0 0; padding-left: 20px; font-size: 12.5px; }
-        .prog-steps li { padding: 1px 0; }
-        .prog-steps li.dispatched { color: var(--_muted); }
-        /* The attested per-step journal: status glyph + attempt + duration, sharing the debug tray's grammar
-           (✓/✗/⏭ in the status palette, ↻N for a retried step). Absent for a run recorded before journaling. */
-        .jst { font-size: 12px; margin-right: 2px; }
-        .jst.ok { color: var(--arazzo-status-completed, #2a8a4a); }
-        .jst.bad { color: var(--arazzo-status-faulted, #d4351c); }
-        .jst.skip { color: var(--_muted); }
-        .jst.retry { color: var(--arazzo-status-suspended, #b58105); }
-        .jmeta { font-size: 11px; color: var(--_muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .prog-note { margin: 4px 0 0; font-size: 11.5px; color: var(--arazzo-status-suspended, #b45309); }
-        .pos-line { font-size: 13px; }
-        .pos { font-size: 11px; border: 1px solid var(--_border); border-radius: 999px; padding: 1px 7px; color: var(--_accent); white-space: nowrap; }
-        .pos.wait { color: var(--arazzo-status-suspended, #b45309); }
-        .pos.fault { color: var(--_danger); }
-        .pos.out { color: var(--_muted); cursor: pointer; }
-        /* §14: sensitive step outputs withheld from this caller — an amber held-back marker, never the payload. */
-        .pos.out.held { color: var(--arazzo-status-quarantined, #d97706); border-color: var(--arazzo-status-quarantined, #d97706); cursor: help; }
-        .step-out summary { cursor: pointer; list-style: none; }
-        .step-out summary::-webkit-details-marker { display: none; }
-        .step-out pre { margin: 4px 0 6px; padding: 8px 10px; background: var(--_surface); border: 1px solid var(--_border); border-radius: 6px; font-size: 11.5px; overflow-x: auto; }
-        .block h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
-        .fault { border-color: color-mix(in srgb, var(--arazzo-status-faulted, #d4351c) 40%, var(--_border)); }
-        .fault .err { color: var(--arazzo-status-faulted, #d4351c); font-family: ui-monospace, monospace; font-size: 12px; }
-        /* What one of the platform's own fault types means and what to do about it, under the recorded error. */
-        .fault .help { margin-top: 8px; font-size: 12.5px; display: grid; gap: 4px; }
-        .fault .help .remedy { color: var(--_muted); }
-        .fault .verdict { margin-top: 8px; font-size: 12.5px; font-weight: 600; }
-        .fault .verdict.yes { color: var(--arazzo-status-completed, #2a8a4a); }
-        .fault .verdict.no { color: var(--arazzo-status-suspended, #b45309); }
-        /* A budget is six label/value pairs. The grid sizes the label column to its content and lets values wrap. */
-        .limits { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; font-size: 12.5px; }
-        .limits dt { color: var(--_muted); font-size: 12px; }
-        .limits dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-        .limits.offered { margin-top: 6px; }
-        .link { background: none; border: 0; padding: 0; color: var(--_accent); cursor: pointer; font: inherit; text-decoration: underline; }
-        .why { font-size: 12px; color: var(--_muted); flex-basis: 100%; }
-        .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--_border); }
-        /* The buttons are a display:contents wrapper so resume/delete become direct flex children of .actions,
-           laid out with the persistent <arazzo-cancel-button> (which is never re-parented — see renderActions). */
-        .action-buttons { display: contents; }
-        .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-        .pad { padding: 14px; }
-      </style>
       <div class="panel" part="panel">
         <header part="header">
           <arazzo-status-badge part="status"></arazzo-status-badge>
@@ -264,8 +266,8 @@ class ArazzoRunDetail extends ArazzoElement {
     }
 
     if (this._loading && !this._run) {
-      wf.innerHTML = '<span class="skl" style="width:140px;display:inline-block"></span>';
-      body.innerHTML = `<div class="pad"><div class="skl" style="width:60%"></div><br><div class="skl" style="width:40%"></div></div>`;
+      wf.innerHTML = '<span class="skl skl-id"></span>';
+      body.innerHTML = `<div class="pad"><div class="skl skl-60"></div><br><div class="skl skl-40"></div></div>`;
       return;
     }
 

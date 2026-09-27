@@ -7,7 +7,7 @@
 // Events     : run-selected {run}, loaded {count, hasMore}, error {problem}
 // Parts      : table, row, cell, status, pager, filters
 
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, countdown, copyToClipboard, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, countdown, copyToClipboard, define } from './base.js';
 import './status-badge.js';
 import './pager.js';
 import { describeFault } from '../execution-budget.js';
@@ -163,35 +163,34 @@ class ArazzoRunsTable extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+      .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+      .tablescroll { flex: 1; min-height: 0; overflow: auto; }
+      table { width: 100%; border-collapse: collapse; }
+      thead th {
+        text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted);
+        padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap;
+        position: sticky; top: 0; z-index: 1;
+      }
+      tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
+      tbody tr:last-child td { border-bottom: none; }
+      tbody tr.selectable { cursor: pointer; }
+      tbody tr.selectable:hover { background: var(--_surface); }
+      tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
+      .id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+      .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
+      .wf { font-weight: 600; }
+      .wait, .err { font-size: 12px; }
+      .err { color: var(--arazzo-status-faulted, #d4351c); }
+      .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+      .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; }
+      .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
+      @keyframes pulse { 50% { opacity: 0.45; } }
+    `, PAGER_CSS, `
+      .pager { flex: none; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: flex; flex-direction: column; min-height: 0; height: 100%; }
-        .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .tablescroll { flex: 1; min-height: 0; overflow: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        thead th {
-          text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted);
-          padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap;
-          position: sticky; top: 0; z-index: 1;
-        }
-        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr.selectable { cursor: pointer; }
-        tbody tr.selectable:hover { background: var(--_surface); }
-        tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
-        .id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-        .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
-        .wf { font-weight: 600; }
-        .wait, .err { font-size: 12px; }
-        .err { color: var(--arazzo-status-faulted, #d4351c); }
-        .tags { display: flex; gap: 4px; flex-wrap: wrap; }
-        .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; }
-        .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
-        @keyframes pulse { 50% { opacity: 0.45; } }
-        ${PAGER_CSS}
-        .pager { flex: none; }
-      </style>
       <div class="wrap" part="table">
         <div class="tablescroll">
           <table>

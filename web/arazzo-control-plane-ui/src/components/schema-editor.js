@@ -23,7 +23,7 @@
 // | boolean     | a read-only true/false switch | JSON tier only (the engine does not enforce boolean input schemas) |
 // | +N more     | preserved unrendered keyword names | preserved verbatim |
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
 import { wireGuardedJsonEditor } from './guarded-json.js';
 import './text-editor.js';
 import './mode-toggle.js';
@@ -119,68 +119,67 @@ class ArazzoSchemaEditor extends ArazzoElement {
   }
 
   _renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      .head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .head .legend { font-weight: 600; font-size: 13px; margin-right: auto; }
+      .rows { display: flex; flex-direction: column; gap: 6px; }
+      /* The root form is a delimited box (border + radius, no fill) matching the payload editor and the
+         parameters/success-criteria sections; nested levels hang off an accent-tinted rail — depth you
+         can see at a glance (#858). */
+      .node { border: 1px solid var(--_border); border-radius: 8px; padding: 8px 10px; background: transparent; }
+      /* A child property is NOT a boxed card: it hangs off the parent's accent rail as an indented list
+         row (the rail is the depth cue, #858), so drop the box border/radius/fill the base .node gives. */
+      .node.child { margin-left: 4px; border: none; border-radius: 0; background: none; border-left: 2px solid color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 30%, var(--_border)); padding: 2px 0 2px 10px; }
+      /* The label that heads an array's items, sitting at the parent's own level with the item indented. */
+      .body-label { font: 11px var(--_font); color: var(--_muted); margin: 6px 0 3px; }
+      /* An object's "properties" section rolls up: the label is a toggle carrying a caret + a count; its
+         members sit in their own container, spaced so each property reads as a distinct row. */
+      .body-toggle { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--_muted); font: 11px var(--_font); cursor: pointer; padding: 2px 0; margin: 6px 0 4px; }
+      .body-toggle:hover { color: inherit; }
+      .body-toggle .caret { font-size: 9px; width: 1ch; display: inline-block; }
+      .body-toggle .count { opacity: 0.7; font-variant-numeric: tabular-nums; }
+      .members { display: grid; gap: 10px; }
+      .members[hidden] { display: none; }
+      .rowline { display: flex; align-items: center; gap: 6px; }
+      .rowline .name { flex: 1; min-width: 60px; font: 12px var(--_font); padding: 3px 6px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
+      .rowline .name.invalid { border-color: var(--arazzo-status-faulted, #d4351c); }
+      select.type, select.kind { font: 12px var(--_font); padding: 3px 6px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
+      .req { cursor: pointer; font-size: 15px; line-height: 1; background: none; border: none; color: var(--_muted); padding: 0 2px; }
+      .req[aria-pressed="true"] { color: var(--arazzo-status-suspended, #b07d18); }
+      .iconbtn { border: none; background: none; color: var(--_muted); cursor: pointer; font-size: 13px; padding: 0 3px; }
+      .iconbtn:hover { color: inherit; }
+      .desc { width: 100%; box-sizing: border-box; font: 12px var(--_font); padding: 3px 6px; margin-top: 4px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
+      /* format (scalars) is promoted out of more... to a top-level labelled row, above the nested body. */
+      .format-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+      .format-row > label { font-size: 11px; color: var(--_muted); }
+      .format-row select { font: 12px var(--_font); padding: 2px 5px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
+      .more { margin-top: 6px; }
+      .more summary { cursor: pointer; font-size: 11px; color: var(--_muted); }
+      .more-body { display: grid; grid-template-columns: max-content 1fr; gap: 4px 8px; align-items: center; padding: 6px 0 2px; }
+      .more-body label { font-size: 11px; color: var(--_muted); }
+      .more-body input, .more-body select { font: 12px var(--_font); padding: 2px 5px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
+      .more-body input.invalid { border-color: var(--arazzo-status-faulted, #d4351c); }
+      .full { grid-column: 1 / -1; }
+      /* The typed default editor sits in the constraint grid at the same scale as the other rows. */
+      .more-body .default-ve { min-width: 0; font-size: 12px; }
+      .variant { border: 1px dashed var(--_border); border-radius: 8px; padding: 6px 8px; margin: 6px 0; }
+      .variant .vhead { display: flex; align-items: center; gap: 6px; }
+      .variant .vlabel { flex: 1; font: 12px var(--_font); padding: 2px 6px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
+      .add { font: 12px var(--_font); padding: 3px 10px; border: 1px dashed var(--_border); border-radius: 6px; background: none; color: inherit; cursor: pointer; margin-top: 4px; }
+      .advanced { color: var(--_muted); font-size: 12px; display: flex; align-items: center; gap: 8px; }
+      .chip { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 999px; background: var(--_surface); color: var(--_muted); }
+      .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+      .ghost { color: var(--arazzo-status-faulted, #d4351c); font-size: 12px; display: flex; align-items: center; gap: 8px; }
+      .empty { color: var(--_muted); font-size: 12px; padding: 4px 0; }
+      arazzo-text-editor.json-ed { display: block; height: 300px; min-height: 160px; }
+      .json-hint { font-size: 11px; color: var(--_muted); margin-top: 4px; }
+      .preview { margin-top: 10px; }
+      .preview summary { cursor: pointer; font-size: 12px; color: var(--_muted); }
+      .preview .pv-body { border: 1px solid var(--_border); border-radius: 8px; padding: 8px; margin-top: 6px; }
+      [hidden] { display: none !important; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        .head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .head .legend { font-weight: 600; font-size: 13px; margin-right: auto; }
-        .rows { display: flex; flex-direction: column; gap: 6px; }
-        /* The root form is a delimited box (border + radius, no fill) matching the payload editor and the
-           parameters/success-criteria sections; nested levels hang off an accent-tinted rail — depth you
-           can see at a glance (#858). */
-        .node { border: 1px solid var(--_border); border-radius: 8px; padding: 8px 10px; background: transparent; }
-        /* A child property is NOT a boxed card: it hangs off the parent's accent rail as an indented list
-           row (the rail is the depth cue, #858), so drop the box border/radius/fill the base .node gives. */
-        .node.child { margin-left: 4px; border: none; border-radius: 0; background: none; border-left: 2px solid color-mix(in srgb, var(--arazzo-accent, #3b6cf6) 30%, var(--_border)); padding: 2px 0 2px 10px; }
-        /* The label that heads an array's items, sitting at the parent's own level with the item indented. */
-        .body-label { font: 11px var(--_font); color: var(--_muted); margin: 6px 0 3px; }
-        /* An object's "properties" section rolls up: the label is a toggle carrying a caret + a count; its
-           members sit in their own container, spaced so each property reads as a distinct row. */
-        .body-toggle { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--_muted); font: 11px var(--_font); cursor: pointer; padding: 2px 0; margin: 6px 0 4px; }
-        .body-toggle:hover { color: inherit; }
-        .body-toggle .caret { font-size: 9px; width: 1ch; display: inline-block; }
-        .body-toggle .count { opacity: 0.7; font-variant-numeric: tabular-nums; }
-        .members { display: grid; gap: 10px; }
-        .members[hidden] { display: none; }
-        .rowline { display: flex; align-items: center; gap: 6px; }
-        .rowline .name { flex: 1; min-width: 60px; font: 12px var(--_font); padding: 3px 6px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
-        .rowline .name.invalid { border-color: var(--arazzo-status-faulted, #d4351c); }
-        select.type, select.kind { font: 12px var(--_font); padding: 3px 6px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
-        .req { cursor: pointer; font-size: 15px; line-height: 1; background: none; border: none; color: var(--_muted); padding: 0 2px; }
-        .req[aria-pressed="true"] { color: var(--arazzo-status-suspended, #b07d18); }
-        .iconbtn { border: none; background: none; color: var(--_muted); cursor: pointer; font-size: 13px; padding: 0 3px; }
-        .iconbtn:hover { color: inherit; }
-        .desc { width: 100%; box-sizing: border-box; font: 12px var(--_font); padding: 3px 6px; margin-top: 4px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
-        /* format (scalars) is promoted out of more... to a top-level labelled row, above the nested body. */
-        .format-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-        .format-row > label { font-size: 11px; color: var(--_muted); }
-        .format-row select { font: 12px var(--_font); padding: 2px 5px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
-        .more { margin-top: 6px; }
-        .more summary { cursor: pointer; font-size: 11px; color: var(--_muted); }
-        .more-body { display: grid; grid-template-columns: max-content 1fr; gap: 4px 8px; align-items: center; padding: 6px 0 2px; }
-        .more-body label { font-size: 11px; color: var(--_muted); }
-        .more-body input, .more-body select { font: 12px var(--_font); padding: 2px 5px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
-        .more-body input.invalid { border-color: var(--arazzo-status-faulted, #d4351c); }
-        .full { grid-column: 1 / -1; }
-        /* The typed default editor sits in the constraint grid at the same scale as the other rows. */
-        .more-body .default-ve { min-width: 0; font-size: 12px; }
-        .variant { border: 1px dashed var(--_border); border-radius: 8px; padding: 6px 8px; margin: 6px 0; }
-        .variant .vhead { display: flex; align-items: center; gap: 6px; }
-        .variant .vlabel { flex: 1; font: 12px var(--_font); padding: 2px 6px; border: 1px solid var(--_border); border-radius: 5px; background: var(--_bg); color: inherit; }
-        .add { font: 12px var(--_font); padding: 3px 10px; border: 1px dashed var(--_border); border-radius: 6px; background: none; color: inherit; cursor: pointer; margin-top: 4px; }
-        .advanced { color: var(--_muted); font-size: 12px; display: flex; align-items: center; gap: 8px; }
-        .chip { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 999px; background: var(--_surface); color: var(--_muted); }
-        .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-        .ghost { color: var(--arazzo-status-faulted, #d4351c); font-size: 12px; display: flex; align-items: center; gap: 8px; }
-        .empty { color: var(--_muted); font-size: 12px; padding: 4px 0; }
-        arazzo-text-editor.json-ed { display: block; height: 300px; min-height: 160px; }
-        .json-hint { font-size: 11px; color: var(--_muted); margin-top: 4px; }
-        .preview { margin-top: 10px; }
-        .preview summary { cursor: pointer; font-size: 12px; color: var(--_muted); }
-        .preview .pv-body { border: 1px solid var(--_border); border-radius: 8px; padding: 8px; margin-top: 6px; }
-        [hidden] { display: none !important; }
-      </style>
       <div class="head">
         <span class="legend" part="editor"></span>
         <arazzo-mode-toggle class="tier" aria-label="Editing tier"></arazzo-mode-toggle>

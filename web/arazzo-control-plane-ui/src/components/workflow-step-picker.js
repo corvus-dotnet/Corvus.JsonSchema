@@ -16,7 +16,7 @@
 // catalog (or there's no catalog access), it falls back to a plain numeric input (bounded by direction) so
 // resume still works.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 
 class ArazzoWorkflowStepPicker extends ArazzoElement {
   static get observedAttributes() {
@@ -133,18 +133,17 @@ class ArazzoWorkflowStepPicker extends ArazzoElement {
   // ---- rendering --------------------------------------------------------------------------------
 
   renderShell() {
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      select, input {
+        width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border);
+        border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text);
+      }
+      select { padding-right: 30px; }
+      .hint { font-size: 11px; color: var(--_muted); margin-top: 4px; }
+      .current { font-weight: 600; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        select, input {
-          width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border);
-          border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text);
-        }
-        select { padding-right: 30px; }
-        .hint { font-size: 11px; color: var(--_muted); margin-top: 4px; }
-        .current { font-weight: 600; }
-      </style>
       <div class="body"></div>
     `;
   }

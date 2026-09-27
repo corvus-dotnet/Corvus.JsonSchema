@@ -26,7 +26,7 @@
 // Events     : value-changed {value} (on edit), commit {value} (Enter),
 //              validated {valid, errors} (after each validator run)
 
-import { ArazzoElement, SHARED_CSS, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, define } from './base.js';
 import { expressionStreamParser, completionsFor } from '../expression-language.js';
 
 const VALIDATE_DEBOUNCE_MS = 350;
@@ -121,30 +121,29 @@ class ArazzoExpressionInput extends ArazzoElement {
     this._built = true;
     const initial = this._pending ?? this.getAttribute('value') ?? '';
     delete this._pending;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      .xin { position: relative; min-width: 0; }
+      :host { min-width: 0; }
+      /* Single-line fields scroll like a native input: content moves with the caret, no visible
+         scrollbar strip. */
+      .cm-scroller { overflow-x: auto; scrollbar-width: none; }
+      .cm-scroller::-webkit-scrollbar { display: none; }
+      input, .cm-editor {
+        width: 100%; box-sizing: border-box;
+        font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;
+        border: 1px solid var(--_border); border-radius: var(--_radius);
+        background-color: var(--_bg); color: var(--_text);
+      }
+      input { padding: 7px 9px; }
+      input:focus-visible { outline: 2px solid var(--_accent); outline-offset: 1px; }
+      .cm-editor { padding: 2px 4px; }
+      .cm-editor.cm-focused { outline: 2px solid var(--_accent); outline-offset: 1px; }
+      .xin.invalid input, .xin.invalid .cm-editor { border-color: var(--_danger); }
+      .err { font-size: 11px; color: var(--_danger); margin-top: 3px; }
+      [hidden] { display: none !important; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        .xin { position: relative; min-width: 0; }
-        :host { min-width: 0; }
-        /* Single-line fields scroll like a native input: content moves with the caret, no visible
-           scrollbar strip. */
-        .cm-scroller { overflow-x: auto; scrollbar-width: none; }
-        .cm-scroller::-webkit-scrollbar { display: none; }
-        input, .cm-editor {
-          width: 100%; box-sizing: border-box;
-          font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;
-          border: 1px solid var(--_border); border-radius: var(--_radius);
-          background-color: var(--_bg); color: var(--_text);
-        }
-        input { padding: 7px 9px; }
-        input:focus-visible { outline: 2px solid var(--_accent); outline-offset: 1px; }
-        .cm-editor { padding: 2px 4px; }
-        .cm-editor.cm-focused { outline: 2px solid var(--_accent); outline-offset: 1px; }
-        .xin.invalid input, .xin.invalid .cm-editor { border-color: var(--_danger); }
-        .err { font-size: 11px; color: var(--_danger); margin-top: 3px; }
-        [hidden] { display: none !important; }
-      </style>
       <div class="xin" part="input">
         <input type="text" spellcheck="false" autocomplete="off"
                value="${escapeAttr(initial)}"

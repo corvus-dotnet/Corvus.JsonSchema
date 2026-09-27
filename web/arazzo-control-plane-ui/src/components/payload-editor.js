@@ -14,7 +14,7 @@
 // A Form | JSON toggle keeps full fidelity: arrays and anything beyond the schema's shape are
 // edited as guarded raw JSON (unparseable input never emits; the last valid payload stands).
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
 import './expression-input.js';
 import './text-editor.js';
 import './mode-toggle.js';
@@ -57,34 +57,33 @@ class ArazzoPayloadEditor extends ArazzoElement {
   /** @private */
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, `
+      :host { display: block; }
+      .modes { display: block; margin-bottom: 6px; }
+      /* The form seats in a delimited box mirroring the JSON text editor's bordered area, so Form
+         and JSON modes read as the same panel in two views (compact: the editor's border + radius). */
+      .fields { display: grid; gap: 10px; min-width: 0; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; }
+      .fields:empty { display: none; }
+      .fields .field, .fields .fieldset { min-width: 0; }
+      label { font-size: 11px; color: var(--_muted); display: flex; gap: 6px; align-items: baseline; margin-bottom: 2px; }
+      label .t { font-size: 10px; opacity: 0.8; }
+      .fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 8px; background: var(--_surface); }
+      .fieldset > .fname { font: 600 11px var(--_font); color: var(--_muted); }
+      arazzo-text-editor.payload { display: block; height: 180px; min-height: 0; }
+      /* An enum leaf is a combo: the expression input plus a picker popping the declared values.
+         Expressions stay first-class — the picker only offers the literal choices. */
+      .leaf-combo { display: flex; gap: 4px; align-items: center; position: relative; }
+      .leaf-combo arazzo-expression-input { flex: 1; min-width: 0; }
+      .enum-pick { flex: none; font-size: 11px; padding: 4px 8px; }
+      .enum-menu { position: absolute; top: 100%; right: 0; z-index: 30; margin-top: 4px; min-width: 160px; max-height: 220px; overflow-y: auto; background: var(--_bg); border: 1px solid var(--_border); border-radius: 6px; box-shadow: 0 6px 24px rgba(0,0,0,0.14); padding: 4px; display: grid; }
+      .enum-menu[hidden] { display: none; }
+      .enum-opt { display: block; width: 100%; text-align: left; border: none; background: none; color: inherit; padding: 4px 8px; border-radius: 4px; cursor: pointer; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .enum-opt:hover { background: var(--_surface); }
+      .enum-opt[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 14%, transparent); font-weight: 600; }
+      .hint { font-size: 11px; color: var(--_muted); margin-top: 3px; }
+            arazzo-expression-input.invalid { outline: 1.5px solid var(--_danger, #d4351c); border-radius: 6px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        :host { display: block; }
-        .modes { display: block; margin-bottom: 6px; }
-        /* The form seats in a delimited box mirroring the JSON text editor's bordered area, so Form
-           and JSON modes read as the same panel in two views (compact: the editor's border + radius). */
-        .fields { display: grid; gap: 10px; min-width: 0; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; }
-        .fields:empty { display: none; }
-        .fields .field, .fields .fieldset { min-width: 0; }
-        label { font-size: 11px; color: var(--_muted); display: flex; gap: 6px; align-items: baseline; margin-bottom: 2px; }
-        label .t { font-size: 10px; opacity: 0.8; }
-        .fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px; display: grid; gap: 8px; background: var(--_surface); }
-        .fieldset > .fname { font: 600 11px var(--_font); color: var(--_muted); }
-        arazzo-text-editor.payload { display: block; height: 180px; min-height: 0; }
-        /* An enum leaf is a combo: the expression input plus a picker popping the declared values.
-           Expressions stay first-class — the picker only offers the literal choices. */
-        .leaf-combo { display: flex; gap: 4px; align-items: center; position: relative; }
-        .leaf-combo arazzo-expression-input { flex: 1; min-width: 0; }
-        .enum-pick { flex: none; font-size: 11px; padding: 4px 8px; }
-        .enum-menu { position: absolute; top: 100%; right: 0; z-index: 30; margin-top: 4px; min-width: 160px; max-height: 220px; overflow-y: auto; background: var(--_bg); border: 1px solid var(--_border); border-radius: 6px; box-shadow: 0 6px 24px rgba(0,0,0,0.14); padding: 4px; display: grid; }
-        .enum-menu[hidden] { display: none; }
-        .enum-opt { display: block; width: 100%; text-align: left; border: none; background: none; color: inherit; padding: 4px 8px; border-radius: 4px; cursor: pointer; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
-        .enum-opt:hover { background: var(--_surface); }
-        .enum-opt[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 14%, transparent); font-weight: 600; }
-        .hint { font-size: 11px; color: var(--_muted); margin-top: 3px; }
-              arazzo-expression-input.invalid { outline: 1.5px solid var(--_danger, #d4351c); border-radius: 6px; }
-      </style>
       <arazzo-mode-toggle class="modes" hidden></arazzo-mode-toggle>
       <div class="body"></div>
     `;

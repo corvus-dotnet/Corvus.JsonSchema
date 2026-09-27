@@ -547,9 +547,10 @@ component added.
 
 > **Decided 2026-09-27: [ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md).** The kit conforms
 > inside ADR 0041: page scripts as modules, component styles in constructable stylesheets, which CSP does not
-> govern. The library ships `AddArazzoSecurityHeaders()`, required in the secured postures. Built: the headers, the
-> script-strict policy and the moved page scripts. Not built: the constructable stylesheets, so `style-src` keeps
-> `'unsafe-inline'` until they land.
+> govern. The library ships `AddArazzoSecurityHeaders()`, required in the secured postures. Built in full: the
+> headers, a policy with `script-src 'self'` and `style-src 'self'` and no `'unsafe-inline'`, the page scripts and
+> styles moved into files, the components' styles in constructable stylesheets, and a static test that refuses
+> inline script and style in the kit.
 
 ### GAP-2 · `TB-3` · Session hardening and revocable logout
 ADR 0042 assigns session ownership to the host but specifies no properties. Missing: a `Secure`

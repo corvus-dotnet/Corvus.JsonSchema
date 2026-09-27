@@ -135,3 +135,7 @@ overviewPanel?.addEventListener('open-environment', (e) => {
   clickTab('view-environments');
   document.querySelector('arazzo-environments')?.select(e.detail.environment);
 });
+
+// Every control is wired. The page's markup is visible before this module and its imports have run, so a click in
+// that window does nothing; the live UX suite waits for this marker before it drives the page.
+document.body.dataset.ready = 'true';

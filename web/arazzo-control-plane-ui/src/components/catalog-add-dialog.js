@@ -22,7 +22,7 @@
 //   4. Review & commit  — everything is gathered first; one commit registers new sources, adds the version, applies
 //                         the administrators, and opens the guided credential dialog for each source flagged for setup.
 
-import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, define } from './base.js';
 import { packWorkflowPackage } from '../workflow-package.js';
 import './credential-dialog.js';
 import './grantee-picker.js';
@@ -393,63 +393,61 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
 
   renderShell() {
     this._built = true;
+    adoptStyles(this.shadowRoot, SHARED_CSS, GRANTEE_CHIP_CSS, `
+      dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(640px, 94vw); }
+      dialog::backdrop { background: rgba(0,0,0,0.4); }
+      .head { padding: 14px 16px; border-bottom: 1px solid var(--_border); }
+      .head .title { font-weight: 700; font-size: 15px; }
+      .steps { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+      .step-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); }
+      .step-chip.active { border-color: var(--_accent); color: var(--_text); background: color-mix(in srgb, var(--_accent) 10%, transparent); font-weight: 600; }
+      .step-chip.done { color: var(--arazzo-status-completed, #2a8a4a); border-color: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 50%, var(--_border)); }
+      .content { padding: 16px; display: grid; gap: 14px; max-height: 60vh; overflow: auto; }
+      fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 12px; margin: 0; display: grid; gap: 10px; }
+      legend { font-size: 12px; font-weight: 600; color: var(--_muted); padding: 0 4px; }
+      .modes { display: flex; gap: 8px; flex-wrap: wrap; }
+      .mode { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 6px 10px; cursor: pointer; font-size: 13px; }
+      .mode:has(input:checked) { border-color: var(--_accent); background: color-mix(in srgb, var(--_accent) 8%, transparent); }
+      label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 4px; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      input[type="text"], input[type="email"], input[type="url"] { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
+      input[type="file"] { font: inherit; font-size: 12px; }
+      .wf-status, .src-upload-status { font-size: 11px; color: var(--_muted); }
+      .wf-status.ok, .src-upload-status.ok { color: var(--arazzo-status-completed, #2a8a4a); }
+      .wf-status.err, .src-upload-status.err, .hint.err { color: var(--_danger); }
+      .sources { display: grid; gap: 8px; }
+      .source-row { display: grid; gap: 6px; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px 10px; }
+      .src-head { display: flex; align-items: baseline; gap: 8px; }
+      .src-label { font-weight: 600; font-size: 13px; color: var(--_text); }
+      .src-type { font-size: 11px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
+      .src-badge { font-size: 11px; padding: 1px 7px; border-radius: 999px; margin-left: auto; }
+      .src-badge.registered { color: var(--arazzo-status-completed, #2a8a4a); border: 1px solid color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 50%, var(--_border)); }
+      .src-badge.new { color: var(--arazzo-status-suspended, #b07d18); border: 1px solid color-mix(in srgb, var(--arazzo-status-suspended, #b07d18) 50%, var(--_border)); }
+      .env-chip { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_text); }
+      .readiness { font-size: 13px; padding: 8px 10px; border-radius: var(--_radius); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+      .readiness.ok { color: var(--arazzo-status-completed, #2a8a4a); border: 1px solid color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 50%, var(--_border)); background: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 8%, transparent); }
+      .readiness.warn { color: var(--arazzo-status-suspended, #b07d18); border: 1px solid color-mix(in srgb, var(--arazzo-status-suspended, #b07d18) 50%, var(--_border)); background: color-mix(in srgb, var(--arazzo-status-suspended, #b07d18) 8%, transparent); }
+      .src-creds { font-size: 12px; color: var(--_muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+      .src-creds .ok { color: var(--arazzo-status-completed, #2a8a4a); font-weight: 600; }
+      .src-creds .warn { color: var(--arazzo-status-suspended, #b07d18); font-weight: 600; }
+      .setup-cred-btn { margin-left: auto; font-size: 12px; }
+      .review-row .ok { color: var(--arazzo-status-completed, #2a8a4a); }
+      .review-row .warn { color: var(--arazzo-status-suspended, #b07d18); }
+      .hint { font-size: 11px; color: var(--_muted); }
+      .admins { display: grid; gap: 6px; }
+      .admin-row { display: flex; align-items: center; gap: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 6px 10px; }
+      .admin-row .grow { flex: 1; }
+      .admin-add { display: flex; gap: 8px; align-items: center; }
+      .admin-add .admin-picker { flex: 1; }
+      .review-grid { display: grid; gap: 10px; }
+      .review-row { display: grid; grid-template-columns: 130px 1fr; gap: 10px; font-size: 13px; }
+      .review-row .k { color: var(--_muted); font-size: 12px; }
+      .creator-note { font-size: 12px; color: var(--_muted); }
+      .foot { display: flex; gap: 8px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--_border); }
+      .foot .spacer { flex: 1; }
+      .error-banner { margin: 0 16px 12px; }
+    `);
     this.shadowRoot.innerHTML = `
-      <style>
-        ${SHARED_CSS}
-        ${GRANTEE_CHIP_CSS}
-        dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(640px, 94vw); }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        .head { padding: 14px 16px; border-bottom: 1px solid var(--_border); }
-        .head .title { font-weight: 700; font-size: 15px; }
-        .steps { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-        .step-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); }
-        .step-chip.active { border-color: var(--_accent); color: var(--_text); background: color-mix(in srgb, var(--_accent) 10%, transparent); font-weight: 600; }
-        .step-chip.done { color: var(--arazzo-status-completed, #2a8a4a); border-color: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 50%, var(--_border)); }
-        .content { padding: 16px; display: grid; gap: 14px; max-height: 60vh; overflow: auto; }
-        fieldset { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 12px; margin: 0; display: grid; gap: 10px; }
-        legend { font-size: 12px; font-weight: 600; color: var(--_muted); padding: 0 4px; }
-        .modes { display: flex; gap: 8px; flex-wrap: wrap; }
-        .mode { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 6px 10px; cursor: pointer; font-size: 13px; }
-        .mode:has(input:checked) { border-color: var(--_accent); background: color-mix(in srgb, var(--_accent) 8%, transparent); }
-        label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 4px; }
-        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        input[type="text"], input[type="email"], input[type="url"] { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
-        input[type="file"] { font: inherit; font-size: 12px; }
-        .wf-status, .src-upload-status { font-size: 11px; color: var(--_muted); }
-        .wf-status.ok, .src-upload-status.ok { color: var(--arazzo-status-completed, #2a8a4a); }
-        .wf-status.err, .src-upload-status.err, .hint.err { color: var(--_danger); }
-        .sources { display: grid; gap: 8px; }
-        .source-row { display: grid; gap: 6px; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 8px 10px; }
-        .src-head { display: flex; align-items: baseline; gap: 8px; }
-        .src-label { font-weight: 600; font-size: 13px; color: var(--_text); }
-        .src-type { font-size: 11px; color: var(--_muted); text-transform: uppercase; letter-spacing: 0.03em; }
-        .src-badge { font-size: 11px; padding: 1px 7px; border-radius: 999px; margin-left: auto; }
-        .src-badge.registered { color: var(--arazzo-status-completed, #2a8a4a); border: 1px solid color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 50%, var(--_border)); }
-        .src-badge.new { color: var(--arazzo-status-suspended, #b07d18); border: 1px solid color-mix(in srgb, var(--arazzo-status-suspended, #b07d18) 50%, var(--_border)); }
-        .env-chip { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_text); }
-        .readiness { font-size: 13px; padding: 8px 10px; border-radius: var(--_radius); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-        .readiness.ok { color: var(--arazzo-status-completed, #2a8a4a); border: 1px solid color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 50%, var(--_border)); background: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 8%, transparent); }
-        .readiness.warn { color: var(--arazzo-status-suspended, #b07d18); border: 1px solid color-mix(in srgb, var(--arazzo-status-suspended, #b07d18) 50%, var(--_border)); background: color-mix(in srgb, var(--arazzo-status-suspended, #b07d18) 8%, transparent); }
-        .src-creds { font-size: 12px; color: var(--_muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-        .src-creds .ok { color: var(--arazzo-status-completed, #2a8a4a); font-weight: 600; }
-        .src-creds .warn { color: var(--arazzo-status-suspended, #b07d18); font-weight: 600; }
-        .setup-cred-btn { margin-left: auto; font-size: 12px; }
-        .review-row .ok { color: var(--arazzo-status-completed, #2a8a4a); }
-        .review-row .warn { color: var(--arazzo-status-suspended, #b07d18); }
-        .hint { font-size: 11px; color: var(--_muted); }
-        .admins { display: grid; gap: 6px; }
-        .admin-row { display: flex; align-items: center; gap: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); padding: 6px 10px; }
-        .admin-row .grow { flex: 1; }
-        .admin-add { display: flex; gap: 8px; align-items: center; }
-        .admin-add .admin-picker { flex: 1; }
-        .review-grid { display: grid; gap: 10px; }
-        .review-row { display: grid; grid-template-columns: 130px 1fr; gap: 10px; font-size: 13px; }
-        .review-row .k { color: var(--_muted); font-size: 12px; }
-        .creator-note { font-size: 12px; color: var(--_muted); }
-        .foot { display: flex; gap: 8px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--_border); }
-        .foot .spacer { flex: 1; }
-        .error-banner { margin: 0 16px 12px; }
-      </style>
       <dialog part="dialog">
         <form method="dialog">
           <div class="head">

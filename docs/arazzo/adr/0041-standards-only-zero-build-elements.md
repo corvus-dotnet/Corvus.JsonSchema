@@ -1,6 +1,6 @@
 # ADR 0041. Standards-only, zero-build custom elements
 
-Date: 2026-07-21. Status: **Accepted**. Implementation: **complete, with one false statement**. Verified against the code 2026-09-21. Open shadow roots, an idempotent `define`, theming tokens, no runtime dependency and no bare-specifier import, so every module loads unbundled, and the editor is lazy-loaded. Divergence: there is no vendored layout engine. `src/vendor/` holds the CodeMirror bundle alone, and layout is the kit's own `workflow-layout.js`. `auth-status.js` calls `customElements.define` directly, so a double import of it throws. Scope: the technology the web kit is built on. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete, with one false statement**. Verified against the code 2026-09-21. Open shadow roots, an idempotent `define`, theming tokens, no runtime dependency and no bare-specifier import, so every module loads unbundled, and the editor is lazy-loaded. Divergence: there is no vendored layout engine. `src/vendor/` holds the CodeMirror bundle alone, and layout is the kit's own `workflow-layout.js`. `auth-status.js` calls `customElements.define` directly, so a double import of it throws. Revised 2026-09-27: components carry their styles in constructable stylesheets, so the kit runs under a strict Content-Security-Policy ([ADR 0073](0073-browser-security-headers-and-a-strict-csp.md)). Scope: the technology the web kit is built on. Builds on
 [ADR 0040](0040-three-layer-web-kit.md). This records why the kit is standards-only custom elements with no
 build step and no framework dependency.
 
@@ -20,6 +20,10 @@ any application with no adoption tax.
 - **Open shadow DOM with CSS-token theming.** `ArazzoElement` uses an open shadow root, and styling is through
   CSS custom properties (`--arazzo-*` tokens) that a themed ancestor supplies, so a component inherits the
   host's theme without a styling framework.
+- **Styles as constructable stylesheets.** A component adopts its CSS into its shadow root through `adoptStyles`
+  (`base.js`), one cached `CSSStyleSheet` for each piece of CSS, shared by every instance. The kit writes no
+  `<style>` element and no style attribute, so it runs under `style-src 'self'` with no build step
+  ([ADR 0073](0073-browser-security-headers-and-a-strict-csp.md)).
 - **No build step.** The kit ships as ES modules a browser loads directly. Heavier vendored dependencies (the
   code editor, the layout engine) are lazy-loaded ESM, not a bundler requirement.
 
