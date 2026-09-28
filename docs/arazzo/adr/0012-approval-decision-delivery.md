@@ -1,6 +1,6 @@
 # ADR 0012. Delivering an approver's decision to a suspended approval-workflow run
 
-Date: 2026-07-19. Status: **Accepted**. Implementation: **partly, with divergences**. Verified against the code 2026-09-21. Built: a decision is published over the `access.decision` channel after the pending and administrator checks, the approval workflow awaits it with an ordinary correlated `receive`, and a repeat is a 409. Not built: decision provenance. Nothing secures the channel or verifies the publisher, neither the resume handler nor the settle path checks `decidedBy`, and the sample broker gives the control plane, the tenant runner and the system runner one shared token with no per-subject permissions, so any holder of the transport credential can publish an approval for any pending request, bounded only by ADR 0010's ceiling. Divergence: the workflow calls `settleAccessRequest` for every outcome and not `grantAccessRequest`. The decision consumer is wired in the sample system runner only. Scope: the
+Date: 2026-07-19. Status: **Accepted**. Implementation: **partly, with divergences**. Verified against the code 2026-09-21. Revised 2026-09-28: a decision that arrives before its run awaits it is retried for a bounded window. Built: a decision is published over the `access.decision` channel after the pending and administrator checks, the approval workflow awaits it with an ordinary correlated `receive`, and a repeat is a 409. Not built: decision provenance. Nothing secures the channel or verifies the publisher, neither the resume handler nor the settle path checks `decidedBy`, and the sample broker gives the control plane, the tenant runner and the system runner one shared token with no per-subject permissions, so any holder of the transport credential can publish an approval for any pending request, bounded only by ADR 0010's ceiling. Divergence: the workflow calls `settleAccessRequest` for every outcome and not `grantAccessRequest`. The decision consumer is wired in the sample system runner only. Scope: the
 approval capstone (#880, design §16.5.1), piece 3 (decision correlation). This records why the
 approver's decision reaches the suspended approval workflow by being **published to a channel**
 rather than handed to the run by a bespoke control-plane call.
@@ -136,6 +136,14 @@ uses an ordinary `receive` step, with no privileged delivery path.
   guaranteed by the request state machine and the bounded grant's 409 on a non-pending request.
 - The decision-channel consumer is hosted on the control plane's **system runner** (as
   `ReceiveKycVerdictConsumer` is hosted on the KYC runner), forwarding to `DeliverMessageAsync`.
+- A decision can arrive before the run awaits it. The run sends its approval-required notification and
+  then suspends, and an administrator who decides at once publishes into that gap. The resume handler
+  therefore delivers through `DeliverToAwaitingRunAsync`, which tries again with backoff while no run
+  awaits the decision. The window is bounded, just under twenty seconds, so it stays inside the broker's
+  acknowledgement deadline (thirty seconds for NATS): the message is acknowledged only after the handler
+  returns, so delivery stays at-least-once, and a longer wait would have the broker redeliver the
+  message while the handler still held it. A decision that no run awaits within the window is logged
+  at warning, as before. The KYC verdict handler uses the same delivery.
 - **Piece 4 (deploy bootstrap)** provisions the control plane's internal environment and system
   runner(s) alongside the approval workflow, the system credential holding `accessRequests:grant`,
   and the workflow's §15 administrators. The system runner claims the internal environment, executes

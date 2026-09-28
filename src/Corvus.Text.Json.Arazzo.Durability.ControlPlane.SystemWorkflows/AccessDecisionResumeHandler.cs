@@ -24,16 +24,20 @@ public sealed class AccessDecisionResumeHandler : IReceiveAccessDecisionHandler
 
     private readonly IWorkflowMessageDelivery delivery;
     private readonly ILogger<AccessDecisionResumeHandler> logger;
+    private readonly TimeProvider timeProvider;
 
     /// <summary>Initializes a new instance of the <see cref="AccessDecisionResumeHandler"/> class.</summary>
     /// <param name="delivery">Delivers the decision to the runs awaiting it. The environment scoping (or, over the
     /// runner API, the server-side binding intersection that replaces it) is bound into the delivery rather than
     /// decided here.</param>
     /// <param name="logger">Logs each decision receipt and how many suspended runs it resumed.</param>
-    public AccessDecisionResumeHandler(IWorkflowMessageDelivery delivery, ILogger<AccessDecisionResumeHandler> logger)
+    /// <param name="timeProvider">The time source for the pauses while a decision waits for its run to suspend; defaults
+    /// to <see cref="TimeProvider.System"/>.</param>
+    public AccessDecisionResumeHandler(IWorkflowMessageDelivery delivery, ILogger<AccessDecisionResumeHandler> logger, TimeProvider? timeProvider = null)
     {
         this.delivery = delivery ?? throw new ArgumentNullException(nameof(delivery));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     /// <inheritdoc/>
@@ -50,12 +54,15 @@ public sealed class AccessDecisionResumeHandler : IReceiveAccessDecisionHandler
         SwModels.JsonString requestIdValue = payload.RequestId;
         string? requestId = requestIdValue.IsNotUndefined() ? (string)requestIdValue : null;
 
-        int resumed = await this.delivery.DeliverAsync(
-            DecisionChannel, requestId, (JsonElement)payload, cancellationToken).ConfigureAwait(false);
+        // The approval run sends its approval-required notification and then suspends, so a prompt decision can arrive
+        // before the run awaits it. The delivery tries again for a bounded window rather than dropping the decision.
+        int resumed = await this.delivery.DeliverToAwaitingRunAsync(
+            DecisionChannel, requestId, (JsonElement)payload, this.timeProvider, cancellationToken).ConfigureAwait(false);
 
         // Make the exchange visible: without this the runner resumes the run silently and the operator sees nothing.
         // Resuming zero runs is an ANOMALY, not routine: a decision was published for a request that has no approval run
-        // suspended awaiting it, so the decision cannot be enacted and the request will stay pending forever. That happens
+        // suspended awaiting it, even after the retry window, so the decision cannot be enacted and the request will stay
+        // pending forever. That happens
         // when a pending request was written to the store WITHOUT starting its approval run (design §16.5.1 requires
         // submission to go through the approval service). Surface it at warning so the operator sees the request will not
         // settle, rather than mistaking silence for success.
