@@ -177,6 +177,19 @@ internal static class ServerThrowHelper
     public static void ThrowSecurityHeadersRequired(ControlPlaneSecurityMode securityMode)
         => throw new InvalidOperationException(SR.Format(SR.SecurityHeadersRequired, securityMode));
 
+    /// <summary>Throws when a session ticket store is given a maximum session lifetime that is not positive (ADR 0075).</summary>
+    /// <param name="maximumLifetime">The configured maximum lifetime.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowSessionMaximumLifetimeNotPositive(TimeSpan maximumLifetime)
+        => throw new ArgumentOutOfRangeException(nameof(ControlPlaneSessionTicketOptions.MaximumLifetime), maximumLifetime, SR.SessionMaximumLifetimeNotPositive);
+
+    /// <summary>Throws when a session is begun for a principal that names no subject (ADR 0075).</summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowSessionHasNoSubject()
+        => throw new InvalidOperationException(SR.SessionHasNoSubject);
+
     /// <summary>Throws when a source configured for the browser security headers is not a single origin (ADR 0073).</summary>
     /// <param name="optionName">The option that named the source.</param>
     /// <param name="source">The source as configured.</param>

@@ -416,6 +416,11 @@ Source: `grantee-picker.js`.
 Optional BFF sign-in and sign-out chrome; self-discovers via `/me`, invisible when auth is disabled
 ([ADR 0042](../adr/0042-auth-agnostic-host-owns-session.md)). Source: `auth-status.js`.
 
+- **Attributes:** `me-url`, `login-url`, `logout-url`
+- **Sign out everywhere:** offered only when `/me` answers `signOutEverywhere: true`, the host's word that its
+  sessions are revocable; it posts `scope=everywhere` to the logout URL
+  ([ADR 0075](../adr/0075-sign-out-revokes-server-side-tickets-and-a-subject-epoch.md))
+
 ---
 
 ## Designer

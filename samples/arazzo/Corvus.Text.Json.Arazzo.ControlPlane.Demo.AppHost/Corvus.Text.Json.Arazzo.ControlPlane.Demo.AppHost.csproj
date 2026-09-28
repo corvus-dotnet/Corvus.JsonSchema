@@ -13,6 +13,7 @@
     <!-- Keycloak hosting integration (AddKeycloak + WithRealmImport) for the §16 identity provider. -->
     <PackageReference Include="Aspire.Hosting.Keycloak" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.Redis" />
   </ItemGroup>
 
   <ItemGroup>

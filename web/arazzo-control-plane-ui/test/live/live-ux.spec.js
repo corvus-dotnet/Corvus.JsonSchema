@@ -678,7 +678,7 @@ test('sign-out completes under the host\'s Content-Security-Policy: the end-sess
   // The sign-out redirect chain, reported if the browser does not arrive signed out: which hop failed is the diagnosis.
   const chain = [];
   page.on('response', (r) => { if (/logout|signout|\/login|signin-oidc|\/me\b/.test(r.url()) || (/arazzo\/v1/.test(r.url()) && r.status() === 401)) chain.push(`${r.status()} ${r.request().method()} ${r.url().slice(0, 100)} -> ${(r.headers().location || '').slice(0, 100)}`); });
-  const signOut = page.locator('arazzo-auth-status').getByRole('button', { name: 'Sign out' });
+  const signOut = page.locator('arazzo-auth-status').getByRole('button', { name: 'Sign out', exact: true });
   await expect(signOut).toBeVisible({ timeout: 30_000 });
 
   // The browser must complete the end-session hop and arrive at the callback. The shell's panels keep polling, and
@@ -713,4 +713,55 @@ test('the session cookie is __Host-, Secure, HttpOnly and Lax, and a sign-in ask
     expect(c.path, c.name).toBe('/');
   }
   expect(cookies.filter((c) => c.name.startsWith('arazzo.session'))).toEqual([]);
+});
+
+// Sign out from the shell's own control and wait until Keycloak has returned the browser to the app.
+async function signOutThrough(page, name) {
+  const button = page.locator('arazzo-auth-status').getByRole('button', { name, exact: true });
+  await expect(button).toBeVisible({ timeout: 30_000 });
+  const callback = page.waitForResponse((r) => new URL(r.url()).pathname === '/signout-callback-oidc', { timeout: 30_000 });
+  await button.click();
+  await callback;
+}
+
+test('a copy of the session cookie taken before sign-out is refused after it: the ticket lived on the server (ADR 0075)', async ({ page, browser, baseURL }) => {
+  await signIn(page, LIVE_USERS.alice);
+  const copy = await page.context().cookies();
+  const thief = await browser.newContext({ baseURL });
+  try {
+    await thief.addCookies(copy);
+    const probe = await thief.newPage();
+    expect((await probe.goto('/me')).status(), 'the copied cookie works while the session lives').toBe(200);
+
+    await signOutThrough(page, 'Sign out');
+
+    expect((await probe.goto('/me')).status(), 'the copied cookie is refused once the session is signed out').toBe(401);
+  } finally {
+    await closeContext(thief);
+  }
+});
+
+test('sign out everywhere ends the user\'s other sessions, and a new sign-in works (ADR 0075)', async ({ browser, baseURL }) => {
+  const laptop = await browser.newContext({ baseURL });
+  const phone = await browser.newContext({ baseURL });
+  try {
+    const onLaptop = await laptop.newPage();
+    const onPhone = await phone.newPage();
+    await signIn(onLaptop, LIVE_USERS.wanda);
+    await signIn(onPhone, LIVE_USERS.wanda);
+    expect((await (await phone.newPage()).goto('/me')).status(), 'the phone is signed in').toBe(200);
+
+    await signOutThrough(onLaptop, 'Sign out everywhere');
+
+    // The phone's own session is ended too, though the phone did nothing.
+    const probe = await phone.newPage();
+    expect((await probe.goto('/me')).status(), 'the other session is ended').toBe(401);
+
+    // Sessions begun afterwards are unaffected.
+    await signIn(onLaptop, LIVE_USERS.wanda);
+    expect((await (await laptop.newPage()).goto('/me')).status()).toBe(200);
+  } finally {
+    await closeContext(laptop);
+    await closeContext(phone);
+  }
 });

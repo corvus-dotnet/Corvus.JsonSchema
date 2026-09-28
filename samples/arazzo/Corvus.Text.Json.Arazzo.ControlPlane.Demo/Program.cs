@@ -508,8 +508,25 @@ builder.Services.AddArazzoSecurityHeaders(options =>
     }
 });
 
+BffSessionLifetime sessionLifetime = builder.Configuration.GetSection("ControlPlane:Session").Get<BffSessionLifetime>() ?? new BffSessionLifetime();
 if (requireAuthorization)
 {
+    // The session tickets live on the server (ADR 0075), so signing out revokes the session wherever its cookie was
+    // copied, and /logout can end every session of the user. The AppHost provides Redis; run on its own, the demo keeps
+    // them in memory. The store's maximum lifetime is the session's absolute lifetime.
+    if (!string.IsNullOrEmpty(builder.Configuration.GetConnectionString("sessions")))
+    {
+        builder.AddRedisDistributedCache("sessions");
+    }
+    else
+    {
+        builder.Services.AddDistributedMemoryCache();
+    }
+
+    builder.Services.AddArazzoControlPlaneSessionTickets(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        options => options.MaximumLifetime = sessionLifetime.AbsoluteLifetime);
+
     // Three ways in (§16.3): browser users via the BFF (interactive OIDC → an HttpOnly cookie session); API
     // callers with a Keycloak bearer token (CLI/machines); and the dev API-key (break-glass/scripts, §16.2). A
     // forwarding policy scheme routes each request to the right scheme by what it presents.
@@ -552,9 +569,7 @@ if (requireAuthorization)
         {
             // A Secure, HttpOnly, __Host- cookie that ends after 30 idle minutes or 8 hours from sign-in, whichever is
             // first; ControlPlane:Session:IdleTimeout and AbsoluteLifetime change them.
-            BffSession.Configure(
-                options,
-                builder.Configuration.GetSection("ControlPlane:Session").Get<BffSessionLifetime>() ?? new BffSessionLifetime());
+            BffSession.Configure(options, sessionLifetime);
         })
         .AddKeycloakOpenIdConnect("keycloak", realm: "arazzo", OpenIdConnectDefaults.AuthenticationScheme, options =>
         {
@@ -755,13 +770,23 @@ if (requireAuthorization)
             new AuthenticationProperties { RedirectUri = BffSession.LocalReturnUrl(returnUrl) },
             [OpenIdConnectDefaults.AuthenticationScheme]));
 
-    app.MapPost("/logout", async (HttpContext http) =>
+    app.MapPost("/logout", async (HttpContext http, IControlPlaneSessionRevocation sessions) =>
     {
-        // RP-initiated logout, robust to a stale session. Read the saved tokens, then ALWAYS clear the local cookie first
-        // so the user is signed out of the app no matter what Keycloak does next.
+        // RP-initiated logout, robust to a stale session. Read the saved tokens, then ALWAYS clear the local session first
+        // so the user is signed out of the app no matter what Keycloak does next. Signing out removes the session's
+        // ticket from the server (ADR 0075), so a copy of the cookie is refused too; scope=everywhere first ends every
+        // session this user began, on any device.
         AuthenticateResult auth = await http.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         string? idToken = auth.Properties?.GetTokenValue("id_token");
         string? refreshToken = auth.Properties?.GetTokenValue("refresh_token");
+        if (auth.Principal is { } principal
+            && http.Request.HasFormContentType
+            && (await http.Request.ReadFormAsync(http.RequestAborted))["scope"] == "everywhere"
+            && ControlPlaneSessionTickets.SubjectOf(principal) is { } subject)
+        {
+            await sessions.RevokeAllAsync(subject, http.RequestAborted);
+        }
+
         await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
         // Keycloak's end-session endpoint needs a VALID, unexpired id_token_hint. We only saved the login-time id_token,
@@ -791,6 +816,9 @@ if (requireAuthorization)
         {
             name = user.Identity!.Name,
             groups = user.FindAll("groups").Select(static c => c.Value).ToArray(),
+
+            // The sessions are revocable (ADR 0075), so the kit's sign-out may offer to end them all.
+            signOutEverywhere = true,
         })
         : Results.Unauthorized());
 }

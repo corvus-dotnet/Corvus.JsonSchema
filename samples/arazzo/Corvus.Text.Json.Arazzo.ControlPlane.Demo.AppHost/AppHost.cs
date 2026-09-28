@@ -504,6 +504,9 @@ var kyc = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Kyc_Host>(
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health");
 
+// The BFF's session-ticket cache (ADR 0075).
+var sessions = builder.AddRedis("sessions");
+
 // The ASP.NET control-plane host: the real server surface (catalog, runs, credentials, administrators, security)
 // plus the build-free web UI. It stores credential *references* only (never binds to
 // Vault — the §13 invariant), so it needs no Vault token. It references Keycloak as the OIDC authority for token
@@ -511,6 +514,11 @@ var kyc = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Samples_Kyc_Host>(
 var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_Demo>("controlplane")
     .WithReference(workflowstore)
     .WaitFor(workflowstore)
+    // The BFF's session tickets (ADR 0075): kept here rather than in the cookie, so signing out revokes the session and
+    // a user can sign out everywhere. Redis's default maxmemory-policy, noeviction, keeps every revocation until it
+    // expires.
+    .WithReference(sessions)
+    .WaitFor(sessions)
     // §18 multi-process: a SEPARATE runner process hosts $draft debug runs, so the control plane must NOT run its own
     // in-process draft pump (else both would claim the same runs). The control plane only MARKS runs claimable.
     .WithEnvironment("ControlPlane__HostDraftRunnerInProcess", "false")

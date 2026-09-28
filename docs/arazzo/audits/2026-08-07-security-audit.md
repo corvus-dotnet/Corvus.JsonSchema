@@ -559,11 +559,13 @@ component added.
 
 ### GAP-2 · `TB-3` · Session hardening and revocable logout
 
-> **Partly built.** The demo host's session cookie is `Secure` under a `__Host-` name whatever the scheme, is ended
-> at 30 idle minutes or 8 hours from sign-in, forwarded headers are believed only from trusted proxies, and the
-> login return is honoured only when it is a local path. HSTS is [ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md)'s.
-> Still to build: the server-side ticket store that makes sign-out revoke, and sign-out everywhere. The finding
-> below is left as it was measured.
+> **Decided and implemented.** [ADR 0075](../adr/0075-sign-out-revokes-server-side-tickets-and-a-subject-epoch.md):
+> the library keeps session tickets server-side in the host's cache, data-protected, so sign-out revokes, and sign out
+> everywhere ends a subject's sessions by a per-subject epoch; the store bounds every session's lifetime. The demo
+> host's session cookie is `Secure` under a `__Host-` name whatever the scheme, is ended at 30 idle minutes or 8
+> hours from sign-in, forwarded headers are believed only from trusted proxies, and the login return is honoured
+> only when it is a local path. HSTS is [ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md)'s. The
+> finding below is left as it was measured.
 ADR 0042 assigns session ownership to the host but specifies no properties. Missing: a `Secure`
 cookie policy, since it defaults to `SameAsRequest` with no `UseForwardedHeaders` and so travels in
 plaintext behind a TLS proxy; HSTS; and a server-side ticket store, without which `SignOutAsync`

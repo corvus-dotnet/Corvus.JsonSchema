@@ -18,6 +18,8 @@
   <ItemGroup>
     <!-- Keycloak JWT-bearer client integration: validates OIDC tokens against the referenced Keycloak realm (§16.3). -->
     <PackageReference Include="Aspire.Keycloak.Authentication" />
+    <!-- The BFF's server-side session tickets (ADR 0075) live in the AppHost's Redis. -->
+    <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
   </ItemGroup>
 
   <ItemGroup>

@@ -195,6 +195,12 @@
   <data name="SecurityHeadersRequired" xml:space="preserve">
     <value>ControlPlaneSecurityMode.{0} requires the browser security headers (ADR 0073): call services.AddArazzoSecurityHeaders() before the host is built. Only Open may run without them.</value>
   </data>
+  <data name="SessionMaximumLifetimeNotPositive" xml:space="preserve">
+    <value>The maximum session lifetime must be positive: it bounds every session and is how long a sign-out everywhere is remembered (ADR 0075).</value>
+  </data>
+  <data name="SessionHasNoSubject" xml:space="preserve">
+    <value>A session cannot begin for a principal with neither a NameIdentifier nor a sub claim: sign-out everywhere reaches a session through its subject, so this one could never be ended everywhere (ADR 0075).</value>
+  </data>
   <data name="InvalidSecurityHeaderSource" xml:space="preserve">
     <value>'{1}' in ControlPlaneSecurityHeadersOptions.{0} is not an origin. Name a scheme of http or https and a host with an optional port, with no path, query, wildcard or keyword (ADR 0073).</value>
   </data>

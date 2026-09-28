@@ -5,7 +5,8 @@
 // The shared sign-in/sign-out chrome (§16.3 BFF). One element, used by BOTH the control-plane dashboard and the
 // workflow designer, so "who am I / sign out" looks and behaves identically everywhere. It self-discovers the auth
 // state from /me: signed in → the identity + a Sign-out that POSTs /logout (a form navigation, so the OIDC
-// end-session redirect chain runs — a fetch would not navigate); signed out → a Sign-in link that returns here;
+// end-session redirect chain runs — a fetch would not navigate), and "Sign out everywhere" when /me says the host's
+// sessions are revocable (signOutEverywhere: true), which posts scope=everywhere; signed out → a Sign-in link that returns here;
 // auth disabled (the endpoint 404s or the fetch fails, e.g. the standalone demo) → the element stays invisible so
 // hosts can drop it in unconditionally. Styled from the --arazzo-* custom properties that pierce the shadow boundary.
 import { adoptStyles } from './base.js';
@@ -67,6 +68,18 @@ class ArazzoAuthStatus extends HTMLElement {
       out.textContent = 'Sign out';
       out.addEventListener('click', () => this.signOut());
       content.replaceChildren(who, out);
+
+      // Offered only when the host can honour it: a host whose sessions live in the cookie cannot end the others.
+      if (me.signOutEverywhere === true) {
+        const all = document.createElement('button');
+        all.className = 'linklike everywhere';
+        all.style.marginLeft = '10px';
+        all.type = 'button';
+        all.textContent = 'Sign out everywhere';
+        all.title = 'End every session you have signed in to, on any device';
+        all.addEventListener('click', () => this.signOut({ everywhere: true }));
+        content.append(all);
+      }
     } else {
       this.setAttribute('data-state', 'out');
       const link = document.createElement('a');
@@ -77,11 +90,21 @@ class ArazzoAuthStatus extends HTMLElement {
     }
   }
 
-  /** POST /logout as a form navigation so the OIDC end-session redirect chain runs (a fetch would not navigate). */
-  signOut() {
+  /**
+   * POST /logout as a form navigation so the OIDC end-session redirect chain runs (a fetch would not navigate).
+   * @param {{ everywhere?: boolean }} [options] `everywhere` asks the host to end every session of this user.
+   */
+  signOut({ everywhere = false } = {}) {
     const form = document.createElement('form');
     form.method = 'post';
     form.action = this.logoutUrl;
+    if (everywhere) {
+      const scope = document.createElement('input');
+      scope.type = 'hidden';
+      scope.name = 'scope';
+      scope.value = 'everywhere';
+      form.append(scope);
+    }
     document.body.appendChild(form);
     form.submit();
   }

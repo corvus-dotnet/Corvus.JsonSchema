@@ -51,6 +51,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0067](0067-reach-enforced-by-the-store-proven-on-the-wire.md) | Reach is enforced by the store, mirrored queryably, and proven on the wire | Accepted |
 | [0071](0071-authentication-event-telemetry.md) | Authentication event telemetry: a library helper the host wires, and audited runner-API refusals | Accepted, not yet implemented |
 | [0073](0073-browser-security-headers-and-a-strict-csp.md) | Browser security headers: a library helper the host registers, and a kit that meets a strict policy with no build step | Accepted |
+| [0075](0075-sign-out-revokes-server-side-tickets-and-a-subject-epoch.md) | Sign-out revokes: server-side session tickets and a per-subject epoch | Accepted |
 
 ### Engine and durability
 

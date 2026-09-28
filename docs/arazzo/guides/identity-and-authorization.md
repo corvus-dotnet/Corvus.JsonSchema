@@ -366,8 +366,15 @@ so these are the demo host's choices (`BffSession` in the demo project), and a d
   `KnownNetworks` name. Behind a TLS-terminating proxy that is what has the OIDC handler build an `https` redirect
   URI and the security headers send HSTS.
 
-Sign-out still ends the session only in the browser that signs out: the ticket lives in the cookie, so a copy taken
-before sign-out stays valid until it expires. A server-side ticket store is the part of GAP-2 still to build.
+**Sign-out revokes** ([ADR 0075](../adr/0075-sign-out-revokes-server-side-tickets-and-a-subject-epoch.md)). The
+library's `AddArazzoControlPlaneSessionTickets` keeps the session ticket, with its claims and the tokens the OIDC
+handler saved, in the host's `IDistributedCache`, data-protected; the cookie carries only a random key. Signing out
+removes the ticket, so a copy of the cookie taken before is refused after. `/logout` with `scope=everywhere` first
+ends every session the user began, on any device, through `IControlPlaneSessionRevocation`, and the kit's
+`arazzo-auth-status` offers "Sign out everywhere" when `/me` says `signOutEverywhere: true`. The store refuses a
+session older than its maximum lifetime, which the demo sets to the absolute lifetime. The demo keeps the tickets in
+the AppHost's Redis (`sessions`), or in memory when run on its own; the cache must not evict entries before they
+expire, and Redis's default `noeviction` policy does not.
 
 The page hands its panels the fetch that `createSessionFetch()` builds (exported by the kit's
 `components/auth-status.js`): same-origin, with the cookie and the `X-CSRF` header, and a 401 sends the browser to
