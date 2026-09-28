@@ -119,6 +119,9 @@ class ArazzoFilterInput extends ArazzoElement {
     input.addEventListener('change', (e) => {
       if (this._selecting) return; // a pick already dispatched the composed pair
       e.stopPropagation();
+      // A commit ends the listing: a list left open lies over the content in the top layer, where the next click
+      // lands on it (and a list item selects on mousedown).
+      this.close();
       this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
     });
     // A short delay so a click on a result (which blurs the input first) still registers before we close.
@@ -233,6 +236,7 @@ class ArazzoFilterInput extends ArazzoElement {
     if (e.key === 'ArrowDown') { e.preventDefault(); this._active = (this._active + 1) % items.length; this.highlight(items); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); this._active = (this._active - 1 + items.length) % items.length; this.highlight(items); }
     else if (e.key === 'Enter' && this._active >= 0) { e.preventDefault(); this.select(items[this._active].dataset.value); }
+    else if (e.key === 'Enter') { this.close(); } // the typed value is the commit; the input's change carries it
     else if (e.key === 'Escape') { this.close(); }
   }
 

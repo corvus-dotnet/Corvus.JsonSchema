@@ -116,12 +116,20 @@ test('autosave narrates unsaved → saved, and editing info.title on the setting
   // An open starts on the settings page (empty selection = the document); info.title lives there.
   const title = page.locator('arazzo-document-inspector input.ititle');
   await expect(title).toHaveValue('Order processing');
+  // Record the narration as it changes: 'unsaved…' lasts only the autosave debounce, too short to poll for reliably.
+  await page.locator('#save-status').evaluate((el) => {
+    window.__saveArc = [];
+    new MutationObserver(() => window.__saveArc.push(el.textContent)).observe(el, { childList: true, characterData: true, subtree: true });
+  });
   await title.fill('Order processing revised');
 
   // The title bar tracks the DOCUMENT's title live, and the autosave narration runs its arc.
   await expect(page.locator('#wc-name')).toHaveText('Order processing revised');
-  await expect(page.locator('#save-status')).toHaveText('unsaved…');
   await expect(page.locator('#save-status')).toHaveText(/^saved \d/, { timeout: 5000 });
+  const arc = await page.evaluate(() => window.__saveArc);
+  const unsaved = arc.indexOf('unsaved…');
+  expect(unsaved, `the narration: ${arc.join(' → ')}`).toBeGreaterThanOrEqual(0);
+  expect(arc.slice(unsaved).some((text) => /^saved \d/.test(text)), `the narration: ${arc.join(' → ')}`).toBe(true);
 
   // name ≡ the document's title: the workspace table lists the copy under its new name.
   await page.locator('#back').click();
@@ -317,6 +325,27 @@ test('the defaults card opens the whole-workflow editor and summary/description 
   await expect(page.locator('#inspector')).toContainText('workflow — place-order');
   await expect(page.locator('arazzo-workflow-inspector input.summary')).toHaveValue('The amended happy path.');
   await expect(page.locator('arazzo-workflow-inspector input.wdesc')).toHaveValue('Now with tightened checks.');
+  assertClean(errors);
+});
+
+test('renaming a property and then clicking its required toggle does both: the rename on blur must not swallow the click', async ({ page }) => {
+  const errors = await watchErrors(page);
+  await openDesigner(page);
+  await selectStartNode(page);
+
+  const editor = page.locator(SCHEMA_EDITOR);
+  const rows = editor.locator('.node.child');
+  await expect(rows).toHaveCount(3); // orderId · amount · customerEmail
+  const email = rows.nth(2);
+  await expect(email.locator('input.name')).toHaveValue('customerEmail');
+  const wasRequired = await email.locator('button.req').getAttribute('aria-pressed');
+
+  // Type a new name, then click straight onto the row's ★ without leaving the field first.
+  await email.locator('input.name').fill('contactEmail');
+  await email.locator('button.req').click();
+
+  await expect(rows.nth(2).locator('input.name')).toHaveValue('contactEmail');
+  await expect(rows.nth(2).locator('button.req')).toHaveAttribute('aria-pressed', wasRequired === 'true' ? 'false' : 'true');
   assertClean(errors);
 });
 
@@ -717,7 +746,7 @@ test('GitHub source acquisition: after connecting, a branch is chosen and a file
   // default branch pre-selected, and lists the repo tree for browsing.
   const repoIn = dlg.locator('.gh-repo-in input');
   await repoIn.fill('acme-org/specs');
-  await repoIn.dispatchEvent('change');
+  await repoIn.press('Enter');
   const branch = dlg.locator('.gh-branch-in input');
   await expect(dlg.locator('label.gh-branch-label')).toBeVisible();
   await expect(branch).toHaveValue('main');

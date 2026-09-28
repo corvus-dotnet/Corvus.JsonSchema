@@ -7,7 +7,7 @@
 // Opt-in (needs the composition running — see README.md): ARAZZO_LIVE_UX=1 npm run test:live
 // Rules of the road are documented in live-helpers.js: unique names, cleanup, relative assertions.
 import { test, expect } from '@playwright/test';
-import { LIVE_USERS, signIn, watchLiveErrors, assertLiveClean, liveTab, openLiveTab, openLiveSubTab, uniq } from './live-helpers.js';
+import { LIVE_USERS, signIn, watchLiveErrors, assertLiveClean, liveTab, openLiveTab, openLiveSubTab, uniq, closeContext } from './live-helpers.js';
 
 test('sign-in lands on a real shell: Keycloak round trip, ten tabs, and a runs list the real runner produced', async ({ page }) => {
   await signIn(page, LIVE_USERS.admin);
@@ -140,8 +140,8 @@ test('the access-request loop crosses real identities: wanda submits, the admini
     await minePanel.locator('button.refresh').click();
     await expect(mineRow.locator('.badge')).toHaveText('Denied');
   } finally {
-    await wandaCtx.close();
-    await adminCtx.close();
+    await closeContext(wandaCtx);
+    await closeContext(adminCtx);
   }
 });
 
@@ -305,7 +305,8 @@ test('a REAL suspended run shows its durable wait, and the cancel confirm surviv
   await expect(progress).toBeVisible();
   await expect(progress.locator('.prog-steps li').first()).toBeVisible();
   await expect(progress.locator('.pos-line')).toContainText(/Position \d+ of \d+|All \d+ steps dispatched/);
-  await expect(detail.locator('dl')).not.toContainText('ETag');
+  // The run's own metadata list (the pane also lists the execution budget's limits in a second one).
+  await expect(detail.locator('dl', { hasText: 'Run id' })).not.toContainText('ETag');
 
   // The REAL journal: the engine recorded outputs for the steps it executed before the wait, and
   // the card expands them verbatim from the checkpoint (GET /runs/{id}/steps).
@@ -362,9 +363,10 @@ test('the environment registry is genuinely reach-scoped per identity: the admin
   // and their environment lists must show EXACTLY the one row the rule admits.
   for (const [user, expected] of [
     // admin has full reach, so it sees every registered environment — including `system`, the control plane's own
-    // governance environment (the Arazzo-governing-Arazzo system workflows run there). erin/wanda reach only the
-    // preprod zone, so the reach-scoping property is that they see EXACTLY staging.
-    ['admin', ['development', 'production', 'staging', 'system']],
+    // governance environment (the Arazzo-governing-Arazzo system workflows run there), and `isolated`, the one the
+    // demo seeds for its serverless runner. erin/wanda reach only the preprod zone, so the reach-scoping property is
+    // that they see EXACTLY staging.
+    ['admin', ['development', 'isolated', 'production', 'staging', 'system']],
     ['erin', ['staging']],
     ['wanda', ['staging']],
   ]) {
@@ -379,7 +381,7 @@ test('the environment registry is genuinely reach-scoped per identity: the admin
         await expect(page.locator(`arazzo-environments tr.erow[data-name="${name}"]`)).toBeVisible();
       }
     } finally {
-      await ctx.close();
+      await closeContext(ctx);
     }
   }
 });
@@ -438,28 +440,41 @@ test('the promotion loop crosses real identities: wanda requests staging availab
     await minePanel.locator('button.refresh').click();
     await expect(mineRow.locator('.badge')).toHaveText('Denied');
   } finally {
-    await wandaCtx.close();
-    await erinCtx.close();
+    await closeContext(wandaCtx);
+    await closeContext(erinCtx);
   }
 });
 
-test('production is governed by prod-ops, not founders-only (#862): pia reaches it by rule route and decides the seeded request', async ({ browser }) => {
+test('production is governed by prod-ops, not founders-only (#862): pia reaches it by rule route and decides a production request', async ({ browser }) => {
   // The org-model half of the security review: production stopped being founder-only. pia (prod-ops)
-  // administers production through the zone=prod rule route — NOT founder-group membership — so the
-  // seeded "promote v2 to production" inbox item is hers to decide, and it reads as a person
-  // ("Alice Payments"). erin, who administers only the preprod zone, must NOT see it. Deny keeps the
-  // suite re-runnable. (Dialog-constructibility of a production promotion is a separate concern: its
-  // credentials are usage-scoped to admins by design, so onboard-customer is not run-ready there for a
-  // non-admin — that gate is correct, not the governance question this test pins.)
+  // administers production through the zone=prod rule route, NOT founder-group membership, so a production
+  // promotion request is hers to decide, and it reads as the person who raised it. erin, who administers only the
+  // preprod zone, must NOT see it. The administrator raises a fresh request under a unique reason each run and pia
+  // denies it, so the test consumes no seeded state and can run again (and retry) against the same backend. (A
+  // non-admin cannot construct a production promotion in the dialog: its credentials are usage-scoped to admins by
+  // design, so onboard-customer is not run-ready there for them. That gate is correct, and not what this pins.)
+  const adminCtx = await browser.newContext({ ignoreHTTPSErrors: true });
   const piaCtx = await browser.newContext({ ignoreHTTPSErrors: true });
   const erinCtx = await browser.newContext({ ignoreHTTPSErrors: true });
   try {
+    const adminPage = await adminCtx.newPage();
+    await signIn(adminPage, LIVE_USERS.admin);
+    const reason = uniq('live-ux production request');
+    // Raised through the admin's own session (cookie and X-CSRF, as the shell's session fetch sends them), which is
+    // the call the request dialog makes. The dialog itself does not offer production here: it counts a credential
+    // toward readiness only when the workflow may use it, and production's are scoped to the admins group.
+    const submitted = await adminPage.request.post('/arazzo/v1/availabilityRequests', {
+      headers: { 'X-CSRF': '1' },
+      data: { baseWorkflowId: 'onboard-customer', versionNumber: 2, environment: 'production', reason },
+    });
+    expect(submitted.status(), await submitted.text()).toBe(201);
+
     // erin administers the preprod zone only: the production request is NOT in her queue.
     const erinPage = await erinCtx.newPage();
     await signIn(erinPage, LIVE_USERS.erin);
     await openLiveTab(erinPage, 'Approvals');
     await openLiveSubTab(erinPage, 'sub-approvals-availability');
-    await expect(erinPage.locator('#sub-approvals-availability arazzo-availability-requests tbody tr[data-id]', { hasText: 'Please promote v2 to production.' })).toHaveCount(0);
+    await expect(erinPage.locator('#sub-approvals-availability arazzo-availability-requests tbody tr[data-id]', { hasText: reason })).toHaveCount(0);
 
     // pia administers production by the prod-ops rule route: the request IS hers, attributed to a person.
     const piaPage = await piaCtx.newPage();
@@ -467,16 +482,17 @@ test('production is governed by prod-ops, not founders-only (#862): pia reaches 
     await openLiveTab(piaPage, 'Approvals');
     await openLiveSubTab(piaPage, 'sub-approvals-availability');
     const queue = piaPage.locator('#sub-approvals-availability arazzo-availability-requests');
-    const row = queue.locator('tbody tr[data-id]', { hasText: 'Please promote v2 to production.' });
+    const row = queue.locator('tbody tr[data-id]', { hasText: reason });
     await expect(row).toHaveCount(1);
-    await expect(row.locator('.who')).toHaveText('Alice Payments');
+    await expect(row.locator('.who')).toHaveText('Arazzo Admin');
     await row.locator('.act[data-action="deny"]').click();
     await queue.locator('dialog.decision-dialog .reason-in').fill('Live UX test cleanup: denied by design.');
     await queue.locator('dialog.decision-dialog button.ok').click();
-    await expect(queue.locator('tbody tr[data-id]', { hasText: 'Please promote v2 to production.' })).toHaveCount(0);
+    await expect(queue.locator('tbody tr[data-id]', { hasText: reason })).toHaveCount(0);
   } finally {
-    await piaCtx.close();
-    await erinCtx.close();
+    await closeContext(adminCtx);
+    await closeContext(piaCtx);
+    await closeContext(erinCtx);
   }
 });
 
@@ -536,8 +552,8 @@ test('independent decision on real infrastructure: an admin cannot decide a prom
     await erinQueue.locator('dialog.decision-dialog button.ok').click();
     await expect(erinQueue.locator('tbody tr[data-id]', { hasText: reason })).toHaveCount(0);
   } finally {
-    await adminCtx.close();
-    await erinCtx.close();
+    await closeContext(adminCtx);
+    await closeContext(erinCtx);
   }
 });
 
@@ -633,8 +649,8 @@ test('widening vs narrowing FOR REAL: a second single-rule grant widens oscar\'s
     await remove(narrowDesc);
     expect(await oscarCatalog()).toEqual(['onboard-customer']);
   } finally {
-    await adminCtx.close();
-    await oscarCtx.close();
+    await closeContext(adminCtx);
+    await closeContext(oscarCtx);
   }
 });
 
@@ -646,11 +662,22 @@ test('sign-out completes under the host\'s Content-Security-Policy: the end-sess
   const violations = [];
   page.on('console', (message) => { if (/Content Security Policy/i.test(message.text())) violations.push(message.text()); });
 
+  // The sign-out redirect chain, reported if the browser does not arrive signed out: which hop failed is the diagnosis.
+  const chain = [];
+  page.on('response', (r) => { if (/logout|signout|\/login|signin-oidc|\/me\b/.test(r.url()) || (/arazzo\/v1/.test(r.url()) && r.status() === 401)) chain.push(`${r.status()} ${r.request().method()} ${r.url().slice(0, 100)} -> ${(r.headers().location || '').slice(0, 100)}`); });
   const signOut = page.locator('arazzo-auth-status').getByRole('button', { name: 'Sign out' });
   await expect(signOut).toBeVisible({ timeout: 30_000 });
+
+  // The browser must complete the end-session hop and arrive at the callback. The shell's panels keep polling, and
+  // once /logout has cleared the cookie a poll is refused with a 401 while the browser is still on its way to
+  // Keycloak: the shell must not answer that by starting a sign-in, which would cancel the end-session navigation and,
+  // with Keycloak's session still alive, sign the user straight back in (createSessionFetch, whose component tests
+  // pin it; the window is too narrow here to hit on demand).
+  const callback = page.waitForResponse((r) => new URL(r.url()).pathname === '/signout-callback-oidc', { timeout: 30_000 });
   await signOut.click();
+  try { await callback; } catch (e) { console.log('SIGNOUT-CHAIN\n  ' + chain.join('\n  ')); throw e; }
 
   // Keycloak ends the SSO session and returns to the app, which is signed out, so the shell bounces to the challenge.
-  await expect(page.locator('#username')).toBeVisible({ timeout: 30_000 });
+  try { await expect(page.locator('#username')).toBeVisible({ timeout: 30_000 }); } catch (e) { console.log('SIGNOUT-CHAIN\n  ' + chain.join('\n  ')); throw e; }
   expect(violations, `CSP violations during sign-out:\n${violations.join('\n')}`).toEqual([]);
 });

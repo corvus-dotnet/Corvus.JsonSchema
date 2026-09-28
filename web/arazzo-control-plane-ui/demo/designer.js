@@ -22,7 +22,7 @@ import '/ui/src/components/workflow-add.js';
 import '/ui/src/components/debug-tray.js';
 import '/ui/src/components/resume-dialog.js';
 import '/ui/src/components/scenario-panel.js';
-import '/ui/src/components/auth-status.js';
+import { createSessionFetch } from '/ui/src/components/auth-status.js';
 import { ArazzoControlPlaneClient } from '/ui/src/arazzo-client.js';
 import { escapeHtml } from '/ui/src/components/base.js';
 import { createMockControlPlane } from '/ui/demo/mock-api.js';
@@ -36,16 +36,10 @@ import { createMockControlPlane } from '/ui/demo/mock-api.js';
 const isLive = new URLSearchParams(location.search).has('live')
   || location.pathname === '/designer' || location.pathname === '/designer/';
 const mock = isLive ? null : createMockControlPlane({ latencyMs: 0 });
-// Live mode talks to the real control plane on this origin. Use the BFF auth fetch (same as the main app):
-// carry the session cookie + X-CSRF and bounce to /login on a 401 — so the designer is a genuinely
+// Live mode talks to the real control plane on this origin. Use the BFF session fetch (same as the main app):
+// carry the session cookie + X-CSRF and bounce to /login on a 401, so the designer is a genuinely
 // authenticated surface, not an anonymous one.
-const authFetch = async (input, init = {}) => {
-  const headers = new Headers(init.headers || {});
-  headers.set('X-CSRF', '1');
-  const res = await fetch(input, { credentials: 'include', ...init, headers });
-  if (res.status === 401) { location.assign('/login?returnUrl=' + encodeURIComponent(location.pathname + location.search)); return new Promise(() => {}); }
-  return res;
-};
+const authFetch = createSessionFetch();
 const client = isLive
   ? new ArazzoControlPlaneClient({ baseUrl: '/arazzo/v1', fetch: authFetch })
   : new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });

@@ -87,4 +87,42 @@ class ArazzoAuthStatus extends HTMLElement {
   }
 }
 
+/**
+ * The fetch a BFF host's page hands the kit's panels (§16.3): same-origin, with the session cookie and the X-CSRF
+ * header, where a 401 means the session has ended and sends the browser to sign in. Except while the page is
+ * navigating away. Sign-out clears the session cookie and then redirects to the identity provider's end-session
+ * endpoint, so a panel's call refused in that window would start a sign-in, cancel the end-session navigation and,
+ * with the provider's session still alive, sign the user straight back in.
+ * @param {{ loginUrl?: string, fetch?: typeof fetch, navigate?: (url: string) => void, target?: EventTarget, settleMs?: number }} [options]
+ * `target` is where `beforeunload` is heard (the window); `settleMs` is how long after one the page counts as still
+ * leaving, since a navigation that does not take the page away (one the browser abandons) leaves it in use.
+ * @returns {(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>}
+ */
+export function createSessionFetch({
+  loginUrl = '/login',
+  fetch: send = (input, init) => globalThis.fetch(input, init),
+  navigate = (url) => location.assign(url),
+  target = window,
+  settleMs = 5000,
+} = {}) {
+  let leaving = false;
+  let settle = 0;
+  target.addEventListener('beforeunload', () => {
+    leaving = true;
+    clearTimeout(settle);
+    settle = setTimeout(() => { leaving = false; }, settleMs);
+  });
+  return async (input, init = {}) => {
+    // X-CSRF anti-forgery: the server requires it on cookie-authenticated state-changing calls; sending it on every
+    // request is harmless and forces a CORS preflight that isolates cross-origin callers.
+    const headers = new Headers(init.headers || {});
+    headers.set('X-CSRF', '1');
+    const response = await send(input, { credentials: 'include', ...init, headers });
+    if (response.status !== 401) return response;
+    if (!leaving) navigate(`${loginUrl}?returnUrl=${encodeURIComponent(location.pathname + location.search)}`);
+    return new Promise(() => {}); // the page is going to sign in, or away: no caller should render the refusal
+  };
+}
+
 customElements.define('arazzo-auth-status', ArazzoAuthStatus);
+export { ArazzoAuthStatus };

@@ -25,6 +25,24 @@ describe('<arazzo-filter-input>', () => {
     ok(el.shadowRoot.querySelector('li').textContent.includes('release/9.0'));
   });
 
+  it('closes the list when a typed value is committed, by Enter or by a change', async () => {
+    // A value typed in full and committed must not leave the top-layer list over the content below: the next click
+    // would land on it, and the list selects on mousedown.
+    combo([{ value: 'acme-org/specs' }, { value: 'acme-org/other' }]);
+    const input = el.shadowRoot.querySelector('input');
+    const list = el.shadowRoot.querySelector('.results');
+    input.value = 'acme-org/specs';
+    input.dispatchEvent(new Event('input'));
+    await waitFor(() => list.matches(':popover-open'), 'typing opens the list');
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    ok(!list.matches(':popover-open'), 'Enter with nothing highlighted closes it');
+
+    input.dispatchEvent(new Event('input'));
+    await waitFor(() => list.matches(':popover-open'), 'typing opens it again');
+    input.dispatchEvent(new Event('change'));
+    ok(!list.matches(':popover-open'), 'a committed change closes it');
+  });
+
   it('a lookup that resolves after disconnect must not throw (the list no-ops off-DOM)', () => {
     combo([{ value: 'alpha' }, { value: 'alnitak' }]);
     el.remove(); // the dialog closing (or test teardown) races a still-pending debounced lookup

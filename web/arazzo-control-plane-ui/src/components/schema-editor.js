@@ -23,7 +23,7 @@
 // | boolean     | a read-only true/false switch | JSON tier only (the engine does not enforce boolean input schemas) |
 // | +N more     | preserved unrendered keyword names | preserved verbatim |
 
-import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, confirmDialog, define, afterPress } from './base.js';
 import { wireGuardedJsonEditor } from './guarded-json.js';
 import './text-editor.js';
 import './mode-toggle.js';
@@ -502,7 +502,13 @@ class ArazzoSchemaEditor extends ArazzoElement {
       input.value = ctx.name;
       return;
     }
-    if (name !== ctx.name) { renameProperty(ctx.parent, ctx.name, name); this._renderForm(); this._commit(); }
+    if (name === ctx.name) return;
+    // The model and the row's context change at once, so a control on this row pressed to end the edit (★, ✕,
+    // ▲▼) acts on the new name; the form re-renders once that press's click has run (afterPress).
+    renameProperty(ctx.parent, ctx.name, name);
+    ctx.name = name;
+    this._commit();
+    afterPress(() => this._renderForm());
   }
 
   _reorderRemove(ctx) {

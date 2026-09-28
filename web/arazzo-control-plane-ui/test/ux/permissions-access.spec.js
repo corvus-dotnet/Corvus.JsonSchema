@@ -248,6 +248,57 @@ test('a person is not offered as a grantee: the grants picker excludes people (p
   assertClean(errors);
 });
 
+test('Cancel closes a new grant after a rule name was typed in full: committing the name on blur must not swallow the click', async ({ page }) => {
+  const errors = await watchErrors(page);
+  await openApp(page);
+  await selectSecurity(page, 'Grants');
+
+  const grants = page.locator('arazzo-grants-panel');
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7); // first load settled
+  await grants.locator('button.new').click();
+  const modal = grants.locator('dialog.cmodal');
+  await expect(modal).toBeVisible();
+
+  // Type an existing rule's full name (no pick from the dropdown), dismiss the suggestions, then Cancel. Leaving
+  // the input commits the exact name (the keyboard fallback), and that must not take the Cancel click with it.
+  await grants.locator('select.verb-mode[data-verb="read"]').selectOption('scopes');
+  const scopeInput = grants.locator('.scope-input[data-verb="read"]');
+  await scopeInput.click();
+  await scopeInput.fill('reach-payments');
+  await expect(grants.locator('.results[data-verb="read"] li[data-name="reach-payments"]')).toBeVisible();
+  await scopeInput.press('Escape');
+  await grants.locator('.dfoot .cancel').click();
+  await expect(modal).toBeHidden();
+  assertClean(errors);
+});
+
+test('Create keeps a rule name typed in full: the name committed on blur is in the grant the click creates', async ({ page }) => {
+  const errors = await watchErrors(page);
+  await openApp(page);
+  await selectSecurity(page, 'Grants');
+
+  const grants = page.locator('arazzo-grants-panel');
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7);
+  await grants.locator('button.new').click();
+  const pickerInput = grants.locator('arazzo-grantee-picker input.q');
+  await pickerInput.click();
+  await pickerInput.fill('payments');
+  await grants.locator('arazzo-grantee-picker .results li[data-index]', { hasText: 'Payments' }).click();
+  await expect(grants.locator('input.f-claimValue')).toHaveValue('payments');
+
+  await grants.locator('select.verb-mode[data-verb="read"]').selectOption('scopes');
+  const scopeInput = grants.locator('.scope-input[data-verb="read"]');
+  await scopeInput.click();
+  await scopeInput.fill('reach-payments');
+  await expect(grants.locator('.results[data-verb="read"] li[data-name="reach-payments"]')).toBeVisible();
+  await scopeInput.press('Escape');
+  await grants.locator('.dfoot .confirm').click();
+  await expect(grants.locator('dialog.cmodal')).toBeHidden();
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(8);
+  await expect(grants.locator('tbody tr.grow-row', { hasText: 'payments' }).last()).toContainText('reach-payments');
+  assertClean(errors);
+});
+
 test('New grant / New rule open in a modal, while editing an existing one stays in the detail pane', async ({ page }) => {
   const errors = await watchErrors(page);
   await openApp(page);

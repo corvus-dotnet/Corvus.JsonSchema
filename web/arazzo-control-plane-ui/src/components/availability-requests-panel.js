@@ -36,7 +36,7 @@ const STATUS_FILTERS = ['', 'Pending', 'Approved', 'Denied', 'Withdrawn'];
 
 class ArazzoAvailabilityRequests extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'view', 'environment', 'theme', 'page-size', 'acting-subject'];
+    return ['base-url', 'view', 'environment', 'page-size', 'acting-subject'];
   }
 
   constructor() {
@@ -70,7 +70,11 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
       this.renderShell();
       this.reload();
     }
-    else { this.renderShell(); this.reload(); }
+    // The acting subject decides only how the caller's own rows render. A host stamps it when it learns who is
+    // signed in, which can be after a dialog has opened, so it re-renders the rows and never the shell the dialog
+    // lives in.
+    else if (name === 'acting-subject') this.renderBody();
+    else if (name === 'page-size') this.reload();
   }
 
   /** A `fetch`-compatible override (the BFF cookie/CSRF fetch); rebuilds the client. */

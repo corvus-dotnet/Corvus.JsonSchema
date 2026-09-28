@@ -21,7 +21,7 @@
 //           stays usable at hundreds — server-paged search). The claim is the immutable key, so it is read-only on edit.
 // The list is searched + paged server-side; "New grant" opens a blank pane; editing/deleting happen in the pane.
 
-import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, PICKER_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, adoptStyles, SHARED_CSS, PAGER_CSS, PICKER_CSS, escapeHtml, confirmDialog, define, afterPress } from './base.js';
 import './grantee-picker.js';
 import './pager.js';
 
@@ -235,10 +235,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
 
   /** Add a rule to a verb's reach (from a dropdown click), then re-render the editor with the new chip. */
   addRule(verb, name) {
-    const f = this._form;
-    if (!f || !name || f.verbs[verb].scopes.includes(name)) return;
-    f.verbs[verb].scopes.push(name);
-    this._activeRuleVerb = null;
+    if (!this.recordRule(verb, name)) return;
     this.renderDetail();
     // Refocus for further typing WITHOUT re-popping the suggestions: the dropdown overlays whatever
     // sits below the verb row (including the pane's footer), so a completed selection must leave it
@@ -246,6 +243,15 @@ class ArazzoGrantsPanel extends ArazzoElement {
     this._squelchFocusPop = true;
     this._formRoot?.querySelector(`.scope-input[data-verb="${verb}"]`)?.focus();
     this._squelchFocusPop = false;
+  }
+
+  /** Add a rule to a verb's reach in the form state, without re-rendering. Returns whether it was added. */
+  recordRule(verb, name) {
+    const f = this._form;
+    if (!f || !name || f.verbs[verb].scopes.includes(name)) return false;
+    f.verbs[verb].scopes.push(name);
+    this._activeRuleVerb = null;
+    return true;
   }
 
   /** Hide any open rule dropdown. */
@@ -769,7 +775,11 @@ class ArazzoGrantsPanel extends ArazzoElement {
         // Blur/commit: add an exact match. A non-match is NOT cleared here — Enter reports it (above) and the dropdown
         // keeps showing why; silently blanking the field is what P1.3 called out.
         const name = input.value.trim();
-        if (name && this._scopes.some((s) => s.name === name)) this.addRule(verb, name);
+        if (!name || !this._scopes.some((s) => s.name === name) || !this.recordRule(verb, name)) return;
+        // Recorded now, so a Create the blur came from builds the grant with it; re-rendered once that press's click
+        // has run, so the click is not lost to the re-render (afterPress).
+        const form = this._form;
+        afterPress(() => { if (this._form === form) this.renderDetail(); });
       });
     });
     pane.querySelectorAll('.chip-rm').forEach((btn) => btn.addEventListener('click', () => {

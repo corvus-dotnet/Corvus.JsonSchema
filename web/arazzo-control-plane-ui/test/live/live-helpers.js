@@ -25,26 +25,24 @@ export const LIVE_USERS = {
 };
 
 /**
- * Land the page's context on the app shell as the given user. A fresh context is bounced to the
- * Keycloak challenge (the shell's authFetch redirects on the first 401); an already-authenticated
- * context skips it. Returns once the primary tab bar is interactive.
+ * Land the page's context on the app shell as the given user, and return once the shell is wired. It starts at the
+ * BFF's /login, not at '/': the shell's markup, Runs tab included, renders before its first API call is refused and
+ * bounces the browser to Keycloak, so a Runs tab seen on '/' can vanish a moment later. /login goes straight to
+ * Keycloak's form when the context has no session, and straight back to the shell when it has one.
  */
 export async function signIn(page, user = LIVE_USERS.admin) {
-  await page.goto('/');
+  await page.goto('/login?returnUrl=%2F');
   const kcUser = page.locator('#username');
-  const runsTab = page.getByRole('tab', { name: 'Runs' });
-  await Promise.race([
-    kcUser.waitFor({ timeout: 30_000 }).catch(() => {}),
-    runsTab.waitFor({ timeout: 30_000 }).catch(() => {}),
-  ]);
+  const ready = page.locator('body[data-ready="true"]');
+  await kcUser.or(ready).first().waitFor({ state: 'attached', timeout: 30_000 });
   if (await kcUser.count()) {
     await kcUser.fill(user.username);
     await page.locator('#password').fill(user.password);
     await page.locator('#kc-login, input[name="login"]').first().click();
   }
-  await expect(runsTab).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('tab', { name: 'Runs' })).toBeVisible({ timeout: 30_000 });
   // The tabs are markup, visible before app.js has wired them; wait until it says it has.
-  await page.locator('body[data-ready="true"]').waitFor({ state: 'attached', timeout: 30_000 });
+  await ready.waitFor({ state: 'attached', timeout: 30_000 });
 }
 
 /**
@@ -78,6 +76,14 @@ export async function openLiveTab(page, name) {
 /** Select a sub-tab inside a grouped view (Runners / Security / Approvals / Requests) by its view id. */
 export async function openLiveSubTab(page, subViewId) {
   await page.locator(`[role="tab"][aria-controls="${subViewId}"]`).click();
+}
+
+/**
+ * Close a second identity's browser context in a test's `finally`. When the test has timed out, Playwright may have
+ * closed the context already, and a throwing close would replace the test's real error in the report.
+ */
+export async function closeContext(context) {
+  await context.close().catch(() => {});
 }
 
 /** A collision-proof name for anything a test creates on the real backend. */

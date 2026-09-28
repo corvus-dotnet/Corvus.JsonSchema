@@ -25,6 +25,19 @@ function scheduleStatusLabel(status) {
 import './pager.js';
 import './text-editor.js';
 
+/**
+ * Why a request failed, for the flash: the problem's detail or title, or, for a run the control plane refused because
+ * the schedule's stored target inputs do not validate (422, a `ValidationResult`), what the validation found.
+ */
+function failureText(err) {
+  const result = err.problem;
+  if (result?.valid === false && Array.isArray(result.errors) && result.errors.length > 0) {
+    const located = result.errors.filter((e) => e.instancePath);
+    return `The target inputs do not validate: ${(located.length > 0 ? located : result.errors).map((e) => e.message).join('; ')}`;
+  }
+  return result?.detail || result?.title || err.message;
+}
+
 class ArazzoSchedules extends ArazzoElement {
   static get observedAttributes() {
     return ['base-url', 'poll', 'scopes', 'page-size'];
@@ -180,12 +193,12 @@ class ArazzoSchedules extends ArazzoElement {
       this.renderBody();
     } catch (err) {
       this._busy.delete(scheduleId);
-      this._flash = { kind: 'err', text: (err.problem?.detail || err.problem?.title || err.message) };
+      this._flash = { kind: 'err', text: failureText(err) };
       this.renderBody();
     }
   }
 
-  async remove(scheduleId) {
+  async deleteSchedule(scheduleId) {
     const ok = await confirmDialog(this, {
       title: 'Delete schedule',
       message: `Delete schedule ${escapeHtml(scheduleId)}? Its cadence stops firing and it reads back as absent. Runs it already started are unaffected.`,
@@ -203,7 +216,7 @@ class ArazzoSchedules extends ArazzoElement {
       this.reload();
     } catch (err) {
       this._busy.delete(scheduleId);
-      this._flash = { kind: 'err', text: (err.problem?.detail || err.problem?.title || err.message) };
+      this._flash = { kind: 'err', text: failureText(err) };
       this.renderBody();
     }
   }
@@ -293,7 +306,7 @@ class ArazzoSchedules extends ArazzoElement {
       .flash { flex: none; margin: 10px 12px 0; font-size: 13px; padding: 8px 10px; border-radius: var(--_radius); border: 1px solid var(--_border); }
       .flash.ok { color: var(--arazzo-status-completed, #1a7f37); border-color: currentColor; }
       .flash.err { color: var(--arazzo-status-faulted, #b3261e); border-color: currentColor; }
-      .err { flex: none; margin: 10px 12px; }
+      .load-error { flex: none; margin: 10px 12px; }
       .list { display: grid; flex: 1; min-height: 0; overflow: auto; }
       .sched { padding: 11px 12px; border-bottom: 1px solid var(--_border); }
       .sched:last-child { border-bottom: none; }
@@ -340,7 +353,7 @@ class ArazzoSchedules extends ArazzoElement {
           <button class="refresh ghost" type="button" title="Refresh">↻</button>
         </div>
         <div class="flash" hidden></div>
-        <div class="err"></div>
+        <div class="load-error"></div>
         <div class="list" part="list"></div>
         <arazzo-pager class="pager" part="pager"></arazzo-pager>
       </div>
@@ -362,7 +375,8 @@ class ArazzoSchedules extends ArazzoElement {
       else { flash.hidden = true; }
     }
 
-    const err = this.$('.err');
+    // Not '.err': an error flash carries that class too, and it comes first.
+    const err = this.$('.load-error');
     err.innerHTML = this._error
       ? `<div class="error-banner"><span><strong>${escapeHtml(this._error.title || 'Request failed')}</strong>${this._error.detail ? ' — ' + escapeHtml(this._error.detail) : ''}</span></div>`
       : '';
@@ -383,7 +397,7 @@ class ArazzoSchedules extends ArazzoElement {
       el.addEventListener('click', () => this.runNow(el.getAttribute('data-run')));
     }
     for (const el of this.shadowRoot.querySelectorAll('[data-del]')) {
-      el.addEventListener('click', () => this.remove(el.getAttribute('data-del')));
+      el.addEventListener('click', () => this.deleteSchedule(el.getAttribute('data-del')));
     }
 
     const parts = [`${this._schedules.length} shown`];

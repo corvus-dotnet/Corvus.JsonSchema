@@ -38,7 +38,10 @@ export default defineConfig({
       testMatch: '**/live/*.spec.js',
       fullyParallel: false,
       retries: 1,
-      timeout: 60_000,
+      // A test signs in up to three identities, each a full OIDC round trip through a real Keycloak and a cold load
+      // of the kit's modules into a fresh browser context: 10 to 22 s apiece measured on a developer box. 60 s did
+      // not hold three of them and the work between.
+      timeout: 120_000,
       use: {
         ...devices['Desktop Chrome'],
         baseURL: process.env.ARAZZO_LIVE_BASE_URL || 'http://localhost:8090',

@@ -479,6 +479,32 @@ function humanizeDelta(ms) {
   return `${Math.round(h / 24)}d`;
 }
 
+/** Whether a pointer press is in progress, and the work {@link afterPress} holds until it has finished. */
+let pressing = false;
+const afterPressQueue = [];
+if (typeof document !== 'undefined') {
+  document.addEventListener('pointerdown', () => { pressing = true; }, true);
+  const settle = () => setTimeout(() => {
+    pressing = false;
+    for (const work of afterPressQueue.splice(0)) work();
+  });
+  document.addEventListener('pointerup', settle, true);
+  document.addEventListener('pointercancel', settle, true);
+}
+
+/**
+ * Run `work` once the pointer press in progress has finished, or now if there is none. A commit made when a field
+ * loses focus (a `change` handler) must re-render through this. A blur caused by pressing another control happens
+ * between that control's pointerdown and its click, so a re-render there replaces the control and the click is lost:
+ * Cancel does not cancel and Save does not save. Change the state at once, so the click sees it, and re-render here.
+ * A click is dispatched in the same task as its pointerup, so work queued from pointerup runs after the click.
+ * @param {() => void} work
+ */
+export function afterPress(work) {
+  if (pressing) afterPressQueue.push(work);
+  else work();
+}
+
 /** Per-trigger in-flight marker for {@link ArazzoElement#runAction} (a Symbol so it never leaks to the DOM). */
 const BUSY_ACTION = Symbol('arazzo-busy-action');
 

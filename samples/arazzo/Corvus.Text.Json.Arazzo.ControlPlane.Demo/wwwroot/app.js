@@ -12,21 +12,13 @@ import '/ui/src/components/rules-panel.js';
 import '/ui/src/components/access-overview-panel.js';
 import '/ui/src/components/access-requests-panel.js';
 import '/ui/src/components/availability-requests-panel.js';
-import '/ui/src/components/auth-status.js';
+import { createSessionFetch } from '/ui/src/components/auth-status.js';
 
-// BFF auth (§16.3). When the host runs with authorization on, an API 401 means "not signed in" — bounce the
-// browser to /login (the OIDC challenge). When the host runs open (the default), the API returns 200 and
-// /me is absent (404), so this is inert and the sign-in bar stays hidden. The cookie travels same-origin.
-const loginUrl = () => '/login?returnUrl=' + encodeURIComponent(location.pathname + location.search);
-const authFetch = async (input, init = {}) => {
-  // X-CSRF anti-forgery (§16.3): the server requires this header on cookie-authenticated state-changing
-  // calls; sending it on every request is harmless and forces a CORS preflight that isolates cross-origin.
-  const headers = new Headers(init.headers || {});
-  headers.set('X-CSRF', '1');
-  const res = await fetch(input, { credentials: 'include', ...init, headers });
-  if (res.status === 401) { location.assign(loginUrl()); return new Promise(() => {}); }
-  return res;
-};
+// BFF auth (§16.3). When the host runs with authorization on, an API 401 means "not signed in" and bounces the
+// browser to /login (the OIDC challenge), except while the page is navigating away, as sign-out does. When the
+// host runs open (the default), the API returns 200 and /me is absent (404), so this is inert and the sign-in bar
+// stays hidden. The cookie travels same-origin.
+const authFetch = createSessionFetch();
 
 // Wire every mounted panel to the BFF fetch. Panels split into two families: the self-contained ones build their
 // own client from a `fetch` property (Runs, Catalog, Environments, Sources, Credentials, Runners, Runner-auth,

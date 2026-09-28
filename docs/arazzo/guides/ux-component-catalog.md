@@ -46,6 +46,14 @@ not repeated per entry.
   re-click of the same control while its operation is in flight and shows a spinner in place of the label once
   the work outlives about 150ms. Validation still owns `disabled`
   ([ADR 0053](../adr/0053-triggered-actions-guard-and-show-delayed-busy.md)).
+- **Commits on blur.** A field that commits when it loses focus (a `change` handler) changes the component's state
+  at once and re-renders through `afterPress(work)`. Pressing another control blurs the field between that
+  control's pointerdown and its click, so a re-render there would replace the control and lose the click: Cancel
+  would not cancel and Create would not create. `afterPress` runs the work once the press's click has run, or at once
+  when no press is in progress.
+- **Method names.** A component never defines a method named after a DOM method (`remove`, `append`, `before`,
+  `after` and the like). It would shadow the element's own for every host: a delete action named `remove()` made
+  `element.remove()` open a delete confirmation. `test/element-methods.test.mjs` refuses one.
 
 ## Design conventions
 

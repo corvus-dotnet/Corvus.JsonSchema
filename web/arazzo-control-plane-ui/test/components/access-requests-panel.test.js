@@ -41,6 +41,19 @@ describe('<arazzo-access-requests>', () => {
     ok(other.querySelector('.act[data-action="approve"]'), 'other subjects’ rows keep live decisions');
   });
 
+  it('keeps an open request dialog when the host stamps the acting subject late', async () => {
+    // A host learns the acting subject from /me after the page has loaded; a user may have opened the dialog by then.
+    el = panelWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    el.shadowRoot.querySelector('.new').click();
+    const dlg = await waitFor(() => el.shadowRoot.querySelector('arazzo-access-request-dialog'));
+    const modal = await waitFor(() => { const d = dlg.shadowRoot.querySelector('dialog'); return d?.open ? d : null; });
+    el.setAttribute('acting-subject', 'someone');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    ok(el.shadowRoot.contains(dlg) && dlg.shadowRoot.contains(modal) && modal.open, 'the same dialog is still open');
+  });
+
   it('the mock refuses deciding a request that would grant YOU access (server parity: 403 own-request)', async () => {
     const mock = createMockControlPlane({ latencyMs: 0 });
     const submit = await mock.fetch('https://mock/arazzo/v1/accessRequests', {

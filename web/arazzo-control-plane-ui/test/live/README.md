@@ -39,9 +39,14 @@ It validates the layers the mock cannot:
 The backend is REAL and SHARED — not a fresh mock per `page.goto`:
 
 - create under `uniq()` names and clean up what you create;
+- never consume seeded state (deciding a seeded request, say): raise your own under a `uniq()` reason, so the suite
+  and a retry both run again against the same backend;
 - assert RELATIVELY (contains / gained-one / status-changed), never seed-exact counts;
 - one worker, tests in order (`--workers=1` is baked into the npm script);
-- identities are Keycloak users (`LIVE_USERS`); a second identity needs a second browser context;
+- identities are Keycloak users (`LIVE_USERS`); a second identity needs a second browser context, closed with
+  `closeContext` in a `finally` so a timeout reports its real error;
+- `signIn` starts at `/login` and returns once the shell is wired (`body[data-ready]`), not when a tab first shows:
+  the shell's markup renders before its first refused API call bounces the browser to Keycloak;
 - start console-error watching AFTER `signIn` — the pre-login 401 bounce is expected noise, and a
   test that deliberately provokes a 4xx (the 403 test) skips the clean-console assertion.
 

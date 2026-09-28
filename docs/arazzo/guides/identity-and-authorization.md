@@ -348,6 +348,13 @@ credential). Layers, matching the canonical .NET BFF (Duende) pattern:
 - **OIDC `state` + `nonce` + correlation cookie** protect the login flow itself; **`/logout` is POST-only**
   (not GET-forgeable, and SameSite blocks a cross-site logout-POST from carrying the cookie).
 
+The page hands its panels the fetch that `createSessionFetch()` builds (exported by the kit's
+`components/auth-status.js`): same-origin, with the cookie and the `X-CSRF` header, and a 401 sends the browser to
+`/login`, back to where it was. Not while the page is navigating away, though. Sign-out clears the session cookie and
+then redirects to the identity provider's end-session endpoint, and a panel's poll refused in that window would
+otherwise start a sign-in that cancels the end-session navigation and, with the provider's session still alive, signs
+the user straight back in.
+
 **Browser security headers.** A secured host registers `services.AddArazzoSecurityHeaders()`
 ([ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md)), and a secured control plane does not map
 without it. Every response then carries a Content-Security-Policy with no inline script or style, `frame-ancestors 'none'`

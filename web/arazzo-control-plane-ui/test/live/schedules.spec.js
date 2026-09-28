@@ -25,6 +25,10 @@ test('a schedule can be created, run now, and deleted; runners show scheduling c
   await panel.locator('#f-base').fill('nightly-reconcile');
   await panel.locator('#f-version').fill('2');
   await panel.locator('#f-cron').fill('0 3 * * *');
+  // The target's inputs schema requires the reconciliation date, and the control plane validates a schedule's stored
+  // inputs when it starts the run, so Run now below is refused without it.
+  await panel.locator('#f-inputs .cm-content').click();
+  await page.keyboard.insertText('{"date": "2026-09-28"}');
   await panel.locator('.modal button.submit').click();
 
   // It appears in the list, targeting the versioned workflow.
