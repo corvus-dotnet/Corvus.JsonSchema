@@ -481,7 +481,7 @@ Func<ClaimsPrincipal, AccessRequest, bool> eligibleForSelfElevation =
 // Enable with `ControlPlane__RequireAuthorization=true`, then present a Keycloak bearer token, or an
 // `X-Api-Key: demo-admin-key` (all scopes) / `demo-readonly-key` (catalog:read + runs:read) header.
 // The BFF session cookie name, shared by the cookie config and the library anti-forgery check (§16.3).
-const string SessionCookieName = "arazzo.session";
+const string SessionCookieName = BffSession.CookieName;
 
 // Stated, never defaulted. ADR 0016 exists to remove insecure-by-omission, and a posture that falls back to "off" when
 // the setting is missing is the same defect one layer out: a typo in the key name, or a compose file that lost the
@@ -550,14 +550,11 @@ if (requireAuthorization)
             })
         .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
         {
-            // The BFF holds the tokens; the SPA never sees them (it calls same-origin with this HttpOnly cookie).
-            options.Cookie.HttpOnly = true;
-            options.Cookie.SameSite = SameSiteMode.Lax;
-            options.Cookie.Name = SessionCookieName;
-
-            // API calls must get 401/403 (the SPA redirects to /login) — never a server-side HTML login redirect.
-            options.Events.OnRedirectToLogin = context => { context.Response.StatusCode = StatusCodes.Status401Unauthorized; return Task.CompletedTask; };
-            options.Events.OnRedirectToAccessDenied = context => { context.Response.StatusCode = StatusCodes.Status403Forbidden; return Task.CompletedTask; };
+            // A Secure, HttpOnly, __Host- cookie that ends after 30 idle minutes or 8 hours from sign-in, whichever is
+            // first; ControlPlane:Session:IdleTimeout and AbsoluteLifetime change them.
+            BffSession.Configure(
+                options,
+                builder.Configuration.GetSection("ControlPlane:Session").Get<BffSessionLifetime>() ?? new BffSessionLifetime());
         })
         .AddKeycloakOpenIdConnect("keycloak", realm: "arazzo", OpenIdConnectDefaults.AuthenticationScheme, options =>
         {
@@ -725,7 +722,16 @@ if (seedExampleData)
         sp.GetRequiredService<ILogger<RunnerPreAuthorizationService>>()));
 }
 
+// Only a trusted proxy may say what address a request came from and whether it arrived over TLS: loopback, and whatever
+// ControlPlane:ForwardedHeaders names. Behind a TLS-terminating proxy that is what has the OIDC handler build an https
+// redirect URI and the security headers send HSTS.
+builder.Services.Configure<ForwardedHeadersOptions>(
+    options => BffSession.ConfigureForwardedHeaders(options, builder.Configuration.GetSection("ControlPlane:ForwardedHeaders")));
+
 WebApplication app = builder.Build();
+
+// First, so everything after it sees the scheme and client address the trusted proxy reported.
+app.UseForwardedHeaders();
 
 // /health (readiness) and /alive (liveness) — the AppHost's WithHttpHealthCheck("/health") polls these.
 app.MapDefaultEndpoints();
@@ -742,9 +748,11 @@ if (requireAuthorization)
 
     // BFF endpoints (§16.3). The SPA is same-origin and carries the HttpOnly cookie automatically; on a 401 it
     // sends the browser to /login (the OIDC challenge → Keycloak), and reads /me to show who is signed in.
+    // The return address is honoured only when it is a path on this host, so a crafted link to /login cannot hand a
+    // freshly signed-in user to another site.
     app.MapGet("/login", (string? returnUrl) =>
         Results.Challenge(
-            new AuthenticationProperties { RedirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl },
+            new AuthenticationProperties { RedirectUri = BffSession.LocalReturnUrl(returnUrl) },
             [OpenIdConnectDefaults.AuthenticationScheme]));
 
     app.MapPost("/logout", async (HttpContext http) =>

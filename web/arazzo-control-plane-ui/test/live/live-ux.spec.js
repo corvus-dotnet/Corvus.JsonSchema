@@ -694,3 +694,23 @@ test('sign-out completes under the host\'s Content-Security-Policy: the end-sess
   try { await expect(page.locator('#username')).toBeVisible({ timeout: 30_000 }); } catch (e) { console.log('SIGNOUT-CHAIN\n  ' + chain.join('\n  ')); throw e; }
   expect(violations, `CSP violations during sign-out:\n${violations.join('\n')}`).toEqual([]);
 });
+
+test('the session cookie is __Host-, Secure, HttpOnly and Lax, and a sign-in asked to return to another site returns home', async ({ page, baseURL }) => {
+  const origin = new URL(baseURL).origin;
+  await signIn(page, LIVE_USERS.admin, { returnUrl: 'https://attacker.example/after-sign-in' });
+
+  // The genuine sign-in completed and the BFF sent the browser home, not to the address the link asked for.
+  expect(new URL(page.url()).origin).toBe(origin);
+  expect(new URL(page.url()).pathname).toBe('/');
+
+  const cookies = await page.context().cookies(origin);
+  const session = cookies.filter((c) => c.name.startsWith('__Host-arazzo.session'));
+  expect(session.length, `session cookie(s) among ${cookies.map((c) => c.name).join(', ')}`).toBeGreaterThan(0);
+  for (const c of session) {
+    expect(c.secure, c.name).toBe(true);
+    expect(c.httpOnly, c.name).toBe(true);
+    expect(c.sameSite, c.name).toBe('Lax');
+    expect(c.path, c.name).toBe('/');
+  }
+  expect(cookies.filter((c) => c.name.startsWith('arazzo.session'))).toEqual([]);
+});

@@ -348,6 +348,27 @@ credential). Layers, matching the canonical .NET BFF (Duende) pattern:
 - **OIDC `state` + `nonce` + correlation cookie** protect the login flow itself; **`/logout` is POST-only**
   (not GET-forgeable, and SameSite blocks a cross-site logout-POST from carrying the cookie).
 
+**BFF session transport and lifetime.** The session is the host's ([ADR 0042](../adr/0042-auth-agnostic-host-owns-session.md)),
+so these are the demo host's choices (`BffSession` in the demo project), and a deployment's host makes its own:
+
+- **`Secure` whatever the request's scheme, under a `__Host-` name** (`__Host-arazzo.session`). The prefix has the
+  browser refuse the cookie unless it is `Secure`, set for `/`, and has no `Domain`, so neither a sibling subdomain
+  nor a plain HTTP response can plant or overwrite it. Browsers treat `localhost` as a secure context, so the demo
+  still signs in over plain HTTP there.
+- **Ended at 30 idle minutes or 8 hours from sign-in**, whichever comes first (`ControlPlane:Session:IdleTimeout`
+  and `AbsoluteLifetime`). The idle timeout is sliding expiration; the time the session began is stamped at sign-in,
+  carried through every renewal, and checked on every request, so a session in steady use still ends. A ticket that
+  does not say when its session began is refused.
+- **Sign-in returns only to a path on this host.** `/login?returnUrl=` honours a local path and sends anything else
+  (another origin, `//host`, `/\host`, a `javascript:` URL) to `/`.
+- **Only a trusted proxy may report TLS.** Forwarded headers (`X-Forwarded-Proto`, `X-Forwarded-For`) are believed
+  from loopback and from the addresses and CIDR ranges `ControlPlane:ForwardedHeaders:KnownProxies` and
+  `KnownNetworks` name. Behind a TLS-terminating proxy that is what has the OIDC handler build an `https` redirect
+  URI and the security headers send HSTS.
+
+Sign-out still ends the session only in the browser that signs out: the ticket lives in the cookie, so a copy taken
+before sign-out stays valid until it expires. A server-side ticket store is the part of GAP-2 still to build.
+
 The page hands its panels the fetch that `createSessionFetch()` builds (exported by the kit's
 `components/auth-status.js`): same-origin, with the cookie and the `X-CSRF` header, and a 401 sends the browser to
 `/login`, back to where it was. Not while the page is navigating away, though. Sign-out clears the session cookie and

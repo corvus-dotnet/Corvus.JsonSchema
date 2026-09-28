@@ -30,8 +30,8 @@ export const LIVE_USERS = {
  * bounces the browser to Keycloak, so a Runs tab seen on '/' can vanish a moment later. /login goes straight to
  * Keycloak's form when the context has no session, and straight back to the shell when it has one.
  */
-export async function signIn(page, user = LIVE_USERS.admin) {
-  await page.goto('/login?returnUrl=%2F');
+export async function signIn(page, user = LIVE_USERS.admin, { returnUrl = '/' } = {}) {
+  await page.goto(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
   const kcUser = page.locator('#username');
   const ready = page.locator('body[data-ready="true"]');
   await kcUser.or(ready).first().waitFor({ state: 'attached', timeout: 30_000 });

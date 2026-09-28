@@ -10,6 +10,8 @@ It validates the layers the mock cannot:
 
 - the OIDC challenge round trip (redirect → Keycloak form → cookie session → back to the shell)
 - cookie + X-CSRF plumbing on every API call
+- the session cookie the browser actually holds (`__Host-`, `Secure`, `HttpOnly`, `Lax`) and the login
+  return guard (a sign-in asked to return to another site lands at `/`)
 - real persistence (a created rule survives; a denied request stays denied)
 - cross-identity flows as *actual different users*, not a persona dropdown
 - server-side authorization (the observer's mutation is a real 403 rendered as a problem banner)

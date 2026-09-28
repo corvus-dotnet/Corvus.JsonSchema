@@ -536,6 +536,11 @@ should be stated in the catalog rather than discovered during phase B.
 **Decide before implementing.** An agent should not invent policy for any of these.
 
 ### GAP-1 · `TB-3` · Browser security headers and a CSP strategy
+
+> **Decided and implemented.** [ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md): the library
+> sends the headers on every response and refuses to map a secured posture without them; the pages carry no inline
+> script, the kit styles itself with constructable stylesheets, and the policy is `script-src 'self'` and
+> `style-src 'self'` with no `'unsafe-inline'`. The finding below is left as it was measured.
 No ADR covers HTTP security headers, and no header middleware exists, so there is no CSP,
 `frame-ancestors`, `X-Frame-Options`, `nosniff`, `Referrer-Policy` or HSTS. The console and designer
 are framable, so a framed click on Revoke or Approve is a governance mutation audited with the victim
@@ -553,6 +558,12 @@ component added.
 > inline script and style in the kit.
 
 ### GAP-2 · `TB-3` · Session hardening and revocable logout
+
+> **Partly built.** The demo host's session cookie is `Secure` under a `__Host-` name whatever the scheme, is ended
+> at 30 idle minutes or 8 hours from sign-in, forwarded headers are believed only from trusted proxies, and the
+> login return is honoured only when it is a local path. HSTS is [ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md)'s.
+> Still to build: the server-side ticket store that makes sign-out revoke, and sign-out everywhere. The finding
+> below is left as it was measured.
 ADR 0042 assigns session ownership to the host but specifies no properties. Missing: a `Secure`
 cookie policy, since it defaults to `SameAsRequest` with no `UseForwardedHeaders` and so travels in
 plaintext behind a TLS proxy; HSTS; and a server-side ticket store, without which `SignOutAsync`

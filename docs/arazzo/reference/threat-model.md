@@ -211,9 +211,9 @@ checkable rather than a by-product of what a review happened to look at.
 | Client-only authorization | **Holds**. Every UI gate has a verified server-side twin ([ADR 0047](../adr/0047-web-kit-permission-gating-server-authoritative.md)) | UI gates fail open when the scopes attribute is absent, deliberate but makes every 403 look like a probe | |
 | Clickjacking and UI redress | **Holds**. `frame-ancestors 'none'` and `X-Frame-Options: DENY` on every response, required in the secured postures ([ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md)) | A host that embeds the console names its portal as a framer, and that portal is then trusted with the console's clicks | H17 |
 | CSRF | **Partial**. `SameSite=Lax`, a required-header check on the API prefix, and no CORS anywhere | The header check does not cover `/logout` or the runner API path, both cookie-authenticated | H17 |
-| Session theft and persistence | **Partial**. `HttpOnly`, no token in web storage | Not `Secure` and no forwarded headers, so plaintext behind a TLS proxy. Logout does not revoke server-side | H17 |
+| Session theft and persistence | **Partial**. `HttpOnly`, no token in web storage. In the demo host, `Secure` under a `__Host-` name whatever the scheme, forwarded headers believed only from trusted proxies, and a session ended at 30 idle minutes or 8 hours from sign-in | Logout does not revoke server-side, so a ticket copied before sign-out lives until it expires. The properties are the host's ([ADR 0042](../adr/0042-auth-agnostic-host-owns-session.md)), so another host must set its own | H17 |
 | Injection amplification once script runs | **Holds**. A CSP with `script-src 'self'` and `style-src 'self'`, no inline script or style, and `connect-src`, `img-src` and `form-action` held to the host's own origin ([ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md)). The kit styles itself with constructable stylesheets, and a static test refuses inline script and style in its source | Injected markup still renders, so the kit's escaping remains the first control (H27). A host page served beside the kit is held to the same policy only if it keeps to it. The vendored CodeMirror bundle is trusted to style only through the CSSOM (H36) | H17 |
-| Phishing via the authentication flow | **Absent**. No local-URL check on the login return | Lands the user on any host straight after a genuine IdP sign-in | H28 |
+| Phishing via the authentication flow | **Holds** in the demo host. The login return is honoured only when it is a local path, and anything else returns to `/` | The check is the host's; another host that offers a return address must make its own | H28 |
 | Credential disclosure to the browser | **Holds**. [ADR 0045](../adr/0045-debug-runs-never-credentials-in-browser.md) verified, the trace record carries no request headers | Debug traces still carry real bodies below the payload tier | H23 |
 
 ### TB-4 Control plane to durable store
@@ -551,7 +551,7 @@ fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 | H14 | High | GAP | No step budget, run deadline or production recursion cap, so the platform can be aimed at a third party | TB-7 | **Closed** |
 | H15 | High | GAP | No egress control on three backends, and the default isolation model has no boundary at all | TB-6, TB-7 | Open |
 | H16 | High | GAP | Build container is root, unconfined and network-live, with an unpinned restore | TB-8 | Open |
-| H17 | High | GAP | No security headers, session cookie not `Secure`, logout does not revoke. Headers and a strict CSP are [ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md); the cookie and revocation remain | TB-3 | Open |
+| H17 | High | GAP | No security headers, session cookie not `Secure`, logout does not revoke. Headers and a strict CSP are [ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md); the demo host's cookie is `Secure`, `__Host-` and bounded in lifetime; revocation remains | TB-3 | Open |
 | H18 | High | DIV | Run id key and grammar do not match ADR 0065 §9, and the idempotent id is unkeyed | TB-2, TB-4 | **Closed** |
 | H19 | High | DIV | Anonymous Azure invoke, and SSRF-with-reflection behind a read scope | TB-6, TB-2 | Open |
 | H40 | High | DIV | Sequence validation compares against a number the client wrote | TB-5 | **Closed** |
@@ -565,7 +565,7 @@ fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 | H25 | Med | GAP | Channel-address wildcard injection subscribes across every tenant on a shared broker | TB-7 | Open |
 | H26 | Med | GAP | Dynamic criteria built from response data, so a source rewrites the assertion checking it | TB-7 | Open |
 | H27 | Med | DIV | `javascript:` URI XSS in the catalog owner link, `escapeHtml` does not validate schemes | TB-3 | Open |
-| H28 | Med | GAP | Open redirect on the login return | TB-3 | Open |
+| H28 | Med | GAP | Open redirect on the login return. The demo host honours only a local return path | TB-3 | **Closed** |
 | H29 | Med | GAP | `allowReserved` path parameters skip encoding, so `../` escapes a gateway prefix | TB-7 | Open |
 | H30 | Med | DIV | Lambda redeploy never refreshes function environment | TB-8 | Open |
 | H31 | Med | DIV | Deploy resource names are non-injective and update has no ownership check | TB-8 | Open |
