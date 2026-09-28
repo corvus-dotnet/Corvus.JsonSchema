@@ -1045,6 +1045,61 @@
         }
       }
     },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/readiness": {
+      "get": {
+        "operationId": "listVersionReadiness",
+        "security": [
+          { "oauth2": ["availability:read"] },
+          { "openIdConnect": ["availability:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["availability"],
+        "summary": "List a workflow version's readiness in each environment",
+        "description": "Returns a page of readiness entries for this version, one for each deployment environment the caller can see, ordered by environment (ADR 0074). A version is ready in an environment when every source it references has a credential there that its runs may use, judged as a run is (the credential's usage restriction against the version's identity), and, where the environment requires evidence, the version's publish suite is green. It is the rule that promotion is gated on. A usable credential is reported, and who it is restricted to, but never the credential itself. Visible to a caller who can read the workflow version.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The readiness entries.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReadinessList" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/readiness": {
+      "post": {
+        "operationId": "evaluateDraftReadiness",
+        "security": [
+          { "oauth2": ["catalog:write"] },
+          { "openIdConnect": ["catalog:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["availability"],
+        "summary": "Evaluate the readiness a version the caller would publish would have",
+        "description": "Returns a page of readiness entries, one for each deployment environment the caller can see, for a version of this workflow the caller has not yet published: its sources are named in the body, and its identity is the one publishing would give it (the caller's identity and the workflow's). The rule is the one listVersionReadiness applies (ADR 0074). A draft has no publish evidence, so evidenceGreen is absent and an environment that requires evidence is not ready.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DraftReadinessRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The readiness entries.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReadinessList" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
     "/catalog/{baseWorkflowId}/versions/{versionNumber}/availability": {
       "get": {
         "operationId": "listVersionAvailability",
@@ -9172,6 +9227,59 @@
           "etag": { "type": "string", "description": "The optimistic-concurrency token." }
         },
         "required": ["baseWorkflowId", "versionNumber", "environment", "createdBy", "createdAt", "etag"]
+      },
+      "ReadinessList": {
+        "type": "object",
+        "description": "A page of readiness entries (ADR 0074), one for each deployment environment the caller can see.",
+        "properties": {
+          "readiness": { "type": "array", "items": { "$ref": "#/components/schemas/EnvironmentReadiness" } },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
+        },
+        "required": ["readiness"]
+      },
+      "EnvironmentReadiness": {
+        "type": "object",
+        "description": "Whether a workflow version is ready in one deployment environment (ADR 0074), and why not when it is not.",
+        "properties": {
+          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
+          "ready": { "type": "boolean", "description": "Whether the version may be promoted into the environment: its credentials are ready and, where the environment requires evidence, its publish suite is green." },
+          "credentialsReady": { "type": "boolean", "description": "Whether every source the version references has a credential in the environment that its runs may use." },
+          "evidenceRequired": { "type": "boolean", "description": "Whether the environment requires green publish evidence to promote a version into it." },
+          "evidenceGreen": { "type": "boolean", "description": "Whether the version's publish suite ran at least one scenario and none failed. Absent for a version not yet published." },
+          "sources": { "type": "array", "description": "Each source the version references, in the version's order.", "items": { "$ref": "#/components/schemas/SourceReadiness" } }
+        },
+        "required": ["environment", "ready", "credentialsReady", "evidenceRequired", "sources"]
+      },
+      "SourceReadiness": {
+        "type": "object",
+        "description": "Whether one source a version references has a credential in the environment that the version's runs may use (ADR 0074).",
+        "properties": {
+          "name": { "type": "string", "description": "The source's name in the workflow document." },
+          "usable": { "type": "boolean", "description": "Whether a credential the version's runs may use exists for the source in the environment." },
+          "restriction": { "$ref": "#/components/schemas/CredentialRestriction" }
+        },
+        "required": ["name", "usable"]
+      },
+      "CredentialRestriction": {
+        "type": "object",
+        "description": "Who a usable credential is restricted to, for display: present when the credential the version's runs may use is usage-restricted, absent when it is shared. It names the grantee and never describes the credential or its identity tags.",
+        "properties": {
+          "kind": { "$ref": "#/components/schemas/GranteeKind" },
+          "label": { "type": "string", "description": "The grantee's display label, when the credential recorded one." }
+        }
+      },
+      "DraftReadinessRequest": {
+        "type": "object",
+        "description": "The sources a version the caller would publish references (ADR 0074).",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "description": "The names of the sources the workflow document declares.",
+            "maxItems": 256,
+            "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+          }
+        },
+        "required": ["sources"]
       },
       "AvailabilityList": {
         "type": "object",

@@ -272,6 +272,29 @@ test('Cancel closes a new grant after a rule name was typed in full: committing 
   assertClean(errors);
 });
 
+test('picking a rule from the dropdown after typing its name in full, then typing the next, keeps both', async ({ page }) => {
+  const errors = await watchErrors(page);
+  await openApp(page);
+  await selectSecurity(page, 'Grants');
+
+  const grants = page.locator('arazzo-grants-panel');
+  await expect(grants.locator('tbody tr.grow-row')).toHaveCount(7);
+  await grants.locator('button.new').click();
+  await grants.locator('select.verb-mode[data-verb="read"]').selectOption('scopes');
+  const scopeInput = grants.locator('.scope-input[data-verb="read"]');
+
+  // Typing the name in full and then clicking its result both commit it: the blur and the pick must not fight, and
+  // the input must be ready for the next name straight away (nothing re-renders it under the next keystrokes).
+  await scopeInput.click();
+  await scopeInput.fill('reach-payments');
+  await grants.locator('.results[data-verb="read"] li[data-name="reach-payments"]').click();
+  await scopeInput.fill('reach-onboarding');
+  await grants.locator('.results[data-verb="read"] li[data-name="reach-onboarding"]').click();
+  await expect(grants.locator('.verb-row .chip', { hasText: 'reach-payments' })).toBeVisible();
+  await expect(grants.locator('.verb-row .chip', { hasText: 'reach-onboarding' })).toBeVisible();
+  assertClean(errors);
+});
+
 test('Create keeps a rule name typed in full: the name committed on blur is in the grant the click creates', async ({ page }) => {
   const errors = await watchErrors(page);
   await openApp(page);

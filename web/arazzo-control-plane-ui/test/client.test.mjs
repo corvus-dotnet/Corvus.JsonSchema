@@ -779,6 +779,33 @@ test('makeVersionAvailable is readiness-gated (409) and 404s for an unknown envi
   await assert.rejects(() => c.makeVersionAvailable('adopt-pet', 1, 'no-such-env'), (e) => e.status === 404);
 });
 
+test('listVersionReadiness judges each environment as a run of the version would be, naming a restriction (ADR 0074)', async () => {
+  const c = makeClient();
+  const { readiness } = await c.listVersionReadiness('nightly-reconcile', 1);
+  const byEnv = Object.fromEntries(readiness.map((r) => [r.environment, r]));
+  // production's billing credential is restricted to the nightly-reconcile workflow: usable by its runs, and says so.
+  const billing = byEnv.production.sources.find((src) => src.name === 'billing');
+  assert.equal(billing.usable, true);
+  assert.deepEqual(billing.restriction, { kind: 'workflow', label: 'nightly-reconcile' });
+  // staging's is restricted to a person who did not publish the version: its runs could not use it.
+  const stagingBilling = byEnv.staging.sources.find((src) => src.name === 'billing');
+  assert.equal(stagingBilling.usable, false);
+  assert.equal(byEnv.staging.credentialsReady, false);
+  assert.equal(byEnv.staging.ready, false);
+  assert.equal(typeof byEnv.production.evidenceGreen, 'boolean', 'a catalogued version reports its evidence');
+  await assert.rejects(() => c.listVersionReadiness('nightly-reconcile', 99), (e) => e.status === 404);
+});
+
+test('evaluateDraftReadiness judges a version the caller would publish, without evidence (ADR 0074)', async () => {
+  const c = makeClient();
+  const { readiness } = await c.evaluateDraftReadiness('brand-new', ['petstore', 'petstore']);
+  const production = readiness.find((r) => r.environment === 'production');
+  assert.deepEqual(production.sources, [{ name: 'petstore', usable: true }], 'each source once; an unrestricted credential names no restriction');
+  assert.equal(production.credentialsReady, true);
+  assert.equal('evidenceGreen' in production, false, 'a draft has no evidence');
+  await assert.rejects(() => c.evaluateDraftReadiness('brand-new-v2', ['petstore']), (e) => e.status === 400);
+});
+
 test('makeVersionAvailable is evidence-gated where the environment requires it (§4.6)', async () => {
   const c = makeClient();
   await c.createEnvironment({ name: 'prod-eu', requireEvidence: true });

@@ -239,6 +239,15 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
 
         // Approval is blocked until the source is ready (409), then succeeds (200) once a credential exists.
         (await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{id}/approve", "acme")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // A credential the version's runs cannot use does not make it ready (ADR 0074): globex's is restricted to globex.
+        (await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"payments","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://payments#globex"}]}""",
+            "globex")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{id}/approve", "acme")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
         (await host.SendJsonAsync(
             HttpMethod.Post,
             "/credentials",

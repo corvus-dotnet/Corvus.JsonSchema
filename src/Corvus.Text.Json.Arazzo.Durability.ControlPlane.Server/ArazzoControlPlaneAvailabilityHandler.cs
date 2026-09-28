@@ -129,6 +129,194 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
     }
 
     /// <inheritdoc/>
+    public async ValueTask<ListVersionReadinessResult> HandleListVersionReadinessAsync(ListVersionReadinessParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+        AccessContext context = this.access.Current();
+
+        // Visibility: a version's readiness is readable by anyone who can read the version itself.
+        using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, context, cancellationToken).ConfigureAwait(false);
+        if (version is null)
+        {
+            return ListVersionReadinessResult.NotFound(VersionNotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        // Judged as a run of the version is: its sources, against the security tags its runs inherit (ADR 0074). The
+        // evidence is the version's, read once for every environment on the page.
+        List<string> sources = SourceNames(version.RootElement);
+        bool evidenceGreen = await VersionReadiness.HasGreenEvidenceAsync(this.catalog, context, baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
+        using EnvironmentPage page = await this.environments.ListAsync(context, limit, JsonString.From(parameters.PageToken), cancellationToken).ConfigureAwait(false);
+        List<VersionReadiness.Evaluation> evaluations = await this.EvaluatePageAsync(page, sources, version.RootElement.SecurityTagsValue, evidenceGreen, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Built inline: ReadinessList.Build scopes its result to the `in` context, so it cannot come from a helper.
+            IReadOnlyList<VersionReadiness.Evaluation> entries = evaluations;
+            ReadOnlyMemory<byte> nextToken = page.NextPageToken;
+            Models.ReadinessList.Source<IReadOnlyList<VersionReadiness.Evaluation>> body = Models.ReadinessList.Build(
+                in entries,
+                readiness: Models.ReadinessList.EnvironmentReadinessArray.Build(in entries, BuildReadiness),
+                nextPageToken: nextToken.IsEmpty ? default : (Models.JsonString.Source)nextToken.Span);
+            return ListVersionReadinessResult.Ok(body, workspace);
+        }
+        finally
+        {
+            DisposeAll(evaluations);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<EvaluateDraftReadinessResult> HandleEvaluateDraftReadinessAsync(EvaluateDraftReadinessParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        if (CatalogPackage.IsVersioned(baseWorkflowId))
+        {
+            return EvaluateDraftReadinessResult.BadRequest(
+                Problem("workflow-id-versioned", "Base workflow id expected", 400, $"'{baseWorkflowId}' names a version; readiness is evaluated for the base workflow id a version would be published under."),
+                workspace);
+        }
+
+        // The draft's sources, each once, in the order given.
+        var sources = new List<string>();
+        foreach (Models.DraftReadinessRequest.SourcesEntityArray.SourcesEntity source in parameters.Body.Sources.EnumerateArray())
+        {
+            string name = (string)source;
+            if (!sources.Contains(name))
+            {
+                sources.Add(name);
+            }
+        }
+
+        // The identity publishing would give the version: the caller's, and the workflow's (ADR 0074). A draft has no
+        // evidence yet, so an environment that requires it is not ready.
+        SecurityTagSet runTags = WorkflowIdentity.VersionTags(this.CallerIdentity(), default, baseWorkflowId);
+        int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
+        using EnvironmentPage page = await this.environments.ListAsync(this.access.Current(), limit, JsonString.From(parameters.PageToken), cancellationToken).ConfigureAwait(false);
+        List<VersionReadiness.Evaluation> evaluations = await this.EvaluatePageAsync(page, sources, runTags, evidenceGreen: null, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            IReadOnlyList<VersionReadiness.Evaluation> entries = evaluations;
+            ReadOnlyMemory<byte> nextToken = page.NextPageToken;
+            Models.ReadinessList.Source<IReadOnlyList<VersionReadiness.Evaluation>> body = Models.ReadinessList.Build(
+                in entries,
+                readiness: Models.ReadinessList.EnvironmentReadinessArray.Build(in entries, BuildReadiness),
+                nextPageToken: nextToken.IsEmpty ? default : (Models.JsonString.Source)nextToken.Span);
+            return EvaluateDraftReadinessResult.Ok(body, workspace);
+        }
+        finally
+        {
+            DisposeAll(evaluations);
+        }
+    }
+
+    // Evaluates readiness in each environment on the page. On a failure, what was evaluated is released.
+    private async ValueTask<List<VersionReadiness.Evaluation>> EvaluatePageAsync(EnvironmentPage page, IReadOnlyList<string> sources, SecurityTagSet runTags, bool? evidenceGreen, CancellationToken cancellationToken)
+    {
+        IReadOnlyList<Environment> environments = page.Environments;
+        var evaluations = new List<VersionReadiness.Evaluation>(environments.Count);
+        try
+        {
+            foreach (Environment environment in environments)
+            {
+                evaluations.Add(await VersionReadiness.EvaluateAsync(this.credentials, sources, runTags, environment, evidenceGreen, cancellationToken).ConfigureAwait(false));
+            }
+
+            return evaluations;
+        }
+        catch
+        {
+            DisposeAll(evaluations);
+            throw;
+        }
+    }
+
+    private static void DisposeAll(List<VersionReadiness.Evaluation> evaluations)
+    {
+        foreach (VersionReadiness.Evaluation evaluation in evaluations)
+        {
+            evaluation.Dispose();
+        }
+    }
+
+    private static List<string> SourceNames(CatalogVersion version)
+    {
+        var names = new List<string>();
+        foreach (CatalogSourceRef source in version.SourcesValue.ToList())
+        {
+            names.Add(source.Name);
+        }
+
+        return names;
+    }
+
+    private static void BuildReadiness(in IReadOnlyList<VersionReadiness.Evaluation> evaluations, ref Models.ReadinessList.EnvironmentReadinessArray.Builder array)
+    {
+        foreach (VersionReadiness.Evaluation evaluation in evaluations)
+        {
+            array.AddItem(Models.EnvironmentReadiness.Build(in evaluation, BuildEnvironmentReadiness));
+        }
+    }
+
+    private static void BuildEnvironmentReadiness(in VersionReadiness.Evaluation evaluation, ref Models.EnvironmentReadiness.Builder readiness)
+    {
+        readiness.Create(
+            in evaluation,
+            credentialsReady: evaluation.CredentialsReady,
+            environment: evaluation.Environment,
+            evidenceRequired: evaluation.EvidenceRequired,
+            ready: evaluation.Ready,
+            sources: Models.EnvironmentReadiness.SourceReadinessArray.Build(in evaluation, BuildSources),
+            evidenceGreen: evaluation.EvidenceGreen is bool green ? green : default(Models.JsonBoolean.Source));
+    }
+
+    // Each source: usable or not, and for a usable credential that is usage-restricted, who it is restricted to, from the
+    // display fields the credential recorded (kind and label as UTF-8 in place). Never the credential or its usage tags.
+    private static void BuildSources(in VersionReadiness.Evaluation evaluation, ref Models.EnvironmentReadiness.SourceReadinessArray.Builder array)
+    {
+        for (int i = 0; i < evaluation.SourceNames.Count; i++)
+        {
+            string name = evaluation.SourceNames[i];
+            ParsedJsonDocument<SourceCredentialBinding>? resolved = evaluation.Resolved(i);
+            if (resolved is null)
+            {
+                array.AddItem(Models.SourceReadiness.Build(name: name, usable: false));
+                continue;
+            }
+
+            SourceCredentialBinding binding = resolved.RootElement;
+            if (!binding.IsUsageScoped)
+            {
+                array.AddItem(Models.SourceReadiness.Build(name: name, usable: true));
+                continue;
+            }
+
+            bool hasKind = binding.UsageKind.IsNotUndefined();
+            bool hasLabel = binding.UsageLabel.IsNotUndefined();
+            if (hasKind && hasLabel)
+            {
+                using UnescapedUtf8JsonString kind = binding.UsageKind.GetUtf8String();
+                using UnescapedUtf8JsonString label = binding.UsageLabel.GetUtf8String();
+                array.AddItem(Models.SourceReadiness.Build(name: name, usable: true, restriction: Models.CredentialRestriction.Build(kind: (Models.GranteeKind.Source)kind.Span, label: (Models.JsonString.Source)label.Span)));
+            }
+            else if (hasKind)
+            {
+                using UnescapedUtf8JsonString kind = binding.UsageKind.GetUtf8String();
+                array.AddItem(Models.SourceReadiness.Build(name: name, usable: true, restriction: Models.CredentialRestriction.Build(kind: (Models.GranteeKind.Source)kind.Span)));
+            }
+            else if (hasLabel)
+            {
+                using UnescapedUtf8JsonString label = binding.UsageLabel.GetUtf8String();
+                array.AddItem(Models.SourceReadiness.Build(name: name, usable: true, restriction: Models.CredentialRestriction.Build(label: (Models.JsonString.Source)label.Span)));
+            }
+            else
+            {
+                array.AddItem(Models.SourceReadiness.Build(name: name, usable: true, restriction: Models.CredentialRestriction.Build()));
+            }
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ListEnvironmentAvailabilityResult> HandleListEnvironmentAvailabilityAsync(ListEnvironmentAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string environment = (string)parameters.Name;
@@ -236,7 +424,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
 
             // Readiness (§7.7): the version may be made available only where every source it references resolves a
             // credential in the target environment. A missing credential for even one source blocks promotion (409).
-            List<string> missing = await this.MissingSourcesAsync(version.RootElement, environment, cancellationToken).ConfigureAwait(false);
+            List<string> missing = await VersionReadiness.MissingSourcesAsync(this.credentials, version.RootElement, environment, cancellationToken).ConfigureAwait(false);
             if (missing.Count > 0)
             {
                 return MakeVersionAvailableResult.Conflict(NotReadyProblem(baseWorkflowId, versionNumber, environment, missing), workspace);
@@ -262,7 +450,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         // ¬requireEvidence). An environment that requires evidence admits only versions whose server-attested
         // suite passed at publish; no evidence, or an empty suite, refuses (409). Default-off — environments
         // without the flag keep the §7.7 behaviour exactly.
-        if (RequiresEvidence(target) && !await this.HasGreenEvidenceAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        if (VersionReadiness.RequiresEvidence(target) && !await VersionReadiness.HasGreenEvidenceAsync(this.catalog, this.access.Current(), baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
         {
             return MakeVersionAvailableResult.Conflict(EvidenceRequiredProblem(baseWorkflowId, versionNumber, environment), workspace);
         }
@@ -348,42 +536,6 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
             : GovernanceGate.Forbidden;
     }
 
-    // The sources the version references that have no usable credential in the target environment (readiness, §7.7).
-    private async ValueTask<List<string>> MissingSourcesAsync(CatalogVersion version, string environment, CancellationToken cancellationToken)
-    {
-        var missing = new List<string>();
-        foreach (CatalogSourceRef source in version.SourcesValue.ToList())
-        {
-            using ParsedJsonDocument<SourceCredentialBinding>? binding = await this.credentials.GetAsync(source.Name, environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
-            if (binding is null)
-            {
-                missing.Add(source.Name);
-            }
-        }
-
-        return missing;
-    }
-
-    // Whether the target environment requires green publish evidence for promotion (workflow-designer design §4.6).
-    private static bool RequiresEvidence(in Environment environment)
-        => environment.RequireEvidence.IsNotUndefined() && (bool)environment.RequireEvidence;
-
-    // Whether the version's package carries publish evidence whose attested suite is green (it ran at least one
-    // scenario and none failed) — the evidence half of the §4.6 readiness formula.
-    private async ValueTask<bool> HasGreenEvidenceAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
-    {
-        ReadOnlyMemory<byte>? package = await this.catalog.GetPackageAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        if (package is not { } bytes || !WorkflowPackage.TryReadEntry(bytes, "metadata/evidence.json"u8, out ReadOnlyMemory<byte> entry))
-        {
-            return false;
-        }
-
-        using var evidence = ParsedJsonDocument<Models.PublishEvidence>.Parse(entry);
-        Models.EvidenceSuite suite = evidence.RootElement.Suite;
-        return suite.Total.IsNotUndefined() && (int)suite.Total > 0
-            && suite.Failed.IsNotUndefined() && (int)suite.Failed == 0;
-    }
-
     private SecurityTagSet CallerIdentity() => SecurityTagSet.FromTags(this.access.InternalTags());
 
     private static Models.ProblemDetails.Source EnvironmentNotFoundProblem(string environment)
@@ -402,7 +554,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         => Problem("evidence-required", "Evidence required", 409, $"Version {versionNumber} of workflow '{baseWorkflowId}' cannot be made available in '{environment}': the environment requires publish evidence and the version's attested scenario suite is not green (or it carries no evidence).");
 
     private static Models.ProblemDetails.Source NotReadyProblem(string baseWorkflowId, int versionNumber, string environment, IReadOnlyList<string> missing)
-        => Problem("environment-not-ready", "Environment not ready", 409, $"Version {versionNumber} of workflow '{baseWorkflowId}' cannot be made available in '{environment}': no credential for {string.Join(", ", missing)}.");
+        => Problem("environment-not-ready", "Environment not ready", 409, $"Version {versionNumber} of workflow '{baseWorkflowId}' cannot be made available in '{environment}': no credential its runs may use for {string.Join(", ", missing)}.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
         => Models.ProblemDetails.Build(

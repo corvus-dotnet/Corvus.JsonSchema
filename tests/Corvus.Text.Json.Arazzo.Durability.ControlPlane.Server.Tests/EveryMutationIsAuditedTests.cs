@@ -33,6 +33,7 @@ public sealed partial class EveryMutationIsAuditedTests
         ["validateCatalogValue"] = "Validates a value against a catalogued version's schema and stores nothing.",
         ["simulateWorkingCopy"] = "Runs the simulator over a working copy and stores nothing.",
         ["simulateCatalogVersion"] = "Runs the simulator over a catalogued version and stores nothing.",
+        ["evaluateDraftReadiness"] = "Judges the readiness a version the caller would publish would have (ADR 0074) and stores nothing; it discloses only whether credentials that version could use exist, and who they are restricted to.",
         ["runScenario"] = "Runs one scenario in the simulator and stores nothing.",
         ["runAllScenarios"] = "Runs a working copy's scenarios in the simulator and stores nothing.",
     };

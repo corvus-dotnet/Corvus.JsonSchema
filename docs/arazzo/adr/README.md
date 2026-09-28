@@ -126,6 +126,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0048](0048-source-credentials-are-references.md) | Source credentials are references, resolved runner-side | Accepted |
 | [0051](0051-channel-sources-bind-per-environment.md) | Channel sources bind per environment, like HTTP sources | Accepted |
 | [0052](0052-source-fetch-authenticates-as-the-user.md) | Acquiring a source document is matched to how the document is protected | Accepted |
+| [0074](0074-readiness-is-the-versions-usability-judged-by-the-server.md) | Readiness is the version's usability, judged once by the server | Accepted |
 
 ### Web kit and designer
 

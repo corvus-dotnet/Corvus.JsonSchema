@@ -26,6 +26,7 @@ import { ArazzoElement, adoptStyles, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, 
 import { packWorkflowPackage } from '../workflow-package.js';
 import './credential-dialog.js';
 import './grantee-picker.js';
+import { draftReadiness } from '../readiness.js';
 import './tag-editor.js';
 
 const STEP_FLOW = {
@@ -33,18 +34,6 @@ const STEP_FLOW = {
   upload: ['details', 'admins', 'review'],
 };
 const STEP_TITLES = { details: 'Details', sources: 'Sources & credentials', admins: 'Administrators', review: 'Review' };
-
-/**
- * Whether a credential binding is usable by a workflow's runs — a client-side approximation of the backend's §13
- * `IsUsableBy` gate. An unscoped binding (no usage grant) is shared and usable by any run; a usage-scoped binding is
- * usable here only when its usage names exactly this workflow (the tag a run is known to carry). The server does the
- * full label-superset check over the run's resolved identity.
- */
-function usableByWorkflow(binding, baseWorkflowId) {
-  const identity = binding?.usageGrantee?.identity;
-  if (!identity || identity.length === 0) return true;
-  return identity.every((t) => t.dimension === 'workflow' && t.value === baseWorkflowId);
-}
 
 class ArazzoCatalogAddDialog extends ArazzoElement {
   connectedCallback() {
@@ -63,7 +52,8 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     this._sourceState = new Map();     // name → { name, type, registered, uploadedDoc, uploadedText }
     this._registryByName = new Map();
     this._environments = [];           // governed environments (for the readiness view)
-    this._credentialedEnvBySource = new Map(); // sourceName → Set<environment that has a credential>
+    this._credentialedEnvBySource = new Map(); // sourceName → Set<environment where it has a credential the runs may use>
+    this._draftReadiness = null;               // environment → the server's readiness for this draft (ADR 0074), or null
     this._sourceDocs = {};             // sourceName → its document (registry- or upload-sourced; for credential derivation)
     this._stagedAdmins = [];           // resolved grantees (person/team/role)
     this._owner = { name: '', email: '', team: '', url: '' };
@@ -204,37 +194,52 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     return this._workflowDoc?.workflows?.[0]?.workflowId || '';
   }
 
-  /** Load the governed environments + which (source, environment) has a credential USABLE by this workflow. */
+  /** Load the governed environments and the server's readiness for this draft (ADR 0074). */
   async loadReadiness() {
     this._environments = [];
-    this._credentialedEnvBySource = new Map();
     if (!this.client) return;
     try {
       for await (const page of this.client.listEnvironmentsPaged()) this._environments.push(...page.environments);
     } catch { /* no environments:read */ }
-    try {
-      for await (const page of this.client.listCredentialsPaged({ limit: 200 })) {
-        for (const b of page.credentials) {
-          // A binding only counts toward readiness if this workflow's runs could actually USE it (§13).
-          if (!usableByWorkflow(b, this.workflowId)) continue;
-          if (!this._credentialedEnvBySource.has(b.sourceName)) this._credentialedEnvBySource.set(b.sourceName, new Set());
-          this._credentialedEnvBySource.get(b.sourceName).add(b.environment);
-        }
-      }
-    } catch { /* no credentials:read */ }
+    await this.refreshReadiness();
   }
 
-  /** The environments the source has a credential in. */
+  /**
+   * Ask the server how a version of this workflow, published by the caller with these sources, would stand in each
+   * environment (ADR 0074): judged with the identity publishing would give it, as its runs would be. Unreadable (no
+   * catalog:write, say) leaves every source uncredentialed, so the wizard cannot claim a readiness it has not seen.
+   */
+  async refreshReadiness() {
+    this._draftReadiness = null;
+    this._credentialedEnvBySource = new Map();
+    const names = this._declaredSources.map((d) => d.name);
+    if (!this.client || !this.workflowId || !names.length) return;
+    try {
+      this._draftReadiness = await draftReadiness(this.client, this.workflowId, names);
+    } catch {
+      return;
+    }
+    for (const entry of this._draftReadiness.values()) {
+      for (const source of entry.sources) {
+        if (!source.usable) continue;
+        if (!this._credentialedEnvBySource.has(source.name)) this._credentialedEnvBySource.set(source.name, new Set());
+        this._credentialedEnvBySource.get(source.name).add(entry.environment);
+      }
+    }
+  }
+
+  /** The environments the source has a credential in that this workflow's runs may use. */
   credentialedEnvironments(sourceName) {
     return [...(this._credentialedEnvBySource.get(sourceName) ?? new Set())].sort();
   }
 
-  /** The environments where EVERY declared source has a credential — the workflow is "ready" (runnable) there (§7.7). */
+  /** The environments where EVERY declared source has a credential its runs may use: the workflow would be runnable
+   *  there (§7.7). Evidence comes with publishing, so it is not part of this gate. */
   readyEnvironments() {
-    const needed = this._declaredSources.map((d) => d.name);
     const envNames = this._environments.map((e) => e.name);
-    if (!needed.length) return envNames; // a sourceless workflow is ready everywhere
-    return envNames.filter((env) => needed.every((n) => this._credentialedEnvBySource.get(n)?.has(env)));
+    if (!this._declaredSources.length) return envNames; // a sourceless workflow is ready everywhere
+    if (!this._draftReadiness) return [];
+    return [...this._draftReadiness.values()].filter((entry) => entry.credentialsReady).map((entry) => entry.environment).sort();
   }
 
   /** Parse + stage an uploaded document for a new source. */
@@ -375,12 +380,9 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     if (!dlg) {
       dlg = document.createElement('arazzo-credential-dialog');
       this.shadowRoot.appendChild(dlg);
-      dlg.addEventListener('credential-saved', (e) => {
-        const b = e.detail?.binding;
-        if (b?.sourceName && b?.environment && usableByWorkflow(b, this.workflowId)) {
-          if (!this._credentialedEnvBySource.has(b.sourceName)) this._credentialedEnvBySource.set(b.sourceName, new Set());
-          this._credentialedEnvBySource.get(b.sourceName).add(b.environment);
-        }
+      dlg.addEventListener('credential-saved', async () => {
+        // Whether the new credential counts is the server's to say (a restricted one may not be one these runs may use).
+        await this.refreshReadiness();
         this.renderStep(); // refresh the source's credential chips + the readiness banner
       });
       dlg.addEventListener('error', (e) => e.stopPropagation()); // the credential dialog surfaces its own banner
@@ -558,10 +560,10 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     const ready = this.readyEnvironments();
     const readiness = !known ? ''
       : ready.length
-        ? `<div class="readiness ok">✓ This workflow will be ready to run in ${ready.map((e) => `<span class="env-chip">${escapeHtml(e)}</span>`).join(' ')} — every source has a credential there.</div>`
+        ? `<div class="readiness ok">✓ This workflow will be ready to run in ${ready.map((e) => `<span class="env-chip">${escapeHtml(e)}</span>`).join(' ')} — every source has a credential there its runs may use.</div>`
         : `<div class="readiness warn">⚠ Not ready in any environment yet. Give <strong>every</strong> source a credential in the <strong>same</strong> environment so this workflow can run there — <strong>required</strong> before you can add it.</div>`;
     return `
-      <div class="hint">Each source is registered once and reused — a source already in the registry is resolved automatically; a new one needs its document. Set up each source's credential per environment: a workflow is ready in an environment when every source it references has a credential there.</div>
+      <div class="hint">Each source is registered once and reused — a source already in the registry is resolved automatically; a new one needs its document. Set up each source's credential per environment: a workflow is ready in an environment when every source it references has a credential there that its runs may use.</div>
       ${readiness}
       <div class="sources">${this._declaredSources.map((decl) => {
         const st = this._sourceState.get(decl.name);

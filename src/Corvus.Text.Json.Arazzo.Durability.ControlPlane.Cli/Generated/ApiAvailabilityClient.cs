@@ -31,6 +31,125 @@ public sealed class ApiAvailabilityClient : IApiAvailabilityClient
     }
 
     /// <summary>
+    /// List a workflow version's readiness in each environment
+    /// </summary>
+    /// <remarks>
+    /// Returns a page of readiness entries for this version, one for each deployment environment the caller can see, ordered by environment (ADR 0074). A version is ready in an environment when every source it references has a credential there that its runs may use, judged as a run is (the credential's usage restriction against the version's identity), and, where the environment requires evidence, the version's publish suite is green. It is the rule that promotion is gated on. A usable credential is reported, and who it is restricted to, but never the credential itself. Visible to a caller who can read the workflow version.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="limit">The limit parameter.</param>
+    /// <param name="pageToken">The pageToken parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    public ValueTask<ListVersionReadinessResponse> ListVersionReadinessAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.CreateBuilder(workspace, versionNumber, 30).RootElement;
+        ListVersionReadinessRequest request = new(BaseWorkflowIdValue, VersionNumberValue)
+        {
+            Limit = limit.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.CreateBuilder(workspace, limit, 30).RootElement,
+            PageToken = pageToken.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, pageToken, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<ListVersionReadinessRequest, ListVersionReadinessResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Evaluate the readiness a version the caller would publish would have
+    /// </summary>
+    /// <remarks>
+    /// Returns a page of readiness entries, one for each deployment environment the caller can see, for a version of this workflow the caller has not yet published: its sources are named in the body, and its identity is the one publishing would give it (the caller's identity and the workflow's). The rule is the one listVersionReadiness applies (ADR 0074). A draft has no publish evidence, so evidenceGreen is absent and an environment that requires evidence is not ready.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="limit">The limit parameter.</param>
+    /// <param name="pageToken">The pageToken parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    public ValueTask<EvaluateDraftReadinessResponse> EvaluateDraftReadinessAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DraftReadinessRequest.Source body, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DraftReadinessRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DraftReadinessRequest.CreateBuilder(workspace, body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        EvaluateDraftReadinessRequest request = new(BaseWorkflowIdValue)
+        {
+            Limit = limit.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.CreateBuilder(workspace, limit, 30).RootElement,
+            PageToken = pageToken.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, pageToken, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<EvaluateDraftReadinessRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DraftReadinessRequest, EvaluateDraftReadinessResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Evaluate the readiness a version the caller would publish would have
+    /// </summary>
+    /// <remarks>
+    /// Returns a page of readiness entries, one for each deployment environment the caller can see, for a version of this workflow the caller has not yet published: its sources are named in the body, and its identity is the one publishing would give it (the caller's identity and the workflow's). The rule is the one listVersionReadiness applies (ADR 0074). A draft has no publish evidence, so evidenceGreen is absent and an environment that requires evidence is not ready.
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="limit">The limit parameter.</param>
+    /// <param name="pageToken">The pageToken parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    public ValueTask<EvaluateDraftReadinessResponse> EvaluateDraftReadinessAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DraftReadinessRequest.Source<TContext> body, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DraftReadinessRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DraftReadinessRequest.CreateBuilder(workspace, in body, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        EvaluateDraftReadinessRequest request = new(BaseWorkflowIdValue)
+        {
+            Limit = limit.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.CreateBuilder(workspace, limit, 30).RootElement,
+            PageToken = pageToken.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, pageToken, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<EvaluateDraftReadinessRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.DraftReadinessRequest, EvaluateDraftReadinessResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// List the environments a workflow version is available in
     /// </summary>
     /// <remarks>
@@ -196,6 +315,28 @@ public sealed class ApiAvailabilityClient : IApiAvailabilityClient
         try
         {
             TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, cancellationToken).ConfigureAwait(false);
+            response.Validate(responseValidationMode);
+            return response;
+        }
+        finally
+        {
+            workspace.Dispose();
+        }
+    }
+
+    private async ValueTask<TResponse> SendWithBodyAsyncCore<TRequest, TBody, TResponse>(
+        JsonWorkspace workspace,
+        TRequest request,
+        TBody body,
+        ValidationMode responseValidationMode,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IApiRequest<TRequest>
+        where TBody : struct, IJsonElement<TBody>
+        where TResponse : struct, IApiResponse<TResponse>
+    {
+        try
+        {
+            TResponse response = await this.transport.SendAsync<TRequest, TBody, TResponse>(in request, in body, cancellationToken).ConfigureAwait(false);
             response.Validate(responseValidationMode);
             return response;
         }

@@ -213,7 +213,13 @@ flowchart LR
 ```
 
 A version's **readiness** for an environment reflects whether the sources it references have credentials in that
-environment: a version whose sources are not credentialed there is not ready to run, even if it is catalogued.
+environment that its runs may use: a version whose sources are not credentialed there is not ready to run, even if it
+is catalogued. A credential counts when a run of the version would get it, judged against the version's identity (its
+publisher's and its workflow's), so one restricted to another workflow, or to a group the publisher is not in, does
+not ([ADR 0074](../adr/0074-readiness-is-the-versions-usability-judged-by-the-server.md)). Only the server can judge
+that, so it reports it: `GET .../versions/{v}/readiness` lists each environment the caller can see, whether the version
+is ready there, which sources lack a usable credential, and who a usable credential is restricted to, and
+`POST /catalog/{base}/readiness` judges a version the caller has not yet published.
 An administrator of an environment either makes a ready version available directly, or acts on a promotion
 request from someone who is not an environment administrator. Promotion is gated on `availability:write`,
 authorized by the target environment's administrator set

@@ -51,6 +51,10 @@ not repeated per entry.
   control's pointerdown and its click, so a re-render there would replace the control and lose the click: Cancel
   would not cancel and Create would not create. `afterPress` runs the work once the press's click has run, or at once
   when no press is in progress.
+- **Readiness.** A surface that shows whether a version is ready in an environment asks the server
+  (`listVersionReadiness`, or `evaluateDraftReadiness` for a version not yet published) through `src/readiness.js`,
+  and never approximates it: only the server can judge a credential against the version's identity
+  ([ADR 0074](../adr/0074-readiness-is-the-versions-usability-judged-by-the-server.md)).
 - **Method names.** A component never defines a method named after a DOM method (`remove`, `append`, `before`,
   `after` and the like). It would shadow the element's own for every host: a delete action named `remove()` made
   `element.remove()` open a delete confirmation. `test/element-methods.test.mjs` refuses one.

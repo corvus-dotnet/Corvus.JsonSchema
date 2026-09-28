@@ -235,7 +235,9 @@ class ArazzoGrantsPanel extends ArazzoElement {
 
   /** Add a rule to a verb's reach (from a dropdown click), then re-render the editor with the new chip. */
   addRule(verb, name) {
-    if (!this.recordRule(verb, name)) return;
+    if (!this._form || !name) return;
+    // Recorded already when the name was typed in full: leaving the input to click its result committed it first.
+    this.recordRule(verb, name);
     this.renderDetail();
     // Refocus for further typing WITHOUT re-popping the suggestions: the dropdown overlays whatever
     // sits below the verb row (including the pane's footer), so a completed selection must leave it
@@ -656,6 +658,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
   }
 
   renderDetail() {
+    this._detailRenders = (this._detailRenders ?? 0) + 1;
     if (!this._pane) return; // renderShell has not run yet (an upgrade-time attribute change)
     const f = this._form;
     if (!f) {
@@ -778,8 +781,11 @@ class ArazzoGrantsPanel extends ArazzoElement {
         if (!name || !this._scopes.some((s) => s.name === name) || !this.recordRule(verb, name)) return;
         // Recorded now, so a Create the blur came from builds the grant with it; re-rendered once that press's click
         // has run, so the click is not lost to the re-render (afterPress).
+        // Skipped when the form has rendered since, as picking the result it was typed for does (addRule): a second
+        // render would replace the input under the next name being typed.
         const form = this._form;
-        afterPress(() => { if (this._form === form) this.renderDetail(); });
+        const renders = this._detailRenders;
+        afterPress(() => { if (this._form === form && this._detailRenders === renders) this.renderDetail(); });
       });
     });
     pane.querySelectorAll('.chip-rm').forEach((btn) => btn.addEventListener('click', () => {

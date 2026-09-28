@@ -145,7 +145,9 @@ public sealed class ArazzoExampleSeed : IExampleSeed
                         // X-API-Key); the reference target is the Vault path's #api-key field the provisioner seeds.
                         [new SecretReferenceDefinition("value", $"vault://secret/arazzo/{source}#api-key")],
                         ManagementTags: management,
-                        UsageTags: usage),
+                        UsageTags: usage,
+                        UsageKind: environment == "production" ? "team" : null,
+                        UsageLabel: environment == "production" ? "arazzo-admins" : null),
                     "demo",
                     cancellationToken);
             }

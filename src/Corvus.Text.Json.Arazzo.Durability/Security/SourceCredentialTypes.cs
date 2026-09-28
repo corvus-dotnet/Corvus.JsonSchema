@@ -34,6 +34,10 @@ public readonly record struct CredentialConfigDefinition(string Key, string Valu
 /// rotation refreshes it.</param>
 /// <param name="RotatedAt">When the referenced secret was last rotated, if known (§13.2 lifecycle metadata) — distinct
 /// from the binding's last-updated audit instant. Mutable.</param>
+/// <param name="UsageKind">The grantee kind the usage restriction names (<c>person</c>, <c>team</c>, <c>role</c> or
+/// <c>workflow</c>), for display only: readiness and the credential views name the grantee with it (ADR 0074). Never part
+/// of usage matching; <see langword="null"/> when not recorded.</param>
+/// <param name="UsageLabel">The grantee's display label, for display only; <see langword="null"/> when not recorded.</param>
 public readonly record struct SourceCredentialDefinition(
     string SourceName,
     string Environment,
@@ -44,4 +48,6 @@ public readonly record struct SourceCredentialDefinition(
     SecurityTagSet ManagementTags = default,
     SecurityTagSet UsageTags = default,
     DateTimeOffset? ExpiresAt = null,
-    DateTimeOffset? RotatedAt = null);
+    DateTimeOffset? RotatedAt = null,
+    string? UsageKind = null,
+    string? UsageLabel = null);

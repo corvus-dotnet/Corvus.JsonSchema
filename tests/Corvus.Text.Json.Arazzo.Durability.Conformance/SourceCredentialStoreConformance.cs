@@ -525,6 +525,34 @@ public abstract class SourceCredentialStoreConformance
     }
 
     [TestMethod]
+    public async Task The_grantee_a_usage_restriction_names_is_kept_for_display_and_never_matched()
+    {
+        ISourceCredentialStore store = await this.NewStoreAsync();
+        SourceCredentialDefinition definition = new(
+            "petstore",
+            "production",
+            SourceCredentialKind.ApiKey,
+            [new SecretReferenceDefinition("value", "keyvault://petstore-apikey")],
+            UsageTags: SecurityTagSet.FromTags([new SecurityTag("group", "admins")]),
+            UsageKind: "team",
+            UsageLabel: "Admins");
+        using (await store.AddAsync(definition, "system", default))
+        {
+        }
+
+        // Readiness names who a usable credential is restricted to from these (ADR 0074); matching stays on the tags.
+        SecurityTagSet admins = SecurityTagSet.FromTags([new SecurityTag("group", "admins")]);
+        using (ParsedJsonDocument<SourceCredentialBinding>? resolved = await store.ResolveForUsageAsync("petstore", "production", admins, default))
+        {
+            resolved.ShouldNotBeNull();
+            ((string)resolved.RootElement.UsageKind).ShouldBe("team");
+            ((string)resolved.RootElement.UsageLabel).ShouldBe("Admins");
+        }
+
+        (await store.ResolveForUsageAsync("petstore", "production", SecurityTagSet.FromTags([new SecurityTag("team", "Admins")]), default)).ShouldBeNull();
+    }
+
+    [TestMethod]
     public async Task Source_access_evaluation_is_granted_denied_or_unconfigured()
     {
         ISourceCredentialStore store = await this.NewStoreAsync();

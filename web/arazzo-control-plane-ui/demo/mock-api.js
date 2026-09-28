@@ -1440,13 +1440,19 @@ export function createMockControlPlane(options = {}) {
     return (m ? findVersion(m[1], m[2]) : null)?.outputsSensitivity;
   };
   const findCredential = (s, e) => credentials.find((c) => c.sourceName === s && c.environment === e);
-  // §13 IsUsableBy (demo approximation): an unscoped binding is shared; a usage-scoped one is usable only by the
-  // workflow it names. The real backend does a full label-superset over the run's resolved identity.
-  const credentialUsableBy = (c, baseWorkflowId) => {
+  // §13 usability, judged as the real backend judges it (ADR 0074): a credential is usable by a run when the run's
+  // identity carries every tag of the credential's usage identity, and an unrestricted credential is usable by every
+  // run. A run inherits its version's identity: the workflow, and the subject that published it (the demo's stand-in
+  // for the publisher's stamped identity). A draft's is the workflow and the caller who would publish it.
+  const versionIdentity = (baseWorkflowId, publisher) => [
+    { dimension: 'workflow', value: baseWorkflowId },
+    { dimension: 'sys:sub', value: publisher ?? '' },
+  ];
+  const credentialUsableBy = (c, identity) => {
     const id = c.usageGrantee?.identity;
-    return !id || id.length === 0 || id.every((t) => t.dimension === 'workflow' && t.value === baseWorkflowId);
+    return !id || id.length === 0 || id.every((t) => identity.some((i) => i.dimension === t.dimension && i.value === t.value));
   };
-  const findUsableCredential = (s, e, wf) => credentials.find((c) => c.sourceName === s && c.environment === e && credentialUsableBy(c, wf));
+  const findUsableCredential = (s, e, identity) => credentials.find((c) => c.sourceName === s && c.environment === e && credentialUsableBy(c, identity));
 
   // The current persona (default administrator → all scopes + administers everything, so existing callers are unchanged).
   function personaState(name) {
@@ -1485,6 +1491,7 @@ export function createMockControlPlane(options = {}) {
   function requiredScopeFor(method, path) {
     if (method === 'GET') return null;
     if (/\/catalog\/[^/]+\/versions\/[^/]+\/availability\/[^/]+$/.test(path)) return 'availability:write';
+    if (/\/catalog\/[^/]+\/readiness\/?$/.test(path)) return 'catalog:write'; // a draft's readiness (ADR 0074)
     if (path.includes('/accessRequests') || path.includes('/availabilityRequests')) return null;
     if (/\/workspace\/workflows\/[^/]+\/publish\/?$/.test(path)) return 'catalog:write'; // publish mints a catalog version (§4.6)
     if (/\/catalog\/[^/]+\/versions\/[^/]+\/simulate\/?$/.test(path)) return null; // simulation mutates nothing (§4.3)
@@ -2019,7 +2026,7 @@ export function createMockControlPlane(options = {}) {
       return json({ count: items.length, capped: items.length >= 1000 });
     }
 
-    const versionAvailabilityResponse = handleVersionAvailability(path, method, u.searchParams);
+    const versionAvailabilityResponse = handleVersionAvailability(path, method, u.searchParams, body);
     if (versionAvailabilityResponse) return versionAvailabilityResponse;
 
     const catalogResponse = await handleCatalog(path, method, u.searchParams, body, isForm ? init.body : null);
@@ -3138,7 +3145,27 @@ export function createMockControlPlane(options = {}) {
 
   // ---- availability matrix (§7.8) — where a version is available -------------------------------
 
-  function handleVersionAvailability(fullPath, method, params) {
+  function handleVersionAvailability(fullPath, method, params, body) {
+    // Readiness (ADR 0074): GET /catalog/{base}/versions/{n}/readiness for a catalogued version, and
+    // POST /catalog/{base}/readiness for a draft the caller would publish.
+    const versionReadiness = fullPath.match(/\/catalog\/([^/]+)\/versions\/([^/]+)\/readiness\/?$/);
+    if (versionReadiness) {
+      if (method !== 'GET') return problem(405, 'Method not allowed');
+      const base = decodeURIComponent(versionReadiness[1]);
+      const version = findVersion(base, Number(versionReadiness[2]));
+      if (!version) return problem(404, 'Workflow version not found', `Version ${versionReadiness[2]} of '${base}' does not exist.`);
+      const names = (version.sources ?? []).map((src) => src.name);
+      return readinessPage(readinessEntries(names, versionIdentity(base, version.createdBy), hasGreenEvidence(version)), params);
+    }
+    const draftReadiness = fullPath.match(/\/catalog\/([^/]+)\/readiness\/?$/);
+    if (draftReadiness) {
+      if (method !== 'POST') return problem(405, 'Method not allowed');
+      const base = decodeURIComponent(draftReadiness[1]);
+      if (/-v\d+$/.test(base)) return problem(400, 'Base workflow id expected', `'${base}' names a version; readiness is evaluated for the base workflow id a version would be published under.`);
+      const names = [...new Set(Array.isArray(body?.sources) ? body.sources : [])];
+      return readinessPage(readinessEntries(names, versionIdentity(base, actingSubject()), null), params);
+    }
+
     // Single-environment make/withdraw (§7.8): PUT/DELETE /catalog/{base}/versions/{n}/availability/{environment}.
     const one = fullPath.match(/\/catalog\/([^/]+)\/versions\/([^/]+)\/availability\/([^/]+)$/);
     if (one) {
@@ -3174,7 +3201,7 @@ export function createMockControlPlane(options = {}) {
     if (denied) return denied;
     const existing = availabilityEntries.find((a) => a.baseWorkflowId === base && a.versionNumber === versionNumber && a.environment === environment);
     if (existing) return json(structuredClone(existing)); // already available (idempotent → 200)
-    const missing = (version.sources ?? []).filter((s) => !findUsableCredential(s.name, environment, base)).map((s) => s.name);
+    const missing = (version.sources ?? []).filter((s) => !findUsableCredential(s.name, environment, versionIdentity(base, version.createdBy))).map((s) => s.name);
     if (missing.length > 0) {
       return problem(409, 'Environment not ready', `Version ${versionNumber} of '${base}' cannot be made available in '${environment}': no usable credential for ${missing.join(', ')}.`);
     }
@@ -4853,6 +4880,35 @@ export function createMockControlPlane(options = {}) {
     return null;
   }
 
+  // Readiness in each environment the caller can see (ADR 0074), judged as a run carrying `identity` would be:
+  // each source usable or not, and who a usable credential is restricted to (never the credential itself).
+  function readinessEntries(sourceNames, identity, evidenceGreen) {
+    const visible = environments.filter((e) => reachAdmits(e.managementTags)).sort((a, b) => a.name.localeCompare(b.name));
+    return visible.map((e) => {
+      const sources = sourceNames.map((name) => {
+        const c = findUsableCredential(name, e.name, identity);
+        if (!c) return { name, usable: false };
+        if (!(c.usageGrantee?.identity?.length > 0)) return { name, usable: true };
+        const restriction = {};
+        if (c.usageGrantee.kind) restriction.kind = c.usageGrantee.kind;
+        if (c.usageGrantee.label) restriction.label = c.usageGrantee.label;
+        return { name, usable: true, restriction };
+      });
+      const credentialsReady = sources.every((src) => src.usable);
+      const evidenceRequired = !!e.requireEvidence;
+      const entry = { environment: e.name, ready: credentialsReady && (!evidenceRequired || evidenceGreen === true), credentialsReady, evidenceRequired, sources };
+      if (evidenceGreen != null) entry.evidenceGreen = evidenceGreen;
+      return entry;
+    });
+  }
+
+  function readinessPage(entries, params) {
+    const limit = Math.max(1, Math.min(Number(params.get('limit')) || 100, 200));
+    const offset = Number(params.get('pageToken')) || 0;
+    const nextPageToken = offset + limit < entries.length ? String(offset + limit) : null;
+    return json({ readiness: entries.slice(offset, offset + limit), nextPageToken });
+  }
+
   function findEnvironment(name) {
     return environments.find((e) => e.name === name);
   }
@@ -5243,7 +5299,7 @@ export function createMockControlPlane(options = {}) {
       if (!version) {
         return problem(409, 'Workflow version no longer exists', `Version ${r.versionNumber} of '${r.baseWorkflowId}' no longer exists, so the request cannot be approved.`);
       }
-      const missing = (version.sources ?? []).filter((s) => !findUsableCredential(s.name, r.environment, r.baseWorkflowId)).map((s) => s.name);
+      const missing = (version.sources ?? []).filter((s) => !findUsableCredential(s.name, r.environment, versionIdentity(r.baseWorkflowId, version.createdBy))).map((s) => s.name);
       if (missing.length > 0) {
         return problem(409, 'Environment not ready', `Version ${r.versionNumber} of '${r.baseWorkflowId}' cannot be made available in '${r.environment}': no usable credential for ${missing.join(', ')}.`);
       }

@@ -21,6 +21,24 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public interface IApiAvailabilityHandler
 {
     /// <summary>
+    /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/readiness — List a workflow version's readiness in each environment
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<ListVersionReadinessResult> HandleListVersionReadinessAsync(ListVersionReadinessParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles POST /catalog/{baseWorkflowId}/readiness — Evaluate the readiness a version the caller would publish would have
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<EvaluateDraftReadinessResult> HandleEvaluateDraftReadinessAsync(EvaluateDraftReadinessParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/availability — List the environments a workflow version is available in
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

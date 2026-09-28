@@ -23,17 +23,7 @@ import './availability-matrix.js';
 import './credential-dialog.js';
 import './input-dialog.js';
 import './workflow-compare.js';
-
-/**
- * Whether a credential binding is usable by a workflow's runs — a client-side approximation of the backend's §13
- * `IsUsableBy` gate: an unscoped binding is shared; a usage-scoped one is usable here only when its usage names this
- * workflow. The server does the full label-superset check over the run's resolved identity.
- */
-function usableByWorkflow(binding, baseWorkflowId) {
-  const identity = binding?.usageGrantee?.identity;
-  if (!identity || identity.length === 0) return true;
-  return identity.every((t) => t.dimension === 'workflow' && t.value === baseWorkflowId);
-}
+import { versionReadiness } from '../readiness.js';
 
 // Status pill colours for a source's existing credential bindings (mirrors credentials-table).
 const CRED_STATUS = {
@@ -655,25 +645,15 @@ class ArazzoCatalogDetail extends ArazzoElement {
     const canPromoteDirectly = scopeList.length === 0 || scopeList.includes('availability:write');
     const action = (promotable.length && !canPromoteDirectly)
       ? `<button class="request-promotion ghost" type="button">Request promotion…</button>`
-      : (ready.length ? '' : `<span class="muted">Not ready in any environment — set up credentials to promote.</span>`);
+      : (ready.length ? '' : `<span class="muted">Not ready in any environment. Promoting needs a credential its runs may use for every source, and any evidence the environment requires.</span>`);
     host.innerHTML = `<div class="avail-row">${availLine}</div>${action ? `<div class="avail-actions">${action}</div>` : ''}`;
     host.querySelector('.request-promotion')?.addEventListener('click', () => this.requestPromotion(v));
   }
 
-  /** The environments where every source the version references has a credential USABLE by this workflow (§7.7/§13). */
+  /** The environments this version is ready in, as the server judges it (ADR 0074). */
   async readyEnvironments(v) {
-    const needed = (Array.isArray(v.sources) ? v.sources : []).map((s) => s.name);
-    const envs = [];
-    for await (const page of this.client.listEnvironmentsPaged()) envs.push(...page.environments);
-    const credByEnv = new Map();
-    for await (const page of this.client.listCredentialsPaged({ limit: 200 })) {
-      for (const c of page.credentials) {
-        if (!usableByWorkflow(c, v.baseWorkflowId)) continue;
-        if (!credByEnv.has(c.environment)) credByEnv.set(c.environment, new Set());
-        credByEnv.get(c.environment).add(c.sourceName);
-      }
-    }
-    return envs.map((e) => e.name).filter((env) => needed.every((n) => credByEnv.get(env)?.has(n)));
+    const readiness = await versionReadiness(this.client, v.baseWorkflowId, v.versionNumber);
+    return [...readiness.values()].filter((entry) => entry.ready).map((entry) => entry.environment);
   }
 
   /** Open the §7.8 "request promotion" dialog locked to this workflow version. */

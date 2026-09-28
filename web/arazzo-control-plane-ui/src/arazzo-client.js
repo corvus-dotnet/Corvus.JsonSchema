@@ -626,6 +626,75 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `listVersionReadiness` — this workflow version's readiness in each environment the caller can see (ADR 0074),
+   * ordered by environment. Each entry says whether the version may be promoted there (`ready`), whether every source
+   * has a credential its runs may use (`credentialsReady`), the evidence rule (`evidenceRequired`, `evidenceGreen`), and
+   * per source whether it is `usable` and, for a restricted credential, who it is restricted to (`restriction`). It is
+   * the rule the server gates promotion on, judged as a run of the version would be.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ readiness: object[], nextPageToken: (string|null) }>} A {@link ReadinessList}.
+   */
+  async listVersionReadiness(baseWorkflowId, versionNumber, query = {}) {
+    const search = new URLSearchParams();
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/readiness${qs(search)}`, { signal: query.signal });
+    return { readiness: result.readiness ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `listVersionReadiness`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ readiness: object[], nextPageToken: (string|null) }>}
+   */
+  async *listVersionReadinessPaged(baseWorkflowId, versionNumber, query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listVersionReadiness(baseWorkflowId, versionNumber, { ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  /**
+   * `evaluateDraftReadiness` — the readiness a version of `baseWorkflowId` the caller has not yet published would have
+   * in each environment the caller can see (ADR 0074): its sources are named here, and its identity is the one
+   * publishing would give it. The same entries as {@link listVersionReadiness}, without `evidenceGreen` (a draft has
+   * no evidence, so an environment that requires it is not `ready`). Needs `catalog:write`.
+   * @param {string} baseWorkflowId
+   * @param {string[]} sources The source names the workflow document declares.
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ readiness: object[], nextPageToken: (string|null) }>} A {@link ReadinessList}.
+   */
+  async evaluateDraftReadiness(baseWorkflowId, sources, query = {}) {
+    const search = new URLSearchParams();
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('POST', `/catalog/${encodeURIComponent(baseWorkflowId)}/readiness${qs(search)}`, { body: { sources: [...sources] }, signal: query.signal });
+    return { readiness: result.readiness ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `evaluateDraftReadiness`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {string} baseWorkflowId
+   * @param {string[]} sources
+   * @param {{ limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ readiness: object[], nextPageToken: (string|null) }>}
+   */
+  async *evaluateDraftReadinessPaged(baseWorkflowId, sources, query = {}) {
+    let pageToken;
+    do {
+      const page = await this.evaluateDraftReadiness(baseWorkflowId, sources, { ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  /**
    * `countVersionAvailability` — the bounded count of environments this version is available in (§7.8), for a footer or
    * badge; no rows are fetched. Visible to a caller who can read the version (`404` otherwise). `capped: true` once the
    * true total meets or exceeds the server cap.

@@ -19,18 +19,8 @@
 // (the "Request promotion…" button) and by a catalog-version entry (locked to that workflow + version).
 
 import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, define } from './base.js';
+import { versionReadiness, restrictionSummary } from '../readiness.js';
 import './workflow-picker.js';
-
-/**
- * Whether a credential binding is usable by a workflow's runs — a client-side approximation of the backend's §13
- * `IsUsableBy` gate: an unscoped binding is shared (usable by any run); a usage-scoped binding is usable here only when
- * its usage names exactly this workflow. The server does the full label-superset check over the run's resolved identity.
- */
-function usableByWorkflow(binding, baseWorkflowId) {
-  const identity = binding?.usageGrantee?.identity;
-  if (!identity || identity.length === 0) return true;
-  return identity.every((t) => t.dimension === 'workflow' && t.value === baseWorkflowId);
-}
 
 class ArazzoAvailabilityRequestDialog extends ArazzoElement {
   /** The Layer-0 client used to load choices and submit. */
@@ -129,6 +119,7 @@ class ArazzoAvailabilityRequestDialog extends ArazzoElement {
       sel.innerHTML = `<option value="">Choose a version first</option>`;
       sel.disabled = true;
       this.updateSubmitState();
+      this.showRestriction();
       return;
     }
     sel.disabled = true;
@@ -147,38 +138,38 @@ class ArazzoAvailabilityRequestDialog extends ArazzoElement {
         sel.disabled = false;
       }
       this.updateSubmitState();
+      this.showRestriction();
     } catch (err) {
       if (seq !== this._envSeq) return;
       this._readyEnvs = [];
       sel.innerHTML = `<option value="">Could not load environments</option>`;
       sel.disabled = true;
       this.updateSubmitState();
+      this.showRestriction();
     }
   }
 
   /**
-   * The environments in which `version` is ready: every source it references has a credential there. No readiness
-   * endpoint exists, so this mirrors the server's §7.7 gate over the same inputs (environments + the version's
-   * sources + credentials). Both are bounded governance resources, walked fully via their keyset pagers.
+   * The environments in which `version` is ready (ADR 0074), as the server judges it: every source has a credential
+   * there that the version's runs may use, and the environment's evidence rule holds. The environments are listed for
+   * their display names; the readiness is kept so the selected environment's restrictions can be shown.
    */
   async readyEnvironments(version) {
     const client = this._client;
-    const needed = (version.sources ?? []).map((s) => s.name);
     const envs = [];
     for await (const page of client.listEnvironmentsPaged()) envs.push(...page.environments);
-    const credentialedSources = new Map(); // environment → Set<sourceName usable by this workflow>
-    for await (const page of client.listCredentialsPaged()) {
-      for (const c of page.credentials) {
-        // Only a binding this workflow's runs could USE counts toward readiness (§13).
-        if (!usableByWorkflow(c, version.baseWorkflowId)) continue;
-        if (!credentialedSources.has(c.environment)) credentialedSources.set(c.environment, new Set());
-        credentialedSources.get(c.environment).add(c.sourceName);
-      }
-    }
-    return envs.filter((e) => {
-      const have = credentialedSources.get(e.name) ?? new Set();
-      return needed.every((n) => have.has(n));
-    });
+    this._readiness = await versionReadiness(client, version.baseWorkflowId, version.versionNumber);
+    return envs.filter((e) => this._readiness.get(e.name)?.ready);
+  }
+
+  /** Say who the selected environment's usable credentials are restricted to, if anyone. */
+  showRestriction() {
+    const hint = this.$('.restriction');
+    if (!hint) return;
+    const entry = this._readiness?.get(this.$('.env-in')?.value || '');
+    const summary = entry ? restrictionSummary(entry) : '';
+    hint.textContent = summary ? `Credentials: ${summary}.` : '';
+    hint.hidden = !summary;
   }
 
   updateSubmitState() {
@@ -236,10 +227,11 @@ class ArazzoAvailabilityRequestDialog extends ArazzoElement {
           <div class="dbody">
             ${wfRow}
             <label>Environment<select class="env-in" disabled><option value="">Choose a version first</option></select></label>
+            <div class="sub restriction" hidden></div>
             <label>Reason (optional)
               <textarea class="reason-in" placeholder="Why this version should be available here…"></textarea>
             </label>
-            <div class="sub">Only the environments where this version is ready (every source it references has a credential there) are offered. An environment administrator approves the request.</div>
+            <div class="sub">Only the environments where this version is ready are offered: every source it references has a credential there that its runs may use, and any evidence the environment requires is green. An environment administrator approves the request.</div>
           </div>
           <div class="error-banner" hidden></div>
           <div class="dfoot">
@@ -256,7 +248,7 @@ class ArazzoAvailabilityRequestDialog extends ArazzoElement {
       wf.addEventListener('change', () => this.loadVersions(wf.value.trim()));
     }
     this.$('.ver-in')?.addEventListener('change', () => this.onVersionChange());
-    this.$('.env-in')?.addEventListener('change', () => this.updateSubmitState());
+    this.$('.env-in')?.addEventListener('change', () => { this.updateSubmitState(); this.showRestriction(); });
     this.$('.cancel').addEventListener('click', () => this.close());
     this.$('dialog').addEventListener('cancel', (e) => { e.preventDefault(); this.close(); });
     this.$('.ok').addEventListener('click', (e) => { void this.runAction(e.currentTarget, () => this.submit()); });

@@ -11,21 +11,16 @@
 //
 // The rollout grid for a base workflow: rows = its versions (newest first), columns = the deployment environments, each
 // cell the availability of that (version, environment) pair (§7.8 — additive, many-to-many). A cell is **available**
-// (with a Withdraw action), **promotable** (ready — every source the version references has a usable credential in the
-// environment, §7.7/§13 — offering a direct *Make available* with `availability:write`, or *Request promotion* through
+// (with a Withdraw action), **promotable** (ready — as the server judges it, ADR 0074: every source the version references has a credential
+// there its runs may use, and any evidence the environment requires is green — offering a direct *Make available* with `availability:write`, or *Request promotion* through
 // the §16.5-shaped approver inbox otherwise), or **not ready** (no usable credential set; no action). Direct make/
 // withdraw is environment-administrator-gated server-side (a `403`/`409` is surfaced); the request path needs no scope.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
 import { ArazzoElement, adoptStyles, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import { versionReadiness, notReadyReasons, restrictionSummary } from '../readiness.js';
 import './availability-request-dialog.js';
 
-// A binding is usable by a workflow when it is unscoped (shared) or its usage names exactly this workflow — the
-// client-side approximation of §13 IsUsableBy the catalog detail uses for the same readiness computation.
-function usableByWorkflow(binding, baseWorkflowId) {
-  const id = binding.usageGrantee?.identity;
-  return !id || id.length === 0 || id.every((t) => t.dimension === 'workflow' && t.value === baseWorkflowId);
-}
 
 class ArazzoAvailabilityMatrix extends ArazzoElement {
   static get observedAttributes() {
@@ -37,7 +32,7 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
     /** @private */ this._versions = [];
     /** @private */ this._environments = [];
     /** @private */ this._availability = new Map();   // versionNumber → Set(environment)
-    /** @private */ this._credByEnv = null;           // Map(environment → Set(sourceName)) usable by this workflow, or null if unreadable
+    /** @private */ this._readiness = new Map();      // Map(versionNumber → Map(environment → server readiness entry)), or null entries if unreadable
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
     /** @private */ this._reqSeq = 0;
@@ -91,26 +86,22 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
         client.listCatalogVersions(base, { limit: 200 }).then((r) => r.versions),
         this.drainEnvironments(),
       ]);
-      // Per-version availability + evidence (small fan-outs — a base workflow has few versions; the
-      // evidence summary rides only the version DETAIL, and evidence-gated environments need it for
-      // the readiness reason) + the usable-credential map.
-      const [availPairs, evidencePairs, credByEnv] = await Promise.all([
+      // Per-version availability and readiness (small fan-outs: a base workflow has few versions). Readiness is the
+      // server's (ADR 0074), judged as a run of each version would be; the matrix never approximates it.
+      const [availPairs, readinessPairs] = await Promise.all([
         Promise.all(versions.map((v) => client
           .listVersionAvailability(base, v.versionNumber, { limit: 200 })
           .then((r) => [v.versionNumber, new Set(r.availability.map((a) => a.environment))])
           .catch(() => [v.versionNumber, new Set()]))),
-        Promise.all(versions.map((v) => client
-          .getCatalogVersion(base, v.versionNumber)
-          .then((d) => [v.versionNumber, d.evidence ?? null])
+        Promise.all(versions.map((v) => versionReadiness(client, base, v.versionNumber)
+          .then((m) => [v.versionNumber, m])
           .catch(() => [v.versionNumber, null]))),
-        this.loadCredByEnv(base).catch(() => null),
       ]);
       if (seq !== this._reqSeq) return;
       this._versions = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
       this._environments = environments.sort((a, b) => a.name.localeCompare(b.name));
       this._availability = new Map(availPairs);
-      this._evidence = new Map(evidencePairs);
-      this._credByEnv = credByEnv;
+      this._readiness = new Map(readinessPairs);
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { versions: this._versions.length, environments: this._environments.length });
@@ -129,48 +120,20 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
     return envs;
   }
 
-  /** The usable-credential map (environment → set of source names credentialed there, usable by this workflow). */
-  async loadCredByEnv(base) {
-    const byEnv = new Map();
-    for await (const page of this.client.listCredentialsPaged({ limit: 200 })) {
-      for (const c of page.credentials) {
-        if (!usableByWorkflow(c, base)) continue;
-        if (!byEnv.has(c.environment)) byEnv.set(c.environment, new Set());
-        byEnv.get(c.environment).add(c.sourceName);
-      }
-    }
-    return byEnv;
-  }
-
   isAvailable(versionNumber, env) {
     return this._availability.get(versionNumber)?.has(env) === true;
   }
 
   /**
-   * Readiness in an environment with the REASONS it fails — the server gates promotion on
-   * credentials (§7.7) AND publish evidence where the environment requires it (§4.6:
-   * readiness = credentials ∧ (suiteGreen ∨ ¬requireEvidence)), so "not ready" must say WHICH
-   * gate refused, not always blame credentials.
-   * @returns {{ready: boolean, reasons: string[]}}
+   * Readiness in an environment with the REASONS it fails, as the server judged it (ADR 0074): the sources with no
+   * credential the version's runs may use, and the evidence the environment requires. "Not ready" says WHICH gate
+   * refused, and a ready cell says who its credentials are restricted to.
+   * @returns {{ready: boolean, reasons: string[], restriction: string}}
    */
   readiness(version, env) {
-    const reasons = [];
-    if (!this._credByEnv) {
-      reasons.push('credentials are unreadable here — readiness unknown');
-    } else {
-      const needed = (Array.isArray(version.sources) ? version.sources : []).map((s) => s.name);
-      const have = this._credByEnv.get(env.name);
-      const missing = needed.filter((n) => !have?.has(n));
-      if (missing.length) reasons.push(`no usable credential for ${missing.join(', ')}`);
-    }
-
-    if (env.requireEvidence) {
-      const suite = this._evidence?.get(version.versionNumber)?.suite;
-      const green = !!suite && suite.total > 0 && !suite.failed && suite.passed === suite.total;
-      if (!green) reasons.push(suite ? 'the publish suite did not pass — this environment requires green evidence' : 'no publish evidence — this environment requires it');
-    }
-
-    return { ready: reasons.length === 0, reasons };
+    const entry = this._readiness?.get(version.versionNumber)?.get(env.name);
+    if (!entry) return { ready: false, reasons: ['readiness is unreadable here'], restriction: '' };
+    return { ready: entry.ready, reasons: notReadyReasons(entry), restriction: restrictionSummary(entry) };
   }
 
   // ---- actions ----------------------------------------------------------------------------------
@@ -323,12 +286,13 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
     if (this.isAvailable(n, env.name)) {
       return `<div class="cell"><span class="badge available" part="cell">✓ Available</span>${this.canWrite ? `<button class="ghost" type="button" data-action="withdraw" ${data}>Withdraw</button>` : ''}</div>`;
     }
-    const { ready, reasons } = this.readiness(version, env);
+    const { ready, reasons, restriction } = this.readiness(version, env);
     if (ready) {
       const action = this.canWrite
         ? `<button class="primary" type="button" data-action="make" ${data}>Make available</button>`
         : `<button class="ghost" type="button" data-action="request" ${data}>Request…</button>`;
-      return `<div class="cell" part="cell"><span class="badge">Ready</span>${action}</div>`;
+      const restricted = restriction ? `<span class="why restricted" title="${escapeHtml(restriction)}">${escapeHtml(restriction)}</span>` : '';
+      return `<div class="cell" part="cell"><span class="badge">Ready</span>${action}${restricted}</div>`;
     }
     // The reason is VISIBLE in the cell, not buried in a tooltip — unreadiness has more than one
     // cause (credentials, evidence) and the operator must see which gate refused at a glance. One

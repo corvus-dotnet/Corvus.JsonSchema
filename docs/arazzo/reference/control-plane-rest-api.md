@@ -33,7 +33,7 @@ below gives each group's job rather than its operations. Read the contract for t
 | `workspace` | Designer working copies: mutable Arazzo documents saved without minting a version, their scenarios, `publishWorkingCopy`, `simulateWorkingCopy`, and source binding. See [the workflow-designer guide](../guides/workflow-designer.md). |
 | `debugRuns` | Debug a working copy: start, step and resume, inspect, inject a message to a suspended wait, cancel and delete. See [ADR 0045](../adr/0045-debug-runs-never-credentials-in-browser.md). |
 | `github` | Brokered GitHub integration: the control plane holds the Git session, so pull and commit a working copy, list and create branches, browse a repo. |
-| `availability` | Make a workflow version available in a deployment environment ("promotion"), directly where the caller administers the environment. |
+| `availability` | Make a workflow version available in a deployment environment ("promotion"), directly where the caller administers the environment, and report whether a version, or one not yet published, is ready in each environment ([ADR 0074](../adr/0074-readiness-is-the-versions-usability-judged-by-the-server.md)). |
 | `availabilityRequests` | Request and approve making a version available in an environment (promotion requests). |
 | `accessRequests` | Request and approve elevated, time-bound access to a workflow ([ADR 0010](../adr/0010-access-requests-ceiling-bounded.md)). |
 | `identity` | Resolve real grantees (person, team, role, workflow) to their exact deployment-stamped identity, and read whoami and capabilities. See [ADR 0008](../adr/0008-resolved-grantee-resolution.md). |

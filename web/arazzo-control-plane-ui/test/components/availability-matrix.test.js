@@ -34,6 +34,19 @@ describe('<arazzo-availability-matrix>', () => {
     ok(q(el, '.badge.notready').length > 0, 'the credential-less qa column is not ready');
   });
 
+  it('judges readiness as the server does, and a ready cell names who its credential is restricted to (ADR 0074)', async () => {
+    // qa's only billing credential is restricted to the nightly-reconcile workflow: usable by its runs, so ready.
+    el = await matrix({ 'base-workflow-id': 'nightly-reconcile', scopes: FULL }, async (c) => {
+      await c.createEnvironment({ name: 'qa' });
+      await c.createCredential({ sourceName: 'billing', environment: 'qa', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'keyvault://billing-qa' }], usageGrantee: { kind: 'workflow', value: 'nightly-reconcile' } });
+    });
+    await nextEvent(el, 'loaded');
+    const qaColumn = [...q(el, 'thead th')].findIndex((th) => th.textContent.trim() === 'qa');
+    const qaCell = q(el, 'tbody tr')[0].children[qaColumn];
+    ok(qaCell.querySelector('button[data-action="make"]'), 'the workflow-restricted credential makes qa ready');
+    ok(qaCell.querySelector('.why.restricted')?.textContent.includes('billing: restricted to this workflow'), qaCell.textContent);
+  });
+
   it('a not-ready cell states WHICH gate refused — credentials, evidence, or both (visible, not tooltip-only)', async () => {
     // qa has no credentials (credential gate); uat requires publish evidence (mock seed) and
     // nightly-reconcile v1/v2 predate evidence (evidence gate); v3 carries a green suite.

@@ -7,7 +7,7 @@
 // Opt-in (needs the composition running — see README.md): ARAZZO_LIVE_UX=1 npm run test:live
 // Rules of the road are documented in live-helpers.js: unique names, cleanup, relative assertions.
 import { test, expect } from '@playwright/test';
-import { LIVE_USERS, signIn, watchLiveErrors, assertLiveClean, liveTab, openLiveTab, openLiveSubTab, uniq, closeContext } from './live-helpers.js';
+import { LIVE_USERS, signIn, watchLiveErrors, assertLiveClean, liveTab, openLiveTab, openLiveSubTab, uniq, closeContext, deleteGrantsDescribed } from './live-helpers.js';
 
 test('sign-in lands on a real shell: Keycloak round trip, ten tabs, and a runs list the real runner produced', async ({ page }) => {
   await signIn(page, LIVE_USERS.admin);
@@ -450,9 +450,7 @@ test('production is governed by prod-ops, not founders-only (#862): pia reaches 
   // administers production through the zone=prod rule route, NOT founder-group membership, so a production
   // promotion request is hers to decide, and it reads as the person who raised it. erin, who administers only the
   // preprod zone, must NOT see it. The administrator raises a fresh request under a unique reason each run and pia
-  // denies it, so the test consumes no seeded state and can run again (and retry) against the same backend. (A
-  // non-admin cannot construct a production promotion in the dialog: its credentials are usage-scoped to admins by
-  // design, so onboard-customer is not run-ready there for them. That gate is correct, and not what this pins.)
+  // denies it, so the test consumes no seeded state and can run again (and retry) against the same backend.
   const adminCtx = await browser.newContext({ ignoreHTTPSErrors: true });
   const piaCtx = await browser.newContext({ ignoreHTTPSErrors: true });
   const erinCtx = await browser.newContext({ ignoreHTTPSErrors: true });
@@ -460,14 +458,25 @@ test('production is governed by prod-ops, not founders-only (#862): pia reaches 
     const adminPage = await adminCtx.newPage();
     await signIn(adminPage, LIVE_USERS.admin);
     const reason = uniq('live-ux production request');
-    // Raised through the admin's own session (cookie and X-CSRF, as the shell's session fetch sends them), which is
-    // the call the request dialog makes. The dialog itself does not offer production here: it counts a credential
-    // toward readiness only when the workflow may use it, and production's are scoped to the admins group.
-    const submitted = await adminPage.request.post('/arazzo/v1/availabilityRequests', {
-      headers: { 'X-CSRF': '1' },
-      data: { baseWorkflowId: 'onboard-customer', versionNumber: 2, environment: 'production', reason },
-    });
-    expect(submitted.status(), await submitted.text()).toBe(201);
+    // The administrator raises it through the request dialog, which offers production because the server judges
+    // onboard-customer v2 ready there (ADR 0074): its runs may use production's credentials, restricted to the admins.
+    await openLiveTab(adminPage, 'Requests');
+    await openLiveSubTab(adminPage, 'sub-requests-availability');
+    const minePanel = adminPage.locator('#sub-requests-availability arazzo-availability-requests');
+    await minePanel.locator('button.new').click();
+    const dlg = adminPage.locator('arazzo-availability-request-dialog');
+    const wfInput = dlg.locator('.sub-wf input.q');
+    await wfInput.click();
+    await wfInput.fill('onboard-customer');
+    // The item whose id line is exactly onboard-customer (not onboard-customer-async); its label is the title.
+    await dlg.locator('.sub-wf .results li[data-index]', { has: adminPage.locator('.ident', { hasText: /^onboard-customer$/ }) }).click();
+    await expect(dlg.locator('.ver-in')).toBeEnabled();
+    await dlg.locator('.ver-in').selectOption('2');
+    await dlg.locator('.env-in').selectOption('production');
+    await expect(dlg.locator('.restriction')).toContainText('restricted to');
+    await dlg.locator('.reason-in').fill(reason);
+    await dlg.locator('button.ok').click();
+    await expect(minePanel.locator('tbody tr[data-id]', { hasText: reason }).locator('.badge')).toHaveText('Pending');
 
     // erin administers the preprod zone only: the production request is NOT in her queue.
     const erinPage = await erinCtx.newPage();
@@ -581,6 +590,9 @@ test('widening vs narrowing FOR REAL: a second single-rule grant widens oscar\'s
   // nothing satisfies both), so it must NOT widen anything. Both grants are cleaned up.
   const adminCtx = await browser.newContext({ ignoreHTTPSErrors: true });
   const oscarCtx = await browser.newContext({ ignoreHTTPSErrors: true });
+  const widenDesc = uniq('live-widen');
+  const narrowDesc = uniq('live-narrow');
+  let adminPage;
   try {
     const oscarPage = await oscarCtx.newPage();
     await signIn(oscarPage, LIVE_USERS.oscar);
@@ -590,12 +602,10 @@ test('widening vs narrowing FOR REAL: a second single-rule grant widens oscar\'s
     });
     expect(await oscarCatalog()).toEqual(['onboard-customer']); // the baseline reach
 
-    const adminPage = await adminCtx.newPage();
+    adminPage = await adminCtx.newPage();
     await signIn(adminPage, LIVE_USERS.admin);
     await openLiveTab(adminPage, 'Security');
     const grants = adminPage.locator('arazzo-grants-panel');
-    const widenDesc = uniq('live-widen');
-    const narrowDesc = uniq('live-narrow');
 
     const author = async (description, ruleNames) => {
       await grants.locator('button.new').click();
@@ -649,6 +659,9 @@ test('widening vs narrowing FOR REAL: a second single-rule grant widens oscar\'s
     await remove(narrowDesc);
     expect(await oscarCatalog()).toEqual(['onboard-customer']);
   } finally {
+    // A failure part-way leaves a grant widening oscar's reach behind, and a retry or the next run would then start
+    // from the wrong baseline: remove whatever this test created, through the admin's session.
+    if (adminPage) await deleteGrantsDescribed(adminPage, [widenDesc, narrowDesc]);
     await closeContext(adminCtx);
     await closeContext(oscarCtx);
   }

@@ -163,6 +163,131 @@ public sealed class ControlPlaneAvailabilityApiTests
     }
 
     [TestMethod]
+    public async Task A_credential_the_versions_runs_cannot_use_does_not_make_it_ready()
+    {
+        await using Scoped host = await StartAsync();
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("billing", "acme", "payments");
+
+        // Another tenant's credential for the source is restricted to that tenant's identity, which acme's version and
+        // its runs do not carry: a run would get no credential, so the version is not ready (ADR 0074).
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", Credential("payments", "production"), "credentials:write", "globex")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        HttpResponseMessage refused = await host.SendAsync(HttpMethod.Put, "/catalog/billing/versions/1/availability/production", Write, "acme");
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(refused))
+        {
+            problem.RootElement.GetProperty("detail").GetString()!.ShouldContain("no credential its runs may use for payments");
+        }
+    }
+
+    [TestMethod]
+    public async Task A_credential_restricted_to_another_workflow_does_not_make_a_version_ready()
+    {
+        await using Scoped host = await StartAsync();
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("billing", "acme", "payments");
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", Credential("payments", "production", """{"kind":"workflow","value":"ledger"}"""), "credentials:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendAsync(HttpMethod.Put, "/catalog/billing/versions/1/availability/production", Write, "acme")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [TestMethod]
+    public async Task The_readiness_list_judges_each_environment_as_a_run_of_the_version_would_be()
+    {
+        await using Scoped host = await StartAsync();
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"staging"}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"audited","requireEvidence":true}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("billing", "acme", "payments");
+
+        // production: acme's own credential, restricted to acme by default, which the version's runs carry. staging:
+        // only globex's, which they do not. audited: acme's, but the environment requires evidence the version lacks.
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", Credential("payments", "production"), "credentials:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", Credential("payments", "staging"), "credentials:write", "globex")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", Credential("payments", "audited"), "credentials:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        HttpResponseMessage response = await host.SendAsync(HttpMethod.Get, "/catalog/billing/versions/1/readiness", Read, "acme");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using Stj.JsonDocument doc = await ReadJsonAsync(response);
+        Dictionary<string, Stj.JsonElement> byEnvironment = doc.RootElement.GetProperty("readiness").EnumerateArray().ToDictionary(e => e.GetProperty("environment").GetString()!);
+        byEnvironment.Keys.ShouldBe(["audited", "production", "staging"], ignoreOrder: true);
+
+        Stj.JsonElement production = byEnvironment["production"];
+        production.GetProperty("ready").GetBoolean().ShouldBeTrue();
+        production.GetProperty("credentialsReady").GetBoolean().ShouldBeTrue();
+        production.GetProperty("evidenceRequired").GetBoolean().ShouldBeFalse();
+        Stj.JsonElement source = production.GetProperty("sources").EnumerateArray().Single();
+        source.GetProperty("name").GetString().ShouldBe("payments");
+        source.GetProperty("usable").GetBoolean().ShouldBeTrue();
+        source.TryGetProperty("restriction", out _).ShouldBeTrue("the usable credential is restricted to its creator's identity");
+
+        Stj.JsonElement staging = byEnvironment["staging"];
+        staging.GetProperty("ready").GetBoolean().ShouldBeFalse();
+        staging.GetProperty("credentialsReady").GetBoolean().ShouldBeFalse();
+        staging.GetProperty("sources")[0].GetProperty("usable").GetBoolean().ShouldBeFalse();
+
+        Stj.JsonElement audited = byEnvironment["audited"];
+        audited.GetProperty("credentialsReady").GetBoolean().ShouldBeTrue();
+        audited.GetProperty("evidenceRequired").GetBoolean().ShouldBeTrue();
+        audited.GetProperty("evidenceGreen").GetBoolean().ShouldBeFalse();
+        audited.GetProperty("ready").GetBoolean().ShouldBeFalse();
+
+        // The readiness of a version the caller cannot read, or that does not exist, is not found.
+        (await host.SendAsync(HttpMethod.Get, "/catalog/billing/versions/9/readiness", Read, "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
+    public async Task A_workflow_restricted_credential_names_who_it_is_restricted_to()
+    {
+        await using Scoped host = await StartAsync();
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("billing", "acme", "payments");
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", Credential("payments", "production", """{"kind":"workflow","value":"billing"}"""), "credentials:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        HttpResponseMessage response = await host.SendAsync(HttpMethod.Get, "/catalog/billing/versions/1/readiness", Read, "acme");
+        using Stj.JsonDocument doc = await ReadJsonAsync(response);
+        Stj.JsonElement source = doc.RootElement.GetProperty("readiness")[0].GetProperty("sources")[0];
+        source.GetProperty("usable").GetBoolean().ShouldBeTrue();
+        Stj.JsonElement restriction = source.GetProperty("restriction");
+        restriction.GetProperty("kind").GetString().ShouldBe("workflow");
+        restriction.TryGetProperty("identity", out _).ShouldBeFalse("readiness names the grantee, never its identity tags");
+    }
+
+    [TestMethod]
+    public async Task A_draft_is_judged_with_the_identity_publishing_would_give_it()
+    {
+        await using Scoped host = await StartAsync();
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"audited","requireEvidence":true}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", Credential("payments", "production"), "credentials:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", Credential("payments", "audited"), "credentials:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        const string Body = """{"sources":["payments"]}""";
+
+        // acme would publish it: acme's credential is one its runs may use.
+        using (Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/catalog/newflow/readiness", Body, "catalog:write", "acme")))
+        {
+            Dictionary<string, Stj.JsonElement> byEnvironment = doc.RootElement.GetProperty("readiness").EnumerateArray().ToDictionary(e => e.GetProperty("environment").GetString()!);
+            byEnvironment["production"].GetProperty("ready").GetBoolean().ShouldBeTrue();
+            byEnvironment["production"].TryGetProperty("evidenceGreen", out _).ShouldBeFalse("a draft has no evidence");
+
+            // A draft has no evidence, so an environment that requires it is not ready, though its credentials are.
+            byEnvironment["audited"].GetProperty("credentialsReady").GetBoolean().ShouldBeTrue();
+            byEnvironment["audited"].GetProperty("ready").GetBoolean().ShouldBeFalse();
+        }
+
+        // globex would publish it: acme's credential is not one its runs may use.
+        using (Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/catalog/newflow/readiness", Body, "catalog:write", "globex")))
+        {
+            Stj.JsonElement production = doc.RootElement.GetProperty("readiness").EnumerateArray().Single(e => e.GetProperty("environment").GetString() == "production");
+            production.GetProperty("credentialsReady").GetBoolean().ShouldBeFalse();
+        }
+
+        // A versioned id is not a base workflow id; the draft endpoint needs catalog:write.
+        (await host.SendJsonAsync(HttpMethod.Post, "/catalog/newflow-v2/readiness", Body, "catalog:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await host.SendJsonAsync(HttpMethod.Post, "/catalog/newflow/readiness", Body, Read, "acme")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [TestMethod]
     public async Task An_environment_requiring_evidence_admits_only_green_suites()
     {
         await using Scoped host = await StartAsync();
@@ -223,6 +348,9 @@ public sealed class ControlPlaneAvailabilityApiTests
 
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+    private static string Credential(string source, string environment, string? usageGrantee = null)
+        => $$"""{"sourceName":"{{source}}","environment":"{{environment}}","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://{{source}}#1"}]{{(usageGrantee is null ? string.Empty : $",\"usageGrantee\":{usageGrantee}")}}}""";
 
     private static async Task<Scoped> StartAsync()
     {

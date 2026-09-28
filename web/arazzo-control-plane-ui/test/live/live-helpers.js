@@ -86,6 +86,26 @@ export async function closeContext(context) {
   await context.close().catch(() => {});
 }
 
+/**
+ * Delete the reach grants whose description contains any of `descriptions`, through the page's signed-in session: the
+ * cleanup a test that creates grants runs in its `finally`, so a failure part-way leaves nothing behind. Best-effort.
+ */
+export async function deleteGrantsDescribed(page, descriptions) {
+  for (const description of descriptions) {
+    try {
+      const listed = await page.request.get(`/arazzo/v1/security/bindings?q=${encodeURIComponent(description)}&limit=50`, { headers: { 'X-CSRF': '1' } });
+      if (!listed.ok()) continue;
+      for (const binding of (await listed.json()).bindings ?? []) {
+        if ((binding.description ?? '').includes(description)) {
+          await page.request.delete(`/arazzo/v1/security/bindings/${encodeURIComponent(binding.id)}`, { headers: { 'X-CSRF': '1' } });
+        }
+      }
+    } catch {
+      // Best-effort: the test's own assertions are what fail it.
+    }
+  }
+}
+
 /** A collision-proof name for anything a test creates on the real backend. */
 export function uniq(prefix) {
   return `${prefix}-${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;

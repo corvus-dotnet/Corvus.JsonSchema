@@ -415,6 +415,28 @@ test('version availability: each client method emits the contract method + templ
   assert.equal(calls[2].path, sub('deleteVersionAvailability'));
 });
 
+test('readiness (ADR 0074): each client method emits the contract method, templated path, declared query params and body', async () => {
+  for (const id of ['listVersionReadiness', 'evaluateDraftReadiness']) {
+    assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
+  }
+  const { client, calls } = capturing();
+  await client.listVersionReadiness('flow', 2, { limit: 10, pageToken: 'tok' });
+  assert.equal(calls[0].method, OPS.listVersionReadiness.method);
+  assert.equal(calls[0].path, OPS.listVersionReadiness.path.replace('{baseWorkflowId}', 'flow').replace('{versionNumber}', '2'));
+  for (const key of calls[0].query.keys()) {
+    assert.ok(OPS.listVersionReadiness.queryParams.has(key), `readiness query param '${key}' is declared in the contract`);
+  }
+
+  await client.evaluateDraftReadiness('flow', ['payments', 'ledger'], { limit: 10 });
+  assert.equal(calls[1].method, OPS.evaluateDraftReadiness.method);
+  assert.equal(calls[1].path, OPS.evaluateDraftReadiness.path.replace('{baseWorkflowId}', 'flow'));
+  assert.ok(OPS.evaluateDraftReadiness.hasBody, 'the draft readiness operation takes a body');
+  assert.deepEqual(calls[1].body, { sources: ['payments', 'ledger'] });
+  for (const key of calls[1].query.keys()) {
+    assert.ok(OPS.evaluateDraftReadiness.queryParams.has(key), `draft readiness query param '${key}' is declared in the contract`);
+  }
+});
+
 test('the contract declares the native-build operations (ADR 0055)', () => {
   for (const id of ['listNativeBuilds', 'countNativeBuilds', 'getNativeBuild', 'enqueueNativeBuild']) {
     assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);

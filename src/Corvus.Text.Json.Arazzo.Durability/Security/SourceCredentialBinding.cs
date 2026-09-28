@@ -280,6 +280,17 @@ public readonly partial struct SourceCredentialBinding
                     d.UsageTags.WriteTo(writer);
                 }
 
+                // The grantee the usage restriction names, for display only (ADR 0074); never part of usage matching.
+                if (d.UsageKind is { } usageKind)
+                {
+                    writer.WriteString(JsonPropertyNames.UsageKindUtf8, usageKind);
+                }
+
+                if (d.UsageLabel is { } usageLabel)
+                {
+                    writer.WriteString(JsonPropertyNames.UsageLabelUtf8, usageLabel);
+                }
+
                 writer.WriteEndObject();
             });
 
