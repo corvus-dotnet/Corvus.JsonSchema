@@ -485,6 +485,25 @@ internal sealed class SchemaCompiler
             node.StrictEntries = null;
             node.AdditionalEntry = new StrictEntry(-1, node.AdditionalInlineType, node.AdditionalInlineLexical, null, node.AdditionalFastNode, node.AdditionalFastNode >= 0 && IsNestedObject(nodes[node.AdditionalFastNode], nodes));
             node.ItemsNestedObject = node.Items.IsPresent && IsNestedObject(nodes[node.Items.FastNode], nodes);
+            node.PatternMap = null;
+            node.PrefixEntries = null;
+            if (!DisablePlans && node.PrefixItems is ChildRef[] prefixItems && !node.UniqueItems && !node.Contains.IsPresent)
+            {
+                var prefixEntries = new StrictEntry[prefixItems.Length + 1];
+                for (int i = 0; i < prefixItems.Length; i++)
+                {
+                    prefixEntries[i] = EntryFor(nodes, prefixItems[i], -1);
+                }
+
+                prefixEntries[^1] = node.Items.IsPresent ? EntryFor(nodes, node.Items, -1) : new StrictEntry(-1, TypeMask.None, false, null, -1);
+                node.PrefixEntries = prefixEntries;
+            }
+
+            if (!DisablePlans && node.Properties is null && node.Dependencies is null && node.PatternProperties is [PatternPropertyEntry only])
+            {
+                node.PatternMap = [EntryFor(nodes, only.Schema, -1)];
+            }
+
             if (node.Properties is null)
             {
                 continue;
@@ -502,6 +521,7 @@ internal sealed class SchemaCompiler
 
                 SchemaNode target = nodes[entry.Schema.FastNode];
                 entry.InlineEnum = null;
+                entry.InlineConst = null;
                 if (target.AlwaysTrue)
                 {
                     entry.InlineTrue = true;
@@ -515,6 +535,10 @@ internal sealed class SchemaCompiler
                 {
                     entry.InlineEnum = target.EnumStrings;
                 }
+                else if (IsStringConstOnly(target))
+                {
+                    entry.InlineConst = target.ConstString;
+                }
             }
 
             ReadOnlySpan<PropertyEntry> values = node.Properties.Values;
@@ -522,12 +546,39 @@ internal sealed class SchemaCompiler
             for (int i = 0; i < values.Length; i++)
             {
                 PropertyEntry e = values[i];
-                int child = e.Schema.IsPresent && !e.InlineTrue && e.InlineType == TypeMask.None && e.InlineEnum is null ? e.Schema.FastNode : -1;
-                strict[i] = new StrictEntry(e.SeenBit, e.InlineType, e.InlineLexical, e.InlineEnum, child, child >= 0 && IsNestedObject(nodes[child], nodes));
+                int child = e.Schema.IsPresent && !e.InlineTrue && e.InlineType == TypeMask.None && e.InlineEnum is null && e.InlineConst is null ? e.Schema.FastNode : -1;
+                strict[i] = new StrictEntry(e.SeenBit, e.InlineType, e.InlineLexical, e.InlineEnum, child, child >= 0 && IsNestedObject(nodes[child], nodes), e.InlineConst);
             }
 
             node.StrictEntries = strict;
         }
+    }
+
+    /// <summary>The in-place resolution for a child: <c>true</c>, a type test, a string set or const, or a child to dispatch on.</summary>
+    private static StrictEntry EntryFor(SchemaNode[] nodes, in ChildRef schema, int seenBit)
+    {
+        SchemaNode target = nodes[schema.FastNode];
+        if (target.AlwaysTrue)
+        {
+            return new StrictEntry(seenBit, TypeMask.None, false, null, -1);
+        }
+
+        if (target.IsTypeOnly)
+        {
+            return new StrictEntry(seenBit, target.Type, target.Dialect == JsonSchemaDialect.Draft4, null, -1);
+        }
+
+        if (IsStringEnumOnly(target))
+        {
+            return new StrictEntry(seenBit, TypeMask.None, false, target.EnumStrings, -1);
+        }
+
+        if (IsStringConstOnly(target))
+        {
+            return new StrictEntry(seenBit, TypeMask.None, false, null, -1, false, target.ConstString);
+        }
+
+        return new StrictEntry(seenBit, TypeMask.None, false, null, schema.FastNode, IsNestedObject(target, nodes));
     }
 
     /// <summary>
@@ -2860,6 +2911,12 @@ internal sealed class SchemaCompiler
             return NodePlan.DynamicRef;
         }
 
+        if (node.HasInPlaceApplicators && IsComposite(node, out NodePlan compositeOwn))
+        {
+            node.ConditionalOwnPlan = compositeOwn;
+            return NodePlan.Composite;
+        }
+
         if (node.HasInPlaceApplicators || !noUnevaluated || !noValueKeywords)
         {
             return NodePlan.General;
@@ -2874,7 +2931,7 @@ internal sealed class SchemaCompiler
             return IsStrictObject(node, nodes) ? NodePlan.StrictObject : NodePlan.Object;
         }
 
-        if (arrayKeywords && !objectKeywords && node.PrefixItems is null && !node.Contains.IsPresent)
+        if (arrayKeywords && !objectKeywords && (node.PrefixItems is null || node.PrefixEntries is not null) && !node.Contains.IsPresent)
         {
             return NodePlan.ArrayItems;
         }
@@ -2886,6 +2943,13 @@ internal sealed class SchemaCompiler
     internal static bool IsStringEnumOnly(SchemaNode node)
     {
         return node.IsLeaf && node.EnumAllStrings && node.EnumStrings is not null && !node.HasConst && !node.HasNumberKeywords && !node.HasStringKeywords
+            && (!node.HasType || node.Type == TypeMask.String) && !node.AlwaysTrue && !node.AlwaysFalse;
+    }
+
+    /// <summary>A leaf whose only assertion is a string <c>const</c>, with at most <c>type: string</c> alongside.</summary>
+    internal static bool IsStringConstOnly(SchemaNode node)
+    {
+        return node.IsLeaf && node.HasConst && node.ConstString is not null && node.Enum is null && !node.HasNumberKeywords && !node.HasStringKeywords
             && (!node.HasType || node.Type == TypeMask.String) && !node.AlwaysTrue && !node.AlwaysFalse;
     }
 
@@ -2945,6 +3009,50 @@ internal sealed class SchemaCompiler
             own = IsStrictObject(node, nodes) ? NodePlan.StrictObject : NodePlan.Object;
         }
         else if (node.HasType)
+        {
+            own = NodePlan.Leaf;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// A node with in-place applicators whose own keywords one plan can take (an object plan, the array-items plan,
+    /// or a leaf), with nothing that needs the general path's bookkeeping: no unevaluated keywords, no in-place
+    /// cycle, no fused plan. Gives the plan for the own keywords.
+    /// </summary>
+    internal static bool IsComposite(SchemaNode node, out NodePlan own)
+    {
+        own = NodePlan.AlwaysTrue;
+        if (DisablePlans || !node.HasInPlaceApplicators || node.AlwaysTrue || node.AlwaysFalse || node.InPlaceCycle || node.Fused is not null
+            || node.UnevaluatedProperties.IsPresent || node.UnevaluatedItems.IsPresent || node.PropertyNames.IsPresent)
+        {
+            return false;
+        }
+
+        bool valueKeywords = node.HasConst || node.Enum is not null || node.HasNumberKeywords || node.HasStringKeywords;
+        bool objectKeywords = LiveObjectKeywords(node);
+        bool arrayKeywords = LiveArrayKeywords(node);
+        if (objectKeywords)
+        {
+            if (arrayKeywords || valueKeywords || node.SeenBitCount > SchemaNode.InlineBitWords * 64)
+            {
+                return false;
+            }
+
+            own = node.PatternProperties is null && node.Dependencies is null && node.SeenBitCount <= 64
+                && (node.Properties is not null || node.AdditionalProperties.IsPresent) ? NodePlan.StrictObject : NodePlan.Object;
+        }
+        else if (arrayKeywords)
+        {
+            if (valueKeywords || (node.PrefixItems is not null && node.PrefixEntries is null) || node.Contains.IsPresent)
+            {
+                return false;
+            }
+
+            own = NodePlan.ArrayItems;
+        }
+        else if (node.HasType || valueKeywords)
         {
             own = NodePlan.Leaf;
         }

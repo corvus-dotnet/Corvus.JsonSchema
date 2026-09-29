@@ -261,6 +261,9 @@ internal sealed class PatternMatcher
     /// <summary>Gets a value indicating whether matching uses a <see cref="Regex"/> (as opposed to a prefix, range or trivial test).</summary>
     public bool UsesRegex => this.kind == Kind.Regex;
 
+    /// <summary>Gets a value indicating whether every string matches (the test can be skipped).</summary>
+    public bool MatchesEverything => this.kind == Kind.Noop;
+
     /// <summary>
     /// Creates a matcher for a pattern, consulting <see cref="JsonSchemaEvaluatorOptions.RegexProvider"/> (with the
     /// given pattern-table index) before constructing a regular expression for patterns that need one.
@@ -2369,14 +2372,20 @@ internal sealed class PropertyEntry
 
     /// <summary>When the child is a leaf whose only assertion is an <c>enum</c> of strings (with at most <c>type: string</c>), that set. Derived from the graph.</summary>
     public Utf8NameMap<object>? InlineEnum;
+
+    /// <summary>The child's string when it is a string-const leaf, compared in place of a call.</summary>
+    public byte[]? InlineConst;
 }
 
 /// <summary>
 /// What the strict object loop does with one known property, as a value: the seen bit, a type mask to test in place,
-/// a string set to test in place, or a child node to dispatch on (-1 for none).
+/// a string set or string const to test in place, or a child node to dispatch on (-1 for none).
 /// </summary>
-internal readonly struct StrictEntry(int seenBit, TypeMask mask, bool lexical, Utf8NameMap<object>? set, int child, bool nestedObject = false)
+internal readonly struct StrictEntry(int seenBit, TypeMask mask, bool lexical, Utf8NameMap<object>? set, int child, bool nestedObject = false, byte[]? constBytes = null)
 {
+    /// <summary>The child's string when it is a string-const leaf (compared in place of a call).</summary>
+    public readonly byte[]? ConstBytes = constBytes;
+
     /// <summary>Whether <see cref="Child"/> is a strict object the loop enters without its prologue when the value is an object.</summary>
     public readonly bool NestedObject = nestedObject;
 
@@ -2669,6 +2678,12 @@ internal enum NodePlan : byte
     /// branch it selects as children: the shape of a decision tree too large to fuse, without the general path's bookkeeping.
     /// </summary>
     Conditional,
+
+    /// <summary>
+    /// The node's own type, value, object or array keywords through their plan (<see cref="SchemaNode.ConditionalOwnPlan"/>),
+    /// then its in-place applicators as fast-mode children, instead of the general keyword-by-keyword path.
+    /// </summary>
+    Composite,
 }
 
 internal sealed class SchemaNode
@@ -2799,6 +2814,12 @@ internal sealed class SchemaNode
 
     /// <summary>The strict loop's per-property resolutions, parallel to <see cref="Properties"/>' values. Derived from the graph.</summary>
     public StrictEntry[]? StrictEntries;
+
+    /// <summary>For an object whose only name test is one pattern property: that pattern's in-place resolution, one element.</summary>
+    public StrictEntry[]? PatternMap;
+
+    /// <summary>For an array with prefix items: each position's in-place resolution, then the rest's as the last element.</summary>
+    public StrictEntry[]? PrefixEntries;
 
     /// <summary>The additional-properties resolution in the same form, for unknown names. Derived from the graph.</summary>
     public StrictEntry AdditionalEntry;

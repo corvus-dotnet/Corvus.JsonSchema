@@ -1033,6 +1033,26 @@ and per object, not any keyword, which is consistent with the profiles and puts 
 per-evaluation entry path first among the remaining optimisations. The shipping generated code is 3.9 behind Blaze on
 the same geometric mean.
 
+## Techniques from the TypeScript port (2026-09-29)
+
+The TypeScript port of this evaluator (`src-ts/corvus-json-schema`) emits specialised JavaScript per node and runs
+warm faster than this evaluator on 29 of the 37 corpora (Native AOT, same machine). Most of that is JavaScript's
+parsed-object instances and cross-node inlining, which do not transfer, but four of its code shapes had no
+counterpart here. Each was built behind a switch and measured with callgrind on the Native AOT harness (instructions
+in the validation loop only: the cold pass, ten fixed warm passes and the warm pass, so the counts are noise-free):
+
+| Change | Corpora lower (none higher) | Largest reductions | Geomean |
+|---|---|---|---|
+| Composite plan (own keywords through their plan, then the applicators) | 9 of 37 | cql2 and ansible-meta 9.1%, draft-04 6.4%, cspell 6.0%, ui5-manifest 3.5% | 0.988 |
+| Inline string consts | 3 | ansible-meta 1.9%, ui5 0.9% | 0.999 |
+| Single-pattern maps | 4 | deno 8.8%, stylecop 1.3%, ui5-manifest 0.8% | 0.997 |
+| Prefix items on the array-items plan | 3 | babelrc 21.3% | 0.993 |
+| All four | 15 | babelrc 21%, ansible-meta 11%, cql2 9%, deno 9%, ui5-manifest 5% | 0.978 |
+
+Wall clock with all four (nine interleaved runs, median warm): babelrc 0.82, cql2 0.87, cspell 0.91, deno and
+draft-04 0.92, ansible-meta 0.92, ui5-manifest 0.93, cmake-presets 0.94; the unaffected corpora within noise. A fifth
+change, `const` compared on the raw bytes inside `MatchesConst`, moved nothing (at most 0.2%) and was dropped.
+
 ## Open decisions
 
 * Resolved: the evaluator is part of `Corvus.Text.Json` (namespace `Corvus.Text.Json.RuntimeEvaluator`, sources under

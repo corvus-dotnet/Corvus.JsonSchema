@@ -133,9 +133,9 @@ public class TypeDispatchTests
             AssertAgree(union, unionLoaded, instance);
         }
 
-        // With another keyword alongside, the node keeps the general plan (the keyword still uses the union test).
+        // With another keyword alongside, the node takes the composite plan (its own keyword as a leaf, then the anyOf, which still uses the union test).
         using JsonSchemaEvaluator mixed = JsonSchemaEvaluator.Compile("""{"anyOf": [{"type": "string"}, {"type": "null"}], "minLength": 2}""");
-        Assert.AreEqual(NodePlan.General, mixed.Program.Nodes[mixed.RootNode].Plan);
+        Assert.AreEqual(NodePlan.Composite, mixed.Program.Nodes[mixed.RootNode].Plan);
         Assert.IsFalse(mixed.Evaluate("\"s\""));
         Assert.IsTrue(mixed.Evaluate("\"ss\""));
         Assert.IsTrue(mixed.Evaluate("null"));
