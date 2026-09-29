@@ -14,7 +14,8 @@
     "./runtime": {
       "types": "./dist/runtime.d.ts",
       "import": "./dist/runtime.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "bin": {
     "corvus-json-schema": "./dist/cli.js"

@@ -25,6 +25,10 @@ Copy this directory to `implementations/js-corvus-jsonschema` in a Bowtie checko
 bowtie suite -i localhost/js-corvus-jsonschema 2020-12 | bowtie summary --show failures
 ```
 
+Bowtie reads the suite from GitHub by default; to use a local checkout pass the directory instead, e.g.
+`bowtie suite -i localhost/js-corvus-jsonschema ../../JSON-Schema-Test-Suite/tests/draft2020-12`. Run that way
+(Bowtie 2026.7.4, 2026-09-29), the harness reports no failures, errors or skips for draft 4, 6, 7, 2019-09 and 2020-12.
+
 Until the package is published to npm the image builds it from this repository (`CORVUS_REF` build argument, default
 `main`). Once it is published, replace the clone-and-build step with
 `npm install @corvus-dotnet/json-schema@${IMPLEMENTATION_VERSION}` as the other JavaScript harnesses do.
