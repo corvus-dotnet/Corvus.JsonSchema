@@ -36,10 +36,99 @@ export interface CompiledSchema {
   readonly rootResource: number;
   readonly usesDynamicScope: boolean;
   readonly options: EvaluatorOptions;
+  /**
+   * What each node's annotations are computed from, indexed by node id, until {@link resolveAnnotations} fills
+   * {@link SchemaNode.annotations}. Only results collection needs annotations, so flag-mode compilation skips them.
+   */
+  annotationSources: Array<AnnotationSource | undefined> | undefined;
+}
+
+/** The inputs to a node's annotation keywords. */
+interface AnnotationSource {
+  readonly e: Record<string, unknown>;
+  readonly dialect: Dialect;
+  readonly vocab: Vocab;
+  readonly legacy: boolean;
+  readonly content: boolean;
+}
+
+/** Fills every node's annotations (once), for results collection. */
+export function resolveAnnotations(program: CompiledSchema): void {
+  const sources = program.annotationSources;
+  if (sources === undefined) return;
+  program.annotationSources = undefined;
+  for (let id = 0; id < sources.length; id++) {
+    const src = sources[id];
+    if (src !== undefined) program.nodes[id].annotations = collectAnnotations(src, program.options.assertFormat !== undefined);
+  }
+}
+
+/** The annotation keywords of a schema object, in the order SchemaCompiler.CompileNode records them. */
+function collectAnnotations(src: AnnotationSource, assertFormatSet: boolean): AnnotationEntry[] | undefined {
+  const { e, dialect, vocab, legacy, content } = src;
+  const metaData = legacy || (vocab & Vocab.MetaData) !== 0;
+  const formatAnnotate = legacy || (vocab & (Vocab.FormatAnnotation | Vocab.FormatAssertion)) !== 0 || assertFormatSet;
+  const out: AnnotationEntry[] = [];
+  const add = (keyword: string, stringsOnly = false): void => {
+    out.push({ keyword, value: e[keyword], stringsOnly });
+  };
+  for (const name of Object.keys(e)) {
+    switch (name) {
+      case 'title':
+      case 'description':
+      case 'default':
+        if (metaData) add(name);
+        break;
+      case 'examples':
+        if (metaData && dialect >= Dialect.Draft6) add(name);
+        break;
+      case 'readOnly':
+      case 'writeOnly':
+        if (metaData && dialect >= Dialect.Draft7) add(name);
+        break;
+      case 'deprecated':
+        if (metaData && dialect >= Dialect.Draft201909) add(name);
+        break;
+      case 'format':
+        if (typeof e.format === 'string' && formatAnnotate) add(name);
+        break;
+      default:
+        // Unknown keywords are collected as annotations from 2019-09 onwards.
+        if (dialect >= Dialect.Draft201909 && !KNOWN_KEYWORDS.has(name)) add(name);
+        break;
+    }
+  }
+  if (content && dialect >= Dialect.Draft7 && (e.contentEncoding !== undefined || e.contentMediaType !== undefined || e.contentSchema !== undefined)) {
+    if (e.contentEncoding !== undefined) add('contentEncoding', true);
+    if (e.contentMediaType !== undefined) {
+      add('contentMediaType', true);
+      // contentSchema is only meaningful alongside contentMediaType.
+      if (e.contentSchema !== undefined && dialect >= Dialect.Draft201909) add('contentSchema', true);
+    }
+  }
+  return out.length > 0 ? out : undefined;
 }
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+function num(v: unknown): number | undefined {
+  return typeof v === 'number' ? v : undefined;
+}
+
+/** Draft 4: exclusiveMaximum/exclusiveMinimum are booleans that make maximum/minimum exclusive. */
+function compileDraft4Bounds(node: SchemaNode, e: Record<string, unknown>): void {
+  const max = num(e.maximum);
+  const min = num(e.minimum);
+  if (max !== undefined) {
+    if (e.exclusiveMaximum === true) node.exclusiveMaximum = max;
+    else node.maximum = max;
+  }
+  if (min !== undefined) {
+    if (e.exclusiveMinimum === true) node.exclusiveMinimum = min;
+    else node.minimum = min;
+  }
 }
 
 function getInt(v: unknown, fallback: number): number {
@@ -73,6 +162,7 @@ export class SchemaCompiler {
   private readonly worklist: number[] = [];
   private worklistHead = 0;
   private readonly pendingDynamicRefs: PendingDynamicRef[] = [];
+  private readonly annotationSources: Array<AnnotationSource | undefined> = [];
   private entryNode = -1;
 
   private constructor(
@@ -101,6 +191,7 @@ export class SchemaCompiler {
       rootResource: compiler.nodes[compiler.entryNode].resourceId,
       usesDynamicScope,
       options,
+      annotationSources: compiler.annotationSources,
     };
   }
 
@@ -123,9 +214,10 @@ export class SchemaCompiler {
         const id = this.worklist[this.worklistHead++];
         this.compileNode(this.nodes[id], this.targets[id]);
       }
-      if (!this.expandDynamicRefs() && this.worklistHead === this.worklist.length) break;
+      if (this.pendingDynamicRefs.length === 0 || (!this.expandDynamicRefs() && this.worklistHead === this.worklist.length)) break;
     }
-    this.finalizeDynamicRefs();
+    // Most schemas have no dynamic reference: skip (and so never compile) the finalisation.
+    if (this.pendingDynamicRefs.length > 0) this.finalizeDynamicRefs();
   }
 
   private child(parent: SchemaTarget, value: unknown, relative: string): number {
@@ -211,19 +303,8 @@ export class SchemaCompiler {
       if (dialect >= Dialect.Draft6 && has('contains')) node.contains = this.child(target, e.contains, kw('contains'));
 
       // "dependencies" is honoured in every dialect: in 2019-09+ it is an optional compatibility keyword.
-      if (isObject(e.dependencies)) {
-        dependencies ??= [];
-        for (const name of Object.keys(e.dependencies)) {
-          const v = e.dependencies[name];
-          if (Array.isArray(v)) dependencies.push({ keyword: 'dependencies', name, required: v.filter((x): x is string => typeof x === 'string') });
-          else dependencies.push({ keyword: 'dependencies', name, schema: this.child(target, v, '/dependencies/' + escapePointerToken(name)) });
-        }
-      }
-      if (dialect >= Dialect.Draft201909 && isObject(e.dependentSchemas)) {
-        dependencies ??= [];
-        for (const name of Object.keys(e.dependentSchemas)) {
-          dependencies.push({ keyword: 'dependentSchemas', name, schema: this.child(target, e.dependentSchemas[name], '/dependentSchemas/' + escapePointerToken(name)) });
-        }
+      if (isObject(e.dependencies) || (dialect >= Dialect.Draft201909 && isObject(e.dependentSchemas))) {
+        dependencies = this.compileDependencySchemas(target, e, dialect);
       }
 
       // Array applicators.
@@ -231,16 +312,8 @@ export class SchemaCompiler {
         if (Array.isArray(e.prefixItems)) node.prefixItems = this.childArray(target, e.prefixItems, 'prefixItems');
         if (has('items') && !Array.isArray(e.items)) node.items = this.child(target, e.items, kw('items'));
       } else if (has('items')) {
-        if (Array.isArray(e.items)) {
-          node.prefixItems = this.childArray(target, e.items, 'items');
-          node.prefixKeyword = 'items';
-          if (has('additionalItems')) {
-            node.items = this.child(target, e.additionalItems, kw('additionalItems'));
-            node.itemsKeyword = 'additionalItems';
-          }
-        } else {
-          node.items = this.child(target, e.items, kw('items'));
-        }
+        if (Array.isArray(e.items)) this.compileItemsArray(node, target, e);
+        else node.items = this.child(target, e.items, kw('items'));
       }
       node.containsMarksEvaluated = dialect >= Dialect.Draft202012;
     }
@@ -279,18 +352,8 @@ export class SchemaCompiler {
       if (typeof e.pattern === 'string') node.pattern = e.pattern;
       if (typeof e.multipleOf === 'number') node.multipleOf = e.multipleOf;
 
-      const num = (v: unknown): number | undefined => (typeof v === 'number' ? v : undefined);
       if (dialect === Dialect.Draft4) {
-        const max = num(e.maximum);
-        const min = num(e.minimum);
-        if (max !== undefined) {
-          if (e.exclusiveMaximum === true) node.exclusiveMaximum = max;
-          else node.maximum = max;
-        }
-        if (min !== undefined) {
-          if (e.exclusiveMinimum === true) node.exclusiveMinimum = min;
-          else node.minimum = min;
-        }
+        compileDraft4Bounds(node, e);
       } else {
         node.maximum = num(e.maximum);
         node.minimum = num(e.minimum);
@@ -311,12 +374,7 @@ export class SchemaCompiler {
     }
 
     // Content keywords are asserted only in draft 7 (and annotations elsewhere).
-    if (content && dialect >= Dialect.Draft7 && (has('contentEncoding') || has('contentMediaType'))) {
-      const base64 = e.contentEncoding === 'base64';
-      const json = e.contentMediaType === 'application/json';
-      node.content = base64 ? (json ? ContentKind.Base64Json : ContentKind.Base64) : json ? ContentKind.Json : ContentKind.None;
-      node.assertContent = dialect === Dialect.Draft7 && this.options.assertContent && node.content !== ContentKind.None;
-    }
+    if (content && dialect >= Dialect.Draft7 && (has('contentEncoding') || has('contentMediaType'))) this.compileContent(node, e, dialect);
 
     if (dependencies !== undefined) {
       // In the order the three keywords appear in the schema, as SchemaCompiler.CompileNode meets them.
@@ -324,52 +382,43 @@ export class SchemaCompiler {
       dependencies.sort((a, b) => order.indexOf(a.keyword) - order.indexOf(b.keyword));
     }
     node.dependencies = dependencies;
-    node.annotations = this.collectAnnotations(e, dialect, vocab, legacy, content);
+    this.annotationSources[node.id] = { e, dialect, vocab, legacy, content };
   }
 
-  /** The annotation keywords of a schema object, in the order SchemaCompiler.CompileNode records them. */
-  private collectAnnotations(e: Record<string, unknown>, dialect: Dialect, vocab: Vocab, legacy: boolean, content: boolean): AnnotationEntry[] | undefined {
-    const metaData = legacy || (vocab & Vocab.MetaData) !== 0;
-    const formatAnnotate = legacy || (vocab & (Vocab.FormatAnnotation | Vocab.FormatAssertion)) !== 0 || this.options.assertFormat !== undefined;
-    const out: AnnotationEntry[] = [];
-    const add = (keyword: string, stringsOnly = false): void => {
-      out.push({ keyword, value: e[keyword], stringsOnly });
-    };
-    for (const name of Object.keys(e)) {
-      switch (name) {
-        case 'title':
-        case 'description':
-        case 'default':
-          if (metaData) add(name);
-          break;
-        case 'examples':
-          if (metaData && dialect >= Dialect.Draft6) add(name);
-          break;
-        case 'readOnly':
-        case 'writeOnly':
-          if (metaData && dialect >= Dialect.Draft7) add(name);
-          break;
-        case 'deprecated':
-          if (metaData && dialect >= Dialect.Draft201909) add(name);
-          break;
-        case 'format':
-          if (typeof e.format === 'string' && formatAnnotate) add(name);
-          break;
-        default:
-          // Unknown keywords are collected as annotations from 2019-09 onwards.
-          if (dialect >= Dialect.Draft201909 && !KNOWN_KEYWORDS.has(name)) add(name);
-          break;
+  // The less common keyword groups, out of compileNode so that schemas without them never compile them.
+
+  private compileDependencySchemas(target: SchemaTarget, e: Record<string, unknown>, dialect: Dialect): DependencyEntry[] {
+    const dependencies: DependencyEntry[] = [];
+    if (isObject(e.dependencies)) {
+      for (const name of Object.keys(e.dependencies)) {
+        const v = e.dependencies[name];
+        if (Array.isArray(v)) dependencies.push({ keyword: 'dependencies', name, required: v.filter((x): x is string => typeof x === 'string') });
+        else dependencies.push({ keyword: 'dependencies', name, schema: this.child(target, v, '/dependencies/' + escapePointerToken(name)) });
       }
     }
-    if (content && dialect >= Dialect.Draft7 && (e.contentEncoding !== undefined || e.contentMediaType !== undefined || e.contentSchema !== undefined)) {
-      if (e.contentEncoding !== undefined) add('contentEncoding', true);
-      if (e.contentMediaType !== undefined) {
-        add('contentMediaType', true);
-        // contentSchema is only meaningful alongside contentMediaType.
-        if (e.contentSchema !== undefined && dialect >= Dialect.Draft201909) add('contentSchema', true);
+    if (dialect >= Dialect.Draft201909 && isObject(e.dependentSchemas)) {
+      for (const name of Object.keys(e.dependentSchemas)) {
+        dependencies.push({ keyword: 'dependentSchemas', name, schema: this.child(target, e.dependentSchemas[name], '/dependentSchemas/' + escapePointerToken(name)) });
       }
     }
-    return out.length > 0 ? out : undefined;
+    return dependencies;
+  }
+
+  /** Array-form items (before 2020-12): positional schemas, then additionalItems for the rest. */
+  private compileItemsArray(node: SchemaNode, target: SchemaTarget, e: Record<string, unknown>): void {
+    node.prefixItems = this.childArray(target, e.items, 'items');
+    node.prefixKeyword = 'items';
+    if (Object.prototype.hasOwnProperty.call(e, 'additionalItems')) {
+      node.items = this.child(target, e.additionalItems, '/additionalItems');
+      node.itemsKeyword = 'additionalItems';
+    }
+  }
+
+  private compileContent(node: SchemaNode, e: Record<string, unknown>, dialect: Dialect): void {
+    const base64 = e.contentEncoding === 'base64';
+    const json = e.contentMediaType === 'application/json';
+    node.content = base64 ? (json ? ContentKind.Base64Json : ContentKind.Base64) : json ? ContentKind.Json : ContentKind.None;
+    node.assertContent = dialect === Dialect.Draft7 && this.options.assertContent && node.content !== ContentKind.None;
   }
 
   private compileType(node: SchemaNode, value: unknown): void {
@@ -518,18 +567,27 @@ export class SchemaCompiler {
   // Analyses
 
   private analyse(): void {
-    this.computeMarking();
-    this.computeInPlaceCycles();
-    this.computeDiscriminators();
+    // The in-place analyses only have work where some node has an in-place applicator, and discriminators only where
+    // some node has a oneOf/anyOf: small schemas often have neither, and then those analyses are never compiled.
+    let inPlace = false;
+    let branches = false;
+    for (const n of this.nodes) {
+      if (n.oneOf !== undefined || n.anyOf !== undefined) branches = inPlace = true;
+      else if (!inPlace && n.inPlaceChildren(true).length > 0) inPlace = true;
+      if (branches) break;
+    }
+    this.computeMarking(inPlace);
+    if (inPlace) this.computeInPlaceCycles();
+    if (branches) this.computeDiscriminators();
   }
 
   /** Which nodes can contribute evaluated-property/item annotations (ComputeMarking). */
-  private computeMarking(): void {
+  private computeMarking(propagate: boolean): void {
     for (const n of this.nodes) {
       n.marksProperties = n.properties !== undefined || n.patternProperties !== undefined || n.additionalProperties >= 0 || n.unevaluatedProperties >= 0;
       n.marksItems = n.prefixItems !== undefined || n.items >= 0 || (n.contains >= 0 && n.containsMarksEvaluated) || n.unevaluatedItems >= 0;
     }
-    let changed = true;
+    let changed = propagate;
     while (changed) {
       changed = false;
       for (const n of this.nodes) {

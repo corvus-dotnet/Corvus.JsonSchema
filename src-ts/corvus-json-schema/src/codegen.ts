@@ -390,135 +390,168 @@ export class CodeGenerator {
     const loop = e !== undefined || patterns.length > 0 || apNeedsLoop || pnNeedsLoop || needsCount || !unrollable;
     const dependencies = n.dependencies ?? [];
 
-    if (!loop) {
-      // Unrolled: look each declared name up directly (required first), as Blaze does for small objects.
-      const names = [...(props?.keys() ?? [])];
-      const requiredSet = new Set(required);
-      names.sort((a, b) => Number(requiredSet.has(b)) - Number(requiredSet.has(a)));
-      const v = this.scratch('p');
-      if (names.length > 0) out.push(`let ${v};`);
-      for (const name of names) {
-        const child = props!.get(name)!;
-        const check = this.call(child, v, n.resourceId);
-        const isRequired = requiredSet.has(name);
-        if (check === 'true') {
-          if (isRequired) out.push(`if (${getProperty('x', name)} === undefined) return false;`);
-        } else if (isRequired) {
-          out.push(`if ((${v} = ${getProperty('x', name)}) === undefined || !${wrap(check)}) return false;`);
-        } else {
-          out.push(`if ((${v} = ${getProperty('x', name)}) !== undefined && !${wrap(check)}) return false;`);
-        }
-      }
-      for (const name of required) {
-        if (!props?.has(name)) out.push(`if (${getProperty('x', name)} === undefined) return false;`);
-      }
-    } else if (e === undefined && propCount === 0 && patterns.length === 0 && !pnNeedsLoop && apNeedsLoop) {
-      // A map: only the values matter, and Object.values beats for-in over the per-object key shapes of maps.
-      const check = this.call(ap!.id, 'vs[i]', n.resourceId);
-      out.push('const vs = Object.values(x);');
-      if (n.minProperties > 0) out.push(`if (vs.length < ${n.minProperties}) return false;`);
-      if (n.maxProperties >= 0) out.push(`if (vs.length > ${n.maxProperties}) return false;`);
-      out.push(check === 'false' ? 'if (vs.length > 0) return false;' : `for (let i = 0; i < vs.length; i++) if (!${wrap(check)}) return false;`);
-      for (const name of required) out.push(`if (${getProperty('x', name)} === undefined) return false;`);
-    } else {
-      const names = [...(props?.keys() ?? [])];
-      // Required names that are also declared are counted as seen in the loop; the rest are looked up.
-      const requiredBits = new Map<string, number>();
-      for (const r of required) if (props?.has(r) && requiredBits.size < 30) requiredBits.set(r, requiredBits.size);
-      const seen = requiredBits.size > 0 ? this.scratch('seen') : undefined;
-      const count = needsCount ? this.scratch('n') : undefined;
-      if (seen) out.push(`let ${seen} = 0;`);
-      if (count) out.push(`let ${count} = 0;`);
-      out.push('for (const k in x) {');
-      const body: string[] = [];
-      if (count) body.push(`${count}++;`);
-      if (pnNeedsLoop) body.push(`if (!${wrap(this.call(pn!.id, 'k', n.resourceId))}) return false;`);
-      const needsValue = names.length > 0 || patterns.length > 0 || apNeedsLoop;
-      if (needsValue) body.push('const v = x[k];');
-      const mark = e !== undefined ? `${e}.add(k);` : undefined;
-      const hasTail = patterns.length > 0 || apNeedsLoop || (mark !== undefined && ap !== undefined);
-      const matched = patterns.length > 0 && (apNeedsLoop || (mark !== undefined && ap !== undefined)) ? this.scratch('m') : undefined;
-      if (matched) body.push(`let ${matched} = false;`);
-      if (names.length > 0) {
-        const caseBody = (name: string): string[] => {
-          const lines: string[] = [];
-          const check = this.call(props!.get(name)!, 'v', n.resourceId);
-          if (check !== 'true') lines.push(`if (!${wrap(check)}) return false;`);
-          const bit = requiredBits.get(name);
-          if (bit !== undefined) lines.push(`${seen} |= ${1 << bit};`);
-          if (mark) lines.push(mark);
-          if (matched) lines.push(`${matched} = true;`);
-          lines.push(hasTail && patterns.length > 0 ? 'break;' : 'continue;');
-          return lines;
-        };
-        if (names.length <= MAX_SWITCH_NAMES) {
-          body.push('switch (k) {');
-          for (const name of names) {
-            body.push(`  case ${lit(name)}:`);
-            body.push(...indent(caseBody(name), 2));
-          }
-          body.push('}');
-        } else if (DISPATCH_MAP) {
-          const map = this.constant(`R.nameMap(JSON.parse(${lit(JSON.stringify(names))}))`);
-          body.push(`switch (${map}.get(k)) {`);
-          names.forEach((name, i) => {
-            body.push(`  case ${i}:`);
-            body.push(...indent(caseBody(name), 2));
-          });
-          body.push('}');
-        } else {
-          // Length first, then the few names of that length (SchemaCompiler's Utf8NameMap: length, then bytes).
-          const byLength = new Map<number, string[]>();
-          for (const name of names) {
-            const list = byLength.get(name.length) ?? [];
-            list.push(name);
-            byLength.set(name.length, list);
-          }
-          body.push('switch (k.length) {');
-          for (const [length, group] of [...byLength].sort((a, b) => a[0] - b[0])) {
-            body.push(`  case ${length}:`);
-            group.forEach((name, i) => {
-              body.push(`    ${i === 0 ? 'if' : '} else if'} (k === ${lit(name)}) {`);
-              body.push(...indent(caseBody(name), 3));
-            });
-            body.push('    }');
-            body.push('    break;');
-          }
-          body.push('}');
-        }
-      }
-      for (const p of patterns) {
-        const check = this.call(p.node, 'v', n.resourceId);
-        const lines: string[] = [];
-        if (check !== 'true') lines.push(`if (!${wrap(check)}) return false;`);
-        if (mark) lines.push(mark);
-        if (matched) lines.push(`${matched} = true;`);
-        if (lines.length > 0) body.push(`if (${this.patternTest(p.pattern, 'k')}) {`, ...indent(lines, 1), '}');
-      }
-      if (ap !== undefined && (apNeedsLoop || mark)) {
-        const lines: string[] = [];
-        const check = this.call(ap.id, 'v', n.resourceId);
-        if (check !== 'true') lines.push(`if (!${wrap(check)}) return false;`);
-        if (mark) lines.push(mark);
-        if (lines.length > 0) {
-          if (matched) body.push(`if (!${matched}) {`, ...indent(lines, 1), '}');
-          else body.push(...lines);
-        }
-      }
-      out.push(...indent(body, 1));
-      out.push('}');
-      if (seen) {
-        const all = (1 << requiredBits.size) - 1;
-        out.push(`if (${seen} !== ${all}) return false;`);
-      }
-      for (const r of required) if (!requiredBits.has(r)) out.push(`if (${getProperty('x', r)} === undefined) return false;`);
-      if (count) {
-        if (n.minProperties > 0) out.push(`if (${count} < ${n.minProperties}) return false;`);
-        if (n.maxProperties >= 0) out.push(`if (${count} > ${n.maxProperties}) return false;`);
+    if (!loop) out.push(...this.objectProbe(n, props, required));
+    else if (e === undefined && propCount === 0 && patterns.length === 0 && !pnNeedsLoop && apNeedsLoop) out.push(...this.objectValues(n, ap!, required));
+    else out.push(...this.objectLoop(n, e, required, patterns, ap, pn, apNeedsLoop, pnNeedsLoop, needsCount));
+
+    if (dependencies.length > 0) out.push(...this.objectDependencies(n, e, flagLayout));
+    return out;
+  }
+
+  /** Unrolled: each declared name looked up directly (required first), as Blaze does for small objects. */
+  private objectProbe(n: SchemaNode, props: Map<string, number> | undefined, required: string[]): string[] {
+    const out: string[] = [];
+    const names = [...(props?.keys() ?? [])];
+    const requiredSet = new Set(required);
+    names.sort((a, b) => Number(requiredSet.has(b)) - Number(requiredSet.has(a)));
+    const v = this.scratch('p');
+    if (names.length > 0) out.push(`let ${v};`);
+    for (const name of names) {
+      const child = props!.get(name)!;
+      const check = this.call(child, v, n.resourceId);
+      const isRequired = requiredSet.has(name);
+      if (check === 'true') {
+        if (isRequired) out.push(`if (${getProperty('x', name)} === undefined) return false;`);
+      } else if (isRequired) {
+        out.push(`if ((${v} = ${getProperty('x', name)}) === undefined || !${wrap(check)}) return false;`);
+      } else {
+        out.push(`if ((${v} = ${getProperty('x', name)}) !== undefined && !${wrap(check)}) return false;`);
       }
     }
+    for (const name of required) {
+      if (!props?.has(name)) out.push(`if (${getProperty('x', name)} === undefined) return false;`);
+    }
+    return out;
+  }
 
-    // Dependencies: required lists always; schemas here only in the flag layout (tracking evaluates them in place).
+  /** A map: only the values matter, and Object.values beats for-in over the per-object key shapes of maps. */
+  private objectValues(n: SchemaNode, ap: SchemaNode, required: string[]): string[] {
+    const out: string[] = [];
+    const check = this.call(ap!.id, 'vs[i]', n.resourceId);
+    out.push('const vs = Object.values(x);');
+    if (n.minProperties > 0) out.push(`if (vs.length < ${n.minProperties}) return false;`);
+    if (n.maxProperties >= 0) out.push(`if (vs.length > ${n.maxProperties}) return false;`);
+    out.push(check === 'false' ? 'if (vs.length > 0) return false;' : `for (let i = 0; i < vs.length; i++) if (!${wrap(check)}) return false;`);
+    for (const name of required) out.push(`if (${getProperty('x', name)} === undefined) return false;`);
+    return out;
+  }
+
+  /** One pass over the instance's properties: names dispatched to their subschemas, then patterns and additional. */
+  private objectLoop(
+    n: SchemaNode,
+    e: string | undefined,
+    required: string[],
+    patterns: Array<{ pattern: string; node: number }>,
+    ap: SchemaNode | undefined,
+    pn: SchemaNode | undefined,
+    apNeedsLoop: boolean,
+    pnNeedsLoop: boolean,
+    needsCount: boolean,
+  ): string[] {
+    const out: string[] = [];
+    const props = n.properties;
+    const names = [...(props?.keys() ?? [])];
+    // Required names that are also declared are counted as seen in the loop; the rest are looked up.
+    const requiredBits = new Map<string, number>();
+    for (const r of required) if (props?.has(r) && requiredBits.size < 30) requiredBits.set(r, requiredBits.size);
+    const seen = requiredBits.size > 0 ? this.scratch('seen') : undefined;
+    const count = needsCount ? this.scratch('n') : undefined;
+    if (seen) out.push(`let ${seen} = 0;`);
+    if (count) out.push(`let ${count} = 0;`);
+    out.push('for (const k in x) {');
+    const body: string[] = [];
+    if (count) body.push(`${count}++;`);
+    if (pnNeedsLoop) body.push(`if (!${wrap(this.call(pn!.id, 'k', n.resourceId))}) return false;`);
+    const needsValue = names.length > 0 || patterns.length > 0 || apNeedsLoop;
+    if (needsValue) body.push('const v = x[k];');
+    const mark = e !== undefined ? `${e}.add(k);` : undefined;
+    const hasTail = patterns.length > 0 || apNeedsLoop || (mark !== undefined && ap !== undefined);
+    const matched = patterns.length > 0 && (apNeedsLoop || (mark !== undefined && ap !== undefined)) ? this.scratch('m') : undefined;
+    if (matched) body.push(`let ${matched} = false;`);
+    if (names.length > 0) {
+      const caseBody = (name: string): string[] => {
+        const lines: string[] = [];
+        const check = this.call(props!.get(name)!, 'v', n.resourceId);
+        if (check !== 'true') lines.push(`if (!${wrap(check)}) return false;`);
+        const bit = requiredBits.get(name);
+        if (bit !== undefined) lines.push(`${seen} |= ${1 << bit};`);
+        if (mark) lines.push(mark);
+        if (matched) lines.push(`${matched} = true;`);
+        lines.push(hasTail && patterns.length > 0 ? 'break;' : 'continue;');
+        return lines;
+      };
+      if (names.length <= MAX_SWITCH_NAMES) {
+        body.push('switch (k) {');
+        for (const name of names) {
+          body.push(`  case ${lit(name)}:`);
+          body.push(...indent(caseBody(name), 2));
+        }
+        body.push('}');
+      } else if (DISPATCH_MAP) {
+        const map = this.constant(`R.nameMap(JSON.parse(${lit(JSON.stringify(names))}))`);
+        body.push(`switch (${map}.get(k)) {`);
+        names.forEach((name, i) => {
+          body.push(`  case ${i}:`);
+          body.push(...indent(caseBody(name), 2));
+        });
+        body.push('}');
+      } else {
+        // Length first, then the few names of that length (SchemaCompiler's Utf8NameMap: length, then bytes).
+        const byLength = new Map<number, string[]>();
+        for (const name of names) {
+          const list = byLength.get(name.length) ?? [];
+          list.push(name);
+          byLength.set(name.length, list);
+        }
+        body.push('switch (k.length) {');
+        for (const [length, group] of [...byLength].sort((a, b) => a[0] - b[0])) {
+          body.push(`  case ${length}:`);
+          group.forEach((name, i) => {
+            body.push(`    ${i === 0 ? 'if' : '} else if'} (k === ${lit(name)}) {`);
+            body.push(...indent(caseBody(name), 3));
+          });
+          body.push('    }');
+          body.push('    break;');
+        }
+        body.push('}');
+      }
+    }
+    for (const p of patterns) {
+      const check = this.call(p.node, 'v', n.resourceId);
+      const lines: string[] = [];
+      if (check !== 'true') lines.push(`if (!${wrap(check)}) return false;`);
+      if (mark) lines.push(mark);
+      if (matched) lines.push(`${matched} = true;`);
+      if (lines.length > 0) body.push(`if (${this.patternTest(p.pattern, 'k')}) {`, ...indent(lines, 1), '}');
+    }
+    if (ap !== undefined && (apNeedsLoop || mark)) {
+      const lines: string[] = [];
+      const check = this.call(ap.id, 'v', n.resourceId);
+      if (check !== 'true') lines.push(`if (!${wrap(check)}) return false;`);
+      if (mark) lines.push(mark);
+      if (lines.length > 0) {
+        if (matched) body.push(`if (!${matched}) {`, ...indent(lines, 1), '}');
+        else body.push(...lines);
+      }
+    }
+    out.push(...indent(body, 1));
+    out.push('}');
+    if (seen) {
+      const all = (1 << requiredBits.size) - 1;
+      out.push(`if (${seen} !== ${all}) return false;`);
+    }
+    for (const r of required) if (!requiredBits.has(r)) out.push(`if (${getProperty('x', r)} === undefined) return false;`);
+    if (count) {
+      if (n.minProperties > 0) out.push(`if (${count} < ${n.minProperties}) return false;`);
+      if (n.maxProperties >= 0) out.push(`if (${count} > ${n.maxProperties}) return false;`);
+    }
+    return out;
+  }
+
+  /** Dependencies: required lists always; schemas here only in the flag layout (tracking evaluates them in place). */
+  private objectDependencies(n: SchemaNode, e: string | undefined, flagLayout: boolean): string[] {
+    const out: string[] = [];
+    const dependencies = n.dependencies ?? [];
     for (const d of dependencies) {
       const lines: string[] = [];
       for (const r of d.required ?? []) lines.push(`if (${getProperty('x', r)} === undefined) return false;`);
@@ -1046,7 +1079,7 @@ export class CodeGenerator {
 
     // Partition refinement: start from the literal parts alone, refine by the classes of the references until
     // the number of classes stops growing. Bisimilar functions (identical text up to equivalent callees) merge.
-    let classOf = new Int32Array(names.length);
+    let classOf: Int32Array = new Int32Array(names.length);
     let count: number;
     {
       const intern = new Map<string, number>();
@@ -1060,41 +1093,8 @@ export class CodeGenerator {
       }
       count = intern.size;
     }
-    if (count < names.length) {
-      // Only functions that still share a class can split; singletons keep theirs.
-      let size = new Int32Array(count);
-      for (let i = 0; i < names.length; i++) size[classOf[i]]++;
-      for (;;) {
-        const intern = new Map<string, number>();
-        const next = new Int32Array(names.length);
-        let nextCount = 0;
-        const singleton = new Int32Array(count).fill(-1);
-        for (let i = 0; i < names.length; i++) {
-          const cls = classOf[i];
-          if (size[cls] === 1) {
-            if (singleton[cls] < 0) singleton[cls] = nextCount++;
-            next[i] = singleton[cls];
-            continue;
-          }
-          const r = refs[i];
-          let sig = String(cls);
-          for (let j = 0; j < r.length; j++) sig += ',' + classOf[r[j]];
-          let c = intern.get(sig);
-          if (c === undefined) {
-            c = nextCount++;
-            intern.set(sig, c);
-          }
-          next[i] = c;
-        }
-        classOf = next;
-        if (nextCount === count) break;
-        count = nextCount;
-        size = new Int32Array(count);
-        for (let i = 0; i < names.length; i++) size[classOf[i]]++;
-      }
-    } else {
-      classOf = Int32Array.from(names, (_, i) => i);
-    }
+    // Only when some functions share text can any merge; the refinement is then compiled and run.
+    classOf = count < names.length ? refineClasses(classOf, count, refs) : Int32Array.from(names, (_, i) => i);
 
     const root = indexOf.get(rootName)!;
     const representative = new Int32Array(names.length).fill(-1);
@@ -1131,6 +1131,47 @@ export class CodeGenerator {
       }
     }
     return { declarations: out.join('\n'), root: names[canonical(root)] };
+  }
+}
+
+/**
+ * Partition refinement: from classes of equal literal text, refines by the classes of the references until the number
+ * of classes stops growing, so that bisimilar functions (identical text up to equivalent callees) share a class.
+ */
+function refineClasses(initial: Int32Array, initialCount: number, refs: Int32Array[]): Int32Array {
+  let classOf = initial;
+  let count = initialCount;
+  const n = classOf.length;
+  // Only functions that still share a class can split; singletons keep theirs.
+  let size = new Int32Array(count);
+  for (let i = 0; i < n; i++) size[classOf[i]]++;
+  for (;;) {
+    const intern = new Map<string, number>();
+    const next = new Int32Array(n);
+    let nextCount = 0;
+    const singleton = new Int32Array(count).fill(-1);
+    for (let i = 0; i < n; i++) {
+      const cls = classOf[i];
+      if (size[cls] === 1) {
+        if (singleton[cls] < 0) singleton[cls] = nextCount++;
+        next[i] = singleton[cls];
+        continue;
+      }
+      const r = refs[i];
+      let sig = String(cls);
+      for (let j = 0; j < r.length; j++) sig += ',' + classOf[r[j]];
+      let c = intern.get(sig);
+      if (c === undefined) {
+        c = nextCount++;
+        intern.set(sig, c);
+      }
+      next[i] = c;
+    }
+    classOf = next;
+    if (nextCount === count) return classOf;
+    count = nextCount;
+    size = new Int32Array(count);
+    for (let i = 0; i < n; i++) size[classOf[i]]++;
   }
 }
 
