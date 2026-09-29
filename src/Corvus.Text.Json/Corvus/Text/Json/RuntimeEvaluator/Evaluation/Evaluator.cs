@@ -1828,7 +1828,9 @@ internal static partial class Evaluator
     {
         if (dynamicRef.NodeByEntryResource is int[] byEntry)
         {
-            int resolved = byEntry[state.EntryResource];
+            // A table smaller than the resource count (a statically resolved reference, or entry points added
+            // after it was built) resolves to the fallback.
+            int resolved = (uint)state.EntryResource < (uint)byEntry.Length ? byEntry[state.EntryResource] : -1;
             return resolved >= 0 ? resolved : dynamicRef.FallbackNode;
         }
 
@@ -2853,7 +2855,7 @@ internal static partial class Evaluator
                     bool present = (seen[rb >> 6] & (1UL << (rb & 63))) != 0;
                     if (default(TMode).Collecting)
                     {
-                        state.Collector!.EvaluatedKeywordForProperty(present, dep.RequiredNames[r], present ? Providers.RequiredPresent : Providers.RequiredNotPresent, dep.RequiredNames[r], node.Dialect >= JsonSchemaDialect.Draft201909 ? "dependentRequired"u8 : "dependencies"u8);
+                        state.Collector!.EvaluatedKeywordForProperty(present, dep.RequiredNames[r], present ? Providers.RequiredPresent : Providers.RequiredNotPresent, dep.RequiredNames[r], dep.KeywordName);
                     }
 
                     if (!present)
@@ -2872,7 +2874,7 @@ internal static partial class Evaluator
                     bool m = EvalInPlaceChild<TMode, TAccess>(dep.Schema, doc, index, ref state, evaluated, seq);
                     if (default(TMode).Collecting)
                     {
-                        state.Collector!.EvaluatedKeywordForProperty(m, dep.NameText, JsonSchemaEvaluation.ExpectedMatchesDependentSchemaValue, dep.Name, node.Dialect >= JsonSchemaDialect.Draft201909 ? "dependentSchemas"u8 : "dependencies"u8);
+                        state.Collector!.EvaluatedKeywordForProperty(m, dep.NameText, JsonSchemaEvaluation.ExpectedMatchesDependentSchemaValue, dep.Name, dep.KeywordName);
                     }
 
                     if (!m)
@@ -2906,6 +2908,18 @@ internal static partial class Evaluator
         return (bits[i >> 6] & (1UL << (i & 63))) != 0;
     }
 
+    /// <summary>
+    /// The node collecting mode evaluates for a child: the end of its pure-<c>$ref</c> chain, as in flag mode, but
+    /// not the representative that <c>SchemaCompiler.CanonicalizeEquivalentNodes</c> chose for identical subschemas, so
+    /// that results and annotations report the child's own schema location.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int CollectingNode(in ChildRef child, SchemaNode[] nodes)
+    {
+        int elided = nodes[child.Node].ElidedTarget;
+        return elided >= 0 ? elided : child.Node;
+    }
+
     private static bool EvalProperty<TMode, TAccess>(in ChildRef child, IJsonDocument doc, int valueIndex, ref EvaluationState state, int parentSeq)
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
@@ -2917,6 +2931,7 @@ internal static partial class Evaluator
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
+        target = state.Nodes[CollectingNode(child, state.Nodes)];
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, doc, valueIndex, -1), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
         bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         collector.CommitChildContext(seq, ok, ok, JsonSchemaEvaluation.EvaluatedSubschema);
@@ -3261,6 +3276,7 @@ internal static partial class Evaluator
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
+        target = state.Nodes[CollectingNode(child, state.Nodes)];
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, doc, -1, itemIndex), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
         bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         collector.CommitChildContext(seq, ok, ok, JsonSchemaEvaluation.EvaluatedSubschema);
@@ -3278,6 +3294,7 @@ internal static partial class Evaluator
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
+        target = state.Nodes[CollectingNode(child, state.Nodes)];
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, doc, -1, itemIndex), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
         bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         if (ok)
@@ -3434,6 +3451,7 @@ internal static partial class Evaluator
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
+        target = state.Nodes[CollectingNode(child, state.Nodes)];
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, null, -1, -1), Providers.EvalPath, Providers.SchemaPath, null);
         bool ok = Eval<TMode, TAccess>(target, doc, index, ref state, bits, seq);
         if (ok || commitOnFailure)

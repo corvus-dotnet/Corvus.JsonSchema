@@ -918,7 +918,7 @@ internal sealed class SchemaCompiler
             if (c.IsPresent)
             {
                 c.FastNode = Resolve(c.Node, out int hops);
-                c.CollectingPath = hops == 0 ? null : CollectingPathFor(c.Path, hops);
+                c.CollectingPath = hops == 0 ? null : this.CollectingPathFor(c.Path, c.Node, hops);
             }
         }
 
@@ -997,13 +997,21 @@ internal sealed class SchemaCompiler
     }
 
     /// <summary>
-    /// The evaluation path segment for a child reached through elided pure <c>$ref</c> hops: the child's own
-    /// segment followed by one <c>$ref</c> per hop, matching the paths generated models report for reduced types.
+    /// The evaluation path segment for a child reached through elided pure reference hops: the child's own segment
+    /// followed by each hop's keyword (<c>$ref</c>, or a statically resolved <c>$dynamicRef</c> or
+    /// <c>$recursiveRef</c>), matching the paths generated models report for reduced types.
     /// </summary>
-    private static byte[] CollectingPathFor(byte[]? path, int hops)
+    private byte[] CollectingPathFor(byte[]? path, int node, int hops)
     {
-        ReadOnlySpan<byte> refSegment = "$ref"u8;
-        int length = (path?.Length ?? 0) + (hops * (refSegment.Length + 1)) - (path is null ? 1 : 0);
+        int length = path?.Length ?? 0;
+        int current = node;
+        for (int i = 0; i < hops; i++)
+        {
+            ChildRef hop = this.nodes[current].Ref;
+            length += hop.Path!.Length + (length > 0 ? 1 : 0);
+            current = hop.Node;
+        }
+
         byte[] result = new byte[length];
         int written = 0;
         if (path is not null)
@@ -1012,15 +1020,18 @@ internal sealed class SchemaCompiler
             written = path.Length;
         }
 
+        current = node;
         for (int i = 0; i < hops; i++)
         {
+            ChildRef hop = this.nodes[current].Ref;
             if (written > 0)
             {
                 result[written++] = (byte)'/';
             }
 
-            refSegment.CopyTo(result.AsSpan(written));
-            written += refSegment.Length;
+            hop.Path!.CopyTo(result, written);
+            written += hop.Path.Length;
+            current = hop.Node;
         }
 
         return result;
@@ -1512,9 +1523,7 @@ internal sealed class SchemaCompiler
             if (pending.Candidates.Count <= 1)
             {
                 // Only the initial target's resource defines the anchor: resolution is static.
-                node.Ref = new ChildRef(fallback, pending.PathSegment);
-                node.DynamicRef = null;
-                node.HasInPlaceApplicators = true;
+                SetStaticDynamicRef(node, fallback, pending.PathSegment);
                 continue;
             }
 
@@ -1526,9 +1535,7 @@ internal sealed class SchemaCompiler
             reachableFromEntry ??= this.ComputeReachabilityFromEntries();
             if (this.TryGetUniformEntryTarget(pending, reachableFromEntry, out int uniform))
             {
-                node.Ref = new ChildRef(uniform, pending.PathSegment);
-                node.DynamicRef = null;
-                node.HasInPlaceApplicators = true;
+                SetStaticDynamicRef(node, uniform, pending.PathSegment);
                 continue;
             }
 
@@ -2340,6 +2347,7 @@ internal sealed class SchemaCompiler
                                     NameText = System.Text.Encoding.UTF8.GetString(pn),
                                     SeenBit = SeenBit(pn),
                                     Schema = this.Child(target, p.Value, Segment("dependentSchemas", pn)),
+                                    Keyword = DependencyKeyword.DependentSchemas,
                                 });
                             }
 
@@ -2381,7 +2389,7 @@ internal sealed class SchemaCompiler
                             foreach (JsonProperty<JsonElement> p in value.EnumerateObject())
                             {
                                 ReadOnlySpan<byte> pn = p.Utf8NameSpan.Span;
-                                var dep = new DependencyEntry { Name = pn.ToArray(), NameText = System.Text.Encoding.UTF8.GetString(pn), SeenBit = SeenBit(pn) };
+                                var dep = new DependencyEntry { Name = pn.ToArray(), NameText = System.Text.Encoding.UTF8.GetString(pn), SeenBit = SeenBit(pn), Keyword = DependencyKeyword.DependentRequired };
                                 if (p.Value.ValueKind == JsonValueKind.Array)
                                 {
                                     this.FillRequiredDependency(dep, p.Value, SeenBitArray);
@@ -3271,7 +3279,41 @@ internal sealed class SchemaCompiler
             throw new JsonSchemaCompilationException($"Unable to resolve reference '{reference}' from '{target.Resource.Uri}'.");
         }
 
+        ChildRef sibling = node.Ref;
         node.Ref = new ChildRef(this.GetNode(resolved), Segment("$ref"));
+        node.HasInPlaceApplicators = true;
+        if (sibling.IsPresent)
+        {
+            // A statically resolved sibling $dynamicRef (or $recursiveRef) got here first: both apply.
+            SetStaticDynamicRef(node, sibling.Node, sibling.Path!);
+        }
+    }
+
+    /// <summary>
+    /// Applies a statically resolved <c>$dynamicRef</c> or <c>$recursiveRef</c>. It takes the node's
+    /// <see cref="SchemaNode.Ref"/> slot unless a sibling <c>$ref</c> holds it, in which case it becomes a dynamic
+    /// reference whose resolution is always its target, so that both apply.
+    /// </summary>
+    private static void SetStaticDynamicRef(SchemaNode node, int target, byte[] pathSegment)
+    {
+        if (node.Ref.IsPresent && node.Ref.Path is byte[] path && path.AsSpan().SequenceEqual("$ref"u8))
+        {
+            node.DynamicRef = new DynamicRefTarget
+            {
+                Anchor = string.Empty,
+                FallbackNode = target,
+                NodeByResource = [],
+                NodeByEntryResource = [],
+                PathSegment = pathSegment,
+                IsRecursive = pathSegment.AsSpan().SequenceEqual("$recursiveRef"u8),
+            };
+        }
+        else
+        {
+            node.Ref = new ChildRef(target, pathSegment);
+            node.DynamicRef = null;
+        }
+
         node.HasInPlaceApplicators = true;
     }
 
@@ -3302,8 +3344,7 @@ internal sealed class SchemaCompiler
 
         if (!dynamic)
         {
-            node.Ref = new ChildRef(this.GetNode(resolved), Segment(keyword));
-            node.HasInPlaceApplicators = true;
+            SetStaticDynamicRef(node, this.GetNode(resolved), Segment(keyword));
             return;
         }
 

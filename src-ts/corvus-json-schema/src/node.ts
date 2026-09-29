@@ -38,7 +38,7 @@ export interface PatternProperty {
 }
 
 export interface DependencyEntry {
-  /** The keyword the entry came from (C# reports 2019-09+ `dependencies` under the newer names). */
+  /** The keyword the entry came from, which names its result rows. */
   readonly keyword: 'dependencies' | 'dependentSchemas' | 'dependentRequired';
   readonly name: string;
   readonly required?: string[];

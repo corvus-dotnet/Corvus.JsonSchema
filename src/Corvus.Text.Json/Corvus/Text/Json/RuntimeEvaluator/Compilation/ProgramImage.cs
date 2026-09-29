@@ -32,13 +32,16 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 /// </para>
 /// <para>
 /// The format is private to this assembly version: the header carries a version number and a loader rejects any
-/// other version.
+/// other version, except that it still reads the previous version (whose dependencies carry no keyword).
 /// </para>
 /// </remarks>
 internal static class ProgramImage
 {
     private const uint Magic = 0x50534A43; // "CJSP" little-endian
-    private const int Version = 6;
+    private const int Version = 7;
+
+    // Version 6 images have no per-dependency keyword; it is inferred from the dialect.
+    private const int PreviousVersion = 6;
 
     /// <summary>Writes the program to an image.</summary>
     public static byte[] Write(CompiledSchema program)
@@ -116,7 +119,7 @@ internal static class ProgramImage
     public static CompiledSchema Read(ReadOnlyMemory<byte> image, JsonSchemaEvaluatorOptions options)
     {
         var r = new ImageReader(image.Span);
-        ReadHeader(ref r);
+        int version = ReadHeader(ref r);
         bool usesDynamicScope = r.ReadBool();
         int resourceCount = r.ReadInt();
         int rootNode = r.ReadInt();
@@ -154,7 +157,7 @@ internal static class ProgramImage
         var nodes = new SchemaNode[nodeCount];
         for (int i = 0; i < nodeCount; i++)
         {
-            nodes[i] = ReadNode(ref r, constants, patterns, matchers, options, nodes);
+            nodes[i] = ReadNode(ref r, version, constants, patterns, matchers, options, nodes);
         }
 
         // Fused plans are derived from the graph rather than stored; a node whose plan was fused when the image was
@@ -194,7 +197,7 @@ internal static class ProgramImage
     }
 #endif
 
-    private static void ReadHeader(ref ImageReader r)
+    private static int ReadHeader(ref ImageReader r)
     {
         if (r.ReadUInt32() != Magic)
         {
@@ -202,10 +205,12 @@ internal static class ProgramImage
         }
 
         int version = r.ReadInt();
-        if (version != Version)
+        if (version != Version && version != PreviousVersion)
         {
             throw new JsonSchemaCompilationException($"The program image is version {version}; this evaluator reads version {Version}.");
         }
+
+        return version;
     }
 
     private static string[] ReadPatternTable(ref ImageReader r)
@@ -426,6 +431,7 @@ internal static class ProgramImage
                 WriteInts(ref w, d.RequiredSeenBits);
                 WriteByteArrays(ref w, d.RequiredNames);
                 WriteChildRef(ref w, d.Schema);
+                w.WriteByte((byte)d.Keyword);
             }
             }
             else
@@ -544,7 +550,7 @@ internal static class ProgramImage
     }
 
 #if !STJ
-    private static SchemaNode ReadNode(ref ImageReader r, List<ConstantValue> constants, string[] patterns, PatternMatcher?[] matchers, JsonSchemaEvaluatorOptions options, SchemaNode[] nodes)
+    private static SchemaNode ReadNode(ref ImageReader r, int version, List<ConstantValue> constants, string[] patterns, PatternMatcher?[] matchers, JsonSchemaEvaluatorOptions options, SchemaNode[] nodes)
     {
         var n = new SchemaNode
         {
@@ -736,6 +742,10 @@ internal static class ProgramImage
                 d.RequiredSeenBits = ReadInts(ref r) ?? [];
                 d.RequiredNames = ReadByteArrays(ref r) ?? [];
                 d.Schema = ReadChildRef(ref r);
+                d.Keyword = version > PreviousVersion
+                    ? (DependencyKeyword)r.ReadByte()
+                    : n.Dialect < JsonSchemaDialect.Draft201909 ? DependencyKeyword.Dependencies
+                    : d.Schema.IsPresent ? DependencyKeyword.DependentSchemas : DependencyKeyword.DependentRequired;
                 dependencies[i] = d;
             }
 

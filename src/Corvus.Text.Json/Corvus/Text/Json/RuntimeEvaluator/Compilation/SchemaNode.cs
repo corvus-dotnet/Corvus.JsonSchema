@@ -2459,6 +2459,27 @@ internal sealed class DependencyEntry
     public byte[][] RequiredNames = [];
 
     public ChildRef Schema = ChildRef.None;
+
+    /// <summary>The keyword that declared the dependency: <c>dependencies</c>, <c>dependentRequired</c> or <c>dependentSchemas</c>.</summary>
+    public DependencyKeyword Keyword;
+
+    /// <summary>The keyword's name, for result paths.</summary>
+    public ReadOnlySpan<byte> KeywordName => this.Keyword switch
+    {
+        DependencyKeyword.DependentRequired => "dependentRequired"u8,
+        DependencyKeyword.DependentSchemas => "dependentSchemas"u8,
+        _ => "dependencies"u8,
+    };
+}
+
+/// <summary>
+/// The keyword that declared a <see cref="DependencyEntry"/>.
+/// </summary>
+internal enum DependencyKeyword : byte
+{
+    Dependencies,
+    DependentRequired,
+    DependentSchemas,
 }
 
 /// <summary>
