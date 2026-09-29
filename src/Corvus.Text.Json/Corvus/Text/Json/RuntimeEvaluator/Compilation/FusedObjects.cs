@@ -134,8 +134,11 @@ internal sealed class FusedAlternative
 }
 
 /// <summary>One child schema applying to a property on behalf of a branch; a node of -1 covers without evaluation.</summary>
-internal readonly struct FusedApplication(int contributor, int node, TypeMask inlineType, bool inlineLexical, Utf8NameMap<object>? inlineEnum = null, int[]? otherContributors = null)
+internal readonly struct FusedApplication(int contributor, int node, TypeMask inlineType, bool inlineLexical, Utf8NameMap<object>? inlineEnum = null, int[]? otherContributors = null, byte[]? inlineConst = null)
 {
+    /// <summary>The child's string when it is a string-const leaf (compared in place of a call).</summary>
+    public readonly byte[]? InlineConst = inlineConst;
+
     public readonly int Contributor = contributor;
     public readonly int Node = node;
 
@@ -690,7 +693,7 @@ internal static class FusedObjects
             }
 
             FusedApplication p = applications[primary];
-            merged.Add(others.Count == 0 ? p : new FusedApplication(p.Contributor, p.Node, p.InlineType, p.InlineLexical, p.InlineEnum, [.. others]));
+            merged.Add(others.Count == 0 ? p : new FusedApplication(p.Contributor, p.Node, p.InlineType, p.InlineLexical, p.InlineEnum, [.. others], p.InlineConst));
         }
 
         applications.Clear();
@@ -712,6 +715,11 @@ internal static class FusedObjects
         if (a.InlineEnum is not null || b.InlineEnum is not null)
         {
             return a.InlineEnum is not null && b.InlineEnum is not null && SameKeys(a.InlineEnum, b.InlineEnum);
+        }
+
+        if (a.InlineConst is not null || b.InlineConst is not null)
+        {
+            return a.InlineConst is not null && b.InlineConst is not null && a.InlineConst.AsSpan().SequenceEqual(b.InlineConst);
         }
 
         return a.Node == b.Node;
@@ -747,6 +755,11 @@ internal static class FusedObjects
         if (target.IsTypeOnly)
         {
             return new FusedApplication(contributor, child.FastNode, target.Type, target.Dialect == JsonSchemaDialect.Draft4);
+        }
+
+        if (SchemaCompiler.IsStringConstOnly(target))
+        {
+            return new FusedApplication(contributor, child.FastNode, TypeMask.None, false, null, null, target.ConstString);
         }
 
         return SchemaCompiler.IsStringEnumOnly(target)

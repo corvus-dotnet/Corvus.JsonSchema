@@ -485,6 +485,25 @@ internal sealed class SchemaCompiler
             node.StrictEntries = null;
             node.AdditionalEntry = new StrictEntry(-1, node.AdditionalInlineType, node.AdditionalInlineLexical, null, node.AdditionalFastNode, node.AdditionalFastNode >= 0 && IsNestedObject(nodes[node.AdditionalFastNode], nodes));
             node.ItemsNestedObject = node.Items.IsPresent && IsNestedObject(nodes[node.Items.FastNode], nodes);
+            node.PatternMap = null;
+            node.PrefixEntries = null;
+            if (!DisablePlans && node.PrefixItems is ChildRef[] prefixItems && !node.UniqueItems && !node.Contains.IsPresent)
+            {
+                var prefixEntries = new StrictEntry[prefixItems.Length + 1];
+                for (int i = 0; i < prefixItems.Length; i++)
+                {
+                    prefixEntries[i] = EntryFor(nodes, prefixItems[i], -1);
+                }
+
+                prefixEntries[^1] = node.Items.IsPresent ? EntryFor(nodes, node.Items, -1) : new StrictEntry(-1, TypeMask.None, false, null, -1);
+                node.PrefixEntries = prefixEntries;
+            }
+
+            if (!DisablePlans && node.Properties is null && node.Dependencies is null && node.PatternProperties is [PatternPropertyEntry only])
+            {
+                node.PatternMap = [EntryFor(nodes, only.Schema, -1)];
+            }
+
             if (node.Properties is null)
             {
                 continue;
@@ -502,6 +521,7 @@ internal sealed class SchemaCompiler
 
                 SchemaNode target = nodes[entry.Schema.FastNode];
                 entry.InlineEnum = null;
+                entry.InlineConst = null;
                 if (target.AlwaysTrue)
                 {
                     entry.InlineTrue = true;
@@ -515,6 +535,10 @@ internal sealed class SchemaCompiler
                 {
                     entry.InlineEnum = target.EnumStrings;
                 }
+                else if (IsStringConstOnly(target))
+                {
+                    entry.InlineConst = target.ConstString;
+                }
             }
 
             ReadOnlySpan<PropertyEntry> values = node.Properties.Values;
@@ -522,12 +546,39 @@ internal sealed class SchemaCompiler
             for (int i = 0; i < values.Length; i++)
             {
                 PropertyEntry e = values[i];
-                int child = e.Schema.IsPresent && !e.InlineTrue && e.InlineType == TypeMask.None && e.InlineEnum is null ? e.Schema.FastNode : -1;
-                strict[i] = new StrictEntry(e.SeenBit, e.InlineType, e.InlineLexical, e.InlineEnum, child, child >= 0 && IsNestedObject(nodes[child], nodes));
+                int child = e.Schema.IsPresent && !e.InlineTrue && e.InlineType == TypeMask.None && e.InlineEnum is null && e.InlineConst is null ? e.Schema.FastNode : -1;
+                strict[i] = new StrictEntry(e.SeenBit, e.InlineType, e.InlineLexical, e.InlineEnum, child, child >= 0 && IsNestedObject(nodes[child], nodes), e.InlineConst);
             }
 
             node.StrictEntries = strict;
         }
+    }
+
+    /// <summary>The in-place resolution for a child: <c>true</c>, a type test, a string set or const, or a child to dispatch on.</summary>
+    private static StrictEntry EntryFor(SchemaNode[] nodes, in ChildRef schema, int seenBit)
+    {
+        SchemaNode target = nodes[schema.FastNode];
+        if (target.AlwaysTrue)
+        {
+            return new StrictEntry(seenBit, TypeMask.None, false, null, -1);
+        }
+
+        if (target.IsTypeOnly)
+        {
+            return new StrictEntry(seenBit, target.Type, target.Dialect == JsonSchemaDialect.Draft4, null, -1);
+        }
+
+        if (IsStringEnumOnly(target))
+        {
+            return new StrictEntry(seenBit, TypeMask.None, false, target.EnumStrings, -1);
+        }
+
+        if (IsStringConstOnly(target))
+        {
+            return new StrictEntry(seenBit, TypeMask.None, false, null, -1, false, target.ConstString);
+        }
+
+        return new StrictEntry(seenBit, TypeMask.None, false, null, schema.FastNode, IsNestedObject(target, nodes));
     }
 
     /// <summary>
@@ -918,7 +969,7 @@ internal sealed class SchemaCompiler
             if (c.IsPresent)
             {
                 c.FastNode = Resolve(c.Node, out int hops);
-                c.CollectingPath = hops == 0 ? null : CollectingPathFor(c.Path, hops);
+                c.CollectingPath = hops == 0 ? null : this.CollectingPathFor(c.Path, c.Node, hops);
             }
         }
 
@@ -997,13 +1048,21 @@ internal sealed class SchemaCompiler
     }
 
     /// <summary>
-    /// The evaluation path segment for a child reached through elided pure <c>$ref</c> hops: the child's own
-    /// segment followed by one <c>$ref</c> per hop, matching the paths generated models report for reduced types.
+    /// The evaluation path segment for a child reached through elided pure reference hops: the child's own segment
+    /// followed by each hop's keyword (<c>$ref</c>, or a statically resolved <c>$dynamicRef</c> or
+    /// <c>$recursiveRef</c>), matching the paths generated models report for reduced types.
     /// </summary>
-    private static byte[] CollectingPathFor(byte[]? path, int hops)
+    private byte[] CollectingPathFor(byte[]? path, int node, int hops)
     {
-        ReadOnlySpan<byte> refSegment = "$ref"u8;
-        int length = (path?.Length ?? 0) + (hops * (refSegment.Length + 1)) - (path is null ? 1 : 0);
+        int length = path?.Length ?? 0;
+        int current = node;
+        for (int i = 0; i < hops; i++)
+        {
+            ChildRef hop = this.nodes[current].Ref;
+            length += hop.Path!.Length + (length > 0 ? 1 : 0);
+            current = hop.Node;
+        }
+
         byte[] result = new byte[length];
         int written = 0;
         if (path is not null)
@@ -1012,15 +1071,18 @@ internal sealed class SchemaCompiler
             written = path.Length;
         }
 
+        current = node;
         for (int i = 0; i < hops; i++)
         {
+            ChildRef hop = this.nodes[current].Ref;
             if (written > 0)
             {
                 result[written++] = (byte)'/';
             }
 
-            refSegment.CopyTo(result.AsSpan(written));
-            written += refSegment.Length;
+            hop.Path!.CopyTo(result, written);
+            written += hop.Path.Length;
+            current = hop.Node;
         }
 
         return result;
@@ -1512,9 +1574,7 @@ internal sealed class SchemaCompiler
             if (pending.Candidates.Count <= 1)
             {
                 // Only the initial target's resource defines the anchor: resolution is static.
-                node.Ref = new ChildRef(fallback, pending.PathSegment);
-                node.DynamicRef = null;
-                node.HasInPlaceApplicators = true;
+                SetStaticDynamicRef(node, fallback, pending.PathSegment);
                 continue;
             }
 
@@ -1526,9 +1586,7 @@ internal sealed class SchemaCompiler
             reachableFromEntry ??= this.ComputeReachabilityFromEntries();
             if (this.TryGetUniformEntryTarget(pending, reachableFromEntry, out int uniform))
             {
-                node.Ref = new ChildRef(uniform, pending.PathSegment);
-                node.DynamicRef = null;
-                node.HasInPlaceApplicators = true;
+                SetStaticDynamicRef(node, uniform, pending.PathSegment);
                 continue;
             }
 
@@ -2340,6 +2398,7 @@ internal sealed class SchemaCompiler
                                     NameText = System.Text.Encoding.UTF8.GetString(pn),
                                     SeenBit = SeenBit(pn),
                                     Schema = this.Child(target, p.Value, Segment("dependentSchemas", pn)),
+                                    Keyword = DependencyKeyword.DependentSchemas,
                                 });
                             }
 
@@ -2381,7 +2440,7 @@ internal sealed class SchemaCompiler
                             foreach (JsonProperty<JsonElement> p in value.EnumerateObject())
                             {
                                 ReadOnlySpan<byte> pn = p.Utf8NameSpan.Span;
-                                var dep = new DependencyEntry { Name = pn.ToArray(), NameText = System.Text.Encoding.UTF8.GetString(pn), SeenBit = SeenBit(pn) };
+                                var dep = new DependencyEntry { Name = pn.ToArray(), NameText = System.Text.Encoding.UTF8.GetString(pn), SeenBit = SeenBit(pn), Keyword = DependencyKeyword.DependentRequired };
                                 if (p.Value.ValueKind == JsonValueKind.Array)
                                 {
                                     this.FillRequiredDependency(dep, p.Value, SeenBitArray);
@@ -2852,6 +2911,12 @@ internal sealed class SchemaCompiler
             return NodePlan.DynamicRef;
         }
 
+        if (node.HasInPlaceApplicators && IsComposite(node, out NodePlan compositeOwn))
+        {
+            node.ConditionalOwnPlan = compositeOwn;
+            return NodePlan.Composite;
+        }
+
         if (node.HasInPlaceApplicators || !noUnevaluated || !noValueKeywords)
         {
             return NodePlan.General;
@@ -2866,7 +2931,7 @@ internal sealed class SchemaCompiler
             return IsStrictObject(node, nodes) ? NodePlan.StrictObject : NodePlan.Object;
         }
 
-        if (arrayKeywords && !objectKeywords && node.PrefixItems is null && !node.Contains.IsPresent)
+        if (arrayKeywords && !objectKeywords && (node.PrefixItems is null || node.PrefixEntries is not null) && !node.Contains.IsPresent)
         {
             return NodePlan.ArrayItems;
         }
@@ -2878,6 +2943,13 @@ internal sealed class SchemaCompiler
     internal static bool IsStringEnumOnly(SchemaNode node)
     {
         return node.IsLeaf && node.EnumAllStrings && node.EnumStrings is not null && !node.HasConst && !node.HasNumberKeywords && !node.HasStringKeywords
+            && (!node.HasType || node.Type == TypeMask.String) && !node.AlwaysTrue && !node.AlwaysFalse;
+    }
+
+    /// <summary>A leaf whose only assertion is a string <c>const</c>, with at most <c>type: string</c> alongside.</summary>
+    internal static bool IsStringConstOnly(SchemaNode node)
+    {
+        return node.IsLeaf && node.HasConst && node.ConstString is not null && node.Enum is null && !node.HasNumberKeywords && !node.HasStringKeywords
             && (!node.HasType || node.Type == TypeMask.String) && !node.AlwaysTrue && !node.AlwaysFalse;
     }
 
@@ -2937,6 +3009,50 @@ internal sealed class SchemaCompiler
             own = IsStrictObject(node, nodes) ? NodePlan.StrictObject : NodePlan.Object;
         }
         else if (node.HasType)
+        {
+            own = NodePlan.Leaf;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// A node with in-place applicators whose own keywords one plan can take (an object plan, the array-items plan,
+    /// or a leaf), with nothing that needs the general path's bookkeeping: no unevaluated keywords, no in-place
+    /// cycle, no fused plan. Gives the plan for the own keywords.
+    /// </summary>
+    internal static bool IsComposite(SchemaNode node, out NodePlan own)
+    {
+        own = NodePlan.AlwaysTrue;
+        if (DisablePlans || !node.HasInPlaceApplicators || node.AlwaysTrue || node.AlwaysFalse || node.InPlaceCycle || node.Fused is not null
+            || node.UnevaluatedProperties.IsPresent || node.UnevaluatedItems.IsPresent || node.PropertyNames.IsPresent)
+        {
+            return false;
+        }
+
+        bool valueKeywords = node.HasConst || node.Enum is not null || node.HasNumberKeywords || node.HasStringKeywords;
+        bool objectKeywords = LiveObjectKeywords(node);
+        bool arrayKeywords = LiveArrayKeywords(node);
+        if (objectKeywords)
+        {
+            if (arrayKeywords || valueKeywords || node.SeenBitCount > SchemaNode.InlineBitWords * 64)
+            {
+                return false;
+            }
+
+            own = node.PatternProperties is null && node.Dependencies is null && node.SeenBitCount <= 64
+                && (node.Properties is not null || node.AdditionalProperties.IsPresent) ? NodePlan.StrictObject : NodePlan.Object;
+        }
+        else if (arrayKeywords)
+        {
+            if (valueKeywords || (node.PrefixItems is not null && node.PrefixEntries is null) || node.Contains.IsPresent)
+            {
+                return false;
+            }
+
+            own = NodePlan.ArrayItems;
+        }
+        else if (node.HasType || valueKeywords)
         {
             own = NodePlan.Leaf;
         }
@@ -3271,7 +3387,41 @@ internal sealed class SchemaCompiler
             throw new JsonSchemaCompilationException($"Unable to resolve reference '{reference}' from '{target.Resource.Uri}'.");
         }
 
+        ChildRef sibling = node.Ref;
         node.Ref = new ChildRef(this.GetNode(resolved), Segment("$ref"));
+        node.HasInPlaceApplicators = true;
+        if (sibling.IsPresent)
+        {
+            // A statically resolved sibling $dynamicRef (or $recursiveRef) got here first: both apply.
+            SetStaticDynamicRef(node, sibling.Node, sibling.Path!);
+        }
+    }
+
+    /// <summary>
+    /// Applies a statically resolved <c>$dynamicRef</c> or <c>$recursiveRef</c>. It takes the node's
+    /// <see cref="SchemaNode.Ref"/> slot unless a sibling <c>$ref</c> holds it, in which case it becomes a dynamic
+    /// reference whose resolution is always its target, so that both apply.
+    /// </summary>
+    private static void SetStaticDynamicRef(SchemaNode node, int target, byte[] pathSegment)
+    {
+        if (node.Ref.IsPresent && node.Ref.Path is byte[] path && path.AsSpan().SequenceEqual("$ref"u8))
+        {
+            node.DynamicRef = new DynamicRefTarget
+            {
+                Anchor = string.Empty,
+                FallbackNode = target,
+                NodeByResource = [],
+                NodeByEntryResource = [],
+                PathSegment = pathSegment,
+                IsRecursive = pathSegment.AsSpan().SequenceEqual("$recursiveRef"u8),
+            };
+        }
+        else
+        {
+            node.Ref = new ChildRef(target, pathSegment);
+            node.DynamicRef = null;
+        }
+
         node.HasInPlaceApplicators = true;
     }
 
@@ -3302,8 +3452,7 @@ internal sealed class SchemaCompiler
 
         if (!dynamic)
         {
-            node.Ref = new ChildRef(this.GetNode(resolved), Segment(keyword));
-            node.HasInPlaceApplicators = true;
+            SetStaticDynamicRef(node, this.GetNode(resolved), Segment(keyword));
             return;
         }
 

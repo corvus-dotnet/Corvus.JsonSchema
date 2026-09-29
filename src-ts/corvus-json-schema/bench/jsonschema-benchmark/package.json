@@ -1,0 +1,8 @@
+{
+  "name": "jsonschema-benchmark-corvus-ts",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@corvus-dotnet/json-schema": "file:/corvus/src-ts/corvus-json-schema"
+  }
+}

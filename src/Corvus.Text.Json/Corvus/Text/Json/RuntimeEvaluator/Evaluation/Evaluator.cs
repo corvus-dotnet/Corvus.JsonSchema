@@ -526,6 +526,8 @@ internal static partial class Evaluator
                 return EvalConditionalPlan<TAccess>(target, doc, index, ref state);
             case NodePlan.TypeDispatch:
                 return EvalTypeDispatchPlan<TAccess>(target, doc, index, ref state);
+            case NodePlan.Composite:
+                return EvalCompositePlan<TAccess>(target, doc, index, ref state);
 
             case NodePlan.FusedObject:
                 return default(TAccess).TokenType(ref state, doc, index) == JsonTokenType.StartObject
@@ -589,6 +591,37 @@ internal static partial class Evaluator
             SchemaNode[] nodes = state.Nodes;
             ChildRef branch = EvalChildFast<TAccess>(nodes[node.If.FastNode], doc, index, ref state) ? node.Then : node.Else;
             ok = !branch.IsPresent || EvalChildFast<TAccess>(nodes[branch.FastNode], doc, index, ref state);
+        }
+
+        if (pushed)
+        {
+            state.ScopeDepth--;
+        }
+
+        return ok;
+    }
+
+    /// <summary>
+    /// <see cref="NodePlan.Composite"/>: the node's own keywords through their plan, then its in-place applicators as
+    /// fast-mode children (no evaluated bits: the plan is only chosen without unevaluated keywords).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static bool EvalCompositePlan<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        bool pushed = EnterScope(node, ref state);
+        bool ok = node.ConditionalOwnPlan switch
+        {
+            NodePlan.StrictObject => EvalStrictObjectPlan<TAccess>(node, doc, index, ref state),
+            NodePlan.Object => EvalObjectPlan<TAccess>(node, doc, index, ref state),
+            NodePlan.ArrayItems => EvalArrayItemsPlan<TAccess>(node, doc, index, ref state),
+            NodePlan.Leaf => EvalLeafFast<TAccess>(node, doc, index, ref state),
+            _ => true,
+        };
+
+        if (ok)
+        {
+            ok = EvalInPlace<FastMode, TAccess>(node, doc, index, ref state, default, 0);
         }
 
         if (pushed)
@@ -936,6 +969,11 @@ internal static partial class Evaluator
             return (tokenBits & (1 << (int)valueType)) != 0 && (!app.IntegerOnly || valueType != JsonTokenType.Number || IsInteger<TAccess>(ref state, doc, valueIndex, app.InlineLexical));
         }
 
+        if (app.InlineConst is byte[] constBytes)
+        {
+            return MatchesStringBytes<TAccess>(constBytes, valueType, ref state, doc, valueIndex);
+        }
+
         return app.InlineEnum is Utf8NameMap<object> allowed
             ? MatchesStringSet<TAccess>(allowed, valueType, ref state, doc, valueIndex)
             : EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state);
@@ -995,6 +1033,130 @@ internal static partial class Evaluator
         return true;
     }
 
+    /// <summary>
+    /// An object whose only name test is one pattern property: each name is matched (not at all for a pattern that
+    /// matches everything), then the value takes the pattern's resolution or the additional-properties one.
+    /// </summary>
+    private static bool EvalPatternMapLoop<TAccess>(SchemaNode node, in StrictEntry pattern, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        if (node.MinProperties >= 0 || node.MaxProperties >= 0)
+        {
+            int count = default(TAccess).Count(ref state, doc, index, JsonTokenType.StartObject);
+            if ((node.MinProperties >= 0 && count < node.MinProperties) || (node.MaxProperties >= 0 && count > node.MaxProperties))
+            {
+                return false;
+            }
+        }
+
+        int end = default(TAccess).EndIndex(ref state, doc, index);
+        if (!default(TAccess).RowsAvailable(ref state, doc, end))
+        {
+            ThrowMalformedRows();
+        }
+
+        PatternMatcher matcher = node.PatternProperties![0].Matcher;
+        bool matchAll = matcher.MatchesEverything;
+        bool hasAdditional = node.AdditionalProperties.IsPresent;
+        int valueIndex = index + (2 * RowSize);
+        while (valueIndex - RowSize < end)
+        {
+            JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
+            bool isMatch = matchAll || MatchesName<TAccess>(matcher, ref state, doc, valueIndex);
+            if (isMatch || hasAdditional)
+            {
+                if (!isMatch && node.AdditionalRejects)
+                {
+                    return false;
+                }
+
+                if (!ApplyEntry<TAccess>(in isMatch ? ref pattern : ref node.AdditionalEntry, valueType, doc, valueIndex, ref state))
+                {
+                    return false;
+                }
+            }
+
+            valueIndex = next + RowSize;
+        }
+
+        return true;
+    }
+
+    /// <summary>Prefix items: each position takes its entry's resolution, and the rest the last entry's (the items one).</summary>
+    private static bool EvalPrefixLoop<TAccess>(SchemaNode node, StrictEntry[] entries, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        bool pushed = EnterScope(node, ref state);
+        bool ok = true;
+        int end = default(TAccess).EndIndex(ref state, doc, index);
+        int last = entries.Length - 1;
+        int position = 0;
+        for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
+        {
+            JsonTokenType valueType = default(TAccess).TokenType(ref state, doc, valueIndex);
+            if (!ApplyEntry<TAccess>(in entries[position < last ? position : last], valueType, doc, valueIndex, ref state))
+            {
+                ok = false;
+                break;
+            }
+
+            position++;
+        }
+
+        if (pushed)
+        {
+            state.ScopeDepth--;
+        }
+
+        return ok;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool MatchesName<TAccess>(PatternMatcher matcher, ref EvaluationState state, IJsonDocument doc, int valueIndex)
+        where TAccess : struct, IDocumentAccess
+    {
+        ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
+        if (!escaped)
+        {
+            return matcher.IsMatch(raw);
+        }
+
+        using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
+        return matcher.IsMatch(name.Span);
+    }
+
+    /// <summary>A value against an in-place resolution: a token-type test, a string set or const, or the child.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool ApplyEntry<TAccess>(in StrictEntry entry, JsonTokenType valueType, IJsonDocument doc, int valueIndex, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        int tokenBits = entry.TokenBits;
+        if (tokenBits != 0)
+        {
+            return (tokenBits & (1 << (int)valueType)) != 0 && (!entry.IntegerOnly || valueType != JsonTokenType.Number || IsInteger<TAccess>(ref state, doc, valueIndex, entry.Lexical));
+        }
+
+        if (entry.Set is Utf8NameMap<object> set)
+        {
+            return MatchesStringSet<TAccess>(set, valueType, ref state, doc, valueIndex);
+        }
+
+        if (entry.ConstBytes is byte[] constBytes)
+        {
+            return MatchesStringBytes<TAccess>(constBytes, valueType, ref state, doc, valueIndex);
+        }
+
+        if (entry.Child < 0)
+        {
+            return true;
+        }
+
+        SchemaNode child = state.Nodes[entry.Child];
+        return entry.NestedObject && valueType == JsonTokenType.StartObject
+            ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
+            : EvalChildFast<TAccess>(child, doc, valueIndex, ref state);
+    }
+
     /// <summary>The name lookup for an escaped property name, out of line: escapes are rare and the loop is register-bound.</summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static int LookupEscapedName<TAccess>(Utf8NameMap<PropertyEntry> properties, ref EvaluationState state, IJsonDocument doc, int valueIndex)
@@ -1008,6 +1170,32 @@ internal static partial class Evaluator
     private static void ThrowMalformedRows()
     {
         throw new InvalidOperationException("The document's metadata rows end before the container's end row.");
+    }
+
+    /// <summary>Whether the value is the string <paramref name="expected"/>: raw bytes when unescaped, else unescaped.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static bool MatchesStringBytes<TAccess>(byte[] expected, JsonTokenType tokenType, ref EvaluationState state, IJsonDocument doc, int index)
+        where TAccess : struct, IDocumentAccess
+    {
+        if (tokenType != JsonTokenType.String)
+        {
+            return false;
+        }
+
+        int location = default(TAccess).RawValueLocation(ref state, doc, index, out int length);
+        if (location >= 0 && length >= 0)
+        {
+            return state.RawUtf8.Slice(location, length).SequenceEqual(expected);
+        }
+
+        ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index, out bool escaped);
+        if (!escaped)
+        {
+            return raw.SequenceEqual(expected);
+        }
+
+        using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
+        return s.Span.SequenceEqual(expected);
     }
 
     /// <summary>A string value's membership of a set (an <c>enum</c> of strings): the raw text when unescaped, else the unescaped text. Out of line: the loops that call it are inlined widely.</summary>
@@ -1490,6 +1678,13 @@ internal static partial class Evaluator
                     return false;
                 }
             }
+            else if (entry.ConstBytes is byte[] constBytes)
+            {
+                if (!MatchesStringBytes<TAccess>(constBytes, valueType, ref state, doc, valueIndex))
+                {
+                    return false;
+                }
+            }
             else if (entry.Child >= 0)
             {
                 SchemaNode child = state.Nodes[entry.Child];
@@ -1513,6 +1708,11 @@ internal static partial class Evaluator
         if (node.UnrolledProperties is PropertyEntry[] unrolled)
         {
             return EvalObjectUnrolled<TAccess>(node, unrolled, doc, index, ref state);
+        }
+
+        if (node.PatternMap is StrictEntry[] patternMap)
+        {
+            return EvalPatternMapLoop<TAccess>(node, in patternMap[0], doc, index, ref state);
         }
 
         if (node.MinProperties >= 0 || node.MaxProperties >= 0)
@@ -1662,6 +1862,13 @@ internal static partial class Evaluator
                     return false;
                 }
             }
+            else if (entry.ConstBytes is byte[] constBytes)
+            {
+                if (!MatchesStringBytes<TAccess>(constBytes, valueType, ref state, doc, valueIndex))
+                {
+                    return false;
+                }
+            }
             else if (entry.Child >= 0)
             {
                 SchemaNode child = state.Nodes[entry.Child];
@@ -1732,6 +1939,11 @@ internal static partial class Evaluator
             {
                 return false;
             }
+        }
+
+        if (node.PrefixEntries is StrictEntry[] prefixEntries)
+        {
+            return EvalPrefixLoop<TAccess>(node, prefixEntries, doc, index, ref state);
         }
 
         if (!node.Items.IsPresent && !node.UniqueItems)
@@ -1828,7 +2040,9 @@ internal static partial class Evaluator
     {
         if (dynamicRef.NodeByEntryResource is int[] byEntry)
         {
-            int resolved = byEntry[state.EntryResource];
+            // A table smaller than the resource count (a statically resolved reference, or entry points added
+            // after it was built) resolves to the fallback.
+            int resolved = (uint)state.EntryResource < (uint)byEntry.Length ? byEntry[state.EntryResource] : -1;
             return resolved >= 0 ? resolved : dynamicRef.FallbackNode;
         }
 
@@ -2853,7 +3067,7 @@ internal static partial class Evaluator
                     bool present = (seen[rb >> 6] & (1UL << (rb & 63))) != 0;
                     if (default(TMode).Collecting)
                     {
-                        state.Collector!.EvaluatedKeywordForProperty(present, dep.RequiredNames[r], present ? Providers.RequiredPresent : Providers.RequiredNotPresent, dep.RequiredNames[r], node.Dialect >= JsonSchemaDialect.Draft201909 ? "dependentRequired"u8 : "dependencies"u8);
+                        state.Collector!.EvaluatedKeywordForProperty(present, dep.RequiredNames[r], present ? Providers.RequiredPresent : Providers.RequiredNotPresent, dep.RequiredNames[r], dep.KeywordName);
                     }
 
                     if (!present)
@@ -2872,7 +3086,7 @@ internal static partial class Evaluator
                     bool m = EvalInPlaceChild<TMode, TAccess>(dep.Schema, doc, index, ref state, evaluated, seq);
                     if (default(TMode).Collecting)
                     {
-                        state.Collector!.EvaluatedKeywordForProperty(m, dep.NameText, JsonSchemaEvaluation.ExpectedMatchesDependentSchemaValue, dep.Name, node.Dialect >= JsonSchemaDialect.Draft201909 ? "dependentSchemas"u8 : "dependencies"u8);
+                        state.Collector!.EvaluatedKeywordForProperty(m, dep.NameText, JsonSchemaEvaluation.ExpectedMatchesDependentSchemaValue, dep.Name, dep.KeywordName);
                     }
 
                     if (!m)
@@ -2906,6 +3120,18 @@ internal static partial class Evaluator
         return (bits[i >> 6] & (1UL << (i & 63))) != 0;
     }
 
+    /// <summary>
+    /// The node collecting mode evaluates for a child: the end of its pure-<c>$ref</c> chain, as in flag mode, but
+    /// not the representative that <c>SchemaCompiler.CanonicalizeEquivalentNodes</c> chose for identical subschemas, so
+    /// that results and annotations report the child's own schema location.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int CollectingNode(in ChildRef child, SchemaNode[] nodes)
+    {
+        int elided = nodes[child.Node].ElidedTarget;
+        return elided >= 0 ? elided : child.Node;
+    }
+
     private static bool EvalProperty<TMode, TAccess>(in ChildRef child, IJsonDocument doc, int valueIndex, ref EvaluationState state, int parentSeq)
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
@@ -2917,6 +3143,7 @@ internal static partial class Evaluator
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
+        target = state.Nodes[CollectingNode(child, state.Nodes)];
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, doc, valueIndex, -1), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
         bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         collector.CommitChildContext(seq, ok, ok, JsonSchemaEvaluation.EvaluatedSubschema);
@@ -3261,6 +3488,7 @@ internal static partial class Evaluator
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
+        target = state.Nodes[CollectingNode(child, state.Nodes)];
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, doc, -1, itemIndex), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
         bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         collector.CommitChildContext(seq, ok, ok, JsonSchemaEvaluation.EvaluatedSubschema);
@@ -3278,6 +3506,7 @@ internal static partial class Evaluator
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
+        target = state.Nodes[CollectingNode(child, state.Nodes)];
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, doc, -1, itemIndex), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
         bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         if (ok)
@@ -3434,6 +3663,7 @@ internal static partial class Evaluator
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
+        target = state.Nodes[CollectingNode(child, state.Nodes)];
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, null, -1, -1), Providers.EvalPath, Providers.SchemaPath, null);
         bool ok = Eval<TMode, TAccess>(target, doc, index, ref state, bits, seq);
         if (ok || commitOnFailure)
