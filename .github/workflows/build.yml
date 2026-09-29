@@ -273,6 +273,7 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     concurrency: preview-${{ github.event.pull_request.number }}
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -285,9 +286,11 @@ jobs:
 
       - name: Ensure .nojekyll on gh-pages
         run: |
-          if ! git fetch origin gh-pages 2>/dev/null || \
+          # Only the tip of gh-pages is needed. Every preview commits the whole site to gh-pages, so
+          # its full history is large and a fetch without --depth takes longer on each deployment.
+          if ! git fetch --depth=1 origin gh-pages 2>/dev/null || \
              ! git show origin/gh-pages:.nojekyll >/dev/null 2>&1; then
-            git fetch origin gh-pages:gh-pages 2>/dev/null || git checkout --orphan gh-pages
+            git fetch --depth=1 origin gh-pages:gh-pages 2>/dev/null || git checkout --orphan gh-pages
             git worktree add /tmp/gh-pages gh-pages
             cd /tmp/gh-pages
             rm -f _config.yml
