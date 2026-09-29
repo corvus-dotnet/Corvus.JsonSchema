@@ -218,6 +218,10 @@ jobs:
         fetch-depth: 0
 
     - name: Install GitVersion
+      # Install from outside the checkout: the repo's global.json pins an SDK this job does not
+      # install, and 'dotnet tool install' would otherwise fail to resolve it. The installed tool
+      # runs on the .NET 6 runtime set up above, which global.json does not affect.
+      working-directory: ${{ runner.temp }}
       run: |
         dotnet tool install -g GitVersion.Tool --version 5.8.0
         echo "/github/home/.dotnet/tools" >> $GITHUB_PATH

@@ -1,5 +1,15 @@
 # Version History
 
+## V5.7.3
+
+V5.7.3 fixes the source generators failing to load in Visual Studio. There are no new features and no breaking changes. It is also the first published 5.7 release: a fault in the release workflow meant V5.7.0, V5.7.1 and V5.7.2 were never tagged or published, so this package includes all of their changes, listed below.
+
+### Bug fixes
+
+- **Releases are tagged and published again.** Since V5.7.0 moved the build to the .NET 11 SDK, the `auto_release` workflow failed to install GitVersion because `global.json` pins an SDK the tagging job does not install, so no release tag was created and nothing was published after V5.6.1. The tool is now installed from outside the checkout.
+
+- **The source generators ship `System.Text.Encodings.Web` with them.** `Corvus.Text.Json.SourceGenerator`, `Corvus.Text.Json.JsonLogic.SourceGenerator` and `Corvus.Json.SourceGenerator` bundle `System.Text.Json` 8.0 in the package's `analyzers` folder, but not `System.Text.Encodings.Web` 8.0, which it depends on. `dotnet build` on .NET finds that assembly in the shared framework. Visual Studio's compiler host does not supply it, so generation failed with `CRV1001: Could not load file or assembly 'System.Text.Encodings.Web, Version=8.0.0.0'`, and the missing generated members caused follow-on errors. The assembly is now packaged next to the generator. The workaround of referencing `System.Text.Encodings.Web` as an `Analyzer` item is no longer needed and can be removed. See [#978](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/978).
+
 ## V5.7.2
 
 V5.7.2 makes reading a string with an unpaired surrogate escape fail instead of returning its escaped text, and makes RFC 8785 canonicalization reject strings that cannot be written as UTF-8. There are no new features. Input that was silently mishandled now throws `InvalidOperationException`.
