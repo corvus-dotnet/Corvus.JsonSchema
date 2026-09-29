@@ -14,7 +14,7 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 
 ## Skills Inventory
 
-22 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
+23 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
 
 | Skill | Area |
 |-------|------|
@@ -22,6 +22,7 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 | `corvus-codegen` | Source generator and CLI code generation from JSON Schema |
 | `corvus-keywords-and-validation` | JSON Schema keywords, vocabularies, validation handlers |
 | `corvus-standalone-evaluator` | Evaluator-only generation, the schema evaluation program, annotation collection |
+| `corvus-typescript-evaluator` | The TypeScript port of the standalone evaluator (`src-ts/`), its suites, benchmarks and Bowtie harness |
 | `corvus-parsed-documents-and-memory` | Parsing, IJsonElement, memory model, UTF-8 transcoding |
 | `corvus-mutable-documents` | JsonWorkspace, JsonDocumentBuilder, mutation, JSON Patch |
 | `corvus-buffer-and-pooling` | stackalloc/ArrayPool/ThreadStatic pooling patterns |

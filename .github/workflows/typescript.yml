@@ -1,0 +1,50 @@
+name: typescript
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-ts/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/typescript.yml'
+  pull_request:
+    paths:
+    - 'src-ts/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/typescript.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and test @corvus-dotnet/json-schema
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src-ts/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+      - name: Checkout JSON-Schema-Test-Suite
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src-ts/corvus-json-schema/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Check the embedded metaschemas are current
+        run: |
+          npm run embed-metaschemas
+          git diff --exit-code -- src/metaschemas.ts
+      - name: Test
+        run: npm test
