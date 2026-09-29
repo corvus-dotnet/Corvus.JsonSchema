@@ -113,6 +113,37 @@ function isObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === 'object' && !Array.isArray(v);
 }
 
+/** Spreads marksProperties/marksItems from each marking node to its in-place parents (excluding `not` edges). */
+function propagateMarks(nodes: SchemaNode[], edges: number[][]): void {
+  const count = nodes.length;
+  const parents: number[][] = new Array(count);
+  for (let i = 0; i < count; i++) parents[i] = [];
+  for (let i = 0; i < count; i++) {
+    // `not` does not contribute annotations: nodes with one use the edges without it.
+    const children = nodes[i].not >= 0 ? nodes[i].inPlaceChildren(false) : edges[i];
+    for (const c of children) parents[c].push(i);
+  }
+  const work: number[] = [];
+  for (let i = 0; i < count; i++) if (nodes[i].marksProperties) work.push(i);
+  while (work.length > 0) {
+    for (const p of parents[work.pop()!]) {
+      if (!nodes[p].marksProperties) {
+        nodes[p].marksProperties = true;
+        work.push(p);
+      }
+    }
+  }
+  for (let i = 0; i < count; i++) if (nodes[i].marksItems) work.push(i);
+  while (work.length > 0) {
+    for (const p of parents[work.pop()!]) {
+      if (!nodes[p].marksItems) {
+        nodes[p].marksItems = true;
+        work.push(p);
+      }
+    }
+  }
+}
+
 function num(v: unknown): number | undefined {
   return typeof v === 'number' ? v : undefined;
 }
@@ -567,49 +598,40 @@ export class SchemaCompiler {
   // Analyses
 
   private analyse(): void {
-    // The in-place analyses only have work where some node has an in-place applicator, and discriminators only where
-    // some node has a oneOf/anyOf: small schemas often have neither, and then those analyses are never compiled.
+    // The in-place edges, built once for both analyses. Discriminators only where some node has a oneOf/anyOf: small
+    // schemas often have neither in-place applicators nor branches, and then those analyses are never compiled.
+    const count = this.nodes.length;
+    const edges: number[][] = new Array(count);
     let inPlace = false;
     let branches = false;
-    for (const n of this.nodes) {
-      if (n.oneOf !== undefined || n.anyOf !== undefined) branches = inPlace = true;
-      else if (!inPlace && n.inPlaceChildren(true).length > 0) inPlace = true;
-      if (branches) break;
+    for (let i = 0; i < count; i++) {
+      const n = this.nodes[i];
+      edges[i] = n.inPlaceChildren(true);
+      if (edges[i].length > 0) inPlace = true;
+      if (n.oneOf !== undefined || n.anyOf !== undefined) branches = true;
     }
-    this.computeMarking(inPlace);
-    if (inPlace) this.computeInPlaceCycles();
+    this.computeMarking(inPlace ? edges : undefined);
+    if (inPlace) this.computeInPlaceCycles(edges);
     if (branches) this.computeDiscriminators();
   }
 
-  /** Which nodes can contribute evaluated-property/item annotations (ComputeMarking). */
-  private computeMarking(propagate: boolean): void {
-    for (const n of this.nodes) {
+  /**
+   * Which nodes can contribute evaluated-property/item annotations (ComputeMarking): a node marks if it has the
+   * keywords itself or any in-place child (not counting `not`) marks, propagated from the marking nodes to their
+   * in-place parents.
+   */
+  private computeMarking(edges: number[][] | undefined): void {
+    const nodes = this.nodes;
+    for (const n of nodes) {
       n.marksProperties = n.properties !== undefined || n.patternProperties !== undefined || n.additionalProperties >= 0 || n.unevaluatedProperties >= 0;
       n.marksItems = n.prefixItems !== undefined || n.items >= 0 || (n.contains >= 0 && n.containsMarksEvaluated) || n.unevaluatedItems >= 0;
     }
-    let changed = propagate;
-    while (changed) {
-      changed = false;
-      for (const n of this.nodes) {
-        for (const c of n.inPlaceChildren(false)) {
-          const child = this.nodes[c];
-          if (child.marksProperties && !n.marksProperties) {
-            n.marksProperties = true;
-            changed = true;
-          }
-          if (child.marksItems && !n.marksItems) {
-            n.marksItems = true;
-            changed = true;
-          }
-        }
-      }
-    }
+    if (edges !== undefined) propagateMarks(nodes, edges);
   }
 
   /** Marks nodes on a cycle of in-place applicators (iterative Tarjan), the only ones that need a depth guard. */
-  private computeInPlaceCycles(): void {
+  private computeInPlaceCycles(edges: number[][]): void {
     const count = this.nodes.length;
-    const edges = this.nodes.map((n) => n.inPlaceChildren(true));
     const index = new Int32Array(count).fill(-1);
     const low = new Int32Array(count);
     const onStack = new Uint8Array(count);

@@ -83,7 +83,17 @@ function kindTest(kind: Kind, v: string): string {
 }
 
 /** A boolean expression that is true when `v` has one of the types in the mask. */
+const typeExprCache = new Map<string, string>();
+
+/** The type test for a mask, as an expression over `v` (memoised: the same few masks and names recur). */
 export function typeExpr(mask: TypeMask, v: string): string {
+  const key = mask + '|' + v;
+  let text = typeExprCache.get(key);
+  if (text === undefined) typeExprCache.set(key, (text = buildTypeExpr(mask, v)));
+  return text;
+}
+
+function buildTypeExpr(mask: TypeMask, v: string): string {
   const parts: string[] = [];
   if (mask & TypeMask.String) parts.push(`typeof ${v} === "string"`);
   if (mask & TypeMask.Number) parts.push(`typeof ${v} === "number"`);
