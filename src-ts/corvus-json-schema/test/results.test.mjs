@@ -223,3 +223,38 @@ test('a collector accumulates across evaluations', () => {
   v.evaluate({ age: 'x' }, c);
   assert.equal(c.resultCount, 2 * first);
 });
+
+test('dependencies reports under its own name in every dialect', () => {
+  const v = compile({ $schema: 'https://json-schema.org/draft/2020-12/schema', dependencies: { a: ['b'], c: { required: ['d'] } } });
+  const out = dump(v, { a: 1, c: 1 }, ResultsLevel.Detailed);
+  assert.equal(
+    out,
+    [
+      'fail|/dependencies/c|/dependencies/c||The value was expected to match the subschema.',
+      "fail|/dependencies/c/required|/dependencies/c/required|/d|Required property not present 'd'",
+      'fail||||The value was expected to match the subschema.',
+      "fail|/dependencies|/dependencies|/c|The value did match the schema applied because it contained the property 'c'",
+      "fail|/dependencies|/dependencies|/b|Required property not present 'b'",
+    ].join('\n'),
+  );
+  const modern = compile({ dependentRequired: { a: ['b'] }, dependentSchemas: { c: { required: ['d'] } } });
+  const rows = dump(modern, { a: 1, c: 1 }, ResultsLevel.Detailed);
+  assert.ok(rows.includes("fail|/dependentRequired|/dependentRequired|/b|Required property not present 'b'"));
+  assert.ok(rows.includes('fail|/dependentSchemas/c|/dependentSchemas/c||'));
+});
+
+test('a statically resolved $dynamicRef hop is named $dynamicRef in the evaluation path', () => {
+  const v = compile({
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    properties: { p: { $dynamicRef: '#/$defs/n' } },
+    $defs: { n: { type: 'integer' } },
+  });
+  assert.equal(
+    dump(v, { p: 'x' }, ResultsLevel.Detailed),
+    [
+      'fail|/$defs/n|/properties/p/$dynamicRef|/p|The value was expected to match the subschema.',
+      "fail|/$defs/n/type|/properties/p/$dynamicRef/type|/p|The value was expected to be of type 'integer'",
+      'fail||||The value was expected to match the subschema.',
+    ].join('\n'),
+  );
+});

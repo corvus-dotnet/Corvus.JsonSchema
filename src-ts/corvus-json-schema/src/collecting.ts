@@ -191,23 +191,25 @@ class CollectingEvaluator {
     return n.ref >= 0 ? n.ref : n.staticDynamicRef;
   }
 
-  /** Follows pure-$ref hops (at most 16; not across resources when a dynamic scope is kept). */
-  private resolve(id: number): { target: number; hops: number } {
+  /**
+   * Follows pure-reference hops (at most 16; not across resources when a dynamic scope is kept). `suffix` extends the
+   * evaluation path by the keyword of each hop: `/$ref`, or `/$dynamicRef`/`/$recursiveRef` for a statically resolved
+   * dynamic reference.
+   */
+  private resolve(id: number): { target: number; suffix: string } {
     let current = id;
     let hops = 0;
+    let suffix = '';
     while (hops < 16) {
       const n = this.nodes[current];
       const next = this.pureRefTarget(n);
       if (next < 0) break;
       if (this.program.usesDynamicScope && this.nodes[next].resourceId !== n.resourceId) break;
+      suffix += n.ref >= 0 ? '/$ref' : '/' + n.staticDynamicKeyword!;
       current = next;
       hops++;
     }
-    return { target: current, hops };
-  }
-
-  private segment(path: string, hops: number): string {
-    return hops === 0 ? path : path + '/$ref'.repeat(hops);
+    return { target: current, suffix };
   }
 
   private evalNode(id: number, x: unknown, bits: Bits | undefined): boolean {
@@ -352,8 +354,8 @@ class CollectingEvaluator {
 
   /** A child application at a new instance location (a property value or an array item). */
   private evalAt(childId: number, path: string, value: unknown, docSegment: string): boolean {
-    const { target, hops } = this.resolve(childId);
-    this.c.beginChildContext(this.segment(path, hops), this.nodes[target].pointer, docSegment);
+    const { target, suffix } = this.resolve(childId);
+    this.c.beginChildContext(path + suffix, this.nodes[target].pointer, docSegment);
     const ok = this.evalNode(target, value, undefined);
     this.c.commitChildContext(ok, ok, EVALUATED_SUBSCHEMA);
     return ok;
@@ -417,12 +419,12 @@ class CollectingEvaluator {
       }
     }
     if (n.dependencies !== undefined) {
-      const modern = n.dialect >= Dialect.Draft201909;
+      // Rows are reported under the keyword the schema used (dependencies, dependentRequired, dependentSchemas).
       for (const d of n.dependencies) {
         if (!has(d.name)) continue;
         for (const r of d.required ?? []) {
           const present = has(r);
-          c.evaluatedKeywordForProperty(present, () => `Required property ${present ? '' : 'not '}present '${r}'`, r, modern ? 'dependentRequired' : 'dependencies');
+          c.evaluatedKeywordForProperty(present, () => `Required property ${present ? '' : 'not '}present '${r}'`, r, d.keyword);
           ok &&= present;
         }
         if (d.schema !== undefined) {
@@ -431,7 +433,7 @@ class CollectingEvaluator {
             m,
             () => `The value did match the schema applied because it contained the property '${d.name}'`,
             d.name,
-            modern ? 'dependentSchemas' : 'dependencies',
+            d.keyword,
           );
           ok &&= m;
         }
@@ -480,8 +482,8 @@ class CollectingEvaluator {
         ok = this.evalAt(n.items, n.itemsKeyword, x[i], String(i)) && ok;
       }
       if (n.contains >= 0) {
-        const { target, hops } = this.resolve(n.contains);
-        c.beginChildContext(this.segment('contains', hops), this.nodes[target].pointer, String(i));
+        const { target, suffix } = this.resolve(n.contains);
+        c.beginChildContext('contains' + suffix, this.nodes[target].pointer, String(i));
         if (this.evalNode(target, x[i], undefined)) {
           c.commitChildContext(true, true, EVALUATED_SUBSCHEMA);
           count++;
@@ -559,7 +561,7 @@ class CollectingEvaluator {
     commitOnFailure: boolean,
     elide = true,
   ): { ok: boolean; scratch: Bits | undefined } {
-    const { target, hops } = elide ? this.resolve(childId) : { target: childId, hops: 0 };
+    const { target, suffix } = elide ? this.resolve(childId) : { target: childId, suffix: '' };
     const scratch = bits !== undefined && this.canMark(childId, x) ? this.scratchFor(x) : undefined;
     const guarded = this.nodes[target].inPlaceCycle;
     if (guarded && ++this.depth > this.program.maxDepth) {
@@ -567,7 +569,7 @@ class CollectingEvaluator {
       throw new SchemaEvaluationDepthError();
     }
     try {
-      this.c.beginChildContext(this.segment(path, hops), this.nodes[target].pointer, undefined);
+      this.c.beginChildContext(path + suffix, this.nodes[target].pointer, undefined);
       const ok = this.evalNode(target, x, scratch);
       if (ok || commitOnFailure) this.c.commitChildContext(ok, ok, EVALUATED_SUBSCHEMA);
       else this.c.popChildContext();
@@ -603,7 +605,7 @@ class CollectingEvaluator {
     }
     if (n.dynamicRef !== undefined) {
       const keyword = n.dynamicRef.isRecursive ? '$recursiveRef' : '$dynamicRef';
-      // The resolved target is elided, with no $ref hops in the path.
+      // The resolved target is elided, with no hops in the path.
       const target = this.resolve(this.resolveDynamic(n)).target;
       const m = this.evalInPlaceChild(target, keyword, x, bits, true, false).ok;
       c.evaluatedKeyword(m, m ? MATCHED_ALL : DID_NOT_MATCH_ALL, keyword);

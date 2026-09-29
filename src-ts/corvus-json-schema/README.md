@@ -197,10 +197,14 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
   - Numbers in messages are printed from JavaScript numbers (`1e2` reads `100`), and annotation values are the
     values re-serialised (`JSON.stringify`), not the schema's source text, because schemas arrive as parsed values.
   - Instance properties are visited in JavaScript's key order, which puts integer-like keys first.
-  - Two C# behaviours are deliberately not reproduced: a subschema that is textually identical to an earlier one
-    reports its own schema location (the C# evaluator reports the first twin's, a side effect of its node
-    canonicalisation), and a static `$dynamicRef` next to a `$ref` evaluates both (the C# compiler keeps only the
-    `$dynamicRef`).
+  - Four C# behaviours are deliberately not reproduced (they are bugs there):
+    - a subschema that is textually identical to an earlier one reports its own schema location (the C# evaluator
+      reports the first twin's, a side effect of its node canonicalisation);
+    - a static `$dynamicRef` next to a `$ref` evaluates both (the C# compiler keeps only the `$dynamicRef`);
+    - `dependencies` rows are reported under `dependencies` in every dialect (C# reports them as
+      `dependentRequired`/`dependentSchemas` from 2019-09);
+    - an elided statically resolved `$dynamicRef`/`$recursiveRef` hop adds its own keyword to the evaluation path
+      (C# adds `/$ref`).
 - **Numbers are JavaScript numbers.** Instances come from `JSON.parse`, so integers beyond 2^53 and long decimals have
   already lost precision before validation (as in every JavaScript validator); `multipleOf` with a fractional
   divisor is computed exactly on the decimal forms of the doubles.
