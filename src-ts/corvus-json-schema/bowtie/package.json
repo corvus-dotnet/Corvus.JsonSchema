@@ -1,0 +1,8 @@
+{
+  "name": "bowtie-corvus-jsonschema",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@corvus-dotnet/json-schema": "file:/corvus/src-ts/corvus-json-schema"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@corvus-dotnet/json-schema",
+  "version": "0.1.0",
+  "description": "A high-performance JSON Schema evaluator (draft 4 to 2020-12) that compiles schemas to specialised JavaScript, ported from the Corvus.Text.Json V5 runtime evaluator.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js"
+    }
+  },
+  "bin": {
+    "corvus-json-schema": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "embed-metaschemas": "node scripts/embed-metaschemas.mjs",
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs && node test/suite.mjs && node test/suite.mjs --module",
+    "suite": "npm run build && node test/suite.mjs",
+    "bench": "npm run build && node bench/corpora.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/corvus-dotnet/Corvus.JsonSchema.git",
+    "directory": "src-ts/corvus-json-schema"
+  }
+}
