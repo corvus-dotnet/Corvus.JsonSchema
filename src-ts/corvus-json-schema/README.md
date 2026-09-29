@@ -125,51 +125,56 @@ harness protocol (`bench/jsonschema-benchmark/main.mjs`), each implementation in
 runs, on the same machine. See [bench/README.md](bench/README.md) for how to reproduce.
 
 Node.js 22.22, Intel(R) Xeon(R) Processor @ 2.10GHz, jsu 0.9.20 (json-model compiler 2.0.62), 2026-09-29. "Warm" is one pass over all
-instances after warm-up, "cold" the first pass after compilation, "compile" the schema compilation (jsu-js compiles
-in a separate Python process, about 0.6 s per schema, so its compile column is omitted).
+instances after warm-up, "cold" the first pass after compilation, "compile" the schema compilation. jsu-js's compile
+time is its `jsu-compile` run (a Python process that generates the JavaScript), timed as the benchmark's jsu-js
+implementation times it, so it includes the Python start-up.
 
-| Corpus | Instances | Corvus TS warm | jsu-js warm | Corvus / jsu | Corvus TS cold | jsu-js cold | Corvus TS compile |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| ansible-meta | 333 | 53.9 µs | 293.8 µs | 0.18 | 1.40 ms | 4.74 ms | 19.68 ms |
-| aws-cdk | 483 | 13.2 µs | 61.5 µs | 0.21 | 314.9 µs | 403.2 µs | 7.70 ms |
-| babelrc | 794 | 61.6 µs | 313.3 µs | 0.20 | 793.2 µs | 3.52 ms | 8.88 ms |
-| clang-format | 133 | 41.4 µs | 305.4 µs | 0.14 | 662.7 µs | 3.05 ms | 15.26 ms |
-| cmake-presets | 967 | 2.90 ms | 12.42 ms | 0.23 | 18.26 ms | 47.33 ms | 29.57 ms |
-| code-climate | 2484 | 196.6 µs | 589.0 µs | 0.33 | 1.28 ms | 1.68 ms | 7.10 ms |
-| cql2 | 109 | 38.1 µs | 48.0 µs | 0.79 | 1.19 ms | 2.54 ms | 19.13 ms |
-| cspell | 981 | 348.2 µs | 990.3 µs | 0.35 | 2.72 ms | 9.93 ms | 20.58 ms |
-| cypress | 981 | 150.6 µs | 544.0 µs | 0.28 | 1.13 ms | 4.06 ms | 9.45 ms |
-| deno | 987 | 340.3 µs | 1.82 ms | 0.19 | 3.41 ms | 7.01 ms | 12.20 ms |
-| dependabot | 967 | 185.7 µs | 780.8 µs | 0.24 | 1.79 ms | 2.34 ms | 9.60 ms |
-| draft-04 | 563 | 4.85 ms | 25.20 ms | 0.19 | 19.44 ms | 59.24 ms | 10.03 ms |
-| fabric-mod | 911 | 371.4 µs | 1.58 ms | 0.24 | 3.26 ms | 11.42 ms | 11.49 ms |
-| geojson | 500 | 4.27 ms | 6.00 ms | 0.71 | 16.62 ms | 37.65 ms | 23.65 ms |
-| gitpod-configuration | 986 | 128.7 µs | 957.5 µs | 0.13 | 1.40 ms | 6.28 ms | 11.14 ms |
-| helm-chart-lock | 3888 | 404.3 µs | 833.1 µs | 0.49 | 2.58 ms | 2.97 ms | 7.48 ms |
-| importmap | 964 | 349.1 µs | 969.8 µs | 0.36 | 1.29 ms | 6.03 ms | 5.75 ms |
-| jasmine | 980 | 53.6 µs | 212.9 µs | 0.25 | 915.5 µs | 844.6 µs | 7.39 ms |
-| jsconfig | 981 | 262.3 µs | 732.6 µs | 0.36 | 3.48 ms | 7.19 ms | 16.47 ms |
-| jshintrc | 966 | 1.18 ms | 1.99 ms | 0.59 | 3.70 ms | 8.78 ms | 7.66 ms |
-| krakend | 47 | 109.4 µs | 466.0 µs | 0.23 | 6.32 ms | 9.98 ms | 42.44 ms |
-| lazygit | 280 | 61.6 µs | 491.3 µs | 0.13 | 1.81 ms | 7.31 ms | 18.77 ms |
-| lerna | 985 | 123.4 µs | 618.1 µs | 0.20 | 1.00 ms | 1.53 ms | 7.60 ms |
-| nest-cli | 1025 | 140.4 µs | 863.0 µs | 0.16 | 1.34 ms | 4.95 ms | 11.65 ms |
-| omnisharp | 987 | 107.6 µs | 1.11 ms | 0.10 | 1.70 ms | 8.51 ms | 11.10 ms |
-| openapi | 107 | 8.11 ms | 17.78 ms | 0.46 | 30.53 ms | 69.91 ms | 60.49 ms |
-| pre-commit-hooks | 985 | 191.0 µs | 1.32 ms | 0.14 | 1.88 ms | 8.63 ms | 7.62 ms |
-| pulumi | 3807 | 358.2 µs | 2.62 ms | 0.14 | 2.64 ms | 6.27 ms | 12.00 ms |
-| semantic-release | 794 | 58.1 µs | 243.2 µs | 0.24 | 824.9 µs | 2.38 ms | 8.07 ms |
-| stale | 961 | 149.8 µs | 320.6 µs | 0.47 | 1.08 ms | 1.14 ms | 6.97 ms |
-| stylecop | 983 | 156.4 µs | 1.04 ms | 0.15 | 2.11 ms | 7.75 ms | 10.53 ms |
-| tmuxinator | 382 | 48.2 µs | 234.3 µs | 0.21 | 697.2 µs | 2.31 ms | 9.22 ms |
-| ui5 | 942 | 230.4 µs | 1.42 ms | 0.16 | 4.13 ms | 16.44 ms | 30.77 ms |
-| ui5-manifest | 611 | 1.52 ms | 5.48 ms | 0.28 | 21.05 ms | 30.92 ms | 83.64 ms |
-| unreal-engine-uproject | 859 | 674.9 µs | 4.89 ms | 0.14 | 6.22 ms | 17.63 ms | 9.99 ms |
-| vercel | 710 | 129.0 µs | 1.84 ms | 0.07 | 1.95 ms | 8.86 ms | 18.95 ms |
-| yamllint | 966 | 8.6 µs | 65.4 µs | 0.13 | 209.2 µs | 1.19 ms | 5.31 ms |
+| Corpus | Instances | Corvus TS warm | jsu-js warm | Corvus / jsu | Corvus TS cold | jsu-js cold | Corvus / jsu | Corvus TS compile | jsu-js compile | Corvus / jsu |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| ansible-meta | 333 | 53.9 µs | 293.8 µs | 0.18 | 1.40 ms | 4.74 ms | 0.29 | 19.68 ms | 693.50 ms | 0.03 |
+| aws-cdk | 483 | 13.2 µs | 61.5 µs | 0.21 | 314.9 µs | 403.2 µs | 0.78 | 7.70 ms | 375.76 ms | 0.02 |
+| babelrc | 794 | 61.6 µs | 313.3 µs | 0.20 | 793.2 µs | 3.52 ms | 0.23 | 8.88 ms | 400.27 ms | 0.02 |
+| clang-format | 133 | 41.4 µs | 305.4 µs | 0.14 | 662.7 µs | 3.05 ms | 0.22 | 15.26 ms | 502.63 ms | 0.03 |
+| cmake-presets | 967 | 2.90 ms | 12.42 ms | 0.23 | 18.26 ms | 47.33 ms | 0.39 | 29.57 ms | 968.51 ms | 0.03 |
+| code-climate | 2484 | 196.6 µs | 589.0 µs | 0.33 | 1.28 ms | 1.68 ms | 0.76 | 7.10 ms | 378.74 ms | 0.02 |
+| cql2 | 109 | 38.1 µs | 48.0 µs | 0.79 | 1.19 ms | 2.54 ms | 0.47 | 19.13 ms | 592.85 ms | 0.03 |
+| cspell | 981 | 348.2 µs | 990.3 µs | 0.35 | 2.72 ms | 9.93 ms | 0.27 | 20.58 ms | 587.57 ms | 0.04 |
+| cypress | 981 | 150.6 µs | 544.0 µs | 0.28 | 1.13 ms | 4.06 ms | 0.28 | 9.45 ms | 410.44 ms | 0.02 |
+| deno | 987 | 340.3 µs | 1.82 ms | 0.19 | 3.41 ms | 7.01 ms | 0.49 | 12.20 ms | 455.74 ms | 0.03 |
+| dependabot | 967 | 185.7 µs | 780.8 µs | 0.24 | 1.79 ms | 2.34 ms | 0.77 | 9.60 ms | 395.93 ms | 0.02 |
+| draft-04 | 563 | 4.85 ms | 25.20 ms | 0.19 | 19.44 ms | 59.24 ms | 0.33 | 10.03 ms | 398.59 ms | 0.03 |
+| fabric-mod | 911 | 371.4 µs | 1.58 ms | 0.24 | 3.26 ms | 11.42 ms | 0.29 | 11.49 ms | 420.10 ms | 0.03 |
+| geojson | 500 | 4.27 ms | 6.00 ms | 0.71 | 16.62 ms | 37.65 ms | 0.44 | 23.65 ms | 649.46 ms | 0.04 |
+| gitpod-configuration | 986 | 128.7 µs | 957.5 µs | 0.13 | 1.40 ms | 6.28 ms | 0.22 | 11.14 ms | 438.46 ms | 0.03 |
+| helm-chart-lock | 3888 | 404.3 µs | 833.1 µs | 0.49 | 2.58 ms | 2.97 ms | 0.87 | 7.48 ms | 391.95 ms | 0.02 |
+| importmap | 964 | 349.1 µs | 969.8 µs | 0.36 | 1.29 ms | 6.03 ms | 0.21 | 5.75 ms | 367.43 ms | 0.02 |
+| jasmine | 980 | 53.6 µs | 212.9 µs | 0.25 | 915.5 µs | 844.6 µs | 1.08 | 7.39 ms | 377.50 ms | 0.02 |
+| jsconfig | 981 | 262.3 µs | 732.6 µs | 0.36 | 3.48 ms | 7.19 ms | 0.48 | 16.47 ms | 553.72 ms | 0.03 |
+| jshintrc | 966 | 1.18 ms | 1.99 ms | 0.59 | 3.70 ms | 8.78 ms | 0.42 | 7.66 ms | 407.09 ms | 0.02 |
+| krakend | 47 | 109.4 µs | 466.0 µs | 0.23 | 6.32 ms | 9.98 ms | 0.63 | 42.44 ms | 1.53 s | 0.03 |
+| lazygit | 280 | 61.6 µs | 491.3 µs | 0.13 | 1.81 ms | 7.31 ms | 0.25 | 18.77 ms | 579.36 ms | 0.03 |
+| lerna | 985 | 123.4 µs | 618.1 µs | 0.20 | 1.00 ms | 1.53 ms | 0.66 | 7.60 ms | 395.03 ms | 0.02 |
+| nest-cli | 1025 | 140.4 µs | 863.0 µs | 0.16 | 1.34 ms | 4.95 ms | 0.27 | 11.65 ms | 434.06 ms | 0.03 |
+| omnisharp | 987 | 107.6 µs | 1.11 ms | 0.10 | 1.70 ms | 8.51 ms | 0.20 | 11.10 ms | 433.48 ms | 0.03 |
+| openapi | 107 | 8.11 ms | 17.78 ms | 0.46 | 30.53 ms | 69.91 ms | 0.44 | 60.49 ms | 927.45 ms | 0.07 |
+| pre-commit-hooks | 985 | 191.0 µs | 1.32 ms | 0.14 | 1.88 ms | 8.63 ms | 0.22 | 7.62 ms | 691.94 ms | 0.01 |
+| pulumi | 3807 | 358.2 µs | 2.62 ms | 0.14 | 2.64 ms | 6.27 ms | 0.42 | 12.00 ms | 419.69 ms | 0.03 |
+| semantic-release | 794 | 58.1 µs | 243.2 µs | 0.24 | 824.9 µs | 2.38 ms | 0.35 | 8.07 ms | 374.07 ms | 0.02 |
+| stale | 961 | 149.8 µs | 320.6 µs | 0.47 | 1.08 ms | 1.14 ms | 0.95 | 6.97 ms | 376.78 ms | 0.02 |
+| stylecop | 983 | 156.4 µs | 1.04 ms | 0.15 | 2.11 ms | 7.75 ms | 0.27 | 10.53 ms | 401.89 ms | 0.03 |
+| tmuxinator | 382 | 48.2 µs | 234.3 µs | 0.21 | 697.2 µs | 2.31 ms | 0.30 | 9.22 ms | 382.08 ms | 0.02 |
+| ui5 | 942 | 230.4 µs | 1.42 ms | 0.16 | 4.13 ms | 16.44 ms | 0.25 | 30.77 ms | 1.36 s | 0.02 |
+| ui5-manifest | 611 | 1.52 ms | 5.48 ms | 0.28 | 21.05 ms | 30.92 ms | 0.68 | 83.64 ms | 2.91 s | 0.03 |
+| unreal-engine-uproject | 859 | 674.9 µs | 4.89 ms | 0.14 | 6.22 ms | 17.63 ms | 0.35 | 9.99 ms | 416.77 ms | 0.02 |
+| vercel | 710 | 129.0 µs | 1.84 ms | 0.07 | 1.95 ms | 8.86 ms | 0.22 | 18.95 ms | 618.57 ms | 0.03 |
+| yamllint | 966 | 8.6 µs | 65.4 µs | 0.13 | 209.2 µs | 1.19 ms | 0.18 | 5.31 ms | 350.62 ms | 0.02 |
 
-Warm: Corvus TS faster on 37 of 37; geometric mean Corvus / jsu-js 0.23. Cold: faster on 36 of 37, geometric mean
-0.38; the exception, jasmine (915.5 µs vs 844.6 µs), was faster than jsu-js in the previous run (888 µs vs 943 µs).
+- Warm: Corvus TS faster on 37 of 37; geometric mean Corvus / jsu-js 0.23.
+- Cold: Corvus TS faster on 36 of 37; geometric mean Corvus / jsu-js 0.38.
+- Compile: Corvus TS faster on 37 of 37; geometric mean Corvus / jsu-js 0.02.
+
+The one cold exception, jasmine (915.5 µs vs 844.6 µs), was faster than jsu-js in the previous run (888 µs vs
+943 µs).
 
 ## Integrations
 

@@ -2,9 +2,11 @@
 // benchmark's Makefile does, and prints a comparison table.
 //
 //   node bench/corpora.mjs --schemas <jsonschema-benchmark>/schemas [--runs 3] [--only a,b] [--jsu <dir>]
+//   node bench/corpora.mjs --render bench/results/corpora-<stamp>.json
 //
 // --jsu points at a directory holding jsu-js's jsonschema_benchmark.js with json_model_runtime installed, and
-// needs jsu-compile on PATH (see bench/README.md). Results are written to bench/results/.
+// needs jsu-compile on PATH (see bench/README.md). Results are written to bench/results/. --render prints the table
+// for an earlier run's results without measuring again.
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -18,8 +20,9 @@ const schemasDir = arg('--schemas', process.env.JSONSCHEMA_BENCHMARK ? path.join
 const runs = Number(arg('--runs', '3'));
 const only = arg('--only', undefined)?.split(',');
 const jsuDir = arg('--jsu', undefined);
+const render = arg('--render', undefined);
 
-if (!schemasDir) {
+if (!schemasDir && !render) {
   console.error('Pass --schemas <jsonschema-benchmark>/schemas (or set JSONSCHEMA_BENCHMARK).');
   process.exit(2);
 }
@@ -77,50 +80,77 @@ function measure(fn, schema, instances) {
   };
 }
 
-const fmt = (ns) => (ns === undefined ? 'n/a' : ns >= 1e6 ? `${(ns / 1e6).toFixed(2)} ms` : `${(ns / 1e3).toFixed(1)} µs`);
+const fmt = (ns) =>
+  ns === undefined ? 'n/a' : ns >= 1e9 ? `${(ns / 1e9).toFixed(2)} s` : ns >= 1e6 ? `${(ns / 1e6).toFixed(2)} ms` : `${(ns / 1e3).toFixed(1)} µs`;
 
-const corpora = fs.readdirSync(schemasDir).filter((d) => !only || only.includes(d)).sort();
-const rows = [];
-for (const name of corpora) {
-  const schema = path.join(schemasDir, name, 'schema.json');
-  const instances = path.join(schemasDir, name, 'instances.jsonl');
-  const count = fs.readFileSync(instances, 'utf8').split('\n').filter((l) => l.length > 0).length;
-  const corvus = measure(runCorvus, schema, instances);
-  const jsu = jsuDir ? measure(runJsu, schema, instances) : undefined;
-  rows.push({ name, count, corvus, jsu });
-  const ratio = corvus && jsu ? (corvus.warm / jsu.warm).toFixed(2) : '';
-  console.error(`${name}: corvus warm ${fmt(corvus?.warm)}${corvus?.valid === false ? ' (INVALID)' : ''}${jsu ? `, jsu-js warm ${fmt(jsu.warm)}, ratio ${ratio}` : ''}`);
-}
-
-const lines = [];
-if (jsuDir) {
-  lines.push('| Corpus | Instances | Corvus TS warm | jsu-js warm | Corvus / jsu | Corvus TS cold | jsu-js cold | Corvus TS compile |');
-  lines.push('|---|---:|---:|---:|---:|---:|---:|---:|');
-} else {
-  lines.push('| Corpus | Instances | Corvus TS warm | Corvus TS cold | Corvus TS compile | Parse |');
-  lines.push('|---|---:|---:|---:|---:|---:|');
-}
-const ratios = [];
-for (const r of rows) {
-  if (jsuDir) {
-    const ratio = r.corvus && r.jsu ? r.corvus.warm / r.jsu.warm : undefined;
-    if (ratio !== undefined) ratios.push(ratio);
-    lines.push(
-      `| ${r.name} | ${r.count} | ${fmt(r.corvus?.warm)} | ${fmt(r.jsu?.warm)} | ${ratio?.toFixed(2) ?? 'n/a'} | ${fmt(r.corvus?.cold)} | ${fmt(r.jsu?.cold)} | ${fmt(r.corvus?.compile)} |`,
-    );
-  } else {
-    lines.push(`| ${r.name} | ${r.count} | ${fmt(r.corvus?.warm)} | ${fmt(r.corvus?.cold)} | ${fmt(r.corvus?.compile)} | ${fmt(r.corvus?.parse)} |`);
+function measureAll() {
+  const corpora = fs.readdirSync(schemasDir).filter((d) => !only || only.includes(d)).sort();
+  const rows = [];
+  for (const name of corpora) {
+    const schema = path.join(schemasDir, name, 'schema.json');
+    const instances = path.join(schemasDir, name, 'instances.jsonl');
+    const count = fs.readFileSync(instances, 'utf8').split('\n').filter((l) => l.length > 0).length;
+    const corvus = measure(runCorvus, schema, instances);
+    const jsu = jsuDir ? measure(runJsu, schema, instances) : undefined;
+    rows.push({ name, count, corvus, jsu });
+    const ratio = corvus && jsu ? (corvus.warm / jsu.warm).toFixed(2) : '';
+    console.error(`${name}: corvus warm ${fmt(corvus?.warm)}${corvus?.valid === false ? ' (INVALID)' : ''}${jsu ? `, jsu-js warm ${fmt(jsu.warm)}, ratio ${ratio}` : ''}`);
   }
+  return rows;
 }
-if (ratios.length > 0) {
-  const geo = Math.exp(ratios.reduce((a, b) => a + Math.log(b), 0) / ratios.length);
-  lines.push('', `Corvus TS faster on ${ratios.filter((x) => x < 1).length} of ${ratios.length}; geometric mean Corvus / jsu-js ${geo.toFixed(2)}.`);
+
+const PHASES = ['warm', 'cold', 'compile'];
+
+function table(rows) {
+  const lines = [];
+  const withJsu = rows.some((r) => r.jsu);
+  if (withJsu) {
+    const head = PHASES.map((p) => `Corvus TS ${p} | jsu-js ${p} | Corvus / jsu`).join(' | ');
+    lines.push(`| Corpus | Instances | ${head} |`);
+    lines.push(`|---|---:|${PHASES.map(() => '---:|---:|---:|').join('')}`);
+  } else {
+    lines.push('| Corpus | Instances | Corvus TS warm | Corvus TS cold | Corvus TS compile | Parse |');
+    lines.push('|---|---:|---:|---:|---:|---:|');
+  }
+
+  const ratios = Object.fromEntries(PHASES.map((p) => [p, []]));
+  for (const r of rows) {
+    if (withJsu) {
+      const cells = PHASES.map((p) => {
+        const ratio = r.corvus && r.jsu ? r.corvus[p] / r.jsu[p] : undefined;
+        if (ratio !== undefined) ratios[p].push(ratio);
+        return `${fmt(r.corvus?.[p])} | ${fmt(r.jsu?.[p])} | ${ratio?.toFixed(2) ?? 'n/a'}`;
+      });
+      lines.push(`| ${r.name} | ${r.count} | ${cells.join(' | ')} |`);
+    } else {
+      lines.push(`| ${r.name} | ${r.count} | ${fmt(r.corvus?.warm)} | ${fmt(r.corvus?.cold)} | ${fmt(r.corvus?.compile)} | ${fmt(r.corvus?.parse)} |`);
+    }
+  }
+
+  if (withJsu) {
+    lines.push('');
+    for (const p of PHASES) {
+      const xs = ratios[p];
+      const geo = Math.exp(xs.reduce((a, b) => a + Math.log(b), 0) / xs.length);
+      lines.push(`- ${p[0].toUpperCase()}${p.slice(1)}: Corvus TS faster on ${xs.filter((x) => x < 1).length} of ${xs.length}; geometric mean Corvus / jsu-js ${geo.toFixed(2)}.`);
+    }
+  }
+
+  const invalid = rows.filter((r) => r.corvus && !r.corvus.valid).map((r) => r.name);
+  if (invalid.length > 0) lines.push('', `Corpora with instances Corvus TS reported invalid: ${invalid.join(', ')}.`);
+  return lines.join('\n');
 }
-const invalid = rows.filter((r) => r.corvus && !r.corvus.valid).map((r) => r.name);
-if (invalid.length > 0) lines.push('', `Corpora with instances Corvus TS reported invalid: ${invalid.join(', ')}.`);
-console.log(lines.join('\n'));
+
+if (render) {
+  console.log(table(JSON.parse(fs.readFileSync(render, 'utf8')).rows));
+  process.exit(0);
+}
+
+const rows = measureAll();
+const text = table(rows);
+console.log(text);
 
 fs.mkdirSync(path.join(here, 'results'), { recursive: true });
 const stamp = new Date().toISOString().replace(/[:.]/g, '-');
 fs.writeFileSync(path.join(here, 'results', `corpora-${stamp}.json`), JSON.stringify({ node: process.version, runs, rows }, null, 2));
-fs.writeFileSync(path.join(here, 'results', `corpora-${stamp}.md`), lines.join('\n') + '\n');
+fs.writeFileSync(path.join(here, 'results', `corpora-${stamp}.md`), text + '\n');

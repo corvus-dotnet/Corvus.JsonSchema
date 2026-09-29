@@ -24,7 +24,8 @@ cp ../jsb/implementations/jsu-js/jsonschema_benchmark.js . && cd ..
 node bench/corpora.mjs --schemas ../jsb/schemas --jsu ./jsujs --runs 3
 ```
 
-Results (JSON and Markdown) are written to `bench/results/`. `--only a,b` restricts the corpora.
+Results (JSON and Markdown) are written to `bench/results/`. `--only a,b` restricts the corpora, and
+`--render bench/results/corpora-<stamp>.json` prints the table for an earlier run without measuring again.
 
 Absolute times depend on the machine; compare implementations measured in the same run. The warm figure is a single
 pass after warm-up, as in the benchmark itself, so small corpora are noisy.
