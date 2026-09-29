@@ -371,7 +371,7 @@
 <p>The generated <code>FeatureFlags</code> type gains a nested enum with <code>None = 0</code> and one bit per boolean property:</p>
 <pre><code class="language-csharp">FeatureFlags.Flags enabled = FeatureFlags.Flags.DarkMode | FeatureFlags.Flags.Telemetry;
 </code></pre>
-<p>Bits are assigned to the properties in alphabetical order of their JSON names. Adding or renaming a property can reassign the bits, so do not persist the integer values; the JSON wire format is unaffected.</p>
+<p>Bits are assigned to the properties in ordinal (UTF-16 code unit) order of their JSON names. Adding or renaming a property can reassign the bits, so do not persist the integer values; the JSON wire format is unaffected.</p>
 <h3 id="creating-documents-from-flags">Creating documents from flags</h3>
 <p>The <code>Source</code> conversion writes every declared property explicitly, so the output is deterministic and satisfies any <code>required</code> properties:</p>
 <pre><code class="language-csharp">using var doc = AppSettings.Create(name: &quot;my-app&quot;, features: enabled);
@@ -411,7 +411,7 @@ dotnet run
 <h3 id="q-what-is-the-difference-between-a-property-being-false-and-being-absent">Q: What is the difference between a property being <code>false</code> and being absent?</h3>
 <p><strong>A:</strong> Nothing, as far as the flags are concerned. Both leave the bit clear when reading. When writing from a <code>Flags</code> value, every declared property is emitted explicitly with <code>true</code> or <code>false</code>.</p>
 <h3 id="q-can-i-persist-the-integer-value-of-the-flags">Q: Can I persist the integer value of the flags?</h3>
-<p><strong>A:</strong> No. Bits follow the alphabetical order of the JSON property names, so adding or renaming a property can renumber them. Persist the JSON instead; it is stable under those changes.</p>
+<p><strong>A:</strong> No. Bits follow the ordinal (UTF-16 code unit) order of the JSON property names, so adding or renaming a property can renumber them. Persist the JSON instead; it is stable under those changes.</p>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -438,7 +438,7 @@ dotnet run
       "name": "Q: Can I persist the integer value of the flags?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "**A:** No. Bits follow the alphabetical order of the JSON property names, so adding or renaming a property can renumber them. Persist the JSON instead; it is stable under those changes."
+        "text": "**A:** No. Bits follow the ordinal (UTF-16 code unit) order of the JSON property names, so adding or renaming a property can renumber them. Persist the JSON instead; it is stable under those changes."
       }
     }
   ]

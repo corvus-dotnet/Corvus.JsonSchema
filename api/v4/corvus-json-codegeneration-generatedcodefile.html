@@ -98,9 +98,11 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<p>The results of generating code.</p>
+<p>A generated code file.</p>
 <pre><code class="language-csharp">public class GeneratedCodeFile
 </code></pre>
+<h2 id="remarks">Remarks</h2>
+<p>The content is held either as a string or as chunks of at most <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.chunksize.html"><code>ChunkSize</code></a> characters (below the large object heap threshold). <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.filecontent.html"><code>FileContent</code></a> materialises the string on first use; writers that can take chunks (<a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.writeto.html"><code>WriteTo</code></a>, <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.chunks.html"><code>Chunks</code></a>) never need it.</p>
 <h2 id="inheritance">Inheritance</h2>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>Object</code></a> → <strong>GeneratedCodeFile</strong></p>
 <h2 id="constructors">Constructors</h2>
@@ -113,8 +115,8 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.ctor.html#generatedcodefile-string-string-typedeclaration">GeneratedCodeFile(string, string, TypeDeclaration?)</a></td>
-<td>The results of generating code.</td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.ctor.html">GeneratedCodeFile(...)</a></td>
+<td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.html"><code>GeneratedCodeFile</code></a> class from a string.</td>
 </tr>
 </tbody>
 </table>
@@ -129,19 +131,65 @@
 </thead>
 <tbody>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.chunks.html">Chunks</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlylist-1"><code>IReadOnlyList&lt;ReadOnlyMemory&lt;char&gt;&gt;</code></a></td>
+<td>Gets the content as chunks of at most <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.chunksize.html"><code>ChunkSize</code></a> characters, in order.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.filecontent.html">FileContent</a></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
-<td>Gets the generated code itself.</td>
+<td>Gets the file content as a string, built on first use from the chunks and then kept.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.filename.html">FileName</a></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
-<td>Gets the filename for the generated code.</td>
+<td>Gets the file name.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.length.html">Length</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Gets the length of the content in characters.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.typedeclaration.html">TypeDeclaration</a></td>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></td>
-<td>Gets the type declaration for which code was generated.</td>
+<td>Gets the type declaration for which the file was generated, if any.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="methods">Methods</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.openreader.html#openreader">OpenReader()</a></td>
+<td>Opens a reader over the content without materialising the string.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.writeto.html#writeto-textwriter">WriteTo(TextWriter)</a></td>
+<td>Writes the content to a writer without materialising the string.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="fields">Fields</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.chunksize.html">ChunkSize</a> <code>static</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>The largest chunk, in characters: 80 KB of UTF-16, below the large object heap threshold and the size Roslyn uses for its own large source texts.</td>
 </tr>
 </tbody>
 </table>

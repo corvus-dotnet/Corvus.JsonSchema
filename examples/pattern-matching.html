@@ -559,6 +559,22 @@ public readonly partial struct MySpeciallyNamedType;
 <p>Note that simple types may be reduced to global types like <code>JsonString</code> or <code>JsonInt32</code>, in which case the explicit name will not be used.</p>
 <h3 id="q-what-is-the-defaultmatch-handler-for">Q: What is the <code>defaultMatch</code> handler for?</h3>
 <p><strong>A:</strong> The <code>defaultMatch</code> handler is called when no other variant matches. In a well-validated schema this shouldn't happen, but it provides a safety net for cases where the JSON data hasn't been validated against the schema. It follows the same pattern as a <code>default</code> case in a C# <code>switch</code> expression, ensuring exhaustive handling.</p>
+<h2 id="with-the.net-11-sdk-a-plain-switch">With the .NET 11 SDK: a plain <code>switch</code></h2>
+<p>The generated <code>oneOf</code> type is also a C# union. When the project is compiled with the C# 15 compiler (the .NET 11 SDK
+or later; the project can still target net9.0 or net10.0), a <code>switch</code> or <code>is</code> pattern over the branch types works,
+is exhaustive over the branches without a fallback arm, and does not box:</p>
+<pre><code class="language-csharp">string ProcessWithSwitch(in DiscriminatedUnionByType value) =&gt; value switch
+{
+    JsonString s =&gt; $&quot;It was a string: {s}&quot;,
+    JsonInt32 i =&gt; $&quot;It was an int32: {i}&quot;,
+    PersonOpen p =&gt; $&quot;It was a person. {p.FamilyName}, {p.GivenName}&quot;,
+    DiscriminatedUnionByType.People people =&gt; $&quot;It was an array of people. {people.GetArrayLength()}&quot;,
+    null =&gt; throw new InvalidOperationException($&quot;Unexpected instance {value}&quot;),
+};
+</code></pre>
+<p>A value that matches no branch has a <code>null</code> union value, so the <code>null</code> arm plays the part of <code>Match</code>'s default
+handler; leave it out when the input is trusted and the compiler still considers the switch exhaustive. <code>Match</code>
+is unchanged and remains the way to write this on older compilers.</p>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",

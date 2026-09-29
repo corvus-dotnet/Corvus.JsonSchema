@@ -98,9 +98,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="codegenerator-ilanguageprovider-cancellationtoken-int-string-string">CodeGenerator(ILanguageProvider, CancellationToken, int, string, string)</h2>
+<h2 id="codegenerator-ilanguageprovider-cancellationtoken-int-string-string-bool">CodeGenerator(ILanguageProvider, CancellationToken, int, string, string, bool)</h2>
 <p>A <a href="https://learn.microsoft.com/dotnet/api/system.text.stringbuilder"><code>StringBuilder</code></a>0like class that supports code generation.</p>
-<pre><code class="language-csharp">public CodeGenerator(ILanguageProvider languageProvider, CancellationToken cancellationToken, int instancesPerIndent, string indentSequence, string lineEndSequence)
+<pre><code class="language-csharp">public CodeGenerator(ILanguageProvider languageProvider, CancellationToken cancellationToken, int instancesPerIndent, string indentSequence, string lineEndSequence, bool storeFilesAsStrings)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -136,6 +136,11 @@
 <td><code>lineEndSequence</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
 <td>The line end sequence. <em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>storeFilesAsStrings</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
+<td>Whether each file is captured as one string (for a host that keeps every file alive) rather than as chunks below the large object heap. <em>(optional)</em></td>
 </tr>
 </tbody>
 </table>

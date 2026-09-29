@@ -236,7 +236,7 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.html">GeneratedCodeFile</a></td>
 <td>class</td>
-<td>The results of generating code.</td>
+<td>A generated code file.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-httpclientdocumentresolver.html">HttpClientDocumentResolver</a></td>
@@ -444,6 +444,11 @@
 <td>Validation keywords.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-igeneratedcodefilesink.html">IGeneratedCodeFileSink</a></td>
+<td>interface</td>
+<td>Receives generated code files as each one is completed, so that a host can write or hand on a file without the whole output being held at once.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ihidessiblingskeyword.html">IHidesSiblingsKeyword</a></td>
 <td>interface</td>
 <td>A keyword that hides its siblings if present.</td>
@@ -609,6 +614,11 @@
 <td>Composite validator where exactly one of the composed validation conditions must be met.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-iorderinglanguageprovider.html">IOrderingLanguageProvider</a></td>
+<td>interface</td>
+<td>An <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ilanguageprovider.html"><code>ILanguageProvider</code></a> that chooses how the names that reach generated code are ordered: property declarations, the subschemas of a keyw...</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ipropertycountconstantvalidationkeyword.html">IPropertyCountConstantValidationKeyword</a></td>
 <td>interface</td>
 <td>Validates the number of properties in an object against a constant.</td>
@@ -644,6 +654,11 @@
 <td>A language provider that emits a schema evaluation program alongside the generated types, and therefore needs the text of every schema document the type builder loaded.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ischemaprogramutf8languageprovider.html">ISchemaProgramUtf8LanguageProvider</a></td>
+<td>interface</td>
+<td>An <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ischemaprogramlanguageprovider.html"><code>ISchemaProgramLanguageProvider</code></a> that accepts the schema documents as UTF-8 JSON, so that they need not be converted to...</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ischemaregistrationcustomkeyword.html">ISchemaRegistrationCustomKeyword</a></td>
 <td>interface</td>
 <td>A custom keyword that is applied during schema registration phase.</td>
@@ -667,6 +682,11 @@
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-isinglesubschemaproviderkeyword.html">ISingleSubschemaProviderKeyword</a></td>
 <td>interface</td>
 <td>A keyword that provides a single subschema.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-istreaminglanguageprovider.html">IStreamingLanguageProvider</a></td>
+<td>interface</td>
+<td>A language provider that can hand each generated file to a sink as it is completed, instead of returning the whole collection at the end.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-istringlengthconstantvalidationkeyword.html">IStringLengthConstantValidationKeyword</a></td>

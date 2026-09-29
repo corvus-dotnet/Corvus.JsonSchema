@@ -7466,7 +7466,7 @@
     "Title": "JsonBoolean",
     "Description": "Generated from JSON Schema.",
     "Keywords": "JsonBoolean struct Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Generated from JSON Schema.\nWhether the validation passed at this evaluation point.\nDefaultInstance: Gets the default instance.\nTryGetValue: Tries to get the value as a boolean\nFrom: Gets an instance of the JSON value from another element.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided text.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nEquals: Equality comparison.\nEvaluateSchema: Evaluate this instance against the JSON Schema for this type.\nClone: Gets a [`JsonBoolean`](/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.html) which can be safely stored beyond the lifetime of the original document.\nFreeze: Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.\nCreateBuilder: Creates and initializes a mutable document from this instance."
+    "Body": "Generated from JSON Schema.\nWhether the validation passed at this evaluation point.\nDefaultInstance: Gets the default instance.\nTryGetValue: Tries to get the value as a boolean"
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.defaultinstance.html",
@@ -7492,30 +7492,30 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.from.html",
     "Title": "JsonBoolean.From",
-    "Description": "Gets an instance of the JSON value from another element.",
+    "Description": "",
     "Keywords": "JsonBoolean From method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Gets an instance of the JSON value from another element."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.parsevalue.html",
     "Title": "JsonBoolean.ParseValue",
-    "Description": "Parses one JSON value (including objects or arrays) from the provided span.",
+    "Description": "",
     "Keywords": "JsonBoolean ParseValue method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided text. Parses one JSON value (including objects or arrays) from the provided reader."
+    "Body": "   "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.tryparsevalue.html",
     "Title": "JsonBoolean.TryParseValue",
-    "Description": "Attempts to parse one JSON value (including objects or arrays) from the provided reader.",
+    "Description": "",
     "Keywords": "JsonBoolean TryParseValue method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Attempts to parse one JSON value (including objects or arrays) from the provided reader."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.equals.html",
     "Title": "JsonBoolean.Equals",
     "Description": "",
     "Keywords": "JsonBoolean Equals method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": " Equality comparison."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.writeto.html",
@@ -7548,30 +7548,30 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.evaluateschema.html",
     "Title": "JsonBoolean.EvaluateSchema",
-    "Description": "Evaluate this instance against the JSON Schema for this type.",
+    "Description": "",
     "Keywords": "JsonBoolean EvaluateSchema method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Evaluate this instance against the JSON Schema for this type."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.clone.html",
     "Title": "JsonBoolean.Clone",
-    "Description": "Gets a [`JsonBoolean`](/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.html) which can be safely stored beyond the lifetime of the original document.",
+    "Description": "",
     "Keywords": "JsonBoolean Clone method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Gets a [`JsonBoolean`](/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.html) which can be safely stored beyond the lifetime of the original document."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.freeze.html",
     "Title": "JsonBoolean.Freeze",
-    "Description": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.",
+    "Description": "",
     "Keywords": "JsonBoolean Freeze method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.createbuilder.html",
     "Title": "JsonBoolean.CreateBuilder",
     "Description": "",
     "Keywords": "JsonBoolean CreateBuilder method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": " Creates and initializes a mutable document from this instance."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.create.html",
@@ -7590,16 +7590,16 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.op-equality.html",
     "Title": "JsonBoolean Equality Operator",
-    "Description": "Operator ==.",
+    "Description": "",
     "Keywords": "JsonBoolean Equality operator Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Operator ==. Operator ==."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean.op-inequality.html",
     "Title": "JsonBoolean Inequality Operator",
-    "Description": "Operator !=.",
+    "Description": "",
     "Keywords": "JsonBoolean Inequality operator Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Operator !=. Operator !=."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-jsonschema.html",
@@ -7760,7 +7760,7 @@
     "Title": "JsonString",
     "Description": "Generated from JSON Schema.",
     "Keywords": "JsonString struct Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Generated from JSON Schema.\nThe evaluation path within the schema.\nDefaultInstance: Gets the default instance.\nFrom: Gets an instance of the JSON value from another element.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided text.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nEquals: Equality comparison.\nValueEquals: Compare with a UTF-8 string.\nValueEquals: Compare with a string.\nValueEquals: Compare with a string.\nEvaluateSchema: Evaluate this instance against the JSON Schema for this type.\nClone: Gets a [`JsonString`](/api/v5/corvus-text-json-asyncapi-internal-jsonstring.html) which can be safely stored beyond the lifetime of the original document.\nFreeze: Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.\nCreateBuilder: Creates and initializes a mutable document from this instance."
+    "Body": "Generated from JSON Schema.\nThe evaluation path within the schema.\nDefaultInstance: Gets the default instance."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.defaultinstance.html",
@@ -7807,37 +7807,37 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.from.html",
     "Title": "JsonString.From",
-    "Description": "Gets an instance of the JSON value from another element.",
+    "Description": "",
     "Keywords": "JsonString From method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Gets an instance of the JSON value from another element."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.parsevalue.html",
     "Title": "JsonString.ParseValue",
-    "Description": "Parses one JSON value (including objects or arrays) from the provided span.",
+    "Description": "",
     "Keywords": "JsonString ParseValue method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided text. Parses one JSON value (including objects or arrays) from the provided reader."
+    "Body": "   "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.tryparsevalue.html",
     "Title": "JsonString.TryParseValue",
-    "Description": "Attempts to parse one JSON value (including objects or arrays) from the provided reader.",
+    "Description": "",
     "Keywords": "JsonString TryParseValue method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Attempts to parse one JSON value (including objects or arrays) from the provided reader."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.equals.html",
     "Title": "JsonString.Equals",
     "Description": "",
     "Keywords": "JsonString Equals method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": " Equality comparison."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.valueequals.html",
     "Title": "JsonString.ValueEquals",
-    "Description": "Compare with a UTF-8 string.",
+    "Description": "",
     "Keywords": "JsonString ValueEquals method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Compare with a UTF-8 string. Compare with a string. Compare with a string."
+    "Body": "  "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.writeto.html",
@@ -7870,30 +7870,30 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.evaluateschema.html",
     "Title": "JsonString.EvaluateSchema",
-    "Description": "Evaluate this instance against the JSON Schema for this type.",
+    "Description": "",
     "Keywords": "JsonString EvaluateSchema method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Evaluate this instance against the JSON Schema for this type."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.clone.html",
     "Title": "JsonString.Clone",
-    "Description": "Gets a [`JsonString`](/api/v5/corvus-text-json-asyncapi-internal-jsonstring.html) which can be safely stored beyond the lifetime of the original document.",
+    "Description": "",
     "Keywords": "JsonString Clone method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Gets a [`JsonString`](/api/v5/corvus-text-json-asyncapi-internal-jsonstring.html) which can be safely stored beyond the lifetime of the original document."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.freeze.html",
     "Title": "JsonString.Freeze",
-    "Description": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.",
+    "Description": "",
     "Keywords": "JsonString Freeze method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.createbuilder.html",
     "Title": "JsonString.CreateBuilder",
     "Description": "",
     "Keywords": "JsonString CreateBuilder method Corvus.Text.Json.AsyncApi.Internal",
-    "Body": " Creates and initializes a mutable document from this instance."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.create.html",
@@ -7912,16 +7912,16 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.op-equality.html",
     "Title": "JsonString Equality Operator",
-    "Description": "Operator ==.",
+    "Description": "",
     "Keywords": "JsonString Equality operator Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Operator ==. Operator ==."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.op-inequality.html",
     "Title": "JsonString Inequality Operator",
-    "Description": "Operator !=.",
+    "Description": "",
     "Keywords": "JsonString Inequality operator Corvus.Text.Json.AsyncApi.Internal",
-    "Body": "Operator !=. Operator !=."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring.op-implicit.html",
@@ -8600,7 +8600,7 @@
     "Title": "JsonCanonicalizer",
     "Description": "Produces canonical JSON output per RFC 8785 (JSON Canonicalization Scheme — JCS).",
     "Keywords": "JsonCanonicalizer class Corvus.Text.Json.Canonicalization",
-    "Body": "Produces canonical JSON output per RFC 8785 (JSON Canonicalization Scheme — JCS).\nJCS defines a deterministic serialization of JSON values: - Object properties are sorted by UTF-16 code unit values of the property names. - Numbers use ECMAScript 6 `Number.toString()` formatting. - Strings use minimal escaping (only control characters, backslash, and double-quote). - No whitespace between structural tokens. Input must conform to I-JSON (RFC 7493): no duplicate property names, and all numbers must be representable as IEEE 754 double-precision values.\nTryCanonicalize: Canonicalizes a JSON element per RFC 8785 and writes the result to a byte span.\nCanonicalize: Canonicalizes a JSON element per RFC 8785 and returns the result as a byte array."
+    "Body": "Produces canonical JSON output per RFC 8785 (JSON Canonicalization Scheme — JCS).\nJCS defines a deterministic serialization of JSON values: - Object properties are sorted by UTF-16 code unit values of the property names. - Numbers use ECMAScript 6 `Number.toString()` formatting. - Strings use minimal escaping (only control characters, backslash, and double-quote). - No whitespace between structural tokens. Input must conform to I-JSON (RFC 7493): no duplicate property names, and all numbers must be representable as IEEE 754 double-precision values. Strings must be valid Unicode: an unpaired surrogate escape, or a string that is not valid UTF-8, is rejected.\nTryCanonicalize: Canonicalizes a JSON element per RFC 8785 and writes the result to a byte span.\nCanonicalize: Canonicalizes a JSON element per RFC 8785 and returns the result as a byte array."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-canonicalization-jsoncanonicalizer.trycanonicalize.html",
@@ -16006,7 +16006,7 @@
     "Title": "JsonPatchDocument",
     "Description": "An RFC 6902 JSON Patch document.",
     "Keywords": "JsonPatchDocument struct Corvus.Text.Json.Patch",
-    "Body": "An RFC 6902 JSON Patch document.\nDefaultInstance: Gets the default instance.\nRank: Gets the rank of the array.\nthis[int]: Gets the item at the given index.\nGetArrayLength: Gets the array length.\nEnumerateArray: Enumerates the array.\nFrom: Gets an instance of the JSON value from another element.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided text.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nEquals: Equality comparison.\nEvaluateSchema: Evaluate this instance against the JSON Schema for this type.\nClone: Gets a [`JsonPatchDocument`](/api/v5/corvus-text-json-patch-jsonpatchdocument.html) which can be safely stored beyond the lifetime of the original document.\nFreeze: Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.\nCreateBuilder: Creates an empty mutable document builder.\nCreateBuilder: Creates and initializes a mutable document from this instance.\nCreate: Creates an empty [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html)."
+    "Body": "An RFC 6902 JSON Patch document.\nDefaultInstance: Gets the default instance.\nRank: Gets the rank of the array.\nCreateBuilder: Creates an empty mutable document builder.\nCreate: Creates an empty [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html)."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.defaultinstance.html",
@@ -16025,9 +16025,9 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.item.html",
     "Title": "JsonPatchDocument.this[int]",
-    "Description": "Gets the item at the given index.",
+    "Description": "",
     "Keywords": "JsonPatchDocument this[int] property Corvus.Text.Json.Patch",
-    "Body": "Gets the item at the given index."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.valuekind.html",
@@ -16039,44 +16039,44 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.getarraylength.html",
     "Title": "JsonPatchDocument.GetArrayLength",
-    "Description": "Gets the array length.",
+    "Description": "",
     "Keywords": "JsonPatchDocument GetArrayLength method Corvus.Text.Json.Patch",
-    "Body": "Gets the array length."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.enumeratearray.html",
     "Title": "JsonPatchDocument.EnumerateArray",
-    "Description": "Enumerates the array.",
+    "Description": "",
     "Keywords": "JsonPatchDocument EnumerateArray method Corvus.Text.Json.Patch",
-    "Body": "Enumerates the array."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.from.html",
     "Title": "JsonPatchDocument.From",
-    "Description": "Gets an instance of the JSON value from another element.",
+    "Description": "",
     "Keywords": "JsonPatchDocument From method Corvus.Text.Json.Patch",
-    "Body": "Gets an instance of the JSON value from another element."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.parsevalue.html",
     "Title": "JsonPatchDocument.ParseValue",
-    "Description": "Parses one JSON value (including objects or arrays) from the provided span.",
+    "Description": "",
     "Keywords": "JsonPatchDocument ParseValue method Corvus.Text.Json.Patch",
-    "Body": "Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided text. Parses one JSON value (including objects or arrays) from the provided reader."
+    "Body": "   "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.tryparsevalue.html",
     "Title": "JsonPatchDocument.TryParseValue",
-    "Description": "Attempts to parse one JSON value (including objects or arrays) from the provided reader.",
+    "Description": "",
     "Keywords": "JsonPatchDocument TryParseValue method Corvus.Text.Json.Patch",
-    "Body": "Attempts to parse one JSON value (including objects or arrays) from the provided reader."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.equals.html",
     "Title": "JsonPatchDocument.Equals",
     "Description": "",
     "Keywords": "JsonPatchDocument Equals method Corvus.Text.Json.Patch",
-    "Body": " Equality comparison."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.writeto.html",
@@ -16109,23 +16109,23 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.evaluateschema.html",
     "Title": "JsonPatchDocument.EvaluateSchema",
-    "Description": "Evaluate this instance against the JSON Schema for this type.",
+    "Description": "",
     "Keywords": "JsonPatchDocument EvaluateSchema method Corvus.Text.Json.Patch",
-    "Body": "Evaluate this instance against the JSON Schema for this type."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.clone.html",
     "Title": "JsonPatchDocument.Clone",
-    "Description": "Gets a [`JsonPatchDocument`](/api/v5/corvus-text-json-patch-jsonpatchdocument.html) which can be safely stored beyond the lifetime of the original document.",
+    "Description": "",
     "Keywords": "JsonPatchDocument Clone method Corvus.Text.Json.Patch",
-    "Body": "Gets a [`JsonPatchDocument`](/api/v5/corvus-text-json-patch-jsonpatchdocument.html) which can be safely stored beyond the lifetime of the original document."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.freeze.html",
     "Title": "JsonPatchDocument.Freeze",
-    "Description": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.",
+    "Description": "",
     "Keywords": "JsonPatchDocument Freeze method Corvus.Text.Json.Patch",
-    "Body": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.build.html",
@@ -16139,7 +16139,7 @@
     "Title": "JsonPatchDocument.CreateBuilder",
     "Description": "",
     "Keywords": "JsonPatchDocument CreateBuilder method Corvus.Text.Json.Patch",
-    "Body": "  Creates an empty mutable document builder.   Creates and initializes a mutable document from this instance."
+    "Body": "  Creates an empty mutable document builder.   "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.create.html",
@@ -16151,16 +16151,16 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.op-equality.html",
     "Title": "JsonPatchDocument Equality Operator",
-    "Description": "Operator ==.",
+    "Description": "",
     "Keywords": "JsonPatchDocument Equality operator Corvus.Text.Json.Patch",
-    "Body": "Operator ==. Operator ==."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.op-inequality.html",
     "Title": "JsonPatchDocument Inequality Operator",
-    "Description": "Operator !=.",
+    "Description": "",
     "Keywords": "JsonPatchDocument Inequality operator Corvus.Text.Json.Patch",
-    "Body": "Operator !=. Operator !=."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.op-implicit.html",
@@ -19780,6 +19780,41 @@
     "Description": "",
     "Keywords": "JsonPatchDocument.PatchOperation.Builder.Build<TContext> EndInvoke method Corvus.Text.Json.Patch",
     "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-iunionmembers.html",
+    "Title": "JsonPatchDocument.PatchOperation.IUnionMembers",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.PatchOperation.IUnionMembers interface Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-iunionmembers.value.html",
+    "Title": "JsonPatchDocument.PatchOperation.IUnionMembers.Value",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.PatchOperation.IUnionMembers Value property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-iunionmembers.hasvalue.html",
+    "Title": "JsonPatchDocument.PatchOperation.IUnionMembers.HasValue",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.PatchOperation.IUnionMembers HasValue property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-iunionmembers.create.html",
+    "Title": "JsonPatchDocument.PatchOperation.IUnionMembers.Create",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.PatchOperation.IUnionMembers Create method Corvus.Text.Json.Patch",
+    "Body": "     "
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-iunionmembers.trygetvalue.html",
+    "Title": "JsonPatchDocument.PatchOperation.IUnionMembers.TryGetValue",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.PatchOperation.IUnionMembers TryGetValue method Corvus.Text.Json.Patch",
+    "Body": "     "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-jsonpropertynames.html",
@@ -23741,7 +23776,7 @@
     "Title": "JsonPointer",
     "Description": "Generated from JSON Schema.",
     "Keywords": "JsonPointer struct Corvus.Text.Json.Patch",
-    "Body": "Generated from JSON Schema.\nDefaultInstance: Gets the default instance.\nFrom: Gets an instance of the JSON value from another element.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided text.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nEquals: Equality comparison.\nValueEquals: Compare with a UTF-8 string.\nValueEquals: Compare with a string.\nValueEquals: Compare with a string.\nEvaluateSchema: Evaluate this instance against the JSON Schema for this type.\nClone: Gets a [`JsonPointer`](/api/v5/corvus-text-json-patch-jsonpointer.html) which can be safely stored beyond the lifetime of the original document.\nFreeze: Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.\nCreateBuilder: Creates and initializes a mutable document from this instance."
+    "Body": "Generated from JSON Schema.\nDefaultInstance: Gets the default instance."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.defaultinstance.html",
@@ -23788,37 +23823,37 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.from.html",
     "Title": "JsonPointer.From",
-    "Description": "Gets an instance of the JSON value from another element.",
+    "Description": "",
     "Keywords": "JsonPointer From method Corvus.Text.Json.Patch",
-    "Body": "Gets an instance of the JSON value from another element."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.parsevalue.html",
     "Title": "JsonPointer.ParseValue",
-    "Description": "Parses one JSON value (including objects or arrays) from the provided span.",
+    "Description": "",
     "Keywords": "JsonPointer ParseValue method Corvus.Text.Json.Patch",
-    "Body": "Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided text. Parses one JSON value (including objects or arrays) from the provided reader."
+    "Body": "   "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.tryparsevalue.html",
     "Title": "JsonPointer.TryParseValue",
-    "Description": "Attempts to parse one JSON value (including objects or arrays) from the provided reader.",
+    "Description": "",
     "Keywords": "JsonPointer TryParseValue method Corvus.Text.Json.Patch",
-    "Body": "Attempts to parse one JSON value (including objects or arrays) from the provided reader."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.equals.html",
     "Title": "JsonPointer.Equals",
     "Description": "",
     "Keywords": "JsonPointer Equals method Corvus.Text.Json.Patch",
-    "Body": " Equality comparison."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.valueequals.html",
     "Title": "JsonPointer.ValueEquals",
-    "Description": "Compare with a UTF-8 string.",
+    "Description": "",
     "Keywords": "JsonPointer ValueEquals method Corvus.Text.Json.Patch",
-    "Body": "Compare with a UTF-8 string. Compare with a string. Compare with a string."
+    "Body": "  "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.writeto.html",
@@ -23851,30 +23886,30 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.evaluateschema.html",
     "Title": "JsonPointer.EvaluateSchema",
-    "Description": "Evaluate this instance against the JSON Schema for this type.",
+    "Description": "",
     "Keywords": "JsonPointer EvaluateSchema method Corvus.Text.Json.Patch",
-    "Body": "Evaluate this instance against the JSON Schema for this type."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.clone.html",
     "Title": "JsonPointer.Clone",
-    "Description": "Gets a [`JsonPointer`](/api/v5/corvus-text-json-patch-jsonpointer.html) which can be safely stored beyond the lifetime of the original document.",
+    "Description": "",
     "Keywords": "JsonPointer Clone method Corvus.Text.Json.Patch",
-    "Body": "Gets a [`JsonPointer`](/api/v5/corvus-text-json-patch-jsonpointer.html) which can be safely stored beyond the lifetime of the original document."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.freeze.html",
     "Title": "JsonPointer.Freeze",
-    "Description": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.",
+    "Description": "",
     "Keywords": "JsonPointer Freeze method Corvus.Text.Json.Patch",
-    "Body": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.createbuilder.html",
     "Title": "JsonPointer.CreateBuilder",
     "Description": "",
     "Keywords": "JsonPointer CreateBuilder method Corvus.Text.Json.Patch",
-    "Body": " Creates and initializes a mutable document from this instance."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.create.html",
@@ -23893,16 +23928,16 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.op-equality.html",
     "Title": "JsonPointer Equality Operator",
-    "Description": "Operator ==.",
+    "Description": "",
     "Keywords": "JsonPointer Equality operator Corvus.Text.Json.Patch",
-    "Body": "Operator ==. Operator ==."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.op-inequality.html",
     "Title": "JsonPointer Inequality Operator",
-    "Description": "Operator !=.",
+    "Description": "",
     "Keywords": "JsonPointer Inequality operator Corvus.Text.Json.Patch",
-    "Body": "Operator !=. Operator !=."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer.op-implicit.html",
@@ -24105,7 +24140,7 @@
     "Title": "JsonString",
     "Description": "Generated from JSON Schema.",
     "Keywords": "JsonString struct Corvus.Text.Json.Patch",
-    "Body": "Generated from JSON Schema.\nDefaultInstance: Gets the default instance.\nFrom: Gets an instance of the JSON value from another element.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided span.\nParseValue: Parses one JSON value (including objects or arrays) from the provided text.\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\nEquals: Equality comparison.\nValueEquals: Compare with a UTF-8 string.\nValueEquals: Compare with a string.\nValueEquals: Compare with a string.\nEvaluateSchema: Evaluate this instance against the JSON Schema for this type.\nClone: Gets a [`JsonString`](/api/v5/corvus-text-json-patch-jsonstring.html) which can be safely stored beyond the lifetime of the original document.\nFreeze: Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.\nCreateBuilder: Creates and initializes a mutable document from this instance."
+    "Body": "Generated from JSON Schema.\nDefaultInstance: Gets the default instance."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.defaultinstance.html",
@@ -24152,37 +24187,37 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.from.html",
     "Title": "JsonString.From",
-    "Description": "Gets an instance of the JSON value from another element.",
+    "Description": "",
     "Keywords": "JsonString From method Corvus.Text.Json.Patch",
-    "Body": "Gets an instance of the JSON value from another element."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.parsevalue.html",
     "Title": "JsonString.ParseValue",
-    "Description": "Parses one JSON value (including objects or arrays) from the provided span.",
+    "Description": "",
     "Keywords": "JsonString ParseValue method Corvus.Text.Json.Patch",
-    "Body": "Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided span. Parses one JSON value (including objects or arrays) from the provided text. Parses one JSON value (including objects or arrays) from the provided reader."
+    "Body": "   "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.tryparsevalue.html",
     "Title": "JsonString.TryParseValue",
-    "Description": "Attempts to parse one JSON value (including objects or arrays) from the provided reader.",
+    "Description": "",
     "Keywords": "JsonString TryParseValue method Corvus.Text.Json.Patch",
-    "Body": "Attempts to parse one JSON value (including objects or arrays) from the provided reader."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.equals.html",
     "Title": "JsonString.Equals",
     "Description": "",
     "Keywords": "JsonString Equals method Corvus.Text.Json.Patch",
-    "Body": " Equality comparison."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.valueequals.html",
     "Title": "JsonString.ValueEquals",
-    "Description": "Compare with a UTF-8 string.",
+    "Description": "",
     "Keywords": "JsonString ValueEquals method Corvus.Text.Json.Patch",
-    "Body": "Compare with a UTF-8 string. Compare with a string. Compare with a string."
+    "Body": "  "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.writeto.html",
@@ -24215,30 +24250,30 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.evaluateschema.html",
     "Title": "JsonString.EvaluateSchema",
-    "Description": "Evaluate this instance against the JSON Schema for this type.",
+    "Description": "",
     "Keywords": "JsonString EvaluateSchema method Corvus.Text.Json.Patch",
-    "Body": "Evaluate this instance against the JSON Schema for this type."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.clone.html",
     "Title": "JsonString.Clone",
-    "Description": "Gets a [`JsonString`](/api/v5/corvus-text-json-patch-jsonstring.html) which can be safely stored beyond the lifetime of the original document.",
+    "Description": "",
     "Keywords": "JsonString Clone method Corvus.Text.Json.Patch",
-    "Body": "Gets a [`JsonString`](/api/v5/corvus-text-json-patch-jsonstring.html) which can be safely stored beyond the lifetime of the original document."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.freeze.html",
     "Title": "JsonString.Freeze",
-    "Description": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.",
+    "Description": "",
     "Keywords": "JsonString Freeze method Corvus.Text.Json.Patch",
-    "Body": "Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable."
+    "Body": ""
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.createbuilder.html",
     "Title": "JsonString.CreateBuilder",
     "Description": "",
     "Keywords": "JsonString CreateBuilder method Corvus.Text.Json.Patch",
-    "Body": " Creates and initializes a mutable document from this instance."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.create.html",
@@ -24257,16 +24292,16 @@
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.op-equality.html",
     "Title": "JsonString Equality Operator",
-    "Description": "Operator ==.",
+    "Description": "",
     "Keywords": "JsonString Equality operator Corvus.Text.Json.Patch",
-    "Body": "Operator ==. Operator ==."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.op-inequality.html",
     "Title": "JsonString Inequality Operator",
-    "Description": "Operator !=.",
+    "Description": "",
     "Keywords": "JsonString Inequality operator Corvus.Text.Json.Patch",
-    "Body": "Operator !=. Operator !=."
+    "Body": " "
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring.op-implicit.html",

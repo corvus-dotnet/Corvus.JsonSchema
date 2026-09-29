@@ -98,12 +98,12 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Canonicalization<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/eba3059fd92ab72f7d98e48f01cc1a00207207cf/src/Corvus.Text.Json/Corvus/Text/Json/Canonicalization/JsonCanonicalizer.cs#L27">JsonCanonicalizer.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/6c64e2f333a11b0d5fd549dc3d574c214dac9069/src/Corvus.Text.Json/Corvus/Text/Json/Canonicalization/JsonCanonicalizer.cs#L28">JsonCanonicalizer.cs</a></p>
 <p>Produces canonical JSON output per RFC 8785 (JSON Canonicalization Scheme — JCS).</p>
 <pre><code class="language-csharp">public static class JsonCanonicalizer
 </code></pre>
 <h2 id="remarks">Remarks</h2>
-<p>JCS defines a deterministic serialization of JSON values: - Object properties are sorted by UTF-16 code unit values of the property names. - Numbers use ECMAScript 6 <code>Number.toString()</code> formatting. - Strings use minimal escaping (only control characters, backslash, and double-quote). - No whitespace between structural tokens. Input must conform to I-JSON (RFC 7493): no duplicate property names, and all numbers must be representable as IEEE 754 double-precision values.</p>
+<p>JCS defines a deterministic serialization of JSON values: - Object properties are sorted by UTF-16 code unit values of the property names. - Numbers use ECMAScript 6 <code>Number.toString()</code> formatting. - Strings use minimal escaping (only control characters, backslash, and double-quote). - No whitespace between structural tokens. Input must conform to I-JSON (RFC 7493): no duplicate property names, and all numbers must be representable as IEEE 754 double-precision values. Strings must be valid Unicode: an unpaired surrogate escape, or a string that is not valid UTF-8, is rejected.</p>
 <h2 id="inheritance">Inheritance</h2>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>Object</code></a> → <strong>JsonCanonicalizer</strong></p>
 <h2 id="methods">Methods</h2>

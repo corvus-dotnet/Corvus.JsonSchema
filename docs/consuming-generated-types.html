@@ -347,9 +347,26 @@ JSON-Schema compliant.</p>
 </code></pre>
 <p>To read a string value's bytes without allocating a managed <code>string</code>, use <code>element.GetUtf8String()</code> (see the UTF-8
 section of <a href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>).</p>
-<h3 id="discriminated-unions-match">Discriminated unions: <code>Match</code></h3>
+<h3 id="discriminated-unions-match-or-a-switch">Discriminated unions: <code>Match</code>, or a <code>switch</code></h3>
 <p>A <code>oneOf</code> schema generates a union. Read it with the generated <code>Match&lt;TResult&gt;(...)</code> (or the <code>IsX</code> / <code>AsX</code>
 accessors) rather than inspecting <code>ValueKind</code> by hand, so the compiler checks that you handled every case.</p>
+<pre><code class="language-csharp">string description = shape.Match(
+    static (in Shape.Circle c) =&gt; $&quot;circle {(double)c.Radius}&quot;,
+    static (in Shape.Square s) =&gt; $&quot;square {(double)s.Side}&quot;,
+    static (in Shape none) =&gt; &quot;not a shape&quot;);
+</code></pre>
+<p><strong>.NET 11 SDK or later, any target framework except .NET Framework:</strong> the generated type is also a C# union, so a <code>switch</code> or <code>is</code>
+pattern over the branch types is exhaustive without a fallback arm, and it does not box. A value that matches
+no branch has a <code>null</code> union value, so add a <code>null</code> arm when the input is untrusted, or test <code>HasValue</code> through
+the type's <code>IUnionMembers</code> interface. The requirement is the C# 15 compiler in the .NET 11 SDK; the project can
+still target net9.0 or net10.0. Older compilers ignore the union members and <code>Match</code> keeps working.</p>
+<pre><code class="language-csharp">string description = shape switch
+{
+    Shape.Circle c =&gt; $&quot;circle {(double)c.Radius}&quot;,
+    Shape.Square s =&gt; $&quot;square {(double)s.Side}&quot;,
+    null =&gt; &quot;not a shape&quot;,
+};
+</code></pre>
 <h3 id="native-enums-knownvalues-and-flags">Native enums: <code>KnownValues</code> and <code>Flags</code></h3>
 <p>A pure string enum generates a nested native C# enum (<code>KnownValues</code>) and an object whose declared properties
 are all boolean generates a nested <code>[Flags]</code> enum, each with implicit conversions in both directions and a

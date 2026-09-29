@@ -384,6 +384,7 @@ Console.WriteLine(Encoding.UTF8.GetString(canonicalBytes));
 <ul>
 <li><strong>No duplicate property names</strong> — <code>TryCanonicalize</code> throws <code>InvalidOperationException</code> if duplicates are detected.</li>
 <li><strong>Numbers must be IEEE 754 double-precision representable</strong> — <code>TryCanonicalize</code> throws <code>InvalidOperationException</code> for numbers that cannot be converted to <code>double</code>, or for <code>NaN</code>/<code>Infinity</code> values.</li>
+<li><strong>Strings must be valid Unicode</strong> — <code>TryCanonicalize</code> throws <code>InvalidOperationException</code> for an unpaired surrogate escape (such as <code>&quot;\ud83d&quot;</code>), and for a string or property name that is not valid UTF-8. Neither can be written as UTF-8, which the canonical form requires.</li>
 </ul>
 <h2 id="api-reference">API Reference</h2>
 <h3 id="trycanonicalize"><code>TryCanonicalize</code></h3>

@@ -98,8 +98,27 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Json.CodeGeneration<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
+<h2 id="overloads">Overloads</h2>
+<table>
+<thead>
+<tr>
+<th>Constructor</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#generatedcodefile-string-string-typedeclaration">GeneratedCodeFile(string, string, TypeDeclaration?)</a></td>
+<td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.html"><code>GeneratedCodeFile</code></a> class from a string.</td>
+</tr>
+<tr>
+<td><a href="#generatedcodefile-string-readonlymemory-char-typedeclaration">GeneratedCodeFile(string, ReadOnlyMemory&lt;char&gt;[], TypeDeclaration?)</a></td>
+<td>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.html"><code>GeneratedCodeFile</code></a> class from chunks of text.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="generatedcodefile-string-string-typedeclaration">GeneratedCodeFile(string, string, TypeDeclaration?)</h2>
-<p>The results of generating code.</p>
+<p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.html"><code>GeneratedCodeFile</code></a> class from a string.</p>
 <pre><code class="language-csharp">public GeneratedCodeFile(string fileName, string fileContent, TypeDeclaration? typeDeclaration)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -115,17 +134,17 @@
 <tr>
 <td><code>fileName</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
-<td>The file name for the generated code.</td>
+<td>The file name.</td>
 </tr>
 <tr>
 <td><code>fileContent</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
-<td>The generated code.</td>
+<td>The file content.</td>
 </tr>
 <tr>
 <td><code>typeDeclaration</code></td>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></td>
-<td>The type declaration for which code was generated. <em>(optional)</em></td>
+<td>The type declaration for which the file was generated, if any. <em>(optional)</em></td>
 </tr>
 </tbody>
 </table>
@@ -148,6 +167,58 @@
 </tr>
 </tbody>
 </table>
+<hr />
+<h2 id="generatedcodefile-string-readonlymemory-char-typedeclaration">GeneratedCodeFile(string, ReadOnlyMemory&lt;char&gt;[], TypeDeclaration?)</h2>
+<p>Initializes a new instance of the <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.html"><code>GeneratedCodeFile</code></a> class from chunks of text.</p>
+<pre><code class="language-csharp">public GeneratedCodeFile(string fileName, ReadOnlyMemory&lt;char&gt;[] chunks, TypeDeclaration? typeDeclaration)
+</code></pre>
+<h3 id="parameters-1">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fileName</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td>The file name.</td>
+</tr>
+<tr>
+<td><code>chunks</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlymemory-1"><code>ReadOnlyMemory&lt;char&gt;[]</code></a></td>
+<td>The content, in order; each chunk holds at most <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.chunksize.html"><code>ChunkSize</code></a> characters.</td>
+</tr>
+<tr>
+<td><code>typeDeclaration</code></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration?</code></a></td>
+<td>The type declaration for which the file was generated, if any. <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to-1">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
         </div>
         <div class="api-feedback">
             <div class="api-feedback__inner">

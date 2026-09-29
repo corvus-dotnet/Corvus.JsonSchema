@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Canonicalization<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/eba3059fd92ab72f7d98e48f01cc1a00207207cf/src/Corvus.Text.Json/Corvus/Text/Json/Canonicalization/JsonCanonicalizer.cs#L58">JsonCanonicalizer.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/6c64e2f333a11b0d5fd549dc3d574c214dac9069/src/Corvus.Text.Json/Corvus/Text/Json/Canonicalization/JsonCanonicalizer.cs#L61">JsonCanonicalizer.cs</a></p>
 <h2 id="canonicalize-jsonelement">Canonicalize(JsonElement)</h2>
 <p>Canonicalizes a JSON element per RFC 8785 and returns the result as a byte array.</p>
 <pre><code class="language-csharp">public static byte[] Canonicalize(in JsonElement element)
@@ -134,7 +134,7 @@
 <tbody>
 <tr>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.invalidoperationexception"><code>InvalidOperationException</code></a></td>
-<td>The input contains duplicate property names.</td>
+<td>The input contains duplicate property names, a number that is not representable as an IEEE 754 double, an unpaired surrogate, or a string that is not valid UTF-8.</td>
 </tr>
 </tbody>
 </table>

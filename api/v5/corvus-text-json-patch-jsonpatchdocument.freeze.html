@@ -99,14 +99,10 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
 <h2 id="freeze">Freeze()</h2>
-<p>Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.</p>
 <pre><code class="language-csharp">public JsonPatchDocument Freeze()
 </code></pre>
 <h3 id="returns">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>JsonPatchDocument</code></a></p>
-<p>An immutable <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>JsonPatchDocument</code></a> that lives for the lifetime of its workspace and its associated documents.</p>
-<h3 id="remarks">Remarks</h3>
-<p>Unlike <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument.clone.html"><code>Clone</code></a>, which serializes the element and re-parses it into a standalone heap-allocated document, <code>Freeze()</code> performs a cheap blit of the metadata and value backing arrays. The resulting element is immutable but is only valid for the lifetime of the workspace. If this instance is already backed by an immutable document, it is returned as-is.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

@@ -497,9 +497,19 @@ public readonly partial struct PhoneNumber;
 <td>Controls emission of native C# enums on generated types. <code>StringEnums</code> emits a nested <code>KnownValues</code> enum (with conversions) for pure string-enum schemas; <code>FlagsObjects</code> emits a nested <code>[Flags]</code> enum (with conversions) for objects whose declared properties are all boolean; <code>All</code> emits both; <code>None</code> emits neither.</td>
 </tr>
 <tr>
+<td><code>CorvusTextJsonUnions</code></td>
+<td><code>true</code></td>
+<td>When <code>true</code>, a generated <code>oneOf</code>/<code>anyOf</code> type is also a C# union: with the C# 15 compiler (the .NET 11 SDK or later, any target framework except .NET Framework) <code>switch</code> and <code>is</code> patterns over its branch types work, exhaustively and without boxing. The generator also emits an internal <code>UnionAttribute</code> polyfill for target frameworks before .NET 11; define <code>CORVUS_TEXT_JSON_NO_UNION_ATTRIBUTE_POLYFILL</code> if the project already has one. Set to <code>false</code> to leave the union members out.</td>
+</tr>
+<tr>
 <td><code>CorvusTextJsonDisabledNamingHeuristics</code></td>
 <td><code>DocumentationNameHeuristic</code></td>
 <td>Semicolon-separated list of specific naming heuristics to disable (e.g., <code>DocumentationNameHeuristic;PathNameHeuristic</code>).</td>
+</tr>
+<tr>
+<td><code>CorvusTextJsonSuppressAnalyzerDiagnosticsInGeneratedCode</code></td>
+<td><code>true</code></td>
+<td>When <code>true</code>, analyzer diagnostics located in the generated code are not reported (see <a href="#analyzers-and-generated-code">Analyzers and generated code</a>). Compiler diagnostics are unaffected. Set to <code>false</code> to have them reported.</td>
 </tr>
 </tbody>
 </table>
@@ -520,6 +530,7 @@ public readonly partial struct PhoneNumber;
 <li><strong>Equality</strong> operators and <code>GetHashCode()</code></li>
 </ul>
 <p>All generated types are <code>readonly struct</code> values — they are lightweight indexes into pooled JSON data, not heap-allocated objects.</p>
+<p>Members that mirror a <code>JsonElement</code> member (<code>TryGetProperty</code>, the indexers, <code>EnumerateObject</code>, <code>ParseValue</code>, <code>Clone</code>, <code>Freeze</code>, the equality operators, the mutable partial's <code>SetProperty</code> and <code>RemoveProperty</code>) are documented with <code>&lt;inheritdoc cref=&quot;global::Corvus.Text.Json.JsonElement...&quot;/&gt;</code>; IntelliSense resolves the reference from the <code>Corvus.Text.Json.xml</code> file in the package. Members without a runtime counterpart keep their own documentation.</p>
 <h2 id="inspecting-generated-code">Inspecting Generated Code</h2>
 <p>By default, generated code exists only in memory. To write it to disk for inspection:</p>
 <pre><code class="language-xml">&lt;PropertyGroup&gt;
@@ -533,6 +544,31 @@ public readonly partial struct PhoneNumber;
   ...
 </code></pre>
 <p>This is useful for debugging, code review, or understanding how the schema maps to C#.</p>
+<h2 id="analyzers-and-generated-code">Analyzers and generated code</h2>
+<p>Generated code is often most of what the compiler sees in a model project, and analyzers can spend most of a build on it. Two things are worth knowing.</p>
+<p><strong>Most analyzers skip generated code by themselves.</strong> An analyzer that calls <code>ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None)</code> is never executed on a generated file: StyleCop, Roslynator, the Corvus analyzers and most of the .NET SDK's NetAnalyzers do. The generator's files qualify: every hint name ends in <code>.g.cs</code> and every file starts with <code>// &lt;auto-generated/&gt;</code>, which is how the analyzer driver classifies a file as generated.</p>
+<p><strong>A few analyze generated code, and they cost real time.</strong> An analyzer that never calls <code>ConfigureGeneratedCodeAnalysis</code>, or asks for <code>GeneratedCodeAnalysisFlags.Analyze</code>, executes on the generated files too. In the .NET 10 SDK these include CA2252 (preview features), CA1418, CA1420 and CA1421, and the Roslyn meta-analyzers (RS rules) that arrive with any <code>Microsoft.CodeAnalysis</code> reference. Building a project with <code>-p:ReportAnalyzer=true -v:d</code> prints a table of the time each analyzer took; in the model projects of this repository the analyzers that analyse generated code were 20 of 27 seconds of analyzer time before they were configured away.</p>
+<p>The package hides analyzer diagnostics in the generated code by default: its build targets copy a small analyzer config file next to the generator's output paths and pass it to the compiler, with a section over this generator's files setting <code>dotnet_analyzer_diagnostic.severity = none</code>. A bulk severity hides reporting only. Compiler diagnostics in generated code (nullable warnings, CS0618, CS1591) are still reported, the analyzers still execute there, and the IDE, which applies no analyzer config to source-generated documents, still analyses them live. Set <code>&lt;CorvusTextJsonSuppressAnalyzerDiagnosticsInGeneratedCode&gt;false&lt;/CorvusTextJsonSuppressAnalyzerDiagnosticsInGeneratedCode&gt;</code> to have those diagnostics reported.</p>
+<p>To stop such an analyzer from executing on the generated files, which is where the time goes, configure it in your own repository:</p>
+<ul>
+<li>A project whose every type is generated (a models-only project) can set <code>&lt;RunAnalyzers&gt;false&lt;/RunAnalyzers&gt;</code>. Generators still run; no analyzer does.</li>
+<li>A project that mixes generated and hand-written code can set every diagnostic of the analyzer to <code>none</code> in a global analyzer config (<code>is_global = true</code>) and restore each one for files on disk in <code>.editorconfig</code>, at the severity it has today:</li>
+</ul>
+<pre><code class="language-ini"># generated-code.globalconfig, passed to the compiler as an EditorConfigFiles item
+is_global = true
+dotnet_diagnostic.CA2252.severity = none
+dotnet_diagnostic.CA1418.severity = none
+dotnet_diagnostic.CA1420.severity = none
+dotnet_diagnostic.CA1421.severity = none
+</code></pre>
+<pre><code class="language-ini"># .editorconfig
+[*.cs]
+dotnet_diagnostic.CA2252.severity = error
+dotnet_diagnostic.CA1418.severity = warning
+dotnet_diagnostic.CA1420.severity = warning
+dotnet_diagnostic.CA1421.severity = suggestion
+</code></pre>
+<p>The compiler gives source generator trees no per-file settings, so they see only the global <code>none</code> and the analyzer driver skips the analyzer on them, while files on disk keep their restored severity and every diagnostic they had. Write the restored value explicitly: a build never runs an analyzer whose diagnostics are all <code>silent</code> or <code>suggestion</code>, and <code>default</code> would count as enabling such a rule. This repository keeps its own list current with <code>update-generated-code-analyzer-config.ps1</code>, which reads the analyzers in use and writes both files.</p>
 <h2 id="incremental-generation">Incremental Generation</h2>
 <p>The source generator is fully incremental — it only regenerates code when something relevant changes:</p>
 <ul>
@@ -634,9 +670,9 @@ public readonly partial struct PhoneNumber;
 <td>Disable the heuristic with <code>CorvusTextJsonDisabledNamingHeuristics</code></td>
 </tr>
 <tr>
-<td>Stale generated code</td>
-<td>Incremental cache not invalidated</td>
-<td>Clean and rebuild (<code>dotnet clean &amp;&amp; dotnet build</code>)</td>
+<td>Generated code does not change after a schema edit</td>
+<td>The edited schema, or a document it references, is not an <code>AdditionalFiles</code> item, so the generator is not told about the change. (Releases before the fix for <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/963">#963</a> also stopped generating after the first edit in a long-lived IDE or build-server session, reporting <code>CS8785</code>.)</td>
+<td>Add every schema the generation reads to <code>AdditionalFiles</code>; on an affected release, restart the IDE or build server, or clean and rebuild</td>
 </tr>
 <tr>
 <td>Cross-assembly type mismatch on a generated type (<code>CS0535</code>, or a conversion that should exist but does not)</td>

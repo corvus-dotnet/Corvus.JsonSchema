@@ -412,6 +412,11 @@ dotnet tool install Corvus.Json.Cli
 <td>Use implicit (vs explicit) conversion to <code>string</code></td>
 </tr>
 <tr>
+<td><code>--unions</code></td>
+<td><code>true</code></td>
+<td>Make each <code>oneOf</code>/<code>anyOf</code> type a C# union as well as giving it <code>Match</code>: with the C# 15 compiler (the .NET 11 SDK or later, any target framework except .NET Framework) <code>switch</code> and <code>is</code> patterns over the branch types work. Pass <code>--unions false</code> to leave the union members out.</td>
+</tr>
+<tr>
 <td><code>--disableOptionalNamingHeuristics</code></td>
 <td><code>false</code></td>
 <td>Disable all optional naming heuristics at once (see <a href="#naming-heuristics">Naming Heuristics</a>)</td>
@@ -450,6 +455,11 @@ dotnet tool install Corvus.Json.Cli
 <td><code>--outputMapFile</code></td>
 <td>—</td>
 <td>Write a JSON map of all generated files</td>
+</tr>
+<tr>
+<td><code>--force</code></td>
+<td><code>false</code></td>
+<td>Regenerate even when the output folder's lock file says nothing changed, and apply this run's options to everything the folder was generated from even when they differ from the lock's (see <a href="#lock-file-and-regeneration">Lock file and regeneration</a>)</td>
 </tr>
 </tbody>
 </table>
@@ -561,6 +571,12 @@ corvusjson jsonschema Schemas/config.json \
 <td>No</td>
 <td><code>true</code></td>
 <td>When <code>true</code>, the <code>format</code> keyword is enforced as a validation assertion. When <code>false</code>, <code>format</code> is treated as an annotation only (per the JSON Schema specification).</td>
+</tr>
+<tr>
+<td><code>unions</code></td>
+<td>No</td>
+<td><code>true</code></td>
+<td>When <code>true</code>, a <code>oneOf</code>/<code>anyOf</code> type is also a C# union (<code>switch</code> and <code>is</code> patterns over its branch types with the C# 15 compiler, the .NET 11 SDK or later, any target framework except .NET Framework). Set to <code>false</code> to leave the union members out.</td>
 </tr>
 <tr>
 <td><code>formatMode</code></td>
@@ -811,9 +827,21 @@ corvusjson jsonschema Schemas/config.json \
 <li><strong>Mutable builder</strong>: <code>person.CreateBuilder(workspace)</code> creates a mutable copy</li>
 <li><strong>Immutable document factory</strong>: <code>Person.Create(...)</code> builds a self-contained <code>ParsedJsonDocument&lt;Person&gt;</code> in a single pass, with no workspace and no serialization round trip</li>
 <li><strong>Pattern matching</strong>: <code>Match()</code> methods for <code>oneOf</code>/<code>anyOf</code> discriminated unions, plus <code>MatchEvery()</code> on <code>anyOf</code> compositions to visit every matching subschema, threading an accumulator through the calls</li>
+<li><strong>C# unions</strong> (.NET 11 SDK or later, any target framework except .NET Framework): a <code>oneOf</code>/<code>anyOf</code> type is also a C# union, so <code>shape switch { Shape.Circle c =&gt; ..., Shape.Square s =&gt; ..., null =&gt; ... }</code> and <code>shape is Shape.Circle c</code> work, exhaustively and without boxing. Turn it off with <code>--unions false</code> (CLI), <code>&lt;CorvusTextJsonUnions&gt;false&lt;/CorvusTextJsonUnions&gt;</code> (source generator) or <code>&quot;unions&quot;: false</code> (config file)</li>
 <li><strong>Serialization</strong>: <code>WriteTo(Utf8JsonWriter)</code> for zero-allocation output</li>
 <li><strong>Schema provenance</strong>: <code>Person.JsonSchema.SchemaDocument</code> is the schema document the type was generated from, relative to the generation base (for example <code>person.json</code>), and <code>Person.JsonSchema.SchemaLocation</code> is the JSON Pointer to the schema within that document (for example <code>/$defs/person</code>). Together they form the reference <code>person.json#/$defs/person</code>. A schema inside a <code>$id</code> sub-resource still reports the containing document and the pointer from its root. Validation results and annotations report the same pointer shape.</li>
 </ul>
+<p>Generated members that mirror a <code>JsonElement</code> member (<code>TryGetProperty</code>, the indexers, <code>EnumerateObject</code>, <code>ParseValue</code>, <code>Clone</code>, <code>Freeze</code>, the equality operators and the mutable partial's <code>SetProperty</code> and <code>RemoveProperty</code>, among others) carry <code>/// &lt;inheritdoc cref=&quot;global::Corvus.Text.Json.JsonElement...&quot;/&gt;</code> instead of a copy of the runtime's documentation. IntelliSense and documentation tools resolve the reference from the <code>Corvus.Text.Json.xml</code> file shipped in the package, so the text you see is the runtime's; a consuming project's own XML documentation file carries the <code>inheritdoc</code> element as written. Members that have no runtime counterpart (property accessors, the <code>Create</code> and <code>Build</code> factories, schema constants) keep their own documentation, and non-public members carry none.</p>
+<h2 id="analyzers-and-the-generated-folder">Analyzers and the generated folder</h2>
+<p>Every generated file starts with <code>// &lt;auto-generated/&gt;</code>, so analyzers that skip generated code (StyleCop, Roslynator, the Corvus analyzers and most of the .NET SDK's NetAnalyzers) never execute on it. A few analyzers analyse generated code regardless (in the .NET 10 SDK: CA2252, CA1418, CA1420, CA1421, and the Roslyn meta-analyzers that come with a <code>Microsoft.CodeAnalysis</code> reference); <code>-p:ReportAnalyzer=true -v:d</code> on a build shows what each costs. Because the output is checked in, an <code>.editorconfig</code> section over the folder both hides every analyzer diagnostic there and stops those analyzers executing on those files, without touching compiler diagnostics:</p>
+<pre><code class="language-ini">[Generated/**.cs]
+dotnet_analyzer_diagnostic.severity = none
+dotnet_diagnostic.CA2252.severity = none
+dotnet_diagnostic.CA1418.severity = none
+dotnet_diagnostic.CA1420.severity = none
+dotnet_diagnostic.CA1421.severity = none
+</code></pre>
+<p>Do not add <code>generated_code = true</code> to such a section for files that lack the header: it also switches off the project's nullable context for them. A project that holds nothing but generated code can set <code>&lt;RunAnalyzers&gt;false&lt;/RunAnalyzers&gt;</code> instead.</p>
 <h2 id="schema-draft-support">Schema Draft Support</h2>
 <table>
 <thead>
@@ -857,6 +885,16 @@ corvusjson jsonschema Schemas/config.json \
 </tbody>
 </table>
 <p>The tool auto-detects the schema draft from the <code>$schema</code> keyword. Use <code>--useSchema</code> only as a fallback when the keyword is missing.</p>
+<h2 id="lock-file-and-regeneration">Lock file and regeneration</h2>
+<p>Every <code>jsonschema</code> run, and every run of a <a href="#config">generation specification file</a>, leaves a <code>corvusjson-jsonschema.lock</code> in its output folder. The lock records the folder's whole generation specification (every schema generated into the folder with its settings, and the options they share), the hash of every local schema and additional file, the generator version, and the files written.</p>
+<p>The generated types in a folder share one <code>CorvusJsonSchemaProgram</code>, and each type refers to its entry in that program. A run into a folder that already holds generated code therefore adds its schemas to the specification the lock recorded and regenerates the whole set as one program. Ten runs with ten schemas into one folder give one consistent program; without the lock, each run would overwrite the program the earlier runs' types were wired to.</p>
+<ul>
+<li>A run whose schemas and options are already in the lock, with unchanged schema content, is skipped (&quot;Up to date&quot;). Pass <code>--force</code> to regenerate anyway.</li>
+<li>A run whose options differ from the lock's (root namespace, <code>--nativeEnums</code> and the rest, the engine, the code generation mode) fails and names the options. Use the same options, pass <code>--force</code> to apply the run's options to everything the folder was generated from, or delete the lock and the generated files to start the folder afresh. A schema with different per-schema settings (<code>--outputRootTypeName</code>, <code>--rootPath</code>) is not a conflict: the new settings replace the old ones for that schema.</li>
+<li>Files an earlier run wrote that the run no longer generates (a renamed root type, for example) are deleted. Files the lock never listed are never touched.</li>
+<li>Local paths are recorded relative to the output folder, so the folder can move together with its schemas. Files reached only through <code>$ref</code> are not hashed; when one of them changes, pass <code>--force</code>.</li>
+<li>The lock is restored from a backup if a run fails.</li>
+</ul>
 <h2 id="output-map-file">Output Map File</h2>
 <p>Use <code>--outputMapFile</code> to generate a JSON manifest of all generated files:</p>
 <pre><code class="language-bash">corvusjson jsonschema Schemas/person.json \

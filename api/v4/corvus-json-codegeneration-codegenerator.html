@@ -115,7 +115,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.ctor.html#codegenerator-ilanguageprovider-cancellationtoken-int-string-string">CodeGenerator(ILanguageProvider, CancellationToken, int, string, string)</a></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.ctor.html#codegenerator-ilanguageprovider-cancellationtoken-int-string-string-bool">CodeGenerator(ILanguageProvider, CancellationToken, int, string, string, bool)</a></td>
 <td>A <a href="https://learn.microsoft.com/dotnet/api/system.text.stringbuilder"><code>StringBuilder</code></a>0like class that supports code generation.</td>
 </tr>
 </tbody>
@@ -309,6 +309,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.reservenameifnotreserved.html#reservenameifnotreserved-membername">ReserveNameIfNotReserved(MemberName)</a></td>
 <td>Reserve a specific name in the scope if it is not already reserved.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.setfilesink.html#setfilesink-igeneratedcodefilesink-func-typedeclaration-filenamedescription">SetFileSink(IGeneratedCodeFileSink, Func&lt;TypeDeclaration, FileNameDescription&gt;)</a></td>
+<td>Hands each file to a sink as soon as it ends, named as <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.getgeneratedcodefiles.html"><code>GetGeneratedCodeFiles</code></a> would name it, instead of keeping it un...</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-codegenerator.tostring.html">ToString</a></td>

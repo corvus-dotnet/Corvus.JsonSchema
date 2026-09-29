@@ -1327,6 +1327,17 @@ string result = v5.Match(
     static (in JsonBoolean b) =&gt; $&quot;bool:{(bool)b}&quot;,
     static (in MigrationUnion v) =&gt; &quot;none&quot;);
 </code></pre>
+<p>V5 only, with the .NET 11 SDK or later (any target framework except .NET Framework): the generated type is also a C# union, so a
+<code>switch</code> over the variants is exhaustive and does not box. There is no V4 equivalent.</p>
+<pre><code class="language-csharp">// V5 — C# 15 switch over the union's variants; null is the &quot;no variant matched&quot; case
+string result = v5 switch
+{
+    JsonString s =&gt; $&quot;string:{(string)s}&quot;,
+    JsonInt32 n =&gt; $&quot;number:{(int)n}&quot;,
+    JsonBoolean b =&gt; $&quot;bool:{(bool)b}&quot;,
+    null =&gt; &quot;none&quot;,
+};
+</code></pre>
 <p>Both also support <code>Match</code> with a context parameter to avoid closures:</p>
 <pre><code class="language-csharp">// V4 — string/boolean are framework globals; integer+format is custom entity
 string result = v4.Match(

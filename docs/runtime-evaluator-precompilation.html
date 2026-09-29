@@ -1984,6 +1984,57 @@ in Blaze against 32 ns in ours, helm-chart-lock 3,888 at 26 ns against 136 ns. T
 and per object, not any keyword, which is consistent with the profiles and puts the object-plan inner loop and the
 per-evaluation entry path first among the remaining optimisations. The shipping generated code is 3.9 behind Blaze on
 the same geometric mean.</p>
+<h2 id="techniques-from-the-typescript-port-2026-09-29">Techniques from the TypeScript port (2026-09-29)</h2>
+<p>The TypeScript port of this evaluator (<code>src-ts/corvus-json-schema</code>) emits specialised JavaScript per node and runs
+warm faster than this evaluator on 29 of the 37 corpora (Native AOT, same machine). Most of that is JavaScript's
+parsed-object instances and cross-node inlining, which do not transfer, but four of its code shapes had no
+counterpart here. Each was built behind a switch and measured with callgrind on the Native AOT harness (instructions
+in the validation loop only: the cold pass, ten fixed warm passes and the warm pass, so the counts are noise-free):</p>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Corpora lower (none higher)</th>
+<th>Largest reductions</th>
+<th>Geomean</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Composite plan (own keywords through their plan, then the applicators)</td>
+<td>9 of 37</td>
+<td>cql2 and ansible-meta 9.1%, draft-04 6.4%, cspell 6.0%, ui5-manifest 3.5%</td>
+<td>0.988</td>
+</tr>
+<tr>
+<td>Inline string consts</td>
+<td>3</td>
+<td>ansible-meta 1.9%, ui5 0.9%</td>
+<td>0.999</td>
+</tr>
+<tr>
+<td>Single-pattern maps</td>
+<td>4</td>
+<td>deno 8.8%, stylecop 1.3%, ui5-manifest 0.8%</td>
+<td>0.997</td>
+</tr>
+<tr>
+<td>Prefix items on the array-items plan</td>
+<td>3</td>
+<td>babelrc 21.3%</td>
+<td>0.993</td>
+</tr>
+<tr>
+<td>All four</td>
+<td>15</td>
+<td>babelrc 21%, ansible-meta 11%, cql2 9%, deno 9%, ui5-manifest 5%</td>
+<td>0.978</td>
+</tr>
+</tbody>
+</table>
+<p>Wall clock with all four (nine interleaved runs, median warm): babelrc 0.82, cql2 0.87, cspell 0.91, deno and
+draft-04 0.92, ansible-meta 0.92, ui5-manifest 0.93, cmake-presets 0.94; the unaffected corpora within noise. A fifth
+change, <code>const</code> compared on the raw bytes inside <code>MatchesConst</code>, moved nothing (at most 0.2%) and was dropped.</p>
 <h2 id="open-decisions">Open decisions</h2>
 <ul>
 <li>Resolved: the evaluator is part of <code>Corvus.Text.Json</code> (namespace <code>Corvus.Text.Json.RuntimeEvaluator</code>, sources under

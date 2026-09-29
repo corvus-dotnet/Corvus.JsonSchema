@@ -112,6 +112,10 @@
 <td>Generates code for the types using the given language provider.</td>
 </tr>
 <tr>
+<td><a href="#generatecodeusing-ilanguageprovider-ienumerable-typedeclaration-igeneratedcodefilesink-cancellationtoken">GenerateCodeUsing(ILanguageProvider, IEnumerable&lt;TypeDeclaration&gt;, IGeneratedCodeFileSink, CancellationToken)</a></td>
+<td>Generates code for the root type declarations, handing each file to the sink as it is completed when the provider streams (...</td>
+</tr>
+<tr>
 <td><a href="#generatecodeusing-ilanguageprovider-cancellationtoken-typedeclaration">GenerateCodeUsing(ILanguageProvider, CancellationToken, TypeDeclaration[])</a></td>
 <td>Generates code for the types using the given language provider.</td>
 </tr>
@@ -171,11 +175,67 @@
 </tbody>
 </table>
 <hr />
+<h2 id="generatecodeusing-ilanguageprovider-ienumerable-typedeclaration-igeneratedcodefilesink-cancellationtoken">GenerateCodeUsing(ILanguageProvider, IEnumerable&lt;TypeDeclaration&gt;, IGeneratedCodeFileSink, CancellationToken)</h2>
+<p>Generates code for the root type declarations, handing each file to the sink as it is completed when the provider streams (<a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-istreaminglanguageprovider.html"><code>IStreamingLanguageProvider</code></a>), and feeding the sink from the collection otherwise.</p>
+<pre><code class="language-csharp">public void GenerateCodeUsing(ILanguageProvider languageProvider, IEnumerable&lt;TypeDeclaration&gt; rootTypeDeclarations, IGeneratedCodeFileSink sink, CancellationToken cancellationToken)
+</code></pre>
+<h3 id="parameters-1">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>languageProvider</code></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ilanguageprovider.html"><code>ILanguageProvider</code></a></td>
+<td>The language provider.</td>
+</tr>
+<tr>
+<td><code>rootTypeDeclarations</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1"><code>IEnumerable&lt;TypeDeclaration&gt;</code></a></td>
+<td>The root type declarations.</td>
+</tr>
+<tr>
+<td><code>sink</code></td>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-igeneratedcodefilesink.html"><code>IGeneratedCodeFileSink</code></a></td>
+<td>The sink that receives each file.</td>
+</tr>
+<tr>
+<td><code>cancellationToken</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken"><code>CancellationToken</code></a></td>
+<td>The cancellation token.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to-1">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="generatecodeusing-ilanguageprovider-cancellationtoken-typedeclaration">GenerateCodeUsing(ILanguageProvider, CancellationToken, TypeDeclaration[])</h2>
 <p>Generates code for the types using the given language provider.</p>
 <pre><code class="language-csharp">public IReadOnlyCollection&lt;GeneratedCodeFile&gt; GenerateCodeUsing(ILanguageProvider languageProvider, CancellationToken cancellationToken, TypeDeclaration[] rootTypeDeclarations)
 </code></pre>
-<h3 id="parameters-1">Parameters</h3>
+<h3 id="parameters-2">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -205,7 +265,7 @@
 <h3 id="returns-1">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlycollection-1"><code>IReadOnlyCollection&lt;GeneratedCodeFile&gt;</code></a></p>
 <p>The <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-generatedcodefile.html"><code>GeneratedCodeFile</code></a> collection.</p>
-<h2 id="applies-to-1">Applies To</h2>
+<h2 id="applies-to-2">Applies To</h2>
 <table>
 <thead>
 <tr>

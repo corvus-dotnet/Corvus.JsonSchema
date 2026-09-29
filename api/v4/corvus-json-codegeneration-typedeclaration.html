@@ -151,9 +151,14 @@
 <td>Gets the subschema type declarations, ordered by location.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.orderingcomparer.html">OrderingComparer</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.icomparer-1"><code>IComparer&lt;string&gt;</code></a></td>
+<td>Gets the comparer with which the names that reach generated code are ordered: <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.propertydeclarations.html"><code>PropertyDeclarations</code></a>, the subschemas...</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.propertydeclarations.html">PropertyDeclarations</a></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlylist-1"><code>IReadOnlyList&lt;PropertyDeclaration&gt;</code></a></td>
-<td>Gets the property declarations for this type declaration.</td>
+<td>Gets the property declarations for this type declaration, ordered by JSON property name with <a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.orderingcomparer.html"><code>OrderingComparer</code></a>.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-typedeclaration.relativeschemadocument.html">RelativeSchemaDocument</a></td>

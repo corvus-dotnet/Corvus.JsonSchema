@@ -479,6 +479,9 @@ string result = value.Match(
 <blockquote>
 <p><strong>Note:</strong> The code fix only applies the <code>static</code> modifier for non-capturing lambdas. Capturing-lambda refactoring to <code>Match&lt;TContext, TResult&gt;</code>, or to an accumulator-threaded <code>MatchEvery</code>, requires manual changes.</p>
 </blockquote>
+<blockquote>
+<p><strong>Tip:</strong> With the .NET 11 SDK or later (any target framework except .NET Framework), a generated <code>oneOf</code>/<code>anyOf</code> type is also a C# union, and a <code>switch</code> over its variants has no lambdas to capture anything: <code>value switch { JsonString s =&gt; ..., JsonNumber n =&gt; ..., null =&gt; ... }</code>. The analyzer has nothing to report there.</p>
+</blockquote>
 <hr />
 <h2 id="ctj004-missing-dispose-on-parsedjsondocument">CTJ004 — Missing dispose on ParsedJsonDocument</h2>
 <p><strong>Severity:</strong> Warning · <strong>Code fix:</strong> ✅ Yes · <strong>Category:</strong> Reliability</p>
