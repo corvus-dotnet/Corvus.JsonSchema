@@ -1,7 +1,7 @@
 {
   "name": "@corvus-dotnet/json-schema",
   "version": "0.1.0",
-  "description": "A high-performance JSON Schema evaluator (draft 4 to 2020-12) that compiles schemas to specialised JavaScript, ported from the Corvus.Text.Json V5 runtime evaluator.",
+  "description": "A high-performance JSON Schema evaluator (draft 4 to 2020-12) that compiles schemas to specialised JavaScript, with results collection and annotations, ported from the Corvus.Text.Json V5 runtime evaluator.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,6 +14,14 @@
     "./runtime": {
       "types": "./dist/runtime.d.ts",
       "import": "./dist/runtime.js"
+    },
+    "./collecting": {
+      "types": "./dist/collecting.d.ts",
+      "import": "./dist/collecting.js"
+    },
+    "./results": {
+      "types": "./dist/results.d.ts",
+      "import": "./dist/results.js"
     },
     "./package.json": "./package.json"
   },
@@ -29,7 +37,7 @@
   "scripts": {
     "embed-metaschemas": "node scripts/embed-metaschemas.mjs",
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test test/*.test.mjs && node test/suite.mjs && node test/suite.mjs --module",
+    "test": "npm run build && node --test test/*.test.mjs && node test/suite.mjs && node test/suite.mjs --module && node test/suite.mjs --collect verbose && node test/annotations.mjs && node test/bowtie-ihop.mjs",
     "suite": "npm run build && node test/suite.mjs",
     "bench": "npm run build && node bench/corpora.mjs"
   },

@@ -9,7 +9,7 @@
 // tracking only where unevaluatedProperties/unevaluatedItems consume it.
 
 import { CompiledSchema } from './compiler.js';
-import { formatValidators } from './formats.js';
+import { formatValidators, isNumericFormat } from './formats.js';
 import { Dialect } from './dialect.js';
 import { ContentKind, Discriminator, SchemaNode, TypeMask } from './node.js';
 
@@ -135,8 +135,8 @@ export class CodeGenerator {
 
   generate(): GeneratedCode {
     const rootName = this.request(this.entryName(this.program.root));
-    while (this.queue.length > 0) {
-      const name = this.queue.shift()!;
+    for (let q = 0; q < this.queue.length; q++) {
+      const name = this.queue[q];
       this.templates.set(name, this.generateFunction(name));
     }
     const { declarations, root } = this.link(rootName);
@@ -159,7 +159,7 @@ export class CodeGenerator {
   }
 
   private request(name: string): string {
-    if (!this.templates.has(name) && !this.queue.includes(name)) {
+    if (!this.templates.has(name)) {
       this.templates.set(name, '');
       this.queue.push(name);
     }
@@ -587,8 +587,8 @@ export class CodeGenerator {
     }
     if (n.maxLength >= 0) out.push(`if (x.length > ${n.maxLength} && R.codePoints(x) > ${n.maxLength}) return false;`);
     if (n.pattern !== undefined) out.push(`if (!${wrap(this.patternTest(n.pattern, 'x'))}) return false;`);
-    if (n.assertFormat && n.format !== undefined) {
-      const f = this.formatFunction(n.format, n.dialect);
+    if (n.assertFormat && n.format !== undefined && !isNumericFormat(n.formatKind)) {
+      const f = this.formatFunction(n.format, n.formatKind, n.dialect);
       if (f !== undefined) out.push(`if (!${f}(x)) return false;`);
     }
     if (n.assertContent) {
@@ -601,6 +601,9 @@ export class CodeGenerator {
   private numberSection(n: SchemaNode): string[] {
     const out: string[] = [];
     const num = (x: number): string => (Number.isFinite(x) ? String(x) : x > 0 ? 'Infinity' : '-Infinity');
+    if (n.assertFormat && isNumericFormat(n.formatKind) && this.program.options.formats[n.format!] === undefined) {
+      out.push(`if (!${this.constant(`R.numericFormatValidators[${lit(n.formatKind)}]`)}(x)) return false;`);
+    }
     if (n.minimum !== undefined) out.push(`if (x < ${num(n.minimum)}) return false;`);
     if (n.maximum !== undefined) out.push(`if (x > ${num(n.maximum)}) return false;`);
     if (n.exclusiveMinimum !== undefined) out.push(`if (x <= ${num(n.exclusiveMinimum)}) return false;`);
@@ -651,7 +654,7 @@ export class CodeGenerator {
     return this.constant(`new RegExp(${lit(pattern)}, ${lit(flags)})`);
   }
 
-  private formatFunction(format: string, dialect: Dialect): string | undefined {
+  private formatFunction(format: string, kind: string, dialect: Dialect): string | undefined {
     const custom = this.program.options.formats[format];
     if (custom !== undefined) {
       let i = this.customFormatIndex.get(custom);
@@ -663,9 +666,10 @@ export class CodeGenerator {
       return `F[${i}]`;
     }
     // Draft 4 and 6 host names are RFC 1123 names; later drafts apply the IDNA rules.
-    if (format === 'hostname' && dialect <= Dialect.Draft6) return this.constant('R.legacyHostname');
-    if (formatValidators[format] === undefined) return undefined;
-    return this.constant(`R.formatValidators[${lit(format)}]`);
+    if (kind === 'hostname' && dialect <= Dialect.Draft6) return this.constant('R.legacyHostname');
+    // Names the dialect does not define are unknown formats, which always match.
+    if (formatValidators[kind] === undefined) return undefined;
+    return this.constant(`R.formatValidators[${lit(kind)}]`);
   }
 
   // -------------------------------------------------------------------------------------------------------------
@@ -688,6 +692,7 @@ export class CodeGenerator {
       kind === 'object' ? `for (const k of ${s}) ${e}.add(k);` : `for (let i = 0; i < ${s}.length; i++) if (${s}[i]) ${e}[i] = 1;`;
 
     if (n.ref >= 0) push(out, direct(n.ref));
+    if (n.staticDynamicRef >= 0) push(out, direct(n.staticDynamicRef));
     if (n.dynamicRef !== undefined) {
       const variant: Variant = e !== undefined && (kind === 'object' ? this.dynamicMarks(n, 'object') : this.dynamicMarks(n, 'array')) ? 't' : 'v';
       out.push(`if (!${this.ref('d' + variant + n.id)}(x${variant === 't' ? ', ' + e : ''})) return false;`);
@@ -918,7 +923,7 @@ export class CodeGenerator {
         if (m.items >= 0 || (!root && m.unevaluatedItems >= 0)) coverage.all = true;
         if (m.contains >= 0 && m.containsMarksEvaluated) return false;
       }
-      for (const c of [m.ref, ...(m.allOf ?? [])]) {
+      for (const c of [m.ref, m.staticDynamicRef, ...(m.allOf ?? [])]) {
         if (c >= 0 && marks(c) && !visit(this.elide(c), false, coverage, visited)) return false;
       }
       return true;
@@ -1036,64 +1041,77 @@ export class CodeGenerator {
 
   private link(rootName: string): { declarations: string; root: string } {
     const names = [...this.templates.keys()];
-    const refsOf = new Map<string, string[]>();
-    for (const name of names) {
-      const refs: string[] = [];
-      for (const m of this.templates.get(name)!.matchAll(REF_RE)) refs.push(m[1]);
-      refsOf.set(name, refs);
-    }
+    const indexOf = new Map<string, number>();
+    names.forEach((name, i) => indexOf.set(name, i));
+    // Split each template once: literal parts (even indices) around references (odd indices).
+    const parts = names.map((name) => this.templates.get(name)!.split(REF_RE));
+    const refs = parts.map((p) => {
+      const r = new Int32Array(p.length >> 1);
+      for (let k = 1, j = 0; k < p.length; k += 2, j++) r[j] = indexOf.get(p[k])!;
+      return r;
+    });
 
-    // Partition refinement: start from templates with references erased, refine by the classes of references.
-    let classOf = new Map<string, number>();
-    let count = 0;
+    // Partition refinement: start from the literal parts alone, refine by the classes of the references until
+    // the number of classes stops growing. Bisimilar functions (identical text up to equivalent callees) merge.
+    let classOf = new Int32Array(names.length);
+    let count: number;
     {
       const intern = new Map<string, number>();
-      for (const name of names) {
-        const sig = this.templates.get(name)!.replace(REF_RE, REF_START + REF_END);
+      for (let i = 0; i < names.length; i++) {
+        const p = parts[i];
+        let sig = p[0];
+        for (let k = 2; k < p.length; k += 2) sig += REF_START + p[k];
         let c = intern.get(sig);
         if (c === undefined) intern.set(sig, (c = intern.size));
-        classOf.set(name, c);
+        classOf[i] = c;
       }
       count = intern.size;
     }
-    for (;;) {
-      const intern = new Map<string, number>();
-      const next = new Map<string, number>();
-      for (const name of names) {
-        const sig = classOf.get(name) + '|' + refsOf.get(name)!.map((r) => classOf.get(r)).join(',');
-        let c = intern.get(sig);
-        if (c === undefined) intern.set(sig, (c = intern.size));
-        next.set(name, c);
+    if (count < names.length) {
+      for (;;) {
+        const intern = new Map<string, number>();
+        const next = new Int32Array(names.length);
+        for (let i = 0; i < names.length; i++) {
+          const r = refs[i];
+          let sig = String(classOf[i]);
+          for (let j = 0; j < r.length; j++) sig += ',' + classOf[r[j]];
+          let c = intern.get(sig);
+          if (c === undefined) intern.set(sig, (c = intern.size));
+          next[i] = c;
+        }
+        classOf = next;
+        if (intern.size === count) break;
+        count = intern.size;
       }
-      classOf = next;
-      if (intern.size === count) break;
-      count = intern.size;
+    } else {
+      classOf = Int32Array.from(names, (_, i) => i);
     }
 
-    const representative = new Map<number, string>();
-    representative.set(classOf.get(rootName)!, rootName);
-    for (const name of names) if (!representative.has(classOf.get(name)!)) representative.set(classOf.get(name)!, name);
-    const canonical = (name: string): string => representative.get(classOf.get(name)!)!;
+    const root = indexOf.get(rootName)!;
+    const representative = new Int32Array(names.length).fill(-1);
+    representative[classOf[root]] = root;
+    for (let i = 0; i < names.length; i++) if (representative[classOf[i]] < 0) representative[classOf[i]] = i;
+    const canonical = (i: number): number => representative[classOf[i]];
 
-    // Emit reachable representatives.
-    const emitted = new Set<string>();
-    const order: string[] = [];
-    const stack = [canonical(rootName)];
+    // Emit the reachable representatives.
+    const emitted = new Uint8Array(names.length);
+    const out: string[] = [];
+    for (const [init, name] of this.constants) out.push(`const ${name} = ${init};`);
+    const stack = [canonical(root)];
     while (stack.length > 0) {
-      const name = stack.pop()!;
-      if (emitted.has(name)) continue;
-      emitted.add(name);
-      order.push(name);
-      for (const r of refsOf.get(name)!) stack.push(canonical(r));
+      const i = stack.pop()!;
+      if (emitted[i]) continue;
+      emitted[i] = 1;
+      const p = parts[i];
+      let text = p[0].replace('function @(', `function ${names[i]}(`);
+      for (let k = 1, j = 0; k < p.length; k += 2, j++) {
+        const target = canonical(refs[i][j]);
+        text += names[target] + p[k + 1];
+        if (!emitted[target]) stack.push(target);
+      }
+      out.push(text);
     }
-
-    const parts: string[] = [];
-    for (const [init, name] of this.constants) parts.push(`const ${name} = ${init};`);
-    for (const name of order) {
-      const text = this.templates.get(name)!.replace('function @(', `function ${name}(`).replace(REF_RE, (_, r: string) => canonical(r));
-      parts.push(text);
-    }
-    return { declarations: parts.join('\n'), root: canonical(rootName) };
+    return { declarations: out.join('\n'), root: names[canonical(root)] };
   }
 }
 

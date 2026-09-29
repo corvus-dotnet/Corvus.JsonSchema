@@ -3,7 +3,20 @@
 
 import { Dialect, Vocab } from './dialect.js';
 import { escapePointerToken, SchemaLoader, SchemaResource, SchemaTarget } from './loader.js';
-import { ContentKind, DependencyEntry, Discriminator, SchemaNode, TypeMask } from './node.js';
+import { AnnotationEntry, ContentKind, DependencyEntry, Discriminator, SchemaNode, TypeMask } from './node.js';
+
+/** Keywords SchemaCompiler.CompileNode handles itself; anything else is an unknown keyword (an annotation from 2019-09). */
+const KNOWN_KEYWORDS = new Set([
+  'if', 'not', 'type', 'enum', '$ref', 'then', 'else', 'const', 'items', 'allOf', 'anyOf', 'oneOf', 'title', '$defs',
+  'format', 'pattern', 'maximum', 'minimum', 'default', '$schema', '$anchor', 'required', 'contains', 'maxItems',
+  'minItems', 'examples', 'readOnly', '$comment', 'maxLength', 'minLength', 'writeOnly', 'properties', 'multipleOf',
+  'deprecated', 'uniqueItems', 'prefixItems', 'minContains', 'maxContains', 'description', '$vocabulary', 'definitions',
+  '$dynamicRef', 'dependencies', 'propertyNames', 'maxProperties', 'minProperties', 'contentSchema', '$recursiveRef',
+  '$dynamicAnchor', 'contentEncoding', 'additionalItems', 'exclusiveMaximum', 'exclusiveMinimum', 'unevaluatedItems',
+  'contentMediaType', '$recursiveAnchor', 'dependentSchemas', 'patternProperties', 'dependentRequired',
+  'additionalProperties', 'unevaluatedProperties', 'id', '$id',
+]);
+import { formatKind } from './formats.js';
 import { EvaluatorOptions, normalizeOptions, CompileOptions, SchemaCompilationError } from './options.js';
 import { decodeFragment, split } from './uri.js';
 
@@ -59,6 +72,7 @@ export class SchemaCompiler {
   private readonly targets: SchemaTarget[] = [];
   private readonly nodeIds = new Map<string, number>();
   private readonly worklist: number[] = [];
+  private worklistHead = 0;
   private readonly pendingDynamicRefs: PendingDynamicRef[] = [];
   private entryNode = -1;
 
@@ -97,7 +111,7 @@ export class SchemaCompiler {
     if (id === undefined) {
       id = this.nodes.length;
       const location = target.document.retrievalUri + '#' + target.pointer;
-      this.nodes.push(new SchemaNode(id, target.resource.id, target.resource.dialect, location));
+      this.nodes.push(new SchemaNode(id, target.resource.id, target.resource.dialect, location, target.pointer));
       this.targets.push(target);
       this.nodeIds.set(key, id);
       this.worklist.push(id);
@@ -107,11 +121,11 @@ export class SchemaCompiler {
 
   private compileAll(): void {
     for (;;) {
-      while (this.worklist.length > 0) {
-        const id = this.worklist.shift()!;
+      while (this.worklistHead < this.worklist.length) {
+        const id = this.worklist[this.worklistHead++];
         this.compileNode(this.nodes[id], this.targets[id]);
       }
-      if (!this.expandDynamicRefs() && this.worklist.length === 0) break;
+      if (!this.expandDynamicRefs() && this.worklistHead === this.worklist.length) break;
     }
     this.finalizeDynamicRefs();
   }
@@ -203,14 +217,14 @@ export class SchemaCompiler {
         dependencies ??= [];
         for (const name of Object.keys(e.dependencies)) {
           const v = e.dependencies[name];
-          if (Array.isArray(v)) dependencies.push({ name, required: v.filter((x): x is string => typeof x === 'string') });
-          else dependencies.push({ name, schema: this.child(target, v, '/dependencies/' + escapePointerToken(name)) });
+          if (Array.isArray(v)) dependencies.push({ keyword: 'dependencies', name, required: v.filter((x): x is string => typeof x === 'string') });
+          else dependencies.push({ keyword: 'dependencies', name, schema: this.child(target, v, '/dependencies/' + escapePointerToken(name)) });
         }
       }
       if (dialect >= Dialect.Draft201909 && isObject(e.dependentSchemas)) {
         dependencies ??= [];
         for (const name of Object.keys(e.dependentSchemas)) {
-          dependencies.push({ name, schema: this.child(target, e.dependentSchemas[name], '/dependentSchemas/' + escapePointerToken(name)) });
+          dependencies.push({ keyword: 'dependentSchemas', name, schema: this.child(target, e.dependentSchemas[name], '/dependentSchemas/' + escapePointerToken(name)) });
         }
       }
 
@@ -221,7 +235,11 @@ export class SchemaCompiler {
       } else if (has('items')) {
         if (Array.isArray(e.items)) {
           node.prefixItems = this.childArray(target, e.items, 'items');
-          if (has('additionalItems')) node.items = this.child(target, e.additionalItems, kw('additionalItems'));
+          node.prefixKeyword = 'items';
+          if (has('additionalItems')) {
+            node.items = this.child(target, e.additionalItems, kw('additionalItems'));
+            node.itemsKeyword = 'additionalItems';
+          }
         } else {
           node.items = this.child(target, e.items, kw('items'));
         }
@@ -242,14 +260,15 @@ export class SchemaCompiler {
       }
       if (Array.isArray(e.enum)) node.enumValues = e.enum;
       if (Array.isArray(e.required)) {
-        requiredSet = new Set(e.required.filter((x): x is string => typeof x === 'string'));
+        node.requiredList = e.required.filter((x): x is string => typeof x === 'string');
+        requiredSet = new Set(node.requiredList);
         node.required = [...requiredSet];
       }
       if (dialect >= Dialect.Draft201909 && isObject(e.dependentRequired)) {
         dependencies ??= [];
         for (const name of Object.keys(e.dependentRequired)) {
           const v = e.dependentRequired[name];
-          if (Array.isArray(v)) dependencies.push({ name, required: v.filter((x): x is string => typeof x === 'string') });
+          if (Array.isArray(v)) dependencies.push({ keyword: 'dependentRequired', name, required: v.filter((x): x is string => typeof x === 'string') });
         }
       }
       node.minProperties = getInt(e.minProperties, -1);
@@ -289,6 +308,7 @@ export class SchemaCompiler {
 
     if (typeof e.format === 'string') {
       node.format = e.format;
+      node.formatKind = formatKind(e.format, dialect);
       node.assertFormat = formatAssert;
     }
 
@@ -300,7 +320,58 @@ export class SchemaCompiler {
       node.assertContent = dialect === Dialect.Draft7 && this.options.assertContent && node.content !== ContentKind.None;
     }
 
+    if (dependencies !== undefined) {
+      // In the order the three keywords appear in the schema, as SchemaCompiler.CompileNode meets them.
+      const order = Object.keys(e);
+      dependencies.sort((a, b) => order.indexOf(a.keyword) - order.indexOf(b.keyword));
+    }
     node.dependencies = dependencies;
+    node.annotations = this.collectAnnotations(e, dialect, vocab, legacy, content);
+  }
+
+  /** The annotation keywords of a schema object, in the order SchemaCompiler.CompileNode records them. */
+  private collectAnnotations(e: Record<string, unknown>, dialect: Dialect, vocab: Vocab, legacy: boolean, content: boolean): AnnotationEntry[] | undefined {
+    const metaData = legacy || (vocab & Vocab.MetaData) !== 0;
+    const formatAnnotate = legacy || (vocab & (Vocab.FormatAnnotation | Vocab.FormatAssertion)) !== 0 || this.options.assertFormat !== undefined;
+    const out: AnnotationEntry[] = [];
+    const add = (keyword: string, stringsOnly = false): void => {
+      out.push({ keyword, value: e[keyword], stringsOnly });
+    };
+    for (const name of Object.keys(e)) {
+      switch (name) {
+        case 'title':
+        case 'description':
+        case 'default':
+          if (metaData) add(name);
+          break;
+        case 'examples':
+          if (metaData && dialect >= Dialect.Draft6) add(name);
+          break;
+        case 'readOnly':
+        case 'writeOnly':
+          if (metaData && dialect >= Dialect.Draft7) add(name);
+          break;
+        case 'deprecated':
+          if (metaData && dialect >= Dialect.Draft201909) add(name);
+          break;
+        case 'format':
+          if (typeof e.format === 'string' && formatAnnotate) add(name);
+          break;
+        default:
+          // Unknown keywords are collected as annotations from 2019-09 onwards.
+          if (dialect >= Dialect.Draft201909 && !KNOWN_KEYWORDS.has(name)) add(name);
+          break;
+      }
+    }
+    if (content && dialect >= Dialect.Draft7 && (e.contentEncoding !== undefined || e.contentMediaType !== undefined || e.contentSchema !== undefined)) {
+      if (e.contentEncoding !== undefined) add('contentEncoding', true);
+      if (e.contentMediaType !== undefined) {
+        add('contentMediaType', true);
+        // contentSchema is only meaningful alongside contentMediaType.
+        if (e.contentSchema !== undefined && dialect >= Dialect.Draft201909) add('contentSchema', true);
+      }
+    }
+    return out.length > 0 ? out : undefined;
   }
 
   private compileType(node: SchemaNode, value: unknown): void {
@@ -337,10 +408,9 @@ export class SchemaCompiler {
         resolved.resource.dynamicAnchors.get(fragment) === resolved.pointer;
     }
     if (!dynamic) {
-      // A static reference; it composes with any sibling $ref as another in-place child.
-      const id = this.getNode(resolved);
-      if (node.ref < 0) node.ref = id;
-      else node.allOf = [...(node.allOf ?? []), id];
+      // A static reference, kept apart from any sibling $ref (C# overwrites the $ref; both apply here).
+      node.staticDynamicRef = this.getNode(resolved);
+      node.staticDynamicKeyword = isRecursive ? '$recursiveRef' : '$dynamicRef';
       return;
     }
     this.pendingDynamicRefs.push({
@@ -387,8 +457,8 @@ export class SchemaCompiler {
       const node = this.nodes[pending.nodeId];
       const fallback = this.getNode(pending.initialTarget);
       const setStatic = (target: number): void => {
-        if (node.ref < 0) node.ref = target;
-        else node.allOf = [...(node.allOf ?? []), target];
+        node.staticDynamicRef = target;
+        node.staticDynamicKeyword = pending.isRecursive ? '$recursiveRef' : '$dynamicRef';
       };
       if (pending.candidates.length <= 1) {
         // Only the initial target's resource defines the anchor: resolution is static.
@@ -417,8 +487,8 @@ export class SchemaCompiler {
         byResource: new Map(pending.candidates),
       };
     }
-    while (this.worklist.length > 0) {
-      const id = this.worklist.shift()!;
+    while (this.worklistHead < this.worklist.length) {
+      const id = this.worklist[this.worklistHead++];
       this.compileNode(this.nodes[id], this.targets[id]);
     }
   }

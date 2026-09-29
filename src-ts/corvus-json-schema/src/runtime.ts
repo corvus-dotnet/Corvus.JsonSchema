@@ -1,9 +1,9 @@
 // Helpers called by generated validators. Everything here is allocation-free on the common paths.
 // Standalone modules emitted by generateModule() import this file, so its exports are public API.
 
-import { formatValidators, legacyHostname } from './formats.js';
+import { formatValidators, legacyHostname, numericFormatValidators } from './formats.js';
 
-export { formatValidators, legacyHostname };
+export { formatValidators, legacyHostname, numericFormatValidators };
 import { SchemaEvaluationDepthError } from './options.js';
 
 export { SchemaEvaluationDepthError };

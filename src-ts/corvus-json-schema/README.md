@@ -9,6 +9,9 @@ validates parsed JSON values (`JSON.parse` output) against it.
   every draft), with the same single exclusion as the C# runner (`draft4/optional/zeroTerminatedFloats.json`, which
   `JSON.parse` cannot express).
 - **Fast**: see [Performance](#performance).
+- **Results and annotations**: evaluate with a results collector at the Basic, Detailed or Verbose level for the
+  same rows (locations, messages, order) as the C# `JsonSchemaResultsCollector`, and annotations as
+  `JsonSchemaAnnotationProducer` extracts them; passes all of the suite's annotation tests.
 - **Standalone**: a schema can be emitted as an ES module that depends only on the small runtime, for environments
   where evaluating generated code at run time is not allowed.
 - No dependencies.
@@ -46,6 +49,28 @@ validate({ id: 0 }); // false
 | `maxDepth` | Depth limit for in-place recursion on a cycle (default 128); exceeding it throws `SchemaEvaluationDepthError`. |
 
 An unresolvable reference throws `SchemaCompilationError` at compile time.
+
+### Results and annotations
+
+```ts
+import { compile, collectAnnotations, JsonSchemaResultsCollector, ResultsLevel } from '@corvus-dotnet/json-schema';
+
+const validate = compile(schema);
+const collector = JsonSchemaResultsCollector.create(ResultsLevel.Detailed);
+validate.evaluate({ id: 0 }, collector); // false
+for (const r of collector.results) {
+  // r.isMatch, r.message, r.evaluationLocation, r.schemaEvaluationLocation, r.documentEvaluationLocation
+}
+
+const verbose = JsonSchemaResultsCollector.create(ResultsLevel.Verbose);
+validate.evaluate({ id: 3 }, verbose);
+collectAnnotations(verbose); // { "": { "title": { "#": "Person" } }, "/id": { ... } }
+```
+
+The levels and rows are those of the C# collector: `Basic` records failures without message text, `Detailed` adds the
+text, `Verbose` records every keyword (passing ones and annotations included). Evaluation without a collector runs the
+generated flag-mode code; with one, an interpreter over the same compiled graph evaluates every keyword and reports it
+(`collecting.ts`), so results collection costs nothing when unused.
 
 ### Standalone modules
 
@@ -156,8 +181,10 @@ Corvus TS faster on 37 of 37; geometric mean Corvus / jsu-js 0.22.
 
 ```sh
 npm install
-npm test                 # unit tests, then the suite through compile() and through generateModule()
-node test/suite.mjs      # the JSON-Schema-Test-Suite only (--draft, --filter, --verbose)
+npm test                 # everything below
+node test/suite.mjs      # the JSON-Schema-Test-Suite (--draft, --filter, --verbose; --module through generateModule;
+                         #   --collect basic|detailed|verbose through a results collector)
+node test/annotations.mjs  # the suite's annotation tests through a verbose collector
 node test/bowtie-ihop.mjs
 ```
 
@@ -166,8 +193,14 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
 
 ## Limitations and differences from the C# evaluator
 
-- **Flag output only.** Validation returns a boolean. The C# evaluator's results collector (basic, detailed and
-  verbose output, and annotation collection) is not ported yet; the Bowtie harness skips annotation runs.
+- **Results collection** matches the C# collector's rows, with these differences:
+  - Numbers in messages are printed from JavaScript numbers (`1e2` reads `100`), and annotation values are the
+    values re-serialised (`JSON.stringify`), not the schema's source text, because schemas arrive as parsed values.
+  - Instance properties are visited in JavaScript's key order, which puts integer-like keys first.
+  - Two C# behaviours are deliberately not reproduced: a subschema that is textually identical to an earlier one
+    reports its own schema location (the C# evaluator reports the first twin's, a side effect of its node
+    canonicalisation), and a static `$dynamicRef` next to a `$ref` evaluates both (the C# compiler keeps only the
+    `$dynamicRef`).
 - **Numbers are JavaScript numbers.** Instances come from `JSON.parse`, so integers beyond 2^53 and long decimals have
   already lost precision before validation (as in every JavaScript validator); `multipleOf` with a fractional
   divisor is computed exactly on the decimal forms of the doubles.

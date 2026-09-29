@@ -1,17 +1,26 @@
 // Public API: compile a schema to a validator in memory, or emit it as a standalone ES module.
 
 import { CodeGenerator, GeneratedCode } from './codegen.js';
-import { SchemaCompiler } from './compiler.js';
+import { CollectingProgram, evaluateWithCollector, serializeProgram } from './collecting.js';
+import { CompiledSchema, SchemaCompiler } from './compiler.js';
+import { JsonSchemaResultsCollector } from './results.js';
 import { CompileOptions, SchemaCompilationError } from './options.js';
 import * as runtime from './runtime.js';
 
 export { Dialect } from './dialect.js';
+export { JsonSchemaResultsCollector, ResultsLevel, enumerateAnnotations, collectAnnotations, schemaLocationFragment } from './results.js';
+export type { SchemaResult, Annotation } from './results.js';
 export { SchemaCompilationError, SchemaEvaluationDepthError } from './options.js';
 export type { CompileOptions, DocumentResolver, FormatValidator } from './options.js';
 
 /** A compiled validator: returns true when the instance is valid against the schema. */
 export interface Validator {
   (instance: unknown): boolean;
+  /**
+   * Evaluates the instance, reporting results to the collector when one is given (every keyword is evaluated and
+   * reported, at the collector's level); without a collector this is the validator itself.
+   */
+  evaluate(instance: unknown, collector?: JsonSchemaResultsCollector): boolean;
   /** The generated JavaScript (the body of the validator's module). */
   readonly source: string;
 }
@@ -20,15 +29,32 @@ export interface Validator {
 export interface ModuleOptions extends CompileOptions {
   /** The import specifier for the runtime helpers. Defaults to `@corvus-dotnet/json-schema/runtime`. */
   runtimeImport?: string;
+  /**
+   * Also export `evaluate(instance, collector)`, embedding the program image for results collection (imports
+   * `@corvus-dotnet/json-schema/collecting`, or `collectingImport`). Defaults to true.
+   */
+  collecting?: boolean;
+  /** The import specifier for the collecting evaluator. Defaults to `@corvus-dotnet/json-schema/collecting`. */
+  collectingImport?: string;
 }
 
 function parseSchema(schema: unknown): unknown {
   return typeof schema === 'string' ? JSON.parse(schema) : schema;
 }
 
-function generate(schema: unknown, options?: CompileOptions): GeneratedCode {
+function generate(schema: unknown, options?: CompileOptions): { g: GeneratedCode; program: CompiledSchema } {
   const program = SchemaCompiler.compile(parseSchema(schema), options);
-  return new CodeGenerator(program).generate();
+  return { g: new CodeGenerator(program).generate(), program };
+}
+
+function collectingProgram(program: CompiledSchema): CollectingProgram {
+  return {
+    nodes: program.nodes,
+    root: program.root,
+    usesDynamicScope: program.usesDynamicScope,
+    maxDepth: program.options.maxDepth,
+    formats: program.options.formats,
+  };
 }
 
 function assemble(g: GeneratedCode): string {
@@ -53,7 +79,7 @@ function assemble(g: GeneratedCode): string {
  * Use {@link generateModule} instead where evaluating generated code at run time is not allowed (a strict CSP).
  */
 export function compile(schema: unknown, options?: CompileOptions): Validator {
-  const g = generate(schema, options);
+  const { g, program } = generate(schema, options);
   const source = assemble(g);
   let validate: (x: unknown) => boolean;
   try {
@@ -61,9 +87,13 @@ export function compile(schema: unknown, options?: CompileOptions): Validator {
   } catch (e) {
     throw new SchemaCompilationError(`The schema produced invalid code: ${(e as Error).message}`);
   }
-  const validator = ((x: unknown) => validate(x)) as Validator;
+  const collecting = collectingProgram(program);
+  const evaluate = (x: unknown, collector?: JsonSchemaResultsCollector): boolean =>
+    collector === undefined ? validate(x) : evaluateWithCollector(collecting, x, collector);
+  const validator = (g.usesDynamicScope || g.usesDepth ? (x: unknown) => validate(x) : validate) as Validator;
   Object.defineProperty(validator, 'source', { value: source });
-  return g.usesDynamicScope || g.usesDepth ? validator : Object.assign(validate, { source }) as Validator;
+  Object.defineProperty(validator, 'evaluate', { value: evaluate });
+  return validator;
 }
 
 /**
@@ -72,15 +102,28 @@ export function compile(schema: unknown, options?: CompileOptions): Validator {
  * where it runs. Custom format functions cannot be serialised; supply them to {@link compile} instead.
  */
 export function generateModule(schema: unknown, options?: ModuleOptions): string {
-  const g = generate(schema, options);
+  const { g, program } = generate(schema, options);
   if (g.customFormats.length > 0) {
     throw new SchemaCompilationError('Custom format functions cannot be emitted into a standalone module.');
   }
   const runtimeImport = options?.runtimeImport ?? '@corvus-dotnet/json-schema/runtime';
-  return (
-    '// Generated by @corvus-dotnet/json-schema. Do not edit.\n' +
-    `import * as R from ${JSON.stringify(runtimeImport)};\n\n` +
-    assemble(g) +
-    '\nexport { validate };\nexport default validate;\n'
-  );
+  const collecting = options?.collecting ?? true;
+  let text = '// Generated by @corvus-dotnet/json-schema. Do not edit.\n' + `import * as R from ${JSON.stringify(runtimeImport)};\n`;
+  if (collecting) {
+    const collectingImport = options?.collectingImport ?? '@corvus-dotnet/json-schema/collecting';
+    text += `import { evaluateWithCollector, loadProgram } from ${JSON.stringify(collectingImport)};\n`;
+  }
+  text += '\n' + assemble(g) + '\nexport { validate };\nexport default validate;\n';
+  if (collecting) {
+    text +=
+      `\nconst image = ${JSON.stringify(serializeProgram(collectingProgram(program)))};\n` +
+      'let program;\n' +
+      '/** Evaluates the instance, reporting to the results collector when one is given. */\n' +
+      'export function evaluate(instance, collector) {\n' +
+      '  if (collector === undefined) return validate(instance);\n' +
+      '  program ??= loadProgram(image);\n' +
+      '  return evaluateWithCollector(program, instance, collector);\n' +
+      '}\n';
+  }
+  return text;
 }

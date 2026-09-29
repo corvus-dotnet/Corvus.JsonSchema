@@ -2,6 +2,7 @@
 // A port of Corvus.Text.Json.RuntimeEvaluator.Compilation.SchemaNode, trimmed to what flag-mode code generation needs.
 
 import { Dialect } from './dialect.js';
+import { isNumericFormat } from './formats.js';
 
 /** JSON types as bits. */
 export const enum TypeMask {
@@ -23,12 +24,22 @@ export const enum ContentKind {
   Base64Json,
 }
 
+/** An annotation-producing keyword and its value (reported in verbose results). */
+export interface AnnotationEntry {
+  readonly keyword: string;
+  readonly value: unknown;
+  /** Reported only when the instance is a string (content keywords). */
+  readonly stringsOnly: boolean;
+}
+
 export interface PatternProperty {
   readonly pattern: string;
   readonly node: number;
 }
 
 export interface DependencyEntry {
+  /** The keyword the entry came from (C# reports 2019-09+ `dependencies` under the newer names). */
+  readonly keyword: 'dependencies' | 'dependentSchemas' | 'dependentRequired';
   readonly name: string;
   readonly required?: string[];
   readonly schema?: number;
@@ -67,6 +78,9 @@ export class SchemaNode {
 
   // References.
   ref = -1;
+  /** A `$dynamicRef`/`$recursiveRef` that compile-time analysis resolved statically, and its keyword. */
+  staticDynamicRef = -1;
+  staticDynamicKeyword: '$dynamicRef' | '$recursiveRef' | undefined;
   dynamicRef: DynamicRefTarget | undefined;
 
   // In-place applicators.
@@ -84,6 +98,8 @@ export class SchemaNode {
   additionalProperties = -1;
   propertyNames = -1;
   required: string[] | undefined;
+  /** `required` as written (duplicates kept), for results. */
+  requiredList: string[] | undefined;
   dependencies: DependencyEntry[] | undefined;
   minProperties = -1;
   maxProperties = -1;
@@ -91,6 +107,9 @@ export class SchemaNode {
 
   // Arrays.
   prefixItems: number[] | undefined;
+  /** The keywords behind prefixItems/items: `prefixItems`/`items` (2020-12) or `items`/`additionalItems` (legacy). */
+  prefixKeyword: 'prefixItems' | 'items' = 'prefixItems';
+  itemsKeyword: 'items' | 'additionalItems' = 'items';
   items = -1;
   contains = -1;
   minContains = 1;
@@ -106,6 +125,8 @@ export class SchemaNode {
   maxLength = -1;
   pattern: string | undefined;
   format: string | undefined;
+  /** The format this dialect recognises (see formatKind), or 'unknown'. */
+  formatKind = 'unknown';
   assertFormat = false;
   content = ContentKind.None;
   assertContent = false;
@@ -116,6 +137,9 @@ export class SchemaNode {
   exclusiveMinimum: number | undefined;
   exclusiveMaximum: number | undefined;
   multipleOf: number | undefined;
+
+  // Annotations, in schema order (SchemaCompiler.CompileNode).
+  annotations: AnnotationEntry[] | undefined;
 
   // Analysis.
   marksProperties = false;
@@ -129,6 +153,8 @@ export class SchemaNode {
     public readonly resourceId: number,
     public readonly dialect: Dialect,
     public readonly location: string,
+    /** The JSON pointer of the schema within its document (C#'s SchemaLocation). */
+    public readonly pointer: string,
   ) {}
 
   /** Keywords that apply only to objects. */
@@ -159,7 +185,7 @@ export class SchemaNode {
   }
 
   get hasStringKeywords(): boolean {
-    return this.minLength >= 0 || this.maxLength >= 0 || this.pattern !== undefined || (this.assertFormat && this.format !== undefined) || this.assertContent;
+    return this.minLength >= 0 || this.maxLength >= 0 || this.pattern !== undefined || (this.assertFormat && this.format !== undefined && !isNumericFormat(this.formatKind)) || this.assertContent;
   }
 
   get hasNumberKeywords(): boolean {
@@ -169,13 +195,14 @@ export class SchemaNode {
       this.exclusiveMinimum !== undefined ||
       this.exclusiveMaximum !== undefined ||
       this.multipleOf !== undefined ||
-      (this.assertFormat && this.format !== undefined)
+      (this.assertFormat && isNumericFormat(this.formatKind))
     );
   }
 
   get hasInPlaceApplicators(): boolean {
     return (
       this.ref >= 0 ||
+      this.staticDynamicRef >= 0 ||
       this.dynamicRef !== undefined ||
       this.allOf !== undefined ||
       this.anyOf !== undefined ||
@@ -212,6 +239,7 @@ export class SchemaNode {
       !this.hasStringKeywords &&
       !this.hasNumberKeywords &&
       this.dynamicRef === undefined &&
+      this.staticDynamicRef < 0 &&
       this.allOf === undefined &&
       this.anyOf === undefined &&
       this.oneOf === undefined &&
@@ -225,6 +253,7 @@ export class SchemaNode {
   inPlaceChildren(includeNot: boolean): number[] {
     const out: number[] = [];
     if (this.ref >= 0) out.push(this.ref);
+    if (this.staticDynamicRef >= 0) out.push(this.staticDynamicRef);
     if (this.dynamicRef !== undefined) {
       out.push(this.dynamicRef.fallback);
       for (const n of this.dynamicRef.byResource.values()) out.push(n);

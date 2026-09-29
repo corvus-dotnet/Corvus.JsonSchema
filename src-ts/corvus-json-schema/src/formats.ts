@@ -469,3 +469,83 @@ export const formatValidators: Readonly<Record<string, (s: string) => boolean>> 
   'relative-json-pointer': relativeJsonPointer,
   regex,
 };
+
+// Numeric formats (a Corvus extension): integers of a given width, and floating-point/decimal magnitudes.
+const integerRange = (min: bigint, max: bigint) => (x: number): boolean => {
+  if (!Number.isInteger(x)) return false;
+  const b = BigInt(x);
+  return b >= min && b <= max;
+};
+const magnitude = (max: number) => (x: number): boolean => Number.isFinite(x) && Math.abs(x) <= max;
+
+/** Numeric format assertions, applied to numbers when `format` is asserted. */
+export const numericFormatValidators: Readonly<Record<string, (x: number) => boolean>> = {
+  byte: integerRange(0n, 255n),
+  uint16: integerRange(0n, 65535n),
+  uint32: integerRange(0n, 4294967295n),
+  uint64: integerRange(0n, 2n ** 64n - 1n),
+  uint128: integerRange(0n, 2n ** 128n - 1n),
+  sbyte: integerRange(-128n, 127n),
+  int16: integerRange(-32768n, 32767n),
+  int32: integerRange(-2147483648n, 2147483647n),
+  int64: integerRange(-(2n ** 63n), 2n ** 63n - 1n),
+  int128: integerRange(-(2n ** 127n), 2n ** 127n - 1n),
+  half: magnitude(65504),
+  single: magnitude(3.40282346638528859e38),
+  double: magnitude(Number.MAX_VALUE),
+  decimal: magnitude(79228162514264337593543950335),
+};
+
+/**
+ * The format a dialect recognises for a `format` value (SchemaCompiler.GetFormatKind): its canonical name, or
+ * 'unknown' for names the dialect does not define (which always match).
+ */
+export function formatKind(format: string, dialect: number): string {
+  switch (format) {
+    case 'float':
+      return 'single';
+    case 'byte':
+    case 'uint16':
+    case 'uint32':
+    case 'uint64':
+    case 'uint128':
+    case 'sbyte':
+    case 'int16':
+    case 'int32':
+    case 'int64':
+    case 'int128':
+    case 'half':
+    case 'single':
+    case 'double':
+    case 'decimal':
+    case 'date-time':
+    case 'email':
+    case 'hostname':
+    case 'ipv4':
+    case 'ipv6':
+    case 'uri':
+      return format;
+    case 'uri-reference':
+    case 'uri-template':
+    case 'json-pointer':
+      return dialect >= 1 ? format : 'unknown';
+    case 'date':
+    case 'time':
+    case 'regex':
+    case 'relative-json-pointer':
+    case 'idn-email':
+    case 'idn-hostname':
+    case 'iri':
+    case 'iri-reference':
+      return dialect >= 2 ? format : 'unknown';
+    case 'duration':
+    case 'uuid':
+      return dialect >= 3 ? format : 'unknown';
+    default:
+      return 'unknown';
+  }
+}
+
+export function isNumericFormat(kind: string): boolean {
+  return numericFormatValidators[kind] !== undefined;
+}

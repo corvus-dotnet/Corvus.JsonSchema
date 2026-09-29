@@ -6,6 +6,7 @@ import { compile, Dialect, generateModule, SchemaCompilationError, SchemaEvaluat
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const runtimeUrl = pathToFileURL(path.resolve(here, '../dist/runtime.js')).href;
+const collectingUrl = pathToFileURL(path.resolve(here, '../dist/collecting.js')).href;
 
 async function importModule(source) {
   return import('data:text/javascript,' + encodeURIComponent(source));
@@ -29,7 +30,7 @@ test('generateModule emits a standalone module equivalent to compile', async () 
     required: ['id'],
     unevaluatedProperties: false,
   };
-  const mod = await importModule(generateModule(schema, { runtimeImport: runtimeUrl }));
+  const mod = await importModule(generateModule(schema, { runtimeImport: runtimeUrl, collectingImport: collectingUrl }));
   const direct = compile(schema);
   const cases = [
     { id: 1 },
@@ -62,7 +63,7 @@ test('generateModule keeps the dynamic scope', async () => {
     unevaluatedProperties: false,
   };
   const resolveDocument = (uri) => (uri === 'https://example.com/tree' ? schema : undefined);
-  const mod = await importModule(generateModule(strict, { runtimeImport: runtimeUrl, resolveDocument }));
+  const mod = await importModule(generateModule(strict, { runtimeImport: runtimeUrl, collectingImport: collectingUrl, resolveDocument }));
   const direct = compile(strict, { resolveDocument });
   const ok = { children: [{ data: 1, children: [] }] };
   const bad = { children: [{ daat: 1 }] };
@@ -162,4 +163,18 @@ test('pattern fast paths agree with RegExp', async () => {
       assert.equal(viaCompile(s), re.test(s), `${p} (compiled) on ${JSON.stringify(s)}`);
     }
   }
+});
+
+test('standalone modules collect the same results as compile', async () => {
+  const { JsonSchemaResultsCollector, ResultsLevel } = await import('../dist/index.js');
+  const schema = { type: 'object', properties: { a: { type: 'string', title: 'A' } }, required: ['b'] };
+  const mod = await importModule(generateModule(schema, { runtimeImport: runtimeUrl, collectingImport: collectingUrl }));
+  const direct = compile(schema);
+  for (const level of [ResultsLevel.Basic, ResultsLevel.Detailed, ResultsLevel.Verbose]) {
+    const a = JsonSchemaResultsCollector.create(level);
+    const b = JsonSchemaResultsCollector.create(level);
+    assert.equal(mod.evaluate({ a: 1 }, a), direct.evaluate({ a: 1 }, b));
+    assert.deepEqual(a.results, b.results);
+  }
+  assert.equal(generateModule(schema, { collecting: false }).includes('evaluate'), false);
 });

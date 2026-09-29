@@ -7,7 +7,9 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 // CORVUS_JSON_SCHEMA lets a local checkout run the harness against its own build.
-const { compile, Dialect } = await import(process.env.CORVUS_JSON_SCHEMA ?? '@corvus-dotnet/json-schema');
+const { compile, Dialect, JsonSchemaResultsCollector, ResultsLevel, enumerateAnnotations, schemaLocationFragment } = await import(
+  process.env.CORVUS_JSON_SCHEMA ?? '@corvus-dotnet/json-schema'
+);
 
 const require = createRequire(import.meta.url);
 const version = process.env.CORVUS_JSON_SCHEMA
@@ -65,12 +67,6 @@ const commands = {
   run(request) {
     if (!started) throw new Error('Not started');
     const testCase = request.case;
-    if (request.output === 'annotations') {
-      return {
-        seq: request.seq,
-        results: testCase.tests.map(() => ({ skipped: true, message: 'The TypeScript evaluator does not collect annotations yet.' })),
-      };
-    }
     const registry = new Map();
     for (const [uri, schema] of Object.entries(testCase.registry ?? {})) registry.set(stripFragment(uri), schema);
     let validate;
@@ -86,7 +82,16 @@ const commands = {
       seq: request.seq,
       results: testCase.tests.map((test) => {
         try {
-          return { valid: validate(test.instance) };
+          if (request.output !== 'annotations') return { valid: validate(test.instance) };
+          const collector = JsonSchemaResultsCollector.create(ResultsLevel.Verbose);
+          const valid = validate.evaluate(test.instance, collector);
+          const annotations = [...enumerateAnnotations(collector)].map((a) => ({
+            keyword: a.keyword.replace(/~1/g, '/').replace(/~0/g, '~'),
+            instanceLocation: a.instanceLocation,
+            keywordLocation: schemaLocationFragment(a.schemaLocation + '/' + a.keyword),
+            annotation: JSON.parse(a.value),
+          }));
+          return { valid, annotations };
         } catch (error) {
           return errored(error);
         }

@@ -67,8 +67,16 @@ for (const [draft, uri] of Object.entries(dialects)) {
     }
   }
 }
-const annotations = await send({ cmd: 'run', seq: ++seq, output: 'annotations', case: { description: 'a', schema: { title: 'x' }, tests: [{ description: 't', instance: 1 }] } });
-if (!annotations.results[0].skipped) failures.push('annotations output was not skipped');
+const annotations = await send({
+  cmd: 'run',
+  seq: ++seq,
+  output: 'annotations',
+  case: { description: 'a', schema: { properties: { 'a/b': { title: 'x' } } }, tests: [{ description: 't', instance: { 'a/b': 1 } }] },
+});
+const expectedAnnotations = [{ keyword: 'title', instanceLocation: '/a~1b', keywordLocation: '#/properties/a~1b/title', annotation: 'x' }];
+if (JSON.stringify(annotations.results[0]) !== JSON.stringify({ valid: true, annotations: expectedAnnotations })) {
+  failures.push(`annotations output: ${JSON.stringify(annotations.results[0])}`);
+}
 harness.stdin.write(JSON.stringify({ cmd: 'stop' }) + '\n');
 for (const f of failures) console.log(f);
 console.log(`${total - failures.length}/${total} agree with the suite through the Bowtie harness`);

@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { compile, Dialect, generateModule } from '../dist/index.js';
+import { compile, Dialect, generateModule, JsonSchemaResultsCollector, ResultsLevel } from '../dist/index.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const suiteRoot = process.env.JSON_SCHEMA_TEST_SUITE ?? path.resolve(here, '../../../JSON-Schema-Test-Suite');
@@ -19,6 +19,9 @@ const verbose = args.includes('--verbose');
 // --module: evaluate through generateModule (the standalone ES module) instead of compile.
 const viaModule = args.includes('--module');
 const runtimeUrl = pathToFileURL(path.resolve(here, '../dist/runtime.js')).href;
+const collectingUrl = pathToFileURL(path.resolve(here, '../dist/collecting.js')).href;
+// --collect basic|detailed|verbose: evaluate through a results collector at that level.
+const collectLevel = args.includes('--collect') ? { basic: ResultsLevel.Basic, detailed: ResultsLevel.Detailed, verbose: ResultsLevel.Verbose }[args[args.indexOf('--collect') + 1]] : undefined;
 const draftArg = args.includes('--draft') ? args[args.indexOf('--draft') + 1] : undefined;
 const filter = args.includes('--filter') ? args[args.indexOf('--filter') + 1] : undefined;
 
@@ -59,10 +62,27 @@ const failures = [];
 const summary = [];
 
 async function build(schema, options) {
-  if (!viaModule) return compile(schema, options);
-  const source = generateModule(schema, { ...options, runtimeImport: runtimeUrl });
-  const mod = await import('data:text/javascript,' + encodeURIComponent(source));
-  return Object.assign((x) => mod.default(x), { source });
+  let evaluate;
+  let source;
+  if (!viaModule) {
+    const v = compile(schema, options);
+    evaluate = v.evaluate;
+    source = v.source;
+  } else {
+    source = generateModule(schema, { ...options, runtimeImport: runtimeUrl, collectingImport: collectingUrl });
+    const mod = await import('data:text/javascript,' + encodeURIComponent(source));
+    evaluate = mod.evaluate;
+  }
+  if (collectLevel === undefined) return Object.assign((x) => evaluate(x), { source });
+  return Object.assign((x) => {
+    const collector = JsonSchemaResultsCollector.create(collectLevel);
+    const valid = evaluate(x, collector);
+    // The root summary row always exists and carries the overall result.
+    if (!collector.results.some((r) => r.evaluationLocation === '' && r.documentEvaluationLocation === '' && r.isMatch === valid)) {
+      throw new Error('no root summary row matching the result');
+    }
+    return valid;
+  }, { source });
 }
 
 async function runFile(draft, file, label, assertFormat) {

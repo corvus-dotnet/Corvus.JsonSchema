@@ -45,6 +45,7 @@ export interface SchemaTarget {
 }
 
 export function escapePointerToken(token: string): string {
+  if (token.indexOf('~') < 0 && token.indexOf('/') < 0) return token;
   return token.replace(/~/g, '~0').replace(/\//g, '~1');
 }
 
