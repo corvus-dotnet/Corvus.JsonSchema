@@ -70,7 +70,6 @@ function typeMaskOf(name: unknown): TypeMask {
 export class SchemaCompiler {
   private readonly nodes: SchemaNode[] = [];
   private readonly targets: SchemaTarget[] = [];
-  private readonly nodeIds = new Map<string, number>();
   private readonly worklist: number[] = [];
   private worklistHead = 0;
   private readonly pendingDynamicRefs: PendingDynamicRef[] = [];
@@ -106,14 +105,13 @@ export class SchemaCompiler {
   }
 
   private getNode(target: SchemaTarget): number {
-    const key = target.document.id + '#' + target.pointer;
-    let id = this.nodeIds.get(key);
+    let id = target.document.nodeOf.get(target.value, target.pointer);
     if (id === undefined) {
       id = this.nodes.length;
       const location = target.document.retrievalUri + '#' + target.pointer;
       this.nodes.push(new SchemaNode(id, target.resource.id, target.resource.dialect, location, target.pointer));
       this.targets.push(target);
-      this.nodeIds.set(key, id);
+      target.document.nodeOf.set(target.value, target.pointer, id);
       this.worklist.push(id);
     }
     return id;
@@ -132,7 +130,7 @@ export class SchemaCompiler {
 
   private child(parent: SchemaTarget, value: unknown, relative: string): number {
     const pointer = parent.pointer + relative;
-    const resource = this.loader.resourceOf(parent.document, pointer) ?? parent.resource;
+    const resource = this.loader.resourceOf(parent.document, value, pointer) ?? parent.resource;
     return this.getNode({ document: parent.document, pointer, value, resource });
   }
 

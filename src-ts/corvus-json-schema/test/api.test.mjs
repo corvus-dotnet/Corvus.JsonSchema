@@ -129,7 +129,7 @@ test('property names that shadow Object.prototype are looked up as own propertie
 test('structurally identical subschemas share one generated function', () => {
   const leaf = { type: 'object', properties: { a: { type: 'string' }, b: { type: 'integer' } }, required: ['a'] };
   const v = compile({ type: 'object', properties: { x: leaf, y: structuredClone(leaf), z: structuredClone(leaf) } });
-  const functions = v.source.match(/^function /gm) ?? [];
+  const functions = v.source.match(/^(?:const \w+ = \()?function /gm) ?? [];
   assert.equal(functions.length, 2);
 });
 
@@ -177,4 +177,14 @@ test('standalone modules collect the same results as compile', async () => {
     assert.deepEqual(a.results, b.results);
   }
   assert.equal(generateModule(schema, { collecting: false }).includes('evaluate'), false);
+});
+
+test('one schema object used at two locations keeps both locations', async () => {
+  const { JsonSchemaResultsCollector, ResultsLevel } = await import('../dist/index.js');
+  const leaf = { type: 'string' };
+  const v = compile({ properties: { a: leaf, b: leaf } });
+  assert.equal(v({ a: 'x', b: 1 }), false);
+  const c = JsonSchemaResultsCollector.create(ResultsLevel.Detailed);
+  v.evaluate({ a: 'x', b: 1 }, c);
+  assert.ok(c.results.some((r) => r.schemaEvaluationLocation === '/properties/b/type' && r.documentEvaluationLocation === '/b'));
 });

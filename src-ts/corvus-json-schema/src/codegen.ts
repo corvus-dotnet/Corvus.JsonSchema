@@ -41,6 +41,8 @@ const MAX_UNROLLED_REQUIRED = env('CORVUS_TS_UNROLL_REQUIRED', 24);
 /** The number of names above which property dispatch goes through a Map to a dense switch. */
 const MAX_SWITCH_NAMES = env('CORVUS_TS_SWITCH', 4);
 const DISPATCH_MAP = env('CORVUS_TS_DISPATCH_MAP', 0) !== 0;
+/** Generated programs smaller than this (characters) are compiled eagerly. */
+const EAGER_MAX_SOURCE = env('CORVUS_TS_EAGER_MAX', 128 * 1024);
 
 function lit(v: string | number | boolean | null): string {
   return JSON.stringify(v);
@@ -382,7 +384,8 @@ export class CodeGenerator {
     const pnNeedsLoop = pn !== undefined && !pn.alwaysTrue;
     const needsCount = n.minProperties > 0 || n.maxProperties >= 0;
     const propCount = props?.size ?? 0;
-    const allRequired = props === undefined || [...props.keys()].every((k) => required.includes(k));
+    const requiredNames = new Set(required);
+    const allRequired = props === undefined || [...props.keys()].every((k) => requiredNames.has(k));
     const unrollable = propCount <= MAX_UNROLLED_PROPERTIES || (allRequired && propCount <= MAX_UNROLLED_REQUIRED);
     const loop = e !== undefined || patterns.length > 0 || apNeedsLoop || pnNeedsLoop || needsCount || !unrollable;
     const dependencies = n.dependencies ?? [];
@@ -622,36 +625,26 @@ export class CodeGenerator {
    * a run of one ASCII character class (`^[a-z0-9_-]+$`). Anything else uses a RegExp.
    */
   private patternTest(pattern: string, v: string): string {
-    const plain = (t: string): boolean => /^[A-Za-z0-9 _\-/:@,;=!%&'"<>~`#]*$/.test(t);
-    let m: RegExpExecArray | null;
-    if ((m = /^\^([^]*)$/.exec(pattern)) !== null && plain(m[1]) && !m[1].endsWith('$')) return `${v}.startsWith(${lit(m[1])})`;
-    if ((m = /^\^([^]*)\$$/.exec(pattern)) !== null && plain(m[1])) return `${v} === ${lit(m[1])}`;
-    if ((m = /^\^\(\?:([^()]*)\)\$$|^\^\(([^()]*)\)\$$/.exec(pattern)) !== null) {
-      const alternatives = (m[1] ?? m[2]).split('|');
-      if (alternatives.every(plain)) {
-        if (alternatives.length <= 6) return '(' + alternatives.map((a) => `${v} === ${lit(a)}`).join(' || ') + ')';
-        return `${this.constant(`new Set(JSON.parse(${lit(JSON.stringify(alternatives))}))`)}.has(${v})`;
-      }
+    // The shape of a pattern's test is cached per process; only the constant names are per program.
+    let shape = PATTERN_SHAPES.get(pattern);
+    if (shape === undefined) {
+      shape = patternShape(pattern);
+      PATTERN_SHAPES.set(pattern, shape);
     }
-    if (pattern.length > 0 && plain(pattern)) return `${v}.includes(${lit(pattern)})`;
-    const sequence = compileClassSequence(pattern);
-    if (sequence !== undefined) return `${this.constant(sequence)}(${v})`;
-    return `${this.regex(pattern)}.test(${v})`;
+    switch (shape.kind) {
+      case 'expr':
+        return shape.expr.replace(/\$V/g, v);
+      case 'set':
+        return `${this.constant(shape.init)}.has(${v})`;
+      case 'fn':
+        return `${this.constant(shape.init)}(${v})`;
+      default:
+        return `${this.constant(shape.init)}.test(${v})`;
+    }
   }
 
   private regex(pattern: string): string {
-    let flags = 'u';
-    try {
-      new RegExp(pattern, 'u');
-    } catch {
-      try {
-        new RegExp(pattern);
-        flags = '';
-      } catch {
-        // An invalid pattern is a schema error; the compile surfaces it when the constant is evaluated.
-      }
-    }
-    return this.constant(`new RegExp(${lit(pattern)}, ${lit(flags)})`);
+    return this.constant(regexInit(pattern));
   }
 
   private formatFunction(format: string, kind: string, dialect: Dialect): string | undefined {
@@ -1068,20 +1061,36 @@ export class CodeGenerator {
       count = intern.size;
     }
     if (count < names.length) {
+      // Only functions that still share a class can split; singletons keep theirs.
+      let size = new Int32Array(count);
+      for (let i = 0; i < names.length; i++) size[classOf[i]]++;
       for (;;) {
         const intern = new Map<string, number>();
         const next = new Int32Array(names.length);
+        let nextCount = 0;
+        const singleton = new Int32Array(count).fill(-1);
         for (let i = 0; i < names.length; i++) {
+          const cls = classOf[i];
+          if (size[cls] === 1) {
+            if (singleton[cls] < 0) singleton[cls] = nextCount++;
+            next[i] = singleton[cls];
+            continue;
+          }
           const r = refs[i];
-          let sig = String(classOf[i]);
+          let sig = String(cls);
           for (let j = 0; j < r.length; j++) sig += ',' + classOf[r[j]];
           let c = intern.get(sig);
-          if (c === undefined) intern.set(sig, (c = intern.size));
+          if (c === undefined) {
+            c = nextCount++;
+            intern.set(sig, c);
+          }
           next[i] = c;
         }
         classOf = next;
-        if (intern.size === count) break;
-        count = intern.size;
+        if (nextCount === count) break;
+        count = nextCount;
+        size = new Int32Array(count);
+        for (let i = 0; i < names.length; i++) size[classOf[i]]++;
       }
     } else {
       classOf = Int32Array.from(names, (_, i) => i);
@@ -1110,6 +1119,16 @@ export class CodeGenerator {
         if (!emitted[target]) stack.push(target);
       }
       out.push(text);
+    }
+    // Below a size bound, wrap each function in parentheses so that V8 compiles it with the program instead of
+    // pre-parsing now and parsing again on its first call: the first (cold) pass gets faster for little extra compile.
+    // Large programs keep lazy compilation, as much of their code never runs.
+    const size = out.reduce((a, t) => a + t.length, 0);
+    if (size < EAGER_MAX_SOURCE) {
+      for (let k = this.constants.size; k < out.length; k++) {
+        const name = /^function (\w+)\(/.exec(out[k])![1];
+        out[k] = `const ${name} = (${out[k]});`;
+      }
     }
     return { declarations: out.join('\n'), root: names[canonical(root)] };
   }
@@ -1308,3 +1327,41 @@ export function compileClassSequence(pattern: string): string | undefined {
   return `(s) => { ${body.join(' ')} }`;
 }
 
+
+type PatternShape = { kind: 'expr'; expr: string } | { kind: 'set' | 'fn' | 'regex'; init: string };
+const PATTERN_SHAPES = new Map<string, PatternShape>();
+
+/** The RegExp constructor call for a pattern: the `u` flag, or none for patterns that only parse without it. */
+function regexInit(pattern: string): string {
+  let flags = 'u';
+  try {
+    new RegExp(pattern, 'u');
+  } catch {
+    try {
+      new RegExp(pattern);
+      flags = '';
+    } catch {
+      // An invalid pattern is a schema error; the compile surfaces it when the constant is evaluated.
+    }
+  }
+  return `new RegExp(${lit(pattern)}, ${lit(flags)})`;
+}
+
+/** How a pattern is tested (see CodeGenerator.patternTest); `$V` stands for the value. */
+function patternShape(pattern: string): PatternShape {
+  const plain = (t: string): boolean => /^[A-Za-z0-9 _\-/:@,;=!%&'"<>~`#]*$/.test(t);
+  let m: RegExpExecArray | null;
+  if ((m = /^\^([^]*)$/.exec(pattern)) !== null && plain(m[1]) && !m[1].endsWith('$')) return { kind: 'expr', expr: `$V.startsWith(${lit(m[1])})` };
+  if ((m = /^\^([^]*)\$$/.exec(pattern)) !== null && plain(m[1])) return { kind: 'expr', expr: `$V === ${lit(m[1])}` };
+  if ((m = /^\^\(\?:([^()]*)\)\$$|^\^\(([^()]*)\)\$$/.exec(pattern)) !== null) {
+    const alternatives = (m[1] ?? m[2]).split('|');
+    if (alternatives.every(plain)) {
+      if (alternatives.length <= 6) return { kind: 'expr', expr: '(' + alternatives.map((a) => `$V === ${lit(a)}`).join(' || ') + ')' };
+      return { kind: 'set', init: `new Set(JSON.parse(${lit(JSON.stringify(alternatives))}))` };
+    }
+  }
+  if (pattern.length > 0 && plain(pattern)) return { kind: 'expr', expr: `$V.includes(${lit(pattern)})` };
+  const sequence = compileClassSequence(pattern);
+  if (sequence !== undefined) return { kind: 'fn', init: sequence };
+  return { kind: 'regex', init: regexInit(pattern) };
+}

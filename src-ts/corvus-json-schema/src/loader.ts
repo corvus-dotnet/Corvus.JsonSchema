@@ -9,7 +9,44 @@ import { decodeFragment, normalize, resolve, resolvePointer, split } from './uri
 
 const DEFAULT_ROOT_URI = 'https://corvus-oss.org/runtime-evaluator/root.json';
 
+/**
+ * Values by schema location. Schema objects are keyed by identity, which avoids hashing long pointer strings; the
+ * pointer decides for booleans and for objects in `shared`, which appear at more than one location (possible in a
+ * schema built in code, never in parsed JSON). The loader's walk records those as it meets them.
+ */
+export class LocationMap<T> {
+  private readonly byObject = new Map<object, T>();
+  private readonly byPointer = new Map<string, T>();
+
+  constructor(private readonly shared: Set<object>) {}
+
+  get(schema: unknown, pointer: string): T | undefined {
+    if (schema !== null && typeof schema === 'object' && (this.shared.size === 0 || !this.shared.has(schema))) {
+      return this.byObject.get(schema);
+    }
+    return this.byPointer.get(pointer);
+  }
+
+  set(schema: unknown, pointer: string, value: T): void {
+    if (schema !== null && typeof schema === 'object' && (this.shared.size === 0 || !this.shared.has(schema))) {
+      this.byObject.set(schema, value);
+    } else {
+      this.byPointer.set(pointer, value);
+    }
+  }
+}
+
 export class SchemaDocument {
+  /** Schema objects met at more than one location, with the location where each was first met. */
+  readonly shared = new Set<object>();
+  readonly firstLocation = new Map<object, string>();
+  /** The resource that owns each visited schema location. */
+  readonly resourceOf = new LocationMap<SchemaResource>(this.shared);
+  /** The compiled node of each schema location, filled by the compiler. */
+  readonly nodeOf = new LocationMap<number>(this.shared);
+  /** Resolved references, by resource and reference text. */
+  readonly referenceCache = new Map<string, SchemaTarget | undefined>();
+
   constructor(
     public readonly id: number,
     public readonly root: unknown,
@@ -66,7 +103,6 @@ export class SchemaLoader {
   readonly resources: SchemaResource[] = [];
   private readonly resourcesByUri = new Map<string, SchemaResource>();
   private readonly documentsByUri = new Map<string, SchemaDocument>();
-  private readonly resourceOfElement = new Map<string, SchemaResource>();
   private readonly metaschemaInfo = new Map<string, [Dialect, Vocab]>();
   private readonly metaschemaLoading = new Set<string>();
 
@@ -75,7 +111,7 @@ export class SchemaLoader {
   loadRoot(schema: unknown, baseUri: string | undefined): SchemaResource {
     const uri = baseUri === undefined ? DEFAULT_ROOT_URI : normalize(baseUri);
     const doc = this.addDocument(uri, schema);
-    return this.resourceOfElement.get(key(doc, ''))!;
+    return doc.resourceOf.get(doc.root, '')!;
   }
 
   loadRootFromUri(uri: string): SchemaResource {
@@ -83,14 +119,24 @@ export class SchemaLoader {
     if (!this.tryLoadDocument(normalized)) {
       throw new SchemaCompilationError(`Unable to resolve the schema document '${uri}'.`);
     }
-    return this.resourceOfElement.get(key(this.documentsByUri.get(normalized)!, ''))!;
+    const doc = this.documentsByUri.get(normalized)!;
+    return doc.resourceOf.get(doc.root, '')!;
   }
 
-  resourceOf(document: SchemaDocument, pointer: string): SchemaResource | undefined {
-    return this.resourceOfElement.get(key(document, pointer));
+  resourceOf(document: SchemaDocument, value: unknown, pointer: string): SchemaResource | undefined {
+    return document.resourceOf.get(value, pointer);
   }
 
   tryResolveReference(from: SchemaResource, reference: string): SchemaTarget | undefined {
+    const cache = from.document.referenceCache;
+    const key = from.id + ' ' + reference;
+    if (cache.has(key)) return cache.get(key);
+    const target = this.resolveReference(from, reference);
+    cache.set(key, target);
+    return target;
+  }
+
+  private resolveReference(from: SchemaResource, reference: string): SchemaTarget | undefined {
     const [uriPart, fragment] = split(reference);
     const absolute = resolve(from.uri, uriPart);
     let resource = this.resourcesByUri.get(absolute);
@@ -111,7 +157,7 @@ export class SchemaLoader {
       if (!r.found) return undefined;
       let pointer = resource.rootPointer;
       for (const seg of r.path) pointer += '/' + escapePointerToken(String(seg));
-      const owner = this.resourceOfElement.get(key(resource.document, pointer)) ?? resource;
+      const owner = resource.document.resourceOf.get(r.value, pointer) ?? resource;
       return { document: resource.document, pointer, value: r.value, resource: owner };
     }
     const anchor = resource.anchors?.get(fragment);
@@ -122,6 +168,9 @@ export class SchemaLoader {
   }
 
   getDialectInfo(schemaUri: string): [Dialect, Vocab] {
+    // The standard metaschema URIs, as usually written, need no URI normalisation.
+    const plain = knownDialect(schemaUri.endsWith('#') ? schemaUri.slice(0, -1) : schemaUri);
+    if (plain !== undefined) return [plain, Vocab.AllAnnotatingFormat];
     const normalized = normalize(schemaUri);
     const known = knownDialect(normalized);
     if (known !== undefined) return [known, Vocab.AllAnnotatingFormat];
@@ -191,8 +240,19 @@ export class SchemaLoader {
   }
 
   private walk(doc: SchemaDocument, element: unknown, pointer: string, resource: SchemaResource, isResourceRoot: boolean): void {
+    if (element !== null && typeof element === 'object') {
+      const first = doc.firstLocation.get(element);
+      if (first === undefined) {
+        doc.firstLocation.set(element, pointer);
+      } else if (first !== pointer && !doc.shared.has(element)) {
+        // Re-key what was recorded for the first location by its pointer.
+        const owner = doc.resourceOf.get(element, first);
+        doc.shared.add(element);
+        if (owner !== undefined) doc.resourceOf.set(element, first, owner);
+      }
+    }
     if (!isObject(element)) {
-      this.resourceOfElement.set(key(doc, pointer), resource);
+      doc.resourceOf.set(element, pointer, resource);
       return;
     }
 
@@ -233,7 +293,7 @@ export class SchemaLoader {
       if (dialect === Dialect.Draft201909 && isResourceRoot && element.$recursiveAnchor === true) resource.recursiveAnchor = true;
     }
 
-    this.resourceOfElement.set(key(doc, pointer), resource);
+    doc.resourceOf.set(element, pointer, resource);
 
     for (const name of Object.keys(element)) {
       const value = element[name];
@@ -267,8 +327,4 @@ export class SchemaLoader {
 function addAnchor(resource: SchemaResource, name: string, pointer: string): void {
   resource.anchors ??= new Map();
   if (!resource.anchors.has(name)) resource.anchors.set(name, pointer);
-}
-
-function key(doc: SchemaDocument, pointer: string): string {
-  return doc.id + '#' + pointer;
 }
