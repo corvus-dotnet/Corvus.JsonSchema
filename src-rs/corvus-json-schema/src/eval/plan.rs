@@ -892,16 +892,29 @@ impl Evaluator<'_, '_> {
         ok
     }
 
-    /// An in-place child with its type check inline.
+    /// An in-place child with its type check inline, then its keywords under the depth guard (without testing the
+    /// type again).
     #[inline(always)]
     fn run_branch(&mut self, c: Child, x: &Value) -> bool {
-        (c.types == ANY || type_ok(c.types, x)) && (c.trivial || self.run_in_place(c.id, x))
+        if c.types != ANY && !type_ok(c.types, x) {
+            return false;
+        }
+        if c.trivial {
+            return true;
+        }
+        let plan = &self.p.plans[c.id as usize];
+        let Some(b) = plan.body.as_deref() else { return self.run_in_place(c.id, x) };
+        if plan.guard {
+            return self.run_in_place(c.id, x);
+        }
+        if c.leaf { run_leaf(b, x) } else { self.run_body(b, x) }
     }
 
     /// The anyOf/oneOf branches that can match: those a discriminator selects, or those admitting the instance type.
-    #[inline]
+    #[inline(always)]
     fn candidates<'b>(&self, b: &'b Branches, x: &Value) -> &'b [u32] {
-        match select(b.discriminator.as_deref(), x) {
+        let Some(d) = b.discriminator.as_deref() else { return &b.by_kind[kind(x)] };
+        match select(Some(d), x) {
             Selection::All => &b.by_kind[kind(x)],
             Selection::None => &[],
             Selection::Subset(s) => s,
@@ -940,9 +953,11 @@ impl Evaluator<'_, '_> {
             Value::Array(_) if b.general & type_mask::ARRAY != 0 => return self.eval_node::<Fast>(b.node, x, None),
             _ => {}
         }
-        for op in b.values.iter() {
-            if !self.run_op(op, x) {
-                return false;
+        if !b.values.is_empty() {
+            for op in b.values.iter() {
+                if !self.run_op(op, x) {
+                    return false;
+                }
             }
         }
         let ok = match x {
@@ -956,10 +971,11 @@ impl Evaluator<'_, '_> {
             }
             _ => true,
         };
-        if !ok {
-            return false;
-        }
-        for op in b.apply.iter() {
+        ok && (b.apply.is_empty() || self.run_apply(&b.apply, x))
+    }
+
+    fn run_apply(&mut self, ops: &[Op], x: &Value) -> bool {
+        for op in ops {
             if !self.run_op(op, x) {
                 return false;
             }
@@ -980,8 +996,13 @@ impl Evaluator<'_, '_> {
             Op::AllOf(list) => list.iter().all(|&c| self.run_branch(c, x)),
             Op::AnyOf(b) => self.candidates(b, x).iter().any(|&i| self.run_branch(b.children[i as usize], x)),
             Op::OneOf(b) => {
+                let candidates = self.candidates(b, x);
+                // The instance's type (or the discriminator) leaves one branch: that branch decides.
+                if let [only] = candidates {
+                    return self.run_branch(b.children[*only as usize], x);
+                }
                 let mut matched = 0;
-                for &i in self.candidates(b, x) {
+                for &i in candidates {
                     if self.run_branch(b.children[i as usize], x) {
                         matched += 1;
                         if matched > 1 {
