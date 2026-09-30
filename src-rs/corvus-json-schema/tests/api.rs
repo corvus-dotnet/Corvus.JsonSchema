@@ -165,3 +165,34 @@ fn discriminators_key_null_and_numbers_by_value() {
     // Both numeric branches match `1` when it has both properties: oneOf fails.
     assert!(!v.is_valid(&json!({ "kind": 1, "b": "s", "c": "t" })));
 }
+
+#[test]
+fn arrays_of_simple_arrays_match_the_general_path() {
+    let position = json!({ "type": "array", "minItems": 2, "maxItems": 3, "items": { "type": "number" } });
+    for schema in [
+        json!({ "type": "array", "items": position }),
+        json!({ "type": "array", "items": { "type": ["array", "string"], "minItems": 2, "items": { "type": "integer" } } }),
+        json!({ "type": "array", "items": { "type": "object", "minItems": 2 } }),
+        json!({ "type": "array", "items": { "type": "array", "items": { "type": "array", "items": { "type": "number" } } } }),
+    ] {
+        let v = compile(&schema).unwrap();
+        for instance in [
+            json!([]),
+            json!([[1, 2]]),
+            json!([[1, 2], [3, 4, 5]]),
+            json!([[1]]),
+            json!([[1, 2, 3, 4]]),
+            json!([[1, "a"]]),
+            json!([[1.5, 2]]),
+            json!([["x", "y"]]),
+            json!(["s", [1, 2]]),
+            json!([{}, [1, 2]]),
+            json!([[[1, 2]], [[3]]]),
+            json!([[[1, "a"]]]),
+        ] {
+            let mut c = JsonSchemaResultsCollector::new(ResultsLevel::Basic);
+            let collected = v.evaluate(&instance, &mut c).unwrap();
+            assert_eq!(v.is_valid(&instance), collected, "{schema} on {instance}");
+        }
+    }
+}

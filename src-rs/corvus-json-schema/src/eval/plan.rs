@@ -301,6 +301,15 @@ struct ArrayPlan {
     unique: bool,
     /// Bounds and type-only items, nothing else (the C# SimpleArray): the items' type mask (`ANY`: no test).
     simple: Option<u8>,
+    /// Items that are themselves simple arrays (GeoJSON's positions): their bounds and item types, checked inline.
+    nested: Option<SimpleArray>,
+}
+
+#[derive(Clone, Copy)]
+struct SimpleArray {
+    min: u64,
+    max: u64,
+    types: u8,
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -617,6 +626,23 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
             }
         }
     }
+    // Arrays whose items are simple arrays check them inline, without entering each one.
+    let simple: Vec<Option<SimpleArray>> = plans
+        .iter()
+        .map(|pl| {
+            let b = pl.body.as_deref()?;
+            let a = b.array.as_ref()?;
+            let types = a.simple?;
+            (shape_of(pl, p.uses_dynamic_scope) == Shape::Array).then_some(SimpleArray {
+                min: a.min,
+                max: a.max,
+                types,
+            })
+        })
+        .collect();
+    for a in plans.iter_mut().filter_map(|pl| pl.body.as_deref_mut()?.array.as_mut()) {
+        a.nested = a.items.filter(|c| c.shape == Shape::Array).and_then(|c| simple[c.id as usize]);
+    }
     plans
 }
 
@@ -797,6 +823,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
             contains: n.contains.map(|c| (target(c), n.min_contains, n.max_contains)),
             unique: n.unique_items,
             simple: None,
+            nested: None,
         });
     }
 
@@ -1447,7 +1474,24 @@ impl Evaluator<'_, '_> {
         }
         if let Some(items) = plan.items {
             let rest = &a[prefix..];
-            if items.trivial() {
+            if let Some(n) = plan.nested {
+                for item in rest {
+                    let ok = match item {
+                        Value::Array(x) => {
+                            let len = x.len() as u64;
+                            items.types & type_mask::ARRAY != 0
+                                && len >= n.min
+                                && len <= n.max
+                                && all_of_type(x, n.types)
+                        }
+                        // Not an array: only the items' type test applies.
+                        other => type_ok(items.types, other),
+                    };
+                    if !ok {
+                        return false;
+                    }
+                }
+            } else if items.trivial() {
                 // A type-only items schema: one tight loop (the C# evaluator's SimpleArray plan), or none for `true`.
                 if !all_of_type(rest, items.types) {
                     return false;
