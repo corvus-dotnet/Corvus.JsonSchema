@@ -51,6 +51,9 @@ struct Entry {
     apps: Box<[App]>,
     /// The conditions' tests on this property's value.
     tests: Box<[ValueTest]>,
+    /// When several tests compare the value with constants: each constant any of them allows, with the mask of the
+    /// tests (by index in `tests`) that allow it, so that one lookup decides them all (the C# MergeValueTests).
+    merged: Option<Box<[(Value, u64)]>>,
 }
 
 /// One child schema applying to a property on behalf of a contributor (`None`: `true`, which covers without a test).
@@ -629,7 +632,8 @@ pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child)
         }
         let apps = coalesce(apps, &contributors);
         let entry_tests = std::mem::take(&mut tests[i]);
-        entries.push(Entry { apps: apps.into_boxed_slice(), tests: entry_tests.into_boxed_slice() });
+        let merged = merge_value_tests(&entry_tests);
+        entries.push(Entry { apps: apps.into_boxed_slice(), tests: entry_tests.into_boxed_slice(), merged });
     }
     debug_assert_eq!(branch_count + ctx.extras.len(), contributors.len());
 
@@ -644,6 +648,24 @@ pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child)
         alt_groups: ctx.alt_groups.iter().map(|&(exactly_one, count)| AltGroup { exactly_one, count }).collect(),
         unevaluated: n.unevaluated_properties.map(|u| child(p.fast_target[u as usize])),
     })
+}
+
+/// The merged constants of an entry's value tests, when at least two (and at most 64) tests are all constant sets.
+fn merge_value_tests(tests: &[ValueTest]) -> Option<Box<[(Value, u64)]>> {
+    if tests.len() < 2 || tests.len() > 64 || !tests.iter().all(|t| matches!(t.kind, TestKind::Allowed(_))) {
+        return None;
+    }
+    let mut merged: Vec<(Value, u64)> = Vec::new();
+    for (t, test) in tests.iter().enumerate() {
+        let TestKind::Allowed(values) = &test.kind else { unreachable!() };
+        for v in values.iter() {
+            match merged.iter_mut().find(|(m, _)| json_equal(m, v)) {
+                Some((_, mask)) => *mask |= 1 << t,
+                None => merged.push((v.clone(), 1 << t)),
+            }
+        }
+    }
+    Some(merged.into_boxed_slice())
 }
 
 /// Identical resolutions of a property from several branches (the same child, or both `true`) become one application
@@ -794,9 +816,21 @@ impl Evaluator<'_, '_> {
     fn fused_entry(&mut self, f: &FusedObject, e: usize, v: &Value, pass: &mut Pass) -> Outcome {
         let entry = &f.entries[e];
         pass.seen.set(e as u16);
-        for test in entry.tests.iter() {
-            if !test.holds(v) {
-                pass.failed |= 1 << test.condition;
+        match &entry.merged {
+            Some(merged) => {
+                let allowed = merged.iter().find(|(m, _)| json_equal(m, v)).map_or(0, |&(_, mask)| mask);
+                for (t, test) in entry.tests.iter().enumerate() {
+                    if allowed & (1 << t) == 0 {
+                        pass.failed |= 1 << test.condition;
+                    }
+                }
+            }
+            None => {
+                for test in entry.tests.iter() {
+                    if !test.holds(v) {
+                        pass.failed |= 1 << test.condition;
+                    }
+                }
             }
         }
         let (mut cover, mut defer) = (false, false);

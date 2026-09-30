@@ -741,10 +741,8 @@ fn idn_label_ok(label: &str) -> bool {
                     return false;
                 }
             }
-            0x200c => {
-                if (i == 0 || !VIRAMAS.contains(&(cps[i - 1] as u32))) && !zwnj_joining_context(&cps, i) {
-                    return false;
-                }
+            0x200c if (i == 0 || !VIRAMAS.contains(&(cps[i - 1] as u32))) && !zwnj_joining_context(&cps, i) => {
+                return false;
             }
             _ => {}
         }

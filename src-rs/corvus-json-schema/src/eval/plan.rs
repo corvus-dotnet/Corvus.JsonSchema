@@ -18,7 +18,7 @@ use super::{Evaluator, Fast, Program, Selection, all_unique, code_points, conten
 use crate::dialect::Dialect;
 use crate::formats::FormatKind;
 use crate::node::*;
-use crate::numbers::{Num, cmp, multiple_of};
+use crate::numbers::{Divisor, Num, cmp};
 use crate::options::FormatValidator;
 use crate::pattern::Pattern;
 
@@ -35,6 +35,8 @@ pub(crate) struct Child {
     trivial: bool,
     /// The child checks only its own value (const, enum, number and string keywords): no children, no calls.
     leaf: bool,
+    /// The child is nothing but an object plan: an object value enters its loop directly (the C# NestedObject).
+    object: bool,
 }
 
 pub(crate) struct Plan {
@@ -71,7 +73,7 @@ enum NumberOp {
     Maximum(Num),
     ExclusiveMinimum(Num),
     ExclusiveMaximum(Num),
-    MultipleOf(Number),
+    MultipleOf(Divisor),
     Format(FormatCheck),
 }
 
@@ -92,6 +94,8 @@ enum Op {
     AnyOf(Box<Branches>),
     OneOf(Box<Branches>),
     Not(NodeId),
+    /// A `$dynamicRef`/`$recursiveRef` resolved against the dynamic scope at run time (the C# DynamicRef plan).
+    DynamicRef(Box<DynamicRefTarget>),
     If {
         cond: NodeId,
         then: Option<NodeId>,
@@ -146,6 +150,9 @@ enum Visit {
     Values,
     /// Declared properties, and additionalProperties for the rest.
     Names,
+    /// One patternProperties entry and nothing declared: each name against the pattern, else additionalProperties
+    /// (the C# PatternMap).
+    Pattern,
     /// Anything else (patternProperties, propertyNames).
     General,
 }
@@ -396,7 +403,7 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
     let target = |id: NodeId| p.fast_target[id as usize];
     let mut plans: Vec<Plan> = nodes.iter().enumerate().map(|(id, n)| plan_node(p, id as NodeId, n, &target)).collect();
     // Hoist the children's type checks now that every plan is known.
-    let summary: Vec<(u8, bool, bool)> = plans
+    let summary: Vec<(u8, bool, bool, bool)> = plans
         .iter()
         .map(|pl| {
             let leaf = !pl.guard
@@ -407,24 +414,46 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
                         && b.general == 0
                         && b.unevaluated_items.is_none()
                 });
-            (pl.types, pl.body.is_none() && !pl.guard, leaf)
+            let object = !pl.guard
+                && !p.uses_dynamic_scope
+                && pl.body.as_deref().is_some_and(|b| {
+                    b.object.is_some()
+                        && b.values.is_empty()
+                        && b.number.is_empty()
+                        && b.string.is_empty()
+                        && b.array.is_none()
+                        && b.apply.is_empty()
+                        && b.general == 0
+                        && b.unevaluated_items.is_none()
+                });
+            (pl.types, pl.body.is_none() && !pl.guard, leaf, object)
         })
         .collect();
     let resolved = |id: NodeId| {
-        let (types, trivial, leaf) = summary[id as usize];
-        Child { id, types, trivial, leaf }
+        let (types, trivial, leaf, _) = summary[id as usize];
+        // Not `object`: a node may still take a fused plan below.
+        Child { id, types, trivial, leaf, object: false }
     };
     // Fused object plans, for nodes whose object semantics span in-place applicators.
+    // A fused plan applies its contributors' keywords without entering them as nodes, so the dynamic scope below it
+    // would differ from the general path's: nodes that can reach a live dynamic reference are not fused.
+    let reaches_dynamic = reaches_dynamic_reference(p);
     for (id, plan) in plans.iter_mut().enumerate() {
+        if reaches_dynamic[id] {
+            continue;
+        }
         if let Some(f) = fused::try_fuse(p, id as NodeId, &resolved) {
-            plan.body.get_or_insert_with(Box::default).fused = Some(Box::new(f));
+            let body = plan.body.get_or_insert_with(|| Box::new(Body { node: id as NodeId, ..Body::default() }));
+            body.fused = Some(Box::new(f));
         }
     }
+    let fused_nodes: Vec<bool> = plans.iter().map(|pl| pl.body.as_ref().is_some_and(|b| b.fused.is_some())).collect();
     let fix = |c: &mut Child| {
-        let (types, trivial, leaf) = summary[c.id as usize];
+        let (types, trivial, leaf, object) = summary[c.id as usize];
         c.types = types;
         c.trivial = trivial;
         c.leaf = leaf;
+        c.object = object && !fused_nodes[c.id as usize];
     };
     for body in plans.iter_mut().filter_map(|pl| pl.body.as_deref_mut()) {
         if let Some(o) = &mut body.object {
@@ -461,7 +490,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
     if n.always_false {
         return Plan { types: 0, guard, body: None };
     }
-    let child = |id: NodeId| Child { id: target(id), types: ANY, trivial: false, leaf: false };
+    let child = |id: NodeId| Child { id: target(id), types: ANY, trivial: false, leaf: false, object: false };
     let mut ops = Vec::new();
     let mut number = Vec::new();
     let mut string = Vec::new();
@@ -506,7 +535,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
         number.push(NumberOp::ExclusiveMaximum(Num::of(b)));
     }
     if let Some(d) = &n.multiple_of {
-        number.push(NumberOp::MultipleOf(d.clone()));
+        number.push(NumberOp::MultipleOf(Divisor::new(d)));
     }
 
     // Strings.
@@ -532,7 +561,12 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
         let names = Names::new(declared.iter().map(|(k, _)| k.as_str().into()).collect());
         let children: Box<[Child]> = declared.iter().map(|&(_, c)| child(c)).collect();
         let required = n.required.clone().unwrap_or_default();
-        let visit = if n.pattern_properties.is_some() || n.property_names.is_some() {
+        let visit = if n.property_names.is_none()
+            && n.properties.is_none()
+            && n.pattern_properties.as_ref().is_some_and(|p| p.len() == 1)
+        {
+            Visit::Pattern
+        } else if n.pattern_properties.is_some() || n.property_names.is_some() {
             Visit::General
         } else if n.properties.is_some() {
             Visit::Names
@@ -597,23 +631,36 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
         ops.push(Op::Ref(target(r)));
     }
     if let Some(d) = &n.dynamic_ref {
-        // Without a dynamic scope the reference always takes its fallback.
-        ops.push(Op::Ref(target(d.fallback)));
+        if p.uses_dynamic_scope {
+            ops.push(Op::DynamicRef(d.clone()));
+        } else {
+            // Without a dynamic scope the reference always takes its fallback.
+            ops.push(Op::Ref(target(d.fallback)));
+        }
     }
     if let Some(list) = &n.all_of {
         ops.push(Op::AllOf(list.iter().map(|&c| child(c)).collect()));
     }
+    // An anyOf of type-only branches, or a oneOf of type-only branches with no type in common, is one type test
+    // (the C# evaluator's TypeUnion plan): it narrows the node's own types instead of adding a keyword.
+    let mut union = ANY;
     if let Some(list) = &n.any_of {
-        ops.push(Op::AnyOf(Box::new(Branches::new(
-            list.iter().map(|&c| child(c)).collect(),
-            n.any_of_discriminator.clone(),
-        ))));
+        match type_union(p, list, false) {
+            Some(mask) => union = meet(union, mask),
+            None => ops.push(Op::AnyOf(Box::new(Branches::new(
+                list.iter().map(|&c| child(c)).collect(),
+                n.any_of_discriminator.clone(),
+            )))),
+        }
     }
     if let Some(list) = &n.one_of {
-        ops.push(Op::OneOf(Box::new(Branches::new(
-            list.iter().map(|&c| child(c)).collect(),
-            n.one_of_discriminator.clone(),
-        ))));
+        match type_union(p, list, true) {
+            Some(mask) => union = meet(union, mask),
+            None => ops.push(Op::OneOf(Box::new(Branches::new(
+                list.iter().map(|&c| child(c)).collect(),
+                n.one_of_discriminator.clone(),
+            )))),
+        }
     }
     if let Some(not) = n.not {
         ops.push(Op::Not(target(not)));
@@ -640,7 +687,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
         }
     }
 
-    let types = if n.has_type { n.type_mask } else { ANY };
+    let types = meet(if n.has_type { n.type_mask } else { ANY }, union);
     if values.is_empty()
         && number.is_empty()
         && string.is_empty()
@@ -665,6 +712,74 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
         apply: ops.into_boxed_slice(),
     };
     Plan { types, guard, body: Some(Box::new(body)) }
+}
+
+/// Marks every node from which a live dynamic reference is reachable through any child.
+fn reaches_dynamic_reference(p: &Program) -> Vec<bool> {
+    let mut reaches: Vec<bool> = p.nodes.iter().map(|n| p.uses_dynamic_scope && n.dynamic_ref.is_some()).collect();
+    if !p.uses_dynamic_scope {
+        return reaches;
+    }
+    let children: Vec<Vec<NodeId>> = p.nodes.iter().map(|n| n.children()).collect();
+    let mut changed = true;
+    while changed {
+        changed = false;
+        for (i, c) in children.iter().enumerate() {
+            if !reaches[i] && c.iter().any(|&c| reaches[c as usize]) {
+                reaches[i] = true;
+                changed = true;
+            }
+        }
+    }
+    reaches
+}
+
+/// A type mask with `integer` made explicit wherever `number` is (every integer is a number).
+fn expand(mask: u8) -> u8 {
+    if mask & type_mask::NUMBER != 0 { mask | type_mask::INTEGER } else { mask }
+}
+
+/// The types both masks admit.
+fn meet(a: u8, b: u8) -> u8 {
+    let m = expand(a) & expand(b);
+    // `number` in both keeps `number`; `integer` alone stays `integer`.
+    if a & b & type_mask::NUMBER == 0 && m & type_mask::NUMBER != 0 { m & !type_mask::NUMBER } else { m }
+}
+
+/// A schema that tests only the type (`true` admits everything, `false` nothing).
+fn type_only_mask(n: &SchemaNode) -> Option<u8> {
+    if n.always_true {
+        return Some(ANY);
+    }
+    if n.always_false {
+        return Some(0);
+    }
+    let only_type = n.has_type
+        && !n.in_place_cycle
+        && n.const_value.is_none()
+        && n.enum_values.is_none()
+        && !n.has_number_keywords()
+        && !n.has_string_keywords()
+        && !n.has_object_keywords()
+        && !n.has_array_keywords()
+        && !n.has_in_place_applicators()
+        && n.dynamic_ref.is_none();
+    only_type.then_some(n.type_mask)
+}
+
+/// The union of anyOf/oneOf branches that all test only the type; for oneOf, only when no two branches admit a
+/// common value (so that "exactly one" is "any").
+fn type_union(p: &Program, list: &[NodeId], exactly_one: bool) -> Option<u8> {
+    let masks: Vec<u8> =
+        list.iter().map(|&c| type_only_mask(&p.nodes[p.fast_target[c as usize] as usize])).collect::<Option<_>>()?;
+    if exactly_one {
+        for (i, a) in masks.iter().enumerate() {
+            if masks[i + 1..].iter().any(|b| expand(*a) & expand(*b) != 0) {
+                return None;
+            }
+        }
+    }
+    Some(masks.iter().fold(0, |u, m| u | m))
 }
 
 enum Coverage {
@@ -729,13 +844,21 @@ impl Evaluator<'_, '_> {
     /// A child at a new instance location: its type check inline, its other keywords (if any) by call.
     #[inline(always)]
     fn run_child(&mut self, c: Child, x: &Value) -> bool {
-        (c.types == ANY || type_ok(c.types, x))
-            && (c.trivial
-                || match self.p.plans[c.id as usize].body.as_deref() {
-                    None => true,
-                    Some(b) if c.leaf => run_leaf(b, x),
-                    Some(b) => self.run_body(b, x),
-                })
+        if c.types != ANY && !type_ok(c.types, x) {
+            return false;
+        }
+        if c.trivial {
+            return true;
+        }
+        match self.p.plans[c.id as usize].body.as_deref() {
+            None => true,
+            Some(b) if c.leaf => run_leaf(b, x),
+            Some(b) if c.object => match x {
+                Value::Object(o) => self.run_object(b.object.as_ref().unwrap(), o, x),
+                _ => true,
+            },
+            Some(b) => self.run_body(b, x),
+        }
     }
 
     /// Evaluates an in-place child under the depth guard.
@@ -785,7 +908,26 @@ impl Evaluator<'_, '_> {
         }
     }
 
+    /// A node's keywords. Where the program keeps a dynamic scope, entering a node of another resource pushes that
+    /// resource (as the general evaluator does), for the dynamic references below it.
+    #[inline]
     fn run_body(&mut self, b: &Body, x: &Value) -> bool {
+        if !self.p.uses_dynamic_scope {
+            return self.run_keywords(b, x);
+        }
+        let resource = self.p.nodes[b.node as usize].resource_id;
+        let pushed = self.scope.last() != Some(&resource);
+        if pushed {
+            self.scope.push(resource);
+        }
+        let ok = self.run_keywords(b, x);
+        if pushed {
+            self.scope.pop();
+        }
+        ok
+    }
+
+    fn run_keywords(&mut self, b: &Body, x: &Value) -> bool {
         match x {
             Value::Object(o) => {
                 if let Some(f) = &b.fused {
@@ -850,6 +992,10 @@ impl Evaluator<'_, '_> {
                 matched == 1
             }
             Op::Not(c) => !self.run(*c, x),
+            Op::DynamicRef(d) => {
+                let target = self.p.fast_target[self.resolve_dynamic(d) as usize];
+                self.run_in_place(target, x)
+            }
             Op::If { cond, then, else_ } => {
                 let next = if self.run_in_place(*cond, x) { then } else { else_ };
                 next.is_none_or(|c| self.run_in_place(c, x))
@@ -867,9 +1013,15 @@ impl Evaluator<'_, '_> {
             Visit::None => {}
             Visit::Values => {
                 let c = plan.additional.unwrap();
-                for v in o.values() {
-                    if !self.run_child(c, v) {
+                if c.trivial {
+                    if c.types != ANY && !o.values().all(|v| type_ok(c.types, v)) {
                         return false;
+                    }
+                } else {
+                    for v in o.values() {
+                        if !self.run_child(c, v) {
+                            return false;
+                        }
                     }
                 }
             }
@@ -890,6 +1042,17 @@ impl Evaluator<'_, '_> {
                                 return false;
                             }
                         }
+                    }
+                }
+            }
+            Visit::Pattern => {
+                let (pattern, c) = &plan.patterns[0];
+                for (k, v) in o {
+                    let applies = if pattern.is_match(k) { Some(*c) } else { plan.additional };
+                    if let Some(c) = applies
+                        && !self.run_child(c, v)
+                    {
+                        return false;
                     }
                 }
             }
@@ -960,9 +1123,17 @@ impl Evaluator<'_, '_> {
             }
         }
         if let Some(items) = plan.items {
-            for item in &a[prefix..] {
-                if !self.run_child(items, item) {
+            let rest = &a[prefix..];
+            if items.trivial {
+                // A type-only items schema: one tight loop (the C# evaluator's SimpleArray plan), or none for `true`.
+                if items.types != ANY && !rest.iter().all(|item| type_ok(items.types, item)) {
                     return false;
+                }
+            } else {
+                for item in rest {
+                    if !self.run_child(items, item) {
+                        return false;
+                    }
                 }
             }
         }
@@ -1013,7 +1184,7 @@ fn run_number(ops: &[NumberOp], n: &Number) -> bool {
         NumberOp::Maximum(b) => cmp(v, *b).is_le(),
         NumberOp::ExclusiveMinimum(b) => cmp(v, *b).is_gt(),
         NumberOp::ExclusiveMaximum(b) => cmp(v, *b).is_lt(),
-        NumberOp::MultipleOf(d) => multiple_of(n, d),
+        NumberOp::MultipleOf(d) => d.divides(n),
         NumberOp::Format(f) => f.number(n),
     })
 }
@@ -1045,6 +1216,20 @@ fn length_ok(s: &str, min: u64, max: u64) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn meet_treats_integers_as_numbers() {
+        use type_mask::*;
+        assert_eq!(meet(INTEGER, NUMBER), INTEGER);
+        assert_eq!(meet(NUMBER, NUMBER | STRING), NUMBER | INTEGER);
+        assert_eq!(meet(ANY, STRING | ARRAY), STRING | ARRAY);
+        assert_eq!(meet(STRING, INTEGER), 0);
+        for x in [serde_json::json!(1), serde_json::json!(1.5), serde_json::json!("a")] {
+            for (a, b) in [(INTEGER, NUMBER), (NUMBER, INTEGER), (NUMBER | STRING, INTEGER | STRING), (ANY, NUMBER)] {
+                assert_eq!(type_ok(meet(a, b), &x), type_ok(a, &x) && type_ok(b, &x), "{a} {b} {x}");
+            }
+        }
+    }
 
     #[test]
     fn str_eq_agrees_with_equality() {

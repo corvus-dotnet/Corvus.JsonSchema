@@ -76,20 +76,54 @@ fn decimal(n: Num) -> Option<(i128, i32)> {
             if !f.is_finite() {
                 return None;
             }
-            // `{:e}` gives the shortest round-trip digits: "1.25e-3", "5e0".
-            let s = format!("{f:e}");
+            // `{:e}` gives the shortest round-trip digits: "1.25e-3", "5e0". Formatted on the stack.
+            let mut buf = StackText::default();
+            std::fmt::Write::write_fmt(&mut buf, format_args!("{f:e}")).ok()?;
+            let s = buf.as_str();
             let (mant, exp) = s.split_once('e')?;
             let exp: i32 = exp.parse().ok()?;
             let neg = mant.starts_with('-');
             let mant = mant.trim_start_matches('-');
             let (int_part, frac) = mant.split_once('.').unwrap_or((mant, ""));
-            let digits = format!("{int_part}{frac}");
-            if digits.len() > 36 {
+            if int_part.len() + frac.len() > 36 {
                 return None;
             }
-            let m: i128 = digits.parse().ok()?;
+            let mut m: i128 = 0;
+            for c in int_part.bytes().chain(frac.bytes()) {
+                m = m * 10 + (c - b'0') as i128;
+            }
             Some((if neg { -m } else { m }, exp - frac.len() as i32))
         }
+    }
+}
+
+/// A short text formatted without allocating (a double's `{:e}` form is at most 24 bytes).
+struct StackText {
+    buf: [u8; 40],
+    len: usize,
+}
+
+impl Default for StackText {
+    fn default() -> Self {
+        StackText { buf: [0; 40], len: 0 }
+    }
+}
+
+impl StackText {
+    fn as_str(&self) -> &str {
+        std::str::from_utf8(&self.buf[..self.len]).unwrap_or("")
+    }
+}
+
+impl std::fmt::Write for StackText {
+    fn write_str(&mut self, s: &str) -> std::fmt::Result {
+        let end = self.len + s.len();
+        if end > self.buf.len() {
+            return Err(std::fmt::Error);
+        }
+        self.buf[self.len..end].copy_from_slice(s.as_bytes());
+        self.len = end;
+        Ok(())
     }
 }
 
@@ -117,32 +151,58 @@ fn divides_scaled(m: u128, shift: u32, d: u128) -> bool {
     rest == 1
 }
 
-/// Exact `multipleOf`: whether `x / d` is an integer, over the decimal forms of both numbers.
-pub(crate) fn multiple_of(x: &Number, d: &Number) -> bool {
-    let (xn, dn) = (Num::of(x), Num::of(d));
-    if let (Num::I(a), Num::I(b)) = (xn, dn) {
-        return b != 0 && a % b == 0;
-    }
-    let (Some((am, ae)), Some((bm, be))) = (decimal(xn), decimal(dn)) else {
-        return false;
-    };
-    let (am, bm) = (am.unsigned_abs(), bm.unsigned_abs());
-    if bm == 0 {
-        return false;
-    }
-    if am == 0 {
-        return true;
-    }
-    let shift = ae - be;
-    if shift >= 0 {
-        divides_scaled(am, shift as u32, bm)
-    } else {
-        // am must be divisible by bm * 10^-shift; am < 10^37, so a larger power of ten cannot divide it.
-        match 10u128.checked_pow((-shift) as u32).and_then(|p| bm.checked_mul(p)) {
-            Some(den) => am % den == 0,
-            None => false,
+/// A `multipleOf` divisor with its integer or decimal form worked out once (the C# evaluator's DivisorValue).
+#[derive(Clone, Debug)]
+pub(crate) struct Divisor {
+    int: Option<i128>,
+    /// Magnitude of the mantissa and the exponent: the divisor is `m * 10^e`.
+    decimal: Option<(u128, i32)>,
+}
+
+impl Divisor {
+    pub fn new(d: &Number) -> Divisor {
+        let n = Num::of(d);
+        Divisor {
+            int: match n {
+                Num::I(i) => Some(i),
+                Num::F(_) => None,
+            },
+            decimal: decimal(n).map(|(m, e)| (m.unsigned_abs(), e)),
         }
     }
+
+    /// Exact `multipleOf`: whether `x / d` is an integer, over the decimal forms of both numbers.
+    pub fn divides(&self, x: &Number) -> bool {
+        let xn = Num::of(x);
+        if let (Num::I(a), Some(b)) = (xn, self.int) {
+            return b != 0 && a % b == 0;
+        }
+        let (Some((am, ae)), Some((bm, be))) = (decimal(xn), self.decimal) else {
+            return false;
+        };
+        let am = am.unsigned_abs();
+        if bm == 0 {
+            return false;
+        }
+        if am == 0 {
+            return true;
+        }
+        let shift = ae - be;
+        if shift >= 0 {
+            divides_scaled(am, shift as u32, bm)
+        } else {
+            // am must be divisible by bm * 10^-shift; am < 10^37, so a larger power of ten cannot divide it.
+            match 10u128.checked_pow((-shift) as u32).and_then(|p| bm.checked_mul(p)) {
+                Some(den) => am % den == 0,
+                None => false,
+            }
+        }
+    }
+}
+
+/// Exact `multipleOf`: whether `x / d` is an integer, over the decimal forms of both numbers.
+pub(crate) fn multiple_of(x: &Number, d: &Number) -> bool {
+    Divisor::new(d).divides(x)
 }
 
 /// The number's text as C# formats it in messages.

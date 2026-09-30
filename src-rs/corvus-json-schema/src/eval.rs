@@ -99,9 +99,7 @@ impl Program {
             assert_format_set,
             plans: Vec::new(),
         };
-        if !program.uses_dynamic_scope {
-            program.plans = plan::compile_plans(&program);
-        }
+        program.plans = plan::compile_plans(&program);
         program
     }
 
@@ -619,25 +617,17 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             );
         }
         match x {
-            Value::Number(num) => {
-                if n.has_number_keywords() {
-                    and!(M, ok, self.eval_number::<M>(n, num));
-                }
+            Value::Number(num) if n.has_number_keywords() => {
+                and!(M, ok, self.eval_number::<M>(n, num));
             }
-            Value::String(s) => {
-                if n.has_string_keywords() {
-                    and!(M, ok, self.eval_string::<M>(n, s));
-                }
+            Value::String(s) if n.has_string_keywords() => {
+                and!(M, ok, self.eval_string::<M>(n, s));
             }
-            Value::Object(o) => {
-                if n.has_object_keywords() {
-                    and!(M, ok, self.eval_object::<M>(id, n, o, x, bits.as_deref_mut()));
-                }
+            Value::Object(o) if n.has_object_keywords() => {
+                and!(M, ok, self.eval_object::<M>(id, n, o, x, bits.as_deref_mut()));
             }
-            Value::Array(a) => {
-                if n.has_array_keywords() {
-                    and!(M, ok, self.eval_array::<M>(n, a, bits.as_deref_mut()));
-                }
+            Value::Array(a) if n.has_array_keywords() => {
+                and!(M, ok, self.eval_array::<M>(n, a, bits.as_deref_mut()));
             }
             _ => {}
         }

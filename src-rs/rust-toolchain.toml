@@ -1,0 +1,5 @@
+# The toolchain for the Rust crates here, shared by local builds and CI (clippy's lints change between releases).
+[toolchain]
+channel = "1.98.0"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

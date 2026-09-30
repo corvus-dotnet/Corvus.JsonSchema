@@ -35,12 +35,18 @@ jobs:
         working-directory: .
         run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
       - name: Toolchain
+        # The version pinned in src-rs/rust-toolchain.toml, so CI lints with the same clippy as local builds.
         run: |
-          rustup toolchain install stable --profile minimal --component clippy,rustfmt
-          rustup default stable
+          rustup toolchain install
+          rustc --version
       - name: Format
         run: cargo fmt --check
       - name: Clippy
         run: cargo clippy --all-targets --locked -- -D warnings
       - name: Test
         run: cargo test --locked
+      - name: Benchmark harness
+        working-directory: src-rs/corvus-json-schema-bench
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
