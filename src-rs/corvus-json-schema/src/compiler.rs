@@ -943,7 +943,7 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
             let mut values: Vec<DiscriminatorValue> = Vec::new();
             for c in &classes {
                 for v in c.set() {
-                    if !values.contains(v) {
+                    if !values.iter().any(|x| x.same(v)) {
                         values.push(v.clone());
                     }
                 }
@@ -955,7 +955,7 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
                         .iter()
                         .enumerate()
                         .filter(|(_, c)| {
-                            let contains = c.set().contains(&value);
+                            let contains = c.set().iter().any(|x| x.same(&value));
                             match c {
                                 Class::Positive(_) => contains,
                                 Class::Negative(_) => !contains,
@@ -1038,6 +1038,7 @@ fn primitive(v: &Value) -> Option<DiscriminatorValue> {
         Value::String(s) => Some(DiscriminatorValue::String(s.clone())),
         Value::Number(n) => Some(DiscriminatorValue::Number(n.clone())),
         Value::Bool(b) => Some(DiscriminatorValue::Bool(*b)),
+        Value::Null => Some(DiscriminatorValue::Null),
         _ => None,
     }
 }

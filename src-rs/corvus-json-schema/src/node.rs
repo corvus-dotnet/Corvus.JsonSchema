@@ -87,6 +87,28 @@ pub(crate) enum DiscriminatorValue {
     String(String),
     Number(Number),
     Bool(bool),
+    Null,
+}
+
+impl DiscriminatorValue {
+    /// Whether an instance value equals this one (numbers by value: `1` and `1.0` are the same key).
+    pub fn matches(&self, v: &Value) -> bool {
+        match (self, v) {
+            (DiscriminatorValue::String(a), Value::String(b)) => a == b,
+            (DiscriminatorValue::Number(a), Value::Number(b)) => crate::numbers::num_eq(a, b),
+            (DiscriminatorValue::Bool(a), Value::Bool(b)) => a == b,
+            (DiscriminatorValue::Null, Value::Null) => true,
+            _ => false,
+        }
+    }
+
+    /// Key equality, with numbers by value.
+    pub fn same(&self, other: &DiscriminatorValue) -> bool {
+        match (self, other) {
+            (DiscriminatorValue::Number(a), DiscriminatorValue::Number(b)) => crate::numbers::num_eq(a, b),
+            _ => self == other,
+        }
+    }
 }
 
 /// Selects oneOf/anyOf branches by the value of one property (`SchemaCompiler.BuildDiscriminator`).

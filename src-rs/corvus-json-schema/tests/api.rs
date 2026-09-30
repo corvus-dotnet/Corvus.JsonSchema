@@ -142,3 +142,26 @@ fn discriminated_one_of_and_any_of_agree_with_exhaustive_evaluation() {
         }
     }
 }
+
+#[test]
+fn discriminators_key_null_and_numbers_by_value() {
+    let branch = |kind: Value, extra: &str| json!({ "type": "object", "properties": { "kind": { "const": kind }, extra: { "type": "string" } }, "required": ["kind", extra] });
+    let schema = json!({ "oneOf": [branch(json!(null), "a"), branch(json!(1), "b"), branch(json!(1.0), "c"), branch(json!("x"), "d")] });
+    let v = compile(&schema).unwrap();
+    for instance in [
+        json!({ "kind": null, "a": "s" }),
+        json!({ "kind": null, "b": "s" }),
+        json!({ "kind": 1, "b": "s" }),
+        json!({ "kind": 1, "b": "s", "c": "t" }),
+        json!({ "kind": 1.0, "c": "t" }),
+        json!({ "kind": "x", "d": "s" }),
+        json!({ "kind": "y", "d": "s" }),
+        json!({ "d": "s" }),
+    ] {
+        let mut c = JsonSchemaResultsCollector::new(ResultsLevel::Basic);
+        let collected = v.evaluate(&instance, &mut c).unwrap();
+        assert_eq!(v.is_valid(&instance), collected, "{instance}");
+    }
+    // Both numeric branches match `1` when it has both properties: oneOf fails.
+    assert!(!v.is_valid(&json!({ "kind": 1, "b": "s", "c": "t" })));
+}

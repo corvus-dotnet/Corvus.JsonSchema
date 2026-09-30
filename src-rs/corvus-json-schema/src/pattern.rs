@@ -32,6 +32,21 @@ enum Matcher {
         whole: bool,
     },
     Sequence(Sequence),
+    /// `.+` (`^.+` with `start`): some (the first) character is not a line terminator.
+    HasContent {
+        start: bool,
+    },
+    /// `^.{min,max}$`: between `min` and `max` characters, none a line terminator.
+    Line {
+        min: u32,
+        max: u32,
+    },
+    /// `^(a|b|...)$`: one of a set of strings.
+    Literals(Literals),
+    /// Top-level alternatives of literals, each optionally anchored (`^a|b|c$`).
+    Alternatives(Box<[Alternative]>),
+    /// `^(?=[^SET]+$)(?=(.*\w)).+$`: a non-empty line without a character of the set, containing a word character.
+    ExcludedClassWithWord(CharSet),
     Regex(regex::Regex),
     Regress(regress::Regex),
 }
@@ -55,14 +70,103 @@ impl Pattern {
                 }
             }
             Matcher::Sequence(seq) => seq.is_match(s),
+            Matcher::HasContent { start } => {
+                if *start {
+                    s.chars().next().is_some_and(|c| !is_line_terminator(c))
+                } else {
+                    s.chars().any(|c| !is_line_terminator(c))
+                }
+            }
+            Matcher::Line { min, max } => line_length(s).is_some_and(|n| n >= *min as usize && n <= *max as usize),
+            Matcher::Literals(set) => set.contains(s),
+            Matcher::Alternatives(alts) => alts.iter().any(|a| a.is_match(s)),
+            Matcher::ExcludedClassWithWord(set) => {
+                let mut word = false;
+                for c in s.chars() {
+                    if set.contains(c) || is_line_terminator(c) {
+                        return false;
+                    }
+                    word |= CharSet::word().contains(c);
+                }
+                word
+            }
             Matcher::Regex(re) => re.is_match(s),
             Matcher::Regress(re) => re.find(s).is_some(),
         }
     }
 }
 
-fn compile_regress(pattern: &str) -> Option<regress::Regex> {
-    regress::Regex::with_flags(pattern, "u").or_else(|_| regress::Regex::new(pattern)).ok()
+/// ECMA-262 `LineTerminator`, which `.` does not match.
+#[inline]
+fn is_line_terminator(c: char) -> bool {
+    matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}')
+}
+
+/// The number of characters, when none is a line terminator.
+#[inline]
+fn line_length(s: &str) -> Option<usize> {
+    if s.is_ascii() {
+        return (!s.bytes().any(|b| b == b'\n' || b == b'\r')).then_some(s.len());
+    }
+    let mut n = 0;
+    for c in s.chars() {
+        if is_line_terminator(c) {
+            return None;
+        }
+        n += 1;
+    }
+    Some(n)
+}
+
+/// A set of strings: compared in turn when there are few, hashed otherwise.
+enum Literals {
+    Few(Box<[Box<str>]>),
+    Many(std::collections::HashSet<Box<str>>),
+}
+
+impl Literals {
+    fn new(texts: Vec<String>) -> Literals {
+        if texts.len() <= 8 {
+            Literals::Few(texts.into_iter().map(String::into_boxed_str).collect())
+        } else {
+            Literals::Many(texts.into_iter().map(String::into_boxed_str).collect())
+        }
+    }
+
+    #[inline]
+    fn contains(&self, s: &str) -> bool {
+        match self {
+            Literals::Few(texts) => texts.iter().any(|t| **t == *s),
+            Literals::Many(set) => set.contains(s),
+        }
+    }
+}
+
+/// One alternative of [`Matcher::Alternatives`].
+struct Alternative {
+    text: Box<str>,
+    start: bool,
+    end: bool,
+}
+
+impl Alternative {
+    #[inline]
+    fn is_match(&self, s: &str) -> bool {
+        match (self.start, self.end) {
+            (true, true) => s == &*self.text,
+            (true, false) => s.starts_with(&*self.text),
+            (false, true) => s.ends_with(&*self.text),
+            (false, false) => s.contains(&*self.text),
+        }
+    }
+}
+
+/// Compiles a pattern with the `u` flag, or (as many validators accept them) without it; the flag is returned.
+fn compile_regress(pattern: &str) -> Option<(regress::Regex, bool)> {
+    match regress::Regex::with_flags(pattern, "u") {
+        Ok(re) => Some((re, true)),
+        Err(_) => regress::Regex::new(pattern).ok().map(|re| (re, false)),
+    }
 }
 
 static CACHE: LazyLock<Mutex<HashMap<String, Arc<Pattern>>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
@@ -73,18 +177,39 @@ pub(crate) fn compile(pattern: &str) -> Option<Arc<Pattern>> {
         return Some(p.clone());
     }
     // Validity is ECMA-262's: a pattern regress rejects is an error, whichever matcher would run it.
-    let regress = compile_regress(pattern)?;
-    let matcher = choose(pattern).unwrap_or(Matcher::Regress(regress));
+    let (regress, unicode) = compile_regress(pattern)?;
+    let matcher = choose(pattern, unicode).unwrap_or(Matcher::Regress(regress));
     let p = Arc::new(Pattern { source: pattern.to_string(), matcher });
     CACHE.lock().unwrap().insert(pattern.to_string(), p.clone());
     Some(p)
 }
 
-fn choose(pattern: &str) -> Option<Matcher> {
+fn choose(pattern: &str, unicode: bool) -> Option<Matcher> {
     // Unanchored (or start-anchored) `.*` finds an empty match in any string; `^.*$` does not (`.` stops at a line
     // terminator), so it is not listed.
-    if matches!(pattern, "" | ".*" | "^.*" | ".*$" | "[\\s\\S]*" | "^[\\s\\S]*" | "^[\\s\\S]*$") {
+    if matches!(pattern, "" | ".*" | "^.*" | ".*$" | "(.*)" | "^(.*)" | "[\\s\\S]*" | "^[\\s\\S]*" | "^[\\s\\S]*$") {
         return Some(Matcher::Everything);
+    }
+    // Without the `u` flag, a pattern matches UTF-16 code units rather than characters: only regress has that.
+    if !unicode {
+        return None;
+    }
+    match pattern {
+        ".+" | "." => return Some(Matcher::HasContent { start: false }),
+        "^.+" | "^." => return Some(Matcher::HasContent { start: true }),
+        _ => {}
+    }
+    if let Some((min, max)) = line_range(pattern) {
+        return Some(Matcher::Line { min, max });
+    }
+    if let Some(texts) = whole_alternatives(pattern) {
+        return Some(Matcher::Literals(Literals::new(texts)));
+    }
+    if let Some(alts) = alternatives(pattern) {
+        return Some(Matcher::Alternatives(alts));
+    }
+    if let Some(set) = excluded_class_with_word(pattern) {
+        return Some(Matcher::ExcludedClassWithWord(set));
     }
     if let Some(seq) = Sequence::parse(pattern) {
         return Some(match seq.literal() {
@@ -94,6 +219,105 @@ fn choose(pattern: &str) -> Option<Matcher> {
     }
     let translated = translate(pattern)?;
     regex::Regex::new(&translated).ok().map(Matcher::Regex)
+}
+
+/// `^.{m,n}$` (and `^.*$`, `^.+$`, `^.{m}$`, `^.{m,}$`): the bounds on the length of a line.
+fn line_range(p: &str) -> Option<(u32, u32)> {
+    let q = p.strip_prefix("^.")?.strip_suffix('$')?;
+    let (min, max, next) = parse_quantifier(q.as_bytes(), 0)?;
+    (next == q.len() && next > 0 && !q.ends_with('?')).then_some((min, max))
+}
+
+/// Literal text: characters other than syntax characters, and identity or control escapes.
+fn literal_text(p: &str) -> Option<String> {
+    let mut out = String::new();
+    let mut chars = p.chars();
+    while let Some(c) = chars.next() {
+        match c {
+            '\\' => out.push(match chars.next()? {
+                'n' => '\n',
+                'r' => '\r',
+                't' => '\t',
+                'f' => '\x0C',
+                'v' => '\x0B',
+                e
+                @ ('^' | '$' | '\\' | '.' | '*' | '+' | '?' | '(' | ')' | '[' | ']' | '{' | '}' | '|' | '/' | '-') => e,
+                _ => return None,
+            }),
+            '^' | '$' | '.' | '*' | '+' | '?' | '(' | ')' | '[' | ']' | '{' | '}' | '|' => return None,
+            c => out.push(c),
+        }
+    }
+    Some(out)
+}
+
+/// Splits at top-level `|`s (none inside a group, a class or after `\`).
+fn split_alternatives(p: &str) -> Option<Vec<&str>> {
+    let b = p.as_bytes();
+    let (mut depth, mut in_class, mut i, mut start) = (0usize, false, 0, 0);
+    let mut parts = Vec::new();
+    while i < b.len() {
+        match b[i] {
+            b'\\' => i += 1,
+            b'[' => in_class = true,
+            b']' => in_class = false,
+            b'(' if !in_class => depth += 1,
+            b')' if !in_class => depth = depth.checked_sub(1)?,
+            b'|' if !in_class && depth == 0 => {
+                parts.push(&p[start..i]);
+                start = i + 1;
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    parts.push(&p[start..]);
+    Some(parts)
+}
+
+/// `^(a|b|...)$` or `^(?:a|b|...)$` over literal alternatives.
+fn whole_alternatives(p: &str) -> Option<Vec<String>> {
+    let inner = p.strip_prefix("^(")?.strip_suffix(")$")?;
+    let inner = inner.strip_prefix("?:").unwrap_or(inner);
+    if inner.starts_with('?') {
+        return None;
+    }
+    let parts = split_alternatives(inner)?;
+    if parts.len() < 2 {
+        return None;
+    }
+    parts.into_iter().map(literal_text).collect()
+}
+
+/// Two or more top-level alternatives, each a literal optionally anchored at either end (`^a|b|c$`).
+fn alternatives(p: &str) -> Option<Box<[Alternative]>> {
+    let parts = split_alternatives(p)?;
+    if parts.len() < 2 {
+        return None;
+    }
+    parts
+        .into_iter()
+        .map(|part| {
+            let (start, part) = part.strip_prefix('^').map_or((false, part), |r| (true, r));
+            let (end, part) = match part.strip_suffix('$') {
+                Some(r) if !r.ends_with('\\') || r.ends_with("\\\\") => (true, r),
+                _ => (false, part),
+            };
+            Some(Alternative { text: literal_text(part)?.into(), start, end })
+        })
+        .collect()
+}
+
+/// `^(?=[^SET]+$)(?=(.*\w)).+$` (with `(?:` or `(` around `.*\w`): the excluded set.
+fn excluded_class_with_word(p: &str) -> Option<CharSet> {
+    // parse_class reads a class body from after `[`, here `^SET]`.
+    let body = p.strip_prefix("^(?=[")?;
+    let (negated, next) = parse_class(body.as_bytes(), 0)?;
+    if !body.starts_with('^') {
+        return None;
+    }
+    let excluded = CharSet { ascii: !negated.ascii, non_ascii: false };
+    matches!(&body[next..], "+$)(?=(.*\\w)).+$" | "+$)(?=(?:.*\\w)).+$" | "+$)(?=.*\\w).+$").then_some(excluded)
 }
 
 /// The `regex` format: a valid ECMA-262 regular expression (with the `u` flag).
@@ -319,7 +543,6 @@ fn parse_class(b: &[u8], mut i: usize) -> Option<(CharSet, usize)> {
                 let single = matches!(e, b'n' | b'r' | b't') || e.is_ascii_punctuation();
                 (s, single.then(|| s.ascii.trailing_zeros() as u8), i + 2)
             }
-            b'[' => return None,
             _ => (CharSet::range(c, c), Some(c), i + 1),
         };
         i = next;
@@ -518,6 +741,29 @@ fn escape(c: &[char], i: usize, in_class: bool) -> Option<(String, usize)> {
             push_literal(&mut out, '\x08');
             i + 1
         }
+        // ECMA's word boundaries are between ASCII word characters and the rest.
+        'b' => {
+            out.push_str("(?-u:\\b)");
+            i + 1
+        }
+        'B' => {
+            out.push_str("(?-u:\\B)");
+            i + 1
+        }
+        // Unicode properties (validated as ECMA-262 names by regress) have the same names in the `regex` crate.
+        'p' | 'P' if c.get(i + 1) == Some(&'{') => {
+            let end = i + 1 + c[i + 1..].iter().position(|&x| x == '}')?;
+            let body: String = c[i + 2..end].iter().collect();
+            if body.is_empty() || !body.chars().all(|x| x.is_ascii_alphanumeric() || x == '_' || x == '=') {
+                return None;
+            }
+            out.push('\\');
+            out.push(e);
+            out.push('{');
+            out.push_str(&body);
+            out.push('}');
+            end + 1
+        }
         'x' => {
             let hex: String = c.get(i + 1..i + 3)?.iter().collect();
             push_literal(&mut out, char::from_u32(u32::from_str_radix(&hex, 16).ok()?)?);
@@ -533,7 +779,7 @@ fn escape(c: &[char], i: usize, in_class: bool) -> Option<(String, usize)> {
             push_literal(&mut out, e);
             i + 1
         }
-        // \b \B (word boundaries), backreferences, \c, \k, \p, \P and the rest.
+        // Backreferences, \c, \k and the rest.
         _ => return None,
     };
     Some((out, next))
@@ -586,7 +832,7 @@ fn class(c: &[char], mut i: usize) -> Option<(String, usize)> {
             let e = *c.get(i + 1)?;
             let (text, next) = escape(c, i + 1, true)?;
             let single = match e {
-                'd' | 'D' | 'w' | 'W' | 's' | 'S' => None,
+                'd' | 'D' | 'w' | 'W' | 's' | 'S' | 'p' | 'P' => None,
                 _ => Some(text.clone()),
             };
             (text, single, next)
@@ -602,7 +848,7 @@ fn class(c: &[char], mut i: usize) -> Option<(String, usize)> {
             let lo = single?;
             let (hi, next) = if c[i + 1] == '\\' {
                 let e = *c.get(i + 2)?;
-                if matches!(e, 'd' | 'D' | 'w' | 'W' | 's' | 'S') {
+                if matches!(e, 'd' | 'D' | 'w' | 'W' | 's' | 'S' | 'p' | 'P') {
                     return None;
                 }
                 escape(c, i + 2, true)?
@@ -691,6 +937,30 @@ mod tests {
         "(?<name>ab)+",
         "^[\\b]",
         "\\x41",
+        ".",
+        "^.",
+        "^.+",
+        "(.*)",
+        "^(.*)",
+        "^.+$",
+        "^.{1,3}$",
+        "^.{2}$",
+        "^.{2,}$",
+        "^(ab|cd)$",
+        "^(?:es|ES|x-|a\\.b)$",
+        "^(a|b|c|d|e|f|g|h|i|j|z)$",
+        "^ab|cd$",
+        "^x-|es|ms$",
+        "a|b",
+        "^a\\$|b",
+        "\\Bs",
+        "a\\b",
+        "^\\p{Lu}",
+        "[\\p{L}\\d]+$",
+        "^\\P{L}+$",
+        "^(?=[^a-c\\n]+$)(?=(.*\\w)).+$",
+        "^\\-a",
+        "[{}[\\]]",
     ];
 
     /// Every matcher agrees with regress on strings over an alphabet that exercises classes, anchors and non-ASCII.
@@ -708,7 +978,7 @@ mod tests {
             seed
         };
         for &p in PATTERNS {
-            let reference = compile_regress(p).unwrap();
+            let (reference, _) = compile_regress(p).unwrap();
             let compiled = compile(p).unwrap();
             for _ in 0..4000 {
                 let len = next() % 9;
@@ -726,10 +996,29 @@ mod tests {
         for p in ["^x-", "^\\/", "^abc$"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Literal { .. }), "{p}");
         }
-        for p in ["^[a-z]*a$", ".+", "^[1-5](?:[0-9]{2}|XX)$", "(base64key|awskms)://(.*)"] {
+        for p in ["^[a-z]*a$", "^[1-5](?:[0-9]{2}|XX)$", "(base64key|awskms)://(.*)"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Regex(_)), "{p}");
         }
-        for p in ["\\bfoo", "^(?=[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$"] {
+        for p in [".+", "^.+"] {
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::HasContent { .. }), "{p}");
+        }
+        for p in ["^.{1,256}$", "^.+$", "^.*$"] {
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::Line { .. }), "{p}");
+        }
+        for p in ["^(ab|cd)$", "^(?:es|ES|x-)$"] {
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::Literals(_)), "{p}");
+        }
+        for p in ["^ab|cd$", "a|b"] {
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::Alternatives(_)), "{p}");
+        }
+        assert!(matches!(
+            compile("^(?=[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$").unwrap().matcher,
+            Matcher::ExcludedClassWithWord(_)
+        ));
+        for p in ["\\bfoo", "^\\p{L}+$"] {
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::Regex(_)), "{p}");
+        }
+        for p in ["^((\\.(?!\\.)\\/)?\\w+\\/?)+$", "^\\-a"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Regress(_)), "{p}");
         }
     }

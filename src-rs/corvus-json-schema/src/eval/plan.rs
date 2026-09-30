@@ -14,7 +14,7 @@ use serde_json::{Map, Number, Value};
 
 mod fused;
 
-use super::{Evaluator, Fast, Program, Selection, all_unique, code_points, content_ok, json_equal, select};
+use super::{Evaluator, Fast, Program, all_unique, code_points, content_ok, json_equal};
 use crate::dialect::Dialect;
 use crate::formats::FormatKind;
 use crate::node::*;
@@ -201,11 +201,56 @@ struct Branches {
     children: Box<[Child]>,
     /// For each instance kind (see `kind`), the branches that can accept it.
     by_kind: [Box<[u32]>; 6],
-    discriminator: Option<Box<Discriminator>>,
+    discriminator: Option<Box<(Discriminator, DiscriminatorIndex)>>,
+}
+
+/// A discriminator's known values by lookup (C# keys them in a hashed map): string values through a name table,
+/// the few others (numbers, booleans, null) by scan.
+struct DiscriminatorIndex {
+    strings: Names,
+    /// For each string in `strings`, its entry in `Discriminator::known`.
+    string_entries: Box<[u32]>,
+    others: Box<[u32]>,
+}
+
+impl DiscriminatorIndex {
+    fn new(d: &Discriminator) -> DiscriminatorIndex {
+        let mut names: Vec<Box<str>> = Vec::new();
+        let mut string_entries = Vec::new();
+        let mut others = Vec::new();
+        for (i, (value, _)) in d.known.iter().enumerate() {
+            match value {
+                DiscriminatorValue::String(s) => {
+                    names.push(s.as_str().into());
+                    string_entries.push(i as u32);
+                }
+                _ => others.push(i as u32),
+            }
+        }
+        DiscriminatorIndex {
+            strings: Names::new(names),
+            string_entries: string_entries.into_boxed_slice(),
+            others: others.into_boxed_slice(),
+        }
+    }
+
+    /// The branches a discriminator value selects.
+    #[inline]
+    fn select<'d>(&self, d: &'d Discriminator, v: &Value) -> &'d [u32] {
+        let entry = match v {
+            Value::String(s) => self.strings.contains_at(s).map(|i| self.string_entries[i]),
+            _ => self.others.iter().copied().find(|&i| d.known[i as usize].0.matches(v)),
+        };
+        entry.map_or(&d.unknown, |i| &d.known[i as usize].1)
+    }
 }
 
 impl Branches {
     fn new(children: Box<[Child]>, discriminator: Option<Box<Discriminator>>) -> Branches {
+        let discriminator = discriminator.map(|d| {
+            let index = DiscriminatorIndex::new(&d);
+            Box::new((*d, index))
+        });
         Branches { children, by_kind: Default::default(), discriminator }
     }
 
@@ -354,6 +399,18 @@ impl Names {
 
     fn find(&self, name: &str) -> Option<usize> {
         self.find_from(name, &mut 0)
+    }
+
+    /// The index of a name, without the ordering hint.
+    #[inline]
+    fn contains_at(&self, name: &str) -> Option<usize> {
+        if self.lengths & length_bit(name.len()) == 0 {
+            return None;
+        }
+        match &self.lookup {
+            Lookup::Linear(names) => names.iter().position(|n| str_eq(n, name)),
+            Lookup::Hashed(table) => table.find(name),
+        }
     }
 
     /// Membership only (for string enums: no order to hint at).
@@ -1056,11 +1113,12 @@ impl Evaluator<'_, '_> {
     /// The anyOf/oneOf branches that can match: those a discriminator selects, or those admitting the instance type.
     #[inline(always)]
     fn candidates<'b>(&self, b: &'b Branches, x: &Value) -> &'b [u32] {
-        let Some(d) = b.discriminator.as_deref() else { return &b.by_kind[kind(x)] };
-        match select(Some(d), x) {
-            Selection::All => &b.by_kind[kind(x)],
-            Selection::None => &[],
-            Selection::Subset(s) => s,
+        let (Some(disc), Value::Object(o)) = (b.discriminator.as_deref(), x) else { return &b.by_kind[kind(x)] };
+        let (d, index) = disc;
+        match get_key(o, &d.property) {
+            Some(v) => index.select(d, v),
+            None if d.all_require => &[],
+            None => &b.by_kind[kind(x)],
         }
     }
 

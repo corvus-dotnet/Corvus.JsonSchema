@@ -462,12 +462,7 @@ fn select<'a>(d: Option<&'a Discriminator>, x: &Value) -> Selection<'a> {
     let Some(value) = plan::get_key(o, &d.property) else {
         return if d.all_require { Selection::None } else { Selection::All };
     };
-    let hit = d.known.iter().find(|(k, _)| match (k, value) {
-        (DiscriminatorValue::String(a), Value::String(b)) => a == b,
-        (DiscriminatorValue::Number(a), Value::Number(b)) => num_eq(a, b),
-        (DiscriminatorValue::Bool(a), Value::Bool(b)) => a == b,
-        _ => false,
-    });
+    let hit = d.known.iter().find(|(k, _)| k.matches(value));
     Selection::Subset(hit.map_or(&d.unknown, |(_, branches)| branches))
 }
 
