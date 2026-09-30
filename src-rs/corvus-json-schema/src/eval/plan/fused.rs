@@ -52,9 +52,29 @@ struct Entry {
     apps: Box<[App]>,
     /// The conditions' tests on this property's value.
     tests: Box<[ValueTest]>,
-    /// When several tests compare the value with constants: each constant any of them allows, with the mask of the
-    /// tests (by index in `tests`) that allow it, so that one lookup decides them all (the C# MergeValueTests).
-    merged: Option<Box<[(Value, u64)]>>,
+    /// The constant tests merged (the C# MergeValueTests): one lookup decides them all.
+    merged: Option<Merged>,
+}
+
+/// Each constant any of an entry's constant tests allows, with the mask of the tests (by index in `tests`) that allow
+/// it. Strings are looked up by name; other constants compared in turn.
+struct Merged {
+    strings: Names,
+    string_masks: Box<[u64]>,
+    others: Box<[(Value, u64)]>,
+    /// The tests that are constant sets; the others (patterns) are tested one by one.
+    keyed: u64,
+}
+
+impl Merged {
+    /// The mask of the constant tests that allow the value.
+    #[inline]
+    fn allowed(&self, v: &Value) -> u64 {
+        match v {
+            Value::String(s) => self.strings.contains_at(s).map_or(0, |i| self.string_masks[i]),
+            _ => self.others.iter().find(|(m, _)| json_equal(m, v)).map_or(0, |&(_, mask)| mask),
+        }
+    }
 }
 
 /// One child schema applying to a property on behalf of a contributor (`None`: `true`, which covers without a test).
@@ -669,22 +689,38 @@ pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child)
     })
 }
 
-/// The merged constants of an entry's value tests, when at least two (and at most 64) tests are all constant sets.
-fn merge_value_tests(tests: &[ValueTest]) -> Option<Box<[(Value, u64)]>> {
-    if tests.len() < 2 || tests.len() > 64 || !tests.iter().all(|t| matches!(t.kind, TestKind::Allowed(_))) {
+/// The merged constants of an entry's value tests, when some (of at most 64) are constant sets and there is more than
+/// one constant to look for.
+fn merge_value_tests(tests: &[ValueTest]) -> Option<Merged> {
+    let constants: usize =
+        tests.iter().map(|t| if let TestKind::Allowed(values) = &t.kind { values.len() } else { 0 }).sum();
+    if tests.len() > 64 || constants < 2 {
         return None;
     }
-    let mut merged: Vec<(Value, u64)> = Vec::new();
+    let (mut strings, mut string_masks): (Vec<Box<str>>, Vec<u64>) = (Vec::new(), Vec::new());
+    let mut others: Vec<(Value, u64)> = Vec::new();
+    let mut keyed = 0;
     for (t, test) in tests.iter().enumerate() {
-        let TestKind::Allowed(values) = &test.kind else { unreachable!() };
+        let TestKind::Allowed(values) = &test.kind else { continue };
+        keyed |= 1 << t;
         for v in values.iter() {
-            match merged.iter_mut().find(|(m, _)| json_equal(m, v)) {
-                Some((_, mask)) => *mask |= 1 << t,
-                None => merged.push((v.clone(), 1 << t)),
+            if let Value::String(s) = v {
+                match strings.iter().position(|m| **m == **s) {
+                    Some(i) => string_masks[i] |= 1 << t,
+                    None => {
+                        strings.push(s.as_str().into());
+                        string_masks.push(1 << t);
+                    }
+                }
+            } else {
+                match others.iter_mut().find(|(m, _)| json_equal(m, v)) {
+                    Some((_, mask)) => *mask |= 1 << t,
+                    None => others.push((v.clone(), 1 << t)),
+                }
             }
         }
     }
-    Some(merged.into_boxed_slice())
+    Some(Merged { strings: Names::new(strings), string_masks: string_masks.into(), others: others.into(), keyed })
 }
 
 /// Identical resolutions of a property from several branches (the same child, or both `true`) become one application
@@ -837,9 +873,10 @@ impl Evaluator<'_, '_> {
         pass.seen.set(e as u16);
         match &entry.merged {
             Some(merged) => {
-                let allowed = merged.iter().find(|(m, _)| json_equal(m, v)).map_or(0, |&(_, mask)| mask);
+                let allowed = merged.allowed(v);
                 for (t, test) in entry.tests.iter().enumerate() {
-                    if allowed & (1 << t) == 0 {
+                    let holds = if merged.keyed & (1 << t) != 0 { allowed & (1 << t) != 0 } else { test.holds(v) };
+                    if !holds {
                         pass.failed |= 1 << test.condition;
                     }
                 }
