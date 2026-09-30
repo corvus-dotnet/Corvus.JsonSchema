@@ -640,6 +640,22 @@ internal static partial class Evaluator
     private static bool EvalFusedObject<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TAccess : struct, IDocumentAccess
     {
+        // Below a live dynamic reference the node itself is entered (its contributors are in its resource).
+        bool pushed = EnterScope(node, ref state);
+        bool ok = node.Fused!.FlatEntries is StrictEntry[] flat
+            ? EvalFlatFusedLoop<TAccess>(node.Fused, flat, doc, index, ref state)
+            : EvalFusedObjectBuffers<TAccess>(node, doc, index, ref state);
+        if (pushed)
+        {
+            state.ScopeDepth--;
+        }
+
+        return ok;
+    }
+
+    private static bool EvalFusedObjectBuffers<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
         // The buffers are allocated here, in a method without a loop, so that the loops below are compiled through
         // the tiers with a profile (see InlineBits).
         Span<ulong> seenBuffer = stackalloc ulong[InlineBitWords];
@@ -650,6 +666,72 @@ internal static partial class Evaluator
         Span<bool> holds = stackalloc bool[64];
         Span<bool> gateOk = stackalloc bool[64];
         return EvalFusedObjectCore<TAccess>(node, doc, index, ref state, seenBuffer, coverInline, failed, altFailed, deferredInline, holds, gateOk);
+    }
+
+    /// <summary>
+    /// A flat fused plan (see <see cref="FusedObject.FlatNodes"/>): the strict object loop over the merged names, with
+    /// the entry index as the seen bit; names no entry knows are ignored.
+    /// </summary>
+    private static bool EvalFlatFusedLoop<TAccess>(FusedObject f, StrictEntry[] entries, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        if (f.FlatMinProperties >= 0 || f.FlatMaxProperties >= 0)
+        {
+            int count = default(TAccess).Count(ref state, doc, index, JsonTokenType.StartObject);
+            if ((f.FlatMinProperties >= 0 && count < f.FlatMinProperties) || (f.FlatMaxProperties >= 0 && count > f.FlatMaxProperties))
+            {
+                return false;
+            }
+        }
+
+        Utf8NameMap<FusedEntry> names = f.Entries;
+        ulong seen = 0;
+        int end = default(TAccess).EndIndex(ref state, doc, index);
+        if (!default(TAccess).RowsAvailable(ref state, doc, end))
+        {
+            ThrowMalformedRows();
+        }
+
+        int valueIndex = index + (2 * RowSize);
+        while (valueIndex - RowSize < end)
+        {
+            JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
+            int entryIndex;
+            int location = default(TAccess).PropertyNameLocationUnchecked(ref state, doc, valueIndex, out int length);
+            if (location >= 0 && length >= 0)
+            {
+                entryIndex = names.GetIndex(state.RawUtf8, location, length);
+            }
+            else
+            {
+                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
+                entryIndex = !escaped
+                    ? (names.TryGetIndex(raw, out int found) ? found : -1)
+                    : LookupEscapedFusedName<TAccess>(names, ref state, doc, valueIndex);
+            }
+
+            if (entryIndex >= 0)
+            {
+                seen |= 1UL << entryIndex;
+                if (!ApplyEntry<TAccess>(in ArrayRef.At(entries, entryIndex), valueType, doc, valueIndex, ref state))
+                {
+                    return false;
+                }
+            }
+
+            valueIndex = next + RowSize;
+        }
+
+        return (seen & f.FlatRequiredMask) == f.FlatRequiredMask;
+    }
+
+    /// <summary>The fused lookup for an escaped property name, out of line.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static int LookupEscapedFusedName<TAccess>(Utf8NameMap<FusedEntry> names, ref EvaluationState state, IJsonDocument doc, int valueIndex)
+        where TAccess : struct, IDocumentAccess
+    {
+        using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
+        return names.TryGetIndex(name.Span, out int entryIndex) ? entryIndex : -1;
     }
 
     private static bool EvalFusedObjectCore<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> seenBuffer, scoped Span<ulong> coverInline, scoped Span<bool> failed, scoped Span<ulong> altFailed, scoped Span<int> deferredInline, scoped Span<bool> holds, scoped Span<bool> gateOk)
@@ -710,7 +792,7 @@ internal static partial class Evaluator
                     entryIndex = f.Entries.GetIndex(state.RawUtf8, location, length);
                     bool ok = entryIndex >= 0
                         ? ApplyFusedEntry<TAccess>(f, f.EntryList[entryIndex], valueType, doc, valueIndex, ref state, seen, failed, altFailed, out cover, out defer)
-                        : ApplyFusedUnknown<TAccess>(f, state.RawUtf8.Slice(location, length), doc, valueIndex, ref state, altFailed, out cover, out defer);
+                        : ApplyFusedUnknown<TAccess>(f, state.RawUtf8.Slice(location, length), doc, valueIndex, ref state, failed, altFailed, out cover, out defer);
                     if (!ok)
                     {
                         return false;
@@ -916,6 +998,29 @@ internal static partial class Evaluator
                 }
 
                 if (matches == 0 || (alternative.ExactlyOne && matches != 1))
+                {
+                    return false;
+                }
+            }
+
+            // not: {required: [...]}: the names must not all be present.
+            FusedAlternative[] forbidden = f.Forbidden;
+            for (int a = 0; a < forbidden.Length; a++)
+            {
+                FusedAlternative entry = forbidden[a];
+                if (entry.Condition >= 0 && (!gateOk[entry.Condition] || holds[entry.Condition] != entry.Polarity))
+                {
+                    continue;
+                }
+
+                bool all = true;
+                int[] bits = entry.Branches[0];
+                for (int i = 0; i < bits.Length && all; i++)
+                {
+                    all = (seen[bits[i] >> 6] & (1UL << (bits[i] & 63))) != 0;
+                }
+
+                if (all)
                 {
                     return false;
                 }
@@ -1240,7 +1345,7 @@ internal static partial class Evaluator
         }
 
         entryIndex = -1;
-        return ApplyFusedUnknown<TAccess>(f, nameSpan, doc, valueIndex, ref state, altFailed, out cover, out defer);
+        return ApplyFusedUnknown<TAccess>(f, nameSpan, doc, valueIndex, ref state, failed, altFailed, out cover, out defer);
     }
 
     /// <summary>A known name: its value tests for the conditions, then every unconditional application; conditional ones are deferred to the second pass.</summary>
@@ -1288,7 +1393,7 @@ internal static partial class Evaluator
     }
 
     /// <summary>A name no entry knows: every unconditional branch resolves it (patterns, additionalProperties); conditional ones defer.</summary>
-    private static bool ApplyFusedUnknown<TAccess>(FusedObject f, scoped ReadOnlySpan<byte> nameSpan, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> altFailed, out bool cover, out bool defer)
+    private static bool ApplyFusedUnknown<TAccess>(FusedObject f, scoped ReadOnlySpan<byte> nameSpan, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<bool> failed, scoped Span<ulong> altFailed, out bool cover, out bool defer)
         where TAccess : struct, IDocumentAccess
     {
         cover = false;
@@ -1296,6 +1401,15 @@ internal static partial class Evaluator
         if (!f.ResolvesUnknownNames)
         {
             return true;
+        }
+
+        FusedAbsentPattern[] absent = f.AbsentPatterns;
+        for (int p = 0; p < absent.Length; p++)
+        {
+            if (!failed[absent[p].Condition] && absent[p].Matcher.IsMatch(nameSpan))
+            {
+                failed[absent[p].Condition] = true;
+            }
         }
 
         SchemaNode[] nodes = state.Nodes;

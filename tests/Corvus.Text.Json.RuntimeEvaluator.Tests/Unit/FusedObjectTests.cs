@@ -122,8 +122,70 @@ public class FusedObjectTests
         }
         """;
 
+    private const string NotRequired = """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {"summary": {"type": "string"}, "value": true, "externalValue": {"type": "string"}},
+          "not": {"required": ["value", "externalValue"]},
+          "$ref": "#/$defs/extensions",
+          "dependentSchemas": {"summary": {"not": {"required": ["id", "name"]}}},
+          "unevaluatedProperties": false,
+          "$defs": {"extensions": {"patternProperties": {"^x-": true}}}
+        }
+        """;
+
+    private const string AbsentPattern = """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {"default": {"type": "integer"}, "id": true},
+          "patternProperties": {"^[1-5](?:[0-9]{2}|XX)$": {"type": "integer"}},
+          "$ref": "#/$defs/extensions",
+          "unevaluatedProperties": false,
+          "if": {"patternProperties": {"^[1-5](?:[0-9]{2}|XX)$": false}},
+          "then": {"required": ["default"]},
+          "else": {"if": {"properties": {"id": {"const": 1}}, "patternProperties": {"^x-": false}}, "then": {"required": ["name"]}},
+          "$defs": {"extensions": {"patternProperties": {"^x-": true}, "properties": {"name": true, "x-known": true}}}
+        }
+        """;
+
+    private const string Flat = """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "allOf": [
+            {"$ref": "#/$defs/base"},
+            {"properties": {"name": {"type": "string"}, "tags": {"type": "array"}}, "required": ["name"], "maxProperties": 4}
+          ],
+          "properties": {"id": {"type": "integer"}, "active": true},
+          "minProperties": 1,
+          "$defs": {"base": {"properties": {"id": {"type": "integer"}, "address": {"type": "object", "properties": {"city": {"type": "string"}}}}, "required": ["id"]}}
+        }
+        """;
+
     private static readonly string[] Instances =
     [
+        """{"summary": "s", "value": 1}""",
+        """{"value": 1, "externalValue": "u"}""",
+        """{"externalValue": 2}""",
+        """{"x-y": 1, "summary": "s", "id": 1, "name": "n"}""",
+        """{"summary": "s", "id": 1}""",
+        """{"default": 1}""",
+        """{"200": 1}""",
+        """{"2XX": 1, "x-a": 1}""",
+        """{"600": 1}""",
+        """{"default": "a", "404": 1}""",
+        """{"200": 1, "id": 1}""",
+        """{"200": 1, "id": 1, "name": "n"}""",
+        """{"200": 1, "id": 1, "x-known": 1}""",
+        """{"200": 1, "id": 1, "x-other": 1}""",
+        """{"20\u0030": 1, "id": 2}""",
+        """{"id": 1, "name": "n", "address": {"city": "c"}}""",
+        """{"id": 1, "name": "n", "address": {"city": 1}}""",
+        """{"id": 1, "name": "n", "tags": [], "active": 1, "other": 2}""",
+        """{"name": "n"}""",
+        """{"id": "1", "name": "n"}""",
+        """{"i\u0064": 1, "name": "n"}""",
         """{"id": 1, "name": "n", "email": "e", "tags": [], "address": {}}""",
         """{"id": 1, "active": true, "score": 2}""",
         """{"id": 1, "score": 2}""",
@@ -203,6 +265,9 @@ public class FusedObjectTests
     [DataRow(OpenApiLikeParameter, DisplayName = "dependent schemas, required-only oneOf, nested and pattern conditions")]
     [DataRow(NestedConditionsAndAlternatives, DisplayName = "if nested in then and else, boolean and untyped pattern tests, required-only anyOf")]
     [DataRow(RefChainWithElse, DisplayName = "$ref chain with if/then/else")]
+    [DataRow(NotRequired, DisplayName = "not with a required list, also under a dependency")]
+    [DataRow(AbsentPattern, DisplayName = "if with patternProperties of false, nested under else with a value test")]
+    [DataRow(Flat, DisplayName = "flat: allOf and $ref of plain objects")]
     public void FusedPlanAgreesWithTheGeneralPath(string schema)
     {
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
@@ -218,6 +283,82 @@ public class FusedObjectTests
             bool general = evaluator.Evaluate(doc.RootElement, collector);
             Assert.AreEqual(general, evaluator.Evaluate(doc.RootElement), $"flag mode differs for {instance}");
             Assert.AreEqual(general, loaded.Evaluate(doc.RootElement), $"image differs for {instance}");
+        }
+    }
+
+    [TestMethod]
+    public void PlainCompositionsTakeTheFlatLoop()
+    {
+        using JsonSchemaEvaluator flat = JsonSchemaEvaluator.Compile(Flat);
+        FusedObject fused = flat.Program.Nodes[flat.RootNode].Fused!;
+        Assert.IsNotNull(fused.FlatEntries, "Every name resolves to one schema and nothing is conditional.");
+        using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(flat.ToProgramImage());
+        Assert.IsNotNull(loaded.Program.Nodes[loaded.RootNode].Fused!.FlatEntries, "The flat entries are rebuilt on load.");
+
+        // Two different schemas for one name, a condition, or unevaluatedProperties keep the fused pass.
+        foreach (string schema in new[]
+        {
+            """{"allOf": [{"properties": {"a": {"type": "integer"}}}], "properties": {"a": {"minimum": 1}, "b": true}}""",
+            """{"allOf": [{"properties": {"a": {"type": "integer"}}}], "properties": {"b": true}, "if": {"required": ["a"]}, "then": {"required": ["b"]}}""",
+            """{"allOf": [{"properties": {"a": {"type": "integer"}}}], "properties": {"b": true}, "unevaluatedProperties": false}""",
+            """{"allOf": [{"properties": {"a": {"type": "integer"}}, "additionalProperties": false}], "properties": {"b": true}}""",
+        })
+        {
+            using JsonSchemaEvaluator e = JsonSchemaEvaluator.Compile(schema);
+            Assert.AreEqual(NodePlan.FusedObject, e.Program.Nodes[e.RootNode].Plan, schema);
+            Assert.IsNull(e.Program.Nodes[e.RootNode].Fused!.FlatEntries, schema);
+        }
+    }
+
+    [TestMethod]
+    public void ContributorsInTheNodesOwnResourceFuseBelowADynamicReference()
+    {
+        // The items' $dynamicRef resolves through the scope to "strict", whose allOf contributor is in its own resource.
+        const string schema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$id": "https://example.com/root",
+              "$ref": "strict",
+              "$defs": {
+                "strict": {
+                  "$id": "https://example.com/strict",
+                  "$dynamicAnchor": "node",
+                  "type": "object",
+                  "properties": {"data": true, "y": true, "children": {"type": "array", "items": {"$ref": "tree#/$defs/kids"}}},
+                  "allOf": [{"$ref": "#/$defs/extra"}],
+                  "unevaluatedProperties": false,
+                  "$defs": {"extra": {"properties": {"x": {"type": "integer"}}}}
+                },
+                "tree": {
+                  "$id": "https://example.com/tree",
+                  "$dynamicAnchor": "node",
+                  "type": "object",
+                  "$defs": {"kids": {"$dynamicRef": "#node"}}
+                }
+              }
+            }
+            """;
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
+        Assert.IsTrue(evaluator.UsesDynamicScope);
+        Assert.IsTrue(evaluator.Program.Nodes.Any(n => n.Plan == NodePlan.FusedObject), "strict fuses: its contributor is in its own resource.");
+        using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(evaluator.ToProgramImage());
+        foreach ((string instance, bool expected) in new[]
+        {
+            ("""{}""", true),
+            ("""{"data": 1, "x": 2}""", true),
+            ("""{"x": "a"}""", false),
+            ("""{"y": 1, "children": [{"y": 1}]}""", true),
+            ("""{"children": [{"z": 1}]}""", false),
+            ("""{"children": [{"x": 1, "children": [{"y": 2, "data": 3}]}]}""", true),
+            ("""{"children": [{"children": [{"x": "no"}]}]}""", false),
+            ("""{"z": 1}""", false),
+        })
+        {
+            using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(instance);
+            using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Basic);
+            Assert.AreEqual(expected, evaluator.Evaluate(doc.RootElement, collector), "general " + instance);
+            Assert.AreEqual(expected, evaluator.Evaluate(doc.RootElement), "fused " + instance);
+            Assert.AreEqual(expected, loaded.Evaluate(doc.RootElement), "image " + instance);
         }
     }
 
@@ -427,7 +568,7 @@ public class FusedObjectTests
         Assert.AreNotEqual(NodePlan.FusedObject, branchy.Program.Nodes[branchy.RootNode].Plan);
 
         // A dependent schema with a keyword the plan does not fuse keeps the whole node on the general path.
-        using JsonSchemaEvaluator negated = JsonSchemaEvaluator.Compile("""{"dependentSchemas": {"a": {"not": {"required": ["b"]}}}, "unevaluatedProperties": false}""");
+        using JsonSchemaEvaluator negated = JsonSchemaEvaluator.Compile("""{"dependentSchemas": {"a": {"not": {"properties": {"b": {"type": "string"}}}}}, "unevaluatedProperties": false}""");
         Assert.AreNotEqual(NodePlan.FusedObject, negated.Program.Nodes[negated.RootNode].Plan);
     }
 
