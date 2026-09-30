@@ -580,10 +580,16 @@ impl CharSet {
         self.ascii & other.ascii == 0 && !(self.non_ascii && other.non_ascii) && !(self.separators && other.separators)
     }
 
+    /// Whether the set holds an ASCII character (a `u128` bit test costs several instructions; a word select fewer).
     #[inline]
+    fn has_ascii(&self, c: u8) -> bool {
+        let word = if c < 64 { self.ascii as u64 } else { (self.ascii >> 64) as u64 };
+        (word >> (c & 63)) & 1 != 0
+    }
+
     fn contains(self, c: char) -> bool {
         match c as u32 {
-            c if c < 128 => self.ascii & (1 << c) != 0,
+            c if c < 128 => self.has_ascii(c as u8),
             0x2028 | 0x2029 => self.separators,
             _ => self.non_ascii,
         }
@@ -717,14 +723,14 @@ impl Sequence {
 
     /// The same over ASCII text, a byte per character.
     fn is_match_ascii(&self, b: &[u8]) -> bool {
-        let mut at = 0;
+        let mut at = 0usize;
         for item in self.items.iter() {
-            let mut n = 0u32;
-            while n < item.max && at < b.len() && item.set.ascii & (1 << b[at]) != 0 {
+            let start = at;
+            let end = b.len().min(start.saturating_add(item.max as usize));
+            while at < end && item.set.has_ascii(b[at]) {
                 at += 1;
-                n += 1;
             }
-            if n < item.min {
+            if at - start < item.min as usize {
                 return false;
             }
         }
@@ -740,7 +746,7 @@ impl Sequence {
             while n < item.max && at < b.len() {
                 let c = b[at];
                 if c < 0x80 {
-                    if item.set.ascii & (1 << c) == 0 {
+                    if !item.set.has_ascii(c) {
                         break;
                     }
                     at += 1;
