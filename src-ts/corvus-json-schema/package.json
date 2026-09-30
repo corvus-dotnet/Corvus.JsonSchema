@@ -40,7 +40,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "corvus-json-schema": "./dist/cli.js"
+    "corvus-json-schema": "dist/cli.js"
   },
   "files": [
     "dist",
@@ -63,7 +63,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/corvus-dotnet/Corvus.JsonSchema.git",
+    "url": "git+https://github.com/corvus-dotnet/Corvus.JsonSchema.git",
     "directory": "src-ts/corvus-json-schema"
   },
   "publishConfig": {
