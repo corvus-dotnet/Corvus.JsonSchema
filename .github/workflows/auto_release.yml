@@ -203,6 +203,8 @@ jobs:
 
   tag_for_release:
     runs-on: ubuntu-latest
+    # The fetch below takes under a minute; a stuck one should not hold the runner for the 6-hour default.
+    timeout-minutes: 20
     needs: [check_ready_to_release,lookup_default_branch]
     if: |
       needs.check_ready_to_release.outputs.ready_to_release == 'true'
@@ -215,7 +217,15 @@ jobs:
       with:
         # ensure we are creating the release tag on the default branch
         ref: ${{ needs.lookup_default_branch.outputs.branch_name }}
-        fetch-depth: 0
+        fetch-depth: 1
+
+    - name: Fetch the default branch's history and the tags
+      # GitVersion needs the default branch's full history and the release tags, but no other branch.
+      # 'fetch-depth: 0' also downloads every other branch, gh-pages among them, which receives a commit of
+      # the whole documentation site for every PR preview; that made this checkout take 30 minutes.
+      run: |
+        branch='${{ needs.lookup_default_branch.outputs.branch_name }}'
+        git fetch --unshallow --tags --no-recurse-submodules origin "+refs/heads/$branch:refs/remotes/origin/$branch"
 
     - name: Install GitVersion
       # Install from outside the checkout: the repo's global.json pins an SDK this job does not
