@@ -10,7 +10,8 @@
 //! unevaluated check needs no second analysis.
 //!
 //! Branches under `then`/`else` (or a dependency's schema) apply only when their condition holds; the plan supports
-//! conditions the pass itself decides (required names, and property values tested against constants or a pattern),
+//! conditions the pass itself decides (required names, property values tested against constants or a pattern, and
+//! names no property may match),
 //! and defers those branches' applications to a second step over the properties they touch.
 //!
 //! Fail-fast evaluation only; nodes that can reach a live dynamic reference are not fused, since the fused pass does
@@ -42,7 +43,13 @@ pub(crate) struct FusedObject {
     alternatives: Box<[Alternative]>,
     /// `oneOf`/`anyOf` groups whose branches carry object keywords (each branch is a contributor).
     alt_groups: Box<[AltGroup]>,
-    /// Some branch has pattern properties or additional properties, so names no entry knows need resolving.
+    /// `not: {required: [...]}`: names that must not all be present, under a condition.
+    forbidden: Box<[(Gate, Box<[u16]>)]>,
+    /// Conditions that fail when some property name matches a pattern (an `if` with `patternProperties: {P: false}`),
+    /// for names no entry knows; a known name that matches carries a test that never holds.
+    absent: Box<[(u16, Arc<Pattern>)]>,
+    /// Some branch has pattern properties or additional properties, or some condition absent patterns, so names no
+    /// entry knows need resolving.
     resolves_unknown: bool,
     has_count_bounds: bool,
     unevaluated: Option<Child>,
@@ -112,7 +119,7 @@ struct ValueTest {
 }
 
 enum TestKind {
-    /// One of these constants (strings, integers, booleans, null).
+    /// One of these constants (strings, integers, booleans, null); none: the property must be absent.
     Allowed(Box<[Value]>),
     Pattern {
         pattern: Arc<Pattern>,
@@ -161,6 +168,7 @@ struct Collect<'a> {
     extras: Vec<(u16, Vec<String>)>,
     alternatives: Vec<(Gate, bool, Vec<Vec<String>>)>,
     alt_groups: Vec<(bool, u32)>,
+    forbidden: Vec<(Gate, Vec<String>)>,
     /// Alternative groups with object keywords only where coverage is not tracked (a failed branch must not cover).
     allow_alt_groups: bool,
 }
@@ -187,13 +195,16 @@ impl<'a> Collect<'a> {
         if n.always_true {
             return true;
         }
-        if n.always_false || n.in_place_cycle || !is_object_branch(n, self.contributors.is_empty()) {
+        if n.always_false || n.in_place_cycle || !is_object_branch(self.p, n, self.contributors.is_empty()) {
             return false;
         }
         if self.contributors.len() >= MAX_CONTRIBUTORS {
             return false;
         }
         self.contributors.push((id, condition, None));
+        if let Some(not) = n.not {
+            self.forbidden.push((condition, forbidden_names(self.p, not).unwrap().to_vec()));
+        }
         for r in [n.ref_, n.static_dynamic_ref].into_iter().flatten() {
             if !self.collect(self.target(r), condition) {
                 return false;
@@ -317,7 +328,8 @@ impl<'a> Collect<'a> {
                 || n.in_place_cycle
                 || n.has_in_place_applicators()
                 || n.dependencies.is_some()
-                || !is_object_branch(n, false)
+                || n.not.is_some()
+                || !is_object_branch(self.p, n, false)
                 || self.contributors.len() >= MAX_CONTRIBUTORS
             {
                 return false;
@@ -389,7 +401,6 @@ impl<'a> Collect<'a> {
             || test.has_in_place_applicators()
             || test.dynamic_ref.is_some()
             || (test.has_type && test.type_mask & type_mask::OBJECT == 0)
-            || test.pattern_properties.is_some()
             || test.additional_properties.is_some()
             || test.property_names.is_some()
             || test.unevaluated_properties.is_some()
@@ -405,18 +416,25 @@ impl<'a> Collect<'a> {
             }
             any = true;
         }
+        // `patternProperties: {P: false}`: no property name may match P.
+        for pp in test.pattern_properties.iter().flatten() {
+            if !self.node(self.target(pp.node)).always_false {
+                return false;
+            }
+            any = true;
+        }
         any
     }
 }
 
 /// A branch whose only effect on an object instance is through object keywords and fusable in-place applicators.
-fn is_object_branch(n: &SchemaNode, allow_unevaluated: bool) -> bool {
+fn is_object_branch(p: &Program, n: &SchemaNode, allow_unevaluated: bool) -> bool {
     !(n.const_value.is_some()
         || n.enum_values.is_some()
         || n.has_number_keywords()
         || n.has_string_keywords()
         || (n.has_type && n.type_mask & type_mask::OBJECT == 0)
-        || n.not.is_some()
+        || n.not.is_some_and(|t| forbidden_names(p, t).is_none())
         || n.property_names.is_some()
         || n.dynamic_ref.is_some()
         || (!allow_unevaluated && n.unevaluated_properties.is_some()))
@@ -438,6 +456,15 @@ fn is_leaf(n: &SchemaNode) -> bool {
         && !n.has_array_keywords()
         && !n.has_in_place_applicators()
         && n.dynamic_ref.is_none()
+}
+
+/// The names of a `not` whose schema is a non-empty `required` list: an object fails when all are present.
+fn forbidden_names(p: &Program, not: NodeId) -> Option<&[String]> {
+    let n = &p.nodes[p.fast_target[not as usize] as usize];
+    if n.always_true || n.always_false || !is_required_list_only(n) {
+        return None;
+    }
+    n.required.as_deref().filter(|r| !r.is_empty())
 }
 
 fn is_required_list_only(n: &SchemaNode) -> bool {
@@ -507,7 +534,7 @@ fn value_test(n: &SchemaNode) -> Option<TestKind> {
 /// Builds the fused plan for a node, or `None` when it cannot be fused or fusing does not pay.
 pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child) -> Option<FusedObject> {
     let n = &p.nodes[id as usize];
-    if !is_object_branch(n, true) || n.in_place_cycle || n.always_true || n.always_false {
+    if !is_object_branch(p, n, true) || n.in_place_cycle || n.always_true || n.always_false {
         return None;
     }
     let mut ctx = Collect {
@@ -517,6 +544,7 @@ pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child)
         extras: Vec::new(),
         alternatives: Vec::new(),
         alt_groups: Vec::new(),
+        forbidden: Vec::new(),
         allow_alt_groups: n.unevaluated_properties.is_none(),
     };
     if !ctx.collect(id, None) {
@@ -571,10 +599,12 @@ pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child)
     }
     let mut conditions = Vec::new();
     let mut tests_by_entry: Vec<(u16, ValueTest)> = Vec::new();
+    let mut absent: Vec<(u16, Arc<Pattern>)> = Vec::new();
     for (i, pending) in ctx.conditions.iter().enumerate() {
         let required: Vec<u16> = match &pending.test {
             Ok(test) => {
                 let test = &p.nodes[*test as usize];
+                absent.extend(test.pattern_properties.iter().flatten().map(|pp| (i as u16, pp.pattern.clone())));
                 for (name, c) in test.properties.iter().flatten() {
                     let kind = value_test(&p.nodes[p.fast_target[*c as usize] as usize]).unwrap();
                     tests_by_entry.push((bit(name), ValueTest { condition: i as u16, kind }));
@@ -585,6 +615,8 @@ pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child)
         };
         conditions.push(Condition { required: required.into_boxed_slice(), gate: pending.gate });
     }
+    let forbidden: Vec<(Gate, Box<[u16]>)> =
+        ctx.forbidden.iter().map(|(gate, names)| (*gate, names.iter().map(|n| bit(n)).collect())).collect();
     let extras: Vec<(u16, Vec<u16>)> =
         ctx.extras.iter().map(|(c, names)| (*c, names.iter().map(|n| bit(n)).collect())).collect();
     let alternatives: Vec<Alternative> = ctx
@@ -647,6 +679,14 @@ pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child)
     for (e, test) in tests_by_entry {
         tests[e as usize].push(test);
     }
+    // A known name matching an absent pattern fails its condition whatever its value: no constant is allowed.
+    for (e, name) in names.iter().enumerate() {
+        for (condition, pattern) in &absent {
+            if pattern.is_match(name) {
+                tests[e].push(ValueTest { condition: *condition, kind: TestKind::Allowed(Box::new([])) });
+            }
+        }
+    }
 
     // Resolve every known name against every branch now.
     let mut entries = Vec::with_capacity(names.len());
@@ -679,12 +719,15 @@ pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child)
     Some(FusedObject {
         names: Names::new(names.into_iter().map(Into::into).collect()),
         entries: entries.into_boxed_slice(),
-        resolves_unknown: contributors.iter().any(|c| !c.patterns.is_empty() || c.additional.is_some()),
+        resolves_unknown: !absent.is_empty()
+            || contributors.iter().any(|c| !c.patterns.is_empty() || c.additional.is_some()),
         has_count_bounds: contributors.iter().any(|c| c.min.is_some() || c.max.is_some()),
         contributors: contributors.into_boxed_slice(),
         conditions: conditions.into_boxed_slice(),
         alternatives: alternatives.into_boxed_slice(),
         alt_groups: ctx.alt_groups.iter().map(|&(exactly_one, count)| AltGroup { exactly_one, count }).collect(),
+        forbidden: forbidden.into_boxed_slice(),
+        absent: absent.into_boxed_slice(),
         unevaluated: n.unevaluated_properties.map(|u| child(p.fast_target[u as usize])),
     })
 }
@@ -913,6 +956,11 @@ impl Evaluator<'_, '_> {
         if !f.resolves_unknown {
             return Outcome::Done { cover, defer };
         }
+        for (c, pattern) in f.absent.iter() {
+            if pass.failed & (1 << c) == 0 && pattern.is_match(name) {
+                pass.failed |= 1 << c;
+            }
+        }
         for c in f.contributors.iter() {
             if c.condition.is_some() {
                 defer |= !c.patterns.is_empty() || c.additional.is_some();
@@ -1031,6 +1079,12 @@ impl Evaluator<'_, '_> {
             let all = if group.count == 64 { u64::MAX } else { (1u64 << group.count) - 1 };
             let survivors = !pass.alt_failed[g] & all;
             if survivors == 0 || (group.exactly_one && survivors & (survivors - 1) != 0) {
+                return false;
+            }
+        }
+
+        for (gate, names) in f.forbidden.iter() {
+            if pass.active(*gate) && pass.seen.all(names) {
                 return false;
             }
         }

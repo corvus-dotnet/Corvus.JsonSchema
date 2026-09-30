@@ -196,3 +196,72 @@ fn arrays_of_simple_arrays_match_the_general_path() {
         }
     }
 }
+
+#[test]
+fn fused_not_required_and_absent_pattern_conditions_match_the_general_path() {
+    let extensions = json!({ "patternProperties": { "^x-": true } });
+    for schema in [
+        // `not: {required}` alongside unevaluatedProperties (the OpenAPI example object).
+        json!({
+            "type": "object",
+            "properties": { "value": true, "externalValue": { "type": "string" }, "summary": { "type": "string" } },
+            "not": { "required": ["value", "externalValue"] },
+            "$ref": "#/$defs/ext",
+            "unevaluatedProperties": false,
+            "$defs": { "ext": extensions }
+        }),
+        // An `if` deciding on no name matching a pattern (the OpenAPI responses object).
+        json!({
+            "type": "object",
+            "properties": { "default": { "type": "integer" } },
+            "patternProperties": { "^[1-5](?:[0-9]{2}|XX)$": { "type": "integer" } },
+            "$ref": "#/$defs/ext",
+            "unevaluatedProperties": false,
+            "if": { "patternProperties": { "^[1-5](?:[0-9]{2}|XX)$": false } },
+            "then": { "required": ["default"] },
+            "$defs": { "ext": extensions }
+        }),
+        // Both, gated by another condition, with a name the pattern also matches.
+        json!({
+            "type": "object",
+            "properties": { "kind": true, "a": true, "b": true, "x-a": true },
+            "allOf": [{ "$ref": "#/$defs/ext" }, { "properties": { "c": true } }],
+            "if": { "properties": { "kind": { "const": "k" } }, "required": ["kind"] },
+            "then": {
+                "not": { "required": ["a", "b"] },
+                "if": { "patternProperties": { "^x-": false } },
+                "then": { "required": ["c"] },
+                "else": { "properties": { "d": true } }
+            },
+            "unevaluatedProperties": false,
+            "$defs": { "ext": extensions }
+        }),
+    ] {
+        let v = compile(&schema).unwrap();
+        for instance in [
+            json!({}),
+            json!({ "value": 1 }),
+            json!({ "value": 1, "externalValue": "u" }),
+            json!({ "externalValue": 2 }),
+            json!({ "x-y": 1, "summary": "s" }),
+            json!({ "other": 1 }),
+            json!({ "default": 1 }),
+            json!({ "200": 1 }),
+            json!({ "2XX": 1, "x-a": 1 }),
+            json!({ "600": 1 }),
+            json!({ "default": "a", "404": 1 }),
+            json!({ "kind": "k" }),
+            json!({ "kind": "k", "c": 1 }),
+            json!({ "kind": "k", "a": 1, "b": 1, "c": 1 }),
+            json!({ "kind": "k", "a": 1, "c": 1 }),
+            json!({ "kind": "k", "x-a": 1, "d": 1 }),
+            json!({ "kind": "k", "x-z": 1, "d": 1 }),
+            json!({ "kind": "k", "d": 1, "c": 1 }),
+            json!({ "kind": "j", "a": 1, "b": 1 }),
+        ] {
+            let mut c = JsonSchemaResultsCollector::new(ResultsLevel::Basic);
+            let collected = v.evaluate(&instance, &mut c).unwrap();
+            assert_eq!(v.is_valid(&instance), collected, "{schema} on {instance}");
+        }
+    }
+}
