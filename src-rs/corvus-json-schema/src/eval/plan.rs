@@ -306,64 +306,126 @@ struct ArrayPlan {
 // ---------------------------------------------------------------------------------------------------------------------
 // Property name lookup
 
-const LINEAR_NAMES: usize = 8;
-
-/// A cheap hash of a property name: its length and its first and last (up to) eight bytes.
+/// A name of at most eight bytes as one word, unique among names of the same length: the first and last four bytes
+/// (overlapping, so every byte is in one of them), or for shorter names the first, middle and last byte.
 #[inline(always)]
-fn name_hash(s: &str) -> u64 {
-    let b = s.as_bytes();
+fn name_word(b: &[u8]) -> u64 {
     let n = b.len();
-    let (head, tail) = if n >= 8 {
-        (u64::from_le_bytes(b[..8].try_into().unwrap()), u64::from_le_bytes(b[n - 8..].try_into().unwrap()))
-    } else if n >= 4 {
-        let h = u32::from_le_bytes(b[..4].try_into().unwrap()) as u64;
-        let t = u32::from_le_bytes(b[n - 4..].try_into().unwrap()) as u64;
-        (h, t)
+    if n >= 4 {
+        let first = u32::from_le_bytes(b[..4].try_into().unwrap()) as u64;
+        let last = u32::from_le_bytes(b[n - 4..].try_into().unwrap()) as u64;
+        first | last << 32
     } else if n > 0 {
-        ((b[0] as u64) | (b[n / 2] as u64) << 8 | (b[n - 1] as u64) << 16, 0)
+        b[0] as u64 | (b[n / 2] as u64) << 8 | (b[n - 1] as u64) << 16
     } else {
-        (0, 0)
-    };
-    (head ^ tail.rotate_left(23) ^ (n as u64).wrapping_mul(0x9e37_79b9_7f4a_7c15)).wrapping_mul(0xff51_afd7_ed55_8ccd)
+        0
+    }
 }
 
-/// An open-addressing table of property names (the declared names of one schema).
-struct NameTable {
+/// At most this many names of one length are compared in turn; more get a table on their most distinguishing byte.
+const MAX_CANDIDATES: usize = 3;
+
+/// Names longer than this are compared in turn (no per-length entry).
+const MAX_INDEXED_LENGTH: usize = 128;
+
+/// Property names by length (the C# evaluator's Utf8NameMap): a few names of a length are compared directly (names of
+/// up to eight bytes as a single word each, so a miss never touches the text), and more are split by the byte
+/// position that best tells them apart, through a table from that byte to a chain of candidates.
+struct NameMap {
     names: Box<[Box<str>]>,
-    /// Index + 1 into `names` (0: empty), at `hash >> shift`, probing linearly.
-    slots: Box<[u32]>,
-    shift: u32,
+    by_length: Box<[ByLength]>,
+    /// Names longer than `MAX_INDEXED_LENGTH`.
+    long: Box<[u32]>,
+    /// The next candidate (index + 1, 0: none) after each name in its table chain.
+    next: Box<[u32]>,
 }
 
-impl NameTable {
-    fn new(names: Vec<Box<str>>) -> NameTable {
-        let size = (names.len() * 2).next_power_of_two().max(16);
-        let shift = 64 - size.trailing_zeros();
-        let mut slots = vec![0u32; size];
-        for (i, name) in names.iter().enumerate() {
-            let mut at = (name_hash(name) >> shift) as usize;
-            while slots[at] != 0 {
-                at = (at + 1) & (size - 1);
+enum ByLength {
+    None,
+    /// Names of at most eight bytes: their words and indexes.
+    Words(Box<[(u64, u32)]>),
+    /// A few longer names.
+    Few(Box<[u32]>),
+    /// The byte position that best splits the names, and the first candidate (index + 1, 0: none) for each byte.
+    Table {
+        at: usize,
+        first: Box<[u32; 256]>,
+    },
+}
+
+impl NameMap {
+    fn new(names: Vec<Box<str>>) -> NameMap {
+        let max = names.iter().map(|n| n.len()).filter(|&l| l <= MAX_INDEXED_LENGTH).max().map_or(0, |m| m + 1);
+        let mut groups: Vec<Vec<u32>> = vec![Vec::new(); max];
+        let mut long = Vec::new();
+        for (i, n) in names.iter().enumerate() {
+            match groups.get_mut(n.len()) {
+                Some(g) => g.push(i as u32),
+                None => long.push(i as u32),
             }
-            slots[at] = i as u32 + 1;
         }
-        NameTable { names: names.into_boxed_slice(), slots: slots.into_boxed_slice(), shift }
+        let mut next = vec![0u32; names.len()];
+        let by_length = groups
+            .into_iter()
+            .enumerate()
+            .map(|(len, group)| {
+                if group.is_empty() {
+                    ByLength::None
+                } else if len <= 8 && (group.len() <= MAX_CANDIDATES || len == 0) {
+                    ByLength::Words(group.iter().map(|&i| (name_word(names[i as usize].as_bytes()), i)).collect())
+                } else if group.len() <= MAX_CANDIDATES {
+                    ByLength::Few(group.into())
+                } else {
+                    // The position with the most distinct bytes (the shortest chains).
+                    let at = (0..len)
+                        .max_by_key(|&at| {
+                            let mut seen = [false; 256];
+                            group
+                                .iter()
+                                .filter(|&&i| {
+                                    !std::mem::replace(&mut seen[names[i as usize].as_bytes()[at] as usize], true)
+                                })
+                                .count()
+                        })
+                        .unwrap();
+                    let mut first = Box::new([0u32; 256]);
+                    // Built back to front so each chain keeps the names' order.
+                    for &i in group.iter().rev() {
+                        let b = names[i as usize].as_bytes()[at] as usize;
+                        next[i as usize] = first[b];
+                        first[b] = i + 1;
+                    }
+                    ByLength::Table { at, first }
+                }
+            })
+            .collect();
+        NameMap { names: names.into(), by_length, long: long.into(), next: next.into() }
     }
 
     #[inline]
     fn find(&self, name: &str) -> Option<usize> {
-        let mask = self.slots.len() - 1;
-        let mut at = (name_hash(name) >> self.shift) as usize;
-        loop {
-            let slot = self.slots[at];
-            if slot == 0 {
-                return None;
+        let b = name.as_bytes();
+        let Some(entry) = self.by_length.get(b.len()) else {
+            return self.long.iter().map(|&i| i as usize).find(|&i| str_eq(&self.names[i], name));
+        };
+        match entry {
+            ByLength::None => None,
+            ByLength::Words(words) => {
+                let w = name_word(b);
+                words.iter().find(|(k, _)| *k == w).map(|&(_, i)| i as usize)
             }
-            let i = slot as usize - 1;
-            if str_eq(&self.names[i], name) {
-                return Some(i);
+            ByLength::Few(few) => few.iter().map(|&i| i as usize).find(|&i| str_eq(&self.names[i], name)),
+            ByLength::Table { at, first } => {
+                let mut c = first[b[*at] as usize];
+                while c != 0 {
+                    let i = c as usize - 1;
+                    if str_eq(&self.names[i], name) {
+                        return Some(i);
+                    }
+                    c = self.next[i];
+                }
+                None
             }
-            at = (at + 1) & mask;
         }
     }
 }
@@ -373,12 +435,7 @@ struct Names {
     /// Bit `n` set: some name has length `n` (lengths of 63 and more share bit 63). A name whose length is not in the
     /// set is not declared, which settles most misses without a search.
     lengths: u64,
-    lookup: Lookup,
-}
-
-enum Lookup {
-    Linear(Box<[Box<str>]>),
-    Hashed(NameTable),
+    map: NameMap,
 }
 
 #[inline(always)]
@@ -389,12 +446,7 @@ fn length_bit(len: usize) -> u64 {
 impl Names {
     fn new(names: Vec<Box<str>>) -> Names {
         let lengths = names.iter().fold(0, |m, n| m | length_bit(n.len()));
-        let lookup = if names.len() <= LINEAR_NAMES {
-            Lookup::Linear(names.into_boxed_slice())
-        } else {
-            Lookup::Hashed(NameTable::new(names))
-        };
-        Names { lengths, lookup }
+        Names { lengths, map: NameMap::new(names) }
     }
 
     fn find(&self, name: &str) -> Option<usize> {
@@ -407,10 +459,7 @@ impl Names {
         if self.lengths & length_bit(name.len()) == 0 {
             return None;
         }
-        match &self.lookup {
-            Lookup::Linear(names) => names.iter().position(|n| str_eq(n, name)),
-            Lookup::Hashed(table) => table.find(name),
-        }
+        self.map.find(name)
     }
 
     /// Membership only (for string enums: no order to hint at).
@@ -419,10 +468,7 @@ impl Names {
         if self.lengths & length_bit(name.len()) == 0 {
             return false;
         }
-        match &self.lookup {
-            Lookup::Linear(names) => names.iter().any(|n| str_eq(n, name)),
-            Lookup::Hashed(table) => table.find(name).is_some(),
-        }
+        self.map.find(name).is_some()
     }
 
     /// Finds a name, trying the one after the previous match first: instances tend to list their properties in the
@@ -432,30 +478,15 @@ impl Names {
         if self.lengths & length_bit(name.len()) == 0 {
             return None;
         }
-        match &self.lookup {
-            Lookup::Linear(names) => {
-                if let Some(expected) = names.get(*hint)
-                    && str_eq(expected, name)
-                {
-                    *hint += 1;
-                    return Some(*hint - 1);
-                }
-                let i = names.iter().position(|n| str_eq(n, name))?;
-                *hint = i + 1;
-                Some(i)
-            }
-            Lookup::Hashed(table) => {
-                if let Some(expected) = table.names.get(*hint)
-                    && str_eq(expected, name)
-                {
-                    *hint += 1;
-                    return Some(*hint - 1);
-                }
-                let i = table.find(name)?;
-                *hint = i + 1;
-                Some(i)
-            }
+        if let Some(expected) = self.map.names.get(*hint)
+            && str_eq(expected, name)
+        {
+            *hint += 1;
+            return Some(*hint - 1);
         }
+        let i = self.map.find(name)?;
+        *hint = i + 1;
+        Some(i)
     }
 }
 
@@ -1557,14 +1588,27 @@ mod tests {
     }
 
     #[test]
-    fn name_table_finds_every_name() {
-        let names: Vec<Box<str>> = (0..200).map(|i| format!("p{i}{}", "x".repeat(i % 13)).into()).collect();
-        let table = NameTable::new(names.clone());
+    fn name_map_finds_every_name() {
+        let mut names: Vec<Box<str>> = (0..200).map(|i| format!("p{i}{}", "x".repeat(i % 13)).into()).collect();
+        names.extend(["", "a", "ab", "abc", "abcd", "abcdefgh", "abcdefghi", "é", "日本"].map(Into::into));
+        names.push("y".repeat(300).into());
+        let map = NameMap::new(names.clone());
         for (i, n) in names.iter().enumerate() {
-            assert_eq!(table.find(n), Some(i));
+            assert_eq!(map.find(n), Some(i), "{n}");
         }
-        for miss in ["", "p", "q1", "p1000", "p0x"] {
-            assert_eq!(table.find(miss), None, "{miss}");
+        for miss in ["p", "q1", "p1000", "p0x", "b", "abce", "abcdefgj", "abcdefghj", "è", "y"] {
+            assert_eq!(map.find(miss), None, "{miss}");
+        }
+        assert_eq!(map.find(&"y".repeat(299)), None);
+        for few in
+            [vec!["a"], vec!["ab", "ba"], vec!["alpha", "gamma", "delta", "omega"], vec!["abcdefghij", "abcdefghik"]]
+        {
+            let names: Vec<Box<str>> = few.iter().map(|&s| s.into()).collect();
+            let map = NameMap::new(names);
+            for (i, n) in few.iter().enumerate() {
+                assert_eq!(map.find(n), Some(i));
+            }
+            assert_eq!(map.find("zeta!"), None);
         }
     }
 

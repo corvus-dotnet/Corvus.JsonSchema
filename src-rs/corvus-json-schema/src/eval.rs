@@ -264,7 +264,20 @@ pub(crate) fn json_equal(a: &Value, b: &Value) -> bool {
         (Value::String(x), Value::String(y)) => x == y,
         (Value::Array(x), Value::Array(y)) => x.len() == y.len() && x.iter().zip(y).all(|(p, q)| json_equal(p, q)),
         (Value::Object(x), Value::Object(y)) => {
-            x.len() == y.len() && x.iter().all(|(k, v)| y.get(k).is_some_and(|w| json_equal(v, w)))
+            if x.len() != y.len() {
+                return false;
+            }
+            // Objects usually list their members in the same order: compare position by position, and look names up
+            // (a hash each) only from the first position where the names differ.
+            for (i, ((k, v), (l, w))) in x.iter().zip(y).enumerate() {
+                if k != l {
+                    return x.iter().skip(i).all(|(k, v)| y.get(k).is_some_and(|w| json_equal(v, w)));
+                }
+                if !json_equal(v, w) {
+                    return false;
+                }
+            }
+            true
         }
         _ => false,
     }
@@ -283,7 +296,9 @@ fn json_hash(v: &Value) -> u64 {
         Value::String(s) => str_hash(s),
         Value::Array(a) => a.iter().fold(0x54 + a.len() as u64, |h, x| h.wrapping_mul(31).wrapping_add(json_hash(x))),
         Value::Object(o) => {
-            o.iter().fold(0x55u64, |h, (k, x)| h.wrapping_add(str_hash(k).wrapping_mul(0x2c1b_3c6d) ^ json_hash(x)))
+            // Equal objects have the same member values, so a sum of the values' hashes (whatever the order) agrees with
+            // equality; hashing the names too would cost more than the collisions it saves.
+            o.iter().fold(0x55 + o.len() as u64, |h, (_, x)| h.wrapping_add(json_hash(x).wrapping_mul(0x2c1b_3c6d)))
         }
     }
 }
@@ -297,9 +312,18 @@ fn str_hash(s: &str) -> u64 {
     for c in &mut chunks {
         h = (h.rotate_left(5) ^ u64::from_le_bytes(c.try_into().unwrap())).wrapping_mul(K);
     }
-    let mut last = [0u8; 8];
-    last[..chunks.remainder().len()].copy_from_slice(chunks.remainder());
-    (h.rotate_left(5) ^ u64::from_le_bytes(last)).wrapping_mul(K)
+    // The tail as one word without copying it out: the last eight bytes when there are that many (overlapping the
+    // chunks already hashed), else the overlapping first and last four, else the bytes themselves.
+    let n = b.len();
+    let tail = if n >= 8 {
+        u64::from_le_bytes(b[n - 8..].try_into().unwrap())
+    } else if n >= 4 {
+        u32::from_le_bytes(b[..4].try_into().unwrap()) as u64
+            | (u32::from_le_bytes(b[n - 4..].try_into().unwrap()) as u64) << 32
+    } else {
+        b.iter().fold(0, |w, &c| w << 8 | c as u64)
+    };
+    (h.rotate_left(5) ^ tail).wrapping_mul(K)
 }
 
 /// `uniqueItems`: pairwise for short arrays, by hash + equality otherwise.
