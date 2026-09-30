@@ -3,6 +3,20 @@
   "version": "0.1.0",
   "description": "A high-performance JSON Schema evaluator (draft 4 to 2020-12) that compiles schemas to specialised JavaScript, with results collection and annotations, ported from the Corvus.Text.Json V5 runtime evaluator.",
   "license": "Apache-2.0",
+  "keywords": [
+    "json-schema",
+    "validator",
+    "validation",
+    "jsonschema",
+    "draft-2020-12",
+    "draft-2019-09",
+    "draft-07",
+    "code-generation"
+  ],
+  "homepage": "https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-ts/corvus-json-schema#readme",
+  "bugs": {
+    "url": "https://github.com/corvus-dotnet/Corvus.JsonSchema/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -26,10 +40,11 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "corvus-json-schema": "./dist/cli.js"
+    "corvus-json-schema": "dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "engines": {
     "node": ">=20"
@@ -37,6 +52,7 @@
   "scripts": {
     "embed-metaschemas": "node scripts/embed-metaschemas.mjs",
     "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build && node scripts/copy-license.mjs",
     "test": "npm run build && node --test test/*.test.mjs && node test/suite.mjs && node test/suite.mjs --module && node test/suite.mjs --collect verbose && node test/annotations.mjs && node test/bowtie-ihop.mjs",
     "suite": "npm run build && node test/suite.mjs",
     "bench": "npm run build && node bench/corpora.mjs"
@@ -47,7 +63,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/corvus-dotnet/Corvus.JsonSchema.git",
+    "url": "git+https://github.com/corvus-dotnet/Corvus.JsonSchema.git",
     "directory": "src-ts/corvus-json-schema"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

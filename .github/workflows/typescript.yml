@@ -48,3 +48,18 @@ jobs:
           git diff --exit-code -- src/metaschemas.ts
       - name: Test
         run: npm test
+      - name: Check the package packs
+        # With the npm that npm-publish.yml stages with, which drops package.json fields it has to auto-correct (as it
+        # once did the bin entry), so fail if `npm pkg fix` would change anything. prepack builds dist/ and copies the
+        # repository LICENSE in.
+        run: |
+          npm install -g 'npm@^11.15.0'
+          npm pkg fix
+          if ! git diff --exit-code -- package.json; then
+            echo "::error::npm would auto-correct package.json when publishing; run 'npm pkg fix' and commit the result."
+            exit 1
+          fi
+          npm pack --dry-run 2>&1 | tee "$RUNNER_TEMP/pack.txt"
+          grep -q ' LICENSE$' "$RUNNER_TEMP/pack.txt"
+          grep -q ' dist/index.js$' "$RUNNER_TEMP/pack.txt"
+          grep -q ' src/index.ts$' "$RUNNER_TEMP/pack.txt"
