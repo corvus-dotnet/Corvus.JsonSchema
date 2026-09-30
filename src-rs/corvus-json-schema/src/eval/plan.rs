@@ -580,13 +580,11 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
     };
     // Fused object plans, for nodes whose object semantics span in-place applicators.
     // A fused plan applies its contributors' keywords without entering them as nodes, so the dynamic scope below it
-    // would differ from the general path's: nodes that can reach a live dynamic reference are not fused.
+    // would differ from the general path's where a contributor is in another resource: nodes that can reach a live
+    // dynamic reference fuse only contributors in their own resource (which the general path would not push again).
     let reaches_dynamic = reaches_dynamic_reference(p);
     for (id, plan) in plans.iter_mut().enumerate() {
-        if reaches_dynamic[id] {
-            continue;
-        }
-        if let Some(f) = fused::try_fuse(p, id as NodeId, &resolved) {
+        if let Some(f) = fused::try_fuse(p, id as NodeId, reaches_dynamic[id], &resolved) {
             let body = plan.body.get_or_insert_with(|| Box::new(Body { node: id as NodeId, ..Body::default() }));
             body.fused = Some(Box::new(f));
         }

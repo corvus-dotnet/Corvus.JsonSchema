@@ -14,8 +14,8 @@
 //! names no property may match),
 //! and defers those branches' applications to a second step over the properties they touch.
 //!
-//! Fail-fast evaluation only; nodes that can reach a live dynamic reference are not fused, since the fused pass does
-//! not enter its contributors as nodes (and so would not push their resources on the dynamic scope).
+//! Fail-fast evaluation only. The fused pass does not enter its contributors as nodes (and so would not push their
+//! resources on the dynamic scope): below a live dynamic reference, only contributors in the node's own resource fuse.
 
 use std::sync::Arc;
 
@@ -174,6 +174,9 @@ struct Collect<'a> {
     forbidden: Vec<(Gate, Vec<String>)>,
     /// Alternative groups with object keywords only where coverage is not tracked (a failed branch must not cover).
     allow_alt_groups: bool,
+    /// Every contributor must belong to this resource (below a live dynamic reference, where the general path would
+    /// push a contributor's own resource on the dynamic scope and the fused pass does not enter contributors).
+    resource: Option<u32>,
 }
 
 struct Pending {
@@ -201,7 +204,7 @@ impl<'a> Collect<'a> {
         if n.always_false || n.in_place_cycle || !is_object_branch(self.p, n, self.contributors.is_empty()) {
             return false;
         }
-        if self.contributors.len() >= MAX_CONTRIBUTORS {
+        if self.contributors.len() >= MAX_CONTRIBUTORS || self.resource.is_some_and(|r| r != n.resource_id) {
             return false;
         }
         self.contributors.push((id, condition, None));
@@ -333,6 +336,7 @@ impl<'a> Collect<'a> {
                 || n.dependencies.is_some()
                 || n.not.is_some()
                 || !is_object_branch(self.p, n, false)
+                || self.resource.is_some_and(|r| r != n.resource_id)
                 || self.contributors.len() >= MAX_CONTRIBUTORS
             {
                 return false;
@@ -535,7 +539,12 @@ fn value_test(n: &SchemaNode) -> Option<TestKind> {
 }
 
 /// Builds the fused plan for a node, or `None` when it cannot be fused or fusing does not pay.
-pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child) -> Option<FusedObject> {
+pub(super) fn try_fuse(
+    p: &Program,
+    id: NodeId,
+    same_resource: bool,
+    child: &dyn Fn(NodeId) -> Child,
+) -> Option<FusedObject> {
     let n = &p.nodes[id as usize];
     if !is_object_branch(p, n, true) || n.in_place_cycle || n.always_true || n.always_false {
         return None;
@@ -549,6 +558,7 @@ pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child)
         alt_groups: Vec::new(),
         forbidden: Vec::new(),
         allow_alt_groups: n.unevaluated_properties.is_none(),
+        resource: same_resource.then_some(n.resource_id),
     };
     if !ctx.collect(id, None) {
         return None;

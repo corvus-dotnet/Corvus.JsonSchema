@@ -299,3 +299,47 @@ fn flat_fused_objects_match_the_general_path() {
         }
     }
 }
+
+#[test]
+fn fused_objects_below_a_dynamic_reference_match_the_general_path() {
+    // The items' $dynamicRef resolves (through the scope) to "strict", whose allOf contributor is in its own resource.
+    let schema = json!({
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://example.com/root",
+        "$ref": "strict",
+        "$defs": {
+            "strict": {
+                "$id": "https://example.com/strict",
+                "$dynamicAnchor": "node",
+                "type": "object",
+                "properties": { "data": true, "y": true, "children": { "type": "array", "items": { "$ref": "tree#/$defs/kids" } } },
+                "allOf": [{ "$ref": "#/$defs/extra" }],
+                "unevaluatedProperties": false,
+                "$defs": { "extra": { "properties": { "x": { "type": "integer" } } } }
+            },
+            "tree": {
+                "$id": "https://example.com/tree",
+                "$dynamicAnchor": "node",
+                "type": "object",
+                "$defs": { "kids": { "$dynamicRef": "#node" } }
+            }
+        }
+    });
+    let v = compile(&schema).unwrap();
+    for instance in [
+        json!({}),
+        json!({ "data": 1, "x": 2 }),
+        json!({ "x": "a" }),
+        json!({ "y": 1, "children": [{ "y": 1 }] }),
+        json!({ "children": [{ "z": 1 }] }),
+        json!({ "children": [{ "x": 1, "children": [{ "y": 2, "data": 3 }] }] }),
+        json!({ "children": [{ "children": [{ "x": "no" }] }] }),
+        json!({ "z": 1 }),
+    ] {
+        let mut c = JsonSchemaResultsCollector::new(ResultsLevel::Basic);
+        let collected = v.evaluate(&instance, &mut c).unwrap();
+        assert_eq!(v.is_valid(&instance), collected, "{instance}");
+    }
+    assert!(v.is_valid(&json!({ "children": [{ "x": 1, "children": [{ "y": 2 }] }] })));
+    assert!(!v.is_valid(&json!({ "children": [{ "z": 1 }] })));
+}
