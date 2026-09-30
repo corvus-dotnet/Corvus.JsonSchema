@@ -1,0 +1,49 @@
+{
+  "generatorVersion": "1.0.0\u002B21d85efed4392126bf4de60752f3396cf7fbf296",
+  "generatedAt": "2026-09-30T12:31:31.5098891\u002B00:00",
+  "engine": "V5",
+  "codeGenerationMode": "TypeGeneration",
+  "specification": {
+    "rootNamespace": "Corvus.ImportmapBenchmark.Current",
+    "typesToGenerate": [
+      {
+        "schemaFile": "../importmap-schema.json",
+        "outputRootTypeName": "ImportmapSchema",
+        "rebaseToRootPath": false
+      }
+    ],
+    "addExplicitUsings": false,
+    "assertFormat": true,
+    "disableOptionalNameHeuristics": false,
+    "nativeEnums": "All",
+    "optionalAsNullable": "None",
+    "supportYaml": false,
+    "unions": true,
+    "useImplicitOperatorString": false,
+    "useUnixLineEndings": false,
+    "formatMode": {
+      "*": "disable"
+    }
+  },
+  "schemaHashes": {
+    "../importmap-schema.json": "63b51d610e475b61e642e28fff8eb06411c3f52076833e97fe853d634c73537f"
+  },
+  "generatedFiles": [
+    "CorvusJsonSchemaProgram.cs",
+    "ImportmapSchema.JsonSchema.cs",
+    "ImportmapSchema.Mutable.cs",
+    "ImportmapSchema.TheImportsField.JsonSchema.cs",
+    "ImportmapSchema.TheImportsField.Mutable.cs",
+    "ImportmapSchema.TheImportsField.cs",
+    "ImportmapSchema.TheScopesField.AdditionalPropertiesEntity.JsonSchema.cs",
+    "ImportmapSchema.TheScopesField.AdditionalPropertiesEntity.Mutable.cs",
+    "ImportmapSchema.TheScopesField.AdditionalPropertiesEntity.cs",
+    "ImportmapSchema.TheScopesField.JsonSchema.cs",
+    "ImportmapSchema.TheScopesField.Mutable.cs",
+    "ImportmapSchema.TheScopesField.cs",
+    "ImportmapSchema.cs",
+    "JsonString.JsonSchema.cs",
+    "JsonString.Mutable.cs",
+    "JsonString.cs"
+  ]
+}

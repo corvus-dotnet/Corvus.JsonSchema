@@ -1,0 +1,80 @@
+{
+  "generatorVersion": "1.0.0\u002B21d85efed4392126bf4de60752f3396cf7fbf296",
+  "generatedAt": "2026-09-30T12:31:58.6992661\u002B00:00",
+  "engine": "V5",
+  "codeGenerationMode": "TypeGeneration",
+  "specification": {
+    "rootNamespace": "Corvus.SemanticReleaseBenchmark.Current",
+    "typesToGenerate": [
+      {
+        "schemaFile": "../semantic-release-schema.json",
+        "outputRootTypeName": "SemanticReleaseSchema",
+        "rebaseToRootPath": false
+      }
+    ],
+    "addExplicitUsings": false,
+    "assertFormat": true,
+    "disableOptionalNameHeuristics": false,
+    "nativeEnums": "All",
+    "optionalAsNullable": "None",
+    "supportYaml": false,
+    "unions": true,
+    "useImplicitOperatorString": false,
+    "useUnixLineEndings": false,
+    "formatMode": {
+      "*": "disable"
+    }
+  },
+  "schemaHashes": {
+    "../semantic-release-schema.json": "027f69df09de9e1bae307d985940fe8eb1e95a96c62d51db2be54185af1971ab"
+  },
+  "generatedFiles": [
+    "CorvusJsonSchemaProgram.cs",
+    "Corvus__UnionAttribute.cs",
+    "JsonArray.JsonSchema.cs",
+    "JsonArray.Mutable.cs",
+    "JsonArray.cs",
+    "JsonBoolean.JsonSchema.cs",
+    "JsonBoolean.Mutable.cs",
+    "JsonBoolean.cs",
+    "JsonString.JsonSchema.cs",
+    "JsonString.Mutable.cs",
+    "JsonString.cs",
+    "SemanticReleaseSchema.BranchObject.JsonSchema.cs",
+    "SemanticReleaseSchema.BranchObject.Mutable.cs",
+    "SemanticReleaseSchema.BranchObject.PrereleaseEntity.JsonSchema.cs",
+    "SemanticReleaseSchema.BranchObject.PrereleaseEntity.Mutable.cs",
+    "SemanticReleaseSchema.BranchObject.PrereleaseEntity.cs",
+    "SemanticReleaseSchema.BranchObject.cs",
+    "SemanticReleaseSchema.CiEntity.JsonSchema.cs",
+    "SemanticReleaseSchema.CiEntity.Mutable.cs",
+    "SemanticReleaseSchema.CiEntity.cs",
+    "SemanticReleaseSchema.ExtendsEntity.JsonSchema.cs",
+    "SemanticReleaseSchema.ExtendsEntity.JsonStringArray.JsonSchema.cs",
+    "SemanticReleaseSchema.ExtendsEntity.JsonStringArray.Mutable.cs",
+    "SemanticReleaseSchema.ExtendsEntity.JsonStringArray.cs",
+    "SemanticReleaseSchema.ExtendsEntity.Mutable.cs",
+    "SemanticReleaseSchema.ExtendsEntity.cs",
+    "SemanticReleaseSchema.JsonSchema.cs",
+    "SemanticReleaseSchema.Mutable.cs",
+    "SemanticReleaseSchema.PluginsEntityArray.JsonSchema.cs",
+    "SemanticReleaseSchema.PluginsEntityArray.Mutable.cs",
+    "SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.JsonSchema.cs",
+    "SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.Mutable.cs",
+    "SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.cs",
+    "SemanticReleaseSchema.PluginsEntityArray.cs",
+    "SemanticReleaseSchema.TagFormatEntity.JsonSchema.cs",
+    "SemanticReleaseSchema.TagFormatEntity.Mutable.cs",
+    "SemanticReleaseSchema.TagFormatEntity.cs",
+    "SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.JsonSchema.cs",
+    "SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Mutable.cs",
+    "SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.JsonSchema.cs",
+    "SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Mutable.cs",
+    "SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Type2Entity.JsonSchema.cs",
+    "SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Type2Entity.Mutable.cs",
+    "SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Type2Entity.cs",
+    "SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.cs",
+    "SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.cs",
+    "SemanticReleaseSchema.cs"
+  ]
+}
