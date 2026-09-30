@@ -98,9 +98,28 @@
             <h1>JsonSchemaEvaluation.MatchNonEmptyRegularExpression Method</h1>
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
-<strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/db113088f8612d05d254562111b9bee4b73e210f/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L282">JsonSchemaEvaluation.String.cs</a></p>
+<strong>Assembly:</strong> Corvus.Text.Json.dll</p>
+<h2 id="overloads">Overloads</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#matchnonemptyregularexpression-readonlyspan-byte-string-readonlyspan-byte-jsonschemacontext">MatchNonEmptyRegularExpression(ReadOnlySpan&lt;byte&gt;, string, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a></td>
+<td>Validates that a string is non-empty, as a replacement for patterns like <code>.+</code>.</td>
+</tr>
+<tr>
+<td><a href="#matchnonemptyregularexpression-readonlyspan-byte">MatchNonEmptyRegularExpression(ReadOnlySpan&lt;byte&gt;)</a></td>
+<td>Determines whether a UTF-8 byte span contains a character other than a line terminator, as a replacement for the patterns <code>.</code> and <code>.+</code> (ECMA-262's <code>.</code> matches anything but <code>\n</code>, <code>\r</code>, U+2028 and U+...</td>
+</tr>
+</tbody>
+</table>
 <h2 id="matchnonemptyregularexpression-readonlyspan-byte-string-readonlyspan-byte-jsonschemacontext">MatchNonEmptyRegularExpression(ReadOnlySpan&lt;byte&gt;, string, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1524b3dd1a1a8fe81ad102554af43d5a190d060c/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L282">JsonSchemaEvaluation.String.cs</a></p>
 <p>Validates that a string is non-empty, as a replacement for patterns like <code>.+</code>.</p>
 <pre><code class="language-csharp">public static bool MatchNonEmptyRegularExpression(ReadOnlySpan&lt;byte&gt; value, string originalExpressionString, ReadOnlySpan&lt;byte&gt; keyword, ref JsonSchemaContext context)
 </code></pre>
@@ -158,6 +177,52 @@
 </tr>
 </tbody>
 </table>
+<hr />
+<h2 id="matchnonemptyregularexpression-readonlyspan-byte">MatchNonEmptyRegularExpression(ReadOnlySpan&lt;byte&gt;)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1524b3dd1a1a8fe81ad102554af43d5a190d060c/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L368">JsonSchemaEvaluation.String.cs</a></p>
+<p>Determines whether a UTF-8 byte span contains a character other than a line terminator, as a replacement for the patterns <code>.</code> and <code>.+</code> (ECMA-262's <code>.</code> matches anything but <code>\n</code>, <code>\r</code>, U+2028 and U+2029). Used for <code>patternProperties</code> matching where no context reporting is needed.</p>
+<pre><code class="language-csharp">public static bool MatchNonEmptyRegularExpression(ReadOnlySpan&lt;byte&gt; value)
+</code></pre>
+<h3 id="parameters-1">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
+<td>The UTF-8 encoded value to check.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-1">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></p>
+<p><code>true</code> if some character is not a line terminator; otherwise, <code>false</code>.</p>
+<h2 id="applies-to-1">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
         </div>
         <div class="api-feedback">
             <div class="api-feedback__inner">

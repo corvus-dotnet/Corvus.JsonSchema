@@ -110,17 +110,17 @@
 <tbody>
 <tr>
 <td><a href="#matchrangeregularexpression-readonlyspan-byte-int-int-string-readonlyspan-byte-jsonschemacontext">MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt;, int, int, string, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a></td>
-<td>Validates that a string's Unicode codepoint length is within a range, as a replacement for patterns like <code>^.{n,m}$</code>.</td>
+<td>Validates that a string's Unicode codepoint length is within a range, as a replacement for patterns like <code>^.{n,m}$</code>. As in ECMA-262, <code>.</code> does not match a line terminator, so a string containing one...</td>
 </tr>
 <tr>
 <td><a href="#matchrangeregularexpression-readonlyspan-byte-int-int">MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt;, int, int)</a></td>
-<td>Validates that a UTF-8 byte span's Unicode codepoint length is within a range. Used for <code>patternProperties</code> matching where no context reporting is needed.</td>
+<td>Validates that a UTF-8 byte span's Unicode codepoint length is within a range and that it contains no line terminator, as a replacement for patterns like <code>^.{n,m}$</code>. Used for <code>patternProperties</code> ma...</td>
 </tr>
 </tbody>
 </table>
 <h2 id="matchrangeregularexpression-readonlyspan-byte-int-int-string-readonlyspan-byte-jsonschemacontext">MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt;, int, int, string, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/db113088f8612d05d254562111b9bee4b73e210f/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L327">JsonSchemaEvaluation.String.cs</a></p>
-<p>Validates that a string's Unicode codepoint length is within a range, as a replacement for patterns like <code>^.{n,m}$</code>.</p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1524b3dd1a1a8fe81ad102554af43d5a190d060c/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L328">JsonSchemaEvaluation.String.cs</a></p>
+<p>Validates that a string's Unicode codepoint length is within a range, as a replacement for patterns like <code>^.{n,m}$</code>. As in ECMA-262, <code>.</code> does not match a line terminator, so a string containing one does not match.</p>
 <pre><code class="language-csharp">public static bool MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt; value, int min, int max, string originalExpressionString, ReadOnlySpan&lt;byte&gt; keyword, ref JsonSchemaContext context)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -189,8 +189,8 @@
 </table>
 <hr />
 <h2 id="matchrangeregularexpression-readonlyspan-byte-int-int">MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt;, int, int)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/db113088f8612d05d254562111b9bee4b73e210f/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L349">JsonSchemaEvaluation.String.cs</a></p>
-<p>Validates that a UTF-8 byte span's Unicode codepoint length is within a range. Used for <code>patternProperties</code> matching where no context reporting is needed.</p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1524b3dd1a1a8fe81ad102554af43d5a190d060c/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L349">JsonSchemaEvaluation.String.cs</a></p>
+<p>Validates that a UTF-8 byte span's Unicode codepoint length is within a range and that it contains no line terminator, as a replacement for patterns like <code>^.{n,m}$</code>. Used for <code>patternProperties</code> matching where no context reporting is needed.</p>
 <pre><code class="language-csharp">public static bool MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt; value, int min, int max)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
