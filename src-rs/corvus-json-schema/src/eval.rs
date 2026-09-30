@@ -426,27 +426,45 @@ fn content_ok(s: &str, kind: ContentKind) -> bool {
 // Evaluated properties/items
 
 /// Evaluated-property (by index in the instance object) or evaluated-item bits.
-pub(crate) struct Bits {
-    words: Vec<u64>,
+pub(crate) enum Bits {
+    /// Up to 256 properties or items, without an allocation.
+    Inline([u64; 4]),
+    Heap(Vec<u64>),
 }
 
 impl Bits {
     fn new(len: usize) -> Bits {
-        Bits { words: vec![0; len.div_ceil(64).max(1)] }
+        if len <= 256 { Bits::Inline([0; 4]) } else { Bits::Heap(vec![0; len.div_ceil(64)]) }
+    }
+
+    #[inline]
+    fn words(&self) -> &[u64] {
+        match self {
+            Bits::Inline(w) => w,
+            Bits::Heap(w) => w,
+        }
+    }
+
+    #[inline]
+    fn words_mut(&mut self) -> &mut [u64] {
+        match self {
+            Bits::Inline(w) => w,
+            Bits::Heap(w) => w,
+        }
     }
 
     #[inline]
     fn set(&mut self, i: usize) {
-        self.words[i >> 6] |= 1 << (i & 63);
+        self.words_mut()[i >> 6] |= 1 << (i & 63);
     }
 
     #[inline]
     fn get(&self, i: usize) -> bool {
-        self.words[i >> 6] & (1 << (i & 63)) != 0
+        self.words()[i >> 6] & (1 << (i & 63)) != 0
     }
 
     fn merge(&mut self, other: &Bits) {
-        for (a, b) in self.words.iter_mut().zip(&other.words) {
+        for (a, b) in self.words_mut().iter_mut().zip(other.words()) {
             *a |= b;
         }
     }
