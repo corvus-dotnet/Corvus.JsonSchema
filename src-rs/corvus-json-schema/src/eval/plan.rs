@@ -37,6 +37,8 @@ pub(crate) struct Child {
     leaf: bool,
     /// The child is nothing but an object plan: an object value enters its loop directly (the C# NestedObject).
     object: bool,
+    /// The child is nothing but an array plan: an array value enters its loop directly.
+    array: bool,
 }
 
 pub(crate) struct Plan {
@@ -214,6 +216,8 @@ struct ArrayPlan {
     items: Option<Child>,
     contains: Option<(NodeId, u64, Option<u64>)>,
     unique: bool,
+    /// Bounds and type-only items, nothing else (the C# SimpleArray): the items' type mask (`ANY`: no test).
+    simple: Option<u8>,
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -403,7 +407,7 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
     let target = |id: NodeId| p.fast_target[id as usize];
     let mut plans: Vec<Plan> = nodes.iter().enumerate().map(|(id, n)| plan_node(p, id as NodeId, n, &target)).collect();
     // Hoist the children's type checks now that every plan is known.
-    let summary: Vec<(u8, bool, bool, bool)> = plans
+    let summary: Vec<(u8, bool, bool, bool, bool)> = plans
         .iter()
         .map(|pl| {
             let leaf = !pl.guard
@@ -426,13 +430,26 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
                         && b.general == 0
                         && b.unevaluated_items.is_none()
                 });
-            (pl.types, pl.body.is_none() && !pl.guard, leaf, object)
+            let array = !pl.guard
+                && !p.uses_dynamic_scope
+                && pl.body.as_deref().is_some_and(|b| {
+                    b.array.is_some()
+                        && b.values.is_empty()
+                        && b.number.is_empty()
+                        && b.string.is_empty()
+                        && b.object.is_none()
+                        && b.fused.is_none()
+                        && b.apply.is_empty()
+                        && b.general == 0
+                        && b.unevaluated_items.is_none()
+                });
+            (pl.types, pl.body.is_none() && !pl.guard, leaf, object, array)
         })
         .collect();
     let resolved = |id: NodeId| {
-        let (types, trivial, leaf, _) = summary[id as usize];
+        let (types, trivial, leaf, _, array) = summary[id as usize];
         // Not `object`: a node may still take a fused plan below.
-        Child { id, types, trivial, leaf, object: false }
+        Child { id, types, trivial, leaf, object: false, array }
     };
     // Fused object plans, for nodes whose object semantics span in-place applicators.
     // A fused plan applies its contributors' keywords without entering them as nodes, so the dynamic scope below it
@@ -449,10 +466,11 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
     }
     let fused_nodes: Vec<bool> = plans.iter().map(|pl| pl.body.as_ref().is_some_and(|b| b.fused.is_some())).collect();
     let fix = |c: &mut Child| {
-        let (types, trivial, leaf, object) = summary[c.id as usize];
+        let (types, trivial, leaf, object, array) = summary[c.id as usize];
         c.types = types;
         c.trivial = trivial;
         c.leaf = leaf;
+        c.array = array;
         c.object = object && !fused_nodes[c.id as usize];
     };
     for body in plans.iter_mut().filter_map(|pl| pl.body.as_deref_mut()) {
@@ -464,6 +482,8 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
         if let Some(a) = &mut body.array {
             a.prefix.iter_mut().for_each(fix);
             a.items.iter_mut().for_each(fix);
+            let items = a.items.map_or(Some(ANY), |c| c.trivial.then_some(c.types));
+            a.simple = items.filter(|_| a.prefix.is_empty() && a.contains.is_none() && !a.unique);
         }
         if let Some((_, c)) = &mut body.unevaluated_items {
             fix(c);
@@ -490,7 +510,8 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
     if n.always_false {
         return Plan { types: 0, guard, body: None };
     }
-    let child = |id: NodeId| Child { id: target(id), types: ANY, trivial: false, leaf: false, object: false };
+    let child =
+        |id: NodeId| Child { id: target(id), types: ANY, trivial: false, leaf: false, object: false, array: false };
     let mut ops = Vec::new();
     let mut number = Vec::new();
     let mut string = Vec::new();
@@ -620,6 +641,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
             items: n.items.map(child),
             contains: n.contains.map(|c| (target(c), n.min_contains, n.max_contains)),
             unique: n.unique_items,
+            simple: None,
         });
     }
 
@@ -855,6 +877,10 @@ impl Evaluator<'_, '_> {
             Some(b) if c.leaf => run_leaf(b, x),
             Some(b) if c.object => match x {
                 Value::Object(o) => self.run_object(b.object.as_ref().unwrap(), o, x),
+                _ => true,
+            },
+            Some(b) if c.array => match x {
+                Value::Array(a) => self.run_array(b.array.as_ref().unwrap(), a),
                 _ => true,
             },
             Some(b) => self.run_body(b, x),
@@ -1137,6 +1163,9 @@ impl Evaluator<'_, '_> {
         if len < plan.min || len > plan.max {
             return false;
         }
+        if let Some(types) = plan.simple {
+            return all_of_type(a, types);
+        }
         let prefix = plan.prefix.len().min(a.len());
         for (c, item) in plan.prefix.iter().zip(a) {
             if !self.run_child(*c, item) {
@@ -1147,7 +1176,7 @@ impl Evaluator<'_, '_> {
             let rest = &a[prefix..];
             if items.trivial {
                 // A type-only items schema: one tight loop (the C# evaluator's SimpleArray plan), or none for `true`.
-                if items.types != ANY && !rest.iter().all(|item| type_ok(items.types, item)) {
+                if !all_of_type(rest, items.types) {
                     return false;
                 }
             } else {
@@ -1173,6 +1202,18 @@ impl Evaluator<'_, '_> {
             }
         }
         !plan.unique || all_unique(a)
+    }
+}
+
+/// Whether every value is of the types in a mask, with the common masks as tight loops.
+#[inline]
+fn all_of_type(a: &[Value], types: u8) -> bool {
+    const NUMBERS: u8 = type_mask::NUMBER | type_mask::INTEGER;
+    match types {
+        ANY => true,
+        type_mask::STRING => a.iter().all(Value::is_string),
+        t if t & !NUMBERS == 0 && t & type_mask::NUMBER != 0 => a.iter().all(Value::is_number),
+        t => a.iter().all(|v| type_ok(t, v)),
     }
 }
 
