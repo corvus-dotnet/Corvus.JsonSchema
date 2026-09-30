@@ -1,0 +1,15 @@
+[package]
+name = "corvus_rs_benchmark"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+# Until corvus-json-schema is published to crates.io, the image builds it from the Corvus.JsonSchema repository,
+# cloned to /corvus (see the Dockerfile).
+corvus-json-schema = { path = "/corvus/src-rs/corvus-json-schema" }
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"

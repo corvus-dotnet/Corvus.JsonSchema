@@ -39,9 +39,51 @@ The standard metaschemas are embedded.
 
 - **Numbers:** compared exactly. Integers are compared as integers and doubles against integers without rounding.
   `multipleOf` is decided on decimal forms, so `0.0075` is a multiple of `0.0001`.
-- **Patterns:** use ECMA-262 semantics through [`regress`](https://crates.io/crates/regress), with the `u` flag.
+- **Patterns:** use ECMA-262 semantics with the `u` flag. Common shapes (class sequences, literals and their
+  alternatives, separated lists, line lengths) get dedicated matchers, as in the C# evaluator. Patterns within the
+  common subset of ECMA-262 and the [`regex`](https://crates.io/crates/regex) crate's syntax are translated and run by
+  `regex`, and anything else by [`regress`](https://crates.io/crates/regress).
 - **Formats:** are annotations unless asserted by the vocabulary or by `CompileOptions::assert_format`. The format
   validators follow the C# implementations (RFC 3339 dates and times, IDN hostnames, IRIs, and so on).
+
+## Benchmarks
+
+### Comparison with other Rust validators
+
+`../corvus-json-schema-bench` validates the corpora of
+[jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark) with this crate,
+[boon](https://crates.io/crates/boon) and [jsonschema](https://crates.io/crates/jsonschema), in one process. The
+engines' passes are interleaved, so drift in the machine's speed affects them alike.
+
+```sh
+git clone --depth 1 https://github.com/sourcemeta-research/jsonschema-benchmark.git ../../../jsonschema-benchmark
+cd ../corvus-json-schema-bench
+cargo run --release -- --schemas ../../../jsonschema-benchmark/schemas [--only a,b] [--engines corvus,boon] \
+  [--budget-ms 1000] [--json results/run.json]
+```
+
+`--profile N` runs N passes of the first engine and nothing else, for use under a profiler.
+
+### jsonschema-benchmark
+
+`../corvus-json-schema-bench/jsonschema-benchmark` is this crate's implementation of the benchmark's protocol. It
+parses every instance, compiles, validates once cold, warms up, and validates once warm. It prints
+`cold,warm,compile,parse` in nanoseconds and exits non-zero if an instance is invalid. To add it to a
+jsonschema-benchmark checkout:
+- copy the directory to `implementations/corvus-rs`;
+- add the rules from `Makefile.fragment` to the Makefile;
+- add `corvus-rs` to the README's list of implementations.
+
+Until the crate is published to crates.io, the image builds it from this repository at the `CORVUS_REF` build
+argument (default `main`).
+
+To run it locally, the binary expects this repository at `/corvus`:
+
+```sh
+ln -s "$(git rev-parse --show-toplevel)" /corvus
+cd ../corvus-json-schema-bench/jsonschema-benchmark
+cargo run --release -- <schema-noformat.json> <instances.jsonl>
+```
 
 ## Testing
 
