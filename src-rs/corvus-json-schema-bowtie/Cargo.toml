@@ -1,0 +1,10 @@
+[package]
+name = "bowtie-corvus-jsonschema"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "A Bowtie (https://github.com/bowtie-json-schema/bowtie) harness for corvus-json-schema"
+
+[dependencies]
+corvus-json-schema = { path = "../corvus-json-schema" }
+serde_json = { version = "1", features = ["preserve_order"] }

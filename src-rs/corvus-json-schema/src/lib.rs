@@ -46,6 +46,9 @@ pub use results::{
     enumerate_annotations, schema_location_fragment,
 };
 
+/// The version of this crate.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 /// A compiled schema. Cheap to clone and safe to share between threads.
 #[derive(Clone)]
 pub struct Validator {

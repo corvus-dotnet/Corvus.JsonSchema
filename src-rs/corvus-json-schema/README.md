@@ -85,6 +85,11 @@ cd ../corvus-json-schema-bench/jsonschema-benchmark
 cargo run --release -- <schema-noformat.json> <instances.jsonl>
 ```
 
+## Bowtie
+
+`../corvus-json-schema-bowtie` is a [Bowtie](https://github.com/bowtie-json-schema/bowtie) harness for this crate. See
+its README.
+
 ## Testing
 
 ```sh
