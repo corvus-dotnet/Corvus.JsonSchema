@@ -23,6 +23,7 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 - **JSON Canonicalization** — RFC 8785 JSON Canonicalization Scheme (JCS) for deterministic serialization. Zero heap allocation.
 - **[YAML](#yaml)** — High-performance YAML 1.2 to JSON converter with 100% yaml-test-suite conformance. Zero-allocation `ref struct` tokenizer.
 - **[TOON](#toon)** — Bidirectional TOON (Token-Oriented Object Notation) conversion for compact JSON-shaped LLM prompts, with Corvus and System.Text.Json packages.
+- **[TypeScript and JavaScript](#typescript-and-javascript)** — [`@corvus-dotnet/json-schema`](https://www.npmjs.com/package/@corvus-dotnet/json-schema) on npm: the V5 standalone evaluator ported to TypeScript, compiling schemas to specialised JavaScript, with the same results collection and annotations.
 
 ## Quick Start
 
@@ -351,6 +352,35 @@ TOON (Token-Oriented Object Notation) is a compact text representation for JSON-
 - **UTF-8-first APIs** — write JSON or TOON directly to caller-provided UTF-8 buffers for hot paths and streaming boundaries.
 
 See [TOON documentation](docs/Toon.md) for the full API, configuration options, examples, and benchmarks. **[Try the TOON Playground](docs/playground-toon/)** to convert between TOON and JSON in your browser.
+
+## TypeScript and JavaScript
+
+[`@corvus-dotnet/json-schema`](https://www.npmjs.com/package/@corvus-dotnet/json-schema) is the V5 standalone schema evaluator ported to TypeScript. It compiles a schema once into specialised JavaScript and validates parsed JSON values against it.
+
+- **Conformant** — passes all 7,966 tests of the JSON-Schema-Test-Suite for draft 4, 6, 7, 2019-09 and 2020-12, and all of its annotation tests.
+- **Results and annotations** — Basic, Detailed and Verbose results with the same rows as the C# `JsonSchemaResultsCollector`.
+- **Standalone modules** — emit a schema as an ES module that depends only on the small runtime, for environments that don't allow generated code at run time.
+- **No dependencies** — Node.js 20 or later; the package is an ES module.
+
+```bash
+npm install @corvus-dotnet/json-schema
+```
+
+```ts
+import { compile } from '@corvus-dotnet/json-schema';
+
+const validate = compile({
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  type: 'object',
+  properties: { id: { type: 'integer', minimum: 1 } },
+  required: ['id'],
+});
+
+validate({ id: 3 }); // true
+validate({ id: 0 }); // false
+```
+
+See the [package README](src-ts/corvus-json-schema/README.md) for the full API, performance measurements and the differences from the C# evaluator.
 
 ## Supported platforms
 
