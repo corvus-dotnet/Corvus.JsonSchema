@@ -1,0 +1,90 @@
+name: npm-publish
+# Publishes @corvus-dotnet/json-schema (src-ts/corvus-json-schema) when the version in its package.json is not yet on
+# npm, then tags the commit ts-v<version>. To release, bump "version" in package.json and merge.
+#
+# It authenticates with npm trusted publishing (OIDC): no npm token is stored, and the package's trusted publisher on
+# npmjs.com names this repository and this workflow file, so keep the file name. npm adds provenance automatically.
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. The
+# ts-v tag is pushed with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-ts/corvus-json-schema/package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write  # push the ts-v<version> tag
+  id-token: write  # npm trusted publishing
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish @corvus-dotnet/json-schema
+    # A manual run from another branch must not publish that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: src-ts/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Use an npm that supports trusted publishing
+        # Trusted publishing needs npm 11.5.1 or later; Node 22 ships npm 10.
+        run: npm install -g npm@11
+      - name: Check whether this version is already on npm
+        id: version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # npm view prints nothing (and fails) for a version or package that does not exist.
+          if [ -n "$(npm view "@corvus-dotnet/json-schema@$version" version 2>/dev/null)" ]; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::@corvus-dotnet/json-schema@$version is already on npm; nothing to publish."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Checkout JSON-Schema-Test-Suite
+        if: steps.version.outputs.published == 'false'
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Install
+        if: steps.version.outputs.published == 'false'
+        run: npm ci
+      - name: Check the embedded metaschemas are current
+        if: steps.version.outputs.published == 'false'
+        run: |
+          npm run embed-metaschemas
+          git diff --exit-code -- src/metaschemas.ts
+      - name: Test
+        if: steps.version.outputs.published == 'false'
+        run: npm test
+      - name: Publish
+        # prepack builds dist/ and copies the repository's LICENSE into the package.
+        if: steps.version.outputs.published == 'false'
+        run: npm publish --access public
+      - name: Tag the published commit
+        if: steps.version.outputs.published == 'false'
+        env:
+          TAG: ts-v${{ steps.version.outputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "::notice::$TAG already exists."
+          else
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG"
+          fi

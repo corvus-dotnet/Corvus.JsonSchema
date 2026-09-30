@@ -16,6 +16,14 @@ validates parsed JSON values (`JSON.parse` output) against it.
   where evaluating generated code at run time is not allowed.
 - No dependencies.
 
+## Install
+
+```sh
+npm install @corvus-dotnet/json-schema
+```
+
+Node.js 20 or later; the package is an ES module.
+
 ## Usage
 
 ```ts
@@ -196,6 +204,13 @@ node test/bowtie-ihop.mjs
 
 The suite is read from the repository's `JSON-Schema-Test-Suite` submodule (`git submodule update --init
 JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
+
+## Releasing
+
+The package is versioned independently of the Corvus NuGet packages. To release, change `version` in `package.json`
+and merge to `main`: the `npm-publish` workflow tests the package, publishes the version if it is not already on npm
+(with npm trusted publishing, so no token is stored, and with provenance), and tags the commit `ts-v<version>`. Don't
+push `ts-v` tags yourself.
 
 ## Limitations and differences from the C# evaluator
 

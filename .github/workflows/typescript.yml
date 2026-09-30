@@ -48,3 +48,10 @@ jobs:
           git diff --exit-code -- src/metaschemas.ts
       - name: Test
         run: npm test
+      - name: Check the package packs
+        # prepack builds dist/ and copies the repository LICENSE in; npm-publish.yml publishes the same way.
+        run: |
+          npm pack --dry-run 2>&1 | tee "$RUNNER_TEMP/pack.txt"
+          grep -q ' LICENSE$' "$RUNNER_TEMP/pack.txt"
+          grep -q ' dist/index.js$' "$RUNNER_TEMP/pack.txt"
+          grep -q ' src/index.ts$' "$RUNNER_TEMP/pack.txt"

@@ -39,6 +39,18 @@ The suites read the repository's `JSON-Schema-Test-Suite` submodule
 `src/metaschemas.ts` is generated from `src/Corvus.Text.Json/metaschema` by `npm run embed-metaschemas`; CI fails
 if it is stale.
 
+## Releasing to npm
+
+The package is versioned independently of the NuGet packages. Bump `version` in `package.json` and merge to `main`;
+`.github/workflows/npm-publish.yml` runs the tests, publishes the version if npm doesn't have it (npm trusted publishing:
+the package's trusted publisher on npmjs.com names that workflow file, so don't rename it), and tags the commit
+`ts-v<version>`. `npm pack`/`npm publish` run `prepack`, which builds `dist/` and copies the repository `LICENSE`
+into the package.
+
+Never push a `ts-v` tag (or any non-version tag) by hand: `build.yml` publishes NuGet packages for the tags that
+trigger it. Its tag filter only accepts release versions (`[0-9]+.[0-9]+.[0-9]+*`), and the workflow's own tag push
+uses `GITHUB_TOKEN`, which starts no other workflow.
+
 ## Performance work
 
 - Corpora: clone https://github.com/sourcemeta-research/jsonschema-benchmark and run
