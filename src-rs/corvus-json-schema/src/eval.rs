@@ -35,7 +35,7 @@ pub(crate) struct Program {
     pub annotation_sources: Vec<Option<AnnotationSource>>,
     pub annotations: OnceLock<Vec<Option<Vec<AnnotationEntry>>>>,
     pub assert_format_set: bool,
-    /// Fail-fast plans (empty when a dynamic scope is kept, which the general evaluator handles).
+    /// Fail-fast plans (with a dynamic scope kept, bodies push their resource on entry).
     plans: Vec<plan::Plan>,
 }
 

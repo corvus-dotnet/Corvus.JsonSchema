@@ -13,7 +13,8 @@
 //! conditions the pass itself decides (required names, and property values tested against constants or a pattern),
 //! and defers those branches' applications to a second step over the properties they touch.
 //!
-//! Fail-fast evaluation only, without a dynamic scope (plans are not used when one is kept).
+//! Fail-fast evaluation only; nodes that can reach a live dynamic reference are not fused, since the fused pass does
+//! not enter its contributors as nodes (and so would not push their resources on the dynamic scope).
 
 use std::sync::Arc;
 
@@ -312,7 +313,7 @@ impl<'a> Collect<'a> {
     fn expensive_children_disjoint(&self, branches: &[NodeId]) -> bool {
         let cheap = |id: NodeId| {
             let n = self.node(self.target(id));
-            n.always_true || n.always_false || is_leaf(n)
+            n.always_true || n.always_false || is_leaf(n) || self.is_simple_array(n)
         };
         let mut expensive: Vec<&str> = Vec::new();
         let mut wildcards = 0;
@@ -336,6 +337,24 @@ impl<'a> Collect<'a> {
             }
         }
         wildcards == 0 || expensive.is_empty()
+    }
+
+    /// An array of leaf items with at most size bounds (C#'s IsSimpleArray): cheap to apply more than once.
+    fn is_simple_array(&self, n: &SchemaNode) -> bool {
+        n.has_array_keywords()
+            && !n.has_object_keywords()
+            && !n.has_in_place_applicators()
+            && n.dynamic_ref.is_none()
+            && n.const_value.is_none()
+            && n.enum_values.is_none()
+            && n.prefix_items.is_none()
+            && n.contains.is_none()
+            && !n.unique_items
+            && n.unevaluated_items.is_none()
+            && n.items.is_some_and(|i| {
+                let item = self.node(self.target(i));
+                item.always_true || is_leaf(item)
+            })
     }
 
     /// A condition the pass decides alone: required names, and properties whose schemas are value tests, optionally

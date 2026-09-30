@@ -25,6 +25,9 @@ use crate::pattern::Pattern;
 /// Every JSON type (a node without `type`).
 const ANY: u8 = 0x7f;
 
+/// A child that accepts anything and is never entered (an undeclared name without additionalProperties).
+const NO_CHILD: Child = Child { id: u32::MAX, types: ANY, shape: Shape::Trivial };
+
 /// A child application, with its type check hoisted so that a child that is only a type check needs no call.
 #[derive(Clone, Copy)]
 pub(crate) struct Child {
@@ -153,9 +156,13 @@ struct ObjectPlan {
     max: u64,
     /// How the properties are visited (for properties, patternProperties, additionalProperties, propertyNames).
     visit: Visit,
+    /// The declared names, then the names only `required` and dependencies mention (so that the pass sees them too;
+    /// C# registers required names as property entries): the first `declared` have a schema.
     names: Names,
+    declared: usize,
+    /// Per name: the declared schema, or for the others the additionalProperties child (or nothing, `NO_CHILD`).
     children: Box<[Child]>,
-    /// Bit `i` set: `children[i]`'s name is required. Only when every required name is declared (and at most 64).
+    /// Bit `i` set: name `i` is required (the names checked by the mask: at most 64 names in all).
     required_mask: u64,
     /// Required names checked by lookup (when the mask cannot cover them).
     required: Box<[Box<str>]>,
@@ -236,6 +243,8 @@ struct Dependency {
     name: Box<str>,
     required: Box<[Box<str>]>,
     schema: Option<NodeId>,
+    /// The seen bits of the name and of the names it requires, when every one is a known name.
+    bits: Option<(u64, u64)>,
 }
 
 struct ArrayPlan {
@@ -487,6 +496,9 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
     }
     let fused_nodes: Vec<bool> = plans.iter().map(|pl| pl.body.as_ref().is_some_and(|b| b.fused.is_some())).collect();
     let fix = |c: &mut Child| {
+        if c.id == u32::MAX {
+            return;
+        }
         let (types, shape) = summary[c.id as usize];
         c.types = types;
         c.shape = if shape == Shape::Object && fused_nodes[c.id as usize] { Shape::General } else { shape };
@@ -592,67 +604,95 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
 
     let values = std::mem::take(&mut ops);
 
-    // Objects.
+    // Objects (unless the type excludes objects: then the keywords apply to nothing and must not cost the node its
+    // shape, as C#'s LiveObjectKeywords).
+    let own_types = if n.has_type { n.type_mask } else { ANY };
     let mut object = None;
-    if n.has_object_keywords() {
+    if n.has_object_keywords() && own_types & type_mask::OBJECT != 0 {
         let declared: Vec<(String, NodeId)> = n.properties.clone().unwrap_or_default();
-        let names = Names::new(declared.iter().map(|(k, _)| k.as_str().into()).collect());
-        let children: Box<[Child]> = declared.iter().map(|&(_, c)| child(c)).collect();
         let required = n.required.clone().unwrap_or_default();
+        // Names only required or dependencies mention join the declared ones, up to 64 names in all (one mask word).
+        let mut known: Vec<String> = declared.iter().map(|(k, _)| k.clone()).collect();
+        let mut extras: Vec<String> = Vec::new();
+        let dependency_names =
+            n.dependencies.iter().flatten().flat_map(|d| std::iter::once(&d.name).chain(d.required.iter().flatten()));
+        for name in required.iter().chain(dependency_names) {
+            if !known.contains(name) && !extras.contains(name) {
+                extras.push(name.clone());
+            }
+        }
+        let with_extras = known.len() + extras.len() <= 64;
+        if with_extras {
+            known.extend(extras);
+        }
+        let names = Names::new(known.iter().map(|k| k.as_str().into()).collect());
+        let undeclared = n.additional_properties.map_or(NO_CHILD, child);
+        let children: Box<[Child]> = declared
+            .iter()
+            .map(|&(_, c)| child(c))
+            .chain(std::iter::repeat_n(undeclared, known.len() - declared.len()))
+            .collect();
+        let has_names = !known.is_empty();
         let visit = if n.property_names.is_none()
-            && n.properties.is_none()
+            && !has_names
             && n.pattern_properties.as_ref().is_some_and(|p| p.len() == 1)
         {
             Visit::Pattern
         } else if n.pattern_properties.is_some() || n.property_names.is_some() {
             Visit::General
-        } else if n.properties.is_some() {
+        } else if has_names {
             Visit::Names
         } else if n.additional_properties.is_some() {
             Visit::Values
         } else {
             Visit::None
         };
+        let visited = matches!(visit, Visit::Names | Visit::General) && known.len() <= 64;
+        let bit = |name: &str| names.find(name).filter(|_| visited).map(|i| 1u64 << i);
         let mut required_mask = 0u64;
         let mut by_lookup = Vec::new();
-        let masked = matches!(visit, Visit::Names | Visit::General)
-            && declared.len() <= 64
-            && required.iter().all(|r| names.find(r).is_some());
         for r in &required {
-            match names.find(r) {
-                Some(i) if masked => required_mask |= 1 << i,
-                _ => by_lookup.push(r.as_str().into()),
+            match bit(r) {
+                Some(b) => required_mask |= b,
+                None => by_lookup.push(r.as_str().into()),
             }
         }
+        let dependencies: Box<[Dependency]> = n
+            .dependencies
+            .iter()
+            .flatten()
+            .map(|d| {
+                let required: Option<u64> =
+                    d.required.iter().flatten().try_fold(0u64, |mask, r| bit(r).map(|b| mask | b));
+                Dependency {
+                    name: d.name.as_str().into(),
+                    required: d.required.iter().flatten().map(|r| r.as_str().into()).collect(),
+                    schema: d.schema.map(target),
+                    bits: bit(&d.name).zip(required),
+                }
+            })
+            .collect();
         let by_lookup_empty = by_lookup.is_empty();
         object = Some(ObjectPlan {
             min: n.min_properties.unwrap_or(0),
             max: n.max_properties.unwrap_or(u64::MAX),
             visit,
             names,
+            declared: declared.len(),
             children,
             required_mask,
             required: by_lookup.into_boxed_slice(),
             patterns: n.pattern_properties.iter().flatten().map(|pp| (pp.pattern.clone(), child(pp.node))).collect(),
-            name_patterns: declared
+            name_patterns: known
                 .iter()
-                .map(|(name, _)| {
+                .map(|name| {
                     let patterns = n.pattern_properties.iter().flatten().enumerate();
                     patterns.filter(|(_, pp)| pp.pattern.is_match(name)).map(|(j, _)| j as u16).collect()
                 })
                 .collect(),
             additional: n.additional_properties.map(child),
             property_names: n.property_names.map(target),
-            dependencies: n
-                .dependencies
-                .iter()
-                .flatten()
-                .map(|d| Dependency {
-                    name: d.name.as_str().into(),
-                    required: d.required.iter().flatten().map(|r| r.as_str().into()).collect(),
-                    schema: d.schema.map(target),
-                })
-                .collect(),
+            dependencies,
             rest_free: by_lookup_empty && n.dependencies.is_none(),
             strict: visit == Visit::Names && by_lookup_empty && n.dependencies.is_none(),
         });
@@ -660,7 +700,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
 
     // Arrays.
     let mut array = None;
-    if n.has_array_keywords() {
+    if n.has_array_keywords() && own_types & type_mask::ARRAY != 0 {
         array = Some(ArrayPlan {
             min: n.min_items.unwrap_or(0),
             max: n.max_items.unwrap_or(u64::MAX),
@@ -978,6 +1018,11 @@ impl Evaluator<'_, '_> {
 
     /// Evaluates a property name as a string instance, in a buffer reused across names.
     fn run_name(&mut self, id: NodeId, name: &str) -> bool {
+        // A name is a string: a plan with nothing beyond its types is decided without building the value.
+        let plan = &self.p.plans[id as usize];
+        if plan.body.is_none() {
+            return plan.types & type_mask::STRING != 0;
+        }
         let mut buffer = std::mem::take(&mut self.name_buffer);
         if let Value::String(s) = &mut buffer {
             s.clear();
@@ -1140,7 +1185,7 @@ impl Evaluator<'_, '_> {
         if seen & plan.required_mask != plan.required_mask {
             return false;
         }
-        plan.rest_free || self.object_rest(plan, o, x)
+        plan.rest_free || self.object_rest(plan, o, x, seen)
     }
 
     /// The C# StrictObject loop: bounds, declared names (additionalProperties for the rest), and the required mask;
@@ -1174,16 +1219,28 @@ impl Evaluator<'_, '_> {
 
     /// Required names checked by lookup, and dependencies.
     #[inline(never)]
-    fn object_rest(&mut self, plan: &ObjectPlan, o: &Map<String, Value>, x: &Value) -> bool {
+    fn object_rest(&mut self, plan: &ObjectPlan, o: &Map<String, Value>, x: &Value, seen: u64) -> bool {
         if !plan.required.iter().all(|r| has_key(o, r)) {
             return false;
         }
         for d in plan.dependencies.iter() {
-            if !has_key(o, &d.name) {
-                continue;
-            }
-            if !d.required.iter().all(|r| has_key(o, r)) {
-                return false;
+            match d.bits {
+                Some((name, required)) => {
+                    if seen & name == 0 {
+                        continue;
+                    }
+                    if seen & required != required {
+                        return false;
+                    }
+                }
+                None => {
+                    if !has_key(o, &d.name) {
+                        continue;
+                    }
+                    if !d.required.iter().all(|r| has_key(o, r)) {
+                        return false;
+                    }
+                }
             }
             if let Some(s) = d.schema
                 && !self.run_in_place(s, x)
@@ -1246,12 +1303,16 @@ impl Evaluator<'_, '_> {
         for (k, v) in o {
             let mut matched = false;
             if let Some(i) = plan.names.find_from(k, &mut hint) {
-                matched = true;
                 seen |= 1 << (i & 63);
-                if !self.run_child(plan.children[i], v) {
-                    return None;
+                // A name only required (or a dependency) mentions is undeclared: patterns, else additionalProperties.
+                if i < plan.declared {
+                    matched = true;
+                    if !self.run_child(plan.children[i], v) {
+                        return None;
+                    }
                 }
                 for &j in plan.name_patterns[i].iter() {
+                    matched = true;
                     if !self.run_child(plan.patterns[j as usize].1, v) {
                         return None;
                     }
@@ -1393,6 +1454,10 @@ fn length_ok(s: &str, min: u64, max: u64) -> bool {
     }
     if bytes <= max && bytes.div_ceil(4) >= min {
         return true;
+    }
+    // Every code point is at most four bytes: more than `max` of them for sure.
+    if bytes.div_ceil(4) > max {
+        return false;
     }
     let chars = code_points(s);
     chars >= min && chars <= max
