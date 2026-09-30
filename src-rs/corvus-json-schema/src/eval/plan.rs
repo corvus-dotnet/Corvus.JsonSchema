@@ -42,6 +42,10 @@ enum Shape {
     Trivial,
     /// Only its own value (const, enum, number and string keywords): no children, no calls.
     Leaf,
+    /// Only an enum of strings (the C# StrictEntry's InlineEnum).
+    StringEnum,
+    /// Only string keywords (length, pattern, format).
+    Strings,
     /// Nothing but an object plan: an object value enters its loop directly (the C# NestedObject).
     Object,
     /// Nothing but an array plan: an array value enters its loop directly.
@@ -162,6 +166,10 @@ struct ObjectPlan {
     additional: Option<Child>,
     property_names: Option<NodeId>,
     dependencies: Box<[Dependency]>,
+    /// No required names by lookup and no dependencies: nothing after the property loop but the required mask.
+    rest_free: bool,
+    /// `Visit::Names` and `rest_free`: the strict loop (`run_strict_object`) decides it.
+    strict: bool,
 }
 
 /// The property loop, specialised by which keywords apply.
@@ -337,6 +345,18 @@ impl Names {
 
     fn find(&self, name: &str) -> Option<usize> {
         self.find_from(name, &mut 0)
+    }
+
+    /// Membership only (for string enums: no order to hint at).
+    #[inline]
+    fn contains(&self, name: &str) -> bool {
+        if self.lengths & length_bit(name.len()) == 0 {
+            return false;
+        }
+        match &self.lookup {
+            Lookup::Linear(names) => names.iter().any(|n| str_eq(n, name)),
+            Lookup::Hashed(table) => table.find(name).is_some(),
+        }
     }
 
     /// Finds a name, trying the one after the previous match first: instances tend to list their properties in the
@@ -604,6 +624,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
                 _ => by_lookup.push(r.as_str().into()),
             }
         }
+        let by_lookup_empty = by_lookup.is_empty();
         object = Some(ObjectPlan {
             min: n.min_properties.unwrap_or(0),
             max: n.max_properties.unwrap_or(u64::MAX),
@@ -632,6 +653,8 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
                     schema: d.schema.map(target),
                 })
                 .collect(),
+            rest_free: by_lookup_empty && n.dependencies.is_none(),
+            strict: visit == Visit::Names && by_lookup_empty && n.dependencies.is_none(),
         });
     }
 
@@ -751,6 +774,12 @@ fn shape_of(pl: &Plan, dynamic_scope: bool) -> Shape {
     let values = !b.values.is_empty() || !b.number.is_empty() || !b.string.is_empty();
     let (object, array, apply) = (b.object.is_some(), b.array.is_some(), !b.apply.is_empty());
     match (plain, values, object, array, apply) {
+        (true, true, false, false, false)
+            if b.number.is_empty() && b.string.is_empty() && matches!(&*b.values, [Op::EnumStrings(_)]) =>
+        {
+            Shape::StringEnum
+        }
+        (true, true, false, false, false) if b.number.is_empty() && b.values.is_empty() => Shape::Strings,
         (true, _, false, false, false) => Shape::Leaf,
         (true, false, true, false, false) if !dynamic_scope => Shape::Object,
         (true, false, false, true, false) if !dynamic_scope => Shape::Array,
@@ -906,8 +935,19 @@ impl Evaluator<'_, '_> {
     fn enter(&mut self, shape: Shape, b: &Body, x: &Value) -> bool {
         match shape {
             Shape::Leaf => run_leaf(b, x),
+            Shape::StringEnum => match (&b.values[0], x) {
+                (Op::EnumStrings(values), Value::String(s)) => values.contains(s),
+                _ => false,
+            },
+            Shape::Strings => match x {
+                Value::String(s) => run_string(&b.string, s),
+                _ => true,
+            },
             Shape::Object => match x {
-                Value::Object(o) => self.run_object(b.object.as_ref().unwrap(), o, x),
+                Value::Object(o) => {
+                    let plan = b.object.as_ref().unwrap();
+                    if plan.strict { self.run_strict_object(plan, o) } else { self.run_object(plan, o, x) }
+                }
                 _ => true,
             },
             Shape::Array => match x {
@@ -1046,7 +1086,7 @@ impl Evaluator<'_, '_> {
         match op {
             Op::Const(c) => json_equal(x, c),
             Op::EnumStrings(values) => match x {
-                Value::String(s) => values.find(s).is_some(),
+                Value::String(s) => values.contains(s),
                 _ => false,
             },
             Op::Enum(values) => values.iter().any(|v| json_equal(x, v)),
@@ -1082,101 +1122,59 @@ impl Evaluator<'_, '_> {
         }
     }
 
+    /// An object plan: the size bounds, the property loop for its shape (each in its own function, so that this entry
+    /// stays small), then the required names and dependencies.
     fn run_object(&mut self, plan: &ObjectPlan, o: &Map<String, Value>, x: &Value) -> bool {
         let len = o.len() as u64;
         if len < plan.min || len > plan.max {
             return false;
         }
-        let mut seen = 0u64;
-        match plan.visit {
-            Visit::None => {}
-            Visit::Values => {
-                let c = plan.additional.unwrap();
-                if c.trivial() {
-                    if c.types != ANY && !o.values().all(|v| type_ok(c.types, v)) {
-                        return false;
-                    }
-                } else {
-                    for v in o.values() {
-                        if !self.run_child(c, v) {
-                            return false;
-                        }
-                    }
-                }
-            }
-            Visit::Names => {
-                let mut hint = 0;
-                for (k, v) in o {
-                    match plan.names.find_from(k, &mut hint) {
-                        Some(i) => {
-                            seen |= 1 << (i & 63);
-                            if !self.run_child(plan.children[i], v) {
-                                return false;
-                            }
-                        }
-                        None => {
-                            if let Some(c) = plan.additional
-                                && !self.run_child(c, v)
-                            {
-                                return false;
-                            }
-                        }
-                    }
-                }
-            }
-            Visit::Pattern => {
-                let (pattern, c) = &plan.patterns[0];
-                for (k, v) in o {
-                    let applies = if pattern.is_match(k) { Some(*c) } else { plan.additional };
-                    if let Some(c) = applies
-                        && !self.run_child(c, v)
-                    {
-                        return false;
-                    }
-                }
-            }
-            Visit::General => {
-                let mut hint = 0;
-                for (k, v) in o {
-                    let mut matched = false;
-                    if let Some(i) = plan.names.find_from(k, &mut hint) {
-                        matched = true;
-                        seen |= 1 << (i & 63);
-                        if !self.run_child(plan.children[i], v) {
-                            return false;
-                        }
-                        for &j in plan.name_patterns[i].iter() {
-                            if !self.run_child(plan.patterns[j as usize].1, v) {
-                                return false;
-                            }
-                        }
-                    } else {
-                        for (pattern, c) in plan.patterns.iter() {
-                            if pattern.is_match(k) {
-                                matched = true;
-                                if !self.run_child(*c, v) {
-                                    return false;
-                                }
-                            }
-                        }
-                    }
-                    if !matched
-                        && let Some(c) = plan.additional
-                        && !self.run_child(c, v)
-                    {
-                        return false;
-                    }
-                    if let Some(pn) = plan.property_names
-                        && !self.run_name(pn, k)
-                    {
-                        return false;
-                    }
-                }
-            }
-        }
+        let seen = match plan.visit {
+            Visit::None => Some(0),
+            Visit::Values => self.visit_values(plan, o).then_some(0),
+            Visit::Names => self.visit_names(plan, o),
+            Visit::Pattern => self.visit_pattern(plan, o).then_some(0),
+            Visit::General => self.visit_general(plan, o),
+        };
+        let Some(seen) = seen else { return false };
         if seen & plan.required_mask != plan.required_mask {
             return false;
         }
+        plan.rest_free || self.object_rest(plan, o, x)
+    }
+
+    /// The C# StrictObject loop: bounds, declared names (additionalProperties for the rest), and the required mask;
+    /// a small function of its own, since nested objects enter it directly.
+    fn run_strict_object(&mut self, plan: &ObjectPlan, o: &Map<String, Value>) -> bool {
+        let len = o.len() as u64;
+        if len < plan.min || len > plan.max {
+            return false;
+        }
+        let mut seen = 0u64;
+        let mut hint = 0;
+        for (k, v) in o {
+            match plan.names.find_from(k, &mut hint) {
+                Some(i) => {
+                    seen |= 1 << (i & 63);
+                    if !self.run_child(plan.children[i], v) {
+                        return false;
+                    }
+                }
+                None => {
+                    if let Some(c) = plan.additional
+                        && !self.run_child(c, v)
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+        seen & plan.required_mask == plan.required_mask
+    }
+
+    /// Required names checked by lookup, and dependencies.
+    #[inline(never)]
+    fn object_rest(&mut self, plan: &ObjectPlan, o: &Map<String, Value>, x: &Value) -> bool {
         if !plan.required.iter().all(|r| has_key(o, r)) {
             return false;
         }
@@ -1187,13 +1185,100 @@ impl Evaluator<'_, '_> {
             if !d.required.iter().all(|r| has_key(o, r)) {
                 return false;
             }
-            if let Some(s) = d.schema {
-                if !self.run_in_place(s, x) {
-                    return false;
-                }
+            if let Some(s) = d.schema
+                && !self.run_in_place(s, x)
+            {
+                return false;
             }
         }
         true
+    }
+
+    /// Only additionalProperties: every value against one child.
+    fn visit_values(&mut self, plan: &ObjectPlan, o: &Map<String, Value>) -> bool {
+        let c = plan.additional.unwrap();
+        if c.trivial() {
+            return c.types == ANY || o.values().all(|v| type_ok(c.types, v));
+        }
+        o.values().all(|v| self.run_child(c, v))
+    }
+
+    /// Declared properties, and additionalProperties for the rest; the declared names seen, or `None` on failure.
+    fn visit_names(&mut self, plan: &ObjectPlan, o: &Map<String, Value>) -> Option<u64> {
+        let mut seen = 0u64;
+        let mut hint = 0;
+        for (k, v) in o {
+            match plan.names.find_from(k, &mut hint) {
+                Some(i) => {
+                    seen |= 1 << (i & 63);
+                    if !self.run_child(plan.children[i], v) {
+                        return None;
+                    }
+                }
+                None => {
+                    if let Some(c) = plan.additional
+                        && !self.run_child(c, v)
+                    {
+                        return None;
+                    }
+                }
+            }
+        }
+        Some(seen)
+    }
+
+    fn visit_pattern(&mut self, plan: &ObjectPlan, o: &Map<String, Value>) -> bool {
+        let (pattern, c) = &plan.patterns[0];
+        for (k, v) in o {
+            let applies = if pattern.is_match(k) { Some(*c) } else { plan.additional };
+            if let Some(c) = applies
+                && !self.run_child(c, v)
+            {
+                return false;
+            }
+        }
+        true
+    }
+
+    fn visit_general(&mut self, plan: &ObjectPlan, o: &Map<String, Value>) -> Option<u64> {
+        let mut seen = 0u64;
+        let mut hint = 0;
+        for (k, v) in o {
+            let mut matched = false;
+            if let Some(i) = plan.names.find_from(k, &mut hint) {
+                matched = true;
+                seen |= 1 << (i & 63);
+                if !self.run_child(plan.children[i], v) {
+                    return None;
+                }
+                for &j in plan.name_patterns[i].iter() {
+                    if !self.run_child(plan.patterns[j as usize].1, v) {
+                        return None;
+                    }
+                }
+            } else {
+                for (pattern, c) in plan.patterns.iter() {
+                    if pattern.is_match(k) {
+                        matched = true;
+                        if !self.run_child(*c, v) {
+                            return None;
+                        }
+                    }
+                }
+            }
+            if !matched
+                && let Some(c) = plan.additional
+                && !self.run_child(c, v)
+            {
+                return None;
+            }
+            if let Some(pn) = plan.property_names
+                && !self.run_name(pn, k)
+            {
+                return None;
+            }
+        }
+        Some(seen)
     }
 
     fn run_array(&mut self, plan: &ArrayPlan, a: &[Value]) -> bool {
@@ -1261,7 +1346,7 @@ fn run_leaf(b: &Body, x: &Value) -> bool {
     for op in b.values.iter() {
         let ok = match op {
             Op::Const(c) => json_equal(x, c),
-            Op::EnumStrings(values) => matches!(x, Value::String(s) if values.find(s).is_some()),
+            Op::EnumStrings(values) => matches!(x, Value::String(s) if values.contains(s)),
             Op::Enum(values) => values.iter().any(|v| json_equal(x, v)),
             _ => unreachable!("a leaf has only value keywords"),
         };
