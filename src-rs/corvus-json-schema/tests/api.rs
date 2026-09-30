@@ -265,3 +265,37 @@ fn fused_not_required_and_absent_pattern_conditions_match_the_general_path() {
         }
     }
 }
+
+#[test]
+fn flat_fused_objects_match_the_general_path() {
+    let shared =
+        json!({ "properties": { "a": { "type": "string" }, "b": true }, "required": ["a"], "maxProperties": 3 });
+    for schema in [
+        json!({ "allOf": [{ "$ref": "#/$defs/s" }], "properties": { "c": { "type": "integer" } }, "$defs": { "s": shared } }),
+        json!({
+            "allOf": [{ "$ref": "#/$defs/s" }, { "properties": { "a": { "type": "string" } }, "required": ["c"] }],
+            "properties": { "c": { "type": "integer" } },
+            "minProperties": 2,
+            "$defs": { "s": shared }
+        }),
+        // The same name with different schemas stays a fused plan.
+        json!({ "allOf": [{ "$ref": "#/$defs/s" }], "properties": { "a": { "minLength": 2 } }, "$defs": { "s": shared } }),
+    ] {
+        let v = compile(&schema).unwrap();
+        for instance in [
+            json!({}),
+            json!({ "a": "x" }),
+            json!({ "a": "xy", "c": 1 }),
+            json!({ "a": 1, "c": 1 }),
+            json!({ "a": "x", "c": "1" }),
+            json!({ "a": "x", "b": null, "c": 1 }),
+            json!({ "a": "x", "b": 1, "c": 1, "d": 1 }),
+            json!({ "c": 1 }),
+            json!([]),
+        ] {
+            let mut c = JsonSchemaResultsCollector::new(ResultsLevel::Basic);
+            let collected = v.evaluate(&instance, &mut c).unwrap();
+            assert_eq!(v.is_valid(&instance), collected, "{schema} on {instance}");
+        }
+    }
+}

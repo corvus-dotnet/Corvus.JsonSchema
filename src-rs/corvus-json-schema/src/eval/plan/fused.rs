@@ -21,7 +21,7 @@ use std::sync::Arc;
 
 use serde_json::{Map, Value};
 
-use super::{Child, Evaluator, Names, Program};
+use super::{Child, Evaluator, NO_CHILD, Names, ObjectPlan, Program, Visit};
 use crate::eval::{json_equal, matches_type};
 use crate::node::*;
 use crate::numbers::Num;
@@ -33,6 +33,9 @@ const MAX_CONTRIBUTORS: usize = 64;
 const MAX_ALT_GROUPS: usize = 8;
 
 pub(crate) struct FusedObject {
+    /// The branches merge into one strict object loop: every one applies unconditionally with declared properties and
+    /// required names only (and count bounds), and each name resolves to one schema.
+    flat: Option<Box<ObjectPlan>>,
     /// Every property name any branch or condition knows, to its entry.
     names: Names,
     entries: Box<[Entry]>,
@@ -716,7 +719,38 @@ pub(super) fn try_fuse(p: &Program, id: NodeId, child: &dyn Fn(NodeId) -> Child)
     }
     debug_assert_eq!(branch_count + ctx.extras.len(), contributors.len());
 
+    let flat = (conditions.is_empty()
+        && alternatives.is_empty()
+        && ctx.alt_groups.is_empty()
+        && forbidden.is_empty()
+        && n.unevaluated_properties.is_none()
+        && names.len() <= 64
+        && contributors.iter().all(|c| c.condition.is_none() && c.patterns.is_empty() && c.additional.is_none())
+        && entries.iter().all(|e| e.apps.len() <= 1 && e.tests.is_empty()))
+    .then(|| {
+        let names: Names = Names::new(names.iter().map(|n| n.as_str().into()).collect());
+        let required_mask = contributors.iter().flat_map(|c| c.required.iter()).fold(0u64, |m, &i| m | 1 << i);
+        Box::new(ObjectPlan {
+            min: contributors.iter().filter_map(|c| c.min).max().unwrap_or(0),
+            max: contributors.iter().filter_map(|c| c.max).min().unwrap_or(u64::MAX),
+            visit: Visit::Names,
+            declared: entries.len(),
+            children: entries.iter().map(|e| e.apps.first().and_then(|a| a.child).unwrap_or(NO_CHILD)).collect(),
+            required_mask,
+            required: Box::new([]),
+            patterns: Box::new([]),
+            name_patterns: entries.iter().map(|_| Box::default()).collect(),
+            additional: None,
+            property_names: None,
+            dependencies: Box::new([]),
+            rest_free: true,
+            strict: true,
+            names,
+        })
+    });
+
     Some(FusedObject {
+        flat,
         names: Names::new(names.into_iter().map(Into::into).collect()),
         entries: entries.into_boxed_slice(),
         resolves_unknown: !absent.is_empty()
@@ -978,6 +1012,9 @@ impl Evaluator<'_, '_> {
     }
 
     pub(super) fn run_fused(&mut self, f: &FusedObject, o: &Map<String, Value>) -> bool {
+        if let Some(plan) = &f.flat {
+            return self.run_strict_object(plan, o);
+        }
         let count = o.len() as u64;
         if f.has_count_bounds {
             for c in f.contributors.iter() {
