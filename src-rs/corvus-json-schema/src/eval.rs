@@ -288,18 +288,36 @@ fn json_hash(v: &Value) -> u64 {
     }
 }
 
+/// A string hash, eight bytes at a time.
 fn str_hash(s: &str) -> u64 {
-    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
-    for &b in s.as_bytes() {
-        h = (h ^ b as u64).wrapping_mul(0x0100_0000_01b3);
+    const K: u64 = 0x9e37_79b9_7f4a_7c15;
+    let b = s.as_bytes();
+    let mut h = (b.len() as u64).wrapping_mul(K);
+    let mut chunks = b.chunks_exact(8);
+    for c in &mut chunks {
+        h = (h.rotate_left(5) ^ u64::from_le_bytes(c.try_into().unwrap())).wrapping_mul(K);
     }
-    h
+    let mut last = [0u8; 8];
+    last[..chunks.remainder().len()].copy_from_slice(chunks.remainder());
+    (h.rotate_left(5) ^ u64::from_le_bytes(last)).wrapping_mul(K)
 }
 
 /// `uniqueItems`: pairwise for short arrays, by hash + equality otherwise.
 pub(crate) fn all_unique(a: &[Value]) -> bool {
     let n = a.len();
     if n < 2 {
+        return true;
+    }
+    // Arrays of strings (the common case: lists of names) compare by length first, without hashing or allocating.
+    if n <= 32 && a.iter().all(Value::is_string) {
+        let s = |i: usize| a[i].as_str().unwrap();
+        for i in 1..n {
+            for j in 0..i {
+                if s(i).len() == s(j).len() && s(i) == s(j) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
     if n <= 16 {

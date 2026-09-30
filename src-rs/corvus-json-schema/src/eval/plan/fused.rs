@@ -675,7 +675,7 @@ fn merge_value_tests(tests: &[ValueTest]) -> Option<Box<[(Value, u64)]>> {
 fn coalesce(apps: Vec<(u16, Option<Child>, Option<NodeId>)>, contributors: &[Contributor]) -> Vec<App> {
     let same = |a: &(u16, Option<Child>, Option<NodeId>), b: &(u16, Option<Child>, Option<NodeId>)| match (&a.1, &b.1) {
         (None, None) => true,
-        (Some(x), Some(y)) => a.2 == b.2 || (x.trivial && y.trivial && x.types == y.types),
+        (Some(x), Some(y)) => a.2 == b.2 || (x.trivial() && y.trivial() && x.types == y.types),
         _ => false,
     };
     let mut used = vec![false; apps.len()];

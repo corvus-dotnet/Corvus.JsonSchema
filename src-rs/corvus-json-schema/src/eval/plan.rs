@@ -31,14 +31,32 @@ pub(crate) struct Child {
     id: NodeId,
     /// The types the child accepts (0 for `false`).
     types: u8,
-    /// The child has nothing to check beyond its types.
-    trivial: bool,
-    /// The child checks only its own value (const, enum, number and string keywords): no children, no calls.
-    leaf: bool,
-    /// The child is nothing but an object plan: an object value enters its loop directly (the C# NestedObject).
-    object: bool,
-    /// The child is nothing but an array plan: an array value enters its loop directly.
-    array: bool,
+    /// What the child's keywords come to, so that entering it skips the dispatch it does not need.
+    shape: Shape,
+}
+
+/// The shape of a node's plan, as its callers enter it.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum Shape {
+    /// Nothing to check beyond the types.
+    Trivial,
+    /// Only its own value (const, enum, number and string keywords): no children, no calls.
+    Leaf,
+    /// Nothing but an object plan: an object value enters its loop directly (the C# NestedObject).
+    Object,
+    /// Nothing but an array plan: an array value enters its loop directly.
+    Array,
+    /// Nothing but in-place applicators (the C# TypeDispatch/Forward entries): straight to them.
+    Apply,
+    /// Anything else, or on an in-place cycle (entered through the guarded path).
+    General,
+}
+
+impl Child {
+    #[inline(always)]
+    fn trivial(&self) -> bool {
+        self.shape == Shape::Trivial
+    }
 }
 
 pub(crate) struct Plan {
@@ -138,6 +156,9 @@ struct ObjectPlan {
     /// Required names checked by lookup (when the mask cannot cover them).
     required: Box<[Box<str>]>,
     patterns: Box<[(Arc<Pattern>, Child)]>,
+    /// For each declared name, the patterns (indexes into `patterns`) it matches, worked out at compile time: only
+    /// undeclared names are tested against the patterns at run time.
+    name_patterns: Box<[Box<[u16]>]>,
     additional: Option<Child>,
     property_names: Option<NodeId>,
     dependencies: Box<[Dependency]>,
@@ -368,8 +389,17 @@ fn str_eq(a: &str, b: &str) -> bool {
         }
         return a == b;
     }
+    // Eight-byte words from the start, then one ending at the last byte (overlapping the previous one): property names
+    // are short enough that a call to memcmp costs more than the compare.
     let word = |s: &[u8], i: usize| u64::from_le_bytes(s[i..i + 8].try_into().unwrap());
-    word(a, 0) == word(b, 0) && word(a, n - 8) == word(b, n - 8) && (n <= 16 || a[8..n - 8] == b[8..n - 8])
+    let mut i = 0;
+    while i + 8 < n {
+        if word(a, i) != word(b, i) {
+            return false;
+        }
+        i += 8;
+    }
+    word(a, n - 8) == word(b, n - 8)
 }
 
 /// Objects up to this size are searched by scanning their keys: comparing lengths first, that is cheaper than hashing
@@ -416,49 +446,11 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
     let target = |id: NodeId| p.fast_target[id as usize];
     let mut plans: Vec<Plan> = nodes.iter().enumerate().map(|(id, n)| plan_node(p, id as NodeId, n, &target)).collect();
     // Hoist the children's type checks now that every plan is known.
-    let summary: Vec<(u8, bool, bool, bool, bool)> = plans
-        .iter()
-        .map(|pl| {
-            let leaf = !pl.guard
-                && pl.body.as_deref().is_some_and(|b| {
-                    b.object.is_none()
-                        && b.array.is_none()
-                        && b.apply.is_empty()
-                        && b.general == 0
-                        && b.unevaluated_items.is_none()
-                });
-            let object = !pl.guard
-                && !p.uses_dynamic_scope
-                && pl.body.as_deref().is_some_and(|b| {
-                    b.object.is_some()
-                        && b.values.is_empty()
-                        && b.number.is_empty()
-                        && b.string.is_empty()
-                        && b.array.is_none()
-                        && b.apply.is_empty()
-                        && b.general == 0
-                        && b.unevaluated_items.is_none()
-                });
-            let array = !pl.guard
-                && !p.uses_dynamic_scope
-                && pl.body.as_deref().is_some_and(|b| {
-                    b.array.is_some()
-                        && b.values.is_empty()
-                        && b.number.is_empty()
-                        && b.string.is_empty()
-                        && b.object.is_none()
-                        && b.fused.is_none()
-                        && b.apply.is_empty()
-                        && b.general == 0
-                        && b.unevaluated_items.is_none()
-                });
-            (pl.types, pl.body.is_none() && !pl.guard, leaf, object, array)
-        })
-        .collect();
+    let summary: Vec<(u8, Shape)> = plans.iter().map(|pl| (pl.types, shape_of(pl, p.uses_dynamic_scope))).collect();
     let resolved = |id: NodeId| {
-        let (types, trivial, leaf, _, array) = summary[id as usize];
-        // Not `object`: a node may still take a fused plan below.
-        Child { id, types, trivial, leaf, object: false, array }
+        let (types, shape) = summary[id as usize];
+        // Not `Object`: a node may still take a fused plan below.
+        Child { id, types, shape: if shape == Shape::Object { Shape::General } else { shape } }
     };
     // Fused object plans, for nodes whose object semantics span in-place applicators.
     // A fused plan applies its contributors' keywords without entering them as nodes, so the dynamic scope below it
@@ -475,12 +467,9 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
     }
     let fused_nodes: Vec<bool> = plans.iter().map(|pl| pl.body.as_ref().is_some_and(|b| b.fused.is_some())).collect();
     let fix = |c: &mut Child| {
-        let (types, trivial, leaf, object, array) = summary[c.id as usize];
+        let (types, shape) = summary[c.id as usize];
         c.types = types;
-        c.trivial = trivial;
-        c.leaf = leaf;
-        c.array = array;
-        c.object = object && !fused_nodes[c.id as usize];
+        c.shape = if shape == Shape::Object && fused_nodes[c.id as usize] { Shape::General } else { shape };
     };
     for body in plans.iter_mut().filter_map(|pl| pl.body.as_deref_mut()) {
         if let Some(o) = &mut body.object {
@@ -491,7 +480,7 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
         if let Some(a) = &mut body.array {
             a.prefix.iter_mut().for_each(fix);
             a.items.iter_mut().for_each(fix);
-            let items = a.items.map_or(Some(ANY), |c| c.trivial.then_some(c.types));
+            let items = a.items.map_or(Some(ANY), |c| c.trivial().then_some(c.types));
             a.simple = items.filter(|_| a.prefix.is_empty() && a.contains.is_none() && !a.unique);
         }
         if let Some((_, c)) = &mut body.unevaluated_items {
@@ -519,8 +508,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
     if n.always_false {
         return Plan { types: 0, guard, body: None };
     }
-    let child =
-        |id: NodeId| Child { id: target(id), types: ANY, trivial: false, leaf: false, object: false, array: false };
+    let child = |id: NodeId| Child { id: target(id), types: ANY, shape: Shape::General };
     let mut ops = Vec::new();
     let mut number = Vec::new();
     let mut string = Vec::new();
@@ -625,6 +613,13 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
             required_mask,
             required: by_lookup.into_boxed_slice(),
             patterns: n.pattern_properties.iter().flatten().map(|pp| (pp.pattern.clone(), child(pp.node))).collect(),
+            name_patterns: declared
+                .iter()
+                .map(|(name, _)| {
+                    let patterns = n.pattern_properties.iter().flatten().enumerate();
+                    patterns.filter(|(_, pp)| pp.pattern.is_match(name)).map(|(j, _)| j as u16).collect()
+                })
+                .collect(),
             additional: n.additional_properties.map(child),
             property_names: n.property_names.map(target),
             dependencies: n
@@ -743,6 +738,25 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
         apply: ops.into_boxed_slice(),
     };
     Plan { types, guard, body: Some(Box::new(body)) }
+}
+
+/// How callers can enter a plan (see `Shape`). The shortcuts skip the scope push, so a program that keeps a dynamic
+/// scope takes them only for leaves; a node on an in-place cycle is entered through its guard.
+fn shape_of(pl: &Plan, dynamic_scope: bool) -> Shape {
+    if pl.guard {
+        return Shape::General;
+    }
+    let Some(b) = pl.body.as_deref() else { return Shape::Trivial };
+    let plain = b.fused.is_none() && b.general == 0 && b.unevaluated_items.is_none();
+    let values = !b.values.is_empty() || !b.number.is_empty() || !b.string.is_empty();
+    let (object, array, apply) = (b.object.is_some(), b.array.is_some(), !b.apply.is_empty());
+    match (plain, values, object, array, apply) {
+        (true, _, false, false, false) => Shape::Leaf,
+        (true, false, true, false, false) if !dynamic_scope => Shape::Object,
+        (true, false, false, true, false) if !dynamic_scope => Shape::Array,
+        (true, false, false, false, true) if !dynamic_scope => Shape::Apply,
+        _ => Shape::General,
+    }
 }
 
 /// Marks every node from which a live dynamic reference is reachable through any child.
@@ -878,21 +892,30 @@ impl Evaluator<'_, '_> {
         if c.types != ANY && !type_ok(c.types, x) {
             return false;
         }
-        if c.trivial {
+        if c.trivial() {
             return true;
         }
         match self.p.plans[c.id as usize].body.as_deref() {
             None => true,
-            Some(b) if c.leaf => run_leaf(b, x),
-            Some(b) if c.object => match x {
+            Some(b) => self.enter(c.shape, b, x),
+        }
+    }
+
+    /// A body entered by shape (its types already tested, and not on an in-place cycle unless `General`).
+    #[inline(always)]
+    fn enter(&mut self, shape: Shape, b: &Body, x: &Value) -> bool {
+        match shape {
+            Shape::Leaf => run_leaf(b, x),
+            Shape::Object => match x {
                 Value::Object(o) => self.run_object(b.object.as_ref().unwrap(), o, x),
                 _ => true,
             },
-            Some(b) if c.array => match x {
+            Shape::Array => match x {
                 Value::Array(a) => self.run_array(b.array.as_ref().unwrap(), a),
                 _ => true,
             },
-            Some(b) => self.run_body(b, x),
+            Shape::Apply => self.run_apply(&b.apply, x),
+            Shape::Trivial | Shape::General => self.run_body(b, x),
         }
     }
 
@@ -934,7 +957,7 @@ impl Evaluator<'_, '_> {
         if c.types != ANY && !type_ok(c.types, x) {
             return false;
         }
-        if c.trivial {
+        if c.trivial() {
             return true;
         }
         let plan = &self.p.plans[c.id as usize];
@@ -942,7 +965,7 @@ impl Evaluator<'_, '_> {
         if plan.guard {
             return self.run_in_place(c.id, x);
         }
-        if c.leaf { run_leaf(b, x) } else { self.run_body(b, x) }
+        self.enter(c.shape, b, x)
     }
 
     /// The anyOf/oneOf branches that can match: those a discriminator selects, or those admitting the instance type.
@@ -1069,7 +1092,7 @@ impl Evaluator<'_, '_> {
             Visit::None => {}
             Visit::Values => {
                 let c = plan.additional.unwrap();
-                if c.trivial {
+                if c.trivial() {
                     if c.types != ANY && !o.values().all(|v| type_ok(c.types, v)) {
                         return false;
                     }
@@ -1122,12 +1145,18 @@ impl Evaluator<'_, '_> {
                         if !self.run_child(plan.children[i], v) {
                             return false;
                         }
-                    }
-                    for (pattern, c) in plan.patterns.iter() {
-                        if pattern.is_match(k) {
-                            matched = true;
-                            if !self.run_child(*c, v) {
+                        for &j in plan.name_patterns[i].iter() {
+                            if !self.run_child(plan.patterns[j as usize].1, v) {
                                 return false;
+                            }
+                        }
+                    } else {
+                        for (pattern, c) in plan.patterns.iter() {
+                            if pattern.is_match(k) {
+                                matched = true;
+                                if !self.run_child(*c, v) {
+                                    return false;
+                                }
                             }
                         }
                     }
@@ -1183,7 +1212,7 @@ impl Evaluator<'_, '_> {
         }
         if let Some(items) = plan.items {
             let rest = &a[prefix..];
-            if items.trivial {
+            if items.trivial() {
                 // A type-only items schema: one tight loop (the C# evaluator's SimpleArray plan), or none for `true`.
                 if !all_of_type(rest, items.types) {
                     return false;

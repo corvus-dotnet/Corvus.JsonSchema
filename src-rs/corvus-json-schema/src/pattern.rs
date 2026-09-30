@@ -26,6 +26,11 @@ pub(crate) struct Pattern {
 enum Matcher {
     /// Matches every string.
     Everything,
+    /// `^literal` (with `$`: the whole string).
+    Literal {
+        text: Box<str>,
+        whole: bool,
+    },
     Sequence(Sequence),
     Regex(regex::Regex),
     Regress(regress::Regex),
@@ -42,6 +47,13 @@ impl Pattern {
     pub fn is_match(&self, s: &str) -> bool {
         match &self.matcher {
             Matcher::Everything => true,
+            Matcher::Literal { text, whole } => {
+                if *whole {
+                    s == &**text
+                } else {
+                    s.starts_with(&**text)
+                }
+            }
             Matcher::Sequence(seq) => seq.is_match(s),
             Matcher::Regex(re) => re.is_match(s),
             Matcher::Regress(re) => re.find(s).is_some(),
@@ -75,7 +87,10 @@ fn choose(pattern: &str) -> Option<Matcher> {
         return Some(Matcher::Everything);
     }
     if let Some(seq) = Sequence::parse(pattern) {
-        return Some(Matcher::Sequence(seq));
+        return Some(match seq.literal() {
+            Some(text) => Matcher::Literal { text: text.into(), whole: seq.to_end },
+            None => Matcher::Sequence(seq),
+        });
     }
     let translated = translate(pattern)?;
     regex::Regex::new(&translated).ok().map(Matcher::Regex)
@@ -210,7 +225,21 @@ impl Sequence {
         Some(Sequence { items: items.into_boxed_slice(), to_end })
     }
 
+    /// The text, when every item is one fixed character.
+    fn literal(&self) -> Option<String> {
+        self.items
+            .iter()
+            .map(|i| {
+                let single = i.min == 1 && i.max == 1 && !i.set.non_ascii && i.set.ascii.count_ones() == 1;
+                single.then(|| i.set.ascii.trailing_zeros() as u8 as char)
+            })
+            .collect()
+    }
+
     fn is_match(&self, s: &str) -> bool {
+        if s.is_ascii() {
+            return self.is_match_ascii(s.as_bytes());
+        }
         let mut chars = s.chars().peekable();
         for item in self.items.iter() {
             let mut n = 0u32;
@@ -228,6 +257,22 @@ impl Sequence {
             }
         }
         !self.to_end || chars.next().is_none()
+    }
+
+    /// The same over ASCII text, a byte per character.
+    fn is_match_ascii(&self, b: &[u8]) -> bool {
+        let mut at = 0;
+        for item in self.items.iter() {
+            let mut n = 0u32;
+            while n < item.max && at < b.len() && item.set.ascii & (1 << b[at]) != 0 {
+                at += 1;
+                n += 1;
+            }
+            if n < item.min {
+                return false;
+            }
+        }
+        !self.to_end || at == b.len()
     }
 }
 
@@ -626,6 +671,9 @@ mod tests {
         "^[0-9]{1,}.[0-9]{1,}.[0-9]{1,}$",
         "\\{.*\\}",
         "^[a-z]{1,2}$",
+        "^abc$",
+        "^\\/",
+        "^es$",
         "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
         "^[Ee][Ss]5|[Ee][Ss]6|[Ee][Ss]7$",
         "^[a-z]*a$",
@@ -672,10 +720,11 @@ mod tests {
 
     #[test]
     fn simple_patterns_take_the_fast_matchers() {
-        for p in
-            ["^[@$_#]", "^[a-zA-Z0-9_\\-]*$", "^x-", "^#[0-9a-fA-F]{6}$", "^[a-z][a-z0-9_]+$", "^\\d{4}-\\d{2}-\\d{2}$"]
-        {
+        for p in ["^[@$_#]", "^[a-zA-Z0-9_\\-]*$", "^#[0-9a-fA-F]{6}$", "^[a-z][a-z0-9_]+$", "^\\d{4}-\\d{2}-\\d{2}$"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Sequence(_)), "{p}");
+        }
+        for p in ["^x-", "^\\/", "^abc$"] {
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::Literal { .. }), "{p}");
         }
         for p in ["^[a-z]*a$", ".+", "^[1-5](?:[0-9]{2}|XX)$", "(base64key|awskms)://(.*)"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Regex(_)), "{p}");
