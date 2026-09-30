@@ -635,8 +635,10 @@ internal static partial class Evaluator
     /// <summary>
     /// <see cref="NodePlan.FusedObject"/>: one pass over the properties applying every branch's resolution for each
     /// name, a second step for the branches whose <c>if</c> is decided by the properties seen, then the required
-    /// names and the unevaluated check. See <see cref="FusedObject"/>.
+    /// names and the unevaluated check. See <see cref="FusedObject"/>. Out of line: the child dispatch that calls it
+    /// is inlined into every object loop.
     /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static bool EvalFusedObject<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TAccess : struct, IDocumentAccess
     {
