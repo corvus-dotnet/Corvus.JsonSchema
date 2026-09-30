@@ -33,6 +33,8 @@ pub(crate) struct Child {
     types: u8,
     /// The child has nothing to check beyond its types.
     trivial: bool,
+    /// The child checks only its own value (const, enum, number and string keywords): no children, no calls.
+    leaf: bool,
 }
 
 pub(crate) struct Plan {
@@ -48,6 +50,12 @@ pub(crate) struct Plan {
 struct Body {
     /// For an object instance, the whole node in one pass (see `fused`), in place of everything below.
     fused: Option<Box<fused::FusedObject>>,
+    /// Instance kinds (`type_mask::OBJECT`, `type_mask::ARRAY`) whose evaluated properties/items the general
+    /// evaluator must track (unevaluatedProperties/unevaluatedItems), and the node it runs.
+    general: u8,
+    node: NodeId,
+    /// unevaluatedItems with a static coverage: the items from this index on, against the child.
+    unevaluated_items: Option<(usize, Child)>,
     /// const and enum.
     values: Box<[Op]>,
     number: Box<[NumberOp]>,
@@ -76,7 +84,8 @@ enum StringOp {
 
 enum Op {
     Const(Value),
-    EnumStrings(Box<[Box<str>]>),
+    /// An enum of strings only.
+    EnumStrings(Names),
     Enum(Box<[Value]>),
     Ref(NodeId),
     AllOf(Box<[Child]>),
@@ -88,8 +97,6 @@ enum Op {
         then: Option<NodeId>,
         else_: Option<NodeId>,
     },
-    /// Evaluated properties/items are tracked: the general evaluator runs the node.
-    General(NodeId),
 }
 
 enum FormatCheck {
@@ -389,10 +396,23 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
     let target = |id: NodeId| p.fast_target[id as usize];
     let mut plans: Vec<Plan> = nodes.iter().enumerate().map(|(id, n)| plan_node(p, id as NodeId, n, &target)).collect();
     // Hoist the children's type checks now that every plan is known.
-    let summary: Vec<(u8, bool)> = plans.iter().map(|pl| (pl.types, pl.body.is_none() && !pl.guard)).collect();
+    let summary: Vec<(u8, bool, bool)> = plans
+        .iter()
+        .map(|pl| {
+            let leaf = !pl.guard
+                && pl.body.as_deref().is_some_and(|b| {
+                    b.object.is_none()
+                        && b.array.is_none()
+                        && b.apply.is_empty()
+                        && b.general == 0
+                        && b.unevaluated_items.is_none()
+                });
+            (pl.types, pl.body.is_none() && !pl.guard, leaf)
+        })
+        .collect();
     let resolved = |id: NodeId| {
-        let (types, trivial) = summary[id as usize];
-        Child { id, types, trivial }
+        let (types, trivial, leaf) = summary[id as usize];
+        Child { id, types, trivial, leaf }
     };
     // Fused object plans, for nodes whose object semantics span in-place applicators.
     for (id, plan) in plans.iter_mut().enumerate() {
@@ -401,9 +421,10 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
         }
     }
     let fix = |c: &mut Child| {
-        let (types, trivial) = summary[c.id as usize];
+        let (types, trivial, leaf) = summary[c.id as usize];
         c.types = types;
         c.trivial = trivial;
+        c.leaf = leaf;
     };
     for body in plans.iter_mut().filter_map(|pl| pl.body.as_deref_mut()) {
         if let Some(o) = &mut body.object {
@@ -414,6 +435,9 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
         if let Some(a) = &mut body.array {
             a.prefix.iter_mut().for_each(fix);
             a.items.iter_mut().for_each(fix);
+        }
+        if let Some((_, c)) = &mut body.unevaluated_items {
+            fix(c);
         }
         for op in body.apply.iter_mut() {
             match op {
@@ -437,11 +461,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
     if n.always_false {
         return Plan { types: 0, guard, body: None };
     }
-    if n.unevaluated_properties.is_some() || n.unevaluated_items.is_some() {
-        let body = Body { apply: Box::new([Op::General(id)]), ..Body::default() };
-        return Plan { types: ANY, guard, body: Some(Box::new(body)) };
-    }
-    let child = |id: NodeId| Child { id: target(id), types: ANY, trivial: false };
+    let child = |id: NodeId| Child { id: target(id), types: ANY, trivial: false, leaf: false };
     let mut ops = Vec::new();
     let mut number = Vec::new();
     let mut string = Vec::new();
@@ -451,7 +471,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
     }
     if let Some(values) = &n.enum_values {
         if values.iter().all(Value::is_string) {
-            ops.push(Op::EnumStrings(values.iter().map(|v| v.as_str().unwrap().into()).collect()));
+            ops.push(Op::EnumStrings(Names::new(values.iter().map(|v| v.as_str().unwrap().into()).collect())));
         } else {
             ops.push(Op::Enum(values.clone().into_boxed_slice()));
         }
@@ -605,6 +625,21 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
         }
     }
 
+    // unevaluatedProperties is left to the general evaluator (or a fused object plan); unevaluatedItems takes the
+    // items after a static prefix when every contribution to the evaluated items is unconditional.
+    let mut general = 0;
+    if n.unevaluated_properties.is_some() {
+        general |= type_mask::OBJECT;
+    }
+    let mut unevaluated_items = None;
+    if let Some(u) = n.unevaluated_items {
+        match static_item_coverage(p, id) {
+            Some(Coverage::All) => {}
+            Some(Coverage::From(from)) => unevaluated_items = Some((from, child(u))),
+            None => general |= type_mask::ARRAY,
+        }
+    }
+
     let types = if n.has_type { n.type_mask } else { ANY };
     if values.is_empty()
         && number.is_empty()
@@ -612,11 +647,16 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
         && object.is_none()
         && array.is_none()
         && ops.is_empty()
+        && general == 0
+        && unevaluated_items.is_none()
     {
         return Plan { types, guard, body: None };
     }
     let body = Body {
         fused: None,
+        general,
+        node: id,
+        unevaluated_items,
         values: values.into_boxed_slice(),
         number: number.into_boxed_slice(),
         string: string.into_boxed_slice(),
@@ -625,6 +665,54 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
         apply: ops.into_boxed_slice(),
     };
     Plan { types, guard, body: Some(Box::new(body)) }
+}
+
+enum Coverage {
+    All,
+    From(usize),
+}
+
+/// The items a node's evaluation always marks evaluated, when that is static: the longest prefixItems of the node and
+/// the contributors it always applies ($ref and allOf chains), or all of them when one has items (or, below the node,
+/// unevaluatedItems). `None` when an in-place child that applies conditionally (anyOf, oneOf, if/then/else, a
+/// dependent schema, a dynamic reference) can mark items, or contains marks them.
+fn static_item_coverage(p: &Program, id: NodeId) -> Option<Coverage> {
+    let mut prefix = 0;
+    let mut all = false;
+    let mut stack = vec![(id, true)];
+    let mut visited = vec![id];
+    while let Some((at, root)) = stack.pop() {
+        let n = &p.nodes[at as usize];
+        if n.always_true || n.always_false {
+            continue;
+        }
+        if n.in_place_cycle || n.dynamic_ref.is_some() || (n.contains.is_some() && n.contains_marks_evaluated) {
+            return None;
+        }
+        prefix = prefix.max(n.prefix_items.as_ref().map_or(0, Vec::len));
+        all |= n.items.is_some() || (!root && n.unevaluated_items.is_some());
+        let conditional: Vec<NodeId> = n
+            .any_of
+            .iter()
+            .flatten()
+            .chain(n.one_of.iter().flatten())
+            .copied()
+            .chain([n.if_, n.then, n.else_].into_iter().flatten())
+            .chain(n.dependencies.iter().flatten().filter_map(|d| d.schema))
+            .collect();
+        for c in conditional {
+            if p.nodes[c as usize].marks_items {
+                return None;
+            }
+        }
+        for c in [n.ref_, n.static_dynamic_ref].into_iter().flatten().chain(n.all_of.iter().flatten().copied()) {
+            if !visited.contains(&c) {
+                visited.push(c);
+                stack.push((c, false));
+            }
+        }
+    }
+    Some(if all { Coverage::All } else { Coverage::From(prefix) })
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -642,7 +730,12 @@ impl Evaluator<'_, '_> {
     #[inline(always)]
     fn run_child(&mut self, c: Child, x: &Value) -> bool {
         (c.types == ANY || type_ok(c.types, x))
-            && (c.trivial || self.p.plans[c.id as usize].body.as_deref().is_none_or(|b| self.run_body(b, x)))
+            && (c.trivial
+                || match self.p.plans[c.id as usize].body.as_deref() {
+                    None => true,
+                    Some(b) if c.leaf => run_leaf(b, x),
+                    Some(b) => self.run_body(b, x),
+                })
     }
 
     /// Evaluates an in-place child under the depth guard.
@@ -659,6 +752,20 @@ impl Evaluator<'_, '_> {
         }
         let ok = self.run(id, x);
         self.depth -= 1;
+        ok
+    }
+
+    /// Evaluates a property name as a string instance, in a buffer reused across names.
+    fn run_name(&mut self, id: NodeId, name: &str) -> bool {
+        let mut buffer = std::mem::take(&mut self.name_buffer);
+        if let Value::String(s) = &mut buffer {
+            s.clear();
+            s.push_str(name);
+        } else {
+            buffer = Value::String(name.to_string());
+        }
+        let ok = self.run(id, &buffer);
+        self.name_buffer = buffer;
         ok
     }
 
@@ -679,8 +786,17 @@ impl Evaluator<'_, '_> {
     }
 
     fn run_body(&mut self, b: &Body, x: &Value) -> bool {
-        if let (Some(f), Value::Object(o)) = (&b.fused, x) {
-            return self.run_fused(f, o);
+        match x {
+            Value::Object(o) => {
+                if let Some(f) = &b.fused {
+                    return self.run_fused(f, o);
+                }
+                if b.general & type_mask::OBJECT != 0 {
+                    return self.eval_node::<Fast>(b.node, x, None);
+                }
+            }
+            Value::Array(_) if b.general & type_mask::ARRAY != 0 => return self.eval_node::<Fast>(b.node, x, None),
+            _ => {}
         }
         for op in b.values.iter() {
             if !self.run_op(op, x) {
@@ -691,7 +807,11 @@ impl Evaluator<'_, '_> {
             Value::Number(n) => b.number.is_empty() || run_number(&b.number, n),
             Value::String(s) => b.string.is_empty() || run_string(&b.string, s),
             Value::Object(o) => b.object.as_ref().is_none_or(|plan| self.run_object(plan, o, x)),
-            Value::Array(a) => b.array.as_ref().is_none_or(|plan| self.run_array(plan, a)),
+            Value::Array(a) => {
+                b.array.as_ref().is_none_or(|plan| self.run_array(plan, a))
+                    && b.unevaluated_items
+                        .is_none_or(|(from, c)| a.iter().skip(from).all(|item| self.run_child(c, item)))
+            }
             _ => true,
         };
         if !ok {
@@ -710,7 +830,7 @@ impl Evaluator<'_, '_> {
         match op {
             Op::Const(c) => json_equal(x, c),
             Op::EnumStrings(values) => match x {
-                Value::String(s) => values.iter().any(|v| str_eq(v, s)),
+                Value::String(s) => values.find(s).is_some(),
                 _ => false,
             },
             Op::Enum(values) => values.iter().any(|v| json_equal(x, v)),
@@ -734,7 +854,6 @@ impl Evaluator<'_, '_> {
                 let next = if self.run_in_place(*cond, x) { then } else { else_ };
                 next.is_none_or(|c| self.run_in_place(c, x))
             }
-            Op::General(id) => self.eval_node::<Fast>(*id, x, None),
         }
     }
 
@@ -799,10 +918,10 @@ impl Evaluator<'_, '_> {
                     {
                         return false;
                     }
-                    if let Some(pn) = plan.property_names {
-                        if !self.run(pn, &Value::String(k.clone())) {
-                            return false;
-                        }
+                    if let Some(pn) = plan.property_names
+                        && !self.run_name(pn, k)
+                    {
+                        return false;
                     }
                 }
             }
@@ -862,6 +981,27 @@ impl Evaluator<'_, '_> {
             }
         }
         !plan.unique || all_unique(a)
+    }
+}
+
+/// A leaf's keywords: its value constraints, then those for the instance's type.
+#[inline]
+fn run_leaf(b: &Body, x: &Value) -> bool {
+    for op in b.values.iter() {
+        let ok = match op {
+            Op::Const(c) => json_equal(x, c),
+            Op::EnumStrings(values) => matches!(x, Value::String(s) if values.find(s).is_some()),
+            Op::Enum(values) => values.iter().any(|v| json_equal(x, v)),
+            _ => unreachable!("a leaf has only value keywords"),
+        };
+        if !ok {
+            return false;
+        }
+    }
+    match x {
+        Value::Number(n) => b.number.is_empty() || run_number(&b.number, n),
+        Value::String(s) => b.string.is_empty() || run_string(&b.string, s),
+        _ => true,
     }
 }
 

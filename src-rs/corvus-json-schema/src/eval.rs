@@ -476,6 +476,8 @@ pub(crate) struct Evaluator<'p, 'c> {
     scope: Vec<u32>,
     depth: u32,
     pub depth_exceeded: bool,
+    /// A string value reused to evaluate property names against propertyNames.
+    name_buffer: Value,
 }
 
 /// Records a keyword result: in collecting mode reports it and accumulates `ok`; in fast mode returns on failure.
@@ -506,7 +508,7 @@ macro_rules! and {
 impl<'p, 'c> Evaluator<'p, 'c> {
     pub fn new(p: &'p Program, c: Option<&'c mut JsonSchemaResultsCollector>) -> Self {
         let annotations: &'p [Option<Vec<AnnotationEntry>>] = if c.is_some() { p.annotations() } else { &[] };
-        Evaluator { p, annotations, c, scope: Vec::new(), depth: 0, depth_exceeded: false }
+        Evaluator { p, annotations, c, scope: Vec::new(), depth: 0, depth_exceeded: false, name_buffer: Value::Null }
     }
 
     #[inline(always)]
