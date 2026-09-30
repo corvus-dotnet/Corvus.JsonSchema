@@ -24,3 +24,7 @@ panic = "abort"
 [profile.bench]
 codegen-units = 1
 lto = "fat"
+
+[profile.profiling]
+inherits = "release"
+debug = "line-tables-only"

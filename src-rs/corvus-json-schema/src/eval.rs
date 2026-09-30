@@ -17,6 +17,8 @@ use crate::options::FormatValidator;
 use crate::results::{JsonSchemaResultsCollector, Message, encode_pointer_segment};
 use crate::uri::resolve_pointer;
 
+mod plan;
+
 /// The compiled program an evaluator runs.
 pub(crate) struct Program {
     pub nodes: Vec<SchemaNode>,
@@ -33,6 +35,8 @@ pub(crate) struct Program {
     pub annotation_sources: Vec<Option<AnnotationSource>>,
     pub annotations: OnceLock<Vec<Option<Vec<AnnotationEntry>>>>,
     pub assert_format_set: bool,
+    /// Fail-fast plans (empty when a dynamic scope is kept, which the general evaluator handles).
+    plans: Vec<plan::Plan>,
 }
 
 const PROPERTY_MAP_THRESHOLD: usize = 8;
@@ -54,7 +58,19 @@ impl Program {
                 let mut current = id;
                 for _ in 0..16 {
                     let n = &nodes[current as usize];
-                    let Some(next) = pure_ref_target(n) else { break };
+                    // Pure-$ref hops, and forwards: a node whose only assertion is one allOf branch (C#'s
+                    // NodePlan.Forward), unless either end is on an in-place cycle, which keeps its guard.
+                    let next = match pure_ref_target(n) {
+                        Some(next) => next,
+                        None => match forward_target(n) {
+                            Some(next)
+                                if !n.in_place_cycle && !nodes[next as usize].in_place_cycle && next != current =>
+                            {
+                                next
+                            }
+                            _ => break,
+                        },
+                    };
                     if uses_dynamic_scope && nodes[next as usize].resource_id != n.resource_id {
                         break;
                     }
@@ -69,7 +85,7 @@ impl Program {
                 n.properties.as_ref().filter(|p| p.len() > PROPERTY_MAP_THRESHOLD).map(|p| p.iter().cloned().collect())
             })
             .collect();
-        Program {
+        let mut program = Program {
             nodes,
             root,
             uses_dynamic_scope,
@@ -81,7 +97,12 @@ impl Program {
             annotation_sources,
             annotations: OnceLock::new(),
             assert_format_set,
+            plans: Vec::new(),
+        };
+        if !program.uses_dynamic_scope {
+            program.plans = plan::compile_plans(&program);
         }
+        program
     }
 
     /// The annotation keywords of every node (computed on the first evaluation with a collector).
@@ -132,6 +153,31 @@ fn pure_ref_target(n: &SchemaNode) -> Option<NodeId> {
         return None;
     }
     n.ref_.or(n.static_dynamic_ref)
+}
+
+/// The branch of a node that is nothing but a one-branch `allOf`, for fail-fast forwarding.
+fn forward_target(n: &SchemaNode) -> Option<NodeId> {
+    let [only] = n.all_of.as_deref()? else { return None };
+    if n.always_true
+        || n.always_false
+        || n.ref_.is_some()
+        || n.static_dynamic_ref.is_some()
+        || n.has_type
+        || n.const_value.is_some()
+        || n.enum_values.is_some()
+        || n.has_number_keywords()
+        || n.has_string_keywords()
+        || n.has_object_keywords()
+        || n.has_array_keywords()
+        || n.dynamic_ref.is_some()
+        || n.any_of.is_some()
+        || n.one_of.is_some()
+        || n.not.is_some()
+        || n.if_.is_some()
+    {
+        return None;
+    }
+    Some(*only)
 }
 
 // Messages (Corvus.Text.Json Strings.resx).
@@ -236,18 +282,20 @@ fn json_hash(v: &Value) -> u64 {
             Num::I(i) => (i as u64).wrapping_mul(K) ^ 0x1234,
             Num::F(f) => f.to_bits().wrapping_mul(K) ^ 0x4321,
         },
-        Value::String(s) => {
-            let mut h: u64 = 0xcbf2_9ce4_8422_2325;
-            for &b in s.as_bytes() {
-                h = (h ^ b as u64).wrapping_mul(0x0100_0000_01b3);
-            }
-            h
-        }
+        Value::String(s) => str_hash(s),
         Value::Array(a) => a.iter().fold(0x54 + a.len() as u64, |h, x| h.wrapping_mul(31).wrapping_add(json_hash(x))),
-        Value::Object(o) => o.iter().fold(0x55u64, |h, (k, x)| {
-            h.wrapping_add(json_hash(&Value::String(k.clone())).wrapping_mul(0x2c1b_3c6d) ^ json_hash(x))
-        }),
+        Value::Object(o) => {
+            o.iter().fold(0x55u64, |h, (k, x)| h.wrapping_add(str_hash(k).wrapping_mul(0x2c1b_3c6d) ^ json_hash(x)))
+        }
     }
+}
+
+fn str_hash(s: &str) -> u64 {
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    for &b in s.as_bytes() {
+        h = (h ^ b as u64).wrapping_mul(0x0100_0000_01b3);
+    }
+    h
 }
 
 /// `uniqueItems`: pairwise for short arrays, by hash + equality otherwise.
@@ -256,7 +304,7 @@ pub(crate) fn all_unique(a: &[Value]) -> bool {
     if n < 2 {
         return true;
     }
-    if n <= 8 {
+    if n <= 16 {
         for i in 1..n {
             for j in 0..i {
                 if json_equal(&a[i], &a[j]) {
@@ -266,13 +314,21 @@ pub(crate) fn all_unique(a: &[Value]) -> bool {
         }
         return true;
     }
-    let mut buckets: HashMap<u64, Vec<usize>> = HashMap::with_capacity(n);
-    for (i, x) in a.iter().enumerate() {
-        let list = buckets.entry(json_hash(x)).or_default();
-        if list.iter().any(|&j| json_equal(x, &a[j])) {
-            return false;
+    // Sort by hash: equal values have equal hashes, so only runs of equal hashes need comparing.
+    let mut hashed: Vec<(u64, u32)> = a.iter().enumerate().map(|(i, x)| (json_hash(x), i as u32)).collect();
+    hashed.sort_unstable();
+    let mut start = 0;
+    for end in 1..=n {
+        if end == n || hashed[end].0 != hashed[start].0 {
+            for i in start + 1..end {
+                for j in start..i {
+                    if json_equal(&a[hashed[i].1 as usize], &a[hashed[j].1 as usize]) {
+                        return false;
+                    }
+                }
+            }
+            start = end;
         }
-        list.push(i);
     }
     true
 }
@@ -387,7 +443,7 @@ impl Selection<'_> {
 
 fn select<'a>(d: Option<&'a Discriminator>, x: &Value) -> Selection<'a> {
     let (Some(d), Value::Object(o)) = (d, x) else { return Selection::All };
-    let Some(value) = o.get(&d.property) else {
+    let Some(value) = plan::get_key(o, &d.property) else {
         return if d.all_require { Selection::None } else { Selection::All };
     };
     let hit = d.known.iter().find(|(k, _)| match (k, value) {
@@ -466,7 +522,13 @@ impl<'p, 'c> Evaluator<'p, 'c> {
     /// Evaluates the program's entry in fast mode.
     pub fn validate(&mut self, x: &Value) -> bool {
         let root = self.p.fast_target[self.p.root as usize];
-        self.eval_node::<Fast>(root, x, None)
+        self.fast(root, x)
+    }
+
+    /// Fail-fast evaluation of a node, through its plan when there are plans.
+    #[inline]
+    fn fast(&mut self, id: NodeId, x: &Value) -> bool {
+        if self.p.plans.is_empty() { self.eval_node::<Fast>(id, x, None) } else { self.run(id, x) }
     }
 
     /// Evaluates the program's entry, reporting to the collector.
@@ -763,7 +825,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
         doc_segment: &dyn Fn() -> String,
     ) -> bool {
         if !M::COLLECT {
-            return self.eval_node::<Fast>(self.p.fast_target[child as usize], value, None);
+            return self.fast(self.p.fast_target[child as usize], value);
         }
         let (target, suffix) = self.resolve(child);
         let pointer = &self.node(target).pointer;
@@ -873,7 +935,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                             self.col().evaluated_keyword(false, Message::Static(PROPERTY_NAME_FAILED), "propertyNames");
                             ok = false;
                         }
-                    } else if !self.eval_node::<Fast>(pn, &name, None) {
+                    } else if !self.fast(self.p.fast_target[pn as usize], &name) {
                         return false;
                     }
                 }
@@ -1040,7 +1102,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                         false
                     }
                 } else {
-                    self.eval_node::<Fast>(self.p.fast_target[contains as usize], item, None)
+                    self.fast(self.p.fast_target[contains as usize], item)
                 };
                 if matched {
                     count += 1;
@@ -1142,8 +1204,10 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 self.col().pop_child_context();
             }
             ok
-        } else {
+        } else if scratch.is_some() {
             self.eval_node::<Fast>(target, x, scratch.as_mut())
+        } else {
+            self.fast(target, x)
         };
         if guarded {
             self.depth -= 1;
@@ -1268,7 +1332,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 self.col().pop_child_context();
                 inner
             } else {
-                self.eval_node::<Fast>(self.p.fast_target[not as usize], x, None)
+                self.fast(self.p.fast_target[not as usize], x)
             };
             check!(self, M, ok, !inner, Message::Static(if inner { MATCHED_NOT } else { DID_NOT_MATCH_NOT }), "not");
         }
