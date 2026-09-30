@@ -2,9 +2,12 @@
 //!
 //! A pattern gets the cheapest matcher that decides it exactly:
 //!
-//! - patterns every string matches (`""`, `.*`, `[\s\S]*` and the like);
+//! - patterns every string matches (`""`, `.*`, `[\s\S]*` and the like), `.+`, and line lengths (`^.{1,256}$`);
 //! - anchored sequences of quantified ASCII character classes and literals (`^[a-z][a-z0-9_]{0,29}$`, `^x-`,
 //!   `^[@$_#]`), matched in one pass over the string (the TypeScript evaluator's class-sequence fast path);
+//! - alternatives of such sequences once groups are multiplied out (`^([a|A]uto)|([n|N]one)$`,
+//!   `^[Ee][Ss]2015(\.([Cc]ore|[Pp]roxy))?$`), sets of literals, and separated lists (`^([a-z]+)(\.[a-z]+)*$`),
+//!   as the C# evaluator's pattern matchers do;
 //! - patterns within the common subset of ECMA-262 and the `regex` crate's syntax, translated with ECMA semantics
 //!   (`\d`/`\w` ASCII-only, ECMA's `\s` and `.`) and run by `regex`, which searches in linear time without
 //!   allocating per match;
@@ -32,6 +35,7 @@ enum Matcher {
         whole: bool,
     },
     Sequence(Sequence),
+    SeparatedList(SeparatedList),
     /// `.+` (`^.+` with `start`): some (the first) character is not a line terminator.
     HasContent {
         start: bool,
@@ -46,7 +50,11 @@ enum Matcher {
     /// Top-level alternatives of literals, each optionally anchored (`^a|b|c$`).
     Alternatives(Box<[Alternative]>),
     /// `^(?=[^SET]+$)(?=(.*\w)).+$`: a non-empty line without a character of the set, containing a word character.
-    ExcludedClassWithWord(CharSet),
+    /// With `bangs` (`^(?=!+[^SET]+$)…`, the set holding `!`), that line follows one or more `!`.
+    ExcludedClassWithWord {
+        set: CharSet,
+        bangs: bool,
+    },
     Regex(regex::Regex),
     Regress(regress::Regex),
 }
@@ -70,6 +78,7 @@ impl Pattern {
                 }
             }
             Matcher::Sequence(seq) => seq.is_match(s),
+            Matcher::SeparatedList(list) => list.is_match(s),
             Matcher::HasContent { start } => {
                 if *start {
                     s.chars().next().is_some_and(|c| !is_line_terminator(c))
@@ -79,9 +88,21 @@ impl Pattern {
             }
             Matcher::Line { min, max } => line_length(s).is_some_and(|n| n >= *min as usize && n <= *max as usize),
             Matcher::Literals(set) => set.contains(s),
-            Matcher::Alternatives(alts) => alts.iter().any(|a| a.is_match(s)),
-            Matcher::ExcludedClassWithWord(set) => {
+            Matcher::Alternatives(alts) => {
+                let ascii = s.is_ascii();
+                alts.iter().any(|a| a.is_match(s, ascii))
+            }
+            Matcher::ExcludedClassWithWord { set, bangs } => {
                 let mut word = false;
+                let s = if *bangs {
+                    let rest = s.trim_start_matches('!');
+                    if rest.len() == s.len() || rest.is_empty() {
+                        return false;
+                    }
+                    rest
+                } else {
+                    s
+                };
                 for c in s.chars() {
                     if set.contains(c) || is_line_terminator(c) {
                         return false;
@@ -142,21 +163,64 @@ impl Literals {
     }
 }
 
-/// One alternative of [`Matcher::Alternatives`].
-struct Alternative {
-    text: Box<str>,
-    start: bool,
-    end: bool,
+/// One alternative of [`Matcher::Alternatives`]: a literal anchored at either end (or neither), a class sequence
+/// anchored at the start, or a fixed-width class sequence anchored at the end.
+enum Alternative {
+    Literal {
+        text: Box<str>,
+        start: bool,
+        end: bool,
+    },
+    /// `^sequence` (with `$` when the sequence's `to_end`).
+    Start(Sequence),
+    /// `sequence$` of `width` characters: matched over the string's last `width` characters.
+    End {
+        seq: Sequence,
+        width: usize,
+    },
+    /// An unanchored `sequence` of `width` characters: matched at each position.
+    Anywhere {
+        seq: Sequence,
+        width: usize,
+    },
 }
 
 impl Alternative {
+    /// Whether the alternative matches `s`, `ascii` saying whether `s` is ASCII.
     #[inline]
-    fn is_match(&self, s: &str) -> bool {
-        match (self.start, self.end) {
-            (true, true) => s == &*self.text,
-            (true, false) => s.starts_with(&*self.text),
-            (false, true) => s.ends_with(&*self.text),
-            (false, false) => s.contains(&*self.text),
+    fn is_match(&self, s: &str, ascii: bool) -> bool {
+        match self {
+            Alternative::Literal { text, start, end } => match (start, end) {
+                (true, true) => s == &**text,
+                (true, false) => s.starts_with(&**text),
+                (false, true) => s.ends_with(&**text),
+                (false, false) => s.contains(&**text),
+            },
+            Alternative::Start(seq) => {
+                if ascii {
+                    seq.is_match_ascii(s.as_bytes())
+                } else {
+                    seq.is_match_chars(s)
+                }
+            }
+            Alternative::End { seq, width } => {
+                if ascii {
+                    return s.len().checked_sub(*width).is_some_and(|at| seq.is_match_ascii(&s.as_bytes()[at..]));
+                }
+                let at = {
+                    let n = s.chars().count();
+                    n.checked_sub(*width).map(|skip| s.char_indices().nth(skip).map_or(s.len(), |(i, _)| i))
+                };
+                at.is_some_and(|at| seq.is_match_chars(&s[at..]))
+            }
+            Alternative::Anywhere { seq, width } => {
+                if ascii {
+                    let b = s.as_bytes();
+                    return b.len() >= *width && (0..=b.len() - width).any(|at| seq.is_match_ascii(&b[at..]));
+                }
+                let n = s.chars().count();
+                n >= *width && s.char_indices().take(n - width + 1).any(|(at, _)| seq.is_match_chars(&s[at..]))
+            }
         }
     }
 }
@@ -195,9 +259,19 @@ fn choose(pattern: &str, unicode: bool) -> Option<Matcher> {
         return None;
     }
     match pattern {
-        ".+" | "." => return Some(Matcher::HasContent { start: false }),
+        ".+" | "." | "(.+)" => return Some(Matcher::HasContent { start: false }),
         "^.+" | "^." => return Some(Matcher::HasContent { start: true }),
         _ => {}
+    }
+    // `^X.*` (no `$`) matches exactly where `^X` does: `.*` can match nothing.
+    if let Some(rest) = pattern.strip_suffix(".*")
+        && rest.starts_with('^')
+        && rest.len() > 1
+        && !ends_with_escape(rest)
+        && !rest.ends_with(['*', '+', '?', '}', '|', '(', '^'])
+        && let Some(m) = choose(rest, unicode)
+    {
+        return Some(m);
     }
     if let Some((min, max)) = line_range(pattern) {
         return Some(Matcher::Line { min, max });
@@ -208,8 +282,11 @@ fn choose(pattern: &str, unicode: bool) -> Option<Matcher> {
     if let Some(alts) = alternatives(pattern) {
         return Some(Matcher::Alternatives(alts));
     }
-    if let Some(set) = excluded_class_with_word(pattern) {
-        return Some(Matcher::ExcludedClassWithWord(set));
+    if let Some(list) = SeparatedList::parse(pattern) {
+        return Some(Matcher::SeparatedList(list));
+    }
+    if let Some((set, bangs)) = excluded_class_with_word(pattern) {
+        return Some(Matcher::ExcludedClassWithWord { set, bangs });
     }
     if let Some(seq) = Sequence::parse(pattern) {
         return Some(match seq.literal() {
@@ -221,9 +298,10 @@ fn choose(pattern: &str, unicode: bool) -> Option<Matcher> {
     regex::Regex::new(&translated).ok().map(Matcher::Regex)
 }
 
-/// `^.{m,n}$` (and `^.*$`, `^.+$`, `^.{m}$`, `^.{m,}$`): the bounds on the length of a line.
+/// `^.{m,n}$` (and `^.*$`, `^.+$`, `^.{m}$`, `^.{m,}$`, each also as `^(.…)$`): the bounds on the length of a line.
 fn line_range(p: &str) -> Option<(u32, u32)> {
-    let q = p.strip_prefix("^.")?.strip_suffix('$')?;
+    let q = p.strip_prefix("^.").or_else(|| p.strip_prefix("^(."))?.strip_suffix('$')?;
+    let q = if p.starts_with("^(") { q.strip_suffix(')')? } else { q };
     let (min, max, next) = parse_quantifier(q.as_bytes(), 0)?;
     (next == q.len() && next > 0 && !q.ends_with('?')).then_some((min, max))
 }
@@ -289,35 +367,168 @@ fn whole_alternatives(p: &str) -> Option<Vec<String>> {
     parts.into_iter().map(literal_text).collect()
 }
 
-/// Two or more top-level alternatives, each a literal optionally anchored at either end (`^a|b|c$`).
+/// At most this many alternatives after expanding groups.
+const MAX_ALTERNATIVES: usize = 64;
+
+/// At most this many alternatives when any is a class sequence: beyond it, trying each in turn is slower than the
+/// `regex` crate's single automaton pass (measured on jsconfig's case-folded `lib` names).
+const MAX_SEQUENCE_ALTERNATIVES: usize = 4;
+
+/// Two or more alternatives once groups of alternatives (and optional groups) are expanded into whole alternatives
+/// (`^a|b|c$`, `^([a|A]uto)|([n|N]one)$`, `^[Ee][Ss]2015(\.([Cc]ore|[Pp]roxy))?$`), each a literal or a class
+/// sequence anchored where its own `^` and `$` say.
 fn alternatives(p: &str) -> Option<Box<[Alternative]>> {
-    let parts = split_alternatives(p)?;
-    if parts.len() < 2 {
+    let c: Vec<char> = p.chars().collect();
+    let (parts, end) = expand(&c, 0)?;
+    // A single alternative is only new here when a group was expanded (Sequence::parse takes the rest).
+    if end != c.len() || parts.is_empty() || (parts.len() == 1 && parts[0] == p) {
         return None;
     }
-    parts
-        .into_iter()
+    let alternatives: Box<[Alternative]> = parts
+        .iter()
         .map(|part| {
-            let (start, part) = part.strip_prefix('^').map_or((false, part), |r| (true, r));
-            let (end, part) = match part.strip_suffix('$') {
-                Some(r) if !r.ends_with('\\') || r.ends_with("\\\\") => (true, r),
+            let (start, part) = part.strip_prefix('^').map_or((false, part.as_str()), |r| (true, r));
+            let (end, body) = match part.strip_suffix('$') {
+                Some(r) if !ends_with_escape(r) => (true, r),
                 _ => (false, part),
             };
-            Some(Alternative { text: literal_text(part)?.into(), start, end })
+            if let Some(text) = literal_text(body) {
+                return Some(Alternative::Literal { text: text.into(), start, end });
+            }
+            let seq = Sequence::parse(&format!("^{body}{}", if end { "$" } else { "" }))?;
+            if start {
+                return Some(Alternative::Start(seq));
+            }
+            let width =
+                seq.items.iter().all(|i| i.min == i.max).then(|| seq.items.iter().map(|i| i.min as usize).sum())?;
+            Some(if end { Alternative::End { seq, width } } else { Alternative::Anywhere { seq, width } })
         })
-        .collect()
+        .collect::<Option<_>>()?;
+    let sequences = alternatives.iter().any(|a| !matches!(a, Alternative::Literal { .. }));
+    (!sequences || alternatives.len() <= MAX_SEQUENCE_ALTERNATIVES).then_some(alternatives)
+}
+
+/// Whether the text ends in an unpaired `\` (so a `$` after it would be escaped).
+fn ends_with_escape(t: &str) -> bool {
+    t.bytes().rev().take_while(|&b| b == b'\\').count() % 2 == 1
+}
+
+/// Expands the alternatives from `i` up to an unmatched `)` or the end: groups of alternatives multiply out, a group
+/// quantified by `?` also contributes the empty alternative, and everything else is copied. `None` for lookarounds,
+/// other quantified groups, or too many alternatives.
+fn expand(c: &[char], mut i: usize) -> Option<(Vec<String>, usize)> {
+    let mut all = Vec::new();
+    let mut branch = vec![String::new()];
+    while i < c.len() {
+        match c[i] {
+            '|' => {
+                all.append(&mut branch);
+                branch.push(String::new());
+                i += 1;
+            }
+            ')' => break,
+            '(' => {
+                i += 1;
+                if c.get(i) == Some(&'?') {
+                    if c.get(i + 1) != Some(&':') {
+                        return None;
+                    }
+                    i += 2;
+                }
+                let (mut inner, next) = expand(c, i)?;
+                if c.get(next) != Some(&')') {
+                    return None;
+                }
+                i = next + 1;
+                match c.get(i) {
+                    Some('?') => {
+                        inner.push(String::new());
+                        i += 1;
+                        if c.get(i) == Some(&'?') {
+                            i += 1;
+                        }
+                    }
+                    Some('{') => {
+                        // An exact count repeats the group; any other bound needs a real regex.
+                        let close = i + c[i..].iter().position(|&x| x == '}')?;
+                        let n: usize = c[i + 1..close].iter().collect::<String>().parse().ok()?;
+                        if n > 16 {
+                            return None;
+                        }
+                        let mut repeated = vec![String::new()];
+                        for _ in 0..n {
+                            if repeated.len() * inner.len() > MAX_ALTERNATIVES {
+                                return None;
+                            }
+                            repeated =
+                                repeated.iter().flat_map(|r| inner.iter().map(move |x| format!("{r}{x}"))).collect();
+                        }
+                        inner = repeated;
+                        i = close + 1;
+                        if c.get(i) == Some(&'?') {
+                            i += 1;
+                        }
+                    }
+                    Some('*' | '+') => return None,
+                    _ => {}
+                }
+                if branch.len() * inner.len() > MAX_ALTERNATIVES {
+                    return None;
+                }
+                branch = branch.iter().flat_map(|b| inner.iter().map(move |x| format!("{b}{x}"))).collect();
+            }
+            '[' => {
+                let start = i;
+                i += 1;
+                if c.get(i) == Some(&'^') {
+                    i += 1;
+                }
+                if c.get(i) == Some(&']') {
+                    i += 1;
+                }
+                while *c.get(i)? != ']' {
+                    i += if c[i] == '\\' { 2 } else { 1 };
+                }
+                i += 1;
+                let text: String = c[start..i].iter().collect();
+                branch.iter_mut().for_each(|b| b.push_str(&text));
+            }
+            '\\' => {
+                let text: String = c.get(i..i + 2)?.iter().collect();
+                branch.iter_mut().for_each(|b| b.push_str(&text));
+                i += 2;
+            }
+            ch => {
+                branch.iter_mut().for_each(|b| b.push(ch));
+                i += 1;
+            }
+        }
+        if all.len() + branch.len() > MAX_ALTERNATIVES {
+            return None;
+        }
+    }
+    all.append(&mut branch);
+    Some((all, i))
 }
 
 /// `^(?=[^SET]+$)(?=(.*\w)).+$` (with `(?:` or `(` around `.*\w`): the excluded set.
-fn excluded_class_with_word(p: &str) -> Option<CharSet> {
+fn excluded_class_with_word(p: &str) -> Option<(CharSet, bool)> {
     // parse_class reads a class body from after `[`, here `^SET]`.
-    let body = p.strip_prefix("^(?=[")?;
+    let (bangs, body) = match p.strip_prefix("^(?=!+[") {
+        Some(body) => (true, body),
+        None => (false, p.strip_prefix("^(?=[")?),
+    };
     let (negated, next) = parse_class(body.as_bytes(), 0)?;
     if !body.starts_with('^') {
         return None;
     }
-    let excluded = CharSet { ascii: !negated.ascii, non_ascii: false };
-    matches!(&body[next..], "+$)(?=(.*\\w)).+$" | "+$)(?=(?:.*\\w)).+$" | "+$)(?=.*\\w).+$").then_some(excluded)
+    let excluded = CharSet { ascii: !negated.ascii, ..CharSet::EMPTY };
+    // The run of `!` ends exactly where the class starts only when the class excludes `!`.
+    if bangs && !excluded.contains('!') {
+        return None;
+    }
+    matches!(&body[next..], "+$)(?=(.*\\w)).+$" | "+$)(?=(?:.*\\w)).+$" | "+$)(?=.*\\w).+$")
+        .then_some((excluded, bangs))
 }
 
 /// The `regex` format: a valid ECMA-262 regular expression (with the `u` flag).
@@ -328,40 +539,54 @@ pub(crate) fn is_valid_ecma_regex(s: &str) -> bool {
 // ---------------------------------------------------------------------------------------------------------------------
 // Class sequences
 
-/// A set of characters: ASCII by bitmask, and either all non-ASCII characters or none.
+/// A set of characters: ASCII by bitmask, then either all or none of the line separators U+2028 and U+2029, and
+/// either all or none of the other non-ASCII characters.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 struct CharSet {
     ascii: u128,
     non_ascii: bool,
+    separators: bool,
 }
 
 impl CharSet {
-    const EMPTY: CharSet = CharSet { ascii: 0, non_ascii: false };
+    const EMPTY: CharSet = CharSet { ascii: 0, non_ascii: false, separators: false };
 
     fn range(lo: u8, hi: u8) -> CharSet {
         let mut ascii = 0u128;
         for c in lo..=hi {
             ascii |= 1 << c;
         }
-        CharSet { ascii, non_ascii: false }
+        CharSet { ascii, ..CharSet::EMPTY }
+    }
+
+    /// ECMA-262's `.`: everything but the line terminators.
+    fn dot() -> CharSet {
+        CharSet { ascii: !((1 << b'\n') | (1 << b'\r')), non_ascii: true, separators: false }
     }
 
     fn union(self, other: CharSet) -> CharSet {
-        CharSet { ascii: self.ascii | other.ascii, non_ascii: self.non_ascii || other.non_ascii }
+        CharSet {
+            ascii: self.ascii | other.ascii,
+            non_ascii: self.non_ascii || other.non_ascii,
+            separators: self.separators || other.separators,
+        }
     }
 
     fn negate(self) -> CharSet {
-        CharSet { ascii: !self.ascii, non_ascii: !self.non_ascii }
+        CharSet { ascii: !self.ascii, non_ascii: !self.non_ascii, separators: !self.separators }
     }
 
     fn disjoint(self, other: CharSet) -> bool {
-        self.ascii & other.ascii == 0 && !(self.non_ascii && other.non_ascii)
+        self.ascii & other.ascii == 0 && !(self.non_ascii && other.non_ascii) && !(self.separators && other.separators)
     }
 
     #[inline]
     fn contains(self, c: char) -> bool {
-        let c = c as u32;
-        if c < 128 { self.ascii & (1 << c) != 0 } else { self.non_ascii }
+        match c as u32 {
+            c if c < 128 => self.ascii & (1 << c) != 0,
+            0x2028 | 0x2029 => self.separators,
+            _ => self.non_ascii,
+        }
     }
 
     fn digit() -> CharSet {
@@ -376,7 +601,7 @@ impl CharSet {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Item {
     set: CharSet,
     min: u32,
@@ -418,7 +643,11 @@ impl Sequence {
                     i += 2;
                     set
                 }
-                b'.' | b'(' | b')' | b'|' | b'^' | b'$' | b'*' | b'+' | b'?' | b'{' | b'}' | b']' => return None,
+                b'.' => {
+                    i += 1;
+                    CharSet::dot()
+                }
+                b'(' | b')' | b'|' | b'^' | b'$' | b'*' | b'+' | b'?' | b'{' | b'}' | b']' => return None,
                 c => {
                     i += 1;
                     CharSet::range(c, c)
@@ -454,16 +683,19 @@ impl Sequence {
         self.items
             .iter()
             .map(|i| {
-                let single = i.min == 1 && i.max == 1 && !i.set.non_ascii && i.set.ascii.count_ones() == 1;
+                let single =
+                    i.min == 1 && i.max == 1 && !i.set.non_ascii && !i.set.separators && i.set.ascii.count_ones() == 1;
                 single.then(|| i.set.ascii.trailing_zeros() as u8 as char)
             })
             .collect()
     }
 
     fn is_match(&self, s: &str) -> bool {
-        if s.is_ascii() {
-            return self.is_match_ascii(s.as_bytes());
-        }
+        if s.is_ascii() { self.is_match_ascii(s.as_bytes()) } else { self.is_match_chars(s) }
+    }
+
+    /// The same over any text, a character at a time.
+    fn is_match_chars(&self, s: &str) -> bool {
         let mut chars = s.chars().peekable();
         for item in self.items.iter() {
             let mut n = 0u32;
@@ -498,6 +730,212 @@ impl Sequence {
         }
         !self.to_end || at == b.len()
     }
+
+    /// Greedily matches the items at the start of `s` (ignoring `to_end`): the bytes taken.
+    fn consume(&self, s: &str) -> Option<usize> {
+        let b = s.as_bytes();
+        let mut at = 0;
+        for item in self.items.iter() {
+            let mut n = 0u32;
+            while n < item.max && at < b.len() {
+                let c = b[at];
+                if c < 0x80 {
+                    if item.set.ascii & (1 << c) == 0 {
+                        break;
+                    }
+                    at += 1;
+                } else {
+                    let ch = s[at..].chars().next()?;
+                    if !item.set.contains(ch) {
+                        break;
+                    }
+                    at += ch.len_utf8();
+                }
+                n += 1;
+            }
+            if n < item.min {
+                return None;
+            }
+        }
+        Some(at)
+    }
+
+    /// Whether greedy matching is exact when `next` can follow the items: every variable item is disjoint from the
+    /// items that can directly follow it (up to the first that cannot match nothing), `next` included.
+    fn greedy_before(items: &[Item], next: CharSet) -> bool {
+        items.iter().enumerate().all(|(i, item)| {
+            if item.min == item.max {
+                return true;
+            }
+            for following in &items[i + 1..] {
+                if !item.set.disjoint(following.set) {
+                    return false;
+                }
+                if following.min > 0 {
+                    return true;
+                }
+            }
+            item.set.disjoint(next)
+        })
+    }
+}
+
+/// A list of items between separators: `^I(SR)*$` or `^I(SR)+$` (`final_` is `None`), or `^(RS)*F$` and
+/// `^(RS)+F$`. The separator is a fixed sequence and no variable class can run into what follows it, so greedy
+/// matching splits the string exactly where the pattern does.
+#[derive(Debug)]
+struct SeparatedList {
+    /// `I` of the first form.
+    first: Option<Sequence>,
+    repeated: Sequence,
+    separator: Sequence,
+    /// `F` of the second form, matched against the whole remainder.
+    final_: Option<Sequence>,
+    min_repeats: u32,
+}
+
+impl SeparatedList {
+    fn is_match(&self, s: &str) -> bool {
+        let mut rest = s;
+        let mut repeats = 0;
+        if let Some(first) = &self.first {
+            let Some(n) = first.consume(rest) else { return false };
+            rest = &rest[n..];
+            loop {
+                if rest.is_empty() {
+                    return repeats >= self.min_repeats;
+                }
+                let Some(n) = self.separator.consume(rest) else { return false };
+                rest = &rest[n..];
+                let Some(n) = self.repeated.consume(rest) else { return false };
+                rest = &rest[n..];
+                repeats += 1;
+            }
+        }
+        let final_ = self.final_.as_ref().expect("a separated list has a first or a final item");
+        loop {
+            if repeats >= self.min_repeats && final_.is_match(rest) {
+                return true;
+            }
+            let Some(n) = self.repeated.consume(rest) else { return false };
+            let Some(m) = self.separator.consume(&rest[n..]) else { return false };
+            rest = &rest[n + m..];
+            repeats += 1;
+        }
+    }
+
+    fn parse(p: &str) -> Option<SeparatedList> {
+        let body = p.strip_prefix('^')?.strip_suffix('$')?;
+        if ends_with_escape(body) {
+            return None;
+        }
+        let b = body.as_bytes();
+        // Top-level groups: (start, end) of each, where end is the index of its `)`.
+        let mut groups = Vec::new();
+        let (mut depth, mut in_class, mut i, mut open) = (0usize, false, 0, 0);
+        while i < b.len() {
+            match b[i] {
+                b'\\' => i += 1,
+                b'[' if !in_class => in_class = true,
+                b']' if in_class => in_class = false,
+                b'(' if !in_class => {
+                    if depth == 0 {
+                        open = i;
+                    }
+                    depth += 1;
+                }
+                b')' if !in_class => {
+                    depth = depth.checked_sub(1)?;
+                    if depth == 0 {
+                        groups.push((open, i));
+                    }
+                }
+                _ => {}
+            }
+            i += 1;
+        }
+        let quantified: Vec<_> = groups.iter().filter(|&&(_, e)| matches!(b.get(e + 1), Some(b'*' | b'+'))).collect();
+        let &&(open, close) = quantified.first().filter(|_| quantified.len() == 1)?;
+        let min_repeats = u32::from(b[close + 1] == b'+');
+        let group = strip_group(&body[open..=close])?;
+        let before = &body[..open];
+        let after = &body[close + 2..];
+        let items = |t: &str| Sequence::parse(&format!("^{t}")).map(|s| s.items.into_vec());
+        let seq = |items: &[Item], to_end| Sequence { items: items.into(), to_end };
+        let fixed = |items: &[Item]| !items.is_empty() && items.iter().all(|i| i.min == i.max && i.min > 0);
+        let g = items(group)?;
+        match (before.is_empty(), after.is_empty()) {
+            // ^I(SR)*$
+            (false, true) => {
+                let first = items(unwrap_group(before)?)?;
+                (1..g.len()).find_map(|k| {
+                    let (separator, repeated) = g.split_at(k);
+                    let next = separator[0].set;
+                    (fixed(separator)
+                        && Sequence::greedy_before(&first, next)
+                        && Sequence::greedy_before(repeated, next))
+                    .then(|| SeparatedList {
+                        first: Some(seq(&first, false)),
+                        repeated: seq(repeated, false),
+                        separator: seq(separator, false),
+                        final_: None,
+                        min_repeats,
+                    })
+                })
+            }
+            // ^(RS)*F$
+            (true, false) => {
+                let final_ = Sequence::parse(&format!("^{}$", unwrap_group(after)?))?;
+                (1..g.len()).find_map(|k| {
+                    let (repeated, separator) = g.split_at(k);
+                    (fixed(separator) && Sequence::greedy_before(repeated, separator[0].set)).then(|| SeparatedList {
+                        first: None,
+                        repeated: seq(repeated, false),
+                        separator: seq(separator, false),
+                        final_: Some(Sequence { items: final_.items.clone(), to_end: true }),
+                        min_repeats,
+                    })
+                })
+            }
+            _ => None,
+        }
+    }
+}
+
+/// The inside of `(...)` or `(?:...)`; `None` for other groups.
+fn strip_group(g: &str) -> Option<&str> {
+    let inner = g.strip_prefix('(')?.strip_suffix(')')?;
+    match inner.strip_prefix("?:") {
+        Some(rest) => Some(rest),
+        None if inner.starts_with('?') => None,
+        None => Some(inner),
+    }
+}
+
+/// A text that is one group wrapping everything, unwrapped; otherwise the text itself.
+fn unwrap_group(t: &str) -> Option<&str> {
+    if t.starts_with('(') && t.ends_with(')') {
+        let inner = strip_group(t)?;
+        // Only when the parentheses enclose the whole text (`(a)(b)` is two groups).
+        let mut depth = 0i32;
+        let mut escaped = false;
+        for c in inner.chars() {
+            match c {
+                _ if escaped => escaped = false,
+                '\\' => escaped = true,
+                '(' => depth += 1,
+                ')' => {
+                    depth -= 1;
+                    if depth < 0 {
+                        return None;
+                    }
+                }
+                _ => {}
+            }
+        }
+        return Some(inner);
+    }
+    Some(t)
 }
 
 /// The set of a class escape (`\d`, `\w`, their negations, or an escaped punctuation character); `None` for `\s`
@@ -961,6 +1399,43 @@ mod tests {
         "^(?=[^a-c\\n]+$)(?=(.*\\w)).+$",
         "^\\-a",
         "[{}[\\]]",
+        "(.+)",
+        "^(.+)$",
+        "^(.*)$",
+        "^a(bc)?$",
+        "^(a|b)c|d(e|f)$",
+        "^([a|A][u|U][t|T][o|O])|([n|N][o|O][n|N][e|E])$",
+        "^[Ee][Ss]2015(\\.([Cc][Oo][Rr][Ee]|[Pp][Rr][Oo][Xx][Yy]))?$",
+        "^[Ee][Ss]([356]|20(1[567]|2[02])|[Nn][Ee][Xx][Tt])$",
+        "^([a-z]+|x)-$",
+        "^a|[0-9]{2}$",
+        "^(a|b)*$",
+        "^(?=a)a|b$",
+        "^/.*",
+        "^a.*",
+        "^a\\\\.*",
+        "(^([0-9]+)\\.([0-9]+)$)|(^\\{[A-F0-9]{2}(-[A-F0-9]{1}){2}\\}$)",
+        "^[0-9]{1,}.[0-9]{1,}$",
+        "^3\\.1\\.\\d+(-.+)?$",
+        "^([A-Za-z_][-A-Za-z0-9_.:]*)$",
+        "^a.c$",
+        "^[a-z].$",
+        "x.y|^z",
+        "^es|ms|x-$",
+        "^(ab){2}$",
+        "^(a|b){2}c$",
+        "^([a-zA-Z0-9]{2,3})(-[a-zA-Z0-9]{1,6})*$",
+        "^([a-z][a-z0-9]{0,3})(\\.[a-z][a-z0-9]{0,3})*$",
+        "^([a-z_$][a-z0-9_$]{0,3}\\.)*([a-zA-Z_$][a-zA-Z0-9_$]{0,3})$",
+        "^([a-z]+)(,[a-z]+)+$",
+        "^(a,)*b$",
+        "^(ab,)+a$",
+        "^a(,a)*$",
+        "^[a-z]*(-[a-z]*)*$",
+        "^(a-)*a-b$",
+        "^(é,)*a$",
+        "^(?=!+[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$",
+        "^(?=!+[^a]+$)(?=(.*\\w)).+$",
     ];
 
     /// Every matcher agrees with regress on strings over an alphabet that exercises classes, anchors and non-ASCII.
@@ -968,7 +1443,8 @@ mod tests {
     fn matchers_agree_with_regress() {
         let alphabet = [
             "a", "b", "z", "A", "X", "Z", "0", "1", "5", "9", "_", "-", ".", ":", "/", "@", "#", "$", "*", "!", "{",
-            "}", "|", " ", "\n", "\u{a0}", "é", "µ", "😀", "\u{2028}", "x-", "es", "ES", "ms", "txt",
+            "}", "|", " ", "\n", "\u{a0}", "é", "µ", "😀", "\u{2028}", "x-", "es", "ES", "ms", "txt", "Au", "to", "No",
+            "ne", "2015", "Co", "re", "20", "15", "22", "2", ",", "a,", "ab,", "a-",
         ];
         let mut seed: u64 = 0x2545_f491_4f6c_dd1d;
         let mut next = || {
@@ -996,30 +1472,67 @@ mod tests {
         for p in ["^x-", "^\\/", "^abc$"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Literal { .. }), "{p}");
         }
-        for p in ["^[a-z]*a$", "^[1-5](?:[0-9]{2}|XX)$", "(base64key|awskms)://(.*)"] {
+        for p in ["^[a-z]*a$", "(base64key|awskms)://(.*)"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Regex(_)), "{p}");
         }
-        for p in [".+", "^.+"] {
+        for p in [".+", "^.+", "(.+)"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::HasContent { .. }), "{p}");
         }
-        for p in ["^.{1,256}$", "^.+$", "^.*$"] {
+        for p in ["^.{1,256}$", "^.+$", "^.*$", "^(.*)$", "^(.+)$"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Line { .. }), "{p}");
         }
         for p in ["^(ab|cd)$", "^(?:es|ES|x-)$"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Literals(_)), "{p}");
         }
-        for p in ["^ab|cd$", "a|b"] {
+        for p in [
+            "^ab|cd$",
+            "a|b",
+            "^([a|A][u|U][t|T][o|O])|([n|N][o|O][n|N][e|E])$",
+            "^[Ee][Ss]2015(\\.([Cc][Oo][Rr][Ee]|[Pp][Rr][Oo][Xx][Yy]))?$",
+            "^[1-5](?:[0-9]{2}|XX)$",
+            "(^([0-9]+)\\.([0-9]+)$)|(^\\{[A-F0-9]{8}(-[A-F0-9]{4}){3}-[A-F0-9]{12}\\}$)",
+            "^([t|T][o|O][p|P])|([c|C][e|E][n|N][t|T][e|E][r|R])|([b|B][o|O][t|T][t|T][o|O][m|M])$",
+            "^([A-Za-z_][-A-Za-z0-9_.:]*)$",
+        ] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Alternatives(_)), "{p}");
+        }
+        for p in [
+            "^([a-zA-Z0-9]{2,3})(-[a-zA-Z0-9]{1,6})*$",
+            "^([a-zA-Z_$][a-zA-Z0-9_$]{0,39}\\.)*([a-zA-Z_$][a-zA-Z0-9_$]{0,39})$",
+            "^([a-z_$][a-z0-9_$]{0,39}\\.)*([a-zA-Z_$][a-zA-Z0-9_$]{0,39})$",
+        ] {
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::SeparatedList(_)), "{p}");
         }
         assert!(matches!(
             compile("^(?=[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$").unwrap().matcher,
-            Matcher::ExcludedClassWithWord(_)
+            Matcher::ExcludedClassWithWord { .. }
         ));
         for p in ["\\bfoo", "^\\p{L}+$"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Regex(_)), "{p}");
         }
         for p in ["^((\\.(?!\\.)\\/)?\\w+\\/?)+$", "^\\-a"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Regress(_)), "{p}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod corpus_patterns {
+    /// Lists which matcher each pattern in `CORVUS_PATTERNS` (corpus<TAB>pattern lines) gets.
+    #[test]
+    #[ignore]
+    fn classify_corpus_patterns() {
+        let Ok(path) = std::env::var("CORVUS_PATTERNS") else { return };
+        for line in std::fs::read_to_string(path).unwrap().lines() {
+            let (corpus, p) = line.split_once('\t').unwrap();
+            let kind = super::compile(p)
+                .map(|c| match &c.matcher {
+                    super::Matcher::Regex(_) => "regex",
+                    super::Matcher::Regress(_) => "regress",
+                    _ => "fast",
+                })
+                .unwrap_or("invalid");
+            println!("{kind}\t{corpus}\t{p}");
         }
     }
 }
