@@ -2,7 +2,7 @@
 
 import { CodeGenerator, GeneratedCode } from './codegen.js';
 import { CollectingProgram, evaluateWithCollector, serializeProgram } from './collecting.js';
-import { CompiledSchema, SchemaCompiler } from './compiler.js';
+import { CompiledSchema, resolveAnnotations, SchemaCompiler } from './compiler.js';
 import { JsonSchemaResultsCollector } from './results.js';
 import { CompileOptions, SchemaCompilationError } from './options.js';
 import * as runtime from './runtime.js';
@@ -48,6 +48,7 @@ function generate(schema: unknown, options?: CompileOptions): { g: GeneratedCode
 }
 
 function collectingProgram(program: CompiledSchema): CollectingProgram {
+  resolveAnnotations(program);
   return {
     nodes: program.nodes,
     root: program.root,
@@ -87,9 +88,10 @@ export function compile(schema: unknown, options?: CompileOptions): Validator {
   } catch (e) {
     throw new SchemaCompilationError(`The schema produced invalid code: ${(e as Error).message}`);
   }
-  const collecting = collectingProgram(program);
+  // The collecting program (annotations included) is built on the first evaluation with a collector.
+  let collecting: CollectingProgram | undefined;
   const evaluate = (x: unknown, collector?: JsonSchemaResultsCollector): boolean =>
-    collector === undefined ? validate(x) : evaluateWithCollector(collecting, x, collector);
+    collector === undefined ? validate(x) : evaluateWithCollector((collecting ??= collectingProgram(program)), x, collector);
   const validator = (g.usesDynamicScope || g.usesDepth ? (x: unknown) => validate(x) : validate) as Validator;
   Object.defineProperty(validator, 'source', { value: source });
   Object.defineProperty(validator, 'evaluate', { value: evaluate });
