@@ -337,7 +337,17 @@ impl Names {
                 *hint = i + 1;
                 Some(i)
             }
-            Lookup::Hashed(table) => table.find(name),
+            Lookup::Hashed(table) => {
+                if let Some(expected) = table.names.get(*hint)
+                    && str_eq(expected, name)
+                {
+                    *hint += 1;
+                    return Some(*hint - 1);
+                }
+                let i = table.find(name)?;
+                *hint = i + 1;
+                Some(i)
+            }
         }
     }
 }
@@ -349,16 +359,15 @@ fn str_eq(a: &str, b: &str) -> bool {
     if a.len() != b.len() {
         return false;
     }
-    if a.len() <= 8 {
-        if a.len() >= 4 {
-            let n = a.len();
-            let head = |s: &[u8]| u32::from_le_bytes([s[0], s[1], s[2], s[3]]);
-            let tail = |s: &[u8]| u32::from_le_bytes([s[n - 4], s[n - 3], s[n - 2], s[n - 1]]);
-            return head(a) == head(b) && tail(a) == tail(b);
-        }
-        return a.iter().zip(b).all(|(x, y)| x == y);
-    }
     let n = a.len();
+    if n <= 8 {
+        if n >= 4 {
+            // Two overlapping four-byte words cover every byte (one load each, no per-byte bounds checks).
+            let word = |s: &[u8], i: usize| u32::from_le_bytes(s[i..i + 4].try_into().unwrap());
+            return word(a, 0) == word(b, 0) && word(a, n - 4) == word(b, n - 4);
+        }
+        return a == b;
+    }
     let word = |s: &[u8], i: usize| u64::from_le_bytes(s[i..i + 8].try_into().unwrap());
     word(a, 0) == word(b, 0) && word(a, n - 8) == word(b, n - 8) && (n <= 16 || a[8..n - 8] == b[8..n - 8])
 }
