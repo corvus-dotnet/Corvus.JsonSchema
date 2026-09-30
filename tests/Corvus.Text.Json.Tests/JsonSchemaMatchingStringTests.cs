@@ -876,6 +876,8 @@ public class JsonSchemaMatchingStringTests
     [DataRow("abcdef", 2, 5, false)]  // 6 chars, above range
     [DataRow("ab", 2, 5, true)]       // boundary: exactly min
     [DataRow("abcde", 2, 5, true)]    // boundary: exactly max
+    [DataRow("a\nb", 2, 5, false)]   // '.' does not match a line terminator
+    [DataRow("a\u2028b", 2, 5, false)]
     public void MatchRangeRegularExpression_WithContext_ValidatesRange(string value, int min, int max, bool expected)
     {
         var collector = new DummyResultsCollector();
@@ -891,9 +893,28 @@ public class JsonSchemaMatchingStringTests
     [DataRow("abc", 2, 5, true)]
     [DataRow("a", 2, 5, false)]
     [DataRow("abcdef", 2, 5, false)]
+    [DataRow("", 0, int.MaxValue, true)]
+    [DataRow("a\rb", 0, int.MaxValue, false)]
+    [DataRow("ab\u2029", 0, int.MaxValue, false)]
+    [DataRow("a\u2027b", 0, int.MaxValue, true)]
     public void MatchRangeRegularExpression_NoContext_ValidatesRange(string value, int min, int max, bool expected)
     {
         bool result = JsonSchemaEvaluation.MatchRangeRegularExpression(Encoding.UTF8.GetBytes(value), min, max);
+        Assert.AreEqual(expected, result);
+    }
+
+    // '.' and '.+': some character that is not a line terminator
+    [TestMethod]
+    [DataRow("a", true)]
+    [DataRow("", false)]
+    [DataRow("\n", false)]
+    [DataRow("\r\n\u2028\u2029", false)]
+    [DataRow("\n\na", true)]
+    [DataRow("\u2027", true)]
+    [DataRow("\u00e9", true)]
+    public void MatchNonEmptyRegularExpression_NeedsACharacterOtherThanALineTerminator(string value, bool expected)
+    {
+        bool result = JsonSchemaEvaluation.MatchNonEmptyRegularExpression(Encoding.UTF8.GetBytes(value));
         Assert.AreEqual(expected, result);
     }
 

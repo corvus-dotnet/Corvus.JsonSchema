@@ -34,6 +34,7 @@ string pattern = EcmaRegexTranslator.TranslateOrFallback(ecmaPattern);
 | ECMAScript Pattern | .NET Translation | Reason |
 |---|---|---|
 | `.` | `[^\n\r\u2028\u2029]` | Dot excludes specific line terminators |
+| `$` | `\z` | ECMAScript `$` matches only at the end; .NET `$` also matches before a final `\n` |
 | `\d` | `[0-9]` | ASCII digits only |
 | `\u{1F600}` | `(?:\uD83D\uDE00)` | Supplementary char → surrogate pair |
 | `(a)\1` | `(a)(?(1)\1)` | Backreference wrapped in conditional |
@@ -91,10 +92,10 @@ Before translating, the code generator classifies patterns:
 
 | Classification | Example | Optimization |
 |----------------|---------|-------------|
-| `Noop` | `.*`, `^.*$` | Skip validation entirely |
-| `NonEmpty` | `.+` | Simple length > 0 check |
+| `Noop` | `.*`, `[\s\S]*` | Skip validation entirely |
+| `NonEmpty` | `.+`, `.` | Some character that is not a line terminator |
 | `Prefix` | `^foo` | `StartsWith("foo")` |
-| `Range` | `[a-z]` | Inline character range check |
+| `Range` | `^.{1,256}$`, `^.*$`, `^.+$` | No line terminator, and a length in range |
 | `FullRegex` | Everything else | Full compiled regex |
 
 ## Cross-References

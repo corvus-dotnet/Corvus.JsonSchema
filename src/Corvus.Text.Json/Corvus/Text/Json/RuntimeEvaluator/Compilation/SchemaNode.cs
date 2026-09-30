@@ -272,19 +272,23 @@ internal sealed class PatternMatcher
     {
         switch (ecmaPattern)
         {
+            // An unanchored .* matches the empty string anywhere, but ECMA-262's '.' excludes line terminators, so the
+            // anchored forms are line-length ranges and an unanchored .+ needs one character that is not a terminator.
             case ".*":
-            case "^.*$":
-            case "^(.*)$":
             case "(.*)":
             case "[\\s\\S]*":
             case "^[\\s\\S]*$":
                 return new PatternMatcher(Kind.Noop, ecmaPattern, null, null, 0, 0);
+            case "^.*$":
+            case "^(.*)$":
+                return new PatternMatcher(Kind.Range, ecmaPattern, null, null, 0, int.MaxValue);
             case ".+":
-            case "^.+$":
-            case "^(.+)$":
             case "(.+)":
             case ".":
                 return new PatternMatcher(Kind.NonEmpty, ecmaPattern, null, null, 0, 0);
+            case "^.+$":
+            case "^(.+)$":
+                return new PatternMatcher(Kind.Range, ecmaPattern, null, null, 1, int.MaxValue);
         }
 
         if (TryParsePrefix(ecmaPattern, out string? prefix))
@@ -351,7 +355,7 @@ internal sealed class PatternMatcher
         return this.kind switch
         {
             Kind.Noop => true,
-            Kind.NonEmpty => utf8Value.Length > 0,
+            Kind.NonEmpty => HasNonLineTerminator(utf8Value),
             Kind.Prefix => utf8Value.StartsWith(this.prefix),
             Kind.Literals => MatchesLiterals(this.literals!, utf8Value),
             Kind.AnchoredLiterals => MatchesAnchoredLiterals(this.literals!, this.anchors!, utf8Value),
@@ -362,7 +366,7 @@ internal sealed class PatternMatcher
             Kind.Range => !ContainsLineTerminator(utf8Value) && RuneCount(utf8Value) >= this.min && RuneCount(utf8Value) <= this.max,
             _ => this.regex!.IsMatch(System.Text.Encoding.UTF8.GetString(utf8Value)),
 #else
-            Kind.Range => !ContainsLineTerminator(utf8Value) && JsonSchemaEvaluation.MatchRangeRegularExpression(utf8Value, this.min, this.max),
+            Kind.Range => JsonSchemaEvaluation.MatchRangeRegularExpression(utf8Value, this.min, this.max),
             _ => JsonSchemaEvaluation.MatchRegularExpression(utf8Value, this.regex!),
 #endif
         };
@@ -1514,6 +1518,30 @@ internal sealed class PatternMatcher
 
         atoms = [.. alternatives[0]];
         return true;
+    }
+
+    /// <summary>Whether the value has a character other than a line terminator (what an unanchored <c>.</c> needs).</summary>
+    private static bool HasNonLineTerminator(ReadOnlySpan<byte> value)
+    {
+        int i = 0;
+        while (i < value.Length)
+        {
+            byte b = value[i];
+            if (b == (byte)'\n' || b == (byte)'\r')
+            {
+                i++;
+            }
+            else if (b == 0xE2 && i + 2 < value.Length && value[i + 1] == 0x80 && (value[i + 2] == 0xA8 || value[i + 2] == 0xA9))
+            {
+                i += 3;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool ContainsLineTerminator(ReadOnlySpan<byte> value)

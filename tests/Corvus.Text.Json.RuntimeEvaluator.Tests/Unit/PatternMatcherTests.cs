@@ -92,6 +92,16 @@ public class PatternMatcherTests
         "^[\\s\\S]*$",
         "^[^\\s]+$",
         "^\\D*$",
+        ".*",
+        "(.*)",
+        "^.*$",
+        "^(.*)$",
+        ".+",
+        "(.+)",
+        ".",
+        "^.+$",
+        "^(.+)$",
+        "[\\s\\S]*",
     ];
 
     private static readonly string[] Inputs =
@@ -114,6 +124,7 @@ public class PatternMatcherTests
         "3.1.0", "3.1.0-beta", "3.1", "3.2.0", "3.1.0-", "{a}", "{", "}", "a{b}c", "{\n}", "{a\nb}", "1.2", "{ABCDEF01-1234-ABCD-EF01-123456789ABC}", "{abcdef01-1234-abcd-ef01-123456789abc}", "1.2.3",
         "a\u00a0b", "a\u3000b", "\u00a0", "\ufeff", "\u2028", "a\u1680b", "User.env.x", "UserDefault.x", "UserDefault.extended.x", "User.env", "UserXenv.x", "\\abc\\d", "\\a\\", "$a", "a$", "abc.de", "ab.c.d",
         "a/b", "./a/b", "a//b", "a/", "../a", "a|b|c", "a|", "|a", "ab|cd", "ab||cd", "1234567", "12", "a\tb", "a\vb", "\v", "\f", "x\u0085y", "é.é", "日本.語",
+        "\n", "\r", "\r\n", "\n\n", "\u2029", "\u2028\u2029", "\na", "a\r",
         "ab-c-d", "ab-cdefghi", "a-b", "abc-", "aB", "a.bC", "a.b.C", "A.b", "_$.a$", "a.B.c.D", "12µs", "µs", "12ms", "12 µs", "!", "!!a", "a!b", "?", "!?",
     ];
 

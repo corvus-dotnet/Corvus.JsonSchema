@@ -835,22 +835,22 @@ main-docs:
       - {index: 5, language: powershell, lines: [167, 177]}
   - path: "docs/EcmaRegexTranslations.md"
     blocks:
-      - {index: 0, language: , lines: [39, 42]}
-      - {index: 1, language: , lines: [116, 122]}
-      - {index: 2, language: , lines: [132, 135]}
-      - {index: 3, language: , lines: [139, 142]}
-      - {index: 4, language: , lines: [146, 149]}
-      - {index: 5, language: , lines: [153, 156]}
-      - {index: 6, language: , lines: [177, 183]}
-      - {index: 7, language: , lines: [189, 195]}
-      - {index: 8, language: , lines: [259, 262]}
-      - {index: 9, language: , lines: [266, 269]}
-      - {index: 10, language: , lines: [308, 314]}
-      - {index: 11, language: , lines: [343, 346]}
-      - {index: 12, language: , lines: [373, 380]}
-      - {index: 13, language: , lines: [396, 399]}
-      - {index: 14, language: , lines: [407, 410]}
-      - {index: 15, language: , lines: [414, 417]}
+      - {index: 0, language: , lines: [40, 43]}
+      - {index: 1, language: , lines: [127, 133]}
+      - {index: 2, language: , lines: [143, 146]}
+      - {index: 3, language: , lines: [150, 153]}
+      - {index: 4, language: , lines: [157, 160]}
+      - {index: 5, language: , lines: [164, 167]}
+      - {index: 6, language: , lines: [188, 194]}
+      - {index: 7, language: , lines: [200, 206]}
+      - {index: 8, language: , lines: [270, 273]}
+      - {index: 9, language: , lines: [277, 280]}
+      - {index: 10, language: , lines: [319, 325]}
+      - {index: 11, language: , lines: [354, 357]}
+      - {index: 12, language: , lines: [384, 391]}
+      - {index: 13, language: , lines: [407, 410]}
+      - {index: 14, language: , lines: [418, 421]}
+      - {index: 15, language: , lines: [425, 428]}
   - path: "docs/EcmaRegexTranslator.md"
     blocks:
       - {index: 0, language: csharp, lines: [19, 27], category: compilable, verified: false}

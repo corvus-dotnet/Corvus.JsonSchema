@@ -8,6 +8,7 @@ Where an ECMAScript construct has identical semantics in .NET, it is passed thro
 
 - [Character Shorthands](#character-shorthands)
 - [Dot (`.`)](#dot-)
+- [End Anchor (`$`)](#end-anchor-)
 - [Word Boundaries (`\b`, `\B`)](#word-boundaries-b-b)
 - [Unicode Escapes (`\u`, `\u{...}`)](#unicode-escapes-u-u)
 - [Literal Non-BMP Characters](#literal-non-bmp-characters)
@@ -80,6 +81,16 @@ ECMAScript `.` excludes four line terminators. .NET `.` only excludes `\n`.
 | `.` | `[^\n\r\u2028\u2029]` |
 
 This ensures `\r`, `\u2028` (Line Separator), and `\u2029` (Paragraph Separator) are excluded, matching ECMAScript semantics.
+
+---
+
+## End Anchor (`$`)
+
+Without the `m` flag (JSON Schema patterns have no flags), ECMAScript `$` matches only at the end of the input. .NET `$` also matches before a final `\n`, so `^abc$` would accept `"abc\n"`.
+
+| ECMAScript | .NET Translation |
+|---|---|
+| `$` | `\z` |
 
 ---
 
@@ -478,7 +489,7 @@ The following ECMAScript constructs have identical semantics in .NET and are pas
 | Construct | Description |
 |---|---|
 | Literal characters | `a`, `Z`, `0`, etc. |
-| `^`, `$` | Anchors |
+| `^` | Start anchor |
 | `*`, `+`, `?`, `{n}`, `{n,}`, `{n,m}` | Quantifiers |
 | `*?`, `+?`, `??` | Non-greedy quantifiers |
 | `(...)` | Capturing groups |

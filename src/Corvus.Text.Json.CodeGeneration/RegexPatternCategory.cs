@@ -16,13 +16,13 @@ internal enum RegexPatternCategory
     FullRegex,
 
     /// <summary>
-    /// The pattern always matches any string (e.g. <c>.*</c>, <c>^.*$</c>, <c>[\s\S]*</c>).
+    /// The pattern always matches any string (e.g. <c>.*</c>, <c>[\s\S]*</c>, <c>^[\s\S]*$</c>).
     /// No validation is required.
     /// </summary>
     Noop,
 
     /// <summary>
-    /// The pattern matches any non-empty string (e.g. <c>.+</c>, <c>^.+$</c>, <c>.</c>).
+    /// The pattern matches any string with a character that is not a line terminator (<c>.+</c>, <c>(.+)</c>, <c>.</c>).
     /// </summary>
     NonEmpty,
 
@@ -33,7 +33,8 @@ internal enum RegexPatternCategory
     Prefix,
 
     /// <summary>
-    /// The pattern matches strings whose length is within a range (e.g. <c>^.{1,256}$</c>).
+    /// The pattern matches strings without a line terminator whose length is within a range (e.g. <c>^.{1,256}$</c>,
+    /// <c>^.*$</c>, <c>^.+$</c>).
     /// </summary>
     Range,
 }

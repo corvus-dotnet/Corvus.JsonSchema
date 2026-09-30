@@ -43,7 +43,7 @@ internal static partial class CodeGenerationExtensions
     private const string MutableClassNameKey = "CSharp_JsonSchema_MutableClassNameKey";
 
     private static readonly System.Text.RegularExpressions.Regex PrefixPattern =
-        new(@"^\^([a-zA-Z0-9\-_/@.]+)(\.\*)?$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        new(@"^\^([a-zA-Z0-9\-_/@]+)(\.\*)?$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     private static readonly System.Text.RegularExpressions.Regex RangePattern =
         new(@"^\^\.\{([0-9]+),([0-9]+)\}\$$", System.Text.RegularExpressions.RegexOptions.Compiled);
@@ -56,14 +56,21 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The classification of the pattern.</returns>
     internal static RegexPatternCategory ClassifyRegexPattern(string pattern)
     {
-        if (pattern is ".*" or "^.*$" or "^(.*)$" or "(.*)" or "[\\s\\S]*" or "^[\\s\\S]*$")
+        // ECMA-262's '.' does not match a line terminator: an unanchored .* matches anything, but the anchored forms
+        // (and .+) are line-length ranges, and an unanchored .+ needs one character that is not a line terminator.
+        if (pattern is ".*" or "(.*)" or "[\\s\\S]*" or "^[\\s\\S]*$")
         {
             return RegexPatternCategory.Noop;
         }
 
-        if (pattern is ".+" or "^.+$" or "^(.+)$" or "(.+)" or ".")
+        if (pattern is ".+" or "(.+)" or ".")
         {
             return RegexPatternCategory.NonEmpty;
+        }
+
+        if (pattern is "^.*$" or "^(.*)$" or "^.+$" or "^(.+)$")
+        {
+            return RegexPatternCategory.Range;
         }
 
         if (PrefixPattern.IsMatch(pattern))
@@ -97,6 +104,14 @@ internal static partial class CodeGenerationExtensions
     /// <returns>A tuple of (minimum, maximum) length values.</returns>
     internal static (int Min, int Max) ExtractRegexRange(string pattern)
     {
+        switch (pattern)
+        {
+            case "^.*$" or "^(.*)$":
+                return (0, int.MaxValue);
+            case "^.+$" or "^(.+)$":
+                return (1, int.MaxValue);
+        }
+
         System.Text.RegularExpressions.Match match = RangePattern.Match(pattern);
         return (int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture), int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture));
     }

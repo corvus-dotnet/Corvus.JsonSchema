@@ -992,7 +992,7 @@ internal static partial class CodeGeneratorExtensions
         return category switch
         {
             RegexPatternCategory.Noop => "true",
-            RegexPatternCategory.NonEmpty => $"{propertyNameExpression}.Length > 0",
+            RegexPatternCategory.NonEmpty => $"JsonSchemaEvaluation.MatchNonEmptyRegularExpression({propertyNameExpression})",
             RegexPatternCategory.Prefix => $"{propertyNameExpression}.StartsWith({SymbolDisplay.FormatLiteral(CodeGenerationExtensions.ExtractRegexPrefix(declaration.Pattern), true)}u8)",
             RegexPatternCategory.Range => $"JsonSchemaEvaluation.MatchRangeRegularExpression({propertyNameExpression}, {CodeGenerationExtensions.ExtractRegexRange(declaration.Pattern).Min}, {CodeGenerationExtensions.ExtractRegexRange(declaration.Pattern).Max})",
             _ => $"JsonSchemaEvaluation.MatchRegularExpression({propertyNameExpression}, {generator.JsonSchemaClassName()}.{generator.GetStaticReadOnlyFieldNameInScope(declaration.Keyword.Keyword, rootScope: generator.JsonSchemaClassScope(), suffix: regexIndex)})",

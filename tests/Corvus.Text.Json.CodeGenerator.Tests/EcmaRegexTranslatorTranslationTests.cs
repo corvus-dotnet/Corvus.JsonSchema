@@ -131,7 +131,7 @@ public class EcmaRegexTranslatorTranslationTests
     [DataRow(@"\P{punct}", @"\P{P}")]                           // Negated punct
     [DataRow(@"\p{Combining_Mark}", @"\p{M}")]                  // Combining_Mark → M (Mark)
     [DataRow(@"\P{Combining_Mark}", @"\P{M}")]                  // Negated Combining_Mark
-    [DataRow(@"^\p{digit}+$", @"^\p{Nd}+$")]                   // digit in context
+    [DataRow(@"^\p{digit}+$", @"^\p{Nd}+\z")]                   // digit in context
     [DataRow(@"\p{gc=digit}", @"\p{Nd}")]                       // gc= prefix with alias
     [DataRow(@"\p{General_Category=digit}", @"\p{Nd}")]         // General_Category= prefix with alias
     public void GeneralCategoryAliasesTranslateCorrectly(string ecma, string expected)
@@ -303,10 +303,10 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow("^abc$", "^abc$")]
+    [DataRow("^abc$", @"^abc\z")]
     [DataRow("a|b|c", "a|b|c")]
-    [DataRow("^(a|b)$", "^(a|b)$")]
-    public void AnchorsAndAlternationPassThrough(string ecma, string expected)
+    [DataRow("^(a|b)$", @"^(a|b)\z")]
+    public void AnchorsAndAlternationTranslateCorrectly(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
@@ -321,7 +321,7 @@ public class EcmaRegexTranslatorTranslationTests
         // ECMAScript: ^\d{4}-\d{2}-\d{2}$
         string ecma = @"^\d{4}-\d{2}-\d{2}$";
         string result = EcmaRegexTranslator.Translate(ecma);
-        Assert.AreEqual("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", result);
+        Assert.AreEqual(@"^[0-9]{4}-[0-9]{2}-[0-9]{2}\z", result);
     }
 
     [TestMethod]
@@ -471,7 +471,7 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow("^\U0001F432*$", @"^(?:\uD83D\uDC32)*$")]                // 🐲* — quantifier on whole code point
+    [DataRow("^\U0001F432*$", @"^(?:\uD83D\uDC32)*\z")]                // 🐲* — quantifier on whole code point
     [DataRow("\U0001F432", @"(?:\uD83D\uDC32)")]                       // bare literal
     [DataRow("\U0001F432+", @"(?:\uD83D\uDC32)+")]                     // quantifier +
     [DataRow("\U0001F432?", @"(?:\uD83D\uDC32)?")]                     // quantifier ?

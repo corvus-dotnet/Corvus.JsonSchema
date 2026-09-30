@@ -19,6 +19,7 @@ namespace Corvus.Text.Json.CodeGeneration;
 /// <item><c>\s</c>, <c>\S</c>: ECMAScript includes <c>\uFEFF</c> but not <c>\x85</c>.</item>
 /// <item><c>\b</c>, <c>\B</c>: Word boundary uses ASCII <c>\w</c> definition.</item>
 /// <item><c>.</c> (dot): ECMAScript excludes <c>\n</c>, <c>\r</c>, <c>\u2028</c>, <c>\u2029</c>.</item>
+/// <item><c>$</c>: ECMAScript (without the <c>m</c> flag) matches only at the end of the input, so it becomes <c>\z</c>; .NET's <c>$</c> also matches before a final <c>\n</c>.</item>
 /// <item><c>\u{XXXXX}</c>: Converted to <c>\uXXXX</c> or surrogate pair escapes.</item>
 /// <item><c>\p{...}</c>: Unicode property names mapped to .NET equivalents.</item>
 /// </list>
@@ -311,6 +312,11 @@ internal static class EcmaRegexTranslator
             else if (ecmaPattern[i] == '.')
             {
                 maxLen += DotExpansion.Length;
+                i++;
+            }
+            else if (ecmaPattern[i] == '$')
+            {
+                maxLen += 2; // \z
                 i++;
             }
             else if (char.IsHighSurrogate(ecmaPattern[i]) && i + 1 < ecmaPattern.Length && char.IsLowSurrogate(ecmaPattern[i + 1]))
@@ -848,6 +854,18 @@ internal static class EcmaRegexTranslator
                 {
                     case '.':
                         status = Emit(DotExpansion);
+                        if (status != OperationStatus.Done)
+                        {
+                            return status;
+                        }
+
+                        _in++;
+                        break;
+
+                    case '$':
+                        // Without the m flag, ECMAScript's $ matches only at the end of the input; .NET's $ also
+                        // matches before a final \n.
+                        status = Emit(@"\z");
                         if (status != OperationStatus.Done)
                         {
                             return status;
