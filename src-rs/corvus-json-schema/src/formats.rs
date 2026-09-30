@@ -364,45 +364,68 @@ pub(crate) fn uuid(s: &str) -> bool {
 }
 
 pub(crate) fn ipv4(s: &str) -> bool {
-    let parts: Vec<&str> = s.split('.').collect();
-    parts.len() == 4
-        && parts.iter().all(|p| {
-            !p.is_empty()
-                && p.len() <= 3
-                && p.bytes().all(|c| c.is_ascii_digit())
-                && (p.len() == 1 || !p.starts_with('0'))
-                && p.parse::<u32>().is_ok_and(|v| v <= 255)
-        })
+    let mut parts = 0;
+    for p in s.split('.') {
+        parts += 1;
+        let b = p.as_bytes();
+        if parts > 4
+            || b.is_empty()
+            || b.len() > 3
+            || !b.iter().all(u8::is_ascii_digit)
+            || (b.len() > 1 && b[0] == b'0')
+        {
+            return false;
+        }
+        if b.iter().fold(0u32, |v, &c| v * 10 + u32::from(c - b'0')) > 255 {
+            return false;
+        }
+    }
+    parts == 4
 }
 
 pub(crate) fn ipv6(s: &str) -> bool {
-    if s.len() < 2 || !s.bytes().all(|c| c.is_ascii_hexdigit() || c == b':' || c == b'.') {
+    // A valid address is at most 51 characters (an IPv4 tail after six groups), so longer text fails without a copy.
+    if s.len() < 2 || s.len() > 64 || !s.bytes().all(|c| c.is_ascii_hexdigit() || c == b':' || c == b'.') {
         return false;
     }
-    let mut tail = s.to_string();
-    if s.contains('.') {
-        let last_colon = match s.rfind(':') {
-            Some(i) => i,
-            None => return false,
+    // An IPv4 tail counts as two groups: check it, then read the address with "0:0" in its place.
+    let mut buf = [0u8; 67];
+    let tail = if s.contains('.') {
+        let Some(last_colon) = s.rfind(':') else {
+            return false;
         };
         if !ipv4(&s[last_colon + 1..]) {
             return false;
         }
-        tail = format!("{}0:0", &s[..=last_colon]);
-    }
+        let head = &s.as_bytes()[..=last_colon];
+        buf[..head.len()].copy_from_slice(head);
+        buf[head.len()..head.len() + 3].copy_from_slice(b"0:0");
+        std::str::from_utf8(&buf[..head.len() + 3]).unwrap()
+    } else {
+        s
+    };
     let hex_ok = |p: &str| !p.is_empty() && p.len() <= 4 && p.bytes().all(|c| c.is_ascii_hexdigit());
-    let parts =
-        |x: &str| -> Vec<String> { if x.is_empty() { vec![] } else { x.split(':').map(String::from).collect() } };
+    // The number of groups, when every one is valid.
+    let groups = |x: &str| -> Option<usize> {
+        if x.is_empty() {
+            return Some(0);
+        }
+        let mut n = 0;
+        for p in x.split(':') {
+            if !hex_ok(p) {
+                return None;
+            }
+            n += 1;
+        }
+        Some(n)
+    };
     if let Some(dbl) = tail.find("::") {
         if tail[dbl + 1..].contains("::") {
             return false;
         }
-        let left = parts(&tail[..dbl]);
-        let right = parts(&tail[dbl + 2..]);
-        return left.iter().all(|p| hex_ok(p)) && right.iter().all(|p| hex_ok(p)) && left.len() + right.len() < 8;
+        return matches!((groups(&tail[..dbl]), groups(&tail[dbl + 2..])), (Some(l), Some(r)) if l + r < 8);
     }
-    let all: Vec<&str> = tail.split(':').collect();
-    all.len() == 8 && all.iter().all(|p| hex_ok(p))
+    groups(tail) == Some(8)
 }
 
 fn ldh_label(l: &str) -> bool {
@@ -907,5 +930,92 @@ mod tests {
         assert!(idn_hostname("실례.테스트") && !idn_hostname("〮실례.테스트"));
         assert!(URI_RE.is_match("http://example.com/a?b#c") && !URI_RE.is_match("//example.com"));
         assert!(DURATION_RE.is_match("P4DT12H30M5S") && !DURATION_RE.is_match("PT1D"));
+    }
+
+    /// The straightforward (allocating) readings of the IP address formats.
+    fn reference_ipv4(s: &str) -> bool {
+        let parts: Vec<&str> = s.split('.').collect();
+        parts.len() == 4
+            && parts.iter().all(|p| {
+                !p.is_empty()
+                    && p.len() <= 3
+                    && p.bytes().all(|c| c.is_ascii_digit())
+                    && (p.len() == 1 || !p.starts_with('0'))
+                    && p.parse::<u32>().is_ok_and(|v| v <= 255)
+            })
+    }
+
+    fn reference_ipv6(s: &str) -> bool {
+        if s.len() < 2 || !s.bytes().all(|c| c.is_ascii_hexdigit() || c == b':' || c == b'.') {
+            return false;
+        }
+        let mut tail = s.to_string();
+        if s.contains('.') {
+            let Some(last_colon) = s.rfind(':') else { return false };
+            if !reference_ipv4(&s[last_colon + 1..]) {
+                return false;
+            }
+            tail = format!("{}0:0", &s[..=last_colon]);
+        }
+        let hex_ok = |p: &str| !p.is_empty() && p.len() <= 4 && p.bytes().all(|c| c.is_ascii_hexdigit());
+        let parts =
+            |x: &str| -> Vec<String> { if x.is_empty() { vec![] } else { x.split(':').map(String::from).collect() } };
+        if let Some(dbl) = tail.find("::") {
+            if tail[dbl + 1..].contains("::") {
+                return false;
+            }
+            let (left, right) = (parts(&tail[..dbl]), parts(&tail[dbl + 2..]));
+            return left.iter().all(|p| hex_ok(p)) && right.iter().all(|p| hex_ok(p)) && left.len() + right.len() < 8;
+        }
+        let all: Vec<&str> = tail.split(':').collect();
+        all.len() == 8 && all.iter().all(|p| hex_ok(p))
+    }
+
+    #[test]
+    fn ip_addresses_match_the_reference_readings() {
+        let seeds = [
+            "1.2.3.4",
+            "255.255.255.255",
+            "0.0.0.0",
+            "::",
+            "::1",
+            "1::",
+            "1:2:3:4:5:6:7:8",
+            "fe80::1:2:3:4",
+            "::ffff:192.168.0.1",
+            "1:2:3:4:5:6:1.2.3.4",
+            "abcd:ef01:2345:6789:abcd:ef01:2345:6789",
+            "1:2:3:4:5:6:7::",
+            "::2:3:4:5:6:7:8",
+        ];
+        let alphabet = b"0123456789abcdefABCDEF:.g ";
+        let mut state = 0x2545_f491_4f6c_dd1du64;
+        let mut next = |n: usize| {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            (state % n as u64) as usize
+        };
+        for seed in seeds {
+            for _ in 0..4000 {
+                let mut b = seed.as_bytes().to_vec();
+                for _ in 0..1 + next(3) {
+                    let at = next(b.len() + 1);
+                    match next(4) {
+                        0 if at < b.len() => {
+                            b.remove(at);
+                        }
+                        1 if at < b.len() => b[at] = alphabet[next(alphabet.len())],
+                        2 => b.insert(at, alphabet[next(alphabet.len())]),
+                        _ => b.extend_from_within(..next(b.len() + 1)),
+                    }
+                }
+                let s = std::str::from_utf8(&b).unwrap();
+                assert_eq!(ipv4(s), reference_ipv4(s), "ipv4 {s:?}");
+                assert_eq!(ipv6(s), reference_ipv6(s), "ipv6 {s:?}");
+            }
+        }
+        let long = "1:".repeat(40) + "1";
+        assert_eq!(ipv6(&long), reference_ipv6(&long));
     }
 }
