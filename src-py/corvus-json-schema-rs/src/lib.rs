@@ -11,7 +11,7 @@ use std::ptr::addr_of_mut;
 use std::sync::Arc;
 
 use corvus_json_schema::{
-    ArrayView, CompileOptions, Dialect, DocumentResolver, FormatValidator, Instance, JsonSchemaResultsCollector,
+    ArrayView, CompileOptions, Dialect, DocumentResolver, FormatValidator, Instance, JsonSchemaResultsCollector, Kind,
     ObjectView, ResultsLevel, SchemaResult, Validator, View,
 };
 use pyo3::create_exception;
@@ -270,6 +270,46 @@ impl<'a> Instance<'a> for PyInstance<'a> {
             }
         }
         self.unsupported()
+    }
+
+    /// The kind from the type alone: no UTF-8 for a string, no conversion for a number. What `view` falls back on
+    /// (nesting too deep, a float that is not finite, a type that is not JSON) falls back here too.
+    #[inline]
+    fn kind(self) -> Kind {
+        let o = self.obj;
+        unsafe {
+            let t = ffi::Py_TYPE(o);
+            if t == addr_of_mut!(ffi::PyUnicode_Type) {
+                return Kind::String;
+            }
+            if t == addr_of_mut!(ffi::PyDict_Type) && self.depth < MAX_NESTING {
+                return Kind::Object;
+            }
+            if t == addr_of_mut!(ffi::PyList_Type) && self.depth < MAX_NESTING {
+                return Kind::Array;
+            }
+            if o == ffi::Py_None() {
+                return Kind::Null;
+            }
+            if t == addr_of_mut!(ffi::PyBool_Type) {
+                return Kind::Bool;
+            }
+            if t == addr_of_mut!(ffi::PyLong_Type) {
+                return Kind::Number;
+            }
+            if t == addr_of_mut!(ffi::PyFloat_Type) && ffi::PyFloat_AsDouble(o).is_finite() {
+                return Kind::Number;
+            }
+        }
+        // Everything else (subclasses included) as `view` decides it.
+        match self.view() {
+            View::Null => Kind::Null,
+            View::Bool(_) => Kind::Bool,
+            View::Number(_) => Kind::Number,
+            View::String(_) => Kind::String,
+            View::Array(_) => Kind::Array,
+            View::Object(_) => Kind::Object,
+        }
     }
 }
 

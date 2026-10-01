@@ -39,7 +39,7 @@ use std::sync::Arc;
 use serde_json::Value;
 
 pub use dialect::Dialect;
-pub use instance::{ArrayView, Instance, ObjectView, View};
+pub use instance::{ArrayView, Instance, Kind, ObjectView, View};
 pub use options::{
     CompileOptions, DocumentResolver, FormatValidator, SchemaCompilationError, SchemaEvaluationDepthError,
 };

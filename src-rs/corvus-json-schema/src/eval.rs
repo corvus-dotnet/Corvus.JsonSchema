@@ -11,7 +11,7 @@ use serde_json::{Number, Value};
 use crate::compiler::{AnnotationSource, collect_annotations};
 use crate::dialect::Dialect;
 use crate::formats::FormatKind;
-use crate::instance::{ArrayView, Instance, ObjectView, View};
+use crate::instance::{ArrayView, Instance, Kind, ObjectView, View};
 use crate::node::*;
 use crate::numbers::{Num, cmp, multiple_of, num_eq, number_text};
 use crate::options::FormatValidator;
@@ -241,13 +241,16 @@ fn const_message(value: &Value) -> String {
 /// Whether a value is of one of the types in a mask.
 #[inline]
 pub(crate) fn matches_type<'a, I: Instance<'a>>(mask: u8, x: I) -> bool {
-    match x.view() {
-        View::Null => mask & type_mask::NULL != 0,
-        View::Bool(_) => mask & type_mask::BOOLEAN != 0,
-        View::Number(n) => mask & type_mask::NUMBER != 0 || (mask & type_mask::INTEGER != 0 && is_integer(&n)),
-        View::String(_) => mask & type_mask::STRING != 0,
-        View::Array(_) => mask & type_mask::ARRAY != 0,
-        View::Object(_) => mask & type_mask::OBJECT != 0,
+    match x.kind() {
+        Kind::Null => mask & type_mask::NULL != 0,
+        Kind::Bool => mask & type_mask::BOOLEAN != 0,
+        Kind::Number => {
+            mask & type_mask::NUMBER != 0
+                || (mask & type_mask::INTEGER != 0 && matches!(x.view(), View::Number(n) if is_integer(&n)))
+        }
+        Kind::String => mask & type_mask::STRING != 0,
+        Kind::Array => mask & type_mask::ARRAY != 0,
+        Kind::Object => mask & type_mask::OBJECT != 0,
     }
 }
 
@@ -335,7 +338,7 @@ pub(crate) fn all_unique<'a, A: ArrayView<'a>>(a: A) -> bool {
         return true;
     }
     // Arrays of strings (the common case: lists of names) compare by length first, without hashing or allocating.
-    if n <= 32 && a.iter().all(|x| matches!(x.view(), View::String(_))) {
+    if n <= 32 && a.iter().all(|x| x.kind() == Kind::String) {
         let s = |i: usize| match a.get(i).view() {
             View::String(t) => t,
             _ => unreachable!("every item is a string"),
@@ -486,12 +489,12 @@ fn container_len<'a, I: Instance<'a>>(x: I) -> usize {
 
 #[inline(always)]
 fn is_object<'a, I: Instance<'a>>(x: I) -> bool {
-    matches!(x.view(), View::Object(_))
+    x.kind() == Kind::Object
 }
 
 #[inline(always)]
 fn is_array<'a, I: Instance<'a>>(x: I) -> bool {
-    matches!(x.view(), View::Array(_))
+    x.kind() == Kind::Array
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -720,7 +723,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
         if M::COLLECT {
             if let Some(list) = &self.annotations[id as usize] {
                 for a in list {
-                    if a.strings_only && !matches!(x.view(), View::String(_)) {
+                    if a.strings_only && x.kind() != Kind::String {
                         continue;
                     }
                     let v = &a.value;

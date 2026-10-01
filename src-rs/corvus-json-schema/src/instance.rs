@@ -14,6 +14,32 @@ pub trait Instance<'a>: Copy {
 
     /// The value's kind and content.
     fn view(self) -> View<'a, Self>;
+
+    /// The value's kind alone (for type tests, which need no content).
+    #[inline]
+    fn kind(self) -> Kind {
+        match self.view() {
+            View::Null => Kind::Null,
+            View::Bool(_) => Kind::Bool,
+            View::Number(_) => Kind::Number,
+            View::String(_) => Kind::String,
+            View::Array(_) => Kind::Array,
+            View::Object(_) => Kind::Object,
+        }
+    }
+}
+
+/// The kind of a JSON value. The discriminants are the evaluator's type bits, so a type test is one mask operation
+/// (and a match that produces a kind compiles to a table, not a jump per value).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(u8)]
+pub enum Kind {
+    Null = 1,
+    Bool = 2,
+    Object = 4,
+    Array = 8,
+    Number = 16,
+    String = 32,
 }
 
 /// What an instance is.
@@ -40,6 +66,11 @@ pub trait ArrayView<'a>: Copy {
     fn get(self, index: usize) -> Self::Item;
 
     fn iter(self) -> impl Iterator<Item = Self::Item>;
+
+    /// The items from an index on (none when it is past the end).
+    fn tail(self, start: usize) -> impl Iterator<Item = Self::Item> {
+        self.iter().skip(start)
+    }
 }
 
 /// The properties of an object, in their order.
@@ -81,6 +112,18 @@ impl<'a> Instance<'a> for &'a Value {
             Value::Object(o) => View::Object(o),
         }
     }
+
+    #[inline(always)]
+    fn kind(self) -> Kind {
+        match self {
+            Value::Null => Kind::Null,
+            Value::Bool(_) => Kind::Bool,
+            Value::Number(_) => Kind::Number,
+            Value::String(_) => Kind::String,
+            Value::Array(_) => Kind::Array,
+            Value::Object(_) => Kind::Object,
+        }
+    }
 }
 
 impl<'a> ArrayView<'a> for &'a [Value] {
@@ -99,6 +142,11 @@ impl<'a> ArrayView<'a> for &'a [Value] {
     #[inline(always)]
     fn iter(self) -> impl Iterator<Item = &'a Value> {
         <[Value]>::iter(self)
+    }
+
+    #[inline(always)]
+    fn tail(self, start: usize) -> impl Iterator<Item = &'a Value> {
+        self.get(start..).unwrap_or_default().iter()
     }
 }
 
@@ -167,3 +215,14 @@ pub(crate) fn str_eq(a: &str, b: &str) -> bool {
     }
     word(a, n - 8) == word(b, n - 8)
 }
+
+// The kinds are the evaluator's type bits.
+const _: () = {
+    use crate::node::type_mask;
+    assert!(Kind::Null as u8 == type_mask::NULL);
+    assert!(Kind::Bool as u8 == type_mask::BOOLEAN);
+    assert!(Kind::Object as u8 == type_mask::OBJECT);
+    assert!(Kind::Array as u8 == type_mask::ARRAY);
+    assert!(Kind::Number as u8 == type_mask::NUMBER);
+    assert!(Kind::String as u8 == type_mask::STRING);
+};

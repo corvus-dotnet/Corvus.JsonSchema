@@ -17,7 +17,7 @@ mod fused;
 use super::{Evaluator, Fast, Program, all_unique, code_points, content_ok, json_equal};
 use crate::dialect::Dialect;
 use crate::formats::FormatKind;
-use crate::instance::{ArrayView, Instance, ObjectView, View, str_eq};
+use crate::instance::{ArrayView, Instance, Kind, ObjectView, View, str_eq};
 use crate::node::*;
 use crate::numbers::{Divisor, Num, cmp};
 use crate::options::FormatValidator;
@@ -275,13 +275,13 @@ impl Branches {
 /// The index of an instance's kind in `Branches::by_kind`.
 #[inline(always)]
 fn kind<'x, I: Instance<'x>>(x: I) -> usize {
-    match x.view() {
-        View::Null => 0,
-        View::Bool(_) => 1,
-        View::Number(_) => 2,
-        View::String(_) => 3,
-        View::Array(_) => 4,
-        View::Object(_) => 5,
+    match x.kind() {
+        Kind::Null => 0,
+        Kind::Bool => 1,
+        Kind::Number => 2,
+        Kind::String => 3,
+        Kind::Array => 4,
+        Kind::Object => 5,
     }
 }
 
@@ -505,15 +505,19 @@ impl Names {
 
 #[inline(always)]
 fn type_ok<'x, I: Instance<'x>>(mask: u8, x: I) -> bool {
-    match x.view() {
-        View::Null => mask & type_mask::NULL != 0,
-        View::Bool(_) => mask & type_mask::BOOLEAN != 0,
-        // A number that is not accepted as a number may still be an integer.
-        View::Number(n) => mask & type_mask::NUMBER != 0 || (mask & type_mask::INTEGER != 0 && super::is_integer(&n)),
-        View::String(_) => mask & type_mask::STRING != 0,
-        View::Array(_) => mask & type_mask::ARRAY != 0,
-        View::Object(_) => mask & type_mask::OBJECT != 0,
+    // A kind's discriminant is its type bit.
+    let bit = x.kind() as u8;
+    if mask & bit != 0 {
+        return true;
     }
+    // A number that is not accepted as a number may still be an integer.
+    bit == type_mask::NUMBER && mask & type_mask::INTEGER != 0 && is_integer_value(x)
+}
+
+/// Whether a number is an integer (out of line: the type test that calls it stays small enough to inline).
+#[inline(never)]
+fn is_integer_value<'x, I: Instance<'x>>(x: I) -> bool {
+    matches!(x.view(), View::Number(n) if super::is_integer(&n))
 }
 
 pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
@@ -1011,7 +1015,7 @@ fn static_item_coverage(p: &Program, id: NodeId) -> Option<Coverage> {
 
 impl Evaluator<'_, '_> {
     /// Evaluates a node's plan (at a new instance location, or where no depth guard applies).
-    #[inline]
+    #[inline(always)]
     pub(super) fn run<'x, I: Instance<'x>>(&mut self, id: NodeId, x: I) -> bool {
         let plan = &self.p.plans[id as usize];
         (plan.types == ANY || type_ok(plan.types, x)) && plan.body.as_deref().is_none_or(|b| self.run_body(b, x))
@@ -1174,8 +1178,7 @@ impl Evaluator<'_, '_> {
             View::Object(o) => b.object.as_ref().is_none_or(|plan| self.run_object(plan, o, x)),
             View::Array(a) => {
                 b.array.as_ref().is_none_or(|plan| self.run_array::<I>(plan, a))
-                    && b.unevaluated_items
-                        .is_none_or(|(from, c)| a.iter().skip(from).all(|item| self.run_child(c, item)))
+                    && b.unevaluated_items.is_none_or(|(from, c)| a.tail(from).all(|item| self.run_child(c, item)))
             }
             _ => true,
         };
@@ -1422,7 +1425,7 @@ impl Evaluator<'_, '_> {
             }
         }
         if let Some(items) = plan.items {
-            let rest = a.iter().skip(prefix);
+            let rest = a.tail(prefix);
             if let Some(n) = plan.nested {
                 for item in rest {
                     let ok = match item.view() {
@@ -1477,8 +1480,9 @@ fn all_of_type<'x, I: Instance<'x>>(mut items: impl Iterator<Item = I>, types: u
     const NUMBERS: u8 = type_mask::NUMBER | type_mask::INTEGER;
     match types {
         ANY => true,
-        type_mask::STRING => items.all(|v| matches!(v.view(), View::String(_))),
-        t if t & !NUMBERS == 0 && t & type_mask::NUMBER != 0 => items.all(|v| matches!(v.view(), View::Number(_))),
+        // Masks of the kind bits (a kind's discriminant is its bit), which compile to a table lookup per item.
+        type_mask::STRING => items.all(|v| v.kind() as u8 & type_mask::STRING != 0),
+        t if t & !NUMBERS == 0 && t & type_mask::NUMBER != 0 => items.all(|v| v.kind() as u8 & type_mask::NUMBER != 0),
         t => items.all(|v| type_ok(t, v)),
     }
 }
