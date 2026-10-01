@@ -5,9 +5,10 @@ name: pypi-publish
 # package's pyproject.toml (and its __version__) and merge.
 #
 # It authenticates with PyPI trusted publishing (OIDC): no token is stored. Each project's trusted publisher on PyPI
-# names this repository, this workflow file and the "pypi" environment, so keep the file and environment names. A
-# trusted publisher can be added before the project exists (a "pending" publisher), so the first version is published
-# by this workflow too (docs/ReleaseProcess.md).
+# names this repository, this workflow file and an environment: "pypi" for corvus-json-schema, "pypi-rs" for
+# corvus-json-schema-rs (PyPI refuses two pending publishers with the same repository, workflow and environment), so
+# keep the file and environment names. A trusted publisher can be added before the project exists (a "pending"
+# publisher), so the first version is published by this workflow too (docs/ReleaseProcess.md).
 #
 # There is no staged approval: the upload makes the version live, and a published version can be yanked but its files
 # never replaced. Every pull request that touches src-py builds and tests the same artifacts (python.yml).
@@ -134,7 +135,7 @@ jobs:
     needs: [versions, rs-build]
     runs-on: ubuntu-latest
     environment:
-      name: pypi
+      name: pypi-rs
       url: https://pypi.org/project/corvus-json-schema-rs/${{ needs.versions.outputs.rs-version }}/
     permissions:
       contents: write  # push the py-rs-v<version> tag

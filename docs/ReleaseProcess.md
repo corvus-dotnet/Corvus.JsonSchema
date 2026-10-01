@@ -199,8 +199,9 @@ then does the following for each package.
 1. It does nothing if PyPI already has that version.
 2. It builds the package: the sdist and wheel for the pure package, and for the Rust-backed one every wheel and the
    sdist through `python-wheels.yml`, which tests each wheel on its own platform, as CI does on every pull request.
-3. It publishes through PyPI trusted publishing, in the `pypi` GitHub environment. No token is stored. Each project's
-   trusted publisher on PyPI names this repository, that workflow file and that environment, so don't rename them.
+3. It publishes through PyPI trusted publishing, in the `pypi` GitHub environment for `corvus-json-schema` and
+   `pypi-rs` for `corvus-json-schema-rs`. No token is stored. Each project's trusted publisher on PyPI names this
+   repository, that workflow file and its environment, so don't rename them.
 4. It tags the commit `py-v<version>` (pure) or `py-rs-v<version>` (Rust-backed).
 
 There is no staged approval: the upload makes the version live. A published version can be yanked on PyPI, but its
@@ -218,8 +219,10 @@ PyPI accepts a trusted publisher for a project that does not exist yet (a "pendi
 publish through it creates the project. A pending publisher does not reserve the name, so publish soon after adding it.
 Do this once, before merging the first version:
 
-1. **Create the GitHub environment.** In the repository's **Settings**, **Environments**, add an environment named
-   `pypi`. It needs no secrets. Required reviewers are optional; without them a merge publishes at once.
+1. **Create the GitHub environments.** In the repository's **Settings**, **Environments**, add environments named
+   `pypi` and `pypi-rs`. They need no secrets. Required reviewers are optional; without them a merge publishes at
+   once. Each project needs its own environment: PyPI refuses a second pending publisher with the same repository,
+   workflow and environment, even for another project name.
 2. **Add the pending publishers.** Sign in to PyPI (with two-factor authentication), open
    [**Publishing**](https://pypi.org/manage/account/publishing/) in your account, and add a GitHub publisher for each
    project:
@@ -230,7 +233,7 @@ Do this once, before merging the first version:
    | Owner | `corvus-dotnet` | `corvus-dotnet` |
    | Repository name | `Corvus.JsonSchema` | `Corvus.JsonSchema` |
    | Workflow name | `pypi-publish.yml` | `pypi-publish.yml` |
-   | Environment name | `pypi` | `pypi` |
+   | Environment name | `pypi` | `pypi-rs` |
 
 3. **Merge.** The workflow publishes both projects, owned by the account that added the publishers.
 4. **Add co-owners.** On each project's **Manage**, **Collaborators** page, invite the other maintainers as owners, so
