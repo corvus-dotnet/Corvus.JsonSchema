@@ -10,13 +10,14 @@
 
 use std::sync::Arc;
 
-use serde_json::{Map, Number, Value};
+use serde_json::{Number, Value};
 
 mod fused;
 
 use super::{Evaluator, Fast, Program, all_unique, code_points, content_ok, json_equal};
 use crate::dialect::Dialect;
 use crate::formats::FormatKind;
+use crate::instance::{ArrayView, Instance, ObjectView, View, str_eq};
 use crate::node::*;
 use crate::numbers::{Divisor, Num, cmp};
 use crate::options::FormatValidator;
@@ -236,9 +237,9 @@ impl DiscriminatorIndex {
 
     /// The branches a discriminator value selects.
     #[inline]
-    fn select<'d>(&self, d: &'d Discriminator, v: &Value) -> &'d [u32] {
-        let entry = match v {
-            Value::String(s) => self.strings.contains_at(s).map(|i| self.string_entries[i]),
+    fn select<'d, 'x, I: Instance<'x>>(&self, d: &'d Discriminator, v: I) -> &'d [u32] {
+        let entry = match v.view() {
+            View::String(s) => self.strings.contains_at(s).map(|i| self.string_entries[i]),
             _ => self.others.iter().copied().find(|&i| d.known[i as usize].0.matches(v)),
         };
         entry.map_or(&d.unknown, |i| &d.known[i as usize].1)
@@ -273,14 +274,14 @@ impl Branches {
 
 /// The index of an instance's kind in `Branches::by_kind`.
 #[inline(always)]
-fn kind(x: &Value) -> usize {
-    match x {
-        Value::Null => 0,
-        Value::Bool(_) => 1,
-        Value::Number(_) => 2,
-        Value::String(_) => 3,
-        Value::Array(_) => 4,
-        Value::Object(_) => 5,
+fn kind<'x, I: Instance<'x>>(x: I) -> usize {
+    match x.view() {
+        View::Null => 0,
+        View::Bool(_) => 1,
+        View::Number(_) => 2,
+        View::String(_) => 3,
+        View::Array(_) => 4,
+        View::Object(_) => 5,
     }
 }
 
@@ -499,71 +500,19 @@ impl Names {
     }
 }
 
-/// String equality with the length test and short comparisons inline (property names are short).
-#[inline(always)]
-fn str_eq(a: &str, b: &str) -> bool {
-    let (a, b) = (a.as_bytes(), b.as_bytes());
-    if a.len() != b.len() {
-        return false;
-    }
-    let n = a.len();
-    if n <= 8 {
-        if n >= 4 {
-            // Two overlapping four-byte words cover every byte (one load each, no per-byte bounds checks).
-            let word = |s: &[u8], i: usize| u32::from_le_bytes(s[i..i + 4].try_into().unwrap());
-            return word(a, 0) == word(b, 0) && word(a, n - 4) == word(b, n - 4);
-        }
-        return a == b;
-    }
-    // Eight-byte words from the start, then one ending at the last byte (overlapping the previous one): property names
-    // are short enough that a call to memcmp costs more than the compare.
-    let word = |s: &[u8], i: usize| u64::from_le_bytes(s[i..i + 8].try_into().unwrap());
-    let mut i = 0;
-    while i + 8 < n {
-        if word(a, i) != word(b, i) {
-            return false;
-        }
-        i += 8;
-    }
-    word(a, n - 8) == word(b, n - 8)
-}
-
-/// Objects up to this size are searched by scanning their keys: comparing lengths first, that is cheaper than hashing
-/// the name with serde_json's SipHash.
-const LINEAR_KEYS: usize = 32;
-
-/// A property of an object.
-#[inline]
-pub(super) fn get_key<'a>(o: &'a Map<String, Value>, name: &str) -> Option<&'a Value> {
-    if o.len() <= LINEAR_KEYS { o.iter().find(|(k, _)| str_eq(k, name)).map(|(_, v)| v) } else { o.get(name) }
-}
-
-/// Whether an object has a property.
-#[inline]
-fn has_key(o: &Map<String, Value>, name: &str) -> bool {
-    if o.len() <= LINEAR_KEYS { o.keys().any(|k| str_eq(k, name)) } else { o.contains_key(name) }
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Compilation
 
 #[inline(always)]
-fn type_ok(mask: u8, x: &Value) -> bool {
-    let bit = match x {
-        Value::Null => type_mask::NULL,
-        Value::Bool(_) => type_mask::BOOLEAN,
-        Value::Number(_) => type_mask::NUMBER,
-        Value::String(_) => type_mask::STRING,
-        Value::Array(_) => type_mask::ARRAY,
-        Value::Object(_) => type_mask::OBJECT,
-    };
-    if mask & bit != 0 {
-        return true;
-    }
-    // A number that is not accepted as a number may still be an integer.
-    match x {
-        Value::Number(n) => mask & type_mask::INTEGER != 0 && super::is_integer(n),
-        _ => false,
+fn type_ok<'x, I: Instance<'x>>(mask: u8, x: I) -> bool {
+    match x.view() {
+        View::Null => mask & type_mask::NULL != 0,
+        View::Bool(_) => mask & type_mask::BOOLEAN != 0,
+        // A number that is not accepted as a number may still be an integer.
+        View::Number(n) => mask & type_mask::NUMBER != 0 || (mask & type_mask::INTEGER != 0 && super::is_integer(&n)),
+        View::String(_) => mask & type_mask::STRING != 0,
+        View::Array(_) => mask & type_mask::ARRAY != 0,
+        View::Object(_) => mask & type_mask::OBJECT != 0,
     }
 }
 
@@ -1063,14 +1012,14 @@ fn static_item_coverage(p: &Program, id: NodeId) -> Option<Coverage> {
 impl Evaluator<'_, '_> {
     /// Evaluates a node's plan (at a new instance location, or where no depth guard applies).
     #[inline]
-    pub(super) fn run(&mut self, id: NodeId, x: &Value) -> bool {
+    pub(super) fn run<'x, I: Instance<'x>>(&mut self, id: NodeId, x: I) -> bool {
         let plan = &self.p.plans[id as usize];
         (plan.types == ANY || type_ok(plan.types, x)) && plan.body.as_deref().is_none_or(|b| self.run_body(b, x))
     }
 
     /// A child at a new instance location: its type check inline, its other keywords (if any) by call.
     #[inline(always)]
-    fn run_child(&mut self, c: Child, x: &Value) -> bool {
+    fn run_child<'x, I: Instance<'x>>(&mut self, c: Child, x: I) -> bool {
         if c.types != ANY && !type_ok(c.types, x) {
             return false;
         }
@@ -1085,26 +1034,26 @@ impl Evaluator<'_, '_> {
 
     /// A body entered by shape (its types already tested, and not on an in-place cycle unless `General`).
     #[inline(always)]
-    fn enter(&mut self, shape: Shape, b: &Body, x: &Value) -> bool {
+    fn enter<'x, I: Instance<'x>>(&mut self, shape: Shape, b: &Body, x: I) -> bool {
         match shape {
             Shape::Leaf => run_leaf(b, x),
-            Shape::StringEnum => match (&b.values[0], x) {
-                (Op::EnumStrings(values), Value::String(s)) => values.contains(s),
+            Shape::StringEnum => match (&b.values[0], x.view()) {
+                (Op::EnumStrings(values), View::String(s)) => values.contains(s),
                 _ => false,
             },
-            Shape::Strings => match x {
-                Value::String(s) => run_string(&b.string, s),
+            Shape::Strings => match x.view() {
+                View::String(s) => run_string(&b.string, s),
                 _ => true,
             },
-            Shape::Object => match x {
-                Value::Object(o) => {
+            Shape::Object => match x.view() {
+                View::Object(o) => {
                     let plan = b.object.as_ref().unwrap();
-                    if plan.strict { self.run_strict_object(plan, o) } else { self.run_object(plan, o, x) }
+                    if plan.strict { self.run_strict_object::<I>(plan, o) } else { self.run_object(plan, o, x) }
                 }
                 _ => true,
             },
-            Shape::Array => match x {
-                Value::Array(a) => self.run_array(b.array.as_ref().unwrap(), a),
+            Shape::Array => match x.view() {
+                View::Array(a) => self.run_array::<I>(b.array.as_ref().unwrap(), a),
                 _ => true,
             },
             Shape::Apply => self.run_apply(&b.apply, x),
@@ -1114,7 +1063,7 @@ impl Evaluator<'_, '_> {
 
     /// Evaluates an in-place child under the depth guard.
     #[inline]
-    fn run_in_place(&mut self, id: NodeId, x: &Value) -> bool {
+    fn run_in_place<'x, I: Instance<'x>>(&mut self, id: NodeId, x: I) -> bool {
         if !self.p.plans[id as usize].guard {
             return self.run(id, x);
         }
@@ -1143,7 +1092,7 @@ impl Evaluator<'_, '_> {
         } else {
             buffer = Value::String(name.to_string());
         }
-        let ok = self.run(id, &buffer);
+        let ok = self.run::<&Value>(id, &buffer);
         self.name_buffer = buffer;
         ok
     }
@@ -1151,7 +1100,7 @@ impl Evaluator<'_, '_> {
     /// An in-place child with its type check inline, then its keywords under the depth guard (without testing the
     /// type again).
     #[inline(always)]
-    fn run_branch(&mut self, c: Child, x: &Value) -> bool {
+    fn run_branch<'x, I: Instance<'x>>(&mut self, c: Child, x: I) -> bool {
         if c.types != ANY && !type_ok(c.types, x) {
             return false;
         }
@@ -1168,10 +1117,12 @@ impl Evaluator<'_, '_> {
 
     /// The anyOf/oneOf branches that can match: those a discriminator selects, or those admitting the instance type.
     #[inline(always)]
-    fn candidates<'b>(&self, b: &'b Branches, x: &Value) -> &'b [u32] {
-        let (Some(disc), Value::Object(o)) = (b.discriminator.as_deref(), x) else { return &b.by_kind[kind(x)] };
+    fn candidates<'b, 'x, I: Instance<'x>>(&self, b: &'b Branches, x: I) -> &'b [u32] {
+        let (Some(disc), View::Object(o)) = (b.discriminator.as_deref(), x.view()) else {
+            return &b.by_kind[kind(x)];
+        };
         let (d, index) = disc;
-        match get_key(o, &d.property) {
+        match o.get(&d.property) {
             Some(v) => index.select(d, v),
             None if d.all_require => &[],
             None => &b.by_kind[kind(x)],
@@ -1181,7 +1132,7 @@ impl Evaluator<'_, '_> {
     /// A node's keywords. Where the program keeps a dynamic scope, entering a node of another resource pushes that
     /// resource (as the general evaluator does), for the dynamic references below it.
     #[inline]
-    fn run_body(&mut self, b: &Body, x: &Value) -> bool {
+    fn run_body<'x, I: Instance<'x>>(&mut self, b: &Body, x: I) -> bool {
         if !self.p.uses_dynamic_scope {
             return self.run_keywords(b, x);
         }
@@ -1197,17 +1148,17 @@ impl Evaluator<'_, '_> {
         ok
     }
 
-    fn run_keywords(&mut self, b: &Body, x: &Value) -> bool {
-        match x {
-            Value::Object(o) => {
+    fn run_keywords<'x, I: Instance<'x>>(&mut self, b: &Body, x: I) -> bool {
+        match x.view() {
+            View::Object(o) => {
                 if let Some(f) = &b.fused {
-                    return self.run_fused(f, o);
+                    return self.run_fused::<I>(f, o);
                 }
                 if b.general & type_mask::OBJECT != 0 {
-                    return self.eval_node::<Fast>(b.node, x, None);
+                    return self.eval_node::<Fast, I>(b.node, x, None);
                 }
             }
-            Value::Array(_) if b.general & type_mask::ARRAY != 0 => return self.eval_node::<Fast>(b.node, x, None),
+            View::Array(_) if b.general & type_mask::ARRAY != 0 => return self.eval_node::<Fast, I>(b.node, x, None),
             _ => {}
         }
         if !b.values.is_empty() {
@@ -1217,12 +1168,12 @@ impl Evaluator<'_, '_> {
                 }
             }
         }
-        let ok = match x {
-            Value::Number(n) => b.number.is_empty() || run_number(&b.number, n),
-            Value::String(s) => b.string.is_empty() || run_string(&b.string, s),
-            Value::Object(o) => b.object.as_ref().is_none_or(|plan| self.run_object(plan, o, x)),
-            Value::Array(a) => {
-                b.array.as_ref().is_none_or(|plan| self.run_array(plan, a))
+        let ok = match x.view() {
+            View::Number(n) => b.number.is_empty() || run_number(&b.number, &n),
+            View::String(s) => b.string.is_empty() || run_string(&b.string, s),
+            View::Object(o) => b.object.as_ref().is_none_or(|plan| self.run_object(plan, o, x)),
+            View::Array(a) => {
+                b.array.as_ref().is_none_or(|plan| self.run_array::<I>(plan, a))
                     && b.unevaluated_items
                         .is_none_or(|(from, c)| a.iter().skip(from).all(|item| self.run_child(c, item)))
             }
@@ -1231,7 +1182,7 @@ impl Evaluator<'_, '_> {
         ok && (b.apply.is_empty() || self.run_apply(&b.apply, x))
     }
 
-    fn run_apply(&mut self, ops: &[Op], x: &Value) -> bool {
+    fn run_apply<'x, I: Instance<'x>>(&mut self, ops: &[Op], x: I) -> bool {
         for op in ops {
             if !self.run_op(op, x) {
                 return false;
@@ -1241,11 +1192,11 @@ impl Evaluator<'_, '_> {
     }
 
     #[inline]
-    fn run_op(&mut self, op: &Op, x: &Value) -> bool {
+    fn run_op<'x, I: Instance<'x>>(&mut self, op: &Op, x: I) -> bool {
         match op {
             Op::Const(c) => json_equal(x, c),
-            Op::EnumStrings(values) => match x {
-                Value::String(s) => values.contains(s),
+            Op::EnumStrings(values) => match x.view() {
+                View::String(s) => values.contains(s),
                 _ => false,
             },
             Op::Enum(values) => values.iter().any(|v| json_equal(x, v)),
@@ -1283,17 +1234,17 @@ impl Evaluator<'_, '_> {
 
     /// An object plan: the size bounds, the property loop for its shape (each in its own function, so that this entry
     /// stays small), then the required names and dependencies.
-    fn run_object(&mut self, plan: &ObjectPlan, o: &Map<String, Value>, x: &Value) -> bool {
+    fn run_object<'x, I: Instance<'x>>(&mut self, plan: &ObjectPlan, o: I::Object, x: I) -> bool {
         let len = o.len() as u64;
         if len < plan.min || len > plan.max {
             return false;
         }
         let seen = match plan.visit {
             Visit::None => Some(0),
-            Visit::Values => self.visit_values(plan, o).then_some(0),
-            Visit::Names => self.visit_names(plan, o),
-            Visit::Pattern => self.visit_pattern(plan, o).then_some(0),
-            Visit::General => self.visit_general(plan, o),
+            Visit::Values => self.visit_values::<I>(plan, o).then_some(0),
+            Visit::Names => self.visit_names::<I>(plan, o),
+            Visit::Pattern => self.visit_pattern::<I>(plan, o).then_some(0),
+            Visit::General => self.visit_general::<I>(plan, o),
         };
         let Some(seen) = seen else { return false };
         if seen & plan.required_mask != plan.required_mask {
@@ -1304,14 +1255,14 @@ impl Evaluator<'_, '_> {
 
     /// The C# StrictObject loop: bounds, declared names (additionalProperties for the rest), and the required mask;
     /// a small function of its own, since nested objects enter it directly.
-    fn run_strict_object(&mut self, plan: &ObjectPlan, o: &Map<String, Value>) -> bool {
+    fn run_strict_object<'x, I: Instance<'x>>(&mut self, plan: &ObjectPlan, o: I::Object) -> bool {
         let len = o.len() as u64;
         if len < plan.min || len > plan.max {
             return false;
         }
         let mut seen = 0u64;
         let mut hint = 0;
-        for (k, v) in o {
+        for (k, v) in o.iter() {
             match plan.names.find_from(k, &mut hint) {
                 Some(i) => {
                     seen |= 1 << (i & 63);
@@ -1333,8 +1284,8 @@ impl Evaluator<'_, '_> {
 
     /// Required names checked by lookup, and dependencies.
     #[inline(never)]
-    fn object_rest(&mut self, plan: &ObjectPlan, o: &Map<String, Value>, x: &Value, seen: u64) -> bool {
-        if !plan.required.iter().all(|r| has_key(o, r)) {
+    fn object_rest<'x, I: Instance<'x>>(&mut self, plan: &ObjectPlan, o: I::Object, x: I, seen: u64) -> bool {
+        if !plan.required.iter().all(|r| o.contains_key(r)) {
             return false;
         }
         for d in plan.dependencies.iter() {
@@ -1348,10 +1299,10 @@ impl Evaluator<'_, '_> {
                     }
                 }
                 None => {
-                    if !has_key(o, &d.name) {
+                    if !o.contains_key(&d.name) {
                         continue;
                     }
-                    if !d.required.iter().all(|r| has_key(o, r)) {
+                    if !d.required.iter().all(|r| o.contains_key(r)) {
                         return false;
                     }
                 }
@@ -1366,7 +1317,7 @@ impl Evaluator<'_, '_> {
     }
 
     /// Only additionalProperties: every value against one child.
-    fn visit_values(&mut self, plan: &ObjectPlan, o: &Map<String, Value>) -> bool {
+    fn visit_values<'x, I: Instance<'x>>(&mut self, plan: &ObjectPlan, o: I::Object) -> bool {
         let c = plan.additional.unwrap();
         if c.trivial() {
             return c.types == ANY || o.values().all(|v| type_ok(c.types, v));
@@ -1375,10 +1326,10 @@ impl Evaluator<'_, '_> {
     }
 
     /// Declared properties, and additionalProperties for the rest; the declared names seen, or `None` on failure.
-    fn visit_names(&mut self, plan: &ObjectPlan, o: &Map<String, Value>) -> Option<u64> {
+    fn visit_names<'x, I: Instance<'x>>(&mut self, plan: &ObjectPlan, o: I::Object) -> Option<u64> {
         let mut seen = 0u64;
         let mut hint = 0;
-        for (k, v) in o {
+        for (k, v) in o.iter() {
             match plan.names.find_from(k, &mut hint) {
                 Some(i) => {
                     seen |= 1 << (i & 63);
@@ -1398,9 +1349,9 @@ impl Evaluator<'_, '_> {
         Some(seen)
     }
 
-    fn visit_pattern(&mut self, plan: &ObjectPlan, o: &Map<String, Value>) -> bool {
+    fn visit_pattern<'x, I: Instance<'x>>(&mut self, plan: &ObjectPlan, o: I::Object) -> bool {
         let (pattern, c) = &plan.patterns[0];
-        for (k, v) in o {
+        for (k, v) in o.iter() {
             let applies = if pattern.is_match(k) { Some(*c) } else { plan.additional };
             if let Some(c) = applies
                 && !self.run_child(c, v)
@@ -1411,10 +1362,10 @@ impl Evaluator<'_, '_> {
         true
     }
 
-    fn visit_general(&mut self, plan: &ObjectPlan, o: &Map<String, Value>) -> Option<u64> {
+    fn visit_general<'x, I: Instance<'x>>(&mut self, plan: &ObjectPlan, o: I::Object) -> Option<u64> {
         let mut seen = 0u64;
         let mut hint = 0;
-        for (k, v) in o {
+        for (k, v) in o.iter() {
             let mut matched = false;
             if let Some(i) = plan.names.find_from(k, &mut hint) {
                 seen |= 1 << (i & 63);
@@ -1456,34 +1407,34 @@ impl Evaluator<'_, '_> {
         Some(seen)
     }
 
-    fn run_array(&mut self, plan: &ArrayPlan, a: &[Value]) -> bool {
+    fn run_array<'x, I: Instance<'x>>(&mut self, plan: &ArrayPlan, a: I::Array) -> bool {
         let len = a.len() as u64;
         if len < plan.min || len > plan.max {
             return false;
         }
         if let Some(types) = plan.simple {
-            return all_of_type(a, types);
+            return all_of_type(a.iter(), types);
         }
         let prefix = plan.prefix.len().min(a.len());
-        for (c, item) in plan.prefix.iter().zip(a) {
+        for (c, item) in plan.prefix.iter().zip(a.iter()) {
             if !self.run_child(*c, item) {
                 return false;
             }
         }
         if let Some(items) = plan.items {
-            let rest = &a[prefix..];
+            let rest = a.iter().skip(prefix);
             if let Some(n) = plan.nested {
                 for item in rest {
-                    let ok = match item {
-                        Value::Array(x) => {
+                    let ok = match item.view() {
+                        View::Array(x) => {
                             let len = x.len() as u64;
                             items.types & type_mask::ARRAY != 0
                                 && len >= n.min
                                 && len <= n.max
-                                && all_of_type(x, n.types)
+                                && all_of_type(x.iter(), n.types)
                         }
                         // Not an array: only the items' type test applies.
-                        other => type_ok(items.types, other),
+                        _ => type_ok(items.types, item),
                     };
                     if !ok {
                         return false;
@@ -1504,7 +1455,7 @@ impl Evaluator<'_, '_> {
         }
         if let Some((c, min, max)) = plan.contains {
             let mut count = 0u64;
-            for item in a {
+            for item in a.iter() {
                 if self.run(c, item) {
                     count += 1;
                     if max.is_none() && count >= min {
@@ -1522,23 +1473,23 @@ impl Evaluator<'_, '_> {
 
 /// Whether every value is of the types in a mask, with the common masks as tight loops.
 #[inline]
-fn all_of_type(a: &[Value], types: u8) -> bool {
+fn all_of_type<'x, I: Instance<'x>>(mut items: impl Iterator<Item = I>, types: u8) -> bool {
     const NUMBERS: u8 = type_mask::NUMBER | type_mask::INTEGER;
     match types {
         ANY => true,
-        type_mask::STRING => a.iter().all(Value::is_string),
-        t if t & !NUMBERS == 0 && t & type_mask::NUMBER != 0 => a.iter().all(Value::is_number),
-        t => a.iter().all(|v| type_ok(t, v)),
+        type_mask::STRING => items.all(|v| matches!(v.view(), View::String(_))),
+        t if t & !NUMBERS == 0 && t & type_mask::NUMBER != 0 => items.all(|v| matches!(v.view(), View::Number(_))),
+        t => items.all(|v| type_ok(t, v)),
     }
 }
 
 /// A leaf's keywords: its value constraints, then those for the instance's type.
 #[inline]
-fn run_leaf(b: &Body, x: &Value) -> bool {
+fn run_leaf<'x, I: Instance<'x>>(b: &Body, x: I) -> bool {
     for op in b.values.iter() {
         let ok = match op {
             Op::Const(c) => json_equal(x, c),
-            Op::EnumStrings(values) => matches!(x, Value::String(s) if values.contains(s)),
+            Op::EnumStrings(values) => matches!(x.view(), View::String(s) if values.contains(s)),
             Op::Enum(values) => values.iter().any(|v| json_equal(x, v)),
             _ => unreachable!("a leaf has only value keywords"),
         };
@@ -1546,9 +1497,9 @@ fn run_leaf(b: &Body, x: &Value) -> bool {
             return false;
         }
     }
-    match x {
-        Value::Number(n) => b.number.is_empty() || run_number(&b.number, n),
-        Value::String(s) => b.string.is_empty() || run_string(&b.string, s),
+    match x.view() {
+        View::Number(n) => b.number.is_empty() || run_number(&b.number, &n),
+        View::String(s) => b.string.is_empty() || run_string(&b.string, s),
         _ => true,
     }
 }

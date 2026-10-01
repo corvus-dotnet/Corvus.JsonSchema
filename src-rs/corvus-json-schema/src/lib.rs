@@ -23,6 +23,7 @@ mod compiler;
 mod dialect;
 mod eval;
 mod formats;
+mod instance;
 mod loader;
 #[rustfmt::skip]
 mod metaschemas;
@@ -38,6 +39,7 @@ use std::sync::Arc;
 use serde_json::Value;
 
 pub use dialect::Dialect;
+pub use instance::{ArrayView, Instance, ObjectView, View};
 pub use options::{
     CompileOptions, DocumentResolver, FormatValidator, SchemaCompilationError, SchemaEvaluationDepthError,
 };
@@ -113,6 +115,23 @@ impl Validator {
     pub fn evaluate(
         &self,
         instance: &Value,
+        collector: &mut JsonSchemaResultsCollector,
+    ) -> Result<bool, SchemaEvaluationDepthError> {
+        self.evaluate_instance(instance, collector)
+    }
+
+    /// [`Validator::validate`] for any [`Instance`]: a value read in place, such as a host language's own objects,
+    /// with no conversion to `serde_json::Value`.
+    pub fn validate_instance<'a, I: Instance<'a>>(&self, instance: I) -> Result<bool, SchemaEvaluationDepthError> {
+        let mut e = eval::Evaluator::new(&self.program, None);
+        let ok = e.validate(instance);
+        if e.depth_exceeded { Err(SchemaEvaluationDepthError) } else { Ok(ok) }
+    }
+
+    /// [`Validator::evaluate`] for any [`Instance`].
+    pub fn evaluate_instance<'a, I: Instance<'a>>(
+        &self,
+        instance: I,
         collector: &mut JsonSchemaResultsCollector,
     ) -> Result<bool, SchemaEvaluationDepthError> {
         let mut e = eval::Evaluator::new(&self.program, Some(collector));

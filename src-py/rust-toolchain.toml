@@ -1,0 +1,5 @@
+# The toolchain for the Rust binding here, the same as src-rs (clippy's lints change between releases).
+[toolchain]
+channel = "1.98.0"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

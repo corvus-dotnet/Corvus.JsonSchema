@@ -4,15 +4,19 @@
 //! `serde_json::Value` (or parsed straight from JSON text) and evaluated in Rust. The Python layer
 //! (`python/corvus_json_schema_rs/__init__.py`) gives the same API as the pure-Python `corvus_json_schema` package.
 
+use std::cell::Cell;
 use std::collections::HashMap;
+use std::marker::PhantomData;
+use std::ptr::addr_of_mut;
 use std::sync::Arc;
 
 use corvus_json_schema::{
-    CompileOptions, Dialect, DocumentResolver, FormatValidator, JsonSchemaResultsCollector, ResultsLevel, SchemaResult,
-    Validator,
+    ArrayView, CompileOptions, Dialect, DocumentResolver, FormatValidator, Instance, JsonSchemaResultsCollector,
+    ObjectView, ResultsLevel, SchemaResult, Validator, View,
 };
 use pyo3::create_exception;
 use pyo3::exceptions::{PyException, PyTypeError, PyValueError};
+use pyo3::ffi;
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
 use serde_json::{Map, Number, Value};
@@ -102,8 +106,14 @@ fn to_value(obj: &Bound<'_, PyAny>, depth: u32) -> PyResult<Value> {
 fn string(s: &Bound<'_, PyString>) -> PyResult<String> {
     match s.to_str() {
         Ok(text) => Ok(text.to_owned()),
-        // Lone surrogates (which json.loads can produce) have no UTF-8 form.
-        Err(_) => Ok(s.to_string_lossy().into_owned()),
+        // Lone surrogates (which json.loads can produce) have no UTF-8 form: each becomes one U+FFFD, so lengths and
+        // positions stay those of the Python string.
+        Err(_) => {
+            let utf16 = s.call_method1("encode", ("utf-16-le", "surrogatepass"))?;
+            let bytes = utf16.cast::<PyBytes>()?.as_bytes();
+            let units = bytes.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]]));
+            Ok(char::decode_utf16(units).map(|c| c.unwrap_or(char::REPLACEMENT_CHARACTER)).collect())
+        }
     }
 }
 
@@ -137,6 +147,222 @@ fn float(f: f64) -> PyResult<Value> {
     Number::from_f64(f)
         .map(Value::Number)
         .ok_or_else(|| PyValueError::new_err("NaN and infinities are not JSON numbers."))
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Python objects read in place
+
+/// A Python object read as a JSON value through the C API, without converting it. Strings are read as their UTF-8
+/// (which CPython keeps with the string, so ASCII strings need no copy), dicts through `PyDict_Next` and lists by index.
+///
+/// Anything this cannot read exactly (a tuple, a key that is not a string, a string with a lone surrogate, a number
+/// beyond a double, nesting deeper than `MAX_NESTING`) sets `fallback`; the caller then converts the instance and
+/// evaluates the converted value instead, so results never depend on which path ran.
+#[derive(Clone, Copy)]
+struct PyInstance<'a> {
+    obj: *mut ffi::PyObject,
+    fallback: &'a Cell<bool>,
+    depth: u32,
+    _life: PhantomData<&'a ()>,
+}
+
+impl<'a> PyInstance<'a> {
+    fn root(obj: &'a Bound<'_, PyAny>, fallback: &'a Cell<bool>) -> Self {
+        PyInstance { obj: obj.as_ptr(), fallback, depth: 0, _life: PhantomData }
+    }
+
+    #[inline(always)]
+    fn child(self, obj: *mut ffi::PyObject) -> Self {
+        PyInstance { obj, fallback: self.fallback, depth: self.depth + 1, _life: PhantomData }
+    }
+
+    #[cold]
+    fn unsupported(self) -> View<'a, Self> {
+        self.fallback.set(true);
+        View::Null
+    }
+}
+
+/// A Python string's UTF-8, or `None` (with the error cleared) when it has none.
+#[inline]
+unsafe fn utf8<'a>(obj: *mut ffi::PyObject) -> Option<&'a str> {
+    let mut size: ffi::Py_ssize_t = 0;
+    let data = unsafe { ffi::PyUnicode_AsUTF8AndSize(obj, &mut size) };
+    if data.is_null() {
+        unsafe { ffi::PyErr_Clear() };
+        return None;
+    }
+    Some(unsafe { std::str::from_utf8_unchecked(std::slice::from_raw_parts(data.cast::<u8>(), size as usize)) })
+}
+
+impl<'a> Instance<'a> for PyInstance<'a> {
+    type Array = PyListView<'a>;
+    type Object = PyDictView<'a>;
+
+    #[inline]
+    fn view(self) -> View<'a, Self> {
+        let o = self.obj;
+        // SAFETY: the GIL is held for the whole evaluation and the instance is not mutated during it (the evaluator
+        // runs no Python code but custom format callbacks, which receive copies of strings), so every borrowed object
+        // outlives the evaluation.
+        unsafe {
+            let t = ffi::Py_TYPE(o);
+            if t == addr_of_mut!(ffi::PyUnicode_Type) {
+                return match utf8(o) {
+                    Some(s) => View::String(s),
+                    None => self.unsupported(),
+                };
+            }
+            if t == addr_of_mut!(ffi::PyDict_Type) {
+                return if self.depth < MAX_NESTING { View::Object(PyDictView(self)) } else { self.unsupported() };
+            }
+            if t == addr_of_mut!(ffi::PyList_Type) {
+                return if self.depth < MAX_NESTING { View::Array(PyListView(self)) } else { self.unsupported() };
+            }
+            if o == ffi::Py_None() {
+                return View::Null;
+            }
+            if t == addr_of_mut!(ffi::PyBool_Type) {
+                return View::Bool(o == ffi::Py_True());
+            }
+            if t == addr_of_mut!(ffi::PyLong_Type)
+                || (t != addr_of_mut!(ffi::PyFloat_Type) && ffi::PyLong_Check(o) != 0)
+            {
+                let mut overflow = 0;
+                let v = ffi::PyLong_AsLongLongAndOverflow(o, &mut overflow);
+                if overflow == 0 {
+                    if v == -1 && !ffi::PyErr_Occurred().is_null() {
+                        ffi::PyErr_Clear();
+                        return self.unsupported();
+                    }
+                    return View::Number(v.into());
+                }
+                if overflow > 0 {
+                    let u = ffi::PyLong_AsUnsignedLongLong(o);
+                    if !(u == u64::MAX && !ffi::PyErr_Occurred().is_null()) {
+                        return View::Number(u.into());
+                    }
+                    ffi::PyErr_Clear();
+                }
+                // Beyond 64 bits, the nearest double (as for a JSON parser without arbitrary precision).
+                let f = ffi::PyLong_AsDouble(o);
+                if f == -1.0 && !ffi::PyErr_Occurred().is_null() {
+                    ffi::PyErr_Clear();
+                    return self.unsupported();
+                }
+                return Number::from_f64(f).map_or_else(|| self.unsupported(), View::Number);
+            }
+            if t == addr_of_mut!(ffi::PyFloat_Type) || ffi::PyFloat_Check(o) != 0 {
+                return Number::from_f64(ffi::PyFloat_AsDouble(o)).map_or_else(|| self.unsupported(), View::Number);
+            }
+            // Subclasses of str, dict and list (an OrderedDict, a str enum).
+            if ffi::PyUnicode_Check(o) != 0 {
+                return match utf8(o) {
+                    Some(s) => View::String(s),
+                    None => self.unsupported(),
+                };
+            }
+            if ffi::PyDict_Check(o) != 0 && self.depth < MAX_NESTING {
+                return View::Object(PyDictView(self));
+            }
+            if ffi::PyList_Check(o) != 0 && self.depth < MAX_NESTING {
+                return View::Array(PyListView(self));
+            }
+        }
+        self.unsupported()
+    }
+}
+
+#[derive(Clone, Copy)]
+struct PyListView<'a>(PyInstance<'a>);
+
+impl<'a> ArrayView<'a> for PyListView<'a> {
+    type Item = PyInstance<'a>;
+
+    #[inline]
+    fn len(self) -> usize {
+        unsafe { ffi::PyList_Size(self.0.obj) as usize }
+    }
+
+    #[inline]
+    fn get(self, index: usize) -> PyInstance<'a> {
+        self.0.child(unsafe { ffi::PyList_GetItem(self.0.obj, index as ffi::Py_ssize_t) })
+    }
+
+    fn iter(self) -> impl Iterator<Item = PyInstance<'a>> {
+        (0..self.len()).map(move |i| self.get(i))
+    }
+}
+
+#[derive(Clone, Copy)]
+struct PyDictView<'a>(PyInstance<'a>);
+
+/// Dicts up to this size are searched by scanning their keys' UTF-8 (no string to create and hash).
+const LINEAR_KEYS: usize = 16;
+
+impl<'a> PyDictView<'a> {
+    /// The key's UTF-8, or the empty string (flagging the fallback) for a key that is not a string.
+    #[inline]
+    fn key(self, key: *mut ffi::PyObject) -> &'a str {
+        let s = unsafe { if ffi::PyUnicode_Check(key) != 0 { utf8(key) } else { None } };
+        s.unwrap_or_else(|| {
+            self.0.fallback.set(true);
+            ""
+        })
+    }
+}
+
+/// The entries of a dict, borrowed.
+struct DictEntries<'a> {
+    dict: PyDictView<'a>,
+    pos: ffi::Py_ssize_t,
+}
+
+impl<'a> Iterator for DictEntries<'a> {
+    type Item = (&'a str, PyInstance<'a>);
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut key = std::ptr::null_mut();
+        let mut value = std::ptr::null_mut();
+        if unsafe { ffi::PyDict_Next(self.dict.0.obj, &mut self.pos, &mut key, &mut value) } == 0 {
+            return None;
+        }
+        Some((self.dict.key(key), self.dict.0.child(value)))
+    }
+}
+
+impl<'a> ObjectView<'a> for PyDictView<'a> {
+    type Item = PyInstance<'a>;
+
+    #[inline]
+    fn len(self) -> usize {
+        unsafe { ffi::PyDict_Size(self.0.obj) as usize }
+    }
+
+    fn get(self, name: &str) -> Option<PyInstance<'a>> {
+        if self.len() <= LINEAR_KEYS {
+            return self.iter().find(|(k, _)| *k == name).map(|(_, v)| v);
+        }
+        unsafe {
+            let key = ffi::PyUnicode_FromStringAndSize(name.as_ptr().cast(), name.len() as ffi::Py_ssize_t);
+            if key.is_null() {
+                ffi::PyErr_Clear();
+                return None;
+            }
+            let value = ffi::PyDict_GetItemWithError(self.0.obj, key);
+            ffi::Py_DECREF(key);
+            if value.is_null() {
+                ffi::PyErr_Clear();
+                return None;
+            }
+            Some(self.0.child(value))
+        }
+    }
+
+    fn iter(self) -> impl Iterator<Item = (&'a str, PyInstance<'a>)> {
+        DictEntries { dict: self, pos: 0 }
+    }
 }
 
 // JSON values to Python objects (resolved documents arrive as Python objects; annotations go back as them).
@@ -205,18 +431,29 @@ impl PyValidator {
     fn check(&self, value: &Value) -> PyResult<bool> {
         self.inner.validate(value).map_err(|e| SchemaEvaluationDepthError::new_err(e.to_string()))
     }
+
+    /// Evaluates the Python objects in place, or the converted value when they hold something the in-place reader
+    /// does not (see `PyInstance`).
+    fn check_object(&self, instance: &Bound<'_, PyAny>) -> PyResult<bool> {
+        let fallback = Cell::new(false);
+        let result = self.inner.validate_instance(PyInstance::root(instance, &fallback));
+        if fallback.get() {
+            return self.check(&to_value(instance, 0)?);
+        }
+        result.map_err(|e| SchemaEvaluationDepthError::new_err(e.to_string()))
+    }
 }
 
 #[pymethods]
 impl PyValidator {
     /// Whether the instance (a value as `json.loads` produces it) is valid against the schema.
     fn __call__(&self, instance: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.check(&to_value(instance, 0)?)
+        self.check_object(instance)
     }
 
     /// Whether the instance (a value as `json.loads` produces it) is valid against the schema.
     fn is_valid(&self, instance: &Bound<'_, PyAny>) -> PyResult<bool> {
-        self.check(&to_value(instance, 0)?)
+        self.check_object(instance)
     }
 
     /// Whether the JSON text (`str` or `bytes`) is valid against the schema. The text is parsed in Rust, so no Python
@@ -239,14 +476,10 @@ impl PyValidator {
     /// reported, at the collector's level); without a collector this is the validator itself.
     #[pyo3(signature = (instance, collector = None))]
     fn evaluate(&self, instance: &Bound<'_, PyAny>, collector: Option<PyRefMut<'_, PyCollector>>) -> PyResult<bool> {
+        let Some(mut c) = collector else { return self.check_object(instance) };
+        // Results collection reads the converted value (an evaluation that falls back part way would leave rows).
         let value = to_value(instance, 0)?;
-        match collector {
-            None => self.check(&value),
-            Some(mut c) => self
-                .inner
-                .evaluate(&value, &mut c.inner)
-                .map_err(|e| SchemaEvaluationDepthError::new_err(e.to_string())),
-        }
+        self.inner.evaluate(&value, &mut c.inner).map_err(|e| SchemaEvaluationDepthError::new_err(e.to_string()))
     }
 
     fn __repr__(&self) -> String {
