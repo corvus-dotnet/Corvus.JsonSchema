@@ -335,28 +335,20 @@ pub(crate) fn all_unique<'a, A: ArrayView<'a>>(a: A) -> bool {
         return true;
     }
     // Arrays of strings (the common case: lists of names) compare by length first, without hashing or allocating.
-    if n <= 32 {
-        let mut s: [&'a str; 32] = [""; 32];
-        let mut strings = true;
-        for (i, x) in a.iter().enumerate() {
-            match x.view() {
-                View::String(t) => s[i] = t,
-                _ => {
-                    strings = false;
-                    break;
+    if n <= 32 && a.iter().all(|x| matches!(x.view(), View::String(_))) {
+        let s = |i: usize| match a.get(i).view() {
+            View::String(t) => t,
+            _ => unreachable!("every item is a string"),
+        };
+        for i in 1..n {
+            for j in 0..i {
+                let (x, y) = (s(i), s(j));
+                if x.len() == y.len() && x == y {
+                    return false;
                 }
             }
         }
-        if strings {
-            for i in 1..n {
-                for j in 0..i {
-                    if s[i].len() == s[j].len() && s[i] == s[j] {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
+        return true;
     }
     if n <= 16 {
         for i in 1..n {

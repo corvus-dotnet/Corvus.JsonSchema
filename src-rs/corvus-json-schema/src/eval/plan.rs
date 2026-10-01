@@ -1118,9 +1118,8 @@ impl Evaluator<'_, '_> {
     /// The anyOf/oneOf branches that can match: those a discriminator selects, or those admitting the instance type.
     #[inline(always)]
     fn candidates<'b, 'x, I: Instance<'x>>(&self, b: &'b Branches, x: I) -> &'b [u32] {
-        let (Some(disc), View::Object(o)) = (b.discriminator.as_deref(), x.view()) else {
-            return &b.by_kind[kind(x)];
-        };
+        let Some(disc) = b.discriminator.as_deref() else { return &b.by_kind[kind(x)] };
+        let View::Object(o) = x.view() else { return &b.by_kind[kind(x)] };
         let (d, index) = disc;
         match o.get(&d.property) {
             Some(v) => index.select(d, v),
@@ -1149,7 +1148,8 @@ impl Evaluator<'_, '_> {
     }
 
     fn run_keywords<'x, I: Instance<'x>>(&mut self, b: &Body, x: I) -> bool {
-        match x.view() {
+        let view = x.view();
+        match view {
             View::Object(o) => {
                 if let Some(f) = &b.fused {
                     return self.run_fused::<I>(f, o);
@@ -1168,7 +1168,7 @@ impl Evaluator<'_, '_> {
                 }
             }
         }
-        let ok = match x.view() {
+        let ok = match view {
             View::Number(n) => b.number.is_empty() || run_number(&b.number, &n),
             View::String(s) => b.string.is_empty() || run_string(&b.string, s),
             View::Object(o) => b.object.as_ref().is_none_or(|plan| self.run_object(plan, o, x)),

@@ -415,3 +415,70 @@ def test_many_declared_properties_dispatch_through_a_table() -> None:
     assert v({"p1": "a"}) is False
     assert v({"x-y": 1}) is False
     assert v({"q": 1}) is False
+
+
+def test_validators_with_module_state_are_safe_across_threads() -> None:
+    import threading
+
+    tree = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://example.com/tree",
+        "$dynamicAnchor": "node",
+        "type": "object",
+        "properties": {"data": True, "children": {"type": "array", "items": {"$dynamicRef": "#node"}}},
+    }
+    strict = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://example.com/strict-tree",
+        "$dynamicAnchor": "node",
+        "$ref": "tree",
+        "unevaluatedProperties": False,
+    }
+    documents = {"https://example.com/tree": tree, "https://example.com/strict-tree": strict}
+    # The entry resource does not define the anchor, so the reference stays dynamic (a scope is kept at run time).
+    root = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://example.com/root",
+        "$ref": "strict-tree",
+    }
+    v = cjs.compile(root, resolve_document=documents.get)
+    assert "LOCK" in v.source and "DS.append" in v.source
+    ok = {"children": [{"data": 1, "children": [{"data": 2, "children": []}] * 20}] * 20}
+    bad = {"children": [{"data": 1, "children": [{"daat": 2}]}]}
+    errors: list[str] = []
+
+    def work() -> None:
+        try:
+            for _ in range(200):
+                if v(ok) is not True or v(bad) is not False:
+                    errors.append("wrong result")
+        except Exception as e:  # the failure is the finding
+            errors.append(repr(e))
+
+    threads = [threading.Thread(target=work) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert errors == []
+
+
+def test_a_custom_format_can_reenter_the_validator() -> None:
+    holder: dict[str, cjs.Validator] = {}
+
+    def nested(s: str) -> bool:
+        # Validates a JSON document embedded in the string with the same validator.
+        return holder["v"](json.loads(s)) if s.startswith("{") else True
+
+    schema = {
+        "$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}},
+        "type": "object",
+        "properties": {"inner": {"type": "string", "format": "nested"}, "x": {"$ref": "#/$defs/loop"}},
+    }
+    v = cjs.compile(schema, assert_format=True, formats={"nested": nested}, max_depth=8)
+    holder["v"] = v
+    assert "LOCK" in v.source
+    assert v({"inner": json.dumps({"inner": "plain"})}) is True
+    with pytest.raises(cjs.SchemaEvaluationDepthError):
+        v({"x": 1})
+    assert v({"inner": "plain"}) is True

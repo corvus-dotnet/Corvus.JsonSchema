@@ -66,6 +66,12 @@ MAX_REQUIRED_TESTS = _env("CORVUS_PY_REQUIRED_TESTS", 3)
 MAX_GUARDED_COVERAGES = 32
 # A guarded coverage with more names than this tests them with a set.
 MAX_GUARD_NAMES = 6
+# A leaf schema with at most this many keywords to test is tested at its call site instead of by a call.
+MAX_INLINE_CONDITIONS = _env("CORVUS_PY_INLINE", 6)
+# Dispatch tables map a schema that accepts everything to True (no call) rather than to its function.
+TRIVIAL_ENTRIES = _env("CORVUS_PY_TRIVIAL_ENTRIES", 1) != 0
+# Enums of more values than this are tested by set lookup.
+MAX_CHAINED_VALUES = _env("CORVUS_PY_CHAINED_VALUES", 3)
 
 
 @dataclass
@@ -326,42 +332,89 @@ class CodeGenerator:
         return f"{self.ref(name)}({v}{'' if e is None else ', ' + e})"
 
     def function_ref(self, node_id: int, source: int) -> str:
-        """A reference to the flag function of child ``node_id`` (for dispatch tables), or 'R.always' for ``true``."""
+        """A reference to the flag function of child ``node_id`` (for dispatch tables), or 'True' for a schema that
+        accepts everything (no call needed)."""
         target = self.elide(node_id)
         n = self.nodes[target]
-        if n.always_true:
-            return "R.always"
+        if n.always_true or (TRIVIAL_ENTRIES and self.call(node_id, "v", source) == "True"):
+            return "True"
         if n.always_false:
             return "R.never"
         crosses = self.program.uses_dynamic_scope and n.resource_id != source
         return self.ref(("sv" if crosses else "v") + str(target))
 
     def is_inline_leaf(self, n: SchemaNode) -> bool:
-        """A ``{type, enum}``/``{const}``/``{enum}`` leaf small enough to test at the call site."""
-        if (
-            n.has_object_keywords
-            or n.has_array_keywords
-            or n.has_string_keywords
-            or n.has_number_keywords
-            or n.has_in_place_applicators
-        ):
+        """A leaf (type, const/enum of primitives, string and number keywords, nothing that applies a subschema)
+        small enough to test at the call site, without a call."""
+        if n.has_object_keywords or n.has_array_keywords or n.has_in_place_applicators or n.in_place_cycle:
             return False
         if n.has_const and not _is_primitive(n.const_value):
             return False
-        if n.enum_values is not None and (len(n.enum_values) > 4 or not all(map(_is_primitive, n.enum_values))):
+        if n.enum_values is not None and not all(map(_is_primitive, n.enum_values)):
             return False
-        return n.has_const or n.enum_values is not None
+        conditions = len(self.string_conditions_count(n)) + n.has_const + (n.enum_values is not None)
+        numbers = sum(
+            x is not None for x in (n.minimum, n.maximum, n.exclusive_minimum, n.exclusive_maximum, n.multiple_of)
+        )
+        return conditions + numbers <= MAX_INLINE_CONDITIONS
+
+    def string_conditions_count(self, n: SchemaNode) -> list[bool]:
+        """The string keywords present (without generating their tests)."""
+        return [
+            k
+            for k in (
+                n.min_length > 0,
+                n.max_length >= 0,
+                n.pattern is not None,
+                n.assert_format and n.format is not None and not is_numeric_format(n.format_kind),
+                n.assert_content,
+            )
+            if k
+        ]
 
     def inline_leaf(self, n: SchemaNode, v: str) -> str:
+        """A leaf's keywords as one expression over ``v``: per kind, its type test and the conditions for that kind,
+        then const/enum."""
+        sections = {
+            "string": self.string_conditions(n, v),
+            "number": [c for c in (self.integer_condition(n, v),) if c] + self.number_conditions(n, v),
+        }
         parts: list[str] = []
         if n.has_type:
-            parts.append(self.type_expr(n.type, v, n.dialect))
+            clauses = []
+            for kind in KINDS:
+                if not kind_allowed(n.type, kind):
+                    continue
+                test = self.kind_test(kind, v)
+                conditions = sections.get(kind, [])
+                clauses.append(test if not conditions else "(" + " and ".join([test, *conditions]) + ")")
+            if not clauses:
+                return "False"
+            parts.append(clauses[0] if len(clauses) == 1 else "(" + " or ".join(clauses) + ")")
+        else:
+            for kind, conditions in sections.items():
+                if conditions:
+                    parts.append(
+                        f"(not {wrap(self.kind_test(kind, v))} or " + " and ".join(map(wrap, conditions)) + ")"
+                    )
         if n.has_const:
             parts.append(eq_test(v, n.const_value))
         if n.enum_values is not None:
-            values = n.enum_values
-            parts.append("False" if not values else "(" + " or ".join(eq_test(v, x) for x in values) + ")")
+            parts.append(self.enum_test(n.enum_values, v))
+        if not parts:
+            return "True"
         return parts[0] if len(parts) == 1 else "(" + " and ".join(parts) + ")"
+
+    def enum_test(self, values: list[Any], v: str) -> str:
+        """A test that ``v`` is one of a list of primitives: a set lookup for more than a few strings (a string is
+        hashable, which an object or array instance is not), a chain of tests otherwise."""
+        if not values:
+            return "False"
+        if len(values) > MAX_CHAINED_VALUES and all(type(x) is str for x in values):
+            return f"({self.type_of(v)} is str and {v} in {self.constant(f'frozenset({self.json_constant(values)})')})"
+        if len(values) > MAX_CHAINED_VALUES:
+            return f"R.has({self.constant(f'R.key_set({self.json_constant(values)})')}, {v})"
+        return "(" + " or ".join(eq_test(v, x) for x in values) + ")"
 
     def scratch(self, prefix: str) -> str:
         name = prefix + str(self.tmp)
@@ -595,14 +648,7 @@ class CodeGenerator:
             if not values:
                 out.append("return False")
             elif all(map(_is_primitive, values)):
-                if len(values) <= 6:
-                    out.append(f"if not ({' or '.join(eq_test('x', v) for v in values)}): return False")
-                elif all(type(v) is str for v in values):
-                    s = self.constant(f"frozenset({self.json_constant(values)})")
-                    out.append(f"if {self.type_of('x')} is not str or x not in {s}: return False")
-                else:
-                    s = self.constant(f"R.key_set({self.json_constant(values)})")
-                    out.append(f"if not R.has({s}, x): return False")
+                out.append(f"if not {wrap(self.enum_test(values, 'x'))}: return False")
             else:
                 out.append(f"if not R.includes({self.json_constant(values)}, x): return False")
         return out
@@ -747,10 +793,12 @@ class CodeGenerator:
                     body.extend(indent(case_body(name), 1))
             else:
                 # A dict from names to check functions: one hash lookup instead of a chain of comparisons.
-                table = self.dispatch_table(n, names)
+                table, trivial = self.dispatch_table(n, names)
                 body.append(f"f = {table}.get(k)")
                 body.append("if f is not None:")
-                lines: list[str] = ["if not f(v): return False"]
+                lines: list[str] = [
+                    "if f is not True and not f(v): return False" if trivial else "if not f(v): return False"
+                ]
                 if mark:
                     lines.append(mark)
                 if matched:
@@ -773,7 +821,9 @@ class CodeGenerator:
         if ap is not None and (ap_needs_loop or mark):
             lines = []
             check = self.call(ap.id, "v", n.resource_id)
-            if check != "True":
+            if check == "False":
+                lines.append("return False")
+            elif check != "True":
                 lines.append(f"if not {wrap(check)}: return False")
             if mark:
                 lines.append(mark)
@@ -791,10 +841,13 @@ class CodeGenerator:
         out.extend(indent(body, 1))
         return out
 
-    def dispatch_table(self, n: SchemaNode, names: list[str]) -> str:
-        """A module-level dict from declared names to their check functions, defined after the functions."""
-        entries = ", ".join(f"{lit(name)}: {self.function_ref(n.properties[name], n.resource_id)}" for name in names)  # type: ignore[index]
-        return self.constant("{" + entries + "}")
+    def dispatch_table(self, n: SchemaNode, names: list[str]) -> tuple[str, bool]:
+        """A module-level dict from declared names to their check functions (``True`` for a schema that accepts
+        everything), defined after the functions; and whether any entry is ``True``."""
+        assert n.properties is not None
+        refs = [self.function_ref(n.properties[name], n.resource_id) for name in names]
+        entries = ", ".join(f"{lit(name)}: {ref}" for name, ref in zip(names, refs, strict=True))
+        return self.constant("{" + entries + "}"), "True" in refs
 
     def object_dependencies(self, n: SchemaNode, e: str | None, flag_layout: bool) -> list[str]:
         """Dependencies: required lists always; schemas here only in the flag layout (tracking evaluates them in
@@ -868,50 +921,81 @@ class CodeGenerator:
                 if hi >= 0:
                     out.append(f"if {c} > {hi}: return False")
         if n.unique_items:
-            out.append(f"if {length} > 1 and not R.unique(x): return False")
+            if self.items_hash_as_json(n):
+                # Every item passed its schema above, so all are strings, numbers or null: Python's equality and
+                # hashing are JSON's for them.
+                out.append(f"if {length} > 1 and len(set(x)) != {length}: return False")
+            else:
+                out.append(f"if {length} > 1 and not R.unique(x): return False")
         return out
+
+    def items_hash_as_json(self, n: SchemaNode) -> bool:
+        """Whether every item of an array this node accepts is a string, a number or null (by its items schema)."""
+        if n.prefix_items or n.items < 0:
+            return False
+        item = self.nodes[self.elide(n.items)]
+        if item.has_type and item.type & (T_OBJECT | T_ARRAY | T_BOOLEAN) == 0:
+            return True
+        return item.enum_values is not None and all(type(v) is str for v in item.enum_values)
 
     # -------------------------------------------------------------------------------------------------------------
     # Strings and numbers
 
-    def string_section(self, n: SchemaNode) -> list[str]:
+    def string_conditions(self, n: SchemaNode, v: str) -> list[str]:
+        """The string keywords as conditions on ``v`` (a string), each true when it holds."""
         out: list[str] = []
         if n.min_length > 0:
-            out.append(f"if len(x) < {n.min_length}: return False")
+            out.append(f"len({v}) >= {n.min_length}")
         if n.max_length >= 0:
-            out.append(f"if len(x) > {n.max_length}: return False")
+            out.append(f"len({v}) <= {n.max_length}")
         if n.pattern is not None:
-            out.append(f"if not {wrap(self.pattern_test(n.pattern, 'x'))}: return False")
+            out.append(self.pattern_test(n.pattern, v))
         if n.assert_format and n.format is not None and not is_numeric_format(n.format_kind):
             f = self.format_function(n.format, n.format_kind, n.dialect)
             if f is not None:
-                out.append(f"if not {f}(x): return False")
+                out.append(f"{f}({v})")
         if n.assert_content:
             kind = 1 if n.content == CONTENT_BASE64 else 2 if n.content == CONTENT_JSON else 3
-            out.append(f"if not R.content(x, {kind}): return False")
+            out.append(f"R.content({v}, {kind})")
         return out
 
-    def number_section(self, n: SchemaNode) -> list[str]:
+    def number_conditions(self, n: SchemaNode, v: str) -> list[str]:
+        """The number keywords as conditions on ``v`` (an int or a float), each true when it holds."""
         out: list[str] = []
         if n.assert_format and is_numeric_format(n.format_kind) and n.format not in self.program.options.formats:
             f = self.constant(f"R.NUMERIC_FORMAT_VALIDATORS[{lit(n.format_kind)}]")
-            out.append(f"if not {f}(x): return False")
+            out.append(f"{f}({v})")
         if n.minimum is not None:
-            out.append(f"if x < {lit(n.minimum)}: return False")
+            out.append(f"{v} >= {lit(n.minimum)}")
         if n.maximum is not None:
-            out.append(f"if x > {lit(n.maximum)}: return False")
+            out.append(f"{v} <= {lit(n.maximum)}")
         if n.exclusive_minimum is not None:
-            out.append(f"if x <= {lit(n.exclusive_minimum)}: return False")
+            out.append(f"{v} > {lit(n.exclusive_minimum)}")
         if n.exclusive_maximum is not None:
-            out.append(f"if x >= {lit(n.exclusive_maximum)}: return False")
+            out.append(f"{v} < {lit(n.exclusive_maximum)}")
         if n.multiple_of is not None:
             d = n.multiple_of
             if type(d) is int and d != 0:
                 # An integer divisor: the remainder is exact for integers and floats alike (fmod is exact).
-                out.append(f"if x % {d}: return False")
+                out.append(f"not {v} % {d}")
             else:
-                out.append(f"if not R.multiple_of(x, {lit(d)}): return False")
+                out.append(f"R.multiple_of({v}, {lit(d)})")
         return out
+
+    def integer_condition(self, n: SchemaNode, v: str) -> str | None:
+        """For a number restricted to integers, the condition that it is one (a float with no fractional part is an
+        integer from draft 6; in draft 4 only an int is)."""
+        if not (n.has_type and (n.type & T_INTEGER) != 0 and (n.type & T_NUMBER) == 0):
+            return None
+        if n.dialect == Dialect.DRAFT4:
+            return f"type({v}) is int"
+        return f"(type({v}) is int or {v}.is_integer())"
+
+    def string_section(self, n: SchemaNode) -> list[str]:
+        return [f"if not {wrap(c)}: return False" for c in self.string_conditions(n, "x")]
+
+    def number_section(self, n: SchemaNode) -> list[str]:
+        return [f"if not {wrap(c)}: return False" for c in self.number_conditions(n, "x")]
 
     def pattern_test(self, pattern: str, v: str) -> str:
         """A test of ``v`` (a string) against an ECMAScript pattern. Common shapes match without a regular expression
