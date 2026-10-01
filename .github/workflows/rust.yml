@@ -8,12 +8,16 @@ on:
     - 'JSON-Schema-Test-Suite'
     - 'src/Corvus.Text.Json/metaschema/**'
     - '.github/workflows/rust.yml'
+    - '.github/workflows/crates-publish.yml'
+    - 'LICENSE'
   pull_request:
     paths:
     - 'src-rs/**'
     - 'JSON-Schema-Test-Suite'
     - 'src/Corvus.Text.Json/metaschema/**'
     - '.github/workflows/rust.yml'
+    - '.github/workflows/crates-publish.yml'
+    - 'LICENSE'
   workflow_dispatch:
 
 permissions:
@@ -45,6 +49,12 @@ jobs:
         run: cargo clippy --all-targets --locked -- -D warnings
       - name: Test
         run: cargo test --locked
+      - name: Package
+        # What crates-publish.yml publishes: the packaged LICENSE must match the repository's, and the crate must
+        # build from its packaged sources alone.
+        run: |
+          cmp ../../LICENSE LICENSE
+          cargo package --locked
       - name: Benchmark harness
         working-directory: src-rs/corvus-json-schema-bench
         run: |

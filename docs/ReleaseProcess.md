@@ -138,6 +138,50 @@ against the package (docs/LocalNuGetTesting.md for the feed):
 the ILC response file under the runner's `obj/.../native/` carries one `--mibc:` argument pointing into the package,
 and `<runner> warm 200 <corpus>` reads within about 10% of the JIT harness's figure (`tools/measure.sh warm`).
 
+## The Rust crate
+
+The Rust port of the runtime evaluator, `corvus-json-schema` in `src-rs/corvus-json-schema`, publishes to
+[crates.io](https://crates.io/crates/corvus-json-schema). It is versioned independently of the NuGet packages, by the
+`version` in its `Cargo.toml`. GitVersion and the tag-triggered NuGet pipeline play no part.
+
+To release, bump `version` in `src-rs/corvus-json-schema/Cargo.toml` and merge to `main`.
+`.github/workflows/crates-publish.yml` then does the following.
+
+1. It does nothing if crates.io already has that version.
+2. It runs fmt, clippy and the tests, checks that the crate's `LICENSE` matches the repository's, and runs
+   `cargo publish --dry-run`, which builds the crate from its packaged sources.
+3. It publishes through crates.io trusted publishing. No token is stored. The crate's trusted publisher on crates.io
+   names this repository and that workflow file, so don't rename it.
+4. It tags the commit `rs-v<version>`.
+
+Unlike the npm package, there is no staged approval. The publish step makes the version live at once. A published
+version can be yanked (`cargo yank --version <version>`), but never replaced or deleted, so check a release on a
+branch first: `rust.yml` runs the same packaging check on every pull request that touches `src-rs`.
+
+The package holds the library sources, `README.md`, `Cargo.toml` and `LICENSE`, as listed by `include` in
+`Cargo.toml`. The crate's `LICENSE` is a copy of the repository's, because a crate can only package files inside its
+own directory. Update both together; CI fails if they differ.
+
+Never push an `rs-v` tag by hand. `build.yml` publishes NuGet packages for the tags that trigger it. Its tag filter only
+accepts release versions (`[0-9]+.[0-9]+.[0-9]+*`), and the workflow's own tag push uses `GITHUB_TOKEN`, which starts
+no other workflow.
+
+### The first release
+
+crates.io only accepts a trusted publisher for a crate that already exists, so version 0.1.0 is published by hand,
+from a clean checkout of `main`.
+
+```bash
+cd src-rs/corvus-json-schema
+cargo login              # a token with the publish-new scope, from crates.io Account Settings, API Tokens
+cargo publish --dry-run  # check the file list, and that the crate builds from its packaged sources
+cargo publish
+```
+
+Then revoke the token, and on crates.io open the crate's Settings, Trusted Publishing, and add a GitHub publisher with
+repository owner `corvus-dotnet`, repository `Corvus.JsonSchema` and workflow `crates-publish.yml`. Add the
+maintainers as owners too (`cargo owner --add <github-user>`), so the crate does not depend on one account.
+
 ## Pre-release testing
 
 Pre-release packages are published to GitHub Packages on every branch build. To test a pre-release package:

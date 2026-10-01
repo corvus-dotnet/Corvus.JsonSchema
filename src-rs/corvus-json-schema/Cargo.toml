@@ -8,8 +8,13 @@ license = "Apache-2.0"
 repository = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
 homepage = "https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-rs/corvus-json-schema"
 readme = "README.md"
+documentation = "https://docs.rs/corvus-json-schema"
 keywords = ["json-schema", "validation", "jsonschema", "validator"]
 categories = ["encoding", "parser-implementations"]
+# The published crate: the library and its documents. The tests read the repository's JSON-Schema-Test-Suite
+# submodule and the C# metaschemas, so they only run from a checkout. LICENSE is a copy of the repository's (CI checks
+# it matches).
+include = ["src/**", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
 regex = "1.13.1"
