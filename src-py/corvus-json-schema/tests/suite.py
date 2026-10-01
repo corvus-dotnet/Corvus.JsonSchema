@@ -66,6 +66,12 @@ def main() -> int:
     parser.add_argument("--draft")
     parser.add_argument("--filter")
     parser.add_argument("--impl", default="corvus_json_schema")
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        help="a test file to skip, e.g. draft4/optional/zeroTerminatedFloats.json (which the Rust evaluator, like C#, excludes)",
+    )
     args = parser.parse_args()
     collect_level = {
         "basic": cjs.ResultsLevel.BASIC,
@@ -167,7 +173,8 @@ def main() -> int:
         for f in files(draft, ""):
             run_file(draft, f, f"{draft}/{f.name}", False)
         for f in files(draft, "optional"):
-            run_file(draft, f, f"{draft}/optional/{f.name}", False)
+            if f"{draft}/optional/{f.name}" not in args.exclude:
+                run_file(draft, f, f"{draft}/optional/{f.name}", False)
         for f in files(draft, "optional/format"):
             run_file(draft, f, f"{draft}/optional/format/{f.name}", True)
 
