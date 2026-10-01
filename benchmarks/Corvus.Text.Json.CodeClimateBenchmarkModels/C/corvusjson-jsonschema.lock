@@ -1,0 +1,67 @@
+{
+  "generatorVersion": "1.0.0\u002B21d85efed4392126bf4de60752f3396cf7fbf296",
+  "generatedAt": "2026-09-30T12:31:08.9208818\u002B00:00",
+  "engine": "V5",
+  "codeGenerationMode": "TypeGeneration",
+  "specification": {
+    "rootNamespace": "Corvus.CodeClimateBenchmark.Current",
+    "typesToGenerate": [
+      {
+        "schemaFile": "../code-climate-schema.json",
+        "outputRootTypeName": "CodeClimateSchema",
+        "rebaseToRootPath": false
+      }
+    ],
+    "addExplicitUsings": false,
+    "assertFormat": true,
+    "disableOptionalNameHeuristics": false,
+    "nativeEnums": "All",
+    "optionalAsNullable": "None",
+    "supportYaml": false,
+    "unions": true,
+    "useImplicitOperatorString": false,
+    "useUnixLineEndings": false,
+    "formatMode": {
+      "*": "disable"
+    }
+  },
+  "schemaHashes": {
+    "../code-climate-schema.json": "e83d23adea3ab9f522e6bcd54cc4fe525719d0d485c0e415b66a6da45b92ff7a"
+  },
+  "generatedFiles": [
+    "CodeClimateSchema.Checks.JsonSchema.cs",
+    "CodeClimateSchema.Checks.Mutable.cs",
+    "CodeClimateSchema.Checks.cs",
+    "CodeClimateSchema.Enabled.EnabledEntity.JsonSchema.cs",
+    "CodeClimateSchema.Enabled.EnabledEntity.Mutable.cs",
+    "CodeClimateSchema.Enabled.EnabledEntity.cs",
+    "CodeClimateSchema.Enabled.JsonSchema.cs",
+    "CodeClimateSchema.Enabled.Mutable.cs",
+    "CodeClimateSchema.Enabled.cs",
+    "CodeClimateSchema.JsonSchema.cs",
+    "CodeClimateSchema.JsonStringArray.JsonSchema.cs",
+    "CodeClimateSchema.JsonStringArray.Mutable.cs",
+    "CodeClimateSchema.JsonStringArray.cs",
+    "CodeClimateSchema.Mutable.cs",
+    "CodeClimateSchema.Plugins.JsonSchema.cs",
+    "CodeClimateSchema.Plugins.Mutable.cs",
+    "CodeClimateSchema.Plugins.cs",
+    "CodeClimateSchema.PrepareEntityArray.JsonSchema.cs",
+    "CodeClimateSchema.PrepareEntityArray.Mutable.cs",
+    "CodeClimateSchema.PrepareEntityArray.PrepareEntity.JsonSchema.cs",
+    "CodeClimateSchema.PrepareEntityArray.PrepareEntity.Mutable.cs",
+    "CodeClimateSchema.PrepareEntityArray.PrepareEntity.cs",
+    "CodeClimateSchema.PrepareEntityArray.cs",
+    "CodeClimateSchema.Version.JsonSchema.cs",
+    "CodeClimateSchema.Version.Mutable.cs",
+    "CodeClimateSchema.Version.cs",
+    "CodeClimateSchema.cs",
+    "CorvusJsonSchemaProgram.cs",
+    "JsonString.JsonSchema.cs",
+    "JsonString.Mutable.cs",
+    "JsonString.cs",
+    "JsonUri.JsonSchema.cs",
+    "JsonUri.Mutable.cs",
+    "JsonUri.cs"
+  ]
+}

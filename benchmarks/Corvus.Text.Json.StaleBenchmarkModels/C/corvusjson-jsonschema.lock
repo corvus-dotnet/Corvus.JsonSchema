@@ -1,0 +1,79 @@
+{
+  "generatorVersion": "1.0.0\u002B21d85efed4392126bf4de60752f3396cf7fbf296",
+  "generatedAt": "2026-09-30T12:32:00.4159011\u002B00:00",
+  "engine": "V5",
+  "codeGenerationMode": "TypeGeneration",
+  "specification": {
+    "rootNamespace": "Corvus.StaleBenchmark.Current",
+    "typesToGenerate": [
+      {
+        "schemaFile": "../stale-schema.json",
+        "outputRootTypeName": "StaleSchema",
+        "rebaseToRootPath": false
+      }
+    ],
+    "addExplicitUsings": false,
+    "assertFormat": true,
+    "disableOptionalNameHeuristics": false,
+    "nativeEnums": "All",
+    "optionalAsNullable": "None",
+    "supportYaml": false,
+    "unions": true,
+    "useImplicitOperatorString": false,
+    "useUnixLineEndings": false,
+    "formatMode": {
+      "*": "disable"
+    }
+  },
+  "schemaHashes": {
+    "../stale-schema.json": "a4a9082ddc34a80b02f6b621e10a1c87a177cdd3eeafc748bd1f3776ba44e2ca"
+  },
+  "generatedFiles": [
+    "CorvusJsonSchemaProgram.cs",
+    "JsonString.JsonSchema.cs",
+    "JsonString.Mutable.cs",
+    "JsonString.cs",
+    "StaleSchema.Configuration.ClosedComment.JsonSchema.cs",
+    "StaleSchema.Configuration.ClosedComment.Mutable.cs",
+    "StaleSchema.Configuration.ClosedComment.cs",
+    "StaleSchema.Configuration.DaysUntilClose.JsonSchema.cs",
+    "StaleSchema.Configuration.DaysUntilClose.Mutable.cs",
+    "StaleSchema.Configuration.DaysUntilClose.cs",
+    "StaleSchema.Configuration.DaysUntilStale.JsonSchema.cs",
+    "StaleSchema.Configuration.DaysUntilStale.Mutable.cs",
+    "StaleSchema.Configuration.DaysUntilStale.cs",
+    "StaleSchema.Configuration.ExemptAssignees.JsonSchema.cs",
+    "StaleSchema.Configuration.ExemptAssignees.Mutable.cs",
+    "StaleSchema.Configuration.ExemptAssignees.cs",
+    "StaleSchema.Configuration.ExemptProjects.JsonSchema.cs",
+    "StaleSchema.Configuration.ExemptProjects.Mutable.cs",
+    "StaleSchema.Configuration.ExemptProjects.cs",
+    "StaleSchema.Configuration.JsonSchema.cs",
+    "StaleSchema.Configuration.JsonStringArray.JsonSchema.cs",
+    "StaleSchema.Configuration.JsonStringArray.Mutable.cs",
+    "StaleSchema.Configuration.JsonStringArray.cs",
+    "StaleSchema.Configuration.LimitPerRun.JsonSchema.cs",
+    "StaleSchema.Configuration.LimitPerRun.Mutable.cs",
+    "StaleSchema.Configuration.LimitPerRun.cs",
+    "StaleSchema.Configuration.MarkComment.JsonSchema.cs",
+    "StaleSchema.Configuration.MarkComment.Mutable.cs",
+    "StaleSchema.Configuration.MarkComment.cs",
+    "StaleSchema.Configuration.Mutable.cs",
+    "StaleSchema.Configuration.Only.JsonSchema.cs",
+    "StaleSchema.Configuration.Only.Mutable.cs",
+    "StaleSchema.Configuration.Only.cs",
+    "StaleSchema.Configuration.OnlyLJsonSArray.JsonSchema.cs",
+    "StaleSchema.Configuration.OnlyLJsonSArray.Mutable.cs",
+    "StaleSchema.Configuration.OnlyLJsonSArray.cs",
+    "StaleSchema.Configuration.StaleLabel.JsonSchema.cs",
+    "StaleSchema.Configuration.StaleLabel.Mutable.cs",
+    "StaleSchema.Configuration.StaleLabel.cs",
+    "StaleSchema.Configuration.UnmarkComment.JsonSchema.cs",
+    "StaleSchema.Configuration.UnmarkComment.Mutable.cs",
+    "StaleSchema.Configuration.UnmarkComment.cs",
+    "StaleSchema.Configuration.cs",
+    "StaleSchema.JsonSchema.cs",
+    "StaleSchema.Mutable.cs",
+    "StaleSchema.cs"
+  ]
+}

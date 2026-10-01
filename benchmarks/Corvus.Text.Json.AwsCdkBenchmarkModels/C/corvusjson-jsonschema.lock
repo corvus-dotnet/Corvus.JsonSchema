@@ -1,0 +1,58 @@
+{
+  "generatorVersion": "1.0.0\u002B21d85efed4392126bf4de60752f3396cf7fbf296",
+  "generatedAt": "2026-09-30T12:30:55.6767148\u002B00:00",
+  "engine": "V5",
+  "codeGenerationMode": "TypeGeneration",
+  "specification": {
+    "rootNamespace": "Corvus.AwsCdkBenchmark.Current",
+    "typesToGenerate": [
+      {
+        "schemaFile": "../aws-cdk-schema.json",
+        "outputRootTypeName": "AwsCdkSchema",
+        "rebaseToRootPath": false
+      }
+    ],
+    "addExplicitUsings": false,
+    "assertFormat": true,
+    "disableOptionalNameHeuristics": false,
+    "nativeEnums": "All",
+    "optionalAsNullable": "None",
+    "supportYaml": false,
+    "unions": true,
+    "useImplicitOperatorString": false,
+    "useUnixLineEndings": false,
+    "formatMode": {
+      "*": "disable"
+    }
+  },
+  "schemaHashes": {
+    "../aws-cdk-schema.json": "e7fb09a3dbc8b5ab4c795c2f20321f6923e0c305b5ec09155f4c4e8e40f0f3f6"
+  },
+  "generatedFiles": [
+    "AwsCdkSchema.AppEntity.JsonSchema.cs",
+    "AwsCdkSchema.AppEntity.Mutable.cs",
+    "AwsCdkSchema.AppEntity.cs",
+    "AwsCdkSchema.JsonSchema.cs",
+    "AwsCdkSchema.Mutable.cs",
+    "AwsCdkSchema.WatchEntity.IncludeJsoArray.JsonSchema.cs",
+    "AwsCdkSchema.WatchEntity.IncludeJsoArray.Mutable.cs",
+    "AwsCdkSchema.WatchEntity.IncludeJsoArray.cs",
+    "AwsCdkSchema.WatchEntity.JsonSchema.cs",
+    "AwsCdkSchema.WatchEntity.JsonStringArray.JsonSchema.cs",
+    "AwsCdkSchema.WatchEntity.JsonStringArray.Mutable.cs",
+    "AwsCdkSchema.WatchEntity.JsonStringArray.cs",
+    "AwsCdkSchema.WatchEntity.Mutable.cs",
+    "AwsCdkSchema.WatchEntity.cs",
+    "AwsCdkSchema.cs",
+    "CorvusJsonSchemaProgram.cs",
+    "JsonBoolean.JsonSchema.cs",
+    "JsonBoolean.Mutable.cs",
+    "JsonBoolean.cs",
+    "JsonObject.JsonSchema.cs",
+    "JsonObject.Mutable.cs",
+    "JsonObject.cs",
+    "JsonString.JsonSchema.cs",
+    "JsonString.Mutable.cs",
+    "JsonString.cs"
+  ]
+}

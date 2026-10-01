@@ -37,12 +37,12 @@ public class PatternPropertyRangeTests
             .Where(l => l.Contains("MatchRangeRegularExpression", StringComparison.Ordinal) || (l.Contains("Regex", StringComparison.Ordinal) && l.Contains("٣", StringComparison.Ordinal)))
             .ToArray();
 
-        // ^.{3,5}$ is matched inline; ^.{٣,٥}$ is a regular expression ('.' translated from ECMAScript).
+        // ^.{3,5}$ is matched inline; ^.{٣,٥}$ is a regular expression ('.' and '$' translated from ECMAScript).
         string[] expected =
         [
             "return JsonSchemaEvaluation.MatchRangeRegularExpression(propertyName, 3, 5);",
-            """[GeneratedRegex("^[^\\n\\r\\u2028\\u2029]{٣,٥}$")]""",
-            """private static Regex CreatePatternProperties2() => new("^[^\\n\\r\\u2028\\u2029]{٣,٥}$", RegexOptions.Compiled);""",
+            """[GeneratedRegex("^[^\\n\\r\\u2028\\u2029]{٣,٥}\\z")]""",
+            """private static Regex CreatePatternProperties2() => new("^[^\\n\\r\\u2028\\u2029]{٣,٥}\\z", RegexOptions.Compiled);""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))

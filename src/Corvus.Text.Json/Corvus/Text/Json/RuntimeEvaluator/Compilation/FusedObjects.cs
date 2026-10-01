@@ -24,8 +24,10 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 /// </para>
 /// <para>
 /// Branches under <c>then</c> or <c>else</c> apply only when the <c>if</c> holds; the plan supports <c>if</c>
-/// schemas that are pure <c>required</c> lists, whose truth is known once the properties have been seen, and
-/// defers those branches' applications to a second step over the properties they touched.
+/// schemas whose truth is known once the properties have been seen (<c>required</c> names, value tests on
+/// properties, and <c>patternProperties</c> of <c>false</c>, which no name may match), and defers those branches'
+/// applications to a second step over the properties they touched. A <c>not</c> whose schema is a
+/// <c>required</c> list is decided the same way.
 /// </para>
 /// <para>
 /// Flag mode only: collecting mode keeps the general path, which produces the per-branch results and annotations.
@@ -65,6 +67,45 @@ internal sealed class FusedObject
 
     /// <summary>The <c>unevaluatedProperties</c> schema, or none.</summary>
     public ChildRef Unevaluated = ChildRef.None;
+
+    /// <summary>
+    /// The <c>not</c> keywords whose schema is a <c>required</c> list: the names must not all be present, decided from
+    /// the seen bits after the pass. Gated like a contributor when under a condition.
+    /// </summary>
+    public FusedAlternative[] Forbidden = [];
+
+    /// <summary>
+    /// The conditions an <c>if</c> with <c>patternProperties</c> whose schemas are all <c>false</c> decides: a name that
+    /// matches fails the condition. A known name carries a value test that never holds instead; these are the patterns
+    /// names no entry knows are tested against.
+    /// </summary>
+    public FusedAbsentPattern[] AbsentPatterns = [];
+
+    /// <summary>
+    /// For a flat plan, the child each entry's one application checks (-1 for none or <c>true</c>), else null. A flat
+    /// plan's branches all apply unconditionally with declared properties, <c>required</c> names and count bounds
+    /// only, and each name resolves to one schema: the object takes one strict loop over the merged names.
+    /// </summary>
+    public int[]? FlatNodes;
+
+    /// <summary>The strict loop's entries for <see cref="FlatNodes"/>, derived with the other object-plan details.</summary>
+    public StrictEntry[]? FlatEntries;
+
+    /// <summary>The seen bits (entry indexes) of every branch's required names, for a flat plan.</summary>
+    public ulong FlatRequiredMask;
+
+    /// <summary>The tightest count bounds of the branches, for a flat plan (-1: none).</summary>
+    public int FlatMinProperties = -1;
+
+    /// <summary>The tightest count bounds of the branches, for a flat plan (-1: none).</summary>
+    public int FlatMaxProperties = -1;
+}
+
+/// <summary>A condition that fails when a property name matches the pattern.</summary>
+internal sealed class FusedAbsentPattern(int condition, PatternMatcher matcher)
+{
+    public readonly int Condition = condition;
+    public readonly PatternMatcher Matcher = matcher;
 }
 
 /// <summary>A known property name and the child schemas that apply to it, per branch.</summary>
@@ -223,8 +264,8 @@ internal static class FusedObjects
 
     /// <summary>
     /// Computes the fused plan for every eligible node. Runs after in-place cycles and pure-reference elision are
-    /// known and before plans are selected; a program that keeps a dynamic scope is left alone, because fusing
-    /// would skip the resource-scope pushes its references depend on.
+    /// known and before plans are selected; a node that can reach a live dynamic reference fuses only contributors in
+    /// its own resource, because fusing skips the resource-scope pushes of the contributors it does not enter.
     /// </summary>
     public static void Compute(SchemaNode[] nodes)
     {
@@ -239,17 +280,13 @@ internal static class FusedObjects
         }
 
         // A fused plan applies its contributors' keywords without entering the contributors as nodes, so the dynamic
-        // scope below it would differ from the general path's. That only matters where a live dynamic reference can
-        // be reached, so only those nodes keep the general plan; the rest of the program fuses as usual.
+        // scope below it would differ from the general path's where a contributor is in another resource. That only
+        // matters where a live dynamic reference can be reached: those nodes fuse only contributors in their own
+        // resource (which the general path would not push again); the rest of the program fuses as usual.
         bool[] reachesDynamic = ReachesDynamicReference(nodes);
         foreach (SchemaNode node in nodes)
         {
-            if (reachesDynamic[node.Id])
-            {
-                continue;
-            }
-
-            node.Fused = TryFuse(nodes, node);
+            node.Fused = TryFuse(nodes, node, reachesDynamic[node.Id]);
         }
     }
 
@@ -291,9 +328,9 @@ internal static class FusedObjects
         return reaches;
     }
 
-    private static FusedObject? TryFuse(SchemaNode[] nodes, SchemaNode node)
+    private static FusedObject? TryFuse(SchemaNode[] nodes, SchemaNode node, bool sameResource)
     {
-        if (!IsObjectBranch(node, allowUnevaluated: true) || node.InPlaceCycle)
+        if (!IsObjectBranch(nodes, node, allowUnevaluated: true) || node.InPlaceCycle)
         {
             return null;
         }
@@ -303,7 +340,8 @@ internal static class FusedObjects
         var extras = new List<(int Condition, bool Polarity, byte[][] RequiredNames)>();
         var alternatives = new List<(int Condition, bool Polarity, bool ExactlyOne, byte[][][] Branches)>();
         var altGroups = new List<(bool ExactlyOne, int BranchCount)>();
-        var context = new CollectContext(nodes, contributors, conditions, extras, alternatives, altGroups, !node.UnevaluatedProperties.IsPresent);
+        var forbidden = new List<(int Condition, bool Polarity, byte[][] Names)>();
+        var context = new CollectContext(nodes, contributors, conditions, extras, alternatives, altGroups, forbidden, !node.UnevaluatedProperties.IsPresent, sameResource ? node.ResourceId : -1);
         if (!Collect(context, node, -1, true))
         {
             return null;
@@ -409,6 +447,14 @@ internal static class FusedObjects
             }
         }
 
+        foreach ((_, _, byte[][] forbiddenNames) in forbidden)
+        {
+            foreach (byte[] name in forbiddenNames)
+            {
+                NameBit(name);
+            }
+        }
+
         if (names.Count > MaxNames)
         {
             return null;
@@ -504,6 +550,21 @@ internal static class FusedObjects
 
         fused.Alternatives = builtAlternatives;
 
+        var builtForbidden = new FusedAlternative[forbidden.Count];
+        for (int i = 0; i < forbidden.Count; i++)
+        {
+            (int condition, bool polarity, byte[][] forbiddenNames) = forbidden[i];
+            int[] bits = new int[forbiddenNames.Length];
+            for (int j = 0; j < bits.Length; j++)
+            {
+                bits[j] = NameBit(forbiddenNames[j]);
+            }
+
+            builtForbidden[i] = new FusedAlternative { Condition = condition, Polarity = polarity, Branches = [bits] };
+        }
+
+        fused.Forbidden = builtForbidden;
+
         var builtConditions = new FusedCondition[conditions.Count];
         var valueTestsByEntry = new Dictionary<int, List<FusedValueTest>>();
         for (int i = 0; i < conditions.Count; i++)
@@ -545,6 +606,53 @@ internal static class FusedObjects
         }
 
         fused.Conditions = builtConditions;
+
+        // patternProperties that are all false in an if: a known name that matches fails the condition whatever its
+        // value (a keyed test with nothing allowed), and names no entry knows are matched during the pass.
+        var absent = new List<FusedAbsentPattern>();
+        for (int i = 0; i < conditions.Count; i++)
+        {
+            foreach (PatternPropertyEntry pattern in conditions[i].Test?.PatternProperties ?? [])
+            {
+                absent.Add(new FusedAbsentPattern(i, pattern.Matcher));
+            }
+        }
+
+        if (absent.Count > 0)
+        {
+            var testsByCondition = new List<FusedValueTest>[conditions.Count];
+            for (int e = 0; e < names.Count; e++)
+            {
+                foreach (FusedAbsentPattern pattern in absent)
+                {
+                    if (!pattern.Matcher.IsMatch(names[e]))
+                    {
+                        continue;
+                    }
+
+                    var never = new FusedValueTest { Condition = pattern.Condition, Entry = e, Allowed = new Utf8NameMap<object>([]) };
+                    if (!valueTestsByEntry.TryGetValue(e, out List<FusedValueTest>? list))
+                    {
+                        list = [];
+                        valueTestsByEntry.Add(e, list);
+                    }
+
+                    list.Add(never);
+                    (testsByCondition[pattern.Condition] ??= [.. builtConditions[pattern.Condition].ValueTests]).Add(never);
+                }
+            }
+
+            for (int i = 0; i < conditions.Count; i++)
+            {
+                if (testsByCondition[i] is List<FusedValueTest> tests)
+                {
+                    builtConditions[i].ValueTests = [.. tests];
+                }
+            }
+
+            fused.AbsentPatterns = [.. absent];
+            fused.ResolvesUnknownNames = true;
+        }
 
         // Resolve every known name against every branch at compile time.
         var entries = new FusedEntry[names.Count];
@@ -601,7 +709,60 @@ internal static class FusedObjects
 
         fused.EntryList = entries;
         fused.Entries = new Utf8NameMap<FusedEntry>(mapEntries);
+        SetFlat(fused, alternatives.Count == 0 && altGroups.Count == 0 && forbidden.Count == 0);
         return fused;
+    }
+
+    /// <summary>
+    /// Makes the plan flat (see <see cref="FusedObject.FlatNodes"/>) when nothing is conditional, nothing is tracked for
+    /// <c>unevaluatedProperties</c>, every branch has declared properties, <c>required</c> names and count bounds only,
+    /// and every name resolves to at most one schema with no value test.
+    /// </summary>
+    private static void SetFlat(FusedObject fused, bool noAlternatives)
+    {
+        if (!noAlternatives || fused.Conditions.Length > 0 || fused.Unevaluated.IsPresent || fused.ResolvesUnknownNames || fused.EntryList.Length > 64)
+        {
+            return;
+        }
+
+        ulong required = 0;
+        int min = -1;
+        int max = -1;
+        foreach (FusedContributor contributor in fused.Contributors)
+        {
+            if (contributor.Condition >= 0 || contributor.AltGroup >= 0)
+            {
+                return;
+            }
+
+            foreach (int bit in contributor.RequiredBits)
+            {
+                required |= 1UL << bit;
+            }
+
+            min = Math.Max(min, contributor.MinProperties);
+            if (contributor.MaxProperties >= 0)
+            {
+                max = max < 0 ? contributor.MaxProperties : Math.Min(max, contributor.MaxProperties);
+            }
+        }
+
+        int[] flat = new int[fused.EntryList.Length];
+        for (int i = 0; i < flat.Length; i++)
+        {
+            FusedEntry entry = fused.EntryList[i];
+            if (entry.Applications.Length > 1 || entry.HasValueTests)
+            {
+                return;
+            }
+
+            flat[i] = entry.Applications.Length == 0 ? -1 : entry.Applications[0].Node;
+        }
+
+        fused.FlatNodes = flat;
+        fused.FlatRequiredMask = required;
+        fused.FlatMinProperties = min;
+        fused.FlatMaxProperties = max;
     }
 
     /// <summary>
@@ -775,7 +936,9 @@ internal static class FusedObjects
         List<(int Condition, bool Polarity, byte[][] RequiredNames)> extras,
         List<(int Condition, bool Polarity, bool ExactlyOne, byte[][][] Branches)> alternatives,
         List<(bool ExactlyOne, int BranchCount)> altGroups,
-        bool allowAltGroups)
+        List<(int Condition, bool Polarity, byte[][] Names)> forbidden,
+        bool allowAltGroups,
+        int resource)
     {
         public SchemaNode[] Nodes { get; } = nodes;
 
@@ -785,6 +948,15 @@ internal static class FusedObjects
 
         /// <summary>Alternative groups with object keywords are taken only where coverage is not tracked, since a failed branch must not cover.</summary>
         public bool AllowAltGroups { get; } = allowAltGroups;
+
+        /// <summary>
+        /// The resource every contributor must belong to, or -1 for any: below a live dynamic reference, where the
+        /// general path would push a contributor's own resource on the dynamic scope and the fused pass does not enter
+        /// contributors.
+        /// </summary>
+        public int Resource { get; } = resource;
+
+        public List<(int Condition, bool Polarity, byte[][] Names)> Forbidden { get; } = forbidden;
 
         public List<PendingCondition> Conditions { get; } = conditions;
 
@@ -806,12 +978,19 @@ internal static class FusedObjects
             return true;
         }
 
-        if (branch.AlwaysFalse || branch.InPlaceCycle || !IsObjectBranch(branch, allowUnevaluated: ctx.Contributors.Count == 0))
+        if (branch.AlwaysFalse || branch.InPlaceCycle || !IsObjectBranch(nodes, branch, allowUnevaluated: ctx.Contributors.Count == 0)
+            || (ctx.Resource >= 0 && branch.ResourceId != ctx.Resource))
         {
             return false;
         }
 
         ctx.Contributors.Add((branch, condition, polarity, -1, 0));
+        if (branch.Not.IsPresent)
+        {
+            // IsObjectBranch accepted it: a required list.
+            ctx.Forbidden.Add((condition, polarity, ForbiddenNames(nodes, branch.Not)!));
+        }
+
         if (branch.Ref.IsPresent && !Collect(ctx, nodes[branch.Ref.FastNode], condition, polarity))
         {
             return false;
@@ -945,7 +1124,8 @@ internal static class FusedObjects
         {
             SchemaNode branch = ctx.Nodes[branches[b].FastNode];
             if (branch.AlwaysTrue || branch.AlwaysFalse || branch.InPlaceCycle || branch.HasInPlaceApplicators || branch.Dependencies is not null
-                || !IsObjectBranch(branch, allowUnevaluated: false) || ctx.Contributors.Count >= MaxContributors)
+                || branch.Not.IsPresent || !IsObjectBranch(ctx.Nodes, branch, allowUnevaluated: false) || ctx.Contributors.Count >= MaxContributors
+                || (ctx.Resource >= 0 && branch.ResourceId != ctx.Resource))
             {
                 return false;
             }
@@ -1057,10 +1237,24 @@ internal static class FusedObjects
             return false;
         }
 
-        if (test.PatternProperties is not null || test.AdditionalProperties.IsPresent || test.PropertyNames.IsPresent
+        if (test.AdditionalProperties.IsPresent || test.PropertyNames.IsPresent
             || test.UnevaluatedProperties.IsPresent || test.Dependencies is not null || test.MinProperties >= 0 || test.MaxProperties >= 0)
         {
             return false;
+        }
+
+        // patternProperties whose schemas are all false: no property name may match.
+        if (test.PatternProperties is PatternPropertyEntry[] patterns)
+        {
+            foreach (PatternPropertyEntry pattern in patterns)
+            {
+                if (!nodes[pattern.Schema.FastNode].AlwaysFalse)
+                {
+                    return false;
+                }
+            }
+
+            anyTest = true;
         }
 
         if (test.Properties is Utf8NameMap<PropertyEntry> properties)
@@ -1143,9 +1337,22 @@ internal static class FusedObjects
     }
 
     /// <summary>
-    /// A branch whose only effect on an object instance is through object keywords and the fusable in-place applicators.
+    /// The names of a <c>not</c> whose schema is a non-empty <c>required</c> list (an object fails when all are present),
+    /// or null.
     /// </summary>
-    private static bool IsObjectBranch(SchemaNode node, bool allowUnevaluated)
+    private static byte[][]? ForbiddenNames(SchemaNode[] nodes, in ChildRef not)
+    {
+        SchemaNode schema = nodes[not.FastNode];
+        return schema.AlwaysTrue || schema.AlwaysFalse || !IsRequiredListOnly(schema) || schema.RequiredNames is not byte[][] { Length: > 0 } required
+            ? null
+            : required;
+    }
+
+    /// <summary>
+    /// A branch whose only effect on an object instance is through object keywords and the fusable in-place applicators
+    /// (a <c>not</c> only when its schema is a <c>required</c> list).
+    /// </summary>
+    private static bool IsObjectBranch(SchemaNode[] nodes, SchemaNode node, bool allowUnevaluated)
     {
         if (node.HasConst || node.Enum is not null || node.HasNumberKeywords || node.HasStringKeywords)
         {
@@ -1158,7 +1365,7 @@ internal static class FusedObjects
         }
 
         // anyOf, oneOf and dependencies are accepted here and validated by Collect (required-only branches, gated conditions).
-        if (node.Not.IsPresent || node.PropertyNames.IsPresent || node.DynamicRef is not null)
+        if ((node.Not.IsPresent && ForbiddenNames(nodes, node.Not) is null) || node.PropertyNames.IsPresent || node.DynamicRef is not null)
         {
             return false;
         }

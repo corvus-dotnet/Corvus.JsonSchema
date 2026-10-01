@@ -1,0 +1,62 @@
+{
+  "generatorVersion": "1.0.0\u002B21d85efed4392126bf4de60752f3396cf7fbf296",
+  "generatedAt": "2026-09-30T12:30:59.6559426\u002B00:00",
+  "engine": "V5",
+  "codeGenerationMode": "TypeGeneration",
+  "specification": {
+    "rootNamespace": "Corvus.PersonBenchmark.Current",
+    "typesToGenerate": [
+      {
+        "schemaFile": "../person-schema.json",
+        "outputRootTypeName": "Person",
+        "rebaseToRootPath": false
+      }
+    ],
+    "addExplicitUsings": false,
+    "assertFormat": true,
+    "disableOptionalNameHeuristics": false,
+    "nativeEnums": "All",
+    "optionalAsNullable": "None",
+    "supportYaml": false,
+    "unions": true,
+    "useImplicitOperatorString": false,
+    "useUnixLineEndings": false,
+    "formatMode": {
+      "*": "disable"
+    }
+  },
+  "schemaHashes": {
+    "../person-schema.json": "89438c90c1a5a3a48dfe11467471d5c4d79a53d9157e921a54535cf7a3de9713"
+  },
+  "generatedFiles": [
+    "Age.JsonSchema.cs",
+    "Age.Mutable.cs",
+    "Age.cs",
+    "CompetedInYears.JsonSchema.cs",
+    "CompetedInYears.Mutable.cs",
+    "CompetedInYears.cs",
+    "CorvusJsonSchemaProgram.cs",
+    "Corvus__UnionAttribute.cs",
+    "JsonInt32.JsonSchema.cs",
+    "JsonInt32.Mutable.cs",
+    "JsonInt32.cs",
+    "JsonObject.JsonSchema.cs",
+    "JsonObject.Mutable.cs",
+    "JsonObject.cs",
+    "NameComponent.JsonSchema.cs",
+    "NameComponent.Mutable.cs",
+    "NameComponent.cs",
+    "NameComponentArray.JsonSchema.cs",
+    "NameComponentArray.Mutable.cs",
+    "NameComponentArray.cs",
+    "OtherNames.JsonSchema.cs",
+    "OtherNames.Mutable.cs",
+    "OtherNames.cs",
+    "Person.JsonSchema.cs",
+    "Person.Mutable.cs",
+    "Person.cs",
+    "PersonName.JsonSchema.cs",
+    "PersonName.Mutable.cs",
+    "PersonName.cs"
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "generatorVersion": "1.0.0\u002B21d85efed4392126bf4de60752f3396cf7fbf296",
+  "generatedAt": "2026-09-30T12:31:46.8049122\u002B00:00",
+  "engine": "V5",
+  "codeGenerationMode": "TypeGeneration",
+  "specification": {
+    "rootNamespace": "Corvus.LernaBenchmark.Current",
+    "typesToGenerate": [
+      {
+        "schemaFile": "../lerna-schema.json",
+        "outputRootTypeName": "LernaSchema",
+        "rebaseToRootPath": false
+      }
+    ],
+    "addExplicitUsings": false,
+    "assertFormat": true,
+    "disableOptionalNameHeuristics": false,
+    "nativeEnums": "All",
+    "optionalAsNullable": "None",
+    "supportYaml": false,
+    "unions": true,
+    "useImplicitOperatorString": false,
+    "useUnixLineEndings": false,
+    "formatMode": {
+      "*": "disable"
+    }
+  },
+  "schemaHashes": {
+    "../lerna-schema.json": "02054df14e82ec5f681ee5fc5b99c4de10b827ec0358da23e20efac466d32996"
+  },
+  "generatedFiles": [
+    "CorvusJsonSchemaProgram.cs",
+    "JsonBoolean.JsonSchema.cs",
+    "JsonBoolean.Mutable.cs",
+    "JsonBoolean.cs",
+    "JsonString.JsonSchema.cs",
+    "JsonString.Mutable.cs",
+    "JsonString.cs",
+    "LernaSchema.ArrayOfGloArray.JsonSchema.cs",
+    "LernaSchema.ArrayOfGloArray.Mutable.cs",
+    "LernaSchema.ArrayOfGloArray.cs",
+    "LernaSchema.JsonSchema.cs",
+    "LernaSchema.JsonStringArray.JsonSchema.cs",
+    "LernaSchema.JsonStringArray.Mutable.cs",
+    "LernaSchema.JsonStringArray.cs",
+    "LernaSchema.Mutable.cs",
+    "LernaSchema.NpmClientAArray.JsonSchema.cs",
+    "LernaSchema.NpmClientAArray.Mutable.cs",
+    "LernaSchema.NpmClientAArray.cs",
+    "LernaSchema.OptionsForTheCliCommands.JsonSchema.cs",
+    "LernaSchema.OptionsForTheCliCommands.Mutable.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheBootstrapCommand.IgnoreArray.JsonSchema.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheBootstrapCommand.IgnoreArray.Mutable.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheBootstrapCommand.IgnoreArray.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheBootstrapCommand.JsonSchema.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheBootstrapCommand.JsonStringArray.JsonSchema.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheBootstrapCommand.JsonStringArray.Mutable.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheBootstrapCommand.JsonStringArray.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheBootstrapCommand.Mutable.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheBootstrapCommand.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheInitCommand.JsonSchema.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheInitCommand.Mutable.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheInitCommand.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForThePublishCommand.IgnoreChangesArray.JsonSchema.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForThePublishCommand.IgnoreChangesArray.Mutable.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForThePublishCommand.IgnoreChangesArray.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForThePublishCommand.JsonSchema.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForThePublishCommand.Mutable.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForThePublishCommand.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheRunCommand.JsonSchema.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheRunCommand.Mutable.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheRunCommand.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.JsonSchema.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Mutable.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.JsonSchema.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.Mutable.cs",
+    "LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.cs",
+    "LernaSchema.OptionsForTheCliCommands.cs",
+    "LernaSchema.cs"
+  ]
+}

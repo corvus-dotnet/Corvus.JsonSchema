@@ -90,6 +90,13 @@ foreach ($proj in $projects) {
     dotnet run --project $generatorProject -f net10.0 -c Release --no-build -- @genArgs | Out-Null
     if ($LASTEXITCODE -ne 0) { $failures += "$($proj.Name) (generator exit $LASTEXITCODE)"; continue }
 
+    # A project that also runs the source generator gets the [Union] attribute polyfill from it, so a second copy
+    # from the CLI would be a duplicate definition in the same assembly.
+    $csproj = Get-ChildItem -Path $proj.FullName -Filter '*.csproj' -File | Select-Object -First 1
+    if ($csproj -and (Select-String -Path $csproj.FullName -Pattern 'Corvus\.Text\.Json\.SourceGenerator' -Quiet)) {
+        Remove-Item -Path (Join-Path $cDir 'Corvus__UnionAttribute.cs') -ErrorAction SilentlyContinue
+    }
+
     if (-not $SkipVerify) {
         # An additive-only regeneration (the common case for an additive generator change) removes no lines from
         # tracked C/ files vs HEAD. Removed lines are NOT necessarily wrong — a generator that renamed/dropped a
@@ -116,6 +123,9 @@ if ($failures.Count -gt 0) {
 if ($review.Count -gt 0) {
     Write-Host "REVIEW ($($review.Count) project(s) had non-additive diffs):" -ForegroundColor Yellow
     $review | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
+}
+elseif ($SkipVerify) {
+    Write-Host 'Additive-only verification skipped (-SkipVerify).' -ForegroundColor Yellow
 }
 else {
     Write-Host 'All C/ regenerations were additive-only.' -ForegroundColor Green

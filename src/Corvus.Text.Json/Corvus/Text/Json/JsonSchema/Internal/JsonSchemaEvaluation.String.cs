@@ -313,6 +313,7 @@ public static partial class JsonSchemaEvaluation
 
     /// <summary>
     /// Validates that a string's Unicode codepoint length is within a range, as a replacement for patterns like <c>^.{n,m}$</c>.
+    /// As in ECMA-262, <c>.</c> does not match a line terminator, so a string containing one does not match.
     /// </summary>
     /// <param name="value">The UTF-8 encoded string value to validate.</param>
     /// <param name="min">The minimum number of Unicode codepoints.</param>
@@ -324,9 +325,7 @@ public static partial class JsonSchemaEvaluation
     [CLSCompliant(false)]
     public static bool MatchRangeRegularExpression(ReadOnlySpan<byte> value, int min, int max, string originalExpressionString, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
     {
-        int runeCount = JsonElementHelpers.CountRunes(value);
-
-        if (runeCount < min || runeCount > max)
+        if (!MatchRangeRegularExpression(value, min, max))
         {
             context.EvaluatedKeyword(false, originalExpressionString, messageProvider: ExpectedStringMatchesRegularExpression, keyword);
             return false;
@@ -337,7 +336,8 @@ public static partial class JsonSchemaEvaluation
     }
 
     /// <summary>
-    /// Validates that a UTF-8 byte span's Unicode codepoint length is within a range.
+    /// Validates that a UTF-8 byte span's Unicode codepoint length is within a range and that it contains no line
+    /// terminator, as a replacement for patterns like <c>^.{n,m}$</c>.
     /// Used for <c>patternProperties</c> matching where no context reporting is needed.
     /// </summary>
     /// <param name="value">The UTF-8 encoded value to check.</param>
@@ -346,8 +346,71 @@ public static partial class JsonSchemaEvaluation
     /// <returns><see langword="true"/> if the length is within range; otherwise, <see langword="false"/>.</returns>
     public static bool MatchRangeRegularExpression(ReadOnlySpan<byte> value, int min, int max)
     {
+        if (ContainsRegexLineTerminator(value))
+        {
+            return false;
+        }
+
         int runeCount = JsonElementHelpers.CountRunes(value);
         return runeCount >= min && runeCount <= max;
+    }
+
+    /// <summary>
+    /// Determines whether a UTF-8 byte span contains a character other than a line terminator, as a replacement for
+    /// the patterns <c>.</c> and <c>.+</c> (ECMA-262's <c>.</c> matches anything but <c>\n</c>, <c>\r</c>, U+2028
+    /// and U+2029).
+    /// Used for <c>patternProperties</c> matching where no context reporting is needed.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded value to check.</param>
+    /// <returns><see langword="true"/> if some character is not a line terminator; otherwise, <see langword="false"/>.</returns>
+    public static bool MatchNonEmptyRegularExpression(ReadOnlySpan<byte> value)
+    {
+        int i = 0;
+        while (i < value.Length)
+        {
+            byte b = value[i];
+            if (b == (byte)'\n' || b == (byte)'\r')
+            {
+                i++;
+            }
+            else if (b == 0xE2 && i + 2 < value.Length && value[i + 1] == 0x80 && (value[i + 2] == 0xA8 || value[i + 2] == 0xA9))
+            {
+                i += 3;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Determines whether a UTF-8 byte span contains an ECMA-262 line terminator (<c>\n</c>, <c>\r</c>, U+2028 or U+2029).
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded value to check.</param>
+    /// <returns><see langword="true"/> if the value contains a line terminator; otherwise, <see langword="false"/>.</returns>
+    internal static bool ContainsRegexLineTerminator(ReadOnlySpan<byte> value)
+    {
+        if (value.IndexOfAny((byte)'\n', (byte)'\r') >= 0)
+        {
+            return true;
+        }
+
+        int i = value.IndexOf((byte)0xE2);
+        while (i >= 0 && i + 2 < value.Length)
+        {
+            if (value[i + 1] == 0x80 && (value[i + 2] == 0xA8 || value[i + 2] == 0xA9))
+            {
+                return true;
+            }
+
+            int next = value[(i + 1)..].IndexOf((byte)0xE2);
+            i = next < 0 ? -1 : i + 1 + next;
+        }
+
+        return false;
     }
 
     /// <summary>

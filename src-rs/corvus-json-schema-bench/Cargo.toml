@@ -1,0 +1,18 @@
+[package]
+name = "corvus-json-schema-bench"
+version = "0.0.0"
+edition = "2024"
+publish = false
+description = "Benchmarks corvus-json-schema against other Rust JSON Schema validators on the jsonschema-benchmark corpora."
+license = "Apache-2.0"
+
+[dependencies]
+corvus-json-schema = { path = "../corvus-json-schema" }
+boon = "0.6.1"
+jsonschema = { version = "0.58.3", default-features = false }
+serde_json = { version = "1.0.151", features = ["preserve_order"] }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+debug = "line-tables-only"

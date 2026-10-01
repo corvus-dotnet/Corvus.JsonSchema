@@ -1,0 +1,52 @@
+{
+  "generatorVersion": "1.0.0\u002B21d85efed4392126bf4de60752f3396cf7fbf296",
+  "generatedAt": "2026-09-30T12:31:29.7082197\u002B00:00",
+  "engine": "V5",
+  "codeGenerationMode": "TypeGeneration",
+  "specification": {
+    "rootNamespace": "Corvus.HelmChartLockBenchmark.Current",
+    "typesToGenerate": [
+      {
+        "schemaFile": "../helm-chart-lock-schema.json",
+        "outputRootTypeName": "HelmChartLockSchema",
+        "rebaseToRootPath": false
+      }
+    ],
+    "addExplicitUsings": false,
+    "assertFormat": true,
+    "disableOptionalNameHeuristics": false,
+    "nativeEnums": "All",
+    "optionalAsNullable": "None",
+    "supportYaml": false,
+    "unions": true,
+    "useImplicitOperatorString": false,
+    "useUnixLineEndings": false,
+    "formatMode": {
+      "*": "disable"
+    }
+  },
+  "schemaHashes": {
+    "../helm-chart-lock-schema.json": "d68fc03eadf8a581687bb4f50a9938a7d35e861c623dacfe0de17ad400bca391"
+  },
+  "generatedFiles": [
+    "CorvusJsonSchemaProgram.cs",
+    "HelmChartLockSchema.JsonSchema.cs",
+    "HelmChartLockSchema.Mutable.cs",
+    "HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.JsonSchema.cs",
+    "HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Mutable.cs",
+    "HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion.JsonSchema.cs",
+    "HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion.Mutable.cs",
+    "HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion.cs",
+    "HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.cs",
+    "HelmChartLockSchema.cs",
+    "JsonDateTime.JsonSchema.cs",
+    "JsonDateTime.Mutable.cs",
+    "JsonDateTime.cs",
+    "JsonString.JsonSchema.cs",
+    "JsonString.Mutable.cs",
+    "JsonString.cs",
+    "JsonUri.JsonSchema.cs",
+    "JsonUri.Mutable.cs",
+    "JsonUri.cs"
+  ]
+}

@@ -1,0 +1,58 @@
+name: rust
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-rs/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/rust.yml'
+  pull_request:
+    paths:
+    - 'src-rs/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/rust.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and test corvus-json-schema (Rust)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src-rs/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+      - name: Checkout JSON-Schema-Test-Suite
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Toolchain
+        # The version pinned in src-rs/rust-toolchain.toml, so CI lints with the same clippy as local builds.
+        run: |
+          rustup toolchain install
+          rustc --version
+      - name: Format
+        run: cargo fmt --check
+      - name: Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+      - name: Test
+        run: cargo test --locked
+      - name: Benchmark harness
+        working-directory: src-rs/corvus-json-schema-bench
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+      - name: Bowtie harness
+        working-directory: src-rs/corvus-json-schema-bowtie
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+          cargo test --locked

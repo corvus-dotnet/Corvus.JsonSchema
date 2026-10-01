@@ -11,9 +11,11 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Tests.Unit;
 
 /// <summary>
 /// A node whose keywords are type and object keywords plus if/then/else, and which does not fuse (the branches here
-/// carry a <c>not</c>, which the fused plan refuses), takes the conditional plan: its own keywords through their
-/// plan, then the if and the selected branch as children, agreeing with the general path on every value kind, on the
-/// absent property, on non-objects, on escaped names and values, on duplicate names and on non-canonical numbers.
+/// carry a <c>not</c> whose schema is more than a <c>required</c> list, which the fused plan refuses), takes the
+/// conditional plan: its own keywords through their plan, then the if and the selected branch as children, agreeing
+/// with the general path on every value kind, on the absent property, on non-objects, on escaped names and values, on
+/// duplicate names and on non-canonical numbers. The same schemas with a plain <c>required</c> list in the
+/// <c>not</c> fuse, and must agree too.
 /// </summary>
 [TestClass]
 public class ConditionalPlanTests
@@ -52,6 +54,20 @@ public class ConditionalPlanTests
         }
         """;
 
+    /// <summary>
+    /// The schema with every <c>not</c> made more than a <c>required</c> list (<c>minProperties: 0</c> changes nothing),
+    /// so that the node does not fuse.
+    /// </summary>
+    private static string Unfusable(string schema) => schema.Replace("\"not\": {\"required\"", "\"not\": {\"minProperties\": 0, \"required\"");
+
+    /// <summary>The schema as written, which fuses, compiled and loaded from its image.</summary>
+    private static (JsonSchemaEvaluator Fused, JsonSchemaEvaluator Loaded) Fused(string schema)
+    {
+        JsonSchemaEvaluator fused = JsonSchemaEvaluator.Compile(schema);
+        Assert.AreEqual(NodePlan.FusedObject, fused.Program.Nodes[fused.RootNode].Plan, "A not with a required list fuses.");
+        return (fused, JsonSchemaEvaluator.FromProgramImage(fused.ToProgramImage()));
+    }
+
     private static void AssertAgree(JsonSchemaEvaluator evaluator, JsonSchemaEvaluator loaded, string instance, bool expected)
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(instance);
@@ -64,7 +80,10 @@ public class ConditionalPlanTests
     [TestMethod]
     public void APureChainTakesTheConditionalPlanAtEveryLevel()
     {
-        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(TypeChain);
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(Unfusable(TypeChain));
+        (JsonSchemaEvaluator fused, JsonSchemaEvaluator fusedLoaded) = Fused(TypeChain);
+        using JsonSchemaEvaluator f = fused;
+        using JsonSchemaEvaluator fl = fusedLoaded;
         SchemaNode root = evaluator.Program.Nodes[evaluator.RootNode];
         Assert.AreEqual(NodePlan.Conditional, root.Plan);
         Assert.AreEqual(NodePlan.AlwaysTrue, root.ConditionalOwnPlan, "No keywords of its own.");
@@ -98,13 +117,17 @@ public class ConditionalPlanTests
         })
         {
             AssertAgree(evaluator, loaded, instance, expected);
+            AssertAgree(f, fl, instance, expected);
         }
     }
 
     [TestMethod]
     public void IntegerBooleanAndNullConditionsAgree()
     {
-        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(NumberChain);
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(Unfusable(NumberChain));
+        (JsonSchemaEvaluator fused, JsonSchemaEvaluator fusedLoaded) = Fused(NumberChain);
+        using JsonSchemaEvaluator f = fused;
+        using JsonSchemaEvaluator fl = fusedLoaded;
         Assert.AreEqual(NodePlan.Conditional, evaluator.Program.Nodes[evaluator.RootNode].Plan);
         using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(evaluator.ToProgramImage());
 
@@ -126,13 +149,17 @@ public class ConditionalPlanTests
         })
         {
             AssertAgree(evaluator, loaded, instance, expected);
+            AssertAgree(f, fl, instance, expected);
         }
     }
 
     [TestMethod]
     public void OwnObjectKeywordsGoThroughTheStrictPlanFirst()
     {
-        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(ObjectWithCondition);
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(Unfusable(ObjectWithCondition));
+        (JsonSchemaEvaluator fused, JsonSchemaEvaluator fusedLoaded) = Fused(ObjectWithCondition);
+        using JsonSchemaEvaluator f = fused;
+        using JsonSchemaEvaluator fl = fusedLoaded;
         SchemaNode root = evaluator.Program.Nodes[evaluator.RootNode];
         Assert.AreEqual(NodePlan.Conditional, root.Plan);
         Assert.AreEqual(NodePlan.StrictObject, root.ConditionalOwnPlan);
@@ -155,10 +182,11 @@ public class ConditionalPlanTests
         })
         {
             AssertAgree(evaluator, loaded, instance, expected);
+            AssertAgree(f, fl, instance, expected);
         }
 
         // Type alone as the own keywords.
-        using JsonSchemaEvaluator typed = JsonSchemaEvaluator.Compile("""{"type": ["object", "null"], "if": {"properties": {"v": {"const": "a"}}}, "then": {"not": {"required": ["b"]}}}""");
+        using JsonSchemaEvaluator typed = JsonSchemaEvaluator.Compile(Unfusable("""{"type": ["object", "null"], "if": {"properties": {"v": {"const": "a"}}}, "then": {"not": {"required": ["b"]}}}"""));
         Assert.AreEqual(NodePlan.Conditional, typed.Program.Nodes[typed.RootNode].Plan);
         Assert.AreEqual(NodePlan.Leaf, typed.Program.Nodes[typed.RootNode].ConditionalOwnPlan);
         Assert.IsTrue(typed.Evaluate("""{"v": "a"}"""));

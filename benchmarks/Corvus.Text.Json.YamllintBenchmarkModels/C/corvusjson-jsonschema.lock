@@ -1,0 +1,43 @@
+{
+  "generatorVersion": "1.0.0\u002B21d85efed4392126bf4de60752f3396cf7fbf296",
+  "generatedAt": "2026-09-30T12:32:21.5702578\u002B00:00",
+  "engine": "V5",
+  "codeGenerationMode": "TypeGeneration",
+  "specification": {
+    "rootNamespace": "Corvus.YamllintBenchmark.Current",
+    "typesToGenerate": [
+      {
+        "schemaFile": "../yamllint-schema.json",
+        "outputRootTypeName": "YamllintSchema",
+        "rebaseToRootPath": false
+      }
+    ],
+    "addExplicitUsings": false,
+    "assertFormat": true,
+    "disableOptionalNameHeuristics": false,
+    "nativeEnums": "All",
+    "optionalAsNullable": "None",
+    "supportYaml": false,
+    "unions": true,
+    "useImplicitOperatorString": false,
+    "useUnixLineEndings": false,
+    "formatMode": {
+      "*": "disable"
+    }
+  },
+  "schemaHashes": {
+    "../yamllint-schema.json": "db503cf018d4c2c9cdd497620a2eea36b26b86a9bcc753aecc752da9dc458972"
+  },
+  "generatedFiles": [
+    "CorvusJsonSchemaProgram.cs",
+    "JsonString.JsonSchema.cs",
+    "JsonString.Mutable.cs",
+    "JsonString.cs",
+    "YamllintSchema.Ignore.JsonSchema.cs",
+    "YamllintSchema.Ignore.Mutable.cs",
+    "YamllintSchema.Ignore.cs",
+    "YamllintSchema.JsonSchema.cs",
+    "YamllintSchema.Mutable.cs",
+    "YamllintSchema.cs"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "generatorVersion": "1.0.0\u002B21d85efed4392126bf4de60752f3396cf7fbf296",
+  "generatedAt": "2026-09-30T12:31:03.8846792\u002B00:00",
+  "engine": "V5",
+  "codeGenerationMode": "TypeGeneration",
+  "specification": {
+    "rootNamespace": "Corvus.ClassicBenchmark.Current",
+    "typesToGenerate": [
+      {
+        "schemaFile": "../person-array-schema.json",
+        "outputRootTypeName": "ClassicSchema",
+        "rebaseToRootPath": false
+      }
+    ],
+    "addExplicitUsings": false,
+    "assertFormat": true,
+    "disableOptionalNameHeuristics": false,
+    "nativeEnums": "All",
+    "optionalAsNullable": "None",
+    "supportYaml": false,
+    "unions": true,
+    "useImplicitOperatorString": false,
+    "useUnixLineEndings": false,
+    "formatMode": {
+      "*": "disable"
+    }
+  },
+  "schemaHashes": {
+    "../person-array-schema.json": "e087b8732193f5efe499beb0b448900514f2967800fc9d236bd5cca3e795316b"
+  },
+  "generatedFiles": [
+    "CorvusJsonSchemaProgram.cs",
+    "Corvus__UnionAttribute.cs",
+    "HeightRangeDouble.JsonSchema.cs",
+    "HeightRangeDouble.Mutable.cs",
+    "HeightRangeDouble.cs",
+    "JsonArray.JsonSchema.cs",
+    "JsonArray.Mutable.cs",
+    "JsonArray.cs",
+    "JsonDate.JsonSchema.cs",
+    "JsonDate.Mutable.cs",
+    "JsonDate.cs",
+    "JsonDecimal.JsonSchema.cs",
+    "JsonDecimal.Mutable.cs",
+    "JsonDecimal.cs",
+    "JsonEmail.JsonSchema.cs",
+    "JsonEmail.Mutable.cs",
+    "JsonEmail.cs",
+    "OtherNames.JsonSchema.cs",
+    "OtherNames.Mutable.cs",
+    "OtherNames.cs",
+    "Person.JsonSchema.cs",
+    "Person.Mutable.cs",
+    "Person.cs",
+    "PersonArray.JsonSchema.cs",
+    "PersonArray.Mutable.cs",
+    "PersonArray.cs",
+    "PersonName.JsonSchema.cs",
+    "PersonName.Mutable.cs",
+    "PersonName.cs",
+    "PersonNameElement.JsonSchema.cs",
+    "PersonNameElement.Mutable.cs",
+    "PersonNameElement.cs",
+    "PersonNameElementArray.JsonSchema.cs",
+    "PersonNameElementArray.Mutable.cs",
+    "PersonNameElementArray.cs"
+  ]
+}

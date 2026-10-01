@@ -482,6 +482,18 @@ internal sealed class SchemaCompiler
                 }
             }
 
+            if (node.Fused is { FlatNodes: int[] flatNodes } fused)
+            {
+                // A flat fused plan's strict loop: the entry index is the seen bit.
+                var flatEntries = new StrictEntry[flatNodes.Length];
+                for (int i = 0; i < flatNodes.Length; i++)
+                {
+                    flatEntries[i] = flatNodes[i] < 0 ? new StrictEntry(i, TypeMask.None, false, null, -1) : EntryFor(nodes, flatNodes[i], i);
+                }
+
+                fused.FlatEntries = flatEntries;
+            }
+
             node.StrictEntries = null;
             node.AdditionalEntry = new StrictEntry(-1, node.AdditionalInlineType, node.AdditionalInlineLexical, null, node.AdditionalFastNode, node.AdditionalFastNode >= 0 && IsNestedObject(nodes[node.AdditionalFastNode], nodes));
             node.ItemsNestedObject = node.Items.IsPresent && IsNestedObject(nodes[node.Items.FastNode], nodes);
@@ -555,9 +567,11 @@ internal sealed class SchemaCompiler
     }
 
     /// <summary>The in-place resolution for a child: <c>true</c>, a type test, a string set or const, or a child to dispatch on.</summary>
-    private static StrictEntry EntryFor(SchemaNode[] nodes, in ChildRef schema, int seenBit)
+    private static StrictEntry EntryFor(SchemaNode[] nodes, in ChildRef schema, int seenBit) => EntryFor(nodes, schema.FastNode, seenBit);
+
+    private static StrictEntry EntryFor(SchemaNode[] nodes, int fastNode, int seenBit)
     {
-        SchemaNode target = nodes[schema.FastNode];
+        SchemaNode target = nodes[fastNode];
         if (target.AlwaysTrue)
         {
             return new StrictEntry(seenBit, TypeMask.None, false, null, -1);
@@ -578,7 +592,7 @@ internal sealed class SchemaCompiler
             return new StrictEntry(seenBit, TypeMask.None, false, null, -1, false, target.ConstString);
         }
 
-        return new StrictEntry(seenBit, TypeMask.None, false, null, schema.FastNode, IsNestedObject(target, nodes));
+        return new StrictEntry(seenBit, TypeMask.None, false, null, fastNode, IsNestedObject(target, nodes));
     }
 
     /// <summary>
