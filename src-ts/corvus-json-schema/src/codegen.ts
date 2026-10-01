@@ -20,6 +20,11 @@ interface Coverage {
   prefix: number;
   all: boolean;
 }
+/** A coverage that applies only when every guard (a JavaScript expression over the instance `x`) holds. */
+interface GuardedCoverage {
+  guards: string[];
+  coverage: Coverage;
+}
 type Kind = 'null' | 'boolean' | 'object' | 'array' | 'number' | 'string';
 const KINDS: Kind[] = ['string', 'number', 'object', 'array', 'boolean', 'null'];
 
@@ -41,6 +46,10 @@ const MAX_UNROLLED_REQUIRED = env('CORVUS_TS_UNROLL_REQUIRED', 24);
 /** The number of names above which property dispatch goes through a Map to a dense switch. */
 const MAX_SWITCH_NAMES = env('CORVUS_TS_SWITCH', 4);
 const DISPATCH_MAP = env('CORVUS_TS_DISPATCH_MAP', 0) !== 0;
+/** At most this many guarded coverages decide unevaluatedProperties statically; more falls back to tracking. */
+const MAX_GUARDED_COVERAGES = 32;
+/** A guarded coverage with more names than this tests them with a Set. */
+const MAX_GUARD_NAMES = 6;
 /** Generated programs smaller than this (characters) are compiled eagerly. */
 const EAGER_MAX_SOURCE = env('CORVUS_TS_EAGER_MAX', 128 * 1024);
 
@@ -1035,8 +1044,70 @@ export class CodeGenerator {
     return conditional.every(within) ? main : undefined;
   }
 
+  /**
+   * Static coverage for objects with guards. Like staticCoverage, but a contribution under `if`/`then`/`else` or a
+   * dependency's schema is kept with the conditions it applies under (the `if` schema evaluated against the
+   * instance, or the dependency's property being present) instead of having to add nothing. An object's evaluated
+   * names are then the unconditional coverage plus every guarded coverage whose guards hold, all tested statically,
+   * so unevaluatedProperties needs no run-time set (as the C# fused plan decides its conditions after its pass).
+   * `anyOf`/`oneOf`/`$dynamicRef` contributions must still add nothing, since whether a branch passed is not a guard
+   * this can test. Undefined when that fails, when a contributor is on an in-place cycle, when there are too many
+   * guarded coverages, or, below a live dynamic reference, when a contributor is in another resource (its `if`
+   * would be evaluated in another dynamic scope).
+   */
+  private guardedCoverage(n: SchemaNode): { main: Coverage; guarded: GuardedCoverage[] } | undefined {
+    const empty = (): Coverage => ({ names: new Set(), patterns: [], prefix: 0, all: false });
+    const main = empty();
+    const guarded: GuardedCoverage[] = [];
+    const unguarded: Coverage[] = [];
+    const marks = (id: number): boolean => this.nodes[this.elide(id)].marksProperties;
+    // `guards` is undefined inside an anyOf/oneOf/$dynamicRef branch, where a guard would also need the branch to pass.
+    const visit = (id: number, root: boolean, coverage: Coverage, guards: string[] | undefined, visited: Set<number>): boolean => {
+      const m = this.nodes[id];
+      if (visited.has(id)) return true;
+      visited.add(id);
+      if (m.alwaysTrue || m.alwaysFalse) return true;
+      if (m.inPlaceCycle || (this.program.usesDynamicScope && m.resourceId !== n.resourceId)) return false;
+      const branch = (c: number, g: string[] | undefined): boolean => {
+        const sub = empty();
+        if (g === undefined) unguarded.push(sub);
+        else guarded.push({ guards: g, coverage: sub });
+        return visit(this.elide(c), false, sub, g, new Set());
+      };
+      const alternatives = [
+        ...(m.anyOf ?? []),
+        ...(m.oneOf ?? []),
+        ...(m.dynamicRef !== undefined ? [m.dynamicRef.fallback, ...m.dynamicRef.byResource.values()] : []),
+      ];
+      for (const c of alternatives) if (marks(c) && !branch(c, undefined)) return false;
+      if (m.if >= 0) {
+        const test = this.call(m.if, 'x', n.resourceId);
+        for (const [c, holds] of [[m.if, true], [m.then, true], [m.else, false]] as const) {
+          if (c >= 0 && marks(c) && !branch(c, guards === undefined ? undefined : [...guards, holds ? test : `!${wrap(test)}`])) return false;
+        }
+      }
+      for (const d of m.dependencies ?? []) {
+        if (d.schema === undefined || !marks(d.schema)) continue;
+        if (!branch(d.schema, guards === undefined ? undefined : [...guards, `${getProperty('x', d.name)} !== undefined`])) return false;
+      }
+      for (const name of m.properties?.keys() ?? []) coverage.names.add(name);
+      for (const p of m.patternProperties ?? []) if (!coverage.patterns.includes(p.pattern)) coverage.patterns.push(p.pattern);
+      if (m.additionalProperties >= 0 || (!root && m.unevaluatedProperties >= 0)) coverage.all = true;
+      for (const c of [m.ref, m.staticDynamicRef, ...(m.allOf ?? [])]) {
+        if (c >= 0 && marks(c) && !visit(this.elide(c), false, coverage, guards, visited)) return false;
+      }
+      return true;
+    };
+    if (!visit(n.id, true, main, [], new Set())) return undefined;
+    const within = (c: Coverage): boolean =>
+      main.all || (!c.all && [...c.names].every((x) => main.names.has(x)) && c.patterns.every((x) => main.patterns.includes(x)));
+    if (!unguarded.every(within)) return undefined;
+    const adding = guarded.filter((g) => !within(g.coverage));
+    return adding.length <= MAX_GUARDED_COVERAGES ? { main, guarded: adding } : undefined;
+  }
+
   /** The object or array branch of a node whose unevaluated keyword is decided by static coverage. */
-  private fusedUnevaluated(n: SchemaNode, kind: 'object' | 'array', coverage: Coverage, variant: Variant): string[] {
+  private fusedUnevaluated(n: SchemaNode, kind: 'object' | 'array', coverage: Coverage, variant: Variant, guarded: GuardedCoverage[] = []): string[] {
     // Other-kind tracking for an enclosing consumer is not needed here: this branch only runs for `kind`.
     const lines: string[] = [];
     lines.push(...this.kindSection(n, kind, undefined, true));
@@ -1045,6 +1116,16 @@ export class CodeGenerator {
       if (kind === 'object') {
         const check = this.call(n.unevaluatedProperties, 'x[k]', n.resourceId);
         if (check !== 'true') {
+          // Each distinct guard is decided once per object, before the pass.
+          const guardNames = new Map<string, string>();
+          for (const g of guarded) {
+            for (const expr of g.guards) {
+              if (guardNames.has(expr)) continue;
+              const name = this.scratch('g');
+              guardNames.set(expr, name);
+              lines.push(`const ${name} = ${expr};`);
+            }
+          }
           lines.push('for (const k in x) {');
           const names = [...coverage.names];
           if (names.length > 0) {
@@ -1061,6 +1142,16 @@ export class CodeGenerator {
             }
           }
           for (const p of coverage.patterns) lines.push(`  if (${this.patternTest(p, 'k')}) continue;`);
+          for (const g of guarded) {
+            const when = g.guards.map((expr) => guardNames.get(expr)!).join(' && ');
+            const covered: string[] = [];
+            const extra = [...g.coverage.names];
+            if (extra.length > 0 && extra.length <= MAX_GUARD_NAMES) covered.push(...extra.map((name) => `k === ${lit(name)}`));
+            else if (extra.length > 0) covered.push(`${this.constant(`new Set(JSON.parse(${lit(JSON.stringify(extra))}))`)}.has(k)`);
+            for (const p of g.coverage.patterns) covered.push(this.patternTest(p, 'k'));
+            if (g.coverage.all) lines.push(`  if (${when || 'true'}) continue;`);
+            else if (covered.length > 0) lines.push(`  if (${when ? when + ' && ' : ''}(${covered.join(' || ')})) continue;`);
+          }
           lines.push(check === 'false' ? '  return false;' : `  if (!${wrap(check)}) return false;`);
           lines.push('}');
         }
@@ -1097,6 +1188,11 @@ export class CodeGenerator {
       const coverage = own ? this.staticCoverage(n, kind) : undefined;
       if (coverage !== undefined) {
         out.push(`if (${test}) {`, ...indent(this.fusedUnevaluated(n, kind, coverage, variant), 1), '}');
+        continue;
+      }
+      const guarded = own && kind === 'object' ? this.guardedCoverage(n) : undefined;
+      if (guarded !== undefined) {
+        out.push(`if (${test}) {`, ...indent(this.fusedUnevaluated(n, kind, guarded.main, variant, guarded.guarded), 1), '}');
         continue;
       }
       const e = own ? this.scratch('e') : variant === 't' ? 'ev' : undefined;

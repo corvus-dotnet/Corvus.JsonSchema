@@ -124,7 +124,10 @@ The pipeline follows the C# evaluator stage for stage:
      each re-test the kind and the properties (the C# and Rust flat fused plan);
    - `oneOf`/`anyOf` narrow by a discriminator property (`const`/`enum` values) or by type dispatch;
    - `unevaluatedProperties`/`unevaluatedItems` whose contributors are all unconditional (or add nothing beyond
-     them) are decided from static coverage, with no run-time tracking (the idea behind the fused object plan);
+     them) are decided from static coverage, with no run-time tracking (the idea behind the fused object plan).
+     For objects, a contribution under `if`/`then`/`else` or a dependency's schema keeps its condition: the
+     condition is decided once per object, and a property counts as evaluated when the unconditional coverage or a
+     coverage whose conditions hold names it;
    - anchored patterns made of literals and ASCII classes match without the regular expression engine
      (`PatternMatcher`'s class sequences), everything else uses a native `RegExp` with the `u` flag;
    - structurally identical functions are merged by partition refinement.
