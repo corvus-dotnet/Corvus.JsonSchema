@@ -182,6 +182,73 @@ Then revoke the token, and on crates.io open the crate's Settings, Trusted Publi
 repository owner `corvus-dotnet`, repository `Corvus.JsonSchema` and workflow `crates-publish.yml`. Add the
 maintainers as owners too (`cargo owner --add <github-user>`), so the crate does not depend on one account.
 
+## The Python packages
+
+`src-py` holds two Python packages, published to PyPI and versioned independently of the NuGet packages and of each
+other, each by the `version` in its `pyproject.toml`:
+
+- `corvus-json-schema`, pure Python (`src-py/corvus-json-schema`);
+- `corvus-json-schema-rs`, backed by the Rust crate
+  (`src-py/corvus-json-schema-rs`): an sdist and one abi3 wheel per platform (Linux x86_64 and aarch64, glibc and musl;
+  macOS universal2; Windows x64 and arm64).
+
+To release one, bump `version` in its `pyproject.toml` and `__version__` in its `__init__.py` (CI checks they agree),
+add the version's entry at the top of its `VERSIONHISTORY.md`, and merge to `main`. `.github/workflows/pypi-publish.yml`
+then does the following for each package.
+
+1. It does nothing if PyPI already has that version.
+2. It builds the package: the sdist and wheel for the pure package, and for the Rust-backed one every wheel and the
+   sdist through `python-wheels.yml`, which tests each wheel on its own platform, as CI does on every pull request.
+3. It publishes through PyPI trusted publishing, in the `pypi` GitHub environment. No token is stored. Each project's
+   trusted publisher on PyPI names this repository, that workflow file and that environment, so don't rename them.
+4. It tags the commit `py-v<version>` (pure) or `py-rs-v<version>` (Rust-backed).
+
+There is no staged approval: the upload makes the version live. A published version can be yanked on PyPI, but its
+files can never be replaced, so check a release on a branch first.
+
+The Rust-backed package builds the crate from `src-rs/corvus-json-schema` by path (its sdist includes the crate's
+sources), so it can use crate changes before the crate is released. Release the crate too when the package depends on
+new crate API, so the crate on crates.io matches what the wheels contain.
+
+Never push a `py-v` or `py-rs-v` tag by hand (see the crate's tags above).
+
+### The first release: PyPI setup
+
+PyPI accepts a trusted publisher for a project that does not exist yet (a "pending" publisher), and the first
+publish through it creates the project. A pending publisher does not reserve the name, so publish soon after adding it.
+Do this once, before merging the first version:
+
+1. **Create the GitHub environment.** In the repository's **Settings**, **Environments**, add an environment named
+   `pypi`. It needs no secrets. Required reviewers are optional; without them a merge publishes at once.
+2. **Add the pending publishers.** Sign in to PyPI (with two-factor authentication), open
+   [**Publishing**](https://pypi.org/manage/account/publishing/) in your account, and add a GitHub publisher for each
+   project:
+
+   | Field | `corvus-json-schema` | `corvus-json-schema-rs` |
+   |---|---|---|
+   | PyPI Project Name | `corvus-json-schema` | `corvus-json-schema-rs` |
+   | Owner | `corvus-dotnet` | `corvus-dotnet` |
+   | Repository name | `Corvus.JsonSchema` | `Corvus.JsonSchema` |
+   | Workflow name | `pypi-publish.yml` | `pypi-publish.yml` |
+   | Environment name | `pypi` | `pypi` |
+
+3. **Merge.** The workflow publishes both projects, owned by the account that added the publishers.
+4. **Add co-owners.** On each project's **Manage**, **Collaborators** page, invite the other maintainers as owners, so
+   the projects do not depend on one account.
+
+To keep the projects in a PyPI organization instead (a group of users and teams that owns projects together):
+
+1. On PyPI, open [**Your organizations**](https://pypi.org/manage/organizations/), enter the name and details under
+   **Create new organization**, choose **Community** (free; **Company** is billed per member) and click **Create**.
+   A PyPI administrator approves new organizations, with no fixed timeline; the creator becomes its Owner.
+2. Once it is approved, add the maintainers on its **People** page (owners or managers), and optionally a team on
+   **Teams**.
+3. Move each project in on the organization's **Projects** page: select it under **Transfer existing project** (an
+   Owner of the organization who also owns the project does this). Its trusted publisher moves with it.
+
+Publishing does not wait for the organization: the projects can be published from an account first and transferred
+when the organization is approved.
+
 ## Pre-release testing
 
 Pre-release packages are published to GitHub Packages on every branch build. To test a pre-release package:
