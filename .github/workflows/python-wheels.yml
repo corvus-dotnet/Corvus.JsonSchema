@@ -1,0 +1,102 @@
+name: python-wheels
+# Builds and tests the corvus-json-schema-rs wheels (abi3, on native runners for each platform) and its sdist, and
+# uploads them as artifacts named wheel-* and sdist. Called by python.yml (CI) and pypi-publish.yml (release), so a
+# release uploads exactly what was built and tested here.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  wheels:
+    name: corvus-json-schema-rs wheel (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux x86_64, os: ubuntu-latest, target: x86_64, manylinux: auto }
+          - { name: linux aarch64, os: ubuntu-24.04-arm, target: aarch64, manylinux: auto }
+          - { name: linux x86_64 musl, os: ubuntu-latest, target: x86_64, manylinux: musllinux_1_2, container: 'python:3.10-alpine' }
+          - { name: linux aarch64 musl, os: ubuntu-24.04-arm, target: aarch64, manylinux: musllinux_1_2, container: 'python:3.10-alpine' }
+          - { name: macos universal2, os: macos-latest, target: universal2-apple-darwin }
+          - { name: windows x64, os: windows-latest, target: x64 }
+          # CPython has no 3.10 build for arm64 Windows: its oldest is 3.11.
+          - { name: windows arm64, os: windows-11-arm, target: aarch64, oldest: '3.11' }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          # Only what the packages need (the repository's generated benchmark models have paths too long for Windows).
+          sparse-checkout: |
+            src-py
+            src-rs/corvus-json-schema
+            JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        shell: bash
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Build
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          working-directory: src-py/corvus-json-schema-rs
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          args: --release --out dist
+      - name: Setup Python
+        # abi3: one wheel serves every Python from 3.10, so test the oldest and the newest.
+        if: ${{ !matrix.container }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: |
+            ${{ matrix.oldest || '3.10' }}
+            3.14
+      - name: Test (oldest and newest Python)
+        if: ${{ !matrix.container }}
+        shell: bash
+        run: |
+          for v in ${{ matrix.oldest || '3.10' }} 3.14; do
+            python$v -m venv .venv-$v || py -$v -m venv .venv-$v
+            py=.venv-$v/bin/python; [ -x "$py" ] || py=.venv-$v/Scripts/python.exe
+            "$py" -m pip install -q pytest
+            "$py" -m pip install -q --no-index --find-links src-py/corvus-json-schema-rs/dist corvus-json-schema-rs
+            "$py" -m pytest -q src-py/corvus-json-schema-rs/tests
+            "$py" src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --exclude draft4/optional/zeroTerminatedFloats.json
+          done
+      - name: Test (musl)
+        if: ${{ matrix.container }}
+        run: |
+          docker run --rm -v "$PWD:/io" -w /io ${{ matrix.container }} sh -c '
+            pip install -q pytest &&
+            pip install -q --no-index --find-links src-py/corvus-json-schema-rs/dist corvus-json-schema-rs &&
+            python -m pytest -q src-py/corvus-json-schema-rs/tests &&
+            python src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --exclude draft4/optional/zeroTerminatedFloats.json'
+      - name: Upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wheel-${{ matrix.os }}-${{ matrix.target }}-${{ matrix.manylinux || 'native' }}
+          path: src-py/corvus-json-schema-rs/dist/*.whl
+
+  sdist:
+    name: corvus-json-schema-rs (sdist)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: |
+            src-py
+            src-rs/corvus-json-schema
+            JSON-Schema-Test-Suite
+      - name: Build
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          working-directory: src-py/corvus-json-schema-rs
+          command: sdist
+          args: --out dist
+      - name: Upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sdist
+          path: src-py/corvus-json-schema-rs/dist/*.tar.gz

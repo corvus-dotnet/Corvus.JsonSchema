@@ -6,11 +6,12 @@
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-use serde_json::{Map, Number, Value};
+use serde_json::{Number, Value};
 
 use crate::compiler::{AnnotationSource, collect_annotations};
 use crate::dialect::Dialect;
 use crate::formats::FormatKind;
+use crate::instance::{ArrayView, Instance, Kind, ObjectView, View};
 use crate::node::*;
 use crate::numbers::{Num, cmp, multiple_of, num_eq, number_text};
 use crate::options::FormatValidator;
@@ -239,14 +240,17 @@ fn const_message(value: &Value) -> String {
 
 /// Whether a value is of one of the types in a mask.
 #[inline]
-pub(crate) fn matches_type(mask: u8, x: &Value) -> bool {
-    match x {
-        Value::Null => mask & type_mask::NULL != 0,
-        Value::Bool(_) => mask & type_mask::BOOLEAN != 0,
-        Value::Number(n) => mask & type_mask::NUMBER != 0 || (mask & type_mask::INTEGER != 0 && is_integer(n)),
-        Value::String(_) => mask & type_mask::STRING != 0,
-        Value::Array(_) => mask & type_mask::ARRAY != 0,
-        Value::Object(_) => mask & type_mask::OBJECT != 0,
+pub(crate) fn matches_type<'a, I: Instance<'a>>(mask: u8, x: I) -> bool {
+    match x.kind() {
+        Kind::Null => mask & type_mask::NULL != 0,
+        Kind::Bool => mask & type_mask::BOOLEAN != 0,
+        Kind::Number => {
+            mask & type_mask::NUMBER != 0
+                || (mask & type_mask::INTEGER != 0 && matches!(x.view(), View::Number(n) if is_integer(&n)))
+        }
+        Kind::String => mask & type_mask::STRING != 0,
+        Kind::Array => mask & type_mask::ARRAY != 0,
+        Kind::Object => mask & type_mask::OBJECT != 0,
     }
 }
 
@@ -255,21 +259,22 @@ fn is_integer(n: &Number) -> bool {
     n.is_i64() || n.is_u64() || n.as_f64().is_some_and(|f| f.is_finite() && f.fract() == 0.0)
 }
 
-/// JSON equality: numbers by value, objects by their property sets, arrays element-wise.
-pub(crate) fn json_equal(a: &Value, b: &Value) -> bool {
-    match (a, b) {
-        (Value::Null, Value::Null) => true,
-        (Value::Bool(x), Value::Bool(y)) => x == y,
-        (Value::Number(x), Value::Number(y)) => num_eq(x, y),
-        (Value::String(x), Value::String(y)) => x == y,
-        (Value::Array(x), Value::Array(y)) => x.len() == y.len() && x.iter().zip(y).all(|(p, q)| json_equal(p, q)),
-        (Value::Object(x), Value::Object(y)) => {
+/// JSON equality: numbers by value, objects by their property sets, arrays element-wise. The two values may be read
+/// differently (an instance against a schema's constant).
+pub(crate) fn json_equal<'a, 'b, A: Instance<'a>, B: Instance<'b>>(a: A, b: B) -> bool {
+    match (a.view(), b.view()) {
+        (View::Null, View::Null) => true,
+        (View::Bool(x), View::Bool(y)) => x == y,
+        (View::Number(x), View::Number(y)) => num_eq(&x, &y),
+        (View::String(x), View::String(y)) => x == y,
+        (View::Array(x), View::Array(y)) => x.len() == y.len() && x.iter().zip(y.iter()).all(|(p, q)| json_equal(p, q)),
+        (View::Object(x), View::Object(y)) => {
             if x.len() != y.len() {
                 return false;
             }
             // Objects usually list their members in the same order: compare position by position, and look names up
             // (a hash each) only from the first position where the names differ.
-            for (i, ((k, v), (l, w))) in x.iter().zip(y).enumerate() {
+            for (i, ((k, v), (l, w))) in x.iter().zip(y.iter()).enumerate() {
                 if k != l {
                     return x.iter().skip(i).all(|(k, v)| y.get(k).is_some_and(|w| json_equal(v, w)));
                 }
@@ -284,18 +289,18 @@ pub(crate) fn json_equal(a: &Value, b: &Value) -> bool {
 }
 
 /// A hash of a JSON value that agrees with JSON equality (object hashing is order-independent).
-fn json_hash(v: &Value) -> u64 {
+fn json_hash<'a, I: Instance<'a>>(v: I) -> u64 {
     const K: u64 = 0x9e37_79b9_7f4a_7c15;
-    match v {
-        Value::Null => 0x53,
-        Value::Bool(b) => 0x51 + *b as u64,
-        Value::Number(n) => match Num::of(n) {
+    match v.view() {
+        View::Null => 0x53,
+        View::Bool(b) => 0x51 + b as u64,
+        View::Number(n) => match Num::of(&n) {
             Num::I(i) => (i as u64).wrapping_mul(K) ^ 0x1234,
             Num::F(f) => f.to_bits().wrapping_mul(K) ^ 0x4321,
         },
-        Value::String(s) => str_hash(s),
-        Value::Array(a) => a.iter().fold(0x54 + a.len() as u64, |h, x| h.wrapping_mul(31).wrapping_add(json_hash(x))),
-        Value::Object(o) => {
+        View::String(s) => str_hash(s),
+        View::Array(a) => a.iter().fold(0x54 + a.len() as u64, |h, x| h.wrapping_mul(31).wrapping_add(json_hash(x))),
+        View::Object(o) => {
             // Equal objects have the same member values, so a sum of the values' hashes (whatever the order) agrees with
             // equality; hashing the names too would cost more than the collisions it saves.
             o.iter().fold(0x55 + o.len() as u64, |h, (_, x)| h.wrapping_add(json_hash(x).wrapping_mul(0x2c1b_3c6d)))
@@ -327,17 +332,21 @@ fn str_hash(s: &str) -> u64 {
 }
 
 /// `uniqueItems`: pairwise for short arrays, by hash + equality otherwise.
-pub(crate) fn all_unique(a: &[Value]) -> bool {
+pub(crate) fn all_unique<'a, A: ArrayView<'a>>(a: A) -> bool {
     let n = a.len();
     if n < 2 {
         return true;
     }
     // Arrays of strings (the common case: lists of names) compare by length first, without hashing or allocating.
-    if n <= 32 && a.iter().all(Value::is_string) {
-        let s = |i: usize| a[i].as_str().unwrap();
+    if n <= 32 && a.iter().all(|x| x.kind() == Kind::String) {
+        let s = |i: usize| match a.get(i).view() {
+            View::String(t) => t,
+            _ => unreachable!("every item is a string"),
+        };
         for i in 1..n {
             for j in 0..i {
-                if s(i).len() == s(j).len() && s(i) == s(j) {
+                let (x, y) = (s(i), s(j));
+                if x.len() == y.len() && x == y {
                     return false;
                 }
             }
@@ -347,7 +356,7 @@ pub(crate) fn all_unique(a: &[Value]) -> bool {
     if n <= 16 {
         for i in 1..n {
             for j in 0..i {
-                if json_equal(&a[i], &a[j]) {
+                if json_equal(a.get(i), a.get(j)) {
                     return false;
                 }
             }
@@ -362,7 +371,7 @@ pub(crate) fn all_unique(a: &[Value]) -> bool {
         if end == n || hashed[end].0 != hashed[start].0 {
             for i in start + 1..end {
                 for j in start..i {
-                    if json_equal(&a[hashed[i].1 as usize], &a[hashed[j].1 as usize]) {
+                    if json_equal(a.get(hashed[i].1 as usize), a.get(hashed[j].1 as usize)) {
                         return false;
                     }
                 }
@@ -470,12 +479,22 @@ impl Bits {
     }
 }
 
-fn container_len(x: &Value) -> usize {
-    match x {
-        Value::Object(o) => o.len(),
-        Value::Array(a) => a.len(),
+fn container_len<'a, I: Instance<'a>>(x: I) -> usize {
+    match x.view() {
+        View::Object(o) => o.len(),
+        View::Array(a) => a.len(),
         _ => 0,
     }
+}
+
+#[inline(always)]
+fn is_object<'a, I: Instance<'a>>(x: I) -> bool {
+    x.kind() == Kind::Object
+}
+
+#[inline(always)]
+fn is_array<'a, I: Instance<'a>>(x: I) -> bool {
+    x.kind() == Kind::Array
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -499,9 +518,9 @@ impl Selection<'_> {
     }
 }
 
-fn select<'a>(d: Option<&'a Discriminator>, x: &Value) -> Selection<'a> {
-    let (Some(d), Value::Object(o)) = (d, x) else { return Selection::All };
-    let Some(value) = plan::get_key(o, &d.property) else {
+fn select<'a, 'x, I: Instance<'x>>(d: Option<&'a Discriminator>, x: I) -> Selection<'a> {
+    let (Some(d), View::Object(o)) = (d, x.view()) else { return Selection::All };
+    let Some(value) = o.get(&d.property) else {
         return if d.all_require { Selection::None } else { Selection::All };
     };
     let hit = d.known.iter().find(|(k, _)| k.matches(value));
@@ -575,24 +594,24 @@ impl<'p, 'c> Evaluator<'p, 'c> {
     }
 
     /// Evaluates the program's entry in fast mode.
-    pub fn validate(&mut self, x: &Value) -> bool {
+    pub fn validate<'x, I: Instance<'x>>(&mut self, x: I) -> bool {
         let root = self.p.fast_target[self.p.root as usize];
         self.fast(root, x)
     }
 
     /// Fail-fast evaluation of a node, through its plan when there are plans.
     #[inline]
-    fn fast(&mut self, id: NodeId, x: &Value) -> bool {
-        if self.p.plans.is_empty() { self.eval_node::<Fast>(id, x, None) } else { self.run(id, x) }
+    fn fast<'x, I: Instance<'x>>(&mut self, id: NodeId, x: I) -> bool {
+        if self.p.plans.is_empty() { self.eval_node::<Fast, I>(id, x, None) } else { self.run(id, x) }
     }
 
     /// Evaluates the program's entry, reporting to the collector.
-    pub fn evaluate(&mut self, x: &Value) -> bool {
+    pub fn evaluate<'x, I: Instance<'x>>(&mut self, x: I) -> bool {
         // A root that is nothing but a $ref reports against its target, with no $ref in the evaluation path.
         let (root, _) = self.resolve(self.p.root);
         let pointer = &self.node(root).pointer;
         self.col().begin_child_context(None, Some(pointer), None);
-        let ok = self.eval_node::<Collect>(root, x, None);
+        let ok = self.eval_node::<Collect, I>(root, x, None);
         self.col().commit_child_context(false, ok, Message::Static(EVALUATED_SUBSCHEMA));
         ok
     }
@@ -625,7 +644,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
         (current, suffix)
     }
 
-    fn eval_node<M: Mode>(&mut self, id: NodeId, x: &Value, bits: Option<&mut Bits>) -> bool {
+    fn eval_node<'x, M: Mode, I: Instance<'x>>(&mut self, id: NodeId, x: I, bits: Option<&mut Bits>) -> bool {
         let n = self.node(id);
         if n.always_true || n.always_false {
             if M::COLLECT {
@@ -638,13 +657,12 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             self.scope.push(n.resource_id);
         }
         let needs_own = bits.is_none()
-            && ((n.unevaluated_properties.is_some() && x.is_object())
-                || (n.unevaluated_items.is_some() && x.is_array()));
+            && ((n.unevaluated_properties.is_some() && is_object(x)) || (n.unevaluated_items.is_some() && is_array(x)));
         let ok = if needs_own {
             let mut own = Bits::new(container_len(x));
-            self.eval_core::<M>(id, n, x, Some(&mut own))
+            self.eval_core::<M, I>(id, n, x, Some(&mut own))
         } else {
-            self.eval_core::<M>(id, n, x, bits)
+            self.eval_core::<M, I>(id, n, x, bits)
         };
         if pushed {
             self.scope.pop();
@@ -652,7 +670,13 @@ impl<'p, 'c> Evaluator<'p, 'c> {
         ok
     }
 
-    fn eval_core<M: Mode>(&mut self, id: NodeId, n: &'p SchemaNode, x: &Value, mut bits: Option<&mut Bits>) -> bool {
+    fn eval_core<'x, M: Mode, I: Instance<'x>>(
+        &mut self,
+        id: NodeId,
+        n: &'p SchemaNode,
+        x: I,
+        mut bits: Option<&mut Bits>,
+    ) -> bool {
         let mut ok = true;
         if n.has_type {
             check!(self, M, ok, matches_type(n.type_mask, x), Message::Lazy(&|| type_message(n.type_mask)), "type");
@@ -671,35 +695,35 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 "enum"
             );
         }
-        match x {
-            Value::Number(num) if n.has_number_keywords() => {
-                and!(M, ok, self.eval_number::<M>(n, num));
+        match x.view() {
+            View::Number(num) if n.has_number_keywords() => {
+                and!(M, ok, self.eval_number::<M>(n, &num));
             }
-            Value::String(s) if n.has_string_keywords() => {
+            View::String(s) if n.has_string_keywords() => {
                 and!(M, ok, self.eval_string::<M>(n, s));
             }
-            Value::Object(o) if n.has_object_keywords() => {
-                and!(M, ok, self.eval_object::<M>(id, n, o, x, bits.as_deref_mut()));
+            View::Object(o) if n.has_object_keywords() => {
+                and!(M, ok, self.eval_object::<M, I>(id, n, o, x, bits.as_deref_mut()));
             }
-            Value::Array(a) if n.has_array_keywords() => {
-                and!(M, ok, self.eval_array::<M>(n, a, bits.as_deref_mut()));
+            View::Array(a) if n.has_array_keywords() => {
+                and!(M, ok, self.eval_array::<M, I>(n, a, bits.as_deref_mut()));
             }
             _ => {}
         }
-        and!(M, ok, self.eval_in_place::<M>(n, x, bits.as_deref_mut()));
-        match x {
-            Value::Object(o) if n.unevaluated_properties.is_some() => {
-                and!(M, ok, self.eval_unevaluated_properties::<M>(n, o, bits.as_deref_mut().unwrap()));
+        and!(M, ok, self.eval_in_place::<M, I>(n, x, bits.as_deref_mut()));
+        match x.view() {
+            View::Object(o) if n.unevaluated_properties.is_some() => {
+                and!(M, ok, self.eval_unevaluated_properties::<M, I>(n, o, bits.as_deref_mut().unwrap()));
             }
-            Value::Array(a) if n.unevaluated_items.is_some() => {
-                and!(M, ok, self.eval_unevaluated_items::<M>(n, a, bits.unwrap()));
+            View::Array(a) if n.unevaluated_items.is_some() => {
+                and!(M, ok, self.eval_unevaluated_items::<M, I>(n, a, bits.unwrap()));
             }
             _ => {}
         }
         if M::COLLECT {
             if let Some(list) = &self.annotations[id as usize] {
                 for a in list {
-                    if a.strings_only && !x.is_string() {
+                    if a.strings_only && x.kind() != Kind::String {
                         continue;
                     }
                     let v = &a.value;
@@ -864,11 +888,11 @@ impl<'p, 'c> Evaluator<'p, 'c> {
 
     /// A child application at a new instance location (a property value or an array item).
     #[inline]
-    fn eval_at<M: Mode>(
+    fn eval_at<'x, M: Mode, I: Instance<'x>>(
         &mut self,
         child: NodeId,
         path: &dyn Fn() -> String,
-        value: &Value,
+        value: I,
         doc_segment: &dyn Fn() -> String,
     ) -> bool {
         if !M::COLLECT {
@@ -879,17 +903,17 @@ impl<'p, 'c> Evaluator<'p, 'c> {
         let eval_segment = format!("{}{}", path(), suffix);
         let doc = doc_segment();
         self.col().begin_child_context(Some(&eval_segment), Some(pointer), Some(&doc));
-        let ok = self.eval_node::<Collect>(target, value, None);
+        let ok = self.eval_node::<Collect, I>(target, value, None);
         self.col().commit_child_context(ok, ok, Message::Static(EVALUATED_SUBSCHEMA));
         ok
     }
 
-    fn eval_object<M: Mode>(
+    fn eval_object<'x, M: Mode, I: Instance<'x>>(
         &mut self,
         id: NodeId,
         n: &'p SchemaNode,
-        o: &Map<String, Value>,
-        _x: &Value,
+        o: I::Object,
+        _x: I,
         mut bits: Option<&mut Bits>,
     ) -> bool {
         let mut ok = true;
@@ -929,7 +953,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                     and!(
                         M,
                         ok,
-                        self.eval_at::<M>(p, &|| format!("properties/{}", encode_pointer_segment(k)), v, &|| {
+                        self.eval_at::<M, I>(p, &|| format!("properties/{}", encode_pointer_segment(k)), v, &|| {
                             encode_pointer_segment(k).into_owned()
                         })
                     );
@@ -947,7 +971,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                         and!(
                             M,
                             ok,
-                            self.eval_at::<M>(
+                            self.eval_at::<M, I>(
                                 pp.node,
                                 &|| format!("patternProperties/{}", encode_pointer_segment(source)),
                                 v,
@@ -964,19 +988,19 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                         and!(
                             M,
                             ok,
-                            self.eval_at::<M>(ap, &|| "additionalProperties".to_string(), v, &|| {
+                            self.eval_at::<M, I>(ap, &|| "additionalProperties".to_string(), v, &|| {
                                 encode_pointer_segment(k).into_owned()
                             })
                         );
                     }
                 }
                 if let Some(pn) = n.property_names {
-                    let name = Value::String(k.clone());
+                    let name = Value::String(k.to_string());
                     if M::COLLECT {
                         // Not elided; the document path stays the object's.
                         let pointer = &self.node(pn).pointer;
                         self.col().begin_child_context(Some("propertyNames"), Some(pointer), None);
-                        let m = self.eval_node::<Collect>(pn, &name, None);
+                        let m = self.eval_node::<Collect, &Value>(pn, &name, None);
                         self.col().commit_child_context(m, m, Message::Static(EVALUATED_SUBSCHEMA));
                         if !m {
                             self.col().evaluated_keyword(false, Message::Static(PROPERTY_NAME_FAILED), "propertyNames");
@@ -1033,7 +1057,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 }
                 if let Some(schema) = d.schema {
                     let name = &d.name;
-                    let (m, _) = self.eval_in_place_child::<M>(
+                    let (m, _) = self.eval_in_place_child::<M, I>(
                         schema,
                         &|| format!("{keyword}/{}", encode_pointer_segment(name)),
                         _x,
@@ -1062,10 +1086,10 @@ impl<'p, 'c> Evaluator<'p, 'c> {
         ok
     }
 
-    fn eval_unevaluated_properties<M: Mode>(
+    fn eval_unevaluated_properties<'x, M: Mode, I: Instance<'x>>(
         &mut self,
         n: &'p SchemaNode,
-        o: &Map<String, Value>,
+        o: I::Object,
         bits: &mut Bits,
     ) -> bool {
         let child = n.unevaluated_properties.unwrap();
@@ -1078,7 +1102,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             and!(
                 M,
                 ok,
-                self.eval_at::<M>(child, &|| "unevaluatedProperties".to_string(), v, &|| encode_pointer_segment(k)
+                self.eval_at::<M, I>(child, &|| "unevaluatedProperties".to_string(), v, &|| encode_pointer_segment(k)
                     .into_owned())
             );
         }
@@ -1091,7 +1115,12 @@ impl<'p, 'c> Evaluator<'p, 'c> {
     // ----------------------------------------------------------------------------------------------------------------
     // Arrays
 
-    fn eval_array<M: Mode>(&mut self, n: &'p SchemaNode, a: &[Value], mut bits: Option<&mut Bits>) -> bool {
+    fn eval_array<'x, M: Mode, I: Instance<'x>>(
+        &mut self,
+        n: &'p SchemaNode,
+        a: I::Array,
+        mut bits: Option<&mut Bits>,
+    ) -> bool {
         let mut ok = true;
         let len = a.len() as u64;
         if let Some(min) = n.min_items {
@@ -1126,13 +1155,13 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 }
                 let child = n.prefix_items.as_ref().unwrap()[i];
                 let kw = n.prefix_keyword;
-                and!(M, ok, self.eval_at::<M>(child, &|| format!("{kw}/{i}"), item, &|| i.to_string()));
+                and!(M, ok, self.eval_at::<M, I>(child, &|| format!("{kw}/{i}"), item, &|| i.to_string()));
             } else if let Some(items) = n.items {
                 if let Some(b) = bits.as_deref_mut() {
                     b.set(i);
                 }
                 let kw = n.items_keyword;
-                and!(M, ok, self.eval_at::<M>(items, &|| kw.to_string(), item, &|| i.to_string()));
+                and!(M, ok, self.eval_at::<M, I>(items, &|| kw.to_string(), item, &|| i.to_string()));
             }
             if let Some(contains) = n.contains {
                 let matched = if M::COLLECT {
@@ -1141,7 +1170,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                     let seg = format!("contains{suffix}");
                     let doc = i.to_string();
                     self.col().begin_child_context(Some(&seg), Some(pointer), Some(&doc));
-                    if self.eval_node::<Collect>(target, item, None) {
+                    if self.eval_node::<Collect, I>(target, item, None) {
                         self.col().commit_child_context(true, true, Message::Static(EVALUATED_SUBSCHEMA));
                         true
                     } else {
@@ -1186,7 +1215,12 @@ impl<'p, 'c> Evaluator<'p, 'c> {
         ok
     }
 
-    fn eval_unevaluated_items<M: Mode>(&mut self, n: &'p SchemaNode, a: &[Value], bits: &mut Bits) -> bool {
+    fn eval_unevaluated_items<'x, M: Mode, I: Instance<'x>>(
+        &mut self,
+        n: &'p SchemaNode,
+        a: I::Array,
+        bits: &mut Bits,
+    ) -> bool {
         let child = n.unevaluated_items.unwrap();
         let mut ok = true;
         for (i, item) in a.iter().enumerate() {
@@ -1194,7 +1228,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 continue;
             }
             bits.set(i);
-            and!(M, ok, self.eval_at::<M>(child, &|| "unevaluatedItems".to_string(), item, &|| i.to_string()));
+            and!(M, ok, self.eval_at::<M, I>(child, &|| "unevaluatedItems".to_string(), item, &|| i.to_string()));
         }
         if M::COLLECT {
             self.col().evaluated_keyword(ok, Message::None, "unevaluatedItems");
@@ -1205,19 +1239,19 @@ impl<'p, 'c> Evaluator<'p, 'c> {
     // ----------------------------------------------------------------------------------------------------------------
     // In-place applicators
 
-    fn can_mark(&self, id: NodeId, x: &Value) -> bool {
+    fn can_mark<'x, I: Instance<'x>>(&self, id: NodeId, x: I) -> bool {
         let n = self.node(id);
-        if x.is_object() { n.marks_properties } else { n.marks_items }
+        if is_object(x) { n.marks_properties } else { n.marks_items }
     }
 
     /// Evaluates an in-place child: a new context at the same instance location, on a fresh scratch set of evaluated
     /// properties/items merged into the parent's on success. A failing child is committed or popped. Returns the
     /// result and the scratch bits (for oneOf, which merges only a single match).
-    fn eval_in_place_child<M: Mode>(
+    fn eval_in_place_child<'x, M: Mode, I: Instance<'x>>(
         &mut self,
         child: NodeId,
         path: &dyn Fn() -> String,
-        x: &Value,
+        x: I,
         bits: Option<&mut Bits>,
         commit_on_failure: bool,
         elide: bool,
@@ -1244,7 +1278,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             let pointer = &self.node(target).pointer;
             let seg = format!("{}{}", path(), suffix);
             self.col().begin_child_context(Some(&seg), Some(pointer), None);
-            let ok = self.eval_node::<Collect>(target, x, scratch.as_mut());
+            let ok = self.eval_node::<Collect, I>(target, x, scratch.as_mut());
             if ok || commit_on_failure {
                 self.col().commit_child_context(ok, ok, Message::Static(EVALUATED_SUBSCHEMA));
             } else {
@@ -1252,7 +1286,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             }
             ok
         } else if scratch.is_some() {
-            self.eval_node::<Fast>(target, x, scratch.as_mut())
+            self.eval_node::<Fast, I>(target, x, scratch.as_mut())
         } else {
             self.fast(target, x)
         };
@@ -1276,15 +1310,22 @@ impl<'p, 'c> Evaluator<'p, 'c> {
         d.fallback
     }
 
-    fn eval_in_place<M: Mode>(&mut self, n: &'p SchemaNode, x: &Value, mut bits: Option<&mut Bits>) -> bool {
+    fn eval_in_place<'x, M: Mode, I: Instance<'x>>(
+        &mut self,
+        n: &'p SchemaNode,
+        x: I,
+        mut bits: Option<&mut Bits>,
+    ) -> bool {
         let mut ok = true;
         if let Some(r) = n.ref_ {
-            let (m, _) = self.eval_in_place_child::<M>(r, &|| "$ref".to_string(), x, bits.as_deref_mut(), true, true);
+            let (m, _) =
+                self.eval_in_place_child::<M, I>(r, &|| "$ref".to_string(), x, bits.as_deref_mut(), true, true);
             check!(self, M, ok, m, Message::Static(if m { MATCHED_ALL } else { DID_NOT_MATCH_ALL }), "$ref");
         }
         if let Some(r) = n.static_dynamic_ref {
             let keyword = n.static_dynamic_keyword.name();
-            let (m, _) = self.eval_in_place_child::<M>(r, &|| keyword.to_string(), x, bits.as_deref_mut(), true, true);
+            let (m, _) =
+                self.eval_in_place_child::<M, I>(r, &|| keyword.to_string(), x, bits.as_deref_mut(), true, true);
             check!(self, M, ok, m, Message::Static(if m { MATCHED_ALL } else { DID_NOT_MATCH_ALL }), keyword);
         }
         if let Some(d) = &n.dynamic_ref {
@@ -1294,14 +1335,14 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             let target =
                 if M::COLLECT { self.resolve(dynamic_target).0 } else { self.p.fast_target[dynamic_target as usize] };
             let (m, _) =
-                self.eval_in_place_child::<M>(target, &|| keyword.to_string(), x, bits.as_deref_mut(), true, false);
+                self.eval_in_place_child::<M, I>(target, &|| keyword.to_string(), x, bits.as_deref_mut(), true, false);
             check!(self, M, ok, m, Message::Static(if m { MATCHED_ALL } else { DID_NOT_MATCH_ALL }), keyword);
         }
         if let Some(list) = &n.all_of {
             let mut all = true;
             for (i, &b) in list.iter().enumerate() {
                 let (m, _) =
-                    self.eval_in_place_child::<M>(b, &|| format!("allOf/{i}"), x, bits.as_deref_mut(), true, true);
+                    self.eval_in_place_child::<M, I>(b, &|| format!("allOf/{i}"), x, bits.as_deref_mut(), true, true);
                 if !m {
                     if !M::COLLECT {
                         return false;
@@ -1320,7 +1361,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             for i in selection.indexes(list.len()) {
                 let b = list[i];
                 let (m, _) =
-                    self.eval_in_place_child::<M>(b, &|| format!("anyOf/{i}"), x, bits.as_deref_mut(), false, true);
+                    self.eval_in_place_child::<M, I>(b, &|| format!("anyOf/{i}"), x, bits.as_deref_mut(), false, true);
                 if m {
                     any = true;
                     if !exhaustive {
@@ -1349,7 +1390,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 // Evaluated properties/items are merged only when exactly one branch matched, so collect them aside.
                 let mut aside = if track { Some(Bits::new(container_len(x))) } else { None };
                 let (m, scratch) =
-                    self.eval_in_place_child::<M>(b, &|| format!("oneOf/{i}"), x, aside.as_mut(), false, true);
+                    self.eval_in_place_child::<M, I>(b, &|| format!("oneOf/{i}"), x, aside.as_mut(), false, true);
                 if m {
                     matched += 1;
                     only = if track { aside.or(scratch) } else { None };
@@ -1375,7 +1416,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             let inner = if M::COLLECT {
                 let pointer = &self.node(not).pointer;
                 self.col().begin_child_context(Some("not"), Some(pointer), None);
-                let inner = self.eval_node::<Collect>(not, x, None);
+                let inner = self.eval_node::<Collect, I>(not, x, None);
                 self.col().pop_child_context();
                 inner
             } else {
@@ -1385,7 +1426,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
         }
         if let Some(cond_node) = n.if_ {
             let (cond, _) =
-                self.eval_in_place_child::<M>(cond_node, &|| "if".to_string(), x, bits.as_deref_mut(), false, true);
+                self.eval_in_place_child::<M, I>(cond_node, &|| "if".to_string(), x, bits.as_deref_mut(), false, true);
             if M::COLLECT {
                 self.col().evaluated_keyword(
                     true,
@@ -1396,11 +1437,11 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             if cond {
                 if let Some(t) = n.then {
                     let (m, _) =
-                        self.eval_in_place_child::<M>(t, &|| "then".to_string(), x, bits.as_deref_mut(), true, true);
+                        self.eval_in_place_child::<M, I>(t, &|| "then".to_string(), x, bits.as_deref_mut(), true, true);
                     check!(self, M, ok, m, Message::Static(if m { MATCHED_THEN } else { DID_NOT_MATCH_THEN }), "then");
                 }
             } else if let Some(e) = n.else_ {
-                let (m, _) = self.eval_in_place_child::<M>(e, &|| "else".to_string(), x, bits, true, true);
+                let (m, _) = self.eval_in_place_child::<M, I>(e, &|| "else".to_string(), x, bits, true, true);
                 check!(self, M, ok, m, Message::Static(if m { MATCHED_ELSE } else { DID_NOT_MATCH_ELSE }), "else");
             }
         }

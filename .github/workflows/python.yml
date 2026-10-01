@@ -1,0 +1,170 @@
+name: python
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-py/**'
+    - 'src-rs/corvus-json-schema/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/python.yml'
+    - '.github/workflows/python-wheels.yml'
+    - 'LICENSE'
+  pull_request:
+    paths:
+    - 'src-py/**'
+    - 'src-rs/corvus-json-schema/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/python.yml'
+    - '.github/workflows/python-wheels.yml'
+    - 'LICENSE'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A pull request's run is superseded by the run for its next push; pushes to main are grouped by commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  pure:
+    name: corvus-json-schema (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+    defaults:
+      run:
+        working-directory: src-py/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          # Only what the packages need (the repository's generated benchmark models have paths too long for Windows).
+          sparse-checkout: |
+            src-py
+            src-rs/corvus-json-schema
+            JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Setup uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: ${{ matrix.python }}
+          activate-environment: true
+      - name: Install
+        run: uv pip install -e . pytest
+      - name: Unit tests
+        run: python -m pytest -q
+      - name: JSON-Schema-Test-Suite
+        run: |
+          python tests/suite.py
+          python tests/suite.py --module
+          python tests/suite.py --collect basic
+          python tests/suite.py --collect detailed
+          python tests/suite.py --collect verbose
+          python tests/annotations.py
+
+  pure-checks:
+    name: corvus-json-schema (lint, types, package)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src-py/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: |
+            src-py
+            src/Corvus.Text.Json/metaschema
+      - name: Setup uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: '3.12'
+          activate-environment: true
+      - name: Install
+        run: uv pip install -e . --group dev
+      - name: Check the embedded metaschemas are current
+        run: |
+          python scripts/embed_metaschemas.py
+          git diff --exit-code -- src/corvus_json_schema/_metaschemas.py
+      - name: Lint
+        run: |
+          ruff check src tests bench scripts
+          ruff format --check src tests bench scripts
+      - name: Types
+        run: |
+          mypy
+          pyright
+      - name: Package
+        # The packaged LICENSEs must match the repository's, and each package's __version__ its pyproject.toml version
+        # (pypi-publish.yml publishes the pyproject.toml version).
+        run: |
+          cmp ../../LICENSE LICENSE
+          cmp ../../LICENSE ../corvus-json-schema-rs/LICENSE
+          for p in corvus-json-schema:src/corvus_json_schema/__init__.py corvus-json-schema-rs:python/corvus_json_schema_rs/__init__.py; do
+            dir=../${p%%:*}; init=${p#*:}
+            version=$(sed -n 's/^version = "\(.*\)"$/\1/p' "$dir/pyproject.toml" | head -n 1)
+            grep -q "^__version__ = \"$version\"$" "$dir/$init" || { echo "::error::$dir: __version__ is not $version."; exit 1; }
+          done
+          uv build
+          ls -l dist
+
+  binding:
+    name: corvus-json-schema-rs (build and test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          # Only what the packages need (the repository's generated benchmark models have paths too long for Windows).
+          sparse-checkout: |
+            src-py
+            src-rs/corvus-json-schema
+            JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Toolchain
+        # The version pinned in src-py/rust-toolchain.toml.
+        working-directory: src-py
+        run: |
+          rustup toolchain install
+          rustc --version
+      - name: Format and lint
+        working-directory: src-py/corvus-json-schema-rs
+        env:
+          PYO3_PYTHON: python3
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+      - name: Setup uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: '3.12'
+          activate-environment: true
+      - name: Build
+        working-directory: src-py/corvus-json-schema-rs
+        run: |
+          cmp ../../LICENSE LICENSE
+          uv pip install 'maturin>=1.15,<2' pytest
+          maturin develop --release --uv
+      - name: Test
+        run: |
+          python -m pytest -q src-py/corvus-json-schema-rs/tests
+          python src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --exclude draft4/optional/zeroTerminatedFloats.json
+          python src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --collect verbose --exclude draft4/optional/zeroTerminatedFloats.json
+          python src-py/corvus-json-schema/tests/annotations.py --impl corvus_json_schema_rs
+          CORVUS_IMPL=corvus_json_schema_rs python -m pytest -q src-py/corvus-json-schema/tests/test_results.py
+
+  wheels:
+    name: wheels
+    uses: ./.github/workflows/python-wheels.yml

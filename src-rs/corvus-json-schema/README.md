@@ -39,6 +39,15 @@ assert!(!validator.is_valid(&json!({ "id": 0 })));
 
 The standard metaschemas are embedded.
 
+### Other instance types
+
+The evaluator reads instances through the `Instance` trait: a value shown as one of the six JSON kinds (`Instance::view`,
+and `Instance::kind` for type tests), with arrays and objects read in place through `ArrayView` and `ObjectView`.
+`&serde_json::Value` implements it. `Validator::validate_instance` and `Validator::evaluate_instance` take any
+implementation, so a host language's own values can be validated without converting them to `serde_json::Value`
+first. The Python package [corvus-json-schema-rs](../../src-py/corvus-json-schema-rs/README.md) reads Python objects
+this way, through CPython's C API.
+
 ## Behaviour
 
 - **Numbers:** compared exactly. Integers are compared as integers and doubles against integers without rounding.

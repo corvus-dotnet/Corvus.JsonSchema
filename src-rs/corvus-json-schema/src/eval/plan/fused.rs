@@ -19,10 +19,11 @@
 
 use std::sync::Arc;
 
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 use super::{Child, Evaluator, NO_CHILD, Names, ObjectPlan, Program, Visit};
 use crate::eval::{json_equal, matches_type};
+use crate::instance::{Instance, ObjectView, View};
 use crate::node::*;
 use crate::numbers::Num;
 use crate::pattern::Pattern;
@@ -79,9 +80,9 @@ struct Merged {
 impl Merged {
     /// The mask of the constant tests that allow the value.
     #[inline]
-    fn allowed(&self, v: &Value) -> u64 {
-        match v {
-            Value::String(s) => self.strings.contains_at(s).map_or(0, |i| self.string_masks[i]),
+    fn allowed<'x, I: Instance<'x>>(&self, v: I) -> u64 {
+        match v.view() {
+            View::String(s) => self.strings.contains_at(s).map_or(0, |i| self.string_masks[i]),
             _ => self.others.iter().find(|(m, _)| json_equal(m, v)).map_or(0, |&(_, mask)| mask),
         }
     }
@@ -131,11 +132,11 @@ enum TestKind {
 }
 
 impl ValueTest {
-    fn holds(&self, v: &Value) -> bool {
+    fn holds<'x, I: Instance<'x>>(&self, v: I) -> bool {
         match &self.kind {
             TestKind::Allowed(values) => values.iter().any(|a| json_equal(a, v)),
-            TestKind::Pattern { pattern, requires_string } => match v {
-                Value::String(s) => pattern.is_match(s),
+            TestKind::Pattern { pattern, requires_string } => match v.view() {
+                View::String(s) => pattern.is_match(s),
                 _ => !requires_string,
             },
         }
@@ -930,13 +931,13 @@ enum Outcome {
 
 impl Evaluator<'_, '_> {
     #[inline]
-    fn apply(&mut self, child: Option<Child>, v: &Value) -> bool {
+    fn apply<'x, I: Instance<'x>>(&mut self, child: Option<Child>, v: I) -> bool {
         child.is_none_or(|c| self.run_child(c, v))
     }
 
     /// Resolves a name no entry knows against one branch's pattern and additional properties; returns whether it
     /// matched (the property is covered), or `None` when the application failed.
-    fn resolve_unknown(&mut self, c: &Contributor, name: &str, v: &Value) -> Option<bool> {
+    fn resolve_unknown<'x, I: Instance<'x>>(&mut self, c: &Contributor, name: &str, v: I) -> Option<bool> {
         let mut matched = false;
         for (pattern, child) in c.patterns.iter() {
             if pattern.is_match(name) {
@@ -955,7 +956,7 @@ impl Evaluator<'_, '_> {
         Some(matched)
     }
 
-    fn fused_entry(&mut self, f: &FusedObject, e: usize, v: &Value, pass: &mut Pass) -> Outcome {
+    fn fused_entry<'x, I: Instance<'x>>(&mut self, f: &FusedObject, e: usize, v: I, pass: &mut Pass) -> Outcome {
         let entry = &f.entries[e];
         pass.seen.set(e as u16);
         match &entry.merged {
@@ -995,7 +996,7 @@ impl Evaluator<'_, '_> {
         Outcome::Done { cover, defer }
     }
 
-    fn fused_unknown(&mut self, f: &FusedObject, name: &str, v: &Value, pass: &mut Pass) -> Outcome {
+    fn fused_unknown<'x, I: Instance<'x>>(&mut self, f: &FusedObject, name: &str, v: I, pass: &mut Pass) -> Outcome {
         let (mut cover, mut defer) = (false, false);
         if !f.resolves_unknown {
             return Outcome::Done { cover, defer };
@@ -1021,9 +1022,9 @@ impl Evaluator<'_, '_> {
         Outcome::Done { cover, defer }
     }
 
-    pub(super) fn run_fused(&mut self, f: &FusedObject, o: &Map<String, Value>) -> bool {
+    pub(super) fn run_fused<'x, I: Instance<'x>>(&mut self, f: &FusedObject, o: I::Object) -> bool {
         if let Some(plan) = &f.flat {
-            return self.run_strict_object(plan, o);
+            return self.run_strict_object::<I>(plan, o);
         }
         let count = o.len() as u64;
         if f.has_count_bounds {
@@ -1036,7 +1037,7 @@ impl Evaluator<'_, '_> {
         let mut pass = Pass { seen: Seen::default(), failed: 0, alt_failed: [0; MAX_ALT_GROUPS], holds: 0, gate_ok: 0 };
         let mut covered = Covered::new(f.unevaluated.is_some(), o.len());
         // Properties with conditional applications pending: (ordinal, entry or none, name, value).
-        let mut deferred: Vec<(usize, Option<usize>, &str, &Value)> = Vec::new();
+        let mut deferred: Vec<(usize, Option<usize>, &'x str, I)> = Vec::new();
         let mut hint = 0;
         for (ordinal, (k, v)) in o.iter().enumerate() {
             let e = f.names.find_from(k, &mut hint);
