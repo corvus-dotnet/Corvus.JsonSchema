@@ -1,6 +1,6 @@
 {
   "name": "@corvus-dotnet/json-schema",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A high-performance JSON Schema evaluator (draft 4 to 2020-12) that compiles schemas to specialised JavaScript, with results collection and annotations, ported from the Corvus.Text.Json V5 runtime evaluator.",
   "license": "Apache-2.0",
   "keywords": [
