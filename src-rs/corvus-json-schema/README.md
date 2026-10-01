@@ -12,6 +12,10 @@ number of `serde_json::Value` instances can then be evaluated against it:
   level. This gives the same rows (evaluation paths, schema locations, instance locations, messages and order) as the C#
   collector, plus annotations (`collect_annotations`, `enumerate_annotations`).
 
+```sh
+cargo add corvus-json-schema serde_json
+```
+
 ```rust
 use serde_json::json;
 
@@ -50,7 +54,7 @@ The standard metaschemas are embedded.
 
 ### Comparison with other Rust validators
 
-`../corvus-json-schema-bench` validates the corpora of
+[`corvus-json-schema-bench`](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-rs/corvus-json-schema-bench) validates the corpora of
 [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark) with this crate,
 [boon](https://crates.io/crates/boon) and [jsonschema](https://crates.io/crates/jsonschema), in one process. The
 engines' passes are interleaved, so drift in the machine's speed affects them alike.
@@ -66,7 +70,7 @@ cargo run --release -- --schemas ../../../jsonschema-benchmark/schemas [--only a
 
 ### jsonschema-benchmark
 
-`../corvus-json-schema-bench/jsonschema-benchmark` is this crate's implementation of the benchmark's protocol. It
+[`corvus-json-schema-bench/jsonschema-benchmark`](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-rs/corvus-json-schema-bench/jsonschema-benchmark) is this crate's implementation of the benchmark's protocol. It
 parses every instance, compiles, validates once cold, warms up, and validates once warm. It prints
 `cold,warm,compile,parse` in nanoseconds and exits non-zero if an instance is invalid. To add it to a
 jsonschema-benchmark checkout:
@@ -87,7 +91,7 @@ cargo run --release -- <schema-noformat.json> <instances.jsonl>
 
 ## Bowtie
 
-`../corvus-json-schema-bowtie` is a [Bowtie](https://github.com/bowtie-json-schema/bowtie) harness for this crate. See
+[`corvus-json-schema-bowtie`](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-rs/corvus-json-schema-bowtie) is a [Bowtie](https://github.com/bowtie-json-schema/bowtie) harness for this crate. See
 its README.
 
 ## Testing

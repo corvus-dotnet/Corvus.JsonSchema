@@ -1,0 +1,127 @@
+name: crates-publish
+# Publishes the corvus-json-schema crate (src-rs/corvus-json-schema) to crates.io when the version in its Cargo.toml is
+# not there yet, then tags the commit rs-v<version>. To release, bump "version" in Cargo.toml and merge.
+#
+# It authenticates with crates.io trusted publishing (OIDC): no token is stored, and the crate's trusted publisher on
+# crates.io names this repository and this workflow file, so keep the file name. crates.io only takes a trusted
+# publisher for a crate that already exists, so the first version is published by hand (docs/ReleaseProcess.md); until
+# then this workflow does nothing.
+#
+# Unlike npm, crates.io has no staged approval: the publish step makes the version live, and a published version can
+# be yanked but never replaced or deleted.
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. The
+# rs-v tag is pushed with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-rs/corvus-json-schema/Cargo.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: write  # push the rs-v<version> tag
+  id-token: write  # crates.io trusted publishing
+
+concurrency:
+  group: crates-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish corvus-json-schema
+    # A manual run from another branch must not publish that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: src-rs/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+      - name: Check whether this version is already on crates.io
+        id: version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No version in Cargo.toml."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # crates.io answers 404 for a crate or version it does not have; it asks callers for a user agent.
+          query() {
+            curl -s -o /dev/null -w '%{http_code}' -A 'corvus-dotnet/Corvus.JsonSchema crates-publish' "$1"
+          }
+          crate=$(query "https://crates.io/api/v1/crates/corvus-json-schema")
+          if [ "$crate" = "404" ]; then
+            # No trusted publisher can exist before the crate does: the first version is published by hand
+            # (docs/ReleaseProcess.md).
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::corvus-json-schema is not on crates.io yet; publish its first version by hand."
+            exit 0
+          fi
+          status=$(query "https://crates.io/api/v1/crates/corvus-json-schema/$version")
+          case "$crate/$status" in
+            200/200)
+              echo "published=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::corvus-json-schema $version is already on crates.io; nothing to publish." ;;
+            200/404)
+              echo "published=false" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "::error::crates.io answered $crate for the crate and $status for corvus-json-schema $version."
+              exit 1 ;;
+          esac
+      - name: Checkout JSON-Schema-Test-Suite
+        if: steps.version.outputs.published == 'false'
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Toolchain
+        # The version pinned in src-rs/rust-toolchain.toml.
+        if: steps.version.outputs.published == 'false'
+        run: |
+          rustup toolchain install
+          rustc --version
+      - name: Check the packaged LICENSE matches the repository's
+        if: steps.version.outputs.published == 'false'
+        run: cmp ../../LICENSE LICENSE
+      - name: Test
+        if: steps.version.outputs.published == 'false'
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+          cargo test --locked
+      - name: Package
+        # Builds the crate from its packaged sources, as crates.io will.
+        if: steps.version.outputs.published == 'false'
+        run: cargo publish --locked --dry-run
+      - name: Authenticate with crates.io
+        if: steps.version.outputs.published == 'false'
+        id: auth
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+      - name: Publish
+        if: steps.version.outputs.published == 'false'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cargo publish --locked
+          {
+            echo "### corvus-json-schema $VERSION is published"
+            echo
+            echo "https://crates.io/crates/corvus-json-schema/$VERSION"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Tag the published commit
+        if: steps.version.outputs.published == 'false'
+        env:
+          TAG: rs-v${{ steps.version.outputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "::notice::$TAG already exists."
+          else
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG"
+          fi
