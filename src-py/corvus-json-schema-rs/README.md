@@ -14,7 +14,8 @@ standalone evaluator. It has the same API as the pure-Python
   [Performance](../corvus-json-schema/README.md#performance-results) section for the figures.
 - **Every platform from one wheel per platform**: the extension uses the stable ABI (abi3), so one wheel serves
   CPython 3.10 and every later version. Wheels are built for Linux (x86_64 and aarch64, glibc and musl), macOS
-  (universal2: Intel and Apple silicon) and Windows (x64 and arm64).
+  (universal2: Intel and Apple silicon) and Windows (x64, and arm64 from Python 3.11, CPython's oldest arm64 Windows
+  release), and CI tests each on its own platform.
 
 ## Install
 
