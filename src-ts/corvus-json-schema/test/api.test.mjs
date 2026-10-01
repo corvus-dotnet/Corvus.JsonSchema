@@ -188,3 +188,101 @@ test('one schema object used at two locations keeps both locations', async () =>
   v.evaluate({ a: 'x', b: 1 }, c);
   assert.ok(c.results.some((r) => r.schemaEvaluationLocation === '/properties/b/type' && r.documentEvaluationLocation === '/b'));
 });
+
+test('allOf and $ref compositions of plain objects check an object in one pass', async () => {
+  const { JsonSchemaResultsCollector, ResultsLevel } = await import('../dist/index.js');
+  const base = { type: 'object', properties: { id: { type: 'integer' }, tags: { type: 'array' } }, required: ['id'], maxProperties: 4 };
+  const flat = {
+    $defs: { base },
+    allOf: [{ $ref: '#/$defs/base' }, { properties: { name: { type: 'string' }, id: { type: 'integer' } }, required: ['name'] }],
+    properties: { active: true },
+    minProperties: 2,
+  };
+  // The root function holds every branch's names: one pass over the properties, no call per branch.
+  const root = compile(flat).source.match(/const v0 = \(function v0\(x\) \{[^]*?\n\}\);/)[0];
+  for (const name of ['id', 'tags', 'name']) assert.ok(root.includes(JSON.stringify(name)), name);
+
+  const conflicting = { allOf: [{ properties: { id: { type: 'integer' } } }, { properties: { id: { minimum: 1 } } }] };
+  const nonObjectBranch = { allOf: [{ properties: { id: { type: 'integer' } } }, { minLength: 2, properties: { n: { type: 'string' } } }] };
+  for (const schema of [flat, conflicting, nonObjectBranch]) {
+    const v = compile(schema);
+    for (const instance of [
+      { id: 1, name: 'a' },
+      { id: 1, name: 'a', tags: [], active: 1 },
+      { id: 1, name: 'a', tags: [], active: 1, other: 2 },
+      { id: 'x', name: 'a' },
+      { id: 1, name: 2 },
+      { id: 0 },
+      { name: 'a' },
+      { id: 1, n: 'a' },
+      { id: 1, n: 1 },
+      {},
+      'ab',
+      'a',
+      [],
+      null,
+    ]) {
+      const collected = v.evaluate(instance, JsonSchemaResultsCollector.create(ResultsLevel.Basic));
+      assert.equal(v(instance), collected, `${JSON.stringify(schema)} on ${JSON.stringify(instance)}`);
+    }
+  }
+  assert.equal(compile(flat)({ id: 1, name: 'a', tags: [], active: 1, other: 2 }), false, 'maxProperties from the $ref branch');
+  assert.equal(compile(flat)({ id: 1 }), false, 'required from the allOf branch');
+  assert.equal(compile(nonObjectBranch)('a'), false, 'a branch keyword for strings still applies');
+});
+
+test('unevaluatedProperties under if/then/else and dependentSchemas is decided without run-time tracking', async () => {
+  const { JsonSchemaResultsCollector, ResultsLevel } = await import('../dist/index.js');
+  const parameter = {
+    type: 'object',
+    properties: { name: { type: 'string' }, in: { enum: ['query', 'path', 'header'] }, schema: true, content: true },
+    required: ['name', 'in'],
+    if: { properties: { in: { const: 'query' } }, required: ['in'] },
+    then: { properties: { allowEmptyValue: { type: 'boolean' } } },
+    dependentSchemas: {
+      schema: {
+        properties: { style: { type: 'string' } },
+        allOf: [{ if: { properties: { style: { const: 'form' } }, required: ['style'] }, then: { properties: { explode: { type: 'boolean' } } }, else: { properties: { explode: { const: false } } } }],
+      },
+    },
+    unevaluatedProperties: false,
+  };
+  const patterns = {
+    properties: { kind: true },
+    if: { properties: { kind: { const: 'ext' } } },
+    then: { patternProperties: { '^x-': { type: 'string' } } },
+    else: { if: { required: ['legacy'] }, then: { properties: { legacy: true, old: { type: 'integer' } } } },
+    unevaluatedProperties: { type: 'number' },
+  };
+  const alternatives = { properties: { a: true }, anyOf: [{ properties: { b: true } }, { required: ['c'] }], unevaluatedProperties: false };
+  for (const schema of [parameter, patterns]) assert.ok(!compile(schema).source.includes('new Set()'), JSON.stringify(schema));
+  for (const schema of [parameter, patterns, alternatives]) {
+    const v = compile(schema);
+    for (const instance of [
+      { name: 'q', in: 'query' },
+      { name: 'q', in: 'query', allowEmptyValue: true },
+      { name: 'q', in: 'path', allowEmptyValue: true },
+      { name: 'q', in: 'query', schema: {}, style: 'form', explode: true },
+      { name: 'q', in: 'query', schema: {}, style: 'simple', explode: true },
+      { name: 'q', in: 'query', schema: {}, style: 'simple', explode: false },
+      { name: 'q', in: 'query', style: 'form', explode: true },
+      { name: 'q', in: 'query', schema: {}, other: 1 },
+      { kind: 'ext', 'x-a': 'y' },
+      { kind: 'ext', 'x-a': 1 },
+      { kind: 'other', 'x-a': 'y' },
+      { kind: 'other', 'x-a': 2 },
+      { legacy: 1, old: 2 },
+      { legacy: 1, old: 'two' },
+      { old: 2 },
+      { a: 1, b: 2 },
+      { a: 1, c: 2 },
+      { a: 1, b: 2, c: 3 },
+      {},
+      [],
+      'x',
+    ]) {
+      const collected = v.evaluate(instance, JsonSchemaResultsCollector.create(ResultsLevel.Basic));
+      assert.equal(v(instance), collected, `${JSON.stringify(schema)} on ${JSON.stringify(instance)}`);
+    }
+  }
+});

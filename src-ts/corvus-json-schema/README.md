@@ -119,9 +119,15 @@ The pipeline follows the C# evaluator stage for stage:
    - small objects with required properties are checked by direct lookups, everything else by one pass over the
      instance's keys, dispatching on the key length and then the few names of that length (as `Utf8NameMap` does);
      required properties become bits in that pass; map-like objects iterate `Object.values`;
+   - an `allOf`/`$ref` composition of plain object schemas (declared properties, `required` and count bounds, each
+     name with one schema) checks an object in one pass over the merged names, instead of a call per branch that
+     each re-test the kind and the properties (the C# and Rust flat fused plan);
    - `oneOf`/`anyOf` narrow by a discriminator property (`const`/`enum` values) or by type dispatch;
    - `unevaluatedProperties`/`unevaluatedItems` whose contributors are all unconditional (or add nothing beyond
-     them) are decided from static coverage, with no run-time tracking (the idea behind the fused object plan);
+     them) are decided from static coverage, with no run-time tracking (the idea behind the fused object plan).
+     For objects, a contribution under `if`/`then`/`else` or a dependency's schema keeps its condition: the
+     condition is decided once per object, and a property counts as evaluated when the unconditional coverage or a
+     coverage whose conditions hold names it;
    - anchored patterns made of literals and ASCII classes match without the regular expression engine
      (`PatternMatcher`'s class sequences), everything else uses a native `RegExp` with the `u` flag;
    - structurally identical functions are merged by partition refinement.
@@ -209,9 +215,9 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
 
 The package is versioned independently of the Corvus NuGet packages. To release:
 
-1. Change `version` in `package.json` and merge to `main`. If npm doesn't have that version, the `npm-publish`
-   workflow tests the package, stages it on npm (`npm stage publish`, with npm trusted publishing, so no token is
-   stored), and tags the commit `ts-v<version>`.
+1. Change `version` in `package.json`, add the version's entry at the top of `VERSIONHISTORY.md`, and merge to
+   `main`. If npm doesn't have that version, the `npm-publish` workflow tests the package, stages it on npm
+   (`npm stage publish`, with npm trusted publishing, so no token is stored), and tags the commit `ts-v<version>`.
 2. A maintainer approves the staged version with 2FA, on the package's **Staged Packages** tab on npmjs.com or with
    `npm stage list` and `npm stage approve <stage-id>`. Only then is the version published. If you reject it instead,
    delete its `ts-v` tag.

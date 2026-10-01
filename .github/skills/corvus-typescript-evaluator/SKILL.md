@@ -41,7 +41,9 @@ if it is stale.
 
 ## Releasing to npm
 
-The package is versioned independently of the NuGet packages. Bump `version` in `package.json` and merge to `main`;
+The package is versioned independently of the NuGet packages, with its own history in
+`src-ts/corvus-json-schema/VERSIONHISTORY.md` (packed with it). Bump `version` in `package.json`, add the version's entry
+at the top of `VERSIONHISTORY.md` in the style of the repository's `VERSIONHISTORY.md`, and merge to `main`;
 `.github/workflows/npm-publish.yml` runs the tests, stages the version if npm doesn't have it (`npm stage publish`
 through npm trusted publishing: the package's trusted publisher on npmjs.com names that workflow file, so don't rename
 it, and allows only staging), and tags the commit `ts-v<version>`. A maintainer then approves the staged version with
