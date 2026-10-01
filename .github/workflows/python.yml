@@ -82,8 +82,7 @@ jobs:
         with:
           sparse-checkout: |
             src-py
-            src-rs/corvus-json-schema
-            JSON-Schema-Test-Suite
+            src/Corvus.Text.Json/metaschema
       - name: Setup uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
@@ -170,7 +169,8 @@ jobs:
           - { name: linux aarch64 musl, os: ubuntu-24.04-arm, target: aarch64, manylinux: musllinux_1_2, container: 'python:3.10-alpine' }
           - { name: macos universal2, os: macos-latest, target: universal2-apple-darwin }
           - { name: windows x64, os: windows-latest, target: x64 }
-          - { name: windows arm64, os: windows-11-arm, target: aarch64 }
+          # CPython has no 3.10 build for arm64 Windows: its oldest is 3.11.
+          - { name: windows arm64, os: windows-11-arm, target: aarch64, oldest: '3.11' }
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -197,13 +197,13 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: |
-            3.10
+            ${{ matrix.oldest || '3.10' }}
             3.14
-      - name: Test (3.10 and 3.14)
+      - name: Test (oldest and newest Python)
         if: ${{ !matrix.container }}
         shell: bash
         run: |
-          for v in 3.10 3.14; do
+          for v in ${{ matrix.oldest || '3.10' }} 3.14; do
             python$v -m venv .venv-$v || py -$v -m venv .venv-$v
             py=.venv-$v/bin/python; [ -x "$py" ] || py=.venv-$v/Scripts/python.exe
             "$py" -m pip install -q pytest
