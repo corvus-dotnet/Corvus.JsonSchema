@@ -119,6 +119,9 @@ The pipeline follows the C# evaluator stage for stage:
    - small objects with required properties are checked by direct lookups, everything else by one pass over the
      instance's keys, dispatching on the key length and then the few names of that length (as `Utf8NameMap` does);
      required properties become bits in that pass; map-like objects iterate `Object.values`;
+   - an `allOf`/`$ref` composition of plain object schemas (declared properties, `required` and count bounds, each
+     name with one schema) checks an object in one pass over the merged names, instead of a call per branch that
+     each re-test the kind and the properties (the C# and Rust flat fused plan);
    - `oneOf`/`anyOf` narrow by a discriminator property (`const`/`enum` values) or by type dispatch;
    - `unevaluatedProperties`/`unevaluatedItems` whose contributors are all unconditional (or add nothing beyond
      them) are decided from static coverage, with no run-time tracking (the idea behind the fused object plan);

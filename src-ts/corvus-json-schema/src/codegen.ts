@@ -298,11 +298,75 @@ export class CodeGenerator {
     const out: string[] = [];
     if (n.alwaysFalse) return ['return false;'];
     if (n.alwaysTrue) return ['return true;'];
+    const flat = this.flatObject(n);
+    if (flat !== undefined) {
+      // Objects take the merged section and return; the code below still serves every other kind.
+      out.push(`if (${kindTest('object', 'x')}) {`, ...indent([...this.objectSection(flat, undefined, true), 'return true;'], 1), '}');
+    }
     out.push(...this.kindBlocks(n, (kind) => this.kindSection(n, kind, undefined, true)));
     out.push(...this.constEnum(n));
     out.push(...this.inPlace(n, undefined, undefined));
     out.push('return true;');
     return out;
+  }
+
+  /**
+   * A flat composition, for object values: a node whose in-place applicators are `$ref`/`allOf` chains, where the
+   * node and every branch are plain object schemas (declared properties, `required` and count bounds, with no type
+   * that excludes objects) and each property name resolves to one schema. Returns a node holding the merged object
+   * keywords, so an object takes one object section instead of a call per branch that each re-test the kind and probe
+   * or loop over the properties (the C# and Rust flat fused plan). Undefined when the node does not qualify, or when
+   * fewer than two branches have object keywords.
+   *
+   * Below a live dynamic reference every branch must be in the node's own resource: calling a branch in another
+   * resource pushes that resource on the dynamic scope, which the merged section would skip.
+   */
+  private flatObject(n: SchemaNode): SchemaNode | undefined {
+    if (n.ref < 0 && n.staticDynamicRef < 0 && n.allOf === undefined) return undefined;
+    const branches: SchemaNode[] = [];
+    const visited = new Set<number>();
+    const collect = (m: SchemaNode): boolean => {
+      if (visited.has(m.id)) return true;
+      visited.add(m.id);
+      if (m.alwaysTrue) return true;
+      if (m.alwaysFalse || m.inPlaceCycle) return false;
+      if (this.program.usesDynamicScope && m.resourceId !== n.resourceId) return false;
+      if (m.hasConst || m.enumValues !== undefined || (m.hasType && !kindAllowed(m.type, 'object'))) return false;
+      if (m.patternProperties !== undefined || m.additionalProperties >= 0 || m.propertyNames >= 0 || m.dependencies !== undefined) return false;
+      if (m.unevaluatedProperties >= 0 || m.unevaluatedItems >= 0) return false;
+      if (m.dynamicRef !== undefined || m.anyOf !== undefined || m.oneOf !== undefined || m.not >= 0 || m.if >= 0) return false;
+      branches.push(m);
+      for (const c of [m.ref, m.staticDynamicRef, ...(m.allOf ?? [])]) {
+        if (c >= 0 && !collect(this.nodes[this.elide(c)])) return false;
+      }
+      return true;
+    };
+    if (!collect(n)) return undefined;
+    const effective = branches.filter((b) => b.properties !== undefined || (b.required?.length ?? 0) > 0 || b.minProperties >= 0 || b.maxProperties >= 0);
+    if (effective.length < 2) return undefined;
+
+    // Two branches' schemas for a name are the same check when they are one node, or type-only tests of one type.
+    const same = (a: number, b: number): boolean => {
+      const x = this.nodes[this.elide(a)];
+      const y = this.nodes[this.elide(b)];
+      return x.id === y.id || (x.isTypeOnly && y.isTypeOnly && x.type === y.type && x.dialect === y.dialect);
+    };
+    const merged = new SchemaNode(n.id, n.resourceId, n.dialect, n.location, n.pointer);
+    const properties = new Map<string, number>();
+    const required: string[] = [];
+    for (const b of branches) {
+      for (const [name, child] of b.properties ?? []) {
+        const existing = properties.get(name);
+        if (existing === undefined || this.nodes[this.elide(existing)].alwaysTrue) properties.set(name, child);
+        else if (!same(existing, child) && !this.nodes[this.elide(child)].alwaysTrue) return undefined;
+      }
+      for (const name of b.required ?? []) if (!required.includes(name)) required.push(name);
+      merged.minProperties = Math.max(merged.minProperties, b.minProperties);
+      if (b.maxProperties >= 0) merged.maxProperties = merged.maxProperties < 0 ? b.maxProperties : Math.min(merged.maxProperties, b.maxProperties);
+    }
+    if (properties.size > 0) merged.properties = properties;
+    if (required.length > 0) merged.required = required;
+    return merged;
   }
 
   /**

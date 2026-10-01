@@ -188,3 +188,45 @@ test('one schema object used at two locations keeps both locations', async () =>
   v.evaluate({ a: 'x', b: 1 }, c);
   assert.ok(c.results.some((r) => r.schemaEvaluationLocation === '/properties/b/type' && r.documentEvaluationLocation === '/b'));
 });
+
+test('allOf and $ref compositions of plain objects check an object in one pass', async () => {
+  const { JsonSchemaResultsCollector, ResultsLevel } = await import('../dist/index.js');
+  const base = { type: 'object', properties: { id: { type: 'integer' }, tags: { type: 'array' } }, required: ['id'], maxProperties: 4 };
+  const flat = {
+    $defs: { base },
+    allOf: [{ $ref: '#/$defs/base' }, { properties: { name: { type: 'string' }, id: { type: 'integer' } }, required: ['name'] }],
+    properties: { active: true },
+    minProperties: 2,
+  };
+  // The root function holds every branch's names: one pass over the properties, no call per branch.
+  const root = compile(flat).source.match(/const v0 = \(function v0\(x\) \{[^]*?\n\}\);/)[0];
+  for (const name of ['id', 'tags', 'name']) assert.ok(root.includes(JSON.stringify(name)), name);
+
+  const conflicting = { allOf: [{ properties: { id: { type: 'integer' } } }, { properties: { id: { minimum: 1 } } }] };
+  const nonObjectBranch = { allOf: [{ properties: { id: { type: 'integer' } } }, { minLength: 2, properties: { n: { type: 'string' } } }] };
+  for (const schema of [flat, conflicting, nonObjectBranch]) {
+    const v = compile(schema);
+    for (const instance of [
+      { id: 1, name: 'a' },
+      { id: 1, name: 'a', tags: [], active: 1 },
+      { id: 1, name: 'a', tags: [], active: 1, other: 2 },
+      { id: 'x', name: 'a' },
+      { id: 1, name: 2 },
+      { id: 0 },
+      { name: 'a' },
+      { id: 1, n: 'a' },
+      { id: 1, n: 1 },
+      {},
+      'ab',
+      'a',
+      [],
+      null,
+    ]) {
+      const collected = v.evaluate(instance, JsonSchemaResultsCollector.create(ResultsLevel.Basic));
+      assert.equal(v(instance), collected, `${JSON.stringify(schema)} on ${JSON.stringify(instance)}`);
+    }
+  }
+  assert.equal(compile(flat)({ id: 1, name: 'a', tags: [], active: 1, other: 2 }), false, 'maxProperties from the $ref branch');
+  assert.equal(compile(flat)({ id: 1 }), false, 'required from the allOf branch');
+  assert.equal(compile(nonObjectBranch)('a'), false, 'a branch keyword for strings still applies');
+});
