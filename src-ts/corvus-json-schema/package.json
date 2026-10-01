@@ -44,7 +44,8 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "VERSIONHISTORY.md"
   ],
   "engines": {
     "node": ">=20"
