@@ -56,6 +56,10 @@ enum Matcher {
         bangs: bool,
     },
     Regex(regex::Regex),
+    /// A pattern that is valid only without the `u` flag (an identity escape such as `\&`), so matching UTF-16 code
+    /// units: translated for `regex`, which decides it exactly on strings with no character beyond the Basic
+    /// Multilingual Plane (where code units are characters); regress decides the rest.
+    RegexBmp(regex::Regex, regress::Regex),
     Regress(regress::Regex),
 }
 
@@ -107,11 +111,19 @@ impl Pattern {
                     if set.contains(c) || is_line_terminator(c) {
                         return false;
                     }
-                    word |= CharSet::word().contains(c);
+                    word |= CharSet::WORD.contains(c);
                 }
                 word
             }
             Matcher::Regex(re) => re.is_match(s),
+            // A UTF-8 lead byte of 0xF0 or above starts a character beyond the BMP.
+            Matcher::RegexBmp(re, fallback) => {
+                if s.bytes().any(|b| b >= 0xF0) {
+                    fallback.find(s).is_some()
+                } else {
+                    re.is_match(s)
+                }
+            }
             Matcher::Regress(re) => re.find(s).is_some(),
         }
     }
@@ -242,7 +254,14 @@ pub(crate) fn compile(pattern: &str) -> Option<Arc<Pattern>> {
     }
     // Validity is ECMA-262's: a pattern regress rejects is an error, whichever matcher would run it.
     let (regress, unicode) = compile_regress(pattern)?;
-    let matcher = choose(pattern, unicode).unwrap_or(Matcher::Regress(regress));
+    let matcher = match choose(pattern, unicode) {
+        Some(m) => m,
+        None if !unicode => match translate(pattern, false).and_then(|t| regex::Regex::new(&t).ok()) {
+            Some(re) => Matcher::RegexBmp(re, regress),
+            None => Matcher::Regress(regress),
+        },
+        None => Matcher::Regress(regress),
+    };
     let p = Arc::new(Pattern { source: pattern.to_string(), matcher });
     CACHE.lock().unwrap().insert(pattern.to_string(), p.clone());
     Some(p)
@@ -294,7 +313,7 @@ fn choose(pattern: &str, unicode: bool) -> Option<Matcher> {
             None => Matcher::Sequence(seq),
         });
     }
-    let translated = translate(pattern)?;
+    let translated = translate(pattern, true)?;
     regex::Regex::new(&translated).ok().map(Matcher::Regex)
 }
 
@@ -551,10 +570,13 @@ struct CharSet {
 impl CharSet {
     const EMPTY: CharSet = CharSet { ascii: 0, non_ascii: false, separators: false };
 
-    fn range(lo: u8, hi: u8) -> CharSet {
+    /// ASCII `lo..=hi` (`hi` below 128).
+    const fn range(lo: u8, hi: u8) -> CharSet {
         let mut ascii = 0u128;
-        for c in lo..=hi {
+        let mut c = lo;
+        while c <= hi {
             ascii |= 1 << c;
+            c += 1;
         }
         CharSet { ascii, ..CharSet::EMPTY }
     }
@@ -564,7 +586,7 @@ impl CharSet {
         CharSet { ascii: !((1 << b'\n') | (1 << b'\r')), non_ascii: true, separators: false }
     }
 
-    fn union(self, other: CharSet) -> CharSet {
+    const fn union(self, other: CharSet) -> CharSet {
         CharSet {
             ascii: self.ascii | other.ascii,
             non_ascii: self.non_ascii || other.non_ascii,
@@ -587,6 +609,7 @@ impl CharSet {
         (word >> (c & 63)) & 1 != 0
     }
 
+    #[inline]
     fn contains(self, c: char) -> bool {
         match c as u32 {
             c if c < 128 => self.has_ascii(c as u8),
@@ -595,15 +618,21 @@ impl CharSet {
         }
     }
 
+    const DIGIT: CharSet = CharSet::range(b'0', b'9');
+
+    /// `\w`. A constant: built per call, its ranges cost tens of nanoseconds, which matchers testing it per character
+    /// paid per character.
+    const WORD: CharSet = CharSet::range(b'0', b'9')
+        .union(CharSet::range(b'A', b'Z'))
+        .union(CharSet::range(b'a', b'z'))
+        .union(CharSet::range(b'_', b'_'));
+
     fn digit() -> CharSet {
-        CharSet::range(b'0', b'9')
+        CharSet::DIGIT
     }
 
     fn word() -> CharSet {
-        CharSet::range(b'0', b'9')
-            .union(CharSet::range(b'A', b'Z'))
-            .union(CharSet::range(b'a', b'z'))
-            .union(CharSet::range(b'_', b'_'))
+        CharSet::WORD
     }
 }
 
@@ -1063,21 +1092,22 @@ fn parse_quantifier(b: &[u8], mut i: usize) -> Option<(u32, u32, usize)> {
 const ECMA_SPACE: &str =
     r"\t\n\x{B}\x{C}\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}";
 
-/// Translates an ECMA-262 pattern (`u` flag) to the `regex` crate's syntax with the same meaning, or `None` when it
-/// uses something outside the common subset.
-fn translate(p: &str) -> Option<String> {
+/// Translates an ECMA-262 pattern to the `regex` crate's syntax with the same meaning, or `None` when it uses
+/// something outside the common subset. With `unicode` false, the pattern is read without the `u` flag (identity
+/// escapes of any non-alphanumeric character), and the translation has its meaning on strings within the BMP.
+fn translate(p: &str, unicode: bool) -> Option<String> {
     let c: Vec<char> = p.chars().collect();
     let mut out = String::with_capacity(p.len() * 2);
     let mut i = 0;
     while i < c.len() {
         match c[i] {
             '\\' => {
-                let (text, next) = escape(&c, i + 1, false)?;
+                let (text, next) = escape(&c, i + 1, false, unicode)?;
                 out.push_str(&text);
                 i = next;
             }
             '[' => {
-                let (text, next) = class(&c, i + 1)?;
+                let (text, next) = class(&c, i + 1, unicode)?;
                 out.push_str(&text);
                 i = next;
             }
@@ -1130,7 +1160,7 @@ fn push_literal(out: &mut String, ch: char) {
 }
 
 /// An escape after `\` at `i`: its translation and the index after it.
-fn escape(c: &[char], i: usize, in_class: bool) -> Option<(String, usize)> {
+fn escape(c: &[char], i: usize, in_class: bool, unicode: bool) -> Option<(String, usize)> {
     let e = *c.get(i)?;
     let mut out = String::new();
     let next = match e {
@@ -1195,7 +1225,8 @@ fn escape(c: &[char], i: usize, in_class: bool) -> Option<(String, usize)> {
             i + 1
         }
         // Unicode properties (validated as ECMA-262 names by regress) have the same names in the `regex` crate.
-        'p' | 'P' if c.get(i + 1) == Some(&'{') => {
+        // Without the `u` flag `\p` is the letter.
+        'p' | 'P' if unicode && c.get(i + 1) == Some(&'{') => {
             let end = i + 1 + c[i + 1..].iter().position(|&x| x == '}')?;
             let body: String = c[i + 2..end].iter().collect();
             if body.is_empty() || !body.chars().all(|x| x.is_ascii_alphanumeric() || x == '_' || x == '=') {
@@ -1213,13 +1244,19 @@ fn escape(c: &[char], i: usize, in_class: bool) -> Option<(String, usize)> {
             push_literal(&mut out, char::from_u32(u32::from_str_radix(&hex, 16).ok()?)?);
             i + 3
         }
-        'u' => {
+        // Without the `u` flag, `\u{...}` is not a code point escape.
+        'u' if unicode || c.get(i + 1) != Some(&'{') => {
             let (code, next) = unicode_escape(c, i + 1)?;
             push_literal(&mut out, char::from_u32(code)?);
             next
         }
         // Identity escapes of syntax characters and `/` (and `-` in a class).
         '^' | '$' | '\\' | '.' | '*' | '+' | '?' | '(' | ')' | '[' | ']' | '{' | '}' | '|' | '/' | '-' => {
+            push_literal(&mut out, e);
+            i + 1
+        }
+        // Without the `u` flag, any other non-alphanumeric character escapes to itself.
+        e if !unicode && !e.is_ascii_alphanumeric() => {
             push_literal(&mut out, e);
             i + 1
         }
@@ -1258,7 +1295,7 @@ fn unicode_escape(c: &[char], i: usize) -> Option<(u32, usize)> {
 
 /// A class after `[` at `i`: its translation (every member spelled as an escape, so nothing in it is special to the
 /// `regex` crate) and the index after `]`.
-fn class(c: &[char], mut i: usize) -> Option<(String, usize)> {
+fn class(c: &[char], mut i: usize, unicode: bool) -> Option<(String, usize)> {
     let mut out = String::from("[");
     if c.get(i) == Some(&'^') {
         out.push('^');
@@ -1274,7 +1311,7 @@ fn class(c: &[char], mut i: usize) -> Option<(String, usize)> {
         // One atom: a character (which can start a range) or a class escape.
         let (atom, single, next) = if ch == '\\' {
             let e = *c.get(i + 1)?;
-            let (text, next) = escape(c, i + 1, true)?;
+            let (text, next) = escape(c, i + 1, true, unicode)?;
             let single = match e {
                 'd' | 'D' | 'w' | 'W' | 's' | 'S' | 'p' | 'P' => None,
                 _ => Some(text.clone()),
@@ -1295,7 +1332,7 @@ fn class(c: &[char], mut i: usize) -> Option<(String, usize)> {
                 if matches!(e, 'd' | 'D' | 'w' | 'W' | 's' | 'S' | 'p' | 'P') {
                     return None;
                 }
-                escape(c, i + 2, true)?
+                escape(c, i + 2, true, unicode)?
             } else {
                 let mut t = String::new();
                 push_literal(&mut t, c[i + 1]);
@@ -1442,6 +1479,13 @@ mod tests {
         "^(é,)*a$",
         "^(?=!+[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$",
         "^(?=!+[^a]+$)(?=(.*\\w)).+$",
+        // Valid only without the `u` flag (identity escapes), so matching code units.
+        "^\\/[^\\*\\?\\&\\%]*(\\/\\*)?$",
+        "^[\\&\\@\\_]+$",
+        "a\\&.b",
+        "^.{2}$",
+        "^[^\\%]{1,3}$",
+        "\\uD83D\\uDE00|\\&",
     ];
 
     /// Every matcher agrees with regress on strings over an alphabet that exercises classes, anchors and non-ASCII.
@@ -1516,7 +1560,10 @@ mod tests {
         for p in ["\\bfoo", "^\\p{L}+$"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Regex(_)), "{p}");
         }
-        for p in ["^((\\.(?!\\.)\\/)?\\w+\\/?)+$", "^\\-a"] {
+        for p in ["^\\/[^\\*\\?\\&\\%]*(\\/\\*)?$", "a\\&.b", "^\\-a"] {
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::RegexBmp(..)), "{p}");
+        }
+        for p in ["^((\\.(?!\\.)\\/)?\\w+\\/?)+$", "^\\1(a)", "^\\p{L}\\&"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Regress(_)), "{p}");
         }
     }

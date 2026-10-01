@@ -446,6 +446,9 @@ struct Names {
     /// set is not declared, which settles most misses without a search.
     lengths: u64,
     map: NameMap,
+    /// For a hint `h` (the index after the previous match), the name after that match in sorted order (entry 0: the
+    /// first name in sorted order); `u32::MAX` after the last.
+    sorted_next: Box<[u32]>,
 }
 
 #[inline(always)]
@@ -456,7 +459,14 @@ fn length_bit(len: usize) -> u64 {
 impl Names {
     fn new(names: Vec<Box<str>>) -> Names {
         let lengths = names.iter().fold(0, |m, n| m | length_bit(n.len()));
-        Names { lengths, map: NameMap::new(names) }
+        let mut order: Vec<u32> = (0..names.len() as u32).collect();
+        order.sort_by(|&a, &b| names[a as usize].cmp(&names[b as usize]));
+        let mut sorted_next = vec![u32::MAX; names.len() + 1];
+        sorted_next[0] = order.first().copied().unwrap_or(u32::MAX);
+        for pair in order.windows(2) {
+            sorted_next[pair[0] as usize + 1] = pair[1];
+        }
+        Names { lengths, map: NameMap::new(names), sorted_next: sorted_next.into() }
     }
 
     fn find(&self, name: &str) -> Option<usize> {
@@ -482,7 +492,8 @@ impl Names {
     }
 
     /// Finds a name, trying the one after the previous match first: instances tend to list their properties in the
-    /// schema's order, so the next name is usually the next one declared.
+    /// schema's order, so the next name is usually the next one declared; failing that, the next name in sorted order
+    /// (instances written by tools that sort their keys).
     #[inline(always)]
     fn find_from(&self, name: &str, hint: &mut usize) -> Option<usize> {
         if self.lengths & length_bit(name.len()) == 0 {
@@ -493,6 +504,13 @@ impl Names {
         {
             *hint += 1;
             return Some(*hint - 1);
+        }
+        if let Some(&next) = self.sorted_next.get(*hint)
+            && let Some(expected) = self.map.names.get(next as usize)
+            && str_eq(expected, name)
+        {
+            *hint = next as usize + 1;
+            return Some(next as usize);
         }
         let i = self.map.find(name)?;
         *hint = i + 1;
@@ -1607,6 +1625,32 @@ mod tests {
             }
             assert_eq!(map.find("zeta!"), None);
         }
+    }
+
+    #[test]
+    fn names_follow_declared_or_sorted_order() {
+        let declared = ["name", "version", "repository", "alias"];
+        let names = Names::new(declared.iter().map(|&n| n.into()).collect());
+        // Every order of the names, from every starting hint, finds each one.
+        let orders: [&[&str]; 4] = [
+            &["name", "version", "repository", "alias"],
+            &["alias", "name", "repository", "version"],
+            &["version", "alias", "name", "repository"],
+            &["repository", "repository", "name"],
+        ];
+        for order in orders {
+            for start in 0..=declared.len() {
+                let mut hint = start;
+                for n in order {
+                    let i = declared.iter().position(|d| d == n).unwrap();
+                    assert_eq!(names.find_from(n, &mut hint), Some(i), "{n} in {order:?} from {start}");
+                }
+            }
+        }
+        assert_eq!(names.find_from("other", &mut 0), None);
+        assert_eq!(names.find_from("names", &mut 2), None);
+        // Sorted successors: after "name" (index 0) comes "repository" (2), after it "version" (1), then none.
+        assert_eq!(&*names.sorted_next, &[3, 2, u32::MAX, 1, 0]);
     }
 
     #[test]
