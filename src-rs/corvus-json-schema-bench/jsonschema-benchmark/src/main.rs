@@ -2,23 +2,23 @@
 //!
 //!   corvus_rs_benchmark <schema.json> <instances.jsonl>
 //!
-//! Mirrors the other implementations: read the instance file, parse every instance (timed), compile the schema
-//! (timed), validate every instance once cold, warm up, validate once more warm. Prints one line
+//! Mirrors the other implementations: read the instance file, parse every instance into a `JsonDocument` (timed),
+//! compile the schema (timed), validate every instance once cold, warm up, validate once more warm. Prints one line
 //! "cold,warm,compile,parse" in nanoseconds and exits non-zero if any instance is invalid.
 
 use std::process::ExitCode;
 use std::time::Instant;
 
-use corvus_json_schema::Validator;
+use corvus_json_schema::{JsonDocument, Validator};
 use serde_json::Value;
 
 const WARMUP_ITERATIONS: u128 = 100;
 const MAX_WARMUP_TIME: u128 = 10_000_000_000; // 10 seconds
 
-fn validate_all(validator: &Validator, instances: &[Value]) -> bool {
+fn validate_all(validator: &Validator, instances: &[JsonDocument<'_>]) -> bool {
     let mut valid = true;
     for instance in instances {
-        valid &= validator.is_valid(instance);
+        valid &= validator.validate_instance(instance.root()).unwrap_or(false);
     }
     valid
 }
@@ -34,10 +34,10 @@ fn main() -> ExitCode {
     let contents = std::fs::read_to_string(&args[2]).expect("read the instances");
 
     let parse_start = Instant::now();
-    let instances: Vec<Value> = contents
+    let instances: Vec<JsonDocument<'_>> = contents
         .lines()
         .filter(|l| !l.is_empty())
-        .map(|l| serde_json::from_str(l).expect("parse an instance"))
+        .map(|l| JsonDocument::parse(l).expect("parse an instance"))
         .collect();
     let parse = parse_start.elapsed().as_nanos();
 

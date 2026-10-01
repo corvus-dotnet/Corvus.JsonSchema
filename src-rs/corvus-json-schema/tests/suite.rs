@@ -8,7 +8,9 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use corvus_json_schema::{CompileOptions, Dialect, JsonSchemaResultsCollector, ResultsLevel, Validator, compile_with};
+use corvus_json_schema::{
+    CompileOptions, Dialect, JsonDocument, JsonSchemaResultsCollector, ResultsLevel, Validator, compile_with,
+};
 use serde_json::Value;
 
 const DRAFTS: [(&str, Dialect); 5] = [
@@ -67,6 +69,22 @@ fn run_case(v: &Validator, data: &Value) -> Result<bool, String> {
         {
             return Err(format!("{level:?}: no root summary row matching the result"));
         }
+    }
+    // The same instance parsed into a JsonDocument: the same verdict, and the same results rows.
+    let text = serde_json::to_string(data).unwrap();
+    let document = JsonDocument::parse(&text).map_err(|e| format!("document: {e}"))?;
+    let from_document = v.validate_instance(document.root()).map_err(|e| format!("document: {e}"))?;
+    if from_document != fast {
+        return Err(format!("the document returned {from_document}, the Value {fast}"));
+    }
+    let (mut c1, mut c2) = (
+        JsonSchemaResultsCollector::new(ResultsLevel::Verbose),
+        JsonSchemaResultsCollector::new(ResultsLevel::Verbose),
+    );
+    v.evaluate(data, &mut c1).map_err(|e| format!("Verbose: {e}"))?;
+    v.evaluate_instance(document.root(), &mut c2).map_err(|e| format!("document Verbose: {e}"))?;
+    if c1.results() != c2.results() {
+        return Err("the document's verbose results differ from the Value's".into());
     }
     Ok(fast)
 }
