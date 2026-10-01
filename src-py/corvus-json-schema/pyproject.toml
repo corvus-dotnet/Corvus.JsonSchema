@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "corvus-json-schema"
+version = "0.1.0"
+description = "A high-performance JSON Schema evaluator (draft 4 to 2020-12) that compiles schemas to specialised Python, with results collection and annotations, ported from the Corvus.Text.Json V5 runtime evaluator."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "endjin" }]
+keywords = ["json-schema", "validation", "jsonschema", "validator", "draft-2020-12", "draft-2019-09", "draft-07"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: File Formats :: JSON :: JSON Schema",
+    "Typing :: Typed",
+]
+dependencies = ["regex>=2024.11.6"]
+
+[project.urls]
+Homepage = "https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-py/corvus-json-schema"
+Repository = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
+Issues = "https://github.com/corvus-dotnet/Corvus.JsonSchema/issues"
+
+[project.scripts]
+corvus-json-schema = "corvus_json_schema.cli:main"
+
+[dependency-groups]
+dev = ["mypy>=1.18", "pyright>=1.1.405", "pytest>=8.4", "ruff>=0.13", "types-regex"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/corvus_json_schema", "README.md", "LICENSE", "VERSIONHISTORY.md"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/corvus_json_schema"]
+
+[tool.mypy]
+strict = true
+python_version = "3.10"
+files = ["src/corvus_json_schema"]
+
+[tool.pyright]
+include = ["src/corvus_json_schema"]
+pythonVersion = "3.10"
+typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["src/corvus_json_schema/_metaschemas.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP", "SIM", "RUF", "PLR1730"]
+# SIM110: explicit loops are faster than all()/any() over generators on the hot paths.
+ignore = ["E501", "SIM102", "SIM108", "SIM110"]

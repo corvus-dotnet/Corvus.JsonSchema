@@ -1,0 +1,22 @@
+[package]
+name = "corvus-json-schema-py"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Python bindings for the corvus-json-schema crate."
+license = "Apache-2.0"
+repository = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
+publish = false
+
+[lib]
+name = "_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+corvus-json-schema = { path = "../../src-rs/corvus-json-schema", version = "0.1.0" }
+pyo3 = { version = "0.29.3", features = ["abi3-py310"] }
+serde_json = { version = "1.0.151", features = ["preserve_order"] }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
