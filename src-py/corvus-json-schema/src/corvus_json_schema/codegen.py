@@ -70,6 +70,14 @@ MAX_GUARD_NAMES = 6
 MAX_INLINE_CONDITIONS = _env("CORVUS_PY_INLINE", 6)
 # Dispatch tables map a schema that accepts everything to True (no call) rather than to its function.
 TRIVIAL_ENTRIES = _env("CORVUS_PY_TRIVIAL_ENTRIES", 1) != 0
+# Dispatch tables hold a type-only schema's types (tested inline) rather than its function.
+TYPE_ENTRIES = _env("CORVUS_PY_TYPE_ENTRIES", 1) != 0
+# Children that are small (non-leaf) schemas are generated into their caller's loop, at most this deep and long.
+INLINE_CHILDREN = _env("CORVUS_PY_INLINE_CHILDREN", 1) != 0
+MAX_INLINE_DEPTH = _env("CORVUS_PY_INLINE_DEPTH", 2)
+MAX_INLINE_LINES = _env("CORVUS_PY_INLINE_LINES", 40)
+# Children that are simple arrays (array type, length bounds, leaf items) are checked in their parent's code.
+INLINE_ARRAYS = _env("CORVUS_PY_INLINE_ARRAYS", 1) != 0
 # Enums of more values than this are tested by set lookup.
 MAX_CHAINED_VALUES = _env("CORVUS_PY_CHAINED_VALUES", 3)
 
@@ -95,6 +103,10 @@ class GeneratedCode:
     declarations: str
     """Constant and function definitions; ``root`` names the entry function."""
     root: str
+    functions: list[tuple[str, str]]
+    """Each function's name and definition (the functions part of ``declarations``)."""
+    constants: str
+    """The constant definitions (the rest of ``declarations``)."""
     custom_formats: list[Callable[[str], bool]]
     """Custom format functions referenced as ``F[i]`` (only when custom formats are used)."""
     uses_dynamic_scope: bool
@@ -157,6 +169,11 @@ def indent(lines: Iterable[str], depth: int) -> list[str]:
     return [pad + line for line in lines]
 
 
+# A string literal or a function reference (kept), or a local name of generated code (renamed when inlining).
+_LOCAL_RE = re.compile(
+    "('(?:[^'\\\\]|\\\\.)*'|\"(?:[^\"\\\\]|\\\\.)*\"|\x01[^\x02]*\x02)"
+    r"|\b(x|tx|p|v|k|f|w|i|(?:[nmesgdc]|any|one)\d+(?:_\d+)?)\b"
+)
 _SIMPLE_RE = re.compile(r"^[\w.\x01\x02]+\([^()]*\)$|^[\w.]+$")
 
 
@@ -202,6 +219,11 @@ class CodeGenerator:
         # Whether the function being generated tests ``tx`` (``type(x)``, taken once at its start).
         self.uses_tx = False
         self._elided: dict[int, int] = {}
+        # The nodes whose functions are being generated (an inlined child's included), and the inlining depth.
+        self.generating: list[int] = []
+        self.inline_depth = 0
+        self._trivial: dict[int, bool] = {}
+        self._generated: dict[tuple[int, str, int], str] = {}
 
     def generate(self) -> GeneratedCode:
         root_name = self.request(self.entry_name(self.program.root))
@@ -210,10 +232,12 @@ class CodeGenerator:
             name = self.queue[q]
             q += 1
             self.templates[name] = self.generate_function(name)
-        declarations, root = self.link(root_name)
+        functions, constants, root = self.link(root_name)
         return GeneratedCode(
-            declarations=declarations,
+            declarations="\n".join([*(text for _, text in functions), constants]),
             root=root,
+            functions=functions,
+            constants=constants,
             custom_formats=self.custom_formats,
             uses_dynamic_scope=self.program.uses_dynamic_scope,
             uses_depth=self.uses_depth,
@@ -239,7 +263,7 @@ class CodeGenerator:
     def constant(self, init: str) -> str:
         name = self.constants.get(init)
         if name is None:
-            name = "c" + str(len(self.constants))
+            name = "C" + str(len(self.constants))
             self.constants[init] = name
         return name
 
@@ -327,6 +351,8 @@ class CodeGenerator:
             return self.type_expr(n.type, v, n.dialect)
         if e is None and not crosses and self.is_inline_leaf(n):
             return self.inline_leaf(n, v)
+        if e is None and not crosses and self.is_trivial(target):
+            return "True"
         variant = "v" if e is None else "t"
         name = ("s" + variant + str(target)) if crosses else (variant + str(target))
         return f"{self.ref(name)}({v}{'' if e is None else ', ' + e})"
@@ -341,7 +367,31 @@ class CodeGenerator:
         if n.always_false:
             return "R.never"
         crosses = self.program.uses_dynamic_scope and n.resource_id != source
+        types = None if crosses or not TYPE_ENTRIES else self.exact_types(n)
+        if types is not None:
+            # A type-only schema: the table holds its types, tested without a call.
+            return "(" + ", ".join(types) + ",)"
         return self.ref(("sv" if crosses else "v") + str(target))
+
+    def exact_types(self, n: SchemaNode) -> list[str] | None:
+        """For a schema that tests only the type, the Python types it accepts; None for any other schema, and for an
+        integer type without number (a float with no fractional part is an integer, which a type alone cannot say)."""
+        if not n.is_type_only or n.in_place_cycle or ((n.type & T_INTEGER) and not (n.type & T_NUMBER)):
+            return None
+        names = [
+            python
+            for bit, python in (
+                (T_STRING, "str"),
+                (T_OBJECT, "dict"),
+                (T_ARRAY, "list"),
+                (T_BOOLEAN, "bool"),
+                (T_NULL, "NoneType"),
+            )
+            if n.type & bit
+        ]
+        if n.type & T_NUMBER:
+            names.extend(("int", "float"))
+        return names
 
     def is_inline_leaf(self, n: SchemaNode) -> bool:
         """A leaf (type, const/enum of primitives, string and number keywords, nothing that applies a subschema)
@@ -470,16 +520,106 @@ class CodeGenerator:
         return f"def @(x{', ev' if e else ''}):\n" + "\n".join(indent(lines, 1))
 
     def generate_node_function(self, node_id: int, variant: str) -> str:
+        # A node's text depends only on the node and the inlining depth (which names nested inlines): generated once
+        # for the trivial test and inlining, which both ask again for the same nodes.
+        key = (node_id, variant, self.inline_depth)
+        cached = self._generated.get(key)
+        if cached is not None:
+            return cached
+        text = self._generate_node_function(node_id, variant)
+        self._generated[key] = text
+        return text
+
+    def _generate_node_function(self, node_id: int, variant: str) -> str:
         n = self.nodes[node_id]
         # Scratch names restart per function so that structurally identical functions produce identical text.
         self.tmp = 0
         self.uses_tx = False
+        self.generating.append(node_id)
         tracking = variant == "t" or n.unevaluated_properties >= 0 or n.unevaluated_items >= 0
         body = self.tracking_body(n, variant) if tracking else self.flag_body(n)
+        self.generating.pop()
         if self.uses_tx:
             body.insert(0, "tx = type(x)")
         params = "x" if variant == "v" else "x, ev"
         return f"def @({params}):\n" + "\n".join(indent(body, 1))
+
+    def is_trivial(self, node_id: int) -> bool:
+        """Whether a node accepts everything without testing anything: no assertion of its own, and only ``$ref`` and
+        ``allOf`` applicators to nodes that are themselves trivial (such as a reference to a schema that holds only
+        annotations), so a call to it can be dropped."""
+        cached = self._trivial.get(node_id)
+        if cached is not None:
+            return cached
+        self._trivial[node_id] = False  # a cycle is not trivial
+        n = self.nodes[node_id]
+        # Below a live dynamic reference, entering a node of another resource pushes it on the scope: not trivial.
+        children = [self.elide(c) for c in (n.ref, n.static_dynamic_ref, *(n.all_of or ())) if c >= 0]
+        crosses = self.program.uses_dynamic_scope and any(self.nodes[c].resource_id != n.resource_id for c in children)
+        trivial = n.always_true or (
+            not crosses
+            and not n.always_false
+            and not n.in_place_cycle
+            and not n.has_type
+            and not n.has_const
+            and n.enum_values is None
+            and not n.has_object_keywords
+            and not n.has_array_keywords
+            and not n.has_string_keywords
+            and not n.has_number_keywords
+            and n.dynamic_ref is None
+            and n.any_of is None
+            and n.one_of is None
+            and n.not_ < 0
+            and n.if_ < 0
+            and n.dependencies is None
+            and all(self.is_trivial(c) for c in children)
+        )
+        self._trivial[node_id] = trivial
+        return trivial
+
+    def inline_child(self, node_id: int, subject: str, source: int) -> list[str] | None:
+        """The statements of a child's function, to run in place of ``if not child(subject): return False``, or None
+        when the child is not worth or not safe to inline. The child's body is generated as usual, its locals are
+        renamed (its subject becomes ``subject``, every other name gets a suffix for the inlining depth, string
+        literals and function references untouched) and its final ``return True`` dropped: its ``return False`` fails
+        the caller, as the call it replaces would."""
+        if not INLINE_CHILDREN or self.inline_depth >= MAX_INLINE_DEPTH:
+            return None
+        target = self.elide(node_id)
+        n = self.nodes[target]
+        crosses = self.program.uses_dynamic_scope and n.resource_id != source
+        if (
+            crosses
+            or n.always_true
+            or n.always_false
+            or n.in_place_cycle
+            or n.unevaluated_properties >= 0
+            or n.unevaluated_items >= 0
+            or target in self.generating
+            or n.is_type_only
+            or self.is_inline_leaf(n)
+        ):
+            return None
+        saved = (self.tmp, self.uses_tx)
+        self.inline_depth += 1
+        text = self.generate_node_function(target, "v")
+        self.inline_depth -= 1
+        self.tmp, self.uses_tx = saved
+        body = [line[4:] for line in text.split("\n")[1:]]
+        if len(body) > MAX_INLINE_LINES or len(body) < 2 or body[-1] != "return True":
+            return None
+        if any("return True" in line or "global" in line for line in body[:-1]):
+            return None
+        suffix = f"_{self.inline_depth + 1}"
+
+        def rename(m: re.Match[str]) -> str:
+            name = m.group(2)
+            if name is None:
+                return m.group(0)
+            return subject if name == "x" else name + suffix
+
+        return [_LOCAL_RE.sub(rename, line) for line in body[:-1]]
 
     def flag_body(self, n: SchemaNode) -> list[str]:
         """Flag mode: type-directed blocks, then const/enum, then in-place applicators."""
@@ -724,15 +864,32 @@ class CodeGenerator:
             if check == "True":
                 continue
             key = lit(name)
-            if check == "False":
+            nested = (
+                self.simple_array_lines(self.nodes[self.elide(child)], "p", "w", n.resource_id)
+                if INLINE_ARRAYS
+                else None
+            )
+            if nested is not None:
+                # A simple array property: checked here, with no call.
+                if name in required_set:
+                    out.append(f"p = x[{key}]")
+                    out.extend(nested)
+                else:
+                    out.append(f"if {key} in x:")
+                    out.append(f"    p = x[{key}]")
+                    out.extend(indent(nested, 1))
+            elif check == "False":
                 out.append(f"if {key} in x: return False")
-            elif name in required_set:
-                out.append(f"p = x[{key}]")
-                out.append(f"if not {wrap(check)}: return False")
             else:
-                out.append(f"if {key} in x:")
-                out.append(f"    p = x[{key}]")
-                out.append(f"    if not {wrap(check)}: return False")
+                inlined = self.inline_child(child, "p", n.resource_id)
+                lines = inlined if inlined is not None else [f"if not {wrap(check)}: return False"]
+                if name in required_set:
+                    out.append(f"p = x[{key}]")
+                    out.extend(lines)
+                else:
+                    out.append(f"if {key} in x:")
+                    out.append(f"    p = x[{key}]")
+                    out.extend(indent(lines, 1))
         return out
 
     def object_values(self, n: SchemaNode, ap: SchemaNode) -> list[str]:
@@ -776,7 +933,8 @@ class CodeGenerator:
                 lines: list[str] = []
                 check = self.call(props[name], "v", n.resource_id)
                 if check != "True":
-                    lines.append(f"if not {wrap(check)}: return False")
+                    inlined = self.inline_child(props[name], "v", n.resource_id)
+                    lines.extend(inlined if inlined is not None else [f"if not {wrap(check)}: return False"])
                 if mark:
                     lines.append(mark)
                 if matched:
@@ -793,12 +951,16 @@ class CodeGenerator:
                     body.extend(indent(case_body(name), 1))
             else:
                 # A dict from names to check functions: one hash lookup instead of a chain of comparisons.
-                table, trivial = self.dispatch_table(n, names)
+                table, trivial, typed = self.dispatch_table(n, names)
                 body.append(f"f = {table}.get(k)")
                 body.append("if f is not None:")
-                lines: list[str] = [
-                    "if f is not True and not f(v): return False" if trivial else "if not f(v): return False"
-                ]
+                lines: list[str] = []
+                if typed:
+                    lines.append("if type(f) is tuple:")
+                    lines.append("    if type(v) not in f: return False")
+                    lines.append(f"elif {'f is not True and ' if trivial else ''}not f(v): return False")
+                else:
+                    lines.append(f"if {'f is not True and ' if trivial else ''}not f(v): return False")
                 if mark:
                     lines.append(mark)
                 if matched:
@@ -841,13 +1003,14 @@ class CodeGenerator:
         out.extend(indent(body, 1))
         return out
 
-    def dispatch_table(self, n: SchemaNode, names: list[str]) -> tuple[str, bool]:
+    def dispatch_table(self, n: SchemaNode, names: list[str]) -> tuple[str, bool, bool]:
         """A module-level dict from declared names to their check functions (``True`` for a schema that accepts
-        everything), defined after the functions; and whether any entry is ``True``."""
+        everything, a tuple of types for one that tests only the type), defined after the functions; and whether any
+        entry is ``True``, and whether any is a tuple."""
         assert n.properties is not None
         refs = [self.function_ref(n.properties[name], n.resource_id) for name in names]
         entries = ", ".join(f"{lit(name)}: {ref}" for name, ref in zip(names, refs, strict=True))
-        return self.constant("{" + entries + "}"), "True" in refs
+        return self.constant("{" + entries + "}"), "True" in refs, any(r.startswith("(") for r in refs)
 
     def object_dependencies(self, n: SchemaNode, e: str | None, flag_layout: bool) -> list[str]:
         """Dependencies: required lists always; schemas here only in the flag layout (tracking evaluates them in
@@ -893,10 +1056,18 @@ class CodeGenerator:
                 out.append(f"if {length} > {len(prefix)}: return False")
             else:
                 check = self.call(item.id, "v", n.resource_id)
-                if check != "True":
-                    source = "x" if not prefix else f"x[{len(prefix)}:]"
+                source = "x" if not prefix else f"x[{len(prefix)}:]"
+                nested = self.simple_array_lines(item, "v", "w", n.resource_id) if INLINE_ARRAYS else None
+                if nested is not None:
+                    # Items that are simple arrays (GeoJSON's positions): checked here, with no call per item.
                     out.append(f"for v in {source}:")
-                    out.append(f"    if not {wrap(check)}: return False")
+                    out.extend(indent(nested, 1))
+                elif check != "True":
+                    inlined = self.inline_child(item.id, "v", n.resource_id)
+                    out.append(f"for v in {source}:")
+                    out.extend(
+                        indent(inlined, 1) if inlined is not None else [f"    if not {wrap(check)}: return False"]
+                    )
                 if e is not None:
                     out.append(f"{e}.update(range({len(prefix)}, {length}))")
         if n.contains >= 0:
@@ -927,7 +1098,47 @@ class CodeGenerator:
                 out.append(f"if {length} > 1 and len(set(x)) != {length}: return False")
             else:
                 out.append(f"if {length} > 1 and not R.unique(x): return False")
+        if not any(length in line for line in out[1:]):
+            out.pop(0)  # the length, unused
         return out
+
+    def simple_array_lines(self, n: SchemaNode, v: str, w: str, source: int) -> list[str] | None:
+        """The statements that check ``v`` against a simple array schema (the type array, optional length bounds and
+        a leaf items schema, nothing else), or None for any other schema. Its items are visited as ``w``."""
+        crosses = self.program.uses_dynamic_scope and n.resource_id != source
+        if (
+            crosses
+            or n.in_place_cycle
+            or not (n.has_type and n.type == T_ARRAY)
+            or n.items < 0
+            or n.prefix_items
+            or n.contains >= 0
+            or n.unique_items
+            or n.unevaluated_items >= 0
+            or n.has_const
+            or n.enum_values is not None
+            or n.has_in_place_applicators
+            or n.has_object_keywords
+        ):
+            return None
+        item = self.nodes[self.elide(n.items)]
+        if not (item.always_true or item.is_type_only or self.is_inline_leaf(item)):
+            return None
+        check = self.call(item.id, w, source)
+        lines = [f"if type({v}) is not list: return False"]
+        if n.min_items > 0 or n.max_items >= 0:
+            bounds = []
+            if n.min_items > 0:
+                bounds.append(f"len({v}) < {n.min_items}")
+            if n.max_items >= 0:
+                bounds.append(f"len({v}) > {n.max_items}")
+            lines.append(f"if {' or '.join(bounds)}: return False")
+        if check == "False":
+            lines.append(f"if {v}: return False")
+        elif check != "True":
+            lines.append(f"for {w} in {v}:")
+            lines.append(f"    if not {wrap(check)}: return False")
+        return lines
 
     def items_hash_as_json(self, n: SchemaNode) -> bool:
         """Whether every item of an array this node accepts is a string, a number or null (by its items schema)."""
@@ -1532,7 +1743,7 @@ class CodeGenerator:
     # -------------------------------------------------------------------------------------------------------------
     # Linking: merge structurally identical functions, then emit the reachable ones.
 
-    def link(self, root_name: str) -> tuple[str, str]:
+    def link(self, root_name: str) -> tuple[list[tuple[str, str]], str, str]:
         names = list(self.templates)
         index_of = {name: i for i, name in enumerate(names)}
         # Split each template once: literal parts (even indices) around references (odd indices).
@@ -1562,7 +1773,7 @@ class CodeGenerator:
 
         # Emit the reachable representatives: from the root, and from the functions that dispatch tables name.
         emitted = [False] * len(names)
-        out: list[str] = []
+        out: list[tuple[str, str]] = []
         stack = [representative[class_of[root]]]
         for init in self.constants:
             stack.extend(representative[class_of[index_of[m.group(1)]]] for m in _REF_RE.finditer(init))
@@ -1578,15 +1789,14 @@ class CodeGenerator:
                 text += names[target] + p[k + 1]
                 if not emitted[target]:
                     stack.append(target)
-            out.append(text)
+            out.append((names[i], text))
 
         # Constants after the functions: a dispatch table names functions, and nothing runs before validate is called.
         def canonical_refs(text: str) -> str:
             return _REF_RE.sub(lambda m: names[representative[class_of[index_of[m.group(1)]]]], text)
 
-        for init, name in self.constants.items():
-            out.append(f"{name} = {canonical_refs(init)}")
-        return "\n".join(out), names[representative[class_of[root]]]
+        constants = "\n".join(f"{name} = {canonical_refs(init)}" for init, name in self.constants.items())
+        return out, constants, names[representative[class_of[root]]]
 
 
 def _refine_classes(initial: list[int], initial_count: int, refs: list[list[int]]) -> list[int]:

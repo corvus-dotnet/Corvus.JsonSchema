@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import builtins
 import json
+import os
 import re
 import threading
 import types
@@ -105,13 +106,13 @@ def _collecting_program(program: CompiledSchema) -> CollectingProgram:
     )
 
 
-def _assemble(g: GeneratedCode) -> str:
+def _assemble(g: GeneratedCode, functions: bool = True) -> str:
     s = ""
     if g.uses_dynamic_scope:
         s += "DS = []\n"
     if g.uses_depth:
         s += f"depth = 0\nMAXDEPTH = {g.max_depth}\n"
-    s += g.declarations + "\n"
+    s += (g.declarations if functions else g.constants) + "\n"
     if g.uses_dynamic_scope or g.uses_depth:
         # The dynamic scope and the depth count are module state: one evaluation at a time (re-entrant, for a custom
         # format that validates with the same validator).
@@ -135,6 +136,32 @@ def _assemble(g: GeneratedCode) -> str:
     else:
         s += f"validate = {g.root}\n"
     return s
+
+
+# Programs with more source than this (characters) compile each function on its first call.
+LAZY_MIN_SOURCE = int(os.environ.get("CORVUS_PY_LAZY_MIN", 64 * 1024))
+
+
+def _stub_template(*args: Any) -> Any:
+    return MATERIALISE("@", args)  # type: ignore[name-defined]  # noqa: F821 - a global of the generated module
+
+
+def _install_lazy_functions(namespace: dict[str, Any], functions: list[tuple[str, str]]) -> None:
+    """Defines each function as a stub that, on its first call, compiles the function's source and takes its code:
+    the stub object becomes the function, so references already taken (dispatch tables) need no update."""
+    sources = dict(functions)
+    template = _stub_template.__code__
+
+    def materialise(name: str, args: tuple[Any, ...]) -> Any:
+        stub = namespace[name]
+        module = builtins.compile(sources[name], "<corvus-json-schema>", "exec")
+        stub.__code__ = next(c for c in module.co_consts if isinstance(c, types.CodeType))
+        return stub(*args)
+
+    namespace["MATERIALISE"] = materialise
+    for name, _ in functions:
+        code = template.replace(co_consts=tuple(name if c == "@" else c for c in template.co_consts), co_name=name)
+        namespace[name] = types.FunctionType(code, namespace, name)
 
 
 def _namespace(custom_formats: list[Any]) -> dict[str, Any]:
@@ -161,7 +188,13 @@ def compile(schema: Any, options: CompileOptions | None = None, **kwargs: Any) -
     source = _assemble(g)
     namespace = _namespace(g.custom_formats)
     try:
-        exec(builtins.compile(source, "<corvus-json-schema>", "exec"), namespace)
+        if len(source) <= LAZY_MIN_SOURCE:
+            exec(builtins.compile(source, "<corvus-json-schema>", "exec"), namespace)
+        else:
+            # A large program: each function is compiled on its first call, so functions no instance reaches (much of
+            # a large schema, for most instances) are never compiled.
+            _install_lazy_functions(namespace, g.functions)
+            exec(builtins.compile(_assemble(g, functions=False), "<corvus-json-schema>", "exec"), namespace)
     except SyntaxError as e:
         raise SchemaCompilationError(f"The schema produced invalid code: {e}") from e
     validate = namespace["validate"]

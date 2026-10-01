@@ -6,6 +6,7 @@ A port of Corvus.Text.Json.RuntimeEvaluator.Compilation.SchemaNode, trimmed to w
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Any
 
 from .dialect import Dialect
@@ -81,6 +82,9 @@ class Discriminator:
 
 @dataclass(eq=False)
 class SchemaNode:
+    """A compiled schema location. Its keyword fields are set by the compiler and fixed once compilation finishes,
+    so the derived ``has_*``/``is_*`` properties are computed once (code generation asks for them many times)."""
+
     id: int
     resource_id: int
     dialect: Dialect
@@ -171,7 +175,7 @@ class SchemaNode:
     one_of_discriminator: Discriminator | None = None
     any_of_discriminator: Discriminator | None = None
 
-    @property
+    @cached_property
     def has_object_keywords(self) -> bool:
         """Keywords that apply only to objects."""
         return (
@@ -186,7 +190,7 @@ class SchemaNode:
             or self.unevaluated_properties >= 0
         )
 
-    @property
+    @cached_property
     def has_array_keywords(self) -> bool:
         return (
             self.prefix_items is not None
@@ -198,7 +202,7 @@ class SchemaNode:
             or self.unevaluated_items >= 0
         )
 
-    @property
+    @cached_property
     def has_string_keywords(self) -> bool:
         return (
             self.min_length >= 0
@@ -208,7 +212,7 @@ class SchemaNode:
             or self.assert_content
         )
 
-    @property
+    @cached_property
     def has_number_keywords(self) -> bool:
         return (
             self.minimum is not None
@@ -219,7 +223,7 @@ class SchemaNode:
             or (self.assert_format and is_numeric_format(self.format_kind))
         )
 
-    @property
+    @cached_property
     def has_in_place_applicators(self) -> bool:
         return (
             self.ref >= 0
@@ -233,7 +237,7 @@ class SchemaNode:
             or (self.dependencies is not None and any(d.schema is not None for d in self.dependencies))
         )
 
-    @property
+    @cached_property
     def is_type_only(self) -> bool:
         """Only ``type`` (a type test at the call site)."""
         return (
@@ -247,7 +251,7 @@ class SchemaNode:
             and not self.has_in_place_applicators
         )
 
-    @property
+    @cached_property
     def is_pure_ref(self) -> bool:
         """Nothing but ``$ref`` (plus, possibly, nothing else that asserts)."""
         return (

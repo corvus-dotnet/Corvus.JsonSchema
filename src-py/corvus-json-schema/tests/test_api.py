@@ -187,7 +187,9 @@ def test_unusual_property_names_are_looked_up_as_keys() -> None:
     assert v({"constructor": 1, "toString": 2, "a'b\"c": 1}) is False
 
 
-def test_structurally_identical_subschemas_share_one_generated_function() -> None:
+def test_structurally_identical_subschemas_share_one_generated_function(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Without inlining (which would put each copy in its caller), the three copies are one function.
+    monkeypatch.setattr("corvus_json_schema.codegen.INLINE_CHILDREN", False)
     leaf = {"type": "object", "properties": {"a": {"type": "string"}, "b": {"type": "integer"}}, "required": ["a"]}
     v = cjs.compile({"type": "object", "properties": {"x": leaf, "y": copy.deepcopy(leaf), "z": copy.deepcopy(leaf)}})
     assert len(re.findall(r"^def ", v.source, re.M)) == 2
@@ -482,3 +484,17 @@ def test_a_custom_format_can_reenter_the_validator() -> None:
     with pytest.raises(cjs.SchemaEvaluationDepthError):
         v({"x": 1})
     assert v({"inner": "plain"}) is True
+
+
+def test_scratch_names_never_shadow_module_constants() -> None:
+    # The contains count is a local of the function that also reads the enum's constant: their names must differ.
+    schema = {
+        "prefixItems": [{"type": "string", "pattern": "^a.*b"}],
+        "contains": {"type": "string"},
+        "enum": [["ab"], ["axb", 1]],
+    }
+    v = cjs.compile(schema)
+    assert v(["ab"]) is True
+    assert v(["axb", 1]) is True
+    assert v(["zz"]) is False
+    assert v(["ab", "c"]) is False
