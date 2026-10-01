@@ -26,9 +26,12 @@ on:
         default: false
         type: boolean
 
+# A pull request's build is superseded by the build for its next push, so runs are grouped by pull request and the
+# older one is cancelled. Pushes to main and release tags are grouped by commit, as before, so a release build is
+# never cancelled by a later one.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.sha }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   actions: write  # enable cache clean-up
