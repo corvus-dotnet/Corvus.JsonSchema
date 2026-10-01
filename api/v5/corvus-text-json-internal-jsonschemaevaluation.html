@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/6c64e2f333a11b0d5fd549dc3d574c214dac9069/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.cs#L18">JsonSchemaEvaluation.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1c249751717d1a5bd01bf946ef67e42ace2b0743/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.cs#L18">JsonSchemaEvaluation.cs</a></p>
 <p>Support for JSON Schema matching implementations.</p>
 <pre><code class="language-csharp">public static class JsonSchemaEvaluation
 </code></pre>
@@ -404,7 +404,7 @@
 <td>Matches a JSON number as a multiple of the given divisor.</td>
 </tr>
 <tr>
-<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.matchnonemptyregularexpression.html#matchnonemptyregularexpression-readonlyspan-byte-string-readonlyspan-byte-jsonschemacontext">MatchNonEmptyRegularExpression(ReadOnlySpan&lt;byte&gt;, string, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.matchnonemptyregularexpression.html">MatchNonEmptyRegularExpression</a> <code>static</code></td>
 <td>Validates that a string is non-empty, as a replacement for patterns like <code>.+</code>.</td>
 </tr>
 <tr>
@@ -445,7 +445,7 @@
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.matchrangeregularexpression.html">MatchRangeRegularExpression</a> <code>static</code></td>
-<td>Validates that a string's Unicode codepoint length is within a range, as a replacement for patterns like <code>^.{n,m}$</code>.</td>
+<td>Validates that a string's Unicode codepoint length is within a range, as a replacement for patterns like <code>^.{n,m}$</code>. As in ECMA-262, <code>.</code> does not match a line terminator, so a string containing one...</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.matchregex.html#matchregex-readonlyspan-byte-readonlyspan-byte-jsonschemacontext">MatchRegex(ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, JsonSchemaContext)</a> <code>static</code></td>
