@@ -9,8 +9,9 @@ standalone evaluator. It has the same API as the pure-Python
   `draft4/optional/zeroTerminatedFloats.json`, which the C# and Rust evaluators exclude (they read `1.0` as an
   integer), and all of the suite's annotation tests.
 - **Fast**: instances are read in place through CPython's C API (dicts, lists and strings are not copied), so
-  validating a Python object costs the evaluation alone. See the pure package's
-  [Performance](../corvus-json-schema/README.md#performance) section for measurements of both.
+  validating a Python object costs the evaluation alone. Over the jsonschema-benchmark corpora it takes 0.35 of the
+  pure package's time and 0.72 of jsonschema-rs's (geometric means); see the pure package's
+  [Performance](../corvus-json-schema/README.md#performance-results) section for the figures.
 - **Every platform from one wheel per platform**: the extension uses the stable ABI (abi3), so one wheel serves
   CPython 3.10 and every later version. Wheels are built for Linux (x86_64 and aarch64, glibc and musl), macOS
   (universal2: Intel and Apple silicon) and Windows (x64 and arm64).

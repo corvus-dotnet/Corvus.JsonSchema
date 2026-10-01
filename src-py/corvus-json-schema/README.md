@@ -143,7 +143,59 @@ python bench/corpora.py --schemas <jsonschema-benchmark>/schemas --impls corvus,
 
 ### Performance results
 
-To be measured on a quiet machine before release.
+CPython 3.12.13 on an Intel Core i7-13800H (WSL2, pinned to the performance cores), jsonschema-rs 0.58.3,
+fastjsonschema 2.22.2, 2026-10-01. The validation columns are one warm pass over all of a corpus's instances (the best of
+five passes after warm-up, the median of three processes); "compile" is the schema compilation (for this package, the
+generation of the Python code and, for programs over 64 KB of source, the compilation of only the functions an instance
+reaches, on first use).
+
+| Corpus | Instances | corvus (pure) | corvus-rs | jsonschema-rs | fastjsonschema | corvus compile | corvus-rs compile |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| ansible-meta | 333 | 345.0 µs | 105.1 µs | 286.2 µs | 7.96 ms | 10.92 ms | 876.6 µs |
+| aws-cdk | 483 | 88.8 µs | 45.7 µs | 61.5 µs | 229.9 µs | 599.4 µs | 78.8 µs |
+| babelrc | 794 | 260.2 µs | 97.4 µs | 130.9 µs | 898.2 µs | 1.54 ms | 189.6 µs |
+| clang-format | 133 | 140.0 µs | 29.0 µs | 38.1 µs | 571.0 µs | 8.46 ms | 765.5 µs |
+| cmake-presets | 967 | 12.29 ms | 3.65 ms | 6.64 ms | 250.54 ms | 19.01 ms | 1.58 ms |
+| code-climate | 2484 | 354.0 µs | 284.6 µs | 329.4 µs | 1.77 ms | 909.5 µs | 121.1 µs |
+| cql2 | 109 | 193.3 µs | 61.2 µs | 127.3 µs | 5.07 ms (!) | 12.54 ms | 800.1 µs |
+| cspell | 981 | 1.52 ms | 1.16 ms | n/a | 52.35 ms | 12.24 ms | 1.68 ms |
+| cypress | 981 | 279.8 µs | 108.8 µs | 185.5 µs | 1.34 ms | 2.76 ms | 267.4 µs |
+| deno | 987 | 831.0 µs | 235.4 µs | 313.3 µs | 2.86 ms | 3.28 ms | 333.8 µs |
+| dependabot | 967 | 1.10 ms | 334.4 µs | 435.5 µs | 2.84 ms | 2.22 ms | 154.9 µs |
+| draft-04 | 563 | 12.55 ms | 4.39 ms | 6.05 ms | 16.83 ms | 2.35 ms | 185.6 µs |
+| fabric-mod | 911 | 1.50 ms | 368.0 µs | 608.8 µs | 42.99 ms | 3.11 ms | 300.2 µs |
+| geojson | 500 | 49.76 ms | 16.65 ms | 19.56 ms | 2173.86 ms | 10.41 ms | 516.9 µs |
+| gitpod-configuration | 986 | 698.3 µs | 222.5 µs | 274.0 µs | 1.82 ms | 3.23 ms | 258.0 µs |
+| helm-chart-lock | 3888 | 1.90 ms | 736.7 µs | 1.11 ms | 6.07 ms | 650.1 µs | 104.3 µs |
+| importmap | 964 | 253.7 µs | 122.3 µs | 150.6 µs | 825.1 µs | 577.2 µs | 79.0 µs |
+| jasmine | 980 | 338.8 µs | 99.0 µs | 197.6 µs | 2.74 ms | 1.39 ms | 123.1 µs |
+| jsconfig | 981 | 906.9 µs | 301.4 µs | 338.1 µs | 19.70 ms | 8.38 ms | 1.70 ms |
+| jshintrc | 966 | 1.16 ms | 329.9 µs | 523.8 µs | 3.96 ms | 1.80 ms | 207.2 µs |
+| krakend | 47 | 698.0 µs | 139.7 µs | n/a | 4.65 ms | 29.33 ms | 4.22 ms |
+| lazygit | 280 | 338.5 µs | 77.7 µs | 106.1 µs | 9.18 ms | 10.74 ms | 956.1 µs |
+| lerna | 985 | 217.9 µs | 138.2 µs | 156.7 µs | 659.5 µs | 1.45 ms | 113.8 µs |
+| nest-cli | 1025 | 579.8 µs | 186.4 µs | 231.9 µs | 3.85 ms | 3.79 ms | 370.0 µs |
+| omnisharp | 987 | 719.2 µs | 215.1 µs | 253.6 µs | 2.21 ms | 2.96 ms | 325.3 µs |
+| openapi | 107 | 16.90 ms | 5.23 ms | 10.91 ms | 88.9 µs | 13.63 ms | 1.44 ms |
+| pre-commit-hooks | 985 | 1.28 ms | 308.9 µs | 467.0 µs | 22.78 ms | 1.44 ms | 195.4 µs |
+| pulumi | 3807 | 1.67 ms | 627.3 µs | 786.2 µs | 19.22 ms | 3.54 ms | 291.8 µs |
+| semantic-release | 794 | 291.5 µs | 118.5 µs | 168.0 µs | 9.30 ms | 1.43 ms | 125.5 µs |
+| stale | 961 | 466.8 µs | 147.5 µs | 214.8 µs | 1.16 ms | 1.25 ms | 157.6 µs |
+| stylecop | 983 | 934.6 µs | 253.1 µs | 296.6 µs | 3.26 ms | 3.56 ms | 236.8 µs |
+| tmuxinator | 382 | 206.2 µs | 80.0 µs | 98.7 µs | 5.77 ms | 1.67 ms | 153.3 µs |
+| ui5 | 942 | 1.33 ms | 624.4 µs | 527.8 µs | 10.50 ms | 20.00 ms | 2.36 ms |
+| ui5-manifest | 611 | 6.81 ms | 2.18 ms | 2.47 ms | n/a | 70.67 ms | 8.92 ms |
+| unreal-engine-uproject | 859 | 2.17 ms | 400.9 µs | 534.8 µs | 12.30 ms | 2.38 ms | 284.7 µs |
+| vercel | 710 | 671.9 µs | 191.0 µs | 293.7 µs | 2.81 ms | 9.46 ms | 653.5 µs |
+| yamllint | 966 | 61.3 µs | 61.9 µs | 65.7 µs | 169.1 µs | 310.3 µs | 78.4 µs |
+
+- **corvus-json-schema (pure Python)** is faster than fastjsonschema, the other generator of Python code, on 34 of the
+  35 corpora both can run: its warm time is a sixth of fastjsonschema's (geometric mean 5.86 times faster).
+  fastjsonschema supports drafts 4 to 7 only, so on openapi, a 2020-12 schema, it applies few of the keywords (its one
+  faster time), on cql2 it rejects valid instances (!), and it cannot compile ui5-manifest.
+- **[corvus-json-schema-rs](../corvus-json-schema-rs/README.md)**, the same API backed by the Rust evaluator, takes
+  0.35 of the pure package's time (geometric mean over all 37 corpora), and 0.72 of jsonschema-rs's (faster on 34 of
+  the 35 corpora jsonschema-rs can run; it rejects the patterns of cspell and krakend).
 
 ## Tests
 
