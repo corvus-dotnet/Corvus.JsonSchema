@@ -1,0 +1,17 @@
+# frozen_string_literal: true
+
+require "rake/testtask"
+require "rb_sys/extensiontask"
+
+GEMSPEC = Gem::Specification.load("corvus_json_schema.gemspec")
+
+RbSys::ExtensionTask.new("corvus_json_schema", GEMSPEC) do |ext|
+  ext.lib_dir = "lib/corvus_json_schema"
+end
+
+Rake::TestTask.new(:test) do |t|
+  t.libs << "lib" << "test"
+  t.test_files = FileList["test/test_*.rb"]
+end
+
+task default: %i[compile test]

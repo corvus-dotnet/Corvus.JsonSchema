@@ -1,0 +1,8 @@
+# The gem's native extension (ext/corvus_json_schema), as rb_sys expects it: a workspace at the gem's root.
+[workspace]
+members = ["ext/corvus_json_schema"]
+resolver = "3"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
