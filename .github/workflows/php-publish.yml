@@ -129,12 +129,12 @@ jobs:
           path: dist
           merge-multiple: true
       - name: Check the builds
-        # 4 PHP versions x 2 thread-safety modes x 7 platforms, all of this version.
+        # 4 PHP versions x 2 thread-safety modes x 6 platforms, all of this version.
         env:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
           ls -l dist
-          [ "$(ls dist/php_corvus_json_schema-"$VERSION"[-_]*.zip | wc -l)" -eq 56 ]
+          [ "$(ls dist/php_corvus_json_schema-"$VERSION"[-_]*.zip | wc -l)" -eq 48 ]
       - name: Push the release's sources
         env:
           TOKEN: ${{ secrets.PHP_REPOSITORY_TOKEN }}

@@ -78,13 +78,14 @@ try {
             throw "-Glibc applies to Linux glibc targets only, not $target"
         }
         # zig as the linker only: cargo-zigbuild would also hand bindgen zig's clang flags, which an older libclang
-        # rejects. The wrapper drops -Wl,-O1, which zig ignores with a warning.
+        # rejects. The wrapper drops -Wl,-O1, which zig ignores with a warning, and the Cortex-A53 erratum fix rustc
+        # asks for on aarch64, which zig's linker rejects.
         $zigTarget = "$($target.Split('-')[0])-linux-gnu.$Glibc"
         $linker = Join-Path $PSScriptRoot "target" "zig-cc-$zigTarget.sh"
         New-Item -ItemType Directory -Force (Split-Path $linker) | Out-Null
         Set-Content -Path $linker -Value @(
             "#!/bin/sh",
-            "for a in `"`$@`"; do shift; [ `"`$a`" = -Wl,-O1 ] || set -- `"`$@`" `"`$a`"; done",
+            "for a in `"`$@`"; do shift; case `"`$a`" in -Wl,-O1|-Wl,--fix-cortex-a53-843419) ;; *) set -- `"`$@`" `"`$a`" ;; esac; done",
             "exec zig cc -target $zigTarget `"`$@`""
         )
         Invoke-Native "chmod" @("+x", $linker) | Out-Null
