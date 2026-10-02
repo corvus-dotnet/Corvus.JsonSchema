@@ -59,9 +59,10 @@ A `Validator` is immutable and can be shared between threads.
 - `valid?(value)` and `valid_json?(text)` return whether the instance is valid, evaluating only as far as the answer
   needs.
 - `evaluate(value, collector)` evaluates every keyword and replaces the collector's results with this evaluation's.
-  `Collector.new(level)` takes `:basic` (failures only), `:detailed` (failures, with messages) or `:verbose` (every
-  result, and annotations); `results` returns its rows and `annotations` the annotations of a verbose evaluation,
-  grouped by instance location, keyword and schema location.
+  `Collector.new(level)` takes `:basic` (the failures, without messages), `:detailed` (the failures, with messages)
+  or `:verbose` (every result, and annotations); at every level the root's own result is the last row. `results`
+  returns its rows and `annotations` the annotations of a verbose evaluation, grouped by instance location, keyword and
+  schema location.
 
 Errors are subclasses of `CorvusJsonSchema::Error`: `CompilationError` (an invalid schema, or a reference that cannot
 be resolved), `DepthError` and `InvalidJsonError` (for `valid_json?`). An error raised by a format or resolver callable
