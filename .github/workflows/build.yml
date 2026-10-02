@@ -41,6 +41,53 @@ permissions:
   pull-requests: write  # enable test result annotations and PR preview comments
 
 jobs:
+  # Whether the change touches anything the .NET build reads. A pull request or a push to main that changes only the
+  # Python, Rust or TypeScript packages (and their own workflows) skips the .NET build: those have their own workflows
+  # (python.yml, rust.yml, typescript.yml). Release tag pushes and manual runs always build.
+  changes:
+    name: Detect .NET changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      dotnet: ${{ steps.detect.outputs.dotnet }}
+    steps:
+      - name: Detect
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          PR: ${{ github.event.pull_request.number }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          build() { echo "dotnet=true" >> "$GITHUB_OUTPUT"; echo "$1"; exit 0; }
+          if [ "$EVENT" = pull_request ]; then
+            # The API lists at most 3000 files of a pull request.
+            files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename') || build "Could not list the changed files."
+            limit=3000
+          elif [ "$EVENT" = push ] && [ "$REF_TYPE" = branch ] && [ -n "$BEFORE" ] && [ "$BEFORE" != 0000000000000000000000000000000000000000 ]; then
+            # The API lists at most 300 files of a comparison.
+            files=$(gh api "repos/$GITHUB_REPOSITORY/compare/$BEFORE...$AFTER" --jq '.files[].filename') || build "Could not list the changed files."
+            limit=300
+          else
+            build "A $EVENT ($REF_TYPE) always builds."
+          fi
+          count=$(printf '%s\n' "$files" | grep -c . || true)
+          if [ "$count" -eq 0 ] || [ "$count" -ge "$limit" ]; then
+            build "$count changed files: building."
+          fi
+          # Paths the .NET build does not read. Anything else (shared files, docs, workflows other than these) builds.
+          others=$(printf '%s\n' "$files" | grep -v -E '^(src-py|src-rs|src-ts)/|^\.github/workflows/(python|python-wheels|rust|typescript|pypi-publish|crates-publish|npm-publish)\.yml$' || true)
+          if [ -n "$others" ]; then
+            printf 'Changes the .NET build reads:\n%s\n' "$others" | head -n 20 || true
+            build "Building."
+          fi
+          echo "dotnet=false" >> "$GITHUB_OUTPUT"
+          echo "Only the Python, Rust or TypeScript packages changed ($count files): skipping the .NET build."
+
   prepareConfig:
     name: Prepare Configuration
     runs-on: ubuntu-latest
@@ -111,8 +158,11 @@ jobs:
 
   build:
     needs:
+      - changes
       - prepareConfig
       - setCachePathsConfig
+    # The jobs that need this one (integration tests, documentation and preview deployment) skip with it.
+    if: needs.changes.outputs.dotnet == 'true'
     uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@main
     with:
       testPhaseMatrixJson: |
@@ -311,3 +361,33 @@ jobs:
           source-dir: docs/website/.output
           umbrella-dir: pr-preview
           pages-base-url: corvus-oss.org/Corvus.JsonSchema
+
+  # The required status check for pull requests: it passes when the .NET build succeeded or was not needed, so a
+  # change outside .NET is not held up waiting for build jobs that were skipped.
+  dotnet-gate:
+    name: .NET build gate
+    needs:
+      - changes
+      - build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          DOTNET: ${{ needs.changes.outputs.dotnet }}
+          BUILD: ${{ needs.build.result }}
+        run: |
+          if [ "$CHANGES" != success ]; then
+            echo "::error::Detecting .NET changes failed ($CHANGES)."
+            exit 1
+          fi
+          if [ "$DOTNET" != true ]; then
+            echo "No .NET changes: the .NET build was not needed."
+            exit 0
+          fi
+          if [ "$BUILD" != success ]; then
+            echo "::error::The .NET build did not succeed ($BUILD)."
+            exit 1
+          fi
+          echo "The .NET build succeeded."
