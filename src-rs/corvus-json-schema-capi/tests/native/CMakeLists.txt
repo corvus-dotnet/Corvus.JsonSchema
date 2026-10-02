@@ -26,7 +26,12 @@ foreach(kind shared static)
   endif()
 
   add_executable(c_${kind} smoke.c)
-  set_target_properties(c_${kind} PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+  # The header is C99; MSVC has no C99 mode, so C11 there.
+  if(MSVC)
+    set_target_properties(c_${kind} PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+  else()
+    set_target_properties(c_${kind} PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+  endif()
   add_executable(cpp_${kind} wrapper.cpp)
   set_target_properties(cpp_${kind} PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 
