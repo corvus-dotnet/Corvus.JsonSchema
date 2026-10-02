@@ -141,6 +141,14 @@ impl<'s> JsonDocument<'s> {
         // SAFETY: the parser records a container's children as a range within `nodes`.
         unsafe { self.nodes.get_unchecked(start..start + count) }
     }
+
+    /// An object's key and value nodes, as pairs (iterating pairs, not two-node chunks, needs no per-step checks).
+    #[inline(always)]
+    fn pairs(&self, n: &Node) -> &[[Node; 2]] {
+        let items = self.children(n, 2 * n.len as usize);
+        // SAFETY: `[Node; 2]` has the layout of two consecutive `Node`s, and `items` holds exactly `n.len` pairs.
+        unsafe { std::slice::from_raw_parts(items.as_ptr().cast::<[Node; 2]>(), n.len as usize) }
+    }
 }
 
 impl fmt::Debug for JsonDocument<'_> {
@@ -167,8 +175,8 @@ pub struct JsonDocumentArray<'d> {
 #[derive(Clone, Copy)]
 pub struct JsonDocumentObject<'d> {
     doc: &'d JsonDocument<'d>,
-    /// Key and value nodes, alternately.
-    pairs: &'d [Node],
+    /// Key and value nodes.
+    pairs: &'d [[Node; 2]],
 }
 
 impl<'d> JsonDocumentValue<'d> {
@@ -214,7 +222,7 @@ impl<'d> Instance<'d> for JsonDocumentValue<'d> {
             Kind::Number => View::Number(Self::number(n)),
             Kind::String => View::String(doc.str_of(n)),
             Kind::Array => View::Array(JsonDocumentArray { doc, items: doc.children(n, n.len as usize) }),
-            Kind::Object => View::Object(JsonDocumentObject { doc, pairs: doc.children(n, 2 * n.len as usize) }),
+            Kind::Object => View::Object(JsonDocumentObject { doc, pairs: doc.pairs(n) }),
         }
     }
 
@@ -255,34 +263,31 @@ impl<'d> ObjectView<'d> for JsonDocumentObject<'d> {
 
     #[inline(always)]
     fn len(self) -> usize {
-        self.pairs.len() / 2
+        self.pairs.len()
     }
 
     #[inline]
     fn get(self, name: &str) -> Option<JsonDocumentValue<'d>> {
         let doc = self.doc;
-        self.pairs
-            .chunks_exact(2)
-            .find(|p| str_eq(doc.str_of(&p[0]), name))
-            .map(|p| JsonDocumentValue { doc, node: &p[1] })
+        self.pairs.iter().find(|[k, _]| str_eq(doc.str_of(k), name)).map(|[_, v]| JsonDocumentValue { doc, node: v })
     }
 
     #[inline]
     fn contains_key(self, name: &str) -> bool {
         let doc = self.doc;
-        self.pairs.chunks_exact(2).any(|p| str_eq(doc.str_of(&p[0]), name))
+        self.pairs.iter().any(|[k, _]| str_eq(doc.str_of(k), name))
     }
 
     #[inline(always)]
     fn iter(self) -> impl Iterator<Item = (&'d str, JsonDocumentValue<'d>)> {
         let doc = self.doc;
-        self.pairs.chunks_exact(2).map(move |p| (doc.str_of(&p[0]), JsonDocumentValue { doc, node: &p[1] }))
+        self.pairs.iter().map(move |[k, v]| (doc.str_of(k), JsonDocumentValue { doc, node: v }))
     }
 
     #[inline(always)]
     fn values(self) -> impl Iterator<Item = JsonDocumentValue<'d>> {
         let doc = self.doc;
-        self.pairs.chunks_exact(2).map(move |p| JsonDocumentValue { doc, node: &p[1] })
+        self.pairs.iter().map(move |[_, v]| JsonDocumentValue { doc, node: v })
     }
 }
 

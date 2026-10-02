@@ -524,7 +524,12 @@ impl Names {
             *hint = next as usize + 1;
             return Some(next as usize);
         }
-        let i = self.map.find(name)?;
+        // A few names are compared in turn (inline: lengths settle most), more are searched.
+        let i = if self.map.names.len() <= LOOKUP_NAMES {
+            self.map.names.iter().position(|n| str_eq(n, name))?
+        } else {
+            self.map.find(name)?
+        };
         *hint = i + 1;
         Some(i)
     }
