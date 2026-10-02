@@ -1,0 +1,42 @@
+name: Check for the no_release label
+description: >-
+  Whether the pull request merged as a push to main carries the `no_release` label, which stops every release it would
+  otherwise make (NuGet, crates.io, PyPI, npm). Only a push is checked: a manual run publishes as asked.
+inputs:
+  token:
+    description: A token that can read the repository's pull requests.
+    required: true
+  event-name:
+    description: github.event_name
+    required: true
+  sha:
+    description: The pushed commit (github.sha).
+    required: true
+outputs:
+  no-release:
+    description: "'true' when the merged pull request carries `no_release`, otherwise 'false'."
+    value: ${{ steps.check.outputs.no_release }}
+runs:
+  using: composite
+  steps:
+    - name: Check
+      id: check
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        EVENT: ${{ inputs.event-name }}
+        SHA: ${{ inputs.sha }}
+      run: |
+        if [ "$EVENT" != push ]; then
+          echo "no_release=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        # The merged pull requests that brought in this commit (a merge, squash or rebase of one).
+        labels=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/pulls" \
+          --jq '[.[] | select(.merged_at != null) | .labels[].name] | join(" ")')
+        if printf ' %s ' "$labels" | grep -q ' no_release '; then
+          echo "no_release=true" >> "$GITHUB_OUTPUT"
+          echo "::notice::The merged pull request is labelled no_release: nothing is published."
+        else
+          echo "no_release=false" >> "$GITHUB_OUTPUT"
+        fi

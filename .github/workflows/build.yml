@@ -41,9 +41,10 @@ permissions:
   pull-requests: write  # enable test result annotations and PR preview comments
 
 jobs:
-  # Whether the change touches anything the .NET build reads. A pull request or a push to main that changes only the
-  # Python, Rust or TypeScript packages (and their own workflows) skips the .NET build: those have their own workflows
-  # (python.yml, rust.yml, typescript.yml). Release tag pushes and manual runs always build.
+  # Whether the change touches anything the .NET build reads (.github/actions/dotnet-changes, which auto_release.yml
+  # also uses). A pull request or a push to main that changes only the Python, Rust or TypeScript packages (and their
+  # own workflows) skips the .NET build: those have their own workflows (python.yml, rust.yml, typescript.yml).
+  # Release tag pushes and manual runs always build.
   changes:
     name: Detect .NET changes
     runs-on: ubuntu-latest
@@ -53,40 +54,21 @@ jobs:
     outputs:
       dotnet: ${{ steps.detect.outputs.dotnet }}
     steps:
+      - name: Checkout the shared actions
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: .github/actions
+          persist-credentials: false
       - name: Detect
         id: detect
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EVENT: ${{ github.event_name }}
-          REF_TYPE: ${{ github.ref_type }}
-          PR: ${{ github.event.pull_request.number }}
-          BEFORE: ${{ github.event.before }}
-          AFTER: ${{ github.sha }}
-        run: |
-          build() { echo "dotnet=true" >> "$GITHUB_OUTPUT"; echo "$1"; exit 0; }
-          if [ "$EVENT" = pull_request ]; then
-            # The API lists at most 3000 files of a pull request.
-            files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename') || build "Could not list the changed files."
-            limit=3000
-          elif [ "$EVENT" = push ] && [ "$REF_TYPE" = branch ] && [ -n "$BEFORE" ] && [ "$BEFORE" != 0000000000000000000000000000000000000000 ]; then
-            # The API lists at most 300 files of a comparison.
-            files=$(gh api "repos/$GITHUB_REPOSITORY/compare/$BEFORE...$AFTER" --jq '.files[].filename') || build "Could not list the changed files."
-            limit=300
-          else
-            build "A $EVENT ($REF_TYPE) always builds."
-          fi
-          count=$(printf '%s\n' "$files" | grep -c . || true)
-          if [ "$count" -eq 0 ] || [ "$count" -ge "$limit" ]; then
-            build "$count changed files: building."
-          fi
-          # Paths the .NET build does not read. Anything else (shared files, docs, workflows other than these) builds.
-          others=$(printf '%s\n' "$files" | grep -v -E '^(src-py|src-rs|src-ts)/|^\.github/workflows/(python|python-wheels|rust|typescript|pypi-publish|crates-publish|npm-publish)\.yml$' || true)
-          if [ -n "$others" ]; then
-            printf 'Changes the .NET build reads:\n%s\n' "$others" | head -n 20 || true
-            build "Building."
-          fi
-          echo "dotnet=false" >> "$GITHUB_OUTPUT"
-          echo "Only the Python, Rust or TypeScript packages changed ($count files): skipping the .NET build."
+        uses: ./.github/actions/dotnet-changes
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          ref-type: ${{ github.ref_type }}
+          pull-request: ${{ github.event.pull_request.number }}
+          before: ${{ github.event.before }}
+          after: ${{ github.sha }}
 
   prepareConfig:
     name: Prepare Configuration

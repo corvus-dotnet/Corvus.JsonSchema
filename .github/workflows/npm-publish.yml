@@ -2,7 +2,8 @@ name: npm-publish
 # Stages @corvus-dotnet/json-schema (src-ts/corvus-json-schema) for publishing when the version in its package.json is
 # not yet on npm, then tags the commit ts-v<version>. To release, bump "version" in package.json and merge, then approve
 # the staged version with 2FA: the package's Staged Packages tab on npmjs.com, or `npm stage approve <stage-id>`. Until
-# a maintainer approves it, nothing is installable.
+# a maintainer approves it, nothing is installable. A merged pull request labelled no_release stages nothing
+# (.github/actions/no-release-label).
 #
 # It authenticates with npm trusted publishing (OIDC): no npm token is stored, and the package's trusted publisher on
 # npmjs.com names this repository and this workflow file, so keep the file name. The trusted publisher allows only
@@ -19,6 +20,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  pull-requests: read  # the merged pull request's labels (no_release)
   contents: write  # push the ts-v<version> tag
   id-token: write  # npm trusted publishing
 
@@ -49,8 +51,17 @@ jobs:
       - name: Use an npm that supports staged publishing
         # Staged publishing needs npm 11.15.0 or later; Node 22 ships npm 10.
         run: npm install -g 'npm@^11.15.0'
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
       - name: Check whether this version is already on npm
         id: version
+        # A merged pull request labelled no_release publishes nothing (every later step needs this one's output).
+        if: steps.label.outputs.no-release != 'true'
         run: |
           version=$(node -p "require('./package.json').version")
           echo "version=$version" >> "$GITHUB_OUTPUT"
