@@ -1,0 +1,146 @@
+name: rubygems-publish
+# Publishes the corvus_json_schema gem (src-rb/corvus-json-schema) to RubyGems when the version in its
+# lib/corvus_json_schema/version.rb is not there yet, then tags the commit rb-v<version>. To release, bump VERSION
+# there (and add the version to its VERSIONHISTORY.md) and merge. A merged pull request labelled no_release publishes
+# nothing (.github/actions/no-release-label).
+#
+# It pushes the native gems (one per platform, each with the extension for every supported Ruby) and then the source
+# gem, all built and tested by rubygems-build.yml, which every pull request that touches src-rb runs too (ruby.yml).
+# The source gem goes last, and its presence is what marks a version as published: a run that fails part of the way
+# can be run again, and skips the native gems RubyGems already has.
+#
+# It authenticates with RubyGems trusted publishing (OIDC): no API key is stored. The gem's trusted publisher on
+# rubygems.org names this repository, this workflow file and the "rubygems" environment, so keep both names. A pending
+# trusted publisher can be added before the gem exists, so the first version is published by this workflow too
+# (docs/ReleaseProcess.md). A pushed version can be yanked but never replaced.
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. The rb-v
+# tag is pushed with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-rb/corvus-json-schema/lib/corvus_json_schema/version.rb'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rubygems-publish
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Version to publish
+    permissions:
+      contents: read
+      pull-requests: read  # the merged pull request's labels (no_release)
+    # A manual run from another branch must not publish that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: |
+            src-rb
+            .github/actions
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
+      - name: Check whether RubyGems has this version
+        id: check
+        # A merged pull request labelled no_release publishes nothing (the build and publish jobs need this output).
+        if: steps.label.outputs.no-release != 'true'
+        run: |
+          file=src-rb/corvus-json-schema/lib/corvus_json_schema/version.rb
+          version=$(sed -n 's/^ *VERSION = "\(.*\)"$/\1/p' "$file" | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No VERSION in $file."
+            exit 1
+          fi
+          grep -q "^## V$version$" src-rb/corvus-json-schema/VERSIONHISTORY.md \
+            || { echo "::error::VERSIONHISTORY.md has no V$version section."; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # RubyGems answers 404 for a gem or version it does not have; the source gem's platform is "ruby".
+          status=$(curl -s -o /dev/null -w '%{http_code}' \
+            "https://rubygems.org/api/v2/rubygems/corvus_json_schema/versions/$version.json?platform=ruby")
+          case "$status" in
+            200) echo "publish=false" >> "$GITHUB_OUTPUT"
+                 echo "::notice::corvus_json_schema $version is already on RubyGems; nothing to publish." ;;
+            404) echo "publish=true" >> "$GITHUB_OUTPUT" ;;
+            *)   echo "::error::RubyGems answered $status for corvus_json_schema $version."
+                 exit 1 ;;
+          esac
+
+  build:
+    name: Build
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    uses: ./.github/workflows/rubygems-build.yml
+
+  publish:
+    name: Publish corvus_json_schema
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    environment:
+      name: rubygems
+      url: https://rubygems.org/gems/corvus_json_schema/versions/${{ needs.version.outputs.version }}
+    permissions:
+      contents: write  # push the rb-v<version> tag
+      id-token: write  # RubyGems trusted publishing
+    steps:
+      - name: Download the gems
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: gem-*
+          path: pkg
+          merge-multiple: true
+      - name: Check the artifacts
+        # Seven native gems (one per platform) and the source gem, all of this version.
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          ls -l pkg
+          [ "$(ls pkg/corvus_json_schema-"$VERSION"-*.gem | wc -l)" -eq 7 ]
+          [ -f "pkg/corvus_json_schema-$VERSION.gem" ]
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          ruby-version: '3.3'
+      - name: Authenticate with RubyGems
+        uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
+        with:
+          trusted-publisher: true
+      - name: Publish
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          for gem in pkg/corvus_json_schema-"$VERSION"-*.gem; do
+            # A native gem pushed by an earlier, failed run of this version is already there.
+            if ! out=$(gem push "$gem" 2>&1); then
+              echo "$out"
+              echo "$out" | grep -q "Repushing of gem versions is not allowed" || exit 1
+            else
+              echo "$out"
+            fi
+          done
+          gem push "pkg/corvus_json_schema-$VERSION.gem"
+          {
+            echo "### corvus_json_schema $VERSION is published"
+            echo
+            echo "https://rubygems.org/gems/corvus_json_schema/versions/$VERSION"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api "repos/${{ github.repository }}/git/refs" -f ref="refs/tags/rb-v${{ needs.version.outputs.version }}" -f sha="${{ github.sha }}"

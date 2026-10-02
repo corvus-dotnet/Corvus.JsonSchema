@@ -6,3 +6,4 @@
 /lib/corvus_json_schema/[0-9]*/
 /target/
 /Gemfile.lock
+/ext/corvus_json_schema/vendor/

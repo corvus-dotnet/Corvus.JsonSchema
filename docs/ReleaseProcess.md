@@ -93,7 +93,7 @@ A release includes every merged PR still labelled `pending_release`, so closing 
 
 A PR that changes only the Python, Rust, TypeScript, Ruby or PHP packages makes no NuGet release; nothing needs adding.
 
-Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI and npm publishes that a version change in `src-rs`, `src-py` or `src-ts` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
+Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI, npm and RubyGems publishes that a version change in `src-rs`, `src-py`, `src-ts` or `src-rb` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
 
 ### Batched Dependabot releases
 
@@ -258,6 +258,54 @@ To keep the projects in a PyPI organization instead (a group of users and teams 
 
 Publishing does not wait for the organization: the projects can be published from an account first and transferred
 when the organization is approved.
+
+## The Ruby gem
+
+`src-rb/corvus-json-schema` is the `corvus_json_schema` gem, a native extension over the Rust crate, published to
+RubyGems and versioned independently of the NuGet packages and of the crate, by `VERSION` in
+`lib/corvus_json_schema/version.rb`. A release is a source gem (which carries the crate's sources and builds the
+extension where it is installed) and one native gem per platform (Linux x86_64 and aarch64, glibc and musl; macOS
+x86_64 and arm64; Windows x64), each holding the extension for Ruby 3.3, 3.4 and 4.0.
+
+To release it, bump `VERSION`, add the version's entry at the top of its `VERSIONHISTORY.md` (the workflow checks it is
+there), and merge to `main`. `.github/workflows/rubygems-publish.yml` then does the following.
+
+1. It does nothing if RubyGems already has that version's source gem, or if the merged PR is labelled `no_release`.
+2. It builds every gem through `rubygems-build.yml`, which cross-compiles the native gems with rb-sys-dock and installs
+   and tests each on its own platform, as CI does on every pull request.
+3. It pushes the native gems and then the source gem through RubyGems trusted publishing, in the `rubygems` GitHub
+   environment. No API key is stored. The gem's trusted publisher names this repository, that workflow file and the
+   environment, so don't rename them. A run that fails part of the way can be run again: it skips native gems RubyGems
+   already has.
+4. It tags the commit `rb-v<version>`.
+
+A pushed version can be yanked, but never replaced. Like the Rust-backed Python package, the gem builds the crate from
+`src-rs/corvus-json-schema` by path, so release the crate too when the gem depends on new crate API.
+
+Never push an `rb-v` tag by hand (see the crate's tags above).
+
+### The first release: RubyGems setup
+
+RubyGems accepts a trusted publisher for a gem that does not exist yet (a "pending" publisher), and the first push
+through it creates the gem. Do this once, before merging the first version:
+
+1. **Create the GitHub environment.** In the repository's **Settings**, **Environments**, add an environment named
+   `rubygems`. It needs no secrets.
+2. **Add the pending publisher.** Sign in to rubygems.org (with multi-factor authentication), open
+   [**Pending trusted publishers**](https://rubygems.org/profile/oidc/pending_trusted_publishers) in your settings,
+   click **Create**, and enter:
+
+   | Field | Value |
+   |---|---|
+   | Gem name | `corvus_json_schema` |
+   | Trusted publisher type | GitHub Actions |
+   | Repository owner | `corvus-dotnet` |
+   | Repository name | `Corvus.JsonSchema` |
+   | Workflow filename | `rubygems-publish.yml` |
+   | Environment | `rubygems` |
+
+3. **Merge.** The workflow publishes the gem, owned by the account that added the publisher.
+4. **Add owners.** On the gem's **Ownership** page, add the other maintainers, so the gem does not depend on one account.
 
 ## Pre-release testing
 
