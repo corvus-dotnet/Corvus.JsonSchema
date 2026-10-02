@@ -190,9 +190,6 @@ impl<'a> Instance<'a> for RbInstance<'a> {
 
     fn kind(self) -> Kind {
         let v = self.v;
-        if RString::from_value(v).is_some() {
-            return Kind::String;
-        }
         if v.is_nil() {
             return Kind::Null;
         }

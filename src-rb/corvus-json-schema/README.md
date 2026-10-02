@@ -75,7 +75,8 @@ Integer beyond 64 bits is compared as the nearest double, as by a JSON parser wi
 
 Values are read only as the schema examines them, so a value the schema never looks at is not checked: with
 `{"type" => "object"}`, `{ "a" => Object.new }` is valid. A value the schema does examine that is none of the kinds
-above raises `TypeError` (or `ArgumentError` for a NaN or infinite Float).
+above raises `TypeError` (`ArgumentError` for a NaN or infinite Float, `EncodingError` for a String that is not valid
+UTF-8).
 
 ## How it works
 

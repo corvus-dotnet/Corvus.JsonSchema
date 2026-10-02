@@ -9,7 +9,8 @@
 #
 # Values are read in place: Hash (String or Symbol keys), Array, String, Symbol (as its name), Integer, Float, true,
 # false and nil. Integers beyond 64 bits become the nearest double. A value the schema examines that is none of these
-# raises (TypeError, or ArgumentError for NaN and infinities); values are read only as the schema examines them.
+# raises (TypeError; ArgumentError for NaN and infinities; EncodingError for a String that is not valid UTF-8); values
+# are read only as the schema examines them.
 require_relative "corvus_json_schema/version"
 
 begin

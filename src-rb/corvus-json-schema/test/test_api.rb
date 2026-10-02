@@ -38,6 +38,8 @@ class TestApi < Minitest::Test
     assert_raises(TypeError) { v.valid?([Time.now]) }
     assert_raises(TypeError) { CorvusJsonSchema.compile({ "type" => "object" }).valid?({ 1 => 2 }) }
     assert_raises(ArgumentError) { CorvusJsonSchema.compile({ "type" => "number" }).valid?(Float::NAN) }
+    # A string that is not valid UTF-8 is not a JSON string, even where only its type is examined.
+    assert_raises(EncodingError) { CorvusJsonSchema.compile({ "type" => "string" }).valid?("\xff".dup.force_encoding("UTF-8")) }
     assert CorvusJsonSchema.compile({ "type" => "array" }).valid?([Time.now]), "an item no keyword examines"
   end
 
