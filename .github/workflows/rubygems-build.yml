@@ -73,6 +73,10 @@ jobs:
         uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: '3.3'
+      - name: Cargo registry directory
+        # rb-sys-dock bind-mounts ~/.cargo/registry into its container, but creates it relative to the working
+        # directory (rb-sys 0.9.130), so on a fresh runner the mount fails.
+        run: mkdir -p "$HOME/.cargo/registry"
       - name: Build
         id: build
         # rb-sys-dock mounts the repository, so the Rakefile vendors the crate inside the container as it does here.
