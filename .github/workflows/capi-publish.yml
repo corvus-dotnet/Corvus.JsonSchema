@@ -1,0 +1,103 @@
+name: capi-publish
+# Publishes the C library (src-rs/corvus-json-schema-capi) as a GitHub release when the version in its Cargo.toml has
+# no release yet: the packages for every platform, built and tested by capi.yml, attached to a release tagged
+# capi-v<version> on the merged commit. To release, bump "version" in that Cargo.toml (and CJS_VERSION_* in src/lib.rs;
+# a test checks they agree), add its VERSIONHISTORY.md entry, and merge. A merged pull request labelled no_release
+# publishes nothing.
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it, and the
+# capi-v tag is created with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-rs/corvus-json-schema-capi/Cargo.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: capi-publish
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Version to publish
+    # A manual run from another branch must not publish that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read  # the merged pull request's labels (no_release)
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: |
+            src-rs/corvus-json-schema-capi
+            .github/actions
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
+      - name: Check whether this version has a release
+        id: check
+        if: steps.label.outputs.no-release != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' src-rs/corvus-json-schema-capi/Cargo.toml | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No version in src-rs/corvus-json-schema-capi/Cargo.toml."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if gh release view "capi-v$version" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::capi-v$version is already released; nothing to publish."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  packages:
+    name: Build and test
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    uses: ./.github/workflows/capi.yml
+
+  release:
+    name: Release capi-v${{ needs.version.outputs.version }}
+    needs: [version, packages]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create the release and its capi-v<version> tag
+    steps:
+      - name: Download the packages
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: capi-*
+          path: packages
+          merge-multiple: true
+      - name: Check the packages
+        # One per platform.
+        run: |
+          ls -l packages
+          [ "$(ls packages | wc -l)" -eq 7 ]
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          gh release create "capi-v$VERSION" packages/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "corvus-json-schema C library $VERSION" \
+            --notes "The corvus-json-schema C library and its C++ wrapper, version $VERSION: headers, shared and static libraries, a CMake package and a pkg-config file for each platform. See src-rs/corvus-json-schema-capi/VERSIONHISTORY.md and DESIGN.md."

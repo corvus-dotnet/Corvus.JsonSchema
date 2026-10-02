@@ -54,8 +54,8 @@ assert!(validator.validate_instance(document.root()).unwrap());
 
 It accepts what serde_json accepts: nesting up to 127 levels, no lone surrogates in `\u` escapes, numbers within the
 range of a double. Of duplicate property names, the last value is kept at the position of the first. Doubles are
-correctly rounded, where serde_json's parser (without its `float_roundtrip` feature) can be one unit in the last place
-off.
+correctly rounded, as serde_json's are with its `float_roundtrip` feature, which this crate turns on: a number in a
+schema and the same number in an instance are the same double, whichever parser read each.
 
 ### Other instance types
 

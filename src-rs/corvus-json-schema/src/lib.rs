@@ -53,6 +53,33 @@ pub use results::{
 /// The version of this crate.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Why JSON text could not be validated.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum JsonValidationError {
+    /// The text is not valid JSON.
+    InvalidJson(JsonParseError),
+    /// Evaluation recursed in place beyond the maximum depth.
+    DepthExceeded(SchemaEvaluationDepthError),
+}
+
+impl std::fmt::Display for JsonValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            JsonValidationError::InvalidJson(e) => write!(f, "invalid JSON: {e}"),
+            JsonValidationError::DepthExceeded(e) => e.fmt(f),
+        }
+    }
+}
+
+impl std::error::Error for JsonValidationError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            JsonValidationError::InvalidJson(e) => Some(e),
+            JsonValidationError::DepthExceeded(e) => Some(e),
+        }
+    }
+}
+
 /// A compiled schema. Cheap to clone and safe to share between threads.
 #[derive(Clone)]
 pub struct Validator {
@@ -128,6 +155,25 @@ impl Validator {
         let mut e = eval::Evaluator::new(&self.program, None);
         let ok = e.validate(instance);
         if e.depth_exceeded { Err(SchemaEvaluationDepthError) } else { Ok(ok) }
+    }
+
+    /// Whether the JSON text is valid. The text is parsed into the thread's reused buffers and evaluated in place: in
+    /// the steady state nothing is allocated. Use [`JsonDocument`] to validate the same text more than once.
+    pub fn validate_json(&self, json: &str) -> Result<bool, JsonValidationError> {
+        JsonDocument::with_document(json, |d| self.validate_instance(d.root()))
+            .map_err(JsonValidationError::InvalidJson)?
+            .map_err(JsonValidationError::DepthExceeded)
+    }
+
+    /// [`Validator::evaluate`] for JSON text, parsed as [`Validator::validate_json`] parses it.
+    pub fn evaluate_json(
+        &self,
+        json: &str,
+        collector: &mut JsonSchemaResultsCollector,
+    ) -> Result<bool, JsonValidationError> {
+        JsonDocument::with_document(json, |d| self.evaluate_instance(d.root(), collector))
+            .map_err(JsonValidationError::InvalidJson)?
+            .map_err(JsonValidationError::DepthExceeded)
     }
 
     /// [`Validator::evaluate`] for any [`Instance`].

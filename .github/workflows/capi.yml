@@ -1,0 +1,190 @@
+name: capi
+# The C library over the Rust crate (src-rs/corvus-json-schema-capi): the Rust tests through its C functions and the
+# header check, then on every release platform the package (package.ps1) with the C and C++ tests run against it,
+# shared and static, as a consumer builds them. Each platform's package is uploaded as an artifact (capi-<target>);
+# capi-publish.yml calls this workflow to build a release.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-rs/corvus-json-schema/**'
+    - 'src-rs/corvus-json-schema-capi/**'
+    - 'src-rs/rust-toolchain.toml'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/capi.yml'
+    - '.github/workflows/capi-publish.yml'
+    - 'LICENSE'
+  pull_request:
+    paths:
+    - 'src-rs/corvus-json-schema/**'
+    - 'src-rs/corvus-json-schema-capi/**'
+    - 'src-rs/rust-toolchain.toml'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/capi.yml'
+    - '.github/workflows/capi-publish.yml'
+    - 'LICENSE'
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Rust tests and the generated header
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src-rs/corvus-json-schema-capi
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+      - name: Checkout JSON-Schema-Test-Suite
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Toolchain
+        # The version pinned in src-rs/rust-toolchain.toml.
+        run: |
+          rustup toolchain install
+          rustc --version
+      - name: Check the packaged LICENSE matches the repository's
+        run: cmp ../../LICENSE LICENSE
+      - name: Format
+        run: cargo fmt --check
+      - name: Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+      - name: Test
+        # The whole JSON-Schema-Test-Suite through the C functions, compared with the crate row by row.
+        run: cargo test --release --locked
+      - name: The committed header is cbindgen's
+        run: |
+          cargo install --locked cbindgen@0.29.4
+          cbindgen --config cbindgen.toml --output include/corvus_json_schema.h
+          git diff --exit-code -- include/corvus_json_schema.h
+
+  package:
+    name: Package and native tests (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The glibc packages link against glibc 2.17's symbols (cargo-zigbuild), so they load on any distribution
+          # from the manylinux2014 baseline on, not only on the runner's newer glibc.
+          - { name: linux x86_64, os: ubuntu-latest, target: x86_64-unknown-linux-gnu, zig: true, glibc: '2.17', sanitize: true, pkgconfig: true }
+          - { name: linux aarch64, os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu, zig: true, glibc: '2.17', pkgconfig: true }
+          - { name: linux x86_64 musl, os: ubuntu-latest, target: x86_64-unknown-linux-musl, zig: true, container: 'alpine:3.22' }
+          - { name: linux aarch64 musl, os: ubuntu-24.04-arm, target: aarch64-unknown-linux-musl, zig: true, container: 'alpine:3.22' }
+          - { name: macos universal2, os: macos-latest, target: universal2-apple-darwin, rust-targets: 'aarch64-apple-darwin x86_64-apple-darwin' }
+          - { name: windows x64, os: windows-latest, target: x86_64-pc-windows-msvc }
+          - { name: windows arm64, os: windows-11-arm, target: aarch64-pc-windows-msvc }
+    defaults:
+      run:
+        working-directory: src-rs/corvus-json-schema-capi
+        shell: pwsh
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          sparse-checkout: |
+            src-rs
+            LICENSE
+      - name: Toolchain
+        # rustup where the runner image has none, then the version pinned in src-rs/rust-toolchain.toml.
+        env:
+          RUST_TARGETS: ${{ matrix.rust-targets || matrix.target }}
+        run: |
+          if (-not (Get-Command rustup -ErrorAction SilentlyContinue)) {
+            if ($IsWindows) {
+              $arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "aarch64" } else { "x86_64" }
+              Invoke-WebRequest "https://static.rust-lang.org/rustup/dist/$arch-pc-windows-msvc/rustup-init.exe" -OutFile rustup-init.exe
+              ./rustup-init.exe -y --profile minimal --default-toolchain none
+            } else {
+              bash -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none"
+            }
+            $bin = Join-Path $HOME ".cargo" "bin"
+            Add-Content $env:GITHUB_PATH $bin
+            $env:PATH = "$bin$([IO.Path]::PathSeparator)$env:PATH"
+          }
+          rustup toolchain install
+          foreach ($t in $env:RUST_TARGETS -split " ") { rustup target add $t }
+          rustc --version
+      - name: Zig (cross-linking the musl targets)
+        if: matrix.zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.16.0
+      - name: cargo-zigbuild
+        if: matrix.zig
+        run: cargo install --locked cargo-zigbuild@0.23.4
+      - name: Package
+        run: |
+          $options = @{ Target = "${{ matrix.target }}" }
+          if ("${{ matrix.zig }}" -eq "true") { $options.Zig = $true }
+          if ("${{ matrix.glibc }}") { $options.Glibc = "${{ matrix.glibc }}" }
+          $package = ./package.ps1 @options
+          $package = @($package)[-1]
+          Add-Content $env:GITHUB_ENV "CJS_PACKAGE=$package"
+          Add-Content $env:GITHUB_ENV "CJS_PACKAGE_NAME=$(Split-Path $package -Leaf)"
+          Get-ChildItem -Recurse $package | Select-Object -ExpandProperty FullName
+      - name: Native tests
+        if: ${{ !matrix.container }}
+        run: |
+          $sanitize = if ("${{ matrix.sanitize }}" -eq "true") { "ON" } else { "OFF" }
+          cmake -S tests/native -B build "-DCMAKE_PREFIX_PATH=$env:CJS_PACKAGE" "-DCJS_SANITIZE=$sanitize" -DCMAKE_BUILD_TYPE=Release
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          cmake --build build --config Release
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          ctest --test-dir build -C Release --output-on-failure
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Native tests (in ${{ matrix.container }})
+        if: matrix.container
+        run: |
+          $work = (Resolve-Path ../..).Path
+          $package = "/w/src-rs/corvus-json-schema-capi/" + [IO.Path]::GetRelativePath((Get-Location).Path, $env:CJS_PACKAGE).Replace("\", "/")
+          docker run --rm -v "${work}:/w" -w /w/src-rs/corvus-json-schema-capi ${{ matrix.container }} sh -c "apk add -q cmake g++ samurai && cmake -S tests/native -B /tmp/build -G Ninja -DCMAKE_PREFIX_PATH=$package -DCMAKE_BUILD_TYPE=Release && cmake --build /tmp/build && ctest --test-dir /tmp/build --output-on-failure"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: The glibc baseline
+        if: matrix.glibc
+        run: |
+          # The newest glibc symbol version the shared library needs.
+          # An array (@(...)): with one version (all of aarch64's are 2.17) it would be a string, and [-1] its last character.
+          $versions = @(objdump -T (Join-Path $env:CJS_PACKAGE "lib" "libcorvus_json_schema.so") | Select-String -AllMatches "GLIBC_([0-9.]+)" | ForEach-Object { $_.Matches.Groups[1].Value } | Sort-Object { [version]$_ } -Unique)
+          $newest = $versions[-1]
+          "newest: GLIBC_$newest"
+          if ([version]$newest -gt [version]"${{ matrix.glibc }}") { Write-Error "needs GLIBC_$newest, above ${{ matrix.glibc }}"; exit 1 }
+      - name: pkg-config
+        if: matrix.pkgconfig
+        run: |
+          $env:PKG_CONFIG_PATH = Join-Path $env:CJS_PACKAGE "lib" "pkgconfig"
+          # pkg-config's output ends with a space: split on whitespace, without empty arguments.
+          # Arrays (@(...)): a single flag would otherwise be a string, which splatting passes character by character.
+          $cflags = @("$(pkg-config --cflags corvus-json-schema)" -split "\s+" | Where-Object { $_ })
+          $libs = @("$(pkg-config --libs corvus-json-schema)" -split "\s+" | Where-Object { $_ })
+          cc -std=c99 -Wall -Werror tests/native/smoke.c @cflags @libs "-Wl,-rpath,$env:CJS_PACKAGE/lib" -o smoke-pkgconfig
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          ./smoke-pkgconfig
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Archive
+        run: |
+          Push-Location (Split-Path $env:CJS_PACKAGE -Parent)
+          if ($IsWindows) {
+            Compress-Archive -Path $env:CJS_PACKAGE_NAME -DestinationPath "$env:CJS_PACKAGE_NAME.zip"
+            Add-Content $env:GITHUB_ENV "CJS_ARCHIVE=$((Resolve-Path "$env:CJS_PACKAGE_NAME.zip").Path)"
+          } else {
+            tar -czf "$env:CJS_PACKAGE_NAME.tar.gz" $env:CJS_PACKAGE_NAME
+            Add-Content $env:GITHUB_ENV "CJS_ARCHIVE=$((Resolve-Path "$env:CJS_PACKAGE_NAME.tar.gz").Path)"
+          }
+          Pop-Location
+      - name: Upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: capi-${{ matrix.target }}
+          path: ${{ env.CJS_ARCHIVE }}
+          if-no-files-found: error

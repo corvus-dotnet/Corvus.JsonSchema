@@ -50,10 +50,11 @@ impl Node {
 /// JSON text parsed for evaluation. It borrows the text, for the strings that need no unescaping.
 pub struct JsonDocument<'s> {
     source: &'s str,
-    nodes: Box<[Node]>,
+    /// Exactly sized for a parsed document; the parser's own buffer for one lent by `with_document`.
+    nodes: Vec<Node>,
     root: Node,
     /// The unescaped strings.
-    text: Box<str>,
+    text: String,
 }
 
 /// The text is not valid JSON, or nests arrays and objects too deeply.
@@ -85,27 +86,40 @@ impl std::error::Error for JsonParseError {}
 
 impl<'s> JsonDocument<'s> {
     /// Parses JSON text. As serde_json does, it rejects lone surrogates in `\u` escapes, numbers out of the range of a
-    /// double, nesting deeper than 128 and anything but whitespace after the value; of duplicate property names, the
-    /// last value is kept, at the position of the first.
+    /// double, nesting deeper than 127 levels and anything but whitespace after the value; of duplicate property
+    /// names, the last value is kept, at the position of the first.
     pub fn parse(source: &'s str) -> Result<JsonDocument<'s>, JsonParseError> {
         let mut parser = Parser::new(source, BUFFERS.take().unwrap_or_default());
         let root = parser.parse();
         // One allocation for the document's nodes, exactly sized.
         let document = root.map(|root| JsonDocument {
             source,
-            nodes: parser.nodes.as_slice().into(),
+            nodes: parser.nodes.as_slice().to_vec(),
             root,
-            text: parser.text.as_str().into(),
+            text: parser.text.as_str().to_owned(),
         });
-        let Parser { mut nodes, mut scratch, mut frames, mut text, .. } = parser;
-        if nodes.capacity() <= MAX_KEPT_NODES && text.capacity() <= MAX_KEPT_TEXT {
-            nodes.clear();
-            scratch.clear();
-            frames.clear();
-            text.clear();
-            BUFFERS.set(Some(Buffers { nodes, scratch, frames, text }));
-        }
+        let Parser { nodes, scratch, frames, text, .. } = parser;
+        release(Buffers { nodes, scratch, frames, text });
         document
+    }
+
+    /// Parses JSON text into the thread's reused buffers and calls `f` with the document, without the allocation
+    /// `parse` makes for a document that outlives the call: a validation of JSON text allocates nothing in the
+    /// steady state. A call made from within `f` (a format callback validating JSON itself) gets buffers of its own.
+    pub(crate) fn with_document<R>(source: &str, f: impl FnOnce(&JsonDocument<'_>) -> R) -> Result<R, JsonParseError> {
+        let mut parser = Parser::new(source, BUFFERS.take().unwrap_or_default());
+        let root = parser.parse();
+        let Parser { nodes, scratch, frames, text, .. } = parser;
+        let (nodes, text, out) = match root {
+            Ok(root) => {
+                let document = JsonDocument { source, nodes, root, text };
+                let out = f(&document);
+                (document.nodes, document.text, Ok(out))
+            }
+            Err(e) => (nodes, text, Err(e)),
+        };
+        release(Buffers { nodes, scratch, frames, text });
+        out
     }
 
     /// The root value.
@@ -128,7 +142,7 @@ impl<'s> JsonDocument<'s> {
     #[inline(always)]
     fn str_of(&self, n: &Node) -> &str {
         let (offset, len) = (n.data as usize, n.len as usize);
-        let buffer = if n.flags == STR_TEXT { &*self.text } else { self.source };
+        let buffer = if n.flags == STR_TEXT { self.text.as_str() } else { self.source };
         debug_assert!(buffer.is_char_boundary(offset) && buffer.is_char_boundary(offset + len));
         // SAFETY: the parser records string nodes at character boundaries within their buffer.
         unsafe { buffer.get_unchecked(offset..offset + len) }
@@ -305,6 +319,17 @@ struct Buffers {
 thread_local! {
     /// Taken for the length of a parse, so a parse that a parse somehow re-entered would start with new buffers.
     static BUFFERS: Cell<Option<Buffers>> = const { Cell::new(None) };
+}
+
+/// Returns the parser's buffers to the thread for the next parse, unless they grew too large to keep.
+fn release(mut b: Buffers) {
+    if b.nodes.capacity() <= MAX_KEPT_NODES && b.text.capacity() <= MAX_KEPT_TEXT {
+        b.nodes.clear();
+        b.scratch.clear();
+        b.frames.clear();
+        b.text.clear();
+        BUFFERS.set(Some(b));
+    }
 }
 
 /// Buffers that grew beyond this many nodes (16 MiB) for a large document are released, not kept.
@@ -814,7 +839,7 @@ mod tests {
 
     #[test]
     fn doubles_are_correctly_rounded() {
-        // serde_json (without float_roundtrip) reads this one ulp off.
+        // serde_json without its float_roundtrip feature reads this one ulp off.
         let text = "-90.50242899999999";
         let d = JsonDocument::parse(text).unwrap();
         assert_eq!(d.to_value().as_f64().unwrap().to_bits(), text.parse::<f64>().unwrap().to_bits());

@@ -370,3 +370,57 @@ fn few_names_are_looked_up_in_small_and_large_objects() {
         }
     }
 }
+
+/// JSON text is validated in place; invalid JSON and runaway recursion are told apart.
+#[test]
+fn validates_json_text() {
+    let v = compile(&json!({ "type": "array", "items": { "type": "integer" } })).unwrap();
+    assert_eq!(v.validate_json("[1, 2, 3]"), Ok(true));
+    assert_eq!(v.validate_json("[1, \"2\"]"), Ok(false));
+    let Err(corvus_json_schema::JsonValidationError::InvalidJson(e)) = v.validate_json("[1, 2") else {
+        panic!("expected invalid JSON")
+    };
+    assert_eq!(e.offset(), 5);
+    // A small depth, as in in_place_recursion_beyond_max_depth_is_an_error: a debug build's frames at the default
+    // depth overflow a test thread's stack.
+    let options = CompileOptions { max_depth: 16, ..CompileOptions::default() };
+    let looping =
+        compile_with(&json!({ "$defs": { "a": { "$ref": "#/$defs/a" } }, "$ref": "#/$defs/a" }), &options).unwrap();
+    assert!(matches!(looping.validate_json("1"), Err(corvus_json_schema::JsonValidationError::DepthExceeded(_))));
+    let mut c = JsonSchemaResultsCollector::new(ResultsLevel::Detailed);
+    assert_eq!(v.evaluate_json("[\"x\"]", &mut c), Ok(false));
+    assert!(c.results().iter().any(|r| !r.is_match && r.document_evaluation_location == "/0"));
+}
+
+/// A format callback that validates JSON text itself, during a validation of JSON text on the same thread, gets
+/// buffers of its own.
+#[test]
+fn validating_json_from_a_format_callback_works() {
+    let inner = compile(&json!({ "type": "object", "required": ["a"] })).unwrap();
+    let mut options = CompileOptions { assert_format: Some(true), ..CompileOptions::default() };
+    options.formats.insert("embedded-json".into(), Arc::new(move |s: &str| inner.validate_json(s).unwrap_or(false)));
+    let v = compile_with(&json!({ "type": "array", "items": { "format": "embedded-json" } }), &options).unwrap();
+    assert_eq!(v.validate_json(r#"["{\"a\": 1}", "{\"a\": 2}"]"#), Ok(true));
+    assert_eq!(v.validate_json(r#"["{\"a\": 1}", "{\"b\": 2}"]"#), Ok(false));
+    assert_eq!(v.validate_json(r#"["{\"a\": 1}", "not json"]"#), Ok(false));
+}
+
+/// A number in a schema and the same number in an instance are the same double, whichever parser read each: the
+/// schema through serde_json (here from serde_json's own output, as a caller passing schema text does), the instance
+/// through JsonDocument. Without serde_json's float_roundtrip feature, serde_json read `9.727837981879871e+26`, its own
+/// output, one unit in the last place off, so an `exclusiveMaximum` equal to the instance passed.
+#[test]
+fn schema_and_instance_numbers_parse_alike() {
+    for (keyword, literal) in [
+        ("exclusiveMaximum", "972783798187987123879878123.18878137"),
+        ("exclusiveMinimum", "-972783798187987123879878123.18878137"),
+    ] {
+        let number: f64 = serde_json::from_str(literal).unwrap();
+        let text = serde_json::to_string(&number).unwrap();
+        let schema: Value = serde_json::from_str(&format!(r#"{{"{keyword}": {text}}}"#)).unwrap();
+        let v = compile(&schema).unwrap();
+        assert_eq!(v.validate_json(&text), Ok(false), "{keyword} {text} (JSON text)");
+        let instance: Value = serde_json::from_str(&text).unwrap();
+        assert!(!v.is_valid(&instance), "{keyword} {text} (Value)");
+    }
+}
