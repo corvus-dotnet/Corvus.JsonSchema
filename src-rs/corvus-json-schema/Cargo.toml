@@ -1,6 +1,6 @@
 [package]
 name = "corvus-json-schema"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 rust-version = "1.85"
 description = "A high-performance JSON Schema evaluator (draft 4 to 2020-12) with results collection and annotations, ported from the Corvus.Text.Json V5 runtime evaluator."

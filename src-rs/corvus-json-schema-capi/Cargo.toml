@@ -17,7 +17,7 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
 # Renamed: the C library is itself `corvus_json_schema`, and its tests use both.
-corvus = { package = "corvus-json-schema", path = "../corvus-json-schema", version = "0.1.2" }
+corvus = { package = "corvus-json-schema", path = "../corvus-json-schema", version = "0.1.3" }
 serde_json = { version = "1.0.151", features = ["preserve_order", "float_roundtrip"] }
 
 [profile.release]

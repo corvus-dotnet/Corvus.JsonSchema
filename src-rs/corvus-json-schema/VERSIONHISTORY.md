@@ -2,6 +2,18 @@
 
 The version history of the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.3
+
+V0.1.3 validates JSON text without allocating, and reads a number in a schema and the same number in an instance as the same double. There are no breaking changes.
+
+### New features
+
+- **`Validator::validate_json` and `Validator::evaluate_json`.** They take JSON text, parse it into the `JsonDocument` parser's per-thread buffers and evaluate it in place: in the steady state a validation of JSON text allocates nothing (a test counts allocations). `JsonValidationError` tells invalid JSON (with its byte offset) from a schema that recurses in place beyond the maximum depth. A format validator that itself validates JSON text, during a validation of JSON text, gets buffers of its own. Use `JsonDocument` to validate the same text more than once.
+
+### Bug fixes
+
+- **Numbers in schemas and instances are read alike.** The crate turns on serde_json's `float_roundtrip` feature. Without it, serde_json read some numbers one unit in the last place off the correctly rounded double, including its own output (`9.727837981879871e+26`), while `JsonDocument` rounds correctly. A schema passed as JSON text and an instance validated as JSON text could then hold two different doubles for one literal, so an `exclusiveMaximum` equal to the instance passed. The JSON-Schema-Test-Suite's `bignum.json` found it, run through the C library.
+
 ## V0.1.2
 
 V0.1.2 adds `JsonDocument`, a parsed form of JSON text that the evaluator reads in place, and makes validation faster on schemas where the Blaze C++ validator was faster. There are no breaking changes, and every result is unchanged.
