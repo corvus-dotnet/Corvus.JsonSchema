@@ -1321,6 +1321,12 @@ $lycheeArgs = @(
     "--root-dir", $absOutputDir
     "--include-fragments"
     "--no-progress"
+    # Transient server responses are not broken links: github.com in particular throttles the checker in CI with
+    # 503s and 504s on links that resolve. Retry them, and accept rate limiting (429) and 502/503/504 if they persist;
+    # anything else (a 404 above all) still fails the build.
+    "--max-retries", "5"
+    "--retry-wait-time", "5"
+    "--accept", "100..=103,200..=299,429,502,503,504"
     "--exclude-path", "api[/\\]v4"
     "--exclude-path", "playground"
     "--exclude-path", "playground-jsonata"
