@@ -195,6 +195,12 @@ parsed.
 - A release builds the shared and static libraries for Linux (x86_64, aarch64; glibc and musl), macOS (universal2)
   and Windows (x64, arm64), and attaches archives with the headers, the CMake package configuration and the
   pkg-config file to a GitHub release (`capi-publish.yml`, on a version change, honouring `no_release`).
+- The glibc libraries link against glibc 2.17's symbols (cargo-zigbuild), the manylinux2014 baseline the Python
+  wheels use, so they load on any distribution with that glibc or newer; CI checks the newest version they need.
+- The Windows packages are built with MSVC against the dynamic C runtime (`/MD`, CMake's default), which the DLL
+  suits whatever runtime its caller uses. They also hold `corvus_json_schema_mt.lib`, the static library built for
+  the static runtime (`/MT`), as the CMake target `corvus_json_schema::corvus_json_schema_static_mt`. Debug runtimes
+  (`/MDd`, `/MTd`) link with the matching release library, with a `LNK4098` warning.
 - vcpkg and Conan ports later. Swift gets an XCFramework from the macOS build.
 
 ## Testing

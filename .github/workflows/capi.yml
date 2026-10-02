@@ -74,8 +74,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: linux x86_64, os: ubuntu-latest, target: x86_64-unknown-linux-gnu, sanitize: true, pkgconfig: true }
-          - { name: linux aarch64, os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu, pkgconfig: true }
+          # The glibc packages link against glibc 2.17's symbols (cargo-zigbuild), so they load on any distribution
+          # from the manylinux2014 baseline on, not only on the runner's newer glibc.
+          - { name: linux x86_64, os: ubuntu-latest, target: x86_64-unknown-linux-gnu, zig: true, glibc: '2.17', sanitize: true, pkgconfig: true }
+          - { name: linux aarch64, os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu, zig: true, glibc: '2.17', pkgconfig: true }
           - { name: linux x86_64 musl, os: ubuntu-latest, target: x86_64-unknown-linux-musl, zig: true, container: 'alpine:3.22' }
           - { name: linux aarch64 musl, os: ubuntu-24.04-arm, target: aarch64-unknown-linux-musl, zig: true, container: 'alpine:3.22' }
           - { name: macos universal2, os: macos-latest, target: universal2-apple-darwin, rust-targets: 'aarch64-apple-darwin x86_64-apple-darwin' }
@@ -123,8 +125,10 @@ jobs:
         run: cargo install --locked cargo-zigbuild@0.23.4
       - name: Package
         run: |
-          $zig = "${{ matrix.zig }}" -eq "true"
-          $package = if ($zig) { ./package.ps1 -Target ${{ matrix.target }} -Zig } else { ./package.ps1 -Target ${{ matrix.target }} }
+          $options = @{ Target = "${{ matrix.target }}" }
+          if ("${{ matrix.zig }}" -eq "true") { $options.Zig = $true }
+          if ("${{ matrix.glibc }}") { $options.Glibc = "${{ matrix.glibc }}" }
+          $package = ./package.ps1 @options
           $package = @($package)[-1]
           Add-Content $env:GITHUB_ENV "CJS_PACKAGE=$package"
           Add-Content $env:GITHUB_ENV "CJS_PACKAGE_NAME=$(Split-Path $package -Leaf)"
@@ -146,6 +150,14 @@ jobs:
           $package = "/w/src-rs/corvus-json-schema-capi/" + [IO.Path]::GetRelativePath((Get-Location).Path, $env:CJS_PACKAGE).Replace("\", "/")
           docker run --rm -v "${work}:/w" -w /w/src-rs/corvus-json-schema-capi ${{ matrix.container }} sh -c "apk add -q cmake g++ samurai && cmake -S tests/native -B /tmp/build -G Ninja -DCMAKE_PREFIX_PATH=$package -DCMAKE_BUILD_TYPE=Release && cmake --build /tmp/build && ctest --test-dir /tmp/build --output-on-failure"
           if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: The glibc baseline
+        if: matrix.glibc
+        run: |
+          # The newest glibc symbol version the shared library needs.
+          $versions = objdump -T (Join-Path $env:CJS_PACKAGE "lib" "libcorvus_json_schema.so") | Select-String -AllMatches "GLIBC_([0-9.]+)" | ForEach-Object { $_.Matches.Groups[1].Value } | Sort-Object { [version]$_ } -Unique
+          $newest = $versions[-1]
+          "newest: GLIBC_$newest"
+          if ([version]$newest -gt [version]"${{ matrix.glibc }}") { Write-Error "needs GLIBC_$newest, above ${{ matrix.glibc }}"; exit 1 }
       - name: pkg-config
         if: matrix.pkgconfig
         run: |

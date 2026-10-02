@@ -12,6 +12,6 @@ The first release.
 
 - **The C++ wrapper.** `corvus_json_schema.hpp`, header-only C++17: RAII classes owning their handles through `std::unique_ptr`, exceptions (or `try_validate`), and format validators and resolvers as `std::function`.
 
-- **Packages for every major platform.** Linux (x86_64 and aarch64, glibc and musl), macOS (universal2) and Windows (x64 and arm64), each with a CMake package (`find_package(corvus_json_schema)`, targets `corvus_json_schema::corvus_json_schema` and `corvus_json_schema::corvus_json_schema_static`) and a pkg-config file (`corvus-json-schema`).
+- **Packages for every major platform.** Linux (x86_64 and aarch64, glibc and musl), macOS (universal2) and Windows (x64 and arm64), each with a CMake package (`find_package(corvus_json_schema)`, targets `corvus_json_schema::corvus_json_schema` and `corvus_json_schema::corvus_json_schema_static`) and a pkg-config file (`corvus-json-schema`). The glibc libraries need glibc 2.17 or newer. The Windows packages, built with MSVC, add a static library for the static C runtime (`/MT`), the target `corvus_json_schema::corvus_json_schema_static_mt`.
 
 - **Faster than Blaze.** On the sourcemeta jsonschema-benchmark corpora, in the benchmark's harness, the C++ wrapper parses and validates faster than Blaze on all 37 (about a quarter of Blaze's time, geometric mean).

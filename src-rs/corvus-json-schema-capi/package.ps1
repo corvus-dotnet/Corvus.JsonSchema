@@ -7,7 +7,8 @@ Builds the shared and static libraries (cargo, release profile) for a Rust targe
 <OutDir>/corvus-json-schema-<version>-<target>/ with:
 
   include/                       corvus_json_schema.h and the C++ wrapper corvus_json_schema.hpp
-  lib/ (and bin/ on Windows)     the shared library (with its import library on Windows) and the static library
+  lib/ (and bin/ on Windows)     the shared library (with its import library on Windows) and the static library; for
+                                 MSVC also corvus_json_schema_mt.lib, the static library for the static C runtime (/MT)
   lib/cmake/corvus_json_schema/  the CMake package: corvus_json_schema::corvus_json_schema (shared) and
                                  corvus_json_schema::corvus_json_schema_static, with a version file
   lib/pkgconfig/                 corvus-json-schema.pc
@@ -23,6 +24,10 @@ architectures (built on macOS: both targets, combined with lipo).
 .PARAMETER Zig
 Build with cargo-zigbuild (zig as the linker), to cross-build Linux targets such as the musl ones from a glibc host.
 
+.PARAMETER Glibc
+With -Zig, the oldest glibc the shared library may need (such as 2.17, the manylinux2014 baseline): it links against
+that version's symbols, so it loads on any distribution with that glibc or newer.
+
 .PARAMETER OutDir
 Where to write the package (default: dist, next to this script).
 
@@ -34,7 +39,8 @@ pwsh package.ps1 -Target aarch64-unknown-linux-gnu -OutDir /tmp/packages
 param(
     [string] $Target,
     [string] $OutDir = (Join-Path $PSScriptRoot "dist"),
-    [switch] $Zig
+    [switch] $Zig,
+    [string] $Glibc
 )
 
 $ErrorActionPreference = "Stop"
@@ -68,7 +74,24 @@ try {
     $targets = @(if ($Target -eq "universal2-apple-darwin") { "aarch64-apple-darwin", "x86_64-apple-darwin" } else { $Target })
     foreach ($t in $targets) {
         Write-Host "Building corvus_json_schema $version for $t"
-        Invoke-Native "cargo" @($build, "--lib", "--release", "--locked", "--target", $t) | Out-Null
+        # cargo-zigbuild takes the glibc version as a suffix on the target (the output directory is the target's).
+        $buildTarget = if ($Glibc) { "$t.$Glibc" } else { $t }
+        Invoke-Native "cargo" @($build, "--lib", "--release", "--locked", "--target", $buildTarget) | Out-Null
+    }
+    # For MSVC, a second static library linked against the static C runtime (/MT), built apart so that the first is
+    # untouched: the default one matches only the dynamic runtime (/MD).
+    $staticMt = ""
+    if ($targetIsMsvc) {
+        $saved = $env:RUSTFLAGS
+        $env:RUSTFLAGS = "$saved -C target-feature=+crt-static".Trim()
+        $env:CARGO_TARGET_DIR = Join-Path "target" "crt-static"
+        try {
+            Invoke-Native "cargo" @("rustc", "--lib", "--crate-type", "staticlib", "--release", "--locked", "--target", $Target) | Out-Null
+        } finally {
+            $env:RUSTFLAGS = $saved
+            Remove-Item Env:CARGO_TARGET_DIR
+        }
+        $staticMt = "lib/corvus_json_schema_mt.lib"
     }
     # The system libraries a program linking the static library needs (building a static library links nothing, so
     # this needs no cross linker).
@@ -128,6 +151,7 @@ try {
         if ($targetIsMsvc) {
             Copy-Item (Join-Path $built "corvus_json_schema.dll.lib") (Join-Path $root "lib")
             Copy-Item (Join-Path $built "corvus_json_schema.lib") (Join-Path $root "lib")
+            Copy-Item (Join-Path "target" "crt-static" $Target "release" "corvus_json_schema.lib") (Join-Path $root $staticMt)
             $importLibrary = "lib/corvus_json_schema.dll.lib"
             $static = "lib/corvus_json_schema.lib"
         } else {
@@ -151,6 +175,7 @@ try {
         "@SHARED_LOCATION@"       = $shared
         "@IMPORT_LIBRARY@"        = $importLibrary
         "@STATIC_LOCATION@"       = $static
+        "@STATIC_MT_LOCATION@"    = $staticMt
         "@STATIC_LINK_LIBRARIES@" = ($cmakeLibs -join ";")
         "@STATIC_LINK_FLAGS@"     = ($pcFlags -join " ")
     }

@@ -1,6 +1,7 @@
 # The corvus-json-schema C library (with its C++ wrapper header), as two imported targets:
 #   corvus_json_schema::corvus_json_schema         the shared library
 #   corvus_json_schema::corvus_json_schema_static  the static library (with the system libraries it needs)
+#   corvus_json_schema::corvus_json_schema_static_mt  (MSVC only) the static library for the static C runtime (/MT)
 # Written by package.ps1 for @PLATFORM@; paths are relative to this file, so the package can be moved.
 
 get_filename_component(_corvus_json_schema_prefix "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
@@ -21,6 +22,16 @@ if(NOT TARGET corvus_json_schema::corvus_json_schema_static)
   set_target_properties(corvus_json_schema::corvus_json_schema_static PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${_corvus_json_schema_prefix}/include"
     IMPORTED_LOCATION "${_corvus_json_schema_prefix}/@STATIC_LOCATION@"
+    INTERFACE_LINK_LIBRARIES "@STATIC_LINK_LIBRARIES@")
+endif()
+
+# MSVC only: the static library built against the static C runtime (/MT); the one above matches the dynamic runtime
+# (/MD), CMake's default.
+if(NOT "@STATIC_MT_LOCATION@" STREQUAL "" AND NOT TARGET corvus_json_schema::corvus_json_schema_static_mt)
+  add_library(corvus_json_schema::corvus_json_schema_static_mt STATIC IMPORTED)
+  set_target_properties(corvus_json_schema::corvus_json_schema_static_mt PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${_corvus_json_schema_prefix}/include"
+    IMPORTED_LOCATION "${_corvus_json_schema_prefix}/@STATIC_MT_LOCATION@"
     INTERFACE_LINK_LIBRARIES "@STATIC_LINK_LIBRARIES@")
 endif()
 
