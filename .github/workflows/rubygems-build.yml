@@ -1,0 +1,172 @@
+name: rubygems-build
+# Builds the corvus_json_schema gems: the source gem, and native gems cross-compiled with rb-sys-dock for each
+# platform, each holding the extension for Ruby 3.3, 3.4 and 4.0. Each native gem is then installed and tested on its
+# own platform, with the oldest and newest of those Rubies. The gems are uploaded as artifacts named gem-*. Called by
+# ruby.yml (CI) and rubygems-publish.yml (release), so a release pushes exactly what was built and tested here.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  RUBY_VERSIONS: '3.3,3.4,4.0'
+
+jobs:
+  source:
+    name: corvus_json_schema source gem
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src-rb/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          sparse-checkout: |
+            src-rb
+            src-rs/corvus-json-schema
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: src-rb/corvus-json-schema
+      - name: Build
+        # Loading the Rakefile copies the crate into ext/corvus_json_schema/vendor, which the source gem carries.
+        run: |
+          bundle exec rake vendor
+          mkdir -p pkg
+          gem build corvus_json_schema.gemspec -o "pkg/corvus_json_schema-$(ruby -Ilib -rcorvus_json_schema/version -e 'print CorvusJsonSchema::VERSION').gem"
+          ls -l pkg
+      - name: Upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: gem-source
+          path: src-rb/corvus-json-schema/pkg/*.gem
+          if-no-files-found: error
+
+  cross:
+    name: corvus_json_schema gem (${{ matrix.platform }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - x86_64-linux
+          - aarch64-linux
+          - x86_64-linux-musl
+          - aarch64-linux-musl
+          - x86_64-darwin
+          - arm64-darwin
+          - x64-mingw-ucrt
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          sparse-checkout: |
+            src-rb
+            src-rs/corvus-json-schema
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          ruby-version: '3.3'
+      - name: Cargo registry directory
+        # rb-sys-dock bind-mounts ~/.cargo/registry into its container, but creates it relative to the working
+        # directory (rb-sys 0.9.130), so on a fresh runner the mount fails.
+        run: mkdir -p "$HOME/.cargo/registry"
+      - name: Build
+        id: build
+        # rb-sys-dock mounts the repository, so the Rakefile vendors the crate inside the container as it does here.
+        uses: oxidize-rb/actions/cross-gem@ec90b4aa48795518d79be3f5cc478d1d7ccd02a8 # v1.5.0
+        with:
+          platform: ${{ matrix.platform }}
+          ruby-versions: ${{ env.RUBY_VERSIONS }}
+          working-directory: src-rb/corvus-json-schema
+      - name: Check the gem
+        env:
+          GEM: ${{ steps.build.outputs.gem-path }}
+        run: |
+          ls -l "$GEM"
+          # One extension per Ruby version.
+          gem spec "$GEM" files | grep -E 'lib/corvus_json_schema/[0-9]+\.[0-9]+/corvus_json_schema\.' | tee libs.txt
+          for v in ${RUBY_VERSIONS//,/ }; do
+            grep -q "lib/corvus_json_schema/$v/" libs.txt || { echo "::error::No extension for Ruby $v."; exit 1; }
+          done
+      - name: Upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: gem-${{ matrix.platform }}
+          path: ${{ steps.build.outputs.gem-path }}
+          if-no-files-found: error
+
+  test:
+    name: corvus_json_schema gem test (${{ matrix.platform }}, Ruby ${{ matrix.ruby }})
+    needs: cross
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: x86_64-linux, os: ubuntu-latest, ruby: '3.3' }
+          - { platform: x86_64-linux, os: ubuntu-latest, ruby: '4.0' }
+          - { platform: aarch64-linux, os: ubuntu-24.04-arm, ruby: '3.3' }
+          - { platform: aarch64-linux, os: ubuntu-24.04-arm, ruby: '4.0' }
+          # The musl gems are tested in the official Alpine images, run with docker (JavaScript actions do not run in
+          # Alpine containers on arm64).
+          - { platform: x86_64-linux-musl, os: ubuntu-latest, ruby: '3.3', image: 'ruby:3.3-alpine' }
+          - { platform: x86_64-linux-musl, os: ubuntu-latest, ruby: '4.0', image: 'ruby:4.0-alpine' }
+          - { platform: aarch64-linux-musl, os: ubuntu-24.04-arm, ruby: '3.3', image: 'ruby:3.3-alpine' }
+          - { platform: aarch64-linux-musl, os: ubuntu-24.04-arm, ruby: '4.0', image: 'ruby:4.0-alpine' }
+          - { platform: x86_64-darwin, os: macos-15-intel, ruby: '3.3' }
+          - { platform: x86_64-darwin, os: macos-15-intel, ruby: '4.0' }
+          - { platform: arm64-darwin, os: macos-latest, ruby: '3.3' }
+          - { platform: arm64-darwin, os: macos-latest, ruby: '4.0' }
+          - { platform: x64-mingw-ucrt, os: windows-latest, ruby: '3.3' }
+          - { platform: x64-mingw-ucrt, os: windows-latest, ruby: '4.0' }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          sparse-checkout: |
+            src-rb/corvus-json-schema/test
+            JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Setup Ruby
+        if: ${{ !matrix.image }}
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          ruby-version: ${{ matrix.ruby }}
+      - name: Download
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: gem-${{ matrix.platform }}
+          path: gems
+      - name: Install and test
+        # The installed gem, not the sources: the tests run outside the gem's directory.
+        env:
+          IMAGE: ${{ matrix.image }}
+        run: |
+          cat > test-gem.sh <<'SCRIPT'
+          set -eu
+          # On Windows, GITHUB_WORKSPACE is a path Ruby can open (sh's $PWD is an MSYS path); in docker it is unset.
+          export JSON_SCHEMA_TEST_SUITE="${GITHUB_WORKSPACE:-$PWD}/JSON-Schema-Test-Suite"
+          gem install --local gems/*.gem
+          gem install minitest -v '~> 5.25'
+          cd src-rb/corvus-json-schema
+          ruby -e 'require "corvus_json_schema"; puts CorvusJsonSchema.crate_version, $LOADED_FEATURES.grep(/corvus_json_schema\.(so|bundle|dll)/)'
+          ruby test/test_api.rb
+          ruby test/test_suite.rb
+          SCRIPT
+          if [ -n "$IMAGE" ]; then
+            docker run --rm -v "$PWD:/w" -w /w "$IMAGE" sh test-gem.sh
+          else
+            sh test-gem.sh
+          fi

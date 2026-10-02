@@ -1,0 +1,71 @@
+name: php
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-php/**'
+    - 'src-rs/corvus-json-schema/**'
+    - 'JSON-Schema-Test-Suite'
+    - '.github/workflows/php.yml'
+    - '.github/workflows/php-build.yml'
+    - '.github/workflows/php-publish.yml'
+    - 'LICENSE'
+  pull_request:
+    paths:
+    - 'src-php/**'
+    - 'src-rs/corvus-json-schema/**'
+    - 'JSON-Schema-Test-Suite'
+    - '.github/workflows/php.yml'
+    - '.github/workflows/php-build.yml'
+    - '.github/workflows/php-publish.yml'
+    - 'LICENSE'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A pull request's run is superseded by the run for its next push; pushes to main are grouped by commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: corvus_json_schema (lint, package)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src-php/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          sparse-checkout: |
+            src-php
+            src-rs/corvus-json-schema
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer
+      - name: Toolchain
+        # The version pinned in src-rs/rust-toolchain.toml (clippy's lints change between releases).
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt
+          rustup default 1.98.0
+      - name: Format and lint
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+      - name: Package
+        # The packaged LICENSE must match the repository's; composer.json is what Packagist and PIE read.
+        run: |
+          cmp ../../LICENSE LICENSE
+          composer validate --strict --no-check-publish
+
+  build:
+    name: build
+    uses: ./.github/workflows/php-build.yml

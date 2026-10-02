@@ -1,0 +1,109 @@
+name: ruby
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-rb/**'
+    - 'src-rs/corvus-json-schema/**'
+    - 'JSON-Schema-Test-Suite'
+    - '.github/workflows/ruby.yml'
+    - '.github/workflows/rubygems-publish.yml'
+    - 'LICENSE'
+  pull_request:
+    paths:
+    - 'src-rb/**'
+    - 'src-rs/corvus-json-schema/**'
+    - 'JSON-Schema-Test-Suite'
+    - '.github/workflows/ruby.yml'
+    - '.github/workflows/rubygems-publish.yml'
+    - 'LICENSE'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A pull request's run is superseded by the run for its next push; pushes to main are grouped by commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: corvus_json_schema (lint, package)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src-rb/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          sparse-checkout: |
+            src-rb
+            src-rs/corvus-json-schema
+      - name: Setup Ruby and Rust
+        uses: oxidize-rb/actions/setup-ruby-and-rust@ec90b4aa48795518d79be3f5cc478d1d7ccd02a8 # v1.5.0
+        with:
+          ruby-version: '3.3'
+          # The version pinned in src-rs/rust-toolchain.toml (clippy's lints change between releases).
+          rustup-toolchain: '1.98.0'
+          bundler-cache: true
+          cargo-cache: true
+          working-directory: src-rb/corvus-json-schema
+      - name: Format and lint
+        run: |
+          bundle exec rake vendor
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+      - name: Package
+        # The packaged LICENSE must match the repository's, and the source gem must build and run on its own, from
+        # the crate's sources it carries.
+        run: |
+          cmp ../../LICENSE LICENSE
+          gem build corvus_json_schema.gemspec
+          # The local gem, with its build dependency (rb_sys) from RubyGems.
+          gem install corvus_json_schema-*.gem
+          cd /tmp
+          ruby -rcorvus_json_schema -e 'raise "wrong" unless CorvusJsonSchema.compile({"type" => "integer"}).valid?(3)
+                                        puts CorvusJsonSchema.crate_version'
+
+  test:
+    name: corvus_json_schema (${{ matrix.os }}, Ruby ${{ matrix.ruby }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        ruby: ['3.3', '3.4', '4.0']
+    defaults:
+      run:
+        working-directory: src-rb/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          # Only what the gem needs (the repository's generated benchmark models have paths too long for Windows).
+          sparse-checkout: |
+            src-rb
+            src-rs/corvus-json-schema
+            JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Setup Ruby and Rust
+        uses: oxidize-rb/actions/setup-ruby-and-rust@ec90b4aa48795518d79be3f5cc478d1d7ccd02a8 # v1.5.0
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          rustup-toolchain: '1.98.0'
+          bundler-cache: true
+          cargo-cache: true
+          working-directory: src-rb/corvus-json-schema
+      - name: Build and test
+        run: bundle exec rake compile test
+
+  gems:
+    name: gems
+    uses: ./.github/workflows/rubygems-build.yml

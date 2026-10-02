@@ -93,7 +93,7 @@ A release includes every merged PR still labelled `pending_release`, so closing 
 
 A PR that changes only the Python, Rust, TypeScript, Ruby or PHP packages makes no NuGet release; nothing needs adding.
 
-Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI and npm publishes that a version change in `src-rs`, `src-py` or `src-ts` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
+Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI, npm, RubyGems and PHP publishes that a version change in `src-rs`, `src-py`, `src-ts`, `src-rb` or `src-php` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
 
 ### Batched Dependabot releases
 
@@ -258,6 +258,109 @@ To keep the projects in a PyPI organization instead (a group of users and teams 
 
 Publishing does not wait for the organization: the projects can be published from an account first and transferred
 when the organization is approved.
+
+## The Ruby gem
+
+`src-rb/corvus-json-schema` is the `corvus_json_schema` gem, a native extension over the Rust crate, published to
+RubyGems and versioned independently of the NuGet packages and of the crate, by `VERSION` in
+`lib/corvus_json_schema/version.rb`. A release is a source gem (which carries the crate's sources and builds the
+extension where it is installed) and one native gem per platform (Linux x86_64 and aarch64, glibc and musl; macOS
+x86_64 and arm64; Windows x64), each holding the extension for Ruby 3.3, 3.4 and 4.0.
+
+To release it, bump `VERSION`, add the version's entry at the top of its `VERSIONHISTORY.md` (the workflow checks it is
+there), and merge to `main`. `.github/workflows/rubygems-publish.yml` then does the following.
+
+1. It does nothing if RubyGems already has that version's source gem, or if the merged PR is labelled `no_release`.
+2. It builds every gem through `rubygems-build.yml`, which cross-compiles the native gems with rb-sys-dock and installs
+   and tests each on its own platform, as CI does on every pull request.
+3. It pushes the native gems and then the source gem through RubyGems trusted publishing, in the `rubygems` GitHub
+   environment. No API key is stored. The gem's trusted publisher names this repository, that workflow file and the
+   environment, so don't rename them. A run that fails part of the way can be run again: it skips native gems RubyGems
+   already has.
+4. It tags the commit `rb-v<version>`.
+
+A pushed version can be yanked, but never replaced. Like the Rust-backed Python package, the gem builds the crate from
+`src-rs/corvus-json-schema` by path, so release the crate too when the gem depends on new crate API.
+
+Never push an `rb-v` tag by hand (see the crate's tags above).
+
+### The first release: RubyGems setup
+
+RubyGems accepts a trusted publisher for a gem that does not exist yet (a "pending" publisher), and the first push
+through it creates the gem. Do this once, before merging the first version:
+
+1. **Create the GitHub environment.** In the repository's **Settings**, **Environments**, add an environment named
+   `rubygems`. It needs no secrets.
+2. **Add the pending publisher.** Sign in to rubygems.org (with multi-factor authentication), open
+   [**Pending trusted publishers**](https://rubygems.org/profile/oidc/pending_trusted_publishers) in your settings,
+   click **Create**, and enter:
+
+   | Field | Value |
+   |---|---|
+   | Gem name | `corvus_json_schema` |
+   | Trusted publisher type | GitHub Actions |
+   | Repository owner | `corvus-dotnet` |
+   | Repository name | `Corvus.JsonSchema` |
+   | Workflow filename | `rubygems-publish.yml` |
+   | Environment | `rubygems` |
+
+3. **Merge.** The workflow publishes the gem, owned by the account that added the publisher.
+4. **Add owners.** On the gem's **Ownership** page, add the other maintainers, so the gem does not depend on one account.
+
+## The PHP extension
+
+`src-php/corvus-json-schema` is the `corvus_json_schema` PHP extension, installed with PIE as the Packagist package
+`corvus-dotnet/corvus-json-schema`, and versioned independently of the NuGet packages and of the crate, by the `version`
+in its `Cargo.toml`. A release is one prebuilt extension per PHP minor version (8.2 to 8.5), thread-safety mode and
+platform (Linux x86_64 and arm64, glibc and musl; macOS arm64 and x86_64; Windows x64): 56 archives, named as PIE looks
+for them.
+
+Packagist reads a package from the root of a repository, and its versions from that repository's tags, so this
+repository cannot be the package's (its tags are the NuGet versions). The package's repository is
+[corvus-dotnet/corvus-json-schema-php](https://github.com/corvus-dotnet/corvus-json-schema-php), which holds only what
+the publish workflow pushes there: changes are made here.
+
+To release it, bump `version` in its `Cargo.toml`, add the version's entry at the top of its `VERSIONHISTORY.md` (the
+workflow checks it is there), and merge to `main`. `.github/workflows/php-publish.yml` then does the following.
+
+1. It does nothing if the package's repository already has a release for that version, or if the merged PR is
+   labelled `no_release`. It fails if the crate version the extension needs is not on crates.io: release the crate
+   first.
+2. It builds every archive through `php-build.yml`, which tests each build on its own platform (CI runs a subset of
+   them on every pull request).
+3. It replaces the package repository's files with `src-php/corvus-json-schema`, with the crate taken from crates.io
+   instead of by path, commits, and tags the commit `<version>` (no prefix: Packagist reads the tag as the version).
+4. It creates the release for that tag, with the version's history entry as its notes, and attaches the archives.
+   Packagist picks up the tag, and `pie install` finds the archives on the release.
+5. It tags this repository's commit `php-v<version>`.
+
+Writing to the package's repository takes a token, the `PHP_REPOSITORY_TOKEN` secret of the `php` environment. A run
+that fails part of the way can be run again: it skips the push when the tag is there, and replaces the archives on an
+existing release.
+
+Never push a `php-v` tag here, or a version tag to the package's repository, by hand.
+
+### The first release: Packagist setup
+
+Do this once, before merging the first version:
+
+1. **Create the package's repository.** Create `corvus-dotnet/corvus-json-schema-php`, public, with a README (so that
+   it has a default branch, `main`). The publish workflow replaces its files.
+2. **Create the token.** In GitHub's **Settings**, **Developer settings**, **Personal access tokens**, **Fine-grained
+   tokens**, generate a token with the `corvus-dotnet` organization as its resource owner, access to that repository
+   only, and the repository permission **Contents: Read and write**. If the organization requires approval for
+   fine-grained tokens, an owner approves it.
+3. **Create the GitHub environment.** In this repository's **Settings**, **Environments**, add an environment named
+   `php`, and add the token to it as the secret `PHP_REPOSITORY_TOKEN`.
+4. **Merge.** The workflow pushes the sources, tags them and creates the release.
+5. **Submit the package to Packagist.** Sign in to [Packagist](https://packagist.org) (with GitHub), click
+   **Submit**, and enter `https://github.com/corvus-dotnet/corvus-json-schema-php`. Packagist reads the tag. With
+   Packagist's GitHub integration (connected under your Packagist profile's **Settings**) it updates by itself when a
+   tag is pushed; otherwise click **Update** on the package's page after each release.
+6. **Add maintainers.** On the package's Packagist page, add the other maintainers, so the package does not depend on
+   one account.
+
+The token expires: renew it, and update the secret, before it does.
 
 ## Pre-release testing
 

@@ -1,8 +1,9 @@
 name: capi
 # The C library over the Rust crate (src-rs/corvus-json-schema-capi): the Rust tests through its C functions and the
 # header check, then on every release platform the package (package.ps1) with the C and C++ tests run against it,
-# shared and static, as a consumer builds them. Each platform's package is uploaded as an artifact (capi-<target>);
-# capi-publish.yml calls this workflow to build a release.
+# shared and static, as a consumer builds them. Each platform's package is uploaded as an artifact (capi-<target>),
+# and so is the XCFramework for Swift packages on Apple platforms (capi-xcframework, with its SwiftPM checksum, tested
+# from Swift); capi-publish.yml calls this workflow to build a release.
 on:
   push:
     branches:
@@ -187,4 +188,55 @@ jobs:
         with:
           name: capi-${{ matrix.target }}
           path: ${{ env.CJS_ARCHIVE }}
+          if-no-files-found: error
+
+  xcframework:
+    name: XCFramework (macOS, iOS, iOS simulator)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: src-rs/corvus-json-schema-capi
+        shell: pwsh
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          sparse-checkout: |
+            src-rs
+            LICENSE
+      - name: Toolchain
+        # The version pinned in src-rs/rust-toolchain.toml, with every Apple target the XCFramework holds.
+        run: |
+          rustup toolchain install
+          foreach ($t in @("aarch64-apple-darwin", "x86_64-apple-darwin", "aarch64-apple-ios", "aarch64-apple-ios-sim", "x86_64-apple-ios")) { rustup target add $t }
+          rustc --version
+          swift --version
+      - name: Package
+        run: |
+          $archive = ./xcframework.ps1 | Select-Object -Last 1
+          Add-Content $env:GITHUB_ENV "CJS_XCFRAMEWORK=$archive"
+          # What a program linking the static library needs besides it (a Swift package's target links these).
+          cargo rustc --lib --crate-type staticlib --release --locked --target aarch64-apple-ios -- --print native-static-libs 2>&1 | Select-String "native-static-libs"
+      - name: Swift tests against the XCFramework
+        # Unpacked from the archive, as SwiftPM unpacks a binaryTarget's download: macOS tests, and builds for iOS and
+        # the iOS simulator.
+        working-directory: src-rs/corvus-json-schema-capi/tests/swift
+        run: |
+          ditto -x -k $env:CJS_XCFRAMEWORK .
+          swift test
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          # SwiftPM builds for iOS and the simulator from their SDKs (no Xcode scheme needed).
+          foreach ($platform in @(@("iphoneos", "arm64-apple-ios13.0"), @("iphonesimulator", "arm64-apple-ios13.0-simulator"))) {
+            $sdk = xcrun --sdk $platform[0] --show-sdk-path
+            swift build --sdk $sdk --triple $platform[1] --build-path ".build-$($platform[0])"
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+          }
+      - name: Upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: capi-xcframework
+          path: |
+            ${{ env.CJS_XCFRAMEWORK }}
+            ${{ env.CJS_XCFRAMEWORK }}.sha256
           if-no-files-found: error

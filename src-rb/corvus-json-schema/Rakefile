@@ -1,0 +1,47 @@
+# frozen_string_literal: true
+
+require "fileutils"
+require "rake/testtask"
+require "rb_sys/extensiontask"
+
+GEMSPEC = Gem::Specification.load("corvus_json_schema.gemspec")
+
+# The crate's published sources, copied beside the extension so that the source gem builds without this repository.
+# In the repository they are copied as the Rakefile loads: rb_sys reads the extension's Cargo metadata (which names the
+# copy) when the extension task is defined, before any task runs. From the source gem, the copy it holds is used.
+CRATE = File.expand_path("../../src-rs/corvus-json-schema", __dir__)
+VENDOR = File.expand_path("ext/corvus_json_schema/vendor/corvus-json-schema", __dir__)
+
+def vendor_crate
+  FileUtils.rm_rf(VENDOR)
+  FileUtils.mkdir_p(VENDOR)
+  %w[Cargo.toml README.md LICENSE].each { |f| FileUtils.cp(File.join(CRATE, f), VENDOR) }
+  FileUtils.cp_r(File.join(CRATE, "src"), VENDOR)
+end
+
+vendor_crate if Dir.exist?(CRATE)
+
+desc "Copy the corvus-json-schema crate into ext/corvus_json_schema/vendor (done whenever the Rakefile loads)"
+task :vendor do
+  raise "#{CRATE} not found: vendoring needs the Corvus.JsonSchema repository" unless Dir.exist?(CRATE)
+
+  vendor_crate
+end
+
+RbSys::ExtensionTask.new("corvus_json_schema", GEMSPEC) do |ext|
+  ext.lib_dir = "lib/corvus_json_schema"
+  ext.cross_compile = true
+  # A native gem holds the compiled extensions, not the sources that build them.
+  ext.cross_compiling do |spec|
+    spec.files.reject! { |f| f.start_with?("ext/", "Cargo.") }
+    spec.extensions.clear
+    spec.dependencies.reject! { |d| d.name == "rb_sys" }
+  end
+end
+
+Rake::TestTask.new(:test) do |t|
+  t.libs << "lib" << "test"
+  t.test_files = FileList["test/test_*.rb"]
+end
+
+task default: %i[compile test]

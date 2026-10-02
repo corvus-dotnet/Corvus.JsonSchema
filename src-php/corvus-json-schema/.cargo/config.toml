@@ -1,0 +1,8 @@
+# The extension does not link against PHP: PHP's symbols are resolved when PHP loads it. On macOS the linker must be
+# told so (Linux allows undefined symbols in a shared library by default).
+[target.'cfg(target_os = "macos")']
+rustflags = ["-C", "link-arg=-Wl,-undefined,dynamic_lookup"]
+
+# ext-php-rs links Windows extensions with rust-lld: the MSVC linker can be newer than the one PHP was built with.
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld"
