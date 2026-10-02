@@ -34,6 +34,10 @@ def test_json_text_is_parsed_in_rust() -> None:
     assert v.is_valid_json(b'{"name": ""}') is False
     with pytest.raises(ValueError, match="Invalid JSON"):
         v.is_valid_json("{")
+    with pytest.raises(ValueError, match="Invalid JSON"):
+        v.is_valid_json(b'{"name": "\xff"}')
+    with pytest.raises(TypeError):
+        v.is_valid_json(3)
 
 
 def test_large_objects_look_names_up_by_hash() -> None:

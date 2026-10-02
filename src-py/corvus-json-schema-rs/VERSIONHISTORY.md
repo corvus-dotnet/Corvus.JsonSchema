@@ -2,6 +2,16 @@
 
 The version history of `corvus-json-schema-rs`, the Python package backed by the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.1
+
+V0.1.1 takes version 0.1.2 of the `corvus-json-schema` crate, which validates faster, and parses JSON text faster. There are no API changes, and every result is unchanged.
+
+### Other changes
+
+- **Faster validation.** The crate's 0.1.2 release makes several patterns and small objects cheaper to evaluate. A lookahead pattern such as `^(?=[^!*,;{}[\]~\n]+$)(?=(.*\w)).+$` no longer rebuilds a character set for every character it tests, a pattern valid only without the `u` flag (such as `^\/[^\*\?\&\%]*(\/\*)?$`) no longer always runs on the backtracking engine, and objects with few declared properties cost less. On the sourcemeta jsonschema-benchmark corpora, cspell validates more than five times faster and krakend about 30% faster.
+
+- **`is_valid_json` parses into a `JsonDocument`.** JSON text is parsed into the crate's `JsonDocument`, read in place by the evaluator, instead of a `serde_json::Value`: about a quarter of the parsing time, and one allocation per document. Doubles are now correctly rounded (serde_json's parser could be one unit in the last place off). Invalid UTF-8 in `bytes` raises `ValueError` as other invalid JSON does.
+
 ## V0.1.0
 
 The first release.

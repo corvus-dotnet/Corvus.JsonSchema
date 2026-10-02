@@ -1,7 +1,8 @@
 //! Python bindings for the `corvus-json-schema` crate.
 //!
-//! A schema is compiled once by the Rust evaluator. Each instance is then converted from Python objects to a
-//! `serde_json::Value` (or parsed straight from JSON text) and evaluated in Rust. The Python layer
+//! A schema is compiled once by the Rust evaluator. Each instance is then evaluated in Rust: Python objects read in
+//! place through the crate's `Instance` trait (converted to a `serde_json::Value` only when they hold something the
+//! in-place reader does not), or JSON text parsed into a `JsonDocument`. The Python layer
 //! (`python/corvus_json_schema_rs/__init__.py`) gives the same API as the pure-Python `corvus_json_schema` package.
 
 use std::cell::Cell;
@@ -11,8 +12,8 @@ use std::ptr::addr_of_mut;
 use std::sync::Arc;
 
 use corvus_json_schema::{
-    ArrayView, CompileOptions, Dialect, DocumentResolver, FormatValidator, Instance, JsonSchemaResultsCollector, Kind,
-    ObjectView, ResultsLevel, SchemaResult, Validator, View,
+    ArrayView, CompileOptions, Dialect, DocumentResolver, FormatValidator, Instance, JsonDocument, JsonParseError,
+    JsonSchemaResultsCollector, Kind, ObjectView, ResultsLevel, SchemaResult, Validator, View,
 };
 use pyo3::create_exception;
 use pyo3::exceptions::{PyException, PyTypeError, PyValueError};
@@ -496,20 +497,23 @@ impl PyValidator {
         self.check_object(instance)
     }
 
-    /// Whether the JSON text (`str` or `bytes`) is valid against the schema. The text is parsed in Rust, so no Python
-    /// objects are created for the instance.
+    /// Whether the JSON text (`str` or `bytes`) is valid against the schema. The text is parsed in Rust into a
+    /// `JsonDocument` (with the GIL released), so no Python objects are created for the instance. Evaluation keeps the
+    /// GIL: custom format validators are Python callables.
     fn is_valid_json(&self, py: Python<'_>, text: &Bound<'_, PyAny>) -> PyResult<bool> {
-        let parsed: Result<Value, serde_json::Error> = if let Ok(s) = text.cast::<PyString>() {
+        let invalid = |e: JsonParseError| PyValueError::new_err(format!("Invalid JSON: {e}"));
+        // The document borrows the text, which `text` keeps alive (and `str` and `bytes` are immutable).
+        let document = if let Ok(s) = text.cast::<PyString>() {
             let s = s.to_str()?;
-            py.detach(|| serde_json::from_str(s))
+            py.detach(|| JsonDocument::parse(s)).map_err(invalid)?
         } else if let Ok(b) = text.cast::<PyBytes>() {
-            let b = b.as_bytes();
-            py.detach(|| serde_json::from_slice(b))
+            let s = std::str::from_utf8(b.as_bytes())
+                .map_err(|e| PyValueError::new_err(format!("Invalid JSON: not UTF-8 ({e})")))?;
+            py.detach(|| JsonDocument::parse(s)).map_err(invalid)?
         } else {
             return Err(PyTypeError::new_err("Expected JSON text as str or bytes."));
         };
-        let value = parsed.map_err(|e| PyValueError::new_err(format!("Invalid JSON: {e}")))?;
-        self.check(&value)
+        self.inner.validate_instance(document.root()).map_err(|e| SchemaEvaluationDepthError::new_err(e.to_string()))
     }
 
     /// Evaluates the instance, reporting results to the collector when one is given (every keyword is evaluated and
