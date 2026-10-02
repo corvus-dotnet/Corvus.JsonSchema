@@ -1,0 +1,28 @@
+[package]
+name = "corvus-json-schema-capi"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "The C library (and its C++ wrapper) over the corvus-json-schema crate."
+license = "Apache-2.0"
+repository = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
+# Released as libraries and headers on GitHub (DESIGN.md), not on crates.io.
+publish = false
+
+[lib]
+# libcorvus_json_schema (.so/.dylib), corvus_json_schema.dll, and the static library; the rlib lets `cargo test` call
+# the C functions directly.
+name = "corvus_json_schema"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+# Renamed: the C library is itself `corvus_json_schema`, and its tests use both.
+corvus = { package = "corvus-json-schema", path = "../corvus-json-schema", version = "0.1.2" }
+serde_json = { version = "1.0.151", features = ["preserve_order", "float_roundtrip"] }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+# Panics unwind (the crate's own release profile aborts), so that every C function can catch them and report
+# CJS_PANIC rather than abort the caller's process.
+panic = "unwind"
