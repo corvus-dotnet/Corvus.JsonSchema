@@ -147,13 +147,20 @@ fields without breaking the ABI.
 
 `corvus_json_schema.hpp`, header-only, C++17, namespace `corvus::json_schema`:
 
-- `validator` (copy is `cjs_validator_clone`, move transfers), `options` (a builder), `document`, `collector`, each
-  owning its handle (RAII).
+- **Ownership.** Each class holds its handle in a `std::unique_ptr` with a deleter that calls the handle's `_free`
+  function, so destruction, moves and exception safety follow from the rule of zero. Copying is each class's
+  choice: a `validator` copies with `cjs_validator_clone` (cheap: the compiled program is shared), so it behaves as a
+  value; `document`, `collector` and `options` are move-only. Not `std::shared_ptr`: the library already counts the
+  references to a validator's program, and a second count would add a control block for nothing.
+- `native_handle()` returns the borrowed handle for calls into the C API, and `release()` hands ownership over, as
+  `std::unique_ptr` does.
 - Inputs as `std::string_view`; outputs as `std::string_view` (views with the C lifetimes above).
+  `document::parse` copies the text; `document::parse_borrowed` does not, and its text must outlive the document.
 - Errors as exceptions: `corvus::json_schema::error`, with the `cjs_status`, the message and the offset.
   `validator::try_validate(...)` returns the status instead, for code built without exceptions.
-- Format validators and resolvers as `std::function`, kept alive through `user_data` and freed by `free_user_data`;
-  the trampolines catch exceptions (a throwing format validator reports invalid, a throwing resolver fails the
+- Format validators and resolvers as `std::function`, allocated into a `std::unique_ptr` and released into
+  `user_data`; a static `free_user_data` trampoline deletes it, so the library owns it and frees it with the last
+  validator that uses it. The trampolines catch exceptions (a throwing format validator reports invalid, a throwing resolver fails the
   compilation with its message).
 
 A later addition, not in the first version: validating a C++ DOM the caller already holds (nlohmann::json,
@@ -203,9 +210,9 @@ parsed.
   that reads the language's own values in place, as the Python binding does: through a C library they would have to
   serialise every value first, or pay a callback per value.
 
-## Open questions
+## Decisions
 
-1. The `cjs_` prefix and the library name `corvus_json_schema`.
-2. Minimum standards: C99 for the header, C++17 for the wrapper.
-3. Platforms for the first release (the list above, or fewer to start).
-4. Whether the first release includes the CMake/pkg-config packaging, or only the libraries and headers.
+1. The prefix is `cjs_` and the library `corvus_json_schema`.
+2. The header is C99 and the wrapper C++17.
+3. The first release covers all the platforms listed under Distribution.
+4. The first release includes the CMake package configuration and the pkg-config file.
