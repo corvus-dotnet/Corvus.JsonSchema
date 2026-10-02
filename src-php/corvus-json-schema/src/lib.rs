@@ -883,7 +883,10 @@ pub fn crate_version() -> &'static str {
 
 #[php_module]
 pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
+    // The extension's name (as `extension_loaded`, `phpversion` and PIE know it) and version, rather than the crate's.
     module
+        .name("corvus_json_schema")
+        .version(env!("CARGO_PKG_VERSION"))
         .class::<JsonSchemaException>()
         .class::<CompilationException>()
         .class::<DepthException>()

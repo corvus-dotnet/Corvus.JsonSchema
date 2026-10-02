@@ -156,6 +156,8 @@ check('default collector level: no failures recorded', [], (function () use ($pe
     return array_filter($basic->results(), fn ($r) => !$r['isMatch']);
 })());
 check('crate_version', 1, preg_match('/^\d+\.\d+\.\d+$/', Corvus\JsonSchema\crate_version()));
+check('the extension\'s name', true, extension_loaded('corvus_json_schema'));
+check('the extension\'s version', 1, preg_match('/^\d+\.\d+\.\d+$/', (string) phpversion('corvus_json_schema')));
 
 if ($failures) {
     fwrite(STDERR, count($failures) . " of $checks checks failed:\n" . implode("\n", $failures) . "\n");
