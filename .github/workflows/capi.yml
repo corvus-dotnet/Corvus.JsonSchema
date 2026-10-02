@@ -154,7 +154,8 @@ jobs:
         if: matrix.glibc
         run: |
           # The newest glibc symbol version the shared library needs.
-          $versions = objdump -T (Join-Path $env:CJS_PACKAGE "lib" "libcorvus_json_schema.so") | Select-String -AllMatches "GLIBC_([0-9.]+)" | ForEach-Object { $_.Matches.Groups[1].Value } | Sort-Object { [version]$_ } -Unique
+          # An array (@(...)): with one version (all of aarch64's are 2.17) it would be a string, and [-1] its last character.
+          $versions = @(objdump -T (Join-Path $env:CJS_PACKAGE "lib" "libcorvus_json_schema.so") | Select-String -AllMatches "GLIBC_([0-9.]+)" | ForEach-Object { $_.Matches.Groups[1].Value } | Sort-Object { [version]$_ } -Unique)
           $newest = $versions[-1]
           "newest: GLIBC_$newest"
           if ([version]$newest -gt [version]"${{ matrix.glibc }}") { Write-Error "needs GLIBC_$newest, above ${{ matrix.glibc }}"; exit 1 }
@@ -163,8 +164,9 @@ jobs:
         run: |
           $env:PKG_CONFIG_PATH = Join-Path $env:CJS_PACKAGE "lib" "pkgconfig"
           # pkg-config's output ends with a space: split on whitespace, without empty arguments.
-          $cflags = "$(pkg-config --cflags corvus-json-schema)" -split "\s+" | Where-Object { $_ }
-          $libs = "$(pkg-config --libs corvus-json-schema)" -split "\s+" | Where-Object { $_ }
+          # Arrays (@(...)): a single flag would otherwise be a string, which splatting passes character by character.
+          $cflags = @("$(pkg-config --cflags corvus-json-schema)" -split "\s+" | Where-Object { $_ })
+          $libs = @("$(pkg-config --libs corvus-json-schema)" -split "\s+" | Where-Object { $_ })
           cc -std=c99 -Wall -Werror tests/native/smoke.c @cflags @libs "-Wl,-rpath,$env:CJS_PACKAGE/lib" -o smoke-pkgconfig
           if ($LASTEXITCODE -ne 0) { exit 1 }
           ./smoke-pkgconfig

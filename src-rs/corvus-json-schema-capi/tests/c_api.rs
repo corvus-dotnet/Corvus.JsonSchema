@@ -318,7 +318,10 @@ fn errors_carry_a_status_message_and_offset() {
     assert_eq!(status, CJS_COMPILATION_FAILED);
     assert!(message.contains("missing.json"), "{message}");
 
-    let looping = compile(r##"{"$defs": {"a": {"$ref": "#/$defs/a"}}, "$ref": "#/$defs/a"}"##, None).unwrap();
+    // A small depth: a debug build's frames at the default depth overflow a test thread's stack.
+    let shallow = Options::new();
+    assert_eq!(unsafe { cjs_options_set_max_depth(shallow.0, 16) }, CJS_OK);
+    let looping = compile(r##"{"$defs": {"a": {"$ref": "#/$defs/a"}}, "$ref": "#/$defs/a"}"##, Some(&shallow)).unwrap();
     assert_eq!(validate(&looping, "1").unwrap_err().0, CJS_DEPTH_EXCEEDED);
 
     let options = Options::new();

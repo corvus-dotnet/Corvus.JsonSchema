@@ -99,7 +99,8 @@ try {
     $printed = Invoke-Native "cargo" (@("rustc", "--lib", "--crate-type", "staticlib") + $cargoArgs + @("--", "--print", "native-static-libs"))
     $line = $printed | Where-Object { "$_" -match "native-static-libs: " } | Select-Object -Last 1
     if (-not $line) { throw "rustc did not print the native static libraries" }
-    $nativeLibs = ("$line" -replace "^.*native-static-libs: ", "").Trim() -split "\s+" | Where-Object { $_ }
+    # An array (@(...)): a single library would otherwise be a string, indexed by character below.
+    $nativeLibs = @(("$line" -replace "^.*native-static-libs: ", "").Trim() -split "\s+" | Where-Object { $_ })
 
     # CMake wants library names (and frameworks as "-framework X"); pkg-config wants linker flags.
     $cmakeLibs = [System.Collections.Generic.List[string]]::new()

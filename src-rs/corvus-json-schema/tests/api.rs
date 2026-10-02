@@ -381,7 +381,11 @@ fn validates_json_text() {
         panic!("expected invalid JSON")
     };
     assert_eq!(e.offset(), 5);
-    let looping = compile(&json!({ "$defs": { "a": { "$ref": "#/$defs/a" } }, "$ref": "#/$defs/a" })).unwrap();
+    // A small depth, as in in_place_recursion_beyond_max_depth_is_an_error: a debug build's frames at the default
+    // depth overflow a test thread's stack.
+    let options = CompileOptions { max_depth: 16, ..CompileOptions::default() };
+    let looping =
+        compile_with(&json!({ "$defs": { "a": { "$ref": "#/$defs/a" } }, "$ref": "#/$defs/a" }), &options).unwrap();
     assert!(matches!(looping.validate_json("1"), Err(corvus_json_schema::JsonValidationError::DepthExceeded(_))));
     let mut c = JsonSchemaResultsCollector::new(ResultsLevel::Detailed);
     assert_eq!(v.evaluate_json("[\"x\"]", &mut c), Ok(false));
