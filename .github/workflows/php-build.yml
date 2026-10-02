@@ -1,0 +1,264 @@
+name: php-build
+# Builds and tests the corvus_json_schema PHP extension, and packages each build as the archive PIE downloads from a
+# release (php_corvus_json_schema-<version>_php<X.Y>-<arch>-<os>-<libc>[-zts].zip, or the Windows form), uploaded as an
+# artifact named php-<archive name>. Called by php.yml (CI, a representative subset) and php-publish.yml (release,
+# every build), so a release attaches exactly what was built and tested here.
+#
+# Every build is for one PHP minor version and thread-safety mode, on its own platform:
+#   Linux glibc  setup-php's PHP; the extension is linked by zig against glibc 2.17's symbols (package.ps1 -Glibc), so
+#                it loads on any distribution with glibc 2.17 or newer
+#   Linux musl   the official php:<X.Y>-cli-alpine and php:<X.Y>-zts-alpine images (run with docker: JavaScript actions
+#                do not run in Alpine containers on arm64)
+#   macOS        setup-php's PHP (Homebrew)
+#   Windows      setup-php's PHP (windows.php.net); ext-php-rs needs a nightly Rust there, for PHP's vectorcall
+on:
+  workflow_call:
+    inputs:
+      full:
+        description: Build every PHP version, thread-safety mode and platform (otherwise a representative subset).
+        type: boolean
+        default: false
+      version:
+        description: The version in the archives' names (default, the version in Cargo.toml).
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  RUST_TOOLCHAIN: '1.98.0'
+  # ext-php-rs needs nightly Rust on Windows (abi_vectorcall).
+  RUST_NIGHTLY: 'nightly-2026-09-28'
+
+jobs:
+  matrix:
+    name: Builds
+    runs-on: ubuntu-latest
+    outputs:
+      unix: ${{ steps.matrix.outputs.unix }}
+      alpine: ${{ steps.matrix.outputs.alpine }}
+      windows: ${{ steps.matrix.outputs.windows }}
+    steps:
+      - name: Choose the builds
+        id: matrix
+        env:
+          FULL: ${{ inputs.full }}
+        shell: python
+        run: |
+          import itertools, json, os
+          php = ["8.2", "8.3", "8.4", "8.5"]
+          ts = ["nts", "ts"]
+          unix_platforms = [
+              {"name": "linux x86_64", "os": "ubuntu-latest", "glibc": "2.17"},
+              {"name": "linux arm64", "os": "ubuntu-24.04-arm", "glibc": "2.17"},
+              {"name": "macos arm64", "os": "macos-latest", "glibc": ""},
+              {"name": "macos x86_64", "os": "macos-15-intel", "glibc": ""},
+          ]
+          alpine_platforms = [
+              {"name": "linux x86_64 musl", "os": "ubuntu-latest"},
+              {"name": "linux arm64 musl", "os": "ubuntu-24.04-arm"},
+          ]
+          windows_platforms = [{"name": "windows x86_64", "os": "windows-latest"}]
+          def grid(platforms):
+              return [dict(p, php=v, ts=t) for p, v, t in itertools.product(platforms, php, ts)]
+          if os.environ["FULL"] == "true":
+              unix, alpine, windows = grid(unix_platforms), grid(alpine_platforms), grid(windows_platforms)
+          else:
+              # The oldest and newest PHP, both thread-safety modes, on the main platform; one build elsewhere.
+              unix = [dict(unix_platforms[0], php="8.2", ts="nts"), dict(unix_platforms[0], php="8.5", ts="ts"),
+                      dict(unix_platforms[2], php="8.5", ts="nts")]
+              alpine = [dict(alpine_platforms[0], php="8.5", ts="nts")]
+              windows = [dict(windows_platforms[0], php="8.2", ts="nts"), dict(windows_platforms[0], php="8.5", ts="ts")]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              for key, value in (("unix", unix), ("alpine", alpine), ("windows", windows)):
+                  out.write(f"{key}={json.dumps({'include': value})}\n")
+
+  unix:
+    name: corvus_json_schema (${{ matrix.name }}, PHP ${{ matrix.php }} ${{ matrix.ts }})
+    needs: matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.matrix.outputs.unix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          sparse-checkout: |
+            src-php
+            src-rs/corvus-json-schema
+            JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: none
+        env:
+          phpts: ${{ matrix.ts }}
+      - name: Setup Zig
+        if: matrix.glibc != ''
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.16.0
+      - name: Toolchain
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal
+          rustup default "$RUST_TOOLCHAIN"
+      - name: Build and package
+        id: package
+        working-directory: src-php/corvus-json-schema
+        shell: pwsh
+        env:
+          GLIBC: ${{ matrix.glibc }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          $archive = ./package.ps1 -Glibc $env:GLIBC -Version $env:VERSION -OutDir ../../dist | Select-Object -Last 1
+          "archive=$archive" >> $env:GITHUB_OUTPUT
+          "name=$([System.IO.Path]::GetFileNameWithoutExtension($archive))" >> $env:GITHUB_OUTPUT
+      - name: Test the packaged extension
+        working-directory: src-php/corvus-json-schema
+        env:
+          ARCHIVE: ${{ steps.package.outputs.archive }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/ext" && unzip -o -q "$ARCHIVE" -d "$RUNNER_TEMP/ext"
+          ext="$RUNNER_TEMP/ext/corvus_json_schema.so"
+          php -d "extension=$ext" -r 'echo PHP_VERSION, PHP_ZTS ? " ZTS" : " NTS", ": corvus-json-schema ", Corvus\JsonSchema\crate_version(), "\n";'
+          if [ "$RUNNER_OS" = Linux ]; then
+            echo "Needs: $(objdump -T "$ext" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)"
+          fi
+          php -d "extension=$ext" tests/api.php
+          php -d "extension=$ext" tests/suite.php
+      - name: Upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: php-${{ steps.package.outputs.name }}
+          path: ${{ steps.package.outputs.archive }}
+          if-no-files-found: error
+
+  alpine:
+    name: corvus_json_schema (${{ matrix.name }}, PHP ${{ matrix.php }} ${{ matrix.ts }})
+    needs: matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.matrix.outputs.alpine) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          sparse-checkout: |
+            src-php
+            src-rs/corvus-json-schema
+            JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Build, test and package
+        id: package
+        env:
+          IMAGE: php:${{ matrix.php }}-${{ matrix.ts == 'ts' && 'zts' || 'cli' }}-alpine
+          VERSION: ${{ inputs.version }}
+        # The archive is named as package.ps1 names it (PowerShell has no build for musl on arm64).
+        run: |
+          mkdir -p dist
+          docker run --rm -v "$PWD:/w" -w /w/src-php/corvus-json-schema -e VERSION -e "UID=$(id -u)" -e "GID=$(id -g)" \
+            -e RUST_TOOLCHAIN "$IMAGE" sh -euc '
+              apk add --no-cache build-base clang-dev curl zip >/dev/null
+              curl -sSf https://sh.rustup.rs | sh -s -- -y -q --profile minimal --default-toolchain "$RUST_TOOLCHAIN"
+              . "$HOME/.cargo/env"
+              RUSTFLAGS="-C target-feature=-crt-static" cargo build --release --locked
+              ext=target/release/libcorvus_json_schema.so
+              php -d "extension=$PWD/$ext" -r "echo PHP_VERSION, PHP_ZTS ? \" ZTS\" : \" NTS\", PHP_EOL;"
+              php -d "extension=$PWD/$ext" tests/api.php
+              php -d "extension=$PWD/$ext" tests/suite.php
+              version=${VERSION:-$(sed -n "s/^version = \"\(.*\)\"$/\1/p" Cargo.toml | head -n 1)}
+              arch=$(uname -m | sed "s/aarch64/arm64/")
+              zts=$(php -r "echo PHP_ZTS ? \"-zts\" : \"\";")
+              name="php_corvus_json_schema-${version}_php$(php -r "echo PHP_MAJOR_VERSION, \".\", PHP_MINOR_VERSION;")-$arch-linux-musl$zts"
+              mkdir -p /tmp/stage && cp "$ext" /tmp/stage/corvus_json_schema.so
+              (cd /tmp/stage && zip -q "/w/dist/$name.zip" corvus_json_schema.so)
+              chown -R "$UID:$GID" /w/dist target
+              echo "$name" > /w/dist/name.txt
+            '
+          name=$(cat dist/name.txt)
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "archive=dist/$name.zip" >> "$GITHUB_OUTPUT"
+      - name: Upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: php-${{ steps.package.outputs.name }}
+          path: ${{ steps.package.outputs.archive }}
+          if-no-files-found: error
+
+  windows:
+    name: corvus_json_schema (${{ matrix.name }}, PHP ${{ matrix.php }} ${{ matrix.ts }})
+    needs: matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.matrix.outputs.windows) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          # Only what the extension needs (the repository's generated benchmark models have paths too long for
+          # Windows).
+          sparse-checkout: |
+            src-php
+            src-rs/corvus-json-schema
+            JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: none
+        env:
+          phpts: ${{ matrix.ts }}
+      - name: Toolchain
+        shell: bash
+        run: |
+          rustup toolchain install "$RUST_NIGHTLY" --profile minimal
+          rustup default "$RUST_NIGHTLY"
+          # bindgen's libclang: the runner's LLVM.
+          echo "LIBCLANG_PATH=C:\\Program Files\\LLVM\\bin" >> "$GITHUB_ENV"
+      - name: Build and package
+        id: package
+        working-directory: src-php/corvus-json-schema
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          $archive = ./package.ps1 -Version $env:VERSION -OutDir ../../dist | Select-Object -Last 1
+          "archive=$archive" >> $env:GITHUB_OUTPUT
+          "name=$([System.IO.Path]::GetFileNameWithoutExtension($archive))" >> $env:GITHUB_OUTPUT
+      - name: Test the packaged extension
+        working-directory: src-php/corvus-json-schema
+        shell: pwsh
+        env:
+          ARCHIVE: ${{ steps.package.outputs.archive }}
+          NAME: ${{ steps.package.outputs.name }}
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP "ext"
+          Expand-Archive -Force $env:ARCHIVE $dir
+          $ext = Join-Path $dir "$env:NAME.dll"
+          php -d "extension=$ext" -r 'echo PHP_VERSION, PHP_ZTS ? " ZTS" : " NTS", ": corvus-json-schema ", Corvus\JsonSchema\crate_version(), "\n";'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          php -d "extension=$ext" tests/api.php
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          php -d "extension=$ext" tests/suite.php
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: php-${{ steps.package.outputs.name }}
+          path: ${{ steps.package.outputs.archive }}
+          if-no-files-found: error

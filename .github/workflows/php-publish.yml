@@ -1,0 +1,191 @@
+name: php-publish
+# Publishes the corvus_json_schema PHP extension (src-php/corvus-json-schema) when the version in its Cargo.toml has no
+# release yet, then tags this repository's commit php-v<version>. To release, bump "version" in Cargo.toml (and add
+# the version to its VERSIONHISTORY.md) and merge. A merged pull request labelled no_release publishes nothing
+# (.github/actions/no-release-label).
+#
+# Packagist reads a package from the root of a repository, and its versions from that repository's tags, so the
+# extension is published through a repository of its own, corvus-dotnet/corvus-json-schema-php, which holds only what
+# this workflow pushes there:
+#   1. the contents of src-php/corvus-json-schema (composer.json at the root), with the corvus-json-schema crate taken
+#      from crates.io instead of by path, committed and tagged <version>;
+#   2. a release for that tag, holding every build of the extension (built and tested by php-build.yml, which every
+#      pull request that touches src-php runs a subset of through php.yml), named as PIE looks for them.
+# Packagist updates from that repository's tags (its GitHub hook), and `pie install corvus-dotnet/corvus-json-schema`
+# downloads the build for the PHP it installs into.
+#
+# Writing to the other repository takes a token: the PHP_REPOSITORY_TOKEN secret of the "php" environment, a
+# fine-grained personal access token for that repository alone, with Contents read and write. A run that fails part
+# of the way can be run again: it skips what is already there (docs/ReleaseProcess.md).
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. The php-v
+# tag is pushed with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-php/corvus-json-schema/Cargo.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: php-publish
+  cancel-in-progress: false
+
+env:
+  PHP_REPOSITORY: corvus-dotnet/corvus-json-schema-php
+
+jobs:
+  version:
+    name: Version to publish
+    permissions:
+      contents: read
+      pull-requests: read  # the merged pull request's labels (no_release)
+    # A manual run from another branch must not publish that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: |
+            src-php
+            .github/actions
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
+      - name: Check whether this version has a release
+        id: check
+        # A merged pull request labelled no_release publishes nothing (the build and publish jobs need this output).
+        if: steps.label.outputs.no-release != 'true'
+        working-directory: src-php/corvus-json-schema
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No version in Cargo.toml."
+            exit 1
+          fi
+          grep -q "^## V$version$" VERSIONHISTORY.md || { echo "::error::VERSIONHISTORY.md has no V$version section."; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # The published repository takes the crate from crates.io: the version the extension builds with must be
+          # there.
+          crate=$(sed -n 's/^corvus = .*version = "\([^"]*\)".*$/\1/p' Cargo.toml)
+          status=$(curl -s -o /dev/null -w '%{http_code}' -A 'corvus-dotnet/Corvus.JsonSchema php-publish' \
+            "https://crates.io/api/v1/crates/corvus-json-schema/$crate")
+          if [ "$status" != 200 ]; then
+            echo "::error::The extension needs corvus-json-schema $crate, which crates.io does not have ($status): release the crate first."
+            exit 1
+          fi
+          if ! gh api "repos/$PHP_REPOSITORY" --silent; then
+            echo "::error::$PHP_REPOSITORY is not there (docs/ReleaseProcess.md)."
+            exit 1
+          fi
+          if gh api "repos/$PHP_REPOSITORY/releases/tags/$version" --silent 2>/dev/null; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::$PHP_REPOSITORY already has a release for $version; nothing to publish."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    uses: ./.github/workflows/php-build.yml
+    with:
+      full: true
+      version: ${{ needs.version.outputs.version }}
+
+  publish:
+    name: Publish corvus_json_schema
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    environment:
+      name: php
+      url: https://github.com/${{ env.PHP_REPOSITORY }}/releases/tag/${{ needs.version.outputs.version }}
+    permissions:
+      contents: write  # push the php-v<version> tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: src-php
+      - name: Download the builds
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: php-*
+          path: dist
+          merge-multiple: true
+      - name: Check the builds
+        # 4 PHP versions x 2 thread-safety modes x 7 platforms, all of this version.
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          ls -l dist
+          [ "$(ls dist/php_corvus_json_schema-"$VERSION"[-_]*.zip | wc -l)" -eq 56 ]
+      - name: Push the release's sources
+        env:
+          TOKEN: ${{ secrets.PHP_REPOSITORY_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          git clone --quiet "https://x-access-token:$TOKEN@github.com/$PHP_REPOSITORY.git" published
+          cd published
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null; then
+            echo "::notice::$PHP_REPOSITORY already has the tag $VERSION."
+            exit 0
+          fi
+          # Everything but the history is replaced by the extension's sources.
+          git rm -r -q --ignore-unmatch .
+          (cd ../src-php/corvus-json-schema && git ls-files -z | xargs -0 cp --parents -t ../../published)
+          crate=$(sed -n 's/^corvus = .*version = "\([^"]*\)".*$/\1/p' Cargo.toml)
+          sed -i 's|^corvus = .*$|corvus = { package = "corvus-json-schema", version = "'"$crate"'" }|' Cargo.toml
+          grep -q '^corvus = { package = "corvus-json-schema", version = ' Cargo.toml
+          # The lock file's entry for the crate moves from the path to crates.io (the same version, with its checksum;
+          # resolving changes nothing else).
+          cargo metadata --format-version 1 > /dev/null
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet -m "corvus_json_schema $VERSION" \
+            -m "From corvus-dotnet/Corvus.JsonSchema@$GITHUB_SHA (src-php/corvus-json-schema)."
+          git tag "$VERSION"
+          git push --quiet origin HEAD "refs/tags/$VERSION"
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.PHP_REPOSITORY_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          # The version's entry in VERSIONHISTORY.md, as the release notes.
+          awk -v v="## V$VERSION" '$0 == v { on = 1; next } on && /^## / { exit } on' \
+            src-php/corvus-json-schema/VERSIONHISTORY.md > notes.md
+          if ! gh release view "$VERSION" -R "$PHP_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$VERSION" -R "$PHP_REPOSITORY" --verify-tag --title "corvus_json_schema $VERSION" \
+              --notes-file notes.md
+          fi
+          gh release upload "$VERSION" -R "$PHP_REPOSITORY" --clobber dist/*.zip
+          {
+            echo "### corvus_json_schema $VERSION is published"
+            echo
+            echo "https://github.com/$PHP_REPOSITORY/releases/tag/$VERSION"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: php-v${{ needs.version.outputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "::notice::$TAG already exists."
+          else
+            gh api "repos/${{ github.repository }}/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA"
+          fi

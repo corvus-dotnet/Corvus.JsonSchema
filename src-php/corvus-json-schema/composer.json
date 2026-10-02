@@ -1,0 +1,25 @@
+{
+    "name": "corvus-dotnet/corvus-json-schema",
+    "description": "A high-performance JSON Schema evaluator (draft 4, 6, 7, 2019-09 and 2020-12) as a PHP extension, backed by Rust.",
+    "type": "php-ext",
+    "license": "Apache-2.0",
+    "keywords": ["json", "json-schema", "validation", "validator", "extension"],
+    "homepage": "https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-php/corvus-json-schema",
+    "support": {
+        "issues": "https://github.com/corvus-dotnet/Corvus.JsonSchema/issues",
+        "source": "https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-php/corvus-json-schema"
+    },
+    "authors": [
+        {
+            "name": "endjin",
+            "homepage": "https://endjin.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2"
+    },
+    "php-ext": {
+        "extension-name": "corvus_json_schema",
+        "download-url-method": ["pre-packaged-binary"]
+    }
+}
