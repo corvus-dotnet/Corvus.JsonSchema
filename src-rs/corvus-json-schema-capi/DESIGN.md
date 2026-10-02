@@ -201,7 +201,11 @@ parsed.
   suits whatever runtime its caller uses. They also hold `corvus_json_schema_mt.lib`, the static library built for
   the static runtime (`/MT`), as the CMake target `corvus_json_schema::corvus_json_schema_static_mt`. Debug runtimes
   (`/MDd`, `/MTd`) link with the matching release library, with a `LNK4098` warning.
-- vcpkg and Conan ports later. Swift gets an XCFramework from the macOS build.
+- An XCFramework (`xcframework.ps1`, on macOS) holds the static library for macOS (arm64 and x86_64), iOS (arm64) and
+  the iOS simulator (arm64 and x86_64), with the header and a module map declaring the Clang module
+  `CCorvusJsonSchema`. It is attached to each release as `CorvusJsonSchema.xcframework.zip`, with its SwiftPM checksum,
+  for a Swift package's `binaryTarget`.
+- vcpkg and Conan ports later.
 
 ## Testing
 
@@ -218,8 +222,9 @@ parsed.
 
 ## Other languages
 
-- **Swift** uses this library: a SwiftPM package with a binary target (an XCFramework for Apple platforms; Linux to
-  be decided once the package layout is known), and a Swift API over it.
+- **Swift** uses this library: a SwiftPM package (`corvus-dotnet/corvus-json-schema-swift`) with a Swift API over the
+  Clang module `CCorvusJsonSchema`, which is the release's XCFramework on Apple platforms and, on Linux, a system
+  library found through this package's pkg-config file.
 - **Ruby and PHP** bind the crate directly from Rust (magnus, ext-php-rs), each with an `Instance` implementation
   that reads the language's own values in place, as the Python binding does: through a C library they would have to
   serialise every value first, or pay a callback per value.

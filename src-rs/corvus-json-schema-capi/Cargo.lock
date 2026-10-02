@@ -22,7 +22,7 @@ dependencies = [
 
 [[package]]
 name = "corvus-json-schema-capi"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "corvus-json-schema",
  "serde_json",

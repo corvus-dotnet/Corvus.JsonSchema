@@ -87,10 +87,11 @@ jobs:
           path: packages
           merge-multiple: true
       - name: Check the packages
-        # One per platform.
+        # One per platform, and the XCFramework with its checksum.
         run: |
           ls -l packages
-          [ "$(ls packages | wc -l)" -eq 7 ]
+          [ "$(ls packages | wc -l)" -eq 9 ]
+          [ -f packages/CorvusJsonSchema.xcframework.zip ] && [ -f packages/CorvusJsonSchema.xcframework.zip.sha256 ]
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -100,4 +101,4 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "corvus-json-schema C library $VERSION" \
-            --notes "The corvus-json-schema C library and its C++ wrapper, version $VERSION: headers, shared and static libraries, a CMake package and a pkg-config file for each platform. See src-rs/corvus-json-schema-capi/VERSIONHISTORY.md and DESIGN.md."
+            --notes "The corvus-json-schema C library and its C++ wrapper, version $VERSION: headers, shared and static libraries, a CMake package and a pkg-config file for each platform, and CorvusJsonSchema.xcframework.zip (static libraries for macOS, iOS and the iOS simulator, for a Swift package's binaryTarget; SwiftPM checksum $(cat packages/CorvusJsonSchema.xcframework.zip.sha256)). See src-rs/corvus-json-schema-capi/VERSIONHISTORY.md and DESIGN.md."

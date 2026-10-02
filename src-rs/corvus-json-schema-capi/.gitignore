@@ -1,3 +1,6 @@
 target/
 build/
 dist/
+tests/swift/.build/
+tests/swift/CorvusJsonSchema.xcframework/
+tests/swift/Package.resolved

@@ -2,6 +2,14 @@
 
 The version history of the corvus-json-schema C library and its C++ wrapper (`src-rs/corvus-json-schema-capi`), released on GitHub as `capi-v<version>`. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md), and of the Rust crate it wraps.
 
+## V0.1.1
+
+V0.1.1 adds an XCFramework for Swift. The library is unchanged.
+
+### New features
+
+- **An XCFramework for Swift packages.** Each release now also carries `CorvusJsonSchema.xcframework.zip`: the static library for macOS (arm64 and x86_64, 10.15 or later), iOS (arm64, 13 or later) and the iOS simulator (arm64 and x86_64), with the header and a module map declaring the Clang module `CCorvusJsonSchema`, for a Swift package's `binaryTarget`. The release notes give its SwiftPM checksum, and `CorvusJsonSchema.xcframework.zip.sha256` holds it. CI tests it from Swift on macOS and builds it for iOS and the simulator.
+
 ## V0.1.0
 
 The first release.

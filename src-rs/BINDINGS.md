@@ -60,18 +60,20 @@ package from a repository's root): its sources stay here, and each release is pu
 
 ## Swift (repository `corvus-dotnet/corvus-json-schema-swift`)
 
-- **Shape:** a SwiftPM package (module `CorvusJsonSchema`) over the C library: a binary target, the XCFramework built
-  from the C library for macOS, iOS and the iOS simulator, attached to each `capi-v<version>` release, and Swift
-  sources wrapping it. Linux uses the C library's static package (a system library target, or an artifact bundle
-  once the minimum Swift version supports them).
-- **API:** `let validator = try Validator(schema: String, options: Options = .init())`; `validator.isValid(json:)`
-  for `String` and `Data` (the main path, JSON text validated in place), `validator.isValid(_ document: Document)`,
-  `validator.evaluate(json:collector:)`; `Collector(level:)` with `results` and `annotations`. Errors are a Swift
-  `Error` enum mirroring `cjs_status`. Classes own their handles and free them in `deinit`; a `Validator` is
-  `Sendable` (the C validator is thread-safe).
-- **Release:** this repository's capi-publish job builds the XCFramework and attaches it with its checksum; the Swift
-  repository's `Package.swift` names that URL and checksum, updated (by a pull request) for each release, and tagged
-  with the C library's version.
+- **Shape:** a SwiftPM package (module `CorvusJsonSchema`) over the C library's Clang module `CCorvusJsonSchema`: on
+  Apple platforms a binary target, the XCFramework built from the C library for macOS, iOS and the iOS simulator and
+  attached to each `capi-v<version>` release; on Linux a system library target, the C library's release package found
+  through its pkg-config file (at the minimum Swift version, 5.9, SwiftPM's binary targets serve libraries only on
+  Apple platforms).
+- **API:** `let validator = try Validator(schema: String, options: Options = .init())` (or `Data`, or
+  `Validator(schemaURI:options:)`); `validator.isValid(json:)` for `String` and `Data` (the main path, JSON text
+  validated in place), `validator.isValid(_ document: Document)`, `validator.evaluate(json:collector:)`;
+  `Collector(level:)` with `results` and `annotationsJSON()`. Errors are the `JSONSchemaError` enum, mirroring
+  `cjs_status`, with the message and byte offset. Classes own their handles and free them in `deinit`; `Validator`
+  and `Document` are `Sendable` (the C validator and document are thread-safe).
+- **Release:** the C library's publish job builds the XCFramework and attaches it with its SwiftPM checksum; the Swift
+  repository's `Package.swift` names that URL and checksum, updated when it moves to a new C library release, and
+  the Swift package is versioned and tagged on its own.
 
 ## Benchmarks
 
