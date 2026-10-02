@@ -61,7 +61,7 @@ runs:
           build "$count changed files: building."
         fi
         # Paths the .NET build does not read. Anything else (shared files, docs, workflows other than these) builds.
-        others=$(printf '%s\n' "$files" | grep -v -E '^(src-py|src-rs|src-ts|src-rb|src-php)/|^\.github/workflows/(python|python-wheels|rust|typescript|capi|capi-publish|ruby|rubygems-publish|php|php-publish|pypi-publish|crates-publish|npm-publish)\.yml$' || true)
+        others=$(printf '%s\n' "$files" | grep -v -E '^(src-py|src-rs|src-ts|src-rb|src-php)/|^\.github/workflows/(python|python-wheels|rust|typescript|capi|capi-publish|ruby|rubygems-build|rubygems-publish|php|php-build|php-publish|pypi-publish|crates-publish|npm-publish)\.yml$' || true)
         if [ -n "$others" ]; then
           printf 'Changes the .NET build reads:\n%s\n' "$others" | head -n 20 || true
           build "Building."
