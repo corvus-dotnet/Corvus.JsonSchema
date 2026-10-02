@@ -63,7 +63,8 @@ jobs:
         run: |
           cmp ../../LICENSE LICENSE
           gem build corvus_json_schema.gemspec
-          gem install --local corvus_json_schema-*.gem
+          # The local gem, with its build dependency (rb_sys) from RubyGems.
+          gem install corvus_json_schema-*.gem
           cd /tmp
           ruby -rcorvus_json_schema -e 'raise "wrong" unless CorvusJsonSchema.compile({"type" => "integer"}).valid?(3)
                                         puts CorvusJsonSchema.crate_version'
