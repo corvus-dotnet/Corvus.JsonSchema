@@ -21,7 +21,7 @@ use std::sync::Arc;
 
 use serde_json::Value;
 
-use super::{Child, Evaluator, NO_CHILD, Names, ObjectPlan, Program, Visit};
+use super::{Child, Evaluator, LOOKUP_NAMES, NO_CHILD, Names, ObjectPlan, Program, Visit};
 use crate::eval::{json_equal, matches_type};
 use crate::instance::{Instance, ObjectView, View};
 use crate::node::*;
@@ -756,6 +756,8 @@ pub(super) fn try_fuse(
             dependencies: Box::new([]),
             rest_free: true,
             strict: true,
+            // No contributor has additionalProperties (`flat` requires it).
+            lookup: names.map.names.len() <= LOOKUP_NAMES,
             names,
         })
     });

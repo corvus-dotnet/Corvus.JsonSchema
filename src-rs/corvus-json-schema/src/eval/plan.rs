@@ -73,6 +73,10 @@ pub(crate) struct Plan {
     guard: bool,
     /// Everything beyond the type check (none for `true`, `false` and type-only schemas).
     body: Option<Box<Body>>,
+    /// The body's shape, for entering it directly (a node evaluated as a program's or an applicator's target, not
+    /// only as a child): `General` goes through `run_keywords`, whose generality costs a small object tens of
+    /// instructions.
+    shape: Shape,
 }
 
 /// A node's keywords, grouped so that only the ones for the instance's type are looked at.
@@ -178,7 +182,15 @@ struct ObjectPlan {
     rest_free: bool,
     /// `Visit::Names` and `rest_free`: the strict loop (`run_strict_object`) decides it.
     strict: bool,
+    /// `Visit::Names` with at most `LOOKUP_NAMES` names and no additionalProperties: undeclared properties need no
+    /// visit, so a small object is decided by looking each name up in it (see `visit_lookup`).
+    lookup: bool,
 }
+
+/// Plans with at most this many names may look them up in the instance instead of visiting its properties.
+const LOOKUP_NAMES: usize = 4;
+/// ...when the instance's properties times the names are at most this (each lookup scans the properties).
+const LOOKUP_BUDGET: usize = 24;
 
 /// The property loop, specialised by which keywords apply.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -612,16 +624,19 @@ pub(crate) fn compile_plans(p: &Program) -> Vec<Plan> {
     for a in plans.iter_mut().filter_map(|pl| pl.body.as_deref_mut()?.array.as_mut()) {
         a.nested = a.items.filter(|c| c.shape == Shape::Array).and_then(|c| simple[c.id as usize]);
     }
+    for pl in plans.iter_mut() {
+        pl.shape = shape_of(pl, p.uses_dynamic_scope);
+    }
     plans
 }
 
 fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) -> NodeId) -> Plan {
     let guard = n.in_place_cycle;
     if n.always_true {
-        return Plan { types: ANY, guard, body: None };
+        return Plan { types: ANY, guard, body: None, shape: Shape::General };
     }
     if n.always_false {
-        return Plan { types: 0, guard, body: None };
+        return Plan { types: 0, guard, body: None, shape: Shape::General };
     }
     let child = |id: NodeId| Child { id: target(id), types: ANY, shape: Shape::General };
     let mut ops = Vec::new();
@@ -778,6 +793,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
             dependencies,
             rest_free: by_lookup_empty && n.dependencies.is_none(),
             strict: visit == Visit::Names && by_lookup_empty && n.dependencies.is_none(),
+            lookup: visit == Visit::Names && n.additional_properties.is_none() && known.len() <= LOOKUP_NAMES,
         });
     }
 
@@ -870,7 +886,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
         && general == 0
         && unevaluated_items.is_none()
     {
-        return Plan { types, guard, body: None };
+        return Plan { types, guard, body: None, shape: Shape::General };
     }
     let body = Body {
         fused: None,
@@ -884,7 +900,7 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
         array,
         apply: ops.into_boxed_slice(),
     };
-    Plan { types, guard, body: Some(Box::new(body)) }
+    Plan { types, guard, body: Some(Box::new(body)), shape: Shape::General }
 }
 
 /// How callers can enter a plan (see `Shape`). The shortcuts skip the scope push, so a program that keeps a dynamic
@@ -1036,7 +1052,14 @@ impl Evaluator<'_, '_> {
     #[inline(always)]
     pub(super) fn run<'x, I: Instance<'x>>(&mut self, id: NodeId, x: I) -> bool {
         let plan = &self.p.plans[id as usize];
-        (plan.types == ANY || type_ok(plan.types, x)) && plan.body.as_deref().is_none_or(|b| self.run_body(b, x))
+        if plan.types != ANY && !type_ok(plan.types, x) {
+            return false;
+        }
+        match plan.body.as_deref() {
+            None => true,
+            Some(b) if plan.shape == Shape::General => self.run_body(b, x),
+            Some(b) => self.enter(plan.shape, b, x),
+        }
     }
 
     /// A child at a new instance location: its type check inline, its other keywords (if any) by call.
@@ -1107,15 +1130,14 @@ impl Evaluator<'_, '_> {
         if plan.body.is_none() {
             return plan.types & type_mask::STRING != 0;
         }
-        let mut buffer = std::mem::take(&mut self.name_buffer);
-        if let Value::String(s) = &mut buffer {
-            s.clear();
-            s.push_str(name);
-        } else {
-            buffer = Value::String(name.to_string());
-        }
+        let mut s = std::mem::take(&mut self.name_buffer);
+        s.clear();
+        s.push_str(name);
+        let buffer = Value::String(s);
         let ok = self.run::<&Value>(id, &buffer);
-        self.name_buffer = buffer;
+        if let Value::String(s) = buffer {
+            self.name_buffer = s;
+        }
         ok
     }
 
@@ -1263,6 +1285,9 @@ impl Evaluator<'_, '_> {
         let seen = match plan.visit {
             Visit::None => Some(0),
             Visit::Values => self.visit_values::<I>(plan, o).then_some(0),
+            Visit::Names if plan.lookup && o.len() * plan.names.map.names.len() <= LOOKUP_BUDGET => {
+                self.visit_lookup::<I>(plan, o)
+            }
             Visit::Names => self.visit_names::<I>(plan, o),
             Visit::Pattern => self.visit_pattern::<I>(plan, o).then_some(0),
             Visit::General => self.visit_general::<I>(plan, o),
@@ -1280,6 +1305,9 @@ impl Evaluator<'_, '_> {
         let len = o.len() as u64;
         if len < plan.min || len > plan.max {
             return false;
+        }
+        if plan.lookup && o.len() * plan.names.map.names.len() <= LOOKUP_BUDGET {
+            return self.visit_lookup::<I>(plan, o).is_some_and(|seen| seen & plan.required_mask == plan.required_mask);
         }
         let mut seen = 0u64;
         let mut hint = 0;
@@ -1301,6 +1329,22 @@ impl Evaluator<'_, '_> {
             }
         }
         seen & plan.required_mask == plan.required_mask
+    }
+
+    /// Each name looked up in the object (a plan with `lookup`: the other properties need no visit); the names seen,
+    /// or `None` on failure.
+    #[inline(always)]
+    fn visit_lookup<'x, I: Instance<'x>>(&mut self, plan: &ObjectPlan, o: I::Object) -> Option<u64> {
+        let mut seen = 0u64;
+        for (i, name) in plan.names.map.names.iter().enumerate() {
+            if let Some(v) = o.get(name) {
+                seen |= 1 << i;
+                if !self.run_child(plan.children[i], v) {
+                    return None;
+                }
+            }
+        }
+        Some(seen)
     }
 
     /// Required names checked by lookup, and dependencies.

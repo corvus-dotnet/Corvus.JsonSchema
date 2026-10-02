@@ -343,3 +343,30 @@ fn fused_objects_below_a_dynamic_reference_match_the_general_path() {
     assert!(v.is_valid(&json!({ "children": [{ "x": 1, "children": [{ "y": 2 }] }] })));
     assert!(!v.is_valid(&json!({ "children": [{ "z": 1 }] })));
 }
+
+/// Small objects are decided by looking the few declared and required names up in them; large ones by visiting their
+/// properties. Both agree, for `serde_json::Value` and `JsonDocument` instances, top-level and nested.
+#[test]
+fn few_names_are_looked_up_in_small_and_large_objects() {
+    let schema = json!({
+        "properties": { "a": { "type": "string" }, "n": { "properties": { "x": { "type": "integer" } } } },
+        "required": ["b"]
+    });
+    let v = compile(&schema).unwrap();
+    let padding = |count: usize| (0..count).map(|i| format!(r#","p{i}": {i}"#)).collect::<String>();
+    for pad in [0, 3, 40] {
+        let p = padding(pad);
+        for (text, expected) in [
+            (format!(r#"{{"b": 1, "a": "x"{p}}}"#), true),
+            (format!(r#"{{"a": "x"{p}}}"#), false),
+            (format!(r#"{{"a": 1, "b": 1{p}}}"#), false),
+            (format!(r#"{{"b": null{p}, "n": {{"x": 2{p}}}}}"#), true),
+            (format!(r#"{{"b": null{p}, "n": {{"x": "2"{p}}}}}"#), false),
+        ] {
+            let value: Value = serde_json::from_str(&text).unwrap();
+            assert_eq!(v.is_valid(&value), expected, "{text}");
+            let document = corvus_json_schema::JsonDocument::parse(&text).unwrap();
+            assert_eq!(v.validate_instance(document.root()).unwrap(), expected, "{text} (document)");
+        }
+    }
+}
