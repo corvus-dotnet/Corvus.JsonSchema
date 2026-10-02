@@ -1,0 +1,27 @@
+# The corvus-json-schema C library (with its C++ wrapper header), as two imported targets:
+#   corvus_json_schema::corvus_json_schema         the shared library
+#   corvus_json_schema::corvus_json_schema_static  the static library (with the system libraries it needs)
+# Written by package.ps1 for @PLATFORM@; paths are relative to this file, so the package can be moved.
+
+get_filename_component(_corvus_json_schema_prefix "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+
+if(NOT TARGET corvus_json_schema::corvus_json_schema)
+  add_library(corvus_json_schema::corvus_json_schema SHARED IMPORTED)
+  set_target_properties(corvus_json_schema::corvus_json_schema PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${_corvus_json_schema_prefix}/include"
+    IMPORTED_LOCATION "${_corvus_json_schema_prefix}/@SHARED_LOCATION@")
+  if(NOT "@IMPORT_LIBRARY@" STREQUAL "")
+    set_target_properties(corvus_json_schema::corvus_json_schema PROPERTIES
+      IMPORTED_IMPLIB "${_corvus_json_schema_prefix}/@IMPORT_LIBRARY@")
+  endif()
+endif()
+
+if(NOT TARGET corvus_json_schema::corvus_json_schema_static)
+  add_library(corvus_json_schema::corvus_json_schema_static STATIC IMPORTED)
+  set_target_properties(corvus_json_schema::corvus_json_schema_static PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${_corvus_json_schema_prefix}/include"
+    IMPORTED_LOCATION "${_corvus_json_schema_prefix}/@STATIC_LOCATION@"
+    INTERFACE_LINK_LIBRARIES "@STATIC_LINK_LIBRARIES@")
+endif()
+
+unset(_corvus_json_schema_prefix)

@@ -1,0 +1,12 @@
+# Written by package.ps1 for @PLATFORM@; paths are relative to this file, so the package can be moved.
+prefix=${pcfiledir}/../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: corvus-json-schema
+Description: JSON Schema validation (draft 4 to 2020-12), with results and annotations
+URL: https://github.com/corvus-dotnet/Corvus.JsonSchema
+Version: @VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -lcorvus_json_schema
+Libs.private: @STATIC_LINK_FLAGS@
