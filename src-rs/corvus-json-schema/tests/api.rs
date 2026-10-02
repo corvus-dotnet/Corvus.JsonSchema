@@ -370,3 +370,33 @@ fn few_names_are_looked_up_in_small_and_large_objects() {
         }
     }
 }
+
+/// JSON text is validated in place; invalid JSON and runaway recursion are told apart.
+#[test]
+fn validates_json_text() {
+    let v = compile(&json!({ "type": "array", "items": { "type": "integer" } })).unwrap();
+    assert_eq!(v.validate_json("[1, 2, 3]"), Ok(true));
+    assert_eq!(v.validate_json("[1, \"2\"]"), Ok(false));
+    let Err(corvus_json_schema::JsonValidationError::InvalidJson(e)) = v.validate_json("[1, 2") else {
+        panic!("expected invalid JSON")
+    };
+    assert_eq!(e.offset(), 5);
+    let looping = compile(&json!({ "$defs": { "a": { "$ref": "#/$defs/a" } }, "$ref": "#/$defs/a" })).unwrap();
+    assert!(matches!(looping.validate_json("1"), Err(corvus_json_schema::JsonValidationError::DepthExceeded(_))));
+    let mut c = JsonSchemaResultsCollector::new(ResultsLevel::Detailed);
+    assert_eq!(v.evaluate_json("[\"x\"]", &mut c), Ok(false));
+    assert!(c.results().iter().any(|r| !r.is_match && r.document_evaluation_location == "/0"));
+}
+
+/// A format callback that validates JSON text itself, during a validation of JSON text on the same thread, gets
+/// buffers of its own.
+#[test]
+fn validating_json_from_a_format_callback_works() {
+    let inner = compile(&json!({ "type": "object", "required": ["a"] })).unwrap();
+    let mut options = CompileOptions { assert_format: Some(true), ..CompileOptions::default() };
+    options.formats.insert("embedded-json".into(), Arc::new(move |s: &str| inner.validate_json(s).unwrap_or(false)));
+    let v = compile_with(&json!({ "type": "array", "items": { "format": "embedded-json" } }), &options).unwrap();
+    assert_eq!(v.validate_json(r#"["{\"a\": 1}", "{\"a\": 2}"]"#), Ok(true));
+    assert_eq!(v.validate_json(r#"["{\"a\": 1}", "{\"b\": 2}"]"#), Ok(false));
+    assert_eq!(v.validate_json(r#"["{\"a\": 1}", "not json"]"#), Ok(false));
+}

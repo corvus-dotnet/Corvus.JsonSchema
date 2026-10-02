@@ -86,6 +86,16 @@ fn run_case(v: &Validator, data: &Value) -> Result<bool, String> {
     if c1.results() != c2.results() {
         return Err("the document's verbose results differ from the Value's".into());
     }
+    // And straight from the text, in the parser's reused buffers.
+    let from_text = v.validate_json(&text).map_err(|e| format!("validate_json: {e}"))?;
+    if from_text != fast {
+        return Err(format!("validate_json returned {from_text}, the Value {fast}"));
+    }
+    let mut c3 = JsonSchemaResultsCollector::new(ResultsLevel::Verbose);
+    v.evaluate_json(&text, &mut c3).map_err(|e| format!("evaluate_json: {e}"))?;
+    if c1.results() != c3.results() {
+        return Err("evaluate_json's verbose results differ from the Value's".into());
+    }
     Ok(fast)
 }
 
