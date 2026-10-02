@@ -13,22 +13,6 @@ use std::time::Instant;
 use corvus_json_schema::JsonDocument;
 use serde_json::Value;
 
-/// Whether the values are equal, but for doubles one ulp apart: serde_json's float parser (without its
-/// `float_roundtrip` feature) is sometimes one ulp off the correctly rounded value, which the document has.
-fn same(a: &Value, b: &Value) -> bool {
-    match (a, b) {
-        (Value::Number(x), Value::Number(y)) if x.is_f64() && y.is_f64() => {
-            let (x, y) = (x.as_f64().unwrap(), y.as_f64().unwrap());
-            x == y || (x.signum() == y.signum() && x.to_bits().abs_diff(y.to_bits()) == 1)
-        }
-        (Value::Array(x), Value::Array(y)) => x.len() == y.len() && x.iter().zip(y).all(|(x, y)| same(x, y)),
-        (Value::Object(x), Value::Object(y)) => {
-            x.len() == y.len() && x.iter().zip(y).all(|((kx, vx), (ky, vy))| kx == ky && same(vx, vy))
-        }
-        _ => a == b,
-    }
-}
-
 fn best_of<F: FnMut()>(mut f: F) -> f64 {
     let mut best = f64::MAX;
     for _ in 0..7 {
@@ -69,7 +53,7 @@ fn main() {
         let documents: Vec<JsonDocument<'_>> = lines.iter().map(|l| JsonDocument::parse(l).unwrap()).collect();
         let v = corvus_json_schema::compile(&schema).unwrap();
         for (i, (value, document)) in values.iter().zip(&documents).enumerate() {
-            assert!(same(&document.to_value(), value), "{name} instance {i}: the document differs from the Value");
+            assert!(document.to_value() == *value, "{name} instance {i}: the document differs from the Value");
             assert_eq!(
                 v.validate(value).unwrap(),
                 v.validate_instance(document.root()).unwrap(),

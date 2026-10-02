@@ -839,7 +839,7 @@ mod tests {
 
     #[test]
     fn doubles_are_correctly_rounded() {
-        // serde_json (without float_roundtrip) reads this one ulp off.
+        // serde_json without its float_roundtrip feature reads this one ulp off.
         let text = "-90.50242899999999";
         let d = JsonDocument::parse(text).unwrap();
         assert_eq!(d.to_value().as_f64().unwrap().to_bits(), text.parse::<f64>().unwrap().to_bits());

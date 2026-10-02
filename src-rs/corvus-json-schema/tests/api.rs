@@ -400,3 +400,23 @@ fn validating_json_from_a_format_callback_works() {
     assert_eq!(v.validate_json(r#"["{\"a\": 1}", "{\"b\": 2}"]"#), Ok(false));
     assert_eq!(v.validate_json(r#"["{\"a\": 1}", "not json"]"#), Ok(false));
 }
+
+/// A number in a schema and the same number in an instance are the same double, whichever parser read each: the
+/// schema through serde_json (here from serde_json's own output, as a caller passing schema text does), the instance
+/// through JsonDocument. Without serde_json's float_roundtrip feature, serde_json read `9.727837981879871e+26`, its own
+/// output, one unit in the last place off, so an `exclusiveMaximum` equal to the instance passed.
+#[test]
+fn schema_and_instance_numbers_parse_alike() {
+    for (keyword, literal) in [
+        ("exclusiveMaximum", "972783798187987123879878123.18878137"),
+        ("exclusiveMinimum", "-972783798187987123879878123.18878137"),
+    ] {
+        let number: f64 = serde_json::from_str(literal).unwrap();
+        let text = serde_json::to_string(&number).unwrap();
+        let schema: Value = serde_json::from_str(&format!(r#"{{"{keyword}": {text}}}"#)).unwrap();
+        let v = compile(&schema).unwrap();
+        assert_eq!(v.validate_json(&text), Ok(false), "{keyword} {text} (JSON text)");
+        let instance: Value = serde_json::from_str(&text).unwrap();
+        assert!(!v.is_valid(&instance), "{keyword} {text} (Value)");
+    }
+}
