@@ -60,7 +60,7 @@ The build workflow runs on every push and PR. It has three phases:
 2. **Test** — runs the test suite with `.NET 10.0` and `.NET Framework 4.8.1`
 3. **NuGet** — packages and publishes
 
-A PR, or a push to `main`, that changes only the Python, Rust or TypeScript packages (`src-py`, `src-rs`, `src-ts`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. Branch protection requires the `.NET build gate` job, which passes when the build succeeded or was not needed.
+A PR, or a push to `main`, that changes only the Python, Rust, TypeScript, Ruby or PHP packages (`src-py`, `src-rs`, `src-ts`, `src-rb`, `src-php`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. Branch protection requires the `.NET build gate` job, which passes when the build succeeded or was not needed.
 
 ### NuGet source selection
 
@@ -91,7 +91,7 @@ A release includes every merged PR still labelled `pending_release`, so closing 
 
 ### Skipping a release
 
-A PR that changes only the Python, Rust or TypeScript packages makes no NuGet release; nothing needs adding.
+A PR that changes only the Python, Rust, TypeScript, Ruby or PHP packages makes no NuGet release; nothing needs adding.
 
 Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI and npm publishes that a version change in `src-rs`, `src-py` or `src-ts` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
 
