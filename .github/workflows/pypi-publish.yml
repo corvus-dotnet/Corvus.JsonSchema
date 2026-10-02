@@ -2,7 +2,8 @@ name: pypi-publish
 # Publishes the Python packages to PyPI when the version in a package's pyproject.toml is not there yet, then tags the
 # commit: corvus-json-schema (src-py/corvus-json-schema, pure Python) as py-v<version>, and corvus-json-schema-rs
 # (src-py/corvus-json-schema-rs, the Rust-backed wheels) as py-rs-v<version>. To release, bump "version" in the
-# package's pyproject.toml (and its __version__) and merge.
+# package's pyproject.toml (and its __version__) and merge. A merged pull request labelled no_release publishes nothing
+# (.github/actions/no-release-label).
 #
 # It authenticates with PyPI trusted publishing (OIDC): no token is stored. Each project's trusted publisher on PyPI
 # names this repository, this workflow file and an environment: "pypi" for corvus-json-schema, "pypi-rs" for
@@ -34,6 +35,9 @@ concurrency:
 jobs:
   versions:
     name: Versions to publish
+    permissions:
+      contents: read
+      pull-requests: read  # the merged pull request's labels (no_release)
     # A manual run from another branch must not publish that branch.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -46,9 +50,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          sparse-checkout: src-py
+          sparse-checkout: |
+            src-py
+            .github/actions
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
       - name: Check which versions PyPI does not have
         id: check
+        # A merged pull request labelled no_release publishes nothing (the build and publish jobs need this output).
+        if: steps.label.outputs.no-release != 'true'
         run: |
           # PyPI answers 404 for a project or version it does not have.
           check() {

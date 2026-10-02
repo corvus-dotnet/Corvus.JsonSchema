@@ -60,6 +60,8 @@ The build workflow runs on every push and PR. It has three phases:
 2. **Test** — runs the test suite with `.NET 10.0` and `.NET Framework 4.8.1`
 3. **NuGet** — packages and publishes
 
+A PR, or a push to `main`, that changes only the Python, Rust or TypeScript packages (`src-py`, `src-rs`, `src-ts`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. Branch protection requires the `.NET build gate` job, which passes when the build succeeded or was not needed.
+
 ### NuGet source selection
 
 Publishing is conditional based on whether the build was triggered by a tag:
@@ -78,15 +80,20 @@ This means:
 When a PR is merged to `main`, the `auto_release.yml` workflow:
 
 1. Checks for the `no_release` label — if present, skips the release
-2. Waits for any pending Dependabot PRs to complete (batched releases)
-3. Uses GitVersion to compute the next version
-4. Creates a Git tag in the format `v{Major}.{Minor}.{Patch}`
-5. The tag push triggers the build workflow, which publishes to NuGet.org
-6. Removes any `pending_release` labels from included PRs
+2. Leaves out a PR that changes nothing the .NET build reads (only `src-py`, `src-rs` or `src-ts`, as `build.yml` decides), and removes its `pending_release` label
+3. Waits for any pending Dependabot PRs to complete (batched releases)
+4. Uses GitVersion to compute the next version
+5. Creates a Git tag in the format `{Major}.{Minor}.{Patch}`
+6. The tag push triggers the build workflow, which publishes to NuGet.org
+7. Removes any `pending_release` labels from included PRs
+
+A release includes every merged PR still labelled `pending_release`, so closing a PR without .NET changes can still release earlier ones.
 
 ### Skipping a release
 
-Add the `no_release` label to a PR before merging to prevent automatic tag creation. This is useful for documentation-only changes or internal refactoring.
+A PR that changes only the Python, Rust or TypeScript packages makes no NuGet release; nothing needs adding.
+
+Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI and npm publishes that a version change in `src-rs`, `src-py` or `src-ts` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
 
 ### Batched Dependabot releases
 
@@ -147,7 +154,7 @@ The Rust port of the runtime evaluator, `corvus-json-schema` in `src-rs/corvus-j
 To release, bump `version` in `src-rs/corvus-json-schema/Cargo.toml` and merge to `main`.
 `.github/workflows/crates-publish.yml` then does the following.
 
-1. It does nothing if crates.io already has that version.
+1. It does nothing if crates.io already has that version, or if the merged PR is labelled `no_release`.
 2. It runs fmt, clippy and the tests, checks that the crate's `LICENSE` matches the repository's, and runs
    `cargo publish --dry-run`, which builds the crate from its packaged sources.
 3. It publishes through crates.io trusted publishing. No token is stored. The crate's trusted publisher on crates.io
@@ -196,7 +203,7 @@ To release one, bump `version` in its `pyproject.toml` and `__version__` in its 
 add the version's entry at the top of its `VERSIONHISTORY.md`, and merge to `main`. `.github/workflows/pypi-publish.yml`
 then does the following for each package.
 
-1. It does nothing if PyPI already has that version.
+1. It does nothing if PyPI already has that version, or if the merged PR is labelled `no_release`.
 2. It builds the package: the sdist and wheel for the pure package, and for the Rust-backed one every wheel and the
    sdist through `python-wheels.yml`, which tests each wheel on its own platform, as CI does on every pull request.
 3. It publishes through PyPI trusted publishing, in the `pypi` GitHub environment for `corvus-json-schema` and

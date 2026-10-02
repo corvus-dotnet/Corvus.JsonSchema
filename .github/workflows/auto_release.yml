@@ -85,11 +85,50 @@ jobs:
       run: |
         echo "no_release: ${{ steps.check_for_norelease_label.outputs.result }}"
 
+  # A pull request that changes nothing the .NET build reads (only the Python, Rust or TypeScript packages) makes no
+  # NuGet release: it is left out of the release, and its 'pending_release' label removed. Releases those packages
+  # make are their own workflows' (crates-publish.yml, pypi-publish.yml, npm-publish.yml).
+  check_for_dotnet_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      dotnet: ${{ steps.detect.outputs.dotnet }}
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      with:
+        ref: ${{ github.event.repository.default_branch }}
+        sparse-checkout: .github/actions
+        persist-credentials: false
+    - name: Detect .NET changes
+      id: detect
+      uses: ./.github/actions/dotnet-changes
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        event-name: pull_request
+        pull-request: ${{ github.event.pull_request.number }}
+    - name: Remove 'pending_release' from a pull request without .NET changes
+      if: steps.detect.outputs.dotnet == 'false'
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3   # v9.0.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        retries: 6  # final retry should wait 64 seconds
+        retry-exempt-status-codes: 400,401,404,422    # GH will raise rate limits with 403 & 429 status codes
+        script: |
+          const labels = context.payload.pull_request.labels.map(l => l.name)
+          if (labels.includes('pending_release')) {
+            await github.rest.issues.removeLabel({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              issue_number: context.payload.pull_request.number,
+              name: 'pending_release'
+            })
+          }
+
   check_ready_to_release:
     runs-on: ubuntu-latest
-    needs: [check_for_norelease_label,lookup_default_branch]
+    needs: [check_for_norelease_label,lookup_default_branch,check_for_dotnet_changes]
     if: |
-      needs.check_for_norelease_label.outputs.no_release == 'false'
+      needs.check_for_norelease_label.outputs.no_release == 'false' &&
+      needs.check_for_dotnet_changes.result == 'success'
     outputs:
       no_open_prs: ${{ steps.watch_dependabot_prs.outputs.is_complete }}
       pending_release_pr_list: ${{ steps.get_release_pending_pr_list.outputs.result }}
@@ -136,15 +175,20 @@ jobs:
           allPrs = pulls.data.items.map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
           core.info(`allPrs: ${JSON.stringify(allPrs)}`);
 
+          // This pull request is left out when it changes nothing the .NET build reads (its label removal may not
+          // have reached the search index yet).
+          const excluded = '${{ needs.check_for_dotnet_changes.outputs.dotnet }}' == 'false' ? context.payload.pull_request.number : null;
           releasePendingPrDetails = pulls.data.items.
                             filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
                             filter(function (x) { return !x.labels.map(l=>l.name).includes('no_release') }).
+                            filter(function (x) { return x.number != excluded }).
                             map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
           core.info(`releasePendingPrDetails: ${JSON.stringify(releasePendingPrDetails)}`);
 
           const release_pending_prs = pulls.data.items.
                                         filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
                                         filter(function (x) { return !x.labels.map(l=>l.name).includes('no_release') }).
+                                        filter(function (x) { return x.number != excluded }).
                                         map(p=>p.number);
           core.info(`release_pending_prs: ${JSON.stringify(release_pending_prs)}`);
           core.setOutput('is_release_pending', (release_pending_prs.length > 0));

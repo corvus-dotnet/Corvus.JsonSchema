@@ -1,6 +1,7 @@
 name: crates-publish
 # Publishes the corvus-json-schema crate (src-rs/corvus-json-schema) to crates.io when the version in its Cargo.toml is
-# not there yet, then tags the commit rs-v<version>. To release, bump "version" in Cargo.toml and merge.
+# not there yet, then tags the commit rs-v<version>. To release, bump "version" in Cargo.toml and merge. A merged pull
+# request labelled no_release publishes nothing (.github/actions/no-release-label).
 #
 # It authenticates with crates.io trusted publishing (OIDC): no token is stored, and the crate's trusted publisher on
 # crates.io names this repository and this workflow file, so keep the file name. crates.io only takes a trusted
@@ -21,6 +22,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  pull-requests: read  # the merged pull request's labels (no_release)
   contents: write  # push the rs-v<version> tag
   id-token: write  # crates.io trusted publishing
 
@@ -43,8 +45,17 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: false
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
       - name: Check whether this version is already on crates.io
         id: version
+        # A merged pull request labelled no_release publishes nothing (every later step needs this one's output).
+        if: steps.label.outputs.no-release != 'true'
         run: |
           version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
           if [ -z "$version" ]; then
