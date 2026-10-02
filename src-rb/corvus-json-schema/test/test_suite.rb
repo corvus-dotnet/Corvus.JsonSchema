@@ -8,7 +8,8 @@ require "minitest/autorun"
 require "corvus_json_schema"
 
 class TestSuite < Minitest::Test
-  ROOT = ENV.fetch("JSON_SCHEMA_TEST_SUITE") { File.expand_path("../../../JSON-Schema-Test-Suite", __dir__) }
+  # Expanded so that Dir[] can glob it (on Windows a path from the environment has backslashes).
+  ROOT = File.expand_path(ENV.fetch("JSON_SCHEMA_TEST_SUITE") { File.join(__dir__, "../../../JSON-Schema-Test-Suite") })
   DRAFTS = {
     "draft4" => :draft4, "draft6" => :draft6, "draft7" => :draft7,
     "draft2019-09" => :draft201909, "draft2020-12" => :draft202012

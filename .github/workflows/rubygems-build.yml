@@ -106,7 +106,6 @@ jobs:
     name: corvus_json_schema gem test (${{ matrix.platform }}, Ruby ${{ matrix.ruby }})
     needs: cross
     runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
     strategy:
       fail-fast: false
       matrix:
@@ -115,10 +114,12 @@ jobs:
           - { platform: x86_64-linux, os: ubuntu-latest, ruby: '4.0' }
           - { platform: aarch64-linux, os: ubuntu-24.04-arm, ruby: '3.3' }
           - { platform: aarch64-linux, os: ubuntu-24.04-arm, ruby: '4.0' }
-          - { platform: x86_64-linux-musl, os: ubuntu-latest, ruby: '3.3', container: 'ruby:3.3-alpine' }
-          - { platform: x86_64-linux-musl, os: ubuntu-latest, ruby: '4.0', container: 'ruby:4.0-alpine' }
-          - { platform: aarch64-linux-musl, os: ubuntu-24.04-arm, ruby: '3.3', container: 'ruby:3.3-alpine' }
-          - { platform: aarch64-linux-musl, os: ubuntu-24.04-arm, ruby: '4.0', container: 'ruby:4.0-alpine' }
+          # The musl gems are tested in the official Alpine images, run with docker (JavaScript actions do not run in
+          # Alpine containers on arm64).
+          - { platform: x86_64-linux-musl, os: ubuntu-latest, ruby: '3.3', image: 'ruby:3.3-alpine' }
+          - { platform: x86_64-linux-musl, os: ubuntu-latest, ruby: '4.0', image: 'ruby:4.0-alpine' }
+          - { platform: aarch64-linux-musl, os: ubuntu-24.04-arm, ruby: '3.3', image: 'ruby:3.3-alpine' }
+          - { platform: aarch64-linux-musl, os: ubuntu-24.04-arm, ruby: '4.0', image: 'ruby:4.0-alpine' }
           - { platform: x86_64-darwin, os: macos-15-intel, ruby: '3.3' }
           - { platform: x86_64-darwin, os: macos-15-intel, ruby: '4.0' }
           - { platform: arm64-darwin, os: macos-latest, ruby: '3.3' }
@@ -129,10 +130,6 @@ jobs:
       run:
         shell: bash
     steps:
-      - name: Install git and bash
-        if: ${{ matrix.container }}
-        shell: sh
-        run: apk add --no-cache git bash
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -141,11 +138,9 @@ jobs:
             src-rb/corvus-json-schema/test
             JSON-Schema-Test-Suite
       - name: Checkout JSON-Schema-Test-Suite
-        run: |
-          git config --global --add safe.directory "$PWD"
-          git submodule update --init --depth 1 JSON-Schema-Test-Suite
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
       - name: Setup Ruby
-        if: ${{ !matrix.container }}
+        if: ${{ !matrix.image }}
         uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -156,11 +151,22 @@ jobs:
           path: gems
       - name: Install and test
         # The installed gem, not the sources: the tests run outside the gem's directory.
+        env:
+          IMAGE: ${{ matrix.image }}
         run: |
-          export JSON_SCHEMA_TEST_SUITE="$GITHUB_WORKSPACE/JSON-Schema-Test-Suite"
+          cat > test-gem.sh <<'SCRIPT'
+          set -eu
+          # On Windows, GITHUB_WORKSPACE is a path Ruby can open (sh's $PWD is an MSYS path); in docker it is unset.
+          export JSON_SCHEMA_TEST_SUITE="${GITHUB_WORKSPACE:-$PWD}/JSON-Schema-Test-Suite"
           gem install --local gems/*.gem
           gem install minitest -v '~> 5.25'
           cd src-rb/corvus-json-schema
           ruby -e 'require "corvus_json_schema"; puts CorvusJsonSchema.crate_version, $LOADED_FEATURES.grep(/corvus_json_schema\.(so|bundle|dll)/)'
           ruby test/test_api.rb
           ruby test/test_suite.rb
+          SCRIPT
+          if [ -n "$IMAGE" ]; then
+            docker run --rm -v "$PWD:/w" -w /w "$IMAGE" sh test-gem.sh
+          else
+            sh test-gem.sh
+          fi
