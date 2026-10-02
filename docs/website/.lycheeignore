@@ -18,6 +18,10 @@ https://www\.nuget\.org/packages/.*/\d+\.\d+\.\d+-
 # production domain, which is unreachable during local and preview builds.
 https://corvus-oss\.org
 
+# Links to this repository's files at a commit (the website build links sources at the commit it builds). A commit's
+# files never change, and github.com rate-limits the checker with 503s; build.ps1 checks the targets exist instead.
+https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/[0-9a-f]{40}/
+
 # GitHub source-code line-number fragments (#L42 etc.) are rendered by JavaScript;
 # lychee cannot find them in the raw HTML that GitHub returns.
 https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/.+#L\d+

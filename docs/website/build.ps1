@@ -574,6 +574,10 @@ foreach ($dir in $recipeDirs) {
     })
 
     $ghRecipeBase = "$canonicalRepoUrl/blob/$canonicalBlobRef/docs/ExampleRecipes/$($dir.Name)"
+    # The link checker skips links pinned to a commit (.lycheeignore), so check the linked source exists.
+    if ($body -match '\./Program\.cs' -and !(Test-Path (Join-Path $dir.FullName "Program.cs"))) {
+        throw "ExampleRecipes/$($dir.Name)/README.md links to ./Program.cs, which does not exist"
+    }
     $body = $body -replace '\./Program\.cs', "$ghRecipeBase/Program.cs"
 
     # Extract first sentence as description
@@ -769,6 +773,16 @@ foreach ($descriptorFile in $descriptorFiles) {
         $target = "/docs/$($docLinkMap[$srcFile])"
         $docBody = $docBody -replace "\(\./$escaped(#[^)]+)?\)", "($target`$1)"
         $docBody = $docBody -replace "\($escaped(#[^)]+)?\)", "($target`$1)"
+    }
+
+    # Links to files that aren't website pages (copilot/ instructions, the arazzo/ design docs) point at the GitHub
+    # source at this build's commit. The link checker skips links pinned to a commit (.lycheeignore: GitHub rate-limits
+    # it), so check here that each target exists in the checkout.
+    foreach ($m in [regex]::Matches($docBody, '\((copilot|arazzo)/([^)]+\.md)\)')) {
+        $linked = "$($m.Groups[1].Value)/$($m.Groups[2].Value)"
+        if (!(Test-Path (Join-Path $docsSourceDir $linked))) {
+            throw "$docFile links to $linked, which is not in docs/"
+        }
     }
 
     # Rewrite links to files that aren't website pages (e.g. copilot/ instructions)
