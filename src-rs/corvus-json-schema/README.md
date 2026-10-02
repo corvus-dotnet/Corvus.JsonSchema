@@ -39,6 +39,24 @@ assert!(!validator.is_valid(&json!({ "id": 0 })));
 
 The standard metaschemas are embedded.
 
+### JSON text
+
+`JsonDocument::parse` parses JSON text into a document that the evaluator reads in place: one flat array of values,
+with strings borrowed from the text where they have no escapes. That is about a quarter of the time of parsing into a
+`serde_json::Value`, and validation reads it at least as fast.
+
+```rust
+let validator = corvus_json_schema::compile(&serde_json::json!({ "type": "array", "items": { "type": "integer" } }))
+    .unwrap();
+let document = corvus_json_schema::JsonDocument::parse("[1, 2, 3]").unwrap();
+assert!(validator.validate_instance(document.root()).unwrap());
+```
+
+It accepts what serde_json accepts: nesting up to 127 levels, no lone surrogates in `\u` escapes, numbers within the
+range of a double. Of duplicate property names, the last value is kept at the position of the first. Doubles are
+correctly rounded, where serde_json's parser (without its `float_roundtrip` feature) can be one unit in the last place
+off.
+
 ### Other instance types
 
 The evaluator reads instances through the `Instance` trait: a value shown as one of the six JSON kinds (`Instance::view`,

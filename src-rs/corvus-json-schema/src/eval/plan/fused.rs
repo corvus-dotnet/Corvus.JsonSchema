@@ -21,7 +21,7 @@ use std::sync::Arc;
 
 use serde_json::Value;
 
-use super::{Child, Evaluator, NO_CHILD, Names, ObjectPlan, Program, Visit};
+use super::{Child, Evaluator, LOOKUP_NAMES, NO_CHILD, Names, ObjectPlan, Program, Visit};
 use crate::eval::{json_equal, matches_type};
 use crate::instance::{Instance, ObjectView, View};
 use crate::node::*;
@@ -756,6 +756,8 @@ pub(super) fn try_fuse(
             dependencies: Box::new([]),
             rest_free: true,
             strict: true,
+            // No contributor has additionalProperties (`flat` requires it).
+            lookup: names.map.names.len() <= LOOKUP_NAMES,
             names,
         })
     });
@@ -1036,8 +1038,11 @@ impl Evaluator<'_, '_> {
         }
         let mut pass = Pass { seen: Seen::default(), failed: 0, alt_failed: [0; MAX_ALT_GROUPS], holds: 0, gate_ok: 0 };
         let mut covered = Covered::new(f.unevaluated.is_some(), o.len());
-        // Properties with conditional applications pending: (ordinal, entry or none, name, value).
-        let mut deferred: Vec<(usize, Option<usize>, &'x str, I)> = Vec::new();
+        // The ordinals of the properties with conditional applications pending: a mask for the first 64, a vector
+        // (allocated only for objects that large) for the rest. A vector of the properties themselves cost an
+        // allocation and a free per evaluation.
+        let mut deferred = 0u64;
+        let mut deferred_beyond: Vec<usize> = Vec::new();
         let mut hint = 0;
         for (ordinal, (k, v)) in o.iter().enumerate() {
             let e = f.names.find_from(k, &mut hint);
@@ -1052,7 +1057,11 @@ impl Evaluator<'_, '_> {
                         covered.set(ordinal);
                     }
                     if defer {
-                        deferred.push((ordinal, e, k, v));
+                        if ordinal < 64 {
+                            deferred |= 1 << ordinal;
+                        } else {
+                            deferred_beyond.push(ordinal);
+                        }
                     }
                 }
             }
@@ -1070,7 +1079,21 @@ impl Evaluator<'_, '_> {
             }
         }
 
-        for (ordinal, e, name, v) in deferred {
+        let mut pending = deferred.count_ones() as usize + deferred_beyond.len();
+        for (ordinal, (name, v)) in o.iter().enumerate() {
+            if pending == 0 {
+                break;
+            }
+            let is_deferred = if ordinal < 64 {
+                deferred & (1 << ordinal) != 0
+            } else {
+                deferred_beyond.binary_search(&ordinal).is_ok()
+            };
+            if !is_deferred {
+                continue;
+            }
+            pending -= 1;
+            let e = f.names.find(name);
             let mut cover = false;
             match e {
                 Some(e) => {

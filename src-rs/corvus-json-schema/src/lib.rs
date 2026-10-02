@@ -21,6 +21,7 @@
 
 mod compiler;
 mod dialect;
+mod document;
 mod eval;
 mod formats;
 mod instance;
@@ -39,6 +40,7 @@ use std::sync::Arc;
 use serde_json::Value;
 
 pub use dialect::Dialect;
+pub use document::{JsonDocument, JsonDocumentArray, JsonDocumentObject, JsonDocumentValue, JsonParseError};
 pub use instance::{ArrayView, Instance, Kind, ObjectView, View};
 pub use options::{
     CompileOptions, DocumentResolver, FormatValidator, SchemaCompilationError, SchemaEvaluationDepthError,
