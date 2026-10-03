@@ -1125,6 +1125,14 @@ main-docs:
       - {index: 1, language: cpp, lines: [27, 43]}
       - {index: 2, language: cpp, lines: [52, 61]}
       - {index: 3, language: cpp, lines: [69, 80]}
+  - path: "docs/JsonSchemaForJava.md"
+    blocks:
+      - {index: 0, language: xml, lines: [22, 28]}
+      - {index: 1, language: kotlin, lines: [32, 34]}
+      - {index: 2, language: java, lines: [38, 49]}
+      - {index: 3, language: kotlin, lines: [53, 56]}
+      - {index: 4, language: java, lines: [67, 70]}
+      - {index: 5, language: java, lines: [93, 103]}
   - path: "docs/JsonSchemaForJavascript.md"
     blocks:
       - {index: 0, language: sh, lines: [23, 25]}
