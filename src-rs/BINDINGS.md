@@ -53,7 +53,7 @@ package from a repository's root): its sources stay here, and each release is pu
   and the like) are converted through their JSON form.
 - **Release:** a Packagist package (`corvus-dotnet/corvus-json-schema`, type `php-ext`) for PIE, with prebuilt
   extensions for each supported PHP minor version, thread-safe and not, on Linux (x86_64 and arm64, glibc and musl),
-  macOS (arm64 and x86_64) and Windows (x64), named as PIE looks for them. Packagist reads a package from a
+  macOS (arm64) and Windows (x64), named as PIE looks for them. Packagist reads a package from a
   repository's root and its versions from that repository's tags, so the package's repository is a separate one,
   `corvus-dotnet/corvus-json-schema-php`, to which the publish workflow pushes this directory (taking the crate from
   crates.io) and whose releases hold the builds; this repository's commit is tagged `php-v<version>`.

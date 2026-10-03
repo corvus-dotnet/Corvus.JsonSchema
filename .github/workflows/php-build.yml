@@ -9,7 +9,7 @@ name: php-build
 #                it loads on any distribution with glibc 2.17 or newer
 #   Linux musl   the official php:<X.Y>-cli-alpine and php:<X.Y>-zts-alpine images (run with docker: JavaScript actions
 #                do not run in Alpine containers on arm64)
-#   macOS        setup-php's PHP (Homebrew)
+#   macOS        setup-php's PHP (Homebrew), on Apple silicon
 #   Windows      setup-php's PHP (windows.php.net); ext-php-rs needs a nightly Rust there, for PHP's vectorcall
 on:
   workflow_call:
@@ -52,8 +52,9 @@ jobs:
           unix_platforms = [
               {"name": "linux x86_64", "os": "ubuntu-latest", "glibc": "2.17"},
               {"name": "linux arm64", "os": "ubuntu-24.04-arm", "glibc": "2.17"},
+              # Apple silicon only: setup-php cannot install PHP 8.2 to 8.4 on the Intel runner (Homebrew has no
+              # prebuilt PHP before 8.5 for Intel, and building it fails).
               {"name": "macos arm64", "os": "macos-latest", "glibc": ""},
-              {"name": "macos x86_64", "os": "macos-15-intel", "glibc": ""},
           ]
           alpine_platforms = [
               {"name": "linux x86_64 musl", "os": "ubuntu-latest"},
@@ -67,7 +68,7 @@ jobs:
           else:
               # The oldest and newest PHP, both thread-safety modes, on the main platform; one build elsewhere.
               unix = [dict(unix_platforms[0], php="8.2", ts="nts"), dict(unix_platforms[0], php="8.5", ts="ts"),
-                      dict(unix_platforms[2], php="8.5", ts="nts")]
+                      dict(unix_platforms[1], php="8.2", ts="nts"), dict(unix_platforms[2], php="8.5", ts="nts")]
               alpine = [dict(alpine_platforms[0], php="8.5", ts="nts")]
               windows = [dict(windows_platforms[0], php="8.2", ts="nts"), dict(windows_platforms[0], php="8.5", ts="ts")]
           with open(os.environ["GITHUB_OUTPUT"], "a") as out:

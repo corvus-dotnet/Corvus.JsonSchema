@@ -312,7 +312,7 @@ through it creates the gem. Do this once, before merging the first version:
 `src-php/corvus-json-schema` is the `corvus_json_schema` PHP extension, installed with PIE as the Packagist package
 `corvus-dotnet/corvus-json-schema`, and versioned independently of the NuGet packages and of the crate, by the `version`
 in its `Cargo.toml`. A release is one prebuilt extension per PHP minor version (8.2 to 8.5), thread-safety mode and
-platform (Linux x86_64 and arm64, glibc and musl; macOS arm64 and x86_64; Windows x64): 56 archives, named as PIE looks
+platform (Linux x86_64 and arm64, glibc and musl; macOS arm64; Windows x64): 48 archives, named as PIE looks
 for them.
 
 Packagist reads a package from the root of a repository, and its versions from that repository's tags, so this

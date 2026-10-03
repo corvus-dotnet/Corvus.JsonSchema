@@ -10,7 +10,7 @@ standalone evaluator.
 - **Fast**: arrays and objects are read in place (nothing is converted or copied), and JSON text is validated without
   creating PHP values for it.
 - **Prebuilt**: for PHP 8.2, 8.3, 8.4 and 8.5, thread-safe and not, on Linux (x86_64 and arm64, glibc 2.17 or later
-  and musl), macOS (arm64 and x86_64) and Windows (x64).
+  and musl), macOS (Apple silicon) and Windows (x64).
 
 ## Install
 
