@@ -1,0 +1,3 @@
+source: JsonSchemaForRuby.md
+navTitle: "Ruby"
+description: "The Corvus JSON Schema evaluator for Ruby (the corvus_json_schema gem): install, validate, options, results and annotations."

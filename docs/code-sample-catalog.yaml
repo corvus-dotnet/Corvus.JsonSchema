@@ -1113,6 +1113,52 @@ main-docs:
       - {index: 30, language: csharp, lines: [560, 567], category: fragment, verified: false}
       - {index: 31, language: xml, lines: [573, 583]}
       - {index: 32, language: csharp, lines: [589, 596], category: compilable, verified: false}
+  - path: "docs/JsonSchemaForC.md"
+    blocks:
+      - {index: 0, language: cmake, lines: [31, 34]}
+      - {index: 1, language: sh, lines: [38, 40]}
+      - {index: 2, language: c, lines: [44, 69]}
+      - {index: 3, language: c, lines: [97, 107]}
+  - path: "docs/JsonSchemaForCpp.md"
+    blocks:
+      - {index: 0, language: cmake, lines: [20, 23]}
+      - {index: 1, language: cpp, lines: [27, 43]}
+      - {index: 2, language: cpp, lines: [52, 61]}
+      - {index: 3, language: cpp, lines: [69, 80]}
+  - path: "docs/JsonSchemaForJavascript.md"
+    blocks:
+      - {index: 0, language: sh, lines: [23, 25]}
+      - {index: 1, language: ts, lines: [29, 40]}
+      - {index: 2, language: ts, lines: [63, 76]}
+      - {index: 3, language: ts, lines: [84, 90]}
+      - {index: 4, language: sh, lines: [94, 97]}
+  - path: "docs/JsonSchemaForPhp.md"
+    blocks:
+      - {index: 0, language: sh, lines: [18, 20]}
+      - {index: 1, language: php, lines: [26, 37]}
+      - {index: 2, language: php, lines: [62, 75]}
+  - path: "docs/JsonSchemaForPython.md"
+    blocks:
+      - {index: 0, language: sh, lines: [23, 26]}
+      - {index: 1, language: python, lines: [30, 41]}
+      - {index: 2, language: python, lines: [68, 77]}
+      - {index: 3, language: python, lines: [87, 91]}
+  - path: "docs/JsonSchemaForRuby.md"
+    blocks:
+      - {index: 0, language: sh, lines: [17, 19]}
+      - {index: 1, language: ruby, lines: [23, 32]}
+      - {index: 2, language: ruby, lines: [55, 66]}
+  - path: "docs/JsonSchemaForRust.md"
+    blocks:
+      - {index: 0, language: sh, lines: [21, 23]}
+      - {index: 1, language: rust, lines: [27, 38]}
+      - {index: 2, language: rust, lines: [47, 54]}
+      - {index: 3, language: rust, lines: [74, 86]}
+  - path: "docs/JsonSchemaForSwift.md"
+    blocks:
+      - {index: 0, language: swift, lines: [19, 26]}
+      - {index: 1, language: swift, lines: [35, 43]}
+      - {index: 2, language: swift, lines: [68, 78]}
   - path: "docs/LocalNuGetTesting.md"
     blocks:
       - {index: 0, language: powershell, lines: [9, 11]}

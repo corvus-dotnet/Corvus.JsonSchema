@@ -1,0 +1,3 @@
+source: OtherLanguages.md
+navTitle: "JSON Schema in other languages"
+description: "The Corvus JSON Schema evaluator in JavaScript, TypeScript, Rust, Python, C, C++, Swift, Ruby and PHP: the same evaluator and the same results in every language."

@@ -1,0 +1,3 @@
+source: JsonSchemaForPython.md
+navTitle: "Python"
+description: "The Corvus JSON Schema evaluator for Python (corvus-json-schema, and corvus-json-schema-rs backed by Rust): install, validate, options, results and annotations."

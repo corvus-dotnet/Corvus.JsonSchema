@@ -1,0 +1,3 @@
+source: JsonSchemaForCpp.md
+navTitle: "C++"
+description: "The Corvus JSON Schema evaluator for C++ (the C library's header-only wrapper): install, validate, options, results and annotations."

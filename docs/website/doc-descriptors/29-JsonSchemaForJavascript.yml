@@ -1,0 +1,3 @@
+source: JsonSchemaForJavascript.md
+navTitle: "JavaScript and TypeScript"
+description: "The Corvus JSON Schema evaluator for JavaScript and TypeScript (@corvus-dotnet/json-schema): install, validate, options, results and annotations."

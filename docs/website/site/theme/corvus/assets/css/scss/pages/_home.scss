@@ -170,3 +170,47 @@ body.page-home {
     margin-top: var(--space-xs);
   }
 }
+
+// "Looking for … in another language?" callout: the languages the Corvus JSON Schema evaluator is available in.
+.home-languages {
+  max-width: 52rem;
+  margin: var(--space-lg) auto 0;
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-brand);
+  border-radius: var(--radius-md);
+  text-align: center;
+
+  &__title {
+    margin: 0 0 var(--space-sm);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+  }
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-xs) var(--space-md);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--font-size-lg);
+
+    a {
+      font-weight: 600;
+      text-decoration: none;
+
+      &:hover,
+      &:focus-visible {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &__note {
+    margin: var(--space-sm) 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-dark);
+  }
+}
