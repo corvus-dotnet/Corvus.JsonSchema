@@ -189,6 +189,45 @@ Then revoke the token, and on crates.io open the crate's Settings, Trusted Publi
 repository owner `corvus-dotnet`, repository `Corvus.JsonSchema` and workflow `crates-publish.yml`. Add the
 maintainers as owners too (`cargo owner --add <github-user>`), so the crate does not depend on one account.
 
+## The Java library
+
+The Java port of the runtime evaluator, `io.github.corvus-dotnet:corvus-json-schema` in `src-java/corvus-json-schema`,
+publishes to [Maven Central](https://central.sonatype.com/artifact/io.github.corvus-dotnet/corvus-json-schema). It is
+versioned independently of the NuGet packages, by the `<version>` in its `pom.xml`, with its own history in
+`src-java/corvus-json-schema/VERSIONHISTORY.md`. GitVersion and the tag-triggered NuGet pipeline play no part.
+
+To release, bump `<version>` in `src-java/corvus-json-schema/pom.xml` (and `corvus.version` in
+`src-java/kotlin-smoke/pom.xml`), add the version's entry to `VERSIONHISTORY.md`, and merge to `main`.
+`.github/workflows/maven-publish.yml` then does the following.
+
+1. It does nothing if the Central Portal already has that version, or if the merged PR is labelled `no_release`.
+2. It checks that the jar's `LICENSE` matches the repository's, then runs `./mvnw deploy -P release`: the tests
+   (the whole JSON-Schema-Test-Suite and the allocation tests), the sources and javadoc jars, GPG signing, and the
+   upload to the Central Portal, which validates and publishes it.
+3. It tags the commit `java-v<version>`.
+
+The publish step makes the version live at once, and a published version can never be replaced or deleted, so check a
+release on a branch first: `java.yml` runs the same `install -P release` (without signing) on every pull request that
+touches `src-java`.
+
+Never push a `java-v` tag by hand. `build.yml` publishes NuGet packages for the tags that trigger it. Its tag filter
+only accepts release versions (`[0-9]+.[0-9]+.[0-9]+*`), and the workflow's own tag push uses `GITHUB_TOKEN`, which
+starts no other workflow.
+
+### The first release: Maven Central setup
+
+1. Sign in to [central.sonatype.com](https://central.sonatype.com) with the `corvus-dotnet` organisation's GitHub
+   account and verify the `io.github.corvus-dotnet` namespace (Namespaces, Add Namespace; for an `io.github`
+   namespace the portal asks for a temporary public repository named with the verification key).
+2. Generate a user token (Account, Generate User Token).
+3. Make a signing key (`gpg --quick-generate-key "Corvus JSON Schema <...>" rsa4096 sign 0`), publish its public key
+   (`gpg --keyserver keyserver.ubuntu.com --send-keys <id>`), and export the private key
+   (`gpg --armor --export-secret-keys <id>`).
+4. Create the `maven-central` environment in the repository settings, limited to `main`, with the secrets
+   `CENTRAL_TOKEN_USERNAME`, `CENTRAL_TOKEN_PASSWORD`, `GPG_PRIVATE_KEY` and `GPG_PASSPHRASE`.
+
+Then the first merge of a `pom.xml` version publishes it as for any later release.
+
 ## The Python packages
 
 `src-py` holds two Python packages, published to PyPI and versioned independently of the NuGet packages and of each
