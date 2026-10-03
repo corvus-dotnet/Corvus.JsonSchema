@@ -326,8 +326,8 @@ workflow checks it is there), and merge to `main`. `.github/workflows/php-publis
 1. It does nothing if the package's repository already has a release for that version, or if the merged PR is
    labelled `no_release`. It fails if the crate version the extension needs is not on crates.io: release the crate
    first.
-2. It builds every archive through `php-build.yml`, which tests each build on its own platform (CI runs a subset of
-   them on every pull request).
+2. It builds every archive through `php-build.yml`, which tests each build on its own platform. Every pull request
+   that touches the extension runs the same builds and tests, so a release builds nothing a pull request has not.
 3. It replaces the package repository's files with `src-php/corvus-json-schema`, with the crate taken from crates.io
    instead of by path, commits, and tags the commit `<version>` (no prefix: Packagist reads the tag as the version).
 4. It creates the release for that tag, with the version's history entry as its notes, and attaches the archives.
