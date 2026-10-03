@@ -1,8 +1,8 @@
 name: php-build
 # Builds and tests the corvus_json_schema PHP extension, and packages each build as the archive PIE downloads from a
 # release (php_corvus_json_schema-<version>_php<X.Y>-<arch>-<os>-<libc>[-zts].zip, or the Windows form), uploaded as an
-# artifact named php-<archive name>. Called by php.yml (CI, a representative subset) and php-publish.yml (release,
-# every build), so a release attaches exactly what was built and tested here.
+# artifact named php-<archive name>. Called by php.yml (CI) and php-publish.yml (release) alike: a pull request builds
+# and tests every archive the release does, so a release attaches exactly what was built and tested here.
 #
 # Every build is for one PHP minor version and thread-safety mode, on its own platform:
 #   Linux glibc  setup-php's PHP; the extension is linked by zig against glibc 2.17's symbols (package.ps1 -Glibc), so
@@ -14,10 +14,6 @@ name: php-build
 on:
   workflow_call:
     inputs:
-      full:
-        description: Build every PHP version, thread-safety mode and platform (otherwise a representative subset).
-        type: boolean
-        default: false
       version:
         description: The version in the archives' names (default, the version in Cargo.toml).
         type: string
@@ -42,8 +38,6 @@ jobs:
     steps:
       - name: Choose the builds
         id: matrix
-        env:
-          FULL: ${{ inputs.full }}
         shell: python
         run: |
           import itertools, json, os
@@ -63,14 +57,7 @@ jobs:
           windows_platforms = [{"name": "windows x86_64", "os": "windows-latest"}]
           def grid(platforms):
               return [dict(p, php=v, ts=t) for p, v, t in itertools.product(platforms, php, ts)]
-          if os.environ["FULL"] == "true":
-              unix, alpine, windows = grid(unix_platforms), grid(alpine_platforms), grid(windows_platforms)
-          else:
-              # The oldest and newest PHP, both thread-safety modes, on the main platform; one build elsewhere.
-              unix = [dict(unix_platforms[0], php="8.2", ts="nts"), dict(unix_platforms[0], php="8.5", ts="ts"),
-                      dict(unix_platforms[1], php="8.2", ts="nts"), dict(unix_platforms[2], php="8.5", ts="nts")]
-              alpine = [dict(alpine_platforms[0], php="8.5", ts="nts")]
-              windows = [dict(windows_platforms[0], php="8.2", ts="nts"), dict(windows_platforms[0], php="8.5", ts="ts")]
+          unix, alpine, windows = grid(unix_platforms), grid(alpine_platforms), grid(windows_platforms)
           with open(os.environ["GITHUB_OUTPUT"], "a") as out:
               for key, value in (("unix", unix), ("alpine", alpine), ("windows", windows)):
                   out.write(f"{key}={json.dumps({'include': value})}\n")
@@ -172,10 +159,11 @@ jobs:
               apk add --no-cache build-base clang-dev curl zip >/dev/null
               curl -sSf https://sh.rustup.rs | sh -s -- -y -q --profile minimal --default-toolchain "$RUST_TOOLCHAIN"
               . "$HOME/.cargo/env"
-              # The unwinder is linked statically (libgcc_eh.a in place of -lgcc_s), so the extension needs only
-              # musl: the stock Alpine PHP images do not all ship libgcc (the arm64 ones do not).
+              # The unwinder is linked statically (libgcc_eh.a, and libgcc.a for the atomic helpers it calls on
+              # aarch64, in place of -lgcc_s), so the extension needs only musl: the stock Alpine PHP images do not
+              # all ship libgcc (the arm64 ones do not).
               printf "%s\n" "#!/bin/sh" \
-                "for a in \"\$@\"; do shift; if [ \"\$a\" = -lgcc_s ]; then set -- \"\$@\" -l:libgcc_eh.a; else set -- \"\$@\" \"\$a\"; fi; done" \
+                "for a in \"\$@\"; do shift; if [ \"\$a\" = -lgcc_s ]; then set -- \"\$@\" -l:libgcc_eh.a -lgcc; else set -- \"\$@\" \"\$a\"; fi; done" \
                 "exec cc \"\$@\"" > /tmp/cc-static-unwind.sh
               chmod +x /tmp/cc-static-unwind.sh
               RUSTFLAGS="-C target-feature=-crt-static -C linker=/tmp/cc-static-unwind.sh" cargo build --release --locked
