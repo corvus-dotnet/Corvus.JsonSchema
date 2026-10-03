@@ -339,22 +339,35 @@ final class CodeGen {
             rt("kind", "(" + DOC + "I)I");
             mv.visitVarInsn(ISTORE, KIND);
 
+            SchemaNode flat = flatObject(n);
+            if (flat != null) {
+                // Objects take the merged section and return; the code below still serves every other kind.
+                Label notObject = new Label();
+                mv.visitVarInsn(ILOAD, KIND);
+                pushInt(JsonDocument.OBJECT);
+                mv.visitJumpInsn(IF_ICMPNE, notObject);
+                objectSection(flat);
+                mv.visitInsn(ICONST_1);
+                mv.visitInsn(IRETURN);
+                mv.visitLabel(notObject);
+            }
             if (n.hasType) {
                 typeCheck(n.typeMask);
             }
             if (n.constValue != null) {
                 mv.visitVarInsn(ALOAD, D);
                 mv.visitVarInsn(ILOAD, X);
-                constant(n.constValue, "L" + PKG + "SchemaNode$Value;");
-                rt("equal", "(" + DOC + "IL" + PKG + "SchemaNode$Value;)Z");
+                if (n.constValue.kind() == JsonDocument.STRING) {
+                    constant(utf8(n.constValue.doc.string(n.constValue.node)), "[B");
+                    rt("stringIs", "(" + DOC + "I[B)Z");
+                } else {
+                    constant(n.constValue, "L" + PKG + "SchemaNode$Value;");
+                    rt("equal", "(" + DOC + "IL" + PKG + "SchemaNode$Value;)Z");
+                }
                 returnFalseIfZero();
             }
             if (n.enumValues != null) {
-                mv.visitVarInsn(ALOAD, D);
-                mv.visitVarInsn(ILOAD, X);
-                constant(n.enumValues, "[L" + PKG + "SchemaNode$Value;");
-                rt("anyEqual", "(" + DOC + "I[L" + PKG + "SchemaNode$Value;)Z");
-                returnFalseIfZero();
+                enumCheck(n.enumValues);
             }
             if (n.hasNumberKeywords()) {
                 section(JsonDocument.NUMBER, () -> numberSection(n));
@@ -371,6 +384,157 @@ final class CodeGen {
             inPlace(n);
             mv.visitInsn(ICONST_1);
             mv.visitInsn(IRETURN);
+        }
+
+        /** The members of an enum: strings by their bytes (a hashed lookup when there are many), others by value. */
+        private void enumCheck(SchemaNode.Value[] values) {
+            boolean strings = values.length > 0;
+            for (SchemaNode.Value v : values) {
+                strings &= v.kind() == JsonDocument.STRING;
+            }
+            if (!strings) {
+                mv.visitVarInsn(ALOAD, D);
+                mv.visitVarInsn(ILOAD, X);
+                constant(values, "[L" + PKG + "SchemaNode$Value;");
+                rt("anyEqual", "(" + DOC + "I[L" + PKG + "SchemaNode$Value;)Z");
+                returnFalseIfZero();
+                return;
+            }
+            if (values.length <= MAX_SCANNED_NAMES) {
+                Label ok = new Label();
+                for (SchemaNode.Value v : values) {
+                    mv.visitVarInsn(ALOAD, D);
+                    mv.visitVarInsn(ILOAD, X);
+                    constant(utf8(v.doc.string(v.node)), "[B");
+                    rt("stringIs", "(" + DOC + "I[B)Z");
+                    mv.visitJumpInsn(IFNE, ok);
+                }
+                returnFalse();
+                mv.visitLabel(ok);
+                return;
+            }
+            NameMap map = new NameMap(values.length);
+            for (SchemaNode.Value v : values) {
+                map.putIfAbsent(utf8(v.doc.string(v.node)), 0);
+            }
+            mv.visitVarInsn(ALOAD, D);
+            mv.visitVarInsn(ILOAD, X);
+            constant(map, "L" + PKG + "NameMap;");
+            rt("stringIn", "(" + DOC + "IL" + PKG + "NameMap;)Z");
+            returnFalseIfZero();
+        }
+
+        /**
+         * A flat composition, for object values: a node whose in-place applicators are $ref/allOf chains, where the node
+         * and every branch are plain object schemas (declared properties, required and count bounds, with no type that
+         * excludes objects) and each property name resolves to one schema. Returns a node holding the merged object
+         * keywords, so that an object takes one pass instead of a call per branch that each re-test the kind and scan
+         * the properties (the C#, Rust and TypeScript flat fused plan); null when the node does not qualify, or fewer
+         * than two branches have object keywords.
+         */
+        private SchemaNode flatObject(SchemaNode n) {
+            if (n.ref < 0 && n.staticDynamicRef < 0 && n.allOf == null) {
+                return null;
+            }
+            List<SchemaNode> branches = new ArrayList<>();
+            if (!collectFlat(n, branches, new HashSet<>())) {
+                return null;
+            }
+            int effective = 0;
+            for (SchemaNode b : branches) {
+                if (b.properties != null || (b.required != null && b.required.length > 0) || b.minProperties >= 0
+                        || b.maxProperties >= 0) {
+                    effective++;
+                }
+            }
+            if (effective < 2) {
+                return null;
+            }
+            SchemaNode merged = new SchemaNode(n.resourceId, n.dialect, n.pointer);
+            java.util.LinkedHashMap<String, Integer> properties = new java.util.LinkedHashMap<>();
+            List<String> required = new ArrayList<>();
+            for (SchemaNode b : branches) {
+                if (b.properties != null) {
+                    for (Property prop : b.properties) {
+                        Integer existing = properties.get(prop.name);
+                        if (existing == null || isTrue(existing)) {
+                            properties.put(prop.name, prop.node);
+                        } else if (!sameCheck(existing, prop.node) && !isTrue(prop.node)) {
+                            return null;
+                        }
+                    }
+                }
+                if (b.required != null) {
+                    for (String r : b.required) {
+                        if (!required.contains(r)) {
+                            required.add(r);
+                        }
+                    }
+                }
+                merged.minProperties = Math.max(merged.minProperties, b.minProperties);
+                if (b.maxProperties >= 0) {
+                    merged.maxProperties = merged.maxProperties < 0
+                            ? b.maxProperties
+                            : Math.min(merged.maxProperties, b.maxProperties);
+                }
+            }
+            if (!properties.isEmpty()) {
+                merged.properties = properties.entrySet().stream()
+                        .map(e -> new Property(e.getKey(), e.getValue()))
+                        .toArray(Property[]::new);
+            }
+            if (!required.isEmpty()) {
+                merged.required = required.toArray(new String[0]);
+            }
+            return merged;
+        }
+
+        private boolean collectFlat(SchemaNode m, List<SchemaNode> branches, Set<SchemaNode> visited) {
+            if (!visited.add(m)) {
+                return true;
+            }
+            if (m.alwaysTrue) {
+                return true;
+            }
+            if (m.alwaysFalse || m.inPlaceCycle) {
+                return false;
+            }
+            if (m.constValue != null || m.enumValues != null || (m.hasType && (m.typeMask & SchemaNode.T_OBJECT) == 0)) {
+                return false;
+            }
+            if (m.patternProperties != null || m.additionalProperties >= 0 || m.propertyNames >= 0
+                    || m.dependencies != null || m.unevaluatedProperties >= 0 || m.unevaluatedItems >= 0) {
+                return false;
+            }
+            if (m.dynamicRef != null || m.anyOf != null || m.oneOf != null || m.not >= 0 || m.ifNode >= 0) {
+                return false;
+            }
+            branches.add(m);
+            List<Integer> children = new ArrayList<>();
+            if (m.ref >= 0) {
+                children.add(m.ref);
+            }
+            if (m.staticDynamicRef >= 0) {
+                children.add(m.staticDynamicRef);
+            }
+            if (m.allOf != null) {
+                for (int c : m.allOf) {
+                    children.add(c);
+                }
+            }
+            for (int c : children) {
+                if (!collectFlat(target(c), branches, visited)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /** Two branches' schemas for a name are the same check: one node, or type-only tests of one type. */
+        private boolean sameCheck(int a, int b) {
+            SchemaNode x = target(a);
+            SchemaNode y = target(b);
+            return x == y || (isTypeOnly(x) && isTypeOnly(y) && x.typeMask == y.typeMask);
         }
 
         /** Emits a section that runs only for a value of one kind. */
@@ -519,10 +683,10 @@ final class CodeGen {
                 }
             }
             if (n.assertContent) {
-                mv.visitVarInsn(ALOAD, D);
+                mv.visitVarInsn(ALOAD, E);
                 mv.visitVarInsn(ILOAD, X);
                 pushInt(n.content);
-                rt("content", "(" + DOC + "II)Z");
+                rt("content", "(" + EV + "II)Z");
                 returnFalseIfZero();
             }
         }
@@ -896,9 +1060,9 @@ final class CodeGen {
                 mv.visitVarInsn(ILOAD, len);
                 mv.visitInsn(ICONST_1);
                 mv.visitJumpInsn(IF_ICMPLE, ok);
-                mv.visitVarInsn(ALOAD, D);
+                mv.visitVarInsn(ALOAD, E);
                 mv.visitVarInsn(ILOAD, X);
-                rt("unique", "(" + DOC + "I)Z");
+                rt("unique", "(" + EV + "I)Z");
                 mv.visitJumpInsn(IFNE, ok);
                 returnFalse();
                 mv.visitLabel(ok);

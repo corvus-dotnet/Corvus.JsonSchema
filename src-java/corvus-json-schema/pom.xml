@@ -38,6 +38,8 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>6.1.3</junit.version>
+    <!-- Extra JVM arguments for the tests, e.g. -Dcorvus.jsonschema.interpret=true. -->
+    <corvusArgLine></corvusArgLine>
     <!-- The JSON-Schema-Test-Suite checkout the conformance tests read. -->
     <jsonSchemaTestSuite>${project.basedir}/../../JSON-Schema-Test-Suite</jsonSchemaTestSuite>
   </properties>
@@ -87,11 +89,31 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.5.4</version>
         <configuration>
+          <argLine>@{argLine} ${corvusArgLine}</argLine>
           <systemPropertyVariables>
             <jsonSchemaTestSuite>${jsonSchemaTestSuite}</jsonSchemaTestSuite>
             <metaschemaSource>${project.basedir}/../../src/Corvus.Text.Json/metaschema</metaschemaSource>
           </systemPropertyVariables>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.15</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

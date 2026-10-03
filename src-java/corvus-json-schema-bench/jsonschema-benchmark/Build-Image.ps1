@@ -15,7 +15,7 @@ New-Item -ItemType Directory $context | Out-Null
 $library = Join-Path $PSScriptRoot "../../corvus-json-schema"
 New-Item -ItemType Directory (Join-Path $context "corvus-json-schema") | Out-Null
 Copy-Item -Recurse (Join-Path $library "src"), (Join-Path $library "pom.xml") (Join-Path $context "corvus-json-schema")
-Copy-Item (Join-Path $PSScriptRoot "Main.java"), (Join-Path $PSScriptRoot "Dockerfile") $context
+Copy-Item (Join-Path $PSScriptRoot "Main.java"), (Join-Path $PSScriptRoot "Train.java"), (Join-Path $PSScriptRoot "Dockerfile") $context
 @'
 #!/bin/sh
 OUTPUT=$(/usr/bin/time -f %M,%x -o /dev/stdout -q "$@" | sed '$!N; s/\n/,/; P; D')

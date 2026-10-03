@@ -66,6 +66,16 @@ final class Rt {
         return Arrays.equals(b, off, off + utf8.length, utf8, 0, utf8.length);
     }
 
+    /** Whether a value is a string in a name map. */
+    static boolean stringIn(JsonDocument d, int x, NameMap names) {
+        long h = d.tape[x << 1];
+        if (((int) h & 0xff) != JsonDocument.STRING) {
+            return false;
+        }
+        byte[] b = (h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source;
+        return names.get(b, (int) d.tape[(x << 1) + 1], (int) (h >>> 32)) >= 0;
+    }
+
     // ----------------------------------------------------------------------------------------------------------------
     // Numbers
 
@@ -75,7 +85,7 @@ final class Rt {
     }
 
     static boolean multipleOf(JsonDocument d, int x, Numbers.Divisor divisor) {
-        return divisor.divides(d.flags(x), d.data(x));
+        return divisor.divides(d, x);
     }
 
     static boolean numericFormat(JsonDocument d, int x, Formats.Kind kind) {
@@ -112,8 +122,8 @@ final class Rt {
         return format.test(d.string(x));
     }
 
-    static boolean content(JsonDocument d, int x, int kind) {
-        return Evaluator.contentOk(d.string(x), kind);
+    static boolean content(Evaluator e, int x, int kind) {
+        return e.contentOk(x, kind);
     }
 
     // ----------------------------------------------------------------------------------------------------------------
@@ -159,8 +169,8 @@ final class Rt {
         return map.get(b, (int) d.tape[(key << 1) + 1], (int) (h >>> 32));
     }
 
-    static boolean unique(JsonDocument d, int x) {
-        return Values.allUnique(d, x);
+    static boolean unique(Evaluator e, int x) {
+        return e.unique(x);
     }
 
     // ----------------------------------------------------------------------------------------------------------------
@@ -168,7 +178,7 @@ final class Rt {
 
     /** Evaluates a node with the interpreter, fail-fast (for what the compiled code does not specialise). */
     static boolean interpret(Evaluator e, int node, int x) {
-        return e.evalNode(node, x, null);
+        return e.evalNode(node, x, -1);
     }
 
     /** The branches a discriminator leaves as candidates for an object, or null for all of them. */

@@ -290,9 +290,12 @@ public final class JsonDocument {
 
     private static final VarHandle LONGS = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
 
-    private static final class Parser {
-        private final byte[] b;
+    static final class Parser {
+        private byte[] b;
+        private int end;
         private int i;
+        /** Checking syntax only (a reused parser): no document is built and failures throw one shared exception. */
+        private boolean validating;
         /** Finished children of closed containers, each container's consecutive (two longs per node). */
         private long[] nodes = new long[64];
         private int nodeCount;
@@ -309,16 +312,43 @@ public final class JsonDocument {
 
         Parser(byte[] b) {
             this.b = b;
+            this.end = b.length;
         }
 
+        /** A parser for {@link #isValid}, whose buffers are reused from one check to the next. */
+        Parser() {
+        }
+
+        private static final JsonParseException INVALID = new JsonParseException("invalid JSON");
+
         private JsonParseException error(String message) {
-            return new JsonParseException(message, i);
+            return validating ? INVALID : new JsonParseException(message, i);
+        }
+
+        /** Whether {@code b[start, end)} is one valid JSON value; allocates nothing once the buffers have grown. */
+        boolean isValid(byte[] b, int start, int end) {
+            this.b = b;
+            this.i = start;
+            this.end = end;
+            this.validating = true;
+            nodeCount = 0;
+            scratchCount = 0;
+            depth = 0;
+            textLength = 0;
+            try {
+                parse();
+                return true;
+            } catch (JsonParseException e) {
+                return false;
+            } finally {
+                this.b = null;
+            }
         }
 
         private void skipWs() {
             byte[] b = this.b;
             int i = this.i;
-            while (i < b.length) {
+            while (i < end) {
                 byte c = b[i];
                 if (c != ' ' && c != '\n' && c != '\r' && c != '\t') {
                     break;
@@ -329,7 +359,7 @@ public final class JsonDocument {
         }
 
         private int peek() {
-            return i < b.length ? b[i] & 0xff : -1;
+            return i < end ? b[i] & 0xff : -1;
         }
 
         private void push(long header, long data) {
@@ -406,10 +436,10 @@ public final class JsonDocument {
                 while (!next) {
                     if (depth == 0) {
                         skipWs();
-                        if (i != b.length) {
+                        if (i != end) {
                             throw error("trailing characters");
                         }
-                        return finish();
+                        return validating ? null : finish();
                     }
                     int frame = frames[depth - 1];
                     boolean object = frame < 0;
@@ -479,7 +509,7 @@ public final class JsonDocument {
         /** Moves the closed container's children to nodes and pushes the container in their place. */
         private void close(int start, boolean object) {
             depth--;
-            if (object && scratchCount - start > 2) {
+            if (object && scratchCount - start > 2 && !validating) {
                 dedupe(start);
             }
             int children = scratchCount - start;
@@ -580,7 +610,7 @@ public final class JsonDocument {
         private static final byte[] NULL_WORD = {'n', 'u', 'l', 'l'};
 
         private void literal(byte[] word, int kind, long data) {
-            if (i + word.length > b.length || !Arrays.equals(b, i, i + word.length, word, 0, word.length)) {
+            if (i + word.length > end || !Arrays.equals(b, i, i + word.length, word, 0, word.length)) {
                 throw error("expected a value");
             }
             i += word.length;
@@ -605,7 +635,7 @@ public final class JsonDocument {
             int j = start;
             long wide = 0;
             // Eight bytes at a time to the first quote, backslash or control character.
-            while (j + 8 <= b.length) {
+            while (j + 8 <= end) {
                 long w = (long) LONGS.get(b, j);
                 long special = eqBytes(w, '"') | eqBytes(w, '\\') | controlBytes(w);
                 if (special != 0) {
@@ -619,7 +649,7 @@ public final class JsonDocument {
                 wide |= w & 0x8080808080808080L;
                 j += 8;
             }
-            while (j < b.length) {
+            while (j < end) {
                 int c = b[j] & 0xff;
                 if (c == '"' || c == '\\' || c < 0x20) {
                     break;
@@ -631,7 +661,7 @@ public final class JsonDocument {
         }
 
         private void stringAt(int start, int j, boolean wide) {
-            if (j >= b.length) {
+            if (j >= end) {
                 i = j;
                 throw error("unterminated string");
             }
@@ -682,7 +712,7 @@ public final class JsonDocument {
             byte[] b = this.b;
             int run = start;
             while (true) {
-                if (j >= b.length) {
+                if (j >= end) {
                     i = j;
                     throw error("unterminated string");
                 }
@@ -701,7 +731,7 @@ public final class JsonDocument {
                         validateUtf8(run, j);
                     }
                     appendText(b, run, j);
-                    int e = j + 1 < b.length ? b[j + 1] & 0xff : -1;
+                    int e = j + 1 < end ? b[j + 1] & 0xff : -1;
                     int out;
                     switch (e) {
                         case '"':
@@ -777,7 +807,7 @@ public final class JsonDocument {
         }
 
         private int hex4(int at) {
-            if (at + 4 > b.length) {
+            if (at + 4 > end) {
                 return -1;
             }
             int v = 0;
@@ -799,7 +829,7 @@ public final class JsonDocument {
                 throw error("invalid \\u escape");
             }
             if (u >= 0xd800 && u <= 0xdbff) {
-                int low = j + 7 < b.length && b[j + 6] == '\\' && b[j + 7] == 'u' ? hex4(j + 8) : -1;
+                int low = j + 7 < end && b[j + 6] == '\\' && b[j + 7] == 'u' ? hex4(j + 8) : -1;
                 if (low >= 0xdc00 && low <= 0xdfff) {
                     return 0x10000 + ((u - 0xd800) << 10) + (low - 0xdc00);
                 }
@@ -826,8 +856,8 @@ public final class JsonDocument {
             return j;
         }
 
-        private static boolean digit(byte[] b, int j) {
-            return j < b.length && b[j] >= '0' && b[j] <= '9';
+        private boolean digit(byte[] b, int j) {
+            return j < end && b[j] >= '0' && b[j] <= '9';
         }
 
         /**
@@ -845,7 +875,7 @@ public final class JsonDocument {
             long value = 0;
             boolean overflow = false;
             int intDigits = 0;
-            if (j < b.length && b[j] == '0') {
+            if (j < end && b[j] == '0') {
                 j++;
                 intDigits = 1;
             } else if (digit(b, j)) {
@@ -872,7 +902,7 @@ public final class JsonDocument {
             boolean floating = false;
             int fracStart = -1;
             int fracEnd = -1;
-            if (j < b.length && b[j] == '.') {
+            if (j < end && b[j] == '.') {
                 j++;
                 if (!digit(b, j)) {
                     i = j;
@@ -887,10 +917,10 @@ public final class JsonDocument {
             }
             int exponent = 0;
             boolean expOverflow = false;
-            if (j < b.length && (b[j] == 'e' || b[j] == 'E')) {
+            if (j < end && (b[j] == 'e' || b[j] == 'E')) {
                 j++;
                 boolean expNegative = false;
-                if (j < b.length && (b[j] == '+' || b[j] == '-')) {
+                if (j < end && (b[j] == '+' || b[j] == '-')) {
                     expNegative = b[j] == '-';
                     j++;
                 }
@@ -925,6 +955,11 @@ public final class JsonDocument {
                 }
             }
             double d = expOverflow ? Double.NaN : fastDouble(b, negative, start, intDigits, fracStart, fracEnd, exponent);
+            if (Double.isNaN(d) && validating && !expOverflow && intDigits + exponent < 300) {
+                // Checking syntax only: the number is well within the range of a double, and its value is not needed.
+                push(header | (NUM_DOUBLE << 8), 0);
+                return;
+            }
             if (Double.isNaN(d)) {
                 d = Double.parseDouble(new String(b, start, j - start, StandardCharsets.ISO_8859_1));
             }

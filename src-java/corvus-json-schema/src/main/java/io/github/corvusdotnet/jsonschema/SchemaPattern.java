@@ -12,21 +12,25 @@ import java.util.regex.Pattern;
 final class SchemaPattern {
     private static final int EVERYTHING = 0;
     private static final int REGEX = 1;
+    private static final int SHAPE = 2;
 
     private static final ConcurrentHashMap<String, SchemaPattern> CACHE = new ConcurrentHashMap<>();
 
     final String source;
     private final int kind;
     final Pattern regex;
+    /** A matcher that decides the pattern without the regular expression engine, or null. */
+    final PatternShapes.Matcher shape;
     /** A process-wide index, for evaluators that keep a matcher per pattern. */
     final int id;
 
     private static int nextId;
 
-    private SchemaPattern(String source, int kind, Pattern regex) {
+    private SchemaPattern(String source, int kind, Pattern regex, PatternShapes.Matcher shape) {
         this.source = source;
         this.kind = kind;
         this.regex = regex;
+        this.shape = shape;
         synchronized (SchemaPattern.class) {
             this.id = nextId++;
         }
@@ -43,10 +47,13 @@ final class SchemaPattern {
             return null;
         }
         SchemaPattern p;
+        PatternShapes.Matcher shape;
         if (matchesEverything(pattern)) {
-            p = new SchemaPattern(pattern, EVERYTHING, null);
+            p = new SchemaPattern(pattern, EVERYTHING, null, null);
+        } else if ((shape = PatternShapes.of(pattern)) != null) {
+            p = new SchemaPattern(pattern, SHAPE, Pattern.compile(translated), shape);
         } else {
-            p = new SchemaPattern(pattern, REGEX, Pattern.compile(translated));
+            p = new SchemaPattern(pattern, REGEX, Pattern.compile(translated), null);
         }
         SchemaPattern previous = CACHE.putIfAbsent(pattern, p);
         return previous != null ? previous : p;

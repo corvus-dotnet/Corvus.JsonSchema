@@ -146,8 +146,12 @@ final class Values {
         return h;
     }
 
-    /** {@code uniqueItems}: pairwise for short arrays, by hash and equality otherwise. */
-    static boolean allUnique(JsonDocument d, int array) {
+    /**
+     * {@code uniqueItems}: pairwise for short arrays; otherwise sorted by hash in {@code scratch} (at least as long as
+     * the array), each entry the hash's high half and the item's index, so that only items with equal hashes are
+     * compared. Allocates nothing.
+     */
+    static boolean allUnique(JsonDocument d, int array, long[] scratch) {
         int n = d.count(array);
         if (n < 2) {
             return true;
@@ -163,26 +167,16 @@ final class Values {
             }
             return true;
         }
-        // Sort by hash: equal values have equal hashes, so only runs of equal hashes need comparing.
-        long[] hashed = new long[n];
-        long[] hashes = new long[n];
         for (int i = 0; i < n; i++) {
-            hashes[i] = hash(d, c + i);
+            scratch[i] = (hash(d, c + i) & 0xffffffff00000000L) | i;
         }
-        Integer[] order = new Integer[n];
-        for (int i = 0; i < n; i++) {
-            order[i] = i;
-        }
-        Arrays.sort(order, (x, y) -> Long.compare(hashes[x], hashes[y]));
-        for (int i = 0; i < n; i++) {
-            hashed[i] = hashes[order[i]];
-        }
+        Arrays.sort(scratch, 0, n);
         int start = 0;
         for (int end = 1; end <= n; end++) {
-            if (end == n || hashed[end] != hashed[start]) {
+            if (end == n || (scratch[end] >>> 32) != (scratch[start] >>> 32)) {
                 for (int i = start + 1; i < end; i++) {
                     for (int j = start; j < i; j++) {
-                        if (equal(d, c + order[i], d, c + order[j])) {
+                        if (equal(d, c + (int) scratch[i], d, c + (int) scratch[j])) {
                             return false;
                         }
                     }

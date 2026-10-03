@@ -9,10 +9,14 @@ import java.util.List;
  * corvus-json-schema's implementation of the jsonschema-benchmark protocol: parse every instance, compile, validate
  * once cold, warm up, validate once warm. Prints cold,warm,compile,parse in nanoseconds; exits 1 if an instance is
  * invalid.
+ *
+ * <p>The benchmark defines warm as steady state. The warm-up follows a rule that is the same for every engine whatever
+ * its runtime: validation passes for a fixed time ({@value #WARMUP_TIME} ns), and at least {@value #MIN_WARMUP_PASSES}
+ * passes.
  */
 public final class Main {
-    static final int WARMUP_ITERATIONS = 1000;
-    static final long MAX_WARMUP_TIME = 10_000_000_000L;
+    static final long WARMUP_TIME = 2_000_000_000L;
+    static final int MIN_WARMUP_PASSES = 100;
 
     static boolean validateAll(Validator v, JsonDocument[] docs) {
         boolean valid = true;
@@ -48,8 +52,8 @@ public final class Main {
             System.exit(1);
         }
 
-        long iterations = (long) Math.ceil((double) MAX_WARMUP_TIME / (coldEnd - coldStart));
-        for (long i = 0; i < Math.min(iterations, WARMUP_ITERATIONS); i++) {
+        long warmupEnd = System.nanoTime() + WARMUP_TIME;
+        for (int i = 0; i < MIN_WARMUP_PASSES || System.nanoTime() < warmupEnd; i++) {
             validateAll(v, docs);
         }
 

@@ -516,7 +516,7 @@ final class SchemaCompiler {
             SchemaNode.Num m = num(d, d.property(e, "multipleOf"));
             if (m != null) {
                 n.multipleOf = m;
-                n.divisor = new Numbers.Divisor(m.flag, m.bits);
+                n.divisor = new Numbers.Divisor(d, d.property(e, "multipleOf"));
             }
             if (dialect == Dialect.DRAFT4) {
                 // Draft 4: exclusiveMaximum/exclusiveMinimum are booleans that make maximum/minimum exclusive.

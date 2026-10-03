@@ -60,8 +60,6 @@ final class Evaluator {
     boolean depthExceeded;
     private final Utf8Chars chars = new Utf8Chars();
     private Matcher[] matchers = new Matcher[0];
-    /** The scratch bits of the last in-place child (for oneOf, which merges only a single match). */
-    private long[] lastScratch;
 
     Evaluator(Program p, JsonSchemaResultsCollector c) {
         this.p = p;
@@ -77,7 +75,7 @@ final class Evaluator {
         depth = 0;
         depthExceeded = false;
         scopeLength = 0;
-        return evalNode(p.fastTarget[p.root], x, null);
+        return evalNode(p.fastTarget[p.root], x, -1);
     }
 
     /** Evaluates the program's entry through its compiled code, fail-fast. */
@@ -98,7 +96,7 @@ final class Evaluator {
         // A root that is nothing but a $ref reports against its target, with no $ref in the evaluation path.
         int root = resolve(p.root);
         c.beginChildContext(null, nodes[root].pointer, null);
-        boolean ok = evalNode(root, x, null);
+        boolean ok = evalNode(root, x, -1);
         c.commitChildContext(false, ok, EVALUATED_SUBSCHEMA);
         return ok;
     }
@@ -139,22 +137,53 @@ final class Evaluator {
         return current;
     }
 
-    private static long[] newBits(int len) {
-        return new long[(len + 63) >>> 6];
-    }
+    /**
+     * Evaluated-property/item bit sets live in one arena, allocated and released in stack order, so the interpreter
+     * allocates nothing once the arena has grown to the deepest nesting it needs. A set is its offset in the arena.
+     */
+    private long[] arena = new long[64];
+    private int arenaTop;
 
-    private static void set(long[] bits, int i) {
-        bits[i >>> 6] |= 1L << i;
-    }
-
-    private static boolean get(long[] bits, int i) {
-        return (bits[i >>> 6] & (1L << i)) != 0;
-    }
-
-    private static void merge(long[] into, long[] from) {
-        for (int i = 0; i < into.length; i++) {
-            into[i] |= from[i];
+    private int newBits(int len) {
+        int words = (len + 63) >>> 6;
+        if (arenaTop + words > arena.length) {
+            arena = java.util.Arrays.copyOf(arena, Math.max(arena.length * 2, arenaTop + words));
         }
+        int off = arenaTop;
+        java.util.Arrays.fill(arena, off, off + words, 0L);
+        arenaTop += words;
+        return off;
+    }
+
+    private long[] hashes = new long[32];
+
+    /** {@code uniqueItems} over the array x, with the evaluator's reused scratch. */
+    boolean unique(int x) {
+        int n = doc.count(x);
+        if (n > hashes.length) {
+            hashes = new long[Math.max(n, hashes.length * 2)];
+        }
+        return Values.allUnique(doc, x, hashes);
+    }
+
+    private void set(int bits, int i) {
+        arena[bits + (i >>> 6)] |= 1L << i;
+    }
+
+    private boolean get(int bits, int i) {
+        return (arena[bits + (i >>> 6)] & (1L << i)) != 0;
+    }
+
+    /** Merges the bits of {@code from} into {@code into}, both sets for the container x. */
+    private void merge(int into, int from, int x) {
+        int words = (containerLength(x) + 63) >>> 6;
+        for (int i = 0; i < words; i++) {
+            arena[into + i] |= arena[from + i];
+        }
+    }
+
+    private void copy(int into, int from, int x) {
+        System.arraycopy(arena, from, arena, into, (containerLength(x) + 63) >>> 6);
     }
 
     private int containerLength(int x) {
@@ -162,7 +191,7 @@ final class Evaluator {
         return k == OBJECT || k == ARRAY ? doc.count(x) : 0;
     }
 
-    boolean evalNode(int id, int x, long[] bits) {
+    boolean evalNode(int id, int x, int bits) {
         SchemaNode n = nodes[id];
         if (n.alwaysTrue || n.alwaysFalse) {
             if (collect) {
@@ -178,16 +207,18 @@ final class Evaluator {
             scope[scopeLength++] = n.resourceId;
         }
         int kind = doc.kind(x);
-        boolean needsOwn = bits == null
+        boolean needsOwn = bits < 0
                 && ((n.unevaluatedProperties >= 0 && kind == OBJECT) || (n.unevaluatedItems >= 0 && kind == ARRAY));
+        int top = arenaTop;
         boolean ok = evalCore(id, n, x, needsOwn ? newBits(containerLength(x)) : bits);
+        arenaTop = top;
         if (pushed) {
             scopeLength--;
         }
         return ok;
     }
 
-    private boolean evalCore(int id, SchemaNode n, int x, long[] bits) {
+    private boolean evalCore(int id, SchemaNode n, int x, int bits) {
         boolean ok = true;
         int kind = doc.kind(x);
         if (n.hasType) {
@@ -400,7 +431,7 @@ final class Evaluator {
             }
         }
         if (n.multipleOf != null) {
-            boolean m = n.divisor.divides(flag, bits);
+            boolean m = n.divisor.divides(doc, x);
             ok &= check(m, null, () -> "The value was expected to be a multiple of" + q(n.multipleOf.text),
                     "multipleOf");
         }
@@ -424,6 +455,9 @@ final class Evaluator {
     boolean matches(SchemaPattern pattern, int s) {
         if (pattern.matchesAll()) {
             return true;
+        }
+        if (pattern.shape != null) {
+            return pattern.shape.matches(doc.strBytes(s), doc.strOffset(s), doc.count(s), doc.strAscii(s));
         }
         return pattern.find(matcher(pattern), chars.of(doc, s));
     }
@@ -474,7 +508,7 @@ final class Evaluator {
             }
         }
         if (n.assertContent) {
-            boolean m = contentOk(doc.string(x), n.content);
+            boolean m = contentOk(x, n.content);
             String message;
             String keyword;
             if (n.content == SchemaNode.CONTENT_BASE64) {
@@ -492,43 +526,51 @@ final class Evaluator {
         return ok;
     }
 
-    static byte[] base64Decode(String s) {
-        int n = s.length();
-        if (n % 4 != 0) {
-            return null;
+    private JsonDocument.Parser contentParser;
+    private byte[] decoded = new byte[64];
+
+    /**
+     * Decodes base64 {@code b[off, off + len)} into {@code out} (at least len * 3 / 4 long), returning the number of
+     * bytes, or -1 when the text is not base64.
+     */
+    static int base64Decode(byte[] b, int off, int len, byte[] out) {
+        if (len % 4 != 0) {
+            return -1;
         }
-        byte[] out = new byte[n / 4 * 3];
         int o = 0;
-        for (int ci = 0; ci < n; ci += 4) {
-            boolean last = ci == n - 4;
+        for (int ci = off; ci < off + len; ci += 4) {
+            boolean last = ci == off + len - 4;
             int pad = 0;
-            for (int k = 3; k >= 0 && s.charAt(ci + k) == '='; k--) {
+            for (int k = 3; k >= 0 && b[ci + k] == '='; k--) {
                 pad++;
             }
             if (pad > 2 || (pad > 0 && !last)) {
-                return null;
+                return -1;
             }
             int acc = 0;
             for (int k = 0; k < 4 - pad; k++) {
-                int v = base64Value(s.charAt(ci + k));
+                int v = base64Value(b[ci + k]);
                 if (v < 0) {
-                    return null;
+                    return -1;
                 }
                 acc = (acc << 6) | v;
             }
             acc <<= 6 * pad;
-            out[o++] = (byte) (acc >> 16);
-            if (pad < 2) {
-                out[o++] = (byte) (acc >> 8);
+            if (out != null) {
+                out[o] = (byte) (acc >> 16);
+                if (pad < 2) {
+                    out[o + 1] = (byte) (acc >> 8);
+                }
+                if (pad < 1) {
+                    out[o + 2] = (byte) acc;
+                }
             }
-            if (pad < 1) {
-                out[o++] = (byte) acc;
-            }
+            o += 3 - pad;
         }
-        return java.util.Arrays.copyOf(out, o);
+        return o;
     }
 
-    private static int base64Value(char c) {
+    private static int base64Value(int c) {
         if (c >= 'A' && c <= 'Z') {
             return c - 'A';
         }
@@ -547,25 +589,29 @@ final class Evaluator {
         return -1;
     }
 
-    private static boolean isJson(byte[] utf8) {
-        try {
-            JsonDocument.parse(utf8);
-            return true;
-        } catch (JsonParseException e) {
-            return false;
+    private boolean isJson(byte[] b, int start, int end) {
+        if (contentParser == null) {
+            contentParser = new JsonDocument.Parser();
         }
+        return contentParser.isValid(b, start, end);
     }
 
-    /** Draft 7 content assertion. */
-    static boolean contentOk(String s, int kind) {
+    /** Draft 7 content assertion over the string value x. */
+    boolean contentOk(int x, int kind) {
+        byte[] b = doc.strBytes(x);
+        int off = doc.strOffset(x);
+        int len = doc.count(x);
         switch (kind) {
             case SchemaNode.CONTENT_BASE64:
-                return base64Decode(s) != null;
+                return base64Decode(b, off, len, null) >= 0;
             case SchemaNode.CONTENT_JSON:
-                return isJson(s.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                return isJson(b, off, off + len);
             case SchemaNode.CONTENT_BASE64_JSON: {
-                byte[] d = base64Decode(s);
-                return d != null && isJson(d);
+                if (decoded.length < len) {
+                    decoded = new byte[Math.max(len, decoded.length * 2)];
+                }
+                int n = base64Decode(b, off, len, decoded);
+                return n >= 0 && isJson(decoded, 0, n);
             }
             default:
                 return true;
@@ -578,11 +624,11 @@ final class Evaluator {
     /** A child application at a new instance location (a property value or an array item). */
     private boolean evalAt(int child, String path, int value, String docSegment) {
         if (!collect) {
-            return evalNode(p.fastTarget[child], value, null);
+            return evalNode(p.fastTarget[child], value, -1);
         }
         int target = resolve(child);
         c.beginChildContext(path + resolvedSuffix, nodes[target].pointer, docSegment);
-        boolean ok = evalNode(target, value, null);
+        boolean ok = evalNode(target, value, -1);
         c.commitChildContext(ok, ok, EVALUATED_SUBSCHEMA);
         return ok;
     }
@@ -591,7 +637,7 @@ final class Evaluator {
         return Uris.escapePointerToken(doc.string(key));
     }
 
-    private boolean evalObject(int id, SchemaNode n, int x, long[] bits) {
+    private boolean evalObject(int id, SchemaNode n, int x, int bits) {
         boolean ok = true;
         long len = doc.count(x);
         if (n.minProperties >= 0) {
@@ -619,7 +665,7 @@ final class Evaluator {
                 int pn = n.properties != null ? p.property(id, doc, k) : -1;
                 if (pn >= 0) {
                     matched = true;
-                    if (bits != null) {
+                    if (bits >= 0) {
                         set(bits, i);
                     }
                     String seg = collect ? keyText(k) : null;
@@ -636,7 +682,7 @@ final class Evaluator {
                             continue;
                         }
                         matched = true;
-                        if (bits != null) {
+                        if (bits >= 0) {
                             set(bits, i);
                         }
                         String path = collect ? "patternProperties/" + Uris.escapePointerToken(pp.pattern.source) : null;
@@ -649,7 +695,7 @@ final class Evaluator {
                     }
                 }
                 if (n.additionalProperties >= 0 && !matched) {
-                    if (bits != null) {
+                    if (bits >= 0) {
                         set(bits, i);
                     }
                     if (!evalAt(n.additionalProperties, "additionalProperties", v, collect ? keyText(k) : null)) {
@@ -664,13 +710,13 @@ final class Evaluator {
                     if (collect) {
                         // Not elided; the document path stays the object's.
                         c.beginChildContext("propertyNames", nodes[n.propertyNames].pointer, null);
-                        boolean m = evalNode(n.propertyNames, k, null);
+                        boolean m = evalNode(n.propertyNames, k, -1);
                         c.commitChildContext(m, m, EVALUATED_SUBSCHEMA);
                         if (!m) {
                             c.evaluatedKeyword(false, PROPERTY_NAME_FAILED, null, "propertyNames");
                             ok = false;
                         }
-                    } else if (!evalNode(p.fastTarget[n.propertyNames], k, null)) {
+                    } else if (!evalNode(p.fastTarget[n.propertyNames], k, -1)) {
                         return false;
                     }
                 }
@@ -727,7 +773,7 @@ final class Evaluator {
         return ok;
     }
 
-    private boolean evalUnevaluated(int child, int x, long[] bits, boolean object) {
+    private boolean evalUnevaluated(int child, int x, int bits, boolean object) {
         boolean ok = true;
         int len = doc.count(x);
         int first = doc.first(x);
@@ -754,7 +800,7 @@ final class Evaluator {
     // ----------------------------------------------------------------------------------------------------------------
     // Arrays
 
-    private boolean evalArray(SchemaNode n, int x, long[] bits) {
+    private boolean evalArray(SchemaNode n, int x, int bits) {
         boolean ok = true;
         int len = doc.count(x);
         if (n.minItems >= 0) {
@@ -780,7 +826,7 @@ final class Evaluator {
         for (int i = 0; i < len; i++) {
             int item = first + i;
             if (i < prefixLength) {
-                if (bits != null) {
+                if (bits >= 0) {
                     set(bits, i);
                 }
                 String seg = collect ? Integer.toString(i) : null;
@@ -791,7 +837,7 @@ final class Evaluator {
                     ok = false;
                 }
             } else if (n.items >= 0) {
-                if (bits != null) {
+                if (bits >= 0) {
                     set(bits, i);
                 }
                 if (!evalAt(n.items, n.itemsKeyword, item, collect ? Integer.toString(i) : null)) {
@@ -806,7 +852,7 @@ final class Evaluator {
                 if (collect) {
                     int target = resolve(n.contains);
                     c.beginChildContext("contains" + resolvedSuffix, nodes[target].pointer, Integer.toString(i));
-                    if (evalNode(target, item, null)) {
+                    if (evalNode(target, item, -1)) {
                         c.commitChildContext(true, true, EVALUATED_SUBSCHEMA);
                         matched = true;
                     } else {
@@ -814,18 +860,18 @@ final class Evaluator {
                         matched = false;
                     }
                 } else {
-                    matched = evalNode(p.fastTarget[n.contains], item, null);
+                    matched = evalNode(p.fastTarget[n.contains], item, -1);
                 }
                 if (matched) {
                     count++;
-                    if (n.containsMarksEvaluated && bits != null) {
+                    if (n.containsMarksEvaluated && bits >= 0) {
                         set(bits, i);
                     }
                 }
             }
         }
         if (n.uniqueItems) {
-            ok &= check(Values.allUnique(doc, x), UNIQUE_ITEMS, null, "uniqueItems");
+            ok &= check(unique(x), UNIQUE_ITEMS, null, "uniqueItems");
             if (!ok && !collect) {
                 return false;
             }
@@ -852,11 +898,10 @@ final class Evaluator {
 
     /**
      * Evaluates an in-place child: a new context at the same instance location, on a fresh scratch set of evaluated
-     * properties/items merged into the parent's on success. A failing child is committed or popped. The scratch bits
-     * are left in {@link #lastScratch}.
+     * properties/items merged into the parent's on success. A failing child is committed or popped.
      */
     private boolean evalInPlaceChild(
-            int child, String path, int x, long[] bits, boolean commitOnFailure, boolean elide) {
+            int child, String path, int x, int bits, boolean commitOnFailure, boolean elide) {
         int target;
         String suffix = "";
         if (!elide) {
@@ -867,14 +912,15 @@ final class Evaluator {
         } else {
             target = p.fastTarget[child];
         }
-        long[] scratch = bits != null && canMark(child, x) ? newBits(containerLength(x)) : null;
+        int top = arenaTop;
+        int scratch = bits >= 0 && canMark(child, x) ? newBits(containerLength(x)) : -1;
         boolean guarded = nodes[target].inPlaceCycle;
         if (guarded) {
             depth++;
             if (depth > p.maxDepth) {
                 depthExceeded = true;
                 depth--;
-                lastScratch = null;
+                arenaTop = top;
                 return false;
             }
         }
@@ -893,10 +939,10 @@ final class Evaluator {
         if (guarded) {
             depth--;
         }
-        if (ok && scratch != null && bits != null) {
-            merge(bits, scratch);
+        if (ok && scratch >= 0) {
+            merge(bits, scratch, x);
         }
-        lastScratch = scratch;
+        arenaTop = top;
         return ok;
     }
 
@@ -932,7 +978,7 @@ final class Evaluator {
 
     private static final int[] NONE = new int[0];
 
-    private boolean evalInPlace(SchemaNode n, int x, long[] bits) {
+    private boolean evalInPlace(SchemaNode n, int x, int bits) {
         boolean ok = true;
         if (n.ref >= 0) {
             boolean m = evalInPlaceChild(n.ref, "$ref", x, bits, true, true);
@@ -975,7 +1021,7 @@ final class Evaluator {
         if (n.anyOf != null) {
             boolean any = false;
             // Every branch runs when results are collected or evaluated properties/items are tracked.
-            boolean exhaustive = collect || bits != null;
+            boolean exhaustive = collect || bits >= 0;
             // Fail-fast evaluation only tries the branches a discriminator property can select.
             int[] selection = exhaustive ? null : select(n.anyOfDiscriminator, x);
             int count = selection != null ? selection.length : n.anyOf.length;
@@ -995,27 +1041,34 @@ final class Evaluator {
         }
         if (n.oneOf != null) {
             int matched = 0;
-            long[] only = null;
-            boolean track = bits != null;
+            boolean track = bits >= 0;
+            int top = arenaTop;
+            // Evaluated properties/items are merged only when exactly one branch matched, so collect them aside.
+            int only = track ? newBits(containerLength(x)) : -1;
             // Branches a discriminator rules out cannot match, so fail-fast evaluation skips them.
             int[] selection = collect || track ? null : select(n.oneOfDiscriminator, x);
             int count = selection != null ? selection.length : n.oneOf.length;
             for (int s = 0; s < count; s++) {
                 int i = selection != null ? selection[s] : s;
-                // Evaluated properties/items are merged only when exactly one branch matched, so collect them aside.
-                long[] aside = track ? newBits(containerLength(x)) : null;
+                int branchTop = arenaTop;
+                int aside = track ? newBits(containerLength(x)) : -1;
                 boolean m = evalInPlaceChild(n.oneOf[i], collect ? "oneOf/" + i : null, x, aside, false, true);
                 if (m) {
                     matched++;
-                    only = track ? (aside != null ? aside : lastScratch) : null;
+                    if (track) {
+                        copy(only, aside, x);
+                    }
                     if (!collect && matched > 1) {
+                        arenaTop = top;
                         return false;
                     }
                 }
+                arenaTop = branchTop;
             }
-            if (matched == 1 && bits != null && only != null) {
-                merge(bits, only);
+            if (matched == 1 && track) {
+                merge(bits, only, x);
             }
+            arenaTop = top;
             String message = matched == 0 ? MATCHED_NO_SCHEMA : matched == 1 ? MATCHED_EXACTLY_ONE
                     : MATCHED_MORE_THAN_ONE;
             ok &= check(matched == 1, message, null, "oneOf");
@@ -1028,10 +1081,10 @@ final class Evaluator {
             boolean inner;
             if (collect) {
                 c.beginChildContext("not", nodes[n.not].pointer, null);
-                inner = evalNode(n.not, x, null);
+                inner = evalNode(n.not, x, -1);
                 c.popChildContext();
             } else {
-                inner = evalNode(p.fastTarget[n.not], x, null);
+                inner = evalNode(p.fastTarget[n.not], x, -1);
             }
             ok &= check(!inner, inner ? MATCHED_NOT : DID_NOT_MATCH_NOT, null, "not");
             if (!ok && !collect) {

@@ -5,8 +5,6 @@ import static io.github.corvusdotnet.jsonschema.JsonDocument.NUM_LONG;
 import static io.github.corvusdotnet.jsonschema.JsonDocument.NUM_U64;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
-import java.math.RoundingMode;
 
 /**
  * Exact numeric comparisons over the parser's number representations (a long, an unsigned long beyond a long, or a
@@ -96,63 +94,215 @@ final class Numbers {
         return d == Math.floor(d) && !Double.isInfinite(d);
     }
 
-    /** The number as an exact decimal: an integer exactly, a double as its shortest round-trip decimal. */
-    static BigDecimal decimal(int flag, long bits) {
-        switch (flag) {
-            case NUM_LONG:
-                return BigDecimal.valueOf(bits);
-            case NUM_U64:
-                return new BigDecimal(Long.toUnsignedString(bits));
-            default:
-                return shortest(Double.longBitsToDouble(bits));
-        }
-    }
-
-    /** From Java 19, {@code Double.toString} gives the shortest decimal that rounds to the double. */
-    private static final boolean SHORTEST_TO_STRING = Runtime.version().feature() >= 19;
-
-    /** The shortest decimal that rounds to the double (the decimal JSON text that produced it, normalised). */
-    static BigDecimal shortest(double d) {
-        if (SHORTEST_TO_STRING) {
-            return new BigDecimal(Double.toString(d));
-        }
-        // Before Java 19 Double.toString sometimes gives more digits than needed: round the exact binary value to
-        // ever more digits until it reads back as the double.
-        BigDecimal exact = new BigDecimal(d);
-        for (int p = 1; p < 17; p++) {
-            BigDecimal r = exact.round(new MathContext(p, RoundingMode.HALF_EVEN));
-            if (r.doubleValue() == d) {
-                return r;
-            }
-        }
-        return exact.round(new MathContext(17, RoundingMode.HALF_EVEN));
-    }
-
-    /** A {@code multipleOf} divisor with its integer or decimal form worked out once. */
+    /**
+     * A {@code multipleOf} divisor, as the decimal its JSON text writes: a significand without trailing zeros and an
+     * exponent. {@code x} is a multiple when {@code x / divisor} is an integer, decided exactly on the decimal digits of
+     * x's own text, with long arithmetic only (no allocation): the C# evaluator's decimal semantics.
+     */
     static final class Divisor {
         private final boolean isLong;
         private final long value;
+        /** The significand (at most 18 digits), or -1 when the divisor's digits do not fit. */
+        private final long significand;
+        private final int exponent;
         private final BigDecimal decimal;
 
-        Divisor(int flag, long bits) {
+        Divisor(JsonDocument d, int n) {
+            int flag = d.flags(n);
             isLong = flag == NUM_LONG;
-            value = bits;
-            decimal = decimal(flag, bits);
+            value = d.data(n);
+            long[] parsed = new long[2];
+            if (decimalOf(d.source, d.count(n), parsed)) {
+                significand = parsed[0];
+                exponent = (int) parsed[1];
+            } else {
+                significand = -1;
+                exponent = 0;
+            }
+            decimal = new BigDecimal(d.numberText(n));
         }
 
-        /** Exact {@code multipleOf}: whether x / divisor is an integer, over the decimal forms of both numbers. */
-        boolean divides(int flag, long bits) {
+        /** Exact {@code multipleOf} of the number value x of a document. */
+        boolean divides(JsonDocument d, int x) {
+            int flag = d.flags(x);
+            long bits = d.data(x);
             if (isLong && flag == NUM_LONG) {
                 return value != 0 && bits % value == 0;
             }
-            if (decimal.signum() == 0) {
+            if (significand == 0) {
                 return false;
             }
-            BigDecimal x = decimal(flag, bits);
-            if (x.signum() == 0) {
-                return true;
+            if (significand > 0) {
+                int r = dividesText(d.source, d.count(x), significand, exponent);
+                if (r >= 0) {
+                    return r == 1;
+                }
             }
-            return x.remainder(decimal).signum() == 0;
+            // A divisor of more than 18 significant digits, or an exponent beyond an int.
+            BigDecimal v = new BigDecimal(d.numberText(x));
+            return v.signum() == 0 || v.remainder(decimal).signum() == 0;
         }
+    }
+
+    /**
+     * Reads the decimal of the number text at {@code start}: out[0] = significand without trailing zeros (at most 18
+     * digits), out[1] = exponent. False when the significand does not fit or the exponent is out of range.
+     */
+    static boolean decimalOf(byte[] b, int start, long[] out) {
+        int j = start;
+        if (b[j] == '-') {
+            j++;
+        }
+        long m = 0;
+        int digits = 0;
+        long exponent = 0;
+        int pendingZeros = 0;
+        boolean fraction = false;
+        for (; j < b.length; j++) {
+            int c = b[j];
+            if (c == '.') {
+                fraction = true;
+                continue;
+            }
+            if (c < '0' || c > '9') {
+                break;
+            }
+            if (fraction) {
+                exponent--;
+            }
+            if (c == '0') {
+                // Trailing zeros are held back, so that they move into the exponent if no other digit follows.
+                if (digits > 0) {
+                    pendingZeros++;
+                }
+                continue;
+            }
+            for (; pendingZeros > 0; pendingZeros--) {
+                if (digits >= 18) {
+                    return false;
+                }
+                m *= 10;
+                digits++;
+            }
+            if (digits >= 18) {
+                return false;
+            }
+            m = m * 10 + (c - '0');
+            digits++;
+        }
+        exponent += pendingZeros;
+        if (j < b.length && (b[j] == 'e' || b[j] == 'E')) {
+            j++;
+            boolean negative = false;
+            if (b[j] == '+' || b[j] == '-') {
+                negative = b[j] == '-';
+                j++;
+            }
+            long e = 0;
+            for (; j < b.length && b[j] >= '0' && b[j] <= '9'; j++) {
+                if (e < 1_000_000_000L) {
+                    e = e * 10 + (b[j] - '0');
+                }
+            }
+            exponent += negative ? -e : e;
+        }
+        if (exponent > Integer.MAX_VALUE / 2 || exponent < Integer.MIN_VALUE / 2) {
+            return false;
+        }
+        out[0] = m;
+        out[1] = exponent;
+        return true;
+    }
+
+    /**
+     * Whether the number text at {@code start} is a multiple of {@code dm * 10^de} (dm positive, no trailing zeros):
+     * 1 or 0, or -1 when the exponents are out of range. The text's digits are streamed modulo what remains of the
+     * divisor, so the text may have any number of digits.
+     */
+    static int dividesText(byte[] b, int start, long dm, int de) {
+        // x = xm * 10^xe with xm the digit string (trailing zeros moved into xe). x / d is an integer exactly when
+        // dm divides xm * 10^(xe - de).
+        int j = start;
+        if (b[j] == '-') {
+            j++;
+        }
+        int digitsStart = j;
+        long exponent = 0;
+        int lastNonZero = -1;
+        boolean fraction = false;
+        boolean any = false;
+        int end = j;
+        for (; end < b.length; end++) {
+            int c = b[end];
+            if (c == '.') {
+                fraction = true;
+                continue;
+            }
+            if (c < '0' || c > '9') {
+                break;
+            }
+            if (fraction) {
+                exponent--;
+            }
+            if (c != '0') {
+                lastNonZero = end;
+                any = true;
+            }
+        }
+        if (!any) {
+            // Zero is a multiple of everything.
+            return 1;
+        }
+        // Digits after the last non-zero one are trailing zeros: they move into the exponent.
+        int k = end;
+        if (end < b.length && (b[end] == 'e' || b[end] == 'E')) {
+            k++;
+            boolean negative = false;
+            if (b[k] == '+' || b[k] == '-') {
+                negative = b[k] == '-';
+                k++;
+            }
+            long e = 0;
+            for (; k < b.length && b[k] >= '0' && b[k] <= '9'; k++) {
+                if (e < 1_000_000_000L) {
+                    e = e * 10 + (b[k] - '0');
+                }
+            }
+            exponent += negative ? -e : e;
+        }
+        for (int t = lastNonZero + 1; t < end; t++) {
+            if (b[t] != '.') {
+                exponent++;
+            }
+        }
+        long shift = exponent - de;
+        if (shift < 0) {
+            // dm * 10^-shift must divide xm, which has no trailing zero, so is not a multiple of 10.
+            return 0;
+        }
+        if (shift > Integer.MAX_VALUE) {
+            return -1;
+        }
+        // Remove from dm the factors of 2 and 5 that 10^shift supplies; what remains must divide xm.
+        long rest = dm;
+        for (int twos = 0; twos < shift && (rest & 1) == 0; twos++) {
+            rest >>>= 1;
+        }
+        for (int fives = 0; fives < shift && rest % 5 == 0; fives++) {
+            rest /= 5;
+        }
+        if (rest == 1) {
+            return 1;
+        }
+        long r = 0;
+        for (int t = digitsStart; t <= lastNonZero; t++) {
+            int c = b[t];
+            if (c == '.') {
+                continue;
+            }
+            // r < rest <= 10^18, so r * 10 + 9 < 2^64: unsigned arithmetic.
+            r = Long.remainderUnsigned(r * 10 + (c - '0'), rest);
+        }
+        return r == 0 ? 1 : 0;
     }
 }
