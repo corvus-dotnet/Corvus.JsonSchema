@@ -674,11 +674,11 @@ final class CodeGen {
                     rt("customFormat", "(" + DOC + "ILjava/util/function/Predicate;)Z");
                     returnFalseIfZero();
                 } else if (n.formatKind != Formats.Kind.UNKNOWN) {
-                    mv.visitVarInsn(ALOAD, D);
+                    mv.visitVarInsn(ALOAD, E);
                     mv.visitVarInsn(ILOAD, X);
                     constant(n.formatKind, "L" + PKG + "Formats$Kind;");
                     mv.visitInsn(n.dialect.compareTo(Dialect.DRAFT6) <= 0 ? ICONST_1 : ICONST_0);
-                    rt("format", "(" + DOC + "IL" + PKG + "Formats$Kind;Z)Z");
+                    rt("format", "(" + EV + "IL" + PKG + "Formats$Kind;Z)Z");
                     returnFalseIfZero();
                 }
             }

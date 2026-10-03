@@ -95,6 +95,19 @@
             <metaschemaSource>${project.basedir}/../../src/Corvus.Text.Json/metaschema</metaschemaSource>
           </systemPropertyVariables>
         </configuration>
+        <executions>
+          <!-- Zero allocation must not depend on the JIT's escape analysis removing allocations. -->
+          <execution>
+            <id>allocations-without-escape-analysis</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <test>AllocationTest</test>
+              <argLine>@{argLine} -XX:-DoEscapeAnalysis</argLine>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>

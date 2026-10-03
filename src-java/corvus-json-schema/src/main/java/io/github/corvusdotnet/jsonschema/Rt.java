@@ -114,8 +114,8 @@ final class Rt {
         return e.matches(p, x);
     }
 
-    static boolean format(JsonDocument d, int x, Formats.Kind kind, boolean legacyHostname) {
-        return kind.checkString(d.string(x), legacyHostname);
+    static boolean format(Evaluator e, int x, Formats.Kind kind, boolean legacyHostname) {
+        return e.format(x, kind, legacyHostname);
     }
 
     static boolean customFormat(JsonDocument d, int x, Predicate<String> format) {

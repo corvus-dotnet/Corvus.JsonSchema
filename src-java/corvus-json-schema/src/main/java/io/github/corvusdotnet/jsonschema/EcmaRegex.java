@@ -38,15 +38,22 @@ final class EcmaRegex {
         }
     }
 
-    /** Whether a string is a valid ECMA-262 regular expression (the {@code regex} format). */
-    static boolean isValid(String pattern) {
+    /**
+     * The translator's verdict on a pattern read with the u flag: 1 valid, 0 not ECMA-262, 2 valid ECMA-262 that
+     * {@code java.util.regex} cannot run (for tests).
+     */
+    static int translatorVerdict(String pattern) {
         try {
-            String t = new Translator(pattern, true).translate();
-            Pattern.compile(t);
-            return true;
+            new Translator(pattern, true).translate();
+            return 1;
         } catch (IllegalArgumentException e) {
-            return false;
+            return e.getCause() instanceof java.util.regex.PatternSyntaxException ? 2 : 0;
         }
+    }
+
+    /** Whether a string is a valid ECMA-262 regular expression with the u flag (the {@code regex} format). */
+    static boolean isValid(CharSequence pattern) {
+        return new Validator().isValid(pattern);
     }
 
     // ECMA-262 classes.
@@ -912,6 +919,596 @@ final class EcmaRegex {
             } else {
                 items.append("\\x{").append(Integer.toHexString(atom.codePoint)).append('}');
             }
+        }
+    }
+
+    /**
+     * Checks that a string is a valid ECMA-262 regular expression with the u flag (the {@code regex} format), reading
+     * it as the translator does but writing nothing: allocates nothing once its buffers have grown, except to look up
+     * a {@code \p{Script=...}} name. Not thread-safe; one per evaluator.
+     */
+    static final class Validator {
+        /** Thrown (shared) on the first error. */
+        private static final IllegalArgumentException INVALID = new IllegalArgumentException("invalid");
+        private static final String[] PROPERTY_NAMES;
+        private static final String[] CATEGORY_NAMES;
+
+        static {
+            CATEGORY_NAMES = CATEGORIES.keySet().toArray(new String[0]);
+            java.util.List<String> all = new java.util.ArrayList<>(CATEGORIES.keySet());
+            all.addAll(BINARY.keySet());
+            PROPERTY_NAMES = all.toArray(new String[0]);
+        }
+
+        private CharSequence p;
+        private int i;
+        private int n;
+        private int groupCount;
+        /** Group names and named references, as ranges of the pattern. */
+        private int[] names = new int[8];
+        private int nameCount;
+        private int[] refs = new int[8];
+        private int refCount;
+
+        boolean isValid(CharSequence pattern) {
+            p = pattern;
+            i = 0;
+            n = pattern.length();
+            nameCount = 0;
+            refCount = 0;
+            try {
+                groupCount = countGroups();
+                disjunction();
+                if (i < n) {
+                    return false;
+                }
+                for (int r = 0; r < refCount; r++) {
+                    if (findName(refs[2 * r], refs[2 * r + 1]) < 0) {
+                        return false;
+                    }
+                }
+                return true;
+            } catch (IllegalArgumentException e) {
+                return false;
+            } finally {
+                p = null;
+            }
+        }
+
+        private int countGroups() {
+            int count = 0;
+            boolean inClass = false;
+            for (int k = 0; k < n; k++) {
+                char c = p.charAt(k);
+                if (c == '\\') {
+                    k++;
+                } else if (c == '[') {
+                    inClass = true;
+                } else if (c == ']') {
+                    inClass = false;
+                } else if (c == '(' && !inClass) {
+                    if (k + 1 >= n || p.charAt(k + 1) != '?') {
+                        count++;
+                    } else if (k + 3 < n && p.charAt(k + 2) == '<' && p.charAt(k + 3) != '=' && p.charAt(k + 3) != '!') {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        private int peek() {
+            return i < n ? Character.codePointAt(p, i) : -1;
+        }
+
+        private boolean eat(char c) {
+            if (i < n && p.charAt(i) == c) {
+                i++;
+                return true;
+            }
+            return false;
+        }
+
+        private void disjunction() {
+            alternative();
+            while (eat('|')) {
+                alternative();
+            }
+        }
+
+        private void alternative() {
+            while (i < n && peek() != '|' && peek() != ')') {
+                term();
+            }
+        }
+
+        private void term() {
+            int c = peek();
+            boolean quantifiable = true;
+            switch (c) {
+                case '^':
+                case '$':
+                    i++;
+                    quantifiable = false;
+                    break;
+                case '(':
+                    quantifiable = group();
+                    break;
+                case '.':
+                    i++;
+                    break;
+                case '[':
+                    characterClass();
+                    break;
+                case '\\':
+                    quantifiable = atomEscape();
+                    break;
+                case '*':
+                case '+':
+                case '?':
+                case '{':
+                case ']':
+                case '}':
+                    throw INVALID;
+                default:
+                    i += Character.charCount(c);
+                    break;
+            }
+            if (quantifier() && !quantifiable) {
+                throw INVALID;
+            }
+        }
+
+        private boolean looksLikeQuantifier() {
+            int k = i + 1;
+            int digits = 0;
+            while (k < n && p.charAt(k) >= '0' && p.charAt(k) <= '9') {
+                k++;
+                digits++;
+            }
+            if (digits == 0) {
+                return false;
+            }
+            if (k < n && p.charAt(k) == '}') {
+                return true;
+            }
+            if (k < n && p.charAt(k) == ',') {
+                k++;
+                while (k < n && p.charAt(k) >= '0' && p.charAt(k) <= '9') {
+                    k++;
+                }
+                return k < n && p.charAt(k) == '}';
+            }
+            return false;
+        }
+
+        private long number() {
+            int start = i;
+            long v = 0;
+            while (i < n && p.charAt(i) >= '0' && p.charAt(i) <= '9') {
+                if (v < Long.MAX_VALUE / 10) {
+                    v = v * 10 + (p.charAt(i) - '0');
+                }
+                i++;
+            }
+            if (start == i) {
+                throw INVALID;
+            }
+            return v;
+        }
+
+        private boolean quantifier() {
+            int c = peek();
+            if (c == '*' || c == '+' || c == '?') {
+                i++;
+            } else if (c == '{' && looksLikeQuantifier()) {
+                i++;
+                long min = number();
+                long max = min;
+                boolean open = false;
+                if (eat(',')) {
+                    if (peek() == '}') {
+                        open = true;
+                    } else {
+                        max = number();
+                    }
+                }
+                if (!eat('}') || (!open && max < min)) {
+                    throw INVALID;
+                }
+            } else {
+                return false;
+            }
+            eat('?');
+            return true;
+        }
+
+        private boolean group() {
+            i++;
+            if (eat('?')) {
+                if (eat(':')) {
+                    disjunction();
+                    close();
+                    return true;
+                }
+                if (eat('=') || eat('!')) {
+                    disjunction();
+                    close();
+                    // Lookaheads are not quantifiable with the u flag.
+                    return false;
+                }
+                if (eat('<')) {
+                    if (eat('=') || eat('!')) {
+                        disjunction();
+                        close();
+                        return false;
+                    }
+                    int start = i;
+                    groupName();
+                    if (findName(start, i - 1) >= 0) {
+                        throw INVALID;
+                    }
+                    if (2 * nameCount + 2 > names.length) {
+                        names = java.util.Arrays.copyOf(names, names.length * 2);
+                    }
+                    names[2 * nameCount] = start;
+                    names[2 * nameCount + 1] = i - 1;
+                    nameCount++;
+                    disjunction();
+                    close();
+                    return true;
+                }
+                throw INVALID;
+            }
+            disjunction();
+            close();
+            return true;
+        }
+
+        private void close() {
+            if (!eat(')')) {
+                throw INVALID;
+            }
+        }
+
+        /** A group name up to and including its '>'. */
+        private void groupName() {
+            int first = peek();
+            if (first < 0 || !(Character.isUnicodeIdentifierStart(first) || first == '$' || first == '_')) {
+                throw INVALID;
+            }
+            i += Character.charCount(first);
+            while (i < n && peek() != '>') {
+                int c = peek();
+                if (!(Character.isUnicodeIdentifierPart(c) || c == '$' || c == '\u200c' || c == '\u200d')
+                        || Character.isIdentifierIgnorable(c) && c != '\u200c' && c != '\u200d') {
+                    throw INVALID;
+                }
+                i += Character.charCount(c);
+            }
+            if (!eat('>')) {
+                throw INVALID;
+            }
+        }
+
+        /** The index of the group named by p[start, end), or -1. */
+        private int findName(int start, int end) {
+            for (int k = 0; k < nameCount; k++) {
+                int a = names[2 * k];
+                int b = names[2 * k + 1];
+                if (b - a == end - start && regionEquals(a, start, end - start)) {
+                    return k;
+                }
+            }
+            return -1;
+        }
+
+        private boolean regionEquals(int a, int b, int len) {
+            for (int k = 0; k < len; k++) {
+                if (p.charAt(a + k) != p.charAt(b + k)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private boolean atomEscape() {
+            i++;
+            if (i >= n) {
+                throw INVALID;
+            }
+            int c = peek();
+            if (c == 'b' || c == 'B') {
+                i++;
+                return false;
+            }
+            if (c == 'k') {
+                i++;
+                if (!eat('<')) {
+                    throw INVALID;
+                }
+                int start = i;
+                while (i < n && peek() != '>') {
+                    i++;
+                }
+                int end = i;
+                if (!eat('>') || end == start) {
+                    throw INVALID;
+                }
+                if (2 * refCount + 2 > refs.length) {
+                    refs = java.util.Arrays.copyOf(refs, refs.length * 2);
+                }
+                refs[2 * refCount] = start;
+                refs[2 * refCount + 1] = end;
+                refCount++;
+                return true;
+            }
+            if (c >= '1' && c <= '9') {
+                if (number() > groupCount) {
+                    throw INVALID;
+                }
+                return true;
+            }
+            if (classEscape(c)) {
+                return true;
+            }
+            characterEscape(false);
+            return true;
+        }
+
+        /** A class escape at i (consumed); false when there is none. */
+        private boolean classEscape(int c) {
+            switch (c) {
+                case 'd':
+                case 'D':
+                case 'w':
+                case 'W':
+                case 's':
+                case 'S':
+                    i++;
+                    return true;
+                case 'p':
+                case 'P':
+                    i++;
+                    property();
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private void property() {
+            if (!eat('{')) {
+                throw INVALID;
+            }
+            int start = i;
+            int eq = -1;
+            while (i < n && p.charAt(i) != '}') {
+                if (p.charAt(i) == '=' && eq < 0) {
+                    eq = i;
+                }
+                i++;
+            }
+            int end = i;
+            if (!eat('}')) {
+                throw INVALID;
+            }
+            if (eq < 0) {
+                if (!oneOf(PROPERTY_NAMES, start, end)) {
+                    throw INVALID;
+                }
+                return;
+            }
+            if (is("General_Category", start, eq) || is("gc", start, eq)) {
+                if (!oneOf(CATEGORY_NAMES, eq + 1, end)) {
+                    throw INVALID;
+                }
+                return;
+            }
+            if (is("Script", start, eq) || is("sc", start, eq) || is("Script_Extensions", start, eq)
+                    || is("scx", start, eq)) {
+                try {
+                    Character.UnicodeScript.forName(p.subSequence(eq + 1, end).toString());
+                } catch (IllegalArgumentException e) {
+                    throw INVALID;
+                }
+                return;
+            }
+            throw INVALID;
+        }
+
+        private boolean is(String name, int start, int end) {
+            if (end - start != name.length()) {
+                return false;
+            }
+            for (int k = 0; k < name.length(); k++) {
+                if (p.charAt(start + k) != name.charAt(k)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private boolean oneOf(String[] names, int start, int end) {
+            for (String name : names) {
+                if (is(name, start, end)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean hex(int digits) {
+            if (i + digits > n) {
+                return false;
+            }
+            for (int k = 0; k < digits; k++) {
+                char c = p.charAt(i + k);
+                if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+                    return false;
+                }
+            }
+            i += digits;
+            return true;
+        }
+
+        /** A character escape after the backslash at i (consumed). */
+        private void characterEscape(boolean inClass) {
+            int c = peek();
+            i += Character.charCount(c);
+            switch (c) {
+                case 'f':
+                case 'n':
+                case 'r':
+                case 't':
+                case 'v':
+                    return;
+                case 'c': {
+                    int l = peek();
+                    if ((l >= 'a' && l <= 'z') || (l >= 'A' && l <= 'Z')) {
+                        i++;
+                        return;
+                    }
+                    throw INVALID;
+                }
+                case '0':
+                    if (i < n && p.charAt(i) >= '0' && p.charAt(i) <= '9') {
+                        throw INVALID;
+                    }
+                    return;
+                case 'x':
+                    if (!hex(2)) {
+                        throw INVALID;
+                    }
+                    return;
+                case 'u':
+                    if (eat('{')) {
+                        long v = 0;
+                        int start = i;
+                        while (i < n && Character.digit(p.charAt(i), 16) >= 0 && p.charAt(i) < 128) {
+                            if (v <= 0x10ffff) {
+                                v = v * 16 + Character.digit(p.charAt(i), 16);
+                            }
+                            i++;
+                        }
+                        if (start == i || !eat('}') || v > 0x10ffff) {
+                            throw INVALID;
+                        }
+                        return;
+                    }
+                    if (!hex(4)) {
+                        throw INVALID;
+                    }
+                    return;
+                default:
+                    break;
+            }
+            // Identity escapes: with the u flag, only syntax characters and '/' (and '-' in a class).
+            if ("^$\\.*+?()[]{}|/".indexOf(c) >= 0 || (inClass && c == '-')) {
+                return;
+            }
+            throw INVALID;
+        }
+
+        private void characterClass() {
+            i++;
+            eat('^');
+            while (true) {
+                if (i >= n) {
+                    throw INVALID;
+                }
+                if (peek() == ']') {
+                    i++;
+                    return;
+                }
+                int first = classAtom();
+                if (peek() == '-' && i + 1 < n && p.charAt(i + 1) != ']') {
+                    i++;
+                    int second = classAtom();
+                    if (first < 0 || second < 0 || second < first) {
+                        throw INVALID;
+                    }
+                }
+            }
+        }
+
+        /** A class atom: its code point, or -1 for a class escape. */
+        private int classAtom() {
+            int c = peek();
+            if (c == '\\') {
+                i++;
+                if (i >= n) {
+                    throw INVALID;
+                }
+                int e = peek();
+                if (e == 'b') {
+                    i++;
+                    return '\b';
+                }
+                if (e == '-') {
+                    i++;
+                    return '-';
+                }
+                if (classEscape(e)) {
+                    return -1;
+                }
+                int at = i;
+                characterEscape(true);
+                return escapedValue(at);
+            }
+            i += Character.charCount(c);
+            return c;
+        }
+
+        /** The code point of the character escape that starts at {@code at} (already validated). */
+        private int escapedValue(int at) {
+            int c = Character.codePointAt(p, at);
+            switch (c) {
+                case 'f':
+                    return '\f';
+                case 'n':
+                    return '\n';
+                case 'r':
+                    return '\r';
+                case 't':
+                    return '\t';
+                case 'v':
+                    return 0x0b;
+                case 'c':
+                    return p.charAt(at + 1) % 32;
+                case '0':
+                    return 0;
+                case 'x':
+                    return hexValue(at + 1, at + 3);
+                case 'u':
+                    if (p.charAt(at + 1) == '{') {
+                        return hexValue(at + 2, i - 1);
+                    }
+                    int u = hexValue(at + 1, at + 5);
+                    // A surrogate pair written as two escapes is one code point.
+                    if (u >= 0xd800 && u <= 0xdbff && i + 6 <= n && p.charAt(i) == '\\' && p.charAt(i + 1) == 'u') {
+                        int save = i;
+                        i += 2;
+                        if (hex(4)) {
+                            int low = hexValue(save + 2, save + 6);
+                            if (low >= 0xdc00 && low <= 0xdfff) {
+                                return Character.toCodePoint((char) u, (char) low);
+                            }
+                        }
+                        i = save;
+                    }
+                    return u;
+                default:
+                    return c;
+            }
+        }
+
+        private int hexValue(int from, int to) {
+            int v = 0;
+            for (int k = from; k < to; k++) {
+                v = v * 16 + Character.digit(p.charAt(k), 16);
+            }
+            return v;
         }
     }
 }

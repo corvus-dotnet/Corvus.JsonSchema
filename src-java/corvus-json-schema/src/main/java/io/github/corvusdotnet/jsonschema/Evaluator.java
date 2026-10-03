@@ -500,7 +500,7 @@ final class Evaluator {
             } else if (n.formatKind == Formats.Kind.UNKNOWN) {
                 ok &= check(true, null, null, "format");
             } else {
-                boolean m = n.formatKind.checkString(doc.string(x), n.dialect.compareTo(Dialect.DRAFT6) <= 0);
+                boolean m = format(x, n.formatKind, n.dialect.compareTo(Dialect.DRAFT6) <= 0);
                 ok &= check(m, n.formatKind.message, null, "format");
             }
             if (!ok && !collect) {
@@ -524,6 +524,14 @@ final class Evaluator {
             ok &= check(m, message, null, keyword);
         }
         return ok;
+    }
+
+    private final Formats.Context formats = new Formats.Context();
+    private final Utf8Chars formatChars = new Utf8Chars();
+
+    /** Asserts a string format on the string value x. */
+    boolean format(int x, Formats.Kind kind, boolean legacyHostname) {
+        return kind.check(formats, formatChars.of(doc, x), legacyHostname);
     }
 
     private JsonDocument.Parser contentParser;
