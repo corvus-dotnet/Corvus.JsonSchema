@@ -161,6 +161,29 @@ final class Rt {
         return word(b, off, width);
     }
 
+    /** The array holding the bytes of the string value k. */
+    static byte[] bytes(JsonDocument d, int k) {
+        return (d.tape[k << 1] & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source;
+    }
+
+    /** The offset of the string value k's bytes in {@link #bytes}. */
+    static int offset(JsonDocument d, int k) {
+        return (int) d.tape[(k << 1) + 1];
+    }
+
+    /** The eight bytes at {@code off} as a little-endian word (within the array). */
+    static long word8(byte[] b, int off) {
+        return (long) LONGS.get(b, off);
+    }
+
+    /** The {@code width} (1 to 7) bytes at {@code off}: one masked load when the array has eight bytes there. */
+    static long wordN(byte[] b, int off, int width) {
+        if (off + 8 <= b.length) {
+            return (long) LONGS.get(b, off) & ((1L << (width << 3)) - 1);
+        }
+        return word(b, off, width);
+    }
+
     /** The same over an array (the compiler's constants). */
     static long word(byte[] b, int off, int width) {
         long w = 0;

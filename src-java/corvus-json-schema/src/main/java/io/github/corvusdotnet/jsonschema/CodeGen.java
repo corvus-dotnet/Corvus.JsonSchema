@@ -1270,8 +1270,26 @@ final class CodeGen {
                 groups[g] = new Label();
             }
             mv.visitLookupSwitchInsn(none, keys, groups);
+            // The key's bytes are read through locals for its array and offset, loaded once.
+            int kb = local(1);
+            int ko = local(1);
+            keyBytes = kb;
+            keyOffset = ko;
+            Label[] loads = new Label[groups.length];
+            for (int g = 0; g < groups.length; g++) {
+                loads[g] = groups[g];
+                groups[g] = new Label();
+            }
             for (int g = 0; g < keys.length; g++) {
-                mv.visitLabel(groups[g]);
+                mv.visitLabel(loads[g]);
+                mv.visitVarInsn(ALOAD, D);
+                mv.visitVarInsn(ILOAD, k);
+                rt("bytes", "(" + DOC + "I)[B");
+                mv.visitVarInsn(ASTORE, kb);
+                mv.visitVarInsn(ALOAD, D);
+                mv.visitVarInsn(ILOAD, k);
+                rt("offset", "(" + DOC + "I)I");
+                mv.visitVarInsn(ISTORE, ko);
                 int length = keys[g];
                 if (length == 0) {
                     mv.visitJumpInsn(GOTO, cases[byLength.get(0).get(0)]);
@@ -1323,13 +1341,27 @@ final class CodeGen {
             mv.visitJumpInsn(GOTO, none);
         }
 
-        /** Pushes the word of {@code width} bytes at {@code pos} of the string in local {@code k}. */
+        /** The locals holding the current key's array and offset (set by the length dispatch). */
+        private int keyBytes;
+        private int keyOffset;
+
+        /**
+         * Pushes the word of {@code width} bytes at {@code pos} of the key whose array and offset are in locals: a
+         * full word inside the key is one load; a shorter one is guarded against the end of the array.
+         */
         private void wordOf(int k, int pos, int width) {
-            mv.visitVarInsn(ALOAD, D);
-            mv.visitVarInsn(ILOAD, k);
-            pushInt(pos);
-            pushInt(width);
-            rt("word", "(" + DOC + "III)J");
+            mv.visitVarInsn(ALOAD, keyBytes);
+            mv.visitVarInsn(ILOAD, keyOffset);
+            if (pos != 0) {
+                pushInt(pos);
+                mv.visitInsn(IADD);
+            }
+            if (width == 8) {
+                rt("word8", "([BI)J");
+            } else {
+                pushInt(width);
+                rt("wordN", "([BII)J");
+            }
         }
 
         // ------------------------------------------------------------------------------------------------------------
