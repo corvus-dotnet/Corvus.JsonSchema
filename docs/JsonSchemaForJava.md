@@ -107,8 +107,21 @@ passing ones and annotations included.
 
 ## Performance
 
-Measured with [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark)'s corpora and
-protocol; see the [package README](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-java/corvus-json-schema).
+Measured with [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark)'s 37 corpora, each
+implementation in its own container pinned to the same 8 CPUs, the median of 3 runs. Every harness warms up for 2
+seconds (at least 100 passes) and reports its last warm-up pass, so each runtime is measured after its JIT has
+settled. Figures are the geometric mean of Java's time over the other's (below 1 means Java is faster), and how many
+corpora Java is faster on.
+
+| Java (JDK 25) over | Warm validation | Parse |
+|---|---|---|
+| [Blaze](https://github.com/sourcemeta/blaze) | 0.42 (35 of 37) | 2.7 (5 of 37) |
+| Corvus .NET | 0.61 (33 of 37) | 7.1 (0 of 37) |
+| Corvus Rust | 0.76 (32 of 37) | 7.7 (0 of 37) |
+
+Once warm, validation is the fastest of the four on most corpora. Start-up is the JVM's weak point: compiling a
+schema takes tens of milliseconds and the first validation runs before the JIT has compiled the generated code, so a
+process that validates a few documents and exits is better served by a native implementation.
 
 ## Links
 

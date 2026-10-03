@@ -54,6 +54,9 @@ final class Evaluator {
     private final boolean collect;
     private final Program.AnnotationEntry[][] annotations;
     private JsonDocument doc;
+    /** The compiled code nodes are handed to when they need no evaluated-set from the interpreter, or null. */
+    private CodeGen.Compiled code;
+    private boolean[] methods;
     private int[] scope = new int[8];
     private int scopeLength;
     private int depth;
@@ -80,6 +83,10 @@ final class Evaluator {
 
     /** Evaluates the program's entry through its compiled code, fail-fast. */
     boolean validate(CodeGen.Compiled code, JsonDocument d, int x) {
+        if (this.code != code) {
+            this.code = code;
+            this.methods = code.methods();
+        }
         doc = d;
         depth = 0;
         depthExceeded = false;
@@ -207,6 +214,14 @@ final class Evaluator {
             scope[scopeLength++] = n.resourceId;
         }
         int kind = doc.kind(x);
+        if (code != null && methods[id] && (bits < 0 || !(kind == OBJECT ? n.marksProperties : n.marksItems))) {
+            // Nothing to record in the parent's evaluated set: the node's compiled method decides it.
+            boolean ok = code.node(id, this, doc, x);
+            if (pushed) {
+                scopeLength--;
+            }
+            return ok;
+        }
         boolean needsOwn = bits < 0
                 && ((n.unevaluatedProperties >= 0 && kind == OBJECT) || (n.unevaluatedItems >= 0 && kind == ARRAY));
         int top = arenaTop;

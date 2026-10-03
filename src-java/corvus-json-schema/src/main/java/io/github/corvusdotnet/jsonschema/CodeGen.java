@@ -39,9 +39,13 @@ import static org.objectweb.asm.Opcodes.V17;
 import io.github.corvusdotnet.jsonschema.SchemaNode.Dependency;
 import io.github.corvusdotnet.jsonschema.SchemaNode.PatternProperty;
 import io.github.corvusdotnet.jsonschema.SchemaNode.Property;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +54,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.ConstantDynamic;
 import org.objectweb.asm.Handle;
@@ -75,7 +80,19 @@ final class CodeGen {
     /** A compiled schema's entry point. */
     interface Compiled {
         boolean validate(Evaluator e, JsonDocument d, int x);
+
+        /** Evaluates node {@code id}'s method, which {@link #methods()} must say exists, at x. */
+        boolean node(int id, Evaluator e, JsonDocument d, int x);
+
+        /**
+         * By node id, whether the node has a compiled method that does not defer to the interpreter, so that the
+         * interpreter can hand it a value it evaluates on no evaluated-set of its own.
+         */
+        boolean[] methods();
     }
+
+    /** Node ids per dispatch method, so that each stays well below the JIT's method size limit. */
+    private static final int DISPATCH_CHUNK = 256;
 
     private static final String PKG = "io/github/corvusdotnet/jsonschema/";
     private static final String EV = "L" + PKG + "Evaluator;";
@@ -100,6 +117,10 @@ final class CodeGen {
      * method exceeds this is generated again in compact form.
      */
     private static final int MAX_METHOD_SIZE = 7900;
+
+    /** The system property naming a directory to write each generated class file to. */
+    static final String DUMP_PROPERTY = "corvus.jsonschema.dump";
+    private static final AtomicInteger DUMPED = new AtomicInteger();
 
     // Local variable slots of a node method.
     private static final int E = 0;
@@ -255,6 +276,7 @@ final class CodeGen {
                 mv.visitMaxs(0, 0);
                 mv.visitEnd();
             }
+            dispatch(cw);
             cw.visitEnd();
             byte[] bytes = cw.toByteArray();
             // Methods the JIT would refuse to compile.
@@ -266,6 +288,7 @@ final class CodeGen {
             if (!huge.isEmpty()) {
                 return null;
             }
+            dump(bytes);
             try {
                 MethodHandles.Lookup lookup = MethodHandles.lookup()
                         .defineHiddenClassWithClassData(bytes, java.util.Collections.unmodifiableList(constants), true);
@@ -276,6 +299,122 @@ final class CodeGen {
             } catch (Throwable t) {
                 throw new IllegalStateException(t);
             }
+        }
+
+        /** Writes the class file to the directory {@code corvus.jsonschema.dump} names, if set, for javap. */
+        private static void dump(byte[] bytes) {
+            String dir = System.getProperty(DUMP_PROPERTY);
+            if (dir == null) {
+                return;
+            }
+            try {
+                Path path = Path.of(dir);
+                Files.createDirectories(path);
+                Files.write(path.resolve("Schema" + DUMPED.incrementAndGet() + ".class"), bytes);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+
+        /**
+         * Requests methods for the nodes the interpreter reaches below an interpreted node (its in-place closure and
+         * their children), so that it can hand them back to compiled code.
+         */
+        private void requestBelowInterpreted(int id) {
+            ArrayDeque<Integer> pending = new ArrayDeque<>();
+            Set<Integer> seen = new HashSet<>();
+            pending.add(id);
+            while (!pending.isEmpty()) {
+                int n = pending.poll();
+                if (!seen.add(n)) {
+                    continue;
+                }
+                for (int c : nodes[n].children()) {
+                    int t = representative[p.fastTarget[c]];
+                    if (!nodes[t].alwaysTrue && !nodes[t].alwaysFalse) {
+                        request(t);
+                    }
+                }
+                for (int c : nodes[n].inPlaceChildren(true)) {
+                    pending.add(p.fastTarget[c]);
+                }
+            }
+        }
+
+        /** Emits {@code node(id, ...)} and {@code methods()}: dispatch by node id to the generated methods. */
+        private void dispatch(ClassWriter cw) {
+            boolean[] methods = new boolean[nodes.length];
+            for (int id = 0; id < nodes.length; id++) {
+                int t = representative[id];
+                methods[id] = requested.contains(t) && !fallback(t) && !fallback(id) && !nodes[t].alwaysTrue
+                        && !nodes[t].alwaysFalse;
+            }
+            int chunks = Math.max(1, (nodes.length + DISPATCH_CHUNK - 1) / DISPATCH_CHUNK);
+            String desc = "(I" + EV + DOC + "I)Z";
+            for (int k = 0; k < chunks; k++) {
+                mv = cw.visitMethod(ACC_STATIC, "d" + k, desc, null, null);
+                mv.visitCode();
+                int from = k * DISPATCH_CHUNK;
+                int to = Math.min(nodes.length, from + DISPATCH_CHUNK);
+                Label none = new Label();
+                Label[] cases = new Label[Math.max(1, to - from)];
+                for (int i = 0; i < cases.length; i++) {
+                    cases[i] = from + i < to && methods[from + i] ? new Label() : none;
+                }
+                mv.visitVarInsn(ILOAD, 0);
+                mv.visitTableSwitchInsn(from, from + cases.length - 1, none, cases);
+                for (int i = 0; i < cases.length; i++) {
+                    if (cases[i] != none) {
+                        mv.visitLabel(cases[i]);
+                        mv.visitVarInsn(ALOAD, 1);
+                        mv.visitVarInsn(ALOAD, 2);
+                        mv.visitVarInsn(ILOAD, 3);
+                        mv.visitMethodInsn(INVOKESTATIC, className, "n" + representative[from + i], NODE_DESC, false);
+                        mv.visitInsn(IRETURN);
+                    }
+                }
+                mv.visitLabel(none);
+                mv.visitTypeInsn(Opcodes.NEW, "java/lang/IllegalStateException");
+                mv.visitInsn(Opcodes.DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/lang/IllegalStateException", "<init>", "()V", false);
+                mv.visitInsn(Opcodes.ATHROW);
+                mv.visitMaxs(0, 0);
+                mv.visitEnd();
+            }
+            mv = cw.visitMethod(ACC_PUBLIC, "node", "(I" + EV + DOC + "I)Z", null, null);
+            mv.visitCode();
+            Label[] targets = new Label[chunks];
+            for (int k = 0; k < chunks; k++) {
+                targets[k] = new Label();
+            }
+            Label out = new Label();
+            mv.visitVarInsn(ILOAD, 1);
+            pushInt(Integer.numberOfTrailingZeros(DISPATCH_CHUNK));
+            mv.visitInsn(Opcodes.IUSHR);
+            mv.visitTableSwitchInsn(0, chunks - 1, out, targets);
+            for (int k = 0; k < chunks; k++) {
+                mv.visitLabel(targets[k]);
+                mv.visitVarInsn(ILOAD, 1);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitVarInsn(ILOAD, 4);
+                mv.visitMethodInsn(INVOKESTATIC, className, "d" + k, desc, false);
+                mv.visitInsn(IRETURN);
+            }
+            mv.visitLabel(out);
+            mv.visitTypeInsn(Opcodes.NEW, "java/lang/IllegalStateException");
+            mv.visitInsn(Opcodes.DUP);
+            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/IllegalStateException", "<init>", "()V", false);
+            mv.visitInsn(Opcodes.ATHROW);
+            mv.visitMaxs(0, 0);
+            mv.visitEnd();
+
+            mv = cw.visitMethod(ACC_PUBLIC, "methods", "()[Z", null, null);
+            mv.visitCode();
+            constant(methods, "[Z");
+            mv.visitInsn(Opcodes.ARETURN);
+            mv.visitMaxs(0, 0);
+            mv.visitEnd();
         }
 
         private void request(int id) {
@@ -474,6 +613,7 @@ final class CodeGen {
                 return;
             }
             if (fallback(id)) {
+                requestBelowInterpreted(id);
                 mv.visitVarInsn(ALOAD, E);
                 pushInt(id);
                 mv.visitVarInsn(ILOAD, X);

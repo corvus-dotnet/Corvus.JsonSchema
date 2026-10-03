@@ -50,6 +50,11 @@ public final class Validator {
         return e;
     }
 
+    /** The compiled code, or null (for tests). */
+    CodeGen.Compiled code() {
+        return code;
+    }
+
     /** Whether the schema runs as compiled code (for tests). */
     boolean isCompiled() {
         return code != null;
