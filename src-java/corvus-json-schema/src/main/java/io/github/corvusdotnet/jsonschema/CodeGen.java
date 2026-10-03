@@ -1270,7 +1270,6 @@ final class CodeGen {
                 groups[g] = new Label();
             }
             mv.visitLookupSwitchInsn(none, keys, groups);
-            int word = local(2);
             for (int g = 0; g < keys.length; g++) {
                 mv.visitLabel(groups[g]);
                 int length = keys[g];
@@ -1288,28 +1287,40 @@ final class CodeGen {
                     }
                     positions.add(length - 8);
                 }
-                int firstWidth = Math.min(length, 8);
-                wordOf(k, 0, firstWidth);
-                mv.visitVarInsn(LSTORE, word);
-                for (int index : byLength.get(length)) {
-                    byte[] name = names[index];
-                    Label nextName = new Label();
-                    mv.visitVarInsn(LLOAD, word);
-                    mv.visitLdcInsn(Rt.word(name, 0, firstWidth));
-                    mv.visitInsn(LCMP);
-                    mv.visitJumpInsn(IFNE, nextName);
-                    for (int w = 1; w < positions.size(); w++) {
-                        int pos = positions.get(w);
-                        wordOf(k, pos, 8);
-                        mv.visitLdcInsn(Rt.word(name, pos, 8));
-                        mv.visitInsn(LCMP);
-                        mv.visitJumpInsn(IFNE, nextName);
-                    }
-                    mv.visitJumpInsn(GOTO, cases[index]);
-                    mv.visitLabel(nextName);
-                }
-                mv.visitJumpInsn(GOTO, none);
+                wordTrie(k, names, byLength.get(length), positions, 0, Math.min(length, 8), cases, none);
             }
+        }
+
+        /**
+         * Decides among names of one length word by word: at each position the key's word is loaded once and compared
+         * with the distinct words the remaining names have there, so names sharing a prefix share its comparisons.
+         */
+        private void wordTrie(int k, byte[][] names, List<Integer> candidates, List<Integer> positions, int depth,
+                int firstWidth, Label[] cases, Label none) {
+            if (depth == positions.size()) {
+                // Names are distinct, so one candidate remains.
+                mv.visitJumpInsn(GOTO, cases[candidates.get(0)]);
+                return;
+            }
+            int pos = positions.get(depth);
+            int width = depth == 0 ? firstWidth : 8;
+            java.util.LinkedHashMap<Long, List<Integer>> byWord = new java.util.LinkedHashMap<>();
+            for (int index : candidates) {
+                byWord.computeIfAbsent(Rt.word(names[index], pos, width), x -> new ArrayList<>()).add(index);
+            }
+            int word = local(2);
+            wordOf(k, pos, width);
+            mv.visitVarInsn(LSTORE, word);
+            for (Map.Entry<Long, List<Integer>> e : byWord.entrySet()) {
+                Label other = new Label();
+                mv.visitVarInsn(LLOAD, word);
+                mv.visitLdcInsn(e.getKey());
+                mv.visitInsn(LCMP);
+                mv.visitJumpInsn(IFNE, other);
+                wordTrie(k, names, e.getValue(), positions, depth + 1, firstWidth, cases, none);
+                mv.visitLabel(other);
+            }
+            mv.visitJumpInsn(GOTO, none);
         }
 
         /** Pushes the word of {@code width} bytes at {@code pos} of the string in local {@code k}. */
