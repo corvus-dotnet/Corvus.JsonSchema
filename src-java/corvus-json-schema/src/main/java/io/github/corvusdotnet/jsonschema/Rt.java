@@ -170,6 +170,13 @@ final class Rt {
         return w;
     }
 
+    /** The index of a property name (a key node) in a name map, or -1 (for many names). */
+    static int lookup(JsonDocument d, int key, NameMap map) {
+        long h = d.tape[key << 1];
+        byte[] b = (h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source;
+        return map.get(b, (int) d.tape[(key << 1) + 1], (int) (h >>> 32));
+    }
+
     static boolean unique(Evaluator e, int x) {
         return e.unique(x);
     }

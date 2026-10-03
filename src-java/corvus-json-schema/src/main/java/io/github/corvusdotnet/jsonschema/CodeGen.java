@@ -89,6 +89,15 @@ final class CodeGen {
             "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;I)Ljava/lang/Object;",
             false);
 
+    /** Names up to this many are dispatched by length and words (unless the method is too large); more by hashing. */
+    private static final int MAX_WORD_DISPATCH = 512;
+
+    /**
+     * HotSpot does not compile methods of more than 8000 bytes of bytecode (DontCompileHugeMethods): a node whose
+     * method exceeds this is generated again in compact form.
+     */
+    private static final int MAX_METHOD_SIZE = 7900;
+
     // Local variable slots of a node method.
     private static final int E = 0;
     private static final int D = 1;
@@ -101,9 +110,21 @@ final class CodeGen {
     /** Compiles a program, or returns null when it should run on the interpreter. */
     static Compiled compile(Program p) {
         Set<Integer> forced = new HashSet<>();
+        Set<Integer> compact = new HashSet<>();
         while (true) {
             try {
-                return new Generator(p, forced).generate();
+                Generator g = new Generator(p, forced, compact);
+                Compiled c = g.generate();
+                if (c != null) {
+                    return c;
+                }
+                // Some methods were too large for the JIT: those nodes are generated again in compact form, or
+                // interpreted when they are already compact.
+                for (int id : g.huge) {
+                    if (!compact.add(id)) {
+                        forced.add(id);
+                    }
+                }
             } catch (MethodTooLargeException e) {
                 // That node runs on the interpreter instead.
                 String name = e.getMethodName();
@@ -111,7 +132,45 @@ final class CodeGen {
                     return null;
                 }
             } catch (RuntimeException | LinkageError e) {
+                if (System.getenv("CORVUS_DEBUG_CODEGEN") != null) {
+                    e.printStackTrace();
+                }
                 return null;
+            }
+        }
+    }
+
+    /** Reports the bytecode length of each method of a class file (its Code attribute's code_length). */
+    static void codeLengths(byte[] bytes, java.util.function.ObjIntConsumer<String> out) {
+        org.objectweb.asm.ClassReader cr = new org.objectweb.asm.ClassReader(bytes);
+        char[] buf = new char[cr.getMaxStringLength()];
+        int at = cr.header + 6;
+        at += 2 + 2 * cr.readUnsignedShort(at);
+        // Fields: access, name, descriptor, then attributes.
+        int fields = cr.readUnsignedShort(at);
+        at += 2;
+        for (int f = 0; f < fields; f++) {
+            at += 6;
+            int attributes = cr.readUnsignedShort(at);
+            at += 2;
+            for (int a = 0; a < attributes; a++) {
+                at += 6 + cr.readInt(at + 2);
+            }
+        }
+        int methods = cr.readUnsignedShort(at);
+        at += 2;
+        for (int m = 0; m < methods; m++) {
+            String name = cr.readUTF8(at + 2, buf);
+            at += 6;
+            int attributes = cr.readUnsignedShort(at);
+            at += 2;
+            for (int a = 0; a < attributes; a++) {
+                String attribute = cr.readUTF8(at, buf);
+                int length = cr.readInt(at + 2);
+                if (attribute.equals("Code")) {
+                    out.accept(name, cr.readInt(at + 10));
+                }
+                at += 6 + length;
             }
         }
     }
@@ -131,11 +190,18 @@ final class CodeGen {
         private int nextLocal;
         /** The resource of the node whose method is being written (for the dynamic scope). */
         private int currentResource;
+        /** Whether the method being written is in compact form. */
+        private boolean compact;
 
-        Generator(Program p, Set<Integer> forced) {
+        /** Nodes whose methods are generated in compact form, and those found too large in this generation. */
+        private final Set<Integer> compactNodes;
+        final List<Integer> huge = new ArrayList<>();
+
+        Generator(Program p, Set<Integer> forced, Set<Integer> compactNodes) {
             this.p = p;
             this.nodes = p.nodes;
             this.forced = forced;
+            this.compactNodes = compactNodes;
             this.className = PKG + "CompiledSchema";
             this.representative = Merging.representatives(p, this::fallback);
         }
@@ -180,6 +246,7 @@ final class CodeGen {
                 mv = cw.visitMethod(ACC_STATIC, "n" + id, NODE_DESC, null, null);
                 mv.visitCode();
                 currentResource = nodes[id].resourceId;
+                compact = compactNodes.contains(id);
                 nextLocal = KIND + 1;
                 nodeBody(id);
                 mv.visitMaxs(0, 0);
@@ -187,6 +254,15 @@ final class CodeGen {
             }
             cw.visitEnd();
             byte[] bytes = cw.toByteArray();
+            // Methods the JIT would refuse to compile.
+            codeLengths(bytes, (name, length) -> {
+                if (name.startsWith("n") && length > MAX_METHOD_SIZE) {
+                    huge.add(Integer.parseInt(name.substring(1)));
+                }
+            });
+            if (!huge.isEmpty()) {
+                return null;
+            }
             try {
                 MethodHandles.Lookup lookup = MethodHandles.lookup()
                         .defineHiddenClassWithClassData(bytes, java.util.Collections.unmodifiableList(constants), true);
@@ -1167,6 +1243,20 @@ final class CodeGen {
         }
 
         private void nameDispatch(int k, byte[][] names, Label[] cases, Label none) {
+            if (names.length > MAX_WORD_DISPATCH || compact) {
+                // Many names: a hashed lookup to the index, then a switch (compact code, so the method stays within
+                // what the JIT compiles).
+                NameMap map = new NameMap(names.length);
+                for (int i = 0; i < names.length; i++) {
+                    map.putIfAbsent(names[i], i);
+                }
+                mv.visitVarInsn(ALOAD, D);
+                mv.visitVarInsn(ILOAD, k);
+                constant(map, "L" + PKG + "NameMap;");
+                rt("lookup", "(" + DOC + "IL" + PKG + "NameMap;)I");
+                mv.visitTableSwitchInsn(0, names.length - 1, none, cases);
+                return;
+            }
             java.util.TreeMap<Integer, List<Integer>> byLength = new java.util.TreeMap<>();
             for (int i = 0; i < names.length; i++) {
                 byLength.computeIfAbsent(names[i].length, x -> new ArrayList<>()).add(i);
