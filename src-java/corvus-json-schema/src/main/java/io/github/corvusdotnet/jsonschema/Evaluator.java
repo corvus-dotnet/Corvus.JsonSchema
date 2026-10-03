@@ -1003,7 +1003,34 @@ final class Evaluator {
         return ok;
     }
 
-    private int resolveDynamic(SchemaNode.DynamicRef d) {
+    /** Enters a node on an in-place cycle: false (and the depth flagged) beyond the maximum depth. */
+    boolean enterInPlace() {
+        if (++depth > p.maxDepth) {
+            depthExceeded = true;
+            depth--;
+            return false;
+        }
+        return true;
+    }
+
+    void leaveInPlace() {
+        depth--;
+    }
+
+    /** Pushes a resource onto the dynamic scope. */
+    void pushScope(int resource) {
+        if (scopeLength == scope.length) {
+            scope = java.util.Arrays.copyOf(scope, scopeLength * 2);
+        }
+        scope[scopeLength++] = resource;
+    }
+
+    void popScope() {
+        scopeLength--;
+    }
+
+    /** The node a dynamic reference resolves to in the current dynamic scope (outermost first). */
+    int resolveDynamic(SchemaNode.DynamicRef d) {
         for (int s = 0; s < scopeLength; s++) {
             int resource = scope[s];
             for (int[] r : d.byResource) {

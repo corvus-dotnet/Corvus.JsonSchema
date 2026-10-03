@@ -100,9 +100,6 @@ final class CodeGen {
 
     /** Compiles a program, or returns null when it should run on the interpreter. */
     static Compiled compile(Program p) {
-        if (p.usesDynamicScope) {
-            return null;
-        }
         Set<Integer> forced = new HashSet<>();
         while (true) {
             try {
@@ -132,6 +129,8 @@ final class CodeGen {
         private final int[] representative;
         private MethodVisitor mv;
         private int nextLocal;
+        /** The resource of the node whose method is being written (for the dynamic scope). */
+        private int currentResource;
 
         Generator(Program p, Set<Integer> forced) {
             this.p = p;
@@ -162,6 +161,12 @@ final class CodeGen {
             request(root);
             MethodVisitor entry = cw.visitMethod(ACC_PUBLIC, "validate", NODE_DESC, null, null);
             entry.visitCode();
+            if (p.usesDynamicScope) {
+                // The dynamic scope starts with the entry's resource.
+                entry.visitVarInsn(ALOAD, 1);
+                entry.visitLdcInsn(nodes[root].resourceId);
+                entry.visitMethodInsn(INVOKESTATIC, RT, "push", "(" + EV + "I)V", false);
+            }
             entry.visitVarInsn(ALOAD, 1);
             entry.visitVarInsn(ALOAD, 2);
             entry.visitVarInsn(ILOAD, 3);
@@ -174,6 +179,7 @@ final class CodeGen {
                 int id = queue.poll();
                 mv = cw.visitMethod(ACC_STATIC, "n" + id, NODE_DESC, null, null);
                 mv.visitCode();
+                currentResource = nodes[id].resourceId;
                 nextLocal = KIND + 1;
                 nodeBody(id);
                 mv.visitMaxs(0, 0);
@@ -268,8 +274,16 @@ final class CodeGen {
             return target(id).alwaysFalse;
         }
 
-        /** Pushes the result (0 or 1) of evaluating child {@code id} against the value in local {@code slot}. */
+        /**
+         * Pushes the result (0 or 1) of evaluating child {@code id} against the value in local {@code slot}. A child
+         * applied in place (slot x) on an in-place cycle is entered under the depth guard; a child in another resource,
+         * under a live dynamic scope, is entered with its resource on the scope.
+         */
         private void call(int id, int slot) {
+            call(id, slot, slot == X);
+        }
+
+        private void call(int id, int slot, boolean guarded) {
             int t = representative[p.fastTarget[id]];
             SchemaNode n = nodes[t];
             if (n.alwaysTrue) {
@@ -280,7 +294,8 @@ final class CodeGen {
                 mv.visitInsn(ICONST_0);
                 return;
             }
-            if (isTypeOnly(n) && !fallback(t)) {
+            boolean crosses = p.usesDynamicScope && n.resourceId != currentResource;
+            if (isTypeOnly(n) && !fallback(t) && !crosses) {
                 mv.visitVarInsn(ALOAD, D);
                 mv.visitVarInsn(ILOAD, slot);
                 pushInt(n.typeMask);
@@ -288,10 +303,36 @@ final class CodeGen {
                 return;
             }
             request(t);
+            Label after = null;
+            boolean depth = guarded && n.inPlaceCycle;
+            if (depth) {
+                Label entered = new Label();
+                after = new Label();
+                mv.visitVarInsn(ALOAD, E);
+                rt("enter", "(" + EV + ")Z");
+                mv.visitJumpInsn(IFNE, entered);
+                mv.visitInsn(ICONST_0);
+                mv.visitJumpInsn(GOTO, after);
+                mv.visitLabel(entered);
+            }
+            if (crosses) {
+                mv.visitVarInsn(ALOAD, E);
+                pushInt(n.resourceId);
+                rt("push", "(" + EV + "I)V");
+            }
             mv.visitVarInsn(ALOAD, E);
             mv.visitVarInsn(ALOAD, D);
             mv.visitVarInsn(ILOAD, slot);
             mv.visitMethodInsn(INVOKESTATIC, className, "n" + t, NODE_DESC, false);
+            if (crosses) {
+                mv.visitVarInsn(ALOAD, E);
+                rt("pop", "(" + EV + ")V");
+            }
+            if (depth) {
+                mv.visitVarInsn(ALOAD, E);
+                rt("leave", "(" + EV + ")V");
+                mv.visitLabel(after);
+            }
         }
 
         private static boolean isTypeOnly(SchemaNode n) {
@@ -311,10 +352,8 @@ final class CodeGen {
         private boolean fallback(int id) {
             SchemaNode n = nodes[id];
             return forced.contains(id)
-                    || n.inPlaceCycle
                     || (n.unevaluatedProperties >= 0 && objectCoverage(id) == null)
-                    || (n.unevaluatedItems >= 0 && arrayCoverage(id) == null)
-                    || n.dynamicRef != null;
+                    || (n.unevaluatedItems >= 0 && arrayCoverage(id) == null);
         }
 
         private final Map<Integer, Coverage.Result> objectCoverages = new java.util.HashMap<>();
@@ -665,6 +704,11 @@ final class CodeGen {
                 return true;
             }
             if (m.alwaysFalse || m.inPlaceCycle) {
+                return false;
+            }
+            // Below a live dynamic scope, a branch in another resource would push that resource, which one merged
+            // pass would skip.
+            if (p.usesDynamicScope && m.resourceId != currentResource) {
                 return false;
             }
             if (m.constValue != null || m.enumValues != null || (m.hasType && (m.typeMask & SchemaNode.T_OBJECT) == 0)) {
@@ -1324,6 +1368,9 @@ final class CodeGen {
                 call(n.staticDynamicRef, X);
                 returnFalseIfZero();
             }
+            if (n.dynamicRef != null) {
+                dynamicRef(n.dynamicRef);
+            }
             if (n.allOf != null) {
                 for (int c : n.allOf) {
                     if (!isTrue(c)) {
@@ -1339,7 +1386,7 @@ final class CodeGen {
                 branches(n.oneOf, n.oneOfDiscriminator, true);
             }
             if (n.not >= 0) {
-                call(n.not, X);
+                call(n.not, X, false);
                 returnFalseIfNonZero();
             }
             if (n.ifNode >= 0 && (n.thenNode >= 0 && !isTrue(n.thenNode) || n.elseNode >= 0 && !isTrue(n.elseNode))) {
@@ -1359,6 +1406,36 @@ final class CodeGen {
                 }
                 mv.visitLabel(done);
             }
+        }
+
+        /**
+         * A $dynamicRef that stays dynamic: its target is found in the dynamic scope at run time, then the candidate's
+         * method runs.
+         */
+        private void dynamicRef(SchemaNode.DynamicRef d) {
+            java.util.TreeSet<Integer> candidates = new java.util.TreeSet<>();
+            candidates.add(d.fallback);
+            for (int[] r : d.byResource) {
+                candidates.add(r[1]);
+            }
+            int[] keys = candidates.stream().mapToInt(Integer::intValue).toArray();
+            Label[] cases = new Label[keys.length];
+            for (int i = 0; i < cases.length; i++) {
+                cases[i] = new Label();
+            }
+            Label done = new Label();
+            mv.visitVarInsn(ALOAD, E);
+            constant(d, "L" + PKG + "SchemaNode$DynamicRef;");
+            rt("dynamicTarget", "(" + EV + "L" + PKG + "SchemaNode$DynamicRef;)I");
+            // Every candidate is a case, so the default is never taken.
+            mv.visitLookupSwitchInsn(cases[0], keys, cases);
+            for (int i = 0; i < keys.length; i++) {
+                mv.visitLabel(cases[i]);
+                call(keys[i], X);
+                returnFalseIfZero();
+                mv.visitJumpInsn(GOTO, done);
+            }
+            mv.visitLabel(done);
         }
 
         /** The kinds a type mask accepts (integer as number). */

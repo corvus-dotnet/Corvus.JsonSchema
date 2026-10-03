@@ -61,6 +61,9 @@ technique; this is the checklist.
   the thread's evaluator reuses (with a guard for validations nested in format callbacks); numbers converted by the
   Eisel-Lemire algorithm (exact up to 19 significant digits); duplicate keys in large objects found by sorting hashes
   in scratch.
+- **No interpreter for dynamic scope or cycles.** A call into another resource pushes it on the dynamic scope only
+  when a dynamic reference still needs one; `$dynamicRef` resolves its candidate from the scope and dispatches to its
+  method; in-place calls into nodes on a cycle run under the depth guard. Every schema in the test suite compiles.
 - **Merged methods.** Structurally identical nodes share one compiled method (partition refinement over the children's
   classes, as the TypeScript generator merges functions and the C# compiler canonicalises equivalent subschemas): ui5's
   820 nodes compile to 262 methods, so the JIT reaches steady state in fewer passes (ui5 after 667 passes: 963 µs
@@ -73,10 +76,10 @@ technique; this is the checklist.
 2. **Simple arrays**: items that are leaves or type-only checked in the array's own loop; nested simple arrays inline
    (geojson).
 3. **Fused object plans** (C#/Rust): one pass deciding `if` conditions, required-only alternatives, alternative groups
-    of object branches, `not: {required}`, and `unevaluatedProperties` from seen bits.
+   of object branches, `not: {required}`, and `unevaluatedProperties` from seen bits.
 4. **Collecting mode without allocation** (C#: static lambdas over a context struct, pooled collector).
-5. **Compiled dynamic scope and in-place cycles** (TypeScript's scope wrapper and switch resolver, depth wrapper), so no
-    schema runs on the interpreter.
+5. **A tracking variant** (TypeScript's `t` functions) for `unevaluated*` whose contributors are conditional (anyOf/oneOf
+   branches that add names): the only nodes still evaluated by the interpreter.
 
 ## Not applicable
 

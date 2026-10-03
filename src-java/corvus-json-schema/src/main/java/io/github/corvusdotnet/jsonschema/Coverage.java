@@ -206,7 +206,7 @@ final class Coverage {
      * too many guarded coverages.
      */
     static Result ofGuarded(Program p, int id) {
-        GuardedState state = new GuardedState(p);
+        GuardedState state = new GuardedState(p, p.nodes[id].resourceId);
         Coverage main = new Coverage();
         if (!state.visit(id, true, main, new ArrayList<>(), new HashSet<>())) {
             return null;
@@ -227,11 +227,13 @@ final class Coverage {
 
     private static final class GuardedState {
         final Program p;
+        final int resource;
         final List<Guarded> guarded = new ArrayList<>();
         final List<Coverage> unguarded = new ArrayList<>();
 
-        GuardedState(Program p) {
+        GuardedState(Program p, int resource) {
             this.p = p;
+            this.resource = resource;
         }
 
         private boolean branch(int c, List<Guard> guards) {
@@ -259,7 +261,8 @@ final class Coverage {
             if (!visited.add(id) || m.alwaysTrue || m.alwaysFalse) {
                 return true;
             }
-            if (m.inPlaceCycle || m.dynamicRef != null) {
+            // Below a live dynamic scope, a guard in another resource would be evaluated in another scope.
+            if (m.inPlaceCycle || m.dynamicRef != null || (p.usesDynamicScope && m.resourceId != resource)) {
                 return false;
             }
             List<Integer> alternatives = new ArrayList<>();

@@ -29,6 +29,10 @@ final class Merging {
         int[][] children = new int[count][];
         for (int i = 0; i < count; i++) {
             String key = fallback.test(i) ? "#" + i : key(nodes[i]);
+            if (p.usesDynamicScope) {
+                // Entering a node pushes its resource onto the dynamic scope, so nodes of different resources differ.
+                key = nodes[i].resourceId + "@" + key;
+            }
             cls[i] = initial.computeIfAbsent(key, k -> initial.size());
             children[i] = children(p, nodes[i]);
         }
@@ -94,6 +98,12 @@ final class Merging {
         if (n.dependencies != null) {
             for (SchemaNode.Dependency d : n.dependencies) {
                 add(p, out, d.schema);
+            }
+        }
+        if (n.dynamicRef != null) {
+            add(p, out, n.dynamicRef.fallback);
+            for (int[] r : n.dynamicRef.byResource) {
+                add(p, out, r[1]);
             }
         }
         return out.stream().mapToInt(Integer::intValue).toArray();
@@ -182,6 +192,11 @@ final class Merging {
                 .append(num(n.multipleOf));
         k.append('|').append(n.unevaluatedProperties >= 0).append(n.unevaluatedItems >= 0);
         k.append('|').append(discriminator(n.oneOfDiscriminator)).append(discriminator(n.anyOfDiscriminator));
+        k.append('|').append(n.inPlaceCycle);
+        if (n.dynamicRef != null) {
+            k.append("|dyn").append(n.dynamicRef.isRecursive).append(Arrays.deepToString(n.dynamicRef.byResource))
+                    .append(n.dynamicRef.fallback);
+        }
         return k.toString();
     }
 

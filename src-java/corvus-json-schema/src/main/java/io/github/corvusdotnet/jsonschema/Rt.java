@@ -177,6 +177,26 @@ final class Rt {
     // ----------------------------------------------------------------------------------------------------------------
     // Fallbacks
 
+    static boolean enter(Evaluator e) {
+        return e.enterInPlace();
+    }
+
+    static void leave(Evaluator e) {
+        e.leaveInPlace();
+    }
+
+    static void push(Evaluator e, int resource) {
+        e.pushScope(resource);
+    }
+
+    static void pop(Evaluator e) {
+        e.popScope();
+    }
+
+    static int dynamicTarget(Evaluator e, SchemaNode.DynamicRef d) {
+        return e.resolveDynamic(d);
+    }
+
     /** Evaluates a node with the interpreter, fail-fast (for what the compiled code does not specialise). */
     static boolean interpret(Evaluator e, int node, int x) {
         return e.evalNode(node, x, -1);
