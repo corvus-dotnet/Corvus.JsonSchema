@@ -172,8 +172,15 @@ jobs:
               apk add --no-cache build-base clang-dev curl zip >/dev/null
               curl -sSf https://sh.rustup.rs | sh -s -- -y -q --profile minimal --default-toolchain "$RUST_TOOLCHAIN"
               . "$HOME/.cargo/env"
-              RUSTFLAGS="-C target-feature=-crt-static" cargo build --release --locked
+              # The unwinder is linked statically (libgcc_eh.a in place of -lgcc_s), so the extension needs only
+              # musl: the stock Alpine PHP images do not all ship libgcc (the arm64 ones do not).
+              printf "%s\n" "#!/bin/sh" \
+                "for a in \"\$@\"; do shift; if [ \"\$a\" = -lgcc_s ]; then set -- \"\$@\" -l:libgcc_eh.a; else set -- \"\$@\" \"\$a\"; fi; done" \
+                "exec cc \"\$@\"" > /tmp/cc-static-unwind.sh
+              chmod +x /tmp/cc-static-unwind.sh
+              RUSTFLAGS="-C target-feature=-crt-static -C linker=/tmp/cc-static-unwind.sh" cargo build --release --locked
               ext=target/release/libcorvus_json_schema.so
+              if readelf -d "$ext" | grep -q "NEEDED.*libgcc_s"; then echo "the extension needs libgcc_s" >&2; exit 1; fi
               php -d "extension=$PWD/$ext" -r "echo PHP_VERSION, PHP_ZTS ? \" ZTS\" : \" NTS\", PHP_EOL;"
               php -d "extension=$PWD/$ext" tests/api.php
               php -d "extension=$PWD/$ext" tests/suite.php
@@ -189,6 +196,18 @@ jobs:
           name=$(cat dist/name.txt)
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "archive=dist/$name.zip" >> "$GITHUB_OUTPUT"
+      - name: Test in the stock image
+        # The packaged extension, loaded by a fresh container of the official image with nothing added (the build's
+        # tools, libgcc among them, are not there).
+        env:
+          IMAGE: php:${{ matrix.php }}-${{ matrix.ts == 'ts' && 'zts' || 'cli' }}-alpine
+          ARCHIVE: ${{ steps.package.outputs.archive }}
+        run: |
+          mkdir -p ext && unzip -o -q "$ARCHIVE" -d ext
+          docker run --rm -v "$PWD:/w" -w /w/src-php/corvus-json-schema "$IMAGE" sh -euc '
+            php -d extension=/w/ext/corvus_json_schema.so tests/api.php
+            php -d extension=/w/ext/corvus_json_schema.so tests/suite.php
+          '
       - name: Upload
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

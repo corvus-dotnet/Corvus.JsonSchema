@@ -1,6 +1,6 @@
 [package]
 name = "corvus-json-schema-php"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.85"
 description = "The corvus_json_schema PHP extension: the corvus-json-schema crate with PHP values read in place."
