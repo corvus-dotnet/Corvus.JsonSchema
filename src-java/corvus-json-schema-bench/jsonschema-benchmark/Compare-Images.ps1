@@ -21,7 +21,7 @@ param(
     [string] $Csv = "",
     # Images that take the corpus directory instead of the schema and instances files.
     [string[]] $DirectoryImages = @("blaze"),
-    # The CPUs the containers run on (for example 2-9), so that runs are not moved between cores.
+    # The CPUs the containers run on (for example 2-9, through taskset), so that runs are not moved between cores.
     [string] $CpuSet = ""
 )
 
@@ -49,8 +49,11 @@ foreach ($corpus in $corpora) {
         for ($r = 0; $r -lt $Runs; $r++) {
             $arguments = @(if ($DirectoryImages -contains $image) { "/workspace/$corpus" } else {
                 "/workspace/$corpus/schema-noformat.json"; "/workspace/$corpus/instances.jsonl" })
-            $pin = @(if ($CpuSet) { "--cpuset-cpus=$CpuSet" })
-            $out = & $Engine run --rm @pin -v "${Schemas}:/workspace" "jsonschema-benchmark/$image" @arguments 2>$null
+            # Rootless podman cannot set a container's CPUs: the engine runs under taskset, whose affinity the
+            # container's processes inherit.
+            $command = @(if ($CpuSet) { "taskset"; "-c"; $CpuSet; $Engine } else { $Engine })
+            $out = & $command[0] @($command | Select-Object -Skip 1) run --rm -v "${Schemas}:/workspace" `
+                "jsonschema-benchmark/$image" @arguments 2>$null
             if ($LASTEXITCODE -ne 0) { $failed = $true; break }
             $fields = @(($out | Select-Object -Last 1).Split(","))
             for ($i = 0; $i -lt 4; $i++) { $samples[$metrics[$i]].Add([double]$fields[$i]) }

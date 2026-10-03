@@ -1,0 +1,17 @@
+# CORVUS (Java) -- add to the jsonschema-benchmark Makefile
+
+implementations/corvus-java/.dockertimestamp: \
+	implementations/corvus-java/memory-wrapper.sh \
+	implementations/corvus-java/src/main/java/Main.java \
+	implementations/corvus-java/src/main/java/Train.java \
+	implementations/corvus-java/pom.xml \
+	implementations/corvus-java/Dockerfile
+	docker build -t jsonschema-benchmark/corvus-java implementations/corvus-java
+	touch $@
+
+dist/results/corvus-java/%: \
+	implementations/corvus-java/.dockertimestamp \
+	schemas/%/schema-noformat.json \
+	schemas/%/instances.jsonl \
+	| dist/results/corvus-java
+	@$(call docker_run,corvus-java,/workspace/$(word 2,$^) /workspace/$(word 3,$^))

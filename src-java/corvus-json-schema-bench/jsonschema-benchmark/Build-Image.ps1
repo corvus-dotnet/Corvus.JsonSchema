@@ -15,14 +15,8 @@ New-Item -ItemType Directory $context | Out-Null
 $library = Join-Path $PSScriptRoot "../../corvus-json-schema"
 New-Item -ItemType Directory (Join-Path $context "corvus-json-schema") | Out-Null
 Copy-Item -Recurse (Join-Path $library "src"), (Join-Path $library "pom.xml") (Join-Path $context "corvus-json-schema")
-Copy-Item (Join-Path $PSScriptRoot "Main.java"), (Join-Path $PSScriptRoot "Train.java"), (Join-Path $PSScriptRoot "Dockerfile") $context
-@'
-#!/bin/sh
-OUTPUT=$(/usr/bin/time -f %M,%x -o /dev/stdout -q "$@" | sed '$!N; s/\n/,/; P; D')
-EXIT_STATUS="${OUTPUT##*,}"
-echo "$OUTPUT" | sed 's/,[^,]*$//'
-exit $EXIT_STATUS
-'@.Replace("`r`n", "`n") | Set-Content -NoNewline (Join-Path $context "memory-wrapper.sh")
-& chmod +x (Join-Path $context "memory-wrapper.sh")
+$bench = New-Item -ItemType Directory (Join-Path $context "bench")
+Copy-Item -Recurse (Join-Path $PSScriptRoot "src"), (Join-Path $PSScriptRoot "pom.xml"), (Join-Path $PSScriptRoot "memory-wrapper.sh") $bench
+Copy-Item (Join-Path $PSScriptRoot "Dockerfile.local") (Join-Path $context "Dockerfile")
 & $Engine build -t jsonschema-benchmark/corvus-java $context
 if ($LASTEXITCODE -ne 0) { throw "image build failed" }

@@ -1,0 +1,16 @@
+# For local comparisons: the library built from this checkout (staged by Build-Image.ps1), otherwise as Dockerfile.
+FROM maven:3.9-eclipse-temurin-25 AS build
+COPY corvus-json-schema /src/corvus-json-schema
+RUN cd /src/corvus-json-schema && mvn -q -B -ntp install -DskipTests
+COPY bench/pom.xml /app/pom.xml
+COPY bench/src /app/src
+RUN cd /app && mvn -B -q -ntp package -Dcorvus.version=0.1.0 && echo local > /app/corvus-version
+
+FROM eclipse-temurin:25-jre
+RUN apt-get update && apt-get install -y --no-install-recommends time && rm -rf /var/lib/apt/lists/*
+COPY --from=build /app/target/bench.jar /app/target/lib/ /app/
+COPY --from=build /app/corvus-version /app/corvus-version
+RUN java -XX:AOTCacheOutput=/app/app.aot -cp /app/bench.jar:/app/corvus-json-schema.jar Train
+COPY bench/memory-wrapper.sh /app/memory-wrapper.sh
+ENTRYPOINT ["/app/memory-wrapper.sh", "java", "-XX:AOTCache=/app/app.aot", "-cp", "/app/bench.jar:/app/corvus-json-schema.jar", "Main"]
+CMD []

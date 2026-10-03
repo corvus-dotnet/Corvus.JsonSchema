@@ -71,4 +71,6 @@ jobs:
       - name: Benchmark harness
         if: matrix.os == 'ubuntu-latest' && matrix.java == '21'
         working-directory: src-java/corvus-json-schema-bench
-        run: ./mvnw -B -ntp package
+        run: |
+          ./mvnw -B -ntp package
+          cd jsonschema-benchmark && ../mvnw -B -ntp package -Dcorvus.version=0.1.0
