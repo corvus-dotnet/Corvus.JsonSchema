@@ -1,0 +1,190 @@
+package io.github.corvusdotnet.jsonschema;
+
+import static io.github.corvusdotnet.jsonschema.JsonDocument.NUMBER;
+
+import java.util.Arrays;
+import java.util.function.Predicate;
+
+/**
+ * The runtime of compiled schemas: small static helpers that the generated code calls with the schema's constants.
+ * They are small enough for the JIT to inline at each call site, where the constant arguments fold away the branches
+ * that do not apply.
+ */
+final class Rt {
+    private Rt() {
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // Values
+
+    static int kind(JsonDocument d, int x) {
+        return (int) d.tape[x << 1] & 0xff;
+    }
+
+    static int count(JsonDocument d, int x) {
+        return (int) (d.tape[x << 1] >>> 32);
+    }
+
+    static int first(JsonDocument d, int x) {
+        return (int) d.tape[(x << 1) + 1];
+    }
+
+    /** Whether a value is of one of the types in a mask (the type bits and integer). */
+    static boolean type(JsonDocument d, int x, int mask) {
+        int kind = (int) d.tape[x << 1] & 0xff;
+        if ((kind & mask) != 0) {
+            return true;
+        }
+        return kind == NUMBER && (mask & SchemaNode.T_INTEGER) != 0 && integer(d, x);
+    }
+
+    static boolean integer(JsonDocument d, int x) {
+        return Numbers.isInteger(d.flags(x), d.data(x));
+    }
+
+    static boolean equal(JsonDocument d, int x, SchemaNode.Value v) {
+        return Values.equal(d, x, v.doc, v.node);
+    }
+
+    static boolean anyEqual(JsonDocument d, int x, SchemaNode.Value[] values) {
+        for (SchemaNode.Value v : values) {
+            if (Values.equal(d, x, v.doc, v.node)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether a string value equals UTF-8 bytes. */
+    static boolean stringIs(JsonDocument d, int x, byte[] utf8) {
+        long h = d.tape[x << 1];
+        if ((int) (h >>> 32) != utf8.length || ((int) h & 0xff) != JsonDocument.STRING) {
+            return false;
+        }
+        int off = (int) d.tape[(x << 1) + 1];
+        byte[] b = (h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source;
+        return Arrays.equals(b, off, off + utf8.length, utf8, 0, utf8.length);
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // Numbers
+
+    /** Compares a number value with a constant: negative, zero or positive. */
+    static int compare(JsonDocument d, int x, int flag, long bits) {
+        return Numbers.compare(d.flags(x), d.data(x), flag, bits);
+    }
+
+    static boolean multipleOf(JsonDocument d, int x, Numbers.Divisor divisor) {
+        return divisor.divides(d.flags(x), d.data(x));
+    }
+
+    static boolean numericFormat(JsonDocument d, int x, Formats.Kind kind) {
+        return kind.checkNumber(d.flags(x), d.data(x));
+    }
+
+    static boolean customNumberFormat(JsonDocument d, int x, Predicate<String> format) {
+        return format.test(d.numberText(x));
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // Strings
+
+    /** The length of a string value in code points. */
+    static long length(JsonDocument d, int x) {
+        long h = d.tape[x << 1];
+        int len = (int) (h >>> 32);
+        if ((h & (JsonDocument.STR_WIDE << 8)) == 0) {
+            return len;
+        }
+        int off = (int) d.tape[(x << 1) + 1];
+        return Utf8.codePoints((h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source, off, off + len);
+    }
+
+    static boolean pattern(Evaluator e, int x, SchemaPattern p) {
+        return e.matches(p, x);
+    }
+
+    static boolean format(JsonDocument d, int x, Formats.Kind kind, boolean legacyHostname) {
+        return kind.checkString(d.string(x), legacyHostname);
+    }
+
+    static boolean customFormat(JsonDocument d, int x, Predicate<String> format) {
+        return format.test(d.string(x));
+    }
+
+    static boolean content(JsonDocument d, int x, int kind) {
+        return Evaluator.contentOk(d.string(x), kind);
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // Objects and arrays
+
+    /** The value of an object's property, or -1. */
+    static int property(JsonDocument d, int x, byte[] name) {
+        long[] t = d.tape;
+        int k = (int) t[(x << 1) + 1];
+        int len = name.length;
+        for (int i = (int) (t[x << 1] >>> 32); i > 0; i--, k += 2) {
+            long h = t[k << 1];
+            if ((int) (h >>> 32) == len) {
+                int off = (int) t[(k << 1) + 1];
+                byte[] b = (h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source;
+                if (Arrays.equals(b, off, off + len, name, 0, len)) {
+                    return k + 1;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /** The index in {@code names} of a property name (a key node), or -1; for a few names. */
+    static int indexOf(JsonDocument d, int key, byte[][] names) {
+        long h = d.tape[key << 1];
+        int len = (int) (h >>> 32);
+        int off = (int) d.tape[(key << 1) + 1];
+        byte[] b = (h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source;
+        for (int i = 0; i < names.length; i++) {
+            byte[] n = names[i];
+            if (n.length == len && Arrays.equals(b, off, off + len, n, 0, len)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** The index of a property name (a key node) in a name map, or -1; for many names. */
+    static int lookup(JsonDocument d, int key, NameMap map) {
+        long h = d.tape[key << 1];
+        byte[] b = (h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source;
+        return map.get(b, (int) d.tape[(key << 1) + 1], (int) (h >>> 32));
+    }
+
+    static boolean unique(JsonDocument d, int x) {
+        return Values.allUnique(d, x);
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // Fallbacks
+
+    /** Evaluates a node with the interpreter, fail-fast (for what the compiled code does not specialise). */
+    static boolean interpret(Evaluator e, int node, int x) {
+        return e.evalNode(node, x, null);
+    }
+
+    /** The branches a discriminator leaves as candidates for an object, or null for all of them. */
+    static int[] select(JsonDocument d, int x, SchemaNode.Discriminator disc) {
+        int value = property(d, x, disc.utf8);
+        if (value < 0) {
+            return disc.allRequire ? NONE : null;
+        }
+        for (int i = 0; i < disc.values.length; i++) {
+            SchemaNode.Value v = disc.values[i];
+            if (Values.equal(d, value, v.doc, v.node)) {
+                return disc.branches[i];
+            }
+        }
+        return disc.unknown;
+    }
+
+    static final int[] NONE = new int[0];
+}

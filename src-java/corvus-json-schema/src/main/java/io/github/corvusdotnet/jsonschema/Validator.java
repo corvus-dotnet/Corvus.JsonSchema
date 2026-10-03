@@ -13,12 +13,27 @@ package io.github.corvusdotnet.jsonschema;
  * }</pre>
  */
 public final class Validator {
+    /** Set (to true) to evaluate with the interpreter instead of compiled code. */
+    static final boolean INTERPRET = Boolean.getBoolean("corvus.jsonschema.interpret");
+
     private final Program program;
+    /** The compiled code, or null to interpret. */
+    private final CodeGen.Compiled code;
     private final ThreadLocal<Evaluator> evaluators;
 
     private Validator(Program program) {
         this.program = program;
+        this.code = INTERPRET ? null : CodeGen.compile(program);
         this.evaluators = ThreadLocal.withInitial(() -> new Evaluator(program, null));
+    }
+
+    private boolean run(Evaluator e, JsonDocument instance) {
+        return code != null ? e.validate(code, instance, instance.root()) : e.validate(instance, instance.root());
+    }
+
+    /** Whether the schema runs as compiled code (for tests). */
+    boolean isCompiled() {
+        return code != null;
     }
 
     /**
@@ -90,7 +105,7 @@ public final class Validator {
      * @return whether it is valid
      */
     public boolean isValid(JsonDocument instance) {
-        return evaluators.get().validate(instance, instance.root());
+        return run(evaluators.get(), instance);
     }
 
     /**
@@ -124,7 +139,7 @@ public final class Validator {
      */
     public boolean validate(JsonDocument instance) {
         Evaluator e = evaluators.get();
-        boolean ok = e.validate(instance, instance.root());
+        boolean ok = run(e, instance);
         if (e.depthExceeded) {
             throw new SchemaEvaluationDepthException();
         }

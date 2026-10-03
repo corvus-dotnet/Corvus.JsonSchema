@@ -80,6 +80,15 @@ final class Evaluator {
         return evalNode(p.fastTarget[p.root], x, null);
     }
 
+    /** Evaluates the program's entry through its compiled code, fail-fast. */
+    boolean validate(CodeGen.Compiled code, JsonDocument d, int x) {
+        doc = d;
+        depth = 0;
+        depthExceeded = false;
+        scopeLength = 0;
+        return code.validate(this, d, x);
+    }
+
     /** Evaluates the program's entry, reporting to the collector. */
     boolean evaluate(JsonDocument d, int x) {
         doc = d;

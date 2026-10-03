@@ -87,6 +87,8 @@ class SuiteTest {
     }
 
     private int total;
+    private int groups;
+    private int compiled;
     private final List<String> failures = new ArrayList<>();
 
     private static final ResultsLevel[] LEVELS = ResultsLevel.values();
@@ -140,6 +142,10 @@ class SuiteTest {
             String compileError = null;
             try {
                 v = Validator.compile(sub(groups, groups.property(group, "schema")), options);
+                this.groups++;
+                if (v.isCompiled()) {
+                    compiled++;
+                }
             } catch (RuntimeException e) {
                 compileError = "compile error: " + e;
             }
@@ -193,11 +199,16 @@ class SuiteTest {
             }
         }
         failures.forEach(System.out::println);
-        System.out.println("JSON-Schema-Test-Suite: " + (total - failures.size()) + "/" + total + " passed");
+        System.out.println("JSON-Schema-Test-Suite: " + (total - failures.size()) + "/" + total + " passed ("
+                + compiled + " of " + groups + " schemas compiled)");
         assertTrue(failures.isEmpty(), failures.size() + " failures; first: "
                 + (failures.isEmpty() ? "" : failures.get(0)));
         if (draftFilter == null && filter == null) {
             assertEquals(EXPECTED_TOTAL, total, "test case count");
+        }
+        if (!Validator.INTERPRET) {
+            // Only schemas with a live dynamic scope run on the interpreter.
+            assertTrue(compiled > groups * 9 / 10, compiled + " of " + groups + " schemas compiled");
         }
     }
 }
