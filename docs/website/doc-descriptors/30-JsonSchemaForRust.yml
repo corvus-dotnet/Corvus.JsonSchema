@@ -1,0 +1,3 @@
+source: JsonSchemaForRust.md
+navTitle: "Rust"
+description: "The Corvus JSON Schema evaluator for Rust (the corvus-json-schema crate): install, validate, JSON text, options, results and annotations."

@@ -1,0 +1,3 @@
+source: JsonSchemaForC.md
+navTitle: "C"
+description: "The Corvus JSON Schema evaluator for C (the corvus-json-schema C library): install, validate, options, results and annotations."

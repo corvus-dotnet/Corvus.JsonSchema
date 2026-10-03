@@ -1,0 +1,3 @@
+source: JsonSchemaForPhp.md
+navTitle: "PHP"
+description: "The Corvus JSON Schema evaluator for PHP (the corvus_json_schema extension, installed with PIE): install, validate, options, results and annotations."

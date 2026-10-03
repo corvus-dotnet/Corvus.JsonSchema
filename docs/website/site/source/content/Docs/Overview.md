@@ -26,6 +26,10 @@ Generate strongly-typed C# models from JSON Schema files using the `corvusjson` 
 
 Dynamically load, compile, and validate JSON documents against JSON Schema at runtime. `Corvus.Text.Json.Validator` uses Roslyn to compile schemas on the fly, producing the same validation logic as the build-time source generator. Ideal for schema registries, configuration validation, API gateways, and any scenario where schemas are not known at compile time. Supports all major drafts (4, 6, 7, 2019-09, 2020-12) with detailed diagnostic output.
 
+## [JSON Schema in other languages](/docs/other-languages.html)
+
+The same evaluator, with the same results, for JavaScript and TypeScript, Rust, Python, C, C++, Swift, Ruby and PHP. Each language has its own page: install, validate, the options, and Basic, Detailed and Verbose results with annotations, reported the same way in every language.
+
 ## [Migrating from V4 to V5](/docs/migrating-from-v4-to-v5.html)
 
 A comprehensive guide for migrating code from the V4 code generator (`Corvus.Json`) to V5 (`Corvus.Text.Json`). Covers package and namespace changes, the shift from functional `With*()` mutation to imperative `Set*()` mutation, parsing changes, validation API differences, composition types, and a quick reference table mapping V4 patterns to V5 equivalents.

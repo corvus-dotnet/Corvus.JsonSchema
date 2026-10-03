@@ -1,0 +1,3 @@
+source: JsonSchemaForSwift.md
+navTitle: "Swift"
+description: "The Corvus JSON Schema evaluator for Swift (the CorvusJsonSchema package): install, validate, options, results and annotations."

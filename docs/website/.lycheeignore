@@ -33,6 +33,9 @@ https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/benchmarks
 # dotnet.microsoft.com returns 403 to automated crawlers
 https://dotnet\.microsoft\.com
 
+# www.npmjs.com returns 403 to automated clients (the package pages resolve in a browser)
+https://www\.npmjs\.com
+
 # endjin.com has flaky DNS that causes intermittent CI failures
 https://endjin\.com
 
