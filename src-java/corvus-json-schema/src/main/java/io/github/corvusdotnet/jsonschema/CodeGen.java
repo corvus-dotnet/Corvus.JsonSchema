@@ -1206,11 +1206,63 @@ final class CodeGen {
             }
         }
 
+        /** The kinds a type mask accepts (integer as number). */
+        private static int kinds(int mask) {
+            return (mask & 0x3f) | ((mask & SchemaNode.T_INTEGER) != 0 ? JsonDocument.NUMBER : 0);
+        }
+
+        /**
+         * When every branch asserts a type and no two accept the same kind, the instance's kind selects the only branch
+         * that can pass, for anyOf and oneOf alike (C#'s type dispatch, the TypeScript generator's typeDispatch).
+         * Returns false, emitting nothing, when the branches do not qualify.
+         */
+        private boolean typeDispatch(int[] list) {
+            if (list.length < 2) {
+                return false;
+            }
+            int[] owned = new int[list.length];
+            int claimed = 0;
+            for (int i = 0; i < list.length; i++) {
+                SchemaNode c = target(list[i]);
+                if (c.alwaysFalse) {
+                    continue;
+                }
+                if (c.alwaysTrue || !c.hasType) {
+                    return false;
+                }
+                int k = kinds(c.typeMask);
+                if ((k & claimed) != 0) {
+                    return false;
+                }
+                claimed |= k;
+                owned[i] = k;
+            }
+            Label done = new Label();
+            for (int i = 0; i < list.length; i++) {
+                if (owned[i] == 0) {
+                    continue;
+                }
+                Label other = new Label();
+                kindTest(owned[i]);
+                mv.visitJumpInsn(IFEQ, other);
+                call(list[i], X);
+                returnFalseIfZero();
+                mv.visitJumpInsn(GOTO, done);
+                mv.visitLabel(other);
+            }
+            returnFalse();
+            mv.visitLabel(done);
+            return true;
+        }
+
         /**
          * anyOf (at least one branch) or oneOf (exactly one). With a discriminator, an object that has the property
          * tries only the branches its value can select.
          */
         private void branches(int[] list, SchemaNode.Discriminator disc, boolean oneOf) {
+            if (typeDispatch(list)) {
+                return;
+            }
             Label done = new Label();
             if (disc != null) {
                 int sel = local(1);
