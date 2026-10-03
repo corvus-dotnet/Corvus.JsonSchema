@@ -139,6 +139,7 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
               <artifactSet>
                 <includes>
                   <include>org.ow2.asm:asm</include>
