@@ -12,7 +12,7 @@ import java.util.List;
  *
  * <p>The benchmark defines warm as steady state. The warm-up follows a rule that is the same for every engine whatever
  * its runtime: validation passes for a fixed time ({@value #WARMUP_TIME} ns), and at least {@value #MIN_WARMUP_PASSES}
- * passes.
+ * passes; the warm figure is the last of those passes.
  */
 public final class Main {
     static final long WARMUP_TIME = 2_000_000_000L;
@@ -52,16 +52,17 @@ public final class Main {
             System.exit(1);
         }
 
+        // The warm pass is the last pass of the warm-up loop, timed at the same call site as the passes before it: a
+        // call from another site can find the method compiled only inlined into the loop, and run it uncompiled.
         long warmupEnd = System.nanoTime() + WARMUP_TIME;
+        long warm = 0;
         for (int i = 0; i < MIN_WARMUP_PASSES || System.nanoTime() < warmupEnd; i++) {
+            long start = System.nanoTime();
             validateAll(v, docs);
+            warm = System.nanoTime() - start;
         }
 
-        long warmStart = System.nanoTime();
-        validateAll(v, docs);
-        long warmEnd = System.nanoTime();
-
-        System.out.println((coldEnd - coldStart) + "," + (warmEnd - warmStart) + "," + (compileEnd - compileStart)
+        System.out.println((coldEnd - coldStart) + "," + warm + "," + (compileEnd - compileStart)
                 + "," + (parseEnd - parseStart));
     }
 }

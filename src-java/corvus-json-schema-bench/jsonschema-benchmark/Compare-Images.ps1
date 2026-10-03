@@ -20,7 +20,9 @@ param(
     [string] $Engine = "podman",
     [string] $Csv = "",
     # Images that take the corpus directory instead of the schema and instances files.
-    [string[]] $DirectoryImages = @("blaze")
+    [string[]] $DirectoryImages = @("blaze"),
+    # The CPUs the containers run on (for example 2-9), so that runs are not moved between cores.
+    [string] $CpuSet = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -47,7 +49,8 @@ foreach ($corpus in $corpora) {
         for ($r = 0; $r -lt $Runs; $r++) {
             $arguments = @(if ($DirectoryImages -contains $image) { "/workspace/$corpus" } else {
                 "/workspace/$corpus/schema-noformat.json"; "/workspace/$corpus/instances.jsonl" })
-            $out = & $Engine run --rm -v "${Schemas}:/workspace" "jsonschema-benchmark/$image" @arguments 2>$null
+            $pin = @(if ($CpuSet) { "--cpuset-cpus=$CpuSet" })
+            $out = & $Engine run --rm @pin -v "${Schemas}:/workspace" "jsonschema-benchmark/$image" @arguments 2>$null
             if ($LASTEXITCODE -ne 0) { $failed = $true; break }
             $fields = @(($out | Select-Object -Last 1).Split(","))
             for ($i = 0; $i -lt 4; $i++) { $samples[$metrics[$i]].Add([double]$fields[$i]) }
