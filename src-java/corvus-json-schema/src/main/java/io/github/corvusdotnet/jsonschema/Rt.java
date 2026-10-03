@@ -55,27 +55,6 @@ final class Rt {
         return false;
     }
 
-    /** Whether a string value equals UTF-8 bytes. */
-    static boolean stringIs(JsonDocument d, int x, byte[] utf8) {
-        long h = d.tape[x << 1];
-        if ((int) (h >>> 32) != utf8.length || ((int) h & 0xff) != JsonDocument.STRING) {
-            return false;
-        }
-        int off = (int) d.tape[(x << 1) + 1];
-        byte[] b = (h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source;
-        return Arrays.equals(b, off, off + utf8.length, utf8, 0, utf8.length);
-    }
-
-    /** Whether a value is a string in a name map. */
-    static boolean stringIn(JsonDocument d, int x, NameMap names) {
-        long h = d.tape[x << 1];
-        if (((int) h & 0xff) != JsonDocument.STRING) {
-            return false;
-        }
-        byte[] b = (h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source;
-        return names.get(b, (int) d.tape[(x << 1) + 1], (int) (h >>> 32)) >= 0;
-    }
-
     // ----------------------------------------------------------------------------------------------------------------
     // Numbers
 
@@ -147,26 +126,31 @@ final class Rt {
         return -1;
     }
 
-    /** The index in {@code names} of a property name (a key node), or -1; for a few names. */
-    static int indexOf(JsonDocument d, int key, byte[][] names) {
-        long h = d.tape[key << 1];
-        int len = (int) (h >>> 32);
-        int off = (int) d.tape[(key << 1) + 1];
+    private static final java.lang.invoke.VarHandle LONGS =
+            java.lang.invoke.MethodHandles.byteArrayViewVarHandle(long[].class, java.nio.ByteOrder.LITTLE_ENDIAN);
+
+    /**
+     * The {@code width} (1 to 8) bytes at {@code pos} of the string value k as a little-endian word: one load when
+     * the array has eight bytes there, masked to the width.
+     */
+    static long word(JsonDocument d, int k, int pos, int width) {
+        long h = d.tape[k << 1];
         byte[] b = (h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source;
-        for (int i = 0; i < names.length; i++) {
-            byte[] n = names[i];
-            if (n.length == len && Arrays.equals(b, off, off + len, n, 0, len)) {
-                return i;
-            }
+        int off = (int) d.tape[(k << 1) + 1] + pos;
+        if (off + 8 <= b.length) {
+            long w = (long) LONGS.get(b, off);
+            return width == 8 ? w : w & ((1L << (width << 3)) - 1);
         }
-        return -1;
+        return word(b, off, width);
     }
 
-    /** The index of a property name (a key node) in a name map, or -1; for many names. */
-    static int lookup(JsonDocument d, int key, NameMap map) {
-        long h = d.tape[key << 1];
-        byte[] b = (h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source;
-        return map.get(b, (int) d.tape[(key << 1) + 1], (int) (h >>> 32));
+    /** The same over an array (the compiler's constants). */
+    static long word(byte[] b, int off, int width) {
+        long w = 0;
+        for (int i = width - 1; i >= 0; i--) {
+            w = (w << 8) | (b[off + i] & 0xff);
+        }
+        return w;
     }
 
     static boolean unique(Evaluator e, int x) {

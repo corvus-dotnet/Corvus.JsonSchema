@@ -97,8 +97,6 @@ final class CodeGen {
 
     /** Objects with at most this many declared properties (and nothing else needing a loop) are probed by name. */
     private static final int MAX_PROBED_PROPERTIES = 4;
-    /** Declared names up to this many are matched by comparing each; more by a hash lookup. */
-    private static final int MAX_SCANNED_NAMES = 8;
 
     /** Compiles a program, or returns null when it should run on the interpreter. */
     static Compiled compile(Program p) {
@@ -358,16 +356,15 @@ final class CodeGen {
                 typeCheck(n.typeMask);
             }
             if (n.constValue != null) {
-                mv.visitVarInsn(ALOAD, D);
-                mv.visitVarInsn(ILOAD, X);
                 if (n.constValue.kind() == JsonDocument.STRING) {
-                    constant(utf8(n.constValue.doc.string(n.constValue.node)), "[B");
-                    rt("stringIs", "(" + DOC + "I[B)Z");
+                    enumCheck(new SchemaNode.Value[] {n.constValue});
                 } else {
+                    mv.visitVarInsn(ALOAD, D);
+                    mv.visitVarInsn(ILOAD, X);
                     constant(n.constValue, "L" + PKG + "SchemaNode$Value;");
                     rt("equal", "(" + DOC + "IL" + PKG + "SchemaNode$Value;)Z");
+                    returnFalseIfZero();
                 }
-                returnFalseIfZero();
             }
             if (n.enumValues != null) {
                 enumCheck(n.enumValues);
@@ -403,28 +400,24 @@ final class CodeGen {
                 returnFalseIfZero();
                 return;
             }
-            if (values.length <= MAX_SCANNED_NAMES) {
-                Label ok = new Label();
-                for (SchemaNode.Value v : values) {
-                    mv.visitVarInsn(ALOAD, D);
-                    mv.visitVarInsn(ILOAD, X);
-                    constant(utf8(v.doc.string(v.node)), "[B");
-                    rt("stringIs", "(" + DOC + "I[B)Z");
-                    mv.visitJumpInsn(IFNE, ok);
-                }
-                returnFalse();
-                mv.visitLabel(ok);
-                return;
-            }
-            NameMap map = new NameMap(values.length);
+            // A string of one of the names: the kind, then the length and word dispatch.
+            java.util.LinkedHashMap<String, byte[]> distinct = new java.util.LinkedHashMap<>();
             for (SchemaNode.Value v : values) {
-                map.putIfAbsent(utf8(v.doc.string(v.node)), 0);
+                String text = v.doc.string(v.node);
+                distinct.putIfAbsent(text, utf8(text));
             }
-            mv.visitVarInsn(ALOAD, D);
-            mv.visitVarInsn(ILOAD, X);
-            constant(map, "L" + PKG + "NameMap;");
-            rt("stringIn", "(" + DOC + "IL" + PKG + "NameMap;)Z");
-            returnFalseIfZero();
+            byte[][] names = distinct.values().toArray(new byte[0][]);
+            Label ok = new Label();
+            Label fail = new Label();
+            mv.visitVarInsn(ILOAD, KIND);
+            pushInt(JsonDocument.STRING);
+            mv.visitJumpInsn(IF_ICMPNE, fail);
+            Label[] cases = new Label[names.length];
+            Arrays.fill(cases, ok);
+            nameDispatch(X, names, cases, fail);
+            mv.visitLabel(fail);
+            returnFalse();
+            mv.visitLabel(ok);
         }
 
         /**
@@ -887,24 +880,6 @@ final class CodeGen {
             }
             Label afterNames = new Label();
             if (props.length > 0) {
-                // The index of the name among the declared ones, then a switch to its check.
-                mv.visitVarInsn(ALOAD, D);
-                mv.visitVarInsn(ILOAD, k);
-                if (props.length <= MAX_SCANNED_NAMES) {
-                    byte[][] utf8 = new byte[props.length][];
-                    for (int i = 0; i < props.length; i++) {
-                        utf8[i] = props[i].utf8;
-                    }
-                    constant(utf8, "[[B");
-                    rt("indexOf", "(" + DOC + "I[[B)I");
-                } else {
-                    NameMap map = new NameMap(props.length);
-                    for (int i = 0; i < props.length; i++) {
-                        map.putIfAbsent(props[i].utf8, i);
-                    }
-                    constant(map, "L" + PKG + "NameMap;");
-                    rt("lookup", "(" + DOC + "IL" + PKG + "NameMap;)I");
-                }
                 Label[] cases = new Label[props.length];
                 for (int i = 0; i < cases.length; i++) {
                     cases[i] = new Label();
@@ -912,7 +887,7 @@ final class CodeGen {
                 // A declared name continues with the next property unless patterns or additionalProperties follow.
                 boolean tail = !patterns.isEmpty();
                 Label afterCase = tail ? afterNames : next;
-                mv.visitTableSwitchInsn(0, props.length - 1, afterNames, cases);
+                nameDispatch(k, props, cases, afterNames);
                 for (int i = 0; i < props.length; i++) {
                     mv.visitLabel(cases[i]);
                     if (!isTrue(props[i].node)) {
@@ -977,6 +952,84 @@ final class CodeGen {
                     mv.visitLabel(ok);
                 }
             }
+        }
+
+        /**
+         * Jumps to {@code cases[i]} when the key in local {@code k} is the i-th declared name, else to {@code none}: a
+         * switch on the name's byte length, then for each name of that length a compare of its bytes as words
+         * (little-endian, the last one overlapping), against constants (C#'s Utf8NameMap: length, then words).
+         */
+        private void nameDispatch(int k, Property[] props, Label[] cases, Label none) {
+            byte[][] names = new byte[props.length][];
+            for (int i = 0; i < props.length; i++) {
+                names[i] = props[i].utf8;
+            }
+            nameDispatch(k, names, cases, none);
+        }
+
+        private void nameDispatch(int k, byte[][] names, Label[] cases, Label none) {
+            java.util.TreeMap<Integer, List<Integer>> byLength = new java.util.TreeMap<>();
+            for (int i = 0; i < names.length; i++) {
+                byLength.computeIfAbsent(names[i].length, x -> new ArrayList<>()).add(i);
+            }
+            mv.visitVarInsn(ALOAD, D);
+            mv.visitVarInsn(ILOAD, k);
+            rt("count", "(" + DOC + "I)I");
+            int[] keys = byLength.keySet().stream().mapToInt(Integer::intValue).toArray();
+            Label[] groups = new Label[keys.length];
+            for (int g = 0; g < groups.length; g++) {
+                groups[g] = new Label();
+            }
+            mv.visitLookupSwitchInsn(none, keys, groups);
+            int word = local(2);
+            for (int g = 0; g < keys.length; g++) {
+                mv.visitLabel(groups[g]);
+                int length = keys[g];
+                if (length == 0) {
+                    mv.visitJumpInsn(GOTO, cases[byLength.get(0).get(0)]);
+                    continue;
+                }
+                // The word positions: 0, 8, ... and the last (overlapping) one, for names longer than 8 bytes.
+                List<Integer> positions = new ArrayList<>();
+                if (length <= 8) {
+                    positions.add(0);
+                } else {
+                    for (int pos = 0; pos + 8 < length; pos += 8) {
+                        positions.add(pos);
+                    }
+                    positions.add(length - 8);
+                }
+                int firstWidth = Math.min(length, 8);
+                wordOf(k, 0, firstWidth);
+                mv.visitVarInsn(LSTORE, word);
+                for (int index : byLength.get(length)) {
+                    byte[] name = names[index];
+                    Label nextName = new Label();
+                    mv.visitVarInsn(LLOAD, word);
+                    mv.visitLdcInsn(Rt.word(name, 0, firstWidth));
+                    mv.visitInsn(LCMP);
+                    mv.visitJumpInsn(IFNE, nextName);
+                    for (int w = 1; w < positions.size(); w++) {
+                        int pos = positions.get(w);
+                        wordOf(k, pos, 8);
+                        mv.visitLdcInsn(Rt.word(name, pos, 8));
+                        mv.visitInsn(LCMP);
+                        mv.visitJumpInsn(IFNE, nextName);
+                    }
+                    mv.visitJumpInsn(GOTO, cases[index]);
+                    mv.visitLabel(nextName);
+                }
+                mv.visitJumpInsn(GOTO, none);
+            }
+        }
+
+        /** Pushes the word of {@code width} bytes at {@code pos} of the string in local {@code k}. */
+        private void wordOf(int k, int pos, int width) {
+            mv.visitVarInsn(ALOAD, D);
+            mv.visitVarInsn(ILOAD, k);
+            pushInt(pos);
+            pushInt(width);
+            rt("word", "(" + DOC + "III)J");
         }
 
         // ------------------------------------------------------------------------------------------------------------
