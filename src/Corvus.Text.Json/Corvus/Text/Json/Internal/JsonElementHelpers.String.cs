@@ -20,6 +20,30 @@ public static partial class JsonElementHelpers
     /// <returns>The number of runes in the UTF-8 string.</returns>
     public static int CountRunes(ReadOnlySpan<byte> utf8String)
     {
+#if NET
+        // Most strings are ASCII, one rune per byte, and valid UTF-8 has one rune per byte that does not continue a
+        // sequence: both are checked vectorised. Anything else is decoded rune by rune, which stops at the first
+        // invalid sequence.
+        if (System.Text.Ascii.IsValid(utf8String))
+        {
+            return utf8String.Length;
+        }
+
+        if (System.Text.Unicode.Utf8.IsValid(utf8String))
+        {
+            int continuation = 0;
+            foreach (byte b in utf8String)
+            {
+                if ((b & 0xC0) == 0x80)
+                {
+                    continuation++;
+                }
+            }
+
+            return utf8String.Length - continuation;
+        }
+#endif
+
         int count = 0;
         while (Rune.DecodeFromUtf8(utf8String, out _, out int bytesConsumed) == System.Buffers.OperationStatus.Done)
         {
