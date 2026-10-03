@@ -31,9 +31,18 @@ public final class Validator {
         return code != null ? e.validate(code, instance, instance.root()) : e.validate(instance, instance.root());
     }
 
+    /** The evaluator last acquired, checked by its owning thread before the (slower) thread-local lookup. */
+    private Evaluator last;
+
     /** The thread's evaluator, or a new one when it is already in use (a validation nested in a format callback). */
     private Evaluator acquire() {
-        Evaluator e = evaluators.get();
+        Evaluator e = last;
+        if (e != null && e.owner == Thread.currentThread() && !e.busy) {
+            e.busy = true;
+            return e;
+        }
+        e = evaluators.get();
+        last = e;
         if (e.busy) {
             return new Evaluator(program, null);
         }

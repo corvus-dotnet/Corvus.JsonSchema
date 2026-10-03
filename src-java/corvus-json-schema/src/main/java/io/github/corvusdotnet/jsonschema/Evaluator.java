@@ -534,6 +534,9 @@ final class Evaluator {
         return kind.check(formats, formatChars.of(doc, x), legacyHostname);
     }
 
+    /** The thread this evaluator belongs to. */
+    final Thread owner = Thread.currentThread();
+
     /** In use by a validation on this thread (a nested validation, from a format callback, takes its own evaluator). */
     boolean busy;
     private JsonDocument.Parser textParser;
