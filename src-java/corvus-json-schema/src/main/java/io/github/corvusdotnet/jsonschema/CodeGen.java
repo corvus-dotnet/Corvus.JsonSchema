@@ -89,6 +89,9 @@ final class CodeGen {
             "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;I)Ljava/lang/Object;",
             false);
 
+    /** Beyond this many words at one position, the trie switches on a distinguishing window instead of a chain. */
+    private static final int MAX_WORD_CHAIN = 4;
+
     /** Names up to this many are dispatched by length and words (unless the method is too large); more by hashing. */
     private static final int MAX_WORD_DISPATCH = 512;
 
@@ -1329,6 +1332,43 @@ final class CodeGen {
             int word = local(2);
             wordOf(k, pos, width);
             mv.visitVarInsn(LSTORE, word);
+            List<Long> words = new ArrayList<>(byWord.keySet());
+            int[] window = words.size() > MAX_WORD_CHAIN ? distinguishingWindow(words, width) : null;
+            if (window != null) {
+                // Many words: a binary search on the window of bits that tells them apart, then the whole word.
+                int shift = window[0];
+                long mask = window[1] == 64 ? -1L : (1L << window[1]) - 1;
+                java.util.TreeMap<Integer, Long> byKey = new java.util.TreeMap<>();
+                for (long w : words) {
+                    byKey.put((int) ((w >>> shift) & mask), w);
+                }
+                int[] keys = byKey.keySet().stream().mapToInt(Integer::intValue).toArray();
+                Label[] labels = new Label[keys.length];
+                for (int i = 0; i < labels.length; i++) {
+                    labels[i] = new Label();
+                }
+                mv.visitVarInsn(LLOAD, word);
+                if (shift > 0) {
+                    pushInt(shift);
+                    mv.visitInsn(Opcodes.LUSHR);
+                }
+                mv.visitInsn(Opcodes.L2I);
+                if (window[1] < 32) {
+                    pushInt((int) mask);
+                    mv.visitInsn(Opcodes.IAND);
+                }
+                mv.visitLookupSwitchInsn(none, keys, labels);
+                for (int i = 0; i < keys.length; i++) {
+                    mv.visitLabel(labels[i]);
+                    long w = byKey.get(keys[i]);
+                    mv.visitVarInsn(LLOAD, word);
+                    mv.visitLdcInsn(w);
+                    mv.visitInsn(LCMP);
+                    mv.visitJumpInsn(IFNE, none);
+                    wordTrie(k, names, byWord.get(w), positions, depth + 1, firstWidth, cases, none);
+                }
+                return;
+            }
             for (Map.Entry<Long, List<Integer>> e : byWord.entrySet()) {
                 Label other = new Label();
                 mv.visitVarInsn(LLOAD, word);
@@ -1344,6 +1384,28 @@ final class CodeGen {
         /** The locals holding the current key's array and offset (set by the length dispatch). */
         private int keyBytes;
         private int keyOffset;
+
+        /**
+         * The narrowest window of bits (a byte, then two, then four, at any byte offset) whose values differ for every
+         * word: {shift, bits}; null when none does (the words are then compared in turn).
+         */
+        private static int[] distinguishingWindow(List<Long> words, int width) {
+            for (int bytes : new int[] {1, 2, 4}) {
+                for (int offset = 0; offset + bytes <= width; offset++) {
+                    int shift = offset * 8;
+                    long mask = (1L << (bytes * 8)) - 1;
+                    Set<Long> seen = new HashSet<>();
+                    boolean distinct = true;
+                    for (long w : words) {
+                        distinct &= seen.add((w >>> shift) & mask);
+                    }
+                    if (distinct) {
+                        return new int[] {shift, bytes * 8};
+                    }
+                }
+            }
+            return null;
+        }
 
         /**
          * Pushes the word of {@code width} bytes at {@code pos} of the key whose array and offset are in locals: a
