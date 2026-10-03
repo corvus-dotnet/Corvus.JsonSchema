@@ -5,7 +5,6 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashSet;
 
 /**
  * JSON text parsed for evaluation: the UTF-8 text and one flat array of values (a tape) that the evaluator reads in
@@ -50,18 +49,26 @@ public final class JsonDocument {
      * the data: a string's offset, a number's bits, a container's first child, a boolean's 0 or 1. The children of a
      * container are consecutive; an object's are key and value pairs.
      */
-    final long[] tape;
+    long[] tape;
 
-    final byte[] source;
+    byte[] source;
+    /** The end of the text in {@link #source} (shorter than the array in a reused document). */
+    int sourceEnd;
     /** The unescaped strings. */
-    final byte[] text;
-    final int root;
+    byte[] text;
+    int root;
 
     private JsonDocument(byte[] source, long[] tape, byte[] text, int root) {
         this.source = source;
+        this.sourceEnd = source.length;
         this.tape = tape;
         this.text = text;
         this.root = root;
+    }
+
+    /** An empty document that a parser refills (an evaluator's, for validating JSON text without allocating). */
+    static JsonDocument reusable() {
+        return new JsonDocument(Parser.EMPTY, new long[64], Parser.EMPTY, 0);
     }
 
     /**
@@ -190,7 +197,8 @@ public final class JsonDocument {
     /** A number's text as written. */
     final String numberText(int n) {
         int start = count(n);
-        return new String(source, start, Parser.numberEnd(source, start) - start, StandardCharsets.ISO_8859_1);
+        return new String(source, start, Parser.numberEnd(source, start, sourceEnd) - start,
+                StandardCharsets.ISO_8859_1);
     }
 
     /** The value as JSON text (numbers as written, strings re-escaped). */
@@ -308,7 +316,13 @@ public final class JsonDocument {
         private byte[] text = EMPTY;
         private int textLength;
 
-        private static final byte[] EMPTY = new byte[0];
+        static final byte[] EMPTY = new byte[0];
+        /** Scratch for finding duplicate keys in large objects. */
+        private long[] hashes = new long[32];
+        /** Scratch for rebuilding an object with duplicate keys. */
+        private long[] pairScratch = new long[64];
+        /** The document a reusing parse fills, or null to build a new one. */
+        private JsonDocument target;
 
         Parser(byte[] b) {
             this.b = b;
@@ -439,7 +453,7 @@ public final class JsonDocument {
                         if (i != end) {
                             throw error("trailing characters");
                         }
-                        return validating ? null : finish();
+                        return validating ? null : target != null ? fill() : finish();
                     }
                     int frame = frames[depth - 1];
                     boolean object = frame < 0;
@@ -475,6 +489,48 @@ public final class JsonDocument {
             tape[root * 2 + 1] = scratch[1];
             byte[] t = textLength == 0 ? EMPTY : Arrays.copyOf(text, textLength);
             return new JsonDocument(b, tape, t, root);
+        }
+
+        /**
+         * Parses {@code b[0, end)} into {@code document}, reusing its arrays and this parser's (no allocation once they
+         * have grown). The document is valid until the next parse into it.
+         */
+        void parseInto(JsonDocument document, byte[] b, int end) {
+            this.b = b;
+            this.i = 0;
+            this.end = end;
+            this.validating = false;
+            nodeCount = 0;
+            scratchCount = 0;
+            depth = 0;
+            textLength = 0;
+            target = document;
+            try {
+                parse();
+            } finally {
+                target = null;
+                this.b = null;
+            }
+        }
+
+        /** Fills the target document with the parsed nodes and text. */
+        private JsonDocument fill() {
+            JsonDocument d = target;
+            int need = nodeCount * 2 + 2;
+            if (d.tape.length < need) {
+                d.tape = new long[Math.max(need, d.tape.length * 2)];
+            }
+            System.arraycopy(nodes, 0, d.tape, 0, nodeCount * 2);
+            d.tape[nodeCount * 2] = scratch[0];
+            d.tape[nodeCount * 2 + 1] = scratch[1];
+            if (d.text.length < textLength) {
+                d.text = new byte[Math.max(textLength, d.text.length * 2)];
+            }
+            System.arraycopy(text, 0, d.text, 0, textLength);
+            d.source = b;
+            d.sourceEnd = end;
+            d.root = nodeCount;
+            return d;
         }
 
         private void open(boolean object) {
@@ -538,12 +594,6 @@ public final class JsonDocument {
             return Arrays.equals(ba, oa, oa + len, bb, ob, ob + len);
         }
 
-        private String keyString(int k) {
-            long h = scratch[k * 2];
-            byte[] buf = (h & (STR_TEXT << 8)) != 0 ? text : this.b;
-            return new String(buf, (int) scratch[k * 2 + 1], (int) (h >>> 32), StandardCharsets.UTF_8);
-        }
-
         /**
          * Of duplicate property names in the object whose pairs start at {@code start}, keeps the last value at the
          * first position.
@@ -562,18 +612,42 @@ public final class JsonDocument {
                     }
                 }
             } else {
-                HashSet<String> seen = new HashSet<>();
+                // Sorted by hash in reused scratch: only keys with equal hashes are compared.
+                if (hashes.length < count) {
+                    hashes = new long[Math.max(count, hashes.length * 2)];
+                }
                 for (int j = 0; j < count; j++) {
-                    if (!seen.add(keyString(start + 2 * j))) {
-                        duplicate = true;
-                        break;
+                    long h = scratch[(start + 2 * j) * 2];
+                    byte[] buf = (h & (STR_TEXT << 8)) != 0 ? text : this.b;
+                    int off = (int) scratch[(start + 2 * j) * 2 + 1];
+                    hashes[j] = (Values.strHash(buf, off, (int) (h >>> 32)) & 0xffffffff00000000L) | j;
+                }
+                Arrays.sort(hashes, 0, count);
+                outer:
+                for (int a = 0; a < count; ) {
+                    int e = a + 1;
+                    while (e < count && (hashes[e] >>> 32) == (hashes[a] >>> 32)) {
+                        e++;
                     }
+                    for (int x = a + 1; x < e; x++) {
+                        for (int y = a; y < x; y++) {
+                            if (keyEquals(start + 2 * (int) hashes[x], start + 2 * (int) hashes[y])) {
+                                duplicate = true;
+                                break outer;
+                            }
+                        }
+                    }
+                    a = e;
                 }
             }
             if (!duplicate) {
                 return;
             }
-            long[] pairs = Arrays.copyOfRange(scratch, start * 2, scratchCount * 2);
+            if (pairScratch.length < (scratchCount - start) * 2) {
+                pairScratch = new long[Math.max((scratchCount - start) * 2, pairScratch.length * 2)];
+            }
+            long[] pairs = pairScratch;
+            System.arraycopy(scratch, start * 2, pairs, 0, (scratchCount - start) * 2);
             scratchCount = start;
             for (int p = 0; p < count; p++) {
                 int keyIndex = -1;
@@ -844,8 +918,8 @@ public final class JsonDocument {
         }
 
         /** The end of the number whose text starts at {@code start} (already validated). */
-        static int numberEnd(byte[] b, int j) {
-            while (j < b.length) {
+        static int numberEnd(byte[] b, int j, int end) {
+            while (j < end) {
                 int c = b[j];
                 if ((c >= '0' && c <= '9') || c == '-' || c == '+' || c == '.' || c == 'e' || c == 'E') {
                     j++;
@@ -961,6 +1035,10 @@ public final class JsonDocument {
                 return;
             }
             if (Double.isNaN(d)) {
+                d = FastDouble.parse(b, start, j);
+            }
+            if (Double.isNaN(d)) {
+                // More than 19 significant digits, rounding ambiguously when truncated: the exact (slow) conversion.
                 d = Double.parseDouble(new String(b, start, j - start, StandardCharsets.ISO_8859_1));
             }
             if (Double.isInfinite(d)) {

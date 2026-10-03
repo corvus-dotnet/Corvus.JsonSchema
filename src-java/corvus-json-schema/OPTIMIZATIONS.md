@@ -46,6 +46,21 @@ technique; this is the checklist.
 - **Compile time and start-up.** Analyses gated on presence; iterative Tarjan with the depth guard only on cycle nodes;
   lazy annotations; schemas compiled to bytecode (one method per node, constants as class data); an ahead-of-time cache
   (JDK 25) in the benchmark image, trained on the metaschemas.
+- **Name dispatch.** Declared property names, string enums and string consts dispatched by a switch on the byte
+  length, then little-endian word compares against compile-time constants (C#'s `Utf8NameMap`), in place of byte
+  compares and hashing.
+- **More pattern shapes.** Whole literal sets, expanded alternatives (start, end and anywhere sequences), separated
+  lists and the excluded-class-with-word lookahead form (cspell 684 µs to 309 µs).
+- **Type dispatch.** `anyOf`/`oneOf` whose branches assert disjoint types evaluate only the branch for the
+  instance's kind.
+- **String lengths, unique strings, discriminators.** Length bounds decided from the byte length before counting code
+  points; arrays of up to 32 strings checked for uniqueness pairwise; string discriminator values by hashed lookup.
+- **Static and guarded unevaluated coverage.** `unevaluated*` whose contributors are unconditional (or guarded by `if`
+  or a dependency) compiles: the members the coverage leaves out are checked in one pass, with no tracking.
+- **Validating JSON text without allocation.** `isValid(String)`/`isValid(byte[])` parse into a document and buffers
+  the thread's evaluator reuses (with a guard for validations nested in format callbacks); numbers converted by the
+  Eisel-Lemire algorithm (exact up to 19 significant digits); duplicate keys in large objects found by sorting hashes
+  in scratch.
 - **Merged methods.** Structurally identical nodes share one compiled method (partition refinement over the children's
   classes, as the TypeScript generator merges functions and the C# compiler canonicalises equivalent subschemas): ui5's
   820 nodes compile to 262 methods, so the JIT reaches steady state in fewer passes (ui5 after 667 passes: 963 µs
@@ -53,26 +68,14 @@ technique; this is the checklist.
 
 ## Todo
 
-1. **Pattern shapes** not yet ported: whole literal sets `^(a|b)$`; expanded alternatives (groups multiplied out, with
-   start/end/anywhere sequences); separated lists `^I(SR)*$`; the excluded-class-with-word lookahead form (cspell);
-   unanchored sequences searched from their first atom; free `.*` stripping.
-2. **Name dispatch**: switch on the name's length, then word compares (C#'s `Utf8NameMap`: length, distinguishing byte,
-   overlapping word loads), in place of the linear byte compare and the general hash.
-3. **Type dispatch and type union** for `anyOf`/`oneOf` whose branches assert disjoint types; small const/enum leaves
-   tested at the call site.
-4. **Simple arrays**: items that are leaves or type-only checked in the array's own loop; nested simple arrays inline
+1. **Small leaves at the call site** (TypeScript's inline const/enum leaves); the JIT inlines small methods, so
+   measure before doing it.
+2. **Simple arrays**: items that are leaves or type-only checked in the array's own loop; nested simple arrays inline
    (geojson).
-5. **Discriminators by hashed lookup** for many string values, and the discriminator property found in the one pass.
-6. **String length bounds from the byte length** before counting code points.
-7. **uniqueItems over strings**: pairwise by length up to 32.
-8. **Static unevaluated coverage** (TypeScript's `staticCoverage`/`guardedCoverage`): `unevaluated*` decided at compile
-   time where every contributor is unconditional, so those nodes compile instead of interpreting (openapi).
-9. **Fused object plans** (C#/Rust): one pass deciding `if` conditions, required-only alternatives, alternative groups
+3. **Fused object plans** (C#/Rust): one pass deciding `if` conditions, required-only alternatives, alternative groups
     of object branches, `not: {required}`, and `unevaluatedProperties` from seen bits.
-10. **Allocation-free `isValid(byte[])`/`isValid(String)`**: parse into reused buffers (the Rust crate's
-    `validate_json`).
-11. **Collecting mode without allocation** (C#: static lambdas over a context struct, pooled collector).
-12. **Compiled dynamic scope and in-place cycles** (TypeScript's scope wrapper and switch resolver, depth wrapper), so no
+4. **Collecting mode without allocation** (C#: static lambdas over a context struct, pooled collector).
+5. **Compiled dynamic scope and in-place cycles** (TypeScript's scope wrapper and switch resolver, depth wrapper), so no
     schema runs on the interpreter.
 
 ## Not applicable

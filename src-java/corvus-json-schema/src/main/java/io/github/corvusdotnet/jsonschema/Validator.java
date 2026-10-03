@@ -31,6 +31,16 @@ public final class Validator {
         return code != null ? e.validate(code, instance, instance.root()) : e.validate(instance, instance.root());
     }
 
+    /** The thread's evaluator, or a new one when it is already in use (a validation nested in a format callback). */
+    private Evaluator acquire() {
+        Evaluator e = evaluators.get();
+        if (e.busy) {
+            return new Evaluator(program, null);
+        }
+        e.busy = true;
+        return e;
+    }
+
     /** Whether the schema runs as compiled code (for tests). */
     boolean isCompiled() {
         return code != null;
@@ -105,29 +115,46 @@ public final class Validator {
      * @return whether it is valid
      */
     public boolean isValid(JsonDocument instance) {
-        return run(evaluators.get(), instance);
+        Evaluator e = acquire();
+        try {
+            return run(e, instance);
+        } finally {
+            e.busy = false;
+        }
     }
 
     /**
-     * Whether JSON text is a valid instance.
+     * Whether JSON text is a valid instance. The text is parsed into buffers the validator reuses on this thread, so
+     * a validation allocates nothing in the steady state.
      *
      * @param json the instance as JSON text
      * @return whether it is valid
      * @throws JsonParseException if the text is not JSON
      */
     public boolean isValid(String json) {
-        return isValid(JsonDocument.parse(json));
+        Evaluator e = acquire();
+        try {
+            return run(e, e.parseReused(json));
+        } finally {
+            e.busy = false;
+        }
     }
 
     /**
-     * Whether UTF-8 JSON text is a valid instance.
+     * Whether UTF-8 JSON text is a valid instance. The text is parsed into buffers the validator reuses on this
+     * thread, so a validation allocates nothing in the steady state.
      *
      * @param utf8 the instance as UTF-8 JSON text
      * @return whether it is valid
      * @throws JsonParseException if the text is not JSON
      */
     public boolean isValid(byte[] utf8) {
-        return isValid(JsonDocument.parse(utf8));
+        Evaluator e = acquire();
+        try {
+            return run(e, e.parseReused(utf8, utf8.length));
+        } finally {
+            e.busy = false;
+        }
     }
 
     /**
@@ -138,12 +165,16 @@ public final class Validator {
      * @throws SchemaEvaluationDepthException if evaluation recursed in place beyond the maximum depth
      */
     public boolean validate(JsonDocument instance) {
-        Evaluator e = evaluators.get();
-        boolean ok = run(e, instance);
-        if (e.depthExceeded) {
-            throw new SchemaEvaluationDepthException();
+        Evaluator e = acquire();
+        try {
+            boolean ok = run(e, instance);
+            if (e.depthExceeded) {
+                throw new SchemaEvaluationDepthException();
+            }
+            return ok;
+        } finally {
+            e.busy = false;
         }
-        return ok;
     }
 
     /**

@@ -112,7 +112,7 @@ final class Numbers {
             isLong = flag == NUM_LONG;
             value = d.data(n);
             long[] parsed = new long[2];
-            if (decimalOf(d.source, d.count(n), parsed)) {
+            if (decimalOf(d.source, d.count(n), d.sourceEnd, parsed)) {
                 significand = parsed[0];
                 exponent = (int) parsed[1];
             } else {
@@ -133,7 +133,7 @@ final class Numbers {
                 return false;
             }
             if (significand > 0) {
-                int r = dividesText(d.source, d.count(x), significand, exponent);
+                int r = dividesText(d.source, d.count(x), d.sourceEnd, significand, exponent);
                 if (r >= 0) {
                     return r == 1;
                 }
@@ -148,7 +148,7 @@ final class Numbers {
      * Reads the decimal of the number text at {@code start}: out[0] = significand without trailing zeros (at most 18
      * digits), out[1] = exponent. False when the significand does not fit or the exponent is out of range.
      */
-    static boolean decimalOf(byte[] b, int start, long[] out) {
+    static boolean decimalOf(byte[] b, int start, int end, long[] out) {
         int j = start;
         if (b[j] == '-') {
             j++;
@@ -158,7 +158,7 @@ final class Numbers {
         long exponent = 0;
         int pendingZeros = 0;
         boolean fraction = false;
-        for (; j < b.length; j++) {
+        for (; j < end; j++) {
             int c = b[j];
             if (c == '.') {
                 fraction = true;
@@ -191,7 +191,7 @@ final class Numbers {
             digits++;
         }
         exponent += pendingZeros;
-        if (j < b.length && (b[j] == 'e' || b[j] == 'E')) {
+        if (j < end && (b[j] == 'e' || b[j] == 'E')) {
             j++;
             boolean negative = false;
             if (b[j] == '+' || b[j] == '-') {
@@ -199,7 +199,7 @@ final class Numbers {
                 j++;
             }
             long e = 0;
-            for (; j < b.length && b[j] >= '0' && b[j] <= '9'; j++) {
+            for (; j < end && b[j] >= '0' && b[j] <= '9'; j++) {
                 if (e < 1_000_000_000L) {
                     e = e * 10 + (b[j] - '0');
                 }
@@ -219,7 +219,7 @@ final class Numbers {
      * 1 or 0, or -1 when the exponents are out of range. The text's digits are streamed modulo what remains of the
      * divisor, so the text may have any number of digits.
      */
-    static int dividesText(byte[] b, int start, long dm, int de) {
+    static int dividesText(byte[] b, int start, int limit, long dm, int de) {
         // x = xm * 10^xe with xm the digit string (trailing zeros moved into xe). x / d is an integer exactly when
         // dm divides xm * 10^(xe - de).
         int j = start;
@@ -232,7 +232,7 @@ final class Numbers {
         boolean fraction = false;
         boolean any = false;
         int end = j;
-        for (; end < b.length; end++) {
+        for (; end < limit; end++) {
             int c = b[end];
             if (c == '.') {
                 fraction = true;
@@ -255,7 +255,7 @@ final class Numbers {
         }
         // Digits after the last non-zero one are trailing zeros: they move into the exponent.
         int k = end;
-        if (end < b.length && (b[end] == 'e' || b[end] == 'E')) {
+        if (end < limit && (b[end] == 'e' || b[end] == 'E')) {
             k++;
             boolean negative = false;
             if (b[k] == '+' || b[k] == '-') {
@@ -263,7 +263,7 @@ final class Numbers {
                 k++;
             }
             long e = 0;
-            for (; k < b.length && b[k] >= '0' && b[k] <= '9'; k++) {
+            for (; k < limit && b[k] >= '0' && b[k] <= '9'; k++) {
                 if (e < 1_000_000_000L) {
                     e = e * 10 + (b[k] - '0');
                 }

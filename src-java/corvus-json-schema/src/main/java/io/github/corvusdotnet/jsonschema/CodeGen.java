@@ -312,9 +312,37 @@ final class CodeGen {
             SchemaNode n = nodes[id];
             return forced.contains(id)
                     || n.inPlaceCycle
-                    || n.unevaluatedProperties >= 0
-                    || n.unevaluatedItems >= 0
+                    || (n.unevaluatedProperties >= 0 && objectCoverage(id) == null)
+                    || (n.unevaluatedItems >= 0 && arrayCoverage(id) == null)
                     || n.dynamicRef != null;
+        }
+
+        private final Map<Integer, Coverage.Result> objectCoverages = new java.util.HashMap<>();
+        private final Map<Integer, Coverage> arrayCoverages = new java.util.HashMap<>();
+        private static final Coverage.Result NO_COVERAGE = new Coverage.Result(null, null);
+
+        /** The compile-time coverage of node id's unevaluatedProperties, or null when it needs tracking. */
+        private Coverage.Result objectCoverage(int id) {
+            Coverage.Result r = objectCoverages.computeIfAbsent(id, k -> {
+                Coverage c = Coverage.ofStatic(p, k, true);
+                if (c != null) {
+                    return new Coverage.Result(c, List.of());
+                }
+                Coverage.Result g = Coverage.ofGuarded(p, k);
+                return g != null ? g : NO_COVERAGE;
+            });
+            return r == NO_COVERAGE ? null : r;
+        }
+
+        private static final Coverage NO_ITEMS = new Coverage();
+
+        /** The compile-time coverage of node id's unevaluatedItems, or null when it needs tracking. */
+        private Coverage arrayCoverage(int id) {
+            Coverage c = arrayCoverages.computeIfAbsent(id, k -> {
+                Coverage v = Coverage.ofStatic(p, k, false);
+                return v != null ? v : NO_ITEMS;
+            });
+            return c == NO_ITEMS ? null : c;
         }
 
         // ------------------------------------------------------------------------------------------------------------
@@ -382,8 +410,152 @@ final class CodeGen {
                 section(JsonDocument.ARRAY, () -> arraySection(n));
             }
             inPlace(n);
+            if (n.unevaluatedProperties >= 0) {
+                Coverage.Result r = objectCoverage(id);
+                section(JsonDocument.OBJECT, () -> unevaluatedProperties(n, r));
+            }
+            if (n.unevaluatedItems >= 0) {
+                Coverage c = arrayCoverage(id);
+                section(JsonDocument.ARRAY, () -> unevaluatedItems(n, c));
+            }
             mv.visitInsn(ICONST_1);
             mv.visitInsn(IRETURN);
+        }
+
+        /**
+         * unevaluatedProperties decided from a compile-time coverage: each property that neither the coverage nor a
+         * guarded coverage whose guards hold names is checked against the keyword's schema.
+         */
+        private void unevaluatedProperties(SchemaNode n, Coverage.Result r) {
+            if (r.main.all || isTrue(n.unevaluatedProperties)) {
+                return;
+            }
+            // Each distinct guard is decided once per object, before the pass.
+            List<Coverage.Guard> guards = new ArrayList<>();
+            for (Coverage.Guarded g : r.guarded) {
+                for (Coverage.Guard guard : g.guards) {
+                    if (!guards.contains(guard)) {
+                        guards.add(guard);
+                    }
+                }
+            }
+            int[] guardSlots = new int[guards.size()];
+            for (int i = 0; i < guards.size(); i++) {
+                Coverage.Guard guard = guards.get(i);
+                guardSlots[i] = local(1);
+                if (guard.ifNode >= 0) {
+                    call(guard.ifNode, X);
+                    if (!guard.holds) {
+                        mv.visitInsn(ICONST_1);
+                        mv.visitInsn(Opcodes.IXOR);
+                    }
+                } else {
+                    Label absent = new Label();
+                    Label stored = new Label();
+                    property(guard.property);
+                    mv.visitJumpInsn(IFLT, absent);
+                    mv.visitInsn(ICONST_1);
+                    mv.visitJumpInsn(GOTO, stored);
+                    mv.visitLabel(absent);
+                    mv.visitInsn(ICONST_0);
+                    mv.visitLabel(stored);
+                }
+                mv.visitVarInsn(ISTORE, guardSlots[i]);
+            }
+            int k = local(1);
+            int end = local(1);
+            int v = local(1);
+            mv.visitVarInsn(ALOAD, D);
+            mv.visitVarInsn(ILOAD, X);
+            rt("first", "(" + DOC + "I)I");
+            mv.visitVarInsn(ISTORE, k);
+            mv.visitVarInsn(ALOAD, D);
+            mv.visitVarInsn(ILOAD, X);
+            rt("count", "(" + DOC + "I)I");
+            mv.visitInsn(ICONST_1);
+            mv.visitInsn(Opcodes.ISHL);
+            mv.visitVarInsn(ILOAD, k);
+            mv.visitInsn(IADD);
+            mv.visitVarInsn(ISTORE, end);
+            Label test = new Label();
+            Label body = new Label();
+            Label next = new Label();
+            mv.visitJumpInsn(GOTO, test);
+            mv.visitLabel(body);
+            coveredBy(r.main, k, next);
+            for (Coverage.Guarded g : r.guarded) {
+                Label skip = new Label();
+                for (Coverage.Guard guard : g.guards) {
+                    mv.visitVarInsn(ILOAD, guardSlots[guards.indexOf(guard)]);
+                    mv.visitJumpInsn(IFEQ, skip);
+                }
+                if (g.coverage.all) {
+                    mv.visitJumpInsn(GOTO, next);
+                } else {
+                    coveredBy(g.coverage, k, next);
+                }
+                mv.visitLabel(skip);
+            }
+            // Not evaluated by any applicator: the keyword's schema applies to the value.
+            mv.visitVarInsn(ILOAD, k);
+            mv.visitInsn(ICONST_1);
+            mv.visitInsn(IADD);
+            mv.visitVarInsn(ISTORE, v);
+            call(n.unevaluatedProperties, v);
+            returnFalseIfZero();
+            mv.visitLabel(next);
+            mv.visitIincInsn(k, 2);
+            mv.visitLabel(test);
+            mv.visitVarInsn(ILOAD, k);
+            mv.visitVarInsn(ILOAD, end);
+            mv.visitJumpInsn(IF_ICMPLT, body);
+        }
+
+        /** Jumps to {@code covered} when the key in local k is one of the coverage's names or matches its patterns. */
+        private void coveredBy(Coverage c, int k, Label covered) {
+            if (!c.names.isEmpty()) {
+                byte[][] names = c.names.stream().map(this::utf8).toArray(byte[][]::new);
+                Label[] cases = new Label[names.length];
+                Arrays.fill(cases, covered);
+                Label none = new Label();
+                nameDispatch(k, names, cases, none);
+                mv.visitLabel(none);
+            }
+            for (SchemaPattern pattern : c.patterns) {
+                patternTest(pattern, k);
+                mv.visitJumpInsn(IFNE, covered);
+            }
+        }
+
+        /** unevaluatedItems decided from a compile-time coverage: the items after the covered prefix. */
+        private void unevaluatedItems(SchemaNode n, Coverage c) {
+            if (c.all || isTrue(n.unevaluatedItems)) {
+                return;
+            }
+            int len = local(1);
+            int first = local(1);
+            int item = local(1);
+            mv.visitVarInsn(ALOAD, D);
+            mv.visitVarInsn(ILOAD, X);
+            rt("count", "(" + DOC + "I)I");
+            mv.visitVarInsn(ISTORE, len);
+            if (isFalse(n.unevaluatedItems)) {
+                mv.visitVarInsn(ILOAD, len);
+                pushInt(c.prefix);
+                Label ok = new Label();
+                mv.visitJumpInsn(IF_ICMPLE, ok);
+                returnFalse();
+                mv.visitLabel(ok);
+                return;
+            }
+            mv.visitVarInsn(ALOAD, D);
+            mv.visitVarInsn(ILOAD, X);
+            rt("first", "(" + DOC + "I)I");
+            mv.visitVarInsn(ISTORE, first);
+            forItems(len, first, item, c.prefix, () -> {
+                call(n.unevaluatedItems, item);
+                returnFalseIfZero();
+            });
         }
 
         /** The members of an enum: strings by their bytes (a hashed lookup when there are many), others by value. */

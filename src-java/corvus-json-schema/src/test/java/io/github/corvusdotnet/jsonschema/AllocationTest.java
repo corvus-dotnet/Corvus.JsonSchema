@@ -139,10 +139,16 @@ class AllocationTest {
             for (int i = 0; i < docs.length; i++) {
                 docs[i] = JsonDocument.parse(c.instances[i]);
             }
+            byte[][] utf8 = new byte[c.instances.length][];
+            for (int i = 0; i < utf8.length; i++) {
+                utf8[i] = c.instances[i].getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            }
             int sink = 0;
             for (int r = 0; r < 20_000; r++) {
-                for (JsonDocument d : docs) {
-                    sink += v.isValid(d) ? 1 : 0;
+                for (int i = 0; i < docs.length; i++) {
+                    sink += v.isValid(docs[i]) ? 1 : 0;
+                    sink += v.isValid(c.instances[i]) ? 1 : 0;
+                    sink += v.isValid(utf8[i]) ? 1 : 0;
                 }
             }
             // The counter itself allocates a little: measure it alone and subtract.
@@ -150,8 +156,10 @@ class AllocationTest {
             int rounds = 2_000;
             long before = allocated();
             for (int r = 0; r < rounds; r++) {
-                for (JsonDocument d : docs) {
-                    sink += v.isValid(d) ? 1 : 0;
+                for (int i = 0; i < docs.length; i++) {
+                    sink += v.isValid(docs[i]) ? 1 : 0;
+                    sink += v.isValid(c.instances[i]) ? 1 : 0;
+                    sink += v.isValid(utf8[i]) ? 1 : 0;
                 }
             }
             long bytes = allocated() - before - overhead;

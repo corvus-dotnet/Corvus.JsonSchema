@@ -534,6 +534,55 @@ final class Evaluator {
         return kind.check(formats, formatChars.of(doc, x), legacyHostname);
     }
 
+    /** In use by a validation on this thread (a nested validation, from a format callback, takes its own evaluator). */
+    boolean busy;
+    private JsonDocument.Parser textParser;
+    private JsonDocument reusable;
+    private byte[] utf8 = new byte[256];
+
+    /** Parses UTF-8 text into this evaluator's reused document. */
+    JsonDocument parseReused(byte[] text, int length) {
+        if (textParser == null) {
+            textParser = new JsonDocument.Parser();
+            reusable = JsonDocument.reusable();
+        }
+        textParser.parseInto(reusable, text, length);
+        return reusable;
+    }
+
+    /** Parses a string (encoded as UTF-8 into a reused buffer) into this evaluator's reused document. */
+    JsonDocument parseReused(String json) {
+        int n = json.length();
+        if (utf8.length < 3 * n) {
+            utf8 = new byte[Math.max(3 * n, utf8.length * 2)];
+        }
+        byte[] b = utf8;
+        int o = 0;
+        for (int i = 0; i < n; i++) {
+            char c = json.charAt(i);
+            if (c < 0x80) {
+                b[o++] = (byte) c;
+            } else if (c < 0x800) {
+                b[o++] = (byte) (0xc0 | (c >> 6));
+                b[o++] = (byte) (0x80 | (c & 0x3f));
+            } else if (Character.isHighSurrogate(c) && i + 1 < n && Character.isLowSurrogate(json.charAt(i + 1))) {
+                int cp = Character.toCodePoint(c, json.charAt(++i));
+                b[o++] = (byte) (0xf0 | (cp >> 18));
+                b[o++] = (byte) (0x80 | ((cp >> 12) & 0x3f));
+                b[o++] = (byte) (0x80 | ((cp >> 6) & 0x3f));
+                b[o++] = (byte) (0x80 | (cp & 0x3f));
+            } else if (Character.isSurrogate(c)) {
+                // A lone surrogate, which UTF-8 cannot hold: '?', as String.getBytes writes it.
+                b[o++] = '?';
+            } else {
+                b[o++] = (byte) (0xe0 | (c >> 12));
+                b[o++] = (byte) (0x80 | ((c >> 6) & 0x3f));
+                b[o++] = (byte) (0x80 | (c & 0x3f));
+            }
+        }
+        return parseReused(b, o);
+    }
+
     private JsonDocument.Parser contentParser;
     private byte[] decoded = new byte[64];
 
