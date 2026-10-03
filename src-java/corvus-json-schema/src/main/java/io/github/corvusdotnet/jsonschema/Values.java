@@ -157,6 +157,17 @@ final class Values {
             return true;
         }
         int c = d.first(array);
+        if (n <= 32 && allStrings(d, c, n)) {
+            // Lists of names, the common case: pairwise, comparing lengths first.
+            for (int i = 1; i < n; i++) {
+                for (int j = 0; j < i; j++) {
+                    if (d.stringEquals(c + i, d, c + j)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
         if (n <= 16) {
             for (int i = 1; i < n; i++) {
                 for (int j = 0; j < i; j++) {
@@ -182,6 +193,15 @@ final class Values {
                     }
                 }
                 start = end;
+            }
+        }
+        return true;
+    }
+
+    private static boolean allStrings(JsonDocument d, int first, int n) {
+        for (int i = 0; i < n; i++) {
+            if (d.kind(first + i) != STRING) {
+                return false;
             }
         }
         return true;

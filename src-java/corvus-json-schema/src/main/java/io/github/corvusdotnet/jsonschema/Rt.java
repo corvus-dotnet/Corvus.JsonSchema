@@ -89,6 +89,23 @@ final class Rt {
         return Utf8.codePoints((h & (JsonDocument.STR_TEXT << 8)) != 0 ? d.text : d.source, off, off + len);
     }
 
+    /**
+     * Whether the length of the string value x in code points is within [min, max] (max negative for none). A string
+     * of n UTF-8 bytes has between ceil(n / 4) and n code points, which decides most bounds without counting.
+     */
+    static boolean lengthWithin(JsonDocument d, int x, long min, long max) {
+        long h = d.tape[x << 1];
+        long bytes = (int) (h >>> 32);
+        if (bytes < min || (max >= 0 && (bytes + 3) >>> 2 > max)) {
+            return false;
+        }
+        if ((bytes + 3) >>> 2 >= min && (max < 0 || bytes <= max)) {
+            return true;
+        }
+        long n = length(d, x);
+        return n >= min && (max < 0 || n <= max);
+    }
+
     static boolean pattern(Evaluator e, int x, SchemaPattern p) {
         return e.matches(p, x);
     }
@@ -171,13 +188,7 @@ final class Rt {
         if (value < 0) {
             return disc.allRequire ? NONE : null;
         }
-        for (int i = 0; i < disc.values.length; i++) {
-            SchemaNode.Value v = disc.values[i];
-            if (Values.equal(d, value, v.doc, v.node)) {
-                return disc.branches[i];
-            }
-        }
-        return disc.unknown;
+        return disc.select(d, value);
     }
 
     static final int[] NONE = new int[0];

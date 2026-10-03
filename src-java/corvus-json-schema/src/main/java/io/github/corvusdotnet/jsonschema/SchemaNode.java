@@ -136,6 +136,9 @@ final class SchemaNode {
         /** Every branch requires the property, so its absence fails the keyword at once. */
         final boolean allRequire;
 
+        /** The index in {@link #values} of each string value, by its bytes. */
+        final NameMap strings;
+
         Discriminator(String property, Value[] values, int[][] branches, int[] unknown, boolean allRequire) {
             this.property = property;
             this.utf8 = property.getBytes(StandardCharsets.UTF_8);
@@ -143,6 +146,26 @@ final class SchemaNode {
             this.branches = branches;
             this.unknown = unknown;
             this.allRequire = allRequire;
+            this.strings = new NameMap(values.length);
+            for (int i = 0; i < values.length; i++) {
+                if (values[i].kind() == JsonDocument.STRING) {
+                    strings.putIfAbsent(values[i].doc.string(values[i].node).getBytes(StandardCharsets.UTF_8), i);
+                }
+            }
+        }
+
+        /** The branches the discriminator value v (of document d) selects. */
+        int[] select(JsonDocument d, int v) {
+            if (d.kind(v) == JsonDocument.STRING) {
+                int i = strings.get(d.strBytes(v), d.strOffset(v), d.count(v));
+                return i >= 0 ? branches[i] : unknown;
+            }
+            for (int i = 0; i < values.length; i++) {
+                if (Values.equal(d, v, values[i].doc, values[i].node)) {
+                    return branches[i];
+                }
+            }
+            return unknown;
         }
     }
 

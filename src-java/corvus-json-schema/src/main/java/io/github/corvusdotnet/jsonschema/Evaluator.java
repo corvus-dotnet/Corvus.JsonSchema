@@ -975,13 +975,7 @@ final class Evaluator {
         if (value < 0) {
             return d.allRequire ? NONE : null;
         }
-        for (int i = 0; i < d.values.length; i++) {
-            Value v = d.values[i];
-            if (Values.equal(doc, value, v.doc, v.node)) {
-                return d.branches[i];
-            }
-        }
-        return d.unknown;
+        return d.select(doc, value);
     }
 
     private static final int[] NONE = new int[0];

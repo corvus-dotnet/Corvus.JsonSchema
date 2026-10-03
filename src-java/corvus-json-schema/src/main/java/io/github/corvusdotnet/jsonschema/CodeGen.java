@@ -633,29 +633,12 @@ final class CodeGen {
 
         private void stringSection(SchemaNode n) {
             if (n.minLength > 0 || n.maxLength >= 0) {
-                int len = local(2);
                 mv.visitVarInsn(ALOAD, D);
                 mv.visitVarInsn(ILOAD, X);
-                rt("length", "(" + DOC + "I)J");
-                mv.visitVarInsn(LSTORE, len);
-                if (n.minLength > 0) {
-                    mv.visitVarInsn(LLOAD, len);
-                    mv.visitLdcInsn(n.minLength);
-                    mv.visitInsn(LCMP);
-                    Label ok = new Label();
-                    mv.visitJumpInsn(IFGE, ok);
-                    returnFalse();
-                    mv.visitLabel(ok);
-                }
-                if (n.maxLength >= 0) {
-                    mv.visitVarInsn(LLOAD, len);
-                    mv.visitLdcInsn(n.maxLength);
-                    mv.visitInsn(LCMP);
-                    Label ok = new Label();
-                    mv.visitJumpInsn(IFLE, ok);
-                    returnFalse();
-                    mv.visitLabel(ok);
-                }
+                mv.visitLdcInsn(Math.max(n.minLength, 0L));
+                mv.visitLdcInsn(n.maxLength);
+                rt("lengthWithin", "(" + DOC + "IJJ)Z");
+                returnFalseIfZero();
             }
             if (n.pattern != null && !n.pattern.matchesAll()) {
                 patternTest(n.pattern, X);
