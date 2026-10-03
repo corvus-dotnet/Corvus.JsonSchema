@@ -46,31 +46,33 @@ technique; this is the checklist.
 - **Compile time and start-up.** Analyses gated on presence; iterative Tarjan with the depth guard only on cycle nodes;
   lazy annotations; schemas compiled to bytecode (one method per node, constants as class data); an ahead-of-time cache
   (JDK 25) in the benchmark image, trained on the metaschemas.
+- **Merged methods.** Structurally identical nodes share one compiled method (partition refinement over the children's
+  classes, as the TypeScript generator merges functions and the C# compiler canonicalises equivalent subschemas): ui5's
+  820 nodes compile to 262 methods, so the JIT reaches steady state in fewer passes (ui5 after 667 passes: 963 µs
+  before, 408 µs after).
 
 ## Todo
 
-1. **Merge identical methods** (TypeScript's partition refinement; C#'s canonical equivalent subschemas): fewer methods
-   for the JIT to compile, so large schemas reach steady state sooner and compile faster.
-2. **Pattern shapes** not yet ported: whole literal sets `^(a|b)$`; expanded alternatives (groups multiplied out, with
+1. **Pattern shapes** not yet ported: whole literal sets `^(a|b)$`; expanded alternatives (groups multiplied out, with
    start/end/anywhere sequences); separated lists `^I(SR)*$`; the excluded-class-with-word lookahead form (cspell);
    unanchored sequences searched from their first atom; free `.*` stripping.
-3. **Name dispatch**: switch on the name's length, then word compares (C#'s `Utf8NameMap`: length, distinguishing byte,
+2. **Name dispatch**: switch on the name's length, then word compares (C#'s `Utf8NameMap`: length, distinguishing byte,
    overlapping word loads), in place of the linear byte compare and the general hash.
-4. **Type dispatch and type union** for `anyOf`/`oneOf` whose branches assert disjoint types; small const/enum leaves
+3. **Type dispatch and type union** for `anyOf`/`oneOf` whose branches assert disjoint types; small const/enum leaves
    tested at the call site.
-5. **Simple arrays**: items that are leaves or type-only checked in the array's own loop; nested simple arrays inline
+4. **Simple arrays**: items that are leaves or type-only checked in the array's own loop; nested simple arrays inline
    (geojson).
-6. **Discriminators by hashed lookup** for many string values, and the discriminator property found in the one pass.
-7. **String length bounds from the byte length** before counting code points.
-8. **uniqueItems over strings**: pairwise by length up to 32.
-9. **Static unevaluated coverage** (TypeScript's `staticCoverage`/`guardedCoverage`): `unevaluated*` decided at compile
+5. **Discriminators by hashed lookup** for many string values, and the discriminator property found in the one pass.
+6. **String length bounds from the byte length** before counting code points.
+7. **uniqueItems over strings**: pairwise by length up to 32.
+8. **Static unevaluated coverage** (TypeScript's `staticCoverage`/`guardedCoverage`): `unevaluated*` decided at compile
    time where every contributor is unconditional, so those nodes compile instead of interpreting (openapi).
-10. **Fused object plans** (C#/Rust): one pass deciding `if` conditions, required-only alternatives, alternative groups
+9. **Fused object plans** (C#/Rust): one pass deciding `if` conditions, required-only alternatives, alternative groups
     of object branches, `not: {required}`, and `unevaluatedProperties` from seen bits.
-11. **Allocation-free `isValid(byte[])`/`isValid(String)`**: parse into reused buffers (the Rust crate's
+10. **Allocation-free `isValid(byte[])`/`isValid(String)`**: parse into reused buffers (the Rust crate's
     `validate_json`).
-12. **Collecting mode without allocation** (C#: static lambdas over a context struct, pooled collector).
-13. **Compiled dynamic scope and in-place cycles** (TypeScript's scope wrapper and switch resolver, depth wrapper), so no
+11. **Collecting mode without allocation** (C#: static lambdas over a context struct, pooled collector).
+12. **Compiled dynamic scope and in-place cycles** (TypeScript's scope wrapper and switch resolver, depth wrapper), so no
     schema runs on the interpreter.
 
 ## Not applicable

@@ -40,6 +40,18 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.5.4</version>
+        <executions>
+          <execution>
+            <id>allocations-without-escape-analysis</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <test>AllocationTest</test>
+              <argLine>@{argLine} -XX:-DoEscapeAnalysis</argLine>
+            </configuration>
+          </execution>
+        </executions>
         <configuration>
           <argLine>@{argLine} ${corvusArgLine}</argLine>
           <systemPropertyVariables>

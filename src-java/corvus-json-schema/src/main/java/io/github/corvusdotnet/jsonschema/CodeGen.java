@@ -130,6 +130,8 @@ final class CodeGen {
         private final Set<Integer> requested = new HashSet<>();
         private final ArrayDeque<Integer> queue = new ArrayDeque<>();
         private final String className;
+        /** The node whose method serves each node: one per class of structurally identical nodes. */
+        private final int[] representative;
         private MethodVisitor mv;
         private int nextLocal;
 
@@ -138,6 +140,7 @@ final class CodeGen {
             this.nodes = p.nodes;
             this.forced = forced;
             this.className = PKG + "CompiledSchema";
+            this.representative = Merging.representatives(p, this::fallback);
         }
 
         Compiled generate() {
@@ -157,7 +160,7 @@ final class CodeGen {
             init.visitMaxs(0, 0);
             init.visitEnd();
 
-            int root = p.fastTarget[p.root];
+            int root = representative[p.fastTarget[p.root]];
             request(root);
             MethodVisitor entry = cw.visitMethod(ACC_PUBLIC, "validate", NODE_DESC, null, null);
             entry.visitCode();
@@ -269,7 +272,7 @@ final class CodeGen {
 
         /** Pushes the result (0 or 1) of evaluating child {@code id} against the value in local {@code slot}. */
         private void call(int id, int slot) {
-            int t = p.fastTarget[id];
+            int t = representative[p.fastTarget[id]];
             SchemaNode n = nodes[t];
             if (n.alwaysTrue) {
                 mv.visitInsn(ICONST_1);
