@@ -322,4 +322,91 @@ public class OptimisationTests
         AssertBoth(draft4, "[1, \"a\"]", true);
         AssertBoth(draft4, "[1.0]", false);
     }
+
+    [TestMethod]
+    public void BranchesNarrowedByTheKindsTheyAdmit()
+    {
+        // Branches reached through $ref, nested oneOf/anyOf and allOf admit only some kinds of value; only those that
+        // admit the instance's kind are evaluated, and the result is the same.
+        const string schema = """
+            {
+              "$defs": {
+                "text": {"oneOf": [{"type": "string", "maxLength": 3}, {"$ref": "#/$defs/wrapped"}]},
+                "wrapped": {"type": "object", "required": ["t"], "properties": {"t": {"$ref": "#/$defs/text"}}},
+                "num": {"anyOf": [{"type": "integer"}, {"allOf": [{"type": ["number", "string"]}, {"type": "number", "maximum": 0}]}]},
+                "flag": {"enum": ["on", "off"]}
+              },
+              "type": "array",
+              "items": {"oneOf": [{"$ref": "#/$defs/text"}, {"$ref": "#/$defs/num"}, {"$ref": "#/$defs/flag"}, {"type": "boolean"}]}
+            }
+            """;
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
+        AssertBoth(evaluator, """["ab", {"t": "x"}, {"t": {"t": "y"}}, 3, -1.5, true]""", true);
+        AssertBoth(evaluator, """["abcd"]""", false);
+        AssertBoth(evaluator, """[{"t": "abcd"}]""", false);
+        AssertBoth(evaluator, """[{"u": 1}]""", false);
+        AssertBoth(evaluator, """[1.5]""", false);
+        AssertBoth(evaluator, """[null]""", false);
+        AssertBoth(evaluator, """[[1]]""", false);
+
+        // "on" matches both text and flag: more than one branch, so oneOf fails.
+        AssertBoth(evaluator, """["on"]""", false);
+
+        using JsonSchemaEvaluator anyOf = JsonSchemaEvaluator.Compile("""
+            {"anyOf": [{"$ref": "#/$defs/o"}, {"type": "string", "minLength": 2}], "$defs": {"o": {"type": "object", "required": ["k"]}}}
+            """);
+        AssertBoth(anyOf, "\"ab\"", true);
+        AssertBoth(anyOf, "\"a\"", false);
+        AssertBoth(anyOf, """{"k": 1}""", true);
+        AssertBoth(anyOf, "{}", false);
+        AssertBoth(anyOf, "1", false);
+
+        // With unevaluatedProperties, only the candidate branches mark properties evaluated.
+        using JsonSchemaEvaluator tracked = JsonSchemaEvaluator.Compile("""
+            {
+              "oneOf": [{"type": "object", "properties": {"a": true}, "required": ["a"]}, {"type": "array"}, {"type": "object", "properties": {"b": true}, "required": ["b"]}],
+              "unevaluatedProperties": false
+            }
+            """);
+        AssertBoth(tracked, """{"a": 1}""", true);
+        AssertBoth(tracked, """{"b": 1}""", true);
+        AssertBoth(tracked, """{"a": 1, "c": 1}""", false);
+        AssertBoth(tracked, "[]", true);
+        AssertBoth(tracked, "1", false);
+    }
+
+    [TestMethod]
+    public void TypeUnionAndDispatchChildrenDecidedInPlace()
+    {
+        // Children that are an anyOf/oneOf of type-only branches (one mask) or of branches with disjoint types (a
+        // dispatch), under the strict loop and as array items.
+        const string schema = """
+            {
+              "type": "object",
+              "properties": {
+                "union": {"anyOf": [{"type": "string"}, {"type": "boolean"}]},
+                "whole": {"oneOf": [{"type": "integer"}, {"type": "null"}]},
+                "dispatch": {"oneOf": [{"type": "string", "maxLength": 2}, {"type": "array", "items": {"type": "integer"}}, {"type": "null"}]},
+                "list": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "required": ["k"]}]}}
+              }
+            }
+            """;
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
+        AssertBoth(evaluator, """{"union": "s"}""", true);
+        AssertBoth(evaluator, """{"union": false}""", true);
+        AssertBoth(evaluator, """{"union": 1}""", false);
+        AssertBoth(evaluator, """{"whole": 2}""", true);
+        AssertBoth(evaluator, """{"whole": 2.5}""", false);
+        AssertBoth(evaluator, """{"whole": null}""", true);
+        AssertBoth(evaluator, """{"whole": "x"}""", false);
+        AssertBoth(evaluator, """{"dispatch": "ab"}""", true);
+        AssertBoth(evaluator, """{"dispatch": "abc"}""", false);
+        AssertBoth(evaluator, """{"dispatch": [1, 2]}""", true);
+        AssertBoth(evaluator, """{"dispatch": [1, "x"]}""", false);
+        AssertBoth(evaluator, """{"dispatch": null}""", true);
+        AssertBoth(evaluator, """{"dispatch": true}""", false);
+        AssertBoth(evaluator, """{"list": [1, 2.5, {"k": 1}]}""", true);
+        AssertBoth(evaluator, """{"list": [{"j": 1}]}""", false);
+        AssertBoth(evaluator, """{"list": ["x"]}""", false);
+    }
 }

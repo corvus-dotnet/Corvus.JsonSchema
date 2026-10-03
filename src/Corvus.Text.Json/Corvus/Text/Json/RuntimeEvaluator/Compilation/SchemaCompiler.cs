@@ -173,6 +173,7 @@ internal sealed class SchemaCompiler
     private static readonly bool DisableUnroll = false;
     private static readonly bool DisableElision = false;
     private static readonly bool DisableDiscriminator = false;
+    private static readonly bool DisableByKind = false;
     private static readonly bool DisableLeaf = false;
     private static readonly bool DisableOrdering = false;
     private static readonly bool DisablePlans = false;
@@ -181,6 +182,7 @@ internal sealed class SchemaCompiler
     private static readonly bool DisableUnroll = Environment.GetEnvironmentVariable("CORVUS_RT_NO_UNROLL") == "1";
     private static readonly bool DisableElision = Environment.GetEnvironmentVariable("CORVUS_RT_NO_ELIDE") == "1";
     private static readonly bool DisableDiscriminator = Environment.GetEnvironmentVariable("CORVUS_RT_NO_DISCRIMINATOR") == "1";
+    private static readonly bool DisableByKind = Environment.GetEnvironmentVariable("CORVUS_RT_NO_BYKIND") == "1";
     private static readonly bool DisableLeaf = Environment.GetEnvironmentVariable("CORVUS_RT_NO_LEAF") == "1";
     private static readonly bool DisableOrdering = Environment.GetEnvironmentVariable("CORVUS_RT_NO_ORDER") == "1";
     private static readonly bool DisablePlans = Environment.GetEnvironmentVariable("CORVUS_RT_NO_PLANS") == "1";
@@ -497,7 +499,7 @@ internal sealed class SchemaCompiler
             node.StrictEntries = null;
             node.AdditionalEntry = new StrictEntry(-1, node.AdditionalInlineType, node.AdditionalInlineLexical, null, node.AdditionalFastNode, node.AdditionalFastNode >= 0 && IsNestedObject(nodes[node.AdditionalFastNode], nodes));
             node.ItemsNestedObject = node.Items.IsPresent && IsNestedObject(nodes[node.Items.FastNode], nodes);
-            node.ItemsDecided = node.Items.IsPresent ? DecidedTokens(nodes[node.Items.FastNode], out node.ItemsAccepts) : (ushort)0;
+            node.ItemsDecided = node.Items.IsPresent ? DecidedTokens(nodes, nodes[node.Items.FastNode], out node.ItemsAccepts) : (ushort)0;
             node.PatternMap = null;
             node.PrefixEntries = null;
             if (!DisablePlans && node.PrefixItems is ChildRef[] prefixItems && !node.UniqueItems && !node.Contains.IsPresent)
@@ -571,7 +573,7 @@ internal sealed class SchemaCompiler
                 ushort accepts = 0;
                 if (child >= 0)
                 {
-                    decided = DecidedTokens(nodes[child], out accepts);
+                    decided = DecidedTokens(nodes, nodes[child], out accepts);
                 }
 
                 strict[i] = new StrictEntry(e.SeenBit, e.InlineType, e.InlineLexical, e.InlineEnum, child, child >= 0 && IsNestedObject(nodes[child], nodes), e.InlineConst, -1, -1, TypeMask.None, decided, accepts);
@@ -612,7 +614,7 @@ internal sealed class SchemaCompiler
             return new StrictEntry(seenBit, TypeMask.None, target.Dialect == JsonSchemaDialect.Draft4, null, -1, false, null, target.MinLength, target.MaxLength, target.HasType ? target.Type : TypeMask.None);
         }
 
-        ushort decided = DecidedTokens(target, out ushort accepts);
+        ushort decided = DecidedTokens(nodes, target, out ushort accepts);
         return new StrictEntry(seenBit, TypeMask.None, false, null, fastNode, IsNestedObject(target, nodes), null, -1, -1, TypeMask.None, decided, accepts);
     }
 
@@ -621,9 +623,69 @@ internal sealed class SchemaCompiler
     /// to that kind of value and it has no applicators; <paramref name="accepts"/> is those its type admits. A number
     /// is never decided when only integers are admitted (that needs the value).
     /// </summary>
-    internal static ushort DecidedTokens(SchemaNode node, out ushort accepts)
+    internal static ushort DecidedTokens(SchemaNode[] nodes, SchemaNode node, out ushort accepts)
     {
         accepts = 0;
+        NodePlan plan = node.AlwaysTrue || node.AlwaysFalse ? NodePlan.General : SelectPlan(node, nodes);
+        if (plan == NodePlan.TypeUnion)
+        {
+            // An anyOf/oneOf of type-only branches whose types make one mask: that mask decides every kind.
+            int union = StrictEntry.TokenBitsOf(node.InPlaceUnionMask);
+            int decidedUnion = AllValueTokens;
+            if ((node.InPlaceUnionMask & TypeMask.Integer) != 0 && (node.InPlaceUnionMask & TypeMask.Number) == 0)
+            {
+                decidedUnion &= ~(1 << (int)JsonTokenType.Number);
+            }
+
+            accepts = (ushort)(union & decidedUnion);
+            return (ushort)decidedUnion;
+        }
+
+        if (plan == NodePlan.TypeDispatch)
+        {
+            // The kind selects one branch (or none): a kind is decided when no branch takes it, or the branch it
+            // selects is itself decided for that kind.
+            int decidedDispatch = 0;
+            int acceptDispatch = 0;
+            for (int token = 0; token < node.InPlaceDispatch!.Length; token++)
+            {
+                int bit = 1 << token;
+                if ((AllValueTokens & bit) == 0)
+                {
+                    continue;
+                }
+
+                int branch = node.InPlaceDispatch[token];
+                if (branch < 0)
+                {
+                    decidedDispatch |= bit;
+                    continue;
+                }
+
+                SchemaNode selected = nodes[node.InPlaceBranches![branch].FastNode];
+                if (selected.InPlaceCycle)
+                {
+                    continue;
+                }
+
+                if (selected.AlwaysTrue || selected.AlwaysFalse)
+                {
+                    decidedDispatch |= bit;
+                    acceptDispatch |= selected.AlwaysTrue ? bit : 0;
+                    continue;
+                }
+
+                if ((DecidedTokens(nodes, selected, out ushort branchAccepts) & bit) != 0)
+                {
+                    decidedDispatch |= bit;
+                    acceptDispatch |= branchAccepts & bit;
+                }
+            }
+
+            accepts = (ushort)acceptDispatch;
+            return (ushort)decidedDispatch;
+        }
+
         if (node.AlwaysTrue || node.AlwaysFalse || node.HasConst || node.Enum is not null || node.HasInPlaceApplicators
             || node.Ref.IsPresent || node.DynamicRef is not null || node.UnevaluatedProperties.IsPresent || node.UnevaluatedItems.IsPresent)
         {
@@ -1219,12 +1281,17 @@ internal sealed class SchemaCompiler
         {
             node.AnyOfTypeDispatch = null;
             node.OneOfTypeDispatch = null;
+            node.AnyOfByKind = null;
+            node.OneOfByKind = null;
         }
 
         if (DisableDiscriminator)
         {
             return;
         }
+
+        int[] admitted = new int[nodes.Length];
+        admitted.AsSpan().Fill(-1);
 
         foreach (SchemaNode node in nodes)
         {
@@ -1236,6 +1303,17 @@ internal sealed class SchemaCompiler
             if (node.AnyOf is { Length: > 1 } anyOf && node.AnyOfTypeUnion == TypeMask.None)
             {
                 node.AnyOfTypeDispatch = BuildTypeDispatch(nodes, anyOf);
+            }
+
+            // Where neither a type union nor a type dispatch decides it, the branches that can accept each kind.
+            if (node.OneOf is { Length: > 1 } oneOfByKind && node.OneOfTypeUnion == TypeMask.None && node.OneOfTypeDispatch is null)
+            {
+                node.OneOfByKind = BuildByKind(nodes, oneOfByKind, admitted);
+            }
+
+            if (node.AnyOf is { Length: > 1 } anyOfByKind && node.AnyOfTypeUnion == TypeMask.None && node.AnyOfTypeDispatch is null)
+            {
+                node.AnyOfByKind = BuildByKind(nodes, anyOfByKind, admitted);
             }
 
             // For a node with exactly one of the two keywords, the plans that decide it by type.
@@ -1254,6 +1332,118 @@ internal sealed class SchemaCompiler
                 node.InPlaceDispatch = node.OneOfTypeDispatch;
                 node.InPlaceBranches = node.OneOf;
             }
+        }
+    }
+
+    /// <summary>The token types a JSON value can have: the value kinds (an integer is a number token).</summary>
+    private const int AllValueTokens = (1 << (int)JsonTokenType.StartObject) | (1 << (int)JsonTokenType.StartArray) | (1 << (int)JsonTokenType.String)
+        | (1 << (int)JsonTokenType.Number) | (1 << (int)JsonTokenType.True) | (1 << (int)JsonTokenType.False) | (1 << (int)JsonTokenType.Null);
+
+    /// <summary>
+    /// By token type, the branches that can accept a value of that kind (null for a kind every branch can accept),
+    /// when some kind rules out a branch; null when every branch can accept every kind.
+    /// </summary>
+    private static int[]?[]? BuildByKind(SchemaNode[] nodes, ChildRef[] branches, int[] admitted)
+    {
+        int[] masks = new int[branches.Length];
+        bool narrows = false;
+        for (int b = 0; b < branches.Length; b++)
+        {
+            masks[b] = AdmittedTokens(nodes, branches[b].FastNode, admitted);
+            narrows |= masks[b] != AllValueTokens;
+        }
+
+        if (!narrows || DisableByKind)
+        {
+            return null;
+        }
+
+        var byKind = new int[]?[12];
+        var candidates = new List<int>(branches.Length);
+        for (int token = 0; token < byKind.Length; token++)
+        {
+            candidates.Clear();
+            for (int b = 0; b < branches.Length; b++)
+            {
+                if ((masks[b] & (1 << token)) != 0)
+                {
+                    candidates.Add(b);
+                }
+            }
+
+            // No list where every branch remains a candidate: the plain loop serves that kind.
+            byKind[token] = candidates.Count == branches.Length ? null : [.. candidates];
+        }
+
+        return byKind;
+    }
+
+    /// <summary>
+    /// The token types a node can possibly accept (a superset): its <c>type</c>, narrowed through <c>$ref</c> and
+    /// <c>allOf</c> (each must accept) and <c>anyOf</c>/<c>oneOf</c> (one must), and by a string <c>const</c> or
+    /// <c>enum</c>. Dynamic references and nodes still being computed (a cycle) admit every kind.
+    /// </summary>
+    internal static int AdmittedTokens(SchemaNode[] nodes, int id, int[] admitted)
+    {
+        if (admitted[id] >= 0)
+        {
+            return admitted[id];
+        }
+
+        // On a cycle, the node being computed admits everything (a superset is always safe).
+        admitted[id] = AllValueTokens;
+        SchemaNode node = nodes[id];
+        int mask;
+        if (node.AlwaysFalse)
+        {
+            mask = 0;
+        }
+        else if (node.AlwaysTrue)
+        {
+            mask = AllValueTokens;
+        }
+        else
+        {
+            mask = node.HasType ? StrictEntry.TokenBitsOf(node.Type) : AllValueTokens;
+            if (node.ConstString is not null || (node.EnumAllStrings && node.EnumStrings is not null))
+            {
+                mask &= 1 << (int)JsonTokenType.String;
+            }
+
+            if (node.Ref.IsPresent)
+            {
+                mask &= AdmittedTokens(nodes, node.Ref.FastNode, admitted);
+            }
+
+            if (node.AllOf is ChildRef[] allOf)
+            {
+                foreach (ChildRef c in allOf)
+                {
+                    mask &= AdmittedTokens(nodes, c.FastNode, admitted);
+                }
+            }
+
+            mask &= AnyBranch(node.AnyOf);
+            mask &= AnyBranch(node.OneOf);
+        }
+
+        admitted[id] = mask;
+        return mask;
+
+        int AnyBranch(ChildRef[]? branches)
+        {
+            if (branches is null)
+            {
+                return AllValueTokens;
+            }
+
+            int union = 0;
+            foreach (ChildRef c in branches)
+            {
+                union |= AdmittedTokens(nodes, c.FastNode, admitted);
+            }
+
+            return union;
         }
     }
 

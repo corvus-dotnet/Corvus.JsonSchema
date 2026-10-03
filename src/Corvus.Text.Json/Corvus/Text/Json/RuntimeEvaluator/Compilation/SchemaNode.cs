@@ -2935,6 +2935,16 @@ internal sealed class SchemaNode
     public int FlagEntry;
 
     /// <summary>Whether <c>items</c> is a strict object the array loop enters without its prologue when the element is an object.</summary>
+    /// <summary>
+    /// By token type, the <c>oneOf</c> branches that can accept a value of that kind (the others certainly fail), with
+    /// null for a kind every branch can accept; null when that does not narrow any kind. See
+    /// <see cref="SchemaCompiler.AdmittedTokens"/>.
+    /// </summary>
+    public int[]?[]? OneOfByKind;
+
+    /// <summary>By token type, the <c>anyOf</c> branches that can accept a value of that kind; as <see cref="OneOfByKind"/>.</summary>
+    public int[]?[]? AnyOfByKind;
+
     public bool ItemsNestedObject;
 
     /// <summary>The token types whose result the items schema's type alone decides (see <see cref="StrictEntry.ChildDecided"/>).</summary>

@@ -4022,6 +4022,11 @@ internal static partial class Evaluator
             {
                 any = EvalAnyOfSelected<TAccess>(anyOf, selected, doc, index, ref state, evaluated);
             }
+            else if (!default(TMode).Collecting && node.AnyOfByKind is int[]?[] anyByKind && anyByKind[(int)default(TAccess).TokenType(ref state, doc, index)] is int[] anyCandidates)
+            {
+                // Only the branches that can accept this kind of value can match.
+                any = EvalAnyOfSelected<TAccess>(anyOf, anyCandidates, doc, index, ref state, evaluated);
+            }
             else if (!default(TMode).Collecting && node.AnyOfTypeDispatch is int[] anyDispatch)
             {
                 // Only one branch accepts the instance's type; it marks straight into the parent's bits since in
@@ -4060,6 +4065,11 @@ internal static partial class Evaluator
             else if (!default(TMode).Collecting && node.OneOfDiscriminator is Discriminator oneDiscriminator && TrySelectBranches<TAccess>(oneDiscriminator, ref state, doc, index, out int[] selected))
             {
                 matched = EvalOneOfSelected<TAccess>(oneOf, selected, doc, index, ref state, evaluated);
+            }
+            else if (!default(TMode).Collecting && node.OneOfByKind is int[]?[] oneByKind && oneByKind[(int)default(TAccess).TokenType(ref state, doc, index)] is int[] oneCandidates)
+            {
+                // Only the branches that can accept this kind of value can match.
+                matched = EvalOneOfSelected<TAccess>(oneOf, oneCandidates, doc, index, ref state, evaluated);
             }
             else if (!default(TMode).Collecting && node.OneOfTypeDispatch is int[] oneDispatch)
             {
