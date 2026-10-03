@@ -50,7 +50,8 @@ final class SchemaPattern {
         PatternShapes.Matcher shape;
         if (matchesEverything(pattern)) {
             p = new SchemaPattern(pattern, EVERYTHING, null, null);
-        } else if ((shape = PatternShapes.of(pattern)) != null) {
+        } else if (new EcmaRegex.Validator().isValid(pattern) && (shape = PatternShapes.of(pattern)) != null) {
+            // Without the u flag a pattern matches UTF-16 code units, which only the regular expression engine does.
             p = new SchemaPattern(pattern, SHAPE, Pattern.compile(translated), shape);
         } else {
             p = new SchemaPattern(pattern, REGEX, Pattern.compile(translated), null);
