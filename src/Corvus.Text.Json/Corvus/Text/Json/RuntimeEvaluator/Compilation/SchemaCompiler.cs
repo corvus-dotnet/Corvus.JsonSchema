@@ -497,6 +497,7 @@ internal sealed class SchemaCompiler
             node.StrictEntries = null;
             node.AdditionalEntry = new StrictEntry(-1, node.AdditionalInlineType, node.AdditionalInlineLexical, null, node.AdditionalFastNode, node.AdditionalFastNode >= 0 && IsNestedObject(nodes[node.AdditionalFastNode], nodes));
             node.ItemsNestedObject = node.Items.IsPresent && IsNestedObject(nodes[node.Items.FastNode], nodes);
+            node.ItemsDecided = node.Items.IsPresent ? DecidedTokens(nodes[node.Items.FastNode], out node.ItemsAccepts) : (ushort)0;
             node.PatternMap = null;
             node.PrefixEntries = null;
             if (!DisablePlans && node.PrefixItems is ChildRef[] prefixItems && !node.UniqueItems && !node.Contains.IsPresent)
@@ -559,7 +560,21 @@ internal sealed class SchemaCompiler
             {
                 PropertyEntry e = values[i];
                 int child = e.Schema.IsPresent && !e.InlineTrue && e.InlineType == TypeMask.None && e.InlineEnum is null && e.InlineConst is null ? e.Schema.FastNode : -1;
-                strict[i] = new StrictEntry(e.SeenBit, e.InlineType, e.InlineLexical, e.InlineEnum, child, child >= 0 && IsNestedObject(nodes[child], nodes), e.InlineConst);
+                if (child >= 0 && IsStringLengthOnly(nodes[child]))
+                {
+                    SchemaNode leaf = nodes[child];
+                    strict[i] = new StrictEntry(e.SeenBit, TypeMask.None, leaf.Dialect == JsonSchemaDialect.Draft4, null, -1, false, null, leaf.MinLength, leaf.MaxLength, leaf.HasType ? leaf.Type : TypeMask.None);
+                    continue;
+                }
+
+                ushort decided = 0;
+                ushort accepts = 0;
+                if (child >= 0)
+                {
+                    decided = DecidedTokens(nodes[child], out accepts);
+                }
+
+                strict[i] = new StrictEntry(e.SeenBit, e.InlineType, e.InlineLexical, e.InlineEnum, child, child >= 0 && IsNestedObject(nodes[child], nodes), e.InlineConst, -1, -1, TypeMask.None, decided, accepts);
             }
 
             node.StrictEntries = strict;
@@ -592,7 +607,55 @@ internal sealed class SchemaCompiler
             return new StrictEntry(seenBit, TypeMask.None, false, null, -1, false, target.ConstString);
         }
 
-        return new StrictEntry(seenBit, TypeMask.None, false, null, fastNode, IsNestedObject(target, nodes));
+        if (IsStringLengthOnly(target))
+        {
+            return new StrictEntry(seenBit, TypeMask.None, target.Dialect == JsonSchemaDialect.Draft4, null, -1, false, null, target.MinLength, target.MaxLength, target.HasType ? target.Type : TypeMask.None);
+        }
+
+        ushort decided = DecidedTokens(target, out ushort accepts);
+        return new StrictEntry(seenBit, TypeMask.None, false, null, fastNode, IsNestedObject(target, nodes), null, -1, -1, TypeMask.None, decided, accepts);
+    }
+
+    /// <summary>
+    /// The token types for which a node's result is decided by its type alone, because no keyword of the node applies
+    /// to that kind of value and it has no applicators; <paramref name="accepts"/> is those its type admits. A number
+    /// is never decided when only integers are admitted (that needs the value).
+    /// </summary>
+    internal static ushort DecidedTokens(SchemaNode node, out ushort accepts)
+    {
+        accepts = 0;
+        if (node.AlwaysTrue || node.AlwaysFalse || node.HasConst || node.Enum is not null || node.HasInPlaceApplicators
+            || node.Ref.IsPresent || node.DynamicRef is not null || node.UnevaluatedProperties.IsPresent || node.UnevaluatedItems.IsPresent)
+        {
+            return 0;
+        }
+
+        int admitted = node.HasType ? StrictEntry.TokenBitsOf(node.Type) : 0xffff;
+        int decided = 0;
+        int accept = 0;
+        Decide(JsonTokenType.Null, false);
+        Decide(JsonTokenType.True, false);
+        Decide(JsonTokenType.False, false);
+        Decide(JsonTokenType.String, node.HasStringKeywords);
+        Decide(JsonTokenType.Number, node.HasNumberKeywords);
+        Decide(JsonTokenType.StartObject, node.HasObjectKeywords);
+        Decide(JsonTokenType.StartArray, node.HasArrayKeywords);
+        accepts = (ushort)accept;
+        return (ushort)decided;
+
+        void Decide(JsonTokenType token, bool keywords)
+        {
+            int bit = 1 << (int)token;
+            if ((admitted & bit) == 0)
+            {
+                decided |= bit;
+            }
+            else if (!keywords)
+            {
+                decided |= bit;
+                accept |= bit;
+            }
+        }
     }
 
     /// <summary>
@@ -2958,6 +3021,18 @@ internal sealed class SchemaCompiler
     {
         return node.IsLeaf && node.EnumAllStrings && node.EnumStrings is not null && !node.HasConst && !node.HasNumberKeywords && !node.HasStringKeywords
             && (!node.HasType || node.Type == TypeMask.String) && !node.AlwaysTrue && !node.AlwaysFalse;
+    }
+
+    /// <summary>
+    /// A leaf whose only assertions are <c>minLength</c> and <c>maxLength</c>, with at most a <c>type</c> alongside: the
+    /// bounds are tested in place, from the value's byte length when that decides them.
+    /// </summary>
+    internal static bool IsStringLengthOnly(SchemaNode node)
+    {
+        return node.IsLeaf && !node.AlwaysTrue && !node.AlwaysFalse && !node.HasConst && node.Enum is null && !node.HasNumberKeywords
+            && (node.MinLength >= 0 || node.MaxLength >= 0) && node.Pattern is null
+            && !(node.AssertFormat && node.Format != FormatKind.None)
+            && !node.AssertContent;
     }
 
     /// <summary>A leaf whose only assertion is a string <c>const</c>, with at most <c>type: string</c> alongside.</summary>

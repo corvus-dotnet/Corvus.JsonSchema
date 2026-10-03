@@ -1255,13 +1255,77 @@ internal static partial class Evaluator
 
         if (entry.Child < 0)
         {
-            return true;
+            return !entry.LengthBounded || LengthLeafMatches<TAccess>(in entry, valueType, ref state, doc, valueIndex);
+        }
+
+        int bit = 1 << (int)valueType;
+        if ((entry.ChildDecided & bit) != 0)
+        {
+            return (entry.ChildAccepts & bit) != 0;
         }
 
         SchemaNode child = state.Nodes[entry.Child];
         return entry.NestedObject && valueType == JsonTokenType.StartObject
             ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
             : EvalChildFast<TAccess>(child, doc, valueIndex, ref state);
+    }
+
+    /// <summary>A value against a string-length leaf entry: its type, then a string's length.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool LengthLeafMatches<TAccess>(in StrictEntry entry, JsonTokenType valueType, ref EvaluationState state, IJsonDocument doc, int valueIndex)
+        where TAccess : struct, IDocumentAccess
+    {
+        int bits = entry.LengthTokenBits;
+        if (bits != 0 && ((bits & (1 << (int)valueType)) == 0 || (entry.LengthIntegerOnly && valueType == JsonTokenType.Number && !IsInteger<TAccess>(ref state, doc, valueIndex, entry.Lexical))))
+        {
+            return false;
+        }
+
+        return valueType != JsonTokenType.String || StringLengthWithin<TAccess>(in entry, ref state, doc, valueIndex);
+    }
+
+    /// <summary>
+    /// Whether a string value is within a length-leaf entry's bounds. A rune is one to four bytes, so an unescaped
+    /// value's byte length decides most values without counting; escaped values are unescaped first, out of line.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool StringLengthWithin<TAccess>(in StrictEntry entry, ref EvaluationState state, IJsonDocument doc, int index)
+        where TAccess : struct, IDocumentAccess
+    {
+        ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index, out bool escaped);
+        if (escaped)
+        {
+            return EscapedStringLengthWithin<TAccess>(entry.MinLength, entry.MaxLength, ref state, doc, index);
+        }
+
+        int bytes = raw.Length;
+        if ((entry.MaxLength < 0 || bytes <= entry.MaxLength) && (entry.MinLength < 0 || ((bytes + 3) >> 2) >= entry.MinLength))
+        {
+            return true;
+        }
+
+        return LengthWithin(raw, entry.MinLength, entry.MaxLength);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static bool EscapedStringLengthWithin<TAccess>(int minLength, int maxLength, ref EvaluationState state, IJsonDocument doc, int index)
+        where TAccess : struct, IDocumentAccess
+    {
+        using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
+        return LengthWithin(s.Span, minLength, maxLength);
+    }
+
+    /// <summary>Whether a string's length in runes is within the bounds (-1 for an absent bound).</summary>
+    private static bool LengthWithin(ReadOnlySpan<byte> value, int minLength, int maxLength)
+    {
+        int bytes = value.Length;
+        if ((minLength >= 0 && bytes < minLength) || (maxLength >= 0 && ((bytes + 3) >> 2) > maxLength))
+        {
+            return false;
+        }
+
+        int runes = JsonElementHelpers.CountRunes(value);
+        return (minLength < 0 || runes >= minLength) && (maxLength < 0 || runes <= maxLength);
     }
 
     /// <summary>The name lookup for an escaped property name, out of line: escapes are rare and the loop is register-bound.</summary>
@@ -1803,13 +1867,29 @@ internal static partial class Evaluator
             }
             else if (entry.Child >= 0)
             {
-                SchemaNode child = state.Nodes[entry.Child];
-                if (!(entry.NestedObject && valueType == JsonTokenType.StartObject
-                    ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
-                    : EvalChildFast<TAccess>(child, doc, valueIndex, ref state)))
+                int bit = 1 << (int)valueType;
+                if ((entry.ChildDecided & bit) != 0)
                 {
-                    return false;
+                    // The child's type alone decides this kind of value.
+                    if ((entry.ChildAccepts & bit) == 0)
+                    {
+                        return false;
+                    }
                 }
+                else
+                {
+                    SchemaNode child = state.Nodes[entry.Child];
+                    if (!(entry.NestedObject && valueType == JsonTokenType.StartObject
+                        ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
+                        : EvalChildFast<TAccess>(child, doc, valueIndex, ref state)))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else if (entry.LengthBounded && !LengthLeafMatches<TAccess>(in entry, valueType, ref state, doc, valueIndex))
+            {
+                return false;
             }
 
             valueIndex = next + RowSize;
@@ -1987,13 +2067,29 @@ internal static partial class Evaluator
             }
             else if (entry.Child >= 0)
             {
-                SchemaNode child = state.Nodes[entry.Child];
-                if (!(entry.NestedObject && valueType == JsonTokenType.StartObject
-                    ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
-                    : EvalChildFast<TAccess>(child, doc, valueIndex, ref state)))
+                int bit = 1 << (int)valueType;
+                if ((entry.ChildDecided & bit) != 0)
                 {
-                    return false;
+                    // The child's type alone decides this kind of value.
+                    if ((entry.ChildAccepts & bit) == 0)
+                    {
+                        return false;
+                    }
                 }
+                else
+                {
+                    SchemaNode child = state.Nodes[entry.Child];
+                    if (!(entry.NestedObject && valueType == JsonTokenType.StartObject
+                        ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
+                        : EvalChildFast<TAccess>(child, doc, valueIndex, ref state)))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else if (entry.LengthBounded && !LengthLeafMatches<TAccess>(in entry, valueType, ref state, doc, valueIndex))
+            {
+                return false;
             }
 
             matched = true;
@@ -2124,9 +2220,25 @@ internal static partial class Evaluator
         else
         {
             bool nested = node.ItemsNestedObject;
+            int decided = node.ItemsDecided;
+            int accepts = node.ItemsAccepts;
             for (int valueIndex = index + RowSize; valueIndex < end;)
             {
                 JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
+                int bit = 1 << (int)valueType;
+                if ((decided & bit) != 0)
+                {
+                    // The items schema's type alone decides this kind of item.
+                    if ((accepts & bit) == 0)
+                    {
+                        ok = false;
+                        break;
+                    }
+
+                    valueIndex = next;
+                    continue;
+                }
+
                 if (!(nested && valueType == JsonTokenType.StartObject
                     ? EvalStrictObjectNested<TAccess>(items!, doc, valueIndex, ref state)
                     : EvalChildFast<TAccess>(items!, doc, valueIndex, ref state)))
@@ -2464,7 +2576,7 @@ internal static partial class Evaluator
         ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index);
 
         // Plain integer literal against plain integer bounds: compare as longs (exact) without normalising.
-        if (!default(TMode).Collecting && !DisableIntegerFastPath && node.MultipleOf is null && raw.Length <= 18 && raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0
+        if (!default(TMode).Collecting && !DisableIntegerFastPath && raw.Length <= 18 && raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0
             && System.Buffers.Text.Utf8Parser.TryParse(raw, out long value, out int consumed) && consumed == raw.Length)
         {
             if (node.Minimum is NumberValue lmin)
@@ -2525,6 +2637,16 @@ internal static partial class Evaluator
                 {
                     goto Slow;
                 }
+            }
+
+            if (node.MultipleOf is DivisorValue lmul)
+            {
+                if (lmul.AsLong is long d)
+                {
+                    return value % d == 0;
+                }
+
+                goto Slow;
             }
 
             return true;
@@ -3461,6 +3583,11 @@ internal static partial class Evaluator
         int containsCount = 0;
         int itemIndex = 0;
 
+        // In flag mode, contains stops being evaluated once minContains is met, unless maxContains bounds the count or
+        // its matches are marked evaluated for a live evaluated set.
+        bool stopAtMinContains = !default(TMode).Collecting && node.MaxContains < 0 && (!node.ContainsMarksEvaluated || evaluated.IsEmpty);
+        bool containsSettled = stopAtMinContains && node.MinContains <= 0;
+
         try
         {
             int end = default(TAccess).EndIndex(ref state, doc, index);
@@ -3493,7 +3620,7 @@ internal static partial class Evaluator
                     }
                 }
 
-                if (hasContains)
+                if (hasContains && !containsSettled)
                 {
                     if (EvalContainsItem<TMode, TAccess>(node.Contains, doc, valueIndex, itemIndex, ref state, seq))
                     {
@@ -3501,6 +3628,25 @@ internal static partial class Evaluator
                         if (node.ContainsMarksEvaluated)
                         {
                             MarkEvaluated(evaluated, itemIndex);
+                        }
+
+                        if (!default(TMode).Collecting)
+                        {
+                            if (node.MaxContains >= 0 && containsCount > node.MaxContains)
+                            {
+                                // More matches than maxContains allows: no later item can undo that.
+                                return false;
+                            }
+
+                            if (stopAtMinContains && containsCount >= node.MinContains)
+                            {
+                                // minContains is met and nothing bounds the count above or needs the other matches.
+                                containsSettled = true;
+                                if (prefixItems is null && !hasItems && !unique)
+                                {
+                                    break;
+                                }
+                            }
                         }
                     }
                 }

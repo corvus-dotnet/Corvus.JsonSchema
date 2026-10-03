@@ -153,6 +153,11 @@ internal sealed class DivisorValue
         // The generator build only carries the text into the image; the normalized form is rebuilt on load.
         return;
 #else
+        if (raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0 && raw.Length <= 18 && System.Buffers.Text.Utf8Parser.TryParse(raw, out long l, out int consumed) && consumed == raw.Length && l > 0)
+        {
+            this.AsLong = l;
+        }
+
         JsonElementHelpers.ParseNumber(raw, out _, out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
         this.Exponent = exponent;
         Span<byte> digits = stackalloc byte[integral.Length + fractional.Length];
@@ -177,6 +182,9 @@ internal sealed class DivisorValue
     }
 
     public bool IsBig { get; }
+
+    /// <summary>When the divisor is a plain positive integer that fits in a long, its value; otherwise null.</summary>
+    public long? AsLong { get; }
 
     public ulong Small { get; }
 
@@ -2409,8 +2417,35 @@ internal sealed class PropertyEntry
 /// What the strict object loop does with one known property, as a value: the seen bit, a type mask to test in place,
 /// a string set or string const to test in place, or a child node to dispatch on (-1 for none).
 /// </summary>
-internal readonly struct StrictEntry(int seenBit, TypeMask mask, bool lexical, Utf8NameMap<object>? set, int child, bool nestedObject = false, byte[]? constBytes = null)
+internal readonly struct StrictEntry(int seenBit, TypeMask mask, bool lexical, Utf8NameMap<object>? set, int child, bool nestedObject = false, byte[]? constBytes = null, int minLength = -1, int maxLength = -1, TypeMask lengthMask = TypeMask.None, ushort childDecided = 0, ushort childAccepts = 0)
 {
+    /// <summary>
+    /// For a <see cref="Child"/>, the token types whose result its type alone decides (no keyword applies to that
+    /// kind of value): the loop decides those in place, by <see cref="ChildAccepts"/>, without entering the child.
+    /// </summary>
+    public readonly ushort ChildDecided = childDecided;
+
+    /// <summary>Of <see cref="ChildDecided"/>, the token types the child accepts.</summary>
+    public readonly ushort ChildAccepts = childAccepts;
+
+    /// <summary>The child's <c>minLength</c> when it is a string-length leaf (tested in place of a call), else -1.</summary>
+    public readonly int MinLength = minLength;
+
+    /// <summary>The child's <c>maxLength</c> when it is a string-length leaf (tested in place of a call), else -1.</summary>
+    public readonly int MaxLength = maxLength;
+
+    /// <summary>
+    /// Whether the entry is a string-length leaf. It has no <see cref="TokenBits"/> and no <see cref="Child"/>, so
+    /// the loops reach it only after the branches the other kinds take, and its type is <see cref="LengthTokenBits"/>.
+    /// </summary>
+    public readonly bool LengthBounded = minLength >= 0 || maxLength >= 0;
+
+    /// <summary>A string-length leaf's type as token bits (0 for no type).</summary>
+    public readonly ushort LengthTokenBits = TokenBitsOf(lengthMask);
+
+    /// <summary>Whether a string-length leaf's type admits a number token only when it is an integer.</summary>
+    public readonly bool LengthIntegerOnly = (lengthMask & TypeMask.Integer) != 0 && (lengthMask & TypeMask.Number) == 0;
+
     /// <summary>The child's string when it is a string-const leaf (compared in place of a call).</summary>
     public readonly byte[]? ConstBytes = constBytes;
 
@@ -2901,6 +2936,12 @@ internal sealed class SchemaNode
 
     /// <summary>Whether <c>items</c> is a strict object the array loop enters without its prologue when the element is an object.</summary>
     public bool ItemsNestedObject;
+
+    /// <summary>The token types whose result the items schema's type alone decides (see <see cref="StrictEntry.ChildDecided"/>).</summary>
+    public ushort ItemsDecided;
+
+    /// <summary>Of <see cref="ItemsDecided"/>, the token types the items schema accepts.</summary>
+    public ushort ItemsAccepts;
 
     /// <summary>Under <see cref="NodePlan.Conditional"/>, the plan for the node's own keywords: strict object, object, leaf (type only) or always-true (none).</summary>
     public NodePlan ConditionalOwnPlan;
