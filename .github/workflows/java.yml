@@ -1,0 +1,70 @@
+name: java
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-java/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/java.yml'
+    - '.github/workflows/maven-publish.yml'
+    - 'LICENSE'
+  pull_request:
+    paths:
+    - 'src-java/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/java.yml'
+    - '.github/workflows/maven-publish.yml'
+    - 'LICENSE'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Every platform and Java version the release supports. The release profile is built too (signing skipped), so a
+    # release cannot fail on something pull requests never built.
+    name: Build and test corvus-json-schema (Java ${{ matrix.java }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
+        java: ['17', '21', '25']
+    defaults:
+      run:
+        shell: bash
+        working-directory: src-java/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+      - name: Checkout JSON-Schema-Test-Suite
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - name: Check the packaged LICENSE matches the repository's
+        run: cmp ../../LICENSE LICENSE
+      - name: Build, test and package
+        # Tests (the suite, compiled and through collectors, and the allocation gate with and without escape
+        # analysis), the shaded jar, and the release profile's sources and javadoc jars.
+        run: ./mvnw -B -ntp install -P release -Dgpg.skip
+      - name: Test with the interpreter
+        # The same suite through the interpreter, which also serves results collection.
+        run: ./mvnw -B -ntp test -Dtest=SuiteTest -DcorvusArgLine=-Dcorvus.jsonschema.interpret=true
+      - name: Kotlin
+        working-directory: src-java/kotlin-smoke
+        run: ./mvnw -B -ntp test
+      - name: Benchmark harness
+        if: matrix.os == 'ubuntu-latest' && matrix.java == '21'
+        working-directory: src-java/corvus-json-schema-bench
+        run: ./mvnw -B -ntp package
