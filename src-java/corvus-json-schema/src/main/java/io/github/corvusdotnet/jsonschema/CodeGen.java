@@ -1539,6 +1539,135 @@ final class CodeGen {
             mv.visitLabel(done);
         }
 
+        /**
+         * A discriminator in the generated code: the property found by its words, its string value dispatched by
+         * length and words to the branches it selects, which are evaluated in place (anyOf: one passes; oneOf:
+         * exactly one). Objects without the property, or with a value that is not a string, take the general paths.
+         * Returns false, emitting nothing, when the discriminator has values other than strings.
+         */
+        private boolean inlineDiscriminator(int[] list, SchemaNode.Discriminator disc, boolean oneOf, Label done) {
+            for (SchemaNode.Value v : disc.values) {
+                if (v.kind() != JsonDocument.STRING) {
+                    return false;
+                }
+            }
+            Label all = new Label();
+            Label unknown = new Label();
+            mv.visitVarInsn(ILOAD, KIND);
+            pushInt(JsonDocument.OBJECT);
+            mv.visitJumpInsn(IF_ICMPNE, all);
+            // The property's value: one pass over the keys, matching the name by its words.
+            int value = local(1);
+            findProperty(disc.property, value);
+            mv.visitVarInsn(ILOAD, value);
+            Label present = new Label();
+            mv.visitJumpInsn(IFGE, present);
+            if (disc.allRequire) {
+                returnFalse();
+            } else {
+                mv.visitJumpInsn(GOTO, all);
+            }
+            mv.visitLabel(present);
+            mv.visitVarInsn(ALOAD, D);
+            mv.visitVarInsn(ILOAD, value);
+            rt("kind", "(" + DOC + "I)I");
+            pushInt(JsonDocument.STRING);
+            mv.visitJumpInsn(IF_ICMPNE, unknown);
+            byte[][] names = new byte[disc.values.length][];
+            Label[] cases = new Label[names.length];
+            for (int i = 0; i < names.length; i++) {
+                names[i] = utf8(disc.values[i].doc.string(disc.values[i].node));
+                cases[i] = new Label();
+            }
+            nameDispatch(value, names, cases, unknown);
+            for (int i = 0; i < names.length; i++) {
+                mv.visitLabel(cases[i]);
+                subset(list, disc.branches[i], oneOf, done);
+            }
+            mv.visitLabel(unknown);
+            subset(list, disc.unknown, oneOf, done);
+            mv.visitLabel(all);
+            return emitAll(list, oneOf, done);
+        }
+
+        /** Evaluates the selected branches, jumping to done when the keyword holds and returning false otherwise. */
+        private void subset(int[] list, int[] selected, boolean oneOf, Label done) {
+            if (oneOf) {
+                int count = local(1);
+                mv.visitInsn(ICONST_0);
+                mv.visitVarInsn(ISTORE, count);
+                for (int i : selected) {
+                    Label skip = new Label();
+                    call(list[i], X);
+                    mv.visitJumpInsn(IFEQ, skip);
+                    mv.visitIincInsn(count, 1);
+                    mv.visitLabel(skip);
+                }
+                mv.visitVarInsn(ILOAD, count);
+                mv.visitInsn(ICONST_1);
+                mv.visitJumpInsn(IF_ICMPEQ, done);
+                returnFalse();
+            } else {
+                for (int i : selected) {
+                    call(list[i], X);
+                    mv.visitJumpInsn(IFNE, done);
+                }
+                returnFalse();
+            }
+        }
+
+        /** Every branch, without a discriminator; returns true (the code ends at done). */
+        private boolean emitAll(int[] list, boolean oneOf, Label done) {
+            int[] every = new int[list.length];
+            for (int i = 0; i < every.length; i++) {
+                every[i] = i;
+            }
+            subset(list, every, oneOf, done);
+            mv.visitLabel(done);
+            return true;
+        }
+
+        /** Stores in local {@code value} the value of property {@code name} of the object x, or -1. */
+        private void findProperty(String name, int value) {
+            int k = local(1);
+            int end = local(1);
+            Label test = new Label();
+            Label body = new Label();
+            Label next = new Label();
+            Label found = new Label();
+            Label exit = new Label();
+            mv.visitInsn(Opcodes.ICONST_M1);
+            mv.visitVarInsn(ISTORE, value);
+            mv.visitVarInsn(ALOAD, D);
+            mv.visitVarInsn(ILOAD, X);
+            rt("first", "(" + DOC + "I)I");
+            mv.visitVarInsn(ISTORE, k);
+            mv.visitVarInsn(ALOAD, D);
+            mv.visitVarInsn(ILOAD, X);
+            rt("count", "(" + DOC + "I)I");
+            mv.visitInsn(ICONST_1);
+            mv.visitInsn(Opcodes.ISHL);
+            mv.visitVarInsn(ILOAD, k);
+            mv.visitInsn(IADD);
+            mv.visitVarInsn(ISTORE, end);
+            mv.visitJumpInsn(GOTO, test);
+            mv.visitLabel(body);
+            nameDispatch(k, new byte[][] {utf8(name)}, new Label[] {found}, next);
+            mv.visitLabel(found);
+            mv.visitVarInsn(ILOAD, k);
+            mv.visitInsn(ICONST_1);
+            mv.visitInsn(IADD);
+            mv.visitVarInsn(ISTORE, value);
+            mv.visitJumpInsn(GOTO, exit);
+            mv.visitLabel(next);
+            mv.visitIincInsn(k, 2);
+            mv.visitLabel(test);
+            mv.visitVarInsn(ILOAD, k);
+            mv.visitVarInsn(ILOAD, end);
+            mv.visitJumpInsn(IF_ICMPLT, body);
+            mv.visitLabel(exit);
+        }
+
         /** The kinds a type mask accepts (integer as number). */
         private static int kinds(int mask) {
             return (mask & 0x3f) | ((mask & SchemaNode.T_INTEGER) != 0 ? JsonDocument.NUMBER : 0);
@@ -1597,6 +1726,9 @@ final class CodeGen {
                 return;
             }
             Label done = new Label();
+            if (disc != null && !compact && inlineDiscriminator(list, disc, oneOf, done)) {
+                return;
+            }
             if (disc != null) {
                 int sel = local(1);
                 int j = local(1);
