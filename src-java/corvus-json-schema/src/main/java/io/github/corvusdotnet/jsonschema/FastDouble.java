@@ -1,7 +1,5 @@
 package io.github.corvusdotnet.jsonschema;
 
-import java.math.BigInteger;
-
 /**
  * Decimal to double conversion without allocation: the Eisel-Lemire algorithm (Daniel Lemire, "Number Parsing at a
  * Gigabyte per Second", and the fast_float library), which is exact for a decimal significand of up to 19 digits
@@ -21,40 +19,7 @@ final class FastDouble {
     private static final int MAX_EXPONENT_ROUND_TO_EVEN = 23;
 
     /** The 128-bit truncated powers of five from 5^-342 to 5^308, high word then low word, normalised. */
-    private static final long[] POWERS = powers();
-
-    private static long[] powers() {
-        long[] table = new long[2 * (LARGEST_POWER_OF_TEN - SMALLEST_POWER_OF_TEN + 1)];
-        BigInteger two128 = BigInteger.ONE.shiftLeft(128);
-        BigInteger two127 = BigInteger.ONE.shiftLeft(127);
-        int at = 0;
-        for (int q = SMALLEST_POWER_OF_TEN; q <= LARGEST_POWER_OF_TEN; q++) {
-            BigInteger c;
-            if (q < 0) {
-                BigInteger power5 = BigInteger.valueOf(5).pow(-q);
-                int z = power5.subtract(BigInteger.ONE).bitLength();
-                if (q >= -27) {
-                    c = BigInteger.ONE.shiftLeft(z + 127).divide(power5).add(BigInteger.ONE);
-                } else {
-                    c = BigInteger.ONE.shiftLeft(2 * z + 128).divide(power5).add(BigInteger.ONE);
-                    while (c.compareTo(two128) >= 0) {
-                        c = c.shiftRight(1);
-                    }
-                }
-            } else {
-                c = BigInteger.valueOf(5).pow(q);
-                while (c.compareTo(two127) < 0) {
-                    c = c.shiftLeft(1);
-                }
-                while (c.compareTo(two128) >= 0) {
-                    c = c.shiftRight(1);
-                }
-            }
-            table[at++] = c.shiftRight(64).longValue();
-            table[at++] = c.longValue();
-        }
-        return table;
-    }
+    private static final long[] POWERS = FastDoubleTable.POWERS;
 
     /** The high 64 bits of the unsigned 128-bit product of a and b. */
     private static long unsignedMultiplyHigh(long a, long b) {

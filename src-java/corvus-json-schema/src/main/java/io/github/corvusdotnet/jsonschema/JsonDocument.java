@@ -1,8 +1,5 @@
 package io.github.corvusdotnet.jsonschema;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -90,7 +87,30 @@ public final class JsonDocument {
      * @throws JsonParseException if the text is not valid JSON
      */
     public static JsonDocument parse(byte[] utf8) {
-        return new Parser(utf8).parse();
+        Parser p = PARSERS.get();
+        if (p == null) {
+            p = new Parser();
+            PARSERS.set(p);
+        }
+        try {
+            return p.parseNew(utf8);
+        } finally {
+            if (p.retainsTooMuch()) {
+                // A large document grew the buffers: let them go rather than hold them for the thread's lifetime.
+                PARSERS.remove();
+            }
+        }
+    }
+
+    /**
+     * Each thread's parser, reused from one {@link #parse(byte[])} to the next: its buffers have grown to fit, and
+     * before the JIT has compiled the parser, every array it allocates costs a call into the VM.
+     */
+    private static final ThreadLocal<Parser> PARSERS = new ThreadLocal<>();
+
+    /** Whether this thread holds a cached parser (for tests). */
+    static boolean hasCachedParser() {
+        return PARSERS.get() != null;
     }
 
     // ----------------------------------------------------------------------------------------------------------------
@@ -296,7 +316,6 @@ public final class JsonDocument {
     // ----------------------------------------------------------------------------------------------------------------
     // The parser
 
-    private static final VarHandle LONGS = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
 
     static final class Parser {
         private byte[] b;
@@ -324,12 +343,7 @@ public final class JsonDocument {
         /** The document a reusing parse fills, or null to build a new one. */
         private JsonDocument target;
 
-        Parser(byte[] b) {
-            this.b = b;
-            this.end = b.length;
-        }
-
-        /** A parser for {@link #isValid}, whose buffers are reused from one check to the next. */
+        /** A parser whose buffers are reused from one parse or check to the next. */
         Parser() {
         }
 
@@ -513,6 +527,32 @@ public final class JsonDocument {
             }
         }
 
+        /** Parses {@code b} into a new document, reusing this parser's buffers. */
+        JsonDocument parseNew(byte[] b) {
+            this.b = b;
+            this.i = 0;
+            this.end = b.length;
+            this.validating = false;
+            nodeCount = 0;
+            scratchCount = 0;
+            depth = 0;
+            textLength = 0;
+            target = null;
+            try {
+                return parse();
+            } finally {
+                this.b = null;
+            }
+        }
+
+        /** The buffers this parser keeps between parses, in bytes, beyond which a cached parser is dropped. */
+        private static final int RETAINED_LIMIT = 1 << 20;
+
+        boolean retainsTooMuch() {
+            return 8L * (nodes.length + scratch.length + hashes.length + pairScratch.length) + text.length
+                    > RETAINED_LIMIT;
+        }
+
         /** Fills the target document with the parsed nodes and text. */
         private JsonDocument fill() {
             JsonDocument d = target;
@@ -691,44 +731,41 @@ public final class JsonDocument {
             push(kind, data);
         }
 
-        /** Bytes equal to n in a word (exact at the lowest set bit, which is all the scanner uses). */
-        private static long eqBytes(long w, long n) {
-            long x = w ^ (0x0101010101010101L * n);
-            return (x - 0x0101010101010101L) & ~x & 0x8080808080808080L;
+        /** By byte: 0 for plain ASCII, 1 for a quote, backslash or control character, 2 for a non-ASCII byte. */
+        private static final byte[] SCAN = scanTable();
+
+        private static byte[] scanTable() {
+            byte[] t = new byte[256];
+            for (int c = 0; c < 0x20; c++) {
+                t[c] = 1;
+            }
+            t['"'] = 1;
+            t['\\'] = 1;
+            for (int c = 0x80; c < 0x100; c++) {
+                t[c] = 2;
+            }
+            return t;
         }
 
-        /** Bytes below 0x20 in a word (exact at the lowest set bit). */
-        private static long controlBytes(long w) {
-            return (w - 0x2020202020202020L) & ~w & 0x8080808080808080L;
-        }
-
-        /** A string, from its opening quote. */
+        /**
+         * A string, from its opening quote. One table lookup per byte: this costs little before the JIT has compiled
+         * the parser, where reading eight bytes at a time through a VarHandle first links method handles (milliseconds
+         * on the first parse of a process). Compiled, eight bytes at a time is about a tenth faster on short documents;
+         * the cold start matters more.
+         */
         private void string() {
             byte[] b = this.b;
+            byte[] scan = SCAN;
             int start = i + 1;
             int j = start;
-            long wide = 0;
-            // Eight bytes at a time to the first quote, backslash or control character.
-            while (j + 8 <= end) {
-                long w = (long) LONGS.get(b, j);
-                long special = eqBytes(w, '"') | eqBytes(w, '\\') | controlBytes(w);
-                if (special != 0) {
-                    int at = Long.numberOfTrailingZeros(special) >>> 3;
-                    // Only the bytes before the special one count towards the string.
-                    wide |= w & (at == 0 ? 0 : (-1L >>> (64 - 8 * at))) & 0x8080808080808080L;
-                    j += at;
-                    stringAt(start, j, wide != 0);
-                    return;
-                }
-                wide |= w & 0x8080808080808080L;
-                j += 8;
-            }
+            int end = this.end;
+            int wide = 0;
             while (j < end) {
-                int c = b[j] & 0xff;
-                if (c == '"' || c == '\\' || c < 0x20) {
+                int c = scan[b[j] & 0xff];
+                if (c == 1) {
                     break;
                 }
-                wide |= c & 0x80;
+                wide |= c;
                 j++;
             }
             stringAt(start, j, wide != 0);

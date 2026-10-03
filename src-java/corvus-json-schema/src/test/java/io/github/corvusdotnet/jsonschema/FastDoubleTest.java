@@ -1,13 +1,54 @@
 package io.github.corvusdotnet.jsonschema;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
 
 /** Decimal to double conversion agrees with Double.parseDouble, bit for bit. */
 class FastDoubleTest {
+    /** The table of powers of five, computed with BigInteger, as the generated constants were. */
+    private static long[] computePowers() {
+        long[] table = new long[2 * (308 + 342 + 1)];
+        BigInteger two128 = BigInteger.ONE.shiftLeft(128);
+        BigInteger two127 = BigInteger.ONE.shiftLeft(127);
+        int at = 0;
+        for (int q = -342; q <= 308; q++) {
+            BigInteger c;
+            if (q < 0) {
+                BigInteger power5 = BigInteger.valueOf(5).pow(-q);
+                int z = power5.subtract(BigInteger.ONE).bitLength();
+                if (q >= -27) {
+                    c = BigInteger.ONE.shiftLeft(z + 127).divide(power5).add(BigInteger.ONE);
+                } else {
+                    c = BigInteger.ONE.shiftLeft(2 * z + 128).divide(power5).add(BigInteger.ONE);
+                    while (c.compareTo(two128) >= 0) {
+                        c = c.shiftRight(1);
+                    }
+                }
+            } else {
+                c = BigInteger.valueOf(5).pow(q);
+                while (c.compareTo(two127) < 0) {
+                    c = c.shiftLeft(1);
+                }
+                while (c.compareTo(two128) >= 0) {
+                    c = c.shiftRight(1);
+                }
+            }
+            table[at++] = c.shiftRight(64).longValue();
+            table[at++] = c.longValue();
+        }
+        return table;
+    }
+
+    @Test
+    void powerTableMatchesItsComputation() {
+        assertArrayEquals(computePowers(), FastDoubleTable.POWERS);
+    }
+
     private static void check(String text) {
         byte[] b = text.getBytes(StandardCharsets.ISO_8859_1);
         double d = FastDouble.parse(b, 0, b.length);

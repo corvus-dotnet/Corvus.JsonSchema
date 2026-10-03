@@ -8,8 +8,11 @@ technique; this is the checklist.
 ## Done
 
 - **Instance representation.** A flat tape (two longs per value, kind as the type bits, children consecutive, object
-  pairs adjacent); strings read in place when unescaped; SWAR string scan; numbers classified at parse (long, unsigned
-  long, double) with the text kept for exact decimals; iterative parser; duplicate-key tiers; exactly sized arrays.
+  pairs adjacent); strings read in place when unescaped; strings scanned with one table lookup per byte (eight bytes at
+  a time through a VarHandle is a little faster once compiled, but its first use links method handles, which cost
+  milliseconds of the first parse); each thread's parser and its buffers reused from one parse to the next; numbers
+  classified at parse (long, unsigned long, double) with the text kept for exact decimals; iterative parser; duplicate-key
+  tiers; exactly sized arrays.
 - **Type tests.** One AND against the kind bits; the integer test only for integer-without-number; type-only children
   tested at the call site (no call); a type mask that excludes a kind skips that kind's keywords.
 - **References.** Pure-`$ref` chains elided and one-branch `allOf` forwarded (fail-fast targets precomputed), not across
