@@ -10,7 +10,7 @@ name: php-publish
 #   1. the contents of src-php/corvus-json-schema (composer.json at the root), with the corvus-json-schema crate taken
 #      from crates.io instead of by path, committed and tagged <version>;
 #   2. a release for that tag, holding every build of the extension (built and tested by php-build.yml, which every
-#      pull request that touches src-php runs a subset of through php.yml), named as PIE looks for them.
+#      pull request that touches src-php also runs in full, through php.yml), named as PIE looks for them.
 # Packagist updates from that repository's tags (its GitHub hook), and `pie install corvus-dotnet/corvus-json-schema`
 # downloads the build for the PHP it installs into.
 #
@@ -105,7 +105,6 @@ jobs:
     if: needs.version.outputs.publish == 'true'
     uses: ./.github/workflows/php-build.yml
     with:
-      full: true
       version: ${{ needs.version.outputs.version }}
 
   publish:
