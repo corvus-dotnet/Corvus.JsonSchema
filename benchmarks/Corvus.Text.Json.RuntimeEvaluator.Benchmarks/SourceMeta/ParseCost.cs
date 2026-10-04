@@ -69,6 +69,9 @@ public static class ParseCost
         string[] names = args[1..];
         double tick = 1_000_000.0 / Stopwatch.Frequency;
         Console.WriteLine($"{"corpus",-24} {"instances",9} {"sum of means",14} {"sum of stdev",14} {"overhead ns",12} {"alloc B/eval",12}");
+
+        // The PE_DIAG sample buffer, allocated once rather than in the loop over corpora (CA2014).
+        Span<double> sample = stackalloc double[8];
         foreach (string name in names)
         {
             using var c = new SourceMetaCase(name);
@@ -118,7 +121,6 @@ public static class ParseCost
                 int gen0 = GC.CollectionCount(0);
                 int gen1 = GC.CollectionCount(1);
                 long t0 = Stopwatch.GetTimestamp();
-                Span<double> sample = stackalloc double[8];
                 int n = 0;
                 foreach (byte[] line in lines)
                 {
