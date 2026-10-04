@@ -307,8 +307,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
 
         if (CodeGenEnabled && !fast.Tiered && Interlocked.Increment(ref this.evaluations) == CodeGenThreshold)
         {
-            // Compiling takes milliseconds: off the evaluating thread, published when done.
-            Task.Run(() => this.CompileFlagMode(fast));
+            this.StartCompilingFlagMode(fast);
         }
 #endif
         return Evaluator.EvaluateFlagRaw(this.program, fast.Nodes, entry, fast.EntryResource, fast.MaxDepth, parsed, document, this.rootNode, index);
@@ -321,6 +320,17 @@ public sealed class JsonSchemaEvaluator : IDisposable
     private static readonly int CodeGenThreshold = int.TryParse(Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN_THRESHOLD"), out int threshold) ? threshold : 1000;
 
     private int evaluations;
+
+    /// <summary>
+    /// Starts compiling the schema's generated code off the evaluating thread (it takes milliseconds), to be published
+    /// when done. A method of its own, never inlined: the closure it makes captures its parameter, so the compiler
+    /// allocates it on entry, and in the evaluation's entry that was an allocation on every evaluation.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void StartCompilingFlagMode(FlagModeEntry fast)
+    {
+        Task.Run(() => this.CompileFlagMode(fast));
+    }
 
     /// <summary>
     /// Compiles the schema's generated code now, whatever the experiment switch says: for tests and measurements
