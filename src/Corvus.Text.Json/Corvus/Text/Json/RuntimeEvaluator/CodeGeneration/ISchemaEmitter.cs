@@ -146,6 +146,87 @@ internal interface ISchemaEmitter
     /// <summary>Finishes the choice by token type.</summary>
     void EndTokenSwitch();
 
+    /// <summary>Returns the interpreter's general evaluation of a node at the method's value when a seen bit is already marked (a property name repeated in the document).</summary>
+    /// <param name="bit">The bit.</param>
+    /// <param name="nodeId">The node.</param>
+    void ReturnInterpretedIfSeen(int bit, int nodeId);
+
+    /// <summary>Makes a place to keep the row index of a property's value for use after the pass.</summary>
+    /// <returns>The place.</returns>
+    int DeclareValueSlot();
+
+    /// <summary>Keeps the current property's value in a place.</summary>
+    /// <param name="slot">The place.</param>
+    void StoreValue(int slot);
+
+    /// <summary>Makes a kept value the current one: the <c>FailUnless</c> operations then test it.</summary>
+    /// <param name="slot">The place.</param>
+    void UseStoredValue(int slot);
+
+    /// <summary>Runs a fused entry's value tests on the current value: the conditions it fails are marked failed.</summary>
+    /// <param name="entry">The entry.</param>
+    /// <param name="conditions">The number of conditions.</param>
+    void FusedValueTests(FusedEntry entry, int conditions);
+
+    /// <summary>Marks a condition failed.</summary>
+    /// <param name="condition">The condition.</param>
+    void MarkConditionFailed(int condition);
+
+    /// <summary>Decides whether a condition holds: it has not been marked failed, and every bit of a mask was marked seen.</summary>
+    /// <param name="condition">The condition.</param>
+    /// <param name="requiredMask">The seen bits it needs.</param>
+    void DecideCondition(int condition, ulong requiredMask);
+
+    /// <summary>Decides whether a condition is reached: it has no gate, or its gate is reached and holds (or does not, by the polarity). Conditions are decided before gates, and a gate before the conditions under it.</summary>
+    /// <param name="condition">The condition.</param>
+    /// <param name="gate">The condition above it, or -1.</param>
+    /// <param name="gatePolarity">Whether the gate must hold.</param>
+    void DecideGate(int condition, int gate, bool gatePolarity);
+
+    /// <summary>Starts code that runs when any of some conditions is reached and holds (or does not hold) as given.</summary>
+    /// <param name="any">The conditions, each with whether it must hold.</param>
+    void BeginIfActive(ReadOnlySpan<(int Condition, bool Polarity)> any);
+
+    /// <summary>Starts code whose failures run a handler in place of failing the method: <see cref="OnFail"/> starts the handler.</summary>
+    void BeginTry();
+
+    /// <summary>Starts the handler of the innermost <see cref="BeginTry"/>.</summary>
+    void OnFail();
+
+    /// <summary>Finishes the innermost <see cref="BeginTry"/>.</summary>
+    void EndTry();
+
+    /// <summary>Marks a branch of an alternative group failed.</summary>
+    /// <param name="group">The group.</param>
+    /// <param name="branch">The branch.</param>
+    void MarkAlternativeFailed(int group, int branch);
+
+    /// <summary>Fails unless a branch of an alternative group has survived, or exactly one has.</summary>
+    /// <param name="group">The group.</param>
+    /// <param name="branchCount">The number of its branches.</param>
+    /// <param name="exactlyOne">Whether exactly one must survive.</param>
+    void FailUnlessAlternativeSurvives(int group, int branchCount, bool exactlyOne);
+
+    /// <summary>Fails unless the method's value (an object) has a property count within bounds.</summary>
+    /// <param name="minProperties">The least count, or -1.</param>
+    /// <param name="maxProperties">The greatest count, or -1.</param>
+    void FailUnlessPropertyCount(int minProperties, int maxProperties);
+
+    /// <summary>Fails if every bit of a mask was marked seen.</summary>
+    /// <param name="mask">The seen bits.</param>
+    void FailIfSeen(ulong mask);
+
+    /// <summary>An alternative (see <see cref="BeginAlternatives"/>): every bit of a mask marked seen.</summary>
+    /// <param name="mask">The seen bits.</param>
+    void OrSeen(ulong mask);
+
+    /// <summary>Counts (see <see cref="BeginCount"/>) a mask whose every bit was marked seen; fails at the second.</summary>
+    /// <param name="mask">The seen bits.</param>
+    void CountSeen(ulong mask);
+
+    /// <summary>Starts another pass over the properties of the object the method has passed over once (after <see cref="EndProperties"/>); <see cref="EndProperties"/> finishes it.</summary>
+    void BeginPropertiesAgain();
+
     /// <summary>Records whether the current property's name has matched a keyword that applies to it.</summary>
     /// <param name="matched">Whether it has.</param>
     void SetMatched(bool matched);

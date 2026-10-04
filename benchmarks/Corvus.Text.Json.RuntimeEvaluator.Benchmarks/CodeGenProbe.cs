@@ -59,6 +59,11 @@ public static class CodeGenProbe
                 Stats(nodes);
             }
 
+            if (Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN_STATS") == "fused")
+            {
+                FusedCensus(name, nodes);
+            }
+
             int mismatches = 0;
             foreach (ParsedJsonDocument<JsonElement> d in c.Documents)
             {
@@ -110,6 +115,40 @@ public static class CodeGenProbe
         }
 
         return valid;
+    }
+
+    // The fused objects that are not flat, by what a generated pass would have to handle.
+    private static void FusedCensus(string name, SchemaNode[] nodes)
+    {
+        int full = 0, flat = 0, unevaluated = 0, conditionalUnknown = 0, wide = 0, simple = 0, conditions = 0, altGroups = 0, valueTests = 0, unknown = 0;
+        foreach (SchemaNode node in nodes)
+        {
+            if (node?.Fused is not FusedObject f || node.Plan != NodePlan.FusedObject)
+            {
+                continue;
+            }
+
+            if (f.FlatEntries is not null)
+            {
+                flat++;
+                continue;
+            }
+
+            full++;
+            bool hasUnevaluated = f.Unevaluated.IsPresent;
+            bool hasConditionalUnknown = f.Contributors.Any(c => c.Condition >= 0 && (c.Patterns is not null || c.AdditionalNode >= 0 || c.AdditionalCoversOnly));
+            bool isWide = f.EntryList.Length > 64 || f.Conditions.Length > 64;
+            unevaluated += hasUnevaluated ? 1 : 0;
+            conditionalUnknown += hasConditionalUnknown ? 1 : 0;
+            wide += isWide ? 1 : 0;
+            simple += !hasUnevaluated && !hasConditionalUnknown && !isWide ? 1 : 0;
+            conditions += f.Conditions.Length > 0 ? 1 : 0;
+            altGroups += f.AltGroups.Length > 0 ? 1 : 0;
+            valueTests += f.EntryList.Any(e => e.HasValueTests) ? 1 : 0;
+            unknown += f.ResolvesUnknownNames ? 1 : 0;
+        }
+
+        Console.WriteLine($"    fused {name,-24} flat {flat,3} | full {full,3}: within limits {simple,3}; unevaluated {unevaluated,3}, conditional unknown names {conditionalUnknown,3}, over 64 names or conditions {wide,3} | with conditions {conditions,3}, alt groups {altGroups,3}, value tests {valueTests,3}, unknown names {unknown,3}");
     }
 
     // The shape of each strict object: its names by the dispatch's length classes and its entries by kind.

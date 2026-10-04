@@ -90,6 +90,26 @@ internal static partial class Evaluator
     [MethodImpl(MethodImplOptions.NoInlining)]
     internal static bool GenOwnLeaf(int nodeId, IJsonDocument doc, int index, ref EvaluationState state) => EvalLeafFast<RawAccess>(state.Nodes[nodeId], doc, index, ref state);
 
+    /// <summary>
+    /// A fused entry's value tests at a property's value (the interpreter's): each condition whose test the value
+    /// fails gets its bit set in <paramref name="failed"/>.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static void GenFusedValueTests(ref EvaluationState state, IJsonDocument doc, int valueIndex, JsonTokenType valueType, FusedEntry entry, int conditions, ref ulong failed)
+    {
+        Span<bool> flags = stackalloc bool[64];
+        flags = flags[..conditions];
+        flags.Clear();
+        ApplyValueTests<RawAccess>(entry, valueType, ref state, doc, valueIndex, flags);
+        for (int i = 0; i < flags.Length; i++)
+        {
+            if (flags[i])
+            {
+                failed |= 1UL << i;
+            }
+        }
+    }
+
     /// <summary>Whether a number value is an integer.</summary>
     internal static bool GenIsInteger(ref EvaluationState state, IJsonDocument doc, int index, bool lexical) => IsInteger<RawAccess>(ref state, doc, index, lexical);
 

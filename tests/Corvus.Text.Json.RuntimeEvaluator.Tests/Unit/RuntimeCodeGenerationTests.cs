@@ -228,6 +228,30 @@ public class RuntimeCodeGenerationTests
         }
         """;
 
+    // The full fused pass: a condition decided by a value test, with patterns and an additional schema under it
+    // (unknown names resolved after the pass), an alternative group of object branches, a required-only oneOf and a
+    // forbidden set of names. The random documents repeat names, which hands an object to the interpreter.
+    private const string FusedConditions = """
+        {
+          "type": "object",
+          "properties": {"kind": {"enum": ["a", "b"]}, "a": {"type": "string"}},
+          "allOf": [
+            {
+              "if": {"properties": {"kind": {"const": "a"}}, "required": ["kind"]},
+              "then": {
+                "required": ["a"],
+                "patternProperties": {"^x": {"type": "integer"}},
+                "additionalProperties": {"type": ["string", "integer", "boolean", "array"]}
+              },
+              "else": {"properties": {"count": {"type": "integer"}}}
+            },
+            {"anyOf": [{"properties": {"name": {"type": "string"}}, "required": ["name"]}, {"properties": {"tag": {"const": "x"}}, "maxProperties": 4}]},
+            {"oneOf": [{"required": ["abcdefghi"]}, {"required": ["b"]}]},
+            {"not": {"required": ["c", "ab"]}}
+          ]
+        }
+        """;
+
     private const string Closed = """{"type": "object", "additionalProperties": false}""";
 
     private const string Untyped = """{"properties": {"a": {"type": "integer"}, "name": {"type": "string"}}}""";
@@ -269,7 +293,8 @@ public class RuntimeCodeGenerationTests
     [DataRow(Conditions, 7)]
     [DataRow(UnderAnyOf, 4)]
     [DataRow(Fused, 8)]
-    [DataRow(UnderIf, 4)]
+    [DataRow(UnderIf, 5)]
+    [DataRow(FusedConditions, 13)]
     [DataRow(Closed, 1)]
     [DataRow(Untyped, 1)]
     [DataRow(Draft4, 1)]

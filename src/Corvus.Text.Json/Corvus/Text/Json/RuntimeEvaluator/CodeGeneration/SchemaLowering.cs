@@ -114,8 +114,11 @@ internal static class SchemaLowering
                 case NodePlan.ArrayItems:
                     LowerArrayItems(emitter, nodes, node, requested, pending);
                     break;
-                case NodePlan.FusedObject:
+                case NodePlan.FusedObject when node.Fused!.FlatEntries is not null:
                     LowerFlatFusedObject(emitter, nodes, node, requested, pending);
+                    break;
+                case NodePlan.FusedObject:
+                    LowerFusedObject(emitter, nodes, node, requested, pending);
                     break;
                 case NodePlan.Object:
                     LowerObject(emitter, nodes, node, requested, pending);
@@ -237,8 +240,15 @@ internal static class SchemaLowering
             case NodePlan.ArrayItems:
                 return !node.UniqueItems && node.PrefixEntries is null;
             case NodePlan.FusedObject:
-                // A flat fused plan: the strict loop over the merged names of an allOf/$ref chain of object schemas.
-                return node.Fused?.FlatEntries is not null;
+                // A flat fused plan (the strict loop over the merged names of an allOf/$ref chain of object schemas),
+                // or the full pass when its state fits one word each (names, conditions, an alternative group's
+                // branches) and nothing is tracked for unevaluatedProperties (the interpreter's, for now).
+                return node.Fused is FusedObject fused
+                    && (fused.FlatEntries is not null
+                        || (!fused.Unevaluated.IsPresent
+                            && fused.EntryList.Length <= 64
+                            && fused.Conditions.Length <= 64
+                            && Array.TrueForAll(fused.AltGroups, g => g.BranchCount <= 64)));
             case NodePlan.TypeUnion:
                 return true;
             case NodePlan.TypeDispatch:
@@ -718,6 +728,361 @@ internal static class SchemaLowering
         emitter.EndCase();
         emitter.EndNameDispatch();
         emitter.EndObject(fused.FlatRequiredMask);
+    }
+
+    // The interpreter's full fused pass (Evaluator.EvalFusedObjectCore), without coverage tracking: one pass applying
+    // every unconditional resolution of each name, the conditions decided from what was seen, then what the
+    // conditions select, the branches' required names and counts, and the alternatives.
+    private static void LowerFusedObject(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
+    {
+        FusedObject f = node.Fused!;
+        FusedContributor[] contributors = f.Contributors;
+
+        // The count bounds of the branches that always apply, as one test before the pass.
+        int min = -1;
+        int max = -1;
+        foreach (FusedContributor contributor in contributors)
+        {
+            if (f.HasCountBounds && contributor.Condition < 0 && contributor.AltGroup < 0)
+            {
+                min = Math.Max(min, contributor.MinProperties);
+                max = contributor.MaxProperties < 0 ? max : max < 0 ? contributor.MaxProperties : Math.Min(max, contributor.MaxProperties);
+            }
+        }
+
+        emitter.BeginObject(0, integerOnly: false, lexical: false, acceptsObject: true, min, max, otherwiseInterpreted: node.Id);
+
+        // The first pass: each known name's value tests and unconditional applications; an unknown name against
+        // the unconditional branches' patterns and additional schemas.
+        int[] slots = new int[f.EntryList.Length];
+        emitter.BeginNameDispatch(f.Entries);
+        for (int i = 0; i < f.EntryList.Length; i++)
+        {
+            FusedEntry entry = f.EntryList[i];
+            emitter.BeginCase(i);
+
+            // A repeated name would be applied twice by the interpreter; the object is its to evaluate.
+            emitter.ReturnInterpretedIfSeen(i, node.Id);
+            emitter.MarkSeen(i);
+            if (entry.HasValueTests)
+            {
+                emitter.FusedValueTests(entry, f.Conditions.Length);
+            }
+
+            slots[i] = -1;
+            foreach (FusedApplication application in entry.Applications)
+            {
+                FusedContributor applied = contributors[application.Contributor];
+                if (applied.Condition >= 0)
+                {
+                    if (slots[i] < 0)
+                    {
+                        slots[i] = emitter.DeclareValueSlot();
+                        emitter.StoreValue(slots[i]);
+                    }
+                }
+                else if (applied.AltGroup < 0)
+                {
+                    Apply(in application);
+                }
+                else
+                {
+                    // A branch of an alternative group fails on its own.
+                    emitter.BeginTry();
+                    Apply(in application);
+                    emitter.OnFail();
+                    emitter.MarkAlternativeFailed(applied.AltGroup, applied.AltBranch);
+                    emitter.EndTry();
+                }
+            }
+
+            emitter.EndCase();
+        }
+
+        emitter.BeginCase(-1);
+        if (f.ResolvesUnknownNames)
+        {
+            foreach (FusedAbsentPattern absent in f.AbsentPatterns)
+            {
+                emitter.BeginIfNameMatches(absent.Matcher);
+                emitter.MarkConditionFailed(absent.Condition);
+                emitter.EndIf();
+            }
+
+            foreach (FusedContributor contributor in contributors)
+            {
+                if (contributor.Condition >= 0 || !ResolvesUnknown(contributor))
+                {
+                    continue;
+                }
+
+                if (contributor.AltGroup < 0)
+                {
+                    Unknown(contributor);
+                }
+                else
+                {
+                    emitter.BeginTry();
+                    Unknown(contributor);
+                    emitter.OnFail();
+                    emitter.MarkAlternativeFailed(contributor.AltGroup, contributor.AltBranch);
+                    emitter.EndTry();
+                }
+            }
+        }
+
+        emitter.EndCase();
+        emitter.EndNameDispatch();
+        emitter.EndProperties();
+
+        // The conditions, then the gates along each chain.
+        for (int i = 0; i < f.Conditions.Length; i++)
+        {
+            emitter.DecideCondition(i, Mask(f.Conditions[i].RequiredBits));
+        }
+
+        for (int i = 0; i < f.Conditions.Length; i++)
+        {
+            emitter.DecideGate(i, f.Conditions[i].Gate, f.Conditions[i].GatePolarity);
+        }
+
+        // The applications the conditions select, at the values kept in the pass.
+        var active = new List<(int Condition, bool Polarity)>();
+        for (int i = 0; i < f.EntryList.Length; i++)
+        {
+            if (slots[i] < 0)
+            {
+                continue;
+            }
+
+            emitter.BeginIfSeen(i);
+            emitter.UseStoredValue(slots[i]);
+            foreach (FusedApplication application in f.EntryList[i].Applications)
+            {
+                FusedContributor applied = contributors[application.Contributor];
+                if (applied.Condition < 0)
+                {
+                    continue;
+                }
+
+                active.Clear();
+                active.Add((applied.Condition, applied.Polarity));
+                foreach (int other in application.OtherContributors ?? [])
+                {
+                    if (contributors[other].Condition >= 0)
+                    {
+                        active.Add((contributors[other].Condition, contributors[other].Polarity));
+                    }
+                }
+
+                emitter.BeginIfActive(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(active));
+                Apply(in application);
+                emitter.EndIf();
+            }
+
+            emitter.EndIf();
+        }
+
+        // The unknown names against the conditional branches that resolve them: a second pass.
+        if (f.ResolvesUnknownNames && Array.Exists(contributors, c => c.Condition >= 0 && ResolvesUnknown(c)))
+        {
+            emitter.BeginPropertiesAgain();
+            emitter.BeginNameDispatch(f.Entries);
+            for (int i = 0; i < f.EntryList.Length; i++)
+            {
+                emitter.BeginCase(i);
+                emitter.EndCase();
+            }
+
+            emitter.BeginCase(-1);
+            foreach (FusedContributor contributor in contributors)
+            {
+                if (contributor.Condition >= 0 && ResolvesUnknown(contributor))
+                {
+                    emitter.BeginIfActive([(contributor.Condition, contributor.Polarity)]);
+                    Unknown(contributor);
+                    emitter.EndIf();
+                }
+            }
+
+            emitter.EndCase();
+            emitter.EndNameDispatch();
+            emitter.EndProperties();
+        }
+
+        // Each branch's count bounds and required names: a conditional branch when its condition selects it, and a
+        // branch of an alternative group failing on its own.
+        foreach (FusedContributor contributor in contributors)
+        {
+            ulong required = Mask(contributor.RequiredBits);
+            bool counts = contributor.MinProperties >= 0 || contributor.MaxProperties >= 0;
+            if (contributor.Condition < 0 && contributor.AltGroup < 0)
+            {
+                emitter.FailUnlessSeen(required);
+                continue;
+            }
+
+            if (required == 0 && !counts)
+            {
+                continue;
+            }
+
+            if (contributor.Condition >= 0)
+            {
+                emitter.BeginIfActive([(contributor.Condition, contributor.Polarity)]);
+                emitter.FailUnlessPropertyCount(contributor.MinProperties, contributor.MaxProperties);
+            }
+
+            if (contributor.AltGroup < 0)
+            {
+                emitter.FailUnlessSeen(required);
+            }
+            else
+            {
+                emitter.BeginTry();
+                if (contributor.Condition < 0)
+                {
+                    emitter.FailUnlessPropertyCount(contributor.MinProperties, contributor.MaxProperties);
+                }
+
+                emitter.FailUnlessSeen(required);
+                emitter.OnFail();
+                emitter.MarkAlternativeFailed(contributor.AltGroup, contributor.AltBranch);
+                emitter.EndTry();
+            }
+
+            if (contributor.Condition >= 0)
+            {
+                emitter.EndIf();
+            }
+        }
+
+        for (int g = 0; g < f.AltGroups.Length; g++)
+        {
+            emitter.FailUnlessAlternativeSurvives(g, f.AltGroups[g].BranchCount, f.AltGroups[g].ExactlyOne);
+        }
+
+        // Required-only anyOf/oneOf, and not: {required}, from the seen bits.
+        foreach (FusedAlternative alternative in f.Alternatives)
+        {
+            if (alternative.Condition >= 0)
+            {
+                emitter.BeginIfActive([(alternative.Condition, alternative.Polarity)]);
+            }
+
+            if (alternative.ExactlyOne)
+            {
+                emitter.BeginCount();
+                foreach (int[] branch in alternative.Branches)
+                {
+                    emitter.CountSeen(Mask(branch));
+                }
+
+                emitter.FailUnlessCountedOne();
+            }
+            else
+            {
+                emitter.BeginAlternatives();
+                foreach (int[] branch in alternative.Branches)
+                {
+                    emitter.OrSeen(Mask(branch));
+                }
+
+                emitter.EndAlternatives();
+            }
+
+            if (alternative.Condition >= 0)
+            {
+                emitter.EndIf();
+            }
+        }
+
+        foreach (FusedAlternative forbidden in f.Forbidden)
+        {
+            if (forbidden.Condition >= 0)
+            {
+                emitter.BeginIfActive([(forbidden.Condition, forbidden.Polarity)]);
+            }
+
+            emitter.FailIfSeen(Mask(forbidden.Branches[0]));
+            if (forbidden.Condition >= 0)
+            {
+                emitter.EndIf();
+            }
+        }
+
+        emitter.Succeed();
+
+        static bool ResolvesUnknown(FusedContributor contributor) => contributor.Patterns is not null || contributor.AdditionalNode >= 0;
+
+        // One resolution of the current value (Evaluator.ApplyApplication).
+        void Apply(in FusedApplication application)
+        {
+            if (application.Node < 0)
+            {
+                return;
+            }
+
+            if (application.TokenBits != 0)
+            {
+                emitter.FailUnlessToken(application.TokenBits, application.IntegerOnly, application.InlineLexical);
+            }
+            else if (application.InlineConst is byte[] expected)
+            {
+                emitter.FailUnlessStringConst(expected);
+            }
+            else if (application.InlineEnum is Utf8NameMap<object> allowed)
+            {
+                emitter.FailUnlessStringSet(allowed);
+            }
+            else
+            {
+                LowerChild(emitter, nodes, 0, 0, application.Node, requested, pending);
+            }
+        }
+
+        // A branch's resolution of a name no entry knows (Evaluator.ResolveUnknownName): every pattern it matches,
+        // and the additional schema when it matches none.
+        void Unknown(FusedContributor contributor)
+        {
+            if (contributor.Patterns is PatternPropertyEntry[] patterns)
+            {
+                emitter.SetMatched(false);
+                foreach (PatternPropertyEntry pattern in patterns)
+                {
+                    emitter.BeginIfNameMatches(pattern.Matcher);
+                    emitter.SetMatched(true);
+                    if (!nodes[pattern.Schema.FastNode].AlwaysTrue)
+                    {
+                        LowerChild(emitter, nodes, 0, 0, pattern.Schema.FastNode, requested, pending);
+                    }
+
+                    emitter.EndIf();
+                }
+
+                if (contributor.AdditionalNode >= 0)
+                {
+                    emitter.BeginIfNotMatched();
+                    LowerChild(emitter, nodes, 0, 0, contributor.AdditionalNode, requested, pending);
+                    emitter.EndIf();
+                }
+            }
+            else if (contributor.AdditionalNode >= 0)
+            {
+                LowerChild(emitter, nodes, 0, 0, contributor.AdditionalNode, requested, pending);
+            }
+        }
+
+        static ulong Mask(int[] bits)
+        {
+            ulong mask = 0;
+            foreach (int bit in bits)
+            {
+                mask |= 1UL << bit;
+            }
+
+            return mask;
+        }
     }
 
     // The interpreter's type dispatch (Evaluator.EvalTypeDispatchPlan): the token type selects the one branch that can match.
