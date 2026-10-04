@@ -322,6 +322,26 @@ public sealed class JsonSchemaEvaluator : IDisposable
 
     private int evaluations;
 
+    /// <summary>
+    /// Compiles the schema's generated code now, whatever the experiment switch says: for tests and measurements
+    /// that compare the two engines in one process.
+    /// </summary>
+    /// <returns>Whether the schema runs generated code (not where dynamic code is unsupported, nor for a schema with a dynamic scope).</returns>
+    internal bool CompileGeneratedCode()
+    {
+        if (!SchemaLowering.IsSupported || this.FlagMode() is not { Entry: not null } fast)
+        {
+            return false;
+        }
+
+        if (!fast.Tiered)
+        {
+            this.CompileFlagMode(fast);
+        }
+
+        return true;
+    }
+
     /// <summary>Compiles the entry's generated code and publishes it, unless the entry data has been replaced meanwhile.</summary>
     private FlagModeEntry CompileFlagMode(FlagModeEntry fast)
     {

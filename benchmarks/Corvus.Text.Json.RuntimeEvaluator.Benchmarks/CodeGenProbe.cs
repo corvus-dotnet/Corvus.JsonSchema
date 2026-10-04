@@ -17,6 +17,12 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Benchmarks;
 /// methods, whether the generated code gives the interpreter's result on every instance, and the warm time of a pass
 /// over the corpus through each (<c>codegen [warm-up ms] [corpus...]</c>; a warm-up of 0 skips the timing).
 /// </summary>
+/// <remarks>
+/// Both engines are measured through the evaluator's public entry, as an application calls it: two evaluators of the
+/// one schema, one of them with its generated code compiled. (Calling the generated entry directly leaves out the
+/// per-document cost of the public entry, which the interpreter's figure includes: on corpora of small documents
+/// that made generated code look far better than an application sees.)
+/// </remarks>
 public static class CodeGenProbe
 {
     public static int Run(string[] args)
@@ -31,13 +37,23 @@ public static class CodeGenProbe
             CompiledSchema program = c.Evaluator.Program;
             SchemaNode[] nodes = program.Nodes;
             SchemaNode entry = nodes[nodes[c.Evaluator.RootNode].FlagEntry];
-            if (program.UsesDynamicScope || !SchemaLowering.IsSupported)
+            JsonSchemaDialect dialect = JsonSchemaDialect.Draft7;
+            foreach ((string file, JsonSchemaDialect d) in SourceMetaCases.All)
+            {
+                if (file == name)
+                {
+                    dialect = d;
+                }
+            }
+
+            using JsonSchemaEvaluator generated = JsonSchemaEvaluator.Compile(c.SchemaBytes, new JsonSchemaEvaluatorOptions { DefaultDialect = dialect });
+            if (!generated.CompileGeneratedCode())
             {
                 Console.WriteLine($"{name,-24} {c.Documents.Length,9} {"(not compiled)",-14}");
                 continue;
             }
 
-            NodeValidator? compiled = SchemaLowering.Compile(nodes, entry, out SchemaNode[] generatedNodes, out int specialised);
+            SchemaLowering.Compile(nodes, entry, out _, out int specialised);
             if (Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN_STATS") == "1")
             {
                 Stats(nodes);
@@ -46,7 +62,7 @@ public static class CodeGenProbe
             int mismatches = 0;
             foreach (ParsedJsonDocument<JsonElement> d in c.Documents)
             {
-                if (c.Evaluator.Evaluate(d.RootElement) != Generated(c, compiled, generatedNodes, entry, d))
+                if (c.Evaluator.Evaluate(d.RootElement) != generated.Evaluate(d.RootElement))
                 {
                     mismatches++;
                 }
@@ -56,24 +72,44 @@ public static class CodeGenProbe
             string timing = string.Empty;
             if (warmUp > 0)
             {
-                double interpreter = Warm(warmUp, () => c.EvaluateAll());
-                double generated = Warm(warmUp, () =>
-                {
-                    int valid = 0;
-                    foreach (ParsedJsonDocument<JsonElement> d in c.Documents)
-                    {
-                        valid += Generated(c, compiled, generatedNodes, entry, d) ? 1 : 0;
-                    }
-
-                    return valid;
-                });
-                timing = $" {interpreter,14:F1} {generated,12:F1} {generated / interpreter,6:F2}";
+                double interpreterTime = Warm(warmUp, c.Evaluator, c.Documents);
+                double generatedTime = Warm(warmUp, generated, c.Documents);
+                timing = $" {interpreterTime,14:F1} {generatedTime,12:F1} {generatedTime / interpreterTime,6:F2}";
             }
 
             Console.WriteLine($"{name,-24} {c.Documents.Length,9} {entry.Plan,-14} {specialised,11} {mismatches,10}{timing}");
         }
 
         return mismatched == 0 ? 0 : 1;
+    }
+
+    // The median of the last passes of a warm-up by time, in microseconds: the same loop and call site for both engines.
+    private static double Warm(int milliseconds, JsonSchemaEvaluator evaluator, ParsedJsonDocument<JsonElement>[] documents)
+    {
+        const int Last = 51;
+        long[] passes = new long[Last];
+        long end = Stopwatch.GetTimestamp() + (Stopwatch.Frequency * milliseconds / 1000);
+        int n = 0;
+        while (n < Last || Stopwatch.GetTimestamp() < end)
+        {
+            long start = Stopwatch.GetTimestamp();
+            Pass(evaluator, documents);
+            passes[n++ % Last] = Stopwatch.GetTimestamp() - start;
+        }
+
+        Array.Sort(passes);
+        return passes[Last / 2] * 1_000_000.0 / Stopwatch.Frequency;
+    }
+
+    private static int Pass(JsonSchemaEvaluator evaluator, ParsedJsonDocument<JsonElement>[] documents)
+    {
+        int valid = 0;
+        foreach (ParsedJsonDocument<JsonElement> d in documents)
+        {
+            valid += evaluator.Evaluate(d.RootElement) ? 1 : 0;
+        }
+
+        return valid;
     }
 
     // The shape of each strict object: its names by the dispatch's length classes and its entries by kind.
@@ -116,37 +152,5 @@ public static class CodeGenProbe
 
             Console.WriteLine($"    node {node.Id,5}: names {keys.Length,3} (<=8: {oneWord}, <=16: {twoWords}, longer: {longer}, largest length group {largestGroup}) required {System.Numerics.BitOperations.PopCount(node.RequiredMask)} rejects {node.AdditionalRejects} | token {tokens} set {sets} const {consts} strict {strictChildren} length {lengths} none {nothing} other {otherChildren} [{string.Join(", ", plans.Select(p => $"{p.Key} {p.Value}"))}]");
         }
-    }
-
-    // As the evaluator runs a compiled schema: the entry's method, or the interpreter over the generated nodes.
-    private static bool Generated(SourceMetaCase c, NodeValidator? compiled, SchemaNode[] generatedNodes, SchemaNode entry, ParsedJsonDocument<JsonElement> d)
-    {
-        IJsonDocument document = ((IJsonElement<JsonElement>)d.RootElement).ParentDocument;
-        int index = ((IJsonElement<JsonElement>)d.RootElement).ParentDocumentIndex;
-        CompiledSchema program = c.Evaluator.Program;
-        var parsed = (Corvus.Text.Json.Internal.JsonDocument)document;
-        return compiled is not null
-            ? Evaluator.EvaluateFlagCompiled(compiled, program, generatedNodes, entry.ResourceId, program.Options.MaxDepth, parsed, document, c.Evaluator.RootNode, index)
-            : Evaluator.EvaluateFlagRaw(program, generatedNodes, generatedNodes[entry.Id], entry.ResourceId, program.Options.MaxDepth, parsed, document, c.Evaluator.RootNode, index);
-    }
-
-    // The fastest pass after a warm-up, in microseconds.
-    private static double Warm(int milliseconds, Func<int> pass)
-    {
-        long end = Stopwatch.GetTimestamp() + (Stopwatch.Frequency * milliseconds / 1000);
-        while (Stopwatch.GetTimestamp() < end)
-        {
-            pass();
-        }
-
-        long best = long.MaxValue;
-        for (int i = 0; i < 200; i++)
-        {
-            long start = Stopwatch.GetTimestamp();
-            pass();
-            best = Math.Min(best, Stopwatch.GetTimestamp() - start);
-        }
-
-        return best * 1_000_000.0 / Stopwatch.Frequency;
     }
 }
