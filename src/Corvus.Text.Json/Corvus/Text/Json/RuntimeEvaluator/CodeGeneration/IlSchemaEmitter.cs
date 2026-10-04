@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.RuntimeEvaluator.Compilation;
@@ -29,6 +30,9 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
 
     // The widest span of name lengths dispatched by a jump table; a wider one is a chain of comparisons.
     private const int MaxLengthTable = 64;
+
+    // The longest name compared by words; a longer one takes the interpreter's lookup.
+    private const int MaxWordsName = 128;
 
     private static readonly Type[] NodeParameters = [typeof(EvaluationState).MakeByRefType(), typeof(IJsonDocument), typeof(int)];
 
@@ -237,10 +241,10 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         LocalBuilder location = il.DeclareLocal(typeof(int));
         LocalBuilder length = il.DeclareLocal(typeof(int));
         LocalBuilder first = il.DeclareLocal(typeof(ulong));
-        LocalBuilder last = il.DeclareLocal(typeof(ulong));
+        LocalBuilder masked = il.DeclareLocal(typeof(ulong));
 
-        // The names by length; within a length, by words: one masked word up to 8 bytes, the first and last 8 bytes
-        // (overlapping) up to 16, and the interpreter's lookup beyond.
+        // The names by length; within a length, by words: one masked word up to 8 bytes, and beyond that each 8 bytes
+        // in turn with the last 8 overlapping (the interpreter's lookup for a name longer than MaxWordsName).
         var byLength = new SortedDictionary<int, List<int>>();
         for (int i = 0; i < keys.Length; i++)
         {
@@ -268,7 +272,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         var lengthLabels = new Dictionary<int, Label>();
         foreach (int nameLength in byLength.Keys)
         {
-            lengthLabels[nameLength] = nameLength > 2 * sizeof(ulong) ? slow : il.DefineLabel();
+            lengthLabels[nameLength] = nameLength > MaxWordsName ? slow : il.DefineLabel();
         }
 
         if (byLength.Count > 0)
@@ -311,7 +315,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         foreach (KeyValuePair<int, List<int>> sameLength in byLength)
         {
             int nameLength = sameLength.Key;
-            if (nameLength > 2 * sizeof(ulong))
+            if (nameLength > MaxWordsName)
             {
                 continue;
             }
@@ -329,33 +333,38 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
                     il.Emit(OpCodes.And);
                 }
 
-                il.Emit(OpCodes.Stloc, last);
+                il.Emit(OpCodes.Stloc, masked);
                 foreach (int index in sameLength.Value)
                 {
                     padded.Clear();
                     keys[index].CopyTo(padded);
-                    il.Emit(OpCodes.Ldloc, last);
+                    il.Emit(OpCodes.Ldloc, masked);
                     il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(padded)));
                     il.Emit(OpCodes.Beq, this.cases[index]);
                 }
             }
             else
             {
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldloc, location);
-                il.Emit(OpCodes.Ldc_I4, nameLength - sizeof(ulong));
-                il.Emit(OpCodes.Add);
-                il.Emit(OpCodes.Call, GenWord);
-                il.Emit(OpCodes.Stloc, last);
+                // A mismatch is nearly always in the first word, which is already read.
                 foreach (int index in sameLength.Value)
                 {
                     Label differs = il.DefineLabel();
                     il.Emit(OpCodes.Ldloc, first);
                     il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(keys[index])));
                     il.Emit(OpCodes.Bne_Un, differs);
-                    il.Emit(OpCodes.Ldloc, last);
-                    il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(keys[index].AsSpan(nameLength - sizeof(ulong)))));
-                    il.Emit(OpCodes.Beq, this.cases[index]);
+                    for (int offset = sizeof(ulong); offset < nameLength; offset += sizeof(ulong))
+                    {
+                        int at = Math.Min(offset, nameLength - sizeof(ulong));
+                        il.Emit(OpCodes.Ldarg_0);
+                        il.Emit(OpCodes.Ldloc, location);
+                        il.Emit(OpCodes.Ldc_I4, at);
+                        il.Emit(OpCodes.Add);
+                        il.Emit(OpCodes.Call, GenWord);
+                        il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(keys[index].AsSpan(at))));
+                        il.Emit(OpCodes.Bne_Un, differs);
+                    }
+
+                    il.Emit(OpCodes.Br, this.cases[index]);
                     il.MarkLabel(differs);
                 }
             }
@@ -363,7 +372,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             il.Emit(OpCodes.Br, this.otherNames);
         }
 
-        // Escaped names, names at the very end of the text and long names: the interpreter's lookup, then the case.
+        // Escaped names, names at the very end of the text and very long names: the interpreter's lookup, then the case.
         il.MarkLabel(slow);
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_1);
@@ -489,7 +498,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.MarkLabel(done);
     }
 
-    /// <summary>Creates the type, sets its constants and returns the method for a node.</summary>
+    /// <summary>Creates the type, sets its constants, compiles its methods and returns the method for a node.</summary>
     /// <param name="nodeId">The node.</param>
     /// <returns>Its method.</returns>
     public NodeValidator Build(int nodeId)
@@ -498,6 +507,13 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         foreach ((FieldBuilder field, object constant) in this.constants)
         {
             created.GetField(field.Name)!.SetValue(null, constant);
+        }
+
+        // Compiled here, on the thread that builds the schema's code (tiering's background task), not at each
+        // method's first call on a thread that is evaluating.
+        foreach (MethodBuilder method in this.methods.Values)
+        {
+            RuntimeHelpers.PrepareMethod(created.GetMethod(method.Name)!.MethodHandle);
         }
 
         return created.GetMethod(this.methods[nodeId].Name)!.CreateDelegate<NodeValidator>();

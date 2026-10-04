@@ -34,8 +34,9 @@ public class RuntimeCodeGenerationTests
         """{"tags": []}""", """{"id": 1, "x": 1}""", "[]", "1", "null",
     ];
 
-    // Names of every length the dispatch treats differently: none, one masked word (1 to 8 bytes), two overlapping
-    // words (9 to 16) and the interpreter's lookup (longer); two names of one length share a comparison chain.
+    // Names of every length the dispatch treats differently: none, one masked word (1 to 8 bytes), several words with
+    // the last overlapping (9 to 128, here with names that differ only in a first, middle or last word) and the
+    // interpreter's lookup (longer); names of one length share a comparison chain.
     private const string NameLengths = """
         {
           "type": "object",
@@ -57,7 +58,12 @@ public class RuntimeCodeGenerationTests
             "abcdefghijkl": {"type": "string"},
             "abcdefghijklmnop": {"type": "string"},
             "abcdefghijklmnopq": {"type": "string"},
-            "abcdefghijklmnopqrstuvwxyz0123": {"type": "boolean"}
+            "abcdefghijklmnopqrstuvwx": {"type": "integer"},
+            "abcdefghijklmnopqrstuvwy": {"type": "string"},
+            "abcdefghijklmnopqrstuvwxyz0123": {"type": "boolean"},
+            "abcdefghijklXnopqrstuvwxyz0123": {"type": "string"},
+            "Xbcdefghijklmnopqrstuvwxyz0123": {"type": "null"},
+            "nabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghz": {"type": "boolean"}
           },
           "additionalProperties": {"type": "string"}
         }
@@ -113,7 +119,9 @@ public class RuntimeCodeGenerationTests
     [
         string.Empty, "a", "b", "c", "ab", "abc", "abcd", "abcde", "abcdef", "abcdefg", "abcdefgh", "abcdefgx", "abcdefgy", "abcdefghi",
         "abcdefghj", "abcdefghk", "xbcdefghi", "abcdefghijkl", "abcdefghijklmnop", "abcdefghijklmnopq", "abcdefghijklmnopx",
-        "abcdefghijklmnopqrstuvwxyz0123", "abcdefghijklmnopqrstuvwxyz0124", "name", "child", "kind", "tag", "code", "count",
+        "abcdefghijklmnopqrstuvwxyz0123", "abcdefghijklmnopqrstuvwxyz0124", "abcdefghijklmnopqrstuvwx", "abcdefghijklmnopqrstuvwy",
+        "abcdefghijklmnopXrstuvwx", "abcdefghijklXnopqrstuvwxyz0123", "abcdefghijklYnopqrstuvwxyz0123", "Xbcdefghijklmnopqrstuvwxyz0123",
+        "nabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghz", "nabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghy", "name", "child", "kind", "tag", "code", "count",
         "items", "either", "id", "tags", "other",
     ];
 
@@ -194,9 +202,17 @@ public class RuntimeCodeGenerationTests
 
         builder.Append('{');
         int count = random.Next(5);
+
+        // Some root objects start with the names one of the schemas requires, so that it accepts some documents.
+        bool required = depth == 0 && random.Next(3) == 0;
+        if (required)
+        {
+            builder.Append("\"a\":\"x\",\"abcdefghi\":\"x\"");
+        }
+
         for (int i = 0; i < count; i++)
         {
-            if (i > 0)
+            if (i > 0 || required)
             {
                 builder.Append(random.Next(2) == 0 ? "," : " , ");
             }
