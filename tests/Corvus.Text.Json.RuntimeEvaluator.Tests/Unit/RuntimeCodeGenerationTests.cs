@@ -165,6 +165,27 @@ public class RuntimeCodeGenerationTests
         }
         """;
 
+    // An allOf/$ref chain of object schemas (a flat fused object), with a type union and a type dispatch beneath it.
+    private const string Fused = """
+        {
+          "allOf": [
+            {"$ref": "#/$defs/base"},
+            {"properties": {"kind": {"enum": ["a", "b"]}, "count": {"type": "integer"}, "tags": {"type": "array", "items": {"type": "string"}}}}
+          ],
+          "$defs": {
+            "base": {
+              "type": "object",
+              "required": ["a"],
+              "properties": {
+                "a": {"type": "string"},
+                "name": {"anyOf": [{"type": "string"}, {"type": "number"}]},
+                "child": {"oneOf": [{"type": "string", "minLength": 2}, {"type": "object", "properties": {"b": {"type": "boolean"}}, "additionalProperties": false}, {"type": "array", "items": {"type": "integer"}}]}
+              }
+            }
+          }
+        }
+        """;
+
     private const string Closed = """{"type": "object", "additionalProperties": false}""";
 
     private const string Untyped = """{"properties": {"a": {"type": "integer"}, "name": {"type": "string"}}}""";
@@ -201,7 +222,8 @@ public class RuntimeCodeGenerationTests
     [DataRow(Maps, 2)]
     [DataRow(Arrays, 10)]
     [DataRow(UnderPatterns, 3)]
-    [DataRow(UnderAnyOf, 2)]
+    [DataRow(UnderAnyOf, 4)]
+    [DataRow(Fused, 8)]
     [DataRow(UnderIf, 4)]
     [DataRow(Closed, 1)]
     [DataRow(Untyped, 1)]
@@ -344,6 +366,43 @@ public class RuntimeCodeGenerationTests
         }
 
         builder.Append('}');
+    }
+
+    [TestMethod]
+    public void FlagModeEvaluationAllocatesNothing()
+    {
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(Schema);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"id": 2, "tags": ["a"]}""");
+        ParsedJsonDocument<JsonElement>[] docs = [doc, doc, doc, doc];
+
+        // Warm up past tiering, so that the measured calls run the optimised code.
+        for (int i = 0; i < 20_000; i++)
+        {
+            EvaluateAll(evaluator, docs);
+        }
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        int valid = 0;
+        for (int i = 0; i < 1000; i++)
+        {
+            valid += EvaluateAll(evaluator, docs);
+        }
+
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.AreEqual(4000, valid);
+        Assert.AreEqual(0L, allocated, "Bytes allocated by 4000 flag-mode evaluations.");
+
+        // A small method of its own: the evaluator's entry is inlined here, as it is into an application's loop.
+        static int EvaluateAll(JsonSchemaEvaluator evaluator, ParsedJsonDocument<JsonElement>[] docs)
+        {
+            int valid = 0;
+            foreach (ParsedJsonDocument<JsonElement> d in docs)
+            {
+                valid += evaluator.Evaluate(d.RootElement) ? 1 : 0;
+            }
+
+            return valid;
+        }
     }
 
     [TestMethod]

@@ -18,7 +18,8 @@ namespace Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
 /// <remarks>
 /// Specialised so far: strict objects (<see cref="NodePlan.StrictObject"/>), with their properties' leaves tested in
 /// place, and arrays of items (<see cref="NodePlan.SimpleArray"/> and <see cref="NodePlan.ArrayItems"/>, without
-/// prefix items or <c>uniqueItems</c>); a child that is specialised is called as a generated method. Every other node
+/// prefix items or <c>uniqueItems</c>), flat fused objects (an <c>allOf</c>/<c>$ref</c> chain of object schemas in one
+/// pass), type unions and type dispatch; a child that is specialised is called as a generated method. Every other node
 /// is evaluated by the interpreter, which calls the generated methods of the specialised nodes it reaches.
 /// </remarks>
 internal static class SchemaLowering
@@ -108,8 +109,17 @@ internal static class SchemaLowering
                 case NodePlan.SimpleArray:
                     LowerSimpleArray(emitter, nodes, node);
                     break;
-                default:
+                case NodePlan.ArrayItems:
                     LowerArrayItems(emitter, nodes, node, requested, pending);
+                    break;
+                case NodePlan.FusedObject:
+                    LowerFlatFusedObject(emitter, nodes, node, requested, pending);
+                    break;
+                case NodePlan.TypeUnion:
+                    emitter.ReturnTokenTest(StrictEntry.TokenBitsOf(node.InPlaceUnionMask), (node.InPlaceUnionMask & TypeMask.Integer) != 0 && (node.InPlaceUnionMask & TypeMask.Number) == 0, node.Dialect == JsonSchemaDialect.Draft4);
+                    break;
+                default:
+                    LowerTypeDispatch(emitter, nodes, node, requested, pending);
                     break;
             }
 
@@ -193,6 +203,22 @@ internal static class SchemaLowering
                 return !node.UniqueItems && (items.AlwaysTrue || items.IsTypeOnly || items.Plan == NodePlan.Leaf);
             case NodePlan.ArrayItems:
                 return !node.UniqueItems && node.PrefixEntries is null;
+            case NodePlan.FusedObject:
+                // A flat fused plan: the strict loop over the merged names of an allOf/$ref chain of object schemas.
+                return node.Fused?.FlatEntries is not null;
+            case NodePlan.TypeUnion:
+                return true;
+            case NodePlan.TypeDispatch:
+                // A branch on an in-place cycle is entered through the interpreter's guarded general edge.
+                foreach (int branch in node.InPlaceDispatch!)
+                {
+                    if (branch >= 0 && (nodes[node.InPlaceBranches![branch].FastNode].Flags & NodeFlags.InPlaceCycle) != 0)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
             default:
                 return false;
         }
@@ -203,6 +229,46 @@ internal static class SchemaLowering
     private static ushort OtherTokens(SchemaNode node, JsonTokenType container) => node.HasType ? (ushort)(StrictEntry.TokenBitsOf(node.Type) & ~(1 << (int)container)) : ushort.MaxValue;
 
     private static bool IntegerOnly(SchemaNode node) => node.HasType && (node.Type & TypeMask.Integer) != 0 && (node.Type & TypeMask.Number) == 0;
+
+    // The interpreter's flat fused loop (Evaluator.EvalFlatFusedLoop): the strict loop over the merged names, with the
+    // entry's index as its seen bit, and names no entry knows ignored. A value that is not an object takes the
+    // interpreter's general evaluation, as the child dispatch gives it.
+    private static void LowerFlatFusedObject(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
+    {
+        FusedObject fused = node.Fused!;
+        StrictEntry[] entries = fused.FlatEntries!;
+        emitter.BeginObject(0, integerOnly: false, lexical: false, acceptsObject: true, fused.FlatMinProperties, fused.FlatMaxProperties, otherwiseInterpreted: node.Id);
+        emitter.BeginNameDispatch(fused.Entries);
+        for (int i = 0; i < entries.Length; i++)
+        {
+            emitter.BeginCase(i);
+            LowerEntry(emitter, nodes, in entries[i], i, fused.FlatRequiredMask, requested, pending);
+            emitter.EndCase();
+        }
+
+        emitter.BeginCase(-1);
+        emitter.EndCase();
+        emitter.EndNameDispatch();
+        emitter.EndObject(fused.FlatRequiredMask);
+    }
+
+    // The interpreter's type dispatch (Evaluator.EvalTypeDispatchPlan): the token type selects the one branch that can match.
+    private static void LowerTypeDispatch(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
+    {
+        int[] dispatch = node.InPlaceDispatch!;
+        int[] childByToken = new int[dispatch.Length];
+        bool[] generatedByToken = new bool[dispatch.Length];
+        for (int token = 0; token < dispatch.Length; token++)
+        {
+            childByToken[token] = -1;
+            if (dispatch[token] >= 0)
+            {
+                (childByToken[token], generatedByToken[token]) = Target(nodes, node.InPlaceBranches![dispatch[token]].FastNode, requested, pending);
+            }
+        }
+
+        emitter.ReturnChildByToken(childByToken, generatedByToken);
+    }
 
     // The interpreter's simple array (Evaluator.EvalSimpleArrayFast): a value that is not an array fails a type and
     // passes otherwise; the items are a leaf.
@@ -276,7 +342,7 @@ internal static class SchemaLowering
         for (int i = 0; i < properties.Count; i++)
         {
             emitter.BeginCase(i);
-            LowerEntry(emitter, nodes, in entries[i], node.RequiredMask, requested, pending);
+            LowerEntry(emitter, nodes, in entries[i], entries[i].SeenBit, node.RequiredMask, requested, pending);
             emitter.EndCase();
         }
 
@@ -287,7 +353,7 @@ internal static class SchemaLowering
         }
         else
         {
-            LowerEntry(emitter, nodes, in node.AdditionalEntry, node.RequiredMask, requested, pending);
+            LowerEntry(emitter, nodes, in node.AdditionalEntry, node.AdditionalEntry.SeenBit, node.RequiredMask, requested, pending);
         }
 
         emitter.EndCase();
@@ -296,12 +362,12 @@ internal static class SchemaLowering
     }
 
     // One property's resolution, in the order the interpreter's loop tests it.
-    private static void LowerEntry(ISchemaEmitter emitter, SchemaNode[] nodes, in StrictEntry entry, ulong requiredMask, HashSet<int> requested, Queue<int> pending)
+    private static void LowerEntry(ISchemaEmitter emitter, SchemaNode[] nodes, in StrictEntry entry, int seenBit, ulong requiredMask, HashSet<int> requested, Queue<int> pending)
     {
         // Only the required bits are read back.
-        if (entry.SeenBit >= 0 && (requiredMask & (1UL << entry.SeenBit)) != 0)
+        if (seenBit >= 0 && (requiredMask & (1UL << seenBit)) != 0)
         {
-            emitter.MarkSeen(entry.SeenBit);
+            emitter.MarkSeen(seenBit);
         }
 
         if (entry.TokenBits != 0)
@@ -328,7 +394,14 @@ internal static class SchemaLowering
 
     private static void LowerChild(ISchemaEmitter emitter, SchemaNode[] nodes, ushort decided, ushort accepts, int child, HashSet<int> requested, Queue<int> pending)
     {
-        // The child's target, its forwards taken as the interpreter takes them.
+        (int target, bool generated) = Target(nodes, child, requested, pending);
+        emitter.FailUnlessChild(decided, accepts, target, generated);
+    }
+
+    // A child's target, its forwards taken as the interpreter takes them: the node whose generated method to call
+    // (requested here), or the child itself for the interpreter.
+    private static (int Node, bool Generated) Target(SchemaNode[] nodes, int child, HashSet<int> requested, Queue<int> pending)
+    {
         int target = child;
         for (int hops = 0; hops < MaxForwards && nodes[target].Plan == NodePlan.Forward; hops++)
         {
@@ -337,8 +410,7 @@ internal static class SchemaLowering
 
         if (!IsSpecialised(nodes, nodes[target]))
         {
-            emitter.FailUnlessChild(decided, accepts, child, generated: false);
-            return;
+            return (child, false);
         }
 
         if (requested.Add(target))
@@ -346,7 +418,7 @@ internal static class SchemaLowering
             pending.Enqueue(target);
         }
 
-        emitter.FailUnlessChild(decided, accepts, target, generated: true);
+        return (target, true);
     }
 }
 #endif

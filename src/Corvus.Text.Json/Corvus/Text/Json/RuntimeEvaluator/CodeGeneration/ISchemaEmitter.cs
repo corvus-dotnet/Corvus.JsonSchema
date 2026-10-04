@@ -42,7 +42,8 @@ internal interface ISchemaEmitter
     /// <param name="acceptsObject">Whether an object is accepted at all.</param>
     /// <param name="minProperties">The least property count, or -1.</param>
     /// <param name="maxProperties">The greatest property count, or -1.</param>
-    void BeginObject(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsObject, int minProperties, int maxProperties);
+    /// <param name="otherwiseInterpreted">When not negative, a value that is not an object returns the interpreter's general evaluation of this node in place of the token test.</param>
+    void BeginObject(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsObject, int minProperties, int maxProperties, int otherwiseInterpreted = -1);
 
     /// <summary>Finishes the pass over the properties; the method then returns whether every bit of <paramref name="requiredMask"/> was marked.</summary>
     /// <param name="requiredMask">The seen bits that must be set.</param>
@@ -77,8 +78,21 @@ internal interface ISchemaEmitter
     void ReturnArrayWithoutItems(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems);
 
     /// <summary>Starts the dispatch on the current property's name: one case per key (by its index), and the case -1 for every other name.</summary>
-    /// <param name="properties">The names, whose indices number the cases.</param>
-    void BeginNameDispatch(Utf8NameMap<PropertyEntry> properties);
+    /// <typeparam name="T">The map's value type.</typeparam>
+    /// <param name="names">The names, whose indices number the cases.</param>
+    void BeginNameDispatch<T>(Utf8NameMap<T> names)
+        where T : class;
+
+    /// <summary>Returns whether the method's value has one of a set of token types.</summary>
+    /// <param name="tokens">The token types accepted, a bit per type.</param>
+    /// <param name="integerOnly">Whether an accepted number must be an integer.</param>
+    /// <param name="lexical">Whether the integer test is draft 4's lexical one.</param>
+    void ReturnTokenTest(ushort tokens, bool integerOnly, bool lexical);
+
+    /// <summary>Returns the result of the child the method's value's token type selects, or false for a token type with none.</summary>
+    /// <param name="childByToken">By token type, the child node, or -1.</param>
+    /// <param name="generatedByToken">By token type, whether that child has a generated method (the interpreter evaluates it otherwise).</param>
+    void ReturnChildByToken(int[] childByToken, bool[] generatedByToken);
 
     /// <summary>Starts the code for one name (by its index in the dispatch's names), or with -1 for every other name.</summary>
     /// <param name="index">The name's index, or -1.</param>

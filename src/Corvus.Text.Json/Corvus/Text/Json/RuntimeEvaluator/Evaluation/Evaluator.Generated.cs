@@ -57,14 +57,30 @@ internal static partial class Evaluator
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static ulong GenWord(ref EvaluationState state, int location) => Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(state.RawUtf8), (nint)(uint)location));
 
-    /// <summary>The index of a property's name in the node's properties, or -1: the interpreter's lookup, for the names generated code does not compare by words.</summary>
+    /// <summary>The index of a property's name in a name map, or -1: the interpreter's lookup, for the names generated code does not compare by words.</summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static int GenSlowName(ref EvaluationState state, IJsonDocument doc, int valueIndex, Utf8NameMap<PropertyEntry> properties)
+    internal static int GenSlowName<T>(ref EvaluationState state, IJsonDocument doc, int valueIndex, Utf8NameMap<T> names)
+        where T : class
     {
         int location = default(RawAccess).PropertyNameLocationUnchecked(ref state, doc, valueIndex, out int length);
-        return length >= 0
-            ? properties.GetIndex(state.RawUtf8, location, length)
-            : LookupEscapedName<RawAccess>(properties, ref state, doc, valueIndex);
+        if (length >= 0)
+        {
+            return names.GetIndex(state.RawUtf8, location, length);
+        }
+
+        using UnescapedUtf8JsonString name = PropertyName<RawAccess>(ref state, doc, valueIndex);
+        return names.TryGetIndex(name.Span, out int index) ? index : -1;
+    }
+
+    /// <summary>
+    /// The interpreter's general evaluation of a node the program compiled, for the values a generated method does
+    /// not handle itself (a fused object's method, given a value that is not an object). The node is the program's
+    /// own, not the generated copy, whose plan would call the method again.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenEvalGeneral(int nodeId, IJsonDocument doc, int index, ref EvaluationState state)
+    {
+        return Eval<FastMode, RawAccess>(state.Program.Nodes[nodeId], doc, index, ref state, default, 0);
     }
 
     /// <summary>Whether a number value is an integer.</summary>

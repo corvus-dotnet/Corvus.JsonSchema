@@ -48,13 +48,23 @@ public static class ProtocolRun
         long coldEnd = Stopwatch.GetTimestamp();
 
         // The warm pass is the last pass of the warm-up loop, timed at the same call site as the passes before it.
-        long warmUpEnd = Stopwatch.GetTimestamp() + (2 * Stopwatch.Frequency);
+        // PROTOCOL_WARMUP_MS lengthens the warm-up (for profiling the steady state); the protocol's is 2 seconds.
+        long warmUpMs = long.TryParse(Environment.GetEnvironmentVariable("PROTOCOL_WARMUP_MS"), out long ms) ? ms : 2000;
+        long warmUpEnd = Stopwatch.GetTimestamp() + (warmUpMs * Stopwatch.Frequency / 1000);
         long warm = 0;
         for (int i = 0; i < MinWarmUpPasses || Stopwatch.GetTimestamp() < warmUpEnd; i++)
         {
             long start = Stopwatch.GetTimestamp();
             ValidateAll(evaluator, docs);
             warm = Stopwatch.GetTimestamp() - start;
+        }
+
+        // PROTOCOL_ALLOC=1 reports what a warm pass allocates (nothing, when the evaluation path is clean).
+        if (Environment.GetEnvironmentVariable("PROTOCOL_ALLOC") == "1")
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            ValidateAll(evaluator, docs);
+            Console.Error.WriteLine($"allocated in one warm pass: {GC.GetAllocatedBytesForCurrentThread() - before} bytes over {docs.Length} documents");
         }
 
         static long Ns(long ticks) => (long)(ticks * 1_000_000_000.0 / Stopwatch.Frequency);

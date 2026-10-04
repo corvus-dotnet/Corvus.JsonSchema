@@ -44,6 +44,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenName = Helper(nameof(Evaluator.GenName));
     private static readonly MethodInfo GenWord = Helper(nameof(Evaluator.GenWord));
     private static readonly MethodInfo GenSlowName = Helper(nameof(Evaluator.GenSlowName));
+    private static readonly MethodInfo GenEvalGeneral = Helper(nameof(Evaluator.GenEvalGeneral));
     private static readonly MethodInfo GenIsInteger = Helper(nameof(Evaluator.GenIsInteger));
     private static readonly MethodInfo GenStringSet = Helper(nameof(Evaluator.GenStringSet));
     private static readonly MethodInfo GenStringConst = Helper(nameof(Evaluator.GenStringConst));
@@ -111,9 +112,9 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     }
 
     /// <inheritdoc/>
-    public void BeginObject(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsObject, int minProperties, int maxProperties)
+    public void BeginObject(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsObject, int minProperties, int maxProperties, int otherwiseInterpreted = -1)
     {
-        this.Prologue(JsonTokenType.StartObject, otherTokens, integerOnly, lexical, acceptsObject, minProperties, maxProperties);
+        this.Prologue(JsonTokenType.StartObject, otherTokens, integerOnly, lexical, acceptsObject, minProperties, maxProperties, otherwiseInterpreted);
         this.BeginLoop(isObject: true);
     }
 
@@ -162,10 +163,74 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     }
 
     /// <inheritdoc/>
-    public void BeginNameDispatch(Utf8NameMap<PropertyEntry> properties)
+    public void ReturnTokenTest(ushort tokens, bool integerOnly, bool lexical)
     {
         ILGenerator il = this.Il;
-        byte[][] keys = properties.Keys;
+        this.token = il.DeclareLocal(typeof(int));
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, GenToken);
+        il.Emit(OpCodes.Stloc, this.token);
+        this.TokenTest(tokens, integerOnly, lexical, atMethodValue: true);
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.Ret);
+    }
+
+    /// <inheritdoc/>
+    public void ReturnChildByToken(int[] childByToken, bool[] generatedByToken)
+    {
+        ILGenerator il = this.Il;
+        var labels = new Label[childByToken.Length];
+        var byChild = new Dictionary<int, Label>();
+        for (int i = 0; i < childByToken.Length; i++)
+        {
+            if (childByToken[i] < 0)
+            {
+                labels[i] = this.fail;
+            }
+            else if (!byChild.TryGetValue(childByToken[i], out labels[i]))
+            {
+                byChild[childByToken[i]] = labels[i] = il.DefineLabel();
+            }
+        }
+
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, GenToken);
+        il.Emit(OpCodes.Switch, labels);
+        il.Emit(OpCodes.Br, this.fail);
+        for (int i = 0; i < childByToken.Length; i++)
+        {
+            if (childByToken[i] >= 0 && byChild.Remove(childByToken[i], out Label label))
+            {
+                il.MarkLabel(label);
+                if (generatedByToken[i])
+                {
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Ldarg_1);
+                    il.Emit(OpCodes.Ldarg_2);
+                    il.Emit(OpCodes.Call, this.Method(childByToken[i]));
+                }
+                else
+                {
+                    il.Emit(OpCodes.Ldc_I4, childByToken[i]);
+                    il.Emit(OpCodes.Ldarg_1);
+                    il.Emit(OpCodes.Ldarg_2);
+                    il.Emit(OpCodes.Ldarg_0);
+                    il.Emit(OpCodes.Call, EvalNodeFast);
+                }
+
+                il.Emit(OpCodes.Ret);
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public void BeginNameDispatch<T>(Utf8NameMap<T> names)
+        where T : class
+    {
+        ILGenerator il = this.Il;
+        byte[][] keys = names.Keys;
         this.cases = new Label[keys.Length];
         for (int i = 0; i < keys.Length; i++)
         {
@@ -313,8 +378,8 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_1);
         il.Emit(OpCodes.Ldloc, this.value!);
-        il.Emit(OpCodes.Ldsfld, this.Constant(properties));
-        il.Emit(OpCodes.Call, GenSlowName);
+        il.Emit(OpCodes.Ldsfld, this.Constant(names));
+        il.Emit(OpCodes.Call, GenSlowName.MakeGenericMethod(typeof(T)));
         if (keys.Length > 0)
         {
             il.Emit(OpCodes.Switch, this.cases);
@@ -462,7 +527,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
 
     // The method's value: a container of the kind goes on (unless its type or count rejects it); anything else is
     // decided by its token type.
-    private void Prologue(JsonTokenType container, ushort otherTokens, bool integerOnly, bool lexical, bool acceptsContainer, int minCount, int maxCount)
+    private void Prologue(JsonTokenType container, ushort otherTokens, bool integerOnly, bool lexical, bool acceptsContainer, int minCount, int maxCount, int otherwiseInterpreted = -1)
     {
         ILGenerator il = this.Il;
         this.token = il.DeclareLocal(typeof(int));
@@ -474,12 +539,24 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldloc, this.token);
         il.Emit(OpCodes.Ldc_I4, (int)container);
         il.Emit(OpCodes.Beq, isContainer);
-        if (otherTokens != ushort.MaxValue)
+        if (otherwiseInterpreted >= 0)
         {
-            this.TokenTest(otherTokens, integerOnly, lexical, atMethodValue: true);
+            il.Emit(OpCodes.Ldc_I4, otherwiseInterpreted);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, GenEvalGeneral);
+        }
+        else
+        {
+            if (otherTokens != ushort.MaxValue)
+            {
+                this.TokenTest(otherTokens, integerOnly, lexical, atMethodValue: true);
+            }
+
+            il.Emit(OpCodes.Ldc_I4_1);
         }
 
-        il.Emit(OpCodes.Ldc_I4_1);
         il.Emit(OpCodes.Ret);
 
         il.MarkLabel(isContainer);
