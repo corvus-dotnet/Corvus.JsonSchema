@@ -388,6 +388,15 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
         return true;
     }
 
+    /// <inheritdoc/>
+    internal override bool TryGetRawSpans(out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8)
+    {
+        CheckNotDisposed();
+        rows = _parsedData.RawData;
+        utf8 = _utf8Array is byte[] array ? new ReadOnlySpan<byte>(array, _utf8Start, _utf8Json.Length) : _utf8Json.Span;
+        return true;
+    }
+
     /// <summary>
     /// Gets the raw simple value from the document without bounds checking.
     /// </summary>

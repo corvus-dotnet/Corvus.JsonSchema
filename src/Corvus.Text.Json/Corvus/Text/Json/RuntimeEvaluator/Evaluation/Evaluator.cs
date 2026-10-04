@@ -77,7 +77,7 @@ internal static partial class Evaluator
     {
         // Every field written once, in place: an object initializer builds a zeroed temporary and copies it over.
         EvaluationState state;
-        if (!parsed.TryGetRawSpans(out state.RawUtf8Memory, out state.RawRows, out state.RawUtf8))
+        if (!parsed.TryGetRawSpans(out state.RawRows, out state.RawUtf8))
         {
             return EvaluateGeneral(program, rootNode, document, index, null);
         }
@@ -99,8 +99,20 @@ internal static partial class Evaluator
     /// <summary>Flag-mode evaluation through a schema's generated code, with the same state as <see cref="EvaluateFlagRaw"/>.</summary>
     internal static bool EvaluateFlagCompiled(CodeGeneration.NodeValidator compiled, CompiledSchema program, SchemaNode[] nodes, int entryResource, int maxDepth, JsonDocument parsed, IJsonDocument document, int rootNode, int index)
     {
+        unsafe
+        {
+            return EvaluateFlagCompiled((delegate*<ref EvaluationState, IJsonDocument, int, bool>)compiled.Method.MethodHandle.GetFunctionPointer(), program, nodes, entryResource, maxDepth, parsed, document, rootNode, index);
+        }
+    }
+
+    /// <summary>
+    /// Flag-mode evaluation through a schema's generated code, called by its address: a delegate to a static method
+    /// goes through a thunk that shifts the arguments, on every document.
+    /// </summary>
+    internal static unsafe bool EvaluateFlagCompiled(delegate*<ref EvaluationState, IJsonDocument, int, bool> compiled, CompiledSchema program, SchemaNode[] nodes, int entryResource, int maxDepth, JsonDocument parsed, IJsonDocument document, int rootNode, int index)
+    {
         EvaluationState state;
-        if (!parsed.TryGetRawSpans(out state.RawUtf8Memory, out state.RawRows, out state.RawUtf8))
+        if (!parsed.TryGetRawSpans(out state.RawRows, out state.RawUtf8))
         {
             return EvaluateGeneral(program, rootNode, document, index, null);
         }
@@ -144,7 +156,7 @@ internal static partial class Evaluator
         };
 
         SchemaNode root = nodes[rootNode];
-        bool raw = document is JsonDocument jsonDocument && jsonDocument.TryGetRawSpans(out state.RawUtf8Memory, out state.RawRows, out state.RawUtf8);
+        bool raw = document is JsonDocument jsonDocument && jsonDocument.TryGetRawSpans(out state.RawRows, out state.RawUtf8);
 
         // A root that is nothing but a $ref reports against its target, as a generated model rooted at a reduced
         // type does; the root context carries the target's schema location. Flag mode starts there too.

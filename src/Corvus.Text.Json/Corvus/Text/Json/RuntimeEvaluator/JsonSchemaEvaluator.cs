@@ -300,9 +300,12 @@ public sealed class JsonSchemaEvaluator : IDisposable
     private bool EvaluateFlag(FlagModeEntry fast, SchemaNode entry, JsonDocument parsed, IJsonDocument document, int index)
     {
 #if NET && !STJ
-        if (fast.Compiled is NodeValidator compiled)
+        if (fast.CompiledAddress != 0)
         {
-            return Evaluator.EvaluateFlagCompiled(compiled, this.program, fast.Nodes, fast.EntryResource, fast.MaxDepth, parsed, document, this.rootNode, index);
+            unsafe
+            {
+                return Evaluator.EvaluateFlagCompiled((delegate*<ref EvaluationState, IJsonDocument, int, bool>)fast.CompiledAddress, this.program, fast.Nodes, fast.EntryResource, fast.MaxDepth, parsed, document, this.rootNode, index);
+            }
         }
 
         if (CodeGenEnabled && !fast.Tiered && Interlocked.Increment(ref this.evaluations) == CodeGenThreshold)
@@ -412,6 +415,9 @@ public sealed class JsonSchemaEvaluator : IDisposable
 
         /// <summary>The entry's generated code, once runtime codegen has compiled the schema and its entry is specialised.</summary>
         public readonly NodeValidator? Compiled = compiled;
+
+        /// <summary>The address of <see cref="Compiled"/>'s method (0 for none), which the evaluation calls; the delegate keeps its code alive.</summary>
+        public readonly nint CompiledAddress = compiled is null ? 0 : compiled.Method.MethodHandle.GetFunctionPointer();
 
         /// <summary>Whether runtime codegen has compiled the schema.</summary>
         public readonly bool Tiered = tiered;

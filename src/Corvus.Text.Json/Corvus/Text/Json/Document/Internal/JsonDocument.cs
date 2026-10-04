@@ -130,6 +130,21 @@ public abstract partial class JsonDocument
     }
 
     /// <summary>
+    /// <see cref="TryGetRawSpans(out ReadOnlyMemory{byte}, out ReadOnlySpan{byte}, out ReadOnlySpan{byte})"/> without
+    /// the text as memory: what an evaluation takes on every document (the memory is an object reference written
+    /// through a write barrier, and few evaluations need it).
+    /// </summary>
+    /// <param name="rows">The metadata rows.</param>
+    /// <param name="utf8">The UTF-8 text the rows index into.</param>
+    /// <returns><see langword="true"/> if direct access is available for this document type.</returns>
+    internal virtual bool TryGetRawSpans(out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8)
+    {
+        rows = default;
+        utf8 = default;
+        return false;
+    }
+
+    /// <summary>
     /// Indicates whether this document instance is immutable and cannot be modified.
     /// </summary>
     [CLSCompliant(false)]

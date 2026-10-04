@@ -136,7 +136,10 @@ internal readonly struct RawAccess : IDocumentAccess
         ReadOnlySpan<byte> rows = state.RawRows;
         int location = ReadInt32(rows, index) & LocationMask;
         int length = ReadInt32(rows, index + SizeOrLengthOffset) & int.MaxValue;
-        return state.RawUtf8Memory.Slice(location, length);
+
+        // The text as memory, from the document: only the values handed on as memory (unescaped strings) need it.
+        ((JsonDocument)doc).TryGetRawSpans(out ReadOnlyMemory<byte> utf8Memory, out _, out _);
+        return utf8Memory.Slice(location, length);
     }
 
     public bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => ReadInt32(state.RawRows, index + SizeOrLengthOffset) < 0;
@@ -373,9 +376,6 @@ internal ref struct EvaluationState
 
     /// <summary>The resource evaluation started in: the outermost dynamic scope on every path.</summary>
     public int EntryResource;
-
-    /// <summary>The UTF-8 text of the instance document as memory, when <see cref="RawAccess"/> is in use: for the values handed on as memory (unescaped strings).</summary>
-    public ReadOnlyMemory<byte> RawUtf8Memory;
 
     /// <summary>The metadata rows of the instance document, when <see cref="RawAccess"/> is in use.</summary>
     public ReadOnlySpan<byte> RawRows;
