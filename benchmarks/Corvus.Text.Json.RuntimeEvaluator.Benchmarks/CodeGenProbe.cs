@@ -88,6 +88,65 @@ public static class CodeGenProbe
         return mismatched == 0 ? 0 : 1;
     }
 
+    /// <summary>
+    /// The warm time of a pass through each engine, measured finely enough to compare two builds
+    /// (<c>precise [corpus...]</c>): after a 2-second warm-up, 41 batches of at least 20 ms each, timed as a whole,
+    /// and the median batch's time per pass. Prints <c>corpus,interpreter ns,generated ns</c>.
+    /// </summary>
+    public static int RunPrecise(string[] args)
+    {
+        string[] names = args.Length > 0 ? args : Array.ConvertAll(SourceMetaCases.All, c => c.File);
+        foreach (string name in names)
+        {
+            using var c = new SourceMetaCase(name);
+            JsonSchemaDialect dialect = JsonSchemaDialect.Draft7;
+            foreach ((string file, JsonSchemaDialect d) in SourceMetaCases.All)
+            {
+                if (file == name)
+                {
+                    dialect = d;
+                }
+            }
+
+            using JsonSchemaEvaluator generated = JsonSchemaEvaluator.Compile(c.SchemaBytes, new JsonSchemaEvaluatorOptions { DefaultDialect = dialect });
+            bool compiled = generated.CompileGeneratedCode();
+            double interpreterTime = Precise(c.Evaluator, c.Documents);
+            double generatedTime = compiled ? Precise(generated, c.Documents) : double.NaN;
+            Console.WriteLine($"{name},{interpreterTime:F0},{generatedTime:F0}");
+        }
+
+        return 0;
+    }
+
+    private static double Precise(JsonSchemaEvaluator evaluator, ParsedJsonDocument<JsonElement>[] documents)
+    {
+        const int Batches = 41;
+        long end = Stopwatch.GetTimestamp() + (2 * Stopwatch.Frequency);
+        long passes = 0;
+        while (Stopwatch.GetTimestamp() < end)
+        {
+            Pass(evaluator, documents);
+            passes++;
+        }
+
+        // Passes per batch for about 20 ms, from the warm-up's rate.
+        int perBatch = (int)Math.Max(1, passes / 100);
+        double[] batches = new double[Batches];
+        for (int b = 0; b < Batches; b++)
+        {
+            long start = Stopwatch.GetTimestamp();
+            for (int i = 0; i < perBatch; i++)
+            {
+                Pass(evaluator, documents);
+            }
+
+            batches[b] = (Stopwatch.GetTimestamp() - start) * 1_000_000_000.0 / Stopwatch.Frequency / perBatch;
+        }
+
+        Array.Sort(batches);
+        return batches[Batches / 2];
+    }
+
     // The median of the last passes of a warm-up by time, in microseconds: the same loop and call site for both engines.
     private static double Warm(int milliseconds, JsonSchemaEvaluator evaluator, ParsedJsonDocument<JsonElement>[] documents)
     {

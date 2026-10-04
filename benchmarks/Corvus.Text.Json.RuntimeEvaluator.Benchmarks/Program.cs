@@ -60,6 +60,11 @@ if (args.Length > 0 && args[0] == "protocol")
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ProtocolRun.Run(args[1..]);
 }
 
+if (args.Length > 0 && args[0] == "precise")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CodeGenProbe.RunPrecise(args[1..]);
+}
+
 if (args.Length > 0 && args[0] == "codegen")
 {
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CodeGenProbe.Run(args[1..]);

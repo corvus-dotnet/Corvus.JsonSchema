@@ -389,6 +389,7 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
     }
 
     /// <inheritdoc/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal override bool TryGetRawSpans(out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8)
     {
         CheckNotDisposed();

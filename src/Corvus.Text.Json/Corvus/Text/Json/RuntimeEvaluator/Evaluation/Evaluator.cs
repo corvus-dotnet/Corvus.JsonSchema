@@ -69,6 +69,19 @@ internal static partial class Evaluator
     }
 
     /// <summary>
+    /// The document's rows and text. Nearly every document evaluated is a <see cref="ParsedJsonDocument{T}"/> of
+    /// <see cref="JsonElement"/>: testing for that exact (sealed) type is one comparison, and its accessor is then
+    /// called directly and inlined, where the general case is a virtual call on every document.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool RawSpans(JsonDocument parsed, out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8)
+    {
+        return parsed is ParsedJsonDocument<JsonElement> exact
+            ? exact.TryGetRawSpans(out rows, out utf8)
+            : parsed.TryGetRawSpans(out rows, out utf8);
+    }
+
+    /// <summary>
     /// Flag mode over a parsed document without a dynamic scope, from the entry data the caller holds: the node the
     /// evaluation enters (the root's flag entry), its resource and the depth limit. The document writes its spans
     /// straight into the state; a document without local rows takes the general entry.
@@ -77,7 +90,7 @@ internal static partial class Evaluator
     {
         // Every field written once, in place: an object initializer builds a zeroed temporary and copies it over.
         EvaluationState state;
-        if (!parsed.TryGetRawSpans(out state.RawRows, out state.RawUtf8))
+        if (!RawSpans(parsed, out state.RawRows, out state.RawUtf8))
         {
             return EvaluateGeneral(program, rootNode, document, index, null);
         }
@@ -112,7 +125,7 @@ internal static partial class Evaluator
     internal static unsafe bool EvaluateFlagCompiled(delegate*<ref EvaluationState, IJsonDocument, int, bool> compiled, CompiledSchema program, SchemaNode[] nodes, int entryResource, int maxDepth, JsonDocument parsed, IJsonDocument document, int rootNode, int index)
     {
         EvaluationState state;
-        if (!parsed.TryGetRawSpans(out state.RawRows, out state.RawUtf8))
+        if (!RawSpans(parsed, out state.RawRows, out state.RawUtf8))
         {
             return EvaluateGeneral(program, rootNode, document, index, null);
         }
