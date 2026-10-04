@@ -95,6 +95,36 @@ internal static partial class Evaluator
         return EvalChildFast<RawAccess>(entry, document, index, ref state);
     }
 
+#if NET
+    /// <summary>Flag-mode evaluation through a schema's generated code, with the same state as <see cref="EvaluateFlagRaw"/>.</summary>
+    internal static bool EvaluateFlagCompiled(CodeGeneration.NodeValidator compiled, CompiledSchema program, SchemaNode[] nodes, int entryResource, int maxDepth, JsonDocument parsed, IJsonDocument document, int rootNode, int index)
+    {
+        EvaluationState state;
+        if (!parsed.TryGetRawSpans(out state.RawUtf8Memory, out state.RawRows, out state.RawUtf8))
+        {
+            return EvaluateGeneral(program, rootNode, document, index, null);
+        }
+
+        state.Program = program;
+        state.Nodes = nodes;
+        state.Collector = null;
+        state.Scope = default;
+        state.ScopeDepth = 0;
+        state.RentedScope = null;
+        state.Depth = 0;
+        state.MaxDepth = maxDepth;
+        state.UsesDynamicScope = false;
+        state.EntryResource = entryResource;
+        return compiled(ref state, document, index);
+    }
+
+    /// <summary>The interpreter's flag-mode evaluation of one node, for generated code that does not specialise it.</summary>
+    internal static bool EvalNodeFast(int nodeId, IJsonDocument doc, int index, ref EvaluationState state)
+    {
+        return EvalChildFast<RawAccess>(state.Nodes[nodeId], doc, index, ref state);
+    }
+#endif
+
     // Not inlined: its scope buffer would otherwise sit in the flag-mode entry's frame and be zeroed on every call.
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static bool EvaluateGeneral(CompiledSchema program, int rootNode, IJsonDocument document, int index, IJsonSchemaResultsCollector? collector)
