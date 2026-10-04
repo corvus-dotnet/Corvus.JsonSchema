@@ -37,7 +37,7 @@ public static class CodeGenProbe
                 continue;
             }
 
-            NodeValidator compiled = SchemaLowering.Compile(nodes, entry, out int specialised);
+            NodeValidator? compiled = SchemaLowering.Compile(nodes, entry, out SchemaNode[] generatedNodes, out int specialised);
             if (Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN_STATS") == "1")
             {
                 Stats(nodes);
@@ -46,7 +46,7 @@ public static class CodeGenProbe
             int mismatches = 0;
             foreach (ParsedJsonDocument<JsonElement> d in c.Documents)
             {
-                if (c.Evaluator.Evaluate(d.RootElement) != Generated(c, compiled, entry, d))
+                if (c.Evaluator.Evaluate(d.RootElement) != Generated(c, compiled, generatedNodes, entry, d))
                 {
                     mismatches++;
                 }
@@ -62,7 +62,7 @@ public static class CodeGenProbe
                     int valid = 0;
                     foreach (ParsedJsonDocument<JsonElement> d in c.Documents)
                     {
-                        valid += Generated(c, compiled, entry, d) ? 1 : 0;
+                        valid += Generated(c, compiled, generatedNodes, entry, d) ? 1 : 0;
                     }
 
                     return valid;
@@ -118,12 +118,16 @@ public static class CodeGenProbe
         }
     }
 
-    private static bool Generated(SourceMetaCase c, NodeValidator compiled, SchemaNode entry, ParsedJsonDocument<JsonElement> d)
+    // As the evaluator runs a compiled schema: the entry's method, or the interpreter over the generated nodes.
+    private static bool Generated(SourceMetaCase c, NodeValidator? compiled, SchemaNode[] generatedNodes, SchemaNode entry, ParsedJsonDocument<JsonElement> d)
     {
         IJsonDocument document = ((IJsonElement<JsonElement>)d.RootElement).ParentDocument;
         int index = ((IJsonElement<JsonElement>)d.RootElement).ParentDocumentIndex;
         CompiledSchema program = c.Evaluator.Program;
-        return Evaluator.EvaluateFlagCompiled(compiled, program, program.Nodes, entry.ResourceId, program.Options.MaxDepth, (Corvus.Text.Json.Internal.JsonDocument)document, document, c.Evaluator.RootNode, index);
+        var parsed = (Corvus.Text.Json.Internal.JsonDocument)document;
+        return compiled is not null
+            ? Evaluator.EvaluateFlagCompiled(compiled, program, generatedNodes, entry.ResourceId, program.Options.MaxDepth, parsed, document, c.Evaluator.RootNode, index)
+            : Evaluator.EvaluateFlagRaw(program, generatedNodes, generatedNodes[entry.Id], entry.ResourceId, program.Options.MaxDepth, parsed, document, c.Evaluator.RootNode, index);
     }
 
     // The fastest pass after a warm-up, in microseconds.

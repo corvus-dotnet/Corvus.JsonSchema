@@ -2452,6 +2452,15 @@ internal readonly struct StrictEntry(int seenBit, TypeMask mask, bool lexical, U
     /// <summary>Whether <see cref="Child"/> is a strict object the loop enters without its prologue when the value is an object.</summary>
     public readonly bool NestedObject = nestedObject;
 
+    /// <summary>The entry without <see cref="NestedObject"/>: its child is then entered through its plan.</summary>
+    /// <returns>The entry.</returns>
+    public StrictEntry WithoutNestedObject()
+    {
+        StrictEntry copy = this;
+        System.Runtime.CompilerServices.Unsafe.AsRef(in copy.NestedObject) = false;
+        return copy;
+    }
+
     public readonly int SeenBit = seenBit;
     public readonly TypeMask Mask = mask;
     public readonly bool Lexical = lexical;
@@ -2747,6 +2756,12 @@ internal enum NodePlan : byte
     /// then its in-place applicators as fast-mode children, instead of the general keyword-by-keyword path.
     /// </summary>
     Composite,
+
+    /// <summary>
+    /// The node has a generated method (<see cref="SchemaNode.Generated"/>), which flag mode calls. Only the node
+    /// copies of a schema that runtime codegen has compiled carry it: never a compiled program's own nodes, nor an image.
+    /// </summary>
+    Generated,
 }
 
 internal sealed class SchemaNode
@@ -2757,6 +2772,15 @@ internal sealed class SchemaNode
     public int Id;
     public int ResourceId;
     public JsonSchemaDialect Dialect;
+
+#if NET && !STJ
+    /// <summary>The node's generated method, under <see cref="NodePlan.Generated"/>.</summary>
+    public CodeGeneration.NodeValidator? Generated;
+
+    /// <summary>A copy of the node that shares its tables: what runtime codegen changes in place of the program's node.</summary>
+    /// <returns>The copy.</returns>
+    public SchemaNode ShallowClone() => (SchemaNode)this.MemberwiseClone();
+#endif
 
     public bool AlwaysTrue;
     public bool AlwaysFalse;

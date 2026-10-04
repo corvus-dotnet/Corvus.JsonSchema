@@ -125,6 +125,46 @@ public class RuntimeCodeGenerationTests
         }
         """;
 
+    // Entries the lowering does not specialise, with specialised objects and arrays beneath them: the interpreter
+    // calls their generated methods.
+    private const string UnderPatterns = """
+        {
+          "type": "object",
+          "patternProperties": {
+            "^x": {"type": "object", "properties": {"a": {"type": "string"}, "name": {"type": "integer"}}, "additionalProperties": false}
+          },
+          "additionalProperties": {"type": "array", "items": {"type": "object", "required": ["a"], "properties": {"a": {"type": "string"}}}}
+        }
+        """;
+
+    private const string UnderAnyOf = """
+        {
+          "anyOf": [
+            {"type": "string"},
+            {
+              "type": "object",
+              "required": ["a"],
+              "properties": {
+                "a": {"type": "string"},
+                "child": {"oneOf": [{"type": "null"}, {"type": "object", "properties": {"b": {"type": "boolean"}}, "additionalProperties": false}]}
+              }
+            }
+          ]
+        }
+        """;
+
+    private const string UnderIf = """
+        {
+          "type": "object",
+          "properties": {
+            "kind": {"type": "string"},
+            "items": {"type": "array", "items": {"type": "object", "properties": {"a": {"type": "string"}}, "additionalProperties": false}}
+          },
+          "if": {"properties": {"kind": {"const": "a"}}},
+          "then": {"required": ["a"]}
+        }
+        """;
+
     private const string Closed = """{"type": "object", "additionalProperties": false}""";
 
     private const string Untyped = """{"properties": {"a": {"type": "integer"}, "name": {"type": "string"}}}""";
@@ -160,6 +200,9 @@ public class RuntimeCodeGenerationTests
     [DataRow(Leaves, 3)]
     [DataRow(Maps, 2)]
     [DataRow(Arrays, 10)]
+    [DataRow(UnderPatterns, 3)]
+    [DataRow(UnderAnyOf, 2)]
+    [DataRow(UnderIf, 4)]
     [DataRow(Closed, 1)]
     [DataRow(Untyped, 1)]
     [DataRow(Draft4, 1)]
@@ -174,8 +217,23 @@ public class RuntimeCodeGenerationTests
         CompiledSchema program = evaluator.Program;
         SchemaNode[] nodes = program.Nodes;
         SchemaNode entry = nodes[nodes[evaluator.RootNode].FlagEntry];
-        NodeValidator compiled = SchemaLowering.Compile(nodes, entry, out int specialised);
+        NodeValidator? compiled = SchemaLowering.Compile(nodes, entry, out SchemaNode[] generatedNodes, out int specialised);
         Assert.AreEqual(specialisedNodes, specialised, "The number of nodes given specialised methods.");
+
+        // Count the interpreter's calls of generated methods (generated methods call each other directly).
+        int callsFromInterpreter = 0;
+        foreach (SchemaNode node in generatedNodes)
+        {
+            if (node?.Plan == NodePlan.Generated)
+            {
+                NodeValidator method = node.Generated!;
+                node.Generated = (ref EvaluationState state, IJsonDocument doc, int at) =>
+                {
+                    callsFromInterpreter++;
+                    return method(ref state, doc, at);
+                };
+            }
+        }
 
         var random = new Random(20261004);
         var builder = new System.Text.StringBuilder();
@@ -199,9 +257,20 @@ public class RuntimeCodeGenerationTests
             IJsonDocument document = ((IJsonElement<JsonElement>)doc.RootElement).ParentDocument;
             int index = ((IJsonElement<JsonElement>)doc.RootElement).ParentDocumentIndex;
             bool expected = evaluator.Evaluate(doc.RootElement);
-            bool actual = Evaluator.EvaluateFlagCompiled(compiled, program, nodes, entry.ResourceId, program.Options.MaxDepth, (Corvus.Text.Json.Internal.JsonDocument)document, document, evaluator.RootNode, index);
+            var parsed = (Corvus.Text.Json.Internal.JsonDocument)document;
+
+            // As the evaluator runs a compiled schema: the entry's method, or the interpreter over the generated nodes.
+            bool actual = compiled is not null
+                ? Evaluator.EvaluateFlagCompiled(compiled, program, generatedNodes, entry.ResourceId, program.Options.MaxDepth, parsed, document, evaluator.RootNode, index)
+                : Evaluator.EvaluateFlagRaw(program, generatedNodes, generatedNodes[entry.Id], entry.ResourceId, program.Options.MaxDepth, parsed, document, evaluator.RootNode, index);
             Assert.AreEqual(expected, actual, instance);
             valid += expected ? 1 : 0;
+        }
+
+        // A schema whose entry is not specialised reaches its generated methods from the interpreter.
+        if (compiled is null)
+        {
+            Assert.IsTrue(callsFromInterpreter > 0, "The interpreter called no generated method.");
         }
 
         // The documents exercise both results.

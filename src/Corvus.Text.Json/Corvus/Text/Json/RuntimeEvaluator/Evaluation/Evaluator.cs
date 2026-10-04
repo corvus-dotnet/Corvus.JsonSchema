@@ -225,6 +225,20 @@ internal static partial class Evaluator
         JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, index);
 
         bool result;
+#if NET
+        if (node.Plan == NodePlan.Generated && !default(TMode).Collecting && evaluated.IsEmpty && typeof(TAccess) == typeof(RawAccess))
+        {
+            // A node runtime codegen has compiled (the child dispatch's default case arrives here).
+            result = node.Generated!(ref state, doc, index);
+            if (pushedScope)
+            {
+                state.ScopeDepth--;
+            }
+
+            return result;
+        }
+
+#endif
         if (!default(TMode).Collecting && evaluated.IsEmpty && node.Plan == NodePlan.FusedObject && tokenType == JsonTokenType.StartObject)
         {
             result = EvalFusedObject<TAccess>(node, doc, index, ref state);

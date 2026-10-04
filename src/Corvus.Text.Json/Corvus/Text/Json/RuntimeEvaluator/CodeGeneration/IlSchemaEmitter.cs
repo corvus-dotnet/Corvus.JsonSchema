@@ -434,10 +434,9 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.MarkLabel(done);
     }
 
-    /// <summary>Creates the type, sets its constants, compiles its methods and returns the method for a node.</summary>
-    /// <param name="nodeId">The node.</param>
-    /// <returns>Its method.</returns>
-    public NodeValidator Build(int nodeId)
+    /// <summary>Creates the type, sets its constants, compiles its methods and returns them by node.</summary>
+    /// <returns>Each node's method.</returns>
+    public Dictionary<int, NodeValidator> Build()
     {
         Type created = this.type.CreateType();
         foreach ((FieldBuilder field, object constant) in this.constants)
@@ -452,7 +451,13 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             RuntimeHelpers.PrepareMethod(created.GetMethod(method.Name)!.MethodHandle);
         }
 
-        return created.GetMethod(this.methods[nodeId].Name)!.CreateDelegate<NodeValidator>();
+        var built = new Dictionary<int, NodeValidator>(this.methods.Count);
+        foreach (KeyValuePair<int, MethodBuilder> method in this.methods)
+        {
+            built[method.Key] = created.GetMethod(method.Value.Name)!.CreateDelegate<NodeValidator>();
+        }
+
+        return built;
     }
 
     // The method's value: a container of the kind goes on (unless its type or count rejects it); anything else is

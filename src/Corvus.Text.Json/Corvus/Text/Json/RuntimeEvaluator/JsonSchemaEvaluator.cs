@@ -305,7 +305,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
             return Evaluator.EvaluateFlagCompiled(compiled, this.program, fast.Nodes, fast.EntryResource, fast.MaxDepth, parsed, document, this.rootNode, index);
         }
 
-        if (CodeGenEnabled && Interlocked.Increment(ref this.evaluations) == CodeGenThreshold)
+        if (CodeGenEnabled && !fast.Tiered && Interlocked.Increment(ref this.evaluations) == CodeGenThreshold)
         {
             // Compiling takes milliseconds: off the evaluating thread, published when done.
             Task.Run(() => this.CompileFlagMode(fast));
@@ -325,8 +325,10 @@ public sealed class JsonSchemaEvaluator : IDisposable
     /// <summary>Compiles the entry's generated code and publishes it, unless the entry data has been replaced meanwhile.</summary>
     private FlagModeEntry CompileFlagMode(FlagModeEntry fast)
     {
-        NodeValidator compiled = SchemaLowering.Compile(fast.Nodes, fast.Entry!);
-        var withCode = new FlagModeEntry(fast.Nodes, fast.Entry, fast.EntryResource, fast.MaxDepth, compiled);
+        // The entry data over the generated node array: its entry's method when the entry is specialised, and
+        // otherwise the interpreter from the entry, which reaches the generated methods beneath it.
+        NodeValidator? compiled = SchemaLowering.Compile(fast.SourceNodes, fast.Entry!, out SchemaNode[] generatedNodes, out _);
+        var withCode = new FlagModeEntry(fast.SourceNodes, generatedNodes, generatedNodes[fast.Entry!.Id], fast.EntryResource, fast.MaxDepth, compiled, tiered: true);
         FlagModeEntry? current = Interlocked.CompareExchange(ref this.flagModeEntry, withCode, fast);
         return ReferenceEquals(current, fast) ? withCode : current ?? withCode;
     }
@@ -342,14 +344,14 @@ public sealed class JsonSchemaEvaluator : IDisposable
     {
         FlagModeEntry? entry = this.flagModeEntry;
         SchemaNode[] nodes = this.program.Nodes;
-        return entry is not null && ReferenceEquals(entry.Nodes, nodes) ? entry : this.RebuildFlagMode(nodes);
+        return entry is not null && ReferenceEquals(entry.SourceNodes, nodes) ? entry : this.RebuildFlagMode(nodes);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private FlagModeEntry RebuildFlagMode(SchemaNode[] nodes)
     {
         SchemaNode root = nodes[this.rootNode];
-        var entry = new FlagModeEntry(nodes, this.program.UsesDynamicScope ? null : nodes[root.FlagEntry], root.ResourceId, this.program.Options.MaxDepth);
+        var entry = new FlagModeEntry(nodes, nodes, this.program.UsesDynamicScope ? null : nodes[root.FlagEntry], root.ResourceId, this.program.Options.MaxDepth);
         this.flagModeEntry = entry;
 #if NET && !STJ
         if (CodeGenEnabled && CodeGenThreshold == 0 && entry.Entry is not null)
@@ -363,19 +365,26 @@ public sealed class JsonSchemaEvaluator : IDisposable
 
     /// <summary>The entry data of flag-mode evaluation for one node array (see <see cref="FlagMode"/>).</summary>
 #if NET && !STJ
-    private sealed class FlagModeEntry(SchemaNode[] nodes, SchemaNode? entry, int entryResource, int maxDepth, NodeValidator? compiled = null)
+    private sealed class FlagModeEntry(SchemaNode[] sourceNodes, SchemaNode[] nodes, SchemaNode? entry, int entryResource, int maxDepth, NodeValidator? compiled = null, bool tiered = false)
 #else
-    private sealed class FlagModeEntry(SchemaNode[] nodes, SchemaNode? entry, int entryResource, int maxDepth)
+    private sealed class FlagModeEntry(SchemaNode[] sourceNodes, SchemaNode[] nodes, SchemaNode? entry, int entryResource, int maxDepth)
 #endif
     {
+        /// <summary>The program's node array this entry data was made for.</summary>
+        public readonly SchemaNode[] SourceNodes = sourceNodes;
+
+        /// <summary>The node array to evaluate with: the program's, or its copy carrying generated methods.</summary>
         public readonly SchemaNode[] Nodes = nodes;
         public readonly SchemaNode? Entry = entry;
         public readonly int EntryResource = entryResource;
         public readonly int MaxDepth = maxDepth;
 #if NET && !STJ
 
-        /// <summary>The entry's generated code, once runtime codegen has compiled it.</summary>
+        /// <summary>The entry's generated code, once runtime codegen has compiled the schema and its entry is specialised.</summary>
         public readonly NodeValidator? Compiled = compiled;
+
+        /// <summary>Whether runtime codegen has compiled the schema.</summary>
+        public readonly bool Tiered = tiered;
 #endif
     }
 

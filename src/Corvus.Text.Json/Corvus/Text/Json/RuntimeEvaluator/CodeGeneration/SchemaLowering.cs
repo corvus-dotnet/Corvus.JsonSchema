@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
 /// Specialised so far: strict objects (<see cref="NodePlan.StrictObject"/>), with their properties' leaves tested in
 /// place, and arrays of items (<see cref="NodePlan.SimpleArray"/> and <see cref="NodePlan.ArrayItems"/>, without
 /// prefix items or <c>uniqueItems</c>); a child that is specialised is called as a generated method. Every other node
-/// is evaluated by the interpreter, which does not yet call back into generated code for the values beneath it.
+/// is evaluated by the interpreter, which calls the generated methods of the specialised nodes it reaches.
 /// </remarks>
 internal static class SchemaLowering
 {
@@ -38,62 +38,147 @@ internal static class SchemaLowering
     /// <summary>Whether generated code can run here (it needs Reflection.Emit and the JIT).</summary>
     public static bool IsSupported => RuntimeFeature.IsDynamicCodeSupported;
 
-    /// <summary>Compiles the flag-mode code for an entry node.</summary>
+    /// <summary>
+    /// Compiles a program's flag-mode code: a method for every node the lowering specialises, and a copy of the node
+    /// array in which those nodes carry their methods (<see cref="NodePlan.Generated"/>), so that the interpreter
+    /// calls generated code for them wherever it evaluates the nodes around them.
+    /// </summary>
     /// <param name="nodes">The program's nodes.</param>
     /// <param name="entry">The entry node (after reference elision).</param>
-    /// <returns>The entry's generated method.</returns>
-    public static NodeValidator Compile(SchemaNode[] nodes, SchemaNode entry) => Compile(nodes, entry, out _);
-
-    /// <summary>Compiles the flag-mode code for an entry node.</summary>
-    /// <param name="nodes">The program's nodes.</param>
-    /// <param name="entry">The entry node (after reference elision).</param>
-    /// <param name="specialised">The number of nodes given specialised methods (the rest run in the interpreter).</param>
-    /// <returns>The entry's generated method.</returns>
-    public static NodeValidator Compile(SchemaNode[] nodes, SchemaNode entry, out int specialised)
+    /// <param name="generatedNodes">The node array to evaluate with: the program's, with the specialised nodes replaced.</param>
+    /// <param name="specialised">The number of nodes given methods.</param>
+    /// <returns>The entry's method, or null when the entry is not specialised (the interpreter then enters it, over <paramref name="generatedNodes"/>).</returns>
+    public static NodeValidator? Compile(SchemaNode[] nodes, SchemaNode entry, out SchemaNode[] generatedNodes, out int specialised)
     {
         Interlocked.Increment(ref compiledCount);
+        generatedNodes = (SchemaNode[])nodes.Clone();
         var emitter = new IlSchemaEmitter();
-        specialised = Lower(emitter, nodes, entry);
-        return emitter.Build(entry.Id);
+        specialised = Lower(emitter, nodes);
+        if (specialised == 0)
+        {
+            return null;
+        }
+
+        Dictionary<int, NodeValidator> methods = emitter.Build();
+        foreach (KeyValuePair<int, NodeValidator> method in methods)
+        {
+            SchemaNode generated = nodes[method.Key].ShallowClone();
+            generated.Plan = NodePlan.Generated;
+            generated.Generated = method.Value;
+            generatedNodes[method.Key] = generated;
+        }
+
+        // An interpreted node that enters a strict-object child by its loop (skipping the child's plan) enters a
+        // specialised child by its plan instead: the generated method.
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            if (nodes[i] is SchemaNode node && !methods.ContainsKey(i) && EntersSpecialisedChildDirectly(node, methods))
+            {
+                generatedNodes[i] = ThroughPlans(node, methods);
+            }
+        }
+
+        return methods.GetValueOrDefault(entry.Id);
     }
 
-    private static int Lower(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode entry)
+    private static int Lower(ISchemaEmitter emitter, SchemaNode[] nodes)
     {
-        // The entry's method always exists; a child gets one when a generated method calls it.
-        var requested = new HashSet<int> { entry.Id };
+        // Every node the lowering specialises gets a method, whatever reaches it: on the Sourcemeta corpora every
+        // such node is reachable from the entry, most of them through nodes the interpreter evaluates.
+        var requested = new HashSet<int>();
         var pending = new Queue<int>();
-        pending.Enqueue(entry.Id);
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            if (nodes[i] is SchemaNode node && IsSpecialised(nodes, node) && requested.Add(i))
+            {
+                pending.Enqueue(i);
+            }
+        }
+
         int specialised = 0;
         while (pending.TryDequeue(out int id))
         {
             SchemaNode node = nodes[id];
             emitter.BeginMethod(id);
-            if (IsSpecialised(nodes, node))
+            switch (node.Plan)
             {
-                switch (node.Plan)
-                {
-                    case NodePlan.StrictObject:
-                        LowerStrictObject(emitter, nodes, node, requested, pending);
-                        break;
-                    case NodePlan.SimpleArray:
-                        LowerSimpleArray(emitter, nodes, node);
-                        break;
-                    default:
-                        LowerArrayItems(emitter, nodes, node, requested, pending);
-                        break;
-                }
-
-                specialised++;
-            }
-            else
-            {
-                emitter.ReturnInterpreted(id);
+                case NodePlan.StrictObject:
+                    LowerStrictObject(emitter, nodes, node, requested, pending);
+                    break;
+                case NodePlan.SimpleArray:
+                    LowerSimpleArray(emitter, nodes, node);
+                    break;
+                default:
+                    LowerArrayItems(emitter, nodes, node, requested, pending);
+                    break;
             }
 
             emitter.EndMethod();
+            specialised++;
         }
 
         return specialised;
+    }
+
+    private static bool IsNestedSpecialised(in StrictEntry entry, Dictionary<int, NodeValidator> methods) => entry.NestedObject && entry.Child >= 0 && methods.ContainsKey(entry.Child);
+
+    private static bool EntersSpecialisedChildDirectly(SchemaNode node, Dictionary<int, NodeValidator> methods)
+    {
+        if (IsNestedSpecialised(in node.AdditionalEntry, methods) || (node.ItemsNestedObject && node.Items.IsPresent && methods.ContainsKey(node.Items.FastNode)))
+        {
+            return true;
+        }
+
+        foreach (StrictEntry[]? entries in (ReadOnlySpan<StrictEntry[]?>)[node.StrictEntries, node.PatternMap, node.PrefixEntries])
+        {
+            foreach (StrictEntry entry in entries ?? [])
+            {
+                if (IsNestedSpecialised(in entry, methods))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static SchemaNode ThroughPlans(SchemaNode node, Dictionary<int, NodeValidator> methods)
+    {
+        SchemaNode copy = node.ShallowClone();
+        copy.StrictEntries = Entries(node.StrictEntries);
+        copy.PatternMap = Entries(node.PatternMap);
+        copy.PrefixEntries = Entries(node.PrefixEntries);
+        if (IsNestedSpecialised(in node.AdditionalEntry, methods))
+        {
+            copy.AdditionalEntry = node.AdditionalEntry.WithoutNestedObject();
+        }
+
+        if (node.ItemsNestedObject && node.Items.IsPresent && methods.ContainsKey(node.Items.FastNode))
+        {
+            copy.ItemsNestedObject = false;
+        }
+
+        return copy;
+
+        StrictEntry[]? Entries(StrictEntry[]? entries)
+        {
+            if (entries is null)
+            {
+                return null;
+            }
+
+            var through = (StrictEntry[])entries.Clone();
+            for (int i = 0; i < through.Length; i++)
+            {
+                if (IsNestedSpecialised(in through[i], methods))
+                {
+                    through[i] = through[i].WithoutNestedObject();
+                }
+            }
+
+            return through;
+        }
     }
 
     private static bool IsSpecialised(SchemaNode[] nodes, SchemaNode node)
