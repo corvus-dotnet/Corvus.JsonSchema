@@ -102,6 +102,29 @@ public class RuntimeCodeGenerationTests
         }
         """;
 
+    // Arrays: of objects, of typed and leaf items, with bounds, with a type beside array, without items to test, and
+    // (left to the interpreter) with prefix items and unique items.
+    private const string Arrays = """
+        {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "properties": {
+              "a": {"type": "array", "items": {"type": "string"}},
+              "b": {"type": "array", "items": {"type": "integer"}, "minItems": 1},
+              "c": {"type": "array", "items": {"enum": ["a", "b"]}},
+              "ab": {"type": ["array", "string"], "items": {"type": "array", "items": {"type": ["string", "null"]}}},
+              "abc": {"type": "array"},
+              "abcd": {"type": "array", "items": true, "maxItems": 1},
+              "abcde": {"items": {"type": "object", "required": ["a"], "properties": {"a": {"type": "string"}}}},
+              "name": {"type": "array", "prefixItems": [{"type": "string"}], "items": {"type": "integer"}},
+              "tags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+            }
+          }
+        }
+        """;
+
     private const string Closed = """{"type": "object", "additionalProperties": false}""";
 
     private const string Untyped = """{"properties": {"a": {"type": "integer"}, "name": {"type": "string"}}}""";
@@ -132,10 +155,11 @@ public class RuntimeCodeGenerationTests
     ];
 
     [TestMethod]
-    [DataRow(Schema, 1)]
+    [DataRow(Schema, 2)]
     [DataRow(NameLengths, 1)]
-    [DataRow(Leaves, 2)]
+    [DataRow(Leaves, 3)]
     [DataRow(Maps, 2)]
+    [DataRow(Arrays, 10)]
     [DataRow(Closed, 1)]
     [DataRow(Untyped, 1)]
     [DataRow(Draft4, 1)]
@@ -184,8 +208,8 @@ public class RuntimeCodeGenerationTests
         Assert.IsTrue(valid > 0 && valid < Count, $"{valid} of {Count} documents are valid.");
     }
 
-    // A random document over the schemas' names and values: objects at the root and (less often) beneath it, with
-    // some names escaped, so that both the word comparisons and the slow lookup run.
+    // A random document over the schemas' names and values: objects and arrays at the root and (less often) beneath
+    // it, with some names escaped, so that both the word comparisons and the slow lookup run.
     private static void WriteValue(System.Text.StringBuilder builder, Random random, int depth)
     {
         if (depth > 0 && (depth > 3 || random.Next(4) != 0))
@@ -197,6 +221,24 @@ public class RuntimeCodeGenerationTests
         if (depth == 0 && random.Next(20) == 0)
         {
             builder.Append(Scalars[random.Next(Scalars.Length)]);
+            return;
+        }
+
+        if (random.Next(depth == 0 ? 3 : 2) == 0)
+        {
+            builder.Append('[');
+            int length = random.Next(5);
+            for (int i = 0; i < length; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(',');
+                }
+
+                WriteValue(builder, random, depth + 1);
+            }
+
+            builder.Append(']');
             return;
         }
 

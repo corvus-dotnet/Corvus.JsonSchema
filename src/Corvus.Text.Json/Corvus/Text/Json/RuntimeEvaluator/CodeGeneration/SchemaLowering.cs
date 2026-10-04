@@ -17,8 +17,9 @@ namespace Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
 /// </summary>
 /// <remarks>
 /// Specialised so far: strict objects (<see cref="NodePlan.StrictObject"/>), with their properties' leaves tested in
-/// place and their strict-object children called as generated methods. Every other node is evaluated by the
-/// interpreter, which does not yet call back into generated code for the values beneath it.
+/// place, and arrays of items (<see cref="NodePlan.SimpleArray"/> and <see cref="NodePlan.ArrayItems"/>, without
+/// prefix items or <c>uniqueItems</c>); a child that is specialised is called as a generated method. Every other node
+/// is evaluated by the interpreter, which does not yet call back into generated code for the values beneath it.
 /// </remarks>
 internal static class SchemaLowering
 {
@@ -67,9 +68,21 @@ internal static class SchemaLowering
         {
             SchemaNode node = nodes[id];
             emitter.BeginMethod(id);
-            if (IsSpecialised(node))
+            if (IsSpecialised(nodes, node))
             {
-                LowerStrictObject(emitter, nodes, node, requested, pending);
+                switch (node.Plan)
+                {
+                    case NodePlan.StrictObject:
+                        LowerStrictObject(emitter, nodes, node, requested, pending);
+                        break;
+                    case NodePlan.SimpleArray:
+                        LowerSimpleArray(emitter, nodes, node);
+                        break;
+                    default:
+                        LowerArrayItems(emitter, nodes, node, requested, pending);
+                        break;
+                }
+
                 specialised++;
             }
             else
@@ -83,15 +96,76 @@ internal static class SchemaLowering
         return specialised;
     }
 
-    private static bool IsSpecialised(SchemaNode node) => node.Plan == NodePlan.StrictObject && (node.Properties?.Count ?? 0) <= MaxDispatchNames;
+    private static bool IsSpecialised(SchemaNode[] nodes, SchemaNode node)
+    {
+        switch (node.Plan)
+        {
+            case NodePlan.StrictObject:
+                return (node.Properties?.Count ?? 0) <= MaxDispatchNames;
+            case NodePlan.SimpleArray:
+                // Its items are a leaf: nothing to test, a type, or the interpreter's leaf evaluation.
+                SchemaNode items = nodes[node.Items.FastNode];
+                return !node.UniqueItems && (items.AlwaysTrue || items.IsTypeOnly || items.Plan == NodePlan.Leaf);
+            case NodePlan.ArrayItems:
+                return !node.UniqueItems && node.PrefixEntries is null;
+            default:
+                return false;
+        }
+    }
+
+    // The token types a node's type accepts for a value that is not the container it specialises (every type when
+    // the node has no type), as Evaluator.MatchesType decides them.
+    private static ushort OtherTokens(SchemaNode node, JsonTokenType container) => node.HasType ? (ushort)(StrictEntry.TokenBitsOf(node.Type) & ~(1 << (int)container)) : ushort.MaxValue;
+
+    private static bool IntegerOnly(SchemaNode node) => node.HasType && (node.Type & TypeMask.Integer) != 0 && (node.Type & TypeMask.Number) == 0;
+
+    // The interpreter's simple array (Evaluator.EvalSimpleArrayFast): a value that is not an array fails a type and
+    // passes otherwise; the items are a leaf.
+    private static void LowerSimpleArray(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node)
+    {
+        ushort otherTokens = node.HasType ? (ushort)0 : ushort.MaxValue;
+        SchemaNode items = nodes[node.Items.FastNode];
+        if (items.AlwaysTrue)
+        {
+            emitter.ReturnArrayWithoutItems(otherTokens, integerOnly: false, lexical: false, acceptsArray: true, node.MinItems, node.MaxItems);
+            return;
+        }
+
+        emitter.BeginArray(otherTokens, integerOnly: false, lexical: false, acceptsArray: true, node.MinItems, node.MaxItems);
+        if (items.IsTypeOnly)
+        {
+            emitter.FailUnlessToken(StrictEntry.TokenBitsOf(items.Type), (items.Type & TypeMask.Integer) != 0 && (items.Type & TypeMask.Number) == 0, items.Dialect == JsonSchemaDialect.Draft4);
+        }
+        else
+        {
+            emitter.FailUnlessChild(0, 0, items.Id, generated: false);
+        }
+
+        emitter.EndArray();
+    }
+
+    // The interpreter's array-of-items plan (Evaluator.EvalArrayItemsPlan), without prefix items or uniqueItems.
+    private static void LowerArrayItems(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
+    {
+        ushort otherTokens = OtherTokens(node, JsonTokenType.StartArray);
+        bool lexical = (node.Flags & NodeFlags.Draft4) != 0;
+        bool acceptsArray = !node.HasType || (node.Type & TypeMask.Array) != 0;
+        if (!node.Items.IsPresent || nodes[node.Items.FastNode].Plan == NodePlan.AlwaysTrue)
+        {
+            emitter.ReturnArrayWithoutItems(otherTokens, IntegerOnly(node), lexical, acceptsArray, node.MinItems, node.MaxItems);
+            return;
+        }
+
+        emitter.BeginArray(otherTokens, IntegerOnly(node), lexical, acceptsArray, node.MinItems, node.MaxItems);
+        LowerChild(emitter, nodes, node.ItemsDecided, node.ItemsAccepts, node.Items.FastNode, requested, pending);
+        emitter.EndArray();
+    }
 
     // The interpreter's strict object plan (Evaluator.EvalStrictObjectPlan and its loops), written out for this node.
     private static void LowerStrictObject(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
     {
-        ushort otherTokens = node.HasType ? (ushort)(StrictEntry.TokenBitsOf(node.Type) & ~(1 << (int)JsonTokenType.StartObject)) : ushort.MaxValue;
-        bool integerOnly = node.HasType && (node.Type & TypeMask.Integer) != 0 && (node.Type & TypeMask.Number) == 0;
         bool acceptsObject = !node.HasType || (node.Type & TypeMask.Object) != 0;
-        emitter.BeginObject(otherTokens, integerOnly, (node.Flags & NodeFlags.Draft4) != 0, acceptsObject, node.MinProperties, node.MaxProperties);
+        emitter.BeginObject(OtherTokens(node, JsonTokenType.StartObject), IntegerOnly(node), (node.Flags & NodeFlags.Draft4) != 0, acceptsObject, node.MinProperties, node.MaxProperties);
         if (node.Properties is not Utf8NameMap<PropertyEntry> properties)
         {
             // A map: no names are read, and every value takes the additional resolution's type test or child.
@@ -105,7 +179,7 @@ internal static class SchemaLowering
             }
             else if (node.AdditionalEntry.Child >= 0)
             {
-                LowerChild(emitter, nodes, in node.AdditionalEntry, requested, pending);
+                LowerChild(emitter, nodes, node.AdditionalEntry.ChildDecided, node.AdditionalEntry.ChildAccepts, node.AdditionalEntry.Child, requested, pending);
             }
 
             emitter.EndObject(0);
@@ -159,7 +233,7 @@ internal static class SchemaLowering
         }
         else if (entry.Child >= 0)
         {
-            LowerChild(emitter, nodes, in entry, requested, pending);
+            LowerChild(emitter, nodes, entry.ChildDecided, entry.ChildAccepts, entry.Child, requested, pending);
         }
         else if (entry.LengthBounded)
         {
@@ -167,18 +241,18 @@ internal static class SchemaLowering
         }
     }
 
-    private static void LowerChild(ISchemaEmitter emitter, SchemaNode[] nodes, in StrictEntry entry, HashSet<int> requested, Queue<int> pending)
+    private static void LowerChild(ISchemaEmitter emitter, SchemaNode[] nodes, ushort decided, ushort accepts, int child, HashSet<int> requested, Queue<int> pending)
     {
         // The child's target, its forwards taken as the interpreter takes them.
-        int target = entry.Child;
+        int target = child;
         for (int hops = 0; hops < MaxForwards && nodes[target].Plan == NodePlan.Forward; hops++)
         {
             target = nodes[target].ForwardNode;
         }
 
-        if (!IsSpecialised(nodes[target]))
+        if (!IsSpecialised(nodes, nodes[target]))
         {
-            emitter.FailUnlessChild(entry.ChildDecided, entry.ChildAccepts, entry.Child, generated: false);
+            emitter.FailUnlessChild(decided, accepts, child, generated: false);
             return;
         }
 
@@ -187,7 +261,7 @@ internal static class SchemaLowering
             pending.Enqueue(target);
         }
 
-        emitter.FailUnlessChild(entry.ChildDecided, entry.ChildAccepts, target, generated: true);
+        emitter.FailUnlessChild(decided, accepts, target, generated: true);
     }
 }
 #endif

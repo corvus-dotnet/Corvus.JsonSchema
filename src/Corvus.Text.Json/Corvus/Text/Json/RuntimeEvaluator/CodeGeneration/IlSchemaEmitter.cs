@@ -39,7 +39,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo EvalNodeFast = Helper(nameof(Evaluator.EvalNodeFast));
     private static readonly MethodInfo GenToken = Helper(nameof(Evaluator.GenToken));
     private static readonly MethodInfo GenCount = Helper(nameof(Evaluator.GenCount));
-    private static readonly MethodInfo GenObjectEnd = Helper(nameof(Evaluator.GenObjectEnd));
+    private static readonly MethodInfo GenEnd = Helper(nameof(Evaluator.GenEnd));
     private static readonly MethodInfo GenTokenAndNext = Helper(nameof(Evaluator.GenTokenAndNext));
     private static readonly MethodInfo GenName = Helper(nameof(Evaluator.GenName));
     private static readonly MethodInfo GenWord = Helper(nameof(Evaluator.GenWord));
@@ -57,14 +57,14 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private ILGenerator? il;
     private Label fail;
 
-    // The current object: its locals, and the labels of its loop.
+    // The current object or array: its locals, and the labels of its loop.
     private LocalBuilder? end;
     private LocalBuilder? value;
     private LocalBuilder? next;
     private LocalBuilder? token;
     private LocalBuilder? seen;
-    private Label nextProperty;
-    private Label endOfObject;
+    private Label nextValue;
+    private Label endOfLoop;
     private Label loop;
 
     // The current name dispatch: a label per name, and the one for every other name.
@@ -113,102 +113,15 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     /// <inheritdoc/>
     public void BeginObject(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsObject, int minProperties, int maxProperties)
     {
-        ILGenerator il = this.Il;
-        this.end = il.DeclareLocal(typeof(int));
-        this.value = il.DeclareLocal(typeof(int));
-        this.next = il.DeclareLocal(typeof(int));
-        this.token = il.DeclareLocal(typeof(int));
-        this.seen = il.DeclareLocal(typeof(ulong));
-        this.nextProperty = il.DefineLabel();
-        this.endOfObject = il.DefineLabel();
-        this.loop = il.DefineLabel();
-        Label isObject = il.DefineLabel();
-
-        // The method's value: an object goes on; anything else is decided by its token type.
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Ldarg_2);
-        il.Emit(OpCodes.Call, GenToken);
-        il.Emit(OpCodes.Stloc, this.token);
-        il.Emit(OpCodes.Ldloc, this.token);
-        il.Emit(OpCodes.Ldc_I4, (int)JsonTokenType.StartObject);
-        il.Emit(OpCodes.Beq, isObject);
-        if (otherTokens != ushort.MaxValue)
-        {
-            this.TokenTest(otherTokens, integerOnly, lexical, atMethodValue: true);
-        }
-
-        il.Emit(OpCodes.Ldc_I4_1);
-        il.Emit(OpCodes.Ret);
-
-        il.MarkLabel(isObject);
-        if (!acceptsObject)
-        {
-            il.Emit(OpCodes.Br, this.fail);
-        }
-
-        if (minProperties >= 0 || maxProperties >= 0)
-        {
-            LocalBuilder count = il.DeclareLocal(typeof(int));
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Call, GenCount);
-            il.Emit(OpCodes.Stloc, count);
-            if (minProperties >= 0)
-            {
-                il.Emit(OpCodes.Ldloc, count);
-                il.Emit(OpCodes.Ldc_I4, minProperties);
-                il.Emit(OpCodes.Blt, this.fail);
-            }
-
-            if (maxProperties >= 0)
-            {
-                il.Emit(OpCodes.Ldloc, count);
-                il.Emit(OpCodes.Ldc_I4, maxProperties);
-                il.Emit(OpCodes.Bgt, this.fail);
-            }
-        }
-
-        // end = the object's end row; value = the first property's value row (the object's row, then the name's).
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Ldarg_2);
-        il.Emit(OpCodes.Call, GenObjectEnd);
-        il.Emit(OpCodes.Stloc, this.end);
-        il.Emit(OpCodes.Ldarg_2);
-        il.Emit(OpCodes.Ldc_I4, 2 * RowSize);
-        il.Emit(OpCodes.Add);
-        il.Emit(OpCodes.Stloc, this.value);
-        il.Emit(OpCodes.Ldc_I4_0);
-        il.Emit(OpCodes.Conv_I8);
-        il.Emit(OpCodes.Stloc, this.seen);
-
-        // while (value - RowSize < end) { token = the value's type; next = the row after the value; ...
-        il.MarkLabel(this.loop);
-        il.Emit(OpCodes.Ldloc, this.value);
-        il.Emit(OpCodes.Ldc_I4, RowSize);
-        il.Emit(OpCodes.Sub);
-        il.Emit(OpCodes.Ldloc, this.end);
-        il.Emit(OpCodes.Bge, this.endOfObject);
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Ldloc, this.value);
-        il.Emit(OpCodes.Ldloca, this.next);
-        il.Emit(OpCodes.Call, GenTokenAndNext);
-        il.Emit(OpCodes.Stloc, this.token);
+        this.Prologue(JsonTokenType.StartObject, otherTokens, integerOnly, lexical, acceptsObject, minProperties, maxProperties);
+        this.BeginLoop(isObject: true);
     }
 
     /// <inheritdoc/>
     public void EndObject(ulong requiredMask)
     {
         ILGenerator il = this.Il;
-
-        // ... value = next + RowSize (past the next property's name row) }
-        il.MarkLabel(this.nextProperty);
-        il.Emit(OpCodes.Ldloc, this.next!);
-        il.Emit(OpCodes.Ldc_I4, RowSize);
-        il.Emit(OpCodes.Add);
-        il.Emit(OpCodes.Stloc, this.value!);
-        il.Emit(OpCodes.Br, this.loop);
-
-        il.MarkLabel(this.endOfObject);
+        this.EndLoop(isObject: true);
         if (requiredMask == 0)
         {
             il.Emit(OpCodes.Ldc_I4_1);
@@ -223,6 +136,29 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         }
 
         il.Emit(OpCodes.Ret);
+    }
+
+    /// <inheritdoc/>
+    public void BeginArray(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems)
+    {
+        this.Prologue(JsonTokenType.StartArray, otherTokens, integerOnly, lexical, acceptsArray, minItems, maxItems);
+        this.BeginLoop(isObject: false);
+    }
+
+    /// <inheritdoc/>
+    public void EndArray()
+    {
+        this.EndLoop(isObject: false);
+        this.Il.Emit(OpCodes.Ldc_I4_1);
+        this.Il.Emit(OpCodes.Ret);
+    }
+
+    /// <inheritdoc/>
+    public void ReturnArrayWithoutItems(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems)
+    {
+        this.Prologue(JsonTokenType.StartArray, otherTokens, integerOnly, lexical, acceptsArray, minItems, maxItems);
+        this.Il.Emit(OpCodes.Ldc_I4_1);
+        this.Il.Emit(OpCodes.Ret);
     }
 
     /// <inheritdoc/>
@@ -400,7 +336,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     /// <inheritdoc/>
     public void EndCase()
     {
-        this.Il.Emit(OpCodes.Br, this.nextProperty);
+        this.Il.Emit(OpCodes.Br, this.nextValue);
     }
 
     /// <inheritdoc/>
@@ -517,6 +453,118 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         }
 
         return created.GetMethod(this.methods[nodeId].Name)!.CreateDelegate<NodeValidator>();
+    }
+
+    // The method's value: a container of the kind goes on (unless its type or count rejects it); anything else is
+    // decided by its token type.
+    private void Prologue(JsonTokenType container, ushort otherTokens, bool integerOnly, bool lexical, bool acceptsContainer, int minCount, int maxCount)
+    {
+        ILGenerator il = this.Il;
+        this.token = il.DeclareLocal(typeof(int));
+        Label isContainer = il.DefineLabel();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, GenToken);
+        il.Emit(OpCodes.Stloc, this.token);
+        il.Emit(OpCodes.Ldloc, this.token);
+        il.Emit(OpCodes.Ldc_I4, (int)container);
+        il.Emit(OpCodes.Beq, isContainer);
+        if (otherTokens != ushort.MaxValue)
+        {
+            this.TokenTest(otherTokens, integerOnly, lexical, atMethodValue: true);
+        }
+
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.Ret);
+
+        il.MarkLabel(isContainer);
+        if (!acceptsContainer)
+        {
+            il.Emit(OpCodes.Br, this.fail);
+        }
+
+        if (minCount >= 0 || maxCount >= 0)
+        {
+            LocalBuilder count = il.DeclareLocal(typeof(int));
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Call, GenCount);
+            il.Emit(OpCodes.Stloc, count);
+            if (minCount >= 0)
+            {
+                il.Emit(OpCodes.Ldloc, count);
+                il.Emit(OpCodes.Ldc_I4, minCount);
+                il.Emit(OpCodes.Blt, this.fail);
+            }
+
+            if (maxCount >= 0)
+            {
+                il.Emit(OpCodes.Ldloc, count);
+                il.Emit(OpCodes.Ldc_I4, maxCount);
+                il.Emit(OpCodes.Bgt, this.fail);
+            }
+        }
+    }
+
+    // The loop over a container's values. An object's rows are name, value, name, value: the first value is two rows
+    // in, the loop runs while the value's name row is before the end, and the next value is a row past the next
+    // name. An array's are its items: the first is one row in, and the next is the row after the item.
+    private void BeginLoop(bool isObject)
+    {
+        ILGenerator il = this.Il;
+        this.end = il.DeclareLocal(typeof(int));
+        this.value = il.DeclareLocal(typeof(int));
+        this.next = il.DeclareLocal(typeof(int));
+        this.nextValue = il.DefineLabel();
+        this.endOfLoop = il.DefineLabel();
+        this.loop = il.DefineLabel();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, GenEnd);
+        il.Emit(OpCodes.Stloc, this.end);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Ldc_I4, isObject ? 2 * RowSize : RowSize);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Stloc, this.value);
+        if (isObject)
+        {
+            this.seen = il.DeclareLocal(typeof(ulong));
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Conv_I8);
+            il.Emit(OpCodes.Stloc, this.seen);
+        }
+
+        il.MarkLabel(this.loop);
+        il.Emit(OpCodes.Ldloc, this.value);
+        if (isObject)
+        {
+            il.Emit(OpCodes.Ldc_I4, RowSize);
+            il.Emit(OpCodes.Sub);
+        }
+
+        il.Emit(OpCodes.Ldloc, this.end);
+        il.Emit(OpCodes.Bge, this.endOfLoop);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldloc, this.value);
+        il.Emit(OpCodes.Ldloca, this.next);
+        il.Emit(OpCodes.Call, GenTokenAndNext);
+        il.Emit(OpCodes.Stloc, this.token!);
+    }
+
+    private void EndLoop(bool isObject)
+    {
+        ILGenerator il = this.Il;
+        il.MarkLabel(this.nextValue);
+        il.Emit(OpCodes.Ldloc, this.next!);
+        if (isObject)
+        {
+            il.Emit(OpCodes.Ldc_I4, RowSize);
+            il.Emit(OpCodes.Add);
+        }
+
+        il.Emit(OpCodes.Stloc, this.value!);
+        il.Emit(OpCodes.Br, this.loop);
+        il.MarkLabel(this.endOfLoop);
     }
 
     private static MethodInfo Helper(string name) => typeof(Evaluator).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!;

@@ -15,7 +15,8 @@ namespace Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
 /// </summary>
 /// <remarks>
 /// Inside an object (<see cref="BeginObject"/> to <see cref="EndObject"/>) the code written runs once per property,
-/// and the <c>FailUnless</c> operations test the current property's value; a failure returns false from the method.
+/// and inside an array (<see cref="BeginArray"/> to <see cref="EndArray"/>) once per item; the <c>FailUnless</c>
+/// operations test the current property's value or the current item, and a failure returns false from the method.
 /// </remarks>
 internal interface ISchemaEmitter
 {
@@ -46,6 +47,34 @@ internal interface ISchemaEmitter
     /// <summary>Finishes the pass over the properties; the method then returns whether every bit of <paramref name="requiredMask"/> was marked.</summary>
     /// <param name="requiredMask">The seen bits that must be set.</param>
     void EndObject(ulong requiredMask);
+
+    /// <summary>
+    /// Starts an array's pass over its items. A value that is not an array returns whether its token type is one of
+    /// <paramref name="otherTokens"/>; an array returns false unless <paramref name="acceptsArray"/>, or when its
+    /// length is outside the bounds.
+    /// </summary>
+    /// <param name="otherTokens">The token types accepted for a value that is not an array, a bit per type.</param>
+    /// <param name="integerOnly">Whether an accepted number must be an integer.</param>
+    /// <param name="lexical">Whether the integer test is draft 4's lexical one.</param>
+    /// <param name="acceptsArray">Whether an array is accepted at all.</param>
+    /// <param name="minItems">The least length, or -1.</param>
+    /// <param name="maxItems">The greatest length, or -1.</param>
+    void BeginArray(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems);
+
+    /// <summary>Finishes the pass over the items; the method then returns true.</summary>
+    void EndArray();
+
+    /// <summary>
+    /// An array whose items need no test: the method returns what <see cref="BeginArray"/> decides before its pass
+    /// (the value's type and the array's length), and true for an array within the bounds.
+    /// </summary>
+    /// <param name="otherTokens">The token types accepted for a value that is not an array, a bit per type.</param>
+    /// <param name="integerOnly">Whether an accepted number must be an integer.</param>
+    /// <param name="lexical">Whether the integer test is draft 4's lexical one.</param>
+    /// <param name="acceptsArray">Whether an array is accepted at all.</param>
+    /// <param name="minItems">The least length, or -1.</param>
+    /// <param name="maxItems">The greatest length, or -1.</param>
+    void ReturnArrayWithoutItems(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems);
 
     /// <summary>Starts the dispatch on the current property's name: one case per key (by its index), and the case -1 for every other name.</summary>
     /// <param name="properties">The names, whose indices number the cases.</param>

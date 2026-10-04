@@ -21,13 +21,13 @@ internal static partial class Evaluator
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static JsonTokenType GenToken(ref EvaluationState state, int index) => default(RawAccess).TokenType(ref state, null!, index);
 
-    /// <summary>An object's property count.</summary>
+    /// <summary>An object's property count, or an array's length.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int GenCount(ref EvaluationState state, int index) => default(RawAccess).Count(ref state, null!, index, JsonTokenType.StartObject);
 
-    /// <summary>An object's end row, its rows checked once: the reads inside the object are unchecked.</summary>
+    /// <summary>An object's or array's end row, its rows checked once: the reads inside the container are unchecked.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int GenObjectEnd(ref EvaluationState state, int index)
+    internal static int GenEnd(ref EvaluationState state, int index)
     {
         int end = default(RawAccess).EndIndex(ref state, null!, index);
         if (!default(RawAccess).RowsAvailable(ref state, null!, end))
@@ -38,7 +38,7 @@ internal static partial class Evaluator
         return end;
     }
 
-    /// <summary>A property value's token type, and the row after the value.</summary>
+    /// <summary>A property value's or an item's token type, and the row after it.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static JsonTokenType GenTokenAndNext(ref EvaluationState state, int valueIndex, out int next) => default(RawAccess).TokenTypeAndNextUnchecked(ref state, null!, valueIndex, out next);
 
