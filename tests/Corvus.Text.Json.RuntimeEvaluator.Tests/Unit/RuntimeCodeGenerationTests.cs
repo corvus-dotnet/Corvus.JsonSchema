@@ -252,6 +252,33 @@ public class RuntimeCodeGenerationTests
         }
         """;
 
+    // A oneOf whose branches a property's value selects.
+    private const string Discriminated = """
+        {
+          "oneOf": [
+            {"type": "object", "properties": {"kind": {"const": "a"}, "count": {"type": "integer"}}, "required": ["kind"]},
+            {"type": "object", "properties": {"kind": {"const": "b"}, "name": {"type": "string"}}, "required": ["kind"]},
+            {"type": "object", "properties": {"kind": {"enum": ["c", "x"]}}, "required": ["kind", "a"]}
+          ]
+        }
+        """;
+
+    // unevaluatedProperties over branches that apply always and under a condition, with a pattern under the condition.
+    private const string Unevaluated = """
+        {
+          "type": "object",
+          "properties": {"a": {"type": "string"}},
+          "allOf": [
+            {"properties": {"name": {"type": "string"}}},
+            {
+              "if": {"properties": {"kind": {"const": "a"}}, "required": ["kind"]},
+              "then": {"properties": {"count": {"type": "integer"}}, "patternProperties": {"^x": {}}}
+            }
+          ],
+          "unevaluatedProperties": {"type": ["string", "boolean"]}
+        }
+        """;
+
     private const string Closed = """{"type": "object", "additionalProperties": false}""";
 
     private const string Untyped = """{"properties": {"a": {"type": "integer"}, "name": {"type": "string"}}}""";
@@ -295,6 +322,8 @@ public class RuntimeCodeGenerationTests
     [DataRow(Fused, 8)]
     [DataRow(UnderIf, 5)]
     [DataRow(FusedConditions, 13)]
+    [DataRow(Discriminated, 4)]
+    [DataRow(Unevaluated, 5)]
     [DataRow(Closed, 1)]
     [DataRow(Untyped, 1)]
     [DataRow(Draft4, 1)]

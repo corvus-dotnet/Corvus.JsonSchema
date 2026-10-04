@@ -48,6 +48,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenNameMatches = Helper(nameof(Evaluator.GenNameMatches));
     private static readonly MethodInfo GenOwnLeaf = Helper(nameof(Evaluator.GenOwnLeaf));
     private static readonly MethodInfo GenFusedValueTests = Helper(nameof(Evaluator.GenFusedValueTests));
+    private static readonly MethodInfo GenSelectBranches = Helper(nameof(Evaluator.GenSelectBranches));
     private static readonly MethodInfo GenIsInteger = Helper(nameof(Evaluator.GenIsInteger));
     private static readonly MethodInfo GenStringSet = Helper(nameof(Evaluator.GenStringSet));
     private static readonly MethodInfo GenStringConst = Helper(nameof(Evaluator.GenStringConst));
@@ -93,6 +94,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
 
     // A fused object's state: the conditions marked failed, those that hold, those reached, the failed branches of
     // each alternative group, the kept values, and the open tries (the failure label each replaced, and its end).
+    private LocalBuilder? selectedBranches;
     private LocalBuilder? failedConditions;
     private LocalBuilder? holds;
     private LocalBuilder? reached;
@@ -120,6 +122,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         this.count = null;
         this.selfToken = null;
         this.ownKeywords = false;
+        this.selectedBranches = null;
         this.failedConditions = null;
         this.holds = null;
         this.reached = null;
@@ -317,6 +320,30 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     {
         this.Il.Emit(OpCodes.Br, this.fail);
         this.Il.MarkLabel(this.ends.Pop());
+    }
+
+    /// <inheritdoc/>
+    public void BeginIfDiscriminated(Discriminator discriminator)
+    {
+        ILGenerator il = this.Il;
+        this.selectedBranches ??= il.DeclareLocal(typeof(ulong));
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Ldsfld, this.Constant(discriminator));
+        il.Emit(OpCodes.Ldloca, this.selectedBranches);
+        il.Emit(OpCodes.Call, GenSelectBranches);
+        this.BeginBlock(OpCodes.Brfalse);
+    }
+
+    /// <inheritdoc/>
+    public void BeginIfBranchSelected(int branch)
+    {
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldloc, this.selectedBranches!);
+        il.Emit(OpCodes.Ldc_I8, 1L << branch);
+        il.Emit(OpCodes.And);
+        this.BeginBlock(OpCodes.Brfalse);
     }
 
     /// <inheritdoc/>

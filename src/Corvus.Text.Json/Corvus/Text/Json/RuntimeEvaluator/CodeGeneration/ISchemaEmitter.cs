@@ -122,6 +122,14 @@ internal interface ISchemaEmitter
     /// <summary>Finishes the alternatives.</summary>
     void EndAlternatives();
 
+    /// <summary>Starts code that runs when a discriminator selects branches for the method's value; <see cref="Else"/> starts the code for when it selects nothing in particular.</summary>
+    /// <param name="discriminator">The discriminator.</param>
+    void BeginIfDiscriminated(Discriminator discriminator);
+
+    /// <summary>Starts code that runs when the discriminator (see <see cref="BeginIfDiscriminated"/>) selected a branch.</summary>
+    /// <param name="branch">The branch.</param>
+    void BeginIfBranchSelected(int branch);
+
     /// <summary>Starts a count of the children the method's value is valid against.</summary>
     void BeginCount();
 

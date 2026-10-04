@@ -110,6 +110,27 @@ internal static partial class Evaluator
         }
     }
 
+    /// <summary>
+    /// The branches a discriminator selects for a value (the interpreter's selection), as a bit per branch; false
+    /// when it selects nothing in particular and the keyword's other narrowing applies.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenSelectBranches(ref EvaluationState state, IJsonDocument doc, int index, Discriminator discriminator, out ulong selected)
+    {
+        selected = 0;
+        if (!TrySelectBranches<RawAccess>(discriminator, ref state, doc, index, out int[] branches))
+        {
+            return false;
+        }
+
+        foreach (int branch in branches)
+        {
+            selected |= 1UL << branch;
+        }
+
+        return true;
+    }
+
     /// <summary>Whether a number value is an integer.</summary>
     internal static bool GenIsInteger(ref EvaluationState state, IJsonDocument doc, int index, bool lexical) => IsInteger<RawAccess>(ref state, doc, index, lexical);
 

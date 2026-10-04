@@ -242,10 +242,11 @@ internal static class SchemaLowering
             case NodePlan.FusedObject:
                 // A flat fused plan (the strict loop over the merged names of an allOf/$ref chain of object schemas),
                 // or the full pass when its state fits one word each (names, conditions, an alternative group's
-                // branches) and nothing is tracked for unevaluatedProperties (the interpreter's, for now).
+                // branches); unevaluatedProperties with alternative groups is the interpreter's (a property is
+                // covered there by whether a branch's resolution of it succeeded).
                 return node.Fused is FusedObject fused
                     && (fused.FlatEntries is not null
-                        || (!fused.Unevaluated.IsPresent
+                        || ((!fused.Unevaluated.IsPresent || fused.AltGroups.Length == 0)
                             && fused.EntryList.Length <= 64
                             && fused.Conditions.Length <= 64
                             && Array.TrueForAll(fused.AltGroups, g => g.BranchCount <= 64)));
@@ -273,13 +274,13 @@ internal static class SchemaLowering
 
     private static bool IntegerOnly(SchemaNode node) => node.HasType && (node.Type & TypeMask.Integer) != 0 && (node.Type & TypeMask.Number) == 0;
 
-    // Whether the node's in-place applicators are specialised: not a dynamic reference, a discriminated anyOf/oneOf
-    // (its branches are selected by data) or a child on an in-place cycle (entered under the interpreter's depth guard).
+    // Whether the node's in-place applicators are specialised: not a dynamic reference, a discriminator over more
+    // than 64 branches, or a child on an in-place cycle (entered under the interpreter's depth guard).
     private static bool IsInPlaceSpecialised(SchemaNode[] nodes, SchemaNode node)
     {
         if (node.DynamicRef is not null
-            || (node.AnyOf is not null && node.AnyOfTypeUnion == TypeMask.None && node.AnyOfDiscriminator is not null)
-            || (node.OneOf is not null && node.OneOfTypeUnion == TypeMask.None && node.OneOfDiscriminator is not null))
+            || (node.AnyOfDiscriminator is not null && node.AnyOf!.Length > 64)
+            || (node.OneOfDiscriminator is not null && node.OneOf!.Length > 64))
         {
             return false;
         }
@@ -375,12 +376,12 @@ internal static class SchemaLowering
 
         if (node.AnyOf is ChildRef[] anyOf)
         {
-            LowerBranches(emitter, nodes, node, anyOf, node.AnyOfTypeUnion, node.AnyOfByKind, node.AnyOfTypeDispatch, exactlyOne: false, requested, pending);
+            LowerBranches(emitter, nodes, node, anyOf, node.AnyOfTypeUnion, node.AnyOfDiscriminator, node.AnyOfByKind, node.AnyOfTypeDispatch, exactlyOne: false, requested, pending);
         }
 
         if (node.OneOf is ChildRef[] oneOf)
         {
-            LowerBranches(emitter, nodes, node, oneOf, node.OneOfTypeUnion, node.OneOfByKind, node.OneOfTypeDispatch, exactlyOne: true, requested, pending);
+            LowerBranches(emitter, nodes, node, oneOf, node.OneOfTypeUnion, node.OneOfDiscriminator, node.OneOfByKind, node.OneOfTypeDispatch, exactlyOne: true, requested, pending);
         }
 
         if (node.Not.IsPresent)
@@ -415,10 +416,10 @@ internal static class SchemaLowering
         emitter.EndIf();
     }
 
-    // An anyOf or oneOf: one mask test when its branches are types; otherwise the branches that can accept the
-    // value's token type (by the kinds each admits, else the one its type selects, else all of them), any of which,
-    // or exactly one of which, must hold.
-    private static void LowerBranches(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, ChildRef[] branches, TypeMask union, int[]?[]? byKind, int[]? dispatch, bool exactlyOne, HashSet<int> requested, Queue<int> pending)
+    // An anyOf or oneOf: one mask test when its branches are types; otherwise the branches a discriminator selects
+    // for the value, or else those that can accept the value's token type (by the kinds each admits, else the one its
+    // type selects, else all of them), any of which, or exactly one of which, must hold.
+    private static void LowerBranches(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, ChildRef[] branches, TypeMask union, Discriminator? discriminator, int[]?[]? byKind, int[]? dispatch, bool exactlyOne, HashSet<int> requested, Queue<int> pending)
     {
         if (union != TypeMask.None)
         {
@@ -426,45 +427,94 @@ internal static class SchemaLowering
             return;
         }
 
-        // The candidates for each token type a value can have, and the token types that share each list.
-        int[] all = new int[branches.Length];
-        for (int i = 0; i < all.Length; i++)
+        if (discriminator is not null)
         {
-            all[i] = i;
-        }
-
-        var lists = new List<(int[] Candidates, ushort Tokens)>();
-        foreach (JsonTokenType token in (ReadOnlySpan<JsonTokenType>)[JsonTokenType.StartObject, JsonTokenType.StartArray, JsonTokenType.String, JsonTokenType.Number, JsonTokenType.True, JsonTokenType.False, JsonTokenType.Null])
-        {
-            int[] candidates = byKind?[(int)token] is int[] narrowed
-                ? narrowed
-                : dispatch is not null ? (dispatch[(int)token] >= 0 ? [dispatch[(int)token]] : []) : all;
-            int at = lists.FindIndex(l => l.Candidates.AsSpan().SequenceEqual(candidates));
-            if (at < 0)
+            emitter.BeginIfDiscriminated(discriminator);
+            if (exactlyOne)
             {
-                lists.Add((candidates, (ushort)(1 << (int)token)));
+                emitter.BeginCount();
             }
             else
             {
-                lists[at] = (lists[at].Candidates, (ushort)(lists[at].Tokens | (1 << (int)token)));
+                emitter.BeginAlternatives();
             }
-        }
 
-        if (lists.Count == 1)
-        {
-            Candidates(lists[0].Candidates);
+            for (int i = 0; i < branches.Length; i++)
+            {
+                (int child, bool generated) = Target(nodes, branches[i].FastNode, requested, pending);
+                emitter.BeginIfBranchSelected(i);
+                if (exactlyOne)
+                {
+                    emitter.CountSelf(child, generated);
+                }
+                else
+                {
+                    emitter.OrSelf(child, generated);
+                }
+
+                emitter.EndIf();
+            }
+
+            if (exactlyOne)
+            {
+                emitter.FailUnlessCountedOne();
+            }
+            else
+            {
+                emitter.EndAlternatives();
+            }
+
+            emitter.Else();
+            Narrowed();
+            emitter.EndIf();
             return;
         }
 
-        emitter.BeginTokenSwitch();
-        foreach ((int[] candidates, ushort tokens) in lists)
-        {
-            emitter.BeginTokenCase(tokens);
-            Candidates(candidates);
-            emitter.EndTokenCase();
-        }
+        Narrowed();
+        return;
 
-        emitter.EndTokenSwitch();
+        void Narrowed()
+        {
+            // The candidates for each token type a value can have, and the token types that share each list.
+            int[] all = new int[branches.Length];
+            for (int i = 0; i < all.Length; i++)
+            {
+                all[i] = i;
+            }
+
+            var lists = new List<(int[] Candidates, ushort Tokens)>();
+            foreach (JsonTokenType token in (ReadOnlySpan<JsonTokenType>)[JsonTokenType.StartObject, JsonTokenType.StartArray, JsonTokenType.String, JsonTokenType.Number, JsonTokenType.True, JsonTokenType.False, JsonTokenType.Null])
+            {
+                int[] candidates = byKind?[(int)token] is int[] narrowed
+                    ? narrowed
+                    : dispatch is not null ? (dispatch[(int)token] >= 0 ? [dispatch[(int)token]] : []) : all;
+                int at = lists.FindIndex(l => l.Candidates.AsSpan().SequenceEqual(candidates));
+                if (at < 0)
+                {
+                    lists.Add((candidates, (ushort)(1 << (int)token)));
+                }
+                else
+                {
+                    lists[at] = (lists[at].Candidates, (ushort)(lists[at].Tokens | (1 << (int)token)));
+                }
+            }
+
+            if (lists.Count == 1)
+            {
+                Candidates(lists[0].Candidates);
+                return;
+            }
+
+            emitter.BeginTokenSwitch();
+            foreach ((int[] candidates, ushort tokens) in lists)
+            {
+                emitter.BeginTokenCase(tokens);
+                Candidates(candidates);
+                emitter.EndTokenCase();
+            }
+
+            emitter.EndTokenSwitch();
+        }
 
         void Candidates(int[] candidates)
         {
@@ -954,6 +1004,107 @@ internal static class SchemaLowering
             if (contributor.Condition >= 0)
             {
                 emitter.EndIf();
+            }
+        }
+
+        // unevaluatedProperties: a last pass over the properties no branch covered. Without alternative groups a
+        // known name is covered by any resolution that applies to it (always, or when a condition selects it), and
+        // an unknown name by a branch, applying, whose pattern matches it or whose additional schema takes it.
+        if (f.Unevaluated.IsPresent)
+        {
+            SchemaNode unevaluated = nodes[f.Unevaluated.FastNode];
+            emitter.BeginPropertiesAgain();
+            emitter.BeginNameDispatch(f.Entries);
+            for (int i = 0; i < f.EntryList.Length; i++)
+            {
+                emitter.BeginCase(i);
+                FusedApplication[] applications = f.EntryList[i].Applications;
+                if (!Array.Exists(applications, a => contributors[a.Contributor].Condition < 0))
+                {
+                    active.Clear();
+                    foreach (FusedApplication application in applications)
+                    {
+                        active.Add((contributors[application.Contributor].Condition, contributors[application.Contributor].Polarity));
+                        foreach (int other in application.OtherContributors ?? [])
+                        {
+                            if (contributors[other].Condition >= 0)
+                            {
+                                active.Add((contributors[other].Condition, contributors[other].Polarity));
+                            }
+                        }
+                    }
+
+                    if (active.Count == 0)
+                    {
+                        Unevaluated();
+                    }
+                    else
+                    {
+                        emitter.BeginIfActive(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(active));
+                        emitter.Else();
+                        Unevaluated();
+                        emitter.EndIf();
+                    }
+                }
+
+                emitter.EndCase();
+            }
+
+            emitter.BeginCase(-1);
+            emitter.SetMatched(false);
+            if (f.ResolvesUnknownNames)
+            {
+                foreach (FusedContributor contributor in contributors)
+                {
+                    bool takesAll = contributor.AdditionalNode >= 0 || contributor.AdditionalCoversOnly;
+                    if (!takesAll && contributor.Patterns is null)
+                    {
+                        continue;
+                    }
+
+                    if (contributor.Condition >= 0)
+                    {
+                        emitter.BeginIfActive([(contributor.Condition, contributor.Polarity)]);
+                    }
+
+                    if (takesAll)
+                    {
+                        emitter.SetMatched(true);
+                    }
+                    else
+                    {
+                        foreach (PatternPropertyEntry pattern in contributor.Patterns!)
+                        {
+                            emitter.BeginIfNameMatches(pattern.Matcher);
+                            emitter.SetMatched(true);
+                            emitter.EndIf();
+                        }
+                    }
+
+                    if (contributor.Condition >= 0)
+                    {
+                        emitter.EndIf();
+                    }
+                }
+            }
+
+            emitter.BeginIfNotMatched();
+            Unevaluated();
+            emitter.EndIf();
+            emitter.EndCase();
+            emitter.EndNameDispatch();
+            emitter.EndProperties();
+
+            void Unevaluated()
+            {
+                if (unevaluated.AlwaysFalse)
+                {
+                    emitter.Fail();
+                }
+                else if (!unevaluated.AlwaysTrue)
+                {
+                    LowerChild(emitter, nodes, 0, 0, f.Unevaluated.FastNode, requested, pending);
+                }
             }
         }
 
