@@ -6,7 +6,9 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using Corvus.Text.Json.Internal;
+using Corvus.Text.Json.RuntimeEvaluator.Compilation;
 using Corvus.Text.Json.RuntimeEvaluator.Evaluation;
 
 namespace Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
@@ -17,15 +19,53 @@ namespace Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
 /// unloaded with the schema. The assembly reads the evaluator's internal state through
 /// <c>IgnoresAccessChecksToAttribute</c>.
 /// </summary>
+/// <remarks>
+/// A method's arguments are the evaluation state (by reference), the document and the value's row index. Constants
+/// that are objects (name maps, strings, leaf resolutions) are static fields of the type, set when it is built.
+/// </remarks>
 internal sealed class IlSchemaEmitter : ISchemaEmitter
 {
+    private const int RowSize = Evaluator.RowSize;
+
+    // The widest span of name lengths dispatched by a jump table; a wider one is a chain of comparisons.
+    private const int MaxLengthTable = 64;
+
     private static readonly Type[] NodeParameters = [typeof(EvaluationState).MakeByRefType(), typeof(IJsonDocument), typeof(int)];
 
-    private static readonly MethodInfo EvalNodeFast = typeof(Evaluator).GetMethod(nameof(Evaluator.EvalNodeFast), BindingFlags.Static | BindingFlags.NonPublic)!;
+    private static readonly MethodInfo EvalNodeFast = Helper(nameof(Evaluator.EvalNodeFast));
+    private static readonly MethodInfo GenToken = Helper(nameof(Evaluator.GenToken));
+    private static readonly MethodInfo GenCount = Helper(nameof(Evaluator.GenCount));
+    private static readonly MethodInfo GenObjectEnd = Helper(nameof(Evaluator.GenObjectEnd));
+    private static readonly MethodInfo GenTokenAndNext = Helper(nameof(Evaluator.GenTokenAndNext));
+    private static readonly MethodInfo GenName = Helper(nameof(Evaluator.GenName));
+    private static readonly MethodInfo GenWord = Helper(nameof(Evaluator.GenWord));
+    private static readonly MethodInfo GenSlowName = Helper(nameof(Evaluator.GenSlowName));
+    private static readonly MethodInfo GenIsInteger = Helper(nameof(Evaluator.GenIsInteger));
+    private static readonly MethodInfo GenStringSet = Helper(nameof(Evaluator.GenStringSet));
+    private static readonly MethodInfo GenStringConst = Helper(nameof(Evaluator.GenStringConst));
+    private static readonly MethodInfo GenLengthLeaf = Helper(nameof(Evaluator.GenLengthLeaf));
 
     private readonly TypeBuilder type;
     private readonly Dictionary<int, MethodBuilder> methods = [];
+    private readonly List<(FieldBuilder Field, object Value)> constants = [];
+
+    // The current method.
     private ILGenerator? il;
+    private Label fail;
+
+    // The current object: its locals, and the labels of its loop.
+    private LocalBuilder? end;
+    private LocalBuilder? value;
+    private LocalBuilder? next;
+    private LocalBuilder? token;
+    private LocalBuilder? seen;
+    private Label nextProperty;
+    private Label endOfObject;
+    private Label loop;
+
+    // The current name dispatch: a label per name, and the one for every other name.
+    private Label[]? cases;
+    private Label otherNames;
 
     public IlSchemaEmitter()
     {
@@ -35,16 +75,19 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         this.type = module.DefineType("Schema", TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract);
     }
 
+    private ILGenerator Il => this.il!;
+
     /// <inheritdoc/>
     public void BeginMethod(int nodeId)
     {
         this.il = this.Method(nodeId).GetILGenerator();
+        this.fail = this.il.DefineLabel();
     }
 
     /// <inheritdoc/>
     public void ReturnInterpreted(int nodeId)
     {
-        ILGenerator il = this.il!;
+        ILGenerator il = this.Il;
         il.Emit(OpCodes.Ldc_I4, nodeId);
         il.Emit(OpCodes.Ldarg_1);
         il.Emit(OpCodes.Ldarg_2);
@@ -56,16 +99,424 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     /// <inheritdoc/>
     public void EndMethod()
     {
+        ILGenerator il = this.Il;
+        il.MarkLabel(this.fail);
+        il.Emit(OpCodes.Ldc_I4_0);
+        il.Emit(OpCodes.Ret);
         this.il = null;
     }
 
-    /// <summary>Creates the type and returns the method for a node.</summary>
+    /// <inheritdoc/>
+    public void BeginObject(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsObject, int minProperties, int maxProperties)
+    {
+        ILGenerator il = this.Il;
+        this.end = il.DeclareLocal(typeof(int));
+        this.value = il.DeclareLocal(typeof(int));
+        this.next = il.DeclareLocal(typeof(int));
+        this.token = il.DeclareLocal(typeof(int));
+        this.seen = il.DeclareLocal(typeof(ulong));
+        this.nextProperty = il.DefineLabel();
+        this.endOfObject = il.DefineLabel();
+        this.loop = il.DefineLabel();
+        Label isObject = il.DefineLabel();
+
+        // The method's value: an object goes on; anything else is decided by its token type.
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, GenToken);
+        il.Emit(OpCodes.Stloc, this.token);
+        il.Emit(OpCodes.Ldloc, this.token);
+        il.Emit(OpCodes.Ldc_I4, (int)JsonTokenType.StartObject);
+        il.Emit(OpCodes.Beq, isObject);
+        if (otherTokens != ushort.MaxValue)
+        {
+            this.TokenTest(otherTokens, integerOnly, lexical, atMethodValue: true);
+        }
+
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.Ret);
+
+        il.MarkLabel(isObject);
+        if (!acceptsObject)
+        {
+            il.Emit(OpCodes.Br, this.fail);
+        }
+
+        if (minProperties >= 0 || maxProperties >= 0)
+        {
+            LocalBuilder count = il.DeclareLocal(typeof(int));
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Call, GenCount);
+            il.Emit(OpCodes.Stloc, count);
+            if (minProperties >= 0)
+            {
+                il.Emit(OpCodes.Ldloc, count);
+                il.Emit(OpCodes.Ldc_I4, minProperties);
+                il.Emit(OpCodes.Blt, this.fail);
+            }
+
+            if (maxProperties >= 0)
+            {
+                il.Emit(OpCodes.Ldloc, count);
+                il.Emit(OpCodes.Ldc_I4, maxProperties);
+                il.Emit(OpCodes.Bgt, this.fail);
+            }
+        }
+
+        // end = the object's end row; value = the first property's value row (the object's row, then the name's).
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, GenObjectEnd);
+        il.Emit(OpCodes.Stloc, this.end);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Ldc_I4, 2 * RowSize);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Stloc, this.value);
+        il.Emit(OpCodes.Ldc_I4_0);
+        il.Emit(OpCodes.Conv_I8);
+        il.Emit(OpCodes.Stloc, this.seen);
+
+        // while (value - RowSize < end) { token = the value's type; next = the row after the value; ...
+        il.MarkLabel(this.loop);
+        il.Emit(OpCodes.Ldloc, this.value);
+        il.Emit(OpCodes.Ldc_I4, RowSize);
+        il.Emit(OpCodes.Sub);
+        il.Emit(OpCodes.Ldloc, this.end);
+        il.Emit(OpCodes.Bge, this.endOfObject);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldloc, this.value);
+        il.Emit(OpCodes.Ldloca, this.next);
+        il.Emit(OpCodes.Call, GenTokenAndNext);
+        il.Emit(OpCodes.Stloc, this.token);
+    }
+
+    /// <inheritdoc/>
+    public void EndObject(ulong requiredMask)
+    {
+        ILGenerator il = this.Il;
+
+        // ... value = next + RowSize (past the next property's name row) }
+        il.MarkLabel(this.nextProperty);
+        il.Emit(OpCodes.Ldloc, this.next!);
+        il.Emit(OpCodes.Ldc_I4, RowSize);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Stloc, this.value!);
+        il.Emit(OpCodes.Br, this.loop);
+
+        il.MarkLabel(this.endOfObject);
+        if (requiredMask == 0)
+        {
+            il.Emit(OpCodes.Ldc_I4_1);
+        }
+        else
+        {
+            il.Emit(OpCodes.Ldloc, this.seen!);
+            il.Emit(OpCodes.Ldc_I8, unchecked((long)requiredMask));
+            il.Emit(OpCodes.And);
+            il.Emit(OpCodes.Ldc_I8, unchecked((long)requiredMask));
+            il.Emit(OpCodes.Ceq);
+        }
+
+        il.Emit(OpCodes.Ret);
+    }
+
+    /// <inheritdoc/>
+    public void BeginNameDispatch(Utf8NameMap<PropertyEntry> properties)
+    {
+        ILGenerator il = this.Il;
+        byte[][] keys = properties.Keys;
+        this.cases = new Label[keys.Length];
+        for (int i = 0; i < keys.Length; i++)
+        {
+            this.cases[i] = il.DefineLabel();
+        }
+
+        this.otherNames = il.DefineLabel();
+        Label slow = il.DefineLabel();
+        LocalBuilder location = il.DeclareLocal(typeof(int));
+        LocalBuilder length = il.DeclareLocal(typeof(int));
+        LocalBuilder first = il.DeclareLocal(typeof(ulong));
+        LocalBuilder last = il.DeclareLocal(typeof(ulong));
+
+        // The names by length; within a length, by words: one masked word up to 8 bytes, the first and last 8 bytes
+        // (overlapping) up to 16, and the interpreter's lookup beyond.
+        var byLength = new SortedDictionary<int, List<int>>();
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (!byLength.TryGetValue(keys[i].Length, out List<int>? sameLength))
+            {
+                byLength[keys[i].Length] = sameLength = [];
+            }
+
+            sameLength.Add(i);
+        }
+
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Ldloca, length);
+        il.Emit(OpCodes.Call, GenName);
+        il.Emit(OpCodes.Stloc, location);
+        il.Emit(OpCodes.Ldloc, location);
+        il.Emit(OpCodes.Ldc_I4_0);
+        il.Emit(OpCodes.Blt, slow);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldloc, location);
+        il.Emit(OpCodes.Call, GenWord);
+        il.Emit(OpCodes.Stloc, first);
+
+        var lengthLabels = new Dictionary<int, Label>();
+        foreach (int nameLength in byLength.Keys)
+        {
+            lengthLabels[nameLength] = nameLength > 2 * sizeof(ulong) ? slow : il.DefineLabel();
+        }
+
+        if (byLength.Count > 0)
+        {
+            int shortest = int.MaxValue;
+            int longest = 0;
+            foreach (int nameLength in byLength.Keys)
+            {
+                shortest = Math.Min(shortest, nameLength);
+                longest = Math.Max(longest, nameLength);
+            }
+
+            if (longest - shortest < MaxLengthTable)
+            {
+                var table = new Label[longest - shortest + 1];
+                for (int i = 0; i < table.Length; i++)
+                {
+                    table[i] = lengthLabels.TryGetValue(shortest + i, out Label label) ? label : this.otherNames;
+                }
+
+                il.Emit(OpCodes.Ldloc, length);
+                il.Emit(OpCodes.Ldc_I4, shortest);
+                il.Emit(OpCodes.Sub);
+                il.Emit(OpCodes.Switch, table);
+            }
+            else
+            {
+                foreach (KeyValuePair<int, Label> label in lengthLabels)
+                {
+                    il.Emit(OpCodes.Ldloc, length);
+                    il.Emit(OpCodes.Ldc_I4, label.Key);
+                    il.Emit(OpCodes.Beq, label.Value);
+                }
+            }
+        }
+
+        il.Emit(OpCodes.Br, this.otherNames);
+
+        Span<byte> padded = stackalloc byte[sizeof(ulong)];
+        foreach (KeyValuePair<int, List<int>> sameLength in byLength)
+        {
+            int nameLength = sameLength.Key;
+            if (nameLength > 2 * sizeof(ulong))
+            {
+                continue;
+            }
+
+            il.MarkLabel(lengthLabels[nameLength]);
+            if (nameLength <= sizeof(ulong))
+            {
+                // The word read may run past the name: mask it to the name's bytes.
+                il.Emit(OpCodes.Ldloc, first);
+                if (nameLength < sizeof(ulong))
+                {
+                    padded.Clear();
+                    padded.Slice(0, nameLength).Fill(0xFF);
+                    il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(padded)));
+                    il.Emit(OpCodes.And);
+                }
+
+                il.Emit(OpCodes.Stloc, last);
+                foreach (int index in sameLength.Value)
+                {
+                    padded.Clear();
+                    keys[index].CopyTo(padded);
+                    il.Emit(OpCodes.Ldloc, last);
+                    il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(padded)));
+                    il.Emit(OpCodes.Beq, this.cases[index]);
+                }
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldloc, location);
+                il.Emit(OpCodes.Ldc_I4, nameLength - sizeof(ulong));
+                il.Emit(OpCodes.Add);
+                il.Emit(OpCodes.Call, GenWord);
+                il.Emit(OpCodes.Stloc, last);
+                foreach (int index in sameLength.Value)
+                {
+                    Label differs = il.DefineLabel();
+                    il.Emit(OpCodes.Ldloc, first);
+                    il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(keys[index])));
+                    il.Emit(OpCodes.Bne_Un, differs);
+                    il.Emit(OpCodes.Ldloc, last);
+                    il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(keys[index].AsSpan(nameLength - sizeof(ulong)))));
+                    il.Emit(OpCodes.Beq, this.cases[index]);
+                    il.MarkLabel(differs);
+                }
+            }
+
+            il.Emit(OpCodes.Br, this.otherNames);
+        }
+
+        // Escaped names, names at the very end of the text and long names: the interpreter's lookup, then the case.
+        il.MarkLabel(slow);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Ldsfld, this.Constant(properties));
+        il.Emit(OpCodes.Call, GenSlowName);
+        if (keys.Length > 0)
+        {
+            il.Emit(OpCodes.Switch, this.cases);
+        }
+        else
+        {
+            il.Emit(OpCodes.Pop);
+        }
+
+        il.Emit(OpCodes.Br, this.otherNames);
+    }
+
+    /// <inheritdoc/>
+    public void BeginCase(int index)
+    {
+        this.Il.MarkLabel(index < 0 ? this.otherNames : this.cases![index]);
+    }
+
+    /// <inheritdoc/>
+    public void EndCase()
+    {
+        this.Il.Emit(OpCodes.Br, this.nextProperty);
+    }
+
+    /// <inheritdoc/>
+    public void EndNameDispatch()
+    {
+        this.cases = null;
+    }
+
+    /// <inheritdoc/>
+    public void MarkSeen(int bit)
+    {
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldloc, this.seen!);
+        il.Emit(OpCodes.Ldc_I8, 1L << bit);
+        il.Emit(OpCodes.Or);
+        il.Emit(OpCodes.Stloc, this.seen!);
+    }
+
+    /// <inheritdoc/>
+    public void Fail()
+    {
+        this.Il.Emit(OpCodes.Br, this.fail);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessToken(ushort tokens, bool integerOnly, bool lexical)
+    {
+        this.TokenTest(tokens, integerOnly, lexical, atMethodValue: false);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessStringSet(Utf8NameMap<object> allowed)
+    {
+        this.ValueTest(GenStringSet, this.Constant(allowed), byAddress: false);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessStringConst(byte[] expected)
+    {
+        this.ValueTest(GenStringConst, this.Constant(expected), byAddress: false);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessLength(in StrictEntry entry)
+    {
+        this.ValueTest(GenLengthLeaf, this.Constant(entry), byAddress: true);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessChild(ushort decided, ushort accepts, int child, bool generated)
+    {
+        ILGenerator il = this.Il;
+        Label done = il.DefineLabel();
+        if (decided != 0)
+        {
+            // A token type the child's type decides: accepted or not in place.
+            Label call = il.DefineLabel();
+            this.TokenBit(decided);
+            il.Emit(OpCodes.Brfalse, call);
+            if ((accepts & decided) == 0)
+            {
+                il.Emit(OpCodes.Br, this.fail);
+            }
+            else
+            {
+                if ((accepts & decided) != decided)
+                {
+                    this.TokenBit(accepts);
+                    il.Emit(OpCodes.Brfalse, this.fail);
+                }
+
+                il.Emit(OpCodes.Br, done);
+            }
+
+            il.MarkLabel(call);
+        }
+
+        if (generated)
+        {
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldloc, this.value!);
+            il.Emit(OpCodes.Call, this.Method(child));
+        }
+        else
+        {
+            il.Emit(OpCodes.Ldc_I4, child);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldloc, this.value!);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, EvalNodeFast);
+        }
+
+        il.Emit(OpCodes.Brfalse, this.fail);
+        il.MarkLabel(done);
+    }
+
+    /// <summary>Creates the type, sets its constants and returns the method for a node.</summary>
     /// <param name="nodeId">The node.</param>
     /// <returns>Its method.</returns>
     public NodeValidator Build(int nodeId)
     {
         Type created = this.type.CreateType();
+        foreach ((FieldBuilder field, object constant) in this.constants)
+        {
+            created.GetField(field.Name)!.SetValue(null, constant);
+        }
+
         return created.GetMethod(this.methods[nodeId].Name)!.CreateDelegate<NodeValidator>();
+    }
+
+    private static MethodInfo Helper(string name) => typeof(Evaluator).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!;
+
+    // [assembly: IgnoresAccessChecksTo(name)]: the runtime honours the attribute by name, so the dynamic assembly
+    // defines it for itself.
+    private static void AllowAccessTo(AssemblyBuilder assembly, ModuleBuilder module, string name)
+    {
+        TypeBuilder attribute = module.DefineType("System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute", TypeAttributes.Public | TypeAttributes.Class, typeof(Attribute));
+        ConstructorBuilder ctor = attribute.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, [typeof(string)]);
+        ILGenerator il = ctor.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Call, typeof(Attribute).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, Type.EmptyTypes)!);
+        il.Emit(OpCodes.Ret);
+        Type created = attribute.CreateType();
+        assembly.SetCustomAttribute(new CustomAttributeBuilder(created.GetConstructor([typeof(string)])!, [name]));
     }
 
     private MethodBuilder Method(int nodeId)
@@ -82,18 +533,83 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         return method;
     }
 
-    // [assembly: IgnoresAccessChecksTo(name)]: the runtime honours the attribute by name, so the dynamic assembly
-    // defines it for itself.
-    private static void AllowAccessTo(AssemblyBuilder assembly, ModuleBuilder module, string name)
+    private FieldBuilder Constant<T>(T constant)
+        where T : notnull
     {
-        TypeBuilder attribute = module.DefineType("System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute", TypeAttributes.Public | TypeAttributes.Class, typeof(Attribute));
-        ConstructorBuilder ctor = attribute.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, [typeof(string)]);
-        ILGenerator il = ctor.GetILGenerator();
+        FieldBuilder field = this.type.DefineField("C" + this.constants.Count, typeof(T), FieldAttributes.Public | FieldAttributes.Static);
+        this.constants.Add((field, constant));
+        return field;
+    }
+
+    // Pushes whether the current token's bit is set in a set of token types.
+    private void TokenBit(ushort tokens)
+    {
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldc_I4, (int)tokens);
+        il.Emit(OpCodes.Ldloc, this.token!);
+        il.Emit(OpCodes.Shr);
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.And);
+    }
+
+    // Fails unless the current token is in a set of token types (and, for an integer type, the number is an integer):
+    // the token of the method's own value, or of the current property's.
+    private void TokenTest(ushort tokens, bool integerOnly, bool lexical, bool atMethodValue)
+    {
+        ILGenerator il = this.Il;
+        if (tokens == 0)
+        {
+            il.Emit(OpCodes.Br, this.fail);
+            return;
+        }
+
+        if ((tokens & (tokens - 1)) == 0)
+        {
+            il.Emit(OpCodes.Ldloc, this.token!);
+            il.Emit(OpCodes.Ldc_I4, System.Numerics.BitOperations.TrailingZeroCount((uint)tokens));
+            il.Emit(OpCodes.Bne_Un, this.fail);
+        }
+        else
+        {
+            this.TokenBit(tokens);
+            il.Emit(OpCodes.Brfalse, this.fail);
+        }
+
+        if (integerOnly && (tokens & (1 << (int)JsonTokenType.Number)) != 0)
+        {
+            Label notNumber = il.DefineLabel();
+            il.Emit(OpCodes.Ldloc, this.token!);
+            il.Emit(OpCodes.Ldc_I4, (int)JsonTokenType.Number);
+            il.Emit(OpCodes.Bne_Un, notNumber);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            if (atMethodValue)
+            {
+                il.Emit(OpCodes.Ldarg_2);
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldloc, this.value!);
+            }
+
+            il.Emit(lexical ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Call, GenIsInteger);
+            il.Emit(OpCodes.Brfalse, this.fail);
+            il.MarkLabel(notNumber);
+        }
+    }
+
+    // Fails unless a helper accepts the current property's value against a constant.
+    private void ValueTest(MethodInfo helper, FieldBuilder constant, bool byAddress)
+    {
+        ILGenerator il = this.Il;
         il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Call, typeof(Attribute).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, Type.EmptyTypes)!);
-        il.Emit(OpCodes.Ret);
-        Type created = attribute.CreateType();
-        assembly.SetCustomAttribute(new CustomAttributeBuilder(created.GetConstructor([typeof(string)])!, [name]));
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Ldloc, this.token!);
+        il.Emit(byAddress ? OpCodes.Ldsflda : OpCodes.Ldsfld, constant);
+        il.Emit(OpCodes.Call, helper);
+        il.Emit(OpCodes.Brfalse, this.fail);
     }
 }
 #endif

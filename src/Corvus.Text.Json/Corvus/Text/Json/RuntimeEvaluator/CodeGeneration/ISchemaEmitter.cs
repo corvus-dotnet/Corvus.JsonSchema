@@ -3,23 +3,97 @@
 // </copyright>
 
 #if NET && !STJ
+using Corvus.Text.Json.RuntimeEvaluator.Compilation;
+
 namespace Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
 
 /// <summary>
 /// What the lowering asks a backend to write. The lowering decides the code's shape (which nodes get a method, what
-/// each does inline); a backend only writes it: IL into a collectible assembly now, C# source later.
+/// each does inline); a backend only writes it: IL into a collectible assembly now, C# source later. The operations
+/// are structured (each <c>Begin</c> has its <c>End</c>), so one backend implements them with labels and another
+/// with blocks.
 /// </summary>
+/// <remarks>
+/// Inside an object (<see cref="BeginObject"/> to <see cref="EndObject"/>) the code written runs once per property,
+/// and the <c>FailUnless</c> operations test the current property's value; a failure returns false from the method.
+/// </remarks>
 internal interface ISchemaEmitter
 {
     /// <summary>Starts the method for a node.</summary>
     /// <param name="nodeId">The node.</param>
     void BeginMethod(int nodeId);
 
-    /// <summary>Returns the interpreter's result for a node at the current value: for nodes the lowering does not specialise.</summary>
+    /// <summary>Returns the interpreter's result for a node at the method's value: for nodes the lowering does not specialise.</summary>
     /// <param name="nodeId">The node to evaluate.</param>
     void ReturnInterpreted(int nodeId);
 
     /// <summary>Finishes the current method.</summary>
     void EndMethod();
+
+    /// <summary>
+    /// Starts an object's pass over its properties. A value that is not an object returns whether its token type is
+    /// one of <paramref name="otherTokens"/>; an object returns false unless <paramref name="acceptsObject"/>, or
+    /// when its property count is outside the bounds.
+    /// </summary>
+    /// <param name="otherTokens">The token types accepted for a value that is not an object, a bit per type.</param>
+    /// <param name="integerOnly">Whether an accepted number must be an integer.</param>
+    /// <param name="lexical">Whether the integer test is draft 4's lexical one.</param>
+    /// <param name="acceptsObject">Whether an object is accepted at all.</param>
+    /// <param name="minProperties">The least property count, or -1.</param>
+    /// <param name="maxProperties">The greatest property count, or -1.</param>
+    void BeginObject(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsObject, int minProperties, int maxProperties);
+
+    /// <summary>Finishes the pass over the properties; the method then returns whether every bit of <paramref name="requiredMask"/> was marked.</summary>
+    /// <param name="requiredMask">The seen bits that must be set.</param>
+    void EndObject(ulong requiredMask);
+
+    /// <summary>Starts the dispatch on the current property's name: one case per key (by its index), and the case -1 for every other name.</summary>
+    /// <param name="properties">The names, whose indices number the cases.</param>
+    void BeginNameDispatch(Utf8NameMap<PropertyEntry> properties);
+
+    /// <summary>Starts the code for one name (by its index in the dispatch's names), or with -1 for every other name.</summary>
+    /// <param name="index">The name's index, or -1.</param>
+    void BeginCase(int index);
+
+    /// <summary>Finishes the current case.</summary>
+    void EndCase();
+
+    /// <summary>Finishes the dispatch.</summary>
+    void EndNameDispatch();
+
+    /// <summary>Marks a seen bit.</summary>
+    /// <param name="bit">The bit.</param>
+    void MarkSeen(int bit);
+
+    /// <summary>Fails.</summary>
+    void Fail();
+
+    /// <summary>Fails unless the value's token type is one of <paramref name="tokens"/>.</summary>
+    /// <param name="tokens">The token types accepted, a bit per type.</param>
+    /// <param name="integerOnly">Whether an accepted number must be an integer.</param>
+    /// <param name="lexical">Whether the integer test is draft 4's lexical one.</param>
+    void FailUnlessToken(ushort tokens, bool integerOnly, bool lexical);
+
+    /// <summary>Fails unless the value is a string in a set.</summary>
+    /// <param name="allowed">The set.</param>
+    void FailUnlessStringSet(Utf8NameMap<object> allowed);
+
+    /// <summary>Fails unless the value is one string.</summary>
+    /// <param name="expected">The string, as UTF-8.</param>
+    void FailUnlessStringConst(byte[] expected);
+
+    /// <summary>Fails unless the value satisfies a string-length leaf.</summary>
+    /// <param name="entry">The leaf's resolution.</param>
+    void FailUnlessLength(in StrictEntry entry);
+
+    /// <summary>
+    /// Fails unless the value is valid against a child node. A token type in <paramref name="decided"/> is decided in
+    /// place by <paramref name="accepts"/>; other values call the child.
+    /// </summary>
+    /// <param name="decided">The token types the child's type alone decides.</param>
+    /// <param name="accepts">Of those, the token types accepted.</param>
+    /// <param name="child">The child node.</param>
+    /// <param name="generated">Whether the child has a generated method (the interpreter evaluates it otherwise).</param>
+    void FailUnlessChild(ushort decided, ushort accepts, int child, bool generated);
 }
 #endif

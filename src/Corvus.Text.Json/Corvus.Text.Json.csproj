@@ -77,6 +77,7 @@
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\Utf8NameMap.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Evaluation\EvaluationState.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Evaluation\Evaluator.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Evaluation\Evaluator.Generated.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Evaluation\Evaluator.UniqueItems.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Exceptions.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\JsonSchemaDialect.cs" />
