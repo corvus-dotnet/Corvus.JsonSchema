@@ -1270,8 +1270,12 @@ internal static partial class Evaluator
             : EvalChildFast<TAccess>(child, doc, valueIndex, ref state);
     }
 
-    /// <summary>A value against a string-length leaf entry: its type, then a string's length.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /// <summary>
+    /// A value against a string-length leaf entry: its type, then a string's length. Out of line: inlined, it grows the
+    /// object loops past the size at which native AOT inlines the strict object plan into the evaluator's entry, which
+    /// costs every document more than the call costs the length leaves.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static bool LengthLeafMatches<TAccess>(in StrictEntry entry, JsonTokenType valueType, ref EvaluationState state, IJsonDocument doc, int valueIndex)
         where TAccess : struct, IDocumentAccess
     {

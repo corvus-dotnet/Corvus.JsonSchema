@@ -174,6 +174,7 @@ internal sealed class SchemaCompiler
     private static readonly bool DisableElision = false;
     private static readonly bool DisableDiscriminator = false;
     private static readonly bool DisableByKind = false;
+    private static readonly bool DisableDecided = false;
     private static readonly bool DisableLeaf = false;
     private static readonly bool DisableOrdering = false;
     private static readonly bool DisablePlans = false;
@@ -183,6 +184,7 @@ internal sealed class SchemaCompiler
     private static readonly bool DisableElision = Environment.GetEnvironmentVariable("CORVUS_RT_NO_ELIDE") == "1";
     private static readonly bool DisableDiscriminator = Environment.GetEnvironmentVariable("CORVUS_RT_NO_DISCRIMINATOR") == "1";
     private static readonly bool DisableByKind = Environment.GetEnvironmentVariable("CORVUS_RT_NO_BYKIND") == "1";
+    private static readonly bool DisableDecided = Environment.GetEnvironmentVariable("CORVUS_RT_NO_DECIDED") == "1";
     private static readonly bool DisableLeaf = Environment.GetEnvironmentVariable("CORVUS_RT_NO_LEAF") == "1";
     private static readonly bool DisableOrdering = Environment.GetEnvironmentVariable("CORVUS_RT_NO_ORDER") == "1";
     private static readonly bool DisablePlans = Environment.GetEnvironmentVariable("CORVUS_RT_NO_PLANS") == "1";
@@ -626,6 +628,11 @@ internal sealed class SchemaCompiler
     internal static ushort DecidedTokens(SchemaNode[] nodes, SchemaNode node, out ushort accepts)
     {
         accepts = 0;
+        if (DisableDecided)
+        {
+            return 0;
+        }
+
         NodePlan plan = node.AlwaysTrue || node.AlwaysFalse ? NodePlan.General : SelectPlan(node, nodes);
         if (plan == NodePlan.TypeUnion)
         {
