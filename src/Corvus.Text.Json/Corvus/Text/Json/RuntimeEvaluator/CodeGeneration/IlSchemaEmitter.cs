@@ -45,6 +45,8 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenWord = Helper(nameof(Evaluator.GenWord));
     private static readonly MethodInfo GenSlowName = Helper(nameof(Evaluator.GenSlowName));
     private static readonly MethodInfo GenEvalGeneral = Helper(nameof(Evaluator.GenEvalGeneral));
+    private static readonly MethodInfo GenNameMatches = Helper(nameof(Evaluator.GenNameMatches));
+    private static readonly MethodInfo GenOwnLeaf = Helper(nameof(Evaluator.GenOwnLeaf));
     private static readonly MethodInfo GenIsInteger = Helper(nameof(Evaluator.GenIsInteger));
     private static readonly MethodInfo GenStringSet = Helper(nameof(Evaluator.GenStringSet));
     private static readonly MethodInfo GenStringConst = Helper(nameof(Evaluator.GenStringConst));
@@ -68,9 +70,25 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private Label endOfLoop;
     private Label loop;
 
-    // The current name dispatch: a label per name, and the one for every other name.
+    // The current name dispatch: a label per name, the one for every other name, and where a case goes when it ends.
     private Label[]? cases;
     private Label otherNames;
+    private Label afterCase;
+    private bool casesThenCommon;
+
+    // The node's own keywords, when more follows them: where success goes.
+    private bool ownKeywords;
+    private Label afterOwnKeywords;
+
+    // The open conditional blocks (the label of the other branch, the label of the end, whether the other branch has begun).
+    private readonly Stack<(Label Otherwise, Label End, bool HasOtherwise)> blocks = new();
+
+    // The open alternatives and token switches (the label of their end).
+    private readonly Stack<Label> ends = new();
+    private LocalBuilder? matched;
+    private LocalBuilder? count;
+    private LocalBuilder? selfToken;
+    private bool loopsOverProperties;
 
     public IlSchemaEmitter()
     {
@@ -87,6 +105,11 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     {
         this.il = this.Method(nodeId).GetILGenerator();
         this.fail = this.il.DefineLabel();
+        this.token = null;
+        this.matched = null;
+        this.count = null;
+        this.selfToken = null;
+        this.ownKeywords = false;
     }
 
     /// <inheritdoc/>
@@ -112,31 +135,274 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     }
 
     /// <inheritdoc/>
-    public void BeginObject(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsObject, int minProperties, int maxProperties, int otherwiseInterpreted = -1)
+    public void BeginObject(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsObject, int minProperties, int maxProperties, int otherwiseInterpreted = -1, bool properties = true)
     {
         this.Prologue(JsonTokenType.StartObject, otherTokens, integerOnly, lexical, acceptsObject, minProperties, maxProperties, otherwiseInterpreted);
-        this.BeginLoop(isObject: true);
+        this.loopsOverProperties = properties;
+        if (properties)
+        {
+            this.BeginLoop(isObject: true);
+        }
+        else
+        {
+            this.seen = this.Il.DeclareLocal(typeof(ulong));
+            this.Il.Emit(OpCodes.Ldc_I4_0);
+            this.Il.Emit(OpCodes.Conv_I8);
+            this.Il.Emit(OpCodes.Stloc, this.seen);
+        }
     }
 
     /// <inheritdoc/>
     public void EndObject(ulong requiredMask)
     {
-        ILGenerator il = this.Il;
-        this.EndLoop(isObject: true);
-        if (requiredMask == 0)
+        this.EndProperties();
+        this.FailUnlessSeen(requiredMask);
+        this.Succeed();
+    }
+
+    /// <inheritdoc/>
+    public void EndProperties()
+    {
+        if (this.loopsOverProperties)
         {
-            il.Emit(OpCodes.Ldc_I4_1);
+            this.EndLoop(isObject: true);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessSeen(ulong mask)
+    {
+        if (mask == 0)
+        {
+            return;
+        }
+
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldloc, this.seen!);
+        il.Emit(OpCodes.Ldc_I8, unchecked((long)mask));
+        il.Emit(OpCodes.And);
+        il.Emit(OpCodes.Ldc_I8, unchecked((long)mask));
+        il.Emit(OpCodes.Bne_Un, this.fail);
+    }
+
+    /// <inheritdoc/>
+    public void BeginIfSeen(int bit)
+    {
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldloc, this.seen!);
+        il.Emit(OpCodes.Ldc_I8, 1L << bit);
+        il.Emit(OpCodes.And);
+        this.BeginBlock(OpCodes.Brfalse);
+    }
+
+    /// <inheritdoc/>
+    public void Succeed()
+    {
+        if (this.ownKeywords)
+        {
+            this.Il.Emit(OpCodes.Br, this.afterOwnKeywords);
         }
         else
         {
-            il.Emit(OpCodes.Ldloc, this.seen!);
-            il.Emit(OpCodes.Ldc_I8, unchecked((long)requiredMask));
-            il.Emit(OpCodes.And);
-            il.Emit(OpCodes.Ldc_I8, unchecked((long)requiredMask));
-            il.Emit(OpCodes.Ceq);
+            this.Il.Emit(OpCodes.Ldc_I4_1);
+            this.Il.Emit(OpCodes.Ret);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void BeginOwnKeywords()
+    {
+        this.ownKeywords = true;
+        this.afterOwnKeywords = this.Il.DefineLabel();
+    }
+
+    /// <inheritdoc/>
+    public void EndOwnKeywords()
+    {
+        this.Il.MarkLabel(this.afterOwnKeywords);
+        this.ownKeywords = false;
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessOwnLeaf(int nodeId)
+    {
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldc_I4, nodeId);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Call, GenOwnLeaf);
+        il.Emit(OpCodes.Brfalse, this.fail);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessSelfToken(ushort tokens, bool integerOnly, bool lexical)
+    {
+        this.LoadSelfToken();
+        this.TokenTest(tokens, integerOnly, lexical, atMethodValue: true);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessSelf(int child, bool generated)
+    {
+        this.CallSelf(child, generated);
+        this.Il.Emit(OpCodes.Brfalse, this.fail);
+    }
+
+    /// <inheritdoc/>
+    public void FailIfSelf(int child, bool generated)
+    {
+        this.CallSelf(child, generated);
+        this.Il.Emit(OpCodes.Brtrue, this.fail);
+    }
+
+    /// <inheritdoc/>
+    public void BeginIfSelf(int child, bool generated)
+    {
+        this.CallSelf(child, generated);
+        this.BeginBlock(OpCodes.Brfalse);
+    }
+
+    /// <inheritdoc/>
+    public void Else()
+    {
+        (Label otherwise, Label end, _) = this.blocks.Pop();
+        this.Il.Emit(OpCodes.Br, end);
+        this.Il.MarkLabel(otherwise);
+        this.blocks.Push((otherwise, end, true));
+    }
+
+    /// <inheritdoc/>
+    public void EndIf()
+    {
+        (Label otherwise, Label end, bool hasOtherwise) = this.blocks.Pop();
+        if (!hasOtherwise)
+        {
+            this.Il.MarkLabel(otherwise);
         }
 
-        il.Emit(OpCodes.Ret);
+        this.Il.MarkLabel(end);
+    }
+
+    /// <inheritdoc/>
+    public void BeginAlternatives()
+    {
+        this.ends.Push(this.Il.DefineLabel());
+    }
+
+    /// <inheritdoc/>
+    public void OrSelf(int child, bool generated)
+    {
+        this.CallSelf(child, generated);
+        this.Il.Emit(OpCodes.Brtrue, this.ends.Peek());
+    }
+
+    /// <inheritdoc/>
+    public void EndAlternatives()
+    {
+        this.Il.Emit(OpCodes.Br, this.fail);
+        this.Il.MarkLabel(this.ends.Pop());
+    }
+
+    /// <inheritdoc/>
+    public void BeginCount()
+    {
+        ILGenerator il = this.Il;
+        this.count ??= il.DeclareLocal(typeof(int));
+        il.Emit(OpCodes.Ldc_I4_0);
+        il.Emit(OpCodes.Stloc, this.count);
+    }
+
+    /// <inheritdoc/>
+    public void CountSelf(int child, bool generated)
+    {
+        ILGenerator il = this.Il;
+        Label skip = il.DefineLabel();
+        this.CallSelf(child, generated);
+        il.Emit(OpCodes.Brfalse, skip);
+        il.Emit(OpCodes.Ldloc, this.count!);
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Stloc, this.count!);
+        il.Emit(OpCodes.Ldloc, this.count!);
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.Bgt, this.fail);
+        il.MarkLabel(skip);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessCountedOne()
+    {
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldloc, this.count!);
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.Bne_Un, this.fail);
+    }
+
+    /// <inheritdoc/>
+    public void BeginTokenSwitch()
+    {
+        ILGenerator il = this.Il;
+        this.selfToken ??= il.DeclareLocal(typeof(int));
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, GenToken);
+        il.Emit(OpCodes.Stloc, this.selfToken);
+        this.ends.Push(il.DefineLabel());
+    }
+
+    /// <inheritdoc/>
+    public void BeginTokenCase(ushort tokens)
+    {
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldc_I4, (int)tokens);
+        il.Emit(OpCodes.Ldloc, this.selfToken!);
+        il.Emit(OpCodes.Shr);
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.And);
+        this.BeginBlock(OpCodes.Brfalse);
+    }
+
+    /// <inheritdoc/>
+    public void EndTokenCase()
+    {
+        (Label otherwise, _, _) = this.blocks.Pop();
+        this.Il.Emit(OpCodes.Br, this.ends.Peek());
+        this.Il.MarkLabel(otherwise);
+    }
+
+    /// <inheritdoc/>
+    public void EndTokenSwitch()
+    {
+        this.Il.MarkLabel(this.ends.Pop());
+    }
+
+    /// <inheritdoc/>
+    public void SetMatched(bool matched)
+    {
+        ILGenerator il = this.Il;
+        this.matched ??= il.DeclareLocal(typeof(bool));
+        il.Emit(matched ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+        il.Emit(OpCodes.Stloc, this.matched);
+    }
+
+    /// <inheritdoc/>
+    public void BeginIfNotMatched()
+    {
+        this.Il.Emit(OpCodes.Ldloc, this.matched!);
+        this.BeginBlock(OpCodes.Brtrue);
+    }
+
+    /// <inheritdoc/>
+    public void BeginIfNameMatches(PatternMatcher matcher)
+    {
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Ldsfld, this.Constant(matcher));
+        il.Emit(OpCodes.Call, GenNameMatches);
+        this.BeginBlock(OpCodes.Brfalse);
     }
 
     /// <inheritdoc/>
@@ -150,30 +416,22 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     public void EndArray()
     {
         this.EndLoop(isObject: false);
-        this.Il.Emit(OpCodes.Ldc_I4_1);
-        this.Il.Emit(OpCodes.Ret);
+        this.Succeed();
     }
 
     /// <inheritdoc/>
     public void ReturnArrayWithoutItems(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems)
     {
         this.Prologue(JsonTokenType.StartArray, otherTokens, integerOnly, lexical, acceptsArray, minItems, maxItems);
-        this.Il.Emit(OpCodes.Ldc_I4_1);
-        this.Il.Emit(OpCodes.Ret);
+        this.Succeed();
     }
 
     /// <inheritdoc/>
     public void ReturnTokenTest(ushort tokens, bool integerOnly, bool lexical)
     {
-        ILGenerator il = this.Il;
-        this.token = il.DeclareLocal(typeof(int));
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Ldarg_2);
-        il.Emit(OpCodes.Call, GenToken);
-        il.Emit(OpCodes.Stloc, this.token);
+        this.LoadSelfToken();
         this.TokenTest(tokens, integerOnly, lexical, atMethodValue: true);
-        il.Emit(OpCodes.Ldc_I4_1);
-        il.Emit(OpCodes.Ret);
+        this.Succeed();
     }
 
     /// <inheritdoc/>
@@ -226,10 +484,12 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     }
 
     /// <inheritdoc/>
-    public void BeginNameDispatch<T>(Utf8NameMap<T> names)
+    public void BeginNameDispatch<T>(Utf8NameMap<T> names, bool thenCommon = false)
         where T : class
     {
         ILGenerator il = this.Il;
+        this.casesThenCommon = thenCommon;
+        this.afterCase = thenCommon ? il.DefineLabel() : this.nextValue;
         byte[][] keys = names.Keys;
         this.cases = new Label[keys.Length];
         for (int i = 0; i < keys.Length; i++)
@@ -401,12 +661,17 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     /// <inheritdoc/>
     public void EndCase()
     {
-        this.Il.Emit(OpCodes.Br, this.nextValue);
+        this.Il.Emit(OpCodes.Br, this.afterCase);
     }
 
     /// <inheritdoc/>
     public void EndNameDispatch()
     {
+        if (this.casesThenCommon)
+        {
+            this.Il.MarkLabel(this.afterCase);
+        }
+
         this.cases = null;
     }
 
@@ -530,7 +795,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private void Prologue(JsonTokenType container, ushort otherTokens, bool integerOnly, bool lexical, bool acceptsContainer, int minCount, int maxCount, int otherwiseInterpreted = -1)
     {
         ILGenerator il = this.Il;
-        this.token = il.DeclareLocal(typeof(int));
+        this.token ??= il.DeclareLocal(typeof(int));
         Label isContainer = il.DefineLabel();
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_2);
@@ -546,18 +811,14 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             il.Emit(OpCodes.Ldarg_2);
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, GenEvalGeneral);
+            il.Emit(OpCodes.Brfalse, this.fail);
         }
-        else
+        else if (otherTokens != ushort.MaxValue)
         {
-            if (otherTokens != ushort.MaxValue)
-            {
-                this.TokenTest(otherTokens, integerOnly, lexical, atMethodValue: true);
-            }
-
-            il.Emit(OpCodes.Ldc_I4_1);
+            this.TokenTest(otherTokens, integerOnly, lexical, atMethodValue: true);
         }
 
-        il.Emit(OpCodes.Ret);
+        this.Succeed();
 
         il.MarkLabel(isContainer);
         if (!acceptsContainer)
@@ -647,6 +908,47 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Stloc, this.value!);
         il.Emit(OpCodes.Br, this.loop);
         il.MarkLabel(this.endOfLoop);
+    }
+
+    // Reads the method's value's token type into the token local (a loop over its values overwrites it).
+    private void LoadSelfToken()
+    {
+        ILGenerator il = this.Il;
+        this.token ??= il.DeclareLocal(typeof(int));
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, GenToken);
+        il.Emit(OpCodes.Stloc, this.token);
+    }
+
+    // Pushes whether the method's value is valid against a child node.
+    private void CallSelf(int child, bool generated)
+    {
+        ILGenerator il = this.Il;
+        if (generated)
+        {
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Call, this.Method(child));
+        }
+        else
+        {
+            il.Emit(OpCodes.Ldc_I4, child);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, EvalNodeFast);
+        }
+    }
+
+    // Opens a conditional block: the value on the stack sends control to the block's other branch by the given branch.
+    private void BeginBlock(OpCode toOtherwise)
+    {
+        ILGenerator il = this.Il;
+        Label otherwise = il.DefineLabel();
+        il.Emit(toOtherwise, otherwise);
+        this.blocks.Push((otherwise, il.DefineLabel(), false));
     }
 
     private static MethodInfo Helper(string name) => typeof(Evaluator).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!;

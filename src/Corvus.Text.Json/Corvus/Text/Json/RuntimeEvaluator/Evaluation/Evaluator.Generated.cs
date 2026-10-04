@@ -83,6 +83,13 @@ internal static partial class Evaluator
         return Eval<FastMode, RawAccess>(state.Program.Nodes[nodeId], doc, index, ref state, default, 0);
     }
 
+    /// <summary>Whether a property's name matches a pattern (the name unescaped first when it is escaped).</summary>
+    internal static bool GenNameMatches(ref EvaluationState state, IJsonDocument doc, int valueIndex, PatternMatcher matcher) => MatchesName<RawAccess>(matcher, ref state, doc, valueIndex);
+
+    /// <summary>A node's own local keywords (type, const, enum, number and string constraints) at a value: the interpreter's leaf evaluation.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenOwnLeaf(int nodeId, IJsonDocument doc, int index, ref EvaluationState state) => EvalLeafFast<RawAccess>(state.Nodes[nodeId], doc, index, ref state);
+
     /// <summary>Whether a number value is an integer.</summary>
     internal static bool GenIsInteger(ref EvaluationState state, IJsonDocument doc, int index, bool lexical) => IsInteger<RawAccess>(ref state, doc, index, lexical);
 

@@ -19,7 +19,9 @@ namespace Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
 /// Specialised so far: strict objects (<see cref="NodePlan.StrictObject"/>), with their properties' leaves tested in
 /// place, and arrays of items (<see cref="NodePlan.SimpleArray"/> and <see cref="NodePlan.ArrayItems"/>, without
 /// prefix items or <c>uniqueItems</c>), flat fused objects (an <c>allOf</c>/<c>$ref</c> chain of object schemas in one
-/// pass), type unions and type dispatch; a child that is specialised is called as a generated method. Every other node
+/// pass), objects with pattern properties and dependencies, type unions and type dispatch, and nodes with in-place
+/// applicators (allOf, anyOf, oneOf, not, if/then/else) over own keywords of those kinds; a child that is specialised
+/// is called as a generated method. Every other node
 /// is evaluated by the interpreter, which calls the generated methods of the specialised nodes it reaches.
 /// </remarks>
 internal static class SchemaLowering
@@ -115,6 +117,13 @@ internal static class SchemaLowering
                 case NodePlan.FusedObject:
                     LowerFlatFusedObject(emitter, nodes, node, requested, pending);
                     break;
+                case NodePlan.Object:
+                    LowerObject(emitter, nodes, node, requested, pending);
+                    break;
+                case NodePlan.Composite:
+                case NodePlan.Conditional:
+                    LowerComposition(emitter, nodes, node, requested, pending);
+                    break;
                 case NodePlan.TypeUnion:
                     emitter.ReturnTokenTest(StrictEntry.TokenBitsOf(node.InPlaceUnionMask), (node.InPlaceUnionMask & TypeMask.Integer) != 0 && (node.InPlaceUnionMask & TypeMask.Number) == 0, node.Dialect == JsonSchemaDialect.Draft4);
                     break;
@@ -195,6 +204,30 @@ internal static class SchemaLowering
     {
         switch (node.Plan)
         {
+            case NodePlan.Composite:
+                return IsOwnPlanSpecialised(nodes, node, node.ConditionalOwnPlan) && IsInPlaceSpecialised(nodes, node);
+            case NodePlan.Conditional:
+                // Its own keywords are a strict object, an object, a type, or nothing; then if/then/else.
+                return node.ConditionalOwnPlan != NodePlan.ArrayItems && IsOwnPlanSpecialised(nodes, node, node.ConditionalOwnPlan);
+            default:
+                return IsOwnPlanSpecialised(nodes, node, node.Plan);
+        }
+    }
+
+    // Whether the node's keywords of one plan are specialised: the node's plan, or the plan of the own keywords of a
+    // node that also has in-place applicators.
+    private static bool IsOwnPlanSpecialised(SchemaNode[] nodes, SchemaNode node, NodePlan plan)
+    {
+        switch (plan)
+        {
+            case NodePlan.Leaf:
+            case NodePlan.AlwaysTrue:
+                // As a node's plan these are the interpreter's (a leaf is tested where it is used); as own keywords
+                // they are a call of the leaf evaluation, or nothing.
+                return node.Plan != plan;
+            case NodePlan.Object:
+                // One word of seen bits; a small object probed by name (unrolled) has at most 32 names.
+                return node.SeenBitCount <= 64 && (node.Properties?.Count ?? 0) <= MaxDispatchNames;
             case NodePlan.StrictObject:
                 return (node.Properties?.Count ?? 0) <= MaxDispatchNames;
             case NodePlan.SimpleArray:
@@ -229,6 +262,441 @@ internal static class SchemaLowering
     private static ushort OtherTokens(SchemaNode node, JsonTokenType container) => node.HasType ? (ushort)(StrictEntry.TokenBitsOf(node.Type) & ~(1 << (int)container)) : ushort.MaxValue;
 
     private static bool IntegerOnly(SchemaNode node) => node.HasType && (node.Type & TypeMask.Integer) != 0 && (node.Type & TypeMask.Number) == 0;
+
+    // Whether the node's in-place applicators are specialised: not a dynamic reference, a discriminated anyOf/oneOf
+    // (its branches are selected by data) or a child on an in-place cycle (entered under the interpreter's depth guard).
+    private static bool IsInPlaceSpecialised(SchemaNode[] nodes, SchemaNode node)
+    {
+        if (node.DynamicRef is not null
+            || (node.AnyOf is not null && node.AnyOfTypeUnion == TypeMask.None && node.AnyOfDiscriminator is not null)
+            || (node.OneOf is not null && node.OneOfTypeUnion == TypeMask.None && node.OneOfDiscriminator is not null))
+        {
+            return false;
+        }
+
+        var children = new List<int>();
+        Add(node.Ref);
+        Add(node.If);
+        Add(node.Then);
+        Add(node.Else);
+        foreach (ChildRef[]? branches in (ReadOnlySpan<ChildRef[]?>)[node.AllOf, node.AnyOf, node.OneOf])
+        {
+            foreach (ChildRef branch in branches ?? [])
+            {
+                Add(branch);
+            }
+        }
+
+        foreach (int child in children)
+        {
+            if ((nodes[child].Flags & NodeFlags.InPlaceCycle) != 0)
+            {
+                return false;
+            }
+        }
+
+        return !node.Not.IsPresent || (nodes[node.Not.Node].Flags & NodeFlags.InPlaceCycle) == 0;
+
+        void Add(in ChildRef child)
+        {
+            if (child.IsPresent)
+            {
+                children.Add(child.FastNode);
+            }
+        }
+    }
+
+    // A node with in-place applicators (Evaluator.EvalCompositePlan and EvalConditionalPlan): its own keywords
+    // through their plan, then the applicators on the same value.
+    private static void LowerComposition(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
+    {
+        emitter.BeginOwnKeywords();
+        switch (node.ConditionalOwnPlan)
+        {
+            case NodePlan.StrictObject:
+                LowerStrictObject(emitter, nodes, node, requested, pending);
+                break;
+            case NodePlan.Object:
+                LowerObject(emitter, nodes, node, requested, pending);
+                break;
+            case NodePlan.ArrayItems:
+                LowerArrayItems(emitter, nodes, node, requested, pending);
+                break;
+            case NodePlan.Leaf when node.Plan == NodePlan.Composite:
+                emitter.FailUnlessOwnLeaf(node.Id);
+                emitter.Succeed();
+                break;
+            case NodePlan.Leaf:
+                emitter.FailUnlessSelfToken(StrictEntry.TokenBitsOf(node.Type), (node.Type & TypeMask.Integer) != 0 && (node.Type & TypeMask.Number) == 0, (node.Flags & NodeFlags.Draft4) != 0);
+                emitter.Succeed();
+                break;
+            default:
+                emitter.Succeed();
+                break;
+        }
+
+        emitter.EndOwnKeywords();
+        if (node.Plan == NodePlan.Conditional)
+        {
+            LowerIf(emitter, nodes, node, requested, pending);
+        }
+        else
+        {
+            LowerInPlace(emitter, nodes, node, requested, pending);
+        }
+
+        emitter.Succeed();
+    }
+
+    // The in-place applicators in flag mode with nothing to mark (Evaluator.EvalInPlace): each keyword in turn.
+    private static void LowerInPlace(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
+    {
+        if (node.Ref.IsPresent)
+        {
+            (int child, bool generated) = Target(nodes, node.Ref.FastNode, requested, pending);
+            emitter.FailUnlessSelf(child, generated);
+        }
+
+        foreach (ChildRef branch in node.AllOf ?? [])
+        {
+            (int child, bool generated) = Target(nodes, branch.FastNode, requested, pending);
+            emitter.FailUnlessSelf(child, generated);
+        }
+
+        if (node.AnyOf is ChildRef[] anyOf)
+        {
+            LowerBranches(emitter, nodes, node, anyOf, node.AnyOfTypeUnion, node.AnyOfByKind, node.AnyOfTypeDispatch, exactlyOne: false, requested, pending);
+        }
+
+        if (node.OneOf is ChildRef[] oneOf)
+        {
+            LowerBranches(emitter, nodes, node, oneOf, node.OneOfTypeUnion, node.OneOfByKind, node.OneOfTypeDispatch, exactlyOne: true, requested, pending);
+        }
+
+        if (node.Not.IsPresent)
+        {
+            (int child, bool generated) = Target(nodes, node.Not.Node, requested, pending);
+            emitter.FailIfSelf(child, generated);
+        }
+
+        if (node.If.IsPresent)
+        {
+            LowerIf(emitter, nodes, node, requested, pending);
+        }
+    }
+
+    private static void LowerIf(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
+    {
+        (int condition, bool conditionGenerated) = Target(nodes, node.If.FastNode, requested, pending);
+        emitter.BeginIfSelf(condition, conditionGenerated);
+        if (node.Then.IsPresent)
+        {
+            (int child, bool generated) = Target(nodes, node.Then.FastNode, requested, pending);
+            emitter.FailUnlessSelf(child, generated);
+        }
+
+        emitter.Else();
+        if (node.Else.IsPresent)
+        {
+            (int child, bool generated) = Target(nodes, node.Else.FastNode, requested, pending);
+            emitter.FailUnlessSelf(child, generated);
+        }
+
+        emitter.EndIf();
+    }
+
+    // An anyOf or oneOf: one mask test when its branches are types; otherwise the branches that can accept the
+    // value's token type (by the kinds each admits, else the one its type selects, else all of them), any of which,
+    // or exactly one of which, must hold.
+    private static void LowerBranches(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, ChildRef[] branches, TypeMask union, int[]?[]? byKind, int[]? dispatch, bool exactlyOne, HashSet<int> requested, Queue<int> pending)
+    {
+        if (union != TypeMask.None)
+        {
+            emitter.FailUnlessSelfToken(StrictEntry.TokenBitsOf(union), (union & TypeMask.Integer) != 0 && (union & TypeMask.Number) == 0, node.Dialect == JsonSchemaDialect.Draft4);
+            return;
+        }
+
+        // The candidates for each token type a value can have, and the token types that share each list.
+        int[] all = new int[branches.Length];
+        for (int i = 0; i < all.Length; i++)
+        {
+            all[i] = i;
+        }
+
+        var lists = new List<(int[] Candidates, ushort Tokens)>();
+        foreach (JsonTokenType token in (ReadOnlySpan<JsonTokenType>)[JsonTokenType.StartObject, JsonTokenType.StartArray, JsonTokenType.String, JsonTokenType.Number, JsonTokenType.True, JsonTokenType.False, JsonTokenType.Null])
+        {
+            int[] candidates = byKind?[(int)token] is int[] narrowed
+                ? narrowed
+                : dispatch is not null ? (dispatch[(int)token] >= 0 ? [dispatch[(int)token]] : []) : all;
+            int at = lists.FindIndex(l => l.Candidates.AsSpan().SequenceEqual(candidates));
+            if (at < 0)
+            {
+                lists.Add((candidates, (ushort)(1 << (int)token)));
+            }
+            else
+            {
+                lists[at] = (lists[at].Candidates, (ushort)(lists[at].Tokens | (1 << (int)token)));
+            }
+        }
+
+        if (lists.Count == 1)
+        {
+            Candidates(lists[0].Candidates);
+            return;
+        }
+
+        emitter.BeginTokenSwitch();
+        foreach ((int[] candidates, ushort tokens) in lists)
+        {
+            emitter.BeginTokenCase(tokens);
+            Candidates(candidates);
+            emitter.EndTokenCase();
+        }
+
+        emitter.EndTokenSwitch();
+
+        void Candidates(int[] candidates)
+        {
+            if (candidates.Length == 0)
+            {
+                emitter.Fail();
+                return;
+            }
+
+            if (candidates.Length == 1)
+            {
+                (int child, bool generated) = Target(nodes, branches[candidates[0]].FastNode, requested, pending);
+                emitter.FailUnlessSelf(child, generated);
+                return;
+            }
+
+            if (exactlyOne)
+            {
+                emitter.BeginCount();
+            }
+            else
+            {
+                emitter.BeginAlternatives();
+            }
+
+            foreach (int candidate in candidates)
+            {
+                (int child, bool generated) = Target(nodes, branches[candidate].FastNode, requested, pending);
+                if (exactlyOne)
+                {
+                    emitter.CountSelf(child, generated);
+                }
+                else
+                {
+                    emitter.OrSelf(child, generated);
+                }
+            }
+
+            if (exactlyOne)
+            {
+                emitter.FailUnlessCountedOne();
+            }
+            else
+            {
+                emitter.EndAlternatives();
+            }
+        }
+    }
+
+    // The interpreter's object plan (Evaluator.EvalObjectPlan and EvalObjectPlanCore): an object with pattern
+    // properties or dependencies, in one of three forms.
+    private static void LowerObject(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
+    {
+        bool acceptsObject = !node.HasType || (node.Type & TypeMask.Object) != 0;
+        ushort otherTokens = OtherTokens(node, JsonTokenType.StartObject);
+        bool lexical = (node.Flags & NodeFlags.Draft4) != 0;
+        if (node.UnrolledProperties is PropertyEntry[] unrolled)
+        {
+            // A few names probed in one pass: each known name's value against its schema, the rest ignored.
+            var named = new List<KeyValuePair<byte[], PropertyEntry>>(unrolled.Length);
+            ulong required = 0;
+            foreach (PropertyEntry entry in unrolled)
+            {
+                named.Add(new(entry.Name, entry));
+            }
+
+            var names = new Utf8NameMap<PropertyEntry>(named);
+            emitter.BeginObject(otherTokens, IntegerOnly(node), lexical, acceptsObject, node.MinProperties, node.MaxProperties);
+            emitter.BeginNameDispatch(names);
+            for (int i = 0; i < unrolled.Length; i++)
+            {
+                names.TryGetIndex(unrolled[i].Name, out int at);
+                emitter.BeginCase(at);
+                if (unrolled[i].IsRequired)
+                {
+                    required |= 1UL << i;
+                    emitter.MarkSeen(i);
+                }
+
+                if (unrolled[i].Schema.IsPresent)
+                {
+                    LowerChild(emitter, nodes, 0, 0, unrolled[i].Schema.FastNode, requested, pending);
+                }
+
+                emitter.EndCase();
+            }
+
+            emitter.BeginCase(-1);
+            emitter.EndCase();
+            emitter.EndNameDispatch();
+            emitter.EndObject(required);
+            return;
+        }
+
+        if (node.PatternMap is StrictEntry[] patternMap)
+        {
+            // One pattern property: a matching name's value takes the pattern's resolution, another the additional one.
+            PatternMatcher matcher = node.PatternProperties![0].Matcher;
+            emitter.BeginObject(otherTokens, IntegerOnly(node), lexical, acceptsObject, node.MinProperties, node.MaxProperties);
+            if (matcher.MatchesEverything)
+            {
+                LowerEntry(emitter, nodes, in patternMap[0], -1, 0, requested, pending);
+            }
+            else
+            {
+                emitter.BeginIfNameMatches(matcher);
+                LowerEntry(emitter, nodes, in patternMap[0], -1, 0, requested, pending);
+                emitter.Else();
+                if (node.AdditionalProperties.IsPresent)
+                {
+                    if (node.AdditionalRejects)
+                    {
+                        emitter.Fail();
+                    }
+                    else
+                    {
+                        LowerEntry(emitter, nodes, in node.AdditionalEntry, -1, 0, requested, pending);
+                    }
+                }
+
+                emitter.EndIf();
+            }
+
+            emitter.EndObject(0);
+            return;
+        }
+
+        // The general form: each name against the properties, then every pattern, then (when nothing matched) the
+        // additional schema; after the properties, the required names and the dependencies.
+        Utf8NameMap<PropertyEntry>? properties = node.Properties;
+        PatternPropertyEntry[] patterns = node.PatternProperties ?? [];
+        bool hasAdditional = node.AdditionalProperties.IsPresent;
+        ulong requiredMask = node.RequiredSeenBits is not null ? node.RequiredMask : 0;
+        ulong read = requiredMask;
+        foreach (DependencyEntry dependency in node.Dependencies ?? [])
+        {
+            read |= 1UL << dependency.SeenBit;
+            read |= Mask(dependency.RequiredSeenBits);
+        }
+
+        bool loop = properties is not null || patterns.Length > 0 || hasAdditional;
+        emitter.BeginObject(otherTokens, IntegerOnly(node), lexical, acceptsObject, node.MinProperties, node.MaxProperties, properties: loop);
+        if (loop)
+        {
+            bool common = patterns.Length > 0;
+            if (properties is not null)
+            {
+                StrictEntry[] entries = node.StrictEntries ?? [];
+                emitter.BeginNameDispatch(properties, thenCommon: common);
+                for (int i = 0; i < properties.Count; i++)
+                {
+                    emitter.BeginCase(i);
+                    LowerEntry(emitter, nodes, in entries[i], entries[i].SeenBit, read, requested, pending);
+                    if (common)
+                    {
+                        emitter.SetMatched(true);
+                    }
+
+                    emitter.EndCase();
+                }
+
+                emitter.BeginCase(-1);
+                if (common)
+                {
+                    emitter.SetMatched(false);
+                }
+                else if (hasAdditional)
+                {
+                    Additional();
+                }
+
+                emitter.EndCase();
+                emitter.EndNameDispatch();
+            }
+            else if (common)
+            {
+                emitter.SetMatched(false);
+            }
+            else
+            {
+                Additional();
+            }
+
+            if (common)
+            {
+                foreach (PatternPropertyEntry pattern in patterns)
+                {
+                    emitter.BeginIfNameMatches(pattern.Matcher);
+                    emitter.SetMatched(true);
+                    LowerChild(emitter, nodes, 0, 0, pattern.Schema.FastNode, requested, pending);
+                    emitter.EndIf();
+                }
+
+                if (hasAdditional)
+                {
+                    emitter.BeginIfNotMatched();
+                    Additional();
+                    emitter.EndIf();
+                }
+            }
+        }
+
+        emitter.EndProperties();
+        emitter.FailUnlessSeen(requiredMask);
+        foreach (DependencyEntry dependency in node.Dependencies ?? [])
+        {
+            emitter.BeginIfSeen(dependency.SeenBit);
+            emitter.FailUnlessSeen(Mask(dependency.RequiredSeenBits));
+            if (dependency.Schema.IsPresent)
+            {
+                (int child, bool generated) = Target(nodes, dependency.Schema.FastNode, requested, pending);
+                emitter.FailUnlessSelf(child, generated);
+            }
+
+            emitter.EndIf();
+        }
+
+        emitter.Succeed();
+
+        void Additional()
+        {
+            if (node.AdditionalEntry.TokenBits != 0)
+            {
+                emitter.FailUnlessToken(node.AdditionalEntry.TokenBits, node.AdditionalEntry.IntegerOnly, node.AdditionalEntry.Lexical);
+            }
+            else
+            {
+                LowerChild(emitter, nodes, 0, 0, node.AdditionalProperties.FastNode, requested, pending);
+            }
+        }
+
+        static ulong Mask(int[] bits)
+        {
+            ulong mask = 0;
+            foreach (int bit in bits)
+            {
+                mask |= 1UL << bit;
+            }
+
+            return mask;
+        }
+    }
 
     // The interpreter's flat fused loop (Evaluator.EvalFlatFusedLoop): the strict loop over the merged names, with the
     // entry's index as its seen bit, and names no entry knows ignored. A value that is not an object takes the
