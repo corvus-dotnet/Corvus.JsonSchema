@@ -72,6 +72,41 @@ public static class ProtocolRun
         return 0;
     }
 
+    /// <summary>
+    /// The warm time of parsing a corpus's instances (<c>parsewarm &lt;corpus&gt;</c>), by the protocol's warm-up rule:
+    /// passes for 2 seconds (at least 100), each parsing every instance and disposing its document, and the last
+    /// pass's time. Prints the time in nanoseconds.
+    /// </summary>
+    public static int RunParse(string[] args)
+    {
+        string root = Environment.GetEnvironmentVariable("COLD_ROOT") ?? Path.Combine(AppContext.BaseDirectory, "sourcemeta");
+        byte[][] texts = [.. File.ReadAllLines(Path.Combine(root, args[0] + "-instances.jsonl")).Where(l => l.Length > 0).Select(System.Text.Encoding.UTF8.GetBytes)];
+        long warmUpEnd = Stopwatch.GetTimestamp() + (2 * Stopwatch.Frequency);
+        long warm = 0;
+        int rows = 0;
+        for (int i = 0; i < MinWarmUpPasses || Stopwatch.GetTimestamp() < warmUpEnd; i++)
+        {
+            long start = Stopwatch.GetTimestamp();
+            rows += ParseAll(texts);
+            warm = Stopwatch.GetTimestamp() - start;
+        }
+
+        Console.WriteLine((long)(warm * 1_000_000_000.0 / Stopwatch.Frequency));
+        return rows == 0 ? 1 : 0;
+    }
+
+    private static int ParseAll(byte[][] texts)
+    {
+        int kinds = 0;
+        foreach (byte[] text in texts)
+        {
+            using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(text);
+            kinds += (int)document.RootElement.ValueKind;
+        }
+
+        return kinds;
+    }
+
     private static int ValidateAll(JsonSchemaEvaluator evaluator, ParsedJsonDocument<JsonElement>[] docs)
     {
         int valid = 0;
