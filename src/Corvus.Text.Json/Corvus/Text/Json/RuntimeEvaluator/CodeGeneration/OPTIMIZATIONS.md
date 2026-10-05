@@ -21,7 +21,8 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
   so shared prefixes are compared once. Escaped names, names at the very end of the text and names over 128 bytes
   take the interpreter's lookup.
 - **String enums and string consts by words.** A set of up to 32 strings is tested with the same trie on the value's
-  text. A string const is compared as bytes.
+  text, while the method is under 16,000 bytes of IL (beyond that the set is a hashed lookup: clang-format's root
+  object reaches 31,000 bytes with every set in place and runs 40% slower). A string const is compared as bytes.
 - **Flat composition.** An `allOf`/`$ref` chain of object schemas in one merged pass (the flat fused plan).
 - **Fused object plans.** Conditions decided from what was seen, alternative groups, required-only alternatives and
   forbidden sets. The Java port lists this as its own todo.

@@ -37,6 +37,12 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     // The largest set of strings a value is tested against by words in place; a larger one is a hashed lookup.
     private const int MaxWordsSet = 32;
 
+    // The size of a method's IL beyond which a set of strings is no longer tested by words in place, but by a hashed
+    // lookup: the in-place test is about 100 bytes of IL a string, and a large object with many enums grows past what
+    // the JIT optimises well (clang-format's root object reaches 31,000 bytes with every set in place, and runs 40%
+    // slower than with the lookup).
+    private const int MaxMethodSizeForWordsSets = 16_000;
+
     // The most names dispatched by words; more take the interpreter's hashed lookup and a jump table, which keeps the
     // method small enough for the JIT to optimise.
     private const int MaxWordDispatch = 512;
@@ -112,6 +118,17 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     // each alternative group, the kept values, and the open tries (the failure label each replaced, and its end).
     private LocalBuilder? selectedBranches;
     private LocalBuilder? longValue;
+
+    // Scratch locals of the current method, declared once and reused: a word dispatch's location, length and first
+    // word, the word a trie compares, and an int. None is live across another use (a dispatch has branched to a case
+    // before the case's code runs, and a trie's deeper levels are only reached on a match, from which control never
+    // returns to the level above). A fresh local for every use gives a large object hundreds of locals, more than
+    // the JIT keeps in registers.
+    private LocalBuilder? dispatchLocation;
+    private LocalBuilder? dispatchLength;
+    private LocalBuilder? dispatchFirst;
+    private LocalBuilder? scratchWord;
+    private LocalBuilder? scratchInt;
     private LocalBuilder? failedConditions;
     private LocalBuilder? holds;
     private LocalBuilder? reached;
@@ -141,6 +158,11 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         this.ownKeywords = false;
         this.selectedBranches = null;
         this.longValue = null;
+        this.dispatchLocation = null;
+        this.dispatchLength = null;
+        this.dispatchFirst = null;
+        this.scratchWord = null;
+        this.scratchInt = null;
         this.value = null;
         this.failedConditions = null;
         this.holds = null;
@@ -737,7 +759,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     {
         // survivors = ~failures & all; none fails, and so does more than one when exactly one must survive.
         ILGenerator il = this.Il;
-        LocalBuilder survivors = il.DeclareLocal(typeof(ulong));
+        LocalBuilder survivors = this.scratchWord ??= il.DeclareLocal(typeof(ulong));
         il.Emit(OpCodes.Ldloc, this.AlternativeFailures(group));
         il.Emit(OpCodes.Not);
         il.Emit(OpCodes.Ldc_I8, branchCount == 64 ? -1L : (1L << branchCount) - 1);
@@ -766,7 +788,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         }
 
         ILGenerator il = this.Il;
-        LocalBuilder properties = il.DeclareLocal(typeof(int));
+        LocalBuilder properties = this.scratchInt ??= il.DeclareLocal(typeof(int));
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_2);
         il.Emit(OpCodes.Call, GenCount);
@@ -1138,7 +1160,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     public void FailUnlessStringSet(Utf8NameMap<object> allowed)
     {
         byte[][] keys = allowed.Keys;
-        if (keys.Length == 0 || keys.Length > MaxWordsSet || Array.Exists(keys, k => k.Length > MaxWordsName))
+        if (keys.Length == 0 || keys.Length > MaxWordsSet || this.Il.ILOffset > MaxMethodSizeForWordsSets || Array.Exists(keys, k => k.Length > MaxWordsName))
         {
             this.ValueTest(GenStringSet, this.Constant(allowed), byAddress: false);
             return;
@@ -1188,7 +1210,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         ILGenerator il = this.Il;
         Label counted = il.DefineLabel();
         Label within = il.DefineLabel();
-        LocalBuilder bytes = il.DeclareLocal(typeof(int));
+        LocalBuilder bytes = this.scratchInt ??= il.DeclareLocal(typeof(int));
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldloc, this.value!);
         il.Emit(OpCodes.Call, GenStringBytes);
@@ -1544,9 +1566,9 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private void DispatchByWords(byte[][] keys, MethodInfo locate, Label[] cases, Label none, Label slow)
     {
         ILGenerator il = this.Il;
-        LocalBuilder location = il.DeclareLocal(typeof(int));
-        LocalBuilder length = il.DeclareLocal(typeof(int));
-        LocalBuilder first = il.DeclareLocal(typeof(ulong));
+        LocalBuilder location = this.dispatchLocation ??= il.DeclareLocal(typeof(int));
+        LocalBuilder length = this.dispatchLength ??= il.DeclareLocal(typeof(int));
+        LocalBuilder first = this.dispatchFirst ??= il.DeclareLocal(typeof(ulong));
 
         // The names by length; within a length, by words: one masked word up to 8 bytes, and beyond that each 8 bytes
         // in turn with the last 8 overlapping (the interpreter's lookup for a name longer than MaxWordsName).
@@ -1696,7 +1718,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         }
 
         // The name's word here: the first is already read (masked to the name's bytes when it is shorter).
-        LocalBuilder current = il.DeclareLocal(typeof(ulong));
+        LocalBuilder current = this.scratchWord ??= il.DeclareLocal(typeof(ulong));
         if (depth == 0)
         {
             il.Emit(OpCodes.Ldloc, first);
