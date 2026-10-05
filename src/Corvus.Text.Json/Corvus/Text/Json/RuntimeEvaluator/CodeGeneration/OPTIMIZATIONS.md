@@ -11,6 +11,9 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
 
 - **One method per node, constants as data of the generated type.** `IlSchemaEmitter`: static methods of one type in
   a collectible assembly, object constants in static fields.
+- **Small methods inlined.** The JVM inlines a small method into its callers by itself. The .NET JIT is asked to, for
+  a method of up to 300 bytes of IL that calls no other generated method (a map of strings, an array of strings, a
+  small closed object), where each caller stays under 1,500 bytes with its callees inlined.
 - **Interpreter and generated code call each other.** Generated code calls the interpreter for a node it does not
   specialise. The interpreter calls generated methods through the `Generated` plan on a copy of the node array.
 - **Type tests.** One comparison or one mask test in place. The integer test runs only for integer without number.

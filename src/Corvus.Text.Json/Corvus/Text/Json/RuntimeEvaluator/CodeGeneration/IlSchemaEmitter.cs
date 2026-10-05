@@ -40,6 +40,18 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     // slower than with the lookup).
     private const int MaxMethodSizeForWordsSets = 16_000;
 
+    // The largest method (bytes of IL) the JIT is asked to inline, and the largest a caller may be with its callees
+    // inlined. Asking for every small method to be inlined gained more on some corpora (importmap 0.83) and lost
+    // badly on others (cspell 1.27, fabric-mod 1.18): the JIT optimises a method that has grown too large poorly.
+    private const int MaxInlinedMethodSize = 300;
+    private const int MaxSizeWithInlinedMethods = 1500;
+
+    // The size of each method's IL, and the calls from one generated method to another (caller, callee), for the
+    // choice of the methods the JIT is asked to inline.
+    private readonly Dictionary<int, int> sizes = [];
+    private readonly List<(int Caller, int Callee)> calls = [];
+    private int currentNode;
+
     // The most names dispatched by words; more take the interpreter's hashed lookup and a jump table, which keeps the
     // method small enough for the JIT to optimise.
     private const int MaxWordDispatch = 512;
@@ -149,6 +161,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     /// <inheritdoc/>
     public void BeginMethod(int nodeId)
     {
+        this.currentNode = nodeId;
         this.il = this.Method(nodeId).GetILGenerator();
         this.fail = this.il.DefineLabel();
         this.token = null;
@@ -191,6 +204,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.MarkLabel(this.fail);
         il.Emit(OpCodes.Ldc_I4_0);
         il.Emit(OpCodes.Ret);
+        this.sizes[this.currentNode] = il.ILOffset;
         this.il = null;
     }
 
@@ -1121,7 +1135,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Ldarg_1);
                     il.Emit(OpCodes.Ldarg_2);
-                    il.Emit(OpCodes.Call, this.Method(childByToken[i]));
+                    il.Emit(OpCodes.Call, this.Callee(childByToken[i]));
                 }
                 else
                 {
@@ -1345,7 +1359,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Ldloc, this.value!);
-            il.Emit(OpCodes.Call, this.Method(child));
+            il.Emit(OpCodes.Call, this.Callee(child));
         }
         else
         {
@@ -1364,6 +1378,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     /// <returns>Each node's method.</returns>
     public Dictionary<int, NodeValidator> Build()
     {
+        this.ChooseInlinedMethods();
         Type created = this.type.CreateType();
         foreach ((FieldBuilder field, object constant) in this.constants)
         {
@@ -1602,7 +1617,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Call, this.Method(child));
+            il.Emit(OpCodes.Call, this.Callee(child));
         }
         else
         {
@@ -1837,6 +1852,54 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ret);
         Type created = attribute.CreateType();
         assembly.SetCustomAttribute(new CustomAttributeBuilder(created.GetConstructor([typeof(string)])!, [name]));
+    }
+
+    private MethodBuilder Callee(int nodeId)
+    {
+        this.calls.Add((this.currentNode, nodeId));
+        return this.Method(nodeId);
+    }
+
+    // Asks the JIT to inline the small methods that call no other generated method (a map of strings, an array of
+    // strings, a small closed object), where every method that calls them stays small with them inlined.
+    private void ChooseInlinedMethods()
+    {
+        var callers = new HashSet<int>();
+        foreach ((int caller, _) in this.calls)
+        {
+            callers.Add(caller);
+        }
+
+        var inlined = new HashSet<int>();
+        foreach (KeyValuePair<int, int> size in this.sizes)
+        {
+            if (size.Value <= MaxInlinedMethodSize && !callers.Contains(size.Key))
+            {
+                inlined.Add(size.Key);
+            }
+        }
+
+        var grown = new Dictionary<int, int>();
+        foreach ((int caller, int callee) in this.calls)
+        {
+            if (inlined.Contains(callee))
+            {
+                grown[caller] = grown.GetValueOrDefault(caller, this.sizes.GetValueOrDefault(caller)) + this.sizes[callee];
+            }
+        }
+
+        foreach ((int caller, int callee) in this.calls)
+        {
+            if (grown.GetValueOrDefault(caller) > MaxSizeWithInlinedMethods)
+            {
+                inlined.Remove(callee);
+            }
+        }
+
+        foreach (int nodeId in inlined)
+        {
+            this.methods[nodeId].SetImplementationFlags(MethodImplAttributes.IL | MethodImplAttributes.AggressiveInlining);
+        }
     }
 
     private MethodBuilder Method(int nodeId)
