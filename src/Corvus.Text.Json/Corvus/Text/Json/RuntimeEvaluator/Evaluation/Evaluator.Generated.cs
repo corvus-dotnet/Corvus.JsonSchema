@@ -242,6 +242,115 @@ internal static partial class Evaluator
         }
     }
 
+    /// <summary>
+    /// An integer literal of at most seven digits as a key that orders as the integers do, made from its text with no
+    /// conversion: the digit count above the digits' bytes in their written order (integers of more digits are
+    /// larger, and those of equal digits order as their text), negated for a negative literal. The row says the text
+    /// is an integer literal (the parser recorded it), so the digits are not tested. False for a longer literal, any
+    /// other number, a number at the very end of the text, or a row that does not say: the caller then reads the
+    /// value. A bound's key is <see cref="IntegerKey"/>.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool GenTryIntegerKey(ref EvaluationState state, int index, out long key)
+    {
+        key = 0;
+        ulong pair = Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(state.RawRows), index));
+        if (!BitConverter.IsLittleEndian || (((uint)pair >> 28) & 3) != 1)
+        {
+            return false;
+        }
+
+        int location = (int)pair & RawAccess.LocationMask;
+        int length = (int)(pair >> 32) & int.MaxValue;
+        ReadOnlySpan<byte> text = state.RawUtf8;
+        if ((ulong)(uint)location + 9 > (ulong)(uint)text.Length)
+        {
+            return false;
+        }
+
+        ref byte start = ref Unsafe.Add(ref MemoryMarshal.GetReference(text), location);
+        bool negative = start == (byte)'-';
+        int digits = negative ? length - 1 : length;
+        if ((uint)(digits - 1) >= IntegerKeyDigits)
+        {
+            return false;
+        }
+
+        ulong word = System.Buffers.Binary.BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref start, negative ? 1 : 0))) >> ((8 - digits) * 8);
+        long magnitude = (long)(((ulong)digits << 56) | word);
+        if (negative)
+        {
+            // -0 is 0: left to the caller's reading of the value.
+            if (magnitude == ((1L << 56) | (byte)'0'))
+            {
+                return false;
+            }
+
+            magnitude = -magnitude;
+        }
+
+        key = magnitude;
+        return true;
+    }
+
+    /// <summary>The most digits of an integer literal <see cref="GenTryIntegerKey"/> gives a key for.</summary>
+    internal const int IntegerKeyDigits = 7;
+
+    /// <summary>
+    /// The key of a bound, to compare with <see cref="GenTryIntegerKey"/>'s: the same key for a bound of at most seven
+    /// digits, and for a larger one a key beyond every literal's on its side.
+    /// </summary>
+    internal static long IntegerKey(long bound)
+    {
+        if (bound == 0)
+        {
+            return (1L << 56) | (byte)'0';
+        }
+
+        bool negative = bound < 0;
+        string text = (negative ? unchecked((ulong)(-bound)) : (ulong)bound).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        long magnitude;
+        if (text.Length > IntegerKeyDigits)
+        {
+            magnitude = (long)(IntegerKeyDigits + 1) << 56;
+        }
+        else
+        {
+            ulong word = 0;
+            foreach (char c in text)
+            {
+                word = (word << 8) | c;
+            }
+
+            magnitude = (long)(((ulong)text.Length << 56) | word);
+        }
+
+        return negative ? -magnitude : magnitude;
+    }
+
+    /// <summary>
+    /// Sets up the state of a flag-mode evaluation for a schema's generated entry method (the state is zeroed: only
+    /// its other fields are stored). False for a document whose rows and text generated code cannot read.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool GenEnter(ref EvaluationState state, CompiledEntry entry, JsonDocument parsed)
+    {
+        if (!RawSpans(parsed, out state.RawRows, out state.RawUtf8))
+        {
+            return false;
+        }
+
+        state.Program = entry.Program;
+        state.Nodes = entry.Nodes;
+        state.MaxDepth = entry.MaxDepth;
+        state.EntryResource = entry.EntryResource;
+        return true;
+    }
+
+    /// <summary>The interpreter's evaluation, for a document a schema's generated entry method cannot read.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenEvaluateGeneral(CompiledEntry entry, IJsonDocument document, int index) => EvaluateGeneral(entry.Program, entry.RootNode, document, index, null);
+
     /// <summary>Whether the parser found a string value's text to be unescaped and all ASCII (one character to a byte).</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool GenIsAscii(ref EvaluationState state, int valueIndex) => default(RawAccess).IsAsciiText(ref state, null!, valueIndex);

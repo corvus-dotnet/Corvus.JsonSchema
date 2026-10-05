@@ -15,6 +15,15 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
   a method of up to 300 bytes of IL counting what is inlined into it (a map of strings, an array of strings, a small
   closed object, a choice between a string and an array), where each caller stays under 1,500 bytes with its callees
   inlined. A method that reaches itself is never inlined.
+- **An entry method for each schema.** The evaluation's state is a local of it, and the entry node's method is inlined
+  into it when nothing else calls it: one frame from the public entry to the validation. On documents of a few
+  values that is 8 to 19% (an array of strings, a map of strings, yamllint).
+- **Leaves tested where the value is.** A leaf child of an array or an object (bounds, a length, a pattern, a small
+  enum) is emitted in the loop, which has the value's token already, not called as a method. An enum of more than
+  eight strings stays a method.
+- **Integer bounds and consts with no conversion.** An integer literal of up to seven digits is compared by a key
+  made from its text: the digit count above the digits' bytes in written order, which orders as the integers do. The
+  metadata row says the text is an integer literal, so the digits are not tested. Longer literals are converted.
 - **Interpreter and generated code call each other.** Generated code calls the interpreter for a node it does not
   specialise. The interpreter calls generated methods through the `Generated` plan on a copy of the node array.
 - **Type tests.** One comparison or one mask test in place. The integer test runs only for integer without number.

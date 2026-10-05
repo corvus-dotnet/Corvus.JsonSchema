@@ -53,6 +53,22 @@ internal static class SchemaLowering
     /// <returns>The entry's method, or null when the entry is not specialised (the interpreter then enters it, over <paramref name="generatedNodes"/>).</returns>
     public static NodeValidator? Compile(SchemaNode[] nodes, SchemaNode entry, out SchemaNode[] generatedNodes, out int specialised)
     {
+        return Compile(nodes, entry, out generatedNodes, out specialised, out _);
+    }
+
+    /// <summary>
+    /// Compiles a program's flag-mode code, as the other overload, and also gives the address of the schema's entry
+    /// method (see <see cref="CompiledEntry.EntryAddress"/>): 0 when the entry node is not specialised.
+    /// </summary>
+    /// <param name="nodes">The program's nodes.</param>
+    /// <param name="entry">The entry node (after reference elision).</param>
+    /// <param name="generatedNodes">The node array to evaluate with: the program's, with the specialised nodes replaced.</param>
+    /// <param name="specialised">The number of nodes given methods.</param>
+    /// <param name="entryAddress">The address of the entry method, or 0.</param>
+    /// <returns>The entry's method, or null when the entry is not specialised.</returns>
+    public static NodeValidator? Compile(SchemaNode[] nodes, SchemaNode entry, out SchemaNode[] generatedNodes, out int specialised, out nint entryAddress)
+    {
+        entryAddress = 0;
         Interlocked.Increment(ref compiledCount);
         generatedNodes = (SchemaNode[])nodes.Clone();
         var emitter = new IlSchemaEmitter();
@@ -62,7 +78,7 @@ internal static class SchemaLowering
             return null;
         }
 
-        Dictionary<int, NodeValidator> methods = emitter.Build();
+        Dictionary<int, NodeValidator> methods = emitter.Build(entry.Id, out entryAddress);
         foreach (KeyValuePair<int, NodeValidator> method in methods)
         {
             if (nodes[method.Key].Plan == NodePlan.Leaf)
@@ -833,6 +849,9 @@ internal static class SchemaLowering
     // its order (type, const, enum, then the number or string keywords by the value's kind). A string const and an
     // enum of strings are compared in place; integer bounds are compared as longs for a plain integer literal, as the
     // interpreter's fast path compares them; everything else is the interpreter's evaluation of that keyword.
+    // The largest string enum a leaf may have to be tested where its value is, not by its method.
+    private const int MaxEnumInPlace = 8;
+
     private static void LowerLeaf(ISchemaEmitter emitter, SchemaNode node)
     {
         // Whether the number keywords are compared as longs for a plain integer literal.
@@ -862,11 +881,16 @@ internal static class SchemaLowering
                 // An integer const: only a number equals it, and a plain integer literal is compared as a long (any
                 // other number, such as 1.0 for 1, takes the general comparison).
                 emitter.BeginIfValueToken(1 << (int)JsonTokenType.Number);
+                emitter.BeginIfValueIntegerKey();
+                emitter.FailIfLongBelow(Evaluation.Evaluator.IntegerKey(constant), exclusive: false);
+                emitter.FailIfLongAbove(Evaluation.Evaluator.IntegerKey(constant), exclusive: false);
+                emitter.Else();
                 emitter.BeginIfValueLong();
                 emitter.FailIfLongBelow(constant, exclusive: false);
                 emitter.FailIfLongAbove(constant, exclusive: false);
                 emitter.Else();
                 emitter.FailUnlessConst(node.Id);
+                emitter.EndIf();
                 emitter.EndIf();
                 emitter.Else();
                 emitter.Fail();
@@ -895,27 +919,17 @@ internal static class SchemaLowering
             emitter.BeginIfValueToken(1 << (int)JsonTokenType.Number);
             if (longs)
             {
+                // Bounds alone need no value: a short integer literal is compared by a key made from its text.
+                bool byKey = node.MultipleOf is null;
+                if (byKey)
+                {
+                    emitter.BeginIfValueIntegerKey();
+                    Bounds(Evaluation.Evaluator.IntegerKey);
+                    emitter.Else();
+                }
+
                 emitter.BeginIfValueLong();
-                if (node.Minimum?.AsLong is long minimum)
-                {
-                    emitter.FailIfLongBelow(minimum, exclusive: false);
-                }
-
-                if (node.Maximum?.AsLong is long maximum)
-                {
-                    emitter.FailIfLongAbove(maximum, exclusive: false);
-                }
-
-                if (node.ExclusiveMinimum?.AsLong is long exclusiveMinimum)
-                {
-                    emitter.FailIfLongBelow(exclusiveMinimum, exclusive: true);
-                }
-
-                if (node.ExclusiveMaximum?.AsLong is long exclusiveMaximum)
-                {
-                    emitter.FailIfLongAbove(exclusiveMaximum, exclusive: true);
-                }
-
+                Bounds(static bound => bound);
                 if (node.MultipleOf?.AsLong is long divisor)
                 {
                     emitter.FailUnlessLongMultipleOf(divisor);
@@ -929,6 +943,33 @@ internal static class SchemaLowering
 
                 emitter.FailUnlessNumberKeywords(node.Id);
                 emitter.EndIf();
+                if (byKey)
+                {
+                    emitter.EndIf();
+                }
+
+                void Bounds(Func<long, long> comparable)
+                {
+                    if (node.Minimum?.AsLong is long minimum)
+                    {
+                        emitter.FailIfLongBelow(comparable(minimum), exclusive: false);
+                    }
+
+                    if (node.Maximum?.AsLong is long maximum)
+                    {
+                        emitter.FailIfLongAbove(comparable(maximum), exclusive: false);
+                    }
+
+                    if (node.ExclusiveMinimum?.AsLong is long exclusiveMinimum)
+                    {
+                        emitter.FailIfLongBelow(comparable(exclusiveMinimum), exclusive: true);
+                    }
+
+                    if (node.ExclusiveMaximum?.AsLong is long exclusiveMaximum)
+                    {
+                        emitter.FailIfLongAbove(comparable(exclusiveMaximum), exclusive: true);
+                    }
+                }
             }
             else
             {
@@ -1633,6 +1674,22 @@ internal static class SchemaLowering
 
     private static void LowerChild(ISchemaEmitter emitter, SchemaNode[] nodes, ushort decided, ushort accepts, int child, HashSet<int> requested, Queue<int> pending)
     {
+        // A leaf is tested where the value is (the loop has its token already): a call of the leaf's method reads
+        // the token again and pays the call for a test of a few instructions. A large enum stays a method, so that
+        // its comparisons are emitted once.
+        int leafId = child;
+        for (int hops = 0; hops < MaxForwards && nodes[leafId].Plan == NodePlan.Forward; hops++)
+        {
+            leafId = nodes[leafId].ForwardNode;
+        }
+
+        SchemaNode leaf = nodes[leafId];
+        if (leaf.Plan == NodePlan.Leaf && (leaf.Enum is null || (leaf.EnumAllStrings && leaf.EnumStrings is { Count: <= MaxEnumInPlace })))
+        {
+            LowerLeaf(emitter, leaf);
+            return;
+        }
+
         (int target, bool generated) = Target(nodes, child, requested, pending);
         emitter.FailUnlessChild(decided, accepts, target, generated);
     }

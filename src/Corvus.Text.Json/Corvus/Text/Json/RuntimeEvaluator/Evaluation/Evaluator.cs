@@ -143,26 +143,6 @@ internal static partial class Evaluator
         return compiled(ref state, document, index);
     }
 
-    /// <summary>
-    /// Flag-mode evaluation through a schema's generated code, from everything about the schema in one object: the
-    /// call passes four arguments in registers, and the state is zeroed once with only its other fields stored. On a
-    /// document of a few values the entry is a large part of the evaluation.
-    /// </summary>
-    internal static unsafe bool EvaluateFlagCompiled(CompiledEntry entry, JsonDocument parsed, IJsonDocument document, int index)
-    {
-        EvaluationState state = default;
-        if (!RawSpans(parsed, out state.RawRows, out state.RawUtf8))
-        {
-            return EvaluateGeneral(entry.Program, entry.RootNode, document, index, null);
-        }
-
-        state.Program = entry.Program;
-        state.Nodes = entry.Nodes;
-        state.MaxDepth = entry.MaxDepth;
-        state.EntryResource = entry.EntryResource;
-        return ((delegate*<ref EvaluationState, IJsonDocument, int, bool>)entry.Address)(ref state, document, index);
-    }
-
     /// <summary>The interpreter's flag-mode evaluation of one node, for generated code that does not specialise it.</summary>
     internal static bool EvalNodeFast(int nodeId, IJsonDocument doc, int index, ref EvaluationState state)
     {

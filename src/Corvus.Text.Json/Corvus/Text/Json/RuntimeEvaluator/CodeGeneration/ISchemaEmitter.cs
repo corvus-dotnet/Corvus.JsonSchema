@@ -259,6 +259,14 @@ internal interface ISchemaEmitter
     void FailUnlessStringKeywords(int nodeId);
 
     /// <summary>
+    /// Starts code that runs when the current value (a number) is an integer literal short enough to compare by a key
+    /// made from its text with no conversion (see <c>Evaluator.GenTryIntegerKey</c>). The <c>FailIfLong</c> operations
+    /// then compare the key, with bounds given as <c>Evaluator.IntegerKey</c>; <see cref="Else"/> starts the code for
+    /// any other number.
+    /// </summary>
+    void BeginIfValueIntegerKey();
+
+    /// <summary>
     /// Starts code that runs when the current value (a number) is a plain integer literal that fits a long, which the
     /// <c>FailIfLong</c> operations then compare; <see cref="Else"/> starts the code for any other number.
     /// </summary>

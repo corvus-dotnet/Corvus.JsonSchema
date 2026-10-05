@@ -302,7 +302,10 @@ public sealed class JsonSchemaEvaluator : IDisposable
 #if NET && !STJ
         if (fast.Compiled is CompiledEntry compiled)
         {
-            return Evaluator.EvaluateFlagCompiled(compiled, parsed, document, index);
+            unsafe
+            {
+                return ((delegate*<CompiledEntry, JsonDocument, IJsonDocument, int, bool>)compiled.EntryAddress)(compiled, parsed, document, index);
+            }
         }
 
         if (CodeGenEnabled && !fast.Tiered && Interlocked.Increment(ref this.evaluations) == CodeGenThreshold)
@@ -357,8 +360,8 @@ public sealed class JsonSchemaEvaluator : IDisposable
     {
         // The entry data over the generated node array: its entry's method when the entry is specialised, and
         // otherwise the interpreter from the entry, which reaches the generated methods beneath it.
-        NodeValidator? compiled = SchemaLowering.Compile(fast.SourceNodes, fast.Entry!, out SchemaNode[] generatedNodes, out _);
-        var withCode = new FlagModeEntry(fast.SourceNodes, generatedNodes, generatedNodes[fast.Entry!.Id], fast.EntryResource, fast.MaxDepth, compiled is null ? null : new CompiledEntry(compiled, this.program, generatedNodes, fast.EntryResource, fast.MaxDepth, this.rootNode), tiered: true);
+        NodeValidator? compiled = SchemaLowering.Compile(fast.SourceNodes, fast.Entry!, out SchemaNode[] generatedNodes, out _, out nint entryAddress);
+        var withCode = new FlagModeEntry(fast.SourceNodes, generatedNodes, generatedNodes[fast.Entry!.Id], fast.EntryResource, fast.MaxDepth, compiled is null ? null : new CompiledEntry(compiled, entryAddress, this.program, generatedNodes, fast.EntryResource, fast.MaxDepth, this.rootNode), tiered: true);
         FlagModeEntry? current = Interlocked.CompareExchange(ref this.flagModeEntry, withCode, fast);
         return ReferenceEquals(current, fast) ? withCode : current ?? withCode;
     }

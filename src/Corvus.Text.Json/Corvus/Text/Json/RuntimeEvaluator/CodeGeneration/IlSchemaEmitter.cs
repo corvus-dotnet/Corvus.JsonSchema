@@ -65,6 +65,9 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenTokenAndNext = Helper(nameof(Evaluator.GenTokenAndNext));
     private static readonly MethodInfo GenName = Helper(nameof(Evaluator.GenName));
     private static readonly MethodInfo GenIsAscii = Helper(nameof(Evaluator.GenIsAscii));
+    private static readonly MethodInfo GenEnter = Helper(nameof(Evaluator.GenEnter));
+    private static readonly MethodInfo GenEvaluateGeneral = Helper(nameof(Evaluator.GenEvaluateGeneral));
+    private static readonly MethodInfo GenTryIntegerKey = Helper(nameof(Evaluator.GenTryIntegerKey));
     private static readonly MethodInfo GenPattern = Helper(nameof(Evaluator.GenPattern));
     private static readonly MethodInfo GenPropertyName = Helper(nameof(Evaluator.GenPropertyName));
     private static readonly MethodInfo GenStringLocation = Helper(nameof(Evaluator.GenStringLocation));
@@ -926,6 +929,18 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     }
 
     /// <inheritdoc/>
+    public void BeginIfValueIntegerKey()
+    {
+        ILGenerator il = this.Il;
+        this.longValue ??= il.DeclareLocal(typeof(long));
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Ldloca, this.longValue);
+        il.Emit(OpCodes.Call, GenTryIntegerKey);
+        this.BeginBlock(OpCodes.Brfalse);
+    }
+
+    /// <inheritdoc/>
     public void FailIfLongBelow(long bound, bool exclusive)
     {
         this.Il.Emit(OpCodes.Ldloc, this.longValue!);
@@ -1440,10 +1455,53 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
 
     /// <summary>Creates the type, sets its constants, compiles its methods and returns them by node.</summary>
     /// <returns>Each node's method.</returns>
-    public Dictionary<int, NodeValidator> Build()
+    public Dictionary<int, NodeValidator> Build(int entryNode, out nint entryAddress)
     {
         this.ChooseInlinedMethods();
+
+        // The schema's entry method: the evaluation's state is a local of it, set up there, and the entry node's
+        // method is called on it (and inlined, when nothing else calls it: one frame from the public entry to the
+        // validation, where a shared entry made a frame of its own and called the node's method by its address).
+        const string EntryName = "Entry";
+        bool hasEntry = this.methods.TryGetValue(entryNode, out MethodBuilder? root);
+        if (hasEntry)
+        {
+            if (!this.calls.Exists(call => call.Callee == entryNode))
+            {
+                root!.SetImplementationFlags(MethodImplAttributes.IL | MethodImplAttributes.AggressiveInlining);
+            }
+
+            MethodBuilder entry = this.type.DefineMethod(EntryName, MethodAttributes.Public | MethodAttributes.Static, typeof(bool), [typeof(CompiledEntry), typeof(JsonDocument), typeof(IJsonDocument), typeof(int)]);
+            ILGenerator il = entry.GetILGenerator();
+            LocalBuilder state = il.DeclareLocal(typeof(EvaluationState));
+            Label readable = il.DefineLabel();
+            il.Emit(OpCodes.Ldloca, state);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Call, GenEnter);
+            il.Emit(OpCodes.Brtrue, readable);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Call, GenEvaluateGeneral);
+            il.Emit(OpCodes.Ret);
+            il.MarkLabel(readable);
+            il.Emit(OpCodes.Ldloca, state);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Ldarg_3);
+            il.Emit(OpCodes.Call, root!);
+            il.Emit(OpCodes.Ret);
+        }
+
         Type created = this.type.CreateType();
+        entryAddress = 0;
+        if (hasEntry)
+        {
+            RuntimeMethodHandle handle = created.GetMethod(EntryName)!.MethodHandle;
+            RuntimeHelpers.PrepareMethod(handle);
+            entryAddress = handle.GetFunctionPointer();
+        }
+
         foreach ((FieldBuilder field, object constant) in this.constants)
         {
             created.GetField(field.Name)!.SetValue(null, constant);
