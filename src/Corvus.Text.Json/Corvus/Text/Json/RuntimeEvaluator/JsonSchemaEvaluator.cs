@@ -300,12 +300,9 @@ public sealed class JsonSchemaEvaluator : IDisposable
     private bool EvaluateFlag(FlagModeEntry fast, SchemaNode entry, JsonDocument parsed, IJsonDocument document, int index)
     {
 #if NET && !STJ
-        if (fast.CompiledAddress != 0)
+        if (fast.Compiled is CompiledEntry compiled)
         {
-            unsafe
-            {
-                return Evaluator.EvaluateFlagCompiled((delegate*<ref EvaluationState, IJsonDocument, int, bool>)fast.CompiledAddress, this.program, fast.Nodes, fast.EntryResource, fast.MaxDepth, parsed, document, this.rootNode, index);
-            }
+            return Evaluator.EvaluateFlagCompiled(compiled, parsed, document, index);
         }
 
         if (CodeGenEnabled && !fast.Tiered && Interlocked.Increment(ref this.evaluations) == CodeGenThreshold)
@@ -361,7 +358,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
         // The entry data over the generated node array: its entry's method when the entry is specialised, and
         // otherwise the interpreter from the entry, which reaches the generated methods beneath it.
         NodeValidator? compiled = SchemaLowering.Compile(fast.SourceNodes, fast.Entry!, out SchemaNode[] generatedNodes, out _);
-        var withCode = new FlagModeEntry(fast.SourceNodes, generatedNodes, generatedNodes[fast.Entry!.Id], fast.EntryResource, fast.MaxDepth, compiled, tiered: true);
+        var withCode = new FlagModeEntry(fast.SourceNodes, generatedNodes, generatedNodes[fast.Entry!.Id], fast.EntryResource, fast.MaxDepth, compiled is null ? null : new CompiledEntry(compiled, this.program, generatedNodes, fast.EntryResource, fast.MaxDepth, this.rootNode), tiered: true);
         FlagModeEntry? current = Interlocked.CompareExchange(ref this.flagModeEntry, withCode, fast);
         return ReferenceEquals(current, fast) ? withCode : current ?? withCode;
     }
@@ -398,7 +395,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
 
     /// <summary>The entry data of flag-mode evaluation for one node array (see <see cref="FlagMode"/>).</summary>
 #if NET && !STJ
-    private sealed class FlagModeEntry(SchemaNode[] sourceNodes, SchemaNode[] nodes, SchemaNode? entry, int entryResource, int maxDepth, NodeValidator? compiled = null, bool tiered = false)
+    private sealed class FlagModeEntry(SchemaNode[] sourceNodes, SchemaNode[] nodes, SchemaNode? entry, int entryResource, int maxDepth, CompiledEntry? compiled = null, bool tiered = false)
 #else
     private sealed class FlagModeEntry(SchemaNode[] sourceNodes, SchemaNode[] nodes, SchemaNode? entry, int entryResource, int maxDepth)
 #endif
@@ -414,10 +411,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
 #if NET && !STJ
 
         /// <summary>The entry's generated code, once runtime codegen has compiled the schema and its entry is specialised.</summary>
-        public readonly NodeValidator? Compiled = compiled;
-
-        /// <summary>The address of <see cref="Compiled"/>'s method (0 for none), which the evaluation calls; the delegate keeps its code alive.</summary>
-        public readonly nint CompiledAddress = compiled is null ? 0 : compiled.Method.MethodHandle.GetFunctionPointer();
+        public readonly CompiledEntry? Compiled = compiled;
 
         /// <summary>Whether runtime codegen has compiled the schema.</summary>
         public readonly bool Tiered = tiered;

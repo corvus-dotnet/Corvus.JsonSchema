@@ -123,6 +123,96 @@ public static class CodeGenProbe
         return 0;
     }
 
+    /// <summary>
+    /// How much of a pass is reaching the documents' memory (<c>locality [corpus...]</c>): generated code over the
+    /// corpus's documents, and over an array of the same length that refers to one of them at every position (the
+    /// mean over eight documents), so the same work is done on memory already in the nearest cache. Prints
+    /// <c>corpus,documents,ns a document over the corpus,ns a document over one document</c>.
+    /// </summary>
+    public static int RunLocality(string[] args)
+    {
+        foreach (string name in args)
+        {
+            using var c = new SourceMetaCase(name);
+            JsonSchemaDialect dialect = JsonSchemaDialect.Draft7;
+            foreach ((string file, JsonSchemaDialect d) in SourceMetaCases.All)
+            {
+                if (file == name)
+                {
+                    dialect = d;
+                }
+            }
+
+            using JsonSchemaEvaluator generated = JsonSchemaEvaluator.Compile(c.SchemaBytes, new JsonSchemaEvaluatorOptions { DefaultDialect = dialect });
+            if (!generated.CompileGeneratedCode())
+            {
+                continue;
+            }
+
+            int count = c.Documents.Length;
+            double corpus = Precise(generated, c.Documents) / count;
+
+            // Eight documents spread over the corpus, each alone: their mean against the same eight in turn.
+            const int Samples = 8;
+            double alone = 0;
+            var sampled = new ParsedJsonDocument<JsonElement>[count];
+            for (int s = 0; s < Samples; s++)
+            {
+                ParsedJsonDocument<JsonElement> one = c.Documents[(int)((long)s * count / Samples)];
+                alone += Precise(generated, [.. Enumerable.Repeat(one, count)], 250) / count / Samples;
+                for (int i = s; i < count; i += Samples)
+                {
+                    sampled[i] = one;
+                }
+            }
+
+            double together = Precise(generated, sampled, 250) / count;
+
+            // The same eight documents' content, each position a document of its own (parsed in a shuffled order, so
+            // that neighbours in the array are not neighbours in memory): the same work as the line above.
+            var copies = new ParsedJsonDocument<JsonElement>[count];
+            int[] order = [.. Enumerable.Range(0, count)];
+            new Random(1).Shuffle(order);
+            foreach (int i in order)
+            {
+                copies[i] = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(sampled[i].RootElement.GetRawText()));
+            }
+
+            double apart = Precise(generated, copies, 250) / count;
+            Console.WriteLine($"{name},{count},{corpus:F1},{apart:F1},{together:F1},{alone:F1}");
+        }
+
+        return 0;
+    }
+
+    private static double Precise(JsonSchemaEvaluator evaluator, ParsedJsonDocument<JsonElement>[] documents, int warmUpMilliseconds)
+    {
+        const int Batches = 41;
+        long end = Stopwatch.GetTimestamp() + (warmUpMilliseconds * Stopwatch.Frequency / 1000);
+        long passes = 0;
+        while (Stopwatch.GetTimestamp() < end)
+        {
+            Pass(evaluator, documents);
+            passes++;
+        }
+
+        int perBatch = (int)Math.Max(1, passes * 20 / warmUpMilliseconds);
+        double[] batches = new double[Batches];
+        for (int b = 0; b < Batches; b++)
+        {
+            long start = Stopwatch.GetTimestamp();
+            for (int i = 0; i < perBatch; i++)
+            {
+                Pass(evaluator, documents);
+            }
+
+            batches[b] = (Stopwatch.GetTimestamp() - start) * 1_000_000_000.0 / Stopwatch.Frequency / perBatch;
+        }
+
+        Array.Sort(batches);
+        return batches[Batches / 2];
+    }
+
     private static double Precise(JsonSchemaEvaluator evaluator, ParsedJsonDocument<JsonElement>[] documents)
     {
         const int Batches = 41;
