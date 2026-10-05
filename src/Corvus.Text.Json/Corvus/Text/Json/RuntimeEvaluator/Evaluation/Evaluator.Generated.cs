@@ -208,6 +208,57 @@ internal static partial class Evaluator
         }
     }
 
+    /// <summary>The byte length of a string value's text, or -1 when the value is escaped (its length is then counted after unescaping).</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int GenStringBytes(ref EvaluationState state, int valueIndex)
+    {
+        default(RawAccess).RawValueLocation(ref state, null!, valueIndex, out int length);
+        return length;
+    }
+
+    /// <summary>
+    /// Whether a string value's length in runes is within bounds, counted: for the values whose byte length does not
+    /// decide it (a rune is one to four bytes), and for escaped values.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenStringLengthCounted(ref EvaluationState state, IJsonDocument doc, int index, int minLength, int maxLength)
+    {
+        ReadOnlySpan<byte> raw = default(RawAccess).RawValue(ref state, doc, index, out bool escaped);
+        return escaped
+            ? EscapedStringLengthWithin<RawAccess>(minLength, maxLength, ref state, doc, index)
+            : LengthWithin(raw, minLength, maxLength);
+    }
+
+    /// <summary>Whether a property's name is a given name, for the names generated code does not compare by words (escaped, or at the very end of the text).</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenNameEquals(ref EvaluationState state, IJsonDocument doc, int valueIndex, byte[] name)
+    {
+        ReadOnlySpan<byte> raw = default(RawAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
+        if (!escaped)
+        {
+            return raw.SequenceEqual(name);
+        }
+
+        using UnescapedUtf8JsonString unescaped = PropertyName<RawAccess>(ref state, doc, valueIndex);
+        return unescaped.Span.SequenceEqual(name);
+    }
+
+    /// <summary>
+    /// The branches a discriminator selects for the value of its property (the interpreter's selection), as a bit per
+    /// branch: for the values generated code does not decide by words.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static ulong GenSelectByValue(ref EvaluationState state, IJsonDocument doc, int valueIndex, Discriminator discriminator)
+    {
+        ulong selected = 0;
+        foreach (int branch in SelectBranchesByValue<RawAccess>(discriminator, ref state, doc, valueIndex))
+        {
+            selected |= 1UL << branch;
+        }
+
+        return selected;
+    }
+
     /// <summary>Whether a number value is an integer.</summary>
     internal static bool GenIsInteger(ref EvaluationState state, IJsonDocument doc, int index, bool lexical) => IsInteger<RawAccess>(ref state, doc, index, lexical);
 
@@ -216,8 +267,5 @@ internal static partial class Evaluator
 
     /// <summary>Whether a value is one string.</summary>
     internal static bool GenStringConst(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType, byte[] expected) => MatchesStringBytes<RawAccess>(expected, tokenType, ref state, doc, index);
-
-    /// <summary>Whether a value satisfies a string-length leaf.</summary>
-    internal static bool GenLengthLeaf(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType, in StrictEntry entry) => LengthLeafMatches<RawAccess>(in entry, tokenType, ref state, doc, index);
 }
 #endif

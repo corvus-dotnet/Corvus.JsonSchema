@@ -56,16 +56,19 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenNameMatches = Helper(nameof(Evaluator.GenNameMatches));
     private static readonly MethodInfo GenFusedValueTests = Helper(nameof(Evaluator.GenFusedValueTests));
     private static readonly MethodInfo GenSelectBranches = Helper(nameof(Evaluator.GenSelectBranches));
+    private static readonly MethodInfo GenNameEquals = Helper(nameof(Evaluator.GenNameEquals));
+    private static readonly MethodInfo GenSelectByValue = Helper(nameof(Evaluator.GenSelectByValue));
     private static readonly MethodInfo GenOwnConst = Helper(nameof(Evaluator.GenOwnConst));
     private static readonly MethodInfo GenOwnEnum = Helper(nameof(Evaluator.GenOwnEnum));
     private static readonly MethodInfo GenOwnNumber = Helper(nameof(Evaluator.GenOwnNumber));
     private static readonly MethodInfo GenOwnString = Helper(nameof(Evaluator.GenOwnString));
     private static readonly MethodInfo GenTryLong = Helper(nameof(Evaluator.GenTryLong));
     private static readonly MethodInfo GenUniqueItems = Helper(nameof(Evaluator.GenUniqueItems));
+    private static readonly MethodInfo GenStringBytes = Helper(nameof(Evaluator.GenStringBytes));
+    private static readonly MethodInfo GenStringLengthCounted = Helper(nameof(Evaluator.GenStringLengthCounted));
     private static readonly MethodInfo GenIsInteger = Helper(nameof(Evaluator.GenIsInteger));
     private static readonly MethodInfo GenStringSet = Helper(nameof(Evaluator.GenStringSet));
     private static readonly MethodInfo GenStringConst = Helper(nameof(Evaluator.GenStringConst));
-    private static readonly MethodInfo GenLengthLeaf = Helper(nameof(Evaluator.GenLengthLeaf));
 
     private readonly TypeBuilder type;
     private readonly Dictionary<int, MethodBuilder> methods = [];
@@ -331,13 +334,147 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     {
         ILGenerator il = this.Il;
         this.selectedBranches ??= il.DeclareLocal(typeof(ulong));
+
+        // The known string values, without their tag: the values decided by words.
+        var strings = new List<byte[]>();
+        var masks = new List<ulong>();
+        byte[][] tagged = discriminator.KnownValues.Keys;
+        ReadOnlySpan<int[]> branches = discriminator.KnownValues.Values;
+        for (int i = 0; i < tagged.Length; i++)
+        {
+            if (tagged[i].Length > 0 && tagged[i][0] == Discriminator.StringTag)
+            {
+                strings.Add(tagged[i][1..]);
+                masks.Add(Mask(branches[i]));
+            }
+        }
+
+        bool byWords = strings.Count > 0 && strings.Count <= MaxWordsSet && !strings.Exists(k => k.Length > MaxWordsName) && discriminator.PropertyName.Length <= MaxWordsName;
+        if (!byWords)
+        {
+            // The interpreter's selection: finds the property and looks its value up.
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Ldarg_2);
+            il.Emit(OpCodes.Ldsfld, this.Constant(discriminator));
+            il.Emit(OpCodes.Ldloca, this.selectedBranches);
+            il.Emit(OpCodes.Call, GenSelectBranches);
+            this.BeginBlock(OpCodes.Brfalse);
+            return;
+        }
+
+        // In place (Evaluator.TrySelectBranches): an object's first property of the discriminator's name, found by
+        // comparing each name's words; its string value against the known values by words. Without the property the
+        // discriminator selects nothing in particular, unless every branch requires it (then no branch can match).
+        Label otherwise = il.DefineLabel();
+        Label discriminated = il.DefineLabel();
+        Label found = il.DefineLabel();
+        Label nextProperty = il.DefineLabel();
+        Label search = il.DefineLabel();
+        Label absent = il.DefineLabel();
+        Label slowName = il.DefineLabel();
+        Label byValue = il.DefineLabel();
+        Label unknown = il.DefineLabel();
+        LocalBuilder searchEnd = il.DeclareLocal(typeof(int));
+        LocalBuilder property = il.DeclareLocal(typeof(int));
+        LocalBuilder following = il.DeclareLocal(typeof(int));
+        LocalBuilder valueToken = il.DeclareLocal(typeof(int));
+
+        // The word dispatch reads the current value's row: the property being looked at, for this search.
+        LocalBuilder? outerValue = this.value;
+        this.value = property;
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, GenToken);
+        il.Emit(OpCodes.Ldc_I4, (int)JsonTokenType.StartObject);
+        il.Emit(OpCodes.Bne_Un, otherwise);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, GenEnd);
+        il.Emit(OpCodes.Stloc, searchEnd);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Ldc_I4, 2 * RowSize);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Stloc, property);
+        il.MarkLabel(search);
+        il.Emit(OpCodes.Ldloc, property);
+        il.Emit(OpCodes.Ldc_I4, RowSize);
+        il.Emit(OpCodes.Sub);
+        il.Emit(OpCodes.Ldloc, searchEnd);
+        il.Emit(OpCodes.Bge, absent);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldloc, property);
+        il.Emit(OpCodes.Ldloca, following);
+        il.Emit(OpCodes.Call, GenTokenAndNext);
+        il.Emit(OpCodes.Stloc, valueToken);
+        this.DispatchByWords([discriminator.PropertyName], GenName, [found], nextProperty, slowName);
+        il.MarkLabel(slowName);
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_1);
-        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Ldloc, property);
+        il.Emit(OpCodes.Ldsfld, this.Constant(discriminator.PropertyName));
+        il.Emit(OpCodes.Call, GenNameEquals);
+        il.Emit(OpCodes.Brtrue, found);
+        il.MarkLabel(nextProperty);
+        il.Emit(OpCodes.Ldloc, following);
+        il.Emit(OpCodes.Ldc_I4, RowSize);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Stloc, property);
+        il.Emit(OpCodes.Br, search);
+
+        il.MarkLabel(absent);
+        il.Emit(OpCodes.Ldc_I4_0);
+        il.Emit(OpCodes.Conv_I8);
+        il.Emit(OpCodes.Stloc, this.selectedBranches);
+        il.Emit(OpCodes.Br, discriminator.AllRequire ? discriminated : otherwise);
+
+        // The value: a string by words to the mask of its branches, anything else by the interpreter's lookup.
+        il.MarkLabel(found);
+        il.Emit(OpCodes.Ldloc, valueToken);
+        il.Emit(OpCodes.Ldc_I4, (int)JsonTokenType.String);
+        il.Emit(OpCodes.Bne_Un, byValue);
+        var cases = new Label[strings.Count];
+        for (int i = 0; i < cases.Length; i++)
+        {
+            cases[i] = il.DefineLabel();
+        }
+
+        this.DispatchByWords([.. strings], GenStringLocation, cases, unknown, byValue);
+        for (int i = 0; i < cases.Length; i++)
+        {
+            il.MarkLabel(cases[i]);
+            il.Emit(OpCodes.Ldc_I8, unchecked((long)masks[i]));
+            il.Emit(OpCodes.Stloc, this.selectedBranches);
+            il.Emit(OpCodes.Br, discriminated);
+        }
+
+        il.MarkLabel(unknown);
+        il.Emit(OpCodes.Ldc_I8, unchecked((long)Mask(discriminator.UnknownString)));
+        il.Emit(OpCodes.Stloc, this.selectedBranches);
+        il.Emit(OpCodes.Br, discriminated);
+
+        il.MarkLabel(byValue);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldloc, property);
         il.Emit(OpCodes.Ldsfld, this.Constant(discriminator));
-        il.Emit(OpCodes.Ldloca, this.selectedBranches);
-        il.Emit(OpCodes.Call, GenSelectBranches);
-        this.BeginBlock(OpCodes.Brfalse);
+        il.Emit(OpCodes.Call, GenSelectByValue);
+        il.Emit(OpCodes.Stloc, this.selectedBranches);
+
+        il.MarkLabel(discriminated);
+        this.value = outerValue;
+        this.blocks.Push((otherwise, il.DefineLabel(), false));
+
+        static ulong Mask(int[] selected)
+        {
+            ulong mask = 0;
+            foreach (int branch in selected)
+            {
+                mask |= 1UL << branch;
+            }
+
+            return mask;
+        }
     }
 
     /// <inheritdoc/>
@@ -1032,7 +1169,61 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     /// <inheritdoc/>
     public void FailUnlessLength(in StrictEntry entry)
     {
-        this.ValueTest(GenLengthLeaf, this.Constant(entry), byAddress: true);
+        // The leaf's type, then a string's length (Evaluator.LengthLeafMatches).
+        if (entry.LengthTokenBits != 0)
+        {
+            this.TokenTest(entry.LengthTokenBits, entry.LengthIntegerOnly, entry.Lexical, atMethodValue: false);
+        }
+
+        this.BeginIfValueToken(1 << (int)JsonTokenType.String);
+        this.FailUnlessStringLength(entry.MinLength, entry.MaxLength);
+        this.EndIf();
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessStringLength(int minLength, int maxLength)
+    {
+        // An unescaped value of at most maxLength bytes, and of enough bytes that even four to a rune reach
+        // minLength, is within the bounds; any other value is counted.
+        ILGenerator il = this.Il;
+        Label counted = il.DefineLabel();
+        Label within = il.DefineLabel();
+        LocalBuilder bytes = il.DeclareLocal(typeof(int));
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Call, GenStringBytes);
+        il.Emit(OpCodes.Stloc, bytes);
+        il.Emit(OpCodes.Ldloc, bytes);
+        il.Emit(OpCodes.Ldc_I4_0);
+        il.Emit(OpCodes.Blt, counted);
+        if (maxLength >= 0)
+        {
+            il.Emit(OpCodes.Ldloc, bytes);
+            il.Emit(OpCodes.Ldc_I4, maxLength);
+            il.Emit(OpCodes.Bgt, counted);
+        }
+
+        if (minLength >= 0)
+        {
+            il.Emit(OpCodes.Ldloc, bytes);
+            il.Emit(OpCodes.Ldc_I4_3);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Ldc_I4_2);
+            il.Emit(OpCodes.Shr);
+            il.Emit(OpCodes.Ldc_I4, minLength);
+            il.Emit(OpCodes.Blt, counted);
+        }
+
+        il.Emit(OpCodes.Br, within);
+        il.MarkLabel(counted);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Ldc_I4, minLength);
+        il.Emit(OpCodes.Ldc_I4, maxLength);
+        il.Emit(OpCodes.Call, GenStringLengthCounted);
+        il.Emit(OpCodes.Brfalse, this.fail);
+        il.MarkLabel(within);
     }
 
     /// <inheritdoc/>

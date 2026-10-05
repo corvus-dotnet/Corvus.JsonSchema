@@ -4310,6 +4310,14 @@ internal static partial class Evaluator
             return discriminator.AllRequire;
         }
 
+        selected = SelectBranchesByValue<TAccess>(discriminator, ref state, doc, valueIndex);
+        return true;
+    }
+
+    /// <summary>The branches a discriminator selects for the value of its property.</summary>
+    private static int[] SelectBranchesByValue<TAccess>(Discriminator discriminator, ref EvaluationState state, IJsonDocument doc, int valueIndex)
+        where TAccess : struct, IDocumentAccess
+    {
         JsonTokenType valueType = default(TAccess).TokenType(ref state, doc, valueIndex);
         switch (valueType)
         {
@@ -4317,43 +4325,31 @@ internal static partial class Evaluator
             {
                 if (!default(TAccess).IsEscaped(ref state, doc, valueIndex))
                 {
-                    selected = LookupDiscriminator(discriminator, Discriminator.StringTag, default(TAccess).RawValue(ref state, doc, valueIndex));
-                    return true;
+                    return LookupDiscriminator(discriminator, Discriminator.StringTag, default(TAccess).RawValue(ref state, doc, valueIndex));
                 }
 
                 using UnescapedUtf8JsonString value = StringValue<TAccess>(ref state, doc, valueIndex);
-                selected = LookupDiscriminator(discriminator, Discriminator.StringTag, value.Span);
-                return true;
+                return LookupDiscriminator(discriminator, Discriminator.StringTag, value.Span);
             }
 
             case JsonTokenType.True:
-                selected = LookupDiscriminator(discriminator, Discriminator.BooleanTag, "true"u8);
-                return true;
+                return LookupDiscriminator(discriminator, Discriminator.BooleanTag, "true"u8);
             case JsonTokenType.False:
-                selected = LookupDiscriminator(discriminator, Discriminator.BooleanTag, "false"u8);
-                return true;
+                return LookupDiscriminator(discriminator, Discriminator.BooleanTag, "false"u8);
             case JsonTokenType.Null:
-                selected = LookupDiscriminator(discriminator, Discriminator.NullTag, "null"u8);
-                return true;
+                return LookupDiscriminator(discriminator, Discriminator.NullTag, "null"u8);
             case JsonTokenType.Number:
             {
                 ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, valueIndex);
-                if (IsCanonicalInteger(raw))
-                {
-                    selected = LookupDiscriminator(discriminator, Discriminator.NumberTag, raw);
-                }
-                else
-                {
-                    // "3.0" may equal a keyed integer: no branch can be excluded.
-                    selected = discriminator.AllBranches;
-                }
 
-                return true;
+                // "3.0" may equal a keyed integer: no branch can be excluded.
+                return IsCanonicalInteger(raw)
+                    ? LookupDiscriminator(discriminator, Discriminator.NumberTag, raw)
+                    : discriminator.AllBranches;
             }
 
             default:
-                selected = discriminator.NonString;
-                return true;
+                return discriminator.NonString;
         }
     }
 

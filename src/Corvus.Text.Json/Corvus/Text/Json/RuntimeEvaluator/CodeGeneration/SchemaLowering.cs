@@ -857,7 +857,16 @@ internal static class SchemaLowering
         if (node.HasStringKeywords)
         {
             emitter.BeginIfValueToken(1 << (int)JsonTokenType.String);
-            emitter.FailUnlessStringKeywords(node.Id);
+            bool lengthsOnly = node.Pattern is null && node.Content == default && !(node.AssertFormat && !FormatKinds.IsNumeric(node.Format));
+            if (lengthsOnly)
+            {
+                emitter.FailUnlessStringLength(node.MinLength, node.MaxLength);
+            }
+            else
+            {
+                emitter.FailUnlessStringKeywords(node.Id);
+            }
+
             emitter.EndIf();
         }
     }

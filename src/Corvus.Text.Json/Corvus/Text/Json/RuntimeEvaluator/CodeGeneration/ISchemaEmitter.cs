@@ -371,6 +371,14 @@ internal interface ISchemaEmitter
     /// <param name="expected">The string, as UTF-8.</param>
     void FailUnlessStringConst(byte[] expected);
 
+    /// <summary>
+    /// Fails unless the current value (a string) has a length in runes within bounds. The byte length decides most
+    /// values in place; the rest are counted.
+    /// </summary>
+    /// <param name="minLength">The least length, or -1.</param>
+    /// <param name="maxLength">The greatest length, or -1.</param>
+    void FailUnlessStringLength(int minLength, int maxLength);
+
     /// <summary>Fails unless the value satisfies a string-length leaf.</summary>
     /// <param name="entry">The leaf's resolution.</param>
     void FailUnlessLength(in StrictEntry entry);

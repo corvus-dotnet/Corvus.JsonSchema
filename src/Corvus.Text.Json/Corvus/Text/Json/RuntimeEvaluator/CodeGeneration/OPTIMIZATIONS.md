@@ -40,14 +40,18 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
   equal nodes share one node and therefore one method. The Java port merges by structure, which also catches nodes
   written differently. Not ported.
 
+- **Discriminators** (`inlineDiscriminator`). The discriminator's property is found by comparing each name's words,
+  and its string value selects the branches by words, as a bit per branch. Other values (numbers, booleans, null,
+  escaped strings) take the interpreter's lookup. The generated code then tests each selected branch.
+- **String lengths.** Decided from the byte length in place (a rune is one to four bytes). Only a value in the band
+  the byte length does not decide, or an escaped one, is counted.
+
 ## Partial
 
-- **Discriminators** (`inlineDiscriminator`). The interpreter selects the branches and returns them as a bit mask. The
-  generated code then tests each selected branch. Java finds the property and compares its value inline.
 - **`unevaluatedProperties` from static coverage.** Compiled in the fused pass when the plan has no alternative
   groups. With alternative groups, and outside the fused plan, it is the interpreter's.
-- **String keywords** (`stringSection`). Length leaves are tested through a helper with the byte-length shortcut.
-  A node's other string keywords (pattern, format, content) are one call of the interpreter's string evaluation.
+- **String keywords** (`stringSection`). Lengths are tested in place (see Done). A node's other string keywords
+  (pattern, format, content) are one call of the interpreter's string evaluation.
 - **Small objects probed by name** (`objectProbe`). Compiled as a dispatch loop over the properties. Java probes each
   declared name, required first.
 - **Size guard.** An object of more than 256 names is left to the interpreter, and more than 512 names would take the
@@ -61,10 +65,9 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
 2. **Dynamic references and in-place cycles** (`dynamicRef`, guarded calls). A dynamic reference resolved from the
    scope and dispatched to its method. In-place calls into nodes on a cycle run under the depth guard. Today a schema
    with a live dynamic scope is not compiled at all, and a node with an in-place child on a cycle is interpreted.
-3. **Inline discriminators.**
-4. **The remaining `unevaluatedProperties` cases.**
-5. **Size guard with compact forms.**
-6. **String keywords in place.** Pattern shapes and formats called directly with their constants.
+3. **The remaining `unevaluatedProperties` cases.**
+4. **Size guard with compact forms.**
+5. **String keywords in place.** Pattern shapes and formats called directly with their constants.
 
 ## Not applicable
 
