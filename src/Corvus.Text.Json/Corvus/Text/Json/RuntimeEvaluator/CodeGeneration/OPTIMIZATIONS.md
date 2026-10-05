@@ -47,6 +47,18 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
 - **String lengths.** Decided from the byte length in place (a rune is one to four bytes). Only a value in the band
   the byte length does not decide, or an escaped one, is counted.
 
+- **`contains`** (`arraySection`). Counted in the array's pass over its items, and no longer tested once
+  `minContains` is met when nothing bounds the count above.
+- **`propertyNames`** (`objectSection`). Each name tested in the object's pass. A names schema that only a type and
+  string keywords decide (a pattern, a length, a format) tests the name's text where it lies, in the interpreter too.
+  Any other names schema is evaluated over a document made of the name, as before.
+- **Keywords that cannot apply under the node's type.** Object or array keywords on a type that admits neither leave a
+  leaf, and string or number keywords on an array type leave the array of items. The interpreter has no plan for these
+  nodes. The lowering takes them by the plan of the keywords that can apply.
+
+After these, a census of the 37 Sourcemeta corpora (`CORVUS_RT_CODEGEN_STATS=census` on the harness's `codegen` mode)
+finds no node left to the interpreter.
+
 ## Partial
 
 - **`unevaluatedProperties` from static coverage.** Compiled in the fused pass when the plan has no alternative
@@ -61,8 +73,8 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
 
 ## Todo
 
-1. **`contains` and `unevaluatedItems`** (`arraySection`). `contains` stopped at `minContains`, and
-   `unevaluatedItems` from static coverage. Both are the interpreter's general path today.
+1. **`unevaluatedItems`** (`arraySection`), from static coverage. It is the interpreter's general path today. No
+   Sourcemeta corpus reaches it.
 2. **Dynamic references and in-place cycles** (`dynamicRef`, guarded calls). A dynamic reference resolved from the
    scope and dispatched to its method. In-place calls into nodes on a cycle run under the depth guard. Today a schema
    with a live dynamic scope is not compiled at all, and a node with an in-place child on a cycle is interpreted.

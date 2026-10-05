@@ -55,6 +55,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenEnd = Helper(nameof(Evaluator.GenEnd));
     private static readonly MethodInfo GenTokenAndNext = Helper(nameof(Evaluator.GenTokenAndNext));
     private static readonly MethodInfo GenName = Helper(nameof(Evaluator.GenName));
+    private static readonly MethodInfo GenPropertyName = Helper(nameof(Evaluator.GenPropertyName));
     private static readonly MethodInfo GenStringLocation = Helper(nameof(Evaluator.GenStringLocation));
     private static readonly MethodInfo GenWord = Helper(nameof(Evaluator.GenWord));
     private static readonly MethodInfo GenSlowName = Helper(nameof(Evaluator.GenSlowName));
@@ -124,6 +125,8 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     // before the case's code runs, and a trie's deeper levels are only reached on a match, from which control never
     // returns to the level above). A fresh local for every use gives a large object hundreds of locals, more than
     // the JIT keeps in registers.
+    private LocalBuilder? contained;
+    private Label containsSettled;
     private LocalBuilder? dispatchLocation;
     private LocalBuilder? dispatchLength;
     private LocalBuilder? dispatchFirst;
@@ -158,6 +161,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         this.ownKeywords = false;
         this.selectedBranches = null;
         this.longValue = null;
+        this.contained = null;
         this.dispatchLocation = null;
         this.dispatchLength = null;
         this.dispatchFirst = null;
@@ -950,6 +954,18 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     }
 
     /// <inheritdoc/>
+    public void FailUnlessName(ChildRef names)
+    {
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Ldsfld, this.Constant(names));
+        il.Emit(OpCodes.Call, GenPropertyName);
+        il.Emit(OpCodes.Brfalse, this.fail);
+    }
+
+    /// <inheritdoc/>
     public void BeginIfNameMatches(PatternMatcher matcher)
     {
         ILGenerator il = this.Il;
@@ -1006,6 +1022,54 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     public void EndArray()
     {
         this.EndLoop(isObject: false);
+        this.Succeed();
+    }
+
+    /// <inheritdoc/>
+    public void BeginContains(int minContains, int maxContains)
+    {
+        // The count starts at zero (the method's locals are initialised).
+        ILGenerator il = this.Il;
+        this.contained ??= il.DeclareLocal(typeof(int));
+        this.containsSettled = il.DefineLabel();
+        if (maxContains < 0)
+        {
+            il.Emit(OpCodes.Ldloc, this.contained);
+            il.Emit(OpCodes.Ldc_I4, minContains);
+            il.Emit(OpCodes.Bge, this.containsSettled);
+        }
+
+        this.BeginTry();
+    }
+
+    /// <inheritdoc/>
+    public void EndContains()
+    {
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldloc, this.contained!);
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Stloc, this.contained!);
+        this.OnFail();
+        this.EndTry();
+        il.MarkLabel(this.containsSettled);
+    }
+
+    /// <inheritdoc/>
+    public void EndArrayContaining(int minContains, int maxContains)
+    {
+        this.EndLoop(isObject: false);
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldloc, this.contained!);
+        il.Emit(OpCodes.Ldc_I4, minContains);
+        il.Emit(OpCodes.Blt, this.fail);
+        if (maxContains >= 0)
+        {
+            il.Emit(OpCodes.Ldloc, this.contained!);
+            il.Emit(OpCodes.Ldc_I4, maxContains);
+            il.Emit(OpCodes.Bgt, this.fail);
+        }
+
         this.Succeed();
     }
 

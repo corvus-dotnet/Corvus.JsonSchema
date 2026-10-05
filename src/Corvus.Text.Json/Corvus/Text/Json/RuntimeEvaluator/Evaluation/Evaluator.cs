@@ -3479,6 +3479,11 @@ internal static partial class Evaluator
             }
         }
 
+        if (!default(TMode).Collecting && TryNameAgainstLeaf<TAccess>(target, ref state, doc, valueIndex, out bool decided))
+        {
+            return decided;
+        }
+
         using FixedStringJsonDocument<JsonElement> nameDoc = FixedStringJsonDocument<JsonElement>.Parse(doc.GetPropertyNameRaw(valueIndex, true), doc.ValueIsEscaped(valueIndex, true));
         if (!default(TMode).Collecting)
         {
@@ -3495,6 +3500,41 @@ internal static partial class Evaluator
         }
 
         return ok;
+    }
+
+    /// <summary>
+    /// Flag mode's test of a property's name against a <c>propertyNames</c> schema that only a type and string
+    /// keywords decide (a pattern, a length, a format): the name's text is tested where it lies, with no document made
+    /// of it. False when the schema has other keywords or the name is escaped; the caller then evaluates it as a document.
+    /// </summary>
+    private static bool TryNameAgainstLeaf<TAccess>(SchemaNode target, ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool result)
+        where TAccess : struct, IDocumentAccess
+    {
+        result = false;
+        if (!target.IsLeaf || target.HasConst || target.Enum is not null)
+        {
+            return false;
+        }
+
+        if (target.HasType && (target.Type & TypeMask.String) == 0)
+        {
+            return true;
+        }
+
+        if (!target.HasStringKeywords)
+        {
+            result = true;
+            return true;
+        }
+
+        ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
+        if (escaped)
+        {
+            return false;
+        }
+
+        result = EvalStringCore<FastMode, TAccess>(target, raw, ref state);
+        return true;
     }
 
     private static bool EvalUnevaluatedProperties<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)

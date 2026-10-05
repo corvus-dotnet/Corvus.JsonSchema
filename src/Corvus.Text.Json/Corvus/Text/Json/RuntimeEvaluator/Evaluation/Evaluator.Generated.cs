@@ -94,6 +94,9 @@ internal static partial class Evaluator
         return Eval<FastMode, RawAccess>(state.Program.Nodes[nodeId], doc, index, ref state, default, 0);
     }
 
+    /// <summary>Whether a property's name is valid against a <c>propertyNames</c> schema (the interpreter's test).</summary>
+    internal static bool GenPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex, ChildRef names) => EvalPropertyName<FastMode, RawAccess>(in names, doc, valueIndex, ref state, 0);
+
     /// <summary>Whether a property's name matches a pattern (the name unescaped first when it is escaped).</summary>
     internal static bool GenNameMatches(ref EvaluationState state, IJsonDocument doc, int valueIndex, PatternMatcher matcher) => MatchesName<RawAccess>(matcher, ref state, doc, valueIndex);
 

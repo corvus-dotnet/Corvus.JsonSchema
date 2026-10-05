@@ -281,6 +281,27 @@ internal interface ISchemaEmitter
     /// <summary>Starts code that runs when the current property's name has not matched (see <see cref="SetMatched"/>).</summary>
     void BeginIfNotMatched();
 
+    /// <summary>
+    /// Starts the test of the current item against a <c>contains</c> schema: the tests up to <see cref="EndContains"/>
+    /// decide whether the item is counted, and do not fail the array. With no <paramref name="maxContains"/> the test
+    /// is skipped once <paramref name="minContains"/> items have been counted.
+    /// </summary>
+    /// <param name="minContains">The least number of matching items.</param>
+    /// <param name="maxContains">The greatest number of matching items, or -1.</param>
+    void BeginContains(int minContains, int maxContains);
+
+    /// <summary>Ends the test started by <see cref="BeginContains"/>, counting the item when the tests passed.</summary>
+    void EndContains();
+
+    /// <summary>Ends an array's pass over its items, failing unless the count of items <c>contains</c> matched is within its bounds, and returns true.</summary>
+    /// <param name="minContains">The least number of matching items.</param>
+    /// <param name="maxContains">The greatest number of matching items, or -1.</param>
+    void EndArrayContaining(int minContains, int maxContains);
+
+    /// <summary>Fails unless the current property's name is valid against a <c>propertyNames</c> schema.</summary>
+    /// <param name="names">The reference to the schema for the names.</param>
+    void FailUnlessName(ChildRef names);
+
     /// <summary>Starts code that runs when the current property's name matches a pattern; <see cref="Else"/> starts the code for when it does not.</summary>
     /// <param name="matcher">The pattern.</param>
     void BeginIfNameMatches(PatternMatcher matcher);

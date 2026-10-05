@@ -53,7 +53,12 @@ public static class CodeGenProbe
                 continue;
             }
 
-            SchemaLowering.Compile(nodes, entry, out _, out int specialised);
+            SchemaLowering.Compile(nodes, entry, out SchemaNode[] generatedNodes, out int specialised);
+            if (Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN_STATS") == "census")
+            {
+                InterpretedCensus(name, generatedNodes);
+            }
+
             if (Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN_STATS") == "1")
             {
                 Stats(nodes);
@@ -208,6 +213,92 @@ public static class CodeGenProbe
         }
 
         Console.WriteLine($"    fused {name,-24} flat {flat,3} | full {full,3}: within limits {simple,3}; unevaluated {unevaluated,3}, conditional unknown names {conditionalUnknown,3}, over 64 names or conditions {wide,3} | with conditions {conditions,3}, alt groups {altGroups,3}, value tests {valueTests,3}, unknown names {unknown,3}");
+    }
+
+    // The nodes left to the interpreter, by plan and by the keywords that keep them there.
+    private static void InterpretedCensus(string name, SchemaNode[] nodes)
+    {
+        var counts = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        foreach (SchemaNode node in nodes)
+        {
+            if (node is null || node.Plan is NodePlan.Generated or NodePlan.Leaf or NodePlan.AlwaysTrue or NodePlan.AlwaysFalse or NodePlan.Forward)
+            {
+                continue;
+            }
+
+            var reasons = new List<string>();
+            if (node.Contains.IsPresent)
+            {
+                reasons.Add("contains");
+            }
+
+            if ((node.Flags & NodeFlags.HasUnevaluatedItems) != 0)
+            {
+                reasons.Add("unevaluatedItems");
+            }
+
+            if ((node.Flags & NodeFlags.HasUnevaluatedProperties) != 0)
+            {
+                reasons.Add("unevaluatedProperties");
+            }
+
+            if ((node.Flags & NodeFlags.InPlaceCycle) != 0)
+            {
+                reasons.Add("cycle");
+            }
+
+            if ((node.Flags & (NodeFlags.TracksProperties | NodeFlags.TracksItems)) != 0)
+            {
+                reasons.Add("tracks");
+            }
+
+            if ((node.Flags & NodeFlags.HasInPlaceApplicators) != 0)
+            {
+                reasons.Add("applicators");
+            }
+
+            if ((node.Flags & NodeFlags.HasObjectKeywords) != 0)
+            {
+                reasons.Add("object");
+            }
+
+            if ((node.Flags & NodeFlags.HasArrayKeywords) != 0)
+            {
+                reasons.Add("array");
+            }
+
+            void Has(bool present, string keyword)
+            {
+                if (present)
+                {
+                    reasons.Add(keyword);
+                }
+            }
+
+            Has(node.Properties is not null, $"properties:{node.Properties?.Count}");
+            Has(node.SeenBitCount > 64, $"seenBits:{node.SeenBitCount}");
+            Has(node.PatternProperties is not null, "patternProperties");
+            Has(node.AdditionalProperties.IsPresent, "additionalProperties");
+            Has(node.PropertyNames.IsPresent, "propertyNames");
+            Has(node.Dependencies is not null, "dependencies");
+            Has(node.MinProperties >= 0 || node.MaxProperties >= 0, "propertyCount");
+            Has(node.PrefixItems is not null, "prefixItems");
+            Has(node.Items.IsPresent, "items");
+            Has(node.UniqueItems, "uniqueItems");
+            Has(node.DynamicRef is not null, "dynamicRef");
+            Has(node.HasType, $"type:{node.Type}");
+            Has(node.HasConst, "const");
+            Has(node.Enum is not null, "enum");
+            Has((node.Flags & NodeFlags.HasStringKeywords) != 0, "string");
+            Has((node.Flags & NodeFlags.HasNumberKeywords) != 0, "number");
+            Has(node.MinItems >= 0 || node.MaxItems >= 0, "itemCount");
+            Has(node.Items.IsPresent, $"itemsPlan:{(node.Items.IsPresent ? nodes[node.Items.FastNode].Plan : default)}");
+
+            string key = $"{node.Plan}[{string.Join("+", reasons)}]";
+            counts[key] = counts.GetValueOrDefault(key) + 1;
+        }
+
+        Console.WriteLine($"    interpreted {name,-24} {string.Join(", ", counts.Select(c => $"{c.Key} {c.Value}"))}");
     }
 
     // The shape of each strict object: its names by the dispatch's length classes and its entries by kind.

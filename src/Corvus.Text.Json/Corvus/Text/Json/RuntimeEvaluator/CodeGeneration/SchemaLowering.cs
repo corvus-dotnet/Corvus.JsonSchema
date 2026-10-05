@@ -135,9 +135,16 @@ internal static class SchemaLowering
                     LowerComposition(emitter, nodes, node, requested, pending);
                     break;
                 case NodePlan.Leaf:
+                case NodePlan.General when EffectiveGeneralPlan(node) == NodePlan.Leaf:
                     emitter.UseSelfAsValue();
                     LowerLeaf(emitter, node);
                     emitter.Succeed();
+                    break;
+                case NodePlan.General when EffectiveGeneralPlan(node) == NodePlan.Object:
+                    LowerObject(emitter, nodes, node, requested, pending);
+                    break;
+                case NodePlan.General:
+                    LowerArrayItems(emitter, nodes, node, requested, pending);
                     break;
                 case NodePlan.TypeUnion:
                     emitter.ReturnTokenTest(StrictEntry.TokenBitsOf(node.InPlaceUnionMask), (node.InPlaceUnionMask & TypeMask.Integer) != 0 && (node.InPlaceUnionMask & TypeMask.Number) == 0, node.Dialect == JsonSchemaDialect.Draft4);
@@ -237,6 +244,8 @@ internal static class SchemaLowering
         {
             case NodePlan.Leaf:
                 return true;
+            case NodePlan.General:
+                return EffectiveGeneralPlan(node) != NodePlan.General;
             case NodePlan.AlwaysTrue:
                 // As a node's plan this is the interpreter's (nothing is evaluated); as own keywords it is nothing.
                 return node.Plan != plan;
@@ -278,6 +287,48 @@ internal static class SchemaLowering
             default:
                 return false;
         }
+    }
+
+    // The plan a node without one lowers by. The keywords that bar the interpreter's plans may not apply under the
+    // node's type: object or array keywords on a type that admits neither (stylecop writes uniqueItems on a string)
+    // leave a leaf, and string or number keywords on an array type leave the array of items. And an object with
+    // propertyNames is the object plan with a test of each name.
+    private static NodePlan EffectiveGeneralPlan(SchemaNode node)
+    {
+        if (node.Plan != NodePlan.General || node.HasInPlaceApplicators || node.DynamicRef is not null
+            || node.Dependencies is not null || node.UnevaluatedProperties.IsPresent || node.UnevaluatedItems.IsPresent)
+        {
+            return NodePlan.General;
+        }
+
+        bool objectLive = node.HasObjectKeywords && (!node.HasType || (node.Type & TypeMask.Object) != 0);
+        bool arrayLive = node.HasArrayKeywords && (!node.HasType || (node.Type & TypeMask.Array) != 0);
+        if (!objectLive && !arrayLive)
+        {
+            return node.HasType ? NodePlan.Leaf : NodePlan.General;
+        }
+
+        bool valueLive = node.HasConst || node.Enum is not null
+            || (node.HasNumberKeywords && (!node.HasType || (node.Type & (TypeMask.Number | TypeMask.Integer)) != 0))
+            || (node.HasStringKeywords && (!node.HasType || (node.Type & TypeMask.String) != 0));
+        if (valueLive || (objectLive && arrayLive))
+        {
+            return NodePlan.General;
+        }
+
+        if (arrayLive)
+        {
+            // contains is counted in the pass over the items (not alongside prefix items).
+            return node.Contains.IsPresent
+                ? (node.PrefixItems is null ? NodePlan.ArrayItems : NodePlan.General)
+                : (node.PrefixItems is null || node.PrefixEntries is not null ? NodePlan.ArrayItems : NodePlan.General);
+        }
+
+        // The object plan's own limits (one word of seen bits, names within the dispatch), with entries for its names.
+        return node.SeenBitCount <= 64 && (node.Properties?.Count ?? 0) <= MaxDispatchNames
+            && node.UnrolledProperties is null && node.PatternMap is null && (node.Properties is null || node.StrictEntries is not null)
+            ? NodePlan.Object
+            : NodePlan.General;
     }
 
     // The token types a node's type accepts for a value that is not the container it specialises (every type when
@@ -668,10 +719,17 @@ internal static class SchemaLowering
             read |= Mask(dependency.RequiredSeenBits);
         }
 
-        bool loop = properties is not null || patterns.Length > 0 || hasAdditional;
+        // propertyNames (a node the interpreter has no plan for reaches here with it): each name against its schema.
+        bool testsNames = node.PropertyNames.IsPresent && !nodes[node.PropertyNames.FastNode].AlwaysTrue;
+        bool loop = properties is not null || patterns.Length > 0 || hasAdditional || testsNames;
         emitter.BeginObject(otherTokens, IntegerOnly(node), lexical, acceptsObject, node.MinProperties, node.MaxProperties, properties: loop);
         if (loop)
         {
+            if (testsNames)
+            {
+                emitter.FailUnlessName(node.PropertyNames);
+            }
+
             bool common = patterns.Length > 0;
             if (properties is not null)
             {
@@ -706,7 +764,7 @@ internal static class SchemaLowering
             {
                 emitter.SetMatched(false);
             }
-            else
+            else if (hasAdditional)
             {
                 Additional();
             }
@@ -1399,6 +1457,23 @@ internal static class SchemaLowering
         ushort otherTokens = OtherTokens(node, JsonTokenType.StartArray);
         bool lexical = (node.Flags & NodeFlags.Draft4) != 0;
         bool acceptsArray = !node.HasType || (node.Type & TypeMask.Array) != 0;
+        if (node.Contains.IsPresent && (node.MinContains > 0 || node.MaxContains >= 0))
+        {
+            // contains (a node the interpreter has no plan for reaches here with it): each item against the items
+            // schema, and counted when it is valid against the contains schema.
+            emitter.BeginArray(otherTokens, IntegerOnly(node), lexical, acceptsArray, node.MinItems, node.MaxItems, node.UniqueItems);
+            if (node.Items.IsPresent && nodes[node.Items.FastNode].Plan != NodePlan.AlwaysTrue)
+            {
+                LowerChild(emitter, nodes, 0, 0, node.Items.FastNode, requested, pending);
+            }
+
+            emitter.BeginContains(node.MinContains, node.MaxContains);
+            LowerChild(emitter, nodes, 0, 0, node.Contains.FastNode, requested, pending);
+            emitter.EndContains();
+            emitter.EndArrayContaining(node.MinContains, node.MaxContains);
+            return;
+        }
+
         if (node.PrefixEntries is StrictEntry[] prefix)
         {
             // Prefix items: each leading position's resolution, then the rest's (the last entry) for every item after.

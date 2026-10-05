@@ -305,6 +305,26 @@ public class RuntimeCodeGenerationTests
 
     private const string Untyped = """{"properties": {"a": {"type": "integer"}, "name": {"type": "string"}}}""";
 
+    // Nodes the interpreter has no plan for: propertyNames (a pattern, a length, and an enum, which is evaluated as a
+    // document), and keywords that cannot apply under the node's type.
+    private const string WithoutPlans = """
+        {
+          "type": "object",
+          "properties": {
+            "name": {"type": "object", "propertyNames": {"pattern": "^[a-k]+$"}, "additionalProperties": {"type": "string"}},
+            "child": {"propertyNames": {"maxLength": 4}},
+            "kind": {"type": "object", "propertyNames": {"enum": ["a", "b", "kind"]}, "additionalProperties": true},
+            "tag": {"type": "string", "uniqueItems": true, "minLength": 1},
+            "code": {"type": "string", "additionalProperties": false},
+            "items": {"type": "array", "minLength": 3, "items": {"type": "string"}, "maxItems": 3},
+            "tags": {"type": "object", "items": {"type": "string"}},
+            "either": {"type": "array", "items": {"type": ["string", "integer"]}, "contains": {"type": "integer"}},
+            "other": {"type": "array", "contains": {"const": "a"}, "minContains": 2, "maxContains": 3},
+            "id": {"contains": {"type": "string", "minLength": 2}, "minContains": 0, "maxContains": 1}
+          }
+        }
+        """;
+
     private const string Draft4 = """
         {
           "$schema": "http://json-schema.org/draft-04/schema#",
@@ -350,6 +370,7 @@ public class RuntimeCodeGenerationTests
     [DataRow(Closed, 1)]
     [DataRow(Untyped, 1)]
     [DataRow(Draft4, 1)]
+    [DataRow(WithoutPlans, 11)]
     public void GeneratedCodeGivesTheInterpretersResults(string schema, int specialisedNodes)
     {
         if (!SchemaLowering.IsSupported)
