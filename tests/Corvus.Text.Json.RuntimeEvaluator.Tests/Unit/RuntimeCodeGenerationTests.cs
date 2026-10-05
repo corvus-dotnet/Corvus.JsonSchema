@@ -84,6 +84,8 @@ public class RuntimeCodeGenerationTests
                 "tag": {"const": "x"},
                 "code": {"type": "string", "minLength": 2, "maxLength": 4},
                 "count": {"type": "integer"},
+                "id": {"const": 1},
+                "other": {"type": "integer", "const": 100},
                 "items": {"type": "array", "items": {"type": "string"}},
                 "either": {"type": ["object", "string"], "properties": {"name": {"type": "boolean"}}, "additionalProperties": false}
               },

@@ -28,9 +28,6 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
 {
     private const int RowSize = Evaluator.RowSize;
 
-    // The widest span of name lengths dispatched by a jump table; a wider one is a chain of comparisons.
-    private const int MaxLengthTable = 64;
-
     // The longest name compared by words; a longer one takes the interpreter's lookup.
     private const int MaxWordsName = 128;
 
@@ -1107,6 +1104,8 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             }
         }
 
+        // A jump table here: the masks of a comparison chain measured no faster (the value's type varies less
+        // from one value to the next than a property's name does).
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_2);
         il.Emit(OpCodes.Call, GenToken);
@@ -1627,6 +1626,36 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     // The dispatch on the text at a location (a property's name, or a string value): by length, then by a trie of
     // words within each length. Control goes to the case of the key the text equals, to none when it equals no key,
     // and to slow for text the words cannot decide (escaped, at the very end of the document, or too long).
+    // Branches to the target of the case whose key a local holds, or to none: a tree of comparisons over the keys in
+    // ascending order. An IL switch compiles to a jump table, which is one indirect jump for every value dispatched;
+    // the processor predicts the tree's conditional branches from the sequence of values far better (a tree for the
+    // length of each property's name made plain objects 8 to 18% faster than the table).
+    private void BranchByValue(LocalBuilder value, (int Key, Label Target)[] sorted, int from, int to, Label none)
+    {
+        ILGenerator il = this.Il;
+        if (to - from <= 2)
+        {
+            for (int i = from; i < to; i++)
+            {
+                il.Emit(OpCodes.Ldloc, value);
+                il.Emit(OpCodes.Ldc_I4, sorted[i].Key);
+                il.Emit(OpCodes.Beq, sorted[i].Target);
+            }
+
+            il.Emit(OpCodes.Br, none);
+            return;
+        }
+
+        int middle = (from + to) / 2;
+        Label upper = il.DefineLabel();
+        il.Emit(OpCodes.Ldloc, value);
+        il.Emit(OpCodes.Ldc_I4, sorted[middle].Key);
+        il.Emit(OpCodes.Bge, upper);
+        this.BranchByValue(value, sorted, from, middle, none);
+        il.MarkLabel(upper);
+        this.BranchByValue(value, sorted, middle, to, none);
+    }
+
     private void DispatchByWords(byte[][] keys, MethodInfo locate, Label[] cases, Label none, Label slow)
     {
         ILGenerator il = this.Il;
@@ -1674,36 +1703,15 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
 
         if (byLength.Count > 0)
         {
-            int shortest = int.MaxValue;
-            int longest = 0;
+            // A tree of comparisons on the length, not a jump table: see BranchByValue.
+            var byLengthLabels = new (int Key, Label Target)[lengthLabels.Count];
+            int at = 0;
             foreach (int nameLength in byLength.Keys)
             {
-                shortest = Math.Min(shortest, nameLength);
-                longest = Math.Max(longest, nameLength);
+                byLengthLabels[at++] = (nameLength, lengthLabels[nameLength]);
             }
 
-            if (longest - shortest < MaxLengthTable)
-            {
-                var table = new Label[longest - shortest + 1];
-                for (int i = 0; i < table.Length; i++)
-                {
-                    table[i] = lengthLabels.TryGetValue(shortest + i, out Label label) ? label : none;
-                }
-
-                il.Emit(OpCodes.Ldloc, length);
-                il.Emit(OpCodes.Ldc_I4, shortest);
-                il.Emit(OpCodes.Sub);
-                il.Emit(OpCodes.Switch, table);
-            }
-            else
-            {
-                foreach (KeyValuePair<int, Label> label in lengthLabels)
-                {
-                    il.Emit(OpCodes.Ldloc, length);
-                    il.Emit(OpCodes.Ldc_I4, label.Key);
-                    il.Emit(OpCodes.Beq, label.Value);
-                }
-            }
+            this.BranchByValue(length, byLengthLabels, 0, byLengthLabels.Length, none);
         }
 
         il.Emit(OpCodes.Br, none);

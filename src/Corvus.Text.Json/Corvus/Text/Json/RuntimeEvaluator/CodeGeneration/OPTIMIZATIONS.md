@@ -17,7 +17,10 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
   Type-only children are tested at the call site.
 - **Objects.** One pass over the properties. `required` as a mask of seen bits. Count bounds from the header, only
   when present. Pattern properties, an additional schema and dependencies (the object plan's three forms).
-- **Name dispatch by length, then a trie of words** (`wordTrie`). Names of one length are told apart word by word,
+- **Name dispatch by length, then a trie of words** (`wordTrie`). The length is decided by a tree of comparisons, not
+  an IL `switch`: the JIT compiles a switch to a jump table, which is one indirect jump for every property, and the
+  tree's conditional branches are predicted far better (generated code 6% faster over the corpora, up to 39%). The
+  JVM compiles a small switch to comparisons by itself. Names of one length are told apart word by word,
   so shared prefixes are compared once. Escaped names, names at the very end of the text and names over 128 bytes
   take the interpreter's lookup.
 - **String enums and string consts by words.** A set of up to 32 strings is tested with the same trie on the value's
@@ -34,6 +37,7 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
   that can accept the value's token type.
 - **Type dispatch.** An `anyOf`/`oneOf` whose branches assert disjoint types evaluates only the branch for the value's
   kind.
+- **Integer const.** A plain integer literal is compared as a long. Any other number takes the general comparison.
 - **Number keywords** (`numberSection`). Integer bounds and `multipleOf` compared as longs for a plain integer
   literal. Any other number, a bound that is not an integer and a numeric format take the interpreter's evaluation.
 - **Leaves as methods.** A leaf node's method tests only the keywords the node has, by the value's kind.

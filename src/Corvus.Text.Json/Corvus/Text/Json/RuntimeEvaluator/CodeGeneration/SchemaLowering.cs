@@ -846,6 +846,21 @@ internal static class SchemaLowering
             {
                 emitter.FailUnlessStringConst(expected);
             }
+            else if (Evaluation.Evaluator.GenIntegerFastPath && node.ConstNumber?.AsLong is long constant)
+            {
+                // An integer const: only a number equals it, and a plain integer literal is compared as a long (any
+                // other number, such as 1.0 for 1, takes the general comparison).
+                emitter.BeginIfValueToken(1 << (int)JsonTokenType.Number);
+                emitter.BeginIfValueLong();
+                emitter.FailIfLongBelow(constant, exclusive: false);
+                emitter.FailIfLongAbove(constant, exclusive: false);
+                emitter.Else();
+                emitter.FailUnlessConst(node.Id);
+                emitter.EndIf();
+                emitter.Else();
+                emitter.Fail();
+                emitter.EndIf();
+            }
             else
             {
                 emitter.FailUnlessConst(node.Id);
