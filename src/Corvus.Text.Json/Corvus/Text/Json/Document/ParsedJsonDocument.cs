@@ -481,7 +481,7 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
 
         result = row.HasComplexChildren
             ? JsonReaderHelper.GetUnescapedString(segment)
-            : JsonReaderHelper.TranscodeHelper(segment);
+            : row.IsAsciiText ? JsonReaderHelper.TranscodeAscii(segment) : JsonReaderHelper.TranscodeHelper(segment);
         return true;
     }
 
@@ -519,7 +519,7 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
 
         return row.HasComplexChildren
             ? JsonReaderHelper.GetUnescapedString(segment)
-            : JsonReaderHelper.TranscodeHelper(segment);
+            : row.IsAsciiText ? JsonReaderHelper.TranscodeAscii(segment) : JsonReaderHelper.TranscodeHelper(segment);
     }
 
     private UnescapedUtf8JsonString GetUtf8JsonStringUnsafe(int index, JsonTokenType expectedType)
@@ -1770,7 +1770,7 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
                 // Adding 1 to skip the start quote will never overflow
                 Debug.Assert(tokenStart < int.MaxValue);
 
-                database.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped);
+                database.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped, reader.ValueIsAscii);
 
                 Debug.Assert(!inArray);
             }
@@ -1792,7 +1792,12 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
                     // Adding 1 to skip the start quote will never overflow
                     Debug.Assert(tokenStart < int.MaxValue);
 
-                    database.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped);
+                    database.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped, reader.ValueIsAscii);
+                }
+                else if (tokenType == JsonTokenType.Number)
+                {
+                    // The reader knows whether the number has a fraction or an exponent: the row keeps it.
+                    database.AppendNumber(tokenStart, reader.ValueSpan.Length, reader.NumberShape);
                 }
                 else
                 {
@@ -2012,7 +2017,7 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
             DbRow row = _parsedData.Get(i);
             bool isEnd = row.TokenType is JsonTokenType.EndObject or JsonTokenType.EndArray;
             int sizeOrLength = isEnd && row.HasPropertyMap ? GetLengthOfEndToken(row.SizeOrLengthOrPropertyMapIndex) : row.SizeOrLengthOrPropertyMapIndex;
-            db.Append(new DbRow(row.TokenType, row.LocationOrIndex + locationDelta, sizeOrLength, row.NumberOfRows, !isEnd && row.HasComplexChildren));
+            db.Append(new DbRow(row.TokenType, row.LocationOrIndex + locationDelta, sizeOrLength, row.NumberOfRows, !isEnd && row.HasComplexChildren, row.TextFacts));
             count++;
         }
 

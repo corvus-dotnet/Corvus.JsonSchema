@@ -795,6 +795,8 @@ public ref partial struct Utf8JsonReader
         // If the first found byte is a quote, we have reached an end of string, and
         // can avoid validation.
         // Otherwise, in the uncommon case, iterate one character at a time and validate.
+        // A string read across segments is not scanned for ASCII.
+        _valueIsAscii = false;
         int idx = localBuffer.IndexOfQuoteOrAnyControlOrBackSlash();
 
         if (idx >= 0)
@@ -1175,6 +1177,9 @@ public ref partial struct Utf8JsonReader
 
         consumed = 0;
         int i = 0;
+
+        // The shape of a number read across segments is not recorded.
+        _numberShape = 0;
 
         ConsumeNumberResult signResult = ConsumeNegativeSignMultiSegment(ref data, ref i, rollBackState);
         if (signResult == ConsumeNumberResult.NeedMoreData)

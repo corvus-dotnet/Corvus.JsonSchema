@@ -170,12 +170,7 @@ internal static partial class Evaluator
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool GenTryLong(ref EvaluationState state, int index, out long value)
     {
-        ReadOnlySpan<byte> raw = default(RawAccess).RawValue(ref state, null!, index);
-        value = 0;
-        return raw.Length <= 18
-            && raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0
-            && System.Buffers.Text.Utf8Parser.TryParse(raw, out value, out int consumed)
-            && consumed == raw.Length;
+        return TryPlainLong(default(RawAccess).RawValue(ref state, null!, index), out value);
     }
 
     /// <summary>
@@ -211,7 +206,11 @@ internal static partial class Evaluator
         }
     }
 
-    /// <summary>The byte length of a string value's text, or -1 when the value is escaped (its length is then counted after unescaping).</summary>
+    /// <summary>Whether the parser found a string value's text to be unescaped and all ASCII (one character to a byte).</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool GenIsAscii(ref EvaluationState state, int valueIndex) => default(RawAccess).IsAsciiText(ref state, null!, valueIndex);
+
+    /// <summary>The byte length of a string value's text, negative when it has escapes.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int GenStringBytes(ref EvaluationState state, int valueIndex)
     {
@@ -227,8 +226,14 @@ internal static partial class Evaluator
     internal static bool GenStringLengthCounted(ref EvaluationState state, IJsonDocument doc, int index, int minLength, int maxLength)
     {
         ReadOnlySpan<byte> raw = default(RawAccess).RawValue(ref state, doc, index, out bool escaped);
-        return escaped
-            ? EscapedStringLengthWithin<RawAccess>(minLength, maxLength, ref state, doc, index)
+        if (escaped)
+        {
+            return EscapedStringLengthWithin<RawAccess>(minLength, maxLength, ref state, doc, index);
+        }
+
+        // An unescaped string the parser found all ASCII has one character to a byte: its length is exact.
+        return default(RawAccess).IsAsciiText(ref state, doc, index)
+            ? (maxLength < 0 || raw.Length <= maxLength) && (minLength < 0 || raw.Length >= minLength)
             : LengthWithin(raw, minLength, maxLength);
     }
 

@@ -322,7 +322,10 @@ public class RuntimeCodeGenerationTests
             "tags": {"type": "object", "items": {"type": "string"}},
             "either": {"type": "array", "items": {"type": ["string", "integer"]}, "contains": {"type": "integer"}},
             "other": {"type": "array", "contains": {"const": "a"}, "minContains": 2, "maxContains": 3},
-            "id": {"contains": {"type": "string", "minLength": 2}, "minContains": 0, "maxContains": 1}
+            "id": {"contains": {"type": "string", "minLength": 2}, "minContains": 0, "maxContains": 1},
+            "count": {"type": "integer", "minimum": -3, "maximum": 100},
+            "kind2": {"type": "array", "uniqueItems": true, "items": {"type": ["string", "integer"], "minLength": 2, "maxLength": 4}},
+            "kind1": {"type": "array", "items": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}, {"type": "integer", "minimum": 1}]}}
           }
         }
         """;

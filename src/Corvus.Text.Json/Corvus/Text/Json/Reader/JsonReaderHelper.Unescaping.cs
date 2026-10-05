@@ -233,6 +233,21 @@ internal static partial class JsonReaderHelper
         return true;
     }
 
+    /// <summary>
+    /// Transcodes text known to be all ASCII (see <c>DbRow.StringIsAscii</c>): each byte is one character, so the
+    /// bytes are widened with no UTF-8 decoding or validation.
+    /// </summary>
+    /// <param name="ascii">The text.</param>
+    /// <returns>The string.</returns>
+    public static string TranscodeAscii(ReadOnlySpan<byte> ascii)
+    {
+#if NET
+        return System.Text.Encoding.Latin1.GetString(ascii);
+#else
+        return TranscodeHelper(ascii);
+#endif
+    }
+
     public static string TranscodeHelper(ReadOnlySpan<byte> utf8Unescaped)
     {
         try

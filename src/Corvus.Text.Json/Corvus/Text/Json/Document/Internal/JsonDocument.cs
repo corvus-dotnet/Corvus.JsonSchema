@@ -100,6 +100,19 @@ public abstract partial class JsonDocument
     protected MetadataDb _parsedData;
 
     /// <summary>
+    /// Gets what the row of a number says of its text: 1 for an integer literal, 2 for a fraction or an exponent, 0
+    /// when the row does not say (see <see cref="DbRow.NumberShapeShift"/>).
+    /// </summary>
+    /// <param name="index">The row's index.</param>
+    /// <returns>The shape.</returns>
+    internal int GetNumberShape(int index) => _parsedData.Get(index).NumberShape;
+
+    /// <summary>Gets a value indicating whether the row of a string or property name says its text is all ASCII.</summary>
+    /// <param name="index">The row's index.</param>
+    /// <returns>Whether it does.</returns>
+    internal bool IsAsciiText(int index) => _parsedData.Get(index).IsAsciiText;
+
+    /// <summary>
     /// Tries to get direct access to the document's rows and UTF-8 text for documents whose rows are all local.
     /// </summary>
     /// <param name="access">The accessor, valid until the document is disposed or mutated.</param>
@@ -957,7 +970,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | (int)DbRow.NumberIntegerLiteral;
     }
 
     /// <summary>
@@ -981,7 +994,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | (int)DbRow.NumberIntegerLiteral;
     }
 
     /// <summary>
@@ -1005,7 +1018,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | (int)DbRow.NumberIntegerLiteral;
     }
 
     /// <summary>
@@ -1030,7 +1043,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | (int)DbRow.NumberIntegerLiteral;
     }
 
     /// <summary>
@@ -1054,7 +1067,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | (int)DbRow.NumberIntegerLiteral;
     }
 
     /// <summary>
@@ -1079,7 +1092,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | (int)DbRow.NumberIntegerLiteral;
     }
 
     /// <summary>
@@ -1103,7 +1116,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | (int)DbRow.NumberIntegerLiteral;
     }
 
     /// <summary>
@@ -1128,7 +1141,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | (int)DbRow.NumberIntegerLiteral;
     }
 
     /// <summary>
@@ -1152,7 +1165,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | NumberFacts(_valueBacking.AsSpan(result + 4, length));
     }
 
     /// <summary>
@@ -1176,7 +1189,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | NumberFacts(_valueBacking.AsSpan(result + 4, length));
     }
 
     /// <summary>
@@ -1200,7 +1213,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | NumberFacts(_valueBacking.AsSpan(result + 4, length));
     }
 
     /// <summary>
@@ -1239,7 +1252,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | (int)DbRow.NumberIntegerLiteral;
     }
 
     /// <summary>
@@ -1278,7 +1291,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | NumberFacts(_valueBacking.AsSpan(result + 4, length));
     }
 
 #if NET
@@ -1304,7 +1317,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | (int)DbRow.NumberIntegerLiteral;
     }
 
     /// <summary>
@@ -1329,7 +1342,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | (int)DbRow.NumberIntegerLiteral;
     }
 
     /// <summary>
@@ -1353,7 +1366,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Number);
 
         _valueOffset = offset;
-        return result;
+        return result | NumberFacts(_valueBacking.AsSpan(result + 4, length));
     }
 
 #endif
@@ -1451,7 +1464,7 @@ public abstract partial class JsonDocument
 
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(offset), length);
         _valueOffset = index;
-        return offset;
+        return offset | StringFacts(_valueBacking.AsSpan(offset + 5, written));
     }
 
     /// <summary>
@@ -1520,7 +1533,7 @@ public abstract partial class JsonDocument
 
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(offset), length);
         _valueOffset = index;
-        return offset;
+        return offset | StringFacts(_valueBacking.AsSpan(offset + 5, written));
     }
 
     /// <summary>
@@ -1556,7 +1569,7 @@ public abstract partial class JsonDocument
         escapedString.CopyTo(_valueBacking.AsSpan(index));
         index += escapedString.Length;
         _valueBacking[index++] = JsonConstants.Quote;
-        return offset;
+        return offset | StringFacts(escapedString);
     }
 
     /// <summary>
@@ -1573,6 +1586,30 @@ public abstract partial class JsonDocument
         Enlarge(_valueOffset, ref _valueBacking);
         prebakedValue.CopyTo(_valueBacking.AsSpan(offset));
         return offset;
+    }
+
+    /// <summary>
+    /// What a number's text is, for the row that will hold the stored value: the store functions return it in the
+    /// spare bits of the location (see <see cref="DbRow.NumberShapeShift"/>), so that a row written by a mutation
+    /// says what a parsed row says.
+    /// </summary>
+    /// <param name="text">The number's text.</param>
+    /// <returns><see cref="DbRow.NumberIntegerLiteral"/> or <see cref="DbRow.NumberFractionOrExponent"/>.</returns>
+    private static int NumberFacts(ReadOnlySpan<byte> text)
+    {
+        return text.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0 ? (int)DbRow.NumberIntegerLiteral : (int)DbRow.NumberFractionOrExponent;
+    }
+
+    /// <summary>What a stored string's text is, as <see cref="NumberFacts"/> for a number: <see cref="DbRow.StringIsAscii"/> when no byte is above 0x7F.</summary>
+    /// <param name="text">The string's stored text, without its quotes.</param>
+    /// <returns>The facts.</returns>
+    private static int StringFacts(ReadOnlySpan<byte> text)
+    {
+#if NET
+        return System.Text.Ascii.IsValid(text) ? (int)DbRow.StringIsAscii : 0;
+#else
+        return 0;
+#endif
     }
 
     /// <summary>
@@ -1605,7 +1642,7 @@ public abstract partial class JsonDocument
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(offset), length);
         unescapedNumberValue.CopyTo(_valueBacking.AsSpan(offset + 4));
 
-        return offset;
+        return offset | NumberFacts(unescapedNumberValue);
     }
 
     /// <summary>

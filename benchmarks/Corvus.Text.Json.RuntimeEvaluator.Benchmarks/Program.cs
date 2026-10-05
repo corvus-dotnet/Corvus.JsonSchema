@@ -60,9 +60,24 @@ if (args.Length > 0 && args[0] == "parsewarm")
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ProtocolRun.RunParse(args[1..]);
 }
 
+if (args.Length > 0 && args[0] == "lengths")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.GetStringRun.RunLengths();
+}
+
+if (args.Length > 0 && args[0] == "getstring")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.GetStringRun.Run(args[1..]);
+}
+
 if (args.Length > 0 && args[0] == "protocol")
 {
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ProtocolRun.Run(args[1..]);
+}
+
+if (args.Length > 0 && args[0] == "floor")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CodeGenProbe.RunFloor();
 }
 
 if (args.Length > 0 && args[0] == "locality")

@@ -86,6 +86,47 @@ internal static partial class Evaluator
     private static bool AllUniquePairwise<TAccess>(ref EvaluationState state, IJsonDocument doc, int index, int end)
         where TAccess : struct, IDocumentAccess
     {
+        // Strings without escapes (the usual array of names): each item's text is located once, and two items are
+        // compared by length before their bytes. The general comparison below reads both rows again for every pair.
+        Span<int> locations = stackalloc int[PairwiseLimit];
+        Span<int> lengths = stackalloc int[PairwiseLimit];
+        int strings = 0;
+        for (int item = index + RowSize; item < end; item = default(TAccess).NextIndex(ref state, doc, item))
+        {
+            if (strings == PairwiseLimit || default(TAccess).TokenType(ref state, doc, item) != JsonTokenType.String)
+            {
+                strings = -1;
+                break;
+            }
+
+            int location = default(TAccess).RawValueLocation(ref state, doc, item, out int length);
+            if (location < 0 || length < 0)
+            {
+                strings = -1;
+                break;
+            }
+
+            locations[strings] = location;
+            lengths[strings++] = length;
+        }
+
+        if (strings >= 0)
+        {
+            ReadOnlySpan<byte> text = state.RawUtf8;
+            for (int a = 0; a < strings; a++)
+            {
+                for (int b = a + 1; b < strings; b++)
+                {
+                    if (lengths[a] == lengths[b] && text.Slice(locations[a], lengths[a]).SequenceEqual(text.Slice(locations[b], lengths[b])))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
         for (int a = index + RowSize; a < end; a = default(TAccess).NextIndex(ref state, doc, a))
         {
             for (int b = default(TAccess).NextIndex(ref state, doc, a); b < end; b = default(TAccess).NextIndex(ref state, doc, b))

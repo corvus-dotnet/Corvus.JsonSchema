@@ -524,7 +524,7 @@ public sealed partial class JsonDocumentBuilder<T>
                 // Adding 1 to skip the start quote will never overflow.
                 Debug.Assert(tokenStart < int.MaxValue);
 
-                _parsedData.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped);
+                _parsedData.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped, reader.ValueIsAscii);
 
                 Debug.Assert(!inArray);
             }
@@ -544,7 +544,11 @@ public sealed partial class JsonDocumentBuilder<T>
                     // Adding 1 to skip the start quote will never overflow.
                     Debug.Assert(tokenStart < int.MaxValue);
 
-                    _parsedData.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped);
+                    _parsedData.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped, reader.ValueIsAscii);
+                }
+                else if (tokenType == JsonTokenType.Number)
+                {
+                    _parsedData.AppendNumber(tokenStart, reader.ValueSpan.Length, reader.NumberShape);
                 }
                 else
                 {

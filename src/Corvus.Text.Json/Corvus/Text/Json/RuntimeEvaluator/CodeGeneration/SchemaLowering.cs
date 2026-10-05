@@ -835,9 +835,20 @@ internal static class SchemaLowering
     // interpreter's fast path compares them; everything else is the interpreter's evaluation of that keyword.
     private static void LowerLeaf(ISchemaEmitter emitter, SchemaNode node)
     {
+        // Whether the number keywords are compared as longs for a plain integer literal.
+        NumberValue?[] bounds = [node.Minimum, node.Maximum, node.ExclusiveMinimum, node.ExclusiveMaximum];
+        bool longs = node.HasNumberKeywords && Evaluation.Evaluator.GenIntegerFastPath
+            && !(node.AssertFormat && FormatKinds.IsNumeric(node.Format))
+            && Array.TrueForAll(bounds, b => b is null || b.AsLong is not null)
+            && (node.MultipleOf is null || node.MultipleOf.AsLong is not null);
+
+        // An integer type with such keywords: the pass that reads a plain integer literal's value also shows it is an
+        // integer, so the integer test is made only for a number that is not one (below).
+        bool integerOnly = node.HasType && (node.Type & TypeMask.Integer) != 0 && (node.Type & TypeMask.Number) == 0;
+        bool integerWithValue = integerOnly && longs;
         if (node.HasType)
         {
-            emitter.FailUnlessToken(StrictEntry.TokenBitsOf(node.Type), (node.Type & TypeMask.Integer) != 0 && (node.Type & TypeMask.Number) == 0, node.Dialect == JsonSchemaDialect.Draft4);
+            emitter.FailUnlessToken(StrictEntry.TokenBitsOf(node.Type), integerOnly && !integerWithValue, node.Dialect == JsonSchemaDialect.Draft4);
         }
 
         if (node.HasConst)
@@ -882,11 +893,6 @@ internal static class SchemaLowering
         if (node.HasNumberKeywords)
         {
             emitter.BeginIfValueToken(1 << (int)JsonTokenType.Number);
-            NumberValue?[] bounds = [node.Minimum, node.Maximum, node.ExclusiveMinimum, node.ExclusiveMaximum];
-            bool longs = Evaluation.Evaluator.GenIntegerFastPath
-                && !(node.AssertFormat && FormatKinds.IsNumeric(node.Format))
-                && Array.TrueForAll(bounds, b => b is null || b.AsLong is not null)
-                && (node.MultipleOf is null || node.MultipleOf.AsLong is not null);
             if (longs)
             {
                 emitter.BeginIfValueLong();
@@ -916,6 +922,11 @@ internal static class SchemaLowering
                 }
 
                 emitter.Else();
+                if (integerWithValue)
+                {
+                    emitter.FailUnlessToken(1 << (int)JsonTokenType.Number, integerOnly: true, node.Dialect == JsonSchemaDialect.Draft4);
+                }
+
                 emitter.FailUnlessNumberKeywords(node.Id);
                 emitter.EndIf();
             }

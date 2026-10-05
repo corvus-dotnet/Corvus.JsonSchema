@@ -12,8 +12,9 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
 - **One method per node, constants as data of the generated type.** `IlSchemaEmitter`: static methods of one type in
   a collectible assembly, object constants in static fields.
 - **Small methods inlined.** The JVM inlines a small method into its callers by itself. The .NET JIT is asked to, for
-  a method of up to 300 bytes of IL that calls no other generated method (a map of strings, an array of strings, a
-  small closed object), where each caller stays under 1,500 bytes with its callees inlined.
+  a method of up to 300 bytes of IL counting what is inlined into it (a map of strings, an array of strings, a small
+  closed object, a choice between a string and an array), where each caller stays under 1,500 bytes with its callees
+  inlined. A method that reaches itself is never inlined.
 - **Interpreter and generated code call each other.** Generated code calls the interpreter for a node it does not
   specialise. The interpreter calls generated methods through the `Generated` plan on a copy of the node array.
 - **Type tests.** One comparison or one mask test in place. The integer test runs only for integer without number.
@@ -39,7 +40,13 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
   `if`/`then`/`else`. `anyOf`/`oneOf` are one mask test when the branches are types, and otherwise only the branches
   that can accept the value's token type.
 - **Type dispatch.** An `anyOf`/`oneOf` whose branches assert disjoint types evaluates only the branch for the value's
-  kind.
+  kind. The kind is decided by comparisons, not an IL switch (neutral on the corpora, a third faster where
+  the values' types vary from one to the next).
+- **Integers read in one pass.** A plain integer literal's value is read by one loop over its digits, which also
+  shows it is an integer, in place of a search for a fraction or exponent followed by a parse. An integer type with
+  integer bounds makes no separate integer test.
+- **`uniqueItems` over strings.** Up to eight unescaped strings are located once and compared by length before bytes
+  (in the interpreter too).
 - **Integer const.** A plain integer literal is compared as a long. Any other number takes the general comparison.
 - **Number keywords** (`numberSection`). Integer bounds and `multipleOf` compared as longs for a plain integer
   literal. Any other number, a bound that is not an integer and a numeric format take the interpreter's evaluation.
@@ -51,8 +58,9 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
 - **Discriminators** (`inlineDiscriminator`). The discriminator's property is found by comparing each name's words,
   and its string value selects the branches by words, as a bit per branch. Other values (numbers, booleans, null,
   escaped strings) take the interpreter's lookup. The generated code then tests each selected branch.
-- **String lengths.** Decided from the byte length in place (a rune is one to four bytes). Only a value in the band
-  the byte length does not decide, or an escaped one, is counted.
+- **String lengths.** Exact from the byte length for text the parser marked all ASCII (the metadata row's ASCII
+  bit). Otherwise decided from the byte length where it can be (a rune is one to four bytes), and counted only in the
+  band it does not decide, or when escaped.
 
 - **`contains`** (`arraySection`). Counted in the array's pass over its items, and no longer tested once
   `minContains` is met when nothing bounds the count above.
@@ -95,6 +103,13 @@ finds no node left to the interpreter.
   position. Ported and measured: generated code was 10% slower on jshintrc and no faster anywhere. The JVM compiles it
   as a lookup switch. In IL it is a computed key, a range check and an indirect jump, which loses to a short chain of
   well-predicted comparisons. The words at a position are compared in turn.
+
+- **The rows' and the text's start kept in locals of each method** (the hand-written validators of the ceiling
+  experiment took them as arguments). Measured: generated code 2 to 15% slower on every corpus tried. A managed
+  pointer held in a local across calls is one more value the JIT has to keep alive and spill. Reading both from the
+  state where they are used is faster.
+- **A tree of comparisons for the dispatch by item position.** Measured neutral (0.98 to 1.04), so it remains an IL
+  switch.
 
 - **Instance representation.** The Java tape classifies numbers at parse time, so its integer and bound tests are bit
   tests. The C# metadata rows do not, and generated code reads the number's text as the interpreter does. This is a

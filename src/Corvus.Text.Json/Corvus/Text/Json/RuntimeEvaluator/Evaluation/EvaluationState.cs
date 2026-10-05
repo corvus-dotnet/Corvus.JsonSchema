@@ -41,6 +41,15 @@ internal interface IDocumentAccess
     /// <summary>Gets the token type of the element.</summary>
     JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index);
 
+    /// <summary>
+    /// Gets what the parser recorded of a number's text: 1 for an integer literal, 2 for a number with a fraction or
+    /// an exponent, 0 when the row does not say (the text is then looked at).
+    /// </summary>
+    int NumberShape(ref EvaluationState state, IJsonDocument doc, int index);
+
+    /// <summary>Gets a value indicating whether the row of a string says its text is all ASCII (each byte one character).</summary>
+    bool IsAsciiText(ref EvaluationState state, IJsonDocument doc, int index);
+
     /// <summary>Gets the property count of an object or the length of an array.</summary>
     int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType);
 
@@ -120,6 +129,10 @@ internal readonly struct RawAccess : IDocumentAccess
     private const uint NumberOfRowsMask = 0x0FFFFFFFU;
 
     public JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index) => (JsonTokenType)(ReadUInt32(state.RawRows, index + NumberOfRowsOffset) >> 28);
+
+    public int NumberShape(ref EvaluationState state, IJsonDocument doc, int index) => (int)(ReadUInt32(state.RawRows, index) >> 28) & 3;
+
+    public bool IsAsciiText(ref EvaluationState state, IJsonDocument doc, int index) => (ReadUInt32(state.RawRows, index) & 0x9000_0000U) == 0x1000_0000U;
 
     public int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType) => ReadInt32(state.RawRows, index + SizeOrLengthOffset) & int.MaxValue;
 
@@ -299,6 +312,10 @@ internal readonly struct RawAccess : IDocumentAccess
 internal readonly struct InterfaceAccess : IDocumentAccess
 {
     public JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetJsonTokenType(index);
+
+    public int NumberShape(ref EvaluationState state, IJsonDocument doc, int index) => 0;
+
+    public bool IsAsciiText(ref EvaluationState state, IJsonDocument doc, int index) => false;
 
     public int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType)
     {

@@ -43,6 +43,13 @@ public ref partial struct Utf8JsonReader
 
     private bool _isNotPrimitive;
 
+    // What the last number token's text is, as the reader found while consuming it (DbRow.NumberIntegerLiteral or
+    // DbRow.NumberFractionOrExponent), or 0 when it did not record it.
+    private byte _numberShape;
+
+    // Whether the last string or property name token is known to be all ASCII (and unescaped).
+    private bool _valueIsAscii;
+
     private JsonTokenType _tokenType;
 
     private JsonTokenType _previousTokenType;
@@ -157,6 +164,18 @@ public ref partial struct Utf8JsonReader
     /// contain escape sequences per RFC 8259 section 7, and therefore require unescaping before being consumed.
     /// </summary>
     public bool ValueIsEscaped { get; private set; }
+
+    /// <summary>
+    /// Gets what the reader recorded of the current number token's text: 1 for an integer literal (no fraction and no
+    /// exponent), 2 for a number with a fraction or an exponent, 0 when it did not record it.
+    /// </summary>
+    internal byte NumberShape => _numberShape;
+
+    /// <summary>
+    /// Gets a value indicating whether the reader found the current string or property name token to be unescaped and
+    /// all ASCII. False also when it did not look (an escaped string, a string read across segments).
+    /// </summary>
+    internal bool ValueIsAscii => _valueIsAscii;
 
     /// <summary>
     /// Returns the mode of this instance of the <see cref="Utf8JsonReader"/>.
@@ -1333,7 +1352,21 @@ public ref partial struct Utf8JsonReader
         // If the first found byte is a quote, we have reached an end of string, and
         // can avoid validation.
         // Otherwise, in the uncommon case, iterate one character at a time and validate.
+#if NET
+        // The same scan also stops at the first byte that is not ASCII: when it reaches the closing quote the string
+        // is all ASCII, which most are. Otherwise the scan goes on from there with the usual search.
+        int idx = localBuffer.IndexOfQuoteOrAnyControlOrBackSlashOrNonAscii();
+        _valueIsAscii = true;
+        if (idx >= 0 && localBuffer[idx] >= 0x80)
+        {
+            _valueIsAscii = false;
+            int rest = localBuffer.Slice(idx).IndexOfQuoteOrAnyControlOrBackSlash();
+            idx = rest < 0 ? -1 : idx + rest;
+        }
+#else
         int idx = localBuffer.IndexOfQuoteOrAnyControlOrBackSlash();
+        _valueIsAscii = false;
+#endif
 
         if (idx >= 0)
         {
@@ -1349,6 +1382,8 @@ public ref partial struct Utf8JsonReader
             }
             else
             {
+                // An escaped string: what follows the first escape is not scanned for ASCII.
+                _valueIsAscii = false;
                 return ConsumeStringAndValidate(localBuffer, idx);
             }
         }
@@ -1480,6 +1515,9 @@ public ref partial struct Utf8JsonReader
         consumed = 0;
         int i = 0;
 
+        // An integer literal, until a fraction or an exponent is found.
+        _numberShape = 1;
+
         ConsumeNumberResult signResult = ConsumeNegativeSign(ref data, ref i);
         if (signResult == ConsumeNumberResult.NeedMoreData)
         {
@@ -1531,6 +1569,7 @@ public ref partial struct Utf8JsonReader
         }
 
         Debug.Assert(nextByte == '.' || nextByte == 'E' || nextByte == 'e');
+        _numberShape = 2;
 
         if (nextByte == '.')
         {

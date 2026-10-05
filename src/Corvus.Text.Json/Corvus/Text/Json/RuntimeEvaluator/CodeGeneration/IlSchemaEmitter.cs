@@ -64,6 +64,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenEnd = Helper(nameof(Evaluator.GenEnd));
     private static readonly MethodInfo GenTokenAndNext = Helper(nameof(Evaluator.GenTokenAndNext));
     private static readonly MethodInfo GenName = Helper(nameof(Evaluator.GenName));
+    private static readonly MethodInfo GenIsAscii = Helper(nameof(Evaluator.GenIsAscii));
     private static readonly MethodInfo GenPropertyName = Helper(nameof(Evaluator.GenPropertyName));
     private static readonly MethodInfo GenStringLocation = Helper(nameof(Evaluator.GenStringLocation));
     private static readonly MethodInfo GenWord = Helper(nameof(Evaluator.GenWord));
@@ -1118,13 +1119,46 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             }
         }
 
-        // A jump table here: the masks of a comparison chain measured no faster (the value's type varies less
-        // from one value to the next than a property's name does).
+        // Each child's token types tested in turn, not an IL switch: a jump table is one indirect jump for every
+        // value, which the processor predicts poorly when the values' types vary (an array of strings and arrays
+        // ran a third faster with the comparisons).
+        this.selfToken ??= il.DeclareLocal(typeof(int));
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_2);
         il.Emit(OpCodes.Call, GenToken);
-        il.Emit(OpCodes.Switch, labels);
+        il.Emit(OpCodes.Stloc, this.selfToken);
+        foreach (KeyValuePair<int, Label> child in byChild)
+        {
+            int mask = 0;
+            for (int i = 0; i < childByToken.Length; i++)
+            {
+                if (childByToken[i] == child.Key)
+                {
+                    mask |= 1 << i;
+                }
+            }
+
+            if ((mask & (mask - 1)) == 0)
+            {
+                il.Emit(OpCodes.Ldloc, this.selfToken);
+                il.Emit(OpCodes.Ldc_I4, System.Numerics.BitOperations.TrailingZeroCount(mask));
+                il.Emit(OpCodes.Beq, child.Value);
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldc_I4, mask);
+                il.Emit(OpCodes.Ldloc, this.selfToken);
+                il.Emit(OpCodes.Ldc_I4, 31);
+                il.Emit(OpCodes.And);
+                il.Emit(OpCodes.Shr_Un);
+                il.Emit(OpCodes.Ldc_I4_1);
+                il.Emit(OpCodes.And);
+                il.Emit(OpCodes.Brtrue, child.Value);
+            }
+        }
+
         il.Emit(OpCodes.Br, this.fail);
+
         for (int i = 0; i < childByToken.Length; i++)
         {
             if (childByToken[i] >= 0 && byChild.Remove(childByToken[i], out Label label))
@@ -1295,6 +1329,29 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldloc, bytes);
         il.Emit(OpCodes.Ldc_I4_0);
         il.Emit(OpCodes.Blt, counted);
+
+        // Text the parser found all ASCII (most text) has one character to a byte: the byte length is the length.
+        Label notAscii = il.DefineLabel();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Call, GenIsAscii);
+        il.Emit(OpCodes.Brfalse, notAscii);
+        if (maxLength >= 0)
+        {
+            il.Emit(OpCodes.Ldloc, bytes);
+            il.Emit(OpCodes.Ldc_I4, maxLength);
+            il.Emit(OpCodes.Bgt, this.fail);
+        }
+
+        if (minLength >= 0)
+        {
+            il.Emit(OpCodes.Ldloc, bytes);
+            il.Emit(OpCodes.Ldc_I4, minLength);
+            il.Emit(OpCodes.Blt, this.fail);
+        }
+
+        il.Emit(OpCodes.Br, within);
+        il.MarkLabel(notAscii);
         if (maxLength >= 0)
         {
             il.Emit(OpCodes.Ldloc, bytes);
@@ -1860,45 +1917,97 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         return this.Method(nodeId);
     }
 
-    // Asks the JIT to inline the small methods that call no other generated method (a map of strings, an array of
-    // strings, a small closed object), where every method that calls them stays small with them inlined.
+    // Asks the JIT to inline the small methods (a map of strings, an array of strings, a small closed object, a
+    // choice between a string and an array), where every method that calls them stays small with them inlined. A
+    // method's size counts the methods inlined into it, and a method that reaches itself is never inlined.
     private void ChooseInlinedMethods()
     {
-        var callers = new HashSet<int>();
-        foreach ((int caller, _) in this.calls)
+        var callees = new Dictionary<int, List<int>>();
+        foreach ((int caller, int callee) in this.calls)
         {
-            callers.Add(caller);
+            if (!callees.TryGetValue(caller, out List<int>? list))
+            {
+                callees[caller] = list = [];
+            }
+
+            list.Add(callee);
         }
 
         var inlined = new HashSet<int>();
         foreach (KeyValuePair<int, int> size in this.sizes)
         {
-            if (size.Value <= MaxInlinedMethodSize && !callers.Contains(size.Key))
+            if (size.Value <= MaxInlinedMethodSize && !Reaches(size.Key, size.Key, []))
             {
                 inlined.Add(size.Key);
             }
         }
 
-        var grown = new Dictionary<int, int>();
-        foreach ((int caller, int callee) in this.calls)
+        // Take candidates away until every one is small with its own callees inlined, and has no caller that
+        // grows too large.
+        while (true)
         {
-            if (inlined.Contains(callee))
+            var effective = new Dictionary<int, int>();
+            var dropped = new List<int>();
+            foreach (int candidate in inlined)
             {
-                grown[caller] = grown.GetValueOrDefault(caller, this.sizes.GetValueOrDefault(caller)) + this.sizes[callee];
+                if (Effective(candidate) > MaxInlinedMethodSize)
+                {
+                    dropped.Add(candidate);
+                }
             }
-        }
 
-        foreach ((int caller, int callee) in this.calls)
-        {
-            if (grown.GetValueOrDefault(caller) > MaxSizeWithInlinedMethods)
+            foreach ((int caller, int callee) in this.calls)
             {
-                inlined.Remove(callee);
+                if (inlined.Contains(callee) && Effective(caller) > MaxSizeWithInlinedMethods)
+                {
+                    dropped.Add(callee);
+                }
+            }
+
+            if (dropped.Count == 0)
+            {
+                break;
+            }
+
+            inlined.ExceptWith(dropped);
+
+            int Effective(int nodeId)
+            {
+                if (!effective.TryGetValue(nodeId, out int size))
+                {
+                    size = this.sizes.GetValueOrDefault(nodeId);
+                    effective[nodeId] = size;
+                    foreach (int callee in callees.GetValueOrDefault(nodeId) ?? [])
+                    {
+                        if (inlined.Contains(callee))
+                        {
+                            size += Effective(callee);
+                        }
+                    }
+
+                    effective[nodeId] = size;
+                }
+
+                return size;
             }
         }
 
         foreach (int nodeId in inlined)
         {
             this.methods[nodeId].SetImplementationFlags(MethodImplAttributes.IL | MethodImplAttributes.AggressiveInlining);
+        }
+
+        bool Reaches(int from, int target, HashSet<int> visited)
+        {
+            foreach (int callee in callees.GetValueOrDefault(from) ?? [])
+            {
+                if (callee == target || (visited.Add(callee) && Reaches(callee, target, visited)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 

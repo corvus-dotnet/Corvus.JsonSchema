@@ -323,6 +323,21 @@ public struct MetadataDb : IDisposable
         Length += DbRow.Size;
     }
 
+    /// <summary>Appends a number's row with the shape of its text as the parser recorded it (see <see cref="DbRow.NumberShapeShift"/>).</summary>
+    /// <param name="startLocation">The location of the number in the UTF8 backing.</param>
+    /// <param name="length">The length of its text.</param>
+    /// <param name="shape">1 for an integer literal, 2 for a number with a fraction or an exponent, 0 for unknown.</param>
+    internal void AppendNumber(int startLocation, int length, byte shape)
+    {
+        if (Length >= (_data.Length - DbRow.Size))
+        {
+            Enlarge();
+        }
+
+        Unsafe.WriteUnaligned(ref _data[Length], new DbRow(startLocation, length, shape));
+        Length += DbRow.Size;
+    }
+
     /// <summary>
     /// Appends a string or property name token to the metadata database, optionally setting the
     /// HasComplexChildren flag (indicating the value requires unescaping) in a single write
@@ -333,7 +348,7 @@ public struct MetadataDb : IDisposable
     /// <param name="length">The length of the token value.</param>
     /// <param name="isEscaped">Whether the value requires unescaping.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void AppendStringOrPropertyName(JsonTokenType tokenType, int startLocation, int length, bool isEscaped)
+    internal void AppendStringOrPropertyName(JsonTokenType tokenType, int startLocation, int length, bool isEscaped, bool isAscii = false)
     {
         Debug.Assert(tokenType == JsonTokenType.String || tokenType == JsonTokenType.PropertyName);
         Debug.Assert(length >= 0);
@@ -343,7 +358,8 @@ public struct MetadataDb : IDisposable
             Enlarge();
         }
 
-        Unsafe.WriteUnaligned(ref _data[Length], new DbRow(tokenType, startLocation, length));
+        // The location word also says whether the text is all ASCII, when the writer knows (see DbRow.StringIsAscii).
+        Unsafe.WriteUnaligned(ref _data[Length], new DbRow(tokenType, isAscii ? startLocation | (int)DbRow.StringIsAscii : startLocation, length));
 
         if (isEscaped)
         {

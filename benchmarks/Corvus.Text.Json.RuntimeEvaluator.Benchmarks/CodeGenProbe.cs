@@ -185,6 +185,26 @@ public static class CodeGenProbe
         return 0;
     }
 
+    /// <summary>
+    /// The least an evaluation costs (<c>floor</c>): 1,000 separately parsed documents against a schema that only tests
+    /// the type, by the interpreter and by generated code, as nanoseconds a document. One document repeated shows the
+    /// same without reaching a new document's memory each time.
+    /// </summary>
+    public static int RunFloor()
+    {
+        foreach ((string schema, string instance) in ((string, string)[])[("{\"type\":\"object\"}", "{}"), ("{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}}", "{\"a\":\"b\",\"c\":\"d\"}")])
+        {
+            using JsonSchemaEvaluator interpreted = JsonSchemaEvaluator.Compile(schema);
+            using JsonSchemaEvaluator generated = JsonSchemaEvaluator.Compile(schema);
+            bool compiled = generated.CompileGeneratedCode();
+            ParsedJsonDocument<JsonElement>[] apart = [.. Enumerable.Range(0, 1000).Select(_ => ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(instance)))];
+            ParsedJsonDocument<JsonElement>[] same = [.. Enumerable.Repeat(apart[0], 1000)];
+            Console.WriteLine($"{schema}  compiled {compiled}: interpreter {Precise(interpreted, apart, 500) / 1000:F2} / {Precise(interpreted, same, 500) / 1000:F2}, generated {Precise(generated, apart, 500) / 1000:F2} / {Precise(generated, same, 500) / 1000:F2} ns (separate documents / one document)");
+        }
+
+        return 0;
+    }
+
     private static double Precise(JsonSchemaEvaluator evaluator, ParsedJsonDocument<JsonElement>[] documents, int warmUpMilliseconds)
     {
         const int Batches = 41;

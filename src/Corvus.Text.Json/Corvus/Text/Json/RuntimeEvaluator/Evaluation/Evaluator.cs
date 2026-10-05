@@ -1397,6 +1397,12 @@ internal static partial class Evaluator
             return true;
         }
 
+        // An unescaped string the parser found all ASCII has one character to a byte: its length is exact.
+        if (default(TAccess).IsAsciiText(ref state, doc, index))
+        {
+            return (entry.MaxLength < 0 || bytes <= entry.MaxLength) && (entry.MinLength < 0 || bytes >= entry.MinLength);
+        }
+
         return LengthWithin(raw, entry.MinLength, entry.MaxLength);
     }
 
@@ -2477,11 +2483,62 @@ internal static partial class Evaluator
         return true;
     }
 
+    /// <summary>
+    /// The value of a number's text when it is a plain integer literal of at most 18 digits (an optional minus sign and
+    /// digits: no fraction, no exponent), in one pass over the text. Most numbers in documents are, and the pass both
+    /// says so and gives the value, where a search for a fraction or exponent followed by a parse reads the text twice.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool TryPlainLong(ReadOnlySpan<byte> raw, out long value)
+    {
+        value = 0;
+        int length = raw.Length;
+        if ((uint)(length - 1) >= 18)
+        {
+            return false;
+        }
+
+        ref byte start = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(raw);
+        int i = 0;
+        bool negative = start == (byte)'-';
+        if (negative)
+        {
+            if (length == 1)
+            {
+                return false;
+            }
+
+            i = 1;
+        }
+
+        long magnitude = 0;
+        for (; i < length; i++)
+        {
+            uint digit = (uint)(Unsafe.Add(ref start, i) - (byte)'0');
+            if (digit > 9)
+            {
+                return false;
+            }
+
+            magnitude = (magnitude * 10) + digit;
+        }
+
+        value = negative ? -magnitude : magnitude;
+        return true;
+    }
+
     private static bool IsInteger<TAccess>(ref EvaluationState state, IJsonDocument doc, int index, bool lexicalInteger)
         where TAccess : struct, IDocumentAccess
     {
+        // The parser recorded whether the text has a fraction or an exponent; a row that does not say is scanned.
+        int shape = default(TAccess).NumberShape(ref state, doc, index);
+        if (shape == 1)
+        {
+            return true;
+        }
+
         ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index);
-        if (raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0)
+        if (shape == 0 && (TryPlainLong(raw, out _) || raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0))
         {
             return true;
         }
@@ -2669,8 +2726,7 @@ internal static partial class Evaluator
         ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index);
 
         // Plain integer literal against plain integer bounds: compare as longs (exact) without normalising.
-        if (!default(TMode).Collecting && !DisableIntegerFastPath && raw.Length <= 18 && raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0
-            && System.Buffers.Text.Utf8Parser.TryParse(raw, out long value, out int consumed) && consumed == raw.Length)
+        if (!default(TMode).Collecting && !DisableIntegerFastPath && TryPlainLong(raw, out long value))
         {
             if (node.Minimum is NumberValue lmin)
             {
@@ -2857,14 +2913,15 @@ internal static partial class Evaluator
         // Escapes are rare: the raw text is the value, with no wrapper to dispose.
         if (!default(TAccess).IsEscaped(ref state, doc, index))
         {
-            return EvalStringCore<TMode, TAccess>(node, default(TAccess).RawValue(ref state, doc, index), ref state);
+            // An unescaped string the parser found all ASCII has one character to a byte: its length needs no count.
+            return EvalStringCore<TMode, TAccess>(node, default(TAccess).RawValue(ref state, doc, index), default(TAccess).IsAsciiText(ref state, doc, index), ref state);
         }
 
         using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
-        return EvalStringCore<TMode, TAccess>(node, s.Span, ref state);
+        return EvalStringCore<TMode, TAccess>(node, s.Span, false, ref state);
     }
 
-    private static bool EvalStringCore<TMode, TAccess>(SchemaNode node, scoped ReadOnlySpan<byte> value, ref EvaluationState state)
+    private static bool EvalStringCore<TMode, TAccess>(SchemaNode node, scoped ReadOnlySpan<byte> value, bool ascii, ref EvaluationState state)
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
@@ -2875,7 +2932,7 @@ internal static partial class Evaluator
             // A rune is one to four bytes, so the byte length bounds the rune count both ways; only values inside
             // the band are counted.
             int byteLength = value.Length;
-            int runeCount = -1;
+            int runeCount = ascii ? byteLength : -1;
             if (node.MinLength >= 0)
             {
                 bool m;
@@ -2889,7 +2946,11 @@ internal static partial class Evaluator
                 }
                 else
                 {
-                    runeCount = JsonElementHelpers.CountRunes(value);
+                    if (runeCount < 0)
+                    {
+                        runeCount = JsonElementHelpers.CountRunes(value);
+                    }
+
                     m = runeCount >= node.MinLength;
                 }
 
@@ -3553,7 +3614,7 @@ internal static partial class Evaluator
             return false;
         }
 
-        result = EvalStringCore<FastMode, TAccess>(target, raw, ref state);
+        result = EvalStringCore<FastMode, TAccess>(target, raw, false, ref state);
         return true;
     }
 
