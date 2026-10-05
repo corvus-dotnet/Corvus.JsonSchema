@@ -53,6 +53,17 @@ internal static partial class Evaluator
         return length >= 0 && (ulong)(uint)location + sizeof(ulong) <= (ulong)(uint)state.RawUtf8.Length ? location : -1;
     }
 
+    /// <summary>
+    /// The location of a string value's text for comparison by words, with its length: -1 for a value that is
+    /// escaped or that starts within eight bytes of the end of the text (which the set's lookup decides instead).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int GenStringLocation(ref EvaluationState state, int valueIndex, out int length)
+    {
+        int location = default(RawAccess).RawValueLocation(ref state, null!, valueIndex, out length);
+        return length >= 0 && (ulong)(uint)location + sizeof(ulong) <= (ulong)(uint)state.RawUtf8.Length ? location : -1;
+    }
+
     /// <summary>Eight bytes of the text, which <see cref="GenName"/> said are there.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static ulong GenWord(ref EvaluationState state, int location) => Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(state.RawUtf8), (nint)(uint)location));
@@ -85,10 +96,6 @@ internal static partial class Evaluator
 
     /// <summary>Whether a property's name matches a pattern (the name unescaped first when it is escaped).</summary>
     internal static bool GenNameMatches(ref EvaluationState state, IJsonDocument doc, int valueIndex, PatternMatcher matcher) => MatchesName<RawAccess>(matcher, ref state, doc, valueIndex);
-
-    /// <summary>A node's own local keywords (type, const, enum, number and string constraints) at a value: the interpreter's leaf evaluation.</summary>
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static bool GenOwnLeaf(int nodeId, IJsonDocument doc, int index, ref EvaluationState state) => EvalLeafFast<RawAccess>(state.Nodes[nodeId], doc, index, ref state);
 
     /// <summary>
     /// A fused entry's value tests at a property's value (the interpreter's): each condition whose test the value
@@ -129,6 +136,76 @@ internal static partial class Evaluator
         }
 
         return true;
+    }
+
+    /// <summary>A node's <c>const</c> at a value (the interpreter's comparison), for constants generated code does not compare in place.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenOwnConst(int nodeId, IJsonDocument doc, int index, JsonTokenType tokenType, ref EvaluationState state) => MatchesConst<RawAccess>(state.Nodes[nodeId], ref state, doc, index, tokenType);
+
+    /// <summary>A node's <c>enum</c> at a value (the interpreter's comparison), for enums that are not all strings.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenOwnEnum(int nodeId, IJsonDocument doc, int index, JsonTokenType tokenType, ref EvaluationState state) => MatchesEnum<RawAccess>(state.Nodes[nodeId], ref state, doc, index, tokenType);
+
+    /// <summary>A node's number keywords at a number value (the interpreter's evaluation).</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenOwnNumber(int nodeId, IJsonDocument doc, int index, ref EvaluationState state) => EvalNumber<FastMode, RawAccess>(state.Nodes[nodeId], doc, index, ref state);
+
+    /// <summary>A node's string keywords at a string value (the interpreter's evaluation).</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenOwnString(int nodeId, IJsonDocument doc, int index, ref EvaluationState state) => EvalString<FastMode, RawAccess>(state.Nodes[nodeId], doc, index, ref state);
+
+    /// <summary>
+    /// Whether generated code may compare a plain integer literal against integer bounds as longs: the interpreter's
+    /// fast path, unless it is switched off.
+    /// </summary>
+    internal static bool GenIntegerFastPath => !DisableIntegerFastPath;
+
+    /// <summary>
+    /// A number value as a long when its text is a plain integer literal of at most 18 characters (the condition of
+    /// the interpreter's fast path); false for any other number, which takes the general comparison.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool GenTryLong(ref EvaluationState state, int index, out long value)
+    {
+        ReadOnlySpan<byte> raw = default(RawAccess).RawValue(ref state, null!, index);
+        value = 0;
+        return raw.Length <= 18
+            && raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0
+            && System.Buffers.Text.Utf8Parser.TryParse(raw, out value, out int consumed)
+            && consumed == raw.Length;
+    }
+
+    /// <summary>
+    /// Whether an array's items are all different (the interpreter's test: pairwise for a short array, otherwise a
+    /// set of hashes).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenUniqueItems(ref EvaluationState state, IJsonDocument doc, int index)
+    {
+        int end = default(RawAccess).EndIndex(ref state, doc, index);
+        int count = default(RawAccess).Count(ref state, doc, index, JsonTokenType.StartArray);
+        if (count <= PairwiseLimit)
+        {
+            return AllUniquePairwise<RawAccess>(ref state, doc, index, end);
+        }
+
+        var set = new UniqueItemSet(count);
+        try
+        {
+            for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(RawAccess).NextIndex(ref state, doc, valueIndex))
+            {
+                if (!set.TryAdd<RawAccess>(ref state, doc, valueIndex))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        finally
+        {
+            set.Dispose();
+        }
     }
 
     /// <summary>Whether a number value is an integer.</summary>

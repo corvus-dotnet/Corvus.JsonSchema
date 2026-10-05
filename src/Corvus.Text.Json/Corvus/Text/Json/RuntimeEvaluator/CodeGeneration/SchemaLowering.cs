@@ -17,8 +17,8 @@ namespace Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
 /// </summary>
 /// <remarks>
 /// Specialised so far: strict objects (<see cref="NodePlan.StrictObject"/>), with their properties' leaves tested in
-/// place, and arrays of items (<see cref="NodePlan.SimpleArray"/> and <see cref="NodePlan.ArrayItems"/>, without
-/// prefix items or <c>uniqueItems</c>), flat fused objects (an <c>allOf</c>/<c>$ref</c> chain of object schemas in one
+/// place, and arrays of items (<see cref="NodePlan.SimpleArray"/> and <see cref="NodePlan.ArrayItems"/>, with
+/// prefix items and <c>uniqueItems</c>), flat fused objects (an <c>allOf</c>/<c>$ref</c> chain of object schemas in one
 /// pass), objects with pattern properties and dependencies, type unions and type dispatch, and nodes with in-place
 /// applicators (allOf, anyOf, oneOf, not, if/then/else) over own keywords of those kinds; a child that is specialised
 /// is called as a generated method. Every other node
@@ -65,6 +65,12 @@ internal static class SchemaLowering
         Dictionary<int, NodeValidator> methods = emitter.Build();
         foreach (KeyValuePair<int, NodeValidator> method in methods)
         {
+            if (nodes[method.Key].Plan == NodePlan.Leaf)
+            {
+                // The interpreter's own leaf evaluation is a direct call; the method is for generated callers.
+                continue;
+            }
+
             SchemaNode generated = nodes[method.Key].ShallowClone();
             generated.Plan = NodePlan.Generated;
             generated.Generated = method.Value;
@@ -92,7 +98,8 @@ internal static class SchemaLowering
         var pending = new Queue<int>();
         for (int i = 0; i < nodes.Length; i++)
         {
-            if (nodes[i] is SchemaNode node && IsSpecialised(nodes, node) && requested.Add(i))
+            // A leaf gets a method only when generated code calls it: the interpreter evaluates a leaf directly.
+            if (nodes[i] is SchemaNode node && node.Plan != NodePlan.Leaf && IsSpecialised(nodes, node) && requested.Add(i))
             {
                 pending.Enqueue(i);
             }
@@ -109,7 +116,7 @@ internal static class SchemaLowering
                     LowerStrictObject(emitter, nodes, node, requested, pending);
                     break;
                 case NodePlan.SimpleArray:
-                    LowerSimpleArray(emitter, nodes, node);
+                    LowerSimpleArray(emitter, nodes, node, requested, pending);
                     break;
                 case NodePlan.ArrayItems:
                     LowerArrayItems(emitter, nodes, node, requested, pending);
@@ -126,6 +133,11 @@ internal static class SchemaLowering
                 case NodePlan.Composite:
                 case NodePlan.Conditional:
                     LowerComposition(emitter, nodes, node, requested, pending);
+                    break;
+                case NodePlan.Leaf:
+                    emitter.UseSelfAsValue();
+                    LowerLeaf(emitter, node);
+                    emitter.Succeed();
                     break;
                 case NodePlan.TypeUnion:
                     emitter.ReturnTokenTest(StrictEntry.TokenBitsOf(node.InPlaceUnionMask), (node.InPlaceUnionMask & TypeMask.Integer) != 0 && (node.InPlaceUnionMask & TypeMask.Number) == 0, node.Dialect == JsonSchemaDialect.Draft4);
@@ -224,9 +236,9 @@ internal static class SchemaLowering
         switch (plan)
         {
             case NodePlan.Leaf:
+                return true;
             case NodePlan.AlwaysTrue:
-                // As a node's plan these are the interpreter's (a leaf is tested where it is used); as own keywords
-                // they are a call of the leaf evaluation, or nothing.
+                // As a node's plan this is the interpreter's (nothing is evaluated); as own keywords it is nothing.
                 return node.Plan != plan;
             case NodePlan.Object:
                 // One word of seen bits; a small object probed by name (unrolled) has at most 32 names.
@@ -236,9 +248,9 @@ internal static class SchemaLowering
             case NodePlan.SimpleArray:
                 // Its items are a leaf: nothing to test, a type, or the interpreter's leaf evaluation.
                 SchemaNode items = nodes[node.Items.FastNode];
-                return !node.UniqueItems && (items.AlwaysTrue || items.IsTypeOnly || items.Plan == NodePlan.Leaf);
+                return items.AlwaysTrue || items.IsTypeOnly || items.Plan == NodePlan.Leaf;
             case NodePlan.ArrayItems:
-                return !node.UniqueItems && node.PrefixEntries is null;
+                return true;
             case NodePlan.FusedObject:
                 // A flat fused plan (the strict loop over the merged names of an allOf/$ref chain of object schemas),
                 // or the full pass when its state fits one word each (names, conditions, an alternative group's
@@ -334,7 +346,8 @@ internal static class SchemaLowering
                 LowerArrayItems(emitter, nodes, node, requested, pending);
                 break;
             case NodePlan.Leaf when node.Plan == NodePlan.Composite:
-                emitter.FailUnlessOwnLeaf(node.Id);
+                emitter.UseSelfAsValue();
+                LowerLeaf(emitter, node);
                 emitter.Succeed();
                 break;
             case NodePlan.Leaf:
@@ -755,6 +768,97 @@ internal static class SchemaLowering
             }
 
             return mask;
+        }
+    }
+
+    // The interpreter's leaf evaluation (Evaluator.EvalLeafFast) of the current value: the keywords the node has, in
+    // its order (type, const, enum, then the number or string keywords by the value's kind). A string const and an
+    // enum of strings are compared in place; integer bounds are compared as longs for a plain integer literal, as the
+    // interpreter's fast path compares them; everything else is the interpreter's evaluation of that keyword.
+    private static void LowerLeaf(ISchemaEmitter emitter, SchemaNode node)
+    {
+        if (node.HasType)
+        {
+            emitter.FailUnlessToken(StrictEntry.TokenBitsOf(node.Type), (node.Type & TypeMask.Integer) != 0 && (node.Type & TypeMask.Number) == 0, node.Dialect == JsonSchemaDialect.Draft4);
+        }
+
+        if (node.HasConst)
+        {
+            if (node.ConstString is byte[] expected)
+            {
+                emitter.FailUnlessStringConst(expected);
+            }
+            else
+            {
+                emitter.FailUnlessConst(node.Id);
+            }
+        }
+
+        if (node.Enum is not null)
+        {
+            if (node.EnumAllStrings)
+            {
+                emitter.FailUnlessStringSet(node.EnumStrings!);
+            }
+            else
+            {
+                emitter.FailUnlessEnum(node.Id);
+            }
+        }
+
+        if (node.HasNumberKeywords)
+        {
+            emitter.BeginIfValueToken(1 << (int)JsonTokenType.Number);
+            NumberValue?[] bounds = [node.Minimum, node.Maximum, node.ExclusiveMinimum, node.ExclusiveMaximum];
+            bool longs = Evaluation.Evaluator.GenIntegerFastPath
+                && !(node.AssertFormat && FormatKinds.IsNumeric(node.Format))
+                && Array.TrueForAll(bounds, b => b is null || b.AsLong is not null)
+                && (node.MultipleOf is null || node.MultipleOf.AsLong is not null);
+            if (longs)
+            {
+                emitter.BeginIfValueLong();
+                if (node.Minimum?.AsLong is long minimum)
+                {
+                    emitter.FailIfLongBelow(minimum, exclusive: false);
+                }
+
+                if (node.Maximum?.AsLong is long maximum)
+                {
+                    emitter.FailIfLongAbove(maximum, exclusive: false);
+                }
+
+                if (node.ExclusiveMinimum?.AsLong is long exclusiveMinimum)
+                {
+                    emitter.FailIfLongBelow(exclusiveMinimum, exclusive: true);
+                }
+
+                if (node.ExclusiveMaximum?.AsLong is long exclusiveMaximum)
+                {
+                    emitter.FailIfLongAbove(exclusiveMaximum, exclusive: true);
+                }
+
+                if (node.MultipleOf?.AsLong is long divisor)
+                {
+                    emitter.FailUnlessLongMultipleOf(divisor);
+                }
+
+                emitter.Else();
+                emitter.FailUnlessNumberKeywords(node.Id);
+                emitter.EndIf();
+            }
+            else
+            {
+                emitter.FailUnlessNumberKeywords(node.Id);
+            }
+
+            emitter.EndIf();
+        }
+
+        if (node.HasStringKeywords)
+        {
+            emitter.BeginIfValueToken(1 << (int)JsonTokenType.String);
+            emitter.FailUnlessStringKeywords(node.Id);
+            emitter.EndIf();
         }
     }
 
@@ -1256,43 +1360,74 @@ internal static class SchemaLowering
 
     // The interpreter's simple array (Evaluator.EvalSimpleArrayFast): a value that is not an array fails a type and
     // passes otherwise; the items are a leaf.
-    private static void LowerSimpleArray(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node)
+    private static void LowerSimpleArray(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
     {
         ushort otherTokens = node.HasType ? (ushort)0 : ushort.MaxValue;
         SchemaNode items = nodes[node.Items.FastNode];
         if (items.AlwaysTrue)
         {
-            emitter.ReturnArrayWithoutItems(otherTokens, integerOnly: false, lexical: false, acceptsArray: true, node.MinItems, node.MaxItems);
+            emitter.ReturnArrayWithoutItems(otherTokens, integerOnly: false, lexical: false, acceptsArray: true, node.MinItems, node.MaxItems, node.UniqueItems);
             return;
         }
 
-        emitter.BeginArray(otherTokens, integerOnly: false, lexical: false, acceptsArray: true, node.MinItems, node.MaxItems);
+        emitter.BeginArray(otherTokens, integerOnly: false, lexical: false, acceptsArray: true, node.MinItems, node.MaxItems, node.UniqueItems);
         if (items.IsTypeOnly)
         {
             emitter.FailUnlessToken(StrictEntry.TokenBitsOf(items.Type), (items.Type & TypeMask.Integer) != 0 && (items.Type & TypeMask.Number) == 0, items.Dialect == JsonSchemaDialect.Draft4);
         }
         else
         {
-            emitter.FailUnlessChild(0, 0, items.Id, generated: false);
+            LowerChild(emitter, nodes, 0, 0, items.Id, requested, pending);
         }
 
         emitter.EndArray();
     }
 
-    // The interpreter's array-of-items plan (Evaluator.EvalArrayItemsPlan), without prefix items or uniqueItems.
+    // The interpreter's array-of-items plan (Evaluator.EvalArrayItemsPlan): prefix items by position, or one items
+    // schema, with uniqueItems tested before the pass.
     private static void LowerArrayItems(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
     {
         ushort otherTokens = OtherTokens(node, JsonTokenType.StartArray);
         bool lexical = (node.Flags & NodeFlags.Draft4) != 0;
         bool acceptsArray = !node.HasType || (node.Type & TypeMask.Array) != 0;
-        if (!node.Items.IsPresent || nodes[node.Items.FastNode].Plan == NodePlan.AlwaysTrue)
+        if (node.PrefixEntries is StrictEntry[] prefix)
         {
-            emitter.ReturnArrayWithoutItems(otherTokens, IntegerOnly(node), lexical, acceptsArray, node.MinItems, node.MaxItems);
+            // Prefix items: each leading position's resolution, then the rest's (the last entry) for every item after.
+            int rest = prefix.Length - 1;
+            emitter.BeginArray(otherTokens, IntegerOnly(node), lexical, acceptsArray, node.MinItems, node.MaxItems);
+            emitter.BeginPositionDispatch(rest);
+            for (int i = 0; i < rest; i++)
+            {
+                emitter.BeginCase(i);
+                LowerEntry(emitter, nodes, in prefix[i], -1, 0, requested, pending);
+                emitter.EndCase();
+            }
+
+            emitter.BeginCase(-1);
+            LowerEntry(emitter, nodes, in prefix[rest], -1, 0, requested, pending);
+            emitter.EndCase();
+            emitter.EndNameDispatch();
+            emitter.EndArray();
             return;
         }
 
-        emitter.BeginArray(otherTokens, IntegerOnly(node), lexical, acceptsArray, node.MinItems, node.MaxItems);
-        LowerChild(emitter, nodes, node.ItemsDecided, node.ItemsAccepts, node.Items.FastNode, requested, pending);
+        if (!node.Items.IsPresent || nodes[node.Items.FastNode].Plan == NodePlan.AlwaysTrue)
+        {
+            emitter.ReturnArrayWithoutItems(otherTokens, IntegerOnly(node), lexical, acceptsArray, node.MinItems, node.MaxItems, node.UniqueItems);
+            return;
+        }
+
+        emitter.BeginArray(otherTokens, IntegerOnly(node), lexical, acceptsArray, node.MinItems, node.MaxItems, node.UniqueItems);
+        if (node.UniqueItems)
+        {
+            // With uniqueItems the interpreter enters the items schema for every item, whatever its type decides.
+            LowerChild(emitter, nodes, 0, 0, node.Items.FastNode, requested, pending);
+        }
+        else
+        {
+            LowerChild(emitter, nodes, node.ItemsDecided, node.ItemsAccepts, node.Items.FastNode, requested, pending);
+        }
+
         emitter.EndArray();
     }
 

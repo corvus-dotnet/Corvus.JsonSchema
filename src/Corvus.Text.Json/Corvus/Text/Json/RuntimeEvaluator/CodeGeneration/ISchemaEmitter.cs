@@ -80,10 +80,6 @@ internal interface ISchemaEmitter
     /// <summary>Finishes the node's own keywords.</summary>
     void EndOwnKeywords();
 
-    /// <summary>Fails unless the method's value satisfies a node's own local keywords, by the interpreter's leaf evaluation.</summary>
-    /// <param name="nodeId">The node.</param>
-    void FailUnlessOwnLeaf(int nodeId);
-
     /// <summary>Fails unless the method's value has one of a set of token types.</summary>
     /// <param name="tokens">The token types accepted, a bit per type.</param>
     /// <param name="integerOnly">Whether an accepted number must be an integer.</param>
@@ -235,6 +231,49 @@ internal interface ISchemaEmitter
     /// <summary>Starts another pass over the properties of the object the method has passed over once (after <see cref="EndProperties"/>); <see cref="EndProperties"/> finishes it.</summary>
     void BeginPropertiesAgain();
 
+    /// <summary>Makes the method's own value the current one: the <c>FailUnless</c> operations then test it.</summary>
+    void UseSelfAsValue();
+
+    /// <summary>Starts code that runs when the current value has one of a set of token types.</summary>
+    /// <param name="tokens">The token types, a bit per type.</param>
+    void BeginIfValueToken(ushort tokens);
+
+    /// <summary>Fails unless the current value equals a node's <c>const</c>, by the interpreter's comparison.</summary>
+    /// <param name="nodeId">The node.</param>
+    void FailUnlessConst(int nodeId);
+
+    /// <summary>Fails unless the current value is in a node's <c>enum</c>, by the interpreter's comparison.</summary>
+    /// <param name="nodeId">The node.</param>
+    void FailUnlessEnum(int nodeId);
+
+    /// <summary>Fails unless the current value (a number) satisfies a node's number keywords, by the interpreter's evaluation.</summary>
+    /// <param name="nodeId">The node.</param>
+    void FailUnlessNumberKeywords(int nodeId);
+
+    /// <summary>Fails unless the current value (a string) satisfies a node's string keywords, by the interpreter's evaluation.</summary>
+    /// <param name="nodeId">The node.</param>
+    void FailUnlessStringKeywords(int nodeId);
+
+    /// <summary>
+    /// Starts code that runs when the current value (a number) is a plain integer literal that fits a long, which the
+    /// <c>FailIfLong</c> operations then compare; <see cref="Else"/> starts the code for any other number.
+    /// </summary>
+    void BeginIfValueLong();
+
+    /// <summary>Fails if the long (see <see cref="BeginIfValueLong"/>) is below a bound, or not above it.</summary>
+    /// <param name="bound">The bound.</param>
+    /// <param name="exclusive">Whether the bound itself fails.</param>
+    void FailIfLongBelow(long bound, bool exclusive);
+
+    /// <summary>Fails if the long is above a bound, or not below it.</summary>
+    /// <param name="bound">The bound.</param>
+    /// <param name="exclusive">Whether the bound itself fails.</param>
+    void FailIfLongAbove(long bound, bool exclusive);
+
+    /// <summary>Fails unless the long is a multiple of a divisor.</summary>
+    /// <param name="divisor">The divisor.</param>
+    void FailUnlessLongMultipleOf(long divisor);
+
     /// <summary>Records whether the current property's name has matched a keyword that applies to it.</summary>
     /// <param name="matched">Whether it has.</param>
     void SetMatched(bool matched);
@@ -257,7 +296,15 @@ internal interface ISchemaEmitter
     /// <param name="acceptsArray">Whether an array is accepted at all.</param>
     /// <param name="minItems">The least length, or -1.</param>
     /// <param name="maxItems">The greatest length, or -1.</param>
-    void BeginArray(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems);
+    /// <param name="uniqueItems">Whether an array also fails when two of its items are equal.</param>
+    void BeginArray(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems, bool uniqueItems = false);
+
+    /// <summary>
+    /// Starts the dispatch on the current item's position in the array: one case per leading position (by its index),
+    /// and the case -1 for every item after them. The cases are written as a name dispatch's are.
+    /// </summary>
+    /// <param name="positions">The number of leading positions.</param>
+    void BeginPositionDispatch(int positions);
 
     /// <summary>Finishes the pass over the items; the method then returns true.</summary>
     void EndArray();
@@ -272,7 +319,8 @@ internal interface ISchemaEmitter
     /// <param name="acceptsArray">Whether an array is accepted at all.</param>
     /// <param name="minItems">The least length, or -1.</param>
     /// <param name="maxItems">The greatest length, or -1.</param>
-    void ReturnArrayWithoutItems(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems);
+    /// <param name="uniqueItems">Whether an array also fails when two of its items are equal.</param>
+    void ReturnArrayWithoutItems(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems, bool uniqueItems = false);
 
     /// <summary>Starts the dispatch on the current property's name: one case per key (by its index), and the case -1 for every other name.</summary>
     /// <typeparam name="T">The map's value type.</typeparam>

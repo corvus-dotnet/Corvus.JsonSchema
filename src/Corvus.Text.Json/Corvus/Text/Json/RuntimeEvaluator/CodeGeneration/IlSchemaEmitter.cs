@@ -34,6 +34,13 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     // The longest name compared by words; a longer one takes the interpreter's lookup.
     private const int MaxWordsName = 128;
 
+    // The largest set of strings a value is tested against by words in place; a larger one is a hashed lookup.
+    private const int MaxWordsSet = 32;
+
+    // The most names dispatched by words; more take the interpreter's hashed lookup and a jump table, which keeps the
+    // method small enough for the JIT to optimise.
+    private const int MaxWordDispatch = 512;
+
     private static readonly Type[] NodeParameters = [typeof(EvaluationState).MakeByRefType(), typeof(IJsonDocument), typeof(int)];
 
     private static readonly MethodInfo EvalNodeFast = Helper(nameof(Evaluator.EvalNodeFast));
@@ -42,13 +49,19 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenEnd = Helper(nameof(Evaluator.GenEnd));
     private static readonly MethodInfo GenTokenAndNext = Helper(nameof(Evaluator.GenTokenAndNext));
     private static readonly MethodInfo GenName = Helper(nameof(Evaluator.GenName));
+    private static readonly MethodInfo GenStringLocation = Helper(nameof(Evaluator.GenStringLocation));
     private static readonly MethodInfo GenWord = Helper(nameof(Evaluator.GenWord));
     private static readonly MethodInfo GenSlowName = Helper(nameof(Evaluator.GenSlowName));
     private static readonly MethodInfo GenEvalGeneral = Helper(nameof(Evaluator.GenEvalGeneral));
     private static readonly MethodInfo GenNameMatches = Helper(nameof(Evaluator.GenNameMatches));
-    private static readonly MethodInfo GenOwnLeaf = Helper(nameof(Evaluator.GenOwnLeaf));
     private static readonly MethodInfo GenFusedValueTests = Helper(nameof(Evaluator.GenFusedValueTests));
     private static readonly MethodInfo GenSelectBranches = Helper(nameof(Evaluator.GenSelectBranches));
+    private static readonly MethodInfo GenOwnConst = Helper(nameof(Evaluator.GenOwnConst));
+    private static readonly MethodInfo GenOwnEnum = Helper(nameof(Evaluator.GenOwnEnum));
+    private static readonly MethodInfo GenOwnNumber = Helper(nameof(Evaluator.GenOwnNumber));
+    private static readonly MethodInfo GenOwnString = Helper(nameof(Evaluator.GenOwnString));
+    private static readonly MethodInfo GenTryLong = Helper(nameof(Evaluator.GenTryLong));
+    private static readonly MethodInfo GenUniqueItems = Helper(nameof(Evaluator.GenUniqueItems));
     private static readonly MethodInfo GenIsInteger = Helper(nameof(Evaluator.GenIsInteger));
     private static readonly MethodInfo GenStringSet = Helper(nameof(Evaluator.GenStringSet));
     private static readonly MethodInfo GenStringConst = Helper(nameof(Evaluator.GenStringConst));
@@ -95,6 +108,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     // A fused object's state: the conditions marked failed, those that hold, those reached, the failed branches of
     // each alternative group, the kept values, and the open tries (the failure label each replaced, and its end).
     private LocalBuilder? selectedBranches;
+    private LocalBuilder? longValue;
     private LocalBuilder? failedConditions;
     private LocalBuilder? holds;
     private LocalBuilder? reached;
@@ -123,6 +137,8 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         this.selfToken = null;
         this.ownKeywords = false;
         this.selectedBranches = null;
+        this.longValue = null;
+        this.value = null;
         this.failedConditions = null;
         this.holds = null;
         this.reached = null;
@@ -239,18 +255,6 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     {
         this.Il.MarkLabel(this.afterOwnKeywords);
         this.ownKeywords = false;
-    }
-
-    /// <inheritdoc/>
-    public void FailUnlessOwnLeaf(int nodeId)
-    {
-        ILGenerator il = this.Il;
-        il.Emit(OpCodes.Ldc_I4, nodeId);
-        il.Emit(OpCodes.Ldarg_1);
-        il.Emit(OpCodes.Ldarg_2);
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Call, GenOwnLeaf);
-        il.Emit(OpCodes.Brfalse, this.fail);
     }
 
     /// <inheritdoc/>
@@ -684,6 +688,93 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     }
 
     /// <inheritdoc/>
+    public void UseSelfAsValue()
+    {
+        ILGenerator il = this.Il;
+        this.value ??= il.DeclareLocal(typeof(int));
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Stloc, this.value);
+        this.LoadSelfToken();
+    }
+
+    /// <inheritdoc/>
+    public void BeginIfValueToken(ushort tokens)
+    {
+        if ((tokens & (tokens - 1)) == 0)
+        {
+            this.Il.Emit(OpCodes.Ldloc, this.token!);
+            this.Il.Emit(OpCodes.Ldc_I4, System.Numerics.BitOperations.TrailingZeroCount((uint)tokens));
+            this.BeginBlock(OpCodes.Bne_Un);
+        }
+        else
+        {
+            this.TokenBit(tokens);
+            this.BeginBlock(OpCodes.Brfalse);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessConst(int nodeId)
+    {
+        this.OwnKeyword(GenOwnConst, nodeId, withToken: true);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessEnum(int nodeId)
+    {
+        this.OwnKeyword(GenOwnEnum, nodeId, withToken: true);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessNumberKeywords(int nodeId)
+    {
+        this.OwnKeyword(GenOwnNumber, nodeId, withToken: false);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessStringKeywords(int nodeId)
+    {
+        this.OwnKeyword(GenOwnString, nodeId, withToken: false);
+    }
+
+    /// <inheritdoc/>
+    public void BeginIfValueLong()
+    {
+        ILGenerator il = this.Il;
+        this.longValue ??= il.DeclareLocal(typeof(long));
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Ldloca, this.longValue);
+        il.Emit(OpCodes.Call, GenTryLong);
+        this.BeginBlock(OpCodes.Brfalse);
+    }
+
+    /// <inheritdoc/>
+    public void FailIfLongBelow(long bound, bool exclusive)
+    {
+        this.Il.Emit(OpCodes.Ldloc, this.longValue!);
+        this.Il.Emit(OpCodes.Ldc_I8, bound);
+        this.Il.Emit(exclusive ? OpCodes.Ble : OpCodes.Blt, this.fail);
+    }
+
+    /// <inheritdoc/>
+    public void FailIfLongAbove(long bound, bool exclusive)
+    {
+        this.Il.Emit(OpCodes.Ldloc, this.longValue!);
+        this.Il.Emit(OpCodes.Ldc_I8, bound);
+        this.Il.Emit(exclusive ? OpCodes.Bge : OpCodes.Bgt, this.fail);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessLongMultipleOf(long divisor)
+    {
+        this.Il.Emit(OpCodes.Ldloc, this.longValue!);
+        this.Il.Emit(OpCodes.Ldc_I8, divisor);
+        this.Il.Emit(OpCodes.Rem);
+        this.Il.Emit(OpCodes.Brtrue, this.fail);
+    }
+
+    /// <inheritdoc/>
     public void SetMatched(bool matched)
     {
         ILGenerator il = this.Il;
@@ -712,10 +803,44 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     }
 
     /// <inheritdoc/>
-    public void BeginArray(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems)
+    public void BeginArray(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems, bool uniqueItems = false)
     {
         this.Prologue(JsonTokenType.StartArray, otherTokens, integerOnly, lexical, acceptsArray, minItems, maxItems);
+        this.UniqueItems(uniqueItems);
         this.BeginLoop(isObject: false);
+    }
+
+    /// <inheritdoc/>
+    public void BeginPositionDispatch(int positions)
+    {
+        ILGenerator il = this.Il;
+        this.casesThenCommon = false;
+        this.afterCase = this.nextValue;
+        this.cases = new Label[positions];
+        for (int i = 0; i < positions; i++)
+        {
+            this.cases[i] = il.DefineLabel();
+        }
+
+        this.otherNames = il.DefineLabel();
+
+        // The position counts the items passed (a local, zero when the method is entered).
+        LocalBuilder position = il.DeclareLocal(typeof(int));
+        il.Emit(OpCodes.Ldloc, position);
+        il.Emit(OpCodes.Ldloc, position);
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Stloc, position);
+        if (positions > 0)
+        {
+            il.Emit(OpCodes.Switch, this.cases);
+        }
+        else
+        {
+            il.Emit(OpCodes.Pop);
+        }
+
+        il.Emit(OpCodes.Br, this.otherNames);
     }
 
     /// <inheritdoc/>
@@ -726,9 +851,10 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     }
 
     /// <inheritdoc/>
-    public void ReturnArrayWithoutItems(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems)
+    public void ReturnArrayWithoutItems(ushort otherTokens, bool integerOnly, bool lexical, bool acceptsArray, int minItems, int maxItems, bool uniqueItems = false)
     {
         this.Prologue(JsonTokenType.StartArray, otherTokens, integerOnly, lexical, acceptsArray, minItems, maxItems);
+        this.UniqueItems(uniqueItems);
         this.Succeed();
     }
 
@@ -805,139 +931,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
 
         this.otherNames = il.DefineLabel();
         Label slow = il.DefineLabel();
-        LocalBuilder location = il.DeclareLocal(typeof(int));
-        LocalBuilder length = il.DeclareLocal(typeof(int));
-        LocalBuilder first = il.DeclareLocal(typeof(ulong));
-        LocalBuilder masked = il.DeclareLocal(typeof(ulong));
-
-        // The names by length; within a length, by words: one masked word up to 8 bytes, and beyond that each 8 bytes
-        // in turn with the last 8 overlapping (the interpreter's lookup for a name longer than MaxWordsName).
-        var byLength = new SortedDictionary<int, List<int>>();
-        for (int i = 0; i < keys.Length; i++)
-        {
-            if (!byLength.TryGetValue(keys[i].Length, out List<int>? sameLength))
-            {
-                byLength[keys[i].Length] = sameLength = [];
-            }
-
-            sameLength.Add(i);
-        }
-
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Ldloc, this.value!);
-        il.Emit(OpCodes.Ldloca, length);
-        il.Emit(OpCodes.Call, GenName);
-        il.Emit(OpCodes.Stloc, location);
-        il.Emit(OpCodes.Ldloc, location);
-        il.Emit(OpCodes.Ldc_I4_0);
-        il.Emit(OpCodes.Blt, slow);
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Ldloc, location);
-        il.Emit(OpCodes.Call, GenWord);
-        il.Emit(OpCodes.Stloc, first);
-
-        var lengthLabels = new Dictionary<int, Label>();
-        foreach (int nameLength in byLength.Keys)
-        {
-            lengthLabels[nameLength] = nameLength > MaxWordsName ? slow : il.DefineLabel();
-        }
-
-        if (byLength.Count > 0)
-        {
-            int shortest = int.MaxValue;
-            int longest = 0;
-            foreach (int nameLength in byLength.Keys)
-            {
-                shortest = Math.Min(shortest, nameLength);
-                longest = Math.Max(longest, nameLength);
-            }
-
-            if (longest - shortest < MaxLengthTable)
-            {
-                var table = new Label[longest - shortest + 1];
-                for (int i = 0; i < table.Length; i++)
-                {
-                    table[i] = lengthLabels.TryGetValue(shortest + i, out Label label) ? label : this.otherNames;
-                }
-
-                il.Emit(OpCodes.Ldloc, length);
-                il.Emit(OpCodes.Ldc_I4, shortest);
-                il.Emit(OpCodes.Sub);
-                il.Emit(OpCodes.Switch, table);
-            }
-            else
-            {
-                foreach (KeyValuePair<int, Label> label in lengthLabels)
-                {
-                    il.Emit(OpCodes.Ldloc, length);
-                    il.Emit(OpCodes.Ldc_I4, label.Key);
-                    il.Emit(OpCodes.Beq, label.Value);
-                }
-            }
-        }
-
-        il.Emit(OpCodes.Br, this.otherNames);
-
-        Span<byte> padded = stackalloc byte[sizeof(ulong)];
-        foreach (KeyValuePair<int, List<int>> sameLength in byLength)
-        {
-            int nameLength = sameLength.Key;
-            if (nameLength > MaxWordsName)
-            {
-                continue;
-            }
-
-            il.MarkLabel(lengthLabels[nameLength]);
-            if (nameLength <= sizeof(ulong))
-            {
-                // The word read may run past the name: mask it to the name's bytes.
-                il.Emit(OpCodes.Ldloc, first);
-                if (nameLength < sizeof(ulong))
-                {
-                    padded.Clear();
-                    padded.Slice(0, nameLength).Fill(0xFF);
-                    il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(padded)));
-                    il.Emit(OpCodes.And);
-                }
-
-                il.Emit(OpCodes.Stloc, masked);
-                foreach (int index in sameLength.Value)
-                {
-                    padded.Clear();
-                    keys[index].CopyTo(padded);
-                    il.Emit(OpCodes.Ldloc, masked);
-                    il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(padded)));
-                    il.Emit(OpCodes.Beq, this.cases[index]);
-                }
-            }
-            else
-            {
-                // A mismatch is nearly always in the first word, which is already read.
-                foreach (int index in sameLength.Value)
-                {
-                    Label differs = il.DefineLabel();
-                    il.Emit(OpCodes.Ldloc, first);
-                    il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(keys[index])));
-                    il.Emit(OpCodes.Bne_Un, differs);
-                    for (int offset = sizeof(ulong); offset < nameLength; offset += sizeof(ulong))
-                    {
-                        int at = Math.Min(offset, nameLength - sizeof(ulong));
-                        il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldloc, location);
-                        il.Emit(OpCodes.Ldc_I4, at);
-                        il.Emit(OpCodes.Add);
-                        il.Emit(OpCodes.Call, GenWord);
-                        il.Emit(OpCodes.Ldc_I8, unchecked((long)MemoryMarshal.Read<ulong>(keys[index].AsSpan(at))));
-                        il.Emit(OpCodes.Bne_Un, differs);
-                    }
-
-                    il.Emit(OpCodes.Br, this.cases[index]);
-                    il.MarkLabel(differs);
-                }
-            }
-
-            il.Emit(OpCodes.Br, this.otherNames);
-        }
+        this.DispatchByWords(keys, GenName, this.cases, this.otherNames, slow);
 
         // Escaped names, names at the very end of the text and very long names: the interpreter's lookup, then the case.
         il.MarkLabel(slow);
@@ -1006,7 +1000,27 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     /// <inheritdoc/>
     public void FailUnlessStringSet(Utf8NameMap<object> allowed)
     {
+        byte[][] keys = allowed.Keys;
+        if (keys.Length == 0 || keys.Length > MaxWordsSet || Array.Exists(keys, k => k.Length > MaxWordsName))
+        {
+            this.ValueTest(GenStringSet, this.Constant(allowed), byAddress: false);
+            return;
+        }
+
+        // A small set: the value's text against the strings by length and words, as a property's name is
+        // dispatched; the lookup only for a value the words cannot decide.
+        ILGenerator il = this.Il;
+        Label member = il.DefineLabel();
+        Label slow = il.DefineLabel();
+        var cases = new Label[keys.Length];
+        Array.Fill(cases, member);
+        il.Emit(OpCodes.Ldloc, this.token!);
+        il.Emit(OpCodes.Ldc_I4, (int)JsonTokenType.String);
+        il.Emit(OpCodes.Bne_Un, this.fail);
+        this.DispatchByWords(keys, GenStringLocation, cases, this.fail, slow);
+        il.MarkLabel(slow);
         this.ValueTest(GenStringSet, this.Constant(allowed), byAddress: false);
+        il.MarkLabel(member);
     }
 
     /// <inheritdoc/>
@@ -1259,6 +1273,39 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(polarity ? OpCodes.Brfalse : OpCodes.Brtrue, target);
     }
 
+    // Fails unless one of the interpreter's keyword evaluations accepts the current value for a node.
+    private void OwnKeyword(MethodInfo helper, int nodeId, bool withToken)
+    {
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldc_I4, nodeId);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        if (withToken)
+        {
+            il.Emit(OpCodes.Ldloc, this.token!);
+        }
+
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Call, helper);
+        il.Emit(OpCodes.Brfalse, this.fail);
+    }
+
+    // Fails when the method's value (an array) has two equal items.
+    private void UniqueItems(bool uniqueItems)
+    {
+        if (!uniqueItems)
+        {
+            return;
+        }
+
+        ILGenerator il = this.Il;
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, GenUniqueItems);
+        il.Emit(OpCodes.Brfalse, this.fail);
+    }
+
     // Reads the method's value's token type into the token local (a loop over its values overwrites it).
     private void LoadSelfToken()
     {
@@ -1298,6 +1345,197 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         Label otherwise = il.DefineLabel();
         il.Emit(toOtherwise, otherwise);
         this.blocks.Push((otherwise, il.DefineLabel(), false));
+    }
+
+    // The dispatch on the text at a location (a property's name, or a string value): by length, then by a trie of
+    // words within each length. Control goes to the case of the key the text equals, to none when it equals no key,
+    // and to slow for text the words cannot decide (escaped, at the very end of the document, or too long).
+    private void DispatchByWords(byte[][] keys, MethodInfo locate, Label[] cases, Label none, Label slow)
+    {
+        ILGenerator il = this.Il;
+        LocalBuilder location = il.DeclareLocal(typeof(int));
+        LocalBuilder length = il.DeclareLocal(typeof(int));
+        LocalBuilder first = il.DeclareLocal(typeof(ulong));
+
+        // The names by length; within a length, by words: one masked word up to 8 bytes, and beyond that each 8 bytes
+        // in turn with the last 8 overlapping (the interpreter's lookup for a name longer than MaxWordsName).
+        var byLength = new SortedDictionary<int, List<int>>();
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (!byLength.TryGetValue(keys[i].Length, out List<int>? sameLength))
+            {
+                byLength[keys[i].Length] = sameLength = [];
+            }
+
+            sameLength.Add(i);
+        }
+
+        if (keys.Length > MaxWordDispatch)
+        {
+            byLength.Clear();
+            il.Emit(OpCodes.Br, slow);
+        }
+
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Ldloca, length);
+        il.Emit(OpCodes.Call, locate);
+        il.Emit(OpCodes.Stloc, location);
+        il.Emit(OpCodes.Ldloc, location);
+        il.Emit(OpCodes.Ldc_I4_0);
+        il.Emit(OpCodes.Blt, slow);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldloc, location);
+        il.Emit(OpCodes.Call, GenWord);
+        il.Emit(OpCodes.Stloc, first);
+
+        var lengthLabels = new Dictionary<int, Label>();
+        foreach (int nameLength in byLength.Keys)
+        {
+            lengthLabels[nameLength] = nameLength > MaxWordsName ? slow : il.DefineLabel();
+        }
+
+        if (byLength.Count > 0)
+        {
+            int shortest = int.MaxValue;
+            int longest = 0;
+            foreach (int nameLength in byLength.Keys)
+            {
+                shortest = Math.Min(shortest, nameLength);
+                longest = Math.Max(longest, nameLength);
+            }
+
+            if (longest - shortest < MaxLengthTable)
+            {
+                var table = new Label[longest - shortest + 1];
+                for (int i = 0; i < table.Length; i++)
+                {
+                    table[i] = lengthLabels.TryGetValue(shortest + i, out Label label) ? label : none;
+                }
+
+                il.Emit(OpCodes.Ldloc, length);
+                il.Emit(OpCodes.Ldc_I4, shortest);
+                il.Emit(OpCodes.Sub);
+                il.Emit(OpCodes.Switch, table);
+            }
+            else
+            {
+                foreach (KeyValuePair<int, Label> label in lengthLabels)
+                {
+                    il.Emit(OpCodes.Ldloc, length);
+                    il.Emit(OpCodes.Ldc_I4, label.Key);
+                    il.Emit(OpCodes.Beq, label.Value);
+                }
+            }
+        }
+
+        il.Emit(OpCodes.Br, none);
+
+        // Within a length, a trie of words: at each position the name's word is read once and compared with the
+        // distinct words the remaining names have there, so names that share a prefix share its comparisons.
+        foreach (KeyValuePair<int, List<int>> sameLength in byLength)
+        {
+            int nameLength = sameLength.Key;
+            if (nameLength > MaxWordsName)
+            {
+                continue;
+            }
+
+            il.MarkLabel(lengthLabels[nameLength]);
+            if (nameLength == 0)
+            {
+                il.Emit(OpCodes.Br, cases[sameLength.Value[0]]);
+                continue;
+            }
+
+            // The word positions: 0, 8, ... and the last (overlapping) one, for names longer than 8 bytes.
+            var positions = new List<int>();
+            if (nameLength <= sizeof(ulong))
+            {
+                positions.Add(0);
+            }
+            else
+            {
+                for (int position = 0; position + sizeof(ulong) < nameLength; position += sizeof(ulong))
+                {
+                    positions.Add(position);
+                }
+
+                positions.Add(nameLength - sizeof(ulong));
+            }
+
+            this.WordTrie(keys, sameLength.Value, positions, 0, Math.Min(nameLength, sizeof(ulong)), location, first, cases, none);
+        }
+    }
+
+    // The word of a name at a position, as the document's text holds it: a name shorter than a word padded with
+    // zeros (the generated code masks the word it reads to the name's bytes).
+    private static ulong WordOf(byte[] name, int position, int width)
+    {
+        Span<byte> padded = stackalloc byte[sizeof(ulong)];
+        padded.Clear();
+        name.AsSpan(position, width).CopyTo(padded);
+        return MemoryMarshal.Read<ulong>(padded);
+    }
+
+    private void WordTrie(byte[][] keys, List<int> candidates, List<int> positions, int depth, int firstWidth, LocalBuilder location, LocalBuilder first, Label[] cases, Label none)
+    {
+        ILGenerator il = this.Il;
+        if (depth == positions.Count)
+        {
+            // Names are distinct, so one candidate remains.
+            il.Emit(OpCodes.Br, cases[candidates[0]]);
+            return;
+        }
+
+        int position = positions[depth];
+        int width = depth == 0 ? firstWidth : sizeof(ulong);
+        var byWord = new Dictionary<ulong, List<int>>();
+        var words = new List<ulong>();
+        foreach (int index in candidates)
+        {
+            ulong word = WordOf(keys[index], position, width);
+            if (!byWord.TryGetValue(word, out List<int>? sameWord))
+            {
+                byWord[word] = sameWord = [];
+                words.Add(word);
+            }
+
+            sameWord.Add(index);
+        }
+
+        // The name's word here: the first is already read (masked to the name's bytes when it is shorter).
+        LocalBuilder current = il.DeclareLocal(typeof(ulong));
+        if (depth == 0)
+        {
+            il.Emit(OpCodes.Ldloc, first);
+            if (width < sizeof(ulong))
+            {
+                il.Emit(OpCodes.Ldc_I8, unchecked((long)WordOf([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], 0, width)));
+                il.Emit(OpCodes.And);
+            }
+        }
+        else
+        {
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldloc, location);
+            il.Emit(OpCodes.Ldc_I4, position);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Call, GenWord);
+        }
+
+        il.Emit(OpCodes.Stloc, current);
+        foreach (ulong word in words)
+        {
+            Label other = il.DefineLabel();
+            il.Emit(OpCodes.Ldloc, current);
+            il.Emit(OpCodes.Ldc_I8, unchecked((long)word));
+            il.Emit(OpCodes.Bne_Un, other);
+            this.WordTrie(keys, byWord[word], positions, depth + 1, firstWidth, location, first, cases, none);
+            il.MarkLabel(other);
+        }
+
+        il.Emit(OpCodes.Br, none);
     }
 
     private static MethodInfo Helper(string name) => typeof(Evaluator).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!;
