@@ -518,6 +518,57 @@ public class RuntimeCodeGenerationTests
     }
 
     [TestMethod]
+    public void IntegersOfEveryLengthGiveTheInterpretersResults()
+    {
+        if (!SchemaLowering.IsSupported)
+        {
+            Assert.Inconclusive("Dynamic code is not supported here.");
+        }
+
+        // Generated code converts up to eight digits at once and longer ones by a loop; the interpreter always loops.
+        // Every digit count, at and around each power of ten, both signs, in an array (text follows the number) and
+        // alone (the number ends the text), against bounds at several magnitudes.
+        var numbers = new List<string> { "0", "-0", "7", "-7", "1.0", "1e3", "-1.5", "12345678", "123456789", "-12345678", "-123456789", "99999999", "100000000" };
+        var random = new Random(20261005);
+        long power = 1;
+        for (int digits = 1; digits <= 18; digits++)
+        {
+            foreach (long value in (long[])[power, power - 1, power + 1, (power * 10) - 1, power + random.NextInt64(power * 9)])
+            {
+                numbers.Add(value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                numbers.Add((-value).ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
+
+            power *= 10;
+        }
+
+        numbers.Add("1234567890123456789");
+        numbers.Add("12345678901234567890123");
+        int valid = 0;
+        int total = 0;
+        foreach (string bounds in (string[])["\"minimum\": 0, \"maximum\": 65535", "\"minimum\": -100000000, \"maximum\": 99999999", "\"exclusiveMinimum\": -5, \"multipleOf\": 3", "\"maximum\": 1000000000000", "\"const\": 12345678"])
+        {
+            string schema = "{\"type\": [\"integer\", \"array\"], " + bounds + ", \"items\": {\"type\": \"integer\", " + bounds + "}}";
+            using JsonSchemaEvaluator interpreted = JsonSchemaEvaluator.Compile(schema);
+            using JsonSchemaEvaluator generated = JsonSchemaEvaluator.Compile(schema);
+            Assert.IsTrue(generated.CompileGeneratedCode());
+            foreach (string number in numbers)
+            {
+                foreach (string instance in (string[])[number, "[" + number + "]", "[" + number + ", " + number + " ]"])
+                {
+                    using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(instance);
+                    bool expected = interpreted.Evaluate(document.RootElement);
+                    Assert.AreEqual(expected, generated.Evaluate(document.RootElement), schema + " at " + instance);
+                    valid += expected ? 1 : 0;
+                    total++;
+                }
+            }
+        }
+
+        Assert.IsTrue(valid > 0 && valid < total, $"{valid} of {total} are valid.");
+    }
+
+    [TestMethod]
     public void FlagModeEvaluationAllocatesNothing()
     {
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(Schema);

@@ -65,6 +65,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenTokenAndNext = Helper(nameof(Evaluator.GenTokenAndNext));
     private static readonly MethodInfo GenName = Helper(nameof(Evaluator.GenName));
     private static readonly MethodInfo GenIsAscii = Helper(nameof(Evaluator.GenIsAscii));
+    private static readonly MethodInfo GenPattern = Helper(nameof(Evaluator.GenPattern));
     private static readonly MethodInfo GenPropertyName = Helper(nameof(Evaluator.GenPropertyName));
     private static readonly MethodInfo GenStringLocation = Helper(nameof(Evaluator.GenStringLocation));
     private static readonly MethodInfo GenWord = Helper(nameof(Evaluator.GenWord));
@@ -1265,6 +1266,12 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     public void FailUnlessToken(ushort tokens, bool integerOnly, bool lexical)
     {
         this.TokenTest(tokens, integerOnly, lexical, atMethodValue: false);
+    }
+
+    /// <inheritdoc/>
+    public void FailUnlessPattern(PatternMatcher matcher)
+    {
+        this.ValueTest(GenPattern, this.Constant(matcher), byAddress: false);
     }
 
     /// <inheritdoc/>

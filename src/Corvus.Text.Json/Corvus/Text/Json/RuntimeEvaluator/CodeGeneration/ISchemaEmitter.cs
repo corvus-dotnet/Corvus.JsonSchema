@@ -250,6 +250,10 @@ internal interface ISchemaEmitter
     /// <param name="nodeId">The node.</param>
     void FailUnlessNumberKeywords(int nodeId);
 
+    /// <summary>Fails unless the current value (a string) matches a pattern.</summary>
+    /// <param name="matcher">The pattern's matcher.</param>
+    void FailUnlessPattern(PatternMatcher matcher);
+
     /// <summary>Fails unless the current value (a string) satisfies a node's string keywords, by the interpreter's evaluation.</summary>
     /// <param name="nodeId">The node.</param>
     void FailUnlessStringKeywords(int nodeId);

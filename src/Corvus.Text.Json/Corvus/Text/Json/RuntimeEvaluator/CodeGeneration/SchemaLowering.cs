@@ -942,9 +942,19 @@ internal static class SchemaLowering
         {
             emitter.BeginIfValueToken(1 << (int)JsonTokenType.String);
             bool lengthsOnly = node.Pattern is null && node.Content == default && !(node.AssertFormat && !FormatKinds.IsNumeric(node.Format));
-            if (lengthsOnly)
+            bool lengthsAndPattern = node.Pattern is not null && node.Content == default && !(node.AssertFormat && !FormatKinds.IsNumeric(node.Format));
+            if (lengthsOnly || lengthsAndPattern)
             {
-                emitter.FailUnlessStringLength(node.MinLength, node.MaxLength);
+                // Lengths in place, and a pattern by its matcher directly (not through the node's string evaluation).
+                if (node.MinLength >= 0 || node.MaxLength >= 0)
+                {
+                    emitter.FailUnlessStringLength(node.MinLength, node.MaxLength);
+                }
+
+                if (node.Pattern is PatternMatcher pattern && !pattern.MatchesEverything)
+                {
+                    emitter.FailUnlessPattern(pattern);
+                }
             }
             else
             {

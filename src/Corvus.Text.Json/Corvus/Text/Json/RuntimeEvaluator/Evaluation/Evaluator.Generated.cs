@@ -170,7 +170,43 @@ internal static partial class Evaluator
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool GenTryLong(ref EvaluationState state, int index, out long value)
     {
-        return TryPlainLong(default(RawAccess).RawValue(ref state, null!, index), out value);
+        // The value's row has been read (checked) for its token type, so its first two words are within the rows:
+        // they are read unchecked, and the text is checked once.
+        ulong pair = Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(state.RawRows), index));
+        int location = (int)pair & RawAccess.LocationMask;
+        int length = (int)(pair >> 32) & int.MaxValue;
+        ReadOnlySpan<byte> text = state.RawUtf8;
+        if (!BitConverter.IsLittleEndian || (ulong)(uint)location + (uint)length > (ulong)(uint)text.Length)
+        {
+            return TryPlainLong(default(RawAccess).RawValue(ref state, null!, index), out value);
+        }
+
+        // Up to eight digits with eight bytes of text to read (all but a number at the very end of the text): the
+        // digits are tested and converted together, with no loop whose length the processor has to predict.
+        ref byte start = ref Unsafe.Add(ref MemoryMarshal.GetReference(text), location);
+        bool negative = length > 1 && start == (byte)'-';
+        int digits = negative ? length - 1 : length;
+        if ((uint)(digits - 1) < 8 && (ulong)(uint)location + (negative ? 9u : 8u) <= (ulong)(uint)text.Length)
+        {
+            ulong word = Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref start, negative ? 1 : 0));
+
+            // The digits moved to the top bytes (the first digit lowest of them), with '0' in the bytes beneath.
+            int spare = (8 - digits) * 8;
+            word = (word << spare) | (spare == 0 ? 0UL : 0x3030303030303030UL >> (64 - spare));
+            word -= 0x3030303030303030UL;
+            if (((word | (word + 0x7676767676767676UL)) & 0x8080808080808080UL) != 0)
+            {
+                value = 0;
+                return false;
+            }
+
+            word = (word * 10) + (word >> 8);
+            long magnitude = (long)((((word & 0x000000FF000000FFUL) * 0x000F424000000064UL) + (((word >> 16) & 0x000000FF000000FFUL) * 0x0000271000000001UL)) >> 32);
+            value = negative ? -magnitude : magnitude;
+            return true;
+        }
+
+        return TryPlainLong(MemoryMarshal.CreateReadOnlySpan(ref start, length), out value);
     }
 
     /// <summary>
@@ -269,6 +305,22 @@ internal static partial class Evaluator
 
     /// <summary>Whether a number value is an integer.</summary>
     internal static bool GenIsInteger(ref EvaluationState state, IJsonDocument doc, int index, bool lexical) => IsInteger<RawAccess>(ref state, doc, index, lexical);
+
+    /// <summary>
+    /// Whether a string value matches a pattern: the value's text where it lies when it has no escapes, and otherwise
+    /// its unescaped text.
+    /// </summary>
+    internal static bool GenPattern(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType, PatternMatcher matcher)
+    {
+        ReadOnlySpan<byte> raw = default(RawAccess).RawValue(ref state, doc, index, out bool escaped);
+        if (!escaped)
+        {
+            return matcher.IsMatch(raw);
+        }
+
+        using UnescapedUtf8JsonString text = StringValue<RawAccess>(ref state, doc, index);
+        return matcher.IsMatch(text.Span);
+    }
 
     /// <summary>Whether a value is a string in a set.</summary>
     internal static bool GenStringSet(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType, Utf8NameMap<object> allowed) => MatchesStringSet<RawAccess>(allowed, tokenType, ref state, doc, index);

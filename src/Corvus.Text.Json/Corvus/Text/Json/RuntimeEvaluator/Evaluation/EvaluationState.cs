@@ -125,7 +125,7 @@ internal readonly struct RawAccess : IDocumentAccess
     private const int RowSize = Evaluator.RowSize;
     private const int SizeOrLengthOffset = 4;
     private const int NumberOfRowsOffset = 8;
-    private const int LocationMask = 0x0FFFFFFF;
+    internal const int LocationMask = 0x0FFFFFFF;
     private const uint NumberOfRowsMask = 0x0FFFFFFFU;
 
     public JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index) => (JsonTokenType)(ReadUInt32(state.RawRows, index + NumberOfRowsOffset) >> 28);

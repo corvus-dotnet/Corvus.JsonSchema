@@ -78,8 +78,8 @@ finds no node left to the interpreter.
 
 - **`unevaluatedProperties` from static coverage.** Compiled in the fused pass when the plan has no alternative
   groups. With alternative groups, and outside the fused plan, it is the interpreter's.
-- **String keywords** (`stringSection`). Lengths are tested in place (see Done). A node's other string keywords
-  (pattern, format, content) are one call of the interpreter's string evaluation.
+- **String keywords** (`stringSection`). Lengths are tested in place (see Done), and a pattern is matched by a direct
+  call of its matcher. A format or content keyword is one call of the interpreter's string evaluation.
 - **Small objects probed by name** (`objectProbe`). Compiled as a dispatch loop over the properties. Java probes each
   declared name, required first.
 - **Size guard.** An object of more than 256 names is left to the interpreter, and more than 512 names would take the

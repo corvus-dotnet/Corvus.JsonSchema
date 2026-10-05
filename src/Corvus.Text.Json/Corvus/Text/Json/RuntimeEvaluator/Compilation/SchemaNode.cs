@@ -655,9 +655,20 @@ internal sealed class PatternMatcher
             this.Atoms = atoms;
             this.Anchor = anchor;
             this.LastVariable = -1;
+            this.AsciiMembers = new byte[atoms.Length][];
             int minimum = 0;
             for (int i = 0; i < atoms.Length; i++)
             {
+                // A byte's membership of the atom's class as one load: nonzero for an ASCII member, zero for any
+                // other byte (an ASCII byte outside the class, or part of a longer character).
+                byte[] members = new byte[256];
+                for (int b = 0; b < 128; b++)
+                {
+                    members[b] = atoms[i].Contains((byte)b) ? (byte)1 : (byte)0;
+                }
+
+                this.AsciiMembers[i] = members;
+
                 if (!atoms[i].Fixed)
                 {
                     this.LastVariable = i;
@@ -689,6 +700,9 @@ internal sealed class PatternMatcher
         public byte[]? StartBytes { get; }
 
         public ClassAtom[] Atoms { get; }
+
+        /// <summary>For each atom, a table of 256 entries: nonzero at the ASCII bytes in its class.</summary>
+        public byte[][] AsciiMembers { get; }
 
         public SequenceAnchor Anchor { get; }
 
@@ -873,32 +887,36 @@ internal sealed class PatternMatcher
     /// <summary>The whole value, anchored at both ends.</summary>
     private static bool MatchWhole(PatternSequence sequence, ReadOnlySpan<byte> value)
     {
+        // The positions passed by reference to the atoms' methods live in memory. The run of the variable atom, where
+        // the time goes, keeps its own position and count in registers, and decides an ASCII member by one load.
         ClassAtom[] atoms = sequence.Atoms;
         int last = sequence.LastVariable;
-        int pos = 0;
-        if (!ConsumeHead(atoms, last < 0 ? atoms.Length : last, value, ref pos))
+        int head = 0;
+        if (!ConsumeHead(atoms, last < 0 ? atoms.Length : last, value, ref head))
         {
             return false;
         }
 
         if (last < 0)
         {
-            return pos == value.Length;
+            return head == value.Length;
         }
 
-        int end = value.Length;
+        int tail = value.Length;
         for (int a = atoms.Length - 1; a > last; a--)
         {
             ref readonly ClassAtom atom = ref atoms[a];
             for (int n = 0; n < atom.Min; n++)
             {
-                if (!atom.TryConsumeBackward(value, ref end))
+                if (!atom.TryConsumeBackward(value, ref tail))
                 {
                     return false;
                 }
             }
         }
 
+        int pos = head;
+        int end = tail;
         if (end < pos)
         {
             return false;
@@ -906,11 +924,29 @@ internal sealed class PatternMatcher
 
         ref readonly ClassAtom variable = ref atoms[last];
         int count = 0;
+        ref byte members = ref System.Runtime.InteropServices.MemoryMarshal.GetReference((ReadOnlySpan<byte>)sequence.AsciiMembers[last]);
+        ref byte text = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(value);
         while (pos < end)
         {
-            if (!variable.TryConsume(value, ref pos))
+            byte b = Unsafe.Add(ref text, pos);
+            if (Unsafe.Add(ref members, b) != 0)
             {
-                return false;
+                pos++;
+            }
+            else
+            {
+                if (b < 0x80)
+                {
+                    return false;
+                }
+
+                int at = pos;
+                if (!variable.TryConsume(value, ref at))
+                {
+                    return false;
+                }
+
+                pos = at;
             }
 
             count++;
