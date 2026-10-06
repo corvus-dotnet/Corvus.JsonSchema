@@ -199,7 +199,10 @@ public static class CodeGenProbe
             ("tiny", "{\"type\":\"object\",\"properties\":{\"a\":{\"type\":\"string\"}}}", "{\"a\":\"alpha12\"}"),
             ("map", "{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}}", "{\"a\":\"b\",\"c\":\"d\",\"e\":\"f\",\"g\":\"h\"}"),
             ("strings", "{\"type\":\"array\",\"items\":{\"type\":\"string\"}}", "[\"a\",\"b\",\"c\",\"d\",\"e\",\"f\",\"g\",\"h\"]"),
-            ("integers", "{\"type\":\"array\",\"items\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":65535}}", "[44877,52433,40174,53803,13497,47953,10600,22455]")])
+("closed", "{\"type\":\"object\",\"additionalProperties\":false,\"properties\":{\"name\":{\"type\":\"string\"},\"before\":{\"type\":\"string\"},\"init\":{\"type\":\"string\"},\"prebuild\":{\"type\":\"string\"},\"command\":{\"type\":\"string\"},\"env\":{\"type\":\"string\"},\"openIn\":{\"type\":\"string\"},\"openMode\":{\"type\":\"string\"}}}", "{\"command\":\"mu25\",\"env\":\"delta65\",\"before\":\"alpha36\",\"name\":\"delta47\",\"init\":\"zeta34\"}"),
+            ("open", "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"before\":{\"type\":\"string\"},\"init\":{\"type\":\"string\"},\"prebuild\":{\"type\":\"string\"},\"command\":{\"type\":\"string\"},\"env\":{\"type\":\"string\"},\"openIn\":{\"type\":\"string\"},\"openMode\":{\"type\":\"string\"}}}", "{\"command\":\"mu25\",\"env\":\"delta65\",\"before\":\"alpha36\",\"name\":\"delta47\",\"init\":\"zeta34\"}"),
+            ("required", "{\"type\":\"object\",\"required\":[\"name\",\"init\",\"env\"],\"properties\":{\"name\":{\"type\":\"string\"},\"before\":{\"type\":\"string\"},\"init\":{\"type\":\"string\"},\"prebuild\":{\"type\":\"string\"},\"command\":{\"type\":\"string\"},\"env\":{\"type\":\"string\"},\"openIn\":{\"type\":\"string\"},\"openMode\":{\"type\":\"string\"}}}", "{\"command\":\"mu25\",\"env\":\"delta65\",\"before\":\"alpha36\",\"name\":\"delta47\",\"init\":\"zeta34\"}"),
+                        ("integers", "{\"type\":\"array\",\"items\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":65535}}", "[44877,52433,40174,53803,13497,47953,10600,22455]")])
         {
             using JsonSchemaEvaluator generated = JsonSchemaEvaluator.Compile(schema);
             bool compiled = generated.CompileGeneratedCode();
