@@ -24,6 +24,9 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
   row: where the next value starts is worked out from the row only after a value that was not. Every other loop
   works it out with the token, as before: with the short form an open object's loop measured 13 to 26% slower, for
   a reason not found (the cause was in the loop's head, not in where the next index was worked out).
+- **A direct path from the public entry.** `Evaluate` reads the schema's compiled entry from one field and checks that
+  the program still has the node array the code was compiled from, then calls it, ahead of the flag-mode entry data
+  and the tiering's checks. 2 to 3% on documents of a few values.
 - **Leaves tested where the value is.** A leaf child of an array or an object (bounds, a length, a pattern, a small
   enum) is emitted in the loop, which has the value's token already, not called as a method. An enum of more than
   eight strings stays a method.
@@ -137,3 +140,11 @@ finds no node left to the interpreter.
 - **An ahead-of-time cache.** The JVM's counterpart to ReadyToRun and native AOT. Generated code needs the JIT.
 - **`java.util.regex` translation and reused matchers.** The C# evaluator's `PatternMatcher` and compiled regular
   expressions serve both engines.
+
+## Measuring
+
+Processes of one build fall into two modes about 8% apart on small documents, case by case (where the JIT placed each
+schema's code), and an occasional process runs at about twice the time. A comparison of two builds on small cases is
+the mean over 15 alternating processes of those within 1.3x of the fastest (`floor` mode of the harness, least of 400
+batches a process), which reads a build against itself to within 2%. Five alternating rounds of the median, as the
+A/B over corpora uses, cannot resolve less than 10% there.

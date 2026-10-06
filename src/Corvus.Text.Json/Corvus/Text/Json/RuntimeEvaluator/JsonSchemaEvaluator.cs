@@ -42,6 +42,11 @@ public sealed class JsonSchemaEvaluator : IDisposable
     // consistent set; rebuilt when the program's node array changes (an entry point added). Null Entry: the program
     // uses a dynamic scope, so every evaluation takes the general entry.
     private FlagModeEntry? flagModeEntry;
+#if NET && !STJ
+
+    // The schema's generated code once it is compiled and has an entry method, for Evaluate to read directly.
+    private CompiledEntry? compiledEntry;
+#endif
 
     private JsonSchemaEvaluator(CompiledSchema program, int rootNode)
     {
@@ -228,6 +233,21 @@ public sealed class JsonSchemaEvaluator : IDisposable
         where T : struct, IJsonElement<T>
     {
         IJsonDocument document = instance.ParentDocument;
+#if NET && !STJ
+
+        // A schema with generated code, first: one field and one comparison (that the program still has the node
+        // array the code was compiled from) before the call. The general path below reaches the same call through
+        // the flag-mode entry data, its checks and the tiering's.
+        if (resultsCollector is null && this.compiledEntry is CompiledEntry compiled && ReferenceEquals(compiled.SourceNodes, this.program.Nodes)
+            && document is JsonDocument compiledDocument)
+        {
+            unsafe
+            {
+                return ((delegate*<CompiledEntry, JsonDocument, IJsonDocument, int, bool>)compiled.EntryAddress)(compiled, compiledDocument, document, instance.ParentDocumentIndex);
+            }
+        }
+
+#endif
         if (resultsCollector is null && document is JsonDocument parsed && this.FlagMode() is { Entry: SchemaNode entry } fast)
         {
             return this.EvaluateFlag(fast, entry, parsed, document, instance.ParentDocumentIndex);
@@ -361,9 +381,16 @@ public sealed class JsonSchemaEvaluator : IDisposable
         // The entry data over the generated node array: its entry's method when the entry is specialised, and
         // otherwise the interpreter from the entry, which reaches the generated methods beneath it.
         NodeValidator? compiled = SchemaLowering.Compile(fast.SourceNodes, fast.Entry!, out SchemaNode[] generatedNodes, out _, out nint entryAddress);
-        var withCode = new FlagModeEntry(fast.SourceNodes, generatedNodes, generatedNodes[fast.Entry!.Id], fast.EntryResource, fast.MaxDepth, compiled is null ? null : new CompiledEntry(compiled, entryAddress, this.program, generatedNodes, fast.EntryResource, fast.MaxDepth, this.rootNode), tiered: true);
+        var withCode = new FlagModeEntry(fast.SourceNodes, generatedNodes, generatedNodes[fast.Entry!.Id], fast.EntryResource, fast.MaxDepth, compiled is null ? null : new CompiledEntry(compiled, entryAddress, this.program, fast.SourceNodes, generatedNodes, fast.EntryResource, fast.MaxDepth, this.rootNode), tiered: true);
         FlagModeEntry? current = Interlocked.CompareExchange(ref this.flagModeEntry, withCode, fast);
-        return ReferenceEquals(current, fast) ? withCode : current ?? withCode;
+        if (ReferenceEquals(current, fast))
+        {
+            // The public entry reads this first (see Evaluate).
+            this.compiledEntry = withCode.Compiled;
+            return withCode;
+        }
+
+        return current ?? withCode;
     }
 #endif
 #endif

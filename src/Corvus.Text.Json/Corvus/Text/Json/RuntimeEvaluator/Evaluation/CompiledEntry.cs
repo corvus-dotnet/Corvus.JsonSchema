@@ -12,8 +12,11 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Evaluation;
 /// What flag-mode evaluation through a schema's generated code needs of the schema, gathered once when the code is
 /// compiled: the evaluation's entry reads it from one object.
 /// </summary>
-internal sealed class CompiledEntry(NodeValidator compiled, nint entryAddress, CompiledSchema program, SchemaNode[] nodes, int entryResource, int maxDepth, int rootNode)
+internal sealed class CompiledEntry(NodeValidator compiled, nint entryAddress, CompiledSchema program, SchemaNode[] sourceNodes, SchemaNode[] nodes, int entryResource, int maxDepth, int rootNode)
 {
+    /// <summary>The program's node array the code was compiled from: the code is the schema's while the program still has this array.</summary>
+    public readonly SchemaNode[] SourceNodes = sourceNodes;
+
     /// <summary>
     /// The address of the schema's generated entry method, which takes this object, the document (as its class and as
     /// its interface) and the index: it sets up the state in its own frame and runs the entry node's code there.

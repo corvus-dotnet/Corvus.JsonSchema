@@ -192,14 +192,38 @@ public static class CodeGenProbe
     /// </summary>
     public static int RunFloor()
     {
-        foreach ((string schema, string instance) in ((string, string)[])[("{\"type\":\"object\"}", "{}"), ("{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}}", "{\"a\":\"b\",\"c\":\"d\"}")])
+        // The least time of many short batches, which a busy moment cannot lower: differences of a few percent between
+        // two builds show in it, where the median of a pass does not resolve them.
+        foreach ((string name, string schema, string instance) in ((string, string, string)[])[
+            ("empty", "{\"type\":\"object\"}", "{}"),
+            ("tiny", "{\"type\":\"object\",\"properties\":{\"a\":{\"type\":\"string\"}}}", "{\"a\":\"alpha12\"}"),
+            ("map", "{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}}", "{\"a\":\"b\",\"c\":\"d\",\"e\":\"f\",\"g\":\"h\"}"),
+            ("strings", "{\"type\":\"array\",\"items\":{\"type\":\"string\"}}", "[\"a\",\"b\",\"c\",\"d\",\"e\",\"f\",\"g\",\"h\"]"),
+            ("integers", "{\"type\":\"array\",\"items\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":65535}}", "[44877,52433,40174,53803,13497,47953,10600,22455]")])
         {
-            using JsonSchemaEvaluator interpreted = JsonSchemaEvaluator.Compile(schema);
             using JsonSchemaEvaluator generated = JsonSchemaEvaluator.Compile(schema);
             bool compiled = generated.CompileGeneratedCode();
-            ParsedJsonDocument<JsonElement>[] apart = [.. Enumerable.Range(0, 1000).Select(_ => ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(instance)))];
-            ParsedJsonDocument<JsonElement>[] same = [.. Enumerable.Repeat(apart[0], 1000)];
-            Console.WriteLine($"{schema}  compiled {compiled}: interpreter {Precise(interpreted, apart, 500) / 1000:F2} / {Precise(interpreted, same, 500) / 1000:F2}, generated {Precise(generated, apart, 500) / 1000:F2} / {Precise(generated, same, 500) / 1000:F2} ns (separate documents / one document)");
+            ParsedJsonDocument<JsonElement>[] documents = [.. Enumerable.Range(0, 1000).Select(_ => ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(instance)))];
+            long end = Stopwatch.GetTimestamp() + Stopwatch.Frequency;
+            int valid = 0;
+            while (Stopwatch.GetTimestamp() < end)
+            {
+                valid += Pass(generated, documents);
+            }
+
+            double least = double.MaxValue;
+            for (int batch = 0; batch < 400; batch++)
+            {
+                long start = Stopwatch.GetTimestamp();
+                for (int i = 0; i < 20; i++)
+                {
+                    valid += Pass(generated, documents);
+                }
+
+                least = Math.Min(least, (Stopwatch.GetTimestamp() - start) * 1_000_000_000.0 / Stopwatch.Frequency / 20 / documents.Length);
+            }
+
+            Console.WriteLine($"{name},{least:F3},{(compiled && valid > 0 ? "ok" : "CHECK")}");
         }
 
         return 0;
