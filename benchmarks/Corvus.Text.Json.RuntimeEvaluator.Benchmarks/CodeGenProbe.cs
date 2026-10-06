@@ -124,6 +124,47 @@ public static class CodeGenProbe
     }
 
     /// <summary>
+    /// What compiling a schema's code costs (<c>compilecost [corpus...]</c>): for each corpus, the time to compile the
+    /// schema for the interpreter and the further time to generate its code, each the least of several fresh
+    /// compilations, with the number of methods generated. Prints <c>corpus,interpreter ms,code ms,methods</c>.
+    /// </summary>
+    public static int RunCompileCost(string[] args)
+    {
+        string[] names = args.Length > 0 ? args : Array.ConvertAll(SourceMetaCases.All, c => c.File);
+        foreach (string name in names)
+        {
+            using var c = new SourceMetaCase(name);
+            JsonSchemaDialect dialect = JsonSchemaDialect.Draft7;
+            foreach ((string file, JsonSchemaDialect d) in SourceMetaCases.All)
+            {
+                if (file == name)
+                {
+                    dialect = d;
+                }
+            }
+
+            double interpreter = double.MaxValue;
+            double code = double.MaxValue;
+            int methods = 0;
+            for (int round = 0; round < 7; round++)
+            {
+                long start = Stopwatch.GetTimestamp();
+                using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(c.SchemaBytes, new JsonSchemaEvaluatorOptions { DefaultDialect = dialect });
+                long compiled = Stopwatch.GetTimestamp();
+                SchemaNode[] nodes = evaluator.Program.Nodes;
+                SchemaLowering.Compile(nodes, nodes[nodes[evaluator.RootNode].FlagEntry], out _, out methods);
+                long generated = Stopwatch.GetTimestamp();
+                interpreter = Math.Min(interpreter, (compiled - start) * 1000.0 / Stopwatch.Frequency);
+                code = Math.Min(code, (generated - compiled) * 1000.0 / Stopwatch.Frequency);
+            }
+
+            Console.WriteLine($"{name},{interpreter:F2},{code:F2},{methods}");
+        }
+
+        return 0;
+    }
+
+    /// <summary>
     /// How much of a pass is reaching the documents' memory (<c>locality [corpus...]</c>): generated code over the
     /// corpus's documents, and over an array of the same length that refers to one of them at every position (the
     /// mean over eight documents), so the same work is done on memory already in the nearest cache. Prints

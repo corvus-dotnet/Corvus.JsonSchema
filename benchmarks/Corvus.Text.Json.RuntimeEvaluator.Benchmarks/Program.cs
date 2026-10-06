@@ -80,6 +80,11 @@ if (args.Length > 0 && args[0] == "floor")
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CodeGenProbe.RunFloor();
 }
 
+if (args.Length > 0 && args[0] == "compilecost")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CodeGenProbe.RunCompileCost(args[1..]);
+}
+
 if (args.Length > 0 && args[0] == "locality")
 {
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CodeGenProbe.RunLocality(args[1..]);

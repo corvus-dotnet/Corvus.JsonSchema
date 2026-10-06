@@ -83,6 +83,7 @@
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Exceptions.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\JsonSchemaDialect.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\JsonSchemaEvaluator.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\JsonSchemaCodeGeneration.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\JsonSchemaEvaluatorOptions.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\JsonSchemaFormatMode.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Polyfills\NetStandardExtensions.cs" />

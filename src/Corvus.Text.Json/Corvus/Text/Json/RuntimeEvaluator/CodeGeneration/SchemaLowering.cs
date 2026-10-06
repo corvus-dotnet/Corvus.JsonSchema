@@ -4,6 +4,7 @@
 
 #if NET && !STJ
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Corvus.Text.Json.Internal;
@@ -41,6 +42,9 @@ internal static class SchemaLowering
     /// <summary>Whether generated code can run here (it needs Reflection.Emit and the JIT).</summary>
     public static bool IsSupported => RuntimeFeature.IsDynamicCodeSupported;
 
+    /// <summary>What the methods that emit code say of their need for a runtime that compiles code.</summary>
+    internal const string RequiresDynamicCodeMessage = "Runtime code generation emits IL. It runs only where RuntimeFeature.IsDynamicCodeSupported is true: elsewhere the evaluator interprets the schema.";
+
     /// <summary>
     /// Compiles a program's flag-mode code: a method for every node the lowering specialises, and a copy of the node
     /// array in which those nodes carry their methods (<see cref="NodePlan.Generated"/>), so that the interpreter
@@ -51,6 +55,7 @@ internal static class SchemaLowering
     /// <param name="generatedNodes">The node array to evaluate with: the program's, with the specialised nodes replaced.</param>
     /// <param name="specialised">The number of nodes given methods.</param>
     /// <returns>The entry's method, or null when the entry is not specialised (the interpreter then enters it, over <paramref name="generatedNodes"/>).</returns>
+    [RequiresDynamicCode(RequiresDynamicCodeMessage)]
     public static NodeValidator? Compile(SchemaNode[] nodes, SchemaNode entry, out SchemaNode[] generatedNodes, out int specialised)
     {
         return Compile(nodes, entry, out generatedNodes, out specialised, out _);
@@ -66,6 +71,7 @@ internal static class SchemaLowering
     /// <param name="specialised">The number of nodes given methods.</param>
     /// <param name="entryAddress">The address of the entry method, or 0.</param>
     /// <returns>The entry's method, or null when the entry is not specialised.</returns>
+    [RequiresDynamicCode(RequiresDynamicCodeMessage)]
     public static NodeValidator? Compile(SchemaNode[] nodes, SchemaNode entry, out SchemaNode[] generatedNodes, out int specialised, out nint entryAddress)
     {
         entryAddress = 0;

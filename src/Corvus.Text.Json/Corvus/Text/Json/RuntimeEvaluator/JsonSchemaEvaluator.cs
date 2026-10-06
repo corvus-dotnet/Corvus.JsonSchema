@@ -53,6 +53,11 @@ public sealed class JsonSchemaEvaluator : IDisposable
         this.program = program;
         this.rootNode = rootNode;
         program.AddReference();
+#if NET && !STJ
+        JsonSchemaCodeGeneration codeGeneration = CodeGenerationOverride ?? program.Options.CodeGeneration;
+        this.compilesAfterWarmUp = codeGeneration == JsonSchemaCodeGeneration.AfterWarmUp && SchemaLowering.IsSupported;
+        this.compilesEagerly = codeGeneration == JsonSchemaCodeGeneration.Eager && SchemaLowering.IsSupported;
+#endif
     }
 
     /// <summary>
@@ -328,7 +333,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
             }
         }
 
-        if (CodeGenEnabled && !fast.Tiered && Interlocked.Increment(ref this.evaluations) == CodeGenThreshold)
+        if (this.compilesAfterWarmUp && !fast.Tiered && Interlocked.Increment(ref this.evaluations) == WarmUpEvaluations)
         {
             this.StartCompilingFlagMode(fast);
         }
@@ -337,12 +342,22 @@ public sealed class JsonSchemaEvaluator : IDisposable
     }
 
 #if NET && !STJ
-    // Runtime codegen (an experiment switch until it is an option): CORVUS_RT_CODEGEN=1 compiles a schema to IL
-    // after CORVUS_RT_CODEGEN_THRESHOLD flag-mode evaluations (default 1000; 0 compiles before the first).
-    private static readonly bool CodeGenEnabled = SchemaLowering.IsSupported && Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN") == "1";
-    private static readonly int CodeGenThreshold = int.TryParse(Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN_THRESHOLD"), out int threshold) ? threshold : 1000;
+    // The evaluations that collect no results an evaluator makes before it compiles its schema, with
+    // JsonSchemaCodeGeneration.AfterWarmUp.
+    private const int WarmUpEvaluations = 1000;
+
+    // What the options ask for, where the runtime can compile code (see JsonSchemaCodeGeneration).
+    private readonly bool compilesAfterWarmUp;
+    private readonly bool compilesEagerly;
 
     private int evaluations;
+
+    /// <summary>
+    /// Gets or sets a value every evaluator made afterwards takes in place of its options'
+    /// <see cref="JsonSchemaEvaluatorOptions.CodeGeneration"/>: for a test run that puts a whole suite of schemas
+    /// through generated code. <see langword="null"/> (the default) leaves the options to decide.
+    /// </summary>
+    internal static JsonSchemaCodeGeneration? CodeGenerationOverride { get; set; }
 
     /// <summary>
     /// Starts compiling the schema's generated code off the evaluating thread (it takes milliseconds), to be published
@@ -356,8 +371,8 @@ public sealed class JsonSchemaEvaluator : IDisposable
     }
 
     /// <summary>
-    /// Compiles the schema's generated code now, whatever the experiment switch says: for tests and measurements
-    /// that compare the two engines in one process.
+    /// Compiles the schema's generated code now, whatever the options say: for tests and measurements that compare
+    /// the two engines in one process.
     /// </summary>
     /// <returns>Whether the schema runs generated code (not where dynamic code is unsupported, nor for a schema with a dynamic scope).</returns>
     internal bool CompileGeneratedCode()
@@ -378,6 +393,13 @@ public sealed class JsonSchemaEvaluator : IDisposable
     /// <summary>Compiles the entry's generated code and publishes it, unless the entry data has been replaced meanwhile.</summary>
     private FlagModeEntry CompileFlagMode(FlagModeEntry fast)
     {
+        // Every caller has asked SchemaLowering.IsSupported already. Asked again here, of the runtime directly, so
+        // that the code below is seen to run only where code can be compiled.
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+        {
+            return fast;
+        }
+
         // The entry data over the generated node array: its entry's method when the entry is specialised, and
         // otherwise the interpreter from the entry, which reaches the generated methods beneath it.
         NodeValidator? compiled = SchemaLowering.Compile(fast.SourceNodes, fast.Entry!, out SchemaNode[] generatedNodes, out _, out nint entryAddress);
@@ -414,9 +436,9 @@ public sealed class JsonSchemaEvaluator : IDisposable
         var entry = new FlagModeEntry(nodes, nodes, this.program.UsesDynamicScope ? null : nodes[root.FlagEntry], root.ResourceId, this.program.Options.MaxDepth);
         this.flagModeEntry = entry;
 #if NET && !STJ
-        if (CodeGenEnabled && CodeGenThreshold == 0 && entry.Entry is not null)
+        if (this.compilesEagerly && entry.Entry is not null)
         {
-            // Compile before the first evaluation (the differential tests run every schema this way).
+            // JsonSchemaCodeGeneration.Eager: compiled here, before the first evaluation.
             return this.CompileFlagMode(entry);
         }
 #endif
@@ -464,6 +486,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
             FallbackDocumentResolver = source.FallbackDocumentResolver,
             BaseUri = source.BaseUri,
             MaxDepth = source.MaxDepth,
+            CodeGeneration = source.CodeGeneration,
             EntryPoint = source.EntryPoint,
         };
     }

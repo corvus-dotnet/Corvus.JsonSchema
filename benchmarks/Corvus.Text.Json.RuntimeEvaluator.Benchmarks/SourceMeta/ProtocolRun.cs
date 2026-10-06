@@ -18,6 +18,21 @@ public static class ProtocolRun
 {
     private const int MinWarmUpPasses = 100;
 
+    /// <summary>
+    /// The harness's choice of code generation, from its environment: <c>CORVUS_RT_CODEGEN=1</c> for after warm-up,
+    /// and with <c>CORVUS_RT_CODEGEN_THRESHOLD=0</c> eagerly. Unset, the interpreter.
+    /// </summary>
+    /// <returns>The option's value.</returns>
+    public static JsonSchemaCodeGeneration CodeGeneration()
+    {
+        if (Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN") != "1")
+        {
+            return JsonSchemaCodeGeneration.Disabled;
+        }
+
+        return Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN_THRESHOLD") == "0" ? JsonSchemaCodeGeneration.Eager : JsonSchemaCodeGeneration.AfterWarmUp;
+    }
+
     public static int Run(string[] args)
     {
         string root = Environment.GetEnvironmentVariable("COLD_ROOT") ?? Path.Combine(AppContext.BaseDirectory, "sourcemeta");
@@ -42,7 +57,7 @@ public static class ProtocolRun
         }
 
         long parseEnd = Stopwatch.GetTimestamp();
-        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema, new JsonSchemaEvaluatorOptions { DefaultDialect = dialect });
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema, new JsonSchemaEvaluatorOptions { DefaultDialect = dialect, CodeGeneration = CodeGeneration() });
         long compileEnd = Stopwatch.GetTimestamp();
         ValidateAll(evaluator, docs);
         long coldEnd = Stopwatch.GetTimestamp();

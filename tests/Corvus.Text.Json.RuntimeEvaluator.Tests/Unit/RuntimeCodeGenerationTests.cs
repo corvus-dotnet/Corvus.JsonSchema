@@ -656,18 +656,74 @@ public class RuntimeCodeGenerationTests
     }
 
     [TestMethod]
-    public void TheSwitchCompilesSchemasWhenOn()
+    public void TheOptionDecidesWhetherAndWhenASchemaIsCompiled()
     {
-        if (Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN") != "1" || Environment.GetEnvironmentVariable("CORVUS_RT_CODEGEN_THRESHOLD") != "0" || !SchemaLowering.IsSupported)
+        if (!SchemaLowering.IsSupported)
         {
-            Assert.Inconclusive("Runs only with CORVUS_RT_CODEGEN=1 and CORVUS_RT_CODEGEN_THRESHOLD=0.");
+            Assert.Inconclusive("Dynamic code is not supported here.");
         }
 
-        int before = SchemaLowering.CompiledCount;
-        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(Schema);
-        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"id": 2}""");
-        Assert.IsTrue(evaluator.Evaluate(doc.RootElement));
-        Assert.IsTrue(SchemaLowering.CompiledCount > before);
+        // The whole-suite override (see TestAssemblySetup) would decide for every evaluator: off for this test.
+        JsonSchemaCodeGeneration? suite = JsonSchemaEvaluator.CodeGenerationOverride;
+        JsonSchemaEvaluator.CodeGenerationOverride = null;
+        try
+        {
+            using ParsedJsonDocument<JsonElement> valid = ParsedJsonDocument<JsonElement>.Parse("""{"id": 2}""");
+            using ParsedJsonDocument<JsonElement> invalid = ParsedJsonDocument<JsonElement>.Parse("""{"id": 0}""");
+
+            // Disabled (the default): never compiled, however many evaluations.
+            int before = SchemaLowering.CompiledCount;
+            using (JsonSchemaEvaluator disabled = JsonSchemaEvaluator.Compile(Schema))
+            {
+                for (int i = 0; i < 3000; i++)
+                {
+                    Assert.IsTrue(disabled.Evaluate(valid.RootElement));
+                }
+
+                Assert.IsFalse(disabled.Evaluate(invalid.RootElement));
+            }
+
+            Assert.AreEqual(before, SchemaLowering.CompiledCount);
+
+            // Eager: compiled by the first evaluation.
+            using (JsonSchemaEvaluator eager = JsonSchemaEvaluator.Compile(Schema, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.Eager }))
+            {
+                Assert.IsTrue(eager.Evaluate(valid.RootElement));
+                Assert.AreEqual(before + 1, SchemaLowering.CompiledCount);
+                Assert.IsFalse(eager.Evaluate(invalid.RootElement));
+            }
+
+            // After warm-up: not before 1,000 evaluations, and then in the background.
+            before = SchemaLowering.CompiledCount;
+            using (JsonSchemaEvaluator warm = JsonSchemaEvaluator.Compile(Schema, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.AfterWarmUp }))
+            {
+                for (int i = 0; i < 999; i++)
+                {
+                    Assert.IsTrue(warm.Evaluate(valid.RootElement));
+                }
+
+                Assert.AreEqual(before, SchemaLowering.CompiledCount);
+                Assert.IsTrue(warm.Evaluate(valid.RootElement));
+                var waited = System.Diagnostics.Stopwatch.StartNew();
+                while (SchemaLowering.CompiledCount == before && waited.Elapsed < TimeSpan.FromSeconds(30))
+                {
+                    Thread.Sleep(5);
+                }
+
+                Assert.AreEqual(before + 1, SchemaLowering.CompiledCount);
+
+                // The results are the interpreter's, before the code is published and after.
+                for (int i = 0; i < 2000; i++)
+                {
+                    Assert.IsTrue(warm.Evaluate(valid.RootElement));
+                    Assert.IsFalse(warm.Evaluate(invalid.RootElement));
+                }
+            }
+        }
+        finally
+        {
+            JsonSchemaEvaluator.CodeGenerationOverride = suite;
+        }
     }
 
     // Memory that gives no array (a memory manager does not, unless it says otherwise), so that the document cannot

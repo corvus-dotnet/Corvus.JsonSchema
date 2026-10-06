@@ -1466,7 +1466,8 @@ main-docs:
       - {index: 29, language: powershell, lines: [415, 421]}
   - path: "docs/RuntimeEvaluator.md"
     blocks:
-      - {index: 0, language: xml, lines: [251, 255]}
+      - {index: 0, language: csharp, lines: [210, 222], category: compilable, verified: false}
+      - {index: 1, language: xml, lines: [304, 308]}
   - path: "docs/SchemaEvaluator.md"
     blocks:
       - {index: 0, language: xml, lines: [19, 26]}

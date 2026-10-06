@@ -4,6 +4,7 @@
 
 #if NET && !STJ
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -24,6 +25,7 @@ namespace Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
 /// A method's arguments are the evaluation state (by reference), the document and the value's row index. Constants
 /// that are objects (name maps, strings, leaf resolutions) are static fields of the type, set when it is built.
 /// </remarks>
+[RequiresDynamicCode(SchemaLowering.RequiresDynamicCodeMessage)]
 internal sealed class IlSchemaEmitter : ISchemaEmitter
 {
     private const int RowSize = Evaluator.RowSize;
@@ -1230,6 +1232,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     }
 
     /// <inheritdoc/>
+    [UnconditionalSuppressMessage("Trimming", "IL2060:MakeGenericMethod", Justification = "The type argument is a reference type, so the instantiation is the shared one, and the method (Evaluator.GenSlowName) is a statically referenced member of this assembly with no annotated type parameters.")]
     public void BeginNameDispatch<T>(Utf8NameMap<T> names, bool thenCommon = false)
         where T : class
     {
