@@ -199,13 +199,39 @@ internal static partial class Evaluator
                 int end = default(TAccess).EndIndex(ref state, doc, index);
                 for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
                 {
+                    // A name without escapes (nearly every name) is hashed where it lies.
                     int nameHash;
-                    using (UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex))
+                    ReadOnlySpan<byte> rawName = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool nameEscaped);
+                    if (!nameEscaped)
                     {
+                        nameHash = Fnv(rawName, 0x27d4eb2f);
+                    }
+                    else
+                    {
+                        using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
                         nameHash = Fnv(name.Span, 0x27d4eb2f);
                     }
 
-                    h += (nameHash * 397) ^ HashValue<TAccess>(ref state, doc, valueIndex);
+                    // The common values of a descriptor (a string without escapes, a boolean) are hashed here, with no
+                    // call for each: the hashes are those the cases above give.
+                    int valueHash;
+                    switch (default(TAccess).TokenType(ref state, doc, valueIndex))
+                    {
+                        case JsonTokenType.String when !default(TAccess).IsEscaped(ref state, doc, valueIndex):
+                            valueHash = Fnv(default(TAccess).RawValue(ref state, doc, valueIndex), 0x5f3759df);
+                            break;
+                        case JsonTokenType.True:
+                            valueHash = 0x0151_7a7e;
+                            break;
+                        case JsonTokenType.False:
+                            valueHash = 0x0151_7a7f;
+                            break;
+                        default:
+                            valueHash = HashValue<TAccess>(ref state, doc, valueIndex);
+                            break;
+                    }
+
+                    h += (nameHash * 397) ^ valueHash;
                 }
 
                 return h;
@@ -274,6 +300,68 @@ internal static partial class Evaluator
 
                 // Two canonical integer literals with different text are different numbers.
                 return !(IsCanonicalInteger(ra) && IsCanonicalInteger(rb)) && JsonElementHelpers.AreEqualJsonNumbers(ra, rb);
+            }
+
+            case JsonTokenType.StartArray:
+            {
+                // Arrays are equal item by item, in order.
+                int endA = default(TAccess).EndIndex(ref state, doc, a);
+                int endB = default(TAccess).EndIndex(ref state, doc, b);
+                if (endA - a != endB - b)
+                {
+                    // Equal values have the same structure, and so the same number of rows.
+                    return false;
+                }
+
+                int itemA = a + RowSize;
+                int itemB = b + RowSize;
+                while (itemA < endA && itemB < endB)
+                {
+                    if (!ValuesEqual<TAccess>(ref state, doc, itemA, itemB))
+                    {
+                        return false;
+                    }
+
+                    itemA = default(TAccess).NextIndex(ref state, doc, itemA);
+                    itemB = default(TAccess).NextIndex(ref state, doc, itemB);
+                }
+
+                return itemA >= endA && itemB >= endB;
+            }
+
+            case JsonTokenType.StartObject:
+            {
+                // Two objects written with their properties in the same order (items of one array usually are) are
+                // compared property by property: a name with different values settles it at once. Properties in
+                // another order, or an escaped name, take the general comparison.
+                int endA = default(TAccess).EndIndex(ref state, doc, a);
+                int endB = default(TAccess).EndIndex(ref state, doc, b);
+                if (endA - a != endB - b)
+                {
+                    return false;
+                }
+
+                int valueA = a + (2 * RowSize);
+                int valueB = b + (2 * RowSize);
+                while (valueA - RowSize < endA && valueB - RowSize < endB)
+                {
+                    ReadOnlySpan<byte> nameA = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueA, out bool escapedA);
+                    ReadOnlySpan<byte> nameB = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueB, out bool escapedB);
+                    if (escapedA || escapedB || !nameA.SequenceEqual(nameB))
+                    {
+                        return JsonElementHelpers.DeepEqualsNoParentDocumentCheck(doc, a, doc, b);
+                    }
+
+                    if (!ValuesEqual<TAccess>(ref state, doc, valueA, valueB))
+                    {
+                        return false;
+                    }
+
+                    valueA = default(TAccess).NextIndex(ref state, doc, valueA) + RowSize;
+                    valueB = default(TAccess).NextIndex(ref state, doc, valueB) + RowSize;
+                }
+
+                return valueA - RowSize >= endA && valueB - RowSize >= endB;
             }
 
             default:

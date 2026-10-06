@@ -46,6 +46,11 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private const int MaxInlinedMethodSize = 300;
     private const int MaxSizeWithInlinedMethods = 1500;
 
+    // What a caller already larger than that may still grow by: a large object's small children (its arrays of
+    // strings) are inlined into it, up to this many bytes of them (jasmine 0.88, babelrc 0.85, stylecop 0.88, and
+    // nothing slower, where no limit at all lost up to 27%).
+    private const int MaxGrowthByInlinedMethods = 1500;
+
     // The size of each method's IL, and the calls from one generated method to another (caller, callee), for the
     // choice of the methods the JIT is asked to inline.
     private readonly Dictionary<int, int> sizes = [];
@@ -2023,7 +2028,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
 
             foreach ((int caller, int callee) in this.calls)
             {
-                if (inlined.Contains(callee) && Effective(caller) > MaxSizeWithInlinedMethods)
+                if (inlined.Contains(callee) && Effective(caller) - this.sizes.GetValueOrDefault(caller) > MaxGrowthByInlinedMethods && Effective(caller) > MaxSizeWithInlinedMethods)
                 {
                     dropped.Add(callee);
                 }

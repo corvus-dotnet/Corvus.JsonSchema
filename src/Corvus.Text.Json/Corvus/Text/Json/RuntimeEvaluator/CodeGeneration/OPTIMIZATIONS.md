@@ -14,7 +14,8 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
 - **Small methods inlined.** The JVM inlines a small method into its callers by itself. The .NET JIT is asked to, for
   a method of up to 300 bytes of IL counting what is inlined into it (a map of strings, an array of strings, a small
   closed object, a choice between a string and an array), where each caller stays under 1,500 bytes with its callees
-  inlined. A method that reaches itself is never inlined.
+  inlined. A method that reaches itself is never inlined. A caller already larger than that may still grow by
+  1,500 bytes of inlined callees, so a large object's small children are inlined too.
 - **An entry method for each schema.** The evaluation's state is a local of it, and the entry node's method is inlined
   into it when nothing else calls it: one frame from the public entry to the validation. On documents of a few
   values that is 8 to 19% (an array of strings, a map of strings, yamllint).
@@ -56,6 +57,11 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
   integer bounds makes no separate integer test.
 - **`uniqueItems` over strings.** Up to eight unescaped strings are located once and compared by length before bytes
   (in the interpreter too).
+- **`uniqueItems` over objects and arrays.** Two objects written with their properties in the same order are compared
+  property by property, where a name with different values settles the pair at once; two arrays item by item; and
+  values of different row counts are unequal without a comparison. For a longer array, an object's hash takes each
+  unescaped name and each string or boolean value where it lies. Hashing every object before comparing pairs, and a
+  pairwise limit of 16, both measured slower.
 - **Integer const.** A plain integer literal is compared as a long. Any other number takes the general comparison.
 - **Number keywords** (`numberSection`). Integer bounds and `multipleOf` compared as longs for a plain integer
   literal. Any other number, a bound that is not an integer and a numeric format take the interpreter's evaluation.
