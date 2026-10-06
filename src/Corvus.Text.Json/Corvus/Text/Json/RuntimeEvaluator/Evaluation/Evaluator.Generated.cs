@@ -351,6 +351,19 @@ internal static partial class Evaluator
     [MethodImpl(MethodImplOptions.NoInlining)]
     internal static bool GenEvaluateGeneral(CompiledEntry entry, IJsonDocument document, int index) => EvaluateGeneral(entry.Program, entry.RootNode, document, index, null);
 
+    /// <summary>
+    /// The last word of a value's row (its token type above its count of rows), read unchecked: for a value within a
+    /// container whose rows <see cref="GenEnd"/> checked.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static uint GenRowWord(ref EvaluationState state, int valueIndex) => Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref MemoryMarshal.GetReference(state.RawRows), valueIndex + RawAccess.NumberOfRowsOffset));
+
+    /// <summary>The index after a value, from its row's last word (see <see cref="GenRowWord"/>): past all its rows for an object or an array.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int GenAfter(int valueIndex, uint rowWord) => (rowWord >> 28) >= (uint)JsonTokenType.PropertyName
+        ? valueIndex + RowSize
+        : valueIndex + (RowSize * (int)(rowWord & RawAccess.NumberOfRowsMask)) + RowSize;
+
     /// <summary>Whether the parser found a string value's text to be unescaped and all ASCII (one character to a byte).</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool GenIsAscii(ref EvaluationState state, int valueIndex) => default(RawAccess).IsAsciiText(ref state, null!, valueIndex);

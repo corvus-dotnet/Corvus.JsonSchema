@@ -250,6 +250,14 @@ internal interface ISchemaEmitter
     /// <param name="nodeId">The node.</param>
     void FailUnlessNumberKeywords(int nodeId);
 
+    /// <summary>
+    /// Says that the next loop started (an object's properties, an array's items) has values that are not, for the
+    /// most part, tested to be of a scalar type: the loop then works out where the next value starts from the
+    /// value's row before the value's code. Without it the loop does so only after a value that was not tested to be
+    /// a scalar, which is one row.
+    /// </summary>
+    void AdvanceFromRow();
+
     /// <summary>Fails unless the current value (a string) matches a pattern.</summary>
     /// <param name="matcher">The pattern's matcher.</param>
     void FailUnlessPattern(PatternMatcher matcher);

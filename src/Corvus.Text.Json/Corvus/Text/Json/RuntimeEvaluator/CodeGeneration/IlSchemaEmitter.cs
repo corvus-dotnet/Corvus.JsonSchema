@@ -70,6 +70,8 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenTokenAndNext = Helper(nameof(Evaluator.GenTokenAndNext));
     private static readonly MethodInfo GenName = Helper(nameof(Evaluator.GenName));
     private static readonly MethodInfo GenIsAscii = Helper(nameof(Evaluator.GenIsAscii));
+    private static readonly MethodInfo GenRowWord = Helper(nameof(Evaluator.GenRowWord));
+    private static readonly MethodInfo GenAfter = Helper(nameof(Evaluator.GenAfter));
     private static readonly MethodInfo GenEnter = Helper(nameof(Evaluator.GenEnter));
     private static readonly MethodInfo GenEvaluateGeneral = Helper(nameof(Evaluator.GenEvaluateGeneral));
     private static readonly MethodInfo GenTryIntegerKey = Helper(nameof(Evaluator.GenTryIntegerKey));
@@ -107,7 +109,6 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     // The current object or array: its locals, and the labels of its loop.
     private LocalBuilder? end;
     private LocalBuilder? value;
-    private LocalBuilder? next;
     private LocalBuilder? token;
     private LocalBuilder? seen;
     private Label nextValue;
@@ -144,6 +145,14 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     // before the case's code runs, and a trie's deeper levels are only reached on a match, from which control never
     // returns to the level above). A fresh local for every use gives a large object hundreds of locals, more than
     // the JIT keeps in registers.
+    private readonly Stack<bool> scalarBeforeBlock = new();
+    private LocalBuilder? rowWord;
+    private LocalBuilder? next;
+    private bool advanceNextLoopFromRow;
+    private bool advancesFromRow;
+    private Label nextScalar;
+    private bool valueKnownScalar;
+    private bool afterCaseIsNextValue;
     private LocalBuilder? contained;
     private Label containsSettled;
     private LocalBuilder? dispatchLocation;
@@ -182,6 +191,9 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         this.selectedBranches = null;
         this.longValue = null;
         this.contained = null;
+        this.rowWord = null;
+        this.next = null;
+        this.advanceNextLoopFromRow = false;
         this.dispatchLocation = null;
         this.dispatchLength = null;
         this.dispatchFirst = null;
@@ -211,7 +223,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     public void EndMethod()
     {
         ILGenerator il = this.Il;
-        il.MarkLabel(this.fail);
+        this.Mark(this.fail);
         il.Emit(OpCodes.Ldc_I4_0);
         il.Emit(OpCodes.Ret);
         this.sizes[this.currentNode] = il.ILOffset;
@@ -303,7 +315,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     /// <inheritdoc/>
     public void EndOwnKeywords()
     {
-        this.Il.MarkLabel(this.afterOwnKeywords);
+        this.Mark(this.afterOwnKeywords);
         this.ownKeywords = false;
     }
 
@@ -340,8 +352,11 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     {
         (Label otherwise, Label end, _) = this.blocks.Pop();
         this.Il.Emit(OpCodes.Br, end);
-        this.Il.MarkLabel(otherwise);
+        this.Mark(otherwise);
         this.blocks.Push((otherwise, end, true));
+
+        // What was known before the block is known where its other path starts.
+        this.valueKnownScalar = this.scalarBeforeBlock.Peek();
     }
 
     /// <inheritdoc/>
@@ -350,10 +365,13 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         (Label otherwise, Label end, bool hasOtherwise) = this.blocks.Pop();
         if (!hasOtherwise)
         {
-            this.Il.MarkLabel(otherwise);
+            this.Mark(otherwise);
         }
 
-        this.Il.MarkLabel(end);
+        this.Mark(end);
+
+        // And after it: both of its paths started from there.
+        this.valueKnownScalar = this.scalarBeforeBlock.Pop();
     }
 
     /// <inheritdoc/>
@@ -373,7 +391,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     public void EndAlternatives()
     {
         this.Il.Emit(OpCodes.Br, this.fail);
-        this.Il.MarkLabel(this.ends.Pop());
+        this.Mark(this.ends.Pop());
     }
 
     /// <inheritdoc/>
@@ -443,7 +461,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldc_I4, 2 * RowSize);
         il.Emit(OpCodes.Add);
         il.Emit(OpCodes.Stloc, property);
-        il.MarkLabel(search);
+        this.Mark(search);
         il.Emit(OpCodes.Ldloc, property);
         il.Emit(OpCodes.Ldc_I4, RowSize);
         il.Emit(OpCodes.Sub);
@@ -455,28 +473,28 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Call, GenTokenAndNext);
         il.Emit(OpCodes.Stloc, valueToken);
         this.DispatchByWords([discriminator.PropertyName], GenName, [found], nextProperty, slowName);
-        il.MarkLabel(slowName);
+        this.Mark(slowName);
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_1);
         il.Emit(OpCodes.Ldloc, property);
         il.Emit(OpCodes.Ldsfld, this.Constant(discriminator.PropertyName));
         il.Emit(OpCodes.Call, GenNameEquals);
         il.Emit(OpCodes.Brtrue, found);
-        il.MarkLabel(nextProperty);
+        this.Mark(nextProperty);
         il.Emit(OpCodes.Ldloc, following);
         il.Emit(OpCodes.Ldc_I4, RowSize);
         il.Emit(OpCodes.Add);
         il.Emit(OpCodes.Stloc, property);
         il.Emit(OpCodes.Br, search);
 
-        il.MarkLabel(absent);
+        this.Mark(absent);
         il.Emit(OpCodes.Ldc_I4_0);
         il.Emit(OpCodes.Conv_I8);
         il.Emit(OpCodes.Stloc, this.selectedBranches);
         il.Emit(OpCodes.Br, discriminator.AllRequire ? discriminated : otherwise);
 
         // The value: a string by words to the mask of its branches, anything else by the interpreter's lookup.
-        il.MarkLabel(found);
+        this.Mark(found);
         il.Emit(OpCodes.Ldloc, valueToken);
         il.Emit(OpCodes.Ldc_I4, (int)JsonTokenType.String);
         il.Emit(OpCodes.Bne_Un, byValue);
@@ -489,18 +507,18 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         this.DispatchByWords([.. strings], GenStringLocation, cases, unknown, byValue);
         for (int i = 0; i < cases.Length; i++)
         {
-            il.MarkLabel(cases[i]);
+            this.Mark(cases[i]);
             il.Emit(OpCodes.Ldc_I8, unchecked((long)masks[i]));
             il.Emit(OpCodes.Stloc, this.selectedBranches);
             il.Emit(OpCodes.Br, discriminated);
         }
 
-        il.MarkLabel(unknown);
+        this.Mark(unknown);
         il.Emit(OpCodes.Ldc_I8, unchecked((long)Mask(discriminator.UnknownString)));
         il.Emit(OpCodes.Stloc, this.selectedBranches);
         il.Emit(OpCodes.Br, discriminated);
 
-        il.MarkLabel(byValue);
+        this.Mark(byValue);
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_1);
         il.Emit(OpCodes.Ldloc, property);
@@ -508,9 +526,10 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Call, GenSelectByValue);
         il.Emit(OpCodes.Stloc, this.selectedBranches);
 
-        il.MarkLabel(discriminated);
+        this.Mark(discriminated);
         this.value = outerValue;
         this.blocks.Push((otherwise, il.DefineLabel(), false));
+        this.scalarBeforeBlock.Push(this.valueKnownScalar);
 
         static ulong Mask(int[] selected)
         {
@@ -557,7 +576,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldloc, this.count!);
         il.Emit(OpCodes.Ldc_I4_1);
         il.Emit(OpCodes.Bgt, this.fail);
-        il.MarkLabel(skip);
+        this.Mark(skip);
     }
 
     /// <inheritdoc/>
@@ -597,14 +616,16 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     public void EndTokenCase()
     {
         (Label otherwise, _, _) = this.blocks.Pop();
+        bool knownBefore = this.scalarBeforeBlock.Pop();
         this.Il.Emit(OpCodes.Br, this.ends.Peek());
-        this.Il.MarkLabel(otherwise);
+        this.Mark(otherwise);
+        this.valueKnownScalar = knownBefore;
     }
 
     /// <inheritdoc/>
     public void EndTokenSwitch()
     {
-        this.Il.MarkLabel(this.ends.Pop());
+        this.Mark(this.ends.Pop());
     }
 
     /// <inheritdoc/>
@@ -622,7 +643,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Call, GenEvalGeneral);
         il.Emit(OpCodes.Ret);
-        il.MarkLabel(unseen);
+        this.Mark(unseen);
     }
 
     /// <inheritdoc/>
@@ -702,7 +723,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldc_I8, 1L << condition);
         il.Emit(OpCodes.Or);
         il.Emit(OpCodes.Stloc, this.holds);
-        il.MarkLabel(not);
+        this.Mark(not);
     }
 
     /// <inheritdoc/>
@@ -722,7 +743,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldc_I8, 1L << condition);
         il.Emit(OpCodes.Or);
         il.Emit(OpCodes.Stloc, this.reached);
-        il.MarkLabel(not);
+        this.Mark(not);
     }
 
     /// <inheritdoc/>
@@ -736,12 +757,13 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             Label next = il.DefineLabel();
             this.BranchUnlessActive(condition, polarity, next);
             il.Emit(OpCodes.Br, body);
-            il.MarkLabel(next);
+            this.Mark(next);
         }
 
         il.Emit(OpCodes.Br, otherwise);
-        il.MarkLabel(body);
+        this.Mark(body);
         this.blocks.Push((otherwise, il.DefineLabel(), false));
+        this.scalarBeforeBlock.Push(this.valueKnownScalar);
     }
 
     /// <inheritdoc/>
@@ -758,14 +780,14 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         ILGenerator il = this.Il;
         (Label outer, Label end) = this.tries.Peek();
         il.Emit(OpCodes.Br, end);
-        il.MarkLabel(this.fail);
+        this.Mark(this.fail);
         this.fail = outer;
     }
 
     /// <inheritdoc/>
     public void EndTry()
     {
-        this.Il.MarkLabel(this.tries.Pop().End);
+        this.Mark(this.tries.Pop().End);
     }
 
     /// <inheritdoc/>
@@ -853,7 +875,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         Label skip = il.DefineLabel();
         this.BranchIfSeen(mask, counted);
         il.Emit(OpCodes.Br, skip);
-        il.MarkLabel(counted);
+        this.Mark(counted);
         il.Emit(OpCodes.Ldloc, this.count!);
         il.Emit(OpCodes.Ldc_I4_1);
         il.Emit(OpCodes.Add);
@@ -861,7 +883,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldloc, this.count!);
         il.Emit(OpCodes.Ldc_I4_1);
         il.Emit(OpCodes.Bgt, this.fail);
-        il.MarkLabel(skip);
+        this.Mark(skip);
     }
 
     /// <inheritdoc/>
@@ -1024,6 +1046,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         ILGenerator il = this.Il;
         this.casesThenCommon = false;
         this.afterCase = this.nextValue;
+        this.afterCaseIsNextValue = true;
         this.cases = new Label[positions];
         for (int i = 0; i < positions; i++)
         {
@@ -1085,7 +1108,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Stloc, this.contained!);
         this.OnFail();
         this.EndTry();
-        il.MarkLabel(this.containsSettled);
+        this.Mark(this.containsSettled);
     }
 
     /// <inheritdoc/>
@@ -1184,7 +1207,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         {
             if (childByToken[i] >= 0 && byChild.Remove(childByToken[i], out Label label))
             {
-                il.MarkLabel(label);
+                this.Mark(label);
                 if (generatedByToken[i])
                 {
                     il.Emit(OpCodes.Ldarg_0);
@@ -1213,6 +1236,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         ILGenerator il = this.Il;
         this.casesThenCommon = thenCommon;
         this.afterCase = thenCommon ? il.DefineLabel() : this.nextValue;
+        this.afterCaseIsNextValue = !thenCommon;
         byte[][] keys = names.Keys;
         this.cases = new Label[keys.Length];
         for (int i = 0; i < keys.Length; i++)
@@ -1225,7 +1249,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         this.DispatchByWords(keys, GenName, this.cases, this.otherNames, slow);
 
         // Escaped names, names at the very end of the text and very long names: the interpreter's lookup, then the case.
-        il.MarkLabel(slow);
+        this.Mark(slow);
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_1);
         il.Emit(OpCodes.Ldloc, this.value!);
@@ -1246,13 +1270,13 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     /// <inheritdoc/>
     public void BeginCase(int index)
     {
-        this.Il.MarkLabel(index < 0 ? this.otherNames : this.cases![index]);
+        this.Mark(index < 0 ? this.otherNames : this.cases![index]);
     }
 
     /// <inheritdoc/>
     public void EndCase()
     {
-        this.Il.Emit(OpCodes.Br, this.afterCase);
+        this.Il.Emit(OpCodes.Br, this.valueKnownScalar && !this.advancesFromRow && this.afterCaseIsNextValue ? this.nextScalar : this.afterCase);
     }
 
     /// <inheritdoc/>
@@ -1260,7 +1284,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     {
         if (this.casesThenCommon)
         {
-            this.Il.MarkLabel(this.afterCase);
+            this.Mark(this.afterCase);
         }
 
         this.cases = null;
@@ -1289,6 +1313,12 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     }
 
     /// <inheritdoc/>
+    public void AdvanceFromRow()
+    {
+        this.advanceNextLoopFromRow = true;
+    }
+
+    /// <inheritdoc/>
     public void FailUnlessPattern(PatternMatcher matcher)
     {
         this.ValueTest(GenPattern, this.Constant(matcher), byAddress: false);
@@ -1301,6 +1331,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         if (keys.Length == 0 || keys.Length > MaxWordsSet || this.Il.ILOffset > MaxMethodSizeForWordsSets || Array.Exists(keys, k => k.Length > MaxWordsName))
         {
             this.ValueTest(GenStringSet, this.Constant(allowed), byAddress: false);
+            this.valueKnownScalar = true;
             return;
         }
 
@@ -1315,15 +1346,19 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldc_I4, (int)JsonTokenType.String);
         il.Emit(OpCodes.Bne_Un, this.fail);
         this.DispatchByWords(keys, GenStringLocation, cases, this.fail, slow);
-        il.MarkLabel(slow);
+        this.Mark(slow);
         this.ValueTest(GenStringSet, this.Constant(allowed), byAddress: false);
-        il.MarkLabel(member);
+        this.Mark(member);
+
+        // A member of the set is a string: one row.
+        this.valueKnownScalar = true;
     }
 
     /// <inheritdoc/>
     public void FailUnlessStringConst(byte[] expected)
     {
         this.ValueTest(GenStringConst, this.Constant(expected), byAddress: false);
+        this.valueKnownScalar = true;
     }
 
     /// <inheritdoc/>
@@ -1378,7 +1413,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         }
 
         il.Emit(OpCodes.Br, within);
-        il.MarkLabel(notAscii);
+        this.Mark(notAscii);
         if (maxLength >= 0)
         {
             il.Emit(OpCodes.Ldloc, bytes);
@@ -1398,7 +1433,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         }
 
         il.Emit(OpCodes.Br, within);
-        il.MarkLabel(counted);
+        this.Mark(counted);
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_1);
         il.Emit(OpCodes.Ldloc, this.value!);
@@ -1406,7 +1441,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldc_I4, maxLength);
         il.Emit(OpCodes.Call, GenStringLengthCounted);
         il.Emit(OpCodes.Brfalse, this.fail);
-        il.MarkLabel(within);
+        this.Mark(within);
     }
 
     /// <inheritdoc/>
@@ -1435,7 +1470,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
                 il.Emit(OpCodes.Br, done);
             }
 
-            il.MarkLabel(call);
+            this.Mark(call);
         }
 
         if (generated)
@@ -1455,7 +1490,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         }
 
         il.Emit(OpCodes.Brfalse, this.fail);
-        il.MarkLabel(done);
+        this.Mark(done);
     }
 
     /// <summary>Creates the type, sets its constants, compiles its methods and returns them by node.</summary>
@@ -1558,7 +1593,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
 
         this.Succeed();
 
-        il.MarkLabel(isContainer);
+        this.Mark(isContainer);
         if (!acceptsContainer)
         {
             il.Emit(OpCodes.Br, this.fail);
@@ -1595,8 +1630,8 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         ILGenerator il = this.Il;
         this.end = il.DeclareLocal(typeof(int));
         this.value = il.DeclareLocal(typeof(int));
-        this.next = il.DeclareLocal(typeof(int));
         this.nextValue = il.DefineLabel();
+        this.nextScalar = il.DefineLabel();
         this.endOfLoop = il.DefineLabel();
         this.loop = il.DefineLabel();
         il.Emit(OpCodes.Ldarg_0);
@@ -1615,7 +1650,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             il.Emit(OpCodes.Stloc, this.seen);
         }
 
-        il.MarkLabel(this.loop);
+        this.Mark(this.loop);
         il.Emit(OpCodes.Ldloc, this.value);
         if (isObject)
         {
@@ -1625,18 +1660,58 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
 
         il.Emit(OpCodes.Ldloc, this.end);
         il.Emit(OpCodes.Bge, this.endOfLoop);
+
+        // A loop whose values are not mostly tested to be scalars (see AdvanceFromRow) reads the value's token and
+        // works out the next value's index together, before the value's code.
+        this.valueKnownScalar = false;
+        this.advancesFromRow = this.advanceNextLoopFromRow;
+        this.advanceNextLoopFromRow = false;
+        if (this.advancesFromRow)
+        {
+            this.next ??= il.DeclareLocal(typeof(int));
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldloc, this.value);
+            il.Emit(OpCodes.Ldloca, this.next);
+            il.Emit(OpCodes.Call, GenTokenAndNext);
+            il.Emit(OpCodes.Stloc, this.token!);
+            return;
+        }
+
+        // Otherwise only the token is taken from the row's last word here, and the word is kept: it holds the count
+        // of rows too, for the end of the pass over a value that was not tested to be a scalar.
+        this.rowWord ??= il.DeclareLocal(typeof(uint));
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldloc, this.value);
-        il.Emit(OpCodes.Ldloca, this.next);
-        il.Emit(OpCodes.Call, GenTokenAndNext);
+        il.Emit(OpCodes.Call, GenRowWord);
+        il.Emit(OpCodes.Stloc, this.rowWord);
+        il.Emit(OpCodes.Ldloc, this.rowWord);
+        il.Emit(OpCodes.Ldc_I4, 28);
+        il.Emit(OpCodes.Shr_Un);
         il.Emit(OpCodes.Stloc, this.token!);
     }
 
     private void EndLoop(bool isObject)
     {
+        // A loop that worked out the next index up front (AdvanceFromRow) uses it after every value.
         ILGenerator il = this.Il;
-        il.MarkLabel(this.nextValue);
-        il.Emit(OpCodes.Ldloc, this.next!);
+        if (this.valueKnownScalar && !this.advancesFromRow)
+        {
+            il.Emit(OpCodes.Br, this.nextScalar);
+        }
+
+        // After any value: its row says how many rows it has.
+        this.Mark(this.nextValue);
+        if (this.advancesFromRow)
+        {
+            il.Emit(OpCodes.Ldloc, this.next!);
+        }
+        else
+        {
+            il.Emit(OpCodes.Ldloc, this.value!);
+            il.Emit(OpCodes.Ldloc, this.rowWord!);
+            il.Emit(OpCodes.Call, GenAfter);
+        }
+
         if (isObject)
         {
             il.Emit(OpCodes.Ldc_I4, RowSize);
@@ -1645,7 +1720,15 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
 
         il.Emit(OpCodes.Stloc, this.value!);
         il.Emit(OpCodes.Br, this.loop);
-        il.MarkLabel(this.endOfLoop);
+
+        // After a value tested to be a scalar: it is one row.
+        this.Mark(this.nextScalar);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Ldc_I4, isObject ? 2 * RowSize : RowSize);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Stloc, this.value!);
+        il.Emit(OpCodes.Br, this.loop);
+        this.Mark(this.endOfLoop);
     }
 
     private LocalBuilder AlternativeFailures(int group)
@@ -1763,6 +1846,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         Label otherwise = il.DefineLabel();
         il.Emit(toOtherwise, otherwise);
         this.blocks.Push((otherwise, il.DefineLabel(), false));
+        this.scalarBeforeBlock.Push(this.valueKnownScalar);
     }
 
     // The dispatch on the text at a location (a property's name, or a string value): by length, then by a trie of
@@ -1794,7 +1878,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ldc_I4, sorted[middle].Key);
         il.Emit(OpCodes.Bge, upper);
         this.BranchByValue(value, sorted, from, middle, none);
-        il.MarkLabel(upper);
+        this.Mark(upper);
         this.BranchByValue(value, sorted, middle, to, none);
     }
 
@@ -1868,7 +1952,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
                 continue;
             }
 
-            il.MarkLabel(lengthLabels[nameLength]);
+            this.Mark(lengthLabels[nameLength]);
             if (nameLength == 0)
             {
                 il.Emit(OpCodes.Br, cases[sameLength.Value[0]]);
@@ -1959,7 +2043,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             il.Emit(OpCodes.Ldc_I8, unchecked((long)word));
             il.Emit(OpCodes.Bne_Un, other);
             this.WordTrie(keys, byWord[word], positions, depth + 1, firstWidth, location, first, cases, none);
-            il.MarkLabel(other);
+            this.Mark(other);
         }
 
         il.Emit(OpCodes.Br, none);
@@ -1979,6 +2063,14 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         il.Emit(OpCodes.Ret);
         Type created = attribute.CreateType();
         assembly.SetCustomAttribute(new CustomAttributeBuilder(created.GetConstructor([typeof(string)])!, [name]));
+    }
+
+    // Marks a label. Paths join at a label, so what the code before it established about the loop's value (that it
+    // is a scalar) is not known after it.
+    private void Mark(Label label)
+    {
+        this.valueKnownScalar = false;
+        this.Il.MarkLabel(label);
     }
 
     private MethodBuilder Callee(int nodeId)
@@ -2157,7 +2249,15 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             il.Emit(lexical ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Call, GenIsInteger);
             il.Emit(OpCodes.Brfalse, this.fail);
-            il.MarkLabel(notNumber);
+            this.Mark(notNumber);
+        }
+
+        // Past this test the loop's value has one of these token types: when none is an object or an array, it is
+        // one row (see EndLoop). A label marked after this forgets it.
+        const int Containers = (1 << (int)JsonTokenType.StartObject) | (1 << (int)JsonTokenType.StartArray);
+        if (!atMethodValue && (tokens & Containers) == 0 && !(integerOnly && (tokens & (1 << (int)JsonTokenType.Number)) != 0))
+        {
+            this.valueKnownScalar = true;
         }
     }
 

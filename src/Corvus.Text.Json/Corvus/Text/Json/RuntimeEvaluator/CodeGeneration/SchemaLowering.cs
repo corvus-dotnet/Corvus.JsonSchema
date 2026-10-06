@@ -662,6 +662,7 @@ internal static class SchemaLowering
             }
 
             var names = new Utf8NameMap<PropertyEntry>(named);
+            emitter.AdvanceFromRow();
             emitter.BeginObject(otherTokens, IntegerOnly(node), lexical, acceptsObject, node.MinProperties, node.MaxProperties);
             emitter.BeginNameDispatch(names);
             for (int i = 0; i < unrolled.Length; i++)
@@ -693,6 +694,7 @@ internal static class SchemaLowering
         {
             // One pattern property: a matching name's value takes the pattern's resolution, another the additional one.
             PatternMatcher matcher = node.PatternProperties![0].Matcher;
+            emitter.AdvanceFromRow();
             emitter.BeginObject(otherTokens, IntegerOnly(node), lexical, acceptsObject, node.MinProperties, node.MaxProperties);
             if (matcher.MatchesEverything)
             {
@@ -738,6 +740,7 @@ internal static class SchemaLowering
         // propertyNames (a node the interpreter has no plan for reaches here with it): each name against its schema.
         bool testsNames = node.PropertyNames.IsPresent && !nodes[node.PropertyNames.FastNode].AlwaysTrue;
         bool loop = properties is not null || patterns.Length > 0 || hasAdditional || testsNames;
+        emitter.AdvanceFromRow();
         emitter.BeginObject(otherTokens, IntegerOnly(node), lexical, acceptsObject, node.MinProperties, node.MaxProperties, properties: loop);
         if (loop)
         {
@@ -1013,6 +1016,7 @@ internal static class SchemaLowering
     {
         FusedObject fused = node.Fused!;
         StrictEntry[] entries = fused.FlatEntries!;
+        emitter.AdvanceFromRow();
         emitter.BeginObject(0, integerOnly: false, lexical: false, acceptsObject: true, fused.FlatMinProperties, fused.FlatMaxProperties, otherwiseInterpreted: node.Id);
         emitter.BeginNameDispatch(fused.Entries);
         for (int i = 0; i < entries.Length; i++)
@@ -1048,6 +1052,7 @@ internal static class SchemaLowering
             }
         }
 
+        emitter.AdvanceFromRow();
         emitter.BeginObject(0, integerOnly: false, lexical: false, acceptsObject: true, min, max, otherwiseInterpreted: node.Id);
 
         // The first pass: each known name's value tests and unconditional applications; an unknown name against
@@ -1514,6 +1519,11 @@ internal static class SchemaLowering
             return;
         }
 
+        if (!items.IsTypeOnly)
+        {
+            emitter.AdvanceFromRow();
+        }
+
         emitter.BeginArray(otherTokens, integerOnly: false, lexical: false, acceptsArray: true, node.MinItems, node.MaxItems, node.UniqueItems);
         if (items.IsTypeOnly)
         {
@@ -1578,6 +1588,7 @@ internal static class SchemaLowering
             return;
         }
 
+        emitter.AdvanceFromRow();
         emitter.BeginArray(otherTokens, IntegerOnly(node), lexical, acceptsArray, node.MinItems, node.MaxItems, node.UniqueItems);
         if (node.UniqueItems)
         {
@@ -1596,6 +1607,14 @@ internal static class SchemaLowering
     private static void LowerStrictObject(ISchemaEmitter emitter, SchemaNode[] nodes, SchemaNode node, HashSet<int> requested, Queue<int> pending)
     {
         bool acceptsObject = !node.HasType || (node.Type & TypeMask.Object) != 0;
+
+        // The short advance after a scalar (see ISchemaEmitter.AdvanceFromRow) is for a map of scalars and for a
+        // closed object, where it measured faster. An open object's loop measured slower with it.
+        if (node.Properties is null ? node.AdditionalEntry.TokenBits == 0 : !node.AdditionalRejects)
+        {
+            emitter.AdvanceFromRow();
+        }
+
         emitter.BeginObject(OtherTokens(node, JsonTokenType.StartObject), IntegerOnly(node), (node.Flags & NodeFlags.Draft4) != 0, acceptsObject, node.MinProperties, node.MaxProperties);
         if (node.Properties is not Utf8NameMap<PropertyEntry> properties)
         {

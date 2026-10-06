@@ -19,6 +19,11 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
 - **An entry method for each schema.** The evaluation's state is a local of it, and the entry node's method is inlined
   into it when nothing else calls it: one frame from the public entry to the validation. On documents of a few
   values that is 8 to 19% (an array of strings, a map of strings, yamllint).
+- **One row on after a scalar.** In an array of scalars, a map of scalars and a closed object, the loop reads only the
+  value's token, and a value tested to be of a scalar type (or a member of a string enum) is followed by the next
+  row: where the next value starts is worked out from the row only after a value that was not. Every other loop
+  works it out with the token, as before: with the short form an open object's loop measured 13 to 26% slower, for
+  a reason not found (the cause was in the loop's head, not in where the next index was worked out).
 - **Leaves tested where the value is.** A leaf child of an array or an object (bounds, a length, a pattern, a small
   enum) is emitted in the loop, which has the value's token already, not called as a method. An enum of more than
   eight strings stays a method.
