@@ -69,16 +69,13 @@ internal static partial class Evaluator
     }
 
     /// <summary>
-    /// The document's rows and text. Nearly every document evaluated is a <see cref="ParsedJsonDocument{T}"/> of
-    /// <see cref="JsonElement"/>: testing for that exact (sealed) type is one comparison, and its accessor is then
-    /// called directly and inlined, where the general case is a virtual call on every document.
+    /// The document's rows and text: from the block the document keeps them in together when it has one (a parsed
+    /// document of any element type), with no test of the document's type, and otherwise by asking the document.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool RawSpans(JsonDocument parsed, out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8)
     {
-        return parsed is ParsedJsonDocument<JsonElement> exact
-            ? exact.TryGetRawSpans(out rows, out utf8)
-            : parsed.TryGetRawSpans(out rows, out utf8);
+        return parsed.TryGetRawSpansDirect(out rows, out utf8);
     }
 
     /// <summary>

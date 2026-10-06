@@ -99,6 +99,14 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
         }
 
         _parsedData = parsedData;
+
+        // The rows and the text together, for a reader of both (JsonDocument._raw). The text's range within its
+        // array is established here, once.
+        if (_utf8Array is byte[] utf8Array && (uint)_utf8Start <= (uint)utf8Array.Length && (uint)utf8Json.Length <= (uint)(utf8Array.Length - _utf8Start) && utf8Json.Length > 0)
+        {
+            _raw = new RawView { Rows = parsedData.RawData, Utf8 = utf8Array, Utf8Start = _utf8Start, Utf8Length = utf8Json.Length };
+        }
+
         _extraRentedArrayPoolBytes = extraRentedArrayPoolBytes;
         _extraPooledByteBufferWriter = extraPooledByteBufferWriter;
         _extraOwner = extraOwner;
@@ -129,6 +137,8 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
             return;
         }
 
+        // Cleared first: a reader then finds nothing here, asks the document, and is told it is disposed.
+        _raw = default;
         DisposeCore();
 
         _utf8Json = ReadOnlyMemory<byte>.Empty;

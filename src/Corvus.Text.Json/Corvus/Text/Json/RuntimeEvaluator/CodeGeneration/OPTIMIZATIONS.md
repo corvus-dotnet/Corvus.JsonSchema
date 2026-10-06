@@ -148,9 +148,10 @@ finds no node left to the interpreter.
   the row's last word, 1.07 reading the row again on the rare exit, and 1.11 with the scalar exit emitted first, each
   against the present code, by the 15-process measure. Its properties end with two taken jumps where a closed
   object's end with one. Open objects are emitted as before.
-- **The entry.** An empty object costs 3.7 ns through the public entry (5.1 ns in the protocol's runner) against the
-  Java port's 2.6. No single part of it is large: the public path was a quarter of its instructions and removing most
-  of that gained 2 to 3%.
+- **The entry.** An empty object costs 3.2 ns through the public entry against the Java port's 2.6. The public path
+  was a quarter of its instructions and removing most of that gained 2 to 3%. Keeping the document's rows and text
+  together in one block (`JsonDocument._raw`), read with no test of the document's type, gained 13% on an empty
+  object and 4 to 5% on other small documents. What is left has no single large part.
 - **Integers.** About 2.0 ns for a bounded integer against the Java port's 1.2: the Java tape holds the value from
   the parse, and here the digits are read from the text on every validation.
 

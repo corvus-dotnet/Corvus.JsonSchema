@@ -569,6 +569,56 @@ public class RuntimeCodeGenerationTests
     }
 
     [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void DocumentsOfEveryBackingAreEvaluatedAndADisposedOneIsRefused(bool generatedCode)
+    {
+        // An evaluation reaches a parsed document's rows and text through the block the document keeps them in
+        // together, when its text is in an array, and otherwise by asking the document: text in an array, text at
+        // an offset within a larger array, text in memory that has no array, and a disposed document.
+        const string Schema = """{"type": "object", "required": ["name"], "properties": {"name": {"type": "string", "minLength": 2}}, "additionalProperties": false}""";
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(Schema);
+        if (generatedCode)
+        {
+            if (!SchemaLowering.IsSupported)
+            {
+                Assert.Inconclusive("Dynamic code is not supported here.");
+            }
+
+            Assert.IsTrue(evaluator.CompileGeneratedCode());
+        }
+
+        byte[] valid = """{"name": "abc"}"""u8.ToArray();
+        byte[] invalid = """{"name": "a"}"""u8.ToArray();
+        foreach ((byte[] text, bool expected) in ((byte[], bool)[])[(valid, true), (invalid, false)])
+        {
+            using (ParsedJsonDocument<JsonElement> whole = ParsedJsonDocument<JsonElement>.Parse(text))
+            {
+                Assert.AreEqual(expected, evaluator.Evaluate(whole.RootElement));
+            }
+
+            byte[] padded = new byte[text.Length + 37];
+            padded.AsSpan().Fill((byte)' ');
+            text.CopyTo(padded, 19);
+            using (ParsedJsonDocument<JsonElement> offset = ParsedJsonDocument<JsonElement>.Parse(padded.AsMemory(19, text.Length)))
+            {
+                Assert.AreEqual(expected, evaluator.Evaluate(offset.RootElement));
+            }
+
+            var manager = new NoArrayMemory(text);
+            using (ParsedJsonDocument<JsonElement> unmanaged = ParsedJsonDocument<JsonElement>.Parse(manager.Memory))
+            {
+                Assert.AreEqual(expected, evaluator.Evaluate(unmanaged.RootElement));
+            }
+        }
+
+        ParsedJsonDocument<JsonElement> disposed = ParsedJsonDocument<JsonElement>.Parse(valid);
+        JsonElement root = disposed.RootElement;
+        disposed.Dispose();
+        Assert.ThrowsExactly<ObjectDisposedException>(() => evaluator.Evaluate(root));
+    }
+
+    [TestMethod]
     public void FlagModeEvaluationAllocatesNothing()
     {
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(Schema);
@@ -618,6 +668,23 @@ public class RuntimeCodeGenerationTests
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"id": 2}""");
         Assert.IsTrue(evaluator.Evaluate(doc.RootElement));
         Assert.IsTrue(SchemaLowering.CompiledCount > before);
+    }
+
+    // Memory that gives no array (a memory manager does not, unless it says otherwise), so that the document cannot
+    // keep its text as an array.
+    private sealed class NoArrayMemory(byte[] content) : System.Buffers.MemoryManager<byte>
+    {
+        public override Span<byte> GetSpan() => content;
+
+        public override System.Buffers.MemoryHandle Pin(int elementIndex = 0) => throw new NotSupportedException();
+
+        public override void Unpin()
+        {
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+        }
     }
 }
 #endif
