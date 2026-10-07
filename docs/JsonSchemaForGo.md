@@ -2,7 +2,7 @@
 
 [corvus-json-schema](https://pkg.go.dev/github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema) is the
 Corvus JSON Schema evaluator for Go: draft 4, 6, 7, 2019-09 and 2020-12. It is a port of the .NET runtime evaluator
-(see [Runtime Evaluator](RuntimeEvaluator.md)), and gives the same results and annotations. It needs Go 1.27 or later
+(see [Runtime Evaluator](RuntimeEvaluator.md)), and gives the same results and annotations. It needs Go 1.25 or later
 and has no dependencies outside the standard library.
 
 A schema is compiled once into a node graph and fail-fast plans: each plan holds only the checks its subschema needs,

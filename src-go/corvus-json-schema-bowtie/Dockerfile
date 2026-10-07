@@ -1,6 +1,7 @@
 # Bowtie harness for the Corvus.JsonSchema Go evaluator (copy this directory to
 # bowtie/implementations/go-corvus-jsonschema). The image builds the library from the repository at CORVUS_REF (a
-# branch or a tag, such as src-go/corvus-json-schema/v0.1.0), with the harness beside it.
+# branch or a tag, such as src-go/corvus-json-schema/v0.1.0), with the harness beside it. The module needs Go 1.25 or
+# later and gives the same results with every Go release. The image builds it with the latest.
 FROM golang:1.27-alpine AS build
 RUN apk add --no-cache git
 ARG CORVUS_REPO=https://github.com/corvus-dotnet/Corvus.JsonSchema.git

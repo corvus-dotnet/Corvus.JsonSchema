@@ -277,11 +277,11 @@ Never push a `src-go/corvus-json-schema/v` tag by hand. `build.yml` publishes Nu
 it. Its tag filter only accepts release versions (`[0-9]+.[0-9]+.[0-9]+*`), which a tag that starts `src-go/` cannot
 match, and the workflow's own tag push uses `GITHUB_TOKEN`, which starts no other workflow.
 
-The minimum Go version is the `go` directive in `go.mod`, which `go.yml` tests to the patch. It is Go 1.27 because
-the module's regular expression engine takes general categories, scripts and case folding from the standard
-library's `unicode` package and its other Unicode properties from its own Unicode 17 tables, and Go 1.27 is the first
-release whose `unicode` package is Unicode 17. Do not lower it without making those tables independent of the
-standard library's.
+The minimum Go version is the `go` directive in `go.mod` (`go 1.25.0`), which `go.yml` tests to the patch, along
+with Go 1.26, Go 1.27 and the latest release. The module takes no Unicode data from the toolchain. Every property
+and case mapping it reads is in its own Unicode 17 tables (`internal/ucd`), so a release gives the same results
+with every Go version. `TestNoToolchainUnicodeData` fails if that dependency returns. When a Go minor version is
+released, add it to the matrix of `go.yml`.
 
 ### After the first release
 

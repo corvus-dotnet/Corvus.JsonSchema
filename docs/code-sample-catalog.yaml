@@ -1881,7 +1881,8 @@ skills:
       - {index: 0, language: csharp, lines: [20, 30], category: compilable, verified: false}
   - path: ".github/skills/corvus-go-evaluator/SKILL.md"
     blocks:
-      - {index: 0, language: bash, lines: [41, 47]}
+      - {index: 0, language: bash, lines: [42, 48]}
+      - {index: 1, language: powershell, lines: [82, 84]}
   - path: ".github/skills/corvus-java-evaluator/SKILL.md"
     blocks:
       - {index: 0, language: bash, lines: [32, 36]}

@@ -28,17 +28,18 @@ permissions:
 
 jobs:
   test:
-    # Every platform, with the oldest Go the module accepts (the go directive of its go.mod, to the patch) and the
-    # latest. The minimum is Go 1.27: internal/ecmaregex needs the Unicode 17 tables of its unicode package. Go
-    # supports its two most recent minor releases, so when Go 1.28 is released "stable" moves to it and the minimum
-    # stays the older one.
+    # Every platform, with the oldest Go the module accepts (the go directive of its go.mod, to the patch), each
+    # newer minor release, and the latest. The module takes no Unicode data from the toolchain (its tables are in
+    # internal/ucd), so every one of them must give the same results. Go 1.25 and 1.26 carry Unicode 15 and Go 1.27
+    # carries Unicode 17, which is what makes the older ones worth testing. When a Go minor version is released,
+    # add it here. "stable" moves to it at once.
     name: Build and test corvus-json-schema (Go ${{ matrix.go }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
-        go: [minimum, stable]
+        go: [minimum, '1.26', '1.27', stable]
     defaults:
       run:
         shell: bash

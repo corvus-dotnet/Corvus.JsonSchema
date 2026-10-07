@@ -1,7 +1,7 @@
 # corvus-json-schema (Go)
 
 A JSON Schema evaluator for Go (draft 4, 6, 7, 2019-09 and 2020-12), ported from the Corvus.Text.Json V5 runtime
-evaluator (`Corvus.Text.Json.RuntimeEvaluator`) by way of its Rust port (`src-rs/corvus-json-schema`). Go 1.27 or
+evaluator (`Corvus.Text.Json.RuntimeEvaluator`) by way of its Rust port (`src-rs/corvus-json-schema`). Go 1.25 or
 later. It has no dependencies outside the standard library.
 
 - **Conformant**: passes all 7,966 tests of the JSON-Schema-Test-Suite (required, optional and `optional/format`,
@@ -241,11 +241,29 @@ has the harnesses and how to run them.
 
 ## Unicode
 
-`pattern` reads general categories, scripts and case folding from the standard library's `unicode` package, and the
-binary properties and script extensions from tables in `internal/ecmaregex` generated from Unicode 17. Go 1.27 is
-the first release whose `unicode` package is Unicode 17, which is why it is the minimum. With an earlier Go the two
-would disagree. With Go 1.26, whose `unicode` package is Unicode 15, 11 scripts do not resolve in
-`\p{Script=...}`, 116 characters fold case differently, and the general categories are those of Unicode 15.
+The module takes no Unicode data from the Go toolchain. The standard library's `unicode` package follows the
+toolchain (Unicode 15 in Go 1.25 and 1.26, Unicode 17 in Go 1.27), and so do the `\p` classes and the case folding
+of `regexp` and the case functions of `strings`. A module that read them would give different answers with
+different toolchains.
+
+Every property the module reads is in `internal/ucd`, whose tables hold Unicode 17. They are the general
+categories, the scripts and script extensions, the binary properties ECMA-262 lists, simple case folding and the
+simple uppercase mapping. `pattern` and `patternProperties` build their `\p{...}` classes and their case-insensitive groups from
+those tables, and a pattern that runs on the standard library's `regexp` is handed explicit ranges. The `hostname`,
+`idn-hostname` and `idn-email` formats read the same tables. RFC 5892 defines the IDNA2008 code point classes by
+rules over Unicode properties and not for one version of Unicode, and the module applies them to Unicode 17. A URI
+is normalized by lowering the letters A to Z only, as RFC 3986 and RFC 3987 specify.
+
+The results are therefore the same with every Go release from 1.25, and they change only when the tables are
+generated again. `internal/ucd/gen_tables.ps1` writes them from the Unicode data of the `regress` crate, which the
+Rust port uses:
+
+```powershell
+pwsh internal/ucd/gen_tables.ps1 -RegressTables ~/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regress-0.12.0/src/unicodetables.rs
+```
+
+`TestNoToolchainUnicodeData` fails if a file of the module that is not a test imports `unicode`, hands `regexp` a
+Unicode class or a case-insensitive flag, or calls a case function of `strings` or `bytes`.
 
 ## Tests
 
@@ -263,6 +281,9 @@ go test -p 4 ./...
 - `pattern_test.go`, `document_test.go`, `plan_test.go`: the regex-free matchers against the engine, the parser
   against `encoding/json` and `strconv`, and the name lookup.
 - `internal/ecmaregex`: the engine against answers recorded from V8 (`testdata/v8_oracle.json`).
+- `internal/ucd`: the Unicode tables. They are compared with the `unicode` package when the toolchain carries the
+  same version of Unicode (Go 1.27).
+- `TestNoToolchainUnicodeData`: no file of the module but a test reads the toolchain's Unicode data.
 - `TestEmbeddedMetaschemasAreCurrent`: the embedded metaschemas match `src/Corvus.Text.Json/metaschema`.
 - `TestPlansAgreeWithTheGeneralEvaluatorOnTheBenchmarkCorpora`: the plans against the general evaluator on the
   jsonschema-benchmark corpora. It runs when `JSONSCHEMA_BENCHMARK` names a checkout.
