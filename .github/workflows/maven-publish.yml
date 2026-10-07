@@ -85,7 +85,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-          cache: maven
           server-id: central
           server-username: CENTRAL_TOKEN_USERNAME
           server-password: CENTRAL_TOKEN_PASSWORD

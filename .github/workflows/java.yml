@@ -56,7 +56,6 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
-          cache: maven
       - name: Check the packaged LICENSE matches the repository's
         run: cmp ../../LICENSE LICENSE
       - name: Build, test and package

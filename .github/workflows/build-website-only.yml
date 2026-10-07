@@ -30,9 +30,12 @@ jobs:
         BUILDVAR_BasePathPrefix: "${{ format('/{0}', github.event.repository.name) }}"
         VELLUM_DOWNLOAD_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
     - name: Deploy to GitHub Pages
-      uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f   # v4.8.0
+      # gh-pages holds one commit, which every write replaces (.github/scripts/Update-GhPages.ps1 says why).
       if: github.ref == 'refs/heads/main'
-      with:
-        branch: gh-pages
-        folder: docs/website/.output
-        clean-exclude: pr-preview
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        $open = gh pr list --repo $env:GITHUB_REPOSITORY --state open --limit 1000 --json number --jq '[.[].number]|join(",")'
+        if ($LASTEXITCODE -ne 0) { throw 'Could not list the open pull requests.' }
+        ./.github/scripts/Update-GhPages.ps1 -Mode Site -Source docs/website/.output -OpenPullRequests "$open"

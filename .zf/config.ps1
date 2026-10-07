@@ -258,7 +258,20 @@ task PostTest {
 # task PostAnalysis {}
 # task PrePackage {}
 # task PostPackage {}
-# task PrePublish {}
+# The publish phase takes the packages from the package phase through the Actions cache, keyed by the run. That cache
+# can be evicted between the two (the repository's caches exceed GitHub's 10 GB limit whenever two builds overlap),
+# and the shared pipeline's own check does not catch it: it tests the restore's cache-hit output for 'false', which
+# is empty when nothing was found. Version 5.7.6 was tagged and "published" with no packages that way. So a publish
+# with nothing to publish fails here.
+task PrePublish -If { !$SkipPublish } {
+    $packagesPath = if ([IO.Path]::IsPathRooted($PackagesDir)) { $PackagesDir } else { Join-Path $here $PackagesDir }
+    $packages = @(Get-ChildItem -Path $packagesPath -Filter *.nupkg -ErrorAction SilentlyContinue)
+    if ($packages.Count -eq 0) {
+        throw "There are no packages in '$packagesPath' to publish. The package phase's output was not restored (its Actions cache entry is missing). Run the whole workflow again when no other build is running."
+    }
+
+    Write-Host "Publishing $($packages.Count) packages from '$packagesPath'"
+}
 # task PostPublish {}
 # task RunLast {}
 
