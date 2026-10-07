@@ -1,0 +1,14 @@
+# For local comparisons: the library built from this checkout (staged by Build-Image.ps1), otherwise as Dockerfile.
+# A workspace stands in for the published module, so go.mod stays as the benchmark has it.
+FROM golang:1.27-alpine
+
+RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community time
+
+COPY corvus-json-schema /src/corvus-json-schema
+COPY bench /app
+WORKDIR /app
+
+RUN go work init . /src/corvus-json-schema && go build -o corvus_go_benchmark .
+
+ENTRYPOINT ["/app/memory-wrapper.sh", "/app/corvus_go_benchmark"]
+CMD []
