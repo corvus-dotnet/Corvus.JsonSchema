@@ -151,6 +151,21 @@ func (d *Document) property(object int, name string) int {
 	return -1
 }
 
+// propertyWord is property for a name whose word (see nameWord) is known: a key of the same length is compared by
+// its word first, which is cheaper than comparing the text.
+func (d *Document) propertyWord(object int, name string, word uint64) int {
+	k := d.first(object)
+	for i := d.count(object); i > 0; i-- {
+		if d.count(k) == len(name) {
+			if key := d.str(k); nameWord(key) == word && (len(name) <= 8 || string(key) == name) {
+				return k + 1
+			}
+		}
+		k += 2
+	}
+	return -1
+}
+
 // float is a number's value as a float64.
 func (d *Document) float(n int) float64 {
 	v := d.data(n)

@@ -1221,8 +1221,9 @@ func (e *evaluator) runStrictObject(pl *objectPlan, x int) bool {
 // the names seen.
 func (e *evaluator) visitLookup(pl *objectPlan, x int) (uint64, bool) {
 	seen := uint64(0)
-	for i, name := range pl.names.m.names {
-		if v := e.d.property(x, name); v >= 0 {
+	m := &pl.names.m
+	for i, name := range m.names {
+		if v := e.d.propertyWord(x, name, m.words[i]); v >= 0 {
 			seen |= 1 << i
 			if !e.runChild(pl.children[i], v) {
 				return 0, false

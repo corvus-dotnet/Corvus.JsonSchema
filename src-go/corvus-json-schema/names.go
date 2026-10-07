@@ -7,10 +7,15 @@ import (
 
 // Property name lookup for the fail-fast plans.
 
-// nameWord is a name of at most eight bytes as one word, unique among names of the same length: the first and last
-// four bytes (overlapping, so every byte is in one of them), or for shorter names the first, middle and last byte.
+// nameWord is a word that tells names of one length apart cheaply. For a name of at most eight bytes it is unique
+// among names of the same length: the first and last four bytes (overlapping, so every byte is in one of them), or
+// for shorter names the first, middle and last byte. For a longer name it is the first eight bytes, so names with
+// different words differ, and names with the same word are compared in full.
 func nameWord(b []byte) uint64 {
 	n := len(b)
+	if n > 8 {
+		return binary.LittleEndian.Uint64(b)
+	}
 	if n >= 4 {
 		return uint64(binary.LittleEndian.Uint32(b)) | uint64(binary.LittleEndian.Uint32(b[n-4:]))<<32
 	}
@@ -57,7 +62,9 @@ type byLength struct {
 // as a single word each, so a miss never touches the text), and more are split by the byte position that best tells
 // them apart, through a table from that byte to a chain of candidates.
 type nameMap struct {
-	names    []string
+	names []string
+	// The word of each name (see nameWord).
+	words    []uint64
 	byLength []byLength
 	// Names longer than maxIndexedLength.
 	long []uint32
@@ -73,8 +80,12 @@ func newNameMap(names []string) nameMap {
 		}
 	}
 	groups := make([][]uint32, max)
-	m := nameMap{names: names, next: make([]uint32, len(names)), byLength: make([]byLength, max)}
+	m := nameMap{
+		names: names, words: make([]uint64, len(names)), next: make([]uint32, len(names)),
+		byLength: make([]byLength, max),
+	}
 	for i, n := range names {
+		m.words[i] = nameWord([]byte(n))
 		if len(n) < max {
 			groups[len(n)] = append(groups[len(n)], uint32(i))
 		} else {
@@ -122,11 +133,17 @@ func newNameMap(names []string) nameMap {
 	return m
 }
 
-// find is the index of a name, or -1.
-func (m *nameMap) find(name []byte) int {
+// equal reports whether name i is the given name, whose word is w.
+func (m *nameMap) equal(i int, name []byte, w uint64) bool {
+	n := m.names[i]
+	return len(n) == len(name) && m.words[i] == w && (len(name) <= 8 || n == string(name))
+}
+
+// find is the index of a name (whose word is w), or -1.
+func (m *nameMap) find(name []byte, w uint64) int {
 	if len(name) >= len(m.byLength) {
 		for _, i := range m.long {
-			if m.names[i] == string(name) {
+			if m.equal(int(i), name, w) {
 				return int(i)
 			}
 		}
@@ -135,7 +152,6 @@ func (m *nameMap) find(name []byte) int {
 	entry := &m.byLength[len(name)]
 	switch entry.kind {
 	case byLengthWords:
-		w := nameWord(name)
 		for i := range entry.words {
 			if entry.words[i].word == w {
 				return int(entry.words[i].index)
@@ -143,13 +159,13 @@ func (m *nameMap) find(name []byte) int {
 		}
 	case byLengthFew:
 		for _, i := range entry.few {
-			if m.names[i] == string(name) {
+			if m.words[i] == w && (len(name) <= 8 || m.names[i] == string(name)) {
 				return int(i)
 			}
 		}
 	case byLengthTable:
 		for c := entry.first[name[entry.at]]; c != 0; c = m.next[c-1] {
-			if m.names[c-1] == string(name) {
+			if m.words[c-1] == w && (len(name) <= 8 || m.names[c-1] == string(name)) {
 				return int(c - 1)
 			}
 		}
@@ -165,8 +181,6 @@ type names struct {
 	// set is not declared, which settles most misses without a search.
 	lengths uint64
 	m       nameMap
-	// The word of each name of at most eight bytes: such a name equals another of its length when the words do.
-	words []uint64
 	// For a hint h (the index after the previous match), the name after that match in sorted order (entry 0: the
 	// first name in sorted order). noName after the last.
 	sortedNext []uint32
@@ -180,12 +194,9 @@ func lengthBit(length int) uint64 {
 }
 
 func newNames(list []string) *names {
-	ns := &names{m: newNameMap(list), words: make([]uint64, len(list))}
+	ns := &names{m: newNameMap(list)}
 	order := make([]uint32, len(list))
 	for i, n := range list {
-		if len(n) <= 8 {
-			ns.words[i] = nameWord([]byte(n))
-		}
 		ns.lengths |= lengthBit(len(n))
 		order[i] = uint32(i)
 	}
@@ -213,7 +224,7 @@ func (ns *names) find(name []byte) int {
 	if ns.lengths&lengthBit(len(name)) == 0 {
 		return -1
 	}
-	return ns.m.find(name)
+	return ns.m.find(name, nameWord(name))
 }
 
 // findString is find for a name held as a string.
@@ -228,46 +239,26 @@ func (ns *names) findFrom(name []byte, hint int) (int, int) {
 	if ns.lengths&lengthBit(len(name)) == 0 {
 		return -1, hint
 	}
-	list := ns.m.names
-	if len(name) <= 8 {
-		// Short names are compared as words, without a call.
-		w := nameWord(name)
-		if hint < len(list) && len(list[hint]) == len(name) && ns.words[hint] == w {
-			return hint, hint + 1
-		}
-		if hint < len(ns.sortedNext) {
-			if next := ns.sortedNext[hint]; next != noName && len(list[next]) == len(name) && ns.words[next] == w {
-				return int(next), int(next) + 1
-			}
-		}
-		if len(list) <= lookupNames {
-			for i := range list {
-				if len(list[i]) == len(name) && ns.words[i] == w {
-					return i, i + 1
-				}
-			}
-			return -1, hint
-		}
-	} else {
-		if hint < len(list) && list[hint] == string(name) {
-			return hint, hint + 1
-		}
-		if hint < len(ns.sortedNext) {
-			if next := ns.sortedNext[hint]; next != noName && list[next] == string(name) {
-				return int(next), int(next) + 1
-			}
-		}
-		// A few names are compared in turn (lengths settle most), more are searched.
-		if len(list) <= lookupNames {
-			for i := range list {
-				if list[i] == string(name) {
-					return i, i + 1
-				}
-			}
-			return -1, hint
+	m := &ns.m
+	w := nameWord(name)
+	if hint < len(m.names) && m.equal(hint, name, w) {
+		return hint, hint + 1
+	}
+	if hint < len(ns.sortedNext) {
+		if next := ns.sortedNext[hint]; next != noName && m.equal(int(next), name, w) {
+			return int(next), int(next) + 1
 		}
 	}
-	if i := ns.m.find(name); i >= 0 {
+	// A few names are compared in turn (lengths and words settle most), more are searched.
+	if len(m.names) <= lookupNames {
+		for i := range m.names {
+			if m.equal(i, name, w) {
+				return i, i + 1
+			}
+		}
+		return -1, hint
+	}
+	if i := m.find(name, w); i >= 0 {
 		return i, i + 1
 	}
 	return -1, hint
