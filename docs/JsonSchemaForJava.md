@@ -23,14 +23,14 @@ Maven:
 <dependency>
   <groupId>io.github.corvus-dotnet</groupId>
   <artifactId>corvus-json-schema</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
 </dependency>
 ```
 
 Gradle (Kotlin DSL):
 
 ```kotlin
-implementation("io.github.corvus-dotnet:corvus-json-schema:0.1.0")
+implementation("io.github.corvus-dotnet:corvus-json-schema:0.1.1")
 ```
 
 ## Validate
@@ -104,6 +104,31 @@ verbose.collectAnnotations(); // instance location -> keyword -> schema location
 
 `BASIC` records the failures without messages, `DETAILED` adds the messages, and `VERBOSE` records every keyword,
 passing ones and annotations included.
+
+## Regular expressions
+
+`pattern`, `patternProperties` and the `regex` format follow ECMA-262, as JSON Schema specifies, with the grammar of
+ECMAScript 2025. A pattern is read with the `u` flag, and a pattern that is not valid with it is read as a pattern
+with no flag, which accepts what many schemas hold (`\&`, a lone brace). The `regex` format accepts only the `u`
+flag grammar.
+
+- `\p{...}` covers every property, value and alias ECMA-262 lists: General_Category, Script, Script_Extensions and
+  the 53 binary properties. The data is Unicode 17 on every JDK. It does not depend on the Unicode version of the JDK
+  the library runs on.
+- Modifier groups (`(?i:...)`, `(?m:...)`, `(?s:...)`, `(?i-s:...)`) ignore case, match at line terminators and let
+  the dot match everything as ECMA-262 defines them. Group names can be any ECMAScript identifier, can be written
+  with `\u` escapes, and can be shared by groups in separate alternatives.
+- A lookbehind can be of any length. One that `java.util.regex` cannot bound is run by a search whose time grows with
+  the square of the length of the string.
+
+The patterns are run by `java.util.regex`, after translation. A few valid patterns cannot be given their ECMA-262
+meaning there, all of them with a backreference: one inside a lookbehind, or to a group inside a lookbehind; one to a
+group of a lookaround that may not have matched; one to a group that the repetition holding both can skip, or of a
+repetition that can match the empty string; and a case-insensitive one (inside `(?i:...)`), unless the only cased
+characters its group can hold are ASCII letters (with the `u` flag grammar, not `k` or `s`, which U+212A and U+017F
+fold to) and it can hold no character beyond the Basic Multilingual Plane. Compiling a schema with such a pattern throws
+`SchemaCompilationException` with a message that starts "Unsupported regular expression" and names the construct. It
+is never run with another meaning. The `regex` format still accepts it, as it is a valid pattern.
 
 ## Performance
 
