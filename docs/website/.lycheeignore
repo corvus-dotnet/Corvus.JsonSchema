@@ -30,6 +30,10 @@ https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/.+#L\d+
 # These resolve once the PR is merged.
 https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/benchmarks
 https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/src-java
+https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/src-go
+
+# The Go module's page, which pkg.go.dev serves only once the module's first version is tagged.
+https://pkg\.go\.dev/github\.com/corvus-dotnet/Corvus\.JsonSchema/src-go
 
 # dotnet.microsoft.com returns 403 to automated crawlers
 https://dotnet\.microsoft\.com

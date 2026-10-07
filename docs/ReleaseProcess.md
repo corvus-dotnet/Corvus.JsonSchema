@@ -60,7 +60,7 @@ The build workflow runs on every push and PR. It has three phases:
 2. **Test** — runs the test suite with `.NET 10.0` and `.NET Framework 4.8.1`
 3. **NuGet** — packages and publishes
 
-A PR, or a push to `main`, that changes only the Python, Rust, TypeScript, Java, Ruby or PHP packages (`src-py`, `src-rs`, `src-ts`, `src-java`, `src-rb`, `src-php`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. Branch protection requires the `.NET build gate` job, which passes when the build succeeded or was not needed.
+A PR, or a push to `main`, that changes only the Python, Rust, TypeScript, Java, Go, Ruby or PHP packages (`src-py`, `src-rs`, `src-ts`, `src-java`, `src-go`, `src-rb`, `src-php`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. Branch protection requires the `.NET build gate` job, which passes when the build succeeded or was not needed.
 
 ### NuGet source selection
 
@@ -103,9 +103,9 @@ It has no history on purpose. Every job of the build fetches every branch, and w
 
 ### Skipping a release
 
-A PR that changes only the Python, Rust, TypeScript, Java, Ruby or PHP packages makes no NuGet release; nothing needs adding.
+A PR that changes only the Python, Rust, TypeScript, Java, Go, Ruby or PHP packages makes no NuGet release; nothing needs adding.
 
-Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI, npm, Maven Central, RubyGems and PHP publishes that a version change in `src-rs`, `src-py`, `src-ts`, `src-java`, `src-rb` or `src-php` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
+Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI, npm, Maven Central, Go module, RubyGems and PHP publishes that a version change in `src-rs`, `src-py`, `src-ts`, `src-java`, `src-go`, `src-rb` or `src-php` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
 
 ### Batched Dependabot releases
 
@@ -239,6 +239,55 @@ starts no other workflow.
    `CENTRAL_TOKEN_USERNAME`, `CENTRAL_TOKEN_PASSWORD`, `GPG_PRIVATE_KEY` and `GPG_PASSPHRASE`.
 
 Then the first merge of a `pom.xml` version publishes it as for any later release.
+
+## The Go module
+
+The Go port of the runtime evaluator, `github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema` in
+`src-go/corvus-json-schema`, is published by a git tag. There is no registry to upload to: the
+[Go module proxy](https://proxy.golang.org) fetches a version from this repository the first time anyone asks for
+it. The module is versioned independently of the NuGet packages, by the `Version` constant in its `version.go`, with
+its own history in `src-go/corvus-json-schema/VERSIONHISTORY.md`. GitVersion and the tag-triggered NuGet pipeline play
+no part.
+
+To release, bump `Version` in `src-go/corvus-json-schema/version.go`, add the version's entry to `VERSIONHISTORY.md`,
+and merge to `main`. `.github/workflows/go-publish.yml` then does the following.
+
+1. It does nothing if the tag already exists, or if the merged PR is labelled `no_release`. It fails if
+   `VERSIONHISTORY.md` has no section for the version.
+2. It runs `go.yml`: on Linux x64 and arm64, Windows and macOS, with the oldest Go the module accepts and the latest,
+   the tests (the whole JSON-Schema-Test-Suite, the annotation suite and the allocation tests), the race detector,
+   the check that the module's `LICENSE` matches the repository's, and the Bowtie and benchmark harnesses.
+3. It tags the commit `src-go/corvus-json-schema/v<version>`. A module in a subdirectory of a repository is tagged
+   with the directory, then the version.
+4. It asks the proxy for the version (`https://proxy.golang.org/<module path>/@v/v<version>.info`, with each capital
+   letter of the path written as `!` and its lower-case letter), which makes the proxy fetch it. The version is then
+   in the checksum database and on [pkg.go.dev](https://pkg.go.dev/github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema).
+   If the request fails, run the workflow again from the Actions tab: it finds the tag and only asks the proxy.
+
+There is no staged approval and no secret. A version the proxy has served can never be replaced: the checksum
+database records its contents, and a tag moved afterwards fails verification for everyone who fetches it. Never move
+or delete a `src-go/corvus-json-schema/v` tag, and check a release on a branch first: `go.yml` runs on every pull
+request that touches `src-go`. A mistake is corrected with a new version, and the bad one can be marked with a
+`retract` directive in `go.mod`.
+
+The module's `LICENSE` is a copy of the repository's, because a module's zip holds only the files in its own
+directory. Update both together. CI fails if they differ.
+
+Never push a `src-go/corvus-json-schema/v` tag by hand. `build.yml` publishes NuGet packages for the tags that trigger
+it. Its tag filter only accepts release versions (`[0-9]+.[0-9]+.[0-9]+*`), which a tag that starts `src-go/` cannot
+match, and the workflow's own tag push uses `GITHUB_TOKEN`, which starts no other workflow.
+
+The minimum Go version is the `go` directive in `go.mod`, which `go.yml` tests to the patch. It is Go 1.27 because
+the module's regular expression engine takes general categories, scripts and case folding from the standard
+library's `unicode` package and its other Unicode properties from its own Unicode 17 tables, and Go 1.27 is the first
+release whose `unicode` package is Unicode 17. Do not lower it without making those tables independent of the
+standard library's.
+
+### After the first release
+
+The jsonschema-benchmark entry (`src-go/corvus-json-schema-bench/jsonschema-benchmark`) requires the published
+version, and its `go.sum` cannot exist until that version does. After the first tag, run `go mod tidy` there and
+commit the `go.sum` it writes.
 
 ## The Python packages
 
