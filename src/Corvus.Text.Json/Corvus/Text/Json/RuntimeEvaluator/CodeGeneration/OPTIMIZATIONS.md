@@ -144,6 +144,16 @@ finds no node left to the interpreter.
 - **`java.util.regex` translation and reused matchers.** The C# evaluator's `PatternMatcher` and compiled regular
   expressions serve both engines.
 
+## Tried on the interpreter and not kept
+
+- **The child dispatch as a chain of comparisons.** Replacing an IL `switch` on a property name's length with
+  comparisons made generated code 6% faster, so the same was tried on the interpreter's own dispatch on a child's plan
+  (`Evaluator.EvalChildFast`, a C# `switch` over the plans, which is a jump table): the plans compared in turn, the
+  commonest first. By the 15-process measure, run through the interpreter, the chain against the switch read 0.978
+  to 1.026 over nine small cases, one of them nested objects and an array of objects, with nothing beyond about one
+  standard error. The sequence of plans along a schema is the same for every document, so the jump is predicted
+  well, where the lengths of a document's property names were not. The switch stays.
+
 ## Open questions
 
 - **The entry.** An empty object costs 3.2 ns through the public entry against the Java port's 2.6. The public path
