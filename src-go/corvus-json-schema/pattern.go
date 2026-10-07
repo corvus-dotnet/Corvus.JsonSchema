@@ -796,10 +796,15 @@ type sequenceItem struct {
 
 // sequence is "^" then quantified character sets, optionally "$". Matched greedily, which is exact because every
 // variable item's set is disjoint from the next item's (a character the item leaves cannot be taken by the next one
-// either).
+// either). Where it is not, a sequence anchored at both ends with a single variable item is still decided in one
+// pass: the string's length fixes how many characters that item takes (pinned).
 type sequence struct {
 	items []sequenceItem
 	toEnd bool
+	// The index of the one variable item of a sequence matched by length, or -1 for greedy matching.
+	pinned int
+	// For a pinned sequence, the characters the other items take.
+	fixedWidth int
 }
 
 func parseSequence(p string) *sequence {
@@ -851,22 +856,27 @@ func parseSequence(p string) *sequence {
 		i = next
 		items = append(items, sequenceItem{set, min, max})
 	}
-	// Greedy matching is exact only when a variable item cannot give up characters an item after it needs: its set
-	// must be disjoint from every item that can directly follow it (up to the first that cannot match nothing).
+	if greedyBefore(items, charSet{}) {
+		return &sequence{items: items, toEnd: toEnd, pinned: -1}
+	}
+	// Greedy matching is not exact. With both ends anchored and one variable item, the length decides.
+	if !toEnd {
+		return nil
+	}
+	pinned, fixedWidth := -1, uint64(0)
 	for i, item := range items {
 		if item.min == item.max {
-			continue
-		}
-		for _, next := range items[i+1:] {
-			if !item.set.disjoint(next.set) {
-				return nil
-			}
-			if next.min > 0 {
-				break
-			}
+			fixedWidth += uint64(item.min)
+		} else if pinned >= 0 {
+			return nil
+		} else {
+			pinned = i
 		}
 	}
-	return &sequence{items: items, toEnd: toEnd}
+	if fixedWidth > math.MaxInt32 {
+		return nil
+	}
+	return &sequence{items: items, toEnd: true, pinned: pinned, fixedWidth: int(fixedWidth)}
 }
 
 // literal is the text, when every item is one fixed character.
@@ -889,8 +899,40 @@ func (q *sequence) match(s []byte) bool {
 	return q.matchChars(s)
 }
 
+// matchPinned matches a pinned sequence: every item but one takes a fixed number of characters, so the string's
+// length says how many the variable one takes.
+func (q *sequence) matchPinned(s []byte, ascii bool) bool {
+	length := len(s)
+	if !ascii {
+		length = utf8.RuneCount(s)
+	}
+	variable := length - q.fixedWidth
+	if v := &q.items[q.pinned]; variable < 0 || uint64(variable) < uint64(v.min) || uint64(variable) > uint64(v.max) {
+		return false
+	}
+	at := 0
+	for i := range q.items {
+		item := &q.items[i]
+		count := int(item.min)
+		if i == q.pinned {
+			count = variable
+		}
+		for ; count > 0; count-- {
+			c, size := decodeRune(s, at)
+			if !item.set.contains(c) {
+				return false
+			}
+			at += size
+		}
+	}
+	return true
+}
+
 // matchChars matches over any text, a character at a time.
 func (q *sequence) matchChars(s []byte) bool {
+	if q.pinned >= 0 {
+		return q.matchPinned(s, false)
+	}
 	at := 0
 	for i := range q.items {
 		item := &q.items[i]
@@ -912,6 +954,9 @@ func (q *sequence) matchChars(s []byte) bool {
 
 // matchASCII matches over ASCII text, a byte per character.
 func (q *sequence) matchASCII(b []byte) bool {
+	if q.pinned >= 0 {
+		return q.matchPinned(b, true)
+	}
 	at := 0
 	for i := range q.items {
 		item := &q.items[i]
@@ -1087,6 +1132,7 @@ func parseSeparatedList(p string) *separatedList {
 		}
 		return nil
 	}
+	greedySequence := func(items []sequenceItem) *sequence { return &sequence{items: items, pinned: -1} }
 	fixed := func(items []sequenceItem) bool {
 		for _, item := range items {
 			if item.min != item.max || item.min == 0 {
@@ -1115,8 +1161,8 @@ func parseSeparatedList(p string) *separatedList {
 			next := separator[0].set
 			if fixed(separator) && greedyBefore(first, next) && greedyBefore(repeated, next) {
 				return &separatedList{
-					first: &sequence{items: first}, repeated: &sequence{items: repeated},
-					separator: &sequence{items: separator}, minRepeats: minRepeats,
+					first: greedySequence(first), repeated: greedySequence(repeated),
+					separator: greedySequence(separator), minRepeats: minRepeats,
 				}
 			}
 		}
@@ -1134,8 +1180,8 @@ func parseSeparatedList(p string) *separatedList {
 			repeated, separator := groupItems[:k], groupItems[k:]
 			if fixed(separator) && greedyBefore(repeated, separator[0].set) {
 				return &separatedList{
-					repeated: &sequence{items: repeated}, separator: &sequence{items: separator},
-					final: &sequence{items: final.items, toEnd: true}, minRepeats: minRepeats,
+					repeated: greedySequence(repeated), separator: greedySequence(separator),
+					final: final, minRepeats: minRepeats,
 				}
 			}
 		}
