@@ -6,8 +6,11 @@ import (
 	"testing"
 )
 
-// Validation allocates nothing in the steady state: the evaluator and its buffers are pooled by the validator, JSON
-// text is parsed into reused buffers, and the document is evaluated where it was parsed.
+// Validation allocates nothing in the steady state: the evaluator's buffers are pooled by the validator, JSON text is
+// parsed into reused buffers, and the document is evaluated where it was parsed.
+//
+// Four asserted formats are outside this: regex (the pattern is parsed), idn-hostname and idn-email (the labels are
+// decoded), and hostname for a label that starts with "xn--". A custom format receives a copy of the string.
 
 type allocationCase struct {
 	name      string
@@ -136,11 +139,15 @@ func allocationCases() []allocationCase {
 				"properties": {
 					"date": { "format": "date-time" }, "ip": { "format": "ipv6" }, "host": { "format": "hostname" },
 					"id": { "format": "uuid" }, "n": { "format": "int32" }, "pointer": { "format": "json-pointer" },
+					"uri": { "format": "uri" }, "ref": { "format": "uri-reference" }, "iri": { "format": "iri" },
+					"template": { "format": "uri-template" }, "email": { "format": "email" },
+					"duration": { "format": "duration" }, "time": { "format": "time" }, "v4": { "format": "ipv4" },
 					"json": { "contentMediaType": "application/json", "contentEncoding": "base64" }
 				}
 			}`,
 			instances: []string{
 				`{"date": "2020-01-02T03:04:05.678Z", "ip": "::ffff:192.168.0.1", "host": "example.com", "id": "2eb8aa08-aa98-11ea-b4aa-73b441d16380", "n": 12, "pointer": "/a/~0b", "json": "eyJhIjogWzEsIDIsIDNdfQ=="}`,
+				`{"uri": "http://example.com/a/b?c=d#e", "ref": "../a/b?c#d", "iri": "http://\u00e9xample.com/\u00fc", "template": "http://example.com/{id}/x{?q,r}", "email": "joe.bloggs@example.com", "duration": "P4DT12H30M5S", "time": "08:30:06.283185+01:00", "v4": "1.2.3.4"}`,
 				`{"n": 1e30}`,
 				`{"json": "bm90IGpzb24="}`,
 			},
