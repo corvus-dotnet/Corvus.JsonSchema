@@ -19,11 +19,14 @@ analyses the Java generator performs for itself. The interpreter evaluates anyth
 - **An entry method for each schema.** The evaluation's state is a local of it, and the entry node's method is inlined
   into it when nothing else calls it: one frame from the public entry to the validation. On documents of a few
   values that is 8 to 19% (an array of strings, a map of strings, yamllint).
-- **One row on after a scalar.** In an array of scalars, a map of scalars and a closed object, the loop reads only the
-  value's token, and a value tested to be of a scalar type (or a member of a string enum) is followed by the next
-  row: where the next value starts is worked out from the row only after a value that was not. Every other loop
-  works it out with the token, as before: with the short form an open object's loop measured 13 to 26% slower, for
-  a reason not found (the cause was in the loop's head, not in where the next index was worked out).
+- **One row on after a scalar.** In an array of scalars, a map of scalars and an object with declared properties, the
+  loop reads only the value's token, and a value tested to be of a scalar type (or a member of a string enum) is
+  followed by the next row: where the next value starts is worked out from the row only after a value that was not.
+  In an object, the advance is written out at the end of each property's code, with a jump straight to the loop's
+  head. As an exit block shared by the properties it was laid out a jump away from the head whenever the loop had
+  another exit too, which an open object's has for a name it does not declare: every property then ended with two
+  taken jumps, and an open object's loop measured 1.02 to 1.11 against the code without the short advance. Written
+  out, it measures 0.92 (an open object) and 0.93 (required properties), level with a closed object.
 - **A direct path from the public entry.** `Evaluate` reads the schema's compiled entry from one field and checks that
   the program still has the node array the code was compiled from, then calls it, ahead of the flag-mode entry data
   and the tiering's checks. 2 to 3% on documents of a few values.
@@ -143,11 +146,6 @@ finds no node left to the interpreter.
 
 ## Open questions
 
-- **An open object's loop.** A closed object's loop is about 15% faster with the short advance after a scalar. The
-  same loop head on an open object (which has a second exit, for a name it does not declare) measured 1.02 keeping
-  the row's last word, 1.07 reading the row again on the rare exit, and 1.11 with the scalar exit emitted first, each
-  against the present code, by the 15-process measure. Its properties end with two taken jumps where a closed
-  object's end with one. Open objects are emitted as before.
 - **The entry.** An empty object costs 3.2 ns through the public entry against the Java port's 2.6. The public path
   was a quarter of its instructions and removing most of that gained 2 to 3%. Keeping the document's rows and text
   together in one block (`JsonDocument._raw`), read with no test of the document's type, gained 13% on an empty

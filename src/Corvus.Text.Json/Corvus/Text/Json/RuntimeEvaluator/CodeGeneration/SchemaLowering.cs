@@ -1614,9 +1614,9 @@ internal static class SchemaLowering
     {
         bool acceptsObject = !node.HasType || (node.Type & TypeMask.Object) != 0;
 
-        // The short advance after a scalar (see ISchemaEmitter.AdvanceFromRow) is for a map of scalars and for a
-        // closed object, where it measured faster. An open object's loop measured slower with it.
-        if (node.Properties is null ? node.AdditionalEntry.TokenBits == 0 : !node.AdditionalRejects)
+        // A map whose values go to a child works out the next index up front (see ISchemaEmitter.AdvanceFromRow). A
+        // map of scalars, and an object with declared properties, closed or open, take the short advance after a scalar.
+        if (node.Properties is null && node.AdditionalEntry.TokenBits == 0)
         {
             emitter.AdvanceFromRow();
         }

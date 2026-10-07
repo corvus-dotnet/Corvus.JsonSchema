@@ -16,6 +16,15 @@ namespace Corvus.Text.Json.Tests;
 [TestClass]
 public class TextFactsTests
 {
+    // Whether text is recorded as all ASCII on this target. The scan that finds it is the vector scan of .NET 8 and
+    // later. On .NET Framework and .NET Standard the row says nothing of a string's text, which is always allowed:
+    // a reader of the fact then looks at the text itself.
+#if NET
+    private const bool AsciiIsRecorded = true;
+#else
+    private const bool AsciiIsRecorded = false;
+#endif
+
     private const int IntegerLiteral = 1;
     private const int FractionOrExponent = 2;
 
@@ -48,8 +57,8 @@ public class TextFactsTests
     {
         string json = "{\"" + text + "\": \"" + text + "\", \"other\": [\"" + text + "\"]}";
         using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(json));
-        Assert.AreEqual(ascii, IsAscii(document.RootElement.GetProperty(text)));
-        Assert.AreEqual(ascii, IsAscii(document.RootElement.GetProperty("other")[0]));
+        Assert.AreEqual(ascii && AsciiIsRecorded, IsAscii(document.RootElement.GetProperty(text)));
+        Assert.AreEqual(ascii && AsciiIsRecorded, IsAscii(document.RootElement.GetProperty("other")[0]));
         Assert.AreEqual(text, document.RootElement.GetProperty(text).GetString());
         Assert.AreEqual(text, document.RootElement.GetProperty("other")[0].GetString());
     }
@@ -89,11 +98,11 @@ public class TextFactsTests
         string wholeDouble = root.GetProperty("wholeDouble").GetRawText();
         Assert.AreEqual(wholeDouble.IndexOfAny(['.', 'e', 'E']) < 0 ? IntegerLiteral : FractionOrExponent, Shape(root.GetProperty("wholeDouble")));
 
-        Assert.IsTrue(IsAscii(root.GetProperty("ascii")));
+        Assert.AreEqual(AsciiIsRecorded, IsAscii(root.GetProperty("ascii")));
         Assert.AreEqual("plain text", root.GetProperty("ascii").GetString());
 
         // The row says what the stored text is: the default encoder stores an accented character escaped, as ASCII.
-        Assert.AreEqual(root.GetProperty("accented").GetRawText().All(c => c < 128), IsAscii(root.GetProperty("accented")));
+        Assert.AreEqual(AsciiIsRecorded && root.GetProperty("accented").GetRawText().All(c => c < 128), IsAscii(root.GetProperty("accented")));
         Assert.AreEqual("caf\u00e9", root.GetProperty("accented").GetString());
     }
 
@@ -147,7 +156,7 @@ public class TextFactsTests
             string accented = ascii + "\u00e9";
             using ParsedJsonDocument<JsonElement> a = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("\"" + ascii + "\""));
             using ParsedJsonDocument<JsonElement> b = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("\"" + accented + "\""));
-            Assert.IsTrue(IsAscii(a.RootElement));
+            Assert.AreEqual(AsciiIsRecorded, IsAscii(a.RootElement));
             Assert.AreEqual(ascii, a.RootElement.GetString());
             Assert.IsFalse(IsAscii(b.RootElement));
             Assert.AreEqual(accented, b.RootElement.GetString());

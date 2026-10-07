@@ -167,7 +167,11 @@ internal readonly struct DbRow
     /// <summary>The number's text has a fraction or an exponent.</summary>
     internal const uint NumberFractionOrExponent = 2U << NumberShapeShift;
 
-    /// <summary>For a string or property name row: no byte of its text is above 0x7F, so each byte is one character.</summary>
+    /// <summary>
+    /// For a string or property name row: no byte of its text is above 0x7F, so each byte is one character. Recorded
+    /// by the .NET builds of the library, whose string scan finds it. The .NET Standard builds leave it unset, which
+    /// is always allowed: a reader of the fact then looks at the text.
+    /// </summary>
     internal const uint StringIsAscii = 1U << NumberShapeShift;
 
     /// <summary>The bits of the location word that carry facts about the row's text.</summary>

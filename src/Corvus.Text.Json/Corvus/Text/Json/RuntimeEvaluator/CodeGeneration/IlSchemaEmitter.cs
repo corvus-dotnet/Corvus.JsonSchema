@@ -155,6 +155,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private Label nextScalar;
     private bool valueKnownScalar;
     private bool afterCaseIsNextValue;
+    private bool loopIsObject;
     private LocalBuilder? contained;
     private Label containsSettled;
     private LocalBuilder? dispatchLocation;
@@ -1279,7 +1280,23 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     /// <inheritdoc/>
     public void EndCase()
     {
-        this.Il.Emit(OpCodes.Br, this.valueKnownScalar && !this.advancesFromRow && this.afterCaseIsNextValue ? this.nextScalar : this.afterCase);
+        if (this.valueKnownScalar && !this.advancesFromRow && this.afterCaseIsNextValue)
+        {
+            // The advance past a scalar is written out at the end of this case, with a jump straight to the loop's
+            // head. As an exit block shared by the cases it was laid out a jump away from the head whenever the loop
+            // had another exit as well (an open object's, for a name it does not declare), and every property then
+            // ended with two taken jumps: an open object's loop was no faster for the short advance, where a closed
+            // object's gained 15%.
+            ILGenerator il = this.Il;
+            il.Emit(OpCodes.Ldloc, this.value!);
+            il.Emit(OpCodes.Ldc_I4, this.loopIsObject ? 2 * RowSize : RowSize);
+            il.Emit(OpCodes.Add);
+            il.Emit(OpCodes.Stloc, this.value!);
+            il.Emit(OpCodes.Br, this.loop);
+            return;
+        }
+
+        this.Il.Emit(OpCodes.Br, this.afterCase);
     }
 
     /// <inheritdoc/>
@@ -1635,6 +1652,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         this.value = il.DeclareLocal(typeof(int));
         this.nextValue = il.DefineLabel();
         this.nextScalar = il.DefineLabel();
+        this.loopIsObject = isObject;
         this.endOfLoop = il.DefineLabel();
         this.loop = il.DefineLabel();
         il.Emit(OpCodes.Ldarg_0);
