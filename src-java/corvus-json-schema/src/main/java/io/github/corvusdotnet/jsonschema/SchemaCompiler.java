@@ -380,8 +380,7 @@ final class SchemaCompiler {
                     String pattern = d.string(k);
                     SchemaPattern compiled = SchemaPattern.compile(pattern);
                     if (compiled == null) {
-                        throw new SchemaCompilationException(
-                                "Invalid regular expression '" + pattern + "' in patternProperties.");
+                        throw new SchemaCompilationException(SchemaPattern.failure(pattern, "patternProperties"));
                     }
                     list[i] = new PatternProperty(
                             compiled, child(target, k + 1, "/patternProperties/" + Uris.escapePointerToken(pattern)));
@@ -510,7 +509,7 @@ final class SchemaCompiler {
             if (p != null) {
                 n.pattern = SchemaPattern.compile(p);
                 if (n.pattern == null) {
-                    throw new SchemaCompilationException("Invalid regular expression '" + p + "' in pattern.");
+                    throw new SchemaCompilationException(SchemaPattern.failure(p, "pattern"));
                 }
             }
             SchemaNode.Num m = num(d, d.property(e, "multipleOf"));
