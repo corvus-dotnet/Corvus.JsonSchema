@@ -55,6 +55,24 @@ func schemeEnd(s string) int {
 	return -1
 }
 
+// asciiLower returns s with the letters A to Z in lower case and everything else as it is. RFC 3986 and RFC 3987 make
+// a scheme and a host case-insensitive for those letters only, and the mapping does not depend on the Unicode data
+// of the Go toolchain as strings.ToLower does.
+func asciiLower(s string) string {
+	for i := 0; i < len(s); i++ {
+		if s[i] >= 'A' && s[i] <= 'Z' {
+			lower := []byte(s)
+			for j := i; j < len(lower); j++ {
+				if lower[j] >= 'A' && lower[j] <= 'Z' {
+					lower[j] += 'a' - 'A'
+				}
+			}
+			return string(lower)
+		}
+	}
+	return s
+}
+
 func isASCIILetter(b byte) bool {
 	return (b|0x20) >= 'a' && (b|0x20) <= 'z'
 }
@@ -133,11 +151,11 @@ func mergePaths(base uriParts, refPath string) string {
 
 func normalizeParts(p uriParts) string {
 	if p.hasScheme {
-		p.scheme = strings.ToLower(p.scheme)
+		p.scheme = asciiLower(p.scheme)
 	}
 	p.path = removeDotSegments(p.path)
 	if p.hasAuthority {
-		a := strings.ToLower(p.authority)
+		a := asciiLower(p.authority)
 		switch p.scheme {
 		case "http":
 			a = strings.TrimSuffix(a, ":80")

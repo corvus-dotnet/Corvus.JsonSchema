@@ -3,11 +3,13 @@ package jsonschema
 import (
 	"math"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
-	"unicode"
 	"unicode/utf8"
 	"unsafe"
+
+	"github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema/internal/ucd"
 )
 
 // Format assertions, applied only when format is asserted (the format-assertion vocabulary or WithAssertFormat).
@@ -617,10 +619,46 @@ func hostnameLabel(l string) bool {
 	return hostnameLabelOK(l) && (!startsWithXN(l) || punycodeLabelOK(l[4:]))
 }
 
-func unassigned(r rune) bool {
-	return !unicode.In(r, unicode.L, unicode.M, unicode.N, unicode.P, unicode.S, unicode.Z, unicode.Cc, unicode.Cf,
-		unicode.Cs, unicode.Co)
+// idnTables holds the Unicode properties the host name checks read. They are built from the tables of internal/ucd,
+// which hold one fixed version of Unicode (ucd.Version), and never from the unicode package of the standard library,
+// whose data follows the Go toolchain. A format therefore accepts the same strings whichever toolchain built the
+// program.
+//
+// RFC 5892 defines the IDNA2008 code point classes by rules over Unicode properties and not by a list for one
+// version of Unicode, so that they extend to each new version. The checks here apply those rules to the properties
+// of ucd.Version.
+type idnTables struct {
+	// disallowed is the general categories that IDNA2008 never makes PVALID: controls, private use, unassigned,
+	// spaces, uppercase and titlecase letters (mapped away), mathematical and other symbols, and punctuation.
+	disallowed *ucd.Table
+	// invisible is the controls, the format characters, the spaces and the unassigned code points.
+	invisible *ucd.Table
+	// mark is the group M, nonspacing is Mn, and nonspacingOrEnclosing is Mn and Me, the stand-in for Bidi class NSM.
+	mark, nonspacing, nonspacingOrEnclosing *ucd.Table
+	// letterOrSpacingMark is the group L and Mc, the stand-in for Bidi class L.
+	letterOrSpacingMark *ucd.Table
+	// The scripts the contextual rules of RFC 5892 and the Bidi rule of RFC 5893 name.
+	hebrew, greek, arabicLike, kanaOrHan *ucd.Table
 }
+
+// idn builds the tables when a host name check first needs them. A union of properties is one table, so a code point
+// is tested against it with one search.
+var idn = sync.OnceValue(func() *idnTables {
+	gc, sc := ucd.Category, ucd.Script
+	return &idnTables{
+		disallowed: ucd.Union(gc("Cc"), gc("Co"), gc("Zs"), gc("Zl"), gc("Zp"), gc("Lu"), gc("Lt"), gc("Sm"), gc("So"),
+			gc("P"), gc("Cn")),
+		invisible:             ucd.Union(gc("Cc"), gc("Cf"), gc("Zs"), gc("Cn")),
+		mark:                  gc("M"),
+		nonspacing:            gc("Mn"),
+		nonspacingOrEnclosing: ucd.Union(gc("Mn"), gc("Me")),
+		letterOrSpacingMark:   ucd.Union(gc("L"), gc("Mc")),
+		hebrew:                sc("Hebrew"),
+		greek:                 sc("Greek"),
+		arabicLike:            ucd.Union(sc("Arabic"), sc("Syriac"), sc("Thaana"), sc("Nko")),
+		kanaOrHan:             ucd.Union(sc("Hiragana"), sc("Katakana"), sc("Han")),
+	}
+})
 
 func isDisallowedException(r rune) bool {
 	switch r {
@@ -633,12 +671,12 @@ func isDisallowedException(r rune) bool {
 // disallowed reports code points IDNA2008 disallows that the tests exercise: controls, private use, unassigned,
 // spaces, uppercase and titlecase letters (mapped away, never PVALID), symbols and punctuation.
 func disallowed(label string) bool {
+	table := idn().disallowed
 	for _, r := range label {
 		if r == '-' || isDisallowedException(r) {
 			continue
 		}
-		if unicode.In(r, unicode.Cc, unicode.Co, unicode.Zs, unicode.Zl, unicode.Zp, unicode.Lu, unicode.Lt,
-			unicode.Sm, unicode.So, unicode.P) || unassigned(r) {
+		if table.Contains(r) {
 			return true
 		}
 	}
@@ -659,7 +697,7 @@ func punycodeLabelOK(encoded string) bool {
 	}
 	// The encoding must be canonical: encoding the U-label again gives the same A-label.
 	label := string(decoded)
-	if punycodeEncode(label) != strings.ToLower(encoded) {
+	if punycodeEncode(label) != asciiLower(encoded) {
 		return false
 	}
 	return idnLabelOK(label) && !disallowed(label) && bidiLabelOK(label, bidiDomain(label))
@@ -823,7 +861,7 @@ func punycodeDecode(input string) ([]rune, bool) {
 		}
 		n += i / length
 		i %= length
-		if n > unicode.MaxRune || (n >= 0xd800 && n <= 0xdfff) {
+		if n > utf8.MaxRune || (n >= 0xd800 && n <= 0xdfff) {
 			return nil, false
 		}
 		output = append(output, 0)
@@ -835,7 +873,7 @@ func punycodeDecode(input string) ([]rune, bool) {
 }
 
 func isArabicLike(r rune) bool {
-	return unicode.In(r, unicode.Arabic, unicode.Syriac, unicode.Thaana, unicode.Nko)
+	return idn().arabicLike.Contains(r)
 }
 
 type bidi uint8
@@ -853,17 +891,17 @@ const (
 // bidiClass approximates the Bidi classes of the RFC 5893 Bidi rule by script and general category.
 func bidiClass(c rune) bidi {
 	switch {
-	case unicode.In(c, unicode.Mn, unicode.Me):
+	case idn().nonspacingOrEnclosing.Contains(c):
 		return bidiNSM
 	case (c >= 0x660 && c <= 0x669) || c == 0x66b || c == 0x66c:
 		return bidiAN
 	case (c >= 0x30 && c <= 0x39) || (c >= 0x6f0 && c <= 0x6f9):
 		return bidiEN
-	case unicode.Is(unicode.Hebrew, c):
+	case idn().hebrew.Contains(c):
 		return bidiR
 	case isArabicLike(c):
 		return bidiAL
-	case unicode.In(c, unicode.L, unicode.Mc):
+	case idn().letterOrSpacingMark.Contains(c):
 		return bidiL
 	}
 	return bidiON
@@ -872,7 +910,7 @@ func bidiClass(c rune) bidi {
 func bidiDomain(label string) bool {
 	rtl, strong := false, false
 	for _, c := range label {
-		rtl = rtl || unicode.Is(unicode.Hebrew, c) || isArabicLike(c) || (c >= 0x660 && c <= 0x669) || c == 0x66b ||
+		rtl = rtl || idn().hebrew.Contains(c) || isArabicLike(c) || (c >= 0x660 && c <= 0x669) || c == 0x66b ||
 			c == 0x66c
 		class := bidiClass(c)
 		strong = strong || class == bidiR || class == bidiAL || class == bidiAN
@@ -926,11 +964,11 @@ func zwnjJoiningContext(cps []rune, i int) bool {
 		return (c >= 0x0620 && c <= 0x064a) || (c >= 0x066e && c <= 0x06d3)
 	}
 	l := i - 1
-	for l >= 0 && unicode.Is(unicode.Mn, cps[l]) {
+	for l >= 0 && idn().nonspacing.Contains(cps[l]) {
 		l--
 	}
 	r := i + 1
-	for r < len(cps) && unicode.Is(unicode.Mn, cps[r]) {
+	for r < len(cps) && idn().nonspacing.Contains(cps[r]) {
 		r++
 	}
 	return l >= 0 && r < len(cps) && isJoiner(cps[l]) && isJoiner(cps[r])
@@ -945,7 +983,7 @@ func idnLabelOK(label string) bool {
 	if len(cps) >= 4 && cps[2] == '-' && cps[3] == '-' {
 		return false
 	}
-	if unicode.Is(unicode.M, cps[0]) {
+	if idn().mark.Contains(cps[0]) {
 		return false
 	}
 	has := func(lo, hi rune) bool {
@@ -968,17 +1006,17 @@ func idnLabelOK(label string) bool {
 				return false
 			}
 		case c == 0x0375:
-			if !(i < len(cps)-1 && unicode.Is(unicode.Greek, cps[i+1])) {
+			if !(i < len(cps)-1 && idn().greek.Contains(cps[i+1])) {
 				return false
 			}
 		case c == 0x05f3 || c == 0x05f4:
-			if !(i > 0 && unicode.Is(unicode.Hebrew, cps[i-1])) {
+			if !(i > 0 && idn().hebrew.Contains(cps[i-1])) {
 				return false
 			}
 		case c == 0x30fb:
 			found := false
 			for _, d := range cps {
-				found = found || (d != 0x30fb && unicode.In(d, unicode.Hiragana, unicode.Katakana, unicode.Han))
+				found = found || (d != 0x30fb && idn().kanaOrHan.Contains(d))
 			}
 			if !found {
 				return false
@@ -1044,7 +1082,7 @@ func isIDNHostname(s string) bool {
 				return r
 			}, label)
 			for _, r := range withoutJoiners {
-				if unicode.In(r, unicode.Cc, unicode.Cf, unicode.Zs) || unassigned(r) {
+				if idn().invisible.Contains(r) {
 					return false
 				}
 			}
@@ -1078,7 +1116,6 @@ func splitLabels(s string) []string {
 }
 
 const emailAtoms = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+"
-const idnEmailAtoms = "[\\p{L}\\p{M}\\p{N}!#$%&'*+/=?^_`{|}~-]+"
 const emailQuoted = `"(?:[^"\\\r\n]|\\.)*"`
 
 var (
@@ -1086,6 +1123,25 @@ var (
 		return regexp.MustCompile(`^(?:` + emailAtoms + `(?:\.` + emailAtoms + `)*|` + emailQuoted + `)$`)
 	})
 	idnEmailLocalRegexp = sync.OnceValue(func() *regexp.Regexp {
+		// An atom of an internationalized local part (RFC 6531 extends atext of RFC 5322) is taken here to be a
+		// letter, a mark or a number of any script, or one of the ASCII atom characters, as in the other ports of the
+		// evaluator. The class is written out as the ranges of the ucd tables. A \p class would be read by the regexp
+		// package with the Unicode data of the Go toolchain.
+		var class strings.Builder
+		class.WriteByte('[')
+		var ranges []rune
+		for _, t := range []*ucd.Table{ucd.Letter(), ucd.Mark(), ucd.Number()} {
+			ranges = t.AppendRanges(ranges)
+		}
+		for i := 0; i < len(ranges); i += 2 {
+			class.WriteString(`\x{`)
+			class.WriteString(strconv.FormatInt(int64(ranges[i]), 16))
+			class.WriteString(`}-\x{`)
+			class.WriteString(strconv.FormatInt(int64(ranges[i+1]), 16))
+			class.WriteByte('}')
+		}
+		class.WriteString("!#$%&'*+/=?^_`{|}~-]+")
+		idnEmailAtoms := class.String()
 		return regexp.MustCompile(`^(?:` + idnEmailAtoms + `(?:\.` + idnEmailAtoms + `)*|` + emailQuoted + `)$`)
 	})
 )
@@ -1107,7 +1163,7 @@ func isEmail(s string, idn bool) bool {
 	}
 	if len(domain) >= 2 && domain[0] == '[' && domain[len(domain)-1] == ']' {
 		inner := domain[1 : len(domain)-1]
-		if len(inner) >= 5 && strings.EqualFold(inner[:5], "IPv6:") {
+		if len(inner) >= 5 && asciiLower(inner[:5]) == "ipv6:" {
 			return isIPv6(inner[5:])
 		}
 		return isIPv4(inner)
