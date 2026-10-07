@@ -310,6 +310,118 @@ public class ValidatorCoverageTests
         Assert.IsFalse(schema.Validate("\"hello\""));
     }
 
+    [TestMethod]
+    public void CodeGeneration_DefaultsToDisabled_AndIsCarriedByTheOptions()
+    {
+        Assert.AreEqual(JsonSchemaCodeGeneration.Disabled, JsonSchema.Options.Default.CodeGeneration);
+        Assert.AreEqual(JsonSchemaCodeGeneration.Disabled, new JsonSchema.Options(alwaysAssertFormat: false).CodeGeneration);
+        Assert.AreEqual(
+            JsonSchemaCodeGeneration.Disabled,
+            new JsonSchema.Options(null, true, JsonSchemaDialect.Draft202012, true, null).CodeGeneration);
+        Assert.AreEqual(
+            JsonSchemaCodeGeneration.AfterWarmUp,
+            new JsonSchema.Options(codeGeneration: JsonSchemaCodeGeneration.AfterWarmUp).CodeGeneration);
+    }
+
+    [TestMethod]
+    [DataRow(JsonSchemaCodeGeneration.Eager)]
+    [DataRow(JsonSchemaCodeGeneration.AfterWarmUp)]
+    public void CodeGeneration_GivesTheSameResultsAsTheInterpreter(JsonSchemaCodeGeneration codeGeneration)
+    {
+        string schemaUri = $"https://example.com/test/code-generation-{codeGeneration}";
+        string schemaText = $$"""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$id": "{{schemaUri}}",
+              "type": "object",
+              "required": ["id"],
+              "properties": {
+                "id": { "type": "integer", "minimum": 1 },
+                "tags": { "type": "array", "items": { "type": "string", "maxLength": 4 }, "uniqueItems": true }
+              },
+              "additionalProperties": false
+            }
+            """;
+
+        string[] instances =
+        [
+            """{"id": 2}""",
+            """{"id": 0}""",
+            """{"id": 3, "tags": ["a", "bc"]}""",
+            """{"id": 3, "tags": ["a", "a"]}""",
+            """{"id": 3, "tags": ["abcde"]}""",
+            """{"id": 3, "other": true}""",
+            """{"tags": []}""",
+            """[1, 2]""",
+        ];
+
+        var interpreted = JsonSchema.FromText(schemaText, refreshCache: true);
+        var generated = JsonSchema.FromText(
+            schemaText,
+            options: new JsonSchema.Options(codeGeneration: codeGeneration),
+            refreshCache: true);
+
+        // More than the 1,000 evaluations after which a schema is compiled in the background, and a pause for the
+        // compilation, so that the later rounds run the generated code where the runtime generates it.
+        for (int round = 0; round < 1200; round++)
+        {
+            foreach (string instance in instances)
+            {
+                Assert.AreEqual(interpreted.Validate(instance), generated.Validate(instance), instance);
+            }
+
+            if (round == 1100)
+            {
+                Thread.Sleep(500);
+            }
+        }
+
+        // A validation that collects results is the interpreter's, with either setting.
+        using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+        Assert.IsFalse(generated.Validate("""{"id": 0}""", collector));
+        Assert.IsTrue(collector.GetResultCount() > 0);
+    }
+
+    [TestMethod]
+    public void CodeGeneration_HasItsOwnCachedEvaluator()
+    {
+        const string schemaUri = "https://example.com/test/code-generation-cache";
+        string stringSchema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$id": "https://example.com/test/code-generation-cache",
+              "type": "string"
+            }
+            """;
+
+        string intSchema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$id": "https://example.com/test/code-generation-cache",
+              "type": "integer"
+            }
+            """;
+
+        var interpretedOptions = new JsonSchema.Options(
+            allowFileSystemAndHttpResolution: false,
+            additionalDocumentResolver: Prepopulated(schemaUri, stringSchema));
+        var interpreted = JsonSchema.FromUri(schemaUri, interpretedOptions, refreshCache: true);
+        Assert.IsTrue(interpreted.Validate("\"hello\""));
+
+        // The same URI with code generation is not the interpreted schema's cache entry: it is resolved and compiled.
+        var generatedOptions = new JsonSchema.Options(
+            allowFileSystemAndHttpResolution: false,
+            additionalDocumentResolver: Prepopulated(schemaUri, intSchema),
+            codeGeneration: JsonSchemaCodeGeneration.Eager);
+        var generated = JsonSchema.FromUri(schemaUri, generatedOptions, refreshCache: true);
+        Assert.IsTrue(generated.Validate("42"));
+        Assert.IsFalse(generated.Validate("\"hello\""));
+
+        // Each is found again by its own setting.
+        Assert.IsTrue(JsonSchema.FromUri(schemaUri, interpretedOptions).Validate("\"hello\""));
+        Assert.IsTrue(JsonSchema.FromUri(schemaUri, generatedOptions).Validate("42"));
+    }
+
     private static JsonSchemaDocumentResolver Prepopulated(string uri, string schemaText)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(schemaText);

@@ -229,8 +229,11 @@ bool valid = evaluator.Evaluate(document.RootElement);
 
 ### When it applies
 
-- Code is generated only where the runtime can compile code at run time (`RuntimeFeature.IsDynamicCodeSupported`).
-  Under native AOT every value behaves as `Disabled`, with no error.
+- Code is generated only by the .NET 9 and later builds of the library, and only where the runtime can compile code
+  at run time (`RuntimeFeature.IsDynamicCodeSupported`). On .NET Framework (the .NET Standard builds) and under
+  native AOT every value behaves as `Disabled`, with no error.
+- The Validator package has the same setting: the `codeGeneration` option of `JsonSchema.Options`
+  (see [Dynamic Schema Validation](Validator.md#runtime-code-generation)).
 - A schema that uses `$dynamicRef` or `$recursiveRef` with a live dynamic scope is not compiled.
 - The code is held in a collectible assembly and is released with the evaluator.
 
