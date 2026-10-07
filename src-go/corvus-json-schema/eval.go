@@ -15,8 +15,10 @@ import (
 
 // program is the compiled program an evaluator runs.
 type program struct {
-	nodes            []*schemaNode
-	root             nodeID
+	nodes []*schemaNode
+	root  nodeID
+	// The entry for fail-fast evaluation: the root's target.
+	entry            nodeID
 	usesDynamicScope bool
 	maxDepth         int
 	formats          map[string]FormatValidator
@@ -72,6 +74,7 @@ func newProgram(c *compiledSchema, options *compileOptions) *program {
 			p.propertyMaps[id] = m
 		}
 	}
+	p.entry = p.fastTarget[p.root]
 	p.plans = compilePlans(p)
 	return p
 }
@@ -292,49 +295,58 @@ func (b bitset) tracked() bool {
 
 // newBits takes a cleared set for length members from the arena. Sets are released in the reverse order.
 func (e *evaluator) newBits(length int) bitset {
+	s := e.state()
 	words := (length + 63) >> 6
 	if words == 0 {
 		words = 1
 	}
-	off := len(e.arena)
+	off := len(s.arena)
 	end := off + words
-	if end > cap(e.arena) {
+	if end > cap(s.arena) {
 		grown := make([]uint64, end, 2*end+16)
-		copy(grown, e.arena)
-		e.arena = grown
+		copy(grown, s.arena)
+		s.arena = grown
 	}
-	e.arena = e.arena[:end]
-	clear(e.arena[off:end])
+	s.arena = s.arena[:end]
+	clear(s.arena[off:end])
 	return bitset{int32(off), int32(words)}
 }
 
+// The functions below are only given sets that newBits returned, so the buffers are there.
+
 func (e *evaluator) freeBits(b bitset) {
-	e.arena = e.arena[:b.off]
+	e.s.arena = e.s.arena[:b.off]
 }
 
 func (e *evaluator) setBit(b bitset, i int) {
-	e.arena[int(b.off)+i>>6] |= 1 << (i & 63)
+	e.s.arena[int(b.off)+i>>6] |= 1 << (i & 63)
 }
 
 func (e *evaluator) getBit(b bitset, i int) bool {
-	return e.arena[int(b.off)+i>>6]&(1<<(i&63)) != 0
+	return e.s.arena[int(b.off)+i>>6]&(1<<(i&63)) != 0
 }
 
 func (e *evaluator) mergeBits(into, from bitset) {
-	a := e.arena[into.off : into.off+into.words]
-	for i, w := range e.arena[from.off : from.off+from.words] {
+	a := e.s.arena[into.off : into.off+into.words]
+	for i, w := range e.s.arena[from.off : from.off+from.words] {
 		a[i] |= w
 	}
 }
 
 func (e *evaluator) clearBits(b bitset) {
-	clear(e.arena[b.off : b.off+b.words])
+	clear(e.s.arena[b.off : b.off+b.words])
+}
+
+func (e *evaluator) copyBits(into, from bitset) {
+	copy(e.s.arena[into.off:into.off+into.words], e.s.arena[from.off:from.off+from.words])
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // The evaluator
 
-// evaluator holds the state of one evaluation. Its buffers are reused from one evaluation to the next.
+// evaluator is the state of one evaluation: small enough to live on the stack of the call that validates. The
+// buffers an evaluation may need are in a scratch, taken from the validator's pool only when first needed, so a
+// schema that needs none (most do) touches no pool at all.
 type evaluator struct {
 	p *program
 	// The instance document.
@@ -342,10 +354,18 @@ type evaluator struct {
 	// The collector, or nil to fail fast.
 	c           *ResultsCollector
 	annotations [][]annotationEntry
-	// The dynamic scope: the resources entered, outermost first.
-	scope         []uint32
-	depth         int
+	depth       int
+	// Evaluation recursed in place beyond the maximum depth.
 	depthExceeded bool
+	// The buffers, once taken, and the validator whose pool they come from.
+	s *scratch
+	v *Validator
+}
+
+// scratch is the buffers of an evaluation, reused from one evaluation to the next.
+type scratch struct {
+	// The dynamic scope: the resources entered, outermost first.
+	scope []uint32
 	// The evaluated-property and evaluated-item sets in use.
 	arena []uint64
 	// Scratch for uniqueItems.
@@ -360,36 +380,26 @@ type evaluator struct {
 	contentParser *parser
 }
 
-func newEvaluator(p *program, c *ResultsCollector) *evaluator {
-	e := &evaluator{p: p, c: c}
-	if c != nil {
-		e.annotations = p.nodeAnnotations()
+// state is the evaluation's buffers, taken from the pool on first use.
+func (e *evaluator) state() *scratch {
+	if e.s == nil {
+		e.s = e.v.acquire()
 	}
-	return e
-}
-
-// begin readies the evaluator for an instance document.
-func (e *evaluator) begin(d *Document) {
-	e.d = d
-	e.scope = e.scope[:0]
-	e.arena = e.arena[:0]
-	e.depth = 0
-	e.depthExceeded = false
+	return e.s
 }
 
 // validate evaluates the program's entry, failing fast.
-func (e *evaluator) validate(d *Document) bool {
-	e.begin(d)
-	return e.run(e.p.fastTarget[e.p.root], d.root)
+func (e *evaluator) validate() bool {
+	return e.run(e.p.entry, e.d.root)
 }
 
 // evaluate evaluates the program's entry, reporting to the collector.
-func (e *evaluator) evaluate(d *Document) bool {
-	e.begin(d)
+func (e *evaluator) evaluate() bool {
+	e.annotations = e.p.nodeAnnotations()
 	// A root that is nothing but a $ref reports against its target, with no $ref in the evaluation path.
 	root, _ := e.resolve(e.p.root)
 	e.c.beginChildContext(false, "", e.p.nodes[root].pointer, false, "")
-	ok := e.evalNode(root, d.root, noBits)
+	ok := e.evalNode(root, e.d.root, noBits)
 	e.c.commitChildContext(false, ok, msgEvaluatedSubschema)
 	return ok
 }
@@ -462,10 +472,7 @@ func (e *evaluator) evalNode(id nodeID, x int, bits bitset) bool {
 		}
 		return n.alwaysTrue
 	}
-	pushed := e.p.usesDynamicScope && (len(e.scope) == 0 || e.scope[len(e.scope)-1] != n.resourceID)
-	if pushed {
-		e.scope = append(e.scope, n.resourceID)
-	}
+	pushed := e.p.usesDynamicScope && e.pushScope(n.resourceID)
 	kind := e.d.kind(x)
 	var ok bool
 	if !bits.tracked() && ((n.unevaluatedProperties >= 0 && kind == kindObject) ||
@@ -477,9 +484,24 @@ func (e *evaluator) evalNode(id nodeID, x int, bits bitset) bool {
 		ok = e.evalCore(id, n, x, bits)
 	}
 	if pushed {
-		e.scope = e.scope[:len(e.scope)-1]
+		e.popScope()
 	}
 	return ok
+}
+
+// pushScope enters a resource in the dynamic scope, unless it is the innermost one already. It reports whether it
+// did.
+func (e *evaluator) pushScope(resource uint32) bool {
+	s := e.state()
+	if n := len(s.scope); n != 0 && s.scope[n-1] == resource {
+		return false
+	}
+	s.scope = append(s.scope, resource)
+	return true
+}
+
+func (e *evaluator) popScope() {
+	e.s.scope = e.s.scope[:len(e.s.scope)-1]
 }
 
 func (e *evaluator) evalCore(id nodeID, n *schemaNode, x int, bits bitset) bool {
@@ -656,7 +678,7 @@ func (e *evaluator) evalString(n *schemaNode, x int) bool {
 		}
 	}
 	if p := n.pattern; p != nil {
-		m := p.match(d.str(x))
+		m := p.match(d.str(x), d.strASCII(x))
 		message := ""
 		if e.wants(m) {
 			message = "Expected the value to match the regular expression" + quoted(p.source)
@@ -705,17 +727,19 @@ func (e *evaluator) contentOK(s []byte, kind contentKind) bool {
 		return true
 	}
 	if kind != contentJSON {
-		decoded, ok := base64Decode(s, e.content)
-		e.content = decoded
+		st := e.state()
+		decoded, ok := base64Decode(s, st.content)
+		st.content = decoded
 		if !ok || kind == contentBase64 {
 			return ok
 		}
 		s = decoded
 	}
-	if e.contentParser == nil {
-		e.contentParser = new(parser)
+	st := e.state()
+	if st.contentParser == nil {
+		st.contentParser = new(parser)
 	}
-	return e.contentParser.isValid(s)
+	return st.contentParser.isValid(s)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -799,7 +823,7 @@ func (e *evaluator) evalObject(id nodeID, n *schemaNode, x int, bits bitset) boo
 			}
 			for j := range n.patternProperties {
 				pp := &n.patternProperties[j]
-				if !pp.pattern.match(name) {
+				if !pp.pattern.match(name, d.strASCII(k)) {
 					continue
 				}
 				matched = true
@@ -979,7 +1003,7 @@ func (e *evaluator) evalArray(n *schemaNode, x int, bits bitset) bool {
 		}
 	}
 	if n.uniqueItems {
-		m := allUnique(d, x, &e.unique)
+		m := allUnique(d, x, &e.state().unique)
 		if e.keyword(m, msgUniqueItems, "uniqueItems") {
 			return false
 		}
@@ -1094,7 +1118,7 @@ func (e *evaluator) evalInPlaceChild(child nodeID, path string, x int, bits bits
 }
 
 func (e *evaluator) resolveDynamic(d *dynamicRefTarget) nodeID {
-	for _, resource := range e.scope {
+	for _, resource := range e.state().scope {
 		for i := range d.byResource {
 			if d.byResource[i].resource == resource {
 				return d.byResource[i].node
@@ -1243,7 +1267,7 @@ func (e *evaluator) evalInPlace(n *schemaNode, x int, bits bitset) bool {
 			if e.evalInPlaceChild(n.oneOf[i], path, x, aside, false, true) {
 				matched++
 				if track {
-					copy(e.arena[only.off:only.off+only.words], e.arena[aside.off:aside.off+aside.words])
+					e.copyBits(only, aside)
 				}
 				if !collect && matched > 1 {
 					break

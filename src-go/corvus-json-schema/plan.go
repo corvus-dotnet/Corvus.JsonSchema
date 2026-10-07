@@ -745,7 +745,7 @@ func planObject(p *program, n *schemaNode, childOf func(nodeID) child) *objectPl
 	o.namePatterns = make([][]uint16, len(known))
 	for i, name := range known {
 		for j, pp := range n.patternProperties {
-			if pp.pattern.match([]byte(name)) {
+			if pp.pattern.matchString(name) {
 				o.namePatterns[i] = append(o.namePatterns[i], uint16(j))
 			}
 		}
@@ -1044,14 +1044,10 @@ func (e *evaluator) runBody(b *body, x int) bool {
 	if !e.p.usesDynamicScope {
 		return e.runKeywords(b, x)
 	}
-	resource := e.p.nodes[b.node].resourceID
-	pushed := len(e.scope) == 0 || e.scope[len(e.scope)-1] != resource
-	if pushed {
-		e.scope = append(e.scope, resource)
-	}
+	pushed := e.pushScope(e.p.nodes[b.node].resourceID)
 	ok := e.runKeywords(b, x)
 	if pushed {
-		e.scope = e.scope[:len(e.scope)-1]
+		e.popScope()
 	}
 	return ok
 }
@@ -1319,7 +1315,7 @@ func (e *evaluator) visitPattern(pl *objectPlan, x int) bool {
 	p := &pl.patterns[0]
 	k := d.first(x)
 	for end := k + 2*d.count(x); k < end; k += 2 {
-		if p.pattern.match(d.str(k)) {
+		if p.pattern.match(d.str(k), d.strASCII(k)) {
 			if !e.runChild(p.child, k+1) {
 				return false
 			}
@@ -1356,7 +1352,7 @@ func (e *evaluator) visitGeneral(pl *objectPlan, x int) (uint64, bool) {
 			}
 		} else {
 			for j := range pl.patterns {
-				if pl.patterns[j].pattern.match(name) {
+				if pl.patterns[j].pattern.match(name, d.strASCII(k)) {
 					matched = true
 					if !e.runChild(pl.patterns[j].child, k+1) {
 						return 0, false
@@ -1437,7 +1433,7 @@ func (e *evaluator) runArray(pl *arrayPlan, x int) bool {
 			return false
 		}
 	}
-	return !pl.unique || allUnique(d, x, &e.unique)
+	return !pl.unique || allUnique(d, x, &e.state().unique)
 }
 
 // allOfType reports whether each of count consecutive values is of the types in a mask.
@@ -1528,7 +1524,7 @@ func (e *evaluator) runString(ops []stringOp, x int) bool {
 		case stringLength:
 			ok = lengthOK(d, x, o.min, o.max)
 		case stringPattern:
-			ok = o.pattern.match(d.str(x))
+			ok = o.pattern.match(d.str(x), d.strASCII(x))
 		case stringFormat:
 			ok = o.format.checkString(d.str(x))
 		default:

@@ -173,7 +173,7 @@ type valueTest struct {
 func (t *valueTest) holds(d *Document, v int) bool {
 	if t.isPattern {
 		if d.kind(v) == kindString {
-			return t.pattern.match(d.str(v))
+			return t.pattern.match(d.str(v), d.strASCII(v))
 		}
 		return !t.requiresString
 	}
@@ -707,7 +707,7 @@ func tryFuse(p *program, id nodeID, sameResource bool, childOf func(nodeID) chil
 	// A known name matching an absent pattern fails its condition whatever its value: no constant is allowed.
 	for e, name := range known {
 		for _, absent := range f.absent {
-			if absent.pattern.match([]byte(name)) {
+			if absent.pattern.matchString(name) {
 				tests[e] = append(tests[e], valueTest{condition: absent.condition})
 			}
 		}
@@ -728,7 +728,7 @@ func tryFuse(p *program, id nodeID, sameResource bool, childOf func(nodeID) chil
 				}
 			}
 			for _, pp := range b.patternProperties {
-				if pp.pattern.match([]byte(name)) {
+				if pp.pattern.matchString(name) {
 					matched = true
 					apps = append(apps, collectedApp{uint16(c), appChild(pp.node), p.fastTarget[pp.node]})
 				}
@@ -922,9 +922,10 @@ const (
 )
 
 func (e *evaluator) acquirePass() *fusedPass {
-	if n := len(e.passes); n > 0 {
-		pass := e.passes[n-1]
-		e.passes = e.passes[:n-1]
+	s := e.state()
+	if n := len(s.passes); n > 0 {
+		pass := s.passes[n-1]
+		s.passes = s.passes[:n-1]
 		*pass = fusedPass{}
 		return pass
 	}
@@ -937,9 +938,9 @@ func (e *evaluator) applyOpt(c optChild, v int) bool {
 
 // resolveUnknown resolves a name no entry knows against one branch's pattern and additional properties. It returns
 // whether it matched (the property is covered), and false when the application failed.
-func (e *evaluator) resolveUnknown(c *fusedContributor, name []byte, v int) (matched, ok bool) {
+func (e *evaluator) resolveUnknown(c *fusedContributor, name []byte, ascii bool, v int) (matched, ok bool) {
 	for i := range c.patterns {
-		if c.patterns[i].pattern.match(name) {
+		if c.patterns[i].pattern.match(name, ascii) {
 			matched = true
 			if !e.applyOpt(c.patterns[i].child, v) {
 				return false, false
@@ -997,13 +998,13 @@ func (e *evaluator) fusedEntry(f *fusedObject, index int, v int, pass *fusedPass
 	return outcome
 }
 
-func (e *evaluator) fusedUnknown(f *fusedObject, name []byte, v int, pass *fusedPass) uint8 {
+func (e *evaluator) fusedUnknown(f *fusedObject, name []byte, ascii bool, v int, pass *fusedPass) uint8 {
 	if !f.resolvesUnknown {
 		return 0
 	}
 	for i := range f.absent {
 		a := &f.absent[i]
-		if pass.failed&(1<<a.condition) == 0 && a.pattern.match(name) {
+		if pass.failed&(1<<a.condition) == 0 && a.pattern.match(name, ascii) {
 			pass.failed |= 1 << a.condition
 		}
 	}
@@ -1016,7 +1017,7 @@ func (e *evaluator) fusedUnknown(f *fusedObject, name []byte, v int, pass *fused
 			}
 			continue
 		}
-		matched, ok := e.resolveUnknown(c, name, v)
+		matched, ok := e.resolveUnknown(c, name, ascii, v)
 		switch {
 		case !ok && !c.alt.set:
 			return fusedFailed
@@ -1033,11 +1034,11 @@ func (e *evaluator) runFused(f *fusedObject, x int) bool {
 	if f.flat != nil {
 		return e.runStrictObject(f.flat, x)
 	}
-	mark := len(e.arena)
 	pass := e.acquirePass()
+	mark := len(e.s.arena)
 	ok := e.runFusedPass(f, x, pass)
-	e.passes = append(e.passes, pass)
-	e.arena = e.arena[:mark]
+	e.s.passes = append(e.s.passes, pass)
+	e.s.arena = e.s.arena[:mark]
 	return ok
 }
 
@@ -1077,7 +1078,7 @@ func (e *evaluator) runFusedPass(f *fusedObject, x int, pass *fusedPass) bool {
 		if index, hint = f.names.findFrom(name, hint); index >= 0 {
 			outcome = e.fusedEntry(f, index, k+1, pass)
 		} else {
-			outcome = e.fusedUnknown(f, name, k+1, pass)
+			outcome = e.fusedUnknown(f, name, d.strASCII(k), k+1, pass)
 		}
 		if outcome&fusedFailed != 0 {
 			return false
@@ -1142,7 +1143,7 @@ func (e *evaluator) runFusedPass(f *fusedObject, x int, pass *fusedPass) bool {
 			for i := range f.contributors {
 				c := &f.contributors[i]
 				if c.condition.set && pass.active(c.condition) {
-					matched, ok := e.resolveUnknown(c, name, v)
+					matched, ok := e.resolveUnknown(c, name, d.strASCII(k), v)
 					if !ok {
 						return false
 					}

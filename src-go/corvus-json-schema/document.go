@@ -1,6 +1,7 @@
 package jsonschema
 
 import (
+	"encoding/binary"
 	"math"
 	"math/bits"
 	"slices"
@@ -331,20 +332,25 @@ func (p *parser) parseNew(b []byte) (*Document, error) {
 	return &Document{tape: tape, source: b, text: text, root: root}, nil
 }
 
-// parseInto parses b into d, reusing its arrays and the parser's (no allocation once they have grown). The document
-// is valid until the next parse into it.
+// parseInto parses b into d, reusing its arrays and the parser's (no allocation once they have grown). The finished
+// values are written straight into the document's tape. The document is valid until the next parse into it.
 func (p *parser) parseInto(d *Document, b []byte) bool {
+	nodes, text := p.nodes, p.text
+	p.nodes, p.text = d.tape, d.text
 	p.reset(b, false)
 	ok := p.parse()
 	p.b = nil
-	if !ok {
-		return false
+	if ok {
+		d.root = len(p.nodes) / 2
+		d.tape = append(p.nodes, p.scratch[0], p.scratch[1])
+		d.text = p.text
+		d.source = b
+	} else {
+		// Keep what the buffers have grown to.
+		d.tape, d.text = p.nodes[:0], p.text[:0]
 	}
-	d.tape = append(append(d.tape[:0], p.nodes...), p.scratch[0], p.scratch[1])
-	d.text = append(d.text[:0], p.text...)
-	d.source = b
-	d.root = len(p.nodes) / 2
-	return true
+	p.nodes, p.text = nodes, text
+	return ok
 }
 
 func (p *parser) skipWs() {
@@ -609,12 +615,38 @@ var scan = func() (t [256]uint8) {
 	return
 }()
 
-// str reads a string, from its opening quote.
+const (
+	swarOnes  = 0x0101010101010101
+	swarHighs = 0x8080808080808080
+)
+
+// str reads a string, from its opening quote. Eight bytes at a time while there are that many, then a byte at a
+// time.
 func (p *parser) str() bool {
 	b := p.b
 	start := p.i + 1
 	j := start
+	var high uint64
+	for j+8 <= len(b) {
+		w := binary.LittleEndian.Uint64(b[j:])
+		// The bytes that end the run: below 0x20, a quote or a backslash. Each test marks the high bit of a byte
+		// that matches. A borrow can mark a byte wrongly only above one that matches, and the lowest mark is taken.
+		quote := w ^ (swarOnes * '"')
+		backslash := w ^ (swarOnes * '\\')
+		stop := ((w-swarOnes*0x20)&^w | (quote-swarOnes)&^quote | (backslash-swarOnes)&^backslash) & swarHighs
+		if stop != 0 {
+			// Only the non-ASCII bytes before the stop count.
+			high |= w & swarHighs & ((stop & -stop) - 1)
+			j += bits.TrailingZeros64(stop) >> 3
+			break
+		}
+		high |= w & swarHighs
+		j += 8
+	}
 	wide := uint8(0)
+	if high != 0 {
+		wide = 2
+	}
 	for j < len(b) {
 		c := scan[b[j]]
 		if c == 1 {
@@ -782,41 +814,58 @@ func (p *parser) number() bool {
 	if negative {
 		j++
 	}
-	var value uint64
-	overflow := false
-	intDigits := 0
+	// The digits of the integer and the fraction as one integer, while they fit: mantissa. exact says no digit was
+	// left out of it.
+	var mantissa uint64
+	exact := true
+	intStart := j
 	if j < len(b) && b[j] == '0' {
 		j++
-		intDigits = 1
-	} else if isDigit(b, j) {
-		for isDigit(b, j) {
-			if !overflow {
-				hi, lo := bits.Mul64(value, 10)
-				sum := lo + uint64(b[j]-'0')
-				if hi != 0 || sum < lo {
-					overflow = true
-				} else {
-					value = sum
-				}
-			}
-			intDigits++
-			j++
-		}
 	} else {
-		return p.fail("invalid number", j)
-	}
-	floating := false
-	fracStart, fracEnd := -1, -1
-	if j < len(b) && b[j] == '.' {
-		j++
-		if !isDigit(b, j) {
+		// Nineteen digits cannot overflow 64 bits.
+		for limit := min(len(b), j+19); j < limit; j++ {
+			c := b[j] - '0'
+			if c > 9 {
+				break
+			}
+			mantissa = mantissa*10 + uint64(c)
+		}
+		if j == intStart {
 			return p.fail("invalid number", j)
 		}
-		fracStart = j
-		for isDigit(b, j) {
-			j++
+		for ; isDigit(b, j); j++ {
+			if exact {
+				hi, lo := bits.Mul64(mantissa, 10)
+				sum := lo + uint64(b[j]-'0')
+				if hi != 0 || sum < lo {
+					exact = false
+				} else {
+					mantissa = sum
+				}
+			}
 		}
-		fracEnd = j
+	}
+	digits := j - intStart
+	floating := false
+	scale := 0
+	if j < len(b) && b[j] == '.' {
+		j++
+		fracStart := j
+		for ; j < len(b); j++ {
+			c := b[j] - '0'
+			if c > 9 {
+				break
+			}
+			if digits++; digits <= 19 {
+				mantissa = mantissa*10 + uint64(c)
+			} else {
+				exact = false
+			}
+		}
+		if j == fracStart {
+			return p.fail("invalid number", j)
+		}
+		scale = fracStart - j
 		floating = true
 	}
 	exponent := 0
@@ -846,31 +895,39 @@ func (p *parser) number() bool {
 	}
 	p.i = j
 	header := uint64(kindNumber) | uint64(start)<<32
-	if !floating && !overflow {
+	if !floating && exact {
 		if !negative {
-			if value>>63 != 0 {
-				p.push(header|numUint<<8, value)
+			if mantissa>>63 != 0 {
+				p.push(header|numUint<<8, mantissa)
 			} else {
-				p.push(header|numInt<<8, value)
+				p.push(header|numInt<<8, mantissa)
 			}
 			return true
 		}
 		// -0 is the float.
-		if value != 0 && value <= 1<<63 {
-			p.push(header|numInt<<8, -value)
+		if mantissa != 0 && mantissa <= 1<<63 {
+			p.push(header|numInt<<8, -mantissa)
 			return true
 		}
 	}
-	d, exact := math.NaN(), false
-	if !expOverflow {
-		d, exact = fastFloat(b, negative, start, intDigits, fracStart, fracEnd, exponent)
-	}
-	if !exact {
-		if p.validating && !expOverflow && intDigits+exponent < 300 {
-			// Checking syntax only: the number is well within the range of a float64, and its value is not needed.
-			p.push(header|numFloat<<8, 0)
-			return true
+	// A mantissa that a float64 holds exactly and a power of ten that one does too: one exact conversion and one
+	// correctly rounded operation give the correctly rounded value (Clinger's fast path).
+	scale += exponent
+	var d float64
+	switch {
+	case exact && !expOverflow && mantissa>>53 == 0 && scale >= -22 && scale <= 22:
+		d = float64(mantissa)
+		if scale < 0 {
+			d /= powers[-scale]
+		} else {
+			d *= powers[scale]
 		}
+		if negative {
+			d = -d
+		}
+	case p.validating && !expOverflow && digits+exponent < 300:
+		// Checking syntax only: the number is well within the range of a float64, and its value is not needed.
+	default:
 		// The text is a validated JSON number, which strconv reads the same way.
 		var err error
 		d, err = strconv.ParseFloat(unsafe.String(&b[start], j-start), 64)
@@ -885,51 +942,4 @@ func (p *parser) number() bool {
 var powers = [...]float64{
 	1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19,
 	1e20, 1e21, 1e22,
-}
-
-// fastFloat is the correctly rounded float64 for a number whose significant digits fit 2^53 and whose decimal
-// exponent is within 10^22 (Clinger's fast path: one exact conversion and one correctly rounded operation).
-func fastFloat(b []byte, negative bool, start, intDigits, fracStart, fracEnd, exponent int) (float64, bool) {
-	intStart := start
-	if negative {
-		intStart++
-	}
-	var mantissa uint64
-	digits := 0
-	for _, c := range b[intStart : intStart+intDigits] {
-		if digits > 0 || c != '0' {
-			digits++
-		}
-		mantissa = mantissa*10 + uint64(c-'0')
-		if digits > 15 {
-			return 0, false
-		}
-	}
-	scale := exponent
-	if fracStart >= 0 {
-		for _, c := range b[fracStart:fracEnd] {
-			if digits > 0 || c != '0' {
-				digits++
-			}
-			mantissa = mantissa*10 + uint64(c-'0')
-			if digits > 15 {
-				return 0, false
-			}
-		}
-		scale -= fracEnd - fracStart
-	}
-	d := float64(mantissa)
-	switch {
-	case scale == 0:
-	case scale > 0 && scale <= 22:
-		d *= powers[scale]
-	case scale < 0 && scale >= -22:
-		d /= powers[-scale]
-	default:
-		return 0, false
-	}
-	if negative {
-		d = -d
-	}
-	return d, true
 }

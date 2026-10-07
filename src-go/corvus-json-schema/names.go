@@ -165,6 +165,8 @@ type names struct {
 	// set is not declared, which settles most misses without a search.
 	lengths uint64
 	m       nameMap
+	// The word of each name of at most eight bytes: such a name equals another of its length when the words do.
+	words []uint64
 	// For a hint h (the index after the previous match), the name after that match in sorted order (entry 0: the
 	// first name in sorted order). noName after the last.
 	sortedNext []uint32
@@ -178,9 +180,12 @@ func lengthBit(length int) uint64 {
 }
 
 func newNames(list []string) *names {
-	ns := &names{m: newNameMap(list)}
+	ns := &names{m: newNameMap(list), words: make([]uint64, len(list))}
 	order := make([]uint32, len(list))
 	for i, n := range list {
+		if len(n) <= 8 {
+			ns.words[i] = nameWord([]byte(n))
+		}
 		ns.lengths |= lengthBit(len(n))
 		order[i] = uint32(i)
 	}
@@ -224,22 +229,43 @@ func (ns *names) findFrom(name []byte, hint int) (int, int) {
 		return -1, hint
 	}
 	list := ns.m.names
-	if hint < len(list) && list[hint] == string(name) {
-		return hint, hint + 1
-	}
-	if hint < len(ns.sortedNext) {
-		if next := ns.sortedNext[hint]; next != noName && list[next] == string(name) {
-			return int(next), int(next) + 1
+	if len(name) <= 8 {
+		// Short names are compared as words, without a call.
+		w := nameWord(name)
+		if hint < len(list) && len(list[hint]) == len(name) && ns.words[hint] == w {
+			return hint, hint + 1
 		}
-	}
-	// A few names are compared in turn (lengths settle most), more are searched.
-	if len(list) <= lookupNames {
-		for i := range list {
-			if list[i] == string(name) {
-				return i, i + 1
+		if hint < len(ns.sortedNext) {
+			if next := ns.sortedNext[hint]; next != noName && len(list[next]) == len(name) && ns.words[next] == w {
+				return int(next), int(next) + 1
 			}
 		}
-		return -1, hint
+		if len(list) <= lookupNames {
+			for i := range list {
+				if len(list[i]) == len(name) && ns.words[i] == w {
+					return i, i + 1
+				}
+			}
+			return -1, hint
+		}
+	} else {
+		if hint < len(list) && list[hint] == string(name) {
+			return hint, hint + 1
+		}
+		if hint < len(ns.sortedNext) {
+			if next := ns.sortedNext[hint]; next != noName && list[next] == string(name) {
+				return int(next), int(next) + 1
+			}
+		}
+		// A few names are compared in turn (lengths settle most), more are searched.
+		if len(list) <= lookupNames {
+			for i := range list {
+				if list[i] == string(name) {
+					return i, i + 1
+				}
+			}
+			return -1, hint
+		}
 	}
 	if i := ns.m.find(name); i >= 0 {
 		return i, i + 1

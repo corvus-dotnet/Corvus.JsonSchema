@@ -1,8 +1,10 @@
 package jsonschema
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -228,6 +230,126 @@ func TestStrHashReadsEveryByte(t *testing.T) {
 			if strHash(changed) == h {
 				t.Errorf("length %d: byte %d does not affect the hash", n, i)
 			}
+		}
+	}
+}
+
+// xorshift is a small deterministic generator for the tests that compare against a reference.
+type xorshift uint64
+
+func (x *xorshift) next(n int) int {
+	*x ^= *x << 13
+	*x ^= *x >> 7
+	*x ^= *x << 17
+	return int(uint64(*x) % uint64(n))
+}
+
+func TestStringsAgreeWithEncodingJSON(t *testing.T) {
+	pieces := []string{
+		"a", "b", "z", " ", "0", "/", "é", "日", "😀", `\n`, `\t`, `\"`, `\\`, `\/`, `\u0041`, `\u00e9`, `\ud83d\ude00`,
+		`\b`, `\f`, `\r`, "abcdefgh", "ABCDEFGHIJKLMNOP", "\u007f",
+	}
+	breakers := []string{"\n", "\x00", "\x1f", `\x`, `\u12G`, "\xff", "\xc3", `\ud800`, `\udc00x`}
+	seed := xorshift(0x2545f4914f6cdd1d)
+	for i := 0; i < 20000; i++ {
+		var sb strings.Builder
+		sb.WriteByte('"')
+		for n := seed.next(24); n > 0; n-- {
+			sb.WriteString(pieces[seed.next(len(pieces))])
+		}
+		broken := seed.next(8) == 0
+		if broken {
+			sb.WriteString(breakers[seed.next(len(breakers))])
+			for n := seed.next(12); n > 0; n-- {
+				sb.WriteString(pieces[seed.next(len(pieces))])
+			}
+		}
+		sb.WriteByte('"')
+		text := sb.String()
+		d, err := ParseDocumentString(text)
+		if broken {
+			if err == nil {
+				t.Fatalf("%q parsed", text)
+			}
+			if new(parser).isValid([]byte(text)) {
+				t.Fatalf("%q is valid to the syntax check", text)
+			}
+			continue
+		}
+		var want string
+		if jsonErr := json.Unmarshal([]byte(text), &want); jsonErr != nil {
+			t.Fatalf("the reference rejects %q: %v", text, jsonErr)
+		}
+		if err != nil {
+			t.Fatalf("%q: %v", text, err)
+		}
+		if got := string(d.str(d.root)); got != want {
+			t.Fatalf("%q read as %q, want %q", text, got, want)
+		}
+		if ascii := d.strASCII(d.root); ascii != (strings.IndexFunc(want, func(r rune) bool { return r >= 0x80 }) < 0) {
+			t.Fatalf("%q: ASCII flag %v", text, ascii)
+		}
+	}
+}
+
+func TestNumbersAgreeWithStrconv(t *testing.T) {
+	seed := xorshift(0x9e3779b97f4a7c15)
+	digits := func(n int) string {
+		b := make([]byte, n)
+		for i := range b {
+			b[i] = byte('0' + seed.next(10))
+		}
+		return string(b)
+	}
+	for i := 0; i < 50000; i++ {
+		var sb strings.Builder
+		if seed.next(3) == 0 {
+			sb.WriteByte('-')
+		}
+		if seed.next(6) == 0 {
+			sb.WriteByte('0')
+		} else {
+			sb.WriteByte(byte('1' + seed.next(9)))
+			sb.WriteString(digits(seed.next(24)))
+		}
+		floating := false
+		if seed.next(2) == 0 {
+			floating = true
+			sb.WriteByte('.')
+			sb.WriteString(digits(1 + seed.next(24)))
+		}
+		if seed.next(3) == 0 {
+			floating = true
+			sb.WriteByte("eE"[seed.next(2)])
+			sb.WriteString([]string{"", "+", "-"}[seed.next(3)])
+			sb.WriteString(strconv.Itoa(seed.next(40)))
+		}
+		text := sb.String()
+		d := mustParse(t, " "+text+" ")
+		flag, data := d.flags(d.root), d.data(d.root)
+		if got := string(d.numberText(d.root)); got != text {
+			t.Fatalf("%s: text %s", text, got)
+		}
+		if !floating {
+			if v, err := strconv.ParseInt(text, 10, 64); err == nil && text != "-0" {
+				if flag != numInt || int64(data) != v {
+					t.Fatalf("%s: representation %d, value %d", text, flag, int64(data))
+				}
+				continue
+			}
+			if v, err := strconv.ParseUint(text, 10, 64); err == nil {
+				if flag != numUint || data != v {
+					t.Fatalf("%s: representation %d, value %d", text, flag, data)
+				}
+				continue
+			}
+		}
+		want, err := strconv.ParseFloat(text, 64)
+		if err != nil {
+			t.Fatalf("the reference rejects %s: %v", text, err)
+		}
+		if flag != numFloat || data != math.Float64bits(want) {
+			t.Fatalf("%s: representation %d, value %v, want %v", text, flag, math.Float64frombits(data), want)
 		}
 	}
 }

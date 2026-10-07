@@ -64,8 +64,15 @@ type pattern struct {
 	engine   patternEngine
 }
 
-// match reports whether the pattern matches somewhere in s.
-func (p *pattern) match(s []byte) bool {
+// matchString is match for a string that is not known to be ASCII.
+func (p *pattern) matchString(s string) bool {
+	b := []byte(s)
+	return p.match(b, isASCII(b))
+}
+
+// match reports whether the pattern matches somewhere in s, ascii saying whether s is known to be ASCII (a document
+// knows that of its strings).
+func (p *pattern) match(s []byte, ascii bool) bool {
 	switch p.kind {
 	case matchEverything:
 		return true
@@ -75,7 +82,10 @@ func (p *pattern) match(s []byte) bool {
 		}
 		return len(s) >= len(p.text) && string(s[:len(p.text)]) == p.text
 	case matchSequence:
-		return p.seq.match(s)
+		if ascii {
+			return p.seq.matchASCII(s)
+		}
+		return p.seq.matchChars(s)
 	case matchSeparatedList:
 		return p.list.match(s)
 	case matchHasContent:
@@ -95,6 +105,9 @@ func (p *pattern) match(s []byte) bool {
 		}
 		return false
 	case matchLine:
+		if ascii && uint64(len(s)) < uint64(p.min) {
+			return false
+		}
 		n := lineLength(s)
 		return n >= 0 && uint64(n) >= uint64(p.min) && uint64(n) <= uint64(p.max)
 	case matchLiterals:
@@ -109,7 +122,6 @@ func (p *pattern) match(s []byte) bool {
 		}
 		return false
 	case matchAlternatives:
-		ascii := isASCII(s)
 		for i := range p.alts {
 			if p.alts[i].match(s, ascii) {
 				return true

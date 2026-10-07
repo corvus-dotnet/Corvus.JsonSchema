@@ -28,13 +28,13 @@ import (
 // Validator is a compiled schema. It is immutable and safe for concurrent use.
 type Validator struct {
 	program *program
-	// Evaluators not in use, with the buffers they have grown.
-	evaluators sync.Pool
+	// Evaluation buffers not in use, with what they have grown to.
+	scratches sync.Pool
 }
 
 func newValidator(compiled *compiledSchema, options *compileOptions) *Validator {
 	v := &Validator{program: newProgram(compiled, options)}
-	v.evaluators.New = func() any { return newEvaluator(v.program, nil) }
+	v.scratches.New = func() any { return new(scratch) }
 	return v
 }
 
@@ -82,21 +82,22 @@ func CompileURI(uri string, options ...Option) (*Validator, error) {
 	return newValidator(compiled, o), nil
 }
 
-func (v *Validator) acquire() *evaluator {
-	return v.evaluators.Get().(*evaluator)
+func (v *Validator) acquire() *scratch {
+	return v.scratches.Get().(*scratch)
 }
 
-// The buffers an evaluator keeps between validations, in bytes, beyond which it is dropped instead of pooled.
-const evaluatorRetainedLimit = 4 << 20
+// The buffers a scratch keeps between validations, in bytes, beyond which it is dropped instead of pooled.
+const scratchRetainedLimit = 4 << 20
 
-func (v *Validator) release(e *evaluator) {
+func (v *Validator) release(s *scratch) {
 	// Let go of the instance, which the caller owns.
-	e.d = nil
-	e.text.source = nil
-	if e.parser.retainsTooMuch() || 8*(cap(e.text.tape)+cap(e.arena)+cap(e.unique)) > evaluatorRetainedLimit {
+	s.text.source = nil
+	if s.parser.retainsTooMuch() || 8*(cap(s.text.tape)+cap(s.arena)+cap(s.unique))+cap(s.text.text) > scratchRetainedLimit {
 		return
 	}
-	v.evaluators.Put(e)
+	s.scope = s.scope[:0]
+	s.arena = s.arena[:0]
+	v.scratches.Put(s)
 }
 
 // stringBytes views a string's bytes, which are only read.
@@ -104,21 +105,33 @@ func stringBytes(s string) []byte {
 	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
+// run validates a document, failing fast. It reports the result and whether evaluation recursed in place beyond the
+// maximum depth.
+func (v *Validator) run(instance *Document, s *scratch) (ok, depthExceeded bool) {
+	e := evaluator{p: v.program, d: instance, v: v, s: s}
+	ok = e.validate()
+	if s == nil && e.s != nil {
+		v.release(e.s)
+	}
+	return ok, e.depthExceeded
+}
+
 // IsValid reports whether an instance is valid. A schema that recursed in place beyond the maximum depth is
 // reported as invalid. Use Validate to tell the two apart.
 func (v *Validator) IsValid(instance *Document) bool {
-	e := v.acquire()
-	ok := e.validate(instance)
-	v.release(e)
+	ok, _ := v.run(instance, nil)
 	return ok
 }
 
 // IsValidBytes reports whether UTF-8 JSON text is a valid instance. Text that is not JSON is not valid. The text is
 // parsed into buffers the validator reuses, so a validation allocates nothing in the steady state.
 func (v *Validator) IsValidBytes(json []byte) bool {
-	e := v.acquire()
-	ok := e.parser.parseInto(&e.text, json) && e.validate(&e.text)
-	v.release(e)
+	s := v.acquire()
+	ok := false
+	if s.parser.parseInto(&s.text, json) {
+		ok, _ = v.run(&s.text, s)
+	}
+	v.release(s)
 	return ok
 }
 
@@ -130,10 +143,7 @@ func (v *Validator) IsValidString(json string) bool {
 // Validate reports whether an instance is valid. The error is ErrDepthExceeded when evaluation recursed in place
 // beyond the maximum depth.
 func (v *Validator) Validate(instance *Document) (bool, error) {
-	e := v.acquire()
-	ok := e.validate(instance)
-	exceeded := e.depthExceeded
-	v.release(e)
+	ok, exceeded := v.run(instance, nil)
 	if exceeded {
 		return false, ErrDepthExceeded
 	}
@@ -144,15 +154,14 @@ func (v *Validator) Validate(instance *Document) (bool, error) {
 // not JSON, and ErrDepthExceeded when evaluation recursed in place beyond the maximum depth. The text is parsed into
 // buffers the validator reuses, so a validation of JSON text allocates nothing in the steady state.
 func (v *Validator) ValidateBytes(json []byte) (bool, error) {
-	e := v.acquire()
-	if !e.parser.parseInto(&e.text, json) {
-		err := e.parser.err()
-		v.release(e)
+	s := v.acquire()
+	if !s.parser.parseInto(&s.text, json) {
+		err := s.parser.err()
+		v.release(s)
 		return false, err
 	}
-	ok := e.validate(&e.text)
-	exceeded := e.depthExceeded
-	v.release(e)
+	ok, exceeded := v.run(&s.text, s)
+	v.release(s)
 	if exceeded {
 		return false, ErrDepthExceeded
 	}
@@ -167,8 +176,11 @@ func (v *Validator) ValidateString(json string) (bool, error) {
 // Evaluate evaluates an instance exhaustively, reporting to the collector, and reports whether the instance is
 // valid. The error is ErrDepthExceeded when evaluation recursed in place beyond the maximum depth.
 func (v *Validator) Evaluate(instance *Document, collector *ResultsCollector) (bool, error) {
-	e := newEvaluator(v.program, collector)
-	ok := e.evaluate(instance)
+	e := evaluator{p: v.program, d: instance, c: collector, v: v}
+	ok := e.evaluate()
+	if e.s != nil {
+		v.release(e.s)
+	}
 	if e.depthExceeded {
 		return false, ErrDepthExceeded
 	}
