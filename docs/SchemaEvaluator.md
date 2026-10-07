@@ -186,6 +186,11 @@ objects, fused simple arrays, plain-integer bounds, pattern classification (`.*`
 `^.{n,m}$` never allocate a `Regex`), compiled regexes with a process-wide cache, and compile-time
 elision of pure `$ref` hops. The optimisation table is in [RuntimeEvaluator.md](RuntimeEvaluator.md).
 
+A generated evaluator is interpreted. The runtime evaluator's
+[runtime code generation](RuntimeEvaluator.md#runtime-code-generation), which compiles a schema to IL in the
+running process, is an option of an evaluator created with `JsonSchemaEvaluator`, and the generated program does
+not set it.
+
 ## Comparison with Type-Based Generation
 
 | Feature | Type Generation | Evaluator Only |

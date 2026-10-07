@@ -175,7 +175,8 @@ public sealed class JsonSchemaEvaluator : IDisposable
     /// </summary>
     /// <param name="image">The image bytes.</param>
     /// <param name="options">The evaluation options; only the settings that apply at evaluation time
-    /// (<see cref="JsonSchemaEvaluatorOptions.MaxDepth"/>, regular-expression construction) are used, because the
+    /// (<see cref="JsonSchemaEvaluatorOptions.MaxDepth"/>, <see cref="JsonSchemaEvaluatorOptions.CodeGeneration"/>,
+    /// regular-expression construction) are used, because the
     /// schema was compiled when the image was created.</param>
     /// <returns>The evaluator.</returns>
     public static JsonSchemaEvaluator FromProgramImage(ReadOnlyMemory<byte> image, JsonSchemaEvaluatorOptions? options = null)

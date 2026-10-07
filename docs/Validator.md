@@ -224,6 +224,12 @@ The Validator is a thin wrapper over the [runtime evaluator](./RuntimeEvaluator.
 2. **Compile** the schema graph into an in-memory evaluator: every `$ref` is resolved at compile time, regular expressions are compiled, and flag-mode fast paths (discriminators, type unions, unrolled objects) are precomputed
 3. **Cache** the evaluator by canonical URI and `alwaysAssertFormat` for subsequent validations against the same schema
 
+The runtime evaluator can also compile a schema to IL at run time, which about halves the time of a warm
+validation that collects no results. `JsonSchema.Options` has no setting for it, so a schema loaded through the
+Validator is always interpreted. To use it, compile the schema with `JsonSchemaEvaluator` and set
+`JsonSchemaEvaluatorOptions.CodeGeneration`, as described under
+[Runtime code generation](./RuntimeEvaluator.md#runtime-code-generation).
+
 Validation walks the parsed document once against the compiled graph. It shares the format, number, and string helpers used by generated code, so it agrees with source-generated models instance for instance, and it produces the same results-collector output and annotations. No hosting configuration is required: the Validator has no dependency on Roslyn or on the host's compilation context.
 
 ## Supported JSON Schema Drafts
