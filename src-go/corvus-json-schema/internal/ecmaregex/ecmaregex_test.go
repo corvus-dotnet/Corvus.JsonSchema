@@ -239,6 +239,9 @@ func TestLongInput(t *testing.T) {
 
 // TestAllocations checks that neither back end allocates in the steady state.
 func TestAllocations(t *testing.T) {
+	if raceEnabled {
+		t.Skip("the race detector makes sync.Pool drop values")
+	}
 	texts := [][]byte{
 		[]byte("the quick brown fox jumps over the lazy dog 12345"), []byte("abcabcabc"), []byte("a-b_c.d@example.com"),
 		[]byte("🐲 naïve café 🐲"), []byte(""),
