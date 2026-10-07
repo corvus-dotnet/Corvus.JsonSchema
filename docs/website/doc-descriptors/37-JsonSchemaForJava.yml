@@ -1,0 +1,3 @@
+source: JsonSchemaForJava.md
+navTitle: "Java and Kotlin"
+description: "The Corvus JSON Schema evaluator for Java and Kotlin (io.github.corvus-dotnet:corvus-json-schema): install, validate, JSON text, options, results and annotations."

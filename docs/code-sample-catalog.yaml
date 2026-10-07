@@ -1125,6 +1125,14 @@ main-docs:
       - {index: 1, language: cpp, lines: [27, 43]}
       - {index: 2, language: cpp, lines: [52, 61]}
       - {index: 3, language: cpp, lines: [69, 80]}
+  - path: "docs/JsonSchemaForJava.md"
+    blocks:
+      - {index: 0, language: xml, lines: [22, 28]}
+      - {index: 1, language: kotlin, lines: [32, 34]}
+      - {index: 2, language: java, lines: [38, 49]}
+      - {index: 3, language: kotlin, lines: [53, 56]}
+      - {index: 4, language: java, lines: [67, 70]}
+      - {index: 5, language: java, lines: [93, 103]}
   - path: "docs/JsonSchemaForJavascript.md"
     blocks:
       - {index: 0, language: sh, lines: [23, 25]}
@@ -1430,8 +1438,8 @@ main-docs:
       - {index: 0, language: yaml, lines: [18, 36]}
       - {index: 1, language: powershell, lines: [106, 114]}
       - {index: 2, language: bash, lines: [181, 186]}
-      - {index: 3, language: xml, lines: [371, 375]}
-      - {index: 4, language: xml, lines: [379, 381]}
+      - {index: 3, language: xml, lines: [410, 414]}
+      - {index: 4, language: xml, lines: [418, 420]}
   - path: "docs/RunningTests.md"
     blocks:
       - {index: 0, language: powershell, lines: [7, 10]}
@@ -1755,23 +1763,23 @@ copilot-docs:
 copilot-instructions:
   - path: ".github/copilot-instructions.md"
     blocks:
-      - {index: 0, language: bash, lines: [47, 59]}
-      - {index: 1, language: powershell, lines: [102, 105]}
-      - {index: 2, language: powershell, lines: [113, 116]}
-      - {index: 3, language: csharp, lines: [173, 183], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [200, 219], category: compilable, verified: false}
-      - {index: 5, language: powershell, lines: [263, 265]}
-      - {index: 6, language: powershell, lines: [277, 281]}
-      - {index: 7, language: powershell, lines: [319, 324]}
-      - {index: 8, language: powershell, lines: [351, 357]}
-      - {index: 9, language: csharp, lines: [367, 377], category: compilable, verified: false}
-      - {index: 10, language: powershell, lines: [446, 455]}
-      - {index: 11, language: bash, lines: [483, 485]}
-      - {index: 12, language: bash, lines: [501, 507]}
-      - {index: 13, language: bash, lines: [513, 516]}
-      - {index: 14, language: powershell, lines: [526, 541]}
-      - {index: 15, language: powershell, lines: [549, 551]}
-      - {index: 16, language: bash, lines: [584, 586]}
+      - {index: 0, language: bash, lines: [48, 60]}
+      - {index: 1, language: powershell, lines: [103, 106]}
+      - {index: 2, language: powershell, lines: [114, 117]}
+      - {index: 3, language: csharp, lines: [174, 184], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [201, 220], category: compilable, verified: false}
+      - {index: 5, language: powershell, lines: [264, 266]}
+      - {index: 6, language: powershell, lines: [278, 282]}
+      - {index: 7, language: powershell, lines: [320, 325]}
+      - {index: 8, language: powershell, lines: [352, 358]}
+      - {index: 9, language: csharp, lines: [368, 378], category: compilable, verified: false}
+      - {index: 10, language: powershell, lines: [447, 456]}
+      - {index: 11, language: bash, lines: [484, 486]}
+      - {index: 12, language: bash, lines: [502, 508]}
+      - {index: 13, language: bash, lines: [514, 517]}
+      - {index: 14, language: powershell, lines: [527, 542]}
+      - {index: 15, language: powershell, lines: [550, 552]}
+      - {index: 16, language: bash, lines: [585, 587]}
 
 skills:
   - path: ".github/skills/corvus-analyzers/SKILL.md"
@@ -1861,6 +1869,9 @@ skills:
   - path: ".github/skills/corvus-ecma-regex/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [20, 30], category: compilable, verified: false}
+  - path: ".github/skills/corvus-java-evaluator/SKILL.md"
+    blocks:
+      - {index: 0, language: bash, lines: [32, 36]}
   - path: ".github/skills/corvus-low-alloc-data-structures/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [37, 45], category: compilable, verified: false}

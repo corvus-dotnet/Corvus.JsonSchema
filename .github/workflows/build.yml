@@ -42,8 +42,8 @@ permissions:
 
 jobs:
   # Whether the change touches anything the .NET build reads (.github/actions/dotnet-changes, which auto_release.yml
-  # also uses). A pull request or a push to main that changes only the Python, Rust, TypeScript, Ruby or PHP packages (and their
-  # own workflows) skips the .NET build: those have their own workflows (python.yml, rust.yml, typescript.yml).
+  # also uses). A pull request or a push to main that changes only the Python, Rust, TypeScript, Java, Ruby or PHP packages (and their
+  # own workflows) skips the .NET build: those have their own workflows (python.yml, rust.yml, typescript.yml, java.yml).
   # Release tag pushes and manual runs always build.
   changes:
     name: Detect .NET changes

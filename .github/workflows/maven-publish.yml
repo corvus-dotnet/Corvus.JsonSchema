@@ -1,0 +1,121 @@
+name: maven-publish
+# Publishes corvus-json-schema (src-java/corvus-json-schema) to Maven Central when the version in its pom.xml is not
+# there yet, then tags the commit java-v<version>. To release, bump <version> in pom.xml (and the Kotlin smoke
+# test's corvus.version) and merge. A merged pull request labelled no_release publishes nothing
+# (.github/actions/no-release-label).
+#
+# It runs in the maven-central environment, whose secrets are a Central Portal user token (CENTRAL_TOKEN_USERNAME,
+# CENTRAL_TOKEN_PASSWORD) and the signing key (GPG_PRIVATE_KEY, GPG_PASSPHRASE); the io.github.corvus-dotnet namespace
+# is verified on central.sonatype.com. A published version can never be replaced or deleted.
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. The
+# java-v tag is pushed with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-java/corvus-json-schema/pom.xml'
+  workflow_dispatch:
+
+permissions:
+  pull-requests: read  # the merged pull request's labels (no_release)
+  contents: write  # push the java-v<version> tag
+
+concurrency:
+  group: maven-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish corvus-json-schema
+    # A manual run from another branch must not publish that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: maven-central
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: src-java/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
+      - name: Check whether this version is already on Maven Central
+        id: version
+        if: steps.label.outputs.no-release != 'true'
+        env:
+          TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+        run: |
+          version=$(sed -n '0,/<version>/s|.*<version>\(.*\)</version>.*|\1|p' pom.xml)
+          if [ -z "$version" ]; then
+            echo "::error::No version in pom.xml."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # The Central Portal knows a version as soon as it is published (the repository mirrors it later).
+          auth=$(printf '%s:%s' "$TOKEN_USERNAME" "$TOKEN_PASSWORD" | base64 -w0)
+          published=$(curl -sf -H "Authorization: Bearer $auth" \
+            "https://central.sonatype.com/api/v1/publisher/published?namespace=io.github.corvus-dotnet&name=corvus-json-schema&version=$version" \
+            | sed -n 's/.*"published":\(true\|false\).*/\1/p')
+          if [ -z "$published" ]; then
+            echo "::error::The Central Portal did not say whether corvus-json-schema $version is published."
+            exit 1
+          fi
+          echo "published=$published" >> "$GITHUB_OUTPUT"
+          if [ "$published" = "true" ]; then
+            echo "::notice::corvus-json-schema $version is already on Maven Central; nothing to publish."
+          fi
+      - name: Checkout JSON-Schema-Test-Suite
+        if: steps.version.outputs.published == 'false'
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Java
+        if: steps.version.outputs.published == 'false'
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_TOKEN_USERNAME
+          server-password: CENTRAL_TOKEN_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+      - name: Check the packaged LICENSE matches the repository's
+        if: steps.version.outputs.published == 'false'
+        run: cmp ../../LICENSE LICENSE
+      - name: Test, sign and publish
+        if: steps.version.outputs.published == 'false'
+        env:
+          CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ./mvnw -B -ntp deploy -P release
+          {
+            echo "### corvus-json-schema $VERSION is published"
+            echo
+            echo "https://central.sonatype.com/artifact/io.github.corvus-dotnet/corvus-json-schema/$VERSION"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Tag the published commit
+        if: steps.version.outputs.published == 'false'
+        env:
+          TAG: java-v${{ steps.version.outputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "::notice::$TAG already exists."
+          else
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG"
+          fi

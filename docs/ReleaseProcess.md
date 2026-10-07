@@ -60,7 +60,7 @@ The build workflow runs on every push and PR. It has three phases:
 2. **Test** — runs the test suite with `.NET 10.0` and `.NET Framework 4.8.1`
 3. **NuGet** — packages and publishes
 
-A PR, or a push to `main`, that changes only the Python, Rust, TypeScript, Ruby or PHP packages (`src-py`, `src-rs`, `src-ts`, `src-rb`, `src-php`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. Branch protection requires the `.NET build gate` job, which passes when the build succeeded or was not needed.
+A PR, or a push to `main`, that changes only the Python, Rust, TypeScript, Java, Ruby or PHP packages (`src-py`, `src-rs`, `src-ts`, `src-java`, `src-rb`, `src-php`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. Branch protection requires the `.NET build gate` job, which passes when the build succeeded or was not needed.
 
 ### NuGet source selection
 
@@ -80,7 +80,7 @@ This means:
 When a PR is merged to `main`, the `auto_release.yml` workflow:
 
 1. Checks for the `no_release` label — if present, skips the release
-2. Leaves out a PR that changes nothing the .NET build reads (only `src-py`, `src-rs` or `src-ts`, as `build.yml` decides), and removes its `pending_release` label
+2. Leaves out a PR that changes nothing the .NET build reads (only the language packages and their workflows, as `build.yml` decides), and removes its `pending_release` label
 3. Waits for any pending Dependabot PRs to complete (batched releases)
 4. Uses GitVersion to compute the next version
 5. Creates a Git tag in the format `{Major}.{Minor}.{Patch}`
@@ -91,9 +91,9 @@ A release includes every merged PR still labelled `pending_release`, so closing 
 
 ### Skipping a release
 
-A PR that changes only the Python, Rust, TypeScript, Ruby or PHP packages makes no NuGet release; nothing needs adding.
+A PR that changes only the Python, Rust, TypeScript, Java, Ruby or PHP packages makes no NuGet release; nothing needs adding.
 
-Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI, npm, RubyGems and PHP publishes that a version change in `src-rs`, `src-py`, `src-ts`, `src-rb` or `src-php` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
+Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI, npm, Maven Central, RubyGems and PHP publishes that a version change in `src-rs`, `src-py`, `src-ts`, `src-java`, `src-rb` or `src-php` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
 
 ### Batched Dependabot releases
 
@@ -188,6 +188,45 @@ cargo publish
 Then revoke the token, and on crates.io open the crate's Settings, Trusted Publishing, and add a GitHub publisher with
 repository owner `corvus-dotnet`, repository `Corvus.JsonSchema` and workflow `crates-publish.yml`. Add the
 maintainers as owners too (`cargo owner --add <github-user>`), so the crate does not depend on one account.
+
+## The Java library
+
+The Java port of the runtime evaluator, `io.github.corvus-dotnet:corvus-json-schema` in `src-java/corvus-json-schema`,
+publishes to [Maven Central](https://central.sonatype.com/artifact/io.github.corvus-dotnet/corvus-json-schema). It is
+versioned independently of the NuGet packages, by the `<version>` in its `pom.xml`, with its own history in
+`src-java/corvus-json-schema/VERSIONHISTORY.md`. GitVersion and the tag-triggered NuGet pipeline play no part.
+
+To release, bump `<version>` in `src-java/corvus-json-schema/pom.xml` (and `corvus.version` in
+`src-java/kotlin-smoke/pom.xml`), add the version's entry to `VERSIONHISTORY.md`, and merge to `main`.
+`.github/workflows/maven-publish.yml` then does the following.
+
+1. It does nothing if the Central Portal already has that version, or if the merged PR is labelled `no_release`.
+2. It checks that the jar's `LICENSE` matches the repository's, then runs `./mvnw deploy -P release`: the tests
+   (the whole JSON-Schema-Test-Suite and the allocation tests), the sources and javadoc jars, GPG signing, and the
+   upload to the Central Portal, which validates and publishes it.
+3. It tags the commit `java-v<version>`.
+
+The publish step makes the version live at once, and a published version can never be replaced or deleted, so check a
+release on a branch first: `java.yml` runs the same `install -P release` (without signing) on every pull request that
+touches `src-java`.
+
+Never push a `java-v` tag by hand. `build.yml` publishes NuGet packages for the tags that trigger it. Its tag filter
+only accepts release versions (`[0-9]+.[0-9]+.[0-9]+*`), and the workflow's own tag push uses `GITHUB_TOKEN`, which
+starts no other workflow.
+
+### The first release: Maven Central setup
+
+1. Sign in to [central.sonatype.com](https://central.sonatype.com) with the `corvus-dotnet` organisation's GitHub
+   account and verify the `io.github.corvus-dotnet` namespace (Namespaces, Add Namespace; for an `io.github`
+   namespace the portal asks for a temporary public repository named with the verification key).
+2. Generate a user token (Account, Generate User Token).
+3. Make a signing key (`gpg --quick-generate-key "Corvus JSON Schema <...>" rsa4096 sign 0`), publish its public key
+   (`gpg --keyserver keyserver.ubuntu.com --send-keys <id>`), and export the private key
+   (`gpg --armor --export-secret-keys <id>`).
+4. Create the `maven-central` environment in the repository settings, limited to `main`, with the secrets
+   `CENTRAL_TOKEN_USERNAME`, `CENTRAL_TOKEN_PASSWORD`, `GPG_PRIVATE_KEY` and `GPG_PASSPHRASE`.
+
+Then the first merge of a `pom.xml` version publishes it as for any later release.
 
 ## The Python packages
 
