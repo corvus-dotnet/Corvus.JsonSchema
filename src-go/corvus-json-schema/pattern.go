@@ -271,57 +271,30 @@ func compilePattern(source string) (*pattern, bool) {
 	if p, ok := patternCache.Load(source); ok {
 		return p.(*pattern), true
 	}
-	// Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it.
-	engine, ok := compileEngine(source)
-	if !ok {
-		return nil, false
-	}
-	p := choosePattern(source, !needsLegacyMode(source))
-	if p == nil {
-		p = &pattern{kind: matchEngine, engine: engine}
+	// Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it. A pattern
+	// with a faster matcher that is valid with the u flag needs no engine at all. The engine reads a pattern that
+	// is valid only without the u flag by code point too, so the faster matchers decide those the same way.
+	p := choosePattern(source)
+	if p == nil || !validRegex(source) {
+		engine, ok := compileEngine(source)
+		if !ok {
+			return nil, false
+		}
+		if p == nil {
+			p = &pattern{kind: matchEngine, engine: engine}
+		}
 	}
 	p.source = source
 	actual, _ := patternCache.LoadOrStore(source, p)
 	return actual.(*pattern), true
 }
 
-// needsLegacyMode reports a pattern that is valid only without the u flag because of an identity escape such as
-// "\&". Such a pattern matches UTF-16 code units rather than characters, which only the engine does.
-func needsLegacyMode(p string) bool {
-	inClass := false
-	for i := 0; i < len(p); i++ {
-		switch p[i] {
-		case '[':
-			inClass = true
-		case ']':
-			inClass = false
-		case '\\':
-			i++
-			if i >= len(p) {
-				return false
-			}
-			e := p[i]
-			switch {
-			case isASCIILetter(e) || isASCIIDigit(e):
-			case strings.IndexByte(`^$\.*+?()[]{}|/`, e) >= 0:
-			case e == '-' && inClass:
-			default:
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func choosePattern(p string, unicode bool) *pattern {
+func choosePattern(p string) *pattern {
 	// Unanchored (or start-anchored) ".*" finds an empty match in any string. "^.*$" does not ("." stops at a line
 	// terminator), so it is not listed.
 	switch p {
 	case "", ".*", "^.*", ".*$", "(.*)", "^(.*)", `[\s\S]*`, `^[\s\S]*`, `^[\s\S]*$`:
 		return &pattern{kind: matchEverything}
-	}
-	if !unicode {
-		return nil
 	}
 	switch p {
 	case ".+", ".", "(.+)":
@@ -332,7 +305,7 @@ func choosePattern(p string, unicode bool) *pattern {
 	// "^X.*" (no "$") matches exactly where "^X" does: ".*" can match nothing.
 	if rest, ok := strings.CutSuffix(p, ".*"); ok && strings.HasPrefix(rest, "^") && len(rest) > 1 &&
 		!endsWithEscape(rest) && !strings.ContainsRune("*+?}|(^", rune(rest[len(rest)-1])) {
-		if m := choosePattern(rest, unicode); m != nil {
+		if m := choosePattern(rest); m != nil {
 			return m
 		}
 	}

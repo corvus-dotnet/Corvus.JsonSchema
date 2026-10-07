@@ -297,7 +297,14 @@ func (e *evaluator) newBits(length int) bitset {
 		words = 1
 	}
 	off := len(e.arena)
-	e.arena = append(e.arena, make([]uint64, words)...)
+	end := off + words
+	if end > cap(e.arena) {
+		grown := make([]uint64, end, 2*end+16)
+		copy(grown, e.arena)
+		e.arena = grown
+	}
+	e.arena = e.arena[:end]
+	clear(e.arena[off:end])
 	return bitset{int32(off), int32(words)}
 }
 
