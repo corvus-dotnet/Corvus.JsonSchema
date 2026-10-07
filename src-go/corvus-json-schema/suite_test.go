@@ -158,9 +158,11 @@ type suiteRunner struct {
 	filter   string
 	total    int
 	failures []string
-	areas    []string
-	passed   map[string]int
-	counted  map[string]int
+	// Failing leap second cases of the format run, which are not counted as failures.
+	skipped []string
+	areas   []string
+	passed  map[string]int
+	counted map[string]int
 }
 
 func compileSuiteSchema(schema []byte, options ...Option) (v *Validator, err error) {
@@ -210,6 +212,7 @@ func (r *suiteRunner) runFile(t *testing.T, dialect Dialect, file, label, area s
 			// Leap seconds are skipped in the format run, as in the C# runner.
 			if assertFormat && strings.Contains(strings.ToLower(test.Description), "leap second") {
 				r.passed[area]++
+				r.skipped = append(r.skipped, label+" ["+group.Description+"] "+test.Description)
 				continue
 			}
 			got := fmt.Sprint(actual)
@@ -254,6 +257,9 @@ func TestJSONSchemaTestSuite(t *testing.T) {
 	}
 	for _, line := range runner.failures {
 		t.Log(line)
+	}
+	for _, line := range runner.skipped {
+		t.Log("skipped: " + line)
 	}
 	for _, area := range runner.areas {
 		t.Logf("%-34s %5d/%d", area, runner.passed[area], runner.counted[area])
