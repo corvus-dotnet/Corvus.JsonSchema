@@ -662,7 +662,7 @@ public final class JsonDocument {
                     int off = (int) scratch[(start + 2 * j) * 2 + 1];
                     hashes[j] = (Values.strHash(buf, off, (int) (h >>> 32)) & 0xffffffff00000000L) | j;
                 }
-                Arrays.sort(hashes, 0, count);
+                Values.sort(hashes, 0, count - 1);
                 outer:
                 for (int a = 0; a < count; ) {
                     int e = a + 1;

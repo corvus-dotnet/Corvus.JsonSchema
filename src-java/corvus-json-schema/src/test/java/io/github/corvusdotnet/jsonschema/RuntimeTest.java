@@ -35,6 +35,51 @@ class RuntimeTest {
     }
 
     @Test
+    void sortAgreesWithArraysSort() {
+        Random random = new Random(11);
+        for (int i = 0; i < 4_000; i++) {
+            int n = random.nextInt(i % 10 == 0 ? 3_000 : 120);
+            long[] values = new long[n + 2];
+            for (int k = 0; k < values.length; k++) {
+                // Few distinct values in some arrays, sorted and reversed runs in others.
+                values[k] = switch (i % 4) {
+                    case 0 -> random.nextLong();
+                    case 1 -> random.nextInt(4);
+                    case 2 -> k;
+                    default -> -k;
+                };
+            }
+            long[] expected = values.clone();
+            java.util.Arrays.sort(expected, 1, n + 1);
+            Values.sort(values, 1, n);
+            org.junit.jupiter.api.Assertions.assertArrayEquals(expected, values, "case " + i);
+        }
+    }
+
+    @Test
+    void uniqueItemsInLongArraysAndDuplicateKeysInWideObjects() {
+        Validator unique = Validator.compile("{\"uniqueItems\": true}");
+        Random random = new Random(5);
+        for (int i = 0; i < 300; i++) {
+            int n = 17 + random.nextInt(400);
+            java.util.Set<Integer> seen = new java.util.HashSet<>();
+            StringBuilder array = new StringBuilder("[");
+            StringBuilder object = new StringBuilder("{");
+            boolean distinct = true;
+            for (int k = 0; k < n; k++) {
+                int value = random.nextInt(i % 2 == 0 ? 1_000_000 : n * 20);
+                distinct &= seen.add(value);
+                array.append(k == 0 ? "" : ",").append(value);
+                object.append(k == 0 ? "" : ",").append("\"k").append(value).append("\":0");
+            }
+            assertEquals(distinct, unique.isValid(array.append(']').toString()), "array " + i);
+            // Of duplicate names the parser keeps one property.
+            JsonDocument parsed = JsonDocument.parse(object.append('}').toString());
+            assertEquals(seen.size(), parsed.count(parsed.root()), "object " + i);
+        }
+    }
+
+    @Test
     void uniqueStringsPairwise() {
         StringBuilder items = new StringBuilder("[");
         for (int i = 0; i < 30; i++) {

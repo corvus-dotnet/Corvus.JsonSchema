@@ -69,6 +69,11 @@ class AllocationTest {
                  "maxContains": 2, "minItems": 2, "maxItems": 40, "uniqueItems": true}""", DEFAULT,
                 "[\"a\", 1, 5, 6, 7]", "[\"a\", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]",
                 "[\"a\", 1, 5, 5]", "[\"a\", \"b\"]", "[1]", "[\"a\", 1, 5, 5, 5]"));
+        c.add(new Case("unique numbers", """
+                {"type": "array", "uniqueItems": true}""", DEFAULT, numbers(300, 0), numbers(300, 7), numbers(60, 3),
+                "[" + numbers(100, 1).substring(1, numbers(100, 1).length() - 1) + ", 5]"));
+        c.add(new Case("wide objects", """
+                {"type": "object", "additionalProperties": {"type": "integer"}}""", DEFAULT, wide(300, 0), wide(60, 5)));
         c.add(new Case("unique objects", """
                 {"uniqueItems": true}""", DEFAULT,
                 "[{\"a\": 1}, {\"a\": 2}, [1, 2], [2, 1], 1, 1.5, \"x\", null, true, false, {\"b\": {\"c\": 1}}, 2, 3,"
@@ -126,8 +131,30 @@ class AllocationTest {
         return c;
     }
 
+    // Looked up once: the lookup allocates, by an amount that changes as the JIT compiles it.
+    private static final com.sun.management.ThreadMXBean THREADS =
+            (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
+
+    /** An array of n distinct numbers in no order (the last instance of the case repeats one). */
+    private static String numbers(int n, int seed) {
+        StringBuilder text = new StringBuilder("[");
+        for (int i = 0; i < n; i++) {
+            text.append(i == 0 ? "" : ", ").append((i * 7919 + seed * 31) % 10007);
+        }
+        return text.append(']').toString();
+    }
+
+    /** An object of n integer properties, whose names the parser checks for duplicates. */
+    private static String wide(int n, int seed) {
+        StringBuilder text = new StringBuilder("{");
+        for (int i = 0; i < n; i++) {
+            text.append(i == 0 ? "" : ", ").append("\"p").append((i * 7919 + seed * 31) % 10007).append("\": ").append(i);
+        }
+        return text.append('}').toString();
+    }
+
     private static long allocated() {
-        return ((com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean()).getCurrentThreadAllocatedBytes();
+        return THREADS.getCurrentThreadAllocatedBytes();
     }
 
     /**
@@ -189,18 +216,24 @@ class AllocationTest {
                     sink += v.isValid(utf8[i]) ? 1 : 0;
                 }
             }
-            // The counter itself allocates a little: measure it alone and subtract.
+            // What the counter itself allocates, measured alone and subtracted.
             long overhead = -allocated() + allocated();
             int rounds = 2_000;
-            long before = allocated();
-            for (int r = 0; r < rounds; r++) {
-                for (int i = 0; i < docs.length; i++) {
-                    sink += v.isValid(docs[i]) ? 1 : 0;
-                    sink += v.isValid(c.instances[i]) ? 1 : 0;
-                    sink += v.isValid(utf8[i]) ? 1 : 0;
+            // The steady state is a window with no allocation. The JVM allocates on this thread once in a while for
+            // its own purposes (it loads a class when newly compiled code first reaches a reference to it), which
+            // the windows after it do not repeat. Code that allocates does so in every window.
+            long bytes = Long.MAX_VALUE;
+            for (int window = 0; window < 3 && bytes > 256; window++) {
+                long before = allocated();
+                for (int r = 0; r < rounds; r++) {
+                    for (int i = 0; i < docs.length; i++) {
+                        sink += v.isValid(docs[i]) ? 1 : 0;
+                        sink += v.isValid(c.instances[i]) ? 1 : 0;
+                        sink += v.isValid(utf8[i]) ? 1 : 0;
+                    }
                 }
+                bytes = allocated() - before - overhead;
             }
-            long bytes = allocated() - before - overhead;
             if (bytes > 256) {
                 failures.add(c.name + (v.isCompiled() ? " (compiled)" : " (interpreted)") + ": " + bytes + " bytes in "
                         + rounds + " passes of " + docs.length + " instances" + breakdown(v, c, docs, utf8, overhead));

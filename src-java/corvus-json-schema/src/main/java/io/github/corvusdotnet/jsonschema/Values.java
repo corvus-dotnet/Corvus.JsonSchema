@@ -7,7 +7,6 @@ import static io.github.corvusdotnet.jsonschema.JsonDocument.NUMBER;
 import static io.github.corvusdotnet.jsonschema.JsonDocument.OBJECT;
 import static io.github.corvusdotnet.jsonschema.JsonDocument.STRING;
 
-import java.util.Arrays;
 
 /** JSON equality, hashing and uniqueness over values in documents (an instance against a schema's constant). */
 final class Values {
@@ -147,6 +146,63 @@ final class Values {
     }
 
     /**
+     * Sorts a[low..high] in place. {@code Arrays.sort} is not used: from Java 22 it allocates an array for each
+     * partition, which only the JIT's escape analysis removes.
+     */
+    static void sort(long[] a, int low, int high) {
+        while (high - low >= 24) {
+            // Median of three as the pivot, then partition around it.
+            int middle = (low + high) >>> 1;
+            if (a[middle] < a[low]) {
+                swap(a, low, middle);
+            }
+            if (a[high] < a[low]) {
+                swap(a, low, high);
+            }
+            if (a[high] < a[middle]) {
+                swap(a, middle, high);
+            }
+            long pivot = a[middle];
+            int i = low;
+            int j = high;
+            while (i <= j) {
+                while (a[i] < pivot) {
+                    i++;
+                }
+                while (a[j] > pivot) {
+                    j--;
+                }
+                if (i <= j) {
+                    swap(a, i++, j--);
+                }
+            }
+            // Recurse into the smaller part and loop on the larger, so the depth is at most log2 of the length.
+            if (j - low < high - i) {
+                sort(a, low, j);
+                low = i;
+            } else {
+                sort(a, i, high);
+                high = j;
+            }
+        }
+        for (int i = low + 1; i <= high; i++) {
+            long v = a[i];
+            int j = i - 1;
+            while (j >= low && a[j] > v) {
+                a[j + 1] = a[j];
+                j--;
+            }
+            a[j + 1] = v;
+        }
+    }
+
+    private static void swap(long[] a, int i, int j) {
+        long t = a[i];
+        a[i] = a[j];
+        a[j] = t;
+    }
+
+    /**
      * {@code uniqueItems}: pairwise for short arrays; otherwise sorted by hash in {@code scratch} (at least as long as
      * the array), each entry the hash's high half and the item's index, so that only items with equal hashes are
      * compared. Allocates nothing.
@@ -181,7 +237,7 @@ final class Values {
         for (int i = 0; i < n; i++) {
             scratch[i] = (hash(d, c + i) & 0xffffffff00000000L) | i;
         }
-        Arrays.sort(scratch, 0, n);
+        sort(scratch, 0, n - 1);
         int start = 0;
         for (int end = 1; end <= n; end++) {
             if (end == n || (scratch[end] >>> 32) != (scratch[start] >>> 32)) {
