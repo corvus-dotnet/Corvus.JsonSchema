@@ -5,7 +5,7 @@ on:
     - main
     tags:
     # Release version tags only (e.g. 5.7.3): a tag run publishes the NuGet packages. Other tags, such as the npm
-    # package's ts-v<version> tags, must not start one.
+    # package's ts-v<version> tags and the Go module's src-go/corvus-json-schema/v<version> tags, must not start one.
     - '[0-9]+.[0-9]+.[0-9]+*'
   pull_request:
   workflow_dispatch:
@@ -42,8 +42,8 @@ permissions:
 
 jobs:
   # Whether the change touches anything the .NET build reads (.github/actions/dotnet-changes, which auto_release.yml
-  # also uses). A pull request or a push to main that changes only the Python, Rust, TypeScript, Java, Ruby or PHP packages (and their
-  # own workflows) skips the .NET build: those have their own workflows (python.yml, rust.yml, typescript.yml, java.yml).
+  # also uses). A pull request or a push to main that changes only the Python, Rust, TypeScript, Java, Go, Ruby or PHP packages (and their
+  # own workflows) skips the .NET build: those have their own workflows (python.yml, rust.yml, typescript.yml, java.yml, go.yml).
   # Release tag pushes and manual runs always build.
   changes:
     name: Detect .NET changes
