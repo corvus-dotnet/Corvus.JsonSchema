@@ -21,7 +21,13 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
 
       - name: Remove PR preview
-        uses: rossjrw/pr-preview-action@ffa7509e91a3ec8dfc2e5536c4d5c1acdf7a6de9    # v1.8.1
-        with:
-          action: remove
-          umbrella-dir: pr-preview
+        # gh-pages holds one commit, which every write replaces (.github/scripts/Update-GhPages.ps1 says why).
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          $open = gh pr list --repo $env:GITHUB_REPOSITORY --state open --limit 1000 --json number --jq '[.[].number]|join(",")'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not list the open pull requests.' }
+          ./.github/scripts/Update-GhPages.ps1 -Mode RemovePreview -PullRequest $env:PR -OpenPullRequests "$open"
+          ./.github/scripts/Set-PreviewComment.ps1 -PullRequest $env:PR -Body "The documentation preview for this pull request has been removed." -OnlyIfExists

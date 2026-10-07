@@ -290,11 +290,15 @@ jobs:
           path: docs/website/.output
 
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f   # v4.8.0
-        with:
-          branch: gh-pages
-          folder: docs/website/.output
-          clean-exclude: pr-preview
+        # gh-pages holds one commit, which every write replaces (.github/scripts/Update-GhPages.ps1 says why).
+        # Previews of pull requests that are no longer open are removed in the same write.
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $open = gh pr list --repo $env:GITHUB_REPOSITORY --state open --limit 1000 --json number --jq '[.[].number]|join(",")'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not list the open pull requests.' }
+          ./.github/scripts/Update-GhPages.ps1 -Mode Site -Source docs/website/.output -OpenPullRequests "$open"
 
   deploy-preview:
     name: Deploy PR Preview
@@ -307,7 +311,7 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     concurrency: preview-${{ github.event.pull_request.number }}
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -318,31 +322,20 @@ jobs:
           name: website-output
           path: docs/website/.output
 
-      - name: Ensure .nojekyll on gh-pages
-        run: |
-          # Only the tip of gh-pages is needed. Every preview commits the whole site to gh-pages, so
-          # its full history is large and a fetch without --depth takes longer on each deployment.
-          if ! git fetch --depth=1 origin gh-pages 2>/dev/null || \
-             ! git show origin/gh-pages:.nojekyll >/dev/null 2>&1; then
-            git fetch --depth=1 origin gh-pages:gh-pages 2>/dev/null || git checkout --orphan gh-pages
-            git worktree add /tmp/gh-pages gh-pages
-            cd /tmp/gh-pages
-            rm -f _config.yml
-            touch .nojekyll
-            git add -A
-            git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
-              commit --amend --no-edit
-            git push origin gh-pages --force-with-lease
-            cd -
-            git worktree remove /tmp/gh-pages
-          fi
-
       - name: Deploy PR preview
-        uses: rossjrw/pr-preview-action@ffa7509e91a3ec8dfc2e5536c4d5c1acdf7a6de9  # v1.8.1
-        with:
-          source-dir: docs/website/.output
-          umbrella-dir: pr-preview
-          pages-base-url: corvus-oss.org/Corvus.JsonSchema
+        # gh-pages holds one commit, which every write replaces (.github/scripts/Update-GhPages.ps1 says why): a
+        # preview used to add a commit holding the whole site, and every job of this build fetches every branch.
+        # Previews of pull requests that are no longer open are removed in the same write.
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          $open = gh pr list --repo $env:GITHUB_REPOSITORY --state open --limit 1000 --json number --jq '[.[].number]|join(",")'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not list the open pull requests.' }
+          ./.github/scripts/Update-GhPages.ps1 -Mode Preview -Source docs/website/.output -PullRequest $env:PR -OpenPullRequests "$open"
+          ./.github/scripts/Set-PreviewComment.ps1 -PullRequest $env:PR -Body "The documentation preview for this pull request is at https://corvus-oss.org/Corvus.JsonSchema/pr-preview/pr-$($env:PR)/ (built from $($env:HEAD_SHA.Substring(0, 7))). GitHub Pages takes a minute or two to publish it."
 
   # The required status check for pull requests: it passes when the .NET build succeeded or was not needed, so a
   # change outside .NET is not held up waiting for build jobs that were skipped.
