@@ -116,12 +116,20 @@ corpora Java is faster on.
 | Java (JDK 25) over | Warm validation | Parse |
 |---|---|---|
 | [Blaze](https://github.com/sourcemeta/blaze) | 0.42 (35 of 37) | 2.7 (5 of 37) |
-| Corvus .NET | 0.61 (33 of 37) | 7.1 (0 of 37) |
 | Corvus Rust | 0.76 (32 of 37) | 7.7 (0 of 37) |
 
-Once warm, validation is the fastest of the four on most corpora. Start-up is the JVM's weak point: compiling a
-schema takes tens of milliseconds and the first validation runs before the JIT has compiled the generated code, so a
-process that validates a few documents and exits is better served by a native implementation.
+Against Corvus .NET 5.7.6 the same protocol was run with each engine as a process on the host (JDK 25 with an AOT
+cache, .NET 10 compiled ReadyToRun, both pinned to the same 12 CPUs, the median of 5 runs).
+
+| Java (JDK 25) over | Warm validation | Parse |
+|---|---|---|
+| Corvus .NET, interpreting the schema | 0.57 (33 of 37) | 1.3 (5 of 37) |
+| Corvus .NET, with [runtime code generation](RuntimeEvaluator.md#runtime-code-generation) | 1.13 (15 of 37) | 1.3 (6 of 37) |
+
+Once warm, validation is faster than Blaze, the Rust crate and the .NET interpreter on most corpora, and a little
+slower than the code .NET generates. Start-up is the JVM's weak point: compiling a schema takes tens of milliseconds and the
+first validation runs before the JIT has compiled the generated code, so a process that validates a few documents and
+exits is better served by a native implementation.
 
 ## Links
 
