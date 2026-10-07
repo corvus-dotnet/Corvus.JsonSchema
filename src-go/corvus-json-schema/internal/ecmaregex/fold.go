@@ -3,7 +3,8 @@ package ecmaregex
 import (
 	"sort"
 	"sync"
-	"unicode"
+
+	"github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema/internal/ucd"
 )
 
 // Case-insensitive matching exists only inside a modifier group such as (?i:...). ECMA-262 defines it through a
@@ -13,6 +14,9 @@ import (
 //
 // The parser applies the equivalence to every literal and class as it reads them, so both back ends match a
 // case-insensitive group with plain classes. Only a backreference needs the function when matching.
+//
+// The folding and the uppercase mapping come from the tables of the ucd package, never from the unicode package of
+// the Go toolchain, so a pattern matches the same texts whichever toolchain built the program.
 
 // multiUpper holds the characters of the Basic Multilingual Plane whose uppercase form is more than one character,
 // as inclusive pairs. Canonicalize leaves them alone.
@@ -26,20 +30,14 @@ var multiUpper = newCharSet([]rune{
 // canonicalize is the Canonicalize function of ECMA-262 for case-insensitive matching.
 func canonicalize(r rune, unicodeMode bool) rune {
 	if unicodeMode {
-		// Every member of a simple case folding orbit shares one representative. The smallest serves.
-		least := r
-		for next := unicode.SimpleFold(r); next != r; next = unicode.SimpleFold(next) {
-			if next < least {
-				least = next
-			}
-		}
-		return least
+		// Every character of a simple case folding class folds to the same character.
+		return ucd.Fold(r)
 	}
 	// A character beyond the Basic Multilingual Plane is two code units, and neither has an uppercase form.
 	if r > 0xFFFF || multiUpper.contains(r) {
 		return r
 	}
-	upper := unicode.ToUpper(r)
+	upper := ucd.ToUpper(r)
 	if r >= 128 && upper < 128 || upper > 0xFFFF {
 		return r
 	}
@@ -87,25 +85,14 @@ func newFoldTable(classes map[rune][]rune) *foldTable {
 func foldClasses(unicodeMode bool) *foldTable {
 	if unicodeMode {
 		unicodeFoldOnce.Do(func() {
+			// A class is a character that others fold to, with those others.
 			classes := map[rune][]rune{}
-			add := func(r rune) {
-				if unicode.SimpleFold(r) == r {
-					return
+			for _, r := range ucd.AppendFolding(nil) {
+				key := ucd.Fold(r)
+				if _, seen := classes[key]; !seen {
+					classes[key] = []rune{key}
 				}
-				key := canonicalize(r, true)
-				if _, done := classes[key]; done {
-					return
-				}
-				class := []rune{r}
-				for next := unicode.SimpleFold(r); next != r; next = unicode.SimpleFold(next) {
-					class = append(class, next)
-				}
-				classes[key] = class
-			}
-			// A character can have a case folding without having a case mapping, so no table of the unicode package
-			// lists them all. The walk over every code point takes about ten milliseconds, once.
-			for r := rune(0); r <= maxRune; r++ {
-				add(r)
+				classes[key] = append(classes[key], r)
 			}
 			unicodeFoldTable = newFoldTable(classes)
 		})

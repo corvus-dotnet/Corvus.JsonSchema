@@ -3,6 +3,8 @@ package ecmaregex
 import (
 	"fmt"
 	"math"
+
+	"github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema/internal/ucd"
 )
 
 type nodeKind uint8
@@ -506,10 +508,10 @@ func (p *parser) groupName() string {
 			}
 		}
 		if len(name) == 0 {
-			if !(c == '$' || c == '_' || idStart.contains(c)) {
+			if !(c == '$' || c == '_' || idStart.Contains(c)) {
 				p.fail("invalid group name")
 			}
-		} else if !(c == '$' || c == 0x200C || c == 0x200D || idContinue.contains(c)) {
+		} else if !(c == '$' || c == 0x200C || c == 0x200D || idContinue.Contains(c)) {
 			p.fail("invalid group name")
 		}
 		name = append(name, c)
@@ -521,8 +523,8 @@ func (p *parser) groupName() string {
 }
 
 var (
-	idStart    = newCharSet(tabIdStart, false)
-	idContinue = newCharSet(tabIdContinue, false)
+	idStart    = ucd.Binary("ID_Start")
+	idContinue = ucd.Binary("ID_Continue")
 )
 
 // atomEscape reads an escape outside a class. It also reports whether a quantifier may follow.

@@ -3,11 +3,12 @@ package ecmaregex
 import (
 	"sort"
 	"sync"
-	"unicode"
+
+	"github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema/internal/ucd"
 )
 
 // maxRune is the last Unicode code point.
-const maxRune = 0x10FFFF
+const maxRune = ucd.MaxRune
 
 // A charSet is an immutable set of code points. The ranges are sorted, inclusive, and neither overlap nor touch. The
 // two words of ascii repeat the membership of the code points below 128 so that the common case is one bit test.
@@ -101,32 +102,7 @@ func isWordByte(b byte) bool {
 	return b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z' || b >= '0' && b <= '9' || b == '_'
 }
 
-// tablePairs returns the ranges of a standard library range table as inclusive pairs.
-func tablePairs(t *unicode.RangeTable) []rune {
-	var pairs []rune
-	for _, r := range t.R16 {
-		if r.Stride == 1 {
-			pairs = append(pairs, rune(r.Lo), rune(r.Hi))
-			continue
-		}
-		for c := rune(r.Lo); c <= rune(r.Hi); c += rune(r.Stride) {
-			pairs = append(pairs, c, c)
-		}
-	}
-	for _, r := range t.R32 {
-		if r.Stride == 1 {
-			pairs = append(pairs, rune(r.Lo), rune(r.Hi))
-			continue
-		}
-		for c := rune(r.Lo); c <= rune(r.Hi); c += rune(r.Stride) {
-			pairs = append(pairs, c, c)
-		}
-	}
-	return pairs
-}
-
-// categoryNames maps the long names and the aliases of the General_Category values to the names the unicode package
-// uses.
+// categoryNames maps the long names and the aliases of the General_Category values to their short names.
 var categoryNames = map[string]string{
 	"Letter": "L", "Lowercase_Letter": "Ll", "Uppercase_Letter": "Lu", "Titlecase_Letter": "Lt", "Cased_Letter": "LC",
 	"Modifier_Letter": "Lm", "Other_Letter": "Lo", "Mark": "M", "Combining_Mark": "M", "Nonspacing_Mark": "Mn",
@@ -199,6 +175,8 @@ func propertySet(expr string) (*charSet, bool) {
 	return set, true
 }
 
+// propertyPairs returns the ranges of a property expression. Every range comes from the tables of the ucd package,
+// which hold one fixed version of Unicode, so the answer does not depend on the Go toolchain.
 func propertyPairs(expr string) ([]rune, bool) {
 	name, value, hasValue := expr, "", false
 	for i := 0; i < len(expr); i++ {
@@ -212,9 +190,9 @@ func propertyPairs(expr string) ([]rune, bool) {
 		case "General_Category", "gc":
 			return categoryPairs(value)
 		case "Script", "sc":
-			return scriptPairs(value, false)
+			return tablePairs(ucd.Script(value))
 		case "Script_Extensions", "scx":
-			return scriptPairs(value, true)
+			return tablePairs(ucd.ScriptExtensions(value))
 		}
 		return nil, false
 	}
@@ -230,16 +208,8 @@ func propertyPairs(expr string) ([]rune, bool) {
 		return []rune{0, 0x7F}, true
 	case "Any":
 		return []rune{0, maxRune}, true
-	case "Assigned":
-		return newCharSet(tablePairs(unicode.Categories["Cn"]), true).ranges, true
 	}
-	if pairs, ok := binaryTables[canonical]; ok {
-		return pairs, true
-	}
-	if table, ok := unicode.Properties[canonical]; ok {
-		return tablePairs(table), true
-	}
-	return nil, false
+	return tablePairs(ucd.Binary(canonical))
 }
 
 func categoryPairs(value string) ([]rune, bool) {
@@ -247,35 +217,13 @@ func categoryPairs(value string) ([]rune, bool) {
 	if !ok {
 		return nil, false
 	}
-	table, ok := unicode.Categories[short]
-	if !ok {
-		return nil, false
-	}
-	return tablePairs(table), true
+	return tablePairs(ucd.Category(short))
 }
 
-func scriptPairs(value string, extensions bool) ([]rune, bool) {
-	name := value
-	if long, ok := scriptAliases[value]; ok {
-		name = long
+// tablePairs returns the ranges of a table as inclusive pairs. It reports false for no table.
+func tablePairs(t *ucd.Table) ([]rune, bool) {
+	if t == nil {
+		return nil, false
 	}
-	table, ok := unicode.Scripts[name]
-	if !ok {
-		if name != "Unknown" {
-			return nil, false
-		}
-		// The unicode package has no table for the code points that belong to no script, so it is built as the
-		// complement of all the others.
-		var all []rune
-		for _, script := range unicode.Scripts {
-			all = append(all, tablePairs(script)...)
-		}
-		return newCharSet(all, true).ranges, true
-	}
-	if extensions {
-		if pairs, ok := scriptExtensionTables[name]; ok {
-			return pairs, true
-		}
-	}
-	return tablePairs(table), true
+	return t.AppendRanges(nil), true
 }

@@ -18,8 +18,11 @@ $staged = New-Item -ItemType Directory (Join-Path $context "corvus-json-schema")
 Get-ChildItem -File $library -Filter "*.go" | Where-Object { $_.Name -notlike "*_test.go" } | Copy-Item -Destination $staged
 Copy-Item (Join-Path $library "go.mod") $staged
 Copy-Item -Recurse (Join-Path $library "metaschemas") $staged
-$regex = New-Item -ItemType Directory (Join-Path $staged "internal/ecmaregex")
-Get-ChildItem -File (Join-Path $library "internal/ecmaregex") -Filter "*.go" | Where-Object { $_.Name -notlike "*_test.go" } | Copy-Item -Destination $regex
+# Its internal packages, which are the regular expression engine and the Unicode tables.
+foreach ($package in @(Get-ChildItem -Directory (Join-Path $library "internal"))) {
+    $internal = New-Item -ItemType Directory (Join-Path $staged "internal/$($package.Name)")
+    Get-ChildItem -File $package.FullName -Filter "*.go" | Where-Object { $_.Name -notlike "*_test.go" } | Copy-Item -Destination $internal
+}
 $bench = New-Item -ItemType Directory (Join-Path $context "bench")
 Copy-Item (Join-Path $PSScriptRoot "main.go"), (Join-Path $PSScriptRoot "go.mod"), (Join-Path $PSScriptRoot "memory-wrapper.sh") $bench
 Copy-Item (Join-Path $PSScriptRoot "Dockerfile.local") (Join-Path $context "Dockerfile")

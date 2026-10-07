@@ -34,7 +34,9 @@
 //
 // The grammar is that of ECMAScript 2025. It includes lookbehind, named groups, group names shared between separate
 // alternatives, modifier groups, and Unicode property escapes for every property, value and alias ECMA-262 lists, with
-// Unicode 17 data. The v flag (set notation and properties of strings) does not apply, because a JSON Schema pattern
+// Unicode 17 data. The properties and the case folding come from the tables of the ucd package and never from the
+// unicode package of the Go toolchain, and the regexp package is given explicit ranges, so a pattern matches the same
+// texts whichever toolchain built the program. The v flag (set notation and properties of strings) does not apply, because a JSON Schema pattern
 // has no flags. Groups may nest 1000 deep.
 package ecmaregex
 

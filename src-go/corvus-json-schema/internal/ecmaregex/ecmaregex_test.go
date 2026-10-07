@@ -4,6 +4,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema/internal/ucd"
 )
 
 // javaHand is the list of hand-written patterns of the Java port's EcmaRegexValidatorTest, each with whether it is a
@@ -323,6 +325,67 @@ func BenchmarkMatch(b *testing.B) {
 	}
 }
 
+// TestTranslationCarriesNoUnicodeClass checks that a pattern handed to the regexp package names no Unicode class and
+// no case-insensitive flag. The regexp package reads both from the unicode package of the Go toolchain, whose version
+// of Unicode differs between toolchains, so the translation must spell out ranges from the tables of the ucd package.
+func TestTranslationCarriesNoUnicodeClass(t *testing.T) {
+	for _, p := range []string{
+		`^\p{L}+$`, `\P{Lu}`, `[\p{Script=Greek}\p{Nd}]`, `[^\p{scx=Hira}]`, `(?i:straße|K)`, `(?i:[a-z\p{Lu}])`, `\d\w\s.`,
+		`(?i:\p{Ll})`, `\p{Any}\p{Assigned}\p{ASCII}`, `(?s:.)`,
+	} {
+		re, err := Compile(p)
+		if err != nil {
+			t.Errorf("Compile(%q): %v", p, err)
+			continue
+		}
+		if re.re == nil {
+			t.Errorf("Compile(%q) is not on the regexp package", p)
+			continue
+		}
+		translated := re.re.String()
+		for _, bad := range []string{`\p`, `\P`, `(?i`, `[[:`, `\d`, `\w`, `\s`, `\pL`} {
+			if strings.Contains(translated, bad) {
+				t.Errorf("the translation of %q contains %s: %s", p, bad, translated)
+			}
+		}
+	}
+}
+
+// BenchmarkMatchProperties matches patterns whose classes are Unicode properties, on text that is mostly outside
+// ASCII, so every class test is a search of the property's ranges.
+func BenchmarkMatchProperties(b *testing.B) {
+	text := []byte("Ελληνικά кириллица 日本語のテキスト العربية naïve café ÉCOLE ৪২ 12345")
+	for _, p := range []string{
+		`^[\p{L}\p{M}\p{N}\p{Zs}]+$`, `\p{Lu}\p{Ll}+ \p{Nd}+$`, `\p{Script=Han}+\p{scx=Hira}`, `(?<=\p{L} )\p{Nd}+$`,
+		`^(?:(?!\p{Sc})[\p{Alphabetic}\p{N}\p{White_Space}])+$`, `(\p{Lu})(?i:\1)`, `(?i:école) \P{L}+`,
+	} {
+		re, err := Compile(p)
+		if err != nil {
+			b.Fatal(err)
+		}
+		b.Run(re.Engine().String()+"/"+p, func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				re.Match(text)
+			}
+		})
+	}
+}
+
+// BenchmarkPropertyRanges builds the ranges of a property expression, which a pattern pays for once when it compiles.
+func BenchmarkPropertyRanges(b *testing.B) {
+	for _, expr := range []string{"L", "Lu", "Script=Greek", "scx=Latin", "Alphabetic", "Assigned", "sc=Unknown"} {
+		b.Run(expr, func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				if _, ok := propertyPairs(expr); !ok {
+					b.Fatal(expr)
+				}
+			}
+		})
+	}
+}
+
 // TestFoldTables checks the tables behind case-insensitive matching. The table for the u flag grammar must hold every
 // character that has a simple case folding, and each table must agree with canonicalize.
 func TestFoldTables(t *testing.T) {
@@ -426,8 +489,8 @@ func TestProperties(t *testing.T) {
 		check("gc=" + name)
 		check("General_Category=" + name)
 	}
-	for alias, name := range scriptAliases {
-		for _, value := range []string{alias, name} {
+	for _, names := range ucd.ScriptNames() {
+		for _, value := range names {
 			check("sc=" + value)
 			check("Script=" + value)
 			check("scx=" + value)
