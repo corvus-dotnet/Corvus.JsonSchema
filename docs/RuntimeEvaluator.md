@@ -242,8 +242,10 @@ Measured on the 37 Sourcemeta corpora (see [the measurements](RuntimeEvaluatorMe
 - **Compiling.** Generating a schema's code takes about 20 ms at the median and up to 0.7 s for the largest schema
   (ui5-manifest, 885 methods), nearly all of it the JIT compiling the methods. `Eager` pays that before the first
   evaluation. `AfterWarmUp` pays it on another thread.
-- **The first pass.** With `AfterWarmUp`, a first pass over a corpus that crosses 1,000 evaluations takes about 11%
-  longer, while the code is compiled alongside it.
+- **Starting the compilation.** With `AfterWarmUp`, the evaluation that starts it (the 1,000th) pays for handing the
+  work to the thread pool: 1.4 to 2.1 ms in a process that has just started and has not yet used the pool, and 0.3
+  to 0.4 ms once the pool is running. The evaluations that follow are not slowed while the code is compiled. An
+  evaluator that makes fewer than 1,000 evaluations pays nothing.
 
 Choose `AfterWarmUp` for an evaluator that may be used a few times or many. Choose `Eager` for a long-lived
 evaluator whose first evaluations should already run at full speed. Leave it `Disabled` for an evaluator used a few

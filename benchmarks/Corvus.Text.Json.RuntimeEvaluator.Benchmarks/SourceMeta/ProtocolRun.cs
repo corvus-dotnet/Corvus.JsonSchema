@@ -92,6 +92,47 @@ public static class ProtocolRun
     /// passes for 2 seconds (at least 100), each parsing every instance and disposing its document, and the last
     /// pass's time. Prints the time in nanoseconds.
     /// </summary>
+    /// <summary>
+    /// The first pass, evaluation by evaluation (<c>tiertrace corpus</c>): what the evaluation that starts the
+    /// background compilation costs, and what the evaluations after it cost while the compilation runs. Prints the
+    /// pass's time, the median evaluation, the 1,000th evaluation (which starts it), the time of the evaluations
+    /// after it over what their count would cost at the median before it, and the slowest five (index:microseconds).
+    /// </summary>
+    public static int RunTierTrace(string[] args)
+    {
+        string root = Environment.GetEnvironmentVariable("COLD_ROOT") ?? Path.Combine(AppContext.BaseDirectory, "sourcemeta");
+        byte[] schema = File.ReadAllBytes(Path.Combine(root, args[0] + "-schema.json"));
+        ParsedJsonDocument<JsonElement>[] docs = [.. File.ReadAllLines(Path.Combine(root, args[0] + "-instances.jsonl")).Where(l => l.Length > 0).Select(l => ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(l)))];
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema, new JsonSchemaEvaluatorOptions { DefaultDialect = JsonSchemaDialect.Draft7, CodeGeneration = CodeGeneration() });
+        if (Environment.GetEnvironmentVariable("TIERTRACE_WARM_POOL") == "1")
+        {
+            // As in an application whose thread pool is already running (a server): one item run and waited for.
+            using var ran = new ManualResetEventSlim();
+            ThreadPool.QueueUserWorkItem(_ => ran.Set());
+            ran.Wait();
+        }
+
+        long[] ticks = new long[docs.Length];
+        int valid = 0;
+        for (int i = 0; i < docs.Length; i++)
+        {
+            long start = Stopwatch.GetTimestamp();
+            valid += evaluator.Evaluate(docs[i].RootElement) ? 1 : 0;
+            ticks[i] = Stopwatch.GetTimestamp() - start;
+        }
+
+        double Microseconds(long t) => t * 1_000_000.0 / Stopwatch.Frequency;
+        long[] before = [.. ticks.Take(Math.Min(999, ticks.Length)).Skip(50).OrderBy(t => t)];
+        double median = Microseconds(before[before.Length / 2]);
+        double total = Microseconds(ticks.Sum());
+        double trigger = ticks.Length > 999 ? Microseconds(ticks[999]) : 0;
+        double after = ticks.Length > 1000 ? Microseconds(ticks.Skip(1000).Sum()) : 0;
+        int afterCount = Math.Max(0, ticks.Length - 1000);
+        string slowest = string.Join(" ", ticks.Select((t, i) => (t, i)).OrderByDescending(x => x.t).Take(5).Select(x => $"{x.i}:{Microseconds(x.t):F0}"));
+        Console.WriteLine($"{args[0]},total {total:F0} us,median {median:F2} us,evaluation 1000 {trigger:F0} us,after it {after:F0} us over {afterCount * median:F0} us expected,slowest {slowest},valid {valid}");
+        return 0;
+    }
+
     public static int RunParse(string[] args)
     {
         string root = Environment.GetEnvironmentVariable("COLD_ROOT") ?? Path.Combine(AppContext.BaseDirectory, "sourcemeta");

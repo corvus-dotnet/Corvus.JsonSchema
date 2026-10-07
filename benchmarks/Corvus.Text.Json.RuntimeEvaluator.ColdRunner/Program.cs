@@ -9,6 +9,11 @@ if (args.Length > 0 && args[0] == "generated")
 }
 #endif
 
+if (args.Length > 1 && args[0] == "tiertrace")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ProtocolRun.RunTierTrace(args[1..]);
+}
+
 if (args.Length > 0 && args[0] == "parsewarm")
 {
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ProtocolRun.RunParse(args[1..]);
