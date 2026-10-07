@@ -130,6 +130,44 @@ class AllocationTest {
         return ((com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean()).getCurrentThreadAllocatedBytes();
     }
 
+    /**
+     * Says where a failing case allocates: the same passes again in blocks of 100 (an allocation that is not there on
+     * the second measurement, or is in one block only, happened once), then each instance by each entry.
+     */
+    private static String breakdown(Validator v, Case c, JsonDocument[] docs, byte[][] utf8, long overhead) {
+        StringBuilder text = new StringBuilder();
+        int sink = 0;
+        long[] blocks = new long[20];
+        for (int b = 0; b < blocks.length; b++) {
+            long before = allocated();
+            for (int r = 0; r < 100; r++) {
+                for (int i = 0; i < docs.length; i++) {
+                    sink += v.isValid(docs[i]) ? 1 : 0;
+                    sink += v.isValid(c.instances[i]) ? 1 : 0;
+                    sink += v.isValid(utf8[i]) ? 1 : 0;
+                }
+            }
+            blocks[b] = allocated() - before - overhead;
+        }
+        text.append(" [again, by 100 passes: ").append(java.util.Arrays.toString(blocks)).append(']');
+        for (int i = 0; i < docs.length; i++) {
+            long[] by = new long[3];
+            for (int entry = 0; entry < 3; entry++) {
+                long before = allocated();
+                for (int r = 0; r < 2_000; r++) {
+                    sink += (entry == 0 ? v.isValid(docs[i]) : entry == 1 ? v.isValid(c.instances[i]) : v.isValid(utf8[i]))
+                            ? 1 : 0;
+                }
+                by[entry] = allocated() - before - overhead;
+            }
+            if (by[0] != 0 || by[1] != 0 || by[2] != 0) {
+                text.append(" [instance ").append(i).append(", 2000 calls, document/text/bytes: ")
+                        .append(java.util.Arrays.toString(by)).append(']');
+            }
+        }
+        return sink >= 0 ? text.toString() : "";
+    }
+
     @Test
     void validationAllocatesNothingInTheSteadyState() {
         List<String> failures = new ArrayList<>();
@@ -164,8 +202,8 @@ class AllocationTest {
             }
             long bytes = allocated() - before - overhead;
             if (bytes > 256) {
-                failures.add(c.name + (v.isCompiled() ? " (compiled)" : " (interpreted)") + ": " + bytes / rounds
-                        + " bytes per pass of " + docs.length + " instances");
+                failures.add(c.name + (v.isCompiled() ? " (compiled)" : " (interpreted)") + ": " + bytes + " bytes in "
+                        + rounds + " passes of " + docs.length + " instances" + breakdown(v, c, docs, utf8, overhead));
             }
             assertTrue(sink >= 0);
         }

@@ -80,7 +80,7 @@ This means:
 When a PR is merged to `main`, the `auto_release.yml` workflow:
 
 1. Checks for the `no_release` label — if present, skips the release
-2. Leaves out a PR that changes nothing the .NET build reads (only `src-py`, `src-rs` or `src-ts`, as `build.yml` decides), and removes its `pending_release` label
+2. Leaves out a PR that changes nothing the .NET build reads (only the language packages and their workflows, as `build.yml` decides), and removes its `pending_release` label
 3. Waits for any pending Dependabot PRs to complete (batched releases)
 4. Uses GitVersion to compute the next version
 5. Creates a Git tag in the format `{Major}.{Minor}.{Patch}`

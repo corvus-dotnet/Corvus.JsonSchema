@@ -490,8 +490,8 @@ final class EcmaRegex {
             i += Character.charCount(first);
             while (more() && peek() != '>') {
                 int c = peek();
-                if (!(Character.isUnicodeIdentifierPart(c) || c == '$' || c == '‌' || c == '‍')
-                        || Character.isIdentifierIgnorable(c) && c != '‌' && c != '‍') {
+                if (!(Character.isUnicodeIdentifierPart(c) || c == '$' || c == '\u200C' || c == '\u200D')
+                        || Character.isIdentifierIgnorable(c) && c != '\u200C' && c != '\u200D') {
                     throw error("invalid group name");
                 }
                 i += Character.charCount(c);

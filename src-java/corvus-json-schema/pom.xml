@@ -206,6 +206,9 @@
             <configuration>
               <doclint>all,-missing</doclint>
               <failOnWarnings>true</failOnWarnings>
+              <!-- Before Java 18, javadoc reads the sources it finds through the patched module in the platform's
+                   encoding, whatever -encoding says (windows-1252 on Windows). -->
+              <additionalJOption>-J-Dfile.encoding=UTF-8</additionalJOption>
             </configuration>
             <executions>
               <execution>
