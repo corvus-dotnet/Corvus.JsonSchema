@@ -89,6 +89,12 @@ When a PR is merged to `main`, the `auto_release.yml` workflow:
 
 A release includes every merged PR still labelled `pending_release`, so closing a PR without .NET changes can still release earlier ones.
 
+### A release that publishes nothing
+
+The publish phase takes the packages from the package phase through the Actions cache. A build stores about 10 GB of state there and GitHub keeps 10 GB for the repository, so when another build overlaps a release tag build the release's packages can be evicted before the publish phase reads them. The publish phase then fails with "There are no packages ... to publish" (the `PrePublish` task in `.zf/config.ps1`).
+
+To recover, wait until no other build is running, then run the tag's workflow again with **Re-run all jobs**. Do not push to a pull request while a release tag build is running.
+
 ### Skipping a release
 
 A PR that changes only the Python, Rust, TypeScript, Java, Ruby or PHP packages makes no NuGet release; nothing needs adding.
