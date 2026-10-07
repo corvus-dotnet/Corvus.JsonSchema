@@ -174,8 +174,12 @@ func (v *Validator) ValidateString(json string) (bool, error) {
 }
 
 // Evaluate evaluates an instance exhaustively, reporting to the collector, and reports whether the instance is
-// valid. The error is ErrDepthExceeded when evaluation recursed in place beyond the maximum depth.
+// valid. The error is ErrDepthExceeded when evaluation recursed in place beyond the maximum depth. With a nil
+// collector it is Validate.
 func (v *Validator) Evaluate(instance *Document, collector *ResultsCollector) (bool, error) {
+	if collector == nil {
+		return v.Validate(instance)
+	}
 	e := evaluator{p: v.program, d: instance, c: collector, v: v}
 	ok := e.evaluate()
 	if e.s != nil {

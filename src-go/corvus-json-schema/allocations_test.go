@@ -149,6 +149,9 @@ func allocationCases() []allocationCase {
 }
 
 func TestValidationAllocatesNothingInTheSteadyState(t *testing.T) {
+	if raceEnabled {
+		t.Skip("the race detector makes sync.Pool drop values")
+	}
 	for _, c := range allocationCases() {
 		v := mustCompile(t, c.schema, c.options...)
 		documents := make([]*Document, len(c.instances))
@@ -207,6 +210,9 @@ func TestValidationAllocatesNothingInTheSteadyState(t *testing.T) {
 }
 
 func TestTextThatIsNotJSONAllocatesNothingForIsValid(t *testing.T) {
+	if raceEnabled {
+		t.Skip("the race detector makes sync.Pool drop values")
+	}
 	v := mustCompile(t, `{"type": "object"}`)
 	text := []byte(`{"a": [1, 2, {"b": "c"}`)
 	v.IsValidBytes(text)
