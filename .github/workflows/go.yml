@@ -1,0 +1,119 @@
+name: go
+# The Go evaluator (src-go/corvus-json-schema) with its Bowtie and benchmark harnesses. go-publish.yml calls this
+# workflow before it tags a release.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-go/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/go.yml'
+    - '.github/workflows/go-publish.yml'
+    - 'LICENSE'
+  pull_request:
+    paths:
+    - 'src-go/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - '.github/workflows/go.yml'
+    - '.github/workflows/go-publish.yml'
+    - 'LICENSE'
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Every platform, with the oldest Go the module accepts (the go directive of its go.mod, to the patch) and the
+    # latest. The minimum is Go 1.27: internal/ecmaregex needs the Unicode 17 tables of its unicode package. Go
+    # supports its two most recent minor releases, so when Go 1.28 is released "stable" moves to it and the minimum
+    # stays the older one.
+    name: Build and test corvus-json-schema (Go ${{ matrix.go }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
+        go: [minimum, stable]
+    defaults:
+      run:
+        shell: bash
+        working-directory: src-go/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: false
+          # Only what the module needs (the repository's generated benchmark models have paths too long for Windows).
+          sparse-checkout: |
+            src-go
+            src/Corvus.Text.Json/metaschema
+            JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Go
+        # The action sets GOTOOLCHAIN=local, so the minimum is tested with that toolchain and no newer one.
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ matrix.go == 'minimum' && '' || matrix.go }}
+          go-version-file: ${{ matrix.go == 'minimum' && 'src-go/corvus-json-schema/go.mod' || '' }}
+          # The library has no dependencies, so the benchmark module's sums key the cache.
+          cache-dependency-path: src-go/corvus-json-schema-bench/go.sum
+      - name: Check the module's LICENSE matches the repository's
+        run: cmp ../../LICENSE LICENSE
+      - name: Format
+        # On Linux only: a Windows checkout has CRLF line endings, which gofmt would report in every file.
+        if: runner.os == 'Linux'
+        working-directory: src-go
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::gofmt would change these files:"
+            echo "$unformatted"
+            exit 1
+          fi
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        # The whole JSON-Schema-Test-Suite, fail-fast and through collectors, the annotation suite, the allocation
+        # tests, the regular expression engine against V8's answers, and the documentation samples (example_test.go).
+        run: go test -p 4 ./...
+      - name: Test with the race detector
+        # The race detector needs cgo, and so a C compiler, which the Linux and macOS runners have. The allocation
+        # tests skip themselves under it.
+        if: runner.os != 'Windows'
+        run: go test -p 4 -race ./...
+      - name: Bowtie harness
+        # Drives the harness over IHOP in its own process: the required suite and the annotation suite.
+        working-directory: src-go/corvus-json-schema-bowtie
+        run: |
+          go vet ./...
+          go test -p 4 ./...
+      - name: Benchmark harness
+        working-directory: src-go/corvus-json-schema-bench
+        run: |
+          go vet ./...
+          go build -o "$RUNNER_TEMP/compare" .
+      - name: jsonschema-benchmark entry
+        # The entry requires the published module, so a workspace stands in for it here. The protocol program then
+        # runs on a small corpus: four positive figures, and exit code 1 for an instance that is not valid.
+        if: matrix.os == 'ubuntu-latest' && matrix.go == 'stable'
+        working-directory: src-go/corvus-json-schema-bench/jsonschema-benchmark
+        run: |
+          go work init . ../../corvus-json-schema
+          go vet .
+          go build -o "$RUNNER_TEMP/corvus_go_benchmark" .
+          echo '{"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}' > "$RUNNER_TEMP/schema.json"
+          printf '{"id": 1}\n{"id": 2}\n' > "$RUNNER_TEMP/instances.jsonl"
+          out=$("$RUNNER_TEMP/corvus_go_benchmark" "$RUNNER_TEMP/schema.json" "$RUNNER_TEMP/instances.jsonl")
+          echo "$out"
+          echo "$out" | grep -Eq '^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$'
+          printf '{"id": 1}\n{"id": "two"}\n' > "$RUNNER_TEMP/instances.jsonl"
+          status=0
+          "$RUNNER_TEMP/corvus_go_benchmark" "$RUNNER_TEMP/schema.json" "$RUNNER_TEMP/instances.jsonl" || status=$?
+          [ "$status" -eq 1 ]
