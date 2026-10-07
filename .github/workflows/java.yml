@@ -43,6 +43,11 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: false
+          # Only what the library needs (the repository's generated benchmark models have paths too long for Windows).
+          sparse-checkout: |
+            src-java
+            src/Corvus.Text.Json/metaschema
+            JSON-Schema-Test-Suite
       - name: Checkout JSON-Schema-Test-Suite
         working-directory: .
         run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
