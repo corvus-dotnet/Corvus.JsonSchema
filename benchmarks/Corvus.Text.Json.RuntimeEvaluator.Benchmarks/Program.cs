@@ -55,6 +55,51 @@ if (args.Length > 0 && args[0] == "ceiling")
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CeilingProbe.Run(args[1..]);
 }
 
+if (args.Length > 0 && args[0] == "parsewarm")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ProtocolRun.RunParse(args[1..]);
+}
+
+if (args.Length > 0 && args[0] == "lengths")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.GetStringRun.RunLengths();
+}
+
+if (args.Length > 0 && args[0] == "getstring")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.GetStringRun.Run(args[1..]);
+}
+
+if (args.Length > 0 && args[0] == "protocol")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ProtocolRun.Run(args[1..]);
+}
+
+if (args.Length > 0 && args[0] == "floor")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CodeGenProbe.RunFloor();
+}
+
+if (args.Length > 0 && args[0] == "compilecost")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CodeGenProbe.RunCompileCost(args[1..]);
+}
+
+if (args.Length > 0 && args[0] == "locality")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CodeGenProbe.RunLocality(args[1..]);
+}
+
+if (args.Length > 0 && args[0] == "precise")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CodeGenProbe.RunPrecise(args[1..]);
+}
+
+if (args.Length > 0 && args[0] == "codegen")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CodeGenProbe.Run(args[1..]);
+}
+
 if (args.Length > 0 && args[0] == "emit")
 {
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.StaticInitEmitter.Run(args[1..]);

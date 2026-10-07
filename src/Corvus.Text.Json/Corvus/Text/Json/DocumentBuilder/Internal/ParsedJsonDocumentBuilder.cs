@@ -1031,7 +1031,7 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
                             CompleteValueToken();
                         }
 
-                        db.AppendStringOrPropertyName(row.TokenType, start, content.Length, row.HasComplexChildren);
+                        db.AppendStringOrPropertyName(row.TokenType, start, content.Length, row.HasComplexChildren, row.IsAsciiText);
                         PushPair(start, content.Length);
                         break;
                     }
@@ -1047,7 +1047,7 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
                         _textPos += content.Length;
                         CompleteValueToken();
 
-                        db.Append(JsonTokenType.Number, start, content.Length);
+                        db.AppendNumber(start, content.Length, (byte)row.NumberShape);
                         PushPair(start, content.Length);
                         break;
                     }

@@ -211,6 +211,7 @@
     <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)Exceptions.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator" />
     <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)JsonSchemaDialect.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator" />
     <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)JsonSchemaEvaluator.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator" />
+    <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)JsonSchemaCodeGeneration.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator" />
     <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)JsonSchemaEvaluatorOptions.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator" />
     <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)JsonSchemaFormatMode.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator" />
     <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)Polyfills\NetStandardExtensions.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator\Polyfills" />

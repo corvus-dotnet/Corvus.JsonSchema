@@ -43,6 +43,7 @@ Console.WriteLine(isValid);  // true
 - **Full schema support** — draft 4, 6, 7, 2019-09, and 2020-12
 - **Detailed diagnostics** — validation results include schema location, evaluation path, and error messages
 - **Caching** — compiled schemas are cached by canonical URI and reused across documents
+- **Optional runtime code generation.** `JsonSchema.Options(codeGeneration: JsonSchemaCodeGeneration.AfterWarmUp)` compiles a schema to IL once it is in steady use, for about half the warm validation time. Off by default
 
 ## Related Packages
 

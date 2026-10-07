@@ -176,6 +176,7 @@ JsonSchema schema = JsonSchema.FromFile("person.json", options: options);
 | `defaultDialect` | `JsonSchemaDialect.Draft202012` | The JSON Schema dialect to use when the schema does not include a `$schema` keyword. |
 | `additionalSchemaFiles` | `null` | Pre-load external schema files for `$ref` resolution. Each entry maps a canonical URI to a local file path; the file is also registered under its `$id` and its full path. |
 | `additionalDocumentResolver` | `null` | A `JsonSchemaDocumentResolver` delegate that supplies referenced documents from memory, consulted before the file system and HTTP. |
+| `codeGeneration` | `JsonSchemaCodeGeneration.Disabled` | Whether, and when, the schema is compiled to IL at run time. See [Runtime Code Generation](#runtime-code-generation). |
 
 ## Pre-loading Referenced Schemas
 
@@ -198,9 +199,38 @@ JsonSchema schema = JsonSchema.FromFile("Schemas/person.json", options: options)
 
 This avoids network calls for referenced schemas and ensures deterministic builds. It is particularly useful in CI/CD environments where external resolution may be unreliable or disallowed.
 
+## Runtime Code Generation
+
+By default a schema is interpreted. The Validator can also compile it to IL at run time, which about halves the time of a warm validation that collects no results. Turn it on with the `codeGeneration` option:
+
+```csharp
+using Corvus.Text.Json.RuntimeEvaluator;
+using Corvus.Text.Json.Validator;
+
+var options = new JsonSchema.Options(
+    codeGeneration: JsonSchemaCodeGeneration.AfterWarmUp);
+
+JsonSchema schema = JsonSchema.FromFile("person.json", options: options);
+bool valid = schema.Validate("""{"name": "Alice"}""");
+```
+
+| Value | Behaviour |
+|-------|-----------|
+| `Disabled` | The default. Every validation is interpreted. |
+| `AfterWarmUp` | The schema is compiled on a background thread once it has made 1,000 validations that collect no results. No validation waits for it. |
+| `Eager` | The schema is compiled on the calling thread before its first validation that collects no results, which waits for it. |
+
+Things to know:
+
+- Generated code gives the same results as the interpreter. A validation with a results collector is always interpreted.
+- Compiling takes about 20 ms for a typical schema and up to 0.7 s for a very large one. `AfterWarmUp` suits a cached schema that may be used a few times or many. `Eager` suits a long-lived schema whose first validations should already run at full speed.
+- Code is generated only on .NET 9 and later, where the runtime can compile code at run time. On .NET Framework and under native AOT the option is accepted and the schema is interpreted, with no error.
+
+The [runtime evaluator guide](./RuntimeEvaluator.md#runtime-code-generation) has the measurements and the cases that are not compiled.
+
 ## Schema Caching
 
-Compiled schemas are cached automatically by their canonical URI and `alwaysAssertFormat` flag. Subsequent calls to any `From*` method with the same URI return the cached validator without recompilation:
+Compiled schemas are cached automatically by their canonical URI, `alwaysAssertFormat` flag and `codeGeneration` setting. Subsequent calls to any `From*` method with the same URI return the cached validator without recompilation:
 
 ```csharp
 // First call: compiles the schema (milliseconds)
@@ -222,7 +252,7 @@ The Validator is a thin wrapper over the [runtime evaluator](./RuntimeEvaluator.
 
 1. **Load** the JSON Schema document and any documents it references, using the registered resolvers
 2. **Compile** the schema graph into an in-memory evaluator: every `$ref` is resolved at compile time, regular expressions are compiled, and flag-mode fast paths (discriminators, type unions, unrolled objects) are precomputed
-3. **Cache** the evaluator by canonical URI and `alwaysAssertFormat` for subsequent validations against the same schema
+3. **Cache** the evaluator by canonical URI, `alwaysAssertFormat` and `codeGeneration` for subsequent validations against the same schema
 
 Validation walks the parsed document once against the compiled graph. It shares the format, number, and string helpers used by generated code, so it agrees with source-generated models instance for instance, and it produces the same results-collector output and annotations. No hosting configuration is required: the Validator has no dependency on Roslyn or on the host's compilation context.
 

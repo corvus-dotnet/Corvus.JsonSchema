@@ -897,10 +897,29 @@ public class JsonSchemaMatchingStringTests
     [DataRow("a\rb", 0, int.MaxValue, false)]
     [DataRow("ab\u2029", 0, int.MaxValue, false)]
     [DataRow("a\u2027b", 0, int.MaxValue, true)]
+    [DataRow("\u00e9\u00e9", 3, 5, false)]           // 4 bytes, 2 runes: counted, below min
+    [DataRow("\u00e9\u00e9\u00e9", 2, 4, true)]      // 6 bytes over max, 3 runes within
+    [DataRow("\ud83d\ude00\ud83d\ude00\ud83d\ude00", 0, 2, false)] // 12 bytes, at least 3 runes: above max uncounted
+    [DataRow("\ud83d\ude00", 1, 1, true)]                 // 4 bytes, 1 rune
+    [DataRow("abc", 1, int.MaxValue, true)]                 // decided from the byte length
     public void MatchRangeRegularExpression_NoContext_ValidatesRange(string value, int min, int max, bool expected)
     {
         bool result = JsonSchemaEvaluation.MatchRangeRegularExpression(Encoding.UTF8.GetBytes(value), min, max);
         Assert.AreEqual(expected, result);
+    }
+
+    [TestMethod]
+    public void CountRunes_CountsAsciiMultiByteAndStopsAtInvalidUtf8()
+    {
+        Assert.AreEqual(0, JsonElementHelpers.CountRunes(ReadOnlySpan<byte>.Empty));
+        Assert.AreEqual(5, JsonElementHelpers.CountRunes("hello"u8));
+        Assert.AreEqual(4, JsonElementHelpers.CountRunes(Encoding.UTF8.GetBytes("a\u00e9\u4e2d\ud83d\ude00")));
+        Assert.AreEqual(40, JsonElementHelpers.CountRunes(Encoding.UTF8.GetBytes(new string('x', 39) + "\u00e9")));
+
+        // Invalid UTF-8: the runes before the first invalid sequence.
+        Assert.AreEqual(2, JsonElementHelpers.CountRunes([(byte)'a', (byte)'b', 0xFF, (byte)'c']));
+        Assert.AreEqual(1, JsonElementHelpers.CountRunes([(byte)'a', 0xE4, 0xB8]));
+        Assert.AreEqual(0, JsonElementHelpers.CountRunes([0x80, (byte)'a']));
     }
 
     // '.' and '.+': some character that is not a line terminator

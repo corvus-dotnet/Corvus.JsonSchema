@@ -153,6 +153,11 @@ internal sealed class DivisorValue
         // The generator build only carries the text into the image; the normalized form is rebuilt on load.
         return;
 #else
+        if (raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0 && raw.Length <= 18 && System.Buffers.Text.Utf8Parser.TryParse(raw, out long l, out int consumed) && consumed == raw.Length && l > 0)
+        {
+            this.AsLong = l;
+        }
+
         JsonElementHelpers.ParseNumber(raw, out _, out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
         this.Exponent = exponent;
         Span<byte> digits = stackalloc byte[integral.Length + fractional.Length];
@@ -177,6 +182,9 @@ internal sealed class DivisorValue
     }
 
     public bool IsBig { get; }
+
+    /// <summary>When the divisor is a plain positive integer that fits in a long, its value; otherwise null.</summary>
+    public long? AsLong { get; }
 
     public ulong Small { get; }
 
@@ -647,9 +655,20 @@ internal sealed class PatternMatcher
             this.Atoms = atoms;
             this.Anchor = anchor;
             this.LastVariable = -1;
+            this.AsciiMembers = new byte[atoms.Length][];
             int minimum = 0;
             for (int i = 0; i < atoms.Length; i++)
             {
+                // A byte's membership of the atom's class as one load: nonzero for an ASCII member, zero for any
+                // other byte (an ASCII byte outside the class, or part of a longer character).
+                byte[] members = new byte[256];
+                for (int b = 0; b < 128; b++)
+                {
+                    members[b] = atoms[i].Contains((byte)b) ? (byte)1 : (byte)0;
+                }
+
+                this.AsciiMembers[i] = members;
+
                 if (!atoms[i].Fixed)
                 {
                     this.LastVariable = i;
@@ -681,6 +700,9 @@ internal sealed class PatternMatcher
         public byte[]? StartBytes { get; }
 
         public ClassAtom[] Atoms { get; }
+
+        /// <summary>For each atom, a table of 256 entries: nonzero at the ASCII bytes in its class.</summary>
+        public byte[][] AsciiMembers { get; }
 
         public SequenceAnchor Anchor { get; }
 
@@ -865,32 +887,36 @@ internal sealed class PatternMatcher
     /// <summary>The whole value, anchored at both ends.</summary>
     private static bool MatchWhole(PatternSequence sequence, ReadOnlySpan<byte> value)
     {
+        // The positions passed by reference to the atoms' methods live in memory. The run of the variable atom, where
+        // the time goes, keeps its own position and count in registers, and decides an ASCII member by one load.
         ClassAtom[] atoms = sequence.Atoms;
         int last = sequence.LastVariable;
-        int pos = 0;
-        if (!ConsumeHead(atoms, last < 0 ? atoms.Length : last, value, ref pos))
+        int head = 0;
+        if (!ConsumeHead(atoms, last < 0 ? atoms.Length : last, value, ref head))
         {
             return false;
         }
 
         if (last < 0)
         {
-            return pos == value.Length;
+            return head == value.Length;
         }
 
-        int end = value.Length;
+        int tail = value.Length;
         for (int a = atoms.Length - 1; a > last; a--)
         {
             ref readonly ClassAtom atom = ref atoms[a];
             for (int n = 0; n < atom.Min; n++)
             {
-                if (!atom.TryConsumeBackward(value, ref end))
+                if (!atom.TryConsumeBackward(value, ref tail))
                 {
                     return false;
                 }
             }
         }
 
+        int pos = head;
+        int end = tail;
         if (end < pos)
         {
             return false;
@@ -898,11 +924,29 @@ internal sealed class PatternMatcher
 
         ref readonly ClassAtom variable = ref atoms[last];
         int count = 0;
+        ref byte members = ref System.Runtime.InteropServices.MemoryMarshal.GetReference((ReadOnlySpan<byte>)sequence.AsciiMembers[last]);
+        ref byte text = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(value);
         while (pos < end)
         {
-            if (!variable.TryConsume(value, ref pos))
+            byte b = Unsafe.Add(ref text, pos);
+            if (Unsafe.Add(ref members, b) != 0)
             {
-                return false;
+                pos++;
+            }
+            else
+            {
+                if (b < 0x80)
+                {
+                    return false;
+                }
+
+                int at = pos;
+                if (!variable.TryConsume(value, ref at))
+                {
+                    return false;
+                }
+
+                pos = at;
             }
 
             count++;
@@ -2409,13 +2453,49 @@ internal sealed class PropertyEntry
 /// What the strict object loop does with one known property, as a value: the seen bit, a type mask to test in place,
 /// a string set or string const to test in place, or a child node to dispatch on (-1 for none).
 /// </summary>
-internal readonly struct StrictEntry(int seenBit, TypeMask mask, bool lexical, Utf8NameMap<object>? set, int child, bool nestedObject = false, byte[]? constBytes = null)
+internal readonly struct StrictEntry(int seenBit, TypeMask mask, bool lexical, Utf8NameMap<object>? set, int child, bool nestedObject = false, byte[]? constBytes = null, int minLength = -1, int maxLength = -1, TypeMask lengthMask = TypeMask.None, ushort childDecided = 0, ushort childAccepts = 0)
 {
+    /// <summary>
+    /// For a <see cref="Child"/>, the token types whose result its type alone decides (no keyword applies to that
+    /// kind of value): the loop decides those in place, by <see cref="ChildAccepts"/>, without entering the child.
+    /// </summary>
+    public readonly ushort ChildDecided = childDecided;
+
+    /// <summary>Of <see cref="ChildDecided"/>, the token types the child accepts.</summary>
+    public readonly ushort ChildAccepts = childAccepts;
+
+    /// <summary>The child's <c>minLength</c> when it is a string-length leaf (tested in place of a call), else -1.</summary>
+    public readonly int MinLength = minLength;
+
+    /// <summary>The child's <c>maxLength</c> when it is a string-length leaf (tested in place of a call), else -1.</summary>
+    public readonly int MaxLength = maxLength;
+
+    /// <summary>
+    /// Whether the entry is a string-length leaf. It has no <see cref="TokenBits"/> and no <see cref="Child"/>, so
+    /// the loops reach it only after the branches the other kinds take, and its type is <see cref="LengthTokenBits"/>.
+    /// </summary>
+    public readonly bool LengthBounded = minLength >= 0 || maxLength >= 0;
+
+    /// <summary>A string-length leaf's type as token bits (0 for no type).</summary>
+    public readonly ushort LengthTokenBits = TokenBitsOf(lengthMask);
+
+    /// <summary>Whether a string-length leaf's type admits a number token only when it is an integer.</summary>
+    public readonly bool LengthIntegerOnly = (lengthMask & TypeMask.Integer) != 0 && (lengthMask & TypeMask.Number) == 0;
+
     /// <summary>The child's string when it is a string-const leaf (compared in place of a call).</summary>
     public readonly byte[]? ConstBytes = constBytes;
 
     /// <summary>Whether <see cref="Child"/> is a strict object the loop enters without its prologue when the value is an object.</summary>
     public readonly bool NestedObject = nestedObject;
+
+    /// <summary>The entry without <see cref="NestedObject"/>: its child is then entered through its plan.</summary>
+    /// <returns>The entry.</returns>
+    public StrictEntry WithoutNestedObject()
+    {
+        StrictEntry copy = this;
+        System.Runtime.CompilerServices.Unsafe.AsRef(in copy.NestedObject) = false;
+        return copy;
+    }
 
     public readonly int SeenBit = seenBit;
     public readonly TypeMask Mask = mask;
@@ -2712,6 +2792,12 @@ internal enum NodePlan : byte
     /// then its in-place applicators as fast-mode children, instead of the general keyword-by-keyword path.
     /// </summary>
     Composite,
+
+    /// <summary>
+    /// The node has a generated method (<see cref="SchemaNode.Generated"/>), which flag mode calls. Only the node
+    /// copies of a schema that runtime codegen has compiled carry it: never a compiled program's own nodes, nor an image.
+    /// </summary>
+    Generated,
 }
 
 internal sealed class SchemaNode
@@ -2722,6 +2808,15 @@ internal sealed class SchemaNode
     public int Id;
     public int ResourceId;
     public JsonSchemaDialect Dialect;
+
+#if NET && !STJ
+    /// <summary>The node's generated method, under <see cref="NodePlan.Generated"/>.</summary>
+    public CodeGeneration.NodeValidator? Generated;
+
+    /// <summary>A copy of the node that shares its tables: what runtime codegen changes in place of the program's node.</summary>
+    /// <returns>The copy.</returns>
+    public SchemaNode ShallowClone() => (SchemaNode)this.MemberwiseClone();
+#endif
 
     public bool AlwaysTrue;
     public bool AlwaysFalse;
@@ -2900,7 +2995,23 @@ internal sealed class SchemaNode
     public int FlagEntry;
 
     /// <summary>Whether <c>items</c> is a strict object the array loop enters without its prologue when the element is an object.</summary>
+    /// <summary>
+    /// By token type, the <c>oneOf</c> branches that can accept a value of that kind (the others certainly fail), with
+    /// null for a kind every branch can accept; null when that does not narrow any kind. See
+    /// <see cref="SchemaCompiler.AdmittedTokens"/>.
+    /// </summary>
+    public int[]?[]? OneOfByKind;
+
+    /// <summary>By token type, the <c>anyOf</c> branches that can accept a value of that kind; as <see cref="OneOfByKind"/>.</summary>
+    public int[]?[]? AnyOfByKind;
+
     public bool ItemsNestedObject;
+
+    /// <summary>The token types whose result the items schema's type alone decides (see <see cref="StrictEntry.ChildDecided"/>).</summary>
+    public ushort ItemsDecided;
+
+    /// <summary>Of <see cref="ItemsDecided"/>, the token types the items schema accepts.</summary>
+    public ushort ItemsAccepts;
 
     /// <summary>Under <see cref="NodePlan.Conditional"/>, the plan for the node's own keywords: strict object, object, leaf (type only) or always-true (none).</summary>
     public NodePlan ConditionalOwnPlan;

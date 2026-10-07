@@ -1,5 +1,27 @@
 # Version History
 
+## V5.7.6
+
+V5.7.6 adds runtime code generation to the runtime evaluator: an evaluator can compile its schema to IL and validate about twice as fast as its interpreter. It is off by default and is turned on with one option. The interpreter is faster too, and reading an all-ASCII string from a document is faster. There are no breaking changes.
+
+### New features
+
+- **Runtime code generation for the runtime evaluator.** `JsonSchemaEvaluatorOptions.CodeGeneration` says whether, and when, a `JsonSchemaEvaluator` compiles its schema to code at run time. `JsonSchemaCodeGeneration.Disabled` is the default, and the interpreter evaluates every instance as before. `AfterWarmUp` compiles the schema on a background thread once the evaluator has made 1,000 evaluations that collect no results, and no evaluation waits for it. `Eager` compiles it on the calling thread before the first such evaluation. Generated code gives the same results as the interpreter and is used by evaluations that collect no results. An evaluation that collects results always uses the interpreter. On the 37 Sourcemeta benchmark corpora, generated code takes about half the interpreter's time on a warm run (0.51, geometric mean) and is faster on every corpus. Generating a schema's code takes about 20 ms at the median and up to 0.7 s for the largest schema. Code is generated only by the .NET 9 and later builds, where the runtime can compile code at run time. On .NET Framework and under native AOT every value behaves as `Disabled`, with no error and no analysis warnings. See [the runtime evaluator guide](docs/RuntimeEvaluator.md#runtime-code-generation). See [#1004](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1004).
+
+- **The same setting on the Validator.** `JsonSchema.Options` in `Corvus.Text.Json.Validator` takes a `codeGeneration` argument, which the Validator passes to the evaluator it creates. It defaults to `JsonSchemaCodeGeneration.Disabled`. The schema cache holds one evaluator for each setting a schema is asked for with. The earlier five-argument constructor remains, so assemblies compiled against it still bind. See [the Validator guide](docs/Validator.md#runtime-code-generation).
+
+### Bug fixes
+
+- **The source generator tests build without warning MSB3243.** The tests saw two primary references to `System.Text.Encodings.Web`, the generator's private netstandard2.0 copy and the framework's, which the build reported as a conflict it could not resolve. The target that already drops the generator's private `System.Text.Json` from the tests now drops `System.Text.Encodings.Web` as well, and the solution builds with no warnings. See [#1004](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1004).
+
+### Other changes
+
+- **A parsed document records what the parser learned about numbers and strings.** The parser already scans each number and each string. It now records, in bits of the metadata row that were unused, whether a number is written as an integer literal and whether an unescaped string is all ASCII. Every mutation of a mutable document records the same facts. The ASCII fact is recorded by the .NET 9 and .NET 10 builds of the library. The .NET Standard builds record the number fact only, and read a string's text as before. `GetString` on an all-ASCII string widens its bytes directly, with no UTF-8 decoding, and takes about two thirds of the time it did. The evaluator's `minLength` and `maxLength` tests are exact from the byte length for ASCII text, and its integer tests no longer search the text for a fraction or an exponent. Parsing is no slower. See [#1004](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1004).
+
+- **A faster entry to evaluation for every parsed document.** A document keeps the arrays behind its rows and its text together in one block, which an evaluation reads with no test of the document's type. The fixed cost of one evaluation falls by about 13%, and a parsed document of any element type now takes the direct path, where only `ParsedJsonDocument<JsonElement>` did. See [#1004](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1004).
+
+- **Faster interpreter paths that the generated code shares.** The pattern matcher keeps its position in a register through the run of a repeated character class. `uniqueItems` locates each string once and compares lengths before bytes, and compares two objects property by property when they are written in the same order. `propertyNames` tests a name where it lies when its schema is only a pattern, a length or a format, with no document built for each name. An integer literal is read in one pass that also shows it is an integer. See [#1004](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1004).
+
 ## V5.7.4
 
 V5.7.4 makes regular expressions in schemas follow ECMA-262 for `.` and `$` in both the runtime evaluator and generated code, and makes the runtime evaluator faster on schemas built from `allOf` and `$ref` compositions. There are no API changes. A schema whose `pattern` uses `.` or `$` may now reject strings it wrongly accepted before: those containing a line terminator.

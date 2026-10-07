@@ -78,7 +78,7 @@ public readonly struct JsonSchema
         options ??= Options.Default;
 
         string fullPath = NormalizeFilePath(fileName);
-        string cacheKey = BuildCacheKey(fullPath.Replace('\\', '/'), options.AlwaysAssertFormat);
+        string cacheKey = BuildCacheKey(fullPath.Replace('\\', '/'), options);
 
         if (TryGetCached(cacheKey, refreshCache, out JsonSchema cached))
         {
@@ -106,7 +106,7 @@ public readonly struct JsonSchema
     {
         options ??= Options.Default;
 
-        string cacheKey = BuildCacheKey(jsonSchemaUri, options.AlwaysAssertFormat);
+        string cacheKey = BuildCacheKey(jsonSchemaUri, options);
 
         if (TryGetCached(cacheKey, refreshCache, out JsonSchema cached))
         {
@@ -208,7 +208,7 @@ public readonly struct JsonSchema
             throw new InvalidOperationException(SR.DocumentDoesNotHaveCanonicalUri);
         }
 
-        string cacheKey = BuildCacheKey(canonicalUri!, options.AlwaysAssertFormat);
+        string cacheKey = BuildCacheKey(canonicalUri!, options);
 
         if (TryGetCached(cacheKey, refreshCache, out JsonSchema cached))
         {
@@ -255,9 +255,12 @@ public readonly struct JsonSchema
         return false;
     }
 
-    private static string BuildCacheKey(string uri, bool alwaysAssertFormat)
+    private static string BuildCacheKey(string uri, Options options)
     {
-        return $"{uri}__{alwaysAssertFormat}";
+        // An evaluator is created with its code generation setting, so each setting has its own cached evaluator.
+        return options.CodeGeneration == JsonSchemaCodeGeneration.Disabled
+            ? $"{uri}__{options.AlwaysAssertFormat}"
+            : $"{uri}__{options.AlwaysAssertFormat}__{options.CodeGeneration}";
     }
 
     private static JsonSchemaEvaluatorOptions BuildEvaluatorOptions(Options options, PrepopulatedDocuments documents)
@@ -268,6 +271,7 @@ public readonly struct JsonSchema
             AssertFormat = options.AlwaysAssertFormat ? true : null,
             DocumentResolver = documents.Resolve,
             FallbackDocumentResolver = options.AllowFileSystemAndHttpResolution ? ResolveFromFileSystemOrHttp : null,
+            CodeGeneration = options.CodeGeneration,
         };
     }
 
@@ -361,18 +365,47 @@ public readonly struct JsonSchema
         /// <param name="defaultDialect">The dialect applied to schemas that do not declare <c>$schema</c> (defaults to <see cref="JsonSchemaDialect.Draft202012"/>).</param>
         /// <param name="alwaysAssertFormat">If <see langword="true"/>, <c>format</c> will always be asserted, even for dialects that usually annotate.</param>
         /// <param name="additionalDocumentResolver">An additional document resolver for in-memory schema resolution.</param>
+        /// <param name="codeGeneration">Whether, and when, the schema is compiled to IL at run time for validations
+        /// that collect no results (defaults to <see cref="JsonSchemaCodeGeneration.Disabled"/>). Code is generated
+        /// only by the .NET builds of the library, where the runtime can compile code at run time. Elsewhere (.NET
+        /// Framework, native AOT) the setting is accepted and the schema is interpreted.</param>
         public Options(
             IReadOnlyList<AdditionalSchemaFile>? additionalSchemaFiles = null,
             bool allowFileSystemAndHttpResolution = true,
             JsonSchemaDialect defaultDialect = JsonSchemaDialect.Draft202012,
             bool alwaysAssertFormat = true,
-            JsonSchemaDocumentResolver? additionalDocumentResolver = null)
+            JsonSchemaDocumentResolver? additionalDocumentResolver = null,
+            JsonSchemaCodeGeneration codeGeneration = JsonSchemaCodeGeneration.Disabled)
         {
             this.AdditionalSchemaFiles = additionalSchemaFiles;
             this.AllowFileSystemAndHttpResolution = allowFileSystemAndHttpResolution;
             this.DefaultDialect = defaultDialect;
             this.AlwaysAssertFormat = alwaysAssertFormat;
             this.AdditionalDocumentResolver = additionalDocumentResolver;
+            this.CodeGeneration = codeGeneration;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Options"/> class.
+        /// </summary>
+        /// <param name="additionalSchemaFiles">Additional schema files to preload into the document resolver.</param>
+        /// <param name="allowFileSystemAndHttpResolution">If <see langword="true"/> then referenced documents may be retrieved from the file system and over HTTP.</param>
+        /// <param name="defaultDialect">The dialect applied to schemas that do not declare <c>$schema</c>.</param>
+        /// <param name="alwaysAssertFormat">If <see langword="true"/>, <c>format</c> will always be asserted, even for dialects that usually annotate.</param>
+        /// <param name="additionalDocumentResolver">An additional document resolver for in-memory schema resolution.</param>
+        /// <remarks>
+        /// The constructor as it was before the code generation setting, kept so that assemblies compiled against it
+        /// still bind. New code binds to the constructor that takes the setting.
+        /// </remarks>
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        public Options(
+            IReadOnlyList<AdditionalSchemaFile>? additionalSchemaFiles,
+            bool allowFileSystemAndHttpResolution,
+            JsonSchemaDialect defaultDialect,
+            bool alwaysAssertFormat,
+            JsonSchemaDocumentResolver? additionalDocumentResolver)
+            : this(additionalSchemaFiles, allowFileSystemAndHttpResolution, defaultDialect, alwaysAssertFormat, additionalDocumentResolver, JsonSchemaCodeGeneration.Disabled)
+        {
         }
 
         /// <summary>
@@ -404,6 +437,11 @@ public readonly struct JsonSchema
         /// Gets the additional document resolver for in-memory schema resolution.
         /// </summary>
         public JsonSchemaDocumentResolver? AdditionalDocumentResolver { get; }
+
+        /// <summary>
+        /// Gets a value that says whether, and when, the schema is compiled to IL at run time.
+        /// </summary>
+        public JsonSchemaCodeGeneration CodeGeneration { get; }
     }
 
     /// <summary>

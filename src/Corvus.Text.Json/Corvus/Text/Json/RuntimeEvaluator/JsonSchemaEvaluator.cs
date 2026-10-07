@@ -5,8 +5,15 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
+#if NET && !STJ
+using System.Threading;
+using System.Threading.Tasks;
+#endif
 #if !STJ
 using Corvus.Text.Json.Internal;
+#endif
+#if NET && !STJ
+using Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
 #endif
 using Corvus.Text.Json.RuntimeEvaluator.Compilation;
 #if !STJ
@@ -35,12 +42,22 @@ public sealed class JsonSchemaEvaluator : IDisposable
     // consistent set; rebuilt when the program's node array changes (an entry point added). Null Entry: the program
     // uses a dynamic scope, so every evaluation takes the general entry.
     private FlagModeEntry? flagModeEntry;
+#if NET && !STJ
+
+    // The schema's generated code once it is compiled and has an entry method, for Evaluate to read directly.
+    private CompiledEntry? compiledEntry;
+#endif
 
     private JsonSchemaEvaluator(CompiledSchema program, int rootNode)
     {
         this.program = program;
         this.rootNode = rootNode;
         program.AddReference();
+#if NET && !STJ
+        JsonSchemaCodeGeneration codeGeneration = CodeGenerationOverride ?? program.Options.CodeGeneration;
+        this.compilesAfterWarmUp = codeGeneration == JsonSchemaCodeGeneration.AfterWarmUp && SchemaLowering.IsSupported;
+        this.compilesEagerly = codeGeneration == JsonSchemaCodeGeneration.Eager && SchemaLowering.IsSupported;
+#endif
     }
 
     /// <summary>
@@ -158,7 +175,8 @@ public sealed class JsonSchemaEvaluator : IDisposable
     /// </summary>
     /// <param name="image">The image bytes.</param>
     /// <param name="options">The evaluation options; only the settings that apply at evaluation time
-    /// (<see cref="JsonSchemaEvaluatorOptions.MaxDepth"/>, regular-expression construction) are used, because the
+    /// (<see cref="JsonSchemaEvaluatorOptions.MaxDepth"/>, <see cref="JsonSchemaEvaluatorOptions.CodeGeneration"/>,
+    /// regular-expression construction) are used, because the
     /// schema was compiled when the image was created.</param>
     /// <returns>The evaluator.</returns>
     public static JsonSchemaEvaluator FromProgramImage(ReadOnlyMemory<byte> image, JsonSchemaEvaluatorOptions? options = null)
@@ -221,9 +239,24 @@ public sealed class JsonSchemaEvaluator : IDisposable
         where T : struct, IJsonElement<T>
     {
         IJsonDocument document = instance.ParentDocument;
+#if NET && !STJ
+
+        // A schema with generated code, first: one field and one comparison (that the program still has the node
+        // array the code was compiled from) before the call. The general path below reaches the same call through
+        // the flag-mode entry data, its checks and the tiering's.
+        if (resultsCollector is null && this.compiledEntry is CompiledEntry compiled && ReferenceEquals(compiled.SourceNodes, this.program.Nodes)
+            && document is JsonDocument compiledDocument)
+        {
+            unsafe
+            {
+                return ((delegate*<CompiledEntry, JsonDocument, IJsonDocument, int, bool>)compiled.EntryAddress)(compiled, compiledDocument, document, instance.ParentDocumentIndex);
+            }
+        }
+
+#endif
         if (resultsCollector is null && document is JsonDocument parsed && this.FlagMode() is { Entry: SchemaNode entry } fast)
         {
-            return Evaluator.EvaluateFlagRaw(this.program, fast.Nodes, entry, fast.EntryResource, fast.MaxDepth, parsed, document, this.rootNode, instance.ParentDocumentIndex);
+            return this.EvaluateFlag(fast, entry, parsed, document, instance.ParentDocumentIndex);
         }
 
         return Evaluator.Evaluate(this.program, this.rootNode, document, instance.ParentDocumentIndex, resultsCollector);
@@ -243,7 +276,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
     {
         if (resultsCollector is null && document is JsonDocument parsed && this.FlagMode() is { Entry: SchemaNode entry } fast)
         {
-            return Evaluator.EvaluateFlagRaw(this.program, fast.Nodes, entry, fast.EntryResource, fast.MaxDepth, parsed, document, this.rootNode, index);
+            return this.EvaluateFlag(fast, entry, parsed, document, index);
         }
 
         return Evaluator.Evaluate(this.program, this.rootNode, document, index, resultsCollector);
@@ -284,6 +317,110 @@ public sealed class JsonSchemaEvaluator : IDisposable
         this.program.Dispose();
     }
 
+#if !STJ
+    /// <summary>
+    /// Flag-mode evaluation of a parsed document: through the schema's generated code once it has been compiled,
+    /// otherwise through the interpreter, counting evaluations towards compiling it (runtime codegen, when enabled).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool EvaluateFlag(FlagModeEntry fast, SchemaNode entry, JsonDocument parsed, IJsonDocument document, int index)
+    {
+#if NET && !STJ
+        if (fast.Compiled is CompiledEntry compiled)
+        {
+            unsafe
+            {
+                return ((delegate*<CompiledEntry, JsonDocument, IJsonDocument, int, bool>)compiled.EntryAddress)(compiled, parsed, document, index);
+            }
+        }
+
+        if (this.compilesAfterWarmUp && !fast.Tiered && Interlocked.Increment(ref this.evaluations) == WarmUpEvaluations)
+        {
+            this.StartCompilingFlagMode(fast);
+        }
+#endif
+        return Evaluator.EvaluateFlagRaw(this.program, fast.Nodes, entry, fast.EntryResource, fast.MaxDepth, parsed, document, this.rootNode, index);
+    }
+
+#if NET && !STJ
+    // The evaluations that collect no results an evaluator makes before it compiles its schema, with
+    // JsonSchemaCodeGeneration.AfterWarmUp.
+    private const int WarmUpEvaluations = 1000;
+
+    // What the options ask for, where the runtime can compile code (see JsonSchemaCodeGeneration).
+    private readonly bool compilesAfterWarmUp;
+    private readonly bool compilesEagerly;
+
+    private int evaluations;
+
+    /// <summary>
+    /// Gets or sets a value every evaluator made afterwards takes in place of its options'
+    /// <see cref="JsonSchemaEvaluatorOptions.CodeGeneration"/>: for a test run that puts a whole suite of schemas
+    /// through generated code. <see langword="null"/> (the default) leaves the options to decide.
+    /// </summary>
+    internal static JsonSchemaCodeGeneration? CodeGenerationOverride { get; set; }
+
+    /// <summary>
+    /// Starts compiling the schema's generated code off the evaluating thread (it takes milliseconds), to be published
+    /// when done. On the thread pool: the evaluation that starts it pays for starting the pool when nothing has yet
+    /// (1.4 to 2.1 ms in a process that has just started, 0.3 to 0.4 ms once the pool is running), and the
+    /// evaluations after it are not slowed. A thread of its own costs 0.5 to 0.8 ms every time, and is a thread for
+    /// every evaluator that compiles. A method of its own, never inlined: the closure it makes captures its parameter, so the compiler
+    /// allocates it on entry, and in the evaluation's entry that was an allocation on every evaluation.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void StartCompilingFlagMode(FlagModeEntry fast)
+    {
+        Task.Run(() => this.CompileFlagMode(fast));
+    }
+
+    /// <summary>
+    /// Compiles the schema's generated code now, whatever the options say: for tests and measurements that compare
+    /// the two engines in one process.
+    /// </summary>
+    /// <returns>Whether the schema runs generated code (not where dynamic code is unsupported, nor for a schema with a dynamic scope).</returns>
+    internal bool CompileGeneratedCode()
+    {
+        if (!SchemaLowering.IsSupported || this.FlagMode() is not { Entry: not null } fast)
+        {
+            return false;
+        }
+
+        if (!fast.Tiered)
+        {
+            this.CompileFlagMode(fast);
+        }
+
+        return true;
+    }
+
+    /// <summary>Compiles the entry's generated code and publishes it, unless the entry data has been replaced meanwhile.</summary>
+    private FlagModeEntry CompileFlagMode(FlagModeEntry fast)
+    {
+        // Every caller has asked SchemaLowering.IsSupported already. Asked again here, of the runtime directly, so
+        // that the code below is seen to run only where code can be compiled.
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+        {
+            return fast;
+        }
+
+        // The entry data over the generated node array: its entry's method when the entry is specialised, and
+        // otherwise the interpreter from the entry, which reaches the generated methods beneath it.
+        NodeValidator? compiled = SchemaLowering.Compile(fast.SourceNodes, fast.Entry!, out SchemaNode[] generatedNodes, out _, out nint entryAddress);
+        var withCode = new FlagModeEntry(fast.SourceNodes, generatedNodes, generatedNodes[fast.Entry!.Id], fast.EntryResource, fast.MaxDepth, compiled is null ? null : new CompiledEntry(compiled, entryAddress, this.program, fast.SourceNodes, generatedNodes, fast.EntryResource, fast.MaxDepth, this.rootNode), tiered: true);
+        FlagModeEntry? current = Interlocked.CompareExchange(ref this.flagModeEntry, withCode, fast);
+        if (ReferenceEquals(current, fast))
+        {
+            // The public entry reads this first (see Evaluate).
+            this.compiledEntry = withCode.Compiled;
+            return withCode;
+        }
+
+        return current ?? withCode;
+    }
+#endif
+#endif
+
     /// <summary>
     /// The flag-mode entry data for the program's current node array: the cached object when it is still that
     /// array's, otherwise rebuilt (a rare event: an entry point added to the program).
@@ -293,25 +430,48 @@ public sealed class JsonSchemaEvaluator : IDisposable
     {
         FlagModeEntry? entry = this.flagModeEntry;
         SchemaNode[] nodes = this.program.Nodes;
-        return entry is not null && ReferenceEquals(entry.Nodes, nodes) ? entry : this.RebuildFlagMode(nodes);
+        return entry is not null && ReferenceEquals(entry.SourceNodes, nodes) ? entry : this.RebuildFlagMode(nodes);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private FlagModeEntry RebuildFlagMode(SchemaNode[] nodes)
     {
         SchemaNode root = nodes[this.rootNode];
-        var entry = new FlagModeEntry(nodes, this.program.UsesDynamicScope ? null : nodes[root.FlagEntry], root.ResourceId, this.program.Options.MaxDepth);
+        var entry = new FlagModeEntry(nodes, nodes, this.program.UsesDynamicScope ? null : nodes[root.FlagEntry], root.ResourceId, this.program.Options.MaxDepth);
         this.flagModeEntry = entry;
+#if NET && !STJ
+        if (this.compilesEagerly && entry.Entry is not null)
+        {
+            // JsonSchemaCodeGeneration.Eager: compiled here, before the first evaluation.
+            return this.CompileFlagMode(entry);
+        }
+#endif
         return entry;
     }
 
     /// <summary>The entry data of flag-mode evaluation for one node array (see <see cref="FlagMode"/>).</summary>
-    private sealed class FlagModeEntry(SchemaNode[] nodes, SchemaNode? entry, int entryResource, int maxDepth)
+#if NET && !STJ
+    private sealed class FlagModeEntry(SchemaNode[] sourceNodes, SchemaNode[] nodes, SchemaNode? entry, int entryResource, int maxDepth, CompiledEntry? compiled = null, bool tiered = false)
+#else
+    private sealed class FlagModeEntry(SchemaNode[] sourceNodes, SchemaNode[] nodes, SchemaNode? entry, int entryResource, int maxDepth)
+#endif
     {
+        /// <summary>The program's node array this entry data was made for.</summary>
+        public readonly SchemaNode[] SourceNodes = sourceNodes;
+
+        /// <summary>The node array to evaluate with: the program's, or its copy carrying generated methods.</summary>
         public readonly SchemaNode[] Nodes = nodes;
         public readonly SchemaNode? Entry = entry;
         public readonly int EntryResource = entryResource;
         public readonly int MaxDepth = maxDepth;
+#if NET && !STJ
+
+        /// <summary>The entry's generated code, once runtime codegen has compiled the schema and its entry is specialised.</summary>
+        public readonly CompiledEntry? Compiled = compiled;
+
+        /// <summary>Whether runtime codegen has compiled the schema.</summary>
+        public readonly bool Tiered = tiered;
+#endif
     }
 
     private static JsonSchemaEvaluatorOptions Clone(JsonSchemaEvaluatorOptions source)
@@ -330,6 +490,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
             FallbackDocumentResolver = source.FallbackDocumentResolver,
             BaseUri = source.BaseUri,
             MaxDepth = source.MaxDepth,
+            CodeGeneration = source.CodeGeneration,
             EntryPoint = source.EntryPoint,
         };
     }

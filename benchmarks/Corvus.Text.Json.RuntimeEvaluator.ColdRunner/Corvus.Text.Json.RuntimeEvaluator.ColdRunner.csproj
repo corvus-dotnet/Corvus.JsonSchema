@@ -2,7 +2,8 @@
 
   <!-- The cold run (ColdRun.cs) and the warm per-evaluation measurement (BlazeBasis.cs) of a corpus, publishable as
        native AOT or ReadyToRun for a like-for-like comparison with the Blaze CLI:
-       dotnet publish -c Release -r linux-x64 -p:ColdAot=true. `warm <loops> <corpus...>` or `<corpus> [image]`. -->
+       dotnet publish -c Release -r linux-x64 -p:ColdAot=true. `warm <loops> <corpus...>`, `<corpus> [image]`, or
+       `protocol <corpus>` (the jsonschema-benchmark protocol, for comparison with the other engines' harnesses). -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
@@ -25,6 +26,7 @@
     <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/SourceMetaCase.cs" Link="SourceMetaCase.cs" />
     <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/BlazeBasis.cs" Link="BlazeBasis.cs" />
     <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/ParseCost.cs" Link="ParseCost.cs" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/ProtocolRun.cs" Link="ProtocolRun.cs" />
   </ItemGroup>
 
   <!-- With -p:ColdGenerated=true the runner also carries the checked-in generated models of every corpus, so the

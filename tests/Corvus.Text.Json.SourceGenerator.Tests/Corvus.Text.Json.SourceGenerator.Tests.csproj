@@ -24,14 +24,14 @@
   <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
     <None Include="..\..\src\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.GeneratedCode.editorconfig" Link="Corvus.Text.Json.SourceGenerator.GeneratedCode.editorconfig" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
-  <!-- The generator project hands its private System.Text.Json 8 (netstandard2.0) assembly to every project that
-       references it (GetDependencyTargetPaths), so that analyzer hosts can load it next to the generator. This
-       project runs on net10.0, where the framework's System.Text.Json 10 is the assembly that loads, so the
-       generator's copy is dropped before reference resolution. Keeping both made ResolveAssemblyReference see two
-       primary System.Text.Json references of different versions (MSB3243). -->
+  <!-- The generator project hands its private System.Text.Json 8 and System.Text.Encodings.Web 8 (netstandard2.0)
+       assemblies to every project that references it (GetDependencyTargetPaths), so that analyzer hosts can load them
+       next to the generator. This project runs on net10.0, where the framework's version 10 assemblies are the ones
+       that load, so the generator's copies are dropped before reference resolution. Keeping them made
+       ResolveAssemblyReference see two primary references of different versions to each (MSB3243). -->
   <Target Name="RemoveGeneratorPrivateSystemTextJson" AfterTargets="ResolveProjectReferences">
     <ItemGroup>
-      <_ResolvedProjectReferencePaths Remove="@(_ResolvedProjectReferencePaths)" Condition="'%(Filename)' == 'System.Text.Json'" />
+      <_ResolvedProjectReferencePaths Remove="@(_ResolvedProjectReferencePaths)" Condition="'%(Filename)' == 'System.Text.Json' or '%(Filename)' == 'System.Text.Encodings.Web'" />
     </ItemGroup>
   </Target>
   <!-- On net481 produce an empty assembly. -->

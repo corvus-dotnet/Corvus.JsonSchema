@@ -69,6 +69,16 @@ internal static partial class Evaluator
     }
 
     /// <summary>
+    /// The document's rows and text: from the block the document keeps them in together when it has one (a parsed
+    /// document of any element type), with no test of the document's type, and otherwise by asking the document.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool RawSpans(JsonDocument parsed, out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8)
+    {
+        return parsed.TryGetRawSpansDirect(out rows, out utf8);
+    }
+
+    /// <summary>
     /// Flag mode over a parsed document without a dynamic scope, from the entry data the caller holds: the node the
     /// evaluation enters (the root's flag entry), its resource and the depth limit. The document writes its spans
     /// straight into the state; a document without local rows takes the general entry.
@@ -77,7 +87,7 @@ internal static partial class Evaluator
     {
         // Every field written once, in place: an object initializer builds a zeroed temporary and copies it over.
         EvaluationState state;
-        if (!parsed.TryGetRawSpans(out state.RawUtf8Memory, out state.RawRows, out state.RawUtf8))
+        if (!RawSpans(parsed, out state.RawRows, out state.RawUtf8))
         {
             return EvaluateGeneral(program, rootNode, document, index, null);
         }
@@ -94,6 +104,48 @@ internal static partial class Evaluator
         state.EntryResource = entryResource;
         return EvalChildFast<RawAccess>(entry, document, index, ref state);
     }
+
+#if NET
+    /// <summary>Flag-mode evaluation through a schema's generated code, with the same state as <see cref="EvaluateFlagRaw"/>.</summary>
+    internal static bool EvaluateFlagCompiled(CodeGeneration.NodeValidator compiled, CompiledSchema program, SchemaNode[] nodes, int entryResource, int maxDepth, JsonDocument parsed, IJsonDocument document, int rootNode, int index)
+    {
+        unsafe
+        {
+            return EvaluateFlagCompiled((delegate*<ref EvaluationState, IJsonDocument, int, bool>)compiled.Method.MethodHandle.GetFunctionPointer(), program, nodes, entryResource, maxDepth, parsed, document, rootNode, index);
+        }
+    }
+
+    /// <summary>
+    /// Flag-mode evaluation through a schema's generated code, called by its address: a delegate to a static method
+    /// goes through a thunk that shifts the arguments, on every document.
+    /// </summary>
+    internal static unsafe bool EvaluateFlagCompiled(delegate*<ref EvaluationState, IJsonDocument, int, bool> compiled, CompiledSchema program, SchemaNode[] nodes, int entryResource, int maxDepth, JsonDocument parsed, IJsonDocument document, int rootNode, int index)
+    {
+        EvaluationState state;
+        if (!RawSpans(parsed, out state.RawRows, out state.RawUtf8))
+        {
+            return EvaluateGeneral(program, rootNode, document, index, null);
+        }
+
+        state.Program = program;
+        state.Nodes = nodes;
+        state.Collector = null;
+        state.Scope = default;
+        state.ScopeDepth = 0;
+        state.RentedScope = null;
+        state.Depth = 0;
+        state.MaxDepth = maxDepth;
+        state.UsesDynamicScope = false;
+        state.EntryResource = entryResource;
+        return compiled(ref state, document, index);
+    }
+
+    /// <summary>The interpreter's flag-mode evaluation of one node, for generated code that does not specialise it.</summary>
+    internal static bool EvalNodeFast(int nodeId, IJsonDocument doc, int index, ref EvaluationState state)
+    {
+        return EvalChildFast<RawAccess>(state.Nodes[nodeId], doc, index, ref state);
+    }
+#endif
 
     // Not inlined: its scope buffer would otherwise sit in the flag-mode entry's frame and be zeroed on every call.
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -114,7 +166,7 @@ internal static partial class Evaluator
         };
 
         SchemaNode root = nodes[rootNode];
-        bool raw = document is JsonDocument jsonDocument && jsonDocument.TryGetRawSpans(out state.RawUtf8Memory, out state.RawRows, out state.RawUtf8);
+        bool raw = document is JsonDocument jsonDocument && jsonDocument.TryGetRawSpans(out state.RawRows, out state.RawUtf8);
 
         // A root that is nothing but a $ref reports against its target, as a generated model rooted at a reduced
         // type does; the root context carries the target's schema location. Flag mode starts there too.
@@ -195,6 +247,20 @@ internal static partial class Evaluator
         JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, index);
 
         bool result;
+#if NET
+        if (node.Plan == NodePlan.Generated && !default(TMode).Collecting && evaluated.IsEmpty && typeof(TAccess) == typeof(RawAccess))
+        {
+            // A node runtime codegen has compiled (the child dispatch's default case arrives here).
+            result = node.Generated!(ref state, doc, index);
+            if (pushedScope)
+            {
+                state.ScopeDepth--;
+            }
+
+            return result;
+        }
+
+#endif
         if (!default(TMode).Collecting && evaluated.IsEmpty && node.Plan == NodePlan.FusedObject && tokenType == JsonTokenType.StartObject)
         {
             result = EvalFusedObject<TAccess>(node, doc, index, ref state);
@@ -1255,13 +1321,87 @@ internal static partial class Evaluator
 
         if (entry.Child < 0)
         {
-            return true;
+            return !entry.LengthBounded || LengthLeafMatches<TAccess>(in entry, valueType, ref state, doc, valueIndex);
+        }
+
+        int bit = 1 << (int)valueType;
+        if ((entry.ChildDecided & bit) != 0)
+        {
+            return (entry.ChildAccepts & bit) != 0;
         }
 
         SchemaNode child = state.Nodes[entry.Child];
         return entry.NestedObject && valueType == JsonTokenType.StartObject
             ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
             : EvalChildFast<TAccess>(child, doc, valueIndex, ref state);
+    }
+
+    /// <summary>
+    /// A value against a string-length leaf entry: its type, then a string's length. Out of line: inlined, it grows the
+    /// object loops past the size at which native AOT inlines the strict object plan into the evaluator's entry, which
+    /// costs every document more than the call costs the length leaves.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static bool LengthLeafMatches<TAccess>(in StrictEntry entry, JsonTokenType valueType, ref EvaluationState state, IJsonDocument doc, int valueIndex)
+        where TAccess : struct, IDocumentAccess
+    {
+        int bits = entry.LengthTokenBits;
+        if (bits != 0 && ((bits & (1 << (int)valueType)) == 0 || (entry.LengthIntegerOnly && valueType == JsonTokenType.Number && !IsInteger<TAccess>(ref state, doc, valueIndex, entry.Lexical))))
+        {
+            return false;
+        }
+
+        return valueType != JsonTokenType.String || StringLengthWithin<TAccess>(in entry, ref state, doc, valueIndex);
+    }
+
+    /// <summary>
+    /// Whether a string value is within a length-leaf entry's bounds. A rune is one to four bytes, so an unescaped
+    /// value's byte length decides most values without counting; escaped values are unescaped first, out of line.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool StringLengthWithin<TAccess>(in StrictEntry entry, ref EvaluationState state, IJsonDocument doc, int index)
+        where TAccess : struct, IDocumentAccess
+    {
+        ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index, out bool escaped);
+        if (escaped)
+        {
+            return EscapedStringLengthWithin<TAccess>(entry.MinLength, entry.MaxLength, ref state, doc, index);
+        }
+
+        int bytes = raw.Length;
+        if ((entry.MaxLength < 0 || bytes <= entry.MaxLength) && (entry.MinLength < 0 || ((bytes + 3) >> 2) >= entry.MinLength))
+        {
+            return true;
+        }
+
+        // An unescaped string the parser found all ASCII has one character to a byte: its length is exact.
+        if (default(TAccess).IsAsciiText(ref state, doc, index))
+        {
+            return (entry.MaxLength < 0 || bytes <= entry.MaxLength) && (entry.MinLength < 0 || bytes >= entry.MinLength);
+        }
+
+        return LengthWithin(raw, entry.MinLength, entry.MaxLength);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static bool EscapedStringLengthWithin<TAccess>(int minLength, int maxLength, ref EvaluationState state, IJsonDocument doc, int index)
+        where TAccess : struct, IDocumentAccess
+    {
+        using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
+        return LengthWithin(s.Span, minLength, maxLength);
+    }
+
+    /// <summary>Whether a string's length in runes is within the bounds (-1 for an absent bound).</summary>
+    private static bool LengthWithin(ReadOnlySpan<byte> value, int minLength, int maxLength)
+    {
+        int bytes = value.Length;
+        if ((minLength >= 0 && bytes < minLength) || (maxLength >= 0 && ((bytes + 3) >> 2) > maxLength))
+        {
+            return false;
+        }
+
+        int runes = JsonElementHelpers.CountRunes(value);
+        return (minLength < 0 || runes >= minLength) && (maxLength < 0 || runes <= maxLength);
     }
 
     /// <summary>The name lookup for an escaped property name, out of line: escapes are rare and the loop is register-bound.</summary>
@@ -1803,13 +1943,29 @@ internal static partial class Evaluator
             }
             else if (entry.Child >= 0)
             {
-                SchemaNode child = state.Nodes[entry.Child];
-                if (!(entry.NestedObject && valueType == JsonTokenType.StartObject
-                    ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
-                    : EvalChildFast<TAccess>(child, doc, valueIndex, ref state)))
+                int bit = 1 << (int)valueType;
+                if ((entry.ChildDecided & bit) != 0)
                 {
-                    return false;
+                    // The child's type alone decides this kind of value.
+                    if ((entry.ChildAccepts & bit) == 0)
+                    {
+                        return false;
+                    }
                 }
+                else
+                {
+                    SchemaNode child = state.Nodes[entry.Child];
+                    if (!(entry.NestedObject && valueType == JsonTokenType.StartObject
+                        ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
+                        : EvalChildFast<TAccess>(child, doc, valueIndex, ref state)))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else if (entry.LengthBounded && !LengthLeafMatches<TAccess>(in entry, valueType, ref state, doc, valueIndex))
+            {
+                return false;
             }
 
             valueIndex = next + RowSize;
@@ -1987,13 +2143,29 @@ internal static partial class Evaluator
             }
             else if (entry.Child >= 0)
             {
-                SchemaNode child = state.Nodes[entry.Child];
-                if (!(entry.NestedObject && valueType == JsonTokenType.StartObject
-                    ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
-                    : EvalChildFast<TAccess>(child, doc, valueIndex, ref state)))
+                int bit = 1 << (int)valueType;
+                if ((entry.ChildDecided & bit) != 0)
                 {
-                    return false;
+                    // The child's type alone decides this kind of value.
+                    if ((entry.ChildAccepts & bit) == 0)
+                    {
+                        return false;
+                    }
                 }
+                else
+                {
+                    SchemaNode child = state.Nodes[entry.Child];
+                    if (!(entry.NestedObject && valueType == JsonTokenType.StartObject
+                        ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
+                        : EvalChildFast<TAccess>(child, doc, valueIndex, ref state)))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else if (entry.LengthBounded && !LengthLeafMatches<TAccess>(in entry, valueType, ref state, doc, valueIndex))
+            {
+                return false;
             }
 
             matched = true;
@@ -2124,9 +2296,25 @@ internal static partial class Evaluator
         else
         {
             bool nested = node.ItemsNestedObject;
+            int decided = node.ItemsDecided;
+            int accepts = node.ItemsAccepts;
             for (int valueIndex = index + RowSize; valueIndex < end;)
             {
                 JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
+                int bit = 1 << (int)valueType;
+                if ((decided & bit) != 0)
+                {
+                    // The items schema's type alone decides this kind of item.
+                    if ((accepts & bit) == 0)
+                    {
+                        ok = false;
+                        break;
+                    }
+
+                    valueIndex = next;
+                    continue;
+                }
+
                 if (!(nested && valueType == JsonTokenType.StartObject
                     ? EvalStrictObjectNested<TAccess>(items!, doc, valueIndex, ref state)
                     : EvalChildFast<TAccess>(items!, doc, valueIndex, ref state)))
@@ -2272,11 +2460,62 @@ internal static partial class Evaluator
         return true;
     }
 
+    /// <summary>
+    /// The value of a number's text when it is a plain integer literal of at most 18 digits (an optional minus sign and
+    /// digits: no fraction, no exponent), in one pass over the text. Most numbers in documents are, and the pass both
+    /// says so and gives the value, where a search for a fraction or exponent followed by a parse reads the text twice.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool TryPlainLong(ReadOnlySpan<byte> raw, out long value)
+    {
+        value = 0;
+        int length = raw.Length;
+        if ((uint)(length - 1) >= 18)
+        {
+            return false;
+        }
+
+        ref byte start = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(raw);
+        int i = 0;
+        bool negative = start == (byte)'-';
+        if (negative)
+        {
+            if (length == 1)
+            {
+                return false;
+            }
+
+            i = 1;
+        }
+
+        long magnitude = 0;
+        for (; i < length; i++)
+        {
+            uint digit = (uint)(Unsafe.Add(ref start, i) - (byte)'0');
+            if (digit > 9)
+            {
+                return false;
+            }
+
+            magnitude = (magnitude * 10) + digit;
+        }
+
+        value = negative ? -magnitude : magnitude;
+        return true;
+    }
+
     private static bool IsInteger<TAccess>(ref EvaluationState state, IJsonDocument doc, int index, bool lexicalInteger)
         where TAccess : struct, IDocumentAccess
     {
+        // The parser recorded whether the text has a fraction or an exponent; a row that does not say is scanned.
+        int shape = default(TAccess).NumberShape(ref state, doc, index);
+        if (shape == 1)
+        {
+            return true;
+        }
+
         ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index);
-        if (raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0)
+        if (shape == 0 && (TryPlainLong(raw, out _) || raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0))
         {
             return true;
         }
@@ -2464,8 +2703,7 @@ internal static partial class Evaluator
         ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index);
 
         // Plain integer literal against plain integer bounds: compare as longs (exact) without normalising.
-        if (!default(TMode).Collecting && !DisableIntegerFastPath && node.MultipleOf is null && raw.Length <= 18 && raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0
-            && System.Buffers.Text.Utf8Parser.TryParse(raw, out long value, out int consumed) && consumed == raw.Length)
+        if (!default(TMode).Collecting && !DisableIntegerFastPath && TryPlainLong(raw, out long value))
         {
             if (node.Minimum is NumberValue lmin)
             {
@@ -2525,6 +2763,16 @@ internal static partial class Evaluator
                 {
                     goto Slow;
                 }
+            }
+
+            if (node.MultipleOf is DivisorValue lmul)
+            {
+                if (lmul.AsLong is long d)
+                {
+                    return value % d == 0;
+                }
+
+                goto Slow;
             }
 
             return true;
@@ -2642,14 +2890,15 @@ internal static partial class Evaluator
         // Escapes are rare: the raw text is the value, with no wrapper to dispose.
         if (!default(TAccess).IsEscaped(ref state, doc, index))
         {
-            return EvalStringCore<TMode, TAccess>(node, default(TAccess).RawValue(ref state, doc, index), ref state);
+            // An unescaped string the parser found all ASCII has one character to a byte: its length needs no count.
+            return EvalStringCore<TMode, TAccess>(node, default(TAccess).RawValue(ref state, doc, index), default(TAccess).IsAsciiText(ref state, doc, index), ref state);
         }
 
         using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
-        return EvalStringCore<TMode, TAccess>(node, s.Span, ref state);
+        return EvalStringCore<TMode, TAccess>(node, s.Span, false, ref state);
     }
 
-    private static bool EvalStringCore<TMode, TAccess>(SchemaNode node, scoped ReadOnlySpan<byte> value, ref EvaluationState state)
+    private static bool EvalStringCore<TMode, TAccess>(SchemaNode node, scoped ReadOnlySpan<byte> value, bool ascii, ref EvaluationState state)
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
@@ -2660,7 +2909,7 @@ internal static partial class Evaluator
             // A rune is one to four bytes, so the byte length bounds the rune count both ways; only values inside
             // the band are counted.
             int byteLength = value.Length;
-            int runeCount = -1;
+            int runeCount = ascii ? byteLength : -1;
             if (node.MinLength >= 0)
             {
                 bool m;
@@ -2674,7 +2923,11 @@ internal static partial class Evaluator
                 }
                 else
                 {
-                    runeCount = JsonElementHelpers.CountRunes(value);
+                    if (runeCount < 0)
+                    {
+                        runeCount = JsonElementHelpers.CountRunes(value);
+                    }
+
                     m = runeCount >= node.MinLength;
                 }
 
@@ -3284,6 +3537,11 @@ internal static partial class Evaluator
             }
         }
 
+        if (!default(TMode).Collecting && TryNameAgainstLeaf<TAccess>(target, ref state, doc, valueIndex, out bool decided))
+        {
+            return decided;
+        }
+
         using FixedStringJsonDocument<JsonElement> nameDoc = FixedStringJsonDocument<JsonElement>.Parse(doc.GetPropertyNameRaw(valueIndex, true), doc.ValueIsEscaped(valueIndex, true));
         if (!default(TMode).Collecting)
         {
@@ -3300,6 +3558,41 @@ internal static partial class Evaluator
         }
 
         return ok;
+    }
+
+    /// <summary>
+    /// Flag mode's test of a property's name against a <c>propertyNames</c> schema that only a type and string
+    /// keywords decide (a pattern, a length, a format): the name's text is tested where it lies, with no document made
+    /// of it. False when the schema has other keywords or the name is escaped; the caller then evaluates it as a document.
+    /// </summary>
+    private static bool TryNameAgainstLeaf<TAccess>(SchemaNode target, ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool result)
+        where TAccess : struct, IDocumentAccess
+    {
+        result = false;
+        if (!target.IsLeaf || target.HasConst || target.Enum is not null)
+        {
+            return false;
+        }
+
+        if (target.HasType && (target.Type & TypeMask.String) == 0)
+        {
+            return true;
+        }
+
+        if (!target.HasStringKeywords)
+        {
+            result = true;
+            return true;
+        }
+
+        ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
+        if (escaped)
+        {
+            return false;
+        }
+
+        result = EvalStringCore<FastMode, TAccess>(target, raw, false, ref state);
+        return true;
     }
 
     private static bool EvalUnevaluatedProperties<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
@@ -3461,6 +3754,11 @@ internal static partial class Evaluator
         int containsCount = 0;
         int itemIndex = 0;
 
+        // In flag mode, contains stops being evaluated once minContains is met, unless maxContains bounds the count or
+        // its matches are marked evaluated for a live evaluated set.
+        bool stopAtMinContains = !default(TMode).Collecting && node.MaxContains < 0 && (!node.ContainsMarksEvaluated || evaluated.IsEmpty);
+        bool containsSettled = stopAtMinContains && node.MinContains <= 0;
+
         try
         {
             int end = default(TAccess).EndIndex(ref state, doc, index);
@@ -3493,7 +3791,7 @@ internal static partial class Evaluator
                     }
                 }
 
-                if (hasContains)
+                if (hasContains && !containsSettled)
                 {
                     if (EvalContainsItem<TMode, TAccess>(node.Contains, doc, valueIndex, itemIndex, ref state, seq))
                     {
@@ -3501,6 +3799,25 @@ internal static partial class Evaluator
                         if (node.ContainsMarksEvaluated)
                         {
                             MarkEvaluated(evaluated, itemIndex);
+                        }
+
+                        if (!default(TMode).Collecting)
+                        {
+                            if (node.MaxContains >= 0 && containsCount > node.MaxContains)
+                            {
+                                // More matches than maxContains allows: no later item can undo that.
+                                return false;
+                            }
+
+                            if (stopAtMinContains && containsCount >= node.MinContains)
+                            {
+                                // minContains is met and nothing bounds the count above or needs the other matches.
+                                containsSettled = true;
+                                if (prefixItems is null && !hasItems && !unique)
+                                {
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
@@ -3876,6 +4193,11 @@ internal static partial class Evaluator
             {
                 any = EvalAnyOfSelected<TAccess>(anyOf, selected, doc, index, ref state, evaluated);
             }
+            else if (!default(TMode).Collecting && node.AnyOfByKind is int[]?[] anyByKind && anyByKind[(int)default(TAccess).TokenType(ref state, doc, index)] is int[] anyCandidates)
+            {
+                // Only the branches that can accept this kind of value can match.
+                any = EvalAnyOfSelected<TAccess>(anyOf, anyCandidates, doc, index, ref state, evaluated);
+            }
             else if (!default(TMode).Collecting && node.AnyOfTypeDispatch is int[] anyDispatch)
             {
                 // Only one branch accepts the instance's type; it marks straight into the parent's bits since in
@@ -3914,6 +4236,11 @@ internal static partial class Evaluator
             else if (!default(TMode).Collecting && node.OneOfDiscriminator is Discriminator oneDiscriminator && TrySelectBranches<TAccess>(oneDiscriminator, ref state, doc, index, out int[] selected))
             {
                 matched = EvalOneOfSelected<TAccess>(oneOf, selected, doc, index, ref state, evaluated);
+            }
+            else if (!default(TMode).Collecting && node.OneOfByKind is int[]?[] oneByKind && oneByKind[(int)default(TAccess).TokenType(ref state, doc, index)] is int[] oneCandidates)
+            {
+                // Only the branches that can accept this kind of value can match.
+                matched = EvalOneOfSelected<TAccess>(oneOf, oneCandidates, doc, index, ref state, evaluated);
             }
             else if (!default(TMode).Collecting && node.OneOfTypeDispatch is int[] oneDispatch)
             {
@@ -4081,6 +4408,14 @@ internal static partial class Evaluator
             return discriminator.AllRequire;
         }
 
+        selected = SelectBranchesByValue<TAccess>(discriminator, ref state, doc, valueIndex);
+        return true;
+    }
+
+    /// <summary>The branches a discriminator selects for the value of its property.</summary>
+    private static int[] SelectBranchesByValue<TAccess>(Discriminator discriminator, ref EvaluationState state, IJsonDocument doc, int valueIndex)
+        where TAccess : struct, IDocumentAccess
+    {
         JsonTokenType valueType = default(TAccess).TokenType(ref state, doc, valueIndex);
         switch (valueType)
         {
@@ -4088,43 +4423,31 @@ internal static partial class Evaluator
             {
                 if (!default(TAccess).IsEscaped(ref state, doc, valueIndex))
                 {
-                    selected = LookupDiscriminator(discriminator, Discriminator.StringTag, default(TAccess).RawValue(ref state, doc, valueIndex));
-                    return true;
+                    return LookupDiscriminator(discriminator, Discriminator.StringTag, default(TAccess).RawValue(ref state, doc, valueIndex));
                 }
 
                 using UnescapedUtf8JsonString value = StringValue<TAccess>(ref state, doc, valueIndex);
-                selected = LookupDiscriminator(discriminator, Discriminator.StringTag, value.Span);
-                return true;
+                return LookupDiscriminator(discriminator, Discriminator.StringTag, value.Span);
             }
 
             case JsonTokenType.True:
-                selected = LookupDiscriminator(discriminator, Discriminator.BooleanTag, "true"u8);
-                return true;
+                return LookupDiscriminator(discriminator, Discriminator.BooleanTag, "true"u8);
             case JsonTokenType.False:
-                selected = LookupDiscriminator(discriminator, Discriminator.BooleanTag, "false"u8);
-                return true;
+                return LookupDiscriminator(discriminator, Discriminator.BooleanTag, "false"u8);
             case JsonTokenType.Null:
-                selected = LookupDiscriminator(discriminator, Discriminator.NullTag, "null"u8);
-                return true;
+                return LookupDiscriminator(discriminator, Discriminator.NullTag, "null"u8);
             case JsonTokenType.Number:
             {
                 ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, valueIndex);
-                if (IsCanonicalInteger(raw))
-                {
-                    selected = LookupDiscriminator(discriminator, Discriminator.NumberTag, raw);
-                }
-                else
-                {
-                    // "3.0" may equal a keyed integer: no branch can be excluded.
-                    selected = discriminator.AllBranches;
-                }
 
-                return true;
+                // "3.0" may equal a keyed integer: no branch can be excluded.
+                return IsCanonicalInteger(raw)
+                    ? LookupDiscriminator(discriminator, Discriminator.NumberTag, raw)
+                    : discriminator.AllBranches;
             }
 
             default:
-                selected = discriminator.NonString;
-                return true;
+                return discriminator.NonString;
         }
     }
 

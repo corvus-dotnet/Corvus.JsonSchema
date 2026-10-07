@@ -351,6 +351,19 @@ public static partial class JsonSchemaEvaluation
             return false;
         }
 
+        // A rune is one to four bytes, so the byte length bounds the rune count both ways: only values inside that
+        // band are counted.
+        int bytes = value.Length;
+        if (bytes < min || ((bytes + 3) >> 2) > max)
+        {
+            return false;
+        }
+
+        if (bytes <= max && ((bytes + 3) >> 2) >= min)
+        {
+            return true;
+        }
+
         int runeCount = JsonElementHelpers.CountRunes(value);
         return runeCount >= min && runeCount <= max;
     }

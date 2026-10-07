@@ -199,6 +199,64 @@ replaced; the Validator is now a facade over this evaluator (see `docs/Validator
   `ref JsonSchemaContext` for reporting; the evaluator passes a scratch context. When merged into Corvus V5 the
   pure predicates (`MatchEmail(ReadOnlySpan<byte>)` etc.) should be made public instead.
 
+## Runtime code generation
+
+An evaluator can compile its schema to IL at run time, in place of interpreting it. Generated code gives the same
+results as the interpreter and is used by evaluations that collect no results (`Evaluate` without a results
+collector). An evaluation that collects results always uses the interpreter.
+
+It is off by default. `JsonSchemaEvaluatorOptions.CodeGeneration` turns it on for an evaluator.
+
+```csharp
+using Corvus.Text.Json;
+using Corvus.Text.Json.RuntimeEvaluator;
+
+var options = new JsonSchemaEvaluatorOptions
+{
+    CodeGeneration = JsonSchemaCodeGeneration.AfterWarmUp,
+};
+
+using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schemaUtf8, options);
+using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(instanceUtf8);
+bool valid = evaluator.Evaluate(document.RootElement);
+```
+
+| Value | Behaviour |
+|---|---|
+| `Disabled` | The default. The interpreter evaluates every instance. |
+| `AfterWarmUp` | The schema is compiled on a background thread once the evaluator has made 1,000 evaluations that collect no results. Later evaluations use the code when it is ready. No evaluation waits for it. |
+| `Eager` | The schema is compiled on the calling thread before the evaluator's first evaluation that collects no results, which waits for it. |
+
+### When it applies
+
+- Code is generated only by the .NET 9 and later builds of the library, and only where the runtime can compile code
+  at run time (`RuntimeFeature.IsDynamicCodeSupported`). On .NET Framework (the .NET Standard builds) and under
+  native AOT every value behaves as `Disabled`, with no error.
+- The Validator package has the same setting: the `codeGeneration` option of `JsonSchema.Options`
+  (see [Dynamic Schema Validation](Validator.md#runtime-code-generation)).
+- A schema that uses `$dynamicRef` or `$recursiveRef` with a live dynamic scope is not compiled.
+- The code is held in a collectible assembly and is released with the evaluator.
+
+### What it costs and what it gains
+
+Measured on the 37 Sourcemeta corpora (see [the measurements](RuntimeEvaluatorMeasurements.md) for the method):
+
+- **Warm evaluation.** Generated code takes about half the interpreter's time (0.51, geometric mean).
+- **Compiling.** Generating a schema's code takes about 20 ms at the median and up to 0.7 s for the largest schema
+  (ui5-manifest, 885 methods), nearly all of it the JIT compiling the methods. `Eager` pays that before the first
+  evaluation. `AfterWarmUp` pays it on another thread.
+- **Starting the compilation.** With `AfterWarmUp`, the evaluation that starts it (the 1,000th) pays for handing the
+  work to the thread pool: 1.4 to 2.1 ms in a process that has just started and has not yet used the pool, and 0.3
+  to 0.4 ms once the pool is running. The evaluations that follow are not slowed while the code is compiled. An
+  evaluator that makes fewer than 1,000 evaluations pays nothing.
+
+Choose `AfterWarmUp` for an evaluator that may be used a few times or many. Choose `Eager` for a long-lived
+evaluator whose first evaluations should already run at full speed. Leave it `Disabled` for an evaluator used a few
+times, where compiling would cost more than it saves.
+
+The techniques the generator uses, and what was measured and not kept, are recorded beside it in
+`src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator/CodeGeneration/OPTIMIZATIONS.md`.
+
 ## Pre-compilation
 
 Program images (`JsonSchemaEvaluator.ToProgramImage`/`FromProgramImage`) and the Stage 2 design and measurements are in

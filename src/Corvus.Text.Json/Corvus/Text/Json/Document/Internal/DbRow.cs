@@ -154,5 +154,69 @@ internal readonly struct DbRow
 
     internal bool IsSimpleValue => TokenType >= JsonTokenType.PropertyName;
 
+    /// <summary>
+    /// The shift of the bits of the location word that say what a local number row's text is. The location itself is
+    /// 28 bits and the sign bit marks a row from an external document, which leaves three bits. A row written without
+    /// them (by a builder, a mutation, or a copy that rebases the location) says nothing: readers then look at the text.
+    /// </summary>
+    internal const int NumberShapeShift = 28;
+
+    /// <summary>The number's text is an integer literal: it has no fraction and no exponent.</summary>
+    internal const uint NumberIntegerLiteral = 1U << NumberShapeShift;
+
+    /// <summary>The number's text has a fraction or an exponent.</summary>
+    internal const uint NumberFractionOrExponent = 2U << NumberShapeShift;
+
+    /// <summary>
+    /// For a string or property name row: no byte of its text is above 0x7F, so each byte is one character. Recorded
+    /// by the .NET builds of the library, whose string scan finds it. The .NET Standard builds leave it unset, which
+    /// is always allowed: a reader of the fact then looks at the text.
+    /// </summary>
+    internal const uint StringIsAscii = 1U << NumberShapeShift;
+
+    /// <summary>The bits of the location word that carry facts about the row's text.</summary>
+    internal const uint TextFactsMask = 0x7000_0000U;
+
+    /// <summary>Gets the facts recorded about the row's text (none for a row from an external document).</summary>
+    internal uint TextFacts => FromExternalDocument ? 0U : _locationAndFromExternalDocumentUnion & TextFactsMask;
+
+    /// <summary>Gets a number row's shape: 1 for an integer literal, 2 for a fraction or an exponent, 0 when not recorded.</summary>
+    internal int NumberShape => (int)(TextFacts >> NumberShapeShift) & 3;
+
+    /// <summary>Gets a value indicating whether a string or property name row is recorded as all ASCII.</summary>
+    internal bool IsAsciiText => (TextFacts & StringIsAscii) != 0;
+
+    /// <summary>
+    /// Creates a fully-specified local row that keeps the facts recorded about the source row's text: for copying a
+    /// parsed row into another database with its location rebased (the text is the same text).
+    /// </summary>
+    /// <param name="jsonTokenType">The <see cref="JsonTokenType"/>.</param>
+    /// <param name="location">The (rebased) location of the value in the UTF8 backing.</param>
+    /// <param name="sizeOrLength">The size or length of the entity.</param>
+    /// <param name="numberOfRows">The number of rows the entity occupies.</param>
+    /// <param name="hasComplexChildren">Whether the row carries the complex-children/escaped flag.</param>
+    /// <param name="textFacts">The source row's <see cref="TextFacts"/>.</param>
+    internal DbRow(JsonTokenType jsonTokenType, int location, int sizeOrLength, int numberOfRows, bool hasComplexChildren, uint textFacts)
+        : this(jsonTokenType, location, sizeOrLength, numberOfRows, hasComplexChildren)
+    {
+        Debug.Assert((textFacts & ~TextFactsMask) == 0);
+        _locationAndFromExternalDocumentUnion |= textFacts;
+    }
+
+    /// <summary>
+    /// Creates a local row for a number whose shape the parser recorded.
+    /// </summary>
+    /// <param name="location">The location of the number in the UTF8 backing.</param>
+    /// <param name="length">The length of its text.</param>
+    /// <param name="shape">1 for an integer literal, 2 for a number with a fraction or an exponent, 0 for unknown.</param>
+    internal DbRow(int location, int length, byte shape)
+    {
+        Debug.Assert(location >= 0 && location <= 0x0FFFFFFF, "The location must fit 28 bits");
+        Debug.Assert(shape <= 2);
+        _locationAndFromExternalDocumentUnion = (uint)location | ((uint)shape << NumberShapeShift);
+        _sizeLengthOrPropertyMapIndexUnion = length;
+        _numberOfRowsExternalDocumentIndexAndTypeUnion = unchecked((uint)JsonTokenType.Number << 28) | 1U;
+    }
+
     internal bool HasPropertyMap => _sizeLengthOrPropertyMapIndexUnion <= 0;
 }

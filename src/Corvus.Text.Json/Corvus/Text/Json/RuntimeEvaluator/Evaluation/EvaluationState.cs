@@ -41,6 +41,15 @@ internal interface IDocumentAccess
     /// <summary>Gets the token type of the element.</summary>
     JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index);
 
+    /// <summary>
+    /// Gets what the parser recorded of a number's text: 1 for an integer literal, 2 for a number with a fraction or
+    /// an exponent, 0 when the row does not say (the text is then looked at).
+    /// </summary>
+    int NumberShape(ref EvaluationState state, IJsonDocument doc, int index);
+
+    /// <summary>Gets a value indicating whether the row of a string says its text is all ASCII (each byte one character).</summary>
+    bool IsAsciiText(ref EvaluationState state, IJsonDocument doc, int index);
+
     /// <summary>Gets the property count of an object or the length of an array.</summary>
     int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType);
 
@@ -115,11 +124,15 @@ internal readonly struct RawAccess : IDocumentAccess
 {
     private const int RowSize = Evaluator.RowSize;
     private const int SizeOrLengthOffset = 4;
-    private const int NumberOfRowsOffset = 8;
-    private const int LocationMask = 0x0FFFFFFF;
-    private const uint NumberOfRowsMask = 0x0FFFFFFFU;
+    internal const int NumberOfRowsOffset = 8;
+    internal const int LocationMask = 0x0FFFFFFF;
+    internal const uint NumberOfRowsMask = 0x0FFFFFFFU;
 
     public JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index) => (JsonTokenType)(ReadUInt32(state.RawRows, index + NumberOfRowsOffset) >> 28);
+
+    public int NumberShape(ref EvaluationState state, IJsonDocument doc, int index) => (int)(ReadUInt32(state.RawRows, index) >> 28) & 3;
+
+    public bool IsAsciiText(ref EvaluationState state, IJsonDocument doc, int index) => (ReadUInt32(state.RawRows, index) & 0x9000_0000U) == 0x1000_0000U;
 
     public int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType) => ReadInt32(state.RawRows, index + SizeOrLengthOffset) & int.MaxValue;
 
@@ -136,7 +149,10 @@ internal readonly struct RawAccess : IDocumentAccess
         ReadOnlySpan<byte> rows = state.RawRows;
         int location = ReadInt32(rows, index) & LocationMask;
         int length = ReadInt32(rows, index + SizeOrLengthOffset) & int.MaxValue;
-        return state.RawUtf8Memory.Slice(location, length);
+
+        // The text as memory, from the document: only the values handed on as memory (unescaped strings) need it.
+        ((JsonDocument)doc).TryGetRawSpans(out ReadOnlyMemory<byte> utf8Memory, out _, out _);
+        return utf8Memory.Slice(location, length);
     }
 
     public bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => ReadInt32(state.RawRows, index + SizeOrLengthOffset) < 0;
@@ -297,6 +313,10 @@ internal readonly struct InterfaceAccess : IDocumentAccess
 {
     public JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetJsonTokenType(index);
 
+    public int NumberShape(ref EvaluationState state, IJsonDocument doc, int index) => 0;
+
+    public bool IsAsciiText(ref EvaluationState state, IJsonDocument doc, int index) => false;
+
     public int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType)
     {
         return tokenType == JsonTokenType.StartObject ? doc.GetPropertyCount(index) : doc.GetArrayLength(index);
@@ -373,9 +393,6 @@ internal ref struct EvaluationState
 
     /// <summary>The resource evaluation started in: the outermost dynamic scope on every path.</summary>
     public int EntryResource;
-
-    /// <summary>The UTF-8 text of the instance document as memory, when <see cref="RawAccess"/> is in use: for the values handed on as memory (unescaped strings).</summary>
-    public ReadOnlyMemory<byte> RawUtf8Memory;
 
     /// <summary>The metadata rows of the instance document, when <see cref="RawAccess"/> is in use.</summary>
     public ReadOnlySpan<byte> RawRows;
