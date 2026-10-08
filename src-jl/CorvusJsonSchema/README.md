@@ -19,7 +19,7 @@ evaluator (`Corvus.Text.Json.RuntimeEvaluator`) by way of its Go port (`src-go/c
 
 ## Install
 
-```
+```julia-repl
 pkg> add CorvusJsonSchema
 ```
 

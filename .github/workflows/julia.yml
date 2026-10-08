@@ -1,0 +1,131 @@
+name: julia
+# The Julia evaluator (src-jl/CorvusJsonSchema) with its Bowtie and benchmark harnesses. julia-publish.yml calls this
+# workflow before it asks for a version to be registered.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-jl/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - 'docs/JsonSchemaForJulia.md'
+    - '.github/workflows/julia.yml'
+    - '.github/workflows/julia-publish.yml'
+    - 'LICENSE'
+  pull_request:
+    paths:
+    - 'src-jl/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src/Corvus.Text.Json/metaschema/**'
+    - 'docs/JsonSchemaForJulia.md'
+    - '.github/workflows/julia.yml'
+    - '.github/workflows/julia-publish.yml'
+    - 'LICENSE'
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Every platform, with the long-term support release (the oldest Julia the package accepts, the julia entry of
+    # its Project.toml), each minor release after it, and the latest. Julia maintains only the long-term support
+    # release and the latest, but the package's compat entry admits the minors between them, and each Julia minor
+    # bundles a PCRE2 of its own, which the pattern engine is written against. The package takes no Unicode data from
+    # Julia or its PCRE2, so every one of them must give the same results. When a Julia minor version is released,
+    # add the one before it here. '1' moves to the new one at once, and 'lts' moves when Julia names a new one.
+    name: Build and test CorvusJsonSchema (Julia ${{ matrix.julia }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
+        julia: [lts, '1.11', '1.12', '1']
+    defaults:
+      run:
+        shell: bash
+        working-directory: src-jl/CorvusJsonSchema
+    env:
+      # Where the tests find the JSON-Schema-Test-Suite. (The pattern engine's tests read their own variable.) The
+      # metaschemas and the documentation page are found from the package's place in the repository.
+      JSON_SCHEMA_TEST_SUITE: ${{ github.workspace }}/JSON-Schema-Test-Suite
+      CORVUS_JSON_SCHEMA_TEST_SUITE: ${{ github.workspace }}/JSON-Schema-Test-Suite
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+          # Only what the package and its tests read (the repository's generated benchmark models have paths too
+          # long for Windows). The patterns are files and directories, so not in cone mode: the tests compare the
+          # embedded metaschemas with the .NET library's, run the samples of the documentation page, and compare
+          # the Unicode tables with the Java library's.
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /LICENSE
+            /src-jl/
+            /src/Corvus.Text.Json/metaschema/
+            /docs/JsonSchemaForJulia.md
+            /src-java/corvus-json-schema/src/main/java/io/github/corvusdotnet/jsonschema/EcmaUnicodeData.java
+            /JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Check the checkout has what the tests read
+        # A test that compares with a file of the repository skips itself when the file is not there, as it must
+        # for a package installed from the registry. Here the files have to be there.
+        working-directory: .
+        run: |
+          test -d JSON-Schema-Test-Suite/tests/draft2020-12
+          test -d JSON-Schema-Test-Suite/annotations/tests
+          test -f src/Corvus.Text.Json/metaschema/draft2020-12/schema.json
+          test -f docs/JsonSchemaForJulia.md
+          test -f src-java/corvus-json-schema/src/main/java/io/github/corvusdotnet/jsonschema/EcmaUnicodeData.java
+      - name: Julia
+        # No cache action: the package has no dependencies and precompiles in seconds, and the repository's Actions
+        # cache is needed by the .NET build, whose state does not fit when other caches crowd it.
+        uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+        with:
+          version: ${{ matrix.julia }}
+      - name: Check the package's LICENSE matches the repository's
+        # The General registry requires the license in the package's own directory.
+        run: cmp ../../LICENSE LICENSE
+      - name: Check the oldest Julia tested is the one Project.toml names
+        if: matrix.julia == 'lts'
+        run: |
+          compat=$(sed -n 's/^julia = "\(.*\)"$/\1/p' Project.toml)
+          running=$(julia --startup-file=no -e 'print(VERSION.major, ".", VERSION.minor)')
+          if [ "$compat" != "$running" ]; then
+            echo "::error::Project.toml accepts Julia $compat and later, and the oldest Julia tested is $running. Change the matrix."
+            exit 1
+          fi
+      - name: Test
+        # The whole JSON-Schema-Test-Suite, fail-fast and through collectors, the annotation suite, the allocation
+        # and type stability tests, the pattern engine against V8's answers, and the documentation samples
+        # (test/docs.jl). The tests run as a script, in a process started as a user's is: Pkg.test adds
+        # --check-bounds=yes on Julia 1.10 to 1.12 and not on 1.13, and julia-actions/julia-runtest adds it on
+        # every version and turns coverage on, and the allocation tests are of the code a user runs.
+        run: julia --startup-file=no --color=yes --project=. -t 4 test/runtests.jl
+      - name: Test as Pkg.test runs it
+        # What a user's Pkg.test("CorvusJsonSchema") does, on the oldest Julia and the latest.
+        if: matrix.os == 'ubuntu-latest' && (matrix.julia == 'lts' || matrix.julia == '1')
+        env:
+          JULIA_NUM_THREADS: 4
+        run: julia --startup-file=no --color=yes --project=. -e 'using Pkg; Pkg.test()'
+      - name: Bowtie harness
+        # Drives the harness over IHOP in its own process: the required suite and the annotation suite.
+        working-directory: src-jl/CorvusJsonSchemaBowtie
+        run: |
+          julia --startup-file=no --project=. -e 'using Pkg; Pkg.develop(path="../CorvusJsonSchema")'
+          julia --startup-file=no --color=yes --project=. -t 4 test/runtests.jl
+      - name: Benchmark harness
+        # The jsonschema-benchmark protocol program on a small corpus (four positive figures, and exit code 1 for
+        # an instance that is not valid), and the comparison in one process. The benchmark runs in Linux
+        # containers, and the comparison installs JSONSchema.jl, so this runs on Linux x64 only.
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: src-jl/CorvusJsonSchemaBench
+        run: |
+          julia --startup-file=no --project=. -e 'using Pkg; Pkg.develop([PackageSpec(path="../CorvusJsonSchema"), PackageSpec(path="jsonschema-benchmark")]); Pkg.instantiate()'
+          julia --startup-file=no --color=yes --project=. test/runtests.jl
