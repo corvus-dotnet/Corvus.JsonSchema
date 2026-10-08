@@ -7,8 +7,9 @@ inventories are the C# V5 runtime evaluator (`src/Corvus.Text.Json/Corvus/Text/J
 `eval/plan/fused.rs`) and the Java port (`src-java/corvus-json-schema/OPTIMIZATIONS.md`).
 
 Status is **done** (with where it is in the Go source), **partial** (with what is missing), **todo** (in the order
-they should be taken) or **n/a** with the reason. Nothing here is a measurement. The todo order is the order in which
-the techniques paid in the other ports, and each one has to be measured here before it is kept.
+they should be taken) or **n/a** with the reason. The todo order is the order in which the techniques paid in the
+other ports, and each one has to be measured here before it is kept. What was measured, kept or not, is under
+"Measured" and "Tried and not kept" at the end.
 
 Keep this file current. A technique added to any of the other evaluators should be checked off here, or ruled out
 with the reason.
@@ -202,3 +203,15 @@ with the reason.
 - **A vectorised search API** (`SearchValues` and `IndexOfAny` in C#). The standard library has no portable SIMD
   API. `bytes.IndexByte` and `bytes.Index` are vectorised in the runtime, and Todo 4 uses them.
 - **Release profile settings** (the Rust crate's `lto` and `codegen-units`). The Go compiler has no counterpart.
+
+## Measured
+
+Warm validation over the 37 jsonschema-benchmark corpora, 2026-10-08, Go 1.27.1, linux/amd64. Every figure is an A/B
+of two builds of the benchmark's protocol program, run alternately five times each, pinned to eight cores, comparing
+the median pass of the warm-up loop. The figure is the time of the change over the time before it, as a geometric
+mean over the corpora, with the range over the corpora. A build measured against itself gave 1.000, with corpora
+between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
+
+1. **The type test inlined** (`typeOK`, `integerOK`). The mask test was 124 on the inliner's scale, against a budget
+   of 80, so every type test was a call. The integer test, which few values reach, is now the call. 0.979 (0.724 to
+   1.034). The 0.724 is a map of strings (importmap).

@@ -213,14 +213,15 @@ func constMessage(v valueRef) string {
 	return ""
 }
 
-// typeOK reports whether a value is of one of the types in a mask. A kind is its type bit.
+// typeOK reports whether a value is of one of the types in a mask. A kind is its type bit. The mask test is small
+// enough to inline at every call site, and the integer test, which few values reach, is a call.
 func typeOK(mask uint8, d *Document, x int) bool {
-	bit := d.kind(x)
-	if mask&bit != 0 {
-		return true
-	}
-	// A number that is not accepted as a number may still be an integer.
-	return bit == kindNumber && mask&typeInteger != 0 && isIntegerNumber(d.flags(x), d.data(x))
+	return mask&d.kind(x) != 0 || integerOK(mask, d, x)
+}
+
+// integerOK reports a number that the mask does not accept as a number but accepts as an integer.
+func integerOK(mask uint8, d *Document, x int) bool {
+	return d.kind(x) == kindNumber && mask&typeInteger != 0 && isIntegerNumber(d.flags(x), d.data(x))
 }
 
 // codePoints is the length of a string value in code points (what minLength and maxLength count).
