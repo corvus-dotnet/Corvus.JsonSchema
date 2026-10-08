@@ -114,7 +114,8 @@ classtext(set::E.CodeSet) = sprint(E.writeset, set)
         if !isfile(java)
             @info "EcmaUnicodeData.java is not there, so the data is not compared with it."
         else
-            source = read(java, String)
+            # A checkout on Windows has the file with CRLF line endings.
+            source = replace(read(java, String), "\r\n" => "\n")
             # A string constant of the Java file, whose pieces are joined by +.
             function constant(name::String)
                 m = match(Regex("String $name =\\s*((?:\\+?\\s*\"[^\"]*\"\\s*)+);"), source)
