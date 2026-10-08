@@ -793,12 +793,9 @@ function run_fused_pass(e::Evaluator, f::FusedObject, x::Int, pass::FusedPass)::
     for ordinal in 0:n-1
         k = first_child + 2 * ordinal
         name = str(d, k)
-        w = name_word(name)
-        index = hint
-        if name_at(ns, hint, name.len, w) && (name.len <= 8 || name_rest(ns, hint, name))
-            hint += 1
-        else
-            index, hint = find_after(ns, name, w, hint)
+        index = find_next(ns, name, hint)
+        if index >= 0
+            hint = index + 1
         end
         outcome = index >= 0 ? fused_entry(e, f, index, k + 1, pass) :
                   fused_unknown(e, f, name, str_ascii(d, k), k + 1, pass)

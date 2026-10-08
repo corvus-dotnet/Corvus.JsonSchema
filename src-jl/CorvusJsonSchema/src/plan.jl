@@ -873,7 +873,7 @@ function visit_lookup(e::Evaluator, pl::ObjectPlan, first_child::Int, n::Int)::T
             hcount(tape[at_word+1]) == len || continue
             k = first_child + 2j
             name = str(d, k)
-            (name_word(name) != key.word || (len > 8 && !bytes_equal(name, ns.bytes[i]))) && continue
+            (name_word(name) != key.word || (len > 8 && !name_rest(ns, i - 1, name))) && continue
             seen |= UInt64(1) << (i - 1)
             c = pl.children[i]
             if (c.pass & (tape[at_word+3] % UInt8)) == 0 && !enter_child(e, c, k + 1)
@@ -940,15 +940,9 @@ function visit_names(e::Evaluator, pl::ObjectPlan, first_child::Int, n::Int)::Tu
     k = first_child
     stop = k + 2n
     while k < stop
-        name = str(d, k)
-        w = name_word(name)
-        i = hint
-        if name_at(ns, hint, name.len, w) && (name.len <= 8 || name_rest(ns, hint, name))
-            hint += 1
-        else
-            i, hint = find_after(ns, name, w, hint)
-        end
+        i = find_next(ns, str(d, k), hint)
         if i >= 0
+            hint = i + 1
             seen |= UInt64(1) << (i & 63)
             @run_child(e, d, children[i+1], k + 1) || return UInt64(0), false
         elseif pl.has_additional && !@run_child(e, d, pl.additional, k + 1)
@@ -986,14 +980,9 @@ function visit_general(e::Evaluator, pl::ObjectPlan, x::Int)::Tuple{UInt64,Bool}
     while k < stop
         name = str(d, k)
         matched = false
-        w = name_word(name)
-        i = hint
-        if name_at(ns, hint, name.len, w) && (name.len <= 8 || name_rest(ns, hint, name))
-            hint += 1
-        else
-            i, hint = find_after(ns, name, w, hint)
-        end
+        i = find_next(ns, name, hint)
         if i >= 0
+            hint = i + 1
             seen |= UInt64(1) << (i & 63)
             # A name only required (or a dependency) mentions is undeclared: patterns, else additionalProperties.
             if i < pl.declared

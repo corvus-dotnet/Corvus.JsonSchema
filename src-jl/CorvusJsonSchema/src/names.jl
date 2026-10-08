@@ -1,25 +1,16 @@
 # Property name lookup for the fail-fast plans. Ported from names.go. Name indexes are zero-based, and -1 is "not
 # found".
 
-# A word that tells names of one length apart cheaply. For a name of at most eight bytes it is unique among names of
-# the same length: the first and last four bytes (overlapping, so every byte is in one of them), or for shorter names
-# the first, middle and last byte. For a longer name it is the first eight bytes, so names with different words
-# differ, and names with the same word are compared in full.
-@inline function name_word(s::Bytes)
-    n = s.len
-    b, off = s.b, s.off
-    if n > 8
-        return le64(b, off)
-    elseif n >= 4
-        return le32(b, off) | le32(b, off + n - 4) << 32
-    elseif n > 0
-        return UInt64(b[off+1]) | UInt64(b[off+(n>>1)+1]) << 8 | UInt64(b[off+n]) << 16
-    end
-    return UInt64(0)
-end
+# The first eight bytes of a name as a little-endian word, zero padded for a shorter name. For a name of at most
+# eight bytes it is the name, so two names of one length with the same word are the same name. For a longer name,
+# names with different words differ, and names with the same word have their second word compared.
+@inline name_word(s::Bytes) = word_at(s.b, s.off, s.len)
 
-# What decides whether a name is a given one: its length, its word, and for a name longer than eight bytes its last
-# eight bytes. That is the whole name up to sixteen bytes, so only a longer name has its text compared.
+# Bytes 8 to 15 of a name longer than eight bytes, zero padded for a name shorter than sixteen.
+@inline second_word(s::Bytes) = second_word_at(s.b, s.off, s.len - 8)
+
+# What decides whether a name is a given one: its length, its word, and for a name longer than eight bytes its
+# second word. That is the whole name up to sixteen bytes, so only a longer name has its text compared.
 struct NameKey
     word::UInt64
     tail::UInt64
@@ -33,9 +24,6 @@ const NAME_HASH_MULTIPLIERS = 24
 const NAME_HASH_SHIFT = 64 - 18
 # More names than this are held in a map (the table has four to eight slots for each name).
 const MAX_TABLE_NAMES = 1 << 15
-
-# The last eight bytes of a name longer than eight bytes.
-@inline tail_word(s::Bytes) = le64(s.b, s.off + s.len - 8)
 
 @inline name_hash(mul::UInt64, word::UInt64, tail::UInt64, len::Int) =
     ((word ⊻ bitrotate(tail, 29)) + UInt64(len)) * mul
@@ -51,7 +39,9 @@ mutable struct Names
     # is not declared, which settles most misses without a search.
     const lengths::UInt64
     const names::Vector{String}
-    const bytes::Vector{Vector{UInt8}}
+    # Each name's bytes followed by eight zero bytes, so that any eight bytes that start inside a name can be read
+    # as one word.
+    const padded::Vector{Vector{UInt8}}
     const keys::Vector{NameKey}
     # The index + 1 of the name in each slot (0: empty). The length is a power of two.
     const table::Vector{UInt16}
@@ -59,13 +49,17 @@ mutable struct Names
     const mul::UInt64
     # A set too large for the table's indexes (which no schema in practice has) is a map instead.
     const is_large::Bool
+    # The longest name the table finds from its key alone: 16, or -1 for a set held in a map.
+    const short::Int
     const large::Dict{String,Int}
     # For a hint h (the index after the previous match), the name after that match in sorted order (entry 0: the
     # first name in sorted order). NO_NAME after the last.
     const sorted_next::Vector{UInt32}
 end
 
-@inline length_bit(len::Int) = UInt64(1) << min(len, 63)
+# The shift is masked so that it compiles to one instruction: Julia's shift by a count that may be negative or 64
+# and more is several.
+@inline length_bit(len::Int) = UInt64(1) << (min(len, 63) & 63)
 
 # Puts the names in a table under a hash, each in the first free slot from its own. It returns how many are not in
 # their own slot.
@@ -95,13 +89,17 @@ function fill_table!(table::Vector{UInt16}, names::Vector{String}, keys::Vector{
 end
 
 function Names(list::Vector{String})
-    bytes = [Vector{UInt8}(codeunits(n)) for n in list]
+    padded = Vector{Vector{UInt8}}(undef, length(list))
     keys = Vector{NameKey}(undef, length(list))
     lengths = UInt64(0)
-    for (i, b) in enumerate(bytes)
-        s = Bytes(b)
-        keys[i] = NameKey(name_word(s), s.len > 8 ? tail_word(s) : UInt64(0), s.len)
-        lengths |= length_bit(s.len)
+    for (i, n) in enumerate(list)
+        len = ncodeunits(n)
+        b = zeros(UInt8, len + 8)
+        copyto!(b, 1, codeunits(n), 1, len)
+        padded[i] = b
+        s = Bytes(b, 0, len)
+        keys[i] = NameKey(name_word(s), len > 8 ? second_word(s) : UInt64(0), len)
+        lengths |= length_bit(len)
     end
     order = sortperm(list; alg=MergeSort)
     sorted_next = fill(NO_NAME, length(list) + 1)
@@ -117,7 +115,7 @@ function Names(list::Vector{String})
         for i in length(list):-1:1
             large[list[i]] = i - 1
         end
-        return Names(lengths, list, bytes, keys, UInt16[], NAME_HASH_MULTIPLIER, true, large, sorted_next)
+        return Names(lengths, list, padded, keys, UInt16[], NAME_HASH_MULTIPLIER, true, -1, large, sorted_next)
     end
     size = 4
     while size < 4 * length(list)
@@ -146,28 +144,27 @@ function Names(list::Vector{String})
         fill!(table, 0)
         fill_table!(table, list, keys, best)
     end
-    return Names(lengths, list, bytes, keys, table, best, false, Dict{String,Int}(), sorted_next)
+    return Names(lengths, list, padded, keys, table, best, false, 16, Dict{String,Int}(), sorted_next)
 end
 
 Base.length(ns::Names) = length(ns.names)
 
-# Reports whether a name longer than sixteen bytes is the given text of the same length, when their first and last
-# eight bytes are known to be equal: only the bytes between them are compared, a word at a time, the last word
-# overlapping the one before it.
-function middle_equal(name::Bytes, text::Vector{UInt8})
-    x, p = name.b, name.off
-    stop = name.len - 8
-    i = 8
-    while i + 8 <= stop
-        le64(x, p + i) == le64(text, i) || return false
+# Reports whether a name longer than sixteen bytes is the given name of the same length, when their first sixteen
+# bytes are known to be equal: the bytes after them are compared a word at a time, the last word zero padded on
+# both sides.
+function rest_equal(name::Bytes, padded::Vector{UInt8})
+    b, off, n = name.b, name.off, name.len
+    i = 16
+    while i < n
+        word_at(b, off + i, n - i) == le64(padded, i) || return false
         i += 8
     end
-    return i >= stop || le64(x, p + stop - 8) == le64(text, stop - 8)
+    return true
 end
 
 # Reports whether name i is the given name, which is longer than eight bytes, when their lengths and words are equal.
 @inline function name_rest(ns::Names, i::Int, name::Bytes)
-    return tail_word(name) == ns.keys[i+1].tail && (name.len <= 16 || middle_equal(name, ns.bytes[i+1]))
+    return second_word(name) == ns.keys[i+1].tail && (name.len <= 16 || rest_equal(name, ns.padded[i+1]))
 end
 
 # Reports whether name i is the given name, whose word is w.
@@ -181,7 +178,7 @@ end
     if ns.is_large
         return get(ns.large, String(name), -1)
     end
-    tail = name.len > 8 ? tail_word(name) : UInt64(0)
+    tail = name.len > 8 ? second_word(name) : UInt64(0)
     table, keys = ns.table, ns.keys
     mask = UInt64(length(table) - 1)
     slot = name_hash(ns.mul, w, tail, name.len) >> NAME_HASH_SHIFT
@@ -189,7 +186,7 @@ end
         i = table[(slot&mask)+1]
         i == 0 && return -1
         k = keys[i]
-        if k.word == w && k.tail == tail && k.length == name.len && (name.len <= 16 || middle_equal(name, ns.bytes[i]))
+        if k.word == w && k.tail == tail && k.length == name.len && (name.len <= 16 || rest_equal(name, ns.padded[i]))
             return Int(i) - 1
         end
         slot += 1
@@ -198,20 +195,19 @@ end
 
 # The index of a name, without the ordering hint, or -1.
 function find(ns::Names, name::Bytes)
-    (ns.lengths & length_bit(name.len)) == 0 && return -1
+    len = name.len
+    (ns.lengths & length_bit(len)) == 0 && return -1
     w = name_word(name)
-    if name.len > 16 || ns.is_large
-        return find_long(ns, name, w)
-    end
-    tail = name.len > 8 ? tail_word(name) : UInt64(0)
+    len > ns.short && return find_long(ns, name, w)
+    tail = len > 8 ? second_word(name) : UInt64(0)
     table, keys = ns.table, ns.keys
     mask = UInt64(length(table) - 1)
-    slot = name_hash(ns.mul, w, tail, name.len) >> NAME_HASH_SHIFT
+    slot = name_hash(ns.mul, w, tail, len) >> NAME_HASH_SHIFT
     while true
         i = table[(slot&mask)+1]
         i == 0 && return -1
         k = keys[i]
-        if k.word == w && k.tail == tail && k.length == name.len
+        if k.word == w && k.tail == tail && k.length == len
             return Int(i) - 1
         end
         slot += 1
@@ -231,55 +227,58 @@ find(ns::Names, name::String) = find(ns, Bytes(Vector{UInt8}(codeunits(name))))
 end
 
 # Finds a name, trying the one after the previous match first: instances tend to list their properties in the
-# schema's order, so the next name is usually the next one declared. It returns the index (or -1) and the hint for
-# the next call.
-@inline function find_from(ns::Names, name::Bytes, hint::Int)
+# schema's order, so the next name is usually the next one declared. It returns the index or -1. The hint for the
+# next call is the index + 1 of a name that was found, and the same hint after one that was not.
+#
+# This is inlined into the property loops, where it is the test of the expected name, then the test that some name
+# has this length, then one call. The call for a name of at most sixteen bytes takes the name's key and no bytes,
+# so the loop passes it numbers and keeps nothing alive for it.
+@inline function find_next(ns::Names, name::Bytes, hint::Int)
     w = name_word(name)
-    if name_at(ns, hint, name.len, w) && (name.len <= 8 || name_rest(ns, hint, name))
-        return hint, hint + 1
+    len = name.len
+    if name_at(ns, hint, len, w) && (len <= 8 || name_rest(ns, hint, name))
+        return hint
     end
-    return find_after(ns, name, w, hint)
+    (ns.lengths & length_bit(len)) == 0 && return -1
+    len > ns.short && return find_after_long(ns, name, w, hint)
+    return find_after(ns, len, w, len > 8 ? second_word(name) : UInt64(0), hint)
 end
 
-# find_from for a name (whose word is w) that is not the one at the hint. It tries the name after the previous match
-# in sorted order (instances written by tools that sort their keys), then searches the table.
-function find_after(ns::Names, name::Bytes, w::UInt64, hint::Int)
-    (ns.lengths & length_bit(name.len)) == 0 && return -1, hint
-    if name.len > 16 || ns.is_large
-        return find_after_long(ns, name, w, hint)
-    end
-    tail = name.len > 8 ? tail_word(name) : UInt64(0)
-    table, keys = ns.table, ns.keys
-    if hint < length(ns.sorted_next)
-        next = ns.sorted_next[hint+1]
+# find_next for a name of at most sixteen bytes that is not the one at the hint, by its key. It tries the name after
+# the previous match in sorted order (instances written by tools that sort their keys), then searches the table.
+function find_after(ns::Names, len::Int, w::UInt64, tail::UInt64, hint::Int)
+    keys, sorted = ns.keys, ns.sorted_next
+    if (hint % UInt) < length(sorted) % UInt
+        next = sorted[hint+1]
         if next != NO_NAME
             k = keys[next+1]
-            if k.word == w && k.tail == tail && k.length == name.len
-                return Int(next), Int(next) + 1
+            if k.word == w && k.tail == tail && k.length == len
+                return Int(next)
             end
         end
     end
+    table = ns.table
     mask = UInt64(length(table) - 1)
-    slot = name_hash(ns.mul, w, tail, name.len) >> NAME_HASH_SHIFT
+    slot = name_hash(ns.mul, w, tail, len) >> NAME_HASH_SHIFT
     while true
         i = table[(slot&mask)+1]
-        i == 0 && return -1, hint
+        i == 0 && return -1
         k = keys[i]
-        if k.word == w && k.tail == tail && k.length == name.len
-            return Int(i) - 1, Int(i)
+        if k.word == w && k.tail == tail && k.length == len
+            return Int(i) - 1
         end
         slot += 1
     end
 end
 
-# find_after for a name longer than sixteen bytes, whose text is compared, and for a set held in a map.
+# find_next for a name longer than sixteen bytes, whose text is compared, and for a set held in a map.
 @noinline function find_after_long(ns::Names, name::Bytes, w::UInt64, hint::Int)
-    if hint < length(ns.sorted_next)
-        next = ns.sorted_next[hint+1]
+    sorted = ns.sorted_next
+    if (hint % UInt) < length(sorted) % UInt
+        next = sorted[hint+1]
         if next != NO_NAME && name_equal(ns, Int(next), name, w)
-            return Int(next), Int(next) + 1
+            return Int(next)
         end
     end
-    i = find_long(ns, name, w)
-    return i >= 0 ? (i, i + 1) : (-1, hint)
+    return find_long(ns, name, w)
 end

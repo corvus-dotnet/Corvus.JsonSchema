@@ -77,6 +77,49 @@ end
     return high | UInt64(b[i+3]) << 16 | UInt64(b[i+2]) << 8 | UInt64(b[i+1])
 end
 
+# Eight bytes at zero-based offset i + k as a little-endian word, for a k that is a constant where this is inlined.
+# The sign of i is tested and the last byte is read first, as in le64. A word at an offset the caller computed (the
+# last eight bytes of a string, say) does not get its reads joined, since the compiler folds the caller's arithmetic
+# into the indexes and no longer sees one base with a known sign. A word at a constant distance from a base does.
+@inline function le64(b::Vector{UInt8}, i::Int, k::Int)
+    i >= 0 || throw_negative_offset(b, i)
+    high = UInt64(b[i+k+8]) << 56
+    return high | UInt64(b[i+k+7]) << 48 | UInt64(b[i+k+6]) << 40 | UInt64(b[i+k+5]) << 32 |
+           UInt64(b[i+k+4]) << 24 | UInt64(b[i+k+3]) << 16 | UInt64(b[i+k+2]) << 8 | UInt64(b[i+k+1])
+end
+
+# The low n bytes of a word, for n from 0 to 7.
+@inline low_bytes(w::UInt64, n::Int) = w & ~(typemax(UInt64) << ((8 * n) & 63))
+
+# The first min(n, 8) of the n bytes at zero-based offset off as a little-endian word, the rest of the word zero.
+# Where eight bytes can be read at off it is one load and a mask: a string shorter than eight bytes inside a document
+# has the document's text after it, which is read (with its index checked, as every read) and masked away. A string
+# within eight bytes of the end of its vector is read byte by byte.
+@inline function word_at(b::Vector{UInt8}, off::Int, n::Int)
+    if off >= 0 && (off + 7) % UInt < length(b) % UInt
+        w = le64(b, off)
+        return n >= 8 ? w : low_bytes(w, n)
+    end
+    return word_at_end(b, off, n)
+end
+
+@noinline function word_at_end(b::Vector{UInt8}, off::Int, n::Int)
+    w = UInt64(0)
+    for i in 0:min(n, 8)-1
+        w |= UInt64(b[off+i+1]) << (8 * i)
+    end
+    return w
+end
+
+# word_at for the bytes from off + 8 on, of which n belong to the string: its second word.
+@inline function second_word_at(b::Vector{UInt8}, off::Int, n::Int)
+    if off >= 0 && (off + 15) % UInt < length(b) % UInt
+        w = le64(b, off, 8)
+        return n >= 8 ? w : low_bytes(w, n)
+    end
+    return word_at_end(b, off + 8, n)
+end
+
 function bytes_equal(a::Bytes, b::Bytes)
     n = a.len
     n == b.len || return false

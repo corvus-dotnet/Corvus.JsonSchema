@@ -71,12 +71,12 @@ with the reason.
   no `additionalProperties` looks each name up in the instance when the instance's properties times the names is at
   most 24, comparing a name's length from its header, then its word, then its text.
 - **Name lookup** (`names.jl`, the C# `Utf8NameMap`). A set of the lengths the names have settles most misses with
-  one test (`Names.lengths`, `length_bit`). A name's key is its length, a word and, beyond eight bytes, its last
-  eight bytes (`NameKey`, `name_word`, `tail_word`), which is the whole name up to sixteen bytes. A longer name has
-  only the bytes between its first and last eight compared, a word at a time (`middle_equal`). The loops try the
-  name after the previous match first, in the loop itself (`name_at`, `name_rest`), then the next name in sorted
-  order (`Names.sorted_next` in `find_after`), then a hash table from the key to the index (`Names.table`,
-  `name_hash`). The table has four to eight slots for each name and its multiplier is the one of 24 that leaves the
+  one test (`Names.lengths`, `length_bit`). A name's key is its length, its first eight bytes as a word and, beyond
+  eight bytes, its second word (`NameKey`, `name_word`, `second_word`), which is the whole name up to sixteen
+  bytes. A longer name has only the bytes after its first sixteen compared, a word at a time (`rest_equal`). The
+  loops try the name after the previous match first, in the loop itself (`find_next` with `name_at` and
+  `name_rest`), then the next name in sorted order (`Names.sorted_next` in `find_after`), then a hash table from
+  the key to the index (`Names.table`, `name_hash`). The table has four to eight slots for each name and its multiplier is the one of 24 that leaves the
   fewest names away from their first slot (`fill_table!`, `NAME_HASH_MULTIPLIERS`), so a search is one
   multiplication and one read to the index. A set of more than `MAX_TABLE_NAMES` names is a `Dict`
   (`Names.is_large`).
@@ -383,6 +383,23 @@ differently.
    and `perf annotate` do. They are now macros, so the test is in the loop whatever the compiler decides. 0.941
    (0.864 to 1.020). This is the Go module's Measured 2, which this port had in its source and not in its code.
 
+3. **A name's key read with two loads, and the search called with the key** (`word_at`, `second_word_at` in
+   `document.jl`, `name_word`, `second_word`, `find_next`, `find_after`, `rest_equal` in `names.jl`). Counting the
+   instructions of a pass with cachegrind showed a search for a name at 112 instructions, and half the properties
+   of some corpora searched. A name of four to seven bytes was read as two overlapping halves and a long name's
+   last eight bytes at an offset worked out from its length, and for a word at such an offset the compiler keeps
+   all eight checks and loads (see "Bounds checks the compiler removes"). A name's word is now its first eight
+   bytes read as one word and masked to its length, which reads the text after a short name where the vector has
+   it, and a long name's second word is bytes 8 to 15 read the same way at a constant distance from the same base.
+   The names of a set carry eight zero bytes after them so that the rest of a name longer than sixteen bytes is
+   compared the same way (`Names.padded`). The test that some name has the length is made in the loop, where it
+   was the first thing the call did, and its shift is masked so that it is one instruction where it was twelve
+   (`length_bit`). The call takes the length and the two words and returns the index, where it took the name as
+   three words in memory and returned two values through memory. 0.895 (0.771 to 1.056), compile 0.970.
+   Instructions per pass over 8 corpora: 0.848 (omnisharp 0.724, helm-chart-lock 0.783). The Go module tried the
+   masked read of a short name and reverted it (its Tried and not kept 2). There a checked eight-byte read is one
+   test whatever the offset, so the branch on the length was all it replaced.
+
 The Go module's ten measured changes are techniques too. Its figures are for Go and are not repeated here. This is
 what this port's source has for each.
 
@@ -391,14 +408,14 @@ what this port's source has for each.
 2. **A type-only child decided where it is applied.** Present since Measured 2 above. `@run_child` is one test of
    the value's kind against `Child.pass`, written into the loop by a macro, and `enter_child` is the one call for a
    child with keywords.
-3. **The expected name tested in the property loops.** Present. `name_at` and `name_rest` are in `visit_names`,
-   `visit_general` and `run_fused_pass`, with the name's length and word side by side in `Names.keys`, and
-   `find_after` is the call.
+3. **The expected name tested in the property loops.** Present. `find_next` is inlined into `visit_names`,
+   `visit_general` and `run_fused_pass` with `name_at` and `name_rest`, the name's length and word are side by side
+   in `Names.keys`, and `find_after` is the call.
 4. **Names found through a hash of their key.** Present, in the form the Go module kept (`Names.table`,
    `name_hash`, see Name lookup under Done).
 5. **The search of the name table written out in its two callers.** Present. `find` and `find_after` each have the
-   probe loop in them, with a call only for a name over sixteen bytes or a set held in a `Dict` (`find_long`,
-   `find_after_long`).
+   probe loop in them, and a name over sixteen bytes or a set held in a `Dict` goes to `find_long` or
+   `find_after_long`.
 6. **Values entered through one function, and a strict object's loop called from it.** Present. `@run` is
    `enter_child` on the node's own child (`Evaluator.selfs`), a node with a fused plan has a shape of its own
    (`SHAPE_FUSED`), `enter_child` calls `visit_lookup` or `visit_names` for a strict object itself, and a child
@@ -418,11 +435,12 @@ the Julia source has, which in every case is the form the Go module kept. None h
 result does not decide a Julia one.
 
 1. **The tape as one struct of two words per value.** The tape is a `Vector{UInt64}` with two words per value.
-2. **A name's word read with no branch on its length.** `name_word` has the three-way branch on the length.
+2. **A name's word read with no branch on its length.** Kept here, where the Go module reverted it. See Measured
+   3.
 3. **The properties that need no call decided in a function that calls nothing.** There is no such function.
    `visit_names` is one loop.
 4. **The expected name's word read from the text in place.** The name is taken as a `Bytes` first (`str`), then
-   `name_word` reads it.
+   `name_word` reads it. A `Bytes` is three values in registers here, not an object.
 5. **The sorted-order prediction tested in the loops.** It is in `find_after`, not in the loops.
 6. **A pointer to the node's keywords in the child.** `Child` is eight bytes and the body is read through
    `Evaluator.bodies` in `enter_child`.

@@ -122,6 +122,30 @@
         @test expect_valid(compile_schema("""{ "multipleOf": 0.0001 }"""), "0.0075", true)
     end
 
+    # A task may move to another thread where it yields. A custom format that yields does that in the middle of a
+    # validation, which then finishes on another thread than the one whose evaluation state it took.
+    @testset "a validation that moves between threads" begin
+        v = compile_schema("""{ "type": "array", "items": { "type": "string", "format": "slow", "minLength": 2 } }""";
+            assert_format=true, formats=Dict("slow" => s -> (yield(); !startswith(s, "x"))))
+        failures = Threads.Atomic{Int}(0)
+        @sync for g in 0:15
+            Threads.@spawn begin
+                valid = "[" * join(["\"g$(g)i$(i)\"" for i in 0:19], ",") * "]"
+                invalid = "[" * join(["\"g$(g)i$(i)\"" for i in 0:19], ",") * ",\"x$(g)\"]"
+                document = parse_document(valid)
+                for _ in 1:100
+                    if !isvalid(v, valid) || isvalid(v, invalid) || !isvalid(v, document)
+                        Threads.atomic_add!(failures, 1)
+                        break
+                    end
+                end
+            end
+        end
+        @test failures[] == 0
+        @test !(@atomic v.busy)
+        @test expect_valid(v, """["ab"]""", true)
+    end
+
     @testset "validators are safe for concurrent use" begin
         v = compile_schema("""{ "type": "array", "items": { "type": "integer", "minimum": 0 }, "uniqueItems": true }""")
         failures = Threads.Atomic{Int}(0)

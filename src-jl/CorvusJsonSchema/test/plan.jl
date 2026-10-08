@@ -50,30 +50,54 @@ name_bytes(name::String) = C.Bytes(Vector{UInt8}(name))
             for start in 0:length(declared)
                 hint = start
                 for n in order
-                    got, hint = C.find_from(ns, name_bytes(n), hint)
+                    got = C.find_next(ns, name_bytes(n), hint)
                     @test got == findfirst(==(n), declared) - 1
+                    hint = got + 1
                 end
             end
         end
-        @test C.find_from(ns, name_bytes("other"), 0)[1] == -1
-        @test C.find_from(ns, name_bytes("names"), 2)[1] == -1
+        @test C.find_next(ns, name_bytes("other"), 0) == -1
+        @test C.find_next(ns, name_bytes("names"), 2) == -1
         # Sorted successors: after "name" (index 0) comes "repository" (2), after it "version" (1), then none.
         @test ns.sorted_next == UInt32[3, 2, C.NO_NAME, 1, 0]
         many = ["property-number-" * lpad((i * 7) % 40, 2, '0') for i in 0:39]
         large = C.Names(many)
         for start in 0:13:length(many)
-            @test all(C.find_from(large, name_bytes(n), start)[1] == i - 1 for (i, n) in enumerate(many))
-            @test C.find_from(large, name_bytes("property-number-40"), start)[1] == -1
+            @test all(C.find_next(large, name_bytes(n), start) == i - 1 for (i, n) in enumerate(many))
+            @test C.find_next(large, name_bytes("property-number-40"), start) == -1
         end
+    end
+
+    # A name inside a document is read a word at a time with the text after it masked away, and a name at the end of
+    # its vector byte by byte. Both must give the key the set was built with, for every length.
+    @testset "a name is found wherever it lies in its vector" begin
+        alphabet = repeat("abcdefghijklmnopqrstuvwxyz", 2)
+        list = [alphabet[1:n] for n in 0:40]
+        others = [n[1:end-1] * "#" for n in list if !isempty(n)]
+        ns = C.Names(list)
+        for (i, n) in enumerate(vcat(list, others)), before in (0, 1, 7, 9), after in (0, 1, 5, 7, 8, 17)
+            b = vcat(fill(UInt8('x'), before), Vector{UInt8}(n), fill(UInt8('y'), after))
+            name = C.Bytes(b, before, ncodeunits(n))
+            expected = i <= length(list) ? i - 1 : -1
+            @test C.find(ns, name) == expected
+            @test all(C.find_next(ns, name, hint) == expected for hint in (0, max(i - 1, 0), length(list)))
+            @test C.name_word(name) == C.name_word(C.Bytes(Vector{UInt8}(n)))
+        end
+        @test_throws BoundsError C.name_word(C.Bytes(UInt8[1, 2, 3], -1, 2))
+        @test_throws BoundsError C.name_word(C.Bytes(UInt8[1, 2, 3], 2, 2))
+        @test_throws BoundsError C.le64(collect(0x01:0x10), 9)
+        @test_throws BoundsError C.le64(collect(0x01:0x10), -1)
+        @test_throws BoundsError C.le64(collect(0x01:0x10), typemin(Int))
+        @test C.le64(collect(0x01:0x10), 8) == 0x100f0e0d0c0b0a09
     end
 
     @testset "linear names find from any hint" begin
         ns = C.Names(["a", "b", "c"])
         for start in 0:2
             for (i, n) in enumerate(["a", "b", "c"])
-                @test C.find_from(ns, name_bytes(n), start)[1] == i - 1
+                @test C.find_next(ns, name_bytes(n), start) == i - 1
             end
-            @test C.find_from(ns, name_bytes("d"), start)[1] == -1
+            @test C.find_next(ns, name_bytes("d"), start) == -1
         end
     end
 
