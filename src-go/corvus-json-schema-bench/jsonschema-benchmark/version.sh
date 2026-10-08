@@ -3,6 +3,5 @@
 set -o errexit
 set -o nounset
 
-# The version of the corvus-json-schema module in go.mod.
-sed -n 's|.*github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema v\([^ ]*\).*|\1|p' \
-  implementations/corvus-go/go.mod | head -n 1
+# The corvus-json-schema module version the image built (the Dockerfile takes the latest release).
+docker run --rm --entrypoint cat jsonschema-benchmark/corvus-go /app/corvus-version

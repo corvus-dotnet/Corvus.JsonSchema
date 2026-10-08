@@ -283,11 +283,12 @@ and case mapping it reads is in its own Unicode 17 tables (`internal/ucd`), so a
 with every Go version. `TestNoToolchainUnicodeData` fails if that dependency returns. When a Go minor version is
 released, add it to the matrix of `go.yml`.
 
-### After the first release
+### The proxy just after a release
 
-The jsonschema-benchmark entry (`src-go/corvus-json-schema-bench/jsonschema-benchmark`) requires the published
-version, and its `go.sum` cannot exist until that version does. After the first tag, run `go mod tidy` there and
-commit the `go.sum` it writes.
+For some minutes after a version is tagged, the proxy can answer "not found" for it, and it remembers that answer
+for a while, differently on each of its servers. The workflow therefore waits for the version to appear in the
+proxy's list of versions before asking for the version itself. If `go get` reports "unknown revision" or "no
+matching versions" shortly after a release, wait and try again: nothing needs fixing.
 
 ## The Python packages
 
