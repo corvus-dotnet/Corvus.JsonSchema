@@ -93,6 +93,13 @@ function allocation_cases()
             }""", (;), [
                 """{"children": [{"data": 1, "children": [{"data": [1, 2, 3]}]}]}""",
                 """{"children": [{"daat": 1}]}"""]),
+        AllocationCase("patterns on the engine", """{
+                "properties": { "a": { "pattern": "\\\\bfoo" }, "b": { "pattern": "^\\\\p{L}+\$" } },
+                "patternProperties": { "^(?=a)a|b\$": { "type": "integer" } }
+            }""", (;), [
+                """{"a": "a foo", "b": "éa", "ab": 1}""",
+                """{"a": "afoo"}""",
+                """{"b": "é1", "bb": 1}"""]),
         AllocationCase("asserted formats and content", """{
                 "properties": {
                     "date": { "format": "date-time" }, "ip": { "format": "ipv6" }, "host": { "format": "hostname" },

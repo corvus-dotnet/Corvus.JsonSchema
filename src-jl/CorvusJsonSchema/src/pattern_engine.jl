@@ -1,42 +1,32 @@
 # The regular expression engine behind every pattern that has no faster matcher, and the Unicode tables that come
-# with it. This file is the only one that names the engine.
-#
-# TEMPORARY: until the EcmaRegex submodule (src/ecmaregex) loads and passes its tests, patterns run on Base.Regex
-# (PCRE), which does not have ECMA-262's semantics exactly, and the Unicode tables are read from the submodule's data
-# files alone.
+# with it: the EcmaRegex submodule (src/ecmaregex). This file is the only one that names the engine.
 
-module EngineUnicode
-include("ecmaregex/unicode_data.jl")
-include("ecmaregex/unicode.jl")
-end
+include("ecmaregex/EcmaRegex.jl")
 
-# The ranges of a property expression of \p{...}, such as "Lu" or "Script=Greek".
-unicode_property(expression::String) = copy(EngineUnicode.property(expression)::Vector{Int32})
+# The ranges of a property expression of \p{...}, such as "Lu" or "Script=Greek", as inclusive pairs in ascending
+# order.
+unicode_property(expression::String) = copy(EcmaRegex.property(expression)::Vector{Int32})
 
 # A compiled pattern of the engine.
-const EnginePattern = Regex
-
-const SHIM_COMPILE_OPTIONS = Base.PCRE.UTF | Base.PCRE.MATCH_INVALID_UTF | Base.PCRE.DOLLAR_ENDONLY
-const SHIM_UNICODE_OPTIONS = SHIM_COMPILE_OPTIONS | Base.PCRE.UCP
+const EnginePattern = EcmaRegex.Pattern
 
 # Compiles an ECMA-262 pattern (with the u flag, or failing that without it, as many schemas need). Nothing when the
-# pattern is invalid.
+# pattern is invalid. A pattern that is valid and that the engine cannot run with the same meaning is a compilation
+# error that says so.
 function compile_engine(source::String)
     try
-        options = occursin("\\p", source) || occursin("\\P", source) ? SHIM_UNICODE_OPTIONS : SHIM_COMPILE_OPTIONS
-        translated = replace(source, "\\u{" => "\\x{", r"\\u([0-9a-fA-F]{4})" => s"\\x{\1}", "\\cX" => "\\x18")
-        re = Regex(translated, options, Base.DEFAULT_MATCH_OPTS)
-        Base.compile(re)
-        return re
-    catch
+        return EcmaRegex.compile(source)
+    catch err
+        err isa EcmaRegex.PatternError || rethrow()
+        err.unsupported && throw(CompileError(sprint(showerror, err)))
         return nothing
     end
 end
 
 # Reports whether the pattern matches somewhere in UTF-8 text.
-engine_match(p::EnginePattern, s::Bytes) = occursin(p, String(s))
+@inline engine_match(p::EnginePattern, s::Bytes) = EcmaRegex.ismatch(p, view(s.b, s.off+1:s.off+s.len))
 
 # Reports whether a string is a valid ECMA-262 regular expression with the u flag (the regex format, and the
 # patterns the engine reads without falling back).
-valid_regex(source::String) = compile_engine(source) !== nothing
+valid_regex(source::String) = EcmaRegex.isvalidpattern(source)
 valid_regex(source::Bytes) = valid_regex(String(source))
