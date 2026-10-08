@@ -119,20 +119,37 @@ jobs:
           # The proxy writes a capital letter in a module path as ! and the lower-case letter:
           # github.com/corvus-dotnet/!corvus.!json!schema/src-go/corvus-json-schema.
           escaped=$(printf '%s' "$MODULE" | sed 's/[A-Z]/!\L&/g')
-          url="https://proxy.golang.org/$escaped/@v/v$VERSION.info"
-          # The proxy fetches the tag from GitHub when first asked, which can take a few tries just after the push.
-          for attempt in 1 2 3 4 5 6 7 8 9 10; do
-            if info=$(curl -sf "$url"); then
-              echo "$info"
-              {
-                echo "### $MODULE v$VERSION is published"
-                echo
-                echo "https://pkg.go.dev/$MODULE@v$VERSION"
-              } >> "$GITHUB_STEP_SUMMARY"
-              exit 0
+          base="https://proxy.golang.org/$escaped/@v"
+          url="$base/v$VERSION.info"
+          # Wait for the version to appear in the proxy's list of versions before asking for the version itself.
+          # The proxy remembers a "not found" for a version for several minutes, so a request made in the seconds
+          # after the tag is pushed, before the proxy can see it, makes every retry fail too. (It did, for v0.1.0.)
+          # The list is not remembered that way, and asking for it is what makes the proxy look for new tags.
+          listed=false
+          for attempt in $(seq 1 40); do
+            if curl -sf "$base/list" | grep -qx "v$VERSION"; then
+              listed=true
+              break
             fi
-            echo "The proxy does not have v$VERSION yet (attempt $attempt)."
+            echo "The proxy does not list v$VERSION yet (attempt $attempt)."
             sleep 30
           done
+          if [ "$listed" = true ]; then
+            for attempt in $(seq 1 20); do
+              if info=$(curl -sf "$url"); then
+                echo "$info"
+                {
+                  echo "### $MODULE v$VERSION is published"
+                  echo
+                  echo "https://pkg.go.dev/$MODULE@v$VERSION"
+                } >> "$GITHUB_STEP_SUMMARY"
+                # Ask pkg.go.dev to index the version (it is slow to answer and the answer does not matter).
+                curl -s -m 20 -o /dev/null -X POST "https://pkg.go.dev/fetch/$MODULE@v$VERSION" || true
+                exit 0
+              fi
+              echo "The proxy lists v$VERSION and does not serve it yet (attempt $attempt)."
+              sleep 30
+            done
+          fi
           echo "::error::proxy.golang.org did not serve $url. The tag exists, so run this workflow again, or run: GOPROXY=https://proxy.golang.org go list -m $MODULE@v$VERSION"
           exit 1

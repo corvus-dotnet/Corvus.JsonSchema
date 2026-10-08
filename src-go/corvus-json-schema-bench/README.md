@@ -45,10 +45,12 @@ go build -o corvus_go_benchmark .
 ./corvus_go_benchmark <schema-noformat.json> <instances.jsonl>
 ```
 
-To add the entry to a jsonschema-benchmark checkout once the module's first version is tagged:
+The image takes the module's latest version from the Go module proxy when it is built (`go.mod` names the oldest
+version the entry works with), and `version.sh` reports the version it built.
+
+To add the entry to a jsonschema-benchmark checkout:
 - copy the directory to `implementations/corvus-go`, without `Dockerfile.local`, `Build-Image.ps1`,
   `Compare-Images.ps1`, `Makefile.fragment` and `memory-wrapper.sh` (the benchmark's Makefile copies its own);
-- run `go mod tidy` there, which writes the `go.sum` the image build needs (it cannot exist before the version does);
 - add the rules from `Makefile.fragment` to the Makefile;
 - add `corvus-go` to the README's list of implementations and to the names in the plot scripts.
 
