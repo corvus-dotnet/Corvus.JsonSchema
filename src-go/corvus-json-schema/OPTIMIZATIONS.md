@@ -41,9 +41,10 @@ with the reason.
   with one candidate, one that is unreachable from the entry, or one the entry resource always answers is resolved at
   compile time (`finalizeDynamicRefs` sets `staticDynamicRef`). A program with no dynamic scope takes the fallback of
   every dynamic reference (`planNode`). In draft 7 and earlier `$ref` replaces its siblings (`compileNode`).
-- **Plan shapes** (`shape`, `shapeOf`, `enter` in `plan.go`). A caller enters a child by what its keywords come to:
-  nothing but the type, a leaf, a string enum, string keywords, an object plan, an array plan, or in-place
-  applicators. These are the C# `Leaf`, `Object`, `StrictObject`, `SimpleArray`, `ArrayItems`, `Composite` and
+- **Plan shapes** (`shape`, `shapeOf`, `enterChild` in `plan.go`). A caller enters a child by what its keywords come
+  to: nothing but the type, a leaf, a string enum, string keywords, an object plan, an array plan, in-place
+  applicators, or a fused object plan. Every child takes the final shape of its node once the fused plans are built
+  (`compilePlans`), and a node entered by its id is entered as a child (`plan.self`, `run`). These are the C# `Leaf`, `Object`, `StrictObject`, `SimpleArray`, `ArrayItems`, `Composite` and
   `Conditional` plans in the form the Rust port gave them. Keywords are grouped by the kind of value they apply to,
   so only those for the instance's kind are looked at (`body`, `runKeywords`).
 - **Objects** (`objectPlan`, `runObject`). One pass over the properties, specialised by which keywords apply
@@ -241,3 +242,11 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
    was not the expected one went through three calls (`findAfter`, `nameMap.find`, `findKey`), and so did a string
    tested against an enum. Each now has the search in it, with a call only for a name over sixteen bytes.
    0.959 (0.788 to 1.047).
+6. **Values entered through one function, and a strict object's loop called from it** (`run`, `enterChild`,
+   `shapeFused`, `plan.self`). The root went through `run`, `enter`, `runBody`, `runKeywords`, `runFused` and
+   `runStrictObject` before its first property, and a nested object through `enterChild` and `runStrictObject`.
+   `run` is now `enterChild` on the node's own child, a node with a fused plan has a shape of its own, and
+   `enterChild` calls the property loop of a strict object itself. A child also now takes the shape its node has
+   after the fused plans are built: before, a child whose node was only applicators kept that shape and entered them
+   one by one, where the node's fused plan decides them in one pass. 0.966 (0.887 to 1.028). Instructions per pass
+   over 18 corpora: 0.971.

@@ -60,6 +60,9 @@ const (
 	shapeArray
 	// shapeApply is nothing but in-place applicators: straight to them.
 	shapeApply
+	// shapeFused has a fused object plan (see fused.go): an object value goes to it directly, and a value of any
+	// other kind to the node's keywords.
+	shapeFused
 )
 
 type plan struct {
@@ -70,6 +73,8 @@ type plan struct {
 	body *body
 	// The body's shape, for entering it directly.
 	shape shape
+	// The node as a child, for entering it by its id (see run).
+	self child
 }
 
 // body is a node's keywords, grouped so that only the ones for the instance's type are looked at.
@@ -467,6 +472,85 @@ func compilePlans(p *program) []plan {
 	}
 	for i := range plans {
 		plans[i].shape = shapeOf(&plans[i], p.usesDynamicScope)
+		plans[i].self = child{id: nodeID(i)}
+		plans[i].self.setShape(plans[i].types, plans[i].shape)
+	}
+	// Every child now takes the final shape of its node, which a fused plan may have changed since the child was
+	// made: a child that kept the shape its node had before it was fused would enter the node's applicators one by
+	// one where the fused plan decides them in one pass.
+	final := func(c *child) {
+		if c.id >= 0 {
+			c.setShape(plans[c.id].types, plans[c.id].shape)
+		}
+	}
+	finalObject := func(o *objectPlan) {
+		for j := range o.children {
+			final(&o.children[j])
+		}
+		for j := range o.patterns {
+			final(&o.patterns[j].child)
+		}
+		if o.hasAdditional {
+			final(&o.additional)
+		}
+	}
+	for i := range plans {
+		b := plans[i].body
+		if b == nil {
+			continue
+		}
+		if b.object != nil {
+			finalObject(b.object)
+		}
+		if a := b.array; a != nil {
+			for j := range a.prefix {
+				final(&a.prefix[j])
+			}
+			if a.hasItems {
+				final(&a.items)
+			}
+		}
+		if b.hasUnevaluatedItems {
+			final(&b.unevaluatedChild)
+		}
+		for j := range b.apply {
+			switch o := &b.apply[j]; o.kind {
+			case opAllOf:
+				for k := range o.children {
+					final(&o.children[k])
+				}
+			case opAnyOf, opOneOf:
+				for k := range o.branches.children {
+					final(&o.branches.children[k])
+				}
+			}
+		}
+		if f := b.fused; f != nil {
+			if f.flat != nil {
+				finalObject(f.flat)
+			}
+			for j := range f.entries {
+				for k := range f.entries[j].apps {
+					if app := &f.entries[j].apps[k]; app.hasChild {
+						final(&app.child)
+					}
+				}
+			}
+			for j := range f.contributors {
+				c := &f.contributors[j]
+				for k := range c.patterns {
+					if c.patterns[k].child.set {
+						final(&c.patterns[k].child.child)
+					}
+				}
+				if c.hasAdditional && c.additional.set {
+					final(&c.additional.child)
+				}
+			}
+			if f.hasUnevaluated {
+				final(&f.unevaluated)
+			}
+		}
 	}
 	return plans
 }
@@ -781,8 +865,15 @@ func shapeOf(pl *plan, dynamicScope bool) shape {
 	if b == nil {
 		return shapeTrivial
 	}
-	if b.fused != nil || b.general != 0 || b.hasUnevaluatedItems {
+	if b.general != 0 || b.hasUnevaluatedItems {
 		return shapeGeneral
+	}
+	if b.fused != nil {
+		// Without the scope push of the general entry, so not in a program that keeps a dynamic scope.
+		if dynamicScope {
+			return shapeGeneral
+		}
+		return shapeFused
 	}
 	values := len(b.values) != 0 || len(b.number) != 0 || len(b.str) != 0
 	object, array, apply := b.object != nil, b.array != nil, len(b.apply) != 0
@@ -945,17 +1036,7 @@ func staticItemCoverage(p *program, id nodeID) (all bool, from int, ok bool) {
 
 // run evaluates a node's plan (at a new instance location, or where no depth guard applies).
 func (e *evaluator) run(id nodeID, x int) bool {
-	pl := &e.p.plans[id]
-	if pl.types != anyType && !typeOK(pl.types, e.d, x) {
-		return false
-	}
-	if pl.body == nil {
-		return true
-	}
-	if pl.shape == shapeGeneral {
-		return e.runBody(pl.body, x)
-	}
-	return e.enter(pl.shape, pl.body, x)
+	return e.enterChild(e.p.plans[id].self, x)
 }
 
 // runChild evaluates a child at a new instance location. A child that is only a type test the value passes is
@@ -964,7 +1045,9 @@ func (e *evaluator) runChild(c child, x int) bool {
 	return c.pass&e.d.kind(x) != 0 || e.enterChild(c, x)
 }
 
-// enterChild is runChild past its inlined test: the type test in full, then the child's keywords by its shape.
+// enterChild is runChild past its inlined test: the type test in full, then the child's keywords by its shape. An
+// object for a strict object plan has its loop called from here, with no function in between, since that is what
+// most values with keywords are.
 func (e *evaluator) enterChild(c child, x int) bool {
 	d := e.d
 	kind := d.kind(x)
@@ -978,6 +1061,7 @@ func (e *evaluator) enterChild(c child, x int) bool {
 	if b == nil {
 		return true
 	}
+	var pl *objectPlan
 	switch c.shape {
 	case shapeLeaf:
 		return e.runLeaf(b, x)
@@ -989,16 +1073,36 @@ func (e *evaluator) enterChild(c child, x int) bool {
 		if kind != kindObject {
 			return true
 		}
-		if b.object.strict {
-			return e.runStrictObject(b.object, x)
+		if pl = b.object; !pl.strict {
+			return e.runObject(pl, x)
 		}
-		return e.runObject(b.object, x)
+	case shapeFused:
+		if kind != kindObject {
+			return e.runKeywords(b, x)
+		}
+		if pl = b.fused.flat; pl == nil {
+			return e.runFused(b.fused, x)
+		}
 	case shapeArray:
 		return kind != kindArray || e.runArray(b.array, x)
 	case shapeApply:
 		return e.runApply(b.apply, x)
+	default:
+		return e.runBody(b, x)
 	}
-	return e.runBody(b, x)
+	// The strict loop (runStrictObject).
+	count := d.count(x)
+	if uint64(count) < pl.min || uint64(count) > pl.max {
+		return false
+	}
+	var seen uint64
+	var ok bool
+	if pl.lookup && count*pl.names.len() <= lookupBudget {
+		seen, ok = e.visitLookup(pl, x)
+	} else {
+		seen, ok = e.visitNames(pl, x)
+	}
+	return ok && seen&pl.requiredMask == pl.requiredMask
 }
 
 // enter evaluates a body by its shape (its types already tested, and not on an in-place cycle unless general).
@@ -1019,6 +1123,11 @@ func (e *evaluator) enter(s shape, b *body, x int) bool {
 			return e.runStrictObject(b.object, x)
 		}
 		return e.runObject(b.object, x)
+	case shapeFused:
+		if d.kind(x) != kindObject {
+			return e.runKeywords(b, x)
+		}
+		return e.runFused(b.fused, x)
 	case shapeArray:
 		return d.kind(x) != kindArray || e.runArray(b.array, x)
 	case shapeApply:
