@@ -354,7 +354,10 @@ Each was measured as under Measured and reverted. "Instructions" is the instruct
    0.906, jsconfig 0.924), as many slower (yamllint 1.090, lerna 1.065, babelrc 1.064). It belongs to a user's own
    binary and cannot be shipped in the library, and here it comes to nothing.
 
-Measured and not committed, for a decision: **`Document.str` without bounds checks**, built with `unsafe.Slice` and
+Measured and declined: **`Document.str` without bounds checks**, built with `unsafe.Slice` and
 `unsafe.Add` in place of a slice expression of the source or the text. Over 17 corpora the median pass was 0.90 to
 0.997 of the time before, most corpora 0.95 to 0.99. The Rust crate reads its tape and text unchecked
 (`get_unchecked` in `document.rs`). The tape reads would be the other half of it and were not measured.
+The decision (2026-10-08) is that the module makes no unchecked reads: a mistake in one would read out of bounds
+where a checked read panics. The module's uses of `unsafe` are only conversions between a string and its bytes
+without a copy.

@@ -186,19 +186,27 @@ fmt.Println(annotations["/name"]["title"]["#/properties/name"]) // "Name"
 
 ## Performance
 
-To be measured. No figures are published for the Go evaluator yet.
+Measured with [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark)'s 37 corpora, each
+implementation in its own container pinned to the same 8 CPUs, the median of 3 runs. The Go, Java and .NET JIT
+harnesses warm up for 2 seconds (at least 100 passes) and report the last warm-up pass. The others are the
+benchmark's own harnesses. Figures are the geometric mean of Go's time over the other's (below 1 means Go is
+faster), and how many corpora Go is faster on.
 
-| Go over | Warm validation | Parse |
-|---|---|---|
-| [santhosh-tekuri/jsonschema](https://github.com/santhosh-tekuri/jsonschema) v6 | to be measured | to be measured |
-| [Blaze](https://github.com/sourcemeta/blaze) | to be measured | to be measured |
-| Corvus Rust | to be measured | to be measured |
-| Corvus Java | to be measured | to be measured |
-| Corvus .NET | to be measured | to be measured |
+| Go 1.27 over | Warm validation | Cold validation | Compile | Parse |
+|---|---|---|---|---|
+| [santhosh-tekuri/jsonschema](https://github.com/santhosh-tekuri/jsonschema) v6 | 0.028 (35 of 35) | 0.038 (35 of 35) | 0.35 (35 of 35) | 0.22 (35 of 35) |
+| [Blaze](https://github.com/sourcemeta/blaze) | 0.68 (31 of 37) | 0.59 (34 of 37) | 0.14 (37 of 37) | 0.34 (37 of 37) |
+| Corvus Rust | 1.29 (0 of 37) | 1.14 (7 of 37) | 0.60 (36 of 37) | 0.93 (30 of 37) |
+| Corvus .NET, native AOT, interpreting the schema | 1.13 (7 of 37) | 0.98 (21 of 37) | 0.67 (35 of 37) | 0.85 (25 of 37) |
+| Corvus .NET, the JIT with [runtime code generation](RuntimeEvaluator.md#runtime-code-generation) | 2.15 (1 of 37) | 0.004 (37 of 37) | 0.016 (37 of 37) | 0.16 (37 of 37) |
+| Corvus Java | 1.89 (2 of 37) | 0.016 (37 of 37) | 0.008 (37 of 37) | 0.19 (37 of 37) |
 
-The measurements will use [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark)'s 37
-corpora, each implementation in its own container pinned to the same CPUs, with every harness warming up for 2 seconds
-(at least 100 passes) and reporting its last warm-up pass.
+santhosh-tekuri/jsonschema does not compile two of the corpora (cspell and ui5-manifest).
+
+Go has no code generation at run time, so a schema is interpreted from compiled plans, as in the Rust crate. Warm
+validation is faster than Blaze on most corpora and within about 30% of the Rust crate. The engines that generate
+code for a schema (Java, and .NET on the JIT) validate about twice as fast once warm. They are 60 to 120 times
+slower to compile a schema, and far slower on the first pass.
 
 ## Links
 
