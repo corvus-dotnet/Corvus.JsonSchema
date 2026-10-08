@@ -57,7 +57,7 @@ function validate(v::Validator, pattern::String)
 end
 
 # The byte at a position that counts from zero.
-@inline byteat(v::Validator, k::Int) = @inbounds codeunit(v.p, k + 1)
+@inline byteat(v::Validator, k::Int) = codeunit(v.p, k + 1)
 
 @inline iscontinuation(b::UInt8) = (b & 0xC0) == 0x80
 

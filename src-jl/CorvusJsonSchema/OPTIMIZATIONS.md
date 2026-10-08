@@ -418,23 +418,10 @@ crate reads its tape and text unchecked.
 What the source does today. Every read of the tape and of a document's bytes is checked. That covers the parser,
 the evaluator, the plans, the fused pass, the name table, the pattern shapes, the formats and the values
 (`document.jl`, `plan.jl`, `fused.jl`, `eval.jl`, `names.jl`, `pattern.jl`, `formats.jl`, `values.jl` have no
-`@inbounds` and no pointer). The exceptions are all in `src/ecmaregex`, which was ported from the Java translator
-and is not part of that measurement.
+`@inbounds` and no pointer). The pattern submodule, `src/ecmaregex`, has no `@inbounds` either: the six it was
+ported with were removed when the decision was made to cover it too (2026-10-08). What remains unsafe there is the
+binding to PCRE2, which cannot be otherwise.
 
-- `@inbounds` appears six times.
-  - `validator.jl`, `byteat`. It reads one byte of the pattern text being validated, which for the `regex` format
-    is a string of the instance. Nothing in `byteat` guards it. Each caller tests the position against the
-    length first or reads inside an escape it has already checked. This one is a byte read on the validation path.
-  - `pcre.jl`, `callout`. It indexes `Pattern.lookbehinds` by the callout number PCRE2 passes, which the emitter
-    wrote into the pattern. Nothing checks it at run time.
-  - `pcre.jl`, `threadframe`. It indexes the per-thread frames, guarded by the test of the thread's number
-    against the length on the line before.
-  - `parser.jl`, `peekchar`. Guarded by the test of the position against the length in the same expression. It
-    runs when a pattern is compiled.
-  - `unicode.jl`, `inset`. A binary search over a set of ranges whose bounds come from the set's own length. It
-    runs when a pattern is compiled.
-  - `unicode.jl`, `isname`. It compares a property name with a range of the pattern. The lengths are tested to be
-    equal first, and the caller supplies a range inside the pattern.
 - Pointers. `pcre.jl` is the binding to PCRE2 and is unsafe by nature. It has 8 `unsafe_load`, 7 `unsafe_store!`
   and one `unsafe_pointer_to_objref` over the `Frame` memory it allocates with `Libc.malloc` and over the callout
   block PCRE2 passes, and 13 `ccall`. `EcmaRegex.jl` takes the pointer to the text and to the pattern under
@@ -442,6 +429,4 @@ and is not part of that measurement.
 - `unsafe_trunc` appears four times outside the engine (`numbers.jl` twice, `values.jl`, `compiler.jl`). It
   converts a `Float64` to an integer with no range check and reads no memory. Each is behind a test of the range.
 
-The decision as recorded is about the tape reads and the byte reads of the evaluator, and those are all checked.
-Whether it also covers `byteat` and the lookbehind index in `callout`, which are unchecked reads reached while an
-instance is validated, has not been decided.
+The decision covers every array and string read of the package. Do not add `@inbounds` anywhere in it.

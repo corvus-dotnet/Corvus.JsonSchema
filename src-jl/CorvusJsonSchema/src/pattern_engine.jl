@@ -10,6 +10,15 @@ unicode_property(expression::String) = copy(EcmaRegex.property(expression)::Vect
 # A compiled pattern of the engine.
 const EnginePattern = EcmaRegex.Pattern
 
+"""
+    PatternMatchError
+
+Thrown by a validation when a `pattern` of the schema backtracks on the text until it reaches a limit of the regular
+expression engine (PCRE2's match or memory limit, or the limit on the search for a lookbehind). Whether the text
+matches is then not known, so it is never reported as no match.
+"""
+const PatternMatchError = EcmaRegex.MatchError
+
 # Compiles an ECMA-262 pattern (with the u flag, or failing that without it, as many schemas need). Nothing when the
 # pattern is invalid. A pattern that is valid and that the engine cannot run with the same meaning is a compilation
 # error that says so.

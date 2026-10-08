@@ -261,7 +261,8 @@ mutable struct Frames
 end
 
 const FRAMES = Frames(Ptr{Frame}[])
-const FRAME_LOCK = Threads.SpinLock()
+# A lock a task may wait on: making the first frame of a thread evaluates the callout's definition.
+const FRAME_LOCK = ReentrantLock()
 # The callout as a C function, made when the first frame is.
 const CALLOUT = Ref{Ptr{Cvoid}}(C_NULL)
 
@@ -317,7 +318,7 @@ function callout(block::Ptr{CalloutBlock}, frameptr::Ptr{Frame})::Cint
         unsafe_store!(Ptr{Ptr{Frame}}(frameptr + FRAME_NEXT), next)
     end
     setframe!(next, frame.pattern, b.current_position, frame.options)
-    code = @inbounds pattern.lookbehinds[number - CALLOUT_FIRST_LOOKBEHIND + 1]
+    code = pattern.lookbehinds[number - CALLOUT_FIRST_LOOKBEHIND + 1]
     rc = pcrematch(code, b.subject, b.subject_length, frame.options, unsafe_load(next))
     rc >= 0 && return Cint(0)
     rc == PCRE2_ERROR_NOMATCH && return Cint(1)
@@ -369,7 +370,7 @@ end
     tid = Threads.threadid()
     frames = @atomic FRAMES.first
     if tid <= length(frames)
-        frame = @inbounds frames[tid]
+        frame = frames[tid]
         frame == C_NULL || return frame
     end
     return newthreadframe(tid)

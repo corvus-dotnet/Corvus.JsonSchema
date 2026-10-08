@@ -226,6 +226,9 @@ vector of UTF-8 bytes. Text that is not JSON is not valid. A schema that recurse
 is reported as invalid. Use [`validate`](@ref) to tell these apart.
 
 JSON text is parsed into buffers the validator reuses, so a validation allocates nothing in the steady state.
+
+Throws [`PatternMatchError`](@ref) when a `pattern` of the schema backtracks on the instance until it reaches a limit
+of the regular expression engine. Whether the instance matches is then not known, so it is not reported as invalid.
 """
 function Base.isvalid(v::Validator, instance::Document)
     ok, _ = run_validation(v, instance)
@@ -274,13 +277,17 @@ function evaluate(v::Validator, instance::Document, collector::ResultsCollector)
     e = acquire(v)
     start!(e, instance)
     e.c = collector
+    # The flag is read before the evaluator is given back: another task may take and reset it at once.
+    exceeded = false
     ok = try
-        evaluate!(e, collector)
+        result = evaluate!(e, collector)
+        exceeded = e.depth_exceeded
+        result
     finally
         e.c = nothing
         release(v, e)
     end
-    e.depth_exceeded && throw(DepthExceededError())
+    exceeded && throw(DepthExceededError())
     return ok
 end
 

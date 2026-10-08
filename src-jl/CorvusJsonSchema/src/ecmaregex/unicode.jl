@@ -88,7 +88,7 @@ intersection(a::CodeSet, b::CodeSet) = complement(setunion(complement(a), comple
 function inset(set::CodeSet, c::Integer)
     lo = 0
     hi = length(set) ÷ 2
-    @inbounds while lo < hi
+    while lo < hi
         mid = (lo + hi) >>> 1
         if c > set[2mid + 2]
             lo = mid + 1
@@ -162,7 +162,7 @@ end
 # A name, as ASCII, against the code points or the bytes p[start:stop] (a pattern as either). Allocates nothing.
 function isname(name::String, p::AbstractVector{<:Integer}, start::Int, stop::Int)
     stop - start + 1 == ncodeunits(name) || return false
-    @inbounds for k in 1:ncodeunits(name)
+    for k in 1:ncodeunits(name)
         p[start + k - 1] == codeunit(name, k) || return false
     end
     return true

@@ -186,7 +186,7 @@ end
 
 more(P::Parser) = P.i < length(P.p)
 
-peekchar(P::Parser) = P.i < length(P.p) ? @inbounds(P.p[P.i + 1]) : END_OF_PATTERN
+peekchar(P::Parser) = P.i < length(P.p) ? P.p[P.i + 1] : END_OF_PATTERN
 
 # The character at a position that counts from zero, which must be inside the pattern.
 charat(P::Parser, k::Int) = P.p[k + 1]
