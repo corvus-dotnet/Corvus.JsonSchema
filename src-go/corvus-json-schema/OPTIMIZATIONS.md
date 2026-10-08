@@ -132,6 +132,13 @@ with the reason.
   for an object of more than 64 properties. JSON text is
   parsed into a pooled document, and a string is read without a copy (`stringBytes`).
   `TestValidationAllocatesNothingInTheSteadyState` holds the keyword paths it lists to zero allocations.
+- **Inlining and bounds checks.** The Go compiler inlines a function whose cost is at most 80 on its own scale and
+  says what it did with `-gcflags=-m`. The type test (`typeOK`), the application of a type-only child (`runChild`)
+  and the test of the expected name (`names.at`) are under that and inline into the loops. `enterChild`, `findAfter`
+  and `names.find` are the calls, each with what it needs written out in it, so that a value costs one call and not
+  a chain of them. A value's header is read once where the value is entered. `visitLookup`, `visitValues` and
+  `allOfType` run over a slice of the tape, with no bounds check per value. See Measured for what each was worth,
+  and Tried and not kept for the same ideas where they did not pay.
 - **Compile time.** Analyses run only when the schema has what they analyse (`analyse`). In-place cycles are found by
   an iterative Tarjan (`computeInPlaceCycles`). Annotation keywords are digested on the first evaluation with a
   collector (`nodeAnnotations`). The metaschemas are embedded and read on demand.
@@ -141,9 +148,9 @@ with the reason.
 - **Leaves decided in the loop.** The C# strict loop decides a string enum, a string const, a string length and a
   nested strict object for a property without leaving the loop (`StrictEntry`), the C# code generator emits leaf
   children in the loop, and the TypeScript generator inlines const and enum leaves. Here only a type-only child is
-  decided in the loop. Any other child goes through `runChild` and `enter`, and a leaf then runs `runLeaf`, which
-  loops over its operations. Missing: const, string enum and length tests in `visitNames`, `visitLookup`, the fused
-  entry and the array loops, without the calls.
+  decided in the loop. Any other child is one call to `enterChild`, and a leaf then runs `runLeaf`, which loops over
+  its operations. Missing: const, string enum and length tests in `visitNames`, `visitLookup`, the fused entry and
+  the array loops, without the calls.
 - **`true` subschemas skipped.** The fused plan treats a `true` child as cover with no test (`optChild`). The object
   plan does not: `additionalProperties: true` stays a child that accepts everything, which costs a call per
   undeclared property and rules out the probe by name (`objectPlan.lookup`), `propertyNames: true` selects the
@@ -165,27 +172,26 @@ with the reason.
 
 ## Todo
 
-1. **Leaves decided in the loop** (see Partial). Every corpus has objects of scalar properties, so this is the first
-   to measure.
+1. **Leaves decided in the loop** (see Partial). Not measured yet. What was measured says how not to do it: every
+   attempt that put more code in the body of `visitNames` made every property dearer (see Tried and not kept, 5 and
+   3), because the loop has more live values than the compiler has registers once it holds a call. A leaf test
+   would have to be reached without growing that loop, for instance from `enterChild`.
 2. **`true` subschemas dropped from the object plan** (see Partial).
 3. **Equivalent subschemas canonicalised.** The C# compiler points fail-fast references at one representative of each
    set of identical subschemas (`CanonicalizeEquivalentNodes`), and the Java port merges structurally identical nodes.
    A chain of conditionals that restates a property's schema at every level then applies one node, which a fused
    object tests once. There is no counterpart here: `getNode` makes one node per schema location.
 4. **Unanchored search** with `bytes.Index` and a first-atom skip (see Partial).
-5. **Inlining and bounds checks audited.** The C# evaluator marks its small hot methods for inlining and the Rust
-   crate keeps its type test small enough to inline. Go decides inlining by a cost budget and says what it did with
-   `-gcflags=-m`. Check `Document.kind`, `typeOK`, `runChild`, `names.findFrom` and the tape loops, and where the
-   compiler keeps bounds checks in them (`-gcflags=-d=ssa/check_bce`).
-6. **Profile-guided optimisation.** Go applies a `default.pgo` profile when it builds a main package. This is the
-   counterpart of the C# MIBC profile and belongs to the benchmark harness and to users' own binaries, not to the
-   library. Measure it in `corvus-json-schema-bench` before recommending it.
-7. **Mixed and large enums** (see Partial).
-8. **Keywords pruned by type** for numbers and strings (see Partial).
-9. **Collecting mode without allocation.** The C# collector is pooled and writes its paths into reused buffers. Here
+5. **Mixed and large enums** (see Partial).
+6. **Keywords pruned by type** for numbers and strings (see Partial).
+7. **Collecting mode without allocation.** The C# collector is pooled and writes its paths into reused buffers. Here
    a collector reuses its row slices after `Reset`, but each row's locations and message are strings built for it.
    The Java port lists the same item.
-10. **Base64 validity without decoding, and `multipleOf` beyond 18 digits without `math/big`** (see Partial).
+8. **Base64 validity without decoding, and `multipleOf` beyond 18 digits without `math/big`** (see Partial).
+9. **The fused pass.** It is the largest part of the corpora with conditionals (ui5, jsconfig, openapi,
+   ansible-meta) and is still a set of small loops over contributors, applications and tests for each property.
+   The C# and Rust plans have the same shape, so there is nothing to port. It would have to be measured line by
+   line as the property loop was.
 
 ## Not applicable
 
@@ -217,8 +223,18 @@ with the reason.
 Warm validation over the 37 jsonschema-benchmark corpora, 2026-10-08, Go 1.27.1, linux/amd64. Every figure is an A/B
 of two builds of the benchmark's protocol program, run alternately five times each, pinned to eight cores, comparing
 the median pass of the warm-up loop. The figure is the time of the change over the time before it, as a geometric
-mean over the corpora, with the range over the corpora. A build measured against itself gave 1.000, with corpora
-between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
+mean over the corpora, with the range over the corpora.
+
+Two measurements say what such a figure can tell. A build measured against itself gave 1.000, with corpora between
+0.963 and 1.024. A build measured against the same source with one unused function added, which only moves the
+code, gave 1.004, with corpora between 0.950 and 1.048. So a corpus inside 0.95 to 1.05 did not move, and a
+geometric mean inside 0.995 to 1.005 is nothing. One corpus (babelrc) has two states about 7 percent apart that
+code layout chooses between (see 4).
+
+From 6 on, a change was first measured by the instructions one validation pass executes, counted by cachegrind as
+the difference between two runs with different numbers of passes, which is repeatable to 0.1 percent. On the machine
+used the evaluator runs close to five instructions per cycle, and the time followed the instruction count wherever
+both were measured. Hardware counters were not available (WSL2).
 
 1. **The type test inlined** (`typeOK`, `integerOK`). The mask test was 124 on the inliner's scale, against a budget
    of 80, so every type test was a call. The integer test, which few values reach, is now the call. 0.979 (0.724 to
@@ -227,9 +243,9 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
    that made a second call to `enter`. It is now one test of the value's kind against `child.pass`, inlined into the
    property and item loops, and one call (`enterChild`, which has the dispatch by shape in it) for a child with
    keywords. 0.929 (0.840 to 0.999).
-3. **The expected name tested in the property loops** (`names.at`, `names.keys`, `findAfter`). `findFrom` cost 346, so
-   every property name was a call. The test of the name after the previous match (its length and word, side by side
-   in `names.keys`) is now in `visitNames`, `visitGeneral` and the fused pass, and the search is the call. 0.986
+3. **The expected name tested in the property loops** (`names.at`, `nameMap.keys`, `findAfter`). `findFrom` cost 346,
+   so every property name was a call. The test of the name after the previous match (its length and word, side by
+   side in `nameMap.keys`) is now in `visitNames`, `visitGeneral` and the fused pass, and the search is the call. 0.986
    (0.938 to 1.073). The corpora above 1.03 in that run (openapi, ansible-meta, cmake-presets) were measured again
    with nine runs each at the protocol's warm-up time and gave 1.019, 1.012 and 1.022, which is inside the noise.
 4. **Names found through a hash of their key** (`nameMap`). The map was by length, then by the byte that best told
@@ -237,9 +253,9 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
    now one table (see Name lookup under Done), and `findKey` calls nothing. 0.979 (0.854 to 1.082), and compile
    0.90. Three forms were measured before this one. Linear probing with the keys in the slots and two slots for each
    name, and a perfect hash by displacement (two reads to the slot), were both slower on a corpus of one or two
-   properties per object (babelrc, 1.11 and 1.16 on a subset run): what counts there is the time until the index is
-   known, since the dispatch on the child's shape waits for it, and both add a read or a mispredicted probe before
-   it. The 1.082 of the kept form is on that same corpus, where twelve runs of each build put the build before the
+   properties per object (babelrc, 1.11 and 1.16 on a subset run). A likely reason, not proven: what counts there
+   is the time until the index is known, since the dispatch on the child's shape waits for it, and both add a read
+   or a second probe before it. The 1.082 of the kept form is on that same corpus, where twelve runs of each build put the build before the
    change between 40.4 and 43.6 microseconds a pass, this one between 44.3 and 47.7, and a build of the old code
    with nothing but an unused function added at 41.4 to 42.0 in seven runs and 44.6 to 45.6 in five. So that corpus
    has two states a pass can be in, about 7 percent apart, that code layout alone chooses between.
@@ -282,3 +298,63 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
     most about a millisecond for a pattern that turns out too large for one). The differential test of the package
     compares the automaton, `regexp` itself and the backtracking matcher on 1500 texts for each of 1462 patterns,
     1418 of which have an automaton.
+
+**The ten together.** The build after 10 against the build before 1, over all 37 corpora at the benchmark's own
+warm-up time of 2 seconds, five alternating runs each: the benchmark's warm figure (the last pass) 0.755, corpora
+from 0.526 (jsconfig) to 0.923 (geojson), and the median pass 0.753, from 0.513 to 0.939. Compile 0.941. Parse
+1.020, where the parser was not touched and a build measured against itself gave 1.021 (one parse is timed per
+run). Instructions per pass, where counted at both ends: helm-chart-lock 0.70, importmap 0.59.
+
+**Where the time is after them.** CPU profiles of the benchmark's loop, the mean share of samples over the 37
+corpora: finding property names 26 percent (`findAfter` 12, `names.find`, `nameWord`, `names.at`), entering values
+23 (`enterChild` 16, which has the dispatch and the start of a strict object in it), the object loops 15
+(`visitNames` 10), reading the tape and the text 15 (`Document.str` 10), arrays 6, applicators 6, patterns 4, the
+fused pass 3, leaves 2. Against the Rust crate, which this is a port of and which interprets the same plans, what
+is left is not a missing analysis: the Go compiler keeps the bounds checks the crate does without (`get_unchecked`),
+inlines by a budget where the crate's hot functions are marked to inline, and keeps a loop's state on the stack
+once the loop has a call in it.
+
+## Tried and not kept
+
+Each was measured as under Measured and reverted. "Instructions" is the instruction count of a validation pass.
+
+1. **The tape as one struct of two words per value** in place of two `uint64` (one bounds check for a value's two
+   words). 0.988 over all 37, but cypress 1.148 and lerna 1.050, and cypress stayed there in two more builds with
+   unused functions added (45.1 to 46.5 microseconds a pass against 38.7 to 40.6 before), so it is the change and
+   not layout. Parse 1.000.
+2. **A name's word read with no branch on its length**: one eight-byte read masked to the length (a short name in a
+   document's text has the bytes that follow it to read into), and its last eight bytes as a second word for every
+   name. The idea was that the three-way branch on the length is mispredicted. 1.026 over 20 corpora, 16 of them
+   slower, the worst 1.095.
+3. **The properties that need no call decided in a function that calls nothing** (`scanNames`), so that the loop's
+   state stays in registers. With the function run for every property, and the loop only for those that need a
+   call: instructions 0.80 to 0.92 for objects of scalars (jshintrc, helm-chart-lock, stale) and 1.06 to 1.20 for
+   objects of objects and arrays (importmap, aws-cdk, babelrc, dependabot). Entered only after a property that
+   needed no call: instructions 0.960 over 10 corpora with none above 1.01, but omnisharp, whose names are longer
+   than sixteen bytes and were left to the loop, 1.21, and 1.141 in time. With long names compared in the function:
+   omnisharp 0.89 and cypress 0.83, but helm-chart-lock back to 0.99, since the function then has more live values
+   than registers too. No variant was better everywhere. The best had a corpus 8 to 14 percent slower.
+4. **The expected name's word read from the text in place**, without taking the name as a slice first
+   (`Document.str` is the largest single item of the profile, 11 percent of the samples on average). Instructions
+   1.050 over 18 corpora, all but one slower: each read from `text[at:]` has its own two tests, where the reads from
+   a slice already made have none.
+5. **The sorted-order prediction tested in the loops** (it is in `findAfter`), for instances that list their
+   properties sorted. Instructions 1.038 over 18 corpora, and 1.034 on the corpus it was for (helm-chart-lock): the
+   larger loop body costs every property more than the call it saves.
+6. **A pointer to the node's keywords in `child`** (16 bytes in place of 8), in place of the read through the plans
+   in `enterChild`. Instructions 0.999 over 18 corpora.
+7. **`visitNames` and the array item loop over a slice of the tape**, as `visitLookup` and `visitValues` are.
+   Instructions 1.002 and 1.004 over the corpora measured: with a call in the loop the slice is one more value to
+   keep on the stack.
+8. **A perfect hash for the names** (hash and displace: the high bits of the hash choose a bucket, whose
+   displacement gives the one slot), and **linear probing with the keys in the slots**. See Measured, 4.
+9. **Profile-guided optimisation of the benchmark's entry** (a `default.pgo` in its main package, from profiles of
+   the protocol loop over all 37 corpora, which is the best case for it since it is then measured on the same
+   corpora). 0.994 over all 37, from 0.874 (openapi) to 1.151 (cypress): some corpora faster (cql2 0.898, ui5
+   0.906, jsconfig 0.924), as many slower (yamllint 1.090, lerna 1.065, babelrc 1.064). It belongs to a user's own
+   binary and cannot be shipped in the library, and here it comes to nothing.
+
+Measured and not committed, for a decision: **`Document.str` without bounds checks**, built with `unsafe.Slice` and
+`unsafe.Add` in place of a slice expression of the source or the text. Over 17 corpora the median pass was 0.90 to
+0.997 of the time before, most corpora 0.95 to 0.99. The Rust crate reads its tape and text unchecked
+(`get_unchecked` in `document.rs`). The tape reads would be the other half of it and were not measured.
