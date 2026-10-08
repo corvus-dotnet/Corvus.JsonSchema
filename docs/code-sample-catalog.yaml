@@ -1127,14 +1127,14 @@ main-docs:
       - {index: 3, language: cpp, lines: [69, 80]}
   - path: "docs/JsonSchemaForGo.md"
     blocks:
-      - {index: 0, language: sh, lines: [21, 23]}
-      - {index: 1, language: go, lines: [27, 29]}
-      - {index: 2, language: go, lines: [33, 45]}
-      - {index: 3, language: go, lines: [56, 72]}
-      - {index: 4, language: go, lines: [78, 89]}
-      - {index: 5, language: go, lines: [107, 134]}
-      - {index: 6, language: go, lines: [138, 160]}
-      - {index: 7, language: go, lines: [166, 183]}
+      - {index: 0, language: sh, lines: [23, 25]}
+      - {index: 1, language: go, lines: [29, 31]}
+      - {index: 2, language: go, lines: [35, 47]}
+      - {index: 3, language: go, lines: [58, 74]}
+      - {index: 4, language: go, lines: [80, 91]}
+      - {index: 5, language: go, lines: [109, 136]}
+      - {index: 6, language: go, lines: [140, 162]}
+      - {index: 7, language: go, lines: [168, 185]}
   - path: "docs/JsonSchemaForJava.md"
     blocks:
       - {index: 0, language: xml, lines: [22, 28]}

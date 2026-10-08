@@ -15,6 +15,8 @@ against it.
 - **Results and annotations.** Basic, Detailed and Verbose results, and annotations, the same as every other Corvus
   implementation.
 - **Allocation-free validation.** In the steady state, validating a parsed document, or JSON text, allocates nothing.
+  The exceptions are an asserted `regex`, `idn-hostname` or `idn-email` format, a `hostname` with an `xn--` label,
+  a custom format (which is given a copy of the string), and a `multipleOf` whose divisor has more than 18 significant digits.
 
 ## Install
 

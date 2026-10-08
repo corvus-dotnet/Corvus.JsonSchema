@@ -63,8 +63,9 @@ jobs:
         with:
           go-version: ${{ matrix.go == 'minimum' && '' || matrix.go }}
           go-version-file: ${{ matrix.go == 'minimum' && 'src-go/corvus-json-schema/go.mod' || '' }}
-          # The library has no dependencies, so the benchmark module's sums key the cache.
-          cache-dependency-path: src-go/corvus-json-schema-bench/go.sum
+          # No cache: the library has no dependencies and builds in seconds, and the repository's Actions cache is
+          # needed by the .NET build, whose state does not fit when other caches crowd it.
+          cache: false
       - name: Check the module's LICENSE matches the repository's
         run: cmp ../../LICENSE LICENSE
       - name: Format

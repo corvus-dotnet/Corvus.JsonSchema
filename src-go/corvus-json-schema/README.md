@@ -10,7 +10,9 @@ later. It has no dependencies outside the standard library.
 - **Fast**: a schema compiles once into a node graph and fail-fast plans, each holding only the checks its subschema
   needs, with an object's keywords fused into one pass over its properties. See [Performance](#performance).
 - **No allocation**: validating a parsed document, or JSON text through the validator's reused buffers, allocates
-  nothing in the steady state.
+  nothing in the steady state. The exceptions are an asserted `regex`, `idn-hostname` or `idn-email`
+  format, a `hostname` with an `xn--` label, a custom format (which is given a copy of the string), and
+  a `multipleOf` whose divisor has more than 18 significant digits.
 - **Results and annotations**: evaluate with a results collector at the Basic, Detailed or Verbose level for the same
   rows (locations, messages, order) as the C# `JsonSchemaResultsCollector`, and annotations as
   `JsonSchemaAnnotationProducer` extracts them.
