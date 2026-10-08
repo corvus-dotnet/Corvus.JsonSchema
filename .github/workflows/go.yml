@@ -61,7 +61,9 @@ jobs:
         # The action sets GOTOOLCHAIN=local, so the minimum is tested with that toolchain and no newer one.
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: ${{ matrix.go == 'minimum' && '' || matrix.go }}
+          # 'minimum' is the version go.mod names, read from the file. (An expression of the form
+          # "minimum && '' || matrix.go" does not work: the empty string is false, so it yields matrix.go.)
+          go-version: ${{ matrix.go != 'minimum' && matrix.go || '' }}
           go-version-file: ${{ matrix.go == 'minimum' && 'src-go/corvus-json-schema/go.mod' || '' }}
           # No cache: the library has no dependencies and builds in seconds, and the repository's Actions cache is
           # needed by the .NET build, whose state does not fit when other caches crowd it.
