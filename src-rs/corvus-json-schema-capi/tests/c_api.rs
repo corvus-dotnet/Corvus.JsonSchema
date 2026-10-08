@@ -503,6 +503,18 @@ fn collectors_hold_the_latest_evaluation() {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Patterns
+
+// The crate before 0.1.4 kept this pattern's excluded set as ASCII bits and read é as the bits of C and ).
+#[test]
+fn excluded_class_with_a_member_outside_ascii() {
+    let v = compile(r#"{"pattern": "^(?=[^é]+$)(?=(.*\\w)).+$"}"#, None).unwrap();
+    assert_eq!(validate(&v, r#""C1""#), Ok(true));
+    assert_eq!(validate(&v, r#"")a""#), Ok(true));
+    assert_eq!(validate(&v, r#""é1""#), Ok(false));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Threads and version
 
 #[test]

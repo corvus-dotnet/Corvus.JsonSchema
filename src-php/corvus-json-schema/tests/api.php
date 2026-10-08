@@ -130,6 +130,12 @@ check('a JSON text schema', false, Validator::compile('{"type": "string"}')->isV
 check('a boolean schema', false, Validator::compile(false)->isValid(1));
 throws('an invalid JSON text schema', InvalidJsonException::class, fn () => Validator::compile('{'));
 throws('an invalid pattern', CompilationException::class, fn () => Validator::compile(['pattern' => '(']));
+// The crate before 0.1.4 kept this pattern's excluded set as ASCII bits and read é as the bits of C and ).
+$excluded = Validator::compile(['pattern' => '^(?=[^é]+$)(?=(.*\w)).+$']);
+check('a class member outside ASCII: C', true, $excluded->isValid('C1'));
+check('a class member outside ASCII: )', true, $excluded->isValid(')a'));
+check('a class member outside ASCII: the member', false, $excluded->isValid('é1'));
+check('a class member outside ASCII: the member, JSON text', false, $excluded->isValidJson('"é1"'));
 check('exceptions share a base', true, is_subclass_of(CompilationException::class, JsonSchemaException::class));
 
 // Errors.

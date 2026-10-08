@@ -27,7 +27,7 @@ from typing import Any
 from . import _native
 from ._native import SchemaCompilationError, SchemaEvaluationDepthError, SchemaResult, Validator
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 __all__ = [
     "Annotation",
