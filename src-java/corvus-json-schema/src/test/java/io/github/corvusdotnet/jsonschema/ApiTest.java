@@ -131,6 +131,35 @@ class ApiTest {
     }
 
     @Test
+    void patternsOfEcmaScript2025AndRefusedPatterns() {
+        Validator v = Validator.compile("{\"pattern\": \"^(?i:[a-f]+)\\\\p{Dash}(?<n>x)\\\\k<\\\\u006e>(?<=^.*)$\"}");
+        assertTrue(v.isValid("\"aBc-xx\""));
+        assertTrue(v.isValid("\"F\u2014xx\""));
+        assertFalse(v.isValid("\"g-xx\""));
+        assertFalse(v.isValid("\"a-x\""));
+        Validator names = Validator.compile(
+                "{\"patternProperties\": {\"^(?:(?<k>a)|(?<k>b))\\\\k<k>$\": {\"type\": \"number\"}}}");
+        assertTrue(names.isValid("{\"aa\": 1, \"bb\": 2, \"ab\": \"x\"}"));
+        assertFalse(names.isValid("{\"bb\": \"x\"}"));
+        // A valid pattern whose meaning java.util.regex cannot give is an error that says so. It is never run with
+        // another meaning.
+        SchemaCompilationException refused = assertThrows(SchemaCompilationException.class,
+                () -> Validator.compile("{\"pattern\": \"(?<=\\\\1(a))b\"}"));
+        assertEquals("Unsupported regular expression '(?<=\\1(a))b' in pattern. It is valid ECMA-262, but this library "
+                + "cannot run a backreference inside a lookbehind with the meaning ECMA-262 gives it.", refused.getMessage());
+        SchemaCompilationException invalid = assertThrows(SchemaCompilationException.class,
+                () -> Validator.compile("{\"patternProperties\": {\"(?<a>x)(?<a>y)\": {}}}"));
+        assertEquals("Invalid regular expression '(?<a>x)(?<a>y)' in patternProperties.", invalid.getMessage());
+        // The regex format is about validity alone.
+        Validator format = Validator.compile("{\"format\": \"regex\"}",
+                CompileOptions.builder().assertFormat(true).build());
+        assertTrue(format.isValid("\"(?<=\\\\1(a))b\""));
+        assertTrue(format.isValid("\"(?i:a)\\\\p{scx=Arab}\""));
+        assertFalse(format.isValid("\"(?i)a\""));
+        assertFalse(format.isValid("\"\\\\p{Nope}\""));
+    }
+
+    @Test
     void documentsPrintAsJson() {
         String text = "{\"a\":[1,2.50,true,null,\"x\\n\\\"\\u0001\"],\"b\":{}}";
         assertEquals(text, JsonDocument.parse(text).toString());

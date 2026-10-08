@@ -36,7 +36,24 @@ final class SchemaPattern {
         }
     }
 
-    /** Compiles (or fetches from the cache) a pattern; null when it is not a valid ECMA-262 regular expression. */
+    /**
+     * The message for a pattern {@link #compile} returned null for, where {@code keyword} is the keyword that holds
+     * it. A pattern that is valid ECMA-262 and that cannot be run with the same meaning says why (see
+     * {@link EcmaRegex}).
+     */
+    static String failure(String pattern, String keyword) {
+        String reason = EcmaRegex.unsupported(pattern);
+        if (reason == null) {
+            return "Invalid regular expression '" + pattern + "' in " + keyword + ".";
+        }
+        return "Unsupported regular expression '" + pattern + "' in " + keyword + ". It is valid ECMA-262, but this "
+                + "library cannot run " + reason + " with the meaning ECMA-262 gives it.";
+    }
+
+    /**
+     * Compiles (or fetches from the cache) a pattern; null when it is not a valid ECMA-262 regular expression, or is
+     * one that cannot be run with the same meaning ({@link #failure} tells the two apart).
+     */
     static SchemaPattern compile(String pattern) {
         SchemaPattern cached = CACHE.get(pattern);
         if (cached != null) {

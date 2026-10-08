@@ -68,11 +68,8 @@ class EcmaRegexValidatorTest {
     }
 
     private static void check(String p) {
-        int verdict = EcmaRegex.translatorVerdict(p);
-        if (verdict == 2) {
-            return;
-        }
-        assertEquals(verdict == 1, new EcmaRegex.Validator().isValid(p), p);
+        // A pattern the translator refuses to run (verdict 2) is still a valid one.
+        assertEquals(EcmaRegex.translatorVerdict(p) != 0, new EcmaRegex.Validator().isValid(p), p);
     }
 
     @Test
@@ -101,10 +98,7 @@ class EcmaRegexValidatorTest {
                 sb.append(alphabet.charAt(random.nextInt(alphabet.length())));
             }
             String p = sb.toString();
-            int verdict = EcmaRegex.translatorVerdict(p);
-            if (verdict != 2) {
-                assertEquals(verdict == 1, v.isValid(p), p);
-            }
+            assertEquals(EcmaRegex.translatorVerdict(p) != 0, v.isValid(p), p);
         }
     }
 }

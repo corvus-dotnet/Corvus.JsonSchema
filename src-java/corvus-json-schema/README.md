@@ -21,12 +21,12 @@ with no dependencies.
 <dependency>
   <groupId>io.github.corvus-dotnet</groupId>
   <artifactId>corvus-json-schema</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
 </dependency>
 ```
 
 ```kotlin
-implementation("io.github.corvus-dotnet:corvus-json-schema:0.1.0")
+implementation("io.github.corvus-dotnet:corvus-json-schema:0.1.1")
 ```
 
 ## Usage
@@ -114,6 +114,31 @@ The levels and rows are those of the C# collector: `BASIC` records failures with
 text, `VERBOSE` records every keyword, passing ones and annotations included. Collecting runs the evaluator's
 interpreter over the compiled graph.
 
+## Regular expressions
+
+`pattern`, `patternProperties` and the `regex` format follow ECMA-262, as JSON Schema specifies, with the grammar of
+ECMAScript 2025. A pattern is read with the `u` flag, and a pattern that is not valid with it is read as a pattern
+with no flag, which accepts what many schemas hold (`\&`, a lone brace). The `regex` format accepts only the `u`
+flag grammar.
+
+- `\p{...}` covers every property, value and alias ECMA-262 lists: General_Category, Script, Script_Extensions and
+  the 53 binary properties. The data is Unicode 17 on every JDK. It does not depend on the Unicode version of the JDK
+  the library runs on.
+- Modifier groups (`(?i:...)`, `(?m:...)`, `(?s:...)`, `(?i-s:...)`) ignore case, match at line terminators and let
+  the dot match everything as ECMA-262 defines them. Group names can be any ECMAScript identifier, can be written
+  with `\u` escapes, and can be shared by groups in separate alternatives.
+- A lookbehind can be of any length. One that `java.util.regex` cannot bound is run by a search whose time grows with
+  the square of the length of the string.
+
+The patterns are run by `java.util.regex`, after translation. A few valid patterns cannot be given their ECMA-262
+meaning there, all of them with a backreference: one inside a lookbehind, or to a group inside a lookbehind; one to a
+group of a lookaround that may not have matched; one to a group that the repetition holding both can skip, or of a
+repetition that can match the empty string; and a case-insensitive one (inside `(?i:...)`), unless the only cased
+characters its group can hold are ASCII letters (with the `u` flag grammar, not `k` or `s`, which U+212A and U+017F
+fold to) and it can hold no character beyond the Basic Multilingual Plane. Compiling a schema with such a pattern throws
+`SchemaCompilationException` with a message that starts "Unsupported regular expression" and names the construct. It
+is never run with another meaning. The `regex` format still accepts it, as it is a valid pattern.
+
 ## How it works
 
 The pipeline follows the C# evaluator stage for stage, as the Rust and TypeScript ports do: the loader identifies
@@ -128,7 +153,8 @@ discriminators. Then, where the C# evaluator interprets fused plans, this port g
 - `$ref`/`allOf` chains of object schemas are checked in one merged pass; `oneOf`/`anyOf` narrow by a discriminator
   property or by type; `unevaluated*` is decided from the coverage known at compile time;
 - common pattern shapes (literals, class sequences, separated lists, line lengths) match the UTF-8 bytes without a
-  regular expression engine; other patterns are translated from ECMA-262 to `java.util.regex`;
+  regular expression engine; other patterns are translated from ECMA-262 to `java.util.regex`, with Unicode data of
+  the library's own;
 - numbers compare exactly across longs and doubles, and `multipleOf` is decided on the decimal digits of the text.
 
 [OPTIMIZATIONS.md](OPTIMIZATIONS.md) maps each technique to its counterpart in the other Corvus evaluators.
@@ -176,6 +202,10 @@ exits is better served by a native implementation.
   without escape analysis).
 - `PatternShapesTest`, `EcmaRegexValidatorTest`, `FastDoubleTest`, `RuntimeTest`: the regex-free matchers, the regex
   format's reader and the number conversion against their straightforward counterparts.
+- `EcmaRegexOracleTest`: the translation of ECMA-262 patterns against what V8 answers, for the 61,383 patterns of
+  `v8_oracle.json` (the file the Go port's pattern package is tested with). The patterns the translator refuses are
+  counted by reason. `EcmaRegexTest` and `EcmaUnicodeTest` cover the property escapes, the modifier groups, lookbehind
+  and the Unicode data, which `gen-ecma-unicode-data.ps1` generates.
 - `MetaschemasTest`: the embedded metaschemas match `src/Corvus.Text.Json/metaschema`.
 
 ## License

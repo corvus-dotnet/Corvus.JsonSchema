@@ -21,7 +21,7 @@
     <dependency>
       <groupId>io.github.corvus-dotnet</groupId>
       <artifactId>corvus-json-schema</artifactId>
-      <version>0.1.0</version>
+      <version>0.1.1</version>
     </dependency>
     <!-- The versions jsonschema-benchmark runs. -->
     <dependency>
