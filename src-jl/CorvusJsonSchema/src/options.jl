@@ -22,7 +22,7 @@ function CompileOptions(; default_dialect::Dialect=Draft202012, assert_format::U
     base_uri::AbstractString="", entry_point::Union{Nothing,AbstractString}=nothing, max_depth::Integer=128)
     custom = Dict{String,Any}()
     if formats !== nothing
-        for (name, validator) in pairs(formats)
+        for (name, validator) in formats
             custom[String(name)] = validator
         end
     end

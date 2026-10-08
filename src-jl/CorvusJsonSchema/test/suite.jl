@@ -10,29 +10,6 @@ const SUITE_DRAFTS = [("draft4", Draft4), ("draft6", Draft6), ("draft7", Draft7)
 # Exclusions, matching the C#, Rust and Go runners: zero-terminated floats.
 const SUITE_EXCLUDED_FILES = Set(["draft4/optional/zeroTerminatedFloats.json"])
 
-# Resolves the suite's remotes (http://localhost:1234/...) from its remotes directory.
-function remote_resolver(root::String)
-    remotes = joinpath(root, "remotes")
-    cache = Dict{String,Union{Nothing,Document}}()
-    guard = ReentrantLock()
-    return function (uri::String)
-        prefix = "http://localhost:1234/"
-        startswith(uri, prefix) || return nothing
-        rest = uri[ncodeunits(prefix)+1:end]
-        return lock(guard) do
-            get!(cache, rest) do
-                path = joinpath(remotes, split(rest, '/')...)
-                isfile(path) || return nothing
-                try
-                    parse_document(read(path))
-                catch
-                    nothing
-                end
-            end
-        end
-    end
-end
-
 const RESULTS_LEVELS = [Basic, Detailed, Verbose]
 
 # Evaluates one instance every way the API offers and checks that they agree. It returns the result, or a message
