@@ -215,3 +215,7 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
 1. **The type test inlined** (`typeOK`, `integerOK`). The mask test was 124 on the inliner's scale, against a budget
    of 80, so every type test was a call. The integer test, which few values reach, is now the call. 0.979 (0.724 to
    1.034). The 0.724 is a map of strings (importmap).
+2. **A type-only child decided where it is applied** (`runChild`, `child.pass`, `enterChild`). `runChild` was a call
+   that made a second call to `enter`. It is now one test of the value's kind against `child.pass`, inlined into the
+   property and item loops, and one call (`enterChild`, which has the dispatch by shape in it) for a child with
+   keywords. 0.929 (0.840 to 0.999).

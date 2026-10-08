@@ -24,10 +24,21 @@ type child struct {
 	types uint8
 	// What the child's keywords come to, so that entering it skips the dispatch it does not need.
 	shape shape
+	// For a child that is only a type test (shapeTrivial), the types again, and 0 for any other child: a value whose
+	// kind is in pass needs nothing more, which is one test where the child is applied.
+	pass uint8
+}
+
+// setShape sets a child's types and shape together, with what follows from them.
+func (c *child) setShape(types uint8, s shape) {
+	c.types, c.shape, c.pass = types, s, 0
+	if s == shapeTrivial {
+		c.pass = types
+	}
 }
 
 // noChild is a child that accepts anything and is never entered (an undeclared name without additionalProperties).
-var noChild = child{id: noNode, types: anyType, shape: shapeTrivial}
+var noChild = child{id: noNode, types: anyType, shape: shapeTrivial, pass: anyType}
 
 // shape is the shape of a node's plan, as its callers enter it.
 type shape uint8
@@ -363,7 +374,9 @@ func compilePlans(p *program) []plan {
 		if s.shape == shapeObject {
 			s.shape = shapeGeneral
 		}
-		return child{id: id, types: s.types, shape: s.shape}
+		c := child{id: id}
+		c.setShape(s.types, s.shape)
+		return c
 	}
 	// Fused object plans, for nodes whose object semantics span in-place applicators. A fused plan applies its
 	// contributors' keywords without entering them as nodes, so the dynamic scope below it would differ from the
@@ -385,10 +398,9 @@ func compilePlans(p *program) []plan {
 			return
 		}
 		s := summary[c.id]
-		c.types = s.types
-		c.shape = s.shape
+		c.setShape(s.types, s.shape)
 		if s.shape == shapeObject && fusedNodes[c.id] {
-			c.shape = shapeGeneral
+			c.setShape(s.types, shapeGeneral)
 		}
 	}
 	for i := range plans {
@@ -946,10 +958,17 @@ func (e *evaluator) run(id nodeID, x int) bool {
 	return e.enter(pl.shape, pl.body, x)
 }
 
-// runChild evaluates a child at a new instance location: its type check inline, its other keywords (if any) by
-// call.
+// runChild evaluates a child at a new instance location. A child that is only a type test the value passes is
+// decided here, in the caller once this is inlined, and anything else is one call.
 func (e *evaluator) runChild(c child, x int) bool {
-	if c.types != anyType && !typeOK(c.types, e.d, x) {
+	return c.pass&e.d.kind(x) != 0 || e.enterChild(c, x)
+}
+
+// enterChild is runChild past its inlined test: the type test in full, then the child's keywords by its shape.
+func (e *evaluator) enterChild(c child, x int) bool {
+	d := e.d
+	kind := d.kind(x)
+	if c.types&kind == 0 && !integerOK(c.types, d, x) {
 		return false
 	}
 	if c.shape == shapeTrivial {
@@ -959,7 +978,27 @@ func (e *evaluator) runChild(c child, x int) bool {
 	if b == nil {
 		return true
 	}
-	return e.enter(c.shape, b, x)
+	switch c.shape {
+	case shapeLeaf:
+		return e.runLeaf(b, x)
+	case shapeStringEnum:
+		return kind == kindString && b.values[0].names.find(d.str(x)) >= 0
+	case shapeStrings:
+		return kind != kindString || e.runString(b.str, x)
+	case shapeObject:
+		if kind != kindObject {
+			return true
+		}
+		if b.object.strict {
+			return e.runStrictObject(b.object, x)
+		}
+		return e.runObject(b.object, x)
+	case shapeArray:
+		return kind != kindArray || e.runArray(b.array, x)
+	case shapeApply:
+		return e.runApply(b.apply, x)
+	}
+	return e.runBody(b, x)
 }
 
 // enter evaluates a body by its shape (its types already tested, and not on an in-place cycle unless general).
