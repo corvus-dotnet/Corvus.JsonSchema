@@ -461,6 +461,9 @@ mutable struct Program
     bodies::Vector{Union{Nothing,Body}}
     selfs::Vector{Child}
     guards::Vector{Bool}
+    # An evaluation may throw: the schema has a custom format, which is the caller's code, or a pattern on the
+    # engine, which throws when a match reaches one of its limits.
+    may_throw::Bool
 end
 
 @inline node(p::Program, id::NodeId) = p.nodes[id+1]

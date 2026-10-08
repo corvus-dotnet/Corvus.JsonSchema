@@ -9,7 +9,7 @@ function Program(c::CompiledSchema, options::CompileOptions)
     names = sort!(collect(keys(options.formats)))
     p = Program(nodes, c.root, c.root, c.uses_dynamic_scope, options.max_depth, names,
         Any[options.formats[name] for name in names], NodeId[], c.annotation_sources, ReentrantLock(), nothing,
-        options.assert_format != 0, Plan[], Union{Nothing,Body}[], Child[], Bool[])
+        options.assert_format != 0, Plan[], Union{Nothing,Body}[], Child[], Bool[], false)
     for id in eachindex(nodes)
         current = NodeId(id - 1)
         for _ in 1:16
@@ -31,6 +31,9 @@ function Program(c::CompiledSchema, options::CompileOptions)
     p.bodies = Union{Nothing,Body}[pl.body for pl in p.plans]
     p.selfs = Child[pl.self for pl in p.plans]
     p.guards = Bool[pl.guard for pl in p.plans]
+    on_engine(pattern::Union{Nothing,Pattern}) = pattern !== nothing && pattern.kind == MATCH_ENGINE
+    p.may_throw = !isempty(p.format_names) ||
+                  any(n -> on_engine(n.pattern) || any(pp -> on_engine(pp.pattern), n.pattern_properties), nodes)
     return p
 end
 

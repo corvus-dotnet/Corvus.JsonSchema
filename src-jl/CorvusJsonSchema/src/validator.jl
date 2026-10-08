@@ -161,10 +161,21 @@ end
 function run_validation(v::Validator, instance::Document)
     e = acquire(v)
     start!(e, instance)
+    v.program.may_throw && return run_guarded(v, e, false)
     ok = validate!(e)
     exceeded = e.depth_exceeded
     release(v, e)
     return ok, exceeded
+end
+
+# run_validation for a program whose evaluation may throw: the evaluation state is given back all the same.
+@noinline function run_guarded(v::Validator, e::Evaluator, text::Bool)
+    try
+        ok = validate!(e)
+        return ok, e.depth_exceeded
+    finally
+        text ? release_text(v, e) : release(v, e)
+    end
 end
 
 # Parses JSON text into the buffers of an evaluation state. It reports whether the text was JSON.
@@ -197,6 +208,10 @@ function run_text_validation(v::Validator, json::JsonText)
         return false, false, message, offset
     end
     start!(e, e.text)
+    if v.program.may_throw
+        ok, exceeded = run_guarded(v, e, true)
+        return ok, exceeded, "", 0
+    end
     ok = validate!(e)
     exceeded = e.depth_exceeded
     release_text(v, e)

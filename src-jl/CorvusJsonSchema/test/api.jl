@@ -345,6 +345,18 @@
         @test expect_valid(v, """["{\\"a\\": 1}", "not json"]""", false)
     end
 
+    # An exception from a custom format reaches the caller, and the validator is fit for the next validation.
+    @testset "a custom format that throws" begin
+        v = compile_schema("""{ "items": { "format": "fragile" } }"""; assert_format=true,
+            formats=Dict("fragile" => s -> s == "boom" ? error("boom") : true))
+        @test expect_valid(v, "[\"a\", \"b\"]", true)
+        @test throws(() -> isvalid(v, "[\"a\", \"boom\"]"), ErrorException)
+        @test throws(() -> isvalid(v, parse_document("[\"boom\"]")), ErrorException)
+        @test throws(() -> evaluate(v, "[\"boom\"]", ResultsCollector(Basic)), ErrorException)
+        @test !(@atomic v.busy)
+        @test expect_valid(v, "[\"a\", 1]", true)
+    end
+
     # A number in a schema and the same number in an instance are the same Float64, however it is written.
     @testset "schema and instance numbers parse alike" begin
         for (keyword, literal) in ["exclusiveMaximum" => "972783798187987123879878123.18878137",
