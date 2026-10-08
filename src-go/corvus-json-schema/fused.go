@@ -1069,13 +1069,20 @@ func (e *evaluator) runFusedPass(f *fusedObject, x int, pass *fusedPass) bool {
 	deferred := uint64(0)
 	pending := 0
 	hint := 0
+	ns := f.names
 	first := d.first(x)
 	for ordinal := 0; ordinal < count; ordinal++ {
 		k := first + 2*ordinal
 		name := d.str(k)
+		w := nameWord(name)
 		var index int
+		if ns.at(hint, len(name), w) && (len(name) <= 8 || string(name) == ns.m.names[hint]) {
+			index, hint = hint, hint+1
+		} else {
+			index, hint = ns.findAfter(name, w, hint)
+		}
 		var outcome uint8
-		if index, hint = f.names.findFrom(name, hint); index >= 0 {
+		if index >= 0 {
 			outcome = e.fusedEntry(f, index, k+1, pass)
 		} else {
 			outcome = e.fusedUnknown(f, name, d.strASCII(k), k+1, pass)

@@ -180,10 +180,18 @@ type names struct {
 	// Bit n set: some name has length n (lengths of 63 and more share bit 63). A name whose length is not in the
 	// set is not declared, which settles most misses without a search.
 	lengths uint64
-	m       nameMap
+	// The length and the word of each name, side by side: what the test of the expected name reads (see at).
+	keys []nameKey
+	m    nameMap
 	// For a hint h (the index after the previous match), the name after that match in sorted order (entry 0: the
 	// first name in sorted order). noName after the last.
 	sortedNext []uint32
+}
+
+// nameKey is a name's length and word (see nameWord), which decide a name of at most eight bytes.
+type nameKey struct {
+	word   uint64
+	length int
 }
 
 func lengthBit(length int) uint64 {
@@ -194,9 +202,10 @@ func lengthBit(length int) uint64 {
 }
 
 func newNames(list []string) *names {
-	ns := &names{m: newNameMap(list)}
+	ns := &names{m: newNameMap(list), keys: make([]nameKey, len(list))}
 	order := make([]uint32, len(list))
 	for i, n := range list {
+		ns.keys[i] = nameKey{ns.m.words[i], len(n)}
 		ns.lengths |= lengthBit(len(n))
 		order[i] = uint32(i)
 	}
@@ -232,18 +241,31 @@ func (ns *names) findString(name string) int {
 	return ns.find([]byte(name))
 }
 
+// at reports whether the name at a hint (the index after the previous match) has the given length and word. For a
+// name of at most eight bytes that is the name.
+func (ns *names) at(hint, length int, w uint64) bool {
+	return uint(hint) < uint(len(ns.keys)) && ns.keys[hint].length == length && ns.keys[hint].word == w
+}
+
 // findFrom finds a name, trying the one after the previous match first: instances tend to list their properties in
-// the schema's order, so the next name is usually the next one declared. Failing that, the next name in sorted order
-// (instances written by tools that sort their keys). It returns the index (or -1) and the hint for the next call.
+// the schema's order, so the next name is usually the next one declared. It returns the index (or -1) and the hint
+// for the next call. The property loops have these lines in them instead of a call, so that a property in the
+// expected place costs no call.
 func (ns *names) findFrom(name []byte, hint int) (int, int) {
+	w := nameWord(name)
+	if ns.at(hint, len(name), w) && (len(name) <= 8 || string(name) == ns.m.names[hint]) {
+		return hint, hint + 1
+	}
+	return ns.findAfter(name, w, hint)
+}
+
+// findAfter is findFrom for a name (whose word is w) that is not the one at the hint. It tries the name after the
+// previous match in sorted order (instances written by tools that sort their keys), then searches.
+func (ns *names) findAfter(name []byte, w uint64, hint int) (int, int) {
 	if ns.lengths&lengthBit(len(name)) == 0 {
 		return -1, hint
 	}
 	m := &ns.m
-	w := nameWord(name)
-	if hint < len(m.names) && m.equal(hint, name, w) {
-		return hint, hint + 1
-	}
 	if hint < len(ns.sortedNext) {
 		if next := ns.sortedNext[hint]; next != noName && m.equal(int(next), name, w) {
 			return int(next), int(next) + 1

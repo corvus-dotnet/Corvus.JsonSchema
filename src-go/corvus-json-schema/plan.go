@@ -1333,12 +1333,20 @@ func (e *evaluator) visitValues(pl *objectPlan, x int) bool {
 // visitNames is for declared properties, and additionalProperties for the rest. It returns the declared names seen.
 func (e *evaluator) visitNames(pl *objectPlan, x int) (uint64, bool) {
 	d := e.d
+	ns := pl.names
 	seen := uint64(0)
 	hint := 0
 	k := d.first(x)
 	for end := k + 2*d.count(x); k < end; k += 2 {
+		name := d.str(k)
+		w := nameWord(name)
 		var i int
-		if i, hint = pl.names.findFrom(d.str(k), hint); i >= 0 {
+		if ns.at(hint, len(name), w) && (len(name) <= 8 || string(name) == ns.m.names[hint]) {
+			i, hint = hint, hint+1
+		} else {
+			i, hint = ns.findAfter(name, w, hint)
+		}
+		if i >= 0 {
 			seen |= 1 << (i & 63)
 			if !e.runChild(pl.children[i], k+1) {
 				return 0, false
@@ -1368,14 +1376,21 @@ func (e *evaluator) visitPattern(pl *objectPlan, x int) bool {
 
 func (e *evaluator) visitGeneral(pl *objectPlan, x int) (uint64, bool) {
 	d := e.d
+	ns := pl.names
 	seen := uint64(0)
 	hint := 0
 	k := d.first(x)
 	for end := k + 2*d.count(x); k < end; k += 2 {
 		name := d.str(k)
 		matched := false
+		w := nameWord(name)
 		var i int
-		if i, hint = pl.names.findFrom(name, hint); i >= 0 {
+		if ns.at(hint, len(name), w) && (len(name) <= 8 || string(name) == ns.m.names[hint]) {
+			i, hint = hint, hint+1
+		} else {
+			i, hint = ns.findAfter(name, w, hint)
+		}
+		if i >= 0 {
 			seen |= 1 << (i & 63)
 			// A name only required (or a dependency) mentions is undeclared: patterns, else additionalProperties.
 			if i < pl.declared {

@@ -219,3 +219,8 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
    that made a second call to `enter`. It is now one test of the value's kind against `child.pass`, inlined into the
    property and item loops, and one call (`enterChild`, which has the dispatch by shape in it) for a child with
    keywords. 0.929 (0.840 to 0.999).
+3. **The expected name tested in the property loops** (`names.at`, `names.keys`, `findAfter`). `findFrom` cost 346, so
+   every property name was a call. The test of the name after the previous match (its length and word, side by side
+   in `names.keys`) is now in `visitNames`, `visitGeneral` and the fused pass, and the search is the call. 0.986
+   (0.938 to 1.073). The corpora above 1.03 in that run (openapi, ansible-meta, cmake-presets) were measured again
+   with nine runs each at the protocol's warm-up time and gave 1.019, 1.012 and 1.022, which is inside the noise.
