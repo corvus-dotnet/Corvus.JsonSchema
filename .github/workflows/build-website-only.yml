@@ -20,10 +20,12 @@ jobs:
       id: run_build
       with:
         displayName: Build Documentation Site
-        netSdkVersion: '10.0.x'
+        # As build.yml: global.json pins the .NET 11 SDK, and the solution also targets the earlier ones.
+        netSdkVersion: '11.0.100-rc.1.26425.128'
         additionalNetSdkVersion: |
           8.0.x
           9.0.x
+          10.0.x
         tasks: Build,BuildWebsite
         configuration: Release
       env:
