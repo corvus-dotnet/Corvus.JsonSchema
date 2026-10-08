@@ -48,6 +48,8 @@ type fusedObject struct {
 	// Conditions that fail when some property name matches a pattern (an if with patternProperties: {P: false}),
 	// for names no entry knows. A known name that matches carries a test that never holds.
 	absent []fusedAbsent
+	// The contributors with something to check after the pass (required names or count bounds).
+	finals []uint16
 	// Some branch has pattern properties or additional properties, or some condition absent patterns, so names no
 	// entry knows need resolving.
 	resolvesUnknown bool
@@ -120,6 +122,9 @@ type fusedApp struct {
 	child    child
 	// Other contributors whose resolution of the property is the same test: applied once when any is active.
 	others []uint16
+	// For an application under conditions: the conditions that apply it when they hold, and when they do not, over
+	// its contributors (see fusedPass.applies).
+	then, els uint64
 }
 
 type altBranch struct {
@@ -150,6 +155,9 @@ type fusedContributor struct {
 	additional    optChild
 	required      []uint16
 	min, max      optCount
+	// The condition as a mask: the bit of the condition in then when it applies the contributor by holding, in els
+	// when by not holding.
+	then, els uint64
 }
 
 // fusedCondition is an if the pass decides (required names and value tests), or the presence of a dependency's
@@ -756,6 +764,27 @@ func tryFuse(p *program, id nodeID, sameResource bool, childOf func(nodeID) chil
 	}
 	f.resolvesUnknown = f.resolvesUnknown || len(f.absent) != 0
 	f.names = newNames(known)
+	for i := range f.contributors {
+		c := &f.contributors[i]
+		if c.condition.set && c.condition.polarity {
+			c.then = 1 << c.condition.condition
+		} else if c.condition.set {
+			c.els = 1 << c.condition.condition
+		}
+		if len(c.required) != 0 || c.min.set || c.max.set {
+			f.finals = append(f.finals, uint16(i))
+		}
+	}
+	for i := range f.entries {
+		for j := range f.entries[i].apps {
+			app := &f.entries[i].apps[j]
+			app.then, app.els = f.contributors[app.contributor].then, f.contributors[app.contributor].els
+			for _, other := range app.others {
+				app.then |= f.contributors[other].then
+				app.els |= f.contributors[other].els
+			}
+		}
+	}
 	if flat {
 		o := &objectPlan{
 			max: ^uint64(0), visit: visitNames, names: f.names, declared: len(known), propertyNames: noNode,
@@ -889,6 +918,14 @@ type fusedPass struct {
 	altFailed [maxFusedAltGroups]uint64
 	holds     uint64
 	gateOK    uint64
+	// Once the conditions are decided: those that apply and hold, and those that apply and do not.
+	then, els uint64
+}
+
+// applies reports whether one of the conditions in the masks applies what they guard: one of then that holds, or
+// one of els that does not.
+func (s *fusedPass) applies(then, els uint64) bool {
+	return s.then&then|s.els&els != 0
 }
 
 func (s *fusedPass) allSeen(names []uint16) bool {
@@ -1107,6 +1144,7 @@ func (e *evaluator) runFusedPass(f *fusedObject, x int, pass *fusedPass) bool {
 			pass.gateOK |= 1 << i
 		}
 	}
+	pass.then, pass.els = pass.gateOK&pass.holds, pass.gateOK&^pass.holds
 
 	for ordinal := 0; ordinal < count && pending > 0; ordinal++ {
 		if ordinal < 64 {
@@ -1123,16 +1161,12 @@ func (e *evaluator) runFusedPass(f *fusedObject, x int, pass *fusedPass) bool {
 		if index := f.names.find(name); index >= 0 {
 			apps := f.entries[index].apps
 			for i := range apps {
+				// An application whose first contributor has no condition was made in the first step.
 				app := &apps[i]
-				c := &f.contributors[app.contributor]
-				if !c.condition.set {
+				if !f.contributors[app.contributor].condition.set {
 					continue
 				}
-				active := pass.active(c.condition)
-				for _, other := range app.others {
-					active = active || pass.active(f.contributors[other].condition)
-				}
-				if active {
+				if pass.applies(app.then, app.els) {
 					if app.hasChild && !e.runChild(app.child, v) {
 						return false
 					}
@@ -1142,7 +1176,7 @@ func (e *evaluator) runFusedPass(f *fusedObject, x int, pass *fusedPass) bool {
 		} else {
 			for i := range f.contributors {
 				c := &f.contributors[i]
-				if c.condition.set && pass.active(c.condition) {
+				if c.condition.set && pass.applies(c.then, c.els) {
 					matched, ok := e.resolveUnknown(c, name, d.strASCII(k), v)
 					if !ok {
 						return false
@@ -1156,10 +1190,10 @@ func (e *evaluator) runFusedPass(f *fusedObject, x int, pass *fusedPass) bool {
 		}
 	}
 
-	for i := range f.contributors {
+	for _, i := range f.finals {
 		c := &f.contributors[i]
 		if c.condition.set {
-			if !pass.active(c.condition) {
+			if !pass.applies(c.then, c.els) {
 				continue
 			}
 			if !countOK(c, uint64(count)) {

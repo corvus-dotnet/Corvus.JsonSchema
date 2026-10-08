@@ -262,3 +262,11 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
    the tape, so they read with no bounds check. 0.976 (0.876 to 1.041). Instructions per pass over 18 corpora:
    0.984, and a map of strings (importmap) 0.861. The same slice in the array item loop and in `visitNames` did not
    lower the instruction count (1.004 and 1.002 over the corpora measured) and is not in.
+9. **Conditions of a fused pass as masks** (`fusedApp.then`, `fusedContributor.then`, `fusedPass.applies`,
+   `fusedObject.finals`). After the properties, the pass asked for every contributor and for every deferred
+   application whether its condition applied, one condition at a time, through its contributors. The conditions
+   that apply an application are now two masks worked out when the plan is built, the pass has the conditions that
+   hold and those that do not as two words, and the question is two ANDs. Only the contributors that have required
+   names or count bounds are visited after the properties. 0.991 over all 37, and over the corpora with conditional
+   fused plans jsconfig 0.862, ui5 0.900, ansible-meta 0.942, openapi 0.975. Instructions per pass: ui5 0.893,
+   jsconfig 0.936.
