@@ -1150,6 +1150,15 @@ main-docs:
       - {index: 2, language: ts, lines: [63, 76]}
       - {index: 3, language: ts, lines: [84, 90]}
       - {index: 4, language: sh, lines: [94, 97]}
+  - path: "docs/JsonSchemaForJulia.md"
+    blocks:
+      - {index: 0, language: julia-repl, lines: [26, 28]}
+      - {index: 1, language: julia, lines: [32, 43]}
+      - {index: 2, language: julia, lines: [56, 66]}
+      - {index: 3, language: julia, lines: [71, 83]}
+      - {index: 4, language: julia, lines: [103, 116]}
+      - {index: 5, language: julia, lines: [120, 134]}
+      - {index: 6, language: julia, lines: [140, 152]}
   - path: "docs/JsonSchemaForPhp.md"
     blocks:
       - {index: 0, language: sh, lines: [18, 20]}

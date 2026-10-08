@@ -1,7 +1,7 @@
 # JSON Schema in other languages
 
 The Corvus JSON Schema evaluator is not only for .NET. The same evaluator, with the same behaviour, is available for
-JavaScript and TypeScript, Rust, Java and Kotlin, Go, Python, C, C++, Swift, Ruby and PHP.
+JavaScript and TypeScript, Rust, Java and Kotlin, Go, Julia, Python, C, C++, Swift, Ruby and PHP.
 
 | Language | Package | Install |
 |---|---|---|
@@ -10,6 +10,7 @@ JavaScript and TypeScript, Rust, Java and Kotlin, Go, Python, C, C++, Swift, Rub
 | [Rust](JsonSchemaForRust.md) | [corvus-json-schema](https://crates.io/crates/corvus-json-schema) | `cargo add corvus-json-schema` |
 | [Java and Kotlin](JsonSchemaForJava.md) | [io.github.corvus-dotnet:corvus-json-schema](https://central.sonatype.com/artifact/io.github.corvus-dotnet/corvus-json-schema) | Maven or Gradle |
 | [Go](JsonSchemaForGo.md) | [github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema](https://pkg.go.dev/github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema) | `go get github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema` |
+| [Julia](JsonSchemaForJulia.md) | [CorvusJsonSchema](https://github.com/JuliaRegistries/General/tree/master/C/CorvusJsonSchema) | `pkg> add CorvusJsonSchema` |
 | [Python](JsonSchemaForPython.md) | [corvus-json-schema](https://pypi.org/project/corvus-json-schema/), [corvus-json-schema-rs](https://pypi.org/project/corvus-json-schema-rs/) | `pip install corvus-json-schema-rs` |
 | [C](JsonSchemaForC.md) | The corvus-json-schema C library | [Release packages](https://github.com/corvus-dotnet/Corvus.JsonSchema/releases?q=capi-v) |
 | [C++](JsonSchemaForCpp.md) | The C library's header-only C++17 wrapper | [Release packages](https://github.com/corvus-dotnet/Corvus.JsonSchema/releases?q=capi-v) |
@@ -23,7 +24,7 @@ JavaScript and TypeScript, Rust, Java and Kotlin, Go, Python, C, C++, Swift, Rub
   engine behind the Python (Rust-backed), Ruby and PHP packages and the C library, and the C library is the engine
   behind the C++ wrapper and the Swift package. The JavaScript and pure-Python packages compile schemas into their own
   languages' code, and the Java library compiles them into JVM bytecode. The Go module is a port of the Rust crate's
-  plans to Go, with no native code.
+  plans to Go, with no native code, and the Julia package is a port of the Go module to Julia.
 - **The same results.** Every implementation evaluates drafts 4, 6, 7, 2019-09 and 2020-12, passes the
   JSON-Schema-Test-Suite, and reports results at the Basic, Detailed and Verbose levels, with the same rows (evaluation
   path, schema location, instance location and message, in the same order). Annotations come grouped the same way
