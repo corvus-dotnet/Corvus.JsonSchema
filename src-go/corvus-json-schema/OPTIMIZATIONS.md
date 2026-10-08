@@ -124,7 +124,9 @@ with the reason.
   is not the innermost already (`runBody`, `pushScope`). The depth guard applies only to nodes on an in-place cycle
   (`plan.guard`, `runInPlace`).
 - **Allocation.** The evaluator is a value on the stack of the call that validates. Its buffers are a scratch taken
-  from the validator's pool only when first needed (`evaluator.state`), so most schemas touch no pool. JSON text is
+  from the validator's pool only when first needed (`evaluator.state`), so most schemas touch no pool. The state of
+  a fused pass is on the stack too (`runFused`), and a pass takes the scratch only to track covered properties or
+  for an object of more than 64 properties. JSON text is
   parsed into a pooled document, and a string is read without a copy (`stringBytes`).
   `TestValidationAllocatesNothingInTheSteadyState` holds the keyword paths it lists to zero allocations.
 - **Compile time.** Analyses run only when the schema has what they analyse (`analyse`). In-place cycles are found by
@@ -250,3 +252,6 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
    after the fused plans are built: before, a child whose node was only applicators kept that shape and entered them
    one by one, where the node's fused plan decides them in one pass. 0.966 (0.887 to 1.028). Instructions per pass
    over 18 corpora: 0.971.
+7. **The state of a fused pass on the stack** (`runFused`). Every fused pass took its state from the scratch, and so
+   the scratch from the validator's `sync.Pool`, once per validation. 0.993 over all 37, and over the corpora that
+   run a fused pass 0.918 (ansible-meta) to 0.983, with nothing else moved.

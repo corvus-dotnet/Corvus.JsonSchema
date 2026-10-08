@@ -371,8 +371,6 @@ type scratch struct {
 	arena []uint64
 	// Scratch for uniqueItems.
 	unique []uint64
-	// Fused passes not in use.
-	passes []*fusedPass
 	// For validating JSON text: the document it is parsed into, and the parser.
 	text   Document
 	parser parser

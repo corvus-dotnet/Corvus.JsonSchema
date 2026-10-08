@@ -880,7 +880,7 @@ func coalesceApps(apps []collectedApp, contributors []fusedContributor) []fusedA
 // ---------------------------------------------------------------------------------------------------------------------
 // Evaluation
 
-// fusedPass is the state of one pass. Passes are reused through the evaluator.
+// fusedPass is the state of one pass. It lives on the stack of runFused.
 type fusedPass struct {
 	// The entries seen.
 	seen [maxFusedNames / 64]uint64
@@ -920,17 +920,6 @@ const (
 	// Conditional applications are pending.
 	fusedDefer
 )
-
-func (e *evaluator) acquirePass() *fusedPass {
-	s := e.state()
-	if n := len(s.passes); n > 0 {
-		pass := s.passes[n-1]
-		s.passes = s.passes[:n-1]
-		*pass = fusedPass{}
-		return pass
-	}
-	return new(fusedPass)
-}
 
 func (e *evaluator) applyOpt(c optChild, v int) bool {
 	return !c.set || e.runChild(c.child, v)
@@ -1034,10 +1023,14 @@ func (e *evaluator) runFused(f *fusedObject, x int) bool {
 	if f.flat != nil {
 		return e.runStrictObject(f.flat, x)
 	}
-	pass := e.acquirePass()
-	mark := len(e.s.arena)
-	ok := e.runFusedPass(f, x, pass)
-	e.s.passes = append(e.s.passes, pass)
+	var pass fusedPass
+	// Only a pass that tracks the covered properties, or an object of more than 64 properties, takes sets from the
+	// arena, and so the evaluation's buffers from the pool.
+	if !f.hasUnevaluated && e.d.count(x) <= 64 {
+		return e.runFusedPass(f, x, &pass)
+	}
+	mark := len(e.state().arena)
+	ok := e.runFusedPass(f, x, &pass)
 	e.s.arena = e.s.arena[:mark]
 	return ok
 }
