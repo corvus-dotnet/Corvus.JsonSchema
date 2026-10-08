@@ -255,12 +255,32 @@ func (ns *names) len() int {
 	return len(ns.m.names)
 }
 
-// find is the index of a name, without the ordering hint, or -1.
+// find is the index of a name, without the ordering hint, or -1. The search of the table is written out here (it
+// is nameMap.findKey), so that a name of at most sixteen bytes is found with one call and no frame.
 func (ns *names) find(name []byte) int {
 	if ns.lengths&lengthBit(len(name)) == 0 {
 		return -1
 	}
-	return ns.m.find(name, nameWord(name))
+	m := &ns.m
+	w := nameWord(name)
+	if len(name) > 16 || m.large != nil {
+		return m.findLong(name, w)
+	}
+	tail := uint64(0)
+	if len(name) > 8 {
+		tail = tailWord(name)
+	}
+	table, keys := m.table, m.keys
+	mask := uint64(len(table) - 1)
+	for slot := m.hash(w, tail, len(name)) >> nameHashShift; ; slot++ {
+		at := table[slot&mask]
+		if at == 0 {
+			return -1
+		}
+		if k := &keys[at-1]; k.word == w && k.tail == tail && k.length == len(name) {
+			return int(at) - 1
+		}
+	}
 }
 
 // findString is find for a name held as a string.
@@ -288,18 +308,51 @@ func (ns *names) findFrom(name []byte, hint int) (int, int) {
 }
 
 // findAfter is findFrom for a name (whose word is w) that is not the one at the hint. It tries the name after the
-// previous match in sorted order (instances written by tools that sort their keys), then searches.
+// previous match in sorted order (instances written by tools that sort their keys), then searches the table. The
+// search is written out here (it is nameMap.findKey), so that a name of at most sixteen bytes is found with one
+// call and no frame.
 func (ns *names) findAfter(name []byte, w uint64, hint int) (int, int) {
 	if ns.lengths&lengthBit(len(name)) == 0 {
 		return -1, hint
 	}
+	m := &ns.m
+	if len(name) > 16 || m.large != nil {
+		return ns.findAfterLong(name, w, hint)
+	}
+	tail := uint64(0)
+	if len(name) > 8 {
+		tail = tailWord(name)
+	}
+	table, keys := m.table, m.keys
+	if hint < len(ns.sortedNext) {
+		if next := ns.sortedNext[hint]; next != noName {
+			if k := &keys[next]; k.word == w && k.tail == tail && k.length == len(name) {
+				return int(next), int(next) + 1
+			}
+		}
+	}
+	mask := uint64(len(table) - 1)
+	for slot := m.hash(w, tail, len(name)) >> nameHashShift; ; slot++ {
+		at := table[slot&mask]
+		if at == 0 {
+			return -1, hint
+		}
+		if k := &keys[at-1]; k.word == w && k.tail == tail && k.length == len(name) {
+			return int(at) - 1, int(at)
+		}
+	}
+}
+
+// findAfterLong is findAfter for a name longer than sixteen bytes, whose text is compared, and for a set held in a
+// map.
+func (ns *names) findAfterLong(name []byte, w uint64, hint int) (int, int) {
 	m := &ns.m
 	if hint < len(ns.sortedNext) {
 		if next := ns.sortedNext[hint]; next != noName && m.equal(int(next), name, w) {
 			return int(next), int(next) + 1
 		}
 	}
-	if i := m.find(name, w); i >= 0 {
+	if i := m.findLong(name, w); i >= 0 {
 		return i, i + 1
 	}
 	return -1, hint

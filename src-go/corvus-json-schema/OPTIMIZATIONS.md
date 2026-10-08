@@ -237,3 +237,7 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
    change between 40.4 and 43.6 microseconds a pass, this one between 44.3 and 47.7, and a build of the old code
    with nothing but an unused function added at 41.4 to 42.0 in seven runs and 44.6 to 45.6 in five. So that corpus
    has two states a pass can be in, about 7 percent apart, that code layout alone chooses between.
+5. **The search of the name table written out in its two callers** (`names.findAfter`, `names.find`). A name that
+   was not the expected one went through three calls (`findAfter`, `nameMap.find`, `findKey`), and so did a string
+   tested against an enum. Each now has the search in it, with a call only for a name over sixteen bytes.
+   0.959 (0.788 to 1.047).
