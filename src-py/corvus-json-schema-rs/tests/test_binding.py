@@ -135,6 +135,15 @@ def test_in_place_reading_agrees_with_parsed_text() -> None:
         assert v(instance) == v.is_valid_json(json.dumps(instance)), instance
 
 
+def test_excluded_class_with_a_member_outside_ascii() -> None:
+    # The crate before 0.1.4 kept this pattern's excluded set as ASCII bits and read é as the bits of C and ).
+    v = cjs.compile({"pattern": r"^(?=[^é]+$)(?=(.*\w)).+$"})
+    assert v("C1") is True
+    assert v(")a") is True
+    assert v("é1") is False
+    assert v.is_valid_json('"é1"') is False
+
+
 def test_custom_formats_and_resolvers_call_back_into_python() -> None:
     v = cjs.compile({"type": "string", "format": "even"}, assert_format=True, formats={"even": lambda s: len(s) % 2 == 0})
     assert v("ab") is True
