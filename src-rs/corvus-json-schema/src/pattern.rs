@@ -1008,6 +1008,11 @@ fn parse_class(b: &[u8], mut i: usize) -> Option<(CharSet, usize)> {
             return None; // `[]` / `[^]`
         }
         first = false;
+        // The set holds ASCII members only. A member outside ASCII leaves the pattern to the engine: a byte of 128
+        // or more is not a bit of the set, and shifting by it overflows.
+        if !c.is_ascii() {
+            return None;
+        }
         // One atom: a single character (for ranges) or a set escape.
         let (atom, single, next) = match c {
             b'\\' => {
@@ -1035,7 +1040,7 @@ fn parse_class(b: &[u8], mut i: usize) -> Option<(CharSet, usize)> {
                     h
                 }
             };
-            if lo > hi {
+            if lo > hi || !hi.is_ascii() {
                 return None;
             }
             set = set.union(CharSet::range(lo, hi));

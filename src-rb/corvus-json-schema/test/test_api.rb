@@ -106,6 +106,15 @@ class TestApi < Minitest::Test
     assert_empty verbose.results
   end
 
+  # The crate before 0.1.4 kept this pattern's excluded set as ASCII bits and read é as the bits of C and ).
+  def test_excluded_class_with_a_member_outside_ascii
+    v = CorvusJsonSchema.compile({ "pattern" => '^(?=[^é]+$)(?=(.*\w)).+$' })
+    assert v.valid?("C1")
+    assert v.valid?(")a")
+    refute v.valid?("é1")
+    refute v.valid_json?('"é1"')
+  end
+
   def test_crate_version
     assert_match(/\A\d+\.\d+\.\d+\z/, CorvusJsonSchema.crate_version)
   end

@@ -81,11 +81,19 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           # The published repository takes the crate from crates.io: the version the extension builds with must be
           # there.
+          # A merge that releases the crate and the extension together starts crates-publish.yml at the same moment as
+          # this workflow, and the crate is tested before it is published, so wait for it.
           crate=$(sed -n 's/^corvus = .*version = "\([^"]*\)".*$/\1/p' Cargo.toml)
-          status=$(curl -s -o /dev/null -w '%{http_code}' -A 'corvus-dotnet/Corvus.JsonSchema php-publish' \
-            "https://crates.io/api/v1/crates/corvus-json-schema/$crate")
+          status=000
+          for attempt in $(seq 1 80); do
+            status=$(curl -s -o /dev/null -w '%{http_code}' -A 'corvus-dotnet/Corvus.JsonSchema php-publish' \
+              "https://crates.io/api/v1/crates/corvus-json-schema/$crate")
+            [ "$status" = 200 ] && break
+            echo "crates.io does not have corvus-json-schema $crate yet ($status, attempt $attempt)."
+            sleep 30
+          done
           if [ "$status" != 200 ]; then
-            echo "::error::The extension needs corvus-json-schema $crate, which crates.io does not have ($status): release the crate first."
+            echo "::error::The extension needs corvus-json-schema $crate, which crates.io does not have ($status) after 40 minutes: release the crate, then run this workflow again."
             exit 1
           fi
           if ! gh api "repos/$PHP_REPOSITORY" --silent; then
