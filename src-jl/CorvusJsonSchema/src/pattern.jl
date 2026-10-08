@@ -276,15 +276,15 @@ end
 # A list of items between separators: "^I(SR)*$" or "^I(SR)+$" (no final), or "^(RS)*F$" and "^(RS)+F$". The
 # separator is a fixed sequence and no variable class can run into what follows it, so greedy matching splits the
 # string exactly where the pattern does.
-struct SeparatedList
+mutable struct SeparatedList
     # I of the first form.
-    has_first::Bool
-    first::Sequence
-    repeated::Sequence
-    separator::Sequence
+    const has_first::Bool
+    const first::Sequence
+    const repeated::Sequence
+    const separator::Sequence
     # F of the second form, matched against the whole remainder.
-    final::Sequence
-    min_repeats::UInt32
+    const final::Sequence
+    const min_repeats::UInt32
 end
 
 function match_list(l::SeparatedList, s::Bytes)
@@ -407,24 +407,24 @@ function match_alternative(a::Alternative, s::Bytes, ascii::Bool)
 end
 
 # A compiled pattern.
-struct Pattern
-    source::String
-    kind::UInt8
+mutable struct Pattern
+    const source::String
+    const kind::UInt8
     # MATCH_LITERAL: the text, and whether it is the whole string.
-    text::Vector{UInt8}
-    whole::Bool
+    const text::Vector{UInt8}
+    const whole::Bool
     # MATCH_HAS_CONTENT: anchored at the start. MATCH_EXCLUDED_CLASS_WITH_WORD: bangs.
-    flag::Bool
+    const flag::Bool
     # MATCH_LINE.
-    min::UInt32
-    max::UInt32
-    seq::Sequence
-    list::Union{Nothing,SeparatedList}
-    few::Vector{Vector{UInt8}}
-    many::Union{Nothing,Names}
-    alts::Vector{Alternative}
-    set::CharSet
-    engine::Union{Nothing,EnginePattern}
+    const min::UInt32
+    const max::UInt32
+    const seq::Sequence
+    const list::Union{Nothing,SeparatedList}
+    const few::Vector{Vector{UInt8}}
+    const many::Union{Nothing,Names}
+    const alts::Vector{Alternative}
+    const set::CharSet
+    const engine::Union{Nothing,EnginePattern}
 end
 
 function Pattern(kind::UInt8; source::String="", text::Vector{UInt8}=EMPTY_BYTES, whole::Bool=false,

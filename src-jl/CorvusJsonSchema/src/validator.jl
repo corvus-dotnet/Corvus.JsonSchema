@@ -88,8 +88,8 @@ end
 const SCRATCH_RETAINED_LIMIT = 4 << 20
 
 # Takes an evaluation state: the validator's own when it is free, otherwise one from the pool.
-function acquire(v::Validator)
-    _, taken = @atomicreplace v.busy false => true
+@inline function acquire(v::Validator)
+    _, taken = @atomicreplace :acquire_release :monotonic v.busy false => true
     taken && return v.primary
     return acquire_pooled(v)
 end
@@ -101,20 +101,29 @@ end
     return e === nothing ? Evaluator(v.program) : e
 end
 
-function release(v::Validator, e::Evaluator)
+# Gives an evaluation state back after the validation of a document.
+@inline function release(v::Validator, e::Evaluator)
     # Let go of the instance, which the caller owns.
     e.d = EMPTY_DOCUMENT
-    e.c = nothing
-    e.text.source = EMPTY_BYTES
-    words = length(e.text.tape) + length(e.arena) + length(e.unique)
-    if retains_too_much(e.parser) || 8 * words + length(e.text.text) + length(e.source) > SCRATCH_RETAINED_LIMIT
+    if 8 * (e.arena_high + length(e.unique)) > SCRATCH_RETAINED_LIMIT
         drop_buffers!(e)
     end
     if e === v.primary
-        @atomic v.busy = false
+        @atomic :release v.busy = false
     else
         release_pooled(v, e)
     end
+    return nothing
+end
+
+# Gives an evaluation state back after the validation of JSON text, which was parsed into its buffers.
+function release_text(v::Validator, e::Evaluator)
+    e.text.source = EMPTY_BYTES
+    words = length(e.text.tape) + e.arena_high + length(e.unique)
+    if retains_too_much(e.parser) || 8 * words + length(e.text.text) + length(e.source) > SCRATCH_RETAINED_LIMIT
+        drop_buffers!(e)
+    end
+    release(v, e)
     return nothing
 end
 
@@ -124,6 +133,7 @@ end
     e.source = UInt8[]
     e.arena = UInt64[]
     e.unique = UInt64[]
+    e.arena_high = 0
     return nothing
 end
 
@@ -134,14 +144,15 @@ end
     return nothing
 end
 
-# Prepares an evaluation state for an instance.
+# Prepares an evaluation state for an instance. A validation leaves the scope, the arena and the passes as it found
+# them, unless an exception ended it (a custom format may throw), so they are checked and not cleared.
 @inline function start!(e::Evaluator, instance::Document)
     e.d = instance
     e.depth = 0
     e.depth_exceeded = false
     e.pass_depth = 0
-    empty!(e.scope)
-    empty!(e.arena)
+    isempty(e.scope) || empty!(e.scope)
+    isempty(e.arena) || empty!(e.arena)
     return nothing
 end
 
@@ -182,13 +193,13 @@ function run_text_validation(v::Validator, json::JsonText)
     e = acquire(v)
     if !parse_text!(e, json)
         message, offset = e.parser.err_message, e.parser.err_offset
-        release(v, e)
+        release_text(v, e)
         return false, false, message, offset
     end
     start!(e, e.text)
     ok = validate!(e)
     exceeded = e.depth_exceeded
-    release(v, e)
+    release_text(v, e)
     return ok, exceeded, "", 0
 end
 
@@ -251,6 +262,7 @@ function evaluate(v::Validator, instance::Document, collector::ResultsCollector)
     ok = try
         evaluate!(e, collector)
     finally
+        e.c = nothing
         release(v, e)
     end
     e.depth_exceeded && throw(DepthExceededError())

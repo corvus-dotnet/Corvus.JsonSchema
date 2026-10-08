@@ -46,23 +46,23 @@ const NO_NAME = typemax(UInt32)
 # addressing. The table has at least four slots for each name and its hash is the one of a few that leaves the fewest
 # names away from their first slot (for most sets, none), so a search is one multiplication and one read to the
 # index, then the comparison of the key.
-struct Names
+mutable struct Names
     # Bit n set: some name has length n (lengths of 63 and more share bit 63). A name whose length is not in the set
     # is not declared, which settles most misses without a search.
-    lengths::UInt64
-    names::Vector{String}
-    bytes::Vector{Vector{UInt8}}
-    keys::Vector{NameKey}
+    const lengths::UInt64
+    const names::Vector{String}
+    const bytes::Vector{Vector{UInt8}}
+    const keys::Vector{NameKey}
     # The index + 1 of the name in each slot (0: empty). The length is a power of two.
-    table::Vector{UInt16}
+    const table::Vector{UInt16}
     # The multiplier of the hash. A slot is the high bits of the product, cut to the table's length.
-    mul::UInt64
+    const mul::UInt64
     # A set too large for the table's indexes (which no schema in practice has) is a map instead.
-    is_large::Bool
-    large::Dict{String,Int}
+    const is_large::Bool
+    const large::Dict{String,Int}
     # For a hint h (the index after the previous match), the name after that match in sorted order (entry 0: the
     # first name in sorted order). NO_NAME after the last.
-    sorted_next::Vector{UInt32}
+    const sorted_next::Vector{UInt32}
 end
 
 @inline length_bit(len::Int) = UInt64(1) << min(len, 63)
@@ -151,9 +151,23 @@ end
 
 Base.length(ns::Names) = length(ns.names)
 
+# Reports whether a name longer than sixteen bytes is the given text of the same length, when their first and last
+# eight bytes are known to be equal: only the bytes between them are compared, a word at a time, the last word
+# overlapping the one before it.
+function middle_equal(name::Bytes, text::Vector{UInt8})
+    x, p = name.b, name.off
+    stop = name.len - 8
+    i = 8
+    while i + 8 <= stop
+        le64(x, p + i) == le64(text, i) || return false
+        i += 8
+    end
+    return i >= stop || le64(x, p + stop - 8) == le64(text, stop - 8)
+end
+
 # Reports whether name i is the given name, which is longer than eight bytes, when their lengths and words are equal.
 @inline function name_rest(ns::Names, i::Int, name::Bytes)
-    return tail_word(name) == ns.keys[i+1].tail && (name.len <= 16 || bytes_equal(name, ns.bytes[i+1]))
+    return tail_word(name) == ns.keys[i+1].tail && (name.len <= 16 || middle_equal(name, ns.bytes[i+1]))
 end
 
 # Reports whether name i is the given name, whose word is w.
@@ -175,7 +189,7 @@ end
         i = table[(slot&mask)+1]
         i == 0 && return -1
         k = keys[i]
-        if k.word == w && k.tail == tail && k.length == name.len && bytes_equal(name, ns.bytes[i])
+        if k.word == w && k.tail == tail && k.length == name.len && (name.len <= 16 || middle_equal(name, ns.bytes[i]))
             return Int(i) - 1
         end
         slot += 1

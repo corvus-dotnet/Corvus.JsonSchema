@@ -64,14 +64,14 @@ end
 # A multipleOf divisor, as the decimal its JSON text writes: a significand without trailing zeros and an exponent. x
 # is a multiple when x / divisor is an integer, decided exactly on the decimal digits of x's own text, with integer
 # arithmetic only (no allocation). These are the C# evaluator's decimal semantics.
-struct Divisor
-    is_int::Bool
-    value::Int64
+mutable struct Divisor
+    const is_int::Bool
+    const value::Int64
     # The significand (at most 18 digits), or -1 when the divisor's digits do not fit.
-    significand::Int64
-    exponent::Int
+    const significand::Int64
+    const exponent::Int
     # The exact value, for divisors and instances the integer arithmetic cannot decide.
-    rational::Rational{BigInt}
+    const rational::Rational{BigInt}
 end
 
 # The exact value of a number's text.

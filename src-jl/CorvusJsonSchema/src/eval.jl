@@ -9,7 +9,7 @@ function Program(c::CompiledSchema, options::CompileOptions)
     names = sort!(collect(keys(options.formats)))
     p = Program(nodes, c.root, c.root, c.uses_dynamic_scope, options.max_depth, names,
         Any[options.formats[name] for name in names], NodeId[], c.annotation_sources, ReentrantLock(), nothing,
-        options.assert_format != 0, Plan[])
+        options.assert_format != 0, Plan[], Union{Nothing,Body}[], Child[], Bool[])
     for id in eachindex(nodes)
         current = NodeId(id - 1)
         for _ in 1:16
@@ -28,6 +28,9 @@ function Program(c::CompiledSchema, options::CompileOptions)
     end
     p.entry = target(p, p.root)
     p.plans = compile_plans(p)
+    p.bodies = Union{Nothing,Body}[pl.body for pl in p.plans]
+    p.selfs = Child[pl.self for pl in p.plans]
+    p.guards = Bool[pl.guard for pl in p.plans]
     return p
 end
 
@@ -192,6 +195,9 @@ function new_bits!(e::Evaluator, n::Int)
     words = max((n + 63) >> 6, 1)
     off = length(arena)
     resize!(arena, off + words)
+    if off + words > e.arena_high
+        e.arena_high = off + words
+    end
     for i in off+1:off+words
         arena[i] = 0
     end

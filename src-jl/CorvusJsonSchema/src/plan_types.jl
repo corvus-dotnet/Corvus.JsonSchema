@@ -127,17 +127,17 @@ end
 const NO_DYNAMIC = DynamicRefTarget(false, NO_NODE, ResourceNode[])
 const NO_BRANCHES = Branches(Child[], [UInt32[] for _ in 1:6], nothing, nothing)
 
-struct Op
-    kind::UInt8
-    value::ValueRef
-    names::Names
-    values::Vector{ValueRef}
-    node::NodeId
-    children::Vector{Child}
-    branches::Branches
-    dynamic::DynamicRefTarget
-    then_::NodeId
-    else_::NodeId
+mutable struct Op
+    const kind::UInt8
+    const value::ValueRef
+    const names::Names
+    const values::Vector{ValueRef}
+    const node::NodeId
+    const children::Vector{Child}
+    const branches::Branches
+    const dynamic::DynamicRefTarget
+    const then_::NodeId
+    const else_::NodeId
 end
 
 function Op(kind::UInt8; value::ValueRef=NO_VALUE, names::Names=EMPTY_NAMES, values::Vector{ValueRef}=ValueRef[],
@@ -314,22 +314,22 @@ struct FusedPattern
     child::OptChild
 end
 
-struct FusedContributor
+mutable struct FusedContributor
     # The condition and the polarity under which it applies.
-    condition::Gate
+    const condition::Gate
     # The alternative group and the branch in it.
-    alt::AltBranch
-    patterns::Vector{FusedPattern}
+    const alt::AltBranch
+    const patterns::Vector{FusedPattern}
     # additionalProperties.
-    has_additional::Bool
-    additional::OptChild
-    required::Vector{UInt16}
-    min::OptCount
-    max::OptCount
+    const has_additional::Bool
+    const additional::OptChild
+    const required::Vector{UInt16}
+    const min::OptCount
+    const max::OptCount
     # The condition as a mask: the bit of the condition in then_ when it applies the contributor by holding, in els
     # when by not holding.
-    then_::UInt64
-    els::UInt64
+    const then_::UInt64
+    const els::UInt64
 end
 
 # An if the pass decides (required names and value tests), or the presence of a dependency's property.
@@ -456,6 +456,11 @@ mutable struct Program
     assert_format_set::Bool
     # Fail-fast plans.
     plans::Vector{Plan}
+    # What the evaluator reads of each plan for every value, side by side: its body, the node as a child, and
+    # whether it is entered under the depth guard.
+    bodies::Vector{Union{Nothing,Body}}
+    selfs::Vector{Child}
+    guards::Vector{Bool}
 end
 
 @inline node(p::Program, id::NodeId) = p.nodes[id+1]
@@ -482,6 +487,10 @@ FusedPass() = FusedPass(zeros(UInt64, MAX_FUSED_NAMES >> 6), 0, zeros(UInt64, MA
 # evaluation at a time and reused, so an evaluation allocates nothing once the buffers have grown.
 mutable struct Evaluator
     p::Program
+    # The program's bodies, children and guards (see Program), held here so that a value reads them directly.
+    bodies::Vector{Union{Nothing,Body}}
+    selfs::Vector{Child}
+    guards::Vector{Bool}
     # The instance document.
     d::Document
     # The collector, or nothing to fail fast.
@@ -506,9 +515,11 @@ mutable struct Evaluator
     # The fused passes in progress, and those kept for reuse.
     passes::Vector{FusedPass}
     pass_depth::Int
+    # The most words the arena has held, for dropping buffers that have grown too large.
+    arena_high::Int
 end
 
 const NO_ANNOTATIONS = Vector{AnnotationEntry}[]
 
-Evaluator(p::Program) = Evaluator(p, EMPTY_DOCUMENT, nothing, NO_ANNOTATIONS, 0, false, UInt32[], UInt64[],
-    UInt64[], Document(), Parser(), UInt8[], UInt8[], Parser(), FusedPass[], 0)
+Evaluator(p::Program) = Evaluator(p, p.bodies, p.selfs, p.guards, EMPTY_DOCUMENT, nothing, NO_ANNOTATIONS, 0, false,
+    UInt32[], UInt64[], UInt64[], Document(), Parser(), UInt8[], UInt8[], Parser(), FusedPass[], 0, 0)

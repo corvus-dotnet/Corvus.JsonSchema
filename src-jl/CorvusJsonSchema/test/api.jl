@@ -170,9 +170,11 @@
     @testset "arrays of simple arrays match the general path" begin
         position = """{ "type": "array", "minItems": 2, "maxItems": 3, "items": { "type": "number" } }"""
         for schema in ["""{ "type": "array", "items": $position }""",
-            """{ "type": "array", "items": { "type": ["array", "string"], "minItems": 2, "items": { "type": "integer" } } }""",
+            """{ "type": "array", "items": { "type": ["array", "string"], "minItems": 2, "items": {
+                "type": "integer" } } }""",
             """{ "type": "array", "items": { "type": "object", "minItems": 2 } }""",
-            """{ "type": "array", "items": { "type": "array", "items": { "type": "array", "items": { "type": "number" } } } }"""]
+            """{ "type": "array", "items": { "type": "array", "items": { "type": "array", "items": {
+                "type": "number" } } } }"""]
             @test isempty(disagreements(compile_schema(schema), ["[]", "[[1, 2]]", "[[1, 2], [3, 4, 5]]", "[[1]]",
                 "[[1, 2, 3, 4]]", "[[1, \"a\"]]", "[[1.5, 2]]", "[[\"x\", \"y\"]]", "[\"s\", [1, 2]]", "[{}, [1, 2]]",
                 "[[[1, 2]], [[3]]]", "[[[1, \"a\"]]]"]))
@@ -233,15 +235,18 @@
     @testset "flat fused objects match the general path" begin
         shared = """{ "properties": { "a": { "type": "string" }, "b": true }, "required": ["a"], "maxProperties": 3 }"""
         for (i, schema) in enumerate([
-            """{ "allOf": [{ "\$ref": "#/\$defs/s" }], "properties": { "c": { "type": "integer" } }, "\$defs": { "s": $shared } }""",
+            """{ "allOf": [{ "\$ref": "#/\$defs/s" }], "properties": { "c": { "type": "integer" } }, "\$defs": {
+                "s": $shared } }""",
             """{
-                "allOf": [{ "\$ref": "#/\$defs/s" }, { "properties": { "a": { "type": "string" } }, "required": ["c"] }],
+                "allOf": [{ "\$ref": "#/\$defs/s" }, { "properties": { "a": { "type": "string" } },
+                    "required": ["c"] }],
                 "properties": { "c": { "type": "integer" } },
                 "minProperties": 2,
                 "\$defs": { "s": $shared }
             }""",
             # The same name with different schemas stays a fused plan.
-            """{ "allOf": [{ "\$ref": "#/\$defs/s" }], "properties": { "a": { "minLength": 2 } }, "\$defs": { "s": $shared } }"""])
+            """{ "allOf": [{ "\$ref": "#/\$defs/s" }], "properties": { "a": { "minLength": 2 } }, "\$defs": {
+                "s": $shared } }"""])
             v = compile_schema(schema)
             b = root_body(v)
             @test b !== nothing && b.fused !== nothing && (b.fused.flat !== nothing) == (i < 3)
@@ -263,7 +268,8 @@
                     "\$id": "https://example.com/strict",
                     "\$dynamicAnchor": "node",
                     "type": "object",
-                    "properties": { "data": true, "y": true, "children": { "type": "array", "items": { "\$ref": "tree#/\$defs/kids" } } },
+                    "properties": { "data": true, "y": true, "children": { "type": "array", "items": {
+                        "\$ref": "tree#/\$defs/kids" } } },
                     "allOf": [{ "\$ref": "#/\$defs/extra" }],
                     "unevaluatedProperties": false,
                     "\$defs": { "extra": { "properties": { "x": { "type": "integer" } } } }
@@ -355,11 +361,14 @@
     @testset "unevaluatedItems with a static prefix match the general path" begin
         for schema in [
             """{ "prefixItems": [{ "type": "integer" }], "unevaluatedItems": { "type": "string" } }""",
-            """{ "allOf": [{ "prefixItems": [true, { "type": "integer" }] }], "prefixItems": [{ "type": "integer" }], "unevaluatedItems": false }""",
+            """{ "allOf": [{ "prefixItems": [true, { "type": "integer" }] }], "prefixItems": [{ "type": "integer" }],
+                "unevaluatedItems": false }""",
             """{ "allOf": [{ "items": { "type": "integer" } }], "unevaluatedItems": false }""",
-            """{ "anyOf": [{ "prefixItems": [true, true] }, { "prefixItems": [{ "type": "integer" }] }], "unevaluatedItems": false }""",
+            """{ "anyOf": [{ "prefixItems": [true, true] }, { "prefixItems": [{ "type": "integer" }] }],
+                "unevaluatedItems": false }""",
             """{ "contains": { "type": "integer" }, "unevaluatedItems": { "type": "string" } }""",
-            """{ "if": { "prefixItems": [{ "const": 1 }] }, "then": { "prefixItems": [true, true] }, "unevaluatedItems": false }"""]
+            """{ "if": { "prefixItems": [{ "const": 1 }] }, "then": { "prefixItems": [true, true] },
+                "unevaluatedItems": false }"""]
             @test isempty(disagreements(compile_schema(schema), ["[]", "[1]", "[1, 2]", "[1, \"a\"]", "[\"a\"]",
                 "[1, 2, 3]", "[1, \"a\", \"b\"]", "[\"a\", 1, \"b\"]", "{}", "[2, 2]"]))
         end

@@ -17,12 +17,14 @@ function allocation_cases()
     return [
         AllocationCase("objects and arrays", """{
                 "type": "object",
-                "properties": { "name": { "type": "string", "minLength": 1 }, "tags": { "type": "array", "items": { "type": "string" } } },
+                "properties": { "name": { "type": "string", "minLength": 1 }, "tags": { "type": "array", "items": {
+                    "type": "string" } } },
                 "required": ["name"]
             }""", (;), [
                 """{"name": "a", "tags": ["x", "y\\nz"]}""",
                 """{"name": "", "tags": []}""",
-                """{"name": "café", "tags": ["1", "2", "3", "4", "5", "6", "7", "8"], "other": {"deep": [1, [2, [3]]]}}"""]),
+                """{"name": "café", "tags": ["1", "2", "3", "4", "5", "6", "7", "8"], "other": {"deep": [1, [2,
+                    [3]]]}}"""]),
         AllocationCase("keywords of every kind", """{
                 "type": "object",
                 "properties": {
@@ -42,18 +44,22 @@ function allocation_cases()
                 "dependentRequired": { "n": ["s"] },
                 "minProperties": 1
             }""", (;), [
-                """{"n": 1.5, "s": "abc", "e": "b", "c": {"k": [1, 2.0]}, "u": [1, "a", [2], {"b": 1}], "o": 3, "a": "ab", "i": 2, "x": 0, "x-flag": true, "extra": 7}""",
+                """{"n": 1.5, "s": "abc", "e": "b", "c": {"k": [1, 2.0]}, "u": [1, "a", [2], {"b": 1}], "o": 3,
+                    "a": "ab", "i": 2, "x": 0, "x-flag": true, "extra": 7}""",
                 """{"n": 1.3, "s": "abc"}""",
                 "{\"u\": [" * unique_items * ", 5]}",
                 "{\"u\": [" * unique_items * ", {\"name\": \"n3\", \"id\": 3}]}",
                 """{"o": {"x": 1}, "a": 3, "i": "s", "x": null}""",
                 """{"a-name-that-is-too-long": 1}"""]),
         AllocationCase("unevaluated properties and items", """{
-                "\$defs": { "base": { "properties": { "a": { "type": "integer" } }, "patternProperties": { "^x-": true } } },
+                "\$defs": { "base": { "properties": { "a": { "type": "integer" } }, "patternProperties": {
+                    "^x-": true } } },
                 "allOf": [{ "\$ref": "#/\$defs/base" }],
                 "anyOf": [{ "properties": { "b": true }, "required": ["b"] }, { "properties": { "c": true } }],
-                "oneOf": [{ "properties": { "d": { "type": "string" } } }, { "properties": { "d": { "type": "integer" } } }],
-                "properties": { "list": { "prefixItems": [true], "contains": { "type": "string" }, "unevaluatedItems": false } },
+                "oneOf": [{ "properties": { "d": { "type": "string" } } }, { "properties": { "d": {
+                    "type": "integer" } } }],
+                "properties": { "list": { "prefixItems": [true], "contains": { "type": "string" },
+                    "unevaluatedItems": false } },
                 "unevaluatedProperties": false
             }""", (;), [
                 """{"a": 1, "b": 2, "d": "s", "x-y": null, "list": [1, "a", "b"]}""",
@@ -87,7 +93,8 @@ function allocation_cases()
                         "\$id": "https://example.com/tree",
                         "\$dynamicAnchor": "node",
                         "type": "object",
-                        "properties": { "data": true, "children": { "type": "array", "items": { "\$dynamicRef": "#node" } } }
+                        "properties": { "data": true, "children": { "type": "array", "items": {
+                            "\$dynamicRef": "#node" } } }
                     }
                 }
             }""", (;), [
@@ -110,8 +117,13 @@ function allocation_cases()
                     "json": { "contentMediaType": "application/json", "contentEncoding": "base64" }
                 }
             }""", (; default_dialect=Draft7, assert_format=true), [
-                """{"date": "2020-01-02T03:04:05.678Z", "ip": "::ffff:192.168.0.1", "host": "example.com", "id": "2eb8aa08-aa98-11ea-b4aa-73b441d16380", "n": 12, "pointer": "/a/~0b", "json": "eyJhIjogWzEsIDIsIDNdfQ=="}""",
-                """{"uri": "http://example.com/a/b?c=d#e", "ref": "../a/b?c#d", "iri": "http://\\u00e9xample.com/\\u00fc", "template": "http://example.com/{id}/x{?q,r}", "email": "joe.bloggs@example.com", "duration": "P4DT12H30M5S", "time": "08:30:06.283185+01:00", "v4": "1.2.3.4"}""",
+                """{"date": "2020-01-02T03:04:05.678Z", "ip": "::ffff:192.168.0.1", "host": "example.com",
+                    "id": "2eb8aa08-aa98-11ea-b4aa-73b441d16380", "n": 12, "pointer": "/a/~0b",
+                    "json": "eyJhIjogWzEsIDIsIDNdfQ=="}""",
+                """{"uri": "http://example.com/a/b?c=d#e", "ref": "../a/b?c#d",
+                    "iri": "http://\\u00e9xample.com/\\u00fc", "template": "http://example.com/{id}/x{?q,r}",
+                    "email": "joe.bloggs@example.com", "duration": "P4DT12H30M5S", "time": "08:30:06.283185+01:00",
+                    "v4": "1.2.3.4"}""",
                 """{"n": 1e30}""",
                 """{"json": "bm90IGpzb24="}"""]),
     ]

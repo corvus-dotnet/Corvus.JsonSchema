@@ -51,5 +51,6 @@ include("plan.jl")
 include("fused.jl")
 include("eval.jl")
 include("validator.jl")
+include("precompile.jl")
 
 end

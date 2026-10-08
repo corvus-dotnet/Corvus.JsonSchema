@@ -759,7 +759,7 @@ function run_fused(e::Evaluator, f::FusedObject, x::Int)::Bool
     pass = take_pass!(e)
     mark = length(e.arena)
     ok = run_fused_pass(e, f, x, pass)
-    resize!(e.arena, mark)
+    length(e.arena) == mark || resize!(e.arena, mark)
     e.pass_depth -= 1
     return ok
 end

@@ -32,7 +32,8 @@ function run_suite_case(v::Validator, data::String)
         # The same instance straight from the text, in the validator's reused buffers.
         bytes = Vector{UInt8}(data)
         from_bytes = validate(v, bytes)
-        (from_bytes == fast && isvalid(v, bytes) == fast) || return "validate(bytes) returned $from_bytes, the document $fast"
+        (from_bytes == fast && isvalid(v, bytes) == fast) ||
+            return "validate(bytes) returned $from_bytes, the document $fast"
         from_string = validate(v, data)
         (from_string == fast && isvalid(v, data) == fast) ||
             return "validate(string) returned $from_string, the document $fast"
