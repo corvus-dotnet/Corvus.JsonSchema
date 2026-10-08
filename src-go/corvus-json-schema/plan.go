@@ -1050,7 +1050,9 @@ func (e *evaluator) runChild(c child, x int) bool {
 // most values with keywords are.
 func (e *evaluator) enterChild(c child, x int) bool {
 	d := e.d
-	kind := d.kind(x)
+	// The value's header is read once here, and what the loops need of it is handed to them.
+	header := d.tape[x<<1]
+	kind := uint8(header)
 	if c.types&kind == 0 && !integerOK(c.types, d, x) {
 		return false
 	}
@@ -1091,16 +1093,16 @@ func (e *evaluator) enterChild(c child, x int) bool {
 		return e.runBody(b, x)
 	}
 	// The strict loop (runStrictObject).
-	count := d.count(x)
+	count := int(header >> 32)
 	if uint64(count) < pl.min || uint64(count) > pl.max {
 		return false
 	}
 	var seen uint64
 	var ok bool
 	if pl.lookup && count*pl.names.len() <= lookupBudget {
-		seen, ok = e.visitLookup(pl, x)
+		seen, ok = e.visitLookup(pl, d.first(x), count)
 	} else {
-		seen, ok = e.visitNames(pl, x)
+		seen, ok = e.visitNames(pl, d.first(x), count)
 	}
 	return ok && seen&pl.requiredMask == pl.requiredMask
 }
@@ -1334,9 +1336,9 @@ func (e *evaluator) runObject(pl *objectPlan, x int) bool {
 		ok = e.visitValues(pl, x)
 	case visitNames:
 		if pl.lookup && count*pl.names.len() <= lookupBudget {
-			seen, ok = e.visitLookup(pl, x)
+			seen, ok = e.visitLookup(pl, e.d.first(x), count)
 		} else {
-			seen, ok = e.visitNames(pl, x)
+			seen, ok = e.visitNames(pl, e.d.first(x), count)
 		}
 	case visitPattern:
 		ok = e.visitPattern(pl, x)
@@ -1358,24 +1360,35 @@ func (e *evaluator) runStrictObject(pl *objectPlan, x int) bool {
 		return false
 	}
 	if pl.lookup && count*pl.names.len() <= lookupBudget {
-		seen, ok := e.visitLookup(pl, x)
+		seen, ok := e.visitLookup(pl, d.first(x), count)
 		return ok && seen&pl.requiredMask == pl.requiredMask
 	}
-	seen, ok := e.visitNames(pl, x)
+	seen, ok := e.visitNames(pl, d.first(x), count)
 	return ok && seen&pl.requiredMask == pl.requiredMask
 }
 
-// visitLookup looks each name up in the object (a plan with lookup: the other properties need no visit). It returns
-// the names seen.
-func (e *evaluator) visitLookup(pl *objectPlan, x int) (uint64, bool) {
+// visitLookup looks each name up in the object, whose count properties start at first (a plan with lookup: the
+// other properties need no visit). It returns the names seen. The properties are one slice of the tape, four words
+// each (a name and a value), so the search for a name reads the lengths of the property names with no bounds check.
+func (e *evaluator) visitLookup(pl *objectPlan, first, count int) (uint64, bool) {
+	d := e.d
 	seen := uint64(0)
 	m := &pl.names.m
+	props := d.tape[first<<1 : (first+2*count)<<1]
 	for i, name := range m.names {
-		if v := e.d.propertyWord(x, name, m.words[i]); v >= 0 {
+		for j := 0; j+3 < len(props); j += 4 {
+			if props[j]>>32 != uint64(len(name)) {
+				continue
+			}
+			k := first + j>>1
+			if key := d.str(k); nameWord(key) != m.words[i] || (len(name) > 8 && string(key) != name) {
+				continue
+			}
 			seen |= 1 << i
-			if !e.runChild(pl.children[i], v) {
+			if c := pl.children[i]; c.pass&uint8(props[j+2]) == 0 && !e.enterChild(c, k+1) {
 				return 0, false
 			}
+			break
 		}
 	}
 	return seen, true
@@ -1424,8 +1437,10 @@ func (e *evaluator) visitValues(pl *objectPlan, x int) bool {
 		if c.types == anyType {
 			return true
 		}
-		for i := 0; i < count; i++ {
-			if !typeOK(c.types, d, first+2*i+1) {
+		// The values' headers are every fourth word of the properties' slice of the tape.
+		props := d.tape[first<<1 : (first+2*count)<<1]
+		for j := 2; j < len(props); j += 4 {
+			if c.types&uint8(props[j]) == 0 && !integerOK(c.types, d, first+j>>1) {
 				return false
 			}
 		}
@@ -1439,14 +1454,15 @@ func (e *evaluator) visitValues(pl *objectPlan, x int) bool {
 	return true
 }
 
-// visitNames is for declared properties, and additionalProperties for the rest. It returns the declared names seen.
-func (e *evaluator) visitNames(pl *objectPlan, x int) (uint64, bool) {
+// visitNames is for declared properties, and additionalProperties for the rest, over the count properties that
+// start at first. It returns the declared names seen.
+func (e *evaluator) visitNames(pl *objectPlan, first, count int) (uint64, bool) {
 	d := e.d
 	ns := pl.names
 	seen := uint64(0)
 	hint := 0
-	k := d.first(x)
-	for end := k + 2*d.count(x); k < end; k += 2 {
+	k := first
+	for end := k + 2*count; k < end; k += 2 {
 		name := d.str(k)
 		w := nameWord(name)
 		var i int

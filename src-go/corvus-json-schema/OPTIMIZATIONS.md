@@ -57,9 +57,9 @@ with the reason.
   on the name where it lies in the document, with no document made for it (`visitGeneral`).
 - **The strict object loop** (`runStrictObject`). Declared names, `additionalProperties` for the rest and the
   required mask, as a function of its own that a nested object enters directly (`shapeObject` in `enter`).
-- **Small objects probed by name** (`visitLookup`, `Document.propertyWord`). A plan of at most 4 names and no
-  `additionalProperties` looks each name up in the instance when the instance's properties times the names is at
-  most 24, comparing names by length and word before text.
+- **Small objects probed by name** (`visitLookup`). A plan of at most 4 names and no `additionalProperties` looks
+  each name up in the instance when the instance's properties times the names is at most 24, comparing names by
+  length and word before text, over the properties as one slice of the tape.
 - **Name lookup** (`names.go`, the C# `Utf8NameMap`). A set of the lengths the names have settles most misses with
   one test (`names.lengths`). A name's key is its length, a word and, beyond eight bytes, its last eight bytes
   (`nameKey`, `nameWord`), which is the whole name up to sixteen bytes, so only a longer name has its text compared.
@@ -255,3 +255,10 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
 7. **The state of a fused pass on the stack** (`runFused`). Every fused pass took its state from the scratch, and so
    the scratch from the validator's `sync.Pool`, once per validation. 0.993 over all 37, and over the corpora that
    run a fused pass 0.918 (ansible-meta) to 0.983, with nothing else moved.
+8. **A value's header read once, and loops over a slice of the tape** (`enterChild`, `visitLookup`, `visitValues`).
+   An object's count and first child were read again by each function it went through, each read with its bounds
+   check. `enterChild` reads the header once and hands the first child and the count to the property loop. The
+   search for a name in a small object and the type test of a map's values run over the properties as one slice of
+   the tape, so they read with no bounds check. 0.976 (0.876 to 1.041). Instructions per pass over 18 corpora:
+   0.984, and a map of strings (importmap) 0.861. The same slice in the array item loop and in `visitNames` did not
+   lower the instruction count (1.004 and 1.002 over the corpora measured) and is not in.

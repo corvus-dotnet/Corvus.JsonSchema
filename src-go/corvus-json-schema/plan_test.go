@@ -130,19 +130,48 @@ func TestLinearNamesFindFromAnyHint(t *testing.T) {
 	}
 }
 
-func TestPropertyLookupByWord(t *testing.T) {
-	d := mustParse(t, `{"a": 1, "ab": 2, "abcdefgh": 3, "abcdefghi": 4, "abcdefghj": 5, "é": 6, "": 7, "a\nb": 8}`)
+// A plan of a few names looks each one up in a small object (visitLookup): every name is found by its length and
+// word, the text deciding beyond eight bytes, and a name that is not there is not.
+func TestPropertyLookupByName(t *testing.T) {
+	const instance = `{"a": 1, "ab": 2, "abcdefgh": 3, "abcdefghi": 4, "abcdefghj": 5, "é": 6, "": 7, "a\nb": 8}`
+	d := mustParse(t, instance)
+	quote := func(name string) string { return string(appendQuoted(nil, []byte(name))) }
 	for name, want := range map[string]string{
 		"a": "1", "ab": "2", "abcdefgh": "3", "abcdefghi": "4", "abcdefghj": "5", "é": "6", "": "7", "a\nb": "8",
 	} {
-		v := d.propertyWord(d.root, name, nameWord([]byte(name)))
-		if v < 0 || string(d.numberText(v)) != want || d.property(d.root, name) != v {
-			t.Errorf("%q: %d", name, v)
+		if v := d.property(d.root, name); v < 0 || string(d.numberText(v)) != want {
+			t.Errorf("property %q: %d", name, v)
+		}
+		for value, valid := range map[string]bool{want: true, "0": false} {
+			schema := `{"properties": {` + quote(name) + `: {"const": ` + value + `}}, "required": [` + quote(name) + `]}`
+			v, err := CompileString(schema)
+			if err != nil {
+				t.Fatalf("%s: %v", schema, err)
+			}
+			if pl := v.program.plans[v.program.entry].body.object; pl == nil || !pl.lookup {
+				t.Fatalf("%s: not a lookup plan", schema)
+			}
+			if got := v.IsValid(d); got != valid {
+				t.Errorf("%s: %v, want %v", schema, got, valid)
+			}
 		}
 	}
 	for _, miss := range []string{"b", "ba", "abcdefgi", "abcdefghk", "abcdefgh ", "è"} {
-		if v := d.propertyWord(d.root, miss, nameWord([]byte(miss))); v != -1 || d.property(d.root, miss) != -1 {
-			t.Errorf("%q: %d", miss, v)
+		if d.property(d.root, miss) != -1 {
+			t.Errorf("property %q found", miss)
+		}
+		// Found, the property would fail its schema. Required, it is missed.
+		for schema, valid := range map[string]bool{
+			`{"properties": {` + quote(miss) + `: false}}`:                                   true,
+			`{"properties": {` + quote(miss) + `: true}, "required": [` + quote(miss) + `]}`: false,
+		} {
+			v, err := CompileString(schema)
+			if err != nil {
+				t.Fatalf("%s: %v", schema, err)
+			}
+			if got := v.IsValid(d); got != valid {
+				t.Errorf("%s: %v, want %v", schema, got, valid)
+			}
 		}
 	}
 }
