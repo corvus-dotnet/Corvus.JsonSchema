@@ -56,14 +56,25 @@ Bytes(b::Vector{UInt8}) = Bytes(b, 0, length(b))
 
 const EMPTY_BYTES = UInt8[]
 
-# Eight bytes at zero-based offset i as a little-endian word.
+# Throws for a read at a negative offset. It is kept out of line so that the readers stay small.
+@noinline throw_negative_offset(b::Vector{UInt8}, i::Int) = throw(BoundsError(b, i + 1))
+
+# Eight bytes at zero-based offset i as a little-endian word. Every byte is read with a checked index. The offset's
+# sign is tested first and the last byte is read first, so the compiler can prove the other seven reads are in range
+# from that one check, drop their checks and join the eight reads into one load (see OPTIMIZATIONS.md, "Bounds checks
+# the compiler removes").
 @inline function le64(b::Vector{UInt8}, i::Int)
-    return UInt64(b[i+1]) | UInt64(b[i+2]) << 8 | UInt64(b[i+3]) << 16 | UInt64(b[i+4]) << 24 |
-           UInt64(b[i+5]) << 32 | UInt64(b[i+6]) << 40 | UInt64(b[i+7]) << 48 | UInt64(b[i+8]) << 56
+    i >= 0 || throw_negative_offset(b, i)
+    high = UInt64(b[i+8]) << 56
+    return high | UInt64(b[i+7]) << 48 | UInt64(b[i+6]) << 40 | UInt64(b[i+5]) << 32 | UInt64(b[i+4]) << 24 |
+           UInt64(b[i+3]) << 16 | UInt64(b[i+2]) << 8 | UInt64(b[i+1])
 end
 
+# Four bytes at zero-based offset i as a little-endian word, read as le64 reads eight.
 @inline function le32(b::Vector{UInt8}, i::Int)
-    return UInt64(b[i+1]) | UInt64(b[i+2]) << 8 | UInt64(b[i+3]) << 16 | UInt64(b[i+4]) << 24
+    i >= 0 || throw_negative_offset(b, i)
+    high = UInt64(b[i+4]) << 24
+    return high | UInt64(b[i+3]) << 16 | UInt64(b[i+2]) << 8 | UInt64(b[i+1])
 end
 
 function bytes_equal(a::Bytes, b::Bytes)

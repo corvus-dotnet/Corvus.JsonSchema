@@ -355,10 +355,22 @@ interpreter, and the interpreter is precompiled into the package image.
 
 ## Measured
 
-Nothing but the two records in this file ("The execution model" and "Measured and declined") has been measured for
-this port yet. Figures will be added when they are measured, by the method the Go module's file describes. That is
-an A/B of two builds of the jsonschema-benchmark protocol program, run alternately on a pinned host, comparing the
-median pass of the warm-up loop, with a build measured against itself first to say what a figure can tell.
+Warm validation over the 37 jsonschema-benchmark corpora, 2026-10-08 and 2026-10-09, linux/amd64. Every figure is
+an A/B of two builds, each with its own project environment and package image. One process per build runs the
+benchmark protocol's loop over every corpus (600 ms of warm-up passes for each, at least 100), the two builds
+alternate for five rounds, pinned to eight cores, and the figure is the median over the rounds of the median pass,
+the change over what was there before it, as a geometric mean over the corpora with the range. Julia 1.13.1 unless
+1.10.12 is named.
+
+A build measured against a second checkout of the same commit gave 1.001, with corpora between 0.934 and 1.102. So
+one corpus inside about 0.93 to 1.10 did not move in a single run of five rounds, and a geometric mean inside 0.99
+to 1.01 is nothing. The noise is larger than the Go module's, because every process places the code and the heap
+differently.
+
+1. **A word read as one load** (`le64`, `le32` in `document.jl`). Eight checked byte reads were eight tests and
+   eight loads. With the offset's sign tested first and the last byte read first, the compiler proves the other
+   reads in range, and the eight become one test and one load on Julia 1.13 and two tests and one load on Julia
+   1.10 (see "Bounds checks the compiler removes"). 0.978 (0.879 to 1.049), parse 0.981.
 
 The Go module's ten measured changes are techniques too. Its figures are for Go and are not repeated here. This is
 what this port's source has for each.
