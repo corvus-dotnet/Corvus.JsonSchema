@@ -324,16 +324,23 @@ function callout(block::Ptr{CalloutBlock}, frameptr::Ptr{Frame})::Cint
     return rc
 end
 
-# The callout as a C function. It is made by evaluating, when it is first needed, the expression that @cfunction
-# stands for, and not by writing @cfunction in a method. A @cfunction in a method of a package is compiled with the
-# package, and the C function Julia 1.10 then makes calls the callout through dispatch, which allocates at every
-# call. Evaluated in the process that runs, it calls the compiled method. The expression names nothing and defines
-# nothing. It is evaluated in Main, as Julia does not let a module of a package be evaluated into while another
-# package is precompiled, and a package that uses this one may match a pattern then.
+# The callout as a C function. In the process that runs it is made by evaluating, when it is first needed, the
+# expression that @cfunction stands for, and not by writing @cfunction in a method. A @cfunction in a method of a
+# package is compiled with the package, and the C function Julia 1.10 then makes calls the callout through dispatch,
+# which allocates at every call. Evaluated in the process that runs, it calls the compiled method. The expression
+# names nothing and defines nothing, and it is evaluated in a module made for it, which nothing else can see, so it
+# touches neither Main nor the names of anyone's code.
+#
+# While a package is being precompiled (this one, or one that uses it and matches a pattern as it loads) Julia lets
+# nothing be evaluated into a module that is not part of that package. The @cfunction of a method serves there: what
+# it allocates on Julia 1.10 does not matter in that process, and __init__ drops the pointer when the package loads.
 function makecallout()
+    if ccall(:jl_generating_output, Cint, ()) != 0
+        return @cfunction(callout, Cint, (Ptr{CalloutBlock}, Ptr{Frame}))
+    end
     arguments = Core.svec(Ptr{CalloutBlock}, Ptr{Frame})
     expression = Expr(:cfunction, Ptr{Cvoid}, QuoteNode(callout), Cint, arguments, QuoteNode(:ccall))
-    return Core.eval(Main, expression)::Ptr{Cvoid}
+    return Core.eval(Module(:EcmaRegexCallout, false, false), expression)::Ptr{Cvoid}
 end
 
 function newframe(calloutfunction::Ptr{Cvoid}, root::Ptr{Frame})
