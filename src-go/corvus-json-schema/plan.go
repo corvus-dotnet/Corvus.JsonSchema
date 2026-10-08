@@ -1341,7 +1341,7 @@ func (e *evaluator) visitNames(pl *objectPlan, x int) (uint64, bool) {
 		name := d.str(k)
 		w := nameWord(name)
 		var i int
-		if ns.at(hint, len(name), w) && (len(name) <= 8 || string(name) == ns.m.names[hint]) {
+		if ns.at(hint, len(name), w) && (len(name) <= 8 || ns.m.rest(hint, name)) {
 			i, hint = hint, hint+1
 		} else {
 			i, hint = ns.findAfter(name, w, hint)
@@ -1385,7 +1385,7 @@ func (e *evaluator) visitGeneral(pl *objectPlan, x int) (uint64, bool) {
 		matched := false
 		w := nameWord(name)
 		var i int
-		if ns.at(hint, len(name), w) && (len(name) <= 8 || string(name) == ns.m.names[hint]) {
+		if ns.at(hint, len(name), w) && (len(name) <= 8 || ns.m.rest(hint, name)) {
 			i, hint = hint, hint+1
 		} else {
 			i, hint = ns.findAfter(name, w, hint)

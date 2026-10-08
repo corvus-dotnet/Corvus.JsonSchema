@@ -38,7 +38,9 @@ func TestNameMapFindsEveryName(t *testing.T) {
 		list = append(list, fmt.Sprintf("p%d%s", i, strings.Repeat("x", i%13)))
 	}
 	list = append(list, "", "a", "ab", "abc", "abcd", "abcdefgh", "abcdefghi", "é", "日本", strings.Repeat("y", 300),
-		"abcdefghijkl", "abcdefghijkm", "abcdefghXjkl")
+		"abcdefghijkl", "abcdefghijkm", "abcdefghXjkl",
+		// Longer than sixteen bytes with the same first and last eight: only the text tells them apart.
+		"aaaaaaaa-1-bbbbbbbb", "aaaaaaaa-2-bbbbbbbb", "aaaaaaaa-3-bbbbbbbb")
 	find := func(m *nameMap, name string) int { return m.find([]byte(name), nameWord([]byte(name))) }
 	m := newNameMap(list)
 	for i, n := range list {
@@ -48,18 +50,18 @@ func TestNameMapFindsEveryName(t *testing.T) {
 	}
 	for _, miss := range []string{
 		"p", "q1", "p1000", "p0x", "b", "abce", "abcdefgj", "abcdefghj", "è", "y", strings.Repeat("y", 299),
-		"abcdefghijkn", "abcdefghXjkm",
+		"abcdefghijkn", "abcdefghXjkm", "aaaaaaaa-4-bbbbbbbb", strings.Repeat("y", 150) + "z" + strings.Repeat("y", 149),
 	} {
 		if got := find(&m, miss); got != -1 {
 			t.Errorf("find(%q) = %d", miss, got)
 		}
 	}
 	for _, few := range [][]string{
-		{"a"}, {"ab", "ba"}, {"alpha", "gamma", "delta", "omega"}, {"abcdefghij", "abcdefghik"},
+		{}, {"a"}, {"ab", "ba"}, {"alpha", "gamma", "delta", "omega"}, {"abcdefghij", "abcdefghik"}, {"twice", "twice", "once"},
 	} {
 		m := newNameMap(few)
 		for i, n := range few {
-			if got := find(&m, n); got != i {
+			if got := find(&m, n); got != slices.Index(few, n) {
 				t.Errorf("%v: find(%q) = %d, want %d", few, n, got, i)
 			}
 		}

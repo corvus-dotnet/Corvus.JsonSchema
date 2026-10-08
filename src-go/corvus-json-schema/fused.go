@@ -1076,7 +1076,7 @@ func (e *evaluator) runFusedPass(f *fusedObject, x int, pass *fusedPass) bool {
 		name := d.str(k)
 		w := nameWord(name)
 		var index int
-		if ns.at(hint, len(name), w) && (len(name) <= 8 || string(name) == ns.m.names[hint]) {
+		if ns.at(hint, len(name), w) && (len(name) <= 8 || ns.m.rest(hint, name)) {
 			index, hint = hint, hint+1
 		} else {
 			index, hint = ns.findAfter(name, w, hint)

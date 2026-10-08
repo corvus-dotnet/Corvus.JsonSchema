@@ -60,11 +60,13 @@ with the reason.
   `additionalProperties` looks each name up in the instance when the instance's properties times the names is at
   most 24, comparing names by length and word before text.
 - **Name lookup** (`names.go`, the C# `Utf8NameMap`). A set of the lengths the names have settles most misses with
-  one test (`names.lengths`). A name of at most eight bytes is one word that is unique among names of its length
-  (`nameWord`), so a miss never touches the text. A few names of one length are compared in turn, and more are split
-  by the byte position that best tells them apart (`byLengthTable`). The loops try the name after the previous match
-  first, then the next name in sorted order, since instances tend to list their properties in the schema's order or
-  sorted (`names.findFrom`).
+  one test (`names.lengths`). A name's key is its length, a word and, beyond eight bytes, its last eight bytes
+  (`nameKey`, `nameWord`), which is the whole name up to sixteen bytes, so only a longer name has its text compared.
+  The loops try the name after the previous match first, in the loop itself (`names.at`), then the next name in
+  sorted order, since instances tend to list their properties in the schema's order or sorted (`findAfter`), then a
+  hash table from the key to the index (`nameMap.findKey`). The table has four to eight slots for each name and its
+  multiplier is the one of 24 that leaves the fewest names away from their first slot, so a search is one
+  multiplication and one read to the index.
 - **Flat composition** (`fusedObject.flat`). A `$ref` and `allOf` chain of plain object schemas that apply
   unconditionally merges into one strict object loop.
 - **Fused object plans** (`fused.go`, the C# `FusedObject` plan). One pass over an object for a schema whose object
@@ -224,3 +226,14 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
    in `names.keys`) is now in `visitNames`, `visitGeneral` and the fused pass, and the search is the call. 0.986
    (0.938 to 1.073). The corpora above 1.03 in that run (openapi, ansible-meta, cmake-presets) were measured again
    with nine runs each at the protocol's warm-up time and gave 1.019, 1.012 and 1.022, which is inside the noise.
+4. **Names found through a hash of their key** (`nameMap`). The map was by length, then by the byte that best told
+   the names of a length apart, then a chain, with a call to compare the text of any name over eight bytes. It is
+   now one table (see Name lookup under Done), and `findKey` calls nothing. 0.979 (0.854 to 1.082), and compile
+   0.90. Three forms were measured before this one. Linear probing with the keys in the slots and two slots for each
+   name, and a perfect hash by displacement (two reads to the slot), were both slower on a corpus of one or two
+   properties per object (babelrc, 1.11 and 1.16 on a subset run): what counts there is the time until the index is
+   known, since the dispatch on the child's shape waits for it, and both add a read or a mispredicted probe before
+   it. The 1.082 of the kept form is on that same corpus, where twelve runs of each build put the build before the
+   change between 40.4 and 43.6 microseconds a pass, this one between 44.3 and 47.7, and a build of the old code
+   with nothing but an unused function added at 41.4 to 42.0 in seven runs and 44.6 to 45.6 in five. So that corpus
+   has two states a pass can be in, about 7 percent apart, that code layout alone chooses between.
