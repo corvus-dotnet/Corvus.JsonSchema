@@ -1,0 +1,19 @@
+name = "CorvusJsonSchemaBowtie"
+uuid = "b0e29788-c189-4d93-b87c-f387dc6d3393"
+version = "0.1.0"
+
+[deps]
+CorvusJsonSchema = "7b662be2-3602-4bf9-b859-13b2e88448f1"
+
+[sources]
+CorvusJsonSchema = {path = "../CorvusJsonSchema"}
+
+[compat]
+CorvusJsonSchema = "0.1"
+julia = "1.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
