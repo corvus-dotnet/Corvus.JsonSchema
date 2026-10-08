@@ -1,0 +1,138 @@
+name: go-publish
+# Publishes the Go module (src-go/corvus-json-schema) when the Version in its version.go has no tag yet. A Go module is
+# published by a tag, which for a module in a subdirectory is the directory then the version:
+# src-go/corvus-json-schema/v<version>. To release, bump Version in version.go (and add the version to the module's
+# VERSIONHISTORY.md) and merge. A merged pull request labelled no_release publishes nothing
+# (.github/actions/no-release-label).
+#
+# There is no registry to upload to and no secret. The Go module proxy fetches a version from the repository the
+# first time anyone asks for it, and this workflow asks, so the version is on proxy.golang.org, in the checksum
+# database and on pkg.go.dev when the run ends. A version the proxy has served can never be replaced: a tag moved
+# afterwards fails the checksum for everyone who fetches it. Never move or delete one.
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. Its tag
+# filter ('[0-9]+.[0-9]+.[0-9]+*') has to match the whole tag name from a leading digit, and its * does not match
+# a slash, so a tag that starts src-go/ cannot start it. The tag is also pushed with GITHUB_TOKEN, which does not
+# start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-go/corvus-json-schema/version.go'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: go-publish
+  cancel-in-progress: false
+
+env:
+  MODULE: github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema
+
+jobs:
+  version:
+    name: Version to publish
+    permissions:
+      contents: read
+      pull-requests: read  # the merged pull request's labels (no_release)
+    # A manual run from another branch must not publish that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      # 'true' when the version has no tag yet, 'false' when it has, and empty when nothing is to be published.
+      publish: ${{ steps.check.outputs.publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: |
+            src-go/corvus-json-schema
+            .github/actions
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
+      - name: Check whether this version has a tag
+        id: check
+        # A merged pull request labelled no_release publishes nothing (the test and publish jobs need this output).
+        if: steps.label.outputs.no-release != 'true'
+        run: |
+          file=src-go/corvus-json-schema/version.go
+          version=$(sed -n 's/^const Version = "\(.*\)"$/\1/p' "$file" | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No Version in $file."
+            exit 1
+          fi
+          grep -q "^## V$version$" src-go/corvus-json-schema/VERSIONHISTORY.md \
+            || { echo "::error::VERSIONHISTORY.md has no V$version section."; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          tag="src-go/corvus-json-schema/v$version"
+          # ls-remote exits 2 when the remote has no such ref, and anything else is a failure to ask.
+          status=0
+          git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null || status=$?
+          case "$status" in
+            0) echo "publish=false" >> "$GITHUB_OUTPUT"
+               echo "::notice::$tag already exists; nothing to tag." ;;
+            2) echo "publish=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::Could not list the repository's tags."
+               exit 1 ;;
+          esac
+
+  test:
+    name: Test
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    uses: ./.github/workflows/go.yml
+
+  publish:
+    name: Tag src-go/corvus-json-schema/v${{ needs.version.outputs.version }}
+    needs: [version, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # push the src-go/corvus-json-schema/v<version> tag
+    steps:
+      - name: Tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: src-go/corvus-json-schema/v${{ needs.version.outputs.version }}
+        run: gh api "repos/${{ github.repository }}/git/refs" -f ref="refs/tags/$TAG" -f sha="${{ github.sha }}"
+
+  index:
+    name: Ask the Go module proxy for v${{ needs.version.outputs.version }}
+    # After a new tag, and again on any later run for a version that is already tagged, so a run whose request failed
+    # can simply be run again.
+    needs: [version, publish]
+    if: ${{ always() && (needs.publish.result == 'success' || needs.version.outputs.publish == 'false') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request the version
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          # The proxy writes a capital letter in a module path as ! and the lower-case letter:
+          # github.com/corvus-dotnet/!corvus.!json!schema/src-go/corvus-json-schema.
+          escaped=$(printf '%s' "$MODULE" | sed 's/[A-Z]/!\L&/g')
+          url="https://proxy.golang.org/$escaped/@v/v$VERSION.info"
+          # The proxy fetches the tag from GitHub when first asked, which can take a few tries just after the push.
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if info=$(curl -sf "$url"); then
+              echo "$info"
+              {
+                echo "### $MODULE v$VERSION is published"
+                echo
+                echo "https://pkg.go.dev/$MODULE@v$VERSION"
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "The proxy does not have v$VERSION yet (attempt $attempt)."
+            sleep 30
+          done
+          echo "::error::proxy.golang.org did not serve $url. The tag exists, so run this workflow again, or run: GOPROXY=https://proxy.golang.org go list -m $MODULE@v$VERSION"
+          exit 1

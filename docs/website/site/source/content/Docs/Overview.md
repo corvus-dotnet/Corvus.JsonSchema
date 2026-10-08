@@ -28,7 +28,7 @@ Dynamically load, compile, and validate JSON documents against JSON Schema at ru
 
 ## [JSON Schema in other languages](/docs/other-languages.html)
 
-The same evaluator, with the same results, for JavaScript and TypeScript, Rust, Python, C, C++, Swift, Ruby and PHP. Each language has its own page: install, validate, the options, and Basic, Detailed and Verbose results with annotations, reported the same way in every language.
+The same evaluator, with the same results, for JavaScript and TypeScript, Rust, Java and Kotlin, Go, Python, C, C++, Swift, Ruby and PHP. Each language has its own page: install, validate, the options, and Basic, Detailed and Verbose results with annotations, reported the same way in every language.
 
 ## [Migrating from V4 to V5](/docs/migrating-from-v4-to-v5.html)
 

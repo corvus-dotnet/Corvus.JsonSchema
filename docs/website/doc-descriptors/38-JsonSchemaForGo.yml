@@ -1,0 +1,3 @@
+source: JsonSchemaForGo.md
+navTitle: "Go"
+description: "The Corvus JSON Schema evaluator for Go (github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema): install, validate, JSON text, options, results and annotations."

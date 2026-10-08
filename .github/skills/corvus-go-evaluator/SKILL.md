@@ -1,0 +1,136 @@
+---
+name: corvus-go-evaluator
+description: >
+  Work on the Go port of the V5 standalone schema evaluator (src-go/corvus-json-schema, module
+  github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema, package jsonschema): loader,
+  compiler, the fail-fast plans and fused object plans, results collector and annotations, the document
+  parser, the ECMA-262 regular expression engine, the allocation tests, the conformance and annotation
+  suites, the jsonschema-benchmark and Bowtie integrations, and performance measurement.
+  USE FOR: changing or debugging the Go evaluator, measuring it against santhosh-tekuri/jsonschema,
+  Blaze and the other Corvus evaluators, running its Bowtie harness, releasing the module, keeping it
+  in parity with the C# runtime evaluator.
+  DO NOT USE FOR: the C# runtime evaluator itself (see corvus-standalone-evaluator and
+  docs/RuntimeEvaluator.md), the Java port (corvus-java-evaluator), the TypeScript port
+  (corvus-typescript-evaluator).
+---
+
+# Go Standalone Evaluator
+
+## Overview
+
+`src-go/corvus-json-schema` ports the `Corvus.Text.Json.RuntimeEvaluator` pipeline to Go, by way of the Rust port
+(`src-rs/corvus-json-schema`), which it follows file for file. `loader.go` and `compiler.go` build the node graph
+(`schemaNode`) and its analyses (marking, in-place cycles, discriminators). `plan.go` compiles each node to a
+fail-fast plan, and `fused.go` fuses an object's keywords across `$ref`, `allOf`, `if`/`then`/`else`, dependencies
+and `oneOf`/`anyOf` into one pass. `eval.go` is the general evaluator: it serves results collection, and the nodes
+that track evaluated properties or items. `Document` (`document.go`) is the instance model: the UTF-8 text plus a
+flat tape, two words per value. `names.go` is the property name lookup, `pattern.go` the regex-free pattern
+matchers, and `internal/ecmaregex` the ECMA-262 engine behind every other pattern. `internal/ucd` holds the Unicode
+tables that the engine and the formats read.
+
+The module has no dependencies outside the standard library. Keep it that way: the benchmark and Bowtie harnesses
+are modules of their own for that reason.
+
+The package README describes the design. `OPTIMIZATIONS.md` maps every optimisation to its counterpart in the C#,
+Rust and Java evaluators, and its Todo list is the order of the performance work. Keep it current: a technique added
+to any of the other evaluators should be checked off (or ruled out, with the reason) there.
+
+## Build and test
+
+Go 1.25 or later. From `src-go/corvus-json-schema`:
+
+```bash
+go vet ./...
+gofmt -l .                      # prints nothing when the code is formatted
+go test -p 4 ./...              # every test
+go test -p 4 -race ./...        # as CI does on Linux and macOS (needs a C compiler; CC=clang works)
+JSONSCHEMA_BENCHMARK=<jsonschema-benchmark> go test -p 4 -run TestPlansAgree .   # plans against the general evaluator
+```
+
+The suites read the repository's `JSON-Schema-Test-Suite` submodule (or `JSON_SCHEMA_TEST_SUITE`). Every required,
+optional and format test must pass (`draft4/optional/zeroTerminatedFloats.json` is excluded, as in the C# runner),
+and all annotation assertions. Each case runs fail-fast as a document, as bytes and as a string, and through a
+collector at each level, and the verdicts must agree. `SUITE_DRAFT` and `SUITE_FILTER` narrow the run.
+
+`TestEmbeddedMetaschemasAreCurrent` checks the embedded metaschemas (`metaschemas/`) against
+`src/Corvus.Text.Json/metaschema`. `UPDATE_METASCHEMAS=1` copies them again.
+
+`src-go/corvus-json-schema-bowtie` runs the Bowtie harness over IHOP on the required and annotation suites
+(`go test -p 4 ./...` there). CI (`.github/workflows/go.yml`) runs all of these on Linux x64 and arm64, Windows and
+macOS, with the oldest Go the module accepts, Go 1.26, Go 1.27 and the latest.
+
+## The minimum Go version and Unicode data
+
+`go.mod` says `go 1.25.0`. CI tests that exact toolchain, Go 1.26, Go 1.27 and the latest release. Use no language
+or library feature newer than Go 1.25.
+
+The module takes no Unicode data from the toolchain, so it gives the same results with every Go release. The
+standard library's `unicode` package is Unicode 15 in Go 1.25 and 1.26 and Unicode 17 in Go 1.27, and the `\p`
+classes and case folding of `regexp` and the case functions of `strings` and `bytes` read it. Never use any of them
+outside a test file. `TestNoToolchainUnicodeData` (`unicode_test.go`) scans the module and fails if one appears.
+
+Use `internal/ucd` instead. `ucd.Category`, `ucd.Script`, `ucd.ScriptExtensions` and `ucd.Binary` return a
+`*ucd.Table` (`Contains`, `AppendRanges`), `ucd.Letter()` and its siblings are the general category groups, and
+`ucd.Fold` and `ucd.ToUpper` are the simple case mappings. For ASCII-only case rules use `asciiLower` (`uri.go`). A
+regular expression given to `regexp` must spell out ranges from the tables, as `idnEmailLocalRegexp` in `formats.go`
+and `writeRE2` in `internal/ecmaregex` do.
+
+`internal/ucd/tables_gen.go` holds Unicode 17, the version V8 answered with in `internal/ecmaregex/testdata/v8_oracle.json`.
+`internal/ucd/gen_tables.ps1` writes it from the Unicode data of the `regress` crate that the Rust port depends on,
+already formatted as gofmt formats it:
+
+```powershell
+pwsh src-go/corvus-json-schema/internal/ucd/gen_tables.ps1 -RegressTables ~/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regress-0.12.0/src/unicodetables.rs
+```
+
+To move to a later Unicode version, generate the tables from a `regress` release that carries it (pass
+`-UnicodeVersion`), record the V8 oracle again with a V8 of the same version (`testdata/gen_oracle.js`), and update
+`TestTheDataIsUnicode17` in `internal/ucd`. Do the three together.
+
+## Zero allocation
+
+Validation must allocate nothing in the steady state, from a `*Document`, a `[]byte` or a `string`.
+`TestValidationAllocatesNothingInTheSteadyState` measures each case with `testing.AllocsPerRun`. Add a case for
+every new keyword path. The evaluator is a value on the stack. Its buffers are a `scratch`, taken from the
+validator's `sync.Pool` only when first needed (`evaluator.state`). Evaluated-property sets come from the scratch's
+arena (`newBits`), and fused passes are reused through it. The race detector makes `sync.Pool` drop values, so the
+allocation tests skip under `-race` (`raceEnabled`).
+
+## Performance work
+
+- Work through `OPTIMIZATIONS.md` in its Todo order. Measure each change before keeping it.
+- In process: `src-go/corvus-json-schema-bench` (see its README) runs the jsonschema-benchmark corpora with corvus
+  and santhosh-tekuri/jsonschema, interleaving the engines' passes. Profile with `go test -cpuprofile` or `pprof` on
+  that program.
+- Against Blaze and the other Corvus evaluators: build the image (`pwsh Build-Image.ps1` in
+  `src-go/corvus-json-schema-bench/jsonschema-benchmark`) and run `Compare-Images.ps1`, pinned with `-CpuSet`. Every
+  harness must warm up by time (2 seconds, at least 100 passes) and report the last warm-up pass, timed inside the
+  loop. Compare like with like.
+- Measure before and after on the same machine, interleaved, with nothing else running. Do not publish a figure
+  that was not measured that way.
+- To see what the compiler inlined and where it kept bounds checks: `go build -gcflags='-m -d=ssa/check_bce' .`
+
+## Parity with the C# evaluator
+
+When the C# collecting mode changes (paths, messages, row order, which subschema results are kept), update the
+collecting paths of `eval.go` and `results_test.go`, which reproduces the C# `ResultsTests`/`ResultPathTests`
+expectations. Format recognition follows `SchemaCompiler.GetFormatKind` (`formatKind` in `formats.go`). A change to
+a plan in the Rust crate (`eval/plan.rs`, `eval/plan/fused.rs`) usually ports line for line to `plan.go` and
+`fused.go`. Patterns have ECMA-262 semantics through `internal/ecmaregex`, which is tested against answers recorded
+from V8 (see corvus-ecma-regex for the .NET translator).
+
+## Releasing the module
+
+Versioned independently, with its history in `src-go/corvus-json-schema/VERSIONHISTORY.md`. Bump `Version` in
+`version.go`, add the history entry, and merge. `.github/workflows/go-publish.yml` runs the tests, tags
+`src-go/corvus-json-schema/v<version>` and asks the Go module proxy for the version. See `docs/ReleaseProcess.md`,
+"The Go module". Never push that tag by hand, and never move one: the checksum database has recorded it.
+
+## Integrations
+
+- `src-go/corvus-json-schema-bench/jsonschema-benchmark/`: the `implementations/corvus-go` directory for
+  jsonschema-benchmark. It requires the published module, so local builds use a workspace
+  (`go work init . ../../corvus-json-schema`).
+- `src-go/corvus-json-schema-bowtie/`: the Bowtie harness and its image.
+- Docs: `docs/JsonSchemaForGo.md`, its row in `docs/OtherLanguages.md`, and the home page's language list. The code
+  samples in the docs and the README are example tests (`example_test.go`). Change both together.
