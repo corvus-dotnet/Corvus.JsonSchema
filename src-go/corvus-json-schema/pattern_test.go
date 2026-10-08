@@ -1,6 +1,7 @@
 package jsonschema
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -121,6 +122,50 @@ func TestInvalidPatternsAreRejected(t *testing.T) {
 	for _, source := range []string{"a(", "[a", "a{2,1}", "(?<n>a)(?<n>b)", "*a", `^(?=a`} {
 		if _, ok := compilePattern(source); ok {
 			t.Errorf("%q compiled", source)
+		}
+	}
+}
+
+// A class with a member outside ASCII, in the shape "^(?=[^SET]+$)(?=(.*\w)).+$". The shape's set holds ASCII
+// characters only. Reading such a member as a bit of the set panicked when the schema was compiled (v0.1.0). The
+// pattern has no shape and is matched by the engine.
+func TestExcludedClassWithAMemberOutsideASCII(t *testing.T) {
+	word := func(c rune) bool {
+		return c == '_' || c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
+	}
+	cases := []struct {
+		pattern  string
+		excluded func(rune) bool
+	}{
+		{"^(?=[^é]+$)(?=(.*\\w)).+$", func(c rune) bool { return c == 0xe9 }},
+		{"^(?=[^xé]+$)(?=(?:.*\\w)).+$", func(c rune) bool { return c == 'x' || c == 0xe9 }},
+		{"^(?=[^中/]+$)(?=.*\\w).+$", func(c rune) bool { return c == 0x4e2d || c == '/' }},
+		{"^(?=[^\U0001f600]+$)(?=(.*\\w)).+$", func(c rune) bool { return c == 0x1f600 }},
+		// A range that starts in ASCII and ends outside it.
+		{"^(?=[^m-é]+$)(?=(.*\\w)).+$", func(c rune) bool { return c >= 'm' && c <= 0xe9 }},
+	}
+	texts := []string{
+		"C1", ")a", "abc", "d-8p", "p.q", "x1", "a/b", "---", "é1", "aé", "中a", "a\U0001f600", "zè",
+		"0", "ABC", "a{", "al",
+	}
+	for _, c := range cases {
+		schema, err := json.Marshal(map[string]string{"pattern": c.pattern})
+		if err != nil {
+			t.Fatal(err)
+		}
+		v, err := Compile(schema)
+		if err != nil {
+			t.Fatalf("%s: %v", c.pattern, err)
+		}
+		for _, text := range texts {
+			instance, err := json.Marshal(text)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := strings.IndexFunc(text, word) >= 0 && strings.IndexFunc(text, c.excluded) < 0
+			if got := v.IsValidBytes(instance); got != want {
+				t.Errorf("%s on %q: got %v, want %v", c.pattern, text, got, want)
+			}
 		}
 	}
 }

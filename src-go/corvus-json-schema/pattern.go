@@ -1284,6 +1284,11 @@ func parseClass(b string, i int) (charSet, int, bool) {
 			break
 		}
 		first = false
+		// The set holds ASCII members only. A member outside ASCII leaves the pattern to the engine. (This is tested
+		// before the set is built: a byte of 128 or more is not a bit of it.)
+		if c >= utf8.RuneSelf {
+			return fail()
+		}
 		// One atom: a single character (for ranges) or a set escape.
 		atom := charRange(c, c)
 		lo, single := c, true
@@ -1301,9 +1306,6 @@ func parseClass(b string, i int) (charSet, int, bool) {
 			single = single && (e == 'n' || e == 'r' || e == 't' || isASCIIPunctuation(e))
 			i += 2
 		} else {
-			if c >= utf8.RuneSelf {
-				return fail()
-			}
 			i++
 		}
 		if i+1 < len(b) && b[i] == '-' && b[i+1] != ']' {
