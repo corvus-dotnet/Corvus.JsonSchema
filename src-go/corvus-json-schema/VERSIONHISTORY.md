@@ -2,6 +2,14 @@
 
 The version history of `github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema`, the Go port of the Corvus.Text.Json V5 runtime evaluator. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.1
+
+V0.1.1 fixes a panic when compiling a schema with one form of pattern. There are no API changes. Version 0.1.0 is affected.
+
+### Bug fixes
+
+- **A pattern of the form `^(?=[^SET]+$)(?=(.*\w)).+$` with a character outside ASCII in its excluded set.** The module matches this form without the pattern engine and keeps the excluded set as one bit for each ASCII character, in two 64-bit words. A member outside ASCII, such as `é` in `^(?=[^é]+$)(?=(.*\w)).+$`, was read one UTF-8 byte at a time as a bit number of 128 or more, which indexed past the two words. `Compile` panicked with an index out of range and returned no error, for a schema that is valid. Such a pattern is now matched by the pattern engine, and `Compile` succeeds. A pattern of this form whose excluded set is all ASCII was never affected.
+
 ## V0.1.0
 
 The first release of the Go port of `Corvus.Text.Json.RuntimeEvaluator`.
