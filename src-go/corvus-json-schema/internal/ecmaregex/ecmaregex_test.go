@@ -103,7 +103,8 @@ func differentialInputs(n int) []string {
 }
 
 // TestDifferential proves the translation to the regexp package exact on the patterns at hand. Every pattern that
-// takes that back end is also run on the backtracking matcher, and the two must agree on every text.
+// takes that back end is also run on the backtracking matcher, and the two must agree on every text. So must the
+// automaton over ASCII text, which answers for the pattern where it has one, and the regexp package asked directly.
 func TestDifferential(t *testing.T) {
 	patterns := map[string]bool{}
 	o := loadOracle(t)
@@ -128,7 +129,7 @@ func TestDifferential(t *testing.T) {
 	}
 	inputs := differentialInputs(1500)
 	var engines [2]int
-	answers := 0
+	answers, automata, decided := 0, 0, 0
 	for p := range patterns {
 		re, err := Compile(p)
 		if err != nil {
@@ -144,13 +145,27 @@ func TestDifferential(t *testing.T) {
 		}
 		for _, s := range inputs {
 			answers++
-			if a, b := re.MatchString(s), backtrack.MatchString(s); a != b {
-				t.Errorf("%q on %q: %v says %v, %v says %v", p, s, EngineRE2, a, EngineBacktrack, b)
+			a, direct, b := re.MatchString(s), re.re.MatchString(s), backtrack.MatchString(s)
+			if a != b || direct != b {
+				t.Errorf("%q on %q: %v says %v (the regexp package itself %v), %v says %v", p, s, EngineRE2, a, direct,
+					EngineBacktrack, b)
 			}
+			if re.dfa != nil {
+				if _, ok := re.dfa.match([]byte(s)); ok {
+					decided++
+				}
+			}
+		}
+		if re.dfa != nil {
+			automata++
 		}
 	}
 	t.Logf("%d patterns on %v compared on %d texts each (%d answers), %d patterns on %v only",
 		engines[EngineRE2], EngineRE2, len(inputs), answers, engines[EngineBacktrack], EngineBacktrack)
+	t.Logf("%d of the patterns on %v have an automaton, which decided %d of the answers", automata, EngineRE2, decided)
+	if automata == 0 || decided == 0 {
+		t.Errorf("no automaton was compared")
+	}
 }
 
 // TestEngineChoice checks which back end a pattern takes.
@@ -527,4 +542,57 @@ func TestProperties(t *testing.T) {
 		}
 	}
 	t.Logf("%d property expressions resolve", expressions)
+}
+
+// TestAutomaton checks which patterns get an automaton over ASCII text, and its answers at the edges: the empty
+// text, anchors, an unanchored search, and a text that is not ASCII (which it must hand back).
+func TestAutomaton(t *testing.T) {
+	for p, want := range map[string]bool{
+		`^[a-z][a-z0-9_]*$`: true, `(base64key|awskms)://(.*)`: true, `^[Ee][Ss]20(1[5-9]|2[0-2])(\.[a-z]+)?$`: true,
+		`^$`: true, `$`: true, `a*`: true, `^(?:a?){40}$`: true, `é+`: true,
+		// A word boundary, and more states than an automaton may have.
+		`\bfoo`: false, `^a{600}$`: false, `(?:a{50}){12}`: false, `^(?:[a-z]{1,3}\d?){2,90}$`: false,
+	} {
+		re, err := Compile(p)
+		if err != nil || re.Engine() != EngineRE2 {
+			t.Fatalf("%q: %v, %v", p, err, re.Engine())
+		}
+		re.MatchString("")
+		if got := re.dfa != nil; got != want {
+			t.Errorf("%q: automaton %v, want %v", p, got, want)
+		}
+	}
+	for _, c := range []struct {
+		p, s string
+		want bool
+	}{
+		{`^$`, "", true}, {`^$`, "a", false}, {`$`, "abc", true}, {`^`, "abc", true}, {`$^`, "", true}, {`$^`, "a", false},
+		{`a$`, "ba", true}, {`a$`, "ab", false}, {`^a`, "ab", true}, {`^a`, "ba", false}, {`b`, "aaab", true},
+		{`^(a|ab)(c|bcd)$`, "abcd", true}, {`^(a|ab)(c|bcd)$`, "abc", true}, {`^(a|ab)(c|bcd)$`, "abcc", false},
+		{`x{2,3}`, "axxb", true}, {`^x{2,3}$`, "xxxx", false}, {`^.$`, "\n", false}, {`^[^a]$`, "\n", true},
+		{`é`, "caf", false}, {`^a*$`, "", true}, {`^(a$|b)c?$`, "a", true}, {`^(a$|b)c?$`, "ac", false},
+	} {
+		re, err := Compile(c.p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := re.MatchString(c.s); got != c.want || re.re.MatchString(c.s) != c.want {
+			t.Errorf("%q on %q: %v (the regexp package %v), want %v", c.p, c.s, got, re.re.MatchString(c.s), c.want)
+		}
+		if re.dfa == nil {
+			t.Errorf("%q: no automaton", c.p)
+		} else if _, ok := re.dfa.match([]byte(c.s)); !ok {
+			t.Errorf("%q on %q: the automaton did not decide an ASCII text", c.p, c.s)
+		}
+	}
+	re, _ := Compile(`^[a-z]+$`)
+	if !re.MatchString("abc") || re.MatchString("caf\u00e9") {
+		t.Errorf("^[a-z]+$ on abc and on a text that is not ASCII")
+	}
+	if _, ok := re.dfa.match([]byte("caf\u00e9")); ok {
+		t.Errorf("the automaton decided a text that is not ASCII")
+	}
+	if re, _ := Compile(`^\p{L}+$`); !re.MatchString("caf\u00e9") || re.MatchString("caf\u00e9 1") || !re.MatchString("cafe") {
+		t.Errorf("a text that is not ASCII was not handed to the regexp package")
+	}
 }

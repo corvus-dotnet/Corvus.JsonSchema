@@ -103,8 +103,11 @@ with the reason.
   multiplied out, separated lists, and the excluded class with a word lookahead. A sequence has a byte-per-character
   path for a string the document knows is ASCII (`matchASCII`). Patterns compile once per process (`patternCache`).
 - **The regular expression engine** (`internal/ecmaregex`). A pattern in the subset that RE2 reads the same way is
-  translated to the standard library's `regexp` and matched in linear time. Anything else runs on a backtracking
-  matcher whose stack is explicit and pooled, so a match allocates nothing once it has grown.
+  translated to the standard library's `regexp` and matched in linear time. Such a pattern with no word boundary
+  also gets a deterministic automaton over ASCII text (`dfa.go`), of at most 256 states, built on the first match:
+  an ASCII text is then decided with one table read per byte, and `regexp` only sees the texts that are not ASCII.
+  Anything else runs on a backtracking matcher whose stack is explicit and pooled, so a match allocates nothing
+  once it has grown.
 - **Numbers** (`numbers.go`). Exact comparison across int64, uint64 and float64 (`compareNumbers`). Bounds are
   digested at compile time into the same representation (`numberOp`). An integer `multipleOf` of an integer is `%`.
   Any other `multipleOf` is decided on the decimal digits of the text with integer arithmetic (`dividesText`).
@@ -270,3 +273,12 @@ between 0.963 and 1.024, so a corpus inside 0.96 to 1.03 did not move.
    names or count bounds are visited after the properties. 0.991 over all 37, and over the corpora with conditional
    fused plans jsconfig 0.862, ui5 0.900, ansible-meta 0.942, openapi 0.975. Instructions per pass: ui5 0.893,
    jsconfig 0.936.
+10. **An automaton over ASCII text for the patterns on `regexp`** (`internal/ecmaregex/dfa.go`). Of the patterns in
+    the 37 schemas that no faster matcher takes, all but one run on `regexp` (case-insensitive words spelt as
+    classes, alternatives of words after a prefix, a semantic version), and `regexp` was 17 percent of the samples
+    of jsconfig and 12 of cspell. 0.980 over all 37, jsconfig 0.700, cspell 0.850, krakend 0.875, ui5 0.953.
+    Instructions per pass: jsconfig 0.778, cspell 0.893, krakend 0.902. Compile time is as before, since the
+    automaton is built on a pattern's first match (5 to 170 microseconds for the patterns of these schemas, and at
+    most about a millisecond for a pattern that turns out too large for one). The differential test of the package
+    compares the automaton, `regexp` itself and the backtracking matcher on 1500 texts for each of 1462 patterns,
+    1418 of which have an automaton.

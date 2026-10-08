@@ -22,7 +22,10 @@
 // # Back ends
 //
 // A pattern with no lookaround, no backreference, no multiline anchor and no case-insensitive word boundary is
-// translated to the syntax of the standard library's regexp package and matched in linear time. The translation spells out every literal and every class as code points, so
+// translated to the syntax of the standard library's regexp package and matched in linear time. Such a pattern also
+// gets a deterministic automaton over ASCII text when it is small enough and has no word boundary (see dfa.go),
+// which decides an ASCII text with one table read per byte. The regexp package then only sees the texts that are
+// not ASCII. The translation spells out every literal and every class as code points, so
 // none of the places where RE2 and ECMA-262 read the same syntax differently (\d, \w, \s, the dot, $, Unicode
 // classes, case folding) can show through. Every other pattern, and any pattern whose translation regexp refuses (a repeat count
 // above its limit, for example), runs on a backtracking matcher in this package. That matcher keeps its choices on an
@@ -43,6 +46,7 @@ package ecmaregex
 import (
 	"regexp"
 	"strings"
+	"sync"
 	"unsafe"
 )
 
@@ -54,6 +58,11 @@ type Regexp struct {
 	prog *program
 	// unicode says the pattern was read with the u flag grammar.
 	unicode bool
+	// For a pattern on the regexp package: its automaton over ASCII text (see dfa.go), built on the first match
+	// from the syntax tree, which is kept until then. Nil when the pattern has none.
+	once sync.Once
+	root *node
+	dfa  *dfa
 }
 
 // An Engine names the back end a pattern compiled to.
@@ -96,7 +105,7 @@ func compile(pattern string, forceBacktrack bool) (*Regexp, error) {
 		var b strings.Builder
 		writeRE2(&b, root)
 		if re, err := regexp.Compile(b.String()); err == nil {
-			r.re = re
+			r.re, r.root = re, root
 			return r, nil
 		}
 	}
@@ -108,18 +117,26 @@ func compile(pattern string, forceBacktrack bool) (*Regexp, error) {
 // in the steady state and is safe for concurrent use.
 func (r *Regexp) Match(utf8 []byte) bool {
 	if r.re != nil {
+		r.once.Do(r.buildDFA)
+		if r.dfa != nil {
+			if matched, ok := r.dfa.match(utf8); ok {
+				return matched
+			}
+		}
 		return r.re.Match(utf8)
 	}
 	return r.prog.match(utf8)
 }
 
+// buildDFA builds the automaton of a pattern on the regexp package, and lets go of the syntax tree.
+func (r *Regexp) buildDFA() {
+	r.dfa, r.root = buildDFA(r.root), nil
+}
+
 // MatchString is Match for a string.
 func (r *Regexp) MatchString(s string) bool {
-	if r.re != nil {
-		return r.re.MatchString(s)
-	}
-	// The matcher only reads the text, so it can look at the string's bytes in place.
-	return r.prog.match(unsafe.Slice(unsafe.StringData(s), len(s)))
+	// The matchers only read the text, so they can look at the string's bytes in place.
+	return r.Match(unsafe.Slice(unsafe.StringData(s), len(s)))
 }
 
 // Engine reports which back end the pattern compiled to.
