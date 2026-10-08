@@ -247,7 +247,7 @@ end
 # The evaluator
 
 # Evaluates the program's entry, failing fast.
-validate!(e::Evaluator) = run(e, e.p.entry, e.d.root)
+validate!(e::Evaluator) = @run(e, e.p.entry, e.d.root)
 
 # Evaluates the program's entry, reporting to the collector.
 function evaluate!(e::Evaluator, c::ResultsCollector)
@@ -545,7 +545,7 @@ function eval_property(e::Evaluator, child::NodeId, keyword::String, entry::Stri
     segment::String)
     tracked(bits) && set_bit!(e, bits, i)
     c = e.c
-    c === nothing && return run(e, target(e.p, child), v)
+    c === nothing && return @run(e, target(e.p, child), v)
     path = (entry != "" || keyword != "additionalProperties") ? keyword * "/" * entry : keyword
     return eval_at(e, c, child, path, v, segment)
 end
@@ -610,7 +610,7 @@ function eval_object(e::Evaluator, n::SchemaNode, x::Int, bits::Bitset)::Bool
                         evaluated_keyword!(collector, false, MSG_PROPERTY_NAME_FAILED, "propertyNames")
                         ok = false
                     end
-                elseif !run(e, target(e.p, pn), k)
+                elseif !@run(e, target(e.p, pn), k)
                     return false
                 end
             end
@@ -657,7 +657,7 @@ function eval_unevaluated_properties(e::Evaluator, n::SchemaNode, x::Int, bits::
         set_bit!(e, bits, i)
         v = first_child + 2i + 1
         if collector === nothing
-            run(e, target(e.p, child), v) || return false
+            @run(e, target(e.p, child), v) || return false
         elseif !eval_at(e, collector, child, "unevaluatedProperties", v,
             escape_pointer_token(String(str(d, first_child + 2i))))
             ok = false
@@ -704,7 +704,7 @@ function eval_array(e::Evaluator, n::SchemaNode, x::Int, bits::Bitset)::Bool
         if child >= 0
             tracked(bits) && set_bit!(e, bits, i)
             if collector === nothing
-                run(e, target(e.p, child), item) || return false
+                @run(e, target(e.p, child), item) || return false
             elseif !eval_at(e, collector, child, path, item, string(i))
                 ok = false
             end
@@ -722,7 +722,7 @@ function eval_array(e::Evaluator, n::SchemaNode, x::Int, bits::Bitset)::Bool
                     pop_child_context!(collector)
                 end
             else
-                matched = run(e, target(e.p, n.contains), item)
+                matched = @run(e, target(e.p, n.contains), item)
             end
             if matched
                 found += 1
@@ -759,7 +759,7 @@ function eval_unevaluated_items(e::Evaluator, n::SchemaNode, x::Int, bits::Bitse
         get_bit(e, bits, i) && continue
         set_bit!(e, bits, i)
         if collector === nothing
-            run(e, target(e.p, child), first_item + i) || return false
+            @run(e, target(e.p, child), first_item + i) || return false
         elseif !eval_at(e, collector, child, "unevaluatedItems", first_item + i, string(i))
             ok = false
         end
@@ -815,7 +815,7 @@ function eval_in_place_child(e::Evaluator, child::NodeId, path::String, x::Int, 
     elseif tracked(scratch)
         ok = eval_node(e, resolved, x, scratch)
     else
-        ok = run(e, resolved, x)
+        ok = @run(e, resolved, x)
     end
     if guarded
         e.depth -= 1
@@ -957,7 +957,7 @@ function eval_in_place(e::Evaluator, n::SchemaNode, x::Int, bits::Bitset)::Bool
             inner = eval_node(e, n.not, x, NO_BITS)
             pop_child_context!(collector)
         else
-            inner = run(e, target(e.p, n.not), x)
+            inner = @run(e, target(e.p, n.not), x)
         end
         keyword!(e, !inner, inner ? MSG_MATCHED_NOT : MSG_DID_NOT_MATCH_NOT, "not") && return false
         ok = ok && !inner

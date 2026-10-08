@@ -45,6 +45,30 @@ Child(id::NodeId) = Child(id, ANY_TYPE, SHAPE_GENERAL, 0x00)
 # A child that accepts anything and is never entered (an undeclared name without additionalProperties).
 const NO_CHILD = Child(NO_NODE, ANY_TYPE, SHAPE_TRIVIAL, ANY_TYPE)
 
+# Evaluates a child at a new instance location: a child that is only a type test the value passes is decided where
+# this is written, and anything else is one call to enter_child. Evaluates a node's plan by its id: enter_child on
+# the node's own child.
+#
+# These are macros and not functions marked @inline. A value is evaluated by functions that call each other in a
+# cycle (enter_child, the property and item loops, the applicators), and Julia does not inline a call to a function
+# of the cycle it is compiling, whatever the function is marked. In the package image both were calls, so every
+# property and item cost a call before its type test (seen in the image's code, not in code_typed, which compiles
+# the caller again once the cycle is known and does inline them).
+macro run_child(e, d, c, x)
+    return quote
+        local child = $(esc(c))
+        local value = $(esc(x))
+        (child.pass & kind($(esc(d)), value)) != 0 || enter_child($(esc(e)), child, value)
+    end
+end
+
+macro run(e, id, x)
+    return quote
+        local evaluator = $(esc(e))
+        enter_child(evaluator, evaluator.selfs[$(esc(id))+1], $(esc(x)))
+    end
+end
+
 const NUMBER_MINIMUM = 0x00
 const NUMBER_MAXIMUM = 0x01
 const NUMBER_EXCLUSIVE_MINIMUM = 0x02

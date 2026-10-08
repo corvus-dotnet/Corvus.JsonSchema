@@ -601,17 +601,7 @@ end
     return kind(d, x) == KIND_NUMBER && (mask & TYPE_INTEGER) != 0 && is_integer_number(flags(d, x), data(d, x))
 end
 
-# Evaluates a node's plan (at a new instance location, or where no depth guard applies).
-@inline run(e::Evaluator, id::NodeId, x::Int) = enter_child(e, e.selfs[id+1], x)
-
-# Evaluates a child at a new instance location. A child that is only a type test the value passes is decided here,
-# in the caller once this is inlined, and anything else is one call.
-@inline run_child(e::Evaluator, c::Child, x::Int) = (c.pass & kind(e.d, x)) != 0 || enter_child(e, c, x)
-
-# run_child for a loop that has the document at hand.
-@inline run_child(e::Evaluator, d::Document, c::Child, x::Int) = (c.pass & kind(d, x)) != 0 || enter_child(e, c, x)
-
-# run_child past its inlined test: the type test in full, then the child's keywords by its shape. An object for a
+# @run_child past its test: the type test in full, then the child's keywords by its shape. An object for a
 # strict object plan has its loop called from here, with no function in between, since that is what most values with
 # keywords are.
 function enter_child(e::Evaluator, c::Child, x::Int)::Bool
@@ -687,14 +677,14 @@ end
 
 # Evaluates an in-place child under the depth guard.
 function run_in_place(e::Evaluator, id::NodeId, x::Int)::Bool
-    e.guards[id+1] || return run(e, id, x)
+    e.guards[id+1] || return @run(e, id, x)
     e.depth += 1
     if e.depth > e.p.max_depth
         e.depth_exceeded = true
         e.depth -= 1
         return false
     end
-    ok = run(e, id, x)
+    ok = @run(e, id, x)
     e.depth -= 1
     return ok
 end
@@ -760,7 +750,7 @@ function run_keywords(e::Evaluator, b::Body, x::Int)::Bool
         if b.has_unevaluated_items
             first_item = first(d, x)
             for i in b.unevaluated_from:count(d, x)-1
-                run_child(e, b.unevaluated_child, first_item + i) || return false
+                @run_child(e, e.d, b.unevaluated_child, first_item + i) || return false
             end
         end
     end
@@ -818,7 +808,7 @@ function run_op(e::Evaluator, o::Op, x::Int)::Bool
         end
         return matched == 1
     elseif k == OP_NOT
-        return !run(e, o.node, x)
+        return !@run(e, o.node, x)
     elseif k == OP_DYNAMIC_REF
         return run_in_place(e, target(e.p, resolve_dynamic(e, o.dynamic)), x)
     end
@@ -934,7 +924,7 @@ function visit_values(e::Evaluator, pl::ObjectPlan, x::Int)::Bool
         return true
     end
     for i in 0:n-1
-        run_child(e, d, c, first_child + 2i + 1) || return false
+        @run_child(e, d, c, first_child + 2i + 1) || return false
     end
     return true
 end
@@ -960,8 +950,8 @@ function visit_names(e::Evaluator, pl::ObjectPlan, first_child::Int, n::Int)::Tu
         end
         if i >= 0
             seen |= UInt64(1) << (i & 63)
-            run_child(e, d, children[i+1], k + 1) || return UInt64(0), false
-        elseif pl.has_additional && !run_child(e, d, pl.additional, k + 1)
+            @run_child(e, d, children[i+1], k + 1) || return UInt64(0), false
+        elseif pl.has_additional && !@run_child(e, d, pl.additional, k + 1)
             return UInt64(0), false
         end
         k += 2
@@ -976,8 +966,8 @@ function visit_pattern(e::Evaluator, pl::ObjectPlan, x::Int)::Bool
     stop = k + 2 * count(d, x)
     while k < stop
         if pattern_match(p.pattern, str(d, k), str_ascii(d, k))
-            run_child(e, d, p.child, k + 1) || return false
-        elseif pl.has_additional && !run_child(e, d, pl.additional, k + 1)
+            @run_child(e, d, p.child, k + 1) || return false
+        elseif pl.has_additional && !@run_child(e, d, pl.additional, k + 1)
             return false
         end
         k += 2
@@ -1008,25 +998,25 @@ function visit_general(e::Evaluator, pl::ObjectPlan, x::Int)::Tuple{UInt64,Bool}
             # A name only required (or a dependency) mentions is undeclared: patterns, else additionalProperties.
             if i < pl.declared
                 matched = true
-                run_child(e, d, pl.children[i+1], k + 1) || return UInt64(0), false
+                @run_child(e, d, pl.children[i+1], k + 1) || return UInt64(0), false
             end
             for j in pl.name_patterns[i+1]
                 matched = true
-                run_child(e, d, patterns[j+1].child, k + 1) || return UInt64(0), false
+                @run_child(e, d, patterns[j+1].child, k + 1) || return UInt64(0), false
             end
         else
             for j in eachindex(patterns)
                 if pattern_match(patterns[j].pattern, name, str_ascii(d, k))
                     matched = true
-                    run_child(e, d, patterns[j].child, k + 1) || return UInt64(0), false
+                    @run_child(e, d, patterns[j].child, k + 1) || return UInt64(0), false
                 end
             end
         end
-        if !matched && pl.has_additional && !run_child(e, d, pl.additional, k + 1)
+        if !matched && pl.has_additional && !@run_child(e, d, pl.additional, k + 1)
             return UInt64(0), false
         end
         # The name is a string value of the document: it is evaluated where it is.
-        if pl.property_names >= 0 && !run(e, pl.property_names, k)
+        if pl.property_names >= 0 && !@run(e, pl.property_names, k)
             return UInt64(0), false
         end
         k += 2
@@ -1042,7 +1032,7 @@ function run_array(e::Evaluator, pl::ArrayPlan, x::Int)::Bool
     pl.is_simple && return all_of_type(d, first_item, n, pl.simple)
     prefix = min(length(pl.prefix), n)
     for i in 0:prefix-1
-        run_child(e, d, pl.prefix[i+1], first_item + i) || return false
+        @run_child(e, d, pl.prefix[i+1], first_item + i) || return false
     end
     if pl.has_items
         items = pl.items
@@ -1065,14 +1055,14 @@ function run_array(e::Evaluator, pl::ArrayPlan, x::Int)::Bool
             all_of_type(d, first_item + prefix, n - prefix, items.types) || return false
         else
             for item in first_item+prefix:first_item+n-1
-                run_child(e, d, items, item) || return false
+                @run_child(e, d, items, item) || return false
             end
         end
     end
     if pl.contains >= 0
         found = UInt64(0)
         for i in 0:n-1
-            if run(e, pl.contains, first_item + i)
+            if @run(e, pl.contains, first_item + i)
                 found += 1
                 !pl.max_contains.set && found >= pl.min_contains && break
             end

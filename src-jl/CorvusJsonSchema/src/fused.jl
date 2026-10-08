@@ -653,8 +653,6 @@ const FUSED_FAILED = 0x01
 const FUSED_COVER = 0x02
 const FUSED_DEFER = 0x04
 
-@inline apply_opt(e::Evaluator, c::OptChild, v::Int) = !c.set || run_child(e, c.child, v)
-
 # Resolves a name no entry knows against one branch's pattern and additional properties. It returns whether it
 # matched (the property is covered), and false when the application failed.
 function resolve_unknown(e::Evaluator, c::FusedContributor, name::Bytes, ascii::Bool, v::Int)::Tuple{Bool,Bool}
@@ -664,12 +662,12 @@ function resolve_unknown(e::Evaluator, c::FusedContributor, name::Bytes, ascii::
         fp = patterns[i]
         if pattern_match(fp.pattern, name, ascii)
             matched = true
-            apply_opt(e, fp.child, v) || return false, false
+            (!fp.child.set || @run_child(e, e.d, fp.child.child, v)) || return false, false
         end
     end
     if !matched && c.has_additional
         matched = true
-        apply_opt(e, c.additional, v) || return false, false
+        (!c.additional.set || @run_child(e, e.d, c.additional.child, v)) || return false, false
     end
     return matched, true
 end
@@ -704,7 +702,7 @@ function fused_entry(e::Evaluator, f::FusedObject, index::Int, v::Int, pass::Fus
             outcome |= FUSED_DEFER
             continue
         end
-        if app.has_child && !run_child(e, app.child, v)
+        if app.has_child && !@run_child(e, e.d, app.child, v)
             c.alt.set || return FUSED_FAILED
             fail_alt!(pass, c.alt)
             continue
@@ -856,7 +854,7 @@ function run_fused_pass(e::Evaluator, f::FusedObject, x::Int, pass::FusedPass)::
                 app = apps[i]
                 contributors[app.contributor+1].condition.set || continue
                 if applies(pass, app.then_, app.els)
-                    app.has_child && !run_child(e, app.child, v) && return false
+                    app.has_child && !@run_child(e, e.d, app.child, v) && return false
                     cover = true
                 end
             end
@@ -911,7 +909,7 @@ function run_fused_pass(e::Evaluator, f::FusedObject, x::Int, pass::FusedPass)::
 
     if f.has_unevaluated
         for ordinal in 0:n-1
-            if !get_bit(e, covered, ordinal) && !run_child(e, f.unevaluated, first_child + 2 * ordinal + 1)
+            if !get_bit(e, covered, ordinal) && !@run_child(e, e.d, f.unevaluated, first_child + 2 * ordinal + 1)
                 return false
             end
         end

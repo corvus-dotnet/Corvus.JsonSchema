@@ -39,7 +39,7 @@ with the reason.
   (`is_valid_json!`) does not convert a number that is well inside the range of a `Float64`.
 - **Type tests.** One mask test against the kind (`type_ok`, `plan.jl`). The integer test runs only for integer
   without number (`integer_ok`, `all_of_type`). A child that only tests the type is tested where it is applied and
-  never entered (`Child.types` and `Child.pass` with `SHAPE_TRIVIAL`, `run_child`, `run_branch`). An `anyOf` of
+  never entered (`Child.types` and `Child.pass` with `SHAPE_TRIVIAL`, `@run_child`, `run_branch`). An `anyOf` of
   type-only branches, or a `oneOf` of type-only branches with no type in common, becomes part of the node's own
   type mask (`type_union`, `type_only_mask`, `meet_types`, which is the C# `TypeUnion` plan).
 - **References.** Pure `$ref` chains are elided and a node that is only a one-branch `allOf` forwards to the branch
@@ -53,7 +53,7 @@ with the reason.
   enters a child by what its keywords come to, which is nothing but the type, a leaf, a string enum, string
   keywords, an object plan, an array plan, in-place applicators, or a fused object plan. Every child takes the
   final shape of its node once the fused plans are built (`compile_plans`, its `final` step), and a node entered by
-  its id is entered as a child (`Plan.self`, `Evaluator.selfs`, `run`). Keywords are grouped by the kind of value
+  its id is entered as a child (`Plan.self`, `Evaluator.selfs`, `@run`). Keywords are grouped by the kind of value
   they apply to, so only those for the instance's kind are looked at (`Body`, `run_keywords`).
 - **Objects** (`ObjectPlan`, `run_object`). One pass over the properties, specialised by which keywords apply (the
   `VISIT_` constants). A map of values against one child has a tight loop when that child is a type
@@ -174,14 +174,16 @@ with the reason.
   `Program.may_throw`), and other programs take the path with no handler. `test/allocations.jl` holds the keyword
   paths it lists to zero allocated bytes for a `Document`, a vector of bytes and a `String`.
 - **Inlining.** Julia has no fixed inlining budget to write to. The small functions of the loops are marked
-  `@inline`, and the calls that should stay calls are marked `@noinline`. The type test (`type_ok`), the
-  application of a type-only child (`run_child`), the test of the expected name (`name_at`, `name_rest`,
-  `name_word`) and the tape readers (`header`, `kind`, `count`, `first`, `str`, `str_ascii`) are inlined into the
-  loops. `enter_child`, `find_after` and `find` are the calls, each with what it needs written out in it, so that a
-  value costs one call and not a chain of them. The rare halves are kept out of line (`integer_ok`, `find_long`,
-  `find_after_long`, `divides_slow`, `decimal_to_float_slow`, `call_custom_format`, `acquire_pooled`,
-  `run_guarded`). A value's header is read once where the value is entered (`enter_child`), and the count and first
-  child are handed to the property loop.
+  `@inline`, and the calls that should stay calls are marked `@noinline`. The type test (`type_ok`), the test of
+  the expected name (`name_at`, `name_rest`, `name_word`) and the tape readers (`header`, `kind`, `count`, `first`,
+  `str`, `str_ascii`) are inlined into the loops. `@inline` does nothing for a function that is part of the cycle
+  of functions that evaluate a value, so the application of a type-only child and the entry of a node by its id
+  are macros (`@run_child`, `@run`, see Measured 2). What the package image really has is checked by disassembling
+  it, not with `code_typed`. `enter_child`, `find_after` and `find` are the calls, each with what it needs written
+  out in it, so that a value costs one call and not a chain of them. The rare halves are kept out of line
+  (`integer_ok`, `find_long`, `find_after_long`, `divides_slow`, `decimal_to_float_slow`, `call_custom_format`,
+  `acquire_pooled`, `run_guarded`). A value's header is read once where the value is entered (`enter_child`), and
+  the count and first child are handed to the property loop.
 - **Type stability.** This is the Julia counterpart of what a static compiler gives the other ports. Every field
   of the tape, the nodes, the plans and the evaluator has a concrete type or is a concrete type with `Nothing`, and
   the recursive entry functions declare their result (`::Bool`, `::Tuple{UInt64,Bool}`, `::UInt8`).
@@ -202,7 +204,7 @@ with the reason.
   without the calls.
 - **`true` subschemas skipped.** The fused plan treats a `true` child as cover with no test (`OptChild`,
   `app_child` in `try_fuse`). The object plan does not drop one. `additionalProperties: true` stays a child, which
-  costs the inlined test of `run_child` for each undeclared property and rules out the probe by name
+  costs the inlined test of `@run_child` for each undeclared property and rules out the probe by name
   (`ObjectPlan.lookup` asks for no `additionalProperties`). `propertyNames: true` selects the general loop and is
   entered for every name. A `true` pattern property is still matched. The Java port drops each of these.
 - **Keywords that cannot apply under the node's type.** Object and array keywords are dropped when `type` excludes
@@ -372,13 +374,23 @@ differently.
    reads in range, and the eight become one test and one load on Julia 1.13 and two tests and one load on Julia
    1.10 (see "Bounds checks the compiler removes"). 0.978 (0.879 to 1.049), parse 0.981.
 
+2. **The test of a type-only child written where the child is applied** (`@run_child`, `@run` in
+   `plan_types.jl`). `run_child`, `run` and `apply_opt` were functions marked `@inline`, and in the package image
+   on both Julia versions they were calls all the same: the property loops called `run_child`, which tested the
+   kind and called `enter_child`. They are part of the cycle of functions that evaluate a value, and Julia does not
+   inline a call to a function of the cycle it is compiling. `code_typed` and `code_native` in a session do not
+   show this, since they compile the caller again when the whole cycle is known. `objdump` of the package image
+   and `perf annotate` do. They are now macros, so the test is in the loop whatever the compiler decides. 0.941
+   (0.864 to 1.020). This is the Go module's Measured 2, which this port had in its source and not in its code.
+
 The Go module's ten measured changes are techniques too. Its figures are for Go and are not repeated here. This is
 what this port's source has for each.
 
 1. **The type test inlined.** Present. `type_ok` is `@inline` and the integer test is the call (`integer_ok`,
    `@noinline`).
-2. **A type-only child decided where it is applied.** Present. `run_child` is one test of the value's kind against
-   `Child.pass`, marked `@inline`, and `enter_child` is the one call for a child with keywords.
+2. **A type-only child decided where it is applied.** Present since Measured 2 above. `@run_child` is one test of
+   the value's kind against `Child.pass`, written into the loop by a macro, and `enter_child` is the one call for a
+   child with keywords.
 3. **The expected name tested in the property loops.** Present. `name_at` and `name_rest` are in `visit_names`,
    `visit_general` and `run_fused_pass`, with the name's length and word side by side in `Names.keys`, and
    `find_after` is the call.
@@ -387,7 +399,7 @@ what this port's source has for each.
 5. **The search of the name table written out in its two callers.** Present. `find` and `find_after` each have the
    probe loop in them, with a call only for a name over sixteen bytes or a set held in a `Dict` (`find_long`,
    `find_after_long`).
-6. **Values entered through one function, and a strict object's loop called from it.** Present. `run` is
+6. **Values entered through one function, and a strict object's loop called from it.** Present. `@run` is
    `enter_child` on the node's own child (`Evaluator.selfs`), a node with a fused plan has a shape of its own
    (`SHAPE_FUSED`), `enter_child` calls `visit_lookup` or `visit_names` for a strict object itself, and a child
    takes the shape its node has after the fused plans are built.
