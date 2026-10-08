@@ -40,6 +40,14 @@ $SkipPublish = $false
 $SolutionToBuild = (Resolve-Path (Join-Path $here ".\Corvus.Text.Json.slnx")).Path
 $ProjectsToPublish = @()
 $NugetPublishSource = property ZF_NUGET_PUBLISH_SOURCE "$here/_local-nuget-feed"
+# The diagnostic log of each test process. The shared build module's default also passes
+# '--diagnostic-output-directory' with the repository root, so every test process of the solution, about sixty of
+# them started together, writes its log to one directory. A process whose log is named by the time alone
+# ('log_<timestamp to the millisecond>.diag') can find the name taken, and after three seconds of retrying it exits
+# with "Failed to create a unique log file" before running a test, which fails the build. Without the option each
+# process writes its log to its own project's TestResults directory.
+$DotNetTestFileLoggerProps_MTP = @('--diagnostic', '--diagnostic-verbosity', 'Warning')
+
 $IncludeAssembliesInCodeCoverage = @()
 $ExcludeAssembliesInCodeCoverage = @()
 $ExcludeFilesInCodeCoverage = @('*.g.cs')
