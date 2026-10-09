@@ -1,6 +1,6 @@
 Package: corvusjsonschema
 Title: A High-Performance 'JSON Schema' Validator
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
     person("Matthew", "Adams", email = "matthew.adams@endjin.com", role = c("aut", "cre")),
     person("Endjin Limited", role = c("cph", "fnd")))

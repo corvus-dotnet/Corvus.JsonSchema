@@ -113,6 +113,18 @@ raises(is_valid(recursive, nested(1500L)), "corvus_value_error", "nests too deep
 # A schema that refers to itself without moving through the instance stops at max_depth.
 looping <- compile_schema('{"$ref": "#/$defs/a", "$defs": {"a": {"$ref": "#/$defs/a"}}}', max_depth = 16L)
 raises(is_valid(looping, 1), "corvus_depth_error")
+
+# A not that leads back to the schema it is in is under the same guard. (Version 0.1.0 overflowed the stack on the
+# first of these, which ends the R session.)
+for (schema in c('{"not": {"$ref": "#"}}', '{"not": {"not": {"$ref": "#"}}}', '{"allOf": [{"not": {"$ref": "#"}}]}',
+                 '{"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "not": {"$ref": "#/$defs/loop"}}')) {
+  under_not <- compile_schema(schema, max_depth = 16L)
+  raises(is_valid(under_not, 1), "corvus_depth_error")
+  raises(is_valid(under_not, list(a = 1)), "corvus_depth_error")
+  raises(is_valid_json(under_not, "1"), "corvus_depth_error")
+  raises(evaluate(under_not, 1, level = "verbose"), "corvus_depth_error")
+  raises(evaluate_json(under_not, "[1]"), "corvus_depth_error")
+}
 raises(is_valid_json(looping, "1"), "corvus_depth_error")
 raises(evaluate(looping, 1), "corvus_depth_error")
 
