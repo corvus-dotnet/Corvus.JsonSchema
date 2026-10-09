@@ -32,6 +32,13 @@ val ranges : table -> int array
 (** [ranges t] returns the ranges of the table as inclusive pairs in ascending order ([lo0; hi0; lo1; hi1; ...]). The
     pairs neither overlap nor touch. The array is fresh and the caller may change it. *)
 
+val bounds16 : table -> int array
+(** The bounds of the ranges that end at or below U+FFFF, as the table stores them. A range that crosses U+FFFF is
+    stored in two parts, and this is the first. For the tests. *)
+
+val bounds32 : table -> int array
+(** The bounds of the ranges that start above U+FFFF, as the table stores them. For the tests. *)
+
 val union : table list -> table
 (** [union tables] builds the table of the code points that any of the tables holds. A caller that tests one code point
     against several properties builds their union once and searches one table. *)
