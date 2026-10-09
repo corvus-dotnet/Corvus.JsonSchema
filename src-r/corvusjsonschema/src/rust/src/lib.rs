@@ -590,11 +590,11 @@ unsafe extern "C" fn finalize_validator(pointer: SEXP) {
 }
 
 fn validator_of<'a>(pointer: SEXP) -> Result<&'a corvus::Validator, Failure> {
-    // SAFETY: the R layer passes the external pointer `cjsr_compile` made; a validator restored from a saved
-    // workspace has a null address.
+    // SAFETY: an external pointer with this package's tag is one `cjsr_compile` made; a validator restored from a
+    // saved workspace has a null address.
     unsafe {
-        if r::TYPEOF(pointer) != 22 {
-            return Err(Failure::value("not a compiled schema"));
+        if r::TYPEOF(pointer) != 22 || r::R_ExternalPtrTag(pointer) != r::validator_tag() {
+            return Err(Failure::value("validator must be a compiled schema (see compile_schema)"));
         }
         r::R_ExternalPtrAddr(pointer).cast::<corvus::Validator>().as_ref().ok_or_else(|| {
             Failure::value("the compiled schema is no longer valid (it does not survive a saved session)")
@@ -726,10 +726,18 @@ fn evaluation(valid: bool, collector: &JsonSchemaResultsCollector) -> SEXP {
 /// Keeps R's global values. Called once by `R_init_corvusjsonschema`.
 ///
 /// # Safety
-/// The arguments are R's `R_NilValue`, `R_NamesSymbol`, `R_ClassSymbol`, `R_NaString` and `R_GlobalEnv`.
+/// The arguments are R's `R_NilValue`, `R_NamesSymbol`, `R_ClassSymbol`, `R_NaString` and `R_GlobalEnv`, and the
+/// symbol that tags a validator's external pointer.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn cjsr_init(nil: SEXP, names: SEXP, class: SEXP, na_string: SEXP, global_env: SEXP) {
-    r::set_globals(nil, names, class, na_string, global_env);
+pub unsafe extern "C" fn cjsr_init(
+    nil: SEXP,
+    names: SEXP,
+    class: SEXP,
+    na_string: SEXP,
+    global_env: SEXP,
+    validator_tag: SEXP,
+) {
+    r::set_globals(nil, names, class, na_string, global_env, validator_tag);
 }
 
 /// The version of the corvus-json-schema crate the package was built from.
@@ -849,7 +857,7 @@ pub unsafe extern "C" fn cjsr_compile(
             r::SET_VECTOR_ELT(kept, 1, resolver);
             let pointer = r::Rf_protect(r::R_MakeExternalPtr(
                 Box::into_raw(Box::new(validator)).cast::<c_void>(),
-                r::nil(),
+                r::validator_tag(),
                 kept,
             ));
             r::R_RegisterCFinalizerEx(pointer, finalize_validator, 1);

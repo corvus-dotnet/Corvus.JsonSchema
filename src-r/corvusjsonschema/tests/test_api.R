@@ -235,7 +235,9 @@ raises(is_valid_json(validator, c("{}", "[1,")), "corvus_invalid_json_error", "e
 raises(is_valid_json(validator, 1), "corvus_value_error", "character vector")
 raises(evaluate_json(validator, c("{}", "{}")), "corvus_value_error", "one string")
 raises(evaluate_json(validator, "nope"), "corvus_invalid_json_error")
-raises(is_valid(list(), 1), "error", "compiled schema")
+raises(is_valid(list(), 1), "corvus_value_error", "compiled schema")
+raises(is_valid_json(NULL, "1"), "corvus_value_error", "compiled schema")
+raises(evaluate(structure(list(), class = "corvus_json_schema"), 1), "corvus_value_error", "compiled schema")
 stopifnot(any(grepl("compiled JSON Schema", capture.output(print(validator)))))
 
 # A compiled schema does not survive being saved and loaded: it says so.

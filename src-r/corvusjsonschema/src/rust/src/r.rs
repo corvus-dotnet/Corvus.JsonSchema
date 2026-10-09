@@ -67,6 +67,7 @@ unsafe extern "C" {
 
     pub fn R_MakeExternalPtr(p: *mut c_void, tag: SEXP, prot: SEXP) -> SEXP;
     pub fn R_ExternalPtrAddr(x: SEXP) -> *mut c_void;
+    pub fn R_ExternalPtrTag(x: SEXP) -> SEXP;
     pub fn R_ClearExternalPtr(x: SEXP);
     pub fn R_RegisterCFinalizerEx(x: SEXP, finalizer: unsafe extern "C" fn(SEXP), on_exit: c_int);
 }
@@ -76,9 +77,18 @@ static NAMES_SYMBOL: AtomicPtr<SEXPREC> = AtomicPtr::new(std::ptr::null_mut());
 static CLASS_SYMBOL: AtomicPtr<SEXPREC> = AtomicPtr::new(std::ptr::null_mut());
 static NA_STRING: AtomicPtr<SEXPREC> = AtomicPtr::new(std::ptr::null_mut());
 static GLOBAL_ENV: AtomicPtr<SEXPREC> = AtomicPtr::new(std::ptr::null_mut());
+static VALIDATOR_TAG: AtomicPtr<SEXPREC> = AtomicPtr::new(std::ptr::null_mut());
 
 /// Keeps R's global values (see the module's documentation).
-pub fn set_globals(nil: SEXP, names_symbol: SEXP, class_symbol: SEXP, na_string: SEXP, global_env: SEXP) {
+pub fn set_globals(
+    nil: SEXP,
+    names_symbol: SEXP,
+    class_symbol: SEXP,
+    na_string: SEXP,
+    global_env: SEXP,
+    validator_tag: SEXP,
+) {
+    VALIDATOR_TAG.store(validator_tag, Ordering::Relaxed);
     NIL.store(nil, Ordering::Relaxed);
     NAMES_SYMBOL.store(names_symbol, Ordering::Relaxed);
     CLASS_SYMBOL.store(class_symbol, Ordering::Relaxed);
@@ -109,4 +119,10 @@ pub fn na_string() -> SEXP {
 #[inline(always)]
 pub fn global_env() -> SEXP {
     GLOBAL_ENV.load(Ordering::Relaxed)
+}
+
+/// The symbol that tags the external pointers of this package's validators (a symbol is never collected).
+#[inline(always)]
+pub fn validator_tag() -> SEXP {
+    VALIDATOR_TAG.load(Ordering::Relaxed)
 }

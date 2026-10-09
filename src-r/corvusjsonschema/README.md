@@ -127,6 +127,24 @@ An R value reads as JSON the way [jsonlite](https://cran.r-project.org/package=j
 - A compiled schema holds native code. It does not survive `saveRDS()` or a saved workspace: compile it again in a new
   session.
 
+## Performance
+
+Measured with the [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark) protocol and its
+37 corpora, on one machine (containers pinned to eight cores, the median of three runs, the geometric mean over the
+corpora). Each figure is the package's time as a multiple of the other's, so below 1 is faster.
+
+| Against | Validating R values, warm | Validating JSON text, warm | JSON text, parsing included |
+|---|---|---|---|
+| [Blaze](https://github.com/sourcemeta/blaze) (C++) | 5.9 | 3.2 | 0.18 (faster on 37 of 37) |
+| The Corvus Ruby gem | 1.11 | 0.61 | |
+
+- **R values** are validated with one `is_valid` call for each document, on values that jsonlite parsed. A call costs
+  about half a microsecond in R before the evaluator runs, which is most of the time for a small document. On large
+  documents the package is faster than the Ruby gem.
+- **JSON text** is validated with one `is_valid_json` call for all the documents of a corpus, which is how a column of
+  JSON documents is best validated in R. Blaze's time in that column is for documents it has already parsed. With
+  parsing counted on both sides (the last column), the package takes 0.18 of Blaze's time.
+
 ## How it works
 
 The package's native code is a Rust static library (`src/rust`) linked into the package. It implements the crate's

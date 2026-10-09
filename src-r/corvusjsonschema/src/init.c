@@ -5,7 +5,7 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 
-void cjsr_init(SEXP nil, SEXP names, SEXP class, SEXP na_string, SEXP global_env);
+void cjsr_init(SEXP nil, SEXP names, SEXP class, SEXP na_string, SEXP global_env, SEXP validator_tag);
 SEXP cjsr_crate_version(void);
 SEXP cjsr_compile(SEXP schema, SEXP dialect, SEXP assert_format, SEXP assert_format_in_legacy_drafts,
                   SEXP assert_content, SEXP formats, SEXP resolver, SEXP base_uri, SEXP entry_point, SEXP max_depth);
@@ -25,7 +25,7 @@ static const R_CallMethodDef call_methods[] = {
 };
 
 void R_init_corvusjsonschema(DllInfo *dll) {
-    cjsr_init(R_NilValue, R_NamesSymbol, R_ClassSymbol, NA_STRING, R_GlobalEnv);
+    cjsr_init(R_NilValue, R_NamesSymbol, R_ClassSymbol, NA_STRING, R_GlobalEnv, Rf_install("corvus_json_schema"));
     R_registerRoutines(dll, NULL, call_methods, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
     R_forceSymbols(dll, TRUE);

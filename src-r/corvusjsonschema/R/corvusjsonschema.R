@@ -66,26 +66,23 @@ compile_schema <- function(schema, default_dialect = "draft2020-12", assert_form
     }
     resolver <- guarded(resolver)
   }
-  pointer <- checked(.Call(
+  # The validator is the external pointer itself, with a class: the native code checks that it is one of its own.
+  structure(checked(.Call(
     native_cjsr_compile, schema, dialect, as.logical(assert_format), as.logical(assert_format_in_legacy_drafts),
     as.logical(assert_content), formats, resolver, base_uri, entry_point, as.integer(max_depth)
-  ))
-  structure(list(pointer = pointer), class = "corvus_json_schema")
+  )), class = "corvus_json_schema")
 }
 
-pointer_of <- function(validator) {
-  if (!inherits(validator, "corvus_json_schema")) {
-    stop("validator must be a compiled schema (see compile_schema)", call. = FALSE)
-  }
-  validator$pointer
-}
-
+# These two are called once for each value in a loop, so they do as little in R as they can: a verdict is logical, and
+# anything else is a failure to raise.
 is_valid <- function(validator, value) {
-  checked(.Call(native_cjsr_is_valid, pointer_of(validator), value))
+  verdict <- .Call(native_cjsr_is_valid, validator, value)
+  if (is.logical(verdict)) verdict else checked(verdict)
 }
 
 is_valid_json <- function(validator, json) {
-  checked(.Call(native_cjsr_is_valid_json, pointer_of(validator), json))
+  verdicts <- .Call(native_cjsr_is_valid_json, validator, json)
+  if (is.logical(verdicts)) verdicts else checked(verdicts)
 }
 
 # A list of columns as a data frame.
@@ -114,12 +111,12 @@ evaluation <- function(native, level) {
 
 evaluate <- function(validator, value, level = "detailed") {
   code <- one_of(level, results_levels, "level")
-  evaluation(checked(.Call(native_cjsr_evaluate, pointer_of(validator), value, code)), level)
+  evaluation(checked(.Call(native_cjsr_evaluate, validator, value, code)), level)
 }
 
 evaluate_json <- function(validator, json, level = "detailed") {
   code <- one_of(level, results_levels, "level")
-  evaluation(checked(.Call(native_cjsr_evaluate_json, pointer_of(validator), json, code)), level)
+  evaluation(checked(.Call(native_cjsr_evaluate_json, validator, json, code)), level)
 }
 
 crate_version <- function() {
