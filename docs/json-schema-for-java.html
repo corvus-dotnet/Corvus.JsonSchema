@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="The Corvus JSON Schema evaluator for Java and Kotlin (io.github.corvus-dotnet:corvus-json-schema): install, validate, JSON text, options, results and annotations." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="The Corvus JSON Schema evaluator for Java and Kotlin (io.github.corvus-dotnet:corvus-json-schema): install, validate, JSON text, options, results and annotations." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="JSON Schema for Java and Kotlin - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="The Corvus JSON Schema evaluator for Java and Kotlin (io.github.corvus-dotnet:corvus-json-schema): install, validate, JSON text, options, results and annotations." />
+    <meta property="og:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta property="og:title" content="JSON Schema for Java and Kotlin - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-java/" />
+    <title>JSON Schema for Java and Kotlin - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-java/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-java/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-path.html">JSONPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/open-api.html">OpenAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api.html">AsyncAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/standalone-evaluator-internals.html">Schema Evaluation Program Internals</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-precompilation.html">Runtime Evaluator Engineering Notes</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-measurements.html">Runtime Evaluator Measurements</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/other-languages.html">JSON Schema in other languages</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-javascript.html">JavaScript and TypeScript</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-rust.html">Rust</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-python.html">Python</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-c.html">C</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-cpp.html">C&#x2B;&#x2B;</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-swift.html">Swift</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ruby.html">Ruby</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-php.html">PHP</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/docs/json-schema-for-java.html">Java and Kotlin</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-go.html">Go</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/clone-and-freeze.html">Clone, Freeze, and Builder Snapshots</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-path.html">Json Path</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-client.html">Open Api Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-server.html">Open Api Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">Open Api Advanced Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-server.html">Open Api Advanced Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-end-to-end.html">Open Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-server.html">Open Api Callback Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-client.html">Open Api Callback Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-producer.html">Async Api Producer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-consumer.html">Async Api Consumer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-end-to-end.html">Async Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-authentication.html">Async Api Authentication</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api20-client.html">Open Api20Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>JSON Schema for Java and Kotlin</h1>
+<p><a href="https://central.sonatype.com/artifact/io.github.corvus-dotnet/corvus-json-schema">corvus-json-schema</a> is the Corvus
+JSON Schema evaluator for Java and Kotlin: draft 4, 6, 7, 2019-09 and 2020-12. It is a port of the .NET runtime
+evaluator (see <a href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>), and gives the same results and annotations. It runs on Java 17
+or later and is one jar with no dependencies.</p>
+<p>A schema is compiled once into JVM bytecode: one method per subschema, holding only the checks that subschema needs,
+which the JIT then optimises as it would hand-written code. Any number of instances can then be validated against it.</p>
+<ul>
+<li><strong>Conformant.</strong> Passes the whole JSON-Schema-Test-Suite (required, optional and <code>optional/format</code>, every draft) except
+<code>draft4/optional/zeroTerminatedFloats.json</code>, and all of its annotation tests.</li>
+<li><strong>Fast.</strong> See <a href="#performance">Performance</a>.</li>
+<li><strong>Results and annotations.</strong> Basic, Detailed and Verbose results, and annotations, the same as every other Corvus
+implementation.</li>
+<li><strong>Allocation-free validation.</strong> In the steady state, validating a parsed document, or JSON text, allocates nothing.</li>
+</ul>
+<h2 id="install">Install</h2>
+<p>Maven:</p>
+<pre><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.corvus-dotnet&lt;/groupId&gt;
+  &lt;artifactId&gt;corvus-json-schema&lt;/artifactId&gt;
+  &lt;version&gt;0.1.1&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<p>Gradle (Kotlin DSL):</p>
+<pre><code class="language-kotlin">implementation(&quot;io.github.corvus-dotnet:corvus-json-schema:0.1.1&quot;)
+</code></pre>
+<h2 id="validate">Validate</h2>
+<pre><code class="language-java">import io.github.corvusdotnet.jsonschema.Validator;
+
+Validator validator = Validator.compile(&quot;&quot;&quot;
+    {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: { &quot;id&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 1 } },
+      &quot;required&quot;: [&quot;id&quot;]
+    }&quot;&quot;&quot;);
+validator.isValid(&quot;{\&quot;id\&quot;: 3}&quot;); // true
+validator.isValid(&quot;{\&quot;id\&quot;: 0}&quot;); // false
+</code></pre>
+<p>From Kotlin:</p>
+<pre><code class="language-kotlin">val validator = Validator.compile(&quot;&quot;&quot;{&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;}}&quot;&quot;&quot;)
+validator.isValid(&quot;&quot;&quot;[&quot;a&quot;, &quot;b&quot;]&quot;&quot;&quot;) // true
+</code></pre>
+<p>A <code>Validator</code> is immutable and safe to share between threads.</p>
+<h2 id="json-text">JSON text</h2>
+<p><code>isValid(String)</code> and <code>isValid(byte[])</code> parse the text into buffers the validator reuses on the calling thread and
+validate it in place, so in the steady state they allocate nothing. To validate the same text more than once, parse it
+into a <code>JsonDocument</code>: the UTF-8 text and one flat array of values, with strings read in place where they have no
+escapes.</p>
+<pre><code class="language-java">JsonDocument document = JsonDocument.parse(bytes);
+boolean valid = validator.isValid(document);
+</code></pre>
+<p><code>isValid</code> reports a schema that recursed in place beyond the maximum depth as invalid; <code>validate</code> throws a
+<code>SchemaEvaluationDepthException</code> instead. Text that is not JSON throws a <code>JsonParseException</code>.</p>
+<h2 id="options">Options</h2>
+<p><code>Validator.compile(schema, options)</code> takes a <code>CompileOptions</code>, built with <code>CompileOptions.builder()</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>defaultDialect</code></td>
+<td>The dialect of a schema without <code>$schema</code> (default <code>Dialect.DRAFT202012</code>).</td>
+</tr>
+<tr>
+<td><code>assertFormat</code></td>
+<td><code>true</code> asserts <code>format</code>, <code>false</code> never does; <code>null</code> (the default) follows the schema's vocabularies.</td>
+</tr>
+<tr>
+<td><code>assertFormatInLegacyDrafts</code></td>
+<td>With <code>assertFormat</code> unset, assert <code>format</code> in drafts 4 to 7 too.</td>
+</tr>
+<tr>
+<td><code>assertContent</code></td>
+<td>Assert <code>contentEncoding</code> and <code>contentMediaType</code> in draft 7 (default <code>true</code>).</td>
+</tr>
+<tr>
+<td><code>format</code></td>
+<td>A custom format by name: a predicate on the string (or a number's JSON text).</td>
+</tr>
+<tr>
+<td><code>documentResolver</code></td>
+<td>A function from an absolute URI to the document, for remote references. The standard metaschemas are built in.</td>
+</tr>
+<tr>
+<td><code>baseUri</code></td>
+<td>The base URI of the root document.</td>
+</tr>
+<tr>
+<td><code>entryPoint</code></td>
+<td>A subschema to validate against, such as <code>#/$defs/item</code>.</td>
+</tr>
+<tr>
+<td><code>maxDepth</code></td>
+<td>The deepest the evaluator recurses in place (default 128).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="results-and-annotations">Results and annotations</h2>
+<pre><code class="language-java">JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.create(ResultsLevel.DETAILED);
+validator.evaluate(JsonDocument.parse(&quot;{\&quot;id\&quot;: 0}&quot;), collector);
+for (SchemaResult r : collector.results()) {
+    // r.isMatch(), r.message(), r.evaluationLocation(), r.schemaEvaluationLocation(), r.documentEvaluationLocation()
+}
+
+JsonSchemaResultsCollector verbose = JsonSchemaResultsCollector.create(ResultsLevel.VERBOSE);
+validator.evaluate(JsonDocument.parse(&quot;{\&quot;id\&quot;: 3}&quot;), verbose);
+verbose.collectAnnotations(); // instance location -&gt; keyword -&gt; schema location -&gt; value (JSON text)
+</code></pre>
+<p><code>BASIC</code> records the failures without messages, <code>DETAILED</code> adds the messages, and <code>VERBOSE</code> records every keyword,
+passing ones and annotations included.</p>
+<h2 id="regular-expressions">Regular expressions</h2>
+<p><code>pattern</code>, <code>patternProperties</code> and the <code>regex</code> format follow ECMA-262, as JSON Schema specifies, with the grammar of
+ECMAScript 2025. A pattern is read with the <code>u</code> flag, and a pattern that is not valid with it is read as a pattern
+with no flag, which accepts what many schemas hold (<code>\&amp;</code>, a lone brace). The <code>regex</code> format accepts only the <code>u</code>
+flag grammar.</p>
+<ul>
+<li><code>\p{...}</code> covers every property, value and alias ECMA-262 lists: General_Category, Script, Script_Extensions and
+the 53 binary properties. The data is Unicode 17 on every JDK. It does not depend on the Unicode version of the JDK
+the library runs on.</li>
+<li>Modifier groups (<code>(?i:...)</code>, <code>(?m:...)</code>, <code>(?s:...)</code>, <code>(?i-s:...)</code>) ignore case, match at line terminators and let
+the dot match everything as ECMA-262 defines them. Group names can be any ECMAScript identifier, can be written
+with <code>\u</code> escapes, and can be shared by groups in separate alternatives.</li>
+<li>A lookbehind can be of any length. One that <code>java.util.regex</code> cannot bound is run by a search whose time grows with
+the square of the length of the string.</li>
+</ul>
+<p>The patterns are run by <code>java.util.regex</code>, after translation. A few valid patterns cannot be given their ECMA-262
+meaning there, all of them with a backreference: one inside a lookbehind, or to a group inside a lookbehind; one to a
+group of a lookaround that may not have matched; one to a group that the repetition holding both can skip, or of a
+repetition that can match the empty string; and a case-insensitive one (inside <code>(?i:...)</code>), unless the only cased
+characters its group can hold are ASCII letters (with the <code>u</code> flag grammar, not <code>k</code> or <code>s</code>, which U+212A and U+017F
+fold to) and it can hold no character beyond the Basic Multilingual Plane. Compiling a schema with such a pattern throws
+<code>SchemaCompilationException</code> with a message that starts &quot;Unsupported regular expression&quot; and names the construct. It
+is never run with another meaning. The <code>regex</code> format still accepts it, as it is a valid pattern.</p>
+<h2 id="performance">Performance</h2>
+<p>Measured with <a href="https://github.com/sourcemeta-research/jsonschema-benchmark">jsonschema-benchmark</a>'s 37 corpora, each
+implementation in its own container pinned to the same 8 CPUs, the median of 3 runs. Every harness warms up for 2
+seconds (at least 100 passes) and reports its last warm-up pass, so each runtime is measured after its JIT has
+settled. Figures are the geometric mean of Java's time over the other's (below 1 means Java is faster), and how many
+corpora Java is faster on.</p>
+<table>
+<thead>
+<tr>
+<th>Java (JDK 25) over</th>
+<th>Warm validation</th>
+<th>Parse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/sourcemeta/blaze">Blaze</a></td>
+<td>0.42 (35 of 37)</td>
+<td>2.7 (5 of 37)</td>
+</tr>
+<tr>
+<td>Corvus Rust</td>
+<td>0.76 (32 of 37)</td>
+<td>7.7 (0 of 37)</td>
+</tr>
+</tbody>
+</table>
+<p>Against Corvus .NET 5.7.6 the same protocol was run with each engine as a process on the host (JDK 25 with an AOT
+cache, .NET 10 compiled ReadyToRun, both pinned to the same 12 CPUs, the median of 5 runs).</p>
+<table>
+<thead>
+<tr>
+<th>Java (JDK 25) over</th>
+<th>Warm validation</th>
+<th>Parse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Corvus .NET, interpreting the schema</td>
+<td>0.57 (33 of 37)</td>
+<td>1.3 (5 of 37)</td>
+</tr>
+<tr>
+<td>Corvus .NET, with <a href="/Corvus.JsonSchema/docs/runtime-evaluator.html#runtime-code-generation">runtime code generation</a></td>
+<td>1.13 (15 of 37)</td>
+<td>1.3 (6 of 37)</td>
+</tr>
+</tbody>
+</table>
+<p>Once warm, validation is faster than Blaze, the Rust crate and the .NET interpreter on most corpora, and a little
+slower than the code .NET generates. Start-up is the JVM's weak point: compiling a schema takes tens of milliseconds and the
+first validation runs before the JIT has compiled the generated code, so a process that validates a few documents and
+exits is better served by a native implementation.</p>
+<h2 id="links">Links</h2>
+<ul>
+<li>Package: <a href="https://central.sonatype.com/artifact/io.github.corvus-dotnet/corvus-json-schema">Maven Central</a></li>
+<li>Source and README: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-java/corvus-json-schema">src-java/corvus-json-schema</a></li>
+<li>The other languages: see <a href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>
