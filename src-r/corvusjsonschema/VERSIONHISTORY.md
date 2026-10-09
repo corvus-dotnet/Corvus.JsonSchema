@@ -4,7 +4,7 @@ The version history of the `corvusjsonschema` R package. It is versioned indepen
 
 ## V0.1.0
 
-The first release: an R package over the corvus-json-schema Rust crate (0.1.4), for drafts 4, 6, 7, 2019-09 and 2020-12, on R 4.2 and later. It reads R lists and vectors in place, validates JSON text without creating R values for it, and collects results (basic, detailed and verbose) and annotations as data frames. It passes the whole JSON-Schema-Test-Suite, as JSON text and read in place.
+The first release: an R package over the corvus-json-schema Rust crate (0.1.5), for drafts 4, 6, 7, 2019-09 and 2020-12, on R 4.2 and later. It reads R lists and vectors in place, validates JSON text without creating R values for it, and collects results (basic, detailed and verbose) and annotations as data frames. It passes the whole JSON-Schema-Test-Suite, as JSON text and read in place.
 
 ### New features
 

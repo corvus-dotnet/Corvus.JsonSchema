@@ -11,7 +11,7 @@ publish = false
 crate-type = ["staticlib"]
 
 [dependencies]
-corvus = { package = "corvus-json-schema", version = "0.1.4" }
+corvus = { package = "corvus-json-schema", version = "0.1.5" }
 serde_json = { version = "1.0.151", features = ["preserve_order", "float_roundtrip"] }
 
 [profile.release]
