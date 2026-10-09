@@ -515,6 +515,55 @@ fn excluded_class_with_a_member_outside_ascii() {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Recursion
+
+// The crate before 0.1.6 evaluated a not without the guard on in-place recursion, so the schemas whose not leads back
+// to the schema it is in overflowed the stack, which ends the process. Each of these stops at the maximum depth.
+#[test]
+fn not_on_an_in_place_cycle_stops_at_max_depth() {
+    let schemas = [
+        r##"{"not": {"$ref": "#"}}"##,
+        r##"{"not": {"not": {"$ref": "#"}}}"##,
+        r##"{"type": "integer", "not": {"$ref": "#"}}"##,
+        r##"{"allOf": [{"not": {"$ref": "#"}}]}"##,
+        r##"{"$defs": {"a": {"not": {"$ref": "#/$defs/b"}}, "b": {"not": {"$ref": "#/$defs/a"}}}, "$ref": "#/$defs/a"}"##,
+        r##"{"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "not": {"$ref": "#/$defs/loop"}}"##,
+        r##"{"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "not": {"not": {"$ref": "#/$defs/loop"}}}"##,
+        r##"{"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "properties": {"a": {"not": {"$ref": "#/$defs/loop"}}}}"##,
+        r##"{"unevaluatedProperties": false, "not": {"$ref": "#"}}"##,
+    ];
+    let options = Options::new();
+    assert_eq!(unsafe { cjs_options_set_max_depth(options.0, 16) }, CJS_OK);
+    for (s, schema) in schemas.iter().enumerate() {
+        let v = compile(schema, Some(&options)).unwrap();
+        for instance in ["1", r#""a""#, r#"{"a": 1}"#, "[1]"] {
+            // Only an object with the property reaches the loop of the eighth schema, and anything but an integer
+            // fails the type of the third before its not is reached, when failing fast.
+            if (s == 7 && !instance.starts_with('{')) || (s == 2 && instance != "1") {
+                continue;
+            }
+            let what = format!("{schema} with {instance}");
+            assert_eq!(validate(&v, instance).map_err(|e| e.0), Err(CJS_DEPTH_EXCEEDED), "{what}");
+            assert!(!last_error().0.is_empty(), "{what}");
+            let mut d = std::ptr::null_mut();
+            assert_eq!(unsafe { cjs_document_parse(ptr(instance), instance.len(), &mut d) }, CJS_OK);
+            let mut valid = false;
+            assert_eq!(unsafe { cjs_validator_validate_document(v.0, d, &mut valid) }, CJS_DEPTH_EXCEEDED, "{what}");
+            for level in [CJS_BASIC, CJS_DETAILED, CJS_VERBOSE] {
+                let c = Collector::new(level);
+                assert_eq!(evaluate(&v, instance, &c), Err(CJS_DEPTH_EXCEEDED), "{what}");
+                assert_eq!(
+                    unsafe { cjs_validator_evaluate_document(v.0, d, c.0, &mut valid) },
+                    CJS_DEPTH_EXCEEDED,
+                    "{what}"
+                );
+            }
+            unsafe { cjs_document_free(d) };
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Threads and version
 
 #[test]
