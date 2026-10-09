@@ -220,23 +220,25 @@ shapes is translated by the `EcmaRegex` submodule into a pattern that PCRE2 matc
 
 ## Performance
 
-To be measured. The figures will be from [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark)'s
-37 corpora, each implementation in its own container pinned to the same CPUs, the median of 3 runs. The Julia, Go,
-Java and .NET JIT harnesses warm up for 2 seconds (at least 100 passes) and report the last warm-up pass. The others
-are the benchmark's own harnesses. Each figure will be the geometric mean of Julia's time over the other's (below 1
-means Julia is faster), with how many corpora Julia is faster on.
+Measured with [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark)'s 37 corpora, each
+implementation in its own container pinned to the same 8 CPUs, the median of 3 runs. The Julia, Go, Java and .NET JIT
+harnesses warm up for 2 seconds (at least 100 passes) and report the last warm-up pass. The others are the
+benchmark's own harnesses. Each figure is the geometric mean of Julia's time over the other's (below 1 means Julia is
+faster), with how many corpora Julia is faster on.
 
 | Julia 1.13 over | Warm validation | Cold validation | Compile | Parse |
 |---|---|---|---|---|
-| [Blaze](https://github.com/sourcemeta/blaze) | to be measured | to be measured | to be measured | to be measured |
-| Corvus Go | to be measured | to be measured | to be measured | to be measured |
-| Corvus Rust | to be measured | to be measured | to be measured | to be measured |
-| Corvus .NET, native AOT, interpreting the schema | to be measured | to be measured | to be measured | to be measured |
-| Corvus .NET, the JIT with [runtime code generation](https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/docs/RuntimeEvaluator.md#runtime-code-generation) | to be measured | to be measured | to be measured | to be measured |
-| Corvus Java | to be measured | to be measured | to be measured | to be measured |
+| [Blaze](https://github.com/sourcemeta/blaze) | 0.80 (28 of 37) | 0.83 (26 of 37) | 0.27 (37 of 37) | 0.43 (37 of 37) |
+| Corvus Go | 1.15 (2 of 37) | 1.33 (3 of 37) | 1.80 (0 of 37) | 1.21 (4 of 37) |
+| Corvus Rust | 1.47 (3 of 37) | 1.58 (0 of 37) | 1.17 (8 of 37) | 1.19 (2 of 37) |
+| Corvus .NET, native AOT, interpreting the schema | 1.29 (2 of 37) | 1.36 (2 of 37) | 1.27 (5 of 37) | 1.04 (13 of 37) |
+| Corvus .NET, the JIT with [runtime code generation](https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/docs/RuntimeEvaluator.md#runtime-code-generation) | 2.45 (0 of 37) | 0.006 (37 of 37) | 0.030 (37 of 37) | 0.20 (37 of 37) |
+| Corvus Java | 2.17 (2 of 37) | 0.023 (37 of 37) | 0.015 (37 of 37) | 0.23 (37 of 37) |
 
-jsonschema-benchmark has no other Julia implementation. The comparison with
-[JSONSchema.jl](https://github.com/JuliaIO/JSONSchema.jl) is made in one process and is also to be measured.
+Against [JSONSchema.jl](https://github.com/JuliaIO/JSONSchema.jl), which jsonschema-benchmark does not have, the
+two were run in one process with their timed passes interleaved, on the corpora whose drafts JSONSchema.jl
+implements (4, 6 and 7). A warm pass with CorvusJsonSchema takes 0.4% to 4.2% of JSONSchema.jl's time on 34 of them,
+1.6% at the geometric mean. On the thirty-fifth, ui5, JSONSchema.jl takes about seven minutes a pass.
 
 [CorvusJsonSchemaBench](../CorvusJsonSchemaBench) has the harnesses and how to run them.
 

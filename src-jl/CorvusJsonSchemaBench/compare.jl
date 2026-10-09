@@ -36,8 +36,16 @@ function prepare_corvus(schema::Vector{UInt8}, schema_file::String, lines::Vecto
     end
 end
 
+# A schema of a draft the engine does not implement.
+struct LaterDraft <: Exception end
+
 function prepare_jsonschema(schema::Vector{UInt8}, schema_file::String, lines::Vector{Vector{UInt8}})
-    compiled = JSONSchema.Schema(JSON.parse(String(copy(schema))); parent_dir=dirname(schema_file))
+    parsed = JSON.parse(String(copy(schema)))
+    # JSONSchema.jl implements draft 4, 6 and 7. It does not refuse a later draft's schema: it leaves out the
+    # keywords it does not know, accepts every instance, and would be timed for work it did not do.
+    dialect = parsed isa AbstractDict ? get(parsed, "\$schema", "") : ""
+    dialect isa AbstractString && occursin(r"draft/20(19|20)-", dialect) && throw(LaterDraft())
+    compiled = JSONSchema.Schema(parsed; parent_dir=dirname(schema_file))
     instances = Any[JSON.parse(String(copy(line))) for line in lines]
     return function ()
         valid = 0
@@ -137,8 +145,8 @@ function main(args::Vector{String})
         for (i, engine) in enumerate(selected)
             pass = try
                 engine.second(schema, schema_file, lines)
-            catch
-                notes[i] = "error"
+            catch err
+                notes[i] = err isa LaterDraft ? "later draft" : "error"
                 continue
             end
             valid = try

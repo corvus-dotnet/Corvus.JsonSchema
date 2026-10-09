@@ -88,7 +88,7 @@ Go and Java ports are tested with (the Go port's `testdata/gen_oracle.js` writes
 again with a V8 of the same version, together.
 
 The PCRE2 callout (for a lookbehind of no fixed length) is a C function pointer. `makecallout` in `pcre.jl` makes
-it at first use in a module of its own, and with `@cfunction` only while a package is being precompiled. A
+it the first time a pattern that has a callout is matched, in a module of its own, and with `@cfunction` only while a package is being precompiled. A
 `@cfunction` compiled into a package image allocates on every call on Julia 1.10, which the allocation tests of
 `test/ecmaregex/runtimetests.jl` catch. Do not simplify it without running them on Julia 1.10.
 
@@ -126,8 +126,14 @@ compiled code: a compiled engine pattern holds memory of the process that made i
   harness must warm up by time (2 seconds, at least 100 passes) and report the last warm-up pass, timed inside the
   loop. Compare like with like.
 - Measure before and after on the same machine, interleaved, with nothing else running. Do not publish a figure
-  that was not measured that way. The Performance tables of the README and `docs/JsonSchemaForJulia.md` say "to be
-  measured" until they are.
+  that was not measured that way. The Performance tables of the README and `docs/JsonSchemaForJulia.md` hold the
+  figures of the last such run. Change them only from a new one.
+- The package's code is what the package IMAGE holds, not what a session shows. Julia does not inline into a
+  recursive cycle it is still compiling, so `run_child`, `run` and `apply_opt` were real calls in the image though
+  `@code_typed` showed them inlined. They are macros (`@run_child`, `@run`) for that reason. Check the image
+  (`objdump` of the package's `.so`) when a hot path is slower than its source suggests.
+- A multi-byte read is checked once only in the forms `OPTIMIZATIONS.md` lists ("Bounds checks the compiler removes"), and Julia
+  1.10 and 1.13 accept different ones. Use `le64` and `le32`. Do not add `@inbounds`.
 - To see what Julia compiled and inferred: `@code_warntype`, `@code_llvm`, and `--trace-compile=stderr` for what a
   process compiles at run time.
 
