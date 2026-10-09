@@ -158,6 +158,9 @@ function compile_plans(p::Program)
     end
     for (i, pl) in enumerate(plans)
         pl.shape = shape_of(pl, p.uses_dynamic_scope)
+        if strict_plan(pl, pl.shape) !== NO_OBJECT_PLAN
+            pl.shape = SHAPE_STRICT
+        end
         pl.self = with_shape(Child(NodeId(i - 1)), pl.types, pl.shape)
     end
     # Every child now takes the final shape of its node, which a fused plan may have changed since the child was
@@ -397,7 +400,7 @@ function plan_object(p::Program, n::SchemaNode, child_of)
         length(n.properties),
         Child[i <= length(n.properties) ? child_of(n.properties[i].node) : undeclared for i in eachindex(known)],
         UInt64(0), String[], PatternChild[], Vector{UInt16}[], has_additional, undeclared, NO_NODE,
-        PlanDependency[], false, false, false)
+        PlanDependency[], false, false, false, -1)
     has_names = !isempty(known)
     if n.property_names_schema < 0 && !has_names && length(n.pattern_properties) == 1
         o.visit = VISIT_PATTERN
@@ -454,6 +457,7 @@ function plan_object(p::Program, n::SchemaNode, child_of)
     o.rest_free = isempty(o.required) && !n.has_dependencies
     o.strict = o.visit == VISIT_NAMES && o.rest_free
     o.lookup = o.visit == VISIT_NAMES && n.additional_properties < 0 && length(known) <= LOOKUP_NAMES
+    o.lookup_max = lookup_limit(o.lookup, length(known))
     return o
 end
 
@@ -487,6 +491,30 @@ function shape_of(pl::Plan, dynamic_scope::Bool)
         return SHAPE_APPLY
     end
     return SHAPE_GENERAL
+end
+
+# The plan the strict loop runs for a node of a shape: an object plan that is strict, or the flat plan of a fused
+# object. NO_OBJECT_PLAN for any other node.
+function strict_plan(pl::Plan, shape::UInt8)
+    b = pl.body
+    b === nothing && return NO_OBJECT_PLAN
+    if shape == SHAPE_OBJECT
+        o = b.object
+        return o !== nothing && o.strict ? o : NO_OBJECT_PLAN
+    elseif shape == SHAPE_FUSED
+        f = b.fused
+        flat = f === nothing ? nothing : f.flat
+        return flat === nothing ? NO_OBJECT_PLAN : flat
+    end
+    return NO_OBJECT_PLAN
+end
+
+# strict_plan for a plan whose shape is final.
+function strict_plan(pl::Plan)
+    pl.shape == SHAPE_STRICT || return NO_OBJECT_PLAN
+    b = pl.body::Body
+    f = b.fused
+    return f === nothing ? b.object::ObjectPlan : f.flat::ObjectPlan
 end
 
 # Marks every node from which a live dynamic reference is reachable through any child.
@@ -601,9 +629,9 @@ end
     return kind(d, x) == KIND_NUMBER && (mask & TYPE_INTEGER) != 0 && is_integer_number(flags(d, x), data(d, x))
 end
 
-# @run_child past its test: the type test in full, then the child's keywords by its shape. An object for a
-# strict object plan has its loop called from here, with no function in between, since that is what most values with
-# keywords are.
+# @run_child past its test: the type test in full, then the child's keywords by its shape. An object for a strict
+# object plan has its loop called from here, with no function in between and without the node's keywords being read,
+# since that is what most values with keywords are.
 function enter_child(e::Evaluator, c::Child, x::Int)::Bool
     d = e.d
     # The value's header is read once here, and what the loops need of it is handed to them.
@@ -614,9 +642,15 @@ function enter_child(e::Evaluator, c::Child, x::Int)::Bool
     end
     shape = c.shape
     shape == SHAPE_TRIVIAL && return true
+    if shape == SHAPE_STRICT && k == KIND_OBJECT
+        # The strict loop (run_strict_object).
+        pl = e.strict[c.id+1]
+        n = hcount(h)
+        (n % UInt64 < pl.min || n % UInt64 > pl.max) && return false
+        return n <= pl.lookup_max ? visit_lookup(e, pl, first(d, x), n) : visit_names(e, pl, first(d, x), n)
+    end
     b = e.bodies[c.id+1]
     b === nothing && return true
-    local pl::ObjectPlan
     if shape == SHAPE_LEAF
         return run_leaf(e, b, x)
     elseif shape == SHAPE_STRING_ENUM
@@ -624,31 +658,18 @@ function enter_child(e::Evaluator, c::Child, x::Int)::Bool
     elseif shape == SHAPE_STRINGS
         return k != KIND_STRING || run_string(e, b.str, x)
     elseif shape == SHAPE_OBJECT
-        k != KIND_OBJECT && return true
-        pl = b.object::ObjectPlan
-        pl.strict || return run_object(e, pl, x)
+        return k != KIND_OBJECT || run_object(e, b.object::ObjectPlan, x)
     elseif shape == SHAPE_FUSED
-        k != KIND_OBJECT && return run_keywords(e, b, x)
-        f = b.fused::FusedObject
-        flat = f.flat
-        flat === nothing && return run_fused(e, f, x)
-        pl = flat
+        return k == KIND_OBJECT ? run_fused(e, b.fused::FusedObject, x) : run_keywords(e, b, x)
     elseif shape == SHAPE_ARRAY
         return k != KIND_ARRAY || run_array(e, b.array::ArrayPlan, x)
     elseif shape == SHAPE_APPLY
         return run_apply(e, b.apply, x)
-    else
-        return run_body(e, b, x)
+    elseif shape == SHAPE_STRICT
+        # Not an object: what the node has for other values (a fused plan may have such keywords).
+        return run_keywords(e, b, x)
     end
-    # The strict loop (run_strict_object).
-    n = hcount(h)
-    (UInt64(n) < pl.min || UInt64(n) > pl.max) && return false
-    if pl.lookup && n * length(pl.names) <= LOOKUP_BUDGET
-        seen, ok = visit_lookup(e, pl, first(d, x), n)
-        return ok && (seen & pl.required_mask) == pl.required_mask
-    end
-    seen, ok = visit_names(e, pl, first(d, x), n)
-    return ok && (seen & pl.required_mask) == pl.required_mask
+    return run_body(e, b, x)
 end
 
 # Evaluates a body by its shape (its types already tested, and not on an in-place cycle unless general).
@@ -660,10 +681,10 @@ function enter(e::Evaluator, shape::UInt8, b::Body, x::Int)::Bool
         return kind(d, x) == KIND_STRING && find(b.values[1].names, str(d, x)) >= 0
     elseif shape == SHAPE_STRINGS
         return kind(d, x) != KIND_STRING || run_string(e, b.str, x)
+    elseif shape == SHAPE_STRICT
+        return kind(d, x) == KIND_OBJECT ? run_strict_object(e, e.strict[b.node+1], x) : run_keywords(e, b, x)
     elseif shape == SHAPE_OBJECT
-        kind(d, x) != KIND_OBJECT && return true
-        pl = b.object::ObjectPlan
-        return pl.strict ? run_strict_object(e, pl, x) : run_object(e, pl, x)
+        return kind(d, x) != KIND_OBJECT || run_object(e, b.object::ObjectPlan, x)
     elseif shape == SHAPE_FUSED
         kind(d, x) != KIND_OBJECT && return run_keywords(e, b, x)
         return run_fused(e, b.fused::FusedObject, x)
@@ -821,17 +842,14 @@ end
 function run_object(e::Evaluator, pl::ObjectPlan, x::Int)::Bool
     d = e.d
     n = count(d, x)
-    (UInt64(n) < pl.min || UInt64(n) > pl.max) && return false
+    (n % UInt64 < pl.min || n % UInt64 > pl.max) && return false
     seen, ok = UInt64(0), true
     visit = pl.visit
     if visit == VISIT_VALUES
         ok = visit_values(e, pl, x)
     elseif visit == VISIT_NAMES
-        if pl.lookup && n * length(pl.names) <= LOOKUP_BUDGET
-            seen, ok = visit_lookup(e, pl, first(d, x), n)
-        else
-            seen, ok = visit_names(e, pl, first(d, x), n)
-        end
+        ok = n <= pl.lookup_max ? visit_lookup(e, pl, first(d, x), n) : visit_names(e, pl, first(d, x), n)
+        seen = e.seen
     elseif visit == VISIT_PATTERN
         ok = visit_pattern(e, pl, x)
     elseif visit == VISIT_GENERAL
@@ -842,23 +860,19 @@ function run_object(e::Evaluator, pl::ObjectPlan, x::Int)::Bool
 end
 
 # The strict loop: bounds, declared names (additionalProperties for the rest), and the required mask. A small
-# function of its own, since nested objects enter it directly.
+# function of its own for the callers that are not enter_child, which has the same lines in it.
 function run_strict_object(e::Evaluator, pl::ObjectPlan, x::Int)::Bool
     d = e.d
     n = count(d, x)
-    (UInt64(n) < pl.min || UInt64(n) > pl.max) && return false
-    if pl.lookup && n * length(pl.names) <= LOOKUP_BUDGET
-        seen, ok = visit_lookup(e, pl, first(d, x), n)
-        return ok && (seen & pl.required_mask) == pl.required_mask
-    end
-    seen, ok = visit_names(e, pl, first(d, x), n)
-    return ok && (seen & pl.required_mask) == pl.required_mask
+    (n % UInt64 < pl.min || n % UInt64 > pl.max) && return false
+    return n <= pl.lookup_max ? visit_lookup(e, pl, first(d, x), n) : visit_names(e, pl, first(d, x), n)
 end
 
 # Looks each name up in the object, whose n properties start at first_child (a plan with lookup: the other
-# properties need no visit). It returns the names seen. The properties are four words each on the tape (a name and a
-# value), so the search for a name reads the lengths of the property names side by side.
-function visit_lookup(e::Evaluator, pl::ObjectPlan, first_child::Int, n::Int)::Tuple{UInt64,Bool}
+# properties need no visit). It reports whether the properties are valid and every required name was seen, and
+# leaves the names seen in the evaluator. The properties are four words each on the tape (a name and a value), so
+# the search for a name reads the lengths of the property names side by side.
+function visit_lookup(e::Evaluator, pl::ObjectPlan, first_child::Int, n::Int)::Bool
     d = e.d
     tape = d.tape
     seen = UInt64(0)
@@ -874,15 +888,16 @@ function visit_lookup(e::Evaluator, pl::ObjectPlan, first_child::Int, n::Int)::T
             k = first_child + 2j
             name = str(d, k)
             (name_word(name) != key.word || (len > 8 && !name_rest(ns, i - 1, name))) && continue
-            seen |= UInt64(1) << (i - 1)
+            seen |= UInt64(1) << ((i - 1) & 63)
             c = pl.children[i]
             if (c.pass & (tape[at_word+3] % UInt8)) == 0 && !enter_child(e, c, k + 1)
-                return UInt64(0), false
+                return false
             end
             break
         end
     end
-    return seen, true
+    e.seen = seen
+    return (seen & pl.required_mask) == pl.required_mask
 end
 
 # Checks the required names checked by lookup, and the dependencies.
@@ -930,8 +945,10 @@ function visit_values(e::Evaluator, pl::ObjectPlan, x::Int)::Bool
 end
 
 # For declared properties, and additionalProperties for the rest, over the n properties that start at first_child.
-# It returns the declared names seen.
-function visit_names(e::Evaluator, pl::ObjectPlan, first_child::Int, n::Int)::Tuple{UInt64,Bool}
+# It reports whether the properties are valid and every required name was seen, and leaves the declared names seen
+# in the evaluator. The result is one value in a register: a pair of the names and the outcome would be returned
+# through memory.
+function visit_names(e::Evaluator, pl::ObjectPlan, first_child::Int, n::Int)::Bool
     d = e.d
     ns = pl.names
     children = pl.children
@@ -944,13 +961,14 @@ function visit_names(e::Evaluator, pl::ObjectPlan, first_child::Int, n::Int)::Tu
         if i >= 0
             hint = i + 1
             seen |= UInt64(1) << (i & 63)
-            @run_child(e, d, children[i+1], k + 1) || return UInt64(0), false
+            @run_child(e, d, children[i+1], k + 1) || return false
         elseif pl.has_additional && !@run_child(e, d, pl.additional, k + 1)
-            return UInt64(0), false
+            return false
         end
         k += 2
     end
-    return seen, true
+    e.seen = seen
+    return (seen & pl.required_mask) == pl.required_mask
 end
 
 function visit_pattern(e::Evaluator, pl::ObjectPlan, x::Int)::Bool

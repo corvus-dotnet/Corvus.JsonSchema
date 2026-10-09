@@ -513,7 +513,8 @@ function try_fuse(p::Program, id::NodeId, same_resource::Bool, child_of)
         o = ObjectPlan(UInt64(0), typemax(UInt64), VISIT_NAMES, names, length(known),
             Child[NO_CHILD for _ in known], UInt64(0), String[], PatternChild[], [UInt16[] for _ in known],
             # No contributor has additionalProperties (flat requires it).
-            false, NO_CHILD, NO_NODE, PlanDependency[], true, true, length(known) <= LOOKUP_NAMES)
+            false, NO_CHILD, NO_NODE, PlanDependency[], true, true, length(known) <= LOOKUP_NAMES,
+            lookup_limit(length(known) <= LOOKUP_NAMES, length(known)))
         for c in contributors
             for r in c.required
                 o.required_mask |= UInt64(1) << r

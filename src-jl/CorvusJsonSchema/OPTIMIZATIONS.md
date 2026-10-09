@@ -51,7 +51,8 @@ with the reason.
   dynamic reference (`plan_node`). In draft 7 and earlier `$ref` replaces its siblings (`compile_node!`).
 - **Plan shapes** (the `SHAPE_` constants in `plan_types.jl`, `shape_of` and `enter_child` in `plan.jl`). A caller
   enters a child by what its keywords come to, which is nothing but the type, a leaf, a string enum, string
-  keywords, an object plan, an array plan, in-place applicators, or a fused object plan. Every child takes the
+  keywords, an object plan, an object plan that is one strict loop, an array plan, in-place applicators, or a fused
+  object plan. Every child takes the
   final shape of its node once the fused plans are built (`compile_plans`, its `final` step), and a node entered by
   its id is entered as a child (`Plan.self`, `Evaluator.selfs`, `@run`). Keywords are grouped by the kind of value
   they apply to, so only those for the instance's kind are looked at (`Body`, `run_keywords`).
@@ -64,12 +65,12 @@ with the reason.
   `object_rest`). Count bounds come from the header. The patterns a declared name matches are worked out at compile
   time, so only undeclared names are matched at run time (`ObjectPlan.name_patterns`). `propertyNames` is evaluated
   on the name where it lies in the document, with no document made for it (`visit_general`).
-- **The strict object loop** (`run_strict_object`, and the same loop written out at the end of `enter_child`).
-  Declared names, `additionalProperties` for the rest and the required mask, entered directly by a nested object
-  (`SHAPE_OBJECT` with `ObjectPlan.strict`).
-- **Small objects probed by name** (`visit_lookup`, `LOOKUP_NAMES`, `LOOKUP_BUDGET`). A plan of at most 4 names and
-  no `additionalProperties` looks each name up in the instance when the instance's properties times the names is at
-  most 24, comparing a name's length from its header, then its word, then its text.
+- **The strict object loop** (`run_strict_object`, and the same lines in `enter_child`). Declared names,
+  `additionalProperties` for the rest and the required mask, entered directly by a nested object, with the plan
+  read from `Evaluator.strict` and nothing else of the node (`SHAPE_STRICT`, see Measured 4).
+- **Small objects probed by name** (`visit_lookup`, `LOOKUP_NAMES`, `LOOKUP_BUDGET`, `lookup_limit`). A plan of at
+  most 4 names and no `additionalProperties` looks each name up in the instance when the instance's properties
+  times the names is at most 24, comparing a name's length from its header, then its word, then its text.
 - **Name lookup** (`names.jl`, the C# `Utf8NameMap`). A set of the lengths the names have settles most misses with
   one test (`Names.lengths`, `length_bit`). A name's key is its length, its first eight bytes as a word and, beyond
   eight bytes, its second word (`NameKey`, `name_word`, `second_word`), which is the whole name up to sixteen
@@ -399,6 +400,17 @@ differently.
    Instructions per pass over 8 corpora: 0.848 (omnisharp 0.724, helm-chart-lock 0.783). The Go module tried the
    masked read of a short name and reverted it (its Tried and not kept 2). There a checked eight-byte read is one
    test whatever the offset, so the branch on the length was all it replaced.
+
+4. **An object of a strict plan entered without reading the node's keywords** (`SHAPE_STRICT`, `Evaluator.strict`,
+   `strict_plan`, `ObjectPlan.lookup_max`, `Evaluator.seen`). `enter_child` was 111 instructions for an object
+   before its first property. It read the node's `Body` from a vector of `Union{Nothing,Body}`, tested it for
+   `nothing`, read the object plan from a field that is a `Union` too and asserted its type, worked out whether to
+   probe by name from the number of names, and took the names seen and the outcome back from the loop as a pair,
+   which Julia returns through memory. A node whose object keywords are one strict loop now has a shape of its own
+   and its plan in a vector of plans by node, the limit of the probe is a number in the plan, and the loops
+   (`visit_names`, `visit_lookup`) test the required names themselves and return a `Bool`, leaving the names seen
+   in the evaluator for the one caller that goes on to dependencies. 0.982 (0.927 to 1.037). Instructions per pass
+   over 8 corpora: 0.959 (yamllint 0.886).
 
 The Go module's ten measured changes are techniques too. Its figures are for Go and are not repeated here. This is
 what this port's source has for each.

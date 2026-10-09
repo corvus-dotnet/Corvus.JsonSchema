@@ -24,6 +24,9 @@ const SHAPE_APPLY = 0x07
 # A fused object plan (see fused.jl): an object value goes to it directly, and a value of any other kind to the
 # node's keywords.
 const SHAPE_FUSED = 0x08
+# An object plan that the strict loop decides, or a fused plan that is one (FusedObject.flat): an object value goes
+# to the loop with the plan read from Evaluator.strict, and the node's keywords are not looked at.
+const SHAPE_STRICT = 0x09
 
 # A child application, with its type check hoisted so that a child that is only a type check needs no call.
 struct Child
@@ -232,7 +235,17 @@ mutable struct ObjectPlan
     # VISIT_NAMES with at most LOOKUP_NAMES names and no additionalProperties: undeclared properties need no visit,
     # so a small object is decided by looking each name up in it (see visit_lookup).
     lookup::Bool
+    # The most properties an instance may have for that (LOOKUP_BUDGET over the number of names), or -1.
+    lookup_max::Int
 end
+
+# The most properties an instance may have for a plan of some names to look them up in it, or -1 for a plan that does
+# not.
+lookup_limit(lookup::Bool, names::Int) = !lookup ? -1 : names == 0 ? typemax(Int) : LOOKUP_BUDGET ÷ names
+
+# The plan of a node that has no strict loop (see Evaluator.strict).
+const NO_OBJECT_PLAN = ObjectPlan(UInt64(0), typemax(UInt64), VISIT_NONE, EMPTY_NAMES, 0, Child[], UInt64(0), String[],
+    PatternChild[], Vector{UInt16}[], false, NO_CHILD, NO_NODE, PlanDependency[], true, false, false, -1)
 
 struct SimpleArray
     set::Bool
@@ -485,6 +498,8 @@ mutable struct Program
     bodies::Vector{Union{Nothing,Body}}
     selfs::Vector{Child}
     guards::Vector{Bool}
+    # For a node of SHAPE_STRICT, the plan its strict loop runs. NO_OBJECT_PLAN for any other node.
+    strict::Vector{ObjectPlan}
     # An evaluation may throw: the schema has a custom format, which is the caller's code, or a pattern on the
     # engine, which throws when a match reaches one of its limits.
     may_throw::Bool
@@ -518,6 +533,9 @@ mutable struct Evaluator
     bodies::Vector{Union{Nothing,Body}}
     selfs::Vector{Child}
     guards::Vector{Bool}
+    strict::Vector{ObjectPlan}
+    # The declared names the last strict loop saw, for the caller that goes on to dependencies (run_object).
+    seen::UInt64
     # The instance document.
     d::Document
     # The collector, or nothing to fail fast.
@@ -548,5 +566,6 @@ end
 
 const NO_ANNOTATIONS = Vector{AnnotationEntry}[]
 
-Evaluator(p::Program) = Evaluator(p, p.bodies, p.selfs, p.guards, EMPTY_DOCUMENT, nothing, NO_ANNOTATIONS, 0, false,
+Evaluator(p::Program) = Evaluator(p, p.bodies, p.selfs, p.guards, p.strict, UInt64(0), EMPTY_DOCUMENT, nothing,
+    NO_ANNOTATIONS, 0, false,
     UInt32[], UInt64[], UInt64[], Document(), Parser(), UInt8[], UInt8[], Parser(), FusedPass[], 0, 0)
