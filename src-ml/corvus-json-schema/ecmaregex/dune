@@ -1,0 +1,5 @@
+; The ECMA-262 regular expression engine. Internal: not a supported interface.
+(library
+ (name corvus_json_schema_ecmaregex)
+ (public_name corvus-json-schema.ecmaregex)
+ (libraries corvus-json-schema.ucd))
