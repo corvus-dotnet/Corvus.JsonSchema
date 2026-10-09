@@ -18,8 +18,8 @@ with the reason.
 
 ## Done
 
-- **Instance representation** (`document.jl`). A flat tape, `Document.tape`, two `UInt64` words per value. The
-  header has the kind in the low byte (the `KIND_` constants are the evaluator's type bits), flags, and a 32-bit
+- **Instance representation** (`document.jl`). A flat tape, `Document.tape`, one `TapeValue` of two `UInt64` words
+  per value. The header has the kind in the low byte (the `KIND_` constants are the evaluator's type bits), flags, and a 32-bit
   count or length in the high half. The second word is the data. A container's children are consecutive, and an
   object's are name and value pairs. Strings are read in place where they have no escapes (`STR_TEXT` marks the
   others, which `escaped!` unescapes into `Document.text`), and the parser records whether a string has a byte
@@ -434,6 +434,18 @@ differently.
    corpora, the same A/B method with the parse of every instance as the pass: 0.846 (0.764 to 0.966).
    Instructions per parse over 4 corpora: 0.75 to 0.86. Warm validation 0.997, which is no change.
 
+7. **The tape as one element of two words per value** (`TapeValue`, `Document.tape`, `push_value!`,
+   `append_values!`, the short path of `all_of_type`). A value's header and data were two elements of a vector of
+   words, so reading both (a string, a container's count and first child, a number) was two indexes and two bounds
+   checks, and the parser pushed twice for a value. They are now one element. The loop over the items of a simple
+   array changed with it: for the new element type the compiler works out before the loop the range of items it
+   can read without a check, about thirty instructions, which is a loss for the two or three numbers of a position.
+   Up to three items are now tested one by one. Warm validation 0.990 (0.905 to 1.055), which alone is at the edge
+   of what a run shows, and parse 0.972 (0.887 to 1.000). On Julia 1.10.12, where `push!` costs more, warm 0.991
+   and parse 0.870. Instructions per validation pass over all 37: 0.975 without the short path, with it geojson
+   0.927. The Go module tried the same layout and reverted it (its Tried and not kept 1) for one corpus that got
+   slower. Nothing did here beyond the noise.
+
 The Go module's ten measured changes are techniques too. Its figures are for Go and are not repeated here. This is
 what this port's source has for each.
 
@@ -468,7 +480,7 @@ Nothing has been tried and reverted in this port. The Go module reverted nine ex
 the Julia source has, which in every case is the form the Go module kept. None has been tried again here, and a Go
 result does not decide a Julia one.
 
-1. **The tape as one struct of two words per value.** The tape is a `Vector{UInt64}` with two words per value.
+1. **The tape as one struct of two words per value.** Kept here, where the Go module reverted it. See Measured 7.
 2. **A name's word read with no branch on its length.** Kept here, where the Go module reverted it. See Measured
    3.
 3. **The properties that need no call decided in a function that calls nothing.** There is no such function.

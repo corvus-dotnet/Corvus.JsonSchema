@@ -161,6 +161,16 @@ end
 
 Base.String(s::Bytes) = String(s.b[s.off+1:s.off+s.len])
 
+# One value of a document's tape, two words. The first is the header: the kind in bits 0 to 7, flags in bits 8 to
+# 15 and a 32-bit field in the high half (a string's byte length, a number's offset in the source, a container's
+# count). The second is the data: a string's offset, a number's bits, a container's first child, a boolean's 0 or 1.
+# The two are one element of the tape, so that reading both is one index and one bounds check, and the parser
+# appends a value with one push.
+struct TapeValue
+    h::UInt64
+    d::UInt64
+end
+
 """
     Document
 
@@ -175,18 +185,16 @@ names, the last value is kept, at the position of the first.
 `String(document)` gives the document as compact JSON text, with numbers as they were written.
 """
 mutable struct Document
-    # Two words per value. The first is the header: the kind in bits 0 to 7, flags in bits 8 to 15 and a 32-bit
-    # field in the high half (a string's byte length, a number's offset in the source, a container's count). The
-    # second is the data: a string's offset, a number's bits, a container's first child, a boolean's 0 or 1. The
-    # children of a container are consecutive. An object's children are key and value pairs.
-    tape::Vector{UInt64}
+    # One entry per value (see TapeValue). The children of a container are consecutive. An object's children are
+    # key and value pairs.
+    tape::Vector{TapeValue}
     source::Vector{UInt8}
     # The unescaped strings.
     text::Vector{UInt8}
     root::Int
 end
 
-Document() = Document(UInt64[], EMPTY_BYTES, UInt8[], 0)
+Document() = Document(TapeValue[], EMPTY_BYTES, UInt8[], 0)
 
 """
     ParseError
@@ -206,15 +214,15 @@ end
 # ----------------------------------------------------------------------------------------------------------------------
 # Reading values (the evaluator's side). A value is the index of its node.
 
-@inline header(d::Document, n::Int) = d.tape[(n<<1)+1]
-@inline data(d::Document, n::Int) = d.tape[(n<<1)+2]
-@inline kind(d::Document, n::Int) = d.tape[(n<<1)+1] % UInt8
-@inline flags(d::Document, n::Int) = (d.tape[(n<<1)+1] >> 8) % UInt8
+@inline header(d::Document, n::Int) = d.tape[n+1].h
+@inline data(d::Document, n::Int) = d.tape[n+1].d
+@inline kind(d::Document, n::Int) = d.tape[n+1].h % UInt8
+@inline flags(d::Document, n::Int) = (d.tape[n+1].h >> 8) % UInt8
 # A container's item or property count, or a string's byte length.
-@inline count(d::Document, n::Int) = (d.tape[(n<<1)+1] >> 32) % Int
+@inline count(d::Document, n::Int) = (d.tape[n+1].h >> 32) % Int
 # A container's first child.
-@inline first(d::Document, n::Int) = d.tape[(n<<1)+2] % Int
-@inline boolean(d::Document, n::Int) = d.tape[(n<<1)+2] != 0
+@inline first(d::Document, n::Int) = d.tape[n+1].d % Int
+@inline boolean(d::Document, n::Int) = d.tape[n+1].d != 0
 
 @inline hkind(h::UInt64) = h % UInt8
 @inline hflags(h::UInt64) = (h >> 8) % UInt8
@@ -222,12 +230,12 @@ end
 
 # The bytes of a string value.
 @inline function str(d::Document, n::Int)
-    h = d.tape[(n<<1)+1]
-    off = d.tape[(n<<1)+2] % Int
-    return Bytes((h & (UInt64(STR_TEXT) << 8)) != 0 ? d.text : d.source, off, (h >> 32) % Int)
+    v = d.tape[n+1]
+    h = v.h
+    return Bytes((h & (UInt64(STR_TEXT) << 8)) != 0 ? d.text : d.source, v.d % Int, (h >> 32) % Int)
 end
 
-@inline str_ascii(d::Document, n::Int) = (d.tape[(n<<1)+1] & (UInt64(STR_WIDE) << 8)) == 0
+@inline str_ascii(d::Document, n::Int) = (d.tape[n+1].h & (UInt64(STR_WIDE) << 8)) == 0
 
 # The value of an object's property, or -1.
 function property(d::Document, object::Int, name::String)
@@ -449,28 +457,28 @@ mutable struct Parser
     i::Int
     # Checking syntax only. No document is built and numbers are not converted.
     validating::Bool
-    # Finished children of closed containers, each container's consecutive (two words per node).
-    nodes::Vector{UInt64}
+    # Finished children of closed containers, each container's consecutive.
+    nodes::Vector{TapeValue}
     # The values of the open containers, innermost last. A container's run moves to nodes when it closes.
-    scratch::Vector{UInt64}
-    # The scratch index (in nodes) at which each open container's children start, with the object flag in bit 31.
+    scratch::Vector{TapeValue}
+    # The scratch index at which each open container's children start, with the object flag in bit 31.
     frames::Vector{UInt32}
     text::Vector{UInt8}
     # Scratch for finding duplicate keys in large objects.
     hashes::Vector{UInt64}
     # Scratch for rebuilding an object with duplicate keys.
-    pairs::Vector{UInt64}
+    pairs::Vector{TapeValue}
     err_message::String
     err_offset::Int
 end
 
-Parser() = Parser(EMPTY_BYTES, 0, false, UInt64[], UInt64[], UInt32[], UInt8[], UInt64[], UInt64[], "", 0)
+Parser() = Parser(EMPTY_BYTES, 0, false, TapeValue[], TapeValue[], UInt32[], UInt8[], UInt64[], TapeValue[], "", 0)
 
 # The buffers a parser keeps between parses, in bytes, beyond which a pooled parser is dropped.
 const RETAINED_LIMIT = 1 << 20
 
 function retains_too_much(p::Parser)
-    words = length(p.nodes) + length(p.scratch) + length(p.hashes) + length(p.pairs)
+    words = 2 * (length(p.nodes) + length(p.scratch) + length(p.pairs)) + length(p.hashes)
     return 8 * words + length(p.text) > RETAINED_LIMIT
 end
 
@@ -508,11 +516,10 @@ function parse_new!(p::Parser, b::Vector{UInt8})
     p.b = EMPTY_BYTES
     ok || throw(parse_error(p))
     n = length(p.nodes)
-    tape = Vector{UInt64}(undef, n + 2)
+    tape = Vector{TapeValue}(undef, n + 1)
     copyto!(tape, 1, p.nodes, 1, n)
     tape[n+1] = p.scratch[1]
-    tape[n+2] = p.scratch[2]
-    return Document(tape, b, copy(p.text), n >> 1)
+    return Document(tape, b, copy(p.text), n)
 end
 
 # Parses b into d, reusing its arrays and the parser's (no allocation once they have grown). The finished values are
@@ -524,8 +531,8 @@ function parse_into!(p::Parser, d::Document, b::Vector{UInt8})
     ok = parse!(p)
     p.b = EMPTY_BYTES
     if ok
-        d.root = length(p.nodes) >> 1
-        push_words!(p.nodes, p.scratch[1], p.scratch[2])
+        d.root = length(p.nodes)
+        push!(p.nodes, p.scratch[1])
         d.source = b
     else
         d.source = EMPTY_BYTES
@@ -551,17 +558,8 @@ end
 
 @inline peek(p::Parser) = p.i < length(p.b) ? Int(p.b[p.i+1]) : -1
 
-# Appends two words to a vector. push! with two items is append! of a tuple, which copies the items through the
-# general copyto!, more than fifty instructions a word. Two pushes of one item are a store each with a test of the
-# capacity.
-@inline function push_words!(v::Vector{UInt64}, a::UInt64, b::UInt64)
-    push!(v, a)
-    push!(v, b)
-    return nothing
-end
-
-# Appends the words of from, from the one-based index first on, to a vector, as one copy.
-@inline function append_words!(v::Vector{UInt64}, from::Vector{UInt64}, first::Int)
+# Appends the values of from, from the one-based index first on, to a vector, as one copy.
+@inline function append_values!(v::Vector{TapeValue}, from::Vector{TapeValue}, first::Int)
     count = length(from) - first + 1
     count > 0 || return nothing
     at = length(v)
@@ -570,8 +568,10 @@ end
     return nothing
 end
 
+# Appends a value to the open container. It is one push of one element. push! with several items is append! of a
+# tuple, which copies the items through the general copyto!, more than fifty instructions a word.
 @inline function push_value!(p::Parser, h::UInt64, d::UInt64)
-    push_words!(p.scratch, h, d)
+    push!(p.scratch, TapeValue(h, d))
     return nothing
 end
 
@@ -590,7 +590,7 @@ function parse!(p::Parser)
                 p.i += 1
                 push_value!(p, UInt64(KIND_OBJECT), UInt64(0))
             else
-                push!(p.frames, (length(p.scratch) >> 1) % UInt32 | OBJECT_FRAME)
+                push!(p.frames, length(p.scratch) % UInt32 | OBJECT_FRAME)
                 key!(p) || return false
                 continue
             end
@@ -602,7 +602,7 @@ function parse!(p::Parser)
                 p.i += 1
                 push_value!(p, UInt64(KIND_ARRAY), UInt64(0))
             else
-                push!(p.frames, (length(p.scratch) >> 1) % UInt32)
+                push!(p.frames, length(p.scratch) % UInt32)
                 continue
             end
         elseif c == Int('"')
@@ -671,14 +671,14 @@ end
 function close!(p::Parser, start::Int, object::Bool)
     pop!(p.frames)
     scratch = p.scratch
-    if object && (length(scratch) >> 1) - start > 2 && !p.validating
+    if object && length(scratch) - start > 2 && !p.validating
         dedupe!(p, start)
     end
-    children = (length(scratch) >> 1) - start
+    children = length(scratch) - start
     nodes = p.nodes
-    first_child = length(nodes) >> 1
-    append_words!(nodes, scratch, 2 * start + 1)
-    resize!(scratch, 2 * start)
+    first_child = length(nodes)
+    append_values!(nodes, scratch, start + 1)
+    resize!(scratch, start)
     if object
         push_value!(p, UInt64(KIND_OBJECT) | UInt64(children >> 1) << 32, UInt64(first_child))
     else
@@ -692,16 +692,16 @@ end
 end
 
 # The bytes of the key at scratch value index a.
-@inline scratch_key(p::Parser, a::Int) = key_bytes(p, p.scratch[2a+1], p.scratch[2a+2])
+@inline scratch_key(p::Parser, a::Int) = (v = p.scratch[a+1]; key_bytes(p, v.h, v.d))
 
 @inline function key_equals(p::Parser, a::Int, b::Int)
-    (p.scratch[2a+1] >> 32) != (p.scratch[2b+1] >> 32) && return false
+    (p.scratch[a+1].h >> 32) != (p.scratch[b+1].h >> 32) && return false
     return bytes_equal(scratch_key(p, a), scratch_key(p, b))
 end
 
 # Keeps, of duplicate property names in the object whose pairs start at start, the last value at the first position.
 function dedupe!(p::Parser, start::Int)
-    n = ((length(p.scratch) >> 1) - start) >> 1
+    n = (length(p.scratch) - start) >> 1
     duplicate = false
     if n <= 16
         for j in 1:n-1
@@ -743,13 +743,13 @@ function dedupe!(p::Parser, start::Int)
     pairs = p.pairs
     empty!(pairs)
     scratch = p.scratch
-    append_words!(pairs, scratch, 2 * start + 1)
-    resize!(scratch, 2 * start)
+    append_values!(pairs, scratch, start + 1)
+    resize!(scratch, start)
     for q in 0:n-1
-        name = key_bytes(p, pairs[4q+1], pairs[4q+2])
+        name = key_bytes(p, pairs[2q+1].h, pairs[2q+1].d)
         found = -1
         k = start
-        while k < (length(scratch) >> 1)
+        while k < length(scratch)
             if bytes_equal(scratch_key(p, k), name)
                 found = k
                 break
@@ -757,11 +757,10 @@ function dedupe!(p::Parser, start::Int)
             k += 2
         end
         if found >= 0
-            scratch[2*(found+1)+1] = pairs[4q+3]
-            scratch[2*(found+1)+2] = pairs[4q+4]
+            scratch[found+2] = pairs[2q+2]
         else
-            push_words!(scratch, pairs[4q+1], pairs[4q+2])
-            push_words!(scratch, pairs[4q+3], pairs[4q+4])
+            push!(scratch, pairs[2q+1])
+            push!(scratch, pairs[2q+2])
         end
     end
     return nothing

@@ -119,7 +119,7 @@ end
 # Gives an evaluation state back after the validation of JSON text, which was parsed into its buffers.
 function release_text(v::Validator, e::Evaluator)
     e.text.source = EMPTY_BYTES
-    words = length(e.text.tape) + e.arena_high + length(e.unique)
+    words = 2 * length(e.text.tape) + e.arena_high + length(e.unique)
     if retains_too_much(e.parser) || 8 * words + length(e.text.text) + length(e.source) > SCRATCH_RETAINED_LIMIT
         drop_buffers!(e)
     end

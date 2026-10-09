@@ -878,19 +878,18 @@ function visit_lookup(e::Evaluator, pl::ObjectPlan, first_child::Int, n::Int)::B
     seen = UInt64(0)
     ns = pl.names
     keys = ns.keys
-    base = first_child << 1
     for i in eachindex(keys)
         key = keys[i]
         len = key.length
         for j in 0:n-1
-            at_word = base + 4j
-            hcount(tape[at_word+1]) == len || continue
+            at = first_child + 2j
+            hcount(tape[at+1].h) == len || continue
             k = first_child + 2j
             name = str(d, k)
             (name_word(name) != key.word || (len > 8 && !name_rest(ns, i - 1, name))) && continue
             seen |= UInt64(1) << ((i - 1) & 63)
             c = pl.children[i]
-            if (c.pass & (tape[at_word+3] % UInt8)) == 0 && !enter_child(e, c, k + 1)
+            if (c.pass & (tape[at+2].h % UInt8)) == 0 && !enter_child(e, c, k + 1)
                 return false
             end
             break
@@ -928,11 +927,10 @@ function visit_values(e::Evaluator, pl::ObjectPlan, x::Int)::Bool
     first_child, n = first(d, x), count(d, x)
     if c.shape == SHAPE_TRIVIAL
         c.types == ANY_TYPE && return true
-        # The values' headers are every fourth word of the properties' run of the tape.
+        # The values are every second entry of the properties' run of the tape.
         tape = d.tape
-        base = first_child << 1
         for j in 0:n-1
-            if (c.types & (tape[base+4j+3] % UInt8)) == 0 && !integer_ok(c.types, d, first_child + 2j + 1)
+            if (c.types & (tape[first_child+2j+2].h % UInt8)) == 0 && !integer_ok(c.types, d, first_child + 2j + 1)
                 return false
             end
         end
@@ -1081,21 +1079,30 @@ end
 function all_of_type(d::Document, first_item::Int, n::Int, types::UInt8)
     types == ANY_TYPE && return true
     tape = d.tape
-    base = first_item << 1
     if (types & TYPE_INTEGER) != 0 && (types & TYPE_NUMBER) == 0
         # Integers that are not numbers in general: the number's value decides.
         for i in 0:n-1
-            h = tape[base+2i+1]
-            bit = h % UInt8
-            if (types & bit) == 0 && !(bit == KIND_NUMBER && is_integer_number(hflags(h), tape[base+2i+2]))
+            v = tape[first_item+i+1]
+            bit = v.h % UInt8
+            if (types & bit) == 0 && !(bit == KIND_NUMBER && is_integer_number(hflags(v.h), v.d))
                 return false
             end
         end
         return true
     end
-    # A kind is its type bit.
+    # A kind is its type bit. Up to three items (a position, a pair, most lists of tags) are tested one by one: for
+    # the loop the compiler works out, before the first item, the range of the items it can read without a check,
+    # which costs more than the checks of so few.
+    if n <= 3
+        n <= 0 && return true
+        ((tape[first_item+1].h % UInt8) & types) == 0 && return false
+        n == 1 && return true
+        ((tape[first_item+2].h % UInt8) & types) == 0 && return false
+        n == 2 && return true
+        return ((tape[first_item+3].h % UInt8) & types) != 0
+    end
     for i in 0:n-1
-        ((tape[base+2i+1] % UInt8) & types) == 0 && return false
+        ((tape[first_item+i+1].h % UInt8) & types) == 0 && return false
     end
     return true
 end
