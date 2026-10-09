@@ -298,6 +298,30 @@ program does.
 Every sample above is in `tests/TestReadme.pas`, which compiles and runs each one, compares what it writes with its
 comments, and fails if a block of Pascal in this file is not in that program line for line.
 
+## Performance
+
+Measured with [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark)'s 37 corpora, each
+implementation in its own container pinned to the same 8 CPUs, the median of 3 runs. The Object Pascal program was
+built with Free Pascal 3.2.2 at `-O3` for x86-64 Linux. The Object Pascal, Go and Julia harnesses warm up for 2
+seconds (at least 100 passes) and report the last warm-up pass. The others are the benchmark's own harnesses. Each
+figure is the geometric mean of Object Pascal's time over the other's (below 1 means Object Pascal is faster), with
+how many corpora Object Pascal is faster on.
+
+| Object Pascal over | Warm validation | Cold validation | Compile | Parse |
+|---|---|---|---|---|
+| [Blaze](https://github.com/sourcemeta/blaze) | 1.25 (12 of 37) | 0.84 (28 of 37) | 0.30 (37 of 37) | 0.68 (35 of 37) |
+| Corvus Go | 1.82 (0 of 37) | 1.39 (1 of 37) | 2.18 (0 of 37) | 1.96 (1 of 37) |
+| Corvus Julia | 1.57 (0 of 37) | 1.01 (16 of 37) | 1.16 (11 of 37) | 1.54 (1 of 37) |
+| Corvus Rust | 2.37 (0 of 37) | 1.53 (2 of 37) | 1.34 (3 of 37) | 1.85 (0 of 37) |
+
+Warm validation is slower than Blaze's and than the other Corvus ports', and validation from a cold start, compiling
+a schema and parsing are faster than Blaze's. Two things account for the warm figure. Every array read is bounds
+checked, as in the Go module and the Julia package. And Free Pascal 3.2.2 generates slower code for these loops than
+the Go, Julia and Rust compilers do. The checks are the smaller part: a build with no checks at all, which is not how
+the package is built, took 0.93 of the time on these corpora (one pinned core).
+
+[corvus-json-schema-bench](../corvus-json-schema-bench) has the harness.
+
 ## How it works
 
 The pipeline follows the C# evaluator stage for stage, as the Rust and Go ports do. The loader identifies documents,
