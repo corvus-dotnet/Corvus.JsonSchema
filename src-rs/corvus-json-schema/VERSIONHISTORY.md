@@ -2,6 +2,16 @@
 
 The version history of the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.6
+
+V0.1.6 fixes a stack overflow, and a wrong `is_valid` result, for a schema whose `not` is part of a loop. There are no API changes. Versions 0.1.0 to 0.1.5 are affected.
+
+### Bug fixes
+
+- **A `not` that leads back to the schema it is in.** A schema can loop without consuming the instance. The crate abandons such an evaluation at `CompileOptions::max_depth` (128 by default) and reports `SchemaEvaluationDepthError`. Evaluating `not` went around that guard. For a schema such as `{"not": {"$ref": "#"}}`, validating an instance that reached the `not` recursed until the stack overflowed, and a stack overflow aborts the process. Every function was affected (`is_valid`, `validate`, `validate_json`, `validate_instance` and the three `evaluate` functions). A `not` is now under the guard, so these functions return the depth error and `is_valid` returns false. The fault is in the schema. No instance causes it for a schema without such a loop, so a program was exposed only if it compiled schemas it did not write.
+
+- **`is_valid` for a schema that loops under a `not`.** With the loop elsewhere, as in `{"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "not": {"$ref": "#/$defs/loop"}}`, the guard stopped the loop and counted the abandoned branch as false, and the `not` turned that into true. `is_valid` returned true for an evaluation that had been abandoned, where its documentation says false. It now returns false whenever the evaluation went beyond the maximum depth, whatever the rest of the schema came to. The same rule changes `is_valid` for a schema whose `anyOf` recovers after the depth is exceeded, such as `{"$defs": {"a": {"anyOf": [{"$ref": "#/$defs/a"}, true]}}, "$ref": "#/$defs/a"}`. Its first branch loops and is abandoned, and its second is true. `is_valid` returned true for it and now returns false, as its documentation says. The functions that return a `Result` reported the depth error for both schemas, and still do.
+
 ## V0.1.5
 
 V0.1.5 corrects the minimum Rust version the crate declares. There are no code or API changes.
