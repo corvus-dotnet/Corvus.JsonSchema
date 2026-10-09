@@ -1,0 +1,14 @@
+#!/bin/sh
+# Checks that the Rust toolchain the package builds with is there, so that a missing one is reported plainly.
+PATH="$PATH:$HOME/.cargo/bin"
+if ! command -v cargo >/dev/null 2>&1; then
+  echo "------------------------------------------------------------------------"
+  echo "corvusjsonschema is built from Rust source and needs cargo and rustc"
+  echo "(1.89 or later). Install them from https://rustup.rs or your system's"
+  echo "packages (for example 'cargo' on Debian, Ubuntu and Fedora), then"
+  echo "install the package again."
+  echo "------------------------------------------------------------------------"
+  exit 1
+fi
+echo "using $(cargo --version) and $(rustc --version)"
+exit 0

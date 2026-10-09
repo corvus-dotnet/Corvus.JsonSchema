@@ -85,9 +85,9 @@ jobs:
       run: |
         echo "no_release: ${{ steps.check_for_norelease_label.outputs.result }}"
 
-  # A pull request that changes nothing the .NET build reads (only the Python, Rust, TypeScript, Java, Go, Julia, Ruby or PHP packages) makes no
+  # A pull request that changes nothing the .NET build reads (only the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP or R packages) makes no
   # NuGet release: it is left out of the release, and its 'pending_release' label removed. Releases those packages
-  # make are their own workflows' (crates-publish.yml, pypi-publish.yml, npm-publish.yml, maven-publish.yml, go-publish.yml, julia-publish.yml).
+  # make are their own workflows' (crates-publish.yml, pypi-publish.yml, npm-publish.yml, maven-publish.yml, go-publish.yml, julia-publish.yml, r-publish.yml).
   check_for_dotnet_changes:
     runs-on: ubuntu-latest
     outputs:

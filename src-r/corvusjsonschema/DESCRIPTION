@@ -1,0 +1,19 @@
+Package: corvusjsonschema
+Title: A High-Performance 'JSON Schema' Validator
+Version: 0.1.0
+Authors@R: c(
+    person("Matthew", "Adams", email = "matthew.adams@endjin.com", role = c("aut", "cre")),
+    person("Endjin Limited", role = c("cph", "fnd")))
+Description: Validates R values and 'JSON' text against 'JSON Schema' drafts 4, 6,
+    7, 2019-09 and 2020-12, with results collection and annotations. A schema is
+    compiled once into a validator, which reads R lists and vectors in place, or
+    parses 'JSON' text itself. The evaluator is the 'corvus-json-schema' 'Rust'
+    crate, which passes the whole 'JSON-Schema-Test-Suite'.
+License: Apache License (>= 2)
+URL: https://github.com/corvus-dotnet/Corvus.JsonSchema
+BugReports: https://github.com/corvus-dotnet/Corvus.JsonSchema/issues
+Depends: R (>= 4.2)
+Suggests: jsonlite
+SystemRequirements: Cargo (Rust's package manager), rustc (>= 1.89)
+Encoding: UTF-8
+NeedsCompilation: yes

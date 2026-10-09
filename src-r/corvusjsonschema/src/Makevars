@@ -1,0 +1,28 @@
+# The native code is a Rust static library (src/rust), linked into the package's shared library with init.c.
+# Cargo takes the crates from crates.io, and keeps what it downloads inside the build directory unless CARGO_HOME is
+# set: an installation must not write to the user's home.
+
+LIBDIR = rust/target/release
+STATLIB = $(LIBDIR)/libcorvusjsonschema.a
+PKG_LIBS = -L$(LIBDIR) -lcorvusjsonschema
+
+all: $(SHLIB) rust-clean
+
+$(SHLIB): $(STATLIB)
+
+# Always run: cargo decides what is out of date.
+$(STATLIB): FORCE
+	@export CARGO_HOME="$${CARGO_HOME:-$(CURDIR)/rust/.cargo-home}"; \
+	export PATH="$$PATH:$$HOME/.cargo/bin"; \
+	cargo build --lib --release --locked --jobs 2 --manifest-path=rust/Cargo.toml
+
+# A source package must not leave build products behind (R CMD check looks), and they are large.
+rust-clean: $(SHLIB)
+	@if [ -z "$$CORVUS_KEEP_RUST_TARGET" ]; then rm -Rf rust/target rust/.cargo-home; fi
+
+clean:
+	rm -Rf $(SHLIB) $(OBJECTS) rust/target rust/.cargo-home
+
+FORCE:
+
+.PHONY: all rust-clean clean FORCE

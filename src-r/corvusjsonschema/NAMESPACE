@@ -1,0 +1,11 @@
+useDynLib(corvusjsonschema, .registration = TRUE, .fixes = "native_")
+
+export(compile_schema)
+export(is_valid)
+export(is_valid_json)
+export(evaluate)
+export(evaluate_json)
+export(crate_version)
+
+S3method(print, corvus_json_schema)
+S3method(print, corvus_evaluation)
