@@ -2,6 +2,18 @@
 
 The version history of `io.github.corvus-dotnet:corvus-json-schema`, the Java port of the Corvus.Text.Json V5 runtime evaluator. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.2
+
+V0.1.2 fixes a `StackOverflowError`, and a wrong `isValid` result, for a schema whose `not` is part of a loop. There are no API changes. `isValid` changes for one more kind of schema, described below. Versions 0.1.0 and 0.1.1 are affected.
+
+### Bug fixes
+
+- **A `not` that leads back to the schema it is in.** A schema can loop without consuming the instance. The library abandons such an evaluation at `maxDepth` (128 by default) and throws `SchemaEvaluationDepthException`. Evaluating `not` went around that guard. For a schema such as `{"not": {"$ref": "#"}}`, validating an instance that reached the `not` recursed until the thread's stack was full, and `isValid`, `validate` and `evaluate` threw `StackOverflowError`. A `not` is now under the guard, so `validate` and `evaluate` throw `SchemaEvaluationDepthException` and `isValid` returns false. The fault is in the schema. No instance causes it for a schema without such a loop, so a program was exposed only if it compiled schemas it did not write.
+
+- **`isValid` for a schema that loops under a `not`.** With the loop elsewhere, as in `{"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "not": {"$ref": "#/$defs/loop"}}`, the guard stopped the loop and counted the abandoned branch as false, and the `not` turned that into true. `isValid` returned true for an evaluation that had been abandoned, where its documentation says false. `validate` and `evaluate` threw `SchemaEvaluationDepthException` for such a schema, and still do.
+
+- **`isValid` is false whenever the evaluation went beyond the maximum depth.** This is the rule that corrects the result above, and it also changes `isValid` for a schema whose `anyOf` recovers after the depth is exceeded. In `{"$defs": {"a": {"anyOf": [{"$ref": "#/$defs/a"}, true]}}, "$ref": "#/$defs/a"}` the first branch loops and is abandoned, and the second branch is true. `isValid` returned true for it and now returns false, as its documentation says. `validate` throws `SchemaEvaluationDepthException` for this schema, as it did before. Such a schema goes beyond any `maxDepth`, so code that relied on true here has to take the loop out of the schema.
+
 ## V0.1.1
 
 Regular expressions that follow ECMA-262 where 0.1.0 followed `java.util.regex`.

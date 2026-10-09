@@ -4,7 +4,7 @@ COPY corvus-json-schema /src/corvus-json-schema
 RUN cd /src/corvus-json-schema && mvn -q -B -ntp install -DskipTests
 COPY bench/pom.xml /app/pom.xml
 COPY bench/src /app/src
-RUN cd /app && mvn -B -q -ntp package -Dcorvus.version=0.1.1 && echo local > /app/corvus-version
+RUN cd /app && mvn -B -q -ntp package -Dcorvus.version=0.1.2 && echo local > /app/corvus-version
 
 FROM eclipse-temurin:25-jre
 RUN apt-get update && apt-get install -y --no-install-recommends time && rm -rf /var/lib/apt/lists/*
