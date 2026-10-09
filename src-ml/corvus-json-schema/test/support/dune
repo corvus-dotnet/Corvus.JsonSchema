@@ -1,0 +1,4 @@
+; The assertion helper every test executable of the package shares.
+
+(library
+ (name corvus_json_schema_test_support))
