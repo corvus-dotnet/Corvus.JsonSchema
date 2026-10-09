@@ -19,8 +19,11 @@ written to be Delphi-compatible, but it has not been compiled with Delphi.
   rows (locations, messages, order) as the C# `JsonSchemaResultsCollector`, and annotations as
   `JsonSchemaAnnotationProducer` extracts them. For every case of the JSON-Schema-Test-Suite the rows are the same,
   byte for byte, as the Go module's (56,069 rows).
-- **Every array read is checked**: range checking is on in every unit and is never turned off, so an index out of
-  range raises `ERangeError` and never reads other memory. The Go module likewise has no unchecked reads.
+- **Every array read is checked**: an index out of range raises `ERangeError` and never reads other memory. Range
+  checking is on in every unit. On the paths every validation takes, the check is written out as one inline
+  comparison in a small accessor function, because Free Pascal makes its own check with a call for each read. Those
+  accessors are the only code compiled without the compiler's check, and a test calls each of them out of range.
+  The Go module likewise has no unchecked reads.
 
 ## Install
 

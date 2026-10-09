@@ -934,7 +934,8 @@ begin
       Result := Matched = 1;
     end;
     OpNot:
-      Result := not Run(E, O^.Node, X);
+      { Under the depth guard, like every other in-place applicator: a not can be part of a cycle too. }
+      Result := not RunInPlace(E, O^.Node, X);
     OpDynamicRef:
       Result := RunInPlace(E, E.P^.FastTarget[ResolveDynamic(E, O^.Dynamic)], X);
   else
@@ -2611,7 +2612,7 @@ end;
 
 function EvalInPlace(var E: TEvaluator; N: PSchemaNode; X: Int32; const Bits: TBitset): Boolean;
 var
-  Collect, M, All, Any, Exhaustive, Track, Inner, Cond: Boolean;
+  Collect, M, All, Any, Exhaustive, Track, Inner, Cond, NotGuarded: Boolean;
   Target: TNodeID;
   Suffix: UTF8String;
   Subset: PUInt32List;
@@ -2731,13 +2732,24 @@ begin
     Result := Result and (Matched = 1);
   end;
   if N^.NotNode >= 0 then begin
-    { Not elided, never contributes results or evaluated properties or items. }
+    { Not elided, never contributes results or evaluated properties or items. A not on an in-place cycle is under
+      the depth guard, like every other in-place applicator. }
     if Collect then begin
-      BeginChildContext(E.C^, True, 'not', E.P^.Nodes[N^.NotNode].Pointer, False, '');
-      Inner := EvalNode(E, N^.NotNode, X, NoBits);
-      PopChildContext(E.C^);
+      NotGuarded := E.P^.Nodes[N^.NotNode].InPlaceCycle;
+      if NotGuarded then
+        Inc(E.Depth);
+      if NotGuarded and (E.Depth > E.P^.MaxDepth) then begin
+        E.DepthExceeded := True;
+        Inner := False;
+      end else begin
+        BeginChildContext(E.C^, True, 'not', E.P^.Nodes[N^.NotNode].Pointer, False, '');
+        Inner := EvalNode(E, N^.NotNode, X, NoBits);
+        PopChildContext(E.C^);
+      end;
+      if NotGuarded then
+        Dec(E.Depth);
     end else
-      Inner := Run(E, E.P^.FastTarget[N^.NotNode], X);
+      Inner := RunInPlace(E, E.P^.FastTarget[N^.NotNode], X);
     if Keyword(E, not Inner, Pick(Inner, MsgMatchedNot, MsgDidNotMatchNot), 'not') then
       Exit(False);
     Result := Result and not Inner;

@@ -16,7 +16,7 @@ The first release of the Object Pascal port of `Corvus.Text.Json.RuntimeEvaluato
 
 - **The same results whichever compiler builds it.** The package reads Unicode properties and case mappings from its own Unicode 17 tables and never from the compiler's run-time library.
 
-- **Every array read is range checked.** Range checking is on in every unit and is never turned off.
+- **Every array read is range checked.** Range checking is on in every unit. On the paths every validation takes the check is one inline comparison, written out in accessor functions that raise `ERangeError` as the compiler's check does.
 
 - **Allocation-free validation.** Validating a parsed `TJsonDocument`, or JSON text through the thread's reused buffers, allocates nothing in the steady state. A thread that has validated should call `JsonSchemaReleaseThreadScratch` before it ends.
 

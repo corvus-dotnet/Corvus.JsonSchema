@@ -19,8 +19,8 @@ against it.
 - **Allocation-free validation.** In the steady state, validating a parsed document, or JSON text, allocates nothing.
   The exceptions are an asserted `regex`, `idn-hostname` or `idn-email` format, a `hostname` with an `xn--` label,
   and a `multipleOf` whose divisor has more than 18 significant digits.
-- **Every array read is checked.** Range checking is on in every unit and is never turned off, so an index out of
-  range raises `ERangeError` and never reads other memory.
+- **Every array read is checked.** An index out of range raises `ERangeError` and never reads other memory. On the
+  paths every validation takes, the check is one inline comparison written out in the source.
 
 ## Install
 

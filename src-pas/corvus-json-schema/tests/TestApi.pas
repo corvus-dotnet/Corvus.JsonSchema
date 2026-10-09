@@ -361,9 +361,8 @@ begin
   Check(not V.TryIsValid('2', Error) and (Error <> ''), 'TryIsValid again: ' + Error);
 end;
 
-{ IsValid is the result of the evaluation whether or not it recursed beyond the maximum depth, the same for a
-  document and for text, as in the Go module (whose IsValid, IsValidBytes and IsValidString all return what the
-  evaluation returned). Under a "not", a branch that was abandoned makes the instance valid. TryIsValid tells. }
+{ An evaluation that recursed beyond the maximum depth is not valid, whatever it came to, the same for a document
+  and for text. Under a "not" the branch that was abandoned counts as false, which the not would turn into true. }
 procedure TestIsValidAgreesForDocumentsAndTextBeyondMaxDepth;
 var
   V: IJsonSchemaValidator;
@@ -378,11 +377,75 @@ begin
   Document := V.IsValid(ParseJson('1'));
   Text := V.IsValid('1');
   FromBytes := V.IsValid(Bytes, 0, 1);
-  Check(Document and Text and FromBytes, 'IsValid beyond the maximum depth: document ' + BoolText(Document)
-    + ', string ' + BoolText(Text) + ', bytes ' + BoolText(FromBytes) + ' (the Go module gives true for each)');
+  Check(not Document and not Text and not FromBytes, 'IsValid beyond the maximum depth: document '
+    + BoolText(Document) + ', string ' + BoolText(Text) + ', bytes ' + BoolText(FromBytes));
   Check(not V.TryIsValid(ParseJson('1'), Error) and (Error <> ''), 'TryIsValid of a document under not');
   Check(not V.TryIsValid('1', Error) and (Error <> ''), 'TryIsValid of a string under not');
   Check(not V.TryIsValid(Bytes, 0, 1, Error) and (Error <> ''), 'TryIsValid of bytes under not');
+end;
+
+{ A not whose subschema leads back to the schema it is in recurses in place like any other applicator. It stops at
+  the maximum depth: the validation is an error, and IsValid reports the instance as invalid. (Evaluating not went
+  around the depth guard, so the first of these schemas overflowed the stack, and for the others the not turned the
+  abandoned evaluation's false into true.) }
+procedure TestNotOnAnInPlaceCycleStopsAtMaxDepth;
+const
+  Looping: UTF8String = '{ "allOf": [{ "$ref": "#/$defs/loop" }] }';
+  Instances: array[0..3] of UTF8String = ('1', '"a"', '{"a": 1}', '[1]');
+var
+  Schemas: array[0..8] of UTF8String;
+  O: TJsonSchemaOptions;
+  V: IJsonSchemaValidator;
+  S, I, Level: Int32;
+  Error, What: UTF8String;
+  C: TJsonSchemaResults;
+  Raised: Boolean;
+begin
+  Schemas[0] := '{ "not": { "$ref": "#" } }';
+  Schemas[1] := '{ "not": { "not": { "$ref": "#" } } }';
+  Schemas[2] := '{ "type": "integer", "not": { "$ref": "#" } }';
+  Schemas[3] := '{ "allOf": [{ "not": { "$ref": "#" } }] }';
+  Schemas[4] := '{ "$defs": { "a": { "not": { "$ref": "#/$defs/b" } }, "b": { "not": { "$ref": "#/$defs/a" } } }, '
+    + '"$ref": "#/$defs/a" }';
+  Schemas[5] := '{ "$defs": { "loop": ' + Looping + ' }, "not": { "$ref": "#/$defs/loop" } }';
+  Schemas[6] := '{ "$defs": { "loop": ' + Looping + ' }, "not": { "not": { "$ref": "#/$defs/loop" } } }';
+  Schemas[7] := '{ "$defs": { "loop": ' + Looping
+    + ' }, "properties": { "a": { "not": { "$ref": "#/$defs/loop" } } } }';
+  Schemas[8] := '{ "unevaluatedProperties": false, "not": { "$ref": "#" } }';
+  O := Options;
+  WithMaxDepth(O, 16);
+  for S := 0 to High(Schemas) do begin
+    V := MustCompile(Schemas[S], O);
+    for I := 0 to High(Instances) do begin
+      { Only an object with the property reaches the loop of the eighth schema, and anything but an integer fails
+        the type of the third before its not is reached, when failing fast. }
+      if ((S = 7) and (I <> 2)) or ((S = 2) and (I <> 0)) then
+        Continue;
+      What := Schemas[S] + ' with ' + Instances[I];
+      Error := '';
+      Check(not V.IsValid(Instances[I]), 'IsValid of a string: ' + What);
+      Check(not V.IsValid(ParseJson(Instances[I])), 'IsValid of a document: ' + What);
+      Check(not V.TryIsValid(Instances[I], Error) and (Error = 'the schema recursed in place beyond the maximum depth'),
+        'TryIsValid of a string: ' + What + ': ' + Error);
+      Check(not V.TryIsValid(ParseJson(Instances[I]), Error) and (Error <> ''), 'TryIsValid of a document: ' + What);
+      for Level := 0 to 2 do begin
+        case Level of
+          0: C := NewJsonSchemaResults(Basic);
+          1: C := NewJsonSchemaResults(Detailed);
+        else
+          C := NewJsonSchemaResults(Verbose);
+        end;
+        Raised := False;
+        try
+          V.Evaluate(ParseJson(Instances[I]), C);
+        except
+          on EJsonSchemaDepthError do
+            Raised := True;
+        end;
+        Check(Raised, 'Evaluate raised no EJsonSchemaDepthError: ' + What);
+      end;
+    end;
+  end;
 end;
 
 procedure TestNumbersAreComparedExactlyForMultipleOf;
@@ -1283,6 +1346,7 @@ begin
   TestCompilationErrors;
   TestInPlaceRecursionBeyondMaxDepthIsAnError;
   TestIsValidAgreesForDocumentsAndTextBeyondMaxDepth;
+  TestNotOnAnInPlaceCycleStopsAtMaxDepth;
   TestNumbersAreComparedExactlyForMultipleOf;
   TestValidatorsAreSafeForConcurrentUse;
   TestDiscriminatedOneOfAndAnyOfAgreeWithExhaustiveEvaluation;

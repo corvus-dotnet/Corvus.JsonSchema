@@ -126,9 +126,8 @@ type
     instance was evaluated and is simply not valid. }
   IJsonSchemaValidator = interface
     ['{6E1B6C0B-52D5-4C59-9E0C-0F3B4D0A7C31}']
-    { IsValid reports whether an instance is valid. When the schema recursed in place beyond the maximum depth the
-      result is what the abandoned evaluation came to, as in the Go module: not valid, unless the branch that was
-      abandoned is under a "not". Use TryIsValid to be told. }
+    { IsValid reports whether an instance is valid. An evaluation that recursed in place beyond the maximum depth is
+      reported as not valid, whatever it came to. Use TryIsValid to tell the two apart. }
     function IsValid(const Instance: TJsonDocument): Boolean; overload;
     { IsValid reports whether JSON text is a valid instance. The text is parsed into buffers the calling thread
       reuses, so a validation allocates nothing in the steady state. It raises EJsonParseError when the text is not
@@ -365,7 +364,8 @@ begin
 end;
 
 { Run validates a document, failing fast. It reports the result and whether evaluation recursed in place beyond the
-  maximum depth. }
+  maximum depth. An evaluation that did is not valid, whatever it came to: the branch that was abandoned counts as
+  false, which a not above it turns into true. }
 function TJsonSchemaValidator.Run(Instance: PDocument; S: PScratch; out DepthExceeded: Boolean): Boolean;
 var
   E: TEvaluator;
@@ -376,10 +376,11 @@ begin
   if (S = nil) and (E.S <> nil) then
     ReleaseScratch(E.S);
   DepthExceeded := E.DepthExceeded;
+  Result := Result and not DepthExceeded;
 end;
 
-{ RunParsed parses B[0 .. Len-1] into the thread's reused document and validates it. The result is the
-  evaluation's, whatever the status (as the run of the Go source, which returns the result beside the flag). }
+{ RunParsed parses B[0 .. Len-1] into the thread's reused document and validates it. The result is False for text
+  that is not JSON and for an evaluation that went beyond the maximum depth, and the status says which. }
 function TJsonSchemaValidator.RunParsed(S: PScratch; const B: TBytes; Len: Int32; out Status: TTextStatus;
   Error: PParseError): Boolean;
 var

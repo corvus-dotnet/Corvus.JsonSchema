@@ -231,10 +231,10 @@ Nothing here has been measured in this port. The first thing to do is to measure
 
 - **Reads without bounds checks.** The Go module reads some loops over a slice of the tape, which lets the Go
   compiler drop the bounds check per value (`visitLookup`, `visitValues`, `allOfType`). Here every array read is
-  range checked. `{$R+}` in `src/corvus.inc` is never turned off, and nothing indexes through a raw pointer to avoid
-  the check. That is a decision, the same one the Go module made when it declined `Document.str` without bounds
+  range checked. That is a decision, the same one the Go module made when it declined `Document.str` without bounds
   checks, and the same one the Julia package made in using no `@inbounds`. A mistake in an unchecked read would read
-  other memory, where a checked read raises `ERangeError`. What the checks cost has not been measured.
+  other memory, where a checked read raises `ERangeError`. How the check is made on the paths every validation takes
+  is under "Measured" below.
 - **Runtime code generation** (the C# IL emitter, the Java bytecode generator, the TypeScript source generator), and
   everything that belongs to it. Object Pascal compiles ahead of time and has no portable way to load code at run
   time. The plans here are data that one evaluator interprets, as in the Go module and the Rust crate.
@@ -262,14 +262,34 @@ Nothing here has been measured in this port. The first thing to do is to measure
 
 ## Measured
 
-Nothing has been measured yet. No timing, instruction count or profile of this port exists, and no figure of the Go
-module's is repeated here as if it were this port's.
+Free Pascal 3.2.2 at `-O3`, x86-64 Linux, with the jsonschema-benchmark protocol's program
+(`src-pas/corvus-json-schema-bench`): the warm time of validating every instance of a corpus, the best of three
+runs on one pinned core.
 
-When measurements are made, each entry should say what was measured, by what, on which compiler and target, and
-against what, as the Go module's and the Julia package's files do.
+- **The compiler's range check is a call.** Free Pascal checks an index into a dynamic array with a call to a
+  run-time routine for each read. A profile of the benchmark program put a quarter of its time in that routine
+  alone, and on six corpora the evaluator took 2.2 to 2.7 times as long with range checking on as with it off.
+  Optimisation level (`-O3`, `-O4`) and the instruction set made no difference to that.
+- **Inline checks in accessor functions.** `Corvus.JsonSchema.Checked` and a few accessors beside the array types
+  they read (`ChildAt`, `OpAt`, `PlanAt`, `NameKeyAt` and the others) compare the index with the array's length
+  inline, raise `ERangeError` when it is out of range, and then read. They are the only code compiled with range
+  checking off, each makes the check itself, and `tests/TestChecked.pas` calls every one of them out of range. The
+  document's readers, the evaluator's tape reads, the name tables, the plan arrays, the pattern matchers, the fused
+  plan and the parser's byte reads use them. Across the 37 benchmark corpora the warm time is 0.50 of what it was
+  with the compiler's check everywhere (geometric mean), and 1.31 of a build with no checks at all. Parse time fell
+  to between 0.79 and 0.93 with the parser's reads.
+- **What remains is not array reads.** With the accessors in place, removing the explicit comparisons alone gains
+  almost nothing, and so does turning the compiler's range checking off alone. Removing both gains 1.7 times on one
+  corpus. Under range checking Free Pascal also checks integer arithmetic that is narrowed to 32 bits, with an
+  inline comparison and a call on failure, and a loop that holds either kind of failure call keeps its variables in
+  memory. Those checks are on arithmetic, not on reads, and are left on.
 
 ## Tried and not kept
 
-Nothing has been tried and reverted yet, since nothing has been measured. The Go module's list of reverted
-experiments is about the Go compiler's code generation (registers kept across a call, the inliner's budget, bounds
-checks of slices) and says nothing about what Free Pascal would do with the same changes.
+- **One check for the name headers of an object in `ObjectVisitLookup`'s inner loop** (a run check before the loop
+  and unchecked reads inside it, in place of a check for each read). The medians of seven runs were equal on every
+  corpus measured. Not kept.
+
+The Go module's list of reverted experiments is about the Go compiler's code generation (registers kept across a
+call, the inliner's budget, bounds checks of slices) and says nothing about what Free Pascal would do with the same
+changes.
