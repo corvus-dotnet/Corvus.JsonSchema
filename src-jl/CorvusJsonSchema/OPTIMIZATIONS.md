@@ -423,6 +423,17 @@ differently.
    did and finds every name. The length set is by length modulo 64, which is one bit test. 0.981 (0.887 to
    1.061). Instructions per pass over all 37: 0.971 (cypress 0.896, stale 0.910, jshintrc 0.919).
 
+6. **The parser's values appended a word at a time, and a string's last bytes scanned only at the end of the text**
+   (`push_words!`, `append_words!`, `string!` in `document.jl`). This is a parse change. Counting the instructions
+   of a parse showed a seventh of them in `copyto!`: `push!` of two items is `append!` of a tuple, which goes
+   through the general `copyto!`, at more than fifty instructions a word, and every value was pushed that way. A
+   closed container's children were moved to the tape with one `push!` for each word. A value is now two pushes of
+   one word, and a container's children are one `resize!` and one `copyto!` of a vector into a vector. In
+   `string!`, the byte loop for the last bytes of the text ran its set-up for every string, though a run that ends
+   inside a word (every string but one at the very end of the text) never enters it. Parse passes over the 37
+   corpora, the same A/B method with the parse of every instance as the pass: 0.846 (0.764 to 0.966).
+   Instructions per parse over 4 corpora: 0.75 to 0.86. Warm validation 0.997, which is no change.
+
 The Go module's ten measured changes are techniques too. Its figures are for Go and are not repeated here. This is
 what this port's source has for each.
 

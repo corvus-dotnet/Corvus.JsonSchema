@@ -525,7 +525,7 @@ function parse_into!(p::Parser, d::Document, b::Vector{UInt8})
     p.b = EMPTY_BYTES
     if ok
         d.root = length(p.nodes) >> 1
-        push!(p.nodes, p.scratch[1], p.scratch[2])
+        push_words!(p.nodes, p.scratch[1], p.scratch[2])
         d.source = b
     else
         d.source = EMPTY_BYTES
@@ -551,8 +551,27 @@ end
 
 @inline peek(p::Parser) = p.i < length(p.b) ? Int(p.b[p.i+1]) : -1
 
+# Appends two words to a vector. push! with two items is append! of a tuple, which copies the items through the
+# general copyto!, more than fifty instructions a word. Two pushes of one item are a store each with a test of the
+# capacity.
+@inline function push_words!(v::Vector{UInt64}, a::UInt64, b::UInt64)
+    push!(v, a)
+    push!(v, b)
+    return nothing
+end
+
+# Appends the words of from, from the one-based index first on, to a vector, as one copy.
+@inline function append_words!(v::Vector{UInt64}, from::Vector{UInt64}, first::Int)
+    count = length(from) - first + 1
+    count > 0 || return nothing
+    at = length(v)
+    resize!(v, at + count)
+    copyto!(v, at + 1, from, first, count)
+    return nothing
+end
+
 @inline function push_value!(p::Parser, h::UInt64, d::UInt64)
-    push!(p.scratch, h, d)
+    push_words!(p.scratch, h, d)
     return nothing
 end
 
@@ -658,9 +677,7 @@ function close!(p::Parser, start::Int, object::Bool)
     children = (length(scratch) >> 1) - start
     nodes = p.nodes
     first_child = length(nodes) >> 1
-    for k in 2*start+1:length(scratch)
-        push!(nodes, scratch[k])
-    end
+    append_words!(nodes, scratch, 2 * start + 1)
     resize!(scratch, 2 * start)
     if object
         push_value!(p, UInt64(KIND_OBJECT) | UInt64(children >> 1) << 32, UInt64(first_child))
@@ -726,9 +743,7 @@ function dedupe!(p::Parser, start::Int)
     pairs = p.pairs
     empty!(pairs)
     scratch = p.scratch
-    for k in 2*start+1:length(scratch)
-        push!(pairs, scratch[k])
-    end
+    append_words!(pairs, scratch, 2 * start + 1)
     resize!(scratch, 2 * start)
     for q in 0:n-1
         name = key_bytes(p, pairs[4q+1], pairs[4q+2])
@@ -745,7 +760,8 @@ function dedupe!(p::Parser, start::Int)
             scratch[2*(found+1)+1] = pairs[4q+3]
             scratch[2*(found+1)+2] = pairs[4q+4]
         else
-            push!(scratch, pairs[4q+1], pairs[4q+2], pairs[4q+3], pairs[4q+4])
+            push_words!(scratch, pairs[4q+1], pairs[4q+2])
+            push_words!(scratch, pairs[4q+3], pairs[4q+4])
         end
     end
     return nothing
@@ -790,6 +806,7 @@ function string!(p::Parser)
     start = p.i + 1
     j = start
     high = UInt64(0)
+    stopped = false
     while j + 8 <= n
         w = le64(b, j)
         # The bytes that end the run: below 0x20, a quote or a backslash. Each test marks the high bit of a byte
@@ -802,19 +819,23 @@ function string!(p::Parser)
             # Only the non-ASCII bytes before the stop count.
             high |= w & SWAR_HIGHS & ((stop & (-stop)) - 1)
             j += trailing_zeros(stop) >> 3
+            stopped = true
             break
         end
         high |= w & SWAR_HIGHS
         j += 8
     end
     wide = high != 0 ? 0x02 : 0x00
-    while j < n
-        c = SCAN[b[j+1]+1]
-        c == 1 && break
-        wide |= c
-        j += 1
+    # The last bytes of the text, fewer than eight. A run that ended in a word is not looked at again.
+    if !stopped
+        while j < n
+            c = SCAN[b[j+1]+1]
+            c == 1 && break
+            wide |= c
+            j += 1
+        end
+        j >= n && return fail!(p, "unterminated string", j)
     end
-    j >= n && return fail!(p, "unterminated string", j)
     c = b[j+1]
     if c == UInt8('"')
         h = UInt64(KIND_STRING) | UInt64(j - start) << 32
