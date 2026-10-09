@@ -230,6 +230,9 @@ struct Frame
     # The first frame of the thread, which counts the items the searches for the lookbehinds of a match have run.
     root::Ptr{Frame}
     steps::Csize_t
+    # The callout the frame's context calls, or C_NULL for a frame that has only matched patterns with no callout
+    # (see calloutframe).
+    callout::Ptr{Cvoid}
 end
 
 const FRAME_NEXT = fieldoffset(Frame, 3)
@@ -238,6 +241,7 @@ const FRAME_TARGET = fieldoffset(Frame, 5)
 const FRAME_OPTIONS = fieldoffset(Frame, 6)
 const FRAME_ROOT = fieldoffset(Frame, 7)
 const FRAME_STEPS = fieldoffset(Frame, 8)
+const FRAME_CALLOUT = fieldoffset(Frame, 9)
 
 # The first fields of pcre2_callout_block, which are the same in every version of it.
 struct CalloutBlock
@@ -261,9 +265,9 @@ mutable struct Frames
 end
 
 const FRAMES = Frames(Ptr{Frame}[])
-# A lock a task may wait on: making the first frame of a thread evaluates the callout's definition.
+# A lock a task may wait on: making the callout evaluates its definition.
 const FRAME_LOCK = ReentrantLock()
-# The callout as a C function, made when the first frame is.
+# The callout as a C function, made when a pattern that has a callout is first matched (see calloutframe).
 const CALLOUT = Ref{Ptr{Cvoid}}(C_NULL)
 
 # The pointers kept when the package was precompiled mean nothing in the process that loads it.
@@ -361,19 +365,24 @@ function newframe(calloutfunction::Ptr{Cvoid}, root::Ptr{Frame})
     ccall((:pcre2_set_heap_limit_8, PCRE_LIB), Cint, (Ptr{Cvoid}, UInt32), context, HEAP_LIMIT_KIB)
     ccall((:pcre2_set_callout_8, PCRE_LIB), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), context, calloutfunction,
         frame)
-    unsafe_store!(frame, Frame(matchdata, context, C_NULL, C_NULL, 0, 0, root == C_NULL ? frame : root, 0))
+    unsafe_store!(frame, Frame(matchdata, context, C_NULL, C_NULL, 0, 0, root == C_NULL ? frame : root, 0,
+        calloutfunction))
     return frame
 end
 
-# The first frame of the thread the task is running on.
+# The first frame of the thread the task is running on. Making a thread's frame takes a lock, which a task may wait
+# on and then be resumed on another thread, so the frame is read again afterwards: the one returned was read with
+# no wait since the thread's number was.
 @inline function threadframe()
-    tid = Threads.threadid()
-    frames = @atomic FRAMES.first
-    if tid <= length(frames)
-        frame = frames[tid]
-        frame == C_NULL || return frame
+    while true
+        tid = Threads.threadid()
+        frames = @atomic FRAMES.first
+        if tid <= length(frames)
+            frame = frames[tid]
+            frame == C_NULL || return frame
+        end
+        newthreadframe(tid)
     end
-    return newthreadframe(tid)
 end
 
 @noinline function newthreadframe(tid::Int)
@@ -388,16 +397,42 @@ end
         end
         frame = frames[tid]
         if frame == C_NULL
-            if CALLOUT[] == C_NULL
-                CALLOUT[] = makecallout()
-            end
-            frame = newframe(CALLOUT[], Ptr{Frame}(C_NULL))
+            # With no callout: see calloutframe.
+            frame = newframe(Ptr{Cvoid}(C_NULL), Ptr{Frame}(C_NULL))
             frames[tid] = frame
         end
         return frame
     finally
         unlock(FRAME_LOCK)
     end
+end
+
+# The first frame of the thread the task is running on, with the callout set in its context.
+#
+# Only a pattern with a lookbehind of no fixed length has callouts, and the C function they are called through
+# takes Julia several milliseconds to make, in every process. It is made when such a pattern is first matched, and
+# set in a thread's frame when the thread first matches one. Before, it was made with the first frame, so the first
+# match of any pattern in a process paid for it, which was most of the first validation pass of a schema with a
+# pattern on the engine.
+@noinline function calloutframe()::Ptr{Frame}
+    if CALLOUT[] == C_NULL
+        lock(FRAME_LOCK)
+        try
+            if CALLOUT[] == C_NULL
+                CALLOUT[] = makecallout()
+            end
+        finally
+            unlock(FRAME_LOCK)
+        end
+    end
+    # The frame of the thread the task is on now. Nothing waits between this read and the match.
+    frame = threadframe()
+    if unsafe_load(Ptr{Ptr{Cvoid}}(frame + FRAME_CALLOUT)) == C_NULL
+        ccall((:pcre2_set_callout_8, PCRE_LIB), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), unsafe_load(frame).context,
+            CALLOUT[], frame)
+        unsafe_store!(Ptr{Ptr{Cvoid}}(frame + FRAME_CALLOUT), CALLOUT[])
+    end
+    return frame
 end
 
 # PCRE2 does not take a null text, even an empty one, in every version.
@@ -410,7 +445,12 @@ function unsafe_ismatch(p::Pattern, subject::Ptr{UInt8}, len::Int)::Bool
     end
     p.code == C_NULL && restore!(p)
     frameptr = threadframe()
-    isempty(p.lookbehinds) || setframe!(frameptr, pointer_from_objref(p), Csize_t(0), UInt32(0))
+    if !isempty(p.lookbehinds)
+        if unsafe_load(Ptr{Ptr{Cvoid}}(frameptr + FRAME_CALLOUT)) == C_NULL
+            frameptr = calloutframe()
+        end
+        setframe!(frameptr, pointer_from_objref(p), Csize_t(0), UInt32(0))
+    end
     rc = pcrematch(p.code, subject, Csize_t(len), UInt32(0), unsafe_load(frameptr))
     rc >= 0 && return true
     rc == PCRE2_ERROR_NOMATCH && return false

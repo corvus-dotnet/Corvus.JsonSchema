@@ -446,6 +446,19 @@ differently.
    0.927. The Go module tried the same layout and reverted it (its Tried and not kept 1) for one corpus that got
    slower. Nothing did here beyond the noise.
 
+8. **The engine's callout made only for a pattern that has one** (`calloutframe`, `Frame.callout`, `threadframe`
+   in `src/ecmaregex/pcre.jl`). This is a change to the cold pass. Timing each document's first validation showed
+   one document of every corpus with a pattern on the engine at 3.3 to 3.6 ms, where the whole pass afterwards is
+   0.3 to 0.8 ms. It was the first match of a pattern in the process, which made the first frame of the thread,
+   and with it the C function PCRE2 calls for a callout. Julia takes 5 to 9 ms to make that function in a process,
+   however it is written (a `@cfunction` in a precompiled method costs the same). Only a pattern with a lookbehind
+   of no fixed length has callouts. The function is now made when such a pattern is first matched, and set in a
+   thread's frame then. The cold figure of the protocol program, fresh processes, three alternating runs: krakend
+   7.56 ms to 0.17, jsconfig 6.95 to 0.31, cspell 7.69 to 0.42, ui5 8.19 to 0.83, ui5-manifest 9.09 to 2.06, and
+   corpora with no pattern on the engine as before (helm-chart-lock 0.958, jshintrc 0.986). Warm validation is
+   not touched. `threadframe` also reads the thread's frame again after making it, since making it takes a lock a
+   task may wait on and be resumed on another thread.
+
 The Go module's ten measured changes are techniques too. Its figures are for Go and are not repeated here. This is
 what this port's source has for each.
 
@@ -510,9 +523,9 @@ the evaluator, the plans, the fused pass, the name table, the pattern shapes, th
 ported with were removed when the decision was made to cover it too (2026-10-08). What remains unsafe there is the
 binding to PCRE2, which cannot be otherwise.
 
-- Pointers. `pcre.jl` is the binding to PCRE2 and is unsafe by nature. It has 8 `unsafe_load`, 7 `unsafe_store!`
+- Pointers. `pcre.jl` is the binding to PCRE2 and is unsafe by nature. It has 11 `unsafe_load`, 8 `unsafe_store!`
   and one `unsafe_pointer_to_objref` over the `Frame` memory it allocates with `Libc.malloc` and over the callout
-  block PCRE2 passes, and 13 `ccall`. `EcmaRegex.jl` takes the pointer to the text and to the pattern under
+  block PCRE2 passes, and 14 `ccall`. `EcmaRegex.jl` takes the pointer to the text and to the pattern under
   `GC.@preserve` in the two `ismatch` methods and calls `unsafe_ismatch`.
 - `unsafe_trunc` appears four times outside the engine (`numbers.jl` twice, `values.jl`, `compiler.jl`). It
   converts a `Float64` to an integer with no range check and reads no memory. Each is behind a test of the range.
