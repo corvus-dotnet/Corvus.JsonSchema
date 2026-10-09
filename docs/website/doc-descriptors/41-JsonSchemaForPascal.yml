@@ -1,0 +1,3 @@
+source: JsonSchemaForPascal.md
+navTitle: "Object Pascal"
+description: "The Corvus JSON Schema evaluator for Object Pascal (Free Pascal, written to be Delphi-compatible): install, validate, JSON text, options, results and annotations."

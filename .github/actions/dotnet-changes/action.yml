@@ -1,8 +1,8 @@
 name: Detect .NET changes
 description: >-
   Whether a pull request, or a push to a branch, changes anything the .NET build reads. A change only to the Python,
-  Rust, TypeScript, Java, Go, Julia, Ruby, PHP or R packages (src-py, src-rs, src-ts, src-java, src-go, src-jl, src-rb,
-  src-php, src-r) and their own workflows needs no .NET build and makes no NuGet release. Any other event (a tag push, a manual run) counts as a .NET change.
+  Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R or Object Pascal packages (src-py, src-rs, src-ts, src-java, src-go,
+  src-jl, src-rb, src-php, src-r, src-pas) and their own workflows needs no .NET build and makes no NuGet release. Any other event (a tag push, a manual run) counts as a .NET change.
 inputs:
   token:
     description: A token that can read the repository's pull requests.
@@ -61,10 +61,10 @@ runs:
           build "$count changed files: building."
         fi
         # Paths the .NET build does not read. Anything else (shared files, docs, workflows other than these) builds.
-        others=$(printf '%s\n' "$files" | grep -v -E '^(src-py|src-rs|src-ts|src-java|src-go|src-jl|src-rb|src-php|src-r)/|^\.github/workflows/(python|python-wheels|rust|typescript|capi|capi-publish|ruby|rubygems-build|rubygems-publish|php|php-build|php-publish|pypi-publish|crates-publish|npm-publish|java|maven-publish|go|go-publish|julia|julia-publish|r|r-publish)\.yml$' || true)
+        others=$(printf '%s\n' "$files" | grep -v -E '^(src-py|src-rs|src-ts|src-java|src-go|src-jl|src-rb|src-php|src-r|src-pas)/|^\.github/workflows/(python|python-wheels|rust|typescript|capi|capi-publish|ruby|rubygems-build|rubygems-publish|php|php-build|php-publish|pypi-publish|crates-publish|npm-publish|java|maven-publish|go|go-publish|julia|julia-publish|r|r-publish|pascal|pascal-publish)\.yml$' || true)
         if [ -n "$others" ]; then
           printf 'Changes the .NET build reads:\n%s\n' "$others" | head -n 20 || true
           build "Building."
         fi
         echo "dotnet=false" >> "$GITHUB_OUTPUT"
-        echo "Only the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP or R packages changed ($count files): skipping the .NET build."
+        echo "Only the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R or Object Pascal packages changed ($count files): skipping the .NET build."
