@@ -115,6 +115,41 @@ class TestApi < Minitest::Test
     refute v.valid_json?('"é1"')
   end
 
+  # The crate before 0.1.6 evaluated a not without the guard on in-place recursion, so the schemas whose not leads back
+  # to the schema it is in overflowed the stack, which ends the process.
+  def test_not_on_an_in_place_cycle_stops_at_max_depth
+    looping = { "allOf" => [{ "$ref" => "#/$defs/loop" }] }
+    schemas = [
+      { "not" => { "$ref" => "#" } },
+      { "not" => { "not" => { "$ref" => "#" } } },
+      { "type" => "integer", "not" => { "$ref" => "#" } },
+      { "allOf" => [{ "not" => { "$ref" => "#" } }] },
+      { "$defs" => { "a" => { "not" => { "$ref" => "#/$defs/b" } }, "b" => { "not" => { "$ref" => "#/$defs/a" } } },
+        "$ref" => "#/$defs/a" },
+      { "$defs" => { "loop" => looping }, "not" => { "$ref" => "#/$defs/loop" } },
+      { "$defs" => { "loop" => looping }, "not" => { "not" => { "$ref" => "#/$defs/loop" } } },
+      { "$defs" => { "loop" => looping }, "properties" => { "a" => { "not" => { "$ref" => "#/$defs/loop" } } } },
+      { "unevaluatedProperties" => false, "not" => { "$ref" => "#" } }
+    ]
+    schemas.each_with_index do |schema, s|
+      v = CorvusJsonSchema.compile(schema, max_depth: 16)
+      [1, "a", { "a" => 1 }, [1]].each do |instance|
+        # Only an object with the property reaches the loop of the eighth schema, and anything but an integer fails
+        # the type of the third before its not is reached, when failing fast.
+        next if (s == 7 && !instance.is_a?(Hash)) || (s == 2 && instance != 1)
+
+        what = "#{schema} with #{instance.inspect}"
+        assert_raises(CorvusJsonSchema::DepthError, what) { v.valid?(instance) }
+        assert_raises(CorvusJsonSchema::DepthError, what) { v.valid_json?(JSON.generate(instance)) }
+        %i[basic detailed verbose].each do |level|
+          assert_raises(CorvusJsonSchema::DepthError, what) do
+            v.evaluate(instance, CorvusJsonSchema::Collector.new(level))
+          end
+        end
+      end
+    end
+  end
+
   def test_crate_version
     assert_match(/\A\d+\.\d+\.\d+\z/, CorvusJsonSchema.crate_version)
   end
