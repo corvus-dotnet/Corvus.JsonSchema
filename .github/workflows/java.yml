@@ -63,8 +63,9 @@ jobs:
         # analysis), the shaded jar, and the release profile's sources and javadoc jars.
         run: ./mvnw -B -ntp install -P release -Dgpg.skip
       - name: Test with the interpreter
-        # The same suite through the interpreter, which also serves results collection.
-        run: ./mvnw -B -ntp test -Dtest=SuiteTest -DcorvusArgLine=-Dcorvus.jsonschema.interpret=true
+        # The same suite through the interpreter, which also serves results collection, with the API tests and the
+        # allocation gate: the interpreter allocates nothing on the validation path either.
+        run: ./mvnw -B -ntp test -Dtest=SuiteTest,AllocationTest,ApiTest -DcorvusArgLine=-Dcorvus.jsonschema.interpret=true
       - name: Kotlin
         working-directory: src-java/kotlin-smoke
         run: ./mvnw -B -ntp test

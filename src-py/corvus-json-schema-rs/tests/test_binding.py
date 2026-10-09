@@ -165,6 +165,39 @@ def test_in_place_recursion_beyond_max_depth_raises() -> None:
         v(1)
 
 
+def test_not_on_an_in_place_cycle_stops_at_max_depth() -> None:
+    # The crate before 0.1.6 evaluated a not without the guard on in-place recursion, so the schemas whose not leads
+    # back to the schema it is in overflowed the stack, which ends the process.
+    looping = {"allOf": [{"$ref": "#/$defs/loop"}]}
+    schemas: list[dict[str, object]] = [
+        {"not": {"$ref": "#"}},
+        {"not": {"not": {"$ref": "#"}}},
+        {"type": "integer", "not": {"$ref": "#"}},
+        {"allOf": [{"not": {"$ref": "#"}}]},
+        {"$defs": {"a": {"not": {"$ref": "#/$defs/b"}}, "b": {"not": {"$ref": "#/$defs/a"}}}, "$ref": "#/$defs/a"},
+        {"$defs": {"loop": looping}, "not": {"$ref": "#/$defs/loop"}},
+        {"$defs": {"loop": looping}, "not": {"not": {"$ref": "#/$defs/loop"}}},
+        {"$defs": {"loop": looping}, "properties": {"a": {"not": {"$ref": "#/$defs/loop"}}}},
+        {"unevaluatedProperties": False, "not": {"$ref": "#"}},
+    ]
+    for s, schema in enumerate(schemas):
+        v = cjs.compile(schema, max_depth=16)
+        for instance in [1, "a", {"a": 1}, [1]]:
+            # Only an object with the property reaches the loop of the eighth schema, and anything but an integer
+            # fails the type of the third before its not is reached, when failing fast.
+            if (s == 7 and not isinstance(instance, dict)) or (s == 2 and instance != 1):
+                continue
+            with pytest.raises(cjs.SchemaEvaluationDepthError):
+                v(instance)
+            with pytest.raises(cjs.SchemaEvaluationDepthError):
+                v.is_valid(instance)
+            with pytest.raises(cjs.SchemaEvaluationDepthError):
+                v.is_valid_json(json.dumps(instance))
+            for level in cjs.ResultsLevel:
+                with pytest.raises(cjs.SchemaEvaluationDepthError):
+                    v.evaluate(instance, cjs.JsonSchemaResultsCollector.create(level))
+
+
 def test_results_and_annotations() -> None:
     schema = {"title": "Person", **PERSON}
     v = cjs.compile(schema)

@@ -98,6 +98,8 @@ final class SchemaNode {
         final byte[] utf8;
         /** The required properties, or null. */
         final String[] required;
+        /** The required properties as UTF-8, to look each up in an instance without encoding its name again. */
+        final byte[][] requiredUtf8;
         /** The schema, or -1. */
         final int schema;
 
@@ -106,6 +108,7 @@ final class SchemaNode {
             this.name = name;
             this.utf8 = name.getBytes(StandardCharsets.UTF_8);
             this.required = required;
+            this.requiredUtf8 = utf8Of(required);
             this.schema = schema;
         }
     }
@@ -208,6 +211,20 @@ final class SchemaNode {
     String[] required;
     /** {@code required} as written (duplicates kept), for results. */
     String[] requiredList;
+    /** {@link #requiredList} as UTF-8, to look each name up in an instance without encoding it again. */
+    byte[][] requiredListUtf8;
+
+    /** Each name as UTF-8, or null for no names. */
+    static byte[][] utf8Of(String[] names) {
+        if (names == null) {
+            return null;
+        }
+        byte[][] out = new byte[names.length][];
+        for (int i = 0; i < names.length; i++) {
+            out[i] = names[i].getBytes(StandardCharsets.UTF_8);
+        }
+        return out;
+    }
     Dependency[] dependencies;
     long minProperties = -1;
     long maxProperties = -1;

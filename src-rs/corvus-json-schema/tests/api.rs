@@ -81,6 +81,53 @@ fn in_place_recursion_beyond_max_depth_is_an_error() {
     assert!(v.evaluate(&json!(1), &mut JsonSchemaResultsCollector::new(ResultsLevel::Detailed)).is_err());
 }
 
+/// A `not` whose subschema leads back to the schema it is in recurses in place like any other applicator. It stops
+/// at the maximum depth: the validation is an error, and `is_valid` reports the instance as invalid. (Evaluating
+/// `not` went around the depth guard, so the first of these schemas overflowed the stack, and for the others the
+/// `not` turned the abandoned evaluation's false into true.)
+#[test]
+fn not_on_an_in_place_cycle_stops_at_max_depth() {
+    let looping = json!({ "allOf": [{ "$ref": "#/$defs/loop" }] });
+    let schemas = [
+        json!({ "not": { "$ref": "#" } }),
+        json!({ "not": { "not": { "$ref": "#" } } }),
+        json!({ "type": "integer", "not": { "$ref": "#" } }),
+        json!({ "allOf": [{ "not": { "$ref": "#" } }] }),
+        json!({
+            "$defs": { "a": { "not": { "$ref": "#/$defs/b" } }, "b": { "not": { "$ref": "#/$defs/a" } } },
+            "$ref": "#/$defs/a"
+        }),
+        json!({ "$defs": { "loop": looping }, "not": { "$ref": "#/$defs/loop" } }),
+        json!({ "$defs": { "loop": looping }, "not": { "not": { "$ref": "#/$defs/loop" } } }),
+        json!({ "$defs": { "loop": looping }, "properties": { "a": { "not": { "$ref": "#/$defs/loop" } } } }),
+        json!({ "unevaluatedProperties": false, "not": { "$ref": "#" } }),
+    ];
+    let instances = [json!(1), json!("a"), json!({ "a": 1 }), json!([1])];
+    for (s, schema) in schemas.iter().enumerate() {
+        let v = compile_with(schema, &CompileOptions { max_depth: 16, ..CompileOptions::default() }).unwrap();
+        for instance in &instances {
+            // Only an object with the property reaches the loop of the eighth schema, and anything but an integer
+            // fails the type of the third before its not is reached, when failing fast.
+            if (s == 7 && !instance.is_object()) || (s == 2 && !instance.is_i64()) {
+                continue;
+            }
+            let text = instance.to_string();
+            assert!(!v.is_valid(instance), "{schema}: is_valid reported {instance} as valid");
+            assert!(v.validate(instance).is_err(), "{schema}: validate({instance}) is not an error");
+            assert!(
+                matches!(v.validate_json(&text), Err(corvus_json_schema::JsonValidationError::DepthExceeded(_))),
+                "{schema}: validate_json({instance}) is not a depth error"
+            );
+            for level in [ResultsLevel::Basic, ResultsLevel::Detailed, ResultsLevel::Verbose] {
+                assert!(
+                    v.evaluate(instance, &mut JsonSchemaResultsCollector::new(level)).is_err(),
+                    "{schema}: evaluate({instance}) is not an error"
+                );
+            }
+        }
+    }
+}
+
 #[test]
 fn numbers_are_compared_exactly_for_multiple_of() {
     let v = compile(&json!({ "multipleOf": 0.01 })).unwrap();

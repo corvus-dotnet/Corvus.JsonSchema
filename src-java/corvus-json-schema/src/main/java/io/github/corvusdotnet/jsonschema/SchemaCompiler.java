@@ -481,6 +481,7 @@ final class SchemaCompiler {
             if (req >= 0 && d.kind(req) == ARRAY) {
                 String[] list = strings(d, req);
                 n.requiredList = list;
+                n.requiredListUtf8 = SchemaNode.utf8Of(list);
                 n.required = Arrays.stream(list).distinct().toArray(String[]::new);
             }
             if (dialect.atLeast(Dialect.DRAFT201909)) {

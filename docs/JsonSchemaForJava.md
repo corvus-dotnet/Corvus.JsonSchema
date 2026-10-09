@@ -23,14 +23,14 @@ Maven:
 <dependency>
   <groupId>io.github.corvus-dotnet</groupId>
   <artifactId>corvus-json-schema</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
 </dependency>
 ```
 
 Gradle (Kotlin DSL):
 
 ```kotlin
-implementation("io.github.corvus-dotnet:corvus-json-schema:0.1.1")
+implementation("io.github.corvus-dotnet:corvus-json-schema:0.1.2")
 ```
 
 ## Validate

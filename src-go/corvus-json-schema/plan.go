@@ -1311,7 +1311,8 @@ func (e *evaluator) runOp(o *op, x int) bool {
 		}
 		return matched == 1
 	case opNot:
-		return !e.run(o.node, x)
+		// Under the depth guard, like every other in-place applicator: a not can be part of a cycle too.
+		return !e.runInPlace(o.node, x)
 	case opDynamicRef:
 		return e.runInPlace(e.p.fastTarget[e.resolveDynamic(o.dynamic)], x)
 	default:

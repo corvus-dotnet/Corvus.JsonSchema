@@ -63,7 +63,7 @@ dependencies = [
 
 [[package]]
 name = "corvus-json-schema"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "regex",
  "regress",
@@ -72,7 +72,7 @@ dependencies = [
 
 [[package]]
 name = "corvus_json_schema"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "corvus-json-schema",
  "magnus",

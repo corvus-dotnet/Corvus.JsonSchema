@@ -40,7 +40,7 @@ public final class BowtieHarness {
 
     private static String version() {
         String v = Validator.class.getPackage().getImplementationVersion();
-        return v != null ? v : "0.1.1";
+        return v != null ? v : "0.1.2";
     }
 
     public static void main(String[] args) throws IOException {

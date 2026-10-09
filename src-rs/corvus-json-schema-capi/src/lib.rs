@@ -67,7 +67,7 @@ pub const CJS_VERBOSE: cjs_results_level = 2;
 /// The header's version: compare with `cjs_version()`, the library's.
 pub const CJS_VERSION_MAJOR: u32 = 0;
 pub const CJS_VERSION_MINOR: u32 = 1;
-pub const CJS_VERSION_PATCH: u32 = 2;
+pub const CJS_VERSION_PATCH: u32 = 3;
 
 /// A UTF-8 string the library owns: `len` bytes from `ptr`, not NUL-terminated. Each function returning one says how
 /// long it stays valid.

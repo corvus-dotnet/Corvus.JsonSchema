@@ -27,8 +27,14 @@ public final class Validator {
         this.evaluators = ThreadLocal.withInitial(() -> new Evaluator(program, null));
     }
 
+    /**
+     * Validates, failing fast. An evaluation that recursed in place beyond the maximum depth is not valid, whatever it
+     * came to: the branch that was abandoned counts as false, which a not above it turns into true.
+     */
     private boolean run(Evaluator e, JsonDocument instance) {
-        return code != null ? e.validate(code, instance, instance.root()) : e.validate(instance, instance.root());
+        boolean ok =
+                code != null ? e.validate(code, instance, instance.root()) : e.validate(instance, instance.root());
+        return ok && !e.depthExceeded;
     }
 
     /** The evaluator last acquired, checked by its owning thread before the (slower) thread-local lookup. */

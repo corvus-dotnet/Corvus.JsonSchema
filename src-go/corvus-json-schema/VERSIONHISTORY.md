@@ -2,6 +2,16 @@
 
 The version history of `github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema`, the Go port of the Corvus.Text.Json V5 runtime evaluator. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.2
+
+V0.1.2 fixes a stack overflow, and a wrong `IsValid` result, for a schema whose `not` is part of a loop. There are no API changes. Versions 0.1.0 and 0.1.1 are affected.
+
+### Bug fixes
+
+- **A `not` that leads back to the schema it is in.** A schema can loop without consuming the instance. The module abandons such an evaluation at the maximum depth (`WithMaxDepth`, 128 by default) and returns `ErrDepthExceeded`. Evaluating `not` went around that guard. For a schema such as `{"not": {"$ref": "#"}}`, validating an instance that reached the `not` recursed until the goroutine's stack reached its limit. That is a fatal error in Go ("stack overflow"), which ends the process and cannot be recovered. `IsValid`, `Validate`, `Evaluate` and their forms for strings and bytes were all affected. A `not` is now under the guard, so `Validate` and `Evaluate` return `ErrDepthExceeded` and `IsValid` returns false. The fault is in the schema. No instance causes it for a schema without such a loop, so a program was exposed only if it compiled schemas it did not write.
+
+- **`IsValid` for a schema that loops under a `not`.** With the loop elsewhere, as in `{"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "not": {"$ref": "#/$defs/loop"}}`, the guard stopped the loop and counted the abandoned branch as false, and the `not` turned that into true. `IsValid` returned true for an evaluation that had been abandoned, where its documentation says false. It now returns false whenever the evaluation went beyond the maximum depth, whatever the rest of the schema came to. The same rule changes `IsValid` for a schema whose `anyOf` recovers after the depth is exceeded, such as `{"$defs": {"a": {"anyOf": [{"$ref": "#/$defs/a"}, true]}}, "$ref": "#/$defs/a"}`. Its first branch loops and is abandoned, and its second is true. `IsValid` returned true for it and now returns false, as its documentation says. `Validate` and `Evaluate` returned `ErrDepthExceeded` for both schemas, and still do.
+
 ## V0.1.1
 
 V0.1.1 fixes a panic when compiling a schema with one form of pattern. There are no API changes. Version 0.1.0 is affected.

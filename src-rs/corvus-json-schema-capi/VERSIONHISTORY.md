@@ -2,6 +2,14 @@
 
 The version history of the corvus-json-schema C library and its C++ wrapper (`src-rs/corvus-json-schema-capi`), released on GitHub as `capi-v<version>`. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md), and of the Rust crate it wraps.
 
+## V0.1.3
+
+V0.1.3 fixes a stack overflow for a schema whose `not` leads back to the schema it is in, by taking version 0.1.6 of the `corvus-json-schema` crate. There are no API changes. Versions 0.1.0 to 0.1.2 are affected, and so is everything built on them, the C++ wrapper included.
+
+### Bug fixes
+
+- **A `not` that leads back to the schema it is in.** A schema can loop without consuming the instance. The library abandons such an evaluation at the maximum depth (`cjs_options_set_max_depth`, 128 by default) and returns `CJS_DEPTH_EXCEEDED`. Evaluating `not` went around that guard. For a schema such as `{"not": {"$ref": "#"}}`, validating an instance that reached the `not` recursed until the stack overflowed, which ends the process with a segmentation fault or an abort. No status was returned, and the C++ wrapper threw no exception. The four functions that validate or evaluate, for JSON text and for a parsed document, were affected. A `not` is now under the guard, so they return `CJS_DEPTH_EXCEEDED`. The fault is in the schema. No instance causes it for a schema without such a loop, so a program was exposed only if it compiled schemas it did not write. A schema that loops elsewhere under a `not` was not affected in this library: it returned `CJS_DEPTH_EXCEEDED`, and still does.
+
 ## V0.1.2
 
 V0.1.2 fixes wrong validation results for one form of pattern, by taking version 0.1.4 of the `corvus-json-schema` crate. There are no API changes. Versions 0.1.0 and 0.1.1 are affected, and so is everything built on them, the C++ wrapper included.

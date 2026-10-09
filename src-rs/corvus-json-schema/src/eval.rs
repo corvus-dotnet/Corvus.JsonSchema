@@ -597,7 +597,9 @@ impl<'p, 'c> Evaluator<'p, 'c> {
     /// Evaluates the program's entry in fast mode.
     pub fn validate<'x, I: Instance<'x>>(&mut self, x: I) -> bool {
         let root = self.p.fast_target[self.p.root as usize];
-        self.fast(root, x)
+        // An evaluation that recursed in place beyond the maximum depth is not valid, whatever it came to: the
+        // branch that was abandoned counts as false, which a not above it turns into true.
+        self.fast(root, x) && !self.depth_exceeded
     }
 
     /// Fail-fast evaluation of a node, through its plan when there are plans.
@@ -1413,16 +1415,28 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             check!(self, M, ok, matched == 1, Message::Static(message), "oneOf");
         }
         if let Some(not) = n.not {
-            // Not elided, never contributes results or evaluated properties/items.
-            let inner = if M::COLLECT {
+            // Not elided, never contributes results or evaluated properties/items. A not on an in-place cycle is
+            // under the depth guard, like every other in-place applicator.
+            let target = if M::COLLECT { not } else { self.p.fast_target[not as usize] };
+            let guarded = self.node(target).in_place_cycle;
+            if guarded {
+                self.depth += 1;
+            }
+            let inner = if guarded && self.depth > self.p.max_depth {
+                self.depth_exceeded = true;
+                false
+            } else if M::COLLECT {
                 let pointer = &self.node(not).pointer;
                 self.col().begin_child_context(Some("not"), Some(pointer), None);
                 let inner = self.eval_node::<Collect, I>(not, x, None);
                 self.col().pop_child_context();
                 inner
             } else {
-                self.fast(self.p.fast_target[not as usize], x)
+                self.fast(target, x)
             };
+            if guarded {
+                self.depth -= 1;
+            }
             check!(self, M, ok, !inner, Message::Static(if inner { MATCHED_NOT } else { DID_NOT_MATCH_NOT }), "not");
         }
         if let Some(cond_node) = n.if_ {

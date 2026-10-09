@@ -407,7 +407,9 @@ final class Evaluator {
             Predicate<String> custom = p.formats.get(n.format);
             boolean m = custom != null ? custom.test(doc.numberText(x)) : n.formatKind.checkNumber(flag, bits);
             String kind = n.formatKind.formatName;
-            ok &= check(m, null, () -> "The value was expected to be in a supported format, and within bounds for '"
+            ok &= check(m, null,
+                    !collect ? null
+                            : () -> "The value was expected to be in a supported format, and within bounds for '"
                     + kind + "'", "format");
             if (!ok && !collect) {
                 return false;
@@ -415,7 +417,9 @@ final class Evaluator {
         }
         if (n.minimum != null) {
             boolean m = Numbers.compare(flag, bits, n.minimum.flag, n.minimum.bits) >= 0;
-            ok &= check(m, null, () -> "The value was expected to be greater than or equal to" + q(n.minimum.text),
+            ok &= check(m, null,
+                    !collect ? null
+                            : () -> "The value was expected to be greater than or equal to" + q(n.minimum.text),
                     "minimum");
             if (!ok && !collect) {
                 return false;
@@ -423,7 +427,9 @@ final class Evaluator {
         }
         if (n.maximum != null) {
             boolean m = Numbers.compare(flag, bits, n.maximum.flag, n.maximum.bits) <= 0;
-            ok &= check(m, null, () -> "The value was expected to be less than or equal to" + q(n.maximum.text),
+            ok &= check(m, null,
+                    !collect ? null
+                            : () -> "The value was expected to be less than or equal to" + q(n.maximum.text),
                     "maximum");
             if (!ok && !collect) {
                 return false;
@@ -431,7 +437,9 @@ final class Evaluator {
         }
         if (n.exclusiveMinimum != null) {
             boolean m = Numbers.compare(flag, bits, n.exclusiveMinimum.flag, n.exclusiveMinimum.bits) > 0;
-            ok &= check(m, null, () -> "The value was expected to be greater than" + q(n.exclusiveMinimum.text),
+            ok &= check(m, null,
+                    !collect ? null
+                            : () -> "The value was expected to be greater than" + q(n.exclusiveMinimum.text),
                     "exclusiveMinimum");
             if (!ok && !collect) {
                 return false;
@@ -439,7 +447,9 @@ final class Evaluator {
         }
         if (n.exclusiveMaximum != null) {
             boolean m = Numbers.compare(flag, bits, n.exclusiveMaximum.flag, n.exclusiveMaximum.bits) < 0;
-            ok &= check(m, null, () -> "The value was expected to be less than" + q(n.exclusiveMaximum.text),
+            ok &= check(m, null,
+                    !collect ? null
+                            : () -> "The value was expected to be less than" + q(n.exclusiveMaximum.text),
                     "exclusiveMaximum");
             if (!ok && !collect) {
                 return false;
@@ -447,7 +457,9 @@ final class Evaluator {
         }
         if (n.multipleOf != null) {
             boolean m = n.divisor.divides(doc, x);
-            ok &= check(m, null, () -> "The value was expected to be a multiple of" + q(n.multipleOf.text),
+            ok &= check(m, null,
+                    !collect ? null
+                            : () -> "The value was expected to be a multiple of" + q(n.multipleOf.text),
                     "multipleOf");
         }
         return ok;
@@ -485,7 +497,8 @@ final class Evaluator {
                     : Utf8.codePoints(doc.strBytes(x), doc.strOffset(x), doc.strOffset(x) + doc.count(x));
             if (n.minLength >= 0) {
                 ok &= check(len >= n.minLength, null,
-                        () -> "Expected the length of the value to be greater than or equal to '" + n.minLength + "'",
+                        !collect ? null
+                                : () -> "Expected the length of the value to be greater than or equal to '" + n.minLength + "'",
                         "minLength");
                 if (!ok && !collect) {
                     return false;
@@ -493,7 +506,8 @@ final class Evaluator {
             }
             if (n.maxLength >= 0) {
                 ok &= check(len <= n.maxLength, null,
-                        () -> "Expected the length of the value to be less than or equal to '" + n.maxLength + "'",
+                        !collect ? null
+                                : () -> "Expected the length of the value to be less than or equal to '" + n.maxLength + "'",
                         "maxLength");
                 if (!ok && !collect) {
                     return false;
@@ -502,7 +516,8 @@ final class Evaluator {
         }
         if (n.pattern != null) {
             ok &= check(matches(n.pattern, x), null,
-                    () -> "Expected the value to match the regular expression" + q(n.pattern.source), "pattern");
+                    !collect ? null
+                            : () -> "Expected the value to match the regular expression" + q(n.pattern.source), "pattern");
             if (!ok && !collect) {
                 return false;
             }
@@ -511,7 +526,8 @@ final class Evaluator {
             Predicate<String> custom = p.formats.get(n.format);
             if (custom != null) {
                 ok &= check(custom.test(doc.string(x)), null,
-                        () -> "Expected a string in the '" + n.format + "' format.", "format");
+                        !collect ? null
+                                : () -> "Expected a string in the '" + n.format + "' format.", "format");
             } else if (n.formatKind == Formats.Kind.UNKNOWN) {
                 ok &= check(true, null, null, "format");
             } else {
@@ -717,7 +733,8 @@ final class Evaluator {
         long len = doc.count(x);
         if (n.minProperties >= 0) {
             ok &= check(len >= n.minProperties, null,
-                    () -> "Expected the property count to be greater than or equal to '" + n.minProperties + "'",
+                    !collect ? null
+                            : () -> "Expected the property count to be greater than or equal to '" + n.minProperties + "'",
                     "minProperties");
             if (!ok && !collect) {
                 return false;
@@ -725,7 +742,8 @@ final class Evaluator {
         }
         if (n.maxProperties >= 0) {
             ok &= check(len <= n.maxProperties, null,
-                    () -> "Expected the property count to be less than or equal to '" + n.maxProperties + "'",
+                    !collect ? null
+                            : () -> "Expected the property count to be less than or equal to '" + n.maxProperties + "'",
                     "maxProperties");
             if (!ok && !collect) {
                 return false;
@@ -798,8 +816,9 @@ final class Evaluator {
             }
         }
         if (n.requiredList != null) {
-            for (String r : n.requiredList) {
-                boolean present = doc.property(x, r) >= 0;
+            for (int i = 0; i < n.requiredList.length; i++) {
+                String r = n.requiredList[i];
+                boolean present = doc.property(x, n.requiredListUtf8[i]) >= 0;
                 if (collect) {
                     c.evaluatedKeywordForProperty(present, null,
                             () -> "Required property " + (present ? "" : "not ") + "present '" + r + "'", r,
@@ -818,8 +837,9 @@ final class Evaluator {
                 }
                 String keyword = d.keyword.keyword;
                 if (d.required != null) {
-                    for (String r : d.required) {
-                        boolean present = doc.property(x, r) >= 0;
+                    for (int i = 0; i < d.required.length; i++) {
+                        String r = d.required[i];
+                        boolean present = doc.property(x, d.requiredUtf8[i]) >= 0;
                         if (collect) {
                             c.evaluatedKeywordForProperty(present, null,
                                     () -> "Required property " + (present ? "" : "not ") + "present '" + r + "'", r,
@@ -880,14 +900,16 @@ final class Evaluator {
         int len = doc.count(x);
         if (n.minItems >= 0) {
             ok &= check(len >= n.minItems, null,
-                    () -> "Expected the item count to be greater than or equal to '" + n.minItems + "'", "minItems");
+                    !collect ? null
+                            : () -> "Expected the item count to be greater than or equal to '" + n.minItems + "'", "minItems");
             if (!ok && !collect) {
                 return false;
             }
         }
         if (n.maxItems >= 0) {
             ok &= check(len <= n.maxItems, null,
-                    () -> "Expected the item count to be less than or equal to '" + n.maxItems + "'", "maxItems");
+                    !collect ? null
+                            : () -> "Expected the item count to be less than or equal to '" + n.maxItems + "'", "maxItems");
             if (!ok && !collect) {
                 return false;
             }
@@ -956,7 +978,9 @@ final class Evaluator {
             long min = n.minContains;
             boolean m = count >= min && (max < 0 || count <= max);
             boolean over = max >= 0 && count > max;
-            ok &= check(m, null, () -> over
+            ok &= check(m, null,
+                    !collect ? null
+                            : () -> over
                     ? "Expected the contains count to be less than or equal to '" + max + "'"
                     : "Expected the contains count to be greater than or equal to '" + min + "'", "contains");
         }
@@ -1173,14 +1197,23 @@ final class Evaluator {
             }
         }
         if (n.not >= 0) {
-            // Not elided, never contributes results or evaluated properties/items.
+            // Not elided, never contributes results or evaluated properties/items. A not on an in-place cycle is
+            // under the depth guard, like every other in-place applicator.
+            int notTarget = collect ? n.not : p.fastTarget[n.not];
+            boolean guarded = nodes[notTarget].inPlaceCycle;
             boolean inner;
-            if (collect) {
+            if (guarded && !enterInPlace()) {
+                guarded = false;
+                inner = false;
+            } else if (collect) {
                 c.beginChildContext("not", nodes[n.not].pointer, null);
                 inner = evalNode(n.not, x, -1);
                 c.popChildContext();
             } else {
-                inner = evalNode(p.fastTarget[n.not], x, -1);
+                inner = evalNode(notTarget, x, -1);
+            }
+            if (guarded) {
+                leaveInPlace();
             }
             ok &= check(!inner, inner ? MATCHED_NOT : DID_NOT_MATCH_NOT, null, "not");
             if (!ok && !collect) {

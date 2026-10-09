@@ -103,6 +103,43 @@
         @test throws(() -> compile_schema("""{ "type": """), ParseError)
     end
 
+    # A not whose subschema leads back to the schema it is in recurses in place like any other applicator. It stops
+    # at the maximum depth: the validation is an error, and isvalid reports the instance as invalid. (Evaluating not
+    # went around the depth guard, so the first of these schemas overflowed the stack, and for the others the not
+    # turned the abandoned evaluation's false into true.)
+    @testset "a not on an in-place cycle stops at the maximum depth" begin
+        looping = """{ "allOf": [{ "\$ref": "#/\$defs/loop" }] }"""
+        schemas = [
+            """{ "not": { "\$ref": "#" } }""",
+            """{ "not": { "not": { "\$ref": "#" } } }""",
+            """{ "type": "integer", "not": { "\$ref": "#" } }""",
+            """{ "allOf": [{ "not": { "\$ref": "#" } }] }""",
+            """{ "\$defs": { "a": { "not": { "\$ref": "#/\$defs/b" } }, "b": { "not": { "\$ref": "#/\$defs/a" } } },
+                 "\$ref": "#/\$defs/a" }""",
+            """{ "\$defs": { "loop": $looping }, "not": { "\$ref": "#/\$defs/loop" } }""",
+            """{ "\$defs": { "loop": $looping }, "not": { "not": { "\$ref": "#/\$defs/loop" } } }""",
+            """{ "\$defs": { "loop": $looping }, "properties": { "a": { "not": { "\$ref": "#/\$defs/loop" } } } }""",
+            """{ "unevaluatedProperties": false, "not": { "\$ref": "#" } }""",
+        ]
+        for (s, schema) in enumerate(schemas)
+            v = compile_schema(schema; max_depth=16)
+            for instance in ["1", "\"a\"", """{ "a": 1 }""", "[1]"]
+                # Only an object with the property reaches the loop of the eighth schema, and anything but an
+                # integer fails the type of the third before its not is reached, when failing fast.
+                (s == 8 && instance != """{ "a": 1 }""") && continue
+                (s == 3 && instance != "1") && continue
+                document = parse_document(instance)
+                @test !isvalid(v, instance)
+                @test !isvalid(v, document)
+                @test throws(() -> validate(v, instance), DepthExceededError)
+                @test throws(() -> validate(v, document), DepthExceededError)
+                for level in (Basic, Detailed, Verbose)
+                    @test throws(() -> evaluate(v, document, ResultsCollector(level)), DepthExceededError)
+                end
+            end
+        end
+    end
+
     @testset "in-place recursion beyond the maximum depth is an error" begin
         schema = """{ "\$defs": { "loop": { "allOf": [{ "\$ref": "#/\$defs/loop" }] } }, "\$ref": "#/\$defs/loop" }"""
         v = compile_schema(schema; max_depth=16)

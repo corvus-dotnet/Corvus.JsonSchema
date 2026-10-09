@@ -2,6 +2,14 @@
 
 The version history of `corvus-json-schema-rs`, the Python package backed by the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.3
+
+V0.1.3 fixes a crash of the Python process for a schema whose `not` leads back to the schema it is in, by taking version 0.1.6 of the `corvus-json-schema` crate. There are no API changes. Versions 0.1.0 to 0.1.2 are affected. The pure-Python `corvus-json-schema` package is not.
+
+### Bug fixes
+
+- **A `not` that leads back to the schema it is in.** A schema can loop without consuming the instance. The package abandons such an evaluation at `max_depth` (128 by default) and raises `SchemaEvaluationDepthError`. Evaluating `not` went around that guard. For a schema such as `{"not": {"$ref": "#"}}`, validating an instance that reached the `not` recursed until the stack overflowed. That ends the Python process with a segmentation fault. No exception is raised, so nothing can catch it. Calling the validator, `is_valid`, `is_valid_json` and `evaluate` were all affected. A `not` is now under the guard, so they raise `SchemaEvaluationDepthError`. The fault is in the schema. No instance causes it for a schema without such a loop, so a program was exposed only if it compiled schemas it did not write. A schema that loops elsewhere under a `not` was not affected in this package: it raised `SchemaEvaluationDepthError`, and still does.
+
 ## V0.1.2
 
 V0.1.2 fixes wrong validation results for one form of pattern, by taking version 0.1.4 of the `corvus-json-schema` crate. There are no API changes. Versions 0.1.0 and 0.1.1 are affected. The pure-Python `corvus-json-schema` package is not.

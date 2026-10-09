@@ -6,7 +6,7 @@
 
   <groupId>io.github.corvus-dotnet</groupId>
   <artifactId>corvus-json-schema</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <packaging>jar</packaging>
 
   <name>Corvus JSON Schema</name>

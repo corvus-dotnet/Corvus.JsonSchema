@@ -142,6 +142,36 @@ check('exceptions share a base', true, is_subclass_of(CompilationException::clas
 throws('invalid JSON text', InvalidJsonException::class, fn () => $person->isValidJson('{'));
 $deep = Validator::compile(['$ref' => '#'], ['maxDepth' => 8]);
 throws('depth', DepthException::class, fn () => $deep->isValid(1));
+// The crate before 0.1.6 evaluated a not without the guard on in-place recursion, so the schemas whose not leads back to
+// the schema it is in overflowed the stack, which ends the process.
+$looping = ['allOf' => [['$ref' => '#/$defs/loop']]];
+$notOnACycle = [
+    ['not' => ['$ref' => '#']],
+    ['not' => ['not' => ['$ref' => '#']]],
+    ['type' => 'integer', 'not' => ['$ref' => '#']],
+    ['allOf' => [['not' => ['$ref' => '#']]]],
+    ['$defs' => ['a' => ['not' => ['$ref' => '#/$defs/b']], 'b' => ['not' => ['$ref' => '#/$defs/a']]], '$ref' => '#/$defs/a'],
+    ['$defs' => ['loop' => $looping], 'not' => ['$ref' => '#/$defs/loop']],
+    ['$defs' => ['loop' => $looping], 'not' => ['not' => ['$ref' => '#/$defs/loop']]],
+    ['$defs' => ['loop' => $looping], 'properties' => ['a' => ['not' => ['$ref' => '#/$defs/loop']]]],
+    ['unevaluatedProperties' => false, 'not' => ['$ref' => '#']],
+];
+foreach ($notOnACycle as $s => $schema) {
+    $not = Validator::compile($schema, ['maxDepth' => 16]);
+    foreach ([1, 'a', ['a' => 1], [1]] as $instance) {
+        // Only an object with the property reaches the loop of the eighth schema, and anything but an integer fails the
+        // type of the third before its not is reached, when failing fast.
+        if (($s === 7 && $instance !== ['a' => 1]) || ($s === 2 && $instance !== 1)) {
+            continue;
+        }
+        $what = 'a not on a cycle: ' . json_encode($schema) . ' with ' . json_encode($instance);
+        throws($what, DepthException::class, fn () => $not->isValid($instance));
+        throws("$what, JSON text", DepthException::class, fn () => $not->isValidJson(json_encode($instance)));
+        foreach ([ResultsLevel::Basic, ResultsLevel::Detailed, ResultsLevel::Verbose] as $level) {
+            throws("$what, evaluate", DepthException::class, fn () => $not->evaluate($instance, new Collector($level)));
+        }
+    }
+}
 
 // Results.
 $c = new Collector(ResultsLevel::Detailed);

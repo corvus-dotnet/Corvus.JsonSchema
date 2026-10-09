@@ -473,3 +473,50 @@ func TestUniqueItemsOverLargeArrays(t *testing.T) {
 	expectValid(t, v, "["+strings.Join(items, ",")+"]", true)
 	expectValid(t, v, "["+strings.Join(items, ",")+`,{"tags": ["a", 1.0], "id": 4e0}]`, false)
 }
+
+// A not whose subschema leads back to the schema it is in recurses in place like any other applicator. It stops at
+// the maximum depth: the validation is an error, and IsValid reports the instance as invalid. (Evaluating not went
+// around the depth guard, so the first of these schemas overflowed the stack, and for the others the not turned the
+// abandoned evaluation's false into true.)
+func TestNotOnAnInPlaceCycleStopsAtMaxDepth(t *testing.T) {
+	schemas := []string{
+		`{"not": {"$ref": "#"}}`,
+		`{"not": {"not": {"$ref": "#"}}}`,
+		`{"type": "integer", "not": {"$ref": "#"}}`,
+		`{"allOf": [{"not": {"$ref": "#"}}]}`,
+		`{"$defs": {"a": {"not": {"$ref": "#/$defs/b"}}, "b": {"not": {"$ref": "#/$defs/a"}}}, "$ref": "#/$defs/a"}`,
+		`{"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "not": {"$ref": "#/$defs/loop"}}`,
+		`{"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "not": {"not": {"$ref": "#/$defs/loop"}}}`,
+		`{"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "properties": {"a": {"not": {"$ref": "#/$defs/loop"}}}}`,
+		`{"unevaluatedProperties": false, "not": {"$ref": "#"}}`,
+	}
+	instances := []string{`1`, `"a"`, `{"a": 1}`, `[1]`}
+	for _, schema := range schemas {
+		v := mustCompile(t, schema, WithMaxDepth(16))
+		for _, instance := range instances {
+			if schema == schemas[7] && instance != `{"a": 1}` {
+				// Only an object with the property reaches the loop.
+				continue
+			}
+			if schema == schemas[2] && instance != `1` {
+				// Anything but an integer fails the type before the not is reached, when failing fast.
+				continue
+			}
+			doc := mustParse(t, instance)
+			if v.IsValid(doc) || v.IsValidString(instance) || v.IsValidBytes([]byte(instance)) {
+				t.Errorf("%s: IsValid reported %s as valid", schema, instance)
+			}
+			if _, err := v.Validate(doc); !errors.Is(err, ErrDepthExceeded) {
+				t.Errorf("%s: Validate(%s) gave %v, not ErrDepthExceeded", schema, instance, err)
+			}
+			if _, err := v.ValidateString(instance); !errors.Is(err, ErrDepthExceeded) {
+				t.Errorf("%s: ValidateString(%s) gave %v, not ErrDepthExceeded", schema, instance, err)
+			}
+			for _, level := range []ResultsLevel{Basic, Detailed, Verbose} {
+				if _, err := v.Evaluate(doc, NewResultsCollector(level)); !errors.Is(err, ErrDepthExceeded) {
+					t.Errorf("%s: Evaluate(%s) at level %v gave %v, not ErrDepthExceeded", schema, instance, level, err)
+				}
+			}
+		}
+	}
+}

@@ -248,7 +248,9 @@ end
 # The evaluator
 
 # Evaluates the program's entry, failing fast.
-validate!(e::Evaluator) = @run(e, e.p.entry, e.d.root)
+# An evaluation that recursed in place beyond the maximum depth is not valid, whatever it came to: the branch that was
+# abandoned counts as false, which a not above it turns into true.
+validate!(e::Evaluator) = @run(e, e.p.entry, e.d.root) && !e.depth_exceeded
 
 # Evaluates the program's entry, reporting to the collector.
 function evaluate!(e::Evaluator, c::ResultsCollector)
@@ -951,14 +953,22 @@ function eval_in_place(e::Evaluator, n::SchemaNode, x::Int, bits::Bitset)::Bool
         ok = ok && matched == 1
     end
     if n.not >= 0
-        # Not elided, never contributes results or evaluated properties or items.
+        # Not elided, never contributes results or evaluated properties or items. A not on an in-place cycle is under
+        # the depth guard, like every other in-place applicator.
         inner = false
         if collector !== nothing
-            begin_child_context!(collector, true, "not", node(e.p, n.not).pointer, false, "")
-            inner = eval_node(e, n.not, x, NO_BITS)
-            pop_child_context!(collector)
+            guarded = node(e.p, n.not).in_place_cycle
+            guarded && (e.depth += 1)
+            if guarded && e.depth > e.p.max_depth
+                e.depth_exceeded = true
+            else
+                begin_child_context!(collector, true, "not", node(e.p, n.not).pointer, false, "")
+                inner = eval_node(e, n.not, x, NO_BITS)
+                pop_child_context!(collector)
+            end
+            guarded && (e.depth -= 1)
         else
-            inner = @run(e, target(e.p, n.not), x)
+            inner = run_in_place(e, target(e.p, n.not), x)
         end
         keyword!(e, !inner, inner ? MSG_MATCHED_NOT : MSG_DID_NOT_MATCH_NOT, "not") && return false
         ok = ok && !inner

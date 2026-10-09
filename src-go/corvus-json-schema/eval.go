@@ -1292,14 +1292,26 @@ func (e *evaluator) evalInPlace(n *schemaNode, x int, bits bitset) bool {
 		ok = ok && matched == 1
 	}
 	if n.not >= 0 {
-		// Not elided, never contributes results or evaluated properties or items.
+		// Not elided, never contributes results or evaluated properties or items. A not on an in-place cycle is under
+		// the depth guard, like every other in-place applicator.
 		var inner bool
 		if collect {
-			e.c.beginChildContext(true, "not", e.p.nodes[n.not].pointer, false, "")
-			inner = e.evalNode(n.not, x, noBits)
-			e.c.popChildContext()
+			guarded := e.p.nodes[n.not].inPlaceCycle
+			if guarded {
+				e.depth++
+			}
+			if guarded && e.depth > e.p.maxDepth {
+				e.depthExceeded = true
+			} else {
+				e.c.beginChildContext(true, "not", e.p.nodes[n.not].pointer, false, "")
+				inner = e.evalNode(n.not, x, noBits)
+				e.c.popChildContext()
+			}
+			if guarded {
+				e.depth--
+			}
 		} else {
-			inner = e.run(e.p.fastTarget[n.not], x)
+			inner = e.runInPlace(e.p.fastTarget[n.not], x)
 		}
 		if e.keyword(!inner, pick(inner, msgMatchedNot, msgDidNotMatchNot), "not") {
 			return false
