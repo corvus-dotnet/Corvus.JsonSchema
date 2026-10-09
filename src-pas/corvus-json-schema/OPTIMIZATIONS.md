@@ -275,20 +275,60 @@ runs on one pinned core.
   inline, raise `ERangeError` when it is out of range, and then read. They are the only code compiled with range
   checking off, each makes the check itself, and `tests/TestChecked.pas` calls every one of them out of range. The
   document's readers, the evaluator's tape reads, the name tables, the plan arrays, the pattern matchers, the fused
-  plan and the parser's byte reads use them. Across the 37 benchmark corpora the warm time is 0.50 of what it was
+  plan and the parser's byte reads use them. Across the 37 benchmark corpora the warm time was 0.50 of what it was
   with the compiler's check everywhere (geometric mean), and 1.31 of a build with no checks at all. Parse time fell
   to between 0.79 and 0.93 with the parser's reads.
-- **What remains is not array reads.** With the accessors in place, removing the explicit comparisons alone gains
-  almost nothing, and so does turning the compiler's range checking off alone. Removing both gains 1.7 times on one
-  corpus. Under range checking Free Pascal also checks integer arithmetic that is narrowed to 32 bits, with an
-  inline comparison and a call on failure, and a loop that holds either kind of failure call keeps its variables in
-  memory. Those checks are on arithmetic, not on reads, and are left on.
+- **Indexes as wide as a length.** Under range checking Free Pascal also checks every integer expression that is
+  assigned to a narrower variable or handed to a narrower parameter, with an inline comparison and a call for the
+  failure. On a 64-bit processor it works `First + 2 * J` out in 64 bits, so a 32-bit index is such an assignment,
+  and so are `Inc(I)` and the bound of a `for` loop. The compiler leaves the check out in three cases, each seen
+  in the assembly it writes: when the variable is as wide as the arithmetic (a `NativeInt`), when the whole
+  expression is under an explicit cast (`Int32(First + 2 * J)`), and inside a region with range checking off. The
+  first is the one used. The accessors take a `NativeInt` and compare it with the length as a `NativeUInt`, which
+  is right for every value, negative or beyond 32 bits. The indexes of the paths every validation takes are
+  `NativeInt` as well, like the Go source's `int`: the parameters and variables of the plan evaluator's loops
+  (`Eval`, from `StrBytes` to `RunFused`), of `Names`, of `Values`, of the matchers of `Pattern`, and of the
+  document's readers. Nothing is narrowed on the way to a read, so nothing is checked on the way, and no check was
+  given up: no cast and no unchecked region was added, and the regions with range checking off are the same
+  accessors as before. Across the 37 corpora the warm time is 0.82 of what it was before this (geometric mean, best
+  of three interleaved runs), and 1.07 of the build with no checks at all. It is within a tenth of that build on 20
+  corpora, and faster than it on 10. On the six corpora used for each step it is between 0.40 and 0.56 of the time
+  with the compiler's checks everywhere (best of seven runs).
+- **A document has a size limit.** Where a `NativeInt` is 64 bits wide an index worked out from a document's 32-bit
+  numbers cannot wrap. Where it is 32 bits wide it could only if a document's text or tape reached 2^31, so the
+  parser refuses text of more than 2^31 - 1 bytes and a tape of more than 2^31 - 1 words as `document too large`
+  (`MaxDocumentSize` and `ParseText` in `Document`). Before, the length of such text was narrowed to 32 bits under
+  the compiler's check, which raises `ERangeError`. `tests/TestDocument.pas` holds the parser to the limit with a
+  small one, and `tests/TestChecked.pas` hands the accessors indexes beyond 32 bits, and indexes worked out from
+  numbers whose sum is beyond 32 bits.
+- **A name's header is read once.** The object loops read the header word of each property name once and take the
+  name's array, length and ASCII flag from it (`DocHeader`, `HeaderBytes`, `HeaderCount`, `HeaderStrASCII`), as
+  `Document.str` does in the Go source, where they read it three times. This is part of the figure above: by
+  itself it gained 5% to 7% on four of six corpora in the best of seven runs, and less in the medians.
+- **What remains is not a check.** With all of this in place, turning range checking off everywhere gains nothing
+  measurable, and neither does taking the failure calls out of the accessors, nor both together. The build with no
+  checks at all is the source as it was before the accessors, which indexes its arrays directly. Free Pascal copies
+  an array argument of an inline function to a slot of the stack and reads through it, so an accessor costs a
+  store and a load that an index written in place does not, which is the likeliest account of the 7% that is left.
+  The compiler's own check stays on outside the accessors: what is left of it on these paths is the reads that
+  still index an array directly (the tails of `RunFusedPass`, `RunNumber`, the bit sets of the fused pass) and a
+  few assignments to 32-bit fields (`NewBits`, the depth counter). Its run-time routine is under 1% of a profile.
 
 ## Tried and not kept
 
 - **One check for the name headers of an object in `ObjectVisitLookup`'s inner loop** (a run check before the loop
   and unchecked reads inside it, in place of a check for each read). The medians of seven runs were equal on every
-  corpus measured. Not kept.
+  corpus measured. Tried again once the indexes were `NativeInt`, for all the loop's reads of the tape: the best of
+  eleven runs was 3% to 7% better on one corpus, the medians were equal there and on the others. Not kept.
+- **Telling the compiler that `RangeFail` does not return** (`noreturn`). Free Pascal 3.2.2 accepts the directive
+  and writes the same code: the program is the same size and the times are equal. Not kept.
+- **One run check for the bytes `MatchASCII` reads**, with and without the loop over the bytes as a function of its
+  own so that its index stays in a register (it does: in `MatchASCII` it is in a slot of the stack), and with the
+  set's word chosen by a comparison instead of an index. The medians of seven runs were equal within the noise or
+  worse on the four corpora that match patterns, which suggests the time they spend in `MatchASCII` is in entering
+  it, for names of a few bytes, and not in the loop. Not kept.
+- **Explicit casts for the narrowing that is left on the fused path** (the outcome bits or-ed into a `Byte`, the
+  depth counter as a `NativeInt`). Equal on nine runs. Not kept, so those assignments keep the compiler's check.
 
 The Go module's list of reverted experiments is about the Go compiler's code generation (registers kept across a
 call, the inliner's budget, bounds checks of slices) and says nothing about what Free Pascal would do with the same

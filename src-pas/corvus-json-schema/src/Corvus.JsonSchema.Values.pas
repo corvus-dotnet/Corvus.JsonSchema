@@ -12,19 +12,19 @@ uses
   Corvus.JsonSchema.Document;
 
 { ValuesEqual is JSON equality: numbers by value, objects by their property sets, arrays element by element. }
-function ValuesEqual(const A: TDocument; X: Int32; const B: TDocument; Y: Int32): Boolean;
+function ValuesEqual(const A: TDocument; X: NativeInt; const B: TDocument; Y: NativeInt): Boolean;
 { StringsEqual says whether two string values (or property names) are the same bytes. }
-function StringsEqual(const A: TDocument; X: Int32; const B: TDocument; Y: Int32): Boolean;
+function StringsEqual(const A: TDocument; X: NativeInt; const B: TDocument; Y: NativeInt): Boolean;
 { FindProperty is the value of the property of AObject in D that has the name of the string value Key of KeyDoc, or
   -1. }
-function FindProperty(const D: TDocument; AObject: Int32; const KeyDoc: TDocument; Key: Int32): Int32;
+function FindProperty(const D: TDocument; AObject: NativeInt; const KeyDoc: TDocument; Key: NativeInt): NativeInt;
 { ValueHash is a hash that agrees with JSON equality (object hashing is independent of the member order). }
-function ValueHash(const D: TDocument; V: Int32): UInt64;
+function ValueHash(const D: TDocument; V: NativeInt): UInt64;
 { AllUnique decides uniqueItems: pairwise for short arrays, otherwise sorted by hash in Scratch, each entry the
   hash's high half and the item's index, so that only items with equal hashes are compared. It allocates nothing
   once Scratch has grown. }
-function AllUnique(const D: TDocument; AArray: Int32; var Scratch: TUInt64Array): Boolean;
-function AllStrings(const D: TDocument; First, N: Int32): Boolean;
+function AllUnique(const D: TDocument; AArray: NativeInt; var Scratch: TUInt64Array): Boolean;
+function AllStrings(const D: TDocument; First, N: NativeInt): Boolean;
 
 implementation
 
@@ -35,9 +35,9 @@ const
   HashK = UInt64($9E3779B97F4A7C15);
   Two63: Double = 9223372036854775808.0;
 
-function StringsEqual(const A: TDocument; X: Int32; const B: TDocument; Y: Int32): Boolean;
+function StringsEqual(const A: TDocument; X: NativeInt; const B: TDocument; Y: NativeInt): Boolean;
 var
-  Len: Int32;
+  Len: NativeInt;
 begin
   Len := DocCount(A, X);
   if Len <> DocCount(B, Y) then
@@ -48,10 +48,10 @@ begin
     Result := DocStrEquals(A, X, B.Source, DocStrOffset(B, Y), Len);
 end;
 
-function ValuesEqual(const A: TDocument; X: Int32; const B: TDocument; Y: Int32): Boolean;
+function ValuesEqual(const A: TDocument; X: NativeInt; const B: TDocument; Y: NativeInt): Boolean;
 var
   Kind: Byte;
-  N, P, Q, I, J, K, L, Key, W: Int32;
+  N, P, Q, I, J, K, L, Key, W: NativeInt;
 begin
   Kind := DocKind(A, X);
   if Kind <> DocKind(B, Y) then begin
@@ -104,9 +104,9 @@ begin
   end;
 end;
 
-function FindProperty(const D: TDocument; AObject: Int32; const KeyDoc: TDocument; Key: Int32): Int32;
+function FindProperty(const D: TDocument; AObject: NativeInt; const KeyDoc: TDocument; Key: NativeInt): NativeInt;
 var
-  K, I: Int32;
+  K, I: NativeInt;
 begin
   K := DocFirst(D, AObject);
   for I := DocCount(D, AObject) downto 1 do begin
@@ -119,12 +119,12 @@ begin
   Result := -1;
 end;
 
-function ValueHash(const D: TDocument; V: Int32): UInt64;
+function ValueHash(const D: TDocument; V: NativeInt): UInt64;
 var
   Flag: Byte;
   Data, H: UInt64;
   F: Double;
-  N, C, I: Int32;
+  N, C, I: NativeInt;
 begin
   case DocKind(D, V) of
     KindNull: Result := $53;
@@ -175,9 +175,9 @@ begin
   end;
 end;
 
-function AllUnique(const D: TDocument; AArray: Int32; var Scratch: TUInt64Array): Boolean;
+function AllUnique(const D: TDocument; AArray: NativeInt; var Scratch: TUInt64Array): Boolean;
 var
-  N, C, I, J, Start, Stop: Int32;
+  N, C, I, J, Start, Stop: NativeInt;
 begin
   Result := True;
   N := DocCount(D, AArray);
@@ -219,9 +219,9 @@ begin
   Result := True;
 end;
 
-function AllStrings(const D: TDocument; First, N: Int32): Boolean;
+function AllStrings(const D: TDocument; First, N: NativeInt): Boolean;
 var
-  I: Int32;
+  I: NativeInt;
 begin
   for I := 0 to N - 1 do
     if DocKind(D, First + I) <> KindString then begin

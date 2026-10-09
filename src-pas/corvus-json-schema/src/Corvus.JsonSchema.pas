@@ -273,7 +273,7 @@ type
     { Held while the annotation keywords are digested, on the first evaluation with a collector. }
     FLock: TCriticalSection;
     function Run(Instance: PDocument; S: PScratch; out DepthExceeded: Boolean): Boolean;
-    function RunParsed(S: PScratch; const B: TBytes; Len: Int32; out Status: TTextStatus;
+    function RunParsed(S: PScratch; const B: TBytes; Len: NativeInt; out Status: TTextStatus;
       Error: PParseError): Boolean;
     function RunNested(const B: TBytes; out Status: TTextStatus; Error: PParseError): Boolean;
     function RunNestedBytes(const Json: TBytes; Start, Len: Int32; out Status: TTextStatus;
@@ -381,7 +381,7 @@ end;
 
 { RunParsed parses B[0 .. Len-1] into the thread's reused document and validates it. The result is False for text
   that is not JSON and for an evaluation that went beyond the maximum depth, and the status says which. }
-function TJsonSchemaValidator.RunParsed(S: PScratch; const B: TBytes; Len: Int32; out Status: TTextStatus;
+function TJsonSchemaValidator.RunParsed(S: PScratch; const B: TBytes; Len: NativeInt; out Status: TTextStatus;
   Error: PParseError): Boolean;
 var
   Exceeded: Boolean;
@@ -464,19 +464,22 @@ function TJsonSchemaValidator.RunString(const Json: UTF8String; out Status: TTex
   Error: PParseError): Boolean;
 var
   S: PScratch;
-  Len: Int32;
+  Len: NativeInt;
 begin
   S := AcquireScratch;
   if S^.TextBusy then
     Exit(RunNestedString(Json, Status, Error));
   { A string is not an array of bytes: its text is copied to the thread's buffer, which the parser reads, with a
-    byte after it that is no part of a value. }
+    byte after it that is no part of a value. Text beyond the size of a document is not copied: the parser refuses
+    it by its length. }
   Len := Length(Json);
-  if Len >= Length(S^.TextBuf) then
-    SetLength(S^.TextBuf, 2 * Len + 64);
-  if Len > 0 then
-    Move(Json[1], S^.TextBuf[0], Len);
-  S^.TextBuf[Len] := 0;
+  if Len <= MaxDocumentSize then begin
+    if Len >= Length(S^.TextBuf) then
+      SetLength(S^.TextBuf, 2 * Len + 64);
+    if Len > 0 then
+      Move(Json[1], S^.TextBuf[0], Len);
+    S^.TextBuf[Len] := 0;
+  end;
   Result := RunParsed(S, S^.TextBuf, Len, Status, Error);
 end;
 

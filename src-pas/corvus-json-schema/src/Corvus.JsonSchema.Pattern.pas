@@ -152,7 +152,7 @@ const
 
 { SequenceItemAt is a pointer to A[I]: one comparison of the index with the array's length, then the element's
   address (see Corvus.JsonSchema.Checked). }
-function SequenceItemAt(const A: TSequenceItemArray; I: Int32): PSequenceItem; inline;
+function SequenceItemAt(const A: TSequenceItemArray; I: NativeInt): PSequenceItem; inline;
 
 { CompilePattern compiles a pattern. False when it is not a valid ECMA-262 regular expression. }
 function CompilePattern(const Source: UTF8String; out P: TPattern): Boolean;
@@ -161,11 +161,11 @@ function CompilePattern(const Source: UTF8String; out P: TPattern): Boolean;
 function ValidRegex(const Source: UTF8String): Boolean;
 { PatternMatch reports whether the pattern matches somewhere in S[Start .. Start+Len-1], Ascii saying whether those
   bytes are known to be ASCII (a document knows that of its strings). }
-function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: Int32; Ascii: Boolean): Boolean;
+function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; Ascii: Boolean): Boolean;
 { PatternMatchString is PatternMatch for a string that is not known to be ASCII. }
 function PatternMatchString(const P: TPattern; const S: UTF8String): Boolean;
 { IsASCII says whether every byte of S[Start .. Stop-1] is ASCII. }
-function IsASCII(const S: TBytes; Start, Stop: Int32): Boolean;
+function IsASCII(const S: TBytes; Start, Stop: NativeInt): Boolean;
 
 implementation
 
@@ -190,9 +190,9 @@ type
 {$PUSH}
 {$R-}
 
-function SequenceItemAt(const A: TSequenceItemArray; I: Int32): PSequenceItem; inline;
+function SequenceItemAt(const A: TSequenceItemArray; I: NativeInt): PSequenceItem; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
@@ -300,7 +300,7 @@ end;
   Characters }
 
 { DecodeRuneAt reads the character at I (a byte for ASCII). }
-function DecodeRuneAt(const S: TBytes; I, Stop: Int32; out Size: Int32): Int32; inline;
+function DecodeRuneAt(const S: TBytes; I, Stop: NativeInt; out Size: Int32): Int32; inline;
 begin
   { The byte array's reader, not the string's ByteAt above. }
   Result := Corvus.JsonSchema.Checked.ByteAt(S, I);
@@ -310,9 +310,9 @@ begin
     Result := DecodeRune(S, I, Stop, Size);
 end;
 
-function IsASCII(const S: TBytes; Start, Stop: Int32): Boolean;
+function IsASCII(const S: TBytes; Start, Stop: NativeInt): Boolean;
 var
-  K: Int32;
+  K: NativeInt;
 begin
   Result := False;
   for K := Start to Stop - 1 do
@@ -323,7 +323,7 @@ end;
 
 function TextIsASCII(const S: UTF8String): Boolean;
 var
-  K: Int32;
+  K: NativeInt;
 begin
   Result := False;
   for K := 1 to Length(S) do
@@ -333,7 +333,7 @@ begin
 end;
 
 { RuneCount is the number of characters of S[Start .. Stop-1] (a byte that starts no character counts as one). }
-function RuneCount(const S: TBytes; Start, Stop: Int32): Int32;
+function RuneCount(const S: TBytes; Start, Stop: NativeInt): NativeInt;
 var
   Size: Int32;
 begin
@@ -352,7 +352,7 @@ begin
 end;
 
 { LineLength is the number of characters, when none is a line terminator, else -1. }
-function LineLength(const S: TBytes; Start, Stop: Int32): Int32;
+function LineLength(const S: TBytes; Start, Stop: NativeInt): NativeInt;
 var
   C, Size: Int32;
 begin
@@ -813,9 +813,10 @@ end;
 
 { MatchPinned matches a pinned sequence: every item but one takes a fixed number of characters, so the string's
   length says how many the variable one takes. }
-function MatchPinned(const Q: TSequence; const S: TBytes; At, Stop: Int32; Ascii: Boolean): Boolean;
+function MatchPinned(const Q: TSequence; const S: TBytes; At, Stop: NativeInt; Ascii: Boolean): Boolean;
 var
-  Len, Variable, I, C, Size: Int32;
+  Len, Variable, I: NativeInt;
+  C, Size: Int32;
   Count: Int64;
   Item: PSequenceItem;
 begin
@@ -845,9 +846,10 @@ begin
 end;
 
 { MatchChars matches over any text, a character at a time. }
-function MatchChars(const Q: TSequence; const S: TBytes; At, Stop: Int32): Boolean;
+function MatchChars(const Q: TSequence; const S: TBytes; At, Stop: NativeInt): Boolean;
 var
-  I, C, Size: Int32;
+  I: NativeInt;
+  C, Size: Int32;
   N: UInt32;
   Item: PSequenceItem;
 begin
@@ -873,9 +875,9 @@ begin
 end;
 
 { MatchASCII matches over ASCII text, a byte per character. }
-function MatchASCII(const Q: TSequence; const B: TBytes; At, Stop: Int32): Boolean;
+function MatchASCII(const Q: TSequence; const B: TBytes; At, Stop: NativeInt): Boolean;
 var
-  I, Start, Limit: Int32;
+  I, Start, Limit: NativeInt;
   Item: PSequenceItem;
 begin
   if Q.Pinned >= 0 then begin
@@ -897,7 +899,7 @@ begin
   Result := not Q.ToEnd or (At = Stop);
 end;
 
-function MatchSeq(const Q: TSequence; const S: TBytes; At, Stop: Int32): Boolean;
+function MatchSeq(const Q: TSequence; const S: TBytes; At, Stop: NativeInt): Boolean;
 begin
   if IsASCII(S, At, Stop) then
     Result := MatchASCII(Q, S, At, Stop)
@@ -906,9 +908,10 @@ begin
 end;
 
 { Consume greedily matches the items at the start of S[At .. Stop-1] (ignoring ToEnd): the bytes taken, or -1. }
-function Consume(const Q: TSequence; const S: TBytes; At, Stop: Int32): Int32;
+function Consume(const Q: TSequence; const S: TBytes; At, Stop: NativeInt): NativeInt;
 var
-  I, C, Size, From: Int32;
+  I, From: NativeInt;
+  C, Size: Int32;
   N: UInt32;
   Item: PSequenceItem;
 begin
@@ -931,10 +934,10 @@ begin
   Result := At - From;
 end;
 
-function ListMatch(const L: TSeparatedList; const S: TBytes; At, Stop: Int32): Boolean;
+function ListMatch(const L: TSeparatedList; const S: TBytes; At, Stop: NativeInt): Boolean;
 var
   Repeats: UInt32;
-  N, M: Int32;
+  N, M: NativeInt;
 begin
   Result := False;
   Repeats := 0;
@@ -1768,9 +1771,9 @@ end;
   Matching }
 
 { IndexBytes is the index of the first occurrence of Text in S[At .. Stop-1], or -1. }
-function IndexBytes(const S: TBytes; At, Stop: Int32; const Text: TBytes): Int32;
+function IndexBytes(const S: TBytes; At, Stop: NativeInt; const Text: TBytes): NativeInt;
 var
-  I, N: Int32;
+  I, N: NativeInt;
 begin
   N := Length(Text);
   I := At;
@@ -1785,9 +1788,10 @@ begin
 end;
 
 { AlternativeMatch reports whether the alternative matches S[At .. Stop-1], Ascii saying whether that is ASCII. }
-function AlternativeMatch(const A: TAlternative; const S: TBytes; At, Stop: Int32; Ascii: Boolean): Boolean;
+function AlternativeMatch(const A: TAlternative; const S: TBytes; At, Stop: NativeInt; Ascii: Boolean): Boolean;
 var
-  N, Skip, Positions, Size: Int32;
+  N, Skip, Positions: NativeInt;
+  Size: Int32;
 begin
   case A.Kind of
     AltLiteral: begin
@@ -1851,9 +1855,9 @@ begin
   end;
 end;
 
-function LiteralsMatch(const P: TPattern; const S: TBytes; Start, Len: Int32): Boolean;
+function LiteralsMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt): Boolean;
 var
-  I, Slot, Size, At: Int32;
+  I, Slot, Size, At: NativeInt;
 begin
   Result := True;
   Size := Length(P.Many);
@@ -1876,9 +1880,10 @@ begin
   Result := False;
 end;
 
-function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: Int32; Ascii: Boolean): Boolean;
+function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; Ascii: Boolean): Boolean;
 var
-  Stop, I, C, Size, N: Int32;
+  Stop, I, N: NativeInt;
+  C, Size: Int32;
   Word: Boolean;
 begin
   Stop := Start + Len;

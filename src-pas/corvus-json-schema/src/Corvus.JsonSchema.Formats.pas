@@ -364,7 +364,7 @@ end;
 // DecodeRune reads the code point at S[I], which is before Stop, and gives its size in bytes. A byte that does not
 // start well-formed UTF-8 (an overlong form, a surrogate, a value above U+10FFFF, a sequence cut short) reads as
 // RuneError with a size of one, as it does in the Go source.
-function DecodeRune(const S: TBytes; I, Stop: Int32; out Size: Int32): Int32;
+function DecodeRune(const S: TBytes; I, Stop: NativeInt; out Size: Int32): Int32;
 var
   B0, B1, B2, B3, Lo, Hi: Byte;
 begin

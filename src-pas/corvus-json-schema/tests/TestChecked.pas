@@ -7,6 +7,11 @@ program TestChecked;
 // check does: an index below the first element, at the length, and far beyond it raises ERangeError, on an empty
 // array and on one with elements, and an index within the array reads the element.
 //
+// An index is a NativeInt, as wide as an array's length, so the functions are also called with indexes that do not
+// fit in 32 bits, and above all with those whose low 32 bits are an index within the array: a function that compared
+// only the low half would read. The same is done through the document's readers, which double a value's index, and
+// with indexes worked out from 32-bit numbers whose sum does not fit in 32 bits.
+//
 // The program prints each failure and a final count, and exits with a status other than zero when anything failed.
 
 uses
@@ -48,6 +53,8 @@ type
     Contributors: TFusedContributorArray;
     FusedPatterns: TFusedPatternArray;
     ValueTests: TValueTestArray;
+    // A document, for its readers.
+    Doc: TDocument;
   end;
 
 const
@@ -126,7 +133,7 @@ end;
 // Call makes one call with an index and gives what the element holds (see NewArrays), or 0 for a function that
 // reads nothing. A string's first byte has the index 1, so the functions for a string are given the index + 1: every
 // function is then called with indexes from 0.
-function Call(C: TCall; const A: TArrays; I: Int32): UInt64;
+function Call(C: TCall; const A: TArrays; I: NativeInt): UInt64;
 begin
   Result := 0;
   case C of
@@ -135,10 +142,10 @@ begin
     CallWordPtrAt: Result := WordPtrAt(A.Words, I)^;
     CallLoad64: Result := Load64(A.Bytes, I);
     CallLoad32: Result := Load32(A.Bytes, I);
-    CallTextByteAt: Result := TextByteAt(A.Text, Int32(Int64(I) + 1));
+    CallTextByteAt: Result := TextByteAt(A.Text, I + 1);
     CallCheckRun: CheckRun(A.Bytes, I, 1);
     CallCheckWords: CheckWords(A.Words, I, 1);
-    CallCheckText: CheckText(A.Text, Int32(Int64(I) + 1), 1);
+    CallCheckText: CheckText(A.Text, I + 1, 1);
     CallUInt32At: Result := UInt32At(A.UInt32s, I);
     CallNameKeyAt: Result := UInt64(NameKeyAt(A.NameKeys, I)^.Length);
     CallTextAt: Result := UInt64(StrToInt(String(TextAt(A.Texts, I)^)));
@@ -171,7 +178,7 @@ begin
 end;
 
 // Refused makes a call that must raise ERangeError.
-procedure Refused(C: TCall; const A: TArrays; I: Int32);
+procedure Refused(C: TCall; const A: TArrays; I: NativeInt);
 var
   Name: UTF8String;
 begin
@@ -222,6 +229,7 @@ procedure TestIndexes(const A: TArrays);
 var
   C: TCall;
   Last, I: Int32;
+  Beyond: Int64;
 begin
   for C := Low(TCall) to High(TCall) do begin
     // The last index a call may be given: it reads Width elements from it.
@@ -240,6 +248,26 @@ begin
     Refused(C, A, High(Int32) - 8);
     Refused(C, A, High(Int32) - 1);
     Refused(C, A, High(Int32));
+    Refused(C, A, Low(NativeInt));
+    Refused(C, A, Low(NativeInt) + 1);
+    Refused(C, A, High(NativeInt) - 8);
+    Refused(C, A, High(NativeInt) - 1);
+    Refused(C, A, High(NativeInt));
+    if SizeOf(NativeInt) = 8 then begin
+      // Indexes beyond 32 bits. The low 32 bits of the first few are 0, 1, the middle and the last index of the
+      // array, and those of the next few are the same with the sign bit set.
+      Beyond := Int64(1) shl 32;
+      Refused(C, A, NativeInt(Beyond));
+      Refused(C, A, NativeInt(Beyond + 1));
+      Refused(C, A, NativeInt(Beyond + A.Count div 2));
+      Refused(C, A, NativeInt(Beyond + A.Count - 1));
+      Refused(C, A, NativeInt(-Beyond));
+      Refused(C, A, NativeInt(-Beyond + 1));
+      Refused(C, A, NativeInt(-Beyond + A.Count - 1));
+      Refused(C, A, NativeInt(Beyond * 1024 + 1));
+      Refused(C, A, NativeInt(Int64(High(Int32)) + 1));
+      Refused(C, A, NativeInt(Int64(High(Int32)) + 2));
+    end;
     // Within the array.
     if Last >= 0 then begin
       Allowed(C, A, 0);
@@ -251,7 +279,7 @@ end;
 
 // RunRefused and RunAllowed call the three Check functions with a run, of bytes, of words and of a string's bytes
 // (whose first has the index Start + 1).
-procedure RunRefused(const A: TArrays; Start, Len: Int32);
+procedure RunRefused(const A: TArrays; Start, Len: NativeInt);
 var
   Name: UTF8String;
   Which: Int32;
@@ -265,7 +293,7 @@ begin
         0: CheckRun(A.Bytes, Start, Len);
         1: CheckWords(A.Words, Start, Len);
       else
-        CheckText(A.Text, Int32(Int64(Start) + 1), Len);
+        CheckText(A.Text, Start + 1, Len);
       end;
       Fail(Name + ': no exception');
     except
@@ -322,6 +350,7 @@ end;
 procedure TestRuns(const A: TArrays);
 var
   N: Int32;
+  Beyond: Int64;
 begin
   N := A.Count;
   RunAllowed(A, 0, 0);
@@ -351,6 +380,125 @@ begin
   RunRefused(A, High(Int32) - 1, High(Int32));
   RunRefused(A, 1, High(Int32));
   RunRefused(A, N, High(Int32));
+  // A start and a length whose sum does not fit in a NativeInt.
+  RunRefused(A, High(NativeInt), 0);
+  RunRefused(A, High(NativeInt), 1);
+  RunRefused(A, High(NativeInt), High(NativeInt));
+  RunRefused(A, 1, High(NativeInt));
+  RunRefused(A, 0, High(NativeInt));
+  RunRefused(A, N, High(NativeInt));
+  RunRefused(A, Low(NativeInt), 0);
+  RunRefused(A, 0, Low(NativeInt));
+  RunRefused(A, Low(NativeInt), Low(NativeInt));
+  RunRefused(A, Low(NativeInt), High(NativeInt));
+  if SizeOf(NativeInt) = 8 then begin
+    // Starts and lengths beyond 32 bits whose low 32 bits are a run within the array.
+    Beyond := Int64(1) shl 32;
+    RunRefused(A, NativeInt(Beyond), 0);
+    RunRefused(A, NativeInt(Beyond), 1);
+    RunRefused(A, 0, NativeInt(Beyond));
+    RunRefused(A, 0, NativeInt(Beyond + 1));
+    RunRefused(A, NativeInt(Beyond), NativeInt(Beyond));
+    RunRefused(A, NativeInt(-Beyond), 1);
+    RunRefused(A, 0, NativeInt(-Beyond + 1));
+  end;
+end;
+
+// MustRaise makes a read, of an index worked out from two 32-bit numbers, that must raise ERangeError.
+type
+  TRead = function(const A: TArrays; First, J: Int32): UInt64;
+
+procedure MustRaise(const Name: UTF8String; Read: TRead; const A: TArrays; First, J: Int32);
+begin
+  Inc(Checks);
+  try
+    Sink := Sink + Read(A, First, J);
+    Fail(Name + ': no exception');
+  except
+    on E: ERangeError do ;
+    on E: Exception do
+      Fail(Name + ': ' + UTF8String(E.ClassName) + ' instead of ERangeError');
+  end;
+end;
+
+// The reads below work an index out from 32-bit numbers, as the evaluator's loops do, and hand it to a function (see
+// TestComputed).
+function ReadPair(const A: TArrays; First, J: Int32): UInt64;
+begin
+  Result := WordAt(A.Words, First + 2 * J);
+end;
+
+function ReadByteSum(const A: TArrays; First, J: Int32): UInt64;
+begin
+  Result := ByteAt(A.Bytes, First + J);
+end;
+
+function ReadLoad(const A: TArrays; First, J: Int32): UInt64;
+begin
+  Result := Load64(A.Bytes, First + J - 8);
+end;
+
+function ReadRun(const A: TArrays; First, J: Int32): UInt64;
+begin
+  CheckWords(A.Words, First shl 1, J shl 1);
+  Result := 0;
+end;
+
+function ReadHeader(const A: TArrays; First, J: Int32): UInt64;
+begin
+  Result := DocHeader(A.Doc, NativeInt(First) + J);
+end;
+
+function ReadData(const A: TArrays; First, J: Int32): UInt64;
+begin
+  Result := DocData(A.Doc, NativeInt(First) + J);
+end;
+
+function ReadKind(const A: TArrays; First, J: Int32): UInt64;
+begin
+  Result := DocKind(A.Doc, NativeInt(First) + J);
+end;
+
+// TestComputed hands the functions indexes worked out from 32-bit numbers. The true value of each is outside the
+// array, and where a NativeInt is 64 bits wide that value reaches the function, which refuses it. Most of the pairs
+// are chosen so that the low 32 bits of the true value are an index within the array: arithmetic that was cut to
+// 32 bits and then read would read the wrong element.
+//
+// Where a NativeInt is 32 bits wide the same arithmetic wraps. A sum of two numbers below 2^31 then wraps to a
+// negative number, which is refused, and those sums are tested everywhere. A true value of 2^32 or more would wrap
+// back into the array, and so would the doubling of a value's index of 2^30 or more. Neither can come from a
+// document, whose text and tape are below 2^31 (MaxDocumentSize, which tests/TestDocument.pas holds the parser to),
+// so those cases are only made where they can be told apart, with a 64-bit NativeInt.
+procedure TestComputed(const A: TArrays);
+begin
+  // 2^31 - 1 + 2^31 - 1 is 2^32 - 2, which as a 32-bit number is -2.
+  MustRaise('ByteAt(First + J) beyond 31 bits', ReadByteSum, A, High(Int32), High(Int32));
+  MustRaise('Load64(First + J - 8) beyond 31 bits', ReadLoad, A, High(Int32), High(Int32));
+  MustRaise('WordAt(First + 2 * J) beyond 31 bits', ReadPair, A, High(Int32), 1);
+  // The run from 2^32 - 2 words, of 2^32 - 2 words.
+  MustRaise('CheckWords(First shl 1, J shl 1) beyond 31 bits', ReadRun, A, High(Int32), High(Int32));
+  MustRaise('DocHeader of the value -1', ReadHeader, A, -1, 0);
+  MustRaise('DocData of the value -1', ReadData, A, -1, 0);
+  MustRaise('DocKind of the value -2', ReadKind, A, -1, -1);
+  // The value after the last (the document is one value).
+  MustRaise('DocHeader of the value 1', ReadHeader, A, 0, 1);
+  MustRaise('DocHeader of the value 2^31 - 1', ReadHeader, A, High(Int32), 0);
+  MustRaise('DocData of the value 2^30', ReadData, A, 1 shl 30, 0);
+  if SizeOf(NativeInt) = 8 then begin
+    // 2^31 - 1 + 2 * (2^30 + 1) is 2^32 + 1, whose low 32 bits are 1.
+    MustRaise('WordAt(First + 2 * J) beyond 32 bits', ReadPair, A, High(Int32), (1 shl 30) + 1);
+    // A value's index is doubled to give its header's: the value 2^31 has the header 2^32, whose low 32 bits are
+    // 0, the header of the document's first value. The value -2^31 has the header -2^32, likewise.
+    MustRaise('DocHeader of the value 2^31', ReadHeader, A, High(Int32), 1);
+    MustRaise('DocData of the value 2^31', ReadData, A, High(Int32), 1);
+    MustRaise('DocKind of the value 2^31', ReadKind, A, High(Int32), 1);
+    MustRaise('DocHeader of the value -2^31', ReadHeader, A, Low(Int32), 0);
+    MustRaise('DocData of the value -2^31', ReadData, A, Low(Int32), 0);
+  end;
+  // The document's one value is read.
+  Inc(Checks);
+  if (DocKind(A.Doc, 0) <> KindNumber) or (HeaderCount(DocHeader(A.Doc, 0)) <> DocCount(A.Doc, 0)) then
+    Fail('the readers of the document do not read its value');
 end;
 
 // TestWrite writes through the pointer WordPtrAt gives, which is to the element and to nothing else.
@@ -385,6 +533,7 @@ end;
 
 var
   Empty, One, Full: TArrays;
+  ParseError: TParseError;
 begin
   NewArrays(Empty, 0);
   NewArrays(One, 1);
@@ -397,6 +546,9 @@ begin
   TestRuns(One);
   TestRuns(Full);
   TestWrite(Full);
+  if not ParseDocumentString('7', Full.Doc, ParseError) then
+    Fail('the document was not parsed');
+  TestComputed(Full);
   // An array that was never given a length is empty as well.
   Empty := Default(TArrays);
   TestIndexes(Empty);

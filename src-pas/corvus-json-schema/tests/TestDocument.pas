@@ -276,6 +276,40 @@ begin
   Check(ParserParseInto(P, D, B, Length(B)) and (DocumentToJson(D) = '[false,"x"]'), 'parse into after a failure');
   Check(ParserIsValid(P, B, Length(B)), 'the validating parser accepts valid text');
 
+  { A document is at most MaxDocumentSize bytes of text and words of tape, so that every index into it is below
+    2^31. No test can make text of that size, so the parser is given a small limit: the checks are the same ones. }
+  Check(MaxDocumentSize = 2147483647, 'the size of a document is at most 2^31 - 1');
+  P := Default(TParser);
+  D := Default(TDocument);
+  P.SizeLimit := 9;
+  { Nine bytes of text and a tape of two words. }
+  B := BytesOf('"abcdefg"');
+  Check(ParserParseInto(P, D, B, Length(B)) and (DocumentToJson(D) = '"abcdefg"'), 'text of the size limit');
+  Check(ParserIsValid(P, B, Length(B)), 'text of the size limit, validating');
+  { Ten bytes of text. }
+  B := BytesOf('"abcdefgh"');
+  Check(not ParserParseInto(P, D, B, Length(B)), 'text beyond the size limit is refused');
+  Check((ParserError(P).Message = 'document too large') and (ParserError(P).Offset = 9),
+    'text beyond the size limit: ' + ParseErrorText(ParserError(P)));
+  Check(not ParserIsValid(P, B, Length(B)) and (ParserError(P).Message = 'document too large'),
+    'text beyond the size limit is refused, validating');
+  { Seven bytes of text and a tape of eight words (four values). }
+  B := BytesOf('[1,2,3]');
+  Check(ParserParseInto(P, D, B, Length(B)) and (DocumentToJson(D) = '[1,2,3]') and (D.Root * 2 + 2 = 8),
+    'a tape within the size limit');
+  { Nine bytes of text and a tape of ten words (five values). }
+  B := BytesOf('[1,2,3,4]');
+  Check(not ParserParseInto(P, D, B, Length(B)), 'a tape beyond the size limit is refused');
+  Check((ParserError(P).Message = 'document too large') and (ParserError(P).Offset = 9),
+    'a tape beyond the size limit: ' + ParseErrorText(ParserError(P)));
+  { The parser is as it was for the next text. }
+  B := BytesOf('[1,2]');
+  Check(ParserParseInto(P, D, B, Length(B)) and (DocumentToJson(D) = '[1,2]'), 'parse into after a refusal by size');
+  { Without the test's limit the same text is a document. }
+  P.SizeLimit := 0;
+  B := BytesOf('[1,2,3,4]');
+  Check(ParserParseInto(P, D, B, Length(B)) and (DocumentToJson(D) = '[1,2,3,4]'), 'the same text without the limit');
+
   WriteLn(Checks, ' checks, ', Failures, ' failed');
   if Failures > 0 then
     Halt(1);

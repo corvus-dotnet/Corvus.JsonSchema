@@ -68,62 +68,63 @@ type
 
 { NameKeyAt and TextAt are pointers to A[I], and UInt16At is A[I]: one comparison of the index with the array's
   length, then the read (see Corvus.JsonSchema.Checked). }
-function NameKeyAt(const A: TNameKeyArray; I: Int32): PNameKey; inline;
-function TextAt(const A: TUTF8StringArray; I: Int32): PUTF8String; inline;
-function UInt16At(const A: TUInt16Array; I: Int32): UInt16; inline;
+function NameKeyAt(const A: TNameKeyArray; I: NativeInt): PNameKey; inline;
+function TextAt(const A: TUTF8StringArray; I: NativeInt): PUTF8String; inline;
+function UInt16At(const A: TUInt16Array; I: NativeInt): UInt16; inline;
 
 { NameWord is a word that tells names of one length apart cheaply. For a name of at most eight bytes it is unique
   among names of the same length: the first and last four bytes (overlapping, so every byte is in one of them), or
   for shorter names the first, middle and last byte. For a longer name it is the first eight bytes, so names with
   different words differ, and names with the same word are compared in full. }
-function NameWord(const B: TBytes; Start, Len: Int32): UInt64;
+function NameWord(const B: TBytes; Start, Len: NativeInt): UInt64;
 { TailWord is the last eight bytes of a name longer than eight bytes. }
-function TailWord(const B: TBytes; Start, Len: Int32): UInt64; inline;
+function TailWord(const B: TBytes; Start, Len: NativeInt): UInt64; inline;
 
 function NewNameMap(const Names: TUTF8StringArray): TNameMap;
 { NameMapHash is the hash of a key. }
-function NameMapHash(const M: TNameMap; Word, Tail: UInt64; Length: Int32): UInt64; inline;
+function NameMapHash(const M: TNameMap; Word, Tail: UInt64; Length: NativeInt): UInt64; inline;
 { NameMapRest reports whether name I is the given name, which is longer than eight bytes, when their lengths and
   words are equal. }
-function NameMapRest(const M: TNameMap; I: Int32; const Name: TBytes; Start, Len: Int32): Boolean;
+function NameMapRest(const M: TNameMap; I: NativeInt; const Name: TBytes; Start, Len: NativeInt): Boolean;
 { NameMapEqual reports whether name I is the given name, whose word is W. }
-function NameMapEqual(const M: TNameMap; I: Int32; const Name: TBytes; Start, Len: Int32; W: UInt64): Boolean;
+function NameMapEqual(const M: TNameMap; I: NativeInt; const Name: TBytes; Start, Len: NativeInt; W: UInt64): Boolean;
 { NameMapFind is the index of a name (whose word is W), or -1. }
-function NameMapFind(const M: TNameMap; const Name: TBytes; Start, Len: Int32; W: UInt64): Int32;
+function NameMapFind(const M: TNameMap; const Name: TBytes; Start, Len: NativeInt; W: UInt64): NativeInt;
 { NameMapFindKey is the index of the name with a key, or -1, for a name of at most sixteen bytes (which its key
   decides). }
-function NameMapFindKey(const M: TNameMap; W, Tail: UInt64; Length: Int32): Int32;
+function NameMapFindKey(const M: TNameMap; W, Tail: UInt64; Length: NativeInt): NativeInt;
 { NameMapFindLong is NameMapFind for a name longer than sixteen bytes, whose text is compared as well, and for a
   large set. }
-function NameMapFindLong(const M: TNameMap; const Name: TBytes; Start, Len: Int32; W: UInt64): Int32;
+function NameMapFindLong(const M: TNameMap; const Name: TBytes; Start, Len: NativeInt; W: UInt64): NativeInt;
 
-function LengthBit(Length: Int32): UInt64; inline;
+function LengthBit(Length: NativeInt): UInt64; inline;
 function NewNames(const List: TUTF8StringArray): TNames;
-function NamesLen(const Ns: TNames): Int32; inline;
+function NamesLen(const Ns: TNames): NativeInt; inline;
 { NamesFind is the index of a name, without the ordering hint, or -1. }
-function NamesFind(const Ns: TNames; const Name: TBytes; Start, Len: Int32): Int32;
+function NamesFind(const Ns: TNames; const Name: TBytes; Start, Len: NativeInt): NativeInt;
 { NamesFindString is NamesFind for a name held as a string. }
-function NamesFindString(const Ns: TNames; const Name: UTF8String): Int32;
+function NamesFindString(const Ns: TNames; const Name: UTF8String): NativeInt;
 { NamesAt reports whether the name at a hint (the index after the previous match) has the given length and word.
   For a name of at most eight bytes that is the name. }
-function NamesAt(const Ns: TNames; Hint, Length: Int32; W: UInt64): Boolean; inline;
+function NamesAt(const Ns: TNames; Hint, Length: NativeInt; W: UInt64): Boolean; inline;
 { NamesFindFrom finds a name, trying the one after the previous match first: instances tend to list their
   properties in the schema's order, so the next name is usually the next one declared. It returns the index (or -1)
   and sets Hint for the next call. }
-function NamesFindFrom(const Ns: TNames; const Name: TBytes; Start, Len: Int32; var Hint: Int32): Int32;
+function NamesFindFrom(const Ns: TNames; const Name: TBytes; Start, Len: NativeInt; var Hint: NativeInt): NativeInt;
 { NamesFindAfter is NamesFindFrom for a name (whose word is W) that is not the one at the hint. It tries the name
   after the previous match in sorted order (instances written by tools that sort their keys), then searches the
   table. }
-function NamesFindAfter(const Ns: TNames; const Name: TBytes; Start, Len: Int32; W: UInt64; var Hint: Int32): Int32;
+function NamesFindAfter(const Ns: TNames; const Name: TBytes; Start, Len: NativeInt; W: UInt64;
+  var Hint: NativeInt): NativeInt;
 { NamesFindAfterLong is NamesFindAfter for a name longer than sixteen bytes, whose text is compared, and for a
   large set. }
-function NamesFindAfterLong(const Ns: TNames; const Name: TBytes; Start, Len: Int32; W: UInt64;
-  var Hint: Int32): Int32;
+function NamesFindAfterLong(const Ns: TNames; const Name: TBytes; Start, Len: NativeInt; W: UInt64;
+  var Hint: NativeInt): NativeInt;
 
 { TextEqualsBytes says whether a string is the bytes B[Start .. Start+Len-1]. }
-function TextEqualsBytes(const S: UTF8String; const B: TBytes; Start, Len: Int32): Boolean;
+function TextEqualsBytes(const S: UTF8String; const B: TBytes; Start, Len: NativeInt): Boolean;
 { CompareUtf8 compares two strings byte by byte: negative, zero or positive. }
-function CompareUtf8(const A, B: UTF8String): Int32;
+function CompareUtf8(const A, B: UTF8String): NativeInt;
 
 implementation
 
@@ -139,32 +140,32 @@ const
 {$PUSH}
 {$R-}
 
-function NameKeyAt(const A: TNameKeyArray; I: Int32): PNameKey; inline;
+function NameKeyAt(const A: TNameKeyArray; I: NativeInt): PNameKey; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function TextAt(const A: TUTF8StringArray; I: Int32): PUTF8String; inline;
+function TextAt(const A: TUTF8StringArray; I: NativeInt): PUTF8String; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function UInt16At(const A: TUInt16Array; I: Int32): UInt16; inline;
+function UInt16At(const A: TUInt16Array; I: NativeInt): UInt16; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := A[I];
 end;
 
 {$POP}
 
-function TextEqualsBytes(const S: UTF8String; const B: TBytes; Start, Len: Int32): Boolean;
+function TextEqualsBytes(const S: UTF8String; const B: TBytes; Start, Len: NativeInt): Boolean;
 var
-  K: Int32;
+  K: NativeInt;
 begin
   Result := False;
   if Length(S) <> Len then
@@ -178,9 +179,9 @@ begin
   Result := True;
 end;
 
-function CompareUtf8(const A, B: UTF8String): Int32;
+function CompareUtf8(const A, B: UTF8String): NativeInt;
 var
-  K, N: Int32;
+  K, N: NativeInt;
 begin
   N := Length(A);
   if Length(B) < N then
@@ -194,9 +195,9 @@ begin
 end;
 
 { CompareBytesText compares the bytes B[Start .. Start+Len-1] with a string: negative, zero or positive. }
-function CompareBytesText(const B: TBytes; Start, Len: Int32; const S: UTF8String): Int32;
+function CompareBytesText(const B: TBytes; Start, Len: NativeInt; const S: UTF8String): NativeInt;
 var
-  K, N: Int32;
+  K, N: NativeInt;
 begin
   N := Len;
   if Length(S) < N then
@@ -209,7 +210,7 @@ begin
   Result := Len - Length(S);
 end;
 
-function NameWord(const B: TBytes; Start, Len: Int32): UInt64;
+function NameWord(const B: TBytes; Start, Len: NativeInt): UInt64;
 begin
   if Len > 8 then
     Result := LoadLE64(B, Start)
@@ -222,12 +223,12 @@ begin
     Result := 0;
 end;
 
-function TailWord(const B: TBytes; Start, Len: Int32): UInt64; inline;
+function TailWord(const B: TBytes; Start, Len: NativeInt): UInt64; inline;
 begin
   Result := LoadLE64(B, Start + Len - 8);
 end;
 
-function NameMapHash(const M: TNameMap; Word, Tail: UInt64; Length: Int32): UInt64; inline;
+function NameMapHash(const M: TNameMap; Word, Tail: UInt64; Length: NativeInt): UInt64; inline;
 begin
   { The sum and the product wrap, as a hash's do. }
   Result := ((Word xor ((Tail shl 29) or (Tail shr 35))) + UInt64(Length)) * M.Mul;
@@ -235,10 +236,10 @@ end;
 
 { Fill puts the names in a table under the map's hash, each in the first free slot from its own. It returns how
   many are not in their own slot. }
-function Fill(const M: TNameMap; var Table: TUInt16Array): Int32;
+function Fill(const M: TNameMap; var Table: TUInt16Array): NativeInt;
 var
   Mask, Home, Slot: UInt64;
-  I: Int32;
+  I: NativeInt;
   Same: Boolean;
 begin
   Mask := UInt64(Length(Table) - 1);
@@ -265,7 +266,7 @@ end;
 
 procedure ClearTable(var Table: TUInt16Array);
 var
-  I: Int32;
+  I: NativeInt;
 begin
   for I := 0 to Length(Table) - 1 do
     Table[I] := 0;
@@ -273,9 +274,9 @@ end;
 
 { SortIndexes sorts the indexes Order[Lo .. Hi] by the names they refer to, and names that are the same by index
   (a merge sort, so that it is stable and takes no more than n log n steps whatever the names). }
-procedure SortIndexes(const List: TUTF8StringArray; var Order, Scratch: TUInt32Array; Lo, Hi: Int32);
+procedure SortIndexes(const List: TUTF8StringArray; var Order, Scratch: TUInt32Array; Lo, Hi: NativeInt);
 var
-  Mid, I, J, K: Int32;
+  Mid, I, J, K: NativeInt;
 begin
   if Hi - Lo < 1 then
     Exit;
@@ -312,7 +313,7 @@ end;
 function SortedOrder(const List: TUTF8StringArray): TUInt32Array;
 var
   Scratch: TUInt32Array;
-  I: Int32;
+  I: NativeInt;
 begin
   Result := nil;
   Scratch := nil;
@@ -325,7 +326,7 @@ end;
 
 function NewNameMap(const Names: TUTF8StringArray): TNameMap;
 var
-  I, N, Size, Attempt, Moved, BestMoved: Int32;
+  I, N, Size, Attempt, Moved, BestMoved: NativeInt;
   B: TBytes;
   Best, Mul: UInt64;
 begin
@@ -386,13 +387,13 @@ begin
   Result.Mask := UInt64(Size - 1);
 end;
 
-function NameMapRest(const M: TNameMap; I: Int32; const Name: TBytes; Start, Len: Int32): Boolean;
+function NameMapRest(const M: TNameMap; I: NativeInt; const Name: TBytes; Start, Len: NativeInt): Boolean;
 begin
   Result := (TailWord(Name, Start, Len) = NameKeyAt(M.Keys, I)^.Tail)
     and ((Len <= 16) or TextEqualsBytes(TextAt(M.Names, I)^, Name, Start, Len));
 end;
 
-function NameMapEqual(const M: TNameMap; I: Int32; const Name: TBytes; Start, Len: Int32; W: UInt64): Boolean;
+function NameMapEqual(const M: TNameMap; I: NativeInt; const Name: TBytes; Start, Len: NativeInt; W: UInt64): Boolean;
 var
   Key: PNameKey;
 begin
@@ -400,7 +401,7 @@ begin
   Result := (Key^.Length = Len) and (Key^.Word = W) and ((Len <= 8) or NameMapRest(M, I, Name, Start, Len));
 end;
 
-function NameMapFind(const M: TNameMap; const Name: TBytes; Start, Len: Int32; W: UInt64): Int32;
+function NameMapFind(const M: TNameMap; const Name: TBytes; Start, Len: NativeInt; W: UInt64): NativeInt;
 var
   Tail: UInt64;
 begin
@@ -414,10 +415,10 @@ begin
   Result := NameMapFindKey(M, W, Tail, Len);
 end;
 
-function NameMapFindKey(const M: TNameMap; W, Tail: UInt64; Length: Int32): Int32;
+function NameMapFindKey(const M: TNameMap; W, Tail: UInt64; Length: NativeInt): NativeInt;
 var
   Slot: UInt64;
-  At: Int32;
+  At: NativeInt;
   Key: PNameKey;
 begin
   Slot := NameMapHash(M, W, Tail, Length) shr NameHashShift;
@@ -436,10 +437,10 @@ begin
   end;
 end;
 
-function NameMapFindLong(const M: TNameMap; const Name: TBytes; Start, Len: Int32; W: UInt64): Int32;
+function NameMapFindLong(const M: TNameMap; const Name: TBytes; Start, Len: NativeInt; W: UInt64): NativeInt;
 var
   Tail, Slot: UInt64;
-  At, Lo, Hi, Mid: Int32;
+  At, Lo, Hi, Mid: NativeInt;
   Key: PNameKey;
 begin
   if M.IsLarge then begin
@@ -480,7 +481,7 @@ begin
   end;
 end;
 
-function LengthBit(Length: Int32): UInt64; inline;
+function LengthBit(Length: NativeInt): UInt64; inline;
 begin
   if Length > 63 then
     Length := 63;
@@ -490,7 +491,7 @@ end;
 function NewNames(const List: TUTF8StringArray): TNames;
 var
   Order: TUInt32Array;
-  I: Int32;
+  I: NativeInt;
 begin
   Result.Lengths := 0;
   Result.M := NewNameMap(List);
@@ -508,12 +509,12 @@ begin
       Result.SortedNext[Order[I - 1] + 1] := Order[I];
 end;
 
-function NamesLen(const Ns: TNames): Int32; inline;
+function NamesLen(const Ns: TNames): NativeInt; inline;
 begin
   Result := Length(Ns.M.Names);
 end;
 
-function NamesFind(const Ns: TNames; const Name: TBytes; Start, Len: Int32): Int32;
+function NamesFind(const Ns: TNames; const Name: TBytes; Start, Len: NativeInt): NativeInt;
 var
   W, Tail: UInt64;
 begin
@@ -534,7 +535,7 @@ begin
   Result := NameMapFindKey(Ns.M, W, Tail, Len);
 end;
 
-function NamesFindString(const Ns: TNames; const Name: UTF8String): Int32;
+function NamesFindString(const Ns: TNames; const Name: UTF8String): NativeInt;
 var
   B: TBytes;
 begin
@@ -542,7 +543,7 @@ begin
   Result := NamesFind(Ns, B, 0, Length(B));
 end;
 
-function NamesAt(const Ns: TNames; Hint, Length: Int32; W: UInt64): Boolean; inline;
+function NamesAt(const Ns: TNames; Hint, Length: NativeInt; W: UInt64): Boolean; inline;
 var
   Key: PNameKey;
 begin
@@ -553,7 +554,7 @@ begin
   end;
 end;
 
-function NamesFindFrom(const Ns: TNames; const Name: TBytes; Start, Len: Int32; var Hint: Int32): Int32;
+function NamesFindFrom(const Ns: TNames; const Name: TBytes; Start, Len: NativeInt; var Hint: NativeInt): NativeInt;
 var
   W: UInt64;
 begin
@@ -566,11 +567,12 @@ begin
   Result := NamesFindAfter(Ns, Name, Start, Len, W, Hint);
 end;
 
-function NamesFindAfter(const Ns: TNames; const Name: TBytes; Start, Len: Int32; W: UInt64; var Hint: Int32): Int32;
+function NamesFindAfter(const Ns: TNames; const Name: TBytes; Start, Len: NativeInt; W: UInt64;
+  var Hint: NativeInt): NativeInt;
 var
   Tail, Slot: UInt64;
   Next: UInt32;
-  At: Int32;
+  At: NativeInt;
   Key: PNameKey;
 begin
   if Ns.Lengths and LengthBit(Len) = 0 then begin
@@ -612,8 +614,8 @@ begin
   end;
 end;
 
-function NamesFindAfterLong(const Ns: TNames; const Name: TBytes; Start, Len: Int32; W: UInt64;
-  var Hint: Int32): Int32;
+function NamesFindAfterLong(const Ns: TNames; const Name: TBytes; Start, Len: NativeInt; W: UInt64;
+  var Hint: NativeInt): NativeInt;
 var
   Next: UInt32;
 begin

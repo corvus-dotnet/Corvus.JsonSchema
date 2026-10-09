@@ -511,17 +511,17 @@ type
 { ChildAt, OpAt, PatternChildAt, PlanAt, StringOpAt and the functions for the arrays of a fused object plan
   (EntryAt, FusedAppAt, FusedConditionAt, FusedContributorAt, FusedPatternAt, ValueTestAt) are pointers to A[I]: one
   comparison of the index with the array's length, then the element's address (see Corvus.JsonSchema.Checked). }
-function ChildAt(const A: TChildArray; I: Int32): PChild; inline;
-function OpAt(const A: TOpArray; I: Int32): POp; inline;
-function PatternChildAt(const A: TPatternChildArray; I: Int32): PPatternChild; inline;
-function PlanAt(const A: TPlanArray; I: Int32): PPlan; inline;
-function StringOpAt(const A: TStringOpArray; I: Int32): PStringOp; inline;
-function EntryAt(const A: TFusedEntryArray; I: Int32): PFusedEntry; inline;
-function FusedAppAt(const A: TFusedAppArray; I: Int32): PFusedApp; inline;
-function FusedConditionAt(const A: TFusedConditionArray; I: Int32): PFusedCondition; inline;
-function FusedContributorAt(const A: TFusedContributorArray; I: Int32): PFusedContributor; inline;
-function FusedPatternAt(const A: TFusedPatternArray; I: Int32): PFusedPattern; inline;
-function ValueTestAt(const A: TValueTestArray; I: Int32): PValueTest; inline;
+function ChildAt(const A: TChildArray; I: NativeInt): PChild; inline;
+function OpAt(const A: TOpArray; I: NativeInt): POp; inline;
+function PatternChildAt(const A: TPatternChildArray; I: NativeInt): PPatternChild; inline;
+function PlanAt(const A: TPlanArray; I: NativeInt): PPlan; inline;
+function StringOpAt(const A: TStringOpArray; I: NativeInt): PStringOp; inline;
+function EntryAt(const A: TFusedEntryArray; I: NativeInt): PFusedEntry; inline;
+function FusedAppAt(const A: TFusedAppArray; I: NativeInt): PFusedApp; inline;
+function FusedConditionAt(const A: TFusedConditionArray; I: NativeInt): PFusedCondition; inline;
+function FusedContributorAt(const A: TFusedContributorArray; I: NativeInt): PFusedContributor; inline;
+function FusedPatternAt(const A: TFusedPatternArray; I: NativeInt): PFusedPattern; inline;
+function ValueTestAt(const A: TValueTestArray; I: NativeInt): PValueTest; inline;
 
 { NoChild is a child that accepts anything and is never entered (an undeclared name without
   additionalProperties). }
@@ -546,9 +546,9 @@ function TypeOnlyMask(const N: TSchemaNode; out Mask: Byte): Boolean;
 
 { TypeOK reports whether a value is of one of the types in a mask. A kind is its type bit. The mask test is small
   enough to inline at every call site, and the integer test, which few values reach, is a call. }
-function TypeOK(Mask: Byte; const D: TDocument; X: Int32): Boolean; inline;
+function TypeOK(Mask: Byte; const D: TDocument; X: NativeInt): Boolean; inline;
 { IntegerOK reports a number that the mask does not accept as a number but accepts as an integer. }
-function IntegerOK(Mask: Byte; const D: TDocument; X: Int32): Boolean;
+function IntegerOK(Mask: Byte; const D: TDocument; X: NativeInt): Boolean;
 
 implementation
 
@@ -559,79 +559,79 @@ uses
 {$PUSH}
 {$R-}
 
-function ChildAt(const A: TChildArray; I: Int32): PChild; inline;
+function ChildAt(const A: TChildArray; I: NativeInt): PChild; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function OpAt(const A: TOpArray; I: Int32): POp; inline;
+function OpAt(const A: TOpArray; I: NativeInt): POp; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function PatternChildAt(const A: TPatternChildArray; I: Int32): PPatternChild; inline;
+function PatternChildAt(const A: TPatternChildArray; I: NativeInt): PPatternChild; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function StringOpAt(const A: TStringOpArray; I: Int32): PStringOp; inline;
+function StringOpAt(const A: TStringOpArray; I: NativeInt): PStringOp; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function PlanAt(const A: TPlanArray; I: Int32): PPlan; inline;
+function PlanAt(const A: TPlanArray; I: NativeInt): PPlan; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function EntryAt(const A: TFusedEntryArray; I: Int32): PFusedEntry; inline;
+function EntryAt(const A: TFusedEntryArray; I: NativeInt): PFusedEntry; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function FusedAppAt(const A: TFusedAppArray; I: Int32): PFusedApp; inline;
+function FusedAppAt(const A: TFusedAppArray; I: NativeInt): PFusedApp; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function FusedConditionAt(const A: TFusedConditionArray; I: Int32): PFusedCondition; inline;
+function FusedConditionAt(const A: TFusedConditionArray; I: NativeInt): PFusedCondition; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function FusedContributorAt(const A: TFusedContributorArray; I: Int32): PFusedContributor; inline;
+function FusedContributorAt(const A: TFusedContributorArray; I: NativeInt): PFusedContributor; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function FusedPatternAt(const A: TFusedPatternArray; I: Int32): PFusedPattern; inline;
+function FusedPatternAt(const A: TFusedPatternArray; I: NativeInt): PFusedPattern; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
 
-function ValueTestAt(const A: TValueTestArray; I: Int32): PValueTest; inline;
+function ValueTestAt(const A: TValueTestArray; I: NativeInt): PValueTest; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;
@@ -667,12 +667,12 @@ begin
   SetShape(Result, S.Types, S.Shape);
 end;
 
-function TypeOK(Mask: Byte; const D: TDocument; X: Int32): Boolean; inline;
+function TypeOK(Mask: Byte; const D: TDocument; X: NativeInt): Boolean; inline;
 begin
   Result := (Mask and DocKind(D, X) <> 0) or IntegerOK(Mask, D, X);
 end;
 
-function IntegerOK(Mask: Byte; const D: TDocument; X: Int32): Boolean;
+function IntegerOK(Mask: Byte; const D: TDocument; X: NativeInt): Boolean;
 begin
   Result := (DocKind(D, X) = KindNumber) and (Mask and TypeInteger <> 0)
     and IsIntegerNumber(DocFlags(D, X), DocData(D, X));

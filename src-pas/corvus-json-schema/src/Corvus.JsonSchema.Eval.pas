@@ -407,7 +407,7 @@ end;
 
 { StrBytes is the array that holds the bytes of a string value: the document's text for a string that had escapes,
   or its source. The bytes are the DocCount bytes from DocStrOffset. }
-function StrBytes(D: PDocument; N: Int32): PDocBytes; inline;
+function StrBytes(D: PDocument; N: NativeInt): PDocBytes; inline;
 begin
   if WordAt(D^.Tape, N shl 1) and (StrText shl 8) <> 0 then
     Result := @D^.Text
@@ -415,11 +415,20 @@ begin
     Result := @D^.Source;
 end;
 
+{ HeaderBytes is StrBytes for a string value whose header word has been read already (see DocHeader). }
+function HeaderBytes(D: PDocument; H: UInt64): PDocBytes; inline;
+begin
+  if HeaderStrInText(H) then
+    Result := @D^.Text
+  else
+    Result := @D^.Source;
+end;
+
 { CodePoints is the length of a string value in code points (what minLength and maxLength count). }
-function CodePoints(D: PDocument; X: Int32): UInt64;
+function CodePoints(D: PDocument; X: NativeInt): UInt64;
 var
   Src: PDocBytes;
-  I, Off, Len: Int32;
+  I, Off, Len: NativeInt;
 begin
   Len := DocCount(D^, X);
   if DocStrASCII(D^, X) then
@@ -515,10 +524,10 @@ begin
 end;
 
 { NewBits takes a cleared set for Length members from the arena. Sets are released in the reverse order. }
-function NewBits(var E: TEvaluator; Length: Int32): TBitset;
+function NewBits(var E: TEvaluator; Length: NativeInt): TBitset;
 var
   S: PScratch;
-  Words, Off, Stop, I: Int32;
+  Words, Off, Stop, I: NativeInt;
 begin
   S := State(E);
   Words := (Length + 63) shr 6;
@@ -542,7 +551,7 @@ begin
   E.S^.ArenaLen := B.Off;
 end;
 
-procedure SetBit(var E: TEvaluator; const B: TBitset; I: Int32); inline;
+procedure SetBit(var E: TEvaluator; const B: TBitset; I: NativeInt); inline;
 var
   W: PUInt64;
 begin
@@ -550,14 +559,14 @@ begin
   W^ := W^ or (One64 shl (I and 63));
 end;
 
-function GetBit(var E: TEvaluator; const B: TBitset; I: Int32): Boolean; inline;
+function GetBit(var E: TEvaluator; const B: TBitset; I: NativeInt): Boolean; inline;
 begin
   Result := WordAt(E.S^.Arena, B.Off + I shr 6) and (One64 shl (I and 63)) <> 0;
 end;
 
 procedure MergeBits(var E: TEvaluator; const Into, From: TBitset);
 var
-  I: Int32;
+  I: NativeInt;
 begin
   for I := 0 to From.Words - 1 do
     E.S^.Arena[Into.Off + I] := E.S^.Arena[Into.Off + I] or E.S^.Arena[From.Off + I];
@@ -565,7 +574,7 @@ end;
 
 procedure ClearBits(var E: TEvaluator; const B: TBitset);
 var
-  I: Int32;
+  I: NativeInt;
 begin
   for I := B.Off to B.Off + B.Words - 1 do
     E.S^.Arena[I] := 0;
@@ -573,7 +582,7 @@ end;
 
 procedure CopyBits(var E: TEvaluator; const Into, From: TBitset);
 var
-  I: Int32;
+  I: NativeInt;
 begin
   for I := 0 to From.Words - 1 do
     E.S^.Arena[Into.Off + I] := E.S^.Arena[From.Off + I];
@@ -581,7 +590,7 @@ end;
 
 { PushScope enters a resource in the dynamic scope, unless it is the innermost one already. It reports whether it
   did. }
-function PushScope(var E: TEvaluator; Resource: Int32): Boolean;
+function PushScope(var E: TEvaluator; Resource: NativeInt): Boolean;
 var
   S: PScratch;
 begin
@@ -603,7 +612,7 @@ end;
 function ResolveDynamic(var E: TEvaluator; const D: TDynamicRefTarget): TNodeID;
 var
   S: PScratch;
-  K, I: Int32;
+  K, I: NativeInt;
 begin
   S := State(E);
   for K := E.ScopeBase to S^.ScopeLen - 1 do
@@ -616,19 +625,21 @@ end;
 { ---------------------------------------------------------------------------------------------------------------------
   The plans (the evaluation half of plan.go) }
 
-function EnterChild(var E: TEvaluator; const C: TChild; X: Int32): Boolean; forward;
-function RunBody(var E: TEvaluator; B: PBody; X: Int32): Boolean; forward;
-function RunKeywords(var E: TEvaluator; B: PBody; X: Int32): Boolean; forward;
-function RunApply(var E: TEvaluator; const Ops: TOpArray; X: Int32): Boolean; forward;
-function RunObject(var E: TEvaluator; Pl: PObjectPlan; X: Int32): Boolean; forward;
-function RunStrictObject(var E: TEvaluator; Pl: PObjectPlan; X: Int32): Boolean; forward;
-function RunArray(var E: TEvaluator; Pl: PArrayPlan; X: Int32): Boolean; forward;
-function RunLeaf(var E: TEvaluator; B: PBody; X: Int32): Boolean; forward;
-function RunNumber(var E: TEvaluator; const Ops: TNumberOpArray; X: Int32): Boolean; forward;
-function RunString(var E: TEvaluator; const Ops: TStringOpArray; X: Int32): Boolean; forward;
-function RunFused(var E: TEvaluator; F: PFusedObject; X: Int32): Boolean; forward;
-function ObjectVisitLookup(var E: TEvaluator; Pl: PObjectPlan; First, Count: Int32; out Seen: UInt64): Boolean; forward;
-function ObjectVisitNames(var E: TEvaluator; Pl: PObjectPlan; First, Count: Int32; out Seen: UInt64): Boolean; forward;
+function EnterChild(var E: TEvaluator; const C: TChild; X: NativeInt): Boolean; forward;
+function RunBody(var E: TEvaluator; B: PBody; X: NativeInt): Boolean; forward;
+function RunKeywords(var E: TEvaluator; B: PBody; X: NativeInt): Boolean; forward;
+function RunApply(var E: TEvaluator; const Ops: TOpArray; X: NativeInt): Boolean; forward;
+function RunObject(var E: TEvaluator; Pl: PObjectPlan; X: NativeInt): Boolean; forward;
+function RunStrictObject(var E: TEvaluator; Pl: PObjectPlan; X: NativeInt): Boolean; forward;
+function RunArray(var E: TEvaluator; Pl: PArrayPlan; X: NativeInt): Boolean; forward;
+function RunLeaf(var E: TEvaluator; B: PBody; X: NativeInt): Boolean; forward;
+function RunNumber(var E: TEvaluator; const Ops: TNumberOpArray; X: NativeInt): Boolean; forward;
+function RunString(var E: TEvaluator; const Ops: TStringOpArray; X: NativeInt): Boolean; forward;
+function RunFused(var E: TEvaluator; F: PFusedObject; X: NativeInt): Boolean; forward;
+function ObjectVisitLookup(var E: TEvaluator; Pl: PObjectPlan; First, Count: NativeInt; out Seen: UInt64): Boolean;
+  forward;
+function ObjectVisitNames(var E: TEvaluator; Pl: PObjectPlan; First, Count: NativeInt; out Seen: UInt64): Boolean;
+  forward;
 function EvalNode(var E: TEvaluator; Id: TNodeID; X: Int32; const Bits: TBitset): Boolean; forward;
 function ContentOK(var E: TEvaluator; Src: PDocBytes; Off, Len: Int32; Kind: TContentKind): Boolean; forward;
 
@@ -651,7 +662,7 @@ end;
 
 { CallCustom calls a custom format validator, which is the caller's code. It must not raise an exception. If it
   does, the evaluation is abandoned and the exception goes on to the caller of the validator. }
-function CallCustom(var E: TEvaluator; Custom: TFormatValidator; const B: TBytes; Start, Len: Int32): Boolean;
+function CallCustom(var E: TEvaluator; Custom: TFormatValidator; const B: TBytes; Start, Len: NativeInt): Boolean;
 begin
   try
     Result := Custom(B, Start, Len);
@@ -661,7 +672,7 @@ begin
   end;
 end;
 
-function CheckString(var E: TEvaluator; const F: TFormatCheckOp; const B: TBytes; Start, Len: Int32): Boolean;
+function CheckString(var E: TEvaluator; const F: TFormatCheckOp; const B: TBytes; Start, Len: NativeInt): Boolean;
 begin
   if Assigned(F.Custom) then
     Result := CallCustom(E, F.Custom, B, Start, Len)
@@ -669,9 +680,9 @@ begin
     Result := FormatCheckString(F.Kind, B, Start, Len, F.Legacy);
 end;
 
-function CheckNumber(var E: TEvaluator; const F: TFormatCheckOp; const D: TDocument; X: Int32): Boolean;
+function CheckNumber(var E: TEvaluator; const F: TFormatCheckOp; const D: TDocument; X: NativeInt): Boolean;
 var
-  Start: Int32;
+  Start: NativeInt;
 begin
   if Assigned(F.Custom) then begin
     Start := DocNumberStart(D, X);
@@ -681,9 +692,9 @@ begin
 end;
 
 { SelectIndexed is the branches a discriminator value selects. }
-function SelectIndexed(const P: TProgram; const B: TBranches; D: PDocument; V: Int32): PUInt32List;
+function SelectIndexed(const P: TProgram; const B: TBranches; D: PDocument; V: NativeInt): PUInt32List;
 var
-  I, K: Int32;
+  I, K: NativeInt;
 begin
   if DocKind(D^, V) = KindString then begin
     I := NamesFind(B.Index.Strings, StrBytes(D, V)^, DocStrOffset(D^, V), DocCount(D^, V));
@@ -700,14 +711,14 @@ begin
 end;
 
 { Run evaluates a node's plan (at a new instance location, or where no depth guard applies). }
-function Run(var E: TEvaluator; Id: TNodeID; X: Int32): Boolean; inline;
+function Run(var E: TEvaluator; Id: TNodeID; X: NativeInt): Boolean; inline;
 begin
   Result := EnterChild(E, PlanAt(E.P^.Plans, Id)^.Self, X);
 end;
 
 { RunChild evaluates a child at a new instance location. A child that is only a type test the value passes is
   decided here, in the caller once this is inlined, and anything else is one call. }
-function RunChild(var E: TEvaluator; const C: TChild; X: Int32): Boolean; inline;
+function RunChild(var E: TEvaluator; const C: TChild; X: NativeInt): Boolean; inline;
 begin
   Result := (C.Pass and Byte(WordAt(E.D^.Tape, X shl 1) and $FF) <> 0) or EnterChild(E, C, X);
 end;
@@ -715,7 +726,7 @@ end;
 { EnterChild is RunChild past its inlined test: the type test in full, then the child's keywords by its shape. An
   object for a strict object plan has its loop called from here, with no function in between, since that is what
   most values with keywords are. }
-function EnterChild(var E: TEvaluator; const C: TChild; X: Int32): Boolean;
+function EnterChild(var E: TEvaluator; const C: TChild; X: NativeInt): Boolean;
 var
   D: PDocument;
   Header, Seen: UInt64;
@@ -723,7 +734,7 @@ var
   Pl: PPlan;
   B: PBody;
   Op: PObjectPlan;
-  Count: Int32;
+  Count: NativeInt;
   Ok: Boolean;
 begin
   D := E.D;
@@ -743,7 +754,7 @@ begin
       Exit(RunLeaf(E, B, X));
     ShapeStringEnum:
       Exit((Kind = KindString)
-        and (NamesFind(B^.Values[0].Names, StrBytes(D, X)^, DocStrOffset(D^, X), DocCount(D^, X)) >= 0));
+        and (NamesFind(B^.Values[0].Names, HeaderBytes(D, Header)^, DocStrOffset(D^, X), HeaderCount(Header)) >= 0));
     ShapeStrings:
       Exit((Kind <> KindString) or RunString(E, B^.Str, X));
     ShapeObject: begin
@@ -779,7 +790,7 @@ begin
 end;
 
 { Enter evaluates a body by its shape (its types already tested, and not on an in-place cycle unless general). }
-function Enter(var E: TEvaluator; S: TShape; B: PBody; X: Int32): Boolean;
+function Enter(var E: TEvaluator; S: TShape; B: PBody; X: NativeInt): Boolean;
 var
   D: PDocument;
 begin
@@ -814,7 +825,7 @@ begin
 end;
 
 { RunInPlace evaluates an in-place child under the depth guard. }
-function RunInPlace(var E: TEvaluator; Id: TNodeID; X: Int32): Boolean;
+function RunInPlace(var E: TEvaluator; Id: TNodeID; X: NativeInt): Boolean;
 begin
   if not PlanAt(E.P^.Plans, Id)^.Guard then
     Exit(Run(E, Id, X));
@@ -830,7 +841,7 @@ end;
 
 { RunBranch evaluates an in-place child with its type check inline, then its keywords under the depth guard
   (without testing the type again). }
-function RunBranch(var E: TEvaluator; const C: TChild; X: Int32): Boolean;
+function RunBranch(var E: TEvaluator; const C: TChild; X: NativeInt): Boolean;
 var
   Pl: PPlan;
 begin
@@ -846,11 +857,11 @@ end;
 
 { Candidates are the anyOf/oneOf branches that can match: those a discriminator selects, or those admitting the
   instance type. }
-function Candidates(var E: TEvaluator; const B: TBranches; X: Int32): PUInt32List;
+function Candidates(var E: TEvaluator; const B: TBranches; X: NativeInt): PUInt32List;
 var
   D: PDocument;
   Kind: Byte;
-  V: Int32;
+  V: NativeInt;
 begin
   D := E.D;
   Kind := DocKind(D^, X);
@@ -866,7 +877,7 @@ end;
 
 { RunBody evaluates a node's keywords. Where the program keeps a dynamic scope, entering a node of another resource
   pushes that resource (as the general evaluator does), for the dynamic references below it. }
-function RunBody(var E: TEvaluator; B: PBody; X: Int32): Boolean;
+function RunBody(var E: TEvaluator; B: PBody; X: NativeInt): Boolean;
 var
   Pushed: Boolean;
 begin
@@ -878,9 +889,9 @@ begin
     PopScope(E);
 end;
 
-function EnumContains(var E: TEvaluator; const Values: TValueRefArray; X: Int32): Boolean;
+function EnumContains(var E: TEvaluator; const Values: TValueRefArray; X: NativeInt): Boolean;
 var
-  I: Int32;
+  I: NativeInt;
 begin
   for I := 0 to Length(Values) - 1 do
     if ValuesEqual(E.D^, X, E.P^.Documents[Values[I].Doc], Values[I].N) then
@@ -888,11 +899,11 @@ begin
   Result := False;
 end;
 
-function RunOp(var E: TEvaluator; O: POp; X: Int32): Boolean;
+function RunOp(var E: TEvaluator; O: POp; X: NativeInt): Boolean;
 var
   D: PDocument;
   List: PUInt32List;
-  I, Matched: Int32;
+  I, Matched: NativeInt;
   Next: TNodeID;
 begin
   D := E.D;
@@ -946,11 +957,11 @@ begin
   end;
 end;
 
-function RunKeywords(var E: TEvaluator; B: PBody; X: Int32): Boolean;
+function RunKeywords(var E: TEvaluator; B: PBody; X: NativeInt): Boolean;
 var
   D: PDocument;
   Kind: Byte;
-  I, First: Int32;
+  I, First: NativeInt;
 begin
   D := E.D;
   Kind := DocKind(D^, X);
@@ -994,9 +1005,9 @@ begin
   Result := (Length(B^.Apply) = 0) or RunApply(E, B^.Apply, X);
 end;
 
-function RunApply(var E: TEvaluator; const Ops: TOpArray; X: Int32): Boolean;
+function RunApply(var E: TEvaluator; const Ops: TOpArray; X: NativeInt): Boolean;
 var
-  I: Int32;
+  I: NativeInt;
 begin
   for I := 0 to Length(Ops) - 1 do
     if not RunOp(E, OpAt(Ops, I), X) then
@@ -1005,10 +1016,10 @@ begin
 end;
 
 { ObjectRest checks the required names checked by lookup, and the dependencies. }
-function ObjectRest(var E: TEvaluator; Pl: PObjectPlan; X: Int32; Seen: UInt64): Boolean;
+function ObjectRest(var E: TEvaluator; Pl: PObjectPlan; X: NativeInt; Seen: UInt64): Boolean;
 var
   D: PDocument;
-  I, J: Int32;
+  I, J: NativeInt;
 begin
   D := E.D;
   for I := 0 to Length(Pl^.Required) - 1 do
@@ -1034,11 +1045,11 @@ begin
 end;
 
 { ObjectVisitValues is for only additionalProperties: every value against one child. }
-function ObjectVisitValues(var E: TEvaluator; Pl: PObjectPlan; X: Int32): Boolean;
+function ObjectVisitValues(var E: TEvaluator; Pl: PObjectPlan; X: NativeInt): Boolean;
 var
   D: PDocument;
   C: TChild;
-  First, Count, I, V: Int32;
+  First, Count, I, V: NativeInt;
 begin
   D := E.D;
   C := Pl^.Additional;
@@ -1062,13 +1073,13 @@ begin
 end;
 
 { ObjectVisitGeneral is the general property loop: declared names, patterns, additionalProperties and propertyNames. }
-function ObjectVisitGeneral(var E: TEvaluator; Pl: PObjectPlan; X: Int32; out Seen: UInt64): Boolean;
+function ObjectVisitGeneral(var E: TEvaluator; Pl: PObjectPlan; X: NativeInt; out Seen: UInt64): Boolean;
 var
   D: PDocument;
   Src: PDocBytes;
   Pc: PPatternChild;
-  Bits, W: UInt64;
-  Hint, K, Stop, I, J, Off, Len: Int32;
+  Bits, W, H: UInt64;
+  Hint, K, Stop, I, J, Off, Len: NativeInt;
   Matched: Boolean;
 begin
   D := E.D;
@@ -1078,9 +1089,11 @@ begin
   K := DocFirst(D^, X);
   Stop := K + 2 * DocCount(D^, X);
   while K < Stop do begin
-    Src := StrBytes(D, K);
+    { The name's header is read once, as the Go source's str reads it. }
+    H := DocHeader(D^, K);
+    Src := HeaderBytes(D, H);
     Off := DocStrOffset(D^, K);
-    Len := DocCount(D^, K);
+    Len := HeaderCount(H);
     Matched := False;
     W := NameWord(Src^, Off, Len);
     if NamesAt(Pl^.Names, Hint, Len, W) and ((Len <= 8) or NameMapRest(Pl^.Names.M, Hint, Src^, Off, Len)) then begin
@@ -1104,7 +1117,7 @@ begin
     end else
       for J := 0 to Length(Pl^.Patterns) - 1 do begin
         Pc := PatternChildAt(Pl^.Patterns, J);
-        if PatternMatch(PatternAt(E.P^.Patterns, Pc^.Pattern)^, Src^, Off, Len, DocStrASCII(D^, K)) then begin
+        if PatternMatch(PatternAt(E.P^.Patterns, Pc^.Pattern)^, Src^, Off, Len, HeaderStrASCII(H)) then begin
           Matched := True;
           if not RunChild(E, Pc^.Child, K + 1) then
             Exit(False);
@@ -1121,19 +1134,21 @@ begin
   Result := True;
 end;
 
-function ObjectVisitPattern(var E: TEvaluator; Pl: PObjectPlan; X: Int32): Boolean;
+function ObjectVisitPattern(var E: TEvaluator; Pl: PObjectPlan; X: NativeInt): Boolean;
 var
   D: PDocument;
   Pc: PPatternChild;
-  K, Stop: Int32;
+  H: UInt64;
+  K, Stop: NativeInt;
 begin
   D := E.D;
   K := DocFirst(D^, X);
   Stop := K + 2 * DocCount(D^, X);
   while K < Stop do begin
     Pc := PatternChildAt(Pl^.Patterns, 0);
-    if PatternMatch(PatternAt(E.P^.Patterns, Pc^.Pattern)^, StrBytes(D, K)^, DocStrOffset(D^, K), DocCount(D^, K),
-      DocStrASCII(D^, K)) then begin
+    H := DocHeader(D^, K);
+    if PatternMatch(PatternAt(E.P^.Patterns, Pc^.Pattern)^, HeaderBytes(D, H)^, DocStrOffset(D^, K), HeaderCount(H),
+      HeaderStrASCII(H)) then begin
       if not RunChild(E, Pc^.Child, K + 1) then
         Exit(False);
     end else if Pl^.HasAdditional and not RunChild(E, Pl^.Additional, K + 1) then
@@ -1145,9 +1160,9 @@ end;
 
 { RunObject evaluates an object plan: the size bounds, the property loop for its shape, then the required names and
   dependencies. }
-function RunObject(var E: TEvaluator; Pl: PObjectPlan; X: Int32): Boolean;
+function RunObject(var E: TEvaluator; Pl: PObjectPlan; X: NativeInt): Boolean;
 var
-  Count: Int32;
+  Count: NativeInt;
   Seen: UInt64;
   Ok: Boolean;
 begin
@@ -1177,10 +1192,10 @@ end;
 
 { RunStrictObject is the strict loop: bounds, declared names (additionalProperties for the rest), and the required
   mask. A small function of its own, since nested objects enter it directly. }
-function RunStrictObject(var E: TEvaluator; Pl: PObjectPlan; X: Int32): Boolean;
+function RunStrictObject(var E: TEvaluator; Pl: PObjectPlan; X: NativeInt): Boolean;
 var
   D: PDocument;
-  Count: Int32;
+  Count: NativeInt;
   Seen: UInt64;
   Ok: Boolean;
 begin
@@ -1198,13 +1213,13 @@ end;
 { ObjectVisitLookup looks each name up in the object, whose Count properties start at First (a plan with Lookup: the
   other properties need no visit). It gives the names seen. The search for a name reads the lengths of the property
   names first, which are in the headers of the tape. }
-function ObjectVisitLookup(var E: TEvaluator; Pl: PObjectPlan; First, Count: Int32; out Seen: UInt64): Boolean;
+function ObjectVisitLookup(var E: TEvaluator; Pl: PObjectPlan; First, Count: NativeInt; out Seen: UInt64): Boolean;
 var
   D: PDocument;
   Src: PDocBytes;
   C: PChild;
-  Bits: UInt64;
-  I, J, K, Len, Off: Int32;
+  Bits, H: UInt64;
+  I, J, K, Len, Off: NativeInt;
 begin
   D := E.D;
   Seen := 0;
@@ -1213,9 +1228,10 @@ begin
     Len := NameKeyAt(Pl^.Names.M.Keys, I)^.Length;
     for J := 0 to Count - 1 do begin
       K := First + 2 * J;
-      if Int32(WordAt(D^.Tape, K shl 1) shr 32) <> Len then
+      H := DocHeader(D^, K);
+      if HeaderCount(H) <> Len then
         Continue;
-      Src := StrBytes(D, K);
+      Src := HeaderBytes(D, H);
       Off := DocStrOffset(D^, K);
       if (NameWord(Src^, Off, Len) <> WordAt(Pl^.Names.M.Words, I))
         or ((Len > 8) and not TextEqualsBytes(TextAt(Pl^.Names.M.Names, I)^, Src^, Off, Len)) then
@@ -1233,12 +1249,12 @@ end;
 
 { ObjectVisitNames is for declared properties, and additionalProperties for the rest, over the Count properties that
   start at First. It gives the declared names seen. }
-function ObjectVisitNames(var E: TEvaluator; Pl: PObjectPlan; First, Count: Int32; out Seen: UInt64): Boolean;
+function ObjectVisitNames(var E: TEvaluator; Pl: PObjectPlan; First, Count: NativeInt; out Seen: UInt64): Boolean;
 var
   D: PDocument;
   Src: PDocBytes;
-  Bits, W: UInt64;
-  Hint, K, Stop, I, Off, Len: Int32;
+  Bits, W, H: UInt64;
+  Hint, K, Stop, I, Off, Len: NativeInt;
 begin
   D := E.D;
   Seen := 0;
@@ -1247,9 +1263,10 @@ begin
   K := First;
   Stop := K + 2 * Count;
   while K < Stop do begin
-    Src := StrBytes(D, K);
+    H := DocHeader(D^, K);
+    Src := HeaderBytes(D, H);
     Off := DocStrOffset(D^, K);
-    Len := DocCount(D^, K);
+    Len := HeaderCount(H);
     W := NameWord(Src^, Off, Len);
     if NamesAt(Pl^.Names, Hint, Len, W) and ((Len <= 8) or NameMapRest(Pl^.Names.M, Hint, Src^, Off, Len)) then begin
       I := Hint;
@@ -1269,9 +1286,9 @@ begin
 end;
 
 { AllOfType reports whether each of Count consecutive values is of the types in a mask. }
-function AllOfType(D: PDocument; First, Count: Int32; Types: Byte): Boolean;
+function AllOfType(D: PDocument; First, Count: NativeInt; Types: Byte): Boolean;
 var
-  I: Int32;
+  I: NativeInt;
   Bit: Byte;
 begin
   if (Types = AnyType) or (Count <= 0) then
@@ -1295,10 +1312,10 @@ begin
   Result := True;
 end;
 
-function RunArray(var E: TEvaluator; Pl: PArrayPlan; X: Int32): Boolean;
+function RunArray(var E: TEvaluator; Pl: PArrayPlan; X: NativeInt): Boolean;
 var
   D: PDocument;
-  Count, First, Prefix, I, Item: Int32;
+  Count, First, Prefix, I, Item: NativeInt;
   Length64, Matches: UInt64;
 begin
   D := E.D;
@@ -1352,10 +1369,10 @@ begin
 end;
 
 { RunLeaf evaluates a leaf's keywords: its value constraints, then those for the instance's type. }
-function RunLeaf(var E: TEvaluator; B: PBody; X: Int32): Boolean;
+function RunLeaf(var E: TEvaluator; B: PBody; X: NativeInt): Boolean;
 var
   D: PDocument;
-  I: Int32;
+  I: NativeInt;
   O: POp;
   Ok: Boolean;
 begin
@@ -1384,12 +1401,12 @@ begin
   end;
 end;
 
-function RunNumber(var E: TEvaluator; const Ops: TNumberOpArray; X: Int32): Boolean;
+function RunNumber(var E: TEvaluator; const Ops: TNumberOpArray; X: NativeInt): Boolean;
 var
   D: PDocument;
   Flag: Byte;
   Data: UInt64;
-  I: Int32;
+  I: NativeInt;
   Ok: Boolean;
 begin
   D := E.D;
@@ -1418,7 +1435,7 @@ end;
 
 { LengthOK decides minLength/maxLength, counting code points only when the byte length cannot decide (a code point
   is one to four bytes). }
-function LengthOK(D: PDocument; X: Int32; Min, Max: UInt64): Boolean;
+function LengthOK(D: PDocument; X: NativeInt; Min, Max: UInt64): Boolean;
 var
   Length64, Quarter, Chars: UInt64;
 begin
@@ -1437,25 +1454,27 @@ begin
   Result := (Chars >= Min) and (Chars <= Max);
 end;
 
-function RunString(var E: TEvaluator; const Ops: TStringOpArray; X: Int32): Boolean;
+function RunString(var E: TEvaluator; const Ops: TStringOpArray; X: NativeInt): Boolean;
 var
   D: PDocument;
   Src: PDocBytes;
   Op: PStringOp;
-  I, Off, Len: Int32;
+  H: UInt64;
+  I, Off, Len: NativeInt;
   Ok: Boolean;
 begin
   D := E.D;
-  Src := StrBytes(D, X);
+  H := DocHeader(D^, X);
+  Src := HeaderBytes(D, H);
   Off := DocStrOffset(D^, X);
-  Len := DocCount(D^, X);
+  Len := HeaderCount(H);
   for I := 0 to Length(Ops) - 1 do begin
     Op := StringOpAt(Ops, I);
     case Op^.Kind of
       StringLength:
         Ok := LengthOK(D, X, Op^.Min, Op^.Max);
       StringPattern:
-        Ok := PatternMatch(PatternAt(E.P^.Patterns, Op^.Pattern)^, Src^, Off, Len, DocStrASCII(D^, X));
+        Ok := PatternMatch(PatternAt(E.P^.Patterns, Op^.Pattern)^, Src^, Off, Len, HeaderStrASCII(H));
       StringFormat:
         Ok := CheckString(E, Op^.Format, Src^, Off, Len);
     else
@@ -1471,9 +1490,9 @@ end;
   The fused pass (the evaluation half of fused.go) }
 
 { MergedAllowed is the mask of the constant tests that allow the value. }
-function MergedAllowed(const P: TProgram; const M: TMergedTests; D: PDocument; V: Int32): UInt64;
+function MergedAllowed(const P: TProgram; const M: TMergedTests; D: PDocument; V: NativeInt): UInt64;
 var
-  I: Int32;
+  I: NativeInt;
 begin
   if DocKind(D^, V) = KindString then begin
     I := NamesFind(M.Strings, StrBytes(D, V)^, DocStrOffset(D^, V), DocCount(D^, V));
@@ -1487,9 +1506,9 @@ begin
   Result := 0;
 end;
 
-function TestHolds(const P: TProgram; const T: TValueTest; D: PDocument; V: Int32): Boolean;
+function TestHolds(const P: TProgram; const T: TValueTest; D: PDocument; V: NativeInt): Boolean;
 var
-  I: Int32;
+  I: NativeInt;
 begin
   if T.IsPattern then begin
     if DocKind(D^, V) = KindString then
@@ -1512,7 +1531,7 @@ end;
 
 function AllSeen(const S: TFusedPass; const Names: TUInt16Array): Boolean;
 var
-  K: Int32;
+  K: NativeInt;
   Name: UInt16;
 begin
   for K := 0 to Length(Names) - 1 do begin
@@ -1536,17 +1555,17 @@ begin
   S.AltFailed[Alt.Group] := S.AltFailed[Alt.Group] or (One64 shl Alt.Branch);
 end;
 
-function ApplyOpt(var E: TEvaluator; const C: TOptChild; V: Int32): Boolean; inline;
+function ApplyOpt(var E: TEvaluator; const C: TOptChild; V: NativeInt): Boolean; inline;
 begin
   Result := not C.IsSet or RunChild(E, C.Child, V);
 end;
 
 { ResolveUnknown resolves a name no entry knows against one branch's pattern and additional properties. Matched
   says whether it matched (the property is covered). The result is False when the application failed. }
-function ResolveUnknown(var E: TEvaluator; C: PFusedContributor; const Name: TBytes; Off, Len: Int32; Ascii: Boolean;
-  V: Int32; out Matched: Boolean): Boolean;
+function ResolveUnknown(var E: TEvaluator; C: PFusedContributor; const Name: TBytes; Off, Len: NativeInt;
+  Ascii: Boolean; V: NativeInt; out Matched: Boolean): Boolean;
 var
-  I: Int32;
+  I: NativeInt;
   Fp: PFusedPattern;
 begin
   Matched := False;
@@ -1570,12 +1589,12 @@ begin
   Result := True;
 end;
 
-function FusedEntryAt(var E: TEvaluator; F: PFusedObject; Index, V: Int32; var Pass: TFusedPass): Byte;
+function FusedEntryAt(var E: TEvaluator; F: PFusedObject; Index, V: NativeInt; var Pass: TFusedPass): Byte;
 var
   D: PDocument;
   Entry: PFusedEntry;
   Allowed, Keyed: UInt64;
-  T, I: Int32;
+  T, I: NativeInt;
   Holds: Boolean;
   App: PFusedApp;
   C: PFusedContributor;
@@ -1617,10 +1636,10 @@ begin
   end;
 end;
 
-function FusedUnknown(var E: TEvaluator; F: PFusedObject; const Name: TBytes; Off, Len: Int32; Ascii: Boolean;
-  V: Int32; var Pass: TFusedPass): Byte;
+function FusedUnknown(var E: TEvaluator; F: PFusedObject; const Name: TBytes; Off, Len: NativeInt; Ascii: Boolean;
+  V: NativeInt; var Pass: TFusedPass): Byte;
 var
-  I: Int32;
+  I: NativeInt;
   C: PFusedContributor;
   Matched, Ok: Boolean;
 begin
@@ -1653,7 +1672,7 @@ begin
   Result := (not C^.Min.IsSet or (Count >= C^.Min.N)) and (not C^.Max.IsSet or (Count <= C^.Max.N));
 end;
 
-function OnesCount64(V: UInt64): Int32;
+function OnesCount64(V: UInt64): NativeInt;
 begin
   Result := 0;
   while V <> 0 do begin
@@ -1662,13 +1681,13 @@ begin
   end;
 end;
 
-function RunFusedPass(var E: TEvaluator; F: PFusedObject; X: Int32; var Pass: TFusedPass): Boolean;
+function RunFusedPass(var E: TEvaluator; F: PFusedObject; X: NativeInt; var Pass: TFusedPass): Boolean;
 var
   D: PDocument;
   Src: PDocBytes;
-  Count, Pending, Hint, First, Ordinal, K, Index, Off, Len, I, J, V, Matches: Int32;
+  Count, Pending, Hint, First, Ordinal, K, Index, Off, Len, I, J, V, Matches: NativeInt;
   Covered, DeferredBeyond: TBitset;
-  Deferred, W, All, Survivors: UInt64;
+  Deferred, W, H, All, Survivors: UInt64;
   Outcome: Byte;
   Cover, Matched: Boolean;
   App: PFusedApp;
@@ -1696,9 +1715,10 @@ begin
   First := DocFirst(D^, X);
   for Ordinal := 0 to Count - 1 do begin
     K := First + 2 * Ordinal;
-    Src := StrBytes(D, K);
+    H := DocHeader(D^, K);
+    Src := HeaderBytes(D, H);
     Off := DocStrOffset(D^, K);
-    Len := DocCount(D^, K);
+    Len := HeaderCount(H);
     W := NameWord(Src^, Off, Len);
     if NamesAt(F^.Names, Hint, Len, W) and ((Len <= 8) or NameMapRest(F^.Names.M, Hint, Src^, Off, Len)) then begin
       Index := Hint;
@@ -1708,7 +1728,7 @@ begin
     if Index >= 0 then
       Outcome := FusedEntryAt(E, F, Index, K + 1, Pass)
     else
-      Outcome := FusedUnknown(E, F, Src^, Off, Len, DocStrASCII(D^, K), K + 1, Pass);
+      Outcome := FusedUnknown(E, F, Src^, Off, Len, HeaderStrASCII(H), K + 1, Pass);
     if Outcome and FusedFailed <> 0 then
       Exit(False);
     if (Outcome and FusedCover <> 0) and Tracked(Covered) then
@@ -1745,9 +1765,10 @@ begin
     end;
     Dec(Pending);
     K := First + 2 * Ordinal;
-    Src := StrBytes(D, K);
+    H := DocHeader(D^, K);
+    Src := HeaderBytes(D, H);
     Off := DocStrOffset(D^, K);
-    Len := DocCount(D^, K);
+    Len := HeaderCount(H);
     V := K + 1;
     Cover := False;
     Index := NamesFind(F^.Names, Src^, Off, Len);
@@ -1767,7 +1788,7 @@ begin
       for I := 0 to Length(F^.Contributors) - 1 do begin
         C := FusedContributorAt(F^.Contributors, I);
         if C^.Condition.IsSet and FusedApplies(Pass, C^.ThenMask, C^.ElsMask) then begin
-          if not ResolveUnknown(E, C, Src^, Off, Len, DocStrASCII(D^, K), V, Matched) then
+          if not ResolveUnknown(E, C, Src^, Off, Len, HeaderStrASCII(H), V, Matched) then
             Exit(False);
           Cover := Cover or Matched;
         end;
@@ -1823,10 +1844,10 @@ begin
   Result := True;
 end;
 
-function RunFused(var E: TEvaluator; F: PFusedObject; X: Int32): Boolean;
+function RunFused(var E: TEvaluator; F: PFusedObject; X: NativeInt): Boolean;
 var
   Pass: TFusedPass;
-  Mark: Int32;
+  Mark: NativeInt;
 begin
   if F^.HasFlat then
     Exit(RunStrictObject(E, @F^.Flat, X));

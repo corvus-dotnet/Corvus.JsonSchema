@@ -192,9 +192,13 @@ end;
 function FindFrom(const Ns: TNames; const Name: UTF8String; var Hint: Int32): Int32;
 var
   B: TBytes;
+  H: NativeInt;
 begin
   B := BytesOf(Name);
-  Result := NamesFindFrom(Ns, B, 0, Length(B), Hint);
+  { The hint of the names is as wide as an index (see Corvus.JsonSchema.Checked). }
+  H := Hint;
+  Result := NamesFindFrom(Ns, B, 0, Length(B), H);
+  Hint := H;
 end;
 
 procedure AddName(var List: TUTF8StringArray; const S: UTF8String);

@@ -88,7 +88,7 @@ function IsKnownKeyword(const Name: UTF8String): Boolean;
 
 { PatternAt is a pointer to A[I]: one comparison of the index with the array's length, then the element's address
   (see Corvus.JsonSchema.Checked). }
-function PatternAt(const A: TPatternArray; I: Int32): PPattern; inline;
+function PatternAt(const A: TPatternArray; I: NativeInt): PPattern; inline;
 
 implementation
 
@@ -101,9 +101,9 @@ uses
 {$PUSH}
 {$R-}
 
-function PatternAt(const A: TPatternArray; I: Int32): PPattern; inline;
+function PatternAt(const A: TPatternArray; I: NativeInt): PPattern; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := @A[I];
 end;

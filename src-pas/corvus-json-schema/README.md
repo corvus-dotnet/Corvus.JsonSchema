@@ -23,7 +23,10 @@ written to be Delphi-compatible, but it has not been compiled with Delphi.
   checking is on in every unit. On the paths every validation takes, the check is written out as one inline
   comparison in a small accessor function, because Free Pascal makes its own check with a call for each read. Those
   accessors are the only code compiled without the compiler's check, and a test calls each of them out of range.
-  The Go module likewise has no unchecked reads.
+  An index on those paths is a `NativeInt`, as wide as an array's length, so the comparison holds for every value
+  an index can have and no arithmetic is narrowed on the way to it. Integer arithmetic that is narrowed anywhere
+  else keeps the compiler's check, and integer overflow is not checked, as before. The Go module likewise has no
+  unchecked reads.
 
 ## Install
 
@@ -62,7 +65,7 @@ threads at once (see [Threads](#threads)). `CompileJsonSchema` takes the schema 
 
 Instances can be given as JSON text (a `UTF8String`, or a range of a `TBytes`), parsed into buffers the thread
 reuses, or as a `TJsonDocument` parsed once and validated any number of times. A document is a value that needs no
-`Free`.
+`Free`. Text of more than 2^31 - 1 bytes is refused as too large, in the way text that is not JSON is refused.
 
 ```pascal
 var
@@ -416,7 +419,8 @@ program that leaves memory unfreed.
   regex-free matchers and the results collector. `TestSchemaSide` also checks that the embedded metaschemas match
   the Go module's (`CORVUS_GO_MODULE`, or `../../src-go/corvus-json-schema`).
 - `TestChecked`: the array reads that make their own bounds check (`Corvus.JsonSchema.Checked` and the `At`
-  functions next to the array types) raise `ERangeError` for an index outside the array.
+  functions next to the array types) raise `ERangeError` for an index outside the array, one beyond 32 bits
+  included.
 - `TestEcmaRegex`: the pattern engine against answers recorded from V8 (the Go module's `v8_oracle.json`), and the
   patterns of the suite. It reads the suite from `CORVUS_JSON_SCHEMA_TEST_SUITE` when the submodule is elsewhere.
 - `TestDifferential`: the plans against the general evaluator on the jsonschema-benchmark corpora and on mutations

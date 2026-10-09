@@ -13,6 +13,11 @@ uses
 const
   { MaxDepth is the deepest nesting of arrays and objects a document may have. }
   MaxDepth = 1000;
+  { MaxDocumentSize is the most bytes of text a document may have, and the most words its tape may have (two for
+    each value). Text or a tape beyond it is refused as too large. Every index into a document is then below 2^31,
+    which the evaluator's index arithmetic relies on where a NativeInt is 32 bits wide: a sum of indexes cannot
+    wrap. The Go source has no such limit, its indexes being 64 bits wide everywhere it runs. }
+  MaxDocumentSize = High(Int32);
 
   { The kinds of a value. They are the evaluator's type bits, so a type test is one mask operation. }
   KindNull = 1;
@@ -95,6 +100,9 @@ type
 
     ErrMessage: UTF8String;
     ErrOffset: Int32;
+    { When not 0, the limit in place of MaxDocumentSize. It is for the tests of the limit, which cannot make a text
+      of two gigabytes: nothing else sets it. }
+    SizeLimit: Int32;
   end;
 
 { ParseDocument parses UTF-8 JSON text into D. The document keeps the array. Do not modify it afterwards. False,
@@ -111,30 +119,37 @@ function BytesOf(const S: UTF8String): TBytes;
 
 { Reading values (the evaluator's side). A value is the index of its node. }
 
-function DocKind(const D: TDocument; N: Int32): Byte; inline;
-function DocFlags(const D: TDocument; N: Int32): Byte; inline;
+function DocKind(const D: TDocument; N: NativeInt): Byte; inline;
+function DocFlags(const D: TDocument; N: NativeInt): Byte; inline;
 { DocCount is a container's item or property count, or a string's byte length. }
-function DocCount(const D: TDocument; N: Int32): Int32; inline;
-function DocData(const D: TDocument; N: Int32): UInt64; inline;
+function DocCount(const D: TDocument; N: NativeInt): Int32; inline;
+function DocData(const D: TDocument; N: NativeInt): UInt64; inline;
 { DocFirst is a container's first child. }
-function DocFirst(const D: TDocument; N: Int32): Int32; inline;
-function DocBoolean(const D: TDocument; N: Int32): Boolean; inline;
+function DocFirst(const D: TDocument; N: NativeInt): Int32; inline;
+function DocBoolean(const D: TDocument; N: NativeInt): Boolean; inline;
 { DocStrInText says a string's bytes are in D.Text (from DocData, for DocCount bytes), not in D.Source. A caller
   reads the bytes from whichever array that is: a string is never copied to be read. }
-function DocStrInText(const D: TDocument; N: Int32): Boolean; inline;
+function DocStrInText(const D: TDocument; N: NativeInt): Boolean; inline;
 { DocStrOffset is where a string's bytes start, in D.Text or D.Source. }
-function DocStrOffset(const D: TDocument; N: Int32): Int32; inline;
-function DocStrASCII(const D: TDocument; N: Int32): Boolean; inline;
+function DocStrOffset(const D: TDocument; N: NativeInt): Int32; inline;
+function DocStrASCII(const D: TDocument; N: NativeInt): Boolean; inline;
+{ DocHeader is a value's header word, for a loop that reads it once, as the Go source's str does. HeaderCount,
+  HeaderStrInText and HeaderStrASCII are then DocCount, DocStrInText and DocStrASCII of that value, with no further
+  read. }
+function DocHeader(const D: TDocument; N: NativeInt): UInt64; inline;
+function HeaderCount(H: UInt64): Int32; inline;
+function HeaderStrInText(H: UInt64): Boolean; inline;
+function HeaderStrASCII(H: UInt64): Boolean; inline;
 { DocStrEquals says whether a string value is these bytes. }
-function DocStrEquals(const D: TDocument; N: Int32; const Name: TBytes; Start, Len: Int32): Boolean;
+function DocStrEquals(const D: TDocument; N: NativeInt; const Name: TBytes; Start, Len: NativeInt): Boolean;
 { DocStrCopy is a copy of a string value's bytes, for the places that keep one. }
 function DocStrCopy(const D: TDocument; N: Int32): UTF8String;
 { DocProperty is the value of an object's property, or -1. }
-function DocProperty(const D: TDocument; AObject: Int32; const Name: UTF8String): Int32;
+function DocProperty(const D: TDocument; AObject: NativeInt; const Name: UTF8String): NativeInt;
 { DocFloat is a number's value as a Double. }
-function DocFloat(const D: TDocument; N: Int32): Double;
+function DocFloat(const D: TDocument; N: NativeInt): Double;
 { DocNumberStart and DocNumberEnd bound a number's text as written, in D.Source. }
-function DocNumberStart(const D: TDocument; N: Int32): Int32; inline;
+function DocNumberStart(const D: TDocument; N: NativeInt): Int32; inline;
 function DocNumberEnd(const D: TDocument; N: Int32): Int32;
 { NumberEnd is the end of the number whose text starts at J (already validated). }
 function NumberEnd(const B: TBytes; J: Int32): Int32;
@@ -143,11 +158,11 @@ function NumberEnd(const B: TBytes; J: Int32): Int32;
 
 { ParserIsValid reports whether B[0 .. Len-1] is one valid JSON value. It allocates nothing once the buffers have
   grown. }
-function ParserIsValid(var P: TParser; const B: TBytes; Len: Int32): Boolean;
+function ParserIsValid(var P: TParser; const B: TBytes; Len: NativeInt): Boolean;
 { ParserParseInto parses B[0 .. Len-1] into D, reusing its arrays and the parser's (no allocation once they have
   grown). The finished values are written straight into the document's tape. The document is valid until the next
   parse into it. }
-function ParserParseInto(var P: TParser; var D: TDocument; const B: TBytes; Len: Int32): Boolean;
+function ParserParseInto(var P: TParser; var D: TDocument; const B: TBytes; Len: NativeInt): Boolean;
 { ParserError is the error of the parse that has just failed. }
 function ParserError(const P: TParser): TParseError;
 { ParserRetainsTooMuch says the parser's buffers have grown beyond what is worth keeping between parses. }
@@ -157,18 +172,18 @@ function ParserRetainsTooMuch(const P: TParser): Boolean;
 
 { UInt32At is A[I]: one comparison of the index with the array's length, then the read (see
   Corvus.JsonSchema.Checked). }
-function UInt32At(const A: TUInt32Array; I: Int32): UInt32; inline;
+function UInt32At(const A: TUInt32Array; I: NativeInt): UInt32; inline;
 { LoadLE64 is the eight bytes at B[J .. J+7] as a little-endian word: one comparison with the array's length, then
   one load. An index beyond the array raises ERangeError like any other. }
-function LoadLE64(const B: TBytes; J: Int32): UInt64; inline;
+function LoadLE64(const B: TBytes; J: NativeInt): UInt64; inline;
 { LoadLE32 is the four bytes at B[J .. J+3] as a little-endian word. }
-function LoadLE32(const B: TBytes; J: Int32): UInt32; inline;
+function LoadLE32(const B: TBytes; J: NativeInt): UInt32; inline;
 { Utf8Valid says whether B[Start .. Stop-1] is valid UTF-8. }
 function Utf8Valid(const B: TBytes; Start, Stop: Int32): Boolean;
 { BytesEqual says whether two runs of bytes of one length are the same. }
-function BytesEqual(const A: TBytes; AStart: Int32; const B: TBytes; BStart, Len: Int32): Boolean;
+function BytesEqual(const A: TBytes; AStart: NativeInt; const B: TBytes; BStart, Len: NativeInt): Boolean;
 { StrHash hashes a string, eight bytes at a time. }
-function StrHash(const B: TBytes; Start, Len: Int32): UInt64;
+function StrHash(const B: TBytes; Start, Len: NativeInt): UInt64;
 { SortUInt64 sorts A[0 .. Count-1] in increasing order. }
 procedure SortUInt64(var A: TUInt64Array; Count: Int32);
 
@@ -207,7 +222,7 @@ var
 
 function BytesOf(const S: UTF8String): TBytes;
 var
-  N: Int32;
+  N: NativeInt;
 begin
   Result := nil;
   N := Length(S);
@@ -219,28 +234,28 @@ end;
 {$PUSH}
 {$R-}
 
-function UInt32At(const A: TUInt32Array; I: Int32): UInt32; inline;
+function UInt32At(const A: TUInt32Array; I: NativeInt): UInt32; inline;
 begin
-  if UInt32(I) >= UInt32(Length(A)) then
+  if NativeUInt(I) >= NativeUInt(Length(A)) then
     RangeFail;
   Result := A[I];
 end;
 
 {$POP}
 
-function LoadLE32(const B: TBytes; J: Int32): UInt32; inline;
+function LoadLE32(const B: TBytes; J: NativeInt): UInt32; inline;
 begin
   Result := Load32(B, J);
 end;
 
-function LoadLE64(const B: TBytes; J: Int32): UInt64; inline;
+function LoadLE64(const B: TBytes; J: NativeInt): UInt64; inline;
 begin
   Result := Load64(B, J);
 end;
 
-function BytesEqual(const A: TBytes; AStart: Int32; const B: TBytes; BStart, Len: Int32): Boolean;
+function BytesEqual(const A: TBytes; AStart: NativeInt; const B: TBytes; BStart, Len: NativeInt): Boolean;
 var
-  K: Int32;
+  K: NativeInt;
 begin
   { Both runs are checked once: the reads below are all within them. }
   CheckRun(A, AStart, Len);
@@ -268,9 +283,9 @@ begin
   Result := (H shl 5) or (H shr 59);
 end;
 
-function StrHash(const B: TBytes; Start, Len: Int32): UInt64;
+function StrHash(const B: TBytes; Start, Len: NativeInt): UInt64;
 var
-  I, K: Int32;
+  I, K: NativeInt;
   H, Tail: UInt64;
 begin
   { The multiplications wrap, as a hash's do. }
@@ -387,52 +402,72 @@ end;
 { --------------------------------------------------------------------------------------------------------------------
   Reading values (the evaluator's side). A value is the index of its node. }
 
-function DocKind(const D: TDocument; N: Int32): Byte; inline;
+function DocKind(const D: TDocument; N: NativeInt): Byte; inline;
 begin
   Result := Byte(WordAt(D.Tape, N shl 1) and $FF);
 end;
 
-function DocFlags(const D: TDocument; N: Int32): Byte; inline;
+function DocFlags(const D: TDocument; N: NativeInt): Byte; inline;
 begin
   Result := Byte((WordAt(D.Tape, N shl 1) shr 8) and $FF);
 end;
 
-function DocCount(const D: TDocument; N: Int32): Int32; inline;
+function DocCount(const D: TDocument; N: NativeInt): Int32; inline;
 begin
   Result := Int32(WordAt(D.Tape, N shl 1) shr 32);
 end;
 
-function DocData(const D: TDocument; N: Int32): UInt64; inline;
+function DocData(const D: TDocument; N: NativeInt): UInt64; inline;
 begin
   Result := WordAt(D.Tape, N shl 1 + 1);
 end;
 
-function DocFirst(const D: TDocument; N: Int32): Int32; inline;
+function DocFirst(const D: TDocument; N: NativeInt): Int32; inline;
 begin
   Result := Int32(WordAt(D.Tape, N shl 1 + 1) and $FFFFFFFF);
 end;
 
-function DocBoolean(const D: TDocument; N: Int32): Boolean; inline;
+function DocBoolean(const D: TDocument; N: NativeInt): Boolean; inline;
 begin
   Result := WordAt(D.Tape, N shl 1 + 1) <> 0;
 end;
 
-function DocStrInText(const D: TDocument; N: Int32): Boolean; inline;
+function DocStrInText(const D: TDocument; N: NativeInt): Boolean; inline;
 begin
   Result := WordAt(D.Tape, N shl 1) and (StrText shl 8) <> 0;
 end;
 
-function DocStrOffset(const D: TDocument; N: Int32): Int32; inline;
+function DocStrOffset(const D: TDocument; N: NativeInt): Int32; inline;
 begin
   Result := Int32(WordAt(D.Tape, N shl 1 + 1) and $FFFFFFFF);
 end;
 
-function DocStrASCII(const D: TDocument; N: Int32): Boolean; inline;
+function DocStrASCII(const D: TDocument; N: NativeInt): Boolean; inline;
 begin
   Result := WordAt(D.Tape, N shl 1) and (StrWide shl 8) = 0;
 end;
 
-function DocStrEquals(const D: TDocument; N: Int32; const Name: TBytes; Start, Len: Int32): Boolean;
+function DocHeader(const D: TDocument; N: NativeInt): UInt64; inline;
+begin
+  Result := WordAt(D.Tape, N shl 1);
+end;
+
+function HeaderCount(H: UInt64): Int32; inline;
+begin
+  Result := Int32(H shr 32);
+end;
+
+function HeaderStrInText(H: UInt64): Boolean; inline;
+begin
+  Result := H and (StrText shl 8) <> 0;
+end;
+
+function HeaderStrASCII(H: UInt64): Boolean; inline;
+begin
+  Result := H and (StrWide shl 8) = 0;
+end;
+
+function DocStrEquals(const D: TDocument; N: NativeInt; const Name: TBytes; Start, Len: NativeInt): Boolean;
 begin
   if DocCount(D, N) <> Len then
     Result := False
@@ -457,9 +492,9 @@ begin
     Move(D.Source[DocStrOffset(D, N)], Result[1], Len);
 end;
 
-function DocProperty(const D: TDocument; AObject: Int32; const Name: UTF8String): Int32;
+function DocProperty(const D: TDocument; AObject: NativeInt; const Name: UTF8String): NativeInt;
 var
-  K, I, J, Len, Off: Int32;
+  K, I, J, Len, Off: NativeInt;
   Same: Boolean;
 begin
   Len := Length(Name);
@@ -495,7 +530,7 @@ begin
   Result := -1;
 end;
 
-function DocFloat(const D: TDocument; N: Int32): Double;
+function DocFloat(const D: TDocument; N: NativeInt): Double;
 var
   V: UInt64;
 begin
@@ -508,7 +543,7 @@ begin
   end;
 end;
 
-function DocNumberStart(const D: TDocument; N: Int32): Int32; inline;
+function DocNumberStart(const D: TDocument; N: NativeInt): Int32; inline;
 begin
   Result := DocCount(D, N);
 end;
@@ -1442,11 +1477,36 @@ begin
   end;
 end;
 
-function ParserIsValid(var P: TParser; const B: TBytes; Len: Int32): Boolean;
+{ SizeLimit is the most bytes of text and words of tape the parser accepts. }
+function SizeLimit(const P: TParser): Int32; inline;
 begin
-  Reset(P, B, Len, True);
+  if P.SizeLimit > 0 then
+    Result := P.SizeLimit
+  else
+    Result := MaxDocumentSize;
+end;
+
+{ ParseText parses B[0 .. Len-1], refusing text and a tape beyond the size limit. The text is refused by its length,
+  before any of it is read. The tape is measured once the text has been parsed: text within the limit cannot make
+  the parser's counts overflow on the way (a value takes two words and, but for the outermost, at least two bytes
+  of text, so the words before the outermost value's own two are fewer than the bytes). }
+function ParseText(var P: TParser; const B: TBytes; Len: NativeInt; Validating: Boolean): Boolean;
+begin
+  if Len > SizeLimit(P) then begin
+    Reset(P, nil, 0, Validating);
+    Result := Fail(P, 'document too large', SizeLimit(P));
+    Exit;
+  end;
+  Reset(P, B, Len, Validating);
   Result := Parse(P);
   P.B := nil;
+  if Result and (P.NodesLen > SizeLimit(P) - 2) then
+    Result := Fail(P, 'document too large', P.I);
+end;
+
+function ParserIsValid(var P: TParser; const B: TBytes; Len: NativeInt): Boolean;
+begin
+  Result := ParseText(P, B, Len, True);
 end;
 
 { ParseNew parses B into a new document, exactly sized. }
@@ -1458,9 +1518,7 @@ begin
   D.Source := nil;
   D.Text := nil;
   D.Root := 0;
-  Reset(P, B, Length(B), False);
-  Result := Parse(P);
-  P.B := nil;
+  Result := ParseText(P, B, Length(B), False);
   if not Result then
     Exit;
   Root := P.NodesLen div 2;
@@ -1477,7 +1535,7 @@ begin
   D.Root := Root;
 end;
 
-function ParserParseInto(var P: TParser; var D: TDocument; const B: TBytes; Len: Int32): Boolean;
+function ParserParseInto(var P: TParser; var D: TDocument; const B: TBytes; Len: NativeInt): Boolean;
 var
   Nodes: TUInt64Array;
   Text: TBytes;
@@ -1489,9 +1547,7 @@ begin
   P.Text := D.Text;
   D.Tape := nil;
   D.Text := nil;
-  Reset(P, B, Len, False);
-  Result := Parse(P);
-  P.B := nil;
+  Result := ParseText(P, B, Len, False);
   if Result then begin
     D.Root := P.NodesLen div 2;
     if P.NodesLen + 2 > Length(P.Nodes) then
