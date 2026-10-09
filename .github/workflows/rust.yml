@@ -49,6 +49,12 @@ jobs:
         run: cargo clippy --all-targets --locked -- -D warnings
       - name: Test
         run: cargo test --locked
+      - name: Minimum Rust version
+        # The crate's rust-version must be a toolchain it builds with: everything above uses the pinned, newer one.
+        run: |
+          minimum=$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' Cargo.toml)
+          rustup toolchain install "$minimum" --profile minimal
+          cargo "+$minimum" check --lib --locked
       - name: Package
         # What crates-publish.yml publishes: the packaged LICENSE must match the repository's, and the crate must
         # build from its packaged sources alone.

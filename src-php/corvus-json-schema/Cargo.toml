@@ -2,7 +2,7 @@
 name = "corvus-json-schema-php"
 version = "0.1.2"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.89"
 description = "The corvus_json_schema PHP extension: the corvus-json-schema crate with PHP values read in place."
 license = "Apache-2.0"
 repository = "https://github.com/corvus-dotnet/Corvus.JsonSchema"

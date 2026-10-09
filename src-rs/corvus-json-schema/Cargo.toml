@@ -1,8 +1,8 @@
 [package]
 name = "corvus-json-schema"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.89"
 description = "A high-performance JSON Schema evaluator (draft 4 to 2020-12) with results collection and annotations, ported from the Corvus.Text.Json V5 runtime evaluator."
 license = "Apache-2.0"
 repository = "https://github.com/corvus-dotnet/Corvus.JsonSchema"

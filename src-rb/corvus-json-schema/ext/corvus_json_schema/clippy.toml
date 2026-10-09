@@ -1,0 +1,4 @@
+# Clippy suggests idioms by the minimum Rust version. The declared minimum (rust-version in Cargo.toml) was corrected
+# from 1.85 to 1.89 with no change to the source, so the lints stay at the level the source was written to. Raise this
+# when the source is next revised for the newer idioms.
+msrv = "1.85"
