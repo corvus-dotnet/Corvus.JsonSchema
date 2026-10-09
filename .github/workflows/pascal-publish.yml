@@ -1,0 +1,147 @@
+name: pascal-publish
+# Releases the Object Pascal package (src-pas/corvus-json-schema) when the JsonSchemaVersion in its public unit
+# (src/Corvus.JsonSchema.pas) has no tag yet. To release, bump JsonSchemaVersion (and add the version to the
+# package's VERSIONHISTORY.md) and merge. A merged pull request labelled no_release releases nothing
+# (.github/actions/no-release-label).
+#
+# Object Pascal has no package registry that this workflow publishes to. A release is the tag pas-v<version> and a
+# GitHub release of that tag with a source archive of the package's directory, as a .zip and as a .tar.gz, without
+# build output. The release is not marked as the repository's latest, which is the latest NuGet release. There is no
+# secret.
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. Its tag
+# filter ('[0-9]+.[0-9]+.[0-9]+*') has to match the whole tag name from a leading digit, so a tag that starts pas-v
+# cannot start it. The tag is also created with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-pas/corvus-json-schema/src/Corvus.JsonSchema.pas'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pascal-publish
+  cancel-in-progress: false
+
+env:
+  SUBDIR: src-pas/corvus-json-schema
+
+jobs:
+  version:
+    name: Version to release
+    permissions:
+      contents: read
+      pull-requests: read  # the merged pull request's labels (no_release)
+    # A manual run from another branch must not release that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      # The version to release, or empty when there is nothing to release.
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            src-pas/corvus-json-schema
+            .github/actions
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
+      - name: Check whether this version is tagged
+        id: check
+        # A merged pull request labelled no_release releases nothing (the other jobs need this step's output).
+        if: steps.label.outputs.no-release != 'true'
+        run: |
+          version=$(sed -n "s/^  JsonSchemaVersion = '\(.*\)';.*$/\1/p" "$SUBDIR/src/Corvus.JsonSchema.pas" | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No JsonSchemaVersion in $SUBDIR/src/Corvus.JsonSchema.pas."
+            exit 1
+          fi
+          grep -q "^## V$version$" "$SUBDIR/VERSIONHISTORY.md" \
+            || { echo "::error::VERSIONHISTORY.md has no V$version section."; exit 1; }
+          # ls-remote exits 2 when the remote has no such ref, and anything else is a failure to ask.
+          status=0
+          git ls-remote --exit-code --tags origin "refs/tags/pas-v$version" > /dev/null || status=$?
+          case "$status" in
+            0) echo "::notice::corvus-json-schema (Object Pascal) $version is tagged pas-v$version; nothing to do." ;;
+            2) echo "version=$version" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::Could not list the repository's tags."
+               exit 1 ;;
+          esac
+
+  test:
+    name: Test
+    needs: version
+    if: needs.version.outputs.version != ''
+    uses: ./.github/workflows/pascal.yml
+
+  release:
+    name: Release pas-v${{ needs.version.outputs.version }}
+    needs: [version, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create the release and its pas-v<version> tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            src-pas/corvus-json-schema
+      - name: Archive the package's source
+        # git archive writes the files of the commit and nothing else, so no build output can be in it. The files
+        # are under corvus-json-schema-<version>/ in both archives.
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          name="corvus-json-schema-pascal-$VERSION"
+          mkdir -p "$RUNNER_TEMP/release"
+          git archive --format=tar.gz --prefix="corvus-json-schema-$VERSION/" \
+            -o "$RUNNER_TEMP/release/$name.tar.gz" "HEAD:$SUBDIR"
+          git archive --format=zip --prefix="corvus-json-schema-$VERSION/" \
+            -o "$RUNNER_TEMP/release/$name.zip" "HEAD:$SUBDIR"
+          tar -tzf "$RUNNER_TEMP/release/$name.tar.gz" > "$RUNNER_TEMP/files.txt"
+          for file in README.md LICENSE VERSIONHISTORY.md src/Corvus.JsonSchema.pas src/corvus.inc \
+              tests/run-tests.ps1; do
+            grep -qxF "corvus-json-schema-$VERSION/$file" "$RUNNER_TEMP/files.txt" \
+              || { echo "::error::The archive has no $file."; exit 1; }
+          done
+          if grep -q "^corvus-json-schema-$VERSION/build/" "$RUNNER_TEMP/files.txt"; then
+            echo "::error::The archive has build output in it."
+            exit 1
+          fi
+          ls -l "$RUNNER_TEMP/release"
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          # The notes are the version's section of VERSIONHISTORY.md.
+          {
+            echo "The Corvus JSON Schema evaluator for Object Pascal, version $VERSION: the source of the package"
+            echo "(\`$SUBDIR\`), as a .zip and as a .tar.gz. See its README.md for how to use it."
+            echo
+            awk -v heading="## V$VERSION" '$0 == heading { on = 1; next } /^## V/ { on = 0 } on' \
+              "$SUBDIR/VERSIONHISTORY.md"
+          } > "$RUNNER_TEMP/notes.md"
+          # --latest=false: the repository's latest release stays the latest NuGet release.
+          gh release create "pas-v$VERSION" "$RUNNER_TEMP"/release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "corvus-json-schema for Object Pascal $VERSION" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            --latest=false
+          {
+            echo "### corvus-json-schema (Object Pascal) $VERSION is released"
+            echo
+            echo "Tagged $GITHUB_SHA as pas-v$VERSION."
+            echo "https://github.com/$GITHUB_REPOSITORY/releases/tag/pas-v$VERSION"
+          } >> "$GITHUB_STEP_SUMMARY"

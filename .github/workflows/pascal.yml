@@ -1,0 +1,166 @@
+name: pascal
+# The Object Pascal evaluator (src-pas/corvus-json-schema). pascal-publish.yml calls this workflow before it tags a
+# release.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-pas/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src-go/corvus-json-schema/metaschemas/**'
+    - 'src-go/corvus-json-schema/internal/ecmaregex/testdata/**'
+    - 'docs/JsonSchemaForPascal.md'
+    - '.github/workflows/pascal.yml'
+    - '.github/workflows/pascal-publish.yml'
+    - 'LICENSE'
+  pull_request:
+    paths:
+    - 'src-pas/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'src-go/corvus-json-schema/metaschemas/**'
+    - 'src-go/corvus-json-schema/internal/ecmaregex/testdata/**'
+    - 'docs/JsonSchemaForPascal.md'
+    - '.github/workflows/pascal.yml'
+    - '.github/workflows/pascal-publish.yml'
+    - 'LICENSE'
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Every platform, with Free Pascal 3.2.2, which is the compiler the package is built and tested with and the
+    # oldest it accepts. There is no lint job: Free Pascal has no formatter or linter that the source is held to, and
+    # the compiler's warnings are printed by the test script. The source is written to be Delphi-compatible, and
+    # nothing here compiles it with Delphi.
+    name: Build and test corvus-json-schema (Free Pascal 3.2.2, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+        working-directory: src-pas/corvus-json-schema
+    steps:
+      - name: Check out text files with LF line endings
+        # The tests compare the embedded metaschemas with the Go module's files byte for byte, and a checkout on
+        # Windows would otherwise give those files CRLF line endings.
+        working-directory: .
+        run: git config --global core.autocrlf input
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+          # Only what the package and its tests read (the repository's generated benchmark models have paths too
+          # long for Windows). The patterns are files and directories, so not in cone mode: the tests compare the
+          # embedded metaschemas with the Go module's, read the answers recorded from V8 that the Go module
+          # holds, and run the samples of the documentation page.
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /LICENSE
+            /src-pas/
+            /src-go/corvus-json-schema/metaschemas/
+            /src-go/corvus-json-schema/internal/ecmaregex/testdata/
+            /docs/JsonSchemaForPascal.md
+            /JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Check the checkout has what the tests read
+        # A test that compares with a file of the repository skips itself when the file is not there, as it must
+        # for a source archive of the package. Here the files have to be there.
+        working-directory: .
+        run: |
+          test -d JSON-Schema-Test-Suite/tests/draft2020-12
+          test -d JSON-Schema-Test-Suite/annotations/tests
+          test -f src-go/corvus-json-schema/metaschemas/draft2020-12/schema.json
+          test -f src-go/corvus-json-schema/internal/ecmaregex/testdata/v8_oracle.json
+          test -f docs/JsonSchemaForPascal.md
+      - name: Free Pascal (Ubuntu)
+        # The distribution's package, which is 3.2.2 on the runner's Ubuntu. The step fails if that changes, so that
+        # the version tested is known.
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fpc
+          version=$(fpc -iV)
+          if [ "$version" != 3.2.2 ]; then
+            echo "::error::The fpc package is Free Pascal $version, and the package is tested with 3.2.2."
+            exit 1
+          fi
+      - name: Free Pascal (macOS)
+        if: runner.os == 'macOS'
+        run: brew install fpc
+      - name: Free Pascal (Windows)
+        # Chocolatey's package runs the official installer of 3.2.2 for Windows, which has the 32-bit compiler and
+        # the cross compiler to 64-bit Windows (ppcrossx64). The tests are built for 64-bit Windows (-Px86_64).
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install freepascal --version=3.2.2 --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # The package installs into the Chocolatey tools location, which is C:\tools unless the variable says so.
+          $tools = if ($env:ChocolateyToolsLocation) { $env:ChocolateyToolsLocation } else { 'C:\tools' }
+          $fpc = Get-ChildItem -Path (Join-Path $tools 'freepascal') -Recurse -Filter fpc.exe `
+            -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -eq $fpc) {
+            Write-Host "::error::fpc.exe is not under $tools\freepascal."
+            exit 1
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value $fpc.DirectoryName
+          Add-Content -Path $env:GITHUB_ENV -Value 'FPC_TARGET=-Px86_64'
+      - name: Free Pascal version and target
+        run: |
+          echo "Free Pascal $(fpc -iV), target $(fpc $FPC_TARGET -iTP)-$(fpc $FPC_TARGET -iTO)"
+          if [ "$RUNNER_OS" = Windows ] && [ "$(fpc $FPC_TARGET -iTP)" != x86_64 ]; then
+            echo "::error::The compiler does not target x86_64."
+            exit 1
+          fi
+      - name: Check the package's LICENSE matches the repository's
+        run: cmp ../../LICENSE LICENSE
+      - name: Check the version has an entry in VERSIONHISTORY.md
+        run: |
+          version=$(sed -n "s/^  JsonSchemaVersion = '\(.*\)';.*$/\1/p" src/Corvus.JsonSchema.pas | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No JsonSchemaVersion in src/Corvus.JsonSchema.pas."
+            exit 1
+          fi
+          grep -q "^## V$version$" VERSIONHISTORY.md \
+            || { echo "::error::VERSIONHISTORY.md has no V$version section."; exit 1; }
+      - name: Test
+        # Builds every test program and runs them: the whole JSON-Schema-Test-Suite, fail-fast and through
+        # collectors, the annotation suite, the allocation test, the pattern engine against V8's answers, and the
+        # samples of the README and of the documentation page (TestReadme).
+        shell: pwsh
+        run: |
+          $arguments = @{}
+          if ($env:FPC_TARGET) {
+            $arguments.Options = @('-O3', $env:FPC_TARGET)
+          }
+          & ./tests/run-tests.ps1 @arguments 2>&1 | Tee-Object -FilePath (Join-Path $env:RUNNER_TEMP 'pascal-tests.log')
+          exit $LASTEXITCODE
+      - name: Check what ran
+        # The script shows the last lines each program wrote. The suite has to have run, and the samples of the
+        # documentation page have to have been checked. The differential test needs the jsonschema-benchmark
+        # corpora, which are not here: it skips itself, and this says so.
+        run: |
+          log="$RUNNER_TEMP/pascal-tests.log"
+          grep -q "^All [0-9]* test programs passed\.$" "$log" \
+            || { echo "::error::The test script did not report that every program passed."; exit 1; }
+          if grep -q "JsonSchemaForPascal.md: skipped" "$log"; then
+            echo "::error::TestReadme did not find docs/JsonSchemaForPascal.md."
+            exit 1
+          fi
+          if grep -q "no Go module at" "$log"; then
+            echo "::error::TestSchemaSide did not find the Go module's metaschemas."
+            exit 1
+          fi
+          if grep -q "set JSONSCHEMA_BENCHMARK" "$log"; then
+            echo "::notice::TestDifferential was skipped: it needs a checkout of jsonschema-benchmark (JSONSCHEMA_BENCHMARK), which this workflow does not have."
+          fi

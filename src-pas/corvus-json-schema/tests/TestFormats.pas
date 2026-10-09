@@ -22,10 +22,6 @@ program TestFormats;
 // hexadecimal and the expected answer (1 or 0), separated by tabs. Each line of a numbers file is a format kind, the
 // number's flag, its data in hexadecimal, the expected answer and the number as it was written.
 //
-// When the program is built with CORVUS_STUBS defined, the regular expression unit is the stand-in of tests/stubs,
-// which reads no pattern. The cases of the regex format then need the real unit: they are not run, and they are
-// counted apart.
-//
 // The program prints each failure and the final counts, and exits with a status other than zero when anything
 // failed.
 
@@ -333,7 +329,7 @@ end;
 type
   TTally = record
     Name: UTF8String;
-    Run, Passed, Skipped, Failed, NeedReal: Int32;
+    Run, Passed, Skipped, Failed: Int32;
   end;
 
 var
@@ -344,7 +340,6 @@ var
   SuitePassed: Int32 = 0;
   SuiteSkipped: Int32 = 0;
   SuiteFailed: Int32 = 0;
-  SuiteNeedReal: Int32 = 0;
   SuiteNotFormat: Int32 = 0;
   SuiteFiles: Int32 = 0;
   // The other checks.
@@ -352,7 +347,6 @@ var
   Failures: Int32 = 0;
   VectorsRun: Int32 = 0;
   VectorsFailed: Int32 = 0;
-  VectorsNeedReal: Int32 = 0;
 
 function TallyOf(const Name: UTF8String): Int32;
 var
@@ -371,7 +365,6 @@ begin
   Tallies[Result].Passed := 0;
   Tallies[Result].Skipped := 0;
   Tallies[Result].Failed := 0;
-  Tallies[Result].NeedReal := 0;
 end;
 
 procedure Check(const Name: UTF8String; Got, Want: Boolean);
@@ -485,14 +478,6 @@ begin
       Kind := FormatKindOf(FormatName, Dialect);
       T := TallyOf(FormatName);
       Expected := R.Nodes[Valid].Kind = JsonTrue;
-      {$IFDEF CORVUS_STUBS}
-      if (Kind = FormatKindRegex) and (R.Nodes[Data].Kind = JsonString) then begin
-        Inc(SuiteNeedReal);
-        Inc(Tallies[T].NeedReal);
-        Test := R.Nodes[Test].NextSibling;
-        Continue;
-      end;
-      {$ENDIF}
       // Data that is not a string is valid for every format, and FormatCheckString accepts every string for a format
       // the dialect does not know and for a numeric format.
       if R.Nodes[Data].Kind = JsonString then Actual := CheckKind(Kind, R.Nodes[Data].Text, Legacy)
@@ -754,12 +739,6 @@ begin
     Want := ToInt(Field(Bytes, Pos)) = 1;
     while (Pos < Length(Bytes)) and (Bytes[Pos] <> 10) do Inc(Pos);
     Inc(Pos);
-    {$IFDEF CORVUS_STUBS}
-    if Kind = FormatKindRegex then begin
-      Inc(VectorsNeedReal);
-      Continue;
-    end;
-    {$ENDIF}
     Got := CheckKind(Kind, Text, Legacy);
     Inc(VectorsRun);
     if Got <> Want then begin
@@ -899,18 +878,18 @@ begin
   if Length(NumbersPath) <> 0 then RunNumbers(NumbersPath);
 
   WriteLn;
-  WriteLn('JSON-Schema-Test-Suite format cases, by format (run, passed, skipped, failed, needing the real unit):');
+  WriteLn('JSON-Schema-Test-Suite format cases, by format (run, passed, skipped, failed):');
   for I := 0 to High(Tallies) do begin
     WriteLn('  ', Tallies[I].Name, ': ', Tallies[I].Run, ' run, ', Tallies[I].Passed, ' passed, ',
-      Tallies[I].Skipped, ' skipped, ', Tallies[I].Failed, ' failed, ', Tallies[I].NeedReal, ' need the real unit');
+      Tallies[I].Skipped, ' skipped, ', Tallies[I].Failed, ' failed');
   end;
   WriteLn('JSON-Schema-Test-Suite: ', SuiteFiles, ' files, ', SuiteTotal, ' cases, ', SuiteRun, ' run, ',
-    SuitePassed, ' passed, ', SuiteSkipped, ' skipped (leap second), ', SuiteFailed, ' failed, ', SuiteNeedReal,
-    ' need the real regular expression unit, ', SuiteNotFormat, ' not format cases');
+    SuitePassed, ' passed, ', SuiteSkipped, ' skipped (leap second), ', SuiteFailed, ' failed, ', SuiteNotFormat,
+    ' not format cases');
   WriteLn('Other checks: ', Checks, ' run, ', Checks - Failures, ' passed, ', Failures, ' failed');
   if (Length(VectorsPath) <> 0) or (Length(NumbersPath) <> 0) then begin
     WriteLn('Answers of the Go source: ', VectorsRun, ' run, ', VectorsRun - VectorsFailed, ' passed, ',
-      VectorsFailed, ' failed, ', VectorsNeedReal, ' need the real regular expression unit');
+      VectorsFailed, ' failed');
   end;
   if SuiteTotal = 0 then begin
     WriteLn('FAIL: no JSON-Schema-Test-Suite cases ran (is the suite at ', SuiteRoot, '?)');

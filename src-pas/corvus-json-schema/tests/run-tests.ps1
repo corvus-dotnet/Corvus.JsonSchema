@@ -15,6 +15,9 @@ TestDifferential needs a checkout of https://github.com/sourcemeta-research/json
 JSONSCHEMA_BENCHMARK, and reports that it was skipped without one. TestDoubleCases and TestStringCases read cases
 that a reference implementation wrote: they are built always, and run only when their file is given.
 
+TestReadme runs the samples of README.md and of ../../docs/JsonSchemaForPascal.md, and fails when a sample in either
+document is not in the program.
+
 .EXAMPLE
 pwsh tests/run-tests.ps1
 pwsh tests/run-tests.ps1 -Fpc ~/sdk/fpc-3.2.2/bin/fpc
@@ -72,6 +75,7 @@ $programs = [ordered]@{
     TestResults      = @()
     TestApi          = @()
     TestAllocations  = @()
+    TestReadme       = @()
     TestDifferential = @()
     TestDoubleCases  = $null
     TestStringCases  = $null
