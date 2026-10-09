@@ -11,7 +11,7 @@ standalone evaluator.
   validated without creating Ruby objects for it.
 - **Precompiled**: native gems for Linux (x86_64 and aarch64, glibc and musl), macOS (x86_64 and arm64) and Windows
   (x64), for Ruby 3.3, 3.4 and 4.0. On other platforms the source gem builds the extension, which needs a Rust
-  toolchain (1.85 or later) and libclang.
+  toolchain (1.89 or later) and libclang.
 
 ## Install
 

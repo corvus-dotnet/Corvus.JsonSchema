@@ -2,7 +2,7 @@
 name = "corvus_json_schema"
 version = "0.1.1"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.89"
 description = "The native extension of the corvus_json_schema gem: the corvus-json-schema crate, reading Ruby values in place."
 license = "Apache-2.0"
 publish = false

@@ -2,6 +2,14 @@
 
 The version history of the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.5
+
+V0.1.5 corrects the minimum Rust version the crate declares. There are no code or API changes.
+
+### Bug fixes
+
+- **The crate declares Rust 1.89 as its minimum (`rust-version`), not 1.85.** Versions 0.1.0 to 0.1.4 declared 1.85 but do not build with it: the `regress` dependency (0.12) uses `let` chains, which need Rust 1.88, and the crate's own source needs 1.89. With the declared version, Cargo chose these versions for a 1.85 toolchain and the build then failed in `regress` with "`let` expressions in this position are unstable". The crate's CI now builds it with the version it declares.
+
 ## V0.1.4
 
 V0.1.4 fixes wrong validation results for one form of pattern. There are no API changes. Versions 0.1.0 to 0.1.3 are affected.
