@@ -957,9 +957,8 @@ function visit_names(e::Evaluator, pl::ObjectPlan, first_child::Int, n::Int)::Bo
     k = first_child
     stop = k + 2n
     while k < stop
-        i = find_next(ns, str(d, k), hint)
+        i, hint = find_next(ns, str(d, k), hint)
         if i >= 0
-            hint = i + 1
             seen |= UInt64(1) << (i & 63)
             @run_child(e, d, children[i+1], k + 1) || return false
         elseif pl.has_additional && !@run_child(e, d, pl.additional, k + 1)
@@ -998,9 +997,8 @@ function visit_general(e::Evaluator, pl::ObjectPlan, x::Int)::Tuple{UInt64,Bool}
     while k < stop
         name = str(d, k)
         matched = false
-        i = find_next(ns, name, hint)
+        i, hint = find_next(ns, name, hint)
         if i >= 0
-            hint = i + 1
             seen |= UInt64(1) << (i & 63)
             # A name only required (or a dependency) mentions is undeclared: patterns, else additionalProperties.
             if i < pl.declared

@@ -50,21 +50,25 @@ name_bytes(name::String) = C.Bytes(Vector{UInt8}(name))
             for start in 0:length(declared)
                 hint = start
                 for n in order
-                    got = C.find_next(ns, name_bytes(n), hint)
+                    got, hint = C.find_next(ns, name_bytes(n), hint)
                     @test got == findfirst(==(n), declared) - 1
-                    hint = got + 1
                 end
             end
         end
-        @test C.find_next(ns, name_bytes("other"), 0) == -1
-        @test C.find_next(ns, name_bytes("names"), 2) == -1
-        # Sorted successors: after "name" (index 0) comes "repository" (2), after it "version" (1), then none.
-        @test ns.sorted_next == UInt32[3, 2, C.NO_NAME, 1, 0]
+        @test C.find_next(ns, name_bytes("other"), 0)[1] == -1
+        @test C.find_next(ns, name_bytes("names"), 2)[1] == -1
+        # The hint follows names found in the declared order, with or without gaps, and is given up for the rest of
+        # an object at a name found before the one expected.
+        @test C.find_next(ns, name_bytes("name"), 0) == (0, 1)
+        @test C.find_next(ns, name_bytes("repository"), 1) == (2, 3)
+        @test C.find_next(ns, name_bytes("version"), 3) == (1, -1)
+        @test C.find_next(ns, name_bytes("alias"), -1) == (3, -1)
+        @test C.find_next(ns, name_bytes("other"), 2) == (-1, 2)
         many = ["property-number-" * lpad((i * 7) % 40, 2, '0') for i in 0:39]
         large = C.Names(many)
         for start in 0:13:length(many)
-            @test all(C.find_next(large, name_bytes(n), start) == i - 1 for (i, n) in enumerate(many))
-            @test C.find_next(large, name_bytes("property-number-40"), start) == -1
+            @test all(C.find_next(large, name_bytes(n), start)[1] == i - 1 for (i, n) in enumerate(many))
+            @test C.find_next(large, name_bytes("property-number-40"), start)[1] == -1
         end
     end
 
@@ -80,7 +84,7 @@ name_bytes(name::String) = C.Bytes(Vector{UInt8}(name))
             name = C.Bytes(b, before, ncodeunits(n))
             expected = i <= length(list) ? i - 1 : -1
             @test C.find(ns, name) == expected
-            @test all(C.find_next(ns, name, hint) == expected for hint in (0, max(i - 1, 0), length(list)))
+            @test all(C.find_next(ns, name, hint)[1] == expected for hint in (-1, 0, max(i - 1, 0), length(list)))
             @test C.name_word(name) == C.name_word(C.Bytes(Vector{UInt8}(n)))
         end
         @test_throws BoundsError C.name_word(C.Bytes(UInt8[1, 2, 3], -1, 2))
@@ -95,9 +99,9 @@ name_bytes(name::String) = C.Bytes(Vector{UInt8}(name))
         ns = C.Names(["a", "b", "c"])
         for start in 0:2
             for (i, n) in enumerate(["a", "b", "c"])
-                @test C.find_next(ns, name_bytes(n), start) == i - 1
+                @test C.find_next(ns, name_bytes(n), start)[1] == i - 1
             end
-            @test C.find_next(ns, name_bytes("d"), start) == -1
+            @test C.find_next(ns, name_bytes("d"), start)[1] == -1
         end
     end
 

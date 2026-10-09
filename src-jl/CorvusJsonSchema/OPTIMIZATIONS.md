@@ -71,13 +71,13 @@ with the reason.
 - **Small objects probed by name** (`visit_lookup`, `LOOKUP_NAMES`, `LOOKUP_BUDGET`, `lookup_limit`). A plan of at
   most 4 names and no `additionalProperties` looks each name up in the instance when the instance's properties
   times the names is at most 24, comparing a name's length from its header, then its word, then its text.
-- **Name lookup** (`names.jl`, the C# `Utf8NameMap`). A set of the lengths the names have settles most misses with
-  one test (`Names.lengths`, `length_bit`). A name's key is its length, its first eight bytes as a word and, beyond
+- **Name lookup** (`names.jl`, the C# `Utf8NameMap`). A set of the lengths the names have, modulo 64, settles most
+  misses of a small set with one test (`Names.lengths`, `length_bit`). A name's key is its length, its first eight bytes as a word and, beyond
   eight bytes, its second word (`NameKey`, `name_word`, `second_word`), which is the whole name up to sixteen
   bytes. A longer name has only the bytes after its first sixteen compared, a word at a time (`rest_equal`). The
   loops try the name after the previous match first, in the loop itself (`find_next` with `name_at` and
-  `name_rest`), then the next name in sorted order (`Names.sorted_next` in `find_after`), then a hash table from
-  the key to the index (`Names.table`, `name_hash`). The table has four to eight slots for each name and its multiplier is the one of 24 that leaves the
+  `name_rest`), for as long as the object's names come in the schema's order (see Measured 5), then a hash table
+  from the key to the index (`Names.table`, `name_hash`, `find_key`). The table has four to eight slots for each name and its multiplier is the one of 24 that leaves the
   fewest names away from their first slot (`fill_table!`, `NAME_HASH_MULTIPLIERS`), so a search is one
   multiplication and one read to the index. A set of more than `MAX_TABLE_NAMES` names is a `Dict`
   (`Names.is_large`).
@@ -412,6 +412,17 @@ differently.
    in the evaluator for the one caller that goes on to dependencies. 0.982 (0.927 to 1.037). Instructions per pass
    over 8 corpora: 0.959 (yamllint 0.886).
 
+5. **The expected name given up for an object whose names are not in the schema's order** (`find_next`,
+   `find_key`, `length_bit`). Counting what each instruction of the property loop ran showed the expected name to
+   be the name for one property in six of one corpus (jshintrc), and the names of most corpora to come in an order
+   of their own. Each test that failed went on to the test of the length set, the test of the next name in sorted
+   order and then the table. Now a name found before the one expected sets the hint to -1 for the rest of the
+   object, which fails the test of the expected name at its first comparison. A name found after the one expected
+   keeps the hint, so an instance that lists a subset of the properties in the schema's order still has each name
+   found by one comparison. The sorted-order test is gone (`Names.sorted_next`): the table costs no more than it
+   did and finds every name. The length set is by length modulo 64, which is one bit test. 0.981 (0.887 to
+   1.061). Instructions per pass over all 37: 0.971 (cypress 0.896, stale 0.910, jshintrc 0.919).
+
 The Go module's ten measured changes are techniques too. Its figures are for Go and are not repeated here. This is
 what this port's source has for each.
 
@@ -422,12 +433,12 @@ what this port's source has for each.
    child with keywords.
 3. **The expected name tested in the property loops.** Present. `find_next` is inlined into `visit_names`,
    `visit_general` and `run_fused_pass` with `name_at` and `name_rest`, the name's length and word are side by side
-   in `Names.keys`, and `find_after` is the call.
+   in `Names.keys`, and `find_key` is the call.
 4. **Names found through a hash of their key.** Present, in the form the Go module kept (`Names.table`,
    `name_hash`, see Name lookup under Done).
-5. **The search of the name table written out in its two callers.** Present. `find` and `find_after` each have the
-   probe loop in them, and a name over sixteen bytes or a set held in a `Dict` goes to `find_long` or
-   `find_after_long`.
+5. **The search of the name table written out in its two callers.** Not in that form. The probe loop is one
+   function that takes a key (`find_key`), which `find` calls and the compiler puts into the property loops, and a
+   name over sixteen bytes or a set held in a `Dict` goes to `find_long`.
 6. **Values entered through one function, and a strict object's loop called from it.** Present. `@run` is
    `enter_child` on the node's own child (`Evaluator.selfs`), a node with a fused plan has a shape of its own
    (`SHAPE_FUSED`), `enter_child` calls `visit_lookup` or `visit_names` for a strict object itself, and a child
@@ -453,7 +464,7 @@ result does not decide a Julia one.
    `visit_names` is one loop.
 4. **The expected name's word read from the text in place.** The name is taken as a `Bytes` first (`str`), then
    `name_word` reads it. A `Bytes` is three values in registers here, not an object.
-5. **The sorted-order prediction tested in the loops.** It is in `find_after`, not in the loops.
+5. **The sorted-order prediction tested in the loops.** There is no sorted-order prediction any more (Measured 5).
 6. **A pointer to the node's keywords in the child.** `Child` is eight bytes and the body is read through
    `Evaluator.bodies` in `enter_child`.
 7. **`visit_names` and the array item loop over a slice of the tape.** `visit_names` and the item loop of
