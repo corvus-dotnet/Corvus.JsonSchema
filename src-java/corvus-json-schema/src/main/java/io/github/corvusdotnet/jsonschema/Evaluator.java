@@ -1173,14 +1173,23 @@ final class Evaluator {
             }
         }
         if (n.not >= 0) {
-            // Not elided, never contributes results or evaluated properties/items.
+            // Not elided, never contributes results or evaluated properties/items. A not on an in-place cycle is
+            // under the depth guard, like every other in-place applicator.
+            int notTarget = collect ? n.not : p.fastTarget[n.not];
+            boolean guarded = nodes[notTarget].inPlaceCycle;
             boolean inner;
-            if (collect) {
+            if (guarded && !enterInPlace()) {
+                guarded = false;
+                inner = false;
+            } else if (collect) {
                 c.beginChildContext("not", nodes[n.not].pointer, null);
                 inner = evalNode(n.not, x, -1);
                 c.popChildContext();
             } else {
-                inner = evalNode(p.fastTarget[n.not], x, -1);
+                inner = evalNode(notTarget, x, -1);
+            }
+            if (guarded) {
+                leaveInPlace();
             }
             ok &= check(!inner, inner ? MATCHED_NOT : DID_NOT_MATCH_NOT, null, "not");
             if (!ok && !collect) {

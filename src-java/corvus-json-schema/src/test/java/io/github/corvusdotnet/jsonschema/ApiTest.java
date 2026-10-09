@@ -72,12 +72,56 @@ class ApiTest {
         assertTrue(v.isValid("7"));
     }
 
+    /**
+     * A not whose subschema leads back to the schema it is in recurses in place like any other applicator. It stops
+     * at the maximum depth: validate() and evaluate() throw, and isValid() reports the instance as invalid.
+     * (Evaluating not went around the depth guard, so the first of these schemas overflowed the stack, and for the
+     * others the not turned the abandoned evaluation's false into true.)
+     */
+    @Test
+    void notOnAnInPlaceCycleStopsAtTheMaximumDepth() {
+        String looping = "{\"allOf\": [{\"$ref\": \"#/$defs/loop\"}]}";
+        String[] schemas = {
+            "{\"not\": {\"$ref\": \"#\"}}",
+            "{\"not\": {\"not\": {\"$ref\": \"#\"}}}",
+            "{\"type\": \"integer\", \"not\": {\"$ref\": \"#\"}}",
+            "{\"allOf\": [{\"not\": {\"$ref\": \"#\"}}]}",
+            "{\"$defs\": {\"a\": {\"not\": {\"$ref\": \"#/$defs/b\"}}, \"b\": {\"not\": {\"$ref\": \"#/$defs/a\"}}}, "
+                    + "\"$ref\": \"#/$defs/a\"}",
+            "{\"$defs\": {\"loop\": " + looping + "}, \"not\": {\"$ref\": \"#/$defs/loop\"}}",
+            "{\"$defs\": {\"loop\": " + looping + "}, \"not\": {\"not\": {\"$ref\": \"#/$defs/loop\"}}}",
+            "{\"$defs\": {\"loop\": " + looping + "}, \"properties\": {\"a\": {\"not\": {\"$ref\": \"#/$defs/loop\"}}}}",
+            "{\"unevaluatedProperties\": false, \"not\": {\"$ref\": \"#\"}}",
+        };
+        String[] instances = {"1", "\"a\"", "{\"a\": 1}", "[1]"};
+        for (int s = 0; s < schemas.length; s++) {
+            Validator v = Validator.compile(schemas[s], CompileOptions.builder().maxDepth(16).build());
+            for (String instance : instances) {
+                // Only an object with the property reaches the loop of the eighth schema, and anything but an
+                // integer fails the type of the third before its not is reached, when failing fast.
+                if (s == 7 && !instance.startsWith("{") || s == 2 && !instance.equals("1")) {
+                    continue;
+                }
+                String what = schemas[s] + " with " + instance;
+                JsonDocument document = JsonDocument.parse(instance);
+                assertFalse(v.isValid(instance), what);
+                assertFalse(v.isValid(document), what);
+                assertThrows(SchemaEvaluationDepthException.class, () -> v.validate(document), what);
+                for (ResultsLevel level : ResultsLevel.values()) {
+                    assertThrows(SchemaEvaluationDepthException.class,
+                            () -> v.evaluate(document, JsonSchemaResultsCollector.create(level)), what);
+                }
+            }
+        }
+    }
+
     @Test
     void recursionBeyondTheMaximumDepth() {
-        // anyOf recovers through its true branch, so the instance is valid, but validate() reports the depth.
+        // anyOf would recover through its true branch, but an evaluation that went beyond the maximum depth is not
+        // valid, whatever it came to: isValid() says so, and validate() reports the depth.
         Validator v = Validator.compile("{\"$defs\": {\"a\": {\"anyOf\": [{\"$ref\": \"#/$defs/a\"}, true]}}, "
                 + "\"$ref\": \"#/$defs/a\"}", CompileOptions.builder().maxDepth(4).build());
-        assertTrue(v.isValid("1"));
+        assertFalse(v.isValid("1"));
         Validator loop = Validator.compile("{\"$defs\": {\"a\": {\"allOf\": [{\"$ref\": \"#/$defs/a\"}]}}, "
                 + "\"$ref\": \"#/$defs/a\"}", CompileOptions.builder().maxDepth(4).build());
         assertFalse(loop.isValid("1"));

@@ -1721,7 +1721,8 @@ final class CodeGen {
                 branches(n.oneOf, n.oneOfDiscriminator, true);
             }
             if (n.not >= 0) {
-                call(n.not, X, false);
+                // Under the depth guard, like every other in-place applicator: a not can be part of a cycle too.
+                call(n.not, X);
                 returnFalseIfNonZero();
             }
             if (n.ifNode >= 0 && (n.thenNode >= 0 && !isTrue(n.thenNode) || n.elseNode >= 0 && !isTrue(n.elseNode))) {

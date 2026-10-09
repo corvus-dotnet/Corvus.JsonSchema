@@ -829,7 +829,8 @@ function run_op(e::Evaluator, o::Op, x::Int)::Bool
         end
         return matched == 1
     elseif k == OP_NOT
-        return !@run(e, o.node, x)
+        # Under the depth guard, like every other in-place applicator: a not can be part of a cycle too.
+        return !run_in_place(e, o.node, x)
     elseif k == OP_DYNAMIC_REF
         return run_in_place(e, target(e.p, resolve_dynamic(e, o.dynamic)), x)
     end

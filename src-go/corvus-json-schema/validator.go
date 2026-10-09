@@ -106,14 +106,15 @@ func stringBytes(s string) []byte {
 }
 
 // run validates a document, failing fast. It reports the result and whether evaluation recursed in place beyond the
-// maximum depth.
+// maximum depth. An evaluation that did is not valid, whatever it came to: the branch that was abandoned counts as
+// false, which a not above it turns into true.
 func (v *Validator) run(instance *Document, s *scratch) (ok, depthExceeded bool) {
 	e := evaluator{p: v.program, d: instance, v: v, s: s}
 	ok = e.validate()
 	if s == nil && e.s != nil {
 		v.release(e.s)
 	}
-	return ok, e.depthExceeded
+	return ok && !e.depthExceeded, e.depthExceeded
 }
 
 // IsValid reports whether an instance is valid. A schema that recursed in place beyond the maximum depth is

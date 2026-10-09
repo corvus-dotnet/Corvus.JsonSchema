@@ -1268,7 +1268,8 @@ impl Evaluator<'_, '_> {
                 }
                 matched == 1
             }
-            Op::Not(c) => !self.run(*c, x),
+            // Under the depth guard, like every other in-place applicator: a not can be part of a cycle too.
+            Op::Not(c) => !self.run_in_place(*c, x),
             Op::DynamicRef(d) => {
                 let target = self.p.fast_target[self.resolve_dynamic(d) as usize];
                 self.run_in_place(target, x)
