@@ -2,7 +2,7 @@
 
 [corvus-json-schema](https://crates.io/crates/corvus-json-schema) is the Corvus JSON Schema evaluator for Rust: draft
 4, 6, 7, 2019-09 and 2020-12. It is a port of the .NET runtime evaluator (see [Runtime Evaluator](RuntimeEvaluator.md)),
-and gives the same results and annotations. The Python, Ruby and PHP packages, and the C library, are built on it.
+and gives the same results and annotations. The Python, Ruby, PHP and R packages, and the C library, are built on it.
 
 A schema is compiled once into a node graph with its keywords pre-digested: references resolved, patterns compiled,
 numeric bounds exact. Any number of instances can then be validated against it.
@@ -93,7 +93,7 @@ passing ones and annotations included.
 The evaluator reads instances through the `Instance` trait: a value shown as one of the six JSON kinds, with arrays and
 objects read in place. `&serde_json::Value` and `JsonDocument` implement it, and so can your own types:
 `Validator::validate_instance` and `Validator::evaluate_instance` take any implementation, so values need not be
-converted first. The Python, Ruby and PHP packages read their languages' values this way.
+converted first. The Python, Ruby, PHP and R packages read their languages' values this way.
 
 ## Performance
 

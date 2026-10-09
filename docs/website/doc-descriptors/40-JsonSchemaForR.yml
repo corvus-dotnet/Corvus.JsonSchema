@@ -1,0 +1,3 @@
+source: JsonSchemaForR.md
+navTitle: "R"
+description: "The Corvus JSON Schema evaluator for R (the corvusjsonschema package): install, validate, options, results and annotations."

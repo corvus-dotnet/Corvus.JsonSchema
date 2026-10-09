@@ -8,22 +8,22 @@ Evaluates an R value (\code{evaluate}) or JSON text (\code{evaluate_json}) again
 at the first failure, and returns what each keyword found.
 }
 \usage{
-evaluate(validator, value, level = "basic")
+evaluate(validator, value, level = "detailed")
 
-evaluate_json(validator, json, level = "basic")
+evaluate_json(validator, json, level = "detailed")
 }
 \arguments{
 \item{validator}{A compiled schema, from \code{\link{compile_schema}}.}
 \item{value}{An R value, read as \code{\link{is_valid}} reads one.}
 \item{json}{One string of JSON text.}
-\item{level}{How much to report: \code{"basic"} (the failures), \code{"detailed"} (the failures, with the
-  subschemas they belong to) or \code{"verbose"} (every keyword evaluated, and the annotations).}
+\item{level}{How much to report: \code{"basic"} (the failures, without messages), \code{"detailed"} (the failures,
+  with messages) or \code{"verbose"} (every keyword evaluated, passing ones included, and the annotations).}
 }
 \value{
 An object of class \code{corvus_evaluation}, a list with:
 \item{valid}{Whether the value is valid.}
 \item{level}{The level asked for.}
-\item{results}{A data frame with a row for each result: \code{valid}, \code{message}, \code{evaluation_location}
+\item{results}{A data frame with a row for each result, the root's own among them: \code{valid}, \code{message}, \code{evaluation_location}
   (the path of keywords followed, through references), \code{schema_location} (where the keyword is in the schema)
   and \code{instance_location} (where the value is in the instance), the three locations as JSON Pointers.}
 \item{annotations}{At the \code{"verbose"} level, a data frame with a row for each annotation:

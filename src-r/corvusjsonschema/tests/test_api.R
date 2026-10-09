@@ -188,11 +188,18 @@ person <- compile_schema(paste0(
   '"properties": {"name": {"type": "string", "title": "Name"}, "age": {"type": "integer", "minimum": 0}}}'
 ))
 bad <- evaluate(person, list(age = -1L))
-stopifnot(inherits(bad, "corvus_evaluation"), identical(bad$valid, FALSE), identical(bad$level, "basic"))
+stopifnot(inherits(bad, "corvus_evaluation"), identical(bad$valid, FALSE), identical(bad$level, "detailed"))
 stopifnot(is.data.frame(bad$results), nrow(bad$results) >= 2L, is.null(bad$annotations))
 stopifnot(identical(names(bad$results),
                     c("valid", "message", "evaluation_location", "schema_location", "instance_location")))
 stopifnot(is.logical(bad$results$valid), is.character(bad$results$message), !any(bad$results$valid))
+# The detailed level, the default, has the messages; the basic level has the same rows without them.
+stopifnot(all(nzchar(bad$results$message)), any(grepl("greater than or equal to '0'", bad$results$message)))
+basic <- evaluate(person, list(age = -1L), level = "basic")
+stopifnot(identical(basic$level, "basic"), !any(nzchar(basic$results$message)))
+stopifnot(identical(basic$results[-2L], bad$results[-2L]))
+# The root's own result is a row too, with empty locations.
+stopifnot(any(bad$results$instance_location == "" & bad$results$evaluation_location == ""))
 stopifnot("/age" %in% bad$results$instance_location, any(grepl("minimum", bad$results$evaluation_location)))
 stopifnot(any(grepl("not valid", capture.output(print(bad)))), any(grepl("/age", capture.output(print(bad)))))
 
@@ -213,8 +220,8 @@ stopifnot(any(grepl("valid", capture.output(print(good)))))
 # The same rows whether the instance is R values or JSON text.
 as_text <- evaluate_json(person, '{"age": -1}')
 stopifnot(identical(as_text$results, bad$results), identical(as_text$valid, bad$valid))
-detailed <- evaluate_json(person, '{"name": "Ada"}', level = "detailed")
-stopifnot(detailed$valid, identical(detailed$level, "detailed"))
+passing <- evaluate_json(person, '{"name": "Ada"}', level = "basic")
+stopifnot(passing$valid, identical(passing$level, "basic"), all(passing$results$valid))
 raises(evaluate(person, list(), level = "everything"), "error", "level must be one of")
 
 # ---------------------------------------------------------------------------------------------------------------------

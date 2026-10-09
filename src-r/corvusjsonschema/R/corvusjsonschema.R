@@ -112,12 +112,12 @@ evaluation <- function(native, level) {
   )
 }
 
-evaluate <- function(validator, value, level = "basic") {
+evaluate <- function(validator, value, level = "detailed") {
   code <- one_of(level, results_levels, "level")
   evaluation(checked(.Call(native_cjsr_evaluate, pointer_of(validator), value, code)), level)
 }
 
-evaluate_json <- function(validator, json, level = "basic") {
+evaluate_json <- function(validator, json, level = "detailed") {
   code <- one_of(level, results_levels, "level")
   evaluation(checked(.Call(native_cjsr_evaluate_json, pointer_of(validator), json, code)), level)
 }

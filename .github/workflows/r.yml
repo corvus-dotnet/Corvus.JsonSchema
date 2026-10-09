@@ -1,0 +1,126 @@
+name: r
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-r/**'
+    - 'JSON-Schema-Test-Suite'
+    - '.github/workflows/r.yml'
+    - '.github/workflows/r-publish.yml'
+  pull_request:
+    paths:
+    - 'src-r/**'
+    - 'JSON-Schema-Test-Suite'
+    - '.github/workflows/r.yml'
+    - '.github/workflows/r-publish.yml'
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A pull request's run is superseded by the run for its next push; pushes to main are grouped by commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: corvusjsonschema (lint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src-r/corvusjsonschema/src/rust
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+          sparse-checkout: src-r
+      - name: Toolchain
+        # The version pinned in src-rs/rust-toolchain.toml (clippy's lints change between releases).
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt
+          rustup default 1.98.0
+      - name: Format and lint
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+      - name: Minimum Rust version
+        # The package's rust-version (and the rustc in its SystemRequirements) must be a toolchain it builds with.
+        run: |
+          minimum=$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' Cargo.toml)
+          grep -q "rustc (>= $minimum)" ../../DESCRIPTION \
+            || { echo "::error::DESCRIPTION's SystemRequirements does not name rustc (>= $minimum)."; exit 1; }
+          rustup toolchain install "$minimum" --profile minimal
+          cargo "+$minimum" check --lib --locked
+
+  check:
+    name: corvusjsonschema (${{ matrix.os }}, R ${{ matrix.r }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        # The minimum the package supports, and the current release.
+        r: ['4.2', 'release']
+        include:
+          - os: ubuntu-latest
+            r: 'devel'
+    env:
+      R_KEEP_PKG_SOURCE: yes
+      # jsonlite, which the test suite's runner needs, is installed below: the others CRAN suggests are not.
+      _R_CHECK_FORCE_SUGGESTS_: false
+      JSON_SCHEMA_TEST_SUITE: ${{ github.workspace }}/JSON-Schema-Test-Suite
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+          # Only what the package needs (the repository's generated benchmark models have paths too long for Windows).
+          sparse-checkout: |
+            src-r
+            JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Setup R
+        uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
+        with:
+          r-version: ${{ matrix.r }}
+          use-public-rspm: true
+      - name: Setup Rust
+        # R's toolchain on Windows (Rtools) links the GNU target.
+        shell: bash
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          if [ "$RUNNER_OS" = Windows ]; then rustup target add x86_64-pc-windows-gnu; fi
+          cargo --version
+      - name: Install jsonlite
+        run: install.packages("jsonlite")
+        shell: Rscript {0}
+      - name: Build
+        shell: bash
+        run: R CMD build src-r/corvusjsonschema
+      - name: Check
+        # A warning fails the job as an error does. A note does not: the installed size (the evaluator's code and
+        # Unicode tables) draws one.
+        shell: bash
+        run: |
+          R CMD check --no-manual corvusjsonschema_*.tar.gz
+          if grep -q "WARNING" corvusjsonschema.Rcheck/00check.log; then
+            echo "::error::R CMD check gave a warning."
+            exit 1
+          fi
+          grep -h "cases:" corvusjsonschema.Rcheck/tests/test_suite.Rout \
+            || { echo "::error::The JSON-Schema-Test-Suite did not run."; exit 1; }
+      - name: Upload the check's logs
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: check-${{ matrix.os }}-r${{ matrix.r }}
+          path: |
+            corvusjsonschema.Rcheck/00check.log
+            corvusjsonschema.Rcheck/00install.out
+            corvusjsonschema.Rcheck/tests/*.Rout*

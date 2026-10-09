@@ -1,0 +1,114 @@
+name: r-publish
+# Releases the R package (src-r/corvusjsonschema) when the Version in its DESCRIPTION has no tag yet. To release,
+# bump Version in DESCRIPTION (and add the version to the package's VERSIONHISTORY.md) and merge. A merged pull
+# request labelled no_release releases nothing (.github/actions/no-release-label).
+#
+# The package is served by R-universe (https://corvus-dotnet.r-universe.dev), which builds a package from a branch
+# of its repository and serves source and binary packages. Its registry (the packages.json of the repository
+# corvus-dotnet/corvus-dotnet.r-universe.dev) names this repository, the subdirectory src-r/corvusjsonschema and the
+# branch r-release. A release here checks the package, tags the commit r-v<version> and moves r-release to it:
+# R-universe then builds that commit, within the hour. Between releases r-release does not move, so what R-universe
+# serves is always a released version. There is no secret.
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. Its tag
+# filter ('[0-9]+.[0-9]+.[0-9]+*') has to match the whole tag name from a leading digit, so a tag that starts r-v
+# cannot start it. The tag and the branch are also pushed with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-r/corvusjsonschema/DESCRIPTION'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r-publish
+  cancel-in-progress: false
+
+env:
+  SUBDIR: src-r/corvusjsonschema
+  BRANCH: r-release
+
+jobs:
+  version:
+    name: Version to release
+    permissions:
+      contents: read
+      pull-requests: read  # the merged pull request's labels (no_release)
+    # A manual run from another branch must not release that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      # The version to release, or empty when there is nothing to release.
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            src-r/corvusjsonschema
+            .github/actions
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
+      - name: Check whether this version is tagged
+        id: check
+        # A merged pull request labelled no_release releases nothing (the other jobs need this step's output).
+        if: steps.label.outputs.no-release != 'true'
+        run: |
+          version=$(sed -n 's/^Version: \(.*\)$/\1/p' "$SUBDIR/DESCRIPTION" | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No Version in $SUBDIR/DESCRIPTION."
+            exit 1
+          fi
+          grep -q "^## V$version$" "$SUBDIR/VERSIONHISTORY.md" \
+            || { echo "::error::VERSIONHISTORY.md has no V$version section."; exit 1; }
+          # ls-remote exits 2 when the remote has no such ref, and anything else is a failure to ask.
+          status=0
+          git ls-remote --exit-code --tags origin "refs/tags/r-v$version" > /dev/null || status=$?
+          case "$status" in
+            0) echo "::notice::corvusjsonschema $version is tagged r-v$version; nothing to do." ;;
+            2) echo "version=$version" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::Could not list the repository's tags."
+               exit 1 ;;
+          esac
+
+  check:
+    name: Check
+    needs: version
+    if: needs.version.outputs.version != ''
+    uses: ./.github/workflows/r.yml
+
+  release:
+    name: Release corvusjsonschema ${{ needs.version.outputs.version }}
+    needs: [version, check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # push the r-v<version> tag and the r-release branch
+    steps:
+      - name: Tag the commit and move the release branch to it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/r-v$VERSION" -f sha="$GITHUB_SHA"
+          # Created the first time, moved after that. A release is always a later commit of main, but the move is
+          # forced so that a release branch someone has moved by hand cannot block one.
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$BRANCH" > /dev/null 2>&1; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/heads/$BRANCH" -f sha="$GITHUB_SHA" -F force=true
+          else
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/heads/$BRANCH" -f sha="$GITHUB_SHA"
+          fi
+          {
+            echo "### corvusjsonschema $VERSION is released"
+            echo
+            echo "Tagged $GITHUB_SHA as r-v$VERSION and moved $BRANCH to it."
+            echo "R-universe builds it within the hour: https://corvus-dotnet.r-universe.dev/corvusjsonschema"
+          } >> "$GITHUB_STEP_SUMMARY"

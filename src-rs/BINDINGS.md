@@ -4,7 +4,7 @@ The crate (`src-rs/corvus-json-schema`) is the one evaluator; every other langua
 
 - **through the C library** (`src-rs/corvus-json-schema-capi`, released as `capi-v<version>`): C and C++, and Swift;
 - **directly from Rust**, with an `Instance` implementation that reads the language's own values in place: Python
-  (`src-py/corvus-json-schema-rs`, PyO3), Ruby and PHP. Through the C library they would have to serialise every value
+  (`src-py/corvus-json-schema-rs`, PyO3), Ruby, PHP and R. Through the C library they would have to serialise every value
   to JSON text first, or pay a callback per value.
 
 Every binding offers the same operations, named in the language's idiom: compile a schema (from text, or from the
@@ -57,6 +57,40 @@ package from a repository's root): its sources stay here, and each release is pu
   repository's root and its versions from that repository's tags, so the package's repository is a separate one,
   `corvus-dotnet/corvus-json-schema-php`, to which the publish workflow pushes this directory (taking the crate from
   crates.io) and whose releases hold the builds; this repository's commit is tagged `php-v<version>`.
+
+## R (`src-r/corvusjsonschema`)
+
+Decisions (2026-10-09): the package is `corvusjsonschema` (CRAN allows only letters, digits and dots in a name); it
+supports R 4.2 and later (4.2 made Windows a UTF-8 platform); it is published on R-universe first, with a CRAN
+submission to follow.
+
+- **Shape:** an R package whose native code is a Rust static library (`src/rust`, crate type `staticlib`) linked into
+  the package's shared library with one C file (`src/init.c`), which registers the routines and passes R's global
+  values (`R_NilValue` and the like, data that R's library exports) to Rust. R's C API is declared by hand
+  (`src/rust/src/r.rs`): no extendr or savvy, so the build has no crate beyond the evaluator and its dependencies. The
+  crate comes from crates.io (R-universe builds with network access); a CRAN submission will need the crates' sources
+  vendored into the source package.
+- **API:** `compile_schema(schema, ...)` returns a validator (`schema` JSON text or R values); `is_valid(validator,
+  value)`, `is_valid_json(validator, json)` over a character vector, `evaluate(validator, value, level)` and
+  `evaluate_json(validator, json, level)`, which return the results and (at the verbose level) the annotations as data
+  frames. There is no collector object: an evaluation returns its results. The default level is detailed.
+- **Errors:** no entry point calls `Rf_error`, whose long jump would skip the destructors of the Rust frames above it.
+  A failure returns as a list of class `corvus_native_error`, and the R layer raises it as a condition
+  (`corvus_compilation_error`, `corvus_invalid_json_error`, `corvus_value_error`, `corvus_depth_error`,
+  `corvus_callback_error`, all `corvus_json_schema_error`). A panic is caught at the entry point. R callbacks (formats,
+  the resolver) are wrapped in the R layer so that calling one never signals a condition.
+- **Values read in place:** `NULL` (null); a list with names (an object, found by scanning the names) or without (an
+  array); a logical, integer, double or character vector of length one (a scalar) or of any other length (an array of
+  scalars; `I()` makes a vector of length one an array); `NA` of any type (null). A whole double is an integer in
+  every dialect. Strings that are ASCII, or valid UTF-8 marked as UTF-8 or as native, are borrowed; one in another
+  encoding makes the evaluation fall back to a conversion that translates it. Objects with a class are not JSON
+  values. An R string cannot hold a NUL: one in a string returned to R is written as U+FFFD.
+- **GC safety:** R's collector does not move values, and the instance is protected by the call that passed it, so the
+  borrows hold even while an R callback runs and collects. The validator is an external pointer with a finalizer; its
+  protected slot keeps the R callbacks alive.
+- **Release:** `r-publish.yml` checks the package, tags the commit `r-v<version>` and moves the branch `r-release` to
+  it on a version change, honouring `no_release`. R-universe builds the package from that branch (the registry
+  repository `corvus-dotnet/corvus-dotnet.r-universe.dev` names this repository, the subdirectory and the branch).
 
 ## Swift (repository `corvus-dotnet/corvus-json-schema-swift`)
 

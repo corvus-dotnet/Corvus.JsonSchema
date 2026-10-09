@@ -41,8 +41,10 @@ is_valid_json(validator, c('{"id": 1}', '{}', NA))   # TRUE FALSE NA: one verdic
 result <- evaluate(validator, list(id = "three"))
 result$valid                                   # FALSE
 result$results[, c("instance_location", "message")]
-#>   instance_location                                       message
-#> 1               /id The value was expected to be of type 'integer'
+#>   instance_location                                        message
+#> 1               /id The value was expected to match the subschema.
+#> 2               /id The value was expected to be of type 'integer'
+#> 3                   The value was expected to match the subschema.
 ```
 
 Compile a schema once and keep the validator: compiling does the work that makes validating fast.
@@ -53,9 +55,9 @@ A schema is JSON text or R values:
 compile_schema(list(type = "object", required = list("id"), properties = list(id = list(type = "integer"))))
 ```
 
-`evaluate()` and `evaluate_json()` evaluate every keyword and report at a level: `"basic"` (the failures),
-`"detailed"` (the failures, with the subschemas they belong to) or `"verbose"` (every keyword, and the annotations).
-The results are a data frame, and at the verbose level so are the annotations:
+`evaluate()` and `evaluate_json()` evaluate every keyword and report at a level: `"basic"` (the failures, without
+messages), `"detailed"` (the failures, with messages; the default) or `"verbose"` (every keyword, passing ones
+included, and the annotations). The results are a data frame, and at the verbose level so are the annotations:
 
 ```r
 titled <- compile_schema('{"title": "Person", "properties": {"name": {"title": "Name"}}}')

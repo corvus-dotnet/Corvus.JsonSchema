@@ -1,21 +1,28 @@
-# As Makevars, for Windows: Rust builds for the GNU target that R's toolchain (Rtools) links.
+# As Makevars, for Windows: Rust builds for the GNU target, which R's toolchain (Rtools) links.
 
 TARGET = x86_64-pc-windows-gnu
 LIBDIR = rust/target/$(TARGET)/release
 STATLIB = $(LIBDIR)/libcorvusjsonschema.a
 PKG_LIBS = -L$(LIBDIR) -lcorvusjsonschema -lws2_32 -ladvapi32 -luserenv -lbcrypt -lntdll
 
+# Rtools' compiler, for anything cargo links for the target.
+CARGO_LINKER = x86_64-w64-mingw32.static.posix-gcc.exe
+
 all: $(SHLIB) rust-clean
 
 $(SHLIB): $(STATLIB)
 
-# Always run: cargo decides what is out of date.
+# Always run: cargo decides what is out of date. Rust's GNU target asks the linker for libgcc_eh, which Rtools does
+# not have (its libgcc holds the same code): an empty library of that name satisfies it.
 $(STATLIB): FORCE
-	@export CARGO_HOME="$${CARGO_HOME:-$(CURDIR)/rust/.cargo-home}"; \
+	@mkdir -p rust/target/libgcc_mock && touch rust/target/libgcc_mock/libgcc_eh.a; \
+	export CARGO_HOME="$${CARGO_HOME:-$(CURDIR)/rust/.cargo-home}"; \
 	export PATH="$$PATH:$$USERPROFILE/.cargo/bin"; \
-	export CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER="$(CC)"; \
+	export CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER="$(CARGO_LINKER)"; \
+	export LIBRARY_PATH="$${LIBRARY_PATH};$(CURDIR)/rust/target/libgcc_mock"; \
 	cargo build --lib --release --locked --jobs 2 --target=$(TARGET) --manifest-path=rust/Cargo.toml
 
+# A source package must not leave build products behind (R CMD check looks), and they are large.
 rust-clean: $(SHLIB)
 	@if [ -z "$$CORVUS_KEEP_RUST_TARGET" ]; then rm -Rf rust/target rust/.cargo-home; fi
 
