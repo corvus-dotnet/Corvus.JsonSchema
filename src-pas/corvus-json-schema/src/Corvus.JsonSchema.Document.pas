@@ -155,6 +155,9 @@ function ParserRetainsTooMuch(const P: TParser): Boolean;
 
 { Helpers shared with the rest of the evaluator. }
 
+{ UInt32At is A[I]: one comparison of the index with the array's length, then the read (see
+  Corvus.JsonSchema.Checked). }
+function UInt32At(const A: TUInt32Array; I: Int32): UInt32; inline;
 { LoadLE64 is the eight bytes at B[J .. J+7] as a little-endian word: one comparison with the array's length, then
   one load. An index beyond the array raises ERangeError like any other. }
 function LoadLE64(const B: TBytes; J: Int32): UInt64; inline;
@@ -212,6 +215,18 @@ begin
   if N > 0 then
     Move(S[1], Result[0], N);
 end;
+
+{$PUSH}
+{$R-}
+
+function UInt32At(const A: TUInt32Array; I: Int32): UInt32; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := A[I];
+end;
+
+{$POP}
 
 function LoadLE32(const B: TBytes; J: Int32): UInt32; inline;
 begin
@@ -453,18 +468,23 @@ begin
     if DocCount(D, K) = Len then begin
       Off := DocStrOffset(D, K);
       Same := True;
+      { The runs are checked once: the reads below are all within them. }
+      CheckText(Name, 1, Len);
       if DocStrInText(D, K) then begin
+        CheckRun(D.Text, Off, Len);
         for J := 0 to Len - 1 do
-          if D.Text[Off + J] <> Byte(Name[J + 1]) then begin
+          if RunByteAt(D.Text, Off + J) <> RunTextByteAt(Name, J + 1) then begin
             Same := False;
             Break;
           end;
-      end else
+      end else begin
+        CheckRun(D.Source, Off, Len);
         for J := 0 to Len - 1 do
-          if D.Source[Off + J] <> Byte(Name[J + 1]) then begin
+          if RunByteAt(D.Source, Off + J) <> RunTextByteAt(Name, J + 1) then begin
             Same := False;
             Break;
           end;
+      end;
       if Same then begin
         Result := K + 1;
         Exit;
@@ -687,7 +707,7 @@ var
 begin
   I := P.I;
   while I < P.BLen do begin
-    C := P.B[I];
+    C := ByteAt(P.B, I);
     if (C <> Ord(' ')) and (C <> 10) and (C <> 13) and (C <> 9) then
       Break;
     Inc(I);
@@ -698,7 +718,7 @@ end;
 function Peek(const P: TParser): Int32; inline;
 begin
   if P.I < P.BLen then
-    Result := P.B[P.I]
+    Result := ByteAt(P.B, P.I)
   else
     Result := -1;
 end;
@@ -909,7 +929,7 @@ begin
     Exit;
   V := 0;
   for K := At to At + 3 do begin
-    C := P.B[K];
+    C := ByteAt(P.B, K);
     if (C >= Ord('0')) and (C <= Ord('9')) then
       D := C - Ord('0')
     else if (C >= Ord('a')) and (C <= Ord('f')) then
@@ -936,7 +956,7 @@ begin
   end;
   if (U >= $D800) and (U <= $DBFF) then begin
     Low := -1;
-    if (J + 7 < P.BLen) and (P.B[J + 6] = Ord('\')) and (P.B[J + 7] = Ord('u')) then
+    if (J + 7 < P.BLen) and (ByteAt(P.B, J + 6) = Ord('\')) and (ByteAt(P.B, J + 7) = Ord('u')) then
       Low := Hex4(P, J + 8);
     if (Low >= $DC00) and (Low <= $DFFF) then begin
       Cp := $10000 + ((U - $D800) shl 10) + (Low - $DC00);
@@ -967,7 +987,7 @@ begin
       Result := Fail(P, 'unterminated string', J);
       Exit;
     end;
-    C := P.B[J];
+    C := ByteAt(P.B, J);
     if C = Ord('"') then begin
       if Wide and not Utf8Valid(P.B, Run, J) then begin
         Result := Fail(P, 'invalid UTF-8', Run);
@@ -989,7 +1009,7 @@ begin
       TextAppend(P, Run, J);
       E := -1;
       if J + 1 < P.BLen then
-        E := P.B[J + 1];
+        E := ByteAt(P.B, J + 1);
       case E of
         Ord('"'), Ord('\'), Ord('/'): OutC := Byte(E);
         Ord('b'): OutC := 8;
@@ -1080,7 +1100,7 @@ begin
   if High <> 0 then
     Wide := 2;
   while J < P.BLen do begin
-    C := Scan[P.B[J]];
+    C := Scan[ByteAt(P.B, J)];
     if C = 1 then
       Break;
     Wide := Wide or C;
@@ -1090,7 +1110,7 @@ begin
     Result := Fail(P, 'unterminated string', J);
     Exit;
   end;
-  case P.B[J] of
+  case ByteAt(P.B, J) of
     Ord('"'): begin
       Header := UInt64(KindString) or (UInt64(J - Start) shl 32);
       if Wide <> 0 then begin
@@ -1120,7 +1140,7 @@ begin
     Exit;
   end;
   for K := 0 to Len - 1 do
-    if P.B[P.I + K] <> Byte(Word[K + 1]) then begin
+    if ByteAt(P.B, P.I + K) <> Byte(Word[K + 1]) then begin
       Result := Fail(P, 'expected a value', P.I);
       Exit;
     end;
@@ -1131,7 +1151,7 @@ end;
 
 function IsDigit(const P: TParser; J: Int32): Boolean; inline;
 begin
-  Result := (J < P.BLen) and (P.B[J] >= Ord('0')) and (P.B[J] <= Ord('9'));
+  Result := (J < P.BLen) and (ByteAt(P.B, J) >= Ord('0')) and (ByteAt(P.B, J) <= Ord('9'));
 end;
 
 { Number reads a number: integers that fit 64 bits as integers (unsigned beyond an Int64), anything else as a
@@ -1146,7 +1166,7 @@ var
 begin
   Start := P.I;
   J := Start;
-  Negative := P.B[J] = Ord('-');
+  Negative := ByteAt(P.B, J) = Ord('-');
   if Negative then
     Inc(J);
   { The digits of the integer and the fraction as one integer, while they fit: Mantissa. Exact says no digit was
@@ -1154,7 +1174,7 @@ begin
   Mantissa := 0;
   Exact := True;
   IntStart := J;
-  if (J < P.BLen) and (P.B[J] = Ord('0')) then
+  if (J < P.BLen) and (ByteAt(P.B, J) = Ord('0')) then
     Inc(J)
   else begin
     { Nineteen digits cannot overflow 64 bits. }
@@ -1162,7 +1182,7 @@ begin
     if Limit > P.BLen then
       Limit := P.BLen;
     while J < Limit do begin
-      C := Int32(P.B[J]) - Ord('0');
+      C := Int32(ByteAt(P.B, J)) - Ord('0');
       if (C < 0) or (C > 9) then
         Break;
       Mantissa := Mantissa * 10 + UInt64(C);
@@ -1178,7 +1198,7 @@ begin
         if Mantissa > UInt64(1844674407370955161) then
           Exact := False
         else begin
-          Sum := Mantissa * 10 + UInt64(Int32(P.B[J]) - Ord('0'));
+          Sum := Mantissa * 10 + UInt64(Int32(ByteAt(P.B, J)) - Ord('0'));
           if Sum < Mantissa * 10 then
             Exact := False
           else
@@ -1191,11 +1211,11 @@ begin
   Digits := J - IntStart;
   Floating := False;
   Scale := 0;
-  if (J < P.BLen) and (P.B[J] = Ord('.')) then begin
+  if (J < P.BLen) and (ByteAt(P.B, J) = Ord('.')) then begin
     Inc(J);
     FracStart := J;
     while J < P.BLen do begin
-      C := Int32(P.B[J]) - Ord('0');
+      C := Int32(ByteAt(P.B, J)) - Ord('0');
       if (C < 0) or (C > 9) then
         Break;
       Inc(Digits);
@@ -1214,11 +1234,11 @@ begin
   end;
   Exponent := 0;
   ExpOverflow := False;
-  if (J < P.BLen) and ((P.B[J] = Ord('e')) or (P.B[J] = Ord('E'))) then begin
+  if (J < P.BLen) and ((ByteAt(P.B, J) = Ord('e')) or (ByteAt(P.B, J) = Ord('E'))) then begin
     Inc(J);
     ExpNegative := False;
-    if (J < P.BLen) and ((P.B[J] = Ord('+')) or (P.B[J] = Ord('-'))) then begin
-      ExpNegative := P.B[J] = Ord('-');
+    if (J < P.BLen) and ((ByteAt(P.B, J) = Ord('+')) or (ByteAt(P.B, J) = Ord('-'))) then begin
+      ExpNegative := ByteAt(P.B, J) = Ord('-');
       Inc(J);
     end;
     if not IsDigit(P, J) then begin
@@ -1227,7 +1247,7 @@ begin
     end;
     while IsDigit(P, J) do begin
       if Exponent < 100000 then
-        Exponent := Exponent * 10 + (Int32(P.B[J]) - Ord('0'))
+        Exponent := Exponent * 10 + (Int32(ByteAt(P.B, J)) - Ord('0'))
       else
         ExpOverflow := True;
       Inc(J);

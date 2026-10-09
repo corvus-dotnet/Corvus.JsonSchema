@@ -12,6 +12,7 @@ interface
 
 uses
   SysUtils,
+  Corvus.JsonSchema.Checked,
   Corvus.JsonSchema.Document;
 
 const
@@ -30,6 +31,7 @@ type
     Tail: UInt64;
     Length: Int32;
   end;
+  PNameKey = ^TNameKey;
   TNameKeyArray = array of TNameKey;
 
   { TNameMap finds a property name among a set of names, through a hash table from a name's key to its index, with
@@ -63,6 +65,12 @@ type
       first name in sorted order). NoName after the last. }
     SortedNext: TUInt32Array;
   end;
+
+{ NameKeyAt and TextAt are pointers to A[I], and UInt16At is A[I]: one comparison of the index with the array's
+  length, then the read (see Corvus.JsonSchema.Checked). }
+function NameKeyAt(const A: TNameKeyArray; I: Int32): PNameKey; inline;
+function TextAt(const A: TUTF8StringArray; I: Int32): PUTF8String; inline;
+function UInt16At(const A: TUInt16Array; I: Int32): UInt16; inline;
 
 { NameWord is a word that tells names of one length apart cheaply. For a name of at most eight bytes it is unique
   among names of the same length: the first and last four bytes (overlapping, so every byte is in one of them), or
@@ -128,6 +136,32 @@ const
   { More names than this are searched in sorted order (the table has four to eight slots for each name). }
   MaxTableNames = 1 shl 15;
 
+{$PUSH}
+{$R-}
+
+function NameKeyAt(const A: TNameKeyArray; I: Int32): PNameKey; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function TextAt(const A: TUTF8StringArray; I: Int32): PUTF8String; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function UInt16At(const A: TUInt16Array; I: Int32): UInt16; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := A[I];
+end;
+
+{$POP}
+
 function TextEqualsBytes(const S: UTF8String; const B: TBytes; Start, Len: Int32): Boolean;
 var
   K: Int32;
@@ -135,8 +169,11 @@ begin
   Result := False;
   if Length(S) <> Len then
     Exit;
+  { Both runs are checked once: the reads below are all within them. }
+  CheckText(S, 1, Len);
+  CheckRun(B, Start, Len);
   for K := 0 to Len - 1 do
-    if Byte(S[K + 1]) <> B[Start + K] then
+    if RunTextByteAt(S, K + 1) <> RunByteAt(B, Start + K) then
       Exit;
   Result := True;
 end;
@@ -179,7 +216,8 @@ begin
   else if Len >= 4 then
     Result := UInt64(LoadLE32(B, Start)) or (UInt64(LoadLE32(B, Start + Len - 4)) shl 32)
   else if Len > 0 then
-    Result := UInt64(B[Start]) or (UInt64(B[Start + Len div 2]) shl 8) or (UInt64(B[Start + Len - 1]) shl 16)
+    Result := UInt64(ByteAt(B, Start)) or (UInt64(ByteAt(B, Start + Len div 2)) shl 8)
+      or (UInt64(ByteAt(B, Start + Len - 1)) shl 16)
   else
     Result := 0;
 end;
@@ -350,13 +388,16 @@ end;
 
 function NameMapRest(const M: TNameMap; I: Int32; const Name: TBytes; Start, Len: Int32): Boolean;
 begin
-  Result := (TailWord(Name, Start, Len) = M.Keys[I].Tail)
-    and ((Len <= 16) or TextEqualsBytes(M.Names[I], Name, Start, Len));
+  Result := (TailWord(Name, Start, Len) = NameKeyAt(M.Keys, I)^.Tail)
+    and ((Len <= 16) or TextEqualsBytes(TextAt(M.Names, I)^, Name, Start, Len));
 end;
 
 function NameMapEqual(const M: TNameMap; I: Int32; const Name: TBytes; Start, Len: Int32; W: UInt64): Boolean;
+var
+  Key: PNameKey;
 begin
-  Result := (M.Keys[I].Length = Len) and (M.Keys[I].Word = W) and ((Len <= 8) or NameMapRest(M, I, Name, Start, Len));
+  Key := NameKeyAt(M.Keys, I);
+  Result := (Key^.Length = Len) and (Key^.Word = W) and ((Len <= 8) or NameMapRest(M, I, Name, Start, Len));
 end;
 
 function NameMapFind(const M: TNameMap; const Name: TBytes; Start, Len: Int32; W: UInt64): Int32;
@@ -377,15 +418,17 @@ function NameMapFindKey(const M: TNameMap; W, Tail: UInt64; Length: Int32): Int3
 var
   Slot: UInt64;
   At: Int32;
+  Key: PNameKey;
 begin
   Slot := NameMapHash(M, W, Tail, Length) shr NameHashShift;
   while True do begin
-    At := M.Table[Slot and M.Mask];
+    At := UInt16At(M.Table, Int32(Slot and M.Mask));
     if At = 0 then begin
       Result := -1;
       Exit;
     end;
-    if (M.Keys[At - 1].Word = W) and (M.Keys[At - 1].Tail = Tail) and (M.Keys[At - 1].Length = Length) then begin
+    Key := NameKeyAt(M.Keys, At - 1);
+    if (Key^.Word = W) and (Key^.Tail = Tail) and (Key^.Length = Length) then begin
       Result := At - 1;
       Exit;
     end;
@@ -397,6 +440,7 @@ function NameMapFindLong(const M: TNameMap; const Name: TBytes; Start, Len: Int3
 var
   Tail, Slot: UInt64;
   At, Lo, Hi, Mid: Int32;
+  Key: PNameKey;
 begin
   if M.IsLarge then begin
     { The first of the names that are not below the given one, which is the one of the lowest index among equal
@@ -421,13 +465,14 @@ begin
     Tail := TailWord(Name, Start, Len);
   Slot := NameMapHash(M, W, Tail, Len) shr NameHashShift;
   while True do begin
-    At := M.Table[Slot and M.Mask];
+    At := UInt16At(M.Table, Int32(Slot and M.Mask));
     if At = 0 then begin
       Result := -1;
       Exit;
     end;
-    if (M.Keys[At - 1].Word = W) and (M.Keys[At - 1].Tail = Tail) and (M.Keys[At - 1].Length = Len)
-      and TextEqualsBytes(M.Names[At - 1], Name, Start, Len) then begin
+    Key := NameKeyAt(M.Keys, At - 1);
+    if (Key^.Word = W) and (Key^.Tail = Tail) and (Key^.Length = Len)
+      and TextEqualsBytes(TextAt(M.Names, At - 1)^, Name, Start, Len) then begin
       Result := At - 1;
       Exit;
     end;
@@ -498,9 +543,14 @@ begin
 end;
 
 function NamesAt(const Ns: TNames; Hint, Length: Int32; W: UInt64): Boolean; inline;
+var
+  Key: PNameKey;
 begin
-  Result := (Hint >= 0) and (Hint < System.Length(Ns.M.Keys)) and (Ns.M.Keys[Hint].Length = Length)
-    and (Ns.M.Keys[Hint].Word = W);
+  Result := False;
+  if (Hint >= 0) and (Hint < System.Length(Ns.M.Keys)) then begin
+    Key := NameKeyAt(Ns.M.Keys, Hint);
+    Result := (Key^.Length = Length) and (Key^.Word = W);
+  end;
 end;
 
 function NamesFindFrom(const Ns: TNames; const Name: TBytes; Start, Len: Int32; var Hint: Int32): Int32;
@@ -521,6 +571,7 @@ var
   Tail, Slot: UInt64;
   Next: UInt32;
   At: Int32;
+  Key: PNameKey;
 begin
   if Ns.Lengths and LengthBit(Len) = 0 then begin
     Result := -1;
@@ -534,22 +585,25 @@ begin
   if Len > 8 then
     Tail := TailWord(Name, Start, Len);
   if (Hint >= 0) and (Hint < Length(Ns.SortedNext)) then begin
-    Next := Ns.SortedNext[Hint];
-    if (Next <> NoName) and (Ns.M.Keys[Next].Word = W) and (Ns.M.Keys[Next].Tail = Tail)
-      and (Ns.M.Keys[Next].Length = Len) then begin
-      Result := Int32(Next);
-      Hint := Result + 1;
-      Exit;
+    Next := UInt32At(Ns.SortedNext, Hint);
+    if Next <> NoName then begin
+      Key := NameKeyAt(Ns.M.Keys, Int32(Next));
+      if (Key^.Word = W) and (Key^.Tail = Tail) and (Key^.Length = Len) then begin
+        Result := Int32(Next);
+        Hint := Result + 1;
+        Exit;
+      end;
     end;
   end;
   Slot := NameMapHash(Ns.M, W, Tail, Len) shr NameHashShift;
   while True do begin
-    At := Ns.M.Table[Slot and Ns.M.Mask];
+    At := UInt16At(Ns.M.Table, Int32(Slot and Ns.M.Mask));
     if At = 0 then begin
       Result := -1;
       Exit;
     end;
-    if (Ns.M.Keys[At - 1].Word = W) and (Ns.M.Keys[At - 1].Tail = Tail) and (Ns.M.Keys[At - 1].Length = Len) then begin
+    Key := NameKeyAt(Ns.M.Keys, At - 1);
+    if (Key^.Word = W) and (Key^.Tail = Tail) and (Key^.Length = Len) then begin
       Result := At - 1;
       Hint := At;
       Exit;
@@ -564,7 +618,7 @@ var
   Next: UInt32;
 begin
   if (Hint >= 0) and (Hint < Length(Ns.SortedNext)) then begin
-    Next := Ns.SortedNext[Hint];
+    Next := UInt32At(Ns.SortedNext, Hint);
     if (Next <> NoName) and NameMapEqual(Ns.M, Int32(Next), Name, Start, Len, W) then begin
       Result := Int32(Next);
       Hint := Result + 1;

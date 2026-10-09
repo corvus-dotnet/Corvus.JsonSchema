@@ -412,6 +412,8 @@ program that leaves memory unfreed.
   resolution, the format checks against the suite's format tests, the Unicode tables, and the name lookup, the
   regex-free matchers and the results collector. `TestSchemaSide` also checks that the embedded metaschemas match
   the Go module's (`CORVUS_GO_MODULE`, or `../../src-go/corvus-json-schema`).
+- `TestChecked`: the array reads that make their own bounds check (`Corvus.JsonSchema.Checked` and the `At`
+  functions next to the array types) raise `ERangeError` for an index outside the array.
 - `TestEcmaRegex`: the pattern engine against answers recorded from V8 (the Go module's `v8_oracle.json`), and the
   patterns of the suite. It reads the suite from `CORVUS_JSON_SCHEMA_TEST_SUITE` when the submodule is elsewhere.
 - `TestDifferential`: the plans against the general evaluator on the jsonschema-benchmark corpora and on mutations

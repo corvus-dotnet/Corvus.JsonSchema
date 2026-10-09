@@ -46,6 +46,7 @@ type
   end;
   TAnnotationSourceArray = array of TAnnotationSource;
 
+  PPattern = ^TPattern;
   TPatternArray = array of TPattern;
 
   { TCompiledSchema is the compiled program: the node graph, its entry node and whether it keeps a dynamic scope. }
@@ -85,12 +86,29 @@ function ContainsString(const List: TUTF8StringArray; const S: UTF8String): Bool
   from 2019-09). }
 function IsKnownKeyword(const Name: UTF8String): Boolean;
 
+{ PatternAt is a pointer to A[I]: one comparison of the index with the array's length, then the element's address
+  (see Corvus.JsonSchema.Checked). }
+function PatternAt(const A: TPatternArray; I: Int32): PPattern; inline;
+
 implementation
 
 uses
+  Corvus.JsonSchema.Checked,
   Corvus.JsonSchema.Numbers,
   Corvus.JsonSchema.Formats,
   Corvus.JsonSchema.Uri;
+
+{$PUSH}
+{$R-}
+
+function PatternAt(const A: TPatternArray; I: Int32): PPattern; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+{$POP}
 
 const
   { KnownKeywords are the keywords CompileNode handles itself, in byte order. }

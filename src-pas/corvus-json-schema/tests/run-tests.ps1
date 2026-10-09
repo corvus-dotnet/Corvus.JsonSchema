@@ -64,6 +64,7 @@ New-Item -ItemType Directory -Force -Path $units | Out-Null
 # The programs, the quick ones first. Each value is the arguments the program is run with, or $null for a program
 # that is built and not run.
 $programs = [ordered]@{
+    TestChecked      = @()
     TestDocument     = @()
     TestUcd          = @()
     TestEcmaRegex    = @()

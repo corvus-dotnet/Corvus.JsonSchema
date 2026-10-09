@@ -91,6 +91,7 @@ type
       kind is in Pass needs nothing more, which is one test where the child is applied. }
     Pass: Byte;
   end;
+  PChild = ^TChild;
   TChildArray = array of TChild;
 
   TNumberOpKind = (NumberMinimum, NumberMaximum, NumberExclusiveMinimum, NumberExclusiveMaximum, NumberMultipleOf,
@@ -122,6 +123,7 @@ type
     Format: TFormatCheckOp;
     Content: TContentKind;
   end;
+  PStringOp = ^TStringOp;
   TStringOpArray = array of TStringOp;
 
   TOpKind = (
@@ -179,6 +181,8 @@ type
     Pattern: Int32;
     Child: TChild;
   end;
+  PPatternChild = ^TPatternChild;
+  TPatternChildArray = array of TPatternChild;
 
   { TVisit is the property loop, specialised by which keywords apply. }
   TVisit = (
@@ -217,7 +221,7 @@ type
     RequiredMask: UInt64;
     { Required names checked by lookup (when the mask cannot cover them). }
     Required: TUTF8StringArray;
-    Patterns: array of TPatternChild;
+    Patterns: TPatternChildArray;
     { For each declared name, the patterns (indexes into Patterns) it matches, worked out at compile time: only
       undeclared names are tested against the patterns at run time. }
     NamePatterns: array of TUInt16Array;
@@ -326,13 +330,15 @@ type
     Pattern: Int32;
     Child: TOptChild;
   end;
+  PFusedPattern = ^TFusedPattern;
+  TFusedPatternArray = array of TFusedPattern;
 
   TFusedContributor = record
     { The condition and the polarity under which it applies. }
     Condition: TGate;
     { The alternative group and the branch in it. }
     Alt: TAltBranch;
-    Patterns: array of TFusedPattern;
+    Patterns: TFusedPatternArray;
     { additionalProperties. }
     HasAdditional: Boolean;
     Additional: TOptChild;
@@ -352,6 +358,8 @@ type
     { The enclosing condition and the polarity under which this one is reached. }
     Gate: TGate;
   end;
+  PFusedCondition = ^TFusedCondition;
+  TFusedConditionArray = array of TFusedCondition;
 
   { TValueTest is a condition's test on a property's value: absent passes, present must hold. }
   TValueTest = record
@@ -374,6 +382,7 @@ type
     Merged: TMergedTests;
   end;
   PFusedEntry = ^TFusedEntry;
+  TFusedEntryArray = array of TFusedEntry;
 
   TFusedAlternative = record
     Condition: TGate;
@@ -394,10 +403,10 @@ type
     Flat: TObjectPlan;
     { Every property name any branch or condition knows, to its entry. }
     Names: TNames;
-    Entries: array of TFusedEntry;
+    Entries: TFusedEntryArray;
     { The branches, the node itself first, then the required lists of dependencies. }
     Contributors: TFusedContributorArray;
-    Conditions: array of TFusedCondition;
+    Conditions: TFusedConditionArray;
     { Required-only oneOf/anyOf keywords, decided from the seen names after the pass. }
     Alternatives: array of TFusedAlternative;
     { oneOf/anyOf groups whose branches carry object keywords (each branch is a contributor). }
@@ -499,6 +508,21 @@ type
   end;
   PProgram = ^TProgram;
 
+{ ChildAt, OpAt, PatternChildAt, PlanAt, StringOpAt and the functions for the arrays of a fused object plan
+  (EntryAt, FusedAppAt, FusedConditionAt, FusedContributorAt, FusedPatternAt, ValueTestAt) are pointers to A[I]: one
+  comparison of the index with the array's length, then the element's address (see Corvus.JsonSchema.Checked). }
+function ChildAt(const A: TChildArray; I: Int32): PChild; inline;
+function OpAt(const A: TOpArray; I: Int32): POp; inline;
+function PatternChildAt(const A: TPatternChildArray; I: Int32): PPatternChild; inline;
+function PlanAt(const A: TPlanArray; I: Int32): PPlan; inline;
+function StringOpAt(const A: TStringOpArray; I: Int32): PStringOp; inline;
+function EntryAt(const A: TFusedEntryArray; I: Int32): PFusedEntry; inline;
+function FusedAppAt(const A: TFusedAppArray; I: Int32): PFusedApp; inline;
+function FusedConditionAt(const A: TFusedConditionArray; I: Int32): PFusedCondition; inline;
+function FusedContributorAt(const A: TFusedContributorArray; I: Int32): PFusedContributor; inline;
+function FusedPatternAt(const A: TFusedPatternArray; I: Int32): PFusedPattern; inline;
+function ValueTestAt(const A: TValueTestArray; I: Int32): PValueTest; inline;
+
 { NoChild is a child that accepts anything and is never entered (an undeclared name without
   additionalProperties). }
 function NoChild: TChild; inline;
@@ -529,7 +553,90 @@ function IntegerOK(Mask: Byte; const D: TDocument; X: Int32): Boolean;
 implementation
 
 uses
+  Corvus.JsonSchema.Checked,
   Corvus.JsonSchema.Fused;
+
+{$PUSH}
+{$R-}
+
+function ChildAt(const A: TChildArray; I: Int32): PChild; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function OpAt(const A: TOpArray; I: Int32): POp; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function PatternChildAt(const A: TPatternChildArray; I: Int32): PPatternChild; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function StringOpAt(const A: TStringOpArray; I: Int32): PStringOp; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function PlanAt(const A: TPlanArray; I: Int32): PPlan; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function EntryAt(const A: TFusedEntryArray; I: Int32): PFusedEntry; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function FusedAppAt(const A: TFusedAppArray; I: Int32): PFusedApp; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function FusedConditionAt(const A: TFusedConditionArray; I: Int32): PFusedCondition; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function FusedContributorAt(const A: TFusedContributorArray; I: Int32): PFusedContributor; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function FusedPatternAt(const A: TFusedPatternArray; I: Int32): PFusedPattern; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+function ValueTestAt(const A: TValueTestArray; I: Int32): PValueTest; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+{$POP}
 
 function NoChild: TChild; inline;
 begin

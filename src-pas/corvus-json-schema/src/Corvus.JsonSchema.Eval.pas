@@ -27,6 +27,7 @@ interface
 
 uses
   SysUtils,
+  Corvus.JsonSchema.Checked,
   Corvus.JsonSchema.Document,
   Corvus.JsonSchema.Numbers,
   Corvus.JsonSchema.Names,
@@ -408,7 +409,7 @@ end;
   or its source. The bytes are the DocCount bytes from DocStrOffset. }
 function StrBytes(D: PDocument; N: Int32): PDocBytes; inline;
 begin
-  if D^.Tape[N shl 1] and (StrText shl 8) <> 0 then
+  if WordAt(D^.Tape, N shl 1) and (StrText shl 8) <> 0 then
     Result := @D^.Text
   else
     Result := @D^.Source;
@@ -529,7 +530,7 @@ begin
     SetLength(S^.Arena, 2 * Stop + 16);
   S^.ArenaLen := Stop;
   for I := Off to Stop - 1 do
-    S^.Arena[I] := 0;
+    WordPtrAt(S^.Arena, I)^ := 0;
   Result.Off := Off;
   Result.Words := Words;
 end;
@@ -542,13 +543,16 @@ begin
 end;
 
 procedure SetBit(var E: TEvaluator; const B: TBitset; I: Int32); inline;
+var
+  W: PUInt64;
 begin
-  E.S^.Arena[B.Off + I shr 6] := E.S^.Arena[B.Off + I shr 6] or (One64 shl (I and 63));
+  W := WordPtrAt(E.S^.Arena, B.Off + I shr 6);
+  W^ := W^ or (One64 shl (I and 63));
 end;
 
 function GetBit(var E: TEvaluator; const B: TBitset; I: Int32): Boolean; inline;
 begin
-  Result := E.S^.Arena[B.Off + I shr 6] and (One64 shl (I and 63)) <> 0;
+  Result := WordAt(E.S^.Arena, B.Off + I shr 6) and (One64 shl (I and 63)) <> 0;
 end;
 
 procedure MergeBits(var E: TEvaluator; const Into, From: TBitset);
@@ -698,14 +702,14 @@ end;
 { Run evaluates a node's plan (at a new instance location, or where no depth guard applies). }
 function Run(var E: TEvaluator; Id: TNodeID; X: Int32): Boolean; inline;
 begin
-  Result := EnterChild(E, E.P^.Plans[Id].Self, X);
+  Result := EnterChild(E, PlanAt(E.P^.Plans, Id)^.Self, X);
 end;
 
 { RunChild evaluates a child at a new instance location. A child that is only a type test the value passes is
   decided here, in the caller once this is inlined, and anything else is one call. }
 function RunChild(var E: TEvaluator; const C: TChild; X: Int32): Boolean; inline;
 begin
-  Result := (C.Pass and Byte(E.D^.Tape[X shl 1] and $FF) <> 0) or EnterChild(E, C, X);
+  Result := (C.Pass and Byte(WordAt(E.D^.Tape, X shl 1) and $FF) <> 0) or EnterChild(E, C, X);
 end;
 
 { EnterChild is RunChild past its inlined test: the type test in full, then the child's keywords by its shape. An
@@ -724,13 +728,13 @@ var
 begin
   D := E.D;
   { The value's header is read once here, and what the loops need of it is handed to them. }
-  Header := D^.Tape[X shl 1];
+  Header := WordAt(D^.Tape, X shl 1);
   Kind := Byte(Header and $FF);
   if (C.Types and Kind = 0) and not IntegerOK(C.Types, D^, X) then
     Exit(False);
   if C.Shape = ShapeTrivial then
     Exit(True);
-  Pl := @E.P^.Plans[C.Id];
+  Pl := PlanAt(E.P^.Plans, C.Id);
   if not Pl^.HasBody then
     Exit(True);
   B := @Pl^.Body;
@@ -812,7 +816,7 @@ end;
 { RunInPlace evaluates an in-place child under the depth guard. }
 function RunInPlace(var E: TEvaluator; Id: TNodeID; X: Int32): Boolean;
 begin
-  if not E.P^.Plans[Id].Guard then
+  if not PlanAt(E.P^.Plans, Id)^.Guard then
     Exit(Run(E, Id, X));
   Inc(E.Depth);
   if E.Depth > E.P^.MaxDepth then begin
@@ -834,7 +838,7 @@ begin
     Exit(False);
   if C.Shape = ShapeTrivial then
     Exit(True);
-  Pl := @E.P^.Plans[C.Id];
+  Pl := PlanAt(E.P^.Plans, C.Id);
   if not Pl^.HasBody or Pl^.Guard then
     Exit(RunInPlace(E, C.Id, X));
   Result := Enter(E, C.Shape, @Pl^.Body, X);
@@ -904,14 +908,14 @@ begin
       Result := RunInPlace(E, O^.Node, X);
     OpAllOf: begin
       for I := 0 to Length(O^.Children) - 1 do
-        if not RunBranch(E, O^.Children[I], X) then
+        if not RunBranch(E, ChildAt(O^.Children, I)^, X) then
           Exit(False);
       Result := True;
     end;
     OpAnyOf: begin
       List := Candidates(E, O^.Branches, X);
       for I := 0 to Length(List^) - 1 do
-        if RunBranch(E, O^.Branches.Children[List^[I]], X) then
+        if RunBranch(E, ChildAt(O^.Branches.Children, Int32(UInt32At(List^, I)))^, X) then
           Exit(True);
       Result := False;
     end;
@@ -919,10 +923,10 @@ begin
       List := Candidates(E, O^.Branches, X);
       { The instance's type (or the discriminator) leaves one branch: that branch decides. }
       if Length(List^) = 1 then
-        Exit(RunBranch(E, O^.Branches.Children[List^[0]], X));
+        Exit(RunBranch(E, ChildAt(O^.Branches.Children, Int32(UInt32At(List^, 0)))^, X));
       Matched := 0;
       for I := 0 to Length(List^) - 1 do
-        if RunBranch(E, O^.Branches.Children[List^[I]], X) then begin
+        if RunBranch(E, ChildAt(O^.Branches.Children, Int32(UInt32At(List^, I)))^, X) then begin
           Inc(Matched);
           if Matched > 1 then
             Break;
@@ -962,7 +966,7 @@ begin
   else
   end;
   for I := 0 to Length(B^.Values) - 1 do
-    if not RunOp(E, @B^.Values[I], X) then
+    if not RunOp(E, OpAt(B^.Values, I), X) then
       Exit(False);
   case Kind of
     KindNumber:
@@ -994,7 +998,7 @@ var
   I: Int32;
 begin
   for I := 0 to Length(Ops) - 1 do
-    if not RunOp(E, @Ops[I], X) then
+    if not RunOp(E, OpAt(Ops, I), X) then
       Exit(False);
   Result := True;
 end;
@@ -1045,7 +1049,7 @@ begin
     { The values' headers are every fourth word of the properties' run of the tape. }
     for I := 0 to Count - 1 do begin
       V := First + 2 * I + 1;
-      if (C.Types and Byte(D^.Tape[V shl 1] and $FF) = 0) and not IntegerOK(C.Types, D^, V) then
+      if (C.Types and Byte(WordAt(D^.Tape, V shl 1) and $FF) = 0) and not IntegerOK(C.Types, D^, V) then
         Exit(False);
     end;
     Exit(True);
@@ -1061,6 +1065,7 @@ function ObjectVisitGeneral(var E: TEvaluator; Pl: PObjectPlan; X: Int32; out Se
 var
   D: PDocument;
   Src: PDocBytes;
+  Pc: PPatternChild;
   Bits, W: UInt64;
   Hint, K, Stop, I, J, Off, Len: Int32;
   Matched: Boolean;
@@ -1087,21 +1092,23 @@ begin
       { A name only required (or a dependency) mentions is undeclared: patterns, else additionalProperties. }
       if I < Pl^.Declared then begin
         Matched := True;
-        if not RunChild(E, Pl^.Children[I], K + 1) then
+        if not RunChild(E, ChildAt(Pl^.Children, I)^, K + 1) then
           Exit(False);
       end;
       for J := 0 to Length(Pl^.NamePatterns[I]) - 1 do begin
         Matched := True;
-        if not RunChild(E, Pl^.Patterns[Pl^.NamePatterns[I][J]].Child, K + 1) then
+        if not RunChild(E, PatternChildAt(Pl^.Patterns, UInt16At(Pl^.NamePatterns[I], J))^.Child, K + 1) then
           Exit(False);
       end;
     end else
-      for J := 0 to Length(Pl^.Patterns) - 1 do
-        if PatternMatch(E.P^.Patterns[Pl^.Patterns[J].Pattern], Src^, Off, Len, DocStrASCII(D^, K)) then begin
+      for J := 0 to Length(Pl^.Patterns) - 1 do begin
+        Pc := PatternChildAt(Pl^.Patterns, J);
+        if PatternMatch(PatternAt(E.P^.Patterns, Pc^.Pattern)^, Src^, Off, Len, DocStrASCII(D^, K)) then begin
           Matched := True;
-          if not RunChild(E, Pl^.Patterns[J].Child, K + 1) then
+          if not RunChild(E, Pc^.Child, K + 1) then
             Exit(False);
         end;
+      end;
     if not Matched and Pl^.HasAdditional and not RunChild(E, Pl^.Additional, K + 1) then
       Exit(False);
     { The name is a string value of the document: it is evaluated where it is. }
@@ -1116,15 +1123,17 @@ end;
 function ObjectVisitPattern(var E: TEvaluator; Pl: PObjectPlan; X: Int32): Boolean;
 var
   D: PDocument;
+  Pc: PPatternChild;
   K, Stop: Int32;
 begin
   D := E.D;
   K := DocFirst(D^, X);
   Stop := K + 2 * DocCount(D^, X);
   while K < Stop do begin
-    if PatternMatch(E.P^.Patterns[Pl^.Patterns[0].Pattern], StrBytes(D, K)^, DocStrOffset(D^, K), DocCount(D^, K),
+    Pc := PatternChildAt(Pl^.Patterns, 0);
+    if PatternMatch(PatternAt(E.P^.Patterns, Pc^.Pattern)^, StrBytes(D, K)^, DocStrOffset(D^, K), DocCount(D^, K),
       DocStrASCII(D^, K)) then begin
-      if not RunChild(E, Pl^.Patterns[0].Child, K + 1) then
+      if not RunChild(E, Pc^.Child, K + 1) then
         Exit(False);
     end else if Pl^.HasAdditional and not RunChild(E, Pl^.Additional, K + 1) then
       Exit(False);
@@ -1192,6 +1201,7 @@ function ObjectVisitLookup(var E: TEvaluator; Pl: PObjectPlan; First, Count: Int
 var
   D: PDocument;
   Src: PDocBytes;
+  C: PChild;
   Bits: UInt64;
   I, J, K, Len, Off: Int32;
 begin
@@ -1199,19 +1209,19 @@ begin
   Seen := 0;
   Bits := 0;
   for I := 0 to Length(Pl^.Names.M.Keys) - 1 do begin
-    Len := Pl^.Names.M.Keys[I].Length;
+    Len := NameKeyAt(Pl^.Names.M.Keys, I)^.Length;
     for J := 0 to Count - 1 do begin
       K := First + 2 * J;
-      if Int32(D^.Tape[K shl 1] shr 32) <> Len then
+      if Int32(WordAt(D^.Tape, K shl 1) shr 32) <> Len then
         Continue;
       Src := StrBytes(D, K);
       Off := DocStrOffset(D^, K);
-      if (NameWord(Src^, Off, Len) <> Pl^.Names.M.Words[I])
-        or ((Len > 8) and not TextEqualsBytes(Pl^.Names.M.Names[I], Src^, Off, Len)) then
+      if (NameWord(Src^, Off, Len) <> WordAt(Pl^.Names.M.Words, I))
+        or ((Len > 8) and not TextEqualsBytes(TextAt(Pl^.Names.M.Names, I)^, Src^, Off, Len)) then
         Continue;
       Bits := Bits or (One64 shl I);
-      if (Pl^.Children[I].Pass and Byte(D^.Tape[(K + 1) shl 1] and $FF) = 0)
-        and not EnterChild(E, Pl^.Children[I], K + 1) then
+      C := ChildAt(Pl^.Children, I);
+      if (C^.Pass and Byte(WordAt(D^.Tape, (K + 1) shl 1) and $FF) = 0) and not EnterChild(E, C^, K + 1) then
         Exit(False);
       Break;
     end;
@@ -1247,7 +1257,7 @@ begin
       I := NamesFindAfter(Pl^.Names, Src^, Off, Len, W, Hint);
     if I >= 0 then begin
       Bits := Bits or (One64 shl (I and 63));
-      if not RunChild(E, Pl^.Children[I], K + 1) then
+      if not RunChild(E, ChildAt(Pl^.Children, I)^, K + 1) then
         Exit(False);
     end else if Pl^.HasAdditional and not RunChild(E, Pl^.Additional, K + 1) then
       Exit(False);
@@ -1263,21 +1273,23 @@ var
   I: Int32;
   Bit: Byte;
 begin
-  if Types = AnyType then
+  if (Types = AnyType) or (Count <= 0) then
     Exit(True);
+  { The values' words (two for each) are checked once: the reads below are all within them. }
+  CheckWords(D^.Tape, First shl 1, Count shl 1);
   if (Types and TypeInteger <> 0) and (Types and TypeNumber = 0) then begin
     { Integers that are not numbers in general: the number's value decides. }
     for I := First to First + Count - 1 do begin
-      Bit := Byte(D^.Tape[I shl 1] and $FF);
+      Bit := Byte(RunWordAt(D^.Tape, I shl 1) and $FF);
       if (Types and Bit = 0) and not ((Bit = KindNumber)
-        and IsIntegerNumber(Byte((D^.Tape[I shl 1] shr 8) and $FF), D^.Tape[I shl 1 + 1])) then
+        and IsIntegerNumber(Byte((RunWordAt(D^.Tape, I shl 1) shr 8) and $FF), RunWordAt(D^.Tape, I shl 1 + 1))) then
         Exit(False);
     end;
     Exit(True);
   end;
   { A kind is its type bit. }
   for I := First to First + Count - 1 do
-    if Byte(D^.Tape[I shl 1] and $FF) and Types = 0 then
+    if Byte(RunWordAt(D^.Tape, I shl 1) and $FF) and Types = 0 then
       Exit(False);
   Result := True;
 end;
@@ -1299,7 +1311,7 @@ begin
   if Count < Prefix then
     Prefix := Count;
   for I := 0 to Prefix - 1 do
-    if not RunChild(E, Pl^.Prefix[I], First + I) then
+    if not RunChild(E, ChildAt(Pl^.Prefix, I)^, First + I) then
       Exit(False);
   if Pl^.HasItems then begin
     if Pl^.HasNested then begin
@@ -1348,7 +1360,7 @@ var
 begin
   D := E.D;
   for I := 0 to Length(B^.Values) - 1 do begin
-    O := @B^.Values[I];
+    O := OpAt(B^.Values, I);
     case O^.Kind of
       OpConst:
         Ok := ValuesEqual(D^, X, E.P^.Documents[O^.Value.Doc], O^.Value.N);
@@ -1428,6 +1440,7 @@ function RunString(var E: TEvaluator; const Ops: TStringOpArray; X: Int32): Bool
 var
   D: PDocument;
   Src: PDocBytes;
+  Op: PStringOp;
   I, Off, Len: Int32;
   Ok: Boolean;
 begin
@@ -1436,15 +1449,16 @@ begin
   Off := DocStrOffset(D^, X);
   Len := DocCount(D^, X);
   for I := 0 to Length(Ops) - 1 do begin
-    case Ops[I].Kind of
+    Op := StringOpAt(Ops, I);
+    case Op^.Kind of
       StringLength:
-        Ok := LengthOK(D, X, Ops[I].Min, Ops[I].Max);
+        Ok := LengthOK(D, X, Op^.Min, Op^.Max);
       StringPattern:
-        Ok := PatternMatch(E.P^.Patterns[Ops[I].Pattern], Src^, Off, Len, DocStrASCII(D^, X));
+        Ok := PatternMatch(PatternAt(E.P^.Patterns, Op^.Pattern)^, Src^, Off, Len, DocStrASCII(D^, X));
       StringFormat:
-        Ok := CheckString(E, Ops[I].Format, Src^, Off, Len);
+        Ok := CheckString(E, Op^.Format, Src^, Off, Len);
     else
-      Ok := ContentOK(E, Src, Off, Len, Ops[I].Content);
+      Ok := ContentOK(E, Src, Off, Len, Op^.Content);
     end;
     if not Ok then
       Exit(False);
@@ -1463,7 +1477,7 @@ begin
   if DocKind(D^, V) = KindString then begin
     I := NamesFind(M.Strings, StrBytes(D, V)^, DocStrOffset(D^, V), DocCount(D^, V));
     if I >= 0 then
-      Exit(M.StringMasks[I]);
+      Exit(WordAt(M.StringMasks, I));
     Exit(0);
   end;
   for I := 0 to Length(M.Others) - 1 do
@@ -1478,7 +1492,7 @@ var
 begin
   if T.IsPattern then begin
     if DocKind(D^, V) = KindString then
-      Exit(PatternMatch(P.Patterns[T.Pattern], StrBytes(D, V)^, DocStrOffset(D^, V), DocCount(D^, V),
+      Exit(PatternMatch(PatternAt(P.Patterns, T.Pattern)^, StrBytes(D, V)^, DocStrOffset(D^, V), DocCount(D^, V),
         DocStrASCII(D^, V)));
     Exit(not T.RequiresString);
   end;
@@ -1498,10 +1512,13 @@ end;
 function AllSeen(const S: TFusedPass; const Names: TUInt16Array): Boolean;
 var
   K: Int32;
+  Name: UInt16;
 begin
-  for K := 0 to Length(Names) - 1 do
-    if S.Seen[Names[K] shr 6] and (One64 shl (Names[K] and 63)) = 0 then
+  for K := 0 to Length(Names) - 1 do begin
+    Name := UInt16At(Names, K);
+    if S.Seen[Name shr 6] and (One64 shl (Name and 63)) = 0 then
       Exit(False);
+  end;
   Result := True;
 end;
 
@@ -1529,16 +1546,19 @@ function ResolveUnknown(var E: TEvaluator; C: PFusedContributor; const Name: TBy
   V: Int32; out Matched: Boolean): Boolean;
 var
   I: Int32;
+  Fp: PFusedPattern;
 begin
   Matched := False;
-  for I := 0 to Length(C^.Patterns) - 1 do
-    if PatternMatch(E.P^.Patterns[C^.Patterns[I].Pattern], Name, Off, Len, Ascii) then begin
+  for I := 0 to Length(C^.Patterns) - 1 do begin
+    Fp := FusedPatternAt(C^.Patterns, I);
+    if PatternMatch(PatternAt(E.P^.Patterns, Fp^.Pattern)^, Name, Off, Len, Ascii) then begin
       Matched := True;
-      if not ApplyOpt(E, C^.Patterns[I].Child, V) then begin
+      if not ApplyOpt(E, Fp^.Child, V) then begin
         Matched := False;
         Exit(False);
       end;
     end;
+  end;
   if not Matched and C^.HasAdditional then begin
     Matched := True;
     if not ApplyOpt(E, C^.Additional, V) then begin
@@ -1560,7 +1580,7 @@ var
   C: PFusedContributor;
 begin
   D := E.D;
-  Entry := @F^.Entries[Index];
+  Entry := EntryAt(F^.Entries, Index);
   Pass.Seen[Index shr 6] := Pass.Seen[Index shr 6] or (One64 shl (Index and 63));
   if Length(Entry^.Tests) <> 0 then begin
     Allowed := 0;
@@ -1573,15 +1593,15 @@ begin
       if (T < 64) and (Keyed and (One64 shl T) <> 0) then
         Holds := Allowed and (One64 shl T) <> 0
       else
-        Holds := TestHolds(E.P^, Entry^.Tests[T], D, V);
+        Holds := TestHolds(E.P^, ValueTestAt(Entry^.Tests, T)^, D, V);
       if not Holds then
-        Pass.Failed := Pass.Failed or (One64 shl Entry^.Tests[T].Condition);
+        Pass.Failed := Pass.Failed or (One64 shl ValueTestAt(Entry^.Tests, T)^.Condition);
     end;
   end;
   Result := 0;
   for I := 0 to Length(Entry^.Apps) - 1 do begin
-    App := @Entry^.Apps[I];
-    C := @F^.Contributors[App^.Contributor];
+    App := FusedAppAt(Entry^.Apps, I);
+    C := FusedContributorAt(F^.Contributors, App^.Contributor);
     if C^.Condition.IsSet then begin
       Result := Result or FusedDefer;
       Continue;
@@ -1607,11 +1627,11 @@ begin
     Exit(0);
   for I := 0 to Length(F^.Absent) - 1 do
     if (Pass.Failed and (One64 shl F^.Absent[I].Condition) = 0)
-      and PatternMatch(E.P^.Patterns[F^.Absent[I].Pattern], Name, Off, Len, Ascii) then
+      and PatternMatch(PatternAt(E.P^.Patterns, F^.Absent[I].Pattern)^, Name, Off, Len, Ascii) then
       Pass.Failed := Pass.Failed or (One64 shl F^.Absent[I].Condition);
   Result := 0;
   for I := 0 to Length(F^.Contributors) - 1 do begin
-    C := @F^.Contributors[I];
+    C := FusedContributorAt(F^.Contributors, I);
     if C^.Condition.IsSet then begin
       if (Length(C^.Patterns) <> 0) or C^.HasAdditional then
         Result := Result or FusedDefer;
@@ -1657,7 +1677,7 @@ begin
   Count := DocCount(D^, X);
   if F^.HasCountBounds then
     for I := 0 to Length(F^.Contributors) - 1 do begin
-      C := @F^.Contributors[I];
+      C := FusedContributorAt(F^.Contributors, I);
       if not C^.Condition.IsSet and not C^.Alt.IsSet and not CountOK(C, UInt64(Count)) then
         Exit(False);
     end;
@@ -1703,10 +1723,10 @@ begin
 
   { Decide the conditions, then which apply along their gates (a gate precedes the conditions under it). }
   for I := 0 to Length(F^.Conditions) - 1 do
-    if (Pass.Failed and (One64 shl I) = 0) and AllSeen(Pass, F^.Conditions[I].Required) then
+    if (Pass.Failed and (One64 shl I) = 0) and AllSeen(Pass, FusedConditionAt(F^.Conditions, I)^.Required) then
       Pass.Holds := Pass.Holds or (One64 shl I);
   for I := 0 to Length(F^.Conditions) - 1 do
-    if GateActive(Pass, F^.Conditions[I].Gate) then
+    if GateActive(Pass, FusedConditionAt(F^.Conditions, I)^.Gate) then
       Pass.GateOK := Pass.GateOK or (One64 shl I);
   Pass.ThenMask := Pass.GateOK and Pass.Holds;
   Pass.ElsMask := Pass.GateOK and not Pass.Holds;
@@ -1731,10 +1751,10 @@ begin
     Cover := False;
     Index := NamesFind(F^.Names, Src^, Off, Len);
     if Index >= 0 then begin
-      for I := 0 to Length(F^.Entries[Index].Apps) - 1 do begin
+      for I := 0 to Length(EntryAt(F^.Entries, Index)^.Apps) - 1 do begin
         { An application whose first contributor has no condition was made in the first step. }
-        App := @F^.Entries[Index].Apps[I];
-        if not F^.Contributors[App^.Contributor].Condition.IsSet then
+        App := FusedAppAt(EntryAt(F^.Entries, Index)^.Apps, I);
+        if not FusedContributorAt(F^.Contributors, App^.Contributor)^.Condition.IsSet then
           Continue;
         if FusedApplies(Pass, App^.ThenMask, App^.ElsMask) then begin
           if App^.HasChild and not RunChild(E, App^.Child, V) then
@@ -1744,7 +1764,7 @@ begin
       end;
     end else
       for I := 0 to Length(F^.Contributors) - 1 do begin
-        C := @F^.Contributors[I];
+        C := FusedContributorAt(F^.Contributors, I);
         if C^.Condition.IsSet and FusedApplies(Pass, C^.ThenMask, C^.ElsMask) then begin
           if not ResolveUnknown(E, C, Src^, Off, Len, DocStrASCII(D^, K), V, Matched) then
             Exit(False);
@@ -1757,7 +1777,7 @@ begin
   end;
 
   for J := 0 to Length(F^.Finals) - 1 do begin
-    C := @F^.Contributors[F^.Finals[J]];
+    C := FusedContributorAt(F^.Contributors, UInt16At(F^.Finals, J));
     if C^.Condition.IsSet then begin
       if not FusedApplies(Pass, C^.ThenMask, C^.ElsMask) then
         Continue;

@@ -30,6 +30,7 @@ interface
 
 uses
   SysUtils,
+  Corvus.JsonSchema.Checked,
   Corvus.JsonSchema.Document,
   Corvus.JsonSchema.Names,
   Corvus.JsonSchema.EcmaRegex;
@@ -69,6 +70,7 @@ type
     { MaxCount: unbounded. }
     Max: UInt32;
   end;
+  PSequenceItem = ^TSequenceItem;
   TSequenceItemArray = array of TSequenceItem;
 
   { TSequence is "^" then quantified character sets, optionally "$". Matched greedily, which is exact because
@@ -148,6 +150,10 @@ const
   { AltAnywhere is an unanchored sequence of width characters: matched at each position. }
   AltAnywhere = 3;
 
+{ SequenceItemAt is a pointer to A[I]: one comparison of the index with the array's length, then the element's
+  address (see Corvus.JsonSchema.Checked). }
+function SequenceItemAt(const A: TSequenceItemArray; I: Int32): PSequenceItem; inline;
+
 { CompilePattern compiles a pattern. False when it is not a valid ECMA-262 regular expression. }
 function CompilePattern(const Source: UTF8String; out P: TPattern): Boolean;
 { ValidRegex reports whether a string is a valid ECMA-262 regular expression with the u flag (the regex format, and
@@ -180,6 +186,18 @@ var
 
 type
   TTextArray = array of UTF8String;
+
+{$PUSH}
+{$R-}
+
+function SequenceItemAt(const A: TSequenceItemArray; I: Int32): PSequenceItem; inline;
+begin
+  if UInt32(I) >= UInt32(Length(A)) then
+    RangeFail;
+  Result := @A[I];
+end;
+
+{$POP}
 
 { --------------------------------------------------------------------------------------------------------------------
   Reading a pattern's text as the Go source does }
@@ -284,7 +302,8 @@ end;
 { DecodeRuneAt reads the character at I (a byte for ASCII). }
 function DecodeRuneAt(const S: TBytes; I, Stop: Int32; out Size: Int32): Int32; inline;
 begin
-  Result := S[I];
+  { The byte array's reader, not the string's ByteAt above. }
+  Result := Corvus.JsonSchema.Checked.ByteAt(S, I);
   if Result < RuneSelf then
     Size := 1
   else
@@ -297,7 +316,7 @@ var
 begin
   Result := False;
   for K := Start to Stop - 1 do
-    if S[K] >= RuneSelf then
+    if Corvus.JsonSchema.Checked.ByteAt(S, K) >= RuneSelf then
       Exit;
   Result := True;
 end;
@@ -798,6 +817,7 @@ function MatchPinned(const Q: TSequence; const S: TBytes; At, Stop: Int32; Ascii
 var
   Len, Variable, I, C, Size: Int32;
   Count: Int64;
+  Item: PSequenceItem;
 begin
   Result := False;
   if Ascii then
@@ -805,16 +825,17 @@ begin
   else
     Len := RuneCount(S, At, Stop);
   Variable := Len - Q.FixedWidth;
-  if (Variable < 0) or (Int64(Variable) < Int64(Q.Items[Q.Pinned].Min))
-    or (Int64(Variable) > Int64(Q.Items[Q.Pinned].Max)) then
+  Item := SequenceItemAt(Q.Items, Q.Pinned);
+  if (Variable < 0) or (Int64(Variable) < Int64(Item^.Min)) or (Int64(Variable) > Int64(Item^.Max)) then
     Exit;
   for I := 0 to Length(Q.Items) - 1 do begin
-    Count := Q.Items[I].Min;
+    Item := SequenceItemAt(Q.Items, I);
+    Count := Item^.Min;
     if I = Q.Pinned then
       Count := Variable;
     while Count > 0 do begin
       C := DecodeRuneAt(S, At, Stop, Size);
-      if not SetContains(Q.Items[I].Chars, C) then
+      if not SetContains(Item^.Chars, C) then
         Exit;
       Inc(At, Size);
       Dec(Count);
@@ -828,6 +849,7 @@ function MatchChars(const Q: TSequence; const S: TBytes; At, Stop: Int32): Boole
 var
   I, C, Size: Int32;
   N: UInt32;
+  Item: PSequenceItem;
 begin
   if Q.Pinned >= 0 then begin
     Result := MatchPinned(Q, S, At, Stop, False);
@@ -835,15 +857,16 @@ begin
   end;
   Result := False;
   for I := 0 to Length(Q.Items) - 1 do begin
+    Item := SequenceItemAt(Q.Items, I);
     N := 0;
-    while (N < Q.Items[I].Max) and (At < Stop) do begin
+    while (N < Item^.Max) and (At < Stop) do begin
       C := DecodeRuneAt(S, At, Stop, Size);
-      if not SetContains(Q.Items[I].Chars, C) then
+      if not SetContains(Item^.Chars, C) then
         Break;
       Inc(At, Size);
       Inc(N);
     end;
-    if N < Q.Items[I].Min then
+    if N < Item^.Min then
       Exit;
   end;
   Result := not Q.ToEnd or (At = Stop);
@@ -853,6 +876,7 @@ end;
 function MatchASCII(const Q: TSequence; const B: TBytes; At, Stop: Int32): Boolean;
 var
   I, Start, Limit: Int32;
+  Item: PSequenceItem;
 begin
   if Q.Pinned >= 0 then begin
     Result := MatchPinned(Q, B, At, Stop, True);
@@ -860,13 +884,14 @@ begin
   end;
   Result := False;
   for I := 0 to Length(Q.Items) - 1 do begin
+    Item := SequenceItemAt(Q.Items, I);
     Start := At;
     Limit := Stop;
-    if Int64(Q.Items[I].Max) < Int64(Stop - Start) then
-      Limit := Start + Int32(Q.Items[I].Max);
-    while (At < Limit) and SetHasASCII(Q.Items[I].Chars, B[At]) do
+    if Int64(Item^.Max) < Int64(Stop - Start) then
+      Limit := Start + Int32(Item^.Max);
+    while (At < Limit) and SetHasASCII(Item^.Chars, Corvus.JsonSchema.Checked.ByteAt(B, At)) do
       Inc(At);
-    if Int64(At - Start) < Int64(Q.Items[I].Min) then
+    if Int64(At - Start) < Int64(Item^.Min) then
       Exit;
   end;
   Result := not Q.ToEnd or (At = Stop);
@@ -885,18 +910,20 @@ function Consume(const Q: TSequence; const S: TBytes; At, Stop: Int32): Int32;
 var
   I, C, Size, From: Int32;
   N: UInt32;
+  Item: PSequenceItem;
 begin
   From := At;
   for I := 0 to Length(Q.Items) - 1 do begin
+    Item := SequenceItemAt(Q.Items, I);
     N := 0;
-    while (N < Q.Items[I].Max) and (At < Stop) do begin
+    while (N < Item^.Max) and (At < Stop) do begin
       C := DecodeRuneAt(S, At, Stop, Size);
-      if not SetContains(Q.Items[I].Chars, C) then
+      if not SetContains(Item^.Chars, C) then
         Break;
       Inc(At, Size);
       Inc(N);
     end;
-    if N < Q.Items[I].Min then begin
+    if N < Item^.Min then begin
       Result := -1;
       Exit;
     end;
@@ -1907,7 +1934,7 @@ begin
       Result := False;
       I := Start;
       if P.Flag then begin
-        while (I < Stop) and (S[I] = Ord('!')) do
+        while (I < Stop) and (Corvus.JsonSchema.Checked.ByteAt(S, I) = Ord('!')) do
           Inc(I);
         if (I = Start) or (I = Stop) then
           Exit;
