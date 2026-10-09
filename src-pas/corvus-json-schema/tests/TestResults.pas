@@ -186,6 +186,7 @@ var
   Value: UTF8String;
   I, Titles: Int32;
 begin
+  Value := '';
   C := NewJsonSchemaResults(Verbose);
   Check(MustCompile(PersonSchema).Evaluate('{ "name": "a" }', C), 'annotations: the instance is invalid');
   Annotations := CollectedAnnotations(C);
@@ -453,6 +454,7 @@ var
   Offset: Int32;
 begin
   Result := False;
+  A := Default(TJsonDocument);
   Actual := 0;
   for I := 0 to Length(Produced) - 1 do
     if (Produced[I].InstanceLocation = Location) and (Produced[I].Keyword = Keyword) then

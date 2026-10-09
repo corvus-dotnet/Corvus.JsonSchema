@@ -126,8 +126,9 @@ type
     instance was evaluated and is simply not valid. }
   IJsonSchemaValidator = interface
     ['{6E1B6C0B-52D5-4C59-9E0C-0F3B4D0A7C31}']
-    { IsValid reports whether an instance is valid. A schema that recursed in place beyond the maximum depth is
-      reported as invalid. Use TryIsValid to tell the two apart. }
+    { IsValid reports whether an instance is valid. When the schema recursed in place beyond the maximum depth the
+      result is what the abandoned evaluation came to, as in the Go module: not valid, unless the branch that was
+      abandoned is under a "not". Use TryIsValid to be told. }
     function IsValid(const Instance: TJsonDocument): Boolean; overload;
     { IsValid reports whether JSON text is a valid instance. The text is parsed into buffers the calling thread
       reuses, so a validation allocates nothing in the steady state. It raises EJsonParseError when the text is not
@@ -281,6 +282,8 @@ type
     function RunNestedString(const Json: UTF8String; out Status: TTextStatus; Error: PParseError): Boolean;
     function RunBytes(const Json: TBytes; Start, Len: Int32; out Status: TTextStatus; Error: PParseError): Boolean;
     function RunString(const Json: UTF8String; out Status: TTextStatus; Error: PParseError): Boolean;
+    procedure RaiseStringNotJson(const Json: UTF8String);
+    procedure RaiseBytesNotJson(const Json: TBytes; Start, Len: Int32);
     function Collect(const Instance: TJsonDocument; var Results: TJsonSchemaResults;
       out DepthExceeded: Boolean): Boolean;
   public
@@ -375,7 +378,8 @@ begin
   DepthExceeded := E.DepthExceeded;
 end;
 
-{ RunParsed parses B[0 .. Len-1] into the thread's reused document and validates it. }
+{ RunParsed parses B[0 .. Len-1] into the thread's reused document and validates it. The result is the
+  evaluation's, whatever the status (as the run of the Go source, which returns the result beside the flag). }
 function TJsonSchemaValidator.RunParsed(S: PScratch; const B: TBytes; Len: Int32; out Status: TTextStatus;
   Error: PParseError): Boolean;
 var
@@ -390,10 +394,8 @@ begin
   end else begin
     Result := Run(@S^.Text, S, Exceeded);
     Status := TextEvaluated;
-    if Exceeded then begin
+    if Exceeded then
       Status := TextDepthExceeded;
-      Result := False;
-    end;
   end;
   ReleaseText(S);
 end;
@@ -415,10 +417,8 @@ begin
   end;
   Result := Run(@Doc, nil, Exceeded);
   Status := TextEvaluated;
-  if Exceeded then begin
+  if Exceeded then
     Status := TextDepthExceeded;
-    Result := False;
-  end;
 end;
 
 { RunNestedBytes and RunNestedString are apart from their callers so that the usual path holds no copy of the
@@ -486,29 +486,43 @@ begin
   Result := Run(@Instance, nil, Exceeded);
 end;
 
-function TJsonSchemaValidator.IsValid(const Json: UTF8String): Boolean;
+{ RaiseStringNotJson and RaiseBytesNotJson raise the EJsonParseError of text that IsValid found is not JSON. The
+  reason is asked for only here, in a function of its own, so that IsValid holds no string (a function that holds
+  one sets up a frame to free it, on every call). }
+procedure TJsonSchemaValidator.RaiseStringNotJson(const Json: UTF8String);
 var
   Status: TTextStatus;
   Error: TParseError;
 begin
+  RunString(Json, Status, @Error);
+  RaiseParseError(Error);
+end;
+
+procedure TJsonSchemaValidator.RaiseBytesNotJson(const Json: TBytes; Start, Len: Int32);
+var
+  Status: TTextStatus;
+  Error: TParseError;
+begin
+  RunBytes(Json, Start, Len, Status, @Error);
+  RaiseParseError(Error);
+end;
+
+function TJsonSchemaValidator.IsValid(const Json: UTF8String): Boolean;
+var
+  Status: TTextStatus;
+begin
   Result := RunString(Json, Status, nil);
-  if Status = TextNotJson then begin
-    { The reason is asked for only now, so that the usual path holds no string. }
-    RunString(Json, Status, @Error);
-    RaiseParseError(Error);
-  end;
+  if Status = TextNotJson then
+    RaiseStringNotJson(Json);
 end;
 
 function TJsonSchemaValidator.IsValid(const Json: TBytes; Start, Len: Int32): Boolean;
 var
   Status: TTextStatus;
-  Error: TParseError;
 begin
   Result := RunBytes(Json, Start, Len, Status, nil);
-  if Status = TextNotJson then begin
-    RunBytes(Json, Start, Len, Status, @Error);
-    RaiseParseError(Error);
-  end;
+  if Status = TextNotJson then
+    RaiseBytesNotJson(Json, Start, Len);
 end;
 
 function TJsonSchemaValidator.TryIsValid(const Instance: TJsonDocument; out Error: UTF8String): Boolean;
@@ -532,7 +546,10 @@ begin
   Result := RunString(Json, Status, @ParseError);
   case Status of
     TextNotJson: Error := ParseErrorText(ParseError);
-    TextDepthExceeded: Error := ErrDepthExceeded;
+    TextDepthExceeded: begin
+      Error := ErrDepthExceeded;
+      Result := False;
+    end;
   else
   end;
 end;
@@ -546,7 +563,10 @@ begin
   Result := RunBytes(Json, Start, Len, Status, @ParseError);
   case Status of
     TextNotJson: Error := ParseErrorText(ParseError);
-    TextDepthExceeded: Error := ErrDepthExceeded;
+    TextDepthExceeded: begin
+      Error := ErrDepthExceeded;
+      Result := False;
+    end;
   else
   end;
 end;

@@ -264,8 +264,8 @@ begin
   Multiple('1e-299', '1e-300', True);
 
   { Parsing into reused buffers gives the same document, and allocates no new arrays once they have grown. }
-  FillChar(P, SizeOf(P), 0);
-  FillChar(D, SizeOf(D), 0);
+  P := Default(TParser);
+  D := Default(TDocument);
   B := BytesOf('{"a": [1, 2, {"b": "c\n"}], "d": 1.5}');
   Check(ParserParseInto(P, D, B, Length(B)), 'parse into');
   Check(DocumentToJson(D) = '{"a":[1,2,{"b":"c\n"}],"d":1.5}', 'parse into: ' + DocumentToJson(D));

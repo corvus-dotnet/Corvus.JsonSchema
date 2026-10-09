@@ -628,21 +628,50 @@ function ObjectVisitNames(var E: TEvaluator; Pl: PObjectPlan; First, Count: Int3
 function EvalNode(var E: TEvaluator; Id: TNodeID; X: Int32; const Bits: TBitset): Boolean; forward;
 function ContentOK(var E: TEvaluator; Src: PDocBytes; Off, Len: Int32; Kind: TContentKind): Boolean; forward;
 
-function CheckString(const F: TFormatCheckOp; const B: TBytes; Start, Len: Int32): Boolean;
+{ Abandon gives back what an evaluation took of the thread's buffers when an exception ends it. The Go source
+  needs no such thing: a scratch that is not put back in the pool is dropped. Here the buffers are the thread's, so
+  an evaluation that ends without giving them back would leave every later one on the thread above what it left
+  in use, and every later validation of JSON text parsing into a document of its own. }
+procedure Abandon(var E: TEvaluator);
+begin
+  if E.S = nil then
+    Exit;
+  E.S^.ScopeLen := E.ScopeBase;
+  E.S^.ArenaLen := E.ArenaBase;
+  { The evaluation of JSON text, whose instance is the thread's document. }
+  if E.D = PDocument(@E.S^.Text) then begin
+    E.S^.Text.Source := nil;
+    E.S^.TextBusy := False;
+  end;
+end;
+
+{ CallCustom calls a custom format validator, which is the caller's code. It must not raise an exception. If it
+  does, the evaluation is abandoned and the exception goes on to the caller of the validator. }
+function CallCustom(var E: TEvaluator; Custom: TFormatValidator; const B: TBytes; Start, Len: Int32): Boolean;
+begin
+  try
+    Result := Custom(B, Start, Len);
+  except
+    Abandon(E);
+    raise;
+  end;
+end;
+
+function CheckString(var E: TEvaluator; const F: TFormatCheckOp; const B: TBytes; Start, Len: Int32): Boolean;
 begin
   if Assigned(F.Custom) then
-    Result := F.Custom(B, Start, Len)
+    Result := CallCustom(E, F.Custom, B, Start, Len)
   else
     Result := FormatCheckString(F.Kind, B, Start, Len, F.Legacy);
 end;
 
-function CheckNumber(const F: TFormatCheckOp; const D: TDocument; X: Int32): Boolean;
+function CheckNumber(var E: TEvaluator; const F: TFormatCheckOp; const D: TDocument; X: Int32): Boolean;
 var
   Start: Int32;
 begin
   if Assigned(F.Custom) then begin
     Start := DocNumberStart(D, X);
-    Result := F.Custom(D.Source, Start, DocNumberEnd(D, X) - Start);
+    Result := CallCustom(E, F.Custom, D.Source, Start, DocNumberEnd(D, X) - Start);
   end else
     Result := FormatCheckNumber(F.Kind, DocFlags(D, X), DocData(D, X));
 end;
@@ -1366,7 +1395,7 @@ begin
       NumberMultipleOf:
         Ok := DivisorDivides(Ops[I].Divisor, Flag, Data, D^.Source, DocNumberStart(D^, X));
     else
-      Ok := CheckNumber(Ops[I].Format, D^, X);
+      Ok := CheckNumber(E, Ops[I].Format, D^, X);
     end;
     if not Ok then
       Exit(False);
@@ -1413,7 +1442,7 @@ begin
       StringPattern:
         Ok := PatternMatch(E.P^.Patterns[Ops[I].Pattern], Src^, Off, Len, DocStrASCII(D^, X));
       StringFormat:
-        Ok := CheckString(Ops[I].Format, Src^, Off, Len);
+        Ok := CheckString(E, Ops[I].Format, Src^, Off, Len);
     else
       Ok := ContentOK(E, Src, Off, Len, Ops[I].Content);
     end;
@@ -1936,7 +1965,7 @@ begin
     Custom := CustomFormat(E.P^.Options, N^.Format);
     if Assigned(Custom) then begin
       Start := DocNumberStart(D^, X);
-      M := Custom(D^.Source, Start, DocNumberEnd(D^, X) - Start);
+      M := CallCustom(E, Custom, D^.Source, Start, DocNumberEnd(D^, X) - Start);
     end else
       M := FormatCheckNumber(N^.FormatKind, DocFlags(D^, X), DocData(D^, X));
     Message := '';
@@ -2049,7 +2078,7 @@ begin
     Message := '';
     Custom := CustomFormat(E.P^.Options, N^.Format);
     if Assigned(Custom) then begin
-      M := Custom(Src^, Off, Len);
+      M := CallCustom(E, Custom, Src^, Off, Len);
       if Wants(E, M) then
         Message := 'Expected a string in the ''' + N^.Format + ''' format.';
     end else if N^.FormatKind <> FormatKindUnknown then begin
