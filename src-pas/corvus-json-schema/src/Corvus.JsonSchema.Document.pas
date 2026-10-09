@@ -158,11 +158,13 @@ function ParserRetainsTooMuch(const P: TParser): Boolean;
 { LoadLE64 is the eight bytes at B[J .. J+7] as a little-endian word. The caller has checked that they exist: the
   read is one load, and an index beyond the array raises ERangeError like any other. }
 function LoadLE64(const B: TBytes; J: Int32): UInt64; inline;
+{ LoadLE32 is the four bytes at B[J .. J+3] as a little-endian word. }
+function LoadLE32(const B: TBytes; J: Int32): UInt32; inline;
 { Utf8Valid says whether B[Start .. Stop-1] is valid UTF-8. }
 function Utf8Valid(const B: TBytes; Start, Stop: Int32): Boolean;
 { BytesEqual says whether two runs of bytes of one length are the same. }
 function BytesEqual(const A: TBytes; AStart: Int32; const B: TBytes; BStart, Len: Int32): Boolean;
-{ StrHash is a 64-bit hash of a run of bytes (FNV-1a). }
+{ StrHash hashes a string, eight bytes at a time. }
 function StrHash(const B: TBytes; Start, Len: Int32): UInt64;
 { SortUInt64 sorts A[0 .. Count-1] in increasing order. }
 procedure SortUInt64(var A: TUInt64Array; Count: Int32);
@@ -174,6 +176,8 @@ uses
 
 const
   ObjectFrame = UInt32($80000000);
+
+  HashK = UInt64($9E3779B97F4A7C15);
 
   SwarOnes = UInt64($0101010101010101);
   SwarHighs = UInt64($8080808080808080);
@@ -209,6 +213,15 @@ begin
     Move(S[1], Result[0], N);
 end;
 
+function LoadLE32(const B: TBytes; J: Int32): UInt32; inline;
+begin
+  if B[J + 3] = 0 then ;
+  Move(B[J], Result, 4);
+  {$IFDEF ENDIAN_BIG}
+  Result := SwapEndian(Result);
+  {$ENDIF}
+end;
+
 function LoadLE64(const B: TBytes; J: Int32): UInt64; inline;
 begin
   { Indexing the last byte checks the whole run: the first is checked by the index below. }
@@ -241,14 +254,34 @@ begin
   Result := True;
 end;
 
+function RotateLeft5(H: UInt64): UInt64; inline;
+begin
+  Result := (H shl 5) or (H shr 59);
+end;
+
 function StrHash(const B: TBytes; Start, Len: Int32): UInt64;
 var
-  K: Int32;
+  I, K: Int32;
+  H, Tail: UInt64;
 begin
-  { FNV-1a. The multiplication wraps, as the hash requires. }
-  Result := UInt64($CBF29CE484222325);
-  for K := Start to Start + Len - 1 do
-    Result := (Result xor B[K]) * UInt64($100000001B3);
+  { The multiplications wrap, as a hash's do. }
+  H := UInt64(Len) * HashK;
+  I := 0;
+  while I + 8 <= Len do begin
+    H := (RotateLeft5(H) xor LoadLE64(B, Start + I)) * HashK;
+    Inc(I, 8);
+  end;
+  { The tail as one word: the last eight bytes when there are that many (overlapping the words already hashed),
+    else the overlapping first and last four, else the bytes themselves. }
+  Tail := 0;
+  if Len >= 8 then
+    Tail := LoadLE64(B, Start + Len - 8)
+  else if Len >= 4 then
+    Tail := UInt64(LoadLE32(B, Start)) or (UInt64(LoadLE32(B, Start + Len - 4)) shl 32)
+  else
+    for K := Start to Start + Len - 1 do
+      Tail := (Tail shl 8) or B[K];
+  Result := (RotateLeft5(H) xor Tail) * HashK;
 end;
 
 procedure SortUInt64Range(var A: TUInt64Array; Lo, Hi: Int32);
