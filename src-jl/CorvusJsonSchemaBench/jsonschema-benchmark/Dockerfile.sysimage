@@ -1,0 +1,18 @@
+# For local comparisons: as Dockerfile.local, with the package and this program compiled into a Julia system image
+# by PackageCompiler, which the process starts from. PackageCompiler is installed in an environment of its own, so it
+# is a dependency of neither the package nor the program. The README says what the system image changes.
+FROM julia:1.13
+
+RUN apt-get update && apt-get install -y --no-install-recommends time gcc libc6-dev && rm -rf /var/lib/apt/lists/*
+
+COPY CorvusJsonSchema /src/CorvusJsonSchema
+COPY bench /app
+WORKDIR /app
+
+RUN julia --startup-file=no --project=/app -e 'using Pkg; Pkg.develop(path="/src/CorvusJsonSchema")' \
+ && julia --startup-file=no --project=/packagecompiler -e 'using Pkg; Pkg.add("PackageCompiler")' \
+ && julia --startup-file=no --project=/packagecompiler /app/sysimage.jl /app /app/corvus.so \
+ && echo local > /app/corvus-version
+
+ENTRYPOINT ["/app/memory-wrapper.sh", "julia", "--startup-file=no", "--sysimage=/app/corvus.so", "--project=/app", "/app/main.jl"]
+CMD []

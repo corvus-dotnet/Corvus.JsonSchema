@@ -1,0 +1,332 @@
+name: julia-publish
+# Releases the Julia package (src-jl/CorvusJsonSchema) when the version in its Project.toml is not in Julia's General
+# registry yet. To release, bump version in Project.toml (and add the version to the package's VERSIONHISTORY.md)
+# and merge. A merged pull request labelled no_release releases nothing (.github/actions/no-release-label).
+#
+# A Julia package is published by a pull request to the General registry (github.com/JuliaRegistries/General), which
+# only the JuliaRegistrator bot may open. This workflow asks it to, with a comment on the commit:
+# "@JuliaRegistrator register subdir=src-jl/CorvusJsonSchema". The bot answers a comment made with GITHUB_TOKEN (its
+# source lets github-actions[bot] through), but only on a repository where its GitHub App is installed
+# (https://github.com/apps/juliateam-registrator). There is no secret. The registry then merges the pull request by
+# itself: about 15 to 20 minutes after it opens for a new version, and no sooner than 3 days for a package's first
+# version. A registered version can never be replaced.
+#
+# When the version is in the registry, the workflow tags the commit CorvusJsonSchema-v<version>, the form
+# Registrator and TagBot use for a package in a subdirectory. It waits for a new version in the same run. For the
+# first version it cannot wait 3 days, so run it again by hand once the registry's pull request has merged: it
+# finds the version registered and only tags. TagBot is not used: it would also make a GitHub release, marked as
+# the repository's latest, with every pull request of the repository in its notes.
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. Its tag
+# filter ('[0-9]+.[0-9]+.[0-9]+*') has to match the whole tag name from a leading digit, so a tag that starts
+# CorvusJsonSchema-v cannot start it. The tag is also pushed with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-jl/CorvusJsonSchema/Project.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: julia-publish
+  cancel-in-progress: false
+
+env:
+  PACKAGE: CorvusJsonSchema
+  SUBDIR: src-jl/CorvusJsonSchema
+  REGISTRY: JuliaRegistries/General
+  # The package's directory in the registry: the first letter of its name, then its name.
+  REGISTRY_PATH: C/CorvusJsonSchema
+
+jobs:
+  version:
+    name: Version to release
+    permissions:
+      contents: read
+      pull-requests: read  # the merged pull request's labels (no_release)
+    # A manual run from another branch must not release that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      # What there is to do: 'register' (ask for the registration), 'wait' (it has been asked for, and the
+      # registry has not merged it), 'tag' (registered, no tag yet), 'done', or empty when nothing is to be released.
+      state: ${{ steps.check.outputs.state }}
+      # 'true' when the registry does not have the package at all.
+      new-package: ${{ steps.check.outputs.new_package }}
+      # The registry's pull request, when one is open for this version.
+      pull-request: ${{ steps.check.outputs.pull_request }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            src-jl/CorvusJsonSchema
+            .github/actions
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
+      - name: Check whether this version is registered and tagged
+        id: check
+        # A merged pull request labelled no_release releases nothing (the other jobs need this step's outputs).
+        if: steps.label.outputs.no-release != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' "$SUBDIR/Project.toml" | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No version in $SUBDIR/Project.toml."
+            exit 1
+          fi
+          grep -q "^## V$version$" "$SUBDIR/VERSIONHISTORY.md" \
+            || { echo "::error::VERSIONHISTORY.md has no V$version section."; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          # The registry's list of the package's versions, read through the GitHub API, which reads the registry's
+          # repository as it is now. (The raw file URL is served through a cache that remembers a "not found" for
+          # minutes.) A 404 means the package has never been registered.
+          status=0
+          versions=$(gh api "repos/$REGISTRY/contents/$REGISTRY_PATH/Versions.toml" \
+            -H "Accept: application/vnd.github.raw+json" 2>&1) || status=$?
+          new_package=false
+          registered=false
+          if [ "$status" -ne 0 ]; then
+            if printf '%s' "$versions" | grep -q 'HTTP 404'; then
+              new_package=true
+            else
+              echo "::error::Could not read $REGISTRY_PATH/Versions.toml from $REGISTRY: $versions"
+              exit 1
+            fi
+          elif printf '%s\n' "$versions" | grep -qxF "[\"$version\"]"; then
+            registered=true
+          fi
+          echo "new_package=$new_package" >> "$GITHUB_OUTPUT"
+
+          if [ "$registered" = true ]; then
+            tag="$PACKAGE-v$version"
+            # ls-remote exits 2 when the remote has no such ref, and anything else is a failure to ask.
+            status=0
+            git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null || status=$?
+            case "$status" in
+              0) echo "state=done" >> "$GITHUB_OUTPUT"
+                 echo "::notice::$PACKAGE $version is registered and $tag exists; nothing to do." ;;
+              2) echo "state=tag" >> "$GITHUB_OUTPUT" ;;
+              *) echo "::error::Could not list the repository's tags."
+                 exit 1 ;;
+            esac
+            exit 0
+          fi
+
+          # Not registered. If the registry has an open pull request for this version, made from the package as
+          # it is in this commit, the registration has been asked for already: asking again changes nothing.
+          parent=$(dirname "$SUBDIR")
+          name=$(basename "$SUBDIR")
+          tree_at() {
+            gh api -X GET "repos/$GITHUB_REPOSITORY/contents/$parent" -f ref="$1" \
+              --jq ".[] | select(.name == \"$name\") | .sha"
+          }
+          pull_request=$(gh api -X GET search/issues \
+            -f q="repo:$REGISTRY is:pr is:open author:JuliaRegistrator in:title \"$PACKAGE v$version\"" \
+            --jq "[.items[] | select(.title | endswith(\": $PACKAGE v$version\"))][0].number // empty")
+          if [ -n "$pull_request" ]; then
+            commit=$(gh api "repos/$REGISTRY/pulls/$pull_request" --jq .body | sed -n 's/^- Commit: \([0-9a-f]\{40\}\).*/\1/p' | head -n 1)
+            if [ -n "$commit" ] && [ "$(tree_at "$commit")" = "$(tree_at "$GITHUB_SHA")" ]; then
+              echo "pull_request=https://github.com/$REGISTRY/pull/$pull_request" >> "$GITHUB_OUTPUT"
+              echo "state=wait" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "state=register" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Test
+    needs: version
+    if: needs.version.outputs.state == 'register'
+    uses: ./.github/workflows/julia.yml
+
+  register:
+    name: Ask JuliaRegistrator to register ${{ needs.version.outputs.version }}
+    needs: [version, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # comment on the commit
+    outputs:
+      pull-request: ${{ steps.ask.outputs.pull_request }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            src-jl/CorvusJsonSchema
+      - name: Comment on the commit and wait for the answer
+        id: ask
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          # The trigger is the first line. The release notes follow it and go into the registry's pull request.
+          # They are the version's section of VERSIONHISTORY.md. The registry asks that the notes of a breaking
+          # release (in 0.x, a new minor version) say what breaks, or point to a changelog, and holds the pull
+          # request otherwise.
+          {
+            echo "@JuliaRegistrator register subdir=$SUBDIR"
+            echo
+            echo "Release notes:"
+            echo
+            awk -v heading="## V$VERSION" '$0 == heading { on = 1; next } /^## V/ { on = 0 } on' "$SUBDIR/VERSIONHISTORY.md"
+            echo
+            echo "The changelog, with any breaking changes, is [VERSIONHISTORY.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/$SUBDIR/VERSIONHISTORY.md)."
+          } > "$RUNNER_TEMP/comment.md"
+          comment=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/comments" -F body=@"$RUNNER_TEMP/comment.md" --jq .id)
+          echo "Commented on $GITHUB_SHA (comment $comment)."
+
+          # JuliaRegistrator answers with a comment of its own, usually within a minute. No answer means that its
+          # GitHub App does not see this repository.
+          for attempt in $(seq 1 60); do
+            sleep 10
+            answer=$(gh api --paginate "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/comments" \
+              --jq "[.[] | select(.user.login == \"JuliaRegistrator\" and .id > $comment)][0].body // empty")
+            if [ -n "$answer" ]; then
+              break
+            fi
+            echo "No answer from JuliaRegistrator yet (attempt $attempt)."
+          done
+          if [ -z "$answer" ]; then
+            {
+              echo "### JuliaRegistrator did not answer"
+              echo
+              echo "The comment asking for $PACKAGE $VERSION to be registered had no answer in 10 minutes."
+              echo "Check that the JuliaRegistrator app (https://github.com/apps/juliateam-registrator) is installed"
+              echo "on this repository (docs/ReleaseProcess.md, \"The first release: General registry set-up\"),"
+              echo "then run this workflow again."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::JuliaRegistrator did not answer the comment on $GITHUB_SHA. Is its GitHub App installed on this repository?"
+            exit 1
+          fi
+          pull_request=$(printf '%s\n' "$answer" | grep -o "https://github.com/$REGISTRY/pull/[0-9]*" | head -n 1)
+          if [ -z "$pull_request" ]; then
+            {
+              echo "### JuliaRegistrator refused $PACKAGE $VERSION"
+              echo
+              printf '%s\n' "$answer"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::JuliaRegistrator did not open a pull request: $(printf '%s' "$answer" | head -n 1)"
+            exit 1
+          fi
+          echo "pull_request=$pull_request" >> "$GITHUB_OUTPUT"
+          echo "JuliaRegistrator answered: $pull_request"
+
+  registered:
+    name: Wait for the General registry to list ${{ needs.version.outputs.version }}
+    # After the registration is asked for, and on any later run while the registry's pull request is open.
+    needs: [version, register]
+    if: ${{ always() && (needs.register.result == 'success' || needs.version.outputs.state == 'wait') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    outputs:
+      registered: ${{ steps.wait.outputs.registered }}
+    steps:
+      - name: Wait
+        id: wait
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+          NEW_PACKAGE: ${{ needs.version.outputs.new-package }}
+          PULL_REQUEST: ${{ needs.register.outputs.pull-request || needs.version.outputs.pull-request }}
+        run: |
+          if [ "$NEW_PACKAGE" = true ]; then
+            # The registry merges a package's first version no sooner than 3 days after the pull request opens.
+            {
+              echo "### $PACKAGE $VERSION: the registration is asked for, and a person has two things to do"
+              echo
+              echo "This is the package's first version. The General registry merges a new package no sooner than"
+              echo "3 days after its pull request opens, and people may comment on it in that time."
+              echo
+              echo "1. Subscribe to $PULL_REQUEST and answer what is asked there. Nobody is mentioned on it,"
+              echo "   since a workflow asked for it."
+              echo "2. When it has merged, run this workflow again (Actions, julia-publish, Run workflow, on main)."
+              echo "   It finds the version registered and tags the commit $PACKAGE-v$VERSION."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice::$PACKAGE $VERSION is a new package: $PULL_REQUEST merges in 3 days at the soonest. Run this workflow again then, to tag."
+            echo "registered=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A new version merges about 15 to 20 minutes after its pull request opens, if the registry's checks
+          # pass. The list is read through the GitHub API, which remembers nothing between requests.
+          for attempt in $(seq 1 75); do
+            if gh api "repos/$REGISTRY/contents/$REGISTRY_PATH/Versions.toml" \
+                -H "Accept: application/vnd.github.raw+json" 2> /dev/null | grep -qxF "[\"$VERSION\"]"; then
+              echo "registered=true" >> "$GITHUB_OUTPUT"
+              echo "The registry lists $VERSION."
+              exit 0
+            fi
+            echo "The registry does not list $VERSION yet (attempt $attempt)."
+            sleep 60
+          done
+          {
+            echo "### $PACKAGE $VERSION is not registered yet"
+            echo
+            echo "The General registry did not merge $PULL_REQUEST in 75 minutes. Read the comments of its checks"
+            echo "there. If they ask for a change, make it, merge it and run this workflow again: it asks again. If"
+            echo "the pull request merges later, run this workflow again to tag the commit $PACKAGE-v$VERSION."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::The General registry did not merge $PULL_REQUEST in 75 minutes. See its checks, and run this workflow again when it has merged."
+          exit 1
+
+  tag:
+    name: Tag CorvusJsonSchema-v${{ needs.version.outputs.version }}
+    # After a registration this run waited for, and on any later run for a version that is registered and has no
+    # tag yet.
+    needs: [version, registered]
+    if: ${{ always() && (needs.registered.outputs.registered == 'true' || needs.version.outputs.state == 'tag') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # push the CorvusJsonSchema-v<version> tag
+    steps:
+      - name: Tag the registered commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          tag="$PACKAGE-v$VERSION"
+          # The registry records a version as the git tree of the package's directory.
+          registered=$(gh api "repos/$REGISTRY/contents/$REGISTRY_PATH/Versions.toml" \
+            -H "Accept: application/vnd.github.raw+json" \
+            | awk -v heading="[\"$VERSION\"]" '$0 == heading { on = 1; next } /^\[/ { on = 0 } on && /^git-tree-sha1/ { gsub(/[^0-9a-f]/, "", $3); print $3 }')
+          if [ -z "$registered" ]; then
+            echo "::error::The registry has no tree for $PACKAGE $VERSION."
+            exit 1
+          fi
+          # The commit to tag is the one that made the directory what was registered: the latest commit on main
+          # that changed the directory and left it with that tree.
+          parent=$(dirname "$SUBDIR")
+          name=$(basename "$SUBDIR")
+          commit=
+          for candidate in $(gh api -X GET "repos/$GITHUB_REPOSITORY/commits" -f sha=main -f path="$SUBDIR" -f per_page=100 --jq '.[].sha'); do
+            tree=$(gh api -X GET "repos/$GITHUB_REPOSITORY/contents/$parent" -f ref="$candidate" \
+              --jq ".[] | select(.name == \"$name\") | .sha")
+            if [ "$tree" = "$registered" ]; then
+              commit=$candidate
+              break
+            fi
+          done
+          if [ -z "$commit" ]; then
+            echo "::error::No commit on main among the last 100 that changed $SUBDIR has the registered tree $registered. Tag the registered commit by hand: git tag $tag <commit> && git push origin $tag"
+            exit 1
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$tag" -f sha="$commit"
+          {
+            echo "### $PACKAGE $VERSION is registered"
+            echo
+            echo "Tagged $commit as $tag."
+            echo
+            echo "https://github.com/$REGISTRY/tree/master/$REGISTRY_PATH"
+          } >> "$GITHUB_STEP_SUMMARY"

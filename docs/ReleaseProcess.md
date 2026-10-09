@@ -60,7 +60,7 @@ The build workflow runs on every push and PR. It has three phases:
 2. **Test** — runs the test suite with `.NET 10.0` and `.NET Framework 4.8.1`
 3. **NuGet** — packages and publishes
 
-A PR, or a push to `main`, that changes only the Python, Rust, TypeScript, Java, Go, Ruby or PHP packages (`src-py`, `src-rs`, `src-ts`, `src-java`, `src-go`, `src-rb`, `src-php`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. Branch protection requires the `.NET build gate` job, which passes when the build succeeded or was not needed.
+A PR, or a push to `main`, that changes only the Python, Rust, TypeScript, Java, Go, Julia, Ruby or PHP packages (`src-py`, `src-rs`, `src-ts`, `src-java`, `src-go`, `src-jl`, `src-rb`, `src-php`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. Branch protection requires the `.NET build gate` job, which passes when the build succeeded or was not needed.
 
 ### NuGet source selection
 
@@ -103,9 +103,9 @@ It has no history on purpose. Every job of the build fetches every branch, and w
 
 ### Skipping a release
 
-A PR that changes only the Python, Rust, TypeScript, Java, Go, Ruby or PHP packages makes no NuGet release; nothing needs adding.
+A PR that changes only the Python, Rust, TypeScript, Java, Go, Julia, Ruby or PHP packages makes no NuGet release; nothing needs adding.
 
-Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI, npm, Maven Central, Go module, RubyGems and PHP publishes that a version change in `src-rs`, `src-py`, `src-ts`, `src-java`, `src-go`, `src-rb` or `src-php` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
+Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI, npm, Maven Central, Go module, Julia registry, RubyGems and PHP publishes that a version change in `src-rs`, `src-py`, `src-ts`, `src-java`, `src-go`, `src-jl`, `src-rb` or `src-php` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
 
 ### Batched Dependabot releases
 
@@ -289,6 +289,94 @@ For some minutes after a version is tagged, the proxy can answer "not found" for
 for a while, differently on each of its servers. The workflow therefore waits for the version to appear in the
 proxy's list of versions before asking for the version itself. If `go get` reports "unknown revision" or "no
 matching versions" shortly after a release, wait and try again: nothing needs fixing.
+
+## The Julia package
+
+The Julia port of the runtime evaluator, `CorvusJsonSchema` in `src-jl/CorvusJsonSchema`, is published by
+registering each version in Julia's [General registry](https://github.com/JuliaRegistries/General). There is nothing
+to upload: the registry records the repository, the package's directory in it and, for each version, the git tree
+of that directory, and Julia's package manager fetches the code from this repository. The package is versioned
+independently of the NuGet packages, by the `version` in its `Project.toml`, with its own history in
+`src-jl/CorvusJsonSchema/VERSIONHISTORY.md`. GitVersion and the tag-triggered NuGet pipeline play no part.
+
+To release, bump `version` in `src-jl/CorvusJsonSchema/Project.toml`, add the version's entry to `VERSIONHISTORY.md`,
+and merge to `main`. `.github/workflows/julia-publish.yml` then does the following.
+
+1. It does nothing if the registry already has the version and the tag exists, or if the merged PR is labelled
+   `no_release`. It fails if `VERSIONHISTORY.md` has no section for the version.
+2. It runs `julia.yml`: on Linux x64 and arm64, Windows and macOS, with Julia 1.10 (the long-term support release,
+   and the oldest the package accepts), 1.11, 1.12 and the latest, the tests (the whole JSON-Schema-Test-Suite, the
+   annotation suite, the allocation and type stability tests, and the documentation samples), the check that the
+   package's `LICENSE` matches the repository's, and the Bowtie and benchmark harnesses.
+3. It comments on the merged commit: `@JuliaRegistrator register subdir=src-jl/CorvusJsonSchema`, followed by the
+   version's section of `VERSIONHISTORY.md` as release notes. The JuliaRegistrator bot answers by opening a pull
+   request on the General registry, and the workflow waits for that answer. It fails, and says why, if the bot does
+   not answer or answers with an error.
+4. It waits for the registry to merge the pull request, which the registry does by itself about 15 to 20 minutes
+   after it opens if its checks pass. The workflow reads the registry through the GitHub API, which answers from
+   the repository as it is, for up to 75 minutes.
+5. It tags the commit `CorvusJsonSchema-v<version>`. A package in a subdirectory of a repository is tagged with its
+   name, then the version. The tag goes on the commit whose `src-jl/CorvusJsonSchema` is the tree the registry
+   recorded.
+
+A run for a version whose registration is already asked for does not ask again: it waits and tags. So a run that
+failed at step 4 or 5 can simply be run again from the Actions tab.
+
+A registered version can never be replaced, and the registry accepts only the next patch, minor or major version
+after an existing one (0.1.0 can be followed by 0.1.1, 0.2.0 or 1.0.0). Check a release on a branch first:
+`julia.yml` runs on every pull request that touches `src-jl`. A mistake is corrected with a new version. In 0.x a
+new minor version is a breaking release, and the registry holds its pull request unless the release notes say what
+breaks or point to a changelog, which the workflow's comment does.
+
+The package's `LICENSE` is a copy of the repository's, because the registry requires the license in the package's
+own directory. Update both together. CI fails if they differ.
+
+The registry's checks do not run the package's tests. They install the package and load it, on the oldest and the
+newest Julia its `Project.toml` accepts. They also require an upper bound on every `[compat]` entry, which
+`julia = "1.10"` has (it means 1.10 or later, before 2).
+
+Never push a `CorvusJsonSchema-v` tag by hand before the version is registered: JuliaRegistrator refuses to register
+a version whose tag exists on another commit. `build.yml` publishes NuGet packages for the tags that trigger it. Its
+tag filter only accepts release versions (`[0-9]+.[0-9]+.[0-9]+*`), which a tag that starts `CorvusJsonSchema-v`
+cannot match, and the workflow's own tag push uses `GITHUB_TOKEN`, which starts no other workflow.
+
+[TagBot](https://github.com/JuliaRegistries/TagBot), which most Julia packages use for the tag, is not used. It
+always makes a GitHub release with the tag, GitHub marks that release as the repository's latest, its notes list
+every pull request of the repository since the package's last release, and in a repository of several packages it
+can put the tag on a later commit than the one registered.
+
+The minimum Julia version is the `julia` entry of `[compat]` in `Project.toml`, which `julia.yml` checks against the
+oldest Julia it tests. The package takes no Unicode data from Julia or from the PCRE2 library Julia bundles. Every
+property it reads is in its own Unicode 17 tables, so a release gives the same results with every Julia version.
+When a Julia minor version is released, add the one before it to the matrix of `julia.yml`.
+
+### The first release: General registry set-up
+
+1. Install the [JuliaRegistrator app](https://github.com/apps/juliateam-registrator/installations/new) on the
+   `corvus-dotnet/Corvus.JsonSchema` repository. It needs an owner of the organisation. Choose "Only select
+   repositories" and this repository. The app asks only for read access (contents, issues, pull requests, statuses
+   and metadata). Without it the bot never sees the workflow's comment, and the workflow fails at step 3 after
+   waiting 10 minutes.
+2. Merge the pull request that adds the package (or, if it is merged already, run `julia-publish` from the Actions
+   tab on `main`). The run tests the package, comments on the commit, and ends with a summary that links the pull
+   request JuliaRegistrator opened on the General registry.
+3. Subscribe to that pull request. Nobody is mentioned on it, because a workflow asked for it. The registry merges a
+   package's first version no sooner than 3 days after the pull request opens, and people may comment in that time
+   (on the name, for instance). Answer them there. If a check of the registry fails, its comment says what to
+   change: make the change, merge it, and run `julia-publish` again from the Actions tab. It asks again, which
+   updates the same pull request.
+4. When the pull request has merged, run `julia-publish` again from the Actions tab on `main`. It finds the version
+   registered and tags the commit `CorvusJsonSchema-v0.1.0`.
+
+Later versions need none of this: a merge that changes the version is registered and tagged in one run.
+
+The registration can also be asked for by hand, with the same comment on a commit of `main`
+(`@JuliaRegistrator register subdir=src-jl/CorvusJsonSchema`), by a collaborator on the repository or a public member
+of the organisation. JuliaRegistrator then mentions that person on the registry's pull request. The workflow, run
+afterwards, finds the pull request and does not ask again.
+
+The package's name, its UUID and its place in the repository are fixed by the first registration. Moving a
+registered package to another directory needs a pull request to the registry made by hand.
 
 ## The Python packages
 

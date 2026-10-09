@@ -14,7 +14,7 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 
 ## Skills Inventory
 
-28 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
+29 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
 
 | Skill | Area |
 |-------|------|
@@ -25,6 +25,7 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 | `corvus-typescript-evaluator` | The TypeScript port of the standalone evaluator (`src-ts/`), its suites, benchmarks and Bowtie harness |
 | `corvus-java-evaluator` | The Java port of the standalone evaluator (`src-java/`), its suites, allocation tests, benchmarks, Bowtie harness and Maven Central release |
 | `corvus-go-evaluator` | The Go port of the standalone evaluator (`src-go/`), its suites, allocation tests, benchmarks, Bowtie harness and module release |
+| `corvus-julia-evaluator` | The Julia port of the standalone evaluator (`src-jl/`), its suites, allocation and type stability tests, benchmarks, Bowtie harness and General registry release |
 | `corvus-parsed-documents-and-memory` | Parsing, IJsonElement, memory model, UTF-8 transcoding |
 | `corvus-mutable-documents` | JsonWorkspace, JsonDocumentBuilder, mutation, JSON Patch |
 | `corvus-buffer-and-pooling` | stackalloc/ArrayPool/ThreadStatic pooling patterns |

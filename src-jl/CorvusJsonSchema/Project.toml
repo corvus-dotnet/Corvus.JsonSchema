@@ -1,0 +1,13 @@
+name = "CorvusJsonSchema"
+uuid = "7b662be2-3602-4bf9-b859-13b2e88448f1"
+authors = ["Endjin Limited"]
+version = "0.1.0"
+
+[compat]
+julia = "1.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
