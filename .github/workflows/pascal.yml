@@ -98,19 +98,34 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install fpc
       - name: Free Pascal (Windows)
-        # Chocolatey's package runs the official installer of 3.2.2 for Windows, which has the 32-bit compiler and
-        # the cross compiler to 64-bit Windows (ppcrossx64). The tests are built for 64-bit Windows (-Px86_64).
+        # The official installer of 3.2.2 that has the 32-bit compiler and the cross compiler to 64-bit Windows
+        # (ppcrossx64), checked against its SHA-256. (Chocolatey's package has the 32-bit compiler alone.) The tests
+        # are built for 64-bit Windows (-Px86_64).
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          choco install freepascal --version=3.2.2 --yes --no-progress
+          $installer = Join-Path $env:RUNNER_TEMP 'fpc-3.2.2.win32.and.win64.exe'
+          $url = 'https://downloads.sourceforge.net/project/freepascal/Win32/3.2.2/fpc-3.2.2.win32.and.win64.exe'
+          curl.exe --silent --show-error --fail --location --retry 5 --retry-delay 10 --output $installer $url
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          # The package installs into the Chocolatey tools location, which is C:\tools unless the variable says so.
-          $tools = if ($env:ChocolateyToolsLocation) { $env:ChocolateyToolsLocation } else { 'C:\tools' }
-          $fpc = Get-ChildItem -Path (Join-Path $tools 'freepascal') -Recurse -Filter fpc.exe `
-            -ErrorAction SilentlyContinue | Select-Object -First 1
+          $expected = '8c255390544b051388b577eb61c6191a04883264afe0e3369b3600a56daf7bde'
+          $actual = (Get-FileHash -Algorithm SHA256 $installer).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) {
+            Write-Host "::error::The installer's SHA-256 is $actual, not $expected."
+            exit 1
+          }
+          # An Inno Setup installer: silent, into a directory with no spaces.
+          $install = Start-Process -FilePath $installer -Wait -PassThru `
+            -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', '/DIR=C:\FPC\3.2.2'
+          if ($install.ExitCode -ne 0) { exit $install.ExitCode }
+          $fpc = Get-ChildItem -Path 'C:\FPC\3.2.2' -Recurse -Filter fpc.exe -ErrorAction SilentlyContinue |
+            Select-Object -First 1
           if ($null -eq $fpc) {
-            Write-Host "::error::fpc.exe is not under $tools\freepascal."
+            Write-Host '::error::fpc.exe is not under C:\FPC\3.2.2.'
+            exit 1
+          }
+          if (-not (Test-Path (Join-Path $fpc.DirectoryName 'ppcrossx64.exe'))) {
+            Write-Host "::error::The cross compiler ppcrossx64.exe is not beside $($fpc.FullName)."
             exit 1
           }
           Add-Content -Path $env:GITHUB_PATH -Value $fpc.DirectoryName
@@ -143,7 +158,8 @@ jobs:
           if ($env:FPC_TARGET) {
             $arguments.Options = @('-O3', $env:FPC_TARGET)
           }
-          & ./tests/run-tests.ps1 @arguments 2>&1 | Tee-Object -FilePath (Join-Path $env:RUNNER_TEMP 'pascal-tests.log')
+          # Every stream, since the script writes its progress to the host.
+          & ./tests/run-tests.ps1 @arguments *>&1 | Tee-Object -FilePath (Join-Path $env:RUNNER_TEMP 'pascal-tests.log')
           exit $LASTEXITCODE
       - name: Check what ran
         # The script shows the last lines each program wrote. The suite has to have run, and the samples of the
