@@ -109,7 +109,15 @@ jobs:
         shell: bash
         run: |
           R CMD check --no-manual corvusjsonschema_*.tar.gz
-          if grep -q "WARNING" corvusjsonschema.Rcheck/00check.log; then
+          # One warning is let through. The linker of R 4.2's toolchain on Windows (Rtools42, binutils 2.38) does
+          # not know a directive that current Rust compilers write into object files, and says "corrupt .drectve at
+          # end of def file" for each. It links them correctly all the same, as the tests that follow show. Later
+          # toolchains do not warn.
+          log=corvusjsonschema.Rcheck/00check.log
+          warnings=$(grep -c "\.\.\. WARNING$" "$log" || true)
+          drectve=$(grep -c "Warning: corrupt .drectve at end of def file" "$log" || true)
+          others=$(grep -c "^  Warning: " "$log" || true)
+          if [ "$warnings" -gt 1 ] || { [ "$warnings" -eq 1 ] && { [ "$drectve" -eq 0 ] || [ "$others" -ne "$drectve" ]; }; }; then
             echo "::error::R CMD check gave a warning."
             exit 1
           fi
