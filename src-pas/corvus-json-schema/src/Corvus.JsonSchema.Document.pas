@@ -8,7 +8,7 @@ unit Corvus.JsonSchema.Document;
 interface
 
 uses
-  SysUtils;
+  SysUtils, Corvus.JsonSchema.Checked;
 
 const
   { MaxDepth is the deepest nesting of arrays and objects a document may have. }
@@ -38,7 +38,7 @@ const
 
 type
   { Bytes are SysUtils.TBytes throughout, so that a caller's own arrays are the evaluator's without a copy. }
-  TUInt64Array = array of UInt64;
+  TUInt64Array = Corvus.JsonSchema.Checked.TUInt64Array;
   TUInt32Array = array of UInt32;
 
   { TDocument is JSON text parsed for evaluation. It holds the UTF-8 text and one flat array of values (a tape) that
@@ -155,8 +155,8 @@ function ParserRetainsTooMuch(const P: TParser): Boolean;
 
 { Helpers shared with the rest of the evaluator. }
 
-{ LoadLE64 is the eight bytes at B[J .. J+7] as a little-endian word. The caller has checked that they exist: the
-  read is one load, and an index beyond the array raises ERangeError like any other. }
+{ LoadLE64 is the eight bytes at B[J .. J+7] as a little-endian word: one comparison with the array's length, then
+  one load. An index beyond the array raises ERangeError like any other. }
 function LoadLE64(const B: TBytes; J: Int32): UInt64; inline;
 { LoadLE32 is the four bytes at B[J .. J+3] as a little-endian word. }
 function LoadLE32(const B: TBytes; J: Int32): UInt32; inline;
@@ -215,37 +215,31 @@ end;
 
 function LoadLE32(const B: TBytes; J: Int32): UInt32; inline;
 begin
-  if B[J + 3] = 0 then ;
-  Move(B[J], Result, 4);
-  {$IFDEF ENDIAN_BIG}
-  Result := SwapEndian(Result);
-  {$ENDIF}
+  Result := Load32(B, J);
 end;
 
 function LoadLE64(const B: TBytes; J: Int32): UInt64; inline;
 begin
-  { Indexing the last byte checks the whole run: the first is checked by the index below. }
-  if B[J + 7] = 0 then ;
-  Move(B[J], Result, 8);
-  {$IFDEF ENDIAN_BIG}
-  Result := SwapEndian(Result);
-  {$ENDIF}
+  Result := Load64(B, J);
 end;
 
 function BytesEqual(const A: TBytes; AStart: Int32; const B: TBytes; BStart, Len: Int32): Boolean;
 var
   K: Int32;
 begin
+  { Both runs are checked once: the reads below are all within them. }
+  CheckRun(A, AStart, Len);
+  CheckRun(B, BStart, Len);
   K := 0;
   while K + 8 <= Len do begin
-    if LoadLE64(A, AStart + K) <> LoadLE64(B, BStart + K) then begin
+    if Load64(A, AStart + K) <> Load64(B, BStart + K) then begin
       Result := False;
       Exit;
     end;
     Inc(K, 8);
   end;
   while K < Len do begin
-    if A[AStart + K] <> B[BStart + K] then begin
+    if RunByteAt(A, AStart + K) <> RunByteAt(B, BStart + K) then begin
       Result := False;
       Exit;
     end;
@@ -380,47 +374,47 @@ end;
 
 function DocKind(const D: TDocument; N: Int32): Byte; inline;
 begin
-  Result := Byte(D.Tape[N shl 1] and $FF);
+  Result := Byte(WordAt(D.Tape, N shl 1) and $FF);
 end;
 
 function DocFlags(const D: TDocument; N: Int32): Byte; inline;
 begin
-  Result := Byte((D.Tape[N shl 1] shr 8) and $FF);
+  Result := Byte((WordAt(D.Tape, N shl 1) shr 8) and $FF);
 end;
 
 function DocCount(const D: TDocument; N: Int32): Int32; inline;
 begin
-  Result := Int32(D.Tape[N shl 1] shr 32);
+  Result := Int32(WordAt(D.Tape, N shl 1) shr 32);
 end;
 
 function DocData(const D: TDocument; N: Int32): UInt64; inline;
 begin
-  Result := D.Tape[N shl 1 + 1];
+  Result := WordAt(D.Tape, N shl 1 + 1);
 end;
 
 function DocFirst(const D: TDocument; N: Int32): Int32; inline;
 begin
-  Result := Int32(D.Tape[N shl 1 + 1] and $FFFFFFFF);
+  Result := Int32(WordAt(D.Tape, N shl 1 + 1) and $FFFFFFFF);
 end;
 
 function DocBoolean(const D: TDocument; N: Int32): Boolean; inline;
 begin
-  Result := D.Tape[N shl 1 + 1] <> 0;
+  Result := WordAt(D.Tape, N shl 1 + 1) <> 0;
 end;
 
 function DocStrInText(const D: TDocument; N: Int32): Boolean; inline;
 begin
-  Result := D.Tape[N shl 1] and (StrText shl 8) <> 0;
+  Result := WordAt(D.Tape, N shl 1) and (StrText shl 8) <> 0;
 end;
 
 function DocStrOffset(const D: TDocument; N: Int32): Int32; inline;
 begin
-  Result := Int32(D.Tape[N shl 1 + 1] and $FFFFFFFF);
+  Result := Int32(WordAt(D.Tape, N shl 1 + 1) and $FFFFFFFF);
 end;
 
 function DocStrASCII(const D: TDocument; N: Int32): Boolean; inline;
 begin
-  Result := D.Tape[N shl 1] and (StrWide shl 8) = 0;
+  Result := WordAt(D.Tape, N shl 1) and (StrWide shl 8) = 0;
 end;
 
 function DocStrEquals(const D: TDocument; N: Int32; const Name: TBytes; Start, Len: Int32): Boolean;
