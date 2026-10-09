@@ -13,9 +13,9 @@ dependencies = [
 
 [[package]]
 name = "corvus-json-schema"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afc1c86aa79a9739d15ee8b36eb5c39e1a0d04d95c03b2a16147ef37c264a944"
+checksum = "0507519b6c85db8b57ffc944d49080fa92637ded44e242ac1ca79ad2b4ce829a"
 dependencies = [
  "regex",
  "regress",
@@ -24,7 +24,7 @@ dependencies = [
 
 [[package]]
 name = "corvusjsonschema"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "corvus-json-schema",
  "serde_json",
