@@ -1,0 +1,21 @@
+[package]
+name = "corvusjsonschema"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+description = "The native code of the corvusjsonschema R package: the corvus-json-schema crate, reading R values in place."
+license = "Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+corvus = { package = "corvus-json-schema", version = "0.1.4" }
+serde_json = { version = "1.0.151", features = ["preserve_order", "float_roundtrip"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "unwind"

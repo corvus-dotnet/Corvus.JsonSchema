@@ -1,0 +1,27 @@
+# As Makevars, for Windows: Rust builds for the GNU target that R's toolchain (Rtools) links.
+
+TARGET = x86_64-pc-windows-gnu
+LIBDIR = rust/target/$(TARGET)/release
+STATLIB = $(LIBDIR)/libcorvusjsonschema.a
+PKG_LIBS = -L$(LIBDIR) -lcorvusjsonschema -lws2_32 -ladvapi32 -luserenv -lbcrypt -lntdll
+
+all: $(SHLIB) rust-clean
+
+$(SHLIB): $(STATLIB)
+
+# Always run: cargo decides what is out of date.
+$(STATLIB): FORCE
+	@export CARGO_HOME="$${CARGO_HOME:-$(CURDIR)/rust/.cargo-home}"; \
+	export PATH="$$PATH:$$USERPROFILE/.cargo/bin"; \
+	export CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER="$(CC)"; \
+	cargo build --lib --release --locked --jobs 2 --target=$(TARGET) --manifest-path=rust/Cargo.toml
+
+rust-clean: $(SHLIB)
+	@if [ -z "$$CORVUS_KEEP_RUST_TARGET" ]; then rm -Rf rust/target rust/.cargo-home; fi
+
+clean:
+	rm -Rf $(SHLIB) $(OBJECTS) rust/target rust/.cargo-home
+
+FORCE:
+
+.PHONY: all rust-clean clean FORCE

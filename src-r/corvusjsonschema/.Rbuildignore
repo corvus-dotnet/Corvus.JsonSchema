@@ -1,0 +1,7 @@
+^src/rust/target$
+^src/rust/\.cargo-home$
+^src/rust/rustfmt\.toml$
+^VERSIONHISTORY\.md$
+^\.gitignore$
+^.*\.Rcheck$
+^.*\.tar\.gz$
