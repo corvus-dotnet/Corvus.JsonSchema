@@ -90,6 +90,51 @@ from pathlib import Path
 Path("person_validator.py").write_text(cjs.generate_module(schema))
 ```
 
+## Regular expressions
+
+`pattern`, `patternProperties` and the `regex` format follow ECMA-262, as JSON Schema specifies, with the grammar of
+ECMAScript 2025. This section is about the pure package, which translates a pattern for Python's engines: the
+standard library's `re`, and the `regex` package for what `re` cannot run. A pattern is read with the `u` flag, and a
+pattern that is not valid with it is read as a pattern with no flag, which accepts what many schemas hold (`\&`, a
+lone brace). The `regex` format accepts only the `u` flag grammar. The answers are V8's for every pattern and text of
+the [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data), on every
+supported version of Python.
+
+- `\d`, `\w` and `\b` are ASCII, the dot excludes the four line terminators, and `$` holds only at the end.
+- Modifier groups (`(?i:...)`, `(?m:...)`, `(?s:...)`, `(?i-s:...)`) ignore case, match at line terminators and let
+  the dot match everything as ECMA-262 defines them. Case is ignored by the tables of Unicode 16 that the package
+  carries, so the answer does not depend on the version of Python or of `regex`.
+- A backreference reads what ECMA-262 says its group holds. A group that did not take part reads as the empty string.
+  The groups of a repeated body are unset when an iteration starts, so `^(?:(a)|x)*\1$` takes "ax" and not "axa",
+  and an iteration that matched nothing leaves no group set.
+- A lookbehind can be of any length and is matched backwards, so `(?<=\1(a))b` takes "aab" and `(?<=(a+))b\1`
+  takes "aabaa". A group that a lookahead sets on only some of the ways it can match, as in `(?=(a)?b)\1`, and a
+  group of a lookaround that is read in the same repetition after a choice, as in
+  `^(?:(?=([ab]))[ab](?:c|ca)\1)*$`, hold what they hold in ECMA-262.
+- Inside a case-insensitive group a backreference compares by ECMA-262's Canonicalize, character by character:
+  `^(?i:(.)\1)$` takes "sſ" and "kK" (U+017F, U+212A) and not "iİ" (U+0130). The comparison is written out
+  in the translation, as neither engine compares that way. It costs a few microseconds for each character
+  compared, and a group that can hold any character has a translation of about 54,000 characters, which takes
+  about 0.2 seconds to compile and holds about 3 MB.
+- A pattern that is valid only without the `u` flag is read and matched by UTF-16 code unit, as ECMA-262 says: in
+  `^\-?.$` the dot takes half of a character beyond the Basic Multilingual Plane.
+
+No valid pattern is refused for what it means, and none is run with another meaning. Two limits remain.
+
+- A pattern whose translation would pass 65,536 characters raises `SchemaCompilationError` with a message that says
+  the pattern is valid and too large. That takes a count inside a count around a group that a backreference reads,
+  as in `^(?:(?:(a)|b){300}){300}\1$`, a count of more than 175 around a case-insensitive backreference inside a
+  lookbehind (more than 1,284 around one outside a lookbehind), or a minimum count of 2,147,483,647 or more over
+  something that can match nothing. The `regex` format still accepts such a pattern.
+- Both engines backtrack, and neither has V8's short cuts, so a pattern of repetitions inside repetitions that can
+  match nothing may take far longer than it does in V8.
+
+Where V8 itself departs from ECMA-262, the package follows ECMA-262. With the `u` flag V8 13.6 also starts a match
+between the two surrogates of a character, and with the `i` and `u` flags it compares a backreference to a group of
+several characters by full case folding. The
+[package's README](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-py/corvus-json-schema#limitations-and-differences-from-the-c-evaluator)
+has an example of each.
+
 ## Performance
 
 Measured with jsonschema-benchmark's corpora and protocol on CPython 3.12 (warm validation, geometric means):

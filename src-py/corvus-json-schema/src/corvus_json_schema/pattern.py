@@ -7,7 +7,9 @@ properties, variable-width lookbehind, and the backreferences described below).
 
 Patterns are parsed with the ``u`` flag's grammar first; one that only parses without it (Annex B: identity escapes
 such as ``\\-``, literal braces) is translated by the lenient grammar instead, as JavaScript's ``RegExp`` would be
-constructed without the flag.
+constructed without the flag. Without the flag ECMA-262 reads a pattern and matches a text by UTF-16 code unit, so
+such a pattern is translated from its code units, and a text is matched as its code units too when the pattern can
+tell the difference (see ``_units``).
 
 Three things have a meaning in ECMA-262 that neither engine has, and are written out for them. All of it is done
 once, when a schema is compiled. For a pattern with no backreference and no modifier group, nothing is added to a
@@ -217,7 +219,7 @@ class _Node:
         self.nothing: bool | None = None
         self.only_nothing: bool | None = None
         # _TEXT that takes a character: the characters it can take (None: any), or with ``others`` every character
-        # but those.
+        # but those. On a _TEXT that takes none, ``others`` marks a \B.
         self.chars: _Ranges | None = None
         self.others = False
         self.state = _PLAIN
@@ -268,6 +270,17 @@ def _only_nothing(n: _Node) -> bool:
     return n.only_nothing
 
 
+def _sees_code_units(n: _Node) -> bool:
+    """Whether a pattern without the u flag can tell a character beyond the Basic Multilingual Plane from its two
+    surrogates: something in it can take a character from U+D800 up, or it has a lookaround or a ``\\B``, which can
+    hold between the two (nothing else holds there that does not hold at the start of the text too)."""
+    if n.kind == _TEXT:
+        if n.nothing is not False:
+            return n.others
+        return n.chars is None or n.others or any(hi >= 0xD800 for _, hi in n.chars)
+    return n.kind == _LOOK or any(_sees_code_units(x) for x in n.items)
+
+
 def _taken(n: _Node, out: _Ranges) -> bool:
     """Adds to ``out`` the characters that the text the node matches can have. False: it can have any."""
     k = n.kind
@@ -310,6 +323,9 @@ class _Translator:
         # The alternatives the parser is inside: (which alternation, which alternative of it).
         self.path: list[tuple[int, int]] = []
         self.alternations = 0
+        # Set by translate for a pattern without the u flag: whether a text is matched as its code units (see
+        # _sees_code_units).
+        self.wide = False
 
     def error(self) -> _Invalid:
         return _Invalid(self.p)
@@ -335,6 +351,7 @@ class _Translator:
                 node.items.append(ref)
         writer = _Writer(root, not self.ascii_flag, self.u)
         self.needs_regex = self.needs_regex or writer.needs_regex
+        self.wide = not self.u and _sees_code_units(root)
         return writer.write()
 
     def _count_groups(self) -> None:
@@ -553,6 +570,10 @@ class _Translator:
         if _ASCII_NAME_RE.fullmatch(name) is None:
             import regex
 
+            if not self.u:
+                # The pattern is read by code unit (see _units), and a name is of characters.
+                name = name.encode("utf-16-le", "surrogatepass").decode("utf-16-le", "surrogatepass")
+
             if regex.fullmatch(r"[\p{ID_Start}$_][\p{ID_Continue}$\u200c\u200d]*", name) is None:
                 raise self.error()
         return name
@@ -572,7 +593,9 @@ class _Translator:
             boundary = "\\b" if self.ascii_flag else "(?a:\\b)"
             # \B is "not at a word boundary", written as that: the standard library's \B never matched in an empty
             # text before CPython 3.14, where ECMA's does.
-            return _Node(_TEXT, boundary if e == "b" else f"(?!{boundary})"), False
+            node = _Node(_TEXT, boundary if e == "b" else f"(?!{boundary})")
+            node.others = e == "B"  # see _sees_code_units
+            return node, False
         if e in "123456789":
             j = self.i
             while j < self.n and self.p[j].isdigit():
@@ -1183,19 +1206,46 @@ class _Writer:
         return q + "?" if lazy else q
 
 
-def translate(pattern: str, unicode: bool = True, for_regex: bool = False) -> tuple[str, bool] | None:
-    """Translates an ECMA-262 pattern to Python syntax: the translation and whether it is for the ``regex`` package
-    (and so is compiled without the ASCII flag), or None when the pattern is not valid in the grammar. It is for
-    ``regex`` when the pattern needs it or ``for_regex`` asks."""
+def _translate(pattern: str, unicode: bool, for_regex: bool) -> tuple[str, bool, bool] | None:
+    """As ``translate``, and whether the pattern is one without the ``u`` flag for which a text is matched as its
+    code units (see ``_units``)."""
     try:
+        if not unicode:
+            pattern = _units(pattern)
         if not for_regex:
             t = _Translator(pattern, unicode, True)
             text = t.translate()
             if not t.needs_regex:
-                return text, False
-        return _Translator(pattern, unicode, False).translate(), True
+                return text, False, t.wide
+        t = _Translator(pattern, unicode, False)
+        return t.translate(), True, t.wide
     except (_Invalid, KeyError, ValueError, IndexError):
         return None
+
+
+def translate(pattern: str, unicode: bool = True, for_regex: bool = False) -> tuple[str, bool] | None:
+    """Translates an ECMA-262 pattern to Python syntax: the translation and whether it is for the ``regex`` package
+    (and so is compiled without the ASCII flag), or None when the pattern is not valid in the grammar. It is for
+    ``regex`` when the pattern needs it or ``for_regex`` asks."""
+    t = _translate(pattern, unicode, for_regex)
+    return None if t is None else t[:2]
+
+
+_ASTRAL_RE = re.compile("[\\U00010000-\\U0010ffff]")
+
+
+def _pair(m: re.Match[str]) -> str:
+    o = ord(m.group()) - 0x10000
+    return chr(0xD800 + (o >> 10)) + chr(0xDC00 + (o & 0x3FF))
+
+
+def _units(s: str) -> str:
+    """The text as its UTF-16 code units, each a character: a character beyond the Basic Multilingual Plane becomes
+    its two surrogates. Without the ``u`` flag ECMA-262 reads a pattern and matches a text by code unit, so ``.``
+    takes half of such a character and a quantifier after one in the pattern repeats its second half. A pattern
+    that is valid only without the flag is translated from its code units, and the texts it is given are matched
+    as theirs when the pattern can tell the difference (see ``_sees_code_units``)."""
+    return _ASTRAL_RE.sub(_pair, s)
 
 
 Matcher = Callable[[str], Any]
@@ -1204,21 +1254,33 @@ _cache: dict[str, Matcher | None] = {}
 
 
 def _compile(pattern: str, unicode: bool) -> Matcher | None:
-    t = translate(pattern, unicode)
+    search = _search(pattern, unicode)
+    if search is None or unicode or not search[1]:
+        return None if search is None else search[0]
+    find = search[0]
+
+    def by_code_unit(text: str) -> Any:
+        return find(text if text.isascii() else _units(text))
+
+    return by_code_unit
+
+
+def _search(pattern: str, unicode: bool) -> tuple[Matcher, bool] | None:
+    t = _translate(pattern, unicode, False)
     if t is None:
         return None
     if not t[1]:
         try:
-            return re.compile(t[0], re.ASCII).search
+            return re.compile(t[0], re.ASCII).search, t[2]
         except re.error:
             # The regex package takes more (a lookbehind that the standard library does not, say).
-            t = translate(pattern, unicode, True)
+            t = _translate(pattern, unicode, True)
             if t is None:
                 return None
     import regex  # only patterns the standard library cannot run need it
 
     try:
-        return regex.compile(t[0]).search
+        return regex.compile(t[0]).search, t[2]
     except regex.error:
         return None
 

@@ -221,16 +221,40 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
 - **Regular expressions** are ECMA-262 translated to Python's syntax with ECMA's meaning (`\d` and `\w` are ASCII, `.`
   excludes every line terminator, `$` matches only at the end, a backreference to a group that has not matched matches
   the empty string, and a modifier group such as `(?i:...)` folds case by tables of Unicode 16 that the package
-  carries). A pattern only valid without the `u` flag (an identity escape such as `\-`, a literal brace) is accepted
-  as JavaScript's `RegExp` would accept it without the flag. The answers are V8's for every pattern of the
-  [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data). Three things are
-  known to differ from V8:
-  - a pattern valid only without the `u` flag is matched by character, where V8 matches by UTF-16 code unit, which
-    shows for a character beyond the Basic Multilingual Plane in the text, or in the pattern under a quantifier or in
-    a class;
+  carries). A pattern is read with the `u` flag. One that is not valid with it (an identity escape such as `\-`, a
+  literal brace) is read as JavaScript's `RegExp` reads it without the flag. The answers are V8's for every pattern of
+  the [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data). What is
+  written out for the engines, so that it is exact:
+  - A backreference inside a case-insensitive group compares character by character by ECMA-262's Canonicalize, from
+    the package's own tables, so the answer is the same on every version of Python and of `regex`. `^(?i:(.)\1)$`
+    takes `"s\u017f"` and `"k\u212a"` and not `"i\u0130"`, and in a pattern that is valid only without the `u` flag it
+    takes none of the three. The comparison is a loop in the pattern that the `regex` package runs. It costs a few
+    microseconds for each character compared, where a plain backreference costs a fraction of one, and a group that
+    can hold any character makes a translation of about 54,000 characters that takes about 0.2 seconds to compile
+    and holds about 3 MB. A group that can hold no letter, such as `(\d+)`, keeps a plain backreference.
+  - A lookbehind is matched backwards, as ECMA-262 matches it, so a group of one holds what it holds in V8
+    (`(?<=(a+))b\1`), and so does a reference inside one to a group of it (`(?<=\1(a))b`). A group that a lookahead
+    sets on only some of the ways it can match (`(?=(a)?b)\1`) and a lookaround group read in the same repetition
+    after a choice (`^(?:(?=([ab]))[ab](?:c|ca)\1)*$`) are exact too. Inside a lookaround with a group that is read
+    outside it, an iteration that matches nothing is refused as ECMA-262 refuses it, which decides what the group
+    holds: `^(?=((?:|a)*))\1$` takes `"a"`.
+  - A pattern that is valid only without the `u` flag is read, and matches, by UTF-16 code unit, as V8 does: in
+    `^\-?.$` the dot takes half of a character beyond the Basic Multilingual Plane, and a quantifier after such a
+    character in the pattern repeats its second half.
+
+  No valid pattern is refused for what it means, and none is answered with another meaning. Two limits remain:
   - both engines backtrack, and neither has V8's short cuts, so a pattern of repetitions inside repetitions that can
     match nothing may take far longer than it does in V8;
-  - a pattern whose translation would pass 65,536 characters (a count inside a count, around a group that a
-    backreference reads) raises `SchemaCompilationError`, as does a minimum count of 2,147,483,647 or more over
-    something that can match nothing.
+  - a pattern whose translation would pass 65,536 characters raises `SchemaCompilationError`, as does a minimum
+    count of 2,147,483,647 or more over something that can match nothing. The message says the pattern is valid and
+    too large. That takes a count inside a count around a group that a backreference reads, as in
+    `^(?:(?:(a)|b){300}){300}\1$`, or a count of more than 175 around a case-insensitive backreference inside a
+    lookbehind, or of more than 1,284 around one outside a lookbehind.
+
+  Where V8 13.6 itself departs from ECMA-262, the package follows ECMA-262. Three such places are known. With the
+  `u` flag V8 also starts a match between the two surrogates of a character, so `(?<!^.*)` matches `"\U00010428"`
+  there. With the `i` and `u` flags V8 compares a backreference to a group of several characters by full case
+  folding, so `^(...)\1$` takes `"\u1e9eS\u00df\u1e9e\u00df\u017f"` there, and `^(.)(.)(.)\1\2\3$`, which means the
+  same, does not. And V8 answers six patterns of the test data with a case-insensitive modifier group differently
+  from the same pattern with the `i` flag.
 - Custom `formats` functions cannot be serialised into standalone modules.

@@ -10,6 +10,7 @@ from itertools import product
 import pytest
 
 import corvus_json_schema as cjs
+from corvus_json_schema import pattern as pattern_module
 from corvus_json_schema.pattern import translate
 
 
@@ -326,3 +327,112 @@ def test_a_repetition_in_a_lookaround_goes_to_the_regex_package_when_a_group_of_
     # No iteration here can match nothing, and here no group is read outside the lookahead.
     assert not (translate("^(?=(a*))\\1$") or ("", True))[1]
     assert not (translate("^(?=((?:|a)*)\\1)") or ("", True))[1]
+
+
+_A, _B = "\U00010400", "\U00010428"
+_H, _L, _L2 = chr(0xD801), chr(0xDC00), chr(0xDC28)
+# fmt: off
+_UNIT_TEXTS = [
+    "", "a", "x", _A, _B, _A + _A, _A + _B, _H, _L, _L2, _H + "a", _L + "a", _A + _L, _A + _L + _L, _H + _A, _A + "a",
+    "a" + _A, "a" + _A + "a", _A + _L2, _H + _H + _L, _B + _B, "a" + _H, "a" + _L, _H + _L2 + _L2, "aa", _A + "x",
+    "x" + _B,
+]
+# fmt: on
+
+# A pattern that is valid only without the u flag is read, and matches a text, by UTF-16 code unit: a dot takes half
+# of a character beyond the Basic Multilingual Plane, and a quantifier after one repeats its second half.
+_CODE_UNITS: list[tuple[str, str, str]] = [
+    ("^\\-?\U00010400*$", "UNITS", "886000"),
+    ("^\\-?\U00010400+$", "UNITS", "806000"),
+    ("^\\-?\U00010400?x$", "UNITS", "2"),
+    ("^\\-?[\U00010400]$", "UNITS", "c0000"),
+    ("^\\-?[\U00010400]{2}$", "UNITS", "800000"),
+    ("^\\-?.$", "UNITS", "30e0000"),
+    ("^\\-?..$", "UNITS", "c18034"),
+    ("^\\-?[^a]$", "UNITS", "10e0000"),
+    ("^\\-?[^a]{2}$", "UNITS", "c00000"),
+    ("^\\-?\\W$", "UNITS", "e0000"),
+    ("^\\-?\\S\\S$", "UNITS", "c18034"),
+    ("^\\-?\\D{3}$", "UNITS", "5d8b"),
+    ("^\\-?\U00010400{2}$", "UNITS", "4000"),
+    ("^\\-?(?:\U00010400){2}$", "UNITS", "200000"),
+    ("^\\-?(\U00010400)\\1$", "UNITS", "200000"),
+    ("^\\-?(.)\\1$", "UNITS", "4"),
+    ("^\\-?(?i:\U00010400)$", "UNITS", "800000"),
+    ("^\\-?(?i:[\U00010400])$", "UNITS", "c0000"),
+    ("^\\-?[a-\U00010400]+$", "UNITS", "3adfeb6"),
+    ("^\\-?[\U00010400-\\udfff]$", "UNITS", "e0000"),
+    ("\\-?(?<=\U00010400)a", "UNITS", "a00"),
+    ("\\-?(?<!\\ud801)\\udc00", "UNITS", "4e010"),
+    ("^\\-?\\ud801\\udc00$", "UNITS", "800000"),
+    ("^\\-?\\ud801$", "UNITS", "80000"),
+    ("^\\-?[\\ud801]\\udc00$", "UNITS", "800000"),
+    ("^\\-?\\ud801+\\udc00$", "UNITS", "801080"),
+    ("^\\-?\\u{2}$", "UNITS", "0"),
+    ("\\-?\U00010400\\b", "UNITS", "a02"),
+    ("\\-?\\B\U00010400", "UNITS", "b07982"),
+    ("^\\-?.\\B.$", "UNITS", "c00004"),
+    ("\\-?a|\U00010400", "UNITS", "2b1ffb6"),
+    ("^\\-?(?<n>\U00010400)\\k<n>$", "UNITS", "200000"),
+    ("^\\-?(?<\U00010400>.)\\k<\U00010400>$", "UNITS", "4"),
+    ("^\\-?[^\U00010400]$", "UNITS", "3020000"),
+    ("^\\-?(?:.|\U00010400)$", "UNITS", "38e0000"),
+    ("\\-?^.{2}(?!.)", "UNITS", "c18034"),
+    ("^\\-?\\x{1}\U00010400$", "UNITS", "0"),
+    ("^\\-?[\\s\\S]$", "UNITS", "30e0000"),
+    ("^\\-?[\\w-\U00010400]{2}$", "UNITS", "818034"),
+    ("\\-?(?=\U00010400)..$", "UNITS", "a01480"),
+    ("^\\-?a?$", "UNITS", "6000000"),
+    ("^[\\w\\-]+\\-?$", "UNITS", "3000004"),
+    ("^\\-?[a-z]*$", "UNITS", "7000004"),
+    ("\\B\\&?", "UNITS", "4ffffff"),
+    ("\\-?(?!a)(?<!a)", "UNITS", "5fffffb"),
+    ("\\-?(?<=a)(?=a)", "UNITS", "4"),
+    ("(?m:\\-?^$)", "UNITS", "4000000"),
+    ("\\-?a\\Ba", "UNITS", "4"),
+    ("\\-?\\b\\b$", "UNITS", "3018a06"),
+    ("^\\-?a(?=.a)", "UNITS", "0"),
+    ("^\\-?a(?=..a)", "UNITS", "200"),
+    (
+        "(?i:\\-{0}^(.)\\1$)",
+        "PAIRS",
+        "c0000c000020000100000c0000c000020000180001800004000020000100000c0000c0000200001000008000040000000000",
+    ),
+    (
+        "(?i:\\-{0}^..(?<=(.)\\1)$)",
+        "PAIRS",
+        "ffffcffffcffffcffffcffffcffffcffffcffffcffffcffffcffffcffffcffffcffffcffffcffffcffffcffffc0000000000",
+    ),
+    (
+        "\\-{0}^(.)(?i:\\1)$",
+        "PAIRS",
+        "c0000c000020000100000c0000c000020000180001800004000020000100000c0000c0000200001000008000040000000000",
+    ),
+    (
+        "(?i:\\-{0}^(?=.([a-z\\u0130\\u0131\\u017f\\u212a\\u00df\\u1e9e\\u01c4-\\u01c6\\u1f80\\u1f88\\ud801\\udc00\\udc28]))\\1)",
+        "PAIRS",
+        "c0000c000020000100000c0000c000020000180001800004000020000100000c0000c0000200001000008000000000000000",
+    ),
+]
+
+
+@pytest.mark.parametrize(("pattern", "texts", "answers"), _CODE_UNITS)
+def test_a_pattern_without_the_u_flag_matches_by_code_unit(pattern: str, texts: str, answers: str) -> None:
+    _check(pattern, _CASE_TEXTS.get(texts, _UNIT_TEXTS), answers)
+
+
+def test_a_text_is_split_into_code_units_only_for_a_pattern_that_can_tell() -> None:
+    def split(pattern: str) -> bool:
+        assert translate(pattern) is None, pattern
+        t = pattern_module._translate(pattern, False, False)
+        assert t is not None, pattern
+        return t[2]
+
+    # Nothing here takes a character from U+D800 up, and there is no lookaround and no \\B.
+    for pattern in ("^[\\w\\-\\.]+\\&?$", "^\\-?[a-z]*$", "\\-?\\ba\\b", "(?m:\\-?^a$)"):
+        assert not split(pattern), pattern
+    for pattern in ("^\\-?.$", "^\\-?[^a]$", "^\\-?\\W$", "\\B\\&?", "\\-?(?!a)", "^\\-?\\ud801$"):
+        assert split(pattern), pattern
+    # The pattern is read by code unit too: a quantifier after a character beyond the Basic Multilingual Plane
+    # repeats its second surrogate.
+    assert translate("^\\-?\U00010400*$", False) == ("^(?:\\-)?\\ud801(?:\\udc00)*\\Z", False)
