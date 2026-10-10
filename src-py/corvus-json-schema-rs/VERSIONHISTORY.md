@@ -2,6 +2,14 @@
 
 The version history of `corvus-json-schema-rs`, the Python package backed by the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.4
+
+V0.1.4 fixes a wrong result for one form of pattern, which was taken to match strings it does not match, by taking version 0.1.7 of the `corvus-json-schema` crate. There are no API changes. Versions 0.1.0 to 0.1.3 are affected. The pure-Python `corvus-json-schema` package is not.
+
+### Bug fixes
+
+- **A separated list with a `$` inside it.** The crate matches a pattern of the form `^item(separator item)*$`, such as `^([a-z]+)(\.[a-z]+)*$`, without a regular expression engine. It dropped a `$` at the end of the first item or of the repeated group, so `^x(,a$)*$` was matched as `^x(,a)*$`. A `$` holds only at the end of the string, so the group of `^x(,a$)*$` can match once at most. `cjs.compile({"pattern": "^x(,a$)*$"})("x,a,a")` returned `True`, where the instance is not valid. `^x$(,a)*$` took `"x,a"`, and `^(a,$)*b$` took `"a,b"`. Calling the validator, `is_valid`, `is_valid_json` and `evaluate` were all affected, and so was a pattern used for `patternProperties` or `propertyNames`. Such a pattern is now matched by a regular expression engine. An escaped `\$` is a literal character and is matched as before. No other form of pattern was affected.
+
 ## V0.1.3
 
 V0.1.3 fixes a crash of the Python process for a schema whose `not` leads back to the schema it is in, by taking version 0.1.6 of the `corvus-json-schema` crate. There are no API changes. Versions 0.1.0 to 0.1.2 are affected. The pure-Python `corvus-json-schema` package is not.

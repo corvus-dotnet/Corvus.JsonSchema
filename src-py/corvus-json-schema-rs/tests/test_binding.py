@@ -198,6 +198,26 @@ def test_not_on_an_in_place_cycle_stops_at_max_depth() -> None:
                     v.evaluate(instance, cjs.JsonSchemaResultsCollector.create(level))
 
 
+def test_a_separated_list_keeps_an_anchor_inside_it() -> None:
+    # The crate before 0.1.7 dropped a "$" at the end of the repeated group of a separated list, and after its first
+    # item, so the first two patterns were matched as ^x(,a)*$ and the third as ^(a,)*b$. The answers are V8's.
+    v = cjs.compile({"pattern": "^x(,a$)*$"})
+    assert v("x") is True
+    assert v("x,a") is True
+    assert v("x,a,a") is False
+    assert v.is_valid_json(json.dumps("x,a,a")) is False
+    v = cjs.compile({"pattern": "^x$(,a)*$"})
+    assert v("x") is True
+    assert v("x,a") is False
+    v = cjs.compile({"pattern": "^(a,$)*b$"})
+    assert v("b") is True
+    assert v("a,b") is False
+    # An escaped "$" is a literal character.
+    v = cjs.compile({"pattern": "^x(,a\\$)*$"})
+    assert v("x,a$,a$") is True
+    assert v("x,a,a") is False
+
+
 def test_results_and_annotations() -> None:
     schema = {"title": "Person", **PERSON}
     v = cjs.compile(schema)
