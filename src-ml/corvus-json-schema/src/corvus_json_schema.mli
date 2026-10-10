@@ -77,8 +77,8 @@ module Document : sig
       share between threads and domains.
 
       Parsing is strict RFC 8259. Anything but whitespace after the value, invalid UTF-8, lone surrogates in [\u]
-      escapes, numbers out of the range of a float and nesting deeper than {!val-max_depth} are errors. Of duplicate
-      property names, the last value is kept, at the position of the first.
+      escapes, numbers out of the range of a float, nesting deeper than {!val-max_depth} and text of 2^31 bytes or more
+      are errors. Of duplicate property names, the last value is kept, at the position of the first.
 
       Integers from -2{^ 63} to 2{^ 64} - 1 are held exactly, and compared exactly with each other and with every other
       number. Any other number is held as the nearest float. *)

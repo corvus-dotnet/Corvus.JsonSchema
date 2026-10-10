@@ -1,4 +1,4 @@
-(* The samples of the package's README.md and of docs/JsonSchemaForOCaml.md, compiled and run. The counterpart of
+(* The samples of the package's README.md and of docs/JsonSchemaForOcaml.md, compiled and run. The counterpart of
    tests/TestReadme.pas of the Object Pascal port.
 
    Each sample is the body of a module of this file, written as it is in the documents: top-level phrases a program
@@ -288,7 +288,7 @@ let page () =
         (List.fold_left Filename.concat dir [ Filename.parent_dir_name; Filename.parent_dir_name; "docs"; page_name ])
     else if depth = 0 then None
     else find (Filename.concat dir Filename.parent_dir_name) (depth - 1)
-  and page_name = "JsonSchemaForOCaml.md" in
+  and page_name = "JsonSchemaForOcaml.md" in
   match Sys.getenv_opt "DUNE_SOURCEROOT" with Some root when root <> "" -> find root 0 | _ -> find "." 10
 
 let () =
@@ -354,8 +354,8 @@ let () =
       | None -> Check.fail "README.md was not found"
       | Some readme -> Printf.printf "README.md: %d OCaml blocks\n" (check_document "README.md" readme source));
       match page () with
-      | None -> print_endline "docs/JsonSchemaForOCaml.md: skipped (the file is not there)"
+      | None -> print_endline "docs/JsonSchemaForOcaml.md: skipped (the file is not there)"
       | Some text ->
-          Printf.printf "docs/JsonSchemaForOCaml.md: %d OCaml blocks\n"
-            (check_document "docs/JsonSchemaForOCaml.md" text source)));
+          Printf.printf "docs/JsonSchemaForOcaml.md: %d OCaml blocks\n"
+            (check_document "docs/JsonSchemaForOcaml.md" text source)));
   Check.finish "readme"

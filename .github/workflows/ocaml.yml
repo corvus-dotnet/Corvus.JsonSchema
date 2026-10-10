@@ -8,7 +8,7 @@ on:
     paths:
     - 'src-ml/**'
     - 'JSON-Schema-Test-Suite'
-    - 'docs/JsonSchemaForOCaml.md'
+    - 'docs/JsonSchemaForOcaml.md'
     - '.github/workflows/ocaml.yml'
     - '.github/workflows/ocaml-publish.yml'
     - 'LICENSE'
@@ -16,7 +16,7 @@ on:
     paths:
     - 'src-ml/**'
     - 'JSON-Schema-Test-Suite'
-    - 'docs/JsonSchemaForOCaml.md'
+    - 'docs/JsonSchemaForOcaml.md'
     - '.github/workflows/ocaml.yml'
     - '.github/workflows/ocaml-publish.yml'
     - 'LICENSE'
@@ -69,7 +69,7 @@ jobs:
           sparse-checkout: |
             /LICENSE
             /src-ml/
-            /docs/JsonSchemaForOCaml.md
+            /docs/JsonSchemaForOcaml.md
             /JSON-Schema-Test-Suite
       - name: Checkout JSON-Schema-Test-Suite
         working-directory: .
@@ -81,7 +81,7 @@ jobs:
         run: |
           test -d JSON-Schema-Test-Suite/tests/draft2020-12
           test -d JSON-Schema-Test-Suite/annotations/tests
-          test -f docs/JsonSchemaForOCaml.md
+          test -f docs/JsonSchemaForOcaml.md
       - name: OCaml
         uses: ocaml/setup-ocaml@93303b622b2522e4411e295f9e77411a24912ac7 # v3.9.0
         with:
@@ -144,8 +144,8 @@ jobs:
             || { echo "::error::The JSON-Schema-Test-Suite did not run."; exit 1; }
           grep -q "^[1-9][0-9]*/[1-9][0-9]* annotation assertions passed" "$log" \
             || { echo "::error::The annotation suite did not run."; exit 1; }
-          grep -q "^docs/JsonSchemaForOCaml.md: [1-9][0-9]* OCaml blocks" "$log" \
-            || { echo "::error::readme_test did not check docs/JsonSchemaForOCaml.md."; exit 1; }
+          grep -q "^docs/JsonSchemaForOcaml.md: [1-9][0-9]* OCaml blocks" "$log" \
+            || { echo "::error::readme_test did not check docs/JsonSchemaForOcaml.md."; exit 1; }
           skipped=$(grep "SKIPPED" "$log" || true)
           if [ "${OCAML%%.*}" = 4 ]; then
             skipped=$(printf '%s\n' "$skipped" | grep -v "^ecmaregex domains: SKIPPED, domains need OCaml 5" || true)

@@ -898,8 +898,18 @@ let number p =
     end
   end
 
+(* max_document_size is the most bytes of text a document may have (2^31 - 1, as in the Object Pascal port). A value
+   takes at least one byte, so every count and every index of a member is then below 2^31, which the sort keys of
+   dedupe and of Values.all_unique rely on (they keep a position in their low 32 bits). *)
+let max_document_size = 0x7fffffff
+
+(* within_size is whether a text of len bytes is within a limit. It is apart from parse so that a test can try it
+   with a small limit, a text of 2^31 bytes being too much for one. *)
+let within_size len limit = len <= limit
+
 let parse p =
   let len = p.stop in
+  if not (within_size (len - p.i) max_document_size) then fail p "document too large" p.i;
   skip_ws p;
   let finished = ref false in
   while not !finished do

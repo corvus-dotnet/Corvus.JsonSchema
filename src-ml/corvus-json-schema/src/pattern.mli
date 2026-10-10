@@ -19,9 +19,10 @@ val compile : string -> t option
 (** [compile source] compiles a pattern. [None] when it is not a valid ECMA-262 regular expression. (compilePattern of
     the Go source.)
 
-    There is no process-wide cache. The Go source keeps every compiled pattern in one, and this library has no global
-    mutable state, so each call compiles the pattern it is given. A caller that meets the same pattern many times (the
-    schema compiler) shares the result itself. *)
+    There is no process-wide cache. The Go source keeps every compiled pattern in one, and this library keeps no
+    process-wide table of patterns (its only process-wide state is the regular expression engine's case-folding tables,
+    built once on first use), so each call compiles the pattern it is given. A caller that meets the same pattern many
+    times (the schema compiler) shares the result itself. *)
 
 val source : t -> string
 (** [source p] is the text the pattern was compiled from. *)

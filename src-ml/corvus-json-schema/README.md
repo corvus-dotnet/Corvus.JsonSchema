@@ -391,6 +391,7 @@ collector allocate.
 
 - **Platform.** A 64-bit OCaml, where an `int` has 63 bits. The package is not available for 32-bit platforms or
   for compilers to JavaScript, whose `int` is 32 bits.
+- **Size.** A document's text may have 2^31 - 1 bytes. Longer text is a parse error ("document too large").
 - **Nesting.** A document's arrays and objects may nest 1,000 deep (`Document.max_depth`). Deeper text is a parse
   error, for a schema and for an instance.
 - **Recursion.** A schema that recurses in place on a cycle, without consuming the instance, is stopped at

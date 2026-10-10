@@ -9,8 +9,9 @@
 
    Nothing on the fail-fast path allocates. Where Go returns two values, a function here returns one [int] that
    holds both (a mask of seen names, or -1 for failure), and where Go keeps a small structure on the stack (a set of
-   evaluated properties, the state of a fused pass) it is a run of words in the evaluator's arena. No function is a
-   closure, and no float leaves the array it is in. *)
+   evaluated properties, the state of a fused pass) it is a run of words in the evaluator's arena. No function on
+   that path is a closure, and no float leaves the array it is in. (The collecting path does allocate, as it builds
+   its results.) *)
 
 open Document
 open Node

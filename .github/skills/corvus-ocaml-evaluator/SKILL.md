@@ -91,7 +91,7 @@ note at the top of `corvus_json_schema.mli` list the exceptions. Keep both true.
 
 ## The README samples
 
-Every OCaml block of `README.md` and of `docs/JsonSchemaForOCaml.md` is the body of a module of
+Every OCaml block of `README.md` and of `docs/JsonSchemaForOcaml.md` is the body of a module of
 `test/readme_test.ml`, which runs each sample, compares what it prints with the expected lines, and fails if a
 block of either document is not in the test line for line. Change a sample in the test first, format it, then copy
 it to the documents.
@@ -103,7 +103,7 @@ it to the documents.
   with `Compare-Images.ps1` of the Go module's benchmark directory, pinned with `-CpuSet`. Every harness warms up
   by time (2 seconds, at least 100 passes) and reports the last warm-up pass. Compare like with like.
 - Do not publish a figure that was not measured that way. The Performance sections of the README and of
-  `docs/JsonSchemaForOCaml.md` hold the figures of the last such run. Change them only from a new one.
+  `docs/JsonSchemaForOcaml.md` hold the figures of the last such run. Change them only from a new one.
 
 ## Parity with the C# evaluator
 
@@ -126,4 +126,4 @@ Never push either tag by hand.
 
 - `src-ml/corvus-json-schema-bench/jsonschema-benchmark/`: the protocol program for jsonschema-benchmark and its
   local image.
-- Docs: `docs/JsonSchemaForOCaml.md`, its row in `docs/OtherLanguages.md`, and the home page's language list.
+- Docs: `docs/JsonSchemaForOcaml.md`, its row in `docs/OtherLanguages.md`, and the home page's language list.

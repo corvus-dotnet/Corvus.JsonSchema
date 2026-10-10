@@ -12,7 +12,7 @@ JavaScript and TypeScript, Rust, Java and Kotlin, Go, Julia, Object Pascal, OCam
 | [Go](JsonSchemaForGo.md) | [github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema](https://pkg.go.dev/github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema) | `go get github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema` |
 | [Julia](JsonSchemaForJulia.md) | [CorvusJsonSchema](https://github.com/JuliaRegistries/General/tree/master/C/CorvusJsonSchema) | `pkg> add CorvusJsonSchema` |
 | [Object Pascal](JsonSchemaForPascal.md) | The corvus-json-schema source package, for Free Pascal | [Source archives](https://github.com/corvus-dotnet/Corvus.JsonSchema/releases?q=pas-v) |
-| [OCaml](JsonSchemaForOCaml.md) | [corvus-json-schema](https://github.com/corvus-dotnet/corvus-json-schema-ocaml), an opam package | `opam pin add corvus-json-schema https://github.com/corvus-dotnet/corvus-json-schema-ocaml.git#v0.1.0` |
+| [OCaml](JsonSchemaForOcaml.md) | [corvus-json-schema](https://github.com/corvus-dotnet/corvus-json-schema-ocaml), an opam package | `opam pin add corvus-json-schema https://github.com/corvus-dotnet/corvus-json-schema-ocaml.git#v0.1.0` |
 | [Python](JsonSchemaForPython.md) | [corvus-json-schema](https://pypi.org/project/corvus-json-schema/), [corvus-json-schema-rs](https://pypi.org/project/corvus-json-schema-rs/) | `pip install corvus-json-schema-rs` |
 | [C](JsonSchemaForC.md) | The corvus-json-schema C library | [Release packages](https://github.com/corvus-dotnet/Corvus.JsonSchema/releases?q=capi-v) |
 | [C++](JsonSchemaForCpp.md) | The C library's header-only C++17 wrapper | [Release packages](https://github.com/corvus-dotnet/Corvus.JsonSchema/releases?q=capi-v) |

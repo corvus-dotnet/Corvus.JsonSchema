@@ -537,6 +537,11 @@ let test_pascal_document () =
   refused (String.make (Document.max_depth + 1) '[') "nesting too deep" (Document.max_depth + 1);
   Check.check "nesting of the maximum depth is accepted"
     (Result.is_ok (Document.parse_string (String.make Document.max_depth '[' ^ String.make Document.max_depth ']')));
+  Check.check "text of the maximum size is within it"
+    (Document.within_size Document.max_document_size Document.max_document_size);
+  Check.check "text beyond the maximum size is not"
+    (not (Document.within_size (Document.max_document_size + 1) Document.max_document_size));
+  Check.check "the maximum size is 2^31 - 1" (Document.max_document_size = (1 lsl 31) - 1);
 
   (* Numbers: integers stay integers, and a float is the correctly rounded one. *)
   bits "0" go_int 0L;
