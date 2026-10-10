@@ -142,4 +142,58 @@ end
         end
         @test E.unsupportedreason("^" * nested * "\$") == E.REFUSED_TOO_LARGE
     end
+
+    # ECMA-262 refuses an iteration past the minimum that matches the empty string. PCRE2 takes one, and tries every
+    # way of putting such iterations among the others, so these patterns ended in its match limit (a MatchError)
+    # on texts of a few characters, where V8 answers at once.
+    @testset "iterations that match the empty string" begin
+        checkv8table([
+            # From the test data, where each ended in PCRE2's match limit.
+            (raw"(?:((?=x)|()|){4,5}?){4}?$", "ffffffffffff"),
+            (raw"^(|(|[^a](a|)){2,4}\B){4,6}(?:[^a]?|)+a", "4f27ffc9e4be"),
+            (raw"^((?!$)(||\Ba?){1,3}|-x){4}?x$", "200000001000"),
+            (raw"(?:$-|((-??|\b)*|){3,5}\b|a??$)+$", "ffffffffffff"),
+            (raw"^(?:(((?:)){2,}(?:-|\2){3}|-|$){0,1}?(\B|-){3,5}?|a){3,4}a", "08270001c482"),
+            (raw"^(?:.){2}?(?:(?:\B||\B){4}a*?|(?<=x|[^a]|\1)\1){4}x$", "000249249208"),
+            (raw"^(a*((?<!^)|^|((?<=^)-){2,3}){2,3}|(?<=a)x|(|a)(|(?<=a)|){3,3})+x", "25c2e3fe006b"),
+            (raw"(((?:|(?=x)){3,3}?(|a)|[^a]*?(|)){0,}){3,5}?(()){0}?x$", "24924924926c"),
+            # A body that can only match the empty string.
+            (raw"^(?:|\b){2,}x", "21c003fe0061"),
+            (raw"^(?:(?=a)|\B)*a", "4e07fc00009a"),
+            (raw"(?:(?=x)|^){3}?x$", "24924924926c"),
+            (raw"^(?:(|\b)*-)+$", "100800000100"),
+            # An iteration past the minimum takes a character.
+            (raw"^(?:a*)*$", "c80400000080"),
+            (raw"^(?:a?x?)*-$", "124120900000"),
+            (raw"^(?:(?:a|){0,3}x)*-$", "104020100000"),
+            (raw"^(?:(?:a*x?)+-)*$", "924924924911"),
+            (raw"^(?:a|\b|x){2,}-$", "024120900000"),
+            (raw"^(?:(?:a|(?=x))*x){2,3}$", "008041200008"),
+            (raw"^(?:\1a|(x)|){3,}-$", "124120900000"),
+            (raw"^(x|(a|)\2){2,}-", "1079001fff05"),
+        ])
+        # A repetition inside a repetition, on texts long enough for the ways to be too many to try.
+        @test !matches("^(?:(?:a|)*x)*\$", "x"^40 * "-")
+        @test matches("^(?:(?:a|)*x)*\$", "x"^40)
+        @test !matches("^(?:a?){0,30}\$", "a"^15 * "-")
+        @test matches("^(?:a?){0,30}\$", "a"^30)
+        @test !matches("^(?:a?){0,30}\$", "a"^31)
+        @test !matches("^(?:(?:a|\\b|(?=x))*x){2,}\$", "x"^40 * "-")
+        # A body that is not plain to write without its empty matches (it holds a backreference).
+        @test !matches("^(x)(?:(?:\\1|a|)*-)*\$", "x" * "-"^40 * "a")
+        @test matches("^(x)(?:(?:\\1|a|)*-)*\$", "x" * "x-a-"^10)
+        # How they are written.
+        @test E.translate("^(?:a*)*\$").main == "\\A(?:(?:a+)*)\\z"
+        @test E.translate("^(?:a?x?)*\$").main == "\\A(?:(?:ax?|x)*)\\z"
+        @test E.translate("^(?:a*)+\$").main == "\\A(?:(?:a*)(?:a+)*)\\z"
+        @test E.translate("^(?:a|\\b)*\$").main == "\\A(?:(?:a)*)\\z"
+        @test E.translate("^(a)(?:\\1|x|)*\$").main ==
+            "\\A(?<g1>a)(?:(?:(?=(?<e1>(?s:.*)))(?:\\k<g1>|x|)(?!\\k<e1>))*)\\z"
+        # A body that can only match the empty string is written once, or not at all for a minimum of zero.
+        @test E.translate("^(?:|\\b){2,}x").main == "\\A(?:|" * E.translate("\\b").main * ")x"
+        @test E.translate("^(?:(?=a)|\\B)*a").main == "\\Aa"
+        # A body that cannot match the empty string is written with its count, as it always was.
+        @test E.translate("^(?:a+x?)*\$").main == "\\A(?:a+x?)*\\z"
+        @test E.translate("^(?:a|x){2,5}\$").main == "\\A(?:a|x){2,5}\\z"
+    end
 end

@@ -82,7 +82,7 @@ const INFINITE = typemax(Int64)
 const LENGTH_LIMIT = Int64(1) << 47
 # The largest count PCRE2 takes in a quantifier, and the longest lookbehind it takes.
 const PCRE_MAX_COUNT = 65535
-# The most text a translation may have where a repetition was written twice (see `writerepeat`).
+# The most text a translation may have where a repetition was written twice.
 const MAX_COPIED_TRANSLATION = 65536
 # The callouts that end and begin the body of a lookbehind (see `lookbehind`). The others name a lookbehind.
 const CALLOUT_AT_TARGET = 0
@@ -238,8 +238,10 @@ function index!(E::Emitter, n::Node)
     return nothing
 end
 
-# Whether a repetition runs no iteration.
-neverruns(n::Node) = n.max == 0
+# Whether a repetition runs no iteration. One with a maximum of zero does not. Nor does one with a minimum of zero
+# whose body can only match the empty string, as ECMA-262 refuses an iteration that matches the empty string once
+# the minimum is met.
+neverruns(n::Node) = n.max == 0 || (n.min == 0 && maxlength(n.subs[1]) == 0)
 
 # Works out, for every backreference, whether each group it names can have taken part where the backreference
 # stands (LIVE) or cannot (NEVER). The walk follows the order in which ECMA-262 evaluates the pattern, which is
@@ -779,35 +781,228 @@ function holdsreferenced(E::Emitter, n::Node)
     return false
 end
 
+# A node that matches nothing, which stands for a way that is not there.
+const NO_WAY = let n = setnode(NO_CHARACTERS)
+    n.minlength = 1
+    n.maxlength = 1
+    n
+end
+
+# The most nodes one body may be rewritten into by `nonempty`.
+const MAX_REWRITTEN_NODES = 256
+
+# A copy of a node with other children.
+function withsubs(n::Node, subs::Vector{Node})
+    c = Node(n.kind)
+    c.min = n.min
+    c.max = n.max
+    c.lazy = n.lazy
+    c.exports = n.exports
+    c.group = n.group
+    c.firstgroup = n.firstgroup
+    c.lastgroup = n.lastgroup
+    c.subs = subs
+    return c
+end
+
+# Counts a node made by `nonempty` or `emptyonly`. False when the body has been given as many as it may have.
+function spend!(budget::Base.RefValue{Int})
+    budget[] -= 1
+    return budget[] >= 0
+end
+
+# The node that matches what `n` matches, but for the empty string. Returns NO_WAY when that is nothing, and
+# nothing when it is not plain to write.
+#
+# With `strict`, no part of `n` is written twice and the ways through the result are tried in the order ECMA-262
+# tries the ways through `n`. That is needed where `n` holds a group a backreference reads. Without it the result
+# matches the same texts and may try them in another order, which nothing can see where no group is read.
+function nonempty(E::Emitter, n::Node, strict::Bool, budget::Base.RefValue{Int})::Union{Node,Nothing}
+    minlength(n) > 0 && return n
+    maxlength(n) == 0 && return NO_WAY
+    spend!(budget) || return nothing
+    kind = n.kind
+    if kind == GROUP
+        body = nonempty(E, n.subs[1], strict, budget)
+        (body === nothing || body === NO_WAY) && return body
+        return withsubs(n, Node[body])
+    elseif kind == ALT
+        subs = Node[]
+        for sub in n.subs
+            way = nonempty(E, sub, strict, budget)
+            way === nothing && return nothing
+            way === NO_WAY || push!(subs, way)
+        end
+        isempty(subs) && return NO_WAY
+        return length(subs) == 1 ? subs[1] : withsubs(n, subs)
+    elseif kind == CAT
+        long = count(sub -> maxlength(sub) > 0, n.subs)
+        if long == 1
+            # Every other element matches the empty string only.
+            subs = copy(n.subs)
+            k = findfirst(sub -> maxlength(sub) > 0, subs)::Int
+            way = nonempty(E, subs[k], strict, budget)
+            (way === nothing || way === NO_WAY) && return way
+            subs[k] = way
+            return withsubs(n, subs)
+        end
+        strict && return nothing
+        # The first element that takes a character is the k-th: the ones before it match the empty string, it
+        # does not, and the ones after it match anything.
+        ways = Node[]
+        before = Node[]
+        for k in eachindex(n.subs)
+            sub = n.subs[k]
+            if maxlength(sub) > 0
+                way = nonempty(E, sub, false, budget)
+                way === nothing && return nothing
+                if way !== NO_WAY
+                    spend!(budget) || return nothing
+                    push!(ways, withsubs(n, vcat(before, Node[way], n.subs[(k + 1):end])))
+                end
+            end
+            empty = emptyonly(E, sub, budget)
+            empty === nothing && return nothing
+            empty === NO_WAY && break
+            push!(before, empty)
+        end
+        isempty(ways) && return NO_WAY
+        length(ways) == 1 && return ways[1]
+        alternation = Node(ALT)
+        alternation.firstgroup = n.firstgroup
+        alternation.lastgroup = n.lastgroup
+        alternation.subs = ways
+        return alternation
+    elseif kind == REPEAT
+        body = n.subs[1]
+        # With a minimum of one or more the body can match the empty string here, and so can its first iterations.
+        n.min == 0 || return nothing
+        if minlength(body) > 0
+            n.max == 1 && return body
+            atleastonce = withsubs(n, n.subs)
+            atleastonce.min = 1
+            return atleastonce
+        end
+        # Every iteration is past the minimum, so each takes a character. The first is written as one that does,
+        # and `writerepeat` sees to the others.
+        way = nonempty(E, body, strict, budget)
+        (way === nothing || way === NO_WAY) && return way
+        n.max == 1 && return way
+        (strict && holdsreferenced(E, n)) && return nothing
+        rest = withsubs(n, n.subs)
+        rest.max = n.max == UNBOUNDED ? UNBOUNDED : n.max - 1
+        sequence = Node(CAT)
+        sequence.firstgroup = n.firstgroup
+        sequence.lastgroup = n.lastgroup
+        sequence.subs = Node[way, rest]
+        return sequence
+    end
+    return nothing
+end
+
+# The node that matches the empty string where `n` does and nothing else, for a body no group of which is read.
+# Returns NO_WAY when `n` never matches the empty string, and nothing when it is not plain to write.
+function emptyonly(E::Emitter, n::Node, budget::Base.RefValue{Int})::Union{Node,Nothing}
+    maxlength(n) == 0 && return n
+    minlength(n) > 0 && return NO_WAY
+    spend!(budget) || return nothing
+    kind = n.kind
+    if kind == GROUP
+        body = emptyonly(E, n.subs[1], budget)
+        (body === nothing || body === NO_WAY) && return body
+        return withsubs(n, Node[body])
+    elseif kind == ALT
+        subs = Node[]
+        for sub in n.subs
+            way = emptyonly(E, sub, budget)
+            way === nothing && return nothing
+            way === NO_WAY || push!(subs, way)
+        end
+        isempty(subs) && return NO_WAY
+        return length(subs) == 1 ? subs[1] : withsubs(n, subs)
+    elseif kind == CAT
+        subs = Node[]
+        for sub in n.subs
+            way = emptyonly(E, sub, budget)
+            (way === nothing || way === NO_WAY) && return way
+            push!(subs, way)
+        end
+        return withsubs(n, subs)
+    elseif kind == REPEAT
+        # No iteration past the minimum matches the empty string, and the iterations up to it that all do are one.
+        n.min == 0 && return Node(EMPTY)
+        return emptyonly(E, n.subs[1], budget)
+    end
+    return nothing
+end
+
+# What the writer has written, to go back to.
+struct Written
+    at::Int
+    names::Int
+    serial::Int
+    lookbehinds::Int
+    walks::Int
+    written::Vector{Int}
+    read::Vector{String}
+end
+
+Written(E::Emitter) = Written(position(E.out), length(E.names), E.serial, length(E.lookbehinds), length(E.walks),
+    copy(E.written), copy(E.read))
+
+function restore!(E::Emitter, w::Written)
+    truncate(E.out, w.at)
+    seekend(E.out)
+    resize!(E.names, w.names)
+    resize!(E.lookbehinds, w.lookbehinds)
+    resize!(E.walks, w.walks)
+    E.serial = w.serial
+    copyto!(E.written, w.written)
+    copyto!(E.read, w.read)
+    return nothing
+end
+
 # Writes a repetition X{m,n}.
 #
 # A repetition that never runs is not written at all. It matches the empty string, and its groups are never set.
 # (PCRE2 10.42 and 10.46 are also wrong about X{0} when it is written: when an alternative of X starts with \A they
 # take the pattern for one that can only match at the start of the text, so (?:b|\A){0}a does not match "ba".)
 #
-# A repetition with no group that a backreference reads is written with its count.
+# A repetition whose body can only match the empty string, and that runs, is its body once. Every iteration starts
+# at the same place with the groups of the body unset, so each can do exactly what the first can, and what is left
+# after the last is what one leaves.
+#
+# # An iteration that matches the empty string
+#
+# ECMA-262 refuses an iteration past the minimum that matches the empty string. PCRE2 takes one. Where no group is
+# read, the two then match the same texts, but PCRE2 tries every way of putting empty iterations among the others,
+# which for a repetition inside a repetition is a number of ways that grows with a power of the length of the
+# text. Where a group of the body is read after the repetition, they differ: PCRE2 leaves the repetition after an
+# empty iteration and shows the groups as that iteration set them. So for a body that can match the empty string
+# the iterations past the minimum are written as ones that take a character. X{m,n} is (?:X){m}(?:N){0,n-m}:
+#
+# - N is X without its empty matches where that is plain to write (see `nonempty`): (?:a*)* is (?:a+)*, and
+#   (?:a?b?)* is (?:ab?|b)*;
+# - otherwise N is (?=(?<e1>(?s:.*)))X(?!\k<e1>). The group e1 is the rest of the text where the iteration
+#   starts. The reference to it matches only where the rest of the text is still that, which is where X has taken
+#   nothing.
+#
+# # A group that a backreference reads
 #
 # A body with such a group is written once, as two groups of one name would be two groups. (?:X){m,n} serves for
 # a minimum of one or more. For a minimum of zero it is (?|(?:X){1,n}|(?<g1>)...), so that the groups of X are set
 # when it runs no times too (see `alternatives`).
 #
-# # An iteration that matches the empty string
-#
-# ECMA-262 refuses an iteration past the minimum that matches the empty string. PCRE2 takes one, leaves the
-# repetition and shows the groups as that iteration set them. So where the body can match the empty string and
-# its groups are read after the repetition, or it can run no times, an iteration past the minimum is written as one
-# that takes a character: (?=(?<e1>(?s:.*)))X(?!\k<e1>). The group e1 is the rest of the text where the iteration
-# starts. The reference to it matches only where the rest of the text is still that, which is where X has taken
-# nothing.
-#
-# The iterations up to the minimum may match the empty string, so for a minimum of one or more the two parts are
-# written apart, the second with groups of other names, and a backreference after the repetition reads the groups
-# of the part that ran last: (?(?=(?s:.*+)\k<e1>)\k<g1>|\k<g1_2>). The condition asks whether e1 is the empty
-# string, which is all that matches at the end of the text. The empty alternative of the second part sets e1 to
-# that, and an iteration of the second part sets it to the rest of the text where it started, which is not empty
-# as the iteration took a character. (Asking whether e1 matches where the backreference stands would not do: a
-# backreference after a lookahead stands where the lookahead started.) The copies multiply when such repetitions
-# are inside one another, and a pattern whose translation passes MAX_COPIED_TRANSLATION is refused.
+# The exception is a repetition with a minimum of one or more whose body can match the empty string and whose
+# groups are read after it. Its iterations up to the minimum may match the empty string and the later ones may not,
+# so the two parts are written apart, the second with groups of other names, and a backreference after the
+# repetition reads the groups of the part that ran last: (?(?=(?s:.*+)\k<e1>)\k<g1>|\k<g1_2>). The condition asks
+# whether e1 is the empty string, which is all that matches at the end of the text. The empty alternative of the
+# second part sets e1 to that, and an iteration of the second part sets it to the rest of the text where it
+# started, which is not empty as the iteration took a character. (Asking whether e1 matches where the
+# backreference stands would not do: a backreference after a lookahead stands where the lookahead started.) The
+# copies multiply when such repetitions are inside one another, and a pattern whose translation passes
+# MAX_COPIED_TRANSLATION is refused.
 function writerepeat(E::Emitter, n::Node)
     neverruns(n) && return nothing
     body = n.subs[1]
@@ -815,14 +1010,18 @@ function writerepeat(E::Emitter, n::Node)
     start = position(out)
     lo = n.min
     hi = n.max
+    if maxlength(body) == 0
+        atom(E, body)
+        return nothing
+    end
     more = hi == UNBOUNDED ? UNBOUNDED : hi - lo
     # Whether an iteration past the minimum could match the empty string.
     optional = hi != lo && minlength(body) == 0
     if !holdsreferenced(E, n)
-        counted(E, body, lo, hi, n.lazy)
+        optional ? writeoptional(E, n, lo, more) : counted(E, body, lo, hi, n.lazy)
         return nothing
     end
-    if !optional || (lo > 0 && !n.exports)
+    if !optional
         if lo > 0
             atom(E, body)
             (lo == 1 && hi == 1) || quantifier(out, lo, hi, n.lazy)
@@ -832,12 +1031,35 @@ function writerepeat(E::Emitter, n::Node)
         end
         return nothing
     end
+    if lo > 0 && !n.exports
+        # No backreference reads the groups after the repetition, so the two parts need no telling apart, and the
+        # count alone is exact too. It is what is written when the two parts are too much text.
+        state = Written(E)
+        atom(E, body)
+        lo == 1 || quantifier(out, lo, lo, false)
+        mark, text, inner = guardedapart(E, body, more, n.lazy)
+        print(out, "(?:", text, ')', n.lazy ? "??" : "?")
+        append!(E.names, inner)
+        if position(out) - start > MAX_COPIED_TRANSLATION
+            restore!(E, state)
+            atom(E, body)
+            quantifier(out, lo, hi, n.lazy)
+        end
+        return nothing
+    end
     first = (n.firstgroup + 1):n.lastgroup
     before = String[]
     if lo > 0
         atom(E, body)
         lo == 1 || quantifier(out, lo, lo, false)
         before = E.read[first]
+    else
+        plain = nonempty(E, body, true, Ref(MAX_REWRITTEN_NODES))
+        if plain !== nothing
+            text, inner = apart(E, plain, more, n.lazy)
+            zerotimes(E, text, inner, n.lazy)
+            return nothing
+        end
     end
     mark, text, inner = guardedapart(E, body, more, n.lazy)
     zerotimes(E, text, inner, n.lazy)
@@ -901,6 +1123,41 @@ function zerotimes(E::Emitter, text::String, inner::Vector{String}, lazy::Bool)
     end
     print(out, ')')
     append!(E.names, inner)
+    return nothing
+end
+
+# Writes a repetition with no group that is read, whose body can match the empty string and that has `more`
+# iterations past its minimum `lo`, so that those take a character (see `writerepeat`). When the two parts are too
+# much text, the repetition is written with its count. That is exact too, as no group is read, and slower.
+function writeoptional(E::Emitter, n::Node, lo::Int, more::Int)
+    body = n.subs[1]
+    out = E.out
+    state = Written(E)
+    fits = true
+    print(out, "(?:")
+    if lo == 1
+        atom(E, body)
+    elseif lo > 1
+        counted(E, body, lo, lo, false)
+    end
+    plain = nonempty(E, body, false, Ref(MAX_REWRITTEN_NODES))
+    if plain !== nothing
+        counted(E, plain, 0, more, n.lazy)
+    elseif more == UNBOUNDED || more <= PCRE_MAX_COUNT
+        mark = helpername(E, 'e')
+        push!(E.names, mark)
+        print(out, "(?:(?=(?<", mark, '>', REST_OF_TEXT, "))")
+        node(E, body)
+        print(out, "(?!\\k<", mark, ">))")
+        quantifier(out, 0, more, n.lazy)
+    else
+        fits = false
+    end
+    print(out, ')')
+    if !fits || position(out) - state.at > MAX_COPIED_TRANSLATION
+        restore!(E, state)
+        counted(E, body, lo, more == UNBOUNDED ? UNBOUNDED : lo + more, n.lazy)
+    end
     return nothing
 end
 
@@ -1130,7 +1387,9 @@ function backreference(E::Emitter, n::Node)
     for k in eachindex(n.groups)
         n.statuses[k] == LIVE || continue
         reading = E.read[n.groups[k]]
-        isempty(reading) && error("backreference before its group")
+        # A group that was not written is in a part of a repetition that only matches the empty string in an
+        # iteration ECMA-262 refuses (see `nonempty`), so it never takes part.
+        isempty(reading) && continue
         if n.ignorecase[k]
             print(out, "(?i:", reading, ')')
         else
