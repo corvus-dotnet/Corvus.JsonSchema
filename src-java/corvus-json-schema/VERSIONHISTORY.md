@@ -2,6 +2,14 @@
 
 The version history of `io.github.corvus-dotnet:corvus-json-schema`, the Java port of the Corvus.Text.Json V5 runtime evaluator. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.3
+
+V0.1.3 fixes a wrong result for one form of pattern, which was taken to match strings it does not match. There are no API changes. Versions 0.1.0 to 0.1.2 are affected.
+
+### Bug fixes
+
+- **A separated list with a `$` inside it.** The library matches a pattern of the form `^item(separator item)*$`, such as `^([a-z]+)(\.[a-z]+)*$`, without a regular expression (and likewise the forms with `+`, and `^(item separator)*item$`). It read the first item and the repeated group as sequences of characters and classes, and a `$` at the end of either was read and then dropped. So `^x(,a$)*$` was matched as `^x(,a)*$`. A `$` holds only at the end of the string, so the group of `^x(,a$)*$` can match once at most, and only as the last thing in the string. `{"pattern": "^x(,a$)*$"}` was valid for `"x,a,a"`, where it is not. `^x$(,a)*$` was valid for `"x,a"`, and `^(a,$)*b$` for `"a,b"`. Compiled code and the interpreter were both affected, and so was a pattern used for `patternProperties` or `propertyNames`. A list with a `$` at the end of its first item or of its group is now matched by the regular expression. An escaped `\$` is a literal character and such a list is matched as before. No other form of pattern was affected. A table of 101 patterns with an anchor, a word boundary or a lookaround inside one of the forms the library matches by itself, with answers from V8, is now part of the tests.
+
 ## V0.1.2
 
 V0.1.2 fixes a `StackOverflowError`, and a wrong `isValid` result, for a schema whose `not` is part of a loop, and stops the interpreter allocating when it validates. There are no API changes. `isValid` changes for one more kind of schema, described below. Versions 0.1.0 and 0.1.1 are affected.

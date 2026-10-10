@@ -943,9 +943,13 @@ final class PatternShapes {
             return t;
         }
 
+        /**
+         * The items of a text that is a class sequence, or null. A "$" at the end of the text is not an item, and
+         * the list has no place for it: "^x(,a$)*$" is not "^x(,a)*$". Such a text is not a part of a list.
+         */
         private static Item[] items(String t) {
             Sequence s = Sequence.parse("^" + t);
-            return s == null ? null : s.items;
+            return s == null || s.toEnd ? null : s.items;
         }
 
         private static boolean fixed(Item[] items) {
