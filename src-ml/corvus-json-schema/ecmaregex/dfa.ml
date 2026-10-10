@@ -155,33 +155,34 @@ let undecided = 2
 
 let finish s = if s = dfa_accept then matched else if s = dfa_bail then undecided else no_match
 
-let rec run_string d text i hi s =
-  if i = hi then if String.get d.at_end s <> '\000' then matched else no_match
+(* The loop of a match. The parts of the automaton are arguments so that each step reads them from registers. *)
+let rec run_string trans byte_class shift at_end text i hi s =
+  if i = hi then if String.get at_end s <> '\000' then matched else no_match
   else
     let c = Char.code (String.get text i) in
-    let s = Char.code (String.get d.trans ((s lsl d.shift) lor Char.code (String.get d.byte_class c))) in
-    if s < dfa_first then finish s else run_string d text (i + 1) hi s
+    let s = Char.code (String.get trans ((s lsl shift) lor Char.code (String.get byte_class c))) in
+    if s < dfa_first then finish s else run_string trans byte_class shift at_end text (i + 1) hi s
 
-let rec run_bytes d text i hi s =
-  if i = hi then if String.get d.at_end s <> '\000' then matched else no_match
+let rec run_bytes trans byte_class shift at_end text i hi s =
+  if i = hi then if String.get at_end s <> '\000' then matched else no_match
   else
     let c = Char.code (Bytes.get text i) in
-    let s = Char.code (String.get d.trans ((s lsl d.shift) lor Char.code (String.get d.byte_class c))) in
-    if s < dfa_first then finish s else run_bytes d text (i + 1) hi s
+    let s = Char.code (String.get trans ((s lsl shift) lor Char.code (String.get byte_class c))) in
+    if s < dfa_first then finish s else run_bytes trans byte_class shift at_end text (i + 1) hi s
 
 (** [match_string d text lo hi] says whether the pattern matches the bytes [lo] up to [hi] of the text: {!matched},
     {!no_match}, or {!undecided} when the text is not ASCII. It does not allocate. *)
 let match_string d text lo hi =
   if lo = hi then if d.empty then matched else no_match
   else if d.start = dfa_accept then matched
-  else run_string d text lo hi d.start
+  else run_string d.trans d.byte_class d.shift d.at_end text lo hi d.start
 
 (** [match_bytes d text lo hi] is {!match_string} for bytes. The loop is written once for each kind of text so that each
     is one table read per byte with no test of the kind. *)
 let match_bytes d text lo hi =
   if lo = hi then if d.empty then matched else no_match
   else if d.start = dfa_accept then matched
-  else run_bytes d text lo hi d.start
+  else run_bytes d.trans d.byte_class d.shift d.at_end text lo hi d.start
 
 type list_ = { mutable items : int array; mutable n : int }
 (** A list of states of the pattern, of which the first [n] elements of [items] are in use. *)

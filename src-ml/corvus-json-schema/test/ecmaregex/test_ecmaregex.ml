@@ -700,6 +700,9 @@ let test_allocations () =
     [@ocamlformat "disable"]
   in
   let total = ref 0. in
+  (* The measure sees an allocation of two words. *)
+  let seen = allocated_words (fun () -> sink := !sink + !(Sys.opaque_identity (ref 1))) in
+  if seen < 2. then fail "the measure of allocations saw %.0f words where two were allocated" seen;
   List.iter
     (fun (p, want) ->
       match compiled p with

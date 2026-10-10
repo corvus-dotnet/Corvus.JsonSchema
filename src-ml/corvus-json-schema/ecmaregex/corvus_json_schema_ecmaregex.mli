@@ -59,7 +59,20 @@
     The grammar is that of ECMAScript 2025. It includes lookbehind, named groups, group names shared between separate
     alternatives, modifier groups, and Unicode property escapes for every property, value and alias ECMA-262 lists, with
     Unicode 17 data from {!Corvus_json_schema_ucd}. The v flag (set notation and properties of strings) does not apply,
-    because a JSON Schema pattern has no flags. Groups may nest 1000 deep. *)
+    because a JSON Schema pattern has no flags.
+
+    The limits are those of the Go package and of the Object Pascal port.
+
+    - Groups may nest 1000 deep. A pattern beyond that is not valid.
+    - A pattern may be of any length. The bounds of a counted quantifier saturate at 2,147,483,647.
+    - A pattern is tried for an automaton when it is {!regular}. It gets one when the automaton has at most 256 states
+      built from at most 512 states of the pattern in at most 400,000 steps. Finding out that a pattern is too large
+      costs about a millisecond when it is compiled.
+    - The backtracking matcher has no step budget and no limit on its stack but memory. Its working memory keeps what
+      the largest match needed, up to 65,536 entries of four words. A match that needed more gives the memory back when
+      it ends.
+
+    The library assumes the 63-bit [int] of a 64-bit OCaml. *)
 
 type t
 (** A compiled ECMA-262 pattern. It is safe to share between threads and domains. *)

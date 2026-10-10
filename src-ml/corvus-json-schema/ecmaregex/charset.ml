@@ -38,9 +38,9 @@ let make pairs negate =
   Array.iter
     (fun pair ->
       let lo = pair lsr 32 and hi = pair land 0xFFFFFFFF in
-      if !m > 0 && lo <= merged.(!m - 1) + 1 then begin
-        if hi > merged.(!m - 1) then merged.(!m - 1) <- hi
-      end
+      if !m > 0 && lo <= merged.(!m - 1) + 1 then
+        begin if hi > merged.(!m - 1) then merged.(!m - 1) <- hi
+        end
       else begin
         merged.(!m) <- lo;
         merged.(!m + 1) <- hi;
@@ -91,8 +91,7 @@ let rec search ranges r lo hi =
     else true
 
 (** Reports whether the set holds the code point. *)
-let contains s r =
-  if r < 128 then r >= 0 && ascii_has s.ascii r else search s.ranges r 0 (Array.length s.ranges / 2)
+let contains s r = if r < 128 then r >= 0 && ascii_has s.ascii r else search s.ranges r 0 (Array.length s.ranges / 2)
 
 (** Reports whether the set holds no code point. *)
 let is_empty s = Array.length s.ranges = 0
@@ -126,7 +125,7 @@ let not_space_set = make space_pairs true
     decided from the bytes on either side of a position. *)
 let is_word_byte b = (b >= 0x61 && b <= 0x7A) || (b >= 0x41 && b <= 0x5A) || (b >= 0x30 && b <= 0x39) || b = 0x5F
 
-(** The long names and the aliases of the General_Category values, each with its short name. *)
+(* The long names and the aliases of the General_Category values, each with its short name. *)
 let category_names =
   [|
     ("Letter", "L"); ("Lowercase_Letter", "Ll"); ("Uppercase_Letter", "Lu"); ("Titlecase_Letter", "Lt");
@@ -147,7 +146,7 @@ let category_names =
   |]
 [@@ocamlformat "disable"]
 
-(** The names and the aliases of the binary properties ECMA-262 lists, each with its canonical name. *)
+(* The names and the aliases of the binary properties ECMA-262 lists, each with its canonical name. *)
 let binary_names =
   [|
     ("ASCII", "ASCII"); ("ASCII_Hex_Digit", "ASCII_Hex_Digit"); ("AHex", "ASCII_Hex_Digit");
@@ -224,8 +223,8 @@ let property_pairs expr =
           | Some "Any" -> Some [| 0; max_rune |]
           | Some canonical -> table_pairs (Ucd.binary canonical)))
 
-(** Resolves the expression between the braces of [\p{...}] to its set, or [None] for a name or value that ECMA-262
-    does not define. *)
+(** Resolves the expression between the braces of [\p{...}] to its set, or [None] for a name or value that ECMA-262 does
+    not define. *)
 let property_set expr = match property_pairs expr with None -> None | Some pairs -> Some (make pairs false)
 
 (* Case-insensitive matching exists only inside a modifier group such as (?i:...). ECMA-262 defines it through a
@@ -238,7 +237,7 @@ let property_set expr = match property_pairs expr with None -> None | Some pairs
 
    The folding and the uppercase mapping come from the tables of the ucd library. *)
 
-(** The characters of the Basic Multilingual Plane whose uppercase form is more than one character. {!canonicalize}
+(* The characters of the Basic Multilingual Plane whose uppercase form is more than one character. canonicalize
     leaves them alone. *)
 let multi_upper =
   make
@@ -288,7 +287,8 @@ let new_fold_table (classes : (int, int list) Hashtbl.t) =
   { points; classes = Array.map (Hashtbl.find by_member) points }
 
 let add_member classes key member =
-  Hashtbl.replace classes key (member :: (match Hashtbl.find_opt classes key with Some members -> members | None -> []))
+  Hashtbl.replace classes key
+    (member :: (match Hashtbl.find_opt classes key with Some members -> members | None -> []))
 
 let build_fold_table unicode_mode =
   let classes = Hashtbl.create 4096 in
@@ -336,7 +336,9 @@ let fold_closure set unicode_mode =
     let lo = set.ranges.(!i) and hi = set.ranges.(!i + 1) in
     let k = ref (first_at_least table.points lo 0 (Array.length table.points)) in
     while !k < Array.length table.points && table.points.(!k) <= hi do
-      Array.iter (fun member -> if not (contains set member) then extra := member :: member :: !extra) table.classes.(!k);
+      Array.iter
+        (fun member -> if not (contains set member) then extra := member :: member :: !extra)
+        table.classes.(!k);
       incr k
     done;
     i := !i + 2
