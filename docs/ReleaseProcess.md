@@ -551,6 +551,72 @@ Do this once, before merging the first version:
 
 The token expires: renew it, and update the secret, before it does.
 
+## The OCaml package
+
+`src-ml/corvus-json-schema` is the opam package `corvus-json-schema`, versioned independently of the NuGet packages
+by the `(version ...)` in its `dune-project`. A release is the package's source, tagged.
+
+An opam pin and a source install clone the repository they are given, and this repository carries a very large
+`github-pages` branch and every other language's sources. The package's repository is therefore
+[corvus-dotnet/corvus-json-schema-ocaml](https://github.com/corvus-dotnet/corvus-json-schema-ocaml), which holds only what
+the publish workflow pushes there: changes are made here.
+
+To release it, bump `(version ...)` in its `dune-project` and `version` in `src/corvus_json_schema.ml`, run
+`dune build` (which writes `corvus-json-schema.opam`), add the version's entry at the top of its `VERSIONHISTORY.md`
+(the workflow checks all four), and merge to `main`. `.github/workflows/ocaml-publish.yml` then does the following.
+
+1. It does nothing if the package's repository already has a release for that version, or if the merged PR is
+   labelled `no_release`.
+2. It runs `ocaml.yml`: the tests with OCaml 4.14 and 5.5 on Linux and with 5.5 on macOS and Windows, the format
+   and documentation checks, and an install of the package as it will be published.
+3. It replaces the package repository's files with `src-ml/corvus-json-schema`, commits, and tags the commit
+   `v<version>`.
+4. It creates the release for that tag, with the version's history entry as its notes.
+5. It tags this repository's commit `ml-v<version>`.
+
+Writing to the package's repository takes a token, the `OCAML_REPOSITORY_TOKEN` secret of the `ocaml` environment. A
+run that fails part of the way can be run again: it skips the push when the tag is there, and the release when it
+is there.
+
+Never push an `ml-v` tag here, or a version tag to the package's repository, by hand.
+
+### Submitting a version to the opam repository
+
+The workflow does not do this. After it has succeeded, for each version:
+
+```sh
+opam install opam-publish
+opam publish https://github.com/corvus-dotnet/corvus-json-schema-ocaml/archive/refs/tags/v<version>.tar.gz
+```
+
+`opam publish` reads `corvus-json-schema.opam` from the archive, adds the archive's URL and checksums, and opens a
+pull request to [ocaml/opam-repository](https://github.com/ocaml/opam-repository) from a fork under the account
+that runs it (it asks for a GitHub token the first time). The opam repository's checks build and test the package
+on its platforms, and a maintainer merges the pull request. The tests that read the JSON-Schema-Test-Suite say that
+they were skipped there, since the published package does not hold the suite. Until the pull request is merged, the
+version is installed with a pin:
+
+```sh
+opam pin add corvus-json-schema https://github.com/corvus-dotnet/corvus-json-schema-ocaml.git#v<version>
+```
+
+### The first release: repository set-up
+
+Do this once, before merging the first version:
+
+1. **Create the package's repository.** Create `corvus-dotnet/corvus-json-schema-ocaml`, public, with a README (so that
+   it has a default branch, `main`). The publish workflow replaces its files.
+2. **Create the token.** In GitHub's **Settings**, **Developer settings**, **Personal access tokens**, **Fine-grained
+   tokens**, generate a token with the `corvus-dotnet` organization as its resource owner, access to that repository
+   only, and the repository permission **Contents: Read and write**. If the organization requires approval for
+   fine-grained tokens, an owner approves it.
+3. **Create the GitHub environment.** In this repository's **Settings**, **Environments**, add an environment named
+   `ocaml`, and add the token to it as the secret `OCAML_REPOSITORY_TOKEN`.
+4. **Merge.** The workflow pushes the sources, tags them and creates the release.
+5. **Submit the version to the opam repository**, as above.
+
+The token expires: renew it, and update the secret, before it does.
+
 ## Pre-release testing
 
 Pre-release packages are published to GitHub Packages on every branch build. To test a pre-release package:
