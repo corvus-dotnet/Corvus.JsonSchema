@@ -500,38 +500,47 @@ let new_divisor flags data b start =
   if !significand < 0 then ignore (decimal_of b start (Some big) (ref 0));
   { is_int = class_of flags = num_int; value = data; significand = !significand; exponent; big }
 
-(* digits_of reads the digits of the number text at start. It returns the last digit that is not zero (or -1 for
-   zero) and leaves in [exponent] the power of ten of the digit string up to it. The digits start at start, or after
-   its sign. *)
-let digits_of b start (exponent : int ref) =
+(* The digits of the number text at start are read by two functions, since a pair of results would be a block. The
+   digits start at start, or after its sign.
+
+   last_non_zero_digit is the position of the last digit that is not zero, or -1 for zero. *)
+let last_non_zero_digit b start =
   let len = Bytes.length b in
-  let j = if Bytes.get b start = '-' then start + 1 else start in
-  let last_non_zero = ref (-1) in
-  let fraction = ref false in
-  let stop = ref j in
-  let scanning = ref true in
-  exponent := 0;
-  while !scanning && !stop < len do
-    let c = Bytes.get b !stop in
-    if c = '.' then begin
-      fraction := true;
-      incr stop
-    end
-    else if not (is_digit c) then scanning := false
-    else begin
-      if !fraction then decr exponent;
-      if c <> '0' then last_non_zero := !stop;
-      incr stop
-    end
+  let j = ref (if Bytes.get b start = '-' then start + 1 else start) in
+  let last = ref (-1) in
+  while
+    !j < len
+    &&
+    let c = Bytes.get b !j in
+    c = '.' || is_digit c
+  do
+    if Bytes.get b !j <> '.' && Bytes.get b !j <> '0' then last := !j;
+    incr j
   done;
-  if !last_non_zero >= 0 then begin
-    exponent := !exponent + text_exponent b !stop;
-    (* Digits after the last non-zero one are trailing zeros: they move into the exponent. *)
-    for t = !last_non_zero + 1 to !stop - 1 do
-      if Bytes.get b t <> '.' then incr exponent
-    done
-  end;
-  !last_non_zero
+  !last
+
+(* digits_exponent is the power of ten of the digit string up to its last digit that is not zero (which is given):
+   the digits after it are trailing zeros, and move into the exponent. *)
+let digits_exponent b start last_non_zero =
+  let len = Bytes.length b in
+  let j = ref (if Bytes.get b start = '-' then start + 1 else start) in
+  let exponent = ref 0 in
+  let fraction = ref false in
+  while
+    !j < len
+    &&
+    let c = Bytes.get b !j in
+    c = '.' || is_digit c
+  do
+    if Bytes.get b !j = '.' then fraction := true
+    else if !fraction then
+      (* A digit of the fraction is a place, unless it is a trailing zero, which is no digit of the string. *)
+      begin if !j <= last_non_zero then decr exponent
+      end
+    else if !j > last_non_zero then incr exponent;
+    incr j
+  done;
+  !exponent + text_exponent b !j
 
 (* divides_text reports whether the number text at start is a multiple of dm * 10^de (dm positive, no trailing
    zeros). The text's digits are streamed modulo what remains of the divisor, so the text may have any number of
@@ -540,11 +549,10 @@ let divides_text b start dm de =
   (* x = xm * 10^xe with xm the digit string (trailing zeros moved into xe). x / d is an integer exactly when dm
      divides xm * 10^(xe - de). *)
   let digits_start = if Bytes.get b start = '-' then start + 1 else start in
-  let exponent = ref 0 in
-  let last_non_zero = digits_of b start exponent in
+  let last_non_zero = last_non_zero_digit b start in
   if last_non_zero < 0 then (* Zero is a multiple of everything. *) true
   else begin
-    let shift = !exponent - de in
+    let shift = digits_exponent b start last_non_zero - de in
     if shift < 0 then
       (* dm * 10^-shift must divide xm, which has no trailing zero, so is not a multiple of 10. *)
       false
@@ -577,11 +585,10 @@ let divides_text b start dm de =
    below the divisor by subtraction, at most nine times for each digit. *)
 let divides_text_big b start dm de =
   let digits_start = if Bytes.get b start = '-' then start + 1 else start in
-  let exponent = ref 0 in
-  let last_non_zero = digits_of b start exponent in
+  let last_non_zero = last_non_zero_digit b start in
   if last_non_zero < 0 then true
   else begin
-    let shift = !exponent - de in
+    let shift = digits_exponent b start last_non_zero - de in
     if shift < 0 then false
     else begin
       let rest = big_copy dm in
