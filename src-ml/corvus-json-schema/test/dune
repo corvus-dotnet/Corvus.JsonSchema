@@ -7,6 +7,7 @@
   differential_test
   document_test
   formats_test
+  limits_test
   metaschemas_test
   number_formats_test
   pattern_test
