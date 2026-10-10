@@ -920,6 +920,14 @@ class EcmaRegexTest {
                         + "|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa"
                         + "|acacab|bcbcab|abababa|ababcab|axbba|abxba",
             },
+            {
+                "^(?:a?(?:a?(?=(((?:a|ac)){0,2})(?:(?:(?:(?:aa|[^a])a)*(b))*)*)(?!b\\3).\\2)+c?){2}$",
+                "|bc|cb|cc|aab|aac|abc|acb|acc|baa|bab|bac|bcb|bcc|caa|cab|cac|cbc|ccb|ccc|aaaa"
+                        + "|aaab|aaac|aabc|aacb|aacc|abaa|abab|abac|abcb|abcc|acaa|acab|acac|acbc|accb"
+                        + "|accc|baaa|baab|baac|babc|bacb|bacc|bcaa|bcab|bcac|bcbc|bccb|bccc|caaa|caab"
+                        + "|caac|cabc|cacb|cacc|cbaa|cbab|cbac|cbcb|cbcc|ccaa|ccab|ccac|ccbc|cccb|cccc"
+                        + "|acbcb|acbccb|abcabc|acacab|bcbcab|ababcab",
+            },
     };
 
     /** A reference reads what the lookaround of its own iteration captured. */

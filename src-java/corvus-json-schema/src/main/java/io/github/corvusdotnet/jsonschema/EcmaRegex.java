@@ -2717,32 +2717,43 @@ final class EcmaRegex {
             if (max == 0) {
                 return;
             }
-            boolean apart = min >= 2 && minLength(body) == 0 && maxLength(body) != 0 && !emptyAnywhere(body);
-            // In a loop inside another, the place an iteration started at can be told only when the loop has no
-            // minimum (see stamped). So where that may be asked for, the iterations that are due are written apart.
-            apart |= min > 0 && (max == UNBOUNDED || max > 1) && loopNow() != null && holdsReadLook(body);
-            if (apart) {
+            // The iterations that are due are written apart where java.util.regex would leave the repetition early
+            // (see leavesEarly). And in a loop inside another, the place an iteration started at can be told only
+            // when the loop has no minimum (see stamped), so where that may be asked for they are written apart too.
+            boolean early = min >= 2 && minLength(body) == 0 && maxLength(body) != 0 && !emptyAnywhere(body);
+            boolean inner = min > 0 && (max == UNBOUNDED || max > 1) && loopNow() != null && holdsReadLook(body);
+            if (early || inner) {
                 for (int k = 0; k < min; k++) {
-                    copyOfBody(body);
+                    copyOfBody(body, early);
                 }
                 if (max != min) {
                     int start = out.length();
                     loop(body, 0, max == UNBOUNDED ? UNBOUNDED : max - min, lazy);
-                    unrolledLength += out.length() - start;
-                    if (++unrolledCopies > MAX_UNROLLED_COPIES || unrolledLength > MAX_UNROLLED_LENGTH) {
-                        throw new Unsupported(REFUSED_EMPTY_ITERATIONS);
-                    }
+                    counted(out.length() - start, early);
                 }
                 return;
             }
             loop(body, min, max, lazy);
         }
 
-        private void copyOfBody(Node body) {
+        private void copyOfBody(Node body, boolean early) {
             String text = bodyText(body, false, false, false);
             out.append("(?:").append(text).append(')');
-            unrolledLength += text.length();
-            if (++unrolledCopies > MAX_UNROLLED_COPIES || unrolledLength > MAX_UNROLLED_LENGTH) {
+            counted(text.length(), early);
+        }
+
+        /**
+         * Counts a copy of a body. The copies of a repetition that java.util.regex would leave early have limits of
+         * their own. The others are bounded by the number of copies and by the limits of a translation by paths.
+         */
+        private void counted(int length, boolean early) {
+            if (early) {
+                unrolledLength += length;
+            }
+            if (++unrolledCopies > MAX_UNROLLED_COPIES) {
+                throw new Unsupported(early ? REFUSED_EMPTY_ITERATIONS : REFUSED_TOO_MANY_PATHS);
+            }
+            if (unrolledLength > MAX_UNROLLED_LENGTH) {
                 throw new Unsupported(REFUSED_EMPTY_ITERATIONS);
             }
         }
