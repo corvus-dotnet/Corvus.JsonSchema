@@ -363,6 +363,39 @@ internal static class EcmaRegexUnicode
         return Union(set, extra);
     }
 
+    /// <summary>
+    /// The classes of Canonicalize that have more than one member and a member in a set.
+    /// </summary>
+    /// <param name="set">The set.</param>
+    /// <param name="unicode">Whether the pattern is read with the u flag grammar.</param>
+    /// <returns>Each class once, as its members in order.</returns>
+    public static List<int[]> FoldClasses(int[] set, bool unicode)
+    {
+        Folding f = GetFolding(unicode);
+        List<int[]> classes = [];
+        HashSet<int> seen = [];
+        for (int i = 0; i < set.Length; i += 2)
+        {
+            int k = Array.BinarySearch(f.Points, set[i]);
+            if (k < 0)
+            {
+                k = ~k;
+            }
+
+            for (; k < f.Points.Length && f.Points[k] <= set[i + 1]; k++)
+            {
+                int[] members = (int[])f.Classes[k].Clone();
+                Array.Sort(members);
+                if (seen.Add(members[0]))
+                {
+                    classes.Add(members);
+                }
+            }
+        }
+
+        return classes;
+    }
+
     /// <summary>The characters that are equivalent to some other character under the Canonicalize of a grammar.</summary>
     /// <param name="unicode">Whether the pattern is read with the u flag grammar.</param>
     /// <returns>The set.</returns>

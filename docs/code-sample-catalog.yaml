@@ -843,8 +843,9 @@ main-docs:
       - {index: 5, language: , lines: [173, 176]}
       - {index: 6, language: , lines: [241, 244]}
       - {index: 7, language: , lines: [256, 262]}
-      - {index: 8, language: , lines: [301, 303]}
-      - {index: 9, language: , lines: [317, 320]}
+      - {index: 8, language: , lines: [303, 312]}
+      - {index: 9, language: , lines: [353, 355]}
+      - {index: 10, language: , lines: [369, 372]}
   - path: "docs/EcmaRegexTranslator.md"
     blocks:
       - {index: 0, language: csharp, lines: [44, 58], category: compilable, verified: false}

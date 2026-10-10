@@ -278,9 +278,61 @@ iteration.
 `(?(1)(?<-1>))` is a balancing group: it takes the capture of group 1 away when there is one, and .NET gives it
 back if the match backtracks out of the iteration.
 
-A backreference inside `(?i:...)` is written `(?(1)(?i:\1))` when the group can capture a character that has a
-case variant. This is the one place where .NET's own case comparison is used
-(see [Known Limits](./EcmaRegexTranslator.md#known-limits)).
+### A Backreference That Ignores Case
+
+Inside `(?i:...)` a backreference matches a text that is the text of its group character by character, where two
+characters are the same when Canonicalize gives one character for both: simple case folding with the `u` flag
+grammar, and the uppercase mapping of one code unit without it.
+
+.NET's own case-insensitive backreference is not that comparison. Measured on .NET 10 over every pair of
+characters, with the `u` flag grammar it fails 106 pairs of the Basic Multilingual Plane that ECMA-262 matches
+(among them `\u03C2` and `\u03C3`, the two small sigmas, `s` and `\u017F`, `\u00B5` and `\u03BC`) and all 614 pairs
+beyond it, because it compares code units. Without the `u` flag it differs on 166 pairs, in both directions
+(it matches `k` with `\u212A` and `\u00DF` with `\u1E9E`, which ECMA-262 does not). Its table also changes from
+one runtime to the next. So it is used only for a text that is ASCII with no `i`, `k` or `s`, the letters that have
+a case variant outside ASCII:
+
+| ECMAScript | .NET | |
+|---|---|---|
+| `(?i:(a)\1)` | `(?:(?<1>[Aa])(?(1)(?i:\1)))` | The group can only capture `a` or `A`. |
+| `(?i:(\d+x)\1)` | `(?:(?<1>[0-9]+[Xx])(?(1)(?i:\1)))` | |
+
+For any other group the comparison is written out. For `(?i:(k)\1)`, whose group can capture `k`, `K` or the
+Kelvin sign:
+
+```
+(?:(?<1>[Kk\u212A])(?(1)
+  (?<=\A(?=[\s\S]*?(?=B\1B(?<z1>[\s\S]*))(?<q1>[\s\S]*))[\s\S]*)
+  (?>(?:
+      (?=(?<u1>[\uD800-\uDBFF][\uDC00-\uDFFF]|[\s\S]))(?=[\s\S]*\z(?<=(?=(?!\k<z1>\z)\k<u1>B(?<q1>[\s\S]*))\k<q1>))\k<u1>
+    | (?=[Kk\u212A])(?=[\s\S]*\z(?<=(?=(?!\k<z1>\z)[Kk\u212A](?<q1>[\s\S]*))\k<q1>))[Kk\u212A]
+  )*)
+  (?=[\s\S]*\z(?<=(?=\k<z1>\z)\k<q1>))
+))
+```
+
+It is shown on several lines, and `B` stands for `(?!(?<=[\uD800-\uDBFF])[\uDC00-\uDFFF])`, which holds everywhere
+but between the two halves of a surrogate pair. It reads:
+
+1. The text of the group cannot be read where it stands in the pattern, but a copy of it stands somewhere in the
+   input. The first line finds one from the start of the input, and captures the input from the copy to the end
+   as `q1` and the input after the copy as `z1`. A group that holds the input from some place to the end names
+   that place.
+2. Each turn of the repetition compares one character. It looks at the next character of the input, goes to the
+   place `q1` names (to the end of the input, and back over the text of `q1`), tests the character there, moves
+   `q1` past it, and takes the character of the input. The test is one of the alternatives: the same character
+   (`\k<u1>`), or two members of one class of case variants (`[Kk\u212A]` at both places). A group that can
+   capture one of the other ASCII letters gets one more alternative, which uses .NET's own comparison for those
+   letters alone.
+3. The repetition is atomic, since each turn has one outcome. The last line holds when `q1` has reached `z1`, so
+   that every character of the copy has been compared.
+
+In a lookbehind, which is matched from right to left, the same comparison runs forward from a place before the
+current one and has to end at the current one.
+
+There is one alternative for each class of case variants that has a member the group can capture, 32 at a time
+behind a look at the next character. See [Known Limits](./EcmaRegexTranslator.md#known-limits) for what that costs
+when the group can capture any letter.
 
 ## Repetitions
 

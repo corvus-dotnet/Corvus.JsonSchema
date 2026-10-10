@@ -123,11 +123,14 @@ pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTable
 
 ## Known Limits
 
-- **A case-insensitive backreference** (`\1` inside `(?i:...)`) is left to .NET's own comparison, which treats two
-  characters as equal when their lowercase forms are equal. ECMA-262 compares their Canonicalize. The two agree for
-  ASCII and for most letters. They differ for a few characters, among them `ς` and `σ`, `ſ` and `s` (with the `u`
-  flag grammar), `µ` and `μ`. A pattern whose group can capture one of those and is read back ignoring case can get
-  a wrong answer for a text that pairs them.
+- **A case-insensitive backreference** (`\1` inside `(?i:...)`) is exact, and can be costly. .NET's own
+  case-insensitive backreference does not compare by ECMA-262's Canonicalize, so the comparison is written out
+  (see [the translations](./EcmaRegexTranslations.md#a-backreference-that-ignores-case)). The translation holds one
+  alternative for each class of case variants the group can capture. For a group such as `([a-z]+)` that is three
+  and the translation is under a thousand characters. For a group that can capture any letter (`(.)`, `(\p{L}+)`)
+  it is every class there is: the translation is about 160,000 characters, and .NET's compiled engine takes one to
+  three seconds to compile it the first time it is used. Each character compared costs a walk to the end of the
+  input and back.
 - **Time.** ECMA-262 does not say how long a match may take, and a backtracking engine can take very long. The
   evaluator's match timeout (`JsonSchemaEvaluatorOptions.RegexMatchTimeout`) bounds it.
 - **Unicode version.** The data is Unicode 17.0.0. The Basic Multilingual Plane part of a General_Category value

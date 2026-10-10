@@ -80,7 +80,10 @@ string strict = EcmaRegexTranslator.Translate(@"\d+\.\d+");
   bound a set with some pairs is runs, `C*(?:PC*)*`. With an upper bound the dot or a negated class is a conditional
   that looks ahead for a surrogate, `(?(?=[^\uD800-\uDFFF]{m}|[^\uD800-\uDFFF]*\z)[C]{n,m}|(?>...){n,m})`. More than
   two pair alternatives stand behind `(?=[\uD800-\uDFFF])`.
-- **Never use .NET's `(?i)`** for anything but a backreference. Its tables and its culture are not ECMA-262's.
+- **Never use .NET's `(?i)`**. Its tables and its culture are not ECMA-262's, and they change with the runtime.
+  The one use is a backreference to a text that is ASCII with no `i`, `k` or `s`. Any other case-insensitive
+  backreference is written out character by character (`FoldedBackreference`), with one alternative for each class
+  of Canonicalize the group can capture.
 - **Never write `(?!)`**. .NET folds it away with what depends on it, and the compiled engine can then throw. The
   translator writes `(?!\z|[\s\S])`.
 - **An empty alternative beside one other** is written `(?:X)?`. .NET runs `(?:a+|)+` as `a+`. It does the same

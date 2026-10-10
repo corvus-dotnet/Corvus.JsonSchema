@@ -215,6 +215,12 @@ internal static class EcmaRegexTranslator
         /// written <c>(?!)</c>, which .NET takes out of the pattern before it runs it, with what depends on it, and
         /// the compiled engine can then throw (<c>(?:(?:(?!)a)??){0,2}</c> before a lookbehind is one such pattern).
         /// </summary>
+        /// <summary>How many classes of Canonicalize a written-out comparison tries behind one look at the next character.</summary>
+        private const int FoldClassesTogether = 32;
+
+        /// <summary>The letters of ASCII that no character outside ASCII is a case variant of, in any casing.</summary>
+        private const string PlainAsciiLetters = "[A-HJL-RT-Za-hjl-rt-z]";
+
         private const string Never = @"(?!\z|[\s\S])";
 
         /// <summary>Holds between the two halves of a character beyond the Basic Multilingual Plane.</summary>
@@ -233,6 +239,10 @@ internal static class EcmaRegexTranslator
         private const int MaxNestedLazy = 8;
 
         private static readonly int[] SurrogateRange = [0xD800, 0xDFFF];
+
+        /// <summary>The letters of ASCII that a character outside ASCII is a case variant of, in some casing: I, K and S.</summary>
+        private static readonly int[] NotPlainAsciiLetters = ['I', 'I', 'K', 'K', 'S', 'S', 'i', 'i', 'k', 'k', 's', 's'];
+
         private static readonly int[] HighSurrogateRange = [0xD800, 0xDBFF];
         private static readonly int[] LowSurrogateRange = [0xDC00, 0xDFFF];
         private static readonly int[] SupplementaryRange = [0x10000, EcmaRegexUnicode.Max];
@@ -767,7 +777,7 @@ internal static class EcmaRegexTranslator
                     this.sb.Append(')');
                     break;
                 case EcmaRegexNodeKind.Backref:
-                    this.Backreference(n);
+                    this.Backreference(n, (context & Context.Backward) != 0);
                     break;
                 default:
                     throw new InvalidOperationException();
@@ -1202,7 +1212,7 @@ internal static class EcmaRegexTranslator
         /// part and the empty string when it has not. A name can belong to several groups in separate alternatives,
         /// of which at most one has taken part, so the tests of each follow one another.
         /// </summary>
-        private void Backreference(EcmaRegexNode n)
+        private void Backreference(EcmaRegexNode n, bool backward)
         {
             foreach (int g in n.Groups)
             {
@@ -1215,7 +1225,7 @@ internal static class EcmaRegexTranslator
                 this.sb.Append("(?(").Append(number).Append(')');
                 if (n.Fold && this.CapturesCased(g))
                 {
-                    this.sb.Append(@"(?i:\").Append(number).Append(')');
+                    this.FoldedBackreference(g, number, backward);
                 }
                 else
                 {
@@ -1223,6 +1233,137 @@ internal static class EcmaRegexTranslator
                 }
 
                 this.sb.Append(')');
+            }
+        }
+
+        /// <summary>
+        /// Writes a backreference that ignores case, to a group whose text can hold a character with a case variant.
+        /// <para>
+        /// ECMA-262 compares the text of the group with the input character by character, and two characters are the
+        /// same when Canonicalize gives the same character for both. .NET's own case-insensitive backreference
+        /// compares by its own table, which is not that relation (with the u flag grammar it does not know that the
+        /// two small sigmas are one letter, nor any pair beyond the Basic Multilingual Plane) and is not the same
+        /// table in every runtime. So the comparison is written out, and .NET's is used only for the letters of ASCII
+        /// that no character outside ASCII is a case variant of.
+        /// </para>
+        /// <para>
+        /// The text of the group cannot be read where it stands in the pattern, but it stands somewhere in the input.
+        /// A group <c>q</c> holds the input from a place in a copy of that text to the end, which names the place,
+        /// and <c>z</c> the input from the end of the copy. Each step looks at the next character of the input, goes
+        /// to the place <c>q</c> names (from the end of the input, back over the text of <c>q</c>), tests the
+        /// character there, moves <c>q</c> past it and takes the character of the input. A step is one of: the same
+        /// character, an ASCII letter and its other case, or two characters of one class of Canonicalize, for each
+        /// class that has a member the group can capture. The steps end when <c>q</c> is <c>z</c>. In a lookbehind
+        /// the same comparison runs forward from a place before the current one and has to end at the current one.
+        /// </para>
+        /// </summary>
+        private void FoldedBackreference(int g, string number, bool backward)
+        {
+            int[] captured = this.CapturedSet(this.groupNodes[g]!, 0);
+            if (captured[captured.Length - 1] < 0x80 && !EcmaRegexUnicode.Intersects(captured, NotPlainAsciiLetters))
+            {
+                // The text of the group is ASCII with none of the letters that have a case variant outside ASCII, and
+                // for such a text .NET's comparison is ECMA-262's, in every runtime.
+                this.sb.Append(@"(?i:\").Append(number).Append(')');
+                return;
+            }
+
+            string id = (++this.markers).ToString(CultureInfo.InvariantCulture);
+            string q = "q" + id;
+            string z = "z" + id;
+            string u = "u" + id;
+            string boundary = this.unicode ? "(?!" + InsideSurrogatePair + ")" : string.Empty;
+            string character = this.unicode ? HighSurrogates + LowSurrogates + @"|[\s\S]" : @"[\s\S]";
+
+            // What goes to the place q names, tests there, and moves q on.
+            string home = @"(?=[\s\S]*\z(?<=(?=(?!\k<" + z + @">\z)";
+            string moved = "(?<" + q + @">[\s\S]*))\k<" + q + ">))";
+
+            if (backward)
+            {
+                this.sb.Append("(?=").Append(boundary);
+            }
+
+            // A copy of the text of the group, which starts and ends between characters.
+            this.sb.Append(@"(?<=\A(?=[\s\S]*?(?=").Append(boundary).Append('\\').Append(number).Append(boundary)
+                .Append("(?<").Append(z).Append(@">[\s\S]*))(?<").Append(q).Append(@">[\s\S]*))[\s\S]*)");
+
+            // The same character.
+            this.sb.Append("(?>(?:(?=(?<").Append(u).Append('>').Append(character).Append("))").Append(home)
+                .Append(@"\k<").Append(u).Append('>').Append(boundary).Append(moved).Append(@"\k<").Append(u).Append('>');
+
+            bool ascii = false;
+            List<EcmaRegexNode> classes = [];
+            foreach (int[] members in EcmaRegexUnicode.FoldClasses(captured, this.unicode))
+            {
+                if (members.Length == 2 && members[0] + 0x20 == members[1] && members[0] >= 'A' && members[0] <= 'Z'
+                    && members[0] != 'I' && members[0] != 'K' && members[0] != 'S')
+                {
+                    ascii = true;
+                    continue;
+                }
+
+                int[] set = new int[2 * members.Length];
+                for (int k = 0; k < members.Length; k++)
+                {
+                    set[2 * k] = members[k];
+                    set[(2 * k) + 1] = members[k];
+                }
+
+                classes.Add(new EcmaRegexNode(EcmaRegexNodeKind.Set) { Set = EcmaRegexUnicode.SetOf(set, set.Length) });
+            }
+
+            // Two characters of one class. Many classes are tried so many at a time, behind a look at the next
+            // character for a member of any of them.
+            for (int first = 0; first < classes.Count; first += FoldClassesTogether)
+            {
+                int end = Math.Min(classes.Count, first + FoldClassesTogether);
+                bool together = classes.Count > FoldClassesTogether;
+                if (together)
+                {
+                    int[] any = [];
+                    for (int k = first; k < end; k++)
+                    {
+                        any = EcmaRegexUnicode.Union(any, classes[k].Set);
+                    }
+
+                    this.sb.Append("|(?=");
+                    this.SetAtom(new EcmaRegexNode(EcmaRegexNodeKind.Set) { Set = any }, backward: false);
+                    this.sb.Append(")(?:");
+                }
+
+                for (int k = first; k < end; k++)
+                {
+                    this.sb.Append(together && k == first ? "(?=" : "|(?=");
+                    this.SetAtom(classes[k], backward: false);
+                    this.sb.Append(')').Append(home);
+                    this.SetAtom(classes[k], backward: false);
+                    this.sb.Append(moved);
+                    this.SetAtom(classes[k], backward: false);
+                }
+
+                if (together)
+                {
+                    this.sb.Append(')');
+                }
+            }
+
+            if (ascii)
+            {
+                // No character outside ASCII is a case variant of one of these letters, in ECMA-262 or in .NET.
+                this.sb.Append("|(?=(?<").Append(u).Append(">").Append(PlainAsciiLetters).Append("))").Append(home)
+                    .Append(@"(?i:\k<").Append(u).Append(">)").Append(moved).Append(PlainAsciiLetters);
+            }
+
+            // Every character of the copy has been compared.
+            this.sb.Append(@")*)(?=[\s\S]*\z(?<=(?=\k<").Append(z).Append(@">\z)\k<").Append(q).Append(">))");
+
+            if (backward)
+            {
+                // Matched from right to left: the current place is named, a place before it is tried, and the
+                // comparison from there has to end at the current place.
+                string p = "p" + id;
+                this.sb.Append(@"(?=\k<").Append(p).Append(@">\z))[\s\S]*?(?=(?<").Append(p).Append(@">[\s\S]*))");
             }
         }
 

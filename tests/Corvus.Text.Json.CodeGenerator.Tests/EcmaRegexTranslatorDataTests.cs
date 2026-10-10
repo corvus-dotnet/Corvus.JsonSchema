@@ -47,6 +47,59 @@ public class EcmaRegexTranslatorDataTests
         AssertCases(EcmaPatternCases.EngineFaults, engine);
     }
 
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
+    public void PatternsWithACaseInsensitiveBackreferenceAnswerAsV8(RegexOptions engine)
+    {
+        AssertCases(EcmaPatternCases.CaseInsensitiveBackreferences, engine);
+    }
+
+    /// <summary>
+    /// A backreference that ignores case, to a group that captures any one character, matches a second character
+    /// exactly when ECMA-262's Canonicalize gives one character for both. Every character with a case variant is
+    /// tried with every member of its class, with the characters next to it and with one from another class, in
+    /// both grammars. .NET's own comparison differs from Canonicalize for hundreds of these pairs.
+    /// </summary>
+    [TestMethod]
+    [DataRow(true, RegexOptions.Compiled)]
+    [DataRow(true, RegexOptions.None)]
+    [DataRow(false, RegexOptions.Compiled)]
+    [DataRow(false, RegexOptions.None)]
+    public void ACaseInsensitiveBackreferenceComparesByCanonicalize(bool unicode, RegexOptions engine)
+    {
+        // A lone "{" is valid only without the u flag.
+        string pattern = unicode ? @"^(?i:([^])\1)$" : @"^(?i:([^])\1)(?:{){0}$";
+        Assert.IsTrue(EcmaRegexTranslator.TryTranslate(pattern, out string translated, out bool wasUnicode, out _));
+        Assert.AreEqual(unicode, wasUnicode);
+        var regex = new Regex(translated, engine | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(30));
+        var failures = new List<string>();
+        int pairs = 0;
+        foreach (int[] members in EcmaRegexUnicode.FoldClasses([0, EcmaRegexUnicode.Max], unicode))
+        {
+            foreach (int captured in members)
+            {
+                var others = new List<int>(members) { captured + 1, captured - 1, 'a', 0x3C3, 0x10428 };
+                foreach (int other in others)
+                {
+                    bool expected = Array.IndexOf(members, other) >= 0;
+                    string text = char.ConvertFromUtf32(captured) + (other is >= 0xD800 and <= 0xDFFF ? "?" : char.ConvertFromUtf32(other));
+                    pairs++;
+                    if (regex.IsMatch(text) != expected)
+                    {
+                        failures.Add($"U+{captured:X4} then U+{other:X4}: expected {expected}");
+                    }
+                }
+            }
+        }
+
+        Assert.IsTrue(pairs > 10000, $"{pairs} pairs");
+        if (failures.Count > 0)
+        {
+            Assert.Fail($"{failures.Count} of {pairs} pairs are wrong. The first of them:\n{string.Join("\n", failures.Take(25))}");
+        }
+    }
+
     /// <summary>
     /// A lazy repetition with more than eight iterations left to choice, inside a lookaround whose captures a
     /// backreference reads, is written as a repetition with no highest count whose iterations a group counts. The
