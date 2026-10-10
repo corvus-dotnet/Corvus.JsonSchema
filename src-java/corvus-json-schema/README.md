@@ -129,15 +129,20 @@ flag grammar.
   with `\u` escapes, and can be shared by groups in separate alternatives.
 - A lookbehind can be of any length. One that `java.util.regex` cannot bound is run by a search whose time grows with
   the square of the length of the string.
+- An iteration of a counted repetition that matches nothing does not end the repetition while iterations are still
+  due, so `(^|x){2}a` matches "xa" as ECMA-262 defines, where `java.util.regex` does not. Such a repetition is
+  written with a copy of its body for each iteration it must run.
 
 The patterns are run by `java.util.regex`, after translation. A few valid patterns cannot be given their ECMA-262
-meaning there, all of them with a backreference: one inside a lookbehind, or to a group inside a lookbehind; one to a
+meaning there. Most have a backreference: one inside a lookbehind, or to a group inside a lookbehind; one to a
 group of a lookaround that may not have matched; one to a group that the repetition holding both can skip, or of a
 repetition that can match the empty string; and a case-insensitive one (inside `(?i:...)`), unless the only cased
 characters its group can hold are ASCII letters (with the `u` flag grammar, not `k` or `s`, which U+212A and U+017F
-fold to) and it can hold no character beyond the Basic Multilingual Plane. Compiling a schema with such a pattern throws
-`SchemaCompilationException` with a message that starts "Unsupported regular expression" and names the construct. It
-is never run with another meaning. The `regex` format still accepts it, as it is a valid pattern.
+fold to) and it can hold no character beyond the Basic Multilingual Plane. The other is a repetition that must run
+more than 200 times over a body that matches the empty string in some places only, such as `(^|x){201}`. Compiling a
+schema with such a pattern throws `SchemaCompilationException` with a message that starts "Unsupported regular
+expression" and names the construct. It is never run with another meaning. The `regex` format still accepts it, as it
+is a valid pattern.
 
 ## How it works
 

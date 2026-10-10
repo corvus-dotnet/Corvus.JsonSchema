@@ -39,7 +39,11 @@ import java.util.regex.PatternSyntaxException;
  *   <li>a lookbehind is written as it is when its length is bounded, and otherwise in a form that finds where it
  *       starts by search (see {@link Emitter#lookbehind}). A pattern with a lookbehind also ends with a branch that
  *       holds a supplementary character and is never taken, which makes {@code java.util.regex} step over the text
- *       of a lookbehind by code point. Without it a lookbehind counts UTF-16 code units.
+ *       of a lookbehind by code point. Without it a lookbehind counts UTF-16 code units;
+ *   <li>a repetition that must run twice or more, and whose body matches the empty string in some places only, is
+ *       written with one copy of the body for each iteration it must run (see {@link Emitter#repeat}).
+ *       {@code java.util.regex} leaves a repetition after an iteration that matched nothing, where ECMA-262 goes on
+ *       to the iterations that are still due.
  * </ul>
  *
  * <p><b>What is refused.</b> A backreference means "the text the group matched when it last took part, or nothing".
@@ -48,7 +52,9 @@ import java.util.regex.PatternSyntaxException;
  * lookbehind forwards where ECMA-262 runs it backwards. The translator shows, for each backreference, that these
  * differences cannot be seen, and writes the backreference in a form that is exact. Where it cannot show it, the
  * pattern is refused rather than given an answer that may be wrong, and {@link #unsupported} says why. The reasons
- * are the {@code REFUSED_} constants. A pattern with no backreference is never refused for them.
+ * are the {@code REFUSED_} constants. A pattern with no backreference is never refused for them, but for two:
+ * a translation {@code java.util.regex} does not compile, and a repetition that would be written with more copies of
+ * its body than {@link Emitter#MAX_UNROLLED_COPIES}, or with more text than {@link Emitter#MAX_UNROLLED_LENGTH}.
  */
 final class EcmaRegex {
     private EcmaRegex() {
@@ -70,6 +76,12 @@ final class EcmaRegex {
     /** The backreference ignores case, and the group can hold a character java.util.regex compares differently. */
     static final String REFUSED_CASE_INSENSITIVE_BACKREFERENCE =
             "a case-insensitive backreference to text that java.util.regex compares differently";
+    /**
+     * The repetition must run so many times, over a body that matches the empty string in some places only, that
+     * writing each of those iterations apart is too much.
+     */
+    static final String REFUSED_EMPTY_ITERATIONS =
+            "a repetition this long of a body that can match the empty string";
     /** {@code java.util.regex} did not compile the translation. */
     static final String REFUSED_BY_ENGINE = "a pattern java.util.regex does not compile";
 
@@ -1130,6 +1142,13 @@ final class EcmaRegex {
         private static final long MAX_DIRECT_LOOKBEHIND = 1 << 16;
         /** A length with no bound. */
         private static final long INFINITE = Long.MAX_VALUE;
+        /**
+         * The most copies of bodies one translation holds for iterations written apart, and the most text they add.
+         * {@code java.util.regex} matches by recursion, some levels for each copy, and a thousand copies of a small
+         * body are more than a stack of 512 KB holds.
+         */
+        static final int MAX_UNROLLED_COPIES = 200;
+        static final int MAX_UNROLLED_LENGTH = 1 << 16;
 
         private final boolean unicode;
         private final Node root;
@@ -1146,6 +1165,8 @@ final class EcmaRegex {
         private final int[] javaMarker;
         private final StringBuilder out = new StringBuilder();
         private int javaGroups;
+        private int unrolledCopies;
+        private int unrolledLength;
         private boolean hasLookbehind;
         private boolean searchingLookbehind;
 
@@ -1195,6 +1216,8 @@ final class EcmaRegex {
         private String write() {
             out.setLength(0);
             javaGroups = 0;
+            unrolledCopies = 0;
+            unrolledLength = 0;
             hasLookbehind = false;
             Arrays.fill(javaGroup, 0);
             Arrays.fill(javaMarker, 0);
@@ -1670,10 +1693,20 @@ final class EcmaRegex {
          * where each iteration starts by unsetting the groups of the body. The first X has groups of its own for the
          * backreferences inside it. The two forms match the same texts, as the body cannot match the empty string
          * (such a repetition is refused), so every iteration is one ECMA-262 takes.
+         *
+         * <p>A repetition X{m,n} that must run twice or more over a body that can match the empty string is written
+         * as m copies of X and then {@code (?:X){0,n-m}}, when {@link #leavesEarly} says the two engines differ on
+         * it. Each copy has groups of its own, and a backreference in a copy reads the groups of that copy, as
+         * ECMA-262 unsets the groups of the body when an iteration starts. A backreference after the repetition to a
+         * group of such a body is refused, so none reads the wrong copy.
          */
         private void repeat(Node n) {
             Node atom = n.subs[0];
             if (!n.lastApart) {
+                if (leavesEarly(n)) {
+                    unrolled(n);
+                    return;
+                }
                 atom(atom);
                 quantifier(n.min, n.max, n.lazy);
                 return;
@@ -1685,6 +1718,82 @@ final class EcmaRegex {
             out.append(')');
             if (n.min == 0) {
                 out.append(n.lazy ? "??" : "?");
+            }
+        }
+
+        /**
+         * Whether {@code java.util.regex} can leave a repetition before the iterations it must run are done, where
+         * ECMA-262 runs them all.
+         *
+         * <p>ECMA-262 takes an iteration that matched nothing while iterations are still due, and goes on to the
+         * next (RepeatMatcher refuses an empty iteration only once the minimum is zero). {@code java.util.regex}
+         * goes on to what follows the repetition after any iteration that matched nothing, as if the rest were
+         * done. So in {@code (^|x){2}a} on "xa", ECMA-262 takes "^" and then "x", and {@code java.util.regex} takes
+         * "^" and looks for "a" at once.
+         *
+         * <p>The answers differ only when a path of ECMA-262 has an empty iteration followed by one that is not
+         * empty, and {@code java.util.regex} has no empty iteration to end on where that path leaves the
+         * repetition. That needs two iterations that are due, so a minimum of two. It needs a body that matches
+         * both the empty string and a longer one. And it needs a body that does not match the empty string
+         * everywhere, which is one whose every empty match passes an assertion or a backreference. With a minimum
+         * of one or none the paths of the two engines reach the same places: an empty iteration does not move, and
+         * the one the paths can differ by is at the end.
+         */
+        private boolean leavesEarly(Node n) {
+            Node body = n.subs[0];
+            return n.min >= 2 && minLength(body) == 0 && maxLength(body) != 0 && !emptyAnywhere(body);
+        }
+
+        /** Whether a node matches the empty string wherever it stands: through no assertion and no backreference. */
+        private static boolean emptyAnywhere(Node n) {
+            switch (n.kind) {
+                case EMPTY:
+                    return true;
+                case CAT:
+                    for (Node sub : n.subs) {
+                        if (!emptyAnywhere(sub)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                case ALT:
+                    for (Node sub : n.subs) {
+                        if (emptyAnywhere(sub)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                case GROUP:
+                    return emptyAnywhere(n.subs[0]);
+                case REPEAT:
+                    return n.min == 0 || emptyAnywhere(n.subs[0]);
+                default:
+                    return false;
+            }
+        }
+
+        /**
+         * Writes a repetition with the iterations it must run apart, a copy of the body for each, and the ones it
+         * may run after them. The copies are counted over the whole translation, as a repetition inside a body is
+         * written again with each copy of it.
+         */
+        private void unrolled(Node n) {
+            Node atom = n.subs[0];
+            for (int k = 0; k < n.min; k++) {
+                copy(atom);
+            }
+            if (n.max != n.min) {
+                copy(atom);
+                quantifier(0, n.max == UNBOUNDED ? UNBOUNDED : n.max - n.min, n.lazy);
+            }
+        }
+
+        private void copy(Node atom) {
+            int start = out.length();
+            atom(atom);
+            unrolledLength += out.length() - start;
+            if (++unrolledCopies > MAX_UNROLLED_COPIES || unrolledLength > MAX_UNROLLED_LENGTH) {
+                throw new Unsupported(REFUSED_EMPTY_ITERATIONS);
             }
         }
 

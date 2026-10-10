@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
@@ -449,5 +451,115 @@ class EcmaRegexTest {
         String shallow = "(?:".repeat(150) + "a" + ")".repeat(150);
         assertValid(shallow);
         assertEquals(true, matches(shallow, "a"));
+    }
+
+    /**
+     * Counted repetitions of a body that can match the empty string, each with the texts it matches, every one
+     * preceded by "|". The texts asked are all those of up to three characters over "a", "x" and "-". The answers
+     * are V8's: {@code new RegExp(pattern, "u").test(text)}.
+     */
+    private static final String[][] EMPTY_ITERATIONS = {
+            {"(^|x){2}a", "|a|aa|ax|a-|xa|aaa|aax|aa-|axa|axx|ax-|a-a|a-x|a--|xaa|xax|xa-|xxa"},
+            {"^(?:-|(?!$)){2}$", "|-|--"},
+            {"(\\b|a){2}a$", "|a|aa|-a|aaa|a-a|x-a|-aa|--a"},
+            {"^(?:(?<!a)|[ax]{1,2}){2}a$", "|a|aa|xa|aaa|axa|xaa|xxa"},
+            {"^([^-]+[^-]+|(?!a)){2}a", "|xaa|xxa"},
+            {"(\\B(?<!a)|a){2}a$", "|xa|aaa|axa|xaa|xxa|-xa"},
+            {"^(?:^|x){3}a$", "|a|xa|xxa"},
+            {"^(?:(?=a)|x){2,}a$", "|a|xa|xxa"},
+            {"^(?:(?=a)|x){2,3}a$", "|a|xa|xxa"},
+            {"^(?:(?=a)|x){2,3}?a$", "|a|xa|xxa"},
+            {"^(?:(?=a)|x){3,}?a$", "|a|xa|xxa"},
+            {"^(?:$|a){4}$", "||a|aa|aaa"},
+            {"^(?:(?:^|x){2}a|-){2}$", "|a-|--|xa-"},
+            {"^(?:(?:\\b|a){2}|x(?=-)){2,}-$", "|a-|x-|aa-|ax-"},
+            {"(?<=(?:^|x){2}a)-", "|a-|a-a|a-x|a--|xa-"},
+            {"(?<=(?:.[^a]|(?=x)){3,})a", "|xxa|x-a"},
+            {"^(?:(a|x|)\\1|^-){2}$", "||-|aa|xx|-aa|-xx"},
+            {"^(?:(?=(a))\\1|x){2}$", "|aa|ax|xa|xx"},
+            {"^(?:(?=a)a?){2,4}(?!a)", "|a|aa|ax|a-|aaa|aax|aa-|axa|axx|ax-|a-a|a-x|a--"},
+            {"^(?:^|x)+a$", "|a|xa|xxa"},
+            {"^(?:^|x)*a$", "|a|xa|xxa"},
+            {"^(?:^|x){1,2}a$", "|a|xa|xxa"},
+            {"^(?:a|){3}x$", "|x|ax|aax"},
+            {"^(?:a*){2,}x$", "|x|ax|aax"},
+            {"^(?:\\b){2}a$", "|a"},
+            {"^(?:(?=a)|(?=x)){3}.$", "|a|x"},
+            {"^(?:ax){2}$", ""},
+    };
+
+    /**
+     * An iteration that matches nothing does not end a repetition whose iterations are still due. ECMA-262 goes on
+     * to the next, where {@code java.util.regex} goes on to what follows the repetition.
+     */
+    @Test
+    void anEmptyIterationDoesNotEndARepetitionThatIsStillDue() {
+        List<String> texts = new ArrayList<>(List.of(""));
+        for (int length = 0, from = 0; length < 3; length++) {
+            int end = texts.size();
+            for (int k = from; k < end; k++) {
+                for (String c : new String[] {"a", "x", "-"}) {
+                    texts.add(texts.get(k) + c);
+                }
+            }
+            from = end;
+        }
+        List<String> wrong = new ArrayList<>();
+        for (String[] c : EMPTY_ITERATIONS) {
+            List<String> expected = c[1].isEmpty() ? List.of() : List.of(c[1].substring(1).split("\\|", -1));
+            Pattern translated = Pattern.compile(EcmaRegex.translate(c[0]));
+            Validator validator = Validator.compile("{\"pattern\": \"" + c[0].replace("\\", "\\\\") + "\"}");
+            for (String text : texts) {
+                boolean matches = expected.contains(text);
+                if (translated.matcher(text).find() != matches) {
+                    wrong.add(c[0] + (matches ? " does not match " : " matches ") + text);
+                }
+                if (validator.isValid("\"" + text + "\"") != matches) {
+                    wrong.add("{\"pattern\": \"" + c[0] + "\"} is " + (matches ? "not " : "") + "valid for " + text);
+                }
+            }
+        }
+        assertEquals(List.of(), wrong);
+    }
+
+    /** Only a repetition on which the two engines differ is written with its iterations apart. */
+    @Test
+    void iterationsAreWrittenApartOnlyWhereTheEnginesDiffer() {
+        // A minimum of two, and a body that is empty in some places only.
+        assertEquals("(?:^|x)(?:^|x)a", EcmaRegex.translate("(?:^|x){2}a"));
+        assertEquals("(?:^|x)(?:^|x)(?:^|x)*a", EcmaRegex.translate("(?:^|x){2,}a"));
+        assertEquals("(?:^|x)(?:^|x)(?:^|x){0,3}?a", EcmaRegex.translate("(?:^|x){2,5}?a"));
+        // A minimum below two.
+        assertEquals("(?:^|x)+a", EcmaRegex.translate("(?:^|x)+a"));
+        assertEquals("(?:^|x){1,4}a", EcmaRegex.translate("(?:^|x){1,4}a"));
+        assertEquals("(?:^|x){0,4}a", EcmaRegex.translate("(?:^|x){0,4}a"));
+        // A body that is empty anywhere, one that is never empty and one that is only ever empty.
+        assertEquals("(?:x|){3}a", EcmaRegex.translate("(?:x|){3}a"));
+        assertEquals("(?:x*){3,}a", EcmaRegex.translate("(?:x*){3,}a"));
+        assertEquals("(?:^x){3}a", EcmaRegex.translate("(?:^x){3}a"));
+        assertEquals("(?:^|(?=x)){3}a", EcmaRegex.translate("(?:^|(?=x)){3}a"));
+        // Each copy of a body has its own group for the backreference inside it.
+        assertEquals("(?:(a|)(?:(?:\\1))|^x)(?:(a|)(?:(?:\\2))|^x)", EcmaRegex.translate("(?:(a|)\\1|^x){2}"));
+    }
+
+    /** A repetition too long to write with its iterations apart is refused, and is not given another meaning. */
+    @Test
+    void aRepetitionTooLongToWriteApartIsRefused() {
+        assertMatches("^(?:^|x){200}a$", "xxa");
+        assertNoMatch("^(?:^|x){200}a$", "-a");
+        assertMatches("^(?:^|x){2,}a$", "x".repeat(300) + "a");
+        String longBody = "(?:^|" + "abcdefghij".repeat(40) + ")";
+        assertMatches("^" + longBody + "{100}$", "abcdefghij".repeat(80));
+        for (String p : new String[] {
+            "(?:^|x){201}a", "(?:^|x){200,}a", "(?:^|x){2147483647}a", "(?:(?:^|x){15}-|$){15}", longBody + "{180}",
+        }) {
+            assertEquals(EcmaRegex.REFUSED_EMPTY_ITERATIONS, EcmaRegex.unsupported(p), p);
+            assertNull(EcmaRegex.translate(p), p);
+            assertTrue(EcmaRegex.isValid(p), p);
+        }
+        // The same counts over a body the engines agree on are written as they are.
+        assertMatches("^(?:x|){2147483647}a$", "xxa");
+        assertMatches("^(?:^x|b){201,}a$", "b".repeat(300) + "a");
+        assertEquals("(?:^x|b){201,}a", EcmaRegex.translate("(?:^x|b){201,}a"));
     }
 }
