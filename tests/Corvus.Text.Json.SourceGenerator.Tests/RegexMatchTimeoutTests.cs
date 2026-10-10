@@ -23,10 +23,10 @@ public class RegexMatchTimeoutTests
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
-            "code": { "type": "string", "pattern": "^(a+)+$" }
+            "code": { "type": "string", "pattern": "^(a|aa)+$" }
           },
           "patternProperties": {
-            "^(a+)+-$": { "type": "integer" }
+            "^(a|aa)+-$": { "type": "integer" }
           }
         }
         """;
@@ -76,7 +76,7 @@ public class RegexMatchTimeoutTests
         string[] expected =
         [
             """RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(10000),""",
-            """private static Regex CreatePatternProperties() => new("^(a+)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """private static Regex CreatePatternProperties() => new("^(?:a|aa)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))
@@ -93,4 +93,4 @@ public class RegexMatchTimeoutTests
 
         public override SourceText? GetText(CancellationToken cancellationToken = default) => this.sourceText;
     }
-}
+}

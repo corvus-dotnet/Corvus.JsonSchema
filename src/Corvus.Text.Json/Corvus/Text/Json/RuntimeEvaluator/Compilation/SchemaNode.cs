@@ -218,7 +218,7 @@ internal sealed class PatternMatcher
 
     // The translation of each pattern seen, or why it is not a valid ECMA-262 pattern. A pattern is read once per
     // process, when the first schema that holds it is compiled.
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string? Translated, string? Error)> TranslationCache = new();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string? Translated, bool Unicode, string? Error)> TranslationCache = new();
 
     private readonly Regex? regex;
     private readonly byte[]? prefix;
@@ -305,12 +305,17 @@ internal sealed class PatternMatcher
 
         // A pattern that is not a valid ECMA-262 regular expression is refused here, when the schema is compiled,
         // whichever matcher would have taken it.
-        (string? translation, string? error) = TranslationCache.GetOrAdd(
+        (string? translation, bool unicode, string? error) = TranslationCache.GetOrAdd(
             ecmaPattern,
-            static p => Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.TryTranslate(p, out string? t, out string? e) ? (t, null) : (null, e));
+            static p => Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.TryTranslate(p, out string? t, out bool u, out string? e) ? (t, u, null) : (null, u, e));
         if (translation is null)
         {
             throw new JsonSchemaCompilationException($"The pattern '{ecmaPattern}' is not a valid ECMA-262 regular expression. {error}");
+        }
+
+        if (!unicode && CountsCodeUnits(ecmaPattern))
+        {
+            return CreateRegex(ecmaPattern, options, patternIndex);
         }
 
         if (TryParsePrefix(ecmaPattern, out string? prefix))
@@ -348,6 +353,40 @@ internal sealed class PatternMatcher
             return new PatternMatcher(Kind.Sequences, ecmaPattern, null, null, 0, 0, sequences: sequences);
         }
 
+        return CreateRegex(ecmaPattern, options, patternIndex);
+    }
+
+    /// <summary>
+    /// Whether a pattern that only the grammar with no <c>u</c> flag accepts may tell a character beyond the Basic
+    /// Multilingual Plane from two characters. ECMA-262 matches such a pattern by UTF-16 code unit, and the matchers
+    /// here match by code point. They differ only where the pattern takes such a character: with the dot, a negated
+    /// class, <c>\D</c>, <c>\W</c> or <c>\S</c>, or by naming one.
+    /// </summary>
+    private static bool CountsCodeUnits(string pattern)
+    {
+        for (int i = 0; i < pattern.Length; i++)
+        {
+            char c = pattern[i];
+            if (c == '.' || char.IsSurrogate(c))
+            {
+                return true;
+            }
+
+            if (i + 1 < pattern.Length)
+            {
+                char next = pattern[i + 1];
+                if ((c == '[' && next == '^') || (c == '\\' && (next == 'D' || next == 'W' || next == 'S')))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static PatternMatcher CreateRegex(string ecmaPattern, JsonSchemaEvaluatorOptions options, int patternIndex)
+    {
         if (options.RegexProvider is JsonSchemaRegexProvider provider && provider(patternIndex, ecmaPattern) is Regex provided)
         {
             return new PatternMatcher(Kind.Regex, ecmaPattern, provided, null, 0, 0);
@@ -2201,20 +2240,14 @@ internal sealed class PatternMatcher
         return true;
     }
 
-    /// <summary>The index of the <c>]</c> closing a class whose body starts at <paramref name="from"/>, skipping escapes; a leading <c>]</c> or <c>^]</c> is literal.</summary>
+    /// <summary>
+    /// The index of the <c>]</c> closing a class whose body starts at <paramref name="from"/>, skipping escapes. In
+    /// ECMA-262 a <c>]</c> closes the class wherever it stands, so <c>[]</c> is a class with no member and
+    /// <c>[^]</c> is every character.
+    /// </summary>
     private static int FindClassEnd(string pattern, int from)
     {
         int i = from;
-        if (i < pattern.Length && pattern[i] == '^')
-        {
-            i++;
-        }
-
-        if (i < pattern.Length && pattern[i] == ']')
-        {
-            i++;
-        }
-
         for (; i < pattern.Length; i++)
         {
             if (pattern[i] == '\\')
@@ -2267,7 +2300,8 @@ internal sealed class PatternMatcher
                     continue;
                 }
 
-                if (e >= 128)
+                // An escaped digit is not that digit: \0 is U+0000, and the others are octal escapes.
+                if (e >= 128 || (e >= '0' && e <= '9'))
                 {
                     return false;
                 }

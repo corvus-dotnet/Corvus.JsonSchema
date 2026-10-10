@@ -298,6 +298,11 @@ internal static partial class CodeGenerationExtensions
 
         string translatedValue = translation!;
 
+        // A case-insensitive backreference is the one construct the translation leaves to .NET's own case
+        // comparison, which follows the current culture unless the options say otherwise.
+        bool ignoresCase = translatedValue.Contains("(?i:");
+        string generatedOptions = ignoresCase ? "RegexOptions.CultureInvariant" : "RegexOptions.None";
+        string constructedOptions = ignoresCase ? "RegexOptions.Compiled | RegexOptions.CultureInvariant" : "RegexOptions.Compiled";
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         // Every form carries the match timeout (see RegexMatchTimeoutMilliseconds).
@@ -309,14 +314,18 @@ internal static partial class CodeGenerationExtensions
                 .Append(memberName)
                 .Append("() => new(")
                 .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
-                .Append(", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(")
+                .Append(", ")
+                .Append(constructedOptions)
+                .Append(", global::System.TimeSpan.FromMilliseconds(")
                 .Append(timeout)
                 .AppendLine("));");
 #else
                 .AppendLine("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD")
                 .AppendIndent("[GeneratedRegex(")
                 .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
-                .Append(", RegexOptions.None, matchTimeoutMilliseconds: ")
+                .Append(", ")
+                .Append(generatedOptions)
+                .Append(", matchTimeoutMilliseconds: ")
                 .Append(timeout)
                 .AppendLine(")]")
                 .AppendIndent("private static partial Regex ")
@@ -327,7 +336,9 @@ internal static partial class CodeGenerationExtensions
             .Append(memberName)
             .Append("() => new(")
             .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
-            .Append(", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(")
+            .Append(", ")
+            .Append(constructedOptions)
+            .Append(", global::System.TimeSpan.FromMilliseconds(")
             .Append(timeout)
             .AppendLine("));")
             .AppendLine("#endif");

@@ -46,6 +46,33 @@ public class InvalidPatternTests
         Assert.IsFalse(result.GeneratedSources.Any(s => s.SourceText.ToString().Contains("partial struct Root", StringComparison.Ordinal)), "Nothing is generated for the schema.");
     }
 
+    [TestMethod]
+    public void ASchemaWithAPatternValidOnlyWithoutTheUFlag_IsGenerated()
+    {
+        GeneratorRunResult result = Run("""{"type": "object", "patternProperties": {"^a\\-b{$": {"type": "integer"}}}""");
+
+        Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
+        Assert.AreEqual(0, result.Diagnostics.Count(d => d.Severity == DiagnosticSeverity.Error), string.Join("\n", result.Diagnostics));
+
+        string[] lines =
+        [
+            .. result.GeneratedSources
+                .SelectMany(s => s.SourceText.ToString().Split('\n'))
+                .Select(l => l.Trim())
+                .Where(l => l.Contains("Regex Create", StringComparison.Ordinal) && l.Contains("=> new(", StringComparison.Ordinal))
+        ];
+
+        string[] expected =
+        [
+            """private static Regex CreatePatternProperties() => new("^a-b\\{\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
+        ];
+
+        if (!expected.SequenceEqual(lines, StringComparer.Ordinal))
+        {
+            Assert.Fail($"Expected:\n{string.Join("\n", expected)}\nActual:\n{string.Join("\n", lines)}");
+        }
+    }
+
     private static GeneratorRunResult Run(string schema)
     {
         IEnumerable<MetadataReference> references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)

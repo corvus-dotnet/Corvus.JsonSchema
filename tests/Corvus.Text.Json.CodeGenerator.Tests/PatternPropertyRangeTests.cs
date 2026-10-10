@@ -34,15 +34,16 @@ public class PatternPropertyRangeTests
         string[] lines = files
             .SelectMany(f => f.FileContent.Split('\n'))
             .Select(l => l.Trim())
-            .Where(l => l.Contains("MatchRangeRegularExpression", StringComparison.Ordinal) || (l.Contains("Regex", StringComparison.Ordinal) && l.Contains("٣", StringComparison.Ordinal)))
+            .Where(l => l.Contains("MatchRangeRegularExpression", StringComparison.Ordinal) || (l.Contains("Regex", StringComparison.Ordinal) && l.Contains("u0663", StringComparison.Ordinal)))
             .ToArray();
 
-        // ^.{3,5}$ is matched inline; ^.{٣,٥}$ is a regular expression ('.' and '$' translated from ECMAScript).
+        // ^.{3,5}$ is matched inline. ^.{٣,٥}$ is a regular expression: a pattern only the grammar with no u flag
+        // accepts, in which the braces and what is between them are themselves.
         string[] expected =
         [
             "return JsonSchemaEvaluation.MatchRangeRegularExpression(propertyName, 3, 5);",
-            """[GeneratedRegex("^[^\\n\\r\\u2028\\u2029]{٣,٥}\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]""",
-            """private static Regex CreatePatternProperties2() => new("^[^\\n\\r\\u2028\\u2029]{٣,٥}\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """[GeneratedRegex("^[^\\n\\r\\u2028\\u2029]\\{\\u0663,\\u0665\\}\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]""",
+            """private static Regex CreatePatternProperties2() => new("^[^\\n\\r\\u2028\\u2029]\\{\\u0663,\\u0665\\}\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))

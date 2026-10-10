@@ -440,6 +440,58 @@ public class PatternMatcherTests
     }
 
     /// <summary>Each case through the matcher, and through an evaluator that interprets and one that generates code.</summary>
+    /// <summary>
+    /// Patterns a matcher for a shape read differently from ECMA-262, with V8's answers. In ECMA-262 a <c>]</c>
+    /// closes a class wherever it stands, so <c>[]</c> holds nothing and <c>[^]</c> is every character, where the
+    /// class sequence took a leading <c>]</c> for a member. An escaped digit in a class is not that digit:
+    /// <c>[\0]</c> is U+0000 and <c>[\1]</c> is U+0001. And a pattern that is valid only without the <c>u</c> flag
+    /// is matched by UTF-16 code unit, so a character beyond the Basic Multilingual Plane is two characters to its
+    /// dot and to its negated class, where the matchers count code points.
+    /// </summary>
+    private static readonly (string Pattern, string[] Matches, string[] Fails)[] MisreadCases =
+    [
+        ("^[^][^a]", ["ab", "\u000Ab", "a\u000A", "\uD83D\uDE00b"], ["aa", "b", ""]),
+        ("[]]", [], ["]", "a]", "[]]", ""]),
+        ("^[^]]$", ["a]", "]]", "\u000A]"], ["a", "]", "", "\uD83D\uDE00]"]),
+        ("^[\\0]$", ["\u0000"], ["0", ""]),
+        ("^[\\1]$", ["\u0001"], ["1", ""]),
+        ("^[^\\%]{1,3}$", ["abc", "\uD83D\uDE00", "\uD83D\uDE00a"], ["\uD83D\uDE00\uD83D\uDE00", "a%", "", "abcd"]),
+        ("^.\\-$", ["a-"], ["\uD83D\uDE00-", "-", "a", "\u000A-"]),
+    ];
+
+    /// <summary>
+    /// Patterns that are valid only without the <c>u</c> flag and name no character beyond the Basic Multilingual
+    /// Plane, by a dot, a negated class or otherwise. Code units and code points are the same thing to them, and
+    /// they keep their matchers.
+    /// </summary>
+    private static readonly (string Pattern, string[] Matches, string[] Fails)[] LegacyCasesThatKeepTheirMatcher =
+    [
+        ("^x\\-y$", ["x-y"], ["xy", "x-y "]),
+        ("^[a-z\\-]+\\@$", ["a-b@", "a@"], ["@", "a-b"]),
+    ];
+
+    [TestMethod]
+    public void APatternAMatcherWouldMisreadIsLeftToTheRegularExpression()
+    {
+        AssertCases(MisreadCases);
+        var options = new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false };
+        foreach ((string pattern, _, _) in MisreadCases)
+        {
+            Assert.IsTrue(PatternMatcher.Create(pattern, options).UsesRegex, pattern);
+        }
+    }
+
+    [TestMethod]
+    public void APatternValidOnlyWithoutTheUFlagKeepsItsMatcherWhenCodeUnitsAndCodePointsAgree()
+    {
+        AssertCases(LegacyCasesThatKeepTheirMatcher);
+        var options = new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false };
+        foreach ((string pattern, _, _) in LegacyCasesThatKeepTheirMatcher)
+        {
+            Assert.IsFalse(PatternMatcher.Create(pattern, options).UsesRegex, pattern);
+        }
+    }
+
     private static void AssertCases((string Pattern, string[] Matches, string[] Fails)[] cases)
     {
         var options = new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false };
@@ -478,6 +530,6 @@ public class PatternMatcherTests
     /// <summary>The text as a JSON string.</summary>
     private static string Quote(string text)
     {
-        return "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r") + "\"";
+        return "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\0", "\\u0000").Replace("\u0001", "\\u0001") + "\"";
     }
 }

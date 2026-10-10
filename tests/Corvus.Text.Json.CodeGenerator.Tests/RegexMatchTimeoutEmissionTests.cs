@@ -24,17 +24,18 @@ namespace Corvus.Text.Json.CodeGenerator.Tests;
 public class RegexMatchTimeoutEmissionTests
 {
     // Neither pattern is one the emitter or the evaluator matches without a regular expression. On a long run of "a"
-    // that does not end the way the pattern needs, each backtracks through every way to divide the run.
+    // that does not end the way the pattern needs, each backtracks through every way to divide the run into "a" and
+    // "aa". (A group is translated without capture, and .NET then runs ^(a+)+$ as ^a+$, which does not backtrack.)
     private const string Schema =
         """
         {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
-            "code": { "type": "string", "pattern": "^(a+)+$" }
+            "code": { "type": "string", "pattern": "^(a|aa)+$" }
           },
           "patternProperties": {
-            "^(a+)+-$": { "type": "integer" }
+            "^(a|aa)+-$": { "type": "integer" }
           }
         }
         """;
@@ -51,8 +52,8 @@ public class RegexMatchTimeoutEmissionTests
         // pattern keyword, which only the program matches.
         string[] expected =
         [
-            """Root.JsonSchema.cs: [GeneratedRegex("^(a+)+-\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]""",
-            """Root.JsonSchema.cs: private static Regex CreatePatternProperties() => new("^(a+)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """Root.JsonSchema.cs: [GeneratedRegex("^(?:a|aa)+-\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]""",
+            """Root.JsonSchema.cs: private static Regex CreatePatternProperties() => new("^(?:a|aa)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
         ];
 
         AssertLines(expected, lines);
@@ -69,8 +70,8 @@ public class RegexMatchTimeoutEmissionTests
         string[] expected =
         [
             """CorvusJsonSchemaProgram.cs: RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(10000),""",
-            """CorvusJsonSchemaProgram.cs: [GeneratedRegex("^(a+)+-\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10000)]""",
-            """CorvusJsonSchemaProgram.cs: [GeneratedRegex("^(a+)+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10000)]""",
+            """CorvusJsonSchemaProgram.cs: [GeneratedRegex("^(?:a|aa)+-\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10000)]""",
+            """CorvusJsonSchemaProgram.cs: [GeneratedRegex("^(?:a|aa)+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10000)]""",
         ];
 
         AssertLines(expected, lines);
@@ -266,4 +267,4 @@ public class RegexMatchTimeoutEmissionTests
         image.Position = 0;
         return context.LoadFromStream(image);
     }
-}
+}

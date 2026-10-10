@@ -13,6 +13,19 @@ using Corvus.Text.Json.CodeGeneration;
 [TestClass]
 public class EcmaRegexTranslatorTranslationTests
 {
+    /// <summary>
+    /// How a set that holds every surrogate and every character beyond the Basic Multilingual Plane (the dot, a
+    /// negated class) ends: after the class of its other code units come a surrogate pair, a first half with no
+    /// second half after it, and a second half with no first half before it.
+    /// </summary>
+    private const string BeyondBmp = @"|[\uD800-\uDBFF](?:[\uDC00-\uDFFF]|(?![\uDC00-\uDFFF]))|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])";
+
+    /// <summary>
+    /// What a translation starts with when the pattern could otherwise match from between the two halves of a
+    /// surrogate pair, where ECMA-262 has no position.
+    /// </summary>
+    private const string NotInsidePair = @"(?!(?<=[\uD800-\uDBFF])[\uDC00-\uDFFF])";
+
     // ============================
     // Literal pass-through
     // ============================
@@ -32,10 +45,10 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow(".", @"[^\n\r\u2028\u2029]")]
+    [DataRow(".", @"(?>[^\n\r\u2028\u2029\uD800-\uDFFF]" + BeyondBmp)]
     [DataRow(".+", @"[^\n\r\u2028\u2029]+")]
-    [DataRow("a.b", @"a[^\n\r\u2028\u2029]b")]
-    [DataRow("...", @"[^\n\r\u2028\u2029][^\n\r\u2028\u2029][^\n\r\u2028\u2029]")]
+    [DataRow("a.b", @"a(?>[^\n\r\u2028\u2029\uD800-\uDFFF]" + BeyondBmp + "b")]
+    [DataRow("...", @"(?>[^\n\r\u2028\u2029\uD800-\uDFFF]" + BeyondBmp + @"(?>[^\n\r\u2028\u2029\uD800-\uDFFF]" + BeyondBmp + @"(?>[^\n\r\u2028\u2029\uD800-\uDFFF]" + BeyondBmp)]
     public void DotIsExpandedCorrectly(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
@@ -47,11 +60,11 @@ public class EcmaRegexTranslatorTranslationTests
 
     [TestMethod]
     [DataRow(@"\d", "[0-9]")]
-    [DataRow(@"\D", "[^0-9]")]
+    [DataRow(@"\D", @"(?>[^0-9\uD800-\uDFFF]" + BeyondBmp)]
     [DataRow(@"\w", "[a-zA-Z0-9_]")]
-    [DataRow(@"\W", "[^a-zA-Z0-9_]")]
+    [DataRow(@"\W", @"(?>[^a-zA-Z0-9_\uD800-\uDFFF]" + BeyondBmp)]
     [DataRow(@"\s", @"[\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]")]
-    [DataRow(@"\S", @"[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]")]
+    [DataRow(@"\S", @"(?>[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uD800-\uDFFF]" + BeyondBmp)]
     public void ShorthandClassesExpandCorrectly(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
@@ -63,7 +76,7 @@ public class EcmaRegexTranslatorTranslationTests
 
     [TestMethod]
     [DataRow(@"\b", @"(?:(?<=[a-zA-Z0-9_])(?![a-zA-Z0-9_])|(?<![a-zA-Z0-9_])(?=[a-zA-Z0-9_]))")]
-    [DataRow(@"\B", @"(?:(?<=[a-zA-Z0-9_])(?=[a-zA-Z0-9_])|(?<![a-zA-Z0-9_])(?![a-zA-Z0-9_]))")]
+    [DataRow(@"\B", NotInsidePair + "(?:(?<=[a-zA-Z0-9_])(?=[a-zA-Z0-9_])|(?<![a-zA-Z0-9_])(?![a-zA-Z0-9_]))")]
     public void WordBoundariesExpandCorrectly(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
@@ -74,9 +87,9 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow(@"\u0041", @"\u0041")]             // \uXXXX pass-through
-    [DataRow(@"\u{41}", @"\u0041")]              // \u{XX} → \u00XX
-    [DataRow(@"\u{0041}", @"\u0041")]            // \u{XXXX} → \uXXXX
+    [DataRow(@"\u0041", "A")]             // written as the character
+    [DataRow(@"\u{41}", "A")]              // written as the character
+    [DataRow(@"\u{0041}", "A")]            // written as the character
     [DataRow(@"\u{1F600}", @"(?:\uD83D\uDE00)")]     // Supplementary → surrogate pair in group
     [DataRow(@"\u{10FFFF}", @"(?:\uDBFF\uDFFF)")]    // Max code point in group
     public void UnicodeEscapesTranslateCorrectly(string ecma, string expected)
@@ -89,33 +102,46 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow(@"\p{L}", @"\p{L}")]                              // Short name pass-through
-    [DataRow(@"\p{Lu}", @"\p{Lu}")]                             // Short name pass-through
-    [DataRow(@"\p{Letter}", @"\p{L}")]                          // Long name → short name
-    [DataRow(@"\p{Uppercase_Letter}", @"\p{Lu}")]               // Long name → short name
-    [DataRow(@"\p{Decimal_Number}", @"\p{Nd}")]                 // Long name → short name
-    [DataRow(@"\P{Letter}", @"\P{L}")]                          // Negated long name
-    [DataRow(@"\P{Number}", @"\P{N}")]                          // Negated long name
-    [DataRow(@"\p{gc=L}", @"\p{L}")]                            // gc= prefix stripped
-    [DataRow(@"\p{General_Category=Letter}", @"\p{L}")]         // General_Category= prefix stripped + mapped
-    [DataRow(@"\p{Script=Latin}",
-        "(?:[\\u0041-\\u005A\\u0061-\\u007A\\u00AA\\u00BA\\u00C0-\\u00D6\\u00D8-\\u00F6"
-        + "\\u00F8-\\u02B8\\u02E0-\\u02E4\\u1D00-\\u1D25\\u1D2C-\\u1D5C\\u1D62-\\u1D65"
-        + "\\u1D6B-\\u1D77\\u1D79-\\u1DBE\\u1E00-\\u1EFF\\u2071\\u207F\\u2090-\\u209C"
-        + "\\u212A-\\u212B\\u2132\\u214E\\u2160-\\u2188\\u2C60-\\u2C7F\\uA722-\\uA787"
-        + "\\uA78B-\\uA7CD\\uA7D0-\\uA7D1\\uA7D3\\uA7D5-\\uA7DC\\uA7F2-\\uA7FF"
-        + "\\uAB30-\\uAB5A\\uAB5C-\\uAB64\\uAB66-\\uAB69\\uFB00-\\uFB06\\uFF21-\\uFF3A"
-        + "\\uFF41-\\uFF5A]|\\uD801[\\uDF80-\\uDF85]|\\uD801[\\uDF87-\\uDFB0]"
-        + "|\\uD801[\\uDFB2-\\uDFBA]|\\uD837[\\uDF00-\\uDF1E]|\\uD837[\\uDF25-\\uDF2A])")]
-    [DataRow(@"\p{sc=Greek}", @"\p{IsGreek}")]                  // sc= → Is prefix
-    [DataRow(@"\p{Script_Extensions=Cyrillic}", @"\p{IsCyrillic}")]  // scx → Is prefix
-    [DataRow(@"\p{ASCII}", @"[\u0000-\u007F]")]                 // Binary property → class
-    [DataRow(@"\P{ASCII}", @"[^\u0000-\u007F]")]                // Negated binary property
-    [DataRow(@"\p{White_Space}",
-        @"[\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]")]
+    [DataRow(@"\p{Zs}", @"\p{Zs}")]                             // General category: .NET's own class
+    [DataRow(@"\p{Space_Separator}", @"\p{Zs}")]                // Long name → short name
+    [DataRow(@"\p{gc=Zs}", @"\p{Zs}")]                          // gc= prefix stripped
+    [DataRow(@"\p{General_Category=Space_Separator}", @"\p{Zs}")] // General_Category= prefix stripped + mapped
+    [DataRow(@"\P{Zs}", @"(?>[^\p{Zs}\uD800-\uDFFF]" + BeyondBmp)] // Negated: every other character, by code point
+    [DataRow(@"\p{Cc}", @"\p{Cc}")]
+    [DataRow(@"\p{Pc}", @"\p{Pc}")]
+    [DataRow(@"\p{Zl}", @"\p{Zl}")]
+    [DataRow(@"\p{ASCII}", @"[\u0000-\u007F]")]                 // Binary property → its set
+    [DataRow(@"\P{ASCII}", @"(?>[\u0080-\uD7FF\uE000-\uFFFF]" + BeyondBmp)] // Negated binary property
+    [DataRow(@"\p{White_Space}", @"[\t-\r \u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]")] // The Unicode property, which is not \s
+    [DataRow(@"\p{Any}", @"(?>[^\uD800-\uDFFF]" + BeyondBmp)]
+    [DataRow(@"\p{Cs}", @"(?>[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])")] // A surrogate that is not half of a pair
     public void PropertyEscapesTranslateCorrectly(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
+    }
+
+    /// <summary>
+    /// A property with members beyond the Basic Multilingual Plane is written as its code units that are characters
+    /// by themselves (.NET's own class for a general category, and the ranges of the Unicode data for a script or a
+    /// binary property), then one alternative of surrogate pairs for each first half, behind a test for a surrogate
+    /// when there are more than two. The translations run to thousands of characters, so the test holds how each
+    /// starts and that it ends inside the pairs.
+    /// </summary>
+    [TestMethod]
+    [DataRow(@"\p{L}", @"(?>\p{L}|(?=[\uD800-\uDFFF])(?:\uD800[\uDC00-\uDC0B\uDC0D-\uDC26")]
+    [DataRow(@"\p{Lu}", @"(?>\p{Lu}|(?=[\uD800-\uDFFF])(?:\uD801[\uDC00-\uDC27\uDCB0-\uDCD3")]
+    [DataRow(@"\p{Decimal_Number}", @"(?>\p{Nd}|(?=[\uD800-\uDFFF])(?:\uD801[\uDCA0-\uDCA9]|\uD803[\uDD30-\uDD39")]
+    [DataRow(@"\p{LC}", @"(?>[\p{Lu}\p{Ll}\p{Lt}]|(?=[\uD800-\uDFFF])(?:\uD801[\uDC00-\uDC4F")]
+    [DataRow(@"\P{Letter}", @"(?>[^\p{L}\uD800-\uDFFF]|(?=[\uD800-\uDFFF])(?:\uD800[\uDC0C\uDC27")]
+    [DataRow(@"\P{Number}", @"(?>[^\p{N}\uD800-\uDFFF]|(?=[\uD800-\uDFFF])(?:\uD800[\uDC00-\uDD06")]
+    [DataRow(@"\p{Script=Latin}", @"(?>[A-Za-z\u00AA\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u02E0-\u02E4")]
+    [DataRow(@"\p{sc=Greek}", @"(?>[\u0370-\u0373\u0375-\u0377\u037A-\u037D\u037F\u0384\u0386")]
+    [DataRow(@"\p{Script_Extensions=Cyrillic}", @"(?>[\u02BC\u0300-\u0302\u0304\u0306\u0308\u030B\u0311\u0400-\u052F")]
+    public void PropertyEscapesWithSupplementaryMembersStartWithTheirBmpClass(string ecma, string expectedStart)
+    {
+        string actual = EcmaRegexTranslator.Translate(ecma);
+        Assert.AreEqual(expectedStart, actual.Substring(0, Math.Min(actual.Length, expectedStart.Length)));
+        Assert.IsTrue(actual.EndsWith("])", StringComparison.Ordinal) || actual.EndsWith("]))", StringComparison.Ordinal), actual.Substring(actual.Length - 20));
     }
 
     // ============================
@@ -131,10 +157,19 @@ public class EcmaRegexTranslatorTranslationTests
     [DataRow(@"\P{punct}", @"\P{P}")]                           // Negated punct
     [DataRow(@"\p{Combining_Mark}", @"\p{M}")]                  // Combining_Mark → M (Mark)
     [DataRow(@"\P{Combining_Mark}", @"\P{M}")]                  // Negated Combining_Mark
-    [DataRow(@"^\p{digit}+$", @"^\p{Nd}+\z")]                   // digit in context
+    [DataRow(@"^\p{digit}+$", @"^\p{Nd}+$")]                    // digit in context
     [DataRow(@"\p{gc=digit}", @"\p{Nd}")]                       // gc= prefix with alias
     [DataRow(@"\p{General_Category=digit}", @"\p{Nd}")]         // General_Category= prefix with alias
-    public void GeneralCategoryAliasesTranslateCorrectly(string ecma, string expected)
+    public void GeneralCategoryAliasesTranslateCorrectly(string ecma, string sameAs)
+    {
+        // An alias is translated as the name it stands for.
+        Assert.AreEqual(EcmaRegexTranslator.Translate(sameAs), EcmaRegexTranslator.Translate(ecma));
+    }
+
+    [TestMethod]
+    [DataRow(@"\p{cntrl}", @"\p{Cc}")]
+    [DataRow(@"\P{cntrl}", @"(?>[^\p{Cc}\uD800-\uDFFF]" + BeyondBmp)]
+    public void GeneralCategoryAliasTranslationIsExact(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
@@ -146,13 +181,13 @@ public class EcmaRegexTranslatorTranslationTests
     [TestMethod]
     [DataRow("[abc]", "[abc]")]
     [DataRow("[a-z]", "[a-z]")]
-    [DataRow("[^abc]", "[^abc]")]
-    [DataRow("[^a-z]", "[^a-z]")]
+    [DataRow("[^abc]", @"(?>[^abc\uD800-\uDFFF]" + BeyondBmp)]
+    [DataRow("[^a-z]", @"(?>[^a-z\uD800-\uDFFF]" + BeyondBmp)]
     [DataRow(@"[\d]", "[0-9]")]
     [DataRow(@"[\w]", "[a-zA-Z0-9_]")]
     [DataRow(@"[\s]", @"[\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]")]
-    [DataRow(@"[^\d]", "[^0-9]")]
-    [DataRow(@"[^\w]", "[^a-zA-Z0-9_]")]
+    [DataRow(@"[^\d]", @"(?>[^0-9\uD800-\uDFFF]" + BeyondBmp)]
+    [DataRow(@"[^\w]", @"(?>[^a-zA-Z0-9_\uD800-\uDFFF]" + BeyondBmp)]
     [DataRow(@"[\da-f]", "[0-9a-f]")]
     [DataRow(@"[\w.]", "[a-zA-Z0-9_.]")]
     [DataRow(@"[a\-z]", @"[a\-z]")]
@@ -166,12 +201,12 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow(@"[\D]", "[^0-9]")]
-    [DataRow(@"[\W]", "[^a-zA-Z0-9_]")]
-    [DataRow(@"[a\D]", "(?:[a]|[^0-9])")]
-    [DataRow(@"[a-z\D]", "(?:[a-z]|[^0-9])")]
-    [DataRow(@"[\D\W]", "(?:[^0-9]|[^a-zA-Z0-9_])")]
-    public void NonNegatedCharClassWithNegShorthandsUsesAlternation(string ecma, string expected)
+    [DataRow(@"[\D]", @"(?>[^0-9\uD800-\uDFFF]" + BeyondBmp)]
+    [DataRow(@"[\W]", @"(?>[^a-zA-Z0-9_\uD800-\uDFFF]" + BeyondBmp)]
+    [DataRow(@"[a\D]", @"(?>[^0-9\uD800-\uDFFF]" + BeyondBmp)]
+    [DataRow(@"[a-z\D]", @"(?>[^0-9\uD800-\uDFFF]" + BeyondBmp)]
+    [DataRow(@"[\D\W]", @"(?>[^0-9\uD800-\uDFFF]" + BeyondBmp)]
+    public void NonNegatedCharClassWithNegShorthandsIsWrittenAsItsSet(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
@@ -183,10 +218,10 @@ public class EcmaRegexTranslatorTranslationTests
     [TestMethod]
     [DataRow(@"[^\D]", "[0-9]")]
     [DataRow(@"[^\W]", "[a-zA-Z0-9_]")]
-    [DataRow(@"[^a\D]", "[0-9-[a]]")]
-    [DataRow(@"[^a-f\D]", "[0-9-[a-f]]")]
+    [DataRow(@"[^a\D]", "[0-9]")]
+    [DataRow(@"[^a-f\D]", "[0-9]")]
     [DataRow(@"[^\D\W]", "[0-9]")]  // intersection of [0-9] and [a-zA-Z0-9_] = [0-9]
-    public void NegatedCharClassWithNegShorthandsUsesSubtraction(string ecma, string expected)
+    public void NegatedCharClassWithNegShorthandsIsWrittenAsItsSet(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
@@ -196,8 +231,8 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow("[]", @"[^\s\S]")]     // Empty class → matches nothing
-    [DataRow("[^]", @"[\s\S]")]      // Match-all class
+    [DataRow("[]", "(?!)")]     // Empty class → matches nothing
+    [DataRow("[^]", @"(?>[^\uD800-\uDFFF]" + BeyondBmp)]      // Match-all class
     public void SpecialCharacterClassesTranslateCorrectly(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
@@ -213,7 +248,7 @@ public class EcmaRegexTranslatorTranslationTests
     [DataRow(@"\r", @"\r")]
     [DataRow(@"\f", @"\f")]
     [DataRow(@"\v", @"\v")]
-    [DataRow(@"\0", @"\0")]
+    [DataRow(@"\0", @"\u0000")]
     [DataRow(@"\\", @"\\")]
     [DataRow(@"\.", @"\.")]
     [DataRow(@"\*", @"\*")]
@@ -228,8 +263,8 @@ public class EcmaRegexTranslatorTranslationTests
     [DataRow(@"\]", @"\]")]
     [DataRow(@"\{", @"\{")]
     [DataRow(@"\}", @"\}")]
-    [DataRow(@"\/", @"\/")]
-    public void EscapeSequencesPassThrough(string ecma, string expected)
+    [DataRow(@"\/", "/")]
+    public void EscapeSequencesTranslateCorrectly(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
@@ -239,11 +274,11 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow(@"\x41", @"\x41")]
-    [DataRow(@"\x0A", @"\x0A")]
-    [DataRow(@"\cA", @"\cA")]
-    [DataRow(@"\cZ", @"\cZ")]
-    public void HexAndControlEscapesPassThrough(string ecma, string expected)
+    [DataRow(@"\x41", "A")]
+    [DataRow(@"\x0A", @"\n")]
+    [DataRow(@"\cA", @"\u0001")]
+    [DataRow(@"\cZ", @"\u001A")]
+    public void HexAndControlEscapesAreWrittenAsTheirCharacter(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
@@ -253,14 +288,14 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow("(abc)", "(abc)")]
+    [DataRow("(abc)", "(?:abc)")]
     [DataRow("(?:abc)", "(?:abc)")]
     [DataRow("(?=abc)", "(?=abc)")]
-    [DataRow("(?!abc)", "(?!abc)")]
+    [DataRow("(?!abc)", NotInsidePair + "(?!abc)")]
     [DataRow("(?<=abc)", "(?<=abc)")]
-    [DataRow("(?<!abc)", "(?<!abc)")]
-    [DataRow("(?<name>abc)", "(?<name>abc)")]
-    public void GroupsPassThrough(string ecma, string expected)
+    [DataRow("(?<!abc)", NotInsidePair + "(?<!abc)")]
+    [DataRow("(?<name>abc)", "(?:abc)")]
+    public void GroupsAreWrittenWithoutCaptureUnlessABackreferenceReadsThem(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
@@ -270,10 +305,10 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow(@"(a)\1", @"(a)(?(1)\1)")]
-    [DataRow(@"(a)(b)\2", @"(a)(b)(?(2)\2)")]
-    [DataRow(@"(?<name>a)\k<name>", @"(?<name>a)(?(name)\k<name>)")]
-    public void BackreferencesPassThrough(string ecma, string expected)
+    [DataRow(@"(a)\1", @"(?<1>a)(?(1)\1)")]
+    [DataRow(@"(a)(b)\2", @"(?:a)(?<2>b)(?(2)\2)")]
+    [DataRow(@"(?<name>a)\k<name>", @"(?<1>a)(?(1)\1)")]
+    public void BackreferencesAreWrittenAsConditionals(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
@@ -305,7 +340,7 @@ public class EcmaRegexTranslatorTranslationTests
     [TestMethod]
     [DataRow("^abc$", @"^abc\z")]
     [DataRow("a|b|c", "a|b|c")]
-    [DataRow("^(a|b)$", @"^(a|b)\z")]
+    [DataRow("^(a|b)$", @"^(?:a|b)\z")]
     public void AnchorsAndAlternationTranslateCorrectly(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
@@ -340,7 +375,7 @@ public class EcmaRegexTranslatorTranslationTests
         // [\w.+-]+@[\w-]+\.[\w.]+
         string ecma = @"[\w.+-]+@[\w-]+\.[\w.]+";
         string result = EcmaRegexTranslator.Translate(ecma);
-        Assert.AreEqual(@"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9_-]+\.[a-zA-Z0-9_.]+", result);
+        Assert.AreEqual(@"[a-zA-Z0-9_.+\-]+@[a-zA-Z0-9_\-]+\.[a-zA-Z0-9_.]+", result);
     }
 
     // ============================
@@ -394,10 +429,10 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow(@"[\b]", @"[\b]")]         // \b = backspace inside char class
-    [DataRow(@"[\x41]", @"[\x41]")]     // hex escape inside class
-    [DataRow(@"[\u0041]", @"[\u0041]")] // unicode escape inside class
-    [DataRow(@"[\u{41}]", @"[\u0041]")] // brace unicode escape inside class
+    [DataRow(@"[\b]", @"[\u0008]")]         // \b = backspace inside char class
+    [DataRow(@"[\x41]", "[A]")]     // hex escape inside class
+    [DataRow(@"[\u0041]", "[A]")] // unicode escape inside class
+    [DataRow(@"[\u{41}]", "[A]")] // brace unicode escape inside class
     public void EscapesInsideCharClassTranslateCorrectly(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
@@ -408,12 +443,13 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow(@"[\p{L}]", @"[\p{L}]")]
-    [DataRow(@"[\p{Letter}]", @"[\p{L}]")]
-    [DataRow(@"[^\p{L}]", @"[^\p{L}]")]
-    public void PropertyEscapesInsideCharClassTranslateCorrectly(string ecma, string expected)
+    [DataRow(@"[\p{L}]", @"\p{L}")]
+    [DataRow(@"[\p{Letter}]", @"\p{L}")]
+    [DataRow(@"[^\p{L}]", @"\P{L}")]
+    public void PropertyEscapesInsideCharClassTranslateCorrectly(string ecma, string sameAs)
     {
-        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
+        // A class that holds one property is that property.
+        Assert.AreEqual(EcmaRegexTranslator.Translate(sameAs), EcmaRegexTranslator.Translate(ecma));
     }
 
     // ============================
@@ -461,9 +497,10 @@ public class EcmaRegexTranslatorTranslationTests
     [DataRow("Unassigned", "Cn")]
     public void AllCategoryLongNamesMapCorrectly(string longName, string expectedShort)
     {
+        // A long name is translated as its short name, whose translation the tests above hold.
         string ecma = $@"\p{{{longName}}}";
-        string expected = $@"\p{{{expectedShort}}}";
-        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
+        string sameAs = $@"\p{{{expectedShort}}}";
+        Assert.AreEqual(EcmaRegexTranslator.Translate(sameAs), EcmaRegexTranslator.Translate(ecma));
     }
 
     // ============================
@@ -491,7 +528,7 @@ public class EcmaRegexTranslatorTranslationTests
     [DataRow(@"\u{1F432}", @"(?:\uD83D\uDC32)")]
     [DataRow(@"\u{1F432}*", @"(?:\uD83D\uDC32)*")]
     [DataRow(@"\u{1F432}+", @"(?:\uD83D\uDC32)+")]
-    [DataRow(@"\u{41}", @"\u0041")]                  // BMP code point — no group needed
+    [DataRow(@"\u{41}", "A")]                  // BMP code point — no group needed
     public void UnicodeEscapeBraceFormWrapsSupplementaryCorrectly(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));

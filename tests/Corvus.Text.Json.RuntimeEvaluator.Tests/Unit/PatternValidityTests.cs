@@ -20,34 +20,37 @@ public class PatternValidityTests
     [TestMethod]
     [DataRow(false)]
     [DataRow(true)]
-    public void ASchemaIsRefusedWhenV8RefusesItsPattern(bool generateCode)
+    public void ASchemaIsRefusedExactlyWhenV8RefusesItsPattern(bool generateCode)
     {
         JsonSchemaEvaluatorOptions options = Options(generateCode);
         var failures = new List<string>();
         foreach ((string pattern, bool validWithU, bool validWithoutU) in EcmaPatternCases.Validity)
         {
-            if (validWithU || validWithoutU)
-            {
-                continue;
-            }
-
             foreach (string schema in new[]
             {
                 "{\"pattern\": " + Json(pattern) + "}",
                 "{\"patternProperties\": {" + Json(pattern) + ": true}}",
             })
             {
+                bool accepted;
                 try
                 {
                     using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema, options);
-                    failures.Add($"{schema}: accepted");
+                    accepted = true;
                 }
                 catch (JsonSchemaCompilationException)
                 {
+                    accepted = false;
                 }
                 catch (Exception ex)
                 {
                     failures.Add($"{schema}: {ex.GetType().Name}: {ex.Message}");
+                    continue;
+                }
+
+                if (accepted != (validWithU || validWithoutU))
+                {
+                    failures.Add($"{schema}: {(accepted ? "accepted" : "refused")}");
                 }
             }
         }

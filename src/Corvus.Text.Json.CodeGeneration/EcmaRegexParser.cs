@@ -190,8 +190,13 @@ internal sealed class EcmaRegexParser
 
     private static readonly int[] LineTerminatorItems = ['\n', '\n', '\r', '\r', 0x2028, 0x2028, 0x2029, 0x2029];
 
+    // The sets that are every character but a few, which most patterns hold, worked out once for each grammar.
+    private static readonly Complements CodePointComplements = new(EcmaRegexUnicode.Max);
+    private static readonly Complements CodeUnitComplements = new(0xFFFF);
+
     private readonly int[] p;
     private readonly int max;
+    private readonly Complements complements;
 
     /// <summary>For each group name, its groups: the number of each, then the alternatives that enclose it.</summary>
     private readonly Dictionary<string, List<int[]>> names = [];
@@ -235,6 +240,7 @@ internal sealed class EcmaRegexParser
     {
         this.Unicode = unicode;
         this.max = unicode ? EcmaRegexUnicode.Max : 0xFFFF;
+        this.complements = unicode ? CodePointComplements : CodeUnitComplements;
         int[] units = new int[pattern.Length];
         int n = 0;
         for (int k = 0; k < pattern.Length; k++)
@@ -271,7 +277,7 @@ internal sealed class EcmaRegexParser
     public bool HasBackreferences { get; private set; }
 
     /// <summary>Gets every character: the code points with the u flag grammar and the UTF-16 code units without.</summary>
-    public int[] Any => [0, this.max];
+    public int[] Any => this.complements.Any;
 
     /// <summary>Reads the pattern.</summary>
     /// <returns>The root of its tree.</returns>
@@ -512,7 +518,7 @@ internal sealed class EcmaRegexParser
                 }
                 else
                 {
-                    atom = SetNode(EcmaRegexUnicode.Complement(LineTerminators, this.max));
+                    atom = SetNode(this.complements.Dot);
                     atom.Items = LineTerminatorItems;
                 }
 
@@ -1037,7 +1043,7 @@ internal sealed class EcmaRegexParser
             case 'D':
                 this.i++;
                 this.atomItems = DigitItems;
-                return EcmaRegexUnicode.Complement(Digit, this.max);
+                return this.complements.NotDigit;
             case 'w':
                 this.i++;
                 this.atomItems = foldWord ? null : WordItems;
@@ -1045,7 +1051,7 @@ internal sealed class EcmaRegexParser
             case 'W':
                 this.i++;
                 this.atomItems = foldWord ? null : WordItems;
-                return EcmaRegexUnicode.Complement(foldWord ? FoldWord : Word, this.max);
+                return foldWord ? this.complements.NotFoldWord : this.complements.NotWord;
             case 's':
                 this.i++;
                 this.atomItems = SpaceItems;
@@ -1053,7 +1059,7 @@ internal sealed class EcmaRegexParser
             case 'S':
                 this.i++;
                 this.atomItems = SpaceItems;
-                return EcmaRegexUnicode.Complement(Space, this.max);
+                return this.complements.NotSpace;
             case 'p':
             case 'P':
             {
@@ -1470,5 +1476,21 @@ internal sealed class EcmaRegexParser
         }
 
         return this.CharacterEscape(inClass: true);
+    }
+
+    /// <summary>The complements of the sets ECMA-262 names, among the characters up to the last one of a grammar.</summary>
+    private sealed class Complements(int max)
+    {
+        public int[] Any { get; } = [0, max];
+
+        public int[] Dot { get; } = EcmaRegexUnicode.Complement(LineTerminators, max);
+
+        public int[] NotDigit { get; } = EcmaRegexUnicode.Complement(Digit, max);
+
+        public int[] NotWord { get; } = EcmaRegexUnicode.Complement(Word, max);
+
+        public int[] NotFoldWord { get; } = EcmaRegexUnicode.Complement(FoldWord, max);
+
+        public int[] NotSpace { get; } = EcmaRegexUnicode.Complement(Space, max);
     }
 }

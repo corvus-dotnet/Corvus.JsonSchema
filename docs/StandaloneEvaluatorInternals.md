@@ -46,7 +46,8 @@ emits one `CorvusJsonSchemaProgram` class in the default namespace:
   ([EcmaRegexTranslator.md](EcmaRegexTranslator.md)), in the program and in the generated types alike. A pattern
   that is not a valid ECMA-262 regular expression stops the generation: the emitter reads every `pattern` and
   `patternProperties` pattern of a type (`ThrowIfAPatternIsNotValid`), and compiling the program image refuses the
-  schema too.
+  schema too. An expression of a generated type is constructed with `RegexOptions.CultureInvariant` when its
+  translation holds a case-insensitive backreference, the one construct that uses .NET's own case comparison.
 - **Entry points.** One `ForEntryPoint("<document key>#<pointer>")` per generated type (its
   `SchemaDocument` and `SchemaLocation`, which are still emitted as constants) and per standalone
   evaluator root. Entry points share one compiled program, so each subschema is compiled once even when

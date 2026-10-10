@@ -10,23 +10,17 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Corvus.Text.Json.RuntimeEvaluator.Tests.Unit;
 
 /// <summary>
-/// A regular expression match has a timeout. Some patterns never finish in .NET's engines, and an evaluation of one
-/// of them throws <see cref="RegexMatchTimeoutException"/> to its caller where it used not to return.
+/// A regular expression match has a timeout. Some patterns take .NET's engines longer than anyone will wait, and an
+/// evaluation of one of them throws <see cref="RegexMatchTimeoutException"/> to its caller where it used not to
+/// return.
 /// </summary>
 [TestClass]
 public class RegexMatchTimeoutTests
 {
-    // On the text "x" this pattern does not finish in the interpreted engine of .NET 10. The compiled engine answers.
-    private const string NeverFinishesInterpreted = "(?:(?=x)|^)*?$";
-
-    // On the text "x" this pattern does not finish in the compiled engine of .NET 10. The interpreted engine answers.
-    private const string NeverFinishesCompiled = "(?:$a[^a]|^|x){2,3}((?!$)){2,}?a$";
-
-    // Both of those grow the engine's backtracking stack for as long as they run, the compiled one by about a gigabyte
-    // a second, so they are only run under the short timeout. This pattern is the one for a wait of the default
-    // timeout. On SlowText it backtracks through 2^48 ways to divide the run of "a", in a few megabytes, in both
-    // engines.
-    private const string BacktracksWithoutEnd = "^(a+)+$";
+    // On SlowText this pattern backtracks through every way to divide the run of "a" into "a" and "aa", some five
+    // thousand million of them, in a few megabytes, in both engines of .NET. (A group is translated without capture,
+    // and .NET then runs ^(a+)+$ as ^a+$, which does not backtrack.)
+    private const string BacktracksWithoutEnd = "^(a|aa)+$";
 
     private static readonly string SlowText = "\"" + new string('a', 48) + "#\"";
 
@@ -68,35 +62,35 @@ public class RegexMatchTimeoutTests
 
 #if NET
     [TestMethod]
-    [DataRow(NeverFinishesInterpreted, false, Route.Interpreter)]
-    [DataRow(NeverFinishesInterpreted, false, Route.InterpreterWithResults)]
-    [DataRow(NeverFinishesInterpreted, false, Route.ProgramImage)]
-    [DataRow(NeverFinishesInterpreted, false, Route.GeneratedCode)]
-    [DataRow(NeverFinishesInterpreted, false, Route.EntryPoint)]
-    [DataRow(NeverFinishesCompiled, true, Route.Interpreter)]
-    [DataRow(NeverFinishesCompiled, true, Route.InterpreterWithResults)]
-    [DataRow(NeverFinishesCompiled, true, Route.ProgramImage)]
-    [DataRow(NeverFinishesCompiled, true, Route.GeneratedCode)]
-    [DataRow(NeverFinishesCompiled, true, Route.EntryPoint)]
-    public void APatternThatNeverFinishesThrowsAtTheTimeout(string pattern, bool compileRegularExpressions, Route route)
+    [DataRow(false, Route.Interpreter)]
+    [DataRow(false, Route.InterpreterWithResults)]
+    [DataRow(false, Route.ProgramImage)]
+    [DataRow(false, Route.GeneratedCode)]
+    [DataRow(false, Route.EntryPoint)]
+    [DataRow(true, Route.Interpreter)]
+    [DataRow(true, Route.InterpreterWithResults)]
+    [DataRow(true, Route.ProgramImage)]
+    [DataRow(true, Route.GeneratedCode)]
+    [DataRow(true, Route.EntryPoint)]
+    public void APatternThatDoesNotFinishThrowsAtTheTimeout(bool compileRegularExpressions, Route route)
     {
-        string schema = """{"$defs": {"entry": {"type": "string", "pattern": """ + Quote(pattern) + """}}, "$ref": "#/$defs/entry"}""";
-        AssertTimesOut(schema, "\"x\"", compileRegularExpressions, route);
+        string schema = """{"$defs": {"entry": {"type": "string", "pattern": """ + Quote(BacktracksWithoutEnd) + """}}, "$ref": "#/$defs/entry"}""";
+        AssertTimesOut(schema, SlowText, compileRegularExpressions, route);
     }
 
     [TestMethod]
-    [DataRow(NeverFinishesInterpreted, false, Route.Interpreter)]
-    [DataRow(NeverFinishesInterpreted, false, Route.InterpreterWithResults)]
-    [DataRow(NeverFinishesInterpreted, false, Route.ProgramImage)]
-    [DataRow(NeverFinishesInterpreted, false, Route.GeneratedCode)]
-    [DataRow(NeverFinishesCompiled, true, Route.Interpreter)]
-    [DataRow(NeverFinishesCompiled, true, Route.InterpreterWithResults)]
-    [DataRow(NeverFinishesCompiled, true, Route.ProgramImage)]
-    [DataRow(NeverFinishesCompiled, true, Route.GeneratedCode)]
-    public void APatternPropertyThatNeverFinishesThrowsAtTheTimeout(string pattern, bool compileRegularExpressions, Route route)
+    [DataRow(false, Route.Interpreter)]
+    [DataRow(false, Route.InterpreterWithResults)]
+    [DataRow(false, Route.ProgramImage)]
+    [DataRow(false, Route.GeneratedCode)]
+    [DataRow(true, Route.Interpreter)]
+    [DataRow(true, Route.InterpreterWithResults)]
+    [DataRow(true, Route.ProgramImage)]
+    [DataRow(true, Route.GeneratedCode)]
+    public void APatternPropertyThatDoesNotFinishThrowsAtTheTimeout(bool compileRegularExpressions, Route route)
     {
-        string schema = """{"$defs": {"entry": {"type": "object", "patternProperties": {""" + Quote(pattern) + """: {"type": "integer"}}}}, "$ref": "#/$defs/entry"}""";
-        AssertTimesOut(schema, """{"x": 1}""", compileRegularExpressions, route);
+        string schema = """{"$defs": {"entry": {"type": "object", "patternProperties": {""" + Quote(BacktracksWithoutEnd) + """: {"type": "integer"}}}}, "$ref": "#/$defs/entry"}""";
+        AssertTimesOut(schema, "{" + SlowText + ": 1}", compileRegularExpressions, route);
     }
 
     /// <summary>
@@ -211,4 +205,4 @@ public class RegexMatchTimeoutTests
 
     private static string Quote(string pattern) => "\"" + pattern.Replace("\\", "\\\\") + "\"";
 #endif
-}
+}

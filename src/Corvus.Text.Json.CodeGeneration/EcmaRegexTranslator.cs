@@ -3,189 +3,49 @@
 // </copyright>
 
 using System.Buffers;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 
 namespace Corvus.Text.Json.CodeGeneration;
 
 /// <summary>
-/// Translates ECMAScript 262 regular expression patterns (with /u Unicode mode)
-/// to equivalent .NET regular expression patterns.
+/// Translates ECMA-262 regular expression patterns to .NET regular expression patterns with the same meaning,
+/// validating them as ECMA-262 does. The grammar is that of ECMAScript 2025.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Key semantic differences handled:
+/// <b>Grammars.</b> A pattern is read first with the grammar of the <c>u</c> flag, as JSON Schema's <c>pattern</c>
+/// specifies, and is then matched by code point. A pattern that is not valid with it is read with the Annex B grammar
+/// of a pattern with no flag, as many schemas hold such patterns (identity escapes like <c>\-</c>, lone braces), and
+/// is then matched by UTF-16 code unit, as ECMA-262 matches a pattern with no flag. A pattern neither grammar accepts
+/// is not valid. <see cref="Translate"/> and <see cref="TryTranslate(ReadOnlySpan{char}, Span{char}, out int)"/> accept
+/// only the <c>u</c> flag grammar. <see cref="TryTranslate(string, out string, out string)"/> and
+/// <see cref="TranslateOrFallback"/> try both.
+/// </para>
+/// <para>
+/// <b>What the translation writes.</b> The pattern is read into a tree (<see cref="EcmaRegexParser"/>), and the tree
+/// is written for .NET so that nothing depends on how .NET reads a construct ECMA-262 reads differently.
 /// <list type="bullet">
-/// <item><c>\d</c>, <c>\D</c>: ECMAScript = <c>[0-9]</c>; .NET = Unicode digits.</item>
-/// <item><c>\w</c>, <c>\W</c>: ECMAScript = <c>[a-zA-Z0-9_]</c>; .NET = Unicode word chars.</item>
-/// <item><c>\s</c>, <c>\S</c>: ECMAScript includes <c>\uFEFF</c> but not <c>\x85</c>.</item>
-/// <item><c>\b</c>, <c>\B</c>: Word boundary uses ASCII <c>\w</c> definition.</item>
-/// <item><c>.</c> (dot): ECMAScript excludes <c>\n</c>, <c>\r</c>, <c>\u2028</c>, <c>\u2029</c>.</item>
-/// <item><c>$</c>: ECMAScript (without the <c>m</c> flag) matches only at the end of the input, so it becomes <c>\z</c>; .NET's <c>$</c> also matches before a final <c>\n</c>.</item>
-/// <item><c>\u{XXXXX}</c>: Converted to <c>\uXXXX</c> or surrogate pair escapes.</item>
-/// <item><c>\p{...}</c>: Unicode property names mapped to .NET equivalents.</item>
+/// <item><c>\d</c>, <c>\w</c>, <c>\s</c>, <c>\b</c> and the dot are the ASCII and line terminator sets of ECMA-262.</item>
+/// <item><c>$</c> is <c>\z</c>: without the <c>m</c> modifier it holds only at the end of the input.</item>
+/// <item>With the <c>u</c> flag grammar a character beyond the Basic Multilingual Plane is one character to a set,
+/// to the dot and to a quantifier, though .NET matches UTF-16 code units. A set that holds such characters is written
+/// as an alternation of the code units and the surrogate pairs it matches.</item>
+/// <item>A <c>\p{...}</c> escape is the set of its property in the Unicode version of
+/// <see cref="EcmaRegexUnicodeData"/>, for every property, value and alias ECMA-262 lists. Only a General_Category
+/// value is written with .NET's own class, for the Basic Multilingual Plane.</item>
+/// <item>The modifiers of a group such as <c>(?i:...)</c>, <c>(?m:...)</c> or <c>(?s:...)</c> are applied while
+/// reading: a case-insensitive literal or class becomes the set of the characters equivalent to it under the
+/// Canonicalize of ECMA-262, <c>^</c> and <c>$</c> become assertions about ECMA-262's four line terminators, and the
+/// dot becomes every character. No option of .NET stands for them.</item>
+/// <item>A group is written without capture unless a backreference reads it, and then by its number.</item>
+/// <item>A backreference matches the empty string when its group has not taken part (see <see cref="Emitter"/>).</item>
 /// </list>
 /// </para>
 /// </remarks>
 internal static class EcmaRegexTranslator
 {
-    private const int StackAllocThreshold = 256;
-
-    // Standalone expansions (outside character classes)
-    private const string DotExpansion = @"[^\n\r\u2028\u2029]";
-    private const string DigitClass = "[0-9]";
-    private const string NotDigitClass = "[^0-9]";
-    private const string WordClass = "[a-zA-Z0-9_]";
-    private const string NotWordClass = "[^a-zA-Z0-9_]";
-
-    private const string WhitespaceClass =
-        @"[\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]";
-
-    private const string NotWhitespaceClass =
-        @"[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]";
-
-    // Inline expansions (inside character classes, without brackets)
-    private const string DigitInline = "0-9";
-    private const string WordInline = "a-zA-Z0-9_";
-
-    private const string WhitespaceInline =
-        @"\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000";
-
-    // Word boundary expansions
-    private const string WordBoundary =
-        @"(?:(?<=[a-zA-Z0-9_])(?![a-zA-Z0-9_])|(?<![a-zA-Z0-9_])(?=[a-zA-Z0-9_]))";
-
-    private const string NonWordBoundary =
-        @"(?:(?<=[a-zA-Z0-9_])(?=[a-zA-Z0-9_])|(?<![a-zA-Z0-9_])(?![a-zA-Z0-9_]))";
-
-    // Matches exactly one Unicode code point (surrogate pair or non-surrogate BMP char)
-    private const string AnyCodePoint =
-        "(?:[\\uD800-\\uDBFF][\\uDC00-\\uDFFF]|[^\\uD800-\\uDFFF])";
-
-    // Latin script — explicit BMP ranges + surrogate-pair alternation for supplementary.
-    // Derived from Unicode 16.0 Script=Latin property.
-    private const string LatinBmp =
-        "\\u0041-\\u005A\\u0061-\\u007A\\u00AA\\u00BA"
-        + "\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02B8"
-        + "\\u02E0-\\u02E4\\u1D00-\\u1D25\\u1D2C-\\u1D5C"
-        + "\\u1D62-\\u1D65\\u1D6B-\\u1D77\\u1D79-\\u1DBE"
-        + "\\u1E00-\\u1EFF\\u2071\\u207F\\u2090-\\u209C"
-        + "\\u212A-\\u212B\\u2132\\u214E\\u2160-\\u2188"
-        + "\\u2C60-\\u2C7F\\uA722-\\uA787\\uA78B-\\uA7CD"
-        + "\\uA7D0-\\uA7D1\\uA7D3\\uA7D5-\\uA7DC"
-        + "\\uA7F2-\\uA7FF\\uAB30-\\uAB5A\\uAB5C-\\uAB64"
-        + "\\uAB66-\\uAB69\\uFB00-\\uFB06\\uFF21-\\uFF3A"
-        + "\\uFF41-\\uFF5A";
-
-    private const string LatinScript =
-        "(?:["
-        + LatinBmp
-        + "]"
-        + "|\\uD801[\\uDF80-\\uDF85]"
-        + "|\\uD801[\\uDF87-\\uDFB0]"
-        + "|\\uD801[\\uDFB2-\\uDFBA]"
-        + "|\\uD837[\\uDF00-\\uDF1E]"
-        + "|\\uD837[\\uDF25-\\uDF2A]"
-        + ")";
-
-    // Hex_Digit — all 44 code points (BMP only)
-    private const string HexDigitClass =
-        "0-9A-Fa-f\\uFF10-\\uFF19\\uFF21-\\uFF26\\uFF41-\\uFF46";
-
-    // Lowercase — \p{Ll} plus Other_Lowercase code points (28 BMP + 5 supplementary ranges)
-    private const string LowercaseBmp =
-        "\\p{Ll}\\u00AA\\u00BA\\u02B0-\\u02B8\\u02C0-\\u02C1"
-        + "\\u02E0-\\u02E4\\u0345\\u037A\\u10FC"
-        + "\\u1D2C-\\u1D6A\\u1D78\\u1D9B-\\u1DBF"
-        + "\\u2071\\u207F\\u2090-\\u209C\\u2170-\\u217F"
-        + "\\u24D0-\\u24E9\\u2C7C-\\u2C7D\\uA69C-\\uA69D"
-        + "\\uA770\\uA7F2-\\uA7F4\\uA7F8-\\uA7F9"
-        + "\\uAB5C-\\uAB5F\\uAB69";
-
-    private const string LowercaseProperty =
-        "(?:["
-        + LowercaseBmp
-        + "]"
-        + "|\\uD801[\\uDF80\\uDF83-\\uDF85\\uDF87-\\uDFB0\\uDFB2-\\uDFBA]"
-        + "|\\uD838[\\uDC30-\\uDC6D]"
-        + ")";
-
-    // Uppercase — \p{Lu} plus Other_Uppercase code points (2 BMP + 3 supplementary ranges)
-    private const string UppercaseBmp =
-        "\\p{Lu}\\u2160-\\u216F\\u24B6-\\u24CF";
-
-    private const string UppercaseProperty =
-        "(?:["
-        + UppercaseBmp
-        + "]"
-        + "|\\uD83C[\\uDD30-\\uDD49\\uDD50-\\uDD69\\uDD70-\\uDD89]"
-        + ")";
-
-    // ID_Start — [\p{L}\p{Nl}] plus 4 extra BMP ranges (6 code points).
-    // Technically excludes U+2E2F (Pattern_Syntax) — negligible over-match.
-    private const string IdStartClass =
-        "\\p{L}\\p{Nl}\\u1885-\\u1886\\u2118\\u212E\\u309B-\\u309C";
-
-    // Emoji_Presentation — 33 BMP ranges + 47 supplementary ranges
-    private const string EmojiPresentationBmp =
-        "\\u231A-\\u231B\\u23E9-\\u23EC\\u23F0\\u23F3"
-        + "\\u25FD-\\u25FE\\u2614-\\u2615\\u2648-\\u2653"
-        + "\\u267F\\u2693\\u26A1\\u26AA-\\u26AB"
-        + "\\u26BD-\\u26BE\\u26C4-\\u26C5\\u26CE\\u26D4\\u26EA"
-        + "\\u26F2-\\u26F3\\u26F5\\u26FA\\u26FD\\u2705"
-        + "\\u270A-\\u270B\\u2728\\u274C\\u274E"
-        + "\\u2753-\\u2755\\u2757\\u2795-\\u2797"
-        + "\\u27B0\\u27BF\\u2B1B-\\u2B1C\\u2B50\\u2B55";
-
-    private const string EmojiPresentationProperty =
-        "(?:["
-        + EmojiPresentationBmp
-        + "]"
-        + "|\\uD83C[\\uDC04\\uDCCF\\uDD8E\\uDD91-\\uDD9A"
-        + "\\uDDE6-\\uDDFF\\uDE01\\uDE1A\\uDE2F\\uDE32-\\uDE36"
-        + "\\uDE38-\\uDE3A\\uDE50-\\uDE51\\uDF00-\\uDF20"
-        + "\\uDF2D-\\uDF35\\uDF37-\\uDF7C\\uDF7E-\\uDF93"
-        + "\\uDFA0-\\uDFCA\\uDFCF-\\uDFD3\\uDFE0-\\uDFF0"
-        + "\\uDFF4\\uDFF8-\\uDFFF]"
-        + "|\\uD83D[\\uDC00-\\uDC3E\\uDC40\\uDC42-\\uDCFC"
-        + "\\uDCFF-\\uDD3D\\uDD4B-\\uDD4E\\uDD50-\\uDD67"
-        + "\\uDD7A\\uDD95-\\uDD96\\uDDA4\\uDDFB-\\uDE4F"
-        + "\\uDE80-\\uDEC5\\uDECC\\uDED0-\\uDED2\\uDED5-\\uDED7"
-        + "\\uDEDC-\\uDEDF\\uDEEB-\\uDEEC\\uDEF4-\\uDEFC"
-        + "\\uDFE0-\\uDFEB\\uDFF0]"
-        + "|\\uD83E[\\uDD0C-\\uDD3A\\uDD3C-\\uDD45\\uDD47-\\uDDFF"
-        + "\\uDE70-\\uDE7C\\uDE80-\\uDE89\\uDE8F-\\uDEC6"
-        + "\\uDECE-\\uDEDC\\uDEDF-\\uDEE9\\uDEF0-\\uDEF8]"
-        + ")";
-
-    // Extended_Pictographic — 50 BMP ranges + 28 supplementary ranges
-    private const string ExtendedPictographicBmp =
-        "\\u00A9\\u00AE\\u203C\\u2049\\u2122\\u2139"
-        + "\\u2194-\\u2199\\u21A9-\\u21AA\\u231A-\\u231B"
-        + "\\u2328\\u2388\\u23CF\\u23E9-\\u23F3\\u23F8-\\u23FA"
-        + "\\u24C2\\u25AA-\\u25AB\\u25B6\\u25C0\\u25FB-\\u25FE"
-        + "\\u2600-\\u2605\\u2607-\\u2612\\u2614-\\u2685"
-        + "\\u2690-\\u2705\\u2708-\\u2712\\u2714\\u2716\\u271D"
-        + "\\u2721\\u2728\\u2733-\\u2734\\u2744\\u2747\\u274C"
-        + "\\u274E\\u2753-\\u2755\\u2757\\u2763-\\u2767"
-        + "\\u2795-\\u2797\\u27A1\\u27B0\\u27BF"
-        + "\\u2934-\\u2935\\u2B05-\\u2B07\\u2B1B-\\u2B1C"
-        + "\\u2B50\\u2B55\\u3030\\u303D\\u3297\\u3299";
-
-    private const string ExtendedPictographicProperty =
-        "(?:["
-        + ExtendedPictographicBmp
-        + "]"
-        + "|\\uD83C[\\uDC00-\\uDCFF\\uDD0D-\\uDD0F\\uDD2F"
-        + "\\uDD6C-\\uDD71\\uDD7E-\\uDD7F\\uDD8E\\uDD91-\\uDD9A"
-        + "\\uDDAD-\\uDDE5\\uDE01-\\uDE0F\\uDE1A\\uDE2F"
-        + "\\uDE32-\\uDE3A\\uDE3C-\\uDE3F\\uDE49-\\uDFFA]"
-        + "|\\uD83D[\\uDC00-\\uDD3D\\uDD46-\\uDE4F"
-        + "\\uDE80-\\uDEFF\\uDF74-\\uDF7F\\uDFD5-\\uDFFF]"
-        + "|\\uD83E[\\uDC0C-\\uDC0F\\uDC48-\\uDC4F"
-        + "\\uDC5A-\\uDC5F\\uDC88-\\uDC8F\\uDCAE-\\uDCFF"
-        + "\\uDD0C-\\uDD3A\\uDD3C-\\uDD45\\uDD47-\\uDEFF]"
-        + "|\\uD83F[\\uDC00-\\uDFFD]"
-        + ")";
-
     /// <summary>
     /// Attempts to translate an ECMAScript 262 regex pattern (with /u Unicode mode)
     /// to an equivalent .NET regex pattern.
@@ -203,10 +63,20 @@ internal static class EcmaRegexTranslator
         Span<char> destination,
         out int charsWritten)
     {
-        Translator translator = new(ecmaPattern, destination);
-        OperationStatus status = translator.Run();
-        charsWritten = translator.CharsWritten;
-        return status;
+        charsWritten = 0;
+        if (!TryTranslateCore(ecmaPattern, unicodeOnly: true, out string? translated, out _, out _))
+        {
+            return OperationStatus.InvalidData;
+        }
+
+        if (translated!.Length > destination.Length)
+        {
+            return OperationStatus.DestinationTooSmall;
+        }
+
+        translated.AsSpan().CopyTo(destination);
+        charsWritten = translated.Length;
+        return OperationStatus.Done;
     }
 
     /// <summary>
@@ -218,96 +88,90 @@ internal static class EcmaRegexTranslator
     /// <exception cref="ArgumentException">The ECMAScript pattern is invalid.</exception>
     public static string Translate(ReadOnlySpan<char> ecmaPattern)
     {
-        int maxLen = GetMaxTranslatedLength(ecmaPattern);
-        char[]? rented = null;
-        Span<char> buffer = maxLen <= StackAllocThreshold
-            ? stackalloc char[StackAllocThreshold]
-            : (rented = ArrayPool<char>.Shared.Rent(maxLen));
+        if (TryTranslateCore(ecmaPattern, unicodeOnly: true, out string? translated, out _, out string? error))
+        {
+            return translated!;
+        }
 
-        try
-        {
-            OperationStatus status = TryTranslate(ecmaPattern, buffer, out int charsWritten);
-            return status switch
-            {
-                OperationStatus.Done => buffer[..charsWritten].ToString(),
-                OperationStatus.DestinationTooSmall => throw new InvalidOperationException(
-                    "Internal error: buffer size estimation was too small."),
-                _ => throw new ArgumentException(
-                    "The ECMAScript pattern is invalid.", nameof(ecmaPattern)),
-            };
-        }
-        finally
-        {
-            if (rented is not null)
-            {
-                ArrayPool<char>.Shared.Return(rented);
-            }
-        }
+        throw new ArgumentException("The ECMAScript pattern is invalid. " + error, nameof(ecmaPattern));
     }
 
     /// <summary>
-    /// Translates an ECMAScript regex pattern to a .NET pattern, falling back
-    /// to the original pattern if translation fails.
-    /// </summary>
-    /// <param name="ecmaPattern">The ECMAScript regex pattern.</param>
-    /// <returns>The translated .NET regex pattern, or the original if translation fails.</returns>
-    internal static string TranslateOrFallback(string ecmaPattern)
-    {
-        try
-        {
-            return Translate(ecmaPattern.AsSpan());
-        }
-        catch (ArgumentException)
-        {
-            return ecmaPattern;
-        }
-        catch (InvalidOperationException)
-        {
-            return ecmaPattern;
-        }
-    }
-
-    /// <summary>
-    /// Decides whether a pattern is a valid ECMA-262 regular expression and translates a valid one to a .NET
-    /// pattern.
+    /// Translates an ECMA-262 pattern to a .NET pattern, reading it with the grammar of the <c>u</c> flag and, when
+    /// that grammar does not accept it, with the grammar of a pattern with no flag.
     /// </summary>
     /// <param name="ecmaPattern">The ECMA-262 pattern.</param>
-    /// <param name="translated">The .NET pattern, when the pattern is valid (see <see cref="TranslateOrFallback"/>).</param>
+    /// <param name="translated">The .NET pattern, when the pattern is valid.</param>
     /// <param name="error">What is wrong with the pattern, when it is not valid.</param>
     /// <returns><see langword="true"/> when the pattern is a valid ECMA-262 pattern.</returns>
     public static bool TryTranslate(string ecmaPattern, out string? translated, out string? error)
     {
-        return TryTranslate(ecmaPattern, out translated, out _, out error);
+        return TryTranslateCore(ecmaPattern.AsSpan(), unicodeOnly: false, out translated, out _, out error);
     }
 
     /// <summary>
-    /// Decides whether a pattern is a valid ECMA-262 regular expression and translates a valid one to a .NET
-    /// pattern.
+    /// Translates an ECMA-262 pattern to a .NET pattern, reading it with the grammar of the <c>u</c> flag and, when
+    /// that grammar does not accept it, with the grammar of a pattern with no flag.
     /// </summary>
     /// <param name="ecmaPattern">The ECMA-262 pattern.</param>
-    /// <param name="translated">The .NET pattern, when the pattern is valid (see <see cref="TranslateOrFallback"/>).</param>
-    /// <param name="unicode">Whether the grammar of the <c>u</c> flag accepted the pattern.</param>
+    /// <param name="translated">The .NET pattern, when the pattern is valid.</param>
+    /// <param name="unicode">
+    /// Whether the grammar of the <c>u</c> flag accepted the pattern, which is then matched by code point. A pattern
+    /// only the other grammar accepts is matched by UTF-16 code unit.
+    /// </param>
     /// <param name="error">What is wrong with the pattern, when it is not valid.</param>
     /// <returns><see langword="true"/> when the pattern is a valid ECMA-262 pattern.</returns>
-    /// <remarks>
-    /// A pattern is read with the grammar of the <c>u</c> flag, as JSON Schema's <c>pattern</c> specifies. A pattern
-    /// that is not valid with it is read with the Annex B grammar of a pattern with no flag, as many schemas hold
-    /// such patterns (identity escapes like <c>\-</c>, lone braces). A pattern neither grammar accepts is not a valid
-    /// ECMA-262 regular expression. <see cref="EcmaRegexParser"/> reads both.
-    /// </remarks>
     public static bool TryTranslate(string ecmaPattern, out string? translated, out bool unicode, out string? error)
     {
+        return TryTranslateCore(ecmaPattern.AsSpan(), unicodeOnly: false, out translated, out unicode, out error);
+    }
+
+    /// <summary>
+    /// Translates an ECMAScript regex pattern to a .NET pattern, falling back
+    /// to the original pattern if it is not a valid ECMA-262 pattern.
+    /// </summary>
+    /// <param name="ecmaPattern">The ECMAScript regex pattern.</param>
+    /// <returns>The translated .NET regex pattern, or the original if the pattern is not valid.</returns>
+    internal static string TranslateOrFallback(string ecmaPattern)
+    {
+        return TryTranslateCore(ecmaPattern.AsSpan(), unicodeOnly: false, out string? translated, out _, out _) ? translated! : ecmaPattern;
+    }
+
+    /// <summary>
+    /// Gets the maximum possible length of the translated pattern, suitable for buffer allocation.
+    /// </summary>
+    /// <param name="ecmaPattern">The ECMAScript regex pattern.</param>
+    /// <returns>The maximum number of characters the translated pattern could require.</returns>
+    public static int GetMaxTranslatedLength(ReadOnlySpan<char> ecmaPattern)
+    {
+        // The length of a translation is not a simple function of the length of the pattern (a set that holds
+        // characters beyond the Basic Multilingual Plane is written out), so the pattern is translated to find it.
+        return TryTranslateCore(ecmaPattern, unicodeOnly: true, out string? translated, out _, out _) ? translated!.Length : ecmaPattern.Length;
+    }
+
+    private static bool TryTranslateCore(ReadOnlySpan<char> ecmaPattern, bool unicodeOnly, out string? translated, out bool unicode, out string? error)
+    {
         unicode = true;
+        EcmaRegexParser parser = new(ecmaPattern, unicode: true);
+        EcmaRegexNode root;
         try
         {
-            new EcmaRegexParser(ecmaPattern.AsSpan(), unicode: true).Parse();
+            root = parser.Parse();
         }
         catch (EcmaRegexSyntaxException unicodeError)
         {
+            if (unicodeOnly)
+            {
+                translated = null;
+                error = unicodeError.Message + ".";
+                return false;
+            }
+
             unicode = false;
+            parser = new EcmaRegexParser(ecmaPattern, unicode: false);
             try
             {
-                new EcmaRegexParser(ecmaPattern.AsSpan(), unicode: false).Parse();
+                root = parser.Parse();
             }
             catch (EcmaRegexSyntaxException legacyError)
             {
@@ -319,2559 +183,1137 @@ internal static class EcmaRegexTranslator
             }
         }
 
-        translated = TranslateOrFallback(ecmaPattern);
+        translated = new Emitter(parser, root).Translate();
         error = null;
         return true;
     }
 
-    /// <summary>
-    /// Gets the maximum possible length of the translated pattern, suitable for buffer allocation.
-    /// </summary>
-    /// <param name="ecmaPattern">The ECMAScript regex pattern.</param>
-    /// <returns>The maximum number of characters the translated pattern could require.</returns>
-    public static int GetMaxTranslatedLength(ReadOnlySpan<char> ecmaPattern)
+    /// <summary>Writes the tree of a pattern as a .NET pattern with the same meaning.</summary>
+    /// <remarks>
+    /// In ECMA-262 a backreference matches the text its group captured when the group last took part, and the empty
+    /// string when it has not taken part. .NET fails a backreference to a group that has not taken part. So a
+    /// backreference to group 1 is written <c>(?(1)\1)</c>, which matches nothing when the group is unset.
+    /// </remarks>
+    private sealed class Emitter
     {
-        int maxLen = 0;
-        int i = 0;
-        while (i < ecmaPattern.Length)
-        {
-            if (ecmaPattern[i] == '\\' && i + 1 < ecmaPattern.Length)
-            {
-                char next = ecmaPattern[i + 1];
-                if (next == 'u' && i + 2 < ecmaPattern.Length && ecmaPattern[i + 2] == '{')
-                {
-                    // \u{XXXXX} — could be part of a supplementary range in a class
-                    // Worst case: (?:\uHH[\uLL-\uDFFF]|[\uHH-\uHH][\uDC00-\uDFFF]|\uHH[\uDC00-\uLL])
-                    maxLen += 100;
-                    int close = i + 3;
-                    while (close < ecmaPattern.Length && ecmaPattern[close] != '}')
-                    {
-                        close++;
-                    }
+        private const string WordClass = "[a-zA-Z0-9_]";
+        private const string FoldWordClass = @"[a-zA-Z0-9_\u017F\u212A]";
+        private const string LineTerminatorClass = @"[\n\r\u2028\u2029]";
+        private const string HighSurrogates = @"[\uD800-\uDBFF]";
+        private const string LowSurrogates = @"[\uDC00-\uDFFF]";
 
-                    i = close < ecmaPattern.Length ? close + 1 : close;
-                }
-                else
+        /// <summary>Holds between the two halves of a character beyond the Basic Multilingual Plane.</summary>
+        private const string InsideSurrogatePair = @"(?<=[\uD800-\uDBFF])[\uDC00-\uDFFF]";
+
+        /// <summary>More alternatives of surrogate pairs than this stand behind one test for a surrogate.</summary>
+        private const int ManyAlternatives = 2;
+
+        private static readonly int[] SurrogateRange = [0xD800, 0xDFFF];
+        private static readonly int[] HighSurrogateRange = [0xD800, 0xDBFF];
+        private static readonly int[] LowSurrogateRange = [0xDC00, 0xDFFF];
+        private static readonly int[] SupplementaryRange = [0x10000, EcmaRegexUnicode.Max];
+
+        // The General_Category values .NET names, by the number of their table, and the unions of them it names.
+        private static readonly string[] CategoryNames =
+        [
+            "Lu", "Ll", "Lt", "Lm", "Lo", "Mn", "Mc", "Me", "Nd", "Nl", "No", "Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po", "Sm",
+            "Sc", "Sk", "So", "Zs", "Zl", "Zp", "Cc", "Cf", "Cs", "Co", "Cn",
+        ];
+
+        private static readonly (int Tables, string Name)[] CategoryUnions =
+        [
+            (0x1F, "L"), (0xE0, "M"), (0x700, "N"), (0x3F800, "P"), (0x3C0000, "S"), (0x1C00000, "Z"),
+        ];
+
+        private readonly bool unicode;
+        private readonly bool hasBackreferences;
+        private readonly EcmaRegexNode root;
+        private readonly EcmaRegexNode?[] groupNodes;
+
+        /// <summary>For each group, whether some backreference reads it.</summary>
+        private readonly bool[] referenced;
+
+        private readonly StringBuilder sb = new();
+
+        public Emitter(EcmaRegexParser parser, EcmaRegexNode root)
+        {
+            this.unicode = parser.Unicode;
+            this.hasBackreferences = parser.HasBackreferences;
+            int n = parser.GroupCount + 1;
+            this.groupNodes = new EcmaRegexNode?[n];
+            this.referenced = new bool[n];
+            this.root = root;
+        }
+
+        /// <summary>Where a node stands, for what is written around it.</summary>
+        [Flags]
+        private enum Context
+        {
+            None = 0,
+
+            /// <summary>Inside a lookbehind, which is matched from right to left.</summary>
+            Backward = 1,
+
+            /// <summary>Nothing follows the node in the pattern: when it has matched, the pattern has.</summary>
+            Last = 2,
+        }
+
+        private enum Start
+        {
+            /// <summary>The node cannot match between the two halves of a surrogate pair.</summary>
+            Blocks,
+
+            /// <summary>The node matches there only as the empty string, with no assertion passed.</summary>
+            Passes,
+
+            /// <summary>The node may match there.</summary>
+            Unsafe,
+        }
+
+        public string Translate()
+        {
+            this.Survey(this.root);
+            if (this.unicode && this.StartOf(this.root, top: true, backward: false) == Start.Unsafe)
+            {
+                // .NET tries a match at every code unit, and so between the two halves of a character beyond the
+                // Basic Multilingual Plane, where ECMA-262 has no position.
+                this.sb.Append("(?!").Append(InsideSurrogatePair).Append(')');
+                if (this.root.Kind == EcmaRegexNodeKind.Alt)
                 {
-                    maxLen += next switch
-                    {
-                        'b' or 'B' => WordBoundary.Length,
-                        's' or 'S' => NotWhitespaceClass.Length,
-                        'd' or 'D' => NotDigitClass.Length,
-                        'w' or 'W' => NotWordClass.Length,
-                        'k' => 14, // \k<name> → (?(name)\k<name>) — name chars counted separately
-                        'p' or 'P' => 1024, // binary properties can expand to large character classes
-                        _ => 12, // backrefs become (?(N)\N), other escapes generous
-                    };
-                    i += 2;
+                    this.sb.Append("(?:");
+                    this.Node(this.root, Context.Last, null);
+                    this.sb.Append(')');
+                    return this.sb.ToString();
                 }
             }
-            else if (ecmaPattern[i] == '.')
+
+            this.Node(this.root, Context.Last, null);
+            return this.sb.ToString();
+        }
+
+        private static bool IsSurrogate(int c) => c >= 0xD800 && c <= 0xDFFF;
+
+        /// <summary>Whether a set holds every surrogate and every character beyond the Basic Multilingual Plane.</summary>
+        private static bool HoldsEveryPair(int[] set) => HoldsRange(set, 0xD800, 0xDFFF) && HoldsRange(set, 0x10000, EcmaRegexUnicode.Max);
+
+        /// <summary>Whether a set holds every code point of a range.</summary>
+        private static bool HoldsRange(int[] set, int lo, int hi)
+        {
+            for (int k = 0; k < set.Length; k += 2)
             {
-                maxLen += DotExpansion.Length;
-                i++;
+                if (set[k] <= lo && set[k + 1] >= hi)
+                {
+                    return true;
+                }
             }
-            else if (ecmaPattern[i] == '$')
+
+            return false;
+        }
+
+        /// <summary>Whether the tables of a General_Category value are written as one class of .NET.</summary>
+        private static bool IsOneCategory(int tables)
+        {
+            if ((tables & (tables - 1)) == 0)
             {
-                maxLen += 2; // \z
-                i++;
+                return true;
             }
-            else if (char.IsHighSurrogate(ecmaPattern[i]) && i + 1 < ecmaPattern.Length && char.IsLowSurrogate(ecmaPattern[i + 1]))
+
+            foreach ((int unionTables, _) in CategoryUnions)
             {
-                // Literal surrogate pair → (?:\uHHHH\uLLLL) = 20 chars
-                maxLen += 20;
-                i += 2;
+                if (tables == unionTables)
+                {
+                    return true;
+                }
             }
-            else
+
+            return false;
+        }
+
+        /// <summary>Notes the group nodes and which of them a backreference reads.</summary>
+        private void Survey(EcmaRegexNode n)
+        {
+            if (n.Kind == EcmaRegexNodeKind.Group && n.Group != 0)
             {
-                maxLen++;
-                i++;
+                this.groupNodes[n.Group] = n;
+            }
+            else if (n.Kind == EcmaRegexNodeKind.Backref)
+            {
+                foreach (int g in n.Groups)
+                {
+                    this.referenced[g] = true;
+                }
+            }
+
+            foreach (EcmaRegexNode sub in n.Subs)
+            {
+                this.Survey(sub);
             }
         }
 
-        // Margin for character class restructuring (alternation, supplementary pairs, negated lookahead)
-        return maxLen + 128;
-    }
+        // Where a match may start.
 
-    private static bool TryParseHex(ReadOnlySpan<char> hex, out int value)
-    {
-        value = 0;
-        for (int i = 0; i < hex.Length; i++)
+        /// <summary>
+        /// What a node does when a match is tried between the two halves of a surrogate pair. Every set and every
+        /// character is written so that it does not match there, so only an assertion that holds there, a
+        /// backreference or a repetition written by code unit can let a match through.
+        /// </summary>
+        private Start StartOf(EcmaRegexNode n, bool top, bool backward)
         {
-            int digit = HexDigitValue(hex[i]);
-            if (digit < 0)
+            switch (n.Kind)
+            {
+                case EcmaRegexNodeKind.Empty:
+                    return Start.Passes;
+                case EcmaRegexNodeKind.Char:
+                case EcmaRegexNodeKind.Set:
+                case EcmaRegexNodeKind.Bol:
+                case EcmaRegexNodeKind.Eol:
+                case EcmaRegexNodeKind.LineStart:
+                case EcmaRegexNodeKind.LineEnd:
+                case EcmaRegexNodeKind.WordBoundary:
+                    return Start.Blocks;
+                case EcmaRegexNodeKind.Cat:
+                    for (int k = 0; k < n.Subs.Length; k++)
+                    {
+                        // A lookbehind is matched from its last term to its first.
+                        Start s = this.StartOf(n.Subs[backward ? n.Subs.Length - 1 - k : k], top, backward);
+                        if (s != Start.Passes)
+                        {
+                            return s;
+                        }
+                    }
+
+                    return Start.Passes;
+                case EcmaRegexNodeKind.Alt:
+                {
+                    Start result = Start.Blocks;
+                    foreach (EcmaRegexNode sub in n.Subs)
+                    {
+                        Start s = this.StartOf(sub, top, backward);
+                        if (s == Start.Unsafe)
+                        {
+                            return s;
+                        }
+
+                        if (s == Start.Passes)
+                        {
+                            result = s;
+                        }
+                    }
+
+                    return result;
+                }
+
+                case EcmaRegexNodeKind.Group:
+                    return this.StartOf(n.Subs[0], top, backward);
+                case EcmaRegexNodeKind.Look:
+                    // A lookaround that has to match holds there only when its body matches from there.
+                    return n.Negative ? Start.Unsafe : this.StartOf(n.Subs[0], top: false, backward: n.Behind);
+                case EcmaRegexNodeKind.Repeat:
+                {
+                    if (this.IsCodeUnitLoop(n))
+                    {
+                        // A match that starts inside a pair with this repetition also starts one code unit earlier,
+                        // where the repetition takes the first half too, unless something could tell the two apart.
+                        return top && !backward && !this.hasBackreferences && n.Min <= 1 ? Start.Blocks : Start.Unsafe;
+                    }
+
+                    Start s = this.StartOf(n.Subs[0], top: false, backward);
+                    return s == Start.Unsafe || n.Min > 0 ? s : Start.Passes;
+                }
+
+                default:
+                    return Start.Unsafe;
+            }
+        }
+
+        // Writing.
+        private void Node(EcmaRegexNode n, Context context, EcmaRegexNode? next)
+        {
+            switch (n.Kind)
+            {
+                case EcmaRegexNodeKind.Empty:
+                    break;
+                case EcmaRegexNodeKind.Char:
+                    this.Character(n.CodePoint);
+                    break;
+                case EcmaRegexNodeKind.Set:
+                    this.SetAtom(n, (context & Context.Backward) != 0);
+                    break;
+                case EcmaRegexNodeKind.Cat:
+                {
+                    bool backward = (context & Context.Backward) != 0;
+                    for (int k = 0; k < n.Subs.Length; k++)
+                    {
+                        // What is matched after a term is the term to its right, or to its left in a lookbehind.
+                        int after = backward ? k - 1 : k + 1;
+                        bool inside = after >= 0 && after < n.Subs.Length;
+                        this.Node(n.Subs[k], inside ? context & ~Context.Last : context, inside ? n.Subs[after] : next);
+                    }
+
+                    break;
+                }
+
+                case EcmaRegexNodeKind.Alt:
+                    this.Alternation(n, context, next);
+                    break;
+                case EcmaRegexNodeKind.Group:
+                    this.Group(n, context, next);
+                    break;
+                case EcmaRegexNodeKind.Repeat:
+                    this.Repeat(n, context, next);
+                    break;
+                case EcmaRegexNodeKind.Bol:
+                    this.sb.Append('^');
+                    break;
+                case EcmaRegexNodeKind.Eol:
+                    this.sb.Append(@"\z");
+                    break;
+                case EcmaRegexNodeKind.LineStart:
+                    this.sb.Append("(?:^|(?<=").Append(LineTerminatorClass).Append("))");
+                    break;
+                case EcmaRegexNodeKind.LineEnd:
+                    this.sb.Append(@"(?:\z|(?=").Append(LineTerminatorClass).Append("))");
+                    break;
+                case EcmaRegexNodeKind.WordBoundary:
+                {
+                    string w = n.Fold ? FoldWordClass : WordClass;
+                    this.sb.Append("(?:(?<=").Append(w).Append(")(?!").Append(w).Append(")|(?<!").Append(w).Append(")(?=").Append(w).Append("))");
+                    break;
+                }
+
+                case EcmaRegexNodeKind.NotWordBoundary:
+                {
+                    string w = n.Fold ? FoldWordClass : WordClass;
+                    this.sb.Append("(?:(?<=").Append(w).Append(")(?=").Append(w).Append(")|(?<!").Append(w).Append(")(?!").Append(w).Append("))");
+                    break;
+                }
+
+                case EcmaRegexNodeKind.Look:
+                    this.sb.Append(n.Behind ? (n.Negative ? "(?<!" : "(?<=") : (n.Negative ? "(?!" : "(?="));
+                    this.Node(n.Subs[0], n.Behind ? Context.Backward : Context.None, null);
+                    this.sb.Append(')');
+                    break;
+                case EcmaRegexNodeKind.Backref:
+                    this.Backreference(n);
+                    break;
+                default:
+                    throw new InvalidOperationException();
+            }
+        }
+
+        /// <summary>Writes alternatives.</summary>
+        private void Alternation(EcmaRegexNode n, Context context, EcmaRegexNode? next)
+        {
+            // An empty alternative after another empty one is never the one that matches.
+            List<EcmaRegexNode> subs = new(n.Subs.Length);
+            bool seenEmpty = false;
+            foreach (EcmaRegexNode sub in n.Subs)
+            {
+                if (sub.Kind == EcmaRegexNodeKind.Empty)
+                {
+                    if (seenEmpty)
+                    {
+                        continue;
+                    }
+
+                    seenEmpty = true;
+                }
+
+                subs.Add(sub);
+            }
+
+            if (subs.Count == 1)
+            {
+                this.Node(subs[0], context, next);
+                return;
+            }
+
+            for (int k = 0; k < subs.Count; k++)
+            {
+                if (k > 0)
+                {
+                    this.sb.Append('|');
+                }
+
+                this.Node(subs[k], context, next);
+            }
+        }
+
+        private void Group(EcmaRegexNode n, Context context, EcmaRegexNode? next)
+        {
+            if (n.Group == 0 || !this.referenced[n.Group])
+            {
+                this.sb.Append("(?:");
+            }
+            else
+            {
+                this.sb.Append("(?<").Append(n.Group.ToString(CultureInfo.InvariantCulture)).Append('>');
+            }
+
+            this.Node(n.Subs[0], context, next);
+            this.sb.Append(')');
+        }
+
+        /// <summary>Writes a node as one unit that a quantifier can follow.</summary>
+        private void Atom(EcmaRegexNode atom, Context context, EcmaRegexNode? next)
+        {
+            if (atom.Kind == EcmaRegexNodeKind.Set && atom.Set.Length != 0)
+            {
+                this.SetAtom(atom, (context & Context.Backward) != 0, wrap: true);
+                return;
+            }
+
+            // A character beyond the Basic Multilingual Plane is written in a group of its own.
+            bool unit = atom.Kind == EcmaRegexNodeKind.Group
+                || (atom.Kind == EcmaRegexNodeKind.Char && (!this.unicode || !IsSurrogate(atom.CodePoint)));
+            if (!unit)
+            {
+                this.sb.Append("(?:");
+            }
+
+            this.Node(atom, context, next);
+            if (!unit)
+            {
+                this.sb.Append(')');
+            }
+        }
+
+        private void Quantifier(int min, int max, bool lazy)
+        {
+            if (min == 1 && max == 1)
+            {
+                return;
+            }
+
+            if (min == 0 && max == EcmaRegexNode.Unbounded)
+            {
+                this.sb.Append('*');
+            }
+            else if (min == 1 && max == EcmaRegexNode.Unbounded)
+            {
+                this.sb.Append('+');
+            }
+            else if (min == 0 && max == 1)
+            {
+                this.sb.Append('?');
+            }
+            else
+            {
+                this.sb.Append('{').Append(min.ToString(CultureInfo.InvariantCulture));
+                if (max != min)
+                {
+                    this.sb.Append(',');
+                    if (max != EcmaRegexNode.Unbounded)
+                    {
+                        this.sb.Append(max.ToString(CultureInfo.InvariantCulture));
+                    }
+                }
+
+                this.sb.Append('}');
+            }
+
+            if (lazy)
+            {
+                this.sb.Append('?');
+            }
+        }
+
+        /// <summary>
+        /// Whether a repetition is written as a repetition of code units: one of a set that holds every surrogate
+        /// and every character beyond the Basic Multilingual Plane (the dot, a negated class), with no upper bound.
+        /// Any run of the code units of such a set that does not start or end inside a surrogate pair is a run of
+        /// its characters, so .NET can run it as it runs any class.
+        /// </summary>
+        private bool IsCodeUnitLoop(EcmaRegexNode n)
+        {
+            if (!this.unicode || n.Kind != EcmaRegexNodeKind.Repeat || n.Max != EcmaRegexNode.Unbounded || n.Subs[0].Kind != EcmaRegexNodeKind.Set)
             {
                 return false;
             }
 
-            value = (value << 4) | digit;
+            return HoldsEveryPair(n.Subs[0].Set);
         }
 
-        return true;
-    }
-
-    private static int HexDigitValue(char c) => c switch
-    {
-        >= '0' and <= '9' => c - '0',
-        >= 'a' and <= 'f' => c - 'a' + 10,
-        >= 'A' and <= 'F' => c - 'A' + 10,
-        _ => -1,
-    };
-
-    private static char ToHexChar(int value) =>
-        (char)(value < 10 ? '0' + value : 'A' + value - 10);
-
-    private static bool TryMapCategoryLongName(
-        ReadOnlySpan<char> name,
-        out string? shortName)
-    {
-        // General Category long names → short names
-        // Ordered roughly by frequency of use
-        shortName = null;
-
-        if (name.SequenceEqual("Letter")) { shortName = "L"; }
-        else if (name.SequenceEqual("Lowercase_Letter")) { shortName = "Ll"; }
-        else if (name.SequenceEqual("Uppercase_Letter")) { shortName = "Lu"; }
-        else if (name.SequenceEqual("Titlecase_Letter")) { shortName = "Lt"; }
-        else if (name.SequenceEqual("Cased_Letter")) { shortName = "LC"; }
-        else if (name.SequenceEqual("Modifier_Letter")) { shortName = "Lm"; }
-        else if (name.SequenceEqual("Other_Letter")) { shortName = "Lo"; }
-        else if (name.SequenceEqual("Mark")) { shortName = "M"; }
-        else if (name.SequenceEqual("Combining_Mark")) { shortName = "M"; }
-        else if (name.SequenceEqual("Nonspacing_Mark")) { shortName = "Mn"; }
-        else if (name.SequenceEqual("Spacing_Mark")) { shortName = "Mc"; }
-        else if (name.SequenceEqual("Enclosing_Mark")) { shortName = "Me"; }
-        else if (name.SequenceEqual("Number")) { shortName = "N"; }
-        else if (name.SequenceEqual("Decimal_Number")) { shortName = "Nd"; }
-        else if (name.SequenceEqual("digit")) { shortName = "Nd"; }
-        else if (name.SequenceEqual("Letter_Number")) { shortName = "Nl"; }
-        else if (name.SequenceEqual("Other_Number")) { shortName = "No"; }
-        else if (name.SequenceEqual("Punctuation")) { shortName = "P"; }
-        else if (name.SequenceEqual("punct")) { shortName = "P"; }
-        else if (name.SequenceEqual("Connector_Punctuation")) { shortName = "Pc"; }
-        else if (name.SequenceEqual("Dash_Punctuation")) { shortName = "Pd"; }
-        else if (name.SequenceEqual("Open_Punctuation")) { shortName = "Ps"; }
-        else if (name.SequenceEqual("Close_Punctuation")) { shortName = "Pe"; }
-        else if (name.SequenceEqual("Initial_Punctuation")) { shortName = "Pi"; }
-        else if (name.SequenceEqual("Final_Punctuation")) { shortName = "Pf"; }
-        else if (name.SequenceEqual("Other_Punctuation")) { shortName = "Po"; }
-        else if (name.SequenceEqual("Symbol")) { shortName = "S"; }
-        else if (name.SequenceEqual("Math_Symbol")) { shortName = "Sm"; }
-        else if (name.SequenceEqual("Currency_Symbol")) { shortName = "Sc"; }
-        else if (name.SequenceEqual("Modifier_Symbol")) { shortName = "Sk"; }
-        else if (name.SequenceEqual("Other_Symbol")) { shortName = "So"; }
-        else if (name.SequenceEqual("Separator")) { shortName = "Z"; }
-        else if (name.SequenceEqual("Space_Separator")) { shortName = "Zs"; }
-        else if (name.SequenceEqual("Line_Separator")) { shortName = "Zl"; }
-        else if (name.SequenceEqual("Paragraph_Separator")) { shortName = "Zp"; }
-        else if (name.SequenceEqual("Other")) { shortName = "C"; }
-        else if (name.SequenceEqual("Control")) { shortName = "Cc"; }
-        else if (name.SequenceEqual("cntrl")) { shortName = "Cc"; }
-        else if (name.SequenceEqual("Format")) { shortName = "Cf"; }
-        else if (name.SequenceEqual("Surrogate")) { shortName = "Cs"; }
-        else if (name.SequenceEqual("Private_Use")) { shortName = "Co"; }
-        else if (name.SequenceEqual("Unassigned")) { shortName = "Cn"; }
-
-        return shortName is not null;
-    }
-
-    private static bool IsValidShortCategory(ReadOnlySpan<char> name)
-    {
-        // Valid .NET short category names (1-2 chars)
-        if (name.Length == 1)
+        /// <summary>
+        /// Whether what is matched after a repetition of code units could match when the repetition stops between the
+        /// two halves of a surrogate pair. A character, a set and the end of the input cannot.
+        /// </summary>
+        private bool MayFollowInsidePair(EcmaRegexNode? next, Context context)
         {
-            return name[0] is 'L' or 'M' or 'N' or 'P' or 'S' or 'Z' or 'C';
-        }
-
-        if (name.Length == 2)
-        {
-            char c0 = name[0];
-            char c1 = name[1];
-            return (c0, c1) switch
+            if (next is null)
             {
-                ('L', 'u' or 'l' or 't' or 'm' or 'o') => true,
-                ('L', 'C') => true, // Cased_Letter
-                ('M', 'n' or 'c' or 'e') => true,
-                ('N', 'd' or 'l' or 'o') => true,
-                ('P', 'c' or 'd' or 's' or 'e' or 'i' or 'f' or 'o') => true,
-                ('S', 'm' or 'c' or 'k' or 'o') => true,
-                ('Z', 's' or 'l' or 'p') => true,
-                ('C', 'c' or 'f' or 's' or 'o' or 'n') => true,
-                _ => false,
-            };
-        }
-
-        return false;
-    }
-
-    private static bool TryMapBinaryProperty(
-        ReadOnlySpan<char> name,
-        out string? classContent,
-        out string? alternationPattern)
-    {
-        // ECMAScript binary Unicode properties → .NET equivalents.
-        // classContent: content usable inside [...] (BMP-only properties).
-        // alternationPattern: complete pattern for properties with supplementary code points.
-        // Only one of the two will be set.
-        classContent = null;
-        alternationPattern = null;
-
-        if (name.SequenceEqual("ASCII"))
-        {
-            classContent = "\\u0000-\\u007F";
-        }
-        else if (name.SequenceEqual("Alphabetic"))
-        {
-            // Close approximation: Unicode Letter + Mark categories
-            classContent = "\\p{L}\\p{M}";
-        }
-        else if (name.SequenceEqual("White_Space"))
-        {
-            classContent = WhitespaceInline;
-        }
-        else if (name.SequenceEqual("Emoji"))
-        {
-            // Emoji includes BMP symbols and supplementary code points.
-            // Supplementary ranges must use surrogate-pair alternation.
-            alternationPattern =
-                "(?:"
-                + "[\\u0023\\u002A\\u0030-\\u0039\\u00A9\\u00AE"
-                + "\\u203C\\u2049\\u2122\\u2139\\u2194-\\u2199"
-                + "\\u21A9\\u21AA\\u231A\\u231B\\u2328\\u23CF"
-                + "\\u23E9-\\u23F3\\u23F8-\\u23FA\\u24C2"
-                + "\\u25AA\\u25AB\\u25B6\\u25C0\\u25FB-\\u25FE"
-                + "\\u2600-\\u27BF\\u2934\\u2935\\u2B05-\\u2B07"
-                + "\\u2B1B\\u2B1C\\u2B50\\u2B55\\u3030\\u303D\\u3297\\u3299]"
-                + "|\\uD83C[\\uDC00-\\uDFFF]"
-                + "|\\uD83D[\\uDC00-\\uDFFF]"
-                + "|\\uD83E[\\uDD00-\\uDFFF]"
-                + ")";
-        }
-        else if (name.SequenceEqual("Any"))
-        {
-            classContent = "\\s\\S";
-        }
-        else if (name.SequenceEqual("Assigned"))
-        {
-            // Everything except Unassigned
-            classContent = "\\P{Cn}";
-        }
-        else if (name.SequenceEqual("Hex_Digit"))
-        {
-            classContent = HexDigitClass;
-        }
-        else if (name.SequenceEqual("Lowercase"))
-        {
-            alternationPattern = LowercaseProperty;
-        }
-        else if (name.SequenceEqual("Uppercase"))
-        {
-            alternationPattern = UppercaseProperty;
-        }
-        else if (name.SequenceEqual("ID_Start"))
-        {
-            classContent = IdStartClass;
-        }
-        else if (name.SequenceEqual("Emoji_Presentation"))
-        {
-            alternationPattern = EmojiPresentationProperty;
-        }
-        else if (name.SequenceEqual("Extended_Pictographic"))
-        {
-            alternationPattern = ExtendedPictographicProperty;
-        }
-
-        return classContent is not null || alternationPattern is not null;
-    }
-
-    private static bool TryMapScriptName(
-        ReadOnlySpan<char> name,
-        out string? dotNetBlockName,
-        out string? fullPattern)
-    {
-        // Map ES script names → .NET block names or full regex patterns.
-        // Most scripts map cleanly to a .NET \p{IsXxx} block name.
-        // Latin requires an explicit character class because it spans many blocks.
-        dotNetBlockName = null;
-        fullPattern = null;
-
-        if (name.SequenceEqual("Latin") || name.SequenceEqual("Latn"))
-        {
-            fullPattern = LatinScript;
-        }
-        else if (name.SequenceEqual("Greek") || name.SequenceEqual("Grek"))
-        {
-            dotNetBlockName = "IsGreek";
-        }
-        else if (name.SequenceEqual("Cyrillic") || name.SequenceEqual("Cyrl"))
-        {
-            dotNetBlockName = "IsCyrillic";
-        }
-        else if (name.SequenceEqual("Armenian") || name.SequenceEqual("Armn"))
-        {
-            dotNetBlockName = "IsArmenian";
-        }
-        else if (name.SequenceEqual("Hebrew") || name.SequenceEqual("Hebr"))
-        {
-            dotNetBlockName = "IsHebrew";
-        }
-        else if (name.SequenceEqual("Arabic") || name.SequenceEqual("Arab"))
-        {
-            dotNetBlockName = "IsArabic";
-        }
-        else if (name.SequenceEqual("Thai") || name.SequenceEqual("Thai"))
-        {
-            dotNetBlockName = "IsThai";
-        }
-        else if (name.SequenceEqual("Georgian") || name.SequenceEqual("Geor"))
-        {
-            dotNetBlockName = "IsGeorgian";
-        }
-        else if (name.SequenceEqual("Hangul") || name.SequenceEqual("Hang"))
-        {
-            dotNetBlockName = "IsHangulJamo";
-        }
-        else if (name.SequenceEqual("Hiragana") || name.SequenceEqual("Hira"))
-        {
-            dotNetBlockName = "IsHiragana";
-        }
-        else if (name.SequenceEqual("Katakana") || name.SequenceEqual("Kana"))
-        {
-            dotNetBlockName = "IsKatakana";
-        }
-        else if (name.SequenceEqual("Tibetan") || name.SequenceEqual("Tibt"))
-        {
-            dotNetBlockName = "IsTibetan";
-        }
-        else if (name.SequenceEqual("Bengali") || name.SequenceEqual("Beng"))
-        {
-            dotNetBlockName = "IsBengali";
-        }
-        else if (name.SequenceEqual("Devanagari") || name.SequenceEqual("Deva"))
-        {
-            dotNetBlockName = "IsDevanagari";
-        }
-        else if (name.SequenceEqual("Gujarati") || name.SequenceEqual("Gujr"))
-        {
-            dotNetBlockName = "IsGujarati";
-        }
-        else if (name.SequenceEqual("Tamil") || name.SequenceEqual("Taml"))
-        {
-            dotNetBlockName = "IsTamil";
-        }
-        else if (name.SequenceEqual("Telugu") || name.SequenceEqual("Telu"))
-        {
-            dotNetBlockName = "IsTelugu";
-        }
-        else if (name.SequenceEqual("Kannada") || name.SequenceEqual("Knda"))
-        {
-            dotNetBlockName = "IsKannada";
-        }
-        else if (name.SequenceEqual("Malayalam") || name.SequenceEqual("Mlym"))
-        {
-            dotNetBlockName = "IsMalayalam";
-        }
-        else if (name.SequenceEqual("Sinhala") || name.SequenceEqual("Sinh"))
-        {
-            dotNetBlockName = "IsSinhala";
-        }
-        else if (name.SequenceEqual("Myanmar") || name.SequenceEqual("Mymr"))
-        {
-            dotNetBlockName = "IsMyanmar";
-        }
-        else if (name.SequenceEqual("Ethiopic") || name.SequenceEqual("Ethi"))
-        {
-            dotNetBlockName = "IsEthiopic";
-        }
-        else if (name.SequenceEqual("Khmer") || name.SequenceEqual("Khmr"))
-        {
-            dotNetBlockName = "IsKhmer";
-        }
-        else if (name.SequenceEqual("Mongolian") || name.SequenceEqual("Mong"))
-        {
-            dotNetBlockName = "IsMongolian";
-        }
-        else if (name.SequenceEqual("Lao") || name.SequenceEqual("Laoo"))
-        {
-            dotNetBlockName = "IsLao";
-        }
-
-        return dotNetBlockName is not null || fullPattern is not null;
-    }
-
-    /// <summary>
-    /// Scanning result for a character class.
-    /// </summary>
-    private struct CharClassInfo
-    {
-        /// <summary>Position of the closing <c>]</c> in the input.</summary>
-        public int EndPos;
-
-        /// <summary>Whether the class is negated (<c>[^...]</c>).</summary>
-        public bool IsNegated;
-
-        /// <summary>Whether <c>\D</c> appears in the class.</summary>
-        public bool HasNegD;
-
-        /// <summary>Whether <c>\W</c> appears in the class.</summary>
-        public bool HasNegW;
-
-        /// <summary>Whether <c>\S</c> appears in the class.</summary>
-        public bool HasNegS;
-
-        /// <summary>Whether the class has any non-negated-shorthand content.</summary>
-        public bool HasPositiveParts;
-
-        /// <summary>Whether the class contains any supplementary (astral) code points via <c>\u{XXXXX}</c>.</summary>
-        public bool HasSupplementary;
-
-        /// <summary>Whether the class contains a property escape that expands to an alternation pattern (e.g. Emoji, Script=Latin).</summary>
-        public bool HasAlternationProperty;
-
-        public readonly bool HasNegatedShorthands => HasNegD || HasNegW || HasNegS;
-    }
-
-    /// <summary>
-    /// Scans character class content (starting after <c>[</c> and optional <c>^</c>)
-    /// to find the closing <c>]</c> and detect negated shorthands.
-    /// Does not modify any translator state.
-    /// </summary>
-    private static CharClassInfo ScanCharClassContent(ReadOnlySpan<char> input, int startPos)
-    {
-        CharClassInfo info = default;
-        int pos = startPos;
-
-        while (pos < input.Length && input[pos] != ']')
-        {
-            if (input[pos] == '\\' && pos + 1 < input.Length)
-            {
-                char next = input[pos + 1];
-                switch (next)
-                {
-                    case 'D':
-                        info.HasNegD = true;
-                        pos += 2;
-                        break;
-                    case 'W':
-                        info.HasNegW = true;
-                        pos += 2;
-                        break;
-                    case 'S':
-                        info.HasNegS = true;
-                        pos += 2;
-                        break;
-                    case 'u':
-                        info.HasPositiveParts = true;
-                        pos += 2;
-                        if (pos < input.Length && input[pos] == '{')
-                        {
-                            int hexStart = pos + 1;
-                            pos++;
-                            while (pos < input.Length && input[pos] != '}')
-                            {
-                                pos++;
-                            }
-
-                            if (pos < input.Length)
-                            {
-                                if (TryParseHex(input[hexStart..pos], out int cp) && cp > 0xFFFF)
-                                {
-                                    info.HasSupplementary = true;
-                                }
-
-                                pos++;
-                            }
-                        }
-                        else
-                        {
-                            pos = Math.Min(pos + 4, input.Length);
-                        }
-
-                        break;
-                    case 'p':
-                    case 'P':
-                        info.HasPositiveParts = true;
-                        pos += 2;
-                        if (pos < input.Length && input[pos] == '{')
-                        {
-                            int propStart = pos + 1;
-                            pos++;
-                            while (pos < input.Length && input[pos] != '}')
-                            {
-                                pos++;
-                            }
-
-                            if (pos < input.Length)
-                            {
-                                // Check if this property resolves to an alternation pattern
-                                ReadOnlySpan<char> propExpr = input[propStart..pos];
-                                if (IsAlternationProperty(propExpr))
-                                {
-                                    info.HasAlternationProperty = true;
-                                }
-
-                                pos++;
-                            }
-                        }
-
-                        break;
-                    case 'x':
-                        info.HasPositiveParts = true;
-                        pos = Math.Min(pos + 4, input.Length);
-                        break;
-                    case 'c':
-                        info.HasPositiveParts = true;
-                        pos = Math.Min(pos + 3, input.Length);
-                        break;
-                    default:
-                        info.HasPositiveParts = true;
-                        pos += 2;
-                        break;
-                }
+                // The end of the pattern is the end of the match, and a match that ends inside a pair is one that
+                // ends after it too. The end of a group or of a lookaround is followed by something not known here.
+                return (context & Context.Last) == 0;
             }
-            else
-            {
-                info.HasPositiveParts = true;
-                if (char.IsHighSurrogate(input[pos]) && pos + 1 < input.Length && input[pos + 1] != ']' && char.IsLowSurrogate(input[pos + 1]))
-                {
-                    int cp = char.ConvertToUtf32(input[pos], input[pos + 1]);
-                    if (cp > 0xFFFF)
-                    {
-                        info.HasSupplementary = true;
-                    }
 
-                    pos += 2;
+            switch (next.Kind)
+            {
+                case EcmaRegexNodeKind.Char:
+                case EcmaRegexNodeKind.Set:
+                case EcmaRegexNodeKind.Eol:
+                case EcmaRegexNodeKind.Bol:
+                case EcmaRegexNodeKind.LineStart:
+                case EcmaRegexNodeKind.LineEnd:
+                case EcmaRegexNodeKind.WordBoundary:
+                    return false;
+                case EcmaRegexNodeKind.Repeat:
+                    return next.Min == 0 || this.IsCodeUnitLoop(next) || this.MayFollowInsidePair(next.Subs[0], Context.None);
+                case EcmaRegexNodeKind.Group:
+                    return next.Subs[0].Kind is not (EcmaRegexNodeKind.Char or EcmaRegexNodeKind.Set);
+                default:
+                    return true;
+            }
+        }
+
+        /// <summary>Writes a repetition.</summary>
+        private void Repeat(EcmaRegexNode n, Context context, EcmaRegexNode? next)
+        {
+            EcmaRegexNode body = n.Subs[0];
+            int min = n.Min;
+            int max = n.Max;
+            bool lazy = n.Lazy;
+            bool backward = (context & Context.Backward) != 0;
+            Context inner = context & Context.Backward;
+            if (this.IsCodeUnitLoop(n))
+            {
+                // The iterations that must run are counted by character, and the rest are any code units.
+                if (min > 1)
+                {
+                    if (backward)
+                    {
+                        this.CodeUnitLoop(body, 0, lazy, this.MayFollowInsidePair(next, context), backward);
+                        this.SetAtom(body, backward, wrap: true);
+                        this.Quantifier(min, min, lazy: false);
+                    }
+                    else
+                    {
+                        this.SetAtom(body, backward, wrap: true);
+                        this.Quantifier(min, min, lazy: false);
+                        this.CodeUnitLoop(body, 0, lazy, this.MayFollowInsidePair(next, context), backward);
+                    }
                 }
                 else
                 {
-                    pos++;
+                    this.CodeUnitLoop(body, min, lazy, this.MayFollowInsidePair(next, context), backward);
                 }
+
+                return;
+            }
+
+            if (this.unicode && max == EcmaRegexNode.Unbounded && body.Kind == EcmaRegexNodeKind.Set && body.Set.Length != 0 && !this.IsOneClass(body))
+            {
+                this.SetRuns(body, min, lazy, backward);
+                return;
+            }
+
+            if (this.unicode && max > 1 && body.Kind == EcmaRegexNodeKind.Set && HoldsEveryPair(body.Set) && this.CountedCodeUnits(body, min, max, lazy, backward))
+            {
+                return;
+            }
+
+            this.Atom(body, inner, null);
+            this.Quantifier(min, max, lazy);
+        }
+
+        /// <summary>
+        /// Writes a backreference, which in ECMA-262 matches the text the group captured when the group has taken
+        /// part and the empty string when it has not. A name can belong to several groups in separate alternatives,
+        /// of which at most one has taken part, so the tests of each follow one another.
+        /// </summary>
+        private void Backreference(EcmaRegexNode n)
+        {
+            foreach (int g in n.Groups)
+            {
+                string number = g.ToString(CultureInfo.InvariantCulture);
+                this.sb.Append("(?(").Append(number).Append(')');
+                if (n.Fold && this.CapturesCased(g))
+                {
+                    this.sb.Append(@"(?i:\").Append(number).Append(')');
+                }
+                else
+                {
+                    this.sb.Append('\\').Append(number);
+                }
+
+                this.sb.Append(')');
             }
         }
 
-        info.EndPos = pos;
-        return info;
-    }
-
-    /// <summary>
-    /// Determines whether a property expression (the content between { and }) resolves to
-    /// an alternation pattern that cannot be inlined into a character class.
-    /// </summary>
-    private static bool IsAlternationProperty(ReadOnlySpan<char> propExpr)
-    {
-        int eqIndex = propExpr.IndexOf('=');
-        if (eqIndex >= 0)
+        /// <summary>Whether the text a group captures can hold a character that has a case variant.</summary>
+        private bool CapturesCased(int g)
         {
-            ReadOnlySpan<char> name = propExpr[..eqIndex];
-            ReadOnlySpan<char> value = propExpr[(eqIndex + 1)..];
-
-            if (name.SequenceEqual("Script") || name.SequenceEqual("sc")
-                || name.SequenceEqual("Script_Extensions") || name.SequenceEqual("scx"))
-            {
-                return TryMapScriptName(value, out _, out string? fullPattern) && fullPattern is not null;
-            }
-
-            return false;
+            EcmaRegexNode? group = this.groupNodes[g];
+            return group is not null && EcmaRegexUnicode.Intersects(this.CapturedSet(group, 0), EcmaRegexUnicode.Cased(this.unicode));
         }
 
-        // Lone value: check binary properties
-        if (TryMapCategoryLongName(propExpr, out _) || IsValidShortCategory(propExpr))
+        /// <summary>Every character the text a node matches can hold.</summary>
+        private int[] CapturedSet(EcmaRegexNode n, int depth)
         {
-            return false;
-        }
-
-        return TryMapBinaryProperty(propExpr, out _, out string? altPattern) && altPattern is not null;
-    }
-
-    private ref struct Translator
-    {
-        private readonly ReadOnlySpan<char> _input;
-        private readonly Span<char> _output;
-        private int _in;
-        private int _out;
-
-        public Translator(ReadOnlySpan<char> input, Span<char> output)
-        {
-            _input = input;
-            _output = output;
-            _in = 0;
-            _out = 0;
-        }
-
-        public readonly int CharsWritten => _out;
-
-        public OperationStatus Run()
-        {
-            while (_in < _input.Length)
+            switch (n.Kind)
             {
-                char c = _input[_in];
-                OperationStatus status;
-
-                switch (c)
+                case EcmaRegexNodeKind.Char:
+                    return [n.CodePoint, n.CodePoint];
+                case EcmaRegexNodeKind.Set:
+                    return n.Set;
+                case EcmaRegexNodeKind.Look:
+                    return [];
+                case EcmaRegexNodeKind.Backref:
                 {
-                    case '.':
-                        status = Emit(DotExpansion);
-                        if (status != OperationStatus.Done)
+                    if (depth > EcmaRegexParser.MaxNesting)
+                    {
+                        return [0, EcmaRegexUnicode.Max];
+                    }
+
+                    int[] set = [];
+                    foreach (int g in n.Groups)
+                    {
+                        if (this.groupNodes[g] is EcmaRegexNode target)
                         {
-                            return status;
+                            int[] captured = this.CapturedSet(target, depth + 1);
+                            set = EcmaRegexUnicode.Union(set, n.Fold ? EcmaRegexUnicode.FoldClosure(captured, this.unicode) : captured);
                         }
-
-                        _in++;
-                        break;
-
-                    case '$':
-                        // Without the m flag, ECMAScript's $ matches only at the end of the input; .NET's $ also
-                        // matches before a final \n.
-                        status = Emit(@"\z");
-                        if (status != OperationStatus.Done)
-                        {
-                            return status;
-                        }
-
-                        _in++;
-                        break;
-
-                    case '[':
-                        status = TranslateCharacterClass();
-                        if (status != OperationStatus.Done)
-                        {
-                            return status;
-                        }
-
-                        break;
-
-                    case '\\':
-                        status = TranslateEscape();
-                        if (status != OperationStatus.Done)
-                        {
-                            return status;
-                        }
-
-                        break;
-
-                    default:
-                        if (char.IsHighSurrogate(c) && _in + 1 < _input.Length && char.IsLowSurrogate(_input[_in + 1]))
-                        {
-                            // Literal non-BMP character (e.g. 🐲) stored as UTF-16 surrogate pair.
-                            // Wrap in non-capturing group so quantifiers apply to the whole code point.
-                            int cp = char.ConvertToUtf32(c, _input[_in + 1]);
-                            status = EmitStandaloneCodePointAtom(cp);
-                            if (status != OperationStatus.Done)
-                            {
-                                return status;
-                            }
-
-                            _in += 2;
-                        }
-                        else
-                        {
-                            status = Emit(c);
-                            if (status != OperationStatus.Done)
-                            {
-                                return status;
-                            }
-
-                            _in++;
-                        }
-
-                        break;
-                }
-            }
-
-            return OperationStatus.Done;
-        }
-
-        private OperationStatus TranslateEscape()
-        {
-            if (_in + 1 >= _input.Length)
-            {
-                return OperationStatus.InvalidData;
-            }
-
-            char next = _input[_in + 1];
-
-            switch (next)
-            {
-                case 'd':
-                    _in += 2;
-                    return Emit(DigitClass);
-
-                case 'D':
-                    _in += 2;
-                    return Emit(NotDigitClass);
-
-                case 'w':
-                    _in += 2;
-                    return Emit(WordClass);
-
-                case 'W':
-                    _in += 2;
-                    return Emit(NotWordClass);
-
-                case 's':
-                    _in += 2;
-                    return Emit(WhitespaceClass);
-
-                case 'S':
-                    _in += 2;
-                    return Emit(NotWhitespaceClass);
-
-                case 'b':
-                    _in += 2;
-                    return Emit(WordBoundary);
-
-                case 'B':
-                    _in += 2;
-                    return Emit(NonWordBoundary);
-
-                case 'u':
-                    return TranslateUnicodeEscape();
-
-                case 'p':
-                case 'P':
-                    return TranslatePropertyEscape(insideCharClass: false);
-
-                case '0':
-                {
-                    // ECMAScript /u mode: \0 is the NUL character, but must NOT
-                    // be followed by a decimal digit (octal escapes are forbidden).
-                    // Without this check, \01 would pass through and .NET would
-                    // interpret it as octal \x01 rather than rejecting it.
-                    if (_in + 2 < _input.Length && _input[_in + 2] is >= '0' and <= '9')
-                    {
-                        return OperationStatus.InvalidData;
                     }
 
-                    OperationStatus s = Emit('\\');
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-
-                    _in += 2;
-                    return Emit('0');
-                }
-
-                // Pass-through escapes
-                case 't' or 'n' or 'r' or 'f' or 'v':
-                case '^' or '$' or '.' or '*' or '+' or '?' or '/':
-                case '(' or ')' or '[' or ']' or '{' or '}' or '|' or '\\':
-                {
-                    OperationStatus s = Emit('\\');
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-
-                    _in += 2;
-                    return Emit(next);
-                }
-
-                case 'c':
-                {
-                    // \cX control escape — X must be a letter [a-zA-Z]
-                    if (_in + 2 >= _input.Length)
-                    {
-                        return OperationStatus.InvalidData;
-                    }
-
-                    char controlLetter = _input[_in + 2];
-                    if (controlLetter is not ((>= 'a' and <= 'z') or (>= 'A' and <= 'Z')))
-                    {
-                        return OperationStatus.InvalidData;
-                    }
-
-                    OperationStatus s = Emit(_input.Slice(_in, 3));
-                    _in += 3;
-                    return s;
-                }
-
-                case 'x':
-                {
-                    // \xHH hex escape
-                    if (_in + 3 >= _input.Length)
-                    {
-                        return OperationStatus.InvalidData;
-                    }
-
-                    OperationStatus s = Emit(_input.Slice(_in, 4));
-                    _in += 4;
-                    return s;
-                }
-
-                case 'k':
-                {
-                    // \k<name> named backreference
-                    // Wrap in conditional to match ECMAScript non-participating semantics:
-                    // (?(name)\k<name>) → if group captured, match it; else match empty
-                    _in += 2;
-                    if (_in >= _input.Length || _input[_in] != '<')
-                    {
-                        return OperationStatus.InvalidData;
-                    }
-
-                    // Extract the name
-                    int nameStart = _in + 1;
-                    int nameEnd = nameStart;
-                    while (nameEnd < _input.Length && _input[nameEnd] != '>')
-                    {
-                        nameEnd++;
-                    }
-
-                    if (nameEnd >= _input.Length)
-                    {
-                        return OperationStatus.InvalidData;
-                    }
-
-                    ReadOnlySpan<char> name = _input[nameStart..nameEnd];
-
-                    OperationStatus s = Emit("(?(");
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-
-                    s = Emit(name);
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-
-                    s = Emit(")\\k<");
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-
-                    s = Emit(name);
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-
-                    s = Emit(">)");
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-
-                    _in = nameEnd + 1;
-                    return OperationStatus.Done;
+                    return set;
                 }
 
                 default:
                 {
-                    if (next is >= '1' and <= '9')
+                    int[] set = [];
+                    foreach (EcmaRegexNode sub in n.Subs)
                     {
-                        // Backreference: wrap in conditional to match ECMAScript
-                        // non-participating/forward reference semantics:
-                        // \N → (?(N)\N) — if group captured, match it; else match empty
-                        _in++;
-                        int digitStart = _in;
-                        while (_in < _input.Length && _input[_in] is >= '0' and <= '9')
-                        {
-                            _in++;
-                        }
-
-                        ReadOnlySpan<char> digits = _input[digitStart.._in];
-
-                        OperationStatus s = Emit("(?(");
-                        if (s != OperationStatus.Done)
-                        {
-                            return s;
-                        }
-
-                        s = Emit(digits);
-                        if (s != OperationStatus.Done)
-                        {
-                            return s;
-                        }
-
-                        s = Emit(")\\");
-                        if (s != OperationStatus.Done)
-                        {
-                            return s;
-                        }
-
-                        s = Emit(digits);
-                        if (s != OperationStatus.Done)
-                        {
-                            return s;
-                        }
-
-                        s = Emit(')');
-                        if (s != OperationStatus.Done)
-                        {
-                            return s;
-                        }
-
-                        return OperationStatus.Done;
+                        set = EcmaRegexUnicode.Union(set, this.CapturedSet(sub, depth));
                     }
 
-                    // In /u mode, no other identity escapes are valid.
-                    // The only valid identity escapes (SyntaxCharacter and /)
-                    // are handled by the explicit cases above.
-                    return OperationStatus.InvalidData;
+                    return set;
                 }
             }
         }
 
-        private OperationStatus TranslateUnicodeEscape(bool insideCharClass = false)
+        // Characters and sets.
+
+        /// <summary>Writes one literal character.</summary>
+        private void Character(int c)
         {
-            _in += 2; // skip \u
-
-            if (_in >= _input.Length)
+            if (c > 0xFFFF)
             {
-                return OperationStatus.InvalidData;
+                // The group makes a quantifier that follows apply to both halves.
+                this.sb.Append("(?:");
+                this.Escape(char.ConvertFromUtf32(c)[0]);
+                this.Escape(char.ConvertFromUtf32(c)[1]);
+                this.sb.Append(')');
             }
-
-            if (_input[_in] == '{')
+            else if (this.unicode && c >= 0xD800 && c <= 0xDBFF)
             {
-                // \u{XXXX...} form
-                _in++;
-                int start = _in;
-                while (_in < _input.Length && _input[_in] != '}')
-                {
-                    _in++;
-                }
-
-                if (_in >= _input.Length)
-                {
-                    return OperationStatus.InvalidData;
-                }
-
-                ReadOnlySpan<char> hexDigits = _input[start.._in];
-                _in++; // skip '}'
-
-                if (!TryParseHex(hexDigits, out int codePoint))
-                {
-                    return OperationStatus.InvalidData;
-                }
-
-                // Outside character classes, supplementary code points need a non-capturing
-                // group wrapper so quantifiers apply to the whole code point.
-                return insideCharClass ? EmitCodePoint(codePoint) : EmitStandaloneCodePointAtom(codePoint);
+                // A lone surrogate in a pattern read by code point does not match half of a pair.
+                this.Escape((char)c);
+                this.sb.Append("(?!").Append(LowSurrogates).Append(')');
+            }
+            else if (this.unicode && c >= 0xDC00 && c <= 0xDFFF)
+            {
+                this.sb.Append("(?<!").Append(HighSurrogates).Append(')');
+                this.Escape((char)c);
             }
             else
             {
-                // \uXXXX form - same syntax in .NET, pass through
-                if (_in + 4 > _input.Length)
-                {
-                    return OperationStatus.InvalidData;
-                }
-
-                OperationStatus s = Emit("\\u");
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = Emit(_input.Slice(_in, 4));
-                _in += 4;
-                return s;
+                this.Literal((char)c, inClass: false);
             }
         }
 
-        private OperationStatus EmitCodePoint(int codePoint)
+        private void Escape(char c)
         {
-            if (codePoint <= 0xFFFF)
-            {
-                return EmitUnicodeEscape((char)codePoint);
-            }
-
-            if (codePoint <= 0x10FFFF)
-            {
-                // Supplementary character: emit as surrogate pair
-                int adjusted = codePoint - 0x10000;
-                char high = (char)(0xD800 + (adjusted >> 10));
-                char low = (char)(0xDC00 + (adjusted & 0x3FF));
-                OperationStatus s = EmitUnicodeEscape(high);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                return EmitUnicodeEscape(low);
-            }
-
-            return OperationStatus.InvalidData;
+            this.sb.Append(@"\u").Append(((int)c).ToString("X4", CultureInfo.InvariantCulture));
         }
 
-        /// <summary>
-        /// Emits a Unicode code point as a standalone regex atom. For supplementary code points,
-        /// wraps the surrogate pair in a non-capturing group <c>(?:\uHHHH\uLLLL)</c> so that
-        /// any following quantifier applies to the entire code point.
-        /// </summary>
-        private OperationStatus EmitStandaloneCodePointAtom(int codePoint)
+        /// <summary>Writes a code unit as itself where .NET reads it as itself, and as an escape elsewhere.</summary>
+        private void Literal(char c, bool inClass)
         {
-            if (codePoint <= 0xFFFF)
+            switch (c)
             {
-                return EmitUnicodeEscape((char)codePoint);
+                case '\t':
+                    this.sb.Append(@"\t");
+                    return;
+                case '\n':
+                    this.sb.Append(@"\n");
+                    return;
+                case '\v':
+                    this.sb.Append(@"\v");
+                    return;
+                case '\f':
+                    this.sb.Append(@"\f");
+                    return;
+                case '\r':
+                    this.sb.Append(@"\r");
+                    return;
             }
 
-            if (codePoint <= 0x10FFFF)
+            if (c < 0x20 || c > 0x7E)
             {
-                OperationStatus s = Emit("(?:");
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                int adjusted = codePoint - 0x10000;
-                char high = (char)(0xD800 + (adjusted >> 10));
-                char low = (char)(0xDC00 + (adjusted & 0x3FF));
-                s = EmitUnicodeEscape(high);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = EmitUnicodeEscape(low);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                return Emit(')');
+                this.Escape(c);
+                return;
             }
 
-            return OperationStatus.InvalidData;
+            bool special = inClass
+                ? c is '\\' or ']' or '[' or '^' or '-'
+                : c is '\\' or '*' or '+' or '?' or '|' or '{' or '}' or '[' or ']' or '(' or ')' or '^' or '$' or '.';
+            if (special)
+            {
+                this.sb.Append('\\');
+            }
+
+            this.sb.Append(c);
         }
 
-        private OperationStatus EmitUnicodeEscape(char c)
+        private void Ranges(int[] set)
         {
-            if (_out + 6 > _output.Length)
+            for (int k = 0; k < set.Length; k += 2)
             {
-                return OperationStatus.DestinationTooSmall;
-            }
-
-            _output[_out++] = '\\';
-            _output[_out++] = 'u';
-            _output[_out++] = ToHexChar((c >> 12) & 0xF);
-            _output[_out++] = ToHexChar((c >> 8) & 0xF);
-            _output[_out++] = ToHexChar((c >> 4) & 0xF);
-            _output[_out++] = ToHexChar(c & 0xF);
-            return OperationStatus.Done;
-        }
-
-        private OperationStatus TranslatePropertyEscape(bool insideCharClass)
-        {
-            bool negated = _input[_in + 1] == 'P';
-            _in += 2; // skip \p or \P
-
-            if (_in >= _input.Length || _input[_in] != '{')
-            {
-                return OperationStatus.InvalidData;
-            }
-
-            _in++; // skip '{'
-
-            int start = _in;
-            while (_in < _input.Length && _input[_in] != '}')
-            {
-                _in++;
-            }
-
-            if (_in >= _input.Length)
-            {
-                return OperationStatus.InvalidData;
-            }
-
-            ReadOnlySpan<char> propertyExpr = _input[start.._in];
-            _in++; // skip '}'
-
-            return EmitTranslatedProperty(propertyExpr, negated, insideCharClass);
-        }
-
-        private OperationStatus EmitTranslatedProperty(ReadOnlySpan<char> propertyExpr, bool negated, bool insideCharClass)
-        {
-            int eqIndex = propertyExpr.IndexOf('=');
-            if (eqIndex >= 0)
-            {
-                ReadOnlySpan<char> name = propertyExpr[..eqIndex];
-                ReadOnlySpan<char> value = propertyExpr[(eqIndex + 1)..];
-
-                if (name.SequenceEqual("General_Category") || name.SequenceEqual("gc"))
+                if (set[k + 1] == set[k])
                 {
-                    return EmitCategoryProperty(value, negated);
-                }
-
-                if (name.SequenceEqual("Script") || name.SequenceEqual("sc")
-                    || name.SequenceEqual("Script_Extensions") || name.SequenceEqual("scx"))
-                {
-                    return EmitScriptProperty(value, negated);
-                }
-
-                // Unknown property name in /u mode is an error
-                return OperationStatus.InvalidData;
-            }
-
-            // Lone value: general category value or binary property
-            return EmitCategoryOrBinaryProperty(propertyExpr, negated, insideCharClass);
-        }
-
-        private OperationStatus EmitCategoryProperty(ReadOnlySpan<char> value, bool negated)
-        {
-            OperationStatus s = Emit(negated ? "\\P{" : "\\p{");
-            if (s != OperationStatus.Done)
-            {
-                return s;
-            }
-
-            if (TryMapCategoryLongName(value, out string? shortName))
-            {
-                s = Emit(shortName);
-            }
-            else if (IsValidShortCategory(value))
-            {
-                s = Emit(value);
-            }
-            else
-            {
-                return OperationStatus.InvalidData;
-            }
-
-            if (s != OperationStatus.Done)
-            {
-                return s;
-            }
-
-            return Emit('}');
-        }
-
-        private OperationStatus EmitScriptProperty(ReadOnlySpan<char> value, bool negated)
-        {
-            if (TryMapScriptName(value, out string? dotNetBlockName, out string? fullPattern))
-            {
-                if (fullPattern is not null)
-                {
-                    // Script with explicit pattern (e.g. Latin)
-                    if (negated)
-                    {
-                        OperationStatus sn = Emit("(?!");
-                        if (sn != OperationStatus.Done)
-                        {
-                            return sn;
-                        }
-
-                        sn = Emit(fullPattern);
-                        if (sn != OperationStatus.Done)
-                        {
-                            return sn;
-                        }
-
-                        sn = Emit(')');
-                        if (sn != OperationStatus.Done)
-                        {
-                            return sn;
-                        }
-
-                        return Emit(AnyCodePoint);
-                    }
-
-                    return Emit(fullPattern);
-                }
-
-                OperationStatus s = Emit(negated ? "\\P{" : "\\p{");
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = Emit(dotNetBlockName);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                return Emit('}');
-            }
-
-            // Unknown script name
-            return OperationStatus.InvalidData;
-        }
-
-        private OperationStatus EmitCategoryOrBinaryProperty(ReadOnlySpan<char> value, bool negated, bool insideCharClass)
-        {
-            // Try general category long name first
-            if (TryMapCategoryLongName(value, out string? shortName))
-            {
-                OperationStatus s = Emit(negated ? "\\P{" : "\\p{");
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = Emit(shortName);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                return Emit('}');
-            }
-
-            // Try valid short category name
-            if (IsValidShortCategory(value))
-            {
-                OperationStatus s = Emit(negated ? "\\P{" : "\\p{");
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = Emit(value);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                return Emit('}');
-            }
-
-            // Try binary property → character class or alternation expansion
-            if (TryMapBinaryProperty(value, out string? classContent, out string? alternationPattern))
-            {
-                if (alternationPattern is not null)
-                {
-                    // Properties with supplementary code points use a complete alternation pattern.
-                    // These cannot be inlined into a character class.
-                    if (insideCharClass)
-                    {
-                        return OperationStatus.InvalidData;
-                    }
-
-                    if (negated)
-                    {
-                        // Negate via negative lookahead: (?!pattern)(.)
-                        OperationStatus sn = Emit("(?!");
-                        if (sn != OperationStatus.Done)
-                        {
-                            return sn;
-                        }
-
-                        sn = Emit(alternationPattern);
-                        if (sn != OperationStatus.Done)
-                        {
-                            return sn;
-                        }
-
-                        sn = Emit(')');
-                        if (sn != OperationStatus.Done)
-                        {
-                            return sn;
-                        }
-
-                        return Emit(AnyCodePoint);
-                    }
-
-                    return Emit(alternationPattern);
-                }
-
-                if (insideCharClass)
-                {
-                    // Inside a character class: emit inline content only.
-                    // The caller already opened the class brackets.
-                    return Emit(classContent);
-                }
-
-                return Emit(negated ? "[^" : "[") is var s1 && s1 != OperationStatus.Done
-                    ? s1
-                    : Emit(classContent) is var s2 && s2 != OperationStatus.Done
-                    ? s2
-                    : Emit(']');
-            }
-
-            // Unrecognised property name in /u mode
-            return OperationStatus.InvalidData;
-        }
-
-        private OperationStatus TranslateCharacterClass()
-        {
-            _in++; // skip '['
-
-            bool isNegated = false;
-            if (_in < _input.Length && _input[_in] == '^')
-            {
-                isNegated = true;
-                _in++;
-            }
-
-            // Handle empty class [] and match-any class [^]
-            if (_in < _input.Length && _input[_in] == ']')
-            {
-                _in++; // skip ']'
-                return isNegated ? Emit("[\\s\\S]") : Emit("[^\\s\\S]");
-            }
-
-            // Scan from current position to determine strategy
-            CharClassInfo info = ScanCharClassContent(_input, _in);
-            info.IsNegated = isNegated;
-
-            if (info.EndPos >= _input.Length)
-            {
-                return OperationStatus.InvalidData;
-            }
-
-            if (!info.HasNegatedShorthands)
-            {
-                if (info.HasAlternationProperty)
-                {
-                    return EmitAlternationPropertyCharClass(isNegated, in info);
-                }
-
-                if (info.HasSupplementary)
-                {
-                    return EmitSupplementaryCharClass(isNegated, in info);
-                }
-
-                return EmitSimpleCharClass(isNegated, info.EndPos);
-            }
-
-            if (!isNegated)
-            {
-                return EmitAlternationCharClass(in info);
-            }
-
-            return EmitSubtractionCharClass(in info);
-        }
-
-        private OperationStatus EmitSimpleCharClass(bool isNegated, int endPos)
-        {
-            OperationStatus s = Emit(isNegated ? "[^" : "[");
-            if (s != OperationStatus.Done)
-            {
-                return s;
-            }
-
-            s = EmitCharClassContent(endPos, skipNegShorthands: false);
-            if (s != OperationStatus.Done)
-            {
-                return s;
-            }
-
-            s = Emit(']');
-            _in = endPos + 1;
-            return s;
-        }
-
-        /// <summary>
-        /// Emits a character class that contains one or more property escapes resolving to
-        /// alternation patterns (e.g. Emoji, Script=Latin). These cannot be inlined into
-        /// a single [...] class, so we emit (?:[inlineContent]|pattern1|pattern2|...).
-        /// For negated classes: (?!pattern1|[inlineContent]|pattern2|...)(anyCodePoint).
-        /// </summary>
-        private OperationStatus EmitAlternationPropertyCharClass(bool isNegated, in CharClassInfo info)
-        {
-            int endPos = info.EndPos;
-            int savedIn = _in;
-
-            // For negated: (?!...) + AnyCodePoint
-            // For non-negated: (?:...)
-            OperationStatus s = Emit(isNegated ? "(?!" : "(?:");
-            if (s != OperationStatus.Done)
-            {
-                return s;
-            }
-
-            // We need to walk the content, accumulating inline parts and emitting alternation
-            // patterns as alternatives. We'll buffer inline content in a [..] class.
-            bool hasInlineContent = false;
-            bool needsSeparator = false;
-
-            // Determine if there's any non-alternation-property content
-            int scanPos = savedIn;
-            while (scanPos < endPos)
-            {
-                if (_input[scanPos] == '\\' && scanPos + 1 < endPos
-                    && (_input[scanPos + 1] == 'p' || _input[scanPos + 1] == 'P')
-                    && scanPos + 2 < endPos && _input[scanPos + 2] == '{')
-                {
-                    int braceStart = scanPos + 3;
-                    int braceEnd = braceStart;
-                    while (braceEnd < endPos && _input[braceEnd] != '}')
-                    {
-                        braceEnd++;
-                    }
-
-                    ReadOnlySpan<char> propExpr = _input[braceStart..braceEnd];
-                    if (IsAlternationProperty(propExpr))
-                    {
-                        scanPos = braceEnd + 1;
-                        continue;
-                    }
-                }
-
-                hasInlineContent = true;
-                break;
-            }
-
-            // First, emit inline content (non-alternation parts) as a character class
-            if (hasInlineContent)
-            {
-                s = Emit('[');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                _in = savedIn;
-                s = EmitCharClassContentSkippingAlternationProperties(endPos);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = Emit(']');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                needsSeparator = true;
-            }
-
-            // Now emit alternation-pattern properties as alternatives
-            _in = savedIn;
-            while (_in < endPos)
-            {
-                if (_input[_in] == '\\' && _in + 1 < endPos
-                    && (_input[_in + 1] == 'p' || _input[_in + 1] == 'P')
-                    && _in + 2 < endPos && _input[_in + 2] == '{')
-                {
-                    int braceStart = _in + 3;
-                    int braceEnd = braceStart;
-                    while (braceEnd < endPos && _input[braceEnd] != '}')
-                    {
-                        braceEnd++;
-                    }
-
-                    ReadOnlySpan<char> propExpr = _input[braceStart..braceEnd];
-                    if (IsAlternationProperty(propExpr))
-                    {
-                        if (needsSeparator)
-                        {
-                            s = Emit('|');
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-                        }
-
-                        // Emit the property as a standalone pattern (not inside class)
-                        s = TranslatePropertyEscape(insideCharClass: false);
-                        if (s != OperationStatus.Done)
-                        {
-                            return s;
-                        }
-
-                        needsSeparator = true;
-                        continue;
-                    }
-                }
-
-                // Skip non-alternation content (already emitted in the inline class above)
-                SkipOneClassAtom(endPos);
-            }
-
-            s = Emit(')');
-            if (s != OperationStatus.Done)
-            {
-                return s;
-            }
-
-            if (isNegated)
-            {
-                s = Emit(AnyCodePoint);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-            }
-
-            _in = endPos + 1; // skip ']'
-            return OperationStatus.Done;
-        }
-
-        /// <summary>
-        /// Emits character class content, skipping any property escapes that resolve to alternation patterns.
-        /// </summary>
-        private OperationStatus EmitCharClassContentSkippingAlternationProperties(int endPos)
-        {
-            while (_in < endPos)
-            {
-                if (_input[_in] == '\\' && _in + 1 < endPos
-                    && (_input[_in + 1] == 'p' || _input[_in + 1] == 'P')
-                    && _in + 2 < endPos && _input[_in + 2] == '{')
-                {
-                    int braceStart = _in + 3;
-                    int braceEnd = braceStart;
-                    while (braceEnd < endPos && _input[braceEnd] != '}')
-                    {
-                        braceEnd++;
-                    }
-
-                    ReadOnlySpan<char> propExpr = _input[braceStart..braceEnd];
-                    if (IsAlternationProperty(propExpr))
-                    {
-                        // Skip this property — it will be emitted as an alternation
-                        _in = braceEnd + 1;
-                        continue;
-                    }
-                }
-
-                // Emit one atom of class content
-                OperationStatus s = EmitOneCharClassAtom(endPos);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-            }
-
-            return OperationStatus.Done;
-        }
-
-        /// <summary>
-        /// Emits exactly one atom (character, escape, range) from the character class content.
-        /// </summary>
-        private OperationStatus EmitOneCharClassAtom(int endPos)
-        {
-            if (_input[_in] == '\\' && _in + 1 < endPos)
-            {
-                char esc = _input[_in + 1];
-
-                // Handle multi-char escapes that need translation
-                switch (esc)
-                {
-                    case 'd':
-                        _in += 2;
-                        return Emit(DigitInline);
-                    case 'w':
-                        _in += 2;
-                        return Emit(WordInline);
-                    case 's':
-                        _in += 2;
-                        return Emit(WhitespaceInline);
-                    case 'p' or 'P':
-                        return TranslatePropertyEscape(insideCharClass: true);
-                    case 'u':
-                    {
-                        OperationStatus s = TranslateUnicodeEscape(insideCharClass: true);
-                        return s;
-                    }
-
-                    case 'x':
-                    {
-                        // \xHH — pass through
-                        int len = Math.Min(4, endPos - _in);
-                        OperationStatus s = Emit(_input.Slice(_in, len));
-                        _in += len;
-                        return s;
-                    }
-
-                    case 'c':
-                    {
-                        int len = Math.Min(3, endPos - _in);
-                        OperationStatus s = Emit(_input.Slice(_in, len));
-                        _in += len;
-                        return s;
-                    }
-
-                    default:
-                    {
-                        // Validate identity escapes in /u mode inside class
-                        if (esc is '^' or '$' or '.' or '*' or '+' or '?' or '(' or ')'
-                            or '[' or ']' or '{' or '}' or '|' or '\\' or '/'
-                            or '-'
-                            or 't' or 'n' or 'r' or 'f' or 'v'
-                            or '0')
-                        {
-                            OperationStatus s = Emit(_input.Slice(_in, 2));
-                            _in += 2;
-                            return s;
-                        }
-
-                        return OperationStatus.InvalidData;
-                    }
-                }
-            }
-            else if (char.IsHighSurrogate(_input[_in]) && _in + 1 < endPos && char.IsLowSurrogate(_input[_in + 1]))
-            {
-                // Literal surrogate pair inside character class — emit as explicit surrogate pair escapes
-                int cp = char.ConvertToUtf32(_input[_in], _input[_in + 1]);
-                _in += 2;
-                return EmitCodePoint(cp);
-            }
-            else
-            {
-                // Literal character
-                OperationStatus s = Emit(_input[_in]);
-                _in++;
-                return s;
-            }
-        }
-
-        /// <summary>
-        /// Advances _in past one class atom without emitting anything.
-        /// </summary>
-        private void SkipOneClassAtom(int endPos)
-        {
-            if (_input[_in] == '\\' && _in + 1 < endPos)
-            {
-                char esc = _input[_in + 1];
-                _in += esc switch
-                {
-                    'p' or 'P' => SkipPropertyEscape(_in, endPos),
-                    'u' => SkipUnicodeEscape(_in, endPos),
-                    'x' => Math.Min(4, endPos - _in),
-                    'c' => Math.Min(3, endPos - _in),
-                    _ => 2,
-                };
-            }
-            else if (char.IsHighSurrogate(_input[_in]) && _in + 1 < endPos && char.IsLowSurrogate(_input[_in + 1]))
-            {
-                _in += 2;
-            }
-            else
-            {
-                _in++;
-            }
-        }
-
-        private OperationStatus EmitAlternationCharClass(in CharClassInfo info)
-        {
-            int contentStart = _in;
-            bool needsGroup = info.HasPositiveParts
-                || ((info.HasNegD ? 1 : 0) + (info.HasNegW ? 1 : 0) + (info.HasNegS ? 1 : 0)) > 1;
-
-            OperationStatus s;
-
-            if (needsGroup)
-            {
-                s = Emit("(?:");
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-            }
-
-            bool needsSep = false;
-
-            if (info.HasPositiveParts)
-            {
-                s = Emit('[');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                _in = contentStart;
-                s = EmitCharClassContent(info.EndPos, skipNegShorthands: true);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = Emit(']');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                needsSep = true;
-            }
-
-            if (info.HasNegD)
-            {
-                if (needsSep)
-                {
-                    s = Emit('|');
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-                }
-
-                s = Emit("[^0-9]");
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                needsSep = true;
-            }
-
-            if (info.HasNegW)
-            {
-                if (needsSep)
-                {
-                    s = Emit('|');
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-                }
-
-                s = Emit("[^a-zA-Z0-9_]");
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                needsSep = true;
-            }
-
-            if (info.HasNegS)
-            {
-                if (needsSep)
-                {
-                    s = Emit('|');
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-                }
-
-                s = Emit(NotWhitespaceClass);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-            }
-
-            if (needsGroup)
-            {
-                s = Emit(')');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-            }
-
-            _in = info.EndPos + 1;
-            return OperationStatus.Done;
-        }
-
-        private OperationStatus EmitSubtractionCharClass(in CharClassInfo info)
-        {
-            int contentStart = _in;
-
-            // Compute base set: intersection of complements of negated shorthands
-            // NOT(\D) = [0-9], NOT(\W) = [a-zA-Z0-9_], NOT(\S) = [whitespace]
-            // Intersections involving \S with either \D or \W yield empty set
-            if ((info.HasNegD && info.HasNegS) || (info.HasNegW && info.HasNegS))
-            {
-                _in = info.EndPos + 1;
-                return Emit("[^\\s\\S]");
-            }
-
-            string baseSet;
-            if (info.HasNegD || (info.HasNegD && info.HasNegW))
-            {
-                baseSet = "0-9";
-            }
-            else if (info.HasNegW)
-            {
-                baseSet = "a-zA-Z0-9_";
-            }
-            else
-            {
-                // HasNegS only
-                baseSet = WhitespaceInline;
-            }
-
-            OperationStatus s;
-
-            if (!info.HasPositiveParts)
-            {
-                s = Emit('[');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = Emit(baseSet);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = Emit(']');
-                _in = info.EndPos + 1;
-                return s;
-            }
-
-            // [baseSet-[positive_parts_expanded]]
-            s = Emit('[');
-            if (s != OperationStatus.Done)
-            {
-                return s;
-            }
-
-            s = Emit(baseSet);
-            if (s != OperationStatus.Done)
-            {
-                return s;
-            }
-
-            s = Emit("-[");
-            if (s != OperationStatus.Done)
-            {
-                return s;
-            }
-
-            _in = contentStart;
-            s = EmitCharClassContent(info.EndPos, skipNegShorthands: true);
-            if (s != OperationStatus.Done)
-            {
-                return s;
-            }
-
-            s = Emit("]]");
-            _in = info.EndPos + 1;
-            return s;
-        }
-
-        private OperationStatus EmitSupplementaryCharClass(bool isNegated, in CharClassInfo info)
-        {
-            int contentStart = _in;
-            int endPos = info.EndPos;
-
-            // Phase 1: Collect supplementary items
-            // Each item is a (startCp, endCp) pair; start == end for individuals
-            Span<int> suppCps = stackalloc int[32];  // code point pairs
-            Span<int> suppPos = stackalloc int[32];  // input position pairs
-            int suppCount = 0;
-            bool hasBmp = false;
-
-            int pos = contentStart;
-            while (pos < endPos)
-            {
-                if (_input[pos] == '\\' && pos + 1 < endPos
-                    && _input[pos + 1] == 'u' && pos + 2 < endPos
-                    && _input[pos + 2] == '{')
-                {
-                    int escStart = pos;
-                    int hexStart = pos + 3;
-                    int hexEnd = hexStart;
-                    while (hexEnd < endPos && _input[hexEnd] != '}')
-                    {
-                        hexEnd++;
-                    }
-
-                    if (TryParseHex(_input[hexStart..hexEnd], out int cp) && cp > 0xFFFF)
-                    {
-                        int startCp = cp;
-                        int endCp = cp;
-                        int escEnd = hexEnd + 1;
-
-                        // Check for supplementary-to-supplementary range
-                        if (escEnd < endPos && _input[escEnd] == '-'
-                            && escEnd + 1 < endPos && _input[escEnd + 1] == '\\'
-                            && escEnd + 2 < endPos && _input[escEnd + 2] == 'u'
-                            && escEnd + 3 < endPos && _input[escEnd + 3] == '{')
-                        {
-                            int rStart = escEnd + 4;
-                            int rEnd = rStart;
-                            while (rEnd < endPos && _input[rEnd] != '}')
-                            {
-                                rEnd++;
-                            }
-
-                            if (TryParseHex(_input[rStart..rEnd], out int endCpVal)
-                                && endCpVal > 0xFFFF)
-                            {
-                                endCp = endCpVal;
-                                escEnd = rEnd + 1;
-                            }
-                        }
-
-                        int idx = suppCount * 2;
-                        if (idx + 1 < suppCps.Length)
-                        {
-                            suppCps[idx] = startCp;
-                            suppCps[idx + 1] = endCp;
-                            suppPos[idx] = escStart;
-                            suppPos[idx + 1] = escEnd;
-                            suppCount++;
-                        }
-
-                        pos = escEnd;
-                        continue;
-                    }
-
-                    // BMP \u{...} escape
-                    hasBmp = true;
-                    pos = hexEnd + 1;
+                    this.Literal((char)set[k], inClass: true);
                     continue;
                 }
 
-                // Check for literal surrogate pair (non-BMP character in UTF-16)
-                if (!(_input[pos] == '\\') && char.IsHighSurrogate(_input[pos])
-                    && pos + 1 < endPos && char.IsLowSurrogate(_input[pos + 1]))
+                // .NET does not take an escaped hyphen for the end of a range, so one is written by its number.
+                this.RangeEnd((char)set[k]);
+                if (set[k + 1] != set[k] + 1)
                 {
-                    int litStart = pos;
-                    int startCp = char.ConvertToUtf32(_input[pos], _input[pos + 1]);
-                    int endCp = startCp;
-                    int litEnd = pos + 2;
+                    this.sb.Append('-');
+                }
 
-                    // Check for literal-pair - literal-pair range
-                    if (litEnd < endPos && _input[litEnd] == '-'
-                        && litEnd + 1 < endPos && char.IsHighSurrogate(_input[litEnd + 1])
-                        && litEnd + 2 < endPos && char.IsLowSurrogate(_input[litEnd + 2]))
+                this.RangeEnd((char)set[k + 1]);
+            }
+        }
+
+        private void RangeEnd(char c)
+        {
+            if (c == '-')
+            {
+                this.Escape(c);
+            }
+            else
+            {
+                this.Literal(c, inClass: true);
+            }
+        }
+
+        private void CategoryClasses(int[] categories)
+        {
+            foreach (int tables in categories)
+            {
+                int left = tables;
+                foreach ((int unionTables, string name) in CategoryUnions)
+                {
+                    if ((left & unionTables) == unionTables)
                     {
-                        int rangeCp = char.ConvertToUtf32(_input[litEnd + 1], _input[litEnd + 2]);
-                        if (rangeCp > 0xFFFF)
-                        {
-                            endCp = rangeCp;
-                            litEnd += 3;
-                        }
+                        this.sb.Append(@"\p{").Append(name).Append('}');
+                        left &= ~unionTables;
+                    }
+                }
+
+                for (int bit = 0; bit < CategoryNames.Length; bit++)
+                {
+                    if ((left & (1 << bit)) != 0)
+                    {
+                        this.sb.Append(@"\p{").Append(CategoryNames[bit]).Append('}');
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Whether a set is written as one class of .NET: every set of a pattern matched by code unit, and with the
+        /// u flag grammar a set with no surrogate and no character beyond the Basic Multilingual Plane.
+        /// </summary>
+        private bool IsOneClass(EcmaRegexNode n)
+        {
+            int[] set = n.Set;
+            if (set.Length == 0)
+            {
+                return false;
+            }
+
+            return !this.unicode || (set[set.Length - 1] <= 0xFFFF && !EcmaRegexUnicode.Intersects(set, SurrogateRange));
+        }
+
+        /// <summary>
+        /// Writes the class of the code units of a set that are characters by themselves: all of them for a pattern
+        /// matched by code unit, and otherwise those that are not surrogates. With <paramref name="surrogates"/> the
+        /// surrogates are among them, which is right only for a set that holds them all. Returns false, writing
+        /// nothing, when there is no such code unit.
+        /// </summary>
+        private bool UnitClass(EcmaRegexNode n, bool surrogates)
+        {
+            if (n.Items is not null && (n.Negated || n.Categories is not null || n.Items.Length > 0))
+            {
+                if (!n.Negated)
+                {
+                    // One General_Category value needs no brackets.
+                    bool one = n.Items.Length == 0 && n.Categories!.Length == 1 && IsOneCategory(n.Categories[0]);
+                    if (!one)
+                    {
+                        this.sb.Append('[');
                     }
 
-                    int idx = suppCount * 2;
-                    if (idx + 1 < suppCps.Length)
+                    if (n.Categories is not null)
                     {
-                        suppCps[idx] = startCp;
-                        suppCps[idx + 1] = endCp;
-                        suppPos[idx] = litStart;
-                        suppPos[idx + 1] = litEnd;
-                        suppCount++;
+                        this.CategoryClasses(n.Categories);
                     }
 
-                    pos = litEnd;
+                    this.Ranges(n.Items);
+                    if (!one)
+                    {
+                        this.sb.Append(']');
+                    }
+
+                    return true;
+                }
+
+                if (n.Items.Length == 0 && n.Categories is null && (surrogates || !this.unicode))
+                {
+                    this.sb.Append(@"[\s\S]");
+                    return true;
+                }
+
+                this.sb.Append("[^");
+                if (n.Categories is not null)
+                {
+                    this.CategoryClasses(n.Categories);
+                }
+
+                this.Ranges(n.Items);
+                if (this.unicode && !surrogates)
+                {
+                    this.sb.Append(@"\uD800-\uDFFF");
+                }
+
+                this.sb.Append(']');
+                return true;
+            }
+
+            int[] units = this.unicode
+                ? EcmaRegexUnicode.Union(EcmaRegexUnicode.Slice(n.Set, 0, 0xD7FF), EcmaRegexUnicode.Slice(n.Set, surrogates ? 0xD800 : 0xE000, 0xFFFF))
+                : n.Set;
+            if (units.Length == 0)
+            {
+                return false;
+            }
+
+            if (units.Length == 2 && units[0] == 0 && units[1] == 0xFFFF)
+            {
+                this.sb.Append(@"[\s\S]");
+                return true;
+            }
+
+            if (units.Length == 2 && units[0] == units[1])
+            {
+                this.Literal((char)units[0], inClass: false);
+                return true;
+            }
+
+            // A set that leaves out a few characters is shorter written by what it leaves out.
+            int[] others = EcmaRegexUnicode.Complement(units, 0xFFFF);
+            if (others.Length < units.Length)
+            {
+                this.sb.Append("[^");
+                this.Ranges(others);
+                this.sb.Append(']');
+                return true;
+            }
+
+            this.sb.Append('[');
+            this.Ranges(units);
+            this.sb.Append(']');
+            return true;
+        }
+
+        /// <summary>
+        /// Writes a repetition of a set by code unit (see <see cref="IsCodeUnitLoop"/>). With <paramref name="guard"/>
+        /// it may not stop between the two halves of a surrogate pair.
+        /// </summary>
+        private void CodeUnitLoop(EcmaRegexNode set, int min, bool lazy, bool guard, bool backward)
+        {
+            // In a lookbehind the repetition runs to the left, so it stops at its left.
+            if (guard && backward)
+            {
+                this.sb.Append("(?!").Append(InsideSurrogatePair).Append(')');
+            }
+
+            this.UnitClass(set, surrogates: true);
+            this.Quantifier(min, EcmaRegexNode.Unbounded, lazy);
+            if (guard && !backward)
+            {
+                this.sb.Append("(?!").Append(InsideSurrogatePair).Append(')');
+            }
+        }
+
+        /// <summary>
+        /// Writes what matches one character of a set. With the u flag grammar a character is a code point, and what
+        /// is written matches by code unit: a code unit that is not a surrogate, or a surrogate pair, or a surrogate
+        /// that is not half of a pair. So the dot, which is every character but four, is written
+        /// <c>(?&gt;[^\n\r\u2028\u2029\uD800-\uDFFF]|[\uD800-\uDBFF](?:[\uDC00-\uDFFF]|(?![\uDC00-\uDFFF]))|(?&lt;![\uD800-\uDBFF])[\uDC00-\uDFFF])</c>.
+        /// </summary>
+        private void SetAtom(EcmaRegexNode n, bool backward, bool wrap = false)
+        {
+            int[] set = n.Set;
+            if (set.Length == 0)
+            {
+                // No character: an assertion that always fails.
+                this.sb.Append("(?!)");
+                return;
+            }
+
+            if (this.IsOneClass(n))
+            {
+                this.UnitClass(n, surrogates: false);
+                return;
+            }
+
+            int start = this.sb.Length;
+            int alternatives = this.UnitClass(n, surrogates: false) ? 1 : 0;
+            if (alternatives > 0)
+            {
+                this.sb.Append('|');
+            }
+
+            alternatives += this.BeyondUnits(n, backward);
+            if (alternatives > 1)
+            {
+                // No two of the alternatives start with the same code unit, so the first that matches is the only
+                // one that can, and .NET need not keep the others to come back to.
+                this.sb.Insert(start, "(?>").Append(')');
+            }
+            else if (wrap)
+            {
+                this.sb.Insert(start, "(?:").Append(')');
+            }
+        }
+
+        /// <summary>
+        /// Writes, as alternatives, the characters of a set that are not one code unit that stands for itself: its
+        /// characters beyond the Basic Multilingual Plane as surrogate pairs, and its surrogates, each where it is
+        /// not half of a pair. Every one of them starts with a surrogate (and ends with one, which is where a
+        /// lookbehind starts), so when there are many they are written as one alternative, behind a test for a
+        /// surrogate that turns away at once a character that is none. Returns the number of alternatives written.
+        /// </summary>
+        private int BeyondUnits(EcmaRegexNode n, bool backward)
+        {
+            int start = this.sb.Length;
+            int[] set = n.Set;
+            int[] high = EcmaRegexUnicode.Slice(set, 0xD800, 0xDBFF);
+            int[] low = EcmaRegexUnicode.Slice(set, 0xDC00, 0xDFFF);
+            int[] supplementary = EcmaRegexUnicode.Slice(set, 0x10000, EcmaRegexUnicode.Max);
+            int alternatives = 0;
+            if (EcmaRegexUnicode.SetEquals(high, HighSurrogateRange) && EcmaRegexUnicode.SetEquals(supplementary, SupplementaryRange))
+            {
+                // A first half, with the second half when it is there.
+                this.Or(ref alternatives);
+                this.sb.Append(HighSurrogates).Append("(?:").Append(LowSurrogates).Append("|(?!").Append(LowSurrogates).Append("))");
+            }
+            else
+            {
+                if (supplementary.Length > 0)
+                {
+                    this.Or(ref alternatives);
+                    alternatives += this.SurrogatePairs(supplementary) - 1;
+                }
+
+                if (high.Length > 0)
+                {
+                    this.Or(ref alternatives);
+                    this.sb.Append('[');
+                    this.Ranges(high);
+                    this.sb.Append("](?!").Append(LowSurrogates).Append(')');
+                }
+            }
+
+            if (low.Length > 0)
+            {
+                this.Or(ref alternatives);
+                this.sb.Append("(?<!").Append(HighSurrogates).Append(")[");
+                this.Ranges(low);
+                this.sb.Append(']');
+            }
+
+            if (alternatives > ManyAlternatives)
+            {
+                // What is matched first stands first, and in a lookbehind last.
+                if (backward)
+                {
+                    this.sb.Insert(start, "(?:").Append(@")(?<=[\uD800-\uDFFF])");
+                }
+                else
+                {
+                    this.sb.Insert(start, @"(?=[\uD800-\uDFFF])(?:").Append(')');
+                }
+
+                return 1;
+            }
+
+            return alternatives;
+        }
+
+        /// <summary>
+        /// Writes a counted repetition, of at most <paramref name="max"/> times, of a set that holds every surrogate
+        /// and every character beyond the Basic Multilingual Plane (the dot, a negated class). When none of the next
+        /// <paramref name="max"/> code units is a surrogate, each of them is a character, and the repetition is one of
+        /// the class of the set's code units, which .NET runs as it runs any class. A conditional tests for that, and
+        /// its other branch counts characters, each as the set once. In a lookbehind the test is of the code units
+        /// before. Returns false, writing nothing, when the set has no code unit that is a character by itself.
+        /// </summary>
+        private bool CountedCodeUnits(EcmaRegexNode set, int min, int max, bool lazy, bool backward)
+        {
+            int start = this.sb.Length;
+            string count = max.ToString(CultureInfo.InvariantCulture);
+            this.sb.Append(backward ? @"(?(?<=[^\uD800-\uDFFF]{" : @"(?(?=[^\uD800-\uDFFF]{").Append(count);
+            this.sb.Append(backward ? @"}|^[^\uD800-\uDFFF]*)" : @"}|[^\uD800-\uDFFF]*\z)");
+            if (!this.UnitClass(set, surrogates: false))
+            {
+                this.sb.Length = start;
+                return false;
+            }
+
+            this.Quantifier(min, max, lazy);
+            this.sb.Append('|');
+            this.SetAtom(set, backward, wrap: true);
+            this.Quantifier(min, max, lazy);
+            this.sb.Append(')');
+            return true;
+        }
+
+        /// <summary>
+        /// Writes a repetition with no upper bound of a set that holds some characters that are not one code unit
+        /// (a class with a character beyond the Basic Multilingual Plane, most <c>\p{...}</c> properties). Where C is
+        /// the class of its single code units and P its surrogate pairs, the set repeated is
+        /// <c>C*(?:PC*)*</c>: runs of code units with a pair between one run and the next. That is one class
+        /// repetition for a text with no such character, where an alternation of C and P would be tried again for
+        /// every character. The iterations that must run come first, each as the set once. In a lookbehind
+        /// everything stands the other way round.
+        /// </summary>
+        private void SetRuns(EcmaRegexNode set, int min, bool lazy, bool backward)
+        {
+            int mark = this.sb.Length;
+            bool hasUnits = this.UnitClass(set, surrogates: false);
+            string units = this.sb.ToString(mark, this.sb.Length - mark);
+            this.sb.Length = mark;
+            if (!hasUnits)
+            {
+                // Nothing but pairs, so there are no runs between them.
+                this.SetAtom(set, backward, wrap: true);
+                this.Quantifier(min, EcmaRegexNode.Unbounded, lazy);
+                return;
+            }
+
+            int count = this.BeyondUnits(set, backward);
+            string beyond = this.sb.ToString(mark, this.sb.Length - mark);
+            this.sb.Length = mark;
+            if (count > 1)
+            {
+                beyond = "(?>" + beyond + ")";
+            }
+
+            string star = lazy ? "*?" : "*";
+            if (backward)
+            {
+                this.sb.Append("(?:").Append(units).Append(star).Append(beyond).Append(')').Append(star).Append(units).Append(star);
+            }
+
+            if (min > 0)
+            {
+                this.SetAtom(set, backward, wrap: true);
+                this.Quantifier(min, min, lazy: false);
+            }
+
+            if (!backward)
+            {
+                this.sb.Append(units).Append(star).Append("(?:").Append(beyond).Append(units).Append(star).Append(')').Append(star);
+            }
+        }
+
+        private void Or(ref int alternatives)
+        {
+            if (alternatives++ > 0)
+            {
+                this.sb.Append('|');
+            }
+        }
+
+        /// <summary>
+        /// Writes the characters beyond the Basic Multilingual Plane of a set as alternatives, each a first half or
+        /// a class of first halves and then a class of second halves. Returns the number of alternatives.
+        /// </summary>
+        private int SurrogatePairs(int[] supplementary)
+        {
+            // Each piece is a range of first halves that share a range of second halves.
+            List<(int HighFirst, int HighLast, int LowFirst, int LowLast)> pieces = [];
+            for (int k = 0; k < supplementary.Length; k += 2)
+            {
+                int a = supplementary[k] - 0x10000;
+                int b = supplementary[k + 1] - 0x10000;
+                int ha = 0xD800 + (a >> 10);
+                int la = 0xDC00 + (a & 0x3FF);
+                int hb = 0xD800 + (b >> 10);
+                int lb = 0xDC00 + (b & 0x3FF);
+                if (ha == hb)
+                {
+                    pieces.Add((ha, ha, la, lb));
                     continue;
                 }
 
-                // All other content is BMP
-                hasBmp = true;
-                if (_input[pos] == '\\' && pos + 1 < endPos)
+                if (la != 0xDC00)
                 {
-                    char esc = _input[pos + 1];
-                    pos += esc switch
+                    pieces.Add((ha, ha, la, 0xDFFF));
+                    ha++;
+                }
+
+                if (lb != 0xDFFF)
+                {
+                    if (ha <= hb - 1)
                     {
-                        'p' or 'P' => SkipPropertyEscape(pos, endPos),
-                        'u' => SkipUnicodeEscape(pos, endPos),
-                        'x' => Math.Min(4, endPos - pos),
-                        'c' => Math.Min(3, endPos - pos),
-                        _ => 2,
-                    };
-                }
-                else
-                {
-                    pos++;
-                }
-            }
-
-            // Phase 2: Emit
-            // For negated: (?!<positive_pattern>)<any_codepoint>
-            // For non-negated: <positive_pattern>
-            bool needGroup = (hasBmp && suppCount > 0) || suppCount > 1;
-            OperationStatus s;
-
-            if (isNegated)
-            {
-                s = Emit("(?!");
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-            }
-
-            if (needGroup)
-            {
-                s = Emit("(?:");
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-            }
-
-            bool needSep = false;
-
-            if (hasBmp)
-            {
-                s = Emit('[');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                // Emit BMP content in segments between supplementary items
-                int segStart = contentStart;
-                for (int i = 0; i < suppCount; i++)
-                {
-                    int suppStart = suppPos[i * 2];
-                    int suppEnd = suppPos[(i * 2) + 1];
-
-                    if (segStart < suppStart)
-                    {
-                        _in = segStart;
-                        s = EmitCharClassContent(suppStart, skipNegShorthands: false);
-                        if (s != OperationStatus.Done)
-                        {
-                            return s;
-                        }
+                        pieces.Add((ha, hb - 1, 0xDC00, 0xDFFF));
                     }
 
-                    segStart = suppEnd;
+                    pieces.Add((hb, hb, 0xDC00, lb));
+                }
+                else if (ha <= hb)
+                {
+                    pieces.Add((ha, hb, 0xDC00, 0xDFFF));
+                }
+            }
+
+            int count = 0;
+            for (int k = 0; k < pieces.Count;)
+            {
+                if (count++ > 0)
+                {
+                    this.sb.Append('|');
                 }
 
-                if (segStart < endPos)
+                (int highFirst, int highLast, int lowFirst, int lowLast) = pieces[k];
+                if (highFirst == highLast)
                 {
-                    _in = segStart;
-                    s = EmitCharClassContent(endPos, skipNegShorthands: false);
-                    if (s != OperationStatus.Done)
+                    // The pieces of one first half share it.
+                    this.Escape((char)highFirst);
+                    this.sb.Append('[');
+                    for (; k < pieces.Count && pieces[k].HighFirst == highFirst && pieces[k].HighLast == highFirst; k++)
                     {
-                        return s;
-                    }
-                }
-
-                s = Emit(']');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                needSep = true;
-            }
-
-            for (int i = 0; i < suppCount; i++)
-            {
-                if (needSep)
-                {
-                    s = Emit('|');
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-                }
-
-                s = EmitSurrogateRange(suppCps[i * 2], suppCps[(i * 2) + 1]);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                needSep = true;
-            }
-
-            if (needGroup)
-            {
-                s = Emit(')');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-            }
-
-            if (isNegated)
-            {
-                s = Emit(')');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = Emit(AnyCodePoint);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-            }
-
-            _in = endPos + 1;
-            return OperationStatus.Done;
-        }
-
-        private OperationStatus EmitSurrogateRange(int startCp, int endCp)
-        {
-            int sAdj = startCp - 0x10000;
-            char sHi = (char)(0xD800 + (sAdj >> 10));
-            char sLo = (char)(0xDC00 + (sAdj & 0x3FF));
-
-            int eAdj = endCp - 0x10000;
-            char eHi = (char)(0xD800 + (eAdj >> 10));
-            char eLo = (char)(0xDC00 + (eAdj & 0x3FF));
-
-            if (startCp == endCp)
-            {
-                // Single supplementary character
-                OperationStatus s = EmitUnicodeEscape(sHi);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                return EmitUnicodeEscape(sLo);
-            }
-
-            if (sHi == eHi)
-            {
-                // Same high surrogate: \uHH[\uLL1-\uLL2]
-                OperationStatus s = EmitUnicodeEscape(sHi);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = Emit('[');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = EmitUnicodeEscape(sLo);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = Emit('-');
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                s = EmitUnicodeEscape(eLo);
-                if (s != OperationStatus.Done)
-                {
-                    return s;
-                }
-
-                return Emit(']');
-            }
-
-            // Different high surrogates: multi-part alternation
-            OperationStatus st;
-            st = Emit("(?:");
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            // Part 1: sHi[sLo-\uDFFF]
-            st = EmitUnicodeEscape(sHi);
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            st = Emit('[');
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            st = EmitUnicodeEscape(sLo);
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            st = Emit('-');
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            st = EmitUnicodeEscape('\uDFFF');
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            st = Emit(']');
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            // Part 2: middle high surrogates with [\uDC00-\uDFFF]
-            if (sHi + 1 <= eHi - 1)
-            {
-                st = Emit('|');
-                if (st != OperationStatus.Done)
-                {
-                    return st;
-                }
-
-                char midStart = (char)(sHi + 1);
-                char midEnd = (char)(eHi - 1);
-
-                if (midStart == midEnd)
-                {
-                    st = EmitUnicodeEscape(midStart);
-                    if (st != OperationStatus.Done)
-                    {
-                        return st;
-                    }
-                }
-                else
-                {
-                    st = Emit('[');
-                    if (st != OperationStatus.Done)
-                    {
-                        return st;
+                        this.Ranges([pieces[k].LowFirst, pieces[k].LowLast]);
                     }
 
-                    st = EmitUnicodeEscape(midStart);
-                    if (st != OperationStatus.Done)
-                    {
-                        return st;
-                    }
-
-                    st = Emit('-');
-                    if (st != OperationStatus.Done)
-                    {
-                        return st;
-                    }
-
-                    st = EmitUnicodeEscape(midEnd);
-                    if (st != OperationStatus.Done)
-                    {
-                        return st;
-                    }
-
-                    st = Emit(']');
-                    if (st != OperationStatus.Done)
-                    {
-                        return st;
-                    }
+                    this.sb.Append(']');
+                    continue;
                 }
 
-                st = Emit('[');
-                if (st != OperationStatus.Done)
-                {
-                    return st;
-                }
-
-                st = EmitUnicodeEscape('\uDC00');
-                if (st != OperationStatus.Done)
-                {
-                    return st;
-                }
-
-                st = Emit('-');
-                if (st != OperationStatus.Done)
-                {
-                    return st;
-                }
-
-                st = EmitUnicodeEscape('\uDFFF');
-                if (st != OperationStatus.Done)
-                {
-                    return st;
-                }
-
-                st = Emit(']');
-                if (st != OperationStatus.Done)
-                {
-                    return st;
-                }
+                this.sb.Append('[');
+                this.Ranges([highFirst, highLast]);
+                this.sb.Append("][");
+                this.Ranges([lowFirst, lowLast]);
+                this.sb.Append(']');
+                k++;
             }
 
-            // Part 3: eHi[\uDC00-eLo]
-            st = Emit('|');
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            st = EmitUnicodeEscape(eHi);
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            st = Emit('[');
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            st = EmitUnicodeEscape('\uDC00');
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            st = Emit('-');
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            st = EmitUnicodeEscape(eLo);
-            if (st != OperationStatus.Done)
-            {
-                return st;
-            }
-
-            st = Emit("])");
-            return st;
-        }
-
-        private int SkipPropertyEscape(int pos, int endPos)
-        {
-            // Skip \p{...} or \P{...}: returns total length to advance past
-            if (pos + 2 < endPos && _input[pos + 2] == '{')
-            {
-                int p = pos + 3;
-                while (p < endPos && _input[p] != '}')
-                {
-                    p++;
-                }
-
-                return p < endPos ? (p + 1 - pos) : (endPos - pos);
-            }
-
-            return 2;
-        }
-
-        private int SkipUnicodeEscape(int pos, int endPos)
-        {
-            // Skip \u{XXXX...} or \uXXXX: returns total length
-            if (pos + 2 < endPos && _input[pos + 2] == '{')
-            {
-                int p = pos + 3;
-                while (p < endPos && _input[p] != '}')
-                {
-                    p++;
-                }
-
-                return p < endPos ? (p + 1 - pos) : (endPos - pos);
-            }
-
-            return Math.Min(6, endPos - pos);
-        }
-
-        private OperationStatus EmitCharClassContent(int endPos, bool skipNegShorthands)
-        {
-            while (_in < endPos)
-            {
-                if (_input[_in] == '\\' && _in + 1 < endPos)
-                {
-                    char next = _input[_in + 1];
-                    OperationStatus s;
-
-                    switch (next)
-                    {
-                        case 'D' or 'W' or 'S':
-                            if (skipNegShorthands)
-                            {
-                                _in += 2;
-                                break;
-                            }
-
-                            // Should not occur in simple path; emit as-is for resilience
-                            s = Emit('\\');
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            s = Emit(next);
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            _in += 2;
-                            break;
-
-                        case 'd':
-                            s = Emit(DigitInline);
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            _in += 2;
-                            break;
-
-                        case 'w':
-                            s = Emit(WordInline);
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            _in += 2;
-                            break;
-
-                        case 's':
-                            s = Emit(WhitespaceInline);
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            _in += 2;
-                            break;
-
-                        case 'p' or 'P':
-                            s = TranslatePropertyEscape(insideCharClass: true);
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            break;
-
-                        case 'u':
-                            s = TranslateUnicodeEscape(insideCharClass: true);
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            break;
-
-                        case 'b':
-                            // \b inside character class = backspace (same in .NET)
-                            s = Emit("\\b");
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            _in += 2;
-                            break;
-
-                        case 'x':
-                        {
-                            if (_in + 4 > _input.Length)
-                            {
-                                return OperationStatus.InvalidData;
-                            }
-
-                            s = Emit(_input.Slice(_in, 4));
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            _in += 4;
-                            break;
-                        }
-
-                        case 'c':
-                        {
-                            if (_in + 3 > _input.Length)
-                            {
-                                return OperationStatus.InvalidData;
-                            }
-
-                            char controlLetter = _input[_in + 2];
-                            if (controlLetter is not ((>= 'a' and <= 'z') or (>= 'A' and <= 'Z')))
-                            {
-                                return OperationStatus.InvalidData;
-                            }
-
-                            s = Emit(_input.Slice(_in, 3));
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            _in += 3;
-                            break;
-                        }
-
-                        case '0':
-                        {
-                            // ECMAScript /u mode: \0 inside a character class must NOT
-                            // be followed by a decimal digit (octal escapes are forbidden).
-                            if (_in + 2 < endPos && _input[_in + 2] is >= '0' and <= '9')
-                            {
-                                return OperationStatus.InvalidData;
-                            }
-
-                            s = Emit("\\0");
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            _in += 2;
-                            break;
-                        }
-
-                        default:
-                        {
-                            // In /u mode inside character class, valid escapes reaching
-                            // the default are: control escapes (t,n,r,f,v), identity
-                            // escapes of SyntaxCharacter, /, and -.
-                            if (next is not ('t' or 'n' or 'r' or 'f' or 'v'
-                                or '^' or '$' or '.' or '*' or '+' or '?' or '/' or '-'
-                                or '(' or ')' or '[' or ']' or '{' or '}' or '|' or '\\'))
-                            {
-                                return OperationStatus.InvalidData;
-                            }
-
-                            s = Emit('\\');
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            s = Emit(next);
-                            if (s != OperationStatus.Done)
-                            {
-                                return s;
-                            }
-
-                            _in += 2;
-                            break;
-                        }
-                    }
-                }
-                else if (char.IsHighSurrogate(_input[_in]) && _in + 1 < endPos && char.IsLowSurrogate(_input[_in + 1]))
-                {
-                    int cp = char.ConvertToUtf32(_input[_in], _input[_in + 1]);
-                    _in += 2;
-                    OperationStatus s = EmitCodePoint(cp);
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-                }
-                else
-                {
-                    OperationStatus s = Emit(_input[_in]);
-                    if (s != OperationStatus.Done)
-                    {
-                        return s;
-                    }
-
-                    _in++;
-                }
-            }
-
-            return OperationStatus.Done;
-        }
-
-        private OperationStatus Emit(char c)
-        {
-            if (_out >= _output.Length)
-            {
-                return OperationStatus.DestinationTooSmall;
-            }
-
-            _output[_out++] = c;
-            return OperationStatus.Done;
-        }
-
-        private OperationStatus Emit(ReadOnlySpan<char> text)
-        {
-            if (_out + text.Length > _output.Length)
-            {
-                return OperationStatus.DestinationTooSmall;
-            }
-
-            text.CopyTo(_output[_out..]);
-            _out += text.Length;
-            return OperationStatus.Done;
+            return count;
         }
     }
 }

@@ -37,6 +37,61 @@ public class InvalidPatternGenerationTests
             thrown.Message);
     }
 
+    /// <summary>
+    /// A pattern that is valid only without the <c>u</c> flag is a valid pattern, and its translation is what the
+    /// generated type's helper matches with.
+    /// </summary>
+    [TestMethod]
+    public async Task GenerateCode_ForAPatternValidOnlyWithoutTheUFlag_WritesItsTranslation()
+    {
+        IReadOnlyList<GeneratedCodeFile> files = await GenerateAsync("""{"type": "object", "patternProperties": {"^a\\-b+{$": {"type": "integer"}}}""", withProgramImage: false);
+
+        string[] lines =
+        [
+            .. files.SelectMany(f => f.FileContent.Split('\n'))
+                .Select(l => l.Trim())
+                .Where(l => l.StartsWith("[GeneratedRegex(", StringComparison.Ordinal))
+        ];
+
+        string[] expected =
+        [
+            """[GeneratedRegex("^a-b+\\{\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]""",
+        ];
+
+        if (!expected.SequenceEqual(lines, StringComparer.Ordinal))
+        {
+            Assert.Fail($"Expected:\n{string.Join("\n", expected)}\nActual:\n{string.Join("\n", lines)}");
+        }
+    }
+
+    /// <summary>
+    /// A case-insensitive backreference is the one construct whose translation uses .NET's own case comparison, so
+    /// the expression is constructed with the invariant culture.
+    /// </summary>
+    [TestMethod]
+    public async Task GenerateCode_ForACaseInsensitiveBackreference_UsesTheInvariantCulture()
+    {
+        IReadOnlyList<GeneratedCodeFile> files = await GenerateAsync("""{"type": "object", "patternProperties": {"^(?i:(a)\\1)$": {"type": "integer"}}}""", withProgramImage: false);
+
+        string[] lines =
+        [
+            .. files.SelectMany(f => f.FileContent.Split('\n'))
+                .Select(l => l.Trim())
+                .Where(l => l.Contains("GeneratedRegex(", StringComparison.Ordinal) || (l.Contains("Regex Create", StringComparison.Ordinal) && l.Contains("=> new(", StringComparison.Ordinal)))
+        ];
+
+        string[] expected =
+        [
+            """[GeneratedRegex("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10000)]""",
+            """private static Regex CreatePatternProperties() => new("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.Compiled | RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(10000));""",
+        ];
+
+        if (!expected.SequenceEqual(lines, StringComparer.Ordinal))
+        {
+            Assert.Fail($"Expected:\n{string.Join("\n", expected)}\nActual:\n{string.Join("\n", lines)}");
+        }
+    }
+
     private static async Task<IReadOnlyList<GeneratedCodeFile>> GenerateAsync(string schema, bool withProgramImage)
     {
         string path = Path.Combine(Path.GetTempPath(), $"invalid-pattern-{Guid.NewGuid():N}.json");

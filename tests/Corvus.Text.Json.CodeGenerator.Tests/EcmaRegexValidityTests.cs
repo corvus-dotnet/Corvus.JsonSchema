@@ -8,8 +8,9 @@ using Corvus.Text.Json.Tests.EcmaPatterns;
 namespace Corvus.Text.Json.CodeGenerator.Tests;
 
 /// <summary>
-/// The translator accepts the patterns V8 accepts with the <c>u</c> flag or without it, and refuses the ones V8 refuses
-/// both ways, through <see cref="EcmaRegexTranslator.TryTranslate(string, out string, out bool, out string)"/>.
+/// The translator accepts the patterns V8 accepts and refuses the ones it refuses: with the grammar of the <c>u</c>
+/// flag alone through <see cref="EcmaRegexTranslator.Translate"/>, and with either grammar through
+/// <see cref="EcmaRegexTranslator.TryTranslate(string, out string, out bool, out string)"/>.
 /// </summary>
 [TestClass]
 public class EcmaRegexValidityTests
@@ -32,6 +33,57 @@ public class EcmaRegexValidityTests
             else if (valid ? error is not null || translated is null : string.IsNullOrEmpty(error) || translated is not null)
             {
                 failures.Add($"{pattern}: translation {translated ?? "null"}, error {error ?? "null"}");
+            }
+        }
+
+        Assert.AreEqual(0, failures.Count, string.Join("\n", failures.Take(25)));
+    }
+
+    [TestMethod]
+    public void TheUFlagGrammar_AcceptsWhatV8AcceptsWithTheUFlag()
+    {
+        var failures = new List<string>();
+        foreach ((string pattern, bool validWithU, _) in EcmaPatternCases.Validity)
+        {
+            bool valid;
+            try
+            {
+                EcmaRegexTranslator.Translate(pattern);
+                valid = true;
+            }
+            catch (ArgumentException)
+            {
+                valid = false;
+            }
+
+            if (valid != validWithU)
+            {
+                failures.Add($"{pattern}: {(valid ? "accepted" : "refused")}");
+            }
+        }
+
+        Assert.AreEqual(0, failures.Count, string.Join("\n", failures.Take(25)));
+    }
+
+    /// <summary>
+    /// Every translation of a valid pattern is a pattern .NET accepts.
+    /// </summary>
+    [TestMethod]
+    public void EveryTranslationIsAPatternDotNetAccepts()
+    {
+        var failures = new List<string>();
+        foreach ((string pattern, _, _) in EcmaPatternCases.Validity)
+        {
+            if (EcmaRegexTranslator.TryTranslate(pattern, out string translated, out _))
+            {
+                try
+                {
+                    _ = new System.Text.RegularExpressions.Regex(translated);
+                }
+                catch (ArgumentException ex)
+                {
+                    failures.Add($"{pattern}: {translated}: {ex.Message}");
+                }
             }
         }
 
