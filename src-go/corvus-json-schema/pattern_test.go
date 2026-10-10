@@ -39,6 +39,9 @@ var testPatterns = []string{
 	// Sequences decided by the length of the string.
 	"^a[a-z]{2,5}z$", "^.*x$", "^-?[0-9-]{0,3}0$", `^\/[^\*\?]*\/\*$`, "^.{2,}é$", "^[^,]*,[^,]$", "^(a.*|.+b)$",
 	`^(.*\.)*[a-z]$`,
+	// Lists with an anchor or an assertion inside them, and with an escaped anchor.
+	"^x(,a$)*$", "^a(,a$)+$", "^x$(,a)*$", "^(a$)(,a)*$", "^$(,a)*$", "^(a,$)*b$", "^([a-z]+,$)+a$", "^a(^,a)*$",
+	"^(^a,)*b$", `^a(,a\b)*$`, `^a(,a\$)*$`, `^a\$(,a)*$`, `^(a\$,)*b$`,
 }
 
 // Every matcher agrees with the engine on strings over an alphabet that exercises classes, anchors and non-ASCII.
@@ -111,11 +114,16 @@ func TestSimplePatternsTakeTheFastMatchers(t *testing.T) {
 	expect(matchSeparatedList, "a separated list",
 		"^([a-zA-Z0-9]{2,3})(-[a-zA-Z0-9]{1,6})*$",
 		`^([a-zA-Z_$][a-zA-Z0-9_$]{0,39}\.)*([a-zA-Z_$][a-zA-Z0-9_$]{0,39})$`,
-		`^([a-z_$][a-z0-9_$]{0,39}\.)*([a-zA-Z_$][a-zA-Z0-9_$]{0,39})$`)
+		`^([a-z_$][a-z0-9_$]{0,39}\.)*([a-zA-Z_$][a-zA-Z0-9_$]{0,39})$`,
+		// An escaped "$" or "^" is a literal character of the list.
+		`^x(,a\$)*$`, `^x\$(,a)*$`, `^(a\$,)*b$`, `^x(,\^a)*$`, `^(a,)*b\$$`, `^x(,[$^]a)*$`)
 	expect(matchExcludedClassWithWord, "an excluded class with a word", `^(?=[^!*,;{}[\]~\n]+$)(?=(.*\w)).+$`)
 	expect(matchEngine, "the engine",
 		"(base64key|awskms)://(.*)", `\bfoo`, `^\p{L}+$`, `^((\.(?!\.)\/)?\w+\/?)+$`, `^\1(a)`, `a\&.b`,
-		"^[a-z]*a[a-z]*$")
+		"^[a-z]*a[a-z]*$",
+		// A list with an anchor or an assertion inside it.
+		"^x(,a$)*$", "^x(?:,a$)+$", "^x$(,a)*$", "^(x$)(,a)*$", "^$(,a)*$", "^(a,$)*b$", "^x(^,a)*$", "^(^a,)*b$",
+		"^x(,(a$))*$", `^x(,a\b)*$`, `^x\B(,a)*$`, "^x(,a(?=,|$))*$", "^x(?=,)(,a)*$")
 }
 
 func TestInvalidPatternsAreRejected(t *testing.T) {
@@ -167,5 +175,146 @@ func TestExcludedClassWithAMemberOutsideASCII(t *testing.T) {
 				t.Errorf("%s on %q: got %v, want %v", c.pattern, text, got, want)
 			}
 		}
+	}
+}
+
+// anchorCases are patterns with an anchor, a word boundary or a lookaround in a place where a matcher for a shape could
+// lose it, and patterns with an escaped "$" or "^", which is a literal character. Each has the texts it matches and the
+// texts it does not. The answers are V8's: new RegExp(pattern, "u").test(text).
+var anchorCases = []struct {
+	pattern string
+	matches []string
+	fails   []string
+}{
+	{`^x(,a$)*$`, []string{"x", "x,a"}, []string{"x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^x(,a$)+$`, []string{"x,a"}, []string{"x", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^x(?:,a$)*$`, []string{"x", "x,a"}, []string{"x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^x$(,a)*$`, []string{"x"}, []string{"x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^(x$)(,a)*$`, []string{"x"}, []string{"x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^(?:x$)(,a)+$`, nil, []string{"x", "x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^$(,a)*$`, []string{""}, []string{",a", ",a,a", "a"}},
+	{`^(a,$)*b$`, []string{"b"}, []string{"a,b", "a,a,b", "a,", "", "a,a"}},
+	{`^(a,$)+b$`, nil, []string{"b", "a,b", "a,a,b", "a,", "", "a,a"}},
+	{`^(?:a,$)*b$`, []string{"b"}, []string{"a,b", "a,a,b", "a,", "", "a,a"}},
+	{`^([a-z]+)(\.[a-z]+$)*$`, []string{"a", "a.b"}, []string{"a.b.c", "a.", ""}},
+	{`^([a-z]+\.$)*[a-z]+$`, []string{"a"}, []string{"a.b", "a.b.c", ".a", ""}},
+	{`^x(,a$$)*$`, []string{"x", "x,a"}, []string{"x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^x(^,a)*$`, []string{"x"}, []string{"x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^x(,^a)*$`, []string{"x"}, []string{"x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^^x(,a)*$`, []string{"x", "x,a", "x,a,a", "x,a,a,a"}, []string{"", "x,", "x,b"}},
+	{`^(^x)(,a)*$`, []string{"x", "x,a", "x,a,a", "x,a,a,a"}, []string{"", "x,", "x,b"}},
+	{`^(^a,)*b$`, []string{"b", "a,b"}, []string{"a,a,b", "a,", "", "a,a"}},
+	{`^(a,)*^b$`, []string{"b"}, []string{"a,b", "a,a,b", "a,", "", "a,a"}},
+	{`^x(,(a$))*$`, []string{"x", "x,a"}, []string{"x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^x(,(?:a$))*$`, []string{"x", "x,a"}, []string{"x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^x(,a|$)*$`, []string{"x", "x,a", "x,a,a", "x,a,a,a"}, []string{"", "x,", "x,b"}},
+	{`^x(,(a|$))*$`, []string{"x", "x,a", "x,a,a", "x,a,a,a", "x,"}, []string{"", "x,b"}},
+	{`^x((^|,)a)*$`, []string{"x", "x,a", "x,a,a", "x,a,a,a"}, []string{"", "x,", "x,b"}},
+	{`^(a,)*(b$)$`, []string{"b", "a,b", "a,a,b"}, []string{"a,", "", "a,a"}},
+	{`^(a,)*b$$`, []string{"b", "a,b", "a,a,b"}, []string{"a,", "", "a,a"}},
+	{`^x(,a\b)*$`, []string{"x", "x,a", "x,a,a", "x,a,a,a"}, []string{"", "x,", "x,b", "x,ab"}},
+	{`^x(\b,a)*$`, []string{"x", "x,a", "x,a,a", "x,a,a,a"}, []string{"", "x,", "x,b"}},
+	{`^x(,\Ba)*$`, []string{"x"}, []string{"x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^x(\B,a)*$`, []string{"x"}, []string{"x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^x\b(,a)*$`, []string{"x", "x,a", "x,a,a", "x,a,a,a"}, []string{"", "x,", "x,b"}},
+	{`^x\B(,a)*$`, nil, []string{"x", "x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^(a\b,)*b$`, []string{"b", "a,b", "a,a,b"}, []string{"a,", "", "a,a"}},
+	{`^(a,\B)*b$`, []string{"b"}, []string{"a,b", "a,a,b", "a,", "", "a,a"}},
+	{`^x(,a(?=,|$))*$`, []string{"x", "x,a", "x,a,a", "x,a,a,a"}, []string{"", "x,", "x,b"}},
+	{`^x(,(?!a)a)*$`, []string{"x"}, []string{"x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^x(?=,)(,a)*$`, []string{"x,a", "x,a,a", "x,a,a,a"}, []string{"x", "", "x,", "x,b"}},
+	{`^x(,a(?<=a))*$`, []string{"x", "x,a", "x,a,a", "x,a,a,a"}, []string{"", "x,", "x,b"}},
+	{`^x(,(?<!,)a)*$`, []string{"x"}, []string{"x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^x(?=,a$)(,a)*$`, []string{"x,a"}, []string{"x", "x,a,a", "x,a,a,a", "", "x,", "x,b"}},
+	{`^(a,(?=b))*b$`, []string{"b", "a,b"}, []string{"a,a,b", "a,", "", "a,a"}},
+	{`^(?!a,a)(a,)*b$`, []string{"b", "a,b"}, []string{"a,a,b", "a,", "", "a,a"}},
+	{`^x(,a\$)*$`, []string{"x", "x,a$", "x,a$,a$"}, []string{"x,a", "x,a,a", "x,a$,a"}},
+	{`^x\$(,a)*$`, []string{"x$", "x$,a", "x$,a,a"}, []string{"x", "x,a"}},
+	{`^(a\$,)*b$`, []string{"b", "a$,b", "a$,a$,b"}, []string{"a,b", "a$,a,b"}},
+	{`^x(,\^a)*$`, []string{"x", "x,^a", "x,^a,^a"}, []string{"x,a", "x,a,a"}},
+	{`^(a,)*b\$$`, []string{"b$", "a,b$", "a,a,b$"}, []string{"b", "a,b"}},
+	{`^x(,[$^]a)*$`, []string{"x", "x,$a", "x,^a,$a"}, []string{"x,a", "x,a,a"}},
+	{`^a$b`, nil, []string{"a", "ab", "a$b", ""}},
+	{`^a^b`, nil, []string{"a", "ab", "b"}},
+	{`^a$$`, []string{"a"}, []string{"ab", ""}},
+	{`^^a`, []string{"a", "ab"}, []string{"ba"}},
+	{`^a\$b$`, []string{"a$b"}, []string{"ab", "a"}},
+	{`^a\b`, []string{"a", "a b", "a,"}, []string{"ab"}},
+	{`^a\Bb`, []string{"ab"}, []string{"a b", "a"}},
+	{`^\ba`, []string{"a"}, []string{"ba", ""}},
+	{`^a(?=b)`, []string{"ab"}, []string{"a", "ac"}},
+	{`^a(?!b)`, []string{"a", "ac"}, []string{"ab"}},
+	{`^[a-c]+\b$`, []string{"a", "abc"}, []string{""}},
+	{`^[a-c]+$\b`, []string{"a", "abc"}, []string{""}},
+	{`^$`, []string{""}, []string{"a"}},
+	{`^a$.*`, []string{"a"}, []string{"ab", ""}},
+	{`^a\b.*`, []string{"a", "a b"}, []string{"ab"}},
+	{`^a^.*`, nil, []string{"a", "ab"}},
+	{`^\$.*`, []string{"$", "$a"}, []string{"a"}},
+	{`^a$|b`, []string{"a", "ab", "b", "cb"}, []string{"c"}},
+	{`a$|^b`, []string{"a", "ba", "bc"}, []string{"ab", "cb"}},
+	{`^(a$|b)$`, []string{"a", "b"}, []string{"ab", ""}},
+	{`^(a|^b)$`, []string{"a", "b"}, []string{"ab"}},
+	{`^(a|b\b)$`, []string{"a", "b"}, []string{"ab"}},
+	{`^(?:a\$|b)$`, []string{"a$", "b"}, []string{"a"}},
+	{`^(a|$)$`, []string{"a", ""}, []string{"b"}},
+	{`^(^|b)$`, []string{"", "b"}, []string{"a"}},
+	{`^(a$|b)c`, []string{"bc", "bcd"}, []string{"a", "ac"}},
+	{`(^a|b)c$`, []string{"ac", "bc", "xbc"}, []string{"xac", "acx"}},
+	{`a(b|^c)`, []string{"ab", "xab"}, []string{"ac", "c"}},
+	{`(a$){2}`, nil, []string{"a", "aa", ""}},
+	{`(^a){2}`, nil, []string{"a", "aa"}},
+	{`x(a$)?b`, []string{"xb"}, []string{"xab", "xa"}},
+	{`^x(a$)?`, []string{"x", "xa", "xab", "xb"}, nil},
+	{`(a|b$)c`, []string{"ac"}, []string{"bc", "b"}},
+	{`a|\bb`, []string{"a", "b", "c b"}, []string{"cb"}},
+	{`a\b|c`, []string{"a", "c", "b a"}, []string{"ab"}},
+	{`(?=a)a|b`, []string{"a", "b"}, []string{"c"}},
+	{`(?<=a)b|c`, []string{"ab", "c"}, []string{"b"}},
+	{`a^|b`, []string{"b"}, []string{"a", ""}},
+	{`$a|b`, []string{"b"}, []string{"a", ""}},
+	{`^|a`, []string{"", "b"}, nil},
+	{`a|$`, []string{"", "b"}, nil},
+	{`(a|b)$c`, nil, []string{"ac", "a", "bc"}},
+	{`^(a|b)^c`, nil, []string{"ac", "c"}},
+	{`[a-c]{2}$|^x`, []string{"ab", "x", "yab"}, []string{"abx", "yx"}},
+	{`[a-c]\b|x`, []string{"a", "x", "d a"}, []string{"ad"}},
+	{`^[a-c]+$|^\d$`, []string{"abc", "1"}, []string{"a1", ""}},
+	{`^(a|b){2}$`, []string{"ab"}, []string{"a", "abc"}},
+	{`^.{1,3}$$`, []string{"a"}, []string{"abcd", ""}},
+	{`^.$^`, nil, []string{"a", ""}},
+	{`^(.*)$`, []string{"", "a"}, nil},
+	{`^es$|ms`, []string{"es", "xms"}, []string{"esx", "x"}},
+	{`^x-$`, []string{"x-"}, []string{"x-a"}},
+	{`^x-\b`, []string{"x-a"}, []string{"x-", "x--"}},
+}
+
+// A shape that cannot express an anchor or an assertion leaves the pattern to the engine. The separated list dropped a
+// "$" at the end of its repeated group and after its first item (v0.1.0 to v0.1.2), so {"pattern": "^x(,a$)*$"} took
+// "x,a,a", which has a "$" before its second ",a".
+func TestAnAnchorOrAnAssertionInsideAShapeIsNotDropped(t *testing.T) {
+	for _, c := range anchorCases {
+		schema, err := json.Marshal(map[string]string{"pattern": c.pattern})
+		if err != nil {
+			t.Fatal(err)
+		}
+		v, err := Compile(schema)
+		if err != nil {
+			t.Errorf("%s: %v", c.pattern, err)
+			continue
+		}
+		check := func(texts []string, want bool) {
+			for _, text := range texts {
+				instance, err := json.Marshal(text)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if got := v.IsValidBytes(instance); got != want {
+					t.Errorf("%s on %q: got %v, want %v", c.pattern, text, got, want)
+				}
+			}
+		}
+		check(c.matches, true)
+		check(c.fails, false)
 	}
 }

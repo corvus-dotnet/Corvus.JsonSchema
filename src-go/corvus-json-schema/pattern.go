@@ -1126,11 +1126,13 @@ func parseSeparatedList(p string) *separatedList {
 		return nil
 	}
 	before, after := body[:g.open], body[g.close+2:]
-	items := func(t string) []sequenceItem {
-		if seq := parseSequence("^" + t); seq != nil {
-			return seq.items
+	// The items of a text that is a class sequence, and whether it is one. A "$" at the end of the text is not an
+	// item, and the list has no place for it: "^x(,a$)*$" is not "^x(,a)*$". Such a text is not a part of a list.
+	items := func(t string) ([]sequenceItem, bool) {
+		if seq := parseSequence("^" + t); seq != nil && !seq.toEnd {
+			return seq.items, true
 		}
-		return nil
+		return nil, false
 	}
 	greedySequence := func(items []sequenceItem) *sequence { return &sequence{items: items, pinned: -1} }
 	fixed := func(items []sequenceItem) bool {
@@ -1141,8 +1143,8 @@ func parseSeparatedList(p string) *separatedList {
 		}
 		return len(items) != 0
 	}
-	groupItems := items(inner)
-	if groupItems == nil {
+	groupItems, ok := items(inner)
+	if !ok {
 		return nil
 	}
 	switch {
@@ -1152,8 +1154,8 @@ func parseSeparatedList(p string) *separatedList {
 		if !ok {
 			return nil
 		}
-		first := items(unwrapped)
-		if first == nil && parseSequence("^"+unwrapped) == nil {
+		first, ok := items(unwrapped)
+		if !ok {
 			return nil
 		}
 		for k := 1; k < len(groupItems); k++ {
