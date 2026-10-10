@@ -806,6 +806,19 @@ class EcmaRegexTest {
                         + "|baaa|baab|baac|baba|babb|bacb|bacc|acaca|acbcb|acbccb|abcabc|acacab|ababcab"
                         + "|axbba|abxba",
             },
+            {"c(?=b+?((?:(?:.|c[bc]).{0,2}?){1,2})*?)[^a][ab]\\1a", "|cbaa|cbba"},
+            {
+                "^(?=(?:(?:a|ab)(?:b|bc)(?:c|ca)(?:a|ab)(?:b|bc)(?:c|ca)(?:a|ab)(?:b|bc)(?:c|ca))?(a)?)\\1",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab"
+                        + "|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb"
+                        + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb"
+                        + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
+                        + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
+                        + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
+                        + "|ccbc|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa"
+                        + "|ababcab|axbba|abxba",
+            },
     };
 
     private static final String[] MORE_FOR_LOOKAHEADS = {
@@ -895,6 +908,17 @@ class EcmaRegexTest {
                         + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
                         + "|ccbc|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa"
                         + "|ababcab|axbba|abxba",
+            },
+            {
+                "^(?=(?:(?=(a|b))[ab](?:c|b)*?\\1(c)?)*)\\1\\2",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aba|abb|abc|aca|acb|acc|baa|bab|bac"
+                        + "|bba|bbb|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab|aaac|aaba"
+                        + "|aabc|abaa|abab|abba|abbb|abbc|abca|abcb|abcc|acaa|acab|acac|acba|acbb|acbc"
+                        + "|acca|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbab|bbac|bbba"
+                        + "|bbbb|bbbc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba"
+                        + "|cabb|cabc|caca|cacb|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa"
+                        + "|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa"
+                        + "|acacab|bcbcab|abababa|ababcab|axbba|abxba",
             },
     };
 
@@ -1082,9 +1106,6 @@ class EcmaRegexTest {
             {"(?<=(x*?)a*)\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
             {"(?<=(a)+b*)x\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
             {"(?<=\\1a*(b))x", EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND},
-            // A lookahead in a loop of a lookahead, with a lazy loop between it and a reference to its group, where
-            // what follows the reference sets a group that is read after the outer lookahead.
-            {"^(?=(?:(?=(a|b))[ab](?:c|d)*?\\1(d)?)*)\\1\\2", EcmaRegex.REFUSED_LOOKAROUND_IN_REPETITION},
             {
                 "(?:(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?\\1\\2\\3\\4\\5\\6\\7\\8\\9)*",
                 EcmaRegex.REFUSED_TOO_MANY_PATHS,

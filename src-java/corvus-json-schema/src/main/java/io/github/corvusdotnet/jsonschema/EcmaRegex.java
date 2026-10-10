@@ -3076,7 +3076,11 @@ final class EcmaRegex {
             if (replaying > 0 || !readsTracked(body)) {
                 return;
             }
-            for (int g = body.reads.nextSetBit(0); g >= 0; g = body.reads.nextSetBit(g + 1)) {
+            prepare(body.reads);
+        }
+
+        private void prepare(BitSet reads) {
+            for (int g = reads.nextSetBit(0); g >= 0; g = reads.nextSetBit(g + 1)) {
                 if (tracked(g)) {
                     anchor(env.rec[g]);
                     fresh(g, false);
@@ -3449,6 +3453,23 @@ final class EcmaRegex {
                     break;
                 }
                 case ALT: {
+                    if (sameAfter(n, rest, live)) {
+                        // Each alternative after the tests that the ones before it fail.
+                        String since = chainHere();
+                        out.append("(?:");
+                        for (int k = 0; k < n.subs.length; k++) {
+                            int taken = k;
+                            out.append(k > 0 ? "|" : "").append(alternative(() -> {
+                                for (int j = 0; j < taken; j++) {
+                                    guard(n.subs[j], rest);
+                                }
+                                way(n.subs[taken], rest, live);
+                            }, since));
+                        }
+                        out.append(')');
+                        choices++;
+                        break;
+                    }
                     int taken = choose(n.subs.length);
                     for (int k = 0; k < taken; k++) {
                         guard(n.subs[k], rest);
@@ -3518,6 +3539,50 @@ final class EcmaRegex {
         }
 
         /**
+         * Whether the plan is the same after a choice whichever way is taken: nothing the node sets is read after
+         * it, and every iteration that is open has moved. The ways of such a choice are written as alternatives in
+         * the plan, each with its tests, and are not decisions of the plan, which keeps the plans few. Not where the
+         * node reads a group of a lookaround of this iteration of a loop: the alternatives of the translation would
+         * be places the match can come back to (see {@link #fresh}), and nor where what follows reads one, as the
+         * tests of the alternatives hold what follows.
+         */
+        private boolean sameAfter(Node n, Rest rest, BitSet live) {
+            if (env.still != 0 || n.sets.intersects(live) || readsTracked(n)) {
+                return false;
+            }
+            for (Rest r = rest; r != null; r = r.next) {
+                if (readsTracked(r.node)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /** The {@link #chain} of a scope that starts here, or null when none is known. */
+        private String chainHere() {
+            return chain == null || chainScope != scopeNow ? null : chain + pieces(chainStart, out.length());
+        }
+
+        /** The text a writer writes, as a scope of its own that starts here: its plans as alternatives. */
+        private String alternative(Writer writer, String since) {
+            String wasChain = chain;
+            int wasStart = chainStart;
+            int wasScope = chainScope;
+            int wasStill = env.still;
+            List<String> plans = plans(() -> {
+                chain = since;
+                chainStart = out.length();
+                chainScope = scopeNow;
+                writer.write();
+            }, null);
+            chain = wasChain;
+            chainStart = wasStart;
+            chainScope = wasScope;
+            env.still = wasStill;
+            return plans.size() == 1 ? plans.get(0) : "(?:" + String.join("|", plans) + ")";
+        }
+
+        /**
          * Writes a backreference in a lookahead written by ways. While an iteration is open that has matched
          * nothing so far, whether the backreference matches something is a decision of the plan, written with a
          * test of the group: it holds the empty string when it is all of the text up to where the rest starts.
@@ -3573,6 +3638,10 @@ final class EcmaRegex {
                 return;
             }
             prepare(body);
+            if (rest != null && replaying == 0) {
+                // The tests in a loop hold what follows it.
+                prepare(rest.reads);
+            }
             if (n.min > 0) {
                 // An iteration that is due. It may match nothing.
                 Node again = again(n, n.min - 1, n.max == UNBOUNDED ? UNBOUNDED : n.max - 1);
@@ -3589,6 +3658,20 @@ final class EcmaRegex {
                 // One more iteration and then the rest of them, or none. A greedy repetition tries the iteration
                 // first, and a lazy one tries to stop first.
                 Node again = unbounded ? n : again(n, 0, n.max - 1);
+                if (sameAfter(n, rest, live)) {
+                    String since = chainHere();
+                    String one = alternative(() -> {
+                        if (n.lazy) {
+                            guard(null, rest);
+                        }
+                        iteration(body, again, rest, live);
+                        way(again, rest, live);
+                    }, since);
+                    String none = n.lazy ? "" : alternative(() -> guard(made(CAT, made(ITERATION, body), again), rest), since);
+                    out.append("(?:").append(n.lazy ? none : one).append('|').append(n.lazy ? one : none).append(')');
+                    choices++;
+                    return;
+                }
                 boolean runs = (choose(2) == 0) != n.lazy;
                 if (runs) {
                     if (n.lazy) {
