@@ -251,14 +251,81 @@ fn a_case_insensitive_group_compares_as_its_grammar_says() {
     assert!(wrong.is_empty(), "{} wrong:\n{}", wrong.len(), wrong.join("\n"));
 }
 
-/// A repetition that is written out as copies multiplies with the repetitions around it. Past 65,536 characters,
-/// or deeper than the engine reads, the pattern is refused with a reason of its own. It is not run with another
-/// meaning.
+/// Ten texts for the repetitions with a count of 300.
+fn long_texts() -> Vec<String> {
+    let r = |s: &str, n: usize| s.repeat(n);
+    vec![
+        r("a", 300) + "-",
+        r("a", 301) + "-",
+        r("ax", 150) + "-" + &r("x", 300) + "-",
+        r("ax", 150) + "-" + &r("x", 301) + "-",
+        r("a-", 400),
+        r("a-", 400) + "a",
+        r("ax-", 200) + &r("a", 299) + "x-",
+        r("a", 600) + "-",
+        r("x", 299) + "--",
+        format!("-{}-", r("a", 10)),
+    ]
+}
+
+/// A repetition that is written out as copies multiplies with the repetitions around it, and each optional copy
+/// is a group inside the one before. Past 65,536 characters, or deeper than the 256 levels the engine reads, a
+/// repetition whose body cannot match the empty string is given to the engine as it is written, with its count.
+/// These compiled before 0.1.7, and the first cut of 0.1.7 refused them. The answers are V8's, on [`texts`] and
+/// then on [`long_texts`].
+#[rustfmt::skip]
+const TOO_LARGE_TO_WRITE_OUT: &[(&str, &str, &str)] = &[
+    ("^(?!-)(?:(?:a|x){1,300}-)+$", "FFFFFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFTTF", "TFTFTFTFFF"),
+    ("^(?!-)(?:(?:a|x){1,300}?-)+$", "FFFFFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFTTF", "TFTFTFTFFF"),
+    ("^(?!-)(?:(?:a|x-?){2,300}-)*$", "TFFFFFFFFFFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFFTF", "TFTFFFTFTF"),
+    ("(?<=^(?:(?:a|x){1,300}?-)+)a", "FFFFFFFFFFFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFTTT", "FFFFTTTFFF"),
+    (r#"^(?!-)(?:(?:(a)|x){1,300}\1-)+$"#, "FFFFFFFFFTFFFFFTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF", "TTTFFFTFFF"),
+    // The rest of the pattern is still written for the engine: the reference from inside its group, and the
+    // small repetition whose body can be empty.
+    (r#"^(?!-)(?:(?:a|x){1,300}-)+(x|\1)x$"#, "FFFFFFFFFFFFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFF", "FFFFFFFFFF"),
+    ("^(?!-)(?:(?:a|x){2,300}-|(?:a|){1,2}x)+$", "FFTFFTFFTFFFFFTTFTTFFFFTTFTTFFFFFFFFFFFFFFFFFTF", "TFTTFFTFFF"),
+    // A repetition inside the one that is too large is written out, whether or not its body can be empty.
+    ("^(?!-)(?:(?:(?:a|)*x){1,300}-)+$", "FFFFFFFFFTFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF", "FFTFFFTFFF"),
+];
+
+/// The same on [`texts`] alone: V8 takes minutes over some of the long ones for these.
+#[rustfmt::skip]
+const TOO_LARGE_TO_WRITE_OUT_ON_SHORT_TEXTS: &[(&str, &str)] = &[
+    ("^(?!-)(?:(?:(?:a|x){1,3}-?){1,300}-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF"),
+    ("^(?!-)(?:(?:(?:a|x){1,2}-){1,300}x?)+$", "FFFFFFTFFTFFFFFTFFTFTFFFTFFTFTFFFFFFFFFFFFFFTTF"),
+    ("^(?!-)(?:(?:(?:a|x){2}-?){1,300}a)+$", "FFFFFFFFFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFFFFFT"),
+    ("^(?!-)(?:(?:(?:a|x){200}-|a){200}x)+$", "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    ("^(?!-)(?:(?:a|x){4294967295}-)+$", "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    // The outer repetition, whose body can be empty, is written out around the inner one, which keeps its count.
+    ("^(?!-)(?:(?:(?:a|x){1,300}-|a?){3}x)+$", "FFTFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFTFFFF"),
+];
+
 #[test]
-fn a_repetition_too_large_to_write_out_is_refused() {
-    for pattern in
-        [r"^(?!-)(?:(?:(?:a|x){200}-|a){200}x)+$", r"^(?!-)(?:(?:a|x){1,300}-)+$", r"^(?!-)(?:(?:a|x){4294967295}-)+$"]
-    {
+fn a_repetition_too_large_to_write_out_keeps_its_count_when_its_body_cannot_be_empty() {
+    check(TOO_LARGE_TO_WRITE_OUT_ON_SHORT_TEXTS);
+    let short: Vec<(&str, &str)> =
+        TOO_LARGE_TO_WRITE_OUT.iter().map(|&(pattern, answers, _)| (pattern, answers)).collect();
+    check(&short);
+    let texts = long_texts();
+    for &(pattern, _, answers) in TOO_LARGE_TO_WRITE_OUT {
+        let v = compile(&json!({ "pattern": pattern })).unwrap();
+        let got: String = texts.iter().map(|text| if v.is_valid(&json!(text)) { 'T' } else { 'F' }).collect();
+        assert_eq!(got, answers, "{pattern}");
+    }
+}
+
+/// A repetition that is too large to write out and whose body can match the empty string is the one the engine
+/// does not end on when it has it as written. The pattern is refused with a reason of its own. It is not run with
+/// another meaning. A repetition inside it that could keep its count does not change that.
+#[test]
+fn a_repetition_too_large_to_write_out_is_refused_when_its_body_can_be_empty() {
+    for pattern in [
+        r"^(?!-)(?:(?:a|){1,300}-)+$",
+        r"^(?!-)(?:(?:a|x|){4294967295}-)+$",
+        r"^(?!-)(?:(?:(?:a|x|){200}-|a?){200}x)+$",
+        r"^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$",
+        r"^(?!-)(?:(?:(?:a|){1,300}x){1,300}-)+$",
+    ] {
         let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
         assert_eq!(
             e.message(),

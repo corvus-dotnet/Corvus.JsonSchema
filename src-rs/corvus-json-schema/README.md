@@ -76,8 +76,18 @@ this way, through CPython's C API.
   `regex`, and anything else by [`regress`](https://crates.io/crates/regress). Where `regress` answers a pattern
   differently from ECMA-262 (a repetition inside a repetition, a backreference to a group from inside it, two groups
   with one name, a case-insensitive group), it is given another pattern with the same meaning. A repetition inside a
-  repetition is written out as copies for that, which multiply with the repetitions around them. A schema whose
-  pattern would come to more than 65,536 characters that way does not compile, and the error says why.
+  repetition is written out as copies for that, which multiply with the repetitions around them. Where the pattern
+  would come to more than 65,536 characters that way, or to groups nested deeper than the 256 levels `regress` reads,
+  a repetition whose body cannot match the empty string is given to `regress` as it is written (`(?:a|x){1,300}`
+  inside another repetition is one). `regress` can lose count of such a repetition and run it more or fewer times than
+  the pattern says. A repetition that is too large and whose body can match the empty string (`(?:a|){1,300}` inside
+  another repetition) is the kind `regress` does not end on as written. A schema with one does not compile, and the
+  error says why.
+
+  One class of pattern is known not to be exact. A backreference inside a case-insensitive group `(?i:...)`, in a
+  pattern that is valid only without the `u` flag (one with `\&` or `\-`, say), is compared by Unicode case folding,
+  where ECMA-262 compares the uppercase forms of UTF-16 code units. `^(?i:(ſ)\1)\&?$` is the example: for the long
+  s followed by `S`, V8 says the pattern does not match and this crate says it does.
 - **Formats:** are annotations unless asserted by the vocabulary or by `CompileOptions::assert_format`. The format
   validators follow the C# implementations (RFC 3339 dates and times, IDN hostnames, IRIs, and so on).
 
