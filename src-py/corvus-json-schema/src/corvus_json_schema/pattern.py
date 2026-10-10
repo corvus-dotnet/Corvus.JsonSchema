@@ -1,28 +1,50 @@
 """ECMA-262 regular expressions (as JSON Schema's ``pattern`` and ``format: regex`` specify), run by Python's engines.
 
 A pattern is translated to Python's syntax with ECMA's meaning and compiled with the ASCII flag, so that ``\\d``,
-``\\w`` and ``\\b`` keep their ECMA (ASCII) definitions. ECMA's ``\\s``, ``.`` and ``$`` are spelled out, named groups
-are renamed to identifiers, and every literal is escaped. The standard library's ``re`` runs what it can; the
-``regex`` package runs the rest (Unicode properties, variable-width lookbehind).
+``\\w`` and ``\\b`` keep their ECMA (ASCII) definitions. ECMA's ``\\s``, ``.`` and ``$`` are spelled out, and every
+literal is escaped. The standard library's ``re`` runs what it can. The ``regex`` package runs the rest (Unicode
+properties, variable-width lookbehind, and the backreferences described below).
 
 Patterns are parsed with the ``u`` flag's grammar first; one that only parses without it (Annex B: identity escapes
 such as ``\\-``, literal braces) is translated by the lenient grammar instead, as JavaScript's ``RegExp`` would be
 constructed without the flag.
+
+Backreferences have a meaning in ECMA-262 that neither engine has, and are written out for them. It is done once,
+when a schema is compiled. For a pattern with no backreference, nothing is added to a match.
+
+**Backreferences.** In ECMA-262 a reference to a group that has not matched matches the empty string, and the
+groups inside a repetition lose their values at the start of each iteration. Both engines fail a reference to a
+group with no value, and keep a value from one iteration to the next. So each reference is placed, from where it
+and its group are in the pattern.
+
+- It can never be read after its group has matched (it is inside the group, before it, or in another alternative).
+  It is written as nothing.
+- Its group has always matched when it is read, in the same iteration. It is written as a reference.
+- Anything else. The pattern goes to ``regex``, where two groups may share a name. An empty group of the same name
+  at the start of the pattern, and at the start of each iteration of a repetition the group is inside, gives the
+  group the empty value, which reads as no value does in ECMA-262.
 """
 
 from __future__ import annotations
 
 import re
+import sys
 from collections.abc import Callable
 from typing import Any
 
 # ECMA-262 WhiteSpace and LineTerminator (what \s matches).
 _SPACE = "\\t\\n\\x0b\\x0c\\r \\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff"
 _DOT = "[^\\n\\r\\u2028\\u2029]"
+_ANY = "(?s:.)"
 _SYNTAX = set("^$\\.*+?()[]{}|/")
-_CLASS_ESCAPES = set("dDwWsS")
 _QUANTIFIER_RE = re.compile(r"\{(\d+)(,(\d*))?\}")
 _PROPERTY_RE = re.compile(r"[A-Za-z0-9_]+(=[A-Za-z0-9_]+)?")
+
+# Before CPython 3.11 the standard library's engine did not put back what a group held when it backtracked into a
+# repetition (bpo-35859), so a reference could read what a group took on a path the match had left.
+# "^([^a]?a+){2,3}?\1a$" did not match "aaaa". There the regex package runs a pattern with a reference to a group
+# inside a repetition.
+_GROUPS_IN_REPETITIONS_GO_STALE = sys.version_info < (3, 11)
 
 
 class _Invalid(Exception):
@@ -41,6 +63,71 @@ def _literal(c: str) -> str:
     return f"\\U{o:08x}"
 
 
+# The kinds of node of a pattern's tree.
+_TEXT, _SEQUENCE, _ALTERNATION, _GROUP, _LOOK, _REPEAT, _REFERENCE = range(7)
+# Where a reference is, from its group (see the module's description).
+_EMPTY, _PLAIN, _DYNAMIC = range(3)
+
+
+class _Node:
+    __slots__ = (
+        "back",
+        "behind",
+        "first",
+        "group",
+        "items",
+        "kind",
+        "last",
+        "lazy",
+        "max",
+        "min",
+        "negative",
+        "nothing",
+        "parent",
+        "state",
+        "text",
+    )
+
+    def __init__(self, kind: int, text: str = "", items: list[_Node] | None = None, group: int = 0) -> None:
+        self.kind = kind
+        # _TEXT: a translated piece that is matched as it is written (a character, a class, an assertion).
+        self.text = text
+        self.items: list[_Node] = [] if items is None else items
+        # _GROUP: the number of a capturing group, or 0. _REFERENCE: the group it names.
+        self.group = group
+        self.behind = False
+        self.negative = False
+        self.min = 0
+        self.max = 0  # -1: no maximum
+        self.lazy = False
+        # Whether the node can match without taking a character (None: not worked out yet).
+        self.nothing: bool | None = None
+        self.state = _PLAIN
+        # Set by _Writer: the parent, the node's place in the tree (it holds the nodes first < n.first < last), and
+        # whether it is matched backwards (it is in a lookbehind).
+        self.parent: _Node | None = None
+        self.first = 0
+        self.last = 0
+        self.back = False
+
+
+def _matches_nothing(n: _Node) -> bool:
+    """Whether the node can match without taking a character. It may say yes for a node that cannot."""
+    if n.nothing is None:
+        k = n.kind
+        if k == _SEQUENCE:
+            n.nothing = all(_matches_nothing(x) for x in n.items)
+        elif k == _ALTERNATION:
+            n.nothing = any(_matches_nothing(x) for x in n.items)
+        elif k == _GROUP:
+            n.nothing = _matches_nothing(n.items[0])
+        elif k == _REPEAT:
+            n.nothing = n.min == 0 or _matches_nothing(n.items[0])
+        else:
+            n.nothing = True
+    return n.nothing
+
+
 class _Translator:
     def __init__(self, pattern: str, unicode: bool, ascii_flag: bool) -> None:
         self.p = pattern
@@ -50,12 +137,12 @@ class _Translator:
         self.n = len(pattern)
         self.u = unicode
         self.i = 0
+        # The capturing groups of the whole pattern and the group of each name, from a scan before parsing: what \1
+        # and \k mean depends on groups that may follow them.
+        self.group_count = 0
+        self.names: dict[str, int] = {}
         self.groups = 0
-        self.names: dict[str, str] = {}
         self.needs_regex = False
-        # Backreferences are checked against the group count once the whole pattern is read.
-        self.backrefs: list[int] = []
-        self.named_refs: list[str] = []
 
     def error(self) -> _Invalid:
         return _Invalid(self.p)
@@ -66,19 +153,14 @@ class _Translator:
 
     def translate(self) -> str:
         self._count_groups()
-        out = self._alternation(top=True)
+        root = self._alternation(top=True)
         if self.i != self.n:
             raise self.error()
-        for b in self.backrefs:
-            if b > self.groups:
-                raise self.error()
-        for name in self.named_refs:
-            if name not in self.names:
-                raise self.error()
-        return out
+        writer = _Writer(root)
+        self.needs_regex = self.needs_regex or writer.needs_regex
+        return writer.write()
 
     def _count_groups(self) -> None:
-        # Capturing groups, for deciding whether \N is a backreference (and the names of named groups).
         i = 0
         in_class = False
         p = self.p
@@ -100,23 +182,23 @@ class _Translator:
                     name = p[i + 3 : end]
                     if not name or name in self.names:
                         raise self.error()
-                    self.groups += 1
-                    self.names[name] = f"g{self.groups}"
+                    self.group_count += 1
+                    self.names[name] = self.group_count
                 elif not p.startswith("(?", i):
-                    self.groups += 1
+                    self.group_count += 1
             i += 1
 
-    def _alternation(self, top: bool) -> str:
+    def _alternation(self, top: bool) -> _Node:
         parts = [self._sequence()]
         while self.peek() == "|":
             self.i += 1
             parts.append(self._sequence())
         if not top and self.peek() != ")":
             raise self.error()
-        return "|".join(parts)
+        return parts[0] if len(parts) == 1 else _Node(_ALTERNATION, items=parts)
 
-    def _sequence(self) -> str:
-        out: list[str] = []
+    def _sequence(self) -> _Node:
+        out: list[_Node] = []
         while self.i < self.n and self.peek() not in "|)":
             atom, quantifiable = self._term()
             if self.i < self.n and self.peek() in "*+?{":
@@ -124,11 +206,12 @@ class _Translator:
                 if q is not None:
                     if not quantifiable:
                         raise self.error()
-                    atom = f"(?:{atom}){q}" if not atom.startswith("(") else atom + q
+                    atom = _Node(_REPEAT, items=[atom])
+                    atom.min, atom.max, atom.lazy = q
             out.append(atom)
-        return "".join(out)
+        return _Node(_SEQUENCE, items=out)
 
-    def _quantifier(self) -> str | None:
+    def _quantifier(self) -> tuple[int, int, bool] | None:
         c = self.peek()
         if c == "{":
             m = _QUANTIFIER_RE.match(self.p, self.i)
@@ -137,36 +220,35 @@ class _Translator:
                     raise self.error()
                 return None  # a literal brace (Annex B); the next term reads it
             lo = int(m.group(1))
-            hi = m.group(3)
-            if m.group(2) is not None and hi != "" and int(hi) < lo:
+            hi = lo if m.group(2) is None else -1 if m.group(3) == "" else int(m.group(3))
+            if hi != -1 and hi < lo:
                 raise self.error()
             self.i = m.end()
-            q = m.group(0)
         else:
             self.i += 1
-            q = c
-        if self.peek() == "?":
+            lo, hi = (0, -1) if c == "*" else (1, -1) if c == "+" else (0, 1)
+        lazy = self.peek() == "?"
+        if lazy:
             self.i += 1
-            q += "?"
         if self.peek() in ("*", "+", "?") or (self.peek() == "{" and _QUANTIFIER_RE.match(self.p, self.i)):
             raise self.error()
-        return q
+        return lo, hi, lazy
 
-    def _term(self) -> tuple[str, bool]:
+    def _term(self) -> tuple[_Node, bool]:
         c = self.peek()
         if c == "^":
             self.i += 1
-            return "^", False
+            return _Node(_TEXT, "^"), False
         if c == "$":
             self.i += 1
-            return "\\Z", False
+            return _Node(_TEXT, "\\Z"), False
         if c == ".":
             self.i += 1
-            return _DOT, True
+            return self._one(_DOT), True
         if c == "(":
             return self._group()
         if c == "[":
-            return self._class(), True
+            return self._one(self._class()), True
         if c == "\\":
             return self._escape()
         if c in "*+?":
@@ -175,95 +257,97 @@ class _Translator:
             if self.u or _QUANTIFIER_RE.match(self.p, self.i):
                 raise self.error()
             self.i += 1
-            return "\\{", True
+            return self._one("\\{"), True
         if c in "}]":
             if self.u:
                 raise self.error()
             self.i += 1
-            return "\\" + c, True
+            return self._one("\\" + c), True
         self.i += 1
-        return self._char(c), True
+        return self._one(self._char(c)), True
+
+    @staticmethod
+    def _one(text: str) -> _Node:
+        """The node of something that takes one character."""
+        n = _Node(_TEXT, text)
+        n.nothing = False
+        return n
 
     def _char(self, c: str) -> str:
         # A literal character; an astral character is one code point (as with the u flag).
         return _literal(c)
 
-    def _group(self) -> tuple[str, bool]:
+    def _group(self) -> tuple[_Node, bool]:
         p = self.p
         i = self.i
         if p.startswith("(?:", i):
             self.i += 3
-            prefix, quantifiable = "(?:", True
+            node, quantifiable = _Node(_GROUP), True
         elif p.startswith("(?=", i) or p.startswith("(?!", i):
             self.i += 3
-            prefix, quantifiable = p[i : i + 3], not self.u
+            node, quantifiable = _Node(_LOOK), not self.u
+            node.negative = p[i + 2] == "!"
         elif p.startswith("(?<=", i) or p.startswith("(?<!", i):
             self.i += 4
-            prefix, quantifiable = p[i : i + 4], False
+            node, quantifiable = _Node(_LOOK), False
+            node.behind = True
+            node.negative = p[i + 3] == "!"
             self.needs_regex = True
         elif p.startswith("(?<", i):
-            end = p.find(">", i)
-            name = p[i + 3 : end]
-            self.i = end + 1
-            prefix, quantifiable = f"(?P<{self.names[name]}>", True
+            self.i = p.find(">", i) + 1
+            self.groups += 1
+            node, quantifiable = _Node(_GROUP, group=self.groups), True
         elif p.startswith("(?", i):
             raise self.error()
         else:
             self.i += 1
-            prefix, quantifiable = "(", True
-        body = self._alternation(top=False)
+            self.groups += 1
+            node, quantifiable = _Node(_GROUP, group=self.groups), True
+        node.items.append(self._alternation(top=False))
         self.i += 1  # ')'
-        return prefix + body + ")", quantifiable
+        return node, quantifiable
 
-    def _escape(self) -> tuple[str, bool]:
+    def _escape(self) -> tuple[_Node, bool]:
         self.i += 1
         if self.i >= self.n:
             raise self.error()
         e = self.p[self.i]
-        if e == "b":
+        if e in "bB":
             self.i += 1
-            return "\\b" if self.ascii_flag else "(?a:\\b)", False
-        if e == "B":
-            self.i += 1
-            # Not at a word boundary, written as that: the standard library's \B never matched in an empty text
-            # before CPython 3.14, where ECMA's does.
-            return "(?!\\b)" if self.ascii_flag else "(?!(?a:\\b))", False
+            boundary = "\\b" if self.ascii_flag else "(?a:\\b)"
+            # \B is "not at a word boundary", written as that: the standard library's \B never matched in an empty
+            # text before CPython 3.14, where ECMA's does.
+            return _Node(_TEXT, boundary if e == "b" else f"(?!{boundary})"), False
         if e in "123456789":
             j = self.i
             while j < self.n and self.p[j].isdigit():
                 j += 1
             number = int(self.p[self.i : j])
-            if number <= self.groups:
+            if number <= self.group_count:
                 self.i = j
-                self.backrefs.append(number)
-                return f"(?:\\{number})", True
+                return _Node(_REFERENCE, group=number), True
             if self.u:
                 raise self.error()
-            return self._legacy_octal_or_identity(), True
-        if e == "k":
-            if self.peek(1) == "<":
-                end = self.p.find(">", self.i)
-                if end > 0:
-                    name = self.p[self.i + 2 : end]
-                    self.i = end + 1
-                    if name in self.names:
-                        return f"(?P={self.names[name]})", True
-                    if self.u or self.names:
-                        raise self.error()
-                    return "k<" + "".join(_literal(ch) for ch in name) + ">", True
-            if self.u or self.names:
+            return self._one(self._char(self._legacy_octal_or_identity())), True
+        if e == "k" and (self.u or self.names):
+            # Annex B reads \k as the letter k in a pattern with no named group.
+            end = self.p.find(">", self.i)
+            if self.peek(1) != "<" or end < 0 or self.p[self.i + 2 : end] not in self.names:
                 raise self.error()
-            self.i += 1
-            return "k", True
-        text = self._char_escape(in_class=False)
-        return text, True
+            ref = _Node(_REFERENCE, group=self.names[self.p[self.i + 2 : end]])
+            self.i = end + 1
+            return ref, True
+        text, char = self._char_escape(in_class=False)
+        if char is not None:
+            return self._one(self._char(char)), True
+        return self._one(text), True
 
     def _legacy_octal_or_identity(self) -> str:
         # Annex B: \8 and \9 are identity escapes; other digits start a legacy octal escape.
         e = self.p[self.i]
         if e in "89":
             self.i += 1
-            return _literal(e)
+            return e
         j = self.i
         while j < self.n and j < self.i + 3 and self.p[j] in "01234567":
             j += 1
@@ -272,52 +356,53 @@ class _Translator:
             j -= 1
             value = int(self.p[self.i : j], 8)
         self.i = j
-        return _literal(chr(value))
+        return chr(value)
 
-    def _char_escape(self, in_class: bool) -> str:
-        """An escape after the backslash at ``self.i`` that denotes a character or a class: its translation."""
+    def _char_escape(self, in_class: bool) -> tuple[str, str | None]:
+        """An escape after the backslash at ``self.i`` that denotes a character or a class: the translation of a
+        class (``\\d``, ``\\p{...}``), or the character."""
         e = self.p[self.i]
         self.i += 1
         if e == "d":
-            return "0-9" if in_class else "[0-9]"
+            return ("0-9" if in_class else "[0-9]"), None
         if e == "D":
-            return "\\D" if self.ascii_flag else "[^0-9]"
+            return ("\\D" if self.ascii_flag else "[^0-9]"), None
         if e == "w":
-            return "\\w" if self.ascii_flag else "0-9A-Za-z_" if in_class else "[0-9A-Za-z_]"
+            return ("\\w" if self.ascii_flag else "0-9A-Za-z_" if in_class else "[0-9A-Za-z_]"), None
         if e == "W":
-            return "\\W" if self.ascii_flag else "[^0-9A-Za-z_]"
+            return ("\\W" if self.ascii_flag else "[^0-9A-Za-z_]"), None
         if e == "s":
-            return _SPACE if in_class else f"[{_SPACE}]"
+            return (_SPACE if in_class else f"[{_SPACE}]"), None
         if e == "S":
-            return f"[^{_SPACE}]"
+            return f"[^{_SPACE}]", None
         if e == "n":
-            return "\\n"
+            return "", "\n"
         if e == "r":
-            return "\\r"
+            return "", "\r"
         if e == "t":
-            return "\\t"
+            return "", "\t"
         if e == "f":
-            return "\\x0c"
+            return "", "\x0c"
         if e == "v":
-            return "\\x0b"
+            return "", "\x0b"
         if e == "0" and not self.peek().isdigit():
-            return "\\x00"
+            return "", "\x00"
         if e == "b" and in_class:
-            return "\\x08"
+            return "", "\x08"
         if e == "-" and in_class:
-            return "\\-"
+            return "", "-"
         if e == "c":
             c = self.peek()
             if ("a" <= c <= "z") or ("A" <= c <= "Z"):
                 self.i += 1
-                return _literal(chr(ord(c) % 32))
+                return "", chr(ord(c) % 32)
             if in_class and not self.u and (c.isdigit() or c == "_"):
                 self.i += 1
-                return _literal(chr(ord(c) % 32))
+                return "", chr(ord(c) % 32)
             if self.u:
                 raise self.error()
             self.i -= 1  # '\c' is a literal backslash then 'c'
-            return "\\\\"
+            return "", "\\"
         if e in "pP":
             if self.u and self.peek() == "{":
                 end = self.p.find("}", self.i)
@@ -326,38 +411,38 @@ class _Translator:
                     raise self.error()
                 self.i = end + 1
                 self.needs_regex = True
-                return f"\\{e}{{{body}}}"
+                return f"\\{e}{{{body}}}", None
             if self.u:
                 raise self.error()
-            return e
+            return "", e
         if e == "x":
             hexa = self.p[self.i : self.i + 2]
             if len(hexa) == 2 and all(h in "0123456789abcdefABCDEF" for h in hexa):
                 self.i += 2
-                return _literal(chr(int(hexa, 16)))
+                return "", chr(int(hexa, 16))
             if self.u:
                 raise self.error()
-            return "x"
+            return "", "x"
         if e == "u":
             code = self._unicode_escape()
             if code is not None:
-                return _literal(chr(code))
+                return "", chr(code)
             if self.u:
                 raise self.error()
-            return "u"
+            return "", "u"
         if e in _SYNTAX:
-            return _literal(e)
+            return "", e
         if e == "0" and in_class and not self.u:
-            return self._legacy_octal_after_zero()
+            return "", self._legacy_octal_after_zero()
         if self.u:
             raise self.error()
         if e == "0":
-            return self._legacy_octal_after_zero()
+            return "", self._legacy_octal_after_zero()
         if in_class and e.isdigit():
             self.i -= 1
-            return self._legacy_octal_or_identity()
+            return "", self._legacy_octal_or_identity()
         # Annex B identity escape.
-        return _literal(e)
+        return "", e
 
     def _legacy_octal_after_zero(self) -> str:
         self.i -= 1
@@ -422,14 +507,14 @@ class _Translator:
                 continue
             (outside if lo.startswith("[^") else members).append(lo)
         if not members and not outside:
-            return "[^\\s\\S]" if not negated else "(?s:.)"
+            return "[^\\s\\S]" if not negated else _ANY
         alternatives = ([f"[{''.join(members)}]"] if members else []) + outside
         body = alternatives[0] if len(alternatives) == 1 else "(?:" + "|".join(alternatives) + ")"
         if not negated:
             return body
         if not outside:
             return f"[^{''.join(members)}]"
-        return f"(?:(?!{body})(?s:.))"
+        return f"(?:(?!{body}){_ANY})"
 
     def _class_atom(self) -> tuple[str, str | None]:
         """One class atom: its translation and, when it is a single character, that character."""
@@ -440,45 +525,140 @@ class _Translator:
         self.i += 1
         if self.i >= self.n:
             raise self.error()
-        e = self.p[self.i]
-        if e in _CLASS_ESCAPES or (e in "pP" and self.u):
-            return self._char_escape(in_class=True), None
-        start = self.i
-        text = self._char_escape(in_class=True)
-        return text, _single_char(self.p[start - 1 : self.i])
+        text, char = self._char_escape(in_class=True)
+        return (text, None) if char is None else (_literal(char), char)
 
 
-def _single_char(escape: str) -> str | None:
-    """The character an escape (with its backslash) stands for, for range bounds."""
-    body = escape[1:]
-    simple = {"n": "\n", "r": "\r", "t": "\t", "f": "\x0c", "v": "\x0b", "b": "\x08", "0": "\x00", "-": "-"}
-    if body in simple:
-        return simple[body]
-    if body.startswith("x") and len(body) == 3:
-        return chr(int(body[1:], 16))
-    if body.startswith("u{"):
-        return chr(int(body[2:-1], 16))
-    if body.startswith("u") and len(body) >= 5:
-        hi = int(body[1:5], 16)
-        if len(body) == 11:
-            lo = int(body[7:11], 16)
-            return chr(0x10000 + ((hi - 0xD800) << 10) + (lo - 0xDC00))
-        return chr(hi)
-    if body.startswith("c") and len(body) == 2:
-        return chr(ord(body[1]) % 32)
-    if body and body[0] in "01234567" and all(ch in "01234567" for ch in body):
-        return chr(int(body, 8))
-    return body[0] if len(body) == 1 else None
+class _Writer:
+    """Places every reference of a pattern's tree and writes the pattern for the engine."""
+
+    def __init__(self, root: _Node) -> None:
+        self.root = root
+        self.groups: dict[int, _Node] = {}
+        self.refs: list[_Node] = []
+        self.count = 0
+        self._number(root, None, False)
+        # The groups a reference reads, which get a name, and the ones a _DYNAMIC reference reads, which are reset.
+        self.read: set[int] = set()
+        self.reset: set[int] = set()
+        self.needs_regex = False
+        for ref in self.refs:
+            ref.state = self._place(ref, self.groups[ref.group])
+            if ref.state != _EMPTY:
+                self.read.add(ref.group)
+                if _GROUPS_IN_REPETITIONS_GO_STALE:
+                    n = self.groups[ref.group].parent
+                    while n is not None and n.kind != _REPEAT:
+                        n = n.parent
+                    self.needs_regex = self.needs_regex or n is not None
+            if ref.state == _DYNAMIC:
+                self.reset.add(ref.group)
+                self.needs_regex = True
+
+    def _number(self, n: _Node, parent: _Node | None, back: bool) -> None:
+        n.parent = parent
+        n.first = self.count
+        self.count += 1
+        n.back = back
+        if n.kind == _GROUP and n.group:
+            self.groups[n.group] = n
+        elif n.kind == _REFERENCE:
+            self.refs.append(n)
+        elif n.kind == _LOOK:
+            back = n.behind
+        for item in n.items:
+            self._number(item, n, back)
+        n.last = self.count
+
+    @staticmethod
+    def _place(ref: _Node, group: _Node) -> int:
+        # The innermost node that holds both the reference and its group.
+        both = ref.parent
+        while both is not None and not both.first <= group.first < both.last:
+            both = both.parent
+        if both is None or both is group or both.kind != _SEQUENCE:
+            # The reference is inside its group, which has no value until it closes, or the two are in separate
+            # alternatives. Any repetition around both has reset the group since it last matched.
+            return _EMPTY
+        ahead = group.first < ref.first
+        if ahead == both.back:
+            # The group is matched after the reference (to its left, in a lookbehind).
+            return _EMPTY
+        plain = True
+        n: _Node | None = group
+        while n is not None and n is not both:
+            k = n.kind
+            if k == _LOOK and n.negative:
+                # Nothing outside a negative lookaround sees its groups.
+                return _EMPTY
+            if k == _ALTERNATION:
+                plain = False
+            elif k == _REPEAT and (n.min == 0 or (n.max != n.min and _matches_nothing(n.items[0]))):
+                # No iteration may run, or the last one may match nothing (which the engines and ECMA-262 treat
+                # differently).
+                plain = False
+            n = n.parent
+        return _PLAIN if plain else _DYNAMIC
+
+    def write(self) -> str:
+        out = self._write(self.root)
+        if self.reset:
+            out = "".join(f"(?P<g{g}>)" for g in sorted(self.reset)) + f"(?:{out})"
+        return out
+
+    def _write(self, n: _Node) -> str:
+        k = n.kind
+        if k == _TEXT:
+            return n.text
+        if k == _SEQUENCE:
+            return "".join([self._write(x) for x in n.items])
+        if k == _ALTERNATION:
+            return "|".join([self._write(x) for x in n.items])
+        if k == _GROUP:
+            body = self._write(n.items[0])
+            if n.group in self.read:
+                return f"(?P<g{n.group}>{body})"
+            # In a pattern with a reference that reads a group, a group that none reads does not capture.
+            return f"({body})" if n.group and not self.read else f"(?:{body})"
+        if k == _LOOK:
+            return f"(?{'<' if n.behind else ''}{'!' if n.negative else '='}{self._write(n.items[0])})"
+        if k == _REFERENCE:
+            if n.state == _EMPTY:
+                return "(?:)"
+            return f"(?P=g{n.group})"
+        return self._repeat(n)
+
+    def _repeat(self, n: _Node) -> str:
+        text = self._write(n.items[0])
+        inside = [g for g in sorted(self.reset) if n.first < self.groups[g].first < n.last]
+        if inside and (n.max == -1 or n.max > 1):
+            # The groups inside that a reference may read without their having matched lose their values at the
+            # start of each iteration (at its right, in a lookbehind).
+            resets = "".join(f"(?P<g{g}>)" for g in inside)
+            text = f"(?:{text}{resets})" if n.back else f"(?:{resets}{text})"
+        return (text if text.startswith("(") else f"(?:{text})") + self._count(n.min, n.max, n.lazy)
+
+    @staticmethod
+    def _count(lo: int, hi: int, lazy: bool) -> str:
+        if hi == -1:
+            q = "*" if lo == 0 else "+" if lo == 1 else f"{{{lo},}}"
+        elif lo == hi:
+            q = f"{{{lo}}}"
+        else:
+            q = "?" if (lo, hi) == (0, 1) else f"{{{lo},{hi}}}"
+        return q + "?" if lazy else q
 
 
-def translate(pattern: str, unicode: bool = True) -> tuple[str, bool] | None:
-    """Translates an ECMA-262 pattern to Python syntax: the translation and whether it needs the ``regex`` package
-    (and so is compiled without the ASCII flag), or None when the pattern is not valid in the grammar."""
+def translate(pattern: str, unicode: bool = True, for_regex: bool = False) -> tuple[str, bool] | None:
+    """Translates an ECMA-262 pattern to Python syntax: the translation and whether it is for the ``regex`` package
+    (and so is compiled without the ASCII flag), or None when the pattern is not valid in the grammar. It is for
+    ``regex`` when the pattern needs it or ``for_regex`` asks."""
     try:
-        t = _Translator(pattern, unicode, True)
-        text = t.translate()
-        if not t.needs_regex:
-            return text, False
+        if not for_regex:
+            t = _Translator(pattern, unicode, True)
+            text = t.translate()
+            if not t.needs_regex:
+                return text, False
         return _Translator(pattern, unicode, False).translate(), True
     except (_Invalid, KeyError, ValueError, IndexError):
         return None
@@ -489,16 +669,22 @@ Matcher = Callable[[str], Any]
 _cache: dict[str, Matcher | None] = {}
 
 
-def _compile(translated: str, needs_regex: bool) -> Matcher | None:
-    if not needs_regex:
+def _compile(pattern: str, unicode: bool) -> Matcher | None:
+    t = translate(pattern, unicode)
+    if t is None:
+        return None
+    if not t[1]:
         try:
-            return re.compile(translated, re.ASCII).search
+            return re.compile(t[0], re.ASCII).search
         except re.error:
-            pass
+            # The regex package takes more (a lookbehind that the standard library does not, say).
+            t = translate(pattern, unicode, True)
+            if t is None:
+                return None
     import regex  # only patterns the standard library cannot run need it
 
     try:
-        return regex.compile(translated).search
+        return regex.compile(t[0]).search
     except regex.error:
         return None
 
@@ -507,18 +693,13 @@ def compile_pattern(pattern: str) -> Matcher | None:
     """A search function for an ECMA-262 pattern (truthy on a match), or None when the pattern is invalid."""
     if pattern in _cache:
         return _cache[pattern]
-    matcher: Matcher | None = None
-    for unicode in (True, False):
-        t = translate(pattern, unicode)
-        if t is not None:
-            matcher = _compile(*t)
-            if matcher is not None:
-                break
+    matcher = _compile(pattern, True)
+    if matcher is None:
+        matcher = _compile(pattern, False)
     _cache[pattern] = matcher
     return matcher
 
 
 def is_valid_ecma_regex(s: str) -> bool:
     """Whether the text is a valid ECMA-262 pattern with the ``u`` flag (``format: regex``)."""
-    t = translate(s, True)
-    return t is not None and _compile(*t) is not None
+    return _compile(s, True) is not None

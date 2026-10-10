@@ -5,6 +5,7 @@ import importlib.util
 import json
 import random
 import re
+import sys
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -12,7 +13,7 @@ from typing import Any
 import pytest
 
 import corvus_json_schema as cjs
-from corvus_json_schema.pattern import compile_pattern
+from corvus_json_schema.pattern import compile_pattern, translate
 
 
 def import_module(source: str, tmp_path: Path, name: str = "generated") -> ModuleType:
@@ -279,6 +280,112 @@ def test_word_boundaries_are_ecma_at_every_position_of_every_short_text() -> Non
                 expected = None if at > len(t) else word(t, at - 1) != word(t, at)
                 assert boundary(t) is (expected is True), f"\\b at {at} of {t!r}"
                 assert not_boundary(t) is (expected is False), f"\\B at {at} of {t!r}"
+
+
+def _on_both_engines(pattern: str) -> list[str]:
+    # The pattern, and the pattern after an empty lookbehind, which sends it to the regex package.
+    return [pattern, "(?<=)" + pattern]
+
+
+@pytest.mark.parametrize(
+    ("pattern", "text", "expected"),
+    [
+        # V8's answers. A reference to a group that has not matched matches the empty string: the group is in
+        # another alternative, comes later, is the one the reference is in, or was reset by its repetition, which
+        # every iteration does at its start.
+        ("^(?:(a)|b)\\1$", "b", True),
+        ("^(?:(a)|b)\\1$", "aa", True),
+        ("^(?:(a)|b)\\1$", "a", False),
+        ("^(?:(a)|b)\\1$", "ba", False),
+        ("^\\1(a)$", "a", True),
+        ("^\\1(a)$", "aa", False),
+        ("^(a\\1)$", "a", True),
+        ("^(a\\1)$", "aa", False),
+        ("^(?:(a)|\\1){1}$", "", True),
+        ("^(?:(a)|\\1){1}$", "a", True),
+        ("^(?:(a)|\\1){4}$", "", True),
+        ("^(?:(a)|\\1){4}$", "a", True),
+        ("^(?:(a)|\\1){4}$", "aa", True),
+        ("^(?:(a)|\\1){4}$", "aaa", True),
+        ("^(?:(a)|\\1){4}$", "aaaa", True),
+        ("^(?:(a)|\\1){4}$", "aaaaa", False),
+        ("^(?:\\1(a)){2}$", "aa", True),
+        ("^(?:\\1(a)){2}$", "aaa", False),
+        ("^(?:\\1(a)){2}$", "a", False),
+        ("^(?:(a)?\\1){2}x$", "x", True),
+        ("^(?:(a)?\\1){2}x$", "aax", True),
+        ("^(?:(a)?\\1){2}x$", "aaaax", True),
+        ("^(?:(a)?\\1){2}x$", "ax", False),
+        ("^(?:(a)|b)*\\1$", "ab", True),
+        ("^(?:(a)|b)*\\1$", "aba", False),
+        ("^(?:(a)|b)*\\1$", "baa", True),
+        ("^(?:(a)|b)*\\1$", "", True),
+        ("^(?:(a)|(b))+\\1\\2$", "ab", False),
+        ("^(?:(a)|(b))+\\1\\2$", "aa", True),
+        ("^(?:(a)|(b))+\\1\\2$", "abb", True),
+        ("^(?:(a)|(b))+\\1\\2$", "bb", True),
+        ("^(?:(a)(b)?)+\\2\\1$", "aba", False),
+        ("^(?:(a)(b)?)+\\2\\1$", "abab", False),
+        ("^(?:(a)(b)?)+\\2\\1$", "abaa", True),
+        ("(?!(a))\\1b", "b", True),
+        ("(?!(a))\\1b", "ab", True),
+        ("^(a)?\\1b$", "b", True),
+        ("^(a)?\\1b$", "aab", True),
+        ("^(a)?\\1b$", "ab", False),
+        ("^(?:(?=(a))a|b)*\\1$", "ab", True),
+        ("^(?:(?=(a))a|b)*\\1$", "aa", True),
+        ("^(?:(?=(a))a|b)*\\1$", "abaa", True),
+        ("(?<=(a)\\1)b", "ab", True),
+        ("(?<=(a)\\1)b", "b", False),
+        ("(?<=\\1(a))b", "aab", True),
+        ("(?<=\\1(a))b", "ab", False),
+        ("^(?<n>a)?\\k<n>b$", "b", True),
+        ("^(?<n>a)?\\k<n>b$", "aab", True),
+        ("^(?<n>a)?\\k<n>b$", "ab", False),
+        ("^\\k<n>(?<n>a)$", "a", True),
+        ("^\\k<n>(?<n>a)$", "aa", False),
+        ("^(['\"]).*\\1$", "'a'", True),
+        ("^(['\"]).*\\1$", '"a"', True),
+        ("^(['\"]).*\\1$", "'a\"", False),
+        ("^(a)\\1{2}$", "aaa", True),
+        ("^(a)\\1{2}$", "aa", False),
+        ("^([^a]?a+){2,3}?\\1a$", "aaaa", True),
+        ("^([^a]?a+){2,3}?\\1a$", "aaa", False),
+        ("^([^a]?a+){2,3}?\\1a$", "aa", False),
+        ("^(x|a{1,2}){3,}?\\1x", "aaaax", True),
+        ("^(x|a{1,2}){3,}?\\1x", "aaax", False),
+        ("^(x|a{1,2}){3,}?\\1x", "xxxxx", True),
+    ],
+)
+def test_backreferences_have_ecma_semantics(pattern: str, text: str, expected: bool) -> None:
+    for p in _on_both_engines(pattern):
+        assert cjs.compile({"pattern": p})(text) is expected, p
+
+
+def test_a_backreference_is_written_from_where_its_group_is() -> None:
+    def written(pattern: str) -> tuple[str, bool]:
+        t = translate(pattern)
+        assert t is not None
+        return t
+
+    # The group has always matched when the reference is read: the standard library's engine runs the pattern.
+    for pattern in ("^(a)\\1$", "^(['\"]).*\\1$", "^(?<n>\\w)-\\k<n>$", "^(a)(?:b|\\1)*$"):
+        text, for_regex = written(pattern)
+        assert "(?P=g1)" in text and not for_regex, pattern
+    # Before CPython 3.11 that engine lost what a group inside a repetition held when it backtracked, so there the
+    # regex package runs a pattern with a reference to such a group.
+    text, for_regex = written("^(?:(a)\\1)+$")
+    assert "(?P=g1)" in text and for_regex is (sys.version_info < (3, 11))
+    # The reference can never be read after its group has matched: it is written as nothing.
+    for pattern in ("^(a\\1)$", "^\\1(a)$", "^(?:(a)|\\1)+$", "^\\k<n>(?<n>a)$", "(?!(a))\\1b"):
+        text, for_regex = written(pattern)
+        assert "(?P" not in text and not for_regex, pattern
+    # The group may have no value when the reference is read: the regex package runs the pattern, with the group
+    # reset at the start of the pattern and of each iteration.
+    for pattern in ("^(a)?\\1b$", "^(?:(a)|b)\\1$", "^(?:(a)|b)*\\1$"):
+        text, for_regex = written(pattern)
+        assert "(?P<g1>)" in text and for_regex, pattern
+    assert written("^(?:(a)|b)*\\1$")[0].count("(?P<g1>)") == 2
 
 
 def test_standalone_modules_collect_the_same_results_as_compile(tmp_path: Path) -> None:
