@@ -18,9 +18,9 @@ Inside ``s`` the dot is any character. Inside ``m``, ``^`` and ``$`` are lookaro
 terminators. Inside ``i`` a character is the class of the characters equal to it without case, and a class takes
 every character equal to a member. Equal means the same simple case folding with the ``u`` flag and the same
 uppercase form of a UTF-16 code unit without it, from the tables of ``_casefold`` (Unicode 16), which are the same
-on every version of Python. A backreference inside ``i`` is compared by the ``regex`` package. With the ``u`` flag
-that differs from ECMA-262 in one place (it also takes ``i`` for U+0130 and ``I`` for U+0131), and without the flag
-it folds where ECMA-262 compares uppercase forms.
+on every version of Python. A backreference inside ``i`` is compared character by character with the same tables,
+by a loop written out for the ``regex`` package (see ``_Writer._folded``). Neither engine's own case-insensitive
+backreference is used: both take ``i`` for U+0130, and each has the case pairs of its own version of Unicode.
 
 **Backreferences.** In ECMA-262 a reference to a group that has not matched matches the empty string, and the
 groups inside a repetition lose their values at the start of each iteration. Both engines fail a reference to a
@@ -175,6 +175,7 @@ class _Node:
     __slots__ = (
         "back",
         "behind",
+        "chars",
         "first",
         "group",
         "icase",
@@ -187,7 +188,9 @@ class _Node:
         "negative",
         "nothing",
         "only_nothing",
+        "others",
         "parent",
+        "same",
         "state",
         "text",
     )
@@ -208,7 +211,14 @@ class _Node:
         # Whether the node can match without taking a character (None: not worked out yet).
         self.nothing: bool | None = None
         self.only_nothing: bool | None = None
+        # _TEXT that takes a character: the characters it can take (None: any), or with ``others`` every character
+        # but those.
+        self.chars: _Ranges | None = None
+        self.others = False
         self.state = _PLAIN
+        # _REFERENCE, set by _Writer: the name of the test that two characters are equal without case, when the
+        # reference is inside a case-insensitive group and its group can take a character that has another case.
+        self.same = ""
         # Set by _Writer: the parent, the node's place in the tree (it holds the nodes first < n.first < last), and
         # whether it is matched backwards (it is in a lookbehind).
         self.parent: _Node | None = None
@@ -251,6 +261,23 @@ def _only_nothing(n: _Node) -> bool:
         else:
             n.only_nothing = all(_only_nothing(x) for x in n.items)
     return n.only_nothing
+
+
+def _taken(n: _Node, out: _Ranges) -> bool:
+    """Adds to ``out`` the characters that the text the node matches can have. False: it can have any."""
+    k = n.kind
+    if k == _TEXT:
+        if n.nothing is not False:
+            return True
+        if n.chars is None:
+            return False
+        out.extend(_complement(n.chars) if n.others else n.chars)
+        return True
+    if k == _LOOK:
+        return True
+    if k == _REFERENCE:
+        return n.state == _EMPTY
+    return all(_taken(x, out) for x in n.items)
 
 
 class _Translator:
@@ -301,7 +328,7 @@ class _Translator:
                 ref = _Node(_REFERENCE, group=group)
                 ref.icase = node.icase
                 node.items.append(ref)
-        writer = _Writer(root, not self.ascii_flag)
+        writer = _Writer(root, not self.ascii_flag, self.u)
         self.needs_regex = self.needs_regex or writer.needs_regex
         return writer.write()
 
@@ -395,7 +422,7 @@ class _Translator:
         if c == "(":
             return self._group()
         if c == "[":
-            return self._one(self._class()), True
+            return self._class(), True
         if c == "\\":
             return self._escape()
         if c in "*+?":
@@ -404,30 +431,32 @@ class _Translator:
             if self.u or _QUANTIFIER_RE.match(self.p, self.i):
                 raise self.error()
             self.i += 1
-            return self._one("\\{"), True
+            return self._one("\\{", [(0x7B, 0x7B)]), True
         if c in "}]":
             if self.u:
                 raise self.error()
             self.i += 1
-            return self._one("\\" + c), True
+            return self._one("\\" + c, [(ord(c), ord(c))]), True
         self.i += 1
-        return self._one(self._char(c)), True
+        return self._char(c), True
 
     @staticmethod
-    def _one(text: str) -> _Node:
-        """The node of something that takes one character."""
+    def _one(text: str, chars: _Ranges | None = None, others: bool = False) -> _Node:
+        """The node of something that takes one character: one of ``chars``, or any (see ``_Node.chars``)."""
         n = _Node(_TEXT, text)
         n.nothing = False
+        n.chars = chars
+        n.others = others
         return n
 
-    def _char(self, c: str) -> str:
-        # A literal character; an astral character is one code point (as with the u flag). Inside a
-        # case-insensitive group it is the class of the characters equal to it.
+    def _char(self, c: str) -> _Node:
+        # A literal character. Inside a case-insensitive group it is the class of the characters equal to it.
         if self.icase:
             members = _fold_table(self.u)[1].get(ord(c))
             if members is not None:
-                return "[" + "".join(_literal(m) for m in members) + "]"
-        return _literal(c)
+                text = "[" + "".join(_literal(m) for m in members) + "]"
+                return self._one(text, [(ord(m), ord(m)) for m in members])
+        return self._one(_literal(c), [(ord(c), ord(c))])
 
     def _group(self) -> tuple[_Node, bool]:
         p = self.p
@@ -551,7 +580,7 @@ class _Translator:
                 return ref, True
             if self.u:
                 raise self.error()
-            return self._one(self._char(self._legacy_octal_or_identity())), True
+            return self._char(self._legacy_octal_or_identity()), True
         if e == "k" and (self.u or self.has_names):
             # Annex B reads \k as the letter k in a pattern with no named group.
             if self.peek(1) != "<":
@@ -563,11 +592,13 @@ class _Translator:
             return ref, True
         text, char = self._char_escape(in_class=False)
         if char is not None:
-            return self._one(self._char(char)), True
+            return self._char(char), True
         if self.icase and self.u and e in "wWpP":
             ranges: _Ranges = _FOLD_WORD if e == "w" else _complement(_FOLD_WORD) if e == "W" else []
-            return self._one(self._folded_class(ranges, [] if e in "wW" else [text], False)), True
-        return self._one(text), True
+            return self._folded_class(ranges, [] if e in "wW" else [text], False), True
+        if e in "pP":
+            return self._one(text), True
+        return self._one(text, _DIGIT if e in "dD" else _WORD if e in "wW" else _WHITE, e in "DWS"), True
 
     def _legacy_octal_or_identity(self) -> str:
         # Annex B: \8 and \9 are identity escapes; other digits start a legacy octal escape.
@@ -704,7 +735,7 @@ class _Translator:
                 return 0x10000 + ((hi - 0xD800) << 10) + (lo - 0xDC00)
         return hi
 
-    def _class(self) -> str:
+    def _class(self) -> _Node:
         self.i += 1
         negated = self.peek() == "^"
         if negated:
@@ -745,14 +776,13 @@ class _Translator:
         if self.icase:
             return self._folded_class(ranges, properties, negated)
         if not members and not outside:
-            return _NEVER if not negated else _ANY
-        alternatives = ([f"[{''.join(members)}]"] if members else []) + outside
-        body = alternatives[0] if len(alternatives) == 1 else "(?:" + "|".join(alternatives) + ")"
-        if not negated:
-            return body
-        if not outside:
-            return f"[^{''.join(members)}]"
-        return f"(?:(?!{body}){_ANY})"
+            text = _NEVER if not negated else _ANY
+        else:
+            alternatives = ([f"[{''.join(members)}]"] if members else []) + outside
+            text = alternatives[0] if len(alternatives) == 1 else "(?:" + "|".join(alternatives) + ")"
+            if negated:
+                text = f"[^{''.join(members)}]" if not outside else f"(?:(?!{text}){_ANY})"
+        return self._one(text, None if properties else ranges, negated)
 
     def _class_atom(self, ranges: _Ranges, properties: list[str]) -> tuple[str, str | None]:
         """One class atom: its translation and, when it is a single character, that character. An escape that is a
@@ -776,7 +806,7 @@ class _Translator:
             ranges.extend(positive if e in "dws" else _complement(positive))
         return text, None
 
-    def _folded_class(self, ranges: _Ranges, properties: list[str], negated: bool) -> str:
+    def _folded_class(self, ranges: _Ranges, properties: list[str], negated: bool) -> _Node:
         """A class inside a case-insensitive group: it has every character that is equal, without case, to one of
         its members, and it is negated after that."""
         points, sets = _fold_table(self.u)
@@ -800,8 +830,10 @@ class _Translator:
                     more.append(sets[point])
         ranges = _merged(ranges + [(ord(c), ord(c)) for c in set("".join(more))])
         if not ranges and not properties:
-            return _ANY if negated else _NEVER
-        return f"[{'^' if negated else ''}{_class_text(ranges)}{''.join(properties)}]"
+            text = _ANY if negated else _NEVER
+        else:
+            text = f"[{'^' if negated else ''}{_class_text(ranges)}{''.join(properties)}]"
+        return self._one(text, None if properties else ranges, negated)
 
 
 class _Writer:
@@ -815,8 +847,9 @@ class _Writer:
     the engine sees, and a repetition with a reference or a reset group inside it is written without a count:
     ``X{2,4}`` as ``XX(?:X(?:X|)|)`` and ``X{2,}`` as ``XX(?:X)*``."""
 
-    def __init__(self, root: _Node, for_regex: bool) -> None:
+    def __init__(self, root: _Node, for_regex: bool, unicode: bool = True) -> None:
         self.root = root
+        self.unicode = unicode
         self.groups: dict[int, _Node] = {}
         self.refs: list[_Node] = []
         self.count = 0
@@ -825,6 +858,12 @@ class _Writer:
         self.read: set[int] = set()
         self.reset: dict[int, list[_Node]] = {}
         self.needs_regex = False
+        # The tests that two characters are equal without case (see _folded), by the sets of characters they are
+        # for, each with its name.
+        self.tests: dict[tuple[str, ...], str] = {}
+        # The comparisons with a group that are written once and called, by the group and the test: the name and
+        # the text of each.
+        self.comparisons: dict[tuple[str, str], tuple[str, str]] = {}
         for ref in self.refs:
             ref.state = self._place(ref, self.groups[ref.group])
         for ref in self.refs:
@@ -833,9 +872,9 @@ class _Writer:
         for ref in self.refs:
             if ref.state != _EMPTY:
                 self.read.add(ref.group)
-                # Without case, a reference is compared by the regex package, which folds as ECMA-262 does with the
-                # u flag.
-                self.needs_regex = self.needs_regex or ref.icase
+                if ref.icase:
+                    ref.same = self._same(self.groups[ref.group])
+                    self.needs_regex = self.needs_regex or ref.same != ""
                 if _GROUPS_IN_REPETITIONS_GO_STALE:
                     n = self.groups[ref.group].parent
                     while n is not None and n.kind != _REPEAT:
@@ -845,6 +884,10 @@ class _Writer:
                 self.reset.setdefault(ref.group, []).append(ref)
                 self.needs_regex = True
         self.live = [ref.first for ref in self.refs if ref.state != _EMPTY]
+        # The references whose comparison is written out (see _folded). It sets groups of its own, and the regex
+        # package runs another iteration of a repetition for as long as each one changes what a group holds, so a
+        # repetition that holds one is written as one that holds a group some reference reads.
+        self.compared = [ref.first for ref in self.refs if ref.same]
         # The reference to an empty group that the regex package sees after a repetition.
         self.seen = "(?P=z)" if for_regex and self.live else ""
         self.loops = 0
@@ -905,6 +948,28 @@ class _Writer:
                 n = n.parent
         return False
 
+    def _same(self, group: _Node) -> str:
+        """The name of the test for a case-insensitive reference to the group, or nothing when no character the
+        group can take is equal to another without case (the reference is then an exact one)."""
+        points, sets = _fold_table(self.unicode)
+        taken: _Ranges = []
+        found: set[str] = set()
+        if _taken(group.items[0], taken):
+            for lo, hi in _merged(taken):
+                k = bisect_left(points, lo)
+                while k < len(points) and points[k] <= hi:
+                    found.add(sets[points[k]])
+                    k += 1
+        else:
+            found.update(sets.values())
+        if not found:
+            return ""
+        key = tuple(sorted(found))
+        name = self.tests.get(key)
+        if name is None:
+            name = self.tests[key] = f"s{len(self.tests) + 1}"
+        return name
+
     def write(self) -> str:
         out = self._write(self.root)
         if self.reset or self.seen:
@@ -912,7 +977,80 @@ class _Writer:
             out = before + "".join(f"(?P<g{g}>)" for g in sorted(self.reset)) + f"(?:{out})"
         if len(out) > _MAX_TRANSLATED:
             raise _TooLarge()
-        return out
+        if not self.tests:
+            return out
+        # The tests and the comparisons are written once each, and are not counted in the size: a test is as long as
+        # the sets it is for, which no repetition multiplies.
+        tests = "".join(self._test(name, key) for key, name in self.tests.items())
+        comparisons = "".join(f"(?P<{name}>{text})" for name, text in self.comparisons.values())
+        return f"(?(DEFINE){tests}{comparisons}){out}"
+
+    @staticmethod
+    def _test(name: str, sets: tuple[str, ...]) -> str:
+        """The test that the character at the pointer of ``_folded`` and the character it has kept are equal
+        without case: they are the same character, or both are in one of the sets. It is a group that is called,
+        and it has no repetition of its own (the engine keeps the state of every repetition of a pattern at each
+        lookaround it enters). Many sets are tried forty at a time, after a test that the character is in one of
+        the forty."""
+
+        def raw(c: str) -> str:
+            return c if ord(c) > 127 else _literal(c)
+
+        at_pointer = "(?P=fr)(?<=(?=%s)(?P=fp))"
+        tests = []
+        for members in sets:
+            one_of = "[" + "".join(raw(c) for c in members) + "]"
+            tests.append(f"(?={one_of})" + at_pointer % one_of)
+        if len(tests) > 80:
+            some = []
+            for k in range(0, len(tests), 40):
+                points = _merged([(ord(c), ord(c)) for members in sets[k : k + 40] for c in members])
+                any_of = "".join(raw(chr(lo)) if lo == hi else f"{raw(chr(lo))}-{raw(chr(hi))}" for lo, hi in points)
+                some.append(f"(?=[{any_of}])(?:{'|'.join(tests[k : k + 40])})")
+            tests = some
+        return f"(?P<{name}>(?s:{'|'.join([at_pointer % '(?P=fx)', *tests])}))"
+
+    def _folded(self, exact: str, same: str, back: bool) -> str:
+        """A reference inside a case-insensitive group. ECMA-262 compares the text of the group G and the text at
+        the reference character by character, each by its Canonicalize. Neither engine compares that way (both
+        take ``i`` for U+0130, and each has the case pairs of its own version of Unicode), so the comparison is
+        written out for the regex package with the sets of ``_casefold``.
+
+        The text is G as it is (``exact``), or a loop takes one character of the text for each character of G. A
+        group ``fp`` is the pointer into G: it holds the rest of the text from a place inside somewhere that G
+        stands, and ``fe`` holds the rest of the text from the end of G there. Each iteration keeps the next
+        character of the text as ``fx`` and the rest of the text from it as ``fr``. A place is found from what it
+        holds: ``(?=(?P=fr)(?<=X(?P=fp)))`` goes to the end of the text and back over ``fp``, and X is matched where
+        the pointer is. So the iteration asks that the pointer is not at the end of G, then that the character
+        there is equal to ``fx`` without case (the test ``same``, written once for the pattern by ``_test`` and
+        called), and then moves the pointer on by one. After the loop the pointer is at the end of G. The loop gives
+        nothing back, and the whole is atomic, as two texts are compared in one way only.
+
+        A comparison is a group that is written once and called from each reference. The engine puts back what
+        the groups held when a call returns, and nothing outside the comparison reads the groups it sets.
+
+        In a lookbehind (``back``) the text to compare ends where the reference stands: the place where it starts
+        is looked for, where the comparison ends at the place that was left. That is written where the reference
+        is, as the engine matches a lookbehind backwards and a group it calls forwards."""
+        z = self.seen
+        at_pointer = "(?=(?P=fr)(?<=%s(?P=fp)))"
+        loop = (
+            f"(?s:(?<=\\A(?=.*?(?P<fp>{exact}(?P<fe>.*))).*)"
+            f"(?:{z}(?=(?P<fr>(?P<fx>.).*))"
+            + at_pointer % "(?!(?P=fe)\\Z)"
+            + f"(?=(?&{same}))"
+            + at_pointer % "(?=.(?P<fp>.*))"
+            + f".)*+{z}(?=(?P<fr>.*))"
+            + at_pointer % "(?=(?P=fe)\\Z)"
+            + ")"
+        )
+        if back:
+            return f"(?>{exact}|(?={loop}(?=(?P=fh)\\Z)){z}{_ANY}*?{z}(?=(?P<fh>{_ANY}*)))"
+        comparison = self.comparisons.get((exact, same))
+        if comparison is None:
+            comparison = self.comparisons[exact, same] = (f"f{len(self.comparisons) + 1}", f"(?>{exact}|{loop})")
+        # The engine has to see a reference here (see the class's description), and does not look into a call.
+        return f"(?&{comparison[0]}){z}"
 
     def _write(self, n: _Node) -> str:
         k = n.kind
@@ -933,7 +1071,8 @@ class _Writer:
         if k == _REFERENCE:
             if n.state == _EMPTY:
                 return "(?:)"
-            return f"(?i:(?P=g{n.group}))" if n.icase else f"(?P=g{n.group})"
+            exact = f"(?P=g{n.group})"
+            return self._folded(exact, n.same, n.back) if n.same else exact
         return self._repeat(n)
 
     def _repeat(self, n: _Node) -> str:
@@ -953,7 +1092,9 @@ class _Writer:
             raise _TooLarge()
         text = self._write(body)
         k = bisect_left(self.live, n.first)
-        read = self.seen != "" and any(n.first < self.groups[g].first < n.last for g in self.read)
+        read = self.seen != "" and (
+            self._holds_one(self.compared, n) or any(n.first < self.groups[g].first < n.last for g in self.read)
+        )
         if not read and not (self.seen and k < len(self.live) and self.live[k] < n.last):
             # A reference to a name that two groups have is two references, which the count is for together.
             if body.kind == _SEQUENCE or not text.startswith("("):
@@ -992,6 +1133,12 @@ class _Writer:
         if len(out) > _MAX_TRANSLATED:
             raise _TooLarge()
         return out
+
+    @staticmethod
+    def _holds_one(places: list[int], n: _Node) -> bool:
+        """Whether one of the places (in order) is inside the node."""
+        k = bisect_left(places, n.first)
+        return k < len(places) and places[k] < n.last
 
     @staticmethod
     def _count(lo: int, hi: int, lazy: bool) -> str:
