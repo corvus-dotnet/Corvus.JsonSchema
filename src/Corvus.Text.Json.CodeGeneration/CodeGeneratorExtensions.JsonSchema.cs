@@ -42,11 +42,13 @@ internal static partial class CodeGenerationExtensions
     private const string MutableClassBaseName = "Mutable";
     private const string MutableClassNameKey = "CSharp_JsonSchema_MutableClassNameKey";
 
+    // Both end in \z and not in $, which in .NET also holds before a final line feed. A pattern that ends in a
+    // line feed (^abc\n) is neither of these.
     private static readonly System.Text.RegularExpressions.Regex PrefixPattern =
-        new(@"^\^([a-zA-Z0-9\-_/@]+)(\.\*)?$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        new(@"^\^([a-zA-Z0-9\-_/@]+)(\.\*)?\z", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     private static readonly System.Text.RegularExpressions.Regex RangePattern =
-        new(@"^\^\.\{([0-9]+),([0-9]+)\}\$$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        new(@"^\^\.\{([0-9]+),([0-9]+)\}\$\z", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     /// <summary>
     /// Classifies a regular expression pattern for potential inline code generation

@@ -269,6 +269,45 @@ public class PatternMatcherTests
         ("(^a|b)$", ["a", "b", "xb"], ["ax", "bx"]),
     ];
 
+    /// <summary>
+    /// Texts with a line terminator at an end, against patterns of every kind the evaluator matches by itself and
+    /// some it leaves to the regular expression. In ECMA-262 without the multiline flag <c>$</c> holds only at the end
+    /// of the text, where the <c>$</c> of a .NET regular expression also holds before a final line feed, and
+    /// <c>.</c> matches none of the four line terminators. The answers are those of V8:
+    /// <c>new RegExp(pattern, "u").test(text)</c>.
+    /// </summary>
+    private static readonly (string Pattern, string[] Matches, string[] Fails)[] LineTerminatorCases =
+    [
+        ("^abc$", ["abc"], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("abc$", ["abc", "\nabc"], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^abc", ["abc", "abc\n", "abc\r", "abc\u2028", "abc\u2029", "abc\n\n", "abc\r\n"], ["\nabc", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^[a-z]+$", ["abc", "a", "de"], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a\n", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^.{1,3}$", ["abc", "a", "de", "a,a", "12", " "], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a\n", "de\n", "a,a\n", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " \n"]),
+        ("^.*$", ["abc", "a", "de", "a,a", "12", "", " "], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a\n", "de\n", "a,a\n", "12\n", "x-\n", "\n", "c\n", "\nd", "a\nc", "ab\n", " \n"]),
+        ("^.+$", ["abc", "a", "de", "a,a", "12", " "], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a\n", "de\n", "a,a\n", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " \n"]),
+        ("^(abc|de)$", ["abc", "de"], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^a(,a)*$", ["a", "a,a"], ["abc", "abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a\n", "de", "de\n", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^(a,)*a$", ["a", "a,a"], ["abc", "abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a\n", "de", "de\n", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^\\w+$", ["abc", "a", "de", "12"], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a\n", "de\n", "a,a", "a,a\n", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^[^x]+$", ["abc", "abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"], ["x-\n", ""]),
+        ("^a.*$", ["abc", "a", "a,a"], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a\n", "de", "de\n", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^\\d{2}$", ["12"], ["abc", "abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^x-", ["x-\n"], ["abc", "abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^abc\\n$", ["abc\n"], ["abc", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^abc\n", ["abc\n", "abc\n\n"], ["abc", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^abc\n$", ["abc\n"], ["abc", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("ab|c$|^d", ["abc", "abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "de", "de\n", "a\nc", "ab\n"], ["a", "a\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", " ", " \n"]),
+        ("^a.c$", ["abc"], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("$", ["abc", "abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"], []),
+        ("^$", [""], ["abc", "abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^\\s$", ["\n", " "], ["abc", "abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "c\n", "\nd", "a\nc", "ab\n", " \n"]),
+        ("^[a-c]{3}$", ["abc"], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^\\S+$", ["abc", "a", "de", "a,a", "12"], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a\n", "de\n", "a,a\n", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        ("^a.+$", ["abc", "a,a"], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a", "a\n", "de", "de\n", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+        (".$", ["abc", "\nabc", "a", "de", "a,a", "12", "\nd", "a\nc", " "], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "abc\n\n", "abc\r\n", "a\n", "de\n", "a,a\n", "12\n", "x-\n", "", "\n", "c\n", "ab\n", " \n"]),
+        ("^ab?c*$", ["abc", "a"], ["abc\n", "abc\r", "abc\u2028", "abc\u2029", "\nabc", "abc\n\n", "abc\r\n", "a\n", "de", "de\n", "a,a", "a,a\n", "12", "12\n", "x-\n", "", "\n", "c\n", "\nd", "a\nc", "ab\n", " ", " \n"]),
+    ];
+
     [TestMethod]
     public void MatchersAgreeWithTheRegularExpression()
     {
@@ -390,6 +429,16 @@ public class PatternMatcherTests
         Assert.IsTrue(PatternMatcher.Create("^a(,a\\b)*$", options).UsesRegex, "A word boundary is not part of a list.");
     }
 
+    /// <summary>
+    /// A <c>$</c> does not hold before a line feed that ends the text, as it does in a .NET regular expression:
+    /// <c>^abc$</c> does not match "abc" followed by a line feed.
+    /// </summary>
+    [TestMethod]
+    public void ADollarDoesNotHoldBeforeAFinalLineFeed()
+    {
+        AssertCases(LineTerminatorCases);
+    }
+
     /// <summary>Each case through the matcher, and through an evaluator that interprets and one that generates code.</summary>
     private static void AssertCases((string Pattern, string[] Matches, string[] Fails)[] cases)
     {
@@ -429,6 +478,6 @@ public class PatternMatcherTests
     /// <summary>The text as a JSON string.</summary>
     private static string Quote(string text)
     {
-        return "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+        return "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r") + "\"";
     }
 }
