@@ -259,3 +259,70 @@ def test_a_case_insensitive_reference_is_written_out_where_its_group_can_hold_a_
     # In a lookbehind the comparison is written where the reference is.
     text, for_regex = translate("^..(?i:(?<=\\1([a-c])))$") or ("", False)
     assert for_regex and "(?&f1)" not in text and "(?&s1)" in text
+
+
+# A lookaround is left by the first way through it, and its groups keep what that way gave them. ECMA-262 refuses
+# an iteration that matches nothing once the minimum count is met, which changes which way is first.
+
+_EMPTY_ITERATIONS_IN_LOOKAROUNDS: list[tuple[str, str, str]] = [
+    ("(?:(?=()((|(.))*))(\\2)a)", "ABC", "0"),
+    ("(?:(?=b(?:((?:c){0,}?))*(([c]))?)[b]\\2)$", "ABC", "492492492492492492492492492492"),
+    ("((?=((?:[^]{0,}?)?)((b)|)(b))(.b))\\3", "ABC", "925d2e974baffae975ff5d2ebfeba"),
+    ("^(?=(()()())((c{0,}?)?))\\5$", "ABC", "1200000000000000000000000000000"),
+    ("(?=(()((())(()))(()(())))(?=([^]{0,}?)+((|[^])a))b)\\13", "ABC", "0"),
+    ("^(?=((?:|a)*))\\1b", "ABC", "4b85c7fc00b8ff803ffffff8000000"),
+    ("^(?=((?:a??)*))\\1b", "ABC", "4b85c7fc00b8ff803ffffff8000000"),
+    ("^(?=(?:a*?)*(a*))\\1$", "ABC", "1000000000000000000000000000000"),
+    ("^(?=((?:a|b??)+))\\1c", "ABC", "24f2793ffe4f27ffc9e4ffffffffff"),
+    ("^(?=((?:|a|ab)*)).\\1c", "ABC", "90001c0e00000000000ff80001ff"),
+    ("^(?=((?:a??){2,3}))\\1b", "ABC", "4b81c7fc0000ff803ffffff8000000"),
+    ("^(?=((?:a??){0,2}))\\1b", "ABC", "4b85c7fc0038ff803ffffff8000000"),
+    ("^(?=((?:|a){1,}?)b?)\\1b", "ABC", "438007fc000000003ffffff8000000"),
+    ("(?<=((?:|a)*))b\\1", "ABC", "43a197fc7412fd0ebffffff8cbfe3a"),
+    ("(?<=((?:a??)*)c)b\\1", "ABC", "20000874000108800021d003fe3a"),
+    ("^.*(?<=((?:a??b??)*))c\\1$", "ABC", "2010280c0201008040201008140601"),
+    ("(?<=(?:c??)*(a|b))c\\1", "ABC", "200800040170008021c0100400"),
+    ("^(?:(?=((?:|a)*))\\1b)+$", "ABC", "490482400090480012090000000000"),
+    ("^(?!(?=((?:|a)*))\\1b)", "ABC", "1b47a3803ff47007fc0000007ffffff"),
+    ("(?=(?=((?:|a)*)).)\\1b", "ABC", "4ba5d7fd74baffaebffffffaebfeba"),
+    ("^(?=((?:|a)*)\\1b)", "ABC", "438407fc003800003ffffff8000000"),
+]
+# A group that a lookahead sets on only some ways to match, a lookaround group with its reference in one repetition
+# and a choice between them, a group of a lookbehind that is matched backwards, and a reference inside a
+# lookbehind to a group of it.
+
+_GROUPS_OF_LOOKAROUNDS: list[tuple[str, str, str]] = [
+    ("(?=(a)?b)\\1", "ABC", "4ba5d7fd74baffaebffffffaebfeba"),
+    ("^(?=(a)?b)\\1b$", "ABC", "480000000000000000000000000000"),
+    ("^(?=(a)|b)\\1.$", "ABC", "5c0000000000000000000000000000"),
+    ("^(?=(?:(a)|b)(?:(c)|a))\\1\\2", "ABC", "160e3f0001ff007fffe00000000000"),
+    ("^(?:(?=(a)?b)\\1.)+$", "ABC", "490082400000480002090000000000"),
+    ("^(?:(?=([ab]))[ab](?:c|ca)\\1)*$", "ABC", "1000020080000004000000400000000"),
+    ("^(?:(?=([ab]))[ab](?:c\\1|ca\\1))*$", "ABC", "1000020080000004000000400000000"),
+    ("^(?:(?=(.))(?:a|ab)\\1)+$", "ABC", "100100000100000000000000000000"),
+    ("^(?:(?<=(.))(?:a|ab)\\1)+$", "ABC", "0"),
+    ("^(?:(?=([ab]))[ab]c*?\\1)*$", "ABC", "1110020080110000100110010000000"),
+    ("(?<=(a+))b\\1", "ABC", "100000000e00004000000800000"),
+    ("(?<=([ab]+)([bc]+))c\\1", "ABC", "20100002010000000"),
+    ("(?<=(a+)(b*))c\\2\\1", "ABC", "20000000007000800000100000"),
+    ("(?<=\\1(a))b", "ABC", "4000000b8000010000002000000"),
+    ("(?<=\\1(a+))b", "ABC", "4000000b8000010000002000000"),
+    ("(?<=(a+)\\1)b", "ABC", "805c20100b8ffa017080402e10080"),
+    ("(?<=\\1b*(a+))c", "ABC", "200000047200008000001000000"),
+    ("(?<=(a|ab)(b*))c\\1", "ABC", "20000004027000800000100000"),
+    ("^.*(?<=(?:(a)|b)+)c\\1$", "ABC", "8021201004020209048040109008"),
+    ("(?<=(\\w+?)(\\w*))c\\1", "ABC", "200802040271004021d0040207"),
+    ("(?<=(a*)\\1b)c", "ABC", "80403c100807820100fff8201e08"),
+]
+
+
+@pytest.mark.parametrize(("pattern", "texts", "answers"), _EMPTY_ITERATIONS_IN_LOOKAROUNDS + _GROUPS_OF_LOOKAROUNDS)
+def test_groups_of_lookarounds_hold_what_ecma_262_gives_them(pattern: str, texts: str, answers: str) -> None:
+    _check(pattern, _words("abc", 4), answers)
+
+
+def test_a_repetition_in_a_lookaround_goes_to_the_regex_package_when_a_group_of_it_is_read_outside() -> None:
+    assert (translate("^(?=((?:|a)*))\\1$") or ("", False))[1]
+    # No iteration here can match nothing, and here no group is read outside the lookahead.
+    assert not (translate("^(?=(a*))\\1$") or ("", True))[1]
+    assert not (translate("^(?=((?:|a)*)\\1)") or ("", True))[1]

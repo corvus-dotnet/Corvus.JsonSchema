@@ -41,6 +41,11 @@ In a pattern for ``regex`` that has a reference, a repetition that holds a group
 as its minimum count and then a rest where every iteration has to take a character: ``(?=(?P<e1>(?s:.)*))``
 before the body takes the rest of the text, and ``(?!(?P=e1))`` after it fails where the rest of the text is still
 the same. ``_Writer`` says what else such a pattern needs for that engine.
+
+A lookaround is left by the first way through it, and its groups keep what that way gave them. Which way is first
+depends on the iterations that ECMA-262 refuses, so every repetition inside a lookaround with a group that is read
+outside it is written in the same way, whether or not it holds the group. ``^(?=((?:|a)*))\\1$`` matches ``a``:
+the group holds ``a``, where the engines' own first way through the lookahead leaves it empty.
 """
 
 from __future__ import annotations
@@ -864,6 +869,10 @@ class _Writer:
         # The comparisons with a group that are written once and called, by the group and the test: the name and
         # the text of each.
         self.comparisons: dict[tuple[str, str], tuple[str, str]] = {}
+        # The lookarounds with a group that is read outside them, and the repetitions inside one of those where an
+        # iteration can match nothing (both by the node's place in the tree). See _repeat.
+        self.leaky: set[int] = set()
+        self.forced: set[int] = set()
         for ref in self.refs:
             ref.state = self._place(ref, self.groups[ref.group])
         for ref in self.refs:
@@ -875,6 +884,7 @@ class _Writer:
                 if ref.icase:
                     ref.same = self._same(self.groups[ref.group])
                     self.needs_regex = self.needs_regex or ref.same != ""
+                self._leaks(ref, self.groups[ref.group])
                 if _GROUPS_IN_REPETITIONS_GO_STALE:
                     n = self.groups[ref.group].parent
                     while n is not None and n.kind != _REPEAT:
@@ -883,6 +893,8 @@ class _Writer:
             if ref.state == _DYNAMIC:
                 self.reset.setdefault(ref.group, []).append(ref)
                 self.needs_regex = True
+        if self.leaky:
+            self._force(root, False)
         self.live = [ref.first for ref in self.refs if ref.state != _EMPTY]
         # The references whose comparison is written out (see _folded). It sets groups of its own, and the regex
         # package runs another iteration of a repetition for as long as each one changes what a group holds, so a
@@ -969,6 +981,24 @@ class _Writer:
         if name is None:
             name = self.tests[key] = f"s{len(self.tests) + 1}"
         return name
+
+    def _leaks(self, ref: _Node, group: _Node) -> None:
+        n = group.parent
+        while n is not None:
+            if n.kind == _LOOK and not n.negative and not n.first < ref.first < n.last:
+                self.leaky.add(n.first)
+            n = n.parent
+
+    def _force(self, n: _Node, inside: bool) -> None:
+        if n.kind == _LOOK:
+            inside = inside or n.first in self.leaky
+        elif inside and n.kind == _REPEAT and n.max != 0:
+            body = n.items[0]
+            if _matches_nothing(body) and not _only_nothing(body):
+                self.forced.add(n.first)
+                self.needs_regex = True
+        for item in n.items:
+            self._force(item, inside)
 
     def write(self) -> str:
         out = self._write(self.root)
@@ -1093,7 +1123,9 @@ class _Writer:
         text = self._write(body)
         k = bisect_left(self.live, n.first)
         read = self.seen != "" and (
-            self._holds_one(self.compared, n) or any(n.first < self.groups[g].first < n.last for g in self.read)
+            n.first in self.forced
+            or self._holds_one(self.compared, n)
+            or any(n.first < self.groups[g].first < n.last for g in self.read)
         )
         if not read and not (self.seen and k < len(self.live) and self.live[k] < n.last):
             # A reference to a name that two groups have is two references, which the count is for together.
