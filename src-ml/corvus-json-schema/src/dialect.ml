@@ -21,8 +21,8 @@ let vocab_content = 1 lsl 6
 let vocab_unevaluated = 1 lsl 7
 
 let vocab_all_annotating =
-  vocab_core lor vocab_applicator lor vocab_validation lor vocab_meta_data lor vocab_format_annotation
-  lor vocab_content lor vocab_unevaluated
+  vocab_core lor vocab_applicator lor vocab_validation lor vocab_meta_data lor vocab_format_annotation lor vocab_content
+  lor vocab_unevaluated
 
 let known = function
   | "http://json-schema.org/draft-04/schema" -> Some Draft4
@@ -41,11 +41,10 @@ let vocabulary_flag = function
   | "https://json-schema.org/draft/2020-12/vocab/validation" | "https://json-schema.org/draft/2019-09/vocab/validation"
     ->
       vocab_validation
-  | "https://json-schema.org/draft/2020-12/vocab/meta-data" | "https://json-schema.org/draft/2019-09/vocab/meta-data"
-    ->
+  | "https://json-schema.org/draft/2020-12/vocab/meta-data" | "https://json-schema.org/draft/2019-09/vocab/meta-data" ->
       vocab_meta_data
-  | "https://json-schema.org/draft/2020-12/vocab/format-annotation" | "https://json-schema.org/draft/2019-09/vocab/format"
-    ->
+  | "https://json-schema.org/draft/2020-12/vocab/format-annotation"
+  | "https://json-schema.org/draft/2019-09/vocab/format" ->
       vocab_format_annotation
   | "https://json-schema.org/draft/2020-12/vocab/format-assertion" -> vocab_format_assertion
   | "https://json-schema.org/draft/2020-12/vocab/content" | "https://json-schema.org/draft/2019-09/vocab/content" ->

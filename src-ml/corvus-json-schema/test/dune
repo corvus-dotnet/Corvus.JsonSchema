@@ -1,0 +1,6 @@
+; The tests of the evaluator. Each is a plain executable that prints its counts and exits with a non-zero status when
+; a check fails. The tests of the regular expression engine and of the Unicode data are in ecmaregex and ucd.
+
+(tests
+ (names document_test)
+ (libraries corvus-json-schema corvus_json_schema_test_support))

@@ -1,5 +1,5 @@
-(** A tiny assertion helper for the test executables. A test records each check, prints the failures as they happen,
-    and ends with {!finish}, which prints the counts and exits with a non-zero status if any check failed. *)
+(** A tiny assertion helper for the test executables. A test records each check, prints the failures as they happen, and
+    ends with {!finish}, which prints the counts and exits with a non-zero status if any check failed. *)
 
 val check : string -> bool -> unit
 (** [check what ok] records one check. A failing check prints [what]. *)

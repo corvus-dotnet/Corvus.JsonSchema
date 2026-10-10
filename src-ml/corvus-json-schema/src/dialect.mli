@@ -40,4 +40,5 @@ val vocabulary_flag : string -> int
 type subschema_kind = Subschema_none | Subschema_single | Subschema_single_or_array | Subschema_array | Subschema_map
 
 val subschema_kind_of : string -> t -> bool -> subschema_kind
-(** [subschema_kind_of keyword dialect legacy_ref_overrides_siblings] says which keywords hold subschemas, by dialect. *)
+(** [subschema_kind_of keyword dialect legacy_ref_overrides_siblings] says which keywords hold subschemas, by dialect.
+*)

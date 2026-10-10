@@ -1,7 +1,6 @@
 let passes = ref 0
 let failures = ref 0
 let current = ref ""
-
 let section name = current := name
 
 let fail what =
