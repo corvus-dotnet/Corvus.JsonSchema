@@ -275,7 +275,9 @@ The tool generates:
 - **Type-safe property accessors**: `person.Name` returns a strongly-typed string value
 - **Validation**: `person.EvaluateSchema()` validates against the full schema. A `pattern` whose match runs for
   longer than 10 seconds throws `RegexMatchTimeoutException` (see
-  [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated))
+  [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated)). A `pattern` or `patternProperties` pattern that is
+  not a valid ECMA-262 regular expression stops the generation with an error that names it (see
+  [EcmaRegexTranslator.md](EcmaRegexTranslator.md#where-an-invalid-pattern-is-refused))
 - **Implicit conversions**: `(string)person.Name` extracts the .NET value
 - **Mutable builder**: `person.CreateBuilder(workspace)` creates a mutable copy
 - **Immutable document factory**: `Person.Create(...)` builds a self-contained `ParsedJsonDocument<Person>` in a single pass, with no workspace and no serialization round trip

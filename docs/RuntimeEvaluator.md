@@ -199,6 +199,21 @@ replaced; the Validator is now a facade over this evaluator (see `docs/Validator
   `ref JsonSchemaContext` for reporting; the evaluator passes a scratch context. When merged into Corvus V5 the
   pure predicates (`MatchEmail(ReadOnlySpan<byte>)` etc.) should be made public instead.
 
+## Patterns
+
+`pattern` and `patternProperties` are ECMA-262 regular expressions. A pattern is read with the grammar of the `u`
+flag, and when that grammar does not accept it, with the grammar of a pattern with no flag, which many schemas need
+(`\-`, `\@`, a lone `{`).
+
+**A pattern neither grammar accepts is refused when the schema is compiled.** `Compile`, `CompileFromUri`,
+`ForEntryPoint` and `FromProgramImage` throw `JsonSchemaCompilationException`, whose message names the pattern and
+says what is wrong and where, for example `The pattern '^[a-z]{3,1}$' is not a valid ECMA-262 regular expression.
+Numbers out of order in {} quantifier at offset 11.` Before this, such a pattern was passed to .NET as it was, which
+accepted most of them with a meaning of its own.
+
+Each distinct pattern is read once in the life of the process, when the first schema that holds it is compiled.
+Nothing of that runs when an instance is evaluated.
+
 ## Regular expression match timeout
 
 The evaluator matches many patterns itself (prefixes, length ranges, literal alternations, class sequences,

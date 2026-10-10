@@ -32,6 +32,9 @@
     <ProjectReference Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexParser.cs" Link="EcmaRegexParser.cs" />
+    <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexUnicode.cs" Link="EcmaRegexUnicode.cs" />
+    <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexUnicodeData.cs" Link="EcmaRegexUnicodeData.cs" />
     <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexTranslator.cs" Link="EcmaRegexTranslator.cs" />
   </ItemGroup>
 

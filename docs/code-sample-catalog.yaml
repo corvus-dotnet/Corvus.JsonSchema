@@ -802,10 +802,10 @@ main-docs:
       - {index: 8, language: bash, lines: [219, 221]}
       - {index: 9, language: bash, lines: [227, 229]}
       - {index: 10, language: json, lines: [261, 271]}
-      - {index: 11, language: ini, lines: [293, 300]}
-      - {index: 12, language: bash, lines: [333, 338]}
-      - {index: 13, language: json, lines: [358, 367]}
-      - {index: 14, language: bash, lines: [396, 408]}
+      - {index: 11, language: ini, lines: [295, 302]}
+      - {index: 12, language: bash, lines: [335, 340]}
+      - {index: 13, language: json, lines: [360, 369]}
+      - {index: 14, language: bash, lines: [398, 410]}
   - path: "docs/CodeSampleCatalog.md"
     blocks:
       - {index: 0, language: powershell, lines: [13, 26]}
@@ -1508,9 +1508,9 @@ main-docs:
       - {index: 29, language: powershell, lines: [415, 421]}
   - path: "docs/RuntimeEvaluator.md"
     blocks:
-      - {index: 0, language: csharp, lines: [224, 242], category: compilable, verified: false}
-      - {index: 1, language: csharp, lines: [255, 267], category: compilable, verified: false}
-      - {index: 2, language: xml, lines: [354, 358]}
+      - {index: 0, language: csharp, lines: [239, 257], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [270, 282], category: compilable, verified: false}
+      - {index: 2, language: xml, lines: [369, 373]}
   - path: "docs/SchemaEvaluator.md"
     blocks:
       - {index: 0, language: xml, lines: [19, 26]}
@@ -1532,13 +1532,13 @@ main-docs:
       - {index: 7, language: xml, lines: [114, 123]}
       - {index: 8, language: xml, lines: [127, 131]}
       - {index: 9, language: xml, lines: [139, 146]}
-      - {index: 10, language: xml, lines: [188, 192]}
-      - {index: 11, language: , lines: [196, 201]}
-      - {index: 12, language: ini, lines: [220, 227]}
-      - {index: 13, language: ini, lines: [229, 236]}
+      - {index: 10, language: xml, lines: [190, 194]}
+      - {index: 11, language: , lines: [198, 203]}
+      - {index: 12, language: ini, lines: [222, 229]}
+      - {index: 13, language: ini, lines: [231, 238]}
   - path: "docs/StandaloneEvaluatorInternals.md"
     blocks:
-      - {index: 0, language: csharp, lines: [54, 61], category: compilable, verified: false}
+      - {index: 0, language: csharp, lines: [59, 66], category: compilable, verified: false}
   - path: "docs/Toon.md"
     blocks:
       - {index: 0, language: json, lines: [23, 25]}
@@ -1595,8 +1595,8 @@ main-docs:
       - {index: 10, language: csharp, lines: [186, 199], category: compilable, verified: false}
       - {index: 11, language: csharp, lines: [207, 216], category: compilable, verified: false}
       - {index: 12, language: csharp, lines: [236, 244], category: compilable, verified: false}
-      - {index: 13, language: csharp, lines: [254, 260], category: fragment, verified: false}
-      - {index: 14, language: csharp, lines: [264, 266], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [258, 264], category: fragment, verified: false}
+      - {index: 14, language: csharp, lines: [268, 270], category: compilable, verified: false}
   - path: "docs/Yaml.md"
     blocks:
       - {index: 0, language: bash, lines: [26, 32]}

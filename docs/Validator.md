@@ -247,6 +247,10 @@ JsonSchema schema = JsonSchema.FromFile("./person-schema.json", options);
 - `System.Text.RegularExpressions.Regex.InfiniteMatchTimeout` matches with no timeout. A value that is zero, negative, or longer than a `Regex` accepts throws `ArgumentOutOfRangeException` when the options are created.
 - The value is passed to the evaluator as `JsonSchemaEvaluatorOptions.RegexMatchTimeout`. The [runtime evaluator guide](./RuntimeEvaluator.md#regular-expression-match-timeout) says more about it.
 
+## Invalid Patterns
+
+A `pattern` or `patternProperties` pattern that is not a valid ECMA-262 regular expression is refused when the schema is compiled: the `JsonSchema.From*` method throws `JsonSchemaCompilationException`, whose message names the pattern and says what is wrong and where. See [Patterns](./RuntimeEvaluator.md#patterns) in the runtime evaluator guide.
+
 ## Schema Caching
 
 Compiled schemas are cached automatically by their canonical URI, `alwaysAssertFormat` flag, `codeGeneration` setting and `regexMatchTimeout`. Subsequent calls to any `From*` method with the same URI return the cached validator without recompilation:

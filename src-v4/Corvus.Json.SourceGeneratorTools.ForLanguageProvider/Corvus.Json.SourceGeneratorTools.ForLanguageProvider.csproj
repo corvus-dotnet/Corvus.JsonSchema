@@ -86,6 +86,9 @@
     <Compile Remove="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration\CSharp\**\NullableAttributes.cs" />
     <Compile Remove="..\Corvus.Json.JsonReference\Corvus.Json\**\NullableAttributes.cs" />
     <Compile Remove="..\Corvus.Json.ExtendedTypes\Corvus.Json\**\NullableAttributes.cs" />
+    <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexParser.cs" Link="EcmaRegexParser.cs" />
+    <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexUnicode.cs" Link="EcmaRegexUnicode.cs" />
+    <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexUnicodeData.cs" Link="EcmaRegexUnicodeData.cs" />
     <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexTranslator.cs" Link="EcmaRegexTranslator.cs" />
     <Compile Include="..\..\src\Corvus.Text.Json\Corvus\Text\Json\Regex\JsonRegexValidator.cs" Link="Regex\JsonRegexValidator.cs" />
     <Compile Include="..\..\src\Corvus.Text.Json\Corvus\Text\Json\Regex\JsonRegexNode.cs" Link="Regex\JsonRegexNode.cs" />

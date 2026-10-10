@@ -268,6 +268,63 @@ internal static class EcmaRegexTranslator
     }
 
     /// <summary>
+    /// Decides whether a pattern is a valid ECMA-262 regular expression and translates a valid one to a .NET
+    /// pattern.
+    /// </summary>
+    /// <param name="ecmaPattern">The ECMA-262 pattern.</param>
+    /// <param name="translated">The .NET pattern, when the pattern is valid (see <see cref="TranslateOrFallback"/>).</param>
+    /// <param name="error">What is wrong with the pattern, when it is not valid.</param>
+    /// <returns><see langword="true"/> when the pattern is a valid ECMA-262 pattern.</returns>
+    public static bool TryTranslate(string ecmaPattern, out string? translated, out string? error)
+    {
+        return TryTranslate(ecmaPattern, out translated, out _, out error);
+    }
+
+    /// <summary>
+    /// Decides whether a pattern is a valid ECMA-262 regular expression and translates a valid one to a .NET
+    /// pattern.
+    /// </summary>
+    /// <param name="ecmaPattern">The ECMA-262 pattern.</param>
+    /// <param name="translated">The .NET pattern, when the pattern is valid (see <see cref="TranslateOrFallback"/>).</param>
+    /// <param name="unicode">Whether the grammar of the <c>u</c> flag accepted the pattern.</param>
+    /// <param name="error">What is wrong with the pattern, when it is not valid.</param>
+    /// <returns><see langword="true"/> when the pattern is a valid ECMA-262 pattern.</returns>
+    /// <remarks>
+    /// A pattern is read with the grammar of the <c>u</c> flag, as JSON Schema's <c>pattern</c> specifies. A pattern
+    /// that is not valid with it is read with the Annex B grammar of a pattern with no flag, as many schemas hold
+    /// such patterns (identity escapes like <c>\-</c>, lone braces). A pattern neither grammar accepts is not a valid
+    /// ECMA-262 regular expression. <see cref="EcmaRegexParser"/> reads both.
+    /// </remarks>
+    public static bool TryTranslate(string ecmaPattern, out string? translated, out bool unicode, out string? error)
+    {
+        unicode = true;
+        try
+        {
+            new EcmaRegexParser(ecmaPattern.AsSpan(), unicode: true).Parse();
+        }
+        catch (EcmaRegexSyntaxException unicodeError)
+        {
+            unicode = false;
+            try
+            {
+                new EcmaRegexParser(ecmaPattern.AsSpan(), unicode: false).Parse();
+            }
+            catch (EcmaRegexSyntaxException legacyError)
+            {
+                translated = null;
+                error = unicodeError.Message == legacyError.Message
+                    ? unicodeError.Message + "."
+                    : unicodeError.Message + " (read without the u flag: " + legacyError.Message + ").";
+                return false;
+            }
+        }
+
+        translated = TranslateOrFallback(ecmaPattern);
+        error = null;
+        return true;
+    }
+
+    /// <summary>
     /// Gets the maximum possible length of the translated pattern, suitable for buffer allocation.
     /// </summary>
     /// <param name="ecmaPattern">The ECMAScript regex pattern.</param>

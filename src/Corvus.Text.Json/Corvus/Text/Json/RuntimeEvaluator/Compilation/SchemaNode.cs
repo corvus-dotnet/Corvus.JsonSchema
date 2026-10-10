@@ -216,6 +216,10 @@ internal sealed class PatternMatcher
 #endif
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<(string Pattern, RegexOptions Options, TimeSpan Timeout), Regex> RegexCache = new();
 
+    // The translation of each pattern seen, or why it is not a valid ECMA-262 pattern. A pattern is read once per
+    // process, when the first schema that holds it is compiled.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string? Translated, string? Error)> TranslationCache = new();
+
     private readonly Regex? regex;
     private readonly byte[]? prefix;
     private readonly int min;
@@ -299,6 +303,16 @@ internal sealed class PatternMatcher
                 return new PatternMatcher(Kind.Range, ecmaPattern, null, null, 1, int.MaxValue);
         }
 
+        // A pattern that is not a valid ECMA-262 regular expression is refused here, when the schema is compiled,
+        // whichever matcher would have taken it.
+        (string? translation, string? error) = TranslationCache.GetOrAdd(
+            ecmaPattern,
+            static p => Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.TryTranslate(p, out string? t, out string? e) ? (t, null) : (null, e));
+        if (translation is null)
+        {
+            throw new JsonSchemaCompilationException($"The pattern '{ecmaPattern}' is not a valid ECMA-262 regular expression. {error}");
+        }
+
         if (TryParsePrefix(ecmaPattern, out string? prefix))
         {
             return new PatternMatcher(Kind.Prefix, ecmaPattern, null, System.Text.Encoding.UTF8.GetBytes(prefix!), 0, 0);
@@ -348,11 +362,7 @@ internal sealed class PatternMatcher
         // Regex instances are immutable and thread-safe, so identical patterns are shared process-wide:
         // repeated patterns (metaschemas, many evaluators of similar schemas) compile once.
         var key = (ecmaPattern, regexOptions, options.RegexMatchTimeout);
-        Regex regex = RegexCache.GetOrAdd(key, static k =>
-        {
-            string translated = Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.TranslateOrFallback(k.Pattern);
-            return new Regex(translated, k.Options, k.Timeout);
-        });
+        Regex regex = RegexCache.GetOrAdd(key, static k => new Regex(TranslationCache[k.Pattern].Translated!, k.Options, k.Timeout));
 
         return new PatternMatcher(Kind.Regex, ecmaPattern, regex, null, 0, 0);
     }

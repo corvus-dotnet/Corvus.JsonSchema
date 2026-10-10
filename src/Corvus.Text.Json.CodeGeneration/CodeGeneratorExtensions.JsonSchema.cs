@@ -91,7 +91,12 @@ internal static partial class CodeGenerationExtensions
             return RegexPatternCategory.Prefix;
         }
 
-        if (RangePattern.IsMatch(pattern))
+        // A bound too large for an int is still a valid quantifier, which the regular expression takes. Bounds out of
+        // order are not a valid pattern, which the translation of a regular expression refuses.
+        if (RangePattern.Match(pattern) is { Success: true } range
+            && int.TryParse(range.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out int min)
+            && int.TryParse(range.Groups[2].Value, NumberStyles.None, CultureInfo.InvariantCulture, out int max)
+            && min <= max)
         {
             return RegexPatternCategory.Range;
         }
@@ -165,8 +170,11 @@ internal static partial class CodeGenerationExtensions
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
+    /// <exception cref="InvalidOperationException">A <c>pattern</c> or <c>patternProperties</c> pattern of the type is
+    /// not a valid ECMA-262 regular expression.</exception>
     public static CodeGenerator AppendPatternPropertyRegexFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        ThrowIfAPatternIsNotValid(typeDeclaration);
         return generator.AppendPatternPropertyRegexMembers(typeDeclaration, static (g, keyword, index, _) => g.AppendRegexValidationField(keyword, index));
     }
 
@@ -179,6 +187,29 @@ internal static partial class CodeGenerationExtensions
     public static CodeGenerator AppendPatternPropertyRegexFactoryMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         return generator.AppendPatternPropertyRegexMembers(typeDeclaration, static (g, keyword, index, value) => g.AppendRegexValidationFactoryMethod(keyword, index, value));
+    }
+
+    /// <summary>
+    /// Reads every pattern of the type, of the <c>pattern</c> keyword and of <c>patternProperties</c> alike, and
+    /// stops the generation at one that is not a valid ECMA-262 regular expression. The runtime evaluator refuses
+    /// such a schema when it compiles it, which for a generated type with no program image is when the type first
+    /// validates. Generated code is not to fail there for something the generator can see.
+    /// </summary>
+    private static void ThrowIfAPatternIsNotValid(TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ValidationRegularExpressions() is IReadOnlyDictionary<IValidationRegexProviderKeyword, IReadOnlyList<string>> regexes)
+        {
+            foreach (KeyValuePair<IValidationRegexProviderKeyword, IReadOnlyList<string>> regex in regexes)
+            {
+                foreach (string value in regex.Value)
+                {
+                    if (!EcmaRegexTranslator.TryTranslate(value, out _, out string? error))
+                    {
+                        throw new InvalidOperationException($"The pattern '{value}' of the keyword '{regex.Key.Keyword}' is not a valid ECMA-262 regular expression. {error}");
+                    }
+                }
+            }
+        }
     }
 
     private static CodeGenerator AppendPatternPropertyRegexMembers(this CodeGenerator generator, TypeDeclaration typeDeclaration, Func<CodeGenerator, IKeyword, int?, string, CodeGenerator> append)
@@ -259,7 +290,14 @@ internal static partial class CodeGenerationExtensions
             return generator;
         }
 
-        string translatedValue = EcmaRegexTranslator.TranslateOrFallback(value);
+        // An invalid pattern has stopped the generation before this (see ThrowIfAPatternIsNotValid).
+        if (!EcmaRegexTranslator.TryTranslate(value, out string? translation, out string? error))
+        {
+            throw new InvalidOperationException($"The pattern '{value}' of the keyword '{keyword.Keyword}' is not a valid ECMA-262 regular expression. {error}");
+        }
+
+        string translatedValue = translation!;
+
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         // Every form carries the match timeout (see RegexMatchTimeoutMilliseconds).

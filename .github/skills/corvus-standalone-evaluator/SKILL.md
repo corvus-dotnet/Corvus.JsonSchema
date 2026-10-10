@@ -62,6 +62,9 @@ records every keyword and the annotations.
   `RegexMatchTimeout` option, and on the expressions of the generated types. A match that exceeds it throws
   `RegexMatchTimeoutException` to the caller. The runtime evaluator's own default is
   `JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout`.
+- A `pattern` or `patternProperties` pattern that is not a valid ECMA-262 regular expression stops the generation
+  (`ThrowIfAPatternIsNotValid` in `CodeGeneratorExtensions.JsonSchema.cs`), as `JsonSchemaEvaluator.Compile`
+  refuses the schema with `JsonSchemaCompilationException`. See the `corvus-ecma-regex` skill.
 - `CodeGeneratorExtensions.JsonSchema.cs` `AppendRuntimeProgramEvaluateMethod` — the per-type shim:
   `private static readonly JsonSchemaEvaluator Evaluator = CorvusJsonSchemaProgram.Entry(n);`.
 - `CSharpLanguageProvider.GetProgramEntry` assigns entry indices; `ISchemaProgramLanguageProvider`
