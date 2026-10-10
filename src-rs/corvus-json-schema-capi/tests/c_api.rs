@@ -514,6 +514,26 @@ fn excluded_class_with_a_member_outside_ascii() {
     assert_eq!(validate(&v, r#""é1""#), Ok(false));
 }
 
+// The crate before 0.1.7 dropped a "$" at the end of the repeated group of a separated list, and after its first item,
+// so the first two patterns were matched as ^x(,a)*$ and the third as ^(a,)*b$. The answers are V8's.
+#[test]
+fn a_separated_list_keeps_an_anchor_inside_it() {
+    let v = compile(r#"{"pattern": "^x(,a$)*$"}"#, None).unwrap();
+    assert_eq!(validate(&v, r#""x""#), Ok(true));
+    assert_eq!(validate(&v, r#""x,a""#), Ok(true));
+    assert_eq!(validate(&v, r#""x,a,a""#), Ok(false));
+    let v = compile(r#"{"pattern": "^x$(,a)*$"}"#, None).unwrap();
+    assert_eq!(validate(&v, r#""x""#), Ok(true));
+    assert_eq!(validate(&v, r#""x,a""#), Ok(false));
+    let v = compile(r#"{"pattern": "^(a,$)*b$"}"#, None).unwrap();
+    assert_eq!(validate(&v, r#""b""#), Ok(true));
+    assert_eq!(validate(&v, r#""a,b""#), Ok(false));
+    // An escaped "$" is a literal character.
+    let v = compile(r#"{"pattern": "^x(,a\\$)*$"}"#, None).unwrap();
+    assert_eq!(validate(&v, r#""x,a$,a$""#), Ok(true));
+    assert_eq!(validate(&v, r#""x,a,a""#), Ok(false));
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Recursion
 

@@ -16,7 +16,7 @@
 
 #define CJS_VERSION_MINOR 1
 
-#define CJS_VERSION_PATCH 3
+#define CJS_VERSION_PATCH 4
 
 // The results of an evaluation. Used by one thread at a time.
 typedef struct cjs_collector cjs_collector;
