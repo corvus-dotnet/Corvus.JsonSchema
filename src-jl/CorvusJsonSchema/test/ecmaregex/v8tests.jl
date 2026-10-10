@@ -321,6 +321,89 @@ end
         @test E.translate("(?<=(a|x)+?)-\\1").main == "(?<=(?<g1>a|x))\\x{2d}\\k<g1>"
         # Where the end of the lookbehind has no fixed length, the pattern is still refused.
         @test E.unsupportedreason("(?<=\\1(a+))x") == E.REFUSED_BACKREFERENCE_IN_LOOKBEHIND
-        @test E.unsupportedreason("(?<=(a)+)x\\1") == E.REFUSED_GROUP_IN_LOOKBEHIND
+    end
+
+    # A backreference after a lookbehind of no fixed length reads a group of it. ECMA-262 matches the lookbehind
+    # backwards, and the group holds what that captures. PCRE2 sets a group only where the match passes over its
+    # text, so the lookbehind is written forwards in a form that captures the same, where there is one. The
+    # translator used to refuse every such pattern.
+    @testset "groups of a lookbehind of no fixed length" begin
+        rows = [
+            # The three of the test data.
+            (raw"(?<=([abc])+)x\1", "00008000000a"),
+            (raw"(?:(?:(?<=$|(|a)\b)(|-)?|.x){4,}?\1){2,}a", "4e27fc49c49a"),
+            (raw"((?:(|a)\2|(?<!x)){0}?||(?<=(?<!|\1)([^a]|[^a][^a]){3}|a|a)\3){1,}(?:(|){1,2}(\B|(?=x)|){1,}){2}$", "ffffffffffff"),
+            # A greedy repetition that a lookbehind matches last runs as often as it can, and its groups are those of the
+            # leftmost iteration.
+            (raw"(?<=(a|x)+)-\1", "000010040035"),
+            (raw"(?<=(a|x)*)-\1", "10381407ff35"),
+            (raw"(?<=(a|x){2,})-\1", "000000000024"),
+            (raw"(?<=(a|x){1,2})-\1", "000010040035"),
+            (raw"(?<=(a|x){0,2}-)\1", "10381407ff35"),
+            (raw"(?<=(?:(a)|x)+)-\1", "0040109e0835"),
+            (raw"(?<=((a)|x){2,3})-\2", "000000900024"),
+            (raw"(?<=(a+))-\1", "000010000010"),
+            (raw"(?<=(a*)x)-\1", "0040001e0801"),
+            (raw"(?<=(x)*a)-\1", "02011c004034"),
+            (raw"(?<=((?:a|x)-)+)\1", "000000000011"),
+            (raw"(.)(?<=([ax])+-)\2\1", "000000000011"),
+            (raw"(?<=([ax])+)-(?<=(x)*-)\1\2", "000010000034"),
+            (raw"(?<=(a|x)+)-(?:\1|x)$", "000018040024"),
+            (raw"^(?:a|x)*(?<=(a|x)+)-\1", "000010040031"),
+            # A part before a group at a fixed distance from the end does not say what the group holds.
+            (raw"(?<=a*(x))-\1", "000000040001"),
+            (raw"(?<=a+(x|-))\1", "000044000000"),
+            (raw"(?<=(?:a|xx)?(.)-)\1", "000010040111"),
+            (raw"(.)(?<=\1*(x)-)\2", "000000040001"),
+            (raw"(?:(?<=a*(x))-\1)+$", "000000040000"),
+            # Alternatives after one that matches the empty string anywhere are never taken, and a part that cannot match
+            # sets no group.
+            (raw"(?<=(|a)x)-\1", "0040201e0801"),
+            (raw"(?<=(a??)x)-\1", "0040201e0801"),
+            (raw"(?<=(?<!|\1)(a)|x)-\1", "0040201e0801"),
+            (raw"(?<=(?!)(a+)|x)-\1", "0040201e0801"),
+            (raw"(?<=(?:(a+)(?!))?x)-\1", "0040201e0801"),
+            # Alternatives: the first that matches is taken, and the match does not come back into the lookbehind.
+            (raw"(?<=^|(a){2,}x)\1", "ffffffffffff"),
+            (raw"(?<=(a|)x)\1", "21d0cbfe3a6f"),
+            (raw"(?<=(ax|a)-)\1", "000010000010"),
+            (raw"(?<=(a|ax)-)\1", "000010000010"),
+            (raw"(?<=(?:(a)|(xa)|)-)\1\2", "1078341fff15"),
+            (raw"(?<=a|(x)+)-\1", "02011c844035"),
+            (raw"(?<=(x)+|(a)-)\1\2", "008050701050"),
+            (raw"(.)(?<=\1+|(a)+)-\2", "02493c9e4f35"),
+            (raw"(?<=(?:(a)|.)+)x\1", "00908174ba6f"),
+            (raw"(?<=(?:(a)|[ax])+)-\1", "0040109e0835"),
+            (raw"(?<=(?:(a)|.)*-)\1$", "104810924901"),
+        ]
+        checkv8table(rows)
+        for (pattern, _) in rows
+            @test E.unsupportedreason(pattern) === nothing
+        end
+        # A group in an end of a fixed length: that end, and then a lookbehind for what stands before it.
+        @test E.translate("(?<=a*(x))-\\1").main == "(?<=(?<g1>x)(?<=(?C2)(?s:.){1}))\\x{2d}\\k<g1>"
+        @test E.translate("(?<=a*(x))-\\1").lookbehinds == ["(?C1)(?:a*)(?C0)"]
+        # A repetition first: a search for where it starts, with the rest of the pattern inside the search. The
+        # search stops where the lookbehind first matches, as the condition of a group does not take another way.
+        @test E.translate("(?<=(a)+)x\\1").main == "(?=(?<r1>(?s:.*)))(?=(?&w2))(?(DEFINE)(?<w2>(?(?=(?<m3>" *
+            "(?<!(?:a))(?<g1>a)(?:a)*(?=\\k<r1>\\z)))\\k<m3>x\\k<g1>|(?<=(?=(?&w2))(?:a)))))"
+        @test isempty(E.translate("(?<=(a)+)x\\1").lookbehinds)
+        # A group that can never take part is not written, and nor is a part that can never match.
+        @test E.translate("(?<=(|a)x)-\\1").main == "(?<=(?:)x)\\x{2d}"
+        @test E.translate("(?<=(?<!|\\1)(a)|x)-\\1").main == "(?<=x)\\x{2d}"
+        # A pattern with no backreference is written as it was.
+        @test E.translate("(?<=(|a)x)-").lookbehinds == ["(?C1)(?:(?:|a)x)(?C0)"]
+        @test E.translate("a(?!)b|c").main == "a(?!)b|c"
+        # The match does not come back into the lookbehind: with the group set to "a", this cannot match "ax-".
+        @test !matches("(?<=(?:(a)|.)+)x\\1", "ax-")
+        @test matches("(?<=(?:(a)|.)+)x\\1", "axa")
+        @test matches("(?<=([abc])+)x\\1", "cb" * "a"^300 * "xc")
+        @test !matches("(?<=([abc])+)x\\1", "-b" * "a"^300 * "xc")
+        # What is still refused: the lookbehind is not a term of the pattern itself, or what its groups hold
+        # depends on the order in which ECMA-262 tries the ways through it from its end.
+        for pattern in ["(?:(?<=(a)+)x\\1)+", "(?<=(a*)(x+))-\\1", "(?<=(\\ba*))x\\1", "(?<=(a+|x)-)\\1"]
+            @test E.unsupportedreason(pattern) == E.REFUSED_GROUP_IN_LOOKBEHIND
+            @test E.parsesunicode(pattern)
+        end
     end
 end

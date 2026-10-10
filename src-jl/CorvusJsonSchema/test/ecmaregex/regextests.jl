@@ -342,8 +342,9 @@ const GRINNING_FACE = "\U1F600"
             # The group is matched before the backreference, and has no fixed length to step back over.
             "(?<=\\1(a+))b" => E.REFUSED_BACKREFERENCE_IN_LOOKBEHIND,
             "(?<=(?:\\1(a))+)b" => E.REFUSED_BACKREFERENCE_IN_LOOKBEHIND,
-            "(?<=([abc])+)x\\1" => E.REFUSED_GROUP_IN_LOOKBEHIND,
-            "(?<=(a|b)+)c\\1" => E.REFUSED_GROUP_IN_LOOKBEHIND,
+            # What the group holds depends on the order in which the lookbehind is matched from its end.
+            "(?<=(a*)(b+))c\\1" => E.REFUSED_GROUP_IN_LOOKBEHIND,
+            "(?:(?<=([abc])+)x\\1)+" => E.REFUSED_GROUP_IN_LOOKBEHIND,
             # With no flag ECMA-262 does not fold U+212A to k, and PCRE2 does.
             "^(.)(?i:\\1)\\&?\$" => E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE,
             "^([a-z]+)-(?i:\\1)\\&?\$" => E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE,

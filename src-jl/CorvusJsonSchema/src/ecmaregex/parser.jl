@@ -69,6 +69,8 @@ mutable struct Node
     haslive::Bool
     # Marks a lookbehind that was written again as a fixed end and a lookbehind for the rest (see `split!`).
     split::Bool
+    # Marks a lookbehind that is written as a search with the rest of the pattern inside it (see `continuation`).
+    continued::Bool
     # The number of the capturing group of a GROUP, counted from 1 as ECMA-262 does, or 0.
     group::Int
     # The groups a BACKREF names. A name can belong to several groups in separate alternatives, of which at most one
@@ -97,8 +99,8 @@ const NO_NODES = Node[]
 const NO_INTS = Int[]
 const NO_BOOLS = Bool[]
 
-Node(kind::Int) = Node(kind, Int32(0), NO_CHARACTERS, NO_NODES, 0, 0, false, false, false, false, 0, NO_INTS, NO_INTS,
-    NO_BOOLS, "", false, false, false, 0, 0, Int64(-1), Int64(0))
+Node(kind::Int) = Node(kind, Int32(0), NO_CHARACTERS, NO_NODES, 0, 0, false, false, false, false, false, 0, NO_INTS,
+    NO_INTS, NO_BOOLS, "", false, false, false, 0, 0, Int64(-1), Int64(0))
 
 # What peek answers at the end of the pattern. It is not a code point.
 const END_OF_PATTERN = Char(0x110000)

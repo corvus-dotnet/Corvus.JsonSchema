@@ -18,10 +18,33 @@ refuses it. PCRE2 does neither, so the translation writes both out (see `emitter
 
 * a backreference inside a lookbehind to a group of the same lookbehind that is matched before it (one to its
   right), where that group is not in an end of the lookbehind of a fixed length, such as `(?<=\\1(a+))`;
-* a backreference to a group inside a lookbehind of no fixed length, such as `(?<=(a)+)x\\1`;
+* a backreference to a group inside a lookbehind of no fixed length, where what the group holds can only be told
+  by matching the lookbehind backwards, as ECMA-262 does, such as `(?<=(a*)(x+))-\\1` (see Lookbehinds below);
 * a case-insensitive backreference in a pattern that is only valid with no flag, where the group can hold a
   character that ECMA-262 compares differently there than PCRE2 does (see Unicode below);
 * repetitions that have to be written twice, inside one another, past 65,536 characters of translation.
+
+# Lookbehinds
+
+ECMA-262 matches a lookbehind backwards, from its end to its start, and PCRE2 matches one forwards from a place it
+steps back to. Whether the lookbehind holds is the same either way. What its groups capture is not, so a lookbehind
+with a group that a backreference after it reads is written in a form that captures what ECMA-262 captures:
+
+* a lookbehind of a fixed length is written as it is, with the groups of a repetition taken from its leftmost
+  iteration;
+* a group in an end of the lookbehind that has a fixed length is at a place the length fixes, whatever stands
+  before it, as in `(?<=a*(x))-\\1`;
+* a lookbehind that is a term of the pattern itself, and not inside a group, a repetition or an alternative, may
+  start with a greedy repetition of a body of a fixed length, as in `(?<=([abc])+)x\\1`, or with alternatives of
+  fixed lengths, as in `(?<=(ab|a)x)-\\1`, and may be alternatives of such forms. It is written as a search for
+  where it starts, with the rest of the pattern inside the search. The search takes time that grows with the
+  length of the text before the lookbehind;
+* a part that can never match, and an alternative that is never taken, set no group.
+
+Any other lookbehind whose groups are read after it is refused. That is one that is not a term of the pattern
+itself and has no fixed length, as in `(?:(?<=(a)+)x\\1)+`, and one whose groups hold what depends on the order
+in which ECMA-262 tries the ways through it from its end, as in `(?<=(a*)(x+))-\\1`. A lookbehind none of whose
+groups is read after it is never refused for this.
 
 # Grammars
 
