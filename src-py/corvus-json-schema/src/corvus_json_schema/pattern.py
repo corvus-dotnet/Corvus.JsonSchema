@@ -111,6 +111,25 @@ class _Invalid(Exception):
     pass
 
 
+_properties: dict[str, bool] = {}
+
+
+def _is_a_property(text: str) -> bool:
+    """Whether the regex package has the property of a ``\\p{...}``. It is asked about each one by itself, so that
+    a translation it then does not compile is known to be a fault here and not a name it does not have."""
+    known = _properties.get(text)
+    if known is None:
+        import regex
+
+        try:
+            regex.compile(text)
+            known = True
+        except regex.error:
+            known = False
+        _properties[text] = known
+    return known
+
+
 class _TooLarge(Exception):
     """The pattern is valid, and its translation would pass _MAX_TRANSLATED."""
 
@@ -697,7 +716,10 @@ class _Translator:
                     raise self.error()
                 self.i = end + 1
                 self.needs_regex = True
-                return f"\\{e}{{{body}}}", None
+                text = f"\\{e}{{{body}}}"
+                if not _is_a_property(text):
+                    raise self.error()
+                return text, None
             if self.u:
                 raise self.error()
             return "", e
@@ -1281,8 +1303,13 @@ def _search(pattern: str, unicode: bool) -> tuple[Matcher, bool] | None:
 
     try:
         return regex.compile(t[0]).search, t[2]
-    except regex.error:
-        return None
+    except regex.error as e:
+        # The pattern is valid, and every property in it is one the engine has. A translation the engine does not
+        # compile is a fault of the translator, and is not passed off as a pattern that is not valid.
+        raise RuntimeError(
+            f"corvus-json-schema translated the regular expression {pattern!r} to one that the regex package does "
+            f"not compile ({e}). This is a fault of the package. The translation starts {t[0][:500]!r}."
+        ) from None
 
 
 def compile_pattern(pattern: str) -> Matcher | None:
@@ -1307,5 +1334,6 @@ def is_valid_ecma_regex(s: str) -> bool:
     """Whether the text is a valid ECMA-262 pattern with the ``u`` flag (``format: regex``)."""
     try:
         return _compile(s, True) is not None
-    except _TooLarge:
+    except (_TooLarge, RuntimeError):
+        # The pattern is valid, whatever the engine made of its translation.
         return True

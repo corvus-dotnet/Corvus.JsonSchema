@@ -130,6 +130,22 @@ def test_invalid_patterns_fail_compilation() -> None:
         cjs.compile({"pattern": "^(abc"})
 
 
+def test_a_translation_the_engine_does_not_compile_is_a_fault(monkeypatch: pytest.MonkeyPatch) -> None:
+    from corvus_json_schema import pattern as pattern_module
+
+    # A property the regex package does not have makes a pattern one that is not valid with the u flag.
+    for pattern in ("\\p{Nope}", "[\\p{Script=Nope}]", "(?i:\\P{sc=L})", "(?i:[\\p{gc=Greek}])"):
+        assert not is_valid_ecma_regex(pattern), pattern
+    with pytest.raises(cjs.SchemaCompilationError, match="Invalid regular expression"):
+        cjs.compile({"pattern": "\\p{Nope}+*"})
+    # Anything else the engine does not compile is a fault of the translation. It is raised as one, and is not
+    # passed off as a pattern that is not valid.
+    monkeypatch.setattr(pattern_module, "_translate", lambda pattern, unicode, for_regex: ("(?P<a>", True, False))
+    with pytest.raises(RuntimeError, match="fault of the package"):
+        pattern_module._compile("a", True)
+    assert is_valid_ecma_regex("a")
+
+
 def test_in_place_recursion_beyond_max_depth_raises() -> None:
     v = cjs.compile({"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "$ref": "#/$defs/loop"}, max_depth=16)
     with pytest.raises(cjs.SchemaEvaluationDepthError):
