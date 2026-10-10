@@ -126,8 +126,12 @@ flag grammar.
 - A backreference reads what ECMA-262 says its group holds, where `java.util.regex` reads something else. A group
   that did not take part reads as the empty string. The groups of a repeated body are unset when an iteration
   starts, so `^(?:(a)|x)*\1$` takes "ax" and not "axa", and an iteration that matched nothing leaves no group set. A
-  lookbehind captures as if run backwards, so `(?<=\1(a))b` takes "aab". Such a pattern is written once for each way
-  through the groups it reads, so its translation can be several times the length of the pattern.
+  lookbehind captures as if run backwards, so `(?<=\1(a))b` takes "aab". Inside a case-insensitive group a
+  backreference compares by ECMA-262's case folding, the same on every JDK: `^(?i:(.)\1)$` takes "sſ" and "kK"
+  (U+017F, U+212A) and not "iİ" (U+0130). Such a pattern is written once for each way through the groups it reads,
+  and a case-insensitive backreference with its comparison written out, so the translation can be long: over
+  100,000 characters for a case-insensitive backreference to a group that can hold any character.
+
 
 The patterns are run by `java.util.regex`, after translation. A few valid patterns cannot be given their ECMA-262
 meaning there, and compiling a schema with one throws `SchemaCompilationException` with a message that starts
@@ -142,9 +146,6 @@ still accepts it, as it is a valid pattern. They are:
   (alternatives of the whole lookahead, as in `(?=(a)|b)\1`, are written);
 - a backreference to a group of a lookaround, when a repetition holds both and the match can go back to a place
   between them, as in `^(?:(?=([ab]))[ab](?:c|ca)\1)*$`;
-- a backreference inside a case-insensitive group (`(?i:...)`), unless the only cased characters its group can hold
-  are ASCII letters (with the `u` flag grammar, not `k` or `s`, which U+212A and U+017F fold to) and it can hold no
-  character beyond the Basic Multilingual Plane;
 - a pattern that would be written with more than 256 alternatives for the ways through the groups it reads, or with
   more than 1,048,576 characters;
 - a repetition that must run more than 200 times over a body that matches the empty string in some places only, such

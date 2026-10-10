@@ -186,7 +186,7 @@ class ApiTest {
         assertTrue(names.isValid("{\"aa\": 1, \"bb\": 2, \"ab\": \"x\"}"));
         assertFalse(names.isValid("{\"bb\": \"x\"}"));
         // A backreference means what ECMA-262 says where java.util.regex differs: in a repetition whose iterations
-        // unset its groups, and in a lookbehind, which runs backwards.
+        // unset its groups, in a lookbehind, which runs backwards, and in a case-insensitive group.
         Validator repeated = Validator.compile("{\"pattern\": \"^(?:(a)|x)*\\\\1$\"}");
         assertTrue(repeated.isValid("\"ax\""));
         assertTrue(repeated.isValid("\"xaa\""));
@@ -194,6 +194,9 @@ class ApiTest {
         Validator behind = Validator.compile("{\"pattern\": \"(?<=\\\\1(a))b\"}");
         assertTrue(behind.isValid("\"aab\""));
         assertFalse(behind.isValid("\"ab\""));
+        Validator folded = Validator.compile("{\"pattern\": \"^(?i:(.+)-\\\\1)$\"}");
+        assertTrue(folded.isValid("\"Stra\u00dfe-STRA\u1e9eE\""));
+        assertFalse(folded.isValid("\"i-\u0130\""));
         // A valid pattern whose meaning java.util.regex cannot give is an error that says so. It is never run with
         // another meaning.
         SchemaCompilationException refused = assertThrows(SchemaCompilationException.class,

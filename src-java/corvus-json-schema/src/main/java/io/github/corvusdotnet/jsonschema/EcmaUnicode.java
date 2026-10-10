@@ -1,8 +1,10 @@
 package io.github.corvusdotnet.jsonschema;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.IntPredicate;
 
@@ -680,6 +682,28 @@ final class EcmaUnicode {
             return set;
         }
         return union(set, Arrays.copyOf(extra, m));
+    }
+
+    /**
+     * The classes of equivalent characters, under the Canonicalize of a grammar, that have a member in the set. Each
+     * class is given once, with all its members.
+     */
+    static int[][] foldClasses(int[] set, boolean unicode) {
+        Folding f = folding(unicode);
+        Map<int[], Boolean> seen = new IdentityHashMap<>();
+        List<int[]> classes = new ArrayList<>();
+        for (int i = 0; i < set.length; i += 2) {
+            int k = Arrays.binarySearch(f.points, set[i]);
+            if (k < 0) {
+                k = -k - 1;
+            }
+            for (; k < f.points.length && f.points[k] <= set[i + 1]; k++) {
+                if (seen.put(f.classes[k], Boolean.TRUE) == null) {
+                    classes.add(f.classes[k]);
+                }
+            }
+        }
+        return classes.toArray(new int[0][]);
     }
 
     /** The characters that are equivalent to some other character under the Canonicalize of a grammar. */

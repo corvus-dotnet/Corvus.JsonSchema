@@ -579,6 +579,162 @@ class EcmaRegexTest {
         assertAnswers(BACKREFERENCES_AND_LOOKBEHINDS, textsOver(4, new String[] {"a", "b", "x"}, MORE_FOR_LOOKBEHINDS));
     }
 
+    /** Backreferences inside a case-insensitive group, in patterns that are valid with the u flag. */
+    private static final String[][] CASE_INSENSITIVE_BACKREFERENCES = {
+            {
+                "^(.)(?i:\\1)$",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|ss|s\u017f|\u017fs|\u017f\u017f|kk"
+                        + "|k\u212a|\u212ak|\u212a\u212a|--|\u00df\u1e9e|\u1e9e\u00df|\u00df\u00df"
+                        + "|\ud801\udc00\ud801\udc28|\ud801\udc28\ud801\udc00|\ud801\udc00\ud801\udc00"
+                        + "|\u03c2\u03c3|\u03c3\u03a3|\u03a3\u03c2|\u00e9\u00e9|\u00e9\u00c9",
+            },
+            {
+                "^(?i:(.)\\1)$",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|ss|s\u017f|\u017fs|\u017f\u017f|kk"
+                        + "|k\u212a|\u212ak|\u212a\u212a|--|\u00df\u1e9e|\u1e9e\u00df|\u00df\u00df"
+                        + "|\ud801\udc00\ud801\udc28|\ud801\udc28\ud801\udc00|\ud801\udc00\ud801\udc00"
+                        + "|\u03c2\u03c3|\u03c3\u03a3|\u03a3\u03c2|\u00e9\u00e9|\u00e9\u00c9",
+            },
+            {
+                "^(.+)(?i:\\1)$",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|ss|s\u017f|\u017fs|\u017f\u017f|kk"
+                        + "|k\u212a|\u212ak|\u212a\u212a|--|\u00df\u1e9e|\u1e9e\u00df|\u00df\u00df"
+                        + "|\ud801\udc00\ud801\udc28|\ud801\udc28\ud801\udc00|\ud801\udc00\ud801\udc00"
+                        + "|\u03c2\u03c3|\u03c3\u03a3|\u03a3\u03c2|isIS|ks\u212a\u017f|\u00e9s\u00c9S"
+                        + "|\u00e9\u00e9|\u00e9\u00c9|\u212aSks",
+            },
+            {
+                "^(?i:(.+)\\1)$",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|ss|s\u017f|\u017fs|\u017f\u017f|kk"
+                        + "|k\u212a|\u212ak|\u212a\u212a|--|\u00df\u1e9e|\u1e9e\u00df|\u00df\u00df"
+                        + "|\ud801\udc00\ud801\udc28|\ud801\udc28\ud801\udc00|\ud801\udc00\ud801\udc00"
+                        + "|\u03c2\u03c3|\u03c3\u03a3|\u03a3\u03c2|isIS|ks\u212a\u017f|\u00e9s\u00c9S"
+                        + "|\u00e9\u00e9|\u00e9\u00c9|\u212aSks",
+            },
+            {
+                "^(?<n>.)(?i:\\k<n>)+$",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|ss|s\u017f|\u017fs|\u017f\u017f|kk"
+                        + "|k\u212a|\u212ak|\u212a\u212a|--|iii|iiI|iIi|iII|Iii|IiI|IIi|III"
+                        + "|\u0130\u0130\u0130|\u0131\u0131\u0131|sss|ss\u017f|s\u017fs|s\u017f\u017f"
+                        + "|\u017fss|\u017fs\u017f|\u017f\u017fs|\u017f\u017f\u017f|kkk|kk\u212a|k\u212ak"
+                        + "|k\u212a\u212a|\u212akk|\u212ak\u212a|\u212a\u212ak|\u212a\u212a\u212a|---"
+                        + "|\u00df\u1e9e|\u1e9e\u00df|\u00df\u00df|\ud801\udc00\ud801\udc28"
+                        + "|\ud801\udc28\ud801\udc00|\ud801\udc00\ud801\udc00|\u03c2\u03c3|\u03c3\u03a3"
+                        + "|\u03a3\u03c2|\u00e9\u00e9|\u00e9\u00c9",
+            },
+            {
+                "^(?i:([a-z]+)-\\1)$",
+                "|i-i|i-I|I-i|I-I|s-s|s-\u017f|\u017f-s|\u017f-\u017f|k-k|k-\u212a|\u212a-k"
+                        + "|\u212a-\u212a",
+            },
+            {"^([a-z]+)-(?i:\\1)$", "|i-i|i-I|s-s|s-\u017f|k-k|k-\u212a"},
+            {
+                "^(?i:(?:(.)\\1)+)$",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|ss|s\u017f|\u017fs|\u017f\u017f|kk"
+                        + "|k\u212a|\u212ak|\u212a\u212a|--|\u00df\u1e9e|\u1e9e\u00df|\u00df\u00df"
+                        + "|\ud801\udc00\ud801\udc28|\ud801\udc28\ud801\udc00|\ud801\udc00\ud801\udc00"
+                        + "|\u03c2\u03c3|\u03c3\u03a3|\u03a3\u03c2|\u00e9\u00e9|\u00e9\u00c9",
+            },
+            {"^(\\u00df)(?i:\\1)$", "|\u00df\u1e9e|\u00df\u00df"},
+            {"^(\\u03c2)(?i:\\1)$", "|\u03c2\u03c3"},
+            {"^(\\ud801\\udc00)(?i:\\1)$", "|\ud801\udc00\ud801\udc28|\ud801\udc00\ud801\udc00"},
+            {"(?<=(?i:\\1)(.))x", "|kKx|\u212akx|k\u212ax|iIx|\u017fsx"},
+            {"(?i:(?<=\\1(k)))x", "|kKx|\u212akx|k\u212ax"},
+            {"(?i:(?<=\\1(..)))x$", "|ks\u212aSx|kskSx"},
+            {
+                "^(?=.(.))(?i:\\1)",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|ss|s\u017f|\u017fs|\u017f\u017f|kk"
+                        + "|k\u212a|\u212ak|\u212a\u212a|--|iii|iiI|ii\u0130|ii\u0131|iis|ii\u017f|iik"
+                        + "|ii\u212a|ii-|iIi|iII|iI\u0130|iI\u0131|iIs|iI\u017f|iIk|iI\u212a|iI-|Iii|IiI"
+                        + "|Ii\u0130|Ii\u0131|Iis|Ii\u017f|Iik|Ii\u212a|Ii-|IIi|III|II\u0130|II\u0131|IIs"
+                        + "|II\u017f|IIk|II\u212a|II-|\u0130\u0130i|\u0130\u0130I|\u0130\u0130\u0130"
+                        + "|\u0130\u0130\u0131|\u0130\u0130s|\u0130\u0130\u017f|\u0130\u0130k"
+                        + "|\u0130\u0130\u212a|\u0130\u0130-|\u0131\u0131i|\u0131\u0131I"
+                        + "|\u0131\u0131\u0130|\u0131\u0131\u0131|\u0131\u0131s|\u0131\u0131\u017f"
+                        + "|\u0131\u0131k|\u0131\u0131\u212a|\u0131\u0131-|ssi|ssI|ss\u0130|ss\u0131|sss"
+                        + "|ss\u017f|ssk|ss\u212a|ss-|s\u017fi|s\u017fI|s\u017f\u0130|s\u017f\u0131"
+                        + "|s\u017fs|s\u017f\u017f|s\u017fk|s\u017f\u212a|s\u017f-|\u017fsi|\u017fsI"
+                        + "|\u017fs\u0130|\u017fs\u0131|\u017fss|\u017fs\u017f|\u017fsk|\u017fs\u212a"
+                        + "|\u017fs-|\u017f\u017fi|\u017f\u017fI|\u017f\u017f\u0130|\u017f\u017f\u0131"
+                        + "|\u017f\u017fs|\u017f\u017f\u017f|\u017f\u017fk|\u017f\u017f\u212a"
+                        + "|\u017f\u017f-|kki|kkI|kk\u0130|kk\u0131|kks|kk\u017f|kkk|kk\u212a|kk-"
+                        + "|k\u212ai|k\u212aI|k\u212a\u0130|k\u212a\u0131|k\u212as|k\u212a\u017f|k\u212ak"
+                        + "|k\u212a\u212a|k\u212a-|\u212aki|\u212akI|\u212ak\u0130|\u212ak\u0131|\u212aks"
+                        + "|\u212ak\u017f|\u212akk|\u212ak\u212a|\u212ak-|\u212a\u212ai|\u212a\u212aI"
+                        + "|\u212a\u212a\u0130|\u212a\u212a\u0131|\u212a\u212as|\u212a\u212a\u017f"
+                        + "|\u212a\u212ak|\u212a\u212a\u212a|\u212a\u212a-|--i|--I|--\u0130|--\u0131|--s"
+                        + "|--\u017f|--k|--\u212a|---|\u00df\u1e9e|\u1e9e\u00df|\u00df\u00df"
+                        + "|\ud801\udc00\ud801\udc28|\ud801\udc28\ud801\udc00|\ud801\udc00\ud801\udc00"
+                        + "|\u03c2\u03c3|\u03c3\u03a3|\u03a3\u03c2|\u00e9\u00e9|\u00e9\u00c9|kKx|\u212akx"
+                        + "|k\u212ax|iIx|\u017fsx",
+            },
+            {
+                "^(?=.(..))(?i:\\1)",
+                "|iii|iiI|iIi|iII|Iii|IiI|IIi|III|\u0130\u0130\u0130|\u0131\u0131\u0131|sss"
+                        + "|ss\u017f|s\u017fs|s\u017f\u017f|\u017fss|\u017fs\u017f|\u017f\u017fs"
+                        + "|\u017f\u017f\u017f|kkk|kk\u212a|k\u212ak|k\u212a\u212a|\u212akk|\u212ak\u212a"
+                        + "|\u212a\u212ak|\u212a\u212a\u212a|---",
+            },
+            {
+                "^(?i:(.*)-\\1)$",
+                "|-|i-i|i-I|I-i|I-I|\u0130-\u0130|\u0131-\u0131|s-s|s-\u017f|\u017f-s"
+                        + "|\u017f-\u017f|k-k|k-\u212a|\u212a-k|\u212a-\u212a|---",
+            },
+    };
+
+    /** The same in patterns valid only without the u flag, where a character is compared by its uppercase. */
+    private static final String[][] CASE_INSENSITIVE_BACKREFERENCES_WITHOUT_THE_U_FLAG = {
+            {
+                "^(.)(?i:\\1)\\&?$",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|ss|\u017f\u017f|kk|\u212a\u212a|--"
+                        + "|\u00df\u00df|\u03c2\u03c3|\u03c3\u03a3|\u03a3\u03c2|\u00e9\u00e9|\u00e9\u00c9",
+            },
+            {
+                "^(?i:(.+)\\1)\\&?$",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|ss|\u017f\u017f|kk|\u212a\u212a|--"
+                        + "|\u00df\u00df|\u03c2\u03c3|\u03c3\u03a3|\u03a3\u03c2|isIS|\u00e9s\u00c9S"
+                        + "|\u00e9\u00e9|\u00e9\u00c9",
+            },
+            {"^([a-z]+)-(?i:\\1)\\&?$", "|i-i|i-I|s-s|k-k"},
+            {
+                "^(?i:(?:(.)\\1)+)\\&?$",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|ss|\u017f\u017f|kk|\u212a\u212a|--"
+                        + "|\u00df\u00df|\u03c2\u03c3|\u03c3\u03a3|\u03a3\u03c2|\u00e9\u00e9|\u00e9\u00c9",
+            },
+    };
+
+    private static final String[] CASED = {"i", "I", "\u0130", "\u0131", "s", "\u017f", "k", "\u212a", "-"};
+    private static final String[] MORE_CASED = {
+        "\u00df\u1e9e", "\u1e9e\u00df", "\u00df\u00df", "\u00dfs", "\ud801\udc00\ud801\udc28",
+        "\ud801\udc28\ud801\udc00", "\ud801\udc00\ud801\udc00", "\ud801\udc00\ud801\udc01", "\u03c2\u03c3",
+        "\u03c3\u03a3", "\u03a3\u03c2", "\u03c3\u03c4", "isIS", "is\u0130S", "ks\u212a\u017f", "\u00e9s\u00c9S",
+        "\u00e9\u00e9", "\u00e9\u00c9", "x\u212a", "xk", "xK", "\u017fix", "six", "Kix", "\u0131ix", "sik\u212a",
+        "\u212aSks", "kKx", "\u212akx", "k\u212ax", "iIx", "\u0130ix", "\u017fsx", "ks\u212aSx", "kskSx"
+    };
+    private static final String[] MORE_CASED_WITHOUT_U = {
+        "\u00df\u1e9e", "\u1e9e\u00df", "\u00df\u00df", "\u00dfs", "\u03c2\u03c3", "\u03c3\u03a3", "\u03a3\u03c2",
+        "\u03c3\u03c4", "isIS", "is\u0130S", "ks\u212a\u017f", "\u00e9s\u00c9S", "\u00e9\u00e9", "\u00e9\u00c9",
+        "x\u212a", "xk", "xK", "\u017fix", "six", "Kix", "\u0131ix", "sik\u212a", "\u212aSks"
+    };
+
+    /**
+     * A backreference inside a case-insensitive group compares by the Canonicalize of ECMA-262: simple case folding
+     * with the u flag, so that "s", "S" and U+017F are one, as are "k", "K" and U+212A, and U+00DF and U+1E9E, and
+     * "i" is neither U+0130 nor U+0131. Without the flag it is the uppercase of one code unit, which keeps U+017F
+     * and U+212A apart from the letters. The case-insensitive backreference of {@code java.util.regex} does neither
+     * (it equates "i", U+0130 and U+0131 on every JDK, and other pairs differ with the JDK), so the answers must be
+     * the same on every JDK.
+     */
+    @Test
+    void aCaseInsensitiveBackreferenceComparesAsEcma262Does() {
+        assertAnswers(CASE_INSENSITIVE_BACKREFERENCES, textsOver(3, CASED, MORE_CASED));
+        assertAnswers(CASE_INSENSITIVE_BACKREFERENCES_WITHOUT_THE_U_FLAG, textsOver(3, CASED, MORE_CASED_WITHOUT_U));
+        // Where the group can hold no character with another case, the backreference is written as it is.
+        assertEquals("^(?:([\\x{30}-\\x{39}]+)\\x{2d}(?:(?:\\1)))\\z", EcmaRegex.translate("^(?i:([0-9]+)-\\1)$"));
+        assertMatches("^(?i:([a-j]+)-\\1)$", "abc-ABC");
+        assertNoMatch("^(?i:([a-j]+)-\\1)$", "abc-ABD");
+    }
+
     /**
      * What is still refused: a valid pattern whose backreference cannot be given its meaning by a pattern for
      * {@code java.util.regex}, and one that would be written too long. None is run with another meaning.
@@ -600,9 +756,6 @@ class EcmaRegexTest {
                 "(?:(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?\\1\\2\\3\\4\\5\\6\\7\\8\\9)*",
                 EcmaRegex.REFUSED_TOO_MANY_PATHS,
             },
-            // java.util.regex has no comparison that is the Canonicalize of ECMA-262.
-            {"^(.)(?i:\\1)$", EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE},
-            {"^(?i:([a-z]+)-\\1)$", EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE},
         };
         for (String[] r : refused) {
             assertEquals(r[1], EcmaRegex.unsupported(r[0]), r[0]);
@@ -612,12 +765,6 @@ class EcmaRegexTest {
         // With no place between the lookahead and the backreference to go back to, the same is written.
         assertMatches("^(?:(?=([ab]))[ab]c\\1)*$", "acabcb");
         assertNoMatch("^(?:(?=([ab]))[ab]c\\1)*$", "acabca");
-        // A case-insensitive backreference is exact where the group can hold no character that folds differently.
-        assertMatches("^(?i:([0-9]+)-\\1)$", "12-12");
-        assertMatches("^(?i:([a-j]+)-\\1)$", "abc-ABC");
-        assertNoMatch("^(?i:([a-j]+)-\\1)$", "abc-ABD");
-        assertMatches("^([a-z]+)-(?i:\\1)\\&?$", "sky-SKY");
-        assertNoMatch("^([a-z]+)-(?i:\\1)\\&?$", "sky-S\u212aY");
         // An invalid pattern is not a refused one.
         assertNull(EcmaRegex.unsupported("(a"));
     }

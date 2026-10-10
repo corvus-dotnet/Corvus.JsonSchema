@@ -61,7 +61,7 @@ import java.util.regex.PatternSyntaxException;
  *   <li>it runs a lookbehind forwards, where ECMA-262 runs it backwards, so that a backreference in it reads a
  *       group that stands after it and a group of a repetition in it holds the leftmost iteration;
  *   <li>its case-insensitive backreference compares by the case mappings of the JDK, and ECMA-262 by its
- *       Canonicalize. It is used only where the two agree, and a pattern is refused where they may not.
+ *       Canonicalize.
  * </ul>
  *
  * <p>Where none of these can be seen, a backreference is written as one, behind a test of an empty group that marks
@@ -69,7 +69,8 @@ import java.util.regex.PatternSyntaxException;
  * written by paths (see {@link Emitter#translateByPaths}): once for each way through the choices that decide what the
  * groups it reads hold, so that every backreference stands where its group is known to be set, by a group of the
  * translation on that way, or known not to be. A lookbehind is written with the captures its backward run gives
- * (see {@link Emitter#edge}).
+ * (see {@link Emitter#edge}), and a case-insensitive backreference with the comparison written out (see
+ * {@link Emitter#folded}).
  *
  * <p><b>What is refused.</b> A valid pattern whose backreference cannot be given its meaning that way is refused
  * rather than given an answer that may be wrong, and {@link #unsupported} says why. The reasons are the
@@ -96,9 +97,6 @@ final class EcmaRegex {
     /** The group is in a lookahead that sets it on some of the ways it can match only. */
     static final String REFUSED_GROUP_IN_LOOKAROUND =
             "a backreference to a group that a lookahead sets on some of the ways it can match only";
-    /** The backreference ignores case, and the group can hold a character java.util.regex compares differently. */
-    static final String REFUSED_CASE_INSENSITIVE_BACKREFERENCE =
-            "a case-insensitive backreference to text that java.util.regex compares differently";
     /** A backreference that the form with markers cannot serve. The pattern is then written by paths. */
     private static final String NOT_BY_MARKERS = "markers";
     /**
@@ -1472,9 +1470,9 @@ final class EcmaRegex {
          * Returns true when the ASCII case-insensitive comparison of {@code java.util.regex} is the comparison
          * ECMA-262 makes for every one of them: the only characters with a variant are ASCII letters whose only
          * variant is the other ASCII case. With the u flag grammar that leaves out k and s, which U+212A and U+017F
-         * fold to. Any other group is refused, as {@code java.util.regex} has no comparison that is the Canonicalize
-         * of ECMA-262. A group that can hold a character beyond the Basic Multilingual Plane is refused too, as the
-         * comparison of Java 17 miscounts them.
+         * fold to. For any other group it throws, and the comparison is written out (see {@link #folded}), as
+         * {@code java.util.regex} has no comparison that is the Canonicalize of ECMA-262. So too for a group that
+         * can hold a character beyond the Basic Multilingual Plane, as the comparison of Java 17 miscounts them.
          */
         private boolean comparesIgnoringAsciiCase(int g) {
             int[] captured = capturedSet(groupNodes[g]);
@@ -1484,7 +1482,7 @@ final class EcmaRegex {
             }
             int[] variants = EcmaUnicode.foldClosure(intersection(captured, cased), unicode);
             if (EcmaUnicode.intersects(variants, NOT_ASCII_LETTER) || EcmaUnicode.intersects(captured, SUPPLEMENTARY)) {
-                throw new Unsupported(REFUSED_CASE_INSENSITIVE_BACKREFERENCE);
+                throw new Unsupported(NOT_BY_MARKERS);
             }
             return true;
         }
@@ -2899,12 +2897,37 @@ final class EcmaRegex {
                     if (length == 0) {
                         break;
                     }
-                    String copy = newName();
-                    out.append("(?=(?<").append(copy).append('>').append(ANY).append('{').append(length)
-                            .append("})").append(ANY).append('{').append(distance - length).append('}')
-                            .append(n.fold && comparesIgnoringAsciiCase(target) ? "(?i:" : "(?:");
-                    refer(copy);
-                    out.append("))").append(ANY).append('{').append(length).append('}');
+                    int[][] classes = n.fold
+                            ? EcmaUnicode.foldClasses(capturedSet(groupNodes[target].subs[0]), unicode)
+                            : new int[0][];
+                    if (classes.length == 0) {
+                        String copy = newName();
+                        out.append("(?=(?<").append(copy).append('>').append(ANY).append('{').append(length)
+                                .append("})").append(ANY).append('{').append(distance - length).append('}');
+                        refer(copy);
+                        out.append(')').append(ANY).append('{').append(length).append('}');
+                    } else {
+                        // Character by character: the character d on is this one, or both are in one class.
+                        // Written once for each character when they are few, as java.util.regex does not bound a
+                        // lookbehind that holds a repeated group with alternatives.
+                        String skip = ANY + "{" + (distance - 1) + "}";
+                        long copies = length <= 16 ? length : 1;
+                        for (long k = 0; k < copies; k++) {
+                            String one = newName();
+                            out.append("(?:(?:(?=(?<").append(one).append('>').append(ANY).append(')').append(skip);
+                            refer(one);
+                            out.append(')');
+                            for (int[] members : classes) {
+                                StringBuilder set = new StringBuilder();
+                                appendMembers(set, members);
+                                out.append("|(?=").append(set).append(skip).append(set).append(')');
+                            }
+                            out.append(')').append(ANY).append(')');
+                        }
+                        if (copies != length) {
+                            out.append('{').append(length).append('}');
+                        }
+                    }
                     at += length;
                     break;
                 }
@@ -3104,19 +3127,141 @@ final class EcmaRegex {
             }
         }
 
+        private static void appendMembers(StringBuilder sb, int[] members) {
+            int[] sorted = members.clone();
+            Arrays.sort(sorted);
+            sb.append('[');
+            for (int member : sorted) {
+                EcmaUnicode.appendCodePoint(sb, member);
+            }
+            sb.append(']');
+        }
+
         /**
-         * Writes a case-insensitive backreference: with the comparison of java.util.regex that ignores the case of
-         * ASCII letters where that is the comparison ECMA-262 makes (see {@link #comparesIgnoringAsciiCase}, which
-         * refuses the others).
+         * Writes a case-insensitive backreference. ECMA-262 compares the text of the group and the text at the
+         * backreference character by character, by its Canonicalize. The case-insensitive backreference of
+         * java.util.regex compares by the case mappings of the JDK it runs on, which equate other pairs (among them
+         * "i" and U+0130 or U+0131), and on Java 17 it miscounts a character beyond the Basic Multilingual Plane. So
+         * the comparison is written out with the classes of equivalent characters of {@link EcmaUnicode}, the ones a
+         * character of the group can belong to.
+         *
+         * <p>A group of at most one character G is compared in one step: the text is G, or its next character is in
+         * some class K and G is in K too. That G is in K is shown by a search for a place in the text where G stands
+         * (the place it was captured at, if no other) at a character of K.
          */
         private void folded(int group) {
-            if (comparesIgnoringAsciiCase(group)) {
-                out.append("(?i:");
-                refer(env.name[group]);
-                out.append(')');
-            } else {
-                refer(env.name[group]);
+            String name = env.name[group];
+            Node body = groupNodes[group].subs[0];
+            int[][] classes = EcmaUnicode.foldClasses(capturedSet(body), unicode);
+            if (classes.length == 0) {
+                refer(name);
+                return;
             }
+            hasLookbehind = true;
+            // A group set in a lookaround can stand after the backreference, so it is looked for in the whole text.
+            boolean anywhere = env.look[group];
+            if (maxLength(body) > 1) {
+                foldedLoop(name, classes, anywhere);
+                return;
+            }
+            String rest = newName();
+            out.append("(?:");
+            refer(name);
+            out.append("|(?=(?<").append(rest).append('>').append(ANY).append("*))(?!");
+            refer(name);
+            refer(rest);
+            out.append("\\z)(?:");
+            for (int k = 0; k < classes.length; k++) {
+                StringBuilder set = new StringBuilder();
+                appendMembers(set, classes[k]);
+                out.append(k > 0 ? "|" : "").append("(?=").append(set).append(')')
+                        .append(found("(?=\\k<" + name + ">)(?=" + set + ")", anywhere));
+            }
+            out.append(')').append(ANY).append(')');
+        }
+
+        /**
+         * A lookbehind that holds when the text has a place where {@code test} holds: one at or before the place
+         * the lookbehind stands at, or anywhere in the text.
+         */
+        private static String found(String test, boolean anywhere) {
+            return anywhere
+                    ? "(?<=^(?=" + ANY + "*?" + test + ")" + ANY + "{0,2147483647})"
+                    : "(?<=" + test + ANY + "{0,2147483647})";
+        }
+
+        /**
+         * Writes a case-insensitive backreference to a group G of any length, as a loop that takes one character of
+         * the text for each character of G. A group P of the translation holds the rest of the text from the place
+         * in G the loop has reached (a pointer into a place in the text where G stands), and each iteration sets it
+         * again, one character on. java.util.regex keeps what a group captured in the iteration before, and a
+         * backreference to P inside P itself reads that, as a group is set when it closes. That is what carries
+         * the pointer. (A backreference written before its group would do too, but java.util.regex reads the number
+         * of one only as far as the groups it has seen, so not past 9.)
+         *
+         * <pre>
+         * (?=(Q0 A*))                          the rest of the text where the backreference starts
+         * (?&gt;(?:
+         *     (?=(Q (X A) A*))                  the next character X, and the rest of the text from it
+         *     (?&lt;=(?=(P                         look for the place one after the pointer, and make it the pointer:
+         *        (?: first (?&lt;=(?=G (E A*)) (?!E\z) same A)    in the first iteration it is one after a place
+         *                                              where G stands: E is the rest of the text after G, G is
+         *                                              not empty, and the character before is the same as X
+         *          | (?&lt;=(?=P\z) (?!E\z) same A) not first )    later the rest of the text one before is P,
+         *                                                         and G has not ended
+         *        A*))
+         *        A{0,2147483647})
+         *     A                                 the character is taken
+         *   )*+
+         *   (?: (?=Q0\z) (?=G Q0\z)             no character was taken, and G is empty
+         *     | (?!Q0\z) (?&lt;=(?=P\z)(?=E\z) A{0,2147483647}) ) )    or the pointer is at the end of G
+         * </pre>
+         *
+         * <p>"Same" is {@code (?: (?=X) | (?=[K]) here [K] | ... )}: the character is X, or it and X are in one
+         * class K. "Here [K]" tests the character X from the place looked at, {@code (?=A*?(?=Q\z)[K])}, and "first"
+         * is the test that the iteration stands where the backreference starts, {@code (?=A*?(?=Q\z)(?=Q0\z))}. The
+         * loop is possessive and the whole is atomic. There is one way to compare two texts, and going back into it
+         * would read a P that a later iteration has set.
+         *
+         * <p>With {@code anywhere}, for a group set in a lookaround, which can stand after the backreference, each
+         * search goes through the whole text and not only back.
+         */
+        private void foldedLoop(String name, int[][] classes, boolean anywhere) {
+            String start = newName();
+            String here = newName();
+            String next = newName();
+            String pointer = newName();
+            String end = newName();
+            String toHere = ANY + "*?(?=\\k<" + here + ">\\z)";
+            // From the place looked at, to the place the iteration stands at.
+            String hereStart = anywhere ? "(?<=^(?=" + toHere : "(?=" + toHere;
+            String hereEnd = anywhere ? ")" + ANY + "{0,2147483647})" : ")";
+            String first = hereStart + "(?=\\k<" + start + ">\\z)" + hereEnd;
+            StringBuilder same = new StringBuilder("(?:(?=\\k<" + next + ">)");
+            for (int[] members : classes) {
+                StringBuilder set = new StringBuilder();
+                appendMembers(set, members);
+                same.append("|(?=").append(set).append(')').append(hereStart).append(set).append(hereEnd);
+            }
+            same.append(')');
+            String notEnded = "(?!\\k<" + end + ">\\z)";
+            // E is set only once the iteration is known to be the first, as a later one reads it.
+            // The tests of the place one before stand in a lookahead, inside a lookbehind of one character:
+            // java.util.regex does not bound a lookbehind that holds another one outside a lookahead.
+            String step = "(?=(?<" + pointer + ">(?:(?<=(?=\\k<" + name + ">)" + ANY + ")" + first + "(?<=(?=(?=\\k<"
+                    + name + ">(?<" + end + ">" + ANY + "*))" + notEnded + same + ")" + ANY + ")|(?<=(?=(?=\\k<"
+                    + pointer + ">\\z)" + notEnded + same + ")" + ANY + ")(?!" + first + "))" + ANY + "*))";
+            out.append("(?=(?<").append(start).append('>').append(ANY).append("*))(?>(?:(?=(?<").append(here)
+                    .append(">(?<").append(next).append('>').append(ANY).append(')').append(ANY).append("*))")
+                    .append(found(step, anywhere)).append(ANY).append(")*+(?:(?=");
+            refer(start);
+            out.append("\\z)(?=");
+            refer(name);
+            refer(start);
+            out.append("\\z)|(?!");
+            refer(start);
+            out.append("\\z)").append(found("(?=\\k<" + pointer + ">\\z)(?=\\k<" + end + ">\\z)", anywhere))
+                    .append("))");
         }
     }
 

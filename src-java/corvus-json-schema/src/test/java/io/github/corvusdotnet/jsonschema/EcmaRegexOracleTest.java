@@ -272,10 +272,9 @@ class EcmaRegexOracleTest {
         return s & 0xffffffffL;
     }
 
-    // The patterns the translator refuses, by reason. EcmaRegex says what each reason means.
-    private static final Map<String, Integer> EXPECTED_UNSUPPORTED_HAND = Map.of(
-            EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE, 12);
-    private static final Map<String, Integer> EXPECTED_UNSUPPORTED_FLAGGED = Map.of(
-            EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE, 20);
+    // The patterns the translator refuses, by reason. EcmaRegex says what each reason means. It refuses none of the
+    // patterns of the file.
+    private static final Map<String, Integer> EXPECTED_UNSUPPORTED_HAND = Map.of();
+    private static final Map<String, Integer> EXPECTED_UNSUPPORTED_FLAGGED = Map.of();
     private static final Map<String, Integer> EXPECTED_UNSUPPORTED_GENERATED = Map.of();
 }
