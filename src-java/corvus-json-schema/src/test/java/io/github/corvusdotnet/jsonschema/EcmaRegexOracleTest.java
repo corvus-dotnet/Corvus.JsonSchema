@@ -279,11 +279,75 @@ class EcmaRegexOracleTest {
                         + "|cbbc|ccca|cccb|cccc|ababcab|bBc|Bbc|aAaAc|aaAAc",
             },
             {"(?i:^(?:(a+)b(?<=\\1b))+$)", "|ab|aab|aaab|abab"},
+            // A lookahead that sets a group on some of its ways only, and one whose first match java.util.regex
+            // finds in another order (a repetition that can take an empty iteration).
+            {
+                "(?=(a)?b)\\1",
+                "|b|ab|ba|bb|bc|cb|aab|aba|abb|abc|acb|baa|bab|bac|bba|bbb|bbc|bca|bcb|bcc|cab"
+                        + "|cba|cbb|cbc|ccb|aaab|aaba|aabb|aabc|aacb|abaa|abab|abac|abba|abbb|abbc|abca"
+                        + "|abcb|abcc|acab|acba|acbb|acbc|accb|baaa|baab|baac|baba|babb|babc|baca|bacb"
+                        + "|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb"
+                        + "|bcbc|bcca|bccb|bccc|caab|caba|cabb|cabc|cacb|cbaa|cbab|cbac|cbba|cbbb|cbbc"
+                        + "|cbca|cbcb|cbcc|ccab|ccba|ccbb|ccbc|cccb|abcabc|aabbaa|acacab|bcbcab|abababa"
+                        + "|ababcab|axbba|abxba|bBc|Bbc",
+            },
+            {
+                "^(?=(?:b|bc)*(c)?)\\1",
+                "||a|b|c|aa|ab|ac|ba|bb|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab|aaac|aaba|aabb|aabc"
+                        + "|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb|abcc|acaa|acab|acac"
+                        + "|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc"
+                        + "|bbaa|bbab|bbac|bbba|bbbb|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa"
+                        + "|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca"
+                        + "|cccb|cccc|acaca|abcabc|aabbaa|acacab|abababa|ababcab|axbba|abxba|bBc|Bbc"
+                        + "|aAaAc|aaAAc",
+            },
+            {"^(?=((?:c??)?))\\1$", "||c"},
+            {
+                "^(?=(a)?(?:(b)|c)*?\\1)\\2",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|abb|abc|aca|acb|acc|baa|bab|bac"
+                        + "|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab|aaac"
+                        + "|aaba|aabb|aabc|aaca|aacb|aacc|abbb|abbc|abca|abcb|abcc|acaa|acab|acac|acbb"
+                        + "|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab"
+                        + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
+                        + "|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa|cbab|cbac|cbba|cbbb"
+                        + "|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|acaca|abcabc"
+                        + "|aabbaa|acacab|bcbcab|axbba|abxba|bBc|Bbc|aAaAc|aaAAc",
+            },
+            {
+                "^(?=(?:((?:a|ab)*)c)*\\1(b)?)\\2.",
+                "|a|c|aa|ab|ac|ba|bb|bc|ca|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab|bac"
+                        + "|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cca|ccc|aaaa|aaab|aaac|aaba|aabb|aabc"
+                        + "|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb|abcc|acaa|acac|acba"
+                        + "|acbb|acbc|acca|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab"
+                        + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
+                        + "|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|ccaa|ccab|ccac|ccca|cccc"
+                        + "|acaca|abcabc|aabbaa|bcbcab|abababa|ababcab|axbba|abxba|bBc|Bbc|aAaAc|aaAAc",
+            },
+            {
+                "^(?=(?:(a)|b)*?(?:c|(b))\\1)\\2a",
+                "|ba|abc|aca|baa|bab|bac|aabc|aaca|abca|abcb|abcc|acaa|acab|acac|baaa|baab|baac"
+                        + "|baba|babb|babc|baca|bacb|bacc|acaca|abcabc|acacab",
+            },
+            {
+                "^(?=(?:(?:(c)|(b[bc]))|(?:([bc])|(?:[^a]|ba)))(a)?)\\1\\2\\3\\4",
+                "|b|c|ba|bb|bc|ca|cb|cc|baa|bab|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb"
+                        + "|cbc|cca|ccb|ccc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac"
+                        + "|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc"
+                        + "|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc"
+                        + "|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|bcbcab|bBc|Bbc",
+            },
+            {
+                "a(?=((?:a|cc))*?\\1(ab|a))\\1\\2\\1",
+                "|aa|aaa|aab|aac|baa|caa|aaaa|aaab|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|acaa"
+                        + "|baaa|baab|baac|bbaa|bcaa|caaa|caab|caac|cbaa|ccaa|aabbaa|aaAAc",
+            },
+            {"^(?=(?:((?:ba?)?){0,2}|((?:.[ab]|b))??(a)(|a))((c{0,2}?)?))\\5$", "||c"},
     };
 
     private static final String[] MORE_FOUND_BY_FUZZING = {
-        "acab", "acaca", "abcabc", "aabbaa", "acacab", "bcbcab", "abababa", "ababcab", "axbba", "abxba", "bBc", "Bbc",
-        "aAaAc", "aaAAc"
+        "acaca", "abcabc", "aabbaa", "acacab", "bcbcab", "abababa", "ababcab", "axbba", "abxba", "bBc", "Bbc", "aAaAc",
+        "aaAAc"
     };
 
     /** The patterns found by fuzzing are translated, and answer as V8 does on every text. */

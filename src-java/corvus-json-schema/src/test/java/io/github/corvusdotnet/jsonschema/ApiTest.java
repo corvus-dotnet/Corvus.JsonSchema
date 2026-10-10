@@ -200,6 +200,12 @@ class ApiTest {
         Validator foldedBehind = Validator.compile("{\"pattern\": \"(?i:^(b*)(?<=\\\\1)c$)\"}");
         assertTrue(foldedBehind.isValid("\"bBc\""));
         assertFalse(foldedBehind.isValid("\"abc\""));
+        // A lookahead takes the first way its body matches, and its groups hold what that way set.
+        Validator ahead = Validator.compile("{\"pattern\": \"^(?=(?:b|bc)*(c)?)b\\\\1$\"}");
+        assertTrue(ahead.isValid("\"bc\""));
+        assertFalse(ahead.isValid("\"bb\""));
+        Validator emptyFirst = Validator.compile("{\"pattern\": \"^(?=((?:c??)?))\\\\1$\"}");
+        assertTrue(emptyFirst.isValid("\"c\""));
         Validator counted = Validator.compile("{\"pattern\": \"(?<=(?:(a|b)(?:c|b){2})+)\\\\1\"}");
         assertTrue(counted.isValid("\"abca\""));
         assertFalse(counted.isValid("\"abcb\""));

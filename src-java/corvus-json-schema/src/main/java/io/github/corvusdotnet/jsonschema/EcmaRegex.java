@@ -96,9 +96,6 @@ final class EcmaRegex {
      */
     static final String REFUSED_GROUP_IN_LOOKBEHIND =
             "a backreference to a group inside a lookbehind whose text depends on the lookbehind being matched backwards";
-    /** The group is in a lookahead that sets it on some of the ways it can match only. */
-    static final String REFUSED_GROUP_IN_LOOKAROUND =
-            "a backreference to a group that a lookahead sets on some of the ways it can match only";
     /** A backreference that the form with markers cannot serve. The pattern is then written by paths. */
     private static final String NOT_BY_MARKERS = "markers";
     /**
@@ -180,7 +177,7 @@ final class EcmaRegex {
     }
 
     /** Thrown for a valid pattern that cannot be run with the same meaning. The message is the reason. */
-    private static final class Unsupported extends IllegalArgumentException {
+    private static class Unsupported extends IllegalArgumentException {
         private static final long serialVersionUID = 1L;
 
         Unsupported(String reason) {
@@ -224,6 +221,15 @@ final class EcmaRegex {
     private static final int NOT_WORD_BOUNDARY = 12;
     private static final int LOOK = 13;
     private static final int BACKREF = 14;
+    // Nodes that are in no pattern. They are written in the test of what remains of a lookahead (see Emitter#guard).
+    /** Text of the translation, written as it is. */
+    private static final int RAW = 15;
+    /** The end of a group that is open where the test stands. */
+    private static final int CLOSE = 16;
+    /** One more iteration of a repetition whose minimum is met: its groups unset, and not the empty string. */
+    private static final int ITERATION = 17;
+    /** The end of an iteration that is open where the test stands, and that must not have matched nothing. */
+    private static final int MOVED = 18;
 
     /** The max of a quantifier with no upper bound. */
     private static final int UNBOUNDED = -1;
@@ -287,6 +293,25 @@ final class EcmaRegex {
         boolean measuring;
         /** Marks a BACKREF that reads nothing on any path to it. */
         boolean dropped;
+        /** Marks a lookahead that sets its groups on some of its ways only (see {@link Emitter#firstWay}). */
+        boolean byWays;
+        /**
+         * The text of a RAW. For a CLOSE, the group of the translation that holds the rest of the text from where
+         * the group started, or with {@link #pieces} a pattern that matches from that place only.
+         */
+        String text;
+        boolean pieces;
+        /** For a CLOSE: where the text of the group starts in the translation, and the scope it was written in. */
+        int[] from;
+        int scope;
+        /**
+         * For a CLOSE of a group that started in an iteration of a loop: the group that holds the rest of the text
+         * from where the iteration started, and backreferences to the text from there to the group. Without them
+         * ({@link #looped}), what the group holds cannot be told in a test.
+         */
+        String anchor;
+        String prefix;
+        boolean looped;
         /** The groups the node can set for what follows it, and the groups the backreferences in it read. */
         BitSet sets;
         BitSet reads;
@@ -1196,6 +1221,8 @@ final class EcmaRegex {
         /** For each group: whether a lookbehind or any lookaround encloses it, and the repetitions that enclose it. */
         private final boolean[] inLookbehind;
         private final boolean[] inLookaround;
+        /** For each group, whether a lookahead around it holds a repetition that takes empty iterations. */
+        private final boolean[] firstMatchDiffers;
         private final Node[][] repeatsAround;
         /** For each group, the number of its group in the translation, and of the group that marks it took part. */
         private final int[] javaGroup;
@@ -1216,6 +1243,7 @@ final class EcmaRegex {
             needsMarker = new boolean[n];
             inLookbehind = new boolean[n];
             inLookaround = new boolean[n];
+            firstMatchDiffers = new boolean[n];
             repeatsAround = new Node[n][];
             javaGroup = new int[n];
             javaMarker = new int[n];
@@ -1225,7 +1253,7 @@ final class EcmaRegex {
         String translate() {
             flow(root, new BitSet(), new BitSet(), false);
             try {
-                survey(root, false, false, new ArrayList<>());
+                survey(root, false, false, false, new ArrayList<>());
             } catch (Unsupported e) {
                 // A backreference the markers cannot serve. The pattern is written by paths.
                 return translateByPaths();
@@ -1378,15 +1406,16 @@ final class EcmaRegex {
          * Notes what encloses each group, then decides for each backreference whether {@code java.util.regex} gives
          * it the meaning ECMA-262 does in the form with markers, and throws when that cannot be shown.
          */
-        private void survey(Node n, boolean lookbehind, boolean lookaround, List<Node> repeats) {
+        private void survey(Node n, boolean lookbehind, boolean lookaround, boolean differs, List<Node> repeats) {
             switch (n.kind) {
                 case GROUP:
                     if (n.group != 0) {
                         inLookbehind[n.group] = lookbehind;
                         inLookaround[n.group] = lookaround;
+                        firstMatchDiffers[n.group] = differs;
                         repeatsAround[n.group] = repeats.toArray(NO_NODES);
                     }
-                    survey(n.subs[0], lookbehind, lookaround, repeats);
+                    survey(n.subs[0], lookbehind, lookaround, differs, repeats);
                     break;
                 case REPEAT:
                     // A repetition of at most once has no earlier iteration. An optional part is written with "?",
@@ -1394,21 +1423,22 @@ final class EcmaRegex {
                     // it a repetition there, with what follows from that (see decide).
                     if (n.max == UNBOUNDED || n.max > 1 || n.min == 1) {
                         repeats.add(n);
-                        survey(n.subs[0], lookbehind, lookaround, repeats);
+                        survey(n.subs[0], lookbehind, lookaround, differs, repeats);
                         repeats.remove(repeats.size() - 1);
                     } else {
-                        survey(n.subs[0], lookbehind, lookaround, repeats);
+                        survey(n.subs[0], lookbehind, lookaround, differs, repeats);
                     }
                     break;
                 case LOOK:
-                    survey(n.subs[0], lookbehind || n.behind, true, repeats);
+                    survey(n.subs[0], lookbehind || n.behind, true, differs || (!n.behind && holdsEmptyIterations(n)),
+                            repeats);
                     break;
                 case BACKREF:
                     decide(n, lookbehind, repeats);
                     break;
                 default:
                     for (Node sub : n.subs) {
-                        survey(sub, lookbehind, lookaround, repeats);
+                        survey(sub, lookbehind, lookaround, differs, repeats);
                     }
                     break;
             }
@@ -1451,6 +1481,11 @@ final class EcmaRegex {
                     throw new Unsupported(NOT_BY_MARKERS);
                 }
                 if (inLookbehind[g]) {
+                    throw new Unsupported(NOT_BY_MARKERS);
+                }
+                if (firstMatchDiffers[g]) {
+                    // The lookahead takes its first match, and java.util.regex tries the ways of a repetition in
+                    // it that can take an empty iteration in another order (see takesEmptyIterations).
                     throw new Unsupported(NOT_BY_MARKERS);
                 }
                 if (n.statuses[k] == DEFINITE) {
@@ -1601,6 +1636,10 @@ final class EcmaRegex {
                 case REPEAT:
                     min = times(minLength(n.subs[0]), n.min);
                     max = times(maxLength(n.subs[0]), n.max);
+                    break;
+                case ITERATION:
+                    min = Math.max(minLength(n.subs[0]), 1);
+                    max = Math.max(maxLength(n.subs[0]), 1);
                     break;
                 case BACKREF:
                     if (!precise || n.measuring) {
@@ -2039,6 +2078,11 @@ final class EcmaRegex {
             int[] body;
             /** Whether the path wrote nothing for the group to match, so that it holds the empty string. */
             boolean[] empty;
+            /**
+             * Inside a lookahead written by ways: how many of the iterations that are open, counted from the
+             * innermost, have matched nothing so far on the path.
+             */
+            int still;
 
             Env(int n) {
                 name = new String[n];
@@ -2055,6 +2099,7 @@ final class EcmaRegex {
                 e.mark = mark.clone();
                 e.body = body.clone();
                 e.empty = empty.clone();
+                e.still = still;
                 return e;
             }
         }
@@ -2073,8 +2118,14 @@ final class EcmaRegex {
         private final List<Integer> openBodies = new ArrayList<>();
         private List<int[]> decisions;
         private int decisionAt;
-        /** Inside a lookaround whose groups are read after it, where the first match of the body is the one taken. */
-        private boolean ordered;
+        /**
+         * Inside a lookahead whose groups are read after it, while it is written as it stands: the first match of
+         * its body is the one taken, so it can be written that way only when it has no decision.
+         */
+        private boolean strict;
+        /** The plans being written: the number of the innermost {@link #plans}, and how many there have been. */
+        private int scopeNow;
+        private int scopes;
         private boolean changed;
         private long written;
 
@@ -2269,7 +2320,14 @@ final class EcmaRegex {
             unrolledCopies = 0;
             unrolledLength = 0;
             hasLookbehind = false;
-            ordered = false;
+            strict = false;
+            scopeNow = 0;
+            scopes = 0;
+            lookLive = NOTHING;
+            iterations = 0;
+            loops = 0;
+            loop = null;
+            offsets.clear();
             openBodies.clear();
             env = new Env(groupNodes.length);
             String text = scope(root, NOTHING, null);
@@ -2352,8 +2410,8 @@ final class EcmaRegex {
 
         /** Takes a decision of the plan being written: the one the plan holds, or the first way when it is new. */
         private int choose(int ways) {
-            if (ordered) {
-                throw new Unsupported(REFUSED_GROUP_IN_LOOKAROUND);
+            if (strict) {
+                throw new NotOneWay();
             }
             if (decisionAt == decisions.size()) {
                 decisions.add(new int[] {0, ways});
@@ -2376,8 +2434,8 @@ final class EcmaRegex {
             if (plans.size() == 1) {
                 return plans.get(0);
             }
-            if (ordered) {
-                throw new Unsupported(REFUSED_GROUP_IN_LOOKAROUND);
+            if (strict) {
+                throw new NotOneWay();
             }
             choices++;
             return "(?:" + String.join("|", plans) + ")";
@@ -2388,6 +2446,8 @@ final class EcmaRegex {
             Env entry = env;
             List<int[]> outerDecisions = decisions;
             int outerAt = decisionAt;
+            int outerScope = scopeNow;
+            scopeNow = ++scopes;
             List<int[]> mine = new ArrayList<>();
             List<String> plans = new ArrayList<>();
             int start = out.length();
@@ -2432,6 +2492,7 @@ final class EcmaRegex {
             } while (more);
             decisions = outerDecisions;
             decisionAt = outerAt;
+            scopeNow = outerScope;
             env = entry;
             unrolledCopies = most;
             unrolledLength = longest;
@@ -2503,6 +2564,15 @@ final class EcmaRegex {
                 case BACKREF:
                     reference(n);
                     break;
+                case RAW:
+                    out.append(n.text);
+                    break;
+                case CLOSE:
+                    close(n);
+                    break;
+                case ITERATION:
+                    oneMore(n, live);
+                    break;
                 default:
                     node(n);
                     break;
@@ -2530,6 +2600,9 @@ final class EcmaRegex {
          */
         private void repetition(Node n, BitSet live) {
             Node body = n.subs[0];
+            if (strict && takesEmptyIterations(n)) {
+                throw new NotOneWay();
+            }
             if (!n.sets.intersects(live)) {
                 repeated(body, n.min, n.max, n.lazy);
                 return;
@@ -2568,6 +2641,30 @@ final class EcmaRegex {
             refer(taken);
             refer(rest);
             out.append("\\z)");
+        }
+
+        /**
+         * Whether a repetition can take, past its minimum, an iteration that matches the empty string of a body
+         * that can also match more. ECMA-262 does not take such an iteration and goes on to the other ways of the
+         * body, and java.util.regex takes it and leaves the repetition. Both reach the same places, in another
+         * order, which shows only where the first match is the one that counts: in a lookahead whose groups are
+         * read after it.
+         */
+        private boolean takesEmptyIterations(Node n) {
+            return n.max != n.min && minLength(n.subs[0]) == 0 && maxLength(n.subs[0]) != 0;
+        }
+
+        /** Whether some repetition in a node {@link #takesEmptyIterations}. */
+        private boolean holdsEmptyIterations(Node n) {
+            if (n.kind == REPEAT && takesEmptyIterations(n)) {
+                return true;
+            }
+            for (Node sub : n.subs) {
+                if (holdsEmptyIterations(sub)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /** Writes a repetition none of whose groups is read after it. */
@@ -2615,39 +2712,756 @@ final class EcmaRegex {
         /**
          * Writes a lookahead. One whose groups are not read after it is a scope. One whose groups are read after it
          * is written on the plan, and its groups are noted as set in a lookaround.
+         *
+         * <p>A lookahead takes the first way its body matches. With no decision in the body that is what
+         * java.util.regex does with the body as it stands (see {@link #oneWay}). With one, the body is written by
+         * ways (see {@link #firstWay}).
          */
         private void ahead(Node n, BitSet live) {
-            boolean wasOrdered = ordered;
+            boolean wasStrict = strict;
             if (n.negative || !n.sets.intersects(live)) {
-                ordered = false;
+                strict = false;
                 String text = scope(n.subs[0], NOTHING, null);
-                ordered = wasOrdered;
+                strict = wasStrict;
                 out.append(n.negative ? "(?!" : "(?=").append(text).append(')');
                 return;
             }
             Env before = env.copy();
+            if (!n.byWays) {
+                Mark mark = new Mark();
+                try {
+                    oneWay(n, live);
+                } catch (NotOneWay e) {
+                    mark.restore();
+                    n.byWays = true;
+                }
+            }
+            if (n.byWays) {
+                if (wasStrict) {
+                    // A lookahead around this one is being written as it stands, and this one has decisions.
+                    throw new NotOneWay();
+                }
+                firstWay(n, live);
+            }
+            strict = wasStrict;
+            noteLookaround(n, before);
+        }
+
+        /** Thrown where a lookahead that is being written as it stands turns out to have a decision. */
+        private static final class NotOneWay extends Unsupported {
+            private static final long serialVersionUID = 1L;
+
+            NotOneWay() {
+                super(NOT_BY_MARKERS);
+            }
+        }
+
+        /** What the writer holds where a part starts that may have to be written again another way. */
+        private final class Mark {
+            private final int length = out.length();
+            private final Env wasEnv = env.copy();
+            private final List<int[]> wasDecisions = decisions;
+            private final int wasDecisionAt = decisionAt;
+            private final int wasDecided = decisions.size();
+            private final int wasChoices = choices;
+            private final int wasCopies = unrolledCopies;
+            private final int wasCopied = unrolledLength;
+            private final int wasBodies = openBodies.size();
+            private final int wasScope = scopeNow;
+            private final boolean wasStrict = strict;
+            private final BitSet wasLookLive = lookLive;
+            private final int wasIterations = iterations;
+            private final int wasLoops = loops;
+            private final Loop wasLoop = loop;
+            private final int wasOffsets = offsets.size();
+            private final BitSet wasInside = inside;
+            private final BitSet wasInvolved = involvedInside;
+            private final Map<Integer, long[]> wasPlaces = places;
+            private final long wasAt = at;
+            private final boolean wasCaptured = captured;
+            private final boolean wasReadAfter = readAfter;
+
+            void restore() {
+                out.setLength(length);
+                env = wasEnv;
+                decisions = wasDecisions;
+                decisionAt = wasDecisionAt;
+                while (decisions.size() > wasDecided) {
+                    decisions.remove(decisions.size() - 1);
+                }
+                choices = wasChoices;
+                unrolledCopies = wasCopies;
+                unrolledLength = wasCopied;
+                while (openBodies.size() > wasBodies) {
+                    openBodies.remove(openBodies.size() - 1);
+                }
+                while (offsets.size() > wasOffsets) {
+                    offsets.remove(offsets.size() - 1);
+                }
+                scopeNow = wasScope;
+                strict = wasStrict;
+                lookLive = wasLookLive;
+                iterations = wasIterations;
+                loops = wasLoops;
+                loop = wasLoop;
+                inside = wasInside;
+                involvedInside = wasInvolved;
+                places = wasPlaces;
+                at = wasAt;
+                captured = wasCaptured;
+                readAfter = wasReadAfter;
+            }
+        }
+
+        /**
+         * Writes a lookahead whose groups are read after it with its body as it stands, which is right when the
+         * body has no decision: its first match in java.util.regex is then its first match in ECMA-262. Alternatives
+         * of the whole body are decisions of the plan, each written after a negative lookahead for each alternative
+         * before it. Throws {@link NotOneWay} at any other decision.
+         */
+        private void oneWay(Node n, BitSet live) {
             Node body = n.subs[0];
             if (body.kind == ALT) {
-                // The first alternative that matches is the one taken: a decision of the plan, written after a
-                // negative lookahead for each alternative before it. One that matches the empty string anywhere is
-                // taken before any after it.
+                // The first alternative that matches is the one taken. One that matches the empty string anywhere
+                // is taken before any after it.
                 int ways = 1;
                 while (ways < body.subs.length && !emptyAnywhere(body.subs[ways - 1])) {
                     ways++;
                 }
                 int way = ways > 1 ? choose(ways) : 0;
-                ordered = false;
+                strict = false;
                 for (int k = 0; k < way; k++) {
                     out.append("(?!").append(scope(body.subs[k], NOTHING, null)).append(')');
                 }
                 body = body.subs[way];
             }
-            ordered = true;
+            strict = true;
             out.append("(?=");
             p(body, live);
             out.append(')');
-            ordered = wasOrdered;
-            noteLookaround(n, before);
+        }
+
+        // A lookahead by ways.
+        //
+        // A lookahead takes the first way its body matches, in the order ECMA-262 tries them, and the match never
+        // goes back into it. When the ways differ in what they set of the groups read after the lookahead, the plans
+        // of the body cannot simply be alternatives: each would match where its own way matches, which need not be
+        // the first way. So in such a body every choice is a decision of the plan, and where a plan does not take
+        // the way ECMA-262 tries first, it is written after a test that the ways tried before it fail: a negative
+        // lookahead that holds each such way followed by all that remains of the lookahead (see #guard). A path that
+        // passes every test of its plan is the first match of the body, or differs from it only after the last place
+        // that sets a group read after the lookahead. So whichever plans match, they hold the same groups.
+        //
+        // The choices are these. Of alternatives, one. Of a repetition, each iteration it must run is written apart
+        // (it may match nothing). Past the minimum, an iteration or none: one more is a copy of the body, and the
+        // rest follows the same way. A repetition with no upper bound becomes a loop once every iteration that is
+        // open has moved, with a test after it that one more iteration fails (and a lazy one with a test before each
+        // iteration that stopping fails). Its body is the plans of one iteration as alternatives, which the tests in
+        // them keep apart. When its groups are read after it, the iteration that runs last is written apart.
+        //
+        // An iteration past the minimum must not match the empty string. Whether one has moved is known along the
+        // plan: a character moves, a part that matches nothing does not, and what may do either (a backreference, a
+        // repetition) is a decision. So where a test is written it is known, of each iteration that is open, whether
+        // it has moved, and the test asks of the others that the place they end at is not the place it stands at.
+        //
+        // Where nothing from a place to the end of the lookahead sets a group read after it, the rest is written as
+        // any other part of a plan. No test is needed there: the ways differ in nothing that is read.
+
+        /** The groups of the lookahead being written by ways that are read after it. */
+        private BitSet lookLive = NOTHING;
+        /** The iterations open in it that may match nothing, and the bodies of loops open in it. */
+        private int iterations;
+        private int loops;
+        /** Where the text of each group that is open in it starts in the translation. */
+        private final List<int[]> offsets = new ArrayList<>();
+
+        /** What follows a node in a lookahead written by ways, up to the end of the lookahead. */
+        private static final class Rest {
+            final Node node;
+            final Rest next;
+            /** The groups set from here to the end of the lookahead. */
+            final BitSet sets;
+
+            Rest(Node node, Rest next) {
+                this.node = node;
+                this.next = next;
+                this.sets = (BitSet) node.sets.clone();
+                if (next != null) {
+                    sets.or(next.sets);
+                }
+            }
+        }
+
+        private static Node made(int kind, Node... subs) {
+            Node n = new Node(kind);
+            n.subs = subs;
+            n.sets = new BitSet();
+            n.reads = new BitSet();
+            for (Node sub : subs) {
+                n.sets.or(sub.sets);
+                n.reads.or(sub.reads);
+            }
+            return n;
+        }
+
+        private static Node raw(String text) {
+            Node n = made(RAW);
+            n.text = text;
+            return n;
+        }
+
+        /** Writes a lookahead that captures the rest of the text in a new group, and returns the group. */
+        private String restOfText() {
+            String name = newName();
+            out.append("(?=(?<").append(name).append('>').append(ANY).append("*))");
+            return name;
+        }
+
+        /** Writes a lookahead whose groups are read after it, by ways. */
+        private void firstWay(Node n, BitSet live) {
+            BitSet wasLive = lookLive;
+            int wasIterations = iterations;
+            int wasLoops = loops;
+            Loop wasLoop = loop;
+            int wasStill = env.still;
+            lookLive = both(n.sets, live);
+            iterations = 0;
+            loops = 0;
+            loop = null;
+            env.still = 0;
+            strict = false;
+            out.append("(?=");
+            way(n.subs[0], null, live);
+            out.append(')');
+            lookLive = wasLive;
+            iterations = wasIterations;
+            loops = wasLoops;
+            loop = wasLoop;
+            env.still = wasStill;
+        }
+
+        /**
+         * Writes a node of a lookahead written by ways, on the plan being written. {@code rest} is what follows the
+         * node in the lookahead, and {@code live} holds the groups read after the node.
+         */
+        private void way(Node n, Rest rest, BitSet live) {
+            if (!n.sets.intersects(lookLive) && (rest == null || !rest.sets.intersects(lookLive))) {
+                p(n, live);
+                return;
+            }
+            switch (n.kind) {
+                case CAT: {
+                    int count = n.subs.length;
+                    BitSet[] after = new BitSet[count];
+                    Rest[] following = new Rest[count];
+                    BitSet later = live;
+                    Rest next = rest;
+                    for (int k = count - 1; k >= 0; k--) {
+                        after[k] = later;
+                        following[k] = next;
+                        if (!n.subs[k].reads.isEmpty()) {
+                            later = (BitSet) later.clone();
+                            later.or(n.subs[k].reads);
+                        }
+                        next = new Rest(n.subs[k], next);
+                    }
+                    for (int k = 0; k < count; k++) {
+                        way(n.subs[k], following[k], after[k]);
+                    }
+                    break;
+                }
+                case ALT: {
+                    int taken = choose(n.subs.length);
+                    for (int k = 0; k < taken; k++) {
+                        guard(n.subs[k], rest);
+                    }
+                    out.append("(?:");
+                    way(n.subs[taken], rest, live);
+                    out.append(')');
+                    break;
+                }
+                case GROUP:
+                    if (n.group != 0 && read.get(n.group)) {
+                        Node close = made(CLOSE);
+                        close.group = n.group;
+                        close.sets.set(n.group);
+                        boolean readLater = false;
+                        for (Rest r = rest; r != null && !readLater; r = r.next) {
+                            readLater = r.node.reads.get(n.group);
+                        }
+                        if (readLater && loop == null) {
+                            // A test in the group may have to say what the group holds.
+                            close.text = restOfText();
+                        } else if (readLater && loop.outer == null) {
+                            // In an iteration of a loop, a group set here in a lookahead is not restored when the
+                            // match goes back into the iteration. The place is told from the start of the iteration.
+                            if (loop.stamp == null) {
+                                loop.stamp = newName();
+                            }
+                            close.anchor = loop.stamp;
+                            close.prefix = pieces(loop.planStart);
+                        } else {
+                            close.looped = readLater;
+                        }
+                        String name = newName();
+                        out.append("(?<").append(name).append('>');
+                        close.from = new int[] {out.length()};
+                        close.scope = scopeNow;
+                        offsets.add(close.from);
+                        way(n.subs[0], new Rest(close, rest), live);
+                        offsets.remove(offsets.size() - 1);
+                        set(n.group, name, close.from[0]);
+                        out.append(')');
+                    } else {
+                        out.append("(?:");
+                        way(n.subs[0], rest, live);
+                        out.append(')');
+                    }
+                    break;
+                case REPEAT:
+                    repeatedWay(n, rest, live);
+                    break;
+                case LOOK:
+                    if (n.behind) {
+                        behind(n, live);
+                    } else {
+                        ahead(n, live);
+                    }
+                    break;
+                case BACKREF:
+                    referenceWay(n);
+                    break;
+                case CHAR:
+                case SET:
+                    node(n);
+                    env.still = 0;
+                    break;
+                default:
+                    node(n);
+                    break;
+            }
+        }
+
+        /**
+         * Writes a backreference in a lookahead written by ways. While an iteration is open that has matched
+         * nothing so far, whether the backreference matches something is a decision of the plan, written with a
+         * test of the group: it holds the empty string when it is all of the text up to where the rest starts.
+         */
+        private void referenceWay(Node n) {
+            int group = groupRead(n);
+            if (env.still == 0 || group == 0 || env.empty[group] || maxLength(groupNodes[group].subs[0]) == 0) {
+                reference(n);
+                return;
+            }
+            boolean moves = choose(2) == 0;
+            if (moves) {
+                reference(n);
+            }
+            used.set(group);
+            String rest = restOfText();
+            out.append(moves ? "(?!" : "(?=");
+            refer(env.name[group]);
+            refer(rest);
+            out.append("\\z)");
+            if (moves) {
+                env.still = 0;
+            }
+        }
+
+        private void countCopy() {
+            if (++unrolledCopies > MAX_UNROLLED_COPIES) {
+                throw new Unsupported(REFUSED_TOO_MANY_PATHS);
+            }
+        }
+
+        /** The repetition of the body of {@code n} with other bounds, or an empty node when it runs no times. */
+        private static Node again(Node n, int min, int max) {
+            if (max == 0) {
+                return made(EMPTY);
+            }
+            if (min == n.min && max == n.max) {
+                return n;
+            }
+            Node r = made(REPEAT, n.subs[0]);
+            r.min = min;
+            r.max = max;
+            r.lazy = n.lazy;
+            r.firstGroup = n.firstGroup;
+            r.lastGroup = n.lastGroup;
+            return r;
+        }
+
+        /** Writes a repetition in a lookahead written by ways (see the notes above {@link #lookLive}). */
+        private void repeatedWay(Node n, Rest rest, BitSet live) {
+            Node body = n.subs[0];
+            if (n.max == 0) {
+                return;
+            }
+            if (n.min > 0) {
+                // An iteration that is due. It may match nothing.
+                Node again = again(n, n.min - 1, n.max == UNBOUNDED ? UNBOUNDED : n.max - 1);
+                countCopy();
+                unset(body.sets);
+                out.append("(?:");
+                way(body, again.kind == EMPTY ? rest : new Rest(again, rest), live);
+                out.append(')');
+                way(again, rest, live);
+                return;
+            }
+            boolean unbounded = n.max == UNBOUNDED;
+            if (!unbounded || env.still > 0) {
+                // One more iteration and then the rest of them, or none. A greedy repetition tries the iteration
+                // first, and a lazy one tries to stop first.
+                Node again = unbounded ? n : again(n, 0, n.max - 1);
+                boolean runs = (choose(2) == 0) != n.lazy;
+                if (runs) {
+                    if (n.lazy) {
+                        guard(null, rest);
+                    }
+                    iteration(body, again, rest, live);
+                    way(again, rest, live);
+                } else if (!n.lazy) {
+                    guard(made(CAT, made(ITERATION, body), again), rest);
+                }
+                return;
+            }
+            // The groups of its body are read after it: the iteration that runs last is written apart.
+            boolean last = n.sets.intersects(live);
+            if (!n.lazy) {
+                if (!last || choose(2) == 0) {
+                    out.append(loopBody(body, n, rest, false)).append('*');
+                    choices++;
+                    if (last) {
+                        iteration(body, n, rest, live);
+                    }
+                }
+                guard(made(CAT, made(ITERATION, body), n), rest);
+            } else if (!last) {
+                out.append("(?:");
+                guard(null, rest, true);
+                out.append(loopBody(body, n, rest, false)).append(")*?");
+                choices++;
+            } else if (choose(2) == 1) {
+                // What follows the repetition reads the groups of the iteration before it. So the test that
+                // stopping fails stands where the repetition starts and at the end of each iteration but the last.
+                guard(null, rest);
+                out.append(loopBody(body, n, rest, true)).append("*?");
+                choices++;
+                iteration(body, n, rest, live);
+            }
+        }
+
+        /**
+         * Writes, on the plan, one iteration that is past the minimum of its repetition, which {@code again} is the
+         * rest of. It must not match the empty string.
+         */
+        private void iteration(Node body, Node again, Rest rest, BitSet live) {
+            countCopy();
+            unset(body.sets);
+            Rest after = again.kind == EMPTY ? rest : new Rest(again, rest);
+            if (minLength(body) > 0) {
+                out.append("(?:");
+                way(body, after, live);
+                out.append(')');
+            } else {
+                movingIteration(body, after, live);
+            }
+            env.still = 0;
+        }
+
+        /**
+         * Writes an iteration of a body that can match the empty string, inside a group that holds what it matched.
+         * When the plan does not show that it moved, a test follows that the group does not hold the empty string.
+         */
+        private void movingIteration(Node body, Rest after, BitSet live) {
+            Node moved = made(MOVED);
+            moved.min = ++iterations;
+            env.still++;
+            String taken = newName();
+            out.append("(?<").append(taken).append('>');
+            way(body, new Rest(moved, after), live);
+            out.append(')');
+            if (env.still > 0) {
+                String rest = restOfText();
+                out.append("(?!");
+                refer(taken);
+                refer(rest);
+                out.append("\\z)");
+            }
+            iterations--;
+        }
+
+        /** A loop that is open in a lookahead written by ways. */
+        private static final class Loop {
+            Loop outer;
+            /** Where the plan of the iteration being written starts in the translation, and its scope. */
+            int planStart;
+            int scope;
+            /** The group that holds the rest of the text from where the iteration started, once one is asked for. */
+            String stamp;
+        }
+
+        private Loop loop;
+
+        /**
+         * The body of a loop in a lookahead written by ways: the plans of one iteration, as alternatives. Every
+         * iteration that was open where the loop starts has moved, so the tests in the body are the same in each
+         * iteration. With {@code stops}, each iteration ends with the test that stopping after it fails.
+         *
+         * <p>A test in the body may need the place the iteration started at (see {@link #guard}). A group set in a
+         * lookahead at that place would not do: java.util.regex does not restore it when the match goes back from
+         * the next iteration into this one. So the group S that holds the rest of the text from that place is set
+         * again on the way back. The body stands in a group I, which holds the text of the iteration before while an
+         * iteration starts, and starts with
+         *
+         * <pre>(?:|(F)) (?=(R A*)) (?&lt;=(?=(?=(?:(?!F)|(?=F)I)R\z)(S A*))A{0,2147483647}) (?!F)</pre>
+         *
+         * <p>Going forward, F is not set and S is set where the iteration starts. When the match comes back to the
+         * start of the iteration, the second branch sets F, S is set one iteration back (the place from which I and
+         * then the rest of the text from here follow), and the last test fails, so the match goes on back with S as
+         * it was in the iteration before. F is only ever set on the way to that failing test. This holds for a loop
+         * that is entered once on a path, so not for a loop inside another loop of the lookahead.
+         */
+        private String loopBody(Node body, Node again, Rest rest, boolean stops) {
+            openBodies.add(++bodySerial);
+            loops++;
+            Loop mine = new Loop();
+            mine.outer = loop;
+            loop = mine;
+            Rest after = new Rest(again, rest);
+            List<String> plans = plans(() -> {
+                mine.planStart = out.length();
+                mine.scope = scopeNow;
+                if (minLength(body) > 0) {
+                    way(body, after, NOTHING);
+                } else {
+                    movingIteration(body, after, NOTHING);
+                }
+                if (stops) {
+                    guard(null, rest, true);
+                }
+            }, body.sets);
+            loop = mine.outer;
+            loops--;
+            openBodies.remove(openBodies.size() - 1);
+            String text = "(?:" + String.join("|", plans) + ")";
+            if (mine.stamp == null) {
+                return text;
+            }
+            String iteration = mine.stamp + "i";
+            String flag = "\\k<" + mine.stamp + "f>";
+            String here = newName();
+            hasLookbehind = true;
+            return "(?:(?<" + iteration + ">(?:|(?<" + mine.stamp + "f>))(?=(?<" + here + ">" + ANY + "*))(?<=(?=(?=(?:(?!"
+                    + flag + ")|(?=" + flag + ")\\k<" + iteration + ">)\\k<" + here + ">\\z)(?<" + mine.stamp + ">" + ANY
+                    + "*))" + ANY + "{0,2147483647})(?!" + flag + ")" + text + "))";
+        }
+
+        /**
+         * Writes the test that a way the plan does not take fails: a negative lookahead that holds {@code first}
+         * (when not null) and then all that remains of the lookahead. It is a scope: only whether it matches counts.
+         *
+         * <p>Of what remains, the end of an iteration that has not moved becomes a test that the place is not the
+         * one the lookahead of the test stands at. The end of a group that is open, when something after it reads
+         * the group, sets a group of the translation to the text from where the group started (see {@link #close}).
+         */
+        private void guard(Node first, Rest rest) {
+            guard(first, rest, false);
+        }
+
+        /** As {@link #guard(Node, Rest)}, for a test that stands in a loop when {@code inLoop}. */
+        private void guard(Node first, Rest rest, boolean inLoop) {
+            List<Node> items = new ArrayList<>();
+            String here = null;
+            if (first != null) {
+                items.add(first);
+            }
+            for (Rest r = rest; r != null; r = r.next) {
+                Node item = r.node;
+                if (item.kind == MOVED) {
+                    if (item.min > iterations - env.still) {
+                        here = here != null ? here : newName();
+                        items.add(raw("(?!\\k<" + here + ">\\z)"));
+                    }
+                } else if (item.kind != CLOSE) {
+                    items.add(item);
+                } else if (item.text != null || item.anchor != null || item.looped) {
+                    if (item.scope == scopeNow && !inLoop) {
+                        // The text the group has matched so far, in groups of the plan, and then the rest of the text
+                        // from here: together they match only from where the group started.
+                        here = here != null ? here : newName();
+                        Node close = made(CLOSE);
+                        close.group = item.group;
+                        close.sets.set(item.group);
+                        close.pieces = true;
+                        close.text = pieces(item.from[0]) + "\\k<" + here + ">\\z";
+                        items.add(close);
+                    } else if (!item.looped) {
+                        items.add(item);
+                    } else {
+                        // The group started in an iteration of a loop that is inside another loop of the lookahead,
+                        // and the test is in a loop inside the group. The place the group started at is not known
+                        // here: java.util.regex does not restore a group set in a lookahead when the match goes
+                        // back into the iteration.
+                        throw new Unsupported(REFUSED_LOOKAROUND_IN_REPETITION);
+                    }
+                }
+            }
+            Node all = made(CAT, items.toArray(NO_NODES));
+            boolean wasStrict = strict;
+            strict = false;
+            out.append("(?!");
+            if (here != null) {
+                out.append("(?=(?<").append(here).append('>').append(ANY).append("*))");
+            }
+            out.append(scope(all, NOTHING, null)).append(')');
+            strict = wasStrict;
+        }
+
+        /**
+         * Writes the end of a group that was open where a test of what remains was written: a group of the
+         * translation is set to the text from where the group started to here, by a lookbehind that reaches back to
+         * that place, which is known by the rest of the text from it.
+         */
+        private void close(Node n) {
+            String name = newName();
+            hasLookbehind = true;
+            String here = restOfText();
+            out.append("(?<=(?=(?=");
+            if (n.pieces) {
+                out.append(n.text).append(")(?<").append(name).append('>').append(ANY).append("*?)");
+            } else if (n.anchor != null) {
+                refer(n.anchor);
+                out.append("\\z)").append(n.prefix).append("(?<").append(name).append('>').append(ANY).append("*?)");
+            } else {
+                refer(n.text);
+                out.append("\\z)(?<").append(name).append('>').append(ANY).append("*?)");
+            }
+            refer(here);
+            out.append("\\z)").append(ANY).append("{0,2147483647})");
+            env.name[n.group] = name;
+            env.look[n.group] = false;
+            env.empty[n.group] = false;
+            env.body[n.group] = openBodies.isEmpty() ? 0 : openBodies.get(openBodies.size() - 1);
+        }
+
+        /** Writes one more iteration of a repetition whose minimum is met, in a test of what remains. */
+        private void oneMore(Node n, BitSet live) {
+            Node body = n.subs[0];
+            unset(body.sets);
+            if (minLength(body) > 0) {
+                out.append("(?:");
+                p(body, live);
+                out.append(')');
+                return;
+            }
+            String taken = newName();
+            out.append("(?<").append(taken).append('>');
+            p(body, live);
+            out.append(')');
+            String rest = restOfText();
+            out.append("(?!");
+            refer(taken);
+            refer(rest);
+            out.append("\\z)");
+        }
+
+        /**
+         * Puts the text written from {@code from} on into groups, and returns backreferences to them in order, which
+         * match the text it has matched. The text is cut where a parenthesis stands that is not closed, or was not
+         * opened, in it, and each stretch between is one group.
+         */
+        private String pieces(int from) {
+            int to = out.length();
+            List<Integer> open = new ArrayList<>();
+            List<int[]> cuts = new ArrayList<>();
+            for (int i = from; i < to;) {
+                char c = out.charAt(i);
+                if (c == '\\') {
+                    i += 2;
+                } else if (c == '[') {
+                    i = classEnd(i);
+                } else {
+                    if (c == '(') {
+                        open.add(i);
+                    } else if (c == ')') {
+                        if (open.isEmpty()) {
+                            cuts.add(new int[] {i, i + 1});
+                        } else {
+                            open.remove(open.size() - 1);
+                        }
+                    }
+                    i++;
+                }
+            }
+            for (int at : open) {
+                cuts.add(new int[] {at, at + header(at)});
+            }
+            cuts.add(new int[] {to, to});
+            List<int[]> runs = new ArrayList<>();
+            int start = from;
+            for (int[] cut : cuts) {
+                if (cut[0] > start) {
+                    runs.add(new int[] {start, cut[0]});
+                }
+                start = cut[1];
+            }
+            String[] names = new String[runs.size()];
+            StringBuilder text = new StringBuilder();
+            for (int k = 0; k < names.length; k++) {
+                names[k] = newName();
+                text.append("\\k<").append(names[k]).append('>');
+            }
+            for (int k = names.length - 1; k >= 0; k--) {
+                int[] run = runs.get(k);
+                if ("*+?{|".indexOf(out.charAt(run[0])) >= 0) {
+                    throw new IllegalStateException("a stretch of a translation that is not a term");
+                }
+                insert(run[1], ")");
+                insert(run[0], "(?<" + names[k] + ">");
+            }
+            return text.toString();
+        }
+
+        /** The place after the class that starts at {@code i} in the translation. */
+        private int classEnd(int i) {
+            int depth = 0;
+            do {
+                char c = out.charAt(i);
+                if (c == '\\') {
+                    i++;
+                } else if (c == '[') {
+                    depth++;
+                } else if (c == ']') {
+                    depth--;
+                }
+                i++;
+            } while (depth > 0);
+            return i;
+        }
+
+        /** The length of what opens the group at {@code at} in the translation. */
+        private int header(int at) {
+            if (out.charAt(at + 1) != '?') {
+                return 1;
+            }
+            if (out.charAt(at + 2) == ':') {
+                return 3;
+            }
+            if (out.charAt(at + 2) != '<' || out.charAt(at + 3) == '=' || out.charAt(at + 3) == '!') {
+                throw new IllegalStateException("a group of a translation that is not one to cut at");
+            }
+            return out.indexOf(">", at) + 1 - at;
+        }
+
+        /** Inserts text in the translation, and moves the places noted after it. */
+        private void insert(int at, String text) {
+            out.insert(at, text);
+            for (int[] offset : offsets) {
+                if (offset[0] > at) {
+                    offset[0] += text.length();
+                }
+            }
         }
 
         /**
@@ -2683,10 +3497,10 @@ final class EcmaRegex {
             involved.or(outside);
             hasLookbehind = true;
             if (involved.isEmpty()) {
-                boolean wasOrdered = ordered;
-                ordered = false;
+                boolean wasStrict = strict;
+                strict = false;
                 String text = scope(body, NOTHING, null);
-                ordered = wasOrdered;
+                strict = wasStrict;
                 wrapBehind(n.negative, text, body.reads.isEmpty() && maxLength(body) <= MAX_DIRECT_LOOKBEHIND);
                 return;
             }
@@ -2868,10 +3682,10 @@ final class EcmaRegex {
          */
         private void writeRigid(Node n, BitSet live) {
             if (uninvolved(n)) {
-                boolean wasOrdered = ordered;
-                ordered = false;
+                boolean wasStrict = strict;
+                strict = false;
                 out.append("(?:").append(scope(n, NOTHING, null)).append(')');
-                ordered = wasOrdered;
+                strict = wasStrict;
                 at += minLength(n);
                 return;
             }
@@ -2992,10 +3806,10 @@ final class EcmaRegex {
                 return;
             }
             if (uninvolved(n) && !captured) {
-                boolean wasOrdered = ordered;
-                ordered = false;
+                boolean wasStrict = strict;
+                strict = false;
                 out.append("(?:").append(scope(n, NOTHING, null)).append(')');
-                ordered = wasOrdered;
+                strict = wasStrict;
                 return;
             }
             String refused = readAfter ? REFUSED_GROUP_IN_LOOKBEHIND : REFUSED_BACKREFERENCE_IN_LOOKBEHIND;
@@ -3047,10 +3861,10 @@ final class EcmaRegex {
                             if (captured || !uninvolved(n.subs[k])) {
                                 throw new Unsupported(refused);
                             }
-                            boolean wasOrdered = ordered;
-                            ordered = false;
+                            boolean wasStrict = strict;
+                            strict = false;
                             out.append("(?:").append(scope(n.subs[k], NOTHING, null)).append(')');
-                            ordered = wasOrdered;
+                            strict = wasStrict;
                         }
                     }
                     places = new HashMap<>();
@@ -3137,15 +3951,7 @@ final class EcmaRegex {
          * between them where the match can take another way. Such a backreference is refused.
          */
         private void reference(Node n) {
-            int group = 0;
-            for (int g : n.groups) {
-                if (env.name[g] != null) {
-                    if (group != 0) {
-                        throw new IllegalStateException("two groups of one name on a path");
-                    }
-                    group = g;
-                }
-            }
+            int group = groupRead(n);
             if (group == 0 || env.empty[group]) {
                 return;
             }
@@ -3158,6 +3964,20 @@ final class EcmaRegex {
             } else {
                 refer(env.name[group]);
             }
+        }
+
+        /** The group, of those a backreference names, that the path has set, or 0. */
+        private int groupRead(Node n) {
+            int group = 0;
+            for (int g : n.groups) {
+                if (env.name[g] != null) {
+                    if (group != 0) {
+                        throw new IllegalStateException("two groups of one name on a path");
+                    }
+                    group = g;
+                }
+            }
+            return group;
         }
 
         private static void appendMembers(StringBuilder sb, int[] members) {

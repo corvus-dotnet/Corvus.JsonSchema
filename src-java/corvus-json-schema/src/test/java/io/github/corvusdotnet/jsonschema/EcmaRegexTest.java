@@ -593,6 +593,213 @@ class EcmaRegexTest {
         assertAnswers(BACKREFERENCES_AND_LOOKBEHINDS, textsOver(4, new String[] {"a", "b", "x"}, MORE_FOR_LOOKBEHINDS));
     }
 
+    /**
+     * Lookaheads whose groups are read after them, and that set them on some of the ways they can match only. A
+     * lookahead takes the first way its body matches, in the order ECMA-262 tries them.
+     */
+    private static final String[][] LOOKAHEADS_BY_WAYS = {
+            {
+                "(?=(a)?b)\\1",
+                "|b|ab|ba|bb|bc|cb|aab|aba|abb|abc|acb|baa|bab|bac|bba|bbb|bbc|bca|bcb|bcc|cab"
+                        + "|cba|cbb|cbc|ccb|aaab|aaba|aabb|aabc|aacb|abaa|abab|abac|abba|abbb|abbc|abca"
+                        + "|abcb|abcc|acab|acba|acbb|acbc|accb|baaa|baab|baac|baba|babb|babc|baca|bacb"
+                        + "|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb"
+                        + "|bcbc|bcca|bccb|bccc|caab|caba|cabb|cabc|cacb|cbaa|cbab|cbac|cbba|cbbb|cbbc"
+                        + "|cbca|cbcb|cbcc|ccab|ccba|ccbb|ccbc|cccb|abcabc|aabbaa|acacab|bcbcab|abababa"
+                        + "|ababcab|axbba|abxba",
+            },
+            {
+                "(?=(?:(a)|b)c)\\1",
+                "|ac|bc|aac|abc|aca|acb|acc|bac|bbc|bca|bcb|bcc|cac|cbc|aaac|aabc|aaca|aacb"
+                        + "|aacc|abac|abbc|abca|abcb|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc"
+                        + "|baac|babc|baca|bacb|bacc|bbac|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb"
+                        + "|bcbc|bcca|bccb|bccc|caac|cabc|caca|cacb|cacc|cbac|cbbc|cbca|cbcb|cbcc|ccac"
+                        + "|ccbc|acaca|abcabc|acacab|bcbcab|ababcab",
+            },
+            {"^(?=[bc]*(c)?)b\\1$", "|b"},
+            {
+                "^(?=(?:b|bc)*(c)?)\\1",
+                "||a|b|c|aa|ab|ac|ba|bb|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab|aaac|aaba|aabb|aabc"
+                        + "|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb|abcc|acaa|acab|acac"
+                        + "|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc"
+                        + "|bbaa|bbab|bbac|bbba|bbbb|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa"
+                        + "|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca"
+                        + "|cccb|cccc|acaca|abcabc|aabbaa|acacab|abababa|ababcab|axbba|abxba",
+            },
+            {
+                "^(?=(a)*?b?)\\1",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab"
+                        + "|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb"
+                        + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb"
+                        + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
+                        + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
+                        + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
+                        + "|ccbc|ccca|cccb|cccc|acaca|abcabc|aabbaa|acacab|bcbcab|abababa|ababcab|axbba"
+                        + "|abxba",
+            },
+            {
+                "^(?=(a*)*?(b)?)\\2\\1",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab"
+                        + "|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb"
+                        + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb"
+                        + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
+                        + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
+                        + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
+                        + "|ccbc|ccca|cccb|cccc|acaca|abcabc|aabbaa|acacab|bcbcab|abababa|ababcab|axbba"
+                        + "|abxba",
+            },
+            {"^(?=((?:c??)?))\\1$", "||c"},
+            {"^(?=((?:|c)*))\\1$", "||c|cc|ccc|cccc"},
+            {
+                "^(?=(a)?(?:(b)|c)*?\\1)\\2",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|abb|abc|aca|acb|acc|baa|bab|bac"
+                        + "|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab|aaac"
+                        + "|aaba|aabb|aabc|aaca|aacb|aacc|abbb|abbc|abca|abcb|abcc|acaa|acab|acac|acbb"
+                        + "|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab"
+                        + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
+                        + "|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa|cbab|cbac|cbba|cbbb"
+                        + "|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|acaca|abcabc"
+                        + "|aabbaa|acacab|bcbcab|axbba|abxba",
+            },
+            {"^(?=(?:(a)|(b))+?c?)\\1\\2$", "|a|b"},
+            {
+                "^(?=((?:a|ab)*)c?\\1(b)?)\\2",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cc|aaa|aac|aba|abb|abc|aca|acb|acc|baa|bab|bac"
+                        + "|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cca|ccb|ccc|aaaa|aaab|aaac|aaca|aacb|aacc"
+                        + "|abaa|abab|abac|abba|abbb|abbc|abca|abcb|abcc|acaa|acac|acba|acbb|acbc|acca"
+                        + "|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba"
+                        + "|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa"
+                        + "|caab|caac|caba|cabb|cabc|caca|cacb|cacc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca"
+                        + "|cccb|cccc|acaca|abcabc|acacab|bcbcab|abababa|ababcab|axbba|abxba",
+            },
+            {
+                "^(?=(?:((?:a|ab)*)c)*\\1(b)?)\\2.",
+                "|a|c|aa|ab|ac|ba|bb|bc|ca|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab|bac"
+                        + "|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cca|ccc|aaaa|aaab|aaac|aaba|aabb|aabc"
+                        + "|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb|abcc|acaa|acac|acba"
+                        + "|acbb|acbc|acca|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab"
+                        + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
+                        + "|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|ccaa|ccab|ccac|ccca|cccc"
+                        + "|acaca|abcabc|aabbaa|bcbcab|abababa|ababcab|axbba|abxba",
+            },
+            {
+                "^(?=(?:a(b)?)*c)a\\1",
+                "|ac|aac|abc|aca|acb|acc|aaac|aaca|aacb|aacc|abac|abca|abcb|abcc|acaa|acab|acac"
+                        + "|acba|acbb|acbc|acca|accb|accc|acaca|abcabc|acacab|ababcab",
+            },
+            {
+                "^(?=(?:(a)|b){1,2}c?)\\1",
+                "|a|b|aa|ab|ac|bb|bc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|bba|bbb|bbc|bca|bcb"
+                        + "|bcc|aaaa|aaab|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb"
+                        + "|abbc|abca|abcb|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|bbaa|bbab"
+                        + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
+                        + "|bccc|acaca|abcabc|aabbaa|acacab|bcbcab|abababa|ababcab|axbba|abxba",
+            },
+            {
+                "^(?=(?=(a)?)(b)?a)\\1\\2",
+                "|a|aa|ab|ac|ba|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab|bac|aaaa|aaab|aaac"
+                        + "|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb|abcc"
+                        + "|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc"
+                        + "|baca|bacb|bacc|acaca|abcabc|aabbaa|acacab|abababa|ababcab|axbba|abxba",
+            },
+            {
+                "(?=(a|ab)(?:c|(b)c))\\1\\2",
+                "|ac|aac|abc|aca|acb|acc|bac|cac|aaac|aabc|aaca|aacb|aacc|abac|abbc|abca|abcb"
+                        + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baac|babc|baca|bacb|bacc"
+                        + "|bbac|bcac|caac|cabc|caca|cacb|cacc|cbac|ccac|acaca|abcabc|acacab|ababcab",
+            },
+            {
+                "^(?=(a)??(?:b|a))\\1",
+                "|a|b|aa|ab|ac|ba|bb|bc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab|bac|bba|bbb"
+                        + "|bbc|bca|bcb|bcc|aaaa|aaab|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac"
+                        + "|abba|abbb|abbc|abca|abcb|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc"
+                        + "|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc"
+                        + "|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|acaca|abcabc"
+                        + "|aabbaa|acacab|bcbcab|abababa|ababcab|axbba|abxba",
+            },
+            {
+                "^(?=(?:(a)|(ab))(?:c|bc))\\1\\2",
+                "|ac|abc|aca|acb|acc|abbc|abca|abcb|abcc|acaa|acab|acac|acba|acbb|acbc|acca"
+                        + "|accb|accc|acaca|abcabc|acacab",
+            },
+            {
+                "^(?=(?:((?:a|ab)*)\\1c)*)\\1",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab"
+                        + "|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb"
+                        + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb"
+                        + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
+                        + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caba|cabb|cabc|caca|cacb|cacc"
+                        + "|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc"
+                        + "|ccca|cccb|cccc|acaca|abcabc|aabbaa|acacab|bcbcab|abababa|ababcab|axbba|abxba",
+            },
+            {
+                "^(?=(?:(a)|b)*?(?:c|(b))\\1)\\2a",
+                "|ba|abc|aca|baa|bab|bac|aabc|aaca|abca|abcb|abcc|acaa|acab|acac|baaa|baab|baac"
+                        + "|baba|babb|babc|baca|bacb|bacc|acaca|abcabc|acacab",
+            },
+            {
+                "^(?=(a)?(?:\\1b)*(c)?)\\2",
+                "||a|b|c|aa|ab|ba|bb|ca|cb|cc|aaa|aab|aac|aba|abb|abc|baa|bab|bac|bba|bbb|caa"
+                        + "|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab|aaac|aaba|aabb|aaca|aacb|aacc|abaa"
+                        + "|abab|abac|abba|abbb|abbc|abca|abcb|abcc|baaa|baab|baac|baba|babb|babc|baca"
+                        + "|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
+                        + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
+                        + "|ccbc|ccca|cccb|cccc|abcabc|aabbaa|abababa|ababcab|axbba|abxba",
+            },
+            {
+                "^(?=(?:(a+)|b)(?:\\1|c)*?(b)?c)\\2",
+                "|ac|bc|aac|aca|acb|acc|bbc|bca|bcb|bcc|aaac|aaca|aacb|aacc|acaa|acab|acac|acba"
+                        + "|acbb|acbc|acca|accb|accc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca"
+                        + "|bccb|bccc|acaca|acacab|bcbcab",
+            },
+            {
+                "(?=((?:.|.b))??(?:(a)|a)(?:\\1)*)\\1.",
+                "|a|aa|ab|ac|ba|ca|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab|bac|bba|bca|caa"
+                        + "|cab|cac|cba|cca|aaaa|aaab|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac"
+                        + "|abba|abbb|abbc|abca|abcb|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc"
+                        + "|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbca|bcaa"
+                        + "|bcab|bcac|bcba|bcca|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa|cbab"
+                        + "|cbac|cbba|cbca|ccaa|ccab|ccac|ccba|ccca|acaca|abcabc|aabbaa|acacab|bcbcab"
+                        + "|abababa|ababcab|axbba|abxba",
+            },
+            {
+                "^(?=(?:((?:bb|a))|[ab])\\1[bc])\\1\\1.",
+                "|ab|ac|bb|bc|aab|aac|aba|abb|abc|aca|acb|acc|bba|bbb|bbc|bca|bcb|bcc|aaba|aabb"
+                        + "|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb|abcc|acaa|acab"
+                        + "|acac|acba|acbb|acbc|acca|accb|accc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb"
+                        + "|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|acaca|abcabc|aabbaa|acacab"
+                        + "|bcbcab|abababa|ababcab|abxba",
+            },
+            {
+                "a(?=((?:a|cc))*?\\1(ab|a))\\1\\2\\1",
+                "|aa|aaa|aab|aac|baa|caa|aaaa|aaab|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|acaa"
+                        + "|baaa|baab|baac|bbaa|bcaa|caaa|caab|caac|cbaa|ccaa|aabbaa",
+            },
+            {"^(?=(a*?)\\1(?:(a?)|c?))\\1\\1$\\2$", "|"},
+            {
+                "^(?=(?:(?:(c)|(b[bc]))|(?:([bc])|(?:[^a]|ba)))(a)?)\\1\\2\\3\\4",
+                "|b|c|ba|bb|bc|ca|cb|cc|baa|bab|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb"
+                        + "|cbc|cca|ccb|ccc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac"
+                        + "|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc"
+                        + "|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc"
+                        + "|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|bcbcab",
+            },
+    };
+
+    private static final String[] MORE_FOR_LOOKAHEADS = {
+        "acaca", "abcabc", "aabbaa", "acacab", "bcbcab", "abababa", "ababcab", "axbba", "abxba"
+    };
+
+    /** A group that a lookahead sets on some of its ways only holds what the first way that matches gave it. */
+    @Test
+    void aLookaheadTakesTheFirstWayItsBodyMatches() {
+        assertAnswers(LOOKAHEADS_BY_WAYS, textsOver(4, new String[] {"a", "b", "c"}, MORE_FOR_LOOKAHEADS));
+    }
+
     /** Backreferences inside a case-insensitive group, in patterns that are valid with the u flag. */
     private static final String[][] CASE_INSENSITIVE_BACKREFERENCES = {
             {
@@ -771,9 +978,10 @@ class EcmaRegexTest {
             {"(?<=(x*?)a*)\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
             {"(?<=(a)+b*)x\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
             {"(?<=\\1a*(b))x", EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND},
-            // The lookahead takes the first way its body matches, and only some of the ways set the group.
-            {"(?=(a)?b)\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKAROUND},
-            {"(?=(?:(a)|b)c)\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKAROUND},
+            // In a lookahead: a group of an iteration of a loop that is inside another loop, read later in the
+            // lookahead, with a loop inside the group in which a choice is made. Where the group started is not
+            // known at the choice: java.util.regex does not restore a group set in a lookahead.
+            {"^(?=(?:(?:((?:a|ab)*)\\1c)*b)*)\\1", EcmaRegex.REFUSED_LOOKAROUND_IN_REPETITION},
             // java.util.regex does not restore the group of a lookahead when the match goes back into the
             // iteration, to between the lookahead and the backreference.
             {"^(?:(?=([ab]))[ab](?:c|ca)\\1)*$", EcmaRegex.REFUSED_LOOKAROUND_IN_REPETITION},
