@@ -1,0 +1,29 @@
+; The tests of the public interface: api_test.go and example_test.go of the Go module. The concurrency test of
+; api_test.go is here twice. With threads it is in api_test.ml, which builds on every OCaml. With domains, which run in
+; parallel and need OCaml 5, it is concurrent_domains_test.ml.
+
+(tests
+ (names api_test example_test)
+ (modules api_test example_test)
+ (libraries
+  corvus-json-schema
+  corvus_json_schema_test_support
+  corvus_json_schema_test_helpers
+  threads.posix))
+
+; A test stanza that is not enabled is still built by this version of the dune language, so the executable and the
+; rule that runs it are each enabled on OCaml 5 only.
+
+(executable
+ (name concurrent_domains_test)
+ (modules concurrent_domains_test)
+ (enabled_if
+  (>= %{ocaml_version} 5.0))
+ (libraries corvus-json-schema corvus_json_schema_test_support))
+
+(rule
+ (alias runtest)
+ (enabled_if
+  (>= %{ocaml_version} 5.0))
+ (action
+  (run %{exe:concurrent_domains_test.exe})))

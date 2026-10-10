@@ -1,0 +1,9 @@
+; The tests of results collection and of annotations: ports of results_test.go and annotations_test.go of the Go
+; module. Each is a plain executable that prints its counts and exits with a non-zero status when a check fails.
+
+(tests
+ (names results_test annotations_test)
+ (libraries
+  corvus-json-schema
+  corvus_json_schema_test_support
+  corvus_json_schema_test_helpers))
