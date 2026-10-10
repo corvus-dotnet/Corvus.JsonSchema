@@ -1,0 +1,35 @@
+; The tests of the ECMA-262 regular expression engine: ecmaregex_test.go, oracle_test.go and suite_test.go of the Go
+; module, as TestEcmaRegex.pas of the Object Pascal port has them. v8_oracle.json is the oracle of the Go package
+; (testdata/v8_oracle.json there, which testdata/gen_oracle.js writes).
+
+(test
+ (name test_ecmaregex)
+ (modules test_ecmaregex json)
+ (deps v8_oracle.json)
+ (libraries
+  corvus-json-schema.ecmaregex
+  corvus-json-schema.ucd
+  threads.posix))
+
+; One compiled pattern matched from several domains at once. Domains need OCaml 5, so the source of the test is
+; domains_5.ml there and a line that says so on OCaml 4.
+
+(rule
+ (enabled_if
+  (>= %{ocaml_version} 5.0))
+ (action
+  (copy domains_5.ml test_domains.ml)))
+
+(rule
+ (enabled_if
+  (< %{ocaml_version} 5.0))
+ (action
+  (with-stdout-to
+   test_domains.ml
+   (echo
+    "let () = print_endline \"ecmaregex domains: SKIPPED, domains need OCaml 5\"\n"))))
+
+(test
+ (name test_domains)
+ (modules test_domains)
+ (libraries corvus-json-schema.ecmaregex))

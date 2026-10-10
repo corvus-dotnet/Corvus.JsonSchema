@@ -137,3 +137,30 @@ val regular : t -> bool
 val compile_backtrack : string -> (t, string) result
 (** {!compile} without the automaton, so that every text runs on the backtracking matcher. The tests use it to compare
     the back ends. *)
+
+(** What the tests read of the inside of the engine. It is not for any other use. *)
+module Internal : sig
+  val automaton : t -> string -> bool option
+  (** [automaton re text] is the answer of the automaton of the pattern alone. It is [None] when the pattern has no
+      automaton, and when the text is not ASCII, which the automaton does not decide. *)
+
+  val canonicalize : int -> bool -> int
+  (** [canonicalize r unicode_mode] is the Canonicalize function of ECMA-262 for case-insensitive matching, for the u
+      flag grammar or for the Annex B grammar. *)
+
+  val fold_classes : bool -> int array * int array array
+  (** [fold_classes unicode_mode] is the table behind case-insensitive matching for the grammar: the characters that are
+      equivalent to some other character, in ascending order, and for each the members of its equivalence class. *)
+
+  val property_resolves : string -> bool
+  (** [property_resolves expr] reports whether the expression between the braces of [\p{...}] names a property. *)
+
+  val property_pairs : string -> int array option
+  (** [property_pairs expr] returns the ranges of a property expression as inclusive pairs. *)
+
+  val binary_names : string array
+  (** Every name and alias of a binary property that a property expression can use. *)
+
+  val category_names : string array
+  (** Every name and alias of a General_Category value that a property expression can use. *)
+end
