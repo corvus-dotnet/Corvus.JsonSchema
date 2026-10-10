@@ -9,7 +9,7 @@ Patterns are parsed with the ``u`` flag's grammar first; one that only parses wi
 such as ``\\-``, literal braces) is translated by the lenient grammar instead, as JavaScript's ``RegExp`` would be
 constructed without the flag.
 
-Two things have a meaning in ECMA-262 that neither engine has, and are written out for them. All of it is done
+Three things have a meaning in ECMA-262 that neither engine has, and are written out for them. All of it is done
 once, when a schema is compiled. For a pattern with no backreference and no modifier group, nothing is added to a
 match.
 
@@ -33,6 +33,14 @@ and its group are in the pattern.
 - Anything else. The pattern goes to ``regex``, where two groups may share a name. An empty group of the same name
   at the start of the pattern, and at the start of each iteration of a repetition the group is inside, gives the
   group the empty value, which reads as no value does in ECMA-262.
+
+**An iteration that matches nothing.** ECMA-262 refuses one once the minimum count is met. Both engines accept it,
+which shows when a group that the iteration set, or reset, is read afterwards. A repetition whose body can only
+match nothing is written as its body once, or as nothing for a minimum of 0, which is what ECMA-262 makes of it.
+A repetition that holds a group that is reset is written as its minimum count and then a rest where every
+iteration has to take a character: ``(?=(?P<e1>(?s:.)*))`` before the body takes the rest of the text, and
+``(?!(?P=e1))`` after it fails where the rest of the text is still the same. ``_Writer`` says what else such a
+pattern needs for the ``regex`` package.
 """
 
 from __future__ import annotations
@@ -43,16 +51,25 @@ from bisect import bisect_left
 from collections.abc import Callable
 from typing import Any
 
+from .options import SchemaCompilationError
+
 # ECMA-262 WhiteSpace and LineTerminator (what \s matches).
 _SPACE = "\\t\\n\\x0b\\x0c\\r \\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff"
 _DOT = "[^\\n\\r\\u2028\\u2029]"
 _ANY = "(?s:.)"
+# What an empty class is: nothing matches it. (The regex package reads [^\s\S] as any character.)
+_NEVER = "(?!)"
 # ^ and $ inside a group with the m modifier: at the start or the end of the text or next to a line terminator.
 _LINE_START = "(?<![^\\n\\r\\u2028\\u2029])"
 _LINE_END = "(?![^\\n\\r\\u2028\\u2029])"
 _SYNTAX = set("^$\\.*+?()[]{}|/")
 _QUANTIFIER_RE = re.compile(r"\{(\d+)(,(\d*))?\}")
 _PROPERTY_RE = re.compile(r"[A-Za-z0-9_]+(=[A-Za-z0-9_]+)?")
+_ASCII_NAME_RE = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
+
+# The most text a translation may have. A repetition written without a count (see _Writer._repeat) multiplies out
+# when it is inside another, and a pattern that passes this is refused.
+_MAX_TRANSLATED = 65_536
 
 # Before CPython 3.11 the standard library's engine did not put back what a group held when it backtracked into a
 # repetition (bpo-35859), so a reference could read what a group took on a path the match had left.
@@ -83,6 +100,10 @@ _WHITE: _Ranges = [
 
 class _Invalid(Exception):
     pass
+
+
+class _TooLarge(Exception):
+    """The pattern is valid, and its translation would pass _MAX_TRANSLATED."""
 
 
 def _literal(c: str) -> str:
@@ -163,6 +184,7 @@ class _Node:
         "min",
         "negative",
         "nothing",
+        "only_nothing",
         "parent",
         "state",
         "text",
@@ -183,6 +205,7 @@ class _Node:
         self.lazy = False
         # Whether the node can match without taking a character (None: not worked out yet).
         self.nothing: bool | None = None
+        self.only_nothing: bool | None = None
         self.state = _PLAIN
         # Set by _Writer: the parent, the node's place in the tree (it holds the nodes first < n.first < last), and
         # whether it is matched backwards (it is in a lookbehind).
@@ -209,6 +232,25 @@ def _matches_nothing(n: _Node) -> bool:
     return n.nothing
 
 
+def _only_nothing(n: _Node) -> bool:
+    """Whether the node matches nothing wherever it matches: it has assertions, lookarounds and references that are
+    never read after their group has matched, and nothing that takes a character. Asked once every reference has
+    its place."""
+    if n.only_nothing is None:
+        k = n.kind
+        if k == _TEXT:
+            n.only_nothing = n.nothing is not False
+        elif k == _REFERENCE:
+            n.only_nothing = n.state == _EMPTY
+        elif k == _LOOK:
+            n.only_nothing = True
+        elif k == _REPEAT:
+            n.only_nothing = n.max == 0 or _only_nothing(n.items[0])
+        else:
+            n.only_nothing = all(_only_nothing(x) for x in n.items)
+    return n.only_nothing
+
+
 class _Translator:
     def __init__(self, pattern: str, unicode: bool, ascii_flag: bool) -> None:
         self.p = pattern
@@ -218,16 +260,22 @@ class _Translator:
         self.n = len(pattern)
         self.u = unicode
         self.i = 0
-        # The capturing groups of the whole pattern and the group of each name, from a scan before parsing: what \1
+        # The capturing groups of the whole pattern and whether any has a name, from a scan before parsing: what \1
         # and \k mean depends on groups that may follow them.
         self.group_count = 0
-        self.names: dict[str, int] = {}
+        self.has_names = False
         self.groups = 0
+        # The groups of each name, each with the alternatives it is inside.
+        self.names: dict[str, list[tuple[int, list[tuple[int, int]]]]] = {}
+        self.named_refs: list[tuple[_Node, str]] = []
         self.needs_regex = False
         # The modifiers in force, which only a group such as (?i:...) changes.
         self.icase = False
         self.multiline = False
         self.dot_all = False
+        # The alternatives the parser is inside: (which alternation, which alternative of it).
+        self.path: list[tuple[int, int]] = []
+        self.alternations = 0
 
     def error(self) -> _Invalid:
         return _Invalid(self.p)
@@ -241,7 +289,17 @@ class _Translator:
         root = self._alternation(top=True)
         if self.i != self.n:
             raise self.error()
-        writer = _Writer(root)
+        for node, name in self.named_refs:
+            if name not in self.names:
+                raise self.error()
+            # A name can belong to several groups in separate alternatives. At most one of them has a value, and a
+            # group without one matches nothing.
+            node.kind = _SEQUENCE
+            for group, _ in self.names[name]:
+                ref = _Node(_REFERENCE, group=group)
+                ref.icase = node.icase
+                node.items.append(ref)
+        writer = _Writer(root, not self.ascii_flag)
         self.needs_regex = self.needs_regex or writer.needs_regex
         return writer.write()
 
@@ -261,23 +319,22 @@ class _Translator:
                 in_class = True
             elif c == "(":
                 if p.startswith("(?<", i) and not p.startswith("(?<=", i) and not p.startswith("(?<!", i):
-                    end = p.find(">", i)
-                    if end < 0:
-                        raise self.error()
-                    name = p[i + 3 : end]
-                    if not name or name in self.names:
-                        raise self.error()
                     self.group_count += 1
-                    self.names[name] = self.group_count
+                    self.has_names = True
                 elif not p.startswith("(?", i):
                     self.group_count += 1
             i += 1
 
     def _alternation(self, top: bool) -> _Node:
+        self.alternations += 1
+        which = self.alternations
+        self.path.append((which, 0))
         parts = [self._sequence()]
         while self.peek() == "|":
             self.i += 1
+            self.path[-1] = (which, len(parts))
             parts.append(self._sequence())
+        self.path.pop()
         if not top and self.peek() != ")":
             raise self.error()
         return parts[0] if len(parts) == 1 else _Node(_ALTERNATION, items=parts)
@@ -384,8 +441,15 @@ class _Translator:
             node.negative = p[i + 3] == "!"
             self.needs_regex = True
         elif p.startswith("(?<", i):
-            self.i = p.find(">", i) + 1
+            self.i += 3
+            name = self._group_name()
+            # Two groups may share a name only when they are in separate alternatives of one alternation, so that
+            # no match can go through both.
+            for _, path in self.names.get(name, ()):
+                if not any(a[0] == b[0] and a[1] != b[1] for a, b in zip(path, self.path, strict=False)):
+                    raise self.error()
             self.groups += 1
+            self.names.setdefault(name, []).append((self.groups, list(self.path)))
             node, quantifiable = _Node(_GROUP, group=self.groups), True
         elif p.startswith("(?", i):
             self.i += 2
@@ -428,6 +492,32 @@ class _Translator:
         self.icase, self.multiline, self.dot_all = saved
         return node
 
+    def _group_name(self) -> str:
+        """A group name up to and including its ``>``. A character of the name may be written as a ``\\u`` escape."""
+        name = ""
+        while True:
+            c = self.peek()
+            if c == "":
+                raise self.error()
+            self.i += 1
+            if c == ">":
+                break
+            if c == "\\":
+                if self.peek() != "u":
+                    raise self.error()
+                self.i += 1
+                code = self._unicode_escape(always=True)
+                if code is None:
+                    raise self.error()
+                c = chr(code)
+            name += c
+        if _ASCII_NAME_RE.fullmatch(name) is None:
+            import regex
+
+            if regex.fullmatch(r"[\p{ID_Start}$_][\p{ID_Continue}$\u200c\u200d]*", name) is None:
+                raise self.error()
+        return name
+
     def _escape(self) -> tuple[_Node, bool]:
         self.i += 1
         if self.i >= self.n:
@@ -457,14 +547,14 @@ class _Translator:
             if self.u:
                 raise self.error()
             return self._one(self._char(self._legacy_octal_or_identity())), True
-        if e == "k" and (self.u or self.names):
+        if e == "k" and (self.u or self.has_names):
             # Annex B reads \k as the letter k in a pattern with no named group.
-            end = self.p.find(">", self.i)
-            if self.peek(1) != "<" or end < 0 or self.p[self.i + 2 : end] not in self.names:
+            if self.peek(1) != "<":
                 raise self.error()
-            ref = _Node(_REFERENCE, group=self.names[self.p[self.i + 2 : end]])
+            self.i += 2
+            ref = _Node(_REFERENCE)
             ref.icase = self.icase
-            self.i = end + 1
+            self.named_refs.append((ref, self._group_name()))
             return ref, True
         text, char = self._char_escape(in_class=False)
         if char is not None:
@@ -580,9 +670,11 @@ class _Translator:
         self.i -= 1
         return self._legacy_octal_or_identity()
 
-    def _unicode_escape(self) -> int | None:
+    def _unicode_escape(self, always: bool = False) -> int | None:
+        """What follows ``\\u``. ``always``: as with the ``u`` flag whatever the grammar (in a group name)."""
         p = self.p
-        if self.u and self.peek() == "{":
+        u = self.u or always
+        if u and self.peek() == "{":
             end = p.find("}", self.i)
             hexa = p[self.i + 1 : end] if end > 0 else ""
             if not hexa or not all(h in "0123456789abcdefABCDEF" for h in hexa) or int(hexa, 16) > 0x10FFFF:
@@ -600,7 +692,7 @@ class _Translator:
         if hi is None:
             return None
         self.i += 4
-        if self.u and 0xD800 <= hi < 0xDC00 and p.startswith("\\u", self.i):
+        if u and 0xD800 <= hi < 0xDC00 and p.startswith("\\u", self.i):
             lo = four(self.i + 2)
             if lo is not None and 0xDC00 <= lo < 0xE000:
                 self.i += 6
@@ -648,7 +740,7 @@ class _Translator:
         if self.icase:
             return self._folded_class(ranges, properties, negated)
         if not members and not outside:
-            return "[^\\s\\S]" if not negated else _ANY
+            return _NEVER if not negated else _ANY
         alternatives = ([f"[{''.join(members)}]"] if members else []) + outside
         body = alternatives[0] if len(alternatives) == 1 else "(?:" + "|".join(alternatives) + ")"
         if not negated:
@@ -703,14 +795,22 @@ class _Translator:
                     more.append(sets[point])
         ranges = _merged(ranges + [(ord(c), ord(c)) for c in set("".join(more))])
         if not ranges and not properties:
-            return _ANY if negated else "[^\\s\\S]"
+            return _ANY if negated else _NEVER
         return f"[{'^' if negated else ''}{_class_text(ranges)}{''.join(properties)}]"
 
 
 class _Writer:
-    """Places every reference of a pattern's tree and writes the pattern for the engine."""
+    """Places every reference of a pattern's tree and writes the pattern for the engine.
 
-    def __init__(self, root: _Node) -> None:
+    ``for_regex``: the pattern is written for the regex package. That engine remembers, for a repetition, the
+    places where its body or what follows it has already failed, and does not try them again. It drops that when it
+    sees a reference in the body or after it, as the outcome then depends on what a group holds. It does not see a
+    reference that is inside a repetition with a maximum count, so ``^(?:(?:(a|)|){2})?(?:x\\1)?$`` does not match
+    ``axa``. So in a pattern with a reference, every repetition is followed by a reference to an empty group, which
+    the engine sees, and a repetition with a reference or a reset group inside it is written without a count:
+    ``X{2,4}`` as ``XX(?:X(?:X|)|)`` and ``X{2,}`` as ``XX(?:X)*``."""
+
+    def __init__(self, root: _Node, for_regex: bool) -> None:
         self.root = root
         self.groups: dict[int, _Node] = {}
         self.refs: list[_Node] = []
@@ -718,10 +818,14 @@ class _Writer:
         self._number(root, None, False)
         # The groups a reference reads, which get a name, and the ones a _DYNAMIC reference reads, which are reset.
         self.read: set[int] = set()
-        self.reset: set[int] = set()
+        self.reset: dict[int, list[_Node]] = {}
         self.needs_regex = False
         for ref in self.refs:
             ref.state = self._place(ref, self.groups[ref.group])
+        for ref in self.refs:
+            if ref.state != _EMPTY and self._never_runs(ref, self.groups[ref.group]):
+                ref.state = _EMPTY
+        for ref in self.refs:
             if ref.state != _EMPTY:
                 self.read.add(ref.group)
                 # Without case, a reference is compared by the regex package, which folds as ECMA-262 does with the
@@ -733,8 +837,12 @@ class _Writer:
                         n = n.parent
                     self.needs_regex = self.needs_regex or n is not None
             if ref.state == _DYNAMIC:
-                self.reset.add(ref.group)
+                self.reset.setdefault(ref.group, []).append(ref)
                 self.needs_regex = True
+        self.live = [ref.first for ref in self.refs if ref.state != _EMPTY]
+        # The reference to an empty group that the regex package sees after a repetition.
+        self.seen = "(?P=z)" if for_regex and self.live else ""
+        self.loops = 0
 
     def _number(self, n: _Node, parent: _Node | None, back: bool) -> None:
         n.parent = parent
@@ -781,10 +889,24 @@ class _Writer:
             n = n.parent
         return _PLAIN if plain else _DYNAMIC
 
+    @staticmethod
+    def _never_runs(ref: _Node, group: _Node) -> bool:
+        """Whether the reference or its group is in a repetition that never runs an iteration (see ``_repeat``)."""
+        for start in (ref, group):
+            n: _Node | None = start
+            while n is not None:
+                if n.kind == _REPEAT and (n.max == 0 or (n.min == 0 and _only_nothing(n.items[0]))):
+                    return True
+                n = n.parent
+        return False
+
     def write(self) -> str:
         out = self._write(self.root)
-        if self.reset:
-            out = "".join(f"(?P<g{g}>)" for g in sorted(self.reset)) + f"(?:{out})"
+        if self.reset or self.seen:
+            before = "(?P<z>)" if self.seen else ""
+            out = before + "".join(f"(?P<g{g}>)" for g in sorted(self.reset)) + f"(?:{out})"
+        if len(out) > _MAX_TRANSLATED:
+            raise _TooLarge()
         return out
 
     def _write(self, n: _Node) -> str:
@@ -810,14 +932,51 @@ class _Writer:
         return self._repeat(n)
 
     def _repeat(self, n: _Node) -> str:
-        text = self._write(n.items[0])
+        body = n.items[0]
+        lo, hi = n.min, n.max
+        if hi == 0:
+            return "(?:)"
+        if _only_nothing(body):
+            # Every iteration matches nothing, and ECMA-262 refuses one that does once the minimum count is met. So
+            # none runs for a minimum of 0. For any other, the groups are left as one iteration leaves them.
+            return self._write(body) if lo else "(?:)"
+        text = self._write(body)
         inside = [g for g in sorted(self.reset) if n.first < self.groups[g].first < n.last]
-        if inside and (n.max == -1 or n.max > 1):
-            # The groups inside that a reference may read without their having matched lose their values at the
-            # start of each iteration (at its right, in a lookbehind).
-            resets = "".join(f"(?P<g{g}>)" for g in inside)
-            text = f"(?:{text}{resets})" if n.back else f"(?:{resets}{text})"
-        return (text if text.startswith("(") else f"(?:{text})") + self._count(n.min, n.max, n.lazy)
+        k = bisect_left(self.live, n.first)
+        if not inside and not (self.seen and k < len(self.live) and self.live[k] < n.last):
+            return (text if text.startswith("(") else f"(?:{text})") + self._count(lo, hi, n.lazy) + self.seen
+        # The groups inside that a reference may read without their having matched lose their values at the start
+        # of each iteration (at its right, in a lookbehind).
+        resets = "".join(f"(?P<g{g}>)" for g in inside) if hi == -1 or hi > 1 else ""
+        one = f"(?:{text}{resets})" if n.back else f"(?:{resets}{text})"
+        more = one
+        if inside and _matches_nothing(body):
+            # ECMA-262 refuses an iteration past the minimum that matches nothing, and the engine does not. Where
+            # such an iteration ends, the rest of the text (the text up to there, in a lookbehind) is not what it
+            # was where it started.
+            self.loops += 1
+            e = f"e{self.loops}"
+            if n.back:
+                more = f"(?:(?<!(?P={e})){text}(?<=(?P<{e}>{_ANY}*)){resets})"
+            else:
+                more = f"(?:{resets}(?=(?P<{e}>{_ANY}*)){text}(?!(?P={e})))"
+        # The iterations up to the minimum, then the rest. In a lookbehind the first iteration is the rightmost.
+        if lo * len(one) > _MAX_TRANSLATED or (hi - lo) * len(more) > _MAX_TRANSLATED:
+            raise _TooLarge()
+        out = one * lo
+        if hi == -1:
+            rest = f"(?:{self.seen}{more}{self.seen})*{'?' if n.lazy else ''}{self.seen}"
+        else:
+            rest = ""
+            for _ in range(hi - lo):
+                inner = rest + more if n.back else more + rest
+                rest = f"(?:|{inner})" if n.lazy else f"(?:{inner}|)"
+                if len(rest) > _MAX_TRANSLATED:
+                    raise _TooLarge()
+        out = rest + out if n.back else out + rest
+        if len(out) > _MAX_TRANSLATED:
+            raise _TooLarge()
+        return out
 
     @staticmethod
     def _count(lo: int, hi: int, lazy: bool) -> str:
@@ -871,16 +1030,26 @@ def _compile(pattern: str, unicode: bool) -> Matcher | None:
 
 
 def compile_pattern(pattern: str) -> Matcher | None:
-    """A search function for an ECMA-262 pattern (truthy on a match), or None when the pattern is invalid."""
+    """A search function for an ECMA-262 pattern (truthy on a match), or None when the pattern is invalid. A valid
+    pattern whose translation would be too large raises SchemaCompilationError."""
     if pattern in _cache:
         return _cache[pattern]
-    matcher = _compile(pattern, True)
-    if matcher is None:
-        matcher = _compile(pattern, False)
+    try:
+        matcher = _compile(pattern, True)
+        if matcher is None:
+            matcher = _compile(pattern, False)
+    except _TooLarge:
+        raise SchemaCompilationError(
+            f"The regular expression '{pattern}' is valid, and too large for the engine once its repetitions are "
+            "written out."
+        ) from None
     _cache[pattern] = matcher
     return matcher
 
 
 def is_valid_ecma_regex(s: str) -> bool:
     """Whether the text is a valid ECMA-262 pattern with the ``u`` flag (``format: regex``)."""
-    return _compile(s, True) is not None
+    try:
+        return _compile(s, True) is not None
+    except _TooLarge:
+        return True

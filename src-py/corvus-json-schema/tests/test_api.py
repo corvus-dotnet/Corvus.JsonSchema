@@ -13,7 +13,7 @@ from typing import Any
 import pytest
 
 import corvus_json_schema as cjs
-from corvus_json_schema.pattern import compile_pattern, translate
+from corvus_json_schema.pattern import compile_pattern, is_valid_ecma_regex, translate
 
 
 def import_module(source: str, tmp_path: Path, name: str = "generated") -> ModuleType:
@@ -587,6 +587,109 @@ def test_every_character_matches_its_case_variants_in_a_case_insensitive_group()
                     assert matcher(c), f"{pattern} on U+{ord(c):04X}"
                 for c in others:
                     assert not matcher(c), f"{pattern} on U+{ord(c):04X}"
+
+
+@pytest.mark.parametrize(
+    ("pattern", "text", "expected"),
+    [
+        # V8's answers.
+        # An iteration that matches nothing is refused once the minimum count is met, so it leaves no group set.
+        ("^(?:(a?))+\\1b$", "ab", False),
+        ("^(?:(a?))+\\1b$", "aab", True),
+        ("^(?:(a?))+\\1b$", "b", True),
+        ("^(?:(?=(a)))?\\1a", "a", True),
+        ("^(?:(?=(a)))?\\1a", "aa", True),
+        ("^(?:(?=(a)))?\\1b", "ab", False),
+        ("^(?:(?=(a)))?\\1b", "b", True),
+        ("^(?:(a)|())*\\1b$", "ab", False),
+        ("^(?:(a)|())*\\1b$", "aab", True),
+        ("^(?:(a)|())*\\1b$", "b", True),
+        ("^(?:(a)|b|){2,4}\\1$", "ab", True),
+        ("^(?:(a)|b|){2,4}\\1$", "aba", False),
+        ("^(?:(a)|b|){2,4}\\1$", "aa", True),
+        ("^(?:(a)|b|){2,4}\\1$", "abab", True),
+        ("^(a|b|\u00e9)*?(?=\\1)", "a", True),
+        ("^(a|b|\u00e9)*?(?=\\1)", "ab", True),
+        ("^(a|b|\u00e9)*?(?=\\1)", "", True),
+        ("(?<=\\1(?:(a)|b|)*)c", "abc", True),
+        ("(?<=\\1(?:(a)|b|)*)c", "c", True),
+        ("(?<=\\1(?:(a)|b|)*)c", "aac", True),
+        ("^(x$|(?:(a|)||.$){4,6}(|){2})?((?:|(?:(?!$))*?){3,}x|(?:[^a]-?|\\3){3,5}\\2)?$", "axa", True),
+        ("^(x$|(?:(a|)||.$){4,6}(|){2})?((?:|(?:(?!$))*?){3,}x|(?:[^a]-?|\\3){3,5}\\2)?$", "a-a", True),
+        ("^(x$|(?:(a|)||.$){4,6}(|){2})?((?:|(?:(?!$))*?){3,}x|(?:[^a]-?|\\3){3,5}\\2)?$", "aa-a", True),
+        ("^(x$|(?:(a|)||.$){4,6}(|){2})?((?:|(?:(?!$))*?){3,}x|(?:[^a]-?|\\3){3,5}\\2)?$", "ax", True),
+        # A repetition that can only match nothing runs once, or not at all for a minimum of 0.
+        ("^(?:(?=(a))){0,}\\1a$", "a", True),
+        ("^(?:(?=(a))){0,}\\1a$", "aa", False),
+        ("^(?:(?=(a))){2,}\\1$", "aa", False),
+        ("^(?:(?=(a))){2,}\\1$", "a", True),
+        ("^(?:()|(?=x)){3}\\1x$", "x", True),
+        ("^(?:()|(?=x)){3}\\1x$", "xx", False),
+        # The regex package does not see a reference inside a repetition with a maximum.
+        ("^(?:(?:(a|)|){2})?(?:x\\1)?$", "axa", True),
+        ("^(?:(?:(a|)|){2})?(?:x\\1)?$", "ax", True),
+        ("^(?:(?:(a|)|){2})?(?:x\\1)?$", "x", True),
+        ("^(?:(?:(a|)|){2})?(?:x\\1)?$", "xa", False),
+        ("(?<=^(?:(?:(a|)|){2})?(?:x\\1)?)$", "axa", False),
+        ("(?<=^(?:(?:(a|)|){2})?(?:x\\1)?)$", "ax", True),
+        ("(?<=^(?:(?:(a|)|){2})?(?:x\\1)?)$", "xa", False),
+        # Two groups with one name, in separate alternatives.
+        ("^(?:(?<a>x)|(?<a>y))\\k<a>$", "xx", True),
+        ("^(?:(?<a>x)|(?<a>y))\\k<a>$", "yy", True),
+        ("^(?:(?<a>x)|(?<a>y))\\k<a>$", "xy", False),
+        ("^(?:(?<a>x)|(?<a>y))\\k<a>$", "x", False),
+        ("^(?:(?<a>x)|(?<a>y))+\\k<a>$", "xyy", True),
+        ("^(?:(?<a>x)|(?<a>y))+\\k<a>$", "xyx", False),
+        ("^(?:(?<a>x)|(?<a>y))+\\k<a>$", "yxx", True),
+        ("^(?:(?<a>x)|(?<a>y)|z)*\\k<a>$", "xz", True),
+        ("^(?:(?<a>x)|(?<a>y)|z)*\\k<a>$", "xzx", False),
+        ("^(?:(?<a>x)|(?<a>y)|z)*\\k<a>$", "z", True),
+        ("^(?:(?<a>x)|(?<a>y)|z)*\\k<a>$", "yzy", False),
+        ("\\k<a>(?:(?<a>x)|(?<a>y))", "x", True),
+        ("\\k<a>(?:(?<a>x)|(?<a>y))", "y", True),
+        ("\\k<a>(?:(?<a>x)|(?<a>y))", "z", False),
+        # A group name is an identifier, and may have \u escapes.
+        ("^(?<\\u0061>a)\\k<a>$", "aa", True),
+        ("^(?<\\u0061>a)\\k<a>$", "a", False),
+        ("^(?<\u03c0>a)\\k<\\u03c0>$", "aa", True),
+        ("^(?<\u03c0>a)\\k<\\u03c0>$", "a", False),
+        ("^(?<\\u{61}b>a)\\k<ab>$", "aa", True),
+        ("^(?<\\u{61}b>a)\\k<ab>$", "a", False),
+        ("^(?<$_a1>a)\\k<$_a1>$", "aa", True),
+        ("^(?<$_a1>a)\\k<$_a1>$", "a", False),
+        # An empty class matches nothing, also where the regex package runs the pattern.
+        ("(?<=a)[]", "ab", False),
+        ("(?<=a)[]", "a", False),
+        ("(?<=a)(?:[]|b)", "ab", True),
+        ("(?<=a)(?:[]|b)", "ac", False),
+        ("^[]*$", "", True),
+        ("^[]*$", "a", False),
+        ("(?<=a)[^]", "ab", True),
+        ("(?<=a)[^]", "a", False),
+    ],
+)
+def test_empty_iterations_and_group_names_have_ecma_semantics(pattern: str, text: str, expected: bool) -> None:
+    for p in _on_both_engines(pattern):
+        assert cjs.compile({"pattern": p})(text) is expected, p
+
+
+def test_a_group_name_that_is_not_an_identifier_or_is_given_twice_is_refused() -> None:
+    for name in ("1a", "a b", "a\\u0020", "\\u0030", "\\x61", "\\u", "\\u{}", "‍", "a-b", "a.b", "\U0001f600", ""):
+        assert compile_pattern(f"(?<{name}>a)") is None, name
+    for pattern in ("(?<a>x)(?<a>y)", "(?<a>x)|(?:(?<a>y)(?<a>z))", "(?<a>(?<a>x))", "(?<a>x)\\k<b>"):
+        assert compile_pattern(pattern) is None, pattern
+    for pattern in ("(?<a>x)|(?<a>y)", "(?:(?<a>x)|(?<a>y)){2}\\k<a>", "(?<a>x)|(?=(?<a>y))", "(?<a\\u0030>a)\\k<a0>"):
+        assert compile_pattern(pattern) is not None, pattern
+
+
+def test_a_valid_pattern_too_large_to_write_out_is_refused_and_is_a_valid_regex() -> None:
+    # A repetition with a reference to what it holds is written without a count, so a count inside a count
+    # multiplies out.
+    pattern = "^(?:(?:(a)|b){300}){300}\\1$"
+    with pytest.raises(cjs.SchemaCompilationError, match="too large"):
+        cjs.compile({"pattern": pattern})
+    assert is_valid_ecma_regex(pattern)
+    assert cjs.compile({"pattern": "^(?:(a)|b){300}\\1$"})("ab" * 150) is True
 
 
 def test_standalone_modules_collect_the_same_results_as_compile(tmp_path: Path) -> None:
