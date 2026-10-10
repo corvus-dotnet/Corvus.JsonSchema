@@ -177,6 +177,7 @@ JsonSchema schema = JsonSchema.FromFile("person.json", options: options);
 | `additionalSchemaFiles` | `null` | Pre-load external schema files for `$ref` resolution. Each entry maps a canonical URI to a local file path; the file is also registered under its `$id` and its full path. |
 | `additionalDocumentResolver` | `null` | A `JsonSchemaDocumentResolver` delegate that supplies referenced documents from memory, consulted before the file system and HTTP. |
 | `codeGeneration` | `JsonSchemaCodeGeneration.Disabled` | Whether, and when, the schema is compiled to IL at run time. See [Runtime Code Generation](#runtime-code-generation). |
+| `regexMatchTimeout` | `null` (10 seconds) | How long one regular expression match may run before it throws `RegexMatchTimeoutException`. See [Regular Expression Match Timeout](#regular-expression-match-timeout). |
 
 ## Pre-loading Referenced Schemas
 
@@ -230,14 +231,25 @@ The [runtime evaluator guide](./RuntimeEvaluator.md#runtime-code-generation) has
 
 ## Regular Expression Match Timeout
 
-A `pattern` or `patternProperties` keyword that the evaluator cannot match by itself is matched by a .NET `Regex`. Some patterns never finish in .NET's engine, so each match has a timeout of 10 seconds.
+A `pattern` or `patternProperties` keyword that the evaluator cannot match by itself is matched by a .NET `Regex`. Some patterns take .NET's engine longer than anyone will wait, so each match has a timeout. It is 10 seconds unless the `regexMatchTimeout` option says otherwise:
+
+```csharp
+using System;
+using Corvus.Text.Json.Validator;
+
+var options = new JsonSchema.Options(
+    regexMatchTimeout: TimeSpan.FromSeconds(1));
+
+JsonSchema schema = JsonSchema.FromFile("./person-schema.json", options);
+```
 
 - A match that runs for longer throws `RegexMatchTimeoutException` out of `Validate`. The document is not reported as invalid. Call `Validate` inside `try` when the schema or the document is not trusted.
-- `JsonSchema.Options` has no setting for the timeout. To use another value, or `Regex.InfiniteMatchTimeout` for none, compile the schema with the [runtime evaluator](./RuntimeEvaluator.md#regular-expression-match-timeout) and set `JsonSchemaEvaluatorOptions.RegexMatchTimeout`.
+- `System.Text.RegularExpressions.Regex.InfiniteMatchTimeout` matches with no timeout. A value that is zero, negative, or longer than a `Regex` accepts throws `ArgumentOutOfRangeException` when the options are created.
+- The value is passed to the evaluator as `JsonSchemaEvaluatorOptions.RegexMatchTimeout`. The [runtime evaluator guide](./RuntimeEvaluator.md#regular-expression-match-timeout) says more about it.
 
 ## Schema Caching
 
-Compiled schemas are cached automatically by their canonical URI, `alwaysAssertFormat` flag and `codeGeneration` setting. Subsequent calls to any `From*` method with the same URI return the cached validator without recompilation:
+Compiled schemas are cached automatically by their canonical URI, `alwaysAssertFormat` flag, `codeGeneration` setting and `regexMatchTimeout`. Subsequent calls to any `From*` method with the same URI return the cached validator without recompilation:
 
 ```csharp
 // First call: compiles the schema (milliseconds)
@@ -259,7 +271,7 @@ The Validator is a thin wrapper over the [runtime evaluator](./RuntimeEvaluator.
 
 1. **Load** the JSON Schema document and any documents it references, using the registered resolvers
 2. **Compile** the schema graph into an in-memory evaluator: every `$ref` is resolved at compile time, regular expressions are compiled, and flag-mode fast paths (discriminators, type unions, unrolled objects) are precomputed
-3. **Cache** the evaluator by canonical URI, `alwaysAssertFormat` and `codeGeneration` for subsequent validations against the same schema
+3. **Cache** the evaluator by canonical URI, `alwaysAssertFormat`, `codeGeneration` and `regexMatchTimeout` for subsequent validations against the same schema
 
 Validation walks the parsed document once against the compiled graph. It shares the format, number, and string helpers used by generated code, so it agrees with source-generated models instance for instance, and it produces the same results-collector output and annotations. No hosting configuration is required: the Validator has no dependency on Roslyn or on the host's compilation context.
 

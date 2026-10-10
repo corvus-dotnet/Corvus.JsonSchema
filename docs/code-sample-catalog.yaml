@@ -1592,10 +1592,11 @@ main-docs:
       - {index: 7, language: csharp, lines: [101, 115], category: compilable, verified: false}
       - {index: 8, language: csharp, lines: [123, 139], category: compilable, verified: false}
       - {index: 9, language: csharp, lines: [155, 168], category: compilable, verified: false}
-      - {index: 10, language: csharp, lines: [185, 198], category: compilable, verified: false}
-      - {index: 11, language: csharp, lines: [206, 215], category: compilable, verified: false}
-      - {index: 12, language: csharp, lines: [242, 248], category: fragment, verified: false}
-      - {index: 13, language: csharp, lines: [252, 254], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [186, 199], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [207, 216], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [236, 244], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [254, 260], category: fragment, verified: false}
+      - {index: 14, language: csharp, lines: [264, 266], category: compilable, verified: false}
   - path: "docs/Yaml.md"
     blocks:
       - {index: 0, language: bash, lines: [26, 32]}
