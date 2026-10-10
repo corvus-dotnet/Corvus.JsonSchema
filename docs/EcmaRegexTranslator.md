@@ -134,6 +134,12 @@ pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTable
   `CompileRegularExpressions` says and by generated types where they construct the expression. .NET constructs it
   for the interpreter in 10 to 50 milliseconds. Each character compared costs a walk to the end of the input and
   back.
+- **The engine.** Two kinds of translation are run by .NET's interpreted engine whatever
+  `CompileRegularExpressions` says, and have no compiled form in generated code: one longer than 32,768 characters
+  (above), and one that keeps a lazy repetition of a group, which starts with `(?#interpreted)`. The compiled engine
+  does not always return from a match of the second kind
+  (see [the translations](./EcmaRegexTranslations.md#repetitions)). Only a pattern with a lazy repetition of a group
+  inside a lookaround whose captures a backreference reads has such a translation.
 - **Time.** ECMA-262 does not say how long a match may take, and a backtracking engine can take very long. The
   evaluator's match timeout (`JsonSchemaEvaluatorOptions.RegexMatchTimeout`) bounds it.
 - **Unicode version.** The data is Unicode 17.0.0. The Basic Multilingual Plane part of a General_Category value

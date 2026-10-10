@@ -56,6 +56,27 @@ internal static class EcmaRegexTranslator
     internal const int LongestCompiledTranslation = 32_768;
 
     /// <summary>
+    /// What a translation starts with when it has to be run by .NET's interpreted engine: a comment, which .NET
+    /// skips. Such a translation keeps a lazy repetition of a group, inside a lookaround whose captures a
+    /// backreference reads, where the order in which paths are tried decides the answer. .NET's compiled engine
+    /// does not always return from a match of one (after a repetition whose iterations hold a lookbehind and can
+    /// match nothing, it loops on a lazy repetition of a group in a lookbehind), and the code the regular expression
+    /// generator writes is the same algorithm. The interpreted engine answers.
+    /// </summary>
+    internal const string InterpretedMarker = "(?#interpreted)";
+
+    /// <summary>
+    /// Whether a translation may be given to .NET's compiled engine: it is not marked for the interpreted one
+    /// (<see cref="InterpretedMarker"/>) and is no longer than <see cref="LongestCompiledTranslation"/>.
+    /// </summary>
+    /// <param name="translated">The translation.</param>
+    /// <returns><see langword="true"/> when the translation may be compiled.</returns>
+    internal static bool IsForCompiledEngine(string translated)
+    {
+        return translated.Length <= LongestCompiledTranslation && !translated.StartsWith(InterpretedMarker, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// Attempts to translate an ECMAScript 262 regex pattern (with /u Unicode mode)
     /// to an equivalent .NET regex pattern.
     /// </summary>
@@ -286,6 +307,13 @@ internal static class EcmaRegexTranslator
         /// </summary>
         private int inCapturingLookaround;
 
+        /// <summary>
+        /// Whether a lazy repetition of anything but one code unit has been written as one, which happens only inside
+        /// a lookaround whose captures a backreference reads. .NET's compiled engine does not always return from
+        /// such an expression, so the translation is marked for the interpreted one (<see cref="InterpretedMarker"/>).
+        /// </summary>
+        private bool keepsLazyGroupRepetition;
+
         public Emitter(EcmaRegexParser parser, EcmaRegexNode root)
         {
             this.unicode = parser.Unicode;
@@ -336,12 +364,12 @@ internal static class EcmaRegexTranslator
                     this.sb.Append("(?:");
                     this.Node(this.root, Context.Last, null);
                     this.sb.Append(')');
-                    return this.sb.ToString();
+                    return this.Finish();
                 }
             }
 
             this.Node(this.root, Context.Last, null);
-            return this.sb.ToString();
+            return this.Finish();
         }
 
         private static long Plus(long a, long b) => a == Infinite || b == Infinite ? Infinite : a + b;
@@ -518,6 +546,17 @@ internal static class EcmaRegexTranslator
                 default:
                     return n;
             }
+        }
+
+        /// <summary>The translation, marked for the interpreted engine when it keeps a lazy repetition of a group.</summary>
+        private string Finish()
+        {
+            if (this.keepsLazyGroupRepetition)
+            {
+                this.sb.Insert(0, InterpretedMarker);
+            }
+
+            return this.sb.ToString();
         }
 
         /// <summary>Notes that the groups of a node never take part, as the node is not written.</summary>
@@ -830,6 +869,7 @@ internal static class EcmaRegexTranslator
                 this.sb.Append("(?:");
                 this.Node(subs[subs[0].Kind == EcmaRegexNodeKind.Empty ? 1 : 0], context, next);
                 this.sb.Append(emptyFirst ? ")??" : ")?");
+                this.keepsLazyGroupRepetition |= emptyFirst;
                 return;
             }
 
@@ -1065,6 +1105,7 @@ internal static class EcmaRegexTranslator
             // With more iterations left to choice than that, it is a lazy repetition with no highest count, and a
             // group counts the iterations.
             bool counted = lazy && !single && max != EcmaRegexNode.Unbounded && max - min > MaxNestedLazy;
+            this.keepsLazyGroupRepetition |= lazy && !single;
             if (!resets && !guarded && !nested && !counted)
             {
                 this.Atom(body, inner, null);

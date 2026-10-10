@@ -93,6 +93,9 @@ string strict = EcmaRegexTranslator.Translate(@"\d+\.\d+");
   .NET's lazy group repetition can hang or throw. Inside a lookaround whose captures a backreference reads, order
   matters, so the lazy form is kept and guarded. A lazy repetition of a group with a highest count is never written
   as .NET's own: it is optional groups one in another, or a repetition whose iterations a balancing group counts.
+- **A translation that keeps a lazy repetition of a group starts with `(?#interpreted)`** and is never given to
+  .NET's compiled engine or to `[GeneratedRegex]`, which do not always return from one. Ask
+  `EcmaRegexTranslator.IsForCompiledEngine(translated)` wherever an expression is constructed or emitted.
 - **In a lookbehind** .NET matches right to left, as ECMA-262 does. Whatever must run first is written last.
 
 ## Regex-Free Matchers

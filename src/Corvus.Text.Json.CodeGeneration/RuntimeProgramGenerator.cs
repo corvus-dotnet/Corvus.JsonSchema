@@ -577,8 +577,12 @@ internal static class RuntimeProgramGenerator
             line("        {");
             for (int i = 0; i < image.DotNetPatterns.Count; i++)
             {
-                line($"            case {i}:");
-                line($"                return Regex{i}();");
+                // A pattern marked for the interpreted engine has no generated expression. The evaluator constructs it.
+                if (!image.DotNetPatterns[i].StartsWith(EcmaRegexTranslator.InterpretedMarker, StringComparison.Ordinal))
+                {
+                    line($"            case {i}:");
+                    line($"                return Regex{i}();");
+                }
             }
 
             line("            default:");
@@ -600,8 +604,11 @@ internal static class RuntimeProgramGenerator
             line("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD");
             for (int i = 0; i < image.DotNetPatterns.Count; i++)
             {
-                line($"    [GeneratedRegex({Literal(image.DotNetPatterns[i])}, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: {CodeGenerationExtensions.RegexMatchTimeoutMilliseconds})]");
-                line($"    private static partial Regex Regex{i}();");
+                if (!image.DotNetPatterns[i].StartsWith(EcmaRegexTranslator.InterpretedMarker, StringComparison.Ordinal))
+                {
+                    line($"    [GeneratedRegex({Literal(image.DotNetPatterns[i])}, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: {CodeGenerationExtensions.RegexMatchTimeoutMilliseconds})]");
+                    line($"    private static partial Regex Regex{i}();");
+                }
             }
 
             line("#endif");

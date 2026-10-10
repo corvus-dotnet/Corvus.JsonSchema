@@ -91,6 +91,24 @@ public class RegexPatternEmissionTests
     }
 
     /// <summary>
+    /// A translation marked for the interpreted engine has no <c>[GeneratedRegex]</c> form: .NET's compiled engine
+    /// does not always return from it, and the regular expression generator writes the same algorithm. It is
+    /// constructed with no <c>RegexOptions.Compiled</c>.
+    /// </summary>
+    [TestMethod]
+    public async Task EmittedCode_ForATranslationMarkedForTheInterpretedEngine_DoesNotCompileIt()
+    {
+        string[] lines = await RegexLinesAsync("""{"type": "string", "pattern": "(?=((?:ab){0,2}?)c)\\1"}""", "Interpreted");
+
+        string[] expected =
+        [
+            """private static Regex CreatePattern() => new("(?#interpreted)(?=(?<1>(?:(?:ab)(?:(?:ab))??)??)c)(?(1)\\1)", RegexOptions.None, global::System.TimeSpan.FromMilliseconds(10000));""",
+        ];
+
+        AssertLines(expected, lines);
+    }
+
+    /// <summary>
     /// A pattern valid only without the <c>u</c> flag is translated by that grammar, as V8 reads it, where it was
     /// given to .NET as it stood.
     /// </summary>
@@ -177,6 +195,8 @@ public class RegexPatternEmissionTests
     [DataRow("^(?:a+|)+$", "", true)]
     [DataRow("^(?i:(.)\\1)$", "\u03C2\u03C3", true)]
     [DataRow("^a\\-b{$", "a-b{", true)]
+    [DataRow("(\\B|[]){4,}(?:(?<=(.??)\\2))$", "-", true)]
+    [DataRow("(\\B|[]){4,}(?:(?<=(.??)\\2))$", "-a", false)]
     public async Task AGeneratedTypeAnswersAsV8(string pattern, string text, bool expected)
     {
         using JsonSchemaBuilderDriver driver = DriverFactory.CreateDraft202012Driver();

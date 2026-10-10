@@ -395,10 +395,11 @@ internal sealed class PatternMatcher
             return new PatternMatcher(Kind.Regex, ecmaPattern, provided, null, 0, 0);
         }
 
-        // A translation too long to be worth compiling is interpreted (see LongestCompiledTranslation).
+        // A translation that is too long to be worth compiling, or that .NET's compiled engine does not always return
+        // from, is interpreted (see EcmaRegexTranslator.IsForCompiledEngine).
         RegexOptions regexOptions = RegexOptions.CultureInvariant;
         if (options.CompileRegularExpressions && !ForceInterpretedRegex
-            && TranslationCache[ecmaPattern].Translated!.Length <= Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.LongestCompiledTranslation)
+            && Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.IsForCompiledEngine(TranslationCache[ecmaPattern].Translated!))
         {
             regexOptions |= RegexOptions.Compiled;
         }

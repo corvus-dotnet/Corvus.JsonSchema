@@ -402,9 +402,9 @@ public static partial class ValidationCodeGeneratorExtensions
         bool ignoresCase = translatedValue.Contains("(?i:");
         string generatedOptions = ignoresCase ? "RegexOptions.CultureInvariant" : "RegexOptions.None";
         string constructedOptions = ignoresCase ? "RegexOptions.Compiled | RegexOptions.CultureInvariant" : "RegexOptions.Compiled";
-        if (translatedValue.Length > EcmaRegexTranslator.LongestCompiledTranslation)
+        if (!EcmaRegexTranslator.IsForCompiledEngine(translatedValue))
         {
-            // Too long to be worth compiling when the type first validates.
+            // Too long to be worth compiling when the type first validates, or marked for the interpreted engine.
             constructedOptions = generatedOptions;
         }
 
@@ -412,6 +412,24 @@ public static partial class ValidationCodeGeneratorExtensions
 
         // Every form carries the match timeout (see RegexMatchTimeoutMilliseconds).
         string timeout = RegexMatchTimeoutMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+#if !BUILDING_SOURCE_GENERATOR
+        if (translatedValue.StartsWith(EcmaRegexTranslator.InterpretedMarker, StringComparison.Ordinal))
+        {
+            // .NET's compiled engine does not always return from this expression, and the code the regular
+            // expression generator writes is the same algorithm. So there is no [GeneratedRegex] form of it.
+            return generator
+                .AppendIndent("private static Regex ")
+                .Append(memberName)
+                .Append("() => new(")
+                .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
+                .Append(", ")
+                .Append(constructedOptions)
+                .Append(", global::System.TimeSpan.FromMilliseconds(")
+                .Append(timeout)
+                .AppendLine("));");
+        }
+#endif
 
         return generator
 #if BUILDING_SOURCE_GENERATOR

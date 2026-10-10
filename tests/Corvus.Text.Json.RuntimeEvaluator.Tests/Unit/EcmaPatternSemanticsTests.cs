@@ -73,6 +73,29 @@ public class EcmaPatternSemanticsTests
         AssertCases(EcmaPatternCases.CaseInsensitiveBackreferences, engine);
     }
 
+    /// <summary>
+    /// Patterns whose translation keeps a lazy repetition of a group in a lookbehind, after a repetition whose
+    /// iterations hold a lookbehind and can match nothing. .NET's compiled engine does not return from a match of
+    /// these, and its interpreted engine answers. The translation is marked for the interpreted engine, and the
+    /// evaluator honours the mark whatever its options say. The second pattern is from the ECMA-262 regular
+    /// expression test data, and the answers are V8's.
+    /// </summary>
+    [TestMethod]
+    [DataRow(Engine.CompiledRegex)]
+    [DataRow(Engine.InterpretedRegex)]
+    [DataRow(Engine.GeneratedCode)]
+    public void PatternsTheCompiledEngineDoesNotReturnFromAnswerAsV8(Engine engine)
+    {
+        (string Pattern, string[] Matches, string[] Fails)[] cases =
+        [
+        ("(\\B|[]){4,}(?:(?<=(.??)\\2))$", ["", "-", "-x-"], ["-a", "--a", "a", "ab", "-ab", "abab", "xx-a", "x", "ax", "-x", "--x", "a-x", "aabab"]),
+        ("(?:([^a]*?|x)+\\B|[^a]){4,}(?:[ax](?<=(.??){1}\\2|(?!ax))|\\b|)+x$", ["ax", "-x", "--x"], ["", "-", "-a", "--a", "-x-", "a", "ab", "-ab", "abab", "xx-a", "x", "a-x", "aabab"]),
+        ("(?:x*\\B){2}(?<=((?:ab)*?)\\1)$", ["", "-", "-x-"], ["-a", "--a", "a", "ab", "-ab", "abab", "xx-a", "x", "ax", "-x", "--x", "a-x", "aabab"]),
+        ];
+
+        AssertCases(cases, engine);
+    }
+
     internal static void AssertCases((string Pattern, string[] Matches, string[] Fails)[] cases, Engine engine)
     {
         if (engine == Engine.GeneratedCode && !PatternValidityTests.GeneratedCodeIsSupported)

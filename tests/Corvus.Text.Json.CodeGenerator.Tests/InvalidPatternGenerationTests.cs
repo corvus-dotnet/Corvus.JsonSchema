@@ -114,6 +114,37 @@ public class InvalidPatternGenerationTests
         StringAssert.EndsWith(lines[0], """, RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(10000));""");
     }
 
+    /// <summary>
+    /// A translation marked for the interpreted engine has no <c>[GeneratedRegex]</c> form, in the type or in the
+    /// schema program: .NET's compiled engine does not always return from it, and the regular expression generator
+    /// writes the same algorithm. The type constructs it with no <c>RegexOptions.Compiled</c>, and the program
+    /// leaves it to the evaluator.
+    /// </summary>
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task GenerateCode_ForATranslationMarkedForTheInterpretedEngine_DoesNotCompileIt(bool withProgramImage)
+    {
+        IReadOnlyList<GeneratedCodeFile> files = await GenerateAsync("""{"type": "object", "patternProperties": {"(?=((?:ab){0,2}?)c)\\1": {"type": "integer"}}}""", withProgramImage);
+
+        string[] lines =
+        [
+            .. files.SelectMany(f => f.FileContent.Split('\n'))
+                .Select(l => l.Trim())
+                .Where(l => l.Contains("GeneratedRegex(", StringComparison.Ordinal) || (l.Contains("Regex Create", StringComparison.Ordinal) && l.Contains("=> new(", StringComparison.Ordinal)))
+        ];
+
+        string[] expected =
+        [
+            """private static Regex CreatePatternProperties() => new("(?#interpreted)(?=(?<1>(?:(?:ab)(?:(?:ab))??)??)c)(?(1)\\1)", RegexOptions.None, global::System.TimeSpan.FromMilliseconds(10000));""",
+        ];
+
+        if (!expected.SequenceEqual(lines, StringComparer.Ordinal))
+        {
+            Assert.Fail($"Expected:\n{string.Join("\n", expected)}\nActual:\n{string.Join("\n", lines)}");
+        }
+    }
+
     private static async Task<IReadOnlyList<GeneratedCodeFile>> GenerateAsync(string schema, bool withProgramImage)
     {
         string path = Path.Combine(Path.GetTempPath(), $"invalid-pattern-{Guid.NewGuid():N}.json");

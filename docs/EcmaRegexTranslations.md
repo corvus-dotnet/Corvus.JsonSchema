@@ -368,11 +368,22 @@ in another (`(?:ab){0,2}?` is `(?:(?:ab)(?:(?:ab))??)??`). With more, a group co
 
 ```
 ECMAScript:  (?=((?:ab){0,12}?)c)\1
-.NET:        (?=(?<1>(?:(?<c1>)){12}(?:(?<-c1>)(?:ab))*?(?:(?(c1)(?<-c1>))){12})c)(?(1)\1)
+.NET:        (?#interpreted)(?=(?<1>(?:(?<c1>)){12}(?:(?<-c1>)(?:ab))*?(?:(?(c1)(?<-c1>))){12})c)(?(1)\1)
 ```
 
 `(?:(?<c1>)){12}` gives the group `c1` twelve captures. Each iteration takes one away with `(?<-c1>)` and cannot
 start when none is left, and `(?:(?(c1)(?<-c1>))){12}` takes away what is left after the last.
+
+A translation that keeps a lazy repetition of a group in any of these forms starts with `(?#interpreted)`, a
+comment .NET skips: `(?=((?:ab){0,2}?)c)\1` is `(?#interpreted)(?=(?<1>(?:(?:ab)(?:(?:ab))??)??)c)(?(1)\1)`. It
+marks the translation for .NET's interpreted engine. The compiled engine does not always return from a match of
+such an expression. After a repetition whose iterations hold a lookbehind and can match nothing, it loops on a
+lazy repetition of a group in a lookbehind: `(?:x*\B){2}(?<=((?:ab)*?)\1)$` never answers for `-a`, and neither
+does a pattern of the ECMA-262 regular expression test data. The interpreted engine answers both. No rewriting
+takes a lazy repetition with no highest count out of a pattern, so the engine is chosen instead
+(`EcmaRegexTranslator.IsForCompiledEngine`): the evaluator constructs a marked translation without
+`RegexOptions.Compiled` whatever its options say, and generated code gives it no `[GeneratedRegex]` form, because
+the regular expression generator writes the algorithm of the compiled engine.
 
 ## Lookarounds
 

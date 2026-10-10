@@ -352,6 +352,24 @@ public class PatternMatcherTests
         Assert.IsFalse(wide.IsMatch(Encoding.UTF8.GetBytes("\u03C3\u03C2-\u03A3\u03B1")));
     }
 
+    /// <summary>
+    /// A translation that keeps a lazy repetition of a group is marked for the interpreted engine, and is not
+    /// compiled whatever the options say.
+    /// </summary>
+    [TestMethod]
+    [DataRow(@"(?=((?:ab){0,2}?)c)\1", false)]
+    [DataRow(@"(?<=((?:ab)*?))\1$", false)]
+    [DataRow(@"(?=(|ab)c)\1", false)]
+    [DataRow(@"(?=((?:ab){0,2})c)\1", true)]
+    [DataRow(@"(?=(a*?)c)\1", true)]
+    [DataRow(@"^(?:ab)*?c\1?$", true)]
+    public void ATranslationMarkedForTheInterpretedEngineIsNotCompiled(string pattern, bool compiled)
+    {
+        PatternMatcher matcher = PatternMatcher.Create(pattern, new JsonSchemaEvaluatorOptions { CompileRegularExpressions = true });
+        Assert.IsTrue(matcher.UsesRegex);
+        Assert.AreEqual(compiled, matcher.UsesCompiledRegex);
+    }
+
     [TestMethod]
     public void OnlyPatternsOutsideTheSubsetNeedARegularExpression()
     {
