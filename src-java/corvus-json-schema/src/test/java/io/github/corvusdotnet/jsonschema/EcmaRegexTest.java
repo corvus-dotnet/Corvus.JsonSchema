@@ -354,15 +354,171 @@ class EcmaRegexTest {
         assertMatches("^(a)\\10$", "a\b");
     }
 
-    /** A pattern that is valid and whose backreference java.util.regex cannot give the meaning of is refused. */
+    /**
+     * The texts of up to {@code max} characters over an alphabet, the shortest first, and then some more. These are
+     * the texts the tables of answers below were made with.
+     */
+    private static List<String> textsOver(int max, String[] alphabet, String... more) {
+        List<String> texts = new ArrayList<>(List.of(""));
+        for (int length = 0, from = 0; length < max; length++) {
+            int end = texts.size();
+            for (int k = from; k < end; k++) {
+                for (String c : alphabet) {
+                    texts.add(texts.get(k) + c);
+                }
+            }
+            from = end;
+        }
+        texts.addAll(List.of(more));
+        return texts;
+    }
+
+    private static String json(String text) {
+        StringBuilder sb = new StringBuilder("\"");
+        for (int k = 0; k < text.length(); k++) {
+            sb.append(String.format("\\u%04x", (int) text.charAt(k)));
+        }
+        return sb.append('"').toString();
+    }
+
+    /**
+     * Checks a table of patterns, each with the texts it matches, every one preceded by "|", against the
+     * translation and against a validator of {@code {"pattern": ...}}, on every one of the texts. The answers of the
+     * tables are V8's: {@code new RegExp(pattern, "u").test(text)}, or without the flag for a pattern that is not
+     * valid with it.
+     */
+    private static void assertAnswers(String[][] cases, List<String> texts) {
+        List<String> wrong = new ArrayList<>();
+        for (String[] c : cases) {
+            List<String> expected = c[1].isEmpty() ? List.of() : List.of(c[1].substring(1).split("\\|", -1));
+            String translation = EcmaRegex.translate(c[0]);
+            if (translation == null) {
+                wrong.add(c[0] + " is refused: " + EcmaRegex.unsupported(c[0]));
+                continue;
+            }
+            Pattern translated = Pattern.compile(translation);
+            Validator validator = Validator.compile("{\"pattern\": " + json(c[0]) + "}");
+            for (String text : texts) {
+                boolean matches = expected.contains(text);
+                if (translated.matcher(text).find() != matches) {
+                    wrong.add(c[0] + (matches ? " does not match " : " matches ") + text);
+                }
+                if (validator.isValid(json(text)) != matches) {
+                    wrong.add("{\"pattern\": \"" + c[0] + "\"} is " + (matches ? "not " : "") + "valid for " + text);
+                }
+            }
+        }
+        assertEquals(List.of(), wrong);
+    }
+
+    /** Backreferences to groups of repetitions, of alternatives and of lookaheads, with the texts each matches. */
+    private static final String[][] BACKREFERENCES_ON_PATHS = {
+            {"^(?:(a)?\\1)*x$", "|x|aax"},
+            {"^(?:(a)?\\1){2}x$", "|x|aax"},
+            {"^(?:(a)?\\1){2,3}?x$", "|x|aax"},
+            {"^(?:(a)|x)*\\1$", "||x|aa|ax|xx|aaa|aax|axx|xaa|xax|xxx|aaaa|xxxx"},
+            {"^(?:(a)|())*\\1\\2$", "||aa|aaa|aaaa"},
+            {"^(?:(a)|()){2,3}\\1\\2-$", "|-|a-|aa-"},
+            {
+                "^(?:a|()|x)*\\1-",
+                "|-|a-|x-|-a|-x|--|aa-|ax-|a-a|a-x|a--|xa-|xx-|x-a|x-x|x--|-aa|-ax|-a-|-xa|-xx"
+                        + "|-x-|--a|--x|---",
+            },
+            {"(\\b){0,}(a\\1){3}$", "|aaa|aaaa"},
+            {
+                "(x*){0,}(?:a|\\1){2,3}$",
+                "||a|x|-|aa|ax|a-|xa|xx|x-|-a|-x|--|aaa|aax|aa-|axa|axx|ax-|a-a|a-x|a--|xaa|xax"
+                        + "|xa-|xxa|xxx|xx-|x-a|x-x|x--|-aa|-ax|-a-|-xa|-xx|-x-|--a|--x|---|aaaa|xxxb"
+                        + "|xaxbb|aaxa|axxa|xxxx",
+            },
+            {
+                "(?:^|(|[ax]){2}\\1){0,}a",
+                "|a|aa|ax|a-|xa|-a|aaa|aax|aa-|axa|axx|ax-|a-a|a-x|a--|xaa|xax|xa-|xxa|x-a|-aa"
+                        + "|-ax|-a-|-xa|--a|aaaa|xaxbb|aaxa|axxa",
+            },
+            {"^(a*)+\\1x", "|x|xa|xx|x-|aax|xaa|xax|xa-|xxa|xxx|xx-|x-a|x-x|x--|xxxb|xaxbb|aaxa|xxxx"},
+            {"^(a*)*\\1x$", "|x|aax"},
+            {"^(?:(a*)x)+\\1$", "|x|xx|axa|axx|xxx|xxxx"},
+            {"^(?:(a)|(x))+\\1\\2$", "|aa|xx|aaa|axx|xaa|xxx|aaaa|xxxx"},
+            {"^(?:x(.)){1,2}\\1", "|xaa|xxx|x--|xxxb|xaxbb|xxxx"},
+            {"^(?:(?:x(.)){2})?\\1$", "||xaxbb"},
+            {
+                "(a(){1})?\\2a",
+                "|a|aa|ax|a-|xa|-a|aaa|aax|aa-|axa|axx|ax-|a-a|a-x|a--|xaa|xax|xa-|xxa|x-a|-aa"
+                        + "|-ax|-a-|-xa|--a|aaaa|xaxbb|aaxa|axxa",
+            },
+            {
+                "(?:([^a]x\\1){1,1}|(?:\\1){2,3})?\\1$",
+                "||a|x|-|aa|ax|a-|xa|xx|x-|-a|-x|--|aaa|aax|aa-|axa|axx|ax-|a-a|a-x|a--|xaa|xax"
+                        + "|xa-|xxa|xxx|xx-|x-a|x-x|x--|-aa|-ax|-a-|-xa|-xx|-x-|--a|--x|---|aaaa|xxxb"
+                        + "|xaxbb|aaxa|axxa|xxxx",
+            },
+            {"^(?:(?=(a)))?\\1x", "|x|xa|xx|x-|xaa|xax|xa-|xxa|xxx|xx-|x-a|x-x|x--|xxxb|xaxbb|xxxx"},
+            {"^(?:(?=(a)))?\\1a", "|a|aa|ax|a-|aaa|aax|aa-|axa|axx|ax-|a-a|a-x|a--|aaaa|aaxa|axxa"},
+            {"(?:(?=(?<!a)|(x){2})\\1|(?<!^)){0}?((?<=a)-){2,2}x", ""},
+            {"^(?:|($|)?\\1){2,3}?a", "|a|aa|ax|a-|aaa|aax|aa-|axa|axx|ax-|a-a|a-x|a--|aaaa|aaxa|axxa"},
+            {
+                "(?:\\Bx|((?<!)|)??\\1){4,}x",
+                "|x|ax|xa|xx|x-|-x|aax|axa|axx|ax-|a-x|xaa|xax|xa-|xxa|xxx|xx-|x-a|x-x|x--|-ax"
+                        + "|-xa|-xx|-x-|--x|xxxb|xaxbb|aaxa|axxa|xxxx",
+            },
+            {"^(?:(a|x)\\1?)+-$", "|a-|x-|aa-|ax-|xa-|xx-"},
+            {"^(?:(?:(a)|x)\\1-?){2,}$", "|xx|aax|xaa|xxx|xx-|x-x|aaaa|xxxx"},
+            {
+                "^(?:(a)|(x)|-)*(?:\\1x|\\2a)$",
+                "|a|x|aa|xx|-a|-x|aaa|aax|axx|a-a|a-x|xaa|xxa|xxx|x-a|x-x|-aa|-xx|--a|--x|aaaa"
+                        + "|axxa|xxxx",
+            },
+            {"^(?:(a+)|x){2}\\1$", "|ax|xx|aaa|aax|xaa|aaaa"},
+            {"^(a|x(a)?){2}\\2-$", "|aa-|ax-|xa-|xx-"},
+            {"^(?:(?=(a)|x).)\\1$", "|x|aa"},
+            {
+                "^(?:(?=|(a)).)+\\1$",
+                "|a|x|-|aa|ax|a-|xa|xx|x-|-a|-x|--|aaa|aax|aa-|axa|axx|ax-|a-a|a-x|a--|xaa|xax"
+                        + "|xa-|xxa|xxx|xx-|x-a|x-x|x--|-aa|-ax|-a-|-xa|-xx|-x-|--a|--x|---|aaaa|xxxb"
+                        + "|xaxbb|aaxa|axxa|xxxx",
+            },
+            {
+                "(?:(?=|(a|).|)){3,6}\\1a",
+                "|a|aa|ax|a-|xa|-a|aaa|aax|aa-|axa|axx|ax-|a-a|a-x|a--|xaa|xax|xa-|xxa|x-a|-aa"
+                        + "|-ax|-a-|-xa|--a|aaaa|xaxbb|aaxa|axxa",
+            },
+            {"^(x|\\1(?=(|a)|)){1,3}\\1\\2$", "||xx|xxx|xxxx"},
+    };
+
+    /**
+     * A backreference reads what its group captured on the way the match took, or nothing. ECMA-262 unsets the
+     * groups of a repeated body when an iteration starts, and does not take an iteration past the minimum that
+     * matched nothing. {@code java.util.regex} keeps the groups of an earlier iteration, takes the empty iteration,
+     * and keeps the groups of an iteration it has given back when the body has one way to match.
+     */
+    @Test
+    void aBackreferenceReadsWhatItsGroupHoldsOnThePathOfTheMatch() {
+        assertAnswers(BACKREFERENCES_ON_PATHS,
+                textsOver(3, new String[] {"a", "x", "-"}, "aaaa", "xxxb", "xaxbb", "aaxa", "axxa", "xxxx"));
+    }
+
+    /**
+     * What is still refused: a valid pattern whose backreference cannot be given its meaning by a pattern for
+     * {@code java.util.regex}, and one that would be written too long. None is run with another meaning.
+     */
     @Test
     void refusedPatterns() {
         String[][] refused = {
+            // ECMA-262 runs a lookbehind backwards, which shows in what its groups hold.
             {"(?<=\\1(a))b", EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND},
             {"(?<=(a|b)+?)c\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
-            {"^(?:(?:(a)|b)\\1)+$", EcmaRegex.REFUSED_GROUP_IN_REPETITION},
-            {"^(?:(?=(a)))?\\1b", EcmaRegex.REFUSED_GROUP_IN_LOOKAROUND},
-            {"^(a*)+\\1b", EcmaRegex.REFUSED_GROUP_IN_EMPTY_REPETITION},
+            // The lookahead takes the first way its body matches, and only some of the ways set the group.
+            {"(?=(a)?b)\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKAROUND},
+            {"(?=(?:(a)|b)c)\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKAROUND},
+            // java.util.regex does not restore the group of a lookahead when the match goes back into the
+            // iteration, to between the lookahead and the backreference.
+            {"^(?:(?=([ab]))[ab](?:c|ca)\\1)*$", EcmaRegex.REFUSED_LOOKAROUND_IN_REPETITION},
+            {
+                "(?:(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?\\1\\2\\3\\4\\5\\6\\7\\8\\9)*",
+                EcmaRegex.REFUSED_TOO_MANY_PATHS,
+            },
+            // java.util.regex has no comparison that is the Canonicalize of ECMA-262.
             {"^(.)(?i:\\1)$", EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE},
             {"^(?i:([a-z]+)-\\1)$", EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE},
         };
@@ -371,6 +527,9 @@ class EcmaRegexTest {
             assertNull(EcmaRegex.translate(r[0]), r[0]);
             assertTrue(EcmaRegex.isValid(r[0]), r[0]);
         }
+        // With no place between the lookahead and the backreference to go back to, the same is written.
+        assertMatches("^(?:(?=([ab]))[ab]c\\1)*$", "acabcb");
+        assertNoMatch("^(?:(?=([ab]))[ab]c\\1)*$", "acabca");
         // A case-insensitive backreference is exact where the group can hold no character that folds differently.
         assertMatches("^(?i:([0-9]+)-\\1)$", "12-12");
         assertMatches("^(?i:([a-j]+)-\\1)$", "abc-ABC");
@@ -494,32 +653,7 @@ class EcmaRegexTest {
      */
     @Test
     void anEmptyIterationDoesNotEndARepetitionThatIsStillDue() {
-        List<String> texts = new ArrayList<>(List.of(""));
-        for (int length = 0, from = 0; length < 3; length++) {
-            int end = texts.size();
-            for (int k = from; k < end; k++) {
-                for (String c : new String[] {"a", "x", "-"}) {
-                    texts.add(texts.get(k) + c);
-                }
-            }
-            from = end;
-        }
-        List<String> wrong = new ArrayList<>();
-        for (String[] c : EMPTY_ITERATIONS) {
-            List<String> expected = c[1].isEmpty() ? List.of() : List.of(c[1].substring(1).split("\\|", -1));
-            Pattern translated = Pattern.compile(EcmaRegex.translate(c[0]));
-            Validator validator = Validator.compile("{\"pattern\": \"" + c[0].replace("\\", "\\\\") + "\"}");
-            for (String text : texts) {
-                boolean matches = expected.contains(text);
-                if (translated.matcher(text).find() != matches) {
-                    wrong.add(c[0] + (matches ? " does not match " : " matches ") + text);
-                }
-                if (validator.isValid("\"" + text + "\"") != matches) {
-                    wrong.add("{\"pattern\": \"" + c[0] + "\"} is " + (matches ? "not " : "") + "valid for " + text);
-                }
-            }
-        }
-        assertEquals(List.of(), wrong);
+        assertAnswers(EMPTY_ITERATIONS, textsOver(3, new String[] {"a", "x", "-"}));
     }
 
     /** Only a repetition on which the two engines differ is written with its iterations apart. */

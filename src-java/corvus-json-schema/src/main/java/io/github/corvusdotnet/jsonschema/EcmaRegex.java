@@ -46,42 +46,64 @@ import java.util.regex.PatternSyntaxException;
  *       to the iterations that are still due.
  * </ul>
  *
- * <p><b>What is refused.</b> A backreference means "the text the group matched when it last took part, or nothing".
- * {@code java.util.regex} differs from ECMA-262 on when a group stops having taken part: it keeps what a group
- * captured in an earlier iteration of a repetition or in a lookaround after which the match failed, and it runs a
- * lookbehind forwards where ECMA-262 runs it backwards. The translator shows, for each backreference, that these
- * differences cannot be seen, and writes the backreference in a form that is exact. Where it cannot show it, the
- * pattern is refused rather than given an answer that may be wrong, and {@link #unsupported} says why. The reasons
- * are the {@code REFUSED_} constants. A pattern with no backreference is never refused for them, but for two:
- * a translation {@code java.util.regex} does not compile, and a repetition that would be written with more copies of
- * its body than {@link Emitter#MAX_UNROLLED_COPIES}, or with more text than {@link Emitter#MAX_UNROLLED_LENGTH}.
+ * <p><b>Backreferences.</b> A backreference means "the text the group captured when it last took part on the way the
+ * match took, or nothing". {@code java.util.regex} differs from ECMA-262 on what a group holds:
+ *
+ * <ul>
+ *   <li>a backreference to a group that did not take part fails there, and matches the empty string in ECMA-262;
+ *   <li>it keeps what a group captured in an earlier iteration of a repetition, where ECMA-262 unsets the groups
+ *       of a body when an iteration starts;
+ *   <li>it takes an iteration that matched nothing as the last of a repetition, with what the iteration captured,
+ *       where ECMA-262 does not take one once the minimum is met;
+ *   <li>it does not restore the groups inside a lookaround when the match fails after the lookaround and goes back,
+ *       nor the groups inside a repeated group whose body has one way to match when the repetition gives back an
+ *       iteration;
+ *   <li>it runs a lookbehind forwards, where ECMA-262 runs it backwards, so that a backreference in it reads a
+ *       group that stands after it and a group of a repetition in it holds the leftmost iteration;
+ *   <li>its case-insensitive backreference compares by the case mappings of the JDK, and ECMA-262 by its
+ *       Canonicalize. It is used only where the two agree, and a pattern is refused where they may not.
+ * </ul>
+ *
+ * <p>Where none of these can be seen, a backreference is written as one, behind a test of an empty group that marks
+ * that its group took part when that is not known (see {@link Emitter#backreference}). Otherwise the pattern is
+ * written by paths (see {@link Emitter#translateByPaths}): once for each way through the choices that decide what the
+ * groups it reads hold, so that every backreference stands where its group is known to be set, by a group of the
+ * translation on that way, or known not to be. A lookbehind whose groups are read is refused.
+ *
+ * <p><b>What is refused.</b> A valid pattern whose backreference cannot be given its meaning that way is refused
+ * rather than given an answer that may be wrong, and {@link #unsupported} says why. The reasons are the
+ * {@code REFUSED_} constants. A pattern with no backreference is refused only for two of them: a translation
+ * {@code java.util.regex} does not compile, and a repetition that would be written with more copies of its body than
+ * {@link Emitter#MAX_UNROLLED_COPIES}, or with more text than {@link Emitter#MAX_UNROLLED_LENGTH}.
  */
 final class EcmaRegex {
     private EcmaRegex() {
     }
 
-    /** The backreference is in a lookbehind, which ECMA-262 matches backwards. */
-    static final String REFUSED_BACKREFERENCE_IN_LOOKBEHIND = "a backreference inside a lookbehind";
+    /** The backreference is in a lookbehind, which ECMA-262 matches backwards, and reads a group of it. */
+    static final String REFUSED_BACKREFERENCE_IN_LOOKBEHIND =
+            "a backreference inside a lookbehind to a group of that lookbehind";
     /** The group is in a lookbehind, which ECMA-262 matches backwards, so it can capture other text. */
     static final String REFUSED_GROUP_IN_LOOKBEHIND = "a backreference to a group inside a lookbehind";
-    /** The repetition that holds the backreference can skip the group, which unsets it only in ECMA-262. */
-    static final String REFUSED_GROUP_IN_REPETITION =
-            "a backreference to a group that an iteration of a repetition can skip";
-    /** The group is in a lookaround that may not have matched, after which java.util.regex can keep its text. */
+    /** The group is in a lookahead that sets it on some of the ways it can match only. */
     static final String REFUSED_GROUP_IN_LOOKAROUND =
-            "a backreference to a group of a lookaround that may not have matched";
-    /** The group is in a repetition whose body can match nothing, which the two engines end differently. */
-    static final String REFUSED_GROUP_IN_EMPTY_REPETITION =
-            "a backreference to a group of a repetition that can match the empty string";
+            "a backreference to a group that a lookahead sets on some of the ways it can match only";
     /** The backreference ignores case, and the group can hold a character java.util.regex compares differently. */
     static final String REFUSED_CASE_INSENSITIVE_BACKREFERENCE =
             "a case-insensitive backreference to text that java.util.regex compares differently";
+    /** A backreference that the form with markers cannot serve. The pattern is then written by paths. */
+    private static final String NOT_BY_MARKERS = "markers";
     /**
      * The repetition must run so many times, over a body that matches the empty string in some places only, that
      * writing each of those iterations apart is too much.
      */
     static final String REFUSED_EMPTY_ITERATIONS =
             "a repetition this long of a body that can match the empty string";
+    /** The group is set in a lookaround that can run again before the match goes back to the backreference. */
+    static final String REFUSED_LOOKAROUND_IN_REPETITION =
+            "a backreference to a group of a lookaround, in a repetition that can go back to before the backreference";
+    /** The pattern would be written with more alternatives, one for each way through its groups, than is kept. */
+    static final String REFUSED_TOO_MANY_PATHS = "a pattern with this many ways through the groups it reads";
     /** {@code java.util.regex} did not compile the translation. */
     static final String REFUSED_BY_ENGINE = "a pattern java.util.regex does not compile";
 
@@ -253,6 +275,13 @@ final class EcmaRegex {
         /** The least and the greatest number of characters the node matches, once measured. */
         long minLength = -1;
         long maxLength;
+        /** Marks a BACKREF while the groups it names are measured for it. */
+        boolean measuring;
+        /** Marks a BACKREF that reads nothing on any path to it. */
+        boolean dropped;
+        /** The groups the node can set for what follows it, and the groups the backreferences in it read. */
+        BitSet sets;
+        BitSet reads;
 
         Node(int kind) {
             this.kind = kind;
@@ -1151,7 +1180,7 @@ final class EcmaRegex {
         static final int MAX_UNROLLED_LENGTH = 1 << 16;
 
         private final boolean unicode;
-        private final Node root;
+        private Node root;
         private final Node[] groupNodes;
         /** For each group, whether some backreference reads it, and whether one reads it unsure that it is set. */
         private final boolean[] referenced;
@@ -1187,7 +1216,12 @@ final class EcmaRegex {
         /** The translation, compiled once to be sure {@code java.util.regex} takes it. */
         String translate() {
             flow(root, new BitSet(), new BitSet(), false);
-            survey(root, false, false, new ArrayList<>());
+            try {
+                survey(root, false, false, new ArrayList<>());
+            } catch (Unsupported e) {
+                // A backreference the markers cannot serve. The pattern is written by paths.
+                return translateByPaths();
+            }
             String translated = write();
             if (compiles(translated)) {
                 return translated;
@@ -1315,7 +1349,7 @@ final class EcmaRegex {
 
         /**
          * Notes what encloses each group, then decides for each backreference whether {@code java.util.regex} gives
-         * it the meaning ECMA-262 does, and refuses the pattern when that cannot be shown.
+         * it the meaning ECMA-262 does in the form with markers, and throws when that cannot be shown.
          */
         private void survey(Node n, boolean lookbehind, boolean lookaround, List<Node> repeats) {
             switch (n.kind) {
@@ -1328,8 +1362,10 @@ final class EcmaRegex {
                     survey(n.subs[0], lookbehind, lookaround, repeats);
                     break;
                 case REPEAT:
-                    // A repetition of at most once has no earlier iteration.
-                    if (n.max == UNBOUNDED || n.max > 1) {
+                    // A repetition of at most once has no earlier iteration. An optional part is written with "?",
+                    // which java.util.regex goes back into as it does into an alternative. Any other count makes
+                    // it a repetition there, with what follows from that (see decide).
+                    if (n.max == UNBOUNDED || n.max > 1 || n.min == 1) {
                         repeats.add(n);
                         survey(n.subs[0], lookbehind, lookaround, repeats);
                         repeats.remove(repeats.size() - 1);
@@ -1352,13 +1388,15 @@ final class EcmaRegex {
         }
 
         /**
-         * Decides one backreference. Outside a lookbehind ECMA-262 evaluates a pattern from left to right, so a group
-         * that can have taken part comes before the backreference, and what encloses it is known.
+         * Decides whether one backreference can be written in the form with markers, and throws when it cannot (the
+         * pattern is then written by paths). Outside a lookbehind ECMA-262 evaluates a pattern from left to right, so
+         * a group that can have taken part comes before the backreference, and what encloses it is known.
          *
          * <p>A group that has taken part on every path to the backreference was set on the path
-         * {@code java.util.regex} is on, so its text is the one ECMA-262 means. The two engines differ there in one
-         * case, a repetition whose body can match the empty string: ECMA-262 refuses an empty iteration and
-         * {@code java.util.regex} takes one, which can leave a group of the body with other text.
+         * {@code java.util.regex} is on, so its text is the one ECMA-262 means, unless a repetition holds the group
+         * and not the backreference. Then the two engines can differ on which iteration the group is of: ECMA-262
+         * refuses an empty iteration and {@code java.util.regex} takes one, and {@code java.util.regex} keeps the
+         * groups of an iteration it has given back when the body has one way to match.
          *
          * <p>A group that may have taken part needs a test, and the test reads what {@code java.util.regex} kept. It
          * is sound only where that engine forgets a group when ECMA-262 does, which is on backtracking out of the
@@ -1366,7 +1404,7 @@ final class EcmaRegex {
          * match fails later. Nor is it sound for a group in a repetition, as ECMA-262 unsets the group when an
          * iteration starts and {@code java.util.regex} keeps it. A repetition that ends before the backreference is
          * therefore written with its last iteration apart (see {@link #repeat}), so that the group is one only the
-         * last iteration sets. A repetition that holds the backreference too cannot be, and is refused.
+         * last iteration sets. A repetition that holds the backreference too cannot be.
          */
         private void decide(Node n, boolean lookbehind, List<Node> repeats) {
             for (int k = 0; k < n.groups.length; k++) {
@@ -1383,27 +1421,33 @@ final class EcmaRegex {
                     continue;
                 }
                 if (lookbehind) {
-                    throw new Unsupported(REFUSED_BACKREFERENCE_IN_LOOKBEHIND);
+                    throw new Unsupported(NOT_BY_MARKERS);
                 }
                 if (inLookbehind[g]) {
-                    throw new Unsupported(REFUSED_GROUP_IN_LOOKBEHIND);
+                    throw new Unsupported(NOT_BY_MARKERS);
                 }
                 if (n.statuses[k] == DEFINITE) {
                     for (Node repeat : repeatsAround[g]) {
-                        if (!repeats.contains(repeat) && minLength(repeat.subs[0]) == 0) {
-                            throw new Unsupported(REFUSED_GROUP_IN_EMPTY_REPETITION);
+                        // java.util.regex runs a repeated group whose body has one way to match (no alternative,
+                        // no count that varies) as a unit, and when it gives back an iteration it does not restore
+                        // the groups inside the body. So a group of a repetition is not read from outside it.
+                        if (!repeats.contains(repeat)) {
+                            throw new Unsupported(NOT_BY_MARKERS);
+                        }
+                        if (inLookaround[g] && repeats.contains(repeat)) {
+                            throw new Unsupported(NOT_BY_MARKERS);
                         }
                     }
                 } else {
                     if (inLookaround[g]) {
-                        throw new Unsupported(REFUSED_GROUP_IN_LOOKAROUND);
+                        throw new Unsupported(NOT_BY_MARKERS);
                     }
                     for (Node repeat : repeatsAround[g]) {
                         if (repeats.contains(repeat)) {
-                            throw new Unsupported(REFUSED_GROUP_IN_REPETITION);
+                            throw new Unsupported(NOT_BY_MARKERS);
                         }
                         if (minLength(repeat.subs[0]) == 0) {
-                            throw new Unsupported(REFUSED_GROUP_IN_EMPTY_REPETITION);
+                            throw new Unsupported(NOT_BY_MARKERS);
                         }
                         repeat.lastApart = true;
                     }
@@ -1532,7 +1576,18 @@ final class EcmaRegex {
                     max = times(maxLength(n.subs[0]), n.max);
                     break;
                 case BACKREF:
-                    max = INFINITE;
+                    if (!precise || n.measuring) {
+                        max = INFINITE;
+                        break;
+                    }
+                    // The text of a backreference is the text of one of its groups, or nothing.
+                    n.measuring = true;
+                    for (int k = 0; k < n.groups.length; k++) {
+                        if (n.statuses[k] != NEVER) {
+                            max = Math.max(max, maxLength(groupNodes[n.groups[k]].subs[0]));
+                        }
+                    }
+                    n.measuring = false;
                     break;
                 default:
                     break;
@@ -1692,13 +1747,13 @@ final class EcmaRegex {
          * The backreference reads the groups of the second X, which only the last iteration sets, as in ECMA-262,
          * where each iteration starts by unsetting the groups of the body. The first X has groups of its own for the
          * backreferences inside it. The two forms match the same texts, as the body cannot match the empty string
-         * (such a repetition is refused), so every iteration is one ECMA-262 takes.
+         * (such a repetition is written by paths), so every iteration is one ECMA-262 takes.
          *
          * <p>A repetition X{m,n} that must run twice or more over a body that can match the empty string is written
          * as m copies of X and then {@code (?:X){0,n-m}}, when {@link #leavesEarly} says the two engines differ on
          * it. Each copy has groups of its own, and a backreference in a copy reads the groups of that copy, as
-         * ECMA-262 unsets the groups of the body when an iteration starts. A backreference after the repetition to a
-         * group of such a body is refused, so none reads the wrong copy.
+         * ECMA-262 unsets the groups of the body when an iteration starts. A pattern with a backreference after the
+         * repetition to a group of such a body is written by paths, so none reads the wrong copy.
          */
         private void repeat(Node n) {
             Node atom = n.subs[0];
@@ -1767,6 +1822,17 @@ final class EcmaRegex {
                     return emptyAnywhere(n.subs[0]);
                 case REPEAT:
                     return n.min == 0 || emptyAnywhere(n.subs[0]);
+                case BACKREF:
+                    // A backreference to groups that are never set where it stands matches the empty string.
+                    if (n.statuses == null) {
+                        return false;
+                    }
+                    for (int status : n.statuses) {
+                        if (status != NEVER) {
+                            return false;
+                        }
+                    }
+                    return true;
                 default:
                     return false;
             }
@@ -1848,8 +1914,8 @@ final class EcmaRegex {
          * takes time that grows with the square of the length of the text.
          *
          * <p>Running the body forwards where ECMA-262 runs it backwards finds a match exactly when ECMA-262 does. The
-         * two directions can differ only in what the groups of the body capture, and a backreference to a group of a
-         * lookbehind, or inside a lookbehind, is refused.
+         * two directions can differ only in what the groups of the body capture, and a pattern with a backreference
+         * to a group of a lookbehind, or inside a lookbehind, is written by paths.
          */
         private void lookbehind(Node n) {
             hasLookbehind = true;
@@ -1904,6 +1970,754 @@ final class EcmaRegex {
                 }
             }
             out.append(')');
+        }
+
+        // The translation by paths.
+        //
+        // A backreference reads what its group captured on the path the match is on. java.util.regex keeps other
+        // text in a group in three cases: a group of an earlier iteration of a repetition (ECMA-262 unsets the
+        // groups of a body when an iteration starts), a group of an iteration that matched nothing (which ECMA-262
+        // does not take once the minimum is met), and a group of a lookaround, which it does not restore when the
+        // match fails after the lookaround and goes back. So where a pattern has a backreference that the marker
+        // form above cannot serve, the translation does not ask java.util.regex whether a group took part. It is
+        // written so that each backreference stands on a path of the pattern text on which its group is known to
+        // have been set, by a group of the translation that the path went through, or known not to have been.
+        //
+        // A choice that decides whether a group read later is set (an alternative, an optional part, the number of
+        // iterations of a repetition) is a decision. Every way of taking the decisions of a scope is a plan, and the
+        // scope is written once for each plan, as an alternative, with groups of its own. A scope is the pattern, the
+        // body of a repetition, an alternative that sets nothing read after it, or a lookaround none of whose groups
+        // is read after it. A match of the pattern is a match of one of the plans, so the order of the plans does not
+        // matter, except in a lookaround whose groups are read after it: that one takes the first match of its body,
+        // and is written only when it has no decision.
+
+        /** The most plans of one scope. */
+        static final int MAX_PLANS = 256;
+        /** The most text of a translation by paths. */
+        static final int MAX_PATHS_LENGTH = 1 << 20;
+        /**
+         * The most text written while a translation by paths is made. A scope inside a scope is written again for
+         * each plan of the outer one, so this is what bounds the time a translation takes.
+         */
+        static final long MAX_PATHS_WRITTEN = 16L * MAX_PATHS_LENGTH;
+
+        /** What a path has set: for each group of the pattern, the group of the translation, or null. */
+        private static final class Env {
+            String[] name;
+            /** Whether the group was set in a lookaround, which java.util.regex does not undo. */
+            boolean[] look;
+            /** The count of choices written when that lookaround ended. */
+            int[] mark;
+            /** The body of a repetition, by its serial number, that was open when the group was set, or 0. */
+            int[] body;
+            /** Whether the path wrote nothing for the group to match, so that it holds the empty string. */
+            boolean[] empty;
+
+            Env(int n) {
+                name = new String[n];
+                look = new boolean[n];
+                mark = new int[n];
+                body = new int[n];
+                empty = new boolean[n];
+            }
+
+            Env copy() {
+                Env e = new Env(0);
+                e.name = name.clone();
+                e.look = look.clone();
+                e.mark = mark.clone();
+                e.body = body.clone();
+                e.empty = empty.clone();
+                return e;
+            }
+        }
+
+        private static final BitSet NOTHING = new BitSet();
+
+        private boolean precise;
+        private Env env;
+        /** The groups some backreference can read, and those of them that a plan wrote a backreference to. */
+        private BitSet read;
+        private final BitSet used = new BitSet();
+        private int names;
+        /** The places written so far at which java.util.regex can take another way when the match fails later. */
+        private int choices;
+        private int bodySerial;
+        private final List<Integer> openBodies = new ArrayList<>();
+        private List<int[]> decisions;
+        private int decisionAt;
+        /** Inside a lookaround whose groups are read after it, where the first match of the body is the one taken. */
+        private boolean ordered;
+        private boolean changed;
+        private long written;
+
+        private String translateByPaths() {
+            precise = true;
+            do {
+                changed = false;
+                clearLengths(root);
+                flow(root, new BitSet(), new BitSet(), false);
+                root = simplify(root);
+            } while (changed);
+            index(root);
+            read = root.reads;
+            String translated = writePaths();
+            while (dropUnused(root)) {
+                // A backreference that no plan wrote reads groups that are unset or empty on every path to it. The
+                // pattern is the same without it, and has fewer decisions.
+                do {
+                    changed = false;
+                    clearLengths(root);
+                    flow(root, new BitSet(), new BitSet(), false);
+                    root = simplify(root);
+                } while (changed);
+                index(root);
+                read = root.reads;
+                translated = writePaths();
+            }
+            if (compiles(translated)) {
+                return translated;
+            }
+            if (hasLookbehind) {
+                searchingLookbehind = true;
+                translated = writePaths();
+                if (compiles(translated)) {
+                    return translated;
+                }
+            }
+            throw new Unsupported(REFUSED_BY_ENGINE);
+        }
+
+        /** Makes of every backreference to groups no plan read a backreference to nothing. */
+        private boolean dropUnused(Node n) {
+            boolean any = false;
+            if (n.kind == BACKREF && !n.dropped) {
+                n.dropped = true;
+                for (int g : n.groups) {
+                    n.dropped &= !used.get(g);
+                }
+                any = n.dropped;
+            }
+            for (Node sub : n.subs) {
+                any |= dropUnused(sub);
+            }
+            return any;
+        }
+
+        private static void clearLengths(Node n) {
+            n.minLength = -1;
+            for (Node sub : n.subs) {
+                clearLengths(sub);
+            }
+        }
+
+        /**
+         * Removes what ECMA-262 never runs or runs to no effect, which leaves the pattern with the same meaning: a
+         * repetition of no times, a repetition of a body that can only match the empty string (ECMA-262 does not
+         * take an iteration that matched nothing once the minimum is met, so such a body runs once when the minimum
+         * is one or more, and not at all otherwise), and a backreference to groups that are never set where it
+         * stands or that can only capture the empty string.
+         */
+        private Node simplify(Node n) {
+            for (int k = 0; k < n.subs.length; k++) {
+                n.subs[k] = simplify(n.subs[k]);
+            }
+            Node never = fails(n);
+            if (never != n) {
+                changed = true;
+                return never;
+            }
+            if (n.kind == REPEAT) {
+                if (n.max == 0) {
+                    changed = true;
+                    return new Node(EMPTY);
+                }
+                if (maxLength(n.subs[0]) == 0) {
+                    changed = true;
+                    return n.min == 0 ? new Node(EMPTY) : n.subs[0];
+                }
+            } else if (n.kind == BACKREF) {
+                for (int k = 0; k < n.groups.length && !n.dropped; k++) {
+                    if (n.statuses[k] != NEVER && maxLength(groupNodes[n.groups[k]].subs[0]) != 0) {
+                        return n;
+                    }
+                }
+                changed = true;
+                return new Node(EMPTY);
+            }
+            return n;
+        }
+
+        private static boolean isFailure(Node n) {
+            return n.kind == SET && n.set.length == 0 && n.parts == null;
+        }
+
+        /**
+         * What a node whose parts have been simplified comes to when some part of it can never match: a failure
+         * (the empty class) for a sequence with a failing term, a group or a lookahead of a failure, and a negative
+         * lookaround of a body that matches the empty string anywhere. Alternatives that fail are left out. A
+         * negative lookaround of a failure always holds, and a repetition of one runs no times.
+         */
+        private static Node fails(Node n) {
+            switch (n.kind) {
+                case CAT:
+                    for (Node sub : n.subs) {
+                        if (isFailure(sub)) {
+                            return sub;
+                        }
+                    }
+                    return n;
+                case ALT: {
+                    int kept = 0;
+                    for (Node sub : n.subs) {
+                        kept += isFailure(sub) ? 0 : 1;
+                    }
+                    if (kept == n.subs.length) {
+                        return n;
+                    }
+                    if (kept == 0) {
+                        return n.subs[0];
+                    }
+                    Node[] subs = new Node[kept];
+                    int m = 0;
+                    for (Node sub : n.subs) {
+                        if (!isFailure(sub)) {
+                            subs[m++] = sub;
+                        }
+                    }
+                    if (kept == 1) {
+                        return subs[0];
+                    }
+                    Node alt = new Node(ALT);
+                    alt.subs = subs;
+                    return alt;
+                }
+                case GROUP:
+                    return isFailure(n.subs[0]) ? n.subs[0] : n;
+                case REPEAT:
+                    if (isFailure(n.subs[0])) {
+                        return n.min == 0 ? new Node(EMPTY) : n.subs[0];
+                    }
+                    return n;
+                case LOOK:
+                    if (isFailure(n.subs[0])) {
+                        return n.negative ? new Node(EMPTY) : n.subs[0];
+                    }
+                    if (n.negative && emptyAnywhere(n.subs[0])) {
+                        Node failure = new Node(SET);
+                        failure.set = NO_CHARACTERS;
+                        return failure;
+                    }
+                    return n;
+                default:
+                    return n;
+            }
+        }
+
+        /** Notes for every node the groups it can set for what follows it, and the groups its backreferences read. */
+        private void index(Node n) {
+            n.sets = new BitSet();
+            n.reads = new BitSet();
+            for (Node sub : n.subs) {
+                index(sub);
+                n.reads.or(sub.reads);
+                if (!(n.kind == LOOK && n.negative)) {
+                    n.sets.or(sub.sets);
+                }
+            }
+            if (n.kind == BACKREF) {
+                for (int k = 0; k < n.groups.length; k++) {
+                    if (n.statuses[k] != NEVER) {
+                        n.reads.set(n.groups[k]);
+                    }
+                }
+            } else if (n.kind == GROUP && n.group != 0) {
+                n.sets.set(n.group);
+            }
+        }
+
+        private String writePaths() {
+            out.setLength(0);
+            used.clear();
+            written = 0;
+            names = 0;
+            choices = 0;
+            bodySerial = 0;
+            unrolledCopies = 0;
+            unrolledLength = 0;
+            hasLookbehind = false;
+            ordered = false;
+            openBodies.clear();
+            env = new Env(groupNodes.length);
+            String text = scope(root, NOTHING, null);
+            if (hasLookbehind) {
+                text = "(?:" + text + ")(?:|𐀀)";
+            }
+            return numbered(text);
+        }
+
+        /**
+         * Gives the groups of a translation their numbers. While it is written its groups have names, as a plan that
+         * is written again takes new groups.
+         */
+        private static String numbered(String text) {
+            Map<String, Integer> numbers = new HashMap<>();
+            int at = 0;
+            while ((at = text.indexOf("(?<g", at)) >= 0) {
+                int end = text.indexOf('>', at);
+                numbers.put(text.substring(at + 3, end), numbers.size() + 1);
+                at = end;
+            }
+            if (numbers.isEmpty()) {
+                return text;
+            }
+            StringBuilder sb = new StringBuilder(text.length());
+            int from = 0;
+            while (from < text.length()) {
+                int open = text.indexOf("(?<g", from);
+                int ref = text.indexOf("\\k<g", from);
+                if (open < 0 && ref < 0) {
+                    break;
+                }
+                if (ref < 0 || (open >= 0 && open < ref)) {
+                    sb.append(text, from, open).append('(');
+                    from = text.indexOf('>', open) + 1;
+                } else {
+                    int end = text.indexOf('>', ref);
+                    // The parentheses keep a digit that follows from being read as part of the number.
+                    sb.append(text, from, ref).append("(?:\\").append(numbers.get(text.substring(ref + 3, end)))
+                            .append(')');
+                    from = end + 1;
+                }
+            }
+            return sb.append(text, from, text.length()).toString();
+        }
+
+        private String newName() {
+            return "g" + ++names;
+        }
+
+        private void refer(String name) {
+            out.append("\\k<").append(name).append('>');
+        }
+
+        private static BitSet both(BitSet a, BitSet b) {
+            BitSet c = (BitSet) a.clone();
+            c.and(b);
+            return c;
+        }
+
+        /** Notes that the path has set a group, as the group of the translation whose body starts at {@code from}. */
+        private void set(int group, String name, int from) {
+            env.name[group] = name;
+            env.look[group] = false;
+            env.body[group] = openBodies.isEmpty() ? 0 : openBodies.get(openBodies.size() - 1);
+            boolean empty = true;
+            for (int k = from; k < out.length() && empty; k++) {
+                // Only groups that hold nothing.
+                empty = out.charAt(k) == ')' || out.indexOf("(?:", k) == k;
+                k += out.charAt(k) == ')' ? 0 : 2;
+            }
+            env.empty[group] = empty;
+        }
+
+        private void unset(BitSet groups) {
+            for (int g = groups.nextSetBit(0); g >= 0; g = groups.nextSetBit(g + 1)) {
+                env.name[g] = null;
+            }
+        }
+
+        /** Takes a decision of the plan being written: the one the plan holds, or the first way when it is new. */
+        private int choose(int ways) {
+            if (ordered) {
+                throw new Unsupported(REFUSED_GROUP_IN_LOOKAROUND);
+            }
+            if (decisionAt == decisions.size()) {
+                decisions.add(new int[] {0, ways});
+            }
+            return decisions.get(decisionAt++)[0];
+        }
+
+        /** Something that writes text on the plan being written. */
+        private interface Writer {
+            void write();
+        }
+
+        /**
+         * Writes a scope: the node once for each plan, and returns the text, which is one alternative for each plan
+         * inside a group when there are several. The groups in {@code reset}, if any, are unset where each plan
+         * starts. What the plans set is forgotten when the scope ends.
+         */
+        private String scope(Node n, BitSet live, BitSet reset) {
+            List<String> plans = plans(() -> p(n, live), reset);
+            if (plans.size() == 1) {
+                return plans.get(0);
+            }
+            if (ordered) {
+                throw new Unsupported(REFUSED_GROUP_IN_LOOKAROUND);
+            }
+            choices++;
+            return "(?:" + String.join("|", plans) + ")";
+        }
+
+        /** The text a writer writes, once for each way of taking the decisions it meets. */
+        private List<String> plans(Writer writer, BitSet reset) {
+            Env entry = env;
+            List<int[]> outerDecisions = decisions;
+            int outerAt = decisionAt;
+            List<int[]> mine = new ArrayList<>();
+            List<String> plans = new ArrayList<>();
+            int start = out.length();
+            int length = 0;
+            // The copies of bodies are counted along one way through the pattern, which is what the depth of the
+            // recursion of java.util.regex follows.
+            int copies = unrolledCopies;
+            int copied = unrolledLength;
+            int most = copies;
+            int longest = copied;
+            boolean more;
+            do {
+                unrolledCopies = copies;
+                unrolledLength = copied;
+                env = entry.copy();
+                if (reset != null) {
+                    unset(reset);
+                }
+                decisions = mine;
+                decisionAt = 0;
+                writer.write();
+                String plan = out.substring(start);
+                out.setLength(start);
+                plans.add(plan);
+                most = Math.max(most, unrolledCopies);
+                longest = Math.max(longest, unrolledLength);
+                length += plan.length();
+                written += plan.length();
+                if (plans.size() > MAX_PLANS || start + length > MAX_PATHS_LENGTH || written > MAX_PATHS_WRITTEN) {
+                    throw new Unsupported(REFUSED_TOO_MANY_PATHS);
+                }
+                more = false;
+                while (!mine.isEmpty()) {
+                    int[] last = mine.get(mine.size() - 1);
+                    if (last[0] + 1 < last[1]) {
+                        last[0]++;
+                        more = true;
+                        break;
+                    }
+                    mine.remove(mine.size() - 1);
+                }
+            } while (more);
+            decisions = outerDecisions;
+            decisionAt = outerAt;
+            env = entry;
+            unrolledCopies = most;
+            unrolledLength = longest;
+            return plans;
+        }
+
+        /** Writes a node on the plan being written. {@code live} holds the groups that are read after the node. */
+        private void p(Node n, BitSet live) {
+            switch (n.kind) {
+                case CAT: {
+                    BitSet[] after = new BitSet[n.subs.length];
+                    BitSet later = live;
+                    for (int k = n.subs.length - 1; k >= 0; k--) {
+                        after[k] = later;
+                        if (!n.subs[k].reads.isEmpty()) {
+                            later = (BitSet) later.clone();
+                            later.or(n.subs[k].reads);
+                        }
+                    }
+                    for (int k = 0; k < n.subs.length; k++) {
+                        p(n.subs[k], after[k]);
+                    }
+                    break;
+                }
+                case ALT:
+                    if (n.sets.intersects(live)) {
+                        // Which alternative is taken decides what the groups read later hold.
+                        out.append("(?:");
+                        p(n.subs[choose(n.subs.length)], live);
+                        out.append(')');
+                    } else {
+                        out.append("(?:");
+                        for (int k = 0; k < n.subs.length; k++) {
+                            if (k > 0) {
+                                out.append('|');
+                            }
+                            out.append(scope(n.subs[k], live, null));
+                        }
+                        out.append(')');
+                        if (n.subs.length > 1) {
+                            choices++;
+                        }
+                    }
+                    break;
+                case GROUP:
+                    if (n.group != 0 && read.get(n.group)) {
+                        String name = newName();
+                        out.append("(?<").append(name).append('>');
+                        int from = out.length();
+                        p(n.subs[0], live);
+                        set(n.group, name, from);
+                        out.append(')');
+                    } else {
+                        out.append("(?:");
+                        p(n.subs[0], live);
+                        out.append(')');
+                    }
+                    break;
+                case REPEAT:
+                    repetition(n, live);
+                    break;
+                case LOOK:
+                    if (n.behind) {
+                        behind(n, live);
+                    } else {
+                        ahead(n, live);
+                    }
+                    break;
+                case BACKREF:
+                    reference(n);
+                    break;
+                default:
+                    node(n);
+                    break;
+            }
+        }
+
+        /**
+         * Writes a repetition. When none of the groups of its body is read after it, it is written as it is, with
+         * the body as a scope of its own (the groups of a body are unset when an iteration starts, so nothing an
+         * iteration sets is read in another).
+         *
+         * <p>Otherwise the iteration that runs last, whose groups are the ones read, is written apart, after the
+         * others, and how many iterations run is a decision of the plan:
+         *
+         * <ul>
+         *   <li>none, when the minimum is 0: nothing is written, and the groups stay as they were;
+         *   <li>exactly the minimum m, when it is 1 or more: {@code (?:X){m-1}} and then the body;
+         *   <li>more than the minimum: {@code (?:X){m,n-1}} and then the body, which must not match the empty
+         *       string here, as ECMA-262 does not take an iteration past the minimum that matched nothing.
+         * </ul>
+         *
+         * <p>java.util.regex takes an iteration that matched nothing as the last one of a repetition. In the
+         * repetitions written here that changes no answer: none of their groups is read after them, and without the
+         * empty iteration the match is at the same place.
+         */
+        private void repetition(Node n, BitSet live) {
+            Node body = n.subs[0];
+            if (!n.sets.intersects(live)) {
+                repeated(body, n.min, n.max, n.lazy);
+                return;
+            }
+            boolean canRunMore = n.max == UNBOUNDED || n.max > Math.max(n.min, 1) || n.min == 0;
+            int way;
+            if (n.min == 0) {
+                way = choose(2) == 0 ? 2 : 0;
+            } else {
+                way = canRunMore ? 1 + choose(2) : 1;
+            }
+            if (way == 0) {
+                return;
+            }
+            if (way == 1) {
+                repeated(body, n.min - 1, n.min - 1, false);
+                unset(body.sets);
+                out.append("(?:");
+                p(body, live);
+                out.append(')');
+                return;
+            }
+            repeated(body, n.min, n.max == UNBOUNDED ? UNBOUNDED : n.max - 1, n.lazy);
+            unset(body.sets);
+            if (minLength(body) > 0) {
+                out.append("(?:");
+                p(body, live);
+                out.append(')');
+                return;
+            }
+            String taken = newName();
+            String rest = newName();
+            out.append("(?<").append(taken).append('>');
+            p(body, live);
+            out.append(")(?=(?<").append(rest).append('>').append(ANY).append("*))(?!");
+            refer(taken);
+            refer(rest);
+            out.append("\\z)");
+        }
+
+        /** Writes a repetition none of whose groups is read after it. */
+        private void repeated(Node body, int min, int max, boolean lazy) {
+            if (max == 0) {
+                return;
+            }
+            if (min >= 2 && minLength(body) == 0 && maxLength(body) != 0 && !emptyAnywhere(body)) {
+                for (int k = 0; k < min; k++) {
+                    copyOfBody(body);
+                }
+                if (max != min) {
+                    copyOfBody(body);
+                    quantifier(0, max == UNBOUNDED ? UNBOUNDED : max - min, lazy);
+                    choices++;
+                }
+                return;
+            }
+            out.append("(?:").append(bodyText(body)).append(')');
+            if (min != 1 || max != 1) {
+                quantifier(min, max, lazy);
+            }
+            if (min != max) {
+                choices++;
+            }
+        }
+
+        private void copyOfBody(Node body) {
+            String text = bodyText(body);
+            out.append("(?:").append(text).append(')');
+            unrolledLength += text.length();
+            if (++unrolledCopies > MAX_UNROLLED_COPIES || unrolledLength > MAX_UNROLLED_LENGTH) {
+                throw new Unsupported(REFUSED_EMPTY_ITERATIONS);
+            }
+        }
+
+        /** The body of a repetition as a scope, with its groups unset where it starts. */
+        private String bodyText(Node body) {
+            openBodies.add(++bodySerial);
+            String text = scope(body, NOTHING, body.sets);
+            openBodies.remove(openBodies.size() - 1);
+            return text;
+        }
+
+        /**
+         * Writes a lookahead. One whose groups are not read after it is a scope. One whose groups are read after it
+         * is written on the plan, and its groups are noted as set in a lookaround.
+         */
+        private void ahead(Node n, BitSet live) {
+            boolean wasOrdered = ordered;
+            if (n.negative || !n.sets.intersects(live)) {
+                ordered = false;
+                String text = scope(n.subs[0], NOTHING, null);
+                ordered = wasOrdered;
+                out.append(n.negative ? "(?!" : "(?=").append(text).append(')');
+                return;
+            }
+            Env before = env.copy();
+            Node body = n.subs[0];
+            if (body.kind == ALT) {
+                // The first alternative that matches is the one taken: a decision of the plan, written after a
+                // negative lookahead for each alternative before it. One that matches the empty string anywhere is
+                // taken before any after it.
+                int ways = 1;
+                while (ways < body.subs.length && !emptyAnywhere(body.subs[ways - 1])) {
+                    ways++;
+                }
+                int way = ways > 1 ? choose(ways) : 0;
+                ordered = false;
+                for (int k = 0; k < way; k++) {
+                    out.append("(?!").append(scope(body.subs[k], NOTHING, null)).append(')');
+                }
+                body = body.subs[way];
+            }
+            ordered = true;
+            out.append("(?=");
+            p(body, live);
+            out.append(')');
+            ordered = wasOrdered;
+            noteLookaround(n, before);
+        }
+
+        /**
+         * Writes a lookbehind none of whose groups is read, in it or after it. It holds where its body matches some
+         * stretch of the text that ends there, whichever way the body is run, so it is written forwards (see
+         * {@link #lookbehind}), in the form that searches for its start when it has a backreference, whose length
+         * java.util.regex cannot bound. ECMA-262 runs a lookbehind backwards, which shows in what its groups
+         * capture, so one whose groups are read is refused.
+         */
+        private void behind(Node n, BitSet live) {
+            Node body = n.subs[0];
+            if (!n.negative && body.sets.intersects(live)) {
+                throw new Unsupported(REFUSED_GROUP_IN_LOOKBEHIND);
+            }
+            if (body.sets.intersects(body.reads)) {
+                throw new Unsupported(REFUSED_BACKREFERENCE_IN_LOOKBEHIND);
+            }
+            hasLookbehind = true;
+            boolean wasOrdered = ordered;
+            ordered = false;
+            String text = scope(body, NOTHING, null);
+            ordered = wasOrdered;
+            wrapBehind(n.negative, text, body.reads.isEmpty() && maxLength(body) <= MAX_DIRECT_LOOKBEHIND);
+        }
+
+        private void wrapBehind(boolean negative, String text, boolean bounded) {
+            if (!searchingLookbehind && bounded) {
+                out.append(negative ? "(?<!" : "(?<=").append(text).append(')');
+                return;
+            }
+            String rest = newName();
+            out.append("(?=(?<").append(rest).append('>').append(ANY).append("*))").append(negative ? "(?<!" : "(?<=")
+                    .append("(?=(?:").append(text).append(')');
+            refer(rest);
+            out.append("\\z)").append(ANY).append("{0,2147483647})");
+        }
+
+        /** Notes the groups a lookaround has set as set in a lookaround. */
+        private void noteLookaround(Node n, Env before) {
+            for (int g = n.sets.nextSetBit(0); g >= 0; g = n.sets.nextSetBit(g + 1)) {
+                if (env.name[g] != null && !env.name[g].equals(before.name[g])) {
+                    env.look[g] = true;
+                    env.mark[g] = choices;
+                    env.body[g] = openBodies.isEmpty() ? 0 : openBodies.get(openBodies.size() - 1);
+                }
+            }
+        }
+
+        /**
+         * Writes a backreference: the group of the translation that the path set, or nothing when the path set none.
+         *
+         * <p>A group set in a lookaround holds what the lookaround captured when it last matched, also after the
+         * match went back to before that. That can only be seen when the lookaround runs again and the match then
+         * goes back to a place between it and the backreference, so in a repetition that holds both, with a place
+         * between them where the match can take another way. Such a backreference is refused.
+         */
+        private void reference(Node n) {
+            int group = 0;
+            for (int g : n.groups) {
+                if (env.name[g] != null) {
+                    if (group != 0) {
+                        throw new IllegalStateException("two groups of one name on a path");
+                    }
+                    group = g;
+                }
+            }
+            if (group == 0 || env.empty[group]) {
+                return;
+            }
+            if (env.look[group] && openBodies.contains(env.body[group]) && choices > env.mark[group]) {
+                throw new Unsupported(REFUSED_LOOKAROUND_IN_REPETITION);
+            }
+            used.set(group);
+            if (n.fold) {
+                folded(group);
+            } else {
+                refer(env.name[group]);
+            }
+        }
+
+        /**
+         * Writes a case-insensitive backreference: with the comparison of java.util.regex that ignores the case of
+         * ASCII letters where that is the comparison ECMA-262 makes (see {@link #comparesIgnoringAsciiCase}, which
+         * refuses the others).
+         */
+        private void folded(int group) {
+            if (comparesIgnoringAsciiCase(group)) {
+                out.append("(?i:");
+                refer(env.name[group]);
+                out.append(')');
+            } else {
+                refer(env.name[group]);
+            }
         }
     }
 

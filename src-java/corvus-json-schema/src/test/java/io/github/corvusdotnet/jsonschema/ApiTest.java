@@ -185,12 +185,19 @@ class ApiTest {
                 "{\"patternProperties\": {\"^(?:(?<k>a)|(?<k>b))\\\\k<k>$\": {\"type\": \"number\"}}}");
         assertTrue(names.isValid("{\"aa\": 1, \"bb\": 2, \"ab\": \"x\"}"));
         assertFalse(names.isValid("{\"bb\": \"x\"}"));
+        // A backreference means what ECMA-262 says where java.util.regex differs: the iterations of a repetition
+        // unset its groups.
+        Validator repeated = Validator.compile("{\"pattern\": \"^(?:(a)|x)*\\\\1$\"}");
+        assertTrue(repeated.isValid("\"ax\""));
+        assertTrue(repeated.isValid("\"xaa\""));
+        assertFalse(repeated.isValid("\"axa\""));
         // A valid pattern whose meaning java.util.regex cannot give is an error that says so. It is never run with
         // another meaning.
         SchemaCompilationException refused = assertThrows(SchemaCompilationException.class,
                 () -> Validator.compile("{\"pattern\": \"(?<=\\\\1(a))b\"}"));
         assertEquals("Unsupported regular expression '(?<=\\1(a))b' in pattern. It is valid ECMA-262, but this library "
-                + "cannot run a backreference inside a lookbehind with the meaning ECMA-262 gives it.", refused.getMessage());
+                + "cannot run a backreference inside a lookbehind to a group of that lookbehind with the meaning "
+                + "ECMA-262 gives it.", refused.getMessage());
         SchemaCompilationException invalid = assertThrows(SchemaCompilationException.class,
                 () -> Validator.compile("{\"patternProperties\": {\"(?<a>x)(?<a>y)\": {}}}"));
         assertEquals("Invalid regular expression '(?<a>x)(?<a>y)' in patternProperties.", invalid.getMessage());

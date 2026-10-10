@@ -123,17 +123,30 @@ flag grammar.
 - An iteration of a counted repetition that matches nothing does not end the repetition while iterations are still
   due, so `(^|x){2}a` matches "xa" as ECMA-262 defines, where `java.util.regex` does not. Such a repetition is
   written with a copy of its body for each iteration it must run.
+- A backreference reads what ECMA-262 says its group holds, where `java.util.regex` reads something else. A group
+  that did not take part reads as the empty string. The groups of a repeated body are unset when an iteration
+  starts, so `^(?:(a)|x)*\1$` takes "ax" and not "axa", and an iteration that matched nothing leaves no group set.
+  Such a pattern is written once for each way through the groups it reads, so its translation can be several times
+  the length of the pattern.
 
 The patterns are run by `java.util.regex`, after translation. A few valid patterns cannot be given their ECMA-262
-meaning there. Most have a backreference: one inside a lookbehind, or to a group inside a lookbehind; one to a
-group of a lookaround that may not have matched; one to a group that the repetition holding both can skip, or of a
-repetition that can match the empty string; and a case-insensitive one (inside `(?i:...)`), unless the only cased
-characters its group can hold are ASCII letters (with the `u` flag grammar, not `k` or `s`, which U+212A and U+017F
-fold to) and it can hold no character beyond the Basic Multilingual Plane. The other is a repetition that must run
-more than 200 times over a body that matches the empty string in some places only, such as `(^|x){201}`. Compiling a
-schema with such a pattern throws `SchemaCompilationException` with a message that starts "Unsupported regular
-expression" and names the construct. It is never run with another meaning. The `regex` format still accepts it, as it
-is a valid pattern.
+meaning there, and compiling a schema with one throws `SchemaCompilationException` with a message that starts
+"Unsupported regular expression" and names the construct. It is never run with another meaning. The `regex` format
+still accepts it, as it is a valid pattern. They are:
+
+- a backreference inside a lookbehind to a group of that lookbehind, or one to a group inside a lookbehind, as
+  ECMA-262 matches a lookbehind backwards;
+- a backreference to a group that a lookahead sets on only some of the ways it can match, as in `(?=(a)?b)\1`
+  (alternatives of the whole lookahead, as in `(?=(a)|b)\1`, are written);
+- a backreference to a group of a lookaround, when a repetition holds both and the match can go back to a place
+  between them, as in `^(?:(?=([ab]))[ab](?:c|ca)\1)*$`;
+- a backreference inside a case-insensitive group (`(?i:...)`), unless the only cased characters its group can hold
+  are ASCII letters (with the `u` flag grammar, not `k` or `s`, which U+212A and U+017F fold to) and it can hold no
+  character beyond the Basic Multilingual Plane;
+- a pattern that would be written with more than 256 alternatives for the ways through the groups it reads, or with
+  more than 1,048,576 characters;
+- a repetition that must run more than 200 times over a body that matches the empty string in some places only, such
+  as `(^|x){201}`.
 
 ## Performance
 
