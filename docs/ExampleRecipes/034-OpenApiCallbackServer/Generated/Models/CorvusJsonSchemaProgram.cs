@@ -51,6 +51,7 @@ internal static partial class CorvusJsonSchemaProgram
             AssertFormat = true,
             AssertFormatInLegacyDrafts = true,
             RegexProvider = GetRegex,
+            RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(10000),
         };
     }
 
@@ -79,7 +80,7 @@ internal static partial class CorvusJsonSchemaProgram
 
     // Program image: 1913 bytes.
     private static ReadOnlySpan<byte> ImageBase64 =>
-        "Q0pTUAwABgAOAAD0AWNvcnZ1cy1zY2hlbWE6Ly8vZXZlbnQtYXBpLmpzb24jL3dlYmhvb2tzL3N5c3RlbUFsZXJ0L3Bvc3QvcmVxdWVzdEJvZHkvY29udGVu"u8 +
+        "Q0pTUA4ABgAOAAD0AWNvcnZ1cy1zY2hlbWE6Ly8vZXZlbnQtYXBpLmpzb24jL3dlYmhvb2tzL3N5c3RlbUFsZXJ0L3Bvc3QvcmVxdWVzdEJvZHkvY29udGVu"u8 +
         "dC9hcHBsaWNhdGlvbn4xanNvbi9zY2hlbWEvcHJvcGVydGllcy9hbGVydElkBOACY29ydnVzLXNjaGVtYTovLy9ldmVudC1hcGkuanNvbiMvcGF0aHMvfjFz"u8 +
         "dWJzY3JpcHRpb25zL3Bvc3QvY2FsbGJhY2tzL29uRXZlbnQveyRyZXF1ZXN0LmJvZHkjfjFjYWxsYmFja1VybH0vcG9zdC9yZXF1ZXN0Qm9keS9jb250ZW50"u8 +
         "L2FwcGxpY2F0aW9ufjFqc29uL3NjaGVtYS9wcm9wZXJ0aWVzL3BheWxvYWQK5AJjb3J2dXMtc2NoZW1hOi8vL2V2ZW50LWFwaS5qc29uIy9wYXRocy9+MXN1"u8 +
