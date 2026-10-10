@@ -41,7 +41,7 @@ uses
 
 const
   { JsonSchemaVersion is the version of this package. }
-  JsonSchemaVersion = '0.1.0';
+  JsonSchemaVersion = '0.1.1';
 
 type
   { EJsonSchemaError is the ancestor of the exceptions this unit raises. Utf8Message is the message as UTF-8. }

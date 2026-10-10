@@ -448,6 +448,33 @@ begin
   end;
 end;
 
+{ A "$" inside a separated list holds only at the end of the string. (The matcher for a list dropped a "$" at the end
+  of its repeated group and after its first item, so the first two patterns were matched as ^x(,a)*$ and the third
+  as ^(a,)*b$.) The answers are those of V8. }
+procedure TestASeparatedListKeepsAnAnchorInsideIt;
+var
+  V: IJsonSchemaValidator;
+begin
+  V := MustCompile('{ "pattern": "^x(,a$)*$" }');
+  ExpectValid(V, '"x"', True);
+  ExpectValid(V, '"x,a"', True);
+  ExpectValid(V, '"x,a,a"', False);
+  V := MustCompile('{ "pattern": "^x$(,a)*$" }');
+  ExpectValid(V, '"x"', True);
+  ExpectValid(V, '"x,a"', False);
+  V := MustCompile('{ "pattern": "^(a,$)*b$" }');
+  ExpectValid(V, '"b"', True);
+  ExpectValid(V, '"a,b"', False);
+  { A pattern for property names is matched the same way. }
+  V := MustCompile('{ "patternProperties": { "^x(,a$)*$": false } }');
+  ExpectValid(V, '{"x,a": 1}', False);
+  ExpectValid(V, '{"x,a,a": 1}', True);
+  { An escaped "$" is a literal character. }
+  V := MustCompile('{ "pattern": "^x(,a\\$)*$" }');
+  ExpectValid(V, '"x,a$,a$"', True);
+  ExpectValid(V, '"x,a,a"', False);
+end;
+
 procedure TestNumbersAreComparedExactlyForMultipleOf;
 var
   V: IJsonSchemaValidator;
@@ -1347,6 +1374,7 @@ begin
   TestInPlaceRecursionBeyondMaxDepthIsAnError;
   TestIsValidAgreesForDocumentsAndTextBeyondMaxDepth;
   TestNotOnAnInPlaceCycleStopsAtMaxDepth;
+  TestASeparatedListKeepsAnAnchorInsideIt;
   TestNumbersAreComparedExactlyForMultipleOf;
   TestValidatorsAreSafeForConcurrentUse;
   TestDiscriminatedOneOfAndAnyOfAgreeWithExhaustiveEvaluation;

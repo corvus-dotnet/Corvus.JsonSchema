@@ -1087,6 +1087,178 @@ begin
   M('^\p{L}+$', 'a1', False);
 end;
 
+{ A shape that cannot express an anchor or an assertion leaves the pattern to the engine. The separated list dropped
+  a "$" at the end of its repeated group and after its first item (v0.1.0), so "^x(,a$)*$" took "x,a,a", which has a
+  "$" before its second ",a".
+
+  Each case is a pattern with an anchor, a word boundary or a lookaround in a place where a matcher for a shape could
+  lose it, or with an escaped "$" or "^", which is a literal character. Yes holds the texts the pattern matches and No
+  the texts it does not, each text after a "|". The answers are those of V8: new RegExp(pattern, "u").test(text). }
+procedure TestAnAnchorOrAnAssertionInsideAShapeIsNotDropped;
+type
+  TAnchorCase = record
+    P, Yes, No: UTF8String;
+  end;
+const
+  Cases: array[0..100] of TAnchorCase = (
+    (P: '^x(,a$)*$'; Yes: '|x|x,a'; No: '|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^x(,a$)+$'; Yes: '|x,a'; No: '|x|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^x(?:,a$)*$'; Yes: '|x|x,a'; No: '|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^x$(,a)*$'; Yes: '|x'; No: '|x,a|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^(x$)(,a)*$'; Yes: '|x'; No: '|x,a|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^(?:x$)(,a)+$'; Yes: ''; No: '|x|x,a|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^$(,a)*$'; Yes: '|'; No: '|,a|,a,a|a'),
+    (P: '^(a,$)*b$'; Yes: '|b'; No: '|a,b|a,a,b|a,||a,a'),
+    (P: '^(a,$)+b$'; Yes: ''; No: '|b|a,b|a,a,b|a,||a,a'),
+    (P: '^(?:a,$)*b$'; Yes: '|b'; No: '|a,b|a,a,b|a,||a,a'),
+    (P: '^([a-z]+)(\.[a-z]+$)*$'; Yes: '|a|a.b'; No: '|a.b.c|a.|'),
+    (P: '^([a-z]+\.$)*[a-z]+$'; Yes: '|a'; No: '|a.b|a.b.c|.a|'),
+    (P: '^x(,a$$)*$'; Yes: '|x|x,a'; No: '|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^x(^,a)*$'; Yes: '|x'; No: '|x,a|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^x(,^a)*$'; Yes: '|x'; No: '|x,a|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^^x(,a)*$'; Yes: '|x|x,a|x,a,a|x,a,a,a'; No: '||x,|x,b'),
+    (P: '^(^x)(,a)*$'; Yes: '|x|x,a|x,a,a|x,a,a,a'; No: '||x,|x,b'),
+    (P: '^(^a,)*b$'; Yes: '|b|a,b'; No: '|a,a,b|a,||a,a'),
+    (P: '^(a,)*^b$'; Yes: '|b'; No: '|a,b|a,a,b|a,||a,a'),
+    (P: '^x(,(a$))*$'; Yes: '|x|x,a'; No: '|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^x(,(?:a$))*$'; Yes: '|x|x,a'; No: '|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^x(,a|$)*$'; Yes: '|x|x,a|x,a,a|x,a,a,a'; No: '||x,|x,b'),
+    (P: '^x(,(a|$))*$'; Yes: '|x|x,a|x,a,a|x,a,a,a|x,'; No: '||x,b'),
+    (P: '^x((^|,)a)*$'; Yes: '|x|x,a|x,a,a|x,a,a,a'; No: '||x,|x,b'),
+    (P: '^(a,)*(b$)$'; Yes: '|b|a,b|a,a,b'; No: '|a,||a,a'),
+    (P: '^(a,)*b$$'; Yes: '|b|a,b|a,a,b'; No: '|a,||a,a'),
+    (P: '^x(,a\b)*$'; Yes: '|x|x,a|x,a,a|x,a,a,a'; No: '||x,|x,b|x,ab'),
+    (P: '^x(\b,a)*$'; Yes: '|x|x,a|x,a,a|x,a,a,a'; No: '||x,|x,b'),
+    (P: '^x(,\Ba)*$'; Yes: '|x'; No: '|x,a|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^x(\B,a)*$'; Yes: '|x'; No: '|x,a|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^x\b(,a)*$'; Yes: '|x|x,a|x,a,a|x,a,a,a'; No: '||x,|x,b'),
+    (P: '^x\B(,a)*$'; Yes: ''; No: '|x|x,a|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^(a\b,)*b$'; Yes: '|b|a,b|a,a,b'; No: '|a,||a,a'),
+    (P: '^(a,\B)*b$'; Yes: '|b'; No: '|a,b|a,a,b|a,||a,a'),
+    (P: '^x(,a(?=,|$))*$'; Yes: '|x|x,a|x,a,a|x,a,a,a'; No: '||x,|x,b'),
+    (P: '^x(,(?!a)a)*$'; Yes: '|x'; No: '|x,a|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^x(?=,)(,a)*$'; Yes: '|x,a|x,a,a|x,a,a,a'; No: '|x||x,|x,b'),
+    (P: '^x(,a(?<=a))*$'; Yes: '|x|x,a|x,a,a|x,a,a,a'; No: '||x,|x,b'),
+    (P: '^x(,(?<!,)a)*$'; Yes: '|x'; No: '|x,a|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^x(?=,a$)(,a)*$'; Yes: '|x,a'; No: '|x|x,a,a|x,a,a,a||x,|x,b'),
+    (P: '^(a,(?=b))*b$'; Yes: '|b|a,b'; No: '|a,a,b|a,||a,a'),
+    (P: '^(?!a,a)(a,)*b$'; Yes: '|b|a,b'; No: '|a,a,b|a,||a,a'),
+    (P: '^x(,a\$)*$'; Yes: '|x|x,a$|x,a$,a$'; No: '|x,a|x,a,a|x,a$,a'),
+    (P: '^x\$(,a)*$'; Yes: '|x$|x$,a|x$,a,a'; No: '|x|x,a'),
+    (P: '^(a\$,)*b$'; Yes: '|b|a$,b|a$,a$,b'; No: '|a,b|a$,a,b'),
+    (P: '^x(,\^a)*$'; Yes: '|x|x,^a|x,^a,^a'; No: '|x,a|x,a,a'),
+    (P: '^(a,)*b\$$'; Yes: '|b$|a,b$|a,a,b$'; No: '|b|a,b'),
+    (P: '^x(,[$^]a)*$'; Yes: '|x|x,$a|x,^a,$a'; No: '|x,a|x,a,a'),
+    (P: '^a$b'; Yes: ''; No: '|a|ab|a$b|'),
+    (P: '^a^b'; Yes: ''; No: '|a|ab|b'),
+    (P: '^a$$'; Yes: '|a'; No: '|ab|'),
+    (P: '^^a'; Yes: '|a|ab'; No: '|ba'),
+    (P: '^a\$b$'; Yes: '|a$b'; No: '|ab|a'),
+    (P: '^a\b'; Yes: '|a|a b|a,'; No: '|ab'),
+    (P: '^a\Bb'; Yes: '|ab'; No: '|a b|a'),
+    (P: '^\ba'; Yes: '|a'; No: '|ba|'),
+    (P: '^a(?=b)'; Yes: '|ab'; No: '|a|ac'),
+    (P: '^a(?!b)'; Yes: '|a|ac'; No: '|ab'),
+    (P: '^[a-c]+\b$'; Yes: '|a|abc'; No: '|'),
+    (P: '^[a-c]+$\b'; Yes: '|a|abc'; No: '|'),
+    (P: '^$'; Yes: '|'; No: '|a'),
+    (P: '^a$.*'; Yes: '|a'; No: '|ab|'),
+    (P: '^a\b.*'; Yes: '|a|a b'; No: '|ab'),
+    (P: '^a^.*'; Yes: ''; No: '|a|ab'),
+    (P: '^\$.*'; Yes: '|$|$a'; No: '|a'),
+    (P: '^a$|b'; Yes: '|a|ab|b|cb'; No: '|c'),
+    (P: 'a$|^b'; Yes: '|a|ba|bc'; No: '|ab|cb'),
+    (P: '^(a$|b)$'; Yes: '|a|b'; No: '|ab|'),
+    (P: '^(a|^b)$'; Yes: '|a|b'; No: '|ab'),
+    (P: '^(a|b\b)$'; Yes: '|a|b'; No: '|ab'),
+    (P: '^(?:a\$|b)$'; Yes: '|a$|b'; No: '|a'),
+    (P: '^(a|$)$'; Yes: '|a|'; No: '|b'),
+    (P: '^(^|b)$'; Yes: '||b'; No: '|a'),
+    (P: '^(a$|b)c'; Yes: '|bc|bcd'; No: '|a|ac'),
+    (P: '(^a|b)c$'; Yes: '|ac|bc|xbc'; No: '|xac|acx'),
+    (P: 'a(b|^c)'; Yes: '|ab|xab'; No: '|ac|c'),
+    (P: '(a$){2}'; Yes: ''; No: '|a|aa|'),
+    (P: '(^a){2}'; Yes: ''; No: '|a|aa'),
+    (P: 'x(a$)?b'; Yes: '|xb'; No: '|xab|xa'),
+    (P: '^x(a$)?'; Yes: '|x|xa|xab|xb'; No: ''),
+    (P: '(a|b$)c'; Yes: '|ac'; No: '|bc|b'),
+    (P: 'a|\bb'; Yes: '|a|b|c b'; No: '|cb'),
+    (P: 'a\b|c'; Yes: '|a|c|b a'; No: '|ab'),
+    (P: '(?=a)a|b'; Yes: '|a|b'; No: '|c'),
+    (P: '(?<=a)b|c'; Yes: '|ab|c'; No: '|b'),
+    (P: 'a^|b'; Yes: '|b'; No: '|a|'),
+    (P: '$a|b'; Yes: '|b'; No: '|a|'),
+    (P: '^|a'; Yes: '||b'; No: ''),
+    (P: 'a|$'; Yes: '||b'; No: ''),
+    (P: '(a|b)$c'; Yes: ''; No: '|ac|a|bc'),
+    (P: '^(a|b)^c'; Yes: ''; No: '|ac|c'),
+    (P: '[a-c]{2}$|^x'; Yes: '|ab|x|yab'; No: '|abx|yx'),
+    (P: '[a-c]\b|x'; Yes: '|a|x|d a'; No: '|ad'),
+    (P: '^[a-c]+$|^\d$'; Yes: '|abc|1'; No: '|a1|'),
+    (P: '^(a|b){2}$'; Yes: '|ab'; No: '|a|abc'),
+    (P: '^.{1,3}$$'; Yes: '|a'; No: '|abcd|'),
+    (P: '^.$^'; Yes: ''; No: '|a|'),
+    (P: '^(.*)$'; Yes: '||a'; No: ''),
+    (P: '^es$|ms'; Yes: '|es|xms'; No: '|esx|x'),
+    (P: '^x-$'; Yes: '|x-'; No: '|x-a'),
+    (P: '^x-\b'; Yes: '|x-a'; No: '|x-|x--')
+  );
+
+  procedure Expect(const Compiled: TPattern; const Source, Texts: UTF8String; Want: Boolean);
+  var
+    At, Stop: Int32;
+    Text: UTF8String;
+  begin
+    At := 1;
+    while At <= Length(Texts) do begin
+      { Texts[At] is the "|" before a text, which runs to the next "|" or to the end. }
+      Stop := At + 1;
+      while (Stop <= Length(Texts)) and (Texts[Stop] <> '|') do
+        Inc(Stop);
+      Text := Copy(Texts, At + 1, Stop - At - 1);
+      if Want then
+        Check(PatternMatchString(Compiled, Text), Source + ' does not match "' + Text + '"')
+      else
+        Check(not PatternMatchString(Compiled, Text), Source + ' matches "' + Text + '"');
+      At := Stop;
+    end;
+  end;
+
+var
+  I: Int32;
+  P: TPattern;
+begin
+  for I := 0 to High(Cases) do begin
+    if not CompilePattern(Cases[I].P, P) then begin
+      Check(False, Cases[I].P + ' is not a valid pattern');
+      Continue;
+    end;
+    Expect(P, Cases[I].P, Cases[I].Yes, True);
+    Expect(P, Cases[I].P, Cases[I].No, False);
+  end;
+  { A list with an anchor or an assertion inside it is matched by the engine. }
+  ExpectKind(MatchEngine, '^x(,a$)*$');
+  ExpectKind(MatchEngine, '^x(?:,a$)+$');
+  ExpectKind(MatchEngine, '^x$(,a)*$');
+  ExpectKind(MatchEngine, '^(x$)(,a)*$');
+  ExpectKind(MatchEngine, '^$(,a)*$');
+  ExpectKind(MatchEngine, '^(a,$)*b$');
+  ExpectKind(MatchEngine, '^x(^,a)*$');
+  ExpectKind(MatchEngine, '^(^a,)*b$');
+  ExpectKind(MatchEngine, '^x(,(a$))*$');
+  ExpectKind(MatchEngine, '^x(,a\b)*$');
+  ExpectKind(MatchEngine, '^x\B(,a)*$');
+  ExpectKind(MatchEngine, '^x(,a(?=,|$))*$');
+  ExpectKind(MatchEngine, '^x(?=,)(,a)*$');
+  { An escaped "$" or "^" is a literal character of the list. }
+  ExpectKind(MatchSeparatedList, '^x(,a\$)*$');
+  ExpectKind(MatchSeparatedList, '^x\$(,a)*$');
+  ExpectKind(MatchSeparatedList, '^(a\$,)*b$');
+  ExpectKind(MatchSeparatedList, '^x(,\^a)*$');
+  ExpectKind(MatchSeparatedList, '^(a,)*b\$$');
+  ExpectKind(MatchSeparatedList, '^x(,[$^]a)*$');
+end;
+
 { --------------------------------------------------------------------------------------------------------------------
   Unicode (unicode_test.go) }
 
@@ -2025,6 +2197,7 @@ begin
   TestInvalidPatternsAreRejected;
   TestExcludedClassWithAMemberOutsideASCII;
   TestMatchersByHand;
+  TestAnAnchorOrAnAssertionInsideAShapeIsNotDropped;
   TestUnicodeFormatsUseUnicode17;
   TestNoToolchainUnicodeData;
   TestResultsCollector;

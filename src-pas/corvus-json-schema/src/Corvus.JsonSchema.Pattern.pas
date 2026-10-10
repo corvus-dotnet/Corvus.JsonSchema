@@ -1149,7 +1149,11 @@ begin
     Exit;
   Before := Slice(Body, 0, GOpen);
   After := Slice(Body, GClose + 2, Length(Body));
+  { A part of a list is a class sequence that does not end in "$". The "$" is not an item, and the list has no place
+    for it: "^x(,a$)*$" is not "^x(,a)*$". A pattern with such a part is not a list. }
   if not ParseSequence('^' + Inner, Seq) then
+    Exit;
+  if Seq.ToEnd then
     Exit;
   GroupItems := Seq.Items;
   Count := Length(GroupItems);
@@ -1160,6 +1164,8 @@ begin
     if not UnwrapGroup(Before, Unwrapped) then
       Exit;
     if not ParseSequence('^' + Unwrapped, First) then
+      Exit;
+    if First.ToEnd then
       Exit;
     for K := 1 to Count - 1 do
       { The separator is the first K items and what is repeated the rest. }
