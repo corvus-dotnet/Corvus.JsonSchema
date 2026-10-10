@@ -121,9 +121,8 @@ end
 
 # The patterns the translator refuses, by reason. emitter.jl says what each reason means.
 const EXPECTED_UNSUPPORTED_HAND = Dict(
-    EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND => 6,
-    EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND => 3,
-    EcmaRegex.REFUSED_GROUP_IN_LOOKAROUND => 2,
+    EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND => 5,
+    EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND => 2,
     EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE => 8,
     EcmaRegex.REFUSED_BY_ENGINE => 3)
 const EXPECTED_UNSUPPORTED_FLAGGED = Dict(

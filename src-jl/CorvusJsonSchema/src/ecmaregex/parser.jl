@@ -45,10 +45,10 @@ const UNBOUNDED = -1
 # The largest bound of a counted quantifier. No string reaches a larger count.
 const MAX_COUNT = Int(typemax(Int32)) - 1
 
-# What is known, where a backreference stands, of whether a group it names has taken part.
+# What is known, where a backreference stands, of whether a group it names has taken part: it never has, or it can
+# have.
 const NEVER = 0
-const MAYBE = 1
-const DEFINITE = 2
+const LIVE = 1
 
 # One element of the syntax tree of a pattern.
 mutable struct Node
@@ -63,14 +63,16 @@ mutable struct Node
     min::Int
     max::Int
     lazy::Bool
-    # Marks a REPEAT whose last iteration is written apart from the ones before it.
-    lastapart::Bool
+    # Marks a REPEAT or a lookbehind with a group inside that a backreference outside it reads.
+    exports::Bool
+    # Marks a lookbehind that holds a backreference to a group that can have taken part.
+    haslive::Bool
     # The number of the capturing group of a GROUP, counted from 1 as ECMA-262 does, or 0.
     group::Int
     # The groups a BACKREF names. A name can belong to several groups in separate alternatives, of which at most one
     # has taken part at any time.
     groups::Vector{Int}
-    # For each of the groups, what is known of whether it has taken part (NEVER, MAYBE or DEFINITE).
+    # For each of the groups, whether it can have taken part where the reference stands (NEVER or LIVE).
     statuses::Vector{Int}
     # For each of the groups, whether PCRE2 is to compare its text ignoring case.
     ignorecase::Vector{Bool}
@@ -93,8 +95,8 @@ const NO_NODES = Node[]
 const NO_INTS = Int[]
 const NO_BOOLS = Bool[]
 
-Node(kind::Int) = Node(kind, Int32(0), NO_CHARACTERS, NO_NODES, 0, 0, false, false, 0, NO_INTS, NO_INTS, NO_BOOLS, "",
-    false, false, false, 0, 0, Int64(-1), Int64(0))
+Node(kind::Int) = Node(kind, Int32(0), NO_CHARACTERS, NO_NODES, 0, 0, false, false, false, 0, NO_INTS, NO_INTS,
+    NO_BOOLS, "", false, false, false, 0, 0, Int64(-1), Int64(0))
 
 # What peek answers at the end of the pattern. It is not a code point.
 const END_OF_PATTERN = Char(0x110000)

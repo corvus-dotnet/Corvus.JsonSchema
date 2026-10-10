@@ -10,33 +10,67 @@
 #   literal or class is the set of the characters equivalent to it under the Canonicalize of ECMA-262, ^ and $ are
 #   assertions about ECMA-262's four line terminators, and the dot is every character. No option of PCRE2 stands
 #   for them;
-# - a group is written without capture unless a backreference needs it, and never by name, so a name may be any
-#   ECMA-262 identifier and may be shared by groups in separate alternatives;
+# - a group is written without capture unless a backreference reads it, and under a name the writer gives it, so a
+#   name of the pattern may be any ECMA-262 identifier and may be shared by groups in separate alternatives;
 # - a lookbehind is written as it is when the length of its body is fixed, which is all PCRE2 10.42 accepts (10.43
 #   and later accept more, within limits). Any other lookbehind is a callout (see `lookbehind`).
 #
-# A backreference means "the text the group matched when it last took part, or nothing". PCRE2 differs from ECMA-262
-# on when a group stops having taken part: it keeps what a group captured in an earlier iteration of a repetition,
-# and it runs a lookbehind forwards where ECMA-262 runs it backwards. The emitter shows, for each backreference, that
-# these differences cannot be seen, and writes the backreference in a form that is exact. Where it cannot show it,
-# the pattern is refused, and the error says why. The reasons are the REFUSED_ constants. A pattern with no
-# backreference is never refused for them.
+# # Backreferences
+#
+# In ECMA-262 a backreference matches the text its group captured when the group last took part, and the empty
+# string when the group has not taken part. The groups of a repeated body stop having taken part when an iteration
+# starts, and those of a negative lookaround when it is done. PCRE2 fails a backreference to a group that is not
+# set, and keeps what a group captured in an earlier iteration. The writer makes the two agree in three steps.
+#
+# 1. `flow!` finds, for each backreference, whether its group can have taken part where the backreference stands.
+#    It cannot when the backreference is inside the group, before it, in another alternative, after a negative
+#    lookaround that holds the group, or after a repetition that holds it and never runs. Such a backreference
+#    matches the empty string and is written as nothing. So is one to a group that can only capture the empty
+#    string. Every other backreference is LIVE.
+# 2. A LIVE backreference stands after its group in a sequence. On every way from the start of the iteration they
+#    share to the backreference, the group is given a value. Where the way goes through the group, PCRE2 sets it.
+#    Where it goes round the group, the writer sets it to the empty string, which a backreference reads as it
+#    reads no value. An alternation with a group in one alternative is written (?|(?<g1>a)|b(?<g1>)): the group
+#    (?|...) of PCRE2 numbers the groups of each alternative from the same number, so the two groups are one. A
+#    repetition X? or X* that can run no times is written (?|(?:X)+|(?<g1>)) for the same reason (see `alternatives`
+#    and `writerepeat`). So the group PCRE2 reads always has the value of the iteration the backreference is in,
+#    and never one an earlier iteration left.
+# 3. ECMA-262 refuses an iteration that matches the empty string once the minimum count is met. PCRE2 takes one
+#    and leaves the repetition, with the groups as that iteration set them. `writerepeat` says how a repetition
+#    whose groups are read after it is written so that no such iteration is taken.
+#
+# What a group captured is the same in both engines otherwise, as both put a group back when they backtrack out of
+# it, and a lookaround is atomic in both.
+#
+# # Lookbehinds and backreferences
+#
+# ECMA-262 matches the body of a lookbehind backwards, from its end to its start. PCRE2 matches it forwards from a
+# place it steps back to. Whether the body matches is the same either way. What its groups capture is not, and a
+# backreference inside the body reads the groups in the other order.
+#
+# - A lookbehind of a fixed length is written as it is, and a backreference after it may read its groups. Every
+#   element of such a body is at a place the length fixes and none of them reads a group, so each captures the same
+#   text in either direction.
+# - A lookbehind that holds a LIVE backreference to a group outside it is written as a search that PCRE2 runs
+#   itself (see `walk`), as the body compiled apart for a callout could not read the group.
+# - Two cases are refused, and the error says which. A backreference inside a lookbehind to a group of the same
+#   lookbehind that ECMA-262 matches before it (one to its right), such as (?<=\1(a)), as PCRE2 would read the group
+#   before setting it. And a backreference to a group of a lookbehind of no fixed length, such as (?<=(a)+)\1, as
+#   the search for such a body does not capture what ECMA-262 captures.
+#
+# None of this is written for a pattern with no LIVE backreference, and none of it adds to its matching.
 
-# The backreference is in a lookbehind, which ECMA-262 matches backwards.
-const REFUSED_BACKREFERENCE_IN_LOOKBEHIND = "a backreference inside a lookbehind"
-# The group is in a lookbehind, which ECMA-262 matches backwards, so it can capture other text.
-const REFUSED_GROUP_IN_LOOKBEHIND = "a backreference to a group inside a lookbehind"
-# The repetition that holds the backreference can skip the group, which unsets it only in ECMA-262.
-const REFUSED_GROUP_IN_REPETITION = "a backreference to a group that an iteration of a repetition can skip"
-# The group is in a repetition whose body can match nothing, which the two engines end differently.
-const REFUSED_GROUP_IN_EMPTY_REPETITION = "a backreference to a group of a repetition that can match the empty string"
-# The group is in a lookaround that may not have matched. A lookaround captures text without matching any, so an
-# optional group that holds one can run an iteration that matches nothing and still sets the group. ECMA-262 refuses
-# such an iteration and PCRE2 takes it.
-const REFUSED_GROUP_IN_LOOKAROUND = "a backreference to a group of a lookaround that may not have matched"
+# The backreference is in a lookbehind, with a group that ECMA-262 matches before it and PCRE2 after it.
+const REFUSED_BACKREFERENCE_IN_LOOKBEHIND =
+    "a backreference inside a lookbehind to a group that the lookbehind matches before it"
+# The group is in a lookbehind of no fixed length, which ECMA-262 matches backwards, so it can capture other text.
+const REFUSED_GROUP_IN_LOOKBEHIND = "a backreference to a group inside a lookbehind of no fixed length"
 # The backreference ignores case, and the group can hold a character PCRE2 compares differently.
 const REFUSED_CASE_INSENSITIVE_BACKREFERENCE =
     "a case-insensitive backreference to text that PCRE2 compares differently"
+# A repetition whose groups are read after it is written twice (see `writerepeat`), and the copies multiply. Or a
+# repetition has a minimum no text reaches and a body that can match the empty string.
+const REFUSED_TOO_LARGE = "a repetition too large to write out"
 # PCRE2 did not compile the translation. The error message carries what PCRE2 said.
 const REFUSED_BY_ENGINE = "a pattern PCRE2 does not compile"
 
@@ -48,6 +82,8 @@ const INFINITE = typemax(Int64)
 const LENGTH_LIMIT = Int64(1) << 47
 # The largest count PCRE2 takes in a quantifier, and the longest lookbehind it takes.
 const PCRE_MAX_COUNT = 65535
+# The most text a translation may have where a repetition was written twice (see `writerepeat`).
+const MAX_COPIED_TRANSLATION = 65536
 # The callouts that end and begin the body of a lookbehind (see `lookbehind`). The others name a lookbehind.
 const CALLOUT_AT_TARGET = 0
 const CALLOUT_NOT_PAST_TARGET = 1
@@ -62,6 +98,9 @@ const ANY_CHARACTER = "(?s:.)"
 const NEVER_MATCHES = "(?!)"
 const WORD_CLASS = "[a-zA-Z0-9_]"
 const FOLD_WORD_CLASS = "[a-zA-Z0-9_\\x{17f}\\x{212a}]"
+# Captures the rest of the text under a name, which says where the match stands: a reference to it matches at
+# that place and at no other, as only there is the rest of the text as long.
+const REST_OF_TEXT = "(?s:.*)"
 
 const SURROGATE_SET = Int32[0xD800, 0xDFFF]
 const NOT_SURROGATE_SET = complement(SURROGATE_SET)
@@ -79,207 +118,239 @@ struct Translation
     lookbehinds::Vector{String}
 end
 
+# A backreference where the tree is walked, with the lookarounds and the repetitions that enclose it.
+struct Found
+    reference::Node
+    looks::Vector{Node}
+    repeats::Vector{Node}
+end
+
 mutable struct Emitter
     pattern::String
     unicode::Bool
     root::Node
     groupnodes::Vector{Union{Nothing,Node}}
-    # For each group, whether some backreference reads it, and whether one reads it unsure that it is set.
+    # Every backreference and every lookbehind of the pattern.
+    references::Vector{Node}
+    lookbehindnodes::Vector{Node}
+    # For each group, whether some LIVE backreference reads it, and the lookarounds and the repetitions that
+    # enclose it, outermost first.
     referenced::Vector{Bool}
-    needsmarker::Vector{Bool}
-    # For each group: whether a lookbehind or any lookaround encloses it, and the repetitions that enclose it.
-    inlookbehind::Vector{Bool}
-    inlookaround::Vector{Bool}
+    looksaround::Vector{Vector{Node}}
     repeatsaround::Vector{Vector{Node}}
-    # For each group, the number of its group in the translation, and of the group that marks it took part.
-    pcregroup::Vector{Int}
-    pcremarker::Vector{Int}
     out::IOBuffer
-    pcregroups::Int
-    # Whether some backreference is written, so that what a group captures can be seen.
+    # The names of the groups written to `out`, in the order PCRE2 numbers them.
+    names::Vector{String}
+    # For each group, how a backreference reads it where the writer stands (see `writerepeat`). Empty until the
+    # group is written.
+    read::Vector{String}
+    # For each group, the times it has been written, and the number of names made for other things.
+    written::Vector{Int}
+    serial::Int
+    # Whether some backreference is LIVE, so that what a group captures can be seen.
     hasbackreference::Bool
     haslookbehind::Bool
     # Whether every lookbehind is written as a callout.
     searchinglookbehind::Bool
     lookbehinds::Vector{String}
-    # The sets of many ranges of the pattern being written, which it calls by number (see `writeclass`).
+    # The sets of many ranges of the pattern being written, which it calls by number (see `writeclass`), and the
+    # searches for its lookbehinds, which it calls by name (see `walk`).
     largesets::Vector{CodeSet}
+    walks::Vector{String}
 end
 
 function Emitter(parser::Parser, root::Node)
     n = parser.groupcount
-    return Emitter(parser.pattern, parser.unicode, root, Vector{Union{Nothing,Node}}(nothing, n), fill(false, n),
-        fill(false, n), fill(false, n), fill(false, n), [NO_NODES for _ in 1:n], zeros(Int, n), zeros(Int, n),
-        IOBuffer(), 0, false, false, false, String[], CodeSet[])
+    return Emitter(parser.pattern, parser.unicode, root, Vector{Union{Nothing,Node}}(nothing, n), Node[], Node[],
+        fill(false, n), [NO_NODES for _ in 1:n], [NO_NODES for _ in 1:n], IOBuffer(), String[], fill("", n),
+        zeros(Int, n), 0, false, false, false, String[], CodeSet[], String[])
 end
 
-# Works out what each backreference can rely on, and refuses the pattern when one cannot be written exactly.
+# Works out what each backreference reads, and refuses the pattern when one cannot be written exactly.
 function analyse!(E::Emitter)
-    flow!(E, E.root, BitSet(), BitSet(), false)
-    survey!(E, E.root, false, false, Node[])
+    resolve!(E)
+    for look in E.lookbehindnodes
+        if look.haslive && look.exports && !fixedlength(look.subs[1])
+            unsupported(E, REFUSED_GROUP_IN_LOOKBEHIND)
+        end
+    end
     return E
+end
+
+# Works out what each backreference reads.
+function resolve!(E::Emitter)
+    index!(E, E.root)
+    isempty(E.references) && return nothing
+    # Whether a backreference is LIVE depends on which repetitions never run, which depends on which bodies can
+    # only match the empty string, which depends on which backreferences are LIVE. Each round can only take
+    # backreferences from LIVE to NEVER, so the rounds end.
+    while true
+        clearlengths!(E.root)
+        before = sum(n -> count(==(LIVE), n.statuses), E.references)
+        flow!(E, E.root, BitSet(), false, false)
+        sum(n -> count(==(LIVE), n.statuses), E.references) == before && break
+    end
+    found = Found[]
+    survey!(E, E.root, Node[], Node[], found)
+    # The lookbehinds that hold a backreference and a group ECMA-262 matches before it.
+    backwards = Node[]
+    for f in found
+        decide!(E, f, backwards)
+    end
+    isempty(backwards) || unsupported(E, REFUSED_BACKREFERENCE_IN_LOOKBEHIND)
+    return nothing
 end
 
 # The translation, with every lookbehind as a callout when `searching`.
 function translation(E::Emitter, searching::Bool)
     E.searchinglookbehind = searching
     E.out = IOBuffer()
-    E.pcregroups = 0
     E.haslookbehind = false
+    E.serial = 0
+    empty!(E.names)
     empty!(E.lookbehinds)
-    fill!(E.pcregroup, 0)
-    fill!(E.pcremarker, 0)
+    fill!(E.read, "")
+    fill!(E.written, 0)
     empty!(E.largesets)
+    empty!(E.walks)
     node(E, E.root)
     definitions(E)
     return Translation(String(take!(E.out)), copy(E.lookbehinds))
 end
 
-# What a backreference can rely on.
+# What a backreference reads.
 
-# Works out, for every backreference, whether each group it names has taken part where the backreference stands: on
-# every path (DEFINITE), on none (NEVER) or on some (MAYBE). The walk follows the order in which ECMA-262 evaluates
-# the pattern, which is backwards inside a lookbehind. `definite` and `possible` hold the groups set on every path
-# and on some path to the node, and are updated to hold the same for the paths that leave it.
+# Notes the node of each group, every backreference and every lookbehind. A backreference starts LIVE.
+function index!(E::Emitter, n::Node)
+    kind = n.kind
+    if kind == GROUP && n.group != 0
+        E.groupnodes[n.group] = n
+    elseif kind == BACKREF
+        n.statuses = fill(LIVE, length(n.groups))
+        n.ignorecase = fill(false, length(n.groups))
+        push!(E.references, n)
+    elseif kind == LOOK && n.behind
+        push!(E.lookbehindnodes, n)
+    end
+    for sub in n.subs
+        index!(E, sub)
+    end
+    return nothing
+end
+
+# Whether a repetition runs no iteration.
+neverruns(n::Node) = n.max == 0
+
+# Works out, for every backreference, whether each group it names can have taken part where the backreference
+# stands (LIVE) or cannot (NEVER). The walk follows the order in which ECMA-262 evaluates the pattern, which is
+# backwards inside a lookbehind. `possible` holds the groups that have taken part on some way to the node, and is
+# updated to hold the same for the ways that leave it. Inside `dead`, a repetition that never runs, every
+# backreference is NEVER, as it is never evaluated.
 #
 # ECMA-262 unsets the groups of a quantified body at the start of each of its iterations, and unsets the groups of a
 # negative lookaround when the lookaround is done.
-function flow!(E::Emitter, n::Node, definite::BitSet, possible::BitSet, backward::Bool)
+function flow!(E::Emitter, n::Node, possible::BitSet, backward::Bool, dead::Bool)
     kind = n.kind
     if kind == CAT
         for k in (backward ? reverse(eachindex(n.subs)) : eachindex(n.subs))
-            flow!(E, n.subs[k], definite, possible, backward)
+            flow!(E, n.subs[k], possible, backward, dead)
         end
     elseif kind == ALT
-        alldefinite = nothing
         anypossible = BitSet()
         for sub in n.subs
-            d = copy(definite)
             p = copy(possible)
-            flow!(E, sub, d, p, backward)
-            if alldefinite === nothing
-                alldefinite = d
-            else
-                intersect!(alldefinite, d)
-            end
+            flow!(E, sub, p, backward, dead)
             union!(anypossible, p)
         end
-        empty!(definite)
-        union!(definite, alldefinite::BitSet)
-        empty!(possible)
         union!(possible, anypossible)
     elseif kind == GROUP
-        flow!(E, n.subs[1], definite, possible, backward)
-        if n.group != 0
-            E.groupnodes[n.group] = n
-            push!(definite, n.group)
-            push!(possible, n.group)
-        end
+        flow!(E, n.subs[1], possible, backward, dead)
+        n.group != 0 && push!(possible, n.group)
     elseif kind == REPEAT
-        inside = (n.firstgroup + 1):n.lastgroup
-        setdiff!(definite, inside)
-        setdiff!(possible, inside)
-        if n.max == 0
+        setdiff!(possible, (n.firstgroup + 1):n.lastgroup)
+        if neverruns(n)
             # The body never runs, so nothing it sets is set after it.
-            flow!(E, n.subs[1], copy(definite), copy(possible), backward)
-        elseif n.min == 0
-            flow!(E, n.subs[1], copy(definite), possible, backward)
+            flow!(E, n.subs[1], copy(possible), backward, true)
         else
-            flow!(E, n.subs[1], definite, possible, backward)
+            flow!(E, n.subs[1], possible, backward, dead)
         end
     elseif kind == LOOK
         if n.negative
-            flow!(E, n.subs[1], copy(definite), copy(possible), n.behind)
-            inside = (n.firstgroup + 1):n.lastgroup
-            setdiff!(definite, inside)
-            setdiff!(possible, inside)
+            flow!(E, n.subs[1], copy(possible), n.behind, dead)
+            setdiff!(possible, (n.firstgroup + 1):n.lastgroup)
         else
-            flow!(E, n.subs[1], definite, possible, n.behind)
+            flow!(E, n.subs[1], possible, n.behind, dead)
         end
     elseif kind == BACKREF
-        n.statuses = Int[g in definite ? DEFINITE : g in possible ? MAYBE : NEVER for g in n.groups]
-        n.ignorecase = fill(false, length(n.groups))
+        for k in eachindex(n.groups)
+            g = n.groups[k]
+            # A group that can only capture the empty string reads as one that has not taken part.
+            live = !dead && g in possible && maxlength((E.groupnodes[g]::Node).subs[1]) != 0
+            if !live && n.statuses[k] == LIVE
+                n.statuses[k] = NEVER
+            end
+        end
     end
     return nothing
 end
 
-# Notes what encloses each group, then decides for each backreference whether PCRE2 gives it the meaning ECMA-262
-# does, and refuses the pattern when that cannot be shown.
-function survey!(E::Emitter, n::Node, lookbehind::Bool, lookaround::Bool, repeats::Vector{Node})
+# Notes what encloses each group, and finds each backreference that is LIVE with what encloses it.
+function survey!(E::Emitter, n::Node, looks::Vector{Node}, repeats::Vector{Node}, found::Vector{Found})
     kind = n.kind
     if kind == GROUP
         if n.group != 0
-            E.inlookbehind[n.group] = lookbehind
-            E.inlookaround[n.group] = lookaround
+            E.looksaround[n.group] = copy(looks)
             E.repeatsaround[n.group] = copy(repeats)
         end
-        survey!(E, n.subs[1], lookbehind, lookaround, repeats)
+        survey!(E, n.subs[1], looks, repeats, found)
     elseif kind == REPEAT
-        # A repetition of at most once has no earlier iteration.
-        if n.max == UNBOUNDED || n.max > 1
-            push!(repeats, n)
-            survey!(E, n.subs[1], lookbehind, lookaround, repeats)
-            pop!(repeats)
-        else
-            survey!(E, n.subs[1], lookbehind, lookaround, repeats)
-        end
+        # Nothing of a repetition that never runs is written.
+        neverruns(n) && return nothing
+        push!(repeats, n)
+        survey!(E, n.subs[1], looks, repeats, found)
+        pop!(repeats)
     elseif kind == LOOK
-        survey!(E, n.subs[1], lookbehind || n.behind, true, repeats)
+        push!(looks, n)
+        survey!(E, n.subs[1], looks, repeats, found)
+        pop!(looks)
     elseif kind == BACKREF
-        decide!(E, n, lookbehind, repeats)
+        any(==(LIVE), n.statuses) && push!(found, Found(n, copy(looks), copy(repeats)))
     else
         for sub in n.subs
-            survey!(E, sub, lookbehind, lookaround, repeats)
+            survey!(E, sub, looks, repeats, found)
         end
     end
     return nothing
 end
 
-holds(repeats::Vector{Node}, n::Node) = any(r -> r === n, repeats)
+holds(nodes::Vector{Node}, n::Node) = any(r -> r === n, nodes)
 
-# Decides one backreference. Outside a lookbehind ECMA-262 evaluates a pattern from left to right, so a group that
-# can have taken part comes before the backreference, and what encloses it is known.
-#
-# A group that has taken part on every path to the backreference was set on the path PCRE2 is on, so its text is the
-# one ECMA-262 means. The two engines differ there in one case, a repetition whose body can match the empty string:
-# ECMA-262 refuses an empty iteration and PCRE2 takes one, which can leave a group of the body with other text.
-#
-# A group that may have taken part needs a test, and the test reads what PCRE2 kept. It is sound only where that
-# engine forgets a group when ECMA-262 does, which is on backtracking out of the group. It is not shown to be sound
-# for a group in a lookaround. The group can then be set by an iteration of an optional group that matches nothing,
-# which ECMA-262 refuses and PCRE2 takes (the oracle has `^(?:(?=(a)))?\1b`, on which the two differ). Nor is it
-# sound for a group in a repetition, as ECMA-262 unsets the group when an iteration starts and PCRE2 keeps it. A
-# repetition that ends before the backreference is therefore written with its last iteration apart (see
-# `writerepeat`), so that the group is one only the last iteration sets. A repetition that holds the backreference
-# too cannot be, and is refused.
-function decide!(E::Emitter, n::Node, lookbehind::Bool, repeats::Vector{Node})
+# Decides one LIVE backreference: marks what it reads through, and notes in `backwards` a lookbehind that holds
+# the backreference and a group ECMA-262 matches before it (see the note on lookbehinds at the top of the file).
+function decide!(E::Emitter, f::Found, backwards::Vector{Node})
+    n = f.reference
     for k in eachindex(n.groups)
-        if n.statuses[k] == DEFINITE
-            # At most one of the groups of a name has taken part, so the others have not.
-            fill!(n.statuses, NEVER)
-            n.statuses[k] = DEFINITE
-            break
-        end
-    end
-    for k in eachindex(n.groups)
+        n.statuses[k] == LIVE || continue
         g = n.groups[k]
-        n.statuses[k] == NEVER && continue
-        lookbehind && unsupported(E, REFUSED_BACKREFERENCE_IN_LOOKBEHIND)
-        E.inlookbehind[g] && unsupported(E, REFUSED_GROUP_IN_LOOKBEHIND)
-        if n.statuses[k] == DEFINITE
-            for rep in E.repeatsaround[g]
-                if !holds(repeats, rep) && minlength(rep.subs[1]) == 0
-                    unsupported(E, REFUSED_GROUP_IN_EMPTY_REPETITION)
-                end
-            end
-        else
-            E.inlookaround[g] && unsupported(E, REFUSED_GROUP_IN_LOOKAROUND)
-            for rep in E.repeatsaround[g]
-                holds(repeats, rep) && unsupported(E, REFUSED_GROUP_IN_REPETITION)
-                minlength(rep.subs[1]) == 0 && unsupported(E, REFUSED_GROUP_IN_EMPTY_REPETITION)
-                rep.lastapart = true
-            end
-            E.needsmarker[g] = true
+        grouplooks = E.looksaround[g]
+        # The lookarounds that hold both the backreference and the group. The innermost says in which direction
+        # ECMA-262 matches the two.
+        common = 0
+        while common < length(f.looks) && common < length(grouplooks) && f.looks[common + 1] === grouplooks[common + 1]
+            common += 1
+        end
+        if common > 0 && f.looks[common].behind
+            holds(backwards, f.looks[common]) || push!(backwards, f.looks[common])
+            continue
+        end
+        for k2 in eachindex(f.looks)
+            f.looks[k2].behind && (f.looks[k2].haslive = true)
+        end
+        for k2 in (common + 1):length(grouplooks)
+            grouplooks[k2].behind && (grouplooks[k2].exports = true)
+        end
+        for rep in E.repeatsaround[g]
+            holds(f.repeats, rep) || (rep.exports = true)
         end
         E.referenced[g] = true
         E.hasbackreference = true
@@ -322,7 +393,7 @@ function capturedset(E::Emitter, n::Node)
     elseif kind == BACKREF
         set = NO_CHARACTERS
         for k in eachindex(n.groups)
-            if n.statuses[k] != NEVER
+            if n.statuses[k] == LIVE
                 target = capturedset(E, E.groupnodes[n.groups[k]]::Node)
                 set = setunion(set, n.fold ? foldclosure(target, E.unicode) : target)
             end
@@ -384,10 +455,21 @@ function measure!(n::Node)
         lo = times(minlength(n.subs[1]), n.min)
         hi = times(maxlength(n.subs[1]), n.max)
     elseif kind == BACKREF
-        hi = INFINITE
+        # A backreference that reads no group matches the empty string.
+        hi = any(==(LIVE), n.statuses) ? INFINITE : 0
     end
     n.minlength = lo > LENGTH_LIMIT ? INFINITE : lo
     n.maxlength = hi > LENGTH_LIMIT ? INFINITE : hi
+    return nothing
+end
+
+
+# Forgets the lengths measured below a node, which depend on which backreferences are LIVE.
+function clearlengths!(n::Node)
+    n.minlength = -1
+    for sub in n.subs
+        clearlengths!(sub)
+    end
     return nothing
 end
 
@@ -406,10 +488,7 @@ function node(E::Emitter, n::Node)
             node(E, sub)
         end
     elseif kind == ALT
-        for k in eachindex(n.subs)
-            k > 1 && print(out, '|')
-            node(E, n.subs[k])
-        end
+        alternatives(E, n.subs, "", "")
     elseif kind == GROUP
         writegroup(E, n)
     elseif kind == REPEAT
@@ -551,11 +630,16 @@ function largeset(E::Emitter, set::CodeSet)
     return number
 end
 
-# Writes the groups of the sets of many ranges of the pattern, inside a group PCRE2 only reads definitions from.
+# Writes what the pattern calls and never runs into, inside a group PCRE2 only reads definitions from: the searches
+# for its lookbehinds (see `walk`) and the groups of its sets of many ranges. A search can hold such a set, so the
+# searches come first.
 function definitions(E::Emitter)
-    isempty(E.largesets) && return nothing
+    isempty(E.largesets) && isempty(E.walks) && return nothing
     out = E.out
     print(out, "(?(DEFINE)")
+    for text in E.walks
+        print(out, text)
+    end
     for (number, set) in enumerate(E.largesets)
         print(out, "(?<s", number, '>')
         if usesearchtrees()
@@ -596,56 +680,227 @@ function searchtree(out::IO, set::CodeSet, from::Int, to::Int)
     return nothing
 end
 
+# Writes a node to a buffer of its own. Returns the text and the names of the groups written to it.
+function apart(E::Emitter, n::Node)
+    out = E.out
+    names = E.names
+    E.out = IOBuffer()
+    E.names = String[]
+    node(E, n)
+    text = String(take!(E.out))
+    inner = E.names
+    E.out = out
+    E.names = names
+    return text, inner
+end
+
+# Writes the groups of the names with nothing in them, which sets each to the empty string.
+function pad(out::IO, names::Vector{String}, from::Int=1, to::Int=length(names))
+    for k in from:to
+        print(out, "(?<", names[k], ">)")
+    end
+    return nothing
+end
+
+# A name for a group PCRE2 needs and the pattern does not have.
+function helpername(E::Emitter, letter::Char)
+    E.serial += 1
+    return string(letter, E.serial)
+end
+
+# Writes alternatives, each between `before` and `after`.
+#
+# When none of them writes a group, they are written as they are. Otherwise each alternative also sets, to the empty
+# string, the groups the others write, so that after the alternation every one of those groups has the value of
+# this pass: its text in the alternative that was taken, and the empty string, which reads as no value, in the
+# others. They are written inside (?|...), in which PCRE2 numbers the groups of every alternative from the same
+# number. Each alternative writes the same names in the same order (the empty groups for the alternatives before
+# it, its own, the empty groups for those after it), so a name has one number.
+function alternatives(E::Emitter, subs::Vector{Node}, before::String, after::String)
+    out = E.out
+    if !E.hasbackreference
+        for k in eachindex(subs)
+            k > 1 && print(out, '|')
+            print(out, before)
+            node(E, subs[k])
+            print(out, after)
+        end
+        return nothing
+    end
+    texts = String[]
+    all = String[]
+    # Where the names of each alternative start in `all`.
+    starts = Int[]
+    for sub in subs
+        text, names = apart(E, sub)
+        push!(texts, text)
+        push!(starts, length(all) + 1)
+        append!(all, names)
+    end
+    push!(starts, length(all) + 1)
+    plain = isempty(all)
+    plain || print(out, "(?|")
+    for k in eachindex(texts)
+        k > 1 && print(out, '|')
+        pad(out, all, 1, starts[k] - 1)
+        print(out, before, texts[k], after)
+        pad(out, all, starts[k + 1], length(all))
+    end
+    plain || print(out, ')')
+    append!(E.names, all)
+    return nothing
+end
+
 function writegroup(E::Emitter, n::Node)
     out = E.out
-    if n.group == 0 || !E.referenced[n.group]
+    g = n.group
+    if g == 0 || !E.referenced[g]
         print(out, "(?:")
         node(E, n.subs[1])
         print(out, ')')
         return nothing
     end
-    E.pcregroups += 1
-    E.pcregroup[n.group] = E.pcregroups
-    if !E.needsmarker[n.group]
-        print(out, '(')
-        node(E, n.subs[1])
-        print(out, ')')
-        return nothing
-    end
-    # An empty group at the end marks that the group took part.
-    print(out, "((?:")
+    # A group that is written again (see `writerepeat`) has another name there.
+    E.written[g] += 1
+    name = E.written[g] == 1 ? string('g', g) : string('g', g, '_', E.written[g])
+    push!(E.names, name)
+    print(out, "(?<", name, '>')
     node(E, n.subs[1])
-    E.pcregroups += 1
-    E.pcremarker[n.group] = E.pcregroups
-    print(out, ")())")
+    print(out, ')')
+    E.read[g] = string("\\k<", name, '>')
     return nothing
 end
 
-# Writes a repetition.
+# Whether a backreference reads a group inside the node.
+function holdsreferenced(E::Emitter, n::Node)
+    for g in (n.firstgroup + 1):n.lastgroup
+        E.referenced[g] && return true
+    end
+    return false
+end
+
+# Writes a repetition X{m,n}.
 #
-# When a backreference after the repetition reads a group of its body that an iteration can skip, the body X is
-# written twice, as (?:(?:X){m-1,n-1}X), and made optional when the repetition can run no times. The backreference
-# reads the groups of the second X, which only the last iteration sets, as in ECMA-262, where each iteration starts
-# by unsetting the groups of the body. The first X has groups of its own for the backreferences inside it. The two
-# forms match the same texts, as the body cannot match the empty string (such a repetition is refused), so every
-# iteration is one ECMA-262 takes.
+# A repetition that never runs is not written at all. It matches the empty string, and its groups are never set.
+# (PCRE2 10.42 and 10.46 are also wrong about X{0} when it is written: when an alternative of X starts with \A they
+# take the pattern for one that can only match at the start of the text, so (?:b|\A){0}a does not match "ba".)
 #
-# A repetition that never runs, X{0}, is not written at all. It matches the empty string, and its groups are never
-# set. PCRE2 10.42 and 10.46 are wrong about one that is written: when an alternative of X starts with \A they take
-# the pattern for one that can only match at the start of the text, so (?:b|\A){0}a does not match "ba".
+# A repetition with no group that a backreference reads is written with its count.
+#
+# A body with such a group is written once, as two groups of one name would be two groups. (?:X){m,n} serves for
+# a minimum of one or more. For a minimum of zero it is (?|(?:X){1,n}|(?<g1>)...), so that the groups of X are set
+# when it runs no times too (see `alternatives`).
+#
+# # An iteration that matches the empty string
+#
+# ECMA-262 refuses an iteration past the minimum that matches the empty string. PCRE2 takes one, leaves the
+# repetition and shows the groups as that iteration set them. So where the body can match the empty string and
+# its groups are read after the repetition, or it can run no times, an iteration past the minimum is written as one
+# that takes a character: (?=(?<e1>(?s:.*)))X(?!\k<e1>). The group e1 is the rest of the text where the iteration
+# starts. The reference to it matches only where the rest of the text is still that, which is where X has taken
+# nothing.
+#
+# The iterations up to the minimum may match the empty string, so for a minimum of one or more the two parts are
+# written apart, the second with groups of other names, and a backreference after the repetition reads the groups
+# of the part that ran last: (?(?=(?s:.*+)\k<e1>)\k<g1>|\k<g1_2>). The condition asks whether e1 is the empty
+# string, which is all that matches at the end of the text. The empty alternative of the second part sets e1 to
+# that, and an iteration of the second part sets it to the rest of the text where it started, which is not empty
+# as the iteration took a character. (Asking whether e1 matches where the backreference stands would not do: a
+# backreference after a lookahead stands where the lookahead started.) The copies multiply when such repetitions
+# are inside one another, and a pattern whose translation passes MAX_COPIED_TRANSLATION is refused.
 function writerepeat(E::Emitter, n::Node)
-    n.max == 0 && return nothing
+    neverruns(n) && return nothing
     body = n.subs[1]
     out = E.out
-    if !n.lastapart
-        counted(E, body, n.min, n.max, n.lazy)
+    start = position(out)
+    lo = n.min
+    hi = n.max
+    more = hi == UNBOUNDED ? UNBOUNDED : hi - lo
+    # Whether an iteration past the minimum could match the empty string.
+    optional = hi != lo && minlength(body) == 0
+    if !holdsreferenced(E, n)
+        counted(E, body, lo, hi, n.lazy)
         return nothing
     end
-    print(out, "(?:")
-    counted(E, body, max(n.min - 1, 0), n.max == UNBOUNDED ? UNBOUNDED : n.max - 1, n.lazy)
-    node(E, body)
+    if !optional || (lo > 0 && !n.exports)
+        if lo > 0
+            atom(E, body)
+            (lo == 1 && hi == 1) || quantifier(out, lo, hi, n.lazy)
+        else
+            text, inner = apart(E, body, more, n.lazy)
+            zerotimes(E, text, inner, n.lazy)
+        end
+        return nothing
+    end
+    first = (n.firstgroup + 1):n.lastgroup
+    before = String[]
+    if lo > 0
+        atom(E, body)
+        lo == 1 || quantifier(out, lo, lo, false)
+        before = E.read[first]
+    end
+    mark, text, inner = guardedapart(E, body, more, n.lazy)
+    zerotimes(E, text, inner, n.lazy)
+    if lo > 0
+        for (k, g) in enumerate(first)
+            isempty(before[k]) && continue
+            E.read[g] = string("(?(?=(?s:.*+)\\k<", mark, ">)", before[k], '|', E.read[g], ')')
+        end
+        position(out) - start > MAX_COPIED_TRANSLATION && unsupported(E, REFUSED_TOO_LARGE)
+    end
+    return nothing
+end
+
+# Writes a node repeated one to `hi` times to a buffer of its own. Returns the text and the names of its groups.
+function apart(E::Emitter, n::Node, hi::Int, lazy::Bool)
+    out = E.out
+    names = E.names
+    E.out = IOBuffer()
+    E.names = String[]
+    atom(E, n)
+    hi == 1 || quantifier(E.out, 1, hi, lazy)
+    text = String(take!(E.out))
+    inner = E.names
+    E.out = out
+    E.names = names
+    return text, inner
+end
+
+# Writes a node repeated one to `hi` times, each time taking a character, to a buffer of its own. Returns the name
+# of the group that holds the rest of the text where the last iteration started, the text, and the names of its
+# groups.
+function guardedapart(E::Emitter, n::Node, hi::Int, lazy::Bool)
+    out = E.out
+    names = E.names
+    E.out = IOBuffer()
+    E.names = String[]
+    mark = helpername(E, 'e')
+    push!(E.names, mark)
+    print(E.out, "(?:(?=(?<", mark, '>', REST_OF_TEXT, "))")
+    node(E, n)
+    print(E.out, "(?!\\k<", mark, ">))")
+    hi == 1 || quantifier(E.out, 1, hi, lazy)
+    text = String(take!(E.out))
+    inner = E.names
+    E.out = out
+    E.names = names
+    return mark, text, inner
+end
+
+# Writes a repetition that runs once or more as `text`, with the alternative of running no times, which sets its
+# groups to the empty string.
+function zerotimes(E::Emitter, text::String, inner::Vector{String}, lazy::Bool)
+    out = E.out
+    print(out, "(?|")
+    if lazy
+        pad(out, inner)
+        print(out, '|', text)
+    else
+        print(out, text, '|')
+        pad(out, inner)
+    end
     print(out, ')')
-    n.min == 0 && print(out, n.lazy ? "??" : "?")
+    append!(E.names, inner)
     return nothing
 end
 
@@ -653,11 +908,10 @@ end
 #
 # PCRE2 counts to 65535 and ECMA-262 counts further. A larger count is written as several repetitions that match the
 # same texts and try the counts in the same order (see `exactly` and `upto`). The body is then written more than
-# once, which a group that a backreference reads cannot be, so this is done only for a pattern with no
-# backreference. With one, the count is written as it is and PCRE2 refuses the pattern.
+# once, which a body with a group that a backreference reads is not: `writerepeat` writes such a body itself.
 function counted(E::Emitter, body::Node, lo::Int, hi::Int, lazy::Bool)
     out = E.out
-    if E.hasbackreference || (lo <= PCRE_MAX_COUNT && (hi == UNBOUNDED || hi <= PCRE_MAX_COUNT))
+    if lo <= PCRE_MAX_COUNT && (hi == UNBOUNDED || hi <= PCRE_MAX_COUNT)
         atom(E, body)
         quantifier(out, lo, hi, lazy)
         return nothing
@@ -764,7 +1018,7 @@ end
 # Writes a lookbehind. PCRE2 runs one by stepping back over as many characters as its body is long and matching the
 # body from there, so it needs the length. That is exact, as running the body forwards where ECMA-262 runs it backwards
 # finds a match exactly when ECMA-262 does. The two directions can differ only in what the groups of the body
-# capture, and a backreference to a group of a lookbehind, or inside a lookbehind, is refused.
+# capture and in what a backreference inside the body reads (see the note at the top of the file).
 #
 # PCRE2 10.42 takes a body only when its length is fixed, and later versions take one whose length is bounded and
 # short. So that a pattern means the same on each, a body is written as it is only when its length is fixed. Any
@@ -774,14 +1028,31 @@ end
 # lookbehind, and the callout 1 before X ends the search once it starts past that position. That is the definition
 # of a lookbehind, which holds when its body matches some stretch of the text that ends where it stands. The search
 # takes time that grows with the square of the length of the text.
+#
+# A body that holds a LIVE backreference is a search that PCRE2 runs (see `walk`).
 function lookbehind(E::Emitter, n::Node)
     E.haslookbehind = true
     body = n.subs[1]
     out = E.out
     if !E.searchinglookbehind && fixedlength(body)
-        print(out, n.negative ? "(?<!" : "(?<=")
-        node(E, body)
-        print(out, ')')
+        if body.kind == ALT && !n.negative && holdsreferenced(E, n)
+            # PCRE2 10.42 takes alternatives of different lengths only at the top of a lookbehind, where the
+            # (?|...) of `alternatives` cannot stand. A lookbehind for each alternative means the same, inside
+            # a lookahead so that the whole is as atomic.
+            print(out, "(?=")
+            alternatives(E, body.subs, "(?<=", ")")
+            print(out, ')')
+        else
+            print(out, n.negative ? "(?<!" : "(?<=")
+            node(E, body)
+            print(out, ')')
+        end
+        return nothing
+    end
+    # Neither a search nor a callout sets a group of the pattern.
+    n.exports && unsupported(E, REFUSED_GROUP_IN_LOOKBEHIND)
+    if n.haslive
+        walk(E, n)
         return nothing
     end
     push!(E.lookbehinds, "")
@@ -790,9 +1061,15 @@ function lookbehind(E::Emitter, n::Node)
     if number > PCRE_MAX_LOOKBEHIND_CALLOUT
         unsupported(E, REFUSED_BY_ENGINE * " (more than 253 lookbehinds of no fixed length)")
     end
+    # The body is a pattern of its own, with its own definitions. It holds no group that is read and no LIVE
+    # backreference, and the names it writes for itself are its own.
     largesets = E.largesets
+    walks = E.walks
+    names = E.names
     E.out = IOBuffer()
     E.largesets = CodeSet[]
+    E.walks = String[]
+    E.names = String[]
     print(E.out, LOOKBEHIND_PREFIX, "(?:")
     node(E, body)
     print(E.out, ")(?C", CALLOUT_AT_TARGET, ')')
@@ -800,6 +1077,8 @@ function lookbehind(E::Emitter, n::Node)
     E.lookbehinds[index] = String(take!(E.out))
     E.out = out
     E.largesets = largesets
+    E.walks = walks
+    E.names = names
     if n.negative
         print(out, "(?!(?C", number, "))")
     else
@@ -808,39 +1087,55 @@ function lookbehind(E::Emitter, n::Node)
     return nothing
 end
 
-# Writes a backreference, which in ECMA-262 matches the text the group captured when the group has taken part and
-# the empty string when it has not. A group known to have taken part is read as it is. One that may have is read
-# behind a test of the empty group that marks it, and the last branch is the case where none of the groups of the
-# name took part. PCRE2 fails a reference to a group that is not set, which is what makes the test.
+# Writes a lookbehind whose body X holds a backreference to a group outside it, as a search for X that PCRE2 runs
+# itself, so that X reads the group.
+#
+# Where the lookbehind stands, (?=(?<r1>(?s:.*))) captures the rest of the text, which says where that is. The
+# search is the group w1, written once among the definitions of the pattern:
+#
+#     (?<w1>(?=(?:X)\k<r1>\z)|(?<=(?=(?&w1))(?s:.)))
+#
+# It holds where X matches from here and ends where the lookbehind stands (the rest of the text after X is r1), or
+# where the search holds one character back. The lookbehind of one character is the step back, and PCRE2 takes it
+# in every version. So the search tries every start from the lookbehind back to the start of the text. It calls
+# itself once for each character it steps back, and a text that is too long for that ends in a MatchError, never in
+# a wrong answer.
+#
+# No group of X is read outside the lookbehind (the pattern is refused otherwise), so what the search captures does
+# not matter, and neither does the direction X is matched in.
+function walk(E::Emitter, n::Node)
+    out = E.out
+    rest = helpername(E, 'r')
+    search = helpername(E, 'w')
+    push!(E.names, rest)
+    print(out, "(?=(?<", rest, '>', REST_OF_TEXT, "))")
+    names = E.names
+    E.out = IOBuffer()
+    E.names = String[]
+    print(E.out, "(?<", search, ">(?=(?:")
+    node(E, n.subs[1])
+    print(E.out, ")\\k<", rest, ">\\z)|(?<=(?=(?&", search, "))", ANY_CHARACTER, "))")
+    push!(E.walks, String(take!(E.out)))
+    E.out = out
+    E.names = names
+    print(out, n.negative ? "(?!(?&" : "(?=(?&", search, "))")
+    return nothing
+end
+
+# Writes a backreference. One to a group that cannot have taken part matches the empty string and is not written.
+# A LIVE one reads its group, which PCRE2 has set on every way here (see the note at the top of the file). A name
+# of several groups reads each of them: at most one has taken part, and the others hold the empty string.
 function backreference(E::Emitter, n::Node)
     out = E.out
-    wrote = false
-    anymaybe = false
     for k in eachindex(n.groups)
-        g = n.groups[k]
-        n.statuses[k] == NEVER && continue
-        E.pcregroup[g] == 0 && error("backreference before its group")
-        print(out, wrote ? "|" : "(?:")
-        wrote = true
-        if n.statuses[k] == MAYBE
-            print(out, "(?=\\g{", E.pcremarker[g], "})")
-            anymaybe = true
-        end
+        n.statuses[k] == LIVE || continue
+        reading = E.read[n.groups[k]]
+        isempty(reading) && error("backreference before its group")
         if n.ignorecase[k]
-            print(out, "(?i:\\g{", E.pcregroup[g], "})")
+            print(out, "(?i:", reading, ')')
         else
-            print(out, "\\g{", E.pcregroup[g], '}')
+            print(out, reading)
         end
     end
-    wrote || return nothing
-    if anymaybe
-        print(out, '|')
-        for k in eachindex(n.groups)
-            if n.statuses[k] == MAYBE
-                print(out, "(?!\\g{", E.pcremarker[n.groups[k]], "})")
-            end
-        end
-    end
-    print(out, ')')
     return nothing
 end

@@ -341,9 +341,6 @@ const GRINNING_FACE = "\U1F600"
         refused = [
             "(?<=\\1(a))b" => E.REFUSED_BACKREFERENCE_IN_LOOKBEHIND,
             "(?<=(a|b)+?)c\\1" => E.REFUSED_GROUP_IN_LOOKBEHIND,
-            "^(?:(?:(a)|b)\\1)+\$" => E.REFUSED_GROUP_IN_REPETITION,
-            "^(?:(?=(a)))?\\1b" => E.REFUSED_GROUP_IN_LOOKAROUND,
-            "^(a*)+\\1b" => E.REFUSED_GROUP_IN_EMPTY_REPETITION,
             "^(.)(?i:\\1)\$" => E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE,
             "^(\u00df)(?i:\\1)\$" => E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE,
             # With no flag ECMA-262 does not fold U+212A to k, and PCRE2 does.
