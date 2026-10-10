@@ -199,6 +199,51 @@ replaced; the Validator is now a facade over this evaluator (see `docs/Validator
   `ref JsonSchemaContext` for reporting; the evaluator passes a scratch context. When merged into Corvus V5 the
   pure predicates (`MatchEmail(ReadOnlySpan<byte>)` etc.) should be made public instead.
 
+## Regular expression match timeout
+
+The evaluator matches many patterns itself (prefixes, length ranges, literal alternations, class sequences,
+separated lists). Every other `pattern` and `patternProperties` keyword is matched by a .NET `Regex`, and .NET's
+engine backtracks. There are patterns on which a match never finishes, in the interpreted engine, the compiled
+engine or both, and patterns that take time exponential in the length of the text (`^(a+)+$` on a long run of `a`
+that ends in another character).
+
+So a match has a timeout. `JsonSchemaEvaluatorOptions.RegexMatchTimeout` sets it, and its default is
+`JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout`, 10 seconds.
+
+- A single match that runs for longer than the timeout throws `RegexMatchTimeoutException`. The exception leaves
+  `Evaluate` and reaches the caller. The instance is not reported as invalid, because the evaluator does not know
+  whether it matches. Call `Evaluate` inside `try` when the schema or the instance is not trusted.
+- The timeout is the same for the interpreter, for generated code (`CodeGeneration`), for an evaluator loaded from
+  a program image and for an evaluator returned by `ForEntryPoint`.
+- A `Regex` supplied by `RegexProvider` keeps the timeout it was constructed with.
+- Set `RegexMatchTimeout = Regex.InfiniteMatchTimeout` to match with no timeout, which was the behaviour before
+  the default was introduced.
+- The timeout limits time and not memory. A match that never finishes can grow the engine's backtracking stack
+  by hundreds of megabytes a second. Choose a shorter timeout for schemas that are not trusted.
+
+```csharp
+using System.Text.RegularExpressions;
+using Corvus.Text.Json.RuntimeEvaluator;
+
+var options = new JsonSchemaEvaluatorOptions
+{
+    RegexMatchTimeout = TimeSpan.FromSeconds(1),
+};
+
+using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schemaUtf8, options);
+try
+{
+    bool valid = evaluator.Evaluate(instanceUtf8);
+}
+catch (RegexMatchTimeoutException)
+{
+    // A match took longer than a second. The instance was neither accepted nor refused.
+}
+```
+
+Generated types and generated standalone evaluators have the same 10 seconds, fixed in the generated code (see
+[StandaloneEvaluatorInternals.md](StandaloneEvaluatorInternals.md)).
+
 ## Runtime code generation
 
 An evaluator can compile its schema to IL at run time, in place of interpreting it. Generated code gives the same

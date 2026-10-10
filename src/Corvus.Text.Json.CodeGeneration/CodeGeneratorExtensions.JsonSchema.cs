@@ -42,6 +42,17 @@ internal static partial class CodeGenerationExtensions
     private const string MutableClassBaseName = "Mutable";
     private const string MutableClassNameKey = "CSharp_JsonSchema_MutableClassNameKey";
 
+    /// <summary>
+    /// The match timeout, in milliseconds, of every regular expression in generated code: 10 seconds.
+    /// </summary>
+    /// <remarks>
+    /// There are patterns on which a match in .NET's regular expression engine never finishes. With a timeout the
+    /// match throws <see cref="System.Text.RegularExpressions.RegexMatchTimeoutException"/> to the caller of the
+    /// generated code. This is the one place the generator holds the value. The runtime evaluator has the same
+    /// default for the expressions it constructs, in <c>JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout</c>.
+    /// </remarks>
+    internal const int RegexMatchTimeoutMilliseconds = 10_000;
+
     // Both end in \z and not in $, which in .NET also holds before a final line feed. A pattern that ends in a
     // line feed (^abc\n) is neither of these.
     private static readonly System.Text.RegularExpressions.Regex PrefixPattern =
@@ -251,17 +262,24 @@ internal static partial class CodeGenerationExtensions
         string translatedValue = EcmaRegexTranslator.TranslateOrFallback(value);
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(CultureInfo.InvariantCulture));
 
+        // Every form carries the match timeout (see RegexMatchTimeoutMilliseconds).
+        string timeout = RegexMatchTimeoutMilliseconds.ToString(CultureInfo.InvariantCulture);
+
         return generator
 #if BUILDING_SOURCE_GENERATOR
                 .AppendIndent("private static Regex ")
                 .Append(memberName)
                 .Append("() => new(")
                 .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
-                .AppendLine(", RegexOptions.Compiled);");
+                .Append(", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(")
+                .Append(timeout)
+                .AppendLine("));");
 #else
                 .AppendLine("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD")
                 .AppendIndent("[GeneratedRegex(")
                 .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
+                .Append(", RegexOptions.None, matchTimeoutMilliseconds: ")
+                .Append(timeout)
                 .AppendLine(")]")
                 .AppendIndent("private static partial Regex ")
                 .Append(memberName)
@@ -271,7 +289,9 @@ internal static partial class CodeGenerationExtensions
             .Append(memberName)
             .Append("() => new(")
             .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
-            .AppendLine(", RegexOptions.Compiled);")
+            .Append(", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(")
+            .Append(timeout)
+            .AppendLine("));")
             .AppendLine("#endif");
 #endif
     }

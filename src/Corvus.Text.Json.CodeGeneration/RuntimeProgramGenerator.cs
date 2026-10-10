@@ -477,6 +477,10 @@ internal static class RuntimeProgramGenerator
         Line($"            AssertFormat = {(alwaysAssertFormat ? "true" : "null")},");
         Line("            AssertFormatInLegacyDrafts = true,");
         Line(image is null ? "            DocumentResolver = TryGetDocument," : "            RegexProvider = GetRegex,");
+
+        // The expressions the evaluator constructs itself (every one of them when there is no [GeneratedRegex] table,
+        // or no regex generator to implement it) have the timeout the table's expressions have.
+        Line($"            RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds({CodeGenerationExtensions.RegexMatchTimeoutMilliseconds}),");
         if (formatModes.Count > 0)
         {
             Line("            FormatModes = new global::System.Collections.Generic.Dictionary<string, JsonSchemaFormatMode>(global::System.StringComparer.Ordinal)");
@@ -549,6 +553,8 @@ internal static class RuntimeProgramGenerator
     /// Emits the image (base64 in UTF-8 literals, decoded on first use) and the regular-expression table: one
     /// <c>[GeneratedRegex]</c> method per pattern, in the image's pattern-table order, on runtimes that have the
     /// generator; elsewhere the provider returns <see langword="null"/> and the evaluator constructs the expression.
+    /// Each has the match timeout of <see cref="CodeGenerationExtensions.RegexMatchTimeoutMilliseconds"/>: the
+    /// attribute carries it, and the options the program is loaded with carry it for the evaluator's own.
     /// A program from a Roslyn source generator carries no patterns (generators do not chain, so the regex generator
     /// would never implement the methods) and the evaluator constructs every expression on first use.
     /// </summary>
@@ -594,7 +600,7 @@ internal static class RuntimeProgramGenerator
             line("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD");
             for (int i = 0; i < image.DotNetPatterns.Count; i++)
             {
-                line($"    [GeneratedRegex({Literal(image.DotNetPatterns[i])}, RegexOptions.CultureInvariant)]");
+                line($"    [GeneratedRegex({Literal(image.DotNetPatterns[i])}, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: {CodeGenerationExtensions.RegexMatchTimeoutMilliseconds})]");
                 line($"    private static partial Regex Regex{i}();");
             }
 

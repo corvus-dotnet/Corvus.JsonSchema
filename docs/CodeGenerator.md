@@ -273,7 +273,9 @@ The tool generates `readonly struct` types that are thin wrappers over pooled JS
 The tool generates:
 
 - **Type-safe property accessors**: `person.Name` returns a strongly-typed string value
-- **Validation**: `person.EvaluateSchema()` validates against the full schema
+- **Validation**: `person.EvaluateSchema()` validates against the full schema. A `pattern` whose match runs for
+  longer than 10 seconds throws `RegexMatchTimeoutException` (see
+  [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated))
 - **Implicit conversions**: `(string)person.Name` extracts the .NET value
 - **Mutable builder**: `person.CreateBuilder(workspace)` creates a mutable copy
 - **Immutable document factory**: `Person.Create(...)` builds a self-contained `ParsedJsonDocument<Person>` in a single pass, with no workspace and no serialization round trip

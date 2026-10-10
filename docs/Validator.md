@@ -228,6 +228,13 @@ Things to know:
 
 The [runtime evaluator guide](./RuntimeEvaluator.md#runtime-code-generation) has the measurements and the cases that are not compiled.
 
+## Regular Expression Match Timeout
+
+A `pattern` or `patternProperties` keyword that the evaluator cannot match by itself is matched by a .NET `Regex`. Some patterns never finish in .NET's engine, so each match has a timeout of 10 seconds.
+
+- A match that runs for longer throws `RegexMatchTimeoutException` out of `Validate`. The document is not reported as invalid. Call `Validate` inside `try` when the schema or the document is not trusted.
+- `JsonSchema.Options` has no setting for the timeout. To use another value, or `Regex.InfiniteMatchTimeout` for none, compile the schema with the [runtime evaluator](./RuntimeEvaluator.md#regular-expression-match-timeout) and set `JsonSchemaEvaluatorOptions.RegexMatchTimeout`.
+
 ## Schema Caching
 
 Compiled schemas are cached automatically by their canonical URI, `alwaysAssertFormat` flag and `codeGeneration` setting. Subsequent calls to any `From*` method with the same URI return the cached validator without recompilation:

@@ -166,7 +166,9 @@ Control the generator's behaviour with MSBuild properties in your `.csproj`:
 For each `[JsonSchemaTypeGenerator]` attribute, the generator produces a complete implementation of the partial struct:
 
 - **Type-safe property accessors** for every property defined in the schema
-- **Validation** via `EvaluateSchema()` with full draft 2020-12 (or earlier draft) support
+- **Validation** via `EvaluateSchema()` with full draft 2020-12 (or earlier draft) support. A `pattern` whose match
+  runs for longer than 10 seconds throws `RegexMatchTimeoutException` (see
+  [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated))
 - **Parsing** from strings, byte arrays, streams, and sequences via `ParsedJsonDocument<T>`
 - **Serialization** via `WriteTo(Utf8JsonWriter)` and `ToString()`
 - **Implicit conversions** to and from .NET primitive types

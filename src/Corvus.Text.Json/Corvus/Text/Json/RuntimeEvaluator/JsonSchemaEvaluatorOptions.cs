@@ -31,6 +31,28 @@ public delegate Regex? JsonSchemaRegexProvider(int index, string ecmaPattern);
 public sealed class JsonSchemaEvaluatorOptions
 {
     /// <summary>
+    /// The default of <see cref="RegexMatchTimeout"/>: 10 seconds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A <c>pattern</c> or <c>patternProperties</c> keyword is matched by .NET's regular expression engine when the
+    /// evaluator has no matcher of its own for the pattern. That engine backtracks. There are patterns on which a
+    /// match never finishes, in the interpreted engine, the compiled engine or both, and patterns that take time
+    /// exponential in the length of the text. Without a timeout an evaluation of such a pattern does not return.
+    /// </para>
+    /// <para>
+    /// A match that runs for longer than the timeout throws <see cref="RegexMatchTimeoutException"/>. The exception
+    /// leaves the evaluation and reaches the caller. It is not reported as an instance that is not valid, because
+    /// the evaluator does not know whether the instance matches.
+    /// </para>
+    /// <para>
+    /// Set <see cref="RegexMatchTimeout"/> to <see cref="Regex.InfiniteMatchTimeout"/> to match with no timeout, as
+    /// the evaluator did before this default.
+    /// </para>
+    /// </remarks>
+    public static readonly TimeSpan DefaultRegexMatchTimeout = TimeSpan.FromSeconds(10);
+
+    /// <summary>
     /// Gets the default options.
     /// </summary>
     public static JsonSchemaEvaluatorOptions Default { get; } = new();
@@ -80,9 +102,22 @@ public sealed class JsonSchemaEvaluatorOptions
     public bool CompileRegularExpressions { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets the match timeout for regular expressions.
+    /// Gets or sets the match timeout for the regular expressions the evaluator constructs. Defaults to
+    /// <see cref="DefaultRegexMatchTimeout"/> (10 seconds).
     /// </summary>
-    public TimeSpan RegexMatchTimeout { get; set; } = Regex.InfiniteMatchTimeout;
+    /// <remarks>
+    /// <para>
+    /// A single match of a <c>pattern</c> or <c>patternProperties</c> keyword that runs for longer than this throws
+    /// <see cref="RegexMatchTimeoutException"/> out of the evaluation. See <see cref="DefaultRegexMatchTimeout"/> for
+    /// why there is a default. Set <see cref="Regex.InfiniteMatchTimeout"/> to match with no timeout.
+    /// </para>
+    /// <para>
+    /// The timeout applies to the interpreter and to generated code alike (see <see cref="CodeGeneration"/>), and to
+    /// an evaluator loaded from a program image. A <see cref="Regex"/> supplied by <see cref="RegexProvider"/> keeps
+    /// the timeout it was constructed with.
+    /// </para>
+    /// </remarks>
+    public TimeSpan RegexMatchTimeout { get; set; } = DefaultRegexMatchTimeout;
 
     /// <summary>
     /// Gets or sets the provider consulted before a regular expression is constructed. Only patterns that need a
