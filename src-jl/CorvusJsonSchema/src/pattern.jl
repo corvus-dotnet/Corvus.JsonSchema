@@ -991,7 +991,9 @@ function parse_separated_list(p::String)
     inner = strip_group(bsub(body, gopen, gclose + 1))
     inner === nothing && return nothing
     before, after = bsub(body, 0, gopen), bsub(body, gclose + 2)
-    items_of(t::String) = (seq = parse_sequence("^" * t); seq === nothing ? nothing : seq.items)
+    # The items of a text that is a class sequence. A "$" at the end of the text is not an item, and the list has no
+    # place for it: "^x(,a$)*$" is not "^x(,a)*$". Such a text is not a part of a list.
+    items_of(t::String) = (seq = parse_sequence("^" * t); seq === nothing || seq.to_end ? nothing : seq.items)
     fixed(items) = !isempty(items) && all(item -> item.min == item.max && item.min != 0, items)
     group_items = items_of(inner)
     group_items === nothing && return nothing

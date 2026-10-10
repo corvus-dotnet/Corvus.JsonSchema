@@ -37,6 +37,117 @@ const TEST_PATTERNS = String[
     # Sequences decided by the length of the string.
     "^a[a-z]{2,5}z\$", "^.*x\$", "^-?[0-9-]{0,3}0\$", "^\\/[^\\*\\?]*\\/\\*\$", "^.{2,}é\$", "^[^,]*,[^,]\$",
     "^(a.*|.+b)\$", "^(.*\\.)*[a-z]\$",
+    # Lists with an anchor or an assertion inside them, and with an escaped anchor.
+    raw"^x(,a$)*$", raw"^a(,a$)+$", raw"^x$(,a)*$", raw"^(a$)(,a)*$", raw"^$(,a)*$", raw"^(a,$)*b$",
+    raw"^([a-z]+,$)+a$", raw"^a(^,a)*$", raw"^(^a,)*b$", raw"^a(,a\b)*$", raw"^a(,a\$)*$", raw"^a\$(,a)*$",
+    raw"^(a\$,)*b$",
+]
+
+# Patterns with an anchor, a word boundary or a lookaround in a place where a matcher for a shape could lose it, and
+# patterns with an escaped "$" or "^", which is a literal character. Each has the texts it matches and the texts it does
+# not. The answers are V8's: new RegExp(pattern, "u").test(text).
+const ANCHOR_CASES = Tuple{String,Vector{String},Vector{String}}[
+    (raw"^x(,a$)*$", String["x", "x,a"], String["x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^x(,a$)+$", String["x,a"], String["x", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^x(?:,a$)*$", String["x", "x,a"], String["x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^x$(,a)*$", String["x"], String["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^(x$)(,a)*$", String["x"], String["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^(?:x$)(,a)+$", String[], String["x", "x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^$(,a)*$", String[""], String[",a", ",a,a", "a"]),
+    (raw"^(a,$)*b$", String["b"], String["a,b", "a,a,b", "a,", "", "a,a"]),
+    (raw"^(a,$)+b$", String[], String["b", "a,b", "a,a,b", "a,", "", "a,a"]),
+    (raw"^(?:a,$)*b$", String["b"], String["a,b", "a,a,b", "a,", "", "a,a"]),
+    (raw"^([a-z]+)(\.[a-z]+$)*$", String["a", "a.b"], String["a.b.c", "a.", ""]),
+    (raw"^([a-z]+\.$)*[a-z]+$", String["a"], String["a.b", "a.b.c", ".a", ""]),
+    (raw"^x(,a$$)*$", String["x", "x,a"], String["x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^x(^,a)*$", String["x"], String["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^x(,^a)*$", String["x"], String["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^^x(,a)*$", String["x", "x,a", "x,a,a", "x,a,a,a"], String["", "x,", "x,b"]),
+    (raw"^(^x)(,a)*$", String["x", "x,a", "x,a,a", "x,a,a,a"], String["", "x,", "x,b"]),
+    (raw"^(^a,)*b$", String["b", "a,b"], String["a,a,b", "a,", "", "a,a"]),
+    (raw"^(a,)*^b$", String["b"], String["a,b", "a,a,b", "a,", "", "a,a"]),
+    (raw"^x(,(a$))*$", String["x", "x,a"], String["x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^x(,(?:a$))*$", String["x", "x,a"], String["x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^x(,a|$)*$", String["x", "x,a", "x,a,a", "x,a,a,a"], String["", "x,", "x,b"]),
+    (raw"^x(,(a|$))*$", String["x", "x,a", "x,a,a", "x,a,a,a", "x,"], String["", "x,b"]),
+    (raw"^x((^|,)a)*$", String["x", "x,a", "x,a,a", "x,a,a,a"], String["", "x,", "x,b"]),
+    (raw"^(a,)*(b$)$", String["b", "a,b", "a,a,b"], String["a,", "", "a,a"]),
+    (raw"^(a,)*b$$", String["b", "a,b", "a,a,b"], String["a,", "", "a,a"]),
+    (raw"^x(,a\b)*$", String["x", "x,a", "x,a,a", "x,a,a,a"], String["", "x,", "x,b", "x,ab"]),
+    (raw"^x(\b,a)*$", String["x", "x,a", "x,a,a", "x,a,a,a"], String["", "x,", "x,b"]),
+    (raw"^x(,\Ba)*$", String["x"], String["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^x(\B,a)*$", String["x"], String["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^x\b(,a)*$", String["x", "x,a", "x,a,a", "x,a,a,a"], String["", "x,", "x,b"]),
+    (raw"^x\B(,a)*$", String[], String["x", "x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^(a\b,)*b$", String["b", "a,b", "a,a,b"], String["a,", "", "a,a"]),
+    (raw"^(a,\B)*b$", String["b"], String["a,b", "a,a,b", "a,", "", "a,a"]),
+    (raw"^x(,a(?=,|$))*$", String["x", "x,a", "x,a,a", "x,a,a,a"], String["", "x,", "x,b"]),
+    (raw"^x(,(?!a)a)*$", String["x"], String["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^x(?=,)(,a)*$", String["x,a", "x,a,a", "x,a,a,a"], String["x", "", "x,", "x,b"]),
+    (raw"^x(,a(?<=a))*$", String["x", "x,a", "x,a,a", "x,a,a,a"], String["", "x,", "x,b"]),
+    (raw"^x(,(?<!,)a)*$", String["x"], String["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^x(?=,a$)(,a)*$", String["x,a"], String["x", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+    (raw"^(a,(?=b))*b$", String["b", "a,b"], String["a,a,b", "a,", "", "a,a"]),
+    (raw"^(?!a,a)(a,)*b$", String["b", "a,b"], String["a,a,b", "a,", "", "a,a"]),
+    (raw"^x(,a\$)*$", String["x", "x,a\$", "x,a\$,a\$"], String["x,a", "x,a,a", "x,a\$,a"]),
+    (raw"^x\$(,a)*$", String["x\$", "x\$,a", "x\$,a,a"], String["x", "x,a"]),
+    (raw"^(a\$,)*b$", String["b", "a\$,b", "a\$,a\$,b"], String["a,b", "a\$,a,b"]),
+    (raw"^x(,\^a)*$", String["x", "x,^a", "x,^a,^a"], String["x,a", "x,a,a"]),
+    (raw"^(a,)*b\$$", String["b\$", "a,b\$", "a,a,b\$"], String["b", "a,b"]),
+    (raw"^x(,[$^]a)*$", String["x", "x,\$a", "x,^a,\$a"], String["x,a", "x,a,a"]),
+    (raw"^a$b", String[], String["a", "ab", "a\$b", ""]),
+    (raw"^a^b", String[], String["a", "ab", "b"]),
+    (raw"^a$$", String["a"], String["ab", ""]),
+    (raw"^^a", String["a", "ab"], String["ba"]),
+    (raw"^a\$b$", String["a\$b"], String["ab", "a"]),
+    (raw"^a\b", String["a", "a b", "a,"], String["ab"]),
+    (raw"^a\Bb", String["ab"], String["a b", "a"]),
+    (raw"^\ba", String["a"], String["ba", ""]),
+    (raw"^a(?=b)", String["ab"], String["a", "ac"]),
+    (raw"^a(?!b)", String["a", "ac"], String["ab"]),
+    (raw"^[a-c]+\b$", String["a", "abc"], String[""]),
+    (raw"^[a-c]+$\b", String["a", "abc"], String[""]),
+    (raw"^$", String[""], String["a"]),
+    (raw"^a$.*", String["a"], String["ab", ""]),
+    (raw"^a\b.*", String["a", "a b"], String["ab"]),
+    (raw"^a^.*", String[], String["a", "ab"]),
+    (raw"^\$.*", String["\$", "\$a"], String["a"]),
+    (raw"^a$|b", String["a", "ab", "b", "cb"], String["c"]),
+    (raw"a$|^b", String["a", "ba", "bc"], String["ab", "cb"]),
+    (raw"^(a$|b)$", String["a", "b"], String["ab", ""]),
+    (raw"^(a|^b)$", String["a", "b"], String["ab"]),
+    (raw"^(a|b\b)$", String["a", "b"], String["ab"]),
+    (raw"^(?:a\$|b)$", String["a\$", "b"], String["a"]),
+    (raw"^(a|$)$", String["a", ""], String["b"]),
+    (raw"^(^|b)$", String["", "b"], String["a"]),
+    (raw"^(a$|b)c", String["bc", "bcd"], String["a", "ac"]),
+    (raw"(^a|b)c$", String["ac", "bc", "xbc"], String["xac", "acx"]),
+    (raw"a(b|^c)", String["ab", "xab"], String["ac", "c"]),
+    (raw"(a$){2}", String[], String["a", "aa", ""]),
+    (raw"(^a){2}", String[], String["a", "aa"]),
+    (raw"x(a$)?b", String["xb"], String["xab", "xa"]),
+    (raw"^x(a$)?", String["x", "xa", "xab", "xb"], String[]),
+    (raw"(a|b$)c", String["ac"], String["bc", "b"]),
+    (raw"a|\bb", String["a", "b", "c b"], String["cb"]),
+    (raw"a\b|c", String["a", "c", "b a"], String["ab"]),
+    (raw"(?=a)a|b", String["a", "b"], String["c"]),
+    (raw"(?<=a)b|c", String["ab", "c"], String["b"]),
+    (raw"a^|b", String["b"], String["a", ""]),
+    (raw"$a|b", String["b"], String["a", ""]),
+    (raw"^|a", String["", "b"], String[]),
+    (raw"a|$", String["", "b"], String[]),
+    (raw"(a|b)$c", String[], String["ac", "a", "bc"]),
+    (raw"^(a|b)^c", String[], String["ac", "c"]),
+    (raw"[a-c]{2}$|^x", String["ab", "x", "yab"], String["abx", "yx"]),
+    (raw"[a-c]\b|x", String["a", "x", "d a"], String["ad"]),
+    (raw"^[a-c]+$|^\d$", String["abc", "1"], String["a1", ""]),
+    (raw"^(a|b){2}$", String["ab"], String["a", "abc"]),
+    (raw"^.{1,3}$$", String["a"], String["abcd", ""]),
+    (raw"^.$^", String[], String["a", ""]),
+    (raw"^(.*)$", String["", "a"], String[]),
+    (raw"^es$|ms", String["es", "xms"], String["esx", "x"]),
+    (raw"^x-$", String["x-"], String["x-a"]),
+    (raw"^x-\b", String["x-a"], String["x-", "x--"]),
 ]
 
 @testset "patterns" begin
@@ -91,10 +202,35 @@ const TEST_PATTERNS = String[
             "^([A-Za-z_][-A-Za-z0-9_.:]*)\$", "^\\/[^\\*\\?\\&\\%]*(\\/\\*)?\$", "^.*\\.(?:txt|trie)(?:\\.gz)?\$")
         @test all_are(C.MATCH_SEPARATED_LIST, "^([a-zA-Z0-9]{2,3})(-[a-zA-Z0-9]{1,6})*\$",
             "^([a-zA-Z_\$][a-zA-Z0-9_\$]{0,39}\\.)*([a-zA-Z_\$][a-zA-Z0-9_\$]{0,39})\$",
-            "^([a-z_\$][a-z0-9_\$]{0,39}\\.)*([a-zA-Z_\$][a-zA-Z0-9_\$]{0,39})\$")
+            "^([a-z_\$][a-z0-9_\$]{0,39}\\.)*([a-zA-Z_\$][a-zA-Z0-9_\$]{0,39})\$",
+            # An escaped "$" or "^" is a literal character of the list.
+            raw"^x(,a\$)*$", raw"^x\$(,a)*$", raw"^(a\$,)*b$", raw"^x(,\^a)*$", raw"^(a,)*b\$$", raw"^x(,[$^]a)*$")
         @test all_are(C.MATCH_EXCLUDED_CLASS_WITH_WORD, "^(?=[^!*,;{}[\\]~\\n]+\$)(?=(.*\\w)).+\$")
         @test all_are(C.MATCH_ENGINE, "(base64key|awskms)://(.*)", "\\bfoo", "^\\p{L}+\$",
-            "^((\\.(?!\\.)\\/)?\\w+\\/?)+\$", "^\\1(a)", "a\\&.b", "^[a-z]*a[a-z]*\$")
+            "^((\\.(?!\\.)\\/)?\\w+\\/?)+\$", "^\\1(a)", "a\\&.b", "^[a-z]*a[a-z]*\$",
+            # A list with an anchor or an assertion inside it.
+            raw"^x(,a$)*$", raw"^x(?:,a$)+$", raw"^x$(,a)*$", raw"^(x$)(,a)*$", raw"^$(,a)*$", raw"^(a,$)*b$",
+            raw"^x(^,a)*$", raw"^(^a,)*b$", raw"^x(,(a$))*$", raw"^x(,a\b)*$", raw"^x\B(,a)*$", raw"^x(,a(?=,|$))*$",
+            raw"^x(?=,)(,a)*$")
+    end
+
+    # A shape that cannot express an anchor or an assertion leaves the pattern to the engine. The separated list
+    # dropped a "$" at the end of its repeated group and after its first item, so {"pattern": "^x(,a$)*$"} took "x,a,a",
+    # which has a "$" before its second ",a" (a fault in the Rust crate and the Go module, and in this port of them).
+    @testset "an anchor or an assertion inside a shape is not dropped" begin
+        failures = String[]
+        for (pattern, matches, fails) in ANCHOR_CASES
+            v = compile_schema("{\"pattern\": " * quote_json(pattern) * "}")
+            for (texts, want) in ((matches, true), (fails, false)), text in texts
+                isvalid(v, Vector{UInt8}(quote_json(text))) == want ||
+                    push!(failures, "$pattern on $(repr(text)): want $want")
+            end
+        end
+        foreach(println, failures)
+        @test isempty(failures)
+        v = compile_schema("{\"patternProperties\": {" * quote_json(raw"^x(,a$)*$") * ": false}}")
+        @test !isvalid(v, "{\"x,a\": 1}")
+        @test isvalid(v, "{\"x,a,a\": 1}")
     end
 
     @testset "invalid patterns are rejected" begin
