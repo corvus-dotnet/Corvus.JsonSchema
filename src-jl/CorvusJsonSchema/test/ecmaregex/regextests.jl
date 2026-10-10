@@ -339,8 +339,11 @@ const GRINNING_FACE = "\U1F600"
     # A pattern that is valid and whose backreference PCRE2 cannot give the meaning of is refused.
     @testset "refused patterns" begin
         refused = [
-            "(?<=\\1(a))b" => E.REFUSED_BACKREFERENCE_IN_LOOKBEHIND,
-            "(?<=(a|b)+?)c\\1" => E.REFUSED_GROUP_IN_LOOKBEHIND,
+            # The group is matched before the backreference, and has no fixed length to step back over.
+            "(?<=\\1(a+))b" => E.REFUSED_BACKREFERENCE_IN_LOOKBEHIND,
+            "(?<=(?:\\1(a))+)b" => E.REFUSED_BACKREFERENCE_IN_LOOKBEHIND,
+            "(?<=([abc])+)x\\1" => E.REFUSED_GROUP_IN_LOOKBEHIND,
+            "(?<=(a|b)+)c\\1" => E.REFUSED_GROUP_IN_LOOKBEHIND,
             "^(.)(?i:\\1)\$" => E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE,
             "^(\u00df)(?i:\\1)\$" => E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE,
             # With no flag ECMA-262 does not fold U+212A to k, and PCRE2 does.
@@ -381,7 +384,8 @@ const GRINNING_FACE = "\U1F600"
         @test E.unsupportedreason("(a") === nothing
         @test E.verdict("(a") == 0
         @test E.verdict("(a)") == 1
-        @test E.verdict("(?<=\\1(a))b") == 2
+        @test E.verdict("(?<=\\1(a))b") == 1
+        @test E.verdict("(?<=\\1(a+))b") == 2
     end
 
     # Counts beyond what PCRE2 holds in one quantifier.
@@ -398,10 +402,16 @@ const GRINNING_FACE = "\U1F600"
         @test matches("^.{0,200000}?b\$", "a"^150000 * "b")
         @test matches("^[ab]{131070}\$", "ab"^65535)
         @test !matches("^[ab]{131071}\$", "ab"^65535)
-        # A count no text reaches is more than PCRE2 can write, and is refused.
-        @test E.unsupportedreason("a{2147483648}") !== nothing
-        @test startswith(E.unsupportedreason("a{2147483648}"), E.REFUSED_BY_ENGINE)
+        # A count no text reaches: as a minimum it matches nothing, and as a maximum it is no maximum.
+        @test E.translate("a{2147483648}").main == "(?!)"
+        @test E.translate("a{99999999999999999999}").main == "(?!)"
+        @test E.translate("a{0,2147483648}").main == "a*"
+        @test E.translate("a{3,2147483647}?").main == "a{3,}?"
+        @test !matches("^a{2147483648}\$", "aaa")
+        @test matches("^a{2,2147483648}\$", "aaa")
         @test isvalid262("a{2147483648}")
+        # With a body that can match the empty string, that many iterations are neither.
+        @test E.unsupportedreason("(?:a|){2147483648}") == E.REFUSED_TOO_LARGE
     end
 
     # Smaller points on which the translator differed from V8.

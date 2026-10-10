@@ -206,13 +206,20 @@ Compiling a schema, parsing with `parse_document`, and evaluating with a results
 `pattern` and `patternProperties` have ECMA-262 semantics, on every Julia version. A pattern outside the common
 shapes is translated by the `EcmaRegex` submodule into a pattern that PCRE2 matches with the same meaning.
 
+- **Backreferences and repetitions.** A backreference matches the text its group captured when the group last took
+  part, and the empty string when it has not. The groups of a repeated body stop having taken part when an iteration
+  starts, and an iteration that matches the empty string is refused once the minimum count is met. PCRE2 does none of
+  that by itself, so the translator writes it out. `^(?:(a)|x)*\1-$` matches `ax-`, and `^(?:(?:a|)*x)*$` is answered
+  at once on a long text.
 - **What is refused.** A pattern that is valid ECMA-262 and that the translator cannot write with exactly the same
   meaning is not run with another meaning. Compiling the schema throws a `CompileError` that names the construct.
-  These are backreferences in the positions where PCRE2 and ECMA-262 capture differently (inside a lookbehind, to a
-  group inside a lookbehind, to a group of a repetition that can skip it or match nothing, to a group of a
-  lookaround that may not have matched), a case-insensitive backreference to text that PCRE2 compares differently,
-  more than 253 lookbehinds of no fixed length in one pattern, and anything PCRE2 does not compile. No pattern of the
-  JSON-Schema-Test-Suite or of the jsonschema-benchmark corpora is refused.
+  These are a backreference inside a lookbehind to a group that the lookbehind matches before it, where the group is
+  not in an end of the lookbehind of a fixed length (`(?<=\1(a+))`), a backreference to a group inside a lookbehind
+  of no fixed length (`(?<=(a)+)x\1`), a case-insensitive backreference to text that PCRE2 compares differently,
+  repetitions that have to be written twice inside one another past 65,536 characters, more than 253 lookbehinds of
+  no fixed length in one pattern, and anything PCRE2 does not compile (its compiled form of a pattern is at most 64
+  KiB, which counted repetitions nested several deep can pass). No pattern of the JSON-Schema-Test-Suite or of the
+  jsonschema-benchmark corpora is refused.
 - **A match that reaches a limit throws.** PCRE2 backtracks, and it limits the steps and the memory of one match.
   A match that reaches a limit throws `CorvusJsonSchema.EcmaRegex.MatchError`, from `isvalid` as from `validate`
   and `evaluate`. It is never reported as a string that does not match. A schema whose patterns are not trusted

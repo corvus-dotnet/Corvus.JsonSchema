@@ -5,9 +5,22 @@ ECMA-262 regular expressions, as JSON Schema's `pattern`, `patternProperties` an
 by the PCRE2 that Julia bundles after an exact translation. A pattern that cannot be translated exactly is refused
 with an error that names the construct. It is never run with another meaning.
 
-The module is a port of `EcmaRegex.java` of the Java library, which does the same for `java.util.regex`. The parser,
-the validator, the Unicode data and the analysis of backreferences are the same. What is written for the engine
-differs where PCRE2 differs from `java.util.regex`. `emitter.jl` says how.
+The module started as a port of `EcmaRegex.java` of the Java library, which does the same for `java.util.regex`. The
+parser, the validator and the Unicode data are the same. What is written for the engine is PCRE2's own, and
+`emitter.jl` says how.
+
+# Backreferences and repetitions
+
+A backreference means what it does in ECMA-262: the text its group captured when the group last took part, and the
+empty string when it has not, where the groups of a repeated body stop having taken part when an iteration starts.
+An iteration of a repetition that matches the empty string is refused once the minimum count is met, as ECMA-262
+refuses it. PCRE2 does neither, so the translation writes both out (see `emitter.jl`). It is refused in four cases:
+
+* a backreference inside a lookbehind to a group of the same lookbehind that is matched before it (one to its
+  right), where that group is not in an end of the lookbehind of a fixed length, such as `(?<=\\1(a+))`;
+* a backreference to a group inside a lookbehind of no fixed length, such as `(?<=(a)+)x\\1`;
+* a case-insensitive backreference to text that PCRE2 compares differently (see Unicode below);
+* repetitions that have to be written twice, inside one another, past 65,536 characters of translation.
 
 # Grammars
 
@@ -48,10 +61,10 @@ module on the steps of the searches for lookbehinds.
 # PCRE2 versions
 
 The module was written against PCRE2 10.42 (Julia 1.10) and 10.46 (Julia 1.13), and what it writes is the same on
-both but for the form of a class of many ranges, which is a matter of speed. Three things are done because one of
+both but for the form of a class of many ranges, which is a matter of speed. Four things are done because one of
 them answers wrongly otherwise, and `emitter.jl` and `pcre.jl` say where: PCRE2 is told not to work out where a
-match can start, a lookbehind is given to PCRE2 only when its length is fixed, and a class is written so that no
-range of it crosses U+00FF.
+match can start, a lookbehind is given to PCRE2 only when its length is fixed, a class is written so that no
+range of it crosses U+00FF, and a repetition that never runs is not written.
 """
 module EcmaRegex
 

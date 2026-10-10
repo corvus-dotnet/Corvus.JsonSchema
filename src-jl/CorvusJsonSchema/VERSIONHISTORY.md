@@ -14,7 +14,7 @@ The first release of the Julia port of `Corvus.Text.Json.RuntimeEvaluator`.
 
 - **Ready when loaded.** One interpreter runs the plans, and a precompile workload puts it in the package image. Nothing is generated or compiled when a schema is compiled, so the first validation in a process does not wait for Julia's compiler.
 
-- **ECMA-262 patterns.** `pattern` and `patternProperties` have ECMA-262 semantics, through a translator in the package that writes each pattern for the PCRE2 that Julia bundles. A pattern that cannot be written with exactly the same meaning is refused when the schema is compiled, with a `CompileError` that names the construct. A match that reaches a PCRE2 limit throws and is never reported as no match.
+- **ECMA-262 patterns.** `pattern` and `patternProperties` have ECMA-262 semantics, through a translator in the package that writes each pattern for the PCRE2 that Julia bundles. A backreference to a group that has not taken part matches the empty string, the groups of a repeated body are unset when an iteration starts, and an iteration that matches the empty string is refused once the minimum count is met, as ECMA-262 specifies and PCRE2 does not do by itself. A pattern that cannot be written with exactly the same meaning is refused when the schema is compiled, with a `CompileError` that names the construct. A match that reaches a PCRE2 limit throws and is never reported as no match.
 
 - **The same results with every Julia release.** The package reads Unicode properties and case mappings from its own Unicode 17 tables and never from Julia or its PCRE2, whose Unicode versions differ between Julia releases. Patterns and the `hostname`, `idn-hostname` and `idn-email` formats give the same answers with Julia 1.10 and 1.13.
 

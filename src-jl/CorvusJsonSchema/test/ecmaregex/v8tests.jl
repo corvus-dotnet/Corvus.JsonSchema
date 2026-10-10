@@ -196,4 +196,42 @@ end
         @test E.translate("^(?:a+x?)*\$").main == "\\A(?:a+x?)*\\z"
         @test E.translate("^(?:a|x){2,5}\$").main == "\\A(?:a|x){2,5}\\z"
     end
+
+    # ECMA-262 matches a lookbehind from its end to its start, so a backreference in one reads a group to its right.
+    @testset "backreferences inside a lookbehind" begin
+        rows = [
+            # A backreference in a lookbehind to a group at its end, which ECMA-262 matches first.
+            (raw"(?<=\1(.))x", "000200200242"),
+            (raw"(?<=\1(a))x", "000200000002"),
+            (raw"(?<=\1(a|x))-", "000100100000"),
+            (raw"(?<=\1(?:(a)|.))x", "0492e974ba6f"),
+            (raw"(?<!\1(a)|x)-", "12381c83ff34"),
+            (raw"(?<=\1\1(a))x", "000000000000"),
+            (raw"(?<=(?:\1-|x)(a)-)x", "000000000024"),
+            (raw"(?<=\2(a)(x))-", "000000000000"),
+            (raw"^(?:a|-|(?<=\1(x)))+$", "5a2d14014590"),
+            # A lazy repetition that a lookbehind matches last runs its minimum.
+            (raw"(?<=(a|x)+?)-\1", "000010040011"),
+            (raw"(?<=(a|x){2,}?)-\1", "000000000024"),
+            (raw"(?<=(a)*?x)-\1", "0040201e0801"),
+            # The groups of a repetition in a lookbehind are those of its leftmost iteration.
+            (raw"(?<=(a|x){2})-\1", "000000000024"),
+            (raw"(?<=(?:(a)|x){3})-\1", "000000000000"),
+            (raw"(?<=(?:(a|x)(-|x)){2})-\1\2", "000000000000"),
+            (raw"(?<=((a|x){2}-){2})\2\1", "000000000000"),
+            # Alternatives of different lengths in a lookbehind, one of which writes a group.
+            (raw"(.)?(?<=a(?=\1*?)|(($)+?))x-$", "000020000000"),
+            (raw"(?:(a)|x)*(?<=x|(?=x{3}\1*|x))x(?<=\1)\1", "25d2ebfeba6f"),
+            (raw"(a|x)(?<=(?=(?!\1{2,})(?:\1*?a)*?)$|-)-", "000000000000"),
+        ]
+        checkv8table(rows)
+        for (pattern, _) in rows
+            @test E.unsupportedreason(pattern) === nothing
+        end
+        @test startswith(E.translate("(?<=\\1(a))x").main, "(?<=(?<g1>a)(?<=(?=(?<r1>(?s:.*)))(?=(?&w2))(?s:.){1}))x")
+        @test E.translate("(?<=(a|x)+?)-\\1").main == "(?<=(?<g1>a|x))\\x{2d}\\k<g1>"
+        # Where the end of the lookbehind has no fixed length, the pattern is still refused.
+        @test E.unsupportedreason("(?<=\\1(a+))x") == E.REFUSED_BACKREFERENCE_IN_LOOKBEHIND
+        @test E.unsupportedreason("(?<=(a)+)x\\1") == E.REFUSED_GROUP_IN_LOOKBEHIND
+    end
 end

@@ -7,8 +7,8 @@
 # characters. V8 answers it at once, as ECMA-262 refuses an iteration that matches nothing where PCRE2 tries it.
 
 const EXPECTED_UNSUPPORTED_FUZZ = Dict(
-    EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND => 24,
-    EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND => 39,
+    EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND => 19,
+    EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND => 36,
     EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE => 101)
 const EXPECTED_LIMITED_FUZZ = 1
 
