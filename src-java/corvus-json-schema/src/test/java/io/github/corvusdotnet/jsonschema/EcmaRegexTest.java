@@ -605,8 +605,8 @@ class EcmaRegexTest {
                         + "|abcb|abcc|acab|acba|acbb|acbc|accb|baaa|baab|baac|baba|babb|babc|baca|bacb"
                         + "|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb"
                         + "|bcbc|bcca|bccb|bccc|caab|caba|cabb|cabc|cacb|cbaa|cbab|cbac|cbba|cbbb|cbbc"
-                        + "|cbca|cbcb|cbcc|ccab|ccba|ccbb|ccbc|cccb|abcabc|aabbaa|acacab|bcbcab|abababa"
-                        + "|ababcab|axbba|abxba",
+                        + "|cbca|cbcb|cbcc|ccab|ccba|ccbb|ccbc|cccb|acbcb|acbccb|abcabc|aabbaa|acacab"
+                        + "|bcbcab|abababa|ababcab|axbba|abxba",
             },
             {
                 "(?=(?:(a)|b)c)\\1",
@@ -614,7 +614,7 @@ class EcmaRegexTest {
                         + "|aacc|abac|abbc|abca|abcb|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc"
                         + "|baac|babc|baca|bacb|bacc|bbac|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb"
                         + "|bcbc|bcca|bccb|bccc|caac|cabc|caca|cacb|cacc|cbac|cbbc|cbca|cbcb|cbcc|ccac"
-                        + "|ccbc|acaca|abcabc|acacab|bcbcab|ababcab",
+                        + "|ccbc|acaca|acbcb|acbccb|abcabc|acacab|bcbcab|ababcab",
             },
             {"^(?=[bc]*(c)?)b\\1$", "|b"},
             {
@@ -625,7 +625,7 @@ class EcmaRegexTest {
                         + "|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc"
                         + "|bbaa|bbab|bbac|bbba|bbbb|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa"
                         + "|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca"
-                        + "|cccb|cccc|acaca|abcabc|aabbaa|acacab|abababa|ababcab|axbba|abxba",
+                        + "|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|abababa|ababcab|axbba|abxba",
             },
             {
                 "^(?=(a)*?b?)\\1",
@@ -636,8 +636,8 @@ class EcmaRegexTest {
                         + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
                         + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
                         + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
-                        + "|ccbc|ccca|cccb|cccc|acaca|abcabc|aabbaa|acacab|bcbcab|abababa|ababcab|axbba"
-                        + "|abxba",
+                        + "|ccbc|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa"
+                        + "|ababcab|axbba|abxba",
             },
             {
                 "^(?=(a*)*?(b)?)\\2\\1",
@@ -648,8 +648,8 @@ class EcmaRegexTest {
                         + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
                         + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
                         + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
-                        + "|ccbc|ccca|cccb|cccc|acaca|abcabc|aabbaa|acacab|bcbcab|abababa|ababcab|axbba"
-                        + "|abxba",
+                        + "|ccbc|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa"
+                        + "|ababcab|axbba|abxba",
             },
             {"^(?=((?:c??)?))\\1$", "||c"},
             {"^(?=((?:|c)*))\\1$", "||c|cc|ccc|cccc"},
@@ -661,8 +661,8 @@ class EcmaRegexTest {
                         + "|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab"
                         + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
                         + "|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa|cbab|cbac|cbba|cbbb"
-                        + "|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|acaca|abcabc"
-                        + "|aabbaa|acacab|bcbcab|axbba|abxba",
+                        + "|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|acaca|acbcb"
+                        + "|acbccb|abcabc|aabbaa|acacab|bcbcab|axbba|abxba",
             },
             {"^(?=(?:(a)|(b))+?c?)\\1\\2$", "|a|b"},
             {
@@ -673,7 +673,7 @@ class EcmaRegexTest {
                         + "|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba"
                         + "|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa"
                         + "|caab|caac|caba|cabb|cabc|caca|cacb|cacc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca"
-                        + "|cccb|cccc|acaca|abcabc|acacab|bcbcab|abababa|ababcab|axbba|abxba",
+                        + "|cccb|cccc|acaca|acbcb|acbccb|abcabc|acacab|bcbcab|abababa|ababcab|axbba|abxba",
             },
             {
                 "^(?=(?:((?:a|ab)*)c)*\\1(b)?)\\2.",
@@ -683,12 +683,12 @@ class EcmaRegexTest {
                         + "|acbb|acbc|acca|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab"
                         + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
                         + "|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|ccaa|ccab|ccac|ccca|cccc"
-                        + "|acaca|abcabc|aabbaa|bcbcab|abababa|ababcab|axbba|abxba",
+                        + "|acaca|acbcb|acbccb|abcabc|aabbaa|bcbcab|abababa|ababcab|axbba|abxba",
             },
             {
                 "^(?=(?:a(b)?)*c)a\\1",
                 "|ac|aac|abc|aca|acb|acc|aaac|aaca|aacb|aacc|abac|abca|abcb|abcc|acaa|acab|acac"
-                        + "|acba|acbb|acbc|acca|accb|accc|acaca|abcabc|acacab|ababcab",
+                        + "|acba|acbb|acbc|acca|accb|accc|acaca|acbcb|acbccb|abcabc|acacab|ababcab",
             },
             {
                 "^(?=(?:(a)|b){1,2}c?)\\1",
@@ -696,20 +696,23 @@ class EcmaRegexTest {
                         + "|bcc|aaaa|aaab|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb"
                         + "|abbc|abca|abcb|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|bbaa|bbab"
                         + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
-                        + "|bccc|acaca|abcabc|aabbaa|acacab|bcbcab|abababa|ababcab|axbba|abxba",
+                        + "|bccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa|ababcab|axbba"
+                        + "|abxba",
             },
             {
                 "^(?=(?=(a)?)(b)?a)\\1\\2",
                 "|a|aa|ab|ac|ba|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab|bac|aaaa|aaab|aaac"
                         + "|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb|abcc"
                         + "|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc"
-                        + "|baca|bacb|bacc|acaca|abcabc|aabbaa|acacab|abababa|ababcab|axbba|abxba",
+                        + "|baca|bacb|bacc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|abababa|ababcab|axbba"
+                        + "|abxba",
             },
             {
                 "(?=(a|ab)(?:c|(b)c))\\1\\2",
                 "|ac|aac|abc|aca|acb|acc|bac|cac|aaac|aabc|aaca|aacb|aacc|abac|abbc|abca|abcb"
                         + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baac|babc|baca|bacb|bacc"
-                        + "|bbac|bcac|caac|cabc|caca|cacb|cacc|cbac|ccac|acaca|abcabc|acacab|ababcab",
+                        + "|bbac|bcac|caac|cabc|caca|cacb|cacc|cbac|ccac|acaca|acbcb|acbccb|abcabc|acacab"
+                        + "|ababcab",
             },
             {
                 "^(?=(a)??(?:b|a))\\1",
@@ -717,13 +720,13 @@ class EcmaRegexTest {
                         + "|bbc|bca|bcb|bcc|aaaa|aaab|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac"
                         + "|abba|abbb|abbc|abca|abcb|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc"
                         + "|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc"
-                        + "|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|acaca|abcabc"
-                        + "|aabbaa|acacab|bcbcab|abababa|ababcab|axbba|abxba",
+                        + "|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|acaca|acbcb"
+                        + "|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa|ababcab|axbba|abxba",
             },
             {
                 "^(?=(?:(a)|(ab))(?:c|bc))\\1\\2",
                 "|ac|abc|aca|acb|acc|abbc|abca|abcb|abcc|acaa|acab|acac|acba|acbb|acbc|acca"
-                        + "|accb|accc|acaca|abcabc|acacab",
+                        + "|accb|accc|acaca|acbcb|acbccb|abcabc|acacab",
             },
             {
                 "^(?=(?:((?:a|ab)*)\\1c)*)\\1",
@@ -734,7 +737,8 @@ class EcmaRegexTest {
                         + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
                         + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caba|cabb|cabc|caca|cacb|cacc"
                         + "|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc"
-                        + "|ccca|cccb|cccc|acaca|abcabc|aabbaa|acacab|bcbcab|abababa|ababcab|axbba|abxba",
+                        + "|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa|ababcab"
+                        + "|axbba|abxba",
             },
             {
                 "^(?=(?:(a)|b)*?(?:c|(b))\\1)\\2a",
@@ -754,7 +758,7 @@ class EcmaRegexTest {
                 "^(?=(?:(a+)|b)(?:\\1|c)*?(b)?c)\\2",
                 "|ac|bc|aac|aca|acb|acc|bbc|bca|bcb|bcc|aaac|aaca|aacb|aacc|acaa|acab|acac|acba"
                         + "|acbb|acbc|acca|accb|accc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca"
-                        + "|bccb|bccc|acaca|acacab|bcbcab",
+                        + "|bccb|bccc|acaca|acbcb|acbccb|acacab|bcbcab",
             },
             {
                 "(?=((?:.|.b))??(?:(a)|a)(?:\\1)*)\\1.",
@@ -763,16 +767,16 @@ class EcmaRegexTest {
                         + "|abba|abbb|abbc|abca|abcb|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc"
                         + "|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbca|bcaa"
                         + "|bcab|bcac|bcba|bcca|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa|cbab"
-                        + "|cbac|cbba|cbca|ccaa|ccab|ccac|ccba|ccca|acaca|abcabc|aabbaa|acacab|bcbcab"
-                        + "|abababa|ababcab|axbba|abxba",
+                        + "|cbac|cbba|cbca|ccaa|ccab|ccac|ccba|ccca|acaca|acbcb|acbccb|abcabc|aabbaa"
+                        + "|acacab|bcbcab|abababa|ababcab|axbba|abxba",
             },
             {
                 "^(?=(?:((?:bb|a))|[ab])\\1[bc])\\1\\1.",
                 "|ab|ac|bb|bc|aab|aac|aba|abb|abc|aca|acb|acc|bba|bbb|bbc|bca|bcb|bcc|aaba|aabb"
                         + "|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb|abcc|acaa|acab"
                         + "|acac|acba|acbb|acbc|acca|accb|accc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb"
-                        + "|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|acaca|abcabc|aabbaa|acacab"
-                        + "|bcbcab|abababa|ababcab|abxba",
+                        + "|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|acaca|acbcb|acbccb|abcabc"
+                        + "|aabbaa|acacab|bcbcab|abababa|ababcab|abxba",
             },
             {
                 "a(?=((?:a|cc))*?\\1(ab|a))\\1\\2\\1",
@@ -788,10 +792,24 @@ class EcmaRegexTest {
                         + "|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc"
                         + "|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|bcbcab",
             },
+            {
+                "^(?=(?:(a)*(?:c|cb))*\\1b)\\1",
+                "|b|ba|bb|bc|cb|baa|bab|bac|bba|bbb|bbc|bca|bcb|bcc|cba|cbb|cbc|ccb|acab|accb"
+                        + "|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc"
+                        + "|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|cbaa|cbab|cbac"
+                        + "|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccba|ccbb|ccbc|cccb|acbcb|acbccb|acacab|bcbcab",
+            },
+            {
+                "^(?=(?:(?:(a)|b)*?(?:c|(b))\\1)*)\\2a",
+                "|a|aa|ab|ac|ba|aaa|aab|aac|abc|aca|acb|acc|baa|bab|bac|aaaa|aaab|aaac|aabc"
+                        + "|aaca|aacb|aacc|abac|abbc|abca|abcc|acaa|acac|acba|acbb|acbc|acca|accb|accc"
+                        + "|baaa|baab|baac|baba|babb|bacb|bacc|acaca|acbcb|acbccb|abcabc|acacab|ababcab"
+                        + "|axbba|abxba",
+            },
     };
 
     private static final String[] MORE_FOR_LOOKAHEADS = {
-        "acaca", "abcabc", "aabbaa", "acacab", "bcbcab", "abababa", "ababcab", "axbba", "abxba"
+        "acaca", "acbcb", "acbccb", "abcabc", "aabbaa", "acacab", "bcbcab", "abababa", "ababcab", "axbba", "abxba"
     };
 
     /** A group that a lookahead sets on some of its ways only holds what the first way that matches gave it. */

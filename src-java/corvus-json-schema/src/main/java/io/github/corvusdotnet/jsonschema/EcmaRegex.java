@@ -2879,15 +2879,18 @@ final class EcmaRegex {
         private static final class Rest {
             final Node node;
             final Rest next;
-            /** The groups set from here to the end of the lookahead. */
+            /** The groups set, and the groups read, from here to the end of the lookahead. */
             final BitSet sets;
+            final BitSet reads;
 
             Rest(Node node, Rest next) {
                 this.node = node;
                 this.next = next;
                 this.sets = (BitSet) node.sets.clone();
+                this.reads = (BitSet) node.reads.clone();
                 if (next != null) {
                     sets.or(next.sets);
+                    reads.or(next.reads);
                 }
             }
         }
@@ -3229,13 +3232,16 @@ final class EcmaRegex {
             mine.outer = loop;
             loop = mine;
             Rest after = new Rest(again, rest);
+            // What an iteration sets is read by what follows the loop when the loop stops after it, which the tests
+            // in the body ask about.
+            BitSet live = after.reads;
             List<String> plans = plans(() -> {
                 mine.planStart = out.length();
                 mine.scope = scopeNow;
                 if (minLength(body) > 0) {
-                    way(body, after, NOTHING);
+                    way(body, after, live);
                 } else {
-                    movingIteration(body, after, NOTHING);
+                    movingIteration(body, after, live);
                 }
                 if (stops) {
                     guard(null, rest, true);

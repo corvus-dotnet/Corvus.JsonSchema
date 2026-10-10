@@ -269,7 +269,7 @@ class EcmaRegexOracleTest {
      */
     private static final String[][] FOUND_BY_FUZZING = {
             // A lookbehind that starts with a repetition whose body holds a counted group with alternatives.
-            {"(?<=(?:(a|b)(?:c|b){2})+)\\1", "|abba|abca|acba|acca|bbbb|bbcb|bcbb|bccb|abcabc|aabbaa|ababcab"},
+            {"(?<=(?:(a|b)(?:c|b){2})+)\\1", "|abba|abca|acba|acca|bbbb|bbcb|bcbb|bccb|acbccb|abcabc|aabbaa|ababcab"},
             {"(?<=(?:(?:c|b){2}(a))+)\\1$", "|bbaa|bcaa|cbaa|ccaa|aabbaa"},
             // A case-insensitive backreference in a lookbehind to a group that ends after the place it is tried at.
             {"(?i:^(b*)(?<=\\1)c$)", "|c|bc|bbc|bbbc|bBc|Bbc"},
@@ -288,8 +288,8 @@ class EcmaRegexOracleTest {
                         + "|abcb|abcc|acab|acba|acbb|acbc|accb|baaa|baab|baac|baba|babb|babc|baca|bacb"
                         + "|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb"
                         + "|bcbc|bcca|bccb|bccc|caab|caba|cabb|cabc|cacb|cbaa|cbab|cbac|cbba|cbbb|cbbc"
-                        + "|cbca|cbcb|cbcc|ccab|ccba|ccbb|ccbc|cccb|abcabc|aabbaa|acacab|bcbcab|abababa"
-                        + "|ababcab|axbba|abxba|bBc|Bbc",
+                        + "|cbca|cbcb|cbcc|ccab|ccba|ccbb|ccbc|cccb|acbcb|acbccb|abcabc|aabbaa|acacab"
+                        + "|bcbcab|abababa|ababcab|axbba|abxba|bBc|Bbc",
             },
             {
                 "^(?=(?:b|bc)*(c)?)\\1",
@@ -299,8 +299,8 @@ class EcmaRegexOracleTest {
                         + "|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc"
                         + "|bbaa|bbab|bbac|bbba|bbbb|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa"
                         + "|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca"
-                        + "|cccb|cccc|acaca|abcabc|aabbaa|acacab|abababa|ababcab|axbba|abxba|bBc|Bbc"
-                        + "|aAaAc|aaAAc",
+                        + "|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|abababa|ababcab|axbba|abxba"
+                        + "|bBc|Bbc|aAaAc|aaAAc",
             },
             {"^(?=((?:c??)?))\\1$", "||c"},
             {
@@ -311,8 +311,8 @@ class EcmaRegexOracleTest {
                         + "|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab"
                         + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
                         + "|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa|cbab|cbac|cbba|cbbb"
-                        + "|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|acaca|abcabc"
-                        + "|aabbaa|acacab|bcbcab|axbba|abxba|bBc|Bbc|aAaAc|aaAAc",
+                        + "|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|acaca|acbcb"
+                        + "|acbccb|abcabc|aabbaa|acacab|bcbcab|axbba|abxba|bBc|Bbc|aAaAc|aaAAc",
             },
             {
                 "^(?=(?:((?:a|ab)*)c)*\\1(b)?)\\2.",
@@ -322,7 +322,8 @@ class EcmaRegexOracleTest {
                         + "|acbb|acbc|acca|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab"
                         + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
                         + "|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|ccaa|ccab|ccac|ccca|cccc"
-                        + "|acaca|abcabc|aabbaa|bcbcab|abababa|ababcab|axbba|abxba|bBc|Bbc|aAaAc|aaAAc",
+                        + "|acaca|acbcb|acbccb|abcabc|aabbaa|bcbcab|abababa|ababcab|axbba|abxba|bBc|Bbc"
+                        + "|aAaAc|aaAAc",
             },
             {
                 "^(?=(?:(a)|b)*?(?:c|(b))\\1)\\2a",
@@ -343,11 +344,20 @@ class EcmaRegexOracleTest {
                         + "|baaa|baab|baac|bbaa|bcaa|caaa|caab|caac|cbaa|ccaa|aabbaa|aaAAc",
             },
             {"^(?=(?:((?:ba?)?){0,2}|((?:.[ab]|b))??(a)(|a))((c{0,2}?)?))\\5$", "||c"},
+            // A group of an iteration of a loop in a lookahead, read by what follows the loop.
+            {
+                "^(?=(?:(a)*(?:c|cb))*\\1b)\\1",
+                "|b|ba|bb|bc|cb|baa|bab|bac|bba|bbb|bbc|bca|bcb|bcc|cba|cbb|cbc|ccb|acab|accb"
+                        + "|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc"
+                        + "|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|cbaa|cbab|cbac"
+                        + "|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccba|ccbb|ccbc|cccb|acbcb|acbccb|acacab|bcbcab"
+                        + "|bBc",
+            },
     };
 
     private static final String[] MORE_FOUND_BY_FUZZING = {
-        "acaca", "abcabc", "aabbaa", "acacab", "bcbcab", "abababa", "ababcab", "axbba", "abxba", "bBc", "Bbc", "aAaAc",
-        "aaAAc"
+        "acaca", "acbcb", "acbccb", "abcabc", "aabbaa", "acacab", "bcbcab", "abababa", "ababcab", "axbba", "abxba",
+        "bBc", "Bbc", "aAaAc", "aaAAc"
     };
 
     /** The patterns found by fuzzing are translated, and answer as V8 does on every text. */
