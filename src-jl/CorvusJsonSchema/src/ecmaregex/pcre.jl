@@ -79,7 +79,8 @@ function pcreconfig(what::Integer)
     return n > 1 ? String(buffer[1:(n - 1)]) : ""
 end
 
-# The version of the PCRE2 in use, and of its Unicode tables (which this module does not rely on).
+# The version of the PCRE2 in use, and of its Unicode tables. The module relies on those for one thing, which is
+# the comparison of a case-insensitive backreference (see `comparesignoringcase`).
 pcreversion() = pcreconfig(PCRE2_CONFIG_VERSION)
 pcreunicodeversion() = pcreconfig(PCRE2_CONFIG_UNICODE_VERSION)
 
@@ -88,14 +89,6 @@ pcreunicodeversion() = pcreconfig(PCRE2_CONFIG_UNICODE_VERSION)
 function pcreclassesarefast()
     version = tryparse(VersionNumber, first(split(pcreversion(), ' ')))
     return version !== nothing && version >= v"10.45"
-end
-
-# Whether the case folding of the PCRE2 in use is of a Unicode version no later than that of the data, so that every
-# pair of characters it holds equivalent is one the data holds too.
-function pcrefoldingisknown()
-    engine = tryparse(VersionNumber, pcreunicodeversion())
-    data = tryparse(VersionNumber, UNICODE_VERSION)
-    return engine !== nothing && data !== nothing && engine <= data
 end
 
 # Julia compiles its own patterns under a lock, and this module compiles under the same one, as PCRE2's JIT compiler

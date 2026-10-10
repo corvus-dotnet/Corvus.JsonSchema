@@ -122,9 +122,9 @@ end
 # The patterns the translator refuses, by reason. emitter.jl says what each reason means.
 const EXPECTED_UNSUPPORTED_HAND = Dict(
     EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND => 1,
-    EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE => 10)
+    EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE => 3)
 const EXPECTED_UNSUPPORTED_FLAGGED = Dict(
-    EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE => 18)
+    EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE => 8)
 const EXPECTED_UNSUPPORTED_GENERATED = Dict{String,Int}()
 
 @testset "V8 oracle" begin

@@ -19,7 +19,8 @@ refuses it. PCRE2 does neither, so the translation writes both out (see `emitter
 * a backreference inside a lookbehind to a group of the same lookbehind that is matched before it (one to its
   right), where that group is not in an end of the lookbehind of a fixed length, such as `(?<=\\1(a+))`;
 * a backreference to a group inside a lookbehind of no fixed length, such as `(?<=(a)+)x\\1`;
-* a case-insensitive backreference to text that PCRE2 compares differently (see Unicode below);
+* a case-insensitive backreference in a pattern that is only valid with no flag, where the group can hold a
+  character that ECMA-262 compares differently there than PCRE2 does (see Unicode below);
 * repetitions that have to be written twice, inside one another, past 65,536 characters of translation.
 
 # Grammars
@@ -38,9 +39,20 @@ the `u` flag grammar.
   is written as the ranges of its code points from Unicode data that the package carries (`UNICODE_VERSION`), and
   case-insensitive matching is written as the set of the characters ECMA-262 holds equivalent, from the same data.
   So `\\p{...}`, `\\w`, `\\d`, `\\s`, `\\b`, the dot and `(?i:...)` mean the same on every Julia, whatever Unicode
-  version its PCRE2 has. The one thing left to PCRE2 is the comparison of a case-insensitive backreference, and only
-  for text in which the characters with a case variant are ASCII letters, which every PCRE2 compares the same way.
-  Any other case-insensitive backreference is refused.
+  version its PCRE2 has.
+* The one thing left to PCRE2 is the comparison of a case-insensitive backreference, such as `(.)(?i:\\1)`. PCRE2
+  compares by Unicode simple case folding, which is what ECMA-262 does with the `u` flag, in the Unicode version
+  PCRE2 was built with. So a pattern that is valid with the `u` flag is always run, and its backreference holds two
+  characters equivalent when that Unicode version does. The PCRE2 10.46 of Julia 1.13 has Unicode 16, as V8 13.6
+  has, and the two agree on every pair of characters. The PCRE2 10.42 of Julia 1.10 has Unicode 14, and does not
+  hold equivalent the thirty pairs Unicode 15.1 and 16 added, which the README lists. Nothing is written to make up
+  for that: the fix is Julia 1.13. (The data of the package is Unicode 17, which added 28 pairs more. A literal or
+  a class holds them equivalent on every Julia, and a backreference on neither of the two.)
+* A pattern that is only valid with no flag compares by the uppercase mapping of one UTF-16 code unit, which is not
+  what PCRE2 does for 78 characters of the Basic Multilingual Plane (PCRE2 holds U+212A equal to k and U+017F to
+  s, and ECMA-262 does not there) and for the characters beyond it. Such a pattern is refused when a group that a
+  case-insensitive backreference reads can hold one of those characters and a character with a case variant. The
+  error says so. No pattern that is valid with the `u` flag is refused for this.
 * The text should be well-formed UTF-8. It is not checked, so a match costs nothing for the check. PCRE2 is given
   `PCRE2_MATCH_INVALID_UTF`, with which a byte sequence that is not UTF-8 is not an error and not undefined: it
   matches no character, not even a negated class or the dot.

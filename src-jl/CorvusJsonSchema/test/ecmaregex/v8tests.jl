@@ -10,16 +10,38 @@ const V8_TEXTS = let texts = [""]
     append!(texts, ["aaaa", "xxxx", "xa-x", "a-a-", "axax", "-xa-x", "aaxaa", "x-x-x-"])
 end
 
-# The texts on which the pattern does not answer as the row says.
-function v8differences(pattern::String, hex::String)
-    compiled = E.compile(pattern)
-    return String[text for (k, text) in enumerate(V8_TEXTS) if E.ismatch(compiled, text) != bit(hex, k - 1)]
+# The texts of the tables of case-insensitive patterns: the empty text, each of eighteen characters, every pair of
+# them, every text of four of "a", "A", "k" and U+212A, one more, and every text of three of "a", "A", "k", "K",
+# U+212A and "-".
+const V8_CASE_TEXTS = let texts = [""]
+    chars = ["a", "A", "k", "K", "\u212a", "s", "S", "\u017f", "\u00df", "\u1e9e", "\u03c3", "\u03c2", "\u03a3",
+        "\u00e9", "\u00c9", "\U10400", "\U10428", "-"]
+    append!(texts, chars)
+    for c in chars, d in chars
+        push!(texts, c * d)
+    end
+    four = ["a", "A", "k", "\u212a"]
+    for a in four, b in four, c in four, d in four
+        push!(texts, a * b * c * d)
+    end
+    push!(texts, "aA-Aa")
+    three = ["a", "A", "k", "K", "\u212a", "-"]
+    for a in three, b in three, c in three
+        push!(texts, a * b * c)
+    end
+    texts
 end
 
-function checkv8table(rows)
+# The texts on which the pattern does not answer as the row says.
+function v8differences(pattern::String, hex::String, texts::Vector{String}=V8_TEXTS)
+    compiled = E.compile(pattern)
+    return String[text for (k, text) in enumerate(texts) if E.ismatch(compiled, text) != bit(hex, k - 1)]
+end
+
+function checkv8table(rows, texts::Vector{String}=V8_TEXTS)
     for (pattern, hex) in rows
         differences = try
-            v8differences(pattern, hex)
+            v8differences(pattern, hex, texts)
         catch e
             e isa Union{E.PatternError,E.MatchError} || rethrow()
             [sprint(showerror, e)]
@@ -195,6 +217,73 @@ end
         # A body that cannot match the empty string is written with its count, as it always was.
         @test E.translate("^(?:a+x?)*\$").main == "\\A(?:a+x?)*\\z"
         @test E.translate("^(?:a|x){2,5}\$").main == "\\A(?:a|x){2,5}\\z"
+    end
+
+    # A case-insensitive backreference compares as PCRE2 compares, which is by Unicode simple case folding, as
+    # ECMA-262 does with the u flag. The translator used to refuse every such pattern whose group could hold a
+    # character with a case variant other than an ASCII letter.
+    @testset "case-insensitive backreferences" begin
+        @test length(V8_CASE_TEXTS) == 816
+        @test V8_CASE_TEXTS[2:6] == ["a", "A", "k", "K", "\u212a"]
+        rows = [
+            # The patterns of the test data, which are valid with the u flag.
+            (raw"^(.)(?i:\1)$", "0000180006000070001c0007000038000e00038000180006000070001c0007000030000c0000c0003000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+            (raw"^(?i:(.)\1)$", "0000180006000070001c0007000038000e00038000180006000070001c0007000030000c0000c0003000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+            (raw"^(?i:(.+)\1)$", "0000180006000070001c0007000038000e00038000180006000070001c0007000030000c0000c0003000039801980066006601980198006600660001980198006600660198019800660066000000000000000000000000000000000000000000000000000000"),
+            (raw"^(?<n>.)(?i:\k<n>)+$", "0000180006000070001c0007000038000e00038000180006000070001c0007000030000c0000c0003000039801980000000001980198000000000000000000006600660000000000660066c30000000c3000000000038e38000038e38000038e380000000001"),
+            (raw"^(?i:(?:(.)\1)+)$", "0000180006000070001c0007000038000e00038000180006000070001c0007000030000c0000c0003000039867986600000001986798660000000000000001986798660000000198679866000000000000000000000000000000000000000000000000000000"),
+            (raw"(?<=(?i:\1)(.))-", "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001041000000041000000000041040000041040000041040000000001"),
+            (raw"^(\u00df)(?i:\1)$", "000000000000000000000000000000000000000000180000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+            (raw"^(\u03c2)(?i:\1)$", "000000000000000000000000000000000000000000000000000000001c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+            (raw"^(\u{10400})(?i:\1)$", "0000000000000000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+            # Others.
+            (raw"^(.+)(?i:\1)$", "0000180006000070001c0007000038000e00038000180006000070001c0007000030000c0000c0003000039801980066006601980198006600660001980198006600660198019800660066000000000000000000000000000000000000000000000000000000"),
+            (raw"^(?i:(k)\1)$", "0000000000000070001c0007000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+            (raw"^(?i:(s+)\1)$", "000000000000000000000000000038000e00038000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+            (raw"^([a-z]+)(?i:\1)$", "000018000000007000000000000038000000000000000000000000000000000000000000000000000000019800000066000000000000000000000001980000006600000000000000000000000000000000000000000000000000000000000000000000000000"),
+            (raw"^(?i:(.)(?-i:\1))$", "000010000200004000080001000020000400008000100002000040000800010000200004000080001000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+            (raw"^(.)(?i:\1)(?-i:\1)$", "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000820000000410000000000208200000104100000082080000000001"),
+            (raw"^(?:(.)|-)(?i:\1)$", "0000380006000070001c0007000038000e00038000180006000070001c0007000030000c0000c0003000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+            (raw"^(?i:(.)\1\1)$", "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c30000000c3000000000038e38000038e38000038e380000000001"),
+            (raw"(?<=(.)(?i:\1))-", "00000000080002000080002000080002000080002000080002000080002000080002000080002000080002000000000000000000000000000000000000000000000000000000000000000104104107f04104107f04104107f04104107f04104107f04104107f"),
+            # Valid only with no flag, with a group that holds no character the two grammars compare differently.
+            (raw"^([a-j]+)(?i:\1)\&?$", "000018000000000000000000000000000000000000000000000000000000000000000000000000000000019800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+            (raw"^(?i:([a-jA-J])\1)\&?-$", "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000041000000041000000000000000000000000000000000000000000"),
+        ]
+        checkv8table(rows, V8_CASE_TEXTS)
+        for (pattern, _) in rows
+            @test E.unsupportedreason(pattern) === nothing
+        end
+        @test E.translate("^(.)(?i:\\1)\$").main ==
+            "\\A(?<g1>[^\\x{a}\\x{d}\\x{2028}-\\x{2029}])(?:(?i:\\k<g1>))\\z"
+        # A group that holds no character with a case variant is compared as it is.
+        @test E.translate("^([0-9]+)(?i:\\1)\$").main == "\\A(?<g1>[\\x{30}-\\x{39}]+)(?:\\k<g1>)\\z"
+        # A pattern that is only valid with no flag compares by the uppercase mapping of a UTF-16 code unit, which
+        # is not what PCRE2 does for k and U+212A, among others. It is refused when its group can hold a character
+        # with a case variant and one of those.
+        for pattern in ["^(.)(?i:\\1)\\&?\$", "^(?i:(.+)\\1)\\&?\$", "^([a-z]+)(?i:\\1)\\&?\$", "^(k)(?i:\\1)\\&?\$",
+            "^(a|\\u212a)(?i:\\1)\\&?\$"]
+            @test E.unsupportedreason(pattern) == E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE
+            @test !E.parsesunicode(pattern)
+        end
+        # The pairs of characters Unicode 15.1 and 16 made equivalent, each both ways round. V8 13.6 holds every
+        # one of them equivalent. So does a PCRE2 with the data of Unicode 16 (10.46, in Julia 1.13). One with the
+        # data of Unicode 14 (10.42, in Julia 1.10) holds none of them equivalent, and nothing is done about that:
+        # the README lists the pairs and says that the fix is Julia 1.13.
+        texts = String[]
+        for (a, b) in PAIRS_SINCE_UNICODE_14
+            push!(texts, string(Char(a), Char(b)), string(Char(b), Char(a)))
+        end
+        @test length(texts) == 60
+        differences = v8differences(raw"^(.)(?i:\1)$", "fffffffffffffff", texts)
+        engine = VersionNumber(E.pcreunicodeversion())
+        if engine >= v"16"
+            @test isempty(differences)
+        elseif engine < v"15"
+            @test differences == texts
+        else
+            @test issubset(differences, texts)
+        end
     end
 
     # ECMA-262 matches a lookbehind from its end to its start, so a backreference in one reads a group to its right.

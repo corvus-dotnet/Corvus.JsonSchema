@@ -29,6 +29,17 @@ function isnotapattern(pattern::String)
     end
 end
 
+# The pairs of characters that Unicode 15.1 and 16 made equivalent under simple case folding, which a PCRE2 with
+# the data of Unicode 14 (10.42, in Julia 1.10) does not hold equivalent, and those Unicode 17 added, which a PCRE2
+# with the data of Unicode 16 (10.46, in Julia 1.13) does not either.
+const PAIRS_SINCE_UNICODE_14 = vcat(
+    [(0x19b, 0xa7dc), (0x264, 0xa7cb), (0x390, 0x1fd3), (0x3b0, 0x1fe3), (0x1c89, 0x1c8a), (0xa7cc, 0xa7cd),
+        (0xa7da, 0xa7db), (0xfb05, 0xfb06)],
+    [(0x10d50 + k, 0x10d70 + k) for k in 0:21])
+const PAIRS_OF_UNICODE_17 = vcat(
+    [(0xa7ce, 0xa7cf), (0xa7d2, 0xa7d3), (0xa7d4, 0xa7d5)],
+    [(0x16ea0 + k, 0x16ebb + k) for k in 0:24])
+
 # A PCRE2 pattern compiled as the module compiles its translations, for tests of what PCRE2 itself does.
 function rawpattern(text::String)
     compiled = E.pcrecompile(E.Translation(text, String[]), text, true)

@@ -344,9 +344,8 @@ const GRINNING_FACE = "\U1F600"
             "(?<=(?:\\1(a))+)b" => E.REFUSED_BACKREFERENCE_IN_LOOKBEHIND,
             "(?<=([abc])+)x\\1" => E.REFUSED_GROUP_IN_LOOKBEHIND,
             "(?<=(a|b)+)c\\1" => E.REFUSED_GROUP_IN_LOOKBEHIND,
-            "^(.)(?i:\\1)\$" => E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE,
-            "^(\u00df)(?i:\\1)\$" => E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE,
             # With no flag ECMA-262 does not fold U+212A to k, and PCRE2 does.
+            "^(.)(?i:\\1)\\&?\$" => E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE,
             "^([a-z]+)-(?i:\\1)\\&?\$" => E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE,
             "^(k)(?i:\\1)\\&?\$" => E.REFUSED_CASE_INSENSITIVE_BACKREFERENCE,
         ]
@@ -356,7 +355,7 @@ const GRINNING_FACE = "\U1F600"
             @test isvalid262(pattern) == !occursin("\\&", pattern)
         end
         message = try
-            E.compile("^(.)(?i:\\1)\$")
+            E.compile("^(.)(?i:\\1)\\&?\$")
             ""
         catch e
             sprint(showerror, e)
@@ -369,8 +368,12 @@ const GRINNING_FACE = "\U1F600"
         @test !matches("^(?i:([a-j]+)-\\1)\$", "abc-ABD")
         @test matches("^([a-j]+)-(?i:\\1)\\&?\$", "abc-ABC")
         @test !matches("^([a-j]+)-(?i:\\1)\\&?\$", "abc-ABD")
-        # With the u flag grammar every ASCII letter is exact, as ECMA-262 and PCRE2 both fold U+212A to k and
-        # U+017F to s. (The Java port refuses these. The answers are V8's.)
+        # With the u flag grammar ECMA-262 and PCRE2 compare the same way: both fold U+212A to k and U+017F to s.
+        # (The answers are V8's.)
+        @test matches("^(.)(?i:\\1)\$", "k\u212a")
+        @test matches("^(.)(?i:\\1)\$", "\u00df\u1e9e")
+        @test matches("^(.+)(?i:\\1)\$", "\u03c3\u03c2\u03a3\u03c3")
+        @test !matches("^(.)(?i:\\1)\$", "\u0131i")
         @test matches("^(?i:([a-z]+)-\\1)\$", "sky-SKY")
         @test matches("^(?i:([a-z]+)-\\1)\$", "sky-S\u212aY")
         @test matches("^(?i:([a-z]+)-\\1)\$", "s\u212ay-\u017fky")

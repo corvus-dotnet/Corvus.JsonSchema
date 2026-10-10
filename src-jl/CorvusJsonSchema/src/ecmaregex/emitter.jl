@@ -69,9 +69,10 @@ const REFUSED_BACKREFERENCE_IN_LOOKBEHIND =
     "a backreference inside a lookbehind to a group that the lookbehind matches before it"
 # The group is in a lookbehind of no fixed length, which ECMA-262 matches backwards, so it can capture other text.
 const REFUSED_GROUP_IN_LOOKBEHIND = "a backreference to a group inside a lookbehind of no fixed length"
-# The backreference ignores case, and the group can hold a character PCRE2 compares differently.
+# The backreference ignores case, the pattern is only valid with no flag, and the group can hold a character that
+# ECMA-262 compares differently there than PCRE2 does.
 const REFUSED_CASE_INSENSITIVE_BACKREFERENCE =
-    "a case-insensitive backreference to text that PCRE2 compares differently"
+    "a case-insensitive backreference, in a pattern that is not valid with the u flag, to text that PCRE2 compares differently"
 # A repetition whose groups are read after it is written twice (see `writerepeat`), and the copies multiply. Or a
 # repetition has a minimum no text reaches and a body that can match the empty string.
 const REFUSED_TOO_LARGE = "a repetition too large to write out"
@@ -108,12 +109,6 @@ const REST_OF_TEXT = "(?s:.*)"
 
 const SURROGATE_SET = Int32[0xD800, 0xDFFF]
 const NOT_SURROGATE_SET = complement(SURROGATE_SET)
-const ASCII_LETTER_SET = Int32['A', 'Z', 'a', 'z']
-const NOT_ASCII_SET = Int32[0x80, MAX_CODE_POINT]
-# The ASCII letters with the two characters that fold to one of them with the u flag grammar, and in PCRE2.
-const FOLD_LETTER_SET = Int32['A', 'Z', 'a', 'z', 0x17F, 0x17F, 0x212A, 0x212A]
-# The ASCII letters but for k and s, which U+212A and U+017F fold to in PCRE2 whatever the grammar.
-const ASCII_LETTERS_FOLDING_IN_ASCII = Int32['A', 'J', 'L', 'R', 'T', 'Z', 'a', 'j', 'l', 'r', 't', 'z']
 
 # The translation of a pattern. It is the pattern PCRE2 searches for, and the body of each lookbehind that is a
 # callout, in the order of the callout numbers.
@@ -502,23 +497,52 @@ end
 # Decides how a case-insensitive backreference to a group is written, from the characters the group can capture.
 # Returns false when none of them has a case variant, so that the backreference compares exactly.
 #
-# Otherwise the comparison is PCRE2's, which is Unicode simple case folding in the Unicode version of that PCRE2. It
-# is the comparison ECMA-262 makes when the only captured characters with a variant, in either grammar, are ASCII
-# letters. PCRE2 compares those the same way in every version. A character with no variant in the data has none in
-# a PCRE2 of the same or an earlier Unicode version, as Unicode never takes a case pair away. A later PCRE2 may give
-# such a character a variant, so with one the group may hold no other character outside ASCII at all (see
-# `pcrefoldingisknown`). With the u flag grammar every ASCII letter qualifies, with U+212A and U+017F, which both
-# ECMA-262 and PCRE2 fold to k and s. With no flag ECMA-262 does not fold them and PCRE2 still does, so k and s are
-# left out. Any other group is refused.
+# Otherwise the comparison is PCRE2's, which is Unicode simple case folding in the Unicode version of that PCRE2.
+#
+# - With the u flag grammar that is the comparison ECMA-262 makes, so the backreference is always written. The
+#   two agree on every pair of characters where the Unicode version of PCRE2 is that of the data or later, as
+#   Unicode does not take a case pair away. An earlier PCRE2 lacks the pairs Unicode has added since (the PCRE2
+#   10.42 of Julia 1.10 has Unicode 14 and lacks thirty pairs, which the README lists), and holds two characters of
+#   such a pair to be different. Nothing is written to make up for that.
+# - With no flag ECMA-262 compares by the uppercase mapping of one UTF-16 code unit, which is not what PCRE2 does
+#   for every character: PCRE2 holds U+212A equal to k, and ECMA-262 does not. So a pattern that is only valid with
+#   no flag is refused when the group can capture a character with a variant and a character the two compare
+#   differently (see `comparedotherwise`).
 function comparesignoringcase(E::Emitter, g::Int)
     captured = capturedset(E, E.groupnodes[g]::Node)
     intersects(captured, cased(E.unicode)) || return false
-    letters = E.unicode ? FOLD_LETTER_SET : ASCII_LETTERS_FOLDING_IN_ASCII
-    other = pcrefoldingisknown() ? setunion(cased(true), cased(false)) : NOT_ASCII_SET
-    if intersects(captured, difference(setunion(other, ASCII_LETTER_SET), letters))
+    if !E.unicode && intersects(captured, comparedotherwise())
         unsupported(E, REFUSED_CASE_INSENSITIVE_BACKREFERENCE)
     end
     return true
+end
+
+const COMPARED_OTHERWISE = Ref{Union{Nothing,CodeSet}}(nothing)
+
+# The characters that are not equivalent to the same characters under the two grammars: those whose class under
+# Unicode simple case folding, which is what PCRE2 compares by, is not their class under the Canonicalize of a
+# pattern with no flag. They are U+212A and k, U+017F and s and the like, and every character beyond the Basic
+# Multilingual Plane that has a case variant, which a pattern with no flag does not fold.
+function comparedotherwise()
+    lock(DATA_LOCK)
+    try
+        set = COMPARED_OTHERWISE[]
+        set === nothing || return set
+        pairs = Int32[]
+        for (f, other) in ((folding(true), folding(false)), (folding(false), folding(true)))
+            for (k, point) in enumerate(f.points)
+                at = searchsortedfirst(other.points, point)
+                same = at <= length(other.points) && other.points[at] == point &&
+                    sort(other.classes[at]) == sort(f.classes[k])
+                same || push!(pairs, point, point)
+            end
+        end
+        set = setof(pairs)
+        COMPARED_OTHERWISE[] = set
+        return set
+    finally
+        unlock(DATA_LOCK)
+    end
 end
 
 # Every character the text a node matches can hold.
