@@ -68,17 +68,42 @@ import java.util.regex.PatternSyntaxException;
  * that its group took part when that is not known (see {@link Emitter#backreference}). Otherwise the pattern is
  * written by paths (see {@link Emitter#translateByPaths}): once for each way through the choices that decide what the
  * groups it reads hold, so that every backreference stands where its group is known to be set, by a group of the
- * translation on that way, or known not to be. A lookbehind is written with the captures its backward run gives
- * (see {@link Emitter#edge}), and a case-insensitive backreference with the comparison written out (see
- * {@link Emitter#folded}).
+ * translation on that way, or known not to be. A lookahead whose groups are read after it takes the first way its
+ * body matches, each way written after tests that the ways before it fail (see {@link Emitter#firstWay}). A group of
+ * a lookaround that is read in the same iteration of a loop is set by another run of the lookaround where the match
+ * can have come back past a later run of it (see {@link Emitter#fresh}). A lookbehind is written with the captures
+ * its backward run gives (see {@link Emitter#edge}), and a case-insensitive backreference with the comparison
+ * written out (see {@link Emitter#folded}).
  *
- * <p><b>What is refused.</b> A valid pattern whose backreference cannot be given its meaning that way is refused
- * rather than given an answer that may be wrong, and {@link #unsupported} says why. The reasons are the
- * {@code REFUSED_} constants. A pattern with no backreference is refused only for two of them, which are limits of
- * size: a translation too large for {@code java.util.regex} to compile, and a repetition that would be written with
- * more copies of its body than {@link Emitter#MAX_UNROLLED_COPIES}, or with more text than
- * {@link Emitter#MAX_UNROLLED_LENGTH}. A translation that {@code java.util.regex} rejects for another reason is a
- * fault of this class, and is thrown as an {@link IllegalStateException} that says so.
+ * <p><b>What is refused.</b> A pattern that is valid with the u flag is translated, with one exception and within
+ * limits of size. A pattern under either is refused, and is not given an answer that may be wrong.
+ * {@link #unsupported} says why, with one of the {@code REFUSED_} constants.
+ *
+ * <p>The exception is a lookbehind with a group that is read, in it or after it, where what the group holds can be
+ * told only by matching the lookbehind backwards, which {@code java.util.regex} does not do. The translator writes
+ * the lookbehinds for which it can be told while matching forwards (see {@link Emitter#edge}): groups at a fixed
+ * distance from the end of the lookbehind, alternatives, and a repetition of a body of fixed length that stands
+ * first. The others are refused:
+ *
+ * <ul>
+ *   <li>{@link #REFUSED_GROUP_IN_LOOKBEHIND}, for a group of the lookbehind that is read after it, as in
+ *       {@code (?<=(x*?)a*)\1}, {@code (?<=(a)+b*)x\1} and {@code (?<=(a|ab)c*)\1};
+ *   <li>{@link #REFUSED_BACKREFERENCE_IN_LOOKBEHIND}, for a backreference in the lookbehind to a group of it, as in
+ *       {@code (?<=\1a*(b))x} and {@code (?<=\1(a)*)x}.
+ * </ul>
+ *
+ * <p>The limits of size are {@link #REFUSED_TOO_MANY_PATHS} (more plans of one scope than {@link Emitter#MAX_PLANS},
+ * or more text than {@link Emitter#MAX_PATHS_LENGTH}), {@link #REFUSED_EMPTY_ITERATIONS} (more copies of a body than
+ * {@link Emitter#MAX_UNROLLED_COPIES}, or more text than {@link Emitter#MAX_UNROLLED_LENGTH}) and
+ * {@link #REFUSED_TOO_LARGE} (more than {@code java.util.regex} compiles on the stack of the thread). A pattern with
+ * no backreference is refused only for the last two.
+ *
+ * <p>{@link #REFUSED_LOOKAROUND_IN_REPETITION} is kept for a reference to a group of a lookaround that cannot be
+ * given a run of the lookaround of its own where the match can come back to it (see {@link Emitter#bodyText}). No
+ * pattern is known that it refuses.
+ *
+ * <p>A translation that {@code java.util.regex} rejects is a fault of this class, and is thrown as an
+ * {@link IllegalStateException} that says so.
  */
 final class EcmaRegex {
     private EcmaRegex() {

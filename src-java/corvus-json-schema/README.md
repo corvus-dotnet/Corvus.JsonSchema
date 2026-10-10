@@ -135,30 +135,53 @@ flag grammar.
 - A backreference reads what ECMA-262 says its group holds, where `java.util.regex` reads something else. A group
   that did not take part reads as the empty string. The groups of a repeated body are unset when an iteration
   starts, so `^(?:(a)|x)*\1$` takes "ax" and not "axa", and an iteration that matched nothing leaves no group set. A
-  lookbehind captures as if run backwards, so `(?<=\1(a))b` takes "aab". Inside a case-insensitive group a
-  backreference compares by ECMA-262's case folding, the same on every JDK: `^(?i:(.)\1)$` takes "sſ" and "kK"
-  (U+017F, U+212A) and not "iİ" (U+0130). Such a pattern is written once for each way through the groups it reads,
-  and a case-insensitive backreference with its comparison written out, so the translation can be long: over
-  100,000 characters for a case-insensitive backreference to a group that can hold any character.
+  lookbehind captures as if run backwards, so `(?<=\1(a))b` takes "aab". A lookahead takes the first way its body
+  matches, so after `(?=(a)?b)` the group holds "a" before "ab" and nothing before "b". A group of a lookaround is
+  the one its own iteration set, so `^(?:(?=([ab]))[ab](?:c|ca)\1)*$` takes "acaa" and not "acab". Inside a
+  case-insensitive group a backreference compares by ECMA-262's case folding, the same on every JDK:
+  `^(?i:(.)\1)$` takes "sſ" and "kK" (U+017F, U+212A) and not "iİ" (U+0130). Such a pattern is written once for
+  each way through the groups it reads, and a case-insensitive backreference with its comparison written out, so
+  the translation can be long: over 100,000 characters for a case-insensitive backreference to a group that can
+  hold any character.
 
 
-The patterns are run by `java.util.regex`, after translation. A few valid patterns cannot be given their ECMA-262
-meaning there, and compiling a schema with one throws `SchemaCompilationException` with a message that starts
-"Unsupported regular expression" and names the construct. It is never run with another meaning. The `regex` format
-still accepts it, as it is a valid pattern. They are:
+The patterns are run by `java.util.regex`, after translation. A pattern that is valid with the `u` flag is run
+with the meaning ECMA-262 gives it. There is one exception, and there are limits of size. A pattern that falls under
+either is refused. Compiling a schema with it throws `SchemaCompilationException` with a message that starts
+"Unsupported regular expression" and names the reason. It is never run with another meaning. The `regex` format
+still accepts it, as it is a valid pattern.
 
-- a backreference to a group inside a lookbehind, or one inside a lookbehind to a group of that lookbehind, where
-  what the group holds depends on the lookbehind being matched backwards, as in `(?<=(x*?)a*)\1`. The library writes
-  the lookbehinds whose groups stand at a fixed distance from its end, alternatives, and a repetition of a body of
-  fixed length that stands first, such as `(?<=([abc])+)x\1`;
-- a backreference to a group that a lookahead sets on only some of the ways it can match, as in `(?=(a)?b)\1`
-  (alternatives of the whole lookahead, as in `(?=(a)|b)\1`, are written);
-- a backreference to a group of a lookaround, when a repetition holds both and the match can go back to a place
-  between them, as in `^(?:(?=([ab]))[ab](?:c|ca)\1)*$`;
-- a pattern that would be written with more than 256 alternatives for the ways through the groups it reads, or with
-  more than 1,048,576 characters;
-- a repetition that must run more than 200 times over a body that matches the empty string in some places only, such
-  as `(^|x){201}`.
+**The exception is a group of a lookbehind that only matching backwards can tell.** ECMA-262 matches a lookbehind
+backwards, from its last term to its first, and `java.util.regex` matches forwards. The library writes a lookbehind
+whose groups are read, in it or after it, when what the backward match captures can be told while matching
+forwards. That covers groups at a fixed distance from the end of the lookbehind, alternatives, and a repetition of a
+body of fixed length that stands first, such as `(?<=([abc])+)x\1`. Any other is refused, with one of two reasons.
+
+- "a backreference to a group inside a lookbehind whose text depends on the lookbehind being matched backwards", as
+  for `(?<=(x*?)a*)\1`, `(?<=(a)+b*)x\1` and `(?<=(a|ab)c*)\1`;
+- "a backreference inside a lookbehind to a group of that lookbehind that is not at a fixed distance from it", as
+  for `(?<=\1a*(b))x` and `(?<=\1(a)*)x`.
+
+A lookbehind none of whose groups is read is not affected, whatever its body.
+
+**The limits of size.** A pattern is refused when its translation would be too large.
+
+- more than 256 alternatives for the ways through the groups it reads, or more than 1,048,576 characters ("a
+  pattern with this many ways through the groups it reads"), as for
+  `(?:(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?\1\2\3\4\5\6\7\8\9)*`. A case-insensitive backreference to a
+  group that can hold any character takes over 100,000 of those characters each time it is written;
+- more than 200 copies of a body, or 65,536 characters of them, for a repetition that must run two or more times
+  over a body that matches the empty string in some places only, such as `(^|x){201}` ("a repetition this long of a
+  body that can match the empty string");
+- more than `java.util.regex` compiles on the stack of the thread, which is some thousands of groups on a stack of
+  1 MB ("a pattern too large for java.util.regex to compile").
+
+The translator keeps one more reason, "a backreference to a group of a lookaround, in a repetition that can go back
+to before the backreference", for a reference it could not give a run of the lookaround of its own. No pattern is
+known that it refuses: none of 125,839 generated patterns does.
+
+A pattern that is deliberately hard, with nested repetitions over groups that are read, can be slow. The translation
+finds some places by search, and `java.util.regex` matches by backtracking.
 
 ## How it works
 
@@ -225,8 +248,10 @@ exits is better served by a native implementation.
   format's reader and the number conversion against their straightforward counterparts.
 - `EcmaRegexOracleTest`: the translation of ECMA-262 patterns against what V8 answers, for the 61,383 patterns of
   `v8_oracle.json` (the file the Go port's pattern package is tested with). The patterns the translator refuses are
-  counted by reason. `EcmaRegexTest` and `EcmaUnicodeTest` cover the property escapes, the modifier groups, lookbehind
-  and the Unicode data, which `gen-ecma-unicode-data.ps1` generates.
+  counted by reason. It also holds the patterns that fuzzing against V8 found refused or answered wrongly, with
+  V8's answers. `EcmaRegexTest` and `EcmaUnicodeTest` cover the property escapes, the modifier groups, lookbehind,
+  backreferences (tables of patterns with V8's answers for each kind the translation writes specially) and the
+  Unicode data, which `gen-ecma-unicode-data.ps1` generates.
 - `MetaschemasTest`: the embedded metaschemas match `src/Corvus.Text.Json/metaschema`.
 
 ## License
