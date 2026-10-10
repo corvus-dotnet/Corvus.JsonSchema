@@ -136,6 +136,10 @@ let run_file scratch resolver filter dialect file label area assert_format =
 let () =
   let root = Suite.root () in
   let tests = Filename.concat root "tests" in
+  if Suite.absent root then begin
+    Suite.skipped "suite";
+    exit 0
+  end;
   if not (Sys.file_exists tests) then begin
     Printf.printf "JSON-Schema-Test-Suite not found at %s (set JSON_SCHEMA_TEST_SUITE, or check out the submodule)\n"
       root;

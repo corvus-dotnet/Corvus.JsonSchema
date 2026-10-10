@@ -1,6 +1,6 @@
 (* The version of the package. A port of version_test.go of the Go module, for what the OCaml package has: the
-   constant is a plain semantic version and is the version dune-project gives the package. When the package has a
-   VERSIONHISTORY.md, it has a section for the version. *)
+   constant is a plain semantic version and is the version dune-project gives the package, and the package's
+   VERSIONHISTORY.md has a section for the version. *)
 
 open Corvus_json_schema_test_support
 module Suite = Corvus_json_schema_test_helpers.Suite
@@ -50,7 +50,7 @@ let () =
         (List.mem ("(version " ^ version ^ ")") (lines project))
         "dune-project declares (version %s) on a line of its own" version);
   (match package_file "VERSIONHISTORY.md" with
-  | None -> ()
+  | None -> Check.fail "VERSIONHISTORY.md was not found"
   | Some history ->
       Check.checkf (List.mem ("## V" ^ version) (lines history)) "VERSIONHISTORY.md has a V%s section" version);
   Check.finish "version"

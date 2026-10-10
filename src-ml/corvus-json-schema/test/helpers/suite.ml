@@ -13,6 +13,15 @@ let root () =
       in
       find "." 10
 
+let absent root =
+  (match Sys.getenv_opt "JSON_SCHEMA_TEST_SUITE" with Some named when named <> "" -> false | _ -> true)
+  && not (Sys.file_exists (Filename.concat root "tests"))
+
+let skipped what =
+  Printf.printf
+    "%s: SKIPPED, the JSON-Schema-Test-Suite is not there (set JSON_SCHEMA_TEST_SUITE, or check out the submodule)\n"
+    what
+
 let read_file path = try Some (In_channel.with_open_bin path In_channel.input_all) with Sys_error _ -> None
 
 let json_files dir =

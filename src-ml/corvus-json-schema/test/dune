@@ -14,7 +14,24 @@
   plan_test
   suite_test
   version_test)
+ (modules :standard \ readme_test)
+ ; version_test reads the package's version history.
+ (deps %{project_root}/VERSIONHISTORY.md)
  (libraries
   corvus-json-schema
   corvus_json_schema_test_support
   corvus_json_schema_test_helpers))
+
+; The samples of README.md and of the documentation page, compiled and run. The test reads README.md and its own
+; source to check that the samples in the two are the same. It needs unix to capture what a sample prints, and
+; threads for the sample that validates from several.
+
+(test
+ (name readme_test)
+ (modules readme_test)
+ (deps %{project_root}/README.md readme_test.ml)
+ (libraries
+  corvus-json-schema
+  corvus_json_schema_test_support
+  unix
+  threads.posix))

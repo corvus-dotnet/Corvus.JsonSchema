@@ -2,6 +2,9 @@
     and [patternProperties] keywords and of the [regex] format. It is a port of the ecmaregex package of the Go module
     ([src-go/corvus-json-schema/internal/ecmaregex]), with the choice of back end of the Object Pascal port.
 
+    {b This library is internal to the corvus-json-schema package.} It is installed because the package is built from
+    it, and it is not a supported interface: it can change in any release. Programs use {!Corvus_json_schema}.
+
     {1 Unicode mode}
 
     A pattern is read first with the grammar of the ECMA-262 u flag, which is what JSON Schema specifies. A pattern that
@@ -101,12 +104,12 @@ val is_match : t -> Bytes.t -> int -> int -> bool
     which are UTF-8 (an unanchored search). It allocates nothing in the steady state and is safe for one compiled
     pattern used from several threads or domains (see the notes on sharing above).
 
-    @raise Invalid_argument if [off] and [len] do not name a range of [text]. *)
+    It raises [Invalid_argument] if [off] and [len] do not name a range of [text]. *)
 
 val is_match_sub : t -> string -> int -> int -> bool
 (** [is_match_sub re text off len] is {!is_match} for a range of a string. It costs the same.
 
-    @raise Invalid_argument if [off] and [len] do not name a range of [text]. *)
+    It raises [Invalid_argument] if [off] and [len] do not name a range of [text]. *)
 
 val is_match_string : t -> string -> bool
 (** [is_match_string re text] is {!is_match_sub} for a whole string. *)
@@ -123,12 +126,12 @@ val is_match_with : scratch -> t -> Bytes.t -> int -> int -> bool
 (** [is_match_with scratch re text off len] is {!is_match} with working memory the caller owns. It never contends with
     another thread or domain and allocates nothing once the scratch has grown.
 
-    @raise Invalid_argument if [off] and [len] do not name a range of [text]. *)
+    It raises [Invalid_argument] if [off] and [len] do not name a range of [text]. *)
 
 val is_match_sub_with : scratch -> t -> string -> int -> int -> bool
 (** [is_match_sub_with scratch re text off len] is {!is_match_with} for a range of a string.
 
-    @raise Invalid_argument if [off] and [len] do not name a range of [text]. *)
+    It raises [Invalid_argument] if [off] and [len] do not name a range of [text]. *)
 
 val engine : t -> engine
 (** [engine re] reports which back end the pattern compiled to. *)

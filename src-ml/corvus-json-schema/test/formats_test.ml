@@ -16,7 +16,8 @@
 
    Usage: formats_test [suite-root] [--vectors file]
 
-   The suite is at suite-root, or at the path in JSON_SCHEMA_TEST_SUITE, or at ../../JSON-Schema-Test-Suite. Each
+   The suite is at suite-root, or at the path in JSON_SCHEMA_TEST_SUITE, or is the submodule of the repository. Where
+   there is none (the published package built on its own), the first part says that it was skipped. Each
    line of a vectors file is a format kind, 1 for the host name rules of draft 4 and 6, the bytes of a string in
    hexadecimal and the expected answer (1 or 0), separated by tabs.
 
@@ -711,8 +712,9 @@ let () =
     ref
       (match Sys.getenv_opt "JSON_SCHEMA_TEST_SUITE" with
       | Some root when root <> "" -> root
-      | _ -> "../../JSON-Schema-Test-Suite")
+      | _ -> Corvus_json_schema_test_helpers.Suite.root ())
   in
+  let suite_named = ref false in
   let vectors_path = ref "" in
   let rec arguments = function
     | "--vectors" :: path :: rest ->
@@ -720,12 +722,16 @@ let () =
         arguments rest
     | root :: rest ->
         suite_root := root;
+        suite_named := true;
         arguments rest
     | [] -> ()
   in
   arguments (List.tl (Array.to_list Sys.argv));
   Check.section "suite";
-  run_suite !suite_root;
+  (* The published package built on its own does not hold the suite. The other checks still run. *)
+  let suite_absent = (not !suite_named) && Corvus_json_schema_test_helpers.Suite.absent !suite_root in
+  if suite_absent then Corvus_json_schema_test_helpers.Suite.skipped "formats (the format cases of the suite)"
+  else run_suite !suite_root;
   Check.section "kinds";
   test_format_kinds ();
   Check.section "ipv4";
@@ -758,6 +764,6 @@ let () =
   if !vectors_path <> "" then
     Printf.printf "Answers of the Go source: %d run, %d passed, %d failed\n" !vectors_run
       (!vectors_run - !vectors_failed) !vectors_failed;
-  if !suite_total = 0 then
+  if !suite_total = 0 && not suite_absent then
     Check.fail (Printf.sprintf "no JSON-Schema-Test-Suite cases ran (is the suite at %s?)" !suite_root);
   Check.finish "formats"

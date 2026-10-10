@@ -46,7 +46,9 @@
 
     These allocate whichever way they are called: an asserted [regex], [idn-hostname] or [idn-email] format, a
     [hostname] (or the domain of an [email]) with a label that starts with [xn--], a custom format (which is given a
-    copy of the string), and a [multipleOf] whose divisor has more than 17 significant digits. *)
+    copy of the string), a [multipleOf] whose divisor has more than 17 significant digits, JSON text with a number of
+    more than 18 significant digits whose nearest float the first 18 do not decide, and a name looked up in a set of
+    more than 32,768 names (the properties of one schema object, or the values of one [enum] of strings). *)
 
 val version : string
 (** The version of this package. *)

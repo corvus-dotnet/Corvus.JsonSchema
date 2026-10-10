@@ -1,5 +1,8 @@
 (** The Unicode Character Database properties the package reads, for one fixed version of Unicode.
 
+    {b This library is internal to the corvus-json-schema package.} It is installed because the package is built from
+    it, and it is not a supported interface: it can change in any release. Programs use {!Corvus_json_schema}.
+
     Nothing in the package takes Unicode properties from anywhere else. With its own tables the package gives the same
     answers whichever compiler builds it and wherever it runs, and the answers change only when the tables are generated
     again. {!version} names the version of Unicode they hold.

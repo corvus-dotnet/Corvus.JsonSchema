@@ -138,5 +138,6 @@ let test_annotation_suite () =
 
 let () =
   Check.section "annotation_suite";
-  (try test_annotation_suite () with Fatal what -> Check.fail what);
+  (if Suite.absent (Suite.root ()) then Suite.skipped "annotations"
+   else try test_annotation_suite () with Fatal what -> Check.fail what);
   Check.finish "annotations"

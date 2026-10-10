@@ -6,6 +6,15 @@ val root : unit -> string
 (** The directory of the JSON-Schema-Test-Suite: the value of [JSON_SCHEMA_TEST_SUITE], or the submodule of the
     repository found from the current directory. *)
 
+val absent : string -> bool
+(** [absent root] says that the suite is not at [root] and that [JSON_SCHEMA_TEST_SUITE] does not name one. That is the
+    case for the published package built on its own, which does not hold the suite, and a test that reads the suite then
+    says that it was skipped (see {!skipped}). A suite that [JSON_SCHEMA_TEST_SUITE] names and that is not there is a
+    failure, as it is for the repository's workflow, which names it. *)
+
+val skipped : string -> unit
+(** [skipped what] prints the line that says the test named [what] did not read the suite. *)
+
 val read_file : string -> string option
 (** [read_file path] is the bytes of a file, or [None] when it cannot be read. *)
 

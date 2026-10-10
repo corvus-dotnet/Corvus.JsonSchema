@@ -1,0 +1,4 @@
+; The front page of the package's documentation (dune build @doc).
+
+(documentation
+ (package corvus-json-schema))
