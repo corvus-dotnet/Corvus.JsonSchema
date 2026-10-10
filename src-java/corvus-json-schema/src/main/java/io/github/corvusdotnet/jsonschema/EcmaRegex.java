@@ -2665,6 +2665,18 @@ final class EcmaRegex {
          * after negative lookbehinds for the ones before it.
          */
         private void behind(Node n, BitSet live) {
+            lookbehinds++;
+            try {
+                writeBehind(n, live);
+            } finally {
+                lookbehinds--;
+            }
+        }
+
+        /** The lookbehinds being written, one inside another. */
+        private int lookbehinds;
+
+        private void writeBehind(Node n, BitSet live) {
             Node body = n.subs[0];
             BitSet outside = n.negative ? NOTHING : both(body.sets, live);
             BitSet involved = both(body.sets, body.reads);
@@ -3179,8 +3191,10 @@ final class EcmaRegex {
                 return;
             }
             hasLookbehind = true;
-            // A group set in a lookaround can stand after the backreference, so it is looked for in the whole text.
-            boolean anywhere = env.look[group];
+            // A group set in a lookaround can stand after the backreference, and so can a group that a backreference
+            // in a lookbehind reads, which is tried at places before the lookbehind. Such a group is looked for in
+            // the whole text.
+            boolean anywhere = env.look[group] || lookbehinds > 0;
             if (maxLength(body) > 1) {
                 foldedLoop(name, classes, anywhere);
                 return;

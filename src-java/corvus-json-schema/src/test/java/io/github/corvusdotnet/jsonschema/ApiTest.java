@@ -197,6 +197,9 @@ class ApiTest {
         Validator folded = Validator.compile("{\"pattern\": \"^(?i:(.+)-\\\\1)$\"}");
         assertTrue(folded.isValid("\"Stra\u00dfe-STRA\u1e9eE\""));
         assertFalse(folded.isValid("\"i-\u0130\""));
+        Validator foldedBehind = Validator.compile("{\"pattern\": \"(?i:^(b*)(?<=\\\\1)c$)\"}");
+        assertTrue(foldedBehind.isValid("\"bBc\""));
+        assertFalse(foldedBehind.isValid("\"abc\""));
         Validator counted = Validator.compile("{\"pattern\": \"(?<=(?:(a|b)(?:c|b){2})+)\\\\1\"}");
         assertTrue(counted.isValid("\"abca\""));
         assertFalse(counted.isValid("\"abcb\""));

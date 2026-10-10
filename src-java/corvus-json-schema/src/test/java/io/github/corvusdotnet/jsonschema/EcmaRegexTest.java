@@ -694,6 +694,17 @@ class EcmaRegexTest {
                 "|-|i-i|i-I|I-i|I-I|\u0130-\u0130|\u0131-\u0131|s-s|s-\u017f|\u017f-s"
                         + "|\u017f-\u017f|k-k|k-\u212a|\u212a-k|\u212a-\u212a|---",
             },
+            // In a lookbehind, where the backreference is tried at places before the end of its group.
+            {
+                "^(?i:(s*)(?<=\\1)k)$",
+                "|k|\u212a|sk|s\u212a|\u017fk|\u017f\u212a|ssk|ss\u212a|s\u017fk|s\u017f\u212a"
+                        + "|\u017fsk|\u017fs\u212a|\u017f\u017fk|\u017f\u017f\u212a",
+            },
+            {
+                "(?i:(.+)(?<=\\1\\1)-)",
+                "|ii-|iI-|Ii-|II-|\u0130\u0130-|\u0131\u0131-|ss-|s\u017f-|\u017fs-"
+                        + "|\u017f\u017f-|kk-|k\u212a-|\u212ak-|\u212a\u212a-|---",
+            },
     };
 
     /** The same in patterns valid only without the u flag, where a character is compared by its uppercase. */

@@ -271,10 +271,19 @@ class EcmaRegexOracleTest {
             // A lookbehind that starts with a repetition whose body holds a counted group with alternatives.
             {"(?<=(?:(a|b)(?:c|b){2})+)\\1", "|abba|abca|acba|acca|bbbb|bbcb|bcbb|bccb|abcabc|aabbaa|ababcab"},
             {"(?<=(?:(?:c|b){2}(a))+)\\1$", "|bbaa|bcaa|cbaa|ccaa|aabbaa"},
+            // A case-insensitive backreference in a lookbehind to a group that ends after the place it is tried at.
+            {"(?i:^(b*)(?<=\\1)c$)", "|c|bc|bbc|bbbc|bBc|Bbc"},
+            {
+                "(?i:(.+)(?<=\\1\\1)c)",
+                "|aac|bbc|ccc|aaac|aaca|aacb|aacc|abbc|accc|baac|bbbc|bbca|bbcb|bbcc|bccc|caac"
+                        + "|cbbc|ccca|cccb|cccc|ababcab|bBc|Bbc|aAaAc|aaAAc",
+            },
+            {"(?i:^(?:(a+)b(?<=\\1b))+$)", "|ab|aab|aaab|abab"},
     };
 
     private static final String[] MORE_FOUND_BY_FUZZING = {
-        "acab", "acaca", "abcabc", "aabbaa", "acacab", "bcbcab", "abababa", "ababcab", "axbba", "abxba"
+        "acab", "acaca", "abcabc", "aabbaa", "acacab", "bcbcab", "abababa", "ababcab", "axbba", "abxba", "bBc", "Bbc",
+        "aAaAc", "aaAAc"
     };
 
     /** The patterns found by fuzzing are translated, and answer as V8 does on every text. */
