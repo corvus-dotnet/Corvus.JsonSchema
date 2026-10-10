@@ -351,6 +351,8 @@ let utf8_valid b start stop =
 type parser = {
   mutable b : Bytes.t;
   mutable i : int;
+  (* The end of the text in b. *)
+  mutable stop : int;
   (* Checking syntax only. No document is built and numbers are not converted. *)
   mutable validating : bool;
   (* Finished children of closed containers, each container's consecutive (two words per node). *)
@@ -382,6 +384,7 @@ let create_parser () =
   {
     b = Bytes.empty;
     i = 0;
+    stop = 0;
     validating = false;
     nodes = [||];
     nnodes = 0;
@@ -404,9 +407,10 @@ let fail p message at =
   p.err_offset <- at;
   raise_notrace Failed
 
-let reset p b validating =
+let reset p b start stop validating =
   p.b <- b;
-  p.i <- 0;
+  p.i <- start;
+  p.stop <- stop;
   p.validating <- validating;
   p.nnodes <- 0;
   p.nscratch <- 0;
@@ -416,7 +420,7 @@ let reset p b validating =
 
 let skip_ws p =
   let b = p.b in
-  let len = Bytes.length b in
+  let len = p.stop in
   let i = ref p.i in
   while
     !i < len
@@ -428,7 +432,7 @@ let skip_ws p =
   done;
   p.i <- !i
 
-let peek p = if p.i < Bytes.length p.b then Char.code (Bytes.get p.b p.i) else -1
+let peek p = if p.i < p.stop then Char.code (Bytes.get p.b p.i) else -1
 
 let push p header data =
   let n = p.nscratch in
@@ -581,7 +585,7 @@ let close p start is_object =
 
 let literal p (word : string) kind data =
   let n = String.length word in
-  if p.i + n > Bytes.length p.b || not (bytes_equal_string p.b p.i n word) then fail p "expected a value" p.i;
+  if p.i + n > p.stop || not (bytes_equal_string p.b p.i n word) then fail p "expected a value" p.i;
   p.i <- p.i + n;
   push p kind data
 
@@ -591,7 +595,7 @@ let scan =
       if c < 0x20 || c = Char.code '"' || c = Char.code '\\' then '\001' else if c >= 0x80 then '\002' else '\000')
 
 let hex4 p at =
-  if at + 4 > Bytes.length p.b then -1
+  if at + 4 > p.stop then -1
   else begin
     let v = ref 0 in
     for k = at to at + 3 do
@@ -613,8 +617,7 @@ let unicode_escape p j =
   if u < 0 then fail p "invalid \\u escape" j;
   if u >= 0xd800 && u <= 0xdbff then begin
     let low =
-      if j + 7 < Bytes.length p.b && Bytes.get p.b (j + 6) = '\\' && Bytes.get p.b (j + 7) = 'u' then hex4 p (j + 8)
-      else -1
+      if j + 7 < p.stop && Bytes.get p.b (j + 6) = '\\' && Bytes.get p.b (j + 7) = 'u' then hex4 p (j + 8) else -1
     in
     if low >= 0xdc00 && low <= 0xdfff then 0x10000 + ((u - 0xd800) lsl 10) + (low - 0xdc00)
     else fail p "lone leading surrogate in hex escape" j
@@ -626,7 +629,7 @@ let unicode_escape p j =
 let escaped p start j wide =
   let offset = p.ntext in
   let b = p.b in
-  let len = Bytes.length b in
+  let len = p.stop in
   let run = ref start in
   let j = ref j in
   let wide = ref wide in
@@ -680,7 +683,7 @@ let escaped p start j wide =
    a byte at a time, through the table. *)
 let str p =
   let b = p.b in
-  let len = Bytes.length b in
+  let len = p.stop in
   let start = p.i + 1 in
   let j = ref start in
   let wide = ref 0 in
@@ -721,7 +724,7 @@ let key p =
   p.i <- p.i + 1;
   skip_ws p
 
-let is_digit b j = j < Bytes.length b && Bytes.get b j >= '0' && Bytes.get b j <= '9'
+let is_digit b len j = j < len && Bytes.get b j >= '0' && Bytes.get b j <= '9'
 
 let powers =
   [|
@@ -790,7 +793,7 @@ let long_integer p header digits_start digits_stop negative =
    the text. *)
 let number p =
   let b = p.b in
-  let len = Bytes.length b in
+  let len = p.stop in
   let start = p.i in
   let j = ref start in
   let negative = Bytes.get b !j = '-' in
@@ -804,12 +807,12 @@ let number p =
   else begin
     (* Eighteen digits cannot overflow an [int]. *)
     let limit = Int.min len (!j + 18) in
-    while !j < limit && is_digit b !j do
+    while !j < limit && is_digit b len !j do
       mantissa := (!mantissa * 10) + (Char.code (Bytes.get b !j) - 48);
       incr j
     done;
     if !j = int_start then fail p "invalid number" !j;
-    while is_digit b !j do
+    while is_digit b len !j do
       exact := false;
       incr j
     done
@@ -821,7 +824,7 @@ let number p =
   if !j < len && Bytes.get b !j = '.' then begin
     incr j;
     let frac_start = !j in
-    while is_digit b !j do
+    while is_digit b len !j do
       incr digits;
       if !digits <= 18 then mantissa := (!mantissa * 10) + (Char.code (Bytes.get b !j) - 48) else exact := false;
       incr j
@@ -839,8 +842,8 @@ let number p =
       exp_negative := Bytes.get b !j = '-';
       incr j
     end;
-    if not (is_digit b !j) then fail p "invalid number" !j;
-    while is_digit b !j do
+    if not (is_digit b len !j) then fail p "invalid number" !j;
+    while is_digit b len !j do
       if !exponent < 100000 then exponent := (!exponent * 10) + (Char.code (Bytes.get b !j) - 48)
       else exp_overflow := true;
       incr j
@@ -896,7 +899,7 @@ let number p =
   end
 
 let parse p =
-  let len = Bytes.length p.b in
+  let len = p.stop in
   skip_ws p;
   let finished = ref false in
   while not !finished do
@@ -980,9 +983,10 @@ let parse p =
 
 let parser_error p = { message = p.err_message; offset = p.err_offset }
 
-(* is_valid reports whether b is one valid JSON value. It allocates nothing once the buffers have grown. *)
-let is_valid p b =
-  reset p b true;
+(* is_valid_range reports whether the len bytes of b from off are one valid JSON value. It allocates nothing once
+   the buffers have grown. *)
+let is_valid_range p b off len =
+  reset p b off (off + len) true;
   let ok =
     try
       parse p;
@@ -992,9 +996,12 @@ let is_valid p b =
   p.b <- Bytes.empty;
   ok
 
+(* is_valid reports whether b is one valid JSON value. *)
+let is_valid p b = is_valid_range p b 0 (Bytes.length b)
+
 (* parse_new parses b into a new document, exactly sized. *)
 let parse_new p b =
-  reset p b false;
+  reset p b 0 (Bytes.length b) false;
   let ok =
     try
       parse p;
@@ -1018,14 +1025,16 @@ let parse_new p b =
 let create_empty () =
   { tape = [| kind_null; 0 |]; source = Bytes.empty; text = Bytes.empty; floats = Float.Array.create 0; root = 0 }
 
-(* parse_into parses b into d, reusing its arrays and the parser's (no allocation once they have grown). The finished
-   values are written straight into the document's tape. The document is valid until the next parse into it. *)
-let parse_into p d b =
+(* parse_into parses the first len bytes of b into d, reusing its arrays and the parser's (no allocation once they
+   have grown). The finished values are written straight into the document's tape. The document is valid until the
+   next parse into it. When b is longer than len, the byte at len must not be one a number is written with, since a
+   number's text is read from the document as far as it goes. *)
+let parse_into p d b len =
   let nodes = p.nodes and text = p.text and floats = p.floats in
   p.nodes <- d.tape;
   p.text <- d.text;
   p.floats <- d.floats;
-  reset p b false;
+  reset p b 0 len false;
   let ok =
     try
       parse p;
@@ -1062,3 +1071,13 @@ let parse_bytes b = parse_new (create_parser ()) b
 
 (* parse_string parses JSON text. The document holds a copy of it. *)
 let parse_string s = parse_bytes (Bytes.of_string s)
+
+(* release_source lets go of the text of a document that a parser fills again, which the caller owns. The document
+   holds null until the next parse into it. *)
+let release_source d =
+  if Array.length d.tape >= 2 then begin
+    d.tape.(0) <- kind_null;
+    d.tape.(1) <- 0;
+    d.root <- 0
+  end;
+  d.source <- Bytes.empty

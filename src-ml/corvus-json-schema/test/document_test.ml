@@ -439,6 +439,8 @@ let test_numbers_agree_with_the_reference () =
 (* ---------------------------------------------------------------------------------------------------------------------
    TestDocument.pas *)
 
+let parse_into p d text = Document.parse_into p d (Bytes.of_string text) (String.length text)
+
 let round_trip json expected =
   match Document.parse_string json with
   | Error e -> Check.fail (json ^ " -> " ^ Document.error_to_string e)
@@ -690,13 +692,12 @@ let test_pascal_document () =
   (* Parsing into reused buffers gives the same document, and allocates no new arrays once they have grown. *)
   let p = Document.create_parser () in
   let d = Document.create_empty () in
-  Check.check "parse into" (Document.parse_into p d (Bytes.of_string {|{"a": [1, 2, {"b": "c\n"}], "d": 1.5}|}));
+  Check.check "parse into" (parse_into p d {|{"a": [1, 2, {"b": "c\n"}], "d": 1.5}|});
   Check.equal_string "parse into" ~expected:{|{"a":[1,2,{"b":"c\n"}],"d":1.5}|} (Document.to_string d);
-  Check.check "parse into refuses bad text" (not (Document.parse_into p d (Bytes.of_string "[true")));
+  Check.check "parse into refuses bad text" (not (parse_into p d "[true"));
   Check.equal_string "parse into reports the error" ~expected:"unexpected end of input"
     (Document.parser_error p).Document.message;
-  Check.check "parse into after a failure"
-    (Document.parse_into p d (Bytes.of_string {|[false, "x"]|}) && Document.to_string d = {|[false,"x"]|});
+  Check.check "parse into after a failure" (parse_into p d {|[false, "x"]|} && Document.to_string d = {|[false,"x"]|});
   Check.check "the validating parser accepts valid text" (Document.is_valid p (Bytes.of_string {|[false, "x"]|}))
 
 (* Words allocated on the minor heap by f, beyond what the measurement itself allocates. *)
@@ -724,7 +725,7 @@ let test_parsing_into_reused_buffers_allocates_nothing () =
   in
   let run () =
     for i = 0 to Array.length texts - 1 do
-      ignore (Document.parse_into p d texts.(i) : bool);
+      ignore (Document.parse_into p d texts.(i) (Bytes.length texts.(i)) : bool);
       ignore (Document.is_valid p texts.(i) : bool)
     done
   in
