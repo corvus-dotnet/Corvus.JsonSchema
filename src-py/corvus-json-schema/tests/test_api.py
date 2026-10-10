@@ -692,6 +692,33 @@ def test_a_valid_pattern_too_large_to_write_out_is_refused_and_is_a_valid_regex(
     assert cjs.compile({"pattern": "^(?:(a)|b){300}\\1$"})("ab" * 150) is True
 
 
+@pytest.mark.parametrize(
+    ("pattern", "text", "expected"),
+    [
+        # V8's answers. A reference to a name that two groups have is a reference to each, and a count after it is
+        # for both.
+        ("^(?:(?<a>x)\\k<a>{2}|(?<a>y))$", "xxx", True),
+        ("^(?:(?<a>x)\\k<a>{2}|(?<a>y))$", "xx", False),
+        ("^(?:(?<a>x)\\k<a>{2}|(?<a>y))$", "y", True),
+        ("^(?:(?<a>x)\\k<a>{2}|(?<a>y))$", "x", False),
+        ("^(?:(?<a>x)\\k<a>*z|(?<a>y)\\k<a>+)$", "xxxz", True),
+        ("^(?:(?<a>x)\\k<a>*z|(?<a>y)\\k<a>+)$", "xz", True),
+        ("^(?:(?<a>x)\\k<a>*z|(?<a>y)\\k<a>+)$", "yy", True),
+        ("^(?:(?<a>x)\\k<a>*z|(?<a>y)\\k<a>+)$", "y", False),
+        ("^(?:(?<a>x)\\k<a>*z|(?<a>y)\\k<a>+)$", "yx", False),
+        ("^(?:(?<a>x)|(?<a>y))\\k<a>{2}$", "xxx", True),
+        ("^(?:(?<a>x)|(?<a>y))\\k<a>{2}$", "yyy", True),
+        ("^(?:(?<a>x)|(?<a>y))\\k<a>{2}$", "xx", False),
+        ("^(?:(?<a>x)|(?<a>y))\\k<a>{2}$", "xyy", False),
+    ],
+)
+def test_a_count_after_a_reference_to_a_name_of_two_groups_is_for_the_whole_reference(
+    pattern: str, text: str, expected: bool
+) -> None:
+    for p in _on_both_engines(pattern):
+        assert cjs.compile({"pattern": p})(text) is expected, p
+
+
 def test_standalone_modules_collect_the_same_results_as_compile(tmp_path: Path) -> None:
     schema = {"type": "object", "properties": {"a": {"type": "string", "title": "A"}}, "required": ["b"]}
     mod = import_module(cjs.generate_module(schema), tmp_path)

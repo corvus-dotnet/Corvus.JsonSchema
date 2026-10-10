@@ -944,7 +944,10 @@ class _Writer:
         inside = [g for g in sorted(self.reset) if n.first < self.groups[g].first < n.last]
         k = bisect_left(self.live, n.first)
         if not inside and not (self.seen and k < len(self.live) and self.live[k] < n.last):
-            return (text if text.startswith("(") else f"(?:{text})") + self._count(lo, hi, n.lazy) + self.seen
+            # A reference to a name that two groups have is two references, which the count is for together.
+            if body.kind == _SEQUENCE or not text.startswith("("):
+                text = f"(?:{text})"
+            return text + self._count(lo, hi, n.lazy) + self.seen
         # The groups inside that a reference may read without their having matched lose their values at the start
         # of each iteration (at its right, in a lookbehind).
         resets = "".join(f"(?P<g{g}>)" for g in inside) if hi == -1 or hi > 1 else ""
