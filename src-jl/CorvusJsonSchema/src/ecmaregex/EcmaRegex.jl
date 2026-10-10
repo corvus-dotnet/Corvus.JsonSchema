@@ -43,8 +43,23 @@ with a group that a backreference after it reads is written in a form that captu
 
 Any other lookbehind whose groups are read after it is refused. That is one that is not a term of the pattern
 itself and has no fixed length, as in `(?:(?<=(a)+)x\\1)+`, and one whose groups hold what depends on the order
-in which ECMA-262 tries the ways through it from its end, as in `(?<=(a*)(x+))-\\1`. A lookbehind none of whose
-groups is read after it is never refused for this.
+in which ECMA-262 tries the ways through it from its end, as in `(?<=(a*)(x+))-\\1`. A
+lookbehind none of whose groups is read after it is never refused for this.
+
+# The lookbehind exception
+
+A pattern that is valid with the `u` flag is run and answers as V8 does, with one named exception, which is the two
+lookbehind cases of the list above. Both need the lookbehind to be matched backwards, which PCRE2 cannot do:
+
+* a group captured inside a lookbehind of no fixed length and read after it, outside the forms above, such as
+  `(?<=(a*)(x+))-\\1`. The error says "a backreference to a group inside a lookbehind of no fixed length, where the
+  group holds what only matching the lookbehind backwards can tell";
+* a backreference inside a lookbehind to a group of it that is not in an end of it of a fixed length, such as
+  `(?<=\\1(a+))x`. The error says "a backreference inside a lookbehind to a group that the lookbehind matches
+  before it".
+
+These are refused when the schema is compiled, and are never run with another meaning. (The limits on size, which
+are the other refusals of the list, are not about what a pattern means.)
 
 # Grammars
 

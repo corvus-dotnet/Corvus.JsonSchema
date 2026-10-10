@@ -240,6 +240,17 @@ Julia version, with one exception for Julia 1.10 that is listed [below](#julia-1
     most 64 KiB, which counted repetitions nested several deep can pass).
 
   No pattern of the JSON-Schema-Test-Suite or of the jsonschema-benchmark corpora is refused.
+- **The lookbehind exception.** A pattern that is valid with the `u` flag is run, and answers as V8 does, with one
+  named exception. Two uses of a lookbehind need it to be matched backwards, as ECMA-262 matches it, which PCRE2 cannot
+  do, and they are refused with an error that says which:
+  - a group captured inside a lookbehind of no fixed length and read after it, outside the forms that are written,
+    such as `(?<=(a*)(x+))-\1` ("a backreference to a group inside a lookbehind of no fixed length, where the group holds
+    what only matching the lookbehind backwards can tell");
+  - a backreference inside a lookbehind to a group of it that is not in an end of it of a fixed length, such as
+    `(?<=\1(a+))x` ("a backreference inside a lookbehind to a group that the lookbehind matches before it").
+
+  A lookbehind with no group that a backreference reads is never refused for this. The limits on the size of a
+  translation are the only other refusals of such a pattern.
 - **A match that reaches a limit throws.** PCRE2 backtracks, and it limits the steps and the memory of one match.
   A match that reaches a limit throws `CorvusJsonSchema.EcmaRegex.MatchError`, from `isvalid` as from `validate`
   and `evaluate`. It is never reported as a string that does not match. A schema whose patterns are not trusted

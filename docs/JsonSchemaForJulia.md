@@ -185,6 +185,19 @@ the schema throws a `CompileError` that names the construct. It is never run wit
 - Repetitions that have to be written twice inside one another past 65,536 characters, more than 253 lookbehinds of
   no fixed length in one pattern, and a pattern too large for PCRE2 to compile.
 
+**The lookbehind exception.** A pattern that is valid with the `u` flag is run, and answers as V8 does, with one
+named exception. Two uses of a lookbehind need it to be matched backwards, as ECMA-262 matches it, which PCRE2 cannot
+do, and they are refused with an error that says which:
+
+- a group captured inside a lookbehind of no fixed length and read after it, outside the forms that are written,
+  such as `(?<=(a*)(x+))-\1` ("a backreference to a group inside a lookbehind of no fixed length, where the group holds
+  what only matching the lookbehind backwards can tell");
+- a backreference inside a lookbehind to a group of it that is not in an end of it of a fixed length, such as
+  `(?<=\1(a+))x` ("a backreference inside a lookbehind to a group that the lookbehind matches before it").
+
+A lookbehind with no group that a backreference reads is never refused for this. The limits on the size of a
+translation are the only other refusals of such a pattern.
+
 PCRE2 backtracks, and it limits the steps and the memory of a match. A match that reaches a limit throws
 `CorvusJsonSchema.EcmaRegex.MatchError`, from `isvalid` as from `validate` and `evaluate`. It is never reported as a
 string that does not match. Validate inside `try` when the schema's patterns are not trusted.
