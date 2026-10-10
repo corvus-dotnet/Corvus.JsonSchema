@@ -43,6 +43,10 @@ final class SchemaPattern {
      */
     static String failure(String pattern, String keyword) {
         String reason = EcmaRegex.unsupported(pattern);
+        if (reason == null && EcmaRegex.translate(pattern) != null) {
+            // It is translated now: it was too large for the stack as it stood when it was compiled.
+            reason = EcmaRegex.REFUSED_TOO_LARGE;
+        }
         if (reason == null) {
             return "Invalid regular expression '" + pattern + "' in " + keyword + ".";
         }

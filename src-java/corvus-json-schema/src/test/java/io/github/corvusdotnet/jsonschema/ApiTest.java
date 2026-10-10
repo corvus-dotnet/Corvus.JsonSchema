@@ -197,6 +197,9 @@ class ApiTest {
         Validator folded = Validator.compile("{\"pattern\": \"^(?i:(.+)-\\\\1)$\"}");
         assertTrue(folded.isValid("\"Stra\u00dfe-STRA\u1e9eE\""));
         assertFalse(folded.isValid("\"i-\u0130\""));
+        Validator counted = Validator.compile("{\"pattern\": \"(?<=(?:(a|b)(?:c|b){2})+)\\\\1\"}");
+        assertTrue(counted.isValid("\"abca\""));
+        assertFalse(counted.isValid("\"abcb\""));
         // A valid pattern whose meaning java.util.regex cannot give is an error that says so. It is never run with
         // another meaning.
         SchemaCompilationException refused = assertThrows(SchemaCompilationException.class,

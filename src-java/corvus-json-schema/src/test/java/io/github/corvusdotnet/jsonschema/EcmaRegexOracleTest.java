@@ -262,6 +262,58 @@ class EcmaRegexOracleTest {
         assertEquals(EXPECTED_UNSUPPORTED_GENERATED, tally.unsupported);
     }
 
+    /**
+     * Patterns that fuzzing against V8 found this translator to refuse or to answer wrongly, each with the texts V8
+     * matches, every one preceded by "|". The texts are every string of up to four of a, b and c, and
+     * {@link #MORE_FOUND_BY_FUZZING}. The answers were written by Node 24 as {@code new RegExp(pattern, "u").test(text)}.
+     */
+    private static final String[][] FOUND_BY_FUZZING = {
+            // A lookbehind that starts with a repetition whose body holds a counted group with alternatives.
+            {"(?<=(?:(a|b)(?:c|b){2})+)\\1", "|abba|abca|acba|acca|bbbb|bbcb|bcbb|bccb|abcabc|aabbaa|ababcab"},
+            {"(?<=(?:(?:c|b){2}(a))+)\\1$", "|bbaa|bcaa|cbaa|ccaa|aabbaa"},
+    };
+
+    private static final String[] MORE_FOUND_BY_FUZZING = {
+        "acab", "acaca", "abcabc", "aabbaa", "acacab", "bcbcab", "abababa", "ababcab", "axbba", "abxba"
+    };
+
+    /** The patterns found by fuzzing are translated, and answer as V8 does on every text. */
+    @Test
+    void patternsFoundByFuzzing() {
+        List<String> texts = new ArrayList<>(List.of(""));
+        for (int length = 0, from = 0; length < 4; length++) {
+            int end = texts.size();
+            for (int k = from; k < end; k++) {
+                for (String c : new String[] {"a", "b", "c"}) {
+                    texts.add(texts.get(k) + c);
+                }
+            }
+            from = end;
+        }
+        texts.addAll(List.of(MORE_FOUND_BY_FUZZING));
+        List<String> wrong = new ArrayList<>();
+        for (String[] c : FOUND_BY_FUZZING) {
+            Set<String> expected = c[1].isEmpty() ? Set.of() : Set.of(c[1].substring(1).split("\\|", -1));
+            String translated = EcmaRegex.translate(c[0]);
+            if (translated == null) {
+                wrong.add(show(c[0]) + " is refused: " + EcmaRegex.unsupported(c[0]));
+                continue;
+            }
+            Pattern regex = Pattern.compile(translated);
+            SchemaPattern compiled = SchemaPattern.compile(c[0]);
+            for (String text : texts) {
+                boolean want = expected.contains(text);
+                if (regex.matcher(text).find() != want) {
+                    wrong.add(show(c[0]) + " on " + show(text) + ": got " + !want + ", V8 says " + want);
+                }
+                if (compiled.find(text) != want) {
+                    wrong.add(show(c[0]) + " on " + show(text) + ": the compiled pattern says " + !want);
+                }
+            }
+        }
+        assertEquals(List.of(), wrong);
+    }
+
     /** One step of xorshift32, as an unsigned value. */
     private static long next(int[] seed) {
         int s = seed[0];

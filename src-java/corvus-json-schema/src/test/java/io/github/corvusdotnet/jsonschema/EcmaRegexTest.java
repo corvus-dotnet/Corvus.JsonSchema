@@ -564,6 +564,20 @@ class EcmaRegexTest {
             {"(?<=^a*(b))x\\1$", "|bxb|abxb"},
             {"(?<=(a)x|(b)x)\\1\\2$", "|axa|bxb|aaxa|abxb|baxa|bbxb|xaxa|xbxb|xaaxa"},
             {"(?<=(?:(a)|(b))x)\\1\\2$", "|axa|bxb|aaxa|abxb|baxa|bbxb|xaxa|xbxb|xaaxa"},
+            // A repetition first in the lookbehind, of a body that holds a counted group with alternatives.
+            {"(?<=(?:(a|b)(?:x|b){2})+)\\1", "|abba|abxa|axba|axxa|bbbb|bbxb|bxbb|bxxb|abxab"},
+            {"(?<=(?:(?:x|b){2}(a))+)\\1", "|bbaa|bxaa|xbaa|xxaa"},
+            {
+                "(?<=(?:(a)(?:x|b){2})*)\\1$",
+                "||a|b|x|aa|ab|ax|ba|bb|bx|xa|xb|xx|aaa|aab|aax|aba|axa|baa|bab|bax|bba|bbb|bbx"
+                        + "|bxa|bxb|bxx|xaa|xab|xax|xba|xbb|xbx|xxa|xxb|xxx|aaaa|aaab|aaax|aaba|aaxa|abaa"
+                        + "|abab|abax|abba|abbb|abbx|abxa|abxb|abxx|axaa|axab|axax|axba|axbb|axbx|axxa"
+                        + "|axxb|axxx|baaa|baab|baax|baba|baxa|bbaa|bbab|bbax|bbba|bbbb|bbbx|bbxa|bbxb"
+                        + "|bbxx|bxaa|bxab|bxax|bxba|bxbb|bxbx|bxxa|bxxb|bxxx|xaaa|xaab|xaax|xaba|xaxa"
+                        + "|xbaa|xbab|xbax|xbba|xbbb|xbbx|xbxa|xbxb|xbxx|xxaa|xxab|xxax|xxba|xxbb|xxbx"
+                        + "|xxxa|xxxb|xxxx|abax|bbbx|xaaxa|aaxaab|axab|abxba|aabbx|abxab|xabxba",
+            },
+            {"(?<=(?:(a)(?:x|b){2})+b)\\1", "|abxba|xabxba"},
     };
 
     private static final String[] MORE_FOR_LOOKBEHINDS = {
@@ -767,6 +781,28 @@ class EcmaRegexTest {
         assertNoMatch("^(?:(?=([ab]))[ab]c\\1)*$", "acabca");
         // An invalid pattern is not a refused one.
         assertNull(EcmaRegex.unsupported("(a"));
+    }
+
+    /**
+     * A translation too large for {@code java.util.regex} to compile is refused, and the error says that. Its
+     * compiler recurses along the pattern and reports the overflow of the stack as a syntax error.
+     */
+    @Test
+    void aTranslationTooLargeForTheEngineIsRefusedAsSuch() throws InterruptedException {
+        String pattern = "(?:a|b)".repeat(20000);
+        String[] found = new String[3];
+        Thread thread = new Thread(null, () -> {
+            found[0] = EcmaRegex.unsupported(pattern);
+            found[1] = EcmaRegex.translate(pattern);
+            found[2] = SchemaPattern.failure(pattern, "pattern");
+        }, "small stack", 256 * 1024);
+        thread.start();
+        thread.join();
+        assertEquals(EcmaRegex.REFUSED_TOO_LARGE, found[0]);
+        assertNull(found[1]);
+        assertTrue(found[2].endsWith("' in pattern. It is valid ECMA-262, but this library cannot run a pattern too "
+                + "large for java.util.regex to compile with the meaning ECMA-262 gives it."), found[2]);
+        assertTrue(EcmaRegex.isValid(pattern));
     }
 
     /** Smaller points on which the translator differed from V8. */

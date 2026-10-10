@@ -74,9 +74,11 @@ import java.util.regex.PatternSyntaxException;
  *
  * <p><b>What is refused.</b> A valid pattern whose backreference cannot be given its meaning that way is refused
  * rather than given an answer that may be wrong, and {@link #unsupported} says why. The reasons are the
- * {@code REFUSED_} constants. A pattern with no backreference is refused only for two of them: a translation
- * {@code java.util.regex} does not compile, and a repetition that would be written with more copies of its body than
- * {@link Emitter#MAX_UNROLLED_COPIES}, or with more text than {@link Emitter#MAX_UNROLLED_LENGTH}.
+ * {@code REFUSED_} constants. A pattern with no backreference is refused only for two of them, which are limits of
+ * size: a translation too large for {@code java.util.regex} to compile, and a repetition that would be written with
+ * more copies of its body than {@link Emitter#MAX_UNROLLED_COPIES}, or with more text than
+ * {@link Emitter#MAX_UNROLLED_LENGTH}. A translation that {@code java.util.regex} rejects for another reason is a
+ * fault of this class, and is thrown as an {@link IllegalStateException} that says so.
  */
 final class EcmaRegex {
     private EcmaRegex() {
@@ -110,8 +112,8 @@ final class EcmaRegex {
             "a backreference to a group of a lookaround, in a repetition that can go back to before the backreference";
     /** The pattern would be written with more alternatives, one for each way through its groups, than is kept. */
     static final String REFUSED_TOO_MANY_PATHS = "a pattern with this many ways through the groups it reads";
-    /** {@code java.util.regex} did not compile the translation. */
-    static final String REFUSED_BY_ENGINE = "a pattern java.util.regex does not compile";
+    /** The translation is more than {@code java.util.regex} compiles on the stack of the thread it is called on. */
+    static final String REFUSED_TOO_LARGE = "a pattern too large for java.util.regex to compile";
 
     /** Groups may nest this deep. It bounds the recursion of the readers. */
     static final int MAX_NESTING = 200;
@@ -1229,28 +1231,47 @@ final class EcmaRegex {
                 return translateByPaths();
             }
             String translated = write();
-            if (compiles(translated)) {
-                return translated;
-            }
-            if (hasLookbehind) {
+            String error = compileError(translated);
+            if (error != null && hasLookbehind) {
                 // java.util.regex cannot bound some lookbehinds whose length is bounded (a repeated group with
                 // alternatives, for one). The form that searches for the start needs no bound.
                 searchingLookbehind = true;
                 translated = write();
-                if (compiles(translated)) {
-                    return translated;
-                }
+                error = compileError(translated);
             }
-            throw new Unsupported(REFUSED_BY_ENGINE);
+            return compiled(translated, error);
         }
 
-        private static boolean compiles(String translated) {
+        /**
+         * What {@code java.util.regex} says against a translation, or null when it compiles it. A translation whose
+         * compilation overflows the stack is refused as too large: the compiler of {@code java.util.regex} recurses
+         * along the pattern, some thousands of groups deep on a stack of 1 MB.
+         */
+        private static String compileError(String translated) {
             try {
                 Pattern.compile(translated);
-                return true;
-            } catch (PatternSyntaxException | StackOverflowError e) {
-                return false;
+                return null;
+            } catch (PatternSyntaxException e) {
+                // The compiler reports the overflow of its own recursion this way.
+                if (e.getDescription().startsWith("Stack overflow")) {
+                    throw new Unsupported(REFUSED_TOO_LARGE);
+                }
+                return e.getDescription() + " near index " + e.getIndex();
+            } catch (StackOverflowError e) {
+                throw new Unsupported(REFUSED_TOO_LARGE);
             }
+        }
+
+        /**
+         * The translation, when {@code java.util.regex} compiled it. One it rejects is a fault of this translator
+         * and not a reason to refuse the pattern, so it is not reported as one.
+         */
+        private static String compiled(String translated, String error) {
+            if (error != null) {
+                throw new IllegalStateException("java.util.regex does not compile the translation of a valid ECMA-262 "
+                        + "pattern (" + error + "). This is a fault of the library. The translation is " + translated);
+            }
+            return translated;
         }
 
         private String write() {
@@ -2081,17 +2102,13 @@ final class EcmaRegex {
                 read = root.reads;
                 translated = writePaths();
             }
-            if (compiles(translated)) {
-                return translated;
-            }
-            if (hasLookbehind) {
+            String error = compileError(translated);
+            if (error != null && hasLookbehind) {
                 searchingLookbehind = true;
                 translated = writePaths();
-                if (compiles(translated)) {
-                    return translated;
-                }
+                error = compileError(translated);
             }
-            throw new Unsupported(REFUSED_BY_ENGINE);
+            return compiled(translated, error);
         }
 
         /** Makes of every backreference to groups no plan read a backreference to nothing. */
@@ -3059,7 +3076,11 @@ final class EcmaRegex {
                         String once = out.substring(start);
                         out.setLength(start);
                         env = saved;
-                        out.append("(?<!").append(once).append(')');
+                        // Not preceded by one more match of the body, which has one length. The body stands in a
+                        // lookahead, at that distance back: java.util.regex does not work out the length of a
+                        // lookbehind that holds a counted group with alternatives.
+                        out.append("(?<!(?=").append(once).append(')').append(ANY).append('{').append(rigid(body))
+                                .append("})");
                     }
                     if (way == 1) {
                         edgeCopies(body, live, Math.max(n.min, 1) - 1, n.max == UNBOUNDED ? UNBOUNDED : n.max - 1);
