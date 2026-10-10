@@ -316,21 +316,26 @@ end
 
 # What ECMA-262 matches last in a lookbehind is the leftmost of its body. What follows it is the end of the
 # lookbehind, which holds, and nothing comes back into a lookbehind that has held. So it takes the first of its ways
-# that matches, and no other:
+# that matches, and no other. The same goes for a term with nothing to its left but terms that match the empty
+# string wherever they stand, as those cannot fail and send the match back into it: in (?<=(a)*x+?) the x+? is such
+# a term.
 #
 # - a lazy repetition there runs its minimum and no more, so (?<=(a|b)+?) is (?<=(a|b)), which has a fixed length;
 # - of alternatives there, none after one that matches the empty string anywhere is ever taken, so (?<=(|a)x) is
 #   (?<=()x).
 #
-# `last` says that nothing follows the node in its lookbehind. Alternatives are taken away only with `alternatives`,
-# which is when the pattern has a backreference: nothing else can tell which of them matched.
+# `last` says that nothing that can fail follows the node in its lookbehind. Alternatives are taken away, and terms
+# after the leftmost are looked at, only with `alternatives`, which is when the pattern has a backreference: nothing
+# else can tell which way was taken.
 function trim!(n::Node, last::Bool, alternatives::Bool)
     kind = n.kind
     if kind == LOOK
         trim!(n.subs[1], n.behind, alternatives)
     elseif kind == CAT
         for k in eachindex(n.subs)
-            trim!(n.subs[k], last && k == 1, alternatives)
+            trim!(n.subs[k], last, alternatives)
+            # The next term is matched last too when this one cannot fail.
+            last = last && alternatives && alwaysempty(n.subs[k])
         end
     elseif kind == ALT
         if last && alternatives

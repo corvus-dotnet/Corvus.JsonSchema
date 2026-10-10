@@ -375,6 +375,14 @@ end
             (raw"(?<=(?:(a)|.)+)x\1", "00908174ba6f"),
             (raw"(?<=(?:(a)|[ax])+)-\1", "0040109e0835"),
             (raw"(?<=(?:(a)|.)*-)\1$", "104810924901"),
+            # A lazy repetition with nothing to its left but parts that match the empty string anywhere runs its
+            # minimum too.
+            (raw"(?<=a?(x*?))-\1", "12793c9fff35"),
+            (raw"(?<=(a)*x+?)-\1", "0040001e0801"),
+            (raw"(?<=(a)*x+?|-+?)\1", "33f9ffffff7f"),
+            (raw"(?<=a*(x){1,2}?)-\1", "000000040001"),
+            (raw"(?<=(?:a|)(x)+?)-\1", "000000040001"),
+            (raw"(?<=a*(x|-)??)\1", "ffffffffffff"),
         ]
         checkv8table(rows)
         for (pattern, _) in rows
@@ -401,7 +409,8 @@ end
         @test !matches("(?<=([abc])+)x\\1", "-b" * "a"^300 * "xc")
         # What is still refused: the lookbehind is not a term of the pattern itself, or what its groups hold
         # depends on the order in which ECMA-262 tries the ways through it from its end.
-        for pattern in ["(?:(?<=(a)+)x\\1)+", "(?<=(a*)(x+))-\\1", "(?<=(\\ba*))x\\1", "(?<=(a+|x)-)\\1"]
+        for pattern in ["(?:(?<=(a)+)x\\1)+", "(?<=(a*)(x+))-\\1", "(?<=(\\ba*))x\\1", "(?<=(a+|x)-)\\1",
+            "(?<=a(x){1,2}?)-\\1"]
             @test E.unsupportedreason(pattern) == E.REFUSED_GROUP_IN_LOOKBEHIND
             @test E.parsesunicode(pattern)
         end
