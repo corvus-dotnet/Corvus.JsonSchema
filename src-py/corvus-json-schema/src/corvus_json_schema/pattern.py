@@ -37,10 +37,10 @@ and its group are in the pattern.
 **An iteration that matches nothing.** ECMA-262 refuses one once the minimum count is met. Both engines accept it,
 which shows when a group that the iteration set, or reset, is read afterwards. A repetition whose body can only
 match nothing is written as its body once, or as nothing for a minimum of 0, which is what ECMA-262 makes of it.
-A repetition that holds a group that is reset is written as its minimum count and then a rest where every
-iteration has to take a character: ``(?=(?P<e1>(?s:.)*))`` before the body takes the rest of the text, and
-``(?!(?P=e1))`` after it fails where the rest of the text is still the same. ``_Writer`` says what else such a
-pattern needs for the ``regex`` package.
+In a pattern for ``regex`` that has a reference, a repetition that holds a group some reference reads is written
+as its minimum count and then a rest where every iteration has to take a character: ``(?=(?P<e1>(?s:.)*))``
+before the body takes the rest of the text, and ``(?!(?P=e1))`` after it fails where the rest of the text is still
+the same. ``_Writer`` says what else such a pattern needs for that engine.
 """
 
 from __future__ import annotations
@@ -67,6 +67,8 @@ _QUANTIFIER_RE = re.compile(r"\{(\d+)(,(\d*))?\}")
 _PROPERTY_RE = re.compile(r"[A-Za-z0-9_]+(=[A-Za-z0-9_]+)?")
 _ASCII_NAME_RE = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
 
+# A count from here up is more characters than a text has. As a maximum it is no maximum.
+_MAX_COUNT = 2**31 - 1
 # The most text a translation may have. A repetition written without a count (see _Writer._repeat) multiplies out
 # when it is inside another, and a pattern that passes this is refused.
 _MAX_TRANSLATED = 65_536
@@ -366,6 +368,9 @@ class _Translator:
             if hi != -1 and hi < lo:
                 raise self.error()
             self.i = m.end()
+            lo = min(lo, _MAX_COUNT)
+            if hi >= _MAX_COUNT:
+                hi = -1 if m.group(2) is not None else _MAX_COUNT
         else:
             self.i += 1
             lo, hi = (0, -1) if c == "*" else (1, -1) if c == "+" else (0, 1)
@@ -940,23 +945,30 @@ class _Writer:
             # Every iteration matches nothing, and ECMA-262 refuses one that does once the minimum count is met. So
             # none runs for a minimum of 0. For any other, the groups are left as one iteration leaves them.
             return self._write(body) if lo else "(?:)"
+        if lo >= _MAX_COUNT:
+            if not _matches_nothing(body):
+                # More characters than a text has.
+                return "(?!)"
+            # That many iterations, of which all but a few match nothing, are beyond both engines.
+            raise _TooLarge()
         text = self._write(body)
-        inside = [g for g in sorted(self.reset) if n.first < self.groups[g].first < n.last]
         k = bisect_left(self.live, n.first)
-        if not inside and not (self.seen and k < len(self.live) and self.live[k] < n.last):
+        read = self.seen != "" and any(n.first < self.groups[g].first < n.last for g in self.read)
+        if not read and not (self.seen and k < len(self.live) and self.live[k] < n.last):
             # A reference to a name that two groups have is two references, which the count is for together.
             if body.kind == _SEQUENCE or not text.startswith("("):
                 text = f"(?:{text})"
             return text + self._count(lo, hi, n.lazy) + self.seen
         # The groups inside that a reference may read without their having matched lose their values at the start
         # of each iteration (at its right, in a lookbehind).
+        inside = [g for g in sorted(self.reset) if n.first < self.groups[g].first < n.last]
         resets = "".join(f"(?P<g{g}>)" for g in inside) if hi == -1 or hi > 1 else ""
         one = f"(?:{text}{resets})" if n.back else f"(?:{resets}{text})"
         more = one
-        if inside and _matches_nothing(body):
-            # ECMA-262 refuses an iteration past the minimum that matches nothing, and the engine does not. Where
-            # such an iteration ends, the rest of the text (the text up to there, in a lookbehind) is not what it
-            # was where it started.
+        if read and _matches_nothing(body):
+            # ECMA-262 refuses an iteration past the minimum that matches nothing. The engine does not, and it runs
+            # another for as long as each one changes what a group holds. Where such an iteration ends, the rest of
+            # the text (the text up to there, in a lookbehind) is not what it was where it started.
             self.loops += 1
             e = f"e{self.loops}"
             if n.back:

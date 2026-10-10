@@ -719,6 +719,46 @@ def test_a_count_after_a_reference_to_a_name_of_two_groups_is_for_the_whole_refe
         assert cjs.compile({"pattern": p})(text) is expected, p
 
 
+@pytest.mark.parametrize(
+    ("pattern", "text", "expected"),
+    [
+        # V8's answers.
+        # These took the regex package's memory: a group that is set again by an iteration that takes no character.
+        ("(?:(?=.(a.|){3}|[^a]x|\\1)(?<=a)|[ax][^a])*?x$", "aaax", True),
+        ("(?:(?=.(a.|){3}|[^a]x|\\1)(?<=a)|[ax][^a])*?x$", "aaa", False),
+        ("(?:(?=.(a.|){3}|[^a]x|\\1)(?<=a)|[ax][^a])*?x$", "x", True),
+        ("(?:|(?<!a)){4,5}(?:(?=([^a]a){2}(?<=a)|.|\\1)|(?=x)|()){1,}?x$", "xaxax", True),
+        ("(?:|(?<!a)){4,5}(?:(?=([^a]a){2}(?<=a)|.|\\1)|(?=x)|()){1,}?x$", "aaa", False),
+        ("(?:|(?<!a)){4,5}(?:(?=([^a]a){2}(?<=a)|.|\\1)|(?=x)|()){1,}?x$", "x", True),
+        ("(?:(?=(.){2}\\1)|b)*(?<=x)$", "axx", True),
+        ("(?:(?=(.){2}\\1)|b)*(?<=x)$", "axy", False),
+        ("(?<=^(?:(?=(.){2})|b)*\\1)x", "x", True),
+        ("(?<=^(?:(?=(.){2})|b)*\\1)x", "bx", True),
+        ("(?<=^(?:(?=(.){2})|b)*\\1)x", "ax", False),
+        # A count no text can reach.
+        ("^a{99999999999999999999}$", "a", False),
+        ("^a{99999999999999999999}$", "", False),
+        ("^a{0,99999999999999999999}$", "aaa", True),
+        ("^a{0,99999999999999999999}$", "", True),
+        ("^a{0,99999999999999999999}$", "b", False),
+        ("^a{2,99999999999999999999}$", "aaa", True),
+        ("^a{2,99999999999999999999}$", "a", False),
+        ("(?<=b)a{99999999999999999999}", "ba", False),
+    ],
+)
+def test_patterns_that_raised_from_inside_an_engine_have_answers(pattern: str, text: str, expected: bool) -> None:
+    for p in _on_both_engines(pattern):
+        assert cjs.compile({"pattern": p})(text) is expected, p
+
+
+def test_a_minimum_no_text_reaches_over_a_body_that_can_match_nothing_is_refused() -> None:
+    # That many iterations, nearly all of which match nothing, are beyond both engines. The pattern is valid.
+    pattern = "(?<=b)(?:a|){99999999999999999999}"
+    with pytest.raises(cjs.SchemaCompilationError, match="too large"):
+        cjs.compile({"pattern": pattern})
+    assert is_valid_ecma_regex(pattern)
+
+
 def test_standalone_modules_collect_the_same_results_as_compile(tmp_path: Path) -> None:
     schema = {"type": "object", "properties": {"a": {"type": "string", "title": "A"}}, "required": ["b"]}
     mod = import_module(cjs.generate_module(schema), tmp_path)

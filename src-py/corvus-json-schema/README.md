@@ -4,7 +4,7 @@ A JSON Schema evaluator for Python (draft 4, 6, 7, 2019-09 and 2020-12), ported 
 standalone evaluator (`Corvus.Text.Json.RuntimeEvaluator`, see [docs/RuntimeEvaluator.md](../../docs/RuntimeEvaluator.md))
 by way of its TypeScript port. It compiles a schema once into specialised Python and validates parsed JSON values
 (`json.loads` output) against it. Pure Python: its one dependency is [`regex`](https://pypi.org/project/regex/), for
-the Unicode properties of ECMA-262 patterns.
+the ECMA-262 patterns that the standard library's `re` cannot run.
 
 For the same evaluator in Rust, behind the same Python API, see
 [corvus-json-schema-rs](../corvus-json-schema-rs/README.md).
@@ -123,7 +123,7 @@ The pipeline follows the C# evaluator stage for stage:
      with conditions under `if`/`then`/`else` and dependencies decided once per object;
    - patterns that are literals (a prefix, an exact value, alternatives, a substring) match without a regular
      expression; others are ECMA-262 translated to Python's syntax (`pattern.py`) and run by `re`, or by `regex` for
-     Unicode properties;
+     Unicode properties, lookbehind and a backreference to a group that may not have matched;
    - structurally identical functions are merged by partition refinement.
 
 Generated code that keeps state (a live dynamic scope or an in-place depth count) evaluates under a lock, so a
@@ -219,6 +219,20 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
 - **Numbers** are Python's: integers are exact at any size, and floats are doubles. `multipleOf` with a fractional
   divisor is computed exactly on the shortest decimal forms of the doubles.
 - **Regular expressions** are ECMA-262 translated to Python's syntax with ECMA's meaning (`\d` and `\w` are ASCII, `.`
-  excludes every line terminator, `$` matches only at the end). A pattern only valid without the `u` flag (an identity
-  escape such as `\-`, a literal brace) is accepted as JavaScript's `RegExp` would accept it without the flag.
+  excludes every line terminator, `$` matches only at the end, a backreference to a group that has not matched matches
+  the empty string, and a modifier group such as `(?i:...)` folds case by tables of Unicode 16 that the package
+  carries). A pattern only valid without the `u` flag (an identity escape such as `\-`, a literal brace) is accepted
+  as JavaScript's `RegExp` would accept it without the flag. The answers are V8's for every pattern of the
+  [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data). Four things are
+  known to differ from V8:
+  - a backreference inside a case-insensitive group is compared by the `regex` package, which also takes `i` for
+    U+0130 and `I` for U+0131, and which folds case where a pattern without the `u` flag compares uppercase forms;
+  - a pattern valid only without the `u` flag is matched by character, where V8 matches by UTF-16 code unit, which
+    shows for a character beyond the Basic Multilingual Plane in the text, or in the pattern under a quantifier or in
+    a class;
+  - both engines backtrack, and neither has V8's short cuts, so a pattern of repetitions inside repetitions that can
+    match nothing may take far longer than it does in V8;
+  - a pattern whose translation would pass 65,536 characters (a count inside a count, around a group that a
+    backreference reads) raises `SchemaCompilationError`, as does a minimum count of 2,147,483,647 or more over
+    something that can match nothing.
 - Custom `formats` functions cannot be serialised into standalone modules.
