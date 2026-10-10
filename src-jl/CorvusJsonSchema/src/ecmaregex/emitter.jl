@@ -629,7 +629,12 @@ end
 # by unsetting the groups of the body. The first X has groups of its own for the backreferences inside it. The two
 # forms match the same texts, as the body cannot match the empty string (such a repetition is refused), so every
 # iteration is one ECMA-262 takes.
+#
+# A repetition that never runs, X{0}, is not written at all. It matches the empty string, and its groups are never
+# set. PCRE2 10.42 and 10.46 are wrong about one that is written: when an alternative of X starts with \A they take
+# the pattern for one that can only match at the start of the text, so (?:b|\A){0}a does not match "ba".
 function writerepeat(E::Emitter, n::Node)
+    n.max == 0 && return nothing
     body = n.subs[1]
     out = E.out
     if !n.lastapart
