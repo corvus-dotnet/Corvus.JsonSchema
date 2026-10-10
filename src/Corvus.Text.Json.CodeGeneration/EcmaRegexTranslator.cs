@@ -48,6 +48,14 @@ namespace Corvus.Text.Json.CodeGeneration;
 internal static class EcmaRegexTranslator
 {
     /// <summary>
+    /// The longest translation that is given to .NET's compiled engine. A longer one is interpreted. The only
+    /// translations this long are those of a case-insensitive backreference to a group that can capture any letter,
+    /// which hold an alternative for every class of case variants (see <see cref="Emitter"/>). .NET compiles such
+    /// an expression in seconds, at the first match, and constructs it for the interpreter in milliseconds.
+    /// </summary>
+    internal const int LongestCompiledTranslation = 32_768;
+
+    /// <summary>
     /// Attempts to translate an ECMAScript 262 regex pattern (with /u Unicode mode)
     /// to an equivalent .NET regex pattern.
     /// </summary>

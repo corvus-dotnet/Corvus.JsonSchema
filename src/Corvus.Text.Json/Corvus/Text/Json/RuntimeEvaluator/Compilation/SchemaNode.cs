@@ -273,6 +273,9 @@ internal sealed class PatternMatcher
     /// <summary>Gets a value indicating whether matching uses a <see cref="Regex"/> (as opposed to a prefix, range or trivial test).</summary>
     public bool UsesRegex => this.kind == Kind.Regex;
 
+    /// <summary>Gets a value indicating whether matching uses a <see cref="Regex"/> that .NET compiles.</summary>
+    public bool UsesCompiledRegex => this.regex is Regex r && (r.Options & RegexOptions.Compiled) != 0;
+
     /// <summary>Gets a value indicating whether every string matches (the test can be skipped).</summary>
     public bool MatchesEverything => this.kind == Kind.Noop;
 
@@ -392,8 +395,10 @@ internal sealed class PatternMatcher
             return new PatternMatcher(Kind.Regex, ecmaPattern, provided, null, 0, 0);
         }
 
+        // A translation too long to be worth compiling is interpreted (see LongestCompiledTranslation).
         RegexOptions regexOptions = RegexOptions.CultureInvariant;
-        if (options.CompileRegularExpressions && !ForceInterpretedRegex)
+        if (options.CompileRegularExpressions && !ForceInterpretedRegex
+            && TranslationCache[ecmaPattern].Translated!.Length <= Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.LongestCompiledTranslation)
         {
             regexOptions |= RegexOptions.Compiled;
         }

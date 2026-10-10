@@ -303,6 +303,12 @@ internal static partial class CodeGenerationExtensions
         bool ignoresCase = translatedValue.Contains("(?i:");
         string generatedOptions = ignoresCase ? "RegexOptions.CultureInvariant" : "RegexOptions.None";
         string constructedOptions = ignoresCase ? "RegexOptions.Compiled | RegexOptions.CultureInvariant" : "RegexOptions.Compiled";
+        if (translatedValue.Length > EcmaRegexTranslator.LongestCompiledTranslation)
+        {
+            // Too long to be worth compiling when the type first validates.
+            constructedOptions = generatedOptions;
+        }
+
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         // Every form carries the match timeout (see RegexMatchTimeoutMilliseconds).

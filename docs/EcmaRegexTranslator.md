@@ -128,9 +128,12 @@ pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTable
   (see [the translations](./EcmaRegexTranslations.md#a-backreference-that-ignores-case)). The translation holds one
   alternative for each class of case variants the group can capture. For a group such as `([a-z]+)` that is three
   and the translation is under a thousand characters. For a group that can capture any letter (`(.)`, `(\p{L}+)`)
-  it is every class there is: the translation is about 160,000 characters, and .NET's compiled engine takes one to
-  three seconds to compile it the first time it is used. Each character compared costs a walk to the end of the
-  input and back.
+  it is every class there is, and the translation is about 160,000 characters. .NET's compiled engine would take
+  one to three seconds to compile that at the first match, so a translation longer than 32,768 characters
+  (`EcmaRegexTranslator.LongestCompiledTranslation`) is interpreted, by the evaluator whatever
+  `CompileRegularExpressions` says and by generated types where they construct the expression. .NET constructs it
+  for the interpreter in 10 to 50 milliseconds. Each character compared costs a walk to the end of the input and
+  back.
 - **Time.** ECMA-262 does not say how long a match may take, and a backtracking engine can take very long. The
   evaluator's match timeout (`JsonSchemaEvaluatorOptions.RegexMatchTimeout`) bounds it.
 - **Unicode version.** The data is Unicode 17.0.0. The Basic Multilingual Plane part of a General_Category value

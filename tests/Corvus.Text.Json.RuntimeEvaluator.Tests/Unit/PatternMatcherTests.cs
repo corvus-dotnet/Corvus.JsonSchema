@@ -331,6 +331,27 @@ public class PatternMatcherTests
         Assert.IsTrue(checkedCount > 500);
     }
 
+    /// <summary>
+    /// A translation longer than <c>EcmaRegexTranslator.LongestCompiledTranslation</c> is interpreted. .NET takes
+    /// seconds to compile one, at the first match. The only such translations are those of a case-insensitive
+    /// backreference to a group that can capture any letter.
+    /// </summary>
+    [TestMethod]
+    public void ALongTranslationIsNotCompiled()
+    {
+        var options = new JsonSchemaEvaluatorOptions { CompileRegularExpressions = true };
+
+        PatternMatcher narrow = PatternMatcher.Create(@"^(?i:([a-z]+)-\1)$", options);
+        Assert.IsTrue(narrow.UsesRegex);
+        Assert.IsTrue(narrow.UsesCompiledRegex);
+
+        PatternMatcher wide = PatternMatcher.Create(@"^(?i:(.+)-\1)$", options);
+        Assert.IsTrue(wide.UsesRegex);
+        Assert.IsFalse(wide.UsesCompiledRegex);
+        Assert.IsTrue(wide.IsMatch(Encoding.UTF8.GetBytes("\u03C3\u03C2-\u03A3\u03C3")));
+        Assert.IsFalse(wide.IsMatch(Encoding.UTF8.GetBytes("\u03C3\u03C2-\u03A3\u03B1")));
+    }
+
     [TestMethod]
     public void OnlyPatternsOutsideTheSubsetNeedARegularExpression()
     {

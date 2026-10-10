@@ -92,6 +92,28 @@ public class InvalidPatternGenerationTests
         }
     }
 
+    /// <summary>
+    /// A translation longer than <c>EcmaRegexTranslator.LongestCompiledTranslation</c> is constructed without
+    /// <c>RegexOptions.Compiled</c>, which .NET would take seconds over when the type first validates.
+    /// </summary>
+    [TestMethod]
+    public async Task GenerateCode_ForALongTranslation_DoesNotCompileIt()
+    {
+        IReadOnlyList<GeneratedCodeFile> files = await GenerateAsync("""{"type": "object", "patternProperties": {"^(?i:(.+)-\\1)$": {"type": "integer"}}}""", withProgramImage: false);
+
+        string[] lines =
+        [
+            .. files.SelectMany(f => f.FileContent.Split('\n'))
+                .Select(l => l.Trim())
+                .Where(l => l.Contains("Regex Create", StringComparison.Ordinal) && l.Contains("=> new(", StringComparison.Ordinal))
+        ];
+
+        Assert.AreEqual(1, lines.Length);
+        Assert.IsTrue(lines[0].Length > 100_000, $"{lines[0].Length} characters");
+        Assert.IsFalse(lines[0].Contains("RegexOptions.Compiled", StringComparison.Ordinal));
+        StringAssert.EndsWith(lines[0], """, RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(10000));""");
+    }
+
     private static async Task<IReadOnlyList<GeneratedCodeFile>> GenerateAsync(string schema, bool withProgramImage)
     {
         string path = Path.Combine(Path.GetTempPath(), $"invalid-pattern-{Guid.NewGuid():N}.json");
