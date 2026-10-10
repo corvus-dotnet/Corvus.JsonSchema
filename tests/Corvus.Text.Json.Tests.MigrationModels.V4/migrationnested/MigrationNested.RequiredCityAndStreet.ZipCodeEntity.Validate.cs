@@ -166,10 +166,10 @@ public readonly partial struct MigrationNested
                 }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                [GeneratedRegex("^[0-9]{5}$")]
+                [GeneratedRegex("^[0-9]{5}\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]
                 private static partial Regex CreatePattern();
 #else
-                private static Regex CreatePattern() => new("^[0-9]{5}$", RegexOptions.Compiled);
+                private static Regex CreatePattern() => new("^[0-9]{5}\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));
 #endif
             }
         }

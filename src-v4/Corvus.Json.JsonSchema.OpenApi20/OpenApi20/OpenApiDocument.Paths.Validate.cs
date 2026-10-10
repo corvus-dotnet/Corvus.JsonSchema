@@ -218,16 +218,16 @@ public readonly partial struct OpenApiDocument
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^/")]
+            [GeneratedRegex("^/", RegexOptions.None, matchTimeoutMilliseconds: 10000)]
             private static partial Regex CreatePatternProperties1();
 #else
-            private static Regex CreatePatternProperties1() => new("^/", RegexOptions.Compiled);
+            private static Regex CreatePatternProperties1() => new("^/", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));
 #endif
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^x-")]
+            [GeneratedRegex("^x-", RegexOptions.None, matchTimeoutMilliseconds: 10000)]
             private static partial Regex CreatePatternProperties2();
 #else
-            private static Regex CreatePatternProperties2() => new("^x-", RegexOptions.Compiled);
+            private static Regex CreatePatternProperties2() => new("^x-", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));
 #endif
         }
     }

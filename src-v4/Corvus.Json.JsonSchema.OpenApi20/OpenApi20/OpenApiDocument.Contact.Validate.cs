@@ -256,10 +256,10 @@ public readonly partial struct OpenApiDocument
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^x-")]
+            [GeneratedRegex("^x-", RegexOptions.None, matchTimeoutMilliseconds: 10000)]
             private static partial Regex CreatePatternProperties();
 #else
-            private static Regex CreatePatternProperties() => new("^x-", RegexOptions.Compiled);
+            private static Regex CreatePatternProperties() => new("^x-", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));
 #endif
         }
     }
