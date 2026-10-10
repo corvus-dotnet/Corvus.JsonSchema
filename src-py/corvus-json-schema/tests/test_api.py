@@ -242,10 +242,43 @@ def test_pattern_fast_paths_agree_with_the_regular_expression() -> None:
         ("\\u{1F600}", "😀", True),
         ("\\uD83D\\uDE00", "😀", True),
         ("(?<=a+)b", "aab", True),
+        # \B holds in an empty text and \b does not (CPython before 3.14 has \B never match there).
+        ("\\B", "", True),
+        ("^\\B$", "", True),
+        ("^(\\d|\\B){2}", "", True),
+        ("(?<!a)\\B", "", True),
+        ("\\b", "", False),
+        ("(?<!a)\\b", "", False),
+        ("^\\B$", "-", False),
+        ("\\B", "a", False),
+        ("\\B", "é", True),
+        ("^.\\B.$", "aé", False),
     ],
 )
 def test_patterns_have_ecma_semantics(pattern: str, text: str, expected: bool) -> None:
     assert cjs.compile({"pattern": pattern})(text) is expected
+
+
+def test_word_boundaries_are_ecma_at_every_position_of_every_short_text() -> None:
+    # \b is between a word character ([A-Za-z0-9_]) and anything else, the ends of the text included. \B is every
+    # other position. Each is tried through both engines: a lookbehind sends a pattern to the regex package.
+    alphabet = ["a", "_", "7", "-", " ", "é"]
+    texts = [""]
+    for _ in range(3):
+        texts += [t + c for t in texts for c in alphabet]
+
+    def word(t: str, i: int) -> bool:
+        return 0 <= i < len(t) and (t[i].isascii() and (t[i].isalnum() or t[i] == "_"))
+
+    for at in range(4):
+        dots = "[^]" * at
+        for prefix in ("", "(?<![^])"):
+            boundary = cjs.compile({"pattern": f"^{prefix}{dots}\\b"})
+            not_boundary = cjs.compile({"pattern": f"^{prefix}{dots}\\B"})
+            for t in set(texts):
+                expected = None if at > len(t) else word(t, at - 1) != word(t, at)
+                assert boundary(t) is (expected is True), f"\\b at {at} of {t!r}"
+                assert not_boundary(t) is (expected is False), f"\\B at {at} of {t!r}"
 
 
 def test_standalone_modules_collect_the_same_results_as_compile(tmp_path: Path) -> None:

@@ -225,7 +225,9 @@ class _Translator:
             return "\\b" if self.ascii_flag else "(?a:\\b)", False
         if e == "B":
             self.i += 1
-            return "\\B" if self.ascii_flag else "(?a:\\B)", False
+            # Not at a word boundary, written as that: the standard library's \B never matched in an empty text
+            # before CPython 3.14, where ECMA's does.
+            return "(?!\\b)" if self.ascii_flag else "(?!(?a:\\b))", False
         if e in "123456789":
             j = self.i
             while j < self.n and self.p[j].isdigit():
