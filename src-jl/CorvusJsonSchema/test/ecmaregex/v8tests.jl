@@ -323,6 +323,38 @@ end
         @test E.unsupportedreason("(?<=\\1(a+))x") == E.REFUSED_BACKREFERENCE_IN_LOOKBEHIND
     end
 
+    # Two classes that another port answered wrongly. A lookahead may set a group on only some of its ways to match,
+    # and the backreference then reads nothing. And a group of a lookaround is put back when the match goes back to
+    # before the lookaround, so a backreference in a later iteration does not read what an abandoned way left.
+    # PCRE2 does both as ECMA-262 does, and the translation was right. The tables keep it so.
+    @testset "groups of a lookahead" begin
+        rows = [
+            # A group that a lookahead sets on only some of its ways to match.
+            (raw"(?=(a)?x)\1", "25d2ebfeba6f"),
+            (raw"(?=(a)?x)\1x", "25d2ebfeba6f"),
+            (raw"(?=(?:(a)|x)*-)\1x", "0040201e0801"),
+            (raw"(?=(a|(x))-?)\1\2", "4fa7fff9f4fe"),
+            (raw"(?:(?=(a)?x).\1)+$", "24924924926c"),
+            (raw"(?!(a)?x)\1-", "12793c9fff35"),
+            # A group of a lookaround and a backreference to it in one repetition, with a way to go back between them.
+            (raw"^(?:(?=([ax]))[ax](?:-|-a)\1)*$", "800010040000"),
+            (raw"^(?:(?=(a|x))[ax](?:-|-a)\1)*$", "800010040000"),
+            (raw"^(?:(?=(.))(?:a|ax)\1)+$", "080080000080"),
+            (raw"^(?:(?=(a)?)(?:x|xa)\1)*-$", "104000900000"),
+        ]
+        checkv8table(rows)
+        for (pattern, _) in rows
+            @test E.unsupportedreason(pattern) === nothing
+        end
+        @test matches("(?=(a)?b)\\1", "b")
+        @test matches("(?=(a)?b)\\1", "ab")
+        @test !matches("(?=(a)?b)\\1", "a")
+        @test !matches("^(?:(?=([ab]))[ab](?:c|ca)\\1)*\$", "acab")
+        @test matches("^(?:(?=([ab]))[ab](?:c|ca)\\1)*\$", "aca")
+        @test matches("^(?:(?=([ab]))[ab](?:c|ca)\\1)*\$", "acaa")
+        @test matches("^(?:(?=([ab]))[ab](?:c|ca)\\1)*\$", "acabcb")
+    end
+
     # A backreference after a lookbehind of no fixed length reads a group of it. ECMA-262 matches the lookbehind
     # backwards, and the group holds what that captures. PCRE2 sets a group only where the match passes over its
     # text, so the lookbehind is written forwards in a form that captures the same, where there is one. The
