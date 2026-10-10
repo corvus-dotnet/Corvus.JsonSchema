@@ -895,7 +895,9 @@ impl SeparatedList {
         let group = strip_group(&body[open..=close])?;
         let before = &body[..open];
         let after = &body[close + 2..];
-        let items = |t: &str| Sequence::parse(&format!("^{t}")).map(|s| s.items.into_vec());
+        // The items of a text that is a class sequence. A `$` at the end of the text is not an item, and the list has
+        // no place for it: `^x(,a$)*$` is not `^x(,a)*$`. Such a text is not a part of a list.
+        let items = |t: &str| Sequence::parse(&format!("^{t}")).filter(|s| !s.to_end).map(|s| s.items.into_vec());
         let seq = |items: &[Item], to_end| Sequence { items: items.into(), to_end };
         let fixed = |items: &[Item]| !items.is_empty() && items.iter().all(|i| i.min == i.max && i.min > 0);
         let g = items(group)?;
@@ -1484,6 +1486,20 @@ mod tests {
         "^(é,)*a$",
         "^(?=!+[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$",
         "^(?=!+[^a]+$)(?=(.*\\w)).+$",
+        // Lists with an anchor or an assertion inside them, and with an escaped anchor.
+        "^x(,a$)*$",
+        "^a(,a$)+$",
+        "^x$(,a)*$",
+        "^(a$)(,a)*$",
+        "^$(,a)*$",
+        "^(a,$)*b$",
+        "^([a-z]+,$)+a$",
+        "^a(^,a)*$",
+        "^(^a,)*b$",
+        "^a(,a\\b)*$",
+        "^a(,a\\$)*$",
+        "^a\\$(,a)*$",
+        "^(a\\$,)*b$",
         // Valid only without the `u` flag (identity escapes), so matching code units.
         "^\\/[^\\*\\?\\&\\%]*(\\/\\*)?$",
         "^[\\&\\@\\_]+$",
@@ -1555,8 +1571,33 @@ mod tests {
             "^([a-zA-Z0-9]{2,3})(-[a-zA-Z0-9]{1,6})*$",
             "^([a-zA-Z_$][a-zA-Z0-9_$]{0,39}\\.)*([a-zA-Z_$][a-zA-Z0-9_$]{0,39})$",
             "^([a-z_$][a-z0-9_$]{0,39}\\.)*([a-zA-Z_$][a-zA-Z0-9_$]{0,39})$",
+            // An escaped `$` or `^` is a literal character of the list.
+            "^x(,a\\$)*$",
+            "^x\\$(,a)*$",
+            "^(a\\$,)*b$",
+            "^x(,\\^a)*$",
+            "^(a,)*b\\$$",
+            "^x(,[$^]a)*$",
         ] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::SeparatedList(_)), "{p}");
+        }
+        // A list with an anchor or an assertion inside it has no shape.
+        for p in [
+            "^x(,a$)*$",
+            "^x(?:,a$)+$",
+            "^x$(,a)*$",
+            "^(x$)(,a)*$",
+            "^$(,a)*$",
+            "^(a,$)*b$",
+            "^x(^,a)*$",
+            "^(^a,)*b$",
+            "^x(,(a$))*$",
+            "^x(,a\\b)*$",
+            "^x\\B(,a)*$",
+            "^x(,a(?=,|$))*$",
+            "^x(?=,)(,a)*$",
+        ] {
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::Regex(_) | Matcher::Regress(_)), "{p}");
         }
         assert!(matches!(
             compile("^(?=[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$").unwrap().matcher,

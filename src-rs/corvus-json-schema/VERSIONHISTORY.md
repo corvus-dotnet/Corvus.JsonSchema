@@ -2,6 +2,14 @@
 
 The version history of the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.7
+
+V0.1.7 fixes a wrong result for one form of pattern, which was taken to match strings it does not match. There are no API changes. Versions 0.1.0 to 0.1.6 are affected.
+
+### Bug fixes
+
+- **A separated list with a `$` inside it.** The crate matches a pattern of the form `^item(separator item)*$`, such as `^([a-z]+)(\.[a-z]+)*$`, without a regular expression engine (and likewise the forms with `+`, and `^(item separator)*item$`). It read the first item and the repeated group as sequences of characters and classes, and a `$` at the end of either was read and then dropped. So `^x(,a$)*$` was matched as `^x(,a)*$`. A `$` holds only at the end of the string, so the group of `^x(,a$)*$` can match once at most, and only as the last thing in the string. `{"pattern": "^x(,a$)*$"}` was valid for `"x,a,a"`, where it is not. `^x$(,a)*$` was valid for `"x,a"`, and `^(a,$)*b$` for `"a,b"`. A pattern used for `patternProperties` or `propertyNames` was affected in the same way. A list with a `$` at the end of its first item or of its group is now matched by a regular expression engine. An escaped `\$` is a literal character and such a list is matched as before. No other form of pattern was affected. A table of 101 patterns with an anchor, a word boundary or a lookaround inside one of the forms the crate matches by itself, with answers from V8, is now part of the tests (`tests/pattern_anchors.rs`).
+
 ## V0.1.6
 
 V0.1.6 fixes a stack overflow, and a wrong `is_valid` result, for a schema whose `not` is part of a loop. There are no API changes. Versions 0.1.0 to 0.1.5 are affected.
