@@ -388,6 +388,207 @@ def test_a_backreference_is_written_from_where_its_group_is() -> None:
     assert written("^(?:(a)|b)*\\1$")[0].count("(?P<g1>)") == 2
 
 
+@pytest.mark.parametrize(
+    ("pattern", "text", "expected"),
+    [
+        # V8's answers (for a case-insensitive group, its answers for the same pattern with the i flag).
+        # A case-insensitive group, with the u flag's simple case folding.
+        ("a(?i:b)c", "abc", True),
+        ("a(?i:b)c", "aBc", True),
+        ("a(?i:b)c", "Abc", False),
+        ("a(?i:b)c", "abC", False),
+        ("(?i:a(?-i:b)c)", "AbC", True),
+        ("(?i:a(?-i:b)c)", "ABC", False),
+        ("^(?i:k)$", "k", True),
+        ("^(?i:k)$", "K", True),
+        ("^(?i:k)$", "\u212a", True),
+        ("^(?i:k)$", "s", False),
+        ("^(?i:s)$", "s", True),
+        ("^(?i:s)$", "S", True),
+        ("^(?i:s)$", "\u017f", True),
+        ("^(?i:\\u017f)$", "s", True),
+        ("^(?i:\\u017f)$", "S", True),
+        ("^(?i:\\u017f)$", "\u017f", True),
+        ("^(?i:[a-z])$", "K", True),
+        ("^(?i:[a-z])$", "\u212a", True),
+        ("^(?i:[a-z])$", "\u017f", True),
+        ("^(?i:[a-z])$", "\u00e9", False),
+        ("^(?i:[^a-z])$", "\u212a", False),
+        ("^(?i:[^a-z])$", "\u00e9", True),
+        ("^(?i:[^a-z])$", "K", False),
+        ("^(?i:[^a-z])$", "1", True),
+        ("^(?i:\\w)$", "\u017f", True),
+        ("^(?i:\\w)$", "\u212a", True),
+        ("^(?i:\\w)$", "k", True),
+        ("^(?i:\\w)$", "\u00e9", False),
+        ("^(?i:\\W)$", "\u017f", False),
+        ("^(?i:\\W)$", "\u212a", False),
+        ("^(?i:\\W)$", "\u00e9", True),
+        ("^(?i:\\W)$", "k", False),
+        ("^(?i:[\\W])$", "\u017f", False),
+        ("^(?i:[\\W])$", "\u212a", False),
+        ("^(?i:[\\W])$", "\u00e9", True),
+        ("^(?i:[\\W])$", "k", False),
+        ("^(?i:[^\\W])$", "\u017f", True),
+        ("^(?i:[^\\W])$", "\u212a", True),
+        ("^(?i:[^\\W])$", "\u00e9", False),
+        ("^(?i:[^\\W])$", "k", True),
+        ("^(?i:\u00df)$", "\u00df", True),
+        ("^(?i:\u00df)$", "\u1e9e", True),
+        ("^(?i:\u00df)$", "ss", False),
+        ("^(?i:\u00df)$", "SS", False),
+        ("^(?i:\u03c3)$", "\u03c3", True),
+        ("^(?i:\u03c3)$", "\u03c2", True),
+        ("^(?i:\u03c3)$", "\u03a3", True),
+        ("^(?i:\u03c3)$", "s", False),
+        ("^(?i:i)$", "i", True),
+        ("^(?i:i)$", "I", True),
+        ("^(?i:i)$", "\u0130", False),
+        ("^(?i:i)$", "\u0131", False),
+        ("^(?i:\u0130)$", "i", False),
+        ("^(?i:\u0130)$", "I", False),
+        ("^(?i:\u0130)$", "\u0130", True),
+        ("^(?i:\u0130)$", "\u0131", False),
+        ("^(?i:\u01c5)$", "\u01c4", True),
+        ("^(?i:\u01c5)$", "\u01c5", True),
+        ("^(?i:\u01c5)$", "\u01c6", True),
+        ("^(?i:\u01c5)$", "D", False),
+        ("^(?i:\U00010400)$", "\U00010400", True),
+        ("^(?i:\U00010400)$", "\U00010428", True),
+        ("^(?i:\U00010400)$", "\U00010401", False),
+        ("^(?i:\u00b5)$", "\u00b5", True),
+        ("^(?i:\u00b5)$", "\u03bc", True),
+        ("^(?i:\u00b5)$", "\u039c", True),
+        ("^(?i:\u00b5)$", "m", False),
+        ("^(?i:[\u00e0-\u00fe])+$", "\u00c9\u00e9", True),
+        ("^(?i:[\u00e0-\u00fe])+$", "\u00d7", False),
+        ("^(?i:[\u00e0-\u00fe])+$", "\u00f7", True),
+        ("^(?i:[\u00e0-\u00fe])+$", "\u1e9e", False),
+        ("^(?i:\\p{Lu})+$", "aA", True),
+        ("^(?i:\\p{Lu})+$", "\u01c5", True),
+        ("^(?i:\\p{Lu})+$", "1", False),
+        ("^(?i:\\P{Lu})+$", "aA", True),
+        ("^(?i:\\P{Lu})+$", "1", True),
+        ("^(?i:\\P{Lu})+$", "\u01c5", True),
+        ("^(?i:[^\\p{Lu}])+$", "a", False),
+        ("^(?i:[^\\p{Lu}])+$", "A", False),
+        ("^(?i:[^\\p{Lu}])+$", "1", True),
+        ("(?i:a\\b)", "A\u017f", False),
+        ("(?i:a\\b)", "A-", True),
+        ("(?i:a\\b)", "a\u212a", False),
+        ("(?i:a\\b)", "a", True),
+        ("(?i:a\\B)", "A\u017f", True),
+        ("(?i:a\\B)", "A-", False),
+        ("(?i:a\\B)", "a\u212a", True),
+        ("(?i:a\\B)", "a", False),
+        ("^(a)(?i:\\1)$", "aA", True),
+        ("^(a)(?i:\\1)$", "aa", True),
+        ("^(a)(?i:\\1)$", "ab", False),
+        ("^(?i:(a)\\1)$", "aA", True),
+        ("^(?i:(a)\\1)$", "Aa", True),
+        ("^(?i:(a)\\1)$", "AB", False),
+        ("^(.)(?i:\\1)$", "s\u017f", True),
+        ("^(.)(?i:\\1)$", "k\u212a", True),
+        ("^(.)(?i:\\1)$", "\u00e9\u00c9", True),
+        ("^(.)(?i:\\1)$", "ab", False),
+        # Without the u flag (\& is an escape only that grammar has), by the uppercase form of a UTF-16 code unit.
+        ("^(?i:k)\\&?$", "k", True),
+        ("^(?i:k)\\&?$", "K", True),
+        ("^(?i:k)\\&?$", "\u212a", False),
+        ("^(?i:s)\\&?$", "S", True),
+        ("^(?i:s)\\&?$", "\u017f", False),
+        ("^(?i:\u00df)\\&?$", "\u00df", True),
+        ("^(?i:\u00df)\\&?$", "\u1e9e", False),
+        ("^(?i:[a-z])\\&?$", "K", True),
+        ("^(?i:[a-z])\\&?$", "\u017f", False),
+        ("^(?i:[a-z])\\&?$", "\u212a", False),
+        ("^(?i:\\w)\\&?$", "k", True),
+        ("^(?i:\\w)\\&?$", "\u017f", False),
+        ("^(?i:\\w)\\&?$", "\u212a", False),
+        ("^(?i:[^\\W])\\&?$", "k", True),
+        ("^(?i:[^\\W])\\&?$", "\u017f", False),
+        ("^(?i:[^\\W])\\&?$", "\u212a", False),
+        ("^(?i:\u01c5)\\&?$", "\u01c4", True),
+        ("^(?i:\u01c5)\\&?$", "\u01c6", True),
+        ("^(?i:\u01c5)\\&?$", "\u01c5", True),
+        ("^(?i:\u00b5)\\&?$", "\u03bc", True),
+        ("^(?i:\u00b5)\\&?$", "\u039c", True),
+        ("^(?i:\u00b5)\\&?$", "\u00b5", True),
+        ("^(?i:\u03c3)\\&?$", "\u03c2", True),
+        ("^(?i:\u03c3)\\&?$", "\u03a3", True),
+        ("(?i:a\\b)\\&?", "A\u017f", True),
+        ("(?i:a\\b)\\&?", "A-", True),
+        # Inside m, ^ and $ hold at each of the four line terminators and nowhere else.
+        ("^a(?m:$)", "a", True),
+        ("^a(?m:$)", "a\n", True),
+        ("^a(?m:$)", "a\r", True),
+        ("^a(?m:$)", "a\u2028", True),
+        ("^a(?m:$)", "a\u2029", True),
+        ("^a(?m:$)", "a\u0085", False),
+        ("^a(?m:$)", "ab", False),
+        ("(?m:^)a$", "a", True),
+        ("(?m:^)a$", "\na", True),
+        ("(?m:^)a$", "\ra", True),
+        ("(?m:^)a$", "\u2028a", True),
+        ("(?m:^)a$", "\u2029a", True),
+        ("(?m:^)a$", "\u0085a", False),
+        ("(?m:^)a$", "ba", False),
+        ("(?m:^a$)", "b\na\rb", True),
+        ("(?m:^a$)", "ba\n", False),
+        ("(?m:^a$)", "\u2028a\u2029", True),
+        ("(?m:^)(?-m:^)a", "a", True),
+        ("(?m:^)(?-m:^)a", "\na", False),
+        ("^a$", "a\n", False),
+        ("^a$", "\na", False),
+        # Inside s, the dot is any character. Outside it, any but the four line terminators.
+        ("^a(?s:.)b$", "a\nb", True),
+        ("^a(?s:.)b$", "a\rb", True),
+        ("^a(?s:.)b$", "a\u2028b", True),
+        ("^a(?s:.)b$", "a\u2029b", True),
+        ("^a(?s:.)b$", "axb", True),
+        ("^a(?s:.)b$", "ab", False),
+        ("^a(?s:(?-s:.))b$", "a\nb", False),
+        ("^a(?s:(?-s:.))b$", "a\u0085b", True),
+        ("^(?s-i:.)$", "\n", True),
+        ("^(?s-i:.)$", "\u2029", True),
+        ("^(?ims:a.^B$)", "A\nb", True),
+        ("^(?ims:a.^B$)", "a\rB\n", True),
+        ("^(?ims:a.^B$)", "a\nb\u2028c", True),
+        ("^(?ims:a.^B$)", "a-b", False),
+    ],
+)
+def test_modifier_groups_have_ecma_semantics(pattern: str, text: str, expected: bool) -> None:
+    for p in _on_both_engines(pattern):
+        assert cjs.compile({"pattern": p})(text) is expected, p
+
+
+def test_a_modifier_group_names_each_modifier_once_and_at_least_one() -> None:
+    for pattern in ("(?i:a)", "(?i-:a)", "(?-i:a)", "(?ims:a)", "(?s-im:a)", "(?m:(?-m:a))", "(?i:a)\\&"):
+        assert compile_pattern(pattern) is not None, pattern
+    for pattern in ("(?-:a)", "(?ii:a)", "(?i-i:a)", "(?i--m:a)", "(?x:a)", "(?i)a", "(?i:a", "(?u:a)"):
+        assert compile_pattern(pattern) is None, pattern
+
+
+def test_every_character_matches_its_case_variants_in_a_case_insensitive_group() -> None:
+    # The sets of _casefold.py, which are checked against V8 when the file is made. A member, as a literal and in
+    # a class, matches every member of its set and no member of the next one. \& makes a pattern one that is valid
+    # only without the u flag.
+    from corvus_json_schema import _casefold
+
+    for table, legacy in ((_casefold.UNICODE, ""), (_casefold.LEGACY, "\\&?")):
+        sets = table.split(" ")
+        assert len(sets) > 1000
+        for k in range(0, len(sets), 7):
+            members, others = sets[k], sets[(k + 1) % len(sets)]
+            for pattern in (f"^(?i:{members[0]}){legacy}$", f"^(?i:[{members[-1]}]){legacy}$"):
+                matcher = compile_pattern(pattern)
+                assert matcher is not None, pattern
+                for c in members:
+                    assert matcher(c), f"{pattern} on U+{ord(c):04X}"
+                for c in others:
+                    assert not matcher(c), f"{pattern} on U+{ord(c):04X}"
+
+
 def test_standalone_modules_collect_the_same_results_as_compile(tmp_path: Path) -> None:
     schema = {"type": "object", "properties": {"a": {"type": "string", "title": "A"}}, "required": ["b"]}
     mod = import_module(cjs.generate_module(schema), tmp_path)

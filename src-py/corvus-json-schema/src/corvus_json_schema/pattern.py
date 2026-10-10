@@ -9,8 +9,18 @@ Patterns are parsed with the ``u`` flag's grammar first; one that only parses wi
 such as ``\\-``, literal braces) is translated by the lenient grammar instead, as JavaScript's ``RegExp`` would be
 constructed without the flag.
 
-Backreferences have a meaning in ECMA-262 that neither engine has, and are written out for them. It is done once,
-when a schema is compiled. For a pattern with no backreference, nothing is added to a match.
+Two things have a meaning in ECMA-262 that neither engine has, and are written out for them. All of it is done
+once, when a schema is compiled. For a pattern with no backreference and no modifier group, nothing is added to a
+match.
+
+**Modifier groups.** ``(?i:...)``, ``(?m:...)``, ``(?s:...)`` and ``(?-i:...)`` are read here and never passed on.
+Inside ``s`` the dot is any character. Inside ``m``, ``^`` and ``$`` are lookarounds for ECMA's four line
+terminators. Inside ``i`` a character is the class of the characters equal to it without case, and a class takes
+every character equal to a member. Equal means the same simple case folding with the ``u`` flag and the same
+uppercase form of a UTF-16 code unit without it, from the tables of ``_casefold`` (Unicode 16), which are the same
+on every version of Python. A backreference inside ``i`` is compared by the ``regex`` package. With the ``u`` flag
+that differs from ECMA-262 in one place (it also takes ``i`` for U+0130 and ``I`` for U+0131), and without the flag
+it folds where ECMA-262 compares uppercase forms.
 
 **Backreferences.** In ECMA-262 a reference to a group that has not matched matches the empty string, and the
 groups inside a repetition lose their values at the start of each iteration. Both engines fail a reference to a
@@ -29,6 +39,7 @@ from __future__ import annotations
 
 import re
 import sys
+from bisect import bisect_left
 from collections.abc import Callable
 from typing import Any
 
@@ -36,6 +47,9 @@ from typing import Any
 _SPACE = "\\t\\n\\x0b\\x0c\\r \\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff"
 _DOT = "[^\\n\\r\\u2028\\u2029]"
 _ANY = "(?s:.)"
+# ^ and $ inside a group with the m modifier: at the start or the end of the text or next to a line terminator.
+_LINE_START = "(?<![^\\n\\r\\u2028\\u2029])"
+_LINE_END = "(?![^\\n\\r\\u2028\\u2029])"
 _SYNTAX = set("^$\\.*+?()[]{}|/")
 _QUANTIFIER_RE = re.compile(r"\{(\d+)(,(\d*))?\}")
 _PROPERTY_RE = re.compile(r"[A-Za-z0-9_]+(=[A-Za-z0-9_]+)?")
@@ -45,6 +59,26 @@ _PROPERTY_RE = re.compile(r"[A-Za-z0-9_]+(=[A-Za-z0-9_]+)?")
 # "^([^a]?a+){2,3}?\1a$" did not match "aaaa". There the regex package runs a pattern with a reference to a group
 # inside a repetition.
 _GROUPS_IN_REPETITIONS_GO_STALE = sys.version_info < (3, 11)
+
+_Ranges = list[tuple[int, int]]
+_DIGIT: _Ranges = [(0x30, 0x39)]
+_WORD: _Ranges = [(0x30, 0x39), (0x41, 0x5A), (0x5F, 0x5F), (0x61, 0x7A)]
+# With the u flag, case-insensitive \w and \b also count the two characters that fold to an ASCII letter (the long
+# s and the Kelvin sign).
+_FOLD_WORD: _Ranges = [*_WORD, (0x17F, 0x17F), (0x212A, 0x212A)]
+_FOLD_WORD_CLASS = "[0-9A-Za-z_\\u017f\\u212a]"
+_WHITE: _Ranges = [
+    (0x09, 0x0D),
+    (0x20, 0x20),
+    (0xA0, 0xA0),
+    (0x1680, 0x1680),
+    (0x2000, 0x200A),
+    (0x2028, 0x2029),
+    (0x202F, 0x202F),
+    (0x205F, 0x205F),
+    (0x3000, 0x3000),
+    (0xFEFF, 0xFEFF),
+]
 
 
 class _Invalid(Exception):
@@ -63,6 +97,51 @@ def _literal(c: str) -> str:
     return f"\\U{o:08x}"
 
 
+def _merged(ranges: _Ranges) -> _Ranges:
+    out: _Ranges = []
+    for lo, hi in sorted(ranges):
+        if out and lo <= out[-1][1] + 1:
+            if hi > out[-1][1]:
+                out[-1] = (out[-1][0], hi)
+        else:
+            out.append((lo, hi))
+    return out
+
+
+def _complement(ranges: _Ranges) -> _Ranges:
+    out: _Ranges = []
+    at = 0
+    for lo, hi in _merged(ranges):
+        if lo > at:
+            out.append((at, lo - 1))
+        at = hi + 1
+    if at <= 0x10FFFF:
+        out.append((at, 0x10FFFF))
+    return out
+
+
+def _class_text(ranges: _Ranges) -> str:
+    return "".join(_literal(chr(lo)) if lo == hi else f"{_literal(chr(lo))}-{_literal(chr(hi))}" for lo, hi in ranges)
+
+
+_fold_tables: dict[bool, tuple[list[int], dict[int, str]]] = {}
+
+
+def _fold_table(unicode: bool) -> tuple[list[int], dict[int, str]]:
+    """The characters that are equal to another without case, in order, and for each the set it is in. Built when
+    the first pattern with a case-insensitive group is compiled."""
+    table = _fold_tables.get(unicode)
+    if table is None:
+        from . import _casefold
+
+        sets: dict[int, str] = {}
+        for members in (_casefold.UNICODE if unicode else _casefold.LEGACY).split(" "):
+            for c in members:
+                sets[ord(c)] = members
+        table = _fold_tables[unicode] = (sorted(sets), sets)
+    return table
+
+
 # The kinds of node of a pattern's tree.
 _TEXT, _SEQUENCE, _ALTERNATION, _GROUP, _LOOK, _REPEAT, _REFERENCE = range(7)
 # Where a reference is, from its group (see the module's description).
@@ -75,6 +154,7 @@ class _Node:
         "behind",
         "first",
         "group",
+        "icase",
         "items",
         "kind",
         "last",
@@ -95,6 +175,7 @@ class _Node:
         self.items: list[_Node] = [] if items is None else items
         # _GROUP: the number of a capturing group, or 0. _REFERENCE: the group it names.
         self.group = group
+        self.icase = False
         self.behind = False
         self.negative = False
         self.min = 0
@@ -143,6 +224,10 @@ class _Translator:
         self.names: dict[str, int] = {}
         self.groups = 0
         self.needs_regex = False
+        # The modifiers in force, which only a group such as (?i:...) changes.
+        self.icase = False
+        self.multiline = False
+        self.dot_all = False
 
     def error(self) -> _Invalid:
         return _Invalid(self.p)
@@ -238,13 +323,13 @@ class _Translator:
         c = self.peek()
         if c == "^":
             self.i += 1
-            return _Node(_TEXT, "^"), False
+            return _Node(_TEXT, _LINE_START if self.multiline else "^"), False
         if c == "$":
             self.i += 1
-            return _Node(_TEXT, "\\Z"), False
+            return _Node(_TEXT, _LINE_END if self.multiline else "\\Z"), False
         if c == ".":
             self.i += 1
-            return self._one(_DOT), True
+            return self._one(_ANY if self.dot_all else _DOT), True
         if c == "(":
             return self._group()
         if c == "[":
@@ -274,7 +359,12 @@ class _Translator:
         return n
 
     def _char(self, c: str) -> str:
-        # A literal character; an astral character is one code point (as with the u flag).
+        # A literal character; an astral character is one code point (as with the u flag). Inside a
+        # case-insensitive group it is the class of the characters equal to it.
+        if self.icase:
+            members = _fold_table(self.u)[1].get(ord(c))
+            if members is not None:
+                return "[" + "".join(_literal(m) for m in members) + "]"
         return _literal(c)
 
     def _group(self) -> tuple[_Node, bool]:
@@ -298,7 +388,8 @@ class _Translator:
             self.groups += 1
             node, quantifiable = _Node(_GROUP, group=self.groups), True
         elif p.startswith("(?", i):
-            raise self.error()
+            self.i += 2
+            return self._modifier_group(), True
         else:
             self.i += 1
             self.groups += 1
@@ -307,6 +398,36 @@ class _Translator:
         self.i += 1  # ')'
         return node, quantifiable
 
+    def _modifier_group(self) -> _Node:
+        """A group that turns modifiers on or off for its body, such as ``(?i:...)`` or ``(?s-i:...)``, from after
+        its ``(?``. A modifier is named once at most, and at least one is named."""
+        saved = (self.icase, self.multiline, self.dot_all)
+        seen = ""
+        on = True
+        while True:
+            c = self.peek()
+            self.i += 1
+            if c == ":":
+                break
+            if c == "-" and on:
+                on = False
+            elif c != "" and c in "ims" and c not in seen:
+                seen += c
+                if c == "i":
+                    self.icase = on
+                elif c == "m":
+                    self.multiline = on
+                else:
+                    self.dot_all = on
+            else:
+                raise self.error()
+        if not seen:
+            raise self.error()
+        node = _Node(_GROUP, items=[self._alternation(top=False)])
+        self.i += 1  # ')'
+        self.icase, self.multiline, self.dot_all = saved
+        return node
+
     def _escape(self) -> tuple[_Node, bool]:
         self.i += 1
         if self.i >= self.n:
@@ -314,6 +435,11 @@ class _Translator:
         e = self.p[self.i]
         if e in "bB":
             self.i += 1
+            if self.u and self.icase:
+                w = _FOLD_WORD_CLASS
+                if e == "b":
+                    return _Node(_TEXT, f"(?:(?<={w})(?!{w})|(?<!{w})(?={w}))"), False
+                return _Node(_TEXT, f"(?:(?<={w})(?={w})|(?<!{w})(?!{w}))"), False
             boundary = "\\b" if self.ascii_flag else "(?a:\\b)"
             # \B is "not at a word boundary", written as that: the standard library's \B never matched in an empty
             # text before CPython 3.14, where ECMA's does.
@@ -325,7 +451,9 @@ class _Translator:
             number = int(self.p[self.i : j])
             if number <= self.group_count:
                 self.i = j
-                return _Node(_REFERENCE, group=number), True
+                ref = _Node(_REFERENCE, group=number)
+                ref.icase = self.icase
+                return ref, True
             if self.u:
                 raise self.error()
             return self._one(self._char(self._legacy_octal_or_identity())), True
@@ -335,11 +463,15 @@ class _Translator:
             if self.peek(1) != "<" or end < 0 or self.p[self.i + 2 : end] not in self.names:
                 raise self.error()
             ref = _Node(_REFERENCE, group=self.names[self.p[self.i + 2 : end]])
+            ref.icase = self.icase
             self.i = end + 1
             return ref, True
         text, char = self._char_escape(in_class=False)
         if char is not None:
             return self._one(self._char(char)), True
+        if self.icase and self.u and e in "wWpP":
+            ranges: _Ranges = _FOLD_WORD if e == "w" else _complement(_FOLD_WORD) if e == "W" else []
+            return self._one(self._folded_class(ranges, [] if e in "wW" else [text], False)), True
         return self._one(text), True
 
     def _legacy_octal_or_identity(self) -> str:
@@ -483,6 +615,9 @@ class _Translator:
         members: list[str] = []
         # Class escapes that Python cannot nest in a class (ECMA's \S), kept aside as alternatives.
         outside: list[str] = []
+        # The same class as sets of characters, for a case-insensitive group: ranges, and properties as written.
+        ranges: _Ranges = []
+        properties: list[str] = []
         while True:
             if self.i >= self.n:
                 raise self.error()
@@ -490,22 +625,28 @@ class _Translator:
             if c == "]":
                 self.i += 1
                 break
-            lo, lo_char = self._class_atom()
+            lo, lo_char = self._class_atom(ranges, properties)
             if self.peek() == "-" and self.peek(1) not in ("]", ""):
                 self.i += 1
-                hi, hi_char = self._class_atom()
+                hi, hi_char = self._class_atom(ranges, properties)
                 if lo_char is None or hi_char is None:
                     if self.u:
                         raise self.error()
                     # Annex B: a class escape at either end makes the '-' a literal.
                     for t in (lo, "\\-", hi):
                         (outside if t.startswith("[^") else members).append(t)
+                    ranges.extend((ord(c), ord(c)) for c in (lo_char, "-", hi_char) if c is not None)
                     continue
                 if ord(hi_char) < ord(lo_char):
                     raise self.error()
                 members.append(f"{lo}-{hi}")
+                ranges.append((ord(lo_char), ord(hi_char)))
                 continue
             (outside if lo.startswith("[^") else members).append(lo)
+            if lo_char is not None:
+                ranges.append((ord(lo_char), ord(lo_char)))
+        if self.icase:
+            return self._folded_class(ranges, properties, negated)
         if not members and not outside:
             return "[^\\s\\S]" if not negated else _ANY
         alternatives = ([f"[{''.join(members)}]"] if members else []) + outside
@@ -516,8 +657,9 @@ class _Translator:
             return f"[^{''.join(members)}]"
         return f"(?:(?!{body}){_ANY})"
 
-    def _class_atom(self) -> tuple[str, str | None]:
-        """One class atom: its translation and, when it is a single character, that character."""
+    def _class_atom(self, ranges: _Ranges, properties: list[str]) -> tuple[str, str | None]:
+        """One class atom: its translation and, when it is a single character, that character. An escape that is a
+        set joins ``ranges`` or ``properties``, which a case-insensitive group reads."""
         c = self.peek()
         if c != "\\":
             self.i += 1
@@ -525,8 +667,44 @@ class _Translator:
         self.i += 1
         if self.i >= self.n:
             raise self.error()
+        e = self.p[self.i]
         text, char = self._char_escape(in_class=True)
-        return (text, None) if char is None else (_literal(char), char)
+        if char is not None:
+            return _literal(char), char
+        if e in "pP":
+            properties.append(text)
+        else:
+            word = _FOLD_WORD if self.u and self.icase else _WORD
+            positive = _DIGIT if e in "dD" else word if e in "wW" else _WHITE
+            ranges.extend(positive if e in "dws" else _complement(positive))
+        return text, None
+
+    def _folded_class(self, ranges: _Ranges, properties: list[str], negated: bool) -> str:
+        """A class inside a case-insensitive group: it has every character that is equal, without case, to one of
+        its members, and it is negated after that."""
+        points, sets = _fold_table(self.u)
+        ranges = _merged(ranges)
+        more: list[str] = []
+        for lo, hi in ranges:
+            k = bisect_left(points, lo)
+            while k < len(points) and points[k] <= hi:
+                more.append(sets[points[k]])
+                k += 1
+        if properties:
+            import regex
+
+            try:
+                members = [regex.compile(p).match for p in properties]
+            except regex.error:
+                raise self.error() from None
+            for point in points:
+                c = chr(point)
+                if any(m(c) for m in members):
+                    more.append(sets[point])
+        ranges = _merged(ranges + [(ord(c), ord(c)) for c in set("".join(more))])
+        if not ranges and not properties:
+            return _ANY if negated else "[^\\s\\S]"
+        return f"[{'^' if negated else ''}{_class_text(ranges)}{''.join(properties)}]"
 
 
 class _Writer:
@@ -546,6 +724,9 @@ class _Writer:
             ref.state = self._place(ref, self.groups[ref.group])
             if ref.state != _EMPTY:
                 self.read.add(ref.group)
+                # Without case, a reference is compared by the regex package, which folds as ECMA-262 does with the
+                # u flag.
+                self.needs_regex = self.needs_regex or ref.icase
                 if _GROUPS_IN_REPETITIONS_GO_STALE:
                     n = self.groups[ref.group].parent
                     while n is not None and n.kind != _REPEAT:
@@ -625,7 +806,7 @@ class _Writer:
         if k == _REFERENCE:
             if n.state == _EMPTY:
                 return "(?:)"
-            return f"(?P=g{n.group})"
+            return f"(?i:(?P=g{n.group}))" if n.icase else f"(?P=g{n.group})"
         return self._repeat(n)
 
     def _repeat(self, n: _Node) -> str:
