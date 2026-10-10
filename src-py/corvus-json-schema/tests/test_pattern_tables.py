@@ -436,3 +436,46 @@ def test_a_text_is_split_into_code_units_only_for_a_pattern_that_can_tell() -> N
     # The pattern is read by code unit too: a quantifier after a character beyond the Basic Multilingual Plane
     # repeats its second surrogate.
     assert translate("^\\-?\U00010400*$", False) == ("^(?:\\-)?\\ud801(?:\\udc00)*\\Z", False)
+
+
+_PROPERTY_TEXTS = ["", "a", "B", "1", "-", "\u00e9", "\u03a3", "ab", "aB", "a1", "Ba", "1-", "\U00010400"]
+
+# A negated class with a property and a negated property. The regex package reads a property and the same property
+# negated as every character and drops the ^ before it.
+_CLASSES_WITH_A_PROPERTY_BOTH_WAYS: list[tuple[str, str, str]] = [
+    ("[^\\p{L}\\P{L}]", "PROPERTY", "0"),
+    ("(?i:[^\\p{L}\\P{L}])", "PROPERTY", "0"),
+    ("(?<=a)[^\\p{L}\\P{L}]", "PROPERTY", "0"),
+    ("(?i:(?<=a)[^\\p{L}\\P{L}])", "PROPERTY", "0"),
+    ("[^\\p{L}\\P{L}a]", "PROPERTY", "0"),
+    ("(?i:[^\\p{L}\\P{L}a])", "PROPERTY", "0"),
+    ("[^\\P{L}\\p{L}]", "PROPERTY", "0"),
+    ("(?i:[^\\P{L}\\p{L}])", "PROPERTY", "0"),
+    ("[^\\p{Lu}\\P{Lu}]", "PROPERTY", "0"),
+    ("(?i:[^\\p{Lu}\\P{Lu}])", "PROPERTY", "0"),
+    ("^[^\\p{Lu}\\P{Ll}]$", "PROPERTY", "880"),
+    ("(?i:^[^\\p{Lu}\\P{Ll}]$)", "PROPERTY", "0"),
+    ("^[^\\P{Lu}\\p{Ll}]+$", "PROPERTY", "441"),
+    ("(?i:^[^\\P{Lu}\\p{Ll}]+$)", "PROPERTY", "0"),
+    ("^[\\p{L}\\P{L}]$", "PROPERTY", "fc1"),
+    ("(?i:^[\\p{L}\\P{L}]$)", "PROPERTY", "fc1"),
+    ("^[^\\p{L}\\P{Letter}]?$", "PROPERTY", "1000"),
+    ("(?i:^[^\\p{L}\\P{Letter}]?$)", "PROPERTY", "1000"),
+    ("^[^\\p{L}\\p{N}]$", "PROPERTY", "100"),
+    ("(?i:^[^\\p{L}\\p{N}]$)", "PROPERTY", "100"),
+    ("^[^\\P{L}\\P{Lu}]$", "PROPERTY", "441"),
+    ("(?i:^[^\\P{L}\\P{Lu}]$)", "PROPERTY", "0"),
+    ("^[^\\p{Lu}\\P{L}1]$", "PROPERTY", "880"),
+    ("(?i:^[^\\p{Lu}\\P{L}1]$)", "PROPERTY", "0"),
+    ("^[^\\p{sc=Greek}\\P{Script=Greek}]*$", "PROPERTY", "1000"),
+    ("(?i:^[^\\p{sc=Greek}\\P{Script=Greek}]*$)", "PROPERTY", "1000"),
+    ("a[^\\p{L}\\P{L}]|B", "PROPERTY", "414"),
+    ("(?i:a[^\\p{L}\\P{L}]|B)", "PROPERTY", "434"),
+]
+
+
+@pytest.mark.parametrize(("pattern", "texts", "answers"), _CLASSES_WITH_A_PROPERTY_BOTH_WAYS)
+def test_a_negated_class_with_a_property_both_ways_takes_what_ecma_262_says(
+    pattern: str, texts: str, answers: str
+) -> None:
+    _check(pattern, _PROPERTY_TEXTS, answers)

@@ -130,6 +130,14 @@ def _is_a_property(text: str) -> bool:
     return known
 
 
+def _both_ways(properties: list[str]) -> bool:
+    """Whether a class has a ``\\p{...}`` and a ``\\P{...}``. The regex package (2025.9.1 to 2026.9.29 at least) reads
+    a class with a property and the same property negated as every character and then drops a ``^`` before it, so
+    ``[^\\p{L}\\P{L}]`` takes any character there. A negated class with both is written as a character that the
+    class without the ``^`` does not take."""
+    return any(p.startswith("\\p") for p in properties) and any(p.startswith("\\P") for p in properties)
+
+
 class _TooLarge(Exception):
     """The pattern is valid, and its translation would pass _MAX_TRANSLATED."""
 
@@ -831,7 +839,8 @@ class _Translator:
             alternatives = ([f"[{''.join(members)}]"] if members else []) + outside
             text = alternatives[0] if len(alternatives) == 1 else "(?:" + "|".join(alternatives) + ")"
             if negated:
-                text = f"[^{''.join(members)}]" if not outside else f"(?:(?!{text}){_ANY})"
+                apart = outside or _both_ways(properties)
+                text = f"(?:(?!{text}){_ANY})" if apart else f"[^{''.join(members)}]"
         return self._one(text, None if properties else ranges, negated)
 
     def _class_atom(self, ranges: _Ranges, properties: list[str]) -> tuple[str, str | None]:
@@ -882,7 +891,9 @@ class _Translator:
         if not ranges and not properties:
             text = _ANY if negated else _NEVER
         else:
-            text = f"[{'^' if negated else ''}{_class_text(ranges)}{''.join(properties)}]"
+            text = f"[{_class_text(ranges)}{''.join(properties)}]"
+            if negated:
+                text = f"(?:(?!{text}){_ANY})" if _both_ways(properties) else "[^" + text[1:]
         return self._one(text, None if properties else ranges, negated)
 
 
