@@ -274,11 +274,8 @@ class EcmaRegexOracleTest {
 
     // The patterns the translator refuses, by reason. EcmaRegex says what each reason means.
     private static final Map<String, Integer> EXPECTED_UNSUPPORTED_HAND = Map.of(
-            EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND, 5,
-            EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND, 3,
-            EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE, 9);
+            EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE, 12);
     private static final Map<String, Integer> EXPECTED_UNSUPPORTED_FLAGGED = Map.of(
-            EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND, 8,
-            EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE, 16);
+            EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE, 20);
     private static final Map<String, Integer> EXPECTED_UNSUPPORTED_GENERATED = Map.of();
 }

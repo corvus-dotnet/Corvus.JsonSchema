@@ -68,7 +68,8 @@ import java.util.regex.PatternSyntaxException;
  * that its group took part when that is not known (see {@link Emitter#backreference}). Otherwise the pattern is
  * written by paths (see {@link Emitter#translateByPaths}): once for each way through the choices that decide what the
  * groups it reads hold, so that every backreference stands where its group is known to be set, by a group of the
- * translation on that way, or known not to be. A lookbehind whose groups are read is refused.
+ * translation on that way, or known not to be. A lookbehind is written with the captures its backward run gives
+ * (see {@link Emitter#edge}).
  *
  * <p><b>What is refused.</b> A valid pattern whose backreference cannot be given its meaning that way is refused
  * rather than given an answer that may be wrong, and {@link #unsupported} says why. The reasons are the
@@ -80,11 +81,18 @@ final class EcmaRegex {
     private EcmaRegex() {
     }
 
-    /** The backreference is in a lookbehind, which ECMA-262 matches backwards, and reads a group of it. */
+    /**
+     * The backreference is in a lookbehind, which ECMA-262 matches backwards, and reads a group of that lookbehind
+     * whose place is not at a fixed distance from it.
+     */
     static final String REFUSED_BACKREFERENCE_IN_LOOKBEHIND =
-            "a backreference inside a lookbehind to a group of that lookbehind";
-    /** The group is in a lookbehind, which ECMA-262 matches backwards, so it can capture other text. */
-    static final String REFUSED_GROUP_IN_LOOKBEHIND = "a backreference to a group inside a lookbehind";
+            "a backreference inside a lookbehind to a group of that lookbehind that is not at a fixed distance from it";
+    /**
+     * The group is in a lookbehind, which ECMA-262 matches backwards, and what it captures that way cannot be told
+     * by matching forwards.
+     */
+    static final String REFUSED_GROUP_IN_LOOKBEHIND =
+            "a backreference to a group inside a lookbehind whose text depends on the lookbehind being matched backwards";
     /** The group is in a lookahead that sets it on some of the ways it can match only. */
     static final String REFUSED_GROUP_IN_LOOKAROUND =
             "a backreference to a group that a lookahead sets on some of the ways it can match only";
@@ -2628,26 +2636,92 @@ final class EcmaRegex {
         }
 
         /**
-         * Writes a lookbehind none of whose groups is read, in it or after it. It holds where its body matches some
-         * stretch of the text that ends there, whichever way the body is run, so it is written forwards (see
+         * Writes a lookbehind.
+         *
+         * <p>A lookbehind none of whose groups is read, in it or after it, holds where its body matches some stretch
+         * of the text that ends there, whichever way the body is run. It is written forwards (see
          * {@link #lookbehind}), in the form that searches for its start when it has a backreference, whose length
-         * java.util.regex cannot bound. ECMA-262 runs a lookbehind backwards, which shows in what its groups
-         * capture, so one whose groups are read is refused.
+         * java.util.regex cannot bound.
+         *
+         * <p>ECMA-262 runs a lookbehind backwards, from its last term to its first. That shows in what its groups
+         * capture, and a backreference in it reads a group that stands after it. Such a lookbehind is written when
+         * what it captures can be told without running it backwards (see {@link #edge}), and is refused otherwise.
+         * Its alternatives are tried in order whichever way it runs, so each is written as a lookbehind of its own,
+         * after negative lookbehinds for the ones before it.
          */
         private void behind(Node n, BitSet live) {
             Node body = n.subs[0];
-            if (!n.negative && body.sets.intersects(live)) {
-                throw new Unsupported(REFUSED_GROUP_IN_LOOKBEHIND);
-            }
-            if (body.sets.intersects(body.reads)) {
-                throw new Unsupported(REFUSED_BACKREFERENCE_IN_LOOKBEHIND);
-            }
+            BitSet outside = n.negative ? NOTHING : both(body.sets, live);
+            BitSet involved = both(body.sets, body.reads);
+            involved.or(outside);
             hasLookbehind = true;
-            boolean wasOrdered = ordered;
-            ordered = false;
-            String text = scope(body, NOTHING, null);
-            ordered = wasOrdered;
-            wrapBehind(n.negative, text, body.reads.isEmpty() && maxLength(body) <= MAX_DIRECT_LOOKBEHIND);
+            if (involved.isEmpty()) {
+                boolean wasOrdered = ordered;
+                ordered = false;
+                String text = scope(body, NOTHING, null);
+                ordered = wasOrdered;
+                wrapBehind(n.negative, text, body.reads.isEmpty() && maxLength(body) <= MAX_DIRECT_LOOKBEHIND);
+                return;
+            }
+            BitSet wasInside = inside;
+            BitSet wasInvolved = involvedInside;
+            Map<Integer, long[]> wasPlaces = places;
+            long wasAt = at;
+            boolean wasCaptured = captured;
+            boolean wasReadAfter = readAfter;
+            captured = false;
+            readAfter = !outside.isEmpty();
+            inside = body.sets;
+            involvedInside = involved;
+            Node[] alternatives = body.kind == ALT ? body.subs : new Node[] {body};
+            if (n.negative) {
+                for (Node alternative : alternatives) {
+                    notBehind(alternative);
+                }
+            } else if (outside.isEmpty()) {
+                // No group is read after it, so which alternative matched does not matter.
+                out.append("(?:");
+                for (int k = 0; k < alternatives.length; k++) {
+                    Node alternative = alternatives[k];
+                    List<String> plans = plans(() -> edge(alternative, NOTHING), null);
+                    for (int w = 0; w < plans.size(); w++) {
+                        out.append(k + w > 0 ? "|" : "");
+                        wrapBehind(false, plans.get(w), bounded(alternative));
+                    }
+                }
+                out.append(')');
+            } else {
+                Env before = env.copy();
+                int way = alternatives.length > 1 ? choose(alternatives.length) : 0;
+                for (int k = 0; k < way; k++) {
+                    notBehind(alternatives[k]);
+                }
+                int start = out.length();
+                edge(alternatives[way], live);
+                String text = out.substring(start);
+                out.setLength(start);
+                wrapBehind(false, text, bounded(alternatives[way]));
+                noteLookaround(n, before);
+            }
+            captured = wasCaptured;
+            readAfter = wasReadAfter;
+            inside = wasInside;
+            involvedInside = wasInvolved;
+            places = wasPlaces;
+            at = wasAt;
+        }
+
+        private boolean bounded(Node body) {
+            BitSet others = (BitSet) body.reads.clone();
+            others.andNot(inside);
+            return others.isEmpty() && maxLength(body) <= MAX_DIRECT_LOOKBEHIND;
+        }
+
+        /** Writes negative lookbehinds that hold where the node, run as ECMA-262 runs a lookbehind, does not match. */
+        private void notBehind(Node body) {
+            for (String plan : plans(() -> edge(body, NOTHING), null)) {
+                wrapBehind(true, plan, bounded(body));
+            }
         }
 
         private void wrapBehind(boolean negative, String text, boolean bounded) {
@@ -2671,6 +2745,331 @@ final class EcmaRegex {
                     env.body[g] = openBodies.isEmpty() ? 0 : openBodies.get(openBodies.size() - 1);
                 }
             }
+        }
+
+        /** The groups of the lookbehind being written, and those of them that are read, in it or after it. */
+        private BitSet inside;
+        private BitSet involvedInside;
+        /** Whether a group of that lookbehind is read after it. */
+        private boolean readAfter;
+        /** Where each group of a stretch of fixed length starts, and its length, counted from a common origin. */
+        private Map<Integer, long[]> places;
+        /** The place the text being written has reached, from the same origin. */
+        private long at;
+
+        /** Inside a group of the lookbehind that is read after it, where what a node matches is what is captured. */
+        private boolean captured;
+
+        private boolean uninvolved(Node n) {
+            return !n.sets.intersects(involvedInside) && !n.reads.intersects(inside);
+        }
+
+        /** The one group of the lookbehind a backreference in it reads, or 0 when that is not one group for sure. */
+        private int target(Node ref) {
+            int target = 0;
+            for (int k = 0; k < ref.groups.length; k++) {
+                if (ref.statuses[k] != NEVER) {
+                    if (target != 0 || ref.statuses[k] != DEFINITE || !inside.get(ref.groups[k])) {
+                        return 0;
+                    }
+                    target = ref.groups[k];
+                }
+            }
+            return target;
+        }
+
+        /**
+         * The length of a node of a lookbehind when the node is rigid, and -1 when it is not. A rigid node matches
+         * texts of one length only, and what its groups capture does not depend on the direction it is run in: it
+         * is made of characters, classes, assertions, groups, repetitions of a fixed count, backreferences to rigid
+         * groups of the lookbehind, and parts of fixed length that hold no group that is read and no backreference
+         * to a group of the lookbehind.
+         */
+        private long rigid(Node n) {
+            if (uninvolved(n)) {
+                return minLength(n) == maxLength(n) ? minLength(n) : -1;
+            }
+            switch (n.kind) {
+                case GROUP:
+                    return rigid(n.subs[0]);
+                case CAT: {
+                    long sum = 0;
+                    for (Node sub : n.subs) {
+                        long length = rigid(sub);
+                        if (length < 0) {
+                            return -1;
+                        }
+                        sum += length;
+                    }
+                    return sum;
+                }
+                case REPEAT: {
+                    long length = rigid(n.subs[0]);
+                    return n.min == n.max && length >= 0 && n.min <= MAX_UNROLLED_COPIES ? length * n.min : -1;
+                }
+                case BACKREF: {
+                    int target = target(n);
+                    return target == 0 ? -1 : rigid(groupNodes[target].subs[0]);
+                }
+                default:
+                    return -1;
+            }
+        }
+
+        /** Notes where the groups of a rigid node start when the node starts at {@code from}. */
+        private void place(Node n, long from) {
+            if (n.kind == GROUP && n.group != 0) {
+                places.put(n.group, new long[] {from, rigid(n.subs[0])});
+            }
+            if (n.kind == CAT) {
+                for (Node sub : n.subs) {
+                    place(sub, from);
+                    from += Math.max(rigid(sub), 0);
+                }
+            } else if (n.kind == GROUP || (n.kind == REPEAT && !uninvolved(n))) {
+                // Of a repetition, the first copy: the last iteration of a lookbehind is the leftmost.
+                place(n.subs[0], from);
+            }
+        }
+
+        /**
+         * Writes a rigid node of a lookbehind, forwards. A group read after the lookbehind is a group of the
+         * translation. A backreference to a group of the lookbehind, which stands further on at a known distance d,
+         * is written as a test that the text here is the text d characters on, {@code (?=(A{n})A{d-n}\1)A{n}} for a
+         * group of n characters. A repetition of a fixed count is written as its copies, of which the first holds the
+         * groups that are read after it, as it is the iteration ECMA-262 runs last.
+         */
+        private void writeRigid(Node n, BitSet live) {
+            if (uninvolved(n)) {
+                boolean wasOrdered = ordered;
+                ordered = false;
+                out.append("(?:").append(scope(n, NOTHING, null)).append(')');
+                ordered = wasOrdered;
+                at += minLength(n);
+                return;
+            }
+            switch (n.kind) {
+                case GROUP:
+                    if (n.group != 0 && live.get(n.group)) {
+                        String name = newName();
+                        out.append("(?<").append(name).append('>');
+                        int from = out.length();
+                        writeRigid(n.subs[0], live);
+                        set(n.group, name, from);
+                        out.append(')');
+                    } else {
+                        out.append("(?:");
+                        writeRigid(n.subs[0], live);
+                        out.append(')');
+                    }
+                    break;
+                case CAT:
+                    for (Node sub : n.subs) {
+                        writeRigid(sub, live);
+                    }
+                    break;
+                case REPEAT: {
+                    long start = at;
+                    long length = rigid(n.subs[0]);
+                    for (int k = 0; k < n.min; k++) {
+                        place(n.subs[0], start + k * length);
+                        if (k == 0) {
+                            writeRigid(n.subs[0], live);
+                        } else {
+                            Env saved = env.copy();
+                            writeRigid(n.subs[0], NOTHING);
+                            env = saved;
+                        }
+                        if (++unrolledCopies > MAX_UNROLLED_COPIES) {
+                            throw new Unsupported(REFUSED_EMPTY_ITERATIONS);
+                        }
+                    }
+                    place(n.subs[0], start);
+                    break;
+                }
+                case BACKREF: {
+                    int target = target(n);
+                    long[] place = places.get(target);
+                    if (place == null || place[0] - at < place[1]) {
+                        throw new Unsupported(REFUSED_BACKREFERENCE_IN_LOOKBEHIND);
+                    }
+                    used.set(target);
+                    long distance = place[0] - at;
+                    long length = place[1];
+                    if (length == 0) {
+                        break;
+                    }
+                    String copy = newName();
+                    out.append("(?=(?<").append(copy).append('>').append(ANY).append('{').append(length)
+                            .append("})").append(ANY).append('{').append(distance - length).append('}')
+                            .append(n.fold && comparesIgnoringAsciiCase(target) ? "(?i:" : "(?:");
+                    refer(copy);
+                    out.append("))").append(ANY).append('{').append(length).append('}');
+                    at += length;
+                    break;
+                }
+                default:
+                    throw new Unsupported(REFUSED_BACKREFERENCE_IN_LOOKBEHIND);
+            }
+        }
+
+        /**
+         * Writes, forwards, a node of a lookbehind that holds a group that is read or a backreference to a group of
+         * the lookbehind. The node is the one ECMA-262 runs last (the lookbehind itself, or what stands first in
+         * it), so nothing can fail after it and send the match back into it, and it takes the first of its ways that
+         * matches:
+         *
+         * <ul>
+         *   <li>a rigid node has one way (see {@link #writeRigid});
+         *   <li>a sequence is its first term, then rigid terms;
+         *   <li>of alternatives, the first that matches is taken: each is a decision of the plan, written with a
+         *       negative lookbehind after it for each alternative before it;
+         *   <li>a greedy repetition of a rigid body runs as many times as it can. It is written with the copy that
+         *       holds its groups first, and is either not preceded by one more match of the body or at its
+         *       maximum. A lazy one runs its minimum.
+         * </ul>
+         *
+         * <p>Anything else is refused.
+         */
+        private void edge(Node n, BitSet live) {
+            if (rigid(n) >= 0) {
+                places = new HashMap<>();
+                at = 0;
+                place(n, 0);
+                writeRigid(n, live);
+                return;
+            }
+            if (uninvolved(n) && !captured) {
+                boolean wasOrdered = ordered;
+                ordered = false;
+                out.append("(?:").append(scope(n, NOTHING, null)).append(')');
+                ordered = wasOrdered;
+                return;
+            }
+            String refused = readAfter ? REFUSED_GROUP_IN_LOOKBEHIND : REFUSED_BACKREFERENCE_IN_LOOKBEHIND;
+            switch (n.kind) {
+                case GROUP:
+                    if (n.group != 0 && live.get(n.group)) {
+                        String name = newName();
+                        out.append("(?<").append(name).append('>');
+                        int from = out.length();
+                        boolean wasCaptured = captured;
+                        captured = true;
+                        edge(n.subs[0], live);
+                        captured = wasCaptured;
+                        set(n.group, name, from);
+                        out.append(')');
+                    } else {
+                        out.append("(?:");
+                        edge(n.subs[0], live);
+                        out.append(')');
+                    }
+                    break;
+                case ALT: {
+                    // An alternative that matches the empty string anywhere is taken before any after it.
+                    int ways = 1;
+                    while (ways < n.subs.length && !emptyAnywhere(n.subs[ways - 1])) {
+                        ways++;
+                    }
+                    int way = ways > 1 ? choose(ways) : 0;
+                    out.append("(?:");
+                    edge(n.subs[way], live);
+                    out.append(')');
+                    for (int k = 0; k < way; k++) {
+                        notBehind(n.subs[k]);
+                    }
+                    break;
+                }
+                case CAT: {
+                    // The rigid terms at the end, and before them either one term, or terms that hold no group
+                    // that is read and no backreference to a group of the lookbehind.
+                    int tail = n.subs.length;
+                    while (tail > 0 && rigid(n.subs[tail - 1]) >= 0) {
+                        tail--;
+                    }
+                    if (tail == 1) {
+                        edge(n.subs[0], live);
+                    } else {
+                        for (int k = 0; k < tail; k++) {
+                            // Inside a group that is read, what these terms match is part of what is captured.
+                            if (captured || !uninvolved(n.subs[k])) {
+                                throw new Unsupported(refused);
+                            }
+                            boolean wasOrdered = ordered;
+                            ordered = false;
+                            out.append("(?:").append(scope(n.subs[k], NOTHING, null)).append(')');
+                            ordered = wasOrdered;
+                        }
+                    }
+                    places = new HashMap<>();
+                    at = 0;
+                    long from = 0;
+                    for (int k = tail; k < n.subs.length; k++) {
+                        place(n.subs[k], from);
+                        from += rigid(n.subs[k]);
+                    }
+                    for (int k = tail; k < n.subs.length; k++) {
+                        writeRigid(n.subs[k], live);
+                    }
+                    break;
+                }
+                case REPEAT: {
+                    Node body = n.subs[0];
+                    if (rigid(body) <= 0) {
+                        throw new Unsupported(refused);
+                    }
+                    if (n.lazy) {
+                        if (n.min > 0) {
+                            edgeCopies(body, live, n.min - 1, n.min - 1);
+                        }
+                        break;
+                    }
+                    // 0: no iteration. 1: as many as match. 2: the maximum.
+                    int way = (n.min == 0 ? 0 : 1) + choose((n.min == 0 ? 1 : 0) + (n.max == UNBOUNDED ? 1 : 2));
+                    if (way < 2) {
+                        Env saved = env.copy();
+                        int start = out.length();
+                        places = new HashMap<>();
+                        at = 0;
+                        place(body, 0);
+                        writeRigid(body, NOTHING);
+                        String once = out.substring(start);
+                        out.setLength(start);
+                        env = saved;
+                        out.append("(?<!").append(once).append(')');
+                    }
+                    if (way == 1) {
+                        edgeCopies(body, live, Math.max(n.min, 1) - 1, n.max == UNBOUNDED ? UNBOUNDED : n.max - 1);
+                    } else if (way == 2) {
+                        edgeCopies(body, live, n.max - 1, n.max - 1);
+                    }
+                    break;
+                }
+                default:
+                    throw new Unsupported(refused);
+            }
+        }
+
+        /** Writes the copy of a rigid body that holds the groups read after it, then the others as a repetition. */
+        private void edgeCopies(Node body, BitSet live, int min, int max) {
+            places = new HashMap<>();
+            at = 0;
+            place(body, 0);
+            out.append("(?:");
+            writeRigid(body, live);
+            out.append(')');
+            if (max == 0) {
+                return;
+            }
+            Env saved = env.copy();
+            places = new HashMap<>();
+            at = 0;
+            place(body, 0);
+            out.append("(?:");
+            writeRigid(body, NOTHING);
+            out.append(')');
+            quantifier(min, max, false);
+            env = saved;
         }
 
         /**

@@ -185,26 +185,29 @@ class ApiTest {
                 "{\"patternProperties\": {\"^(?:(?<k>a)|(?<k>b))\\\\k<k>$\": {\"type\": \"number\"}}}");
         assertTrue(names.isValid("{\"aa\": 1, \"bb\": 2, \"ab\": \"x\"}"));
         assertFalse(names.isValid("{\"bb\": \"x\"}"));
-        // A backreference means what ECMA-262 says where java.util.regex differs: the iterations of a repetition
-        // unset its groups.
+        // A backreference means what ECMA-262 says where java.util.regex differs: in a repetition whose iterations
+        // unset its groups, and in a lookbehind, which runs backwards.
         Validator repeated = Validator.compile("{\"pattern\": \"^(?:(a)|x)*\\\\1$\"}");
         assertTrue(repeated.isValid("\"ax\""));
         assertTrue(repeated.isValid("\"xaa\""));
         assertFalse(repeated.isValid("\"axa\""));
+        Validator behind = Validator.compile("{\"pattern\": \"(?<=\\\\1(a))b\"}");
+        assertTrue(behind.isValid("\"aab\""));
+        assertFalse(behind.isValid("\"ab\""));
         // A valid pattern whose meaning java.util.regex cannot give is an error that says so. It is never run with
         // another meaning.
         SchemaCompilationException refused = assertThrows(SchemaCompilationException.class,
-                () -> Validator.compile("{\"pattern\": \"(?<=\\\\1(a))b\"}"));
-        assertEquals("Unsupported regular expression '(?<=\\1(a))b' in pattern. It is valid ECMA-262, but this library "
-                + "cannot run a backreference inside a lookbehind to a group of that lookbehind with the meaning "
-                + "ECMA-262 gives it.", refused.getMessage());
+                () -> Validator.compile("{\"pattern\": \"(?<=(x*?)a*)\\\\1\"}"));
+        assertEquals("Unsupported regular expression '(?<=(x*?)a*)\\1' in pattern. It is valid ECMA-262, but this "
+                + "library cannot run a backreference to a group inside a lookbehind whose text depends on the "
+                + "lookbehind being matched backwards with the meaning ECMA-262 gives it.", refused.getMessage());
         SchemaCompilationException invalid = assertThrows(SchemaCompilationException.class,
                 () -> Validator.compile("{\"patternProperties\": {\"(?<a>x)(?<a>y)\": {}}}"));
         assertEquals("Invalid regular expression '(?<a>x)(?<a>y)' in patternProperties.", invalid.getMessage());
         // The regex format is about validity alone.
         Validator format = Validator.compile("{\"format\": \"regex\"}",
                 CompileOptions.builder().assertFormat(true).build());
-        assertTrue(format.isValid("\"(?<=\\\\1(a))b\""));
+        assertTrue(format.isValid("\"(?<=(x*?)a*)\\\\1\""));
         assertTrue(format.isValid("\"(?i:a)\\\\p{scx=Arab}\""));
         assertFalse(format.isValid("\"(?i)a\""));
         assertFalse(format.isValid("\"\\\\p{Nope}\""));

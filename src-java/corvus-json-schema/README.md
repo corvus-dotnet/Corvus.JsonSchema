@@ -134,17 +134,19 @@ flag grammar.
   written with a copy of its body for each iteration it must run.
 - A backreference reads what ECMA-262 says its group holds, where `java.util.regex` reads something else. A group
   that did not take part reads as the empty string. The groups of a repeated body are unset when an iteration
-  starts, so `^(?:(a)|x)*\1$` takes "ax" and not "axa", and an iteration that matched nothing leaves no group set.
-  Such a pattern is written once for each way through the groups it reads, so its translation can be several times
-  the length of the pattern.
+  starts, so `^(?:(a)|x)*\1$` takes "ax" and not "axa", and an iteration that matched nothing leaves no group set. A
+  lookbehind captures as if run backwards, so `(?<=\1(a))b` takes "aab". Such a pattern is written once for each way
+  through the groups it reads, so its translation can be several times the length of the pattern.
 
 The patterns are run by `java.util.regex`, after translation. A few valid patterns cannot be given their ECMA-262
 meaning there, and compiling a schema with one throws `SchemaCompilationException` with a message that starts
 "Unsupported regular expression" and names the construct. It is never run with another meaning. The `regex` format
 still accepts it, as it is a valid pattern. They are:
 
-- a backreference inside a lookbehind to a group of that lookbehind, or one to a group inside a lookbehind, as
-  ECMA-262 matches a lookbehind backwards;
+- a backreference to a group inside a lookbehind, or one inside a lookbehind to a group of that lookbehind, where
+  what the group holds depends on the lookbehind being matched backwards, as in `(?<=(x*?)a*)\1`. The library writes
+  the lookbehinds whose groups stand at a fixed distance from its end, alternatives, and a repetition of a body of
+  fixed length that stands first, such as `(?<=([abc])+)x\1`;
 - a backreference to a group that a lookahead sets on only some of the ways it can match, as in `(?=(a)?b)\1`
   (alternatives of the whole lookahead, as in `(?=(a)|b)\1`, are written);
 - a backreference to a group of a lookaround, when a repetition holds both and the match can go back to a place

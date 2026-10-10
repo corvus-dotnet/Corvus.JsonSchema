@@ -498,6 +498,87 @@ class EcmaRegexTest {
                 textsOver(3, new String[] {"a", "x", "-"}, "aaaa", "xxxb", "xaxbb", "aaxa", "axxa", "xxxx"));
     }
 
+    /** Lookbehinds with groups that are read after them, or with backreferences to their own groups. */
+    private static final String[][] BACKREFERENCES_AND_LOOKBEHINDS = {
+            {"(?<=\\1(a))b", "|aab|aaab|aaba|aabb|aabx|baab|xaab|aabx|aaxaab|baabx|aabbx"},
+            {
+                "(?<=\\1(.))a",
+                "|aaa|bba|xxa|aaaa|aaab|aaax|abba|axxa|baaa|bbaa|bbab|bbax|bbba|bxxa|xaaa|xbba"
+                        + "|xxaa|xxab|xxax|xxxa",
+            },
+            {
+                "(?<!\\1(.))a$",
+                "|a|aa|ba|xa|aba|axa|baa|bxa|xaa|xba|aaba|aaxa|abaa|abxa|axaa|axba|baba|baxa"
+                        + "|bbaa|bbxa|bxaa|bxba|xaba|xaxa|xbaa|xbxa|xxaa|xxba|xaaxa|abxba|xabxba",
+            },
+            {
+                "(\\w)(?<=\\1\\1)x",
+                "|aax|bbx|xxx|aaax|aaxa|aaxb|aaxx|abbx|axxx|baax|bbbx|bbxa|bbxb|bbxx|bxxx|xaax"
+                        + "|xbbx|xxxa|xxxb|xxxx|bbbx|xaaxa|aaxaab|aabbx",
+            },
+            {"(?<=\\1\\1(.))x", "|aaax|bbbx|xxxx|bbbx"},
+            {"(?<=(a)(b))x\\2\\1", "|abxba|xabxba"},
+            {"(?<=\\2\\1(a)(b))x", "|baabx"},
+            {"(?<=(?:\\1(.)){2})x$", "|aabbx"},
+            {
+                "(?<=([ab])+)x\\1",
+                "|axa|bxb|aaxa|abxa|axaa|axab|axax|baxb|bbxb|bxba|bxbb|bxbx|xaxa|xbxb|xaaxa"
+                        + "|aaxaab|axab|abxab",
+            },
+            {
+                "(?<=([ab])*)x\\1",
+                "|x|xa|xb|xx|axa|axx|bxb|bxx|xaa|xab|xax|xba|xbb|xbx|xxa|xxb|xxx|aaxa|aaxx|abxa"
+                        + "|abxx|axaa|axab|axax|axxa|axxb|axxx|baxb|baxx|bbxb|bbxx|bxba|bxbb|bxbx|bxxa"
+                        + "|bxxb|bxxx|xaaa|xaab|xaax|xaba|xabb|xabx|xaxa|xaxb|xaxx|xbaa|xbab|xbax|xbba"
+                        + "|xbbb|xbbx|xbxa|xbxb|xbxx|xxaa|xxab|xxax|xxba|xxbb|xxbx|xxxa|xxxb|xxxx|xaaxa"
+                        + "|aaxaab|axab|abxab|xabxba",
+            },
+            {
+                "(?<=([ab]){1,2})x\\1",
+                "|axa|bxb|aaxa|abxa|axaa|axab|axax|baxb|bbxb|bxba|bxbb|bxbx|xaxa|xbxb|xaaxa"
+                        + "|aaxaab|axab|abxab",
+            },
+            {
+                "(?<=([ab])+?)x\\1",
+                "|axa|bxb|aaxa|abxb|axaa|axab|axax|baxa|bbxb|bxba|bxbb|bxbx|xaxa|xbxb|xaaxa"
+                        + "|aaxaab|axab|abxba|xabxba",
+            },
+            {"(?<=([ab]){2})x\\1", "|aaxa|abxa|baxb|bbxb|xaaxa|aaxaab|abxab"},
+            {
+                "(?<=(a|b)+?)x\\1",
+                "|axa|bxb|aaxa|abxb|axaa|axab|axax|baxa|bbxb|bxba|bxbb|bxbx|xaxa|xbxb|xaaxa"
+                        + "|aaxaab|axab|abxba|xabxba",
+            },
+            {
+                "(?<=(?<n>a)|(?<n>b))\\k<n>x",
+                "|aax|bbx|aaax|aaxa|aaxb|aaxx|abbx|baax|bbbx|bbxa|bbxb|bbxx|xaax|xbbx|bbbx"
+                        + "|xaaxa|aaxaab|aabbx",
+            },
+            {"(?<=$|(|a)\\b)x\\1a", "|xa|xaa|xab|xax|xaaa|xaab|xaax|xaba|xabb|xabx|xaxa|xaxb|xaxx|xaaxa|xabxba"},
+            {
+                "(?<=(a*))x\\1b",
+                "|xb|bxb|xba|xbb|xbx|xxb|abxb|axab|axxb|bbxb|bxba|bxbb|bxbx|bxxb|xbaa|xbab|xbax"
+                        + "|xbba|xbbb|xbbx|xbxa|xbxb|xbxx|xxba|xxbb|xxbx|xxxb|aaxaab|axab|abxba|xabxba",
+            },
+            {"(?<=(a|ab))x\\1$", "|axa|aaxa|baxa|xaxa|xaaxa|abxab"},
+            {"(?<=^a*(b))x\\1$", "|bxb|abxb"},
+            {"(?<=(a)x|(b)x)\\1\\2$", "|axa|bxb|aaxa|abxb|baxa|bbxb|xaxa|xbxb|xaaxa"},
+            {"(?<=(?:(a)|(b))x)\\1\\2$", "|axa|bxb|aaxa|abxb|baxa|bbxb|xaxa|xbxb|xaaxa"},
+    };
+
+    private static final String[] MORE_FOR_LOOKBEHINDS = {
+        "aabx", "abax", "ababx", "bbbx", "xaaxa", "aaxaab", "axab", "abxba", "baabx", "aabbx", "abxab", "xabxba"
+    };
+
+    /**
+     * ECMA-262 runs a lookbehind backwards: a backreference in it reads a group that stands after it, and a group
+     * of a repetition in it holds the leftmost iteration.
+     */
+    @Test
+    void aLookbehindCapturesAsIfRunBackwards() {
+        assertAnswers(BACKREFERENCES_AND_LOOKBEHINDS, textsOver(4, new String[] {"a", "b", "x"}, MORE_FOR_LOOKBEHINDS));
+    }
+
     /**
      * What is still refused: a valid pattern whose backreference cannot be given its meaning by a pattern for
      * {@code java.util.regex}, and one that would be written too long. None is run with another meaning.
@@ -505,9 +586,10 @@ class EcmaRegexTest {
     @Test
     void refusedPatterns() {
         String[][] refused = {
-            // ECMA-262 runs a lookbehind backwards, which shows in what its groups hold.
-            {"(?<=\\1(a))b", EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND},
-            {"(?<=(a|b)+?)c\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
+            // What the group holds depends on the lookbehind being run backwards.
+            {"(?<=(x*?)a*)\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
+            {"(?<=(a)+b*)x\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
+            {"(?<=\\1a*(b))x", EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND},
             // The lookahead takes the first way its body matches, and only some of the ways set the group.
             {"(?=(a)?b)\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKAROUND},
             {"(?=(?:(a)|b)c)\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKAROUND},
