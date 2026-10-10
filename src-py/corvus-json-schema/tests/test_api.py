@@ -146,6 +146,21 @@ def test_a_translation_the_engine_does_not_compile_is_a_fault(monkeypatch: pytes
     assert is_valid_ecma_regex("a")
 
 
+def test_the_regex_package_is_a_release_that_runs_what_is_written_for_it() -> None:
+    import regex
+
+    # A \\b in a pattern for the regex package is written (?a:\\b). Releases before 2025.7.34 did not apply the flag
+    # there and took a letter beyond ASCII for a word character. Release 2025.8.29 does not compile a dot that takes
+    # every character where it is an alternative. So the package asks for 2025.9.1, the first release after both.
+    assert regex.search("(?a:\\b)", "\u00e9") is None
+    assert translate("(?<=\u00e9)\\b") == ("(?<=\\u00e9)(?a:\\b)", True)
+    assert cjs.compile({"pattern": "(?<=\u00e9)\\b"})("\u00e9") is False
+    assert translate("(?<![^]|\\r)$") == ("(?<!(?s:.)|\\x0d)\\Z", True)
+    assert cjs.compile({"pattern": "(?<![^]|\\r)$"})("") is True
+    requirements = (Path(__file__).parent.parent / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'dependencies = ["regex>=2025.9.1"]' in requirements
+
+
 def test_in_place_recursion_beyond_max_depth_raises() -> None:
     v = cjs.compile({"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "$ref": "#/$defs/loop"}, max_depth=16)
     with pytest.raises(cjs.SchemaEvaluationDepthError):

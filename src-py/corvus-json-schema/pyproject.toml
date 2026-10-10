@@ -20,7 +20,7 @@ classifiers = [
     "Topic :: File Formats :: JSON :: JSON Schema",
     "Typing :: Typed",
 ]
-dependencies = ["regex>=2024.11.6"]
+dependencies = ["regex>=2025.9.1"]
 
 [project.urls]
 Homepage = "https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-py/corvus-json-schema"
