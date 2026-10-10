@@ -2,6 +2,14 @@
 
 The version history of the `corvus_json_schema` PHP extension (Packagist package `corvus-dotnet/corvus-json-schema`). It is versioned independently of the Corvus NuGet packages and of the [corvus-json-schema](../../src-rs/corvus-json-schema/VERSIONHISTORY.md) Rust crate it is built on.
 
+## V0.1.4
+
+V0.1.4 fixes a wrong result for one form of pattern, which was taken to match strings it does not match, by taking version 0.1.7 of the corvus-json-schema crate. There are no API changes. Versions 0.1.0 to 0.1.3 are affected.
+
+### Bug fixes
+
+- **A separated list with a `$` inside it.** The crate matches a pattern of the form `^item(separator item)*$`, such as `^([a-z]+)(\.[a-z]+)*$`, without a regular expression engine. It dropped a `$` at the end of the first item or of the repeated group, so `^x(,a$)*$` was matched as `^x(,a)*$`. A `$` holds only at the end of the string, so the group of `^x(,a$)*$` can match once at most. `Validator::compile(['pattern' => '^x(,a$)*$'])->isValid('x,a,a')` returned `true`, where the instance is not valid. `^x$(,a)*$` took `'x,a'`, and `^(a,$)*b$` took `'a,b'`. `isValid`, `isValidJson` and `evaluate` were all affected, and so was a pattern used for `patternProperties` or `propertyNames`. Such a pattern is now matched by a regular expression engine. An escaped `\$` is a literal character and is matched as before. No other form of pattern was affected. The publish workflow takes version 0.1.7 of the crate from crates.io for the package's repository, and waits for it, so the crate has to be published first.
+
 ## V0.1.3
 
 V0.1.3 fixes a crash of the PHP process for a schema whose `not` leads back to the schema it is in, by taking version 0.1.6 of the corvus-json-schema crate. There are no API changes. Versions 0.1.0 to 0.1.2 are affected.

@@ -136,6 +136,23 @@ check('a class member outside ASCII: C', true, $excluded->isValid('C1'));
 check('a class member outside ASCII: )', true, $excluded->isValid(')a'));
 check('a class member outside ASCII: the member', false, $excluded->isValid('é1'));
 check('a class member outside ASCII: the member, JSON text', false, $excluded->isValidJson('"é1"'));
+// The crate before 0.1.7 dropped a "$" at the end of the repeated group of a separated list, and after its first item, so
+// the first two patterns were matched as ^x(,a)*$ and the third as ^(a,)*b$. The answers are V8's.
+$anchored = Validator::compile(['pattern' => '^x(,a$)*$']);
+check('a list with an anchor in its group: no repeat', true, $anchored->isValid('x'));
+check('a list with an anchor in its group: one repeat', true, $anchored->isValid('x,a'));
+check('a list with an anchor in its group: two repeats', false, $anchored->isValid('x,a,a'));
+check('a list with an anchor in its group: two repeats, JSON text', false, $anchored->isValidJson('"x,a,a"'));
+$anchored = Validator::compile(['pattern' => '^x$(,a)*$']);
+check('a list with an anchor after its first item: no repeat', true, $anchored->isValid('x'));
+check('a list with an anchor after its first item: one repeat', false, $anchored->isValid('x,a'));
+$anchored = Validator::compile(['pattern' => '^(a,$)*b$']);
+check('a list with an anchor before its last item: no repeat', true, $anchored->isValid('b'));
+check('a list with an anchor before its last item: one repeat', false, $anchored->isValid('a,b'));
+// An escaped "$" is a literal character.
+$escaped = Validator::compile(['pattern' => '^x(,a\$)*$']);
+check('a list with an escaped anchor: two repeats', true, $escaped->isValid('x,a$,a$'));
+check('a list with an escaped anchor: no "$" in the text', false, $escaped->isValid('x,a,a'));
 check('exceptions share a base', true, is_subclass_of(CompilationException::class, JsonSchemaException::class));
 
 // Errors.
