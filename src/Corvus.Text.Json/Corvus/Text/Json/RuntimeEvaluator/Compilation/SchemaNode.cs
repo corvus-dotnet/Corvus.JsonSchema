@@ -1272,9 +1272,34 @@ internal sealed class PatternMatcher
         }
 
         var result = new List<PatternSequence>();
-        foreach (string rawPart in parts)
+        for (int index = 0; index < parts.Count; index++)
         {
-            string part = StripEnclosingGroup(rawPart);
+            string part = StripEnclosingGroup(parts[index]);
+            if (part.Length != parts[index].Length)
+            {
+                // A group that enclosed the whole alternative may hold alternatives of its own, and (a|b$) is a|b$:
+                // each of them is a whole alternative with its own anchors. Reading the "$" here would give it to
+                // them all.
+                List<string>? nested = SplitTopLevel(part);
+                if (nested is null)
+                {
+                    return false;
+                }
+
+                if (nested.Count > 1)
+                {
+                    parts.RemoveAt(index);
+                    parts.InsertRange(index, nested);
+                    if (parts.Count > MaxAlternatives)
+                    {
+                        return false;
+                    }
+
+                    index--;
+                    continue;
+                }
+            }
+
             bool start = part.Length > 0 && part[0] == '^';
             bool end = EndsWithUnescapedDollar(part) && !(start && part.Length == 1);
             string inner = part.Substring(start ? 1 : 0, part.Length - (start ? 1 : 0) - (end ? 1 : 0));
@@ -1520,6 +1545,20 @@ internal sealed class PatternMatcher
         for (int k = 0; same && k < item.Length; k++)
         {
             same = item[k].Equals(repeated[k]);
+        }
+
+        if (!itemFirst && !same)
+        {
+            // A final item that differs from the repeated one is matched over the remainder once no separator follows
+            // an item. That is exact only when the final item cannot hold the separator's first character: otherwise
+            // its own text can be read as an item and a separator, as the "," of ^(a*,)+,$ is in "a,,".
+            foreach (ClassAtom atom in item)
+            {
+                if (!separator[0].Disjoint(atom))
+                {
+                    return false;
+                }
+            }
         }
 
         list = itemFirst

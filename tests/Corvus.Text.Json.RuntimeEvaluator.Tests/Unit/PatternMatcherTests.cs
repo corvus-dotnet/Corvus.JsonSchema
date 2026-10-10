@@ -128,6 +128,147 @@ public class PatternMatcherTests
         "ab-c-d", "ab-cdefghi", "a-b", "abc-", "aB", "a.bC", "a.b.C", "A.b", "_$.a$", "a.B.c.D", "12µs", "µs", "12ms", "12 µs", "!", "!!a", "a!b", "?", "!?",
     ];
 
+    /// <summary>
+    /// Patterns with an anchor, a word boundary or a lookaround in a place where a matcher for a shape could lose it,
+    /// and patterns with an escaped <c>$</c> or <c>^</c>, which is a literal character. Each has the texts it
+    /// matches and the texts it does not. The answers are those of V8: <c>new RegExp(pattern, "u").test(text)</c>.
+    /// </summary>
+    private static readonly (string Pattern, string[] Matches, string[] Fails)[] AnchorCases =
+    [
+        ("^x(,a$)*$", ["x", "x,a"], ["x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^x(,a$)+$", ["x,a"], ["x", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^x(?:,a$)*$", ["x", "x,a"], ["x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^x$(,a)*$", ["x"], ["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^(x$)(,a)*$", ["x"], ["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^(?:x$)(,a)+$", [], ["x", "x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^$(,a)*$", [""], [",a", ",a,a", "a"]),
+        ("^(a,$)*b$", ["b"], ["a,b", "a,a,b", "a,", "", "a,a"]),
+        ("^(a,$)+b$", [], ["b", "a,b", "a,a,b", "a,", "", "a,a"]),
+        ("^(?:a,$)*b$", ["b"], ["a,b", "a,a,b", "a,", "", "a,a"]),
+        ("^([a-z]+)(\\.[a-z]+$)*$", ["a", "a.b"], ["a.b.c", "a.", ""]),
+        ("^([a-z]+\\.$)*[a-z]+$", ["a"], ["a.b", "a.b.c", ".a", ""]),
+        ("^x(,a$$)*$", ["x", "x,a"], ["x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^x(^,a)*$", ["x"], ["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^x(,^a)*$", ["x"], ["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^^x(,a)*$", ["x", "x,a", "x,a,a", "x,a,a,a"], ["", "x,", "x,b"]),
+        ("^(^x)(,a)*$", ["x", "x,a", "x,a,a", "x,a,a,a"], ["", "x,", "x,b"]),
+        ("^(^a,)*b$", ["b", "a,b"], ["a,a,b", "a,", "", "a,a"]),
+        ("^(a,)*^b$", ["b"], ["a,b", "a,a,b", "a,", "", "a,a"]),
+        ("^x(,(a$))*$", ["x", "x,a"], ["x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^x(,(?:a$))*$", ["x", "x,a"], ["x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^x(,a|$)*$", ["x", "x,a", "x,a,a", "x,a,a,a"], ["", "x,", "x,b"]),
+        ("^x(,(a|$))*$", ["x", "x,a", "x,a,a", "x,a,a,a", "x,"], ["", "x,b"]),
+        ("^x((^|,)a)*$", ["x", "x,a", "x,a,a", "x,a,a,a"], ["", "x,", "x,b"]),
+        ("^(a,)*(b$)$", ["b", "a,b", "a,a,b"], ["a,", "", "a,a"]),
+        ("^(a,)*b$$", ["b", "a,b", "a,a,b"], ["a,", "", "a,a"]),
+        ("^x(,a\\b)*$", ["x", "x,a", "x,a,a", "x,a,a,a"], ["", "x,", "x,b", "x,ab"]),
+        ("^x(\\b,a)*$", ["x", "x,a", "x,a,a", "x,a,a,a"], ["", "x,", "x,b"]),
+        ("^x(,\\Ba)*$", ["x"], ["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^x(\\B,a)*$", ["x"], ["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^x\\b(,a)*$", ["x", "x,a", "x,a,a", "x,a,a,a"], ["", "x,", "x,b"]),
+        ("^x\\B(,a)*$", [], ["x", "x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^(a\\b,)*b$", ["b", "a,b", "a,a,b"], ["a,", "", "a,a"]),
+        ("^(a,\\B)*b$", ["b"], ["a,b", "a,a,b", "a,", "", "a,a"]),
+        ("^x(,a(?=,|$))*$", ["x", "x,a", "x,a,a", "x,a,a,a"], ["", "x,", "x,b"]),
+        ("^x(,(?!a)a)*$", ["x"], ["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^x(?=,)(,a)*$", ["x,a", "x,a,a", "x,a,a,a"], ["x", "", "x,", "x,b"]),
+        ("^x(,a(?<=a))*$", ["x", "x,a", "x,a,a", "x,a,a,a"], ["", "x,", "x,b"]),
+        ("^x(,(?<!,)a)*$", ["x"], ["x,a", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^x(?=,a$)(,a)*$", ["x,a"], ["x", "x,a,a", "x,a,a,a", "", "x,", "x,b"]),
+        ("^(a,(?=b))*b$", ["b", "a,b"], ["a,a,b", "a,", "", "a,a"]),
+        ("^(?!a,a)(a,)*b$", ["b", "a,b"], ["a,a,b", "a,", "", "a,a"]),
+        ("^x(,a\\$)*$", ["x", "x,a$", "x,a$,a$"], ["x,a", "x,a,a", "x,a$,a"]),
+        ("^x\\$(,a)*$", ["x$", "x$,a", "x$,a,a"], ["x", "x,a"]),
+        ("^(a\\$,)*b$", ["b", "a$,b", "a$,a$,b"], ["a,b", "a$,a,b"]),
+        ("^x(,\\^a)*$", ["x", "x,^a", "x,^a,^a"], ["x,a", "x,a,a"]),
+        ("^(a,)*b\\$$", ["b$", "a,b$", "a,a,b$"], ["b", "a,b"]),
+        ("^x(,[$^]a)*$", ["x", "x,$a", "x,^a,$a"], ["x,a", "x,a,a"]),
+        ("^a$b", [], ["a", "ab", "a$b", ""]),
+        ("^a^b", [], ["a", "ab", "b"]),
+        ("^a$$", ["a"], ["ab", ""]),
+        ("^^a", ["a", "ab"], ["ba"]),
+        ("^a\\$b$", ["a$b"], ["ab", "a"]),
+        ("^a\\b", ["a", "a b", "a,"], ["ab"]),
+        ("^a\\Bb", ["ab"], ["a b", "a"]),
+        ("^\\ba", ["a"], ["ba", ""]),
+        ("^a(?=b)", ["ab"], ["a", "ac"]),
+        ("^a(?!b)", ["a", "ac"], ["ab"]),
+        ("^[a-c]+\\b$", ["a", "abc"], [""]),
+        ("^[a-c]+$\\b", ["a", "abc"], [""]),
+        ("^$", [""], ["a"]),
+        ("^a$.*", ["a"], ["ab", ""]),
+        ("^a\\b.*", ["a", "a b"], ["ab"]),
+        ("^a^.*", [], ["a", "ab"]),
+        ("^\\$.*", ["$", "$a"], ["a"]),
+        ("^a$|b", ["a", "ab", "b", "cb"], ["c"]),
+        ("a$|^b", ["a", "ba", "bc"], ["ab", "cb"]),
+        ("^(a$|b)$", ["a", "b"], ["ab", ""]),
+        ("^(a|^b)$", ["a", "b"], ["ab"]),
+        ("^(a|b\\b)$", ["a", "b"], ["ab"]),
+        ("^(?:a\\$|b)$", ["a$", "b"], ["a"]),
+        ("^(a|$)$", ["a", ""], ["b"]),
+        ("^(^|b)$", ["", "b"], ["a"]),
+        ("^(a$|b)c", ["bc", "bcd"], ["a", "ac"]),
+        ("(^a|b)c$", ["ac", "bc", "xbc"], ["xac", "acx"]),
+        ("a(b|^c)", ["ab", "xab"], ["ac", "c"]),
+        ("(a$){2}", [], ["a", "aa", ""]),
+        ("(^a){2}", [], ["a", "aa"]),
+        ("x(a$)?b", ["xb"], ["xab", "xa"]),
+        ("^x(a$)?", ["x", "xa", "xab", "xb"], []),
+        ("(a|b$)c", ["ac"], ["bc", "b"]),
+        ("a|\\bb", ["a", "b", "c b"], ["cb"]),
+        ("a\\b|c", ["a", "c", "b a"], ["ab"]),
+        ("(?=a)a|b", ["a", "b"], ["c"]),
+        ("(?<=a)b|c", ["ab", "c"], ["b"]),
+        ("a^|b", ["b"], ["a", ""]),
+        ("$a|b", ["b"], ["a", ""]),
+        ("^|a", ["", "b"], []),
+        ("a|$", ["", "b"], []),
+        ("(a|b)$c", [], ["ac", "a", "bc"]),
+        ("^(a|b)^c", [], ["ac", "c"]),
+        ("[a-c]{2}$|^x", ["ab", "x", "yab"], ["abx", "yx"]),
+        ("[a-c]\\b|x", ["a", "x", "d a"], ["ad"]),
+        ("^[a-c]+$|^\\d$", ["abc", "1"], ["a1", ""]),
+        ("^(a|b){2}$", ["ab"], ["a", "abc"]),
+        ("^.{1,3}$$", ["a"], ["abcd", ""]),
+        ("^.$^", [], ["a", ""]),
+        ("^(.*)$", ["", "a"], []),
+        ("^es$|ms", ["es", "xms"], ["esx", "x"]),
+        ("^x-$", ["x-"], ["x-a"]),
+        ("^x-\\b", ["x-a"], ["x-", "x--"]),
+    ];
+
+    /// <summary>
+    /// Separated lists whose final item can hold the separator's first character, so that the text of the final
+    /// item can also be read as an item and a separator. The answers are those of V8.
+    /// </summary>
+    private static readonly (string Pattern, string[] Matches, string[] Fails)[] AmbiguousFinalItemCases =
+    [
+        ("^(a*,)+,$", ["a,,", ",,", "a,a,,", "a,,,"], ["a,", ",", ""]),
+        ("^(?:a?\\^)*.$", ["^", "a^^", "^^", "a", "a^b"], ["a^", "", "^a^"]),
+        ("^(?:a.)+a{2}$", ["aaaaaa", "axaa", "aaaa", "axaxaa"], ["aaa", "aa", "axa"]),
+        ("^([a-z]+\\.)*.$", ["a.b", "a..", "b", ".", "a.b.c"], ["a.", "a.bc"]),
+        ("^(\\d+-)+-$", ["1--", "1-2--"], ["1-", "--", "12-3-"]),
+    ];
+
+    /// <summary>
+    /// Alternatives inside a group that encloses a whole alternative, with an anchor of their own. The anchor binds
+    /// to its alternative alone. The answers are those of V8.
+    /// </summary>
+    private static readonly (string Pattern, string[] Matches, string[] Fails)[] AnchoredAlternativeInAGroupCases =
+    [
+        ("(b|[a-c]{1,2}$)", ["b.", "b", "ab", "ab.", "xb."], ["."]),
+        ("(^a|b)", ["a", "xb", "b"], ["xa", "c"]),
+        ("(a|b$)", ["a", "ax", "b", "xb"], ["bx", "c"]),
+        ("(?:^a|b)", ["ab", "xb"], ["xa", "c"]),
+        ("((a|b$))", ["ax", "xb"], ["bx"]),
+        ("(^a|b)|c$", ["a", "xb", "c", "xc"], ["xa", "cx"]),
+        ("x|(a|b$)", ["x", "ax", "bx", "b"], ["c"]),
+        ("(^[a-c]+|\\d{2}$)", ["abx", "x12"], ["xab", "12x", "1"]),
+        ("^(a|b$)", ["a", "ax", "b"], ["bx", "xa"]),
+        ("(^a|b)$", ["a", "b", "xb"], ["ax", "bx"]),
+    ];
+
     [TestMethod]
     public void MatchersAgreeWithTheRegularExpression()
     {
@@ -187,5 +328,107 @@ public class PatternMatcherTests
         Assert.IsFalse(PatternMatcher.Create("^(?=[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$", options).UsesRegex, "An excluded set plus a required word character is a scan.");
         Assert.IsFalse(PatternMatcher.Create("^(?=!+[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$", options).UsesRegex);
         Assert.IsTrue(PatternMatcher.Create("^(?=[^a]+$).+$", options).UsesRegex, "Only the exact two-lookahead form is recognised.");
+    }
+
+    /// <summary>
+    /// A shape that cannot express an anchor or an assertion leaves the pattern to the regular expression. (The
+    /// separated list of the Rust, Go, Java, Julia and Object Pascal ports dropped a <c>$</c> at the end of its
+    /// repeated group and after its first item, so <c>^x(,a$)*$</c> took <c>x,a,a</c>. This evaluator's separated
+    /// list refuses an item or a group with an anchor in it, and the table holds it to that.)
+    /// </summary>
+    [TestMethod]
+    public void AnAnchorOrAnAssertionInsideAShapeIsNotDropped()
+    {
+        AssertCases(AnchorCases);
+    }
+
+    /// <summary>
+    /// A final item that differs from the repeated one is matched over what is left once no separator follows an
+    /// item. When the final item can hold the separator's first character, its own text can be read as an item and
+    /// a separator: <c>^(a*,)+,$</c> matches <c>a,,</c>, and the list took both commas for separators. Such a
+    /// pattern is not a separated list.
+    /// </summary>
+    [TestMethod]
+    public void AFinalItemThatCanHoldTheSeparatorIsNotASeparatedList()
+    {
+        AssertCases(AmbiguousFinalItemCases);
+        var options = new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false };
+        foreach ((string pattern, _, _) in AmbiguousFinalItemCases)
+        {
+            Assert.IsTrue(PatternMatcher.Create(pattern, options).UsesRegex, pattern);
+        }
+
+        Assert.IsFalse(PatternMatcher.Create("^([a-zA-Z_$][a-zA-Z0-9_$]{0,39}\\.)*([a-zA-Z_$][a-zA-Z0-9_$]{0,39})$", options).UsesRegex, "A final item without the separator's character is still a separated list.");
+        Assert.IsFalse(PatternMatcher.Create("^([a-z]+,)*[a-z]{2}$", options).UsesRegex, "A final item with other bounds is still a separated list.");
+    }
+
+    /// <summary>
+    /// A group that encloses a whole alternative is removed before the alternative's anchors are read. When the
+    /// group holds alternatives, an anchor at either end of its text belongs to the first or the last of them, not
+    /// to them all: <c>(a|b$)</c> is <c>a|b$</c>, and was matched as <c>(a|b)$</c>.
+    /// </summary>
+    [TestMethod]
+    public void AnAnchorOfOneAlternativeInAGroupIsNotGivenToTheOthers()
+    {
+        AssertCases(AnchoredAlternativeInAGroupCases);
+        var options = new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false };
+        Assert.IsFalse(PatternMatcher.Create("(a|b$)", options).UsesRegex, "The alternatives of the group are whole alternatives, each with its own anchors.");
+        Assert.IsFalse(PatternMatcher.Create("(^[a-c]+|\\d{2}$)", options).UsesRegex);
+    }
+
+    [TestMethod]
+    public void ASeparatedListWithAnEscapedAnchorIsStillMatchedWithoutARegularExpression()
+    {
+        var options = new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false };
+        Assert.IsFalse(PatternMatcher.Create("^[a-z]+(\\$[a-z]+)*$", options).UsesRegex, "An escaped anchor is a literal character, here the separator.");
+        Assert.IsFalse(PatternMatcher.Create("^a\\$(,a\\$)*$", options).UsesRegex);
+        Assert.IsFalse(PatternMatcher.Create("^(a\\$,)*a\\$$", options).UsesRegex);
+        Assert.IsFalse(PatternMatcher.Create("^a(,[$^]a)*$", options).UsesRegex);
+        Assert.IsTrue(PatternMatcher.Create("^a(,a$)*$", options).UsesRegex, "An anchor inside the group is not part of a list.");
+        Assert.IsTrue(PatternMatcher.Create("^a$(,a)*$", options).UsesRegex, "An anchor after the first item is not part of a list.");
+        Assert.IsTrue(PatternMatcher.Create("^(a,$)*a$", options).UsesRegex);
+        Assert.IsTrue(PatternMatcher.Create("^a(,a\\b)*$", options).UsesRegex, "A word boundary is not part of a list.");
+    }
+
+    /// <summary>Each case through the matcher, and through an evaluator that interprets and one that generates code.</summary>
+    private static void AssertCases((string Pattern, string[] Matches, string[] Fails)[] cases)
+    {
+        var options = new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false };
+        var wrong = new List<string>();
+        foreach ((string pattern, string[] matches, string[] fails) in cases)
+        {
+            PatternMatcher matcher = PatternMatcher.Create(pattern, options);
+            string schema = "{\"pattern\": " + Quote(pattern) + "}";
+            using JsonSchemaEvaluator interpreted = JsonSchemaEvaluator.Compile(schema, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.Disabled });
+            using JsonSchemaEvaluator generated = JsonSchemaEvaluator.Compile(schema, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.Eager });
+            foreach ((string[] texts, bool expected) in new[] { (matches, true), (fails, false) })
+            {
+                foreach (string text in texts)
+                {
+                    if (matcher.IsMatch(Encoding.UTF8.GetBytes(text)) != expected)
+                    {
+                        wrong.Add($"matcher: {pattern} on \"{text}\", want {expected}");
+                    }
+
+                    if (interpreted.Evaluate(Quote(text)) != expected)
+                    {
+                        wrong.Add($"interpreted: {pattern} on \"{text}\", want {expected}");
+                    }
+
+                    if (generated.Evaluate(Quote(text)) != expected)
+                    {
+                        wrong.Add($"generated: {pattern} on \"{text}\", want {expected}");
+                    }
+                }
+            }
+        }
+
+        Assert.AreEqual(string.Empty, string.Join("\n", wrong));
+    }
+
+    /// <summary>The text as a JSON string.</summary>
+    private static string Quote(string text)
+    {
+        return "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
     }
 }
