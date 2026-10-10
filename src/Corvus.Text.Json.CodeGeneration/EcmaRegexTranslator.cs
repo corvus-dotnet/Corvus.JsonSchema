@@ -210,6 +210,13 @@ internal static class EcmaRegexTranslator
         private const string HighSurrogates = @"[\uD800-\uDBFF]";
         private const string LowSurrogates = @"[\uDC00-\uDFFF]";
 
+        /// <summary>
+        /// An assertion that never holds: what follows is neither the end of the input nor a character. It is not
+        /// written <c>(?!)</c>, which .NET takes out of the pattern before it runs it, with what depends on it, and
+        /// the compiled engine can then throw (<c>(?:(?:(?!)a)??){0,2}</c> before a lookbehind is one such pattern).
+        /// </summary>
+        private const string Never = @"(?!\z|[\s\S])";
+
         /// <summary>Holds between the two halves of a character beyond the Basic Multilingual Plane.</summary>
         private const string InsideSurrogatePair = @"(?<=[\uD800-\uDBFF])[\uDC00-\uDFFF]";
 
@@ -218,6 +225,12 @@ internal static class EcmaRegexTranslator
 
         /// <summary>A length with no bound.</summary>
         private const long Infinite = long.MaxValue;
+
+        /// <summary>
+        /// The most iterations a lazy repetition may leave to choice and still be written as optional groups one in
+        /// another, each a copy of its body.
+        /// </summary>
+        private const int MaxNestedLazy = 8;
 
         private static readonly int[] SurrogateRange = [0xD800, 0xDFFF];
         private static readonly int[] HighSurrogateRange = [0xD800, 0xDBFF];
@@ -238,7 +251,7 @@ internal static class EcmaRegexTranslator
 
         private readonly bool unicode;
         private readonly bool hasBackreferences;
-        private readonly EcmaRegexNode root;
+        private EcmaRegexNode root;
         private readonly EcmaRegexNode?[] groupNodes;
 
         /// <summary>For each group, whether some backreference reads it.</summary>
@@ -294,6 +307,7 @@ internal static class EcmaRegexTranslator
         public string Translate()
         {
             this.Survey(this.root);
+            this.root = this.Prune(this.root);
             if (this.unicode && this.StartOf(this.root, top: true, backward: false) == Start.Unsafe)
             {
                 // .NET tries a match at every code unit, and so between the two halves of a character beyond the
@@ -409,6 +423,7 @@ internal static class EcmaRegexTranslator
         /// .NET would have to run over a body that cannot move.
         /// <list type="bullet">
         /// <item>A repetition of at most zero times is nothing, and its groups never take part.</item>
+        /// <item>A negative lookaround of a body that matches the empty string wherever it stands never holds.</item>
         /// <item>A repetition of a body that can only match the empty string is that body once when it must run, and
         /// nothing when it need not: ECMA-262 refuses an iteration that matched nothing once the iterations that
         /// must run are done, and the ones that must run all stand at the same place.</item>
@@ -419,6 +434,13 @@ internal static class EcmaRegexTranslator
             for (int k = 0; k < n.Subs.Length; k++)
             {
                 n.Subs[k] = this.Simplify(n.Subs[k]);
+            }
+
+            if (n.Kind == EcmaRegexNodeKind.Look && n.Negative && EmptyAnywhere(n.Subs[0]))
+            {
+                // The body matches the empty string wherever it stands, so the lookaround never holds.
+                this.Kill(n);
+                return new EcmaRegexNode(EcmaRegexNodeKind.Set);
             }
 
             if (n.Kind == EcmaRegexNodeKind.Repeat)
@@ -437,6 +459,47 @@ internal static class EcmaRegexTranslator
             }
 
             return n;
+        }
+
+        /// <summary>
+        /// Makes an empty node of what would be written as nothing, or as what .NET takes for nothing: a group no
+        /// backreference reads around nothing, a positive lookaround of nothing, a repetition of nothing, a
+        /// backreference to groups that never take part. An alternative that is nothing is then seen for one (see
+        /// <see cref="Alternation"/>).
+        /// </summary>
+        private EcmaRegexNode Prune(EcmaRegexNode n)
+        {
+            int kept = 0;
+            for (int k = 0; k < n.Subs.Length; k++)
+            {
+                n.Subs[k] = this.Prune(n.Subs[k]);
+                kept += n.Subs[k].Kind == EcmaRegexNodeKind.Empty ? 0 : 1;
+            }
+
+            switch (n.Kind)
+            {
+                case EcmaRegexNodeKind.Backref when Array.TrueForAll(n.Groups, g => this.dead[g]):
+                case EcmaRegexNodeKind.Group when kept == 0 && (n.Group == 0 || !this.referenced[n.Group]):
+                case EcmaRegexNodeKind.Look when kept == 0 && !n.Negative:
+                case EcmaRegexNodeKind.Repeat when kept == 0:
+                case EcmaRegexNodeKind.Alt when kept == 0:
+                case EcmaRegexNodeKind.Cat when kept == 0:
+                    return new EcmaRegexNode(EcmaRegexNodeKind.Empty);
+                case EcmaRegexNodeKind.Cat when kept < n.Subs.Length:
+                {
+                    EcmaRegexNode[] subs = Array.FindAll(n.Subs, sub => sub.Kind != EcmaRegexNodeKind.Empty);
+                    if (subs.Length == 1)
+                    {
+                        return subs[0];
+                    }
+
+                    n.Subs = subs;
+                    return n;
+                }
+
+                default:
+                    return n;
+            }
         }
 
         /// <summary>Notes that the groups of a node never take part, as the node is not written.</summary>
@@ -744,9 +807,10 @@ internal static class EcmaRegexTranslator
 
             if (subs.Count == 2 && seenEmpty)
             {
-                bool emptyFirst = subs[0].Kind == EcmaRegexNodeKind.Empty;
+                // The empty alternative first is the lazy form, which is kept only where the order of the paths counts.
+                bool emptyFirst = subs[0].Kind == EcmaRegexNodeKind.Empty && this.inCapturingLookaround > 0;
                 this.sb.Append("(?:");
-                this.Node(subs[emptyFirst ? 1 : 0], context, next);
+                this.Node(subs[subs[0].Kind == EcmaRegexNodeKind.Empty ? 1 : 0], context, next);
                 this.sb.Append(emptyFirst ? ")??" : ")?");
                 return;
             }
@@ -899,10 +963,15 @@ internal static class EcmaRegexTranslator
         /// iterations that need not run are then written apart, each made to fail when it has matched nothing.
         /// </para>
         /// <para>
-        /// A lazy repetition of a body that can match the empty string is written greedy. Whether a pattern matches
-        /// does not depend on which of two paths is tried first, unless a lookaround ends the search at the first
-        /// and a backreference reads what it captured, and there it stays lazy. .NET's lazy repetition of such a
-        /// body does not always end.
+        /// A lazy repetition of anything but one code unit is written greedy. Whether a pattern matches does not
+        /// depend on which of two paths is tried first, unless a lookaround ends the search at the first and a
+        /// backreference reads what it captured. .NET's lazy repetition does not always end, and can throw: in both
+        /// engines when an iteration matches nothing, and in the compiled one when it has a highest count and stands
+        /// in another repetition. Inside such a lookaround the repetition stays lazy and every repetition keeps the
+        /// order of its paths: the iterations that need not run are made to fail when they have matched nothing, and
+        /// a lazy repetition with a highest count is written as optional groups one in another, or, past
+        /// <see cref="MaxNestedLazy"/> of them, as a lazy repetition with no highest count whose iterations a group
+        /// counts.
         /// </para>
         /// </summary>
         private void Repeat(EcmaRegexNode n, Context context, EcmaRegexNode? next)
@@ -952,7 +1021,11 @@ internal static class EcmaRegexTranslator
 
             bool nullable = this.MinLength(body) == 0;
             bool resets = (max == EcmaRegexNode.Unbounded || max > 1) && this.AnyReferenced(n);
-            if (nullable && lazy && this.inCapturingLookaround == 0)
+
+            // One code unit. A lazy repetition of it is one .NET runs without the faults of its other lazy repetitions.
+            bool single = (body.Kind == EcmaRegexNodeKind.Char && (!this.unicode || !IsSurrogate(body.CodePoint)) && body.CodePoint <= 0xFFFF)
+                || (body.Kind == EcmaRegexNodeKind.Set && this.IsOneClass(body));
+            if (lazy && this.inCapturingLookaround == 0 && (nullable || !single))
             {
                 lazy = false;
             }
@@ -964,9 +1037,17 @@ internal static class EcmaRegexTranslator
             }
 
             // An iteration that need not run is made to fail when it has matched nothing, where .NET would go on with
-            // the groups as that iteration left them.
-            bool guarded = nullable && max != min && this.AnyReferenced(n);
-            if (!resets && !guarded)
+            // the groups as that iteration left them, and where the order of the paths counts.
+            bool guarded = nullable && max != min && (this.inCapturingLookaround > 0 || this.AnyReferenced(n));
+
+            // A lazy repetition that is still lazy here, with a highest count, is written as optional groups one in
+            // another.
+            bool nested = lazy && !single && max > 1 && max != EcmaRegexNode.Unbounded && max - min >= 1 && max - min <= MaxNestedLazy;
+
+            // With more iterations left to choice than that, it is a lazy repetition with no highest count, and a
+            // group counts the iterations.
+            bool counted = lazy && !single && max != EcmaRegexNode.Unbounded && max - min > MaxNestedLazy;
+            if (!resets && !guarded && !nested && !counted)
             {
                 this.Atom(body, inner, null);
                 this.Quantifier(min, max, lazy);
@@ -974,7 +1055,7 @@ internal static class EcmaRegexTranslator
             }
 
             string reset = resets ? this.Resets(n) : string.Empty;
-            if (!guarded)
+            if (!guarded && !nested && !counted)
             {
                 this.Iteration(body, inner, reset, null);
                 this.Quantifier(min, max, lazy);
@@ -983,7 +1064,7 @@ internal static class EcmaRegexTranslator
 
             // The iterations that must run, which may match nothing, and then the ones that need not, which may not.
             // In a lookbehind the ones that must run are matched first, and they stand on the right.
-            string marker = "e" + (++this.markers).ToString(CultureInfo.InvariantCulture);
+            string? marker = guarded ? "e" + (++this.markers).ToString(CultureInfo.InvariantCulture) : null;
             int rest = max == EcmaRegexNode.Unbounded ? EcmaRegexNode.Unbounded : max - min;
             if (!backward && min > 0)
             {
@@ -991,8 +1072,58 @@ internal static class EcmaRegexTranslator
                 this.Quantifier(min, min, lazy: false);
             }
 
-            this.Iteration(body, inner, reset, marker);
-            this.Quantifier(0, rest, lazy);
+            if (nested)
+            {
+                // X{0,3}? is (?:X(?:X(?:X)??)??)??, and in a lookbehind (?:(?:(?:X)??X)??X)??.
+                for (int k = 0; k < rest; k++)
+                {
+                    this.sb.Append("(?:");
+                    if (!backward)
+                    {
+                        this.Iteration(body, inner, reset, marker);
+                    }
+                }
+
+                for (int k = 0; k < rest; k++)
+                {
+                    if (backward)
+                    {
+                        this.Iteration(body, inner, reset, marker);
+                    }
+
+                    this.sb.Append(")??");
+                }
+            }
+            else if (counted)
+            {
+                // A group is given one capture for each iteration that may run, an iteration takes one away and
+                // cannot start when none is left, and what is left is taken away after the last. A repetition of
+                // an exact count runs every iteration, though it matches nothing.
+                string counter = "c" + (++this.markers).ToString(CultureInfo.InvariantCulture);
+                string count = rest.ToString(CultureInfo.InvariantCulture);
+                string give = "(?:(?<" + counter + ">)){" + count + "}";
+                string take = "(?<-" + counter + ">)";
+                string clear = "(?:(?(" + counter + ")" + take + ")){" + count + "}";
+                this.sb.Append(backward ? clear : give).Append("(?:");
+                if (!backward)
+                {
+                    this.sb.Append(take);
+                }
+
+                this.Iteration(body, inner, reset, marker);
+                if (backward)
+                {
+                    this.sb.Append(take);
+                }
+
+                this.sb.Append(")*?").Append(backward ? give : clear);
+            }
+            else
+            {
+                this.Iteration(body, inner, reset, marker);
+                this.Quantifier(0, rest, lazy);
+            }
+
             if (backward && min > 0)
             {
                 this.Iteration(body, inner, reset, null);
@@ -1414,8 +1545,8 @@ internal static class EcmaRegexTranslator
             int[] set = n.Set;
             if (set.Length == 0)
             {
-                // No character: an assertion that always fails.
-                this.sb.Append("(?!)");
+                // No character.
+                this.sb.Append(Never);
                 return;
             }
 

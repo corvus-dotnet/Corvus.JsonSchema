@@ -39,6 +39,44 @@ public class EcmaRegexTranslatorDataTests
         AssertCases(EcmaPatternCases.EmptyIterations, engine);
     }
 
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
+    public void PatternsThatFaultedTheEngineAnswerAsV8(RegexOptions engine)
+    {
+        AssertCases(EcmaPatternCases.EngineFaults, engine);
+    }
+
+    /// <summary>
+    /// A lazy repetition with more than eight iterations left to choice, inside a lookaround whose captures a
+    /// backreference reads, is written as a repetition with no highest count whose iterations a group counts. The
+    /// count holds, also when the repetition is entered again and in a lookbehind. The answers are V8's.
+    /// </summary>
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
+    public void ALazyRepetitionCountedByAGroupKeepsItsHighestCount(RegexOptions engine)
+    {
+        (string Pattern, string[] Matches, string[] Fails)[] cases =
+        [
+        ("^(?=((?:ab?){0,9}?)c)\\1c$", ["aaaaaaaaac", "c", "aaac", "abababababababababc"], ["aaaaaaaaaac", "aaaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac", "aaaaacaaaaaaaaac", "aacaaaaaaaaaac", "aaaaaaaaaacaac", "cc", "aaaaaaaaaaaacaaac", "ababababababababababc", "abababababcabababababababababc"]),
+        ("^(?:(?=((?:ab?){0,9}?)c)\\1c){2}$", ["aaaaaaaaacaaaaaaaaac", "aaaaacaaaaaaaaac", "cc", "abababababcabababababababababc"], ["aaaaaaaaac", "aaaaaaaaaac", "aaaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac", "aacaaaaaaaaaac", "aaaaaaaaaacaac", "c", "aaac", "aaaaaaaaaaaacaaac", "abababababababababc", "ababababababababababc"]),
+        ("^(?:(?=((?:ab?){0,9}?)c)\\1c)+$", ["aaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaacaaaaaaaaac", "c", "cc", "aaac", "abababababababababc", "abababababcabababababababababc"], ["aaaaaaaaaac", "aaaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac", "aacaaaaaaaaaac", "aaaaaaaaaacaac", "aaaaaaaaaaaacaaac", "ababababababababababc"]),
+        ("^(?:(?=((?:ab?){2,11}?)c)\\1c)+$", ["aaaaaaaaac", "aaaaaaaaaac", "aaaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac", "aaaaacaaaaaaaaac", "aacaaaaaaaaaac", "aaaaaaaaaacaac", "aaac", "abababababababababc", "ababababababababababc", "abababababcabababababababababc"], ["c", "cc", "aaaaaaaaaaaacaaac"]),
+        ("(?:(?<=^((?:ab?){0,9}?))\\1c)", ["aaaaaaaaaac", "aacaaaaaaaaaac", "aaaaaaaaaacaac", "c", "cc", "aaaaaaaaaaaacaaac", "ababababababababababc"], ["aaaaaaaaac", "aaaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac", "aaaaacaaaaaaaaac", "aaac", "abababababababababc", "abababababcabababababababababc"]),
+        ("^(?:(?=((?:(a)|b){1,10}?)c)\\1c\\2?)+$", ["aaaaaaaaac", "aaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac", "aaaaacaaaaaaaaac", "aacaaaaaaaaaac", "aaaaaaaaaacaac", "aaac"], ["aaaaaaaaaaac", "c", "cc", "aaaaaaaaaaaacaaac", "abababababababababc", "ababababababababababc", "abababababcabababababababababc"]),
+        ("^(?:(?=((?:(a|)b?){0,9}?)c)\\1c)+$", ["aaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaacaaaaaaaaac", "c", "cc", "aaac", "abababababababababc", "abababababcabababababababababc"], ["aaaaaaaaaac", "aaaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac", "aacaaaaaaaaaac", "aaaaaaaaaacaac", "aaaaaaaaaaaacaaac", "ababababababababababc"]),
+        ("^(?:(?=((?:a|ab){0,9}?)c)\\1c)+$", ["aaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaacaaaaaaaaac", "c", "cc", "aaac", "abababababababababc", "abababababcabababababababababc"], ["aaaaaaaaaac", "aaaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac", "aacaaaaaaaaaac", "aaaaaaaaaacaac", "aaaaaaaaaaaacaaac", "ababababababababababc"]),
+        ("^(?:(?=((?:a|ab){0,9}?)(c))\\1\\2)+$", ["aaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaacaaaaaaaaac", "c", "cc", "aaac", "abababababababababc", "abababababcabababababababababc"], ["aaaaaaaaaac", "aaaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac", "aacaaaaaaaaaac", "aaaaaaaaaacaac", "aaaaaaaaaaaacaaac", "ababababababababababc"]),
+        ];
+        foreach ((string pattern, _, _) in cases)
+        {
+            StringAssert.Contains(EcmaRegexTranslator.Translate(pattern), "(?<c", pattern);
+        }
+
+        AssertCases(cases, engine);
+    }
+
     private static void AssertCases((string Pattern, string[] Matches, string[] Fails)[] cases, RegexOptions engine)
     {
         var failures = new List<string>();

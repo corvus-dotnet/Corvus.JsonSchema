@@ -1,505 +1,347 @@
 # Translation Reference
 
-This document describes every translation performed by `EcmaRegexTranslator` when converting ECMAScript 262 `/u` mode regular expressions to .NET regular expressions.
+What `EcmaRegexTranslator` writes for each construct of an ECMA-262 regular expression, and why.
+[EcmaRegexTranslator.md](./EcmaRegexTranslator.md) is the overview.
 
-Where an ECMAScript construct has identical semantics in .NET, it is passed through unchanged. Where semantics differ, the translator emits an equivalent .NET pattern.
+The translator parses a pattern into a tree and writes the tree. A construct that means the same in .NET is written
+in its plain form. The examples below are the exact output for a pattern that is valid with the `u` flag, unless
+they say otherwise.
 
 ## Table of Contents
 
+- [The Two Grammars](#the-two-grammars)
+- [Validity](#validity)
+- [Literal Characters and Escapes](#literal-characters-and-escapes)
 - [Character Shorthands](#character-shorthands)
-- [Dot (`.`)](#dot-)
-- [End Anchor (`$`)](#end-anchor-)
-- [Word Boundaries (`\b`, `\B`)](#word-boundaries-b-b)
-- [Unicode Escapes (`\u`, `\u{...}`)](#unicode-escapes-u-u)
-- [Literal Non-BMP Characters](#literal-non-bmp-characters)
-- [Unicode Property Escapes (`\p{...}`, `\P{...}`)](#unicode-property-escapes-p-p)
-- [Backreferences](#backreferences)
+- [Dot](#dot)
+- [Anchors](#anchors)
+- [Word Boundaries](#word-boundaries)
+- [Sets and Code Points](#sets-and-code-points)
 - [Character Classes](#character-classes)
-- [Identity Escapes](#identity-escapes)
-- [Strict `/u` Mode Validation](#strict-u-mode-validation)
-- [Pass-Through Constructs](#pass-through-constructs)
+- [Unicode Property Escapes](#unicode-property-escapes)
+- [Modifier Groups](#modifier-groups)
+- [Groups](#groups)
+- [Backreferences](#backreferences)
+- [Repetitions](#repetitions)
+- [Lookarounds](#lookarounds)
+- [Alternatives](#alternatives)
 
 ---
+
+## The Two Grammars
+
+| Grammar | When | A character is | Example of a pattern only it accepts |
+|---|---|---|---|
+| `u` flag | Tried first. JSON Schema's `pattern` is specified with it. | A code point | `\u{1F600}`, `\p{L}` |
+| No flag (Annex B) | When the `u` flag grammar refuses the pattern. | A UTF-16 code unit | `\-`, `\@`, `a{`, `\1` with no group |
+
+Without the flag an identity escape may escape any character, a lone `{`, `}` or `]` is itself, `\1` with no such
+group is an octal escape, `\p` is the letter `p`, and a lookahead may be quantified. A character beyond the Basic
+Multilingual Plane is then two characters to the dot and to a negated class.
+
+```
+ECMAScript:  ^a\-b{$          (valid only without the u flag)
+.NET:        ^a-b\{\z
+```
+
+## Validity
+
+A pattern neither grammar accepts is refused. `TryTranslate` returns `false` and an error that says what is wrong
+and the offset in the pattern. When the two grammars object to different things the error gives both.
+
+| Pattern | Error |
+|---|---|
+| `a{2,1}` | `Numbers out of order in {} quantifier at offset 6.` |
+| `x\b+` | `Nothing to repeat at offset 1.` |
+| `(?<n>a)(?<n>b)` | `Duplicate group name 'n' at offset 12.` |
+| `[z-a]` | `Range out of order in character class at offset 2.` |
+| `(` | `Unterminated group at offset 1.` |
+| `\p{Nope}(` | `Invalid property name at offset 3 (read without the u flag: Unterminated group at offset 9).` |
+
+Constructs that only .NET has are not ECMA-262 and are refused: `(?i)`, `(?#comment)`, `(?'name'a)`, `(?>a)`.
+`\A`, `\Z` and `\z` are valid only without the `u` flag, where they are the letters `A`, `Z` and `z`.
+
+## Literal Characters and Escapes
+
+A literal is written as the character it names, whatever way the pattern named it.
+
+| ECMAScript | .NET | |
+|---|---|---|
+| `a`, `\x61`, `\u0061`, `\u{61}` | `a` | A printable ASCII character is itself. |
+| `\.`, `\*`, `\(`, `\{`, `\/` | `\.`, `\*`, `\(`, `\{`, `/` | Escaped where .NET needs it. |
+| `\t`, `\n`, `\v`, `\f`, `\r` | the same | |
+| `\0`, `\cA`, `\cJ` | `\u0000`, `\u0001`, `\n` | A control escape is the character it names. |
+| `é`, `\u00E9` | `\u00E9` | A character outside printable ASCII is written by its number. |
+| `\u{1F600}`, a literal U+1F600 | `(?:\uD83D\uDE00)` | Both halves in a group, so that a quantifier applies to the character. |
+| `\uD83D` (a lone surrogate) | `\uD83D(?![\uDC00-\uDFFF])` | It does not match half of a pair. |
 
 ## Character Shorthands
 
-ECMAScript and .NET define different character sets for `\d`, `\w`, and `\s`. The translator expands these to explicit character classes matching the ECMAScript definitions.
+ECMA-262's `\d`, `\w` and `\s` are narrower than .NET's.
 
-### `\d` and `\D` — Digit Classes
-
-ECMAScript `\d` matches `[0-9]` only. .NET `\d` matches all Unicode digits (e.g. `٣`, `੫`).
-
-| ECMAScript | .NET Translation | Context |
+| ECMAScript | .NET | Reason |
 |---|---|---|
-| `\d` | `[0-9]` | Standalone |
-| `\D` | `[^0-9]` | Standalone |
-| `\d` inside `[...]` | `0-9` | Inline (without brackets) |
+| `\d` | `[0-9]` | .NET's `\d` is every Unicode decimal digit. |
+| `\w` | `[a-zA-Z0-9_]` | .NET's `\w` is every Unicode word character. |
+| `\s` | `[\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]` | ECMA-262 has U+FEFF and not U+0085. |
+| `\D`, `\W`, `\S` | The complement, as a [set that holds characters beyond the Basic Multilingual Plane](#sets-and-code-points). | |
 
-**Example:**
+Inside a case-insensitive group read with the `u` flag grammar, `\w` also holds U+017F and U+212A, which fold to
+`s` and `k`.
+
+## Dot
+
+The dot is every character but the four line terminators `\n`, `\r`, U+2028 and U+2029. .NET's dot leaves out only
+`\n`. With the `s` modifier the dot is every character.
 
 ```
-ECMAScript:  \d+
-.NET:        [0-9]+
+ECMAScript:  ^.*$
+.NET:        ^[^\n\r\u2028\u2029]*\z
+
+ECMAScript:  a.b
+.NET:        a(?>[^\n\r\u2028\u2029\uD800-\uDFFF]|[\uD800-\uDBFF](?:[\uDC00-\uDFFF]|(?![\uDC00-\uDFFF]))|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])b
 ```
 
-### `\w` and `\W` — Word Classes
+The second form is explained under [Sets and Code Points](#sets-and-code-points).
 
-ECMAScript `\w` matches `[a-zA-Z0-9_]` only. .NET `\w` matches all Unicode word characters.
+## Anchors
 
-| ECMAScript | .NET Translation | Context |
+| ECMAScript | .NET | Reason |
 |---|---|---|
-| `\w` | `[a-zA-Z0-9_]` | Standalone |
-| `\W` | `[^a-zA-Z0-9_]` | Standalone |
-| `\w` inside `[...]` | `a-zA-Z0-9_` | Inline |
+| `^` | `^` | .NET is not given its multiline option, so `^` is the start of the input. |
+| `$` | `\z` | .NET's `$` also holds before a final `\n`. |
+| `^` in `(?m:...)` | `(?:^\|(?<=[\n\r\u2028\u2029]))` | A line starts after any of the four line terminators. .NET's multiline `^` knows only `\n`. |
+| `$` in `(?m:...)` | `(?:\z\|(?=[\n\r\u2028\u2029]))` | |
 
-### `\s` and `\S` — Whitespace Classes
+## Word Boundaries
 
-ECMAScript and .NET disagree on two specific characters:
+A word character is one of the 63 ASCII ones. The positions before the start and after the end of the input count
+as not a word character.
 
-| Character | ECMAScript `\s` | .NET `\s` |
-|---|---|---|
-| `\uFEFF` (BOM) | ✅ Included | ❌ Excluded |
-| `\x85` (NEL) | ❌ Excluded | ✅ Included |
+```
+ECMAScript:  \b
+.NET:        (?:(?<=[a-zA-Z0-9_])(?![a-zA-Z0-9_])|(?<![a-zA-Z0-9_])(?=[a-zA-Z0-9_]))
 
-The translator emits the full explicit ECMAScript whitespace character class:
+ECMAScript:  x\B
+.NET:        x(?:(?<=[a-zA-Z0-9_])(?=[a-zA-Z0-9_])|(?<![a-zA-Z0-9_])(?![a-zA-Z0-9_]))
+```
 
-| ECMAScript | .NET Translation |
+## Sets and Code Points
+
+With the `u` flag grammar a character is a code point, and .NET matches UTF-16 code units. A set (a class, a class
+escape, the dot, a property) is therefore written by what it holds:
+
+| The set holds | Written as |
 |---|---|
-| `\s` | `[\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]` |
-| `\S` | `[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]` |
+| Only characters of the Basic Multilingual Plane, no surrogate | One .NET class: `[a-z]` |
+| Characters beyond it as well | An atomic alternation of the class and the surrogate pairs: `[a-z\u{1F600}-\u{1F64F}]` is `(?>[a-z]\|\uD83D[\uDE00-\uDE4F])` |
+| Every character beyond it and every surrogate (the dot, a negated class, `\D`, `\W`, `\S`) | `(?>[...\uD800-\uDFFF excluded]\|[\uD800-\uDBFF](?:[\uDC00-\uDFFF]\|(?![\uDC00-\uDFFF]))\|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])` |
 
-The same characters are used inline when `\s` appears inside a character class.
+The last form reads: a code unit of the set that is not a surrogate, or a first half with its second half when
+there is one, or a second half with no first half before it. So a surrogate pair is always one character and is
+never split. The alternatives start with different code units, which is why the group can be atomic.
 
----
+A **repetition** of such a set is written so that a text with no character beyond the Basic Multilingual Plane is
+matched by a repetition of one class, at the cost it always had.
 
-## Dot (`.`)
-
-ECMAScript `.` excludes four line terminators. .NET `.` only excludes `\n`.
-
-| ECMAScript | .NET Translation |
-|---|---|
-| `.` | `[^\n\r\u2028\u2029]` |
-
-This ensures `\r`, `\u2028` (Line Separator), and `\u2029` (Paragraph Separator) are excluded, matching ECMAScript semantics.
-
----
-
-## End Anchor (`$`)
-
-Without the `m` flag (JSON Schema patterns have no flags), ECMAScript `$` matches only at the end of the input. .NET `$` also matches before a final `\n`, so `^abc$` would accept `"abc\n"`.
-
-| ECMAScript | .NET Translation |
-|---|---|
-| `$` | `\z` |
-
----
-
-## Word Boundaries (`\b`, `\B`)
-
-ECMAScript word boundaries are defined in terms of the ASCII `\w` character set `[a-zA-Z0-9_]`. .NET `\b` uses the Unicode-aware `\w`, which would produce different results.
-
-The translator expands word boundaries to explicit lookaround assertions:
-
-| ECMAScript | .NET Translation |
-|---|---|
-| `\b` | `(?:(?<=[a-zA-Z0-9_])(?![a-zA-Z0-9_])\|(?<![a-zA-Z0-9_])(?=[a-zA-Z0-9_]))` |
-| `\B` | `(?:(?<=[a-zA-Z0-9_])(?=[a-zA-Z0-9_])\|(?<![a-zA-Z0-9_])(?![a-zA-Z0-9_]))` |
-
----
-
-## Unicode Escapes (`\u`, `\u{...}`)
-
-### BMP Escapes
-
-`\uHHHH` is passed through unchanged — both engines support this syntax.
-
-### Extended Unicode Escapes
-
-ECMAScript `/u` mode supports `\u{XXXXX}` for code points above U+FFFF. .NET does not support this syntax.
-
-| Code Point Range | ECMAScript | .NET Translation |
-|---|---|---|
-| BMP (U+0000–U+FFFF) | `\u{41}` | `\u0041` |
-| Supplementary (U+10000+) | `\u{1F600}` | `(?:\uD83D\uDE00)` (surrogate pair in non-capturing group) |
-
-**Example:**
+With **no upper bound**, a set that holds every such character (the dot, a negated class) does not need the long
+form, because any run of the set's code units that does not start or end inside a surrogate pair is a run of its
+characters:
 
 ```
-ECMAScript:  \u{48}\u{65}\u{6C}\u{6C}\u{6F}
-.NET:        \u0048\u0065\u006C\u006C\u006F
-
-ECMAScript:  \u{1F600}
-.NET:        (?:\uD83D\uDE00)
+ECMAScript:  ^[^/]+/.*$
+.NET:        ^[^/]+/[^\n\r\u2028\u2029]*\z
 ```
 
-Supplementary code points are wrapped in a non-capturing group `(?:...)` outside character classes, ensuring any following quantifier applies to the whole code point.
+Where what follows the repetition could match inside a pair, the repetition is followed by
+`(?!(?<=[\uD800-\uDBFF])[\uDC00-\uDFFF])`, which holds everywhere but between the two halves of a pair. A whole
+translation starts with the same assertion when the pattern could otherwise match from inside a pair, because .NET
+tries a match at every code unit: `\B` becomes `(?!(?<=[\uD800-\uDBFF])[\uDC00-\uDFFF])(?:...)`.
 
-### Supplementary Characters in Character Classes
-
-When character class ranges span supplementary code points, the translator emits surrogate-pair-aware alternation patterns.
-
-**Same high surrogate:**
-
-```
-ECMAScript:  [\u{1F600}-\u{1F64F}]
-.NET:        (?:\uD83D[\uDE00-\uDE4F])
-```
-
-**Different high surrogates (multi-part):**
+With no upper bound, a set that holds some surrogate pairs is runs of the class with a pair between one run and the
+next:
 
 ```
-ECMAScript:  [\u{1F600}-\u{1F9FF}]
-.NET:        (?:\uD83D[\uDE00-\uDFFF]|[\uD83E-\uD83E][\uDC00-\uDFFF]|\uD83E[\uDC00-\uDDFF])
+ECMAScript:  ^[a-z\u{1F600}-\u{1F64F}]+$
+.NET:        ^(?>[a-z]|\uD83D[\uDE00-\uDE4F])[a-z]*(?:\uD83D[\uDE00-\uDE4F][a-z]*)*\z
 ```
 
-**Mixed BMP and supplementary:**
+With **an upper bound**, the dot or a negated class counts characters, and a run of code units is a run of as many
+characters only when none is a surrogate. So the translation looks ahead as far as the highest count. When no
+surrogate is there it is the class repeated, and otherwise the long form:
 
 ```
-ECMAScript:  [a-z\u{1F600}-\u{1F64F}]
-.NET:        (?:[a-z]|\uD83D[\uDE00-\uDE4F])
+ECMAScript:  ^.{2,5}$
+.NET:        ^(?(?=[^\uD800-\uDFFF]{5}|[^\uD800-\uDFFF]*\z)[^\n\r\u2028\u2029\uD800-\uDFFF]{2,5}|(?>[^\n\r\u2028\u2029\uD800-\uDFFF]|[\uD800-\uDBFF](?:[\uDC00-\uDFFF]|(?![\uDC00-\uDFFF]))|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]){2,5})\z
 ```
 
-**Negated supplementary classes** use a negative lookahead:
+A set with more than two alternatives of surrogate pairs (`\p{Lu}`, `\p{L}`) has them behind a look at the next
+code unit, so that a character of the Basic Multilingual Plane that is not in the class fails without trying each:
+`(?>\p{Lu}|(?=[\uD800-\uDFFF])(?:\uD801[...]|\uD803[...]|...))`. In a lookbehind, which .NET matches from right to
+left, the look is `(?<=[\uD800-\uDFFF])` and stands after the alternatives.
 
-```
-ECMAScript:  [^\u{1F600}-\u{1F64F}]
-.NET:        (?!\uD83D[\uDE00-\uDE4F])(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\uD800-\uDFFF])
-```
-
----
-
-## Literal Non-BMP Characters
-
-ECMAScript patterns can contain literal non-BMP characters (e.g. `🐲`, U+1F432). In UTF-16, these are stored as surrogate pairs — two `char` values. Without special handling, a quantifier like `*` after a literal emoji would apply only to the low surrogate, producing incorrect results.
-
-The translator detects literal surrogate pairs in the pattern and wraps them in a non-capturing group with explicit escape sequences, ensuring quantifiers apply to the whole code point.
-
-### Outside Character Classes
-
-| ECMAScript | .NET Translation | Notes |
-|---|---|---|
-| `🐲` | `(?:\uD83D\uDC32)` | Surrogate pair grouped |
-| `🐲*` | `(?:\uD83D\uDC32)*` | Quantifier applies to whole code point |
-| `🐲+` | `(?:\uD83D\uDC32)+` | Same for `+` |
-| `🐲{2}` | `(?:\uD83D\uDC32){2}` | Same for `{n}` |
-
-**Example:**
-
-```
-ECMAScript:  ^🐲*$
-.NET:        ^(?:\uD83D\uDC32)*$
-
-ECMAScript:  🐲🐉
-.NET:        (?:\uD83D\uDC32)(?:\uD83D\uDC09)
-```
-
-### Inside Character Classes
-
-Literal surrogate pairs inside character classes are handled using the same surrogate-pair-aware alternation approach used for `\u{XXXXX}` escapes:
-
-```
-ECMAScript:  [🐲]
-.NET:        (?:\uD83D\uDC32)
-
-ECMAScript:  [a🐲z]
-.NET:        (?:[az]|\uD83D\uDC32)
-```
-
----
-
-## Unicode Property Escapes (`\p{...}`, `\P{...}`)
-
-### General Category — Long Names
-
-Long Unicode General Category names are mapped to their short equivalents, which .NET supports natively.
-
-| ECMAScript | .NET Translation |
-|---|---|
-| `\p{Letter}` | `\p{L}` |
-| `\p{Uppercase_Letter}` | `\p{Lu}` |
-| `\p{Lowercase_Letter}` | `\p{Ll}` |
-| `\p{Titlecase_Letter}` | `\p{Lt}` |
-| `\p{Cased_Letter}` | `\p{LC}` |
-| `\p{Modifier_Letter}` | `\p{Lm}` |
-| `\p{Other_Letter}` | `\p{Lo}` |
-| `\p{Mark}` | `\p{M}` |
-| `\p{Nonspacing_Mark}` | `\p{Mn}` |
-| `\p{Spacing_Mark}` | `\p{Mc}` |
-| `\p{Enclosing_Mark}` | `\p{Me}` |
-| `\p{Number}` | `\p{N}` |
-| `\p{Decimal_Number}` | `\p{Nd}` |
-| `\p{Letter_Number}` | `\p{Nl}` |
-| `\p{Other_Number}` | `\p{No}` |
-| `\p{Punctuation}` | `\p{P}` |
-| `\p{Connector_Punctuation}` | `\p{Pc}` |
-| `\p{Dash_Punctuation}` | `\p{Pd}` |
-| `\p{Open_Punctuation}` | `\p{Ps}` |
-| `\p{Close_Punctuation}` | `\p{Pe}` |
-| `\p{Initial_Punctuation}` | `\p{Pi}` |
-| `\p{Final_Punctuation}` | `\p{Pf}` |
-| `\p{Other_Punctuation}` | `\p{Po}` |
-| `\p{Symbol}` | `\p{S}` |
-| `\p{Math_Symbol}` | `\p{Sm}` |
-| `\p{Currency_Symbol}` | `\p{Sc}` |
-| `\p{Modifier_Symbol}` | `\p{Sk}` |
-| `\p{Other_Symbol}` | `\p{So}` |
-| `\p{Separator}` | `\p{Z}` |
-| `\p{Space_Separator}` | `\p{Zs}` |
-| `\p{Line_Separator}` | `\p{Zl}` |
-| `\p{Paragraph_Separator}` | `\p{Zp}` |
-| `\p{Other}` | `\p{C}` |
-| `\p{Control}` | `\p{Cc}` |
-| `\p{Format}` | `\p{Cf}` |
-| `\p{Surrogate}` | `\p{Cs}` |
-| `\p{Private_Use}` | `\p{Co}` |
-| `\p{Unassigned}` | `\p{Cn}` |
-
-### General Category — Unicode Aliases
-
-The Unicode `PropertyValueAliases.txt` file defines additional aliases for some General Category values beyond the short and long names. These are valid in ECMAScript `\p{...}` escapes and are mapped to their .NET short equivalents.
-
-| ECMAScript | .NET Translation | Alias for |
-|---|---|---|
-| `\p{digit}` | `\p{Nd}` | `Decimal_Number` |
-| `\p{cntrl}` | `\p{Cc}` | `Control` |
-| `\p{punct}` | `\p{P}` | `Punctuation` |
-| `\p{Combining_Mark}` | `\p{M}` | `Mark` |
-
-**Example:**
-
-```
-ECMAScript:  ^\p{digit}+$
-.NET:        ^\p{Nd}+$
-```
-
-Short category names (`L`, `Lu`, `Nd`, etc.) and the `General_Category=`/`gc=` prefix are passed through after stripping the prefix:
-
-```
-ECMAScript:  \p{gc=Lu}       →  .NET: \p{Lu}
-ECMAScript:  \p{General_Category=Letter}  →  .NET: \p{L}
-```
-
-### General Category — Negated
-
-`\P{...}` is translated to `\P{...}` in .NET (both engines support negation natively for categories).
-
-### Script Properties
-
-Script properties are mapped to .NET Unicode block names where they align. The `Script=`, `sc=`, `Script_Extensions=`, and `scx=` prefixes are all supported.
-
-| ECMAScript | .NET Translation |
-|---|---|
-| `\p{Script=Greek}` / `\p{sc=Grek}` | `\p{IsGreek}` |
-| `\p{Script=Cyrillic}` / `\p{sc=Cyrl}` | `\p{IsCyrillic}` |
-| `\p{Script=Armenian}` / `\p{sc=Armn}` | `\p{IsArmenian}` |
-| `\p{Script=Hebrew}` / `\p{sc=Hebr}` | `\p{IsHebrew}` |
-| `\p{Script=Arabic}` / `\p{sc=Arab}` | `\p{IsArabic}` |
-| `\p{Script=Thai}` | `\p{IsThai}` |
-| `\p{Script=Georgian}` / `\p{sc=Geor}` | `\p{IsGeorgian}` |
-| `\p{Script=Devanagari}` / `\p{sc=Deva}` | `\p{IsDevanagari}` |
-| `\p{Script=Bengali}` / `\p{sc=Beng}` | `\p{IsBengali}` |
-| `\p{Script=Gujarati}` / `\p{sc=Gujr}` | `\p{IsGujarati}` |
-| `\p{Script=Tamil}` / `\p{sc=Taml}` | `\p{IsTamil}` |
-| `\p{Script=Telugu}` / `\p{sc=Telu}` | `\p{IsTelugu}` |
-| `\p{Script=Kannada}` / `\p{sc=Knda}` | `\p{IsKannada}` |
-| `\p{Script=Malayalam}` / `\p{sc=Mlym}` | `\p{IsMalayalam}` |
-| `\p{Script=Sinhala}` / `\p{sc=Sinh}` | `\p{IsSinhala}` |
-| `\p{Script=Myanmar}` / `\p{sc=Mymr}` | `\p{IsMyanmar}` |
-| `\p{Script=Ethiopic}` / `\p{sc=Ethi}` | `\p{IsEthiopic}` |
-| `\p{Script=Khmer}` / `\p{sc=Khmr}` | `\p{IsKhmer}` |
-| `\p{Script=Mongolian}` / `\p{sc=Mong}` | `\p{IsMongolian}` |
-| `\p{Script=Lao}` / `\p{sc=Laoo}` | `\p{IsLao}` |
-| `\p{Script=Hangul}` / `\p{sc=Hang}` | `\p{IsHangulJamo}` |
-| `\p{Script=Hiragana}` / `\p{sc=Hira}` | `\p{IsHiragana}` |
-| `\p{Script=Katakana}` / `\p{sc=Kana}` | `\p{IsKatakana}` |
-| `\p{Script=Tibetan}` / `\p{sc=Tibt}` | `\p{IsTibetan}` |
-
-**Script=Latin** is a special case. .NET does not have a `\p{IsLatin}` property — the Latin script spans multiple Unicode blocks. The translator emits an explicit alternation of the exact Unicode 16.0 Latin script code point ranges (34 BMP ranges + 5 supplementary ranges via surrogate pairs):
-
-```
-ECMAScript:  \p{Script=Latin}
-.NET:        (?:[\u0041-\u005A\u0061-\u007A\u00AA\u00BA...\uFF41-\uFF5A]
-              |\uD801[\uDF80-\uDF85]|\uD801[\uDF87-\uDFB0]
-              |\uD801[\uDFB2-\uDFBA]|\uD837[\uDF00-\uDF1E]
-              |\uD837[\uDF25-\uDF2A])
-```
-
-Negated script properties (`\P{Script=Latin}`) use a negative lookahead followed by a match for any Unicode code point.
-
-### Binary Properties
-
-ECMAScript `/u` mode supports binary Unicode properties. These are expanded to equivalent .NET character classes or alternation patterns.
-
-| ECMAScript | .NET Translation | Notes |
-|---|---|---|
-| `\p{ASCII}` | `[\u0000-\u007F]` | U+0000–U+007F |
-| `\p{Alphabetic}` | `[\p{L}\p{M}]` | Close approximation (Letter + Mark) |
-| `\p{White_Space}` | `[<whitespace chars>]` | Full ECMAScript whitespace set |
-| `\p{Emoji}` | `(?:[<BMP emoji>]\|<surrogate ranges>)` | Alternation of BMP class + supplementary surrogate pairs |
-| `\p{Any}` | `[\s\S]` | Matches any character |
-| `\p{Assigned}` | `[\P{Cn}]` | Everything except Unassigned |
-| `\p{Hex_Digit}` | `[0-9A-Fa-f\uFF10-\uFF19\uFF21-\uFF26\uFF41-\uFF46]` | ASCII + fullwidth hex digits |
-| `\p{Lowercase}` | `(?:[\p{Ll}<Other_Lowercase>]\|<supp>)` | `\p{Ll}` + 28 BMP + 5 supplementary Other_Lowercase ranges |
-| `\p{Uppercase}` | `(?:[\p{Lu}<Other_Uppercase>]\|<supp>)` | `\p{Lu}` + 2 BMP + 3 supplementary Other_Uppercase ranges |
-| `\p{ID_Start}` | `[\p{L}\p{Nl}\u1885-\u1886\u2118\u212E\u309B-\u309C]` | `[\p{L}\p{Nl}]` + 4 extra code points |
-| `\p{Emoji_Presentation}` | `(?:[<BMP>]\|<supp>)` | 33 BMP + 47 supplementary ranges |
-| `\p{Extended_Pictographic}` | `(?:[<BMP>]\|<supp>)` | 50 BMP + 28 supplementary ranges |
-
-Negated binary properties (`\P{ASCII}`, `\P{Emoji}`, etc.) use the appropriate negation mechanism — either `[^...]` for class-based properties or `(?!...)` negative lookahead for alternation-pattern properties.
-
-**Binary properties inside character classes:**
-
-BMP-only binary properties (ASCII, Alphabetic, White_Space, Any, Assigned, Hex_Digit, ID_Start) are inlined directly. Alternation-pattern properties (Emoji, Lowercase, Uppercase, Emoji_Presentation, Extended_Pictographic) cause the character class to be emitted as an alternation group:
-
-```
-ECMAScript:  [\p{Emoji}a-z]
-.NET:        (?:[a-z]|(?:[\u0023\u002A...BMP emoji...]|\uD83C[\uDC00-\uDFFF]|...))
-```
-
----
-
-## Backreferences
-
-### Numbered Backreferences
-
-ECMAScript treats backreferences to non-participating or forward-declared capture groups as matching the empty string. .NET fails the match in this case.
-
-The translator wraps every backreference in a .NET conditional:
-
-| ECMAScript | .NET Translation | Semantics |
-|---|---|---|
-| `\1` | `(?(1)\1)` | If group 1 captured, match its value; else match empty |
-| `\12` | `(?(12)\12)` | Same for multi-digit refs |
-
-### Named Backreferences
-
-| ECMAScript | .NET Translation |
-|---|---|
-| `\k<name>` | `(?(name)\k<name>)` |
-
-This `(?(N)\N)` conditional is a non-capturing construct — it does not affect group numbering.
-
-**Example:**
-
-```
-ECMAScript:  (a)?\1
-.NET:        (a)?(?(1)\1)
-
-Matching "" against (a)?\1:
-  ECMAScript: ✅ matches (group 1 non-participating → \1 matches empty)
-  .NET:       ✅ matches (conditional: group 1 not captured → match empty)
-```
-
-### Backreference vs. Octal Ambiguity
-
-In ECMAScript, `\1`–`\9` are always backreferences if there is a corresponding capture group. The translator counts capture groups and uses `(?(N)\N)` for all backreferences.
-
-`\0` (null character) is supported and translated as-is, but `\0` followed by a digit (e.g. `\00`) is rejected as `InvalidData` in `/u` mode.
-
----
+Without the `u` flag none of this applies. Every set is one .NET class of code units.
 
 ## Character Classes
 
-### Simple Classes
+A class is the set of its members. Members in the Basic Multilingual Plane are written in the order the pattern
+gave them. A class that needs another form is written from its set, in code point order.
 
-Simple character classes without negated shorthands or supplementary code points are passed through with content translation:
-
-```
-ECMAScript:  [a-z\d]
-.NET:        [a-z0-9]
-```
-
-### Negated Shorthands in Classes
-
-ECMAScript allows negated shorthands like `\D` inside character classes: `[\d\D]`. This cannot be represented directly in a .NET `[...]` class.
-
-**Non-negated class with negated shorthands** — Uses alternation:
-
-```
-ECMAScript:  [a-z\D]
-.NET:        (?:[a-z]|[^0-9])
-```
-
-**Negated class with negated shorthands** — Uses .NET character class subtraction:
-
-```
-ECMAScript:  [^a-z\D]
-.NET:        [^0-9-[a-z]]
-```
-
-### Empty and Match-Any Classes
-
-| ECMAScript | .NET Translation | Meaning |
+| ECMAScript | .NET | |
 |---|---|---|
-| `[]` | `[^\s\S]` | Matches nothing (empty class) |
-| `[^]` | `[\s\S]` | Matches any character |
+| `[a-zA-Z0-9_]` | `[a-zA-Z0-9_]` | |
+| `[\w.+-]` | `[a-zA-Z0-9_.+\-]` | A class escape is its members. |
+| `[\b]` | `[\u0008]` | In a class `\b` is backspace. |
+| `[--a]` | `[\u002D-a]` | .NET does not take an escaped hyphen as the start of a range. |
+| `[^abc]` | `(?>[^abc\uD800-\uDFFF]\|...)` | Every other character, by code point. |
+| `[\W]`, `[^\w]` | The same as `\W` | |
+| `[^\W]` | `[a-zA-Z0-9_]` | |
+| `[^a\D]` | `[0-9]` | The digits but `a`: the class is written from its set. |
+| `[\d\D]`, `[^]` | `(?>[^\uD800-\uDFFF]\|...)` | Every character. |
+| `[]`, `[^\d\D]` | `(?!\z\|[\s\S])` | No character: an assertion that never holds. |
 
----
+`[]` is a class with no member and `[^]` is every character. A `]` closes a class wherever it stands, unlike in
+.NET, where a `]` first in a class is a member.
 
-## Identity Escapes
+`(?!)` is not used for "never", because .NET removes it and what depends on it from the pattern before it runs it,
+and its compiled engine then goes wrong on some patterns.
 
-In ECMAScript `/u` mode, only specific characters may be escaped with a backslash. The translator enforces these restrictions and passes valid identity escapes through.
+## Unicode Property Escapes
 
-### Outside Character Classes
+`\p{...}` and `\P{...}` take every property, value and alias ECMA-262 lists: the General_Category values
+(`\p{L}`, `\p{Letter}`, `\p{gc=L}`, `\p{General_Category=Letter}`), `Script` and `Script_Extensions` for every
+script, and the 53 binary properties. A name ECMA-262 does not define is an error with the `u` flag.
 
-Valid identity escapes: `^`, `$`, `.`, `*`, `+`, `?`, `(`, `)`, `[`, `]`, `{`, `}`, `|`, `\`, `/`
+| ECMAScript | .NET | |
+|---|---|---|
+| `\p{Zs}` | `\p{Zs}` | A General_Category value with no member beyond the Basic Multilingual Plane is .NET's class. |
+| `\p{L}` | `(?>\p{L}\|(?=[\uD800-\uDFFF])(?:\uD800[\uDC00-\uDC0B...]\|\uD801[...]\|...))` | .NET's class, then the surrogate pairs of the letters beyond the Basic Multilingual Plane. |
+| `\P{Zs}` | `(?>[^\p{Zs}\uD800-\uDFFF]\|...)` | |
+| `\p{LC}` | `(?>[\p{Lu}\p{Ll}\p{Lt}]\|...)` | .NET has no `LC`. |
+| `\p{Script=Greek}` | `(?>[\u0370-\u0373\u0375-\u0377...]\|\uD800[\uDD40-\uDD8E\uDDA0]\|\uD834[\uDE00-\uDE45])` | The ranges of the script. .NET's `IsGreek` is a block, which is not the script. |
+| `\p{ASCII}` | `[\u0000-\u007F]` | |
+| `\p{White_Space}` | `[\t-\r \u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]` | The Unicode property, which is not `\s`. |
+| `\p{Any}` | Every character | |
+| `\p{Cs}` | `(?>[\uD800-\uDBFF](?![\uDC00-\uDFFF])\|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])` | A surrogate that is not half of a pair. |
 
-These are the ECMAScript *SyntaxCharacter* set plus `/`.
+.NET's `\p{L}` tests one code unit, so it never matches a letter beyond the Basic Multilingual Plane. That is why
+the pairs are written out, and why `\p{L}` is about 4,200 characters long.
 
-### Inside Character Classes
+## Modifier Groups
 
-Valid identity escapes: all of the above plus `-`.
+`(?i:...)`, `(?m:...)`, `(?s:...)`, combinations such as `(?im:...)`, and negations such as `(?-i:...)` or
+`(?s-i:...)` change how their body is read. No .NET option is used for them.
 
-### Control Escapes
-
-`\t`, `\n`, `\r`, `\f`, `\v` are passed through in all contexts.
-
-### Control Letter Escapes
-
-`\cA`–`\cZ` and `\ca`–`\cz` are passed through. An invalid letter after `\c` returns `InvalidData`.
-
-### Hex Escapes
-
-`\xHH` is passed through unchanged.
-
----
-
-## Strict `/u` Mode Validation
-
-The following patterns are **rejected as `InvalidData`** in `/u` mode, matching ECMAScript strict behaviour:
-
-| Pattern | Reason |
+| Modifier | Effect on the translation |
 |---|---|
-| `\a` | Not a valid escape in `/u` mode (would be BEL in .NET — silent mismatch) |
-| `\e` | Not a valid escape in `/u` mode (would be ESC in .NET) |
-| `\B` inside `[...]` | Word boundary assertion not valid inside character class |
-| `\1`–`\9` inside `[...]` | Backreferences not valid inside character class |
-| `\0` followed by a digit | Octal escapes not permitted in `/u` mode |
-| `\p{letter}` | Wrong case — property names are case-sensitive |
-| `\p{}`, `\p{=}` | Malformed property name |
-| `\p{Script=Klingon}` | Unknown script name |
-| `\-` outside `[...]` | Dash is only a valid identity escape inside character classes |
+| `s` | The dot is every character. |
+| `m` | `^` and `$` are the line assertions shown under [Anchors](#anchors). |
+| `i` | A literal or a class becomes the set of the characters ECMA-262's Canonicalize makes equal to it. |
 
----
+```
+ECMAScript:  ^(?i:straße)$
+.NET:        ^(?:[Ss\u017F][Tt][Rr][Aa][\u00DF\u1E9E][Ee])\z
+```
 
-## Pass-Through Constructs
+Canonicalize is Unicode simple case folding with the `u` flag grammar, and the uppercase mapping of one code unit
+without it, which never maps a character outside ASCII into ASCII. So `(?i:k)` matches the Kelvin sign U+212A only
+with the `u` flag grammar. .NET's own case-insensitive matching follows other tables and the current culture.
 
-The following ECMAScript constructs have identical semantics in .NET and are passed through without modification:
+## Groups
 
-| Construct | Description |
+A group is written without capture, `(?:...)`, unless a backreference reads it. A group that is read is written
+with its ECMA-262 number as its name, `(?<1>...)`. A named group is treated the same way, so a name may be any
+ECMA-262 identifier and two groups in separate alternatives may share one.
+
+```
+ECMAScript:  ^(a|b)(c)$
+.NET:        ^(?:a|b)(?:c)\z
+
+ECMAScript:  (?<year>\d{4})-\k<year>
+.NET:        (?<1>[0-9]{4})-(?(1)\1)
+```
+
+## Backreferences
+
+In ECMA-262 a backreference matches what its group captured when the group last took part, and the empty string
+when it has not taken part. A quantified term forgets the captures of the groups inside it when each iteration
+starts. .NET fails a backreference to a group that has not taken part, and keeps a capture from an earlier
+iteration.
+
+| ECMAScript | .NET | |
+|---|---|---|
+| `(a)\1` | `(?<1>a)(?(1)\1)` | The conditional matches nothing when the group is unset. |
+| `^\1(a)` | `^(?(1)\1)(?<1>a)` | A reference before its group matches the empty string. |
+| `^(?:(a)\|b)*\1` | `^(?:(?(1)(?<-1>))(?:(?<1>a)\|b))*(?(1)\1)` | Each iteration starts by unsetting group 1. |
+| `^(a){0}\1` | `^` | The group never takes part, so the reference is the empty string. |
+
+`(?(1)(?<-1>))` is a balancing group: it takes the capture of group 1 away when there is one, and .NET gives it
+back if the match backtracks out of the iteration.
+
+A backreference inside `(?i:...)` is written `(?(1)(?i:\1))` when the group can capture a character that has a
+case variant. This is the one place where .NET's own case comparison is used
+(see [Known Limits](./EcmaRegexTranslator.md#known-limits)).
+
+## Repetitions
+
+A quantifier is written as it is, except in the cases below. They concern a body that can match the empty string,
+where ECMA-262 is exact and .NET's engines are not: ECMA-262 lets the iterations that must run match nothing, and
+refuses an iteration that matched nothing once they are done.
+
+| Case | What is written |
 |---|---|
-| Literal characters | `a`, `Z`, `0`, etc. |
-| `^` | Start anchor |
-| `*`, `+`, `?`, `{n}`, `{n,}`, `{n,m}` | Quantifiers |
-| `*?`, `+?`, `??` | Non-greedy quantifiers |
-| `(...)` | Capturing groups |
-| `(?:...)` | Non-capturing groups |
-| `(?=...)`, `(?!...)` | Lookahead assertions |
-| `(?<=...)`, `(?<!...)` | Lookbehind assertions |
-| `(?<name>...)` | Named capturing groups |
-| `\|` | Alternation |
-| `\uHHHH` | BMP Unicode escape |
-| `\xHH` | Hex escape |
-| `\t`, `\n`, `\r`, `\f`, `\v` | Control escapes |
-| `\cX` | Control letter escapes |
-| `\p{L}`, `\p{Lu}`, etc. | Short category names |
+| `X{0}` | Nothing. |
+| A body that can only match the empty string (`(?:^)*`, `(?=a){3}`, `\b+` is not valid) | Nothing when no iteration must run, and the body once when one must. |
+| A lazy repetition of anything but one code unit (`(?:a\|b)*?`, `(a\|){2,}?`) | The greedy form. Whether a pattern matches does not depend on which path is tried first. .NET's lazy repetition of a group can fail to end, or throw. |
+| A body that matches the empty string wherever it stands, with a least count (`(a\|){2,3}`) | The least count becomes 0: `(?:(?:a)?){0,3}`. |
+| A body with a group a backreference reads, which can match the empty string, with iterations that need not run | Those iterations are written apart and made to fail when they matched nothing (below). |
+
+The last case in full, for `^(?:(a)|)*\1`:
+
+```
+^(?:(?(1)(?<-1>))(?=(?<e1>[\s\S]*))(?:(?:(?<1>a))?)(?!\k<e1>\z))*(?(1)\1)
+```
+
+`(?=(?<e1>[\s\S]*))` captures the rest of the input when an iteration starts, and `(?!\k<e1>\z)` fails the
+iteration when the rest of the input is still that text. Without it .NET would take an iteration that matched
+nothing and leave the repetition with group 1 unset, where ECMA-262 leaves it as the last iteration that matched
+something set it. The check reads the rest of the input, so such a repetition takes time in proportion to the
+square of the length of the text. It is written only where a backreference could see the difference.
+
+Inside a lookaround whose captures a backreference reads, the order in which paths are tried decides what is
+captured. There a lazy repetition stays lazy, every iteration that need not run has the check above, and a lazy
+repetition of a group with a highest count is never left to .NET, whose compiled engine can throw on one that
+stands inside another repetition. With up to eight iterations left to choice it is written as optional groups one
+in another (`(?:ab){0,2}?` is `(?:(?:ab)(?:(?:ab))??)??`). With more, a group counts the iterations:
+
+```
+ECMAScript:  (?=((?:ab){0,12}?)c)\1
+.NET:        (?=(?<1>(?:(?<c1>)){12}(?:(?<-c1>)(?:ab))*?(?:(?(c1)(?<-c1>))){12})c)(?(1)\1)
+```
+
+`(?:(?<c1>)){12}` gives the group `c1` twelve captures. Each iteration takes one away with `(?<-c1>)` and cannot
+start when none is left, and `(?:(?(c1)(?<-c1>))){12}` takes away what is left after the last.
+
+## Lookarounds
+
+`(?=...)`, `(?!...)`, `(?<=...)` and `(?<!...)` are written as they are. Both engines match a lookbehind from
+right to left, so captures and backreferences inside one behave alike. Inside a lookbehind the translator writes
+what must be matched first on the right.
+
+A negative lookaround whose body matches the empty string wherever it stands, such as `(?!)` or `(?<!a*)`, never
+holds and is written `(?!\z|[\s\S])`.
+
+Without the `u` flag a lookahead may be quantified. It is a body that can only match the empty string, so it is
+written once or not at all.
+
+## Alternatives
+
+Alternatives are written in order. An empty alternative beside one other is written as that other made optional:
+`(?:a+|)` is `(?:(?:a+)?)`, which is what .NET makes of it itself. It is written so because .NET's own rewrite goes
+wrong when the other alternative is a repetition with no highest count and a repetition encloses both. It runs
+`(?:a+|)+` as `a+`, which does not match the empty string.
+
+.NET also takes for empty an alternative that is written but matches nothing wherever it stands: a group no
+backreference reads around nothing (`()`), a lookaround of nothing (`(?=)`), a backreference to a group that never
+takes part. The translator reads each of those as the empty alternative it is, so `(?:x+|()){3}` is
+`(?:(?:x+)?){0,3}`, and writes none of them anywhere else: `a(?=)b` is `ab`.

@@ -835,27 +835,21 @@ main-docs:
       - {index: 5, language: powershell, lines: [167, 177]}
   - path: "docs/EcmaRegexTranslations.md"
     blocks:
-      - {index: 0, language: , lines: [40, 43]}
-      - {index: 1, language: , lines: [127, 133]}
-      - {index: 2, language: , lines: [143, 146]}
-      - {index: 3, language: , lines: [150, 153]}
-      - {index: 4, language: , lines: [157, 160]}
-      - {index: 5, language: , lines: [164, 167]}
-      - {index: 6, language: , lines: [188, 194]}
-      - {index: 7, language: , lines: [200, 206]}
-      - {index: 8, language: , lines: [270, 273]}
-      - {index: 9, language: , lines: [277, 280]}
-      - {index: 10, language: , lines: [319, 325]}
-      - {index: 11, language: , lines: [354, 357]}
-      - {index: 12, language: , lines: [384, 391]}
-      - {index: 13, language: , lines: [407, 410]}
-      - {index: 14, language: , lines: [418, 421]}
-      - {index: 15, language: , lines: [425, 428]}
+      - {index: 0, language: , lines: [42, 45]}
+      - {index: 1, language: , lines: [97, 103]}
+      - {index: 2, language: , lines: [121, 127]}
+      - {index: 3, language: , lines: [151, 154]}
+      - {index: 4, language: , lines: [164, 167]}
+      - {index: 5, language: , lines: [173, 176]}
+      - {index: 6, language: , lines: [241, 244]}
+      - {index: 7, language: , lines: [256, 262]}
+      - {index: 8, language: , lines: [301, 303]}
+      - {index: 9, language: , lines: [317, 320]}
   - path: "docs/EcmaRegexTranslator.md"
     blocks:
-      - {index: 0, language: csharp, lines: [19, 27], category: compilable, verified: false}
-      - {index: 1, language: csharp, lines: [33, 67], category: fragment, verified: false}
-      - {index: 2, language: csharp, lines: [85, 103], category: compilable, verified: false}
+      - {index: 0, language: csharp, lines: [44, 58], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [65, 89], category: fragment, verified: false}
+      - {index: 2, language: powershell, lines: [120, 122]}
   - path: "docs/ImplementingNatsJetStreamAndAzureServiceBus.md"
     blocks:
       - {index: 0, language: , lines: [14, 33]}
@@ -1508,9 +1502,9 @@ main-docs:
       - {index: 29, language: powershell, lines: [415, 421]}
   - path: "docs/RuntimeEvaluator.md"
     blocks:
-      - {index: 0, language: csharp, lines: [239, 257], category: compilable, verified: false}
-      - {index: 1, language: csharp, lines: [270, 282], category: compilable, verified: false}
-      - {index: 2, language: xml, lines: [369, 373]}
+      - {index: 0, language: csharp, lines: [245, 263], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [276, 288], category: compilable, verified: false}
+      - {index: 2, language: xml, lines: [375, 379]}
   - path: "docs/SchemaEvaluator.md"
     blocks:
       - {index: 0, language: xml, lines: [19, 26]}
@@ -1904,7 +1898,7 @@ skills:
       - {index: 2, language: powershell, lines: [96, 105]}
   - path: ".github/skills/corvus-ecma-regex/SKILL.md"
     blocks:
-      - {index: 0, language: csharp, lines: [20, 30], category: compilable, verified: false}
+      - {index: 0, language: csharp, lines: [35, 48], category: fragment, verified: false}
   - path: ".github/skills/corvus-go-evaluator/SKILL.md"
     blocks:
       - {index: 0, language: bash, lines: [42, 48]}

@@ -715,8 +715,8 @@ public class EcmaRegexTranslatorComprehensiveTests
     }
 
     [TestMethod]
-    [DataRow(@"[^\D\S]", "(?!)")]       // empty: D+S in negated
-    [DataRow(@"[^\W\S]", "(?!)")]       // empty: W+S in negated
+    [DataRow(@"[^\D\S]", @"(?!\z|[\s\S])")]       // empty: D+S in negated
+    [DataRow(@"[^\W\S]", @"(?!\z|[\s\S])")]       // empty: W+S in negated
     [DataRow(@"[^\D\W]", "[0-9]")]           // intersection of [0-9] and [a-zA-Z0-9_]
     public void MultipleNegatedShorthandsNegatedClassTranslation(string ecma, string expected)
     {
@@ -775,7 +775,7 @@ public class EcmaRegexTranslatorComprehensiveTests
 
     [TestMethod]
     [DataRow("a|", "(?:a)?")]
-    [DataRow("|b", "(?:b)??")]
+    [DataRow("|b", "(?:b)?")]
     [DataRow("a||b", "a||b")]
     public void EmptyAlternationTranslation(string ecma, string expected)
     {
@@ -831,8 +831,8 @@ public class EcmaRegexTranslatorComprehensiveTests
     [TestMethod]
     [DataRow("(?=a(?=b))", "(?=a(?=b))")]
     [DataRow("(?=a(?!b))", "(?=a(?!b))")]
-    [DataRow("a(?=)b", "a(?=)b")]
-    [DataRow("a(?!)b", "a(?!)b")]
+    [DataRow("a(?=)b", "ab")]
+    [DataRow("a(?!)b", @"a(?!\z|[\s\S])b")]
     public void NestedLookaroundTranslation(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));

@@ -231,7 +231,7 @@ public class EcmaRegexTranslatorTranslationTests
     // ============================
 
     [TestMethod]
-    [DataRow("[]", "(?!)")]     // Empty class → matches nothing
+    [DataRow("[]", @"(?!\z|[\s\S])")]     // Empty class → matches nothing
     [DataRow("[^]", @"(?>[^\uD800-\uDFFF]" + BeyondBmp)]      // Match-all class
     public void SpecialCharacterClassesTranslateCorrectly(string ecma, string expected)
     {

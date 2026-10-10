@@ -55,6 +55,15 @@ public class EcmaPatternSemanticsTests
         AssertCases(EcmaPatternCases.EmptyIterations, engine);
     }
 
+    [TestMethod]
+    [DataRow(Engine.CompiledRegex)]
+    [DataRow(Engine.InterpretedRegex)]
+    [DataRow(Engine.GeneratedCode)]
+    public void PatternsThatFaultedTheEngineAnswerAsV8(Engine engine)
+    {
+        AssertCases(EcmaPatternCases.EngineFaults, engine);
+    }
+
     internal static void AssertCases((string Pattern, string[] Matches, string[] Fails)[] cases, Engine engine)
     {
         if (engine == Engine.GeneratedCode && !PatternValidityTests.GeneratedCodeIsSupported)

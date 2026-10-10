@@ -211,6 +211,38 @@ internal static class EcmaPatternCases
     ];
 
     /// <summary>
+    /// Patterns on which a match threw from inside .NET's engine, did not return, or took the wrong one of two
+    /// paths, once the translation was right in every other respect: a lazy repetition of a group, and a
+    /// repetition inside a lookaround whose captures a backreference reads.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] EngineFaults =
+    [
+        ("((a){0,2}?(\\2?)x|){3}((x))", ["x", "ax", "xa", "xx", "aax", "axa", "xax", "ax-", "x1"], ["", "a", "aa", "aaa", "a-a", "-", "aaaa", "1", "91"]),
+        ("(?:(?=((?:(a)){0,12}?x)?)\\1\\2?){3}x", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "aaaaaaaaa", "aaaaaaaaaaax", "aaaaaaaaaaaaa", "ababababababababababx", "xaaaaaaaaaaaaaa", "aaaaaaaaac", "aaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac"]),
+        ("(?:(?=((?:(a)|x){2,11}?(?:a|ab){1,2}?)$)x\\1)?$", ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "aaaaaaaaa", "aaaaaaaaaaax", "aaaaaaaaaaaaa", "ababababababababababx", "xaaaaaaaaaaaaaa", "aaaaaaaaac", "aaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac"], []),
+        ("(?:(?=((?:ab?)*?(?:ab?){1,2}?)$)\\1x){2}$", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "aaaaaaaaa", "aaaaaaaaaaax", "aaaaaaaaaaaaa", "ababababababababababx", "xaaaaaaaaaaaaaa", "aaaaaaaaac", "aaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac"]),
+        ("(?:(?=((?:ab?){0,9}?(?:ab?){1,2}?)$)\\1x){2}$", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "aaaaaaaaa", "aaaaaaaaaaax", "aaaaaaaaaaaaa", "ababababababababababx", "xaaaaaaaaaaaaaa", "aaaaaaaaac", "aaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac"]),
+        ("(?=((((x)+|())){3}))\\1", ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "xxx", "xy", "xyxy"], []),
+        ("(?=((?:(?:a|))+?)a)(?:\\1|a)$", ["a", "aa", "xa", "axa", "aaa", "a-a", "aaaa"], ["", "x", "ax", "xx", "aax", "xax", "-", "ax-", "1", "x1", "91"]),
+        ("(|()((?!)()9)){2}((?<!(|\\B)()\\9{3})((1))?)", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        (".*(?=((?:(?:(a)?)*(?:(?:(?=x)|(?:a|)))+?)|x)a)\\1a$", ["a", "aa", "xa", "axa", "aaa", "a-a", "aaaa"], ["", "x", "ax", "xx", "aax", "xax", "-", "ax-", "1", "x1", "91"]),
+        (".*(?=((?:(?:(|a)(?:x)*?(?!$)))+?(?:a)+)$)x\\1", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        (".*(?=((a*)(?:.?)+?)x)(?:\\1|a)$", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("^(?:(?:xy)+|(?=)){3}$", ["", "xy", "xyxy"], ["a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "xxx"]),
+        ("^(?<=((?:(?:a|))*\\b(?:(x|))+?|.?))\\1+$", [""], ["a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("^(?=((?:(?:(?:(?:x)??(|a)))*|\\b)(?:a)??|[ax]))x\\1", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("^(?=((?:(?:(|a)(?:(?:(?:(a|)){1,3}?(?:.?)??))*?(?:.?)+))*[ax]))\\1$", ["a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "aaaa"], ["", "-", "ax-", "1", "x1", "91"]),
+        ("^(a){0}(?:x+|\\1){3}$", ["", "x", "xx", "xxx"], ["a", "aa", "ax", "xa", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "xy", "xyxy"]),
+        ("a(?<=((?:^)*(?:(a|))+?(?:(a|)){2,}?|$))\\1a$", ["aaa"], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("a(?=((?:(?:(?:(?:(|a))+?))+)))\\1a$", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("a(?=((?:(?:(?:(a*))+(?:(?:)(?:(?:a|))??)(?:\\b)*))+?(?:a|))$)\\1", ["a", "aa", "xa", "axa", "aaa", "a-a", "aaaa"], ["", "x", "ax", "xx", "aax", "xax", "-", "ax-", "1", "x1", "91"]),
+        ("x?(?<=((?:(?:a|))+?(?:(x|))+(a)?))\\1$", ["", "aa", "xx", "-", "ax-", "aaaa", "1", "x1", "91"], ["a", "x", "ax", "xa", "aax", "axa", "xax", "aaa", "a-a"]),
+        ("x?(?<=((?:(a)?)+?[ax]|(a|)))\\1", ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"], []),
+        ("x?(?<=((?:(|a))+))\\1a$", ["a", "xa", "axa", "aaa", "a-a"], ["", "x", "aa", "ax", "xx", "aax", "xax", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("x?(?<=((?:[ax]){1,3}?(?:(a)?)+?))\\1", ["aa", "xx", "aax", "aaa", "aaaa"], ["", "a", "x", "ax", "xa", "axa", "xax", "a-a", "-", "ax-", "1", "x1", "91"]),
+    ];
+
+    /// <summary>
     /// Patterns with whether V8 accepts each with the <c>u</c> flag and with no flag. A pattern neither accepts is
     /// not a valid ECMA-262 regular expression.
     /// </summary>

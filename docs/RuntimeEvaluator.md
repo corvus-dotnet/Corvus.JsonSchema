@@ -16,8 +16,9 @@ the existing `JsonSchemaResultsCollector` / `JsonSchemaAnnotationProducer`.
 | `tests/...Tests/Unit` | Focused tests for references, keywords, results collection. |
 | `benchmarks/...Benchmarks` | BenchmarkDotNet: the 37 Sourcemeta cases (generated model vs runtime evaluator) and cold start. |
 
-The library links `EcmaRegexTranslator.cs` from `Corvus.Text.Json.CodeGeneration` as shared source and
-embeds the standard metaschemas from its `metaschema` folder.
+The library links the ECMA-262 regular expression translator (`EcmaRegexTranslator.cs` and the three
+`EcmaRegex*.cs` files beside it) from `Corvus.Text.Json.CodeGeneration` as shared source and embeds the standard
+metaschemas from its `metaschema` folder.
 
 ## Compilation (cold start)
 
@@ -201,26 +202,31 @@ replaced; the Validator is now a facade over this evaluator (see `docs/Validator
 
 ## Patterns
 
-`pattern` and `patternProperties` are ECMA-262 regular expressions. A pattern is read with the grammar of the `u`
-flag, and when that grammar does not accept it, with the grammar of a pattern with no flag, which many schemas need
-(`\-`, `\@`, a lone `{`).
+`pattern` and `patternProperties` are ECMA-262 regular expressions, and the evaluator answers them as an
+ECMAScript engine does. The answers are tested against V8 on the
+[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data).
 
-**A pattern neither grammar accepts is refused when the schema is compiled.** `Compile`, `CompileFromUri`,
-`ForEntryPoint` and `FromProgramImage` throw `JsonSchemaCompilationException`, whose message names the pattern and
-says what is wrong and where, for example `The pattern '^[a-z]{3,1}$' is not a valid ECMA-262 regular expression.
-Numbers out of order in {} quantifier at offset 11.` Before this, such a pattern was passed to .NET as it was, which
-accepted most of them with a meaning of its own.
-
-Each distinct pattern is read once in the life of the process, when the first schema that holds it is compiled.
-Nothing of that runs when an instance is evaluated.
+- A pattern is read with the grammar of the `u` flag, and is then matched by code point: a character beyond the
+  Basic Multilingual Plane is one character to the dot, to a class and to a quantifier. A pattern that grammar does
+  not accept is read with the grammar of a pattern with no flag, which many schemas need (`\-`, `\@`, a lone `{`),
+  and is then matched by UTF-16 code unit, as ECMA-262 matches such a pattern.
+- **A pattern neither grammar accepts is refused when the schema is compiled.** `Compile`, `CompileFromUri`,
+  `ForEntryPoint` and `FromProgramImage` throw `JsonSchemaCompilationException`, whose message names the pattern and
+  says what is wrong and where, for example `The pattern '^[a-z]{3,1}$' is not a valid ECMA-262 regular expression.
+  Numbers out of order in {} quantifier at offset 11.` Before this, such a pattern was passed to .NET as it was,
+  which accepted most of them with a meaning of its own.
+- The evaluator matches many patterns itself (prefixes, length ranges, literal alternations, class sequences,
+  separated lists). Every other pattern is translated to a .NET pattern with the same meaning and matched by a
+  .NET `Regex`. [EcmaRegexTranslator.md](./EcmaRegexTranslator.md) describes the translation and its limits.
+  `JsonSchemaEvaluator.ToDotNetPattern` returns it.
+- Each distinct pattern is read and translated once in the life of the process, when the first schema that holds
+  it is compiled. Nothing of that runs when an instance is evaluated.
 
 ## Regular expression match timeout
 
-The evaluator matches many patterns itself (prefixes, length ranges, literal alternations, class sequences,
-separated lists). Every other `pattern` and `patternProperties` keyword is matched by a .NET `Regex`, and .NET's
-engine backtracks. There are patterns on which a match never finishes, in the interpreted engine, the compiled
-engine or both, and patterns that take time exponential in the length of the text (`^(a+)+$` on a long run of `a`
-that ends in another character).
+.NET's regular expression engine backtracks, and there are patterns on which a match takes time exponential in the
+length of the text (`^(a|aa)+$` on a long run of `a` that ends in another character). The translation avoids the
+forms on which .NET's engines are known not to finish at all, but it cannot make a match fast.
 
 So a match has a timeout. `JsonSchemaEvaluatorOptions.RegexMatchTimeout` sets it, and its default is
 `JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout`, 10 seconds.
@@ -233,8 +239,8 @@ So a match has a timeout. `JsonSchemaEvaluatorOptions.RegexMatchTimeout` sets it
 - A `Regex` supplied by `RegexProvider` keeps the timeout it was constructed with.
 - Set `RegexMatchTimeout = Regex.InfiniteMatchTimeout` to match with no timeout, which was the behaviour before
   the default was introduced.
-- The timeout limits time and not memory. A match that never finishes can grow the engine's backtracking stack
-  by hundreds of megabytes a second. Choose a shorter timeout for schemas that are not trusted.
+- The timeout limits time and not memory. A match that runs for long can grow the engine's backtracking stack as
+  it goes. Choose a shorter timeout for schemas that are not trusted.
 
 ```csharp
 using System.Text.RegularExpressions;
