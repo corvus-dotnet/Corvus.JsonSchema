@@ -40,7 +40,8 @@ namespace Corvus.Text.Json.CodeGeneration;
 /// Canonicalize of ECMA-262, <c>^</c> and <c>$</c> become assertions about ECMA-262's four line terminators, and the
 /// dot becomes every character. No option of .NET stands for them.</item>
 /// <item>A group is written without capture unless a backreference reads it, and then by its number.</item>
-/// <item>A backreference matches the empty string when its group has not taken part (see <see cref="Emitter"/>).</item>
+/// <item>A backreference matches the empty string when its group has not taken part, and a quantified group forgets
+/// what its groups captured when an iteration starts, as ECMA-262 specifies (see <see cref="Emitter"/>).</item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -190,9 +191,16 @@ internal static class EcmaRegexTranslator
 
     /// <summary>Writes the tree of a pattern as a .NET pattern with the same meaning.</summary>
     /// <remarks>
-    /// In ECMA-262 a backreference matches the text its group captured when the group last took part, and the empty
-    /// string when it has not taken part. .NET fails a backreference to a group that has not taken part. So a
-    /// backreference to group 1 is written <c>(?(1)\1)</c>, which matches nothing when the group is unset.
+    /// <para>
+    /// <b>Backreferences.</b> In ECMA-262 a backreference matches the text its group captured when the group last
+    /// took part, and the empty string when it has not taken part. A quantified term unsets the groups inside it
+    /// when each iteration starts. .NET fails a backreference to a group that has not taken part and keeps what a
+    /// group captured in an earlier iteration. So a backreference to group 1 is written <c>(?(1)\1)</c>, which
+    /// matches nothing when the group is unset, and a repetition whose body holds a group that a backreference reads
+    /// starts each iteration with <c>(?(1)(?&lt;-1&gt;))</c>, a balancing group that takes the capture away, and
+    /// gives it back when the match backtracks out of the iteration. A lookbehind is matched backwards by both
+    /// engines, and both undo the captures of a negative lookaround.
+    /// </para>
     /// </remarks>
     private sealed class Emitter
     {
@@ -207,6 +215,9 @@ internal static class EcmaRegexTranslator
 
         /// <summary>More alternatives of surrogate pairs than this stand behind one test for a surrogate.</summary>
         private const int ManyAlternatives = 2;
+
+        /// <summary>A length with no bound.</summary>
+        private const long Infinite = long.MaxValue;
 
         private static readonly int[] SurrogateRange = [0xD800, 0xDFFF];
         private static readonly int[] HighSurrogateRange = [0xD800, 0xDBFF];
@@ -234,6 +245,7 @@ internal static class EcmaRegexTranslator
         private readonly bool[] referenced;
 
         private readonly StringBuilder sb = new();
+        private int markers;
 
         public Emitter(EcmaRegexParser parser, EcmaRegexNode root)
         {
@@ -289,6 +301,24 @@ internal static class EcmaRegexTranslator
 
             this.Node(this.root, Context.Last, null);
             return this.sb.ToString();
+        }
+
+        private static long Plus(long a, long b) => a == Infinite || b == Infinite ? Infinite : a + b;
+
+        /// <summary>A length some number of times over, where the lengths that are not infinite are below 2^47.</summary>
+        private static long Times(long length, int count)
+        {
+            if (length == 0 || count == 0)
+            {
+                return 0;
+            }
+
+            if (length == Infinite || count == EcmaRegexNode.Unbounded || length > (1L << 47) / count)
+            {
+                return Infinite;
+            }
+
+            return length * count;
         }
 
         private static bool IsSurrogate(int c) => c >= 0xD800 && c <= 0xDFFF;
@@ -348,6 +378,88 @@ internal static class EcmaRegexTranslator
             {
                 this.Survey(sub);
             }
+        }
+
+        private bool AnyReferenced(EcmaRegexNode n)
+        {
+            for (int g = n.FirstGroup + 1; g <= n.LastGroup; g++)
+            {
+                if (this.referenced[g])
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Lengths, in characters.
+        private long MinLength(EcmaRegexNode n)
+        {
+            if (n.MinLength < 0)
+            {
+                this.Measure(n);
+            }
+
+            return n.MinLength;
+        }
+
+        private long MaxLength(EcmaRegexNode n)
+        {
+            if (n.MinLength < 0)
+            {
+                this.Measure(n);
+            }
+
+            return n.MaxLength;
+        }
+
+        private void Measure(EcmaRegexNode n)
+        {
+            long min = 0;
+            long max = 0;
+            switch (n.Kind)
+            {
+                case EcmaRegexNodeKind.Char:
+                case EcmaRegexNodeKind.Set:
+                    min = 1;
+                    max = 1;
+                    break;
+                case EcmaRegexNodeKind.Cat:
+                    foreach (EcmaRegexNode sub in n.Subs)
+                    {
+                        min = Plus(min, this.MinLength(sub));
+                        max = Plus(max, this.MaxLength(sub));
+                    }
+
+                    break;
+                case EcmaRegexNodeKind.Alt:
+                    min = Infinite;
+                    foreach (EcmaRegexNode sub in n.Subs)
+                    {
+                        min = Math.Min(min, this.MinLength(sub));
+                        max = Math.Max(max, this.MaxLength(sub));
+                    }
+
+                    break;
+                case EcmaRegexNodeKind.Group:
+                    min = this.MinLength(n.Subs[0]);
+                    max = this.MaxLength(n.Subs[0]);
+                    break;
+                case EcmaRegexNodeKind.Repeat:
+                    min = Times(this.MinLength(n.Subs[0]), n.Min);
+                    max = Times(this.MaxLength(n.Subs[0]), n.Max);
+                    break;
+                case EcmaRegexNodeKind.Backref:
+                    max = Infinite;
+                    break;
+                default:
+                    break;
+            }
+
+            // Past 2^47 a length is as good as unbounded, and keeping below it keeps the sums exact.
+            n.MinLength = min > (1L << 47) ? Infinite : min;
+            n.MaxLength = max > (1L << 47) ? Infinite : max;
         }
 
         // Where a match may start.
@@ -666,7 +778,16 @@ internal static class EcmaRegexTranslator
             }
         }
 
-        /// <summary>Writes a repetition.</summary>
+        /// <summary>
+        /// Writes a repetition.
+        /// <para>
+        /// When a backreference reads a group of the body, each iteration starts by unsetting the groups of the body,
+        /// as ECMA-262 does. .NET takes an iteration that matched nothing and then leaves the repetition, where
+        /// ECMA-262 refuses such an iteration once the iterations that must run are done. The two reach the same
+        /// places in the text, but .NET reaches them with the groups as the empty iteration left them. So the
+        /// iterations that need not run are then written apart, each made to fail when it has matched nothing.
+        /// </para>
+        /// </summary>
         private void Repeat(EcmaRegexNode n, Context context, EcmaRegexNode? next)
         {
             EcmaRegexNode body = n.Subs[0];
@@ -712,8 +833,110 @@ internal static class EcmaRegexTranslator
                 return;
             }
 
-            this.Atom(body, inner, null);
-            this.Quantifier(min, max, lazy);
+            bool nullable = this.MinLength(body) == 0;
+            bool resets = (max == EcmaRegexNode.Unbounded || max > 1) && this.AnyReferenced(n);
+
+            // An iteration that need not run is made to fail when it has matched nothing, where .NET would go on with
+            // the groups as that iteration left them.
+            bool guarded = nullable && max != min && this.AnyReferenced(n);
+            if (!resets && !guarded)
+            {
+                this.Atom(body, inner, null);
+                this.Quantifier(min, max, lazy);
+                return;
+            }
+
+            string reset = resets ? this.Resets(n) : string.Empty;
+            if (!guarded)
+            {
+                this.Iteration(body, inner, reset, null);
+                this.Quantifier(min, max, lazy);
+                return;
+            }
+
+            // The iterations that must run, which may match nothing, and then the ones that need not, which may not.
+            // In a lookbehind the ones that must run are matched first, and they stand on the right.
+            string marker = "e" + (++this.markers).ToString(CultureInfo.InvariantCulture);
+            int rest = max == EcmaRegexNode.Unbounded ? EcmaRegexNode.Unbounded : max - min;
+            if (!backward && min > 0)
+            {
+                this.Iteration(body, inner, reset, null);
+                this.Quantifier(min, min, lazy: false);
+            }
+
+            this.Iteration(body, inner, reset, marker);
+            this.Quantifier(0, rest, lazy);
+            if (backward && min > 0)
+            {
+                this.Iteration(body, inner, reset, null);
+                this.Quantifier(min, min, lazy: false);
+            }
+        }
+
+        /// <summary>
+        /// Writes one iteration of a repetition as a group: what unsets the groups of the body, then the body. With
+        /// <paramref name="marker"/> the iteration fails when it has matched nothing: a group of that name captures
+        /// the rest of the input when the iteration starts, and the iteration ends only where the rest of the input
+        /// is no longer that text. In a lookbehind everything is matched from right to left, so what comes first
+        /// stands last, and the group captures the input before the iteration.
+        /// </summary>
+        private void Iteration(EcmaRegexNode body, Context inner, string reset, string? marker)
+        {
+            if (reset.Length == 0 && marker is null)
+            {
+                this.Atom(body, inner, null);
+                return;
+            }
+
+            bool backward = (inner & Context.Backward) != 0;
+            this.sb.Append("(?:");
+            if (!backward)
+            {
+                this.sb.Append(reset);
+                if (marker is not null)
+                {
+                    this.sb.Append("(?=(?<").Append(marker).Append(@">[\s\S]*))");
+                }
+
+                this.Node(body, inner, null);
+                if (marker is not null)
+                {
+                    this.sb.Append(@"(?!\k<").Append(marker).Append(@">\z)");
+                }
+            }
+            else
+            {
+                if (marker is not null)
+                {
+                    this.sb.Append(@"(?<!^\k<").Append(marker).Append(">)");
+                }
+
+                this.Node(body, inner, null);
+                if (marker is not null)
+                {
+                    this.sb.Append("(?<=(?<").Append(marker).Append(@">^[\s\S]*))");
+                }
+
+                this.sb.Append(reset);
+            }
+
+            this.sb.Append(')');
+        }
+
+        /// <summary>What unsets every group of a node that a backreference reads.</summary>
+        private string Resets(EcmaRegexNode n)
+        {
+            StringBuilder reset = new();
+            for (int g = n.FirstGroup + 1; g <= n.LastGroup; g++)
+            {
+                if (this.referenced[g])
+                {
+                    string number = g.ToString(CultureInfo.InvariantCulture);
+                    reset.Append("(?(").Append(number).Append(")(?<-").Append(number).Append(">))");
+                }
+            }
+
+            return reset.ToString();
         }
 
         /// <summary>

@@ -23,6 +23,14 @@ public class EcmaRegexTranslatorDataTests
         AssertCases(EcmaPatternCases.WrittenFromTheTree, engine);
     }
 
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
+    public void PatternsWithBackreferencesAnswerAsV8(RegexOptions engine)
+    {
+        AssertCases(EcmaPatternCases.Backreferences, engine);
+    }
+
     private static void AssertCases((string Pattern, string[] Matches, string[] Fails)[] cases, RegexOptions engine)
     {
         var failures = new List<string>();
