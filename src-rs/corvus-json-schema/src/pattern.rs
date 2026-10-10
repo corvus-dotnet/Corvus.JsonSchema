@@ -12,13 +12,16 @@
 //!   (`\d`/`\w` ASCII-only, ECMA's `\s` and `.`) and run by `regex`, which searches in linear time without
 //!   allocating per match;
 //! - anything else (lookarounds, backreferences, word boundaries, Unicode properties) by `regress`, a backtracking
-//!   ECMA-262 engine.
+//!   ECMA-262 engine. Where its answer for a pattern is not ECMA-262's, it is given another pattern with the same
+//!   meaning (see `rewrite`).
 //!
 //! Patterns compile once per process (a pattern is immutable, so identical patterns share one matcher).
 
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::{Arc, LazyLock, Mutex};
+
+mod rewrite;
 
 /// A compiled `pattern`.
 pub(crate) struct Pattern {
@@ -247,24 +250,62 @@ fn compile_regress(pattern: &str) -> Option<(regress::Regex, bool)> {
 
 static CACHE: LazyLock<Mutex<HashMap<String, Arc<Pattern>>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
-/// Compiles (or fetches from the process-wide cache) a pattern; `None` when it is not a valid ECMA-262 regex.
-pub(crate) fn compile(pattern: &str) -> Option<Arc<Pattern>> {
-    if let Some(p) = CACHE.lock().unwrap().get(pattern) {
-        return Some(p.clone());
+/// Why a pattern does not compile.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum PatternError {
+    /// It is not a valid ECMA-262 regular expression.
+    Invalid,
+    /// It is valid, and it has repetitions inside repetitions that have to be written out for the engine (see
+    /// `rewrite`), which comes to more than the engine is given.
+    TooLarge,
+}
+
+impl PatternError {
+    /// The message for the pattern `pattern` of the keyword `keyword`.
+    pub(crate) fn message(self, pattern: &str, keyword: &str) -> String {
+        match self {
+            PatternError::Invalid => format!("Invalid regular expression '{pattern}' in {keyword}."),
+            PatternError::TooLarge => format!(
+                "The regular expression '{pattern}' in {keyword} is valid, but its repetitions inside repetitions \
+                 are too large to compile."
+            ),
+        }
     }
-    // Validity is ECMA-262's: a pattern regress rejects is an error, whichever matcher would run it.
-    let (regress, unicode) = compile_regress(pattern)?;
+}
+
+/// Compiles (or fetches from the process-wide cache) a pattern.
+pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
+    if let Some(p) = CACHE.lock().unwrap().get(pattern) {
+        return Ok(p.clone());
+    }
+    // Validity is ECMA-262's: a pattern regress rejects is an error, whichever matcher would run it. regress allows
+    // a quantifier on a word boundary, which ECMA-262 does not.
+    let (regress, unicode) = compile_regress(pattern).ok_or(PatternError::Invalid)?;
+    if rewrite::quantified_assertion(pattern, unicode) {
+        return Err(PatternError::Invalid);
+    }
     let matcher = match choose(pattern, unicode) {
         Some(m) => m,
-        None if !unicode => match translate(pattern, false).and_then(|t| regex::Regex::new(&t).ok()) {
-            Some(re) => Matcher::RegexBmp(re, regress),
-            None => Matcher::Regress(regress),
-        },
-        None => Matcher::Regress(regress),
+        None => {
+            // regress matches it, and is given a pattern for which its answers are ECMA-262's.
+            let regress = match rewrite::for_engine(pattern, unicode) {
+                rewrite::Rewrite::Unchanged => regress,
+                rewrite::Rewrite::Rewritten(rewritten) => {
+                    let flags = if unicode { "u" } else { "" };
+                    regress::Regex::with_flags(&rewritten, flags).map_err(|_| PatternError::TooLarge)?
+                }
+                rewrite::Rewrite::TooLarge => return Err(PatternError::TooLarge),
+            };
+            let bmp = if unicode { None } else { translate(pattern, false).and_then(|t| regex::Regex::new(&t).ok()) };
+            match bmp {
+                Some(re) => Matcher::RegexBmp(re, regress),
+                None => Matcher::Regress(regress),
+            }
+        }
     };
     let p = Arc::new(Pattern { source: pattern.to_string(), matcher });
     CACHE.lock().unwrap().insert(pattern.to_string(), p.clone());
-    Some(p)
+    Ok(p)
 }
 
 fn choose(pattern: &str, unicode: bool) -> Option<Matcher> {
@@ -552,7 +593,7 @@ fn excluded_class_with_word(p: &str) -> Option<(CharSet, bool)> {
 
 /// The `regex` format: a valid ECMA-262 regular expression (with the `u` flag).
 pub(crate) fn is_valid_ecma_regex(s: &str) -> bool {
-    regress::Regex::with_flags(s, "u").is_ok()
+    regress::Regex::with_flags(s, "u").is_ok() && !rewrite::quantified_assertion(s, true)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

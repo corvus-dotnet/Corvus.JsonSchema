@@ -73,7 +73,11 @@ this way, through CPython's C API.
 - **Patterns:** use ECMA-262 semantics with the `u` flag. Common shapes (class sequences, literals and their
   alternatives, separated lists, line lengths) get dedicated matchers, as in the C# evaluator. Patterns within the
   common subset of ECMA-262 and the [`regex`](https://crates.io/crates/regex) crate's syntax are translated and run by
-  `regex`, and anything else by [`regress`](https://crates.io/crates/regress).
+  `regex`, and anything else by [`regress`](https://crates.io/crates/regress). Where `regress` answers a pattern
+  differently from ECMA-262 (a repetition inside a repetition, a backreference to a group from inside it, two groups
+  with one name, a case-insensitive group), it is given another pattern with the same meaning. A repetition inside a
+  repetition is written out as copies for that, which multiply with the repetitions around them. A schema whose
+  pattern would come to more than 65,536 characters that way does not compile, and the error says why.
 - **Formats:** are annotations unless asserted by the vocabulary or by `CompileOptions::assert_format`. The format
   validators follow the C# implementations (RFC 3339 dates and times, IDN hostnames, IRIs, and so on).
 

@@ -1,0 +1,281 @@
+//! Patterns that regress, the engine for the patterns no other matcher takes, answers differently from ECMA-262
+//! when it is given them as they are written. The crate gives it another pattern with the same meaning
+//! (`src/pattern/rewrite.rs`). The answers here are V8's.
+//!
+//! - A repetition inside a repetition. regress loses the iteration count of the inner one when it comes back into
+//!   it by backtracking. It then gave wrong answers, and for a body that can match nothing it did not end:
+//!   `{"pattern": "^(?!-)(?:(?:a*)*)*x"}` on `"a"` took memory until the process was stopped (0.1.0 to 0.1.6).
+//! - A reference to a group from inside that group, which read a value the group does not have yet.
+//! - Two groups with one name, where a reference to the name matched nothing.
+//! - A quantifier on a word boundary, which is not valid and was accepted.
+//! - A case-insensitive group in a pattern that is valid only without the `u` flag, and `\W` in a class of one
+//!   with it.
+
+use corvus_json_schema::{CompileOptions, compile, compile_with};
+use serde_json::json;
+
+/// Every text of up to three characters over `a`, `x` and `-`, and seven longer ones: 47 texts.
+fn texts() -> Vec<String> {
+    let mut all = vec![String::new()];
+    let mut last = all.clone();
+    for _ in 0..3 {
+        last = last.iter().flat_map(|t| ["a", "x", "-"].map(|c| format!("{t}{c}"))).collect();
+        all.extend(last.iter().cloned());
+    }
+    all.extend(["aaaa", "xaxa", "aaax", "xxxa", "a-a-", "ax-ax-", "aa-xx-a"].map(String::from));
+    all
+}
+
+/// Checks each pattern against its answers, one `T` or `F` for each of [`texts`]: V8's
+/// `new RegExp(pattern, "u").test(text)`, or without the flag for a pattern that is valid only without it.
+fn check(cases: &[(&str, &str)]) {
+    let texts = texts();
+    let mut wrong = Vec::new();
+    for &(pattern, answers) in cases {
+        assert_eq!(answers.len(), texts.len(), "{pattern}");
+        let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
+        for (text, want) in texts.iter().zip(answers.chars()) {
+            if v.is_valid(&json!(text)) != (want == 'T') {
+                wrong.push(format!("{pattern} on {text:?}: want {want}"));
+            }
+        }
+    }
+    assert!(wrong.is_empty(), "{} wrong:\n{}", wrong.len(), wrong.join("\n"));
+}
+
+/// A repetition inside a repetition, where the inner one can be come back into: its body has an alternation or a
+/// repetition of its own. Before 0.1.7 the first three, and the patterns from `(((?=x)|){3}){2}x$` to
+/// `((?:x|(?<!^)){4,5}|x){2}$`, did not end on some text here, and the others gave a wrong answer on one.
+#[rustfmt::skip]
+const REPETITIONS: &[(&str, &str)] = &[
+    ("^(?!-)(?:(?:a*)*)*x", "FFTFFTFTTTFFFFTFTTTFFFTTTTTTTTTFFFFFFFFFFTTTFTF"),
+    ("^(?!-)(?:(?:a|)?){2}x", "FFTFFTFTTTFFFFTFTTTFFFTTTTTTTTTFFFFFFFFFFTFTFTF"),
+    ("^(?!-)(?:(?:a?)?){3}$", "TTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    ("^(?!-)(?:(?:(?:a){1,}){1}){3}$", "FFFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFFFF"),
+    ("^(?!-)(?:(?:a|x){1,2}-)+$", "FFFFFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFTTF"),
+    ("^(?!-)(?:(?:a|x){1,3}?-)+$", "FFFFFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFTTF"),
+    ("^(?!-)(?:(?:a|x-?){2}-)*$", "TFFFFFFFFFFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFFTF"),
+    ("^(?!-)(?:(?:a|x)+-)+$", "FFFFFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFTTF"),
+    ("^(?!-)(?:(?:a|^)+x)+$", "FFTFFTFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFFTFFFF"),
+    (r#"^(?!-)(?:(?:a|\b){2,}x)+$"#, "FFTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFF"),
+    (r#"^(?!-)(?:(?:a|\b){2,}?x)+$"#, "FFTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFF"),
+    ("^(?!-)(?:a(?:x[ax]{1,2})?-?)+$", "FTFFTFTFFFFFFTFTTTFTFFFFFFFFFFFFFFFFFFFFTFFFTFF"),
+    ("(((?=x)|){3}){2}x$", "FFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFFTFFFF"),
+    (r#"((?:\1|(a|)|.)*|a())*x"#, "FFTFFTFTTTFTFFTFTTTFTFTTTTTTTTTFTFTTTFTFFTTTFTT"),
+    (r#"^(?:(|\B\1){2}|){3,5}$"#, "TFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    ("(?:(-|){1}?|(?!$)){1,}?x$", "FFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFFTFFFF"),
+    (r#"(\b([ax]?){3}|x|\1)*?x$"#, "FFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFFTFFFF"),
+    (r#"^(|(a|$|\1(?:))+())+a"#, "FTFFTTTFFFFFFTTTTTTTTTFFFFFFFFFFFFFFFFFFTFTFTTT"),
+    (r#"^((x|()|\2){0,}|){4}?x"#, "FFTFFFFTTTFFFFFFFFFFFFTTTTTTTTTFFFFFFFFFFTFTFFF"),
+    ("^(?:|((?<!x)|){4,5})+x$", "FFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    ("((?:x|(?<!^)){4,5}|x){2}$", "FTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"),
+    (r#"(?:a|){3}(^(?:(?:|[^a])+(?<![^a]\1)|[ax]){1}?|x)+$"#, "TTTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFFTFFFF"),
+    (r#"([^a][^a]|.(?:\1\1|a?[ax]){2}){4}a$"#, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFT"),
+    (r#"^(\b([^a]|\2){1,}){4}?a$"#, "FTFFFFFTFFFFFFFFFFFFFFFFFTFFTFFFFFFFFFFFFFFTFFF"),
+    (r#"^(a|(?:(?<=a)\1|){3}?){2}a$"#, "FTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+];
+
+/// A reference from outside a repetition to a group inside it reads the last iteration that ran, and from inside
+/// it, the group of its own iteration. Before 0.1.7 the first three did not end on some text here. regress
+/// answers the others as they are written, and they are here for what a reference reads once the repetition is
+/// written as copies.
+#[rustfmt::skip]
+const REFERENCES_TO_A_REPETITION: &[(&str, &str)] = &[
+    (r#"^(?:(?:(a)|x|){1,2}\1-)+$"#, "FFFTFFFFFTFFTFFTFFTFFFFFFFFTFFTFFFFFTFFTFFFFFTF"),
+    (r#"^(?:(?:(a)|x|)+\1-)+$"#, "FFFTFFFFFTFFTFFTFFTFFFFFFFFTFFTFFFFFTFFTFFFFFTF"),
+    (r#"^(?:(?:(a)|x?){2,}\1-)+$"#, "FFFTFFTFFTFFTFFTFFTFFTFFFFFTFFTFFTFFTFFTFFFFTTF"),
+    (r#"^(?:(?:(a)|x){1,2}\1-)+$"#, "FFFFFFFFFTFFFFFTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF"),
+    (r#"^(?:(?:(a)|(x))+\1\2-)*$"#, "TFFFFFFFFFFFFFFTFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFF"),
+    (r#"^(?:(?:(a)|x|-){0,2}?\1x)+$"#, "FFTFFFFFTFFTFFTFFTFFTFFFFFTFFTFFFFFTFFTFFFTFFFF"),
+    (r#"^(?:(?:(a)|x){2,}\1-)+$"#, "FFFFFFFFFFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF"),
+    (r#"^(?:(?:(?:(a)|x){1,2}-){1,2}\1)+$"#, "FFFFFFFFFTFFFFFFFFTTFFFFFFFTFFFFFFFFFFFFFFFFFTF"),
+];
+
+/// The same inside a lookbehind, which matches from its end: the iterations run from the last one written. Before
+/// 0.1.7 the first five did not end on some text here, and the next three gave a wrong answer on one.
+#[rustfmt::skip]
+const REPETITIONS_IN_A_LOOKBEHIND: &[(&str, &str)] = &[
+    ("(?<=^(?:(?:a|){1,2}){3})-", "FFFTFFTFFFTTTFFTFFFTTTFFFFFFFFFTTTTTTTTTFFFFTFT"),
+    ("(?<=^(?:x(?:a*x?){1,2})+)-", "FFFFFFFFFTFFFFFFFFFFFFFFTFFTTTTFFFFFFFFFFFFFFFF"),
+    ("(?<=^(?:(?:a|)+){3})-", "FFFTFFTFFFTTTFFTFFFTTTFFFFFFFFFTTTTTTTTTFFFFTFT"),
+    ("(?<=^(?:x(?:(a)|x|){1,2})+)-", "FFFFFFFFFTFFFFFFFFFFFFFFTFFTTTTFFFFFFFFFFFFFFFF"),
+    ("(?<=^(?:x(?:a?x?){2})+)-", "FFFFFFFFFTFFFFFFFFFFFFFFTFFTTTTFFFFFFFFFFFFFFFF"),
+    ("(?<=^(?:(?:a+){1,2}-?){2})x", "FFFFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFT"),
+    ("(?<=^(?:(?:a+){1}-?){2})x", "FFFFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFT"),
+    ("(?<=^(?:(?:(?:a){1,}){1}){3})x", "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFF"),
+    ("(?<=^(?:(?:a|)*-?)*x)-", "FFFFFFFFFTFFFFFFFFTFFFFFFFFFTTTFFFFFTFFFFFFFFTF"),
+    (r#"(?<=(?:(?:(a)|x){1,2}\1)+)-"#, "FFFFFFTFFTFFFFFTFFTTTTFFTFFTTTTFFTFFTFFFFFFFTTT"),
+    (r#"(?<=^(?:\1(?:(a)|x){1,2}-)+)x"#, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFFFFFFFFFFFFFFT"),
+    ("(?<=^(?:(?:a|x){1,2}?-)+)a", "FFFFFFFFFFFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFTTT"),
+];
+
+/// Patterns that are valid only without the `u` flag (`\-` is not an escape with it). Before 0.1.7 the first two
+/// did not end on some text here.
+#[rustfmt::skip]
+const REPETITIONS_WITHOUT_THE_U_FLAG: &[(&str, &str)] = &[
+    (r#"^(?:\-|(?:a|){1,2}x)+$"#, "FFTTFTFFTTFTTFTFFTTFFFFTFFTTFTTFTFFTTFTTFFFFFTF"),
+    (r#"^(?:\-|(?:(a)|x|){1,2}\1x)+$"#, "FFTTFFFFTTFTTFTFFTFFFFFFFFTTFTTFFFFTTFTTFFTFFFF"),
+    (r#"^(?:\-)?(?:(?:a|)+x)+$"#, "FFTFFTFFTFFTFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFTFFFF"),
+    (r#"^(?:\-|(?:(a)|x){1,2}\1)+$"#, "FFTTTTFFTTFTTTTTFTTFFFTTFFTTFTTTTFFTTFTTTFTFFTF"),
+];
+
+/// A reference to a group from inside the group matches nothing: the group has no value until it closes.
+#[rustfmt::skip]
+const REFERENCES_FROM_INSIDE_THE_GROUP: &[(&str, &str)] = &[
+    (r#"(x|\1)x"#, "FFTFFTFTTTFTFFTFTTTFTFTTTTTTTTTFTFTTTFTFFTTTFTT"),
+    (r#"^(a|\1a)$"#, "FTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    (r#"(a?\1)a"#, "FTFFTTTTFFTFFTTTTTTTTTTTTTFFTFFTTTTFFTFFTTTTTTT"),
+    (r#"()([x]|\2)x"#, "FFTFFTFTTTFTFFTFTTTFTFTTTTTTTTTFTFTTTFTFFTTTFTT"),
+    (r#"^(?:(a)|(x\2))+$"#, "FTTFTTFTTFFFFTTFTTFFFFTTFTTFFFFFFFFFFFFFTTTTFFF"),
+    (r#"^(?:(a|x\1)-)+$"#, "FFFFFFTFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFTFF"),
+    (r#"(?<=(\1x|a))-"#, "FFFFFFTFFTFFFFFTFFTTTTFFTFFTTTTFFTFFTFFFFFFFTTT"),
+];
+
+/// Two groups with one name, in separate alternatives. A reference to the name reads the one that matched.
+#[rustfmt::skip]
+const GROUPS_WITH_ONE_NAME: &[(&str, &str)] = &[
+    (r#"^(?:(?<n>a)|(?<n>x))\k<n>$"#, "FFFFTFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    (r#"^(?:(?<n>a)|(?<n>x))+\k<n>$"#, "FFFFTFFFTFFFFTFFFTFFFFTFFFTFFFFFFFFFFFFFTFFFFFF"),
+    (r#"(?:(?<n>a)|(?<n>x)){2}\k<n>"#, "FFFFFFFFFFFFFTFFFTFFFFTFFFTFFFFFFFFFFFFFTFTTFFF"),
+    (r#"^(?:(?<n>a)|(?<n>x)|-)*\k<n>$"#, "TFFTTFTFTTFFTTFTFTTFFTTFTFTTFFTTFTFTTFFTTFFFTTF"),
+    (r#"^(?:(?<m>a)|(?<m>x))(?:(?<n>a)|(?<n>x))\k<m>\k<n>$"#, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFTTFFFFF"),
+];
+
+#[test]
+fn a_repetition_inside_a_repetition_keeps_its_count() {
+    check(REPETITIONS);
+}
+
+#[test]
+fn a_reference_to_a_group_of_a_repetition_reads_the_last_iteration() {
+    check(REFERENCES_TO_A_REPETITION);
+}
+
+#[test]
+fn a_repetition_inside_a_repetition_in_a_lookbehind() {
+    check(REPETITIONS_IN_A_LOOKBEHIND);
+}
+
+#[test]
+fn a_repetition_inside_a_repetition_without_the_u_flag() {
+    check(REPETITIONS_WITHOUT_THE_U_FLAG);
+}
+
+#[test]
+fn a_reference_from_inside_its_group_matches_nothing() {
+    check(REFERENCES_FROM_INSIDE_THE_GROUP);
+}
+
+#[test]
+fn a_reference_to_a_name_of_two_groups_reads_the_one_that_matched() {
+    check(GROUPS_WITH_ONE_NAME);
+}
+
+/// The patterns of `patternProperties` and `propertyNames` go the same way.
+#[test]
+fn a_repetition_inside_a_repetition_in_a_pattern_of_property_names() {
+    let v = compile(&json!({ "patternProperties": { "^(?!-)(?:(?:a*)*)*x": false } })).unwrap();
+    assert!(v.is_valid(&json!({ "a": 1, "-x": 1 })));
+    assert!(!v.is_valid(&json!({ "aax": 1 })));
+    let v = compile(&json!({ "propertyNames": { "pattern": r"^(?:(?:(a)|x){1,2}\1-)+$" } })).unwrap();
+    assert!(v.is_valid(&json!({ "xaa-": 1, "x-": 1 })));
+    assert!(!v.is_valid(&json!({ "xa-": 1 })));
+}
+
+/// An assertion takes no quantifier. regress allows one on `\b` and `\B`.
+#[test]
+fn a_quantifier_on_a_word_boundary_is_not_valid() {
+    let format = CompileOptions { assert_format: Some(true), ..CompileOptions::default() };
+    let format = compile_with(&json!({ "format": "regex" }), &format).unwrap();
+    for pattern in [r"\b+", r"\B*", r"a\b?", r"^\b{2}a", r"\B{1,}?x", r"(a\b*)", r"[a]\b+\&", r"(?=a\B+)"] {
+        let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
+        assert_eq!(e.message(), format!("Invalid regular expression '{pattern}' in pattern."));
+        assert!(compile(&json!({ "patternProperties": { pattern: true } })).is_err(), "{pattern}");
+        assert!(!format.is_valid(&json!(pattern)), "{pattern}");
+    }
+    // A quantifier on a group that holds one, an escaped backslash before a `b`, and a backspace in a class.
+    for (pattern, text) in [(r"(?:\b)+a", "a"), (r"\\b+", r"\bb"), (r"[\b+]", "+"), (r"a\b", "a"), (r"\b{", "a{")] {
+        let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
+        assert!(v.is_valid(&json!(text)), "{pattern} on {text:?}");
+    }
+    for pattern in [r"(?:\b)+a", r"\\b+", r"[\b+]", r"a\b"] {
+        assert!(format.is_valid(&json!(pattern)), "{pattern}");
+    }
+}
+
+/// Each pattern has a case-insensitive group, the texts it matches and the texts it does not. The answers are V8's
+/// for the same pattern with the group taken off and the `i` flag set, which ECMA-262 gives the same meaning. (V8
+/// 13.6 itself answers some of these groups differently from the flag.) The patterns with `\&` are valid only
+/// without the `u` flag, where two characters are equal when the uppercase forms of their UTF-16 code units are:
+/// `s` is not U+017F there, and `k` is not U+212A. With the flag, `\W` does not hold the characters that fold to a
+/// word character.
+#[rustfmt::skip]
+const CASE_INSENSITIVE: &[(&str, &[&str], &[&str])] = &[
+    (r"^(?i:s)$\&?", &["s", "S"], &["\u{17f}", "k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:\u017f)$\&?", &["\u{17f}"], &["s", "S", "k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:[a-z])$\&?", &["s", "S", "k", "K", "i", "I", "a"], &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "0", "_", ""]),
+    (r"^(?i:[^a-z])$\&?", &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "0", "_"], &["s", "S", "k", "K", "i", "I", "a", ""]),
+    (r"^(?i:\w)$\&?", &["s", "S", "k", "K", "i", "I", "a", "0", "_"], &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", ""]),
+    (r"^(?i:\W)$\&?", &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-"], &["s", "S", "k", "K", "i", "I", "a", "0", "_", ""]),
+    (r"^(?i:[\W])$\&?", &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-"], &["s", "S", "k", "K", "i", "I", "a", "0", "_", ""]),
+    (r"^(?i:[^\W])$\&?", &["s", "S", "k", "K", "i", "I", "a", "0", "_"], &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", ""]),
+    (r"^(?i:\u0131)$\&?", &["\u{131}"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:i)$\&?", &["i", "I"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:\u1f80)$\&?", &["\u{1f80}"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:\u00b5)$\&?", &["\u{b5}", "\u{3bc}", "\u{39c}"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:[k-s])$\&?", &["s", "S", "k", "K"], &["\u{17f}", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:[\u212a])$\&?", &["\u{212a}"], &["s", "S", "\u{17f}", "k", "K", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"(?i:\Bs)\&?", &[], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:[\W])$", &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "0", "_", ""]),
+    (r"^(?i:[^\W])$", &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "0", "_"], &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", ""]),
+    (r"^(?i:[^\W\d]+)$", &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "_"], &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "0", ""]),
+    (r"^(?i:[\W_])$", &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "_"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "0", ""]),
+    (r"^(?i:s)$", &["s", "S", "\u{17f}"], &["k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:\W)$", &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "0", "_", ""]),
+    (r"^(?i:[\w])$", &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "0", "_"], &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", ""]),
+];
+
+#[test]
+fn a_case_insensitive_group_compares_as_its_grammar_says() {
+    let mut wrong = Vec::new();
+    for &(pattern, matches, fails) in CASE_INSENSITIVE {
+        let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
+        for (texts, want) in [(matches, true), (fails, false)] {
+            for &text in texts {
+                if v.is_valid(&json!(text)) != want {
+                    wrong.push(format!("{pattern} on {text:?}: want {want}"));
+                }
+            }
+        }
+    }
+    assert!(wrong.is_empty(), "{} wrong:\n{}", wrong.len(), wrong.join("\n"));
+}
+
+/// A repetition that is written out as copies multiplies with the repetitions around it. Past 65,536 characters,
+/// or deeper than the engine reads, the pattern is refused with a reason of its own. It is not run with another
+/// meaning.
+#[test]
+fn a_repetition_too_large_to_write_out_is_refused() {
+    for pattern in
+        [r"^(?!-)(?:(?:(?:a|x){200}-|a){200}x)+$", r"^(?!-)(?:(?:a|x){1,300}-)+$", r"^(?!-)(?:(?:a|x){4294967295}-)+$"]
+    {
+        let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
+        assert_eq!(
+            e.message(),
+            format!(
+                "The regular expression '{pattern}' in pattern is valid, but its repetitions inside repetitions are \
+                 too large to compile."
+            )
+        );
+    }
+    // A count as large on a body that cannot be come back into is not written out.
+    for (pattern, text) in [
+        (r"^(?!-)(?:[ax]{1,300}-)+$", "ax-xxa-"),
+        (r"^(?!-)(?:(?:ax){300}-)+$", &format!("{}-", "ax".repeat(300))),
+        (r"^(?!-)(?:(?:a|x){1,200}-)+$", "ax-xxa-"),
+    ] {
+        let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
+        assert!(v.is_valid(&json!(text)), "{pattern}");
+        assert!(!v.is_valid(&json!("ax-xxa")), "{pattern}");
+    }
+}
