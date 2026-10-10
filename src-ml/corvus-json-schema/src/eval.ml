@@ -549,11 +549,12 @@ let keyword e is_match message name =
   end
   else not is_match
 
-(* count_keyword records a keyword whose message ends in a quoted count. *)
-let count_keyword e is_match prefix n name =
+(* count_keyword records a keyword whose message ends in a quoted count: the value of a count keyword of the node,
+   which is named by key (the keyword that holds the value, where that is not the keyword of the row). *)
+let count_keyword e is_match prefix (n : Node.t) key value name =
   if not e.collect then not is_match
   else begin
-    let message = if Results.with_text e.c is_match then prefix ^ " '" ^ string_of_int n ^ "'" else "" in
+    let message = if Results.with_text e.c is_match then prefix ^ " '" ^ count_text n key value ^ "'" else "" in
     Results.evaluated_keyword e.c is_match message name;
     false
   end
@@ -1450,14 +1451,18 @@ and eval_string e id (n : Node.t) x =
     let length = code_points d x in
     if n.min_length >= 0 then begin
       let m = length >= n.min_length in
-      if count_keyword e m "Expected the length of the value to be greater than or equal to" n.min_length "minLength"
+      if
+        count_keyword e m "Expected the length of the value to be greater than or equal to" n "minLength" n.min_length
+          "minLength"
       then go := false;
       ok := !ok && m
     end;
     if !go && n.max_length >= 0 then begin
       let m = length <= n.max_length in
-      if count_keyword e m "Expected the length of the value to be less than or equal to" n.max_length "maxLength" then
-        go := false;
+      if
+        count_keyword e m "Expected the length of the value to be less than or equal to" n "maxLength" n.max_length
+          "maxLength"
+      then go := false;
       ok := !ok && m
     end
   end;
@@ -1528,14 +1533,18 @@ and eval_object e id (n : Node.t) x bits =
   let count = count d x in
   if n.min_properties >= 0 then begin
     let m = count >= n.min_properties in
-    if count_keyword e m "Expected the property count to be greater than or equal to" n.min_properties "minProperties"
+    if
+      count_keyword e m "Expected the property count to be greater than or equal to" n "minProperties" n.min_properties
+        "minProperties"
     then go := false;
     ok := !ok && m
   end;
   if !go && n.max_properties >= 0 then begin
     let m = count <= n.max_properties in
-    if count_keyword e m "Expected the property count to be less than or equal to" n.max_properties "maxProperties" then
-      go := false;
+    if
+      count_keyword e m "Expected the property count to be less than or equal to" n "maxProperties" n.max_properties
+        "maxProperties"
+    then go := false;
     ok := !ok && m
   end;
   let first = first d x in
@@ -1661,13 +1670,14 @@ and eval_array e (n : Node.t) x bits =
   let count = count d x in
   if n.min_items >= 0 then begin
     let m = count >= n.min_items in
-    if count_keyword e m "Expected the item count to be greater than or equal to" n.min_items "minItems" then
-      go := false;
+    if count_keyword e m "Expected the item count to be greater than or equal to" n "minItems" n.min_items "minItems"
+    then go := false;
     ok := !ok && m
   end;
   if !go && n.max_items >= 0 then begin
     let m = count <= n.max_items in
-    if count_keyword e m "Expected the item count to be less than or equal to" n.max_items "maxItems" then go := false;
+    if count_keyword e m "Expected the item count to be less than or equal to" n "maxItems" n.max_items "maxItems" then
+      go := false;
     ok := !ok && m
   end;
   if (not !go) || ((not n.has_prefix_items) && n.items < 0 && n.contains < 0 && not n.unique_items) then !go && !ok
@@ -1722,8 +1732,11 @@ and eval_array e (n : Node.t) x bits =
       let m = !matches >= n.min_contains && not over in
       let stop =
         if over then
-          count_keyword e m "Expected the contains count to be less than or equal to" n.max_contains "contains"
-        else count_keyword e m "Expected the contains count to be greater than or equal to" n.min_contains "contains"
+          count_keyword e m "Expected the contains count to be less than or equal to" n "maxContains" n.max_contains
+            "contains"
+        else
+          count_keyword e m "Expected the contains count to be greater than or equal to" n "minContains" n.min_contains
+            "contains"
       in
       if stop then go := false;
       ok := !ok && m

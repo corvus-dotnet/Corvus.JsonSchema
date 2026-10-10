@@ -29,7 +29,8 @@ let no_value = { d = Document.create_empty (); n = -1 }
 let is_set v = v.n >= 0
 
 (* An optional non-negative integer keyword value is an [int], negative when the keyword is absent. Go holds a
-   uint64. A value of 2^62 or more is held as the greatest [int], which no count of a document reaches either. *)
+   uint64. A value of 2^62 or more is held as the greatest [int], which no count of a document reaches either, and
+   the node keeps its text for the messages (count_texts). *)
 let no_count = -1
 
 (* An annotation-producing keyword and its value (reported in verbose results). *)
@@ -195,6 +196,8 @@ type t = {
   mutable in_place_cycle : bool;
   mutable one_of_discriminator : discriminator option;
   mutable any_of_discriminator : discriminator option;
+  (* The text of each count keyword whose value is beyond an [int], by keyword, for messages. *)
+  mutable count_texts : (string * string) list;
 }
 
 let create resource dialect pointer =
@@ -270,6 +273,7 @@ let create resource dialect pointer =
     in_place_cycle = false;
     one_of_discriminator = None;
     any_of_discriminator = None;
+    count_texts = [];
   }
 
 (* has_object_keywords reports keywords that apply only to objects. *)
@@ -345,3 +349,8 @@ let children n =
   add n.unevaluated_items;
   Array.iter (fun id -> out := id :: !out) n.prefix_items;
   List.rev !out
+
+(* count_text is a count keyword's value as a message writes it. *)
+let count_text n keyword value =
+  if value <> max_int then string_of_int value
+  else match List.assoc_opt keyword n.count_texts with Some text -> text | None -> string_of_int value

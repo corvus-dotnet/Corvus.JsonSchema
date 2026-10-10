@@ -119,7 +119,58 @@ let test_numbers_through_a_schema () =
   Check.check "a custom numeric format decides" (not (Validator.is_valid_string v "12"));
   Check.check "a custom numeric format is given the text of the number" (!seen = [ "12"; "1.50" ])
 
+(* A count keyword holds a non-negative integer of up to 64 bits in Go. Here one beyond an OCaml int is held as the
+   greatest int, which decides the same, and its text is kept for the messages. *)
+let test_counts_beyond_an_int () =
+  Check.section "counts beyond an int";
+  let open Corvus_json_schema in
+  let messages schema instance =
+    match Validator.compile_string schema with
+    | Error e -> failwith (error_to_string e)
+    | Ok v ->
+        let results = Results.create Results.Verbose in
+        let valid = Validator.evaluate_string v ~results instance in
+        Check.checkf (Ok (Validator.is_valid_string v instance) = valid) "%s: fail-fast and collecting agree" schema;
+        ( valid,
+          List.filter_map
+            (fun (r : Results.result) -> if r.evaluation_location <> "" then Some r.message else None)
+            (Results.results results) )
+  in
+  List.iter
+    (fun (schema, instance, valid, message) ->
+      let got_valid, got = messages schema instance in
+      Check.checkf (got_valid = Ok valid) "%s on %s: want %b" schema instance valid;
+      Check.checkf (List.mem message got) "%s on %s: %s" schema instance (String.concat " | " got))
+    [
+      ( {|{"maxLength": 18446744073709551615}|},
+        {|"a"|},
+        true,
+        "Expected the length of the value to be less than or equal to '18446744073709551615'" );
+      ( {|{"minLength": 4611686018427387904}|},
+        {|"a"|},
+        false,
+        "Expected the length of the value to be greater than or equal to '4611686018427387904'" );
+      ( {|{"minLength": 4611686018427387903}|},
+        {|"a"|},
+        false,
+        "Expected the length of the value to be greater than or equal to '4611686018427387903'" );
+      ( {|{"minItems": 1e19}|},
+        "[1]",
+        false,
+        "Expected the item count to be greater than or equal to '10000000000000000000'" );
+      ({|{"maxItems": 1.0e2}|}, "[1]", true, "Expected the item count to be less than or equal to '100'");
+      ( {|{"maxProperties": 9223372036854775808.0}|},
+        "{}",
+        true,
+        "Expected the property count to be less than or equal to '9223372036854775808'" );
+      ( {|{"contains": true, "maxContains": 18446744073709551615, "minContains": 9223372036854775807}|},
+        "[1]",
+        false,
+        "Expected the contains count to be greater than or equal to '9223372036854775807'" );
+    ]
+
 let () =
   test_numbers ();
   test_numbers_through_a_schema ();
+  test_counts_beyond_an_int ();
   Check.finish "number_formats"

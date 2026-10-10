@@ -79,6 +79,19 @@ let uint_value d n =
     end
   end
 
+(* count_value is uint_value for a keyword of a node, which keeps the text of a value beyond an [int] for the
+   messages: the digits Go writes for the uint64 it holds. *)
+let count_value (node : Node.t) d n keyword =
+  let value = uint_value d n in
+  if value = max_int then begin
+    let text =
+      if Numbers.class_of (flags d n) = Numbers.num_float then Printf.sprintf "%.0f" (float_value d n)
+      else number_text d n
+    in
+    node.count_texts <- (keyword, text) :: node.count_texts
+  end;
+  value
+
 let type_mask_of d n =
   if kind d n <> kind_string then 0
   else
@@ -448,14 +461,14 @@ let compile_node c id (target : Loader.target) =
               done
             end
           end;
-          n.min_properties <- uint_value d (get "minProperties");
-          n.max_properties <- uint_value d (get "maxProperties");
-          n.min_items <- uint_value d (get "minItems");
-          n.max_items <- uint_value d (get "maxItems");
+          n.min_properties <- count_value n d (get "minProperties") "minProperties";
+          n.max_properties <- count_value n d (get "maxProperties") "maxProperties";
+          n.min_items <- count_value n d (get "minItems") "minItems";
+          n.max_items <- count_value n d (get "maxItems") "maxItems";
           (let v = get "uniqueItems" in
            if Loader.is_kind d v kind_bool then n.unique_items <- boolean d v);
-          n.min_length <- uint_value d (get "minLength");
-          n.max_length <- uint_value d (get "maxLength");
+          n.min_length <- count_value n d (get "minLength") "minLength";
+          n.max_length <- count_value n d (get "maxLength") "maxLength";
           (match Loader.string_value d (get "pattern") with
           | Some p -> (
               match compile_pattern c p with
@@ -488,10 +501,10 @@ let compile_node c id (target : Loader.target) =
           end;
           if rank >= 3 && n.contains >= 0 then begin
             if has "minContains" then begin
-              let v = uint_value d (get "minContains") in
+              let v = count_value n d (get "minContains") "minContains" in
               n.min_contains <- (if v >= 0 then v else 1)
             end;
-            if has "maxContains" then n.max_contains <- uint_value d (get "maxContains")
+            if has "maxContains" then n.max_contains <- count_value n d (get "maxContains") "maxContains"
           end
         end;
 
