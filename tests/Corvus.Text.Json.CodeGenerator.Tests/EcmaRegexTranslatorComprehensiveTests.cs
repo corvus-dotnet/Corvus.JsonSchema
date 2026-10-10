@@ -774,8 +774,8 @@ public class EcmaRegexTranslatorComprehensiveTests
     }
 
     [TestMethod]
-    [DataRow("a|", "a|")]
-    [DataRow("|b", "|b")]
+    [DataRow("a|", "(?:a)?")]
+    [DataRow("|b", "(?:b)??")]
     [DataRow("a||b", "a||b")]
     public void EmptyAlternationTranslation(string ecma, string expected)
     {
@@ -800,8 +800,8 @@ public class EcmaRegexTranslatorComprehensiveTests
     }
 
     [TestMethod]
-    [DataRow("a{0}", "a{0}")]
-    [DataRow("a{0,0}", "a{0}")]
+    [DataRow("a{0}", "")]
+    [DataRow("a{0,0}", "")]
     [DataRow("a{0,1}", "a?")]
     [DataRow("a{0,}", "a*")]
     public void QuantifierEdgeCasesTranslation(string ecma, string expected)

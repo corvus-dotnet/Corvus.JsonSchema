@@ -31,6 +31,14 @@ public class EcmaRegexTranslatorDataTests
         AssertCases(EcmaPatternCases.Backreferences, engine);
     }
 
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
+    public void PatternsWithEmptyIterationsAnswerAsV8(RegexOptions engine)
+    {
+        AssertCases(EcmaPatternCases.EmptyIterations, engine);
+    }
+
     private static void AssertCases((string Pattern, string[] Matches, string[] Fails)[] cases, RegexOptions engine)
     {
         var failures = new List<string>();
