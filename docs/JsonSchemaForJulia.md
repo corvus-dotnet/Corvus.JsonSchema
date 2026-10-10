@@ -155,18 +155,71 @@ found["/name"]["title"]["#/properties/name"]  # "Name"
 
 `pattern` and `patternProperties` have ECMA-262 semantics. The common shapes of pattern are matched with no regular
 expression engine. Any other pattern is translated into one that the PCRE2 library Julia bundles matches with the
-same meaning, with every character class written from the package's own Unicode 17 data, so a pattern means the same
-on every Julia version.
+same meaning, with every character class written from the package's own Unicode 17 data. The answers are those of V8
+on every Julia version, with one exception for [Julia 1.10](#julia-110).
+
+What is exact:
+
+- Every construct but the two below, for every pattern, whether it is valid with the `u` flag or only without it.
+  That includes a backreference to a group that has not taken part, the groups of a repeated body, an iteration that
+  matches the empty string, and a backreference inside a lookbehind to a group at its end.
+- A case-insensitive backreference such as `(.)(?i:\1)`, in every pattern that is valid with the `u` flag, with
+  Julia 1.13. PCRE2 makes the comparison, by Unicode simple case folding, as ECMA-262 does with the `u` flag.
+- A backreference to a group of a lookbehind, where the lookbehind has a fixed length, where the group is at a
+  fixed distance from its end (`(?<=a*(x))-\1`), and where the lookbehind is a term of the pattern itself and starts
+  with a repetition of a body of a fixed length (`(?<=([abc])+)x\1`) or with alternatives of fixed lengths
+  (`(?<=(ab|a)x)-\1`).
 
 A pattern that is valid ECMA-262 and cannot be written for PCRE2 with exactly the same meaning is refused: compiling
-the schema throws a `CompileError` that names the construct. These are a few forms of backreference (inside a
-lookbehind, or to a group that a lookbehind, a lookaround or a skipped repetition captures differently in the two
-engines), a case-insensitive backreference to text outside ASCII letters, and more than 253 lookbehinds of no fixed
-length in one pattern.
+the schema throws a `CompileError` that names the construct. It is never run with another meaning. These are:
+
+- A case-insensitive backreference in a pattern that is only valid without the `u` flag (one with an Annex B form
+  such as `\&`), where the group can hold a character that ECMA-262 compares differently there than PCRE2 does,
+  such as `k`, `s`, or a character beyond the Basic Multilingual Plane that has a case variant. `^(.)(?i:\1)\&?$`
+  is refused. No pattern that is valid with the `u` flag is refused for this.
+- A backreference to a group inside a lookbehind of no fixed length, where the lookbehind is not a term of the
+  pattern itself (`(?:(?<=(a)+)x\1)+`), or where the group holds what depends on the order in which ECMA-262 tries
+  the ways through the lookbehind from its end (`(?<=(a*)(x+))-\1`).
+- A backreference inside a lookbehind to a group that the lookbehind matches before it, where the group is not in
+  an end of the lookbehind of a fixed length (`(?<=\1(a+))`).
+- Repetitions that have to be written twice inside one another past 65,536 characters, more than 253 lookbehinds of
+  no fixed length in one pattern, and a pattern too large for PCRE2 to compile.
 
 PCRE2 backtracks, and it limits the steps and the memory of a match. A match that reaches a limit throws
 `CorvusJsonSchema.EcmaRegex.MatchError`, from `isvalid` as from `validate` and `evaluate`. It is never reported as a
 string that does not match. Validate inside `try` when the schema's patterns are not trusted.
+
+### Julia 1.10
+
+Julia 1.10 bundles PCRE2 10.42, whose case folding is that of Unicode 14. A case-insensitive backreference there
+does not hold equivalent the two characters of each of the thirty pairs below, which Unicode 15.1 and 16 made
+equivalent and which V8 and Julia 1.13 hold equivalent. So `^(.)(?i:\1)$` matches `ƛꟜ` with Julia 1.13 and
+does not with Julia 1.10. Nothing else differs between the two: a literal, a class and every other construct read the
+package's own tables on every Julia. The package does not work around this. The fix is to update to Julia 1.13, where
+the answers are exact.
+
+| Code points | Characters | Code points | Characters |
+|---|---|---|---|
+| U+019B, U+A7DC | ƛ Ƛ | U+0264, U+A7CB | ɤ Ɤ |
+| U+0390, U+1FD3 | ΐ ΐ | U+03B0, U+1FE3 | ΰ ΰ |
+| U+1C89, U+1C8A | Ᲊ ᲊ | U+A7CC, U+A7CD | Ꟍ ꟍ |
+| U+A7DA, U+A7DB | Ꟛ ꟛ | U+FB05, U+FB06 | ﬅ ﬆ |
+| U+10D50, U+10D70 | 𐵐 𐵰 | U+10D51, U+10D71 | 𐵑 𐵱 |
+| U+10D52, U+10D72 | 𐵒 𐵲 | U+10D53, U+10D73 | 𐵓 𐵳 |
+| U+10D54, U+10D74 | 𐵔 𐵴 | U+10D55, U+10D75 | 𐵕 𐵵 |
+| U+10D56, U+10D76 | 𐵖 𐵶 | U+10D57, U+10D77 | 𐵗 𐵷 |
+| U+10D58, U+10D78 | 𐵘 𐵸 | U+10D59, U+10D79 | 𐵙 𐵹 |
+| U+10D5A, U+10D7A | 𐵚 𐵺 | U+10D5B, U+10D7B | 𐵛 𐵻 |
+| U+10D5C, U+10D7C | 𐵜 𐵼 | U+10D5D, U+10D7D | 𐵝 𐵽 |
+| U+10D5E, U+10D7E | 𐵞 𐵾 | U+10D5F, U+10D7F | 𐵟 𐵿 |
+| U+10D60, U+10D80 | 𐵠 𐶀 | U+10D61, U+10D81 | 𐵡 𐶁 |
+| U+10D62, U+10D82 | 𐵢 𐶂 | U+10D63, U+10D83 | 𐵣 𐶃 |
+| U+10D64, U+10D84 | 𐵤 𐶄 | U+10D65, U+10D85 | 𐵥 𐶅 |
+
+The package's own tables hold Unicode 17, which added 28 pairs more: U+A7CE and U+A7CF, U+A7D2 and U+A7D3, U+A7D4
+and U+A7D5, and U+16EA0 to U+16EB8 each with the character 27 places on (U+16EBB to U+16ED3). A case-insensitive
+literal or class holds them equivalent on every Julia. A case-insensitive backreference does not, with Julia 1.10 or
+1.13, and neither does V8 13.6, whose data is Unicode 16.
 
 ## Performance
 
