@@ -150,6 +150,26 @@ class TestApi < Minitest::Test
     end
   end
 
+  # The crate before 0.1.7 dropped a "$" at the end of the repeated group of a separated list, and after its first item,
+  # so the first two patterns were matched as ^x(,a)*$ and the third as ^(a,)*b$. The answers are V8's.
+  def test_a_separated_list_keeps_an_anchor_inside_it
+    v = CorvusJsonSchema.compile({ "pattern" => '^x(,a$)*$' })
+    assert v.valid?("x")
+    assert v.valid?("x,a")
+    refute v.valid?("x,a,a")
+    refute v.valid_json?('"x,a,a"')
+    v = CorvusJsonSchema.compile({ "pattern" => '^x$(,a)*$' })
+    assert v.valid?("x")
+    refute v.valid?("x,a")
+    v = CorvusJsonSchema.compile({ "pattern" => '^(a,$)*b$' })
+    assert v.valid?("b")
+    refute v.valid?("a,b")
+    # An escaped "$" is a literal character.
+    v = CorvusJsonSchema.compile({ "pattern" => '^x(,a\$)*$' })
+    assert v.valid?("x,a$,a$")
+    refute v.valid?("x,a,a")
+  end
+
   def test_crate_version
     assert_match(/\A\d+\.\d+\.\d+\z/, CorvusJsonSchema.crate_version)
   end
