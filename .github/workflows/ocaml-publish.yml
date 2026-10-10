@@ -1,0 +1,198 @@
+name: ocaml-publish
+# Publishes the OCaml package (src-ml/corvus-json-schema) when the version in its dune-project has no release yet,
+# then tags this repository's commit ml-v<version>. To release, bump (version ...) in dune-project and the version
+# constant in src/corvus_json_schema.ml, run dune build (which writes corvus-json-schema.opam), add the version to
+# the package's VERSIONHISTORY.md, and merge. A merged pull request labelled no_release publishes nothing
+# (.github/actions/no-release-label).
+#
+# An opam pin and a source install clone the repository they are given, and this repository carries a very large
+# github-pages branch and every other language's sources. So the package is published through a repository of its
+# own, corvus-dotnet/corvus-json-schema-ocaml, which holds only what this workflow pushes there:
+#   1. the contents of src-ml/corvus-json-schema at the root (dune-project and corvus-json-schema.opam at the root),
+#      committed and tagged v<version>;
+#   2. a release for that tag, with the version's entry in VERSIONHISTORY.md as its notes.
+# `opam pin add corvus-json-schema https://github.com/corvus-dotnet/corvus-json-schema-ocaml.git#v<version>` installs
+# from it. Changes are made here and never there.
+#
+# Writing to the other repository takes a token: the OCAML_REPOSITORY_TOKEN secret of the "ocaml" environment, a
+# fine-grained personal access token for that repository alone, with Contents read and write. A run that fails part
+# of the way can be run again: it skips what is already there (docs/ReleaseProcess.md, "The OCaml package").
+#
+# Submitting the release to the opam repository is NOT done here. It is a manual step, after this workflow has
+# succeeded, for each version:
+#   1. opam publish https://github.com/corvus-dotnet/corvus-json-schema-ocaml/archive/refs/tags/v<version>.tar.gz
+#      (the opam-publish plugin: it reads corvus-json-schema.opam from the archive, adds the url and checksum, and
+#      opens a pull request to ocaml/opam-repository from a fork under the account that runs it);
+#      or, by hand, a pull request that adds packages/corvus-json-schema/corvus-json-schema.<version>/opam: the
+#      package's opam file with a url section (src: that archive, checksum: its sha256 and sha512).
+#   2. The opam repository's checks build and test the package on its platforms (the tests that need the
+#      JSON-Schema-Test-Suite say that they were skipped there), and a maintainer merges the pull request.
+#   3. Until it is merged, the pin above is how the version is installed.
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. Its tag
+# filter ('[0-9]+.[0-9]+.[0-9]+*') has to match the whole tag name from a leading digit, so a tag that starts ml-v
+# cannot start it. The ml-v tag is also pushed with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-ml/corvus-json-schema/dune-project'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocaml-publish
+  cancel-in-progress: false
+
+env:
+  SUBDIR: src-ml/corvus-json-schema
+  OCAML_REPOSITORY: corvus-dotnet/corvus-json-schema-ocaml
+
+jobs:
+  version:
+    name: Version to publish
+    permissions:
+      contents: read
+      pull-requests: read  # the merged pull request's labels (no_release)
+    # A manual run from another branch must not publish that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            src-ml/corvus-json-schema
+            .github/actions
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
+      - name: Check whether this version has a release
+        id: check
+        # A merged pull request labelled no_release publishes nothing (the test and publish jobs need this output).
+        if: steps.label.outputs.no-release != 'true'
+        working-directory: ${{ env.SUBDIR }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^(version \(.*\))$/\1/p' dune-project | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No (version ...) in dune-project."
+            exit 1
+          fi
+          grep -q "^let version = \"$version\"$" src/corvus_json_schema.ml \
+            || { echo "::error::src/corvus_json_schema.ml does not say version $version."; exit 1; }
+          grep -q "^version: \"$version\"$" corvus-json-schema.opam \
+            || { echo "::error::corvus-json-schema.opam does not say version $version: run dune build and commit it."; exit 1; }
+          grep -q "^## V$version$" VERSIONHISTORY.md || { echo "::error::VERSIONHISTORY.md has no V$version section."; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if ! gh api "repos/$OCAML_REPOSITORY" --silent; then
+            echo "::error::$OCAML_REPOSITORY is not there (docs/ReleaseProcess.md, \"The OCaml package\")."
+            exit 1
+          fi
+          if gh api "repos/$OCAML_REPOSITORY/releases/tags/v$version" --silent 2>/dev/null; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::$OCAML_REPOSITORY already has a release for v$version; nothing to publish."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    name: Test
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    uses: ./.github/workflows/ocaml.yml
+
+  publish:
+    name: Publish corvus-json-schema (OCaml)
+    needs: [version, test]
+    runs-on: ubuntu-latest
+    environment:
+      name: ocaml
+      url: https://github.com/${{ env.OCAML_REPOSITORY }}/releases/tag/v${{ needs.version.outputs.version }}
+    permissions:
+      contents: write  # push the ml-v<version> tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: src-ml/corvus-json-schema
+      - name: Push the release's sources
+        env:
+          TOKEN: ${{ secrets.OCAML_REPOSITORY_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          git clone --quiet "https://x-access-token:$TOKEN@github.com/$OCAML_REPOSITORY.git" published
+          cd published
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null; then
+            echo "::notice::$OCAML_REPOSITORY already has the tag v$VERSION."
+            exit 0
+          fi
+          # Everything but the history is replaced by the package's sources: the files git tracks, so no build
+          # output.
+          git rm -r -q --ignore-unmatch .
+          (cd "../$SUBDIR" && git ls-files -z | xargs -0 cp --parents -t "$GITHUB_WORKSPACE/published")
+          for file in dune-project corvus-json-schema.opam README.md LICENSE VERSIONHISTORY.md \
+              src/corvus_json_schema.mli; do
+            test -f "$file" || { echo "::error::The package has no $file."; exit 1; }
+          done
+          if [ -e _build ]; then
+            echo "::error::The package has build output in it."
+            exit 1
+          fi
+          git add -A
+          # --allow-empty: a run that pushed the commit and failed before the tag makes the same tree again.
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet --allow-empty -m "corvus-json-schema $VERSION" \
+            -m "From corvus-dotnet/Corvus.JsonSchema@$GITHUB_SHA ($SUBDIR)."
+          git tag "v$VERSION"
+          git push --quiet origin HEAD "refs/tags/v$VERSION"
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.OCAML_REPOSITORY_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          # The version's entry in VERSIONHISTORY.md, as the release notes.
+          awk -v v="## V$VERSION" '$0 == v { on = 1; next } on && /^## / { exit } on' \
+            "$SUBDIR/VERSIONHISTORY.md" > notes.md
+          if ! gh release view "v$VERSION" -R "$OCAML_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "v$VERSION" -R "$OCAML_REPOSITORY" --verify-tag \
+              --title "corvus-json-schema for OCaml $VERSION" --notes-file notes.md
+          fi
+          {
+            echo "### corvus-json-schema (OCaml) $VERSION is published"
+            echo
+            echo "https://github.com/$OCAML_REPOSITORY/releases/tag/v$VERSION"
+            echo
+            echo "Install it with:"
+            echo
+            echo '```sh'
+            echo "opam pin add corvus-json-schema https://github.com/$OCAML_REPOSITORY.git#v$VERSION"
+            echo '```'
+            echo
+            echo "Submitting it to the opam repository is a manual step (see the header of ocaml-publish.yml):"
+            echo
+            echo '```sh'
+            echo "opam publish https://github.com/$OCAML_REPOSITORY/archive/refs/tags/v$VERSION.tar.gz"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ml-v${{ needs.version.outputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "::notice::$TAG already exists."
+          else
+            gh api "repos/${{ github.repository }}/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA"
+          fi

@@ -1,0 +1,263 @@
+name: ocaml
+# The OCaml evaluator (src-ml/corvus-json-schema) with its benchmark harness. ocaml-publish.yml calls this workflow
+# before it publishes a release.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-ml/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'docs/JsonSchemaForOCaml.md'
+    - '.github/workflows/ocaml.yml'
+    - '.github/workflows/ocaml-publish.yml'
+    - 'LICENSE'
+  pull_request:
+    paths:
+    - 'src-ml/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'docs/JsonSchemaForOCaml.md'
+    - '.github/workflows/ocaml.yml'
+    - '.github/workflows/ocaml-publish.yml'
+    - 'LICENSE'
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # The oldest OCaml the package accepts (4.14, which has system threads and no domains) and the current 5.x on
+    # Linux, and the current 5.x on macOS and Windows. The package takes no Unicode data and no regular expression
+    # engine from the compiler or the system, so every one of them must give the same results. When an OCaml minor
+    # version is released, move 5.5 to it here, in the lint job's note and in the benchmark harness's Dockerfile.local.
+    name: Build and test corvus-json-schema (OCaml ${{ matrix.ocaml }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            ocaml: '4.14'
+          - os: ubuntu-latest
+            ocaml: '5.5'
+          - os: macos-latest
+            ocaml: '5.5'
+          - os: windows-latest
+            ocaml: '5.5'
+    defaults:
+      run:
+        shell: bash
+        working-directory: src-ml/corvus-json-schema
+    steps:
+      - name: Check out text files with LF line endings
+        # The README test compares the samples of the documents with its own source line for line, and the tests
+        # read the JSON-Schema-Test-Suite as it is. A checkout on Windows would otherwise give those files CRLF line
+        # endings.
+        working-directory: .
+        run: git config --global core.autocrlf input
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+          # Only what the package and its tests read (the repository's generated benchmark models have paths too
+          # long for Windows). The patterns are files and directories, so not in cone mode: the README test also
+          # runs the samples of the documentation page.
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /LICENSE
+            /src-ml/
+            /docs/JsonSchemaForOCaml.md
+            /JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        working-directory: .
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Check the checkout has what the tests read
+        # A test that reads a file of the repository skips itself when the file is not there, as it must for the
+        # published package, which holds the package's directory alone. Here the files have to be there.
+        working-directory: .
+        run: |
+          test -d JSON-Schema-Test-Suite/tests/draft2020-12
+          test -d JSON-Schema-Test-Suite/annotations/tests
+          test -f docs/JsonSchemaForOCaml.md
+      - name: OCaml
+        uses: ocaml/setup-ocaml@93303b622b2522e4411e295f9e77411a24912ac7 # v3.9.0
+        with:
+          ocaml-compiler: ${{ matrix.ocaml }}
+          # No cache: the package has no dependencies and builds in seconds, and the repository's Actions cache is
+          # needed by the .NET build, whose state does not fit when other caches crowd it.
+          dune-cache: false
+          opam-pin: false
+      - name: dune
+        # The package's only build dependency. The tests need nothing else: unix and threads come with the compiler.
+        working-directory: .
+        run: opam install --yes dune
+      - name: OCaml and dune versions
+        run: |
+          opam exec -- ocamlfind ocamlopt -version
+          opam exec -- dune --version
+      - name: Check the package's LICENSE matches the repository's
+        run: cmp ../../LICENSE LICENSE
+      - name: Check the version is the same everywhere and has an entry in VERSIONHISTORY.md
+        run: |
+          version=$(sed -n 's/^(version \(.*\))$/\1/p' dune-project | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No (version ...) in dune-project."
+            exit 1
+          fi
+          grep -q "^let version = \"$version\"$" src/corvus_json_schema.ml \
+            || { echo "::error::src/corvus_json_schema.ml does not say version $version."; exit 1; }
+          grep -q "^version: \"$version\"$" corvus-json-schema.opam \
+            || { echo "::error::corvus-json-schema.opam does not say version $version."; exit 1; }
+          grep -q "^## V$version$" VERSIONHISTORY.md \
+            || { echo "::error::VERSIONHISTORY.md has no V$version section."; exit 1; }
+      - name: Build
+        # The dev profile, in which a warning is an error. The build also writes corvus-json-schema.opam from
+        # dune-project and corvus-json-schema.opam.template, so on Linux the step fails if the committed file is not
+        # what they give.
+        run: |
+          opam exec -- dune build
+          if [ "$RUNNER_OS" = Linux ] && ! git diff --exit-code -- corvus-json-schema.opam; then
+            echo "::error::corvus-json-schema.opam is not what dune-project generates. Run dune build and commit it."
+            exit 1
+          fi
+      - name: Test
+        # Every test: the whole JSON-Schema-Test-Suite, fail-fast and through collectors, the annotation suite, the
+        # allocation tests, the pattern engine against V8's answers, validators shared between threads (and between
+        # domains on OCaml 5), and the samples of the README and of the documentation page (readme_test).
+        env:
+          JSON_SCHEMA_TEST_SUITE: ${{ github.workspace }}/JSON-Schema-Test-Suite
+        run: |
+          set -o pipefail
+          opam exec -- dune test --force 2>&1 | tee "$RUNNER_TEMP/ocaml-tests.log"
+      - name: Check what ran
+        # The suite has to have run, and the samples of the documentation page have to have been checked. Two tests
+        # may say that they were skipped: the one that needs domains, on OCaml 4, and the differential test, which
+        # needs the jsonschema-benchmark corpora, which are not here.
+        env:
+          OCAML: ${{ matrix.ocaml }}
+        run: |
+          log="$RUNNER_TEMP/ocaml-tests.log"
+          grep -q "^JSON-Schema-Test-Suite: [1-9][0-9]*/[1-9][0-9]* passed" "$log" \
+            || { echo "::error::The JSON-Schema-Test-Suite did not run."; exit 1; }
+          grep -q "^[1-9][0-9]*/[1-9][0-9]* annotation assertions passed" "$log" \
+            || { echo "::error::The annotation suite did not run."; exit 1; }
+          grep -q "^docs/JsonSchemaForOCaml.md: [1-9][0-9]* OCaml blocks" "$log" \
+            || { echo "::error::readme_test did not check docs/JsonSchemaForOCaml.md."; exit 1; }
+          skipped=$(grep "SKIPPED" "$log" || true)
+          if [ "${OCAML%%.*}" = 4 ]; then
+            skipped=$(printf '%s\n' "$skipped" | grep -v "^ecmaregex domains: SKIPPED, domains need OCaml 5" || true)
+          fi
+          if [ -n "$skipped" ]; then
+            echo "::error::Tests were skipped:"
+            printf '%s\n' "$skipped"
+            exit 1
+          fi
+          if grep -q "set JSONSCHEMA_BENCHMARK" "$log"; then
+            echo "::notice::differential_test was skipped: it needs a checkout of jsonschema-benchmark (JSONSCHEMA_BENCHMARK), which this workflow does not have."
+          fi
+      - name: Benchmark harness
+        # The protocol program is built with the library from one workspace, then runs on a small corpus: four
+        # positive figures, and exit code 1 for an instance that is not valid. Its clock is clock_gettime, so not on
+        # Windows.
+        if: runner.os != 'Windows'
+        working-directory: src-ml
+        run: |
+          program=corvus-json-schema-bench/jsonschema-benchmark/corvus_ocaml_benchmark.exe
+          opam exec -- dune build --root . --profile release "./$program"
+          echo '{"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}' > "$RUNNER_TEMP/schema.json"
+          printf '{"id": 1}\n{"id": 2}\n' > "$RUNNER_TEMP/instances.jsonl"
+          out=$("_build/default/$program" "$RUNNER_TEMP/schema.json" "$RUNNER_TEMP/instances.jsonl")
+          echo "$out"
+          echo "$out" | grep -Eq '^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$'
+          printf '{"id": 1}\n{"id": "two"}\n' > "$RUNNER_TEMP/instances.jsonl"
+          status=0
+          "_build/default/$program" "$RUNNER_TEMP/schema.json" "$RUNNER_TEMP/instances.jsonl" || status=$?
+          [ "$status" -eq 1 ]
+
+  lint:
+    # The formatting, the documentation and the opam package, once, on Linux. They run with OCaml 4.14, which is the
+    # compiler the ocamlformat version that .ocamlformat names is installed with, and the package's minimum.
+    name: Format, documentation and opam package (OCaml 4.14)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+        working-directory: src-ml/corvus-json-schema
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /LICENSE
+            /src-ml/
+      - name: OCaml
+        uses: ocaml/setup-ocaml@93303b622b2522e4411e295f9e77411a24912ac7 # v3.9.0
+        with:
+          ocaml-compiler: '4.14'
+          dune-cache: false
+          opam-pin: false
+      - name: dune, ocamlformat and odoc
+        # The ocamlformat version is the one .ocamlformat names, so that the check here is the check a contributor
+        # runs.
+        run: |
+          version=$(sed -n 's/^version = \(.*\)$/\1/p' .ocamlformat)
+          opam install --yes dune "ocamlformat.$version" odoc
+      - name: Format
+        run: |
+          opam exec -- dune build @fmt
+          (cd ../corvus-json-schema-bench/jsonschema-benchmark && opam exec -- ocamlformat --check corvus_ocaml_benchmark.ml)
+      - name: Documentation
+        # odoc reports a broken reference as a warning and still succeeds, so the step fails on any warning.
+        run: |
+          opam exec -- dune build @doc 2>&1 | tee "$RUNNER_TEMP/ocaml-doc.log"
+          if grep -q "Warning" "$RUNNER_TEMP/ocaml-doc.log"; then
+            echo "::error::dune build @doc gave warnings."
+            exit 1
+          fi
+          test -f _build/default/_doc/_html/corvus-json-schema/Corvus_json_schema/index.html
+      - name: opam lint
+        run: opam lint corvus-json-schema.opam
+      - name: Install the package as it is published
+        # The published package is this directory at the root of a repository of its own (ocaml-publish.yml), with a
+        # tag for the version. This makes that repository here and installs from it with opam, tests included, which
+        # is what a pin and the opam repository's own checks do. The tests that read the JSON-Schema-Test-Suite say
+        # that they were skipped, since the published package does not hold it. A program is then built against the
+        # installed package with ocamlfind.
+        run: |
+          version=$(sed -n 's/^(version \(.*\))$/\1/p' dune-project | head -n 1)
+          published="$RUNNER_TEMP/corvus-json-schema-ocaml"
+          mkdir -p "$published"
+          git ls-files -z | xargs -0 cp --parents -t "$published"
+          cd "$published"
+          git init --quiet
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet -m "corvus-json-schema $version"
+          git tag "v$version"
+          opam lint .
+          opam install --yes --with-test .
+          installed=$(opam show --field=installed-version corvus-json-schema)
+          if [ "$installed" != "$version" ]; then
+            echo "::error::opam installed corvus-json-schema $installed, not $version."
+            exit 1
+          fi
+          mkdir "$RUNNER_TEMP/use"
+          cd "$RUNNER_TEMP/use"
+          cat > use.ml <<'EOF'
+          let () =
+            match Corvus_json_schema.Validator.compile_string {|{"type": "integer"}|} with
+            | Error e -> failwith (Corvus_json_schema.error_to_string e)
+            | Ok validator ->
+                assert (Corvus_json_schema.Validator.is_valid_string validator "3");
+                assert (not (Corvus_json_schema.Validator.is_valid_string validator "3.5"));
+                print_endline Corvus_json_schema.version
+          EOF
+          opam exec -- ocamlfind ocamlopt -package corvus-json-schema -linkpkg use.ml -o use
+          [ "$(./use)" = "$version" ]
+          opam remove --yes corvus-json-schema
