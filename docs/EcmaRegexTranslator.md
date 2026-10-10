@@ -101,7 +101,7 @@ internal static class EcmaRegexTranslator
 | Runtime evaluator (`JsonSchemaEvaluator.Compile`, `CompileFromUri`, `ForEntryPoint`, `FromProgramImage`) | `JsonSchemaCompilationException` when the schema is compiled. The message names the pattern and says what is wrong and where. |
 | `Corvus.Text.Json.Validator` | The same exception, from the `JsonSchema.From*` method that compiles the schema. |
 | CLI code generator and Roslyn source generator | Generation stops with `InvalidOperationException` (the source generator reports it as its `CRV1001` diagnostic). No code is emitted that would fail when it first validates. |
-| V4 code generator | Unchanged: it emits the pattern as it is. |
+| V4 code generator (`--engine V4`, `Corvus.Json.SourceGenerator`, `Corvus.Json.Validator`) | The same as the V5 generators. It uses the same translator, so generation stops with `InvalidOperationException`, which its source generator reports as `CRV1001`. Before, it emitted such a pattern as it was, and the generated type failed when it first validated. |
 
 ## Costs
 

@@ -993,6 +993,32 @@ What that tells us is that we cannot implicitly convert the missing `PersonName`
 
 What can we do about that?
 
+### Regular expressions in `pattern` and `patternProperties`
+
+JSON Schema says that a `pattern` is an [ECMA-262](https://tc39.es/ecma262/#sec-patterns) regular expression, read
+with the `u` flag. .NET's regular expressions are another dialect, so the generator translates each pattern for
+.NET, with the translator the V5 generator and evaluator use (see
+[EcmaRegexTranslator.md](../EcmaRegexTranslator.md) and [EcmaRegexTranslations.md](../EcmaRegexTranslations.md)).
+A generated type then gives the answer a JavaScript engine gives. Three things follow.
+
+- **A character is a code point.** `^.$` matches one emoji, and `\p{L}` matches a letter beyond the Basic
+  Multilingual Plane. A pattern that is valid only without the `u` flag (`\-`, a lone `{`) is read by that grammar,
+  as a JavaScript engine reads it, and is matched by UTF-16 code unit.
+- **A pattern that is not a valid ECMA-262 regular expression stops the generation.** That includes constructs only
+  .NET has, such as `(?i)` or `(?>a)`. The error names the pattern and the keyword and says what is wrong and where:
+  `The pattern 'a{2,1}' of the keyword 'pattern' is not a valid ECMA-262 regular expression. Numbers out of order in {} quantifier at offset 6.`
+  The source generator reports it as its `CRV1001` diagnostic. An earlier generator emitted such a pattern as
+  it was, and the generated type threw when it first validated.
+- **A match has a timeout of 10 seconds.** Every regular expression a generated type holds is constructed with it
+  (`[GeneratedRegex(..., matchTimeoutMilliseconds: 10000)]`, or the `Regex` constructor where there is no regular
+  expression generator). .NET's engine takes time exponential in the length of the text for some patterns, and
+  does not return at all for a few. A match of a `pattern` or of a `patternProperties` name that runs for longer
+  throws `RegexMatchTimeoutException` from `Validate()`. It is not reported as an instance that is not valid. The
+  `format` checks that use a regular expression answer "not valid" on a timeout, as they did.
+
+Regenerate your types with this version of the generator to get all three. Types generated before it keep the
+translation and the expressions they were generated with.
+
 ## Values, Null, and Undefined
 
 Let's remind ourselves about the characteristics of JSON data.

@@ -17,6 +17,9 @@
        assemblies in the other test projects. -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
     <ProjectReference Include="..\..\src\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" ReferenceOutputAssembly="true" />
+    <!-- The V4 source generator, for the tests of the text it emits. It declares the same type names as the V5 one,
+         so it is referenced under an alias and its types are named only through it. -->
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj" ReferenceOutputAssembly="true" Aliases="V4SourceGenerator" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="Microsoft.Bcl.HashCode" />
   </ItemGroup>

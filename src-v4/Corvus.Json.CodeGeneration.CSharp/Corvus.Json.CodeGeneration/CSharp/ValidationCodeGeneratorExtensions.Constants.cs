@@ -14,6 +14,14 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// </summary>
 public static partial class ValidationCodeGeneratorExtensions
 {
+    /// <summary>
+    /// The match timeout of every regular expression generated code holds, in milliseconds. A match that runs for
+    /// longer throws <see cref="System.Text.RegularExpressions.RegexMatchTimeoutException"/> to the caller. .NET's
+    /// engine does not return from a match of some patterns, and takes time exponential in the length of the text
+    /// for others.
+    /// </summary>
+    internal const int RegexMatchTimeoutMilliseconds = 10_000;
+
     private static CodeGenerator AppendValidationConstantFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         if (generator.IsCancellationRequested)
@@ -380,8 +388,30 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
-        string translatedValue = EcmaRegexTranslator.TranslateOrFallback(value);
+        // A pattern that is not a valid ECMA-262 regular expression stops the generation here. Generated code is not
+        // to fail when it first validates for something the generator can see.
+        if (!EcmaRegexTranslator.TryTranslate(value, out string? translation, out string? error))
+        {
+            throw new InvalidOperationException($"The pattern '{value}' of the keyword '{keyword.Keyword}' is not a valid ECMA-262 regular expression. {error}");
+        }
+
+        string translatedValue = translation!;
+
+        // A case-insensitive backreference to a text of plain ASCII letters is the one construct the translation
+        // leaves to .NET's own case comparison, which follows the current culture unless the options say otherwise.
+        bool ignoresCase = translatedValue.Contains("(?i:");
+        string generatedOptions = ignoresCase ? "RegexOptions.CultureInvariant" : "RegexOptions.None";
+        string constructedOptions = ignoresCase ? "RegexOptions.Compiled | RegexOptions.CultureInvariant" : "RegexOptions.Compiled";
+        if (translatedValue.Length > EcmaRegexTranslator.LongestCompiledTranslation)
+        {
+            // Too long to be worth compiling when the type first validates.
+            constructedOptions = generatedOptions;
+        }
+
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+        // Every form carries the match timeout (see RegexMatchTimeoutMilliseconds).
+        string timeout = RegexMatchTimeoutMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         return generator
 #if BUILDING_SOURCE_GENERATOR
@@ -389,11 +419,19 @@ public static partial class ValidationCodeGeneratorExtensions
                 .Append(memberName)
                 .Append("() => new(")
                 .AppendQuotedStringLiteral(translatedValue)
-                .AppendLine(", RegexOptions.Compiled);");
+                .Append(", ")
+                .Append(constructedOptions)
+                .Append(", global::System.TimeSpan.FromMilliseconds(")
+                .Append(timeout)
+                .AppendLine("));");
 #else
                 .AppendLine("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD")
                 .AppendIndent("[GeneratedRegex(")
                 .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
+                .Append(", ")
+                .Append(generatedOptions)
+                .Append(", matchTimeoutMilliseconds: ")
+                .Append(timeout)
                 .AppendLine(")]")
                 .AppendIndent("private static partial Regex ")
                 .Append(memberName)
@@ -403,7 +441,11 @@ public static partial class ValidationCodeGeneratorExtensions
             .Append(memberName)
             .Append("() => new(")
             .AppendQuotedStringLiteral(translatedValue)
-            .AppendLine(", RegexOptions.Compiled);")
+            .Append(", ")
+            .Append(constructedOptions)
+            .Append(", global::System.TimeSpan.FromMilliseconds(")
+            .Append(timeout)
+            .AppendLine("));")
             .AppendLine("#endif");
 #endif
     }
