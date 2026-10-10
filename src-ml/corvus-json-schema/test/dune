@@ -2,5 +2,5 @@
 ; a check fails. The tests of the regular expression engine and of the Unicode data are in ecmaregex and ucd.
 
 (tests
- (names document_test formats_test suite_test)
+ (names document_test formats_test pattern_test suite_test)
  (libraries corvus-json-schema corvus_json_schema_test_support corvus_json_schema_test_helpers))
