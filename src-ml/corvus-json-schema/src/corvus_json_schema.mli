@@ -3,23 +3,23 @@
 
     A schema is compiled once into a node graph with fail-fast plans, then any number of instances are validated against
     it. {!Validator.is_valid_string} and its variants fail fast and report nothing. {!Validator.evaluate} is exhaustive
-    and reports to a {!Results.t} collector at the Basic, Detailed or Verbose level, with the same rows (paths, messages,
-    order) as the other Corvus implementations, annotations included.
+    and reports to a {!Results.t} collector at the Basic, Detailed or Verbose level, with the same rows (paths,
+    messages, order) as the other Corvus implementations, annotations included.
 
     {[
-      let () =
-        match
-          Corvus_json_schema.Validator.compile_string
-            {|{
+    let () =
+      match
+        Corvus_json_schema.Validator.compile_string
+          {|{
                 "type": "object",
                 "properties": {"id": {"type": "integer", "minimum": 1}},
                 "required": ["id"]
               }|}
-        with
-        | Error e -> prerr_endline (Corvus_json_schema.error_to_string e)
-        | Ok validator ->
-            assert (Corvus_json_schema.Validator.is_valid_string validator {|{"id": 3}|});
-            assert (not (Corvus_json_schema.Validator.is_valid_string validator {|{"id": 0}|}))
+      with
+      | Error e -> prerr_endline (Corvus_json_schema.error_to_string e)
+      | Ok validator ->
+          assert (Corvus_json_schema.Validator.is_valid_string validator {|{"id": 3}|});
+          assert (not (Corvus_json_schema.Validator.is_valid_string validator {|{"id": 0}|}))
     ]}
 
     {1 Threads, domains and allocation}
@@ -27,12 +27,12 @@
     A validator is safe to share between threads and domains. Its compiled program is never written to after
     compilation.
 
-    An evaluation needs working memory (a few buffers that grow to what the largest instance so far needed). A
-    validator keeps one set of it, which one evaluation at a time holds, taken with an atomic compare and set. An
-    evaluation that finds it held, by another thread or domain or by its own caller further up the stack (a custom
-    format that validates), makes its own for that one evaluation. So every call is correct wherever it is made from,
-    and in the steady state a validator used by one thread at a time validates a parsed document, or JSON text, without
-    allocating anything on the OCaml heap.
+    An evaluation needs working memory (a few buffers that grow to what the largest instance so far needed). A validator
+    keeps one set of it, which one evaluation at a time holds, taken with an atomic compare and set. An evaluation that
+    finds it held, by another thread or domain or by its own caller further up the stack (a custom format that
+    validates), makes its own for that one evaluation. So every call is correct wherever it is made from, and in the
+    steady state a validator used by one thread at a time validates a parsed document, or JSON text, without allocating
+    anything on the OCaml heap.
 
     A caller that validates from several threads or domains at once gives each its own {!Scratch.t}, in the [?scratch]
     argument, and then no evaluation contends with another and none allocates. An optional argument is passed as an
@@ -40,8 +40,8 @@
     pass it as it is:
 
     {[
-      let scratch = Some (Corvus_json_schema.Scratch.create ()) in
-      List.for_all (fun text -> Corvus_json_schema.Validator.is_valid_string ?scratch validator text) texts
+    let scratch = Some (Corvus_json_schema.Scratch.create ()) in
+    List.for_all (fun text -> Corvus_json_schema.Validator.is_valid_string ?scratch validator text) texts
     ]}
 
     These allocate whichever way they are called: an asserted [regex], [idn-hostname] or [idn-email] format, a
@@ -75,10 +75,10 @@ module Document : sig
       share between threads and domains.
 
       Parsing is strict RFC 8259. Anything but whitespace after the value, invalid UTF-8, lone surrogates in [\u]
-      escapes, numbers out of the range of a float and nesting deeper than {!max_depth} are errors. Of duplicate property
-      names, the last value is kept, at the position of the first.
+      escapes, numbers out of the range of a float and nesting deeper than {!max_depth} are errors. Of duplicate
+      property names, the last value is kept, at the position of the first.
 
-      Integers from -2{^63} to 2{^64} - 1 are held exactly, and compared exactly with each other and with every other
+      Integers from -2{^ 63} to 2{^ 64} - 1 are held exactly, and compared exactly with each other and with every other
       number. Any other number is held as the nearest float. *)
 
   type error = {
@@ -159,8 +159,7 @@ module Results : sig
   val collect_annotations : t -> (string * (string * (string * string) list) list) list
   (** [collect_annotations c] is the annotations grouped by instance location, then keyword, then schema location
       fragment (see {!schema_location_fragment}), with the values as JSON text. Each level is an association list in
-      ascending order of its keys, for example
-      [[("/name", [("title", [("#/properties/name", "\"Name\"")])])]]. *)
+      ascending order of its keys, for example [[("/name", [("title", [("#/properties/name", "\"Name\"")])])]]. *)
 
   val schema_location_fragment : string -> string
   (** [schema_location_fragment location] is ["#"] followed by the schema location, percent-encoded as a URI fragment
@@ -181,8 +180,8 @@ type options = {
           The default is [true]. *)
   formats : (string * (string -> bool)) list;
       (** Custom format assertions by name, each over the string value (or the number's JSON text, for numbers). A
-          custom format takes precedence over a built-in one of the same name, and of two with one name the later in
-          the list. It receives a copy of the string. *)
+          custom format takes precedence over a built-in one of the same name, and of two with one name the later in the
+          list. It receives a copy of the string. *)
   resolver : (string -> Document.t option) option;
       (** The function that resolves remote documents by absolute URI. It returns [None] if the document is unknown. The
           standard metaschemas are always available. *)
