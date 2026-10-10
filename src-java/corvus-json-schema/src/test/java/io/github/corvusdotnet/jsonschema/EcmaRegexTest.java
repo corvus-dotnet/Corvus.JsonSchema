@@ -818,6 +818,92 @@ class EcmaRegexTest {
         assertAnswers(LOOKAHEADS_BY_WAYS, textsOver(4, new String[] {"a", "b", "c"}, MORE_FOR_LOOKAHEADS));
     }
 
+    /**
+     * Groups of a lookaround that are read in the same iteration of a loop, past a place the match can come back to
+     * after the lookaround has run again in a later iteration. java.util.regex does not restore the groups of a
+     * lookaround, so the lookaround is run again before the reference.
+     */
+    private static final String[][] LOOKAROUND_GROUPS_IN_LOOPS = {
+            {"^(?:(?=([ab]))[ab](?:c|ca)\\1)*$", "||aca|bcb|acaa|bcab"},
+            {"^(?:(?=([ab]))[ab](?:c\\1|ca\\1))*$", "||aca|bcb|acaa|bcab"},
+            {
+                "^(?:(?=([ab]+?))(?:\\1.)*?b)+$",
+                "|b|bb|aab|abb|acb|bab|bbb|bcb|aabb|abbb|acbb|baab|babb|bacb|bbab|bbbb|bbcb"
+                        + "|bcbb",
+            },
+            {"^(?:(?=(.))(?:[bc]\\1[^a]?)+)*$", "||bb|cc|bbb|bbc|ccb|ccc|bbbb|bbcb|bbcc|ccbb|ccbc|cccc"},
+            {
+                "^(?:(?=([ab]c?))(?:\\1([bc]+?))*)*$",
+                "||ab|bb|abb|abc|acb|acc|bbb|bbc|bcb|bcc|abab|abac|abbb|abbc|abcb|abcc|acbb"
+                        + "|acbc|accb|accc|bbab|bbbb|bbbc|bbcb|bbcc|bcbb|bcbc|bccb|bccc|acbcb|acbccb"
+                        + "|abcabc|bcbcab|ababcab",
+            },
+            {"^(?:(?=(a*))(?:b\\1(?<=\\1b?))*?)*$", "||b|bb|bbb|bbbb"},
+            {"^(?:(?<=(.))(?:a\\1c?)?\\1|b)*$", "||b|bb|bbb|babb|bbbb"},
+            {
+                "^(?:a(?:(?=(b))b(?:c|\\1)*)*)*$",
+                "||a|aa|ab|aaa|aab|aba|abb|abc|aaaa|aaab|aaba|aabb|aabc|abaa|abab|abba|abbb"
+                        + "|abbc|abca|abcb|abcc|abcabc|aabbaa|abababa|ababcab",
+            },
+            {
+                "^(?:[bc]?(?:.(?=([ab]c?))(?:c\\1)*\\1)*?b?)*$",
+                "||b|c|aa|ab|ba|bb|bc|ca|cb|cc|aab|aac|abb|abc|baa|bab|bac|bba|bbb|bbc|bca|bcb"
+                        + "|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab|aaba|aabb|aabc|aacb|aacc"
+                        + "|abaa|abab|abba|abbb|abbc|abcb|abcc|baaa|baab|baac|baba|babb|babc|bacb|bacc"
+                        + "|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc"
+                        + "|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|cacb|cacc|cbaa|cbab|cbac|cbba"
+                        + "|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|abcabc"
+                        + "|aabbaa|bcbcab|ababcab",
+            },
+            {
+                "^(?:b?(?:(?<=(a)[^a])a\\1\\2(?=(?:(a*?)(a)?\\1)?)(?:c*\\2c?)?\\3)?.?){2}",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab"
+                        + "|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb"
+                        + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb"
+                        + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
+                        + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
+                        + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
+                        + "|ccbc|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa"
+                        + "|ababcab|axbba|abxba",
+            },
+            {"(?i:^(?:(?=(a|))c\\1)*$)", "||c|cc|ccc|cccc"},
+            {"^(?:(?=(a|b))(?:c*\\1)+?c)+$", "|ac|bc|aac|bbc|aaac|acac|acbc|bbbc|bcac|bcbc"},
+            {"^(?:(?=(a)|b)[ab](?:c|cb)\\1)*$", "||bc|aca|bcb|acba|bcbc"},
+            {"^(?:(?=(a)?)(?:b|ba)\\1c)+$", "|bc|bac|bcbc"},
+            {"^(?:(?<=(a|b))c(?:a|ab)\\1)+$", ""},
+            {
+                "^(?=(?:(?=(a|b))[ab](?:c|ca)\\1)*)\\1",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab"
+                        + "|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb"
+                        + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb"
+                        + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
+                        + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
+                        + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
+                        + "|ccbc|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa"
+                        + "|ababcab|axbba|abxba",
+            },
+            {
+                "^(?=(?:(?:((?:a|ab)*)\\1c)*b)*)\\1",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab"
+                        + "|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb"
+                        + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb"
+                        + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
+                        + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
+                        + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
+                        + "|ccbc|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa"
+                        + "|ababcab|axbba|abxba",
+            },
+    };
+
+    /** A reference reads what the lookaround of its own iteration captured. */
+    @Test
+    void aGroupOfALookaroundIsReadAsItsIterationSetIt() {
+        assertAnswers(LOOKAROUND_GROUPS_IN_LOOPS, textsOver(4, new String[] {"a", "b", "c"}, MORE_FOR_LOOKAHEADS));
+    }
+
     /** Backreferences inside a case-insensitive group, in patterns that are valid with the u flag. */
     private static final String[][] CASE_INSENSITIVE_BACKREFERENCES = {
             {
@@ -996,13 +1082,9 @@ class EcmaRegexTest {
             {"(?<=(x*?)a*)\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
             {"(?<=(a)+b*)x\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
             {"(?<=\\1a*(b))x", EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND},
-            // In a lookahead: a group of an iteration of a loop that is inside another loop, read later in the
-            // lookahead, with a loop inside the group in which a choice is made. Where the group started is not
-            // known at the choice: java.util.regex does not restore a group set in a lookahead.
-            {"^(?=(?:(?:((?:a|ab)*)\\1c)*b)*)\\1", EcmaRegex.REFUSED_LOOKAROUND_IN_REPETITION},
-            // java.util.regex does not restore the group of a lookahead when the match goes back into the
-            // iteration, to between the lookahead and the backreference.
-            {"^(?:(?=([ab]))[ab](?:c|ca)\\1)*$", EcmaRegex.REFUSED_LOOKAROUND_IN_REPETITION},
+            // A lookahead in a loop of a lookahead, with a lazy loop between it and a reference to its group, where
+            // what follows the reference sets a group that is read after the outer lookahead.
+            {"^(?=(?:(?=(a|b))[ab](?:c|d)*?\\1(d)?)*)\\1\\2", EcmaRegex.REFUSED_LOOKAROUND_IN_REPETITION},
             {
                 "(?:(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?\\1\\2\\3\\4\\5\\6\\7\\8\\9)*",
                 EcmaRegex.REFUSED_TOO_MANY_PATHS,
@@ -1013,9 +1095,6 @@ class EcmaRegexTest {
             assertNull(EcmaRegex.translate(r[0]), r[0]);
             assertTrue(EcmaRegex.isValid(r[0]), r[0]);
         }
-        // With no place between the lookahead and the backreference to go back to, the same is written.
-        assertMatches("^(?:(?=([ab]))[ab]c\\1)*$", "acabcb");
-        assertNoMatch("^(?:(?=([ab]))[ab]c\\1)*$", "acabca");
         // An invalid pattern is not a refused one.
         assertNull(EcmaRegex.unsupported("(a"));
     }

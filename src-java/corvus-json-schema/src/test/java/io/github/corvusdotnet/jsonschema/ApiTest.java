@@ -206,6 +206,10 @@ class ApiTest {
         assertFalse(ahead.isValid("\"bb\""));
         Validator emptyFirst = Validator.compile("{\"pattern\": \"^(?=((?:c??)?))\\\\1$\"}");
         assertTrue(emptyFirst.isValid("\"c\""));
+        // A group of a lookaround is read as the lookaround of the same iteration set it.
+        Validator looped = Validator.compile("{\"pattern\": \"^(?:(?=([ab]))[ab](?:c|ca)\\\\1)*$\"}");
+        assertTrue(looped.isValid("\"acaa\""));
+        assertFalse(looped.isValid("\"acab\""));
         Validator counted = Validator.compile("{\"pattern\": \"(?<=(?:(a|b)(?:c|b){2})+)\\\\1\"}");
         assertTrue(counted.isValid("\"abca\""));
         assertFalse(counted.isValid("\"abcb\""));

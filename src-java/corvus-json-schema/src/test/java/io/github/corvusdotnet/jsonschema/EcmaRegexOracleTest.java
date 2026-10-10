@@ -353,6 +353,40 @@ class EcmaRegexOracleTest {
                         + "|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccba|ccbb|ccbc|cccb|acbcb|acbccb|acacab|bcbcab"
                         + "|bBc",
             },
+            // A group of a lookaround read in the same iteration of a loop, where the match can come back to before
+            // the reference after a later iteration has run the lookaround again.
+            {"^(?:(?=([ab]))[ab](?:c|ca)\\1)*$", "||aca|bcb|acaa|bcab"},
+            {"^(?:(?=([ab]))[ab](?:c\\1|ca\\1))*$", "||aca|bcb|acaa|bcab"},
+            {
+                "^(?:(?=([ab]+?))(?:\\1.)*?b)+$",
+                "|b|bb|aab|abb|acb|bab|bbb|bcb|aabb|abbb|acbb|baab|babb|bacb|bbab|bbbb|bbcb"
+                        + "|bcbb",
+            },
+            {"^(?:(?=(a*))(?:b\\1(?<=\\1b?))*?)*$", "||b|bb|bbb|bbbb"},
+            {"^(?:(?<=(.))(?:a\\1c?)?\\1|b)*$", "||b|bb|bbb|babb|bbbb"},
+            {
+                "^(?:[bc]?(?:.(?=([ab]c?))(?:c\\1)*\\1)*?b?)*$",
+                "||b|c|aa|ab|ba|bb|bc|ca|cb|cc|aab|aac|abb|abc|baa|bab|bac|bba|bbb|bbc|bca|bcb"
+                        + "|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab|aaba|aabb|aabc|aacb|aacc"
+                        + "|abaa|abab|abba|abbb|abbc|abcb|abcc|baaa|baab|baac|baba|babb|babc|bacb|bacc"
+                        + "|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc"
+                        + "|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|cacb|cacc|cbaa|cbab|cbac|cbba"
+                        + "|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|abcabc"
+                        + "|aabbaa|bcbcab|ababcab|Bbc",
+            },
+            {"(?i:^(?:(?=(a|))c\\1)*$)", "||c|cc|ccc|cccc"},
+            {
+                "^(?=(?:(?:((?:a|ab)*)\\1c)*b)*)\\1",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab"
+                        + "|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb"
+                        + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb"
+                        + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
+                        + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
+                        + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
+                        + "|ccbc|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa"
+                        + "|ababcab|axbba|abxba|bBc|Bbc|aAaAc|aaAAc",
+            },
     };
 
     private static final String[] MORE_FOUND_BY_FUZZING = {
