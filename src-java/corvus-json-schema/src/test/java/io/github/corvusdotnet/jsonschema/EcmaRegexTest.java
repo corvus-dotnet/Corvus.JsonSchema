@@ -1114,8 +1114,10 @@ class EcmaRegexTest {
             {"(?<=(x*?)a*)\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
             {"(?<=(a)+b*)x\\1", EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND},
             {"(?<=\\1a*(b))x", EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND},
+            // Seventeen groups that may each be set or not: 131,072 ways through them.
             {
-                "(?:(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?\\1\\2\\3\\4\\5\\6\\7\\8\\9)*",
+                "(?:(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?(j)?(k)?(l)?(m)?(n)?(o)?(p)?(q)?"
+                        + "\\1\\2\\3\\4\\5\\6\\7\\8\\9\\10\\11\\12\\13\\14\\15\\16\\17)*",
                 EcmaRegex.REFUSED_TOO_MANY_PATHS,
             },
         };
@@ -1294,8 +1296,10 @@ class EcmaRegexTest {
         assertMatches("^(?:^|x){2,}a$", "x".repeat(300) + "a");
         String longBody = "(?:^|" + "abcdefghij".repeat(40) + ")";
         assertMatches("^" + longBody + "{100}$", "abcdefghij".repeat(80));
+        // The copies are counted, and their text only against the limit of a translation.
+        assertMatches("^" + longBody + "{180}$", "abcdefghij".repeat(80));
         for (String p : new String[] {
-            "(?:^|x){201}a", "(?:^|x){200,}a", "(?:^|x){2147483647}a", "(?:(?:^|x){15}-|$){15}", longBody + "{180}",
+            "(?:^|x){201}a", "(?:^|x){200,}a", "(?:^|x){2147483647}a", "(?:(?:^|x){15}-|$){15}", longBody + "{201}",
         }) {
             assertEquals(EcmaRegex.REFUSED_EMPTY_ITERATIONS, EcmaRegex.unsupported(p), p);
             assertNull(EcmaRegex.translate(p), p);
@@ -2088,5 +2092,62 @@ class EcmaRegexTest {
         // Java 17 has the longest text: its engine fails on every character beyond the Basic Multilingual Plane.
         assertTrue(EcmaRegex.translate("(?i:^(.)\\1$)").length() < 8000);
         assertTrue(EcmaRegex.translate("(?i:^(..\\W)\\1$)").length() < 16000);
+    }
+
+    /**
+     * Patterns that the limits of size refused before they were raised (more than 256 plans of one scope, or more
+     * than 200 copies of bodies counted through the tests of a lookahead), with the texts each matches.
+     */
+    private static final String[][] WITHIN_THE_LIMITS_OF_SIZE = {
+            {
+                "^(?=((?:(a)|(b)){0,9}?(?:(|a)){0,13}?)|ab)\\4\\3",
+                "||a|b|x|aa|ab|ax|ba|bb|bx|xa|xb|xx|aaa|aab|aax|aba|abb|abx|axa|axb|axx|baa|bab"
+                        + "|bax|bba|bbb|bbx|bxa|bxb|bxx|xaa|xab|xax|xba|xbb|xbx|xxa|xxb|xxx|aaaa|aaab"
+                        + "|aaax|aaba|aabb|aabx|aaxa|aaxb|aaxx|abaa|abab|abax|abba|abbb|abbx|abxa|abxb"
+                        + "|abxx|axaa|axab|axax|axba|axbb|axbx|axxa|axxb|axxx|baaa|baab|baax|baba|babb"
+                        + "|babx|baxa|baxb|baxx|bbaa|bbab|bbax|bbba|bbbb|bbbx|bbxa|bbxb|bbxx|bxaa|bxab"
+                        + "|bxax|bxba|bxbb|bxbx|bxxa|bxxb|bxxx|xaaa|xaab|xaax|xaba|xabb|xabx|xaxa|xaxb"
+                        + "|xaxx|xbaa|xbab|xbax|xbba|xbbb|xbbx|xbxa|xbxb|xbxx|xxaa|xxab|xxax|xxba|xxbb"
+                        + "|xxbx|xxxa|xxxb|xxxx|aaaaaa|aaaaaaaaaaaa|ababababab|aaaaaaaaaab"
+                        + "|abababababababab",
+            },
+            {
+                "(?=((?:(a)|(b)){0,14}?a)$)\\2\\2(?=(a(?:(|a)){0,14}?))(?:a\\5)*\\1",
+                "|a|aa|ba|xa|aaa|aba|axa|baa|bba|bxa|xaa|xba|xxa|aaaa|aaba|aaxa|abaa|abba|abxa"
+                        + "|axaa|axba|axxa|baaa|baba|baxa|bbaa|bbba|bbxa|bxaa|bxba|bxxa|xaaa|xaba|xaxa"
+                        + "|xbaa|xbba|xbxa|xxaa|xxba|xxxa|aaaaaa|aaaaaaaaaaaa",
+            },
+            {
+                "^(?:[ax](?=((?:\\b|a){0,13}?(?:\\b|a){2,3}?))(?:[ab]\\1)*?\\1)*$",
+                "||a|x|aa|xa|aaa|xaa|aaaa|aaax|xaaa|xaax|aaaaaa|aaaaaaaaaaaa",
+            },
+            {"^(?:a?(?=((?:\\b|a){9}?(?:.?){2,18}?))(?:a\\1)+\\1){2}$", ""},
+            {".*(?:(?=((?:a?){1,22}?(?=x))x?)(?:\\1)*?\\1$){2,}$", ""},
+    };
+
+    private static final String[] MORE_FOR_LIMITS = {
+        "aaaaaa", "aaaaaaaaaaaa", "ababababab", "aaaaaaaaaab", "abababababababab"
+    };
+
+    /** What the limits of size take, and the smallest patterns of each kind that they refuse. */
+    @Test
+    void theLimitsOfSize() {
+        assertAnswers(WITHIN_THE_LIMITS_OF_SIZE, textsOver(4, new String[] {"a", "b", "x"}, MORE_FOR_LIMITS));
+        // A pattern of the test data whose translation is over a million characters.
+        String large = "(?:b(?=(?:(?:((?:[^a]??(?:b[ab]){0,2}?){2,})|b??)(?=[^a]?))*?((?:b|a[bc]))*?c)(?:b\\1){0,2}?(?:c"
+                + "\\1){2}\\2a\\1$)*$";
+        String translation = EcmaRegex.translate(large);
+        assertNotNull(translation, () -> EcmaRegex.unsupported(large));
+        assertTrue(translation.length() > 1 << 20 && translation.length() < 1 << 24);
+        // Sixteen groups that may each be set or not are 65,536 ways. Seventeen are too many.
+        String sixteen = "(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?(j)?(k)?(l)?(m)?(n)?(o)?(p)?";
+        String read = "\\1\\2\\3\\4\\5\\6\\7\\8\\9\\10\\11\\12\\13\\14\\15\\16";
+        assertNotNull(EcmaRegex.translate("(?:" + sixteen + read + ")*"));
+        assertEquals(EcmaRegex.REFUSED_TOO_MANY_PATHS, EcmaRegex.unsupported("(?:" + sixteen + "(q)?" + read + "\\17)*"));
+        // Two hundred iterations of a lookahead by ways, and two hundred copies of a body, are written.
+        assertNotNull(EcmaRegex.translate("(?=((?:a|){0,200}?)a)\\1a$"));
+        assertEquals(EcmaRegex.REFUSED_TOO_MANY_PATHS, EcmaRegex.unsupported("(?=((?:a|){0,201}?)a)\\1a$"));
+        assertNotNull(EcmaRegex.translate("(?:^|x){200}a"));
+        assertEquals(EcmaRegex.REFUSED_EMPTY_ITERATIONS, EcmaRegex.unsupported("(?:^|x){201}a"));
     }
 }

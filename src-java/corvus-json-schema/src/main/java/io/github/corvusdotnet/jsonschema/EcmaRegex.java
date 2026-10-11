@@ -1324,7 +1324,7 @@ final class EcmaRegex {
          * body are more than a stack of 512 KB holds.
          */
         static final int MAX_UNROLLED_COPIES = 200;
-        static final int MAX_UNROLLED_LENGTH = 1 << 16;
+        static final int MAX_UNROLLED_LENGTH = 1 << 24;
 
         private final boolean unicode;
         private Node root;
@@ -2270,14 +2270,14 @@ final class EcmaRegex {
         // and is written only when it has no decision.
 
         /** The most plans of one scope. */
-        static final int MAX_PLANS = 256;
+        static final int MAX_PLANS = 1 << 16;
         /** The most text of a translation by paths. */
-        static final int MAX_PATHS_LENGTH = 1 << 20;
+        static final int MAX_PATHS_LENGTH = 1 << 24;
         /**
          * The most text written while a translation by paths is made. A scope inside a scope is written again for
          * each plan of the outer one, so this is what bounds the time a translation takes.
          */
-        static final long MAX_PATHS_WRITTEN = 16L * MAX_PATHS_LENGTH;
+        static final long MAX_PATHS_WRITTEN = 8L * MAX_PATHS_LENGTH;
 
         /** What a path has set: for each group of the pattern, the group of the translation, or null. */
         private static final class Env {
@@ -3671,6 +3671,7 @@ final class EcmaRegex {
             int wasAtomic = atomic;
             int wasBase = loopBase;
             int wasChoices = choices;
+            int wasCopies = unrolledCopies;
             List<int[]> list = decisions;
             int at = decisionAt;
             int start = out.length();
@@ -3683,6 +3684,9 @@ final class EcmaRegex {
             } else {
                 ahead(n, live);
             }
+            // The engine is done with a lookaround before it goes on, so the copies in it are not on the way of
+            // what follows.
+            unrolledCopies = wasCopies;
             atomic = wasAtomic;
             loopBase = wasBase;
             chain = wasChain;
@@ -4677,7 +4681,9 @@ final class EcmaRegex {
             if (here != null) {
                 out.append("(?=(?<").append(here).append('>').append(ANY).append("*))");
             }
+            int wasCopies = unrolledCopies;
             out.append(scope(all, NOTHING, null)).append(')');
+            unrolledCopies = wasCopies;
             strict = wasStrict;
             atomic = wasAtomic;
             loopBase = wasBase;
