@@ -2104,11 +2104,25 @@ _CACHE_PATTERN = 1024
 _cache: OrderedDict[tuple[str, float | None], Matcher | None] = OrderedDict()
 _cache_lock = threading.Lock()
 
-# The standard library keeps the patterns it compiled last (512 of them) and gives no way to compile one that it
-# does not keep. So it is given translations of this many characters at most, and its cache holds 512 of those at
-# most for this package (16 bytes kept for a character, as measured: 8 MB). A longer one goes to the regex package,
-# which is asked not to keep it.
+# The standard library keeps the patterns it compiled last (512 of them), and its documented functions give no way
+# to compile one that it does not keep. A translation of this many characters at most is compiled by re.compile, so
+# that cache holds 512 of those at most for this package (16 bytes kept for a character, as measured: 8 MB). A
+# longer one is compiled by the compiler behind re.compile, which keeps nothing, and goes to the regex package
+# (which is asked not to keep it) on a Python that does not have that compiler where it is looked for.
 _MAX_FOR_RE = 1024
+
+
+def _compile_for_re(text: str) -> Any:
+    """The translation compiled by the standard library's engine, or None when it is too long for the engine's
+    cache and this Python has no way around the cache."""
+    if len(text) <= _MAX_FOR_RE:
+        return re.compile(text, re.ASCII)
+    compiler = getattr(re, "_compiler", None)
+    if compiler is None and sys.version_info < (3, 11):
+        import sre_compile as compiler  # the name it had before CPython 3.11
+    if compiler is None or not hasattr(compiler, "compile"):
+        return None
+    return compiler.compile(text, re.ASCII.value)
 
 
 def _limited(search: Matcher, limit: float, pattern: str) -> Matcher:
@@ -2140,9 +2154,11 @@ def _search(pattern: str, unicode: bool, limit: float | None) -> tuple[Matcher, 
     t = _translate(pattern, unicode, False)
     if t is None:
         return None
-    if not t.for_regex and len(t.text) <= _MAX_FOR_RE and (limit is None or t.linear):
+    if not t.for_regex and (limit is None or t.linear):
         try:
-            return re.compile(t.text, re.ASCII).search, t.wide
+            compiled = _compile_for_re(t.text)
+            if compiled is not None:
+                return compiled.search, t.wide
         except re.error:
             # The regex package takes more (a lookbehind that the standard library does not, say).
             pass

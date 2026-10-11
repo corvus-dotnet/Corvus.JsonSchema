@@ -483,15 +483,18 @@ def test_the_caches_are_bounded() -> None:
         assert compile_pattern(f"^a{{{k}}}b+$") is not None
         assert compile_pattern(f"^(?:a|a){{{k}}}b+$", 0.5) is not None
     assert len(pattern_module._cache) <= 256
-    # A long pattern is not kept at all, and the standard library is not given one to keep.
+    # A long pattern is not kept at all, by this package or by the standard library, which compiles it all the same.
     long = "^[ab]" + "a" * 2000 + "$"
-    purged = re.compile("x")  # anything, so the next line has something to purge
-    del purged
     re.purge()
     assert compile_pattern(long) is not None
     assert (long, 1.0) not in pattern_module._cache
     assert not any(long[5:50] in str(key) for key in getattr(re, "_cache", {}))
-    assert _engine(compile_pattern(long)) == "regex"
+    assert _engine(compile_pattern(long)) == "re"
+    assert compile_pattern(long)("b" + "a" * 2000) and not compile_pattern(long)("b" + "a" * 1999)  # type: ignore[misc]
+    # On a Python without the compiler behind re.compile where it is looked for, the regex package takes it.
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(pattern_module, "_compile_for_re", lambda text: None)
+        assert _engine(compile_pattern(long)) == "regex"
     # The regex package is asked not to keep what it compiles for this package.
     import regex
 
