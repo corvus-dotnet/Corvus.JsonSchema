@@ -280,17 +280,17 @@ alternations, lookbehinds over a long string, case-insensitive backreferences to
 classes, choices that read no character, and repetitions that recurse. Before the limits, with a heap of 1 GB,
 93 of them had not answered after 20 seconds, 64 threw `StackOverflowError`, and one took
 the whole heap while the schema was compiled. With the limits, on Java 21, with a heap of 256 MB, on a machine with a
-load of 14 to 17 from other work:
+load of 5 to 18 from other work:
 
 | | Compiled | Interpreter |
 |---|---|---|
-| Cases that end in an answer | 122 | 122 |
-| Cases that end in `PatternMatchLimitException` | 144 | 144 |
+| Cases that end in an answer | 134 | 134 |
+| Cases that end in `PatternMatchLimitException` | 132 | 132 |
 | Cases refused as too large when the schema is compiled | 19 | 19 |
 | Cases refused for another reason (not valid, or the lookbehind exception) | 2 | 2 |
-| Longest translation of a pattern, and compilation by `java.util.regex` | 645 ms, 25 ms | 784 ms, 37 ms |
-| Longest match, which is the limit and what it overran by | 1,048 ms | 1,054 ms |
-| Most memory the process held | 264 MB | 263 MB |
+| Longest translation of a pattern, and compilation by `java.util.regex` | 464 ms, 27 ms | 501 ms, 37 ms |
+| Longest match, which is the limit and what it overran by | 1,046 ms | 1,043 ms |
+| Most memory the process held | 266 MB | 263 MB |
 
 No case ran longer, threw anything else, or ran out of memory.
 
@@ -315,11 +315,10 @@ No case ran longer, threw anything else, or ran out of memory.
 
 **Slow patterns.** `java.util.regex` matches by backtracking, and the translation finds some places by search, so
 a pattern that is deliberately hard can take a second where V8 answers in milliseconds. Of the 98,839 patterns of the
-test data, seven go over the limit of 1 second for some of their texts, on every JDK and in both modes.
+test data, six go over the limit of 1 second for some of their texts, on every JDK and in both modes.
 Each nests repetitions whose bodies can match nothing around groups that are read, or holds a lookbehind that is
 searched for, and each gave V8's answers when it was run with no limit:
 
-- `^((?:a|(?<n0>\k<n0>+?|(|a)){2,}\1\3{2}){0,}){0,}?\1\k<n0>$` (`backreferences`)
 - `^(?=((?:(?:(|a)(?:(?:(?:(a|)){1,3}?(?:.?)??))*?(?:.?)+))*[ax]))\1$` (`engine-faults`)
 - `((?!\Bx??|)-??|-(?:a|(?:a*|[ax]){2,}?){2}|(.(?<!a)|\B|($){3,}(\B|(?!$)){2,}?){4,}a*?){4}x` (`empty-loops`)
 - `^((?<n0>\k<n0>?|(?:\1?(|a)\k<n0>|()(x)*){0,2}){1,2}?((?:a){0,0}?^x{1,2})?|(a|)){1,}?\4\3-$` (`backreferences`)
@@ -327,7 +326,7 @@ searched for, and each gave V8's answers when it was run with no limit:
 - `^(?:((?!|-$)|(?=).|(?<=[^a])){2}){0}(?:\1|(?:(?<!^)(?:[^a]*\b|[^a]){2,3}|[^a]){3,4}(?:(|)|)*){3}a$` (`empty-loops`)
 - `^(x){0}\1(?<n0>(\3{2}){0,2}\2(?:(?!$)(\k<n0>\1)?){3,}|(?:(?<n1>(?<=x)[^a])|(?<n1>\6+?)){2,}(?:(?<n2>\2(?:(?<n3>a(x)*)|(?<n3>\7?a)){3,}?\3{2})|(?<n2>[^a]-))+|(?:(?:x){2,4}|\11*){1,3}\11{2}x){3,}?x$` (`backreferences`)
 
-2 more went over the limit in some of the four runs and not in others, on a busy machine, as a time
+One more went over the limit in some of the four runs and not in others, on a busy machine, as a time
 limit will have it. Earlier versions of this page listed ten slow patterns. One of them, which is in two of the
 files, is now fast, and so is `^(?:(?:a|)*?x)*?$`, which read a string of 41 characters nine million times: a
 repetition that can run no times is written without the empty alternatives of its body, which ECMA-262 never takes
