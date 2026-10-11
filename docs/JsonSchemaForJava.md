@@ -185,7 +185,7 @@ A lookbehind none of whose groups is read is not affected, whatever its body.
 
 The translator keeps one more reason, "a backreference to a group of a lookaround, in a repetition that can go back
 to before the backreference", for a reference it could not give a run of the lookaround of its own. No pattern is
-known that it refuses: none of 125,839 generated patterns does.
+known that it refuses: none of 200,803 generated patterns does.
 
 A pattern that is deliberately hard, with nested repetitions over groups that are read, can be slow. The translation
 finds some places by search, and `java.util.regex` matches by backtracking.
