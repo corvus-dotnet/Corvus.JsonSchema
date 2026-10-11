@@ -1742,11 +1742,24 @@ mod corpus_patterns {
             let kind = super::compile(p)
                 .map(|c| match &c.matcher {
                     super::Matcher::Regex(_) => "regex",
+                    super::Matcher::RegexBmp(..) => "regex-bmp",
                     super::Matcher::Regress(_) => "regress",
+                    super::Matcher::RegressUnits { .. } => "regress-units",
                     _ => "fast",
                 })
                 .unwrap_or("invalid");
-            println!("{kind}\t{corpus}\t{p}");
+            // What the engine is given: the translation for `regex`, and for regress the pattern written again
+            // where it is.
+            let unicode = regress::Regex::with_flags(p, "u").is_ok();
+            let given = match kind {
+                "regex" | "regex-bmp" => super::translate(p, unicode).unwrap_or_default(),
+                "regress" | "regress-units" => match super::rewrite::for_engine(p, unicode) {
+                    super::rewrite::Rewrite::Rewritten(written) => written,
+                    _ => "as written".to_string(),
+                },
+                _ => String::new(),
+            };
+            println!("{kind}\t{corpus}\t{p}\t{given}");
         }
     }
 }

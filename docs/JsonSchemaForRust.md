@@ -95,6 +95,41 @@ objects read in place. `&serde_json::Value` and `JsonDocument` implement it, and
 `Validator::validate_instance` and `Validator::evaluate_instance` take any implementation, so values need not be
 converted first. The Python, Ruby, PHP and R packages read their languages' values this way.
 
+## Regular expressions
+
+`pattern`, `patternProperties` and the `regex` format follow ECMA-262, as JSON Schema specifies. A pattern is read
+with the `u` flag. A pattern that is not valid with it is read as a pattern with no flag, which accepts what many
+schemas hold (`\&`, `\-`, a lone brace), and is then matched as ECMA-262 says for such a pattern: by UTF-16 code
+unit, so a character beyond the Basic Multilingual Plane is two, and `^\-?.$` does not match one. The `regex`
+format accepts only the grammar of the flag.
+
+The crate matches the common shapes itself, gives what the [`regex`](https://crates.io/crates/regex) crate can run to
+it, and the rest (lookarounds, backreferences, modifier groups, patterns without the flag) to
+[`regress`](https://crates.io/crates/regress), a backtracking ECMA-262 engine. Where `regress` answers a pattern
+differently from ECMA-262 it is given another pattern with the same meaning.
+
+- **Exact.** The answers are V8's for every pattern and text of the
+  [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) that a Rust
+  string can hold. That covers lookaheads and lookbehinds, with none refused (`regress` matches a lookbehind
+  backwards, as ECMA-262 does), backreferences into and out of repetitions and lookarounds, modifier groups, and
+  case-insensitive matching in both grammars, a case-insensitive backreference without the `u` flag among it.
+- **Refused.** One kind of valid pattern does not compile, and the error says that it is valid and too large: a
+  repetition inside a repetition whose body can match the empty string, with a minimum too large to write out as
+  copies, or with a count too large to write out and a group that a backreference outside the repetition reads.
+  `^(?!-)(?:(?:(a)|){1,300}\1-)+$` is one. The same pattern with a count of 30 compiles.
+- **Not proved exact.** A repetition inside a repetition with a count too large to write out as copies, such as
+  `(?:a|x){1,300}`, keeps its count, and `regress` can lose it and run the repetition more times than its maximum.
+  No pattern of the test data shows a wrong answer for it.
+- **Where V8 departs from ECMA-262,** the crate follows ECMA-262. With the `u` flag V8 starts a match between the two
+  halves of a surrogate pair (`/\B/u` matches inside the one character of `"a\u{10428}a"`), compares a
+  case-insensitive backreference to a group of several characters by full case folding, and answers some
+  case-insensitive modifier groups differently from the same pattern with the `i` flag.
+- **Unicode versions.** Case-insensitive matching with the `u` flag uses the tables of `regress` (Unicode 17 in 0.12),
+  and without the flag the uppercase forms of the Rust standard library. They agree with V8 13.6 on every character
+  of Unicode 16.
+- **Lone surrogates.** A JSON string with the escape of half of a surrogate pair is not a Rust string.
+  `validate_json` and `serde_json` both refuse such a document as not valid JSON.
+
 ## Performance
 
 Measured with jsonschema-benchmark's corpora and protocol against Blaze (geometric means over the 37 corpora, Corvus

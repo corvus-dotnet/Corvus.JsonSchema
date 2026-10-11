@@ -70,24 +70,45 @@ this way, through CPython's C API.
 
 - **Numbers:** compared exactly. Integers are compared as integers and doubles against integers without rounding.
   `multipleOf` is decided on decimal forms, so `0.0075` is a multiple of `0.0001`.
-- **Patterns:** use ECMA-262 semantics with the `u` flag. Common shapes (class sequences, literals and their
-  alternatives, separated lists, line lengths) get dedicated matchers, as in the C# evaluator. Patterns within the
-  common subset of ECMA-262 and the [`regex`](https://crates.io/crates/regex) crate's syntax are translated and run by
-  `regex`, and anything else by [`regress`](https://crates.io/crates/regress). Where `regress` answers a pattern
-  differently from ECMA-262 (a repetition inside a repetition, a backreference to a group from inside it, two groups
-  with one name, a case-insensitive group), it is given another pattern with the same meaning. A repetition inside a
-  repetition is written out as copies for that, which multiply with the repetitions around them. Where the pattern
-  would come to more than 65,536 characters that way, or to groups nested deeper than the 256 levels `regress` reads,
-  a repetition whose body cannot match the empty string is given to `regress` as it is written (`(?:a|x){1,300}`
-  inside another repetition is one). `regress` can lose count of such a repetition and run it more or fewer times than
-  the pattern says. A repetition that is too large and whose body can match the empty string (`(?:a|){1,300}` inside
-  another repetition) is the kind `regress` does not end on as written. A schema with one does not compile, and the
-  error says why.
+- **Patterns:** use ECMA-262 semantics. A pattern is compiled with the `u` flag. One that is not valid with it (it has
+  `\&` or `\-`, say) is compiled without it, as many validators accept such patterns, and is then matched as
+  ECMA-262 says for it: by UTF-16 code unit, so a character beyond the Basic Multilingual Plane is two. The `regex`
+  format accepts only the grammar of the flag. Common shapes (class sequences, literals and their alternatives,
+  separated lists, line lengths) get dedicated matchers, as in the C# evaluator. Patterns within the common subset of
+  ECMA-262 and the [`regex`](https://crates.io/crates/regex) crate's syntax are translated and run by `regex`, and
+  anything else by [`regress`](https://crates.io/crates/regress). Where `regress` answers a pattern differently from
+  ECMA-262, it is given another pattern with the same meaning (`src/pattern/rewrite.rs` lists the cases).
 
-  One class of pattern is known not to be exact. A backreference inside a case-insensitive group `(?i:...)`, in a
-  pattern that is valid only without the `u` flag (one with `\&` or `\-`, say), is compared by Unicode case folding,
-  where ECMA-262 compares the uppercase forms of UTF-16 code units. `^(?i:(ſ)\1)\&?$` is the example: for the long
-  s followed by `S`, V8 says the pattern does not match and this crate says it does.
+  **What is exact.** The answers are V8's for every pattern and text of the
+  [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) that a Rust string
+  can hold, the records where V8 itself departs from ECMA-262 apart. That covers lookaheads and lookbehinds (`regress`
+  matches a lookbehind backwards, as ECMA-262 does, so none is refused), backreferences into and out of repetitions
+  and lookarounds, modifier groups, and case-insensitive matching in both grammars. A case-insensitive backreference
+  in a pattern without the `u` flag is exact too. `regress` equates 31 pairs of code units there that ECMA-262 does
+  not (`i` with U+0131 and `s` with U+017F among them), and the pattern it is given refuses those.
+
+  **What is refused.** A valid pattern does not compile in one case, and the error says that it is valid and too
+  large. It has a repetition inside a repetition, with a body that can match the empty string, and either a minimum
+  too large to write out as copies (`(?:a|){100000}` inside another repetition) or a group that a backreference
+  outside the repetition reads while its count is too large to write out (`(?:(?:(a)|){1,300}\1-)+`). The limits are
+  65,536 characters for the pattern `regress` is given and the 256 levels of groups it reads.
+
+  **What is not proved exact.** A repetition inside a repetition that is too large to write out as copies keeps its
+  count (`(?:a|x){1,300}`, and `(?:a|){1,300}` for its iterations after the first). `regress` can lose the count of
+  such a repetition when it comes back into it, and then run it more times than its maximum. No pattern of the test
+  data or of the tests shows a wrong answer for it.
+
+  **Where V8 departs from ECMA-262,** the crate follows ECMA-262. With the `u` flag V8 starts a match between the two
+  halves of a surrogate pair, compares a case-insensitive backreference to a group of several characters by full
+  case folding, and answers some case-insensitive modifier groups differently from the same pattern with the `i`
+  flag. The test data marks those records.
+
+  **Unicode versions.** Case-insensitive matching with the `u` flag uses the case folding tables of `regress` (Unicode
+  17 in 0.12), and without the flag the uppercase forms of the Rust standard library. V8 13.6 has Unicode 16. They
+  agree on every character of Unicode 16.
+
+  **Lone surrogates.** A JSON string with the escape of half of a surrogate pair (`"\ud800"`) is not a Rust string.
+  `validate_json` and `serde_json` both refuse the document as not valid JSON.
 - **Formats:** are annotations unless asserted by the vocabulary or by `CompileOptions::assert_format`. The format
   validators follow the C# implementations (RFC 3339 dates and times, IDN hostnames, IRIs, and so on).
 
