@@ -1261,6 +1261,13 @@ let test_escaped_k_in_a_class () =
   let t = check_syntax "classK" in
   if t.patterns < 30 || t.invalid < 9 then fail "the cases are not the ones this test is about"
 
+(* Checks the two counts of a quantifier. A first count greater than the second is an error whatever the size of the
+   numbers. V8 13.6 keeps a count as a number that stops at 2^31 - 1 and so takes a{2147483648,2147483647}. Those cases
+   have ECMA-262's answer. *)
+let test_counts_are_compared_as_written () =
+  let t = check_syntax "counts" in
+  if t.invalid < 20 || t.departures < 10 then fail "the cases are not the ones this test is about"
+
 let () =
   let ran = ref 0 in
   List.iter
@@ -1295,6 +1302,7 @@ let () =
       ("needs", test_needs);
       ("loops give up when the rest cannot fit", test_loops_give_up_when_the_rest_cannot_fit);
       ("escaped k in a class", test_escaped_k_in_a_class);
+      ("counts are compared as written", test_counts_are_compared_as_written);
     ];
   Printf.printf
     "V8 oracle: %d verdicts on validity compared, %d agreed. %d answers on a match compared (each text on both back \

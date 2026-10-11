@@ -183,6 +183,19 @@ let number p =
   if start = p.i then fail p "expected a number";
   !v
 
+(* Reports whether the first of two runs of decimal digits of the pattern, from a up to a_end and from b up to b_end,
+   is the greater number. The runs are compared as written, because a count has no limit of size in the grammar and
+   number stops at max_count. *)
+let greater_as_written p a a_end b b_end =
+  let rec skip_zeros k limit = if k < limit && p.p.(k) = 0x30 then skip_zeros (k + 1) limit else k in
+  let a = skip_zeros a a_end and b = skip_zeros b b_end in
+  if a_end - a <> b_end - b then a_end - a > b_end - b
+  else
+    let rec compare k =
+      k < a_end - a && (p.p.(a + k) > p.p.(b + k) || (p.p.(a + k) = p.p.(b + k) && compare (k + 1)))
+    in
+    compare 0
+
 (* Reads a quantifier, if one is there, as its min, its max and whether it is lazy. *)
 let quantifier p =
   let bounds =
@@ -198,10 +211,21 @@ let quantifier p =
         Some (0, 1)
     | '{' when looks_like_quantifier p ->
         p.i <- p.i + 1;
+        let first = p.i in
         let min = number p in
-        let max = if eat p ',' then if peek p = 0x7D then unbounded else number p else min in
+        let first_end = p.i in
+        let max =
+          if not (eat p ',') then min
+          else if peek p = 0x7D then unbounded
+          else begin
+            let second = p.i in
+            let max = number p in
+            (* Both counts stop at max_count, so the numbers are compared as they are written. *)
+            if greater_as_written p first first_end second p.i then fail p "numbers out of order in quantifier";
+            max
+          end
+        in
         if not (eat p '}') then fail p "malformed quantifier";
-        if max <> unbounded && max < min then fail p "numbers out of order in quantifier";
         Some (min, max)
     | _ -> None
   in
