@@ -74,8 +74,15 @@ class PatternMatchLimitError(Exception):
 
     def __init__(self, pattern: str, limit: float) -> None:
         shown = pattern if len(pattern) <= 200 else f"{pattern[:200]}... ({len(pattern)} characters)"
+        # The limit as corvus-json-schema-rs writes it: 1s, 250ms, 1.5s.
+        if limit >= 1:
+            time = f"{limit:g}s"
+        elif limit >= 1e-3:
+            time = f"{limit * 1e3:g}ms"
+        else:
+            time = f"{limit * 1e6:g}\u00b5s"
         super().__init__(
-            f"A match of the regular expression '{shown}' was abandoned: it took longer than the limit of {limit:g} s."
+            f"A match of the regular expression '{shown}' was abandoned: it took longer than the limit of {time}."
         )
         self.pattern = pattern
         """The regular expression."""

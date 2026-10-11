@@ -2,8 +2,15 @@
 
 A pattern is translated to Python's syntax with ECMA's meaning and compiled with the ASCII flag, so that ``\\d``,
 ``\\w`` and ``\\b`` keep their ECMA (ASCII) definitions. ECMA's ``\\s``, ``.`` and ``$`` are spelled out, and every
-literal is escaped. The standard library's ``re`` runs what it can. The ``regex`` package runs the rest (Unicode
-properties, variable-width lookbehind, and the backreferences described below).
+literal is escaped. A ``\\p{...}`` is the characters of Unicode 17 that the package's own tables have for it.
+
+Two engines run the translations. The standard library's ``re`` cannot be stopped once a match has started, and
+the ``regex`` package takes a timeout. So with the limit of a match in force (``pattern_match_limit``, one second
+unless the caller says otherwise) ``re`` runs the patterns that are proved to match in time proportional to the
+text (see ``_Linear``), and the ``regex`` package runs the rest with the limit as its timeout: a lookbehind, the
+backreferences described below, and anything else that is not proved. With no limit ``re`` runs what it can. A
+pattern over a limit of size (``MAX_PATTERN``, ``MAX_NESTING``, ``MAX_COPIES`` and the length of the translation)
+is refused as too large, which is not the same as not valid.
 
 Patterns are parsed with the ``u`` flag's grammar first; one that only parses without it (Annex B: identity escapes
 such as ``\\-``, literal braces) is translated by the lenient grammar instead, as JavaScript's ``RegExp`` would be

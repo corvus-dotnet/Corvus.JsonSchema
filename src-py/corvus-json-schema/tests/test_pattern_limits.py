@@ -69,7 +69,7 @@ def test_a_match_that_reaches_its_limit_raises_from_every_way_in() -> None:
     ]
     for check in checks:
         error = _raises_at_the_limit(check, 0.05)
-        assert NEVER_ANSWERS in str(error) and "0.05 s" in str(error)
+        assert NEVER_ANSWERS in str(error) and "limit of 50ms." in str(error)
         assert error.pattern == NEVER_ANSWERS and error.limit == 0.05
     # It is not an answer and not one of the other errors, and the validator is as it was.
     assert not issubclass(cjs.PatternMatchLimitError, (cjs.SchemaCompilationError, cjs.SchemaEvaluationDepthError))
@@ -91,7 +91,9 @@ def test_the_default_limit_is_one_second() -> None:
     assert pattern_module.DEFAULT_MATCH_LIMIT == 1.0
     v = cjs.compile({"pattern": NEVER_ANSWERS})
     error = _raises_at_the_limit(lambda: v(NEVER_ANSWERED), 1.0)
-    assert "limit of 1 s" in str(error)
+    assert "limit of 1s." in str(error)
+    assert "limit of 1.5s." in str(cjs.PatternMatchLimitError("a", 1.5))
+    assert "limit of 250\u00b5s." in str(cjs.PatternMatchLimitError("a", 0.00025))
 
 
 def test_the_limit_can_be_turned_off() -> None:
