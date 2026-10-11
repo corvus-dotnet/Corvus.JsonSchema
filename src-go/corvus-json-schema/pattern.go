@@ -507,6 +507,11 @@ const maxAlternatives = 64
 // pass of the engine.
 const maxSequenceAlternatives = 4
 
+// maxAnywhereWidth is the widest class sequence, in characters, and the longest literal, in bytes, that is searched
+// for at every position of a text. The search takes the text times this, and these matchers have no limit, so a
+// wider one is left to the engine, which has the limit of a match.
+const maxAnywhereWidth = 64
+
 // parseAlternatives reads two or more alternatives once groups of alternatives (and optional groups) are expanded
 // into whole alternatives ("^a|b|c$", "^([a|A]uto)|([n|N]one)$", "^[Ee][Ss]2015(\.([Cc]ore|[Pp]roxy))?$"), each a
 // literal or a class sequence anchored where its own "^" and "$" say.
@@ -526,6 +531,10 @@ func parseAlternatives(p string) []alternative {
 			body, end = r, true
 		}
 		if text, ok := literalText(body); ok {
+			// A literal that is anchored at neither end is searched for at every position of the text.
+			if !start && !end && len(text) > maxAnywhereWidth {
+				return nil
+			}
 			alts = append(alts, alternative{kind: altLiteral, text: text, start: start, end: end})
 			continue
 		}
@@ -552,6 +561,9 @@ func parseAlternatives(p string) []alternative {
 		kind := altAnywhere
 		if end {
 			kind = altEnd
+		} else if width > maxAnywhereWidth {
+			// A sequence that is not anchored is tried at every position of the text, and reads its width at each.
+			return nil
 		}
 		alts = append(alts, alternative{kind: kind, seq: seq, width: width})
 	}
@@ -1082,6 +1094,10 @@ type separatedList struct {
 func (l *separatedList) match(s []byte) bool {
 	rest := s
 	repeats := uint32(0)
+	// Whether the text is ASCII is worked out once, for the whole of it. The final sequence is tried after every
+	// item, and reading what is left of the text each time to see whether it is ASCII made the match take time
+	// quadratic in the number of items.
+	ascii := l.final != nil && isASCII(s)
 	if l.first != nil {
 		n := l.first.consume(rest)
 		if n < 0 {
@@ -1104,8 +1120,10 @@ func (l *separatedList) match(s []byte) bool {
 		}
 	}
 	for {
-		if repeats >= l.minRepeats && l.final.match(rest) {
-			return true
+		if repeats >= l.minRepeats {
+			if ascii && l.final.matchASCII(rest) || !ascii && l.final.matchChars(rest) {
+				return true
+			}
 		}
 		n := l.repeated.consume(rest)
 		if n < 0 {
@@ -1222,12 +1240,14 @@ func parseSeparatedList(p string) *separatedList {
 			return nil
 		}
 		final := parseSequence("^" + unwrapped + "$")
-		if final == nil {
+		// The final sequence is tried after every item, against all that is left of the text. A sequence matched by
+		// the length of the text reads that length each time, so a pattern with one is not a list.
+		if final == nil || final.pinned >= 0 {
 			return nil
 		}
 		for k := 1; k < len(groupItems); k++ {
 			repeated, separator := groupItems[:k], groupItems[k:]
-			if fixed(separator) && greedyBefore(repeated, separator[0].set) {
+			if fixed(separator) && greedyBefore(repeated, separator[0].set) && finalStopsAt(final, separator[0].set) {
 				return &separatedList{
 					repeated: greedySequence(repeated), separator: greedySequence(separator),
 					final: final, minRepeats: minRepeats,
@@ -1236,6 +1256,19 @@ func parseSeparatedList(p string) *separatedList {
 		}
 	}
 	return nil
+}
+
+// finalStopsAt reports whether the final sequence of a list cannot read past the separator that follows an item: no
+// item of it holds a character the first item of the separator holds. Tried at the start of an item, it then fails
+// at that separator at the latest, so trying it after every item reads the text a bounded number of times. A final
+// sequence that can read through separators would read to the end of the text from every item.
+func finalStopsAt(final *sequence, separator charSet) bool {
+	for i := range final.items {
+		if !final.items[i].set.disjoint(separator) {
+			return false
+		}
+	}
+	return true
 }
 
 // stripGroup is the inside of "(...)" or "(?:...)". Not ok for other groups.
