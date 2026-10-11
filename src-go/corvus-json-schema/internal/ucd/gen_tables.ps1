@@ -6,8 +6,9 @@
     The module takes every Unicode property it reads from the tables this script writes, and nothing from the unicode
     package of the Go toolchain, so that its answers do not depend on the toolchain that built it.
 
-    The data comes from unicodetables.rs of the regress crate, which the Rust port of the evaluator depends on and
-    which is generated from the Unicode Character Database. The script copies the General_Category values, the
+    The data comes from unicodetables.rs of the regress crate, which that crate generates from the Unicode Character
+    Database. The crate is only where the data is read from: no port of the evaluator depends on it. The Rust crate
+    carries a port of this module's engine and writes its tables from the file this script writes. The script copies the General_Category values, the
     binary properties, the Script values, the Script_Extensions ranges of the scripts whose extensions differ from
     their Script ranges, the simple case folding and the simple uppercase mapping.
 

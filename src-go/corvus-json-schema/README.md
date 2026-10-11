@@ -397,8 +397,9 @@ rules over Unicode properties and not for one version of Unicode, and the module
 is normalized by lowering the letters A to Z only, as RFC 3986 and RFC 3987 specify.
 
 The results are therefore the same with every Go release from 1.25, and they change only when the tables are
-generated again. `internal/ucd/gen_tables.ps1` writes them from the Unicode data of the `regress` crate, which the
-Rust port uses:
+generated again. `internal/ucd/gen_tables.ps1` writes them from `unicodetables.rs` of the `regress` crate, a file
+that crate generates from the Unicode Character Database. The crate is only where the data is read from, and no port
+depends on it (the Rust crate writes its own tables from the file this script writes):
 
 ```powershell
 pwsh internal/ucd/gen_tables.ps1 -RegressTables ~/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regress-0.12.0/src/unicodetables.rs

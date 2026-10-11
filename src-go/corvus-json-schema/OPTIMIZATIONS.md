@@ -213,8 +213,8 @@ with the reason.
 - **Stack allocation, `SkipLocalsInit`, `ArrayPool` and thread-static buffers** (C#), **per-thread buffers** (Rust
   and Java). Go has no thread-local storage. The evaluator stays on the stack by escape analysis, and the scratch
   comes from a `sync.Pool`.
-- **Translation to `java.util.regex` with reused matchers** (Java), **the `regex` and `regress` crates** (Rust),
-  **compiled IL regular expressions** (C#). `internal/ecmaregex` is this port's engine.
+- **Translation to `java.util.regex` with reused matchers** (Java), **the `regex` crate** (Rust, beside a port of
+  this module's engine), **compiled IL regular expressions** (C#). `internal/ecmaregex` is this port's engine.
 - **A vectorised search API** (`SearchValues` and `IndexOfAny` in C#). The standard library has no portable SIMD
   API. `bytes.IndexByte` and `bytes.Index` are vectorised in the runtime, and Todo 4 uses them.
 - **Release profile settings** (the Rust crate's `lto` and `codegen-units`). The Go compiler has no counterpart.
