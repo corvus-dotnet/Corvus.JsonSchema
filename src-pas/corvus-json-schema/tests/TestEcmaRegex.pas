@@ -2280,6 +2280,83 @@ begin
     Fail('the cases of TestRepetitionsThatCannotConsume are not the ones the test is about');
 end;
 
+var
+  { Set by TestNeeds when the needs are in place. }
+  NeedsWork: Boolean = False;
+
+{ TestNeeds checks the least number of bytes a match consumes, which SetNeeds works out for a program and for each
+  of its counted loops. The figure is a lower bound: the way out of a counted loop is counted without its minimum
+  number of iterations. }
+procedure TestNeeds;
+const
+  NoMatch = 1 shl 30;
+var
+  Count: Int32;
+
+  procedure Expect(const Pattern: UTF8String; Need: Int32; const Loops: array of Int32);
+  var
+    Re: TEcmaRegex;
+    K, Found: Int32;
+    Same: Boolean;
+  begin
+    Inc(Count);
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Found := 0;
+    Same := Re.Prog.Need = Need;
+    for K := 0 to High(Re.Prog.Insts) do
+      if Re.Prog.Insts[K].Op = OpLoop then begin
+        Same := Same and (Found <= High(Loops)) and (Re.Prog.Insts[K].Need = Loops[Found]);
+        Inc(Found);
+      end;
+    if not (Same and (Found = Length(Loops))) then begin
+      Fail(Quote(Pattern) + ': the need of the program is ' + Num(Re.Prog.Need) + ' and it has ' + Num(Found) +
+        ' counted loops, want ' + Num(Need) + ' and ' + Num(Length(Loops)) + ', or a loop has another need');
+      NeedsWork := False;
+    end;
+  end;
+
+begin
+  Count := 0;
+  NeedsWork := True;
+  Expect('abc', 3, []);
+  Expect('a+b{2,}c?', 3, []);
+  Expect('(?:a|bc)d', 2, []);
+  Expect('(?=abc)a', 1, []);
+  Expect('(?<=abc)d', 1, []);
+  Expect('\u00e9{2}\u{10400}', 3, []);
+  Expect('(?:a|){3}xy$', 2, [2]);
+  Expect('(?:a|){3}', 0, [0]);
+  Expect('(?:(?:a|){2}b){2}c', 1, [1, 2]);
+  Expect('(?=(?:a|){2}xyz)(?:b|){2}c', 1, [3, 1]);
+  Expect('(?<=(?:ab|){2}c)(?:d|){2}ef', 2, [0, 2]);
+  Expect('(?!(?:a|){2}xx)(?:(x)|){2}\1y', 1, [2, 1]);
+  Expect('(?:a|){2}[]', NoMatch, [NoMatch]);
+  Expect('(?:(?:a|){2}|bcd)e', 1, [1]);
+  WriteLn('TestNeeds: ', Count, ' patterns');
+end;
+
+{ TestLoopsGiveUpWhenTheRestCannotFit checks, against V8, counted loops whose iterations can be empty, before a rest
+  of the pattern that needs more text than is left. The matcher gives up at such a loop (see SetNeeds). Without
+  that, the first three patterns of the set do not finish, so the test fails without running them when TestNeeds
+  has found the needs missing. The other patterns have such loops inside and around lookaheads and lookbehinds,
+  where a wrong count of what is left would give a wrong answer. }
+procedure TestLoopsGiveUpWhenTheRestCannotFit;
+var
+  Patterns, Answers, Matched, Legacy, Invalid: Int32;
+begin
+  if not NeedsWork then begin
+    Fail('TestLoopsGiveUpWhenTheRestCannotFit: not run, because the needs of SetNeeds are missing and its ' +
+      'patterns would not finish');
+    Exit;
+  end;
+  CheckCases('needs', False, Patterns, Answers, Matched, Legacy, Invalid);
+  WriteLn('TestLoopsGiveUpWhenTheRestCannotFit: ', Patterns, ' patterns, ', Answers, ' answers per back end (',
+    Matched, ' of them a match)');
+  if (Patterns < 20) or (Matched < 100) then
+    Fail('the cases of TestLoopsGiveUpWhenTheRestCannotFit are not the ones the test is about');
+end;
+
 { TestCodeUnitPositions checks the two readers of a code unit on every position of a text, forwards and
   backwards. }
 procedure TestCodeUnitPositions;
@@ -2373,6 +2450,8 @@ begin
   TestFastMatchersMatchCodeUnits;
   TestSimplify;
   TestRepetitionsThatCannotConsume;
+  TestNeeds;
+  TestLoopsGiveUpWhenTheRestCannotFit;
   TestCodeUnitPositions;
   WriteLn('V8 oracle: ', OracleVerdicts, ' verdicts on validity compared, ', OracleVerdictsAgreed, ' agreed. ',
     OracleAnswers, ' answers on a match compared (each text on both back ends), ', OracleAnswersAgreed, ' agreed.');
@@ -2380,5 +2459,5 @@ begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 22 tests, 0 failures');
+  WriteLn('PASS: 24 tests, 0 failures');
 end.

@@ -601,8 +601,9 @@ begin
       OpLoop: begin
         N := St.Counts[2 * I^.A];
         // Once the minimum is met, ECMA-262 rejects an iteration that consumed nothing. That is what stops a
-        // loop over a body that can be empty.
-        if not ((N > I^.Min) and (Pos = St.Counts[2 * I^.A + 1])) then begin
+        // loop over a body that can be empty. The loop also gives up when fewer bytes are left than any way from
+        // here to a match consumes.
+        if (Hi - Pos >= I^.Need) and not ((N > I^.Min) and (Pos = St.Counts[2 * I^.A + 1])) then begin
           if N < I^.Min then
             Inc(Pc)
           else if (I^.Max >= 0) and (N >= I^.Max) then
@@ -693,6 +694,8 @@ function Search(const Prog: TProgram; var St: TState; const Text: TBytes; Lo, Hi
 var
   At, R, W: Int32;
 begin
+  if Hi - Lo < Prog.Need then
+    Exit(False);
   if Prog.Anchored then
     Exit(Run(Prog, St, Text, Lo, Hi, Lo));
   if Length(Prog.Prefix) > 0 then begin

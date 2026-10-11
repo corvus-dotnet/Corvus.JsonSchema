@@ -50,7 +50,9 @@ unit Corvus.JsonSchema.EcmaRegex;
   pattern with a lookaround or a backreference, because the regexp package matches the others in linear time. Here
   it is also so for a pattern that has no automaton, and for a text that is not ASCII. A repetition whose body
   cannot consume a character is not such a pattern. It is run once, or not at all (see Simplify of the Compile
-  unit), as V8 runs it.
+  unit), as V8 runs it. And a counted loop gives up at a position from which the rest of the pattern needs more
+  text than is left (see SetNeeds of the Compile unit), as V8 does, so a loop whose iterations can be empty does
+  not try every combination of them there.
 
   The automaton is built when the pattern is compiled, where Go builds it on the first match. A compiled pattern is
   then a value that nothing writes to, which is what lets threads share it without a lock.

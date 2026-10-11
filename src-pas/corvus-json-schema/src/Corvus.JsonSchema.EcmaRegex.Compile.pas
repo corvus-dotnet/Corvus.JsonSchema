@@ -82,6 +82,9 @@ type
     A, B: Int32;
     { Min and Max bound a repetition. A max of -1 is no bound. }
     Min, Max: Int32;
+    { Need is the least number of bytes of text that every way from this instruction to a match consumes going
+      forward (see SetNeeds). It is set for an OpLoop. }
+    Need: Int32;
   end;
   PInst = ^TInst;
   TInsts = array of TInst;
@@ -98,6 +101,8 @@ type
     Units: Boolean;
     { Anchored says every match starts at the start of the text. }
     Anchored: Boolean;
+    { Need is the least number of bytes a match consumes (see SetNeeds). }
+    Need: Int32;
     { Prefix is literal text every match starts with. }
     Prefix: TBytes;
     { First names the set of every code point a match can start with. It is -1 when a match can be empty or when
@@ -665,6 +670,80 @@ begin
   end;
 end;
 
+const
+  { NoMatch is the need of an instruction from which no way leads to a match. }
+  NoMatch = 1 shl 30;
+
+{ SetNeeds works out, for every instruction, the least number of bytes of text that any way from it to a match
+  consumes going forward, and writes it into the counted loops. It returns the need of the whole program. The
+  matcher gives up at a counted loop when fewer bytes than that are left, as V8 does at every choice. A loop whose
+  iterations can be empty would otherwise try every combination of its ways at a position from which the rest of
+  the pattern cannot match at all.
+
+  A character is counted as one byte, a literal run as its bytes and a single character loop as its minimum, so the
+  figure can only be too small. The body of a lookaround ends at its own last instruction and the instruction that
+  opens one goes straight to what follows it, so a body is counted by itself. An instruction that matches right to
+  left, which is the body of a lookbehind, counts nothing. }
+function SetNeeds(var Insts: TInsts): Int32;
+var
+  Need: TInt32Array;
+  Pc, N: Int32;
+  Changed: Boolean;
+
+  procedure Next(Target, Weight: Int32);
+  begin
+    if Need[Target] + Weight < N then
+      N := Need[Target] + Weight;
+  end;
+
+begin
+  SetLength(Need, Length(Insts));
+  for Pc := 0 to High(Need) do
+    Need[Pc] := NoMatch;
+  // The needs only fall, and nearly every way goes forward, so going through the instructions from the last to
+  // the first settles all but the loops in one pass.
+  repeat
+    Changed := False;
+    for Pc := High(Insts) downto 0 do begin
+      N := NoMatch;
+      case Insts[Pc].Op of
+        OpMatch, OpLookOK, OpLookFail:
+          N := 0;
+        OpFail:
+          ;
+        OpChar, OpSet:
+          Next(Pc + 1, 1);
+        OpLit:
+          Next(Pc + 1, Length(Insts[Pc].Lit));
+        OpRep, OpRepLazy:
+          Next(Pc + 1, Insts[Pc].Min);
+        OpJmp, OpLook:
+          Next(Insts[Pc].X, 0);
+        OpSplit: begin
+          Next(Insts[Pc].X, 0);
+          Next(Insts[Pc].Y, 0);
+        end;
+        OpLoop: begin
+          Next(Pc + 1, 0);
+          Next(Insts[Pc].X, 0);
+        end;
+      else
+        Next(Pc + 1, 0);
+      end;
+      if N > NoMatch then
+        N := NoMatch;
+      if N < Need[Pc] then begin
+        Need[Pc] := N;
+        Changed := True;
+      end;
+    end;
+  until not Changed;
+  for Pc := 0 to High(Insts) do
+    if Insts[Pc].Op = OpLoop then
+      Insts[Pc].Need := Need[Pc];
+  Result := Need[0];
+end;
+
 function CompileProgram(const Ps: TParser; Root: Int32; Unicode: Boolean): TProgram;
 var
   C: TCompiler;
@@ -705,6 +784,7 @@ begin
   Result.Groups := C.TrackedCount;
   Result.Loops := C.Loops;
   Result.Units := not Unicode;
+  Result.Need := SetNeeds(Result.Insts);
   Result.First := -1;
   Result.Anchored := StartsAtBOL(C.Nodes, Root);
   if not Result.Anchored then begin
