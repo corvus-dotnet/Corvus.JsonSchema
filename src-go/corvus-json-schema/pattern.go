@@ -592,21 +592,36 @@ func product(a, b []string) ([]string, bool) {
 func expandAlternatives(c []rune, i int) ([]string, int, bool) {
 	var all []string
 	branch := []string{""}
-	appendAll := func(text string) {
-		for b := range branch {
-			branch[b] += text
+	// The characters that are copied are added to the branches a run at a time, when something else follows the
+	// run. Adding them one at a time would copy the branch for each, which takes time quadratic in its length. run
+	// is where the run that has not been added starts, or -1.
+	run := -1
+	flush := func(end int) {
+		if run >= 0 {
+			text := string(c[run:end])
+			for b := range branch {
+				branch[b] += text
+			}
+			run = -1
+		}
+	}
+	copied := func(from int) {
+		if run < 0 {
+			run = from
 		}
 	}
 loop:
 	for i < len(c) {
 		switch c[i] {
 		case '|':
+			flush(i)
 			all = append(all, branch...)
 			branch = []string{""}
 			i++
 		case ')':
 			break loop
 		case '(':
+			flush(i)
 			i++
 			if runeAt(c, i) == '?' {
 				if runeAt(c, i+1) != ':' {
@@ -678,21 +693,22 @@ loop:
 				i++
 			}
 			i++
-			appendAll(string(c[start:i]))
+			copied(start)
 		case '\\':
 			if i+2 > len(c) {
 				return nil, 0, false
 			}
-			appendAll(string(c[i : i+2]))
+			copied(i)
 			i += 2
 		default:
-			appendAll(string(c[i]))
+			copied(i)
 			i++
 		}
 		if len(all)+len(branch) > maxAlternatives {
 			return nil, 0, false
 		}
 	}
+	flush(i)
 	return append(all, branch...), i, true
 }
 
