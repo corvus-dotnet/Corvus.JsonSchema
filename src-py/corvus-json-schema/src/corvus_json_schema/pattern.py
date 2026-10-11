@@ -62,6 +62,7 @@ from __future__ import annotations
 import re
 import sys
 import threading
+from array import array
 from bisect import bisect_left
 from collections import OrderedDict
 from collections.abc import Callable
@@ -269,7 +270,11 @@ def _host_agrees(expression: str, ranges: _Ranges) -> bool:
         import regex
 
         if not _every_character:
-            _every_character.append("".join(map(chr, range(0x110000))))
+            # (Joining a million strings of one character takes 85 MB while it is done.)
+            units = array("I", range(0x110000)).tobytes()
+            _every_character.append(
+                units.decode("utf-32-le" if sys.byteorder == "little" else "utf-32-be", "surrogatepass")
+            )
         try:
             found = [(m.start(), m.end() - 1) for m in regex.compile(expression + "+").finditer(_every_character[0])]
         except regex.error:
@@ -1165,6 +1170,10 @@ class _Translator:
         self.copies = 0
         # How many groups the parser is inside.
         self.depth = 0
+        # The length of the characters and classes read so far, as they are written (see _one).
+        self.size = 0
+        # The case-insensitive classes worked out so far, by what was written in them (see _folded_class).
+        self.folded: dict[tuple[Any, ...], tuple[str, _Ranges]] = {}
 
     def error(self) -> _Invalid:
         return _Invalid(self.p)
@@ -1325,9 +1334,15 @@ class _Translator:
         self.i += 1
         return self._char(c), True
 
-    @staticmethod
-    def _one(text: str, chars: _Ranges | None = None, others: bool = False) -> _Node:
+    def _one(self, text: str, chars: _Ranges | None = None, others: bool = False) -> _Node:
         """The node of something that takes one character: one of ``chars``, or any (see ``_Node.chars``)."""
+        # What is read is written at least once, but for what a count of 0 is around. A pattern whose characters
+        # and classes are already twice the limit of a translation is not read to its end: a class of a property
+        # in a case-insensitive group takes milliseconds to work out, and a pattern of 1,000 characters has room
+        # for eighty.
+        self.size += len(text)
+        if self.size > 2 * _MAX_TRANSLATED:
+            raise _TooLarge()
         n = _Node(_TEXT, text)
         n.nothing = False
         n.chars = chars
@@ -1730,24 +1745,29 @@ class _Translator:
         """A class inside a case-insensitive group: it has every character that is equal, without case, to one of
         its members, and it is negated after that. ``properties``: the properties in it, each as it is written for
         the engine and with its characters."""
-        points, sets = _fold_table(self.u)
         ranges = _merged(ranges)
-        more: list[str] = []
-        for held in [ranges, *[held for _, held in properties]]:
-            for lo, hi in held:
-                k = bisect_left(points, lo)
-                while k < len(points) and points[k] <= hi:
-                    more.append(sets[points[k]])
-                    k += 1
-        ranges = _merged(ranges + [(ord(c), ord(c)) for c in set("".join(more))])
         written = [p for p, _ in properties]
-        if not ranges and not any(written):
-            text = _ANY if negated else _NEVER
-        else:
-            text = f"[{_class_text(ranges)}{''.join(written)}]"
-            if negated:
-                text = f"(?:(?!{text}){_ANY})" if _both_ways(written) else "[^" + text[1:]
-        return self._one(text, ranges + [r for _, held in properties for r in held], negated)
+        # A class that is written again in the pattern is worked out once.
+        key = (tuple(ranges), tuple(written), negated)
+        known = self.folded.get(key)
+        if known is None:
+            points, sets = _fold_table(self.u)
+            more: list[str] = []
+            for held in [ranges, *[held for _, held in properties]]:
+                for lo, hi in held:
+                    k = bisect_left(points, lo)
+                    while k < len(points) and points[k] <= hi:
+                        more.append(sets[points[k]])
+                        k += 1
+            ranges = _merged(ranges + [(ord(c), ord(c)) for c in set("".join(more))])
+            if not ranges and not any(written):
+                text = _ANY if negated else _NEVER
+            else:
+                text = f"[{_class_text(ranges)}{''.join(written)}]"
+                if negated:
+                    text = f"(?:(?!{text}){_ANY})" if _both_ways(written) else "[^" + text[1:]
+            known = self.folded[key] = (text, ranges + [r for _, held in properties for r in held])
+        return self._one(known[0], known[1], negated)
 
 
 class _Writer:
@@ -2146,6 +2166,8 @@ def _translate(pattern: str, unicode: bool, for_regex: bool) -> _Translation | N
     """The pattern as it is written for the standard library's engine, or for the regex package when the pattern
     needs it or ``for_regex`` asks. None: the pattern is not valid in the grammar. A pattern over a limit of size
     raises _TooLarge."""
+    if len(pattern) > MAX_PATTERN:
+        raise _TooLarge(f"it is longer than {MAX_PATTERN:,} characters", unread=True)
     try:
         if not unicode:
             pattern = _units(pattern)
@@ -2313,8 +2335,6 @@ def compile_pattern(pattern: str, limit: float | None = DEFAULT_MATCH_LIMIT) -> 
             _cache.move_to_end(key)
             return _cache[key]
     try:
-        if len(pattern) > MAX_PATTERN:
-            raise _TooLarge(f"it is longer than {MAX_PATTERN:,} characters", unread=True)
         matcher = _compile(pattern, True, limit)
         if matcher is None:
             matcher = _compile(pattern, False, limit)

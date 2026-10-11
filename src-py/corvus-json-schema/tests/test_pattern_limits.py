@@ -439,6 +439,60 @@ def test_the_longest_pattern_is_read_proved_and_compiled_in_time_in_proportion_t
     assert _proved("^(?:es5|es6|es2015)$") and lengths
 
 
+def test_the_classes_of_a_pattern_are_worked_out_within_a_bound(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A class of a property in a case-insensitive group takes some milliseconds to work out, and a pattern of 1,000
+    # characters has room for eighty. Three of them are already over the limit of a translation.
+    written: list[int] = []
+    original = pattern_module._class_text
+
+    def class_text(ranges: Any) -> str:
+        written.append(len(ranges))
+        return original(ranges)
+
+    monkeypatch.setattr(pattern_module, "_class_text", class_text)
+    # The same class again and again is worked out once (for each engine it is written for).
+    with pytest.raises(cjs.PatternTooLargeError):
+        compile_pattern("(?i:^" + "[\\p{Lu}\\p{Ll}]" * 60 + "$)")
+    assert 1 <= len(written) <= 2, len(written)
+    # Eighty classes that differ are not all worked out: reading stops at twice the limit of a translation.
+    written.clear()
+    different = "".join(f"[\\p{{L}}{chr(0x4E00 + k)}]" for k in range(80))
+    with pytest.raises(cjs.PatternTooLargeError):
+        compile_pattern(f"(?i:^{different}$)")
+    assert len(written) < 50, len(written)
+    # A few such classes are within the limits, and mean what they did.
+    monkeypatch.undo()
+    validate = cjs.compile({"pattern": "(?i:^[\\p{Lu}_][\\p{Lu}_]$)"})
+    assert validate("aB") and validate("_\u00e9") and not validate("a1")
+
+
+def test_translate_reads_nothing_longer_than_the_limit() -> None:
+    long = "a|" * 300000
+    for call in (lambda: pattern_module.translate(long), lambda: pattern_module.translate(long, False, True)):
+        start = time.process_time()
+        with pytest.raises(pattern_module._TooLarge) as raised:
+            call()
+        assert raised.value.unread and time.process_time() - start < 1
+
+
+def test_asking_the_regex_package_about_a_property_takes_megabytes_and_not_tens_of_them() -> None:
+    # Whether the package has the characters of the tables for a property is found by asking it about every
+    # character. The text of every character is 4 MB. Building it from a million strings took 85 MB.
+    pattern_module._every_character.clear()
+    pattern_module._host.clear()
+    known = pattern_module._property("Lt")
+    assert known is not None and known[0] is not None
+    tracemalloc.start()
+    try:
+        pattern_module._host_agrees(known[0][0], known[1])
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert peak < 24 * 1024 * 1024, peak
+    assert len(pattern_module._every_character[0]) == 0x110000
+    assert [ord(c) for c in pattern_module._every_character[0][0xD7FF:0xD802]] == [0xD7FF, 0xD800, 0xD801]
+
+
 def test_a_count_is_no_matter_to_the_standard_library() -> None:
     # The standard library's engine keeps a count as a number, so a pattern it is proved to run in linear time may
     # have any count.
