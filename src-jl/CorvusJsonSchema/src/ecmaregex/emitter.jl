@@ -1262,6 +1262,12 @@ function nonempty(E::Emitter, n::Node, strict::Bool, budget::Base.RefValue{Int})
     if kind == GROUP
         body = nonempty(E, n.subs[1], strict, budget)
         (body === nothing || body === NO_WAY) && return body
+        # A group that no backreference reads and that is left with one character is that character. PCRE2 keeps
+        # the count of a repeated character as a number and writes a repeated group out once for each iteration,
+        # so (?:(?:a|){1,300}x){1,300} is "too large" for it with (?:a){0,299} inside and not with a{0,299}.
+        if (n.group == 0 || !E.referenced[n.group]) && (body.kind == CHAR || body.kind == SET)
+            return body
+        end
         return withsubs(n, Node[body])
     elseif kind == ALT
         subs = Node[]
@@ -1271,7 +1277,16 @@ function nonempty(E::Emitter, n::Node, strict::Bool, budget::Base.RefValue{Int})
             way === NO_WAY || push!(subs, way)
         end
         isempty(subs) && return NO_WAY
-        return length(subs) == 1 ? subs[1] : withsubs(n, subs)
+        length(subs) == 1 && return subs[1]
+        if all(sub -> sub.kind == CHAR || sub.kind == SET, subs)
+            # Alternatives of one character each are a class, which PCRE2 counts as it counts a character.
+            set = NO_CHARACTERS
+            for sub in subs
+                set = setunion(set, sub.kind == CHAR ? Int32[sub.codepoint, sub.codepoint] : sub.set)
+            end
+            return setnode(set)
+        end
+        return withsubs(n, subs)
     elseif kind == CAT
         long = count(sub -> maxlength(sub) > 0, n.subs)
         if long == 1

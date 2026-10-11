@@ -208,7 +208,7 @@ end
         @test E.translate("^(?:a*)*\$").main == "\\A(?:(?:a+)*)\\z"
         @test E.translate("^(?:a?x?)*\$").main == "\\A(?:(?:ax?|x)*)\\z"
         @test E.translate("^(?:a*)+\$").main == "\\A(?:(?:a*)(?:a+)*)\\z"
-        @test E.translate("^(?:a|\\b)*\$").main == "\\A(?:(?:a)*)\\z"
+        @test E.translate("^(?:a|\\b)*\$").main == "\\A(?:a*)\\z"
         @test E.translate("^(a)(?:\\1|x|)*\$").main ==
             "\\A(?<g1>a)(?:(?:(?=(?<e1>(?s:.*)))(?:\\k<g1>|x|)(?!\\k<e1>))*)\\z"
         # A body that can only match the empty string is written once, or not at all for a minimum of zero.
@@ -608,5 +608,20 @@ end
         @test matches("(?<=a+(?=.*x))-", "aa-x")
         @test !matches("(?<=a+(?=.*x))-", "aa-a")
         @test matches("(?<=a+(?=-x))-", "aa-x")
+    end
+
+    # PCRE2 keeps the count of a repeated character or class as a number and writes a repeated group out once for
+    # each iteration, and it has a limit on what it writes. A group that the translation leaves with one character,
+    # or with alternatives of one character each, is written as that character or class.
+    @testset "a counted group of one character" begin
+        rows = [
+            (raw"^(?!-)(?:(?:(?:a|){1,300}x){1,300}-)+$", "004020100001"),
+            (raw"^(?:(?:(a|)|x){1,70}-){1,70}$", "124924924911"),
+            (raw"^(?:(?:[ax]|){2,90}-){0,90}$", "924924924911"),
+        ]
+        checkv8table(rows)
+        @test E.translate(raw"^(?!-)(?:(?:(?:a|){1,300}x){1,300}-)+$").main ==
+              raw"\A(?!\x{2d})(?:(?:(?:(?:a|)a{0,299})x){1,300}\x{2d})+\z"
+        @test E.translate(raw"^(?:a|\b|x)*$").main == raw"\A(?:[\x{61}\x{78}]*)\z"
     end
 end
