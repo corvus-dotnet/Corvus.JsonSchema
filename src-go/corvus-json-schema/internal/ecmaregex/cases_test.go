@@ -76,6 +76,9 @@ func checkCases(t *testing.T, cases []v8Case, limit time.Duration) (answers, mat
 				if got := backtrack.Match([]byte(test.T)); got != test.Want {
 					t.Errorf("%q on %q (forced backtrack): got %v, V8 says %v", c.P, test.T, got, test.Want)
 				}
+				if got, err := re.MatchLimit([]byte(test.T), time.Nanosecond); err == nil && got != test.Want {
+					t.Errorf("%q on %q (%v, with a limit): got %v, V8 says %v", c.P, test.T, re.Engine(), got, test.Want)
+				}
 			}
 		}()
 		select {

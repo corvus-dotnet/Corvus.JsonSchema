@@ -178,10 +178,10 @@ type valueTest struct {
 	requiresString bool
 }
 
-func (t *valueTest) holds(d *Document, v int) bool {
+func (t *valueTest) holds(d *Document, v int, budget *patternBudget) bool {
 	if t.isPattern {
 		if d.kind(v) == kindString {
-			return t.pattern.match(d.str(v), d.strASCII(v))
+			return t.pattern.match(d.str(v), d.strASCII(v), budget)
 		}
 		return !t.requiresString
 	}
@@ -715,7 +715,7 @@ func tryFuse(p *program, id nodeID, sameResource bool, childOf func(nodeID) chil
 	// A known name matching an absent pattern fails its condition whatever its value: no constant is allowed.
 	for e, name := range known {
 		for _, absent := range f.absent {
-			if absent.pattern.matchString(name) {
+			if absent.pattern.matchString(name, &p.budget) {
 				tests[e] = append(tests[e], valueTest{condition: absent.condition})
 			}
 		}
@@ -736,7 +736,7 @@ func tryFuse(p *program, id nodeID, sameResource bool, childOf func(nodeID) chil
 				}
 			}
 			for _, pp := range b.patternProperties {
-				if pp.pattern.matchString(name) {
+				if pp.pattern.matchString(name, &p.budget) {
 					matched = true
 					apps = append(apps, collectedApp{uint16(c), appChild(pp.node), p.fastTarget[pp.node]})
 				}
@@ -966,7 +966,7 @@ func (e *evaluator) applyOpt(c optChild, v int) bool {
 // whether it matched (the property is covered), and false when the application failed.
 func (e *evaluator) resolveUnknown(c *fusedContributor, name []byte, ascii bool, v int) (matched, ok bool) {
 	for i := range c.patterns {
-		if c.patterns[i].pattern.match(name, ascii) {
+		if c.patterns[i].pattern.match(name, ascii, &e.budget) {
 			matched = true
 			if !e.applyOpt(c.patterns[i].child, v) {
 				return false, false
@@ -997,7 +997,7 @@ func (e *evaluator) fusedEntry(f *fusedObject, index int, v int, pass *fusedPass
 			if keyed&(1<<t) != 0 {
 				holds = allowed&(1<<t) != 0
 			} else {
-				holds = test.holds(d, v)
+				holds = test.holds(d, v, &e.budget)
 			}
 			if !holds {
 				pass.failed |= 1 << test.condition
@@ -1030,7 +1030,7 @@ func (e *evaluator) fusedUnknown(f *fusedObject, name []byte, ascii bool, v int,
 	}
 	for i := range f.absent {
 		a := &f.absent[i]
-		if pass.failed&(1<<a.condition) == 0 && a.pattern.match(name, ascii) {
+		if pass.failed&(1<<a.condition) == 0 && a.pattern.match(name, ascii, &e.budget) {
 			pass.failed |= 1 << a.condition
 		}
 	}

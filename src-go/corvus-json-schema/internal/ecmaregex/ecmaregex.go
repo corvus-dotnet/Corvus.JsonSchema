@@ -59,8 +59,10 @@ package ecmaregex
 
 import (
 	"regexp"
+	"regexp/syntax"
 	"strings"
 	"sync"
+	"time"
 	"unsafe"
 )
 
@@ -77,13 +79,30 @@ type Regexp struct {
 	once sync.Once
 	root *node
 	dfa  *dfa
-	// For a pattern on the regexp package that was read without the u flag: the program that matches by UTF-16 code
-	// unit, built from unitsRoot on the first text with a character beyond the Basic Multilingual Plane. The regexp
-	// package matches by code point, which is the same thing for every other text.
-	unitsOnce sync.Once
-	unitsRoot *node
-	unitsProg *program
+	// For a pattern on the regexp package: the program of the backtracking matcher, built on the first text the
+	// regexp package is not given. That is a text with a character beyond the Basic Multilingual Plane when the
+	// pattern was read without the u flag, because the regexp package matches by code point and such a pattern
+	// matches by UTF-16 code unit. And it is a text too long for the regexp package to answer within the limit of
+	// the match (see reCost), because a match there cannot be stopped.
+	backOnce sync.Once
+	backProg *program
+	// reCost is the number of instructions of the program the regexp package runs.
+	reCost int
 }
+
+const (
+	// maxRE2Cost is the largest program the regexp package is asked to compile, in the instructions estimated for
+	// it before it is written (see re2Cost). The package writes a counted repetition out, so a{1000} is a thousand
+	// instructions, and it takes time proportional to its program to compile and, for every character of a text,
+	// to match.
+	maxRE2Cost = 10000
+	// re2StepTime is the time the regexp package can take for one instruction of its program and one byte of the
+	// text, when every instruction has a thread on it. It was measured at 5 to 13 ns (the higher figure for a
+	// class of many ranges) on a machine under load, and is rounded up. A match on the regexp package cannot be
+	// stopped, so a match with a limit goes there only when the size of the program times the length of the text
+	// times this is within the limit. Any other goes to the backtracking matcher, which reads the clock.
+	re2StepTime = 16 * time.Nanosecond
+)
 
 // An Engine names the back end a pattern compiled to.
 type Engine uint8
@@ -122,43 +141,73 @@ func compile(pattern string, forceBacktrack bool) (*Regexp, error) {
 	}
 	r := &Regexp{pattern: pattern, unicode: unicode}
 	if !forceBacktrack && !ps.needsBacktracking {
-		var b strings.Builder
-		writeRE2(&b, root)
-		if re, err := regexp.Compile(b.String()); err == nil {
-			r.re, r.root = re, root
-			if !unicode {
-				r.unitsRoot = root
+		if re2Cost(root) <= maxRE2Cost {
+			var b strings.Builder
+			writeRE2(&b, root)
+			if re, cost := compileRE2(b.String()); re != nil {
+				r.re, r.root, r.reCost = re, root, cost
+				return r, nil
 			}
-			return r, nil
 		}
 	}
 	r.prog = compileProgram(root, unicode)
 	return r, nil
 }
 
-// Match reports whether the pattern matches anywhere in the UTF-8 text (an unanchored search). It allocates nothing
-// in the steady state and is safe for concurrent use.
+// compileRE2 compiles a translation with the regexp package. It also returns the number of instructions of the
+// program the package runs, which the package does not tell, so the translation is compiled a second time by the
+// syntax package to count them. It returns nil when the package refuses the translation.
+func compileRE2(translation string) (*regexp.Regexp, int) {
+	re, err := regexp.Compile(translation)
+	if err != nil {
+		return nil, 0
+	}
+	tree, err := syntax.Parse(translation, syntax.Perl)
+	if err != nil {
+		return nil, 0
+	}
+	prog, err := syntax.Compile(tree.Simplify())
+	if err != nil {
+		return nil, 0
+	}
+	return re, len(prog.Inst)
+}
+
+// Match reports whether the pattern matches anywhere in the UTF-8 text (an unanchored search), with no limit on
+// the time or the memory the match takes. It allocates nothing in the steady state and is safe for concurrent use.
 func (r *Regexp) Match(utf8 []byte) bool {
+	matched, _ := r.MatchLimit(utf8, 0)
+	return matched
+}
+
+// MatchLimit is Match with a limit on the time the match may take, when limit is above zero. A match that reaches
+// the limit is abandoned and the error is ErrMatchTime. So is a match whose backtracking stack reaches maxStack
+// entries, and the error is ErrMatchMemory. The result is then not an answer. The clock is read every checkEvery
+// steps of the backtracking matcher, so a match can go past the limit by the time those take, which is some tens of
+// microseconds. The automaton and the regexp package take time proportional to the text and are not stopped: the
+// regexp package is given a text only when it can answer within the limit (see re2StepTime).
+func (r *Regexp) MatchLimit(utf8 []byte, limit time.Duration) (bool, error) {
 	if r.re != nil {
 		r.once.Do(r.buildDFA)
 		if r.dfa != nil {
 			if matched, ok := r.dfa.match(utf8); ok {
-				return matched
+				return matched, nil
 			}
 		}
-		if r.unicode || !hasSupplementary(utf8) {
-			return r.re.Match(utf8)
+		if (r.unicode || !hasSupplementary(utf8)) && (limit <= 0 || time.Duration(r.reCost)*time.Duration(len(utf8)) <= limit/re2StepTime) {
+			return r.re.Match(utf8), nil
 		}
-		r.unitsOnce.Do(r.buildUnits)
-		return r.unitsProg.match(utf8)
+		r.backOnce.Do(r.buildBacktracking)
+		return r.backProg.match(utf8, limit)
 	}
-	return r.prog.match(utf8)
+	return r.prog.match(utf8, limit)
 }
 
-// buildUnits compiles the program that matches a pattern with no u flag by code unit, and lets go of the syntax
-// tree.
-func (r *Regexp) buildUnits() {
-	r.unitsProg, r.unitsRoot = compileProgram(r.unitsRoot, false), nil
+// buildBacktracking compiles the program of the backtracking matcher for a pattern on the regexp package. The
+// syntax tree was let go of when the pattern was compiled, so the pattern is read again, which cannot fail.
+func (r *Regexp) buildBacktracking() {
+	root, _, _ := parse(r.pattern, r.unicode)
+	r.backProg = compileProgram(root, r.unicode)
 }
 
 // buildDFA builds the automaton of a pattern on the regexp package, and lets go of the syntax tree.

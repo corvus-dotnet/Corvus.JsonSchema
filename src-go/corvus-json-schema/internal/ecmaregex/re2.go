@@ -92,3 +92,37 @@ func writeRE2Rune(b *strings.Builder, r rune) {
 	b.WriteString(strconv.FormatInt(int64(r), 16))
 	b.WriteByte('}')
 }
+
+// re2Cost estimates the number of instructions of the program the regexp package compiles for a tree. The package
+// writes a counted repetition out: x{n,m} is m copies of x, and x{n,} is n copies and a loop. The estimate is never
+// much below the true figure, and it stops counting above maxRE2Cost.
+func re2Cost(n *node) int {
+	switch n.kind {
+	case nEmpty:
+		return 0
+	case nCat, nAlt, nGroup:
+		cost := len(n.subs) - 1
+		for _, sub := range n.subs {
+			cost += re2Cost(sub)
+			if cost > maxRE2Cost {
+				return maxRE2Cost + 1
+			}
+		}
+		return cost
+	case nRepeat:
+		copies := n.max
+		if copies == unbounded {
+			copies = n.min
+		}
+		if copies < 1 {
+			copies = 1
+		}
+		// Each copy has the body and one instruction for the choice to enter it.
+		body := re2Cost(n.subs[0]) + 1
+		if copies > maxRE2Cost || body*copies > maxRE2Cost {
+			return maxRE2Cost + 1
+		}
+		return body * copies
+	}
+	return 1
+}

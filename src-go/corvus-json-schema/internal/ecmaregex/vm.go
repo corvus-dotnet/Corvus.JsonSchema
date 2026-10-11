@@ -2,7 +2,37 @@ package ecmaregex
 
 import (
 	"bytes"
+	"errors"
+	"time"
 	"unicode/utf8"
+)
+
+// ErrMatchTime reports a match that was abandoned because it ran for longer than its limit, and ErrMatchMemory one
+// that was abandoned because its backtracking stack reached maxStack entries. Neither is an answer.
+var (
+	ErrMatchTime   = errors.New("ecmaregex: the match ran for longer than its limit")
+	ErrMatchMemory = errors.New("ecmaregex: the match needed more backtracking memory than its limit")
+)
+
+const (
+	// checkEvery is the number of steps the matcher takes between two looks at the clock and at the depth of its
+	// stack. A step is one instruction, and eight characters of a single character loop or of a backreference. A
+	// step takes a few nanoseconds, so the clock is read every ten to twenty microseconds, a match that ends
+	// before its first check never reads it, and a match goes past its limit by that much at most.
+	checkEvery = 1 << 12
+	// maxStack is the number of entries the backtracking stack of a match with a limit may hold (24 bytes each).
+	// A match that needs more is abandoned. A pattern that keeps a choice for every character of its text needs
+	// one entry or a few for each, so this is room for a text of some hundred thousand characters, and a pattern
+	// that pushes without consuming, such as (?:a?){2147483647}, reaches it in a few milliseconds. It is looked at
+	// with the clock, so the stack can go past it by checkEvery entries.
+	maxStack = 1 << 20
+)
+
+// Why a match was abandoned.
+const (
+	stopNone uint8 = iota
+	stopTime
+	stopMemory
 )
 
 // The kinds of entry on the backtracking stack. A choice entry says where to resume. An undo entry restores a value
@@ -44,23 +74,61 @@ type state struct {
 	tmp  []int
 	// counts holds, for each loop, the number of iterations started and the position at which the last one started.
 	counts []int
+	// limit is the time the match may take, or zero for no limit. The clock starts at the first check, so deadline
+	// is set when timed is.
+	limit    time.Duration
+	deadline time.Time
+	timed    bool
+	// steps is the number of steps left before the next check, and stop why the match was abandoned.
+	steps int
+	stop  uint8
+}
+
+// check is called every checkEvery steps. It reports whether the match may go on.
+func (st *state) check(depth int) bool {
+	if st.limit <= 0 {
+		return true
+	}
+	if depth > maxStack {
+		st.stop = stopMemory
+		return false
+	}
+	now := time.Now()
+	if !st.timed {
+		st.timed, st.deadline = true, now.Add(st.limit)
+		return true
+	}
+	if now.After(st.deadline) {
+		st.stop = stopTime
+		return false
+	}
+	return true
 }
 
 // maxRetainedStack is the largest stack kept in the pool between matches.
 const maxRetainedStack = 1 << 16
 
-// match reports whether the program matches anywhere in the text.
-func (p *program) match(in []byte) bool {
+// match reports whether the program matches anywhere in the text. With a limit above zero the match is abandoned
+// when it has run for longer than that, or when its stack has reached maxStack, and the error says which.
+func (p *program) match(in []byte, limit time.Duration) (bool, error) {
 	st := p.pool.Get().(*state)
 	for i := range st.caps {
 		st.caps[i] = -1
 	}
+	st.limit, st.timed, st.steps, st.stop = limit, false, checkEvery, stopNone
 	ok := p.search(st, in)
+	stop := st.stop
 	if cap(st.stack) > maxRetainedStack {
 		st.stack = nil
 	}
 	p.pool.Put(st)
-	return ok
+	switch stop {
+	case stopTime:
+		return false, ErrMatchTime
+	case stopMemory:
+		return false, ErrMatchMemory
+	}
+	return ok, nil
 }
 
 func (p *program) search(st *state, in []byte) bool {
@@ -80,6 +148,9 @@ func (p *program) search(st *state, in []byte) bool {
 			if p.run(st, in, at) {
 				return true
 			}
+			if st.stop != stopNone {
+				return false
+			}
 		}
 	}
 	for at := 0; ; {
@@ -97,13 +168,17 @@ func (p *program) search(st *state, in []byte) bool {
 		if (p.first == nil || p.first.contains(r)) && p.run(st, in, at) {
 			return true
 		}
+		if st.stop != stopNone {
+			return false
+		}
 		at += w
 	}
 }
 
 // run reports whether the program matches at the position start. It keeps its choices on an explicit stack, so the
 // depth of the search is bounded by memory and not by the goroutine stack. When it fails, every group and counter is
-// back to the value it had on entry.
+// back to the value it had on entry. It counts its steps, and when a check says the match has reached a limit it
+// returns false with the reason in st.stop.
 func (p *program) run(st *state, in []byte, start int) bool {
 	insts := p.insts
 	stack := st.stack[:0]
@@ -111,7 +186,16 @@ func (p *program) run(st *state, in []byte, start int) bool {
 	// units says the text is matched by UTF-16 code unit (see units.go).
 	units := p.units
 	pc, pos := 0, start
+	steps := st.steps
 	for {
+		steps--
+		if steps < 0 {
+			if !st.check(len(stack)) {
+				st.stack, st.steps = stack, 0
+				return false
+			}
+			steps = checkEvery
+		}
 		i := &insts[pc]
 		switch i.op {
 		case opChar:
@@ -262,6 +346,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			pc++
 			continue
 		case opClear:
+			steps -= int(i.b - i.a)
 			for g := i.a; g <= i.b; g++ {
 				if caps[2*g] >= 0 {
 					stack = append(stack, entry{kind: eCap, pc: g, pos: caps[2*g], a: caps[2*g+1]})
@@ -278,6 +363,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				continue
 			}
 			if n := to - from; len(in)-pos >= n && bytes.Equal(in[pos:pos+n], in[from:to]) {
+				steps -= n >> 3
 				pos += n
 				pc++
 				continue
@@ -289,6 +375,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				continue
 			}
 			if n := to - from; pos >= n && bytes.Equal(in[pos-n:pos], in[from:to]) {
+				steps -= n >> 3
 				pos -= n
 				pc++
 				continue
@@ -301,6 +388,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				pc++
 				continue
 			}
+			steps -= (to - from) >> 3
 			at, ok := pos, true
 			for from < to && ok {
 				want, w := decode(in, from, units)
@@ -324,6 +412,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				pc++
 				continue
 			}
+			steps -= (to - from) >> 3
 			at, ok := pos, true
 			for from < to && ok {
 				want, w := decodeLast(in, to, units)
@@ -424,6 +513,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 					}
 				}
 			}
+			steps -= (at - pos) >> 3
 			if n >= i.min {
 				if at > floor {
 					stack = append(stack, entry{kind: eRep, pc: int32(pc + 1), pos: at, a: floor})
@@ -442,6 +532,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				at += w
 				n++
 			}
+			steps -= int(n) >> 3
 			if n == i.min {
 				if n != i.max {
 					stack = append(stack, entry{kind: eRepLazy, pc: int32(pc), pos: at, a: int(n)})
@@ -486,14 +577,14 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			pc++
 			continue
 		case opMatch:
-			st.stack = stack
+			st.stack, st.steps = stack, steps
 			return true
 		}
 		// The instruction failed. Take up the most recent choice, undoing what was recorded since.
 	backtrack:
 		for {
 			if len(stack) == 0 {
-				st.stack = stack
+				st.stack, st.steps = stack, steps
 				return false
 			}
 			e := &stack[len(stack)-1]

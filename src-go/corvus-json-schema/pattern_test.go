@@ -74,7 +74,7 @@ func TestMatchersAgreeWithTheEngine(t *testing.T) {
 				sb.WriteString(alphabet[seed.next(len(alphabet))])
 			}
 			s := []byte(sb.String())
-			if got, want := compiled.match(s, isASCII(s)), reference.Match(s); got != want {
+			if got, want := compiled.match(s, isASCII(s), &patternBudget{}), reference.Match(s); got != want {
 				t.Errorf("%q on %q: %v, the engine says %v", source, s, got, want)
 				break
 			}
@@ -123,7 +123,7 @@ func TestPatternsValidOnlyWithoutTheUFlagMatchCodeUnits(t *testing.T) {
 		}
 		for _, test := range c.Tests {
 			answers++
-			if got := compiled.matchString(test.T); got != test.Want {
+			if got := compiled.matchString(test.T, &patternBudget{}); got != test.Want {
 				t.Errorf("%q on %q: %v, V8 says %v", c.P, test.T, got, test.Want)
 			}
 		}

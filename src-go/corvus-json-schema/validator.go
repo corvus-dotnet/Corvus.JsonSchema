@@ -32,10 +32,14 @@ type Validator struct {
 	scratches sync.Pool
 }
 
-func newValidator(compiled *compiledSchema, options *compileOptions) *Validator {
+func newValidator(compiled *compiledSchema, options *compileOptions) (*Validator, error) {
 	v := &Validator{program: newProgram(compiled, options)}
+	// The plans match each pattern against the property names the schema declares, within the limit of a match.
+	if err := v.program.budget.failure(); err != nil {
+		return nil, err
+	}
 	v.scratches.New = func() any { return new(scratch) }
-	return v
+	return v, nil
 }
 
 func applyOptions(options []Option) *compileOptions {
@@ -47,7 +51,9 @@ func applyOptions(options []Option) *compileOptions {
 }
 
 // Compile compiles a schema given as UTF-8 JSON text. The validator keeps the slice. Do not modify it afterwards.
-// The error is a *ParseError when the text is not JSON, and a *CompileError when the schema cannot be compiled.
+// The error is a *ParseError when the text is not JSON, and a *CompileError when the schema cannot be compiled. It
+// is a *PatternMatchLimitError when matching a regular expression of the schema against a property name the
+// schema declares reached the limit of a match (see WithPatternMatchLimit).
 func Compile(schema []byte, options ...Option) (*Validator, error) {
 	doc, err := ParseDocument(schema)
 	if err != nil {
@@ -68,7 +74,7 @@ func CompileDocument(schema *Document, options ...Option) (*Validator, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newValidator(compiled, o), nil
+	return newValidator(compiled, o)
 }
 
 // CompileURI compiles the schema document at a URI, fetched through the document resolver given in the options (or
@@ -79,7 +85,7 @@ func CompileURI(uri string, options ...Option) (*Validator, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newValidator(compiled, o), nil
+	return newValidator(compiled, o)
 }
 
 func (v *Validator) acquire() *scratch {
@@ -105,27 +111,44 @@ func stringBytes(s string) []byte {
 	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
-// run validates a document, failing fast. It reports the result and whether evaluation recursed in place beyond the
-// maximum depth. An evaluation that did is not valid, whatever it came to: the branch that was abandoned counts as
+// run validates a document, failing fast. The error is ErrDepthExceeded when evaluation recursed in place beyond
+// the maximum depth, and a *PatternMatchLimitError when a match of a regular expression reached its limit. An
+// evaluation that ended in either is not valid, whatever it came to: the branch that was abandoned counts as
 // false, which a not above it turns into true.
-func (v *Validator) run(instance *Document, s *scratch) (ok, depthExceeded bool) {
-	e := evaluator{p: v.program, d: instance, v: v, s: s}
-	ok = e.validate()
+func (v *Validator) run(instance *Document, s *scratch) (bool, error) {
+	e := evaluator{p: v.program, d: instance, v: v, s: s, budget: patternBudget{limit: v.program.matchLimit}}
+	ok := e.validate()
 	if s == nil && e.s != nil {
 		v.release(e.s)
 	}
-	return ok && !e.depthExceeded, e.depthExceeded
+	return e.outcome(ok)
 }
 
-// IsValid reports whether an instance is valid. A schema that recursed in place beyond the maximum depth is
-// reported as invalid. Use Validate to tell the two apart.
+// outcome returns what an evaluation that came to ok reports: no answer and the error when a match of a regular
+// expression reached its limit or the schema recursed beyond the maximum depth.
+func (e *evaluator) outcome(ok bool) (bool, error) {
+	if e.budget.err != nil {
+		return false, e.budget.failure()
+	}
+	if e.depthExceeded {
+		return false, ErrDepthExceeded
+	}
+	return ok, nil
+}
+
+// IsValid reports whether an instance is valid. It has no way to report an error, so it reports false both for a
+// schema that recursed in place beyond the maximum depth and for a match of a regular expression that reached its
+// limit (see WithPatternMatchLimit). In neither case is the instance known to be not valid. Use Validate to tell
+// them from an instance that is not valid.
 func (v *Validator) IsValid(instance *Document) bool {
 	ok, _ := v.run(instance, nil)
 	return ok
 }
 
-// IsValidBytes reports whether UTF-8 JSON text is a valid instance. Text that is not JSON is not valid. The text is
-// parsed into buffers the validator reuses, so a validation allocates nothing in the steady state.
+// IsValidBytes reports whether UTF-8 JSON text is a valid instance. Text that is not JSON is not valid. Like
+// IsValid, it reports false when the maximum depth or the limit of a match was reached. Use ValidateBytes to tell
+// those apart. The text is parsed into buffers the validator reuses, so a validation allocates nothing in the
+// steady state.
 func (v *Validator) IsValidBytes(json []byte) bool {
 	s := v.acquire()
 	ok := false
@@ -142,18 +165,16 @@ func (v *Validator) IsValidString(json string) bool {
 }
 
 // Validate reports whether an instance is valid. The error is ErrDepthExceeded when evaluation recursed in place
-// beyond the maximum depth.
+// beyond the maximum depth, and a *PatternMatchLimitError (which errors.Is matches with ErrPatternMatchLimit) when
+// a match of a regular expression reached its limit. With an error the result is false and is not an answer.
 func (v *Validator) Validate(instance *Document) (bool, error) {
-	ok, exceeded := v.run(instance, nil)
-	if exceeded {
-		return false, ErrDepthExceeded
-	}
-	return ok, nil
+	return v.run(instance, nil)
 }
 
 // ValidateBytes reports whether UTF-8 JSON text is a valid instance. The error is a *ParseError when the text is
-// not JSON, and ErrDepthExceeded when evaluation recursed in place beyond the maximum depth. The text is parsed into
-// buffers the validator reuses, so a validation of JSON text allocates nothing in the steady state.
+// not JSON, ErrDepthExceeded when evaluation recursed in place beyond the maximum depth, and a
+// *PatternMatchLimitError when a match of a regular expression reached its limit. The text is parsed into buffers
+// the validator reuses, so a validation of JSON text allocates nothing in the steady state.
 func (v *Validator) ValidateBytes(json []byte) (bool, error) {
 	s := v.acquire()
 	if !s.parser.parseInto(&s.text, json) {
@@ -161,12 +182,9 @@ func (v *Validator) ValidateBytes(json []byte) (bool, error) {
 		v.release(s)
 		return false, err
 	}
-	ok, exceeded := v.run(&s.text, s)
+	ok, err := v.run(&s.text, s)
 	v.release(s)
-	if exceeded {
-		return false, ErrDepthExceeded
-	}
-	return ok, nil
+	return ok, err
 }
 
 // ValidateString is ValidateBytes for a string.
@@ -175,24 +193,23 @@ func (v *Validator) ValidateString(json string) (bool, error) {
 }
 
 // Evaluate evaluates an instance exhaustively, reporting to the collector, and reports whether the instance is
-// valid. The error is ErrDepthExceeded when evaluation recursed in place beyond the maximum depth. With a nil
-// collector it is Validate.
+// valid. The error is ErrDepthExceeded when evaluation recursed in place beyond the maximum depth, and a
+// *PatternMatchLimitError when a match of a regular expression reached its limit. With an error the result is
+// false and is not an answer, and what the collector holds is not a report of the instance. With a nil collector
+// it is Validate.
 func (v *Validator) Evaluate(instance *Document, collector *ResultsCollector) (bool, error) {
 	if collector == nil {
 		return v.Validate(instance)
 	}
-	e := evaluator{p: v.program, d: instance, c: collector, v: v}
+	e := evaluator{p: v.program, d: instance, c: collector, v: v, budget: patternBudget{limit: v.program.matchLimit}}
 	ok := e.evaluate()
 	if e.s != nil {
 		v.release(e.s)
 	}
-	if e.depthExceeded {
-		return false, ErrDepthExceeded
-	}
-	return ok, nil
+	return e.outcome(ok)
 }
 
-// EvaluateBytes is Evaluate for UTF-8 JSON text. The error is a *ParseError when the text is not JSON.
+// EvaluateBytes is Evaluate for UTF-8 JSON text. The error is also a *ParseError when the text is not JSON.
 func (v *Validator) EvaluateBytes(json []byte, collector *ResultsCollector) (bool, error) {
 	instance, err := ParseDocument(json)
 	if err != nil {

@@ -70,16 +70,17 @@ type pattern struct {
 }
 
 // matchString is match for a string that is not known to be ASCII.
-func (p *pattern) matchString(s string) bool {
+func (p *pattern) matchString(s string, budget *patternBudget) bool {
 	b := []byte(s)
-	return p.match(b, isASCII(b))
+	return p.match(b, isASCII(b), budget)
 }
 
 // match reports whether the pattern matches somewhere in s, ascii saying whether s is known to be ASCII (a document
-// knows that of its strings).
-func (p *pattern) match(s []byte, ascii bool) bool {
+// knows that of its strings). The engine matches within the budget. Every other matcher reads the text once, or a
+// bounded number of times, and has no limit.
+func (p *pattern) match(s []byte, ascii bool, budget *patternBudget) bool {
 	if p.units != nil && !ascii && hasSupplementary(s) {
-		return p.units.Match(s)
+		return budget.engineMatch(p.units, p.source, s)
 	}
 	switch p.kind {
 	case matchEverything:
@@ -158,7 +159,7 @@ func (p *pattern) match(s []byte, ascii bool) bool {
 		}
 		return word
 	default:
-		return p.engine.Match(s)
+		return budget.engineMatch(p.engine, p.source, s)
 	}
 }
 

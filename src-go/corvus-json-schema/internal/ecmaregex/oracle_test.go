@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 // The oracle holds what V8 answers for a set of patterns and texts. testdata/gen_oracle.js writes it.
@@ -104,6 +105,12 @@ func checkAnswers(t *testing.T, p string, re, backtrack *Regexp, inputs []string
 		}
 		if got := backtrack.Match([]byte(s)); got != want {
 			t.Errorf("%q on %q (forced backtrack): got %v, V8 says %v", p, s, got, want)
+		}
+		// With a limit, the regexp package is given a text only when it can answer within the limit. A limit of a
+		// nanosecond gives it none, so this is the path of a match with a limit for a pattern on that package. A
+		// match that reaches its first check is abandoned and says nothing.
+		if got, err := re.MatchLimit([]byte(s), time.Nanosecond); err == nil && got != want {
+			t.Errorf("%q on %q (%v, with a limit): got %v, V8 says %v", p, s, re.Engine(), got, want)
 		}
 	}
 	return answers, matched

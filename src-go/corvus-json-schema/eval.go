@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 	"unicode/utf8"
 )
 
@@ -21,7 +22,12 @@ type program struct {
 	entry            nodeID
 	usesDynamicScope bool
 	maxDepth         int
-	formats          map[string]FormatValidator
+	// The time one match of a pattern may take, or zero for no limit.
+	matchLimit time.Duration
+	// The budget of the matches made while the plans are compiled (a pattern against the property names the schema
+	// declares).
+	budget  patternBudget
+	formats map[string]FormatValidator
 	// For fail-fast evaluation: each node's target after following pure $ref hops.
 	fastTarget []nodeID
 	// Name lookup tables for nodes with many properties.
@@ -40,6 +46,7 @@ func newProgram(c *compiledSchema, options *compileOptions) *program {
 	nodes := c.nodes
 	p := &program{
 		nodes: nodes, root: c.root, usesDynamicScope: c.usesDynamicScope, maxDepth: options.maxDepth,
+		matchLimit: options.matchLimit, budget: patternBudget{limit: options.matchLimit},
 		formats: options.formats, annotationSources: c.annotationSources,
 		assertFormatSet: options.assertFormat != 0,
 	}
@@ -358,6 +365,8 @@ type evaluator struct {
 	depth       int
 	// Evaluation recursed in place beyond the maximum depth.
 	depthExceeded bool
+	// What a match of a pattern may take, and the first match that reached a limit.
+	budget patternBudget
 	// The buffers, once taken, and the validator whose pool they come from.
 	s *scratch
 	v *Validator
@@ -677,7 +686,7 @@ func (e *evaluator) evalString(n *schemaNode, x int) bool {
 		}
 	}
 	if p := n.pattern; p != nil {
-		m := p.match(d.str(x), d.strASCII(x))
+		m := p.match(d.str(x), d.strASCII(x), &e.budget)
 		message := ""
 		if e.wants(m) {
 			message = "Expected the value to match the regular expression" + quoted(p.source)
@@ -822,7 +831,7 @@ func (e *evaluator) evalObject(id nodeID, n *schemaNode, x int, bits bitset) boo
 			}
 			for j := range n.patternProperties {
 				pp := &n.patternProperties[j]
-				if !pp.pattern.match(name, d.strASCII(k)) {
+				if !pp.pattern.match(name, d.strASCII(k), &e.budget) {
 					continue
 				}
 				matched = true
