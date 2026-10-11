@@ -9,6 +9,7 @@
 
 open Corvus_json_schema
 open Corvus_json_schema_test_support
+module Pattern = Corvus_json_schema__Pattern
 
 (* What a test allows for something that takes milliseconds, in seconds. *)
 let generous_time = 20.0
@@ -267,6 +268,44 @@ let test_an_ordinary_pattern_is_not_affected_by_the_limit () =
     ]
     [@ocamlformat "disable"]
 
+(* Checks the matchers that are not the engine's and so have no limit. An alternative with no anchor is looked for at
+   every position of the text, at a cost of its length for each, so a pattern whose alternatives cost more than 256
+   between them has no such matcher and runs on the engine, whose matches have the limit. A sequence of 50,000
+   characters and one more, looked for in a text of 100,000, took 4 to 10 seconds that way. *)
+let test_a_search_with_no_limit_is_narrow () =
+  Check.section "TestASearchWithNoLimitIsNarrow";
+  let kind source = match Pattern.compile source with Ok p -> Pattern.kind_name p | Error _ -> "not compiled" in
+  List.iter
+    (fun (source, want) ->
+      Check.equal_string
+        (Printf.sprintf "the matcher of %S" (String.sub source 0 (min 40 (String.length source))))
+        ~expected:want (kind source))
+    [
+      ("[a-z]{3}[0-9]|x", "alternatives"); ("[a-z]{254}[0-9]|x", "alternatives"); ("[a-z]{255}[0-9]|x", "engine");
+      ("[a-z]{50000}[0-9]|x", "engine"); ("^[a-z]{50000}[0-9]|x", "alternatives"); ("[a-z]{50000}[0-9]$|^x", "alternatives");
+      ("^x|" ^ repeat 256 "a", "alternatives"); ("^x|" ^ repeat 257 "a", "engine"); ("^x|^" ^ repeat 8000 "a", "alternatives");
+      ("^x|" ^ repeat 8000 "a" ^ "$", "alternatives"); (repeat 100 "a" ^ "|" ^ repeat 100 "b" ^ "|" ^ repeat 56 "c", "alternatives");
+      (repeat 100 "a" ^ "|" ^ repeat 100 "b" ^ "|" ^ repeat 57 "c", "engine");
+    ]
+    [@ocamlformat "disable"];
+  (* The answers are the same whichever matcher runs. *)
+  let text = String.make 100000 'a' in
+  List.iter
+    (fun (pattern, instance, want) ->
+      let v = compile (Printf.sprintf {|{"pattern": "%s"}|} pattern) in
+      let start = Unix.gettimeofday () in
+      let result = Validator.validate_string v (Printf.sprintf {|"%s"|} instance) in
+      let took = Unix.gettimeofday () -. start in
+      Check.checkf
+        (match result with Ok ok -> ok = want | Error (Pattern_match_limit _) -> true | Error _ -> false)
+        "%S: want %b or the limit of a match" (String.sub pattern 0 (min 20 (String.length pattern))) want;
+      Check.checkf (took <= 1.0 +. generous_time) "%S took %gs" (String.sub pattern 0 (min 20 (String.length pattern))) took)
+    [
+      ("[a-z]{50000}[0-9]|x", text, false); ("[a-z]{50000}[0-9]|x", text ^ "1", true);
+      ("^x|" ^ repeat 8000 "a" ^ "b", text, false); ("^x|" ^ repeat 8000 "a" ^ "b", text ^ "b", true);
+    ]
+    [@ocamlformat "disable"]
+
 (* The limits on the size of one pattern. *)
 
 (* Checks each limit in both keywords: the error is Pattern_too_large, which names the keyword, the limit and its
@@ -425,6 +464,7 @@ let () =
   test_a_match_that_reaches_its_memory_limit_is_an_error ();
   test_a_match_while_compiling_has_the_limit ();
   test_an_ordinary_pattern_is_not_affected_by_the_limit ();
+  test_a_search_with_no_limit_is_narrow ();
   test_a_pattern_over_a_limit_of_size_is_refused ();
   test_a_pattern_that_is_not_valid_is_not_too_large ();
   test_a_long_pattern_compiles_in_memory_proportional_to_its_length ();

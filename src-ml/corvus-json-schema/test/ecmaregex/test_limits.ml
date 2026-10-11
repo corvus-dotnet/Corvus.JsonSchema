@@ -208,6 +208,39 @@ let test_a_limited_match_allocates_nothing () =
     ]
     [@ocamlformat "disable"]
 
+(* Checks the search for the literal text a match starts with. The search looks for it at every position of the text,
+   outside the steps the matcher counts, so it looks for the first bytes alone: a literal of 16,000 characters that
+   nearly matches at every position of a text of 100,000 took 2.5 seconds, which no limit ended. The matcher compares
+   the rest of the literal when it runs, and counts that. *)
+let test_a_long_literal_is_searched_for_by_its_first_bytes () =
+  List.iter
+    (fun (pattern, want) ->
+      let found = Re.Internal.prefix (compiled pattern) in
+      if found <> want then fail "the prefix of %S is %S, want %S" (String.sub pattern 0 (min 30 (String.length pattern))) found want)
+    [
+      ("abc", "abc"); ("abcdefghijklmnop", "abcdefghijklmnop"); ("abcdefghijklmnopq", "abcdefghijklmnop");
+      (repeat 16000 "a" ^ "b", repeat 16 "a"); ("(abcdefghijklmnopqrstuvwxyz)", "abcdefghijklmnop"); ("^abc", "");
+      ("[ab]c", "");
+    ]
+    [@ocamlformat "disable"];
+  let scratch = Re.create_scratch () in
+  let text = String.make 100000 'a' in
+  List.iter
+    (fun (pattern, text, want) ->
+      let start = Unix.gettimeofday () in
+      let outcome = match_limit scratch (compiled pattern) text 0.2 in
+      let took = Unix.gettimeofday () -. start in
+      (* The match is abandoned at its limit or answers. It does not run on outside the limit. *)
+      if outcome <> Time && outcome <> Matched want then
+        fail "%S: %s, want %b or Match_time" (String.sub pattern 0 20) (outcome_name outcome) want;
+      if took > 0.2 +. generous then fail "%S took %gs with a limit of 0.2s" (String.sub pattern 0 20) took;
+      log "a literal of %d characters: %s after %.3fs" (String.length pattern) (outcome_name outcome) took)
+    [
+      (repeat 16000 "a" ^ "b", text, false); (repeat 16000 "a" ^ "[bc]", text, false);
+      (repeat 16000 "a" ^ "b", String.sub text 0 20000 ^ "b", true);
+    ]
+    [@ocamlformat "disable"]
+
 (* The limits of size. *)
 
 let node_size = 32
@@ -388,6 +421,7 @@ let () =
       ("a match is abandoned at its memory limit", test_a_match_is_abandoned_at_its_memory_limit);
       ("a limit does not change an answer", test_a_limit_does_not_change_an_answer);
       ("a limited match allocates nothing", test_a_limited_match_allocates_nothing);
+      ("a long literal is searched for by its first bytes", test_a_long_literal_is_searched_for_by_its_first_bytes);
       ("a pattern at the limit of size is cheap", test_a_pattern_at_the_limit_of_size_is_cheap);
       ("a pattern over a limit of size is too large", test_a_pattern_over_a_limit_of_size_is_too_large);
       ("the size of a pattern", test_the_size_of_a_pattern);

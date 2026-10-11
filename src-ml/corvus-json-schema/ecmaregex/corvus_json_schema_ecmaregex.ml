@@ -184,6 +184,7 @@ module Internal = struct
          (Array.to_list re.prog.insts))
 
   let no_match = Compile.no_match
+  let prefix re = re.prog.prefix
   let size pattern unicode = match Parse.parse pattern unicode with Ok (_, ps) -> ps.size | Error _ -> -1
   let unpack packed = (Utf8.rune packed, Utf8.width packed)
   let unit_at text at = unpack (Utf8.unit_at { b = Bytes.empty; s = text; is_string = true } 0 at (String.length text))

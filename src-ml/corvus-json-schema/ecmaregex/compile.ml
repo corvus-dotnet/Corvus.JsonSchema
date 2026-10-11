@@ -467,6 +467,9 @@ let set_needs insts =
   Array.iteri (fun pc i -> if i.op = Op_loop then i.need <- need.(pc)) insts;
   need.(0)
 
+(** The most bytes of the literal text a match starts with that the search for a match looks for. *)
+let max_prefix = 16
+
 (** Compiles the tree the parser read for the backtracking matcher. [group_count] is the number of capturing groups of
     the pattern. *)
 let compile_program root group_count unicode_mode =
@@ -506,7 +509,10 @@ let compile_program root group_count unicode_mode =
     units = not unicode_mode;
     anchored;
     need;
-    prefix = Buffer.contents prefix;
+    (* The search looks for the prefix at every position of the text, a byte at a time, so only its first bytes are
+       used: a long prefix that nearly matches everywhere would cost its length at each position, outside the steps
+       the matcher counts. The matcher compares the rest when it runs. *)
+    prefix = Buffer.sub prefix 0 (min (Buffer.length prefix) max_prefix);
     first = (match first with Some set -> set | None -> Charset.none);
     has_first = first <> None;
   }

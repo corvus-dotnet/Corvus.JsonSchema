@@ -282,6 +282,10 @@ module Internal : sig
   val no_match : int
   (** The need of a program that no text matches. *)
 
+  val prefix : t -> string
+  (** [prefix re] is the literal text the search for a match looks for at each position of the text: the first bytes, 16
+      at most, of the literal text every match starts with, or [""]. *)
+
   val size : string -> bool -> int
   (** [size pattern unicode] is the size the parser counts for the pattern (see {!max_size}) under the u flag grammar or
       under the Annex B grammar, or -1 when that grammar does not accept it or the pattern is over a limit. *)

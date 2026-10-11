@@ -950,6 +950,18 @@ let rec expand_alternatives c i =
   flush !i;
   (!all @ !branch, !i)
 
+(* An alternative with no "^" before it and no "$" after it is looked for at every position of the text, and each try
+   costs up to the length of its literal or the width of its sequence. Such a search has no limit of time, so the
+   alternatives of a pattern may cost at most this much for each position between them. A pattern beyond it has no
+   faster matcher and runs on the engine, whose matches have the limit. *)
+let max_search_width = 256
+
+(* search_width is what an alternative costs at each position of a text it is searched for in. *)
+let search_width = function
+  | Alt_literal { text; at_start = false; at_end = false } -> String.length text
+  | Alt_anywhere { width; _ } -> width
+  | _ -> 0
+
 (* parse_alternatives reads two or more alternatives once groups of alternatives (and optional groups) are expanded
    into whole alternatives ("^a|b|c$", "^([a|A]uto)|([n|N]one)$", "^[Ee][Ss]2015(\.([Cc]ore|[Pp]roxy))?$"), each a
    literal or a class sequence anchored where its own "^" and "$" say. *)
@@ -981,7 +993,9 @@ let parse_alternatives p =
     if stop <> String.length p || parts = [ p ] then None
     else
       let alts = Array.of_list (List.map alternative parts) in
-      if !sequences && Array.length alts > max_sequence_alternatives then None else Some alts
+      if !sequences && Array.length alts > max_sequence_alternatives then None
+      else if Array.fold_left (fun width alt -> width + search_width alt) 0 alts > max_search_width then None
+      else Some alts
   with No_shape -> None
 
 (* excluded_class_with_word reads "^(?=[^SET]+$)(?=(.*\w)).+$" (with "(?:" or "(" around ".*\w"): the excluded set,
