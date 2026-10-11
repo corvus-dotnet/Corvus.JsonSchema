@@ -84,8 +84,35 @@ pub struct DepthException;
 #[derive(Default)]
 pub struct InvalidJsonException;
 
-fn depth_error(e: corvus::SchemaEvaluationDepthError) -> PhpException {
-    PhpException::from_class::<DepthException>(e.to_string())
+/// A regular expression of the schema is over a limit of size (1,048,576 bytes of pattern, 1,000 levels of groups,
+/// or 1,048,576 bytes counted for it as it is read). It is a CompilationException, so code that catches those still
+/// does. The pattern was not read to its end, so nothing is known of whether it is valid.
+#[php_class]
+#[php(name = "Corvus\\JsonSchema\\PatternTooLargeException")]
+#[php(extends(CompilationException))]
+#[derive(Default)]
+pub struct PatternTooLargeException;
+
+/// One match of a pattern or patternProperties regular expression reached its limit (the patternMatchLimit option).
+/// The value is then neither valid nor not valid.
+#[php_class]
+#[php(name = "Corvus\\JsonSchema\\PatternMatchLimitException")]
+#[php(extends(JsonSchemaException))]
+#[derive(Default)]
+pub struct PatternMatchLimitException;
+
+/// The exception for an evaluation that gave no answer: it recursed in place beyond the maximum depth, or a match
+/// of a regular expression reached its limit.
+fn evaluation_error(e: corvus::SchemaEvaluationError) -> PhpException {
+    match e {
+        corvus::SchemaEvaluationError::InvalidJson(e) => {
+            PhpException::from_class::<InvalidJsonException>(e.to_string())
+        }
+        corvus::SchemaEvaluationError::PatternMatchLimit(e) => {
+            PhpException::from_class::<PatternMatchLimitException>(e.to_string())
+        }
+        other => PhpException::from_class::<DepthException>(other.to_string()),
+    }
 }
 
 fn type_error(message: impl Into<String>) -> PhpException {
@@ -703,6 +730,26 @@ impl Validator {
                             .and_then(|d| u32::try_from(d).ok())
                             .ok_or_else(|| type_error("the maxDepth option must be a non-negative int"))?;
                     }
+                    // The seconds one match of a regular expression may take. null, zero or less turns the limit
+                    // off.
+                    "patternMatchLimit" => {
+                        let seconds = match type_of(value) {
+                            IS_NULL => None,
+                            _ => Some(value.double().or_else(|| value.long().map(|n| n as f64)).ok_or_else(|| {
+                                type_error("the patternMatchLimit option must be a number of seconds or null")
+                            })?),
+                        };
+                        compile.pattern_match_limit = match seconds {
+                            Some(s) if s.is_nan() => {
+                                return Err(value_error("the patternMatchLimit option is not a number of seconds"));
+                            }
+                            Some(s) if s > 0.0 => {
+                                Some(std::time::Duration::try_from_secs_f64(s).unwrap_or(std::time::Duration::MAX))
+                                    .filter(|limit| !limit.is_zero())
+                            }
+                            _ => None,
+                        };
+                    }
                     "formats" => {
                         let Some(formats) = value.array() else {
                             return Err(type_error("the formats option must be an array of format name => callable"));
@@ -761,7 +808,15 @@ impl Validator {
                     Some(r) => format!("{} ({r})", e.message()),
                     None => e.message().to_owned(),
                 };
-                Err(PhpException::from_class::<CompilationException>(message))
+                Err(match e.kind() {
+                    corvus::SchemaCompilationErrorKind::PatternTooLarge(_) => {
+                        PhpException::from_class::<PatternTooLargeException>(message)
+                    }
+                    corvus::SchemaCompilationErrorKind::PatternMatchLimit(_) => {
+                        PhpException::from_class::<PatternMatchLimitException>(message)
+                    }
+                    _ => PhpException::from_class::<CompilationException>(message),
+                })
             }
         }
     }
@@ -770,15 +825,15 @@ impl Validator {
     pub fn is_valid(&self, value: &Zval) -> PhpResult<bool> {
         if !self.php_formats {
             let ctx = Context::new();
-            let result = self.inner.validate_instance(PhpInstance::root(value, &ctx));
+            let result = self.inner.try_validate_instance(PhpInstance::root(value, &ctx));
             if !ctx.fallback.get() {
-                return result.map_err(depth_error);
+                return result.map_err(evaluation_error);
             }
         }
         let json = to_json(value, 0)?;
-        let result = self.inner.validate(&json);
+        let result = self.inner.try_validate(&json);
         callbacks_done()?;
-        result.map_err(depth_error)
+        result.map_err(evaluation_error)
     }
 
     /// Whether the JSON text is valid: it is parsed by the crate, without creating PHP values for it.
@@ -790,15 +845,9 @@ impl Validator {
         let text = str_of(json).ok_or_else(|| {
             PhpException::from_class::<InvalidJsonException>("the JSON text is not valid UTF-8".into())
         })?;
-        let result = self.inner.validate_json(text);
+        let result = self.inner.try_validate_json(text);
         callbacks_done()?;
-        match result {
-            Ok(valid) => Ok(valid),
-            Err(corvus::JsonValidationError::InvalidJson(e)) => {
-                Err(PhpException::from_class::<InvalidJsonException>(e.to_string()))
-            }
-            Err(corvus::JsonValidationError::DepthExceeded(e)) => Err(depth_error(e)),
-        }
+        result.map_err(evaluation_error)
     }
 
     /// Evaluates the value into the collector, replacing its results (every keyword is evaluated and reported at the
@@ -807,18 +856,18 @@ impl Validator {
         let mut c = JsonSchemaResultsCollector::new(collector.level);
         if !self.php_formats {
             let ctx = Context::new();
-            let result = self.inner.evaluate_instance(PhpInstance::root(value, &ctx), &mut c);
+            let result = self.inner.try_evaluate_instance(PhpInstance::root(value, &ctx), &mut c);
             if !ctx.fallback.get() {
                 *collector.inner.borrow_mut() = c;
-                return result.map_err(depth_error);
+                return result.map_err(evaluation_error);
             }
             c = JsonSchemaResultsCollector::new(collector.level);
         }
         let json = to_json(value, 0)?;
-        let result = self.inner.evaluate(&json, &mut c);
+        let result = self.inner.try_evaluate(&json, &mut c);
         callbacks_done()?;
         *collector.inner.borrow_mut() = c;
-        result.map_err(depth_error)
+        result.map_err(evaluation_error)
     }
 }
 
@@ -889,7 +938,9 @@ pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
         .version(env!("CARGO_PKG_VERSION"))
         .class::<JsonSchemaException>()
         .class::<CompilationException>()
+        .class::<PatternTooLargeException>()
         .class::<DepthException>()
+        .class::<PatternMatchLimitException>()
         .class::<InvalidJsonException>()
         .enumeration::<Dialect>()
         .enumeration::<ResultsLevel>()

@@ -11,6 +11,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// The time one match of a regular expression may take unless `cjs_options_set_pattern_match_limit_ms` says
+// otherwise, in milliseconds: one second.
+#define CJS_DEFAULT_PATTERN_MATCH_LIMIT_MS 1000
+
 // The header's version: compare with `cjs_version()`, the library's.
 #define CJS_VERSION_MAJOR 0
 
@@ -85,6 +89,17 @@ typedef uint32_t cjs_results_level;
 // A bug in the library: it was caught, and the library remains usable, but the object passed may be left in an
 // unspecified state (free it).
 #define CJS_PANIC 6
+
+// A match of a `pattern` or `patternProperties` regular expression reached its limit (see
+// `cjs_options_set_pattern_match_limit_ms`), so there is no answer: the instance is neither valid nor not valid.
+// The message names the pattern and the limit. Compiling a schema can report it too, since a pattern of
+// `patternProperties` is matched against the property names the schema declares.
+#define CJS_PATTERN_MATCH_LIMIT 7
+
+// The schema could not be compiled because one of its regular expressions is over a limit of size: 1,048,576 bytes
+// of pattern, 1,000 levels of groups, or 1,048,576 bytes counted for it as it is read. It is not the status of a
+// regular expression that is not valid, which is `CJS_COMPILATION_FAILED`: the pattern was not read to its end.
+#define CJS_PATTERN_TOO_LARGE 8
 
 #define CJS_DRAFT4 4
 
@@ -163,6 +178,13 @@ cjs_status cjs_options_set_entry_point(cjs_options *options, const char *referen
 // The maximum depth of in-place recursion on a cycle before evaluation is abandoned (default 128).
 cjs_status cjs_options_set_max_depth(cjs_options *options, uint32_t depth);
 
+// The time one match of a `pattern` or `patternProperties` regular expression against one string may take, in
+// milliseconds (default `CJS_DEFAULT_PATTERN_MATCH_LIMIT_MS`, one second). A match that takes longer is abandoned
+// and the call it belongs to returns `CJS_PATTERN_MATCH_LIMIT`. Zero turns the limit off, for a caller who trusts
+// both the schema and the instances: a match then has no limit on its memory either. The limit is on each match,
+// not on the validation.
+cjs_status cjs_options_set_pattern_match_limit_ms(cjs_options *options, uint64_t milliseconds);
+
 // A custom format assertion, taking precedence over the built-in one of that name. `free_user_data` (may be NULL)
 // runs when the options and every validator compiled with them have been freed.
 cjs_status cjs_options_add_format(cjs_options *options,
@@ -180,7 +202,8 @@ cjs_status cjs_options_set_resolver(cjs_options *options,
                                     cjs_free_fn free_user_data);
 
 // Compiles a schema from its JSON text, with the options (NULL: the defaults). On success `*out` is a new validator,
-// freed with `cjs_validator_free`; otherwise it is NULL.
+// freed with `cjs_validator_free`; otherwise it is NULL. A schema that does not compile is
+// `CJS_COMPILATION_FAILED`, or `CJS_PATTERN_TOO_LARGE` when one of its regular expressions is over a limit of size.
 cjs_status cjs_compile(const char *schema, size_t len, const cjs_options *options, cjs_validator **out);
 
 // Compiles the schema document at an absolute URI, fetched through the options' resolver (or one of the standard
@@ -194,7 +217,8 @@ cjs_validator *cjs_validator_clone(const cjs_validator *validator);
 void cjs_validator_free(cjs_validator *validator);
 
 // Whether the JSON text is valid against the schema: `*valid` on `CJS_OK`. The text is parsed into per-thread
-// buffers and evaluated in place, allocating nothing in the steady state.
+// buffers and evaluated in place, allocating nothing in the steady state. `CJS_DEPTH_EXCEEDED` and
+// `CJS_PATTERN_MATCH_LIMIT` say the evaluation was abandoned, and `*valid` is then not an answer.
 cjs_status cjs_validator_validate_json(const cjs_validator *validator, const char *json, size_t len, bool *valid);
 
 // Whether the parsed document is valid against the schema: `*valid` on `CJS_OK`.

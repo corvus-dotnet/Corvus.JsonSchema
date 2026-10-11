@@ -10,10 +10,12 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::ptr::addr_of_mut;
 use std::sync::Arc;
+use std::time::Duration;
 
 use corvus_json_schema::{
     ArrayView, CompileOptions, Dialect, DocumentResolver, FormatValidator, Instance, JsonDocument, JsonParseError,
-    JsonSchemaResultsCollector, Kind, ObjectView, ResultsLevel, SchemaResult, Validator, View,
+    JsonSchemaResultsCollector, Kind, ObjectView, ResultsLevel, SchemaCompilationErrorKind, SchemaResult, Validator,
+    View,
 };
 use pyo3::create_exception;
 use pyo3::exceptions::{PyException, PyTypeError, PyValueError};
@@ -34,6 +36,34 @@ create_exception!(
     PyException,
     "Raised when evaluation recurses in place beyond max_depth (a schema that loops without consuming the instance)."
 );
+create_exception!(
+    corvus_json_schema_rs,
+    PatternTooLargeError,
+    SchemaCompilationError,
+    "Raised when a schema cannot be compiled because one of its regular expressions is over a limit of size \
+     (1,048,576 bytes of pattern, 1,000 levels of groups, or 1,048,576 bytes counted for it as it is read). The \
+     pattern was not read to its end, so nothing is known of whether it is valid."
+);
+create_exception!(
+    corvus_json_schema_rs,
+    PatternMatchLimitError,
+    PyException,
+    "Raised when one match of a pattern or patternProperties regular expression reaches its limit (see the \
+     pattern_match_limit option of compile). The instance is then neither valid nor not valid."
+);
+
+/// The exception for an evaluation that gave no answer.
+fn evaluation_error(e: corvus_json_schema::SchemaEvaluationError) -> PyErr {
+    match e {
+        corvus_json_schema::SchemaEvaluationError::PatternMatchLimit(e) => {
+            PatternMatchLimitError::new_err(e.to_string())
+        }
+        corvus_json_schema::SchemaEvaluationError::InvalidJson(e) => {
+            PyValueError::new_err(format!("Invalid JSON: {e}"))
+        }
+        other => SchemaEvaluationDepthError::new_err(other.to_string()),
+    }
+}
 
 /// The deepest instance nesting converted to a JSON value (deeper instances are rejected rather than overflowing the
 /// stack).
@@ -470,18 +500,18 @@ struct PyValidator {
 
 impl PyValidator {
     fn check(&self, value: &Value) -> PyResult<bool> {
-        self.inner.validate(value).map_err(|e| SchemaEvaluationDepthError::new_err(e.to_string()))
+        self.inner.try_validate(value).map_err(evaluation_error)
     }
 
     /// Evaluates the Python objects in place, or the converted value when they hold something the in-place reader
     /// does not (see `PyInstance`).
     fn check_object(&self, instance: &Bound<'_, PyAny>) -> PyResult<bool> {
         let fallback = Cell::new(false);
-        let result = self.inner.validate_instance(PyInstance::root(instance, &fallback));
+        let result = self.inner.try_validate_instance(PyInstance::root(instance, &fallback));
         if fallback.get() {
             return self.check(&to_value(instance, 0)?);
         }
-        result.map_err(|e| SchemaEvaluationDepthError::new_err(e.to_string()))
+        result.map_err(evaluation_error)
     }
 }
 
@@ -513,7 +543,7 @@ impl PyValidator {
         } else {
             return Err(PyTypeError::new_err("Expected JSON text as str or bytes."));
         };
-        self.inner.validate_instance(document.root()).map_err(|e| SchemaEvaluationDepthError::new_err(e.to_string()))
+        self.inner.try_validate_instance(document.root()).map_err(evaluation_error)
     }
 
     /// Evaluates the instance, reporting results to the collector when one is given (every keyword is evaluated and
@@ -523,7 +553,7 @@ impl PyValidator {
         let Some(mut c) = collector else { return self.check_object(instance) };
         // Results collection reads the converted value (an evaluation that falls back part way would leave rows).
         let value = to_value(instance, 0)?;
-        self.inner.evaluate(&value, &mut c.inner).map_err(|e| SchemaEvaluationDepthError::new_err(e.to_string()))
+        self.inner.try_evaluate(&value, &mut c.inner).map_err(evaluation_error)
     }
 
     fn __repr__(&self) -> String {
@@ -545,6 +575,7 @@ impl PyValidator {
     base_uri = None,
     entry_point = None,
     max_depth = 128,
+    pattern_match_limit = Some(1.0),
 ))]
 #[allow(clippy::too_many_arguments)]
 fn compile(
@@ -558,8 +589,19 @@ fn compile(
     base_uri: Option<String>,
     entry_point: Option<String>,
     max_depth: u32,
+    pattern_match_limit: Option<f64>,
 ) -> PyResult<PyValidator> {
     let value = to_value(schema, 0)?;
+    // The limit of a match in seconds. None, zero or less turns it off.
+    let pattern_match_limit = match pattern_match_limit {
+        Some(seconds) if seconds.is_nan() => {
+            return Err(PyValueError::new_err("pattern_match_limit is not a number of seconds."));
+        }
+        Some(seconds) if seconds > 0.0 => {
+            Some(Duration::try_from_secs_f64(seconds).unwrap_or(Duration::MAX)).filter(|limit| !limit.is_zero())
+        }
+        _ => None,
+    };
     let mut options = CompileOptions {
         default_dialect: dialect(default_dialect)?,
         assert_format,
@@ -568,6 +610,7 @@ fn compile(
         base_uri,
         entry_point,
         max_depth,
+        pattern_match_limit,
         ..CompileOptions::default()
     };
     for (name, f) in formats.unwrap_or_default() {
@@ -596,9 +639,11 @@ fn compile(
         });
         options.resolve_document = Some(resolver);
     }
-    corvus_json_schema::compile_with(&value, &options)
-        .map(|inner| PyValidator { inner })
-        .map_err(|e| SchemaCompilationError::new_err(e.message().to_string()))
+    corvus_json_schema::compile_with(&value, &options).map(|inner| PyValidator { inner }).map_err(|e| match e.kind() {
+        SchemaCompilationErrorKind::PatternTooLarge(_) => PatternTooLargeError::new_err(e.message().to_string()),
+        SchemaCompilationErrorKind::PatternMatchLimit(_) => PatternMatchLimitError::new_err(e.message().to_string()),
+        _ => SchemaCompilationError::new_err(e.message().to_string()),
+    })
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -716,6 +761,8 @@ fn schema_location_fragment(schema_location: &str) -> String {
 fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("SchemaCompilationError", m.py().get_type::<SchemaCompilationError>())?;
     m.add("SchemaEvaluationDepthError", m.py().get_type::<SchemaEvaluationDepthError>())?;
+    m.add("PatternTooLargeError", m.py().get_type::<PatternTooLargeError>())?;
+    m.add("PatternMatchLimitError", m.py().get_type::<PatternMatchLimitError>())?;
     m.add("RUST_CRATE_VERSION", corvus_json_schema::VERSION)?;
     m.add_class::<PyValidator>()?;
     m.add_class::<PySchemaResult>()?;

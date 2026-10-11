@@ -155,6 +155,30 @@ int main(void) {
     cjs_validator_free(named);
     CHECK(cjs_collector_new(7) == NULL);
 
+    /* A match of a regular expression has a limit of time (one second unless the options say otherwise), and a
+       pattern has limits of size. Reaching either is a status of its own. */
+    cjs_options *limited = cjs_options_new();
+    CHECK(cjs_options_set_pattern_match_limit_ms(limited, 20) == CJS_OK);
+    cjs_validator *slow = compile("{\"pattern\": \"^(?:(a+)\\\\1*)+$\"}", limited);
+    CHECK(validate(slow, "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab\"", &valid) == CJS_PATTERN_MATCH_LIMIT);
+    CHECK(contains(cjs_last_error_message(), "20ms"));
+    CHECK(validate(slow, "\"aaaa\"", &valid) == CJS_OK && valid);
+    cjs_validator_free(slow);
+    cjs_options_free(limited);
+    {
+        /* 1,000 levels of groups are one too many. */
+        char deep[8192];
+        size_t n = 0;
+        n += (size_t)sprintf(deep + n, "{\"pattern\": \"");
+        for (int i = 0; i < 1000; i++) n += (size_t)sprintf(deep + n, "(?:");
+        n += (size_t)sprintf(deep + n, "a");
+        for (int i = 0; i < 1000; i++) n += (size_t)sprintf(deep + n, ")");
+        n += (size_t)sprintf(deep + n, "\"}");
+        cjs_validator *too_large = NULL;
+        CHECK(cjs_compile(deep, n, NULL, &too_large) == CJS_PATTERN_TOO_LARGE && too_large == NULL);
+        CHECK(contains(cjs_last_error_message(), "nest more than 1000 deep"));
+    }
+
     /* Freeing NULL is allowed. */
     cjs_validator_free(NULL);
     cjs_options_free(NULL);

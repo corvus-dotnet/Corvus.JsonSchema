@@ -611,3 +611,121 @@ fn version() {
     let v = cjs_version();
     assert_eq!((v >> 16, (v >> 8) & 0xff, v & 0xff), (CJS_VERSION_MAJOR, CJS_VERSION_MINOR, CJS_VERSION_PATCH));
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The limits on a regular expression. A schema and an instance may both come from outside, so a match has a limit
+// of time (and with it of the memory of its backtracking), and a pattern has limits of size. Reaching either is a
+// status of its own, never "valid" or "not valid", and never the status of a pattern that is not valid.
+
+/// A pattern whose match on sixty `a` and a `b` takes longer than any test waits.
+const NEVER_ANSWERS: &str = r"^(?:(a+)\\1*)+$";
+
+fn never_answered() -> String {
+    format!("\"{}b\"", "a".repeat(60))
+}
+
+#[test]
+fn a_match_that_reaches_its_limit_is_a_status_of_its_own() {
+    let options = Options::new();
+    assert_eq!(unsafe { cjs_options_set_pattern_match_limit_ms(options.0, 50) }, CJS_OK);
+    assert_eq!(unsafe { cjs_options_set_pattern_match_limit_ms(std::ptr::null_mut(), 50) }, CJS_INVALID_ARGUMENT);
+    let schema = format!(r#"{{"pattern": "{NEVER_ANSWERS}"}}"#);
+    let v = compile(&schema, Some(&options)).unwrap();
+    let instance = never_answered();
+    let start = std::time::Instant::now();
+    let (status, message, _) = validate(&v, &instance).unwrap_err();
+    let took = start.elapsed();
+    assert_eq!(status, CJS_PATTERN_MATCH_LIMIT);
+    assert!(message.contains(r"^(?:(a+)\1*)+$") && message.contains("50ms"), "{message}");
+    assert!(took.as_millis() >= 50 && took.as_secs() < 20, "abandoned after {took:?}");
+    // The same through a parsed document and through both evaluations.
+    let mut d = std::ptr::null_mut();
+    assert_eq!(unsafe { cjs_document_parse(ptr(&instance), instance.len(), &mut d) }, CJS_OK);
+    let mut valid = true;
+    assert_eq!(unsafe { cjs_validator_validate_document(v.0, d, &mut valid) }, CJS_PATTERN_MATCH_LIMIT);
+    let c = Collector::new(CJS_BASIC);
+    assert_eq!(evaluate(&v, &instance, &c), Err(CJS_PATTERN_MATCH_LIMIT));
+    assert_eq!(unsafe { cjs_validator_evaluate_document(v.0, d, c.0, &mut valid) }, CJS_PATTERN_MATCH_LIMIT);
+    unsafe { cjs_document_free(d) };
+    // A string that matches is answered, and so is one that does not once the pattern can say so.
+    assert_eq!(validate(&v, "\"aaaa\"").map_err(|e| e.0), Ok(true));
+    assert_eq!(validate(&v, "\"b\"").map_err(|e| e.0), Ok(false));
+}
+
+#[test]
+fn the_default_match_limit_is_one_second_and_zero_turns_it_off() {
+    assert_eq!(CJS_DEFAULT_PATTERN_MATCH_LIMIT_MS, 1000);
+    let schema = format!(r#"{{"pattern": "{NEVER_ANSWERS}"}}"#);
+    // The defaults, with no options and with options nothing was set on.
+    for options in [None, Some(Options::new())] {
+        let v = compile(&schema, options.as_ref()).unwrap();
+        let start = std::time::Instant::now();
+        let (status, message, _) = validate(&v, &never_answered()).unwrap_err();
+        let took = start.elapsed();
+        assert_eq!(status, CJS_PATTERN_MATCH_LIMIT);
+        assert!(message.contains("1s"), "{message}");
+        assert!(took.as_millis() >= 1000 && took.as_secs() < 21, "abandoned after {took:?}");
+    }
+    // With the limit off the match runs to its end: fourteen `a` take a moment, and the answer is no.
+    let off = Options::new();
+    assert_eq!(unsafe { cjs_options_set_pattern_match_limit_ms(off.0, 0) }, CJS_OK);
+    let v = compile(&schema, Some(&off)).unwrap();
+    assert_eq!(validate(&v, &format!("\"{}b\"", "a".repeat(14))).map_err(|e| e.0), Ok(false));
+}
+
+#[test]
+fn a_match_that_reaches_its_memory_limit_is_the_same_status() {
+    let v = compile(r#"{"pattern": "(?:a?){2147483647}"}"#, None).unwrap();
+    let (status, message, _) = validate(&v, "\"\"").unwrap_err();
+    assert_eq!(status, CJS_PATTERN_MATCH_LIMIT);
+    assert!(message.contains("1,048,576 backtracking entries"), "{message}");
+}
+
+#[test]
+fn a_pattern_over_a_limit_of_size_is_a_status_of_its_own() {
+    let nest = |depth: usize| format!("{}a{}", "(?:".repeat(depth), ")".repeat(depth));
+    for (at, over, reason) in [
+        ("a".repeat(16384), "a".repeat(16385), "the pattern has a size of more than 1048576 bytes when it is read"),
+        (nest(999), nest(1000), "the groups of the pattern nest more than 1000 deep"),
+        ("a".repeat(1 << 20), "a".repeat((1 << 20) + 1), "the pattern is longer than 1048576 bytes"),
+    ] {
+        let schema = |pattern: &str| format!(r#"{{"pattern": "{pattern}"}}"#);
+        if reason.contains("longer") {
+            // The pattern at the limit of length is over the limit of size.
+            assert_eq!(compile(&schema(&at), None).map(|_| ()).map_err(|e| e.0), Err(CJS_PATTERN_TOO_LARGE));
+        } else {
+            assert!(compile(&schema(&at), None).is_ok(), "the pattern at the limit ({reason})");
+        }
+        let (status, message, _) = compile(&schema(&over), None).err().unwrap();
+        assert_eq!(status, CJS_PATTERN_TOO_LARGE, "{reason}");
+        assert!(message.ends_with(&format!("is too large to read as an ECMA-262 regular expression: {reason}.")));
+        assert!(message.len() < 400 && !message.to_lowercase().contains("invalid"), "{message}");
+        let properties = format!(r#"{{"patternProperties": {{"{over}": true}}}}"#);
+        assert_eq!(compile(&properties, None).map(|_| ()).map_err(|e| e.0), Err(CJS_PATTERN_TOO_LARGE));
+    }
+    // A pattern that is not valid is still the status it was.
+    let (status, message, _) = compile(r#"{"pattern": "a**"}"#, None).err().unwrap();
+    assert_eq!(status, CJS_COMPILATION_FAILED);
+    assert!(message.starts_with("Invalid regular expression"), "{message}");
+}
+
+/// A match made while a schema is compiled (a pattern of patternProperties against a property name the schema
+/// declares) has the limit too.
+#[test]
+fn a_match_while_compiling_has_the_limit() {
+    let options = Options::new();
+    assert_eq!(unsafe { cjs_options_set_pattern_match_limit_ms(options.0, 50) }, CJS_OK);
+    let name = format!("{}b", "a".repeat(60));
+    let schema = format!(
+        r#"{{"properties": {{"{name}": true}}, "patternProperties": {{"{NEVER_ANSWERS}": true}}, "additionalProperties": false}}"#
+    );
+    match compile(&schema, Some(&options)) {
+        Err((status, message, _)) => {
+            assert_eq!(status, CJS_PATTERN_MATCH_LIMIT);
+            assert!(message.contains("50ms"), "{message}");
+        }
+        Ok(v) => {
+            assert_eq!(validate(&v, &format!(r#"{{"{name}": 1}}"#)).map_err(|e| e.0), Err(CJS_PATTERN_MATCH_LIMIT))
+        }
+    }
+}

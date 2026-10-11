@@ -15,8 +15,8 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::{Arc, Mutex};
 
 use corvus::{
-    CompileOptions, Dialect, JsonDocument, JsonSchemaResultsCollector, JsonValidationError, ResultsLevel,
-    SchemaEvaluationDepthError, Validator,
+    CompileOptions, Dialect, JsonDocument, JsonSchemaResultsCollector, ResultsLevel, SchemaCompilationErrorKind,
+    SchemaEvaluationError, Validator,
 };
 use serde_json::Value;
 
@@ -40,6 +40,19 @@ pub const CJS_DEPTH_EXCEEDED: cjs_status = 5;
 /// A bug in the library: it was caught, and the library remains usable, but the object passed may be left in an
 /// unspecified state (free it).
 pub const CJS_PANIC: cjs_status = 6;
+/// A match of a `pattern` or `patternProperties` regular expression reached its limit (see
+/// `cjs_options_set_pattern_match_limit_ms`), so there is no answer: the instance is neither valid nor not valid.
+/// The message names the pattern and the limit. Compiling a schema can report it too, since a pattern of
+/// `patternProperties` is matched against the property names the schema declares.
+pub const CJS_PATTERN_MATCH_LIMIT: cjs_status = 7;
+/// The schema could not be compiled because one of its regular expressions is over a limit of size: 1,048,576 bytes
+/// of pattern, 1,000 levels of groups, or 1,048,576 bytes counted for it as it is read. It is not the status of a
+/// regular expression that is not valid, which is `CJS_COMPILATION_FAILED`: the pattern was not read to its end.
+pub const CJS_PATTERN_TOO_LARGE: cjs_status = 8;
+
+/// The time one match of a regular expression may take unless `cjs_options_set_pattern_match_limit_ms` says
+/// otherwise, in milliseconds: one second.
+pub const CJS_DEFAULT_PATTERN_MATCH_LIMIT_MS: u64 = 1000;
 
 /// A JSON Schema dialect.
 pub type cjs_dialect = u32;
@@ -240,14 +253,14 @@ fn invalid_json(e: corvus::JsonParseError) -> Failure {
     Failure { status: CJS_INVALID_JSON, message: format!("invalid JSON: {e}"), offset: e.offset() }
 }
 
-fn depth_exceeded(e: SchemaEvaluationDepthError) -> Failure {
-    Failure::new(CJS_DEPTH_EXCEEDED, e.to_string())
-}
-
-fn validation_error(e: JsonValidationError) -> Failure {
+/// The failure of an evaluation that gave no answer.
+fn evaluation_error(e: SchemaEvaluationError) -> Failure {
     match e {
-        JsonValidationError::InvalidJson(e) => invalid_json(e),
-        JsonValidationError::DepthExceeded(e) => depth_exceeded(e),
+        SchemaEvaluationError::InvalidJson(e) => invalid_json(e),
+        SchemaEvaluationError::DepthExceeded(e) => Failure::new(CJS_DEPTH_EXCEEDED, e.to_string()),
+        SchemaEvaluationError::PatternMatchLimit(e) => Failure::new(CJS_PATTERN_MATCH_LIMIT, e.to_string()),
+        // The crate may come to report more. Whatever it is, the evaluation gave no answer.
+        other => Failure::new(CJS_DEPTH_EXCEEDED, other.to_string()),
     }
 }
 
@@ -479,6 +492,24 @@ pub unsafe extern "C" fn cjs_options_set_max_depth(options: *mut cjs_options, de
     }
 }
 
+/// The time one match of a `pattern` or `patternProperties` regular expression against one string may take, in
+/// milliseconds (default `CJS_DEFAULT_PATTERN_MATCH_LIMIT_MS`, one second). A match that takes longer is abandoned
+/// and the call it belongs to returns `CJS_PATTERN_MATCH_LIMIT`. Zero turns the limit off, for a caller who trusts
+/// both the schema and the instances: a match then has no limit on its memory either. The limit is on each match,
+/// not on the validation.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn cjs_options_set_pattern_match_limit_ms(
+    options: *mut cjs_options,
+    milliseconds: u64,
+) -> cjs_status {
+    unsafe {
+        with_options(options, |o| {
+            o.inner.pattern_match_limit = (milliseconds > 0).then(|| std::time::Duration::from_millis(milliseconds));
+            Ok(())
+        })
+    }
+}
+
 /// A custom format assertion, taking precedence over the built-in one of that name. `free_user_data` (may be NULL)
 /// runs when the options and every validator compiled with them have been freed.
 #[unsafe(no_mangle)]
@@ -562,14 +593,20 @@ fn compile_failure(e: corvus::SchemaCompilationError, resolver: &Mutex<Option<St
         Some(r) => format!("{} ({r})", e.message()),
         None => e.message().to_owned(),
     };
-    Failure::new(CJS_COMPILATION_FAILED, message)
+    let status = match e.kind() {
+        SchemaCompilationErrorKind::PatternTooLarge(_) => CJS_PATTERN_TOO_LARGE,
+        SchemaCompilationErrorKind::PatternMatchLimit(_) => CJS_PATTERN_MATCH_LIMIT,
+        _ => CJS_COMPILATION_FAILED,
+    };
+    Failure::new(status, message)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Validators
 
 /// Compiles a schema from its JSON text, with the options (NULL: the defaults). On success `*out` is a new validator,
-/// freed with `cjs_validator_free`; otherwise it is NULL.
+/// freed with `cjs_validator_free`; otherwise it is NULL. A schema that does not compile is
+/// `CJS_COMPILATION_FAILED`, or `CJS_PATTERN_TOO_LARGE` when one of its regular expressions is over a limit of size.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn cjs_compile(
     schema: *const c_char,
@@ -627,7 +664,8 @@ pub unsafe extern "C" fn cjs_validator_free(validator: *mut cjs_validator) {
 }
 
 /// Whether the JSON text is valid against the schema: `*valid` on `CJS_OK`. The text is parsed into per-thread
-/// buffers and evaluated in place, allocating nothing in the steady state.
+/// buffers and evaluated in place, allocating nothing in the steady state. `CJS_DEPTH_EXCEEDED` and
+/// `CJS_PATTERN_MATCH_LIMIT` say the evaluation was abandoned, and `*valid` is then not an answer.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn cjs_validator_validate_json(
     validator: *const cjs_validator,
@@ -638,7 +676,7 @@ pub unsafe extern "C" fn cjs_validator_validate_json(
     guard(|| {
         let v = unsafe { handle(validator, "validator") }?;
         let valid = unsafe { out(valid, "valid") }?;
-        *valid = v.inner.validate_json(unsafe { text(json, len, "json") }?).map_err(validation_error)?;
+        *valid = v.inner.try_validate_json(unsafe { text(json, len, "json") }?).map_err(evaluation_error)?;
         Ok(())
     })
 }
@@ -654,7 +692,7 @@ pub unsafe extern "C" fn cjs_validator_validate_document(
         let v = unsafe { handle(validator, "validator") }?;
         let d = unsafe { handle(document, "document") }?;
         let valid = unsafe { out(valid, "valid") }?;
-        *valid = v.inner.validate_instance(d.doc.root()).map_err(depth_exceeded)?;
+        *valid = v.inner.try_validate_instance(d.doc.root()).map_err(evaluation_error)?;
         Ok(())
     })
 }
@@ -675,7 +713,7 @@ pub unsafe extern "C" fn cjs_validator_evaluate_json(
         let valid = unsafe { out(valid, "valid") }?;
         let json = unsafe { text(json, len, "json") }?;
         c.reset();
-        *valid = v.inner.evaluate_json(json, &mut c.inner).map_err(validation_error)?;
+        *valid = v.inner.try_evaluate_json(json, &mut c.inner).map_err(evaluation_error)?;
         Ok(())
     })
 }
@@ -694,7 +732,7 @@ pub unsafe extern "C" fn cjs_validator_evaluate_document(
         let c = unsafe { handle_mut(collector, "collector") }?;
         let valid = unsafe { out(valid, "valid") }?;
         c.reset();
-        *valid = v.inner.evaluate_instance(d.doc.root(), &mut c.inner).map_err(depth_exceeded)?;
+        *valid = v.inner.try_evaluate_instance(d.doc.root(), &mut c.inner).map_err(evaluation_error)?;
         Ok(())
     })
 }

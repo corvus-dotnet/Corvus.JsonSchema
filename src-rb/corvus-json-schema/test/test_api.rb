@@ -53,6 +53,77 @@ class TestApi < Minitest::Test
     assert CorvusJsonSchema::CompilationError < CorvusJsonSchema::Error
   end
 
+  # A schema and an instance may both come from outside, so a match of a pattern has a limit of time (one second unless
+  # pattern_match_limit says otherwise) and a pattern has limits of size. Reaching either raises an error of its own,
+  # and is never an answer.
+  NEVER_ANSWERS = '^(?:(a+)\\1*)+$'
+  NEVER_ANSWERED = ("a" * 60) + "b"
+
+  def test_a_match_that_reaches_its_limit_raises
+    v = CorvusJsonSchema.compile({ "pattern" => NEVER_ANSWERS }, pattern_match_limit: 0.05)
+    collector = CorvusJsonSchema::Collector.new(:basic)
+    [
+      -> { v.valid?(NEVER_ANSWERED) },
+      -> { v.valid_json?(JSON.generate(NEVER_ANSWERED)) },
+      -> { v.evaluate(NEVER_ANSWERED, collector) }
+    ].each do |check|
+      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      error = assert_raises(CorvusJsonSchema::PatternMatchLimitError) { check.call }
+      took = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+      assert_includes error.message, NEVER_ANSWERS
+      assert_includes error.message, "50ms"
+      assert_operator took, :>=, 0.05
+      assert_operator took, :<, 20
+    end
+    assert v.valid?("aaaa")
+    refute v.valid?("b")
+    assert CorvusJsonSchema::PatternMatchLimitError < CorvusJsonSchema::Error
+    refute CorvusJsonSchema::PatternMatchLimitError <= CorvusJsonSchema::DepthError
+  end
+
+  def test_the_default_match_limit_is_one_second_and_can_be_turned_off
+    assert_equal 1.0, CorvusJsonSchema::DEFAULT_PATTERN_MATCH_LIMIT
+    v = CorvusJsonSchema.compile({ "patternProperties" => { NEVER_ANSWERS => { "type" => "integer" } } })
+    start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    error = assert_raises(CorvusJsonSchema::PatternMatchLimitError) { v.valid?({ NEVER_ANSWERED => 1 }) }
+    took = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+    assert_includes error.message, "1s"
+    assert_operator took, :>=, 1.0
+    assert_operator took, :<, 21
+    # Off: the match runs to its end. Fourteen characters take a moment, and the answer is no.
+    [nil, 0, 0.0, -1].each do |off|
+      refute CorvusJsonSchema.compile({ "pattern" => NEVER_ANSWERS }, pattern_match_limit: off).valid?(("a" * 14) + "b")
+    end
+    assert_raises(ArgumentError) { CorvusJsonSchema.compile({ "pattern" => "a" }, pattern_match_limit: Float::NAN) }
+  end
+
+  def test_a_match_that_reaches_its_memory_limit_raises
+    v = CorvusJsonSchema.compile({ "pattern" => "(?:a?){2147483647}" })
+    error = assert_raises(CorvusJsonSchema::PatternMatchLimitError) { v.valid?("") }
+    assert_includes error.message, "1,048,576 backtracking entries"
+  end
+
+  def test_a_pattern_over_a_limit_of_size_is_not_an_invalid_pattern
+    nest = ->(depth) { ("(?:" * depth) + "a" + (")" * depth) }
+    [
+      ["a" * 16_384, "a" * 16_385, "the pattern has a size of more than 1048576 bytes when it is read"],
+      [nest.call(999), nest.call(1000), "the groups of the pattern nest more than 1000 deep"]
+    ].each do |at, over, reason|
+      CorvusJsonSchema.compile({ "pattern" => at })
+      [{ "pattern" => over }, { "patternProperties" => { over => true } }].each do |schema|
+        error = assert_raises(CorvusJsonSchema::PatternTooLargeError) { CorvusJsonSchema.compile(schema) }
+        assert error.message.end_with?("is too large to read as an ECMA-262 regular expression: #{reason}.")
+        refute_includes error.message.downcase, "invalid"
+        assert_operator error.message.length, :<, 400
+      end
+    end
+    # It is a compilation error, so code that rescues those still does. A pattern that is not valid is not it.
+    assert CorvusJsonSchema::PatternTooLargeError < CorvusJsonSchema::CompilationError
+    error = assert_raises(CorvusJsonSchema::CompilationError) { CorvusJsonSchema.compile({ "pattern" => "a**" }) }
+    refute_kind_of CorvusJsonSchema::PatternTooLargeError, error
+    assert error.message.start_with?("Invalid regular expression")
+  end
+
   def test_options
     v = CorvusJsonSchema.compile({ "$defs" => { "item" => { "type" => "string" } }, "type" => "object" },
                                  entry_point: "#/$defs/item", default_dialect: :draft7)

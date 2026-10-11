@@ -25,6 +25,9 @@ module CorvusJsonSchema
     draft4: 4, draft6: 6, draft7: 7, draft201909: 2019, draft202012: 2020
   }.freeze
 
+  # The seconds one match of a regular expression may take, unless compile is told otherwise.
+  DEFAULT_PATTERN_MATCH_LIMIT = 1.0
+
   RESULTS_LEVELS = { basic: 0, detailed: 1, verbose: 2 }.freeze
 
   # Compiles a schema (a Hash or Array, true or false, or JSON text) into a Validator.
@@ -33,12 +36,19 @@ module CorvusJsonSchema
   # $schema), assert_format (nil follows the vocabularies), assert_format_in_legacy_drafts, assert_content, formats (a
   # Hash of format name to a callable returning whether a string is valid), resolver (a callable from an absolute URI
   # to the document, as a Hash or JSON text, or nil when unknown), base_uri, entry_point (a reference such as
-  # "#/$defs/item") and max_depth (of in-place recursion, default 128).
+  # "#/$defs/item"), max_depth (of in-place recursion, default 128) and pattern_match_limit (the seconds one match of
+  # a pattern or patternProperties regular expression may take, default 1. A match that takes longer is abandoned and
+  # the validation raises PatternMatchLimitError. nil or 0 turns the limit off, for a caller who trusts both the
+  # schema and the instances).
+  #
+  # A schema that does not compile raises CompilationError, and one with a regular expression over a limit of size
+  # (1,048,576 bytes of pattern, 1,000 levels of groups) raises PatternTooLargeError, which is a CompilationError.
   def self.compile(schema, default_dialect: :draft202012, assert_format: nil, assert_format_in_legacy_drafts: false,
-                   assert_content: true, formats: nil, resolver: nil, base_uri: nil, entry_point: nil, max_depth: 128)
+                   assert_content: true, formats: nil, resolver: nil, base_uri: nil, entry_point: nil, max_depth: 128,
+                   pattern_match_limit: DEFAULT_PATTERN_MATCH_LIMIT)
     dialect = DIALECTS.fetch(default_dialect) { raise ArgumentError, "unknown dialect #{default_dialect.inspect}" }
     Native.compile(schema, dialect, assert_format, assert_format_in_legacy_drafts, assert_content, formats, resolver,
-                   base_uri, entry_point, Integer(max_depth))
+                   base_uri, entry_point, Integer(max_depth), pattern_match_limit&.to_f)
   end
 
   # The version of the corvus-json-schema crate the extension was built from.
