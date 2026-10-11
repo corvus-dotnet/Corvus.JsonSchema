@@ -347,4 +347,37 @@ const ANCHOR_CASES = Tuple{String,Vector{String},Vector{String}}[
         @test C.compile_pattern("\\-{0}^[\U10400-\U10428]\$") === nothing
         @test C.compile_pattern("^[\U10400-\U10428]\$") !== nothing
     end
+
+    # A long pattern compiles in time and memory proportional to its length. The matcher that multiplies out the
+    # alternatives of a pattern added each character it copied to every branch, one character at a time, which
+    # copies the branch for each: a literal pattern of 140,000 characters took 1.2 seconds to compile and one of a
+    # megabyte two minutes. The characters are added a run at a time. The test counts the bytes allocated, which
+    # no load on the machine changes, through every matcher a literal can take.
+    @testset "a long pattern compiles in memory proportional to its length" begin
+        round = 0
+        function allocated(n, shape)
+            # A pattern is compiled once for the process, so each must be a new one.
+            round += 1
+            pattern = shape("a"^(n - 8) * lpad(round, 8, '0'))
+            bytes = @allocated compiled = C.compile_pattern(pattern)
+            @test compiled !== nothing
+            return bytes
+        end
+        shapes = [
+            ("a literal", s -> s),
+            ("anchored", s -> "^" * s * "\$"),
+            ("alternatives", s -> "^(?:" * s[1:end-200] * "|x" * s[end-100:end] * ")\$"),
+            ("with an escape", s -> s[1:end÷2] * "\\." * s[end÷2+3:end]),
+            ("with a class", s -> s[1:end÷2] * "[ab]" * s[end÷2:end]),
+            ("in a group", s -> "(" * s * ")"),
+        ]
+        for (name, shape) in shapes
+            allocated(1000, shape)
+            short, long = allocated(1000, shape), allocated(16_000, shape)
+            # Sixteen times the length. Growth with its square is 256 times.
+            long > 64 * short && println("[patterns] ", name, ": 16,000 characters allocate ", long >> 10,
+                " KB and 1,000 allocate ", short >> 10, " KB")
+            @test long <= 64 * short
+        end
+    end
 end

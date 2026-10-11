@@ -815,8 +815,17 @@ function expand_alternatives(c::Vector{Char}, i::Int)
     all = String[]
     branch = [""]
     n = length(c)
+    # The characters that are copied are added to the branches a run at a time, when something else follows the
+    # run. Adding them one at a time would copy the branch for each, which takes time that grows with the square of
+    # its length. run is where the run that has not been added starts, or -1.
+    run = -1
     while i < n
         ch = c[i+1]
+        if run >= 0 && (ch == '|' || ch == ')' || ch == '(')
+            text = rune_text(c, run, i)
+            branch = [b * text for b in branch]
+            run = -1
+        end
         if ch == '|'
             append!(all, branch)
             branch = [""]
@@ -883,18 +892,20 @@ function expand_alternatives(c::Vector{Char}, i::Int)
                 i += 1
             end
             i += 1
-            text = rune_text(c, start, i)
-            branch = [b * text for b in branch]
+            run < 0 && (run = start)
         elseif ch == '\\'
             i + 2 > n && return nothing
-            text = rune_text(c, i, i + 2)
-            branch = [b * text for b in branch]
+            run < 0 && (run = i)
             i += 2
         else
-            branch = [b * string(ch) for b in branch]
+            run < 0 && (run = i)
             i += 1
         end
         length(all) + length(branch) > MAX_ALTERNATIVES && return nothing
+    end
+    if run >= 0
+        text = rune_text(c, run, i)
+        branch = [b * text for b in branch]
     end
     append!(all, branch)
     return all, i
