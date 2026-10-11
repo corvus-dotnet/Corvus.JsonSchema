@@ -1956,4 +1956,44 @@ class EcmaRegexTest {
     private static final String[] MORE_FOR_JOINED_PLANS = {
         "xya", "xyb", "xyaa", "xyaaz", "zxybz", "xyaaxyb", "zz", "ababab", "bcbcbc", "abcabc", "aabbcc", "bbbbbb"
     };
+
+    /**
+     * Repetitions that must run twice or more over a body with one way to match, such as a backreference, with the
+     * texts each matches.
+     */
+    private static final String[][] BODIES_WITH_ONE_WAY_TO_MATCH = {
+            {"(?i:^(.)\\1{5}$)", "|aaaaaa|aAaAaA|kK\u212akK\u212a|k\u212a\u212akkK"},
+            {"(?i:^(..)\\1{3}$)", "|a-a-a-a-|a-A-a-A-|akakakak"},
+            {"(?i:^(.)\\1{9}$)", "|aaaaaaaaaa|aAaAAaaAAa"},
+            {"(?i:^(.|..)\\1{3}$)", "|a-a-a-a-|a-A-a-A-|akakakak"},
+            {"(?i:^(?:(.)\\1{4}){2}$)", "|aaaaaaaaaa|aAaAAaaAAa"},
+            {"^(a*)\\1{3}b$", "|b|aaaab|aaaaaaaab"},
+            {"^(?:(a)|b)\\1{2}$", "|aaa|b"},
+            {
+                "^(a*)(?:(?=(a))\\1\\2){2}",
+                "|aa|aaa|aaA|aak|aa\u212a|aa-|aaaaaa|aaaaaaaaaa|aab|aaaab|aaaaaaaab|aaaaaaab",
+            },
+    };
+
+    private static final String[] MORE_FOR_ONE_WAY = {
+        "aaaaaa", "aAaAaA", "aAaAaAa", "kKKkKK", "kKKkkK", "a-a-a-a-", "a-A-a-A-", "akakakak", "aKAkakKAK",
+        "aaaaaaaaaa", "aAaAAaaAAa", "ab", "b", "aab", "aaaab", "aaaaaaaab", "aaaaaaab"
+    };
+
+    /**
+     * A body with one way to match where it stands is not written once for each iteration that is due: when one
+     * iteration of it matches nothing, so do the ones after it, and leaving the repetition there, as
+     * {@code java.util.regex} does, is what ECMA-262 comes to. So a count over a case-insensitive backreference,
+     * whose comparison is long, is translated whatever the count.
+     */
+    @Test
+    void aBodyWithOneWayToMatchIsNotWrittenOnceForEachIteration() {
+        assertAnswers(BODIES_WITH_ONE_WAY_TO_MATCH,
+                textsOver(3, new String[] {"a", "A", "k", "\u212a", "-"}, MORE_FOR_ONE_WAY));
+        assertEquals("^(a*)(?:(?:(?:\\1))){2}b\\z", EcmaRegex.translate("^(a*)\\1{2}b$"));
+        assertEquals("^(?:((?:a)())|b)(?:(?:(?=\\2)(?:\\1)|(?!\\2))){2}\\z", EcmaRegex.translate("^(?:(a)|b)\\1{2}$"));
+        assertEquals(EcmaRegex.translate("(?i:^(.)\\1{2}$)").length(), EcmaRegex.translate("(?i:^(.)\\1{9}$)").length());
+        // A body with alternatives has more than one way, and is still written apart.
+        assertEquals("(?:^|x)(?:^|x)a", EcmaRegex.translate("(?:^|x){2}a"));
+    }
 }

@@ -2022,10 +2022,39 @@ final class EcmaRegex {
          * everywhere, which is one whose every empty match passes an assertion or a backreference. With a minimum
          * of one or none the paths of the two engines reach the same places: an empty iteration does not move, and
          * the one the paths can differ by is at the end.
+         *
+         * <p>And it needs a body with more than one way to match where it stands. A body with one way (see
+         * {@link #oneWayToMatch}) that matched nothing in one iteration matches nothing in the next, which starts at
+         * the same place with the same groups, and so in all that are due: leaving the repetition there is what
+         * ECMA-262 comes to. A backreference under a count is such a body.
          */
         private boolean leavesEarly(Node n) {
             Node body = n.subs[0];
-            return n.min >= 2 && minLength(body) == 0 && maxLength(body) != 0 && !emptyAnywhere(body);
+            return n.min >= 2 && minLength(body) == 0 && maxLength(body) != 0 && !emptyAnywhere(body)
+                    && !oneWayToMatch(body);
+        }
+
+        /**
+         * Whether a node has at most one way to match where it stands, given what the groups outside it hold: it has
+         * no alternatives and no repetition that may run a number of times or another. A lookaround counts as one
+         * way, as it takes the first way its body matches and the match does not go back into it.
+         */
+        private static boolean oneWayToMatch(Node n) {
+            switch (n.kind) {
+                case ALT:
+                    return false;
+                case REPEAT:
+                    return n.min == n.max && oneWayToMatch(n.subs[0]);
+                case LOOK:
+                    return true;
+                default:
+                    for (Node sub : n.subs) {
+                        if (!oneWayToMatch(sub)) {
+                            return false;
+                        }
+                    }
+                    return true;
+            }
         }
 
         /** Whether a node matches the empty string wherever it stands: through no assertion and no backreference. */
@@ -3362,7 +3391,8 @@ final class EcmaRegex {
             // The iterations that are due are written apart where java.util.regex would leave the repetition early
             // (see leavesEarly). And in a loop inside another, the place an iteration started at can be told only
             // when the loop has no minimum (see stamped), so where that may be asked for they are written apart too.
-            boolean early = min >= 2 && minLength(body) == 0 && maxLength(body) != 0 && !emptyAnywhere(body);
+            boolean early = min >= 2 && minLength(body) == 0 && maxLength(body) != 0 && !emptyAnywhere(body)
+                    && !oneWayToMatch(body);
             boolean inner = min > 0 && (max == UNBOUNDED || max > 1) && loopNow() != null && holdsReadLook(body);
             if (early || inner) {
                 for (int k = 0; k < min; k++) {
