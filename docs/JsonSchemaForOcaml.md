@@ -252,14 +252,38 @@ With domains the code is the same, with `Domain.spawn` and `Domain.join`.
 `pattern` and `patternProperties` have ECMA-262 semantics. The common shapes of pattern are matched with no regular
 expression engine. Any other pattern runs on the package's own engine, which reads every character class from the
 package's own Unicode 17 data, so a pattern means the same whichever compiler built the program. The engine agrees
-with answers recorded from V8 on 61,383 patterns and 1,057,650 match answers.
+with answers recorded from V8 on 61,694 patterns and 1,091,280 match answers, and on the 13 files of the ECMA-262
+regular expression test data (98,839 patterns and 4,268,313 answers).
+
+A pattern is read with the grammar of the `u` flag and matched by Unicode code point. A pattern that grammar refuses
+is read with the Annex B grammar of a pattern with no flag, which many schemas need (`\-` outside a class, `\_`, a
+lone `{`). Such a pattern is matched by UTF-16 code unit, as ECMA-262 matches a pattern with no `u` flag. The two
+differ only for a string with a character beyond the Basic Multilingual Plane, which is two code units. `^.$`
+matches `"\ud801\udc00"` (the one character U+10400), and `^\-?.$` does not, because the dot takes one unit of the
+two. A pattern that neither grammar accepts is a `Compile_error`.
+
+The answers are V8's except where V8 itself departs from ECMA-262, and there the package follows ECMA-262. A
+quantifier whose first count is greater than its second is an error whatever the size of the numbers, so
+`a{2147483648,2147483647}` is refused, which V8 takes. A group name used twice is an error unless the two groups
+are in separate alternatives of one disjunction, so `(?<m>a)(?:x|(?<m>b))` is refused, which V8 takes.
+`\p{WSpace}` is not a property name ECMA-262 lists, so the pattern is read with no flag, as the characters
+`p{WSpace}`, where V8 reads it as `\p{White_Space}`. `Katakana_Or_Hiragana` (`Hrkt`) is a Script value that no
+character has, so `\p{sc=Hrkt}` is valid and matches nothing, where V8 refuses it. And the properties are those of
+Unicode 17, so the scripts Sidetic, Tolong_Siki, Beria_Erfe and Tai_Yo are known, which V8 13.6 does not know.
+
+A JSON string can name half of a surrogate pair with an escape, as in `"\ud800"`. That is not Unicode text, and a
+document is UTF-8 and cannot hold it. Parsing such text is a `Parse_error`, and the `is_valid` functions report it
+as not valid, whatever the schema. So a pattern is never matched against such a string.
 
 A pattern with no lookaround, backreference, multiline anchor or word boundary gets an automaton that decides an
 ASCII text with one table read per byte, when the automaton is small enough. Every other pattern, and a text that
 is not ASCII, runs on a backtracking matcher. The Go module hands most patterns to Go's linear-time `regexp`
 package, which OCaml's standard library has no counterpart of. The backtracking matcher has no step budget, so a
 pattern with nested quantifiers can take exponential time on a text it does not match, in cases where the Go
-module's would not.
+module's would not. A repetition whose body cannot consume a character, such as `(?:\b|(?=a)|){4,5}`, is not such a case. Every
+iteration of it is empty, so the matcher runs the body once when the minimum is one or more and not at all when it
+is zero, which is what ECMA-262 says such a repetition matches. And a counted repetition is not tried at all at a
+place where the rest of the pattern needs more of the string than is left.
 
 ## Performance
 

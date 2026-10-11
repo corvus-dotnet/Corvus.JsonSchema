@@ -486,7 +486,7 @@ let test_invalid_patterns_are_rejected () =
       (fun source -> Check.check (Printf.sprintf "%S compiled" source) (Pattern.compile source = None))
       [
         "a("; "[a"; "a{2,1}"; "(?<n>a)(?<n>b)"; "*a"; "^(?=a"; {p|(?<n>a)[\k]|p}; {p|^[\k]+(?<n>a)$|p};
-        "^a{2147483648,2147483647}$"; "^[a-z]{99999999999999999999,99999999999999999998}$"; "^.{4294967296,1}$";
+        "^a{2147483648,2147483647}$"; "^[a-z]{99999999999999999999,99999999999999999998}$"; "^.{4294967296,1}$"; "(?<m>a)(?:x|(?<m>b))";
       ]
       [@ocamlformat "disable"];
     Check.check "valid is the u flag grammar"
@@ -918,6 +918,133 @@ let test_matching_allocates_nothing () =
     (rounds * 3 * n)
     (String.concat ", " (List.rev !kinds))
 
+(* Patterns with an anchor, a word boundary or a lookaround in a place where a matcher for a shape could lose it, and
+   patterns with an escaped "$" or "^", which is a literal character. Each has the texts it matches and the texts it
+   does not. The answers are V8's: new RegExp(pattern, "u").test(text). (anchorCases of the Go source.) *)
+let anchor_cases =
+  [
+    ({p|^x(,a$)*$|p}, [ "x"; "x,a" ], [ "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^x(,a$)+$|p}, [ "x,a" ], [ "x"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^x(?:,a$)*$|p}, [ "x"; "x,a" ], [ "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^x$(,a)*$|p}, [ "x" ], [ "x,a"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^(x$)(,a)*$|p}, [ "x" ], [ "x,a"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^(?:x$)(,a)+$|p}, [], [ "x"; "x,a"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^$(,a)*$|p}, [ "" ], [ ",a"; ",a,a"; "a" ]);
+    ({p|^(a,$)*b$|p}, [ "b" ], [ "a,b"; "a,a,b"; "a,"; ""; "a,a" ]);
+    ({p|^(a,$)+b$|p}, [], [ "b"; "a,b"; "a,a,b"; "a,"; ""; "a,a" ]);
+    ({p|^(?:a,$)*b$|p}, [ "b" ], [ "a,b"; "a,a,b"; "a,"; ""; "a,a" ]);
+    ({p|^([a-z]+)(\.[a-z]+$)*$|p}, [ "a"; "a.b" ], [ "a.b.c"; "a."; "" ]);
+    ({p|^([a-z]+\.$)*[a-z]+$|p}, [ "a" ], [ "a.b"; "a.b.c"; ".a"; "" ]);
+    ({p|^x(,a$$)*$|p}, [ "x"; "x,a" ], [ "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^x(^,a)*$|p}, [ "x" ], [ "x,a"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^x(,^a)*$|p}, [ "x" ], [ "x,a"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^^x(,a)*$|p}, [ "x"; "x,a"; "x,a,a"; "x,a,a,a" ], [ ""; "x,"; "x,b" ]);
+    ({p|^(^x)(,a)*$|p}, [ "x"; "x,a"; "x,a,a"; "x,a,a,a" ], [ ""; "x,"; "x,b" ]);
+    ({p|^(^a,)*b$|p}, [ "b"; "a,b" ], [ "a,a,b"; "a,"; ""; "a,a" ]);
+    ({p|^(a,)*^b$|p}, [ "b" ], [ "a,b"; "a,a,b"; "a,"; ""; "a,a" ]);
+    ({p|^x(,(a$))*$|p}, [ "x"; "x,a" ], [ "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^x(,(?:a$))*$|p}, [ "x"; "x,a" ], [ "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^x(,a|$)*$|p}, [ "x"; "x,a"; "x,a,a"; "x,a,a,a" ], [ ""; "x,"; "x,b" ]);
+    ({p|^x(,(a|$))*$|p}, [ "x"; "x,a"; "x,a,a"; "x,a,a,a"; "x," ], [ ""; "x,b" ]);
+    ({p|^x((^|,)a)*$|p}, [ "x"; "x,a"; "x,a,a"; "x,a,a,a" ], [ ""; "x,"; "x,b" ]);
+    ({p|^(a,)*(b$)$|p}, [ "b"; "a,b"; "a,a,b" ], [ "a,"; ""; "a,a" ]);
+    ({p|^(a,)*b$$|p}, [ "b"; "a,b"; "a,a,b" ], [ "a,"; ""; "a,a" ]);
+    ({p|^x(,a\b)*$|p}, [ "x"; "x,a"; "x,a,a"; "x,a,a,a" ], [ ""; "x,"; "x,b"; "x,ab" ]);
+    ({p|^x(\b,a)*$|p}, [ "x"; "x,a"; "x,a,a"; "x,a,a,a" ], [ ""; "x,"; "x,b" ]);
+    ({p|^x(,\Ba)*$|p}, [ "x" ], [ "x,a"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^x(\B,a)*$|p}, [ "x" ], [ "x,a"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^x\b(,a)*$|p}, [ "x"; "x,a"; "x,a,a"; "x,a,a,a" ], [ ""; "x,"; "x,b" ]);
+    ({p|^x\B(,a)*$|p}, [], [ "x"; "x,a"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^(a\b,)*b$|p}, [ "b"; "a,b"; "a,a,b" ], [ "a,"; ""; "a,a" ]);
+    ({p|^(a,\B)*b$|p}, [ "b" ], [ "a,b"; "a,a,b"; "a,"; ""; "a,a" ]);
+    ({p|^x(,a(?=,|$))*$|p}, [ "x"; "x,a"; "x,a,a"; "x,a,a,a" ], [ ""; "x,"; "x,b" ]);
+    ({p|^x(,(?!a)a)*$|p}, [ "x" ], [ "x,a"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^x(?=,)(,a)*$|p}, [ "x,a"; "x,a,a"; "x,a,a,a" ], [ "x"; ""; "x,"; "x,b" ]);
+    ({p|^x(,a(?<=a))*$|p}, [ "x"; "x,a"; "x,a,a"; "x,a,a,a" ], [ ""; "x,"; "x,b" ]);
+    ({p|^x(,(?<!,)a)*$|p}, [ "x" ], [ "x,a"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^x(?=,a$)(,a)*$|p}, [ "x,a" ], [ "x"; "x,a,a"; "x,a,a,a"; ""; "x,"; "x,b" ]);
+    ({p|^(a,(?=b))*b$|p}, [ "b"; "a,b" ], [ "a,a,b"; "a,"; ""; "a,a" ]);
+    ({p|^(?!a,a)(a,)*b$|p}, [ "b"; "a,b" ], [ "a,a,b"; "a,"; ""; "a,a" ]);
+    ({p|^x(,a\$)*$|p}, [ "x"; "x,a$"; "x,a$,a$" ], [ "x,a"; "x,a,a"; "x,a$,a" ]);
+    ({p|^x\$(,a)*$|p}, [ "x$"; "x$,a"; "x$,a,a" ], [ "x"; "x,a" ]);
+    ({p|^(a\$,)*b$|p}, [ "b"; "a$,b"; "a$,a$,b" ], [ "a,b"; "a$,a,b" ]);
+    ({p|^x(,\^a)*$|p}, [ "x"; "x,^a"; "x,^a,^a" ], [ "x,a"; "x,a,a" ]);
+    ({p|^(a,)*b\$$|p}, [ "b$"; "a,b$"; "a,a,b$" ], [ "b"; "a,b" ]);
+    ({p|^x(,[$^]a)*$|p}, [ "x"; "x,$a"; "x,^a,$a" ], [ "x,a"; "x,a,a" ]);
+    ({p|^a$b|p}, [], [ "a"; "ab"; "a$b"; "" ]);
+    ({p|^a^b|p}, [], [ "a"; "ab"; "b" ]);
+    ({p|^a$$|p}, [ "a" ], [ "ab"; "" ]);
+    ({p|^^a|p}, [ "a"; "ab" ], [ "ba" ]);
+    ({p|^a\$b$|p}, [ "a$b" ], [ "ab"; "a" ]);
+    ({p|^a\b|p}, [ "a"; "a b"; "a," ], [ "ab" ]);
+    ({p|^a\Bb|p}, [ "ab" ], [ "a b"; "a" ]);
+    ({p|^\ba|p}, [ "a" ], [ "ba"; "" ]);
+    ({p|^a(?=b)|p}, [ "ab" ], [ "a"; "ac" ]);
+    ({p|^a(?!b)|p}, [ "a"; "ac" ], [ "ab" ]);
+    ({p|^[a-c]+\b$|p}, [ "a"; "abc" ], [ "" ]);
+    ({p|^[a-c]+$\b|p}, [ "a"; "abc" ], [ "" ]);
+    ({p|^$|p}, [ "" ], [ "a" ]);
+    ({p|^a$.*|p}, [ "a" ], [ "ab"; "" ]);
+    ({p|^a\b.*|p}, [ "a"; "a b" ], [ "ab" ]);
+    ({p|^a^.*|p}, [], [ "a"; "ab" ]);
+    ({p|^\$.*|p}, [ "$"; "$a" ], [ "a" ]);
+    ({p|^a$|b|p}, [ "a"; "ab"; "b"; "cb" ], [ "c" ]);
+    ({p|a$|^b|p}, [ "a"; "ba"; "bc" ], [ "ab"; "cb" ]);
+    ({p|^(a$|b)$|p}, [ "a"; "b" ], [ "ab"; "" ]);
+    ({p|^(a|^b)$|p}, [ "a"; "b" ], [ "ab" ]);
+    ({p|^(a|b\b)$|p}, [ "a"; "b" ], [ "ab" ]);
+    ({p|^(?:a\$|b)$|p}, [ "a$"; "b" ], [ "a" ]);
+    ({p|^(a|$)$|p}, [ "a"; "" ], [ "b" ]);
+    ({p|^(^|b)$|p}, [ ""; "b" ], [ "a" ]);
+    ({p|^(a$|b)c|p}, [ "bc"; "bcd" ], [ "a"; "ac" ]);
+    ({p|(^a|b)c$|p}, [ "ac"; "bc"; "xbc" ], [ "xac"; "acx" ]);
+    ({p|a(b|^c)|p}, [ "ab"; "xab" ], [ "ac"; "c" ]);
+    ({p|(a$){2}|p}, [], [ "a"; "aa"; "" ]);
+    ({p|(^a){2}|p}, [], [ "a"; "aa" ]);
+    ({p|x(a$)?b|p}, [ "xb" ], [ "xab"; "xa" ]);
+    ({p|^x(a$)?|p}, [ "x"; "xa"; "xab"; "xb" ], []);
+    ({p|(a|b$)c|p}, [ "ac" ], [ "bc"; "b" ]);
+    ({p|a|\bb|p}, [ "a"; "b"; "c b" ], [ "cb" ]);
+    ({p|a\b|c|p}, [ "a"; "c"; "b a" ], [ "ab" ]);
+    ({p|(?=a)a|b|p}, [ "a"; "b" ], [ "c" ]);
+    ({p|(?<=a)b|c|p}, [ "ab"; "c" ], [ "b" ]);
+    ({p|a^|b|p}, [ "b" ], [ "a"; "" ]);
+    ({p|$a|b|p}, [ "b" ], [ "a"; "" ]);
+    ({p|^|a|p}, [ ""; "b" ], []);
+    ({p|a|$|p}, [ ""; "b" ], []);
+    ({p|(a|b)$c|p}, [], [ "ac"; "a"; "bc" ]);
+    ({p|^(a|b)^c|p}, [], [ "ac"; "c" ]);
+    ({p|[a-c]{2}$|^x|p}, [ "ab"; "x"; "yab" ], [ "abx"; "yx" ]);
+    ({p|[a-c]\b|x|p}, [ "a"; "x"; "d a" ], [ "ad" ]);
+    ({p|^[a-c]+$|^\d$|p}, [ "abc"; "1" ], [ "a1"; "" ]);
+    ({p|^(a|b){2}$|p}, [ "ab" ], [ "a"; "abc" ]);
+    ({p|^.{1,3}$$|p}, [ "a" ], [ "abcd"; "" ]);
+    ({p|^.$^|p}, [], [ "a"; "" ]);
+    ({p|^(.*)$|p}, [ ""; "a" ], []);
+    ({p|^es$|ms|p}, [ "es"; "xms" ], [ "esx"; "x" ]);
+    ({p|^x-$|p}, [ "x-" ], [ "x-a" ]);
+    ({p|^x-\b|p}, [ "x-a" ], [ "x-"; "x--" ]);
+  ]
+  [@ocamlformat "disable"]
+
+(* A shape that cannot express an anchor or an assertion leaves the pattern to the engine. A separated list has no
+   place for a "$" at the end of its repeated group or after its first item, so "^x(,a$)*$" is not "^x(,a)*$" and
+   does not take "x,a,a", which has a "$" before its second ",a". *)
+let test_an_anchor_or_an_assertion_inside_a_shape_is_not_dropped () =
+  Check.section "an anchor or an assertion inside a shape is not dropped";
+  if needs_engine "TestAnAnchorOrAnAssertionInsideAShapeIsNotDropped" then begin
+    List.iter
+      (fun (source, matches, fails) ->
+        match Pattern.compile source with
+        | None -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
+        | Some p ->
+            List.iter (fun text -> check_every_way p text true) matches;
+            List.iter (fun text -> check_every_way p text false) fails)
+      anchor_cases;
+    Printf.printf "%d patterns\n" (List.length anchor_cases);
+    Check.check "the cases are the ones this test is about" (List.length anchor_cases > 100)
+  end
+
 (* The cases of ecmaregex/v8_cases.json, which gen_cases.js of the Go module writes: the set "fast" is patterns of the
    shapes the faster matchers take that are valid only without the u flag, with V8's answers. ECMA-262 matches such a
    pattern by UTF-16 code unit, so a character beyond the Basic Multilingual Plane is two characters to it. The faster
@@ -967,4 +1094,5 @@ let () =
   test_is_ascii_and_source ();
   test_matching_allocates_nothing ();
   test_patterns_valid_only_without_the_u_flag_match_code_units ();
+  test_an_anchor_or_an_assertion_inside_a_shape_is_not_dropped ();
   Check.finish "pattern"

@@ -1276,6 +1276,13 @@ let test_property_names_and_values () =
   let t = check_syntax "properties" in
   if t.patterns < 30 || t.departures < 24 then fail "the cases are not the ones this test is about"
 
+(* Checks a name on two groups. It is valid only when the groups are in separate alternatives of one disjunction, so
+   that no match goes through both. V8 13.6 takes some patterns where both can take part, such as
+   (?<m>a)(?:x|(?<m>b)). Those cases have ECMA-262's answer. *)
+let test_a_group_name_used_twice () =
+  let t = check_syntax "names" in
+  if t.invalid < 15 || t.departures < 4 then fail "the cases are not the ones this test is about"
+
 let () =
   let ran = ref 0 in
   List.iter
@@ -1312,6 +1319,7 @@ let () =
       ("escaped k in a class", test_escaped_k_in_a_class);
       ("counts are compared as written", test_counts_are_compared_as_written);
       ("property names and values", test_property_names_and_values);
+      ("a group name used twice", test_a_group_name_used_twice);
     ];
   Printf.printf
     "V8 oracle: %d verdicts on validity compared, %d agreed. %d answers on a match compared (each text on both back \

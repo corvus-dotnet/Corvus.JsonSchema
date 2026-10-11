@@ -110,8 +110,10 @@ it to the documents.
 When the C# collecting mode changes (paths, messages, row order, which subschema results are kept), update the
 collecting paths of `eval.ml` and `results.ml`, and `test/results`, which reproduces the C# expectations. A change
 to a plan in the Go module (`plan.go`, `fused.go`) usually ports line for line to `plan.ml` and `fused.ml`. A change
-to the Go module's `internal/ecmaregex` ports to `ecmaregex/`, and `test/ecmaregex/v8_oracle.json` is a copy of the
-Go module's oracle.
+to the Go module's `internal/ecmaregex` ports to `ecmaregex/`, and `test/ecmaregex/v8_oracle.json` and
+`v8_cases.json` are copies of the Go module's files of V8's answers. Copy them again when the Go module's change. The
+engine is held to the ECMA-262 regular expression test data as well: every pattern and text of its 13 files, with
+ECMA-262's answer where V8 departs from it.
 
 ## Releasing the package
 
