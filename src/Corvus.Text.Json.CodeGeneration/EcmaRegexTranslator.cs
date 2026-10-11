@@ -325,7 +325,7 @@ internal static class EcmaRegexTranslator
             this.groupNodes = new EcmaRegexNode?[n];
             this.referenced = new bool[n];
             this.dead = new bool[n];
-            this.root = this.Simplify(root);
+            this.root = this.Simplify(root, new bool[n], new int[n]);
         }
 
         /// <summary>Where a node stands, for what is written around it.</summary>
@@ -431,6 +431,20 @@ internal static class EcmaRegexTranslator
 
         private static bool IsSurrogate(int c) => c >= 0xD800 && c <= 0xDFFF;
 
+        /// <summary>Adds the numbers of the capturing groups of a node.</summary>
+        private static void CollectGroups(EcmaRegexNode n, List<int> groups)
+        {
+            if (n.Kind == EcmaRegexNodeKind.Group && n.Group != 0)
+            {
+                groups.Add(n.Group);
+            }
+
+            foreach (EcmaRegexNode sub in n.Subs)
+            {
+                CollectGroups(sub, groups);
+            }
+        }
+
         /// <summary>Whether a set holds every surrogate and every character beyond the Basic Multilingual Plane.</summary>
         private static bool HoldsEveryPair(int[] set) => HoldsRange(set, 0xD800, 0xDFFF) && HoldsRange(set, 0x10000, EcmaRegexUnicode.Max);
 
@@ -471,18 +485,91 @@ internal static class EcmaRegexTranslator
         /// Takes out of the tree what never runs or runs to no effect, so that what is written holds no repetition
         /// .NET would have to run over a body that cannot move.
         /// <list type="bullet">
+        /// <item>A backreference inside the group it reads is nothing. The group is not set until it closes, and a
+        /// repetition around it unsets it when each iteration starts, so inside the group it is never set.</item>
+        /// <item>So is a backreference to a group in another alternative of the alternation it stands in. One
+        /// alternative runs at a time, and a repetition around the alternation unsets the group when each iteration
+        /// starts.</item>
         /// <item>A repetition of at most zero times is nothing, and its groups never take part.</item>
         /// <item>A negative lookaround of a body that matches the empty string wherever it stands never holds.</item>
         /// <item>A repetition of a body that can only match the empty string is that body once when it must run, and
         /// nothing when it need not: ECMA-262 refuses an iteration that matched nothing once the iterations that
         /// must run are done, and the ones that must run all stand at the same place.</item>
         /// </list>
+        /// V8 makes the first rewrite and the last. Without them a pattern such as <c>((|\2|\1\2){3,}|a){4}</c>, whose
+        /// inner body is then seen to match only the empty string, is run through every combination of the ways
+        /// through every iteration.
         /// </summary>
-        private EcmaRegexNode Simplify(EcmaRegexNode n)
+        /// <param name="n">The node.</param>
+        /// <param name="open">For each group, whether the node is inside it.</param>
+        /// <param name="apart">For each group, in how many alternations the node and the group are in different alternatives.</param>
+        private EcmaRegexNode Simplify(EcmaRegexNode n, bool[] open, int[] apart)
         {
+            if (n.Kind == EcmaRegexNodeKind.Backref && n.Groups.Length > 0)
+            {
+                // A name can belong to several groups. The reference reads those of them that can be set here.
+                int[] set = Array.FindAll(n.Groups, g => !open[g] && apart[g] == 0);
+                if (set.Length == 0)
+                {
+                    return new EcmaRegexNode(EcmaRegexNodeKind.Empty);
+                }
+
+                n.Groups = set;
+                return n;
+            }
+
+            if (n.Kind == EcmaRegexNodeKind.Alt && this.hasBackreferences)
+            {
+                List<int>[] groups = new List<int>[n.Subs.Length];
+                for (int k = 0; k < n.Subs.Length; k++)
+                {
+                    groups[k] = [];
+                    CollectGroups(n.Subs[k], groups[k]);
+                }
+
+                for (int k = 0; k < n.Subs.Length; k++)
+                {
+                    for (int other = 0; other < n.Subs.Length; other++)
+                    {
+                        if (other != k)
+                        {
+                            foreach (int g in groups[other])
+                            {
+                                apart[g]++;
+                            }
+                        }
+                    }
+
+                    n.Subs[k] = this.Simplify(n.Subs[k], open, apart);
+                    for (int other = 0; other < n.Subs.Length; other++)
+                    {
+                        if (other != k)
+                        {
+                            foreach (int g in groups[other])
+                            {
+                                apart[g]--;
+                            }
+                        }
+                    }
+                }
+
+                return n;
+            }
+
+            bool opens = n.Kind == EcmaRegexNodeKind.Group && n.Group != 0;
+            if (opens)
+            {
+                open[n.Group] = true;
+            }
+
             for (int k = 0; k < n.Subs.Length; k++)
             {
-                n.Subs[k] = this.Simplify(n.Subs[k]);
+                n.Subs[k] = this.Simplify(n.Subs[k], open, apart);
+            }
+
+            if (opens)
+            {
+                open[n.Group] = false;
             }
 
             if (n.Kind == EcmaRegexNodeKind.Look && n.Negative && EmptyAnywhere(n.Subs[0]))

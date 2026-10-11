@@ -274,9 +274,17 @@ iteration.
 | `^\1(a)` | `^(?(1)\1)(?<1>a)` | A reference before its group matches the empty string. |
 | `^(?:(a)\|b)*\1` | `^(?:(?(1)(?<-1>))(?:(?<1>a)\|b))*(?(1)\1)` | Each iteration starts by unsetting group 1. |
 | `^(a){0}\1` | `^` | The group never takes part, so the reference is the empty string. |
+| `^(a\1)+$` | `^(?:a)+\z` | A reference inside the group it reads is the empty string. The group is not set until it closes, and the repetition unsets it when each iteration starts. |
+| `^(?:(a)\|\1b)+$` | `^(?:(?:a)\|b)+\z` | So is a reference to a group in another alternative of the alternation the group is in. One alternative runs at a time. |
 
 `(?(1)(?<-1>))` is a balancing group: it takes the capture of group 1 away when there is one, and .NET gives it
 back if the match backtracks out of the iteration.
+
+The last two rows are more than tidiness. With such a reference taken out, a body such as `(|\2|\1\2)` is seen
+to match only the empty string, and its repetition is written as the body once (see
+[Repetitions](#repetitions)). Run as written, `((|\2|\1\2){3,}|[ax]){4}x$` tries every combination of the three
+ways through each iteration, 27 to the power of 4 of them at every place in the text. V8 takes a reference inside
+its own group for the empty string too, and answers such a pattern in a few hundred steps.
 
 ### A Backreference That Ignores Case
 

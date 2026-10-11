@@ -12,8 +12,10 @@ namespace Corvus.Text.Json.Tests.EcmaPatterns;
 /// <see cref="EngineFaults"/> and <see cref="CaseInsensitiveBackreferences"/> are not in that data. The first were
 /// found by comparing random patterns with the same V8, and the second were written for the pairs of characters
 /// on which .NET and ECMA-262 differ, with the <c>i</c> of each given to V8 as a flag. So were the first patterns
-/// of <see cref="CaseInsensitiveBackreferencesToTheirOwnGroup"/>. Every pattern here was answered wrongly, refused,
-/// or not answered at all before the change its table is named for.
+/// of <see cref="CaseInsensitiveBackreferencesToTheirOwnGroup"/>, and all but the last two of
+/// <see cref="BackreferencesToGroupsThatAreNotSet"/> were written for that table. Every pattern here was answered
+/// wrongly, refused, or not answered at all before the change its table is named for, or pins what that change
+/// must not alter.
 /// </summary>
 internal static class EcmaPatternCases
 {
@@ -299,6 +301,37 @@ internal static class EcmaPatternCases
         ("(?i:\\-{0}(\\1\\1?\\b)$)", ["s", "S", "k", "K", "i", "I", "a", "A", "0", "a\u01C5\u01C4I", "\u212As\u212AS", "\u00E5kK", "\u01C5\u03BCI", "\u03C2\uD801\uDC00S\u03C3\uD801\uDC28S"], ["", "\u017F", "\u212A", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5", "\u01C4", "\u01C6", "\u1F80", "\u1F88", "\u03C3", "\u03C2"]),
         ("(?i:\\-{0}(\\1?\\1){2}\\1?)", ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"], []),
         ("(?i:\\-{0}^(?:\u1F88(?<n0>\\1\\1(\\2+)*?)*)$)", ["\u1F88"], ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a backreference to a group that cannot be set where the reference stands: inside the group
+    /// itself, or in another alternative of the alternation the group is in. Such a reference is the empty string.
+    /// With it written as a reference, a body that can only match the empty string was not seen for one, and the
+    /// first two patterns and the two before the last were searched through every combination of the ways through
+    /// every iteration. V8 answers them in a few hundred steps. The last two are from the empty-loops and
+    /// backreferences families of the test data.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] BackreferencesToGroupsThatAreNotSet =
+    [
+        ("^((|\\2|\\1\\2){3,}|[ax]){6}x$", ["x", "ax", "xx", "aax", "xax", "axax"], ["", "aa", "a-a", "xxxxa", "b"]),
+        ("((?:)(|\\2|\\1\\2){3,}|[ax]){4}x$", ["x", "ax", "xx", "aax", "xax", "axax"], ["", "aa", "a-a", "xxxxa", "b"]),
+        ("^(a\\1)+$", ["a", "aa", "aaa", "aaaa", "aaaaa", "aaaaaa"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "ab", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "abab", "xaxa", "axax", "xxxxa", "axaxax", "bb", "abb", "b", "c", "bc", "abc"]),
+        ("^(\\1a|\\1\\1b)+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax", "c", "bc", "abc"]),
+        ("^(?<n>\\k<n>a|b\\k<n>{2})+\\k<n>$", ["aa", "aaa", "aaaa", "aaaaa", "aaaaaa", "bb", "abb"], ["", "a", "x", "-", "ax", "xa", "xx", "a-", "-a", "ab", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "abab", "xaxa", "axax", "xxxxa", "axaxax", "b", "c", "bc", "abc"]),
+        ("^(a(?<=\\1a))+$", ["a", "aa", "aaa", "aaaa", "aaaaa", "aaaaaa"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "ab", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "abab", "xaxa", "axax", "xxxxa", "axaxax", "bb", "abb", "b", "c", "bc", "abc"]),
+        ("^(?:(a\\1*){2,}|b)+$", ["aa", "aaa", "aaaa", "aaaaa", "aaaaaa", "bb", "b"], ["", "a", "x", "-", "ax", "xa", "xx", "a-", "-a", "ab", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "abab", "xaxa", "axax", "xxxxa", "axaxax", "abb", "c", "bc", "abc"]),
+        ("^((a)|\\1\\2|b)+$", ["", "a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b"], ["x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax", "c", "bc", "abc"]),
+        ("^(?:(a)|\\1b)+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax", "c", "bc", "abc"]),
+        ("^(?:(a)|b\\1){2,}\\1$", ["ab", "aaa", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb"], ["", "a", "x", "-", "aa", "ax", "xa", "xx", "a-", "-a", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "xaxa", "axax", "xxxxa", "axaxax", "b", "c", "bc", "abc"]),
+        ("^(?:(?<n>a)|(?<n>b)\\k<n>|c\\k<n>*)+$", ["a", "aa", "aaa", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "c"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "ab", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "abab", "xaxa", "axax", "xxxxa", "axaxax", "b", "bc", "abc"]),
+        ("^(?:(a)|(b)|\\1\\2c)+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b", "c", "bc", "abc"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax"]),
+        ("^(?:(?:(a)|\\1|\\1\\1){3}){4}b$", ["b", "aaab", "aaaab", "ab"], ["", "x", "ax", "xx", "aa", "aax", "xax", "a-a", "axax", "xxxxa"]),
+        ("^(?:(a)|(?=\\1b)b|(?<=\\1b)c)+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b", "bc", "abc"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax", "c"]),
+        ("^(?:(a)|(?:(b)|\\1\\2c)\\1)+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b", "c", "bc", "abc"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax"]),
+        ("^(?:(a)|b)+\\1$", ["aa", "ab", "aaa", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b"], ["", "a", "x", "-", "ax", "xa", "xx", "a-", "-a", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "xaxa", "axax", "xxxxa", "axaxax", "c", "bc", "abc"]),
+        ("^(?:(a)|b(?:\\1|c))+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b", "bc", "abc"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax", "c"]),
+        ("(?:-??-*?){1,}((?:(\\2){4}(?=x)|(|\\1){2,}){4,}(\\3x|-*?){0,}|($-*?|\\2\\b){2,3}?(?<=a)){1,2}a$", ["a", "aa", "xa", "-a", "aaa", "axa", "a-a", "xaa", "xxa", "x-a", "-aa", "-xa", "--a"], ["", "x", "-", "ax", "a-", "xx", "x-", "-x", "--", "aax", "aa-", "axx", "ax-", "a-x", "a--", "xax", "xa-", "xxx", "xx-", "x-x", "x--", "-ax", "-a-", "-xx", "-x-", "--x", "---"]),
+        ("^(?:(?<n0>(a|-){0,0})|(?<n0>(\\k<n0>*\\4?|\\2{2}){3,3})){3,5}\\k<n0>a", ["a", "aa", "ax", "a-", "aaa", "aax", "aa-", "axa", "axx", "ax-", "a-a", "a-x", "a--"], ["", "x", "-", "xa", "xx", "x-", "-a", "-x", "--", "xaa", "xax", "xa-", "xxa", "xxx", "xx-", "x-a", "x-x", "x--", "-aa", "-ax", "-a-", "-xa", "-xx", "-x-", "--a", "--x", "---"]),
     ];
 
     /// <summary>

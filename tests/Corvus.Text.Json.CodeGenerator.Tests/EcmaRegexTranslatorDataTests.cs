@@ -146,10 +146,36 @@ public class EcmaRegexTranslatorDataTests
         Assert.IsTrue(EcmaRegexTranslator.TryTranslate(@"(?i:^(\1a)+$)", out string translated, out _));
         Assert.IsTrue(translated.Length < 100, $"{translated.Length} characters: {translated}");
 
-        // Two groups that read each other, and a third that reads both and itself.
+        // Two groups that read each other, and a third that reads both and itself. The reference of the third to
+        // itself is nothing, since a group is not set inside itself.
         Assert.IsTrue(EcmaRegexTranslator.TryTranslate(@"(?i:^(?:(\2a)(\1b))+(\1\2\3)$)", out translated, out _));
-        StringAssert.StartsWith(translated, @"(?:^(?:(?(1)(?<-1>))(?(2)(?<-2>))(?:(?<1>(?(2)(?i:\2))[Aa])(?<2>(?(1)(?i:\1))[Bb])))+(?<3>(?(1)(?i:\1))(?(2)(?i:\2))");
-        Assert.IsTrue(translated.Length < 200, $"{translated.Length} characters: {translated}");
+        Assert.AreEqual(@"(?:^(?:(?(1)(?<-1>))(?(2)(?<-2>))(?:(?<1>(?(2)(?i:\2))[Aa])(?<2>(?(1)(?i:\1))[Bb])))+(?:(?(1)(?i:\1))(?(2)(?i:\2)))\z)", translated);
+    }
+
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
+    public void PatternsWithABackreferenceToAGroupThatIsNotSetAnswerAsV8(RegexOptions engine)
+    {
+        AssertCases(EcmaPatternCases.BackreferencesToGroupsThatAreNotSet, engine);
+    }
+
+    /// <summary>
+    /// A backreference inside the group it reads is the empty string, and so is one to a group in another
+    /// alternative of the alternation the group is in: the group is never set there. A reference that can read a
+    /// set group is kept, and a name that two groups share reads the one that can be set.
+    /// </summary>
+    [TestMethod]
+    [DataRow(@"^(a\1)+$", @"^(?:a)+\z")]
+    [DataRow(@"^(?:(a)|\1b)+$", @"^(?:(?:a)|b)+\z")]
+    [DataRow(@"((?:)(|\2|\1\2){3,}|[ax]){4}x$", @"(?:(?:[ax])?){0,4}x\z")]
+    [DataRow(@"^(?:(a)|b)+\1$", @"^(?:(?(1)(?<-1>))(?:(?<1>a)|b))+(?(1)\1)\z")]
+    [DataRow(@"^(a\1*)\1$", @"^(?<1>a)(?(1)\1)\z")]
+    [DataRow(@"^(?:(?<n>a\k<n>)|(?<n>b)\k<n>)+\k<n>$", @"^(?:(?(1)(?<-1>))(?(2)(?<-2>))(?:(?<1>a)|(?<2>b)(?(2)\2)))+(?(1)\1)(?(2)\2)\z")]
+    public void ABackreferenceToAGroupThatIsNotSetIsNothing(string pattern, string expected)
+    {
+        Assert.IsTrue(EcmaRegexTranslator.TryTranslate(pattern, out string translated, out string error), error);
+        Assert.AreEqual(expected, translated);
     }
 
     /// <summary>

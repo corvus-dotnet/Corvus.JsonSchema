@@ -107,6 +107,15 @@ public class EcmaPatternSemanticsTests
         }
     }
 
+    [TestMethod]
+    [DataRow(Engine.CompiledRegex)]
+    [DataRow(Engine.InterpretedRegex)]
+    [DataRow(Engine.GeneratedCode)]
+    public void PatternsWithABackreferenceToAGroupThatIsNotSetAnswerAsV8(Engine engine)
+    {
+        AssertCases(EcmaPatternCases.BackreferencesToGroupsThatAreNotSet, engine);
+    }
+
     /// <summary>
     /// Patterns whose translation keeps a lazy repetition of a group in a lookbehind, after a repetition whose
     /// iterations hold a lookbehind and can match nothing. .NET's compiled engine does not return from a match of
