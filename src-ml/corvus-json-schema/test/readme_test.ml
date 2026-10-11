@@ -125,6 +125,32 @@ module Options_record () = struct
     Printf.printf "%b\n" (Validator.is_valid_string metaschema {|{"type": "objekt"}|})
 end
 
+module Pattern_limits () = struct
+  let () =
+    (* One match of a pattern may take a twentieth of a second. The default is one second, and 0. turns the limit off. *)
+    let options = options ~pattern_match_limit:0.05 () in
+    let validator = Result.get_ok (Validator.compile_string ~options {|{"pattern": "^(?:(a+)\\1*)+$"}|}) in
+    let text = {|"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"|} in
+
+    (* A match that reaches the limit is an error and never an answer: no answer within 0.05 s *)
+    (match Validator.validate_string validator text with
+    | Ok valid -> Printf.printf "%b\n" valid
+    | Error (Pattern_match_limit { limit; _ }) -> Printf.printf "no answer within %g s\n" limit
+    | Error e -> print_endline (error_to_string e));
+
+    (* A function that returns a bool alone raises: abandoned *)
+    (match Validator.is_valid_string validator text with
+    | valid -> Printf.printf "%b\n" valid
+    | exception Pattern_match_limit_reached _ -> print_endline "abandoned");
+
+    (* A pattern over a limit of size is refused when the schema is compiled: nesting, 1000 *)
+    let deep = String.concat "" (List.init 1000 (fun _ -> "(?:")) ^ "a" ^ String.make 1000 ')' in
+    match Validator.compile_string (Printf.sprintf {|{"pattern": "%s"}|} deep) with
+    | Ok _ -> print_endline "compiled"
+    | Error (Pattern_too_large { limit; value; _ }) -> Printf.printf "%s, %d\n" limit value
+    | Error e -> print_endline (error_to_string e)
+end
+
 module Results_rows () = struct
   let () =
     let validator =
@@ -325,6 +351,11 @@ let () =
       let module M = Options_record () in
       ())
     [ "draft4: false"; "true"; "false" ];
+  expect "pattern limits"
+    (fun () ->
+      let module M = Pattern_limits () in
+      ())
+    [ "no answer within 0.05 s"; "abandoned"; "nesting, 1000" ];
   expect "results"
     (fun () ->
       let module M = Results_rows () in

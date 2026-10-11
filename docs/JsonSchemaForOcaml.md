@@ -94,7 +94,9 @@ let () =
 
 The `is_valid` functions report text that is not JSON as not valid. The `validate` functions return the reason
 instead: `Error (Parse_error e)` with the message and the byte offset, or `Error Depth_exceeded` when the schema
-recursed in place beyond the maximum depth.
+recursed in place beyond the maximum depth. A match of a pattern that reached its limit is neither valid nor not
+valid: the `validate` functions return `Error (Pattern_match_limit _)` and the `is_valid` functions raise (see
+[Limits on patterns](#limits-on-patterns)).
 
 ```ocaml
 let () =
@@ -132,6 +134,8 @@ The compile functions take `?options`, a record that the function `options` buil
 | `base_uri` | The base URI of the root document. |
 | `entry_point` | A subschema to validate against, such as `#/$defs/item`. |
 | `max_depth` | The deepest the evaluator recurses in place (default 128). |
+| `pattern_match_limit` | The seconds one match of a `pattern` or `patternProperties` regular expression may take (default 1.0). `0.` or less turns the limit off. See [Limits on patterns](#limits-on-patterns). |
+| `pattern_match_clock` | The clock that limit is counted on, a function that returns the time in seconds. Without it the clock is `Sys.time`, the processor time of the process. |
 
 A custom format and a document resolver are plain functions.
 
@@ -278,12 +282,78 @@ as not valid, whatever the schema. So a pattern is never matched against such a 
 A pattern with no lookaround, backreference, multiline anchor or word boundary gets an automaton that decides an
 ASCII text with one table read per byte, when the automaton is small enough. Every other pattern, and a text that
 is not ASCII, runs on a backtracking matcher. The Go module hands most patterns to Go's linear-time `regexp`
-package, which OCaml's standard library has no counterpart of. The backtracking matcher has no step budget, so a
-pattern with nested quantifiers can take exponential time on a text it does not match, in cases where the Go
-module's would not. A repetition whose body cannot consume a character, such as `(?:\b|(?=a)|){4,5}`, is not such a case. Every
-iteration of it is empty, so the matcher runs the body once when the minimum is one or more and not at all when it
-is zero, which is what ECMA-262 says such a repetition matches. And a counted repetition is not tried at all at a
-place where the rest of the pattern needs more of the string than is left.
+package, which OCaml's standard library has no counterpart of. On the backtracking matcher a pattern with nested
+quantifiers can take exponential time on a text it does not match, in cases where the Go module's would not, so a
+match is limited (see below). A repetition whose body cannot consume a character, such as `(?:\b|(?=a)|){4,5}`, is
+not such a case. Every iteration of it is empty, so the matcher runs the body once when the minimum is one or more
+and not at all when it is zero, which is what ECMA-262 says such a repetition matches. And a counted repetition is
+not tried at all at a place where the rest of the pattern, with the iterations the repetition has still to make,
+needs more of the string than is left.
+
+## Limits on patterns
+
+A schema may come from outside, and so may an instance. Neither is to make a validation run without end or hold
+memory out of proportion to what it was given. So one match has a limit, and one pattern has limits of size. A
+limit that is reached is an error of its own, never the answer "valid" or "not valid", and never the error of a
+pattern that is not valid.
+
+| Limit | Value | When it is reached |
+|---|---|---|
+| Time of one match of a pattern against one string | 1 second by default (the option `pattern_match_limit`, in seconds). `0.` or less turns it off. | `Error (Pattern_match_limit {pattern; limit; memory = false})` from the `validate` and `evaluate` functions. The `is_valid` functions, which return a `bool` alone, raise `Pattern_match_limit_reached` with the same fields. |
+| Backtracking memory of one match | 1,048,576 entries, which is 32 MB | The same, with `memory = true`. |
+| Length of a pattern | 1,048,576 bytes | `Error (Pattern_too_large {pattern; keyword; limit = "length"; value})` from the compile functions. |
+| Nesting of the groups of a pattern | 1,000 deep | The same, with `limit = "nesting"`. |
+| Size of a pattern | 1,048,576 as it is read: 64 for each term, 32 for each further alternative, 8 for each range of a class, and what case folding and groups of one name add | The same, with `limit = "size"`. |
+
+```ocaml
+let () =
+  (* One match of a pattern may take a twentieth of a second. The default is one second, and 0. turns the limit off. *)
+  let options = options ~pattern_match_limit:0.05 () in
+  let validator = Result.get_ok (Validator.compile_string ~options {|{"pattern": "^(?:(a+)\\1*)+$"}|}) in
+  let text = {|"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"|} in
+
+  (* A match that reaches the limit is an error and never an answer: no answer within 0.05 s *)
+  (match Validator.validate_string validator text with
+  | Ok valid -> Printf.printf "%b\n" valid
+  | Error (Pattern_match_limit { limit; _ }) -> Printf.printf "no answer within %g s\n" limit
+  | Error e -> print_endline (error_to_string e));
+
+  (* A function that returns a bool alone raises: abandoned *)
+  (match Validator.is_valid_string validator text with
+  | valid -> Printf.printf "%b\n" valid
+  | exception Pattern_match_limit_reached _ -> print_endline "abandoned");
+
+  (* A pattern over a limit of size is refused when the schema is compiled: nesting, 1000 *)
+  let deep = String.concat "" (List.init 1000 (fun _ -> "(?:")) ^ "a" ^ String.make 1000 ')' in
+  match Validator.compile_string (Printf.sprintf {|{"pattern": "%s"}|} deep) with
+  | Ok _ -> print_endline "compiled"
+  | Error (Pattern_too_large { limit; value; _ }) -> Printf.printf "%s, %d\n" limit value
+  | Error e -> print_endline (error_to_string e)
+```
+
+The backtracking matcher counts its steps and reads the clock every 4,096 of them, which is every 23 to 74
+microseconds as measured, so a match is abandoned at the first reading after its limit and a match that ends before
+its first reading never reads the clock. The limit is on each match and not on the validation. It applies to
+`pattern` and to `patternProperties`, failing fast and collecting, and to the matches the compiler makes of a
+pattern against the property names the schema declares, for which the compile functions return the error. The
+evaluation is abandoned at the match and its working memory is given back.
+
+The clock is `Sys.time`, the processor time of the process, which is the one clock the OCaml standard library has.
+It does not move while the process waits. And it is the time of the whole process, so in a program that computes on
+several domains at once it runs that many times faster, and a match there is abandoned sooner than its limit. A
+program for which either matters gives its own clock, such as `options ~pattern_match_clock:Unix.gettimeofday ()`.
+
+The automaton and the matchers for the common shapes of pattern take time proportional to the string and have no
+limit. With the limit turned off a match has no limit on its time or its memory.
+
+A pattern over a limit of size is not read past the limit, so the error says it is too large to read and nothing
+of whether it is valid. The Go module counts the same size for every pattern. The `regex` format reads a string of
+the instance with the same limits, and a string over one is not a valid regular expression to it.
+
+Some patterns that V8 answers at once reach the limit here on a long enough string: a backreference inside nested
+repetitions (`^(?:(a+)\1*)+$`), nested repetitions on a string that is not ASCII or behind a lookaround, a
+lookaround that scans the rest of the string from every position (`(?=.*c)b` on 100,000 characters), and nested
+counted ranges (`^(?:a{0,1000}){0,1000}$`).
 
 ## Performance
 

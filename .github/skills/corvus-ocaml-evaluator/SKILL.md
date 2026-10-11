@@ -89,6 +89,39 @@ stored or returned is a block, so floats stay in a `Float.Array.t`, two results 
 the loops are top-level functions that take what a closure would capture. The README's "What allocates" and the
 note at the top of `corvus_json_schema.mli` list the exceptions. Keep both true.
 
+## Limits on patterns
+
+A schema and an instance may both come from outside, so no pattern and no text may make a validation run without
+end or hold memory without bound. These are standing rules.
+
+- **One match is limited.** One second by default (`pattern_match_limit`, seconds, `0.` turns it off) and
+  1,048,576 backtracking entries. The limit lives in the working memory of the engine (`Vm.state`, set by
+  `Pattern_engine.set_limit` when an evaluation starts), so no matcher takes an argument for it. `step` of
+  `ecmaregex/vm.ml` counts one step for each instruction and one for each eight characters of a single character
+  loop, a literal or a backreference, and `check` runs every 4,096 steps. Anything new in the matcher that can run
+  long without passing through `step` must charge its steps.
+- **A limit that is reached is never an answer.** The engine raises `Match_time` or `Match_memory`, which carry
+  nothing, `Pattern.engine_match` turns them into `Pattern.Match_limit`, and `corvus_json_schema.ml` turns that into
+  `Error (Pattern_match_limit _)` for the functions that return a result and into the exception
+  `Pattern_match_limit_reached` for the `is_valid` functions. Do not catch it anywhere between, and do not add a
+  handler that turns an exception into `false`.
+- **The clock is `Sys.time`** unless the program gives one (`pattern_match_clock`). That follows from the rule of no
+  dependencies: the standard library has no other clock. `Sys.time` returns an unboxed float. Keep the limit and
+  the deadline in the float array of the state, or the read allocates.
+- **A matcher with no limit must take time proportional to the text.** The automaton does. The regex-free matchers
+  of `pattern.ml` do, and `max_search_width` keeps the search for an alternative with no anchor narrow. The prefix
+  search of the engine looks for `Compile.max_prefix` bytes. A new matcher that can do more than a bounded amount of
+  work for each byte of the text needs the same bound, or runs on the engine.
+- **One pattern is limited in size** (`Parse.max_pattern_length`, `max_nesting`, `max_size`), and a pattern over a
+  limit is `Pattern_too_large`, not a `Compile_error`. `Parse.charge` counts the size as the pattern is read.
+  Anything the parser or a compiler does that costs more than a constant for each unit of that size must be
+  charged. The Go module counts the same size: `test/ecmaregex/size_cases.json` is a copy of its
+  `testdata/size_cases.json`, and the two must agree on every pattern. When the Go module changes what it charges,
+  change `parse.ml` to match and copy the file again. Do not edit the file here.
+- **Tests.** `test/ecmaregex/test_limits.ml` and `test/pattern_limits_test.ml`. A test of a time must not depend on
+  a quiet machine: use a pattern that never answers, a generous upper bound, and a clock the test moves where a
+  count of readings will do.
+
 ## The README samples
 
 Every OCaml block of `README.md` and of `docs/JsonSchemaForOcaml.md` is the body of a module of
