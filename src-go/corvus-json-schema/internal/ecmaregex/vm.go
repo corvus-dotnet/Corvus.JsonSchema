@@ -145,6 +145,9 @@ func (p *program) search(st *state, in []byte) bool {
 				return false
 			}
 			at += i
+			if len(in)-at < p.need {
+				return false
+			}
 			if p.run(st, in, at) {
 				return true
 			}
@@ -154,6 +157,9 @@ func (p *program) search(st *state, in []byte) bool {
 		}
 	}
 	for at := 0; ; {
+		if len(in)-at < p.need {
+			return false
+		}
 		if at == len(in) {
 			return p.first == nil && p.run(st, in, at)
 		}
@@ -547,11 +553,12 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			pc++
 			continue
 		case opLoop:
-			// Fewer bytes are left than any way from here to a match consumes.
-			if len(in)-pos < int(i.need) {
+			n := counts[2*i.a]
+			// Fewer bytes are left than any way from here to a match consumes: what follows the loop, and the
+			// iterations it has still to make.
+			if left := len(in) - pos; left < int(i.need) || n < int(i.min) && i.iter != 0 && int64(left)-int64(i.need) < int64(int(i.min)-n)*int64(i.iter) {
 				break
 			}
-			n := counts[2*i.a]
 			// Once the minimum is met, ECMA-262 rejects an iteration that consumed nothing. That is what stops a
 			// loop over a body that can be empty.
 			if n > int(i.min) && pos == counts[2*i.a+1] {

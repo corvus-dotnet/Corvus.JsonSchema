@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 )
@@ -245,35 +246,76 @@ func TestLoopsGiveUpWhenTheRestCannotFit(t *testing.T) {
 }
 
 // TestNeeds checks the least number of bytes a match consumes, which setNeeds works out for a program and for each
-// of its counted loops. The figure is a lower bound: the way out of a counted loop is counted without its minimum
-// number of iterations.
+// of its counted loops, and the least one iteration of each loop consumes. The figures are lower bounds. The need of
+// a loop counts what follows it and none of its iterations, which the matcher adds from the count it has reached.
+// The need of the program counts the least number of iterations of every loop it must go through.
 func TestNeeds(t *testing.T) {
 	for _, c := range []struct {
 		pattern string
-		// need is the need of the program, and loops the needs of its counted loops in order.
-		need  int
-		loops []int32
+		// need is the need of the program, loops the needs of its counted loops in order, and iters the least bytes
+		// of one iteration of each.
+		need         int
+		loops, iters []int32
 	}{
-		{`abc`, 3, nil}, {`a+b{2,}c?`, 3, nil}, {`(?:a|bc)d`, 2, nil}, {`(?=abc)a`, 1, nil}, {`(?<=abc)d`, 1, nil},
-		{`\u00e9{2}\u{10400}`, 3, nil}, {`(?:a|){3}xy$`, 2, []int32{2}}, {`(?:a|){3}`, 0, []int32{0}},
-		{`(?:(?:a|){2}b){2}c`, 1, []int32{1, 2}}, {`(?=(?:a|){2}xyz)(?:b|){2}c`, 1, []int32{3, 1}},
-		{`(?<=(?:ab|){2}c)(?:d|){2}ef`, 2, []int32{0, 2}}, {`(?!(?:a|){2}xx)(?:(x)|){2}\1y`, 1, []int32{2, 1}},
-		{`(?:a|){2}[]`, noMatch, []int32{noMatch}}, {`(?:(?:a|){2}|bcd)e`, 1, []int32{1}},
+		{`abc`, 3, nil, nil}, {`a+b{2,}c?`, 3, nil, nil}, {`(?:a|bc)d`, 2, nil, nil}, {`(?=abc)a`, 1, nil, nil},
+		{`(?<=abc)d`, 1, nil, nil}, {`\u00e9{2}\u{10400}`, 3, nil, nil},
+		{`(?:a|){3}xy$`, 2, []int32{2}, []int32{0}}, {`(?:a|){3}`, 0, []int32{0}, []int32{0}},
+		{`(?:(?:a|){2}b){2}c`, 3, []int32{1, 2}, []int32{1, 0}},
+		{`(?=(?:a|){2}xyz)(?:b|){2}c`, 1, []int32{3, 1}, []int32{0, 0}},
+		{`(?<=(?:ab|){2}c)(?:d|){2}ef`, 2, []int32{0, 2}, []int32{0, 0}},
+		{`(?!(?:a|){2}xx)(?:(x)|){2}\1y`, 1, []int32{2, 1}, []int32{0, 0}},
+		{`(?:a|){2}[]`, noMatch, []int32{noMatch}, []int32{0}}, {`(?:(?:a|){2}|bcd)e`, 1, []int32{1}, []int32{0}},
+		// The least count of a loop times the least of its body.
+		{`(?:a|b){5}c`, 6, []int32{1}, []int32{1}}, {`(?:ab|cde){3,}?x`, 7, []int32{1}, []int32{2}},
+		{`(?:a{1000}){1000}`, 1000000, []int32{0}, []int32{1000}}, {`(?:\u00e9|xyz){2}`, 4, []int32{0}, []int32{2}},
+		{`(?:a|b){2147483647}c`, noMatch, []int32{1}, []int32{1}}, {`(?:(?:a|bc){2}d){3}`, 9, []int32{0, 1}, []int32{3, 1}},
+		// The body of a lookbehind is matched backwards and counts nothing.
+		{`(?<=(?:ab|c){2}d)e`, 1, []int32{0}, []int32{0}},
+		{`(?:a|(?=(?:b|c){3}))x{2}`, 2, []int32{0}, []int32{1}},
 	} {
 		root, _, err := parse(c.pattern, true)
 		if err != nil {
 			t.Fatalf("parse(%q): %v", c.pattern, err)
 		}
 		p := compileProgram(root, true)
-		var loops []int32
+		var loops, iters []int32
 		for _, i := range p.insts {
 			if i.op == opLoop {
-				loops = append(loops, i.need)
+				loops, iters = append(loops, i.need), append(iters, i.iter)
 			}
 		}
-		if p.need != c.need || !slices.Equal(loops, c.loops) {
-			t.Errorf("%q: need %d, loops %v, want %d and %v", c.pattern, p.need, loops, c.need, c.loops)
+		if p.need != c.need || !slices.Equal(loops, c.loops) || !slices.Equal(iters, c.iters) {
+			t.Errorf("%q: need %d, loops %v, iterations %v, want %d, %v and %v", c.pattern, p.need, loops, iters, c.need, c.loops, c.iters)
 		}
+	}
+}
+
+// TestALoopGivesUpWhenItsIterationsCannotFit checks the matcher uses the least count of a counted loop: a pattern
+// that needs a million characters, or two thousand million, answers a text of a hundred thousand at once. Without
+// the count in the need, the matcher runs each loop as far as the text goes from every position of the text, which
+// took 15 seconds for the first of these and no time that was waited for the second. The limit of the match here
+// is a small part of that, so a match that does the work is abandoned and the test fails on its error.
+func TestALoopGivesUpWhenItsIterationsCannotFit(t *testing.T) {
+	text := []byte(strings.Repeat("a", 100000))
+	for _, pattern := range []string{`(?:a{1000}){1000}`, `(?:a|b){2147483647}c`, `(?=.)(?:(?:ab|a){500}){500}`, `x?(?:[ab]c?){100001}$`} {
+		re, err := compile(pattern, true)
+		if err != nil {
+			t.Fatalf("compile(%q): %v", pattern, err)
+		}
+		if matched, err := re.MatchLimit(text, 200*time.Millisecond); err != nil || matched {
+			t.Errorf("%q on 100,000 characters: %v, %v, want false and no error", pattern, matched, err)
+		}
+	}
+	// A text that is long enough still matches.
+	re, err := compile(`^(?:a{10}){100}$`, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if matched, err := re.MatchLimit(text[:1000], time.Minute); err != nil || !matched {
+		t.Errorf("a thousand characters: %v, %v, want true and no error", matched, err)
+	}
+	if matched, err := re.MatchLimit(text[:999], time.Minute); err != nil || matched {
+		t.Errorf("999 characters: %v, %v, want false and no error", matched, err)
 	}
 }
 

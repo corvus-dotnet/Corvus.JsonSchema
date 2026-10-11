@@ -73,8 +73,10 @@ type inst struct {
 	// min and max bound a repetition. A max of -1 is no bound.
 	min, max int32
 	// need is the least number of bytes of text that every way from this instruction to a match consumes going
-	// forward (see setNeeds). It is set for an opLoop.
+	// forward (see setNeeds). It is set for an opLoop, and counts none of the iterations the loop has still to make.
 	need int32
+	// iter is the least number of bytes one iteration of the body of an opLoop consumes going forward.
+	iter int32
 }
 
 // A program is a pattern compiled for the backtracking matcher.
@@ -432,21 +434,79 @@ func (c *compiler) emitRepeat(n *node, back bool) {
 	k := int32(c.loops)
 	c.loops++
 	c.add(inst{op: opLoopInit, a: k})
-	loop := c.add(inst{op: opLoop, a: k, min: min, max: max, flag: n.lazy})
+	iter := 0
+	if !back {
+		iter = minLength(body)
+	}
+	loop := c.add(inst{op: opLoop, a: k, min: min, max: max, flag: n.lazy, iter: int32(iter)})
 	c.add(inst{op: opLoopIter, a: k})
 	emitBody()
 	c.add(inst{op: opJmp, x: loop})
 	c.insts[loop].x = c.pc()
 }
 
-// noMatch is the need of an instruction from which no way leads to a match.
+// noMatch is the need of an instruction from which no way leads to a match. Every need is capped at it.
 const noMatch = 1 << 30
+
+// minLength returns the least number of bytes a match of n consumes, capped at noMatch. Like the needs, it counts a
+// character as its UTF-8 bytes when the matcher compares bytes for it and as one byte otherwise, so it can only be
+// too small.
+func minLength(n *node) int {
+	switch n.kind {
+	case nChar:
+		if literalRune(n.r) {
+			return utf8.RuneLen(n.r)
+		}
+		return 1
+	case nSet:
+		if n.set.empty() {
+			return noMatch
+		}
+		return 1
+	case nCat:
+		total := 0
+		for _, sub := range n.subs {
+			if total += minLength(sub); total >= noMatch {
+				return noMatch
+			}
+		}
+		return total
+	case nAlt:
+		least := noMatch
+		for _, sub := range n.subs {
+			if l := minLength(sub); l < least {
+				least = l
+			}
+		}
+		return least
+	case nGroup:
+		return minLength(n.subs[0])
+	case nRepeat:
+		return timesNeed(n.min, minLength(n.subs[0]))
+	}
+	return 0
+}
+
+// timesNeed returns count times need, capped at noMatch.
+func timesNeed(count, need int) int {
+	if count == 0 || need == 0 {
+		return 0
+	}
+	if need >= noMatch || count >= noMatch/need {
+		return noMatch
+	}
+	return count * need
+}
 
 // setNeeds works out, for every instruction, the least number of bytes of text that any way from it to a match
 // consumes going forward, and writes it into the counted loops. It returns the need of the whole program. The
 // matcher gives up at a counted loop when fewer bytes than that are left, as V8 does at every choice. A loop whose
 // iterations can be empty would otherwise try every combination of its ways at a position from which the rest of
 // the pattern cannot match at all.
+//
+// A counted loop that is entered needs its least count of iterations, each of them the least its body consumes
+// (inst.iter), and then what follows it. The loop instruction itself is also reached after each iteration, so its
+// own need counts only what follows, and the matcher adds the iterations it has still to make.
 //
 // A character is counted as one byte, a literal run as its bytes and a single character loop as its minimum, so the
 // figure can only be too small. The body of a lookaround ends at its own last instruction and the instruction that
@@ -487,6 +547,9 @@ func setNeeds(insts []inst) int {
 			case opLoop:
 				next(int32(pc+1), 0)
 				next(i.x, 0)
+			case opLoopInit:
+				loop := &insts[pc+1]
+				next(int32(pc+1), int32(timesNeed(int(loop.min), int(loop.iter))))
 			default:
 				next(int32(pc+1), 0)
 			}
