@@ -200,6 +200,11 @@ type options = {
           ({!no_pattern_match_limit}) or less turns the limit off, for a caller who trusts both the schema and the
           instances. Without the limit a match also has no limit on its memory.
 
+          Few patterns need the limit. The matcher takes no way that the next character of the string rules out, and it
+          remembers the places where every way has failed (in at most 8 MB of the working memory), so a repetition
+          inside a repetition takes time proportional to the pattern times the string. A pattern with a backreference
+          has no such memory, and neither has a repetition that counts to a bound.
+
           The limit is on each match, not on the validation. Only the backtracking matcher can take long, and it reads
           the clock every 4,096 steps, so a match is abandoned within tens of microseconds of the limit, or a few
           milliseconds for a pattern whose steps are long comparisons. The matchers that take time proportional to the

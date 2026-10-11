@@ -282,9 +282,13 @@ as not valid, whatever the schema. So a pattern is never matched against such a 
 A pattern with no lookaround, backreference, multiline anchor or word boundary gets an automaton that decides an
 ASCII text with one table read per byte, when the automaton is small enough. Every other pattern, and a text that
 is not ASCII, runs on a backtracking matcher. The Go module hands most patterns to Go's linear-time `regexp`
-package, which OCaml's standard library has no counterpart of. On the backtracking matcher a pattern with nested
-quantifiers can take exponential time on a text it does not match, in cases where the Go module's would not, so a
-match is limited (see below). A repetition whose body cannot consume a character, such as `(?:\b|(?=a)|){4,5}`, is
+package, which OCaml's standard library has no counterpart of. A backtracking matcher can take time that doubles
+with each character of a text it does not match, so a match is limited (see below), and the matcher does four
+things to keep a pattern from going the long way round. It looks at the next character before it takes a way, as
+V8 does, and takes no way that character rules out. It remembers the places where every way has failed, when the
+pattern has no backreference, so that a repetition inside a repetition (`(a*)*b`, `^(?:a+)+$`) and alternatives
+that are prefixes of each other (`^(?:a|aa)+$`) take time proportional to the pattern times the text. A repetition
+whose body cannot consume a character, such as `(?:\b|(?=a)|){4,5}`, is
 not such a case. Every iteration of it is empty, so the matcher runs the body once when the minimum is one or more
 and not at all when it is zero, which is what ECMA-262 says such a repetition matches. And a counted repetition is
 not tried at all at a place where the rest of the pattern, with the iterations the repetition has still to make,
@@ -350,10 +354,14 @@ A pattern over a limit of size is not read past the limit, so the error says it 
 of whether it is valid. The Go module counts the same size for every pattern. The `regex` format reads a string of
 the instance with the same limits, and a string over one is not a valid regular expression to it.
 
-Some patterns that V8 answers at once reach the limit here on a long enough string: a backreference inside nested
-repetitions (`^(?:(a+)\1*)+$`), nested repetitions on a string that is not ASCII or behind a lookaround, a
-lookaround that scans the rest of the string from every position (`(?=.*c)b` on 100,000 characters), and nested
-counted ranges (`^(?:a{0,1000}){0,1000}$`).
+The memory of the places where a way has failed is at most 8 MB, is taken into use only by a match that has made
+64 steps for each position of its string, and stays in the working memory of the evaluation, so a match with it
+allocates nothing once it has grown.
+
+Some patterns still reach the limit on a long enough string: a backreference inside nested repetitions
+(`^(?:(a+)\1*)+$`), for which V8 takes time that doubles with each character too, nested counted ranges
+(`^(?:a{0,1000}){0,1000}$`), and a search that reads the rest of the string from every position of it, such as a
+lookaround that scans (`(?=.*c)b` on 100,000 characters).
 
 ## Performance
 

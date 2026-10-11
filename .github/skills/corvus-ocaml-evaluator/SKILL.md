@@ -109,9 +109,19 @@ end or hold memory without bound. These are standing rules.
   dependencies: the standard library has no other clock. `Sys.time` returns an unboxed float. Keep the limit and
   the deadline in the float array of the state, or the read allocates.
 - **A matcher with no limit must take time proportional to the text.** The automaton does. The regex-free matchers
-  of `pattern.ml` do, and `max_search_width` keeps the search for an alternative with no anchor narrow. The prefix
+  of `pattern.ml` do, `max_search_width` keeps the search for an alternative with no anchor narrow, and a list with
+  a final sequence is a list only when that sequence stops at the next separator (`final_stops`). The prefix
   search of the engine looks for `Compile.max_prefix` bytes. A new matcher that can do more than a bounded amount of
   work for each byte of the text needs the same bound, or runs on the engine.
+- **The matcher looks at the next character and remembers where a way has failed.** `Compile.set_quick` works out
+  for every instruction what can come next (`q`), and `Vm.allows` is asked at a split, a loop, a lookaround and the
+  give back of a single character loop. Everything in `set_quick` must be a set that can only be too large. The
+  memory (`memo` of `Vm.state`, `e_mark` entries, `memo_index`) holds a bit for each memo point, position and state
+  of two loops. A memo point is only sound where what follows depends on the place and the position alone: never in
+  a pattern with a backreference, never inside a loop that counts to a bound. A new kind of state in the matcher
+  (a new counter, a new thing a group holds) must either be a bit of the index or take the memo points away. The
+  constants and the points are those of the Go module (`TestMemoPoints`, `TestTheMemoryIsBounded`), and the tests
+  run every case set with `Internal.memo_from_the_start` set: remembering a failure must change no answer.
 - **One pattern is limited in size** (`Parse.max_pattern_length`, `max_nesting`, `max_size`), and a pattern over a
   limit is `Pattern_too_large`, not a `Compile_error`. `Parse.charge` counts the size as the pattern is read.
   Anything the parser or a compiler does that costs more than a constant for each unit of that size must be

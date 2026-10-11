@@ -66,7 +66,7 @@ with the reason.
 
 | # | Technique | Status | Where in this port |
 |---|---|---|---|
-| 27 | **The regular expression engine.** A pattern in the subset that needs no backtracking matched in linear time. An automaton over ASCII text for such a pattern with no word boundary. A backtracking matcher with an explicit, reused stack for the rest. | partial | `ecmaregex/`. Done: `Dfa.build` makes an automaton of at most 256 states (`max_dfa_states`) when the pattern is compiled, and `Dfa.match_bytes` reads one table entry for each byte. `Vm.match_bytes` keeps its stack in a `Vm.state` the caller gives (`create_scratch`, `is_match_with`), so a match allocates only while the stack grows. The entry points that are given no state use one the pattern keeps, taken with `Atomic.compare_and_set`. Missing: a linear-time matcher for a pattern of that subset that has no automaton, and for a text that is not ASCII. Those run on the backtracking matcher, where one match is limited to a second by default and is abandoned with an error at the limit (the README's "Limits on patterns"). There is no RE2 and no translation to another engine. |
+| 27 | **The regular expression engine.** A pattern in the subset that needs no backtracking matched in linear time. An automaton over ASCII text for such a pattern with no word boundary. A backtracking matcher with an explicit, reused stack for the rest. | partial | `ecmaregex/`. Done: `Dfa.build` makes an automaton of at most 256 states (`max_dfa_states`) when the pattern is compiled, and `Dfa.match_bytes` reads one table entry for each byte. `Vm.match_bytes` keeps its stack in a `Vm.state` the caller gives (`create_scratch`, `is_match_with`), so a match allocates only while the stack grows. The entry points that are given no state use one the pattern keeps, taken with `Atomic.compare_and_set`. A pattern of that subset that has no automaton, and a text that is not ASCII, run on the backtracking matcher, which looks at the next character before it takes a way (`Compile.set_quick`) and remembers the places where every way has failed (`memo` of `Vm.state`), so such a pattern takes time proportional to its size times the text and not time that doubles with each character. Missing: the same inside a repetition that counts to a bound, and a search that does not read the rest of the text from every position. One match is limited to a second by default and is abandoned with an error at the limit (the README's "Limits on patterns"). There is no RE2 and no translation to another engine. |
 | 28 | **Patterns compiled once.** The Go module keeps every compiled pattern in a cache for the whole process. | partial | Done: `compile_pattern` in `src/compiler.ml` shares one matcher between the identical patterns of one compilation, through the `patterns` table of the compiler. Missing: nothing is shared between schemas. `Pattern.compile` compiles what it is given each time, and its interface says the package keeps no cache of patterns. See row 46. |
 | 29 | **Leaves decided in the loop.** Const, string enum and length tests for a property without leaving the loop. | partial | Done: a type-only child is decided by one test (`child.pass`). Missing: any other child is a call to `enter_child`, and a leaf then runs `run_leaf`, which loops over its operations. No const, string enum or length test is in `walk_names`, `walk_lookup`, `fused_entry` or the array loops. |
 | 30 | **`true` subschemas skipped.** | partial | Done: the fused plan treats a `true` child as cover with no test (`opt_child`, `apply_opt`, `app_child` in `try_fuse`). Missing: in `plan_object`, `additionalProperties: true` stays a child (`has_additional`), which rules out `object_plan.lookup`, `propertyNames: true` selects `visit_general`, and a `true` pattern property is still matched. |
@@ -89,7 +89,7 @@ with the reason.
 | 42 | **Collecting mode without allocation.** | todo | `src/results.ml` builds each row's locations and message as strings (`Buffer.contents` and concatenation). `reset` also lets go of the array of committed rows, so a collector that is used again grows it again. |
 | 43 | **Base64 validity without decoding, JSON content checked where it lies, and `multipleOf` beyond the digit limit without a big integer that allocates.** | partial | JSON content where it lies is done (row 34). The other two are not (rows 34 and 35). |
 | 44 | **The fused pass.** A set of small loops over contributors, applications and tests for each property. | todo | `run_fused_pass` has the shape of the Go function, so there is nothing to port. It would have to be measured line by line. Its state is read from the arena, where Go reads the stack. |
-| 45 | **A linear-time matcher for the patterns that have no automaton, and for texts that are not ASCII.** | todo | See row 27. This is the one place where a pattern can cost more here than in the Go module by more than a constant. |
+| 45 | **A linear-time matcher for the patterns that have no automaton, and for texts that are not ASCII.** | partial | See row 27. The memory of failed places bounds these to the size of the pattern times the text. What is left is a repetition that counts to a bound, and a search over a long text, where a pattern can cost more here than in the Go module by more than a constant. |
 | 46 | **A pattern cache for the process.** | n/a | A decision. `src/pattern.ml` and `src/compiler.ml` say the package keeps no process-wide cache of patterns, so a validator is a value with nothing shared behind it. The only process-wide values built at run time are the two case-folding tables of `ecmaregex/charset.ml`, published through an `Atomic`. |
 
 ## Not applicable
@@ -160,8 +160,9 @@ Partial, with what is missing.
 - Row 25. Only seven small functions are marked `[@inline]`. In most loops the type-only child and the expected name
   are tested in functions that are not marked, and an object's count and first child are read again after
   `enter_child`.
-- Row 27. No linear-time matcher for a pattern without an automaton or for a text that is not ASCII, and no step
-  budget in the backtracking matcher.
+- Row 27. A pattern without an automaton, and a text that is not ASCII, are bounded by the memory of failed places
+  and not by a linear-time matcher, which leaves a repetition that counts to a bound and a search over a long
+  text.
 - Row 28. Patterns are shared within one compilation only.
 - Row 29. Only a type-only child is decided without a call.
 - Row 30. `true` subschemas are kept in the object plan.
@@ -184,6 +185,6 @@ Todo, in the Go module's order.
 8. Base64 validity without decoding, and `multipleOf` beyond 17 digits without a big integer that allocates (row
    43).
 9. The fused pass, measured line by line (row 44).
-10. A linear-time matcher for the patterns that have no automaton, and for texts that are not ASCII (row 45).
+10. A linear-time matcher for a repetition that counts to a bound and for a search over a long text (row 45).
 11. A stated size limit for a document (row 60).
 12. A name's header read once (row 61).

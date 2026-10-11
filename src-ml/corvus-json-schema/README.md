@@ -451,9 +451,10 @@ The engine has two matchers:
   Its stack is explicit and kept in the evaluation's working memory, so a long text cannot overflow the thread's
   stack and a match allocates nothing once the stack has grown.
 
-A pattern with nested quantifiers can take exponential time on the backtracking matcher for a text it does not
-match, as it can in any backtracking engine. A match is limited for that reason (see
-[Limits on patterns](#limits-on-patterns)). A repetition whose body cannot consume a character, such as
+A backtracking matcher can take time that doubles with each character of a text it does not match, and a match is
+limited for that reason (see [Limits on patterns](#limits-on-patterns)). Four things keep a pattern that V8 or a
+linear engine answers at once from reaching the limit (see [What keeps a match short](#what-keeps-a-match-short)).
+A repetition whose body cannot consume a character, such as
 `(?:\b|(?=a)|){4,5}`, is not such a case. Every iteration of it is empty, so the matcher runs the body once when the
 minimum is one or more and not at all when it is zero, which is what ECMA-262 says such a repetition matches. And a
 counted repetition is not tried at all at a place where the rest of the pattern, with the iterations the repetition
@@ -528,8 +529,10 @@ With the limit turned off a match has no limit on its time and none on its memor
 **What has no limit, and why.** The automaton over ASCII text reads each byte once. The matchers for the common
 shapes of pattern read the string once, or a bounded number of times: a pattern of alternatives with no anchor is
 looked for at every position of the string, so its alternatives may cost at most 256 bytes or characters between
-them for each position, and a pattern beyond that runs on the engine. The engine's search for the literal text a
-match starts with looks for its first 16 bytes. All of these take time proportional to the string and are not
+them for each position, and a pattern beyond that runs on the engine. A list that ends in a final part,
+`^(?:[a-z]+,)*[a-z]{2}[0-9]$`, tries that part after every item, so a pattern is matched as such a list only when
+the final part can hold no character the separator starts with and so stops at the next separator. Any other runs
+on the engine. The engine's search for the literal text a match starts with looks for its first 16 bytes. All of these take time proportional to the string and are not
 stopped.
 
 **The size of a pattern.** The size is counted as the pattern is read: 64 for each term (an atom, with the
@@ -550,20 +553,66 @@ refused, and so is the same property negated more than about 190 times.
 The `regex` format reads a string of the instance as a pattern, with the same limits. A string over one is not a
 valid regular expression to it.
 
-**What still reaches the limit.** These answer in V8 at once, or would in an engine that does not backtrack, and
-here end in `Pattern_match_limit` on a long enough string: a backreference inside nested repetitions
-(`^(?:(a+)\1*)+$`), nested repetitions on a string that is not ASCII or behind a lookaround (`(a*)*b`,
-`^(?=.)(?:a+)+$`), a lookaround that scans the rest of the string from every position (`(?=.*c)b` on 100,000
-characters), nested counted ranges (`^(?:a{0,1000}){0,1000}$`), and a count of a hundred million or more of a body that
-can be empty (`(?:a?){2147483647}`), which reaches the limit of memory.
+### What keeps a match short
+
+The backtracking matcher does four things so that a pattern does not go the long way round. None changes what a
+pattern matches, and the tests compare every one with V8.
+
+- **A repetition that cannot consume is run once**, and a backreference inside the group it names is the empty
+  string (see [Patterns](#patterns)).
+- **A counted repetition knows what it needs.** It is not tried at a place where the rest of the pattern, with the
+  iterations it has still to make, needs more of the string than is left.
+- **The matcher looks at the next character before it takes a way.** For every instruction the compiler works out
+  which characters can come next on a way from it to the end of its match, and whether a way can end without one.
+  At a choice, at a repetition that may be entered or left, at a lookaround and where a single character
+  repetition gives a character back, a way the next character rules out is not taken, and where it was one of two
+  no choice is kept. V8 makes the same check.
+- **The matcher remembers where a way has failed.** A choice, a repetition with no upper bound and a least count of
+  zero or one, and what follows a single character repetition are places it can remember, when the pattern has no
+  backreference and the place is in no repetition that counts to a bound. One bit for each such place, position of
+  the string and state of the two repetitions around the place is set when every way from there has failed, and a
+  way that comes to a set bit fails at once. So no place is gone through twice, and a repetition inside a
+  repetition (`(a*)*b`, `^(?:a+)+$`), alternatives that are prefixes of each other (`^(?:a|aa)+$`) and repetitions
+  that follow each other (`.*.*.*x`) take time proportional to the pattern times the string, where a backtracking
+  matcher takes time that doubles with each character. V8 keeps no such memory and takes that time for them.
+
+  The memory is at most 8 MB, and a match that would need more goes without it. A match takes it into use only
+  once it has made as many steps as the memory has words and 64 more for each position of the string, which a match
+  that goes through its string once or a few times never makes, so nearly every match never has it. It stays in the
+  working memory of the evaluation, so a match with it allocates nothing once it has grown. This is the bounded
+  path of this package for a string that is not ASCII, which the automaton does not take, and for a pattern that
+  has no automaton.
+
+**What still reaches the limit.** These end in `Pattern_match_limit` on a long enough string:
+
+- a backreference inside nested repetitions (`^(?:(a+)\1*)+$`, `(a*)*\1b`). What a group holds changes what follows
+  a place, so a pattern with a backreference has no memory of failed places. V8 takes time that doubles with each
+  character for these too.
+- nested counted ranges (`^(?:a{0,1000}){0,1000}$`, `^(?=.)(?:a{0,3}){0,300}$`). A place inside a repetition that
+  counts to a bound is not remembered.
+- a search that reads the rest of the string from every position of it, which takes time proportional to the
+  square of the string: a lookaround that scans (`(?=.*c)b` and `(?<=c.*)b` on 100,000 characters), a long counted
+  class with no anchor (`[a-z]{50000}[0-9]`), a backreference to a long group (`(.{0,50000})\1x`).
+- on a string that is not ASCII, which the automaton does not take: repetitions with bodies that can be empty
+  nested more than two deep (the memory tells the state of two apart), and a pattern with so many choices that
+  the memory for a long string would be more than 8 MB, such as 495 alternatives repeated over 100,000 characters.
+- a count of a hundred million or more of a body that can be empty (`(?:a?){2147483647}`), which reaches the limit
+  of memory in milliseconds.
+
+The probe behind this list is 125 patterns of at most 1,000 characters against strings of at most 100,000. Before
+the limits 32 of them did not answer in 20 seconds, and four held 2.1 to 3.6 GB. Now 99 answer, 24 end in
+`Pattern_match_limit` within 0.97 seconds, 2 are refused for their size when they are compiled, and none holds more
+than 104 MB, on OCaml 4.14 and 5.5 alike.
 
 ## Differences from the Go module and the Object Pascal port
 
 - **Patterns.** The Go module hands a pattern with no lookaround or backreference to the Go standard library's
   `regexp`, which matches in linear time. OCaml's standard library has no counterpart, so every pattern here runs
-  on the package's own matchers, as in the Object Pascal port (see [Patterns](#patterns)). A pattern can therefore
-  reach the limit of a match in cases where the Go module's would answer: a pattern that has no automaton, and a
-  text that is not ASCII.
+  on the package's own matchers, as in the Object Pascal port (see [Patterns](#patterns)). The backtracking matcher
+  remembers where a way has failed, which bounds the patterns that `regexp` runs in linear time to time
+  proportional to the pattern times the text, except inside a repetition that counts to a bound. So a pattern can
+  still reach the limit of a match here where the Go module's would answer: nested counted ranges, and a search
+  over a long text that is not ASCII.
 - **Errors are values.** Nothing raises for a schema or an instance that is wrong. The compile functions and the
   `validate` and `evaluate` functions return a `result` whose error is `Parse_error`, `Compile_error`,
   `Depth_exceeded`, `Pattern_too_large` or `Pattern_match_limit`, where the Go module returns an `error` and the

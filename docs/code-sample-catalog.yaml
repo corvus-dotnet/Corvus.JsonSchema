@@ -1172,7 +1172,7 @@ main-docs:
       - {index: 6, language: ocaml, lines: [161, 180]}
       - {index: 7, language: ocaml, lines: [186, 224]}
       - {index: 8, language: ocaml, lines: [234, 250]}
-      - {index: 9, language: ocaml, lines: [308, 332]}
+      - {index: 9, language: ocaml, lines: [312, 336]}
   - path: "docs/JsonSchemaForPascal.md"
     blocks:
       - {index: 0, language: sh, lines: [31, 33]}
