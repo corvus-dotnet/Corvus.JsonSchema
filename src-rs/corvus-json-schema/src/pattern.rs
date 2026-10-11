@@ -322,8 +322,12 @@ pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
         return Ok(p.clone());
     }
     // Validity is ECMA-262's: a pattern regress rejects is an error, whichever matcher would run it. regress takes
-    // a few patterns ECMA-262 does not (`rewrite::not_valid`).
+    // a few patterns ECMA-262 does not (`rewrite::not_valid`), and does not know one Script value that ECMA-262
+    // has: the pattern that is compiled has that value written another way, where that makes a pattern with the
+    // `u` flag of it.
     let source = pattern;
+    let written = with_every_script(pattern);
+    let pattern = written.as_deref().unwrap_or(pattern);
     let (regress, unicode) = compile_regress(pattern).ok_or(PatternError::Invalid)?;
     if rewrite::not_valid(pattern, unicode) {
         return Err(PatternError::Invalid);
@@ -653,7 +657,16 @@ fn excluded_class_with_word(p: &str) -> Option<(CharSet, bool)> {
 
 /// The `regex` format: a valid ECMA-262 regular expression (with the `u` flag).
 pub(crate) fn is_valid_ecma_regex(s: &str) -> bool {
+    let written = with_every_script(s);
+    let s = written.as_deref().unwrap_or(s);
     regress::Regex::with_flags(s, "u").is_ok() && !rewrite::not_valid(s, true)
+}
+
+/// The pattern with the Script value regress does not know written another way
+/// (`rewrite::without_the_script_of_no_character`), when that is a pattern with the `u` flag. Without the flag
+/// the escape of a property is the letter and the text after it, and the pattern stays as it is written.
+fn with_every_script(pattern: &str) -> Option<String> {
+    rewrite::without_the_script_of_no_character(pattern).filter(|p| regress::Regex::with_flags(p, "u").is_ok())
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

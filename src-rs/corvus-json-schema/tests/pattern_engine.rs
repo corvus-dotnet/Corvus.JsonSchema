@@ -743,3 +743,61 @@ fn the_numbers_of_a_count_are_compared_as_they_are_written() {
         (r"^a{3,2$", &["a{3,2"], &["", "aaa"]),
     ]);
 }
+
+/// The Script value `Hrkt` (`Katakana_Or_Hiragana`) is in Unicode's list of property value aliases, so
+/// ECMA-262 takes it, for `Script` and for `Script_Extensions`. No character has it, so it matches nothing and
+/// its negation matches every character. V8 13.6 and the engine do not take it. The pattern was then read without
+/// the `u` flag, as the letter and the text in braces.
+#[test]
+fn the_script_no_character_has() {
+    for name in ["Script", "sc", "Script_Extensions", "scx"] {
+        for value in ["Hrkt", "Katakana_Or_Hiragana"] {
+            let all = ["\u{3042}", "\u{30ab}", "\u{30fc}", "a", "\u{1F600}"];
+            let pattern = |text: &str| text.replace("NAME", name).replace("VALUE", value);
+            check_texts(&[
+                (&pattern(r"^\p{NAME=VALUE}$"), &[], &all),
+                (&pattern(r"^\P{NAME=VALUE}$"), &all, &["", "aa"]),
+                (&pattern(r"^[\p{NAME=VALUE}a]$"), &["a"], &["\u{3042}", "\u{30ab}", ""]),
+                (&pattern(r"^[^\p{NAME=VALUE}a]$"), &["\u{3042}", "\u{30ab}", "b"], &["a", ""]),
+                (&pattern(r"^[\P{NAME=VALUE}]+$"), &["\u{3042}a\u{30ab}"], &[""]),
+                (&pattern(r"^[^\P{NAME=VALUE}]$"), &[], &all),
+                (&pattern(r"^(?i:\P{NAME=VALUE})\p{NAME=VALUE}*$"), &all, &["", "aa"]),
+                // After a backslash that is a character it is text, and the pattern is valid only without the
+                // flag.
+                (&pattern(r"^\\p{NAME=VALUE}$"), &[&pattern(r"\p{NAME=VALUE}")], &["", "a"]),
+            ]);
+        }
+    }
+    // A name or a value that is not in the list is not valid with the flag, and is the text without it.
+    check_texts(&[
+        (r"^\p{sc=hrkt}$", &["p{sc=hrkt}"], &["", "a", "\u{3042}"]),
+        (r"^\p{gc=Hrkt}$", &["p{gc=Hrkt}"], &["", "a", "\u{3042}"]),
+        (r"^\p{Hrkt}$", &["p{Hrkt}"], &["", "a", "\u{3042}"]),
+    ]);
+}
+
+/// Where V8 13.6 and ECMA-262 differ in what is a pattern, the answer is ECMA-262's. `\p{WSpace}` is not in
+/// ECMA-262's list of binary properties (V8 takes it). A name of two groups that can both take part in a match is
+/// not valid (V8 takes `(|((?<m>))(?<m>|))`). The four scripts of Unicode 17 are scripts (V8 13.6 has Unicode
+/// 16).
+#[test]
+fn what_is_a_pattern_is_what_ecma_262_says() {
+    check_texts(&[
+        (r"^\p{WSpace}$", &["p{WSpace}"], &[" ", "", "\t"]),
+        (r"^\p{White_Space}$", &[" ", "\t"], &["p{White_Space}", ""]),
+        (r"^\p{space}$", &[" ", "\t"], &["p{space}", ""]),
+        (r"^(?:(?<m>a)|(?<m>b))\k<m>$", &["aa", "bb"], &["ab", "a", ""]),
+        (r"^\p{sc=Sidt}$", &["\u{10940}"], &["a", "p{sc=Sidt}"]),
+        (r"^\p{Script=Sidetic}$", &["\u{10940}"], &["a", ""]),
+        (r"^\p{sc=Tols}+$", &["\u{11DB0}\u{11DB1}"], &["a", ""]),
+        (r"^\p{scx=Tolong_Siki}$", &["\u{11DB0}"], &["a", ""]),
+        (r"^\p{sc=Berf}$", &["\u{16EA0}"], &["a", ""]),
+        (r"^[\p{Script_Extensions=Beria_Erfe}]$", &["\u{16EA0}"], &["a", ""]),
+        (r"^\p{sc=Tayo}$", &["\u{1E6C0}"], &["a", ""]),
+        (r"^\P{sc=Tai_Yo}$", &["a", "\u{10940}"], &["\u{1E6C0}", ""]),
+    ]);
+    for pattern in [r"(|((?<m>))(?<m>|))", r"(?<m>a)(?<m>b)", r"(?:(?<m>a)|b)(?<m>c)", r"((?<m>a)|b)+(?<m>c)"] {
+        let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
+        assert_eq!(e.message(), format!("Invalid regular expression '{pattern}' in pattern."));
+    }
+}

@@ -189,6 +189,44 @@ fn k_in_a_class(pattern: &str) -> bool {
     named && in_a_class
 }
 
+/// The pattern with every property escape of the Script value `Hrkt` (`Katakana_Or_Hiragana`) written as the
+/// escape of no character (`\P{Any}`), and its negation as the escape of every character. `None` when the pattern
+/// has no such escape.
+///
+/// The value is in Unicode's `PropertyValueAliases.txt`, so it is a value of `Script` and of `Script_Extensions`
+/// in ECMA-262, and no character has it (`Scripts.txt` and `ScriptExtensions.txt` give it to none). regress does
+/// not know the value.
+pub(super) fn without_the_script_of_no_character(pattern: &str) -> Option<String> {
+    if !pattern.contains("=Hrkt}") && !pattern.contains("=Katakana_Or_Hiragana}") {
+        return None;
+    }
+    let mut out = String::with_capacity(pattern.len());
+    let mut rest = pattern;
+    let mut found = false;
+    while let Some(at) = rest.find('\\') {
+        out.push_str(&rest[..at]);
+        rest = &rest[at..];
+        let negated = rest.starts_with("\\P{");
+        let escape = (negated || rest.starts_with("\\p{")).then(|| rest.find('}')).flatten().and_then(|end| {
+            let (name, value) = rest[3..end].split_once('=')?;
+            let known = matches!(name, "Script" | "sc" | "Script_Extensions" | "scx")
+                && matches!(value, "Hrkt" | "Katakana_Or_Hiragana");
+            known.then_some(end + 1)
+        });
+        // Any other escape is the backslash and the character after it, which may be a backslash.
+        let end = escape.unwrap_or_else(|| 1 + rest[1..].chars().next().map_or(0, char::len_utf8));
+        if escape.is_some() {
+            found = true;
+            out.push_str(if negated { "\\p{Any}" } else { "\\P{Any}" });
+        } else {
+            out.push_str(&rest[..end]);
+        }
+        rest = &rest[end..];
+    }
+    out.push_str(rest);
+    found.then_some(out)
+}
+
 /// Groups nested deeper than this are read and written on a stack of their own.
 const NESTED_ON_THE_CALLERS_STACK: usize = 32;
 
@@ -2562,6 +2600,20 @@ mod tests {
         }
         for pattern in [r"[\k]", r"(?<=a)[\k]", r"(?<!a)[\k]", r"[(?<n>][\k]", r"(?<n>a)[\\k]", r"(?<n>a)\[\k<n>]"] {
             assert!(!k_in_a_class(pattern), "{pattern}");
+        }
+    }
+
+    #[test]
+    fn the_script_value_no_character_has_is_written_as_no_character() {
+        for (pattern, expected) in [
+            (r"\p{sc=Hrkt}", Some(r"\P{Any}")),
+            (r"^[\P{Script_Extensions=Katakana_Or_Hiragana}a]\p{scx=Hrkt}$", Some(r"^[\p{Any}a]\P{Any}$")),
+            (r"\\p{sc=Hrkt}", None),
+            (r"\\\p{Script=Hrkt}", Some(r"\\\P{Any}")),
+            (r"\p{sc=Hira}\p{gc=Hrkt}\p{Hrkt}\p{sc=hrkt}p{sc=Hrkt}", None),
+            ("\\\u{3042}\\p{sc=Hrkt}", Some("\\\u{3042}\\P{Any}")),
+        ] {
+            assert_eq!(without_the_script_of_no_character(pattern).as_deref(), expected, "{pattern}");
         }
     }
 
