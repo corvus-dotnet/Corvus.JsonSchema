@@ -51,6 +51,21 @@ function checkv8table(rows, texts::Vector{String}=V8_TEXTS)
     end
 end
 
+# The texts of the tables of what each grammar takes.
+const V8_NAME_TEXTS = ["", "a", "k", "K", "x", "p", "\\", "<", "ak", "ka", "kk", "xk", "aa", "xa", "k<a>", "a<a>",
+    "\u212a", "\u30ab", "\u3042", "\u30fc", "\u30ab\u3042", "z", "-", "pp"]
+
+# Checks rows of a pattern, whether V8 takes it with the u flag, whether it takes it without, and its answers on
+# V8_NAME_TEXTS, which are those with the u flag when it takes the pattern with it.
+function checkgrammars(rows)
+    for (pattern, unicode, legacy, hex) in rows
+        @test E.parsesunicode(pattern) == unicode
+        @test E.isvalidpattern(pattern) == unicode
+        @test isnotapattern(pattern) == !(unicode || legacy)
+        (unicode || legacy) && checkv8table([(pattern, hex)], V8_NAME_TEXTS)
+    end
+end
+
 @testset "V8 by class" begin
     @test length(V8_TEXTS) == 48
     @test V8_TEXTS[1:6] == ["", "a", "x", "-", "aa", "ax"]
@@ -638,5 +653,39 @@ end
         @test matches(raw"(?i:^(..)\1$)", "\u00dfS\u1e9e\u017f")
         @test matches(raw"(?i:^(.)(.)(.)\1\2\3$)", "\u1e9eS\u00df\u00dfs\u1e9e")
         @test !matches(raw"(?i:^(.)(.)(.)\1\2\3$)", "\u1e9eS\u00df\u1e9e\u00df\u017f")
+    end
+
+    # \k in a class. With the u flag it is not an escape there. Without it, it is the letter k, but in a pattern
+    # with a named group, where \k is a reference to a group and nothing else, in a class as outside one. Such a
+    # pattern was taken, with the class read as the letter k.
+    @testset "\\k in a class" begin
+        @test length(V8_NAME_TEXTS) == 24
+        checkgrammars([
+            (raw"[\k]", false, true, "20f200"),
+            (raw"^[\k]$", false, true, "200000"),
+            (raw"^[\k-z]$", false, true, "2c0004"),
+            (raw"^[\kA]+$", false, true, "202000"),
+            (raw"(a)[\k]", false, true, "008000"),
+            (raw"(?:a)[\k]", false, true, "008000"),
+            (raw"(?i:[\k])", false, true, "30f200"),
+            (raw"[\k<a>]", false, true, "61ff00"),
+            (raw"(a)[\k<a>]", false, true, "008b00"),
+            (raw"(?<n>a)[\k]", false, false, ""),
+            (raw"[\k](?<n>a)", false, false, ""),
+            (raw"(?<a>x)[\k]", false, false, ""),
+            (raw"(?<n>a)[\k<a>]", false, false, ""),
+            (raw"[\k<a>](?<n>a)", false, false, ""),
+            (raw"(?<a>x)[\k<a>]", false, false, ""),
+            (raw"(?<n>a)^[\k<a>]$", false, false, ""),
+            (raw"^[\k<a>]$(?<n>a)", false, false, ""),
+            (raw"(?<n>a)[^\k]", false, false, ""),
+            (raw"(?<n>a)[a-\k]", false, false, ""),
+            # Outside a class it was already so.
+            (raw"\k", false, true, "20f200"),
+            (raw"(a)\k", false, true, "008000"),
+            (raw"(?<n>a)\k", false, false, ""),
+            (raw"(?<n>a)\k<n>", true, true, "000800"),
+            (raw"\k<n>(?<n>a)", true, true, "40cf00"),
+        ])
     end
 end

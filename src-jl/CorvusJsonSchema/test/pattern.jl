@@ -266,6 +266,19 @@ const ANCHOR_CASES = Tuple{String,Vector{String},Vector{String}}[
         end
     end
 
+    # \k in a class is not an escape in a pattern with a named group, in either grammar, so the schema does not
+    # compile. In a pattern with no named group it is the letter k.
+    @testset "\\k in a class, in a pattern with a named group" begin
+        for pattern in [raw"(?<n>a)[\k]", raw"[\k](?<n>a)", raw"(?<a>x)[\k<a>]"]
+            @test !C.valid_regex(pattern)
+            @test_throws CompileError compile_schema("{\"pattern\": " * quote_json(pattern) * "}")
+            @test_throws CompileError compile_schema("{\"patternProperties\": {" * quote_json(pattern) * ": true}}")
+        end
+        v = compile_schema("{\"pattern\": " * quote_json(raw"^(a)[\k]$") * "}")
+        @test isvalid(v, "\"ak\"")
+        @test !isvalid(v, "\"aa\"")
+    end
+
     # A pattern that is valid only without the u flag (one with an identity escape such as \- or \&) matches UTF-16
     # code units, as ECMA-262 says, so a character beyond the Basic Multilingual Plane is two characters to it. The
     # faster matchers go by character. They decide the strings within the Basic Multilingual Plane, where the two are

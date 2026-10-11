@@ -754,8 +754,12 @@ function characterescape(P::Parser, inclass::Bool)
         return legacyoctal(P)
     end
     # Identity escapes. The u flag allows only the syntax characters and '/', and '-' in a class. Annex B allows any
-    # character.
+    # character, but for k in a pattern with a named group, where \k is a reference to one and nothing else. So
+    # `(?<n>a)[\k]` is an error, and `(a)[\k]` is a class of the letter k.
     if P.unicode && !(c in SYNTAX_CHARACTERS) && !(inclass && c == '-')
+        syntaxerror(P, "invalid escape")
+    end
+    if c == 'k' && P.hasnames
         syntaxerror(P, "invalid escape")
     end
     return cpof(c)
