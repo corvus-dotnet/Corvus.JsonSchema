@@ -89,7 +89,7 @@ impl fmt::Debug for Pattern {
 /// cannot be stopped, with the engine for the strings it is not given.
 struct Linear {
     re: regex::Regex,
-    /// The number of instructions estimated for the program (`ecmaregex::Facts::re2_cost`), and one at least.
+    /// The number of instructions estimated for the program (`ecmaregex::Facts::linear_cost`), and one at least.
     cost: u64,
     /// The engine for the pattern: compiled with the pattern when it is valid only without the `u` flag, and
     /// otherwise for the first string that is too long for `regex` to answer within the limit of a match.
@@ -114,8 +114,8 @@ impl Linear {
 /// instruction has a thread on it (it then runs its simulation of the automaton, which is its slowest matcher). A
 /// match on `regex` cannot be stopped, so a match with a limit goes there only when the size of the program times
 /// the length of the string times this is within the limit. Any other goes to the engine, which reads the clock.
-/// The figure is the Go module's for the regexp package of Go. It was measured for the `regex` crate with patterns
-/// that defeat its lazy automaton (see the crate's change log), and is above what was seen.
+/// The figure is the Go module's for the regexp package of Go. For the `regex` crate the most that was measured,
+/// with patterns that defeat its lazy automaton on a text of 100,000 bytes, was 3.6 ns.
 const LINEAR_STEP: Duration = Duration::from_nanos(16);
 
 /// The limit of a match, as a validator holds it.
@@ -531,18 +531,34 @@ fn linear(pattern: &str, facts: &ecmaregex::Facts) -> Option<Linear> {
     if facts.re2_cost > ecmaregex::MAX_RE2_COST {
         return None;
     }
-    let re = regex::RegexBuilder::new(&translate(pattern, facts.unicode)?)
-        .size_limit(REGEX_SIZE_LIMIT)
-        .dfa_size_limit(REGEX_DFA_SIZE_LIMIT)
-        .build()
-        .ok()?;
+    let translation = translate(pattern, facts.unicode)?;
+    let re = if ecmaregex::shallow(pattern) {
+        regex::RegexBuilder::new(&translation)
+            .size_limit(REGEX_SIZE_LIMIT)
+            .dfa_size_limit(REGEX_DFA_SIZE_LIMIT)
+            .build()
+            .ok()?
+    } else {
+        // `regex` reads 250 levels of nesting unless it is told otherwise, because what it does with a pattern goes
+        // a level deeper for each. A pattern that opens many groups is compiled on a thread with a stack for the
+        // 1,000 levels the engine's own limit allows (a group, its quantifier and a class inside it are three
+        // levels to `regex`), so that it is not the engine's for its nesting alone.
+        ecmaregex::deep(|| {
+            regex::RegexBuilder::new(&translation)
+                .size_limit(REGEX_SIZE_LIMIT)
+                .dfa_size_limit(REGEX_DFA_SIZE_LIMIT)
+                .nest_limit(4 * ecmaregex::MAX_NESTING as u32)
+                .build()
+                .ok()
+        })??
+    };
     let engine = OnceLock::new();
     if !facts.unicode || !ecmaregex::shallow(pattern) {
         // The engine has the strings with a character beyond the Basic Multilingual Plane, so it is compiled now.
         // So is that of a pattern that nests deeply, which is compiled on a stack of its own.
         let _ = engine.set(Some(ecmaregex::compile(pattern).ok()?));
     }
-    Some(Linear { re, cost: facts.re2_cost.max(1) as u64, engine })
+    Some(Linear { re, cost: facts.linear_cost.max(1) as u64, engine })
 }
 
 fn choose(pattern: &str, facts: &ecmaregex::Facts) -> Option<Matcher> {
@@ -1553,7 +1569,7 @@ fn escape(c: &[char], i: usize, in_class: bool, unicode: bool) -> Option<(String
         }
         // `\B` has no translation. `(?-u:\B)` also holds between the bytes of a character that takes several, where
         // no match may start or end, and `regex` 1.13.1 then says there is no match where it finds one: for
-        // `s*?(?-u:\B)|..$` on `k\u{17f}k`, `is_match` is false and `find` is not. regress has it.
+        // `s*?(?-u:\B)|..$` on `k\u{17f}k`, `is_match` is false and `find` is not. The engine has it.
         'B' => return None,
         // A Unicode property is written as the ranges of the engine's own tables, and never by its name: the
         // `regex` crate has tables of its own, of the version of Unicode its release carries, and a name would
@@ -2124,6 +2140,34 @@ mod limits {
             assert_eq!(kind(&compiled), want, "{pattern}");
             let mut budget = PatternBudget::new(PatternLimit::new(Some(Duration::from_secs(1))));
             assert!(compiled.is_match("caf\u{e9}", &mut budget) && !compiled.is_match("caf\u{e9}!", &mut budget));
+        }
+    }
+
+    /// Alternatives of one character each are one class to a linear matcher, so a long alternation is a small
+    /// program, and `regex` keeps a long string for it. And a pattern that nests more deeply than `regex` reads by
+    /// default is still compiled by it, on a thread with a stack for the nesting.
+    #[test]
+    fn regex_keeps_a_long_alternation_and_a_deep_nest() {
+        let alternatives: Vec<String> = (0..495u32).map(|k| char::from_u32(0x4E00 + k).unwrap().to_string()).collect();
+        let compiled = compile(&format!("(?:{})*z", alternatives.join("|"))).unwrap();
+        let Matcher::Regex(linear) = &compiled.matcher else { panic!("the alternation is on {}", kind(&compiled)) };
+        assert!(linear.cost <= 4, "a program of {} instructions", linear.cost);
+        let text = alternatives.concat().repeat(70);
+        assert!(text.len() >= 100_000);
+        let mut budget = PatternBudget::new(PatternLimit::new(Some(Duration::from_secs(1))));
+        assert!(linear.fits(&text, &budget) && !compiled.is_match(&text, &mut budget) && !budget.failed());
+        assert!(compiled.is_match(&format!("{text}z"), &mut budget) && linear.engine.get().is_none());
+
+        for depth in [300, 999] {
+            let nested = format!("^{}a{}b$", "(".repeat(depth), "*)".repeat(depth));
+            let compiled = compile(&nested).unwrap();
+            assert_eq!(kind(&compiled), "regex", "{depth} nested groups");
+            let start = std::time::Instant::now();
+            assert!(
+                compiled.is_match("aaaab", &mut budget)
+                    && !compiled.is_match("\u{e9}aaaaaaaaaaaaaaaaaaaaaaaaa", &mut budget)
+            );
+            assert!(!budget.failed() && start.elapsed() < Duration::from_secs(20), "{depth} nested groups");
         }
     }
 

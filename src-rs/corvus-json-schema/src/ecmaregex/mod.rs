@@ -90,8 +90,8 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 pub(crate) use charset::{CharSet, property_set};
-pub(crate) use parse::TooLargeError;
-use parse::{Limit, MAX_NESTING};
+use parse::Limit;
+pub(crate) use parse::{MAX_NESTING, TooLargeError};
 pub(crate) use re2::MAX_RE2_COST;
 pub(crate) use units::has_supplementary;
 pub(crate) use vm::MatchError;
@@ -132,6 +132,9 @@ pub(crate) struct Facts {
     /// The number of instructions estimated for the program a linear matcher compiles for the pattern, which stops
     /// counting above [`MAX_RE2_COST`].
     pub(crate) re2_cost: i64,
+    /// The number of instructions estimated for the program a linear matcher runs for the pattern (see
+    /// `re2::linear_cost`), which is `re2_cost` or less.
+    pub(crate) linear_cost: i64,
     /// The memory estimated for the program the `regex` crate compiles for the pattern, in bytes (see
     /// `re2::linear_size`).
     pub(crate) linear_size: i64,
@@ -157,6 +160,7 @@ fn read(pattern: &str) -> Result<(parse::Node, Facts), Error> {
         needs_backtracking: ps.needs_backtracking,
         size: ps.size,
         re2_cost: re2::re2_cost(&root),
+        linear_cost: re2::linear_cost(&root),
         linear_size: re2::linear_size(&root),
     };
     Ok((root, facts))
@@ -179,6 +183,12 @@ fn on_a_deep_stack<T: Send>(pattern: &str, work: impl FnOnce() -> T + Send) -> O
     if shallow(pattern) {
         return Some(work());
     }
+    deep(work)
+}
+
+/// Runs work that goes a level deeper for each level of groups of a pattern on a thread with a stack for the
+/// deepest nesting the limits allow. `None` when the thread could not be started.
+pub(crate) fn deep<T: Send>(work: impl FnOnce() -> T + Send) -> Option<T> {
     std::thread::scope(|scope| {
         let thread = std::thread::Builder::new().stack_size(DEEP_STACK).spawn_scoped(scope, work).ok()?;
         match thread.join() {

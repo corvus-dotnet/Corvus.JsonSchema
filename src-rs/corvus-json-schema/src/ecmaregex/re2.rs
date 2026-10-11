@@ -7,6 +7,37 @@
 
 use super::parse::{Node, NodeKind, UNBOUNDED};
 
+/// Estimates the number of instructions of the program a linear matcher runs for a tree, which is what a match on
+/// it can cost for each byte of a text when every instruction has a thread on it. It is [`re2_cost`] with one thing
+/// a linear matcher does to a tree before it compiles it: alternatives that are each one character or one class are
+/// one class, so `(?:a|b|c)*` is the two instructions of `[abc]*`. (The Go engine asks the regexp package what it
+/// compiled. The `regex` crate does not say, so this is worked out from the tree.)
+pub(crate) fn linear_cost(n: &Node) -> i64 {
+    match n.kind {
+        NodeKind::Empty => 0,
+        NodeKind::Alt if n.subs.iter().all(|sub| matches!(sub.kind, NodeKind::Char | NodeKind::Set)) => 1,
+        NodeKind::Cat | NodeKind::Alt | NodeKind::Group => {
+            let mut cost = n.subs.len() as i64 - 1;
+            for sub in &n.subs {
+                cost += linear_cost(sub);
+                if cost > MAX_RE2_COST {
+                    return MAX_RE2_COST + 1;
+                }
+            }
+            cost
+        }
+        NodeKind::Repeat => {
+            let copies = (if n.max == UNBOUNDED { n.min } else { n.max }).max(1) as i64;
+            let body = linear_cost(&n.subs[0]) + 1;
+            if copies > MAX_RE2_COST || body * copies > MAX_RE2_COST {
+                return MAX_RE2_COST + 1;
+            }
+            body * copies
+        }
+        _ => 1,
+    }
+}
+
 /// The cap on [`linear_size`]: a program of that size is never compiled.
 const MAX_LINEAR_SIZE: i64 = 1 << 30;
 
