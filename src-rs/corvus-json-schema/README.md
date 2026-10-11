@@ -75,39 +75,43 @@ this way, through CPython's C API.
   ECMA-262 says for it: by UTF-16 code unit, so a character beyond the Basic Multilingual Plane is two. The `regex`
   format accepts only the grammar of the flag. Common shapes (class sequences, literals and their alternatives,
   separated lists, line lengths) get dedicated matchers, as in the C# evaluator. Patterns within the common subset of
-  ECMA-262 and the [`regex`](https://crates.io/crates/regex) crate's syntax are translated and run by `regex`, and
-  anything else by [`regress`](https://crates.io/crates/regress). Where `regress` answers a pattern differently from
-  ECMA-262, it is given another pattern with the same meaning (`src/pattern/rewrite.rs` lists the cases).
+  ECMA-262 and the [`regex`](https://crates.io/crates/regex) crate's syntax are translated and run by `regex`.
+  Anything else (lookarounds, backreferences, `\B`, modifier groups) is matched by the crate's own ECMA-262 engine
+  (`src/ecmaregex`), a port of the engine of the Go module, which the Object Pascal and OCaml ports also carry. The
+  crate depends on `regex` and `serde_json` alone.
 
-  **What is exact.** The answers are V8's for every pattern and text of the
+  **What is exact.** Everything. A pattern is matched as it is written, whichever matcher has it, and none is
+  refused for what an engine cannot do. The answers are V8's for every pattern and text of the
   [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) that a Rust string
-  can hold, the records where V8 itself departs from ECMA-262 apart. That covers lookaheads and lookbehinds (`regress`
-  matches a lookbehind backwards, as ECMA-262 does, so none is refused), backreferences into and out of repetitions
-  and lookarounds, modifier groups, and case-insensitive matching in both grammars. A case-insensitive backreference
-  in a pattern without the `u` flag is exact too. `regress` equates 31 pairs of code units there that ECMA-262 does
-  not (`i` with U+0131 and `s` with U+017F among them), and the pattern it is given refuses those.
+  can hold (98,839 patterns, 4,268,313 texts), the records where V8 itself departs from ECMA-262 apart. That covers
+  lookaheads and lookbehinds, backreferences into and out of repetitions and lookarounds, named groups, a name shared
+  by groups in separate alternatives, modifier groups, repetitions inside repetitions with any count, and
+  case-insensitive matching in both grammars.
 
-  **What is exact by construction.** `regress` loses the count of a repetition in one way: the match comes back,
-  after a later run of the repetition, to a choice inside the body of an iteration of an earlier run. A repetition
-  that can be reached so (it is inside a repetition that can run twice, its body has a choice in it, and it is not
-  `X*` over a body that cannot be empty) is never given to `regress` with a count. It is written as copies of its
-  body, whatever the count: `X{m,n}` as `m` copies and `n - m` optional ones, each a group inside the one before.
-  `regress` reads 256 levels of groups, so more optional copies than that are written in chunks, one after another,
-  tried in the order the iterations are. A backreference outside the repetition reads the last iteration that ran.
-  Many iterations of one character that may be left out, as `(?:a|){100000}`, are up to as many of the character.
+  **Limits.** A schema and an instance may both come from outside, so a pattern is bounded in what it costs.
 
-  **What is left to `regress`.** Every other repetition keeps its count, and `regress` has it right: one that is
-  entered once on its backtrack stack (it is not inside a repetition that can run twice, or it is in a lookaround,
-  which has a stack of its own), one whose body leaves no choice behind (`[a-z]{1,300}`, `(?:ab){300}`), and `X*`
-  over a body that cannot be empty, which reads its count for nothing. That is read from the matcher of `regress`
-  0.12.0, and the test data and the fuzz sets have no wrong answer for any of them.
-
-  **What is refused.** A valid pattern does not compile when what is written for `regress` comes to more than
-  65,536 characters, and the error says that it is valid and too large. That is about five thousand copies of a
-  body of seven characters (`(?:a|x){1,5000}` inside another repetition), and the copies of a repetition multiply
-  with those of the repetitions around it (`(?:(?:a|x){1,300}-?){1,300}` inside a third). Such a pattern is not run
-  with a count that can be lost. The limit bounds what compiling a pattern costs. Matching is not bounded: `regress`
-  backtracks, and a pattern such as `^(?=.)(a+)+$` takes time that doubles with each character of some strings.
+  - *A match has a limit of time.* `CompileOptions::pattern_match_limit` is the time one match against one string may
+    take. The default is one second (`DEFAULT_PATTERN_MATCH_LIMIT`), and `None` or zero turns it off for a caller who
+    trusts both the schema and the instances. A match that reaches it is abandoned, and so is one whose backtracking
+    holds 1,048,576 entries (24 MB). The validation then has no answer: the `try_` functions (`try_validate`,
+    `try_validate_json`, `try_evaluate` and the rest) return `SchemaEvaluationError::PatternMatchLimit` with the
+    pattern and the limit. The engine counts its steps and reads the clock every 4,096 of them, so the limit costs
+    nothing that allocates and is met within tens of microseconds.
+  - *The functions without the new error.* `is_valid` returns a `bool`, and returns `false` for a match that
+    reached its limit, as it does for the maximum depth. `validate`, `validate_instance`, `validate_json` and the
+    `evaluate` functions report it as the one error their type has for an evaluation that was abandoned
+    (`SchemaEvaluationDepthError`). Neither says the instance is not valid. Use the `try_` functions to know which
+    limit was reached.
+  - *A pattern has limits of size.* A pattern longer than 1,048,576 bytes, nested more than 1,000 groups deep, or
+    counted as more than 1,048,576 as it is read (64 for a term, 32 for an alternative, 8 for a range of a class) is
+    refused when the schema is compiled. The message says it is too large, not that it is not valid, and
+    `SchemaCompilationError::kind` is `PatternTooLarge`. A pattern of plain characters can be 16,384 characters long.
+  - *What the crate keeps is bounded.* The cache of compiled patterns of the process holds 1,024 patterns and 64 MiB
+    at most, and the `regex` crate is given no program over 2 MiB.
+  - *What is not bounded.* The limit is for each match, not for a validation. The matchers that read a string once
+    are not stopped, and `regex` is given a string only when it can answer within the limit. With the limit turned
+    off, nothing bounds a match: a group read back inside a repetition, as in `^(?:(a+)\1*)+$`, takes time that
+    doubles with each character of some strings.
 
   **Where V8 departs from ECMA-262,** the crate follows ECMA-262. With the `u` flag V8 starts a match between the two
   halves of a surrogate pair, compares a case-insensitive backreference to a group of several characters by full
@@ -119,10 +123,11 @@ this way, through CPython's C API.
   `Hrkt` (`Katakana_Or_Hiragana`), which is in Unicode's list of values, and the crate takes it (no character has
   it, so it matches nothing).
 
-  **Unicode versions.** Properties and case-insensitive matching with the `u` flag use the tables of `regress`
-  (Unicode 17 in 0.12), and without the flag the uppercase forms of the Rust standard library. V8 13.6 has Unicode
-  16. They agree on every character of Unicode 16. The four scripts Unicode 17 adds (`Sidetic`, `Tolong_Siki`,
-  `Beria_Erfe`, `Tai_Yo`) are scripts here, where V8 13.6 does not know them.
+  **Unicode versions.** Properties and case-insensitive matching use tables of the crate's own, for Unicode 17: the
+  same tables as the Go module, and nothing from the Rust standard library or from the `regex` crate, so the answers
+  do not depend on the toolchain or on a dependency's release. V8 13.6 has Unicode 16. They agree on every
+  character of Unicode 16. The four scripts Unicode 17 adds (`Sidetic`, `Tolong_Siki`, `Beria_Erfe`, `Tai_Yo`) are
+  scripts here, where V8 13.6 does not know them. The tables are generated from the Unicode Character Database.
 
   **Lone surrogates.** A JSON string with the escape of half of a surrogate pair (`"\ud800"`) is not a Rust string.
   `validate_json` and `serde_json` both refuse the document as not valid JSON.
@@ -189,3 +194,14 @@ This runs:
 - **`tests/results.rs`:** the results-collection expectations shared with the C# and TypeScript evaluators.
 - **`tests/metaschemas.rs`:** checks that `src/metaschemas.rs` matches `src/Corvus.Text.Json/metaschema`.
   Regenerate it with `UPDATE_METASCHEMAS=1 cargo test --test metaschemas`.
+- **The regular expression engine's own tests** (`src/ecmaregex/tests.rs`): the tests of the Go package it is a port
+  of, with V8's answers read from that package's `testdata` (`v8_cases.json`, `v8_oracle.json`) and the sizes the
+  ports must agree on (`size_cases.json`). One test compares the Unicode tables with the Go module's.
+- **`tests/pattern_engine.rs`, `tests/pattern_anchors.rs` and `tests/pattern_class.rs`:** patterns that an engine
+  or a matcher answered wrongly at some point, with V8's answers.
+- **`tests/pattern_limits.rs`:** the limit of a match and the limits of size, through the public functions.
+- **`tests/allocations.rs`:** validating JSON text allocates nothing in the steady state, with patterns the engine
+  matches and with the limit on or off.
+
+The Unicode tables are `src/ecmaregex/tables_gen.rs`. `pwsh tools/gen-ucd-tables.ps1` writes them from the tables of
+the Go module (`src-go/corvus-json-schema/internal/ucd/tables_gen.go`), so the two ports hold the same data.

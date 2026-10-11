@@ -61,8 +61,14 @@ cjs::validator validator = cjs::validator::compile(schema, options);
 ```
 
 The options are those of the C library: `default_dialect`, `assert_format`, `assert_format_in_legacy_drafts`,
-`assert_content`, `format`, `resolver`, `base_uri`, `entry_point` and `max_depth`. Failures throw
-`corvus::json_schema::error`, with the C library's status, the message and, for invalid JSON, the byte offset.
+`assert_content`, `format`, `resolver`, `base_uri`, `entry_point`, `max_depth` and `pattern_match_limit`. Failures
+throw `corvus::json_schema::error`, with the C library's status, the message and, for invalid JSON, the byte offset.
+
+`pattern_match_limit(std::chrono::milliseconds)` is the time one match of a regular expression against one string may
+take. The default is one second, and zero turns the limit off. A validation whose match reaches it throws an `error`
+whose `status()` is `CJS_PATTERN_MATCH_LIMIT`, and the instance is then neither valid nor not valid. A schema with a
+regular expression over a limit of size throws one whose status is `CJS_PATTERN_TOO_LARGE`. See
+[JSON Schema for C](JsonSchemaForC.md#limits-on-regular-expressions).
 
 ## Results and annotations
 

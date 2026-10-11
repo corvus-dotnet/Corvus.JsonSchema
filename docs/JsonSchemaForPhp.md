@@ -53,9 +53,17 @@ $validator->isValidJson('{"id": 3}');        // true: JSON text, parsed in Rust
 | `baseUri` | none | The schema's base URI, when it has no `$id`. |
 | `entryPoint` | none | A subschema to validate against, such as `'#/$defs/item'`. |
 | `maxDepth` | `128` | The deepest the evaluator recurses in place before it throws `DepthException`. |
+| `patternMatchLimit` | `1` | The seconds one match of a regular expression against one string may take before the validation throws `PatternMatchLimitException`. `null` or `0` turns the limit off. |
 
-Errors are exceptions extending `Corvus\JsonSchema\JsonSchemaException`: `CompilationException`, `DepthException` and
-`InvalidJsonException`.
+Errors are exceptions extending `Corvus\JsonSchema\JsonSchemaException`: `CompilationException`, `DepthException`,
+`InvalidJsonException`, `PatternMatchLimitException` and `PatternTooLargeException`.
+
+A schema and a value may both come from outside, so a regular expression is bounded in what it costs. A match of a
+`pattern` or `patternProperties` regular expression that takes longer than `patternMatchLimit` is abandoned, and
+`isValid`, `isValidJson` and `evaluate` throw `PatternMatchLimitException`: the value is then neither valid nor not
+valid. A schema with a regular expression longer than 1,048,576 bytes, nested more than 1,000 groups deep or of more
+than about 16,000 terms does not compile, and `Validator::compile` throws `PatternTooLargeException`, which is a
+`CompilationException`.
 
 ## Results and annotations
 

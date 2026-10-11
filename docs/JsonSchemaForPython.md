@@ -59,9 +59,16 @@ it: `validate.is_valid_json('{"id": 3}')`.
 | `base_uri` | The base URI of the root document. |
 | `entry_point` | A subschema to validate against, such as `#/$defs/item`. |
 | `max_depth` | The deepest the evaluator recurses in place (default 128); beyond it, `SchemaEvaluationDepthError`. |
+| `pattern_match_limit` | `corvus-json-schema-rs` only. The seconds one match of a regular expression against one string may take (default `1.0`). Beyond it, `PatternMatchLimitError`. `None` or `0` turns the limit off. |
 
 A reference that cannot be resolved, or an invalid pattern, raises `SchemaCompilationError` when the schema is
 compiled.
+
+In `corvus-json-schema-rs` a regular expression is bounded in what it costs, since a schema and an instance may both
+come from outside. A validation whose match reaches `pattern_match_limit` raises `PatternMatchLimitError`, and the
+instance is then neither valid nor not valid. A schema with a regular expression longer than 1,048,576 bytes, nested
+more than 1,000 groups deep or of more than about 16,000 terms raises `PatternTooLargeError`, which is a
+`SchemaCompilationError`.
 
 ## Results and annotations
 

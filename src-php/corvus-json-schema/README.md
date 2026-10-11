@@ -60,6 +60,7 @@ options:
 | `baseUri` | none | The schema's base URI, when it has no `$id`. |
 | `entryPoint` | none | A reference to the subschema to validate against, such as `'#/$defs/item'`. |
 | `maxDepth` | `128` | The deepest the evaluator recurses in place before it throws `DepthException`. |
+| `patternMatchLimit` | `1` | The seconds (an `int` or a `float`) one match of a `pattern` or `patternProperties` regular expression against one string may take before the validation throws `PatternMatchLimitException`. `null` or `0` turns the limit off, for a caller who trusts both the schema and the values. |
 
 A `Validator` is immutable.
 
@@ -72,7 +73,10 @@ A `Validator` is immutable.
   instance location, keyword and schema location, and `clear()` empties it.
 
 Errors are exceptions extending `Corvus\JsonSchema\JsonSchemaException`: `CompilationException` (an invalid schema, or
-a reference that cannot be resolved), `DepthException` and `InvalidJsonException` (invalid JSON text). An exception
+a reference that cannot be resolved), `PatternTooLargeException` (a `CompilationException` for a regular expression
+over a limit of size: 1,048,576 bytes, 1,000 levels of groups, or about 16,000 terms), `DepthException`,
+`PatternMatchLimitException` (a match of a regular expression reached its limit, so the value is neither valid nor
+not valid) and `InvalidJsonException` (invalid JSON text). An exception
 thrown by a format validator or a resolver propagates. `Corvus\JsonSchema\crate_version()` returns the version of the
 crate the extension was built from.
 

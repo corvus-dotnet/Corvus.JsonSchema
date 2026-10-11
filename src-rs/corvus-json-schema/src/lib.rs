@@ -18,6 +18,47 @@
 //! assert!(validator.is_valid(&json!({ "id": 3 })));
 //! assert!(!validator.is_valid(&json!({ "id": 0 })));
 //! ```
+//!
+//! # Regular expressions and their limits
+//!
+//! `pattern`, `patternProperties` and the `regex` format follow ECMA-262. Simple patterns are matched by matchers of
+//! the crate's own and by the `regex` crate, and everything else (lookarounds, backreferences, modifier groups) by
+//! the crate's own ECMA-262 engine, as each pattern is written.
+//!
+//! A schema and an instance may both come from outside, so a pattern is bounded in what it costs. One match against
+//! one string may take [`CompileOptions::pattern_match_limit`], one second unless the options say otherwise. A match
+//! that reaches it is abandoned and the validation has no answer: [`Validator::try_validate`] and the other `try_`
+//! functions return [`SchemaEvaluationError::PatternMatchLimit`]. A pattern longer than 1,048,576 bytes, nested more
+//! than 1,000 groups deep or of more than about 16,000 terms does not compile, and
+//! [`SchemaCompilationError::kind`] is then [`SchemaCompilationErrorKind::PatternTooLarge`], which is not the kind
+//! of a pattern that is not valid.
+//!
+//! ```
+//! use std::time::Duration;
+//!
+//! use corvus_json_schema::{CompileOptions, SchemaCompilationErrorKind, SchemaEvaluationError, compile, compile_with};
+//! use serde_json::json;
+//!
+//! // A group read back inside a repetition: on this string the match would run for longer than anyone waits.
+//! let options = CompileOptions { pattern_match_limit: Some(Duration::from_millis(50)), ..CompileOptions::default() };
+//! let validator = compile_with(&json!({ "pattern": r"^(?:(a+)\1*)+$" }), &options).unwrap();
+//! let instance = json!("a".repeat(60) + "b");
+//! match validator.try_validate(&instance) {
+//!     Err(SchemaEvaluationError::PatternMatchLimit(e)) => {
+//!         assert_eq!(e.pattern(), r"^(?:(a+)\1*)+$");
+//!         assert_eq!(e.limit(), Duration::from_millis(50));
+//!     }
+//!     other => panic!("{other:?}"),
+//! }
+//! // is_valid has no way to say so, and answers false.
+//! assert!(!validator.is_valid(&instance));
+//!
+//! // A pattern over a limit of size is not a pattern that is not valid.
+//! let error = compile(&json!({ "pattern": "a".repeat(20000) })).unwrap_err();
+//! assert!(matches!(error.kind(), SchemaCompilationErrorKind::PatternTooLarge(large) if large.limit() == "size"));
+//! let error = compile(&json!({ "pattern": "a**" })).unwrap_err();
+//! assert_eq!(error.kind(), &SchemaCompilationErrorKind::InvalidPattern);
+//! ```
 
 mod compiler;
 mod dialect;

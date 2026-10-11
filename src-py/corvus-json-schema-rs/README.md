@@ -35,11 +35,18 @@ validate.is_valid_json('{"id": "3"}')  # False: JSON text, parsed in Rust
 
 `compile` takes the same options as the pure package (`default_dialect`, `assert_format`, `formats`,
 `resolve_document`, `base_uri`, `entry_point`, `max_depth` and the rest, as keywords or a `CompileOptions`), and
+one more, `pattern_match_limit` (below), and
 `evaluate`, `JsonSchemaResultsCollector`, `ResultsLevel` and `collect_annotations` work as they do there. Custom
 formats and document resolvers are Python callables, called from Rust.
 
 What differs from the pure package:
 
+- A match of a `pattern` or `patternProperties` regular expression has a limit of time. `pattern_match_limit` is
+  the seconds one match against one string may take (default `1.0`, and `None` or `0` turns it off for a caller who
+  trusts both the schema and the instances). A validation whose match reaches it raises `PatternMatchLimitError`:
+  the instance is then neither valid nor not valid. A schema with a regular expression over a limit of size
+  (1,048,576 bytes, 1,000 levels of groups, or about 16,000 terms) raises `PatternTooLargeError`, which is a
+  `SchemaCompilationError`.
 - There is no generated source: no `Validator.source` and no `generate_module`.
 - `is_valid_json(text)` validates JSON text (`str` or `bytes`) without creating Python objects for it.
 - Subclasses of `dict`, `list`, `str`, `int` and `float` (an `OrderedDict`, a string enum) are read as their bases,
