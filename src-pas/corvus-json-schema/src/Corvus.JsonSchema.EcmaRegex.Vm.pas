@@ -40,8 +40,8 @@ const
   StopMemory = 2;
 
   { CheckEvery is the number of steps the matcher takes between two looks at the clock and at the depth of its
-    stack. A step is one instruction, and eight characters of a single character loop or of a backreference. A
-    step takes some tens of nanoseconds, so the clock is read some tens of microseconds apart (44 to
+    stack. A step is one instruction, and eight characters of a single character loop, of a backreference or of a
+    literal. A step takes some tens of nanoseconds, so the clock is read some tens of microseconds apart (44 to
     128 were measured), a match that ends before its first check never reads it, and a match goes past its limit
     by that much at most, and by the millisecond the clock counts in. }
   CheckEvery = 1 shl 12;
@@ -266,17 +266,34 @@ begin
   Result := True;
 end;
 
-{ IndexOf returns the first position at or after At where the bytes of Lit are in the text, or -1. }
+{ IndexOf returns the first position at or after At where the first bytes of Lit are in the text and the rest of
+  Lit fits, or -1. It compares PrefixProbe bytes of Lit at most, so the search takes the text times that and not
+  the text times the length of Lit. The matcher is run at the position found, and compares every byte there. (Go
+  searches with bytes.Index, which takes time proportional to the text.) }
 function IndexOf(const Text: TBytes; At, Hi: Int32; const Lit: TBytes): Int32;
+const
+  PrefixProbe = 16;
 var
-  Last: Int32;
+  Last, N, K: Int32;
   First: UInt8;
+  Same: Boolean;
 begin
   Last := Hi - Length(Lit);
+  N := Length(Lit);
+  if N > PrefixProbe then
+    N := PrefixProbe;
   First := Lit[0];
   while At <= Last do begin
-    if (Text[At] = First) and EqualLit(Text, At, Lit) then
-      Exit(At);
+    if Text[At] = First then begin
+      Same := True;
+      for K := 1 to N - 1 do
+        if Text[At + K] <> Lit[K] then begin
+          Same := False;
+          Break;
+        end;
+      if Same then
+        Exit(At);
+    end;
     Inc(At);
   end;
   Result := -1;
@@ -386,10 +403,15 @@ begin
           end;
         end;
       OpLit:
-        if (Hi - Pos >= Length(I^.Lit)) and EqualLit(Text, Pos, I^.Lit) then begin
-          Inc(Pos, Length(I^.Lit));
-          Inc(Pc);
-          Continue;
+        if Hi - Pos >= Length(I^.Lit) then begin
+          // The bytes are compared one at a time here, so a long literal is charged for. (Go compares with
+          // bytes.Equal, which is much faster for each byte, and does not charge.)
+          Dec(Steps, Length(I^.Lit) shr 3);
+          if EqualLit(Text, Pos, I^.Lit) then begin
+            Inc(Pos, Length(I^.Lit));
+            Inc(Pc);
+            Continue;
+          end;
         end;
       OpCharBack:
         if Pos > Lo then begin

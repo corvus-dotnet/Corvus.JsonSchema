@@ -29,6 +29,7 @@ uses
   SysUtils,
   Corvus.JsonSchema.EcmaRegex,
   Corvus.JsonSchema.EcmaRegex.Vm,
+  Corvus.JsonSchema.Pattern,
   Corvus.JsonSchema;
 
 const
@@ -636,6 +637,78 @@ begin
   end;
 end;
 
+(* TestTheMatchersWithNoLimitReadTheTextABoundedNumberOfTimes checks the matchers that are not the engine, which
+  have no limit and so must take time proportional to the text. Three shapes did not:
+
+    - a class sequence that is not anchored is tried at every position, and one 50,000 characters wide took the
+      width times the text: "[a-z]{50000}[0-9]|x" took 5 seconds on 100,000 characters;
+    - a literal that is not anchored is searched for at every position, the same way;
+    - the final sequence of a list is tried after every item, and one that reads through the separators, or that
+      is matched by the length of what is left, read to the end of the text each time:
+      "^(?:[a-z]+,)*[a-z,]+[0-9]$" took 8 seconds on 33,333 items.
+
+  Each of those is now left to the engine, which has the limit. The shapes beside them that read a bounded part of
+  the text at each position keep their matcher. On a text of a million characters the old matchers took minutes,
+  and every pattern here must end, in an answer or in the error of the limit, in the time a test allows. *)
+procedure TestTheMatchersWithNoLimitReadTheTextABoundedNumberOfTimes;
+var
+  Long, Items, Error: UTF8String;
+  K: Int32;
+
+  procedure Shape(const Pattern, Text: UTF8String; Kind: TMatcherKind);
+  var
+    P: TPattern;
+    V: IJsonSchemaValidator;
+    Start, Took: Int64;
+  begin
+    if not CompilePattern(Pattern, P) then begin
+      Check(False, Copy(Pattern, 1, 40) + ' does not compile');
+      Exit;
+    end;
+    Check(P.Kind = Kind, Copy(Pattern, 1, 40) + ' has the matcher ' + Number(Ord(P.Kind)) + ', want '
+      + Number(Ord(Kind)));
+    V := CompileJsonSchema('{"pattern": "' + Pattern + '"}');
+    Start := MonotonicMilliseconds;
+    Check(not V.TryIsValid('"' + Text + '"', Error), Copy(Pattern, 1, 40) + ' matches');
+    Took := MonotonicMilliseconds - Start;
+    Check(Took <= Generous, Copy(Pattern, 1, 40) + ' took ' + Number(Took) + ' ms on ' + Number(Length(Text))
+      + ' characters');
+    Check((Error = '') or (Pos('A match of the regular expression', Error) = 1), Copy(Pattern, 1, 40) + ': '
+      + Error);
+  end;
+
+begin
+  SetLength(Long, 1000000);
+  FillChar(Long[1], Length(Long), Ord('a'));
+  SetLength(Items, 999999);
+  for K := 0 to 333332 do begin
+    Items[3 * K + 1] := 'a';
+    Items[3 * K + 2] := 'b';
+    Items[3 * K + 3] := ',';
+  end;
+  // Tried at every position, and wide.
+  Shape('[a-z]{50000}[0-9]|x', Long, MatchEngine);
+  Shape('[a-z]{65}[0-9]|x', Long, MatchEngine);
+  Shape(Rep('a', 65) + 'b|x', Long, MatchEngine);
+  // Tried at every position, and narrow.
+  Shape('[a-z]{63}[0-9]|x', Long, MatchAlternatives);
+  Shape(Rep('a', 63) + 'b|x', Long, MatchAlternatives);
+  // Anchored, so tried once.
+  Shape('^[a-z]{50000}[0-9]|^x', Long, MatchAlternatives);
+  Shape('[a-z]{50000}[0-9]$|^x', Long, MatchAlternatives);
+  // A list whose final sequence reads through the separators, or is matched by length.
+  Shape('^(?:[a-z]+,)*[a-z,]+[0-9]$', Items, MatchEngine);
+  Shape('^(?:[a-z]+,)*[a-z,]*[0-9]$', Items, MatchEngine);
+  Shape('^(?:[a-z]+,)*[a-z]*[a-z]{2}$', Items, MatchEngine);
+  // A list whose final sequence stops at a separator.
+  Shape('^(?:[a-z]+,)*[a-z]{2}[0-9]$', Items, MatchSeparatedList);
+  Shape('^(?:[a-z]+,)*[a-z]+[0-9]$', Items, MatchSeparatedList);
+  Shape('^(?:[a-z]+,)*[a-z]*[0-9]$', Items, MatchSeparatedList);
+  Shape('^[a-z]+(?:,[a-z]+)*$', Items, MatchSeparatedList);
+  // A long literal the engine searches for.
+  Shape(Rep('a', 15000) + 'b(?=c)', Long, MatchEngine);
+end;
+
 begin
   Checks := 0;
   Failures := 0;
@@ -652,6 +725,7 @@ begin
   TestAMatchThatReachesItsMemoryLimitIsAnError;
   TestAMatchWhileCompilingHasTheLimit;
   TestAnOrdinaryPatternIsNotAffectedByTheLimit;
+  TestTheMatchersWithNoLimitReadTheTextABoundedNumberOfTimes;
   JsonSchemaReleaseThreadScratch;
   WriteLn(Checks - Failures, '/', Checks, ' checks passed');
   if Failures <> 0 then

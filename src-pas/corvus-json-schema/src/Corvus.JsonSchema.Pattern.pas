@@ -201,6 +201,9 @@ uses
 const
   { At most this many alternatives after expanding groups. }
   MaxAlternatives = 64;
+  { The widest class sequence, in characters, and the longest literal, in bytes, that is searched for at every
+    position of a text. The search takes the text times this. }
+  MaxAnywhereWidth = 64;
   { At most this many alternatives when any is a class sequence: beyond it, trying each in turn is slower than one
     pass of the engine. }
   MaxSequenceAlternatives = 4;
@@ -692,6 +695,21 @@ end;
 { --------------------------------------------------------------------------------------------------------------------
   Class sequences }
 
+{ FinalStopsAt reports whether the final sequence of a list cannot read past the separator that follows an item:
+  no item of it holds a character the first item of the separator holds. Tried at the start of an item, it then
+  fails at that separator at the latest, so trying it after every item reads the text a bounded number of times.
+  A final sequence that can read through separators would read to the end of the text from every item. }
+function FinalStopsAt(const Final: TSequence; const Separator: TCharSet): Boolean;
+var
+  I: Int32;
+begin
+  Result := False;
+  for I := 0 to Length(Final.Items) - 1 do
+    if not SetDisjoint(Final.Items[I].Chars, Separator) then
+      Exit;
+  Result := True;
+end;
+
 { GreedyBefore reports whether greedy matching is exact when Next can follow the items Items[From .. Stop-1]:
   every variable item is disjoint from the items that can directly follow it (up to the first that cannot match
   nothing), Next included. }
@@ -925,14 +943,6 @@ begin
   Result := not Q.ToEnd or (At = Stop);
 end;
 
-function MatchSeq(const Q: TSequence; const S: TBytes; At, Stop: NativeInt): Boolean;
-begin
-  if IsASCII(S, At, Stop) then
-    Result := MatchASCII(Q, S, At, Stop)
-  else
-    Result := MatchChars(Q, S, At, Stop);
-end;
-
 { Consume greedily matches the items at the start of S[At .. Stop-1] (ignoring ToEnd): the bytes taken, or -1. }
 function Consume(const Q: TSequence; const S: TBytes; At, Stop: NativeInt): NativeInt;
 var
@@ -964,9 +974,14 @@ function ListMatch(const L: TSeparatedList; const S: TBytes; At, Stop: NativeInt
 var
   Repeats: UInt32;
   N, M: NativeInt;
+  Ascii, Matched: Boolean;
 begin
   Result := False;
   Repeats := 0;
+  { Whether the text is ASCII is worked out once, for the whole of it. The final sequence is tried after every
+    item, and reading what is left of the text each time to see whether it is ASCII made the match take time
+    quadratic in the number of items. }
+  Ascii := L.HasFirst or IsASCII(S, At, Stop);
   if L.HasFirst then begin
     N := Consume(L.First, S, At, Stop);
     if N < 0 then
@@ -989,9 +1004,15 @@ begin
     end;
   end;
   while True do begin
-    if (Repeats >= L.MinRepeats) and MatchSeq(L.Final, S, At, Stop) then begin
-      Result := True;
-      Exit;
+    if Repeats >= L.MinRepeats then begin
+      if Ascii then
+        Matched := MatchASCII(L.Final, S, At, Stop)
+      else
+        Matched := MatchChars(L.Final, S, At, Stop);
+      if Matched then begin
+        Result := True;
+        Exit;
+      end;
     end;
     N := Consume(L.Repeated, S, At, Stop);
     if N < 0 then
@@ -1211,9 +1232,16 @@ begin
       Exit;
     if not ParseSequence('^' + Unwrapped + '$', Final) then
       Exit;
+    { The final sequence is tried after every item, against all that is left of the text. A sequence matched by
+      the length of the text reads that length each time. Neither it nor any other is to read far, or the match
+      takes time quadratic in the number of items: so a pattern is a list only when the final sequence is not one
+      matched by length (see FinalStopsAt below for the rest of the rule). }
+    if Final.Pinned >= 0 then
+      Exit;
     for K := 1 to Count - 1 do
       { What is repeated is the first K items and the separator the rest. }
-      if FixedItems(GroupItems, K, Count) and GreedyBefore(GroupItems, 0, K, GroupItems[K].Chars) then begin
+      if FixedItems(GroupItems, K, Count) and GreedyBefore(GroupItems, 0, K, GroupItems[K].Chars)
+        and FinalStopsAt(Final, GroupItems[K].Chars) then begin
         L.Repeated := GreedySequence(GroupItems, 0, K);
         L.Separator := GreedySequence(GroupItems, K, Count);
         L.Final := Final;
@@ -1566,6 +1594,11 @@ begin
       AtEnd := True;
     end;
     if LiteralText(Body, Text) then begin
+      { A literal that is anchored at neither end is searched for at every position of the text. }
+      if (not AtStart) and (not AtEnd) and (Length(Text) > MaxAnywhereWidth) then begin
+        Alts := nil;
+        Exit;
+      end;
       Alts[Count].Text := BytesOf(Text);
       Alts[Count].AtStart := AtStart;
       Alts[Count].AtEnd := AtEnd;
@@ -1599,8 +1632,16 @@ begin
       Width := High(Int32);
     if AtEnd then
       Alts[Count].Kind := AltEnd
-    else
+    else begin
+      { A sequence that is not anchored is tried at every position of the text, and reads its width at each. A
+        wide one would take the width times the text, so it is left to the engine, which has the limit of a
+        match. }
+      if Width > MaxAnywhereWidth then begin
+        Alts := nil;
+        Exit;
+      end;
       Alts[Count].Kind := AltAnywhere;
+    end;
     Alts[Count].Width := Int32(Width);
     Inc(Count);
   end;
