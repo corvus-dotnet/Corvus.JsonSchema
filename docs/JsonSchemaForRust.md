@@ -113,20 +113,33 @@ differently from ECMA-262 it is given another pattern with the same meaning.
   string can hold. That covers lookaheads and lookbehinds, with none refused (`regress` matches a lookbehind
   backwards, as ECMA-262 does), backreferences into and out of repetitions and lookarounds, modifier groups, and
   case-insensitive matching in both grammars, a case-insensitive backreference without the `u` flag among it.
-- **Refused.** One kind of valid pattern does not compile, and the error says that it is valid and too large: a
-  repetition inside a repetition whose body can match the empty string, with a minimum too large to write out as
-  copies, or with a count too large to write out and a group that a backreference outside the repetition reads.
-  `^(?!-)(?:(?:(a)|){1,300}\1-)+$` is one. The same pattern with a count of 30 compiles.
-- **Not proved exact.** A repetition inside a repetition with a count too large to write out as copies, such as
-  `(?:a|x){1,300}`, keeps its count, and `regress` can lose it and run the repetition more times than its maximum.
-  No pattern of the test data shows a wrong answer for it.
+- **Exact by construction.** `regress` can lose the count of a repetition that is inside another repetition, when
+  the match comes back into an earlier run of it. Such a repetition is never given to `regress` with a count. It is
+  written as copies of its body, whatever the count, in chunks where the copies are too many to write one inside
+  another, and tried in the order the iterations are. `^(?!-)(?:(?:(a)|){1,300}\1-)+$` compiles, and the
+  backreference reads the last iteration that ran. Every other repetition keeps its count, which `regress` has
+  right: one that is entered once, one whose body leaves no choice behind (`[a-z]{1,300}`), and `X*` over a body
+  that cannot be empty.
+- **Refused as too large.** A valid pattern does not compile when what is written for `regress` comes to more than
+  65,536 characters, and the error says that it is valid and too large: about five thousand copies of a body of
+  seven characters, as in `^(?!-)(?:(?:a|x){1,5000}-)+$`, or fewer of a longer body. The copies of a repetition
+  multiply with those of the repetitions around it, so `^(?!-)(?:(?:(?:a|x){1,300}-?){1,300}-)+$` is refused. The
+  limit bounds what a pattern costs to compile. It is not run with a count that can be lost.
+- **Not bounded.** The time of a match is not. `regress` backtracks, and `^(?=.)(a+)+$` takes time that doubles
+  with each `a` of a string of them that ends in another character. Take care with patterns from a source you do
+  not trust.
 - **Where V8 departs from ECMA-262,** the crate follows ECMA-262. With the `u` flag V8 starts a match between the two
   halves of a surrogate pair (`/\B/u` matches inside the one character of `"a\u{10428}a"`), compares a
   case-insensitive backreference to a group of several characters by full case folding, and answers some
-  case-insensitive modifier groups differently from the same pattern with the `i` flag.
-- **Unicode versions.** Case-insensitive matching with the `u` flag uses the tables of `regress` (Unicode 17 in 0.12),
-  and without the flag the uppercase forms of the Rust standard library. They agree with V8 13.6 on every character
-  of Unicode 16.
+  case-insensitive modifier groups differently from the same pattern with the `i` flag. V8 13.6 also takes three
+  things that are not patterns in ECMA-262, and the crate refuses them: `\p{WSpace}`, a count whose first number is
+  the greater when the numbers are large (`a{2147483648,2147483647}`), and a name of two groups that can both take
+  part in one match (`(|((?<m>))(?<m>|))`). It refuses the Script value `Hrkt` (`Katakana_Or_Hiragana`), which
+  ECMA-262 has, and the crate takes it: no character has it, so `\p{sc=Hrkt}` matches nothing.
+- **Unicode versions.** Properties and case-insensitive matching with the `u` flag use the tables of `regress`
+  (Unicode 17 in 0.12), and without the flag the uppercase forms of the Rust standard library. They agree with V8
+  13.6 on every character of Unicode 16. The four scripts Unicode 17 adds (`Sidetic`, `Tolong_Siki`, `Beria_Erfe`,
+  `Tai_Yo`) are scripts here, where V8 13.6 does not know them.
 - **Lone surrogates.** A JSON string with the escape of half of a surrogate pair is not a Rust string.
   `validate_json` and `serde_json` both refuse such a document as not valid JSON.
 

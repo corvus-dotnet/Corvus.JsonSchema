@@ -87,25 +87,42 @@ this way, through CPython's C API.
   in a pattern without the `u` flag is exact too. `regress` equates 31 pairs of code units there that ECMA-262 does
   not (`i` with U+0131 and `s` with U+017F among them), and the pattern it is given refuses those.
 
-  **What is refused.** A valid pattern does not compile in one case, and the error says that it is valid and too
-  large. It has a repetition inside a repetition, with a body that can match the empty string, and either a minimum
-  too large to write out as copies (`(?:a|){100000}` inside another repetition) or a group that a backreference
-  outside the repetition reads while its count is too large to write out (`(?:(?:(a)|){1,300}\1-)+`). The limits are
-  65,536 characters for the pattern `regress` is given and the 256 levels of groups it reads.
+  **What is exact by construction.** `regress` loses the count of a repetition in one way: the match comes back,
+  after a later run of the repetition, to a choice inside the body of an iteration of an earlier run. A repetition
+  that can be reached so (it is inside a repetition that can run twice, its body has a choice in it, and it is not
+  `X*` over a body that cannot be empty) is never given to `regress` with a count. It is written as copies of its
+  body, whatever the count: `X{m,n}` as `m` copies and `n - m` optional ones, each a group inside the one before.
+  `regress` reads 256 levels of groups, so more optional copies than that are written in chunks, one after another,
+  tried in the order the iterations are. A backreference outside the repetition reads the last iteration that ran.
+  Many iterations of one character that may be left out, as `(?:a|){100000}`, are up to as many of the character.
 
-  **What is not proved exact.** A repetition inside a repetition that is too large to write out as copies keeps its
-  count (`(?:a|x){1,300}`, and `(?:a|){1,300}` for its iterations after the first). `regress` can lose the count of
-  such a repetition when it comes back into it, and then run it more times than its maximum. No pattern of the test
-  data or of the tests shows a wrong answer for it.
+  **What is left to `regress`.** Every other repetition keeps its count, and `regress` has it right: one that is
+  entered once on its backtrack stack (it is not inside a repetition that can run twice, or it is in a lookaround,
+  which has a stack of its own), one whose body leaves no choice behind (`[a-z]{1,300}`, `(?:ab){300}`), and `X*`
+  over a body that cannot be empty, which reads its count for nothing. That is read from the matcher of `regress`
+  0.12.0, and the test data and the fuzz sets have no wrong answer for any of them.
+
+  **What is refused.** A valid pattern does not compile when what is written for `regress` comes to more than
+  65,536 characters, and the error says that it is valid and too large. That is about five thousand copies of a
+  body of seven characters (`(?:a|x){1,5000}` inside another repetition), and the copies of a repetition multiply
+  with those of the repetitions around it (`(?:(?:a|x){1,300}-?){1,300}` inside a third). Such a pattern is not run
+  with a count that can be lost. The limit bounds what compiling a pattern costs. Matching is not bounded: `regress`
+  backtracks, and a pattern such as `^(?=.)(a+)+$` takes time that doubles with each character of some strings.
 
   **Where V8 departs from ECMA-262,** the crate follows ECMA-262. With the `u` flag V8 starts a match between the two
   halves of a surrogate pair, compares a case-insensitive backreference to a group of several characters by full
   case folding, and answers some case-insensitive modifier groups differently from the same pattern with the `i`
-  flag. The test data marks those records.
+  flag. The test data marks those records. V8 13.6 also differs in what it takes as a pattern. It takes
+  `\p{WSpace}`, a count whose first number is the greater when the numbers are large
+  (`a{2147483648,2147483647}`), and a name of two groups that can both take part in one match
+  (`(|((?<m>))(?<m>|))`), none of which ECMA-262 allows, and the crate refuses them. It refuses the Script value
+  `Hrkt` (`Katakana_Or_Hiragana`), which is in Unicode's list of values, and the crate takes it (no character has
+  it, so it matches nothing).
 
-  **Unicode versions.** Case-insensitive matching with the `u` flag uses the case folding tables of `regress` (Unicode
-  17 in 0.12), and without the flag the uppercase forms of the Rust standard library. V8 13.6 has Unicode 16. They
-  agree on every character of Unicode 16.
+  **Unicode versions.** Properties and case-insensitive matching with the `u` flag use the tables of `regress`
+  (Unicode 17 in 0.12), and without the flag the uppercase forms of the Rust standard library. V8 13.6 has Unicode
+  16. They agree on every character of Unicode 16. The four scripts Unicode 17 adds (`Sidetic`, `Tolong_Siki`,
+  `Beria_Erfe`, `Tai_Yo`) are scripts here, where V8 13.6 does not know them.
 
   **Lone surrogates.** A JSON string with the escape of half of a surrogate pair (`"\ud800"`) is not a Rust string.
   `validate_json` and `serde_json` both refuse the document as not valid JSON.
