@@ -31,7 +31,7 @@ public delegate Regex? JsonSchemaRegexProvider(int index, string ecmaPattern);
 public sealed class JsonSchemaEvaluatorOptions
 {
     /// <summary>
-    /// The default of <see cref="RegexMatchTimeout"/>: 10 seconds.
+    /// The default of <see cref="RegexMatchTimeout"/>: 1 second.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -50,7 +50,7 @@ public sealed class JsonSchemaEvaluatorOptions
     /// the evaluator did before this default.
     /// </para>
     /// </remarks>
-    public static readonly TimeSpan DefaultRegexMatchTimeout = TimeSpan.FromSeconds(10);
+    public static readonly TimeSpan DefaultRegexMatchTimeout = TimeSpan.FromSeconds(1);
 
     /// <summary>
     /// Gets the default options.
@@ -103,7 +103,7 @@ public sealed class JsonSchemaEvaluatorOptions
 
     /// <summary>
     /// Gets or sets the match timeout for the regular expressions the evaluator constructs. Defaults to
-    /// <see cref="DefaultRegexMatchTimeout"/> (10 seconds).
+    /// <see cref="DefaultRegexMatchTimeout"/> (1 second).
     /// </summary>
     /// <remarks>
     /// <para>

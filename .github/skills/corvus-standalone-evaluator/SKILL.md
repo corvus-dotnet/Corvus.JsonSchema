@@ -57,7 +57,7 @@ records every keyword and the annotations.
   `Create()` compiling the root with `CompileFromUri` and `ForEntryPoint(...)` per entry, dialect and
   `AssertFormat` options.
 - `RuntimeProgramGenerator.GenerateStandaloneEvaluator` — the evaluator shim over one entry.
-- Regular expressions have a match timeout of 10 seconds, from the one constant
+- Regular expressions have a match timeout of 1 second, from the one constant
   `CodeGenerationExtensions.RegexMatchTimeoutMilliseconds`: on each `[GeneratedRegex]`, in the program's
   `RegexMatchTimeout` option, and on the expressions of the generated types. A match that exceeds it throws
   `RegexMatchTimeoutException` to the caller. The runtime evaluator's own default is

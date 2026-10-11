@@ -65,9 +65,9 @@ public class V4SourceGeneratorRegexPatternTests
 
         string[] expected =
         [
-            """private static Regex CreatePattern() => new("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.Compiled | RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(10000));""",
-            """private static Regex CreatePattern() => new("^(?:a|aa)+\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
-            """private static Regex CreatePatternProperties() => new("^(?:a|aa)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """private static Regex CreatePattern() => new("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.Compiled | RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(1000));""",
+            """private static Regex CreatePattern() => new("^(?:a|aa)+\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));""",
+            """private static Regex CreatePatternProperties() => new("^(?:a|aa)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))

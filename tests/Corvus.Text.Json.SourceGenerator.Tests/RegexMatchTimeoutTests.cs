@@ -9,7 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Corvus.Text.Json.SourceGenerator.Tests;
 
 /// <summary>
-/// The code the source generator emits has the regular expression match timeout of 10 seconds. Roslyn does not chain
+/// The code the source generator emits has the regular expression match timeout of 1 second. Roslyn does not chain
 /// generators, so there is no <c>[GeneratedRegex]</c> in it: a generated type constructs its expression, and the
 /// program's options give the evaluator the timeout for the expressions it constructs.
 /// </summary>
@@ -75,8 +75,8 @@ public class RegexMatchTimeoutTests
 
         string[] expected =
         [
-            """RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(10000),""",
-            """private static Regex CreatePatternProperties() => new("^(?:a|aa)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(1000),""",
+            """private static Regex CreatePatternProperties() => new("^(?:a|aa)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))

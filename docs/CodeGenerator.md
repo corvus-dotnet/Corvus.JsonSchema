@@ -274,7 +274,7 @@ The tool generates:
 
 - **Type-safe property accessors**: `person.Name` returns a strongly-typed string value
 - **Validation**: `person.EvaluateSchema()` validates against the full schema. A `pattern` whose match runs for
-  longer than 10 seconds throws `RegexMatchTimeoutException` (see
+  longer than 1 second throws `RegexMatchTimeoutException` (see
   [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated)). A `pattern` or `patternProperties` pattern that is
   not a valid ECMA-262 regular expression stops the generation with an error that names it (see
   [EcmaRegexTranslator.md](EcmaRegexTranslator.md#where-an-invalid-pattern-is-refused)). Both hold for the V4 engine too: its types throw the exception from `Validate()`

@@ -34,13 +34,13 @@ emits one `CorvusJsonSchemaProgram` class in the default namespace:
   to the common directory of all file documents, so no build-machine path reaches the generated code;
   documents with an absolute `$id` are keyed by that `$id`. Relative `$ref`s between documents resolve
   within the same scheme, so the keys are consistent.
-- **Regular expression match timeout.** Every expression has a match timeout of 10 seconds
+- **Regular expression match timeout.** Every expression has a match timeout of 1 second
   (`CodeGenerationExtensions.RegexMatchTimeoutMilliseconds`, the one place the generator holds the value). Each
-  `[GeneratedRegex]` of the program carries `matchTimeoutMilliseconds: 10000`, and the options the program is
+  `[GeneratedRegex]` of the program carries `matchTimeoutMilliseconds: 1000`, and the options the program is
   loaded with set `RegexMatchTimeout` to the same value, for the expressions the evaluator constructs (all of
   them where there is no regex generator, and all of them in a program from the Roslyn source generator). The
   expressions a generated type holds for its own helpers (`[GeneratedRegex(pattern, RegexOptions.None,
-  matchTimeoutMilliseconds: 10000)]`, or `new Regex(pattern, RegexOptions.Compiled, TimeSpan)` where there is no
+  matchTimeoutMilliseconds: 1000)]`, or `new Regex(pattern, RegexOptions.Compiled, TimeSpan)` where there is no
   regex generator) have it too. A match that runs for longer throws `RegexMatchTimeoutException` to the caller.
 - **Patterns.** Every pattern is the translation `EcmaRegexTranslator` writes for it
   ([EcmaRegexTranslator.md](EcmaRegexTranslator.md)), in the program and in the generated types alike. A pattern

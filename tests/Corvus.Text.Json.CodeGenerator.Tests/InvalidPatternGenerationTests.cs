@@ -55,7 +55,7 @@ public class InvalidPatternGenerationTests
 
         string[] expected =
         [
-            """[GeneratedRegex("^a-b+\\{\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]""",
+            """[GeneratedRegex("^a-b+\\{\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))
@@ -82,8 +82,8 @@ public class InvalidPatternGenerationTests
 
         string[] expected =
         [
-            """[GeneratedRegex("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10000)]""",
-            """private static Regex CreatePatternProperties() => new("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.Compiled | RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """[GeneratedRegex("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]""",
+            """private static Regex CreatePatternProperties() => new("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.Compiled | RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(1000));""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))
@@ -111,7 +111,7 @@ public class InvalidPatternGenerationTests
         Assert.AreEqual(1, lines.Length);
         Assert.IsTrue(lines[0].Length > 100_000, $"{lines[0].Length} characters");
         Assert.IsFalse(lines[0].Contains("RegexOptions.Compiled", StringComparison.Ordinal));
-        StringAssert.EndsWith(lines[0], """, RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(10000));""");
+        StringAssert.EndsWith(lines[0], """, RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(1000));""");
     }
 
     /// <summary>
@@ -136,7 +136,7 @@ public class InvalidPatternGenerationTests
 
         string[] expected =
         [
-            """private static Regex CreatePatternProperties() => new("(?#interpreted)(?=(?<1>(?:(?:ab)(?:(?:ab))??)??)c)(?(1)\\1)", RegexOptions.None, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """private static Regex CreatePatternProperties() => new("(?#interpreted)(?=(?<1>(?:(?:ab)(?:(?:ab))??)??)c)(?(1)\\1)", RegexOptions.None, global::System.TimeSpan.FromMilliseconds(1000));""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))

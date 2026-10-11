@@ -1512,10 +1512,10 @@ main-docs:
       - {index: 0, language: xml, lines: [19, 26]}
       - {index: 1, language: csharp, lines: [30, 33], category: compilable, verified: false}
       - {index: 2, language: bash, lines: [41, 53]}
-      - {index: 3, language: csharp, lines: [95, 123], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [131, 157], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [163, 171], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [177, 183], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [96, 124], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [132, 158], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [164, 172], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [178, 184], category: compilable, verified: false}
   - path: "docs/SourceGenerator.md"
     blocks:
       - {index: 0, language: xml, lines: [15, 21]}

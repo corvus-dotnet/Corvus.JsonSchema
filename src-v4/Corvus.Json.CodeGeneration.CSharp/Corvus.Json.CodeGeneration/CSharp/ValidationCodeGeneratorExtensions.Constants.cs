@@ -15,12 +15,12 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 public static partial class ValidationCodeGeneratorExtensions
 {
     /// <summary>
-    /// The match timeout of every regular expression generated code holds, in milliseconds. A match that runs for
-    /// longer throws <see cref="System.Text.RegularExpressions.RegexMatchTimeoutException"/> to the caller. .NET's
-    /// engine does not return from a match of some patterns, and takes time exponential in the length of the text
-    /// for others.
+    /// The match timeout of every regular expression generated code holds, in milliseconds: 1 second. A match that
+    /// runs for longer throws <see cref="System.Text.RegularExpressions.RegexMatchTimeoutException"/> to the caller.
+    /// .NET's engine does not return from a match of some patterns, and takes time exponential in the length of the
+    /// text for others.
     /// </summary>
-    internal const int RegexMatchTimeoutMilliseconds = 10_000;
+    internal const int RegexMatchTimeoutMilliseconds = 1_000;
 
     private static CodeGenerator AppendValidationConstantFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {

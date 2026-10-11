@@ -10,7 +10,7 @@ namespace Corvus.Text.Json.Validator.Tests;
 
 /// <summary>
 /// A validation whose regular expression match does not finish throws <see cref="RegexMatchTimeoutException"/> at
-/// the timeout of <see cref="JsonSchema.Options.RegexMatchTimeout"/>, which is the evaluator's 10 seconds unless the
+/// the timeout of <see cref="JsonSchema.Options.RegexMatchTimeout"/>, which is the evaluator's 1 second unless the
 /// options say otherwise.
 /// </summary>
 [TestClass]
@@ -23,15 +23,15 @@ public class RegexMatchTimeoutTests
     private static readonly string SlowText = "\"" + new string('a', 48) + "#\"";
 
     [TestMethod]
-    public void TheDefaultIsTenSeconds()
+    public void TheDefaultIsOneSecond()
     {
-        Assert.AreEqual(TimeSpan.FromSeconds(10), JsonSchema.Options.Default.RegexMatchTimeout);
-        Assert.AreEqual(TimeSpan.FromSeconds(10), new JsonSchema.Options().RegexMatchTimeout);
-        Assert.AreEqual(TimeSpan.FromSeconds(10), new JsonSchema.Options(alwaysAssertFormat: false).RegexMatchTimeout);
+        Assert.AreEqual(TimeSpan.FromSeconds(1), JsonSchema.Options.Default.RegexMatchTimeout);
+        Assert.AreEqual(TimeSpan.FromSeconds(1), new JsonSchema.Options().RegexMatchTimeout);
+        Assert.AreEqual(TimeSpan.FromSeconds(1), new JsonSchema.Options(alwaysAssertFormat: false).RegexMatchTimeout);
 
         // The constructors that have no parameter for it.
-        Assert.AreEqual(TimeSpan.FromSeconds(10), new JsonSchema.Options(null, true, JsonSchemaDialect.Draft202012, true, null).RegexMatchTimeout);
-        Assert.AreEqual(TimeSpan.FromSeconds(10), new JsonSchema.Options(null, true, JsonSchemaDialect.Draft202012, true, null, JsonSchemaCodeGeneration.Disabled).RegexMatchTimeout);
+        Assert.AreEqual(TimeSpan.FromSeconds(1), new JsonSchema.Options(null, true, JsonSchemaDialect.Draft202012, true, null).RegexMatchTimeout);
+        Assert.AreEqual(TimeSpan.FromSeconds(1), new JsonSchema.Options(null, true, JsonSchemaDialect.Draft202012, true, null, JsonSchemaCodeGeneration.Disabled).RegexMatchTimeout);
     }
 
     [TestMethod]
@@ -60,7 +60,10 @@ public class RegexMatchTimeoutTests
         Assert.IsTrue(schema.Validate("\"aaa\""));
 
         TimeSpan elapsed = AssertThrowsTimeout(schema, TimeSpan.FromSeconds(30));
-        Assert.IsTrue(elapsed >= TimeSpan.FromSeconds(9), $"The match stopped after {elapsed}, before the default timeout.");
+        Assert.IsTrue(elapsed >= TimeSpan.FromMilliseconds(900), $"The match stopped after {elapsed}, before the default timeout.");
+
+        // The default is 1 second. The bound is several times that, for a machine that is busy.
+        Assert.IsTrue(elapsed < TimeSpan.FromSeconds(8), $"The match stopped after {elapsed}, long after the default timeout.");
     }
 
     [TestMethod]

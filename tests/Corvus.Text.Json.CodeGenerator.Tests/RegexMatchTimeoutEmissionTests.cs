@@ -15,7 +15,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Corvus.Text.Json.CodeGenerator.Tests;
 
 /// <summary>
-/// Every regular expression in generated code has a match timeout of 10 seconds: the expressions of the generated
+/// Every regular expression in generated code has a match timeout of 1 second: the expressions of the generated
 /// types, in each of their forms, and the expressions of the schema evaluation program. There are patterns on which a
 /// match in .NET's engine never finishes, and with the timeout the generated code throws
 /// <see cref="RegexMatchTimeoutException"/> where it used not to return.
@@ -52,8 +52,8 @@ public class RegexMatchTimeoutEmissionTests
         // pattern keyword, which only the program matches.
         string[] expected =
         [
-            """Root.JsonSchema.cs: [GeneratedRegex("^(?:a|aa)+-\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]""",
-            """Root.JsonSchema.cs: private static Regex CreatePatternProperties() => new("^(?:a|aa)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """Root.JsonSchema.cs: [GeneratedRegex("^(?:a|aa)+-\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]""",
+            """Root.JsonSchema.cs: private static Regex CreatePatternProperties() => new("^(?:a|aa)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));""",
         ];
 
         AssertLines(expected, lines);
@@ -69,9 +69,9 @@ public class RegexMatchTimeoutEmissionTests
         // The options carry it for the expressions the evaluator constructs where there is no regex generator.
         string[] expected =
         [
-            """CorvusJsonSchemaProgram.cs: RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(10000),""",
-            """CorvusJsonSchemaProgram.cs: [GeneratedRegex("^(?:a|aa)+-\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10000)]""",
-            """CorvusJsonSchemaProgram.cs: [GeneratedRegex("^(?:a|aa)+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10000)]""",
+            """CorvusJsonSchemaProgram.cs: RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(1000),""",
+            """CorvusJsonSchemaProgram.cs: [GeneratedRegex("^(?:a|aa)+-\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]""",
+            """CorvusJsonSchemaProgram.cs: [GeneratedRegex("^(?:a|aa)+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]""",
         ];
 
         AssertLines(expected, lines);
@@ -86,14 +86,14 @@ public class RegexMatchTimeoutEmissionTests
 
         string[] expected =
         [
-            """CorvusJsonSchemaProgram.cs: RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(10000),""",
+            """CorvusJsonSchemaProgram.cs: RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(1000),""",
         ];
 
         AssertLines(expected, lines);
     }
 
     /// <summary>
-    /// The generated code is compiled and run. Its timeout is fixed at 10 seconds, so one evaluation here waits for
+    /// The generated code is compiled and run. Its timeout is fixed at 1 second, so one evaluation here waits for
     /// that long: validation of an instance whose property does not finish its match. The expression a generated type
     /// holds is not run to its timeout. It is checked for the timeout it was constructed with.
     /// </summary>
@@ -118,7 +118,7 @@ public class RegexMatchTimeoutEmissionTests
             Assert.AreEqual(1, expressions.Length, "The expression of the pattern property.");
             foreach (Regex expression in expressions)
             {
-                Assert.AreEqual(TimeSpan.FromSeconds(10), expression.MatchTimeout, expression.ToString());
+                Assert.AreEqual(TimeSpan.FromSeconds(1), expression.MatchTimeout, expression.ToString());
             }
 
             Func<string, bool> evaluate = assembly.GetType("TestGenerated.Runner", throwOnError: true)!
@@ -158,7 +158,7 @@ public class RegexMatchTimeoutEmissionTests
 
             Assert.IsFalse(returned, "The generated code returned an answer. The match was expected not to finish.");
             Assert.IsInstanceOfType<RegexMatchTimeoutException>(thrown);
-            Assert.IsTrue(elapsed.Elapsed >= TimeSpan.FromSeconds(9), $"The match stopped after {elapsed.Elapsed}, before the timeout.");
+            Assert.IsTrue(elapsed.Elapsed >= TimeSpan.FromMilliseconds(900), $"The match stopped after {elapsed.Elapsed}, before the timeout.");
         }
         finally
         {

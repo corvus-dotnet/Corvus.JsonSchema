@@ -24,6 +24,10 @@ public class RegexMatchTimeoutTests
 
     private static readonly string SlowText = "\"" + new string('a', 48) + "#\"";
 
+    // A run of "a" on which the interpreted engine takes several seconds to try every division (some sixty million
+    // of them) and then answers. Each "a" more multiplies the time by 1.6.
+    private const int LongerThanTheDefaultRun = 38;
+
     private static readonly TimeSpan ShortTimeout = TimeSpan.FromMilliseconds(250);
 
     // The wait for an evaluation whose timeout is the short one. A match with no timeout is a failed assertion at the
@@ -53,11 +57,11 @@ public class RegexMatchTimeoutTests
     }
 
     [TestMethod]
-    public void TheDefaultIsTenSeconds()
+    public void TheDefaultIsOneSecond()
     {
-        Assert.AreEqual(TimeSpan.FromSeconds(10), JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout);
-        Assert.AreEqual(TimeSpan.FromSeconds(10), new JsonSchemaEvaluatorOptions().RegexMatchTimeout);
-        Assert.AreEqual(TimeSpan.FromSeconds(10), JsonSchemaEvaluatorOptions.Default.RegexMatchTimeout);
+        Assert.AreEqual(TimeSpan.FromSeconds(1), JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout);
+        Assert.AreEqual(TimeSpan.FromSeconds(1), new JsonSchemaEvaluatorOptions().RegexMatchTimeout);
+        Assert.AreEqual(TimeSpan.FromSeconds(1), JsonSchemaEvaluatorOptions.Default.RegexMatchTimeout);
     }
 
 #if NET
@@ -104,7 +108,29 @@ public class RegexMatchTimeoutTests
 
         var elapsed = System.Diagnostics.Stopwatch.StartNew();
         AssertThrowsTimeout(() => evaluator.Evaluate(SlowText), DefaultWait);
-        Assert.IsTrue(elapsed.Elapsed >= TimeSpan.FromSeconds(9), $"The match stopped after {elapsed.Elapsed}, before the default timeout.");
+        Assert.IsTrue(elapsed.Elapsed >= TimeSpan.FromMilliseconds(900), $"The match stopped after {elapsed.Elapsed}, before the default timeout.");
+
+        // The default is 1 second. The bound is several times that, for a machine that is busy.
+        Assert.IsTrue(elapsed.Elapsed < TimeSpan.FromSeconds(8), $"The match stopped after {elapsed.Elapsed}, long after the default timeout.");
+    }
+
+    /// <summary>
+    /// With <see cref="Regex.InfiniteMatchTimeout"/> a match runs for as long as it takes, as it did before there was
+    /// a timeout. The text is sized so that the match takes several times the default timeout and then answers.
+    /// </summary>
+    [TestMethod]
+    public void WithTheTimeoutTurnedOffAMatchLongerThanTheDefaultTimeoutGivesItsAnswer()
+    {
+        const string schema = """{"type": "string", "pattern": "^(a|aa)+$"}""";
+        string text = "\"" + new string('a', LongerThanTheDefaultRun) + "#\"";
+
+        using JsonSchemaEvaluator limited = JsonSchemaEvaluator.Compile(schema, new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false });
+        AssertThrowsTimeout(() => limited.Evaluate(text), DefaultWait);
+
+        using JsonSchemaEvaluator unlimited = JsonSchemaEvaluator.Compile(
+            schema,
+            new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false, RegexMatchTimeout = Regex.InfiniteMatchTimeout });
+        Assert.IsFalse(unlimited.Evaluate(text));
     }
 
     /// <summary>

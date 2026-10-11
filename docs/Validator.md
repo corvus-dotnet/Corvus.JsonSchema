@@ -177,7 +177,7 @@ JsonSchema schema = JsonSchema.FromFile("person.json", options: options);
 | `additionalSchemaFiles` | `null` | Pre-load external schema files for `$ref` resolution. Each entry maps a canonical URI to a local file path; the file is also registered under its `$id` and its full path. |
 | `additionalDocumentResolver` | `null` | A `JsonSchemaDocumentResolver` delegate that supplies referenced documents from memory, consulted before the file system and HTTP. |
 | `codeGeneration` | `JsonSchemaCodeGeneration.Disabled` | Whether, and when, the schema is compiled to IL at run time. See [Runtime Code Generation](#runtime-code-generation). |
-| `regexMatchTimeout` | `null` (10 seconds) | How long one regular expression match may run before it throws `RegexMatchTimeoutException`. See [Regular Expression Match Timeout](#regular-expression-match-timeout). |
+| `regexMatchTimeout` | `null` (1 second) | How long one regular expression match may run before it throws `RegexMatchTimeoutException`. See [Regular Expression Match Timeout](#regular-expression-match-timeout). |
 
 ## Pre-loading Referenced Schemas
 
@@ -231,14 +231,14 @@ The [runtime evaluator guide](./RuntimeEvaluator.md#runtime-code-generation) has
 
 ## Regular Expression Match Timeout
 
-A `pattern` or `patternProperties` keyword that the evaluator cannot match by itself is matched by a .NET `Regex`. Some patterns take .NET's engine longer than anyone will wait, so each match has a timeout. It is 10 seconds unless the `regexMatchTimeout` option says otherwise:
+A `pattern` or `patternProperties` keyword that the evaluator cannot match by itself is matched by a .NET `Regex`. Some patterns take .NET's engine longer than anyone will wait, so each match has a timeout. It is 1 second unless the `regexMatchTimeout` option says otherwise:
 
 ```csharp
 using System;
 using Corvus.Text.Json.Validator;
 
 var options = new JsonSchema.Options(
-    regexMatchTimeout: TimeSpan.FromSeconds(1));
+    regexMatchTimeout: TimeSpan.FromSeconds(5));
 
 JsonSchema schema = JsonSchema.FromFile("./person-schema.json", options);
 ```

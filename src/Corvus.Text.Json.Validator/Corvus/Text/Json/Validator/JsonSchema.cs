@@ -377,8 +377,8 @@ public readonly struct JsonSchema
         /// Framework, native AOT) the setting is accepted and the schema is interpreted.</param>
         /// <param name="regexMatchTimeout">How long one regular expression match of a <c>pattern</c> or
         /// <c>patternProperties</c> keyword may run before it throws <see cref="RegexMatchTimeoutException"/> out of
-        /// the validation (defaults to <see cref="JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout"/>, 10
-        /// seconds). <see cref="Regex.InfiniteMatchTimeout"/> matches with no timeout.</param>
+        /// the validation (defaults to <see cref="JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout"/>, 1
+        /// second). <see cref="Regex.InfiniteMatchTimeout"/> matches with no timeout.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="regexMatchTimeout"/> is zero, negative and
         /// not <see cref="Regex.InfiniteMatchTimeout"/>, or longer than a regular expression accepts.</exception>
         public Options(

@@ -76,10 +76,11 @@ graph, so validation and annotation results are identical whichever entry you us
 generated code must reference `Corvus.Text.Json.RuntimeEvaluator`. See
 [StandaloneEvaluatorInternals.md](StandaloneEvaluatorInternals.md) for the emitted shape.
 
-Every regular expression of the program has a match timeout of 10 seconds, because some patterns take .NET's
+Every regular expression of the program has a match timeout of 1 second, because some patterns take .NET's
 engine longer than anyone will wait. A match that runs for longer throws `RegexMatchTimeoutException` out of `Evaluate` and
-`EvaluateSchema()`. The instance is not reported as invalid. The value is fixed in the generated code. To choose
-another, evaluate with the [runtime evaluator](RuntimeEvaluator.md#regular-expression-match-timeout) and set
+`EvaluateSchema()`. The instance is not reported as invalid. The value is fixed in the generated code, and the code
+has no setting that changes it. To choose another, or to match with no timeout, evaluate with the
+[runtime evaluator](RuntimeEvaluator.md#regular-expression-match-timeout) and set
 `JsonSchemaEvaluatorOptions.RegexMatchTimeout`.
 
 ## Annotation Collection

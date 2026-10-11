@@ -43,7 +43,7 @@ internal static partial class CodeGenerationExtensions
     private const string MutableClassNameKey = "CSharp_JsonSchema_MutableClassNameKey";
 
     /// <summary>
-    /// The match timeout, in milliseconds, of every regular expression in generated code: 10 seconds.
+    /// The match timeout, in milliseconds, of every regular expression in generated code: 1 second.
     /// </summary>
     /// <remarks>
     /// There are patterns on which a match in .NET's regular expression engine never finishes. With a timeout the
@@ -51,7 +51,7 @@ internal static partial class CodeGenerationExtensions
     /// generated code. This is the one place the generator holds the value. The runtime evaluator has the same
     /// default for the expressions it constructs, in <c>JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout</c>.
     /// </remarks>
-    internal const int RegexMatchTimeoutMilliseconds = 10_000;
+    internal const int RegexMatchTimeoutMilliseconds = 1_000;
 
     // Both end in \z and not in $, which in .NET also holds before a final line feed. A pattern that ends in a
     // line feed (^abc\n) is neither of these.

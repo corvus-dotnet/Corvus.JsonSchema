@@ -167,7 +167,7 @@ For each `[JsonSchemaTypeGenerator]` attribute, the generator produces a complet
 
 - **Type-safe property accessors** for every property defined in the schema
 - **Validation** via `EvaluateSchema()` with full draft 2020-12 (or earlier draft) support. A `pattern` whose match
-  runs for longer than 10 seconds throws `RegexMatchTimeoutException` (see
+  runs for longer than 1 second throws `RegexMatchTimeoutException` (see
   [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated)). A `pattern` or `patternProperties` pattern that is
   not a valid ECMA-262 regular expression is reported as an error of the generator and nothing is generated for
   the schema (see [EcmaRegexTranslator.md](EcmaRegexTranslator.md#where-an-invalid-pattern-is-refused))

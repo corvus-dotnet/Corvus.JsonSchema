@@ -229,7 +229,7 @@ length of the text (`^(a|aa)+$` on a long run of `a` that ends in another charac
 forms on which .NET's engines are known not to finish at all, but it cannot make a match fast.
 
 So a match has a timeout. `JsonSchemaEvaluatorOptions.RegexMatchTimeout` sets it, and its default is
-`JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout`, 10 seconds.
+`JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout`, 1 second.
 
 - A single match that runs for longer than the timeout throws `RegexMatchTimeoutException`. The exception leaves
   `Evaluate` and reaches the caller. The instance is not reported as invalid, because the evaluator does not know
@@ -248,7 +248,7 @@ using Corvus.Text.Json.RuntimeEvaluator;
 
 var options = new JsonSchemaEvaluatorOptions
 {
-    RegexMatchTimeout = TimeSpan.FromSeconds(1),
+    RegexMatchTimeout = TimeSpan.FromSeconds(5),
 };
 
 using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schemaUtf8, options);
@@ -258,7 +258,7 @@ try
 }
 catch (RegexMatchTimeoutException)
 {
-    // A match took longer than a second. The instance was neither accepted nor refused.
+    // A match took longer than five seconds. The instance was neither accepted nor refused.
 }
 ```
 

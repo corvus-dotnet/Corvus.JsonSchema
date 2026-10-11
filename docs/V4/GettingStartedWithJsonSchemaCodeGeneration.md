@@ -1009,8 +1009,8 @@ A generated type then gives the answer a JavaScript engine gives. Three things f
   `The pattern 'a{2,1}' of the keyword 'pattern' is not a valid ECMA-262 regular expression. Numbers out of order in {} quantifier at offset 6.`
   The source generator reports it as its `CRV1001` diagnostic. An earlier generator emitted such a pattern as
   it was, and the generated type threw when it first validated.
-- **A match has a timeout of 10 seconds.** Every regular expression a generated type holds is constructed with it
-  (`[GeneratedRegex(..., matchTimeoutMilliseconds: 10000)]`, or the `Regex` constructor where there is no regular
+- **A match has a timeout of 1 second.** Every regular expression a generated type holds is constructed with it
+  (`[GeneratedRegex(..., matchTimeoutMilliseconds: 1000)]`, or the `Regex` constructor where there is no regular
   expression generator). .NET's engine takes time exponential in the length of the text for some patterns, and
   does not return at all for a few. A match of a `pattern` or of a `patternProperties` name that runs for longer
   throws `RegexMatchTimeoutException` from `Validate()`. It is not reported as an instance that is not valid. The

@@ -14,7 +14,7 @@ namespace Corvus.Json.Specs.Tests.CodeGeneration;
 
 /// <summary>
 /// The regular expressions of V4 generated code. A pattern is translated from ECMA-262 by the translator the V5
-/// generator and evaluator use, every expression has a match timeout of 10 seconds, and a pattern that is not a
+/// generator and evaluator use, every expression has a match timeout of 1 second, and a pattern that is not a
 /// valid ECMA-262 regular expression stops the generation.
 /// </summary>
 [TestClass]
@@ -45,10 +45,10 @@ public class RegexPatternEmissionTests
 
         string[] expected =
         [
-            """[GeneratedRegex("^(?:a|aa)+-\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]""",
-            """[GeneratedRegex("^(?:a|aa)+\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]""",
-            """private static Regex CreatePattern() => new("^(?:a|aa)+\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
-            """private static Regex CreatePatternProperties() => new("^(?:a|aa)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """[GeneratedRegex("^(?:a|aa)+-\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]""",
+            """[GeneratedRegex("^(?:a|aa)+\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]""",
+            """private static Regex CreatePattern() => new("^(?:a|aa)+\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));""",
+            """private static Regex CreatePatternProperties() => new("^(?:a|aa)+-\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));""",
         ];
 
         AssertLines(expected, lines);
@@ -65,8 +65,8 @@ public class RegexPatternEmissionTests
 
         string[] expected =
         [
-            """[GeneratedRegex("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10000)]""",
-            """private static Regex CreatePattern() => new("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.Compiled | RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """[GeneratedRegex("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]""",
+            """private static Regex CreatePattern() => new("^(?:(?<1>[Aa])(?(1)(?i:\\1)))\\z", RegexOptions.Compiled | RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(1000));""",
         ];
 
         AssertLines(expected, lines);
@@ -84,10 +84,10 @@ public class RegexPatternEmissionTests
 
         Assert.AreEqual(2, lines.Length);
         StringAssert.StartsWith(lines[0], "[GeneratedRegex(");
-        StringAssert.EndsWith(lines[0], """, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 10000)]""");
+        StringAssert.EndsWith(lines[0], """, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]""");
         Assert.IsTrue(lines[1].Length > 100_000, $"{lines[1].Length} characters");
         Assert.IsTrue(lines[1].IndexOf("RegexOptions.Compiled", StringComparison.Ordinal) < 0);
-        StringAssert.EndsWith(lines[1], """, RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(10000));""");
+        StringAssert.EndsWith(lines[1], """, RegexOptions.CultureInvariant, global::System.TimeSpan.FromMilliseconds(1000));""");
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public class RegexPatternEmissionTests
 
         string[] expected =
         [
-            """private static Regex CreatePattern() => new("(?#interpreted)(?=(?<1>(?:(?:ab)(?:(?:ab))??)??)c)(?(1)\\1)", RegexOptions.None, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """private static Regex CreatePattern() => new("(?#interpreted)(?=(?<1>(?:(?:ab)(?:(?:ab))??)??)c)(?(1)\\1)", RegexOptions.None, global::System.TimeSpan.FromMilliseconds(1000));""",
         ];
 
         AssertLines(expected, lines);
@@ -119,8 +119,8 @@ public class RegexPatternEmissionTests
 
         string[] expected =
         [
-            """[GeneratedRegex("^a-b\\{\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]""",
-            """private static Regex CreatePattern() => new("^a-b\\{\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """[GeneratedRegex("^a-b\\{\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]""",
+            """private static Regex CreatePattern() => new("^a-b\\{\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));""",
         ];
 
         AssertLines(expected, lines);
@@ -147,7 +147,7 @@ public class RegexPatternEmissionTests
 
     /// <summary>
     /// A match of the <c>pattern</c> keyword that outlasts the timeout throws to the caller of <c>Validate</c>. It is
-    /// not reported as an instance that is not valid. This waits for the 10 seconds.
+    /// not reported as an instance that is not valid. This waits for the 1 second.
     /// </summary>
     [TestMethod]
     public async Task ValidatingWithAPatternThatDoesNotFinish_ThrowsRegexMatchTimeoutException()
@@ -176,7 +176,7 @@ public class RegexPatternEmissionTests
         Assert.IsTrue(await Task.WhenAny(validation, Task.Delay(TimeSpan.FromSeconds(60))) == validation, "The match did not time out.");
         Exception? thrown = await validation;
         Assert.IsInstanceOfType<RegexMatchTimeoutException>(thrown);
-        Assert.AreEqual(TimeSpan.FromSeconds(10), ((RegexMatchTimeoutException)thrown!).MatchTimeout);
+        Assert.AreEqual(TimeSpan.FromSeconds(1), ((RegexMatchTimeoutException)thrown!).MatchTimeout);
     }
 
     /// <summary>

@@ -42,8 +42,8 @@ public class PatternPropertyRangeTests
         string[] expected =
         [
             "return JsonSchemaEvaluation.MatchRangeRegularExpression(propertyName, 3, 5);",
-            """[GeneratedRegex("^[^\\n\\r\\u2028\\u2029]\\{\\u0663,\\u0665\\}\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]""",
-            """private static Regex CreatePatternProperties2() => new("^[^\\n\\r\\u2028\\u2029]\\{\\u0663,\\u0665\\}\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));""",
+            """[GeneratedRegex("^[^\\n\\r\\u2028\\u2029]\\{\\u0663,\\u0665\\}\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]""",
+            """private static Regex CreatePatternProperties2() => new("^[^\\n\\r\\u2028\\u2029]\\{\\u0663,\\u0665\\}\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))
