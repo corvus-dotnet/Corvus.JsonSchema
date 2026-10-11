@@ -179,43 +179,452 @@ internal static class EcmaRegexTranslator
         return TryTranslateCore(ecmaPattern, unicodeOnly: true, out string? translated, out _, out _) ? translated!.Length : ecmaPattern.Length;
     }
 
-    private static bool TryTranslateCore(ReadOnlySpan<char> ecmaPattern, bool unicodeOnly, out string? translated, out bool unicode, out string? error)
+    /// <summary>
+    /// The message of a pattern that is over a limit of size. It says that the pattern is too large, and never that
+    /// it is not valid. Where the whole pattern was read before the limit was met, it says that the pattern is valid.
+    /// </summary>
+    /// <param name="ecmaPattern">The pattern.</param>
+    /// <param name="keyword">The keyword the pattern is the value of, when the caller knows it.</param>
+    /// <param name="limit">What the pattern is over, as a sentence.</param>
+    /// <param name="read">Whether the whole pattern was read, and found valid, before the limit was met.</param>
+    /// <returns>The message.</returns>
+    internal static string TooLargeMessage(ReadOnlySpan<char> ecmaPattern, string? keyword, string limit, bool read)
     {
-        unicode = true;
-        EcmaRegexParser parser = new(ecmaPattern, unicode: true);
-        EcmaRegexNode root;
-        try
+        // A pattern over a limit may be megabytes long, so the message has its start.
+        const int Shown = 120;
+        string shown = ecmaPattern.Length <= Shown
+            ? "'" + ecmaPattern.ToString() + "'"
+            : "'" + ecmaPattern.Slice(0, Shown).ToString() + "...' (" + ecmaPattern.Length.ToString("N0", CultureInfo.InvariantCulture) + " characters)";
+        string of = keyword is null ? string.Empty : " of the keyword '" + keyword + "'";
+        return read
+            ? "The pattern " + shown + of + " is a valid ECMA-262 regular expression, and is too large. " + limit
+            : "The pattern " + shown + of + " is too large to read as an ECMA-262 regular expression. " + limit;
+    }
+
+    /// <summary>
+    /// The steps it takes to read a pattern and to write it for .NET, which <see cref="EcmaRegexLimits.MaxSteps"/>
+    /// bounds. It is what a test of the limit measures a pattern by.
+    /// </summary>
+    /// <param name="ecmaPattern">The ECMA-262 pattern.</param>
+    /// <returns>The steps, whether or not the pattern is valid.</returns>
+    /// <exception cref="EcmaRegexPatternTooLargeException">The pattern is over a limit of size.</exception>
+    internal static long StepsToTranslate(string ecmaPattern)
+    {
+        TryTranslateCore(ecmaPattern.AsSpan(), unicodeOnly: false, out _, out _, out _, out long steps);
+        return steps;
+    }
+
+    /// <summary>
+    /// What a .NET pattern the translator wrote costs .NET to construct a regular expression from, where that is
+    /// more than in proportion to its length. It is the sum of two things .NET does when it reads a pattern.
+    /// <list type="bullet">
+    /// <item>For each sequence of terms: the number of its pieces of literal text (a run of characters written as
+    /// themselves, a character written as an escape, a character with a small exact count, a class of one
+    /// character) times the length of that text, and the number of the plain groups in it times the number of its
+    /// terms. .NET joins the pieces one at a time and copies what it has joined each time, and it moves the terms
+    /// that follow a plain group to put the terms of the group in their place. A group written <c>(?:...)</c> with
+    /// no alternative and no quantifier is part of the sequence it stands in.</item>
+    /// <item>For each alternation: a quarter of the square of the number of its alternatives.</item>
+    /// </list>
+    /// The counts are those of .NET 10. They are upper bounds: a term .NET does not join is counted when it could
+    /// be mistaken for one that it does.
+    /// </summary>
+    /// <param name="dotNetPattern">A pattern written by the translator.</param>
+    /// <returns>The cost.</returns>
+    internal static long ConstructionCost(string dotNetPattern)
+    {
+        // One frame for each open group. Of the alternative being read: the pieces and the length of the literal
+        // text that nothing but literal text stands between (Pieces, Length), the same over the whole alternative
+        // (AllPieces, AllLength), its plain groups and its terms. Then the alternatives before it, whether the group
+        // is a plain one, and what its own sequences have cost, which is not counted when it turns out to be part
+        // of the sequence around it.
+        const int Pieces = 0;
+        const int Length = 1;
+        const int AllPieces = 2;
+        const int AllLength = 3;
+        const int Groups = 4;
+        const int Terms = 5;
+        const int Alternatives = 6;
+        const int Plain = 7;
+        const int Own = 8;
+        const int Size = 9;
+        int depth = 0;
+        long[] frames = new long[Size * 16];
+        long cost = 0;
+        bool afterWritten = false;
+        int i = 0;
+        string p = dotNetPattern;
+        while (i < p.Length)
         {
-            root = parser.Parse();
-        }
-        catch (EcmaRegexSyntaxException unicodeError)
-        {
-            if (unicodeOnly)
+            char c = p[i];
+            int frame = Size * depth;
+            if (c == '(')
             {
-                translated = null;
-                error = unicodeError.Message + ".";
-                return false;
+                // What kind of group it is decides whether .NET makes its terms part of the sequence around it.
+                bool plain = false;
+                int at = i + 1;
+                if (at < p.Length && p[at] == '?')
+                {
+                    at++;
+                    if (at < p.Length && p[at] == '#')
+                    {
+                        // A comment.
+                        int close = p.IndexOf(')', at);
+                        i = close < 0 ? p.Length : close + 1;
+                        continue;
+                    }
+
+                    if (at < p.Length && p[at] == ':')
+                    {
+                        plain = true;
+                        at++;
+                    }
+                    else if (at < p.Length && p[at] == '(')
+                    {
+                        // A conditional. Its test is the number or the name of a group, or a lookaround, which is
+                        // read as the group it is.
+                        if (at + 1 < p.Length && p[at + 1] != '?')
+                        {
+                            int close = p.IndexOf(')', at);
+                            at = close < 0 ? p.Length : close + 1;
+                        }
+                    }
+                    else if (at < p.Length && p[at] == '<' && at + 1 < p.Length && p[at + 1] != '=' && p[at + 1] != '!')
+                    {
+                        int close = p.IndexOf('>', at);
+                        at = close < 0 ? p.Length : close + 1;
+                    }
+                    else
+                    {
+                        // A lookaround, an atomic group, or a group with an option, up to what it holds.
+                        while (at < p.Length && (p[at] == '<' || p[at] == '=' || p[at] == '!' || p[at] == '>' || p[at] == 'i' || p[at] == ':'))
+                        {
+                            at++;
+                        }
+                    }
+                }
+
+                depth++;
+                if (Size * (depth + 1) > frames.Length)
+                {
+                    Array.Resize(ref frames, frames.Length * 2);
+                }
+
+                Array.Clear(frames, Size * depth, Size);
+                frames[(Size * depth) + Plain] = plain ? 1 : 0;
+                afterWritten = false;
+                i = at;
+                continue;
             }
 
-            unicode = false;
-            parser = new EcmaRegexParser(ecmaPattern, unicode: false);
+            if (c == '|')
+            {
+                frames[frame + Own] += (frames[frame + Pieces] * frames[frame + Length]) + (frames[frame + Groups] * frames[frame + Terms]);
+                Array.Clear(frames, frame, Alternatives);
+                frames[frame + Alternatives]++;
+                afterWritten = false;
+                i++;
+                continue;
+            }
+
+            if (c == ')' && depth > 0)
+            {
+                i++;
+                int quantifier = QuantifierLength(p, i, out _);
+                i += quantifier;
+                int parent = frame - Size;
+                afterWritten = false;
+                depth--;
+                if (frames[frame + Plain] == 1 && frames[frame + Alternatives] == 0 && quantifier == 0)
+                {
+                    // A plain group: its terms are terms of the sequence it stands in, and its text is counted as
+                    // one run with the text before it and the text after it.
+                    frames[parent + Pieces] += frames[frame + AllPieces];
+                    frames[parent + Length] += frames[frame + AllLength];
+                    frames[parent + AllPieces] += frames[frame + AllPieces];
+                    frames[parent + AllLength] += frames[frame + AllLength];
+                    frames[parent + Groups] += frames[frame + Groups] + 1;
+                    frames[parent + Terms] += frames[frame + Terms];
+                    continue;
+                }
+
+                long alternatives = frames[frame + Alternatives] + 1;
+                cost += frames[frame + Own] + (frames[frame + Pieces] * frames[frame + Length]) + (frames[frame + Groups] * frames[frame + Terms]);
+                if (alternatives > 1)
+                {
+                    cost += alternatives * alternatives / 4;
+                }
+
+                // A group that is not part of the sequence ends the run of text before it.
+                frames[parent + Own] += frames[parent + Pieces] * frames[parent + Length];
+                frames[parent + Pieces] = 0;
+                frames[parent + Length] = 0;
+                frames[parent + Terms]++;
+                continue;
+            }
+
+            // One term that is not a group. A literal character is a piece of text, or part of the piece before it
+            // when both are written as themselves.
+            bool literal;
+            bool written = false;
+            if (c == '\\' && i + 1 < p.Length)
+            {
+                char e = p[i + 1];
+                if (e == 'u')
+                {
+                    literal = true;
+                    i += 6;
+                }
+                else if (e == 'k')
+                {
+                    literal = false;
+                    int close = p.IndexOf('>', i);
+                    i = close < 0 ? p.Length : close + 1;
+                }
+                else if (e == 'p' || e == 'P')
+                {
+                    literal = false;
+                    int close = p.IndexOf('}', i);
+                    i = close < 0 ? p.Length : close + 1;
+                }
+                else if (e >= '0' && e <= '9')
+                {
+                    literal = false;
+                    i += 2;
+                    while (i < p.Length && p[i] >= '0' && p[i] <= '9')
+                    {
+                        i++;
+                    }
+                }
+                else
+                {
+                    // An anchor is no text. Every other escape the translator writes is one character.
+                    literal = e != 'z' && e != 'A' && e != 'b' && e != 'B';
+                    i += 2;
+                }
+            }
+            else if (c == '[')
+            {
+                // A class of one character is that character to .NET.
+                int members = 0;
+                i++;
+                if (i < p.Length && p[i] == '^')
+                {
+                    members = 2;
+                    i++;
+                }
+
+                while (i < p.Length && p[i] != ']')
+                {
+                    if (p[i] == '\\' && i + 1 < p.Length)
+                    {
+                        members += p[i + 1] == 'p' || p[i + 1] == 'P' || p[i + 1] == 's' || p[i + 1] == 'S' ? 2 : 1;
+                        i += p[i + 1] == 'u' ? 6 : 2;
+                    }
+                    else
+                    {
+                        members += p[i] == '-' ? 2 : 1;
+                        i++;
+                    }
+                }
+
+                i++;
+                literal = members <= 1;
+            }
+            else if (c == '^')
+            {
+                literal = false;
+                i++;
+            }
+            else
+            {
+                literal = true;
+                written = true;
+                i++;
+            }
+
+            int length = QuantifierLength(p, i, out int exact);
+            i += length;
+            frames[frame + Terms]++;
+            if (!literal || (length > 0 && (exact < 2 || exact > 64)))
+            {
+                // Not text that .NET joins: it ends the run of text before it.
+                frames[frame + Own] += frames[frame + Pieces] * frames[frame + Length];
+                frames[frame + Pieces] = 0;
+                frames[frame + Length] = 0;
+                afterWritten = false;
+                continue;
+            }
+
+            if (!(written && afterWritten && length == 0))
+            {
+                frames[frame + Pieces]++;
+                frames[frame + AllPieces]++;
+            }
+
+            frames[frame + Length] += length > 0 ? exact : 1;
+            frames[frame + AllLength] += length > 0 ? exact : 1;
+            afterWritten = written && length == 0;
+        }
+
+        while (depth >= 0)
+        {
+            int frame = Size * depth;
+            long alternatives = frames[frame + Alternatives] + 1;
+            cost += frames[frame + Own] + (frames[frame + Pieces] * frames[frame + Length]) + (frames[frame + Groups] * frames[frame + Terms]);
+            if (alternatives > 1)
+            {
+                cost += alternatives * alternatives / 4;
+            }
+
+            depth--;
+        }
+
+        return cost;
+    }
+
+    /// <summary>
+    /// The length of the quantifier at a place in a .NET pattern, with its <c>?</c> when it is lazy, or 0 when there
+    /// is none. <paramref name="exact"/> is the count of a quantifier written <c>{n}</c>, and -1 for any other.
+    /// </summary>
+    private static int QuantifierLength(string p, int at, out int exact)
+    {
+        exact = -1;
+        if (at >= p.Length)
+        {
+            return 0;
+        }
+
+        int end = at;
+        if (p[at] == '*' || p[at] == '+' || p[at] == '?')
+        {
+            end++;
+        }
+        else if (p[at] == '{')
+        {
+            int k = at + 1;
+            long count = 0;
+            while (k < p.Length && p[k] >= '0' && p[k] <= '9')
+            {
+                count = Math.Min((count * 10) + (p[k] - '0'), int.MaxValue);
+                k++;
+            }
+
+            if (k == at + 1 || k >= p.Length)
+            {
+                return 0;
+            }
+
+            if (p[k] == '}')
+            {
+                exact = (int)count;
+            }
+            else if (p[k] == ',')
+            {
+                k++;
+                while (k < p.Length && p[k] >= '0' && p[k] <= '9')
+                {
+                    k++;
+                }
+
+                if (k >= p.Length || p[k] != '}')
+                {
+                    return 0;
+                }
+            }
+            else
+            {
+                return 0;
+            }
+
+            end = k + 1;
+        }
+        else
+        {
+            return 0;
+        }
+
+        if (end < p.Length && p[end] == '?')
+        {
+            end++;
+        }
+
+        return end - at;
+    }
+
+    private static bool TryTranslateCore(ReadOnlySpan<char> ecmaPattern, bool unicodeOnly, out string? translated, out bool unicode, out string? error)
+    {
+        return TryTranslateCore(ecmaPattern, unicodeOnly, out translated, out unicode, out error, out _);
+    }
+
+    private static bool TryTranslateCore(ReadOnlySpan<char> ecmaPattern, bool unicodeOnly, out string? translated, out bool unicode, out string? error, out long steps)
+    {
+        unicode = true;
+        steps = 0;
+        EcmaRegexWork? work = null;
+        try
+        {
+            if (ecmaPattern.Length > EcmaRegexLimits.MaxLength)
+            {
+                throw new EcmaRegexPatternTooLargeException("It is longer than " + EcmaRegexLimits.MaxLength.ToString("N0", CultureInfo.InvariantCulture) + " characters.");
+            }
+
+            // One count of steps for the pattern, whichever grammars read it.
+            work = new EcmaRegexWork();
+            EcmaRegexParser parser = new(ecmaPattern, unicode: true, work);
+            EcmaRegexNode root;
             try
             {
                 root = parser.Parse();
             }
-            catch (EcmaRegexSyntaxException legacyError)
+            catch (EcmaRegexSyntaxException unicodeError)
             {
-                translated = null;
-                error = unicodeError.Message == legacyError.Message
-                    ? unicodeError.Message + "."
-                    : unicodeError.Message + " (read without the u flag: " + legacyError.Message + ").";
-                return false;
-            }
-        }
+                if (unicodeOnly)
+                {
+                    translated = null;
+                    error = unicodeError.Message + ".";
+                    return false;
+                }
 
-        translated = new Emitter(parser, root).Translate();
-        error = null;
-        return true;
+                unicode = false;
+                parser = new EcmaRegexParser(ecmaPattern, unicode: false, work);
+                try
+                {
+                    root = parser.Parse();
+                }
+                catch (EcmaRegexSyntaxException legacyError)
+                {
+                    translated = null;
+                    error = unicodeError.Message == legacyError.Message
+                        ? unicodeError.Message + "."
+                        : unicodeError.Message + " (read without the u flag: " + legacyError.Message + ").";
+                    return false;
+                }
+            }
+
+            work.Read = true;
+            translated = new Emitter(parser, root, work).Translate();
+
+            // What the last node written did with the tables of Unicode is counted too.
+            work.Spend(0);
+            if (ConstructionCost(translated) > EcmaRegexLimits.MaxConstructionCost)
+            {
+                string limit = "Its sequences and alternations are longer than .NET constructs a regular expression from in bounded time: by the count of the translator, a cost of more than "
+                    + EcmaRegexLimits.MaxConstructionCost.ToString("N0", CultureInfo.InvariantCulture) + ".";
+                throw new EcmaRegexPatternTooLargeException(limit, limit, read: true);
+            }
+
+            error = null;
+            return true;
+        }
+        catch (EcmaRegexPatternTooLargeException limit)
+        {
+            throw new EcmaRegexPatternTooLargeException(TooLargeMessage(ecmaPattern, null, limit.Limit, limit.Read), limit.Limit, limit.Read);
+        }
+        finally
+        {
+            steps = work?.Steps ?? 0;
+        }
     }
 
     /// <summary>Writes the tree of a pattern as a .NET pattern with the same meaning.</summary>
@@ -301,7 +710,8 @@ internal static class EcmaRegexTranslator
 
         /// <summary>For each group, whether it is in a part of the pattern that never runs, so that it never takes part.</summary>
         private readonly bool[] dead;
-        private readonly StringBuilder sb = new();
+        private readonly Output sb = new();
+        private readonly EcmaRegexWork work;
         private int markers;
 
         /// <summary>For each group, every character its text can hold (see <see cref="CapturedSets"/>).</summary>
@@ -320,8 +730,9 @@ internal static class EcmaRegexTranslator
         /// </summary>
         private bool keepsLazyGroupRepetition;
 
-        public Emitter(EcmaRegexParser parser, EcmaRegexNode root)
+        public Emitter(EcmaRegexParser parser, EcmaRegexNode root, EcmaRegexWork work)
         {
+            this.work = work;
             this.unicode = parser.Unicode;
             this.hasBackreferences = parser.HasBackreferences;
             int n = parser.GroupCount + 1;
@@ -360,6 +771,7 @@ internal static class EcmaRegexTranslator
         {
             this.Survey(this.root);
             this.root = this.Prune(this.root);
+            this.RefuseManyCopies();
             if (this.unicode && this.StartOf(this.root, top: true, backward: false) == Start.Unsafe)
             {
                 // .NET tries a match at every code unit, and so between the two halves of a character beyond the
@@ -396,62 +808,12 @@ internal static class EcmaRegexTranslator
             return length * count;
         }
 
-        /// <summary>Whether a node matches the empty string wherever it stands: through no assertion and no backreference.</summary>
-        private static bool EmptyAnywhere(EcmaRegexNode n)
-        {
-            switch (n.Kind)
-            {
-                case EcmaRegexNodeKind.Empty:
-                    return true;
-                case EcmaRegexNodeKind.Cat:
-                    foreach (EcmaRegexNode sub in n.Subs)
-                    {
-                        if (!EmptyAnywhere(sub))
-                        {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                case EcmaRegexNodeKind.Alt:
-                    foreach (EcmaRegexNode sub in n.Subs)
-                    {
-                        if (EmptyAnywhere(sub))
-                        {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                case EcmaRegexNodeKind.Group:
-                    return EmptyAnywhere(n.Subs[0]);
-                case EcmaRegexNodeKind.Repeat:
-                    return n.Min == 0 || EmptyAnywhere(n.Subs[0]);
-                default:
-                    return false;
-            }
-        }
-
         private static bool IsSurrogate(int c) => c >= 0xD800 && c <= 0xDFFF;
 
         /// <summary>A node that never matches.</summary>
         private static EcmaRegexNode NeverNode() => new(EcmaRegexNodeKind.Set);
 
         private static bool IsNever(EcmaRegexNode n) => n.Kind == EcmaRegexNodeKind.Set && n.Set.Length == 0;
-
-        /// <summary>Adds the numbers of the capturing groups of a node.</summary>
-        private static void CollectGroups(EcmaRegexNode n, List<int> groups)
-        {
-            if (n.Kind == EcmaRegexNodeKind.Group && n.Group != 0)
-            {
-                groups.Add(n.Group);
-            }
-
-            foreach (EcmaRegexNode sub in n.Subs)
-            {
-                CollectGroups(sub, groups);
-            }
-        }
 
         /// <summary>Whether a node is one backreference, in non-capturing groups or in none.</summary>
         private static bool IsOneReference(EcmaRegexNode n)
@@ -462,25 +824,6 @@ internal static class EcmaRegexTranslator
             }
 
             return n.Kind == EcmaRegexNodeKind.Backref;
-        }
-
-        /// <summary>Whether a node holds a backreference.</summary>
-        private static bool HoldsBackreference(EcmaRegexNode n)
-        {
-            if (n.Kind == EcmaRegexNodeKind.Backref)
-            {
-                return true;
-            }
-
-            foreach (EcmaRegexNode sub in n.Subs)
-            {
-                if (HoldsBackreference(sub))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         /// <summary>Whether a set holds every surrogate and every character beyond the Basic Multilingual Plane.</summary>
@@ -520,6 +863,117 @@ internal static class EcmaRegexTranslator
         }
 
         /// <summary>
+        /// Refuses a pattern whose repetitions .NET would write out to more than <see cref="EcmaRegexLimits.MaxCopies"/>
+        /// copies when it constructs the regular expression.
+        /// </summary>
+        private void RefuseManyCopies()
+        {
+            long size = 0;
+            if (this.WrittenOut(this.root, ref size) - (4 * size) > EcmaRegexLimits.MaxCopies)
+            {
+                string limit = "Its repetitions with a least count of 2, 3 or 4, one inside another, come to more than "
+                    + EcmaRegexLimits.MaxCopies.ToString("N0", CultureInfo.InvariantCulture) + " copies of what they repeat, beyond four times its size.";
+                throw new EcmaRegexPatternTooLargeException(limit, limit, read: true);
+            }
+        }
+
+        /// <summary>
+        /// The size of a node with every repetition that has a least count of 2, 3 or 4 written out that many times,
+        /// which is what .NET does to find the text a match starts with (it writes out at most 4 iterations of a
+        /// repetition, and goes no further into a pattern after one it did not write out whole). It is counted in
+        /// nodes, saturates, and also gives the size with nothing written out.
+        /// </summary>
+        private long WrittenOut(EcmaRegexNode n, ref long size)
+        {
+            this.work.Spend();
+            size++;
+            long written = 1;
+            foreach (EcmaRegexNode sub in n.Subs)
+            {
+                written += this.WrittenOut(sub, ref size);
+            }
+
+            if (n.Kind == EcmaRegexNodeKind.Repeat && n.Min >= 2 && n.Min <= 4)
+            {
+                written *= n.Min;
+            }
+
+            return Math.Min(written, 1L << 40);
+        }
+
+        /// <summary>Whether a node matches the empty string wherever it stands: through no assertion and no backreference.</summary>
+        private bool EmptyAnywhere(EcmaRegexNode n)
+        {
+            this.work.Spend();
+            switch (n.Kind)
+            {
+                case EcmaRegexNodeKind.Empty:
+                    return true;
+                case EcmaRegexNodeKind.Cat:
+                    foreach (EcmaRegexNode sub in n.Subs)
+                    {
+                        if (!this.EmptyAnywhere(sub))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                case EcmaRegexNodeKind.Alt:
+                    foreach (EcmaRegexNode sub in n.Subs)
+                    {
+                        if (this.EmptyAnywhere(sub))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                case EcmaRegexNodeKind.Group:
+                    return this.EmptyAnywhere(n.Subs[0]);
+                case EcmaRegexNodeKind.Repeat:
+                    return n.Min == 0 || this.EmptyAnywhere(n.Subs[0]);
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>Adds the numbers of the capturing groups of a node.</summary>
+        private void CollectGroups(EcmaRegexNode n, List<int> groups)
+        {
+            this.work.Spend();
+            if (n.Kind == EcmaRegexNodeKind.Group && n.Group != 0)
+            {
+                groups.Add(n.Group);
+            }
+
+            foreach (EcmaRegexNode sub in n.Subs)
+            {
+                this.CollectGroups(sub, groups);
+            }
+        }
+
+        /// <summary>Whether a node holds a backreference.</summary>
+        private bool HoldsBackreference(EcmaRegexNode n)
+        {
+            this.work.Spend();
+            if (n.Kind == EcmaRegexNodeKind.Backref)
+            {
+                return true;
+            }
+
+            foreach (EcmaRegexNode sub in n.Subs)
+            {
+                if (this.HoldsBackreference(sub))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Takes out of the tree what never runs or runs to no effect, so that what is written holds no repetition
         /// .NET would have to run over a body that cannot move.
         /// <list type="bullet">
@@ -543,6 +997,7 @@ internal static class EcmaRegexTranslator
         /// <param name="apart">For each group, in how many alternations the node and the group are in different alternatives.</param>
         private EcmaRegexNode Simplify(EcmaRegexNode n, bool[] open, int[] apart)
         {
+            this.work.Spend(1 + n.Groups.Length);
             if (n.Kind == EcmaRegexNodeKind.Backref && n.Groups.Length > 0)
             {
                 // A name can belong to several groups. The reference reads those of them that can be set here.
@@ -562,32 +1017,39 @@ internal static class EcmaRegexTranslator
                 for (int k = 0; k < n.Subs.Length; k++)
                 {
                     groups[k] = [];
-                    CollectGroups(n.Subs[k], groups[k]);
+                    this.CollectGroups(n.Subs[k], groups[k]);
+                }
+
+                // Every group of the alternation is apart from an alternative, but for the alternative's own. So all
+                // of them are counted once, and each alternative takes its own out while it is simplified, which is
+                // one pass over the groups and not one for each alternative.
+                foreach (List<int> all in groups)
+                {
+                    foreach (int g in all)
+                    {
+                        apart[g]++;
+                    }
                 }
 
                 for (int k = 0; k < n.Subs.Length; k++)
                 {
-                    for (int other = 0; other < n.Subs.Length; other++)
+                    foreach (int g in groups[k])
                     {
-                        if (other != k)
-                        {
-                            foreach (int g in groups[other])
-                            {
-                                apart[g]++;
-                            }
-                        }
+                        apart[g]--;
                     }
 
                     n.Subs[k] = this.Simplify(n.Subs[k], open, apart);
-                    for (int other = 0; other < n.Subs.Length; other++)
+                    foreach (int g in groups[k])
                     {
-                        if (other != k)
-                        {
-                            foreach (int g in groups[other])
-                            {
-                                apart[g]--;
-                            }
-                        }
+                        apart[g]++;
+                    }
+                }
+
+                foreach (List<int> all in groups)
+                {
+                    foreach (int g in all)
+                    {
+                        apart[g]--;
                     }
                 }
 
@@ -610,7 +1072,7 @@ internal static class EcmaRegexTranslator
                 open[n.Group] = false;
             }
 
-            if (n.Kind == EcmaRegexNodeKind.Look && n.Negative && EmptyAnywhere(n.Subs[0]))
+            if (n.Kind == EcmaRegexNodeKind.Look && n.Negative && this.EmptyAnywhere(n.Subs[0]))
             {
                 // The body matches the empty string wherever it stands, so the lookaround never holds.
                 this.Kill(n);
@@ -673,7 +1135,7 @@ internal static class EcmaRegexTranslator
                 case EcmaRegexNodeKind.Repeat when IsNever(n.Subs[0]):
                 {
                     List<int> groups = [];
-                    CollectGroups(n, groups);
+                    this.CollectGroups(n, groups);
                     foreach (int g in groups)
                     {
                         this.dead[g] = true;
@@ -696,6 +1158,7 @@ internal static class EcmaRegexTranslator
         /// </summary>
         private EcmaRegexNode Prune(EcmaRegexNode n)
         {
+            this.work.Spend(1 + n.Groups.Length);
             int kept = 0;
             for (int k = 0; k < n.Subs.Length; k++)
             {
@@ -743,6 +1206,7 @@ internal static class EcmaRegexTranslator
         /// <summary>Notes that the groups of a node never take part, as the node is not written.</summary>
         private void Kill(EcmaRegexNode n)
         {
+            this.work.Spend(n.LastGroup - n.FirstGroup);
             for (int g = n.FirstGroup + 1; g <= n.LastGroup; g++)
             {
                 this.dead[g] = true;
@@ -752,6 +1216,7 @@ internal static class EcmaRegexTranslator
         /// <summary>Notes the group nodes and which of them a backreference reads.</summary>
         private void Survey(EcmaRegexNode n)
         {
+            this.work.Spend(1 + n.Groups.Length);
             if (n.Kind == EcmaRegexNodeKind.Group && n.Group != 0)
             {
                 this.groupNodes[n.Group] = n;
@@ -775,6 +1240,7 @@ internal static class EcmaRegexTranslator
 
         private bool AnyReferenced(EcmaRegexNode n)
         {
+            this.work.Spend(n.LastGroup - n.FirstGroup);
             for (int g = n.FirstGroup + 1; g <= n.LastGroup; g++)
             {
                 if (this.referenced[g])
@@ -809,6 +1275,7 @@ internal static class EcmaRegexTranslator
 
         private void Measure(EcmaRegexNode n)
         {
+            this.work.Spend();
             long min = 0;
             long max = 0;
             switch (n.Kind)
@@ -864,6 +1331,7 @@ internal static class EcmaRegexTranslator
         /// </summary>
         private Start StartOf(EcmaRegexNode n, bool top, bool backward)
         {
+            this.work.Spend(1 + n.Groups.Length);
             switch (n.Kind)
             {
                 case EcmaRegexNodeKind.Empty:
@@ -937,6 +1405,7 @@ internal static class EcmaRegexTranslator
         // Writing.
         private void Node(EcmaRegexNode n, Context context, EcmaRegexNode? next)
         {
+            this.work.Spend();
             switch (n.Kind)
             {
                 case EcmaRegexNodeKind.Empty:
@@ -1167,6 +1636,7 @@ internal static class EcmaRegexTranslator
         /// </summary>
         private bool MayFollowInsidePair(EcmaRegexNode? next, Context context)
         {
+            this.work.Spend();
             if (next is null)
             {
                 // The end of the pattern is the end of the match, and a match that ends inside a pair is one that
@@ -1270,7 +1740,7 @@ internal static class EcmaRegexTranslator
                 lazy = false;
             }
 
-            if (nullable && min > 0 && this.inCapturingLookaround == 0 && !this.AnyReferenced(n) && EmptyAnywhere(body))
+            if (nullable && min > 0 && this.inCapturingLookaround == 0 && !this.AnyReferenced(n) && this.EmptyAnywhere(body))
             {
                 // Every iteration that must run can match nothing, whatever the text, and leaves nothing behind.
                 min = 0;
@@ -1279,7 +1749,7 @@ internal static class EcmaRegexTranslator
             // An iteration that need not run is made to fail when it has matched nothing, where .NET would go on with
             // the groups as that iteration left them, and where the order of the paths counts.
             bool guarded = nullable && max != min && (this.inCapturingLookaround > 0 || this.AnyReferenced(n));
-            if (!guarded && nullable && max != min && HoldsBackreference(body) && !(min > 0 && IsOneReference(body)))
+            if (!guarded && nullable && max != min && this.HoldsBackreference(body) && !(min > 0 && IsOneReference(body)))
             {
                 // A backreference matches nothing whenever its group is unset or empty. .NET takes an iteration that
                 // matched nothing and then tries again without it, from the same place and with the same groups, so a
@@ -1422,6 +1892,7 @@ internal static class EcmaRegexTranslator
         /// </summary>
         private EcmaRegexNode? NonEmpty(EcmaRegexNode n, ref int budget)
         {
+            this.work.Spend();
             if (--budget < 0)
             {
                 return null;
@@ -1536,7 +2007,7 @@ internal static class EcmaRegexTranslator
                     // number of iterations, up to its highest count, each match something: an iteration that must run
                     // and matches nothing adds no text. With two or more that must run it is so when an iteration
                     // can match nothing wherever it stands.
-                    if (n.Min > 1 && !EmptyAnywhere(body))
+                    if (n.Min > 1 && !this.EmptyAnywhere(body))
                     {
                         return null;
                     }
@@ -1559,6 +2030,7 @@ internal static class EcmaRegexTranslator
         /// </summary>
         private EcmaRegexNode? OnlyEmpty(EcmaRegexNode n, ref int budget)
         {
+            this.work.Spend();
             if (--budget < 0)
             {
                 return null;
@@ -1569,7 +2041,7 @@ internal static class EcmaRegexTranslator
                 return NeverNode();
             }
 
-            if (EmptyAnywhere(n))
+            if (this.EmptyAnywhere(n))
             {
                 return new EcmaRegexNode(EcmaRegexNodeKind.Empty);
             }
@@ -1641,6 +2113,7 @@ internal static class EcmaRegexTranslator
         /// </summary>
         private bool ReadsTextOnly(EcmaRegexNode n)
         {
+            this.work.Spend(n.Groups.Length);
             bool any = false;
             foreach (int g in n.Groups)
             {
@@ -1711,6 +2184,7 @@ internal static class EcmaRegexTranslator
         /// <summary>What unsets every group of a node that a backreference reads.</summary>
         private string Resets(EcmaRegexNode n)
         {
+            this.work.Spend(n.LastGroup - n.FirstGroup);
             StringBuilder reset = new();
             for (int g = n.FirstGroup + 1; g <= n.LastGroup; g++)
             {
@@ -1952,9 +2426,11 @@ internal static class EcmaRegexTranslator
                 grew = false;
                 for (int g = 1; g < sets.Length; g++)
                 {
+                    this.work.Spend();
                     if (this.groupNodes[g] is EcmaRegexNode group)
                     {
                         int[] set = this.CapturedSet(group, sets);
+                        this.work.Spend(set.Length);
                         if (!EcmaRegexUnicode.SetEquals(set, sets[g]))
                         {
                             sets[g] = set;
@@ -1972,6 +2448,7 @@ internal static class EcmaRegexTranslator
         /// <summary>Every character the text a node matches can hold, given what each group can.</summary>
         private int[] CapturedSet(EcmaRegexNode n, int[][] groups)
         {
+            this.work.Spend(1 + n.Groups.Length);
             switch (n.Kind)
             {
                 case EcmaRegexNodeKind.Char:
@@ -2527,6 +3004,55 @@ internal static class EcmaRegexTranslator
             }
 
             return count;
+        }
+
+        /// <summary>
+        /// What has been written, which is refused when it grows past <see cref="EcmaRegexLimits.MaxLength"/>. A
+        /// repetition that is written as its body more than once, inside another that is, doubles what is written
+        /// with each one, so the length is looked at as it grows and not when the writing is done.
+        /// </summary>
+        private sealed class Output
+        {
+            private readonly StringBuilder text = new();
+
+            public int Length
+            {
+                get => this.text.Length;
+                set => this.text.Length = value;
+            }
+
+            public Output Append(string value)
+            {
+                this.text.Append(value);
+                return this.Checked();
+            }
+
+            public Output Append(char value)
+            {
+                this.text.Append(value);
+                return this.Checked();
+            }
+
+            public Output Insert(int index, string value)
+            {
+                this.text.Insert(index, value);
+                return this.Checked();
+            }
+
+            public override string ToString() => this.text.ToString();
+
+            public string ToString(int startIndex, int length) => this.text.ToString(startIndex, length);
+
+            private Output Checked()
+            {
+                if (this.text.Length > EcmaRegexLimits.MaxLength)
+                {
+                    string limit = "What is written for .NET from it is longer than " + EcmaRegexLimits.MaxLength.ToString("N0", CultureInfo.InvariantCulture) + " characters.";
+                    throw new EcmaRegexPatternTooLargeException(limit, limit, read: true);
+                }
+
+                return this;
+            }
         }
     }
 }

@@ -51,6 +51,24 @@ internal static class EcmaRegexUnicode
     private static Folding? unicodeFolding;
     private static Folding? legacyFolding;
 
+    /// <summary>The steps the operations on sets have taken on this thread since <see cref="TakeSteps"/> last read them.</summary>
+    [ThreadStatic]
+    private static long steps;
+
+    /// <summary>
+    /// The steps the operations on sets have taken on this thread since the last call. The translator counts them
+    /// against <see cref="EcmaRegexLimits.MaxSteps"/>, where a step stands for the time it takes to read one
+    /// character of a pattern and make its node. So a range that is sorted is half a step, a member of a class of
+    /// case variants that is looked up is half a step, and a range that is only copied is a sixteenth.
+    /// </summary>
+    /// <returns>The steps.</returns>
+    public static long TakeSteps()
+    {
+        long taken = steps;
+        steps = 0;
+        return taken;
+    }
+
     /// <summary>The set of the first <paramref name="count"/> numbers of <paramref name="pairs"/>, read as inclusive ranges in any order.</summary>
     /// <param name="pairs">The ranges.</param>
     /// <param name="count">How many numbers of <paramref name="pairs"/> to read.</param>
@@ -58,6 +76,7 @@ internal static class EcmaRegexUnicode
     public static int[] SetOf(int[] pairs, int count)
     {
         int n = count / 2;
+        steps += 1 + (n / 2);
         long[] keys = new long[n];
         for (int i = 0; i < n; i++)
         {
@@ -99,6 +118,7 @@ internal static class EcmaRegexUnicode
     /// <returns>The complement.</returns>
     public static int[] Complement(int[] set, int max = Max)
     {
+        steps += 1 + (set.Length / 32);
         int[] result = new int[set.Length + 2];
         int m = 0;
         int next = 0;
@@ -152,6 +172,7 @@ internal static class EcmaRegexUnicode
     /// <returns>The part of the set in the range.</returns>
     public static int[] Slice(int[] set, int lo, int hi)
     {
+        steps += 1 + (set.Length / 32);
         int[] result = new int[set.Length];
         int m = 0;
         for (int i = 0; i < set.Length; i += 2)
@@ -331,6 +352,7 @@ internal static class EcmaRegexUnicode
         Folding f = GetFolding(unicode);
         int[] extra = new int[16];
         int m = 0;
+        long taken = 1 + (set.Length / 8);
         for (int i = 0; i < set.Length; i += 2)
         {
             int k = Array.BinarySearch(f.Points, set[i]);
@@ -341,6 +363,7 @@ internal static class EcmaRegexUnicode
 
             for (; k < f.Points.Length && f.Points[k] <= set[i + 1]; k++)
             {
+                taken += f.Classes[k].Length;
                 foreach (int member in f.Classes[k])
                 {
                     if (!Contains(set, member))
@@ -357,6 +380,7 @@ internal static class EcmaRegexUnicode
             }
         }
 
+        steps += taken / 2;
         if (m == 0)
         {
             return set;
@@ -387,6 +411,7 @@ internal static class EcmaRegexUnicode
 
             for (; k < f.Points.Length && f.Points[k] <= set[i + 1]; k++)
             {
+                steps++;
                 int[] members = (int[])f.Classes[k].Clone();
                 Array.Sort(members);
                 if (seen.Add(members[0]))

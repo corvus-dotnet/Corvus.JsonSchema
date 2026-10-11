@@ -47,13 +47,40 @@ string pattern = EcmaRegexTranslator.TranslateOrFallback(ecmaPattern);
 string strict = EcmaRegexTranslator.Translate(@"\d+\.\d+");
 ```
 
+Every entry point throws `EcmaRegexPatternTooLargeException` (an `InvalidOperationException`) for a pattern over a
+limit of size. A caller must not report that as a pattern that is not valid.
+
 ## Who Calls It, and What an Invalid Pattern Does
 
-| Caller | Invalid pattern |
-|---|---|
-| `PatternMatcher.Create` in `RuntimeEvaluator/Compilation/SchemaNode.cs` | `JsonSchemaCompilationException` when the schema is compiled. It runs before the regex-free matchers. |
-| `CodeGeneratorExtensions.JsonSchema.cs` (`ThrowIfAPatternIsNotValid`) | `InvalidOperationException` stops the generation of the type |
-| `RuntimeProgramCompiler` (baked programs) | Compiles the schema with the runtime evaluator, so the same exception |
+| Caller | Invalid pattern | Pattern over a limit of size |
+|---|---|---|
+| `PatternMatcher.Create` in `RuntimeEvaluator/Compilation/SchemaNode.cs` | `JsonSchemaCompilationException` when the schema is compiled. It runs before the regex-free matchers. | `JsonSchemaCompilationException` with the message of the limit (`... is a valid ECMA-262 regular expression, and is too large. ...`) |
+| `CodeGeneratorExtensions.JsonSchema.cs` (`ThrowIfAPatternIsNotValid`) | `InvalidOperationException` stops the generation of the type | `EcmaRegexPatternTooLargeException`, with the keyword in its message. The source generators report it as `CRV1003` |
+| `RuntimeProgramCompiler` (baked programs) | Compiles the schema with the runtime evaluator, so the same exception | The same |
+
+## Limits Of Size
+
+A schema may come from outside, so no pattern may make the translator or .NET's `Regex` constructor run long or
+hold much memory. `EcmaRegexLimits` has the limits, and `docs/EcmaRegexTranslator.md` explains each:
+
+| Limit | Value | Where it is met |
+|---|---|---|
+| `MaxLength` | 1,048,576 characters | The pattern, in `TryTranslateCore`. The translation, in `Emitter.Output`, as it is written |
+| `EcmaRegexParser.MaxNesting` | 200 | `Disjunction` |
+| `MaxSteps` | 2,000,000 | `EcmaRegexWork.Spend`, from the reader and from every walk of the tree |
+| `MaxCopies` | 65,536 beyond four times the size | `Emitter.RefuseManyCopies`: repetitions with a least count of 2 to 4 one inside another, which .NET writes out |
+| `MaxConstructionCost` | 100,000,000 | `EcmaRegexTranslator.ConstructionCost` of the finished translation: pieces of text times length for each sequence, alternatives squared for each alternation |
+
+- **Anything that walks the tree, or loops over the groups or over a set, calls `this.work.Spend(...)`.** A walk
+  that does not is a way to spend unbounded time on a pattern from outside. The operations of `EcmaRegexUnicode`
+  count their own steps (`TakeSteps`).
+- **Everything is appended through `Emitter.Output`**, which refuses the pattern when the translation passes the
+  limit. Do not build a part of the translation in a `StringBuilder` of its own without a bound.
+- **A limit is deterministic.** Do not bound the translator with a clock: the same pattern must be refused or
+  accepted on every machine, or a build fails only when the machine is busy.
+- **When a rewrite writes a body more than once, or writes many pieces of escaped text or many plain groups in a
+  row, look at what the limits then refuse.** A pattern of ordinary size that is over a limit only because of how
+  it is rewritten is a fault in the rewrite.
 
 ## Translation Examples
 

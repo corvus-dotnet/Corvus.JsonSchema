@@ -209,16 +209,37 @@ internal sealed class DivisorValue
 /// </summary>
 internal sealed class PatternMatcher
 {
+    /// <summary>
+    /// The most patterns whose translation and regular expressions are kept for the life of the process: 4,096.
+    /// </summary>
+    internal const int MaxCachedPatterns = 4096;
+
+    /// <summary>
+    /// The most characters, of patterns and of their translations together, that are kept for the life of the
+    /// process: 1,048,576. A pattern or a translation longer than
+    /// <c>EcmaRegexTranslator.LongestCompiledTranslation</c> is not kept at all, so that one large pattern does not
+    /// empty the caches of the small ones.
+    /// </summary>
+    internal const long MaxCachedCharacters = 1024 * 1024;
+
 #if STJ
     private static readonly bool ForceInterpretedRegex = false;
 #else
     private static readonly bool ForceInterpretedRegex = Environment.GetEnvironmentVariable("CORVUS_RT_REGEX_INTERPRETED") == "1";
 #endif
+
+    // Regex instances are immutable and thread-safe, so identical patterns are shared process-wide: repeated patterns
+    // (metaschemas, many evaluators of similar schemas) compile once.
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<(string Pattern, RegexOptions Options, TimeSpan Timeout), Regex> RegexCache = new();
 
-    // The translation of each pattern seen, or why it is not a valid ECMA-262 pattern. A pattern is read once per
-    // process, when the first schema that holds it is compiled.
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string? Translated, bool Unicode, string? Error)> TranslationCache = new();
+    // The translation of each pattern seen, or why it is not a valid ECMA-262 pattern, or that it is over a limit of
+    // size. A pattern is read once per process, when the first schema that holds it is compiled.
+    //
+    // Both caches are bounded, as a schema may come from outside and a process may compile schemas for as long as it
+    // runs: when they hold more than MaxCachedPatterns patterns or MaxCachedCharacters characters they are emptied,
+    // and a pattern met again is read again. What an evaluator holds is its own and is not affected.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string? Translated, bool Unicode, string? Error, bool TooLarge)> TranslationCache = new();
+    private static long cachedCharacters;
 
     private readonly Regex? regex;
     private readonly byte[]? prefix;
@@ -307,10 +328,14 @@ internal sealed class PatternMatcher
         }
 
         // A pattern that is not a valid ECMA-262 regular expression is refused here, when the schema is compiled,
-        // whichever matcher would have taken it.
-        (string? translation, bool unicode, string? error) = TranslationCache.GetOrAdd(
-            ecmaPattern,
-            static p => Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.TryTranslate(p, out string? t, out bool u, out string? e) ? (t, u, null) : (null, u, e));
+        // whichever matcher would have taken it. So is a pattern over a limit of size, with its own message: it is
+        // too large, and it is not reported as a pattern that is not valid.
+        (string? translation, bool unicode, string? error, bool tooLarge) = Translated(ecmaPattern);
+        if (tooLarge)
+        {
+            throw new JsonSchemaCompilationException(error!);
+        }
+
         if (translation is null)
         {
             throw new JsonSchemaCompilationException($"The pattern '{ecmaPattern}' is not a valid ECMA-262 regular expression. {error}");
@@ -318,7 +343,7 @@ internal sealed class PatternMatcher
 
         if (!unicode && CountsCodeUnits(ecmaPattern))
         {
-            return CreateRegex(ecmaPattern, options, patternIndex);
+            return CreateRegex(ecmaPattern, translation, options, patternIndex);
         }
 
         if (TryParsePrefix(ecmaPattern, out string? prefix))
@@ -356,7 +381,69 @@ internal sealed class PatternMatcher
             return new PatternMatcher(Kind.Sequences, ecmaPattern, null, null, 0, 0, sequences: sequences);
         }
 
-        return CreateRegex(ecmaPattern, options, patternIndex);
+        return CreateRegex(ecmaPattern, translation, options, patternIndex);
+    }
+
+    /// <summary>Gets the number of patterns whose translation is kept, for the tests of the bound on it.</summary>
+    internal static int CachedPatternCount => TranslationCache.Count;
+
+    /// <summary>
+    /// The translation of a pattern, from <see cref="TranslationCache"/> when the pattern has been seen. A pattern
+    /// that is not valid or is too large is kept too, with its error, as it is as likely to be met again.
+    /// </summary>
+    private static (string? Translated, bool Unicode, string? Error, bool TooLarge) Translated(string ecmaPattern)
+    {
+        if (TranslationCache.TryGetValue(ecmaPattern, out (string? Translated, bool Unicode, string? Error, bool TooLarge) known))
+        {
+            return known;
+        }
+
+        (string? Translated, bool Unicode, string? Error, bool TooLarge) translated = Translate(ecmaPattern);
+        if (IsKept(ecmaPattern, translated.Translated) && TranslationCache.TryAdd(ecmaPattern, translated))
+        {
+            NoteKept(ecmaPattern.Length + (translated.Translated?.Length ?? 0));
+        }
+
+        return translated;
+    }
+
+    /// <summary>Whether a pattern and its translation are small enough to be kept for the life of the process.</summary>
+    private static bool IsKept(string ecmaPattern, string? translated)
+    {
+        return ecmaPattern.Length <= Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.LongestCompiledTranslation
+            && (translated is null || translated.Length <= Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.LongestCompiledTranslation);
+    }
+
+    /// <summary>Counts what has been added to the caches, and empties them when they are over their bounds.</summary>
+    private static void NoteKept(int characters)
+    {
+        // A pattern has an expression for each set of options and each timeout it is compiled with.
+        if (System.Threading.Interlocked.Add(ref cachedCharacters, characters) > MaxCachedCharacters
+            || TranslationCache.Count > MaxCachedPatterns
+            || RegexCache.Count > 4 * MaxCachedPatterns)
+        {
+            TranslationCache.Clear();
+            RegexCache.Clear();
+            System.Threading.Interlocked.Exchange(ref cachedCharacters, 0);
+        }
+    }
+
+    /// <summary>
+    /// Translates a pattern for <see cref="TranslationCache"/>: its translation, or why it is not valid, or the
+    /// message of the limit of size it is over (see <c>EcmaRegexLimits</c>).
+    /// </summary>
+    private static (string? Translated, bool Unicode, string? Error, bool TooLarge) Translate(string ecmaPattern)
+    {
+        try
+        {
+            return Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.TryTranslate(ecmaPattern, out string? translated, out bool unicode, out string? error)
+                ? (translated, unicode, null, false)
+                : (null, unicode, error, false);
+        }
+        catch (Corvus.Text.Json.CodeGeneration.EcmaRegexPatternTooLargeException tooLarge)
+        {
+            return (null, false, tooLarge.Message, true);
+        }
     }
 
     /// <summary>
@@ -388,7 +475,7 @@ internal sealed class PatternMatcher
         return false;
     }
 
-    private static PatternMatcher CreateRegex(string ecmaPattern, JsonSchemaEvaluatorOptions options, int patternIndex)
+    private static PatternMatcher CreateRegex(string ecmaPattern, string translated, JsonSchemaEvaluatorOptions options, int patternIndex)
     {
         if (options.RegexProvider is JsonSchemaRegexProvider provider && provider(patternIndex, ecmaPattern) is Regex provided)
         {
@@ -399,15 +486,22 @@ internal sealed class PatternMatcher
         // from, is interpreted (see EcmaRegexTranslator.IsForCompiledEngine).
         RegexOptions regexOptions = RegexOptions.CultureInvariant;
         if (options.CompileRegularExpressions && !ForceInterpretedRegex
-            && Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.IsForCompiledEngine(TranslationCache[ecmaPattern].Translated!))
+            && Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.IsForCompiledEngine(translated))
         {
             regexOptions |= RegexOptions.Compiled;
         }
 
-        // Regex instances are immutable and thread-safe, so identical patterns are shared process-wide:
-        // repeated patterns (metaschemas, many evaluators of similar schemas) compile once.
+        // An expression that is kept is shared by every evaluator of the pattern with these options (see RegexCache).
         var key = (ecmaPattern, regexOptions, options.RegexMatchTimeout);
-        Regex regex = RegexCache.GetOrAdd(key, static k => new Regex(TranslationCache[k.Pattern].Translated!, k.Options, k.Timeout));
+        if (!RegexCache.TryGetValue(key, out Regex? regex))
+        {
+            regex = new Regex(translated, regexOptions, options.RegexMatchTimeout);
+            if (IsKept(ecmaPattern, translated))
+            {
+                regex = RegexCache.GetOrAdd(key, regex);
+                NoteKept(0);
+            }
+        }
 
         return new PatternMatcher(Kind.Regex, ecmaPattern, regex, null, 0, 0);
     }

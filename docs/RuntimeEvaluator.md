@@ -215,12 +215,19 @@ ECMAScript engine does. The answers are tested against V8 on the
   says what is wrong and where, for example `The pattern '^[a-z]{3,1}$' is not a valid ECMA-262 regular expression.
   Numbers out of order in {} quantifier at offset 11.` Before this, such a pattern was passed to .NET as it was,
   which accepted most of them with a meaning of its own.
+- **A pattern over a limit of size is refused when the schema is compiled**, with the same exception and a message
+  of its own: `The pattern '...' is a valid ECMA-262 regular expression, and is too large.` and then the limit, for
+  example `Its groups nest more than 200 deep.` It is never the message of a pattern that is not valid. The limits
+  bound the time and the memory one pattern can take when a schema is compiled, whatever the pattern, and
+  [the translator guide](EcmaRegexTranslator.md#limits-on-the-size-of-a-pattern) lists them.
 - The evaluator matches many patterns itself (prefixes, length ranges, literal alternations, class sequences,
   separated lists). Every other pattern is translated to a .NET pattern with the same meaning and matched by a
   .NET `Regex`. [EcmaRegexTranslator.md](./EcmaRegexTranslator.md) describes the translation and its limits.
   `JsonSchemaEvaluator.ToDotNetPattern` returns it.
 - Each distinct pattern is read and translated once in the life of the process, when the first schema that holds
-  it is compiled. Nothing of that runs when an instance is evaluated.
+  it is compiled. Nothing of that runs when an instance is evaluated. What the process keeps of patterns is
+  bounded (4,096 patterns, 1,048,576 characters). Past the bound it is let go, and a pattern met again is read
+  again.
 
 ## Regular expression match timeout
 

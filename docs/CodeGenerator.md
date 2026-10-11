@@ -277,7 +277,9 @@ The tool generates:
   longer than 1 second throws `RegexMatchTimeoutException` (see
   [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated)). A `pattern` or `patternProperties` pattern that is
   not a valid ECMA-262 regular expression stops the generation with an error that names it (see
-  [EcmaRegexTranslator.md](EcmaRegexTranslator.md#where-an-invalid-pattern-is-refused)). Both hold for the V4 engine too: its types throw the exception from `Validate()`
+  [EcmaRegexTranslator.md](EcmaRegexTranslator.md#where-an-invalid-pattern-is-refused)). A pattern over a limit of
+  size stops it with an error of its own, which says that the pattern is too large (see
+  [EcmaRegexTranslator.md](EcmaRegexTranslator.md#limits-on-the-size-of-a-pattern)). All three hold for the V4 engine too: its types throw the exception from `Validate()`
 - **Implicit conversions**: `(string)person.Name` extracts the .NET value
 - **Mutable builder**: `person.CreateBuilder(workspace)` creates a mutable copy
 - **Immutable document factory**: `Person.Create(...)` builds a self-contained `ParsedJsonDocument<Person>` in a single pass, with no workspace and no serialization round trip

@@ -51,6 +51,15 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
+    private static readonly DiagnosticDescriptor Crv1003PatternTooLarge =
+        new(
+            id: "CRV1003",
+            title: "JSON Schema pattern too large",
+            messageFormat: "{0}",
+            category: "JsonSchemaCodeGenerator",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
+
     private static readonly IVocabulary Corvus202012Vocab = CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabularyWith([CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance]);
 
     /// <inheritdoc/>
@@ -164,6 +173,17 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                     Location.None,
                     ex.ReferencingLocation,
                     ex.ReferencedLocation));
+
+            return;
+        }
+        catch (Corvus.Text.Json.CodeGeneration.EcmaRegexPatternTooLargeException ex)
+        {
+            // A pattern over a limit of size is not a pattern that is not valid, and has a diagnostic of its own.
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    Crv1003PatternTooLarge,
+                    Location.None,
+                    ex.Message));
 
             return;
         }

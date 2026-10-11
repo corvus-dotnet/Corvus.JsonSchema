@@ -15,8 +15,9 @@ namespace Corvus.Text.Json.SourceGenerator.Tests;
 
 /// <summary>
 /// The regular expressions in the code the V4 source generator (<c>Corvus.Json.SourceGenerator</c>) emits. Roslyn does not chain generators, so there is
-/// no <c>[GeneratedRegex]</c> in it: a generated type constructs its expression, with the match timeout of 10
-/// seconds. A pattern that is not a valid ECMA-262 regular expression is reported as the diagnostic CRV1001.
+/// no <c>[GeneratedRegex]</c> in it: a generated type constructs its expression, with the match timeout of 1
+/// second. A pattern that is not a valid ECMA-262 regular expression is reported as the diagnostic CRV1001, and a
+/// pattern over a limit of size as CRV1003.
 /// </summary>
 [TestClass]
 public class V4SourceGeneratorRegexPatternTests
@@ -92,6 +93,26 @@ public class V4SourceGeneratorRegexPatternTests
         Assert.AreEqual(1, errors.Length, string.Join("\n", result.Diagnostics));
         Assert.AreEqual("CRV1001", errors[0].Id);
         StringAssert.Contains(errors[0].GetMessage(), "The pattern 'a{2,1}' of the keyword 'pattern' is not a valid ECMA-262 regular expression. Numbers out of order in {} quantifier at offset 6.");
+    }
+
+    [TestMethod]
+    public void APatternOverALimitOfSize_IsReportedAsADiagnosticOfItsOwn()
+    {
+        GeneratorRunResult result = Run("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "(?:(?:(?:(?:(?:(?:(?:(?:(?:ab){4}){4}){4}){4}){4}){4}){4}){4}){4}"
+            }
+            """);
+
+        Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
+        Diagnostic[] errors = [.. result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)];
+        Assert.AreEqual(1, errors.Length, string.Join("\n", result.Diagnostics));
+        Assert.AreEqual("CRV1003", errors[0].Id);
+        Assert.AreEqual(
+            "The pattern '(?:(?:(?:(?:(?:(?:(?:(?:(?:ab){4}){4}){4}){4}){4}){4}){4}){4}){4}' of the keyword 'pattern' is a valid ECMA-262 regular expression, and is too large. Its repetitions with a least count of 2, 3 or 4, one inside another, come to more than 65,536 copies of what they repeat, beyond four times its size.",
+            errors[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture));
     }
 
     private static GeneratorRunResult Run(string schema)

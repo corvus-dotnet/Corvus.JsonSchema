@@ -389,10 +389,23 @@ public static partial class ValidationCodeGeneratorExtensions
         }
 
         // A pattern that is not a valid ECMA-262 regular expression stops the generation here. Generated code is not
-        // to fail when it first validates for something the generator can see.
-        if (!EcmaRegexTranslator.TryTranslate(value, out string? translation, out string? error))
+        // to fail when it first validates for something the generator can see. A pattern over a limit of size (see
+        // EcmaRegexLimits) stops it too, with its own exception and a message that says it is too large.
+        string? translation;
+        string? error;
+        try
         {
-            throw new InvalidOperationException($"The pattern '{value}' of the keyword '{keyword.Keyword}' is not a valid ECMA-262 regular expression. {error}");
+            if (!EcmaRegexTranslator.TryTranslate(value, out translation, out error))
+            {
+                throw new InvalidOperationException($"The pattern '{value}' of the keyword '{keyword.Keyword}' is not a valid ECMA-262 regular expression. {error}");
+            }
+        }
+        catch (EcmaRegexPatternTooLargeException tooLarge)
+        {
+            throw new EcmaRegexPatternTooLargeException(
+                EcmaRegexTranslator.TooLargeMessage(value.AsSpan(), keyword.Keyword, tooLarge.Limit, tooLarge.Read),
+                tooLarge.Limit,
+                tooLarge.Read);
         }
 
         string translatedValue = translation!;

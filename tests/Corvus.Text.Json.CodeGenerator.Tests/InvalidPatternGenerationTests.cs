@@ -38,6 +38,30 @@ public class InvalidPatternGenerationTests
     }
 
     /// <summary>
+    /// A pattern over a limit of size stops the generation too, with or without a program image. The exception is
+    /// not the one of a pattern that is not valid, and its message says that the pattern is too large and names the
+    /// keyword and the limit.
+    /// </summary>
+    [TestMethod]
+    [DataRow("pattern", false)]
+    [DataRow("pattern", true)]
+    [DataRow("patternProperties", false)]
+    [DataRow("patternProperties", true)]
+    public async Task GenerateCode_ForASchemaWithAPatternOverALimitOfSize_StopsAndSaysItIsTooLarge(string keyword, bool withProgramImage)
+    {
+        const string Pattern = "(?:(?:(?:(?:(?:(?:(?:(?:(?:ab){4}){4}){4}){4}){4}){4}){4}){4}){4}";
+        string schema = keyword == "pattern"
+            ? "{\"type\": \"string\", \"pattern\": \"" + Pattern + "\"}"
+            : "{\"type\": \"object\", \"patternProperties\": {\"" + Pattern + "\": {\"type\": \"integer\"}}}";
+
+        EcmaRegexPatternTooLargeException thrown = await Assert.ThrowsExactlyAsync<EcmaRegexPatternTooLargeException>(() => GenerateAsync(schema, withProgramImage));
+        Assert.AreEqual(
+            $"The pattern '{Pattern}' of the keyword '{keyword}' is a valid ECMA-262 regular expression, and is too large. Its repetitions with a least count of 2, 3 or 4, one inside another, come to more than 65,536 copies of what they repeat, beyond four times its size.",
+            thrown.Message);
+        Assert.IsInstanceOfType<InvalidOperationException>(thrown);
+    }
+
+    /// <summary>
     /// A pattern that is valid only without the <c>u</c> flag is a valid pattern, and its translation is what the
     /// generated type's helper matches with.
     /// </summary>

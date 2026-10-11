@@ -44,7 +44,7 @@ Console.WriteLine(isValid);  // true
 - **Detailed diagnostics** — validation results include schema location, evaluation path, and error messages
 - **Caching** — compiled schemas are cached by canonical URI and reused across documents
 - **Regular expression match timeout.** A `pattern` match that runs for longer than 1 second throws `RegexMatchTimeoutException` out of `Validate`, because some patterns take .NET's engine longer than anyone will wait. `JsonSchema.Options(regexMatchTimeout: TimeSpan.FromSeconds(5))` sets another timeout, and `Regex.InfiniteMatchTimeout` sets none
-- **ECMA-262 patterns.** `pattern` and `patternProperties` are answered as an ECMAScript engine answers them, and a schema whose pattern is not a valid ECMA-262 regular expression is refused when it is compiled
+- **ECMA-262 patterns.** `pattern` and `patternProperties` are answered as an ECMAScript engine answers them, and a schema whose pattern is not a valid ECMA-262 regular expression is refused when it is compiled, and so is one whose pattern is over a limit of size, with a message that says it is too large
 - **Optional runtime code generation.** `JsonSchema.Options(codeGeneration: JsonSchemaCodeGeneration.AfterWarmUp)` compiles a schema to IL once it is in steady use, for about half the warm validation time. Off by default
 
 ## Related Packages

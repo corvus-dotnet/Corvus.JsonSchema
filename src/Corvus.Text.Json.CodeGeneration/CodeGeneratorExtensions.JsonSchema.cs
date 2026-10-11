@@ -203,12 +203,32 @@ internal static partial class CodeGenerationExtensions
             {
                 foreach (string value in regex.Value)
                 {
-                    if (!EcmaRegexTranslator.TryTranslate(value, out _, out string? error))
+                    if (!TryTranslatePattern(regex.Key.Keyword, value, out _, out string? error))
                     {
                         throw new InvalidOperationException($"The pattern '{value}' of the keyword '{regex.Key.Keyword}' is not a valid ECMA-262 regular expression. {error}");
                     }
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Translates a pattern of a keyword. A pattern over a limit of size (see <see cref="EcmaRegexLimits"/>) stops
+    /// the generation with <see cref="EcmaRegexPatternTooLargeException"/>, whose message names the keyword and the
+    /// limit and says that the pattern is too large. It is not the message of a pattern that is not valid.
+    /// </summary>
+    private static bool TryTranslatePattern(string keyword, string value, out string? translation, out string? error)
+    {
+        try
+        {
+            return EcmaRegexTranslator.TryTranslate(value, out translation, out error);
+        }
+        catch (EcmaRegexPatternTooLargeException tooLarge)
+        {
+            throw new EcmaRegexPatternTooLargeException(
+                EcmaRegexTranslator.TooLargeMessage(value.AsSpan(), keyword, tooLarge.Limit, tooLarge.Read),
+                tooLarge.Limit,
+                tooLarge.Read);
         }
     }
 
@@ -291,7 +311,7 @@ internal static partial class CodeGenerationExtensions
         }
 
         // An invalid pattern has stopped the generation before this (see ThrowIfAPatternIsNotValid).
-        if (!EcmaRegexTranslator.TryTranslate(value, out string? translation, out string? error))
+        if (!TryTranslatePattern(keyword.Keyword, value, out string? translation, out string? error))
         {
             throw new InvalidOperationException($"The pattern '{value}' of the keyword '{keyword.Keyword}' is not a valid ECMA-262 regular expression. {error}");
         }

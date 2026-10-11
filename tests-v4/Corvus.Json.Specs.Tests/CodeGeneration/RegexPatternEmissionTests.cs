@@ -146,6 +146,26 @@ public class RegexPatternEmissionTests
     }
 
     /// <summary>
+    /// A pattern over a limit of size stops the generation with an exception of its own, which says that the pattern
+    /// is too large and names the keyword and the limit. It is not the error of a pattern that is not valid.
+    /// </summary>
+    [TestMethod]
+    [DataRow("""{"type": "string", "pattern": "(?:(?:(?:(?:(?:(?:(?:(?:(?:ab){4}){4}){4}){4}){4}){4}){4}){4}){4}"}""", "pattern")]
+    [DataRow("""{"type": "object", "patternProperties": {"(?:(?:(?:(?:(?:(?:(?:(?:(?:ab){4}){4}){4}){4}){4}){4}){4}){4}){4}": {"type": "integer"}}}""", "patternProperties")]
+    public async Task GenerateCode_ForAPatternOverALimitOfSize_ThrowsThatItIsTooLarge(string schema, string keyword)
+    {
+        using JsonSchemaBuilderDriver driver = DriverFactory.CreateDraft202012Driver();
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await driver.GenerateCodeForVirtualFile(schema, $"large-pattern-{Guid.NewGuid():N}.json", "RegexPatternEmission", "Large", validateFormat: false, optionalAsNullable: false, useImplicitOperatorString: false));
+
+        Assert.AreEqual("EcmaRegexPatternTooLargeException", ex.GetType().Name);
+        Assert.AreEqual(
+            "The pattern '(?:(?:(?:(?:(?:(?:(?:(?:(?:ab){4}){4}){4}){4}){4}){4}){4}){4}){4}' of the keyword '" + keyword + "' is a valid ECMA-262 regular expression, and is too large. Its repetitions with a least count of 2, 3 or 4, one inside another, come to more than 65,536 copies of what they repeat, beyond four times its size.",
+            ex.Message);
+    }
+
+    /// <summary>
     /// A match of the <c>pattern</c> keyword that outlasts the timeout throws to the caller of <c>Validate</c>. It is
     /// not reported as an instance that is not valid. This waits for the 1 second.
     /// </summary>

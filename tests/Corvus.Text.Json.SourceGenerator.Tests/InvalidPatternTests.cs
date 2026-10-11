@@ -46,6 +46,27 @@ public class InvalidPatternTests
         Assert.IsFalse(result.GeneratedSources.Any(s => s.SourceText.ToString().Contains("partial struct Root", StringComparison.Ordinal)), "Nothing is generated for the schema.");
     }
 
+    /// <summary>
+    /// A pattern over a limit of size is an error of its own, CRV1003, whose message says that the pattern is too
+    /// large and names the limit. It is not reported as a pattern that is not valid.
+    /// </summary>
+    [TestMethod]
+    [DataRow("""{"type": "string", "pattern": "(?:(?:(?:(?:(?:(?:(?:(?:(?:ab){4}){4}){4}){4}){4}){4}){4}){4}){4}"}""", "pattern")]
+    [DataRow("""{"type": "object", "patternProperties": {"(?:(?:(?:(?:(?:(?:(?:(?:(?:ab){4}){4}){4}){4}){4}){4}){4}){4}){4}": {"type": "integer"}}}""", "patternProperties")]
+    public void ASchemaWithAPatternOverALimitOfSize_IsAnErrorOfItsOwn(string schema, string keyword)
+    {
+        GeneratorRunResult result = Run(schema);
+
+        Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
+        Diagnostic[] errors = [.. result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)];
+        Assert.AreEqual(1, errors.Length, string.Join("\n", result.Diagnostics));
+        Assert.AreEqual("CRV1003", errors[0].Id);
+        Assert.AreEqual(
+            "The pattern '(?:(?:(?:(?:(?:(?:(?:(?:(?:ab){4}){4}){4}){4}){4}){4}){4}){4}){4}' of the keyword '" + keyword + "' is a valid ECMA-262 regular expression, and is too large. Its repetitions with a least count of 2, 3 or 4, one inside another, come to more than 65,536 copies of what they repeat, beyond four times its size.",
+            errors[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture));
+        Assert.IsFalse(result.GeneratedSources.Any(s => s.SourceText.ToString().Contains("partial struct Root", StringComparison.Ordinal)), "Nothing is generated for the schema.");
+    }
+
     [TestMethod]
     public void ASchemaWithAPatternValidOnlyWithoutTheUFlag_IsGenerated()
     {

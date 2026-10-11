@@ -1009,6 +1009,10 @@ A generated type then gives the answer a JavaScript engine gives. Three things f
   `The pattern 'a{2,1}' of the keyword 'pattern' is not a valid ECMA-262 regular expression. Numbers out of order in {} quantifier at offset 6.`
   The source generator reports it as its `CRV1001` diagnostic. An earlier generator emitted such a pattern as
   it was, and the generated type threw when it first validated.
+- **A pattern over a limit of size stops the generation too**, with an error of its own that says the pattern is
+  too large and names the limit, for example more than 200 groups one inside another, or a translation longer than
+  1,048,576 characters. The source generator reports it as `CRV1003`. The limits are those of the V5 translator
+  (see [the translator guide](../EcmaRegexTranslator.md#limits-on-the-size-of-a-pattern)).
 - **A match has a timeout of 1 second.** Every regular expression a generated type holds is constructed with it
   (`[GeneratedRegex(..., matchTimeoutMilliseconds: 1000)]`, or the `Regex` constructor where there is no regular
   expression generator). .NET's engine takes time exponential in the length of the text for some patterns, and

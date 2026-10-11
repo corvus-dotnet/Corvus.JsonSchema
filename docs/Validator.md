@@ -251,6 +251,8 @@ JsonSchema schema = JsonSchema.FromFile("./person-schema.json", options);
 
 A `pattern` or `patternProperties` pattern that is not a valid ECMA-262 regular expression is refused when the schema is compiled: the `JsonSchema.From*` method throws `JsonSchemaCompilationException`, whose message names the pattern and says what is wrong and where. See [Patterns](./RuntimeEvaluator.md#patterns) in the runtime evaluator guide.
 
+A pattern over a limit of size is refused in the same place with the same exception, and its message says that the pattern is too large and names the limit. It does not say that the pattern is not valid. The limits bound the time and the memory one pattern of a schema can take when the schema is compiled, and are listed in [the translator guide](./EcmaRegexTranslator.md#limits-on-the-size-of-a-pattern).
+
 ## Schema Caching
 
 Compiled schemas are cached automatically by their canonical URI, `alwaysAssertFormat` flag, `codeGeneration` setting and `regexMatchTimeout`. Subsequent calls to any `From*` method with the same URI return the cached validator without recompilation:

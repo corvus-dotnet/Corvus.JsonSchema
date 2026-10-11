@@ -154,13 +154,115 @@ internal sealed class EcmaRegexSyntaxException(string reason, int position)
 }
 
 /// <summary>
+/// The error of a pattern that is over one of the limits of size (see <see cref="EcmaRegexLimits"/>). It is not the
+/// error of a pattern that is not valid, which is <see cref="EcmaRegexSyntaxException"/>.
+/// </summary>
+/// <param name="message">The message. The translator's own is the pattern, that it is too large, and <paramref name="limit"/>.</param>
+/// <param name="limit">What the pattern is over, with the limit and its value, as a sentence.</param>
+/// <param name="read">Whether the whole pattern was read, and found to be a valid ECMA-262 pattern, before the limit was met.</param>
+internal sealed class EcmaRegexPatternTooLargeException(string message, string limit, bool read)
+    : InvalidOperationException(message)
+{
+    /// <summary>Initializes a new instance of the <see cref="EcmaRegexPatternTooLargeException"/> class, for a limit met while reading.</summary>
+    /// <param name="limit">What the pattern is over, with the limit and its value, as a sentence.</param>
+    public EcmaRegexPatternTooLargeException(string limit)
+        : this(limit, limit, read: false)
+    {
+    }
+
+    /// <summary>Gets what the pattern is over, with the limit and its value, as a sentence.</summary>
+    public string Limit { get; } = limit;
+
+    /// <summary>
+    /// Gets a value indicating whether the whole pattern was read, and found to be a valid ECMA-262 pattern, before
+    /// the limit was met. A limit met while reading leaves the rest of the pattern unread.
+    /// </summary>
+    public bool Read { get; } = read;
+}
+
+/// <summary>
+/// The limits on the size of one pattern, which bound the time and the memory it takes to read it, to write it for
+/// .NET and to construct a regular expression from what is written, whatever the pattern. A pattern may come from
+/// outside, in a schema that is not trusted. A pattern over a limit is refused with
+/// <see cref="EcmaRegexPatternTooLargeException"/>.
+/// </summary>
+internal static class EcmaRegexLimits
+{
+    /// <summary>The most characters of a pattern, and of what is written for .NET from it: 1,048,576.</summary>
+    public const int MaxLength = 1_048_576;
+
+    /// <summary>
+    /// The most steps taken to read a pattern and to write it. A step is the reading of one character or the visit
+    /// of one node of the tree, and the work on the ranges of a set is counted in the same measure (two ranges
+    /// sorted are a step, sixteen copied are one). The steps stand for time, which they bound whatever the machine
+    /// is doing, so that the same pattern is refused or accepted everywhere.
+    /// </summary>
+    public const long MaxSteps = 2_000_000;
+
+    /// <summary>
+    /// The most copies that repetitions with a least count of 2, 3 or 4, one inside another, come to, beyond four
+    /// times the size of the pattern: 65,536. .NET writes such repetitions out when it constructs a regular
+    /// expression, to find the text every match starts with, in time and memory that double, triple or quadruple
+    /// with each one, and it keeps what it wrote. One such repetition makes at most four copies of what it holds,
+    /// which is in proportion to the pattern. One inside another, twelve deep, makes millions.
+    /// </summary>
+    public const int MaxCopies = 65_536;
+
+    /// <summary>
+    /// The most that what is written for .NET may cost .NET to construct a regular expression from: 100,000,000,
+    /// counted as <see cref="EcmaRegexTranslator.ConstructionCost"/> counts it. .NET joins the literal text of a
+    /// sequence piece by piece, each time copying what it has joined so far, and goes through the alternatives of
+    /// an alternation once for each of them, so a sequence of very many pieces and an alternation of very many
+    /// alternatives take it time that grows with the square of their number.
+    /// </summary>
+    public const long MaxConstructionCost = 100_000_000;
+}
+
+/// <summary>Counts the steps taken for one pattern, and refuses the pattern past <see cref="EcmaRegexLimits.MaxSteps"/>.</summary>
+internal sealed class EcmaRegexWork
+{
+    private long steps;
+
+    /// <summary>Initializes a new instance of the <see cref="EcmaRegexWork"/> class.</summary>
+    public EcmaRegexWork()
+    {
+        // What the tables of Unicode did on this thread for anything else is not this pattern's.
+        EcmaRegexUnicode.TakeSteps();
+    }
+
+    /// <summary>Gets or sets a value indicating whether the whole pattern has been read, and is a valid ECMA-262 pattern.</summary>
+    public bool Read { get; set; }
+
+    /// <summary>Gets the steps taken so far.</summary>
+    public long Steps => this.steps;
+
+    /// <summary>Counts steps.</summary>
+    /// <param name="count">How many.</param>
+    /// <exception cref="EcmaRegexPatternTooLargeException">The pattern has taken more than <see cref="EcmaRegexLimits.MaxSteps"/>.</exception>
+    public void Spend(long count = 1)
+    {
+        // What the tables of Unicode did since the last call is counted with it.
+        this.steps += count + EcmaRegexUnicode.TakeSteps();
+        if (this.steps > EcmaRegexLimits.MaxSteps)
+        {
+            string limit = "It takes more than " + EcmaRegexLimits.MaxSteps.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + " steps to translate.";
+            throw new EcmaRegexPatternTooLargeException(limit, limit, this.Read);
+        }
+    }
+}
+
+/// <summary>
 /// Reads an ECMA-262 pattern by recursive descent into a tree. With <c>unicode</c> it applies the grammar of the u
 /// flag and reads the pattern by code point. Without it, it applies the Annex B grammar of a pattern with no flag and
 /// reads the pattern by UTF-16 code unit, as such a pattern is matched. The grammar is that of ECMAScript 2025.
 /// </summary>
 internal sealed class EcmaRegexParser
 {
-    /// <summary>Groups may nest this deep. It bounds the recursion of the reader and of the writer.</summary>
+    /// <summary>
+    /// Groups may nest this deep. It bounds the recursion of the reader and of the writer. A pattern that nests
+    /// deeper is refused as too large (<see cref="EcmaRegexPatternTooLargeException"/>), and not as a pattern that
+    /// is not valid.
+    /// </summary>
     public const int MaxNesting = 200;
 
     /// <summary>The largest bound of a counted quantifier. No string reaches a larger count.</summary>
@@ -204,6 +306,7 @@ internal sealed class EcmaRegexParser
     private readonly int[] p;
     private readonly int max;
     private readonly Complements complements;
+    private readonly EcmaRegexWork work;
 
     /// <summary>For each group name, its groups: the number of each, then the alternatives that enclose it.</summary>
     private readonly Dictionary<string, List<int[]>> names = [];
@@ -243,8 +346,10 @@ internal sealed class EcmaRegexParser
     /// <summary>Initializes a new instance of the <see cref="EcmaRegexParser"/> class.</summary>
     /// <param name="pattern">The pattern.</param>
     /// <param name="unicode">Whether to read it with the grammar of the u flag.</param>
-    public EcmaRegexParser(ReadOnlySpan<char> pattern, bool unicode)
+    /// <param name="work">The count of the steps taken for the pattern, when the caller keeps one.</param>
+    public EcmaRegexParser(ReadOnlySpan<char> pattern, bool unicode, EcmaRegexWork? work = null)
     {
+        this.work = work ?? new EcmaRegexWork();
         this.Unicode = unicode;
         this.max = unicode ? EcmaRegexUnicode.Max : 0xFFFF;
         this.complements = unicode ? CodePointComplements : CodeUnitComplements;
@@ -289,8 +394,10 @@ internal sealed class EcmaRegexParser
     /// <summary>Reads the pattern.</summary>
     /// <returns>The root of its tree.</returns>
     /// <exception cref="EcmaRegexSyntaxException">The pattern is not valid in the grammar.</exception>
+    /// <exception cref="EcmaRegexPatternTooLargeException">The pattern is over a limit of size.</exception>
     public EcmaRegexNode Parse()
     {
+        this.work.Spend(this.p.Length);
         this.ScanGroups();
         EcmaRegexNode root = this.Disjunction();
         if (this.i < this.p.Length)
@@ -413,7 +520,8 @@ internal sealed class EcmaRegexParser
     {
         if (++this.depth > MaxNesting)
         {
-            throw this.Error("Groups nested too deeply");
+            throw new EcmaRegexPatternTooLargeException(
+                "Its groups nest more than " + MaxNesting.ToString(System.Globalization.CultureInfo.InvariantCulture) + " deep.");
         }
 
         if ((2 * this.pathLength) + 2 > this.path.Length)
@@ -492,6 +600,7 @@ internal sealed class EcmaRegexParser
 
     private EcmaRegexNode Term()
     {
+        this.work.Spend();
         int c = this.Peek();
         int groupsBefore = this.groups;
         int at = this.i;
@@ -779,6 +888,7 @@ internal sealed class EcmaRegexParser
             // no match can go through both.
             if (this.names.TryGetValue(name, out List<int[]>? others))
             {
+                this.work.Spend((long)others.Count * (this.pathLength + 1));
                 foreach (int[] other in others)
                 {
                     if (!this.SeparateAlternatives(other))
@@ -883,6 +993,7 @@ internal sealed class EcmaRegexParser
         EcmaRegexNode group = new(EcmaRegexNodeKind.Group) { Group = ++this.groups };
         if (name is not null)
         {
+            this.work.Spend(this.pathLength);
             int[] named = new int[1 + (2 * this.pathLength)];
             named[0] = group.Group;
             Array.Copy(this.path, 0, named, 1, 2 * this.pathLength);
@@ -1144,6 +1255,7 @@ internal sealed class EcmaRegexParser
                 }
 
                 int[]? set = EcmaRegexUnicode.Property(expression, out int categoryTables);
+                this.work.Spend(8);
                 if (set is null)
                 {
                     this.i = start;
@@ -1365,6 +1477,7 @@ internal sealed class EcmaRegexParser
 
     private void AddClassAtom(int c, int[]? set, int[]? items, ref bool ordered)
     {
+        this.work.Spend(1 + ((set?.Length ?? 0) / 32));
         if (set is null)
         {
             this.AddPair(c, c);
@@ -1467,6 +1580,9 @@ internal sealed class EcmaRegexParser
             this.AddClassAtom(first, firstSet, firstItems, ref ordered);
         }
 
+        // The ranges are sorted, joined with the categories, and gone through for what is equivalent to them, and
+        // the operations on sets count the steps of that.
+        this.work.Spend(1 + (this.pairCount / 32));
         int[] items = new int[this.pairCount];
         Array.Copy(this.pairs, items, this.pairCount);
         int[] rest = EcmaRegexUnicode.SetOf(this.pairs, this.pairCount);
