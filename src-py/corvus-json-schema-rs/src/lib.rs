@@ -112,7 +112,7 @@ fn string(s: &Bound<'_, PyString>) -> PyResult<String> {
         Err(_) => {
             let utf16 = s.call_method1("encode", ("utf-16-le", "surrogatepass"))?;
             let bytes = utf16.cast::<PyBytes>()?.as_bytes();
-            let units = bytes.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]]));
+            let units = bytes.as_chunks::<2>().0.iter().map(|&c| u16::from_le_bytes(c));
             Ok(char::decode_utf16(units).map(|c| c.unwrap_or(char::REPLACEMENT_CHARACTER)).collect())
         }
     }
