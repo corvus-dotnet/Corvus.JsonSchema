@@ -386,3 +386,12 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
   `\p{sc=Hrkt}` is valid and takes no character, as no character has that value. And V8 takes
   `a{2147483648,2147483647}`, where the first count is the greater, which is not valid here.
 - Custom `formats` functions cannot be serialised into standalone modules.
+
+## License
+
+Apache 2.0.
+
+The tables of Unicode properties and of case (`_properties.py` and `_casefold.py`) are derived from the Unicode
+Character Database, which is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has
+that notice, and the one of the `regress` crate that the tables were first read from. The file is in the source
+distribution and in the wheel, beside `LICENSE`.
