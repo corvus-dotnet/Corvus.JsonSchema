@@ -29,8 +29,9 @@ type v8Cases struct {
 	Fast  []v8Case `json:"fast"`
 	Needs []v8Case `json:"needs"`
 	// The four sets of what is a pattern.
-	ClassK []v8Case `json:"classK"`
-	Counts []v8Case `json:"counts"`
+	ClassK     []v8Case `json:"classK"`
+	Counts     []v8Case `json:"counts"`
+	Properties []v8Case `json:"properties"`
 }
 
 func loadCases(t *testing.T) *v8Cases {
@@ -134,6 +135,17 @@ func TestEscapedKInAClass(t *testing.T) {
 func TestCountsAreComparedAsWritten(t *testing.T) {
 	c := loadCases(t)
 	if invalid, departures := checkSyntax(t, c.Counts); invalid < 20 || departures["count-order"] < 10 {
+		t.Errorf("the cases are not the ones this test is about")
+	}
+}
+
+// TestPropertyNamesAndValues checks the names and values of \p{...} where V8 13.6 departs from ECMA-262. WSpace is
+// not a name ECMA-262 lists, so \p{WSpace} is an error with the u flag and is read with no flag, as the characters
+// p{WSpace}. Katakana_Or_Hiragana (Hrkt) is a Script value, which no character has, so \p{sc=Hrkt} matches nothing
+// and \P{sc=Hrkt} matches any character.
+func TestPropertyNamesAndValues(t *testing.T) {
+	c := loadCases(t)
+	if _, departures := checkSyntax(t, c.Properties); departures["property-name"] < 3 || departures["script-value"] < 20 {
 		t.Errorf("the cases are not the ones this test is about")
 	}
 }
