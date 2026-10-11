@@ -30,6 +30,7 @@ type v8Cases struct {
 	Needs []v8Case `json:"needs"`
 	// The four sets of what is a pattern.
 	ClassK []v8Case `json:"classK"`
+	Counts []v8Case `json:"counts"`
 }
 
 func loadCases(t *testing.T) *v8Cases {
@@ -123,6 +124,16 @@ func checkSyntax(t *testing.T, cases []v8Case) (invalid int, departures map[stri
 func TestEscapedKInAClass(t *testing.T) {
 	c := loadCases(t)
 	if invalid, _ := checkSyntax(t, c.ClassK); len(c.ClassK) < 30 || invalid < 9 {
+		t.Errorf("the cases are not the ones this test is about")
+	}
+}
+
+// TestCountsAreComparedAsWritten checks the two counts of a quantifier. A first count greater than the second is an
+// error whatever the size of the numbers. V8 13.6 keeps a count as a number that stops at 2^31 - 1 and so takes
+// a{2147483648,2147483647}. Those cases have ECMA-262's answer.
+func TestCountsAreComparedAsWritten(t *testing.T) {
+	c := loadCases(t)
+	if invalid, departures := checkSyntax(t, c.Counts); invalid < 20 || departures["count-order"] < 10 {
 		t.Errorf("the cases are not the ones this test is about")
 	}
 }

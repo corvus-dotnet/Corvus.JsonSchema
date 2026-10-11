@@ -15,6 +15,7 @@
 //     left. The first three do not finish unless the matcher gives up at such a loop, as V8 does. The others have
 //     such loops inside and around lookaheads and lookbehinds, where a wrong count of what is left would show.
 //   - classK: \k in a class, which is the letter k only in a pattern with no named group and no u flag.
+//   - counts: the two counts of a quantifier, which are compared as the numbers written, whatever their size.
 //
 // The answers are V8's, except in the places where V8 13.6 departs from ECMA-262. There a case has ECMA-262's
 // answer, and "ecma262" names the departure (see departure below).
@@ -98,6 +99,16 @@ const classKPatterns = [
   "(?<n>a)[\\k]", "[\\k](?<n>a)", "(?<n>a)[\\k<n>]", "[\\k<n>](?<n>a)", "(?<n>a)[^\\k]", "(?<n>a)[\\k-z]", "(?<n>a)[a-\\k]", "(?<n>a)[\\d-\\k]", "(?<n>a)|[\\k]",
   "(?<n>a)\\k<n>[k]", "(?<n>a)[k]", "\\k", "\\k<n>", "(?<n>a)\\k", "(?<n>a)\\k<n>", "(?<n>a)[\\b]", "(?<n>a)[\\-]", "(?<n>a)[\\a]", "(?<n>a)[\\c]", "(?<n>a)[\\_]",
 ];
+// The counts of a quantifier are compared as the numbers written, whatever their size.
+const countPatterns = [
+  "a{2,1}", "a{1,2}", "^a{2,2}$", "a{10,9}", "a{9,10}", "a{010,9}", "a{9,010}", "a{2,00000000000000000000001}", "a{00000000000000000000001,2}", "\\-a{2,1}", "{2,1}",
+  "a{2147483647,2147483647}", "a{2147483647,2147483648}", "a{2147483648,2147483647}", "a{2147483648,2147483648}", "a{2147483649,2147483648}",
+  "a{4294967295,4294967296}", "a{4294967296,4294967295}", "a{4294967297,4294967296}", "a{99999999999999999999,1}", "a{1,99999999999999999999}",
+  "a{99999999999999999999,99999999999999999998}", "a{99999999999999999998,99999999999999999999}", "a{99999999999999999999,99999999999999999999}",
+  "a{100000000000000000000,99999999999999999999}", "a{99999999999999999999,100000000000000000000}", "^a{0,99999999999999999999}$", "^a{2,2147483648}$",
+  "^a{3,}?$", "(?:a{2147483648,2147483647})", "(?=a{2147483648,2147483647})", "(?<=a{2147483648,2147483647})", "[a{2147483648,2147483647}]", "\\-{2147483648,2147483647}",
+  "a{2147483648,2147483647}?", "(a){2147483648,2147483647}", "[a]{2147483648,2147483647}", "\\d{2147483648,2147483647}", "a{2147483648,2147483647", "a{2147483648,2147483647,}",
+];
 // departure names the place where V8 13.6 departs from ECMA-262 for a pattern, and gives ECMA-262's answer.
 //   - count-order: V8 keeps a count as a number that stops at 2^31 - 1, so it takes a{2147483648,2147483647}. A
 //     first count greater than the second is an error at any size (22.2.1.1 Early Errors of QuantifierPrefix).
@@ -139,5 +150,6 @@ const out = {
   fast: fastPatterns.map((p) => ask(p, fastTexts)),
   needs: needsPatterns.map((p) => ask(p, loopTexts)),
   classK: classKPatterns.map(departure),
+  counts: countPatterns.map(departure),
 };
 process.stdout.write(JSON.stringify(out));

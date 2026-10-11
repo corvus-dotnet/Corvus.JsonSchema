@@ -355,6 +355,26 @@ func (p *parser) looksLikeQuantifier() bool {
 	return k < len(s) && s[k] == '}'
 }
 
+// greaterAsWritten reports whether the first of two runs of decimal digits is the greater number. The runs are
+// compared as written, because a count has no limit of size in the grammar and number stops at maxCount.
+func greaterAsWritten(a, b []rune) bool {
+	for len(a) > 0 && a[0] == '0' {
+		a = a[1:]
+	}
+	for len(b) > 0 && b[0] == '0' {
+		b = b[1:]
+	}
+	if len(a) != len(b) {
+		return len(a) > len(b)
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return a[i] > b[i]
+		}
+	}
+	return false
+}
+
 // number reads a run of decimal digits, saturating at maxCount.
 func (p *parser) number() int {
 	start := p.i
@@ -387,20 +407,23 @@ func (p *parser) quantifier() (min, max int, lazy, ok bool) {
 		min, max = 0, 1
 	case c == '{' && p.looksLikeQuantifier():
 		p.i++
+		first := p.i
 		min = p.number()
 		max = min
-		if p.eat(',') {
+		if firstEnd := p.i; p.eat(',') {
 			if p.peek() == '}' {
 				max = unbounded
 			} else {
+				second := p.i
 				max = p.number()
+				// Both counts stop at maxCount, so the numbers are compared as they are written.
+				if greaterAsWritten(p.p[first:firstEnd], p.p[second:p.i]) {
+					p.fail("numbers out of order in quantifier")
+				}
 			}
 		}
 		if !p.eat('}') {
 			p.fail("malformed quantifier")
-		}
-		if max != unbounded && max < min {
-			p.fail("numbers out of order in quantifier")
 		}
 	default:
 		return 0, 0, false, false
