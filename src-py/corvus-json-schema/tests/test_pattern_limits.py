@@ -591,7 +591,11 @@ def test_the_caches_are_bounded() -> None:
 
     regex.purge()
     assert compile_pattern("(?<=q)w{3,}e") is not None
-    assert not any("(?<=q)" in str(key) for key in getattr(regex._main, "_cache", {}))
+    # (Its cache is in regex._main from release 2026, and in regex.regex before.)
+    internals = getattr(regex, "_main", None) or getattr(regex, "regex", None)
+    cached = getattr(internals, "_cache", None)
+    assert cached is not None and not any("(?<=q)" in str(key) for key in cached)
+    assert regex.compile("(?<=q)w{3,}e") is not None and any("(?<=q)" in str(key) for key in cached)
 
 
 def test_a_caller_near_the_end_of_the_stack_gets_the_error_of_size() -> None:
