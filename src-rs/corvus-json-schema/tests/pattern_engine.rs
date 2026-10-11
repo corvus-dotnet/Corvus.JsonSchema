@@ -678,3 +678,34 @@ fn a_repetition_too_large_to_write_out_is_refused() {
         assert!(!v.is_valid(&json!("ax-xxa")), "{pattern}");
     }
 }
+
+/// `\k` in a class is the letter in a pattern with no named group, and is not valid in one with a named group,
+/// with the `u` flag or without it. The engine took it as the letter in both. V8 says the same of each of these.
+#[test]
+fn k_in_a_class_is_not_valid_in_a_pattern_with_a_named_group() {
+    for pattern in [
+        r"(?<n>a)[\k]",
+        r"[\k](?<n>a)",
+        r"(?<n>a)[\k<a>]",
+        r"[\k<a>](?<n>a)",
+        r"(?<n>a)^[\k<a>]$",
+        r"^[\k<a>]$(?<n>a)",
+        r"(?<a>x)[\k]",
+        r"(?<a>x)[\k<a>]",
+        r"(?<n>a)[^\k]",
+        r"(?<n>a)[a-\k]",
+        r"(?<n>a)[\cK\k]",
+        r"(?<n>a)\[\k]",
+    ] {
+        let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
+        assert_eq!(e.message(), format!("Invalid regular expression '{pattern}' in pattern."));
+    }
+    check_texts(&[
+        (r"^[\k]$", &["k"], &["", "\\", "kk", "a"]),
+        (r"^[\k<a>]+$", &["k", "<a>", "ka"], &["", "\\", "n"]),
+        // The backslash is the member, and the `k` after it another.
+        (r"^(?<n>a)[\\k]$", &["ak", "a\\"], &["a", "k", "aa"]),
+        // No named group: the class holds the text of one.
+        (r"^[(?<n>]\k$", &["nk", "(k", "<k"], &["k", "n", "ak"]),
+    ]);
+}

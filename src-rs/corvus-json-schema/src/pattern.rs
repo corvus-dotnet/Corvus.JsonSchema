@@ -321,11 +321,11 @@ pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
     if let Some(p) = CACHE.lock().unwrap().get(pattern) {
         return Ok(p.clone());
     }
-    // Validity is ECMA-262's: a pattern regress rejects is an error, whichever matcher would run it. regress allows
-    // a quantifier on a word boundary, which ECMA-262 does not.
+    // Validity is ECMA-262's: a pattern regress rejects is an error, whichever matcher would run it. regress takes
+    // a few patterns ECMA-262 does not (`rewrite::not_valid`).
     let source = pattern;
     let (regress, unicode) = compile_regress(pattern).ok_or(PatternError::Invalid)?;
-    if rewrite::quantified_assertion(pattern, unicode) {
+    if rewrite::not_valid(pattern, unicode) {
         return Err(PatternError::Invalid);
     }
     let matcher = match choose(pattern, unicode) {
@@ -653,7 +653,7 @@ fn excluded_class_with_word(p: &str) -> Option<(CharSet, bool)> {
 
 /// The `regex` format: a valid ECMA-262 regular expression (with the `u` flag).
 pub(crate) fn is_valid_ecma_regex(s: &str) -> bool {
-    regress::Regex::with_flags(s, "u").is_ok() && !rewrite::quantified_assertion(s, true)
+    regress::Regex::with_flags(s, "u").is_ok() && !rewrite::not_valid(s, true)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

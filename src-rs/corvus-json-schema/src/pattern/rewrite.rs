@@ -111,12 +111,43 @@ enum Stop {
 }
 
 /// Whether the pattern has a quantifier on an assertion. regress accepts `\b+` and ECMA-262 does not.
-pub(super) fn quantified_assertion(pattern: &str, unicode: bool) -> bool {
+fn quantified_assertion(pattern: &str, unicode: bool) -> bool {
     // A quantifier right after `\b` or `\B` is needed for it (an escaped backslash or a class can also read so).
     let b = pattern.as_bytes();
     let candidate =
         b.windows(3).any(|w| w[0] == b'\\' && (w[1] | 0x20) == b'b' && matches!(w[2], b'*' | b'+' | b'?' | b'{'));
     candidate && with_stack(pattern, || matches!(Parser::parse(pattern, unicode), Err(Stop::Invalid))) == Some(true)
+}
+
+/// Whether the pattern is one regress takes (with the `u` flag when `unicode`, and otherwise without it) and
+/// ECMA-262 does not.
+pub(super) fn not_valid(pattern: &str, unicode: bool) -> bool {
+    quantified_assertion(pattern, unicode) || (!unicode && k_in_a_class(pattern))
+}
+
+/// Whether the pattern has a named group and `\k` in a class. Without the `u` flag `\k` is the letter only in a
+/// pattern with no named group, and regress takes it as the letter in a class of any pattern. (With the flag
+/// regress refuses it, as ECMA-262 does.)
+fn k_in_a_class(pattern: &str) -> bool {
+    let b = pattern.as_bytes();
+    let (mut named, mut in_a_class, mut in_class, mut i) = (false, false, false, 0);
+    while i < b.len() {
+        match b[i] {
+            b'\\' => {
+                in_a_class |= in_class && b.get(i + 1) == Some(&b'k');
+                i += 1;
+            }
+            b'[' => in_class = true,
+            b']' => in_class = false,
+            // `(?<` that is not a lookbehind.
+            b'(' if !in_class => {
+                named |= b[i + 1..].starts_with(b"?<") && !matches!(b.get(i + 3), Some(b'=' | b'!') | None);
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    named && in_a_class
 }
 
 /// Groups nested deeper than this are read and written on a stack of their own.
@@ -2450,6 +2481,16 @@ mod tests {
         }
         for pattern in [r"\\b+", r"[\b+]", r"(?:\b)+", r"a\b", r"\b\{", r"\b{", r"\b{a}"] {
             assert!(!quantified_assertion(pattern, false), "{pattern}");
+        }
+    }
+
+    #[test]
+    fn k_in_a_class_of_a_pattern_with_a_named_group() {
+        for pattern in [r"(?<n>a)[\k]", r"[\k](?<n>a)", r"[a\k<n>](?<n>a)", r"((?<n>a))[^\k]"] {
+            assert!(k_in_a_class(pattern), "{pattern}");
+        }
+        for pattern in [r"[\k]", r"(?<=a)[\k]", r"(?<!a)[\k]", r"[(?<n>][\k]", r"(?<n>a)[\\k]", r"(?<n>a)\[\k<n>]"] {
+            assert!(!k_in_a_class(pattern), "{pattern}");
         }
     }
 
