@@ -966,7 +966,7 @@ var
   Sources: TUTF8StringArray;
   I: Int32;
 begin
-  Sources := ListOf(['a(', '[a', 'a{2,1}', '(?<n>a)(?<n>b)', '*a', '^(?=a']);
+  Sources := ListOf(['a(', '[a', 'a{2,1}', '(?<n>a)(?<n>b)', '*a', '^(?=a', '(?<n>a)[\k]', '^[\k]+(?<n>a)$']);
   for I := 0 to Length(Sources) - 1 do
     Check(not CompilePattern(Sources[I], P), Sources[I] + ' compiled');
   Check(ValidRegex('^a+$') and not ValidRegex('a\&.b') and not ValidRegex('a('), 'ValidRegex is the u flag grammar');

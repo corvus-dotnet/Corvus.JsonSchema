@@ -4,7 +4,7 @@ The version history of `corvus-json-schema` for Object Pascal (`src-pas/corvus-j
 
 ## V0.1.1
 
-V0.1.1 fixes wrong results for two kinds of pattern, and patterns that took the engine longer than anyone would wait. There are no API changes. Version 0.1.0 is affected.
+V0.1.1 fixes wrong results for two kinds of pattern, and patterns that took the engine longer than anyone would wait. It also refuses patterns that are not valid and were accepted. There are no API changes. Version 0.1.0 is affected.
 
 ### Bug fixes
 
@@ -13,6 +13,8 @@ V0.1.1 fixes wrong results for two kinds of pattern, and patterns that took the 
 - **A repetition whose body cannot consume a character.** A pattern such as `(?:((?=x)|()|){4,5}?){4}?$` repeats a body that can match only the empty string. ECMA-262 lets the iterations up to the minimum be empty and refuses an empty one after it, so the repetition is the body the minimum number of times. The backtracking matcher ran it as written, and so tried every combination of the alternatives of every iteration: up to 3 to the power of 16 for that pattern, at every position of the string. The schema compiled and the first match did not return, in any time worth waiting. The matcher now runs such a body once when the minimum is one or more, and not at all when it is zero. What the body's groups hold afterwards is unchanged, since each iteration starts with them cleared and at the same position, so only the last iteration decides. A backreference inside the group it names, as in `(a\1)`, is now read as the empty string, which is what it always matched, so that a body made of such references is seen to consume nothing. V8 makes both rewrites. Of the patterns of the ECMA-262 regular expression test data, which V8 answers within 250,000 backtracks each, 23 did not finish in 5 seconds, and 21 of those now do.
 
 - **A counted repetition before a rest of the pattern that cannot fit.** `(?:\1|[^a]|$(?:a?|(?<!^)){4}?){4,6}?(\b|a)+?a$` repeats a body that can be empty in 17 ways at the end of the string, and what follows the repetition needs one more character. The matcher tried every combination of those ways, 17 to the power of 4, before it found that out each time. It now works out, for every counted repetition, the least number of bytes that the rest of the pattern consumes, and gives up at the repetition when fewer are left. V8 does the same at every choice. The two patterns of the test data that still did not finish in 5 seconds took 8 and 11 seconds for their texts, and now take 4 and 135 milliseconds. No answer changes.
+
+- **`\k` in a class, in a pattern with a named group.** Without the `u` flag `\k` is the letter `k`, but only in a pattern with no named group. In a pattern that has one, `\k` must be a reference such as `\k<n>`, and in a class it cannot be one, so `(?<n>a)[\k]` is an error. The package read the `\k` of the class as the letter `k` and accepted the pattern. Compiling such a schema now raises `EJsonSchemaCompileError`. `[\k]` with no named group in the pattern is the letter `k`, as before.
 
 - **The ECMA-262 regular expression test data.** The engine now agrees with V8 on every pattern and every text of the 13 files that a document can hold: 98,839 patterns and 4,268,313 answers, with no pattern left unanswered. The texts it cannot hold are the 31 of `lone-surrogates.jsonl` with half of a surrogate pair, which the parser refuses. The answers of the 62 records where V8 is known to depart from ECMA-262 are not compared.
 

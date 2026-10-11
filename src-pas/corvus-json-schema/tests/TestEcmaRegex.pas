@@ -2357,6 +2357,40 @@ begin
     Fail('the cases of TestLoopsGiveUpWhenTheRestCannotFit are not the ones the test is about');
 end;
 
+{ CheckSyntax checks one of the sets of what is a pattern: which patterns are valid, in each grammar, and what the
+  valid ones match. The expectations are V8's, and ECMA-262's where V8 13.6 departs from it, which gen_cases.js of
+  the Go package works out and marks with the name of the departure. Departures counts the marked patterns. }
+procedure CheckSyntax(const Test, Name: UTF8String; out Patterns, Invalid, Departures: Int32);
+var
+  Json: TJson;
+  Root, Item, Answers, Matched, Legacy: Int32;
+begin
+  CheckCases(Name, False, Patterns, Answers, Matched, Legacy, Invalid);
+  Departures := 0;
+  if LoadJson(CasesPath, Json, Root) then begin
+    Item := Json.Nodes[Json.Member(Root, Name)].First;
+    while Item >= 0 do begin
+      if Json.Member(Item, 'ecma262') >= 0 then
+        Inc(Departures);
+      Item := Json.Nodes[Item].Next;
+    end;
+  end;
+  WriteLn(Test, ': ', Patterns, ' patterns (', Legacy, ' valid only with no flag, ', Invalid, ' not valid), ', Answers,
+    ' answers per back end (', Matched, ' of them a match), ', Departures, ' where V8 departs from ECMA-262');
+end;
+
+{ TestEscapedKInAClass checks \k in a class. In a pattern with no named group and no u flag it is the letter k. In a
+  pattern with a named group it is an error, in a class as outside one: the identity escapes of Annex B leave k out
+  when the pattern has a group name, and \k is a reference only outside a class. }
+procedure TestEscapedKInAClass;
+var
+  Patterns, Invalid, Departures: Int32;
+begin
+  CheckSyntax('TestEscapedKInAClass', 'classK', Patterns, Invalid, Departures);
+  if (Patterns < 30) or (Invalid < 9) then
+    Fail('the cases of TestEscapedKInAClass are not the ones the test is about');
+end;
+
 { TestCodeUnitPositions checks the two readers of a code unit on every position of a text, forwards and
   backwards. }
 procedure TestCodeUnitPositions;
@@ -2453,11 +2487,12 @@ begin
   TestNeeds;
   TestLoopsGiveUpWhenTheRestCannotFit;
   TestCodeUnitPositions;
+  TestEscapedKInAClass;
   WriteLn('V8 oracle: ', OracleVerdicts, ' verdicts on validity compared, ', OracleVerdictsAgreed, ' agreed. ',
     OracleAnswers, ' answers on a match compared (each text on both back ends), ', OracleAnswersAgreed, ' agreed.');
   if Failures <> 0 then begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 24 tests, 0 failures');
+  WriteLn('PASS: 25 tests, 0 failures');
 end.

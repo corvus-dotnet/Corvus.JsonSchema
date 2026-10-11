@@ -1152,8 +1152,13 @@ begin
     Exit(LegacyOctal);
   end;
   // Identity escapes. The u flag allows only the syntax characters and '/', and '-' in a class. Annex B allows
-  // any character.
+  // any character, except k in a pattern with a named group. Outside a class AtomEscape reads \k before this is
+  // reached, so here the \k of such a pattern is in a class, where it is not a reference either.
   if Unicode and (not SyntaxCharacter(C)) and not (InClass and (C = Ord('-'))) then begin
+    Fail('invalid escape');
+    Exit(0);
+  end;
+  if (C = Ord('k')) and HasNames then begin
     Fail('invalid escape');
     Exit(0);
   end;
