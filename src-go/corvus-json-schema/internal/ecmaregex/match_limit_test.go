@@ -244,6 +244,9 @@ func TestALimitedMatchAllocatesNothing(t *testing.T) {
 		{`^(?:(a|b)\1?)+$`, long[:4000], time.Minute, nil},
 		{`^[abé]{0,60000}c$`, append([]byte("é"), long...), time.Minute, nil},
 		{`^(?:(a+)\1*)+$`, []byte(strings.Repeat("a", 60) + "b"), time.Millisecond, ErrMatchTime},
+		// A match that takes the memory of failed places into use, which is pooled with the rest of its state.
+		{`^(?=.)(?:a|aa)+$`, []byte(strings.Repeat("a", 1000) + "b"), time.Minute, nil},
+		{`(?=.)(?:a|b)*c`, long, 0, nil},
 	} {
 		re, err := Compile(c.pattern)
 		if err != nil {

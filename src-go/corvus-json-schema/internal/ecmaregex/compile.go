@@ -77,6 +77,32 @@ type inst struct {
 	need int32
 	// iter is the least number of bytes one iteration of the body of an opLoop consumes going forward.
 	iter int32
+	// m is the number of the instruction's memo point, counted from 1, or 0 when it has none (see memoPoint). It is
+	// set for an opSplit, an opLoop, an opRep and an opRepLazy.
+	m int32
+}
+
+// A memoPoint is a place where the matcher makes a choice and can remember that the choice has failed: a split, a
+// loop that may be entered or left, and what follows a single character loop that gives characters back or takes
+// more. Whether a way from such a place leads to a match depends on the place and the position alone when nothing
+// else the matcher keeps can change what follows. So a pattern with a backreference has no memo points (what a
+// group holds changes what follows), and neither has a place inside a loop that counts its iterations up to a
+// bound. Inside a loop with no upper bound and a least count of zero or one, one thing more decides what follows:
+// whether the loop would refuse the iteration as empty if it ended here. That is one bit for each such loop the
+// place is in (loops, innermost last), and a place in more than maxMemoLoops of them has no memo point.
+type memoPoint struct {
+	loops [maxMemoLoops]int32
+	mins  [maxMemoLoops]int32
+}
+
+// maxMemoLoops is the number of loops whose state a memo point can tell apart.
+const maxMemoLoops = 2
+
+// A loopContext is one counted loop that the instruction being written is inside of: its number, its least count,
+// and whether its state is one bit to a memo point (no upper bound, and a least count of zero or one).
+type loopContext struct {
+	loop, min int32
+	simple    bool
 }
 
 // A program is a pattern compiled for the backtracking matcher.
@@ -92,6 +118,11 @@ type program struct {
 	prefix []byte
 	// need is the least number of bytes a match consumes (see setNeeds).
 	need int
+	// points holds the memo points of the program (see memoPoint).
+	points []memoPoint
+	// quick says, for each instruction, which characters can come next on a way from it to the end of its match (see
+	// setQuick).
+	quick []quick
 	// first holds every code point a match can start with. It is nil when a match can be empty or when the set is
 	// not known.
 	first *charSet
@@ -106,6 +137,32 @@ type compiler struct {
 	loops   int
 	// unicode says the pattern was read with the u flag grammar, which decides how a backreference folds case.
 	unicode bool
+	// memo says the pattern has no backreference, so its choices can have memo points. open lists the counted loops
+	// around the instruction being written, outermost first, inside the innermost lookaround: what a lookaround's
+	// body does depends on nothing outside it. points collects the memo points.
+	memo   bool
+	open   []loopContext
+	points []memoPoint
+}
+
+// point returns the number of a new memo point for an instruction written here, or 0 when a choice here cannot be
+// remembered.
+func (c *compiler) point() int32 {
+	if !c.memo || len(c.open) > maxMemoLoops {
+		return 0
+	}
+	var p memoPoint
+	for k := range p.loops {
+		p.loops[k] = -1
+	}
+	for k, l := range c.open {
+		if !l.simple {
+			return 0
+		}
+		p.loops[k], p.mins[k] = l.loop, l.min
+	}
+	c.points = append(c.points, p)
+	return int32(len(c.points))
 }
 
 func compileProgram(root *node, unicode bool) *program {
@@ -127,10 +184,12 @@ func compileProgram(root *node, unicode bool) *program {
 			c.tracked[g] = int32(len(c.tracked))
 		}
 	}
+	c.memo = len(c.tracked) == 0
 	c.emit(root, false)
 	c.add(inst{op: opMatch})
-	p := &program{insts: c.insts, groups: len(c.tracked), loops: c.loops, units: !unicode}
+	p := &program{insts: c.insts, groups: len(c.tracked), loops: c.loops, units: !unicode, points: c.points}
 	p.need = setNeeds(p.insts)
+	p.quick = setQuick(p.insts)
 	p.anchored = startsAtBOL(root)
 	if !p.anchored {
 		p.prefix = literalPrefix(root, nil)
@@ -305,7 +364,7 @@ func (c *compiler) emit(n *node, back bool) {
 				c.emit(sub, back)
 				break
 			}
-			split := c.add(inst{op: opSplit})
+			split := c.add(inst{op: opSplit, m: c.point()})
 			c.insts[split].x = c.pc()
 			c.emit(sub, back)
 			jumps = append(jumps, c.add(inst{op: opJmp}))
@@ -364,7 +423,11 @@ func (c *compiler) emit(n *node, back bool) {
 		}
 	case nLook:
 		look := c.add(inst{op: opLook, flag: n.negative})
+		// Whether the body matches depends on nothing outside it.
+		outer := c.open
+		c.open = nil
 		c.emit(n.subs[0], n.behind)
+		c.open = outer
 		if n.negative {
 			c.add(inst{op: opLookFail})
 		} else {
@@ -387,7 +450,7 @@ func (c *compiler) emitRepeat(n *node, back bool) {
 		if n.lazy {
 			op = opRepLazy
 		}
-		c.add(inst{op: op, r: body.r, set: body.set, min: min, max: max})
+		c.add(inst{op: op, r: body.r, set: body.set, min: min, max: max, m: c.point()})
 		return
 	}
 	clearLo, clearHi, clear := c.groupRange(body)
@@ -398,7 +461,7 @@ func (c *compiler) emitRepeat(n *node, back bool) {
 		c.emit(body, back)
 	}
 	// split writes a choice between entering the body and leaving the loop, in the order the quantifier prefers.
-	split := func() int32 { return c.add(inst{op: opSplit}) }
+	split := func() int32 { return c.add(inst{op: opSplit, m: c.point()}) }
 	setSplit := func(at, enter, exit int32) {
 		if n.lazy {
 			c.insts[at].x, c.insts[at].y = exit, enter
@@ -438,9 +501,17 @@ func (c *compiler) emitRepeat(n *node, back bool) {
 	if !back {
 		iter = minLength(body)
 	}
-	loop := c.add(inst{op: opLoop, a: k, min: min, max: max, flag: n.lazy, iter: int32(iter)})
+	simple := max == unbounded && min <= 1
+	point := int32(0)
+	if simple {
+		// The loop is left or entered from here, and what follows either depends on the loops around this one.
+		point = c.point()
+	}
+	loop := c.add(inst{op: opLoop, a: k, min: min, max: max, flag: n.lazy, iter: int32(iter), m: point})
 	c.add(inst{op: opLoopIter, a: k})
+	c.open = append(c.open, loopContext{loop: k, min: min, simple: simple})
 	emitBody()
+	c.open = c.open[:len(c.open)-1]
 	c.add(inst{op: opJmp, x: loop})
 	c.insts[loop].x = c.pc()
 }
@@ -567,6 +638,123 @@ func setNeeds(insts []inst) int {
 		}
 	}
 	return int(need[0])
+}
+
+// A quick says what can come next on a way from an instruction to the end of its match, which is the end of the
+// pattern or of the lookaround the instruction is in. The matcher looks at it before it takes a way: when the next
+// character of the text is none that the way can start with, and the way cannot end without one, the way fails, so
+// it is not taken, and where it was one of two no choice is kept for it. V8 makes the same check ("quick check")
+// at its choices. It is what keeps a choice between ways that need different characters from being a choice.
+type quick struct {
+	// ascii holds the characters below 128 a way can consume next, and other says it can consume a character that
+	// is not ASCII.
+	ascii [2]uint64
+	other bool
+	// mid says a way reaches the end of its match consuming nothing more while text is left, and end that one does
+	// at the end of the text.
+	mid, end bool
+}
+
+// allows reports whether a way can go on from the position.
+func (q *quick) allows(in []byte, pos int) bool {
+	if pos >= len(in) {
+		return q.end
+	}
+	if q.mid {
+		return true
+	}
+	if c := in[pos]; c < utf8.RuneSelf {
+		return q.ascii[c>>6]>>(c&63)&1 != 0
+	}
+	return q.other
+}
+
+func (q *quick) addRune(r rune) {
+	if r < utf8.RuneSelf {
+		q.ascii[r>>6] |= 1 << (uint(r) & 63)
+	} else {
+		q.other = true
+	}
+}
+
+func (q *quick) addSet(s *charSet) {
+	q.ascii[0] |= s.ascii[0]
+	q.ascii[1] |= s.ascii[1]
+	if n := len(s.ranges); n > 0 && s.ranges[n-1] >= utf8.RuneSelf {
+		q.other = true
+	}
+}
+
+func (q *quick) union(o quick) {
+	q.ascii[0] |= o.ascii[0]
+	q.ascii[1] |= o.ascii[1]
+	q.other = q.other || o.other
+	q.mid = q.mid || o.mid
+	q.end = q.end || o.end
+}
+
+// setQuick works out the quick of every instruction. Every figure is a set that can only be too large: an
+// assertion is taken to hold, a backreference and an instruction that matches right to left (the body of a
+// lookbehind) to allow anything. A positive lookahead needs both its body and what follows it to go on from the
+// same position, so it allows what both allow.
+func setQuick(insts []inst) []quick {
+	q := make([]quick, len(insts))
+	all := quick{ascii: [2]uint64{^uint64(0), ^uint64(0)}, other: true, mid: true, end: true}
+	// The sets only grow, and nearly every way goes forward, so going through the instructions from the last to the
+	// first settles all but the loops in one pass.
+	for changed := true; changed; {
+		changed = false
+		for pc := len(insts) - 1; pc >= 0; pc-- {
+			i := &insts[pc]
+			var n quick
+			switch i.op {
+			case opMatch, opLookOK, opLookFail:
+				n = all
+			case opFail:
+			case opChar:
+				n.addRune(i.r)
+			case opSet:
+				n.addSet(i.set)
+			case opLit:
+				n.addRune(rune(i.lit[0]))
+			case opRep, opRepLazy:
+				if i.set != nil {
+					n.addSet(i.set)
+				} else {
+					n.addRune(i.r)
+				}
+				if i.min == 0 {
+					n.union(q[pc+1])
+				}
+			case opJmp:
+				n = q[i.x]
+			case opSplit:
+				n = q[i.x]
+				n.union(q[i.y])
+			case opLoop:
+				n = q[pc+1]
+				n.union(q[i.x])
+			case opEOL:
+				n.end = q[pc+1].end
+			case opLook:
+				n = q[i.x]
+				if !i.flag {
+					b := q[pc+1]
+					n.ascii[0] &= b.ascii[0]
+					n.ascii[1] &= b.ascii[1]
+					n.other, n.mid, n.end = n.other && b.other, n.mid && b.mid, n.end && b.end
+				}
+			case opCharBack, opSetBack, opBackref, opBackrefBack, opBackrefFold, opBackrefFoldBack, opBackrefUnits, opBackrefUnitsBack:
+				n = all
+			default:
+				n = q[pc+1]
+			}
+			if n != q[pc] {
+				q[pc], changed = n, true
+			}
+		}
+	}
+	return q
 }
 
 // literalRune reports whether a code point can be matched by comparing its UTF-8 bytes. A surrogate has no encoding,

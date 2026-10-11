@@ -14,6 +14,15 @@
 //   - needs: counted loops whose iterations can be empty, before a rest of the pattern that needs more text than is
 //     left. The first three do not finish unless the matcher gives up at such a loop, as V8 does. The others have
 //     such loops inside and around lookaheads and lookbehinds, where a wrong count of what is left would show.
+//   - quick: choices, loops and lookarounds where the next character of the text rules a way out, which the matcher
+//     looks at before it takes the way (setQuick). The first three took the matcher seconds before it did. The
+//     others have each thing a way can end with or go through without a character: the end of the text and of a
+//     line, a lookahead and a lookbehind, a backreference, a word boundary, an empty alternative.
+//   - memo: repetitions inside repetitions, alternatives that are prefixes of each other and repetitions that follow
+//     each other, with no backreference, in patterns the backtracking matcher runs. The matcher remembers the places
+//     where a way has failed (see memo in vm.go). The tests run these, and every other set, with that memory on from
+//     the first step. The texts are short, because V8 remembers nothing and takes time that doubles with each
+//     character for some of them.
 //   - classK: \k in a class, which is the letter k only in a pattern with no named group and no u flag.
 //   - counts: the two counts of a quantifier, which are compared as the numbers written, whatever their size.
 //   - properties: the names and the values of \p{...} where V8 and ECMA-262 differ.
@@ -93,6 +102,65 @@ const needsPatterns = [
   "(?<=(?=(?:x|){3}a)(?:a|x|){2})a$", "^(?:(?:a|){2}){2}$", "^(?:(?:a|){2,}?x){2}$", "(?:a|){3}(?<=^(?:a|){3})xx", "(?:(?:x|){2}(?!(?:a|){2}-)){2}a$",
   "^(?:(?:a|x|-|){3}){3}(?<=(?:a|){2}x)-", "(?:(?:a|){2}\\b){2}x-", "^(?:(?:(a)|){2}\\1){2}x$",
 ];
+const quickTexts = (() => {
+  const texts = [""];
+  for (const a of ["a", "b", "x"]) {
+    texts.push(a);
+    for (const b of ["a", "b", "x"]) {
+      texts.push(a + b);
+      for (const c of ["a", "b", "x"]) texts.push(a + b + c);
+    }
+  }
+  return texts.concat(["\n", "a\n", "\nb", "a\nb", "xa\nb", "ab\nx", "x\n", "\u00e9", "a\u00e9", "\u00e9x", "x\u00e9a", A, A + "a", "x" + A + "a", "a" + A, "k", "K", "\u212a",
+    "ka", "Kx", "\u212aa", "ax", "AX", "bX", "-", "a-", "-a", "a b", "x a", "abxabx", "aaxaax", "bxbxbx", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaax", "xaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaxaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbxa", "abababababababababababababababx"]);
+})();
+const quickPatterns = [
+  ".*(?=((?:a*){7})$)x\\1", ".*(?=((a*)(?:(a|)){2,8}(?:a?\\2){0,}?)$)x\\1x", ".*(?:(?=((?:(a|)(b|)){3,}?)x|(?=x))x\\1){2}",
+  // The end of the text, and of a line.
+  "(?:a|$)", "(?:$|a)b?", "^(?:a|b$|$)", "(?:x$|x)a", "(?:a|)$", "(?=$)|a", "(?:(?=a$)|(?=b))[ab]", "(?:a|b)$|x", "^(?:a|$)(?:b|$)",
+  "(?m:(?:a|$)\\n?b)", "(?m:^(?:x|$))", "(?m:(?:$|a)$)", "(?m:(?:a|$)(?:\\n|x))", "(?m:^(?:b|^)x)",
+  // Lookbehinds, whose bodies are matched right to left.
+  "(?<=a|^)b", "(?<=(?:a|b)x?)a", "(?<!a|b)x", "(?<=(?=b)a?)b", "(?<=^|x)(?:a|b)", "(?<=(?:a|x)b)(?:a|x)", "(?<=a(?:b|))x", "(?<!(?:a|b)(?:a|x))(?:b|x)$",
+  // Lookaheads: the body and what follows start at the same place.
+  "(?=a)(?:a|b)", "(?=[ab])(?:b|x)", "(?=a|$)(?:a|)$", "(?!a)(?:a|b)", "(?=(?:a|b)*x)a", "(?=.*x)(?:a|b)+", "(?=a)", "(?=)a", "(?!)|a", "(?=a)(?=b)|x",
+  "(?=a)(?!ab)(?:a|x)", "(?:(?=a)|(?=b))(?:b|x)", "(?=(?=a)[ab])(?:a|b)x", "(?!(?=a)a|b).", "(?=a*$)(?:a|b)", "(?=(a)|b)(?:\\1|b)x",
+  // Backreferences, which may consume anything or nothing.
+  "(a|b)\\1", "(a|)\\1(?:b|x)", "(?:(a)|b)(?:\\1|x)", "(a?)(?:\\1b|x)", "(?:(a)|(b))(?:\\1\\2|x)a", "(a|b)(?=\\1)(?:a|b)",
+  // Loops.
+  "(?:a|b)*x", "(?:a?b?)*x", "(?:a|){2,3}x", "(?:(?:a|b)x?){2,}?b", "a*?(?:b|x)", "a*(?:a|b)", "[ab]*?a{2}", "(?:a|b)+?(?:x|$)",
+  "^a*b*x*$", "^a*?b+?x?$", "a{2,}?(?:a|b)x", "^(?:a|b){2}(?:x|$)", "(?:a+|b+)*x", "^[^x]*(?:a|x)$", "^.*?(?:ab|bx)", "(?:[ab]x?)*?(?:aa|bb)",
+  // Assertions that consume nothing.
+  "(?:\\b|a)x", "(?:\\B|b)a", "(?:^|a)b", "(?:a|^)(?:b|^)x", "\\b(?:a|x)\\b", "(?:\\b|\\B)(?:a|b)(?:\\b|x)", "(?i:(?:\\B|\\u212a)a)",
+  // Characters that are not ASCII, in each grammar, and case-insensitive ways.
+  "(?:\\u00e9|a)x", "(?:[^a]|b)\\u00e9", "(?:\\u{10400}|x)a", "\\-?(?:\\ud801|a)\\udc00?a", "\\-?(?:.|x)a$", "(?i:(?:a|B)x)", "(?i:[^k]|ka)$",
+  // A way that can never be taken, and one that can always.
+  "(?:[]|a)b", "(?:a|[^])b", "(?:a|[]|)x", "(?:|a)(?:|b)x",
+];
+const memoTexts = ["", "a", "b", "x", "ab", "ba", "aa", "ax", "xa", "aab", "aax", "abx", "aaaa", "aaab", "aaax", "abab", "abax", "aaaaaaaa", "aaaaaaab", "aaaaaaax",
+  "abababab", "abababax", "bbbbbbba", "aaaaaaaaaaab", "aaaaaaaaaaax", "aaaaaaaaaaaa", "abababababab", "ababababababx", "xaaaaaaaaaaa", "bababababab",
+  "ab ab ab!", "ab ab ab", "a b\nab a", "ab\nab ab!", "\u00e9", "a\u00e9a", "aaaa\u00e9", "\u00e9aaaaaaab", "aaaaaaab!", "ab ab ab ab"];
+const memoPatterns = [
+  // A repetition in a repetition, an alternation of prefixes, and a body of optional characters, behind a lookahead.
+  "^(?=.)(?:a+)+$", "^(?=.)(?:a|aa)+$", "^(?=.)(?:a?b?)*x", "(?=a)(a*)*b", "^(?=.)(?:a*)*$", "(?=.)(?:a|b)*x", "^(?=.)(?:a+?)+?$", "^(?=.)(?:a|ab|b)*?x$",
+  "^(?=.)(?:a|b|ab)*$", "(?=.)(?:a+b?)+x", "^(?=.)(?:(?:a|b)+x?)+$", "(?=[ab])(?:a*b*)*x", "(?=.)(?:a*|b)*x",
+  // Repetitions whose bodies can be empty, one inside another, greedy and lazy, with a least count of none and of one.
+  "^(?=.)(?:(?:a|b)*x?)*$", "^(?=.)(?:(?:a?b?)*x?)*$", "^(?=.)(?:(?:a*)+b?)+$", "(?=.)(?:a*?b*?)*?x$", "^(?=.)(?:(?:a?)+?b?)*?x", "^(?=.)(?:(?:(?:a?)*b?)*x?)*$",
+  "^(?=.)(?:(?:a|)+(?:b|)+)+$", "^(?=.)(?:(?:a*b?)+|x)+$", "(?=.)(?:(?:a?|b)*?x?)+?$",
+  // Counted repetitions, which the memory leaves alone, beside ones it does not.
+  "^(?=.)(?:(?:a|aa){2,3}b?)*$", "^(?=.)(?:a{0,2}){0,5}(?:a+)+$", "^(?=.)(?:(?:a+)+b){1,2}$", "^(?=.)(?:(?:a|){2}b?)*$", "^(?=.)(?:a?){3}(?:a|aa)+$",
+  // Lookarounds inside and around the repetitions, and negative ones.
+  "^(?=.)(?:a(?=a|b|$)|b)*$", "^(?=.)(?:(?<=a)b|a)*$", "^(?!(?:a+)+x)a*b", "(?<=(?:a+)+)x", "(?<!(?:a|aa)+b)x$", "^(?:(?=(?:a+)+b)a|(?=(?:a|aa)+x)a)+", "^(?=.)(?:a(?!x)|b)*a",
+  "(?=(?:a|aa)*$)(?=(?:a+)+$)a", "^(?=.)(?:(?=(?:a*)*b)a)*a?b$", "(?<=^(?:a|aa)*)b", "(?<=(?:a?b?)*)x$",
+  // Single character repetitions that follow each other.
+  "(?=.).*.*.*x", "(?=.)a*?a*?a*?b", "(?=.)[ab]*a[ab]*a[ab]*x", "^(?=.)a*a*a*a*$", "(?=.)a+?a+a+?b", "^(?=.)[^x]*[^b]*[^a]*$", "(?=.)a*(?:a|b)a*x",
+  // Multiline anchors and case-insensitive word boundaries keep a pattern on the backtracking matcher.
+  "(?i:\\b(?:\\w+\\W?)+\\b!)", "(?m:^(?:\\w+\\s?)+$)", "(?m:^(?:a|ab|b)+$)", "(?i:\\b(?:a|aa)+\\b ?b)", "(?m:^(?:a?b?)*$)x?",
+  // A backreference turns the memory off for the pattern.
+  "^(?:(a+)\\1?)+$", "^(?=.)(?:(a)|b)+\\1?x$", "(a*)*\\1b",
+  // Characters that are not ASCII.
+  "^(?:\\u00e9|a)+$", "^(?=.)(?:[^b]+)+$", "^(?=.)(?:a|\\u00e9a?)*b",
+];
 const syntaxTexts = ["", "a", "k", "kk", "aa", "aaa", "ak", "<a>", "x", "ax", "ab", "b", "-", "z", "p{WSpace}", " ", "\u00a0", "\u3042", "\u30ab", "\u30fc",
   "\u3042a", "p{sc=Hrkt}", "P{sc=Hrkt}", A, "aaaaaaaaaaaa"];
 // \k in a class. It is the letter k only in a pattern with no named group and no u flag.
@@ -167,6 +235,8 @@ const out = {
   loops: loopPatterns.map((p) => ask(p, loopTexts)),
   fast: fastPatterns.map((p) => ask(p, fastTexts)),
   needs: needsPatterns.map((p) => ask(p, loopTexts)),
+  quick: quickPatterns.map((p) => ask(p, quickTexts)),
+  memo: memoPatterns.map((p) => ask(p, memoTexts)),
   classK: classKPatterns.map(departure),
   counts: countPatterns.map(departure),
   properties: propertyPatterns.map(departure),

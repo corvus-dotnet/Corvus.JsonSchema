@@ -29,6 +29,8 @@ type v8Cases struct {
 	Loops []v8Case `json:"loops"`
 	Fast  []v8Case `json:"fast"`
 	Needs []v8Case `json:"needs"`
+	Quick []v8Case `json:"quick"`
+	Memo  []v8Case `json:"memo"`
 	// The four sets of what is a pattern.
 	ClassK     []v8Case `json:"classK"`
 	Counts     []v8Case `json:"counts"`

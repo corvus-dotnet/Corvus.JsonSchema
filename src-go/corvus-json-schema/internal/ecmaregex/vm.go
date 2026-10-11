@@ -50,6 +50,9 @@ const (
 	// restore, and eLookNeg the instruction to continue at when its body has failed.
 	eLook
 	eLookNeg
+	// eMark lies under the choices of a memo point. When it is reached, every way from the point has failed, and
+	// the bit pos of the memory is set (see memo in state).
+	eMark
 	// eTmp restores the entry position of group pc to pos.
 	eTmp
 	// eCap restores the start and end of group pc to pos and a.
@@ -82,10 +85,84 @@ type state struct {
 	// steps is the number of steps left before the next check, and stop why the match was abandoned.
 	steps int
 	stop  uint8
+	// memo is the memory of the places where a way has failed: one bit for each memo point of the program, each
+	// position of the text and each state of the loops around the point (see memoPoint). A bit is set when every
+	// way from the place has failed, and a way that comes to a place whose bit is set fails at once. So no place
+	// is gone through twice, and a pattern of repetitions inside repetitions takes time proportional to its size
+	// times the text and not time that doubles with each character.
+	//
+	// The memory costs its size to clear, and a mark on the stack for each place gone through, so a match starts
+	// without it. It takes it at the check by which it has made as many steps as the memory has words and
+	// memoStepsPerPosition more for each position of the text, which a match that goes through its text once or a
+	// few times never makes. A place whose way failed before then is not remembered, which loses time and nothing
+	// else. memoOn says the memory is in use, memoOff
+	// that it never will be (the program has no memo points, or the memory would be larger than maxMemoWords), and
+	// width is the number of positions of the text.
+	memo            []uint64
+	memoOn, memoOff bool
+	width, checks   int
+	points          int
+}
+
+const (
+	// maxMemoWords is the largest memory of failed places, in words of 64 bits: 8 MB. A match that would need more
+	// goes without it.
+	maxMemoWords = 1 << 20
+	// memoStepsPerPosition is the number of steps for each position of the text that a match makes before it takes
+	// the memory into use.
+	memoStepsPerPosition = 64
+	// maxRetainedMemo is the largest memory kept in the pool between matches.
+	maxRetainedMemo = 1 << 16
+	// maxMarkDepth is the depth of the backtracking stack beyond which a memo point is not marked. A mark is an
+	// entry of the stack, and a pattern that keeps no choice for a character still marks a place for each, so on a
+	// long text the marks alone would reach maxStack. A place that is not marked is not remembered, which loses
+	// time and nothing else, and the places below this depth are remembered when the stack unwinds, so a later
+	// start has the room to mark the next ones.
+	maxMarkDepth = maxStack / 2
+)
+
+// memoFromTheStart makes every match take its memory of failed places before its first step. The tests set it, to
+// run every pattern they have with the memory in use.
+var memoFromTheStart bool
+
+// remember takes the memory of failed places into use when the match has made enough steps to pay for it.
+func (st *state) remember() {
+	words := (st.points*st.width<<maxMemoLoops + 63) >> 6
+	if words > maxMemoWords {
+		st.memoOff = true
+		return
+	}
+	if st.checks*checkEvery < words+memoStepsPerPosition*st.width && !memoFromTheStart {
+		return
+	}
+	if cap(st.memo) < words {
+		st.memo = make([]uint64, words)
+	} else {
+		st.memo = st.memo[:words]
+		clear(st.memo)
+	}
+	st.memoOn = true
+}
+
+// memoIndex returns the bit of the memory for the memo point m at a position, with the state of the loops around
+// the point: for each, whether it would refuse an iteration that ended here as empty.
+func (p *program) memoIndex(st *state, m int32, pos int) int {
+	pt := &p.points[m-1]
+	idx := (int(m-1)*st.width + pos) << maxMemoLoops
+	for k := 0; k < maxMemoLoops; k++ {
+		if l := pt.loops[k]; l >= 0 && st.counts[2*l] > int(pt.mins[k]) && st.counts[2*l+1] == pos {
+			idx |= 1 << k
+		}
+	}
+	return idx
 }
 
 // check is called every checkEvery steps. It reports whether the match may go on.
 func (st *state) check(depth int) bool {
+	if !st.memoOn && !st.memoOff {
+		st.checks++
+		st.remember()
+	}
 	if st.limit <= 0 {
 		return true
 	}
@@ -116,10 +193,17 @@ func (p *program) match(in []byte, limit time.Duration) (bool, error) {
 		st.caps[i] = -1
 	}
 	st.limit, st.timed, st.steps, st.stop = limit, false, checkEvery, stopNone
+	st.memoOn, st.memoOff, st.checks, st.width, st.points = false, len(p.points) == 0, 0, len(in)+1, len(p.points)
+	if memoFromTheStart && !st.memoOff {
+		st.remember()
+	}
 	ok := p.search(st, in)
 	stop := st.stop
 	if cap(st.stack) > maxRetainedStack {
 		st.stack = nil
+	}
+	if cap(st.memo) > maxRetainedMemo {
+		st.memo = nil
 	}
 	p.pool.Put(st)
 	switch stop {
@@ -186,13 +270,18 @@ func (p *program) search(st *state, in []byte) bool {
 // back to the value it had on entry. It counts its steps, and when a check says the match has reached a limit it
 // returns false with the reason in st.stop.
 func (p *program) run(st *state, in []byte, start int) bool {
-	insts := p.insts
+	insts, quick := p.insts, p.quick
 	stack := st.stack[:0]
 	caps, counts := st.caps, st.counts
 	// units says the text is matched by UTF-16 code unit (see units.go).
 	units := p.units
 	pc, pos := 0, start
 	steps := st.steps
+	// memo is the memory of failed places once the match has taken it into use, and nil before.
+	var memo []uint64
+	if st.memoOn {
+		memo = st.memo
+	}
 	for {
 		steps--
 		if steps < 0 {
@@ -201,6 +290,9 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				return false
 			}
 			steps = checkEvery
+			if st.memoOn {
+				memo = st.memo
+			}
 		}
 		i := &insts[pc]
 		switch i.op {
@@ -334,6 +426,29 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			pc = int(i.x)
 			continue
 		case opSplit:
+			// A place from which every way has failed before fails at once. The mark is under whatever comes of
+			// this place, a choice or not, so that the place is remembered when it has all failed.
+			if memo != nil && i.m != 0 {
+				idx := p.memoIndex(st, i.m, pos)
+				if memo[idx>>6]>>(uint(idx)&63)&1 != 0 {
+					break
+				}
+				if len(stack) < maxMarkDepth {
+					stack = append(stack, entry{kind: eMark, pos: idx})
+				}
+			}
+			// A way the next character rules out is not taken, and no choice is kept for it.
+			if !quick[i.y].allows(in, pos) {
+				if !quick[i.x].allows(in, pos) {
+					break
+				}
+				pc = int(i.x)
+				continue
+			}
+			if !quick[i.x].allows(in, pos) {
+				pc = int(i.y)
+				continue
+			}
 			stack = append(stack, entry{kind: eChoice, pc: i.y, pos: pos})
 			pc = int(i.x)
 			continue
@@ -437,6 +552,10 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				continue
 			}
 		case opLook:
+			// What follows a lookaround starts where the lookaround does, and so does the body of a lookahead.
+			if !quick[pc].allows(in, pos) {
+				break
+			}
 			kind := eLook
 			if i.flag {
 				kind = eLookNeg
@@ -521,6 +640,19 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			}
 			steps -= (at - pos) >> 3
 			if n >= i.min {
+				if memo != nil && i.m != 0 {
+					idx := p.memoIndex(st, i.m, at)
+					if memo[idx>>6]>>(uint(idx)&63)&1 != 0 {
+						// What follows the loop has failed from here before. The loop gives a character back.
+						if at > floor {
+							stack = append(stack, entry{kind: eRep, pc: int32(pc + 1), pos: at, a: floor})
+						}
+						break
+					}
+					if at == floor && len(stack) < maxMarkDepth {
+						stack = append(stack, entry{kind: eMark, pos: idx})
+					}
+				}
 				if at > floor {
 					stack = append(stack, entry{kind: eRep, pc: int32(pc + 1), pos: at, a: floor})
 				}
@@ -540,6 +672,19 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			}
 			steps -= int(n) >> 3
 			if n == i.min {
+				if memo != nil && i.m != 0 {
+					idx := p.memoIndex(st, i.m, at)
+					if memo[idx>>6]>>(uint(idx)&63)&1 != 0 {
+						// What follows the loop has failed from here before. The loop takes one more character.
+						if n != i.max {
+							stack = append(stack, entry{kind: eRepLazy, pc: int32(pc), pos: at, a: int(n)})
+						}
+						break
+					}
+					if n == i.max && len(stack) < maxMarkDepth {
+						stack = append(stack, entry{kind: eMark, pos: idx})
+					}
+				}
 				if n != i.max {
 					stack = append(stack, entry{kind: eRepLazy, pc: int32(pc), pos: at, a: int(n)})
 				}
@@ -564,10 +709,29 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			if n > int(i.min) && pos == counts[2*i.a+1] {
 				break
 			}
-			switch {
-			case n < int(i.min):
+			if n < int(i.min) {
 				pc++
-			case i.max >= 0 && n >= int(i.max):
+				continue
+			}
+			if i.max >= 0 && n >= int(i.max) {
+				pc = int(i.x)
+				continue
+			}
+			// The loop may be left or entered from here. A place from which both have failed before fails at once.
+			if memo != nil && i.m != 0 {
+				idx := p.memoIndex(st, i.m, pos)
+				if memo[idx>>6]>>(uint(idx)&63)&1 != 0 {
+					break
+				}
+				if len(stack) < maxMarkDepth {
+					stack = append(stack, entry{kind: eMark, pos: idx})
+				}
+			}
+			switch {
+			case !quick[i.x].allows(in, pos):
+				// The next character rules out leaving the loop, so there is no choice.
+				pc++
+			case !quick[pc+1].allows(in, pos):
 				pc = int(i.x)
 			case i.flag:
 				stack = append(stack, entry{kind: eChoice, pc: int32(pc + 1), pos: pos})
@@ -601,6 +765,13 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				stack = stack[:len(stack)-1]
 				break backtrack
 			case eRep:
+				// What followed the loop from the position it stood at has failed.
+				rep := &insts[e.pc-1]
+				marked := memo != nil && rep.m != 0
+				if marked {
+					idx := p.memoIndex(st, rep.m, e.pos)
+					memo[idx>>6] |= 1 << (uint(idx) & 63)
+				}
 				// Give back the last character taken. The characters between a and pos were decoded going forward,
 				// and decoding the last of them going backward finds the same boundary.
 				w := 1
@@ -613,12 +784,36 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				}
 				e.pos -= w
 				pc, pos = int(e.pc), e.pos
-				if e.pos <= e.a {
+				last := e.pos <= e.a
+				// A position from which what follows the loop cannot go on is passed over, and so is one from which
+				// it has failed before.
+				pass := !quick[pc].allows(in, pos)
+				if marked && !pass {
+					idx := p.memoIndex(st, rep.m, pos)
+					if memo[idx>>6]>>(uint(idx)&63)&1 != 0 {
+						pass = true
+					} else if last {
+						// The loop has nothing more to give back. The entry stays to note this last way.
+						*e = entry{kind: eMark, pos: idx}
+						break backtrack
+					}
+				}
+				if last {
 					stack = stack[:len(stack)-1]
+				}
+				if pass {
+					steps--
+					continue
 				}
 				break backtrack
 			case eRepLazy:
+				// What followed the loop from the position it stood at has failed.
 				rep := &insts[e.pc]
+				marked := memo != nil && rep.m != 0
+				if marked {
+					idx := p.memoIndex(st, rep.m, e.pos)
+					memo[idx>>6] |= 1 << (uint(idx) & 63)
+				}
 				w := rep.one(in, e.pos, units)
 				if w == 0 {
 					stack = stack[:len(stack)-1]
@@ -627,10 +822,29 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				e.pos += w
 				e.a++
 				pc, pos = int(e.pc)+1, e.pos
-				if int32(e.a) == rep.max {
+				last := int32(e.a) == rep.max
+				if marked {
+					idx := p.memoIndex(st, rep.m, pos)
+					if memo[idx>>6]>>(uint(idx)&63)&1 != 0 {
+						if last {
+							stack = stack[:len(stack)-1]
+						}
+						steps--
+						continue
+					}
+					if last {
+						*e = entry{kind: eMark, pos: idx}
+						break backtrack
+					}
+				}
+				if last {
 					stack = stack[:len(stack)-1]
 				}
 				break backtrack
+			case eMark:
+				// Every way from a memo point has failed.
+				memo[e.pos>>6] |= 1 << (uint(e.pos) & 63)
+				stack = stack[:len(stack)-1]
 			case eLook:
 				// The body of a positive lookaround has no way left to match.
 				stack = stack[:len(stack)-1]
