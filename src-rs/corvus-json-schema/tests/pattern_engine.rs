@@ -10,6 +10,8 @@
 //! - A quantifier on a word boundary, which is not valid and was accepted.
 //! - A case-insensitive group in a pattern that is valid only without the `u` flag, and `\W` in a class of one
 //!   with it.
+//!
+//! One class is not regress's: `\B` beside a character of several bytes, which the `regex` crate answered.
 
 use corvus_json_schema::{CompileOptions, compile, compile_with};
 use serde_json::json;
@@ -235,10 +237,10 @@ const CASE_INSENSITIVE: &[(&str, &[&str], &[&str])] = &[
     (r"^(?i:[\w])$", &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "0", "_"], &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", ""]),
 ];
 
-#[test]
-fn a_case_insensitive_group_compares_as_its_grammar_says() {
+/// Checks each pattern against the texts it matches and the texts it does not.
+fn check_texts(cases: &[(&str, &[&str], &[&str])]) {
     let mut wrong = Vec::new();
-    for &(pattern, matches, fails) in CASE_INSENSITIVE {
+    for &(pattern, matches, fails) in cases {
         let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
         for (texts, want) in [(matches, true), (fails, false)] {
             for &text in texts {
@@ -249,6 +251,36 @@ fn a_case_insensitive_group_compares_as_its_grammar_says() {
         }
     }
     assert!(wrong.is_empty(), "{} wrong:\n{}", wrong.len(), wrong.join("\n"));
+}
+
+#[test]
+fn a_case_insensitive_group_compares_as_its_grammar_says() {
+    check_texts(CASE_INSENSITIVE);
+}
+
+/// `\B` in patterns the `regex` crate would otherwise match. Its `(?-u:\B)` also holds between the bytes of a
+/// character that takes several, and `is_match` then said no where there is a match: `s*?\B|.{2}.$` on
+/// `k\u{17f}k` (before 0.1.7). The answers are V8's with the `u` flag.
+#[rustfmt::skip]
+const NOT_A_WORD_BOUNDARY: &[(&str, &[&str], &[&str])] = &[
+    ("s*?\\B|.{2}.$", &["", "k\u{17f}k", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"], &["a"]),
+    ("s*?\\B|.{2}.{1,2}$", &["", "k\u{17f}k", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"], &["a"]),
+    ("\\B", &["", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "ab", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "abc", "\u{e9}\u{e9}a", "-", "a-"], &["k\u{17f}k", "a", "a b", "k k", "a\u{e9}b"]),
+    ("a\\B", &["ab", "abc"], &["", "k\u{17f}k", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "a", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"]),
+    ("\\B\u{e9}", &["\u{e9}", "\u{e9}a", "\u{e9}\u{e9}a"], &["", "k\u{17f}k", "\u{17f}", "a\u{e9}", "a", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "-", "a-"]),
+    ("^\\B", &["", "\u{17f}", "\u{e9}", "\u{e9}a", "\u{17f}\u{17f}", "\u{1f600}", "\u{1f600}\u{1f600}", "\u{e9}\u{e9}a", "-"], &["k\u{17f}k", "a\u{e9}", "a", "ab", "a b", "a\u{1f600}", "k k", "abc", "a\u{e9}b", "a-"]),
+    ("\u{e9}\\B$", &["\u{e9}", "a\u{e9}"], &["", "k\u{17f}k", "\u{17f}", "\u{e9}a", "a", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"]),
+    ("k\\B|\u{17f}$", &["\u{17f}", "\u{17f}\u{17f}"], &["", "k\u{17f}k", "\u{e9}", "a\u{e9}", "\u{e9}a", "a", "ab", "a b", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"]),
+    ("x*\\B.", &["\u{17f}", "\u{e9}", "\u{e9}a", "ab", "\u{17f}\u{17f}", "\u{1f600}", "\u{1f600}\u{1f600}", "abc", "\u{e9}\u{e9}a", "-"], &["", "k\u{17f}k", "a\u{e9}", "a", "a b", "a\u{1f600}", "k k", "a\u{e9}b", "a-"]),
+    ("^.\\B.$", &["ab", "\u{17f}\u{17f}", "\u{1f600}\u{1f600}"], &["", "k\u{17f}k", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "a", "a b", "\u{1f600}", "a\u{1f600}", "k k", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"]),
+    ("\\B|a$", &["", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "a", "ab", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "abc", "\u{e9}\u{e9}a", "-", "a-"], &["k\u{17f}k", "a b", "k k", "a\u{e9}b"]),
+    ("[^a]\\B|b$", &["\u{17f}", "\u{e9}", "a\u{e9}", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"], &["", "k\u{17f}k", "\u{e9}a", "a", "k k"]),
+    ("\\Ba\\B|\u{e9}{2}", &["\u{e9}\u{e9}a"], &["", "k\u{17f}k", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "a", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "-", "a-"]),
+];
+
+#[test]
+fn not_a_word_boundary_beside_a_character_of_several_bytes() {
+    check_texts(NOT_A_WORD_BOUNDARY);
 }
 
 /// Ten texts for the repetitions with a count of 300.

@@ -1269,10 +1269,10 @@ fn escape(c: &[char], i: usize, in_class: bool, unicode: bool) -> Option<(String
             out.push_str("(?-u:\\b)");
             i + 1
         }
-        'B' => {
-            out.push_str("(?-u:\\B)");
-            i + 1
-        }
+        // `\B` has no translation. `(?-u:\B)` also holds between the bytes of a character that takes several, where
+        // no match may start or end, and `regex` 1.13.1 then says there is no match where it finds one: for
+        // `s*?(?-u:\B)|..$` on `k\u{17f}k`, `is_match` is false and `find` is not. regress has it.
+        'B' => return None,
         // Unicode properties (validated as ECMA-262 names by regress) have the same names in the `regex` crate.
         // Without the `u` flag `\p` is the letter.
         'p' | 'P' if unicode && c.get(i + 1) == Some(&'{') => {
