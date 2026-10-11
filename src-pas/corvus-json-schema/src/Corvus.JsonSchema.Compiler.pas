@@ -46,7 +46,7 @@ type
   end;
   TAnnotationSourceArray = array of TAnnotationSource;
 
-  PPattern = ^TPattern;
+  PPattern = Corvus.JsonSchema.Pattern.PPattern;
   TPatternArray = array of TPattern;
 
   { TCompiledSchema is the compiled program: the node graph, its entry node and whether it keeps a dynamic scope. }

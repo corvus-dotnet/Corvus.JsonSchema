@@ -84,6 +84,8 @@ type
     Depth: Int32;
     { Evaluation recursed in place beyond the maximum depth. }
     DepthExceeded: Boolean;
+    { What a match of a pattern may take, and the first match that reached a limit. }
+    Budget: TPatternBudget;
     { The buffers, once taken, and what was in use in them when they were (by an evaluation that this one runs
       inside). }
     S: PScratch;
@@ -91,8 +93,11 @@ type
     ArenaBase: Int32;
   end;
 
-{ NewProgram is the program of a compiled schema, with its fail-fast plans. }
-procedure NewProgram(const C: TCompiledSchema; const Options: TCompileOptions; var P: TProgram);
+{ NewProgram is the program of a compiled schema, with its fail-fast plans. The plans match each pattern of
+  patternProperties against the property names the schema declares, within the limit of a match: Budget says
+  whether one of those matches reached a limit, and the program is then not to be used. }
+procedure NewProgram(const C: TCompiledSchema; const Options: TCompileOptions; var P: TProgram;
+  out Budget: TPatternBudget);
 { ComputeNodeAnnotations digests the annotation keywords of every node. The caller sees that it runs once, before
   the first evaluation with a collector (the nodeAnnotations function of the Go source, which runs it under a
   sync.Once). }
@@ -227,7 +232,8 @@ begin
   Result := N.AllOf[0];
 end;
 
-procedure NewProgram(const C: TCompiledSchema; const Options: TCompileOptions; var P: TProgram);
+procedure NewProgram(const C: TCompiledSchema; const Options: TCompileOptions; var P: TProgram;
+  out Budget: TPatternBudget);
 var
   Id, Hop, I: Int32;
   Current, Next: TNodeID;
@@ -238,6 +244,9 @@ begin
   P.Root := C.Root;
   P.UsesDynamicScope := C.UsesDynamicScope;
   P.MaxDepth := Options.MaxDepth;
+  P.MatchLimit := Options.PatternMatchLimit;
+  Budget := NewPatternBudget(P.MatchLimit);
+  P.CompileBudget := @Budget;
   P.Options := Options;
   P.AnnotationSources := C.AnnotationSources;
   P.AssertFormatSet := Options.AssertFormat <> 0;
@@ -274,6 +283,7 @@ begin
     end;
   P.Entry := P.FastTarget[P.Root];
   CompilePlans(P);
+  P.CompileBudget := nil;
 end;
 
 procedure ComputeNodeAnnotations(var P: TProgram);
@@ -483,6 +493,7 @@ begin
   E.C := C;
   E.Depth := 0;
   E.DepthExceeded := False;
+  E.Budget := NewPatternBudget(P^.MatchLimit);
   E.S := S;
   E.ScopeBase := 0;
   E.ArenaBase := 0;
@@ -1117,7 +1128,7 @@ begin
     end else
       for J := 0 to Length(Pl^.Patterns) - 1 do begin
         Pc := PatternChildAt(Pl^.Patterns, J);
-        if PatternMatch(PatternAt(E.P^.Patterns, Pc^.Pattern)^, Src^, Off, Len, HeaderStrASCII(H)) then begin
+        if PatternMatch(PatternAt(E.P^.Patterns, Pc^.Pattern)^, Src^, Off, Len, HeaderStrASCII(H), E.Budget) then begin
           Matched := True;
           if not RunChild(E, Pc^.Child, K + 1) then
             Exit(False);
@@ -1148,7 +1159,7 @@ begin
     Pc := PatternChildAt(Pl^.Patterns, 0);
     H := DocHeader(D^, K);
     if PatternMatch(PatternAt(E.P^.Patterns, Pc^.Pattern)^, HeaderBytes(D, H)^, DocStrOffset(D^, K), HeaderCount(H),
-      HeaderStrASCII(H)) then begin
+      HeaderStrASCII(H), E.Budget) then begin
       if not RunChild(E, Pc^.Child, K + 1) then
         Exit(False);
     end else if Pl^.HasAdditional and not RunChild(E, Pl^.Additional, K + 1) then
@@ -1474,7 +1485,7 @@ begin
       StringLength:
         Ok := LengthOK(D, X, Op^.Min, Op^.Max);
       StringPattern:
-        Ok := PatternMatch(PatternAt(E.P^.Patterns, Op^.Pattern)^, Src^, Off, Len, HeaderStrASCII(H));
+        Ok := PatternMatch(PatternAt(E.P^.Patterns, Op^.Pattern)^, Src^, Off, Len, HeaderStrASCII(H), E.Budget);
       StringFormat:
         Ok := CheckString(E, Op^.Format, Src^, Off, Len);
     else
@@ -1506,14 +1517,15 @@ begin
   Result := 0;
 end;
 
-function TestHolds(const P: TProgram; const T: TValueTest; D: PDocument; V: NativeInt): Boolean;
+function TestHolds(const P: TProgram; const T: TValueTest; D: PDocument; V: NativeInt;
+  var Budget: TPatternBudget): Boolean;
 var
   I: NativeInt;
 begin
   if T.IsPattern then begin
     if DocKind(D^, V) = KindString then
       Exit(PatternMatch(PatternAt(P.Patterns, T.Pattern)^, StrBytes(D, V)^, DocStrOffset(D^, V), DocCount(D^, V),
-        DocStrASCII(D^, V)));
+        DocStrASCII(D^, V), Budget));
     Exit(not T.RequiresString);
   end;
   for I := 0 to Length(T.Allowed) - 1 do
@@ -1571,7 +1583,7 @@ begin
   Matched := False;
   for I := 0 to Length(C^.Patterns) - 1 do begin
     Fp := FusedPatternAt(C^.Patterns, I);
-    if PatternMatch(PatternAt(E.P^.Patterns, Fp^.Pattern)^, Name, Off, Len, Ascii) then begin
+    if PatternMatch(PatternAt(E.P^.Patterns, Fp^.Pattern)^, Name, Off, Len, Ascii, E.Budget) then begin
       Matched := True;
       if not ApplyOpt(E, Fp^.Child, V) then begin
         Matched := False;
@@ -1613,7 +1625,7 @@ begin
       if (T < 64) and (Keyed and (One64 shl T) <> 0) then
         Holds := Allowed and (One64 shl T) <> 0
       else
-        Holds := TestHolds(E.P^, ValueTestAt(Entry^.Tests, T)^, D, V);
+        Holds := TestHolds(E.P^, ValueTestAt(Entry^.Tests, T)^, D, V, E.Budget);
       if not Holds then
         Pass.Failed := Pass.Failed or (One64 shl ValueTestAt(Entry^.Tests, T)^.Condition);
     end;
@@ -1647,7 +1659,7 @@ begin
     Exit(0);
   for I := 0 to Length(F^.Absent) - 1 do
     if (Pass.Failed and (One64 shl F^.Absent[I].Condition) = 0)
-      and PatternMatch(PatternAt(E.P^.Patterns, F^.Absent[I].Pattern)^, Name, Off, Len, Ascii) then
+      and PatternMatch(PatternAt(E.P^.Patterns, F^.Absent[I].Pattern)^, Name, Off, Len, Ascii, E.Budget) then
       Pass.Failed := Pass.Failed or (One64 shl F^.Absent[I].Condition);
   Result := 0;
   for I := 0 to Length(F^.Contributors) - 1 do begin
@@ -2107,7 +2119,7 @@ begin
     end;
   end;
   if N^.Pattern >= 0 then begin
-    M := PatternMatch(E.P^.Patterns[N^.Pattern], Src^, Off, Len, DocStrASCII(D^, X));
+    M := PatternMatch(E.P^.Patterns[N^.Pattern], Src^, Off, Len, DocStrASCII(D^, X), E.Budget);
     Message := '';
     if Wants(E, M) then
       Message := 'Expected the value to match the regular expression' + Quoted(E.P^.Patterns[N^.Pattern].Source);
@@ -2238,7 +2250,8 @@ begin
     end;
   end;
   for J := 0 to Length(N^.PatternProperties) - 1 do begin
-    if not PatternMatch(E.P^.Patterns[N^.PatternProperties[J].Pattern], Src^, Off, Len, DocStrASCII(D^, K)) then
+    if not PatternMatch(E.P^.Patterns[N^.PatternProperties[J].Pattern], Src^, Off, Len, DocStrASCII(D^, K),
+      E.Budget) then
       Continue;
     Matched := True;
     Entry := '';

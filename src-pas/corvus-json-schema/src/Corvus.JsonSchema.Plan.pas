@@ -487,6 +487,11 @@ type
     Entry: TNodeID;
     UsesDynamicScope: Boolean;
     MaxDepth: Int32;
+    { The time one match of a pattern may take, in milliseconds, or zero for no limit. }
+    MatchLimit: Int64;
+    { The budget of the matches made while the plans are compiled (a pattern against the property names the schema
+      declares). It is that of NewProgram, and nil once the program is made. }
+    CompileBudget: PPatternBudget;
     { The options the schema was compiled with, for their custom formats. }
     Options: TCompileOptions;
     { For fail-fast evaluation: each node's target after following pure $ref hops. }
@@ -1039,7 +1044,7 @@ begin
   SetLength(O.NamePatterns, Length(Known));
   for I := 0 to Length(Known) - 1 do
     for J := 0 to Length(N.PatternProperties) - 1 do
-      if PatternMatchString(P.Patterns[N.PatternProperties[J].Pattern], Known[I]) then begin
+      if PatternMatchString(P.Patterns[N.PatternProperties[J].Pattern], Known[I], P.CompileBudget^) then begin
         K := Length(O.NamePatterns[I]);
         SetLength(O.NamePatterns[I], K + 1);
         O.NamePatterns[I][K] := UInt16(J);

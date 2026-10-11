@@ -28,6 +28,8 @@ uses
 
 var
   Failures, Checks: Int32;
+  { The budget of a match that has no limit. }
+  NoBudget: TPatternBudget;
 
 procedure Check(Ok: Boolean; const What: UTF8String);
 begin
@@ -770,7 +772,7 @@ begin
         Dec(N);
       end;
       S := BytesOf(Text);
-      Got := PatternMatch(Compiled, S, 0, Length(S), IsASCII(S, 0, Length(S)));
+      Got := PatternMatch(Compiled, S, 0, Length(S), IsASCII(S, 0, Length(S)), NoBudget);
       Want := EcmaRegexIsMatch(Reference, S, 0, Length(S));
       Inc(Checks);
       if Got <> Want then begin
@@ -781,7 +783,7 @@ begin
       { The same text within a longer buffer: a match reads no byte outside its text. }
       if I mod 16 = 0 then begin
         S := BytesOf('a' + #10 + Text + 'z!');
-        Got := PatternMatch(Compiled, S, 2, Length(S) - 4, IsASCII(S, 2, Length(S) - 2));
+        Got := PatternMatch(Compiled, S, 2, Length(S) - 4, IsASCII(S, 2, Length(S) - 2), NoBudget);
         Check(Got = Want, TestPatterns[P] + ' within a longer buffer on ' + Text);
         if Got <> Want then
           Break;
@@ -883,7 +885,7 @@ begin
         Dec(N);
       end;
       S := BytesOf(Text);
-      Got := PatternMatch(Compiled, S, 0, Length(S), IsASCII(S, 0, Length(S)));
+      Got := PatternMatch(Compiled, S, 0, Length(S), IsASCII(S, 0, Length(S)), NoBudget);
       Want := EcmaRegexIsMatch(Reference, S, 0, Length(S));
       Inc(Checks);
       if Got <> Want then begin
@@ -1027,7 +1029,7 @@ begin
         end;
         HasExcluded := HasExcluded or Excluded;
       end;
-      Check(PatternMatchString(P, Texts[T]) = (HasWord and not HasExcluded), Patterns[C] + ' on ' + Texts[T]);
+      Check(PatternMatchString(P, Texts[T], NoBudget) = (HasWord and not HasExcluded), Patterns[C] + ' on ' + Texts[T]);
     end;
   end;
 end;
@@ -1042,7 +1044,7 @@ procedure TestMatchersByHand;
     if not CompilePattern(Source, P) then
       Check(False, Source + ' is not a valid pattern')
     else
-      Check(PatternMatchString(P, Text) = Expected, Source + ' on ' + Text);
+      Check(PatternMatchString(P, Text, NoBudget) = Expected, Source + ' on ' + Text);
   end;
 
 begin
@@ -1219,9 +1221,9 @@ const
         Inc(Stop);
       Text := Copy(Texts, At + 1, Stop - At - 1);
       if Want then
-        Check(PatternMatchString(Compiled, Text), Source + ' does not match "' + Text + '"')
+        Check(PatternMatchString(Compiled, Text, NoBudget), Source + ' does not match "' + Text + '"')
       else
-        Check(not PatternMatchString(Compiled, Text), Source + ' matches "' + Text + '"');
+        Check(not PatternMatchString(Compiled, Text, NoBudget), Source + ' matches "' + Text + '"');
       At := Stop;
     end;
   end;

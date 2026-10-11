@@ -853,7 +853,7 @@ begin
   { A known name matching an absent pattern fails its condition whatever its value: no constant is allowed. }
   for E := 0 to Length(Known) - 1 do
     for J := 0 to Length(F.Absent) - 1 do
-      if PatternMatchString(P.Patterns[F.Absent[J].Pattern], Known[E]) then begin
+      if PatternMatchString(P.Patterns[F.Absent[J].Pattern], Known[E], P.CompileBudget^) then begin
         VT := Default(TValueTest);
         VT.Pattern := -1;
         VT.Condition := F.Absent[J].Condition;
@@ -874,7 +874,7 @@ begin
           Break;
         end;
       for J := 0 to Length(B^.PatternProperties) - 1 do
-        if PatternMatchString(P.Patterns[B^.PatternProperties[J].Pattern], Known[I]) then begin
+        if PatternMatchString(P.Patterns[B^.PatternProperties[J].Pattern], Known[I], P.CompileBudget^) then begin
           Matched := True;
           AddApp(C, B^.PatternProperties[J].Node);
         end;

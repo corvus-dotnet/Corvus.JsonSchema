@@ -45,10 +45,12 @@ unit Corvus.JsonSchema.EcmaRegex;
   other case runs on the backtracking matcher (see Corvus.JsonSchema.EcmaRegex.Vm): a pattern with no automaton,
   and a text that is not ASCII for a pattern that has one. That matcher keeps its choices on an explicit stack that
   the thread keeps between matches, so a long text cannot overflow the stack of the thread and a match does not
-  allocate once the stack has grown. It has no step budget, so a pattern with nested quantifiers can take
-  exponential time on a text it does not match, as it can in any backtracking engine. In Go that is so only for a
-  pattern with a lookaround or a backreference, because the regexp package matches the others in linear time. Here
-  it is also so for a pattern that has no automaton, and for a text that is not ASCII. A repetition whose body
+  allocate once the stack has grown. A pattern with nested quantifiers can take exponential time on a text it does
+  not match, as it can in any backtracking engine, so a match can be given a limit (EcmaRegexIsMatchLimit): the
+  matcher counts its steps, reads the clock every 4,096 of them, and abandons a match that has run for longer than
+  the limit or whose stack has reached 1,048,576 entries. In Go only a pattern with a lookaround or a
+  backreference can take that long, because the regexp package matches the others in linear time. Here a pattern
+  that has no automaton can, and so can any pattern on a text that is not ASCII. A repetition whose body
   cannot consume a character is not such a pattern. It is run once, or not at all (see Simplify of the Compile
   unit), as V8 runs it. And a counted loop gives up at a position from which the rest of the pattern needs more
   text than is left (see SetNeeds of the Compile unit), as V8 does, so a loop whose iterations can be empty does
@@ -110,6 +112,21 @@ function EcmaRegexValid(const Pattern: UTF8String): Boolean;
   UTF-8 (an unanchored search). It allocates nothing in the steady state and is safe for one TEcmaRegex used from
   several threads. }
 function EcmaRegexIsMatch(const Regex: TEcmaRegex; const Text: TBytes; Start, Len: Int32): Boolean;
+
+const
+  { Why a match with a limit was abandoned (the StopNone, StopTime and StopMemory of the Vm unit). }
+  EcmaRegexStopNone = 0;
+  EcmaRegexStopTime = 1;
+  EcmaRegexStopMemory = 2;
+
+{ EcmaRegexIsMatchLimit is EcmaRegexIsMatch with a limit on the time the match may take, in milliseconds, when
+  LimitMs is above zero. A match that reaches the limit is abandoned and Stop is EcmaRegexStopTime. So is a match
+  whose backtracking stack reaches 1,048,576 entries, and Stop is EcmaRegexStopMemory. The result is then False
+  and is not an answer. The clock is read every 4,096 steps of the backtracking matcher, so a match can go past the
+  limit by the time those take and by the millisecond the clock counts in. The automaton takes time proportional
+  to the text and is not stopped. }
+function EcmaRegexIsMatchLimit(const Regex: TEcmaRegex; const Text: TBytes; Start, Len: Int32; LimitMs: Int64;
+  out Stop: UInt8): Boolean;
 
 { EcmaRegexReleaseThreadScratch frees the working memory the calling thread's matches have kept. A thread that has
   matched should call it before it ends, because a thread variable of a managed type is not freed with its thread.
@@ -208,11 +225,20 @@ end;
 
 function EcmaRegexIsMatch(const Regex: TEcmaRegex; const Text: TBytes; Start, Len: Int32): Boolean;
 var
+  Stop: UInt8;
+begin
+  Result := EcmaRegexIsMatchLimit(Regex, Text, Start, Len, 0, Stop);
+end;
+
+function EcmaRegexIsMatchLimit(const Regex: TEcmaRegex; const Text: TBytes; Start, Len: Int32; LimitMs: Int64;
+  out Stop: UInt8): Boolean;
+var
   Matched: Boolean;
 begin
+  Stop := EcmaRegexStopNone;
   if Regex.HasDfa and DfaMatch(Regex.Dfa, Text, Start, Start + Len, Matched) then
     Exit(Matched);
-  Result := ProgramMatch(Regex.Prog, Text, Start, Start + Len);
+  Result := ProgramMatchLimit(Regex.Prog, Text, Start, Start + Len, LimitMs, Stop);
 end;
 
 function EcmaRegexValid(const Pattern: UTF8String): Boolean;

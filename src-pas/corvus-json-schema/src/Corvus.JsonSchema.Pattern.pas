@@ -142,6 +142,21 @@ type
     Units: Boolean;
   end;
 
+  PPattern = ^TPattern;
+
+  { A TPatternBudget is what one evaluation, or the compilation of one schema, gives every match of a pattern: the
+    time each may take. It notes the first match that reached a limit, after which every match is abandoned at
+    once. (The patternBudget of pattern_engine.go.) }
+  TPatternBudget = record
+    { LimitMs is the time one match may take, in milliseconds, or zero for no limit. }
+    LimitMs: Int64;
+    { Stop is EcmaRegexStopTime or EcmaRegexStopMemory once a match has reached a limit, and Failed is the pattern
+      of that match. }
+    Stop: UInt8;
+    Failed: PPattern;
+  end;
+  PPatternBudget = ^TPatternBudget;
+
 const
   { The count of an item that is not bounded. }
   MaxCount = UInt32($FFFFFFFF);
@@ -163,11 +178,18 @@ function CompilePattern(const Source: UTF8String; out P: TPattern): Boolean;
 { ValidRegex reports whether a string is a valid ECMA-262 regular expression with the u flag (the regex format, and
   the patterns the engine reads without falling back). }
 function ValidRegex(const Source: UTF8String): Boolean;
+{ NewPatternBudget is the budget of an evaluation whose matches may each take LimitMs milliseconds (zero for no
+  limit). }
+function NewPatternBudget(LimitMs: Int64): TPatternBudget; inline;
 { PatternMatch reports whether the pattern matches somewhere in S[Start .. Start+Len-1], Ascii saying whether those
-  bytes are known to be ASCII (a document knows that of its strings). }
-function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; Ascii: Boolean): Boolean;
+  bytes are known to be ASCII (a document knows that of its strings). The engine matches within the budget. When a
+  limit is reached the answer is False, and it is not an answer: the budget says so, and the caller of the
+  evaluation gets the error. Every other matcher reads the text once, or a bounded number of times, and has no
+  limit. }
+function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; Ascii: Boolean;
+  var Budget: TPatternBudget): Boolean;
 { PatternMatchString is PatternMatch for a string that is not known to be ASCII. }
-function PatternMatchString(const P: TPattern; const S: UTF8String): Boolean;
+function PatternMatchString(const P: TPattern; const S: UTF8String; var Budget: TPatternBudget): Boolean;
 { IsASCII says whether every byte of S[Start .. Stop-1] is ASCII. }
 function IsASCII(const S: TBytes; Start, Stop: NativeInt): Boolean;
 
@@ -1897,7 +1919,30 @@ begin
   Result := False;
 end;
 
-function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; Ascii: Boolean): Boolean;
+function NewPatternBudget(LimitMs: Int64): TPatternBudget; inline;
+begin
+  Result.LimitMs := LimitMs;
+  Result.Stop := EcmaRegexStopNone;
+  Result.Failed := nil;
+end;
+
+{ EngineMatch matches the text on the engine within the budget. }
+function EngineMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; var Budget: TPatternBudget): Boolean;
+var
+  Stop: UInt8;
+begin
+  if Budget.Stop <> EcmaRegexStopNone then
+    Exit(False);
+  Result := EcmaRegexIsMatchLimit(P.Engine, S, Start, Len, Budget.LimitMs, Stop);
+  if Stop <> EcmaRegexStopNone then begin
+    Budget.Stop := Stop;
+    Budget.Failed := @P;
+    Result := False;
+  end;
+end;
+
+function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; Ascii: Boolean;
+  var Budget: TPatternBudget): Boolean;
 var
   Stop, I, N: NativeInt;
   C, Size: Int32;
@@ -1905,7 +1950,7 @@ var
 begin
   Stop := Start + Len;
   if P.Units and (not Ascii) and HasSupplementary(S, Start, Stop) then begin
-    Result := EcmaRegexIsMatch(P.Engine, S, Start, Len);
+    Result := EngineMatch(P, S, Start, Len, Budget);
     Exit;
   end;
   case P.Kind of
@@ -1976,16 +2021,16 @@ begin
       Result := Word;
     end;
   else
-    Result := EcmaRegexIsMatch(P.Engine, S, Start, Len);
+    Result := EngineMatch(P, S, Start, Len, Budget);
   end;
 end;
 
-function PatternMatchString(const P: TPattern; const S: UTF8String): Boolean;
+function PatternMatchString(const P: TPattern; const S: UTF8String; var Budget: TPatternBudget): Boolean;
 var
   B: TBytes;
 begin
   B := BytesOf(S);
-  Result := PatternMatch(P, B, 0, Length(B), IsASCII(B, 0, Length(B)));
+  Result := PatternMatch(P, B, 0, Length(B), IsASCII(B, 0, Length(B)), Budget);
 end;
 
 initialization

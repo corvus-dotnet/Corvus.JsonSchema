@@ -53,6 +53,8 @@ var
   OracleVerdictsAgreed: Int64 = 0;
   OracleAnswers: Int64 = 0;
   OracleAnswersAgreed: Int64 = 0;
+  { The budget of a match that has no limit. }
+  NoBudget: TPatternBudget;
   OraclePath: UTF8String = '../../src-go/corvus-json-schema/internal/ecmaregex/testdata/v8_oracle.json';
   SuitePath: UTF8String = '';
 
@@ -1242,6 +1244,7 @@ var
   I: Int32;
   Want, Got: Boolean;
   Text: TBytes;
+  Stop: UInt8;
 begin
   for I := 0 to High(Inputs) do begin
     Want := Bit(Bits, I);
@@ -1262,6 +1265,12 @@ begin
         Bool(Want))
     else
       Inc(OracleAnswersAgreed);
+    // The same match with a limit. A match that reaches the limit is abandoned and says nothing. Any other gives
+    // the answer it gives without one.
+    Got := EcmaRegexIsMatchLimit(Backtrack, Text, 0, Length(Text), 1, Stop);
+    if (Stop = EcmaRegexStopNone) and (Got <> Want) then
+      Fail(Quote(P) + ' on ' + Quote(Inputs[I]) + ' (forced backtrack, with a limit): got ' + Bool(Got) +
+        ', V8 says ' + Bool(Want));
   end;
 end;
 
@@ -1693,6 +1702,67 @@ end;
 {$ELSE}
 begin
   WriteLn('TestAllocations: SKIPPED, the count of allocations is taken from the memory manager of Free Pascal');
+end;
+{$ENDIF}
+
+{ TestALimitedMatchAllocatesNothing checks the steady state with a limit on the match, on patterns that reach the
+  first check of the clock and on one that is abandoned there. The limit and the deadline are in the memory the
+  thread keeps for its matches, and a match that is abandoned says so with a number. }
+procedure TestALimitedMatchAllocatesNothing;
+{$IFDEF FPC}
+var
+  Counting: TMemoryManager;
+  Long: UTF8String;
+  K: Int32;
+
+  procedure Alloc(const Pattern, Text: UTF8String; LimitMs: Int64; WantStop: UInt8);
+  var
+    Re: TEcmaRegex;
+    Bytes: TBytes;
+    Run: Int32;
+    Before: Int64;
+    Stop: UInt8;
+  begin
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Bytes := ToBytes(Text);
+    // The first matches grow the memory of the thread to what the text needs.
+    for Run := 1 to 3 do begin
+      EcmaRegexIsMatchLimit(Re, Bytes, 0, Length(Bytes), LimitMs, Stop);
+      if Stop <> WantStop then
+        Fail(Quote(Pattern) + ' with a limit of ' + Num(LimitMs) + ' ms: stop ' + Num(Stop) + ', want ' +
+          Num(WantStop));
+    end;
+    SetMemoryManager(Counting);
+    Before := Allocations;
+    for Run := 1 to 20 do
+      EcmaRegexIsMatchLimit(Re, Bytes, 0, Length(Bytes), LimitMs, Stop);
+    Before := Allocations - Before;
+    SetMemoryManager(SystemManager);
+    if Before <> 0 then
+      Fail(Quote(Pattern) + ' with a limit of ' + Num(LimitMs) + ' ms: ' + Num(Before) + ' allocations in 20 matches');
+  end;
+
+begin
+  GetMemoryManager(SystemManager);
+  Counting := SystemManager;
+  Counting.GetMem := @CountingGetMem;
+  Counting.AllocMem := @CountingAllocMem;
+  Counting.ReAllocMem := @CountingReAllocMem;
+  Long := '';
+  for K := 1 to 20000 do
+    Long := Long + 'ab';
+  Alloc('^(?=.)(?:a|b)*c$', Long, 60000, EcmaRegexStopNone);
+  Alloc('^(?:(a|b)\1?)+$', Copy(Long, 1, 4000), 60000, EcmaRegexStopNone);
+  Alloc('^[ab\u00e9]{0,60000}c$', U($E9) + Long, 60000, EcmaRegexStopNone);
+  Alloc('^(?=.)(?:a|b)*c$', Long, 0, EcmaRegexStopNone);
+  Alloc('^(?:(a+)\1*)+$', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab', 2, EcmaRegexStopTime);
+  WriteLn('TestALimitedMatchAllocatesNothing: 5 patterns, each matched 20 times');
+end;
+{$ELSE}
+begin
+  WriteLn('TestALimitedMatchAllocatesNothing: SKIPPED, the count of allocations is taken from the memory manager of '
+    + 'Free Pascal');
 end;
 {$ENDIF}
 
@@ -2161,7 +2231,7 @@ begin
       if Want then
         Inc(Matched);
       if Fast then begin
-        if PatternMatchString(Compiled, T) <> Want then
+        if PatternMatchString(Compiled, T, NoBudget) <> Want then
           Fail(Quote(P) + ' on ' + Quote(T) + ': ' + Bool(not Want) + ', V8 says ' + Bool(Want));
       end else begin
         Text := ToBytes(T);
@@ -2507,6 +2577,7 @@ begin
   TestBacktrackingSemantics;
   TestLongInput;
   TestAllocations;
+  TestALimitedMatchAllocatesNothing;
   TestConcurrentUse;
   TestFoldTables;
   TestModifiers;
@@ -2534,5 +2605,5 @@ begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 28 tests, 0 failures');
+  WriteLn('PASS: 29 tests, 0 failures');
 end.

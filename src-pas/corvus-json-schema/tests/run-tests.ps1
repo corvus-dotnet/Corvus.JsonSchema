@@ -68,6 +68,7 @@ $programs = [ordered]@{
     TestDocument     = @()
     TestUcd          = @()
     TestEcmaRegex    = @()
+    TestPatternLimits = @()
     TestUri          = @()
     TestFormats      = @()
     TestSchemaSide   = @()

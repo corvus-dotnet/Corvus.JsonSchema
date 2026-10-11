@@ -17,16 +17,55 @@ unit Corvus.JsonSchema.EcmaRegex.Vm;
   surface gives a match no parameter through which a caller could supply the memory, which is the other way to do
   it. The cost is that neither Free Pascal nor Delphi frees a thread variable of a managed type when its thread
   ends, so a thread that has matched and is about to end should call ReleaseThreadState. A thread that does not
-  loses that memory once, and nothing else goes wrong. }
+  loses that memory once, and nothing else goes wrong.
+
+  The limit of a match is a number of milliseconds, where Go has a duration. The clock is the tick count of the
+  system (GetTickCount64 of Free Pascal, which reads the monotonic clock, and the time stamp of TStopwatch in
+  Delphi), which never goes back and counts whole milliseconds. }
 
 interface
 
 uses
   SysUtils,
+  {$IFNDEF FPC}
+  System.Diagnostics,
+  {$ENDIF}
   Corvus.JsonSchema.EcmaRegex.Compile;
 
-{ ProgramMatch reports whether the program matches anywhere in the bytes Lo to Hi - 1 of the text. }
+const
+  { Why a match was abandoned. StopTime says it ran for longer than its limit, and StopMemory that its
+    backtracking stack reached MaxStack entries. Neither is an answer. }
+  StopNone = 0;
+  StopTime = 1;
+  StopMemory = 2;
+
+  { CheckEvery is the number of steps the matcher takes between two looks at the clock and at the depth of its
+    stack. A step is one instruction, and eight characters of a single character loop or of a backreference. A
+    step takes some tens of nanoseconds, so the clock is read some tens of microseconds apart (44 to
+    128 were measured), a match that ends before its first check never reads it, and a match goes past its limit
+    by that much at most, and by the millisecond the clock counts in. }
+  CheckEvery = 1 shl 12;
+
+  (* MaxStack is the number of entries the backtracking stack of a match with a limit may hold (16 bytes each). A
+     match that needs more is abandoned. A pattern that keeps a choice for every character of its text needs one
+     entry or a few for each, so this is room for a text of some hundred thousand characters, and a pattern that
+     pushes without consuming, such as (?:a?){2147483647}, reaches it in a few milliseconds. It is looked at with
+     the clock, so the stack can go past it by CheckEvery entries. *)
+  MaxStack = 1 shl 20;
+
+{ ProgramMatch reports whether the program matches anywhere in the bytes Lo to Hi - 1 of the text, with no limit on
+  the time or the memory the match takes. }
 function ProgramMatch(const Prog: TProgram; const Text: TBytes; Lo, Hi: Int32): Boolean;
+
+{ ProgramMatchLimit is ProgramMatch with a limit on the time the match may take, in milliseconds, when LimitMs is
+  above zero. A match that reaches the limit is abandoned and Stop is StopTime. So is a match whose backtracking
+  stack reaches MaxStack entries, and Stop is StopMemory. The result is then False and is not an answer. Stop is
+  StopNone for a match that ran to its answer. }
+function ProgramMatchLimit(const Prog: TProgram; const Text: TBytes; Lo, Hi: Int32; LimitMs: Int64;
+  out Stop: UInt8): Boolean;
+
+{ MonotonicMilliseconds reads the clock the limit of a match is measured with. }
+function MonotonicMilliseconds: Int64;
 
 { ReleaseThreadState frees the working memory the calling thread's matches have used. }
 procedure ReleaseThreadState;
@@ -84,6 +123,14 @@ type
     { Counts holds, for each loop, the number of iterations started and the position at which the last one
       started. }
     Counts: TInt32Array;
+    { LimitMs is the time the match may take, or zero for no limit. The clock starts at the first check, so
+      Deadline is set when Timed is. }
+    LimitMs: Int64;
+    Deadline: Int64;
+    Timed: Boolean;
+    { Steps is the number of steps left before the next check, and Stop why the match was abandoned. }
+    Steps: Int32;
+    Stop: UInt8;
   end;
   PState = ^TState;
 
@@ -102,6 +149,39 @@ begin
   St^.Tmp := nil;
   St^.Counts := nil;
   St^.Sp := 0;
+end;
+
+function MonotonicMilliseconds: Int64;
+begin
+  {$IFDEF FPC}
+  Result := Int64(GetTickCount64);
+  {$ELSE}
+  Result := TStopwatch.GetTimeStamp div 10000;
+  {$ENDIF}
+end;
+
+{ Check is called every CheckEvery steps. It reports whether the match may go on. }
+function Check(var St: TState): Boolean;
+var
+  Now: Int64;
+begin
+  if St.LimitMs <= 0 then
+    Exit(True);
+  if St.Sp > MaxStack then begin
+    St.Stop := StopMemory;
+    Exit(False);
+  end;
+  Now := MonotonicMilliseconds;
+  if not St.Timed then begin
+    St.Timed := True;
+    St.Deadline := Now + St.LimitMs;
+    Exit(True);
+  end;
+  if Now > St.Deadline then begin
+    St.Stop := StopTime;
+    Exit(False);
+  end;
+  Result := True;
 end;
 
 procedure GrowStack(var St: TState);
@@ -244,10 +324,11 @@ end;
 
 { Run reports whether the program matches at the position Start. It keeps its choices on an explicit stack, so the
   depth of the search is bounded by memory and not by the stack of the thread. When it fails, every group and
-  counter is back to the value it had on entry. }
+  counter is back to the value it had on entry. It counts its steps, and when a check says the match has reached a
+  limit it returns False with the reason in St.Stop. }
 function Run(const Prog: TProgram; var St: TState; const Text: TBytes; Lo, Hi, Start: Int32): Boolean;
 var
-  Pc, Pos, R, W, At, N, Floor, From, Till, G, F, Keep, K, Want, Got: Int32;
+  Pc, Pos, R, W, At, N, Floor, From, Till, G, F, Keep, K, Want, Got, Steps: Int32;
   C: UInt8;
   I, Rep: PInst;
   CharSet: PCharSet;
@@ -261,7 +342,16 @@ begin
   St.Sp := 0;
   Pc := 0;
   Pos := Start;
+  Steps := St.Steps;
   while True do begin
+    Dec(Steps);
+    if Steps < 0 then begin
+      if not Check(St) then begin
+        St.Steps := 0;
+        Exit(False);
+      end;
+      Steps := CheckEvery;
+    end;
     I := @Prog.Insts[Pc];
     case I^.Op of
       OpChar:
@@ -395,6 +485,7 @@ begin
         Continue;
       end;
       OpClear: begin
+        Dec(Steps, I^.B - I^.A);
         for G := I^.A to I^.B do
           if St.Caps[2 * G] >= 0 then begin
             Push(St, ECap, G, St.Caps[2 * G], St.Caps[2 * G + 1]);
@@ -414,6 +505,7 @@ begin
         end;
         N := Till - From;
         if (Hi - Pos >= N) and EqualSpans(Text, Pos, From, N) then begin
+          Dec(Steps, N shr 3);
           Inc(Pos, N);
           Inc(Pc);
           Continue;
@@ -428,6 +520,7 @@ begin
         end;
         N := Till - From;
         if (Pos - Lo >= N) and EqualSpans(Text, Pos - N, From, N) then begin
+          Dec(Steps, N shr 3);
           Dec(Pos, N);
           Inc(Pc);
           Continue;
@@ -443,6 +536,7 @@ begin
           Inc(Pc);
           Continue;
         end;
+        Dec(Steps, (Till - From) shr 3);
         At := Pos;
         Ok := True;
         while (From < Till) and Ok do begin
@@ -473,6 +567,7 @@ begin
           Inc(Pc);
           Continue;
         end;
+        Dec(Steps, (Till - From) shr 3);
         At := Pos;
         Ok := True;
         while (From < Till) and Ok do begin
@@ -565,6 +660,7 @@ begin
               Floor := At;
           end;
         end;
+        Dec(Steps, (At - Pos) shr 3);
         if N >= I^.Min then begin
           if At > Floor then
             Push(St, ERep, Pc + 1, At, Floor);
@@ -583,6 +679,7 @@ begin
           Inc(At, W);
           Inc(N);
         end;
+        Dec(Steps, N shr 3);
         if N = I^.Min then begin
           if N <> I^.Max then
             Push(St, ERepLazy, Pc, At, N);
@@ -625,13 +722,17 @@ begin
         Inc(Pc);
         Continue;
       end;
-      OpMatch:
+      OpMatch: begin
+        St.Steps := Steps;
         Exit(True);
+      end;
     end;
     // The instruction failed. Take up the most recent choice, undoing what was recorded since.
     while True do begin
-      if St.Sp = 0 then
+      if St.Sp = 0 then begin
+        St.Steps := Steps;
         Exit(False);
+      end;
       E := @St.Stack[St.Sp - 1];
       case E^.Kind of
         EChoice: begin
@@ -706,6 +807,8 @@ begin
         Exit(False);
       if Run(Prog, St, Text, Lo, Hi, At) then
         Exit(True);
+      if St.Stop <> StopNone then
+        Exit(False);
       Inc(At);
     end;
   end;
@@ -719,11 +822,21 @@ begin
       R := Decode(Text, Lo, At, Hi, Prog.Units, W);
     if ((Prog.First < 0) or Prog.Sets[Prog.First].Contains(R)) and Run(Prog, St, Text, Lo, Hi, At) then
       Exit(True);
+    if St.Stop <> StopNone then
+      Exit(False);
     Inc(At, W);
   end;
 end;
 
 function ProgramMatch(const Prog: TProgram; const Text: TBytes; Lo, Hi: Int32): Boolean;
+var
+  Stop: UInt8;
+begin
+  Result := ProgramMatchLimit(Prog, Text, Lo, Hi, 0, Stop);
+end;
+
+function ProgramMatchLimit(const Prog: TProgram; const Text: TBytes; Lo, Hi: Int32; LimitMs: Int64;
+  out Stop: UInt8): Boolean;
 var
   St: PState;
   K: Int32;
@@ -740,7 +853,14 @@ begin
     SetLength(St^.Counts, 2 * Prog.Loops);
   for K := 0 to 2 * Prog.Groups - 1 do
     St^.Caps[K] := -1;
+  St^.LimitMs := LimitMs;
+  St^.Timed := False;
+  St^.Steps := CheckEvery;
+  St^.Stop := StopNone;
   Result := Search(Prog, St^, Text, Lo, Hi);
+  Stop := St^.Stop;
+  if Stop <> StopNone then
+    Result := False;
   if Length(St^.Stack) > MaxRetainedStack then
     St^.Stack := nil;
 end;
