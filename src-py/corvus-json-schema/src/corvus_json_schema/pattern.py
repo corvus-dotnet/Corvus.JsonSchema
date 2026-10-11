@@ -444,7 +444,7 @@ class _Plain:
         body = self.plain(n.items[0])
         out = self.copy(n, [body])
         if not _matches_nothing(body):
-            return out
+            return self.one_repetition(out)
         try:
             rest, empty = self.without(body), self.nothing(body)
         except _Keep:
@@ -461,7 +461,24 @@ class _Plain:
         out.min = 0
         if out.max >= _MAX_COUNT:
             out.max = -1
-        return out
+        return self.one_repetition(out)
+
+    @staticmethod
+    def one_repetition(out: _Node) -> _Node:
+        """``(?:Y+)*`` as ``Y*`` and ``(?:Y+)+`` as ``Y+``: a repetition with no maximum whose body is nothing but
+        another one matches what the inner one does, any number of times. Written one inside the other, the
+        engines try every way to share a text between the two, and the regex package compiles each ``+`` as two
+        copies of its body, so twenty of them inside each other took 331 MB to compile."""
+        if out.max != -1 or out.min > 1:
+            return out
+        body = out.items[0]
+        while body.kind == _GROUP or (body.kind == _SEQUENCE and len(body.items) == 1):
+            body = body.items[0]
+        if body.kind != _REPEAT or body.max != -1 or body.min > 1 or body.kept:
+            return out
+        body.min *= out.min
+        body.lazy = out.lazy
+        return body
 
     def without(self, n: _Node) -> _Node | None:
         """What matches the texts the node matches other than the empty text, or None when it matches no other."""

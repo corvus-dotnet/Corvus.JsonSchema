@@ -1203,7 +1203,8 @@ def test_a_repetition_is_written_without_the_iterations_that_match_nothing(
 def test_repetitions_inside_repetitions_are_written_with_bodies_that_take_a_character() -> None:
     # Both engines try what follows a repetition again after an iteration that matched nothing, at each level.
     # This one took the standard library's engine over a minute for a text of twelve characters.
-    assert translate("(?:(?:(-|){3,})+|){3}-$") == ("(?:(?:(?:\\-)+)+){0,3}\\-\\Z", False)
+    # (A repetition with no maximum of nothing but another one is written as the one.)
+    assert translate("(?:(?:(-|){3,})+|){3}-$") == ("(?:(?:\\-)+){0,3}\\-\\Z", False)
     assert translate("^(?:(?:a|)*x?)*$") == ("^(?:(?:(?:a)+(?:x)?|(?:x){1}))*\\Z", False)
     # A body that matches nothing only where an assertion holds: with no minimum the assertion is not needed.
     assert translate("^(?:(?:\\b|a)*x)*$") == ("^(?:(?:a)*x)*\\Z", False)
@@ -1233,7 +1234,7 @@ def test_a_repetition_beside_a_reference_is_written_that_way_when_nothing_in_it_
     text, for_regex = translate("^(?:(?:(a)|)*)*x\\1$") or ("", False)
     assert for_regex and "(?P<g1>a)|)" in text
     # The group holds the repetition: where the repetition ends is all that the group shows of it.
-    assert translate("^((?:(?:a|)*)*)x\\1$") == ("^(?P<g1>(?:(?:a)+)*)x(?P=g1)\\Z", False)
+    assert translate("^((?:(?:a|)*)*)x\\1$") == ("^(?P<g1>(?:a)*)x(?P=g1)\\Z", False)
     # Inside a lookahead with a group that is read outside it, the first way through decides what the group holds.
     text, for_regex = translate("^(?=((?:(?:|a)*)*))\\1x") or ("", False)
     assert for_regex and "(?P<e1>" in text

@@ -419,6 +419,34 @@ def test_a_count_is_no_matter_to_the_standard_library() -> None:
     assert matcher is not None and matcher("b" + "a" * 4000)
 
 
+def test_a_repetition_of_nothing_but_a_repetition_is_written_as_one() -> None:
+    # Where no reference reads a group, (?:Y+)+ is Y+ and (?:Y+)* is Y*. One inside the other, both engines try
+    # every way to share a text between the two, and the regex package compiles each + as two copies of its body:
+    # twenty groups with a * of what can match nothing inside each other took it 331 MB and 6 s to compile.
+    for depth in (2, 3, 20, 60):
+        nested = "(?:" * depth + "a*" + ")*" * depth
+        assert pattern_module.translate(nested + "b") == ("(?:a)*b", False), depth
+        assert pattern_module.translate(nested + "b", for_regex=True) == ("(?:a)*b", True), depth
+        assert pattern_module.translate("^" + "(" * depth + "a|" + ")+" * depth + "$") == ("^(?:a)*\\Z", False), depth
+    tracemalloc.start()
+    try:
+        start = time.monotonic()
+        for limit in (1.0, None):
+            matcher = compile_pattern("^" + "(?:" * 20 + "a*" + ")*" * 20 + "$", limit)
+            assert matcher is not None and _engine(matcher) == "re"
+            # Nested as it was written, this text had no answer from either engine.
+            assert matcher("a" * 5000) and not matcher("a" * 5000 + "!")
+        assert time.monotonic() - start < 20 and tracemalloc.get_traced_memory()[1] < 16 * 1024 * 1024
+    finally:
+        tracemalloc.stop()
+    # A repetition with a count, or with something beside the inner one, is not such a repetition.
+    assert pattern_module.translate("^(?:(?:a|)*x?){2,}$") == ("^(?:(?:(?:a)+(?:x)?|(?:x){1}))*\\Z", False)
+    assert pattern_module.translate("^(?:(?:a|){2,3})*$") == ("^(?:(?:a){1,3})*\\Z", False)
+    # Nor is one that a reference reads a group of.
+    text, for_regex = pattern_module.translate("^(?:(?:(a)|)*)*\\1$") or ("", False)
+    assert for_regex and text.count("(?P<g1>a)") >= 1 and "(?:a)*" not in text
+
+
 def test_nothing_longer_than_the_limit_is_written_for_an_engine() -> None:
     limit = pattern_module._MAX_TRANSLATED
     shapes = [
