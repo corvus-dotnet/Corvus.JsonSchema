@@ -205,3 +205,11 @@ This runs:
 
 The Unicode tables are `src/ecmaregex/tables_gen.rs`. `pwsh tools/gen-ucd-tables.ps1` writes them from the tables of
 the Go module (`src-go/corvus-json-schema/internal/ucd/tables_gen.go`), so the two ports hold the same data.
+
+## License
+
+Apache 2.0.
+
+The Unicode tables are derived from the Unicode Character Database, which is under the Unicode License V3.
+[THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice, and the one of the `regress` crate that the
+tables were first read from. The file is in the published crate, beside `LICENSE`.
