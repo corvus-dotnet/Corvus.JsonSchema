@@ -34,8 +34,48 @@ const unbounded = -1
 // maxCount caps the bounds of a counted quantifier. No text that fits in memory reaches a larger count.
 const maxCount = math.MaxInt32
 
-// maxNesting caps the depth of groups, which bounds the recursion of the parser and of the compilers.
-const maxNesting = 1000
+// The limits on the size of one pattern. A pattern may come from outside, so reading and compiling one must take
+// bounded time and memory whatever it holds. A pattern over a limit is refused with a *TooLargeError, which is not
+// the error of a pattern that is not valid.
+const (
+	// MaxPatternLength is the longest pattern that is read, in bytes of UTF-8.
+	MaxPatternLength = 1 << 20
+	// MaxNesting caps the depth of groups, which bounds the recursion of the parser and of the compilers.
+	MaxNesting = 1000
+	// MaxSize is the largest size a pattern may have, in the bytes the parser counts for it: nodeSize for each node
+	// of its syntax tree, and rangeSize for each range of a class as its members are read, for each range a case
+	// insensitive group or a negated property adds, for each alternative that encloses a named group and for each
+	// group that shares its name. The tree, the program compiled from it and the time to make both are proportional
+	// to that size, so it bounds them all: a pattern at the limit takes a few milliseconds and a few megabytes.
+	MaxSize   = 1 << 20
+	nodeSize  = 32
+	rangeSize = 8
+)
+
+// A TooLargeError reports a pattern over one of the limits of size. Limit names the limit and Value is its value.
+// The pattern was not read to its end, so the error says nothing of whether it is valid.
+type TooLargeError struct {
+	Limit string
+	Value int
+}
+
+// The names of the limits a TooLargeError carries.
+const (
+	LimitLength  = "length"
+	LimitNesting = "nesting"
+	LimitSize    = "size"
+)
+
+// Error implements the error interface.
+func (e *TooLargeError) Error() string {
+	switch e.Limit {
+	case LimitLength:
+		return fmt.Sprintf("the pattern is longer than %d bytes", e.Value)
+	case LimitNesting:
+		return fmt.Sprintf("the groups of the pattern nest more than %d deep", e.Value)
+	}
+	return fmt.Sprintf("the pattern has a size of more than %d bytes when it is read", e.Value)
+}
 
 // A node is one element of the syntax tree of a pattern.
 type node struct {
@@ -84,6 +124,16 @@ type parser struct {
 	icase, multiline, dotAll bool
 	// needsBacktracking records that the pattern has a construct only the backtracking matcher can run.
 	needsBacktracking bool
+	// size is the size of what has been read so far (see MaxSize).
+	size int
+}
+
+// charge adds to the size of the pattern, and stops the parser when the size is over its limit.
+func (p *parser) charge(bytes int) {
+	p.size += bytes
+	if p.size > MaxSize {
+		panic(&TooLargeError{Limit: LimitSize, Value: MaxSize})
+	}
 }
 
 // A branch names one alternative of one disjunction.
@@ -107,14 +157,22 @@ func (p *parser) fail(msg string) {
 	panic(parseError{msg, p.i})
 }
 
-// parse reads the pattern. It returns an error for a pattern that is not valid under the chosen grammar.
+// parse reads the pattern. It returns an error for a pattern that is not valid under the chosen grammar, and a
+// *TooLargeError for a pattern over a limit of size, which it stops reading at the limit.
 func parse(pattern string, unicode bool) (root *node, ps *parser, err error) {
+	if len(pattern) > MaxPatternLength {
+		return nil, nil, &TooLargeError{Limit: LimitLength, Value: MaxPatternLength}
+	}
 	ps = &parser{p: []rune(pattern), unicode: unicode}
 	if !unicode {
 		ps.p = codeUnits(ps.p)
 	}
 	defer func() {
 		if r := recover(); r != nil {
+			if large, ok := r.(*TooLargeError); ok {
+				root, err = nil, large
+				return
+			}
 			pe, ok := r.(parseError)
 			if !ok {
 				panic(r)
@@ -214,8 +272,8 @@ func (p *parser) eat(c rune) bool {
 
 func (p *parser) disjunction() *node {
 	p.depth++
-	if p.depth > maxNesting {
-		p.fail("groups nested too deeply")
+	if p.depth > MaxNesting {
+		panic(&TooLargeError{Limit: LimitNesting, Value: MaxNesting})
 	}
 	p.disjunctions++
 	p.path = append(p.path, branch{disjunction: p.disjunctions})
@@ -228,6 +286,7 @@ func (p *parser) disjunction() *node {
 	}
 	alt := &node{kind: nAlt, subs: []*node{first}}
 	for p.eat('|') {
+		p.charge(nodeSize)
 		p.path[last].alternative++
 		alt.subs = append(alt.subs, p.alternative())
 	}
@@ -254,7 +313,7 @@ func (p *parser) alternative() *node {
 // characters equivalent to it.
 func (p *parser) charNode(c rune) *node {
 	if p.icase {
-		if set := foldClosure(newCharSet([]rune{c, c}, false), p.unicode); len(set.ranges) != 2 || set.ranges[0] != set.ranges[1] {
+		if set, _ := foldClosure(newCharSet([]rune{c, c}, false), p.unicode); len(set.ranges) != 2 || set.ranges[0] != set.ranges[1] {
 			return &node{kind: nSet, set: set}
 		}
 	}
@@ -265,14 +324,24 @@ func (p *parser) charNode(c rune) *node {
 // equivalent to one of its members.
 func (p *parser) setNode(set *charSet) *node {
 	if p.icase {
-		set = foldClosure(set, p.unicode)
+		set = p.fold(set)
 	}
 	return &node{kind: nSet, set: set}
+}
+
+// fold returns the set with every character equivalent to one of its members, and charges the pattern for the work
+// and for the set: a byte for each character with a case variant that the set holds, and its ranges.
+func (p *parser) fold(set *charSet) *charSet {
+	closed, variants := foldClosure(set, p.unicode)
+	p.charge(variants + rangeSize*len(closed.ranges)/2)
+	return closed
 }
 
 var anySet = newCharSet([]rune{0, maxRune}, false)
 
 func (p *parser) term() *node {
+	// The atom, and the repetition or the group around it.
+	p.charge(2 * nodeSize)
 	c := p.peek()
 	quantifiable := true
 	var atom *node
@@ -533,6 +602,8 @@ func (p *parser) capture(name string) *node {
 		if p.names == nil {
 			p.names = map[string][]namedGroup{}
 		}
+		// The path is kept, and every group of the same name is compared with it.
+		p.charge(rangeSize * (len(p.path) + len(p.names[name])))
 		p.names[name] = append(p.names[name], namedGroup{group: g.group, path: append([]branch(nil), p.path...)})
 	}
 	g.subs = []*node{p.disjunction()}
@@ -720,6 +791,7 @@ func (p *parser) classEscape(c rune) *charSet {
 			p.fail("invalid property name")
 		}
 		if c == 'P' {
+			p.charge(rangeSize * len(set.ranges) / 2)
 			return newCharSet(set.ranges, true)
 		}
 		return set
@@ -883,6 +955,8 @@ func (p *parser) class() *node {
 	p.i++
 	negated := p.eat('^')
 	var pairs []rune
+	// The ranges read so far that the size of the pattern has been charged for.
+	charged := 0
 	for {
 		if !p.more() {
 			p.fail("unterminated character class")
@@ -890,6 +964,8 @@ func (p *parser) class() *node {
 		if p.eat(']') {
 			break
 		}
+		p.charge(rangeSize * (len(pairs)/2 - charged))
+		charged = len(pairs) / 2
 		first, firstSet := p.classAtom()
 		if p.peek() == '-' && p.i+1 < len(p.p) && p.p[p.i+1] != ']' {
 			p.i++
@@ -914,9 +990,10 @@ func (p *parser) class() *node {
 	}
 	// Inside a case-insensitive group a character matches the class when it is equivalent to a member, and a
 	// negated class excludes exactly those characters.
+	p.charge(rangeSize * (len(pairs)/2 - charged))
 	set := newCharSet(pairs, false)
 	if p.icase {
-		set = foldClosure(set, p.unicode)
+		set = p.fold(set)
 	}
 	if negated {
 		set = newCharSet(set.ranges, true)

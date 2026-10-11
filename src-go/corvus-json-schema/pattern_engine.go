@@ -1,6 +1,7 @@
 package jsonschema
 
 import (
+	"errors"
 	"time"
 
 	"github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema/internal/ecmaregex"
@@ -13,10 +14,44 @@ import (
 type patternEngine = *ecmaregex.Regexp
 
 // compileEngine compiles an ECMA-262 pattern (with the u flag, or failing that without it, as many schemas need).
-// Not ok when the pattern is invalid.
-func compileEngine(source string) (patternEngine, bool) {
-	re, err := ecmaregex.Compile(source)
-	return re, err == nil
+func compileEngine(source string) (patternEngine, error) {
+	return ecmaregex.Compile(source)
+}
+
+// checkRegex reads a pattern without compiling it. It reports whether the pattern is valid with the u flag, and
+// returns nil for a pattern that is valid with or without it, a *patternSizeError for one over a limit of size, and
+// errInvalidPattern for one that is not valid.
+func checkRegex(source string) (unicode bool, err error) {
+	unicode, err = ecmaregex.Check(source)
+	if err == nil {
+		return unicode, nil
+	}
+	var large *ecmaregex.TooLargeError
+	if errors.As(err, &large) {
+		return false, &patternSizeError{limit: large.Limit, value: large.Value, reason: large.Error()}
+	}
+	return false, errInvalidPattern
+}
+
+// errInvalidPattern says a pattern is not a valid ECMA-262 regular expression.
+var errInvalidPattern = errors.New("invalid regular expression")
+
+// A patternSizeError says a pattern is over a limit of size, which one, and its value.
+type patternSizeError struct {
+	limit  string
+	value  int
+	reason string
+}
+
+func (e *patternSizeError) Error() string { return e.reason }
+
+// patternError returns the error of a schema whose keyword holds a pattern that could not be compiled.
+func patternError(err error, source, keyword string) error {
+	var large *patternSizeError
+	if errors.As(err, &large) {
+		return &PatternTooLargeError{Pattern: source, Keyword: keyword, Limit: large.limit, Value: large.value, reason: large.reason}
+	}
+	return compileError("Invalid regular expression '" + source + "' in " + keyword + ".")
 }
 
 // A patternBudget is what one evaluation, or the compilation of one schema, gives every match of a pattern: the

@@ -152,6 +152,33 @@ func (e *PatternMatchLimitError) Error() string {
 // Is reports whether target is ErrPatternMatchLimit.
 func (e *PatternMatchLimitError) Is(target error) bool { return target == ErrPatternMatchLimit }
 
+// ErrPatternTooLarge is the error every *PatternTooLargeError matches with errors.Is.
+var ErrPatternTooLarge = errors.New("a regular expression is too large")
+
+// PatternTooLargeError reports a schema that was not compiled because one of its regular expressions is over a
+// limit of size. It is not the error of a regular expression that is not valid, which is a *CompileError: the
+// pattern was not read to its end, so nothing is known of whether it is valid.
+type PatternTooLargeError struct {
+	// Pattern is the regular expression.
+	Pattern string
+	// Keyword is the keyword that holds it, pattern or patternProperties.
+	Keyword string
+	// Limit names the limit: "length" (the bytes of the pattern), "nesting" (the depth of its groups) or "size"
+	// (the bytes counted for it as it is read). Value is the value of that limit.
+	Limit string
+	Value int
+	// What the engine says of the limit.
+	reason string
+}
+
+// Error implements the error interface.
+func (e *PatternTooLargeError) Error() string {
+	return "The regular expression " + shownPattern(e.Pattern) + " in " + e.Keyword + " is too large to read as an ECMA-262 regular expression: " + e.reason + "."
+}
+
+// Is reports whether target is ErrPatternTooLarge.
+func (e *PatternTooLargeError) Is(target error) bool { return target == ErrPatternTooLarge }
+
 // shownPattern quotes a pattern for a message, or its first 120 bytes and its length when it is longer.
 func shownPattern(pattern string) string {
 	const shown = 120

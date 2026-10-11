@@ -58,6 +58,7 @@
 package ecmaregex
 
 import (
+	"errors"
 	"regexp"
 	"regexp/syntax"
 	"strings"
@@ -123,7 +124,8 @@ func (e Engine) String() string {
 }
 
 // Compile compiles an ECMA-262 pattern with the semantics JSON Schema requires. It returns an error for a pattern
-// that is not valid.
+// that is not valid, and a *TooLargeError for a pattern over a limit of size (see MaxSize), whether or not it is
+// valid.
 func Compile(pattern string) (*Regexp, error) {
 	return compile(pattern, false)
 }
@@ -133,9 +135,15 @@ func compile(pattern string, forceBacktrack bool) (*Regexp, error) {
 	unicode := true
 	root, ps, err := parse(pattern, true)
 	if err != nil {
+		if tooLarge(err) {
+			return nil, err
+		}
 		var legacyErr error
 		unicode = false
 		if root, ps, legacyErr = parse(pattern, false); legacyErr != nil {
+			if tooLarge(legacyErr) {
+				return nil, legacyErr
+			}
 			return nil, err
 		}
 	}
@@ -171,6 +179,11 @@ func compileRE2(translation string) (*regexp.Regexp, int) {
 		return nil, 0
 	}
 	return re, len(prog.Inst)
+}
+
+func tooLarge(err error) bool {
+	var large *TooLargeError
+	return errors.As(err, &large)
 }
 
 // Match reports whether the pattern matches anywhere in the UTF-8 text (an unanchored search), with no limit on
@@ -237,8 +250,27 @@ func (r *Regexp) Unicode() bool { return r.unicode }
 func (r *Regexp) String() string { return r.pattern }
 
 // Valid reports whether the pattern is a valid ECMA-262 pattern (for format: regex). It applies the grammar of the u
-// flag.
+// flag. A pattern over a limit of size is not read to its end and is reported as not valid.
 func Valid(pattern string) bool {
 	_, _, err := parse(pattern, true)
 	return err == nil
+}
+
+// Check reads the pattern without compiling it. It reports whether the pattern is valid with the u flag grammar,
+// and returns the error Compile would: nil for a pattern either grammar accepts, a *TooLargeError for a pattern over
+// a limit of size, and any other error for a pattern that is not valid.
+func Check(pattern string) (unicode bool, err error) {
+	if _, _, err = parse(pattern, true); err == nil {
+		return true, nil
+	}
+	if tooLarge(err) {
+		return false, err
+	}
+	if _, _, legacyErr := parse(pattern, false); legacyErr != nil {
+		if tooLarge(legacyErr) {
+			return false, legacyErr
+		}
+		return false, err
+	}
+	return false, nil
 }

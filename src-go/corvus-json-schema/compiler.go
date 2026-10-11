@@ -337,9 +337,9 @@ func (c *schemaCompiler) compileNode(id nodeID, target schemaTarget) error {
 			k := d.first(pp)
 			for i := 0; i < d.count(pp); i++ {
 				source := string(d.str(k + 2*i))
-				compiled, ok := compilePattern(source)
-				if !ok {
-					return compileError("Invalid regular expression '" + source + "' in patternProperties.")
+				compiled, err := compilePattern(source)
+				if err != nil {
+					return patternError(err, source, "patternProperties")
 				}
 				node := c.child(target, k+2*i+1, "/patternProperties/"+escapePointerToken(source))
 				n.patternProperties = append(n.patternProperties, patternProperty{compiled, node})
@@ -441,9 +441,9 @@ func (c *schemaCompiler) compileNode(id nodeID, target schemaTarget) error {
 		n.minLength = uintValue(d, get("minLength"))
 		n.maxLength = uintValue(d, get("maxLength"))
 		if p, ok := stringValue(d, get("pattern")); ok {
-			compiled, ok := compilePattern(p)
-			if !ok {
-				return compileError("Invalid regular expression '" + p + "' in pattern.")
+			compiled, err := compilePattern(p)
+			if err != nil {
+				return patternError(err, p, "pattern")
 			}
 			n.pattern = compiled
 		}

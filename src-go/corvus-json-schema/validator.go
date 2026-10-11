@@ -52,8 +52,9 @@ func applyOptions(options []Option) *compileOptions {
 
 // Compile compiles a schema given as UTF-8 JSON text. The validator keeps the slice. Do not modify it afterwards.
 // The error is a *ParseError when the text is not JSON, and a *CompileError when the schema cannot be compiled. It
-// is a *PatternMatchLimitError when matching a regular expression of the schema against a property name the
-// schema declares reached the limit of a match (see WithPatternMatchLimit).
+// is a *PatternTooLargeError when a regular expression of the schema is over a limit of size, and a
+// *PatternMatchLimitError when matching one against a property name the schema declares reached the limit of a
+// match (see WithPatternMatchLimit).
 func Compile(schema []byte, options ...Option) (*Validator, error) {
 	doc, err := ParseDocument(schema)
 	if err != nil {

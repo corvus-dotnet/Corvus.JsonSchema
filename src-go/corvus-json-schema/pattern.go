@@ -297,11 +297,16 @@ func indexString(s []byte, text string) int {
 
 var patternCache sync.Map
 
-// compilePattern compiles (or fetches from the process-wide cache) a pattern. Not ok when it is not a valid
-// ECMA-262 regular expression.
-func compilePattern(source string) (*pattern, bool) {
+// compilePattern compiles (or fetches from the process-wide cache) a pattern. The error is errInvalidPattern when
+// it is not a valid ECMA-262 regular expression, and a *patternSizeError when it is over a limit of size.
+func compilePattern(source string) (*pattern, error) {
 	if p, ok := patternCache.Load(source); ok {
-		return p.(*pattern), true
+		return p.(*pattern), nil
+	}
+	// The limits of size come first: nothing below reads a pattern that is over one.
+	unicode, err := checkRegex(source)
+	if err != nil {
+		return nil, err
 	}
 	// Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it. A pattern
 	// with a faster matcher that is valid with the u flag needs no engine at all. A pattern that is valid only
@@ -310,10 +315,10 @@ func compilePattern(source string) (*pattern, bool) {
 	// for those texts. When the pattern itself has such a character it is two atoms, which no faster matcher
 	// reads, and the engine takes every text.
 	p := choosePattern(source)
-	if p == nil || !validRegex(source) {
-		engine, ok := compileEngine(source)
-		if !ok {
-			return nil, false
+	if p == nil || !unicode {
+		engine, err := compileEngine(source)
+		if err != nil {
+			return nil, errInvalidPattern
 		}
 		switch {
 		case p == nil || hasSupplementary([]byte(source)):
@@ -324,7 +329,7 @@ func compilePattern(source string) (*pattern, bool) {
 	}
 	p.source = source
 	actual, _ := patternCache.LoadOrStore(source, p)
-	return actual.(*pattern), true
+	return actual.(*pattern), nil
 }
 
 func choosePattern(p string) *pattern {

@@ -60,8 +60,8 @@ func TestMatchersAgreeWithTheEngine(t *testing.T) {
 			t.Errorf("%q does not compile: %v", source, err)
 			continue
 		}
-		compiled, ok := compilePattern(source)
-		if !ok {
+		compiled, err := compilePattern(source)
+		if err != nil {
 			t.Errorf("%q is not a valid pattern", source)
 			continue
 		}
@@ -109,8 +109,8 @@ func TestPatternsValidOnlyWithoutTheUFlagMatchCodeUnits(t *testing.T) {
 	}
 	fast, answers := 0, 0
 	for _, c := range cases.Fast {
-		compiled, ok := compilePattern(c.P)
-		if !ok {
+		compiled, err := compilePattern(c.P)
+		if err != nil {
 			t.Errorf("%q is not a valid pattern", c.P)
 			continue
 		}
@@ -138,8 +138,8 @@ func TestSimplePatternsTakeTheFastMatchers(t *testing.T) {
 	expect := func(kind matcherKind, name string, patterns ...string) {
 		t.Helper()
 		for _, source := range patterns {
-			p, ok := compilePattern(source)
-			if !ok {
+			p, err := compilePattern(source)
+			if err != nil {
 				t.Errorf("%q is not a valid pattern", source)
 			} else if p.kind != kind {
 				t.Errorf("%q takes matcher %d, want %s", source, p.kind, name)
@@ -181,7 +181,7 @@ func TestInvalidPatternsAreRejected(t *testing.T) {
 		"a(", "[a", "a{2,1}", "(?<n>a)(?<n>b)", "*a", `^(?=a`, `(?<n>a)[\k]`, `^[\k]+(?<n>a)$`, "^a{2147483648,2147483647}$",
 		"^[a-z]{99999999999999999999,99999999999999999998}$", "^.{4294967296,1}$", "(?<m>a)(?:x|(?<m>b))",
 	} {
-		if _, ok := compilePattern(source); ok {
+		if _, err := compilePattern(source); err != errInvalidPattern {
 			t.Errorf("%q compiled", source)
 		}
 	}

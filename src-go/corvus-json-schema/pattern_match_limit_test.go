@@ -56,7 +56,7 @@ func expectMatchLimit(t *testing.T, what string, ok bool, err error, limit time.
 	case !strings.Contains(err.Error(), limit.String()) || !strings.Contains(err.Error(), limited.Pattern):
 		t.Errorf("%s: the message %q does not name the pattern and the limit", what, err)
 	}
-	if errors.Is(err, ErrDepthExceeded) {
+	if errors.Is(err, ErrDepthExceeded) || errors.Is(err, ErrPatternTooLarge) {
 		t.Errorf("%s: the error %v is also another error", what, err)
 	}
 }
