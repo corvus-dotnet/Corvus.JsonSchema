@@ -141,6 +141,17 @@ pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTable
   (see [the translations](./EcmaRegexTranslations.md#repetitions)). Only a pattern with a lazy repetition of a group
   inside a lookaround whose captures a backreference reads has such a translation.
 - **Time.** ECMA-262 does not say how long a match may take, and a backtracking engine can take very long. The
-  evaluator's match timeout (`JsonSchemaEvaluatorOptions.RegexMatchTimeout`) bounds it.
+  evaluator's match timeout (`JsonSchemaEvaluatorOptions.RegexMatchTimeout`) bounds it. A translation gives V8's
+  answer and not V8's time, in three ways.
+  - A repetition whose body can match the empty string, with no backreference in it and no group that one reads
+    (`(?:a?b?)*`), is written as it is. .NET takes an iteration that matched nothing and, when the rest fails, tries
+    again without it, where ECMA-262 refuses the iteration. A search that passes twenty such repetitions is made
+    two to the power of twenty times: `^(?:(?:a?b?)*c){1,22}d$` against twenty `c` and an `e` is 42 backtracks in
+    V8 and about a million paths in .NET. The same pattern costs the same with no translation at all.
+  - A lazy repetition of anything but one code unit is written greedy, and an empty alternative before another
+    (`(|a)`) as an optional group. The answer does not depend on the order of the paths, and the time to find a
+    match does: .NET can search long before it reaches the path V8 takes first.
+  - Unsetting groups when an iteration starts and refusing an iteration that matched nothing are written with
+    conditionals, balancing groups and lookarounds, so a step of such a search costs more in .NET than in V8.
 - **Unicode version.** The data is Unicode 17.0.0. The Basic Multilingual Plane part of a General_Category value
   uses .NET's own class, which follows the runtime's Unicode version.

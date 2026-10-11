@@ -255,6 +255,9 @@ internal static class EcmaRegexTranslator
         /// <summary>Holds between the two halves of a character beyond the Basic Multilingual Plane.</summary>
         private const string InsideSurrogatePair = @"(?<=[\uD800-\uDBFF])[\uDC00-\uDFFF]";
 
+        /// <summary>The most nodes read to write a body that cannot match the empty string (<see cref="NonEmpty"/>).</summary>
+        private const int NonEmptyBudget = 256;
+
         /// <summary>More alternatives of surrogate pairs than this stand behind one test for a surrogate.</summary>
         private const int ManyAlternatives = 2;
 
@@ -431,6 +434,11 @@ internal static class EcmaRegexTranslator
 
         private static bool IsSurrogate(int c) => c >= 0xD800 && c <= 0xDFFF;
 
+        /// <summary>A node that never matches.</summary>
+        private static EcmaRegexNode NeverNode() => new(EcmaRegexNodeKind.Set);
+
+        private static bool IsNever(EcmaRegexNode n) => n.Kind == EcmaRegexNodeKind.Set && n.Set.Length == 0;
+
         /// <summary>Adds the numbers of the capturing groups of a node.</summary>
         private static void CollectGroups(EcmaRegexNode n, List<int> groups)
         {
@@ -443,6 +451,36 @@ internal static class EcmaRegexTranslator
             {
                 CollectGroups(sub, groups);
             }
+        }
+
+        /// <summary>Whether a node is one backreference, in non-capturing groups or in none.</summary>
+        private static bool IsOneReference(EcmaRegexNode n)
+        {
+            while (n.Kind == EcmaRegexNodeKind.Group && n.Group == 0)
+            {
+                n = n.Subs[0];
+            }
+
+            return n.Kind == EcmaRegexNodeKind.Backref;
+        }
+
+        /// <summary>Whether a node holds a backreference.</summary>
+        private static bool HoldsBackreference(EcmaRegexNode n)
+        {
+            if (n.Kind == EcmaRegexNodeKind.Backref)
+            {
+                return true;
+            }
+
+            foreach (EcmaRegexNode sub in n.Subs)
+            {
+                if (HoldsBackreference(sub))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>Whether a set holds every surrogate and every character beyond the Basic Multilingual Plane.</summary>
@@ -1000,6 +1038,7 @@ internal static class EcmaRegexTranslator
 
             // A character beyond the Basic Multilingual Plane is written in a group of its own.
             bool unit = atom.Kind == EcmaRegexNodeKind.Group
+                || (atom.Kind == EcmaRegexNodeKind.Backref && atom.ReferenceForm == 1)
                 || (atom.Kind == EcmaRegexNodeKind.Char && (!this.unicode || !IsSurrogate(atom.CodePoint)));
             if (!unit)
             {
@@ -1187,6 +1226,41 @@ internal static class EcmaRegexTranslator
             // An iteration that need not run is made to fail when it has matched nothing, where .NET would go on with
             // the groups as that iteration left them, and where the order of the paths counts.
             bool guarded = nullable && max != min && (this.inCapturingLookaround > 0 || this.AnyReferenced(n));
+            if (!guarded && nullable && max != min && HoldsBackreference(body) && !(min > 0 && IsOneReference(body)))
+            {
+                // A backreference matches nothing whenever its group is unset or empty. .NET takes an iteration that
+                // matched nothing and then tries again without it, from the same place and with the same groups, so a
+                // pattern with several such repetitions is searched many times over, where ECMA-262 refuses the
+                // iteration. The iterations that need not run are written as a body that cannot match nothing, or
+                // made to fail when they have, where there is no such body. A body that is one backreference, with
+                // an iteration that must run, needs neither: when that iteration matches nothing .NET runs no other,
+                // and when it matches something so does every other.
+                int budget = NonEmptyBudget;
+                if (this.NonEmpty(body, ref budget) is EcmaRegexNode nonEmpty)
+                {
+                    if (!backward && min > 0)
+                    {
+                        this.Atom(body, inner, null);
+                        this.Quantifier(min, min, lazy: false);
+                    }
+
+                    if (!IsNever(nonEmpty))
+                    {
+                        this.Atom(nonEmpty, inner, null);
+                        this.Quantifier(0, max == EcmaRegexNode.Unbounded ? max : max - min, lazy: false);
+                    }
+
+                    if (backward && min > 0)
+                    {
+                        this.Atom(body, inner, null);
+                        this.Quantifier(min, min, lazy: false);
+                    }
+
+                    return;
+                }
+
+                guarded = true;
+            }
 
             // A lazy repetition that is still lazy here, with a highest count, is written as optional groups one in
             // another.
@@ -1281,6 +1355,257 @@ internal static class EcmaRegexTranslator
         }
 
         /// <summary>
+        /// A tree that matches what a node matches, the empty string left out, or null when there is none to be had
+        /// within <see cref="NonEmptyBudget"/>. A node that never matches stands for a node that can only match the
+        /// empty string. The node holds no group a backreference reads, and is not in a lookaround whose captures one
+        /// reads, so neither the groups nor the order of the paths count.
+        /// <para>
+        /// Terms one after another match something when one of them is the first to: the terms before it match
+        /// nothing (<see cref="OnlyEmpty"/>), it matches something, and the rest match as they do. A repetition
+        /// matches something when its iterations do, since the ones that need not run cannot match nothing. A
+        /// backreference to a group that cannot capture the empty string matches something exactly when the group is
+        /// set, which is how .NET reads a backreference with no test of the group around it.
+        /// </para>
+        /// </summary>
+        private EcmaRegexNode? NonEmpty(EcmaRegexNode n, ref int budget)
+        {
+            if (--budget < 0)
+            {
+                return null;
+            }
+
+            switch (n.Kind)
+            {
+                case EcmaRegexNodeKind.Char:
+                case EcmaRegexNodeKind.Set:
+                    return n;
+                case EcmaRegexNodeKind.Backref:
+                    return this.ReadsTextOnly(n)
+                        ? new EcmaRegexNode(EcmaRegexNodeKind.Backref) { Groups = n.Groups, Fold = n.Fold, ReferenceForm = 1 }
+                        : null;
+                case EcmaRegexNodeKind.Group:
+                    return this.NonEmpty(n.Subs[0], ref budget) is EcmaRegexNode grouped
+                        ? (IsNever(grouped) || grouped.Kind is EcmaRegexNodeKind.Backref or EcmaRegexNodeKind.Char or EcmaRegexNodeKind.Set or EcmaRegexNodeKind.Group
+                            ? grouped
+                            : new EcmaRegexNode(EcmaRegexNodeKind.Group) { Subs = [grouped] })
+                        : null;
+                case EcmaRegexNodeKind.Alt:
+                {
+                    List<EcmaRegexNode> subs = [];
+                    foreach (EcmaRegexNode alternative in n.Subs)
+                    {
+                        if (this.NonEmpty(alternative, ref budget) is not EcmaRegexNode sub)
+                        {
+                            return null;
+                        }
+
+                        if (!IsNever(sub))
+                        {
+                            subs.Add(sub);
+                        }
+                    }
+
+                    return subs.Count == 0 ? NeverNode() : subs.Count == 1 ? subs[0] : new EcmaRegexNode(EcmaRegexNodeKind.Alt) { Subs = [.. subs] };
+                }
+
+                case EcmaRegexNodeKind.Cat:
+                {
+                    // One alternative for each term that can be the first to match something.
+                    List<EcmaRegexNode> alternatives = [];
+                    List<EcmaRegexNode> before = [];
+                    for (int k = 0; k < n.Subs.Length; k++)
+                    {
+                        if (this.NonEmpty(n.Subs[k], ref budget) is not EcmaRegexNode first)
+                        {
+                            return null;
+                        }
+
+                        if (!IsNever(first))
+                        {
+                            List<EcmaRegexNode> terms = [];
+                            if (before.Count > 0)
+                            {
+                                // What holds where the terms before match nothing, once however many ways it holds.
+                                terms.Add(new EcmaRegexNode(EcmaRegexNodeKind.Look) { Subs = [before.Count == 1 ? before[0] : new EcmaRegexNode(EcmaRegexNodeKind.Cat) { Subs = [.. before] }] });
+                            }
+
+                            terms.Add(first);
+                            for (int rest = k + 1; rest < n.Subs.Length; rest++)
+                            {
+                                terms.Add(n.Subs[rest]);
+                            }
+
+                            budget -= terms.Count;
+                            alternatives.Add(terms.Count == 1 ? terms[0] : new EcmaRegexNode(EcmaRegexNodeKind.Cat) { Subs = [.. terms] });
+                        }
+
+                        if (this.MinLength(n.Subs[k]) > 0)
+                        {
+                            break;
+                        }
+
+                        if (this.OnlyEmpty(n.Subs[k], ref budget) is not EcmaRegexNode nothing)
+                        {
+                            return null;
+                        }
+
+                        if (IsNever(nothing))
+                        {
+                            break;
+                        }
+
+                        if (nothing.Kind != EcmaRegexNodeKind.Empty)
+                        {
+                            before.Add(nothing);
+                        }
+                    }
+
+                    return budget < 0
+                        ? null
+                        : alternatives.Count == 0 ? NeverNode() : alternatives.Count == 1 ? alternatives[0] : new EcmaRegexNode(EcmaRegexNodeKind.Alt) { Subs = [.. alternatives] };
+                }
+
+                case EcmaRegexNodeKind.Repeat:
+                {
+                    EcmaRegexNode body = n.Subs[0];
+                    if (n.Max == 0)
+                    {
+                        return NeverNode();
+                    }
+
+                    if (this.MinLength(body) > 0)
+                    {
+                        // Every iteration matches something, so the repetition does when one runs.
+                        return n.Min > 0 ? n : new EcmaRegexNode(EcmaRegexNodeKind.Repeat) { Subs = [body], Min = 1, Max = n.Max, Lazy = n.Lazy };
+                    }
+
+                    // With one iteration that must run, or none, the repetition matches something exactly when some
+                    // number of iterations, up to its highest count, each match something: an iteration that must run
+                    // and matches nothing adds no text. With two or more that must run it is so when an iteration
+                    // can match nothing wherever it stands.
+                    if (n.Min > 1 && !EmptyAnywhere(body))
+                    {
+                        return null;
+                    }
+
+                    return this.NonEmpty(body, ref budget) is EcmaRegexNode repeated
+                        ? (IsNever(repeated) ? repeated : new EcmaRegexNode(EcmaRegexNodeKind.Repeat) { Subs = [repeated], Min = 1, Max = n.Max, Lazy = n.Lazy })
+                        : null;
+                }
+
+                default:
+                    // The empty node and every assertion.
+                    return NeverNode();
+            }
+        }
+
+        /// <summary>
+        /// A tree that matches nothing, and holds exactly where a node can match the empty string, or null when
+        /// there is none to be had. A node that never matches stands for a node that cannot match the empty string,
+        /// and the empty node for one that can wherever it stands.
+        /// </summary>
+        private EcmaRegexNode? OnlyEmpty(EcmaRegexNode n, ref int budget)
+        {
+            if (--budget < 0)
+            {
+                return null;
+            }
+
+            if (this.MinLength(n) > 0)
+            {
+                return NeverNode();
+            }
+
+            if (EmptyAnywhere(n))
+            {
+                return new EcmaRegexNode(EcmaRegexNodeKind.Empty);
+            }
+
+            switch (n.Kind)
+            {
+                case EcmaRegexNodeKind.Backref:
+                    return this.ReadsTextOnly(n)
+                        ? new EcmaRegexNode(EcmaRegexNodeKind.Backref) { Groups = n.Groups, Fold = n.Fold, ReferenceForm = 2 }
+                        : null;
+                case EcmaRegexNodeKind.Group:
+                    return this.OnlyEmpty(n.Subs[0], ref budget);
+                case EcmaRegexNodeKind.Repeat:
+                    // No iteration must run here only when the node matches the empty string wherever it stands, so
+                    // one must, and the ones that must all stand at the same place.
+                    return this.OnlyEmpty(n.Subs[0], ref budget);
+                case EcmaRegexNodeKind.Alt:
+                {
+                    List<EcmaRegexNode> subs = [];
+                    foreach (EcmaRegexNode alternative in n.Subs)
+                    {
+                        if (this.OnlyEmpty(alternative, ref budget) is not EcmaRegexNode sub)
+                        {
+                            return null;
+                        }
+
+                        if (!IsNever(sub))
+                        {
+                            subs.Add(sub);
+                        }
+                    }
+
+                    return subs.Count == 0 ? NeverNode() : subs.Count == 1 ? subs[0] : new EcmaRegexNode(EcmaRegexNodeKind.Alt) { Subs = [.. subs] };
+                }
+
+                case EcmaRegexNodeKind.Cat:
+                {
+                    List<EcmaRegexNode> subs = [];
+                    foreach (EcmaRegexNode term in n.Subs)
+                    {
+                        if (this.OnlyEmpty(term, ref budget) is not EcmaRegexNode sub)
+                        {
+                            return null;
+                        }
+
+                        if (IsNever(sub))
+                        {
+                            return sub;
+                        }
+
+                        if (sub.Kind != EcmaRegexNodeKind.Empty)
+                        {
+                            subs.Add(sub);
+                        }
+                    }
+
+                    return subs.Count == 0 ? new EcmaRegexNode(EcmaRegexNodeKind.Empty) : subs.Count == 1 ? subs[0] : new EcmaRegexNode(EcmaRegexNodeKind.Cat) { Subs = [.. subs] };
+                }
+
+                default:
+                    // An assertion holds where it holds.
+                    return n;
+            }
+        }
+
+        /// <summary>
+        /// Whether a backreference reads only groups that cannot capture the empty string, so that it matches the
+        /// empty string exactly when no group it reads is set.
+        /// </summary>
+        private bool ReadsTextOnly(EcmaRegexNode n)
+        {
+            bool any = false;
+            foreach (int g in n.Groups)
+            {
+                if (!this.dead[g])
+                {
+                    if (this.groupNodes[g] is not EcmaRegexNode group || this.MinLength(group) == 0)
+                    {
+                        return false;
+                    }
+
+                    any = true;
+                }
+            }
+
+            return any;
+        }
+
+        /// <summary>
         /// Writes one iteration of a repetition as a group: what unsets the groups of the body, then the body. With
         /// <paramref name="marker"/> the iteration fails when it has matched nothing: a group of that name captures
         /// the rest of the input when the iteration starts, and the iteration ends only where the rest of the input
@@ -1353,6 +1678,38 @@ internal static class EcmaRegexTranslator
         /// </summary>
         private void Backreference(EcmaRegexNode n, bool backward)
         {
+            if (n.ReferenceForm == 1)
+            {
+                // The text of the group that is set, and no match when none is. .NET fails a backreference to a group
+                // that is unset. The group around it keeps a digit that follows out of the number.
+                this.sb.Append("(?:");
+                bool first = true;
+                foreach (int g in n.Groups)
+                {
+                    if (this.dead[g])
+                    {
+                        continue;
+                    }
+
+                    string number = g.ToString(CultureInfo.InvariantCulture);
+                    this.sb.Append(first ? string.Empty : "|");
+                    first = false;
+                    if (n.Fold && this.CapturesCased(g))
+                    {
+                        this.sb.Append("(?(").Append(number).Append(')');
+                        this.FoldedBackreference(g, number, backward);
+                        this.sb.Append('|').Append(Never).Append(')');
+                    }
+                    else
+                    {
+                        this.sb.Append('\\').Append(number);
+                    }
+                }
+
+                this.sb.Append(')');
+                return;
+            }
+
             foreach (int g in n.Groups)
             {
                 if (this.dead[g])
@@ -1362,7 +1719,12 @@ internal static class EcmaRegexTranslator
 
                 string number = g.ToString(CultureInfo.InvariantCulture);
                 this.sb.Append("(?(").Append(number).Append(')');
-                if (n.Fold && this.CapturesCased(g))
+                if (n.ReferenceForm == 2)
+                {
+                    // Holds where the group is unset.
+                    this.sb.Append(Never);
+                }
+                else if (n.Fold && this.CapturesCased(g))
                 {
                     this.FoldedBackreference(g, number, backward);
                 }

@@ -116,6 +116,13 @@ internal sealed class EcmaRegexNode(EcmaRegexNodeKind kind)
     /// <summary>Gets or sets a value indicating whether a Backref, WordBoundary or NotWordBoundary is inside a case-insensitive group.</summary>
     public bool Fold { get; set; }
 
+    /// <summary>
+    /// Gets or sets how a Backref the translator made reads its group. 0, as every Backref of a pattern does: the text
+    /// of the group, and the empty string when the group is unset. 1: the text of the group, and no match when the
+    /// group is unset. 2: nothing, where the group is unset, and no match where it is set.
+    /// </summary>
+    public int ReferenceForm { get; set; }
+
     /// <summary>Gets or sets a value indicating whether a Look is a lookbehind.</summary>
     public bool Behind { get; set; }
 

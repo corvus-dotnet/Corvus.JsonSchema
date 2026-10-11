@@ -96,6 +96,17 @@ string strict = EcmaRegexTranslator.Translate(@"\d+\.\d+");
 - **A translation that keeps a lazy repetition of a group starts with `(?#interpreted)`** and is never given to
   .NET's compiled engine or to `[GeneratedRegex]`, which do not always return from one. Ask
   `EcmaRegexTranslator.IsForCompiledEngine(translated)` wherever an expression is constructed or emitted.
+- **A backreference that cannot find its group set is taken out first** (`Simplify`): one inside the group it
+  reads, and one to a group in another alternative of the alternation the group is in. V8 does the first. A body
+  such as `(|\2|\1\2)` is then seen to match only the empty string, and its repetition is the body once.
+  Following a backreference to its group to learn something about it must not recurse: what the groups can capture
+  is a fixed point over all of them (`CapturedSets`), since a group can read itself.
+- **An iteration that need not run must not match nothing where a backreference is in the body.** .NET takes the
+  empty iteration and then tries again without it, which doubles the search at each such repetition. `NonEmpty`
+  writes a body that cannot match the empty string (a backreference to a group that cannot capture it is then
+  .NET's own, `(?:\1)`, which fails when the group is unset), and the rest-of-input check is the fallback. The
+  check costs the length of the rest of the input in the interpreted engine for each iteration, so do not add it
+  to shapes that ordinary patterns have.
 - **In a lookbehind** .NET matches right to left, as ECMA-262 does. Whatever must run first is written last.
 
 ## Regex-Free Matchers

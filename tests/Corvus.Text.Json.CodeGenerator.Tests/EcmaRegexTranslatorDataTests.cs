@@ -178,6 +178,39 @@ public class EcmaRegexTranslatorDataTests
         Assert.AreEqual(expected, translated);
     }
 
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
+    public void PatternsWithARepeatedBackreferenceAnswerAsV8(RegexOptions engine)
+    {
+        AssertCases(EcmaPatternCases.RepeatedBackreferences, engine);
+    }
+
+    /// <summary>
+    /// The iterations that need not run, of a body that holds a backreference and can match the empty string, are
+    /// written as a body that cannot match it. A backreference to a group that cannot capture the empty string is
+    /// then written with no test of the group around it, which .NET fails when the group is unset: with the group
+    /// unset no such iteration runs, and with it set none matches nothing. Where the group can capture the empty
+    /// string the iteration is made to fail when it has matched nothing. A body that cannot match the empty string
+    /// is written as it was, and so is a lone backreference with an iteration that must run.
+    /// </summary>
+    [TestMethod]
+    [DataRow(@"^(a)\1?$", @"^(?<1>a)(?:\1)?\z")]
+    [DataRow(@"^(a)\1?0$", @"^(?<1>a)(?:\1)?0\z")]
+    [DataRow(@"^(a+)\1*?b$", @"^(?<1>a+)(?:\1)*b\z")]
+    [DataRow(@"^(a)\1{2,5}$", @"^(?<1>a)(?:(?(1)\1)){2,5}\z")]
+    [DataRow(@"^(a)(?:\1|b)*$", @"^(?<1>a)(?:(?:\1)|b)*\z")]
+    [DataRow(@"^(a)(?:\1?x?)*$", @"^(?<1>a)(?:(?:\1)x?|x)*\z")]
+    [DataRow(@"^(?:(?<n>a)|(?<n>b))\k<n>*c?$", @"^(?:(?<1>a)|(?<2>b))(?:\1|\2)*c?\z")]
+    [DataRow(@"^(?:(a)|(b))(?:\1\2)*c?$", @"^(?:(?<1>a)|(?<2>b))(?:(?:\1)(?(2)\2)|(?=(?(1)(?!\z|[\s\S])))(?:\2))*c?\z")]
+    [DataRow(@"^(a|)\1?b$", @"^(?<1>(?:a)?)(?:(?=(?<e1>[\s\S]*))(?(1)\1)(?!\k<e1>\z))?b\z")]
+    [DataRow(@"^(a)(?:\1b)*$", @"^(?<1>a)(?:(?(1)\1)b)*\z")]
+    public void AnIterationThatNeedNotRunOfABodyWithABackreferenceDoesNotMatchNothing(string pattern, string expected)
+    {
+        Assert.IsTrue(EcmaRegexTranslator.TryTranslate(pattern, out string translated, out string error), error);
+        Assert.AreEqual(expected, translated);
+    }
+
     /// <summary>
     /// A lazy repetition with more than eight iterations left to choice, inside a lookaround whose captures a
     /// backreference reads, is written as a repetition with no highest count whose iterations a group counts. The
