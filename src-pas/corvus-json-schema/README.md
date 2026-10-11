@@ -620,8 +620,10 @@ the simple uppercase mapping. `pattern` and `patternProperties` build their `\p{
 case-insensitive groups from those tables, and the `hostname`, `idn-hostname` and `idn-email` formats read the same
 data. A URI is normalized by lowering the letters A to Z only, as RFC 3986 and RFC 3987 specify.
 
-`tools/gen-ucd-tables.ps1` writes the tables from the Unicode data of the `regress` crate, which the Rust port uses.
-It is the Go module's generator with the part that writes Go replaced, so the two sets of tables hold the same data.
+`tools/gen-ucd-tables.ps1` writes the tables from `unicodetables.rs` of the `regress` crate, a file that crate
+generates from the Unicode Character Database. The crate is only where the data is read from, and no port depends on
+it. It is the Go module's generator with the part that writes Go replaced, so the two sets of tables hold the same
+data.
 
 ## Tests
 

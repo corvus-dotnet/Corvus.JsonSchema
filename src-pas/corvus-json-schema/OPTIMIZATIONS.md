@@ -253,8 +253,8 @@ Nothing here has been measured in this port. The first thing to do is to measure
   are values that nothing writes to.
 - **The inliner's budget** (Go: functions shaped to cost at most 80 on the Go inliner's scale). Free Pascal inlines
   what is marked `inline` (see Inlining under Done).
-- **Translation to another engine** (`regexp` in Go, `java.util.regex` in Java, the `regex` and `regress` crates in
-  Rust, compiled IL regular expressions in C#, PCRE2 in Julia). The package has no dependencies, so its own engine
+- **Translation to another engine** (`regexp` in Go, `java.util.regex` in Java, the `regex` crate in Rust, compiled
+  IL regular expressions in C#, PCRE2 in Julia). The package has no dependencies, so its own engine
   is the only one (see Partial).
 - **A vectorised search API** (`SearchValues` and `IndexOfAny` in C#, `bytes.Index` in Go). The source uses nothing
   that only one of Free Pascal and Delphi has, so its searches are loops over the bytes.
