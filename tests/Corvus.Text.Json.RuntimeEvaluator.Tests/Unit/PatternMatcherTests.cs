@@ -509,6 +509,38 @@ public class PatternMatcherTests
         ("^[a-z\\-]+\\@$", ["a-b@", "a@"], ["@", "a-b"]),
     ];
 
+    /// <summary>
+    /// Classes with a range that starts at a control escape (<c>\t</c>, <c>\n</c>, <c>\v</c>, <c>\f</c>, <c>\r</c>). The
+    /// matchers read the escape as one character and then the <c>-</c> and the end of the range as two more, so
+    /// <c>^[\f-z]$</c> matched a form feed, a hyphen and <c>z</c> and nothing between. The answers are V8's.
+    /// </summary>
+    private static readonly (string Pattern, string[] Matches, string[] Fails)[] RangesFromAControlEscape =
+    [
+        ("^[\\f-z]$", ["\u000C", "\u000D", " ", "-", "!", "0", "A", "a", "z", "\u000E", "t", "n", "f", "v", "r", "\\"], ["\u0009", "\u000A", "\u000B", "{", "~", "\u0008", "", "aa", "\u0009\u0009"]),
+        ("^[\\n-z]$", ["\u000A", "\u000B", "\u000C", "\u000D", " ", "-", "!", "0", "A", "a", "z", "\u000E", "t", "n", "f", "v", "r", "\\"], ["\u0009", "{", "~", "\u0008", "", "aa", "\u0009\u0009"]),
+        ("^[\\t-z]$", ["\u0009", "\u000A", "\u000B", "\u000C", "\u000D", " ", "-", "!", "0", "A", "a", "z", "\u000E", "t", "n", "f", "v", "r", "\\"], ["{", "~", "\u0008", "", "aa", "\u0009\u0009"]),
+        ("^[\\v-z]$", ["\u000B", "\u000C", "\u000D", " ", "-", "!", "0", "A", "a", "z", "\u000E", "t", "n", "f", "v", "r", "\\"], ["\u0009", "\u000A", "{", "~", "\u0008", "", "aa", "\u0009\u0009"]),
+        ("^[\\r-z]$", ["\u000D", " ", "-", "!", "0", "A", "a", "z", "\u000E", "t", "n", "f", "v", "r", "\\"], ["\u0009", "\u000A", "\u000B", "\u000C", "{", "~", "\u0008", "", "aa", "\u0009\u0009"]),
+        ("^[\\n-\\r]$", ["\u000A", "\u000B", "\u000C", "\u000D"], ["\u0009", " ", "-", "!", "0", "A", "a", "z", "{", "~", "\u0008", "\u000E", "", "aa", "\u0009\u0009", "t", "n", "f", "v", "r", "\\"]),
+        ("^[\\t-\\t]$", ["\u0009"], ["\u000A", "\u000B", "\u000C", "\u000D", " ", "-", "!", "0", "A", "a", "z", "{", "~", "\u0008", "\u000E", "", "aa", "\u0009\u0009", "t", "n", "f", "v", "r", "\\"]),
+        ("^[\\f-\\f]$", ["\u000C"], ["\u0009", "\u000A", "\u000B", "\u000D", " ", "-", "!", "0", "A", "a", "z", "{", "~", "\u0008", "\u000E", "", "aa", "\u0009\u0009", "t", "n", "f", "v", "r", "\\"]),
+        ("^[\\t-\\r]+$", ["\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "\u0009\u0009"], [" ", "-", "!", "0", "A", "a", "z", "{", "~", "\u0008", "\u000E", "", "aa", "t", "n", "f", "v", "r", "\\"]),
+        ("^[a\\t-\\r]$", ["\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "a"], [" ", "-", "!", "0", "A", "z", "{", "~", "\u0008", "\u000E", "", "aa", "\u0009\u0009", "t", "n", "f", "v", "r", "\\"]),
+        ("^[\\t-\\rx-z]{2}$", ["\u0009\u0009"], ["\u0009", "\u000A", "\u000B", "\u000C", "\u000D", " ", "-", "!", "0", "A", "a", "z", "{", "~", "\u0008", "\u000E", "", "aa", "t", "n", "f", "v", "r", "\\"]),
+        ("^[^\\t-\\r]$", [" ", "-", "!", "0", "A", "a", "z", "{", "~", "\u0008", "\u000E", "t", "n", "f", "v", "r", "\\"], ["\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "", "aa", "\u0009\u0009"]),
+        ("^[\\t\\-\\r]$", ["\u0009", "\u000D", "-"], ["\u000A", "\u000B", "\u000C", " ", "!", "0", "A", "a", "z", "{", "~", "\u0008", "\u000E", "", "aa", "\u0009\u0009", "t", "n", "f", "v", "r", "\\"]),
+        ("^[\\t-]$", ["\u0009", "-"], ["\u000A", "\u000B", "\u000C", "\u000D", " ", "!", "0", "A", "a", "z", "{", "~", "\u0008", "\u000E", "", "aa", "\u0009\u0009", "t", "n", "f", "v", "r", "\\"]),
+    ];
+
+    [TestMethod]
+    public void ARangeInAClassCanStartAtAControlEscape()
+    {
+        AssertCases(RangesFromAControlEscape);
+        var options = new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false };
+        // The matcher reads such a class itself: the regular expression is not what gives the answers above.
+        Assert.IsFalse(PatternMatcher.Create(@"^[\f-z]$", options).UsesRegex);
+    }
+
     [TestMethod]
     public void APatternAMatcherWouldMisreadIsLeftToTheRegularExpression()
     {
@@ -569,6 +601,23 @@ public class PatternMatcherTests
     /// <summary>The text as a JSON string.</summary>
     private static string Quote(string text)
     {
-        return "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\0", "\\u0000").Replace("\u0001", "\\u0001") + "\"";
+        var json = new StringBuilder("\"");
+        foreach (char c in text)
+        {
+            if (c is '\\' or '"')
+            {
+                json.Append('\\').Append(c);
+            }
+            else if (c < ' ')
+            {
+                json.Append("\\u").Append(((int)c).ToString("X4", System.Globalization.CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                json.Append(c);
+            }
+        }
+
+        return json.Append('"').ToString();
     }
 }

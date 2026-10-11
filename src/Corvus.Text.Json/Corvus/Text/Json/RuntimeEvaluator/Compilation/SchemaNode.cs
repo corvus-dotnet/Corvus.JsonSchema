@@ -2295,7 +2295,22 @@ internal sealed class PatternMatcher
                 }
 
                 char e = body[i + 1];
-                if (char.IsLetter(e))
+                char control = e switch
+                {
+                    't' => '\t',
+                    'n' => '\n',
+                    'v' => '\v',
+                    'f' => '\f',
+                    'r' => '\r',
+                    _ => '\0',
+                };
+                if (control != '\0')
+                {
+                    // A control escape is one character, and a range can start with it: [\t-\r], [\f-z].
+                    low = control;
+                    i += 2;
+                }
+                else if (char.IsLetter(e))
                 {
                     if (!TryAddEscape(e, ref bits0, ref bits1, ref extra))
                     {
@@ -2305,15 +2320,17 @@ internal sealed class PatternMatcher
                     i += 2;
                     continue;
                 }
-
-                // An escaped digit is not that digit: \0 is U+0000, and the others are octal escapes.
-                if (e >= 128 || (e >= '0' && e <= '9'))
+                else
                 {
-                    return false;
-                }
+                    // An escaped digit is not that digit: \0 is U+0000, and the others are octal escapes.
+                    if (e >= 128 || (e >= '0' && e <= '9'))
+                    {
+                        return false;
+                    }
 
-                low = e;
-                i += 2;
+                    low = e;
+                    i += 2;
+                }
             }
             else if (c >= 128)
             {
