@@ -484,7 +484,7 @@ let test_invalid_patterns_are_rejected () =
   if needs_engine "TestInvalidPatternsAreRejected" then begin
     List.iter
       (fun source -> Check.check (Printf.sprintf "%S compiled" source) (Pattern.compile source = None))
-      [ "a("; "[a"; "a{2,1}"; "(?<n>a)(?<n>b)"; "*a"; "^(?=a" ];
+      [ "a("; "[a"; "a{2,1}"; "(?<n>a)(?<n>b)"; "*a"; "^(?=a"; {p|(?<n>a)[\k]|p}; {p|^[\k]+(?<n>a)$|p} ];
     Check.check "valid is the u flag grammar"
       (Pattern_engine.valid "^a+$" && (not (Pattern_engine.valid {p|a\&.b|p})) && not (Pattern_engine.valid "a("))
   end

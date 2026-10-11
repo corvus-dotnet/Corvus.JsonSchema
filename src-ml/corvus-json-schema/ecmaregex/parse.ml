@@ -430,8 +430,10 @@ let character_escape p in_class =
       end
       else begin
         (* Identity escapes. The u flag allows only the syntax characters and '/', and '-' in a class. Annex B allows
-           any character. *)
+           any character, except k in a pattern with a named group. Outside a class atom_escape reads \k before this
+           is reached, so here the \k of such a pattern is in a class, where it is not a reference either. *)
         if p.unicode && (not (syntax_character c)) && not (in_class && c = 0x2D (* - *)) then fail p "invalid escape";
+        if c = 0x6B (* k *) && p.has_names then fail p "invalid escape";
         c
       end
 

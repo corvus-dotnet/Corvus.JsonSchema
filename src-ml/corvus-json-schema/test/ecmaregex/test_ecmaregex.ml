@@ -1243,6 +1243,24 @@ let test_loops_give_up_when_the_rest_cannot_fit () =
     if t.patterns < 20 || t.matched < 100 then fail "the cases are not the ones this test is about"
   end
 
+(* Checks one of the sets of what is a pattern: which patterns are valid, in each grammar, and what the valid ones
+   match. The expectations are V8's, and ECMA-262's where V8 13.6 departs from it, which gen_cases.js of the Go package
+   works out and marks with the name of the departure. *)
+let check_syntax name =
+  let t = check_cases name in
+  log
+    "%d patterns (%d valid only with no flag, %d not valid), %d answers per back end (%d of them a match), %d where V8 \
+     departs from ECMA-262"
+    t.patterns t.legacy t.invalid t.answers t.matched t.departures;
+  t
+
+(* Checks \k in a class. In a pattern with no named group and no u flag it is the letter k. In a pattern with a named
+   group it is an error, in a class as outside one: the identity escapes of Annex B leave k out when the pattern has a
+   group name, and \k is a reference only outside a class. *)
+let test_escaped_k_in_a_class () =
+  let t = check_syntax "classK" in
+  if t.patterns < 30 || t.invalid < 9 then fail "the cases are not the ones this test is about"
+
 let () =
   let ran = ref 0 in
   List.iter
@@ -1276,6 +1294,7 @@ let () =
       ("repetitions that cannot consume", test_repetitions_that_cannot_consume);
       ("needs", test_needs);
       ("loops give up when the rest cannot fit", test_loops_give_up_when_the_rest_cannot_fit);
+      ("escaped k in a class", test_escaped_k_in_a_class);
     ];
   Printf.printf
     "V8 oracle: %d verdicts on validity compared, %d agreed. %d answers on a match compared (each text on both back \
