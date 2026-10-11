@@ -846,8 +846,12 @@ final class EcmaRegex {
                 // one place, and ECMA-262 takes an iteration that matched nothing only while iterations are due. So
                 // one iteration stands for any number of them. java.util.regex would run the whole count, without
                 // reading the text, which is where a match is counted (see Ticks).
+                // And one that can run no times never runs: its one iteration would match nothing, which is not
+                // taken once the minimum is met. It is the repetition of no times, which is written as nothing.
+                // Left as a choice between the body and nothing, a run of them is a number of ways that doubles
+                // with each.
+                repeat.max = repeat.min == 0 ? 0 : 1;
                 repeat.min = Math.min(repeat.min, 1);
-                repeat.max = repeat.max == 0 ? 0 : 1;
             }
             if (repeat.min == 0) {
                 withoutEmptyAlternatives(atom);
@@ -6526,7 +6530,8 @@ final class EcmaRegex {
                     places.add(start);
                     counted = true;
                 }
-                if (quantified && nullable && min == 0) {
+                if (quantified && nullable && min == 0 && !exact) {
+                    // (A repetition of exactly no times is not run, and is no choice.)
                     places.add(start);
                     counted = true;
                 }

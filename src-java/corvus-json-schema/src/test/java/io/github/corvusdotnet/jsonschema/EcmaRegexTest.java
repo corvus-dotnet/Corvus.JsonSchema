@@ -2428,6 +2428,9 @@ class EcmaRegexTest {
     void aRepetitionOfNoCharacterIsRunOnce() {
         assertAnswersInBits(REPETITIONS_OF_NO_CHARACTER);
         assertEquals("(?:^){1}a", EcmaRegex.translate("(?:^){5}a"));
+        // One that can run no times is nothing: its iteration would match nothing, and is not taken.
+        assertEquals("(?:\\z){0}(?:^|\\z){0}?(?:(?=b)){0}a", EcmaRegex.translate("(?:$)*(?:^|$)*?(?:(?=b)){0,7}a"));
+        assertEquals("^(?:(?=(?:a))){0}\\z", EcmaRegex.translate("^(?:(?=(a)))?\\1$"));
         assertEquals("(?:(?:^|\\z){1}){1}b", EcmaRegex.translate("(?:(?:^|$){2147483646}){2147483646}b"));
     }
 
