@@ -402,6 +402,41 @@ def test_a_count_that_would_be_written_out_too_many_times_is_refused(pattern: st
     assert is_valid_ecma_regex(pattern)
 
 
+def test_the_longest_pattern_is_read_proved_and_compiled_in_time_in_proportion_to_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Whether a pattern is proved linear is worked out in time proportional to the pattern. The ways through a
+    # bounded pattern are written out to compare them, and writing out one way of 32,000 characters, a character at
+    # a time, took 3 s. Nothing longer than the bound on the work of a proved pattern is written out.
+    lengths: list[float] = []
+    original = pattern_module._Linear.ways
+
+    def ways(self: Any, n: Any) -> Any:
+        lengths.append(self.length(n))
+        return original(self, n)
+
+    monkeypatch.setattr(pattern_module._Linear, "ways", ways)
+    for pattern in (
+        "^[ab]" + "a" * 32000 + "$",
+        "^(?:" + "a|" * 16000 + "b)$",
+        "^" + "[ab]" * 8000,
+        "x" * 30000 + "y*",
+    ):
+        start = time.process_time()
+        matcher = compile_pattern(pattern)
+        assert matcher is not None
+        # Twenty times what the whole compilation takes on a quiet machine.
+        assert time.process_time() - start < 10, pattern[:20]
+    assert max(lengths, default=0) <= pattern_module._Linear.MAX_WORK
+    # A proved pattern has 4,096 nodes at most, which bounds the work of the engine for a character of the text. A
+    # longer one goes to the engine with the limit.
+    assert _engine(compile_pattern("^[ab]" + "a" * 3000 + "$")) == "re"
+    assert _engine(compile_pattern("^[ab]" + "a" * 32000 + "$")) == "regex"
+    # A bounded pattern within the bound is still proved by its ways.
+    lengths.clear()
+    assert _proved("^(?:es5|es6|es2015)$") and lengths
+
+
 def test_a_count_is_no_matter_to_the_standard_library() -> None:
     # The standard library's engine keeps a count as a number, so a pattern it is proved to run in linear time may
     # have any count.

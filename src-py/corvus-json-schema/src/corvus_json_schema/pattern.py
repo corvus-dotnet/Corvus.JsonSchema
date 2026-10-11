@@ -826,7 +826,8 @@ class _Linear:
     def bounded(self, root: _Node, anchored: bool) -> bool:
         """Whether the pattern takes a bounded number of characters, has no lookahead, and has few ways through
         it."""
-        if self.length(root) == _INFINITE or self.has_look(root):
+        # (A pattern longer than the bound has too many characters in one way alone, and is not written out.)
+        if self.length(root) > self.MAX_WORK or self.has_look(root):
             return False
         ways = self.ways(root)
         if ways is None:
@@ -1081,7 +1082,7 @@ class _Linear:
                 seen = _merged(seen + starts)
             if clash:
                 # The next character does not say which alternative to take.
-                ways = self.ways(n) if self.length(n) != _INFINITE else None
+                ways = self.ways(n) if self.length(n) <= self.MAX_WORK else None
                 if ways is None:
                     raise _NotLinear()
                 if any(self.starts_with(a, b) for i, a in enumerate(ways) for b in ways[:i]):
