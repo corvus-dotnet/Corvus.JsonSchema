@@ -666,3 +666,7 @@ again without Go, and they run when `-DoubleCases` and `-StringCases` name those
 ## License
 
 Apache 2.0.
+
+The Unicode tables of `src/Corvus.JsonSchema.UcdTables.inc` are derived from the Unicode Character Database, which
+is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice, and the one of
+the `regress` crate that the tables were read from. The file is in the release archives, beside `LICENSE`.
