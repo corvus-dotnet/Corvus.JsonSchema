@@ -23,7 +23,7 @@ func TestAWideSearchIsLeftToTheEngine(t *testing.T) {
 		{`^` + strings.Repeat("a", 65) + `|^x`, matchAlternatives}, {strings.Repeat("a", 65) + `$|^x`, matchAlternatives},
 		// The final sequence of a list must stop at the separator, and must not be matched by the length of the text.
 		{`^(?:[a-z]+,)*[a-z]{2}[0-9]$`, matchSeparatedList}, {`^(?:[a-z]+,)*[a-z,]+[0-9]$`, matchEngine},
-		{`^(?:[a-z]+,)*[a-z]{2}[0-9]*$`, matchEngine}, {`^(?:[a-z]+,)*[0-9]{1,3}$`, matchSeparatedList},
+		{`^(?:[a-z]+,)*[a-z]*[a-z0-9]{2}$`, matchEngine}, {`^(?:[a-z]+,)*[0-9]{1,3}$`, matchSeparatedList},
 	} {
 		p, err := compilePattern(c.pattern)
 		if err != nil {
