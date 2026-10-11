@@ -33,7 +33,7 @@ fn keeps_the_dynamic_scope() {
 #[test]
 fn custom_formats_are_asserted_when_format_assertion_is_on() {
     let mut options = CompileOptions { assert_format: Some(true), ..CompileOptions::default() };
-    options.formats.insert("even-length".into(), Arc::new(|s: &str| s.chars().count() % 2 == 0));
+    options.formats.insert("even-length".into(), Arc::new(|s: &str| s.chars().count().is_multiple_of(2)));
     let v = compile_with(&json!({ "type": "string", "format": "even-length" }), &options).unwrap();
     assert!(v.is_valid(&json!("ab")));
     assert!(!v.is_valid(&json!("abc")));

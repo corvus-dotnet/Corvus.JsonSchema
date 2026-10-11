@@ -272,11 +272,9 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
         };
         let legacy = dialect.is_legacy();
 
-        if legacy {
-            if let Some(Value::String(r)) = e.get("$ref") {
-                // In draft 7 and earlier, $ref replaces every sibling keyword.
-                return self.compile_ref(id, target, r);
-            }
+        if legacy && let Some(Value::String(r)) = e.get("$ref") {
+            // In draft 7 and earlier, $ref replaces every sibling keyword.
+            return self.compile_ref(id, target, r);
         }
 
         let applicator = legacy || voc & vocab::APPLICATOR != 0;
@@ -295,15 +293,15 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
         if let Some(Value::String(r)) = e.get("$ref") {
             self.compile_ref(id, target, r)?;
         }
-        if dialect >= Dialect::Draft202012 {
-            if let Some(Value::String(r)) = e.get("$dynamicRef") {
-                self.compile_dynamic_ref(id, target, r, false)?;
-            }
+        if dialect >= Dialect::Draft202012
+            && let Some(Value::String(r)) = e.get("$dynamicRef")
+        {
+            self.compile_dynamic_ref(id, target, r, false)?;
         }
-        if dialect == Dialect::Draft201909 {
-            if let Some(Value::String(r)) = e.get("$recursiveRef") {
-                self.compile_dynamic_ref(id, target, r, true)?;
-            }
+        if dialect == Dialect::Draft201909
+            && let Some(Value::String(r)) = e.get("$recursiveRef")
+        {
+            self.compile_dynamic_ref(id, target, r, true)?;
         }
 
         // Applicators.
@@ -321,18 +319,18 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
                 let c = self.child(target, v, "/not");
                 self.nodes[id as usize].not = Some(c);
             }
-            if dialect >= Dialect::Draft7 {
-                if let Some(v) = e.get("if") {
-                    let c = self.child(target, v, "/if");
-                    self.nodes[id as usize].if_ = Some(c);
-                    if let Some(v) = e.get("then") {
-                        let c = self.child(target, v, "/then");
-                        self.nodes[id as usize].then = Some(c);
-                    }
-                    if let Some(v) = e.get("else") {
-                        let c = self.child(target, v, "/else");
-                        self.nodes[id as usize].else_ = Some(c);
-                    }
+            if dialect >= Dialect::Draft7
+                && let Some(v) = e.get("if")
+            {
+                let c = self.child(target, v, "/if");
+                self.nodes[id as usize].if_ = Some(c);
+                if let Some(v) = e.get("then") {
+                    let c = self.child(target, v, "/then");
+                    self.nodes[id as usize].then = Some(c);
+                }
+                if let Some(v) = e.get("else") {
+                    let c = self.child(target, v, "/else");
+                    self.nodes[id as usize].else_ = Some(c);
                 }
             }
             if let Some(Value::Object(props)) = e.get("properties") {
@@ -381,11 +379,11 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
                     self.nodes[id as usize].prefix_items =
                         self.child_array(target, e.get("prefixItems"), "prefixItems");
                 }
-                if let Some(v) = e.get("items") {
-                    if !v.is_array() {
-                        let c = self.child(target, v, &kw("items"));
-                        self.nodes[id as usize].items = Some(c);
-                    }
+                if let Some(v) = e.get("items")
+                    && !v.is_array()
+                {
+                    let c = self.child(target, v, &kw("items"));
+                    self.nodes[id as usize].items = Some(c);
                 }
             } else if let Some(v) = e.get("items") {
                 if v.is_array() {
@@ -428,10 +426,10 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
                 n.type_mask = mask;
                 n.has_type = true;
             }
-            if dialect >= Dialect::Draft6 {
-                if let Some(c) = e.get("const") {
-                    n.const_value = Some(c.clone());
-                }
+            if dialect >= Dialect::Draft6
+                && let Some(c) = e.get("const")
+            {
+                n.const_value = Some(c.clone());
             }
             if let Some(Value::Array(values)) = e.get("enum") {
                 n.enum_values = Some(values.clone());
@@ -447,18 +445,18 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
                 n.required_list = Some(list);
                 n.required = Some(dedup);
             }
-            if dialect >= Dialect::Draft201909 {
-                if let Some(Value::Object(dr)) = e.get("dependentRequired") {
-                    let deps = dependencies.get_or_insert_with(Vec::new);
-                    for (name, v) in dr {
-                        if let Value::Array(list) = v {
-                            deps.push(DependencyEntry {
-                                keyword: DependencyKeyword::DependentRequired,
-                                name: name.clone(),
-                                required: Some(strings(list)),
-                                schema: None,
-                            });
-                        }
+            if dialect >= Dialect::Draft201909
+                && let Some(Value::Object(dr)) = e.get("dependentRequired")
+            {
+                let deps = dependencies.get_or_insert_with(Vec::new);
+                for (name, v) in dr {
+                    if let Value::Array(list) = v {
+                        deps.push(DependencyEntry {
+                            keyword: DependencyKeyword::DependentRequired,
+                            name: name.clone(),
+                            required: Some(strings(list)),
+                            schema: None,
+                        });
                     }
                 }
             }
@@ -573,17 +571,17 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
                 }
             }
         }
-        if dialect >= Dialect::Draft201909 {
-            if let Some(Value::Object(ds)) = e.get("dependentSchemas") {
-                for (name, v) in ds {
-                    let c = self.child(target, v, &format!("/dependentSchemas/{}", escape_pointer_token(name)));
-                    out.push(DependencyEntry {
-                        keyword: DependencyKeyword::DependentSchemas,
-                        name: name.clone(),
-                        required: None,
-                        schema: Some(c),
-                    });
-                }
+        if dialect >= Dialect::Draft201909
+            && let Some(Value::Object(ds)) = e.get("dependentSchemas")
+        {
+            for (name, v) in ds {
+                let c = self.child(target, v, &format!("/dependentSchemas/{}", escape_pointer_token(name)));
+                out.push(DependencyEntry {
+                    keyword: DependencyKeyword::DependentSchemas,
+                    name: name.clone(),
+                    required: None,
+                    schema: Some(c),
+                });
             }
         }
         out
@@ -902,15 +900,15 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
 
     fn compute_discriminators(&mut self) {
         for i in 0..self.nodes.len() {
-            if let Some(branches) = self.nodes[i].one_of.clone() {
-                if branches.len() > 1 {
-                    self.nodes[i].one_of_discriminator = self.build_discriminator(&branches).map(Box::new);
-                }
+            if let Some(branches) = self.nodes[i].one_of.clone()
+                && branches.len() > 1
+            {
+                self.nodes[i].one_of_discriminator = self.build_discriminator(&branches).map(Box::new);
             }
-            if let Some(branches) = self.nodes[i].any_of.clone() {
-                if branches.len() > 1 {
-                    self.nodes[i].any_of_discriminator = self.build_discriminator(&branches).map(Box::new);
-                }
+            if let Some(branches) = self.nodes[i].any_of.clone()
+                && branches.len() > 1
+            {
+                self.nodes[i].any_of_discriminator = self.build_discriminator(&branches).map(Box::new);
             }
         }
     }
@@ -982,32 +980,32 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
             return Class::Wildcard;
         };
         let p = self.effective_node(child);
-        if let Some(c) = &p.const_value {
-            if let Some(v) = primitive(c) {
-                return Class::Positive(vec![v]);
+        if let Some(c) = &p.const_value
+            && let Some(v) = primitive(c)
+        {
+            return Class::Positive(vec![v]);
+        }
+        if let Some(values) = &p.enum_values
+            && !values.is_empty()
+        {
+            let prims: Vec<DiscriminatorValue> = values.iter().filter_map(primitive).collect();
+            if prims.len() == values.len() {
+                return Class::Positive(prims);
             }
         }
-        if let Some(values) = &p.enum_values {
-            if !values.is_empty() {
-                let prims: Vec<DiscriminatorValue> = values.iter().filter_map(primitive).collect();
-                if prims.len() == values.len() {
-                    return Class::Positive(prims);
-                }
-            }
-        }
-        if let Some(not) = p.not {
-            if p.has_type && p.type_mask == type_mask::STRING {
-                let not = self.effective_node(not);
-                if let Some(values) = &not.enum_values {
-                    if values.iter().all(Value::is_string)
-                        && !not.has_type
-                        && not.const_value.is_none()
-                        && !not.has_string_keywords()
-                        && !not.has_in_place_applicators()
-                    {
-                        return Class::Negative(values.iter().filter_map(primitive).collect());
-                    }
-                }
+        if let Some(not) = p.not
+            && p.has_type
+            && p.type_mask == type_mask::STRING
+        {
+            let not = self.effective_node(not);
+            if let Some(values) = &not.enum_values
+                && values.iter().all(Value::is_string)
+                && !not.has_type
+                && not.const_value.is_none()
+                && !not.has_string_keywords()
+                && !not.has_in_place_applicators()
+            {
+                return Class::Negative(values.iter().filter_map(primitive).collect());
             }
         }
         Class::Wildcard

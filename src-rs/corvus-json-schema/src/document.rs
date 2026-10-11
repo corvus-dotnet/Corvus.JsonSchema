@@ -552,9 +552,9 @@ impl<'s> Parser<'s> {
             return;
         }
         let mut kept: Vec<Node> = Vec::with_capacity(pairs.len());
-        for p in pairs.chunks_exact(2) {
+        for p in pairs.as_chunks::<2>().0 {
             let name = self.key_str(&p[0]);
-            match kept.chunks_exact(2).position(|q| self.key_str(&q[0]) == name) {
+            match kept.as_chunks::<2>().0.iter().position(|q| self.key_str(&q[0]) == name) {
                 Some(at) => kept[2 * at + 1] = p[1],
                 None => kept.extend_from_slice(p),
             }

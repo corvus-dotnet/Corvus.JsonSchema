@@ -313,9 +313,8 @@ fn str_hash(s: &str) -> u64 {
     const K: u64 = 0x9e37_79b9_7f4a_7c15;
     let b = s.as_bytes();
     let mut h = (b.len() as u64).wrapping_mul(K);
-    let mut chunks = b.chunks_exact(8);
-    for c in &mut chunks {
-        h = (h.rotate_left(5) ^ u64::from_le_bytes(c.try_into().unwrap())).wrapping_mul(K);
+    for c in b.as_chunks::<8>().0 {
+        h = (h.rotate_left(5) ^ u64::from_le_bytes(*c)).wrapping_mul(K);
     }
     // The tail as one word without copying it out: the last eight bytes when there are that many (overlapping the
     // chunks already hashed), else the overlapping first and last four, else the bytes themselves.
@@ -390,7 +389,7 @@ fn code_points(s: &str) -> u64 {
 
 fn base64_decode(s: &str) -> Option<Vec<u8>> {
     let b = s.as_bytes();
-    if b.len() % 4 != 0 {
+    if !b.len().is_multiple_of(4) {
         return None;
     }
     let val = |c: u8| -> Option<u32> {
@@ -723,15 +722,15 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             }
             _ => {}
         }
-        if M::COLLECT {
-            if let Some(list) = &self.annotations[id as usize] {
-                for a in list {
-                    if a.strings_only && x.kind() != Kind::String {
-                        continue;
-                    }
-                    let v = &a.value;
-                    self.col().ignored_keyword(Message::Lazy(&|| v.to_string()), &a.keyword);
+        if M::COLLECT
+            && let Some(list) = &self.annotations[id as usize]
+        {
+            for a in list {
+                if a.strings_only && x.kind() != Kind::String {
+                    continue;
                 }
+                let v = &a.value;
+                self.col().ignored_keyword(Message::Lazy(&|| v.to_string()), &a.keyword);
             }
         }
         ok
@@ -742,24 +741,25 @@ impl<'p, 'c> Evaluator<'p, 'c> {
 
     fn eval_number<M: Mode>(&mut self, n: &'p SchemaNode, x: &Number) -> bool {
         let mut ok = true;
-        if n.assert_format && n.format_kind.is_numeric() {
-            if let Some(f) = &n.format {
-                let m = match self.p.formats.get(f) {
-                    Some(custom) => custom(&x.to_string()),
-                    None => n.format_kind.check_number(x),
-                };
-                let kind = n.format_kind.name();
-                check!(
-                    self,
-                    M,
-                    ok,
-                    m,
-                    Message::Lazy(&|| format!(
-                        "The value was expected to be in a supported format, and within bounds for '{kind}'"
-                    )),
-                    "format"
-                );
-            }
+        if n.assert_format
+            && n.format_kind.is_numeric()
+            && let Some(f) = &n.format
+        {
+            let m = match self.p.formats.get(f) {
+                Some(custom) => custom(&x.to_string()),
+                None => n.format_kind.check_number(x),
+            };
+            let kind = n.format_kind.name();
+            check!(
+                self,
+                M,
+                ok,
+                m,
+                Message::Lazy(&|| format!(
+                    "The value was expected to be in a supported format, and within bounds for '{kind}'"
+                )),
+                "format"
+            );
         }
         let xv = Num::of(x);
         use std::cmp::Ordering::*;
@@ -861,18 +861,19 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 "pattern"
             );
         }
-        if n.assert_format && !n.format_kind.is_numeric() {
-            if let Some(f) = &n.format {
-                let (m, message): (bool, Message) = match self.p.formats.get(f) {
-                    Some(custom) => (custom(s), Message::Lazy(&|| format!("Expected a string in the '{f}' format."))),
-                    None if n.format_kind == FormatKind::Unknown => (true, Message::None),
-                    None => (
-                        n.format_kind.check_string(s, n.dialect <= Dialect::Draft6),
-                        n.format_kind.message().map_or(Message::None, Message::Static),
-                    ),
-                };
-                check!(self, M, ok, m, message, "format");
-            }
+        if n.assert_format
+            && !n.format_kind.is_numeric()
+            && let Some(f) = &n.format
+        {
+            let (m, message): (bool, Message) = match self.p.formats.get(f) {
+                Some(custom) => (custom(s), Message::Lazy(&|| format!("Expected a string in the '{f}' format."))),
+                None if n.format_kind == FormatKind::Unknown => (true, Message::None),
+                None => (
+                    n.format_kind.check_string(s, n.dialect <= Dialect::Draft6),
+                    n.format_kind.message().map_or(Message::None, Message::Static),
+                ),
+            };
+            check!(self, M, ok, m, message, "format");
         }
         if n.assert_content {
             let m = content_ok(s, n.content);
@@ -983,19 +984,19 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                         );
                     }
                 }
-                if let Some(ap) = n.additional_properties {
-                    if !matched {
-                        if let Some(b) = bits.as_deref_mut() {
-                            b.set(i);
-                        }
-                        and!(
-                            M,
-                            ok,
-                            self.eval_at::<M, I>(ap, &|| "additionalProperties".to_string(), v, &|| {
-                                encode_pointer_segment(k).into_owned()
-                            })
-                        );
+                if let Some(ap) = n.additional_properties
+                    && !matched
+                {
+                    if let Some(b) = bits.as_deref_mut() {
+                        b.set(i);
                     }
+                    and!(
+                        M,
+                        ok,
+                        self.eval_at::<M, I>(ap, &|| "additionalProperties".to_string(), v, &|| {
+                            encode_pointer_segment(k).into_owned()
+                        })
+                    );
                 }
                 if let Some(pn) = n.property_names {
                     let name = Value::String(k.to_string());
@@ -1185,10 +1186,10 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 };
                 if matched {
                     count += 1;
-                    if n.contains_marks_evaluated {
-                        if let Some(b) = bits.as_deref_mut() {
-                            b.set(i);
-                        }
+                    if n.contains_marks_evaluated
+                        && let Some(b) = bits.as_deref_mut()
+                    {
+                        b.set(i);
                     }
                 }
             }
@@ -1296,10 +1297,8 @@ impl<'p, 'c> Evaluator<'p, 'c> {
         if guarded {
             self.depth -= 1;
         }
-        if ok {
-            if let (Some(s), Some(b)) = (&scratch, bits) {
-                b.merge(s);
-            }
+        if ok && let (Some(s), Some(b)) = (&scratch, bits) {
+            b.merge(s);
         }
         (ok, scratch)
     }
@@ -1402,10 +1401,10 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                     }
                 }
             }
-            if matched == 1 {
-                if let (Some(b), Some(o)) = (bits.as_deref_mut(), &only) {
-                    b.merge(o);
-                }
+            if matched == 1
+                && let (Some(b), Some(o)) = (bits.as_deref_mut(), &only)
+            {
+                b.merge(o);
             }
             let message = match matched {
                 0 => MATCHED_NO_SCHEMA,

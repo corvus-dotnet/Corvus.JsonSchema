@@ -369,7 +369,7 @@ struct Counter {
 
 unsafe extern "C" fn even_length(user: *mut c_void, _value: *const c_char, len: usize) -> bool {
     unsafe { &*user.cast::<Counter>() }.calls.fetch_add(1, Ordering::SeqCst);
-    len % 2 == 0
+    len.is_multiple_of(2)
 }
 
 unsafe extern "C" fn free_counter(user: *mut c_void) {

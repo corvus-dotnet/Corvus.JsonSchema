@@ -129,10 +129,10 @@ fn normalize_parts(scheme: Option<&str>, authority: Option<&str>, path: &str, qu
             Some("https") => Some(":443"),
             _ => None,
         };
-        if let Some(port) = default_port {
-            if a.ends_with(port) {
-                a.truncate(a.len() - port.len());
-            }
+        if let Some(port) = default_port
+            && a.ends_with(port)
+        {
+            a.truncate(a.len() - port.len());
         }
         if path.is_empty() {
             path = "/".to_string();
