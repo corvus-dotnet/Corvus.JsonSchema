@@ -90,14 +90,16 @@ let test_a_match_that_reaches_its_limit_is_an_error () =
       let document = parse instance in
       let bytes = Bytes.of_string instance in
       let scratch = Scratch.create () in
+      (* The limit is counted on the processor time of the process, so that is the time the least is asked of. *)
       let timed what run =
-        let start = Unix.gettimeofday () in
+        let start = Unix.gettimeofday () and computed = Sys.time () in
         let result = run () in
-        let took = Unix.gettimeofday () -. start in
+        let computed = Sys.time () -. computed and took = Unix.gettimeofday () -. start in
         expect_match_limit (name ^ ", " ^ what) result limit;
         Check.checkf
-          (took >= limit && took <= limit +. generous_time)
-          "%s, %s: abandoned after %gs with a limit of %gs" name what took limit
+          (computed >= limit && took <= limit +. generous_time)
+          "%s, %s: abandoned after %gs of processor time and %gs in all, with a limit of %gs" name what computed took
+          limit
       in
       timed "validate_document" (fun () -> Validator.validate_document v document);
       timed "validate_bytes" (fun () -> Validator.validate_bytes v bytes);
@@ -141,12 +143,48 @@ let test_the_default_match_limit_is_one_second () =
     && default_options.pattern_match_limit = 1.0
     && (options ()).pattern_match_limit = 1.0)
     "the default limit is %g" default_pattern_match_limit;
+  Check.check "the default clock is none of the caller's"
+    (default_options.pattern_match_clock = None && (options ()).pattern_match_clock = None);
   let v = compile (Printf.sprintf {|{"pattern": "%s"}|} never_answers) in
-  let start = Unix.gettimeofday () in
+  let start = Unix.gettimeofday () and computed = Sys.time () in
   let result = Validator.validate_string v (Printf.sprintf {|"%s"|} never_answered) in
-  let took = Unix.gettimeofday () -. start in
+  let computed = Sys.time () -. computed and took = Unix.gettimeofday () -. start in
   expect_match_limit "the default limit" result 1.0;
-  Check.checkf (took >= 1.0 && took <= 1.0 +. generous_time) "abandoned after %gs with the default limit" took
+  Check.checkf
+    (computed >= 1.0 && took <= 1.0 +. generous_time)
+    "abandoned after %gs of processor time and %gs in all with the default limit" computed took
+
+(* Checks the clock a program gives in the options. With the time of day the limit is of the time that passes. With a
+   clock the test moves, a second at each reading, the match is abandoned at a count of readings that no machine
+   changes: the first sets the deadline, and the match goes on while the clock is at or before it. *)
+let test_the_clock_of_the_limit_can_be_given () =
+  Check.section "TestTheClockOfTheLimitCanBeGiven";
+  let schema = Printf.sprintf {|{"pattern": "%s"}|} never_answers in
+  let instance = Printf.sprintf {|"%s"|} never_answered in
+  let v = compile ~options:(options ~pattern_match_limit:0.1 ~pattern_match_clock:Unix.gettimeofday ()) schema in
+  let start = Unix.gettimeofday () in
+  let result = Validator.validate_string v instance in
+  let took = Unix.gettimeofday () -. start in
+  expect_match_limit "with the time of day" result 0.1;
+  Check.checkf (took >= 0.1 && took <= 0.1 +. generous_time) "with the time of day: abandoned after %gs" took;
+  let reads = ref 0 in
+  let tick () =
+    incr reads;
+    float_of_int !reads
+  in
+  let v = compile ~options:(options ~pattern_match_limit:5. ~pattern_match_clock:tick ()) schema in
+  expect_match_limit "with a clock of a second a reading" (Validator.validate_string v instance) 5.;
+  Check.equal_int "the readings of the clock for a limit of five seconds" ~expected:7 !reads;
+  reads := 0;
+  (match Validator.is_valid_string v instance with
+  | answer -> Check.fail (Printf.sprintf "is_valid_string answers %b" answer)
+  | exception Pattern_match_limit_reached { limit; memory; _ } ->
+      Check.check "is_valid_string raises for the time" (limit = 5. && not memory));
+  Check.equal_int "the readings of the clock for the second match" ~expected:7 !reads;
+  (* A match that ends before its first check never reads the clock. *)
+  reads := 0;
+  Check.check "a string that matches is valid" (Validator.validate_string v {|"aaaa"|} = Ok true);
+  Check.equal_int "the readings of the clock for a short match" ~expected:0 !reads
 
 (* Checks the limit is on one match and not on the validation: an array of strings that each take a part of the limit
    is validated, however long the whole takes. *)
@@ -459,6 +497,7 @@ let test_the_regex_format_refuses_a_pattern_over_a_limit () =
 let () =
   test_a_match_that_reaches_its_limit_is_an_error ();
   test_the_default_match_limit_is_one_second ();
+  test_the_clock_of_the_limit_can_be_given ();
   test_the_match_limit_is_for_each_match ();
   test_the_match_limit_can_be_turned_off ();
   test_a_match_that_reaches_its_memory_limit_is_an_error ();

@@ -15,6 +15,8 @@ type t = {
   max_depth : int;
   (* The time in seconds one match of a pattern may take, or zero for no limit. *)
   pattern_match_limit : float;
+  (* The clock that limit is counted on, or None for the processor time of the process. *)
+  pattern_match_clock : (unit -> float) option;
 }
 
 let default =
@@ -29,6 +31,7 @@ let default =
     entry_point = None;
     max_depth = 128;
     pattern_match_limit = 1.0;
+    pattern_match_clock = None;
   }
 
 (* Raised inside the compiler with the reason compilation failed (an unresolvable reference, an invalid pattern).

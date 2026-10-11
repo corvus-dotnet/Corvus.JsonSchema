@@ -62,6 +62,7 @@ type options = {
   entry_point : string option;
   max_depth : int;
   pattern_match_limit : float;
+  pattern_match_clock : (unit -> float) option;
 }
 
 let default_pattern_match_limit = 1.0
@@ -79,12 +80,14 @@ let default_options =
     entry_point = None;
     max_depth = 128;
     pattern_match_limit = default_pattern_match_limit;
+    pattern_match_clock = None;
   }
 
 let options ?(default_dialect = default_options.default_dialect) ?assert_format
     ?(assert_format_in_legacy_drafts = default_options.assert_format_in_legacy_drafts)
     ?(assert_content = default_options.assert_content) ?(formats = []) ?resolver ?base_uri ?entry_point
-    ?(max_depth = default_options.max_depth) ?(pattern_match_limit = default_options.pattern_match_limit) () =
+    ?(max_depth = default_options.max_depth) ?(pattern_match_limit = default_options.pattern_match_limit)
+    ?pattern_match_clock () =
   {
     default_dialect;
     assert_format;
@@ -96,6 +99,7 @@ let options ?(default_dialect = default_options.default_dialect) ?assert_format
     entry_point;
     max_depth;
     pattern_match_limit;
+    pattern_match_clock;
   }
 
 type error =
@@ -160,6 +164,7 @@ let internal_options (o : options) : Options.t =
     max_depth = (if o.max_depth >= 1 then o.max_depth else Options.default.max_depth);
     (* Zero or less, or a value that is not a number, is no limit. *)
     pattern_match_limit = (if o.pattern_match_limit > 0. then o.pattern_match_limit else 0.);
+    pattern_match_clock = o.pattern_match_clock;
   }
 
 module Scratch = struct

@@ -30,10 +30,14 @@ let is_match scratch re text off len = Engine.is_match_with scratch re text off 
 exception Match_time = Engine.Match_time
 exception Match_memory = Engine.Match_memory
 
-let set_limit = Engine.set_limit
-
-(* create_limited_scratch makes working memory whose matches have a limit of that many seconds, or none for zero. *)
-let create_limited_scratch seconds =
-  let scratch = Engine.create_scratch () in
+(* set_limit gives the matches with a scratch a limit of that many seconds, or none for zero, counted on the clock given
+   or, without one, on the processor time of the process. *)
+let set_limit scratch seconds clock =
   Engine.set_limit scratch seconds;
+  Engine.set_clock scratch clock
+
+(* create_limited_scratch makes working memory whose matches have that limit. *)
+let create_limited_scratch seconds clock =
+  let scratch = Engine.create_scratch () in
+  set_limit scratch seconds clock;
   scratch

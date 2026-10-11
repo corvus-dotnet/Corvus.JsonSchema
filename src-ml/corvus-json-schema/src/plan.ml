@@ -208,7 +208,7 @@ let plan_object (p : Program.t) (n : Node.t) (child_of : int -> child) =
     Array.map (fun pp -> { pc_pattern = pp.pp_pattern; pc_child = child_of pp.pp_node }) n.pattern_properties
   in
   (* The matches made while a schema is compiled have the limit of a match too. *)
-  let scratch = Pattern_engine.create_limited_scratch p.pattern_match_limit in
+  let scratch = Pattern_engine.create_limited_scratch p.pattern_match_limit p.pattern_match_clock in
   let name_patterns =
     Array.map
       (fun name ->
@@ -717,6 +717,7 @@ let new_program (c : Compiler.compiled) (options : Options.t) =
       uses_dynamic_scope = c.uses_dynamic_scope;
       max_depth = options.max_depth;
       pattern_match_limit = options.pattern_match_limit;
+      pattern_match_clock = options.pattern_match_clock;
       custom_formats;
       fast_target;
       property_maps;

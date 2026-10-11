@@ -54,7 +54,8 @@ let forever =
   [@ocamlformat "disable"]
 
 (* Runs each pattern that never answers with a limit, and expects Match_time no sooner than the limit and not long
-   after it. *)
+   after it. The limit is counted on the processor time of the process, which is the clock of a scratch that has been
+   given no other, so that is the time the least is asked of. The most is asked of the time that passed. *)
 let test_a_match_is_abandoned_at_its_limit () =
   let scratch = Re.create_scratch () in
   List.iter
@@ -62,16 +63,69 @@ let test_a_match_is_abandoned_at_its_limit () =
       List.iter
         (fun (pattern, text) ->
           let re = compiled pattern in
-          let start = Unix.gettimeofday () in
+          let start = Unix.gettimeofday () and computed = Sys.time () in
           let outcome = match_limit scratch re text limit in
-          let took = Unix.gettimeofday () -. start in
+          let computed = Sys.time () -. computed and took = Unix.gettimeofday () -. start in
           if outcome <> Time then
             fail "%S with a limit of %gs: %s, want Match_time" pattern limit (outcome_name outcome);
-          if took < limit || took > limit +. generous then
-            fail "%S with a limit of %gs was abandoned after %gs" pattern limit took;
-          log "%S with a limit of %gs: abandoned after %.4fs" pattern limit took)
+          if computed < limit || took > limit +. generous then
+            fail "%S with a limit of %gs was abandoned after %gs of processor time and %gs in all" pattern limit
+              computed took;
+          log "%S with a limit of %gs: abandoned after %.4fs of processor time, %.4fs in all" pattern limit computed
+            took)
         forever)
     [ 0.02; 0.3 ]
+
+(* Checks the clock a caller gives a scratch. With the time of day the limit is of the time that passes. With a clock
+   that the test moves, the match is abandoned at the first check after the limit, which is a count of checks that no
+   machine changes: the first check starts the clock, and the match goes on while the clock is at or before the
+   deadline. A clock that is set back counts the limit again from the new time, and a clock set forward ends the match
+   at once. *)
+let test_the_clock_of_a_match_can_be_given () =
+  let scratch = Re.create_scratch () in
+  let pattern, text = List.hd forever in
+  let re = compiled pattern in
+  Re.set_clock scratch (Some Unix.gettimeofday);
+  let start = Unix.gettimeofday () in
+  let outcome = match_limit scratch re text 0.1 in
+  let took = Unix.gettimeofday () -. start in
+  if outcome <> Time || took < 0.1 || took > 0.1 +. generous then
+    fail "with the time of day and a limit of 0.1s: %s after %gs" (outcome_name outcome) took;
+  (* A clock that is a second later at each read, and the readings a match made of it. *)
+  let reads = ref 0 and now = ref 1000. in
+  let expect what clock limit want =
+    reads := 0;
+    Re.set_clock scratch (Some clock);
+    let outcome = match_limit scratch re text limit in
+    if outcome <> Time || !reads <> want then
+      fail "%s: %s after %d readings of the clock, want Match_time after %d" what (outcome_name outcome) !reads want
+  in
+  let tick () =
+    incr reads;
+    now := !now +. 1.;
+    !now
+  in
+  (* The first reading sets the deadline five seconds on, the next five are within it and the seventh is past it. *)
+  expect "a clock of a second a reading, with a limit of 5s" tick 5. 7;
+  expect "the same with a limit of half a second" tick 0.5 2;
+  (* Set back an hour at its fourth reading: the limit is counted again from there, so six more readings follow. *)
+  expect "a clock set back at its fourth reading"
+    (fun () ->
+      if !reads = 3 then now := !now -. 3600.;
+      tick ())
+    5. 10;
+  (* Set forward an hour at its third reading: the match is abandoned there. *)
+  expect "a clock set forward at its third reading"
+    (fun () ->
+      if !reads = 2 then now := !now +. 3600.;
+      tick ())
+    5. 3;
+  (* With no clock of the caller's again, the scratch is back on the processor time. *)
+  Re.set_clock scratch None;
+  reads := 0;
+  let outcome = match_limit scratch re text 0.02 in
+  if outcome <> Time || !reads <> 0 then
+    fail "with the clock taken away: %s after %d readings of it" (outcome_name outcome) !reads
 
 (* Checks that a limit of zero is no limit: a match that takes far more steps than a small limit allows runs to its
    answer, as it does through the entry points that take no scratch. *)
@@ -417,6 +471,7 @@ let () =
       if !failures > before then Printf.printf "  FAILED: %d failures\n%!" (!failures - before))
     [
       ("a match is abandoned at its limit", test_a_match_is_abandoned_at_its_limit);
+      ("the clock of a match can be given", test_the_clock_of_a_match_can_be_given);
       ("a match with no limit is not abandoned", test_a_match_with_no_limit_is_not_abandoned);
       ("a match is abandoned at its memory limit", test_a_match_is_abandoned_at_its_memory_limit);
       ("a limit does not change an answer", test_a_limit_does_not_change_an_answer);
