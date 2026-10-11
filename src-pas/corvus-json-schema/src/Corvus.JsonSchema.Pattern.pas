@@ -1459,23 +1459,44 @@ end;
 function ExpandAlternatives(const C: UTF8String; I: Int32; out Parts: TTextArray; out Next: Int32): Boolean;
 var
   All, Branch, Inner, Repeated, Multiplied: TTextArray;
-  InnerNext, Close, Start: Int32;
+  InnerNext, Close, Start, Run: Int32;
   N: UInt32;
+
+  { The characters that are copied are added to the branches a run at a time, when something else follows the run.
+    Adding them one at a time copies the branch for each, which takes time quadratic in its length. Run is where
+    the run that has not been added starts, or -1. }
+  procedure Flush(Stop: Int32);
+  begin
+    if Run >= 0 then begin
+      AppendAll(Branch, Slice(C, Run, Stop));
+      Run := -1;
+    end;
+  end;
+
+  procedure Copied(From: Int32);
+  begin
+    if Run < 0 then
+      Run := From;
+  end;
+
 begin
   Result := False;
   Parts := nil;
   Next := 0;
   All := nil;
   Branch := OneEmpty;
+  Run := -1;
   while I < Length(C) do begin
     case ByteAt(C, I) of
       Ord('|'): begin
+        Flush(I);
         AppendList(All, Branch);
         Branch := OneEmpty;
         Inc(I);
       end;
       Ord(')'): Break;
       Ord('('): begin
+        Flush(I);
         Inc(I);
         if ByteOr(C, I) = Ord('?') then begin
           if ByteOr(C, I + 1) <> Ord(':') then
@@ -1536,21 +1557,22 @@ begin
           Inc(I);
         end;
         Inc(I);
-        AppendAll(Branch, Slice(C, Start, I));
+        Copied(Start);
       end;
       Ord('\'): begin
         if I + 2 > Length(C) then
           Exit;
-        AppendAll(Branch, Slice(C, I, I + 2));
+        Copied(I);
         Inc(I, 2);
       end;
     else
-      AppendAll(Branch, Slice(C, I, I + 1));
+      Copied(I);
       Inc(I);
     end;
     if Length(All) + Length(Branch) > MaxAlternatives then
       Exit;
   end;
+  Flush(I);
   AppendList(All, Branch);
   Parts := All;
   Next := I;

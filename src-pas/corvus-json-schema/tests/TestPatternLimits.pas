@@ -709,6 +709,91 @@ begin
   Shape(Rep('a', 15000) + 'b(?=c)', Long, MatchEngine);
 end;
 
+{$IFDEF FPC}
+var
+  { The memory manager is wrapped to count the requests for memory of TestALongPatternIsCopiedARunAtATime. }
+  SystemManager: TMemoryManager;
+  Requests: Int64 = 0;
+
+function CountingGetMem(Size: PtrUInt): Pointer;
+begin
+  Inc(Requests);
+  Result := SystemManager.GetMem(Size);
+end;
+
+function CountingAllocMem(Size: PtrUInt): Pointer;
+begin
+  Inc(Requests);
+  Result := SystemManager.AllocMem(Size);
+end;
+
+function CountingReAllocMem(var P: Pointer; Size: PtrUInt): Pointer;
+begin
+  Inc(Requests);
+  Result := SystemManager.ReAllocMem(P, Size);
+end;
+{$ENDIF}
+
+{ TestALongPatternIsCopiedARunAtATime compiles patterns that are a long literal for the matchers that multiply out
+  the alternatives of a pattern, and counts the requests for memory, which no load on the machine changes. The
+  characters a pattern copies were added to every branch one at a time, each a request to make the branch a
+  character longer, and each such request can copy the branch: a literal of 128,000 characters took 6.6 seconds
+  to compile. They are now added a run at a time, so a pattern sixteen times as long asks for memory about as
+  often. (Go counts the bytes allocated. Here the memory manager grows a block where it stands when it can, so the
+  bytes asked for say little, and the number of requests says how the pattern was built.) }
+procedure TestALongPatternIsCopiedARunAtATime;
+{$IFDEF FPC}
+var
+  Counting: TMemoryManager;
+  Round: Int32;
+
+  function Compile(const Pattern: UTF8String): Int64;
+  var
+    P: TPattern;
+    Ok: Boolean;
+  begin
+    SetMemoryManager(Counting);
+    Result := Requests;
+    Ok := CompilePattern(Pattern, P);
+    Result := Requests - Result;
+    SetMemoryManager(SystemManager);
+    Check(Ok, 'a pattern of ' + Number(Length(Pattern)) + ' characters does not compile');
+  end;
+
+  procedure Shape(const Name, Before, After: UTF8String);
+  var
+    Short, Long: Int64;
+  begin
+    Inc(Round);
+    Short := Compile(Before + Rep('a', 1000) + Number(Round) + After);
+    Long := Compile(Before + Rep('a', 16000) + Number(Round) + After);
+    WriteLn('TestALongPatternIsCopiedARunAtATime: ', Name, ': ', Short, ' requests for 1,000 characters, ', Long,
+      ' for 16,000');
+    // Built a character at a time, the long pattern asks sixteen times as often, and some 16,000 times more.
+    Check(Long <= 4 * Short + 256, Name + ': ' + Number(Long) + ' requests for memory for 16,000 characters and '
+      + Number(Short) + ' for 1,000');
+  end;
+
+begin
+  GetMemoryManager(SystemManager);
+  Counting := SystemManager;
+  Counting.GetMem := @CountingGetMem;
+  Counting.AllocMem := @CountingAllocMem;
+  Counting.ReAllocMem := @CountingReAllocMem;
+  Round := 0;
+  Shape('anchored', '^', '$');
+  Shape('anchored at the start', '^', '');
+  Shape('alternatives', '^(?:', '|xyz)$');
+  Shape('with an escape', '^\.', '$');
+  Shape('with a class', '^[.]', '$');
+end;
+{$ELSE}
+begin
+  WriteLn('TestALongPatternIsCopiedARunAtATime: SKIPPED, the count of requests is taken from the memory manager of '
+    + 'Free Pascal');
+end;
+{$ENDIF}
+
 begin
   Checks := 0;
   Failures := 0;
@@ -726,6 +811,7 @@ begin
   TestAMatchWhileCompilingHasTheLimit;
   TestAnOrdinaryPatternIsNotAffectedByTheLimit;
   TestTheMatchersWithNoLimitReadTheTextABoundedNumberOfTimes;
+  TestALongPatternIsCopiedARunAtATime;
   JsonSchemaReleaseThreadScratch;
   WriteLn(Checks - Failures, '/', Checks, ' checks passed');
   if Failures <> 0 then
