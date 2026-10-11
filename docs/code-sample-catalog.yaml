@@ -1157,9 +1157,10 @@ main-docs:
       - {index: 1, language: julia, lines: [32, 43]}
       - {index: 2, language: julia, lines: [56, 66]}
       - {index: 3, language: julia, lines: [71, 83]}
-      - {index: 4, language: julia, lines: [103, 116]}
-      - {index: 5, language: julia, lines: [120, 134]}
-      - {index: 6, language: julia, lines: [140, 152]}
+      - {index: 4, language: julia, lines: [104, 118]}
+      - {index: 5, language: julia, lines: [122, 136]}
+      - {index: 6, language: julia, lines: [142, 154]}
+      - {index: 7, language: julia, lines: [239, 259]}
   - path: "docs/JsonSchemaForPascal.md"
     blocks:
       - {index: 0, language: sh, lines: [31, 33]}

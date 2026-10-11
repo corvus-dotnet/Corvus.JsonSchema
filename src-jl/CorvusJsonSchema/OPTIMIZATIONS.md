@@ -136,14 +136,20 @@ with the reason.
   (`Frame`, `threadframe`), and the text is matched where it lies through a pointer held under `GC.@preserve`
   (`ismatch`, `unsafe_ismatch`). Every class, property and case-insensitive set is written from Unicode data the
   package carries, so nothing depends on the PCRE2 version's tables. A lookbehind of no fixed length runs as a
-  PCRE2 callout that searches for its body (`callout`, `lookbehind` in `emitter.jl`). A match that reaches the limit
-  on its steps (`MATCH_LIMIT`, 500 million, set with the depth and heap limits in the match context a thread keeps,
-  so a match sets nothing), the limit on the interpreter's memory, or the module's own limit on the steps of
-  lookbehind searches (`STEP_LIMIT`), throws a `MatchError` and is never reported as no match. A text that a
+  PCRE2 callout that searches for its body (`callout`, `lookbehind` in `emitter.jl`). A match has a limit
+  on its time, which PCRE2 cannot keep by itself, as it has no clock and its count of steps does not bound time. A
+  match of a short text runs with the steps the match context of the thread is left with (`QUICK_STEPS`), so it
+  sets nothing, works nothing out and reads no clock. A longer one, or one that used those steps, is given the
+  steps of its first stage (`freesteps`, from `stepcost` of the translation), and one that uses them is run again
+  by code compiled with automatic callouts that read the clock (`timedcode`, `timedmatch`, `callout`). The search
+  of a long text for a pattern that is not anchored is run in parts, with the clock read between them
+  (`searchinparts`). A match that reaches the limit on its time or on the interpreter's memory throws a
+  `MatchError` and is never reported as no match. A text that a
   pattern without the `u` flag reads as code units is written into a buffer that is kept (`UNIT_BUFFERS`,
   `matchunits`). A pattern that cannot be written with the same meaning is refused
-  when the schema is compiled (the `REFUSED_` constants, which are the backreference cases, more than 253
-  lookbehinds of no fixed length, and anything PCRE2 does not compile). PCRE2 is told not to work out where a match
+  when the schema is compiled (the `REFUSED_` constants, which are the backreference cases), and a pattern
+  over a limit of size is a `TooLargeError` there (its length, nesting and terms as it is read, the bytes and the
+  steps of its translation, and what PCRE2 holds). PCRE2 is told not to work out where a match
   can start (`PCRE2_NO_START_OPTIMIZE`), because both PCRE2 versions the module was written against answer wrongly
   with it for some patterns. That costs the skip of positions in a search, and nothing for a pattern anchored
   with `^`.

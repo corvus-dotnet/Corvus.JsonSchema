@@ -97,6 +97,7 @@ isvalid(validator, """{"id": 3""")  # false
 | `base_uri` | The base URI of the root document. |
 | `entry_point` | A subschema to validate against, such as `#/$defs/item`. |
 | `max_depth` | The deepest the evaluator recurses in place (default 128). |
+| `pattern_match_limit` | The limit on the time of one match of a `pattern` or `patternProperties` regular expression, in seconds (default 1). `nothing` turns it off. A match that reaches it throws a `PatternMatchError`. See [Limits](#limits). |
 
 A schema that has a `$` in it is easiest to write as a `raw` string.
 
@@ -109,7 +110,8 @@ validator = compile_schema(raw"""{"$defs": {"item": {"$ref": "item.json"}}}""";
     resolver=uri -> uri == "https://example.com/item.json" ? item : nothing,
     base_uri="https://example.com/root.json",
     entry_point=raw"#/$defs/item",
-    max_depth=128)
+    max_depth=128,
+    pattern_match_limit=1)        # seconds for one match of a pattern. With nothing there is no limit
 
 isvalid(validator, "\"four\"")  # true
 isvalid(validator, "\"three\"")  # false
@@ -199,10 +201,8 @@ the schema throws a `CompileError` that names the construct. It is never run wit
   the ways through the lookbehind from its end (`(?<=(a*)(x+))-\1`).
 - A backreference inside a lookbehind to a group that the lookbehind matches before it, where the group is not in
   an end of the lookbehind of a fixed length (`(?<=\1(a+))`).
-- Repetitions that have to be written twice inside one another past 65,536 characters, more than 252 lookbehinds of
-  no fixed length in one pattern, and a pattern too large for PCRE2 to compile, which holds a compiled pattern of at
-  most 64 KiB and writes a counted group out once for each time: `(?:ab){6552}` is run and `(?:ab){6553}` is not, and
-  `(?:(?:ab){80}c){80}` is run and `(?:(?:ab){81}c){81}` is not. A counted character or class is never too large.
+- A pattern PCRE2 does not compile for a reason that is not its size, which no pattern is known to be. (A pattern
+  that is valid and too large is not refused in this way. See [Limits](#limits).)
 
 **The lookbehind exception.** A pattern that is valid with the `u` flag is run, and answers as V8 does, with one
 named exception. Two uses of a lookbehind need it to be matched backwards, as ECMA-262 matches it, which PCRE2 cannot
@@ -214,28 +214,126 @@ do, and they are refused with an error that says which:
 - a backreference inside a lookbehind to a group of it that is not in an end of it of a fixed length, such as
   `(?<=\1(a+))x` ("a backreference inside a lookbehind to a group that the lookbehind matches before it").
 
-A lookbehind with no group that a backreference reads is never refused for this. The limits on the size of a
-translation are the only other refusals of such a pattern.
+A lookbehind with no group that a backreference reads is never refused for this. A pattern over a limit of size is
+the only other such pattern that does not compile, and its error is one of its own.
 
-PCRE2 backtracks, and a pattern can backtrack without end on a text, so a match has limits. A match that reaches
-one throws `CorvusJsonSchema.EcmaRegex.MatchError`, from `isvalid` as from `validate` and `evaluate`. It is never
-reported as a string that does not match. Validate inside `try` when the schema's patterns are not trusted.
+### Limits
 
-| Limit | Value | The error says |
+A schema and an instance may both come from outside, so a pattern and a match of it have limits. A pattern or a
+match over one is an error of its own, which names the limit and its value. It is never an answer.
+
+**The limit on a match.** One match of a `pattern` or `patternProperties` regular expression against one string is
+limited to one second. The keyword `pattern_match_limit` of `compile_schema` sets the limit, in seconds, and
+`nothing` turns it off, for schemas and instances that are trusted. A match that reaches the limit is given up and
+the validation throws a `PatternMatchError`, from `isvalid` as from `validate` and `evaluate`, with a collector or
+without one, and from `compile_schema` when the match was of a pattern against a property name the schema
+declares. It is never reported as a string that matches or does not. Validate inside `try` when the schema or the
+instance is not trusted. The field `limit` of the error says which limit was reached.
+
+| `limit` | What was reached | Value |
 |---|---|---|
-| The steps of a match | 500 million | "match limit exceeded" (PCRE2 error -47) |
-| The memory of a match, in PCRE2's interpreter | 64 MiB | "heap limit exceeded" (PCRE2 error -63) |
-| The searches for the lookbehinds of no fixed length of one match | ten million items | "match limit exceeded" |
+| `:time` | The time of a match | `pattern_match_limit`, 1 second unless it is set |
+| `:memory` | The memory of a match, in PCRE2's interpreter | 64 MiB |
+| `:steps` | The steps of a match that could not be timed | See below |
 
-PCRE2 by itself allows a match ten million steps. That is too few for three patterns of the
-[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data)
-that V8 answers, and the one that takes the most needs 157 million steps on five characters, in under a second (359
-million where PCRE2's interpreter runs it). A match that reaches the limit of 500 million has taken up to 4.3
-seconds on the machine that was measured, and up to 15 in the interpreter, which runs a match only when PCRE2's JIT
-code has filled its stack of 1 MiB. A repeated group needs memory for each time it has matched, and so does a class
-of many ranges such as `\p{L}` under `*` or `+`: with Julia 1.13 `^\p{L}+$` reaches the memory limit on a string
-of 147,168 letters (233,014 with Julia 1.10), where `^\p{L}{1,3000000}$`, `^\w+$` and `^[a-z]+$` answer on three
-million. The limits are set once for each thread, so a match pays nothing for them.
+```julia
+validator = compile_schema(raw"""{"pattern": "^(?:a|a)+$"}"""; pattern_match_limit=0.05)
+isvalid(validator, "\"aaaa\"")  # true
+
+# Each a is matched two ways, so there are 2^40 ways to find that this string does not match.
+hostile = "\"" * "a"^40 * "b\""
+outcome = try
+    isvalid(validator, hostile)
+catch error
+    error isa PatternMatchError ? error.limit : rethrow()
+end
+outcome  # time
+
+# A pattern over a limit of size does not compile. It is not said to be invalid.
+too_large = try
+    compile_schema(raw"""{"pattern": "(?:(?:a{1000}){1000}){1000}"}""")
+catch error
+    error isa PatternTooLargeError ? error.valid : rethrow()
+end
+too_large  # true
+```
+
+PCRE2 has no clock. It counts steps, and its count does not bound time: it counts the steps of each place a match
+is tried from apart, and one step may read the whole string. So a match is run in two stages. The first is the code
+PCRE2 compiles, with a number of steps worked out from the pattern and the length of the string so that it cannot
+take long (a twentieth to a half of the limit at worst, and microseconds for a match that is not hostile). Nearly
+every match ends there, at the cost it had. A match that uses those steps is run again from the start by code that
+PCRE2 calls back from before every item of the pattern, which reads the clock, so the match ends with its answer
+or at the limit. That code was measured 8 to 30 times slower on patterns that repeat a group, which is why it is
+not the code of every match. On the probe of hostile patterns the package keeps (257 patterns of at most 1,000
+characters on strings of at most 100,000), a match that was given up took 1.13 seconds at most with the limit at one
+second, where 25 of them did not end in a minute before.
+
+What the limit costs, and what it does not bound:
+
+- **A long string and a pattern that repeats a group.** The steps of the first stage are fewer the longer the
+  string, so a string of some tens of thousands of characters matched by a pattern that repeats a group, such as
+  `^(?:[a-z0-9]+\.)*[a-z0-9]+$`, or searched for a pattern that is not anchored, is run by the slower code. It
+  answers as it did, some 5 to 30 times slower on such strings. A class or a character under `*` or `+`
+  (`^[a-z]+$`, `^\p{L}+$`) is not slower, on a string of any length. `pattern_match_limit=nothing` runs every match
+  as before.
+- **Memory.** A repeated group needs memory for each time it has matched. PCRE2's JIT code has a stack of 1 MiB,
+  and a match that fills it is run by PCRE2's interpreter, which may take 64 MiB. Past that the match is a
+  `PatternMatchError` whose `limit` is `:memory`, with any limit on time or none: `^(?:ab|cd)*$` reaches it on a
+  string of some 500,000 characters. A class of many ranges under `*` or `+` no longer needs that memory:
+  `^\p{L}+$` threw on a string of 150,000 letters, and answers on a million.
+- **With no limit on time** a match has the 4,294,967,295 steps that are the most PCRE2 can be told to allow for
+  each place it is tried from, and a match that takes them is a `PatternMatchError` whose `limit` is `:steps`.
+  PCRE2 cannot be told to count none.
+- **A pattern too large to be timed.** PCRE2, as Julia builds it, holds a compiled pattern of at most 64 KiB, and
+  the code that reads the clock is larger than the code that does not. A pattern PCRE2 holds only without it, such
+  as an alternation of 3,000 words, is run, and its matches end in their first stage. One that does not is given
+  up there, sooner than its limit, with `limit` at `:steps`.
+- **The faster matchers.** A pattern the package matches without PCRE2 (a literal, an anchored class sequence, a
+  list of alternatives) reads the string a bounded number of times and has no limit.
+
+**The limits on the size of a pattern.** A pattern over one of these does not compile. The error is a
+`PatternTooLargeError`, and never the `CompileError` of a pattern that is not valid. Its field `valid` says whether
+the whole pattern was read before the limit was met. The message is then "is a valid ECMA-262 regular expression,
+and is too large", and otherwise "is too large to read", as nothing is known of the rest of the pattern.
+
+| Limit | Value | The message ends |
+|---|---|---|
+| The length of the pattern | 1,048,576 bytes of UTF-8 | "its length is over the limit of 1048576 bytes" |
+| The nesting of its groups | 200 | "its groups nest over the limit of 200 deep" |
+| Its terms and alternatives | 131,072 | "it has over the limit of 131072 terms and alternatives" |
+| The translation PCRE2 is given | 1,048,576 bytes | "its translation is over the limit of 1048576 bytes" |
+| The steps to write the translation | 524,288 | "its translation takes over the limit of 524288 steps to write" |
+| A repetition that is written out twice | 65,536 bytes | "a repetition that is written out is over the limit of 65536 bytes" |
+| Lookbehinds of no fixed length | 252 | "it has over the limit of 252 lookbehinds of no fixed length" |
+| What PCRE2 holds | 64 KiB compiled, 250 nested parentheses, 65,535 groups | "PCRE2 does not hold it, and says ..." |
+| The compiled pattern and those of its lookbehinds | 1,048,576 bytes together | "PCRE2 does not hold it, and says ..." |
+
+The limit a pattern of a few hundred characters meets is PCRE2's 64 KiB. PCRE2 writes a counted group out once for
+each time, so a large count of a group of several characters passes it: `(?:ab){6552}` is run and `(?:ab){6553}` is
+not, `(?:a{1000}){1000}` is run and `(?:(?:a{1000}){1000}){1000}` is not. A counted character or class is never too
+large (`\p{L}{1000000000}` is run). A repetition of what can match the empty string inside another, such as
+`(?:(?:a*)*)*`, was written twice at each level and is written once, so a hundred levels are run where twelve were
+too large. With a minimum of one or more (`(?:(?:a*)+)+`) it is written twice still, and some twelve levels are too
+large. The JIT code of a pattern is at most 4 MiB, and nothing is refused for that: a pattern that would pass it,
+such as one of several hundred `\p{L}`, is run by PCRE2's interpreter. On the probe, a pattern of at most 1,000
+characters is translated and compiled in 0.4 seconds at most and keeps 2.5 MB at most. The patterns a process
+has compiled are kept for the next schema that has them, up to 4,096 patterns and 32 MiB.
+
+The `regex` format reads a string of the instance with the limits of length and of nesting, and a string over one
+is not a valid regular expression to it.
+
+On the thirteen files of the
+[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data), 98,839 patterns
+and 4.2 million answers, no pattern is over a limit of size, and with the limit at one second two patterns reach it
+with Julia 1.13 and four with Julia 1.10, on one or a few strings each. All are patterns of nested repetitions of
+what can match the empty string, such as `^a{2}?(((?!)|((|a){2,}(|a)\B|){2,3}?){2,3}.{3}a{2})\4`. V8 refuses an
+empty iteration and answers them at once, where PCRE2 tries each, which is more steps than the first stage of a
+match has (157 million for one of them) and more than the code that reads the clock runs in a second. They answer
+as V8 does with `pattern_match_limit=nothing`. Every other answer is V8's, but for the two lookbehind uses and the
+case-insensitive backreference above, which are refused.
+
+### Surrogates
 
 A JSON string with the escape of a surrogate that is not half of a pair, such as `"\ud800"`, is not Unicode text. The
 parser refuses a document that has one, an instance or a schema, so a pattern is never matched against such a string.
