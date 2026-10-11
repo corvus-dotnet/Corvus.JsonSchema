@@ -372,7 +372,9 @@ internal static class EcmaPatternCases
     /// <summary>
     /// Patterns whose validity is ECMA-262's where V8 13.6 says otherwise. The counts of a quantifier are numbers,
     /// and the first may not be the greater. V8 keeps a count past 2,147,483,647 as that number, so it accepts
-    /// <c>a{2147483648,2147483647}</c>, and any two counts past it in either order.
+    /// <c>a{2147483648,2147483647}</c>, and any two counts past it in either order. The Script value
+    /// Katakana_Or_Hiragana, or Hrkt, is in PropertyValueAliases.txt and so in ECMA-262, and V8 refuses it. WSpace
+    /// is not a name ECMA-262 lists for White_Space, and V8 takes it.
     /// </summary>
     public static readonly (string Pattern, bool ValidWithU, bool ValidWithoutU)[] ValidityWhereV8DepartsFromEcma262 =
     [
@@ -386,6 +388,31 @@ internal static class EcmaPatternCases
         ("a{9,010}", true, true),
         ("a{010,9}", false, false),
         ("a{00,0}", true, true),
+        ("\\p{sc=Hrkt}", true, true),
+        ("\\P{Script=Katakana_Or_Hiragana}", true, true),
+        ("[\\p{scx=Hrkt}]", true, true),
+        ("\\p{Script_Extensions=Katakana_Or_Hiragana}", true, true),
+        ("\\p{Hrkt}", false, true),
+        ("\\p{gc=Hrkt}", false, true),
+        ("\\p{sc=Hrkt}{2,1}", false, false),
+        ("\\p{WSpace}", false, true),
+    ];
+
+    /// <summary>
+    /// Patterns with the Script value Katakana_Or_Hiragana (Hrkt), which ECMA-262 has and V8 13.6 refuses. No
+    /// character has it, so <c>\p{sc=Hrkt}</c> matches nothing and <c>\P{sc=Hrkt}</c> any character. The answers are
+    /// V8's for the same patterns with <c>\P{Any}</c> and <c>\p{Any}</c> in their place.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] ScriptOfNoCharacter =
+    [
+        ("^\\p{sc=Hrkt}$", [], ["", "a", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "ab", "\u3042\u30A2", "p{sc=Hrkt}", "\u000A"]),
+        ("^\\P{sc=Hrkt}$", ["a", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "\u000A"], ["", "ab", "\u3042\u30A2", "p{sc=Hrkt}"]),
+        ("^[\\p{Script=Katakana_Or_Hiragana}a]+$", ["a"], ["", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "ab", "\u3042\u30A2", "p{sc=Hrkt}", "\u000A"]),
+        ("^[^\\p{scx=Hrkt}a]$", ["Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "\u000A"], ["", "a", "ab", "\u3042\u30A2", "p{sc=Hrkt}"]),
+        ("^[\\P{Script_Extensions=Katakana_Or_Hiragana}]$", ["a", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "\u000A"], ["", "ab", "\u3042\u30A2", "p{sc=Hrkt}"]),
+        ("^[^\\P{scx=Hrkt}]$", [], ["", "a", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "ab", "\u3042\u30A2", "p{sc=Hrkt}", "\u000A"]),
+        ("^(?:\\p{sc=Hrkt}|a)+$", ["a"], ["", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "ab", "\u3042\u30A2", "p{sc=Hrkt}", "\u000A"]),
+        ("\\p{scx=Katakana_Or_Hiragana}", [], ["", "a", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "ab", "\u3042\u30A2", "p{sc=Hrkt}", "\u000A"]),
     ];
 
     /// <summary>

@@ -125,6 +125,15 @@ public class EcmaPatternSemanticsTests
         AssertCases(EcmaPatternCases.RepeatedBackreferences, engine);
     }
 
+    [TestMethod]
+    [DataRow(Engine.CompiledRegex)]
+    [DataRow(Engine.InterpretedRegex)]
+    [DataRow(Engine.GeneratedCode)]
+    public void PatternsWithTheScriptOfNoCharacterAnswerAsEcma262Says(Engine engine)
+    {
+        AssertCases(EcmaPatternCases.ScriptOfNoCharacter, engine);
+    }
+
     /// <summary>
     /// Patterns whose translation keeps a lazy repetition of a group in a lookbehind, after a repetition whose
     /// iterations hold a lookbehind and can match nothing. .NET's compiled engine does not return from a match of

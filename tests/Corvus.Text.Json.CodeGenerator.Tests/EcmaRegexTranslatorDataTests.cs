@@ -211,6 +211,14 @@ public class EcmaRegexTranslatorDataTests
         Assert.AreEqual(expected, translated);
     }
 
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
+    public void PatternsWithTheScriptOfNoCharacterAnswerAsEcma262Says(RegexOptions engine)
+    {
+        AssertCases(EcmaPatternCases.ScriptOfNoCharacter, engine);
+    }
+
     /// <summary>
     /// A lazy repetition with more than eight iterations left to choice, inside a lookaround whose captures a
     /// backreference reads, is written as a repetition with no highest count whose iterations a group counts. The

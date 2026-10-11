@@ -27,6 +27,7 @@ internal static class EcmaRegexUnicode
     private const int Binary = 2 << 16;
     private const int Script = 3 << 16;
     private const int ScriptExtensions = 4 << 16;
+    private const int NoCharacter = 5 << 16;
 
     private const string Alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/";
 
@@ -272,6 +273,8 @@ internal static class EcmaRegexUnicode
                 return Table(EcmaRegexUnicodeData.BinaryTables[index]);
             case Script:
                 return Table(EcmaRegexUnicodeData.ScriptTables[index]);
+            case NoCharacter:
+                return [];
             default:
                 return Table(EcmaRegexUnicodeData.ScriptExtensionTables[index]);
         }
@@ -489,16 +492,26 @@ internal static class EcmaRegexUnicode
         if (name.SequenceEqual("Script".AsSpan()) || name.SequenceEqual("sc".AsSpan()))
         {
             int script = Find(EcmaRegexUnicodeData.ScriptNames, value);
-            return script >= 0 ? Script | script : None;
+            return script >= 0 ? Script | script : IsScriptOfNoCharacter(value) ? NoCharacter : None;
         }
 
         if (name.SequenceEqual("Script_Extensions".AsSpan()) || name.SequenceEqual("scx".AsSpan()))
         {
             int script = Find(EcmaRegexUnicodeData.ScriptNames, value);
-            return script >= 0 ? ScriptExtensions | script : None;
+            return script >= 0 ? ScriptExtensions | script : IsScriptOfNoCharacter(value) ? NoCharacter : None;
         }
 
         return None;
+    }
+
+    /// <summary>
+    /// Whether a name is the Script value Katakana_Or_Hiragana or its alias Hrkt. PropertyValueAliases.txt lists
+    /// it, so ECMA-262 has it, and no character has it as its Script or among its Script_Extensions, so the tables
+    /// have no entry for it. V8 13.6 refuses it.
+    /// </summary>
+    private static bool IsScriptOfNoCharacter(ReadOnlySpan<char> value)
+    {
+        return value.SequenceEqual("Hrkt".AsSpan()) || value.SequenceEqual("Katakana_Or_Hiragana".AsSpan());
     }
 
     /// <summary>The union of the General_Category tables whose bits are set.</summary>

@@ -153,5 +153,12 @@ pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTable
     match does: .NET can search long before it reaches the path V8 takes first.
   - Unsetting groups when an iteration starts and refusing an iteration that matched nothing are written with
     conditionals, balancing groups and lookarounds, so a step of such a search costs more in .NET than in V8.
+- **Where V8 is not ECMA-262.** The answers are tested against V8 13.6, and the translator follows ECMA-262 where
+  that V8 departs from it. The Script value `Katakana_Or_Hiragana` (`Hrkt`) is accepted, and matches no character,
+  since none has it: V8 refuses it. `\p{WSpace}` is refused, since ECMA-262 lists `White_Space` and `space` only:
+  V8 takes it. `a{2147483648,2147483647}` is refused, since the first count is the greater: V8 keeps both as one
+  number. A backreference that ignores case compares character by character through Canonicalize, where V8 with
+  the `i` and `u` flags compares the whole text by full case folding. The scripts Unicode 17 added (`Sidetic`,
+  `Tolong_Siki`, `Beria_Erfe`, `Tai_Yo`) are accepted, and V8 13.6 has Unicode 16.
 - **Unicode version.** The data is Unicode 17.0.0. The Basic Multilingual Plane part of a General_Category value
   uses .NET's own class, which follows the runtime's Unicode version.
