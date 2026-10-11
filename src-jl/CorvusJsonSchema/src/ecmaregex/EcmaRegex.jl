@@ -70,9 +70,15 @@ the `u` flag grammar.
 
 # Unicode
 
-* Matching is by Unicode code point over UTF-8 text, whichever grammar accepted the pattern, as in the Java and Go
-  ports. PCRE2 is given the `PCRE2_UTF` option for that. (V8 matches a pattern with no flag by UTF-16 code unit. No
-  text of JSON is a sequence of code units, so there is nothing to be faithful to.)
+* A pattern that is valid with the `u` flag matches Unicode code points over UTF-8 text. PCRE2 is given the
+  `PCRE2_UTF` option for that.
+* A pattern that is only valid with no flag matches UTF-16 code units, as ECMA-262 says: a character beyond the
+  Basic Multilingual Plane is two of them, to the dot, a class, a quantifier, an assertion and a backreference, so
+  `^\\-?.\$` does not match U+10400. PCRE2 has no such matching over UTF-8, so the surrogate U+D800 + n is written
+  as the character U+F0000 + n, in the pattern and in the text. The parser reads such a pattern as code units (a
+  group name apart, which is read by character in both grammars), and [`ismatch`](@ref) writes a text that has a
+  character of four bytes again with each half of its surrogate pair as one of those characters (see
+  `codeunits!`). A text within the Basic Multilingual Plane is matched as it is.
 * PCRE2 is not given `PCRE2_UCP`, and nothing that is written asks it what a character is. Every class and property
   is written as the ranges of its code points from Unicode data that the package carries (`UNICODE_VERSION`), and
   case-insensitive matching is written as the set of the characters ECMA-262 holds equivalent, from the same data.
@@ -94,14 +100,16 @@ the `u` flag grammar.
 * The text should be well-formed UTF-8. It is not checked, so a match costs nothing for the check. PCRE2 is given
   `PCRE2_MATCH_INVALID_UTF`, with which a byte sequence that is not UTF-8 is not an error and not undefined: it
   matches no character, not even a negated class or the dot.
-* A surrogate (U+D800 to U+DFFF) is not a character of UTF-8 text. A pattern may name one, as `\\uD800` or within
-  `\\p{Cs}` or a negated class, and it matches nothing. A pair of surrogate escapes is one character, as in
-  ECMA-262.
+* A surrogate (U+D800 to U+DFFF) is not a character of UTF-8 text. A pattern that is valid with the `u` flag may
+  name one, as `\\uD800` or within `\\p{Cs}` or a negated class, and it matches nothing. A pair of surrogate escapes
+  is one character there, as in ECMA-262. In a pattern that is only valid with no flag a surrogate is a code unit,
+  half of a character beyond the Basic Multilingual Plane, and two escapes are two code units.
 
 # Matching
 
-[`ismatch`](@ref) allocates nothing and may be called from several tasks at once. What a match writes to belongs to
-the thread it runs on. PCRE2's JIT compiler is used where the PCRE2 of the Julia in use has one, and the interpreter
+[`ismatch`](@ref) may be called from several tasks at once. It allocates nothing, but for a pattern that is only
+valid with no flag on a text with a character beyond the Basic Multilingual Plane, which it writes again as code
+units. What a match writes to belongs to the thread it runs on. PCRE2's JIT compiler is used where the PCRE2 of the Julia in use has one, and the interpreter
 runs a pattern the JIT compiler does not take and a match too deep for the stack of JIT code.
 
 A match that reaches a limit throws a [`MatchError`](@ref). It is never reported as no match. The limits are those
@@ -189,8 +197,10 @@ end
     ismatch(p::Pattern, text::AbstractVector{UInt8}) -> Bool
     ismatch(p::Pattern, text::AbstractString) -> Bool
 
-Whether the pattern matches anywhere in the UTF-8 text (an unanchored search). It allocates nothing and is safe to
-call from several tasks at once. Throws a [`MatchError`](@ref) when PCRE2 reaches one of its limits.
+Whether the pattern matches anywhere in the UTF-8 text (an unanchored search). It is safe to call from several tasks
+at once. Throws a [`MatchError`](@ref) when PCRE2 reaches one of its limits. It allocates nothing, but for a pattern
+that is only valid with no flag on a text with a character beyond the Basic Multilingual Plane, which is matched by
+UTF-16 code unit and written again for that.
 
 The bytes of a `Vector{UInt8}`, of a contiguous view of one, of the code units of a `String` and of a `String` or
 `SubString{String}` are matched where they are. Any other vector or string is copied first.
@@ -201,14 +211,72 @@ const ContiguousBytes = Union{DenseVector{UInt8},
     Base.FastContiguousSubArray{UInt8,1,<:DenseVector{UInt8}}}
 
 function ismatch(p::Pattern, text::ContiguousBytes)::Bool
+    if !p.unicode && beyondbmp(text)
+        return matchunits(p, text)
+    end
     GC.@preserve p text begin
         return unsafe_ismatch(p, pointer(text), length(text))
     end
 end
 
 function ismatch(p::Pattern, text::Union{String,SubString{String}})::Bool
+    if !p.unicode && beyondbmp(codeunits(text))
+        return matchunits(p, codeunits(text))
+    end
     GC.@preserve p text begin
         return unsafe_ismatch(p, pointer(text), ncodeunits(text))
+    end
+end
+
+# Whether UTF-8 text has a character beyond the Basic Multilingual Plane, which is one of four bytes.
+function beyondbmp(text::AbstractVector{UInt8})
+    for b in text
+        b >= 0xF0 && return true
+    end
+    return false
+end
+
+"""
+    codeunits!(out::Vector{UInt8}, text::AbstractVector{UInt8}) -> Vector{UInt8}
+
+Writes UTF-8 text as the translation of a pattern without the `u` flag reads it, where each UTF-16 code unit is one
+character. A character beyond the Basic Multilingual Plane is two code units, a surrogate pair, and the surrogate
+U+D800 + n is written as the character U+F0000 + n, so that PCRE2, which matches by character, takes the two halves
+one at a time. Every other character is written as it is. Bytes that are not UTF-8 are copied.
+"""
+function codeunits!(out::Vector{UInt8}, text::AbstractVector{UInt8})
+    empty!(out)
+    sizehint!(out, 2 * length(text))
+    i = firstindex(text)
+    last = lastindex(text)
+    while i <= last
+        b = text[i]
+        if b >= 0xF0 && b <= 0xF4 && i + 3 <= last && (text[i+1] & 0xC0) == 0x80 && (text[i+2] & 0xC0) == 0x80 &&
+           (text[i+3] & 0xC0) == 0x80
+            c = (UInt32(b & 0x07) << 18) | (UInt32(text[i+1] & 0x3F) << 12) | (UInt32(text[i+2] & 0x3F) << 6) |
+                UInt32(text[i+3] & 0x3F)
+            if c >= 0x10000 && c <= 0x10FFFF
+                v = c - 0x10000
+                for unit in (v >> 10, 0x400 + (v & 0x3FF))
+                    # U+F0000 + unit, which is below U+F0800.
+                    push!(out, 0xF3, 0xB0, 0x80 | ((unit >> 6) % UInt8), 0x80 | ((unit & 0x3F) % UInt8))
+                end
+                i += 4
+                continue
+            end
+        end
+        push!(out, b)
+        i += 1
+    end
+    return out
+end
+
+# A match of a pattern without the u flag against text with a character beyond the Basic Multilingual Plane. The
+# text is written again as code units, which allocates.
+@noinline function matchunits(p::Pattern, text::AbstractVector{UInt8})::Bool
+    units = codeunits!(UInt8[], text)
+    GC.@preserve p units begin
+        return unsafe_ismatch(p, pointer(units), length(units))
     end
 end
 

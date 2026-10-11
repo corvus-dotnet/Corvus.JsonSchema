@@ -265,4 +265,45 @@ const ANCHOR_CASES = Tuple{String,Vector{String},Vector{String}}[
             end
         end
     end
+
+    # A pattern that is valid only without the u flag (one with an identity escape such as \- or \&) matches UTF-16
+    # code units, as ECMA-262 says, so a character beyond the Basic Multilingual Plane is two characters to it. The
+    # faster matchers go by character. They decide the strings within the Basic Multilingual Plane, where the two are
+    # the same, and the engine decides the others. Each pattern is with the texts V8 13.6 matches, of the eleven.
+    @testset "a pattern valid only without the u flag matches code units" begin
+        texts = ["", "a", "ab", "\U10400", "a\U10400", "\U10400\U10400", "\U1F600", "-a", "_", "&\U10400",
+            "\u00e9\u00e9"]
+        cases = [
+            ("^[^\\_]{2}\$", ["ab", "\U10400", "\U1F600", "-a", "\u00e9\u00e9"]),
+            ("^[\\&\\@\\_]+\$", ["_"]),
+            ("^[^\\%]{1,3}\$", ["a", "ab", "\U10400", "a\U10400", "\U1F600", "-a", "_", "&\U10400", "\u00e9\u00e9"]),
+            ("^\\-?.{1,2}\$", ["a", "ab", "\U10400", "\U1F600", "-a", "_", "\u00e9\u00e9"]),
+            ("^\\-a", ["-a"]),
+            ("^.\\&?\$", ["a", "_"]),
+            ("\\&|^.{2}\$", ["ab", "\U10400", "\U1F600", "-a", "&\U10400", "\u00e9\u00e9"]),
+            ("^\\-?\U10400*\$", ["\U10400"]),
+        ]
+        fast = 0
+        for (pattern, matched) in cases
+            @test !C.valid_regex(pattern)
+            compiled = C.compile_pattern(pattern)
+            @test compiled !== nothing
+            fast += compiled.kind != C.MATCH_ENGINE
+            v = compile_schema("{\"pattern\": " * quote_json(pattern) * "}")
+            for text in texts
+                @test C.match_string(compiled, text) == (text in matched)
+                @test isvalid(v, Vector{UInt8}(quote_json(text))) == (text in matched)
+            end
+        end
+        # Some of them have a faster matcher, which is what the strings without such a character go to.
+        @test fast >= 3
+        # A pattern with such a character in it has none: a quantifier after the character repeats its second half.
+        @test C.compile_pattern("^\\-?\U10400*\$").kind == C.MATCH_ENGINE
+        # A pattern that is valid with the u flag matches characters.
+        @test isvalid(compile_schema("{\"pattern\": \"^[^_]{2}\$\"}"), Vector{UInt8}("\"a\U10400\""))
+        @test !isvalid(compile_schema("{\"pattern\": \"^[^_]{2}\$\"}"), Vector{UInt8}("\"\U10400\""))
+        # A class range between two such characters is an error without the flag, and the pattern is valid with it.
+        @test C.compile_pattern("\\-{0}^[\U10400-\U10428]\$") === nothing
+        @test C.compile_pattern("^[\U10400-\U10428]\$") !== nothing
+    end
 end

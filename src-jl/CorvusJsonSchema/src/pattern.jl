@@ -425,6 +425,10 @@ mutable struct Pattern
     const alts::Vector{Alternative}
     const set::CharSet
     const engine::Union{Nothing,EnginePattern}
+    # The pattern is valid only without the u flag, and has a faster matcher beside the engine. ECMA-262 matches such
+    # a pattern by UTF-16 code unit. The faster matchers go by character, which is the same for a string within the
+    # Basic Multilingual Plane, so they decide those, and the engine decides the others.
+    const units::Bool
 end
 
 function Pattern(kind::UInt8; source::String="", text::Vector{UInt8}=EMPTY_BYTES, whole::Bool=false,
@@ -432,11 +436,26 @@ function Pattern(kind::UInt8; source::String="", text::Vector{UInt8}=EMPTY_BYTES
     list::Union{Nothing,SeparatedList}=nothing, few::Vector{Vector{UInt8}}=Vector{UInt8}[],
     many::Union{Nothing,Names}=nothing, alts::Vector{Alternative}=Alternative[], set::CharSet=CharSet(),
     engine::Union{Nothing,EnginePattern}=nothing)
-    return Pattern(source, kind, text, whole, flag, min, max, seq, list, few, many, alts, set, engine)
+    return Pattern(source, kind, text, whole, flag, min, max, seq, list, few, many, alts, set, engine, false)
 end
 
 with_source(p::Pattern, source::String) = Pattern(source, p.kind, p.text, p.whole, p.flag, p.min, p.max, p.seq,
-    p.list, p.few, p.many, p.alts, p.set, p.engine)
+    p.list, p.few, p.many, p.alts, p.set, p.engine, p.units)
+
+# A pattern with a faster matcher that is valid only without the u flag: the engine decides a string with a character
+# beyond the Basic Multilingual Plane.
+with_units(p::Pattern, engine::EnginePattern) = Pattern(p.source, p.kind, p.text, p.whole, p.flag, p.min, p.max,
+    p.seq, p.list, p.few, p.many, p.alts, p.set, engine, true)
+
+# Whether a string has a character beyond the Basic Multilingual Plane, which is one of four bytes of UTF-8.
+function beyond_bmp(s::Bytes)
+    i = 0
+    while i < s.len
+        at(s, i) >= 0xf0 && return true
+        i += 1
+    end
+    return false
+end
 
 # match for a string that is not known to be ASCII.
 function match_string(p::Pattern, s::String)
@@ -448,6 +467,9 @@ end
 # that of its strings).
 function pattern_match(p::Pattern, s::Bytes, ascii::Bool)::Bool
     k = p.kind
+    if p.units && !ascii && beyond_bmp(s)
+        return engine_match(p.engine::EnginePattern, s)
+    end
     if k == MATCH_EVERYTHING
         return true
     elseif k == MATCH_LITERAL
@@ -535,18 +557,30 @@ function compile_pattern(source::String)
     cached = lock(() -> get(PATTERN_CACHE, source, nothing), PATTERN_CACHE_LOCK)
     cached === nothing || return cached
     # Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it. A pattern
-    # with a faster matcher that is valid with the u flag needs no engine at all. The engine reads a pattern that is
-    # valid only without the u flag by code point too, so the faster matchers decide those the same way.
+    # with a faster matcher that is valid with the u flag needs no engine at all. One that is valid only without
+    # the u flag matches UTF-16 code units, which the engine does and the faster matchers do not. A faster matcher
+    # is kept for the strings within the Basic Multilingual Plane, where the two are the same, unless the pattern
+    # itself names a character beyond it or has a \u escape, which the faster matchers would read by character.
     p = choose_pattern(source)
     if p === nothing || !valid_regex(source)
         engine = compile_engine(source)
         engine === nothing && return nothing
-        if p === nothing
+        if p === nothing || names_code_units(source)
             p = Pattern(MATCH_ENGINE; engine=engine)
+        else
+            p = with_units(p, engine)
         end
     end
     p = with_source(p, source)
     return lock(() -> get!(PATTERN_CACHE, source, p), PATTERN_CACHE_LOCK)
+end
+
+# Whether a pattern has a character beyond the Basic Multilingual Plane (a byte of 0xF0 or more) or a \u escape.
+function names_code_units(p::String)
+    for b in codeunits(p)
+        b >= 0xf0 && return true
+    end
+    return occursin("\\u", p)
 end
 
 function choose_pattern(p::String)::Union{Nothing,Pattern}

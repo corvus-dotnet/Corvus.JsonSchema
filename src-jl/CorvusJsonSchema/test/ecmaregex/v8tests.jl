@@ -447,4 +447,98 @@ end
             @test E.parsesunicode(pattern)
         end
     end
+
+    # The classes below were found by the six later families of the ECMA-262 regular expression test data.
+
+    # A pattern that is valid only without the u flag matches UTF-16 code units, as ECMA-262 says. A character beyond
+    # the Basic Multilingual Plane is two of them, to the dot, a class, a quantifier, an assertion and a
+    # backreference, in the text and in the pattern. The texts are every text of up to three of "a", U+10400, U+10428
+    # and U+1F600, and seven more.
+    @testset "patterns valid only without the u flag match code units" begin
+        texts = [""]
+        for n in 1:3, t in Iterators.product(ntuple(_ -> ("a", "\U10400", "\U10428", "\U1F600"), n)...)
+            push!(texts, join(reverse(t)))
+        end
+        append!(texts, ["x", "uu", "-", "\U10400x", "aa\U10400\U10400", "\U10400"^4, "\u00e9"])
+        @test length(texts) == 92
+        @test texts[1:7] == ["", "a", "\U10400", "\U10428", "\U1F600", "aa", "a\U10400"]
+        rows = [
+            # The dot, a class and a negated class take one code unit.
+            (raw"^\-?.$", "40000000000000000000051"),
+            (raw"^\-?..$", "3c000000000000000000020"),
+            (raw"\-{0}^.{3}$", "03c44400000000000000008"),
+            (raw"^\-?[^a]$", "00000000000000000000051"),
+            (raw"^\-?[^a]{2}$", "38000000000000000000020"),
+            (raw"\-{0}^\W\W$", "38000000000000000000000"),
+            (raw"\-{0}\S{3}$", "03fffffffffffffffffff8e"),
+            (raw"\-{0}^[\s\S]{4}$", "003bbbc4440004000400000"),
+            # A character beyond the Basic Multilingual Plane in the pattern is two code units, and a quantifier repeats the second.
+            (raw"^\-?𐐀*$", "20000000000000000000000"),
+            (raw"^\-?𐐀?x$", "00000000000000000000008"),
+            (raw"\-{0}^𐐀*?a", "00400000078000000000000"),
+            (raw"\-{0}^𐐀{2}$", "00000000000000000000000"),
+            (raw"\-{0}^x𐐀?$", "00000000000000000000000"),
+            (raw"\-{0}^[a𐐀]+$", "66600660066000000000006"),
+            (raw"\-{0}^[a-𐐀]+$", "6660066006600000000006f"),
+            (raw"\-{0}^[^𐐀]$", "40000000000000000000051"),
+            (raw"\-{0}𐐀|😀", "2afafafafffffafafffff8e"),
+            # The escapes of a surrogate pair are two code units too, and \u{...} is the letter u counted.
+            (raw"\-{0}^\ud801\udc00*$", "20000000000000000000000"),
+            (raw"\-{0}^\ud801\udc00{0}$", "00000000000000000000000"),
+            (raw"\-{0}^\u{2}$", "00000000000000000000020"),
+            (raw"\-{0}^[\u{10400}]+$", "00000000000000000000020"),
+            (raw"^\-?[\ud800-\udbff][\udc00-\udfff]$", "38000000000000000000000"),
+            (raw"^\-?[^\ud800-\udfff]$", "40000000000000000000051"),
+            (raw"^\-?[\ud801-\udc28]+$", "30330000003300330000002"),
+            (raw"\-{0}\ud801$", "00000000000000000000000"),
+            (raw"\-{0}^\udc00", "00000000000000000000000"),
+            # Assertions stand between code units.
+            (raw"\-{0}(?<=\ud801)\udc00", "227a227a27fffa7a227a20e"),
+            (raw"\-{0}(?<!\ud801)\udc00", "00000000000000000000000"),
+            (raw"\-{0}\ud801(?!\udc00)", "11179117911797fff917900"),
+            (raw"\-{0}\ud83d\B", "0888f888f888f888fffff80"),
+            (raw"\-{0}^.\b", "4380007ff80000000000040"),
+            (raw"\-{0}(?<=^..)a", "00444400078007800780000"),
+            (raw"\-{0}(?<=a.*)\udc28$", "01000111110001000100000"),
+            # A backreference compares code units.
+            (raw"\-{0}^(.)\1$", "04000000000000000000020"),
+            (raw"\-{0}^(..)\1$", "00210800000000000000000"),
+            (raw"\-{0}^(.).\1", "00330c00007f807f8000782"),
+            (raw"\-{0}^(?:(.)\1)+$", "04000000000000000000020"),
+            # A group name is read by character.
+            (raw"^\-?(?<𐐀>.)\k<𐐀>$", "04000000000000000000020"),
+            (raw"^\-?(?<\ud801\udc00>.)\k<𐐀>$", "04000000000000000000020"),
+            (raw"^\-?(?<\u{10400}>..)\k<\ud801\udc00>$", "00210800000000000000000"),
+            # A case-insensitive group. A surrogate has no other case.
+            (raw"\-{0}(?i:^𐐀$)", "20000000000000000000000"),
+            (raw"\-{0}(?i:^[𐐨a]$)", "40000000000000000000000"),
+            (raw"\-{0}(?i:^.A$)", "04000000000000000000000"),
+        ]
+        checkv8table(rows, texts)
+        for (pattern, _) in rows
+            @test !E.parsesunicode(pattern)
+        end
+        # A class range from one such character to another runs from a low surrogate down to a high one, which is
+        # an error in both grammars. So is a group name that is half of a character.
+        @test isnotapattern(raw"\-{0}^[𐐀-𐐨]$")
+        @test isnotapattern(raw"^\-?[😀-𐐀]$")
+        @test isnotapattern(raw"^\-?(?<\ud801>.)$")
+        @test !isnotapattern(raw"^[𐐀-𐐨]$")
+        # A surrogate is written as a character of its own from U+F0000, and the text is written the same way.
+        @test E.translate(raw"\-{0}^𐐀*$").main == raw"\A\x{f0001}\x{f0400}*\z"
+        @test E.translate(raw"^\-?[\ud800-\udbff]$").main == raw"\A\x{2d}?[\x{f0000}-\x{f03ff}]\z"
+        @test String(E.codeunits!(UInt8[], codeunits("a\U10400\u00e9\U1F600"))) ==
+              "a\U000f0001\U000f0400\u00e9\U000f003d\U000f0600"
+        # A pattern that names no surrogate is written as it was.
+        @test E.translate(raw"^\-?.$").main == raw"\A\x{2d}?[^\x{a}\x{d}\x{2028}-\x{2029}]\z"
+        # Bytes, a string and a view are all matched as code units.
+        dot = E.compile(raw"^\-?.$")
+        @test !E.ismatch(dot, "\U10400")
+        @test !E.ismatch(dot, codeunits("\U10400"))
+        @test !E.ismatch(dot, SubString("x\U10400", 2))
+        @test !E.ismatch(dot, view(Vector{UInt8}("x\U10400"), 2:5))
+        @test E.ismatch(dot, "\u00e9")
+        # A pattern that is valid with the u flag matches characters.
+        @test E.ismatch(E.compile("^.\$"), "\U10400")
+    end
 end

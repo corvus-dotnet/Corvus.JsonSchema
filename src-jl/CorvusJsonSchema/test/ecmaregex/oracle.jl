@@ -12,8 +12,10 @@
 #   with the i flag, which ECMA-262 does not allow. Only their validity is taken from the file. The same behaviour is
 #   checked through the patterns that V8 matched with the flag set.
 #
-# V8 matches a pattern that is valid only with no flag by UTF-16 code unit, and this library matches every pattern by
-# code point, so such a pattern is not asked about a text with a character beyond the Basic Multilingual Plane.
+# A pattern that is valid only with no flag is not asked about a text with a character beyond the Basic Multilingual
+# Plane: the file was written for a library that matched such a pattern by code point, and does not hold V8's
+# answers for those ("{" on a text with U+10428 and "{" is recorded as no match). V8 matches such a pattern by UTF-16
+# code unit, and so does this library. The tables of v8tests.jl hold V8's answers for that.
 
 # The patterns of the file that V8 answers inconsistently.
 const V8_MODIFIER_BUGS = Set(["^(?i:\\u212a)\$", "^(?i:\\u017f)\$", "^(?i:\\u1e9e)\$", "^(?i:\\u03bc)\$",

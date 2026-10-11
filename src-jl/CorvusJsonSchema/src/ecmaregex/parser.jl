@@ -141,7 +141,14 @@ function Parser(pattern::String, unicode::Bool)
         if Base.ismalformed(c) || Base.isoverlong(c) || UInt32(c) > 0x10FFFF
             throw(PatternError(pattern, "it is not UTF-8", false))
         end
-        push!(p, c)
+        if !unicode && UInt32(c) > 0xFFFF
+            # Without the u flag a pattern is a sequence of UTF-16 code units, each an atom of its own.
+            v = UInt32(c) - 0x10000
+            push!(p, Char(0xD800 + (v >> 10)))
+            push!(p, Char(0xDC00 + (v & 0x3FF)))
+        else
+            push!(p, c)
+        end
     end
     return Parser(pattern, p, unicode, 0, 0, 0, false, 0, Dict{String,Vector{Vector{Int}}}(), Node[], Int[], 0, false,
         false, false, Int32[], nothing)
@@ -238,11 +245,50 @@ function alternative(P::Parser)
     return node
 end
 
+# Where the translation of a pattern without the u flag keeps the surrogates: the code unit U+D800 + n is the
+# character U+F0000 + n, in the pattern and in the text (see `codeunits!` in EcmaRegex.jl).
+const UNIT_BASE = Int32(0xF0000)
+const SURROGATES = Int32[0xD800, 0xDFFF]
+const UNITS = Int32[UNIT_BASE, UNIT_BASE + 0x7FF]
+
+# The set of a pattern without the u flag as the translation holds it. Such a pattern matches UTF-16 code units, and
+# the text it is matched against has each half of a surrogate pair written as one character from UNIT_BASE. So the
+# surrogates of the set go there. What the set holds of the other characters beyond the Basic Multilingual Plane is
+# left as it is: the text has none of them. A set with every surrogate and every unit, or with none of either, is
+# not touched, so a pattern that names no surrogate is written as it was.
+function unitset(set::CodeSet)
+    surrogates = covered(set, SURROGATES)
+    if surrogates == covered(set, UNITS) && surrogates != SOME
+        return set
+    end
+    moved = Int32[c - Int32(0xD800) + UNIT_BASE for c in intersection(set, SURROGATES)]
+    return setunion(difference(set, UNITS), moved)
+end
+
+const NONE = 0
+const SOME = 1
+const EVERY = 2
+
+# How much of one range a set holds: none of it, some of it or every character of it.
+function covered(set::CodeSet, range::CodeSet)
+    lo = range[1]
+    hi = range[2]
+    for k in 1:2:length(set)
+        (set[k+1] < lo || set[k] > hi) && continue
+        return set[k] <= lo && set[k+1] >= hi ? EVERY : SOME
+    end
+    return NONE
+end
+
+# A node for a set as the translation holds it.
 function setnode(set::CodeSet)
     node = Node(SET)
     node.set = set
     return node
 end
+
+# A node for a set the parser read.
+setnode(P::Parser, set::CodeSet) = setnode(P.unicode ? set : unitset(set))
 
 # The node for one literal character. Inside a case-insensitive group that is the set of the characters equivalent
 # to it.
@@ -251,11 +297,11 @@ function charnode(P::Parser, c::Char)
     if P.ignorecase
         set = foldclosure(Int32[cp, cp], P.unicode)
         if length(set) != 2 || set[1] != set[2]
-            return setnode(set)
+            return setnode(P, set)
         end
     end
     node = Node(CHAR)
-    node.codepoint = cp
+    node.codepoint = !P.unicode && cp >= 0xD800 && cp <= 0xDFFF ? cp - Int32(0xD800) + UNIT_BASE : cp
     return node
 end
 
@@ -282,7 +328,7 @@ function term(P::Parser)
         quantifiable = atom.kind != LOOK || (!P.unicode && !atom.behind)
     elseif c == '.'
         P.i += 1
-        atom = setnode(P.dotall ? ANY_SET : DOT_SET)
+        atom = setnode(P, P.dotall ? ANY_SET : DOT_SET)
     elseif c == '['
         atom = characterclass(P)
     elseif c == '\\'
@@ -508,8 +554,13 @@ function groupname(P::Parser)
         P.i += 1
         if c == Int32('\\')
             eat(P, 'u') || syntaxerror(P, "invalid group name")
-            c = unicodeescape(P, true)
+            c = unicodeescape(P, true, true)
             c < 0 && syntaxerror(P, "invalid group name")
+        elseif !P.unicode && c >= 0xD800 && c <= 0xDBFF && more(P) && cpof(peekchar(P)) >= 0xDC00 &&
+               cpof(peekchar(P)) <= 0xDFFF
+            # A name is read by character in both grammars.
+            c = Int32(0x10000) + ((c - Int32(0xD800)) << 10) + (cpof(peekchar(P)) - Int32(0xDC00))
+            P.i += 1
         end
         if count == 0 ? !isnamestart(c) : !isnamepart(c)
             syntaxerror(P, "invalid group name")
@@ -561,7 +612,7 @@ function atomescape(P::Parser)
         return charnode(P, Char(UInt32(legacyoctal(P))))
     end
     set = classescape(P, c)
-    set === nothing || return setnode(folded(P, set))
+    set === nothing || return setnode(P, folded(P, set))
     return charnode(P, Char(UInt32(characterescape(P, false))))
 end
 
@@ -691,7 +742,7 @@ function characterescape(P::Parser, inclass::Bool)
         end
         return h
     elseif c == 'u'
-        u = unicodeescape(P, P.unicode)
+        u = unicodeescape(P, P.unicode, P.unicode)
         if u < 0
             P.unicode && syntaxerror(P, "invalid \\u escape")
             return Int32('u')
@@ -711,9 +762,9 @@ function characterescape(P::Parser, inclass::Bool)
 end
 
 # Reads what follows the u of a Unicode escape and returns the code point, or -1, reading nothing, when it is not a
-# well-formed escape. With `braces` it accepts the form with braces. A surrogate pair written as two escapes is one
-# code point.
-function unicodeescape(P::Parser, braces::Bool)
+# well-formed escape. With `braces` it accepts the form with braces. With `pairs` a surrogate pair written as two
+# escapes is one code point. Without the u flag it is that in a group name only, and two code units anywhere else.
+function unicodeescape(P::Parser, braces::Bool, pairs::Bool)
     start = P.i
     if braces && eat(P, '{')
         digits = P.i
@@ -732,7 +783,7 @@ function unicodeescape(P::Parser, braces::Bool)
     end
     u = hex(P, 4)
     u < 0 && return Int32(-1)
-    if u >= 0xD800 && u <= 0xDBFF && P.i + 6 <= length(P.p) && charat(P, P.i) == '\\' && charat(P, P.i + 1) == 'u'
+    if pairs && u >= 0xD800 && u <= 0xDBFF && P.i + 6 <= length(P.p) && charat(P, P.i) == '\\' && charat(P, P.i + 1) == 'u'
         save = P.i
         P.i += 2
         low = hex(P, 4)
@@ -784,7 +835,7 @@ function characterclass(P::Parser)
     # Inside a case-insensitive group a character matches the class when it is equivalent to a member, and a
     # negated class excludes exactly those characters.
     set = folded(P, setof(P.pairs))
-    return setnode(negated ? complement(set) : set)
+    return setnode(P, negated ? complement(set) : set)
 end
 
 # Reads one member of a class. Returns its code point, or sets `atomset` for a class escape.
