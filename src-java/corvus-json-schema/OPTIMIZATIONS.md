@@ -37,7 +37,7 @@ technique; this is the checklist.
   `multipleOf` by `%`; other `multipleOf` exactly on the decimal digits of the text with long arithmetic.
 - **Formats and content.** Format kind and assertion decided at compile time per dialect; all formats over the UTF-8
   view without allocation (hand-written dates, times, UUIDs, IP addresses, host names, IDNA with reused buffers, the
-  regex format by an allocation-free reader; regex-based URI formats with reused matchers); content checked without
+  regex format by an allocation-free reader; the URI, IRI, template, pointer and duration formats by readers of their grammars, with no regex engine); content checked without
   decoding (base64) or with a reused validate-only parser (JSON).
 - **Enum and const.** String const compared as bytes; string enums compared as bytes (up to 8) or by a hashed lookup;
   other values by JSON equality with prefilters (kind first, objects position by position).

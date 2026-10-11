@@ -528,6 +528,20 @@ final class Idna {
 
     private final Ascii ascii = new Ascii();
 
+    /**
+     * The most code points a label of a valid host name has. An ASCII label has 63 characters at most, and the
+     * A-label of any other is "xn--" and at least a character for each of its code points, in 63 characters at most.
+     * So a label of more code points makes the name invalid whatever it holds, and it is not read further: decoding
+     * and encoding a label, and some of the rules of context, take time that grows with the square of its length.
+     */
+    private static final int MAX_LABEL = 63;
+    /**
+     * The most labels a valid host name has: its A-labels and the dots between them are 253 characters at most, and
+     * a label is not empty. A name of more is invalid whatever it holds, and is not read further, so the buffers
+     * the check keeps do not grow with the text.
+     */
+    private static final int MAX_LABELS = 127;
+
     /** The {@code idn-hostname} format over s[from, to). */
     boolean idnHostname(CharSequence s, int from, int to) {
         if (from == to) {
@@ -537,7 +551,6 @@ final class Idna {
         // halfwidth ideographic full stop.
         int count = 0;
         int labelCount = 0;
-        cps = grow(cps, to - from);
         labels = grow(labels, 2);
         labels[0] = 0;
         for (int i = from; i < to; ) {
@@ -547,9 +560,16 @@ final class Idna {
                 labels = grow(labels, 2 * labelCount + 4);
                 labels[2 * labelCount + 1] = count;
                 labelCount++;
+                if (labelCount > MAX_LABELS) {
+                    return false;
+                }
                 labels[2 * labelCount] = count;
                 continue;
             }
+            if (count - labels[2 * labelCount] == MAX_LABEL) {
+                return false;
+            }
+            cps = grow(cps, count + 1);
             cps[count++] = c;
         }
         labels[2 * labelCount + 1] = count;

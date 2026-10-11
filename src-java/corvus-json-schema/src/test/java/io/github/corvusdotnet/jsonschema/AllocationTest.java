@@ -114,6 +114,15 @@ class AllocationTest {
                         + " \"ptr\": \"/a/b\", \"re\": \"^a+$\", \"tpl\": \"http://example.com/{id}\","
                         + " \"iri\": \"http://éxample.com\", \"rel\": \"0/a\", \"idnHost\": \"실례.테스트\","
                         + " \"idnEmail\": \"실례@실례.테스트\", \"unknown\": \"x\"}",
+                // What the readers of the grammars take: a quoted local part, an IP literal, a query and a fragment,
+                // an operator and a prefix in a template, named groups that share a name, and an A-label.
+                "{\"email\": \"\\\"joe \\\\\\\"x\\\"@[IPv6:::1]\", \"uri\": \"http://u:p@[2001:db8::1.2.3.4]:80/a%20b?q=1#f\","
+                        + " \"uriRef\": \"//h/p?q#f\", \"dur\": \"P1Y2M3DT4H5M6S\", \"ptr\": \"/a~0b/~1\","
+                        + " \"re\": \"(?:(?<a>x)|(?<a>y))\\\\k<a>(?<b>z)\", \"tpl\": \"/{+a,b:3}{?c*}\","
+                        + " \"iri\": \"http://éxample.com/é?\\ue000#é\", \"rel\": \"12#\","
+                        + " \"idnHost\": \"xn--bcher-kva.example\", \"idnEmail\": \"\\\"é\\\"@é.example\"}",
+                "{\"uri\": \"http://[::1\"}", "{\"tpl\": \"{a\"}", "{\"dur\": \"P1Y1D\"}", "{\"ptr\": \"/~2\"}",
+                "{\"re\": \"(?<a>x)(?<a>y)\"}", "{\"idnHost\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}", "{\"email\": \"a..b@c.d\"}",
                 "{\"date\": \"2021-02-29\"}", "{\"dt\": \"1963-06-19 08:30:06Z\"}", "{\"email\": \"joe\"}",
                 "{\"ipv4\": \"256.1.1.1\"}", "{\"uri\": \"//example.com\"}", "{\"host\": \"-a.com\"}",
                 "{\"re\": \"(\"}", "{\"idnHost\": \"〮실례.테스트\"}"));

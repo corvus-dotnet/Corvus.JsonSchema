@@ -6651,13 +6651,36 @@ final class EcmaRegex {
         private int n;
         private int groupCount;
         private int depth;
-        /** Group names: for each, its range of the pattern, then the range of {@link #paths} that holds its path. */
-        private int[] names = new int[16];
+        /**
+         * The group names, one entry for each name: the range of the pattern it is first written at, the node of
+         * the alternative that the group of that name read last stands in, and the entry after it in its bucket.
+         * {@link #nameHashes} has the hash of each. The names are found through {@link #buckets}, of which the first
+         * {@link #bucketCount} are in use for the pattern being read, so that what a pattern costs to read grows
+         * with its own length, whatever was read before it.
+         */
+        private int[] names = new int[4 * 16];
+        private long[] nameHashes = new long[16];
         private int nameCount;
-        /** The paths of the group names: the alternatives that enclose each, as disjunction and alternative. */
-        private int[] paths = new int[16];
-        private int pathsLength;
-        /** The alternatives that enclose the current position, innermost last. */
+        private int[] buckets = new int[16];
+        private int bucketCount;
+        /**
+         * The base of the hash of a name, which is a polynomial in it modulo 2^61 - 1. It is drawn for each reader,
+         * so that names cannot be written to share a hash: a pattern comes from outside, and a table whose names
+         * all fell in one bucket would take time that grows with the square of their number.
+         */
+        private final long hashBase =
+                (1L << 32) + java.util.concurrent.ThreadLocalRandom.current().nextLong(HASH_MODULUS - (1L << 33));
+        private static final long HASH_MODULUS = (1L << 61) - 1;
+        /**
+         * The alternatives that hold a named group, as a tree: for each node its parent (-1 for an alternative of
+         * the whole pattern), the number of its disjunction, and its depth.
+         */
+        private int[] nodes = new int[3 * 16];
+        private int nodeCount;
+        /**
+         * The disjunctions that enclose the current position, innermost last: for each its number, and the node
+         * of its current alternative, or -1 while no named group has needed one.
+         */
         private int[] path = new int[16];
         private int pathLength;
         private int disjunctions;
@@ -6673,7 +6696,8 @@ final class EcmaRegex {
             n = pattern.length();
             depth = 0;
             nameCount = 0;
-            pathsLength = 0;
+            bucketCount = 0;
+            nodeCount = 0;
             pathLength = 0;
             disjunctions = 0;
             refCount = 0;
@@ -6684,7 +6708,7 @@ final class EcmaRegex {
                     return false;
                 }
                 for (int r = 0; r < refCount; r++) {
-                    if (findName(refs[2 * r], refs[2 * r + 1], 0) < 0) {
+                    if (findName(refs[2 * r], refs[2 * r + 1], nameHash(refs[2 * r], refs[2 * r + 1])) < 0) {
                         return false;
                     }
                 }
@@ -6740,10 +6764,10 @@ final class EcmaRegex {
             }
             int level = pathLength++;
             path[2 * level] = ++disjunctions;
-            path[2 * level + 1] = 0;
+            path[2 * level + 1] = -1;
             alternative();
             while (eat('|')) {
-                path[2 * level + 1]++;
+                path[2 * level + 1] = -1;
                 alternative();
             }
             pathLength--;
@@ -6902,25 +6926,20 @@ final class EcmaRegex {
                 int start = i;
                 groupName();
                 int end = i - 1;
-                // Two groups may share a name only in separate alternatives of one disjunction.
-                for (int k = findName(start, end, 0); k >= 0; k = findName(start, end, k + 1)) {
-                    if (!separateAlternatives(names[4 * k + 2], names[4 * k + 3])) {
-                        throw INVALID;
-                    }
+                // Two groups may share a name only in separate alternatives of one disjunction. The groups of a
+                // name read so far are in separate alternatives of each other, so one that is not separate from
+                // this group is not separate from the one read last either: where this group stands outside the
+                // disjunction that separates two of them, it stands the same way to both. So the last is compared.
+                long hash = nameHash(start, end);
+                int node = currentNode();
+                int k = findName(start, end, hash);
+                if (k < 0) {
+                    addName(start, end, hash, node);
+                } else if (!separateAlternatives(names[4 * k + 2], node)) {
+                    throw INVALID;
+                } else {
+                    names[4 * k + 2] = node;
                 }
-                if (4 * nameCount + 4 > names.length) {
-                    names = Arrays.copyOf(names, names.length * 2);
-                }
-                if (pathsLength + 2 * pathLength > paths.length) {
-                    paths = Arrays.copyOf(paths, Math.max(paths.length * 2, pathsLength + 2 * pathLength));
-                }
-                System.arraycopy(path, 0, paths, pathsLength, 2 * pathLength);
-                names[4 * nameCount] = start;
-                names[4 * nameCount + 1] = end;
-                names[4 * nameCount + 2] = pathsLength;
-                names[4 * nameCount + 3] = pathLength;
-                nameCount++;
-                pathsLength += 2 * pathLength;
                 body();
                 return true;
             }
@@ -6960,16 +6979,48 @@ final class EcmaRegex {
         }
 
         /**
-         * Whether a stored path (of {@code length} levels at {@code offset} of {@link #paths}) and the current
-         * position lie in different alternatives of some disjunction.
+         * The node of the alternative the current position stands in, made now if no named group has needed it,
+         * with those of the alternatives that enclose it.
          */
-        private boolean separateAlternatives(int offset, int length) {
-            for (int k = 0; k < length && k < pathLength && paths[offset + 2 * k] == path[2 * k]; k++) {
-                if (paths[offset + 2 * k + 1] != path[2 * k + 1]) {
-                    return true;
-                }
+        private int currentNode() {
+            int level = pathLength - 1;
+            int k = level;
+            while (k >= 0 && path[2 * k + 1] < 0) {
+                k--;
             }
-            return false;
+            int parent = k >= 0 ? path[2 * k + 1] : -1;
+            for (k++; k <= level; k++) {
+                if (3 * nodeCount + 3 > nodes.length) {
+                    nodes = Arrays.copyOf(nodes, nodes.length * 2);
+                }
+                nodes[3 * nodeCount] = parent;
+                nodes[3 * nodeCount + 1] = path[2 * k];
+                nodes[3 * nodeCount + 2] = k;
+                path[2 * k + 1] = nodeCount;
+                parent = nodeCount++;
+            }
+            return parent;
+        }
+
+        /**
+         * Whether two alternatives (as nodes) are different alternatives of one disjunction, or lie in such: the
+         * two paths from the whole pattern part at a disjunction, and not inside one alternative.
+         */
+        private boolean separateAlternatives(int a, int b) {
+            while (nodes[3 * a + 2] > nodes[3 * b + 2]) {
+                a = nodes[3 * a];
+            }
+            while (nodes[3 * b + 2] > nodes[3 * a + 2]) {
+                b = nodes[3 * b];
+            }
+            if (a == b) {
+                return false;
+            }
+            while (nodes[3 * a] != nodes[3 * b]) {
+                a = nodes[3 * a];
+                b = nodes[3 * b];
+            }
+            return nodes[3 * a + 1] == nodes[3 * b + 1];
         }
 
         /** A group name up to and including its '>'. */
@@ -7071,14 +7122,64 @@ final class EcmaRegex {
             return v;
         }
 
-        /** The index, from {@code from} on, of a group whose name is the one written at p[start, end), or -1. */
-        private int findName(int start, int end, int from) {
-            for (int k = from; k < nameCount; k++) {
-                if (sameName(names[4 * k], names[4 * k + 1], start, end)) {
+        /** The hash of the group name written at p[start, end), which is that of its characters however written. */
+        private long nameHash(int start, int end) {
+            long h = 0;
+            for (int at = start; at < end; at = nameNext) {
+                // h * base + character + 1, modulo 2^61 - 1.
+                int c = nameChar(at);
+                long low = h * hashBase;
+                long sum = ((Math.multiplyHigh(h, hashBase) << 3) | (low >>> 61)) + (low & HASH_MODULUS) + c + 1;
+                sum = (sum & HASH_MODULUS) + (sum >>> 61);
+                h = sum >= HASH_MODULUS ? sum - HASH_MODULUS : sum;
+            }
+            return h;
+        }
+
+        private static int bucket(long hash, int count) {
+            return (int) (hash ^ (hash >>> 31)) & (count - 1);
+        }
+
+        /** The entry of the name written at p[start, end), whose hash is {@code hash}, or -1. */
+        private int findName(int start, int end, long hash) {
+            if (bucketCount == 0) {
+                return -1;
+            }
+            for (int k = buckets[bucket(hash, bucketCount)]; k >= 0; k = names[4 * k + 3]) {
+                if (nameHashes[k] == hash && sameName(names[4 * k], names[4 * k + 1], start, end)) {
                     return k;
                 }
             }
             return -1;
+        }
+
+        /** Adds a name that {@link #findName} did not find. */
+        private void addName(int start, int end, long hash, int node) {
+            if (nameCount == bucketCount) {
+                // Twice the buckets, of which only those in use are cleared, and the names put in them again.
+                int count = bucketCount == 0 ? 16 : 2 * bucketCount;
+                if (buckets.length < count) {
+                    buckets = new int[count];
+                }
+                Arrays.fill(buckets, 0, count, -1);
+                bucketCount = count;
+                for (int k = 0; k < nameCount; k++) {
+                    int at = bucket(nameHashes[k], count);
+                    names[4 * k + 3] = buckets[at];
+                    buckets[at] = k;
+                }
+            }
+            if (4 * nameCount + 4 > names.length) {
+                names = Arrays.copyOf(names, names.length * 2);
+                nameHashes = Arrays.copyOf(nameHashes, nameHashes.length * 2);
+            }
+            int at = bucket(hash, bucketCount);
+            names[4 * nameCount] = start;
+            names[4 * nameCount + 1] = end;
+            names[4 * nameCount + 2] = node;
+            names[4 * nameCount + 3] = buckets[at];
+            nameHashes[nameCount] = hash;
+            buckets[at] = nameCount++;
         }
 
         /** Whether two valid group names of the pattern are the same name, however their characters are written. */

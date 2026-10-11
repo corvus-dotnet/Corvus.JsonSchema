@@ -283,6 +283,31 @@ load of 5 to 18 from other work:
 
 No case ran longer, threw anything else, or ran out of memory.
 
+**The formats.** The text a `format` is asserted on comes from outside as well. No format is checked by a
+regular expression engine. Each is read once from left to right by a reader of its own, in time that grows with
+the length of the text and with nothing kept on the stack for it. So no format is under the limit on a match, and
+none needs to be.
+
+- `date`, `time`, `date-time`, `uuid`, `ipv4`, `ipv6` and `hostname` read a bounded number of characters, or stop at
+  the first that does not fit.
+- `duration`, `uri`, `uri-reference`, `iri`, `iri-reference`, `uri-template`, `json-pointer`,
+  `relative-json-pointer`, and the local part of `email` and `idn-email`, are read by the grammar of their RFC.
+  Until 0.1.3 they were regular expressions run by `java.util.regex`, which matches a repetition of alternatives by
+  recursion: a text of some thousands of characters threw `StackOverflowError` from the validator.
+- `idn-hostname`, and the domain of `idn-email`, stop at a label of more than 63 code points and at the 128th
+  label, which no valid name has. Decoding and encoding a label takes time that grows with the square of its
+  length, which is 63 at most.
+- `regex` reads the text with the grammar of the `u` flag and compiles nothing. Group names are kept in a hash
+  table, with a hash that is seeded for each evaluator, and the alternatives that hold a named group in a tree.
+  Groups nested more than 200 deep are answered as not a regular expression.
+
+Measured with 544 texts written to be costly, of 100,000 and of 1,000,000 characters, each in a process of its
+own: long runs of the characters each format repeats, texts that fail at their last character, and deep nesting.
+Every one is answered. The longest check of a text of 1,000,000 characters took 25 ms (`regex`, for 124,000 groups
+of one name in alternatives nested 150 deep), and the longest for any other format 13 ms, on a machine with a load
+of 2. Before, 184 of the 496 of them that were tried threw `StackOverflowError`, and 4 had not answered after 60
+seconds.
+
 **The cache of compiled patterns.** A pattern is immutable, so schemas with the same pattern share what was
 compiled for it, through a cache of the process. A schema may come from outside, so the cache is bounded. It holds
 1,024 patterns at most, counted as 64 MiB at most. Over either bound the patterns compiled first go, oldest first. A
@@ -324,7 +349,6 @@ heap before the next tenth.
   as it lives.
 - **The start of a match.** The clock is first read after the first 4,096 reads (fewer for a long translation),
   and the limit runs from there.
-- **The formats.** The library's own regular expressions for `format` are not under the limit.
 
 **Slow patterns.** `java.util.regex` matches by backtracking, and the translation finds some places by search, so
 a pattern that is deliberately hard can take a second where V8 answers in milliseconds. Of the 98,839 patterns of the
