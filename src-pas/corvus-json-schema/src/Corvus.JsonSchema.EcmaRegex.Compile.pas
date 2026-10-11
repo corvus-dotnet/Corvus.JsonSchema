@@ -83,8 +83,11 @@ type
     { Min and Max bound a repetition. A max of -1 is no bound. }
     Min, Max: Int32;
     { Need is the least number of bytes of text that every way from this instruction to a match consumes going
-      forward (see SetNeeds). It is set for an OpLoop. }
+      forward (see SetNeeds). It is set for an OpLoop, and counts none of the iterations the loop has still to
+      make. }
     Need: Int32;
+    { Iter is the least number of bytes one iteration of the body of an OpLoop consumes going forward. }
+    Iter: Int32;
   end;
   PInst = ^TInst;
   TInsts = array of TInst;
@@ -285,6 +288,66 @@ end;
 function LiteralRune(R: Int32): Boolean;
 begin
   Result := ValidRune(R) and (R <> RuneError);
+end;
+
+const
+  { NoMatch is the need of an instruction from which no way leads to a match. Every need is capped at it. }
+  NoMatch = 1 shl 30;
+
+{ TimesNeed returns Count times Need, capped at NoMatch. }
+function TimesNeed(Count, Need: Int32): Int32;
+begin
+  if (Count = 0) or (Need = 0) then
+    Exit(0);
+  if (Need >= NoMatch) or (Count >= NoMatch div Need) then
+    Exit(NoMatch);
+  Result := Count * Need;
+end;
+
+{ MinLength returns the least number of bytes a match of N consumes, capped at NoMatch. Like the needs, it counts a
+  character as its UTF-8 bytes when the matcher compares bytes for it and as one byte otherwise, so it can only be
+  too small. }
+function MinLength(const Nodes: TNodes; const Sets: TCharSets; N: Int32): Int32;
+var
+  K, L: Int32;
+begin
+  Result := 0;
+  case Nodes[N].Kind of
+    NChar:
+      // The bytes of its UTF-8 encoding.
+      if not LiteralRune(Nodes[N].R) or (Nodes[N].R < $80) then
+        Result := 1
+      else if Nodes[N].R < $800 then
+        Result := 2
+      else if Nodes[N].R < $10000 then
+        Result := 3
+      else
+        Result := 4;
+    NSet:
+      if Sets[Nodes[N].SetIx].Empty then
+        Result := NoMatch
+      else
+        Result := 1;
+    NCat:
+      for K := 0 to High(Nodes[N].Subs) do begin
+        L := MinLength(Nodes, Sets, Nodes[N].Subs[K]);
+        if (L >= NoMatch) or (Result + L >= NoMatch) then
+          Exit(NoMatch);
+        Inc(Result, L);
+      end;
+    NAlt: begin
+      Result := NoMatch;
+      for K := 0 to High(Nodes[N].Subs) do begin
+        L := MinLength(Nodes, Sets, Nodes[N].Subs[K]);
+        if L < Result then
+          Result := L;
+      end;
+    end;
+    NGroup:
+      Result := MinLength(Nodes, Sets, Nodes[N].Subs[0]);
+    NRepeat:
+      Result := TimesNeed(Nodes[N].Min, MinLength(Nodes, Sets, Nodes[N].Subs[0]));
+  end;
 end;
 
 { Nullable reports whether N can match without consuming anything. It errs towards true. }
@@ -544,6 +607,8 @@ begin
   Insts[Loop].Min := Min;
   Insts[Loop].Max := Max;
   Insts[Loop].Flag := Lazy;
+  if not Back then
+    Insts[Loop].Iter := MinLength(Nodes, Sets, Body);
   At := Add(OpLoopIter);
   Insts[At].A := K;
   EmitBody(Body, Back, Clear, ClearLo, ClearHi);
@@ -670,15 +735,15 @@ begin
   end;
 end;
 
-const
-  { NoMatch is the need of an instruction from which no way leads to a match. }
-  NoMatch = 1 shl 30;
-
 { SetNeeds works out, for every instruction, the least number of bytes of text that any way from it to a match
   consumes going forward, and writes it into the counted loops. It returns the need of the whole program. The
   matcher gives up at a counted loop when fewer bytes than that are left, as V8 does at every choice. A loop whose
   iterations can be empty would otherwise try every combination of its ways at a position from which the rest of
   the pattern cannot match at all.
+
+  A counted loop that is entered needs its least count of iterations, each of them the least its body consumes
+  (Iter of the instruction), and then what follows it. The loop instruction itself is also reached after each
+  iteration, so its own need counts only what follows, and the matcher adds the iterations it has still to make.
 
   A character is counted as one byte, a literal run as its bytes and a single character loop as its minimum, so the
   figure can only be too small. The body of a lookaround ends at its own last instruction and the instruction that
@@ -691,9 +756,15 @@ var
   Changed: Boolean;
 
   procedure Next(Target, Weight: Int32);
+  var
+    Sum: Int64;
   begin
-    if Need[Target] + Weight < N then
-      N := Need[Target] + Weight;
+    // Both can be NoMatch, and the sum is then beyond an Int32.
+    Sum := Int64(Need[Target]) + Weight;
+    if Sum > NoMatch then
+      Sum := NoMatch;
+    if Sum < N then
+      N := Int32(Sum);
   end;
 
 begin
@@ -727,6 +798,8 @@ begin
           Next(Pc + 1, 0);
           Next(Insts[Pc].X, 0);
         end;
+        OpLoopInit:
+          Next(Pc + 1, TimesNeed(Insts[Pc + 1].Min, Insts[Pc + 1].Iter));
       else
         Next(Pc + 1, 0);
       end;

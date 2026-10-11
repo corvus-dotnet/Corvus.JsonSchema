@@ -2663,16 +2663,17 @@ var
   { Set by TestNeeds when the needs are in place. }
   NeedsWork: Boolean = False;
 
-{ TestNeeds checks the least number of bytes a match consumes, which SetNeeds works out for a program and for each
-  of its counted loops. The figure is a lower bound: the way out of a counted loop is counted without its minimum
-  number of iterations. }
+(* TestNeeds checks the least number of bytes a match consumes, which SetNeeds works out for a program and for each
+  of its counted loops, and the least one iteration of each loop consumes. The figures are lower bounds. The need of
+  a loop counts what follows it and none of its iterations, which the matcher adds from the count it has reached.
+  The need of the program counts the least number of iterations of every loop it must go through. *)
 procedure TestNeeds;
 const
   NoMatch = 1 shl 30;
 var
   Count: Int32;
 
-  procedure Expect(const Pattern: UTF8String; Need: Int32; const Loops: array of Int32);
+  procedure Expect(const Pattern: UTF8String; Need: Int32; const Loops, Iters: array of Int32);
   var
     Re: TEcmaRegex;
     K, Found: Int32;
@@ -2682,15 +2683,17 @@ var
     if not Compiled(Pattern, Re) then
       Exit;
     Found := 0;
-    Same := Re.Prog.Need = Need;
+    Same := (Re.Prog.Need = Need) and (Length(Loops) = Length(Iters));
     for K := 0 to High(Re.Prog.Insts) do
       if Re.Prog.Insts[K].Op = OpLoop then begin
-        Same := Same and (Found <= High(Loops)) and (Re.Prog.Insts[K].Need = Loops[Found]);
+        Same := Same and (Found <= High(Loops)) and (Re.Prog.Insts[K].Need = Loops[Found])
+          and (Re.Prog.Insts[K].Iter = Iters[Found]);
         Inc(Found);
       end;
     if not (Same and (Found = Length(Loops))) then begin
       Fail(Quote(Pattern) + ': the need of the program is ' + Num(Re.Prog.Need) + ' and it has ' + Num(Found) +
-        ' counted loops, want ' + Num(Need) + ' and ' + Num(Length(Loops)) + ', or a loop has another need');
+        ' counted loops, want ' + Num(Need) + ' and ' + Num(Length(Loops)) +
+        ', or a loop has another need or another least iteration');
       NeedsWork := False;
     end;
   end;
@@ -2698,21 +2701,78 @@ var
 begin
   Count := 0;
   NeedsWork := True;
-  Expect('abc', 3, []);
-  Expect('a+b{2,}c?', 3, []);
-  Expect('(?:a|bc)d', 2, []);
-  Expect('(?=abc)a', 1, []);
-  Expect('(?<=abc)d', 1, []);
-  Expect('\u00e9{2}\u{10400}', 3, []);
-  Expect('(?:a|){3}xy$', 2, [2]);
-  Expect('(?:a|){3}', 0, [0]);
-  Expect('(?:(?:a|){2}b){2}c', 1, [1, 2]);
-  Expect('(?=(?:a|){2}xyz)(?:b|){2}c', 1, [3, 1]);
-  Expect('(?<=(?:ab|){2}c)(?:d|){2}ef', 2, [0, 2]);
-  Expect('(?!(?:a|){2}xx)(?:(x)|){2}\1y', 1, [2, 1]);
-  Expect('(?:a|){2}[]', NoMatch, [NoMatch]);
-  Expect('(?:(?:a|){2}|bcd)e', 1, [1]);
+  Expect('abc', 3, [], []);
+  Expect('a+b{2,}c?', 3, [], []);
+  Expect('(?:a|bc)d', 2, [], []);
+  Expect('(?=abc)a', 1, [], []);
+  Expect('(?<=abc)d', 1, [], []);
+  Expect('é{2}\u{10400}', 3, [], []);
+  Expect('(?:a|){3}xy$', 2, [2], [0]);
+  Expect('(?:a|){3}', 0, [0], [0]);
+  Expect('(?:(?:a|){2}b){2}c', 3, [1, 2], [1, 0]);
+  Expect('(?=(?:a|){2}xyz)(?:b|){2}c', 1, [3, 1], [0, 0]);
+  Expect('(?<=(?:ab|){2}c)(?:d|){2}ef', 2, [0, 2], [0, 0]);
+  Expect('(?!(?:a|){2}xx)(?:(x)|){2}\1y', 1, [2, 1], [0, 0]);
+  Expect('(?:a|){2}[]', NoMatch, [NoMatch], [0]);
+  Expect('(?:(?:a|){2}|bcd)e', 1, [1], [0]);
+  // The least count of a loop times the least of its body.
+  Expect('(?:a|b){5}c', 6, [1], [1]);
+  Expect('(?:ab|cde){3,}?x', 7, [1], [2]);
+  Expect('(?:a{1000}){1000}', 1000000, [0], [1000]);
+  Expect('(?:é|xyz){2}', 4, [0], [2]);
+  Expect('(?:a|b){2147483647}c', NoMatch, [1], [1]);
+  Expect('(?:(?:a|bc){2}d){3}', 9, [0, 1], [3, 1]);
+  // The body of a lookbehind is matched backwards and counts nothing.
+  Expect('(?<=(?:ab|c){2}d)e', 1, [0], [0]);
+  Expect('(?:a|(?=(?:b|c){3}))x{2}', 2, [0], [1]);
+  // A loop that cannot be left for a match, and whose iterations alone are beyond any text.
+  Expect('(?:ab){2147483647}[]', NoMatch, [NoMatch], [2]);
   WriteLn('TestNeeds: ', Count, ' patterns');
+end;
+
+(* TestALoopGivesUpWhenItsIterationsCannotFit checks the matcher uses the least count of a counted loop: a pattern
+  that needs a million characters, or two thousand million, answers a text of a hundred thousand at once. Without
+  the count in the need, the matcher runs each loop as far as the text goes from every position of the text, which
+  did not answer in 20 seconds for any of these. The limit of the match here is a small part of that, so a match
+  that does the work is abandoned and the test fails on that. *)
+procedure TestALoopGivesUpWhenItsIterationsCannotFit;
+var
+  Text: TBytes;
+  K: Int32;
+  Re: TEcmaRegex;
+  Stop: UInt8;
+  Matched: Boolean;
+
+  procedure AtOnce(const Pattern: UTF8String);
+  begin
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Re := Backtracking(Re);
+    Matched := EcmaRegexIsMatchLimit(Re, Text, 0, Length(Text), 200, Stop);
+    if (Stop <> EcmaRegexStopNone) or Matched then
+      Fail(Quote(Pattern) + ' on 100,000 characters: stop ' + Num(Stop) + ', matched ' + Bool(Matched) +
+        ', want an answer of false');
+  end;
+
+begin
+  SetLength(Text, 100000);
+  for K := 0 to High(Text) do
+    Text[K] := Ord('a');
+  AtOnce('(?:a{1000}){1000}');
+  AtOnce('(?:a|b){2147483647}c');
+  AtOnce('(?=.)(?:(?:ab|a){500}){500}');
+  AtOnce('x?(?:[ab]c?){100001}$');
+  // A text that is long enough still matches.
+  if Compiled('^(?:a{10}){100}$', Re) then begin
+    Re := Backtracking(Re);
+    Matched := EcmaRegexIsMatchLimit(Re, Text, 0, 1000, 60000, Stop);
+    if (Stop <> EcmaRegexStopNone) or not Matched then
+      Fail('^(?:a{10}){100}$ on a thousand characters: stop ' + Num(Stop) + ', want true');
+    Matched := EcmaRegexIsMatchLimit(Re, Text, 0, 999, 60000, Stop);
+    if (Stop <> EcmaRegexStopNone) or Matched then
+      Fail('^(?:a{10}){100}$ on 999 characters: stop ' + Num(Stop) + ', want false');
+  end;
+  WriteLn('TestALoopGivesUpWhenItsIterationsCannotFit: done');
 end;
 
 { TestLoopsGiveUpWhenTheRestCannotFit checks, against V8, counted loops whose iterations can be empty, before a rest
@@ -2903,6 +2963,7 @@ begin
   TestRepetitionsThatCannotConsume;
   TestNeeds;
   TestLoopsGiveUpWhenTheRestCannotFit;
+  TestALoopGivesUpWhenItsIterationsCannotFit;
   TestCodeUnitPositions;
   TestEscapedKInAClass;
   TestCountsAreComparedAsWritten;
@@ -2917,5 +2978,5 @@ begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 32 tests, 0 failures');
+  WriteLn('PASS: 33 tests, 0 failures');
 end.

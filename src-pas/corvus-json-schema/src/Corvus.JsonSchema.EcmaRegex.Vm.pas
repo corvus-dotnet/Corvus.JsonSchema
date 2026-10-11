@@ -721,8 +721,10 @@ begin
         N := St.Counts[2 * I^.A];
         // Once the minimum is met, ECMA-262 rejects an iteration that consumed nothing. That is what stops a
         // loop over a body that can be empty. The loop also gives up when fewer bytes are left than any way from
-        // here to a match consumes.
-        if (Hi - Pos >= I^.Need) and not ((N > I^.Min) and (Pos = St.Counts[2 * I^.A + 1])) then begin
+        // here to a match consumes: what follows the loop, and the iterations it has still to make.
+        if (Hi - Pos >= I^.Need) and not ((N < I^.Min) and (I^.Iter <> 0)
+          and (Int64(Hi - Pos) - I^.Need < Int64(I^.Min - N) * I^.Iter))
+          and not ((N > I^.Min) and (Pos = St.Counts[2 * I^.A + 1])) then begin
           if N < I^.Min then
             Inc(Pc)
           else if (I^.Max >= 0) and (N >= I^.Max) then
@@ -825,7 +827,7 @@ begin
     At := Lo;
     while True do begin
       At := IndexOf(Text, At, Hi, Prog.Prefix);
-      if At < 0 then
+      if (At < 0) or (Hi - At < Prog.Need) then
         Exit(False);
       if Run(Prog, St, Text, Lo, Hi, At) then
         Exit(True);
@@ -836,6 +838,8 @@ begin
   end;
   At := Lo;
   while True do begin
+    if Hi - At < Prog.Need then
+      Exit(False);
     if At = Hi then
       Exit((Prog.First < 0) and Run(Prog, St, Text, Lo, Hi, At));
     R := Text[At];
