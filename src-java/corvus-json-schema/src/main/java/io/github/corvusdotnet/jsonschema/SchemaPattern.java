@@ -8,6 +8,10 @@ import java.util.regex.Pattern;
  * A compiled {@code pattern} with ECMA-262 semantics: the cheapest matcher that decides it exactly, falling back to
  * the pattern translated for {@code java.util.regex}. Patterns compile once per process (a pattern is immutable, so
  * identical patterns share one matcher).
+ *
+ * <p>A pattern that is valid with the u flag matches characters. One that is valid only without it matches UTF-16
+ * code units, as ECMA-262 says: {@code ^\-?.$} does not match one character beyond the Basic Multilingual Plane, which
+ * is two code units.
  */
 final class SchemaPattern {
     private static final int EVERYTHING = 0;
@@ -21,6 +25,11 @@ final class SchemaPattern {
     final Pattern regex;
     /** A matcher that decides the pattern without the regular expression engine, or null. */
     final PatternShapes.Matcher shape;
+    /**
+     * Whether the pattern is valid only without the u flag. ECMA-262 then matches it against the UTF-16 code units
+     * of the text, and the translation is given the text as {@link EcmaRegex#codeUnits} writes it.
+     */
+    final boolean units;
     /** A process-wide index, for evaluators that keep a matcher per pattern. */
     final int id;
 
@@ -31,6 +40,7 @@ final class SchemaPattern {
         this.kind = kind;
         this.regex = regex;
         this.shape = shape;
+        this.units = kind == REGEX && EcmaRegex.matchesCodeUnits(source);
         synchronized (SchemaPattern.class) {
             this.id = nextId++;
         }
@@ -116,6 +126,9 @@ final class SchemaPattern {
 
     /** Whether the pattern matches somewhere in a string (allocates a matcher). */
     boolean find(CharSequence text) {
-        return kind == EVERYTHING || regex.matcher(text).find();
+        if (kind == EVERYTHING) {
+            return true;
+        }
+        return regex.matcher(units && EcmaRegex.hasSurrogate(text) ? EcmaRegex.codeUnits(text) : text).find();
     }
 }

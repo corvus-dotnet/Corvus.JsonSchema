@@ -486,7 +486,7 @@ final class Evaluator {
         if (pattern.shape != null) {
             return pattern.shape.matches(doc.strBytes(s), doc.strOffset(s), doc.count(s), doc.strAscii(s));
         }
-        return pattern.find(matcher(pattern), chars.of(doc, s));
+        return pattern.find(matcher(pattern), pattern.units ? chars.units(doc, s) : chars.of(doc, s));
     }
 
     private boolean evalString(SchemaNode n, int x) {

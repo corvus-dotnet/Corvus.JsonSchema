@@ -15,9 +15,11 @@ import java.util.regex.PatternSyntaxException;
  *
  * <p><b>Grammars.</b> A pattern is read first with the grammar of the {@code u} flag, as JSON Schema's {@code pattern}
  * specifies. A pattern that is not valid with it is read with the Annex B grammar of a pattern with no flag, as many
- * schemas hold such patterns (identity escapes like {@code \&}, lone braces). Whichever grammar accepts the pattern,
- * it matches code points. {@link #isValid}, which backs the {@code regex} format, accepts only the {@code u} flag
- * grammar.
+ * schemas hold such patterns (identity escapes like {@code \&}, lone braces). A pattern that is valid with the
+ * {@code u} flag matches code points. A pattern that is valid only without it matches UTF-16 code units, as ECMA-262
+ * says: its dot takes one half of a character beyond the Basic Multilingual Plane, and such a character written in
+ * it is two atoms (see {@link #matchesCodeUnits} and {@link #codeUnits}). {@link #isValid}, which backs the
+ * {@code regex} format, accepts only the {@code u} flag grammar.
  *
  * <p><b>What the translation writes.</b> The pattern is read into a tree, and the tree is written for
  * {@code java.util.regex} so that nothing depends on how that engine reads a construct ECMA-262 reads differently:
@@ -182,6 +184,57 @@ final class EcmaRegex {
         } catch (Unsupported e) {
             return 2;
         }
+    }
+
+    /**
+     * Where the translation of a pattern without the u flag keeps the surrogates: the code unit U+D800 + n is the
+     * character U+F0000 + n, in the pattern and in the text (see {@link #codeUnits}).
+     */
+    static final int UNIT_BASE = 0xF0000;
+    private static final int[] SURROGATES = {Character.MIN_SURROGATE, Character.MAX_SURROGATE};
+    private static final int[] UNITS = {UNIT_BASE, UNIT_BASE + 0x7FF};
+
+    /**
+     * Whether a pattern that {@link #translate} translates is valid only without the u flag. ECMA-262 matches such
+     * a pattern against the UTF-16 code units of the text, and its translation has to be given the text that
+     * {@link #codeUnits} makes of one with a character beyond the Basic Multilingual Plane.
+     */
+    static boolean matchesCodeUnits(String pattern) {
+        try {
+            new Parser(pattern, true).parse();
+            return false;
+        } catch (IllegalArgumentException e) {
+            return true;
+        }
+    }
+
+    /** Whether a text has a surrogate, and so is to be written by {@link #codeUnits} for a pattern of code units. */
+    static boolean hasSurrogate(CharSequence text) {
+        for (int k = 0, n = text.length(); k < n; k++) {
+            if (Character.isSurrogate(text.charAt(k))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * A text as the translation of a pattern without the u flag reads it: each UTF-16 code unit is one character.
+     * A surrogate U+D800 + n is written as the character U+F0000 + n, so that {@code java.util.regex}, which
+     * matches by character, takes the two halves of a pair one at a time. No other character of the result is beyond
+     * the Basic Multilingual Plane.
+     */
+    static String codeUnits(CharSequence text) {
+        StringBuilder sb = new StringBuilder(text.length() + 16);
+        for (int k = 0, n = text.length(); k < n; k++) {
+            char c = text.charAt(k);
+            if (Character.isSurrogate(c)) {
+                sb.appendCodePoint(c - Character.MIN_SURROGATE + UNIT_BASE);
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     /** Whether a string is a valid ECMA-262 regular expression with the u flag (the {@code regex} format). */
@@ -388,7 +441,8 @@ final class EcmaRegex {
 
         Parser(String pattern, boolean unicode) {
             this.pattern = pattern;
-            this.p = pattern.codePoints().toArray();
+            // Without the u flag a pattern is a sequence of UTF-16 code units, each an atom of its own.
+            this.p = unicode ? pattern.codePoints().toArray() : pattern.chars().toArray();
             this.unicode = unicode;
         }
 
@@ -508,14 +562,44 @@ final class EcmaRegex {
                 }
             }
             Node node = new Node(CHAR);
-            node.codePoint = c;
+            node.codePoint = !unicode && c >= Character.MIN_SURROGATE && c <= Character.MAX_SURROGATE
+                    ? c - Character.MIN_SURROGATE + UNIT_BASE
+                    : c;
             return node;
         }
 
-        private static Node setNode(int[] set) {
+        private Node setNode(int[] set) {
             Node node = new Node(SET);
-            node.set = set;
+            node.set = unicode ? set : unitSet(set);
             return node;
+        }
+
+        /**
+         * The set of a pattern without the u flag as the translation holds it. Such a pattern matches UTF-16 code
+         * units, and the text it is matched against has each half of a surrogate pair written as one character of
+         * {@link #UNIT_BASE} (see {@link #codeUnits}). So the surrogates of the set go there. What the set holds of
+         * the other characters beyond the Basic Multilingual Plane is left as it is: the text has none of them. A
+         * set that holds every surrogate, such as the dot or a negated class, is written as it was.
+         */
+        private static int[] unitSet(int[] set) {
+            int[] surrogates = intersection(set, SURROGATES);
+            int[] units = intersection(set, UNITS);
+            boolean every = surrogates.length == 2 && surrogates[0] == Character.MIN_SURROGATE
+                    && surrogates[1] == Character.MAX_SURROGATE;
+            boolean everyUnit = units.length == 2 && units[0] == UNIT_BASE && units[1] == UNIT_BASE + 0x7FF;
+            if (surrogates.length == 0 ? units.length == 0 : every && everyUnit) {
+                return set;
+            }
+            int[] moved = new int[surrogates.length];
+            for (int k = 0; k < moved.length; k++) {
+                moved[k] = surrogates[k] - Character.MIN_SURROGATE + UNIT_BASE;
+            }
+            int[] others = EcmaUnicode.difference(EcmaUnicode.difference(set, UNITS), SURROGATES);
+            return EcmaUnicode.union(others, moved);
+        }
+
+        private static int[] intersection(int[] a, int[] b) {
+            return EcmaUnicode.difference(a, EcmaUnicode.complement(b));
         }
 
         /** The set that also holds, inside a case-insensitive group, every character equivalent to a member. */
@@ -816,10 +900,13 @@ final class EcmaRegex {
                     if (!eat('u')) {
                         throw error("invalid group name");
                     }
-                    c = unicodeEscape(true);
+                    c = unicodeEscape(true, true);
                     if (c < 0) {
                         throw error("invalid group name");
                     }
+                } else if (!unicode && c >= 0xD800 && c <= 0xDBFF && more() && p[i] >= 0xDC00 && p[i] <= 0xDFFF) {
+                    // A name is read by character in both grammars.
+                    c = Character.toCodePoint((char) c, (char) p[i++]);
                 }
                 if (name.length() == 0 ? !EcmaUnicode.isNameStart(c) : !EcmaUnicode.isNamePart(c)) {
                     throw error("invalid group name");
@@ -1048,7 +1135,7 @@ final class EcmaRegex {
                     return h;
                 }
                 case 'u': {
-                    int u = unicodeEscape(unicode);
+                    int u = unicodeEscape(unicode, unicode);
                     if (u < 0) {
                         if (unicode) {
                             throw error("invalid \\u escape");
@@ -1074,10 +1161,11 @@ final class EcmaRegex {
 
         /**
          * Reads what follows the u of a Unicode escape and returns the code point, or -1, reading nothing, when it
-         * is not a well-formed escape. With {@code braces} it accepts the form with braces. A surrogate pair written
-         * as two escapes is one code point.
+         * is not a well-formed escape. With {@code braces} it accepts the form with braces. With {@code pairs} a
+         * surrogate pair written as two escapes is one code point. Without the u flag it is that in a group name
+         * only, and two code units anywhere else.
          */
-        private int unicodeEscape(boolean braces) {
+        private int unicodeEscape(boolean braces, boolean pairs) {
             int start = i;
             if (braces && eat('{')) {
                 int digits = i;
@@ -1098,7 +1186,7 @@ final class EcmaRegex {
             if (u < 0) {
                 return -1;
             }
-            if (u >= 0xD800 && u <= 0xDBFF && i + 6 <= p.length && p[i] == '\\' && p[i + 1] == 'u') {
+            if (pairs && u >= 0xD800 && u <= 0xDBFF && i + 6 <= p.length && p[i] == '\\' && p[i + 1] == 'u') {
                 int save = i;
                 i += 2;
                 int low = hex(4);
@@ -2003,6 +2091,15 @@ final class EcmaRegex {
          * characters to a start, and from that start a lookahead runs X forwards and requires that what follows X
          * be the captured rest up to the end of the text, which is so only where the lookbehind stands. The search
          * takes time that grows with the square of the length of the text.
+         *
+         * <p>Each character X takes is written after the test {@code (?!\1\z)}, that the place is not yet the one
+         * the lookbehind stands at. X can match only up to that place, and without the test it runs on past it and
+         * comes back, which for a repetition inside a repetition, as in {@code (?<=(?:[ax]+){2,})$}, is every way
+         * to split the text after that place before the first way that ends at it. ECMA-262 runs the body backwards
+         * from that place and never sees the text after it. For the same reason, when the characters X can take
+         * are a set T of few ranges, X is tried only at a start from which every character up to that place is in
+         * T, by the test {@code (?=(?:(?!\1\z)T)*\1\z)} before it. X cannot match from a start before a character
+         * it cannot take, and it would try every way to split the text up to that character.
          *
          * <p>Running the body forwards where ECMA-262 runs it backwards finds a match exactly when ECMA-262 does. The
          * two directions can differ only in what the groups of the body capture, and a pattern with a backreference

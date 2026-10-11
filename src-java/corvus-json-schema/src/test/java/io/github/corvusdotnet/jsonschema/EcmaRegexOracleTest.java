@@ -33,8 +33,9 @@ import org.junit.jupiter.api.Test;
  *       same behaviour is checked through the patterns that V8 matched with the flag set.
  * </ul>
  *
- * <p>V8 matches a pattern that is valid only with no flag by UTF-16 code unit, and this library matches every pattern
- * by code point, so such a pattern is not asked about a text with a character beyond the Basic Multilingual Plane.
+ * <p>V8 matches a pattern that is valid only with no flag by UTF-16 code unit, and so does this library. The
+ * translation of such a pattern is for the text as {@link EcmaRegex#codeUnits} writes it, so it is asked through the
+ * compiled pattern, which does that.
  */
 class EcmaRegexOracleTest {
     /** The patterns of the file that V8 answers inconsistently (see the class comment). */
@@ -148,15 +149,12 @@ class EcmaRegexOracleTest {
         SchemaPattern compiled = SchemaPattern.compile(p);
         PatternShapes.Matcher shape = compiled.shape;
         for (int i = 0; i < texts.length; i++) {
-            if (!validUnicode && beyondBmp(texts[i])) {
-                continue;
-            }
             boolean want = bit(bits, i);
             tally.answers++;
             if (want) {
                 tally.matched++;
             }
-            if (regex.matcher(texts[i]).find() != want) {
+            if ((validUnicode || !beyondBmp(texts[i])) && regex.matcher(texts[i]).find() != want) {
                 tally.fail(show(p) + " on " + show(texts[i]) + ": got " + !want + ", V8 says " + want + "  [" + translated
                         + "]");
             }

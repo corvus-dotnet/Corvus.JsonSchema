@@ -121,6 +121,16 @@ ECMAScript 2025. A pattern is read with the `u` flag, and a pattern that is not 
 with no flag, which accepts what many schemas hold (`\&`, a lone brace). The `regex` format accepts only the `u`
 flag grammar.
 
+A pattern that is valid with the `u` flag matches characters. A pattern that is valid only without it matches UTF-16
+code units, as ECMA-262 says, and a character beyond the Basic Multilingual Plane is two of them. So `^\-?.$` does
+not take "𐐀" (U+10400), and `^\-?..$` does. Such a character written in the pattern is two atoms: a
+quantifier after it repeats its second half, a class holds each half, and a class range from one such character to
+another is not valid. Without the flag `\u{...}` is not an escape, and the escapes of the two halves of a pair are
+two atoms. A group name is read by character in both grammars.
+
+A JSON string cannot hold a surrogate that is not half of a pair. The parser refuses the escape of one, such as
+`"\ud800"`, in a schema and in an instance, with a `JsonParseException`. So no pattern is matched against one.
+
 - `\p{...}` covers every property, value and alias ECMA-262 lists: General_Category, Script, Script_Extensions and
   the 53 binary properties. The data is Unicode 17 on every JDK. It does not depend on the Unicode version of the JDK
   the library runs on.

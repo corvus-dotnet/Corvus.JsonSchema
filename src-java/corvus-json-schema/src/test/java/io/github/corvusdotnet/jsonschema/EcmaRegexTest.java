@@ -1306,4 +1306,252 @@ class EcmaRegexTest {
         assertMatches("^(?:^x|b){201,}a$", "b".repeat(300) + "a");
         assertEquals("(?:^x|b){201,}a", EcmaRegex.translate("(?:^x|b){201,}a"));
     }
+
+    /**
+     * Patterns that are valid only without the u flag (each has an escape of "-", which the u flag does not allow),
+     * with the texts each matches. ECMA-262 matches such a pattern against UTF-16 code units: a character beyond the
+     * Basic Multilingual Plane is two of them to the dot, to a class and to a backreference, one written in the
+     * pattern is two atoms, so a quantifier after it repeats the second, and a class holds each of the two. The
+     * escape with braces is not one without the flag, and the escapes of the two halves of a pair are two atoms. A
+     * group name is read by character in both grammars.
+     */
+    private static final String[][] CODE_UNITS = {
+            {"^\\-?.$", "|a|x|-|u|{"},
+            {"^\\-?..$", "|\ud801\udc00|\ud801\udc28|\ud83d\ude00|aa|a-"},
+            {
+                "\\-{0}^.{3}$",
+                "|a\ud801\udc00|a\ud801\udc28|a\ud83d\ude00|\ud801\udc00a|\ud801\udc28a"
+                        + "|\ud83d\ude00a|aaa|uuu|x\ud801\udc00|\ud801\udc00x",
+            },
+            {
+                "\\-{0}^.{4}$",
+                "|\ud801\udc00\ud801\udc00|\ud801\udc00\ud801\udc28|\ud801\udc00\ud83d\ude00"
+                        + "|\ud801\udc28\ud801\udc00|\ud801\udc28\ud801\udc28|\ud801\udc28\ud83d\ude00"
+                        + "|\ud83d\ude00\ud801\udc00|\ud83d\ude00\ud801\udc28|\ud83d\ude00\ud83d\ude00"
+                        + "|a\ud801\udc00a",
+            },
+            {"\\-{0}^\ud801\udc00*$", "|\ud801\udc00"},
+            {"\\-{0}^\ud801\udc00+$", "|\ud801\udc00"},
+            {"\\-{0}^\ud801\udc00?a$", "|\ud801\udc00a"},
+            {"\\-{0}^\ud801\udc00{2}$", ""},
+            {"\\-{0}^\ud801\udc00*?a", "|\ud801\udc00a|\ud801\udc00a\ud801\udc00"},
+            {
+                "\\-{0}^(?:\ud801\udc00)*$",
+                "||\ud801\udc00|\ud801\udc00\ud801\udc00|\ud801\udc00\ud801\udc00\ud801\udc00",
+            },
+            {"\\-{0}^[\ud801\udc00]$", ""},
+            {"\\-{0}^[\ud801\udc00]{2}$", "|\ud801\udc00"},
+            {
+                "\\-{0}^[\ud801\udc00]+$",
+                "|\ud801\udc00|\ud801\udc00\ud801\udc00|\ud801\udc00\ud801\udc00\ud801\udc00",
+            },
+            {"\\-{0}^[^\ud801\udc00]$", "|a|x|-|u|{"},
+            {
+                "\\-{0}^[^\ud801\udc00]+$",
+                "|a|\ud83d\ude00|aa|a\ud83d\ude00|\ud83d\ude00a|\ud83d\ude00\ud83d\ude00|x|-"
+                        + "|aaa|uuu|u|{|a-",
+            },
+            {"\\-{0}^[^a]$", "|x|-|u|{"},
+            {"\\-{0}^[^a]{2}$", "|\ud801\udc00|\ud801\udc28|\ud83d\ude00"},
+            {
+                "\\-{0}^[a-\ud801\udc00]+$",
+                "|a|\ud801\udc00|aa|a\ud801\udc00|\ud801\udc00a|\ud801\udc00\ud801\udc00|x|aaa"
+                        + "|\ud801\udc00\ud801\udc00\ud801\udc00|a\ud801\udc00a|\ud801\udc00a\ud801\udc00"
+                        + "|\ud801\udc00\ud801\udc00a|uuu|u|{|x\ud801\udc00|\ud801\udc00x",
+            },
+            {"^\\-?[\ud801\udc00-\\udfff]$", ""},
+            {"\\-{0}^\\ud801\\udc00$", "|\ud801\udc00"},
+            {"\\-{0}^\\ud801\\udc00*$", "|\ud801\udc00"},
+            {"\\-{0}^\\ud801\\udc00?$", "|\ud801\udc00"},
+            {
+                "\\-{0}^\\ud801",
+                "|\ud801\udc00|\ud801\udc28|\ud801\udc00a|\ud801\udc00\ud801\udc00"
+                        + "|\ud801\udc00\ud801\udc28|\ud801\udc00\ud83d\ude00|\ud801\udc28a"
+                        + "|\ud801\udc28\ud801\udc00|\ud801\udc28\ud801\udc28|\ud801\udc28\ud83d\ude00"
+                        + "|\ud801\udc00\ud801\udc00\ud801\udc00|\ud801\udc00a\ud801\udc00"
+                        + "|\ud801\udc00\ud801\udc00a|\ud801\udc00x"
+                        + "|\ud801\udc28\ud801\udc28\ud801\udc28\ud801\udc28",
+            },
+            {
+                "\\-{0}\\udc00$",
+                "|\ud801\udc00|a\ud801\udc00|\ud801\udc00\ud801\udc00|\ud801\udc28\ud801\udc00"
+                        + "|\ud83d\ude00\ud801\udc00|\ud801\udc00\ud801\udc00\ud801\udc00"
+                        + "|\ud801\udc00a\ud801\udc00|x\ud801\udc00",
+            },
+            {"\\-{0}^[\\ud800-\\udbff][\\udc00-\\udfff]$", "|\ud801\udc00|\ud801\udc28|\ud83d\ude00"},
+            {"\\-{0}^[\\ud800-\\udfff]{2}$", "|\ud801\udc00|\ud801\udc28|\ud83d\ude00"},
+            {"\\-{0}^[^\\ud800-\\udfff]+$", "|a|aa|x|-|aaa|uuu|u|{|a-"},
+            {"\\-{0}^\\u{3}$", "|uuu"},
+            {"\\-{0}^[\\u{10400}]+$", "|uuu|u|{"},
+            {"\\-{0}^\\S$", "|a|x|-|u|{"},
+            {"\\-{0}^\\W{2}$", "|\ud801\udc00|\ud801\udc28|\ud83d\ude00"},
+            {"\\-{0}^\\D\\D$", "|\ud801\udc00|\ud801\udc28|\ud83d\ude00|aa|a-"},
+            {"\\-{0}^\\w.\\w$", "|aaa|uuu"},
+            {
+                "\\-{0}(?<=\\ud801)\\udc00",
+                "|\ud801\udc00|a\ud801\udc00|\ud801\udc00a|\ud801\udc00\ud801\udc00"
+                        + "|\ud801\udc00\ud801\udc28|\ud801\udc00\ud83d\ude00|\ud801\udc28\ud801\udc00"
+                        + "|\ud83d\ude00\ud801\udc00|\ud801\udc00\ud801\udc00\ud801\udc00|a\ud801\udc00a"
+                        + "|\ud801\udc00a\ud801\udc00|\ud801\udc00\ud801\udc00a|x\ud801\udc00"
+                        + "|\ud801\udc00x",
+            },
+            {"\\-{0}(?<!\\ud801)\\udc28", ""},
+            {
+                "\\-{0}(?<=^.)\\udc28",
+                "|\ud801\udc28|\ud801\udc28a|\ud801\udc28\ud801\udc00|\ud801\udc28\ud801\udc28"
+                        + "|\ud801\udc28\ud83d\ude00|\ud801\udc28\ud801\udc28\ud801\udc28\ud801\udc28",
+            },
+            {"\\-{0}(?<=^..)a", "|\ud801\udc00a|\ud801\udc28a|\ud83d\ude00a|aaa|\ud801\udc00a\ud801\udc00"},
+            {
+                "\\-{0}\\ud801(?=\\udc00)",
+                "|\ud801\udc00|a\ud801\udc00|\ud801\udc00a|\ud801\udc00\ud801\udc00"
+                        + "|\ud801\udc00\ud801\udc28|\ud801\udc00\ud83d\ude00|\ud801\udc28\ud801\udc00"
+                        + "|\ud83d\ude00\ud801\udc00|\ud801\udc00\ud801\udc00\ud801\udc00|a\ud801\udc00a"
+                        + "|\ud801\udc00a\ud801\udc00|\ud801\udc00\ud801\udc00a|x\ud801\udc00"
+                        + "|\ud801\udc00x",
+            },
+            {
+                "\\-{0}\\ud801(?!\\udc00)",
+                "|\ud801\udc28|a\ud801\udc28|\ud801\udc00\ud801\udc28|\ud801\udc28a"
+                        + "|\ud801\udc28\ud801\udc00|\ud801\udc28\ud801\udc28|\ud801\udc28\ud83d\ude00"
+                        + "|\ud83d\ude00\ud801\udc28|a\ud801\udc28\ud83d\ude00"
+                        + "|\ud801\udc28\ud801\udc28\ud801\udc28\ud801\udc28",
+            },
+            {"\\-{0}^(.)\\1$", "|aa"},
+            {"\\-{0}^(.)(.)\\1\\2$", "|\ud801\udc00\ud801\udc00|\ud801\udc28\ud801\udc28|\ud83d\ude00\ud83d\ude00"},
+            {
+                "\\-{0}^(?:(.).)\\1",
+                "|\ud801\udc00\ud801\udc00|\ud801\udc00\ud801\udc28|\ud801\udc28\ud801\udc00"
+                        + "|\ud801\udc28\ud801\udc28|\ud83d\ude00\ud83d\ude00|aaa"
+                        + "|\ud801\udc00\ud801\udc00\ud801\udc00|\ud801\udc00\ud801\udc00a|uuu"
+                        + "|\ud801\udc28\ud801\udc28\ud801\udc28\ud801\udc28",
+            },
+            {
+                "\\-{0}^(.).\\1",
+                "|\ud801\udc00\ud801\udc00|\ud801\udc00\ud801\udc28|\ud801\udc28\ud801\udc00"
+                        + "|\ud801\udc28\ud801\udc28|\ud83d\ude00\ud83d\ude00|aaa"
+                        + "|\ud801\udc00\ud801\udc00\ud801\udc00|\ud801\udc00\ud801\udc00a|uuu"
+                        + "|\ud801\udc28\ud801\udc28\ud801\udc28\ud801\udc28",
+            },
+            {
+                "\\-{0}\\b.\\b",
+                "|a|a\ud801\udc00|a\ud801\udc28|a\ud83d\ude00|\ud801\udc00a|\ud801\udc28a"
+                        + "|\ud83d\ude00a|x|a\ud801\udc00a|\ud801\udc00a\ud801\udc00"
+                        + "|\ud801\udc00\ud801\udc00a|u|a\ud801\udc28\ud83d\ude00|x\ud801\udc00"
+                        + "|\ud801\udc00x|a-",
+            },
+            {"\\-{0}^.\\\ud801\udc28.$", ""},
+            {"\\-{0}^(?i:\ud801\udc00)$", "|\ud801\udc00"},
+            {"\\-{0}^(?i:\ud801\udc28)$", "|\ud801\udc28"},
+            {
+                "\\-{0}^(?i:[\ud801\udc00])+$",
+                "|\ud801\udc00|\ud801\udc00\ud801\udc00|\ud801\udc00\ud801\udc00\ud801\udc00",
+            },
+            {"\\-{0}^(?<\ud801\udc00>.)\\k<\ud801\udc00>$", "|aa"},
+            {"\\-{0}^(?<n>.)\\k<n>.$", "|aaa|uuu"},
+            {"\\-{0}a.\ud801\udc00", ""},
+            {
+                "\\-{0}^a|.{5}",
+                "|a|aa|a\ud801\udc00|a\ud801\udc28|a\ud83d\ude00|aaa"
+                        + "|\ud801\udc00\ud801\udc00\ud801\udc00|a\ud801\udc00a|\ud801\udc00a\ud801\udc00"
+                        + "|\ud801\udc00\ud801\udc00a|a\ud801\udc28\ud83d\ude00|a-"
+                        + "|\ud801\udc28\ud801\udc28\ud801\udc28\ud801\udc28",
+            },
+            {"\\-{0}^[\\s\\S]{2}$", "|\ud801\udc00|\ud801\udc28|\ud83d\ude00|aa|a-"},
+            {"\\-{0}^[^]{2}$", "|\ud801\udc00|\ud801\udc28|\ud83d\ude00|aa|a-"},
+            {"\\-{0}^(?:.|a){2}$", "|\ud801\udc00|\ud801\udc28|\ud83d\ude00|aa|a-"},
+            {
+                "\\-{0}^(?:[^a]{2})+$",
+                "|\ud801\udc00|\ud801\udc28|\ud83d\ude00|\ud801\udc00\ud801\udc00"
+                        + "|\ud801\udc00\ud801\udc28|\ud801\udc00\ud83d\ude00|\ud801\udc28\ud801\udc00"
+                        + "|\ud801\udc28\ud801\udc28|\ud801\udc28\ud83d\ude00|\ud83d\ude00\ud801\udc00"
+                        + "|\ud83d\ude00\ud801\udc28|\ud83d\ude00\ud83d\ude00"
+                        + "|\ud801\udc00\ud801\udc00\ud801\udc00"
+                        + "|\ud801\udc28\ud801\udc28\ud801\udc28\ud801\udc28",
+            },
+    };
+
+    /** Not valid in either grammar: without the u flag such a range runs from a low surrogate down to a high one. */
+    private static final String[] NOT_VALID_BY_CODE_UNIT = {
+            "\\-{0}^[\ud801\udc00-\ud801\udc28]$",
+            "\\-{0}[\ud801\udc28-\ud801\udc00]",
+            "\\-{0}^[\ud83d\ude00-\ud801\udc00]+$",
+            "^\\-?[\ud801\udc00-a]$",
+    };
+
+    /** The same atoms in patterns that are valid with the u flag, which match by character. */
+    private static final String[][] CHARACTERS_WITH_THE_U_FLAG = {
+            {"^.$", "|a|\ud801\udc00|\ud801\udc28|\ud83d\ude00|x|-|u|{"},
+            {"^\ud801\udc00*$", "||\ud801\udc00|\ud801\udc00\ud801\udc00|\ud801\udc00\ud801\udc00\ud801\udc00"},
+            {"^[\ud801\udc00-\ud801\udc28]$", "|\ud801\udc00|\ud801\udc28"},
+            {"^[^a]$", "|\ud801\udc00|\ud801\udc28|\ud83d\ude00|x|-|u|{"},
+            {"^[\ud801\udc00]{2}$", "|\ud801\udc00\ud801\udc00"},
+            {"^\\ud801\\udc00$", "|\ud801\udc00"},
+            {"^(?i:\ud801\udc00)$", "|\ud801\udc00|\ud801\udc28"},
+            {"^(.)\\1$", "|aa|\ud801\udc00\ud801\udc00|\ud801\udc28\ud801\udc28|\ud83d\ude00\ud83d\ude00"},
+            {"(?<=^.)a", "|aa|\ud801\udc00a|\ud801\udc28a|\ud83d\ude00a|aaa|\ud801\udc00a\ud801\udc00"},
+            {
+                "^\\S{2}$",
+                "|aa|a\ud801\udc00|a\ud801\udc28|a\ud83d\ude00|\ud801\udc00a"
+                        + "|\ud801\udc00\ud801\udc00|\ud801\udc00\ud801\udc28|\ud801\udc00\ud83d\ude00"
+                        + "|\ud801\udc28a|\ud801\udc28\ud801\udc00|\ud801\udc28\ud801\udc28"
+                        + "|\ud801\udc28\ud83d\ude00|\ud83d\ude00a|\ud83d\ude00\ud801\udc00"
+                        + "|\ud83d\ude00\ud801\udc28|\ud83d\ude00\ud83d\ude00|x\ud801\udc00|\ud801\udc00x"
+                        + "|a-",
+            },
+    };
+
+    private static final String[] BEYOND_THE_BMP = {
+        "a", "\ud801\udc00", "\ud801\udc28", "\ud83d\ude00"
+    };
+    private static final String[] MORE_BEYOND_THE_BMP = {
+        "x", "-", "aaa", "\ud801\udc00\ud801\udc00\ud801\udc00", "\u0061\ud801\udc00\u0061",
+        "\ud801\udc00\u0061\ud801\udc00", "\ud801\udc00\ud801\udc00\u0061", "uuu", "u", "{",
+        "\u0061\ud801\udc28\ud83d\ude00", "\u0078\ud801\udc00", "\ud801\udc00\u0078", "a-",
+        "\ud801\udc28\ud801\udc28\ud801\udc28\ud801\udc28"
+    };
+
+    /**
+     * Checks a table as {@link #assertAnswers} does, through a validator of {@code {"pattern": ...}} only: the
+     * translation of a pattern of code units is for the text as {@link EcmaRegex#codeUnits} writes it.
+     */
+    private static void assertValidatorAnswers(String[][] cases, List<String> texts) {
+        List<String> wrong = new ArrayList<>();
+        for (String[] c : cases) {
+            List<String> expected = c[1].isEmpty() ? List.of() : List.of(c[1].substring(1).split("\\|", -1));
+            Validator validator;
+            try {
+                validator = Validator.compile("{\"pattern\": " + json(c[0]) + "}");
+            } catch (SchemaCompilationException e) {
+                wrong.add(e.getMessage());
+                continue;
+            }
+            for (String text : texts) {
+                boolean matches = expected.contains(text);
+                if (validator.isValid(json(text)) != matches) {
+                    wrong.add("{\"pattern\": \"" + c[0] + "\"} is " + (matches ? "not " : "") + "valid for " + text);
+                }
+            }
+        }
+        assertEquals(List.of(), wrong);
+    }
+
+    /**
+     * A pattern that is valid only without the u flag matches UTF-16 code units, and one that is valid with it
+     * matches characters. The answers are V8's.
+     */
+    @Test
+    void aPatternValidOnlyWithoutTheUFlagMatchesUtf16CodeUnits() {
+        List<String> texts = textsOver(2, BEYOND_THE_BMP, MORE_BEYOND_THE_BMP);
+        assertValidatorAnswers(CODE_UNITS, texts);
+        assertAnswers(CHARACTERS_WITH_THE_U_FLAG, texts);
+        for (String p : NOT_VALID_BY_CODE_UNIT) {
+            assertNull(EcmaRegex.translate(p), p);
+            assertNull(EcmaRegex.unsupported(p), p);
+        }
+        // A pattern with no surrogate is translated as it was, and a surrogate is the character the text has for it.
+        assertEquals("^\\x{2d}?[\\x{0}-\\x{60}\\x{62}-\\x{10ffff}][^\\x{A}\\x{D}\\x{2028}\\x{2029}]\\z",
+                EcmaRegex.translate("^\\-?[^a].$"));
+        assertEquals("\\x{2d}{0}^[\\x{f0001}\\x{f0400}]\\z", EcmaRegex.translate("\\-{0}^[\\ud801\\udc00]$"));
+    }
 }

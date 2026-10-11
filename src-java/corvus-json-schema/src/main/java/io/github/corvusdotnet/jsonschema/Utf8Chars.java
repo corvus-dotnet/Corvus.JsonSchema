@@ -31,6 +31,44 @@ final class Utf8Chars implements CharSequence {
         return this;
     }
 
+    /**
+     * Views the string value {@code n} of {@code doc} as a pattern that is valid only without the u flag reads it:
+     * by UTF-16 code unit. Each half of a surrogate pair is written as one character of its own (see
+     * {@link EcmaRegex#codeUnits}), which is two chars here, so a character beyond the Basic Multilingual Plane
+     * takes four chars for its four bytes.
+     */
+    Utf8Chars units(JsonDocument doc, int n) {
+        of(doc, n);
+        if (ascii) {
+            return this;
+        }
+        int surrogates = 0;
+        for (int k = 0; k < length; k++) {
+            if (Character.isSurrogate(chars[k])) {
+                surrogates++;
+            }
+        }
+        if (surrogates == 0) {
+            return this;
+        }
+        int to = length + surrogates;
+        if (chars.length < to) {
+            chars = java.util.Arrays.copyOf(chars, Math.max(to, chars.length * 2));
+        }
+        for (int k = length - 1, w = to; k >= 0; k--) {
+            char c = chars[k];
+            if (Character.isSurrogate(c)) {
+                int unit = c - Character.MIN_SURROGATE + EcmaRegex.UNIT_BASE;
+                chars[--w] = Character.lowSurrogate(unit);
+                chars[--w] = Character.highSurrogate(unit);
+            } else {
+                chars[--w] = c;
+            }
+        }
+        length = to;
+        return this;
+    }
+
     /** Decodes valid UTF-8 into UTF-16, returning the number of chars. */
     static int decode(byte[] b, int from, int to, char[] out) {
         int n = 0;
