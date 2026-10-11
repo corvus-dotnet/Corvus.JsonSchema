@@ -118,6 +118,12 @@ supported version of Python.
   about 0.2 seconds to compile and holds about 3 MB.
 - A pattern that is valid only without the `u` flag is read and matched by UTF-16 code unit, as ECMA-262 says: in
   `^\-?.$` the dot takes half of a character beyond the Basic Multilingual Plane.
+- A `\p{...}` takes the names that ECMA-262 has and no others: a value of General_Category (`\p{Lu}`,
+  `\p{gc=Letter}`), a value of Script after `Script=`, `sc=`, `Script_Extensions=` or `scx=` (`\p{sc=Greek}`), or a
+  binary property that ECMA-262 lists (`\p{Alphabetic}`), in the spelling of the Unicode Character Database. The
+  names are those of Unicode 16. A name that only the `regex` package has, such as `\p{Greek}`, `\p{IsLatin}` or
+  `\p{alpha}`, makes a pattern that is not valid with the `u` flag, and so one where `\p` is the letter `p`. The
+  characters of a property are the `regex` package's, and follow its version of Unicode.
 
 No valid pattern is refused for what it means, and none is run with another meaning. Two limits remain.
 
@@ -131,7 +137,8 @@ No valid pattern is refused for what it means, and none is run with another mean
 
 Where V8 itself departs from ECMA-262, the package follows ECMA-262. With the `u` flag V8 13.6 also starts a match
 between the two surrogates of a character, and with the `i` and `u` flags it compares a backreference to a group of
-several characters by full case folding. The
+several characters by full case folding. It takes `\p{WSpace}`, which ECMA-262 does not list, and refuses the
+Script value `Katakana_Or_Hiragana`, which ECMA-262 has. The
 [package's README](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-py/corvus-json-schema#limitations-and-differences-from-the-c-evaluator)
 has an example of each.
 

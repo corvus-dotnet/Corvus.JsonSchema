@@ -242,6 +242,14 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
     `^\-?.$` the dot takes half of a character beyond the Basic Multilingual Plane, and a quantifier after such a
     character in the pattern repeats its second half.
 
+  - A `\p{...}` has one of ECMA-262's names, or the pattern is not valid with the `u` flag: a value of
+    General_Category by itself or after `General_Category=` or `gc=`, a value of Script after `Script=`, `sc=`,
+    `Script_Extensions=` or `scx=`, or a binary property that ECMA-262 lists, in the spelling of the Unicode
+    Character Database. The names are those of Unicode 16, from a table that the package carries. The other names
+    that the `regex` package has (`\p{Greek}`, `\p{IsLatin}`, `\p{alpha}`, a name in another case) are not taken:
+    such a pattern is read without the `u` flag, where `\p` is the letter `p`. The characters of a property are the
+    `regex` package's, so they follow its version of Unicode (16 in release 2025.9.1, 17 in 2026.9.29).
+
   No valid pattern is refused for what it means, and none is answered with another meaning. Two limits remain:
   - both engines backtrack, and neither has V8's short cuts, so a pattern of repetitions inside repetitions that can
     match nothing may take far longer than it does in V8;
@@ -251,10 +259,14 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
     `^(?:(?:(a)|b){300}){300}\1$`, or a count of more than 175 around a case-insensitive backreference inside a
     lookbehind, or of more than 1,284 around one outside a lookbehind.
 
-  Where V8 13.6 itself departs from ECMA-262, the package follows ECMA-262. Three such places are known. With the
+  Where V8 13.6 itself departs from ECMA-262, the package follows ECMA-262. Six such places are known. With the
   `u` flag V8 also starts a match between the two surrogates of a character, so `(?<!^.*)` matches `"\U00010428"`
   there. With the `i` and `u` flags V8 compares a backreference to a group of several characters by full case
   folding, so `^(...)\1$` takes `"\u1e9eS\u00df\u1e9e\u00df\u017f"` there, and `^(.)(.)(.)\1\2\3$`, which means the
-  same, does not. And V8 answers six patterns of the test data with a case-insensitive modifier group differently
-  from the same pattern with the `i` flag.
+  same, does not. V8 answers six patterns of the test data with a case-insensitive modifier group differently
+  from the same pattern with the `i` flag. V8 takes `\p{WSpace}`, an alias of White_Space that ECMA-262 does not
+  list, so here that pattern is the letter `p` and what follows it. V8 refuses the Script value
+  `Katakana_Or_Hiragana` (`Hrkt`), which ECMA-262 has because `PropertyValueAliases.txt` has it, so here
+  `\p{sc=Hrkt}` is valid and takes no character, as no character has that value. And V8 takes
+  `a{2147483648,2147483647}`, where the first count is the greater, which is not valid here.
 - Custom `formats` functions cannot be serialised into standalone modules.

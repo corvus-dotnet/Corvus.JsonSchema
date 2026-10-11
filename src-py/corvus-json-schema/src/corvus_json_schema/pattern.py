@@ -71,7 +71,6 @@ _LINE_START = "(?<![^\\n\\r\\u2028\\u2029])"
 _LINE_END = "(?![^\\n\\r\\u2028\\u2029])"
 _SYNTAX = set("^$\\.*+?()[]{}|/")
 _QUANTIFIER_RE = re.compile(r"\{(\d+)(,(\d*))?\}")
-_PROPERTY_RE = re.compile(r"[A-Za-z0-9_]+(=[A-Za-z0-9_]+)?")
 _ASCII_NAME_RE = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
 
 # A count from here up is more characters than a text has. As a maximum it is no maximum.
@@ -111,23 +110,50 @@ class _Invalid(Exception):
     pass
 
 
-_properties: dict[str, bool] = {}
+_properties: dict[str, tuple[str, str, _Ranges | None]] = {}
 
 
-def _is_a_property(text: str) -> bool:
-    """Whether the regex package has the property of a ``\\p{...}``. It is asked about each one by itself, so that
-    a translation it then does not compile is known to be a fault here and not a name it does not have."""
-    known = _properties.get(text)
-    if known is None:
-        import regex
+def _property(body: str) -> tuple[str, str, _Ranges | None] | None:
+    """What a property expression of ECMA-262 (the text between the braces of a ``\\p{...}``) is for the regex
+    package: the class member that takes its characters and the one that takes the others, or the ranges of its
+    characters for a property that the package does not have. None: ECMA-262 has no such expression.
 
-        try:
-            regex.compile(text)
-            known = True
-        except regex.error:
-            known = False
-        _properties[text] = known
-    return known
+    The names are ECMA-262's and no others, and their case matters: a value of General_Category by itself or after
+    ``General_Category=`` or ``gc=``, a value of Script after ``Script=``, ``sc=``, ``Script_Extensions=`` or
+    ``scx=``, and a binary property that ECMA-262 lists. The regex package has many more (``\\p{Greek}``,
+    ``\\p{IsLatin}``, ``\\p{alpha}``, block names, any case), so it is never asked what a name means: each
+    expression is written for it with the property named, and a value by its short name."""
+    if not _properties:
+        from . import _properties as tables
+
+        for names in tables.GENERAL_CATEGORY.split(";"):
+            short = names.split(" ")[0]
+            entry: tuple[str, str, _Ranges | None] = (f"\\p{{gc={short}}}", f"\\P{{gc={short}}}", None)
+            for name in names.split(" "):
+                _properties[name] = _properties[f"gc={name}"] = _properties[f"General_Category={name}"] = entry
+        for names in tables.SCRIPT.split(";"):
+            short = names.split(" ")[0]
+            for kind, long in (("sc", "Script"), ("scx", "Script_Extensions")):
+                entry = (f"\\p{{{kind}={short}}}", f"\\P{{{kind}={short}}}", None)
+                for name in names.split(" "):
+                    _properties[f"{kind}={name}"] = _properties[f"{long}={name}"] = entry
+        changes: _Ranges = []
+        for item in tables.CHANGES_WHEN_NFKC_CASEFOLDED.split(" "):
+            lo, _, hi = item.partition("-")
+            changes.append((int(lo, 16), int(hi or lo, 16)))
+        # The regex package has no property of these names, or (ASCII) has a block of the name.
+        special: dict[str, tuple[str, str, _Ranges | None]] = {
+            "ASCII": ("", "", [(0, 0x7F)]),
+            "Any": ("", "", [(0, 0x10FFFF)]),
+            "Assigned": ("\\P{gc=Cn}", "\\p{gc=Cn}", None),
+            "Changes_When_NFKC_Casefolded": ("", "", changes),
+        }
+        for names in tables.BINARY.split(";"):
+            long = names.split(" ")[0]
+            binary = special.get(long, (f"\\p{{{long}=Yes}}", f"\\P{{{long}=Yes}}", None))
+            for name in names.split(" "):
+                _properties[name] = binary
+    return _properties.get(body)
 
 
 def _both_ways(properties: list[str]) -> bool:
@@ -645,14 +671,18 @@ class _Translator:
             ref.icase = self.icase
             self.named_refs.append((ref, self._group_name()))
             return ref, True
+        if e in "pP" and self.u:
+            member, ranges = self._property_escape()
+            if self.icase:
+                return self._folded_class(ranges or [], [member] if ranges is None else [], False), True
+            if ranges is None:
+                return self._one(member), True
+            return self._one(f"[{member}]" if ranges else _NEVER, ranges), True
         text, char = self._char_escape(in_class=False)
         if char is not None:
             return self._char(char), True
-        if self.icase and self.u and e in "wWpP":
-            ranges: _Ranges = _FOLD_WORD if e == "w" else _complement(_FOLD_WORD) if e == "W" else []
-            return self._folded_class(ranges, [] if e in "wW" else [text], False), True
-        if e in "pP":
-            return self._one(text), True
+        if self.icase and self.u and e in "wW":
+            return self._folded_class(_FOLD_WORD if e == "w" else _complement(_FOLD_WORD), [], False), True
         return self._one(text, _DIGIT if e in "dD" else _WORD if e in "wW" else _WHITE, e in "DWS"), True
 
     def _legacy_octal_or_identity(self) -> str:
@@ -716,21 +746,6 @@ class _Translator:
                 raise self.error()
             self.i -= 1  # '\c' is a literal backslash then 'c'
             return "", "\\"
-        if e in "pP":
-            if self.u and self.peek() == "{":
-                end = self.p.find("}", self.i)
-                body = self.p[self.i + 1 : end] if end > 0 else ""
-                if not body or _PROPERTY_RE.fullmatch(body) is None:
-                    raise self.error()
-                self.i = end + 1
-                self.needs_regex = True
-                text = f"\\{e}{{{body}}}"
-                if not _is_a_property(text):
-                    raise self.error()
-                return text, None
-            if self.u:
-                raise self.error()
-            return "", e
         if e == "x":
             hexa = self.p[self.i : self.i + 2]
             if len(hexa) == 2 and all(h in "0123456789abcdefABCDEF" for h in hexa):
@@ -759,6 +774,24 @@ class _Translator:
             return "", self._legacy_octal_or_identity()
         # Annex B identity escape.
         return "", e
+
+    def _property_escape(self) -> tuple[str, _Ranges | None]:
+        """A ``\\p{...}`` or ``\\P{...}`` of a pattern with the ``u`` flag, from its ``p``: the class member that
+        takes its characters, and the characters as ranges when the member is written from them (see ``_property``).
+        Without the ``u`` flag ``\\p`` is the letter ``p`` (Annex B), which ``_char_escape`` reads."""
+        negated = self.p[self.i] == "P"
+        end = self.p.find("}", self.i)
+        known = _property(self.p[self.i + 2 : end]) if end > 0 and self.peek(1) == "{" else None
+        if known is None:
+            raise self.error()
+        self.i = end + 1
+        positive, negative, ranges = known
+        if ranges is None:
+            self.needs_regex = True
+            return (negative if negated else positive), None
+        if negated:
+            ranges = _complement(ranges)
+        return _class_text(ranges), ranges
 
     def _legacy_octal_after_zero(self) -> str:
         self.i -= 1
@@ -828,7 +861,8 @@ class _Translator:
                 members.append(f"{lo}-{hi}")
                 ranges.append((ord(lo_char), ord(hi_char)))
                 continue
-            (outside if lo.startswith("[^") else members).append(lo)
+            if lo:
+                (outside if lo.startswith("[^") else members).append(lo)
             if lo_char is not None:
                 ranges.append((ord(lo_char), ord(lo_char)))
         if self.icase:
@@ -854,15 +888,19 @@ class _Translator:
         if self.i >= self.n:
             raise self.error()
         e = self.p[self.i]
+        if e in "pP" and self.u:
+            member, sets = self._property_escape()
+            if sets is None:
+                properties.append(member)
+            else:
+                ranges.extend(sets)
+            return member, None
         text, char = self._char_escape(in_class=True)
         if char is not None:
             return _literal(char), char
-        if e in "pP":
-            properties.append(text)
-        else:
-            word = _FOLD_WORD if self.u and self.icase else _WORD
-            positive = _DIGIT if e in "dD" else word if e in "wW" else _WHITE
-            ranges.extend(positive if e in "dws" else _complement(positive))
+        word = _FOLD_WORD if self.u and self.icase else _WORD
+        positive = _DIGIT if e in "dD" else word if e in "wW" else _WHITE
+        ranges.extend(positive if e in "dws" else _complement(positive))
         return text, None
 
     def _folded_class(self, ranges: _Ranges, properties: list[str], negated: bool) -> _Node:
