@@ -138,7 +138,8 @@ A JSON string cannot hold a surrogate that is not half of a pair. The parser ref
   the dot match everything as ECMA-262 defines them. Group names can be any ECMAScript identifier, can be written
   with `\u` escapes, and can be shared by groups in separate alternatives.
 - A lookbehind can be of any length. One that `java.util.regex` cannot bound is run by a search whose time grows with
-  the square of the length of the string.
+  the square of the length of the string. The search is held to the place the lookbehind stands at, so a repetition
+  inside a repetition, as in `(?<=(?:[ax]+){2,})$`, does not try the ways to split the text after that place.
 - An iteration of a counted repetition that matches nothing does not end the repetition while iterations are still
   due, so `(^|x){2}a` matches "xa" as ECMA-262 defines, where `java.util.regex` does not. Such a repetition is
   written with a copy of its body for each iteration it must run.

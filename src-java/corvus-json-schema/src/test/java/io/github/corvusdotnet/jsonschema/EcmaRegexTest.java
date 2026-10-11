@@ -1712,4 +1712,81 @@ class EcmaRegexTest {
         assertNoMatch("(?i:^(?<n0>\\1|\u00df)*?(..\\W){1,2}\\2{2}$)",
                 "\u00df\u1e9e\u017f\u00df\u1e9eS\u00df\u1e9e\u00df\u017f");
     }
+
+    /**
+     * Lookbehinds of no bounded length whose body is a repetition inside a repetition, with the texts each matches.
+     * Such a lookbehind is written as a search for its start. Its body ran on past the place the lookbehind stands
+     * at, and tried every way to split the text after that place, or the text before a character it cannot take:
+     * the first of these took over two minutes on a text of 41 characters.
+     */
+    private static final String[][] SEARCHED_LOOKBEHINDS = {
+            {
+                "(?<=((?:[ax]+){2,}))$",
+                "|aa|ax|xa|xx|aaa|aax|axa|axx|xaa|xax|xxa|xxx|-aa|-ax|-xa|-xx|aaaa|aaax|aaxa"
+                        + "|aaxx|axaa|axax|axxa|axxx|a-aa|a-ax|a-xa|a-xx|xaaa|xaax|xaxa|xaxx|xxaa|xxax"
+                        + "|xxxa|xxxx|x-aa|x-ax|x-xa|x-xx|-aaa|-aax|-axa|-axx|-xaa|-xax|-xxa|-xxx|--aa"
+                        + "|--ax|--xa|--xx|aaaaaaaaaxaaaaaaaaaa|xaaaaaaaaaaaaaa|aaaaaaaaaaxa",
+            },
+            {
+                "(?<=(?:[ax]+){2,})$",
+                "|aa|ax|xa|xx|aaa|aax|axa|axx|xaa|xax|xxa|xxx|-aa|-ax|-xa|-xx|aaaa|aaax|aaxa"
+                        + "|aaxx|axaa|axax|axxa|axxx|a-aa|a-ax|a-xa|a-xx|xaaa|xaax|xaxa|xaxx|xxaa|xxax"
+                        + "|xxxa|xxxx|x-aa|x-ax|x-xa|x-xx|-aaa|-aax|-axa|-axx|-xaa|-xax|-xxa|-xxx|--aa"
+                        + "|--ax|--xa|--xx|aaaaaaaaaxaaaaaaaaaa|xaaaaaaaaaaaaaa|aaaaaaaaaaxa",
+            },
+            {
+                "(?<=((?:(?:\\b)*[ax]+){2,}))$",
+                "|aa|ax|xa|xx|aaa|aax|axa|axx|xaa|xax|xxa|xxx|-aa|-ax|-xa|-xx|aaaa|aaax|aaxa"
+                        + "|aaxx|axaa|axax|axxa|axxx|a-aa|a-ax|a-xa|a-xx|xaaa|xaax|xaxa|xaxx|xxaa|xxax"
+                        + "|xxxa|xxxx|x-aa|x-ax|x-xa|x-xx|-aaa|-aax|-axa|-axx|-xaa|-xax|-xxa|-xxx|--aa"
+                        + "|--ax|--xa|--xx|aaaaaaaaaxaaaaaaaaaa|xaaaaaaaaaaaaaa|aaaaaaaaaaxa",
+            },
+            {
+                "(?<=(?:a+b?)+)-$",
+                "|a-|aa-|xa-|-a-|aaa-|axa-|a-a-|xaa-|xxa-|x-a-|-aa-|-xa-|--a-|aaaaaaaaaaaaaa-"
+                        + "|aab-|abab-|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab-ab-",
+            },
+            {
+                "(?<=(?:a+(?=.x))+).x",
+                "|aax|axx|a-x|aaax|aaxa|aaxx|aax-|aa-x|axxa|axxx|axx-|a-xa|a-xx|a-x-|xaax|xaxx"
+                        + "|xa-x|-aax|-axx|-a-x|aaaaaaaaaxaaaaaaaaaa|aaaaaaaaaaxa",
+            },
+            {
+                "(?<!(?:[ax]+){3,})-",
+                "|-|a-|x-|-a|-x|--|aa-|ax-|a-a|a-x|a--|xa-|xx-|x-a|x-x|x--|-aa|-ax|-a-|-xa|-xx"
+                        + "|-x-|--a|--x|---|aa-a|aa-x|aa--|ax-a|ax-x|ax--|a-aa|a-ax|a-a-|a-xa|a-xx|a-x-"
+                        + "|a--a|a--x|a---|xa-a|xa-x|xa--|xx-a|xx-x|xx--|x-aa|x-ax|x-a-|x-xa|x-xx|x-x-"
+                        + "|x--a|x--x|x---|-aaa|-aax|-aa-|-axa|-axx|-ax-|-a-a|-a-x|-a--|-xaa|-xax|-xa-"
+                        + "|-xxa|-xxx|-xx-|-x-a|-x-x|-x--|--aa|--ax|--a-|--xa|--xx|--x-|---a|---x|----"
+                        + "|aab-|abab-|axb-|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab-ab-",
+            },
+            {"(?<=(?:a+(?<=x.*)){2,})$", "|xaa|axaa|xaaa|xxaa|x-aa|-xaa|aaaaaaaaaxaaaaaaaaaa|xaaaaaaaaaaaaaa"},
+            {
+                "(?<=^(?:[ax]+)+)-",
+                "|a-|x-|aa-|ax-|a-a|a-x|a--|xa-|xx-|x-a|x-x|x--|aaa-|aax-|aa-a|aa-x|aa--|axa-"
+                        + "|axx-|ax-a|ax-x|ax--|a-aa|a-ax|a-a-|a-xa|a-xx|a-x-|a--a|a--x|a---|xaa-|xax-"
+                        + "|xa-a|xa-x|xa--|xxa-|xxx-|xx-a|xx-x|xx--|x-aa|x-ax|x-a-|x-xa|x-xx|x-x-|x--a"
+                        + "|x--x|x---|axaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxax-|aaaaaaaaaaaaaa-"
+                        + "|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-a",
+            },
+            {
+                "(?<=(?:[^-]+){2})-a",
+                "|aa-a|ax-a|xa-a|xx-a|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-a"
+                        + "|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab-ab-",
+            },
+    };
+
+    private static final String[] MORE_FOR_SEARCHED_LOOKBEHINDS = {
+        "axaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxax-", "aaaaaaaaaaaaaa-", "aaaaaaaaaxaaaaaaaaaa", "xaaaaaaaaaaaaaa",
+        "aaaaaaaaaaxa", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-a", "ab", "aab-", "abab-", "axb-",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab-ab-"
+    };
+
+    /** The body of a searched lookbehind is held to the place the lookbehind stands at. */
+    @Test
+    void aSearchedLookbehindDoesNotRunPastItsPlace() {
+        org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(java.time.Duration.ofSeconds(20),
+                () -> assertAnswers(SEARCHED_LOOKBEHINDS,
+                        textsOver(4, new String[] {"a", "x", "-"}, MORE_FOR_SEARCHED_LOOKBEHINDS)));
+    }
 }

@@ -1783,13 +1783,20 @@ final class EcmaRegex {
                 case EMPTY:
                     break;
                 case CHAR:
-                    literal(n.codePoint);
-                    break;
                 case SET:
-                    if (n.parts != null) {
+                    if (!barrier.isEmpty()) {
+                        // In a group, so that a quantifier after the character repeats the test with it.
+                        out.append("(?:").append(barrier);
+                    }
+                    if (n.kind == CHAR) {
+                        literal(n.codePoint);
+                    } else if (n.parts != null) {
                         engineSet(n);
                     } else {
                         set(n.set);
+                    }
+                    if (!barrier.isEmpty()) {
+                        out.append(')');
                     }
                     break;
                 case CAT:
@@ -1835,7 +1842,10 @@ final class EcmaRegex {
                             .append(w).append("))");
                     break;
                 }
-                case LOOK:
+                case LOOK: {
+                    // A lookaround inside a lookbehind is not held to the place the lookbehind stands at.
+                    String wasBarrier = barrier;
+                    barrier = "";
                     if (n.behind) {
                         lookbehind(n);
                     } else {
@@ -1843,7 +1853,9 @@ final class EcmaRegex {
                         node(n.subs[0]);
                         out.append(')');
                     }
+                    barrier = wasBarrier;
                     break;
+                }
                 case BACKREF:
                     backreference(n);
                     break;
@@ -1851,6 +1863,43 @@ final class EcmaRegex {
                     throw new IllegalStateException();
             }
         }
+
+        /** A lookbehind written as a search reaches back over the characters of a set of up to this many ranges. */
+        private static final int MAX_REACH_RANGES = 8;
+
+        /**
+         * The characters a node can take, outside the lookarounds in it, or null when that is any character (a
+         * backreference takes what its group holds).
+         */
+        private static int[] taken(Node n) {
+            switch (n.kind) {
+                case CHAR:
+                    return new int[] {n.codePoint, n.codePoint};
+                case SET:
+                    return n.set;
+                case LOOK:
+                    return NO_CHARACTERS;
+                case BACKREF:
+                    return null;
+                default: {
+                    int[] all = NO_CHARACTERS;
+                    for (Node sub : n.subs) {
+                        int[] one = taken(sub);
+                        if (one == null) {
+                            return null;
+                        }
+                        all = EcmaUnicode.union(all, one);
+                    }
+                    return all;
+                }
+            }
+        }
+
+        /**
+         * Inside a lookbehind that is written as a search (see {@link #lookbehind}): the test, written before each
+         * character the body takes, that the place is not yet the one the lookbehind stands at. Empty elsewhere.
+         */
+        private String barrier = "";
 
         private void literal(int c) {
             if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
@@ -2115,8 +2164,19 @@ final class EcmaRegex {
                 return;
             }
             int rest = ++javaGroups;
-            out.append("(?=(").append(ANY).append("*))").append(n.negative ? "(?<!" : "(?<=").append("(?=(?:");
+            out.append("(?=(").append(ANY).append("*))").append(n.negative ? "(?<!" : "(?<=");
+            int[] taken = taken(body);
+            boolean reach = taken != null && taken.length > 0 && taken.length <= 2 * MAX_REACH_RANGES;
+            barrier = "(?!\\" + rest + "\\z)";
+            if (reach) {
+                // java.util.regex tries X at a start before it tries to reach the start, so the test comes first.
+                out.append("(?=(?:").append(barrier);
+                set(taken);
+                out.append(")*\\").append(rest).append("\\z)");
+            }
+            out.append("(?=(?:");
             node(body);
+            barrier = "";
             out.append(")\\").append(rest).append("\\z)").append(ANY).append("{0,2147483647})");
         }
 
