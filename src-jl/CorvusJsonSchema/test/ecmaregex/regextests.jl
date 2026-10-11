@@ -303,9 +303,11 @@ const GRINNING_FACE = "\U1F600"
         @test isempty(E.translate("(?<=a{3}[bc])x").lookbehinds)
         @test length(E.translate("(?<=(?:a|bc))x").lookbehinds) == 1
         @test length(E.translate("(?<=a?)x").lookbehinds) == 1
-        # A fixed length PCRE2 does not take is a callout too.
-        @test matches("(?<=^a{70000})b", "a"^70000 * "b")
-        @test !matches("(?<=^a{70000})b", "a"^69999 * "b")
+        # A fixed length PCRE2 does not take is a callout too. (The lookbehind is searched for at each of the 70,000
+        # places before the b, which takes seconds, so the match is given the time.)
+        long = E.compile("(?<=^a{70000})b")
+        @test E.ismatch(long, "a"^70000 * "b", E.MatchLimit(nothing))
+        @test !E.ismatch(long, "a"^69999 * "b", E.MatchLimit(nothing))
     end
 
     # Backreferences mean what ECMA-262 says, or the pattern is refused.

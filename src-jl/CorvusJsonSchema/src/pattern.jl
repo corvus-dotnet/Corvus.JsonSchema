@@ -458,17 +458,18 @@ function beyond_bmp(s::Bytes)
 end
 
 # match for a string that is not known to be ASCII.
-function match_string(p::Pattern, s::String)
+function match_string(p::Pattern, s::String, limit::PatternMatchLimit)
     b = Bytes(Vector{UInt8}(codeunits(s)))
-    return pattern_match(p, b, is_ascii(b))
+    return pattern_match(p, b, is_ascii(b), limit)
 end
 
 # Reports whether the pattern matches somewhere in s, ascii saying whether s is known to be ASCII (a document knows
-# that of its strings).
-function pattern_match(p::Pattern, s::Bytes, ascii::Bool)::Bool
+# that of its strings). The limit is on the time of a match by the engine. The faster matchers read the string a
+# bounded number of times and have none.
+function pattern_match(p::Pattern, s::Bytes, ascii::Bool, limit::PatternMatchLimit)::Bool
     k = p.kind
     if p.units && !ascii && beyond_bmp(s)
-        return engine_match(p.engine::EnginePattern, s)
+        return engine_match(p.engine::EnginePattern, s, limit)
     end
     if k == MATCH_EVERYTHING
         return true
@@ -526,7 +527,7 @@ function pattern_match(p::Pattern, s::Bytes, ascii::Bool)::Bool
         end
         return word
     end
-    return engine_match(p.engine::EnginePattern, s)
+    return engine_match(p.engine::EnginePattern, s, limit)
 end
 
 # ----------------------------------------------------------------------------------------------------------------------

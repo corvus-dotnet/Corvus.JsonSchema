@@ -764,13 +764,14 @@ end
               raw"\A(?:[\x{61}-\x{62}]{5}(?:(?&d1){0,118}?(?&c1){0,255}?[\x{61}-\x{62}]{0,32767}?|(?&d1){119}" *
               raw"(?:(?&c1){0,52}?[\x{61}-\x{62}]{0,32767}?|(?&c1){53}[\x{61}-\x{62}]{0,18939}?)))\z" *
               raw"(?(DEFINE)(?<c1>(?>[\x{61}-\x{62}]{32768}))(?<d1>(?>(?&c1){256})))"
-        # A long text does not fill the memory of a match: nothing is kept to come back into a block.
+        # A long text does not fill the memory of a match: nothing is kept to come back into a block. (The test is
+        # of memory, on a text of five megabytes, so the match has no limit on its time.)
         for trees in (false, true)
             E.SEARCH_TREES[] = trees
             try
                 lazy = E.compile(raw"^[^\P{L}x]{0,2000000}?$")
-                @test E.ismatch(lazy, "a\u00e9\U10400"^600000)
-                @test !E.ismatch(lazy, "a\u00e9\U10400"^600000 * "x")
+                @test E.ismatch(lazy, "a\u00e9\U10400"^600000, E.MatchLimit(nothing))
+                @test !E.ismatch(lazy, "a\u00e9\U10400"^600000 * "x", E.MatchLimit(nothing))
             finally
                 E.SEARCH_TREES[] = nothing
             end

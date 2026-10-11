@@ -171,7 +171,7 @@ const ANCHOR_CASES = Tuple{String,Vector{String},Vector{String}}[
             for _ in 1:4000
                 text = join(String[alphabet[next!(g, length(alphabet))+1] for _ in 1:next!(g, 9)])
                 s = C.Bytes(Vector{UInt8}(text))
-                got, want = C.pattern_match(compiled, s, isascii(text)), C.engine_match(reference, s)
+                got, want = C.pattern_match(compiled, s, isascii(text), C.PatternMatchLimit()), C.engine_match(reference, s, C.PatternMatchLimit())
                 if got != want
                     push!(failures, "$(repr(source)) on $(repr(text)): $got, the engine says $want")
                     break
@@ -332,7 +332,7 @@ const ANCHOR_CASES = Tuple{String,Vector{String},Vector{String}}[
             fast += compiled.kind != C.MATCH_ENGINE
             v = compile_schema("{\"pattern\": " * quote_json(pattern) * "}")
             for text in texts
-                @test C.match_string(compiled, text) == (text in matched)
+                @test C.match_string(compiled, text, C.PatternMatchLimit()) == (text in matched)
                 @test isvalid(v, Vector{UInt8}(quote_json(text))) == (text in matched)
             end
         end

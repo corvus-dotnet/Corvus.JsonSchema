@@ -43,7 +43,7 @@ const PAIRS_OF_UNICODE_17 = vcat(
 # A PCRE2 pattern compiled as the module compiles its translations, for tests of what PCRE2 itself does.
 function rawpattern(text::String)
     compiled = E.pcrecompile(E.Translation(text, String[]), text, true)
-    compiled isa String && error("PCRE2 does not compile $(repr(text)): $compiled")
+    compiled isa E.Refusal && error("PCRE2 does not compile $(repr(text)): $(compiled.message)")
     return compiled
 end
 

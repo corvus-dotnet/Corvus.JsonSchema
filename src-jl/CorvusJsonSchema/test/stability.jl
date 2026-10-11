@@ -60,9 +60,9 @@ end
         (C.eval_unevaluated_items, (E, C.SchemaNode, Int, C.Bitset)), (C.push_scope!, (E, UInt32)),
         (C.new_bits!, (E, Int)), (C.content_ok, (E, B, UInt8)),
         # Patterns, names, values, numbers and formats.
-        (C.pattern_match, (C.Pattern, B, Bool)), (C.match_ascii, (C.Sequence, B)), (C.match_chars, (C.Sequence, B)),
+        (C.pattern_match, (C.Pattern, B, Bool, C.PatternMatchLimit)), (C.match_ascii, (C.Sequence, B)), (C.match_chars, (C.Sequence, B)),
         (C.match_list, (C.SeparatedList, B)), (C.match_alternative, (C.Alternative, B, Bool)),
-        (C.engine_match, (C.EnginePattern, B)), (C.find, (C.Names, B)),
+        (C.engine_match, (C.EnginePattern, B, C.PatternMatchLimit)), (C.find, (C.Names, B)),
         (C.find_key, (C.Names, Int, UInt64, UInt64)), (C.find_long, (C.Names, B, UInt64)),
         (C.find_next, (C.Names, B, Int)), (C.name_word, (B,)), (C.second_word, (B,)), (C.name_rest, (C.Names, Int, B)),
         (C.rest_equal, (B, Vector{UInt8})), (C.word_at, (Vector{UInt8}, Int, Int)), (C.values_equal, (D, Int, D, Int)), (C.value_hash, (D, Int)),

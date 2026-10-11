@@ -182,6 +182,22 @@ end
         end
     end
 
+    # The limit on the time of a match allocates nothing: not the limit a validator is given, not a match that
+    # uses the steps it starts with, not a match that is timed, not the search of a long string in parts.
+    @testset "the limit on a match allocates nothing" begin
+        schema = """{ "properties": { "a": { "pattern": "^(?:a|a)+\$" }, "b": { "pattern": "(?:foo|bar)\\\\d" } } }"""
+        instances = ["""{"a": "aaa", "b": "foo1"}""", """{"a": "$("a"^12)b", "b": "foo1"}""",
+            """{"a": "$("a"^17)b", "b": "bar2"}""", """{"a": "a", "b": "$("x"^100_000)foo3"}""",
+            """{"a": "a", "b": "$("é"^100_000)"}"""]
+        for limit in (1, 0.5, 120, nothing)
+            v = compile_schema(schema; pattern_match_limit=limit)
+            documents = [parse_document(instance) for instance in instances]
+            @test [isvalid(v, d) for d in documents] == [true, false, false, true, false]
+            @test allocated(validate_all, v, documents) == 0
+            @test allocated(validate_all_strict, v, instances) == 0
+        end
+    end
+
     @testset "text that is not JSON allocates nothing for isvalid" begin
         v = compile_schema("""{"type": "object"}""")
         @test allocated(validate_all, v, [Vector{UInt8}("""{"a": [1, 2, {"b": "c"}""")]) == 0

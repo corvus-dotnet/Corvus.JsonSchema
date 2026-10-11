@@ -418,6 +418,82 @@
         @test expect_valid(v, "[\"a\", 1]", true)
     end
 
+    # One match of a pattern is limited in time, to one second unless pattern_match_limit says another time. A
+    # match that reaches the limit is an error from every entry point, and never "valid" or "invalid". The pattern
+    # tries 2^40 ways on the string before it finds no match, which no machine does in the time the tests allow.
+    @testset "a match of a pattern is limited in time" begin
+        slow = "^(?:a|a)+\$"
+        hostile = "\"" * "a"^40 * "b\""
+        function given(f)
+            started = time()
+            error = try
+                f()
+            catch e
+                e
+            end
+            return error, time() - started
+        end
+        v = compile_schema("""{ "pattern": "$(escape_string(slow))" }""")
+        @test expect_valid(v, "\"aaaa\"", true)
+        error, took = given(() -> isvalid(v, hostile))
+        @test error isa PatternMatchError
+        @test error.limit == :time && error.pattern == slow
+        @test occursin("which is 1 second", sprint(showerror, error))
+        @test 0.9 < took < 20
+        @test !(@atomic v.busy)
+        # The option, for each entry point, failing fast and collecting, for pattern and for patternProperties.
+        for schema in ["""{ "pattern": "$(escape_string(slow))" }""",
+                """{ "items": { "type": "string", "pattern": "$(escape_string(slow))" } }""",
+                """{ "patternProperties": { "$(escape_string(slow))": true }, "additionalProperties": false }""",
+                """{ "propertyNames": { "pattern": "$(escape_string(slow))" } }""",
+                """{ "unevaluatedProperties": false, "patternProperties": { "$(escape_string(slow))": true } }"""]
+            v = compile_schema(schema; pattern_match_limit=0.05)
+            instance = occursin("ropert", schema) ? "{" * hostile * ": 1}" :
+                occursin("items", schema) ? "[" * hostile * "]" : hostile
+            for check in [() -> isvalid(v, instance), () -> validate(v, instance),
+                    () -> isvalid(v, parse_document(instance)), () -> validate(v, parse_document(instance)),
+                    () -> isvalid(v, Vector{UInt8}(instance)), () -> evaluate(v, instance),
+                    () -> evaluate(v, instance, ResultsCollector(Basic)),
+                    () -> evaluate(v, parse_document(instance), ResultsCollector(Verbose))]
+                error, took = given(check)
+                @test error isa PatternMatchError && error.limit == :time
+                @test error isa PatternMatchError && occursin("which is 0.05 seconds", error.message)
+                @test took < 5
+                # The validator is fit for the next validation.
+                @test !(@atomic v.busy)
+            end
+            @test isvalid(v, replace(instance, "b\"" => "\""))
+        end
+        # A limit that leaves the match its time, and no limit: 2^22 ways are tried in less than two minutes.
+        mild = "\"" * "a"^22 * "b\""
+        @test expect_valid(compile_schema("""{ "pattern": "$(escape_string(slow))" }"""; pattern_match_limit=120), mild, false)
+        @test expect_valid(compile_schema("""{ "pattern": "$(escape_string(slow))" }"""; pattern_match_limit=nothing), mild,
+            false)
+        @test throws(() -> isvalid(compile_schema("""{ "pattern": "$(escape_string(slow))" }""";
+            pattern_match_limit=0.001), mild), PatternMatchError)
+        # A limit is a positive time. No time is not "no limit".
+        @test throws(() -> compile_schema("{}"; pattern_match_limit=0), ArgumentError)
+        @test throws(() -> compile_schema("{}"; pattern_match_limit=-1), ArgumentError)
+        # A pattern with a faster matcher that is valid only without the u flag is decided by the engine for a
+        # string beyond the Basic Multilingual Plane, and the validator is fit after its error too.
+        units = compile_schema("""{ "pattern": "^[a-z]+\\\\-\$" }""")
+        @test units.program.may_throw
+        @test expect_valid(units, "\"ab-\"", true)
+        @test expect_valid(units, "\"\U0001F600-\"", false)
+        # Two validators of one pattern have each their own limit.
+        quick = compile_schema("""{ "pattern": "$(escape_string(slow))" }"""; pattern_match_limit=0.001)
+        patient = compile_schema("""{ "pattern": "$(escape_string(slow))" }"""; pattern_match_limit=120)
+        @test throws(() -> isvalid(quick, mild), PatternMatchError)
+        @test expect_valid(patient, mild, false)
+        @test throws(() -> isvalid(quick, mild), PatternMatchError)
+        # A property name the schema declares is matched against its patterns when the schema is compiled, with the
+        # same limit, so compile_schema throws the error.
+        declared = """{ "properties": { "$("a"^40)b": true }, "patternProperties": { "$(escape_string(slow))": true } }"""
+        error, took = given(() -> compile_schema(declared; pattern_match_limit=0.05))
+        @test error isa PatternMatchError && error.limit == :time
+        @test took < 5
+    end
+
     # A number in a schema and the same number in an instance are the same Float64, however it is written.
     @testset "schema and instance numbers parse alike" begin
         for (keyword, literal) in ["exclusiveMaximum" => "972783798187987123879878123.18878137",

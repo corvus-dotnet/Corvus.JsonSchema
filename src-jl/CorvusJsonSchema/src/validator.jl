@@ -38,6 +38,8 @@ Compile a JSON Schema (draft 4, 6, 7, 2019-09 or 2020-12) given as JSON text in 
 bytes, or as a parsed [`Document`](@ref). A vector of bytes is kept, not copied, so do not modify it afterwards.
 
 Throws [`ParseError`](@ref) when the text is not JSON and [`CompileError`](@ref) when the schema cannot be compiled.
+A property name that the schema declares is matched against its `patternProperties` here, so a match that reaches a
+limit throws its [`PatternMatchError`](@ref) from here.
 
 # Keyword arguments
 - `default_dialect::Dialect = Draft202012`: the dialect of documents without `\$schema`.
@@ -58,6 +60,10 @@ Throws [`ParseError`](@ref) when the text is not JSON and [`CompileError`](@ref)
   default is the root.
 - `max_depth::Integer = 128`: the maximum depth of in-place recursion on a cycle before evaluation is abandoned.
   Values below 1 are ignored.
+- `pattern_match_limit::Union{Nothing,Real} = 1`: the limit on the time of one match of a `pattern` or
+  `patternProperties` regular expression against one string, in seconds. A match that reaches it is given up, and
+  the validation throws a [`PatternMatchError`](@ref). `nothing` turns the limit off, for schemas and instances
+  that are trusted. A limit that is not a positive number is an `ArgumentError`.
 
 # Examples
 ```julia
@@ -227,8 +233,9 @@ is reported as invalid. Use [`validate`](@ref) to tell these apart.
 
 JSON text is parsed into buffers the validator reuses, so a validation allocates nothing in the steady state.
 
-Throws [`PatternMatchError`](@ref) when a `pattern` of the schema backtracks on the instance until it reaches a limit
-of the regular expression engine. Whether the instance matches is then not known, so it is not reported as invalid.
+Throws [`PatternMatchError`](@ref) when one match of a `pattern` or `patternProperties` regular expression of the
+schema reaches the limit on its time (`pattern_match_limit`, one second unless it is set) or on its memory. Whether
+the instance matches is then not known, so it is not reported as valid or as invalid.
 """
 function Base.isvalid(v::Validator, instance::Document)
     ok, _ = run_validation(v, instance)
@@ -246,8 +253,8 @@ end
 Report whether an instance is valid. The instance is a [`Document`](@ref), JSON text as a string, or JSON text as a
 vector of UTF-8 bytes.
 
-Throws [`ParseError`](@ref) when the text is not JSON, and [`DepthExceededError`](@ref) when evaluation recursed in
-place beyond the maximum depth.
+Throws [`ParseError`](@ref) when the text is not JSON, [`DepthExceededError`](@ref) when evaluation recursed in
+place beyond the maximum depth, and [`PatternMatchError`](@ref) when a match of a pattern reaches a limit.
 """
 function validate(v::Validator, instance::Document)
     ok, exceeded = run_validation(v, instance)
@@ -270,8 +277,9 @@ Evaluate an instance exhaustively, reporting to the collector, and report whethe
 instance is a [`Document`](@ref), JSON text as a string, or JSON text as a vector of UTF-8 bytes. Without a collector
 it is [`validate`](@ref).
 
-Throws [`ParseError`](@ref) when the text is not JSON, and [`DepthExceededError`](@ref) when evaluation recursed in
-place beyond the maximum depth.
+Throws [`ParseError`](@ref) when the text is not JSON, [`DepthExceededError`](@ref) when evaluation recursed in
+place beyond the maximum depth, and [`PatternMatchError`](@ref) when a match of a pattern reaches a limit. Nothing
+is then reported as the result of the keyword.
 """
 function evaluate(v::Validator, instance::Document, collector::ResultsCollector)
     e = acquire(v)

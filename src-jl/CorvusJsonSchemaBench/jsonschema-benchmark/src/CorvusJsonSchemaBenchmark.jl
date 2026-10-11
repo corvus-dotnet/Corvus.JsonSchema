@@ -89,7 +89,8 @@ function run_protocol(io::IO, schema_file::String, instances_file::String, warmu
 end
 
 # The program. It returns the exit code of the process: 0, 1 for an instance that is not valid, and 2 for a mistake
-# in the arguments, a file that cannot be read, text that is not JSON, or a schema that does not compile.
+# in the arguments, a file that cannot be read, text that is not JSON, a schema that does not compile, or a match of
+# a pattern that was given up at a limit (which is an error, and never an instance that is not valid).
 function main(args::Vector{String})
     if length(args) != 2
         println(stderr, "Usage: julia --project=. main.jl <schema> <instances>")

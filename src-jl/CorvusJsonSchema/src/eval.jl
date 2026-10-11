@@ -7,7 +7,7 @@
 function Program(c::CompiledSchema, options::CompileOptions)
     nodes = c.nodes
     names = sort!(collect(keys(options.formats)))
-    p = Program(nodes, c.root, c.root, c.uses_dynamic_scope, options.max_depth, names,
+    p = Program(nodes, c.root, c.root, c.uses_dynamic_scope, options.max_depth, options.pattern_match_limit, names,
         Any[options.formats[name] for name in names], NodeId[], c.annotation_sources, ReentrantLock(), nothing,
         options.assert_format != 0, Plan[], Union{Nothing,Body}[], Child[], Bool[], ObjectPlan[], false)
     for id in eachindex(nodes)
@@ -32,7 +32,8 @@ function Program(c::CompiledSchema, options::CompileOptions)
     p.selfs = Child[pl.self for pl in p.plans]
     p.guards = Bool[pl.guard for pl in p.plans]
     p.strict = ObjectPlan[strict_plan(pl) for pl in p.plans]
-    on_engine(pattern::Union{Nothing,Pattern}) = pattern !== nothing && pattern.kind == MATCH_ENGINE
+    # A pattern with a faster matcher may have the engine beside it, for the strings the matcher does not decide.
+    on_engine(pattern::Union{Nothing,Pattern}) = pattern !== nothing && pattern.engine !== nothing
     p.may_throw = !isempty(p.format_names) ||
                   any(n -> on_engine(n.pattern) || any(pp -> on_engine(pp.pattern), n.pattern_properties), nodes)
     return p
@@ -473,7 +474,7 @@ function eval_string(e::Evaluator, n::SchemaNode, x::Int)::Bool
     end
     p = n.pattern
     if p !== nothing
-        m = pattern_match(p, str(d, x), str_ascii(d, x))
+        m = pattern_match(p, str(d, x), str_ascii(d, x), e.p.pattern_match_limit)
         message = wants(e, m) ? "Expected the value to match the regular expression" * quoted(p.source) : ""
         keyword!(e, m, message, "pattern") && return false
         ok = ok && m
@@ -587,7 +588,7 @@ function eval_object(e::Evaluator, n::SchemaNode, x::Int, bits::Bitset)::Bool
                 end
             end
             for pp in n.pattern_properties
-                pattern_match(pp.pattern, name, str_ascii(d, k)) || continue
+                pattern_match(pp.pattern, name, str_ascii(d, k), e.p.pattern_match_limit) || continue
                 matched = true
                 entry = collect ? escape_pointer_token(pp.pattern.source) : ""
                 if !eval_property(e, pp.node, "patternProperties", entry, bits, i, v, segment)

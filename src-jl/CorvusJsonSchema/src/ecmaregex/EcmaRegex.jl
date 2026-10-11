@@ -122,9 +122,11 @@ PCRE2's JIT compiler is used where the PCRE2 of the Julia in use has one, and th
 compiler does not take and a match too deep for the stack of JIT code.
 
 A match that reaches a limit throws a [`MatchError`](@ref). It is never reported as no match. The limits are on the
-steps of a match (`MATCH_LIMIT`, 500 million, where PCRE2 by itself has ten million), on the memory of the
-interpreter (`HEAP_LIMIT_KIB`, 64 MiB), and one of this module on the steps of the searches for lookbehinds
-(`STEP_LIMIT`). They are set in the match context a thread keeps, so a match sets nothing.
+time of a match, which is one second unless [`ismatch`](@ref) is given another [`MatchLimit`](@ref) and can be
+turned off, and on the memory of the interpreter (`HEAP_LIMIT_KIB`, 64 MiB). PCRE2 has no clock, and its count of
+steps does not bound time, so a match is run in two stages: by the code as PCRE2 compiles it, with a number of
+steps that cannot take long, and then, if it used them, from the start by code with automatic callouts that read a
+clock. `pcre.jl` says how, and what was measured.
 
 # PCRE2 versions
 
@@ -182,12 +184,12 @@ end
 function compileparsed(parser::Parser, root::Node)
     emitter = analyse!(Emitter(parser, root))
     compiled = pcrecompile(translation(emitter, false), parser.pattern, parser.unicode)
-    if compiled isa String && emitter.haslookbehind
+    if compiled isa Refusal && emitter.haslookbehind
         # PCRE2 did not take a lookbehind as it is (one longer than it allows, for one). A callout has no limit.
         compiled = pcrecompile(translation(emitter, true), parser.pattern, parser.unicode)
     end
-    if compiled isa String
-        unsupported(emitter, string(REFUSED_BY_ENGINE, " (", compiled, ")"))
+    if compiled isa Refusal
+        unsupported(emitter, string(REFUSED_BY_ENGINE, " (", compiled.message, ")"))
     end
     return compiled
 end
@@ -204,11 +206,32 @@ function compile(pattern::AbstractString)::Pattern
 end
 
 """
-    ismatch(p::Pattern, text::AbstractVector{UInt8}) -> Bool
-    ismatch(p::Pattern, text::AbstractString) -> Bool
+    MatchLimit(seconds)
+
+The limit on the time of one match, for [`ismatch`](@ref): a positive number of seconds, or `nothing` for no limit.
+`MatchLimit()` is the limit a match has when none is given, which is one second.
+"""
+struct MatchLimit
+    nanoseconds::UInt64
+    MatchLimit(seconds::Union{Nothing,Real}) = new(matchlimit(seconds))
+    MatchLimit() = new(DEFAULT_MATCH_LIMIT)
+end
+
+Base.show(io::IO, limit::MatchLimit) = limit.nanoseconds == NO_MATCH_LIMIT ? print(io, "MatchLimit(nothing)") :
+    print(io, "MatchLimit(", limit.nanoseconds / 1e9, ")")
+
+"""
+    ismatch(p::Pattern, text::AbstractVector{UInt8}[, limit::MatchLimit]) -> Bool
+    ismatch(p::Pattern, text::AbstractString[, limit::MatchLimit]) -> Bool
 
 Whether the pattern matches anywhere in the UTF-8 text (an unanchored search). It is safe to call from several tasks
-at once. Throws a [`MatchError`](@ref) when PCRE2 reaches one of its limits. In the steady state it allocates nothing.
+at once. In the steady state it allocates nothing.
+
+A match is limited in time, to one second unless `limit` is another [`MatchLimit`](@ref), and a match that reaches
+the limit throws a [`MatchError`](@ref) whose `limit` is `:time`. `MatchLimit(nothing)` turns the limit off. A match
+that needs more memory than PCRE2 may take throws one whose `limit` is `:memory`, with any limit on time or none. A
+match that was given up is never reported as no match.
+
 A pattern that is only valid with no flag is matched by UTF-16 code unit, so a text with a character beyond the Basic
 Multilingual Plane is written again for it, into a buffer that the module keeps and uses again (one that has grown
 past 4 MiB is not kept, so such a match of a text of more than 2 MiB allocates).
@@ -221,21 +244,21 @@ function ismatch end
 const ContiguousBytes = Union{DenseVector{UInt8},
     Base.FastContiguousSubArray{UInt8,1,<:DenseVector{UInt8}}}
 
-function ismatch(p::Pattern, text::ContiguousBytes)::Bool
+function ismatch(p::Pattern, text::ContiguousBytes, limit::MatchLimit=MatchLimit())::Bool
     if !p.unicode && beyondbmp(text)
-        return matchunits(p, text)
+        return matchunits(p, text, limit)
     end
     GC.@preserve p text begin
-        return unsafe_ismatch(p, pointer(text), length(text))
+        return unsafe_ismatch(p, pointer(text), length(text), limit.nanoseconds)
     end
 end
 
-function ismatch(p::Pattern, text::Union{String,SubString{String}})::Bool
+function ismatch(p::Pattern, text::Union{String,SubString{String}}, limit::MatchLimit=MatchLimit())::Bool
     if !p.unicode && beyondbmp(codeunits(text))
-        return matchunits(p, codeunits(text))
+        return matchunits(p, codeunits(text), limit)
     end
     GC.@preserve p text begin
-        return unsafe_ismatch(p, pointer(text), ncodeunits(text))
+        return unsafe_ismatch(p, pointer(text), ncodeunits(text), limit.nanoseconds)
     end
 end
 
@@ -299,7 +322,7 @@ const MAX_KEPT_UNITS = 4 * 1024 * 1024
 
 # A match of a pattern without the u flag against text with a character beyond the Basic Multilingual Plane. The
 # text is written again as code units, into a buffer that is kept.
-@noinline function matchunits(p::Pattern, text::AbstractVector{UInt8})::Bool
+@noinline function matchunits(p::Pattern, text::AbstractVector{UInt8}, limit::MatchLimit)::Bool
     lock(UNIT_BUFFER_LOCK)
     units = isempty(UNIT_BUFFERS) ? nothing : pop!(UNIT_BUFFERS)
     unlock(UNIT_BUFFER_LOCK)
@@ -309,7 +332,7 @@ const MAX_KEPT_UNITS = 4 * 1024 * 1024
     try
         codeunits!(units, text)
         GC.@preserve p units begin
-            return unsafe_ismatch(p, pointer(units), length(units))
+            return unsafe_ismatch(p, pointer(units), length(units), limit.nanoseconds)
         end
     finally
         if length(units) <= MAX_KEPT_UNITS
@@ -320,8 +343,9 @@ const MAX_KEPT_UNITS = 4 * 1024 * 1024
     end
 end
 
-ismatch(p::Pattern, text::AbstractVector{UInt8}) = ismatch(p, Vector{UInt8}(text))
-ismatch(p::Pattern, text::AbstractString) = ismatch(p, String(text))
+ismatch(p::Pattern, text::AbstractVector{UInt8}, limit::MatchLimit=MatchLimit()) =
+    ismatch(p, Vector{UInt8}(text), limit)
+ismatch(p::Pattern, text::AbstractString, limit::MatchLimit=MatchLimit()) = ismatch(p, String(text), limit)
 
 const VALIDATORS = Validator[]
 const VALIDATOR_LOCK = Threads.SpinLock()

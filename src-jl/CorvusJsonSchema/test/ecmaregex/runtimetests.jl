@@ -161,49 +161,79 @@ end
         @test sum(fetch, compiling) == 0
     end
 
-    # A match PCRE2 gives up on is an error, never "no match".
-    @testset "a match that reaches a limit is an error" begin
-        # Each a can be matched two ways, so this backtracks through more ways than the limit on the steps of a
-        # match, MATCH_LIMIT.
+    # A match is limited in time. What ends it is a clock and not a count of steps, so the tests are of patterns
+    # that would run for hours, or for ever, and of bounds that a loaded machine keeps: a match that is given up
+    # is given up in less than twenty times its limit, where it is measured at 1.0 to 1.1 times.
+    @testset "a match is limited in time" begin
+        # Each a can be matched two ways, so this tries 2^40 ways before it finds no match.
         slow = E.compile("^(?:a|a)+\$")
         @test E.ismatch(slow, "a"^40)
-        @test_throws E.MatchError E.ismatch(slow, "a"^40 * "b")
+        started = time()
         error = try
             E.ismatch(slow, "a"^40 * "b")
             nothing
         catch e
             e
         end
+        took = time() - started
         @test error isa E.MatchError
         @test error.pattern == "^(?:a|a)+\$"
-        @test error.code == -47
-        @test occursin("match limit", sprint(showerror, error))
-        # The same through a lookbehind that is a callout. The error comes out of the search for its body, which
-        # tries every way to take the forty a before it finds no b.
-        behind = E.compile("^a*b?(?<=^(?:a|a)+ba*)c")
-        @test E.ismatch(behind, "a"^40 * "bc")
-        @test_throws E.MatchError E.ismatch(behind, "a"^40 * "c")
-        # The body of a lookbehind does not run past the place the lookbehind stands at, and its starts are tried
-        # from that place backwards, so these two end at once. Each reached the limit before.
-        @test !E.ismatch(E.compile("^a*(?<=^(?:a|a)+)c"), "a"^40 * "bc")
-        @test !E.ismatch(E.compile("^a*(?<=^(?:a|aa)*)b"), "a"^60 * "c")
-        # The searches for the lookbehinds of one match have a limit together. One search of this one tries a
-        # thousand ways and more from each start, and a text of sixty a has it searched sixty times.
-        many = E.compile("^[ab]*(?<=(?:a|aa){10}ba*)c")
-        @test E.ismatch(many, "a"^12 * "bc")
-        @test !E.ismatch(many, "a"^30 * "c")
-        @test_throws E.MatchError E.ismatch(many, "a"^60 * "c")
+        @test error.limit == :time
+        @test error.code == 0
+        @test occursin("the limit on its time, which is 1 second", sprint(showerror, error))
+        # One second is the limit when none is given.
+        @test E.MatchLimit().nanoseconds == 1_000_000_000
+        @test 0.9 < took < 20
         # The pattern is still good after an error.
         @test E.ismatch(slow, "aaa")
         @test !E.ismatch(slow, "b")
     end
 
-    # PCRE2 allows a match ten million steps unless it is told another number, which is too few for three patterns
-    # of the ecma262-regex-test-data files on these texts. V8 answers each, and so does the package, which sets the
-    # limit to MATCH_LIMIT. The first is the one that takes the most steps of any pattern of those files.
-    @testset "a match that takes more steps than PCRE2 allows by itself" begin
-        @test E.MATCH_LIMIT == 500_000_000
-        @test E.DEPTH_LIMIT == E.MATCH_LIMIT
+    @testset "the limit a caller gives is the one that ends a match" begin
+        slow = E.compile("^(?:a|a)+\$")
+        function given(limit)
+            started = time()
+            error = try
+                E.ismatch(slow, "a"^40 * "b", E.MatchLimit(limit))
+                nothing
+            catch e
+                e
+            end
+            return error, time() - started
+        end
+        error, took = given(0.05)
+        @test error isa E.MatchError && error.limit == :time
+        @test occursin("which is 0.05 seconds", error.message)
+        @test 0.04 < took < 1
+        error, took = given(2)
+        @test error isa E.MatchError && error.limit == :time
+        @test occursin("which is 2 seconds", error.message)
+        @test 1.9 < took < 40
+        # 2^22 ways take a hundredth of a second at least and a few seconds at most. A limit of a millisecond ends
+        # the match, and a limit of two minutes lets it answer.
+        text = "a"^22 * "b"
+        @test_throws E.MatchError E.ismatch(slow, text, E.MatchLimit(0.001))
+        @test !E.ismatch(slow, text, E.MatchLimit(120))
+        @test E.ismatch(slow, "a"^22, E.MatchLimit(0.001))
+        # A limit is a positive time. No time is not "no limit".
+        @test_throws ArgumentError E.MatchLimit(0)
+        @test_throws ArgumentError E.MatchLimit(-1)
+        @test_throws ArgumentError E.MatchLimit(Inf)
+        @test_throws ArgumentError E.MatchLimit(NaN)
+        @test E.MatchLimit(nothing).nanoseconds == 0
+        @test E.MatchLimit(1.5).nanoseconds == 1_500_000_000
+    end
+
+    # With no limit a match runs until it answers, or until PCRE2 has counted every step it can be told to allow.
+    @testset "the limit can be turned off" begin
+        slow = E.compile("^(?:a|a)+\$")
+        @test !E.ismatch(slow, "a"^22 * "b", E.MatchLimit(nothing))
+        @test E.ismatch(slow, "a"^22, E.MatchLimit(nothing))
+        # PCRE2 allows a match ten million steps unless it is told another number, which is too few for three
+        # patterns of the ecma262-regex-test-data files on these texts. V8 answers each, and so does the package
+        # when the limit on time is off. The first is the one that takes the most steps of any pattern of those
+        # files, 157 million. (With the limit on, each is run by the code that is timed once its first steps are
+        # used, and may reach the limit.)
         cases = [
             (raw"^(?:(?!$)|(?:(?<n0>(?:(?<n1>(a|)(a|))|(?<n1>(|a)xx)){3,4}(a|))|(?<n0>.a)){3,}^.){2,2}" *
              raw"(?:(?<!a)\6|[^a](((?=a)){2,2}(?:ax*|\10{2}){0,0}?|\8\10|a-){1,2}|(?<=x)\k<n1>*($|(a$(|a))+|a*?x+){1,}?){2,}x$",
@@ -213,63 +243,299 @@ end
             (raw"^a{2}?(((?!)|((|a){2,}(|a)\B|){2,3}?){2,3}.{3}a{2})\4", "aaaaaaaaaaxa", true),
         ]
         for (pattern, text, wanted) in cases
-            @test E.ismatch(E.compile(pattern), text) == wanted
+            @test E.ismatch(E.compile(pattern), text, E.MatchLimit(nothing)) == wanted
+            answer = try
+                E.ismatch(E.compile(pattern), text)
+            catch e
+                e isa E.MatchError && e.limit == :time ? wanted : rethrow()
+            end
+            @test answer == wanted
         end
-        # With the limit PCRE2 has by itself, the first is given up, by the JIT code of either PCRE2.
-        compiled = E.compile(cases[1][1])
-        text = cases[1][2]
-        frame = unsafe_load(E.threadframe())
-        limit(steps) = ccall((:pcre2_set_match_limit_8, E.PCRE_LIB), Cint, (Ptr{Cvoid}, UInt32), frame.context, steps)
-        limit(10_000_000)
-        try
-            @test E.pcrematch(compiled.code, pointer(text), Csize_t(sizeof(text)), UInt32(0), frame) ==
-                  E.PCRE2_ERROR_MATCHLIMIT
-        finally
-            limit(E.MATCH_LIMIT)
+    end
+
+    # What PCRE2 counts does not bound the time of a match: it counts the steps of each place a match is tried from
+    # apart, and one step may read the whole text. Each of these ran for longer than anyone waited, within the
+    # 500 million steps a match had before, and all are given up at the limit now.
+    @testset "matches that a count of steps does not end" begin
+        long = "a"^100_000
+        for pattern in [
+                # A loop around a lookahead that reads to the end of the text, three deep.
+                "^(?:(?=(?:(?=(?:(?=a*)a)*)a)*)a)*b\$",
+                # A step that reads the whole text.
+                "^(?:(?:a*b|a)*c|a)*d",
+                # The same from every place of the text.
+                "(?:a*b|a)*c",
+                # A hundred and forty lookaheads that each read the whole text, from every place of it.
+                "(?=a*)"^140 * "b",
+                # Repetitions of one character, which PCRE2 counts a step of only when it comes back to one.
+                "a*a*a*a*a*b",
+                # A lookbehind that is searched for, at every place.
+                "(?<=a*b*)c",
+            ]
+            compiled = E.compile(pattern)
+            started = time()
+            error = try
+                E.ismatch(compiled, long, E.MatchLimit(0.2))
+            catch e
+                e
+            end
+            @test error isa E.MatchError && error.limit == :time
+            @test 0.15 < time() - started < 8
         end
-        @test !E.ismatch(compiled, text)
-        # A thread that has matched nothing yet has the limit too: its frame is made with it.
-        fresh = Threads.@spawn E.ismatch(E.compile(cases[3][1]), cases[3][2])
-        @test fetch(fresh)
-        # The interpreter, which runs a match when the JIT code is out of stack, has the same limit, and its
-        # memory is limited too. The error names the limit that was reached.
-        deep = E.compile("^(?:ab|cd)*\$")
+        # A lookbehind that is written as a search, with the rest of the pattern inside it, takes time that grows
+        # with the square of the text before it. It answers or is given up.
+        search = E.compile("(?<=([abc])+)x\\1")
+        @test E.ismatch(search, "abc"^300 * "xa", E.MatchLimit(120))
+        @test !E.ismatch(search, "abc"^300 * "xc", E.MatchLimit(120))
+        started = time()
+        answer = try
+            E.ismatch(search, "abc"^5333 * "xa", E.MatchLimit(0.2))
+        catch e
+            e isa E.MatchError && e.limit == :time ? true : rethrow()
+        end
+        @test answer
+        @test time() - started < 8
+    end
+
+    # The same through a lookbehind that is a callout, whose body is searched for by matches of its own.
+    @testset "the searches for a lookbehind are within the limit of the match" begin
+        behind = E.compile("^a*b?(?<=^(?:a|a)+ba*)c")
+        @test E.ismatch(behind, "a"^40 * "bc")
+        started = time()
         error = try
-            E.ismatch(deep, "ab"^2_000_000)
-            nothing
+            E.ismatch(behind, "a"^40 * "c", E.MatchLimit(0.2))
         catch e
             e
         end
-        @test error isa E.MatchError
-        @test error.code == E.PCRE2_ERROR_HEAPLIMIT
-        @test occursin("heap limit", sprint(showerror, error))
-        # A match sets no limit and makes no context: the frame of the thread and its context are the same after
-        # matches as before, and the matches allocate nothing.
-        before = (E.threadframe(), unsafe_load(E.threadframe()).context)
-        @test allocated(E.compile("^[a-z]+\\d\$"), "abc1", 10_000) == 0
-        @test allocated(E.compile("(?<=^(?:ab)*)c"), "ababc", 10_000) == 0
-        @test (E.threadframe(), unsafe_load(E.threadframe()).context) == before
+        @test error isa E.MatchError && error.limit == :time
+        @test 0.15 < time() - started < 8
+        # The body of a lookbehind does not run past the place the lookbehind stands at, and its starts are tried
+        # from that place backwards, so these two end at once.
+        @test !E.ismatch(E.compile("^a*(?<=^(?:a|a)+)c"), "a"^40 * "bc")
+        @test !E.ismatch(E.compile("^a*(?<=^(?:a|aa)*)b"), "a"^60 * "c")
+        # One search of this one tries a thousand ways and more from each start, and a text of four hundred a
+        # has it searched four hundred times, which takes seconds. Thirty answer.
+        many = E.compile("^[ab]*(?<=(?:a|aa){10}ba*)c")
+        @test E.ismatch(many, "a"^12 * "bc")
+        @test !E.ismatch(many, "a"^30 * "c", E.MatchLimit(120))
+        @test_throws E.MatchError E.ismatch(many, "a"^400 * "c", E.MatchLimit(0.2))
+        @test E.ismatch(many, "a"^12 * "bc")
     end
 
-    # JIT code keeps what it may backtrack to on a stack of a megabyte. A match that needs more is run again by the
-    # interpreter, which has more room (64 MiB), and gives its answer. A match that needs more than that is an error.
+    # A match that uses the steps it has before it is timed is run again by code that reads a clock, from the
+    # start, and answers what the first code would have answered. The second stage is run here by itself, with
+    # two minutes, on every text, and through `ismatch`, where a text of twenty and more characters each matched
+    # two ways uses the steps of the first stage.
+    @testset "a match that is timed answers the same" begin
+        function timed(compiled, text, interpreted)
+            GC.@preserve compiled text begin
+                return E.timedmatch(compiled, pointer(text), sizeof(text), Csize_t(0), time_ns() + 120_000_000_000,
+                    UInt64(120_000_000_000), interpreted)
+            end
+        end
+        for (pattern, matching, failing) in [
+                ("^(?:a|a)+\$", "a"^14, "a"^14 * "b"),
+                ("^(?:(a)|(a))+\\1?\$", "a"^14, "a"^14 * "b"),
+                ("(?:x|x)+(?<=^[^y]*)y\$", "x"^14 * "y", "x"^14 * "yz"),
+                ("^(?i:(?:k|\\u212a)+)\$", "kK"^7, "kK"^7 * "s"),
+                ("(?<=([abc])+)x\\1", "abc"^20 * "xa", "abc"^20 * "xc"),
+                ("^\\p{L}+\\d\$", "aé"^500 * "1", "aé"^500),
+                ("b(?<=a{3}b)", "ab"^500 * "aaab", "ab"^500),
+            ]
+            compiled = E.compile(pattern)
+            @test isempty(E.timedcodes(compiled))
+            for interpreted in (false, true)
+                @test timed(compiled, matching, interpreted)
+                @test !timed(compiled, failing, interpreted)
+                @test !timed(compiled, "", interpreted)
+            end
+            @test length(E.timedcodes(compiled)) == 1
+            @test E.ismatch(compiled, matching, E.MatchLimit(nothing))
+            @test !E.ismatch(compiled, failing, E.MatchLimit(nothing))
+        end
+        # Through ismatch: 2^22 ways are more steps than the first stage of a match has with a limit of a second,
+        # and the code that is timed is compiled when a match first needs it. A machine that leaves the match less
+        # than its second has it given up, which is not an answer.
+        slow = E.compile("^(?:a|a)+\$")
+        @test isempty(E.timedcodes(slow))
+        answer = try
+            E.ismatch(slow, "a"^22 * "b")
+        catch e
+            e isa E.MatchError && e.limit == :time ? false : rethrow()
+        end
+        @test !answer
+        @test length(E.timedcodes(slow)) == 1
+        # A match of a few steps is never timed, and its pattern is compiled once.
+        plain = E.compile("^[a-z]+\\d\$")
+        @test E.ismatch(plain, "abc1") && !E.ismatch(plain, "abc")
+        @test isempty(E.timedcodes(plain))
+    end
+
+    # A pattern that is not anchored is tried from every place of the text, and PCRE2 gives each place the steps
+    # of the match. The search of a long text is run in parts, between which the clock is read. The parts start at
+    # characters, see the whole text behind and ahead, and answer what one search would.
+    @testset "the search of a long text is run in parts" begin
+        word = E.compile("foo|bar")
+        @test word.freelength < 100_000
+        for filler in ("x", "é", "€", "\U0001F600", "xé€\U0001F600")
+            long = filler^(400_000 ÷ sizeof(filler))
+            @test E.ismatch(word, long * "bar")
+            @test E.ismatch(word, "foo" * long)
+            @test E.ismatch(word, long * "foo" * long)
+            @test !E.ismatch(word, long * "baz")
+            # A lookbehind and a lookahead across the place two parts meet at, and the end of the text.
+            @test E.ismatch(E.compile("(?<=" * filler * ")b(?=" * filler * ")"), long * "b" * long)
+            @test !E.ismatch(E.compile("(?<=" * filler * ")b(?=" * filler * "c)"), long * "b" * long)
+            @test E.ismatch(E.compile("(?<=" * filler * ")\$"), long)
+            @test E.ismatch(E.compile("[^" * first(filler) * "]\$"), long * "!")
+            @test !E.ismatch(E.compile("!\\b."), long * "!")
+            # A lookbehind that is a callout, in a search in parts.
+            @test E.ismatch(E.compile("b(?<=^(?:" * filler * ")*b)"), long * "b")
+            @test !E.ismatch(E.compile("b(?<=^(?:" * filler * ")*b)"), long * "ab")
+            @test allocated(word, long * "baz", 3) == 0
+        end
+        # Every place is tried once: a pattern that matches at one place only, wherever that is.
+        once = E.compile("b(?<=^a{0,300000}b)")
+        for at in (0, 1, 437, 438, 439, 440, 70_000, 199_999, 200_000)
+            @test E.ismatch(once, "a"^at * "b" * "a"^(200_000 - at))
+        end
+        # A search that takes the square of the length of the text, with one step for each place, is given up at
+        # the limit by the clock between two parts, and answers when it has the time.
+        square = E.compile("a*b")
+        started = time()
+        @test_throws E.MatchError E.ismatch(square, "a"^300_000, E.MatchLimit(0.05))
+        @test time() - started < 8
+        @test !E.ismatch(square, "a"^20_000, E.MatchLimit(120))
+        @test E.ismatch(square, "a"^20_000 * "b", E.MatchLimit(120))
+    end
+
+    # The memory of a match is limited too. JIT code keeps what it may come back to on a stack of a megabyte. A
+    # match that needs more is run again by the interpreter, which has 64 MiB, and gives its answer. A match that
+    # needs more than that is an error, whatever the limit on time is.
     @testset "a match too deep for the JIT stack" begin
         deep = E.compile("^(?:ab|cd)*\$")
         long = "ab"^100_000
         # JIT code alone does not get through this text.
         frame = unsafe_load(E.threadframe())
-        @test E.pcrematch(deep.code, pointer(long), Csize_t(sizeof(long)), UInt32(0), frame) ==
-              E.PCRE2_ERROR_JIT_STACKLIMIT
-        @test E.ismatch(deep, long)
-        @test !E.ismatch(deep, long * "x")
-        @test E.ismatch(deep, long * "cd")
-        @test E.ismatch(deep, "abcd")
-        # The same in the search for a lookbehind that is a callout, which the match reaches once.
-        behind = E.compile("^[a-d]*(?<=^(?:ab|cd)*)x")
-        @test E.ismatch(behind, long * "x")
-        @test E.ismatch(behind, "abx")
-        @test !E.ismatch(behind, "abax")
-        @test_throws E.MatchError E.ismatch(deep, "ab"^2_000_000)
-        @test E.ismatch(deep, "abab")
+        E.setsteps!(frame, E.MOST_STEPS)
+        rc = E.pcrematch(deep.code, pointer(long), Csize_t(sizeof(long)), UInt32(0), frame)
+        E.setsteps!(frame, E.QUICK_STEPS)
+        @test rc == E.PCRE2_ERROR_JIT_STACKLIMIT
+        for limit in (E.MatchLimit(), E.MatchLimit(120), E.MatchLimit(nothing))
+            @test E.ismatch(deep, long, limit)
+            @test !E.ismatch(deep, long * "x", limit)
+            @test E.ismatch(deep, long * "cd", limit)
+            @test E.ismatch(deep, "abcd", limit)
+            # The same in the search for a lookbehind that is a callout, which the match reaches once.
+            behind = E.compile("^[a-d]*(?<=^(?:ab|cd)*)x")
+            @test E.ismatch(behind, long * "x", limit)
+            @test E.ismatch(behind, "abx", limit)
+            @test !E.ismatch(behind, "abax", limit)
+            error = try
+                E.ismatch(deep, "ab"^2_000_000, limit)
+                nothing
+            catch e
+                e
+            end
+            @test error isa E.MatchError
+            @test error.limit == :memory
+            @test error.code == E.PCRE2_ERROR_HEAPLIMIT
+            @test occursin("more memory than the limit of 64 MiB", sprint(showerror, error))
+            @test E.ismatch(deep, "abab", limit)
+        end
+    end
+
+    # A match sets no limit and makes no context when it ends within its first steps: the frame of the thread and
+    # its context are the same after matches as before, they are left with the steps a match starts with, and the
+    # matches allocate nothing. Nor does a match that is timed, or one that is given up, once the pattern has been
+    # compiled for it.
+    @testset "the limit allocates nothing" begin
+        before = (E.threadframe(), unsafe_load(E.threadframe()).context)
+        @test allocated(E.compile("^[a-z]+\\d\$"), "abc1", 10_000) == 0
+        @test allocated(E.compile("(?<=^(?:ab)*)c"), "ababc", 10_000) == 0
+        # More steps than a match starts with, and fewer than it has untimed.
+        @test allocated(E.compile("^(?:a|a)+\$"), "a"^12 * "b", 100) == 0
+        # A match that is timed.
+        @test allocated(E.compile("^(?:a|a)+\$"), "a"^17 * "b", 20) == 0
+        # A long text for a pattern that is anchored, which is given its steps by its length.
+        @test allocated(E.compile("^[a-z]+\\d\$"), "a"^200_000 * "1", 10) == 0
+        slow = E.compile("^(?:a|a)+\$")
+        text = "a"^40 * "b"
+        limit = E.MatchLimit(0.01)
+        giveup() = try
+            E.ismatch(slow, text, limit)
+        catch e
+            e isa E.MatchError || rethrow()
+            false
+        end
+        giveup()
+        # The error itself is allocated, and its message. Nothing else is, however long the match ran.
+        @test (@allocated giveup()) < 2_000
+        @test (E.threadframe(), unsafe_load(E.threadframe()).context) == before
+        # A thread that has matched nothing yet has the limit too.
+        fresh = Threads.@spawn try
+            E.ismatch(E.compile("^(?:a|a)+\$"), "a"^40 * "b", E.MatchLimit(0.05))
+        catch e
+            e
+        end
+        @test fetch(fresh) isa E.MatchError
+    end
+
+    # What a match may do before it is timed is worked out from the translation: the most PCRE2 does between two
+    # steps is so much, and so much for each byte of the text.
+    @testset "the cost of a step is read off the translation" begin
+        @test E.stepcost("a") == (2, 1)
+        @test E.stepcost("abc") == (4, 1)
+        # A repetition with no upper count runs its body once more for each byte.
+        @test E.stepcost("a*") == (2, 2)
+        @test E.stepcost("(?:ab)+c") == (8, 4)
+        # A count multiplies.
+        @test E.stepcost("a{1000}") == (1001, 1)
+        @test E.stepcost("(?:a{100}){100}") == (10_101, 1)
+        @test E.stepcost("(?:a{0,1000}){0,1000}")[1] > 1_000_000
+        @test E.stepcost("(?:(?:a{1000}){1000}){1000}")[1] > 1_000_000_000
+        # Alternatives add, a class costs by its length, a call costs as a class of many ranges does.
+        @test E.stepcost("a|b|c") == (4, 1)
+        @test E.stepcost("[a-c]") == (2, 1)
+        for slow in (true, false)
+            E.SLOW_CLASSES[] = slow
+            try
+                # A class of fifty ranges, where PCRE2 tries the ranges one after another and where it halves them.
+                @test E.stepcost("[" * "\\x{100}-\\x{101}"^50 * "]")[2] == (slow ? 16 : 5)
+            finally
+                E.SLOW_CLASSES[] = nothing
+            end
+        end
+        @test E.stepcost("(?&s1)")[2] == 2 * E.CALL_COST
+        # Every form the emitter writes is read: nothing is left over, so the cost is not the one of a text that
+        # is not understood, which is its length for both numbers.
+        for pattern in ["(?<=([abc])+)x\\1", "(?<=a*b*)c", "^\\p{L}+\$", "(?i:(.)\\1)", "^(?:(a)|b)*\\1\$", "(?<n>a)\\k<n>",
+                "a{2,}?b*?c+?d??", "(?=a)(?!b)(?<=c)(?<!d)", "[\\]\\\\^-]", "\\u{1F600}{3}", "^(?:(?:a|){1,300}x){1,300}\$",
+                "\\p{L}{100000}", "(?<=(ab|a)x)-\\1", "^(?:(?=([ab]))[ab](?:c|ca)\\1)*\$"]
+            translation = E.translate(pattern)
+            for text in vcat(translation.main, translation.lookbehinds)
+                reader = E.CostReader(codeunits(text), 1, 1, 0, false)
+                E.sequencecost(reader)
+                @test !reader.failed && reader.at == ncodeunits(text) + 1
+            end
+        end
+        # A text that is not one the emitter writes costs its length.
+        @test E.stepcost("(a") == (3, 3)
+        @test E.stepcost("a)") == (3, 3)
+        # The longest text a match of which starts with no working out, and the steps of a longer one.
+        anchored = E.compile("^[a-z]+\$")
+        @test anchored.anchored && anchored.jit == E.hasjitcode(anchored.code)
+        second = E.DEFAULT_MATCH_LIMIT
+        steps(len, limit) = E.freesteps(anchored.fixedcost, anchored.textcost, true, anchored.jit, len, limit)
+        @test steps(anchored.freelength, second) >= E.QUICK_STEPS
+        @test steps(anchored.freelength + 1, second) < E.QUICK_STEPS
+        # The first stage is in proportion to the limit, so a short limit is kept too.
+        @test steps(1000, second ÷ 10) == steps(1000, second) ÷ 10
+        @test abs(steps(100_000, 10 * second) - 10 * steps(100_000, second)) <= 10
+        @test steps(1000, UInt64(999_999)) == 0
+        searched = E.compile("[a-z]+\\d")
+        @test !searched.anchored
+        @test searched.freelength < anchored.freelength
+        @test E.freelength(E.MOST_COST, E.MOST_COST, true, true) == -1
     end
 end
