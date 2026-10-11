@@ -595,9 +595,10 @@ func setNeeds(insts []inst) int {
 		for pc := len(insts) - 1; pc >= 0; pc-- {
 			i := &insts[pc]
 			n := int32(noMatch)
+			// Both figures can be noMatch, so the sum is made in 64 bits: in 32 it would wrap to a negative need.
 			next := func(to int32, weight int32) {
-				if v := need[to] + weight; v < n {
-					n = v
+				if v := int64(need[to]) + int64(weight); v < int64(n) {
+					n = int32(v)
 				}
 			}
 			switch i.op {

@@ -271,6 +271,9 @@ func TestNeeds(t *testing.T) {
 		{`(?:a|b){5}c`, 6, []int32{1}, []int32{1}}, {`(?:ab|cde){3,}?x`, 7, []int32{1}, []int32{2}},
 		{`(?:a{1000}){1000}`, 1000000, []int32{0}, []int32{1000}}, {`(?:\u00e9|xyz){2}`, 4, []int32{0}, []int32{2}},
 		{`(?:a|b){2147483647}c`, noMatch, []int32{1}, []int32{1}}, {`(?:(?:a|bc){2}d){3}`, 9, []int32{0, 1}, []int32{3, 1}},
+		// A loop that cannot reach a match, with a count times a body over the cap: the sum of the two is capped
+		// too, and does not wrap to a negative need.
+		{`(?:ab){2147483647}[]`, noMatch, []int32{noMatch}, []int32{2}}, {`(?:(?:ab){2147483647}[]|c)d`, 2, []int32{noMatch}, []int32{2}},
 		// The body of a lookbehind is matched backwards and counts nothing.
 		{`(?<=(?:ab|c){2}d)e`, 1, []int32{0}, []int32{0}},
 		{`(?:a|(?=(?:b|c){3}))x{2}`, 2, []int32{0}, []int32{1}},
