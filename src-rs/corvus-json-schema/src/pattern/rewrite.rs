@@ -25,8 +25,10 @@
 //! - **Case-insensitive groups.** In a pattern valid only without the `u` flag, `(?i:...)` compares by the
 //!   uppercase form of a UTF-16 code unit, where regress folds as with the flag. The literals and classes of such a
 //!   group are written out as the classes they stand for, and the modifier is taken off. A backreference in such a
-//!   group cannot be written out, and is still compared by folding. With the flag, `\W` in a class of such a group
-//!   does not hold the two characters that fold to a word character.
+//!   group is compared by regress, whose folding equates everything ECMA-262 does and 31 pairs of code units
+//!   more. Where the group may hold a character of such a pair, the places regress would accept wrongly are
+//!   refused before its comparison (see `Emitter::compared`). With the flag, `\W` in a class of such a group does
+//!   not hold the two characters that fold to a word character.
 //!
 //! - **A pattern without the `u` flag.** It is matched by UTF-16 code unit, and regress is given its code units.
 //!   Two escapes are not given as they are written, as regress reads them as it would with the flag (see
@@ -228,13 +230,22 @@ pub(super) fn for_engine(pattern: &str, unicode: bool) -> Rewrite {
 /// `always`: the pattern is written again even when regress would answer it as written.
 fn rewrite(pattern: &str, unicode: bool, always: bool) -> Rewrite {
     let Ok(parsed) = Parser::parse(pattern, unicode) else { return Rewrite::Unchanged };
-    let mut scan =
-        Scan { refs: vec![0; parsed.groups as usize + 1], needed: parsed.special, unbounded: false, open: Vec::new() };
+    let mut scan = Scan {
+        refs: vec![0; parsed.groups as usize + 1],
+        needed: parsed.special,
+        unbounded: false,
+        open: Vec::new(),
+        compared: vec![false; parsed.groups as usize + 1],
+    };
     scan.node(&parsed.root, false);
     if !scan.needed && !always {
         return Rewrite::Unchanged;
     }
+    // The groups whose case-insensitive references are written out: regress may compare what they hold wrongly.
+    let holds = scan.compared.iter().zip(&parsed.holds).map(|(&compared, &holds)| if compared { holds } else { 0 });
     let mut emitter = Emitter {
+        holds: holds.collect(),
+        held: std::collections::HashMap::new(),
         refs: scan.refs,
         read_outside: std::collections::HashMap::new(),
         bind: Vec::new(),
@@ -253,6 +264,7 @@ fn rewrite(pattern: &str, unicode: bool, always: bool) -> Rewrite {
         emitter.bind = vec![Binding::Unset; parsed.groups as usize + 1];
         (emitter.instances, emitter.spent, emitter.depth, emitter.deepest) = (0, 0, 1, 1);
         emitter.writing.clear();
+        emitter.held.clear();
         emitter.leave = None;
         match emitter.node(&parsed.root, false, false) {
             Ok(out) => {
@@ -416,6 +428,8 @@ struct Parsed {
     /// The pattern has something that is rewritten wherever it is: a case-insensitive group that regress reads
     /// with another meaning.
     special: bool,
+    /// For each group, by number, what it may hold of the characters regress compares wrongly ([`held`]).
+    holds: Vec<u8>,
 }
 
 struct Parser {
@@ -431,6 +445,9 @@ struct Parser {
     icase: bool,
     special: bool,
     depth: u32,
+    /// The capturing groups being read, and for each group of the pattern what it may hold ([`held`]).
+    open: Vec<u32>,
+    holds: Vec<u8>,
 }
 
 /// The least and the most counts of a quantifier (no most for `*`, `+` and `{n,}`), whether it is lazy, and its
@@ -463,14 +480,17 @@ impl Parser {
             icase: false,
             special: false,
             depth: 0,
+            open: Vec::new(),
+            holds: Vec::new(),
         };
         p.scan_groups();
+        p.holds = vec![0; p.group_count as usize + 1];
         let mut root = p.disjunction()?;
         if p.i < p.c.len() {
             return Err(Stop::Unread);
         }
         p.resolve(&mut root)?;
-        Ok(Parsed { root, groups: p.groups, special: p.special })
+        Ok(Parsed { root, groups: p.groups, special: p.special, holds: p.holds })
     }
 
     fn scan_groups(&mut self) {
@@ -518,6 +538,17 @@ impl Parser {
 
     fn peek(&self) -> Option<char> {
         self.c.get(self.i).copied()
+    }
+
+    /// The groups being read may hold `what` ([`held`]).
+    fn hold(&mut self, what: u8) {
+        if what != 0 && !self.unicode {
+            for &group in &self.open {
+                if let Some(holds) = self.holds.get_mut(group as usize) {
+                    *holds |= what;
+                }
+            }
+        }
     }
 
     /// What a character of the pattern stands for: a code point, or without the `u` flag a UTF-16 code unit.
@@ -576,6 +607,7 @@ impl Parser {
             '(' => self.group()?,
             '.' => {
                 self.i += 1;
+                self.hold(HOLDS_ALL);
                 (Node::Atom(".".into()), true)
             }
             '[' => (self.class()?, true),
@@ -726,7 +758,9 @@ impl Parser {
         if let Some(name) = name {
             self.names.push((name, index));
         }
+        self.open.push(index);
         let body = Box::new(self.disjunction()?);
+        self.open.pop();
         self.close()?;
         Ok(Node::Group { index, modifiers: None, body })
     }
@@ -771,6 +805,8 @@ impl Parser {
 
     /// The node of one character with the code `value`, written `text`.
     fn character(&mut self, value: u32, text: String) -> Node {
+        // Without case a character is equal to itself and to the other case of its letter, which hold the same.
+        self.hold(held(value));
         if self.icase && !self.unicode && value <= 0xFFFF {
             let mut set = CodeUnits::new();
             set.insert(value as u16, value as u16);
@@ -798,11 +834,14 @@ impl Parser {
                 let name = self.group_name()?;
                 self.names.push((name, 0));
                 let groups = vec![NAME_BASE + self.names.len() as u32 - 1];
+                // What the group it reads holds is not followed: a group with a reference in it may hold anything.
+                self.hold(HOLDS_ALL);
                 return Ok((Node::Backref { groups, icase: self.icase && !self.unicode }, true));
             }
             '1'..='9' => {
                 let n = self.number();
                 if n <= self.group_count {
+                    self.hold(HOLDS_ALL);
                     return Ok((Node::Backref { groups: vec![n], icase: self.icase && !self.unicode }, true));
                 }
                 if self.unicode {
@@ -817,7 +856,15 @@ impl Parser {
             _ => {}
         }
         Ok(match self.escape(false)? {
-            Escape::Set => (Node::Atom(self.c[start..self.i].iter().collect()), true),
+            Escape::Set => {
+                // `\d` and `\s` hold none of them, `\w` the letters, and a negated set all.
+                self.hold(match c {
+                    'd' | 's' => 0,
+                    'w' => HOLDS_PARTNER,
+                    _ => HOLDS_ALL,
+                });
+                (Node::Atom(self.c[start..self.i].iter().collect()), true)
+            }
             Escape::Char(value) => {
                 // With the `u` flag the escape is valid as written. Without it, an escape Annex B reads in a way
                 // of its own (`\c` before no letter, `\x` before no digits) is written as what it stands for.
@@ -992,6 +1039,9 @@ impl Parser {
         }
         let text: String = self.c[start..self.i].iter().collect();
         if let Some(set) = set {
+            self.hold(compared_wrongly().fold(0, |holds, unit| {
+                if set.contains(unit) == negated { holds } else { holds | held(u32::from(unit)) }
+            }));
             // Without case, compared by the uppercase form of each code unit: the class of everything equal to a
             // member.
             return Ok(Node::Atom(if self.icase { set.fold().write(negated) } else { text }));
@@ -1045,6 +1095,42 @@ impl Parser {
 /// characters that fold to one.
 const NOT_WORD_FOLDED: &str =
     r"\u0000-\u002f\u003a-\u0040\u005b-\u005e\u0060\u007b-\u017e\u0180-\u2129\u212b-\u{10ffff}";
+
+/// regress compares a case-insensitive reference, in a pattern without the `u` flag, by a folding of its own. It
+/// equates every two code units that ECMA-262's `Canonicalize` does, and 31 pairs more (measured over every code
+/// unit against every cased one): `i` and `I` with U+0131, `s` and `S` with U+017F, and each of the 27 Greek
+/// letters with a iota below it with its capital form (U+1F80 with U+1F88 and so on). A comparison regress accepts
+/// is wrong when a character of [`ONE_OF_A_PAIR`] meets anything but itself.
+///
+/// What a group may hold of them, as bits: a letter regress equates with a character of [`ONE_OF_A_PAIR`]
+/// (`HOLDS_PARTNER`: `i`, `I`, `s`, `S` and the Greek letters), and U+0131 or U+017F (`HOLDS_DOTLESS`).
+const HOLDS_PARTNER: u8 = 1;
+const HOLDS_DOTLESS: u8 = 2;
+const HOLDS_ALL: u8 = HOLDS_PARTNER | HOLDS_DOTLESS;
+
+/// The class of U+0131, U+017F and the Greek letters: where the text has one, the group must have the same.
+const ONE_OF_A_PAIR: &str = r"[\u0131\u017f\u1f80-\u1faf\u1fb3\u1fbc\u1fc3\u1fcc\u1ff3\u1ffc]";
+
+/// The class of U+0131 and U+017F: where the group has one, the text must have the same.
+const DOTLESS: &str = r"[\u0131\u017f]";
+
+/// Every code unit of a pair regress equates and ECMA-262 does not.
+fn compared_wrongly() -> impl Iterator<Item = u16> {
+    [0x49, 0x69, 0x53, 0x73, 0x131, 0x17F, 0x1FB3, 0x1FBC, 0x1FC3, 0x1FCC, 0x1FF3, 0x1FFC]
+        .into_iter()
+        .chain(0x1F80..=0x1FAF)
+}
+
+/// What a group that may match the code unit `value` may hold.
+fn held(value: u32) -> u8 {
+    match value {
+        0x131 | 0x17F => HOLDS_DOTLESS,
+        0x49 | 0x69 | 0x53 | 0x73 | 0x1F80..=0x1FAF | 0x1FB3 | 0x1FBC | 0x1FC3 | 0x1FCC | 0x1FF3 | 0x1FFC => {
+            HOLDS_PARTNER
+        }
+        _ => 0,
+    }
+}
 
 /// Named references hold `NAME_BASE` plus the index of their name until the pattern is read to its end.
 const NAME_BASE: u32 = 1 << 24;
@@ -1175,6 +1261,8 @@ struct Scan {
     unbounded: bool,
     /// The capturing groups the scan is inside.
     open: Vec<u32>,
+    /// The groups a case-insensitive reference names (in a pattern without the `u` flag).
+    compared: Vec<bool>,
 }
 
 impl Scan {
@@ -1199,9 +1287,10 @@ impl Scan {
                 self.needed |= zero_width(body) && !choice_free(body);
                 self.node(body, in_loop || max.is_none_or(|max| max >= 2));
             }
-            Node::Backref { groups, .. } => {
+            Node::Backref { groups, icase } => {
                 self.needed |= groups.len() > 1;
                 for &g in groups {
+                    self.compared[g as usize] |= *icase;
                     self.refs[g as usize] += 1;
                     self.needed |= self.open.contains(&g);
                 }
@@ -1293,6 +1382,11 @@ struct Iteration {
 const START: &str = "(?<![^])";
 
 struct Emitter {
+    /// For each group of the pattern, what it may hold that regress compares wrongly without case ([`held`]), when
+    /// a case-insensitive reference names it.
+    holds: Vec<u8>,
+    /// For a group as it is written, what it may hold that regress compares wrongly, where that is something.
+    held: std::collections::HashMap<u32, u8>,
     /// How many references name each group.
     refs: Vec<u32>,
     /// What [`Emitter::read_outside`] said of each repetition, which is asked once for every copy of it.
@@ -1439,6 +1533,10 @@ impl Emitter {
                 // Until here the group has no value: a reference inside it reads nothing.
                 if let Some(instance) = instance {
                     self.bind[*index as usize] = Binding::Group(instance);
+                    // A case-insensitive reference to it is compared by hand where regress would be wrong.
+                    if self.holds[*index as usize] != 0 {
+                        self.held.insert(instance, self.holds[*index as usize]);
+                    }
                 }
             }
             Node::Look { behind, negative, body, groups } => {
@@ -1474,28 +1572,106 @@ impl Emitter {
             Node::Backref { groups, icase } => {
                 for &g in groups {
                     let binding = self.bind[g as usize].clone();
-                    self.reference(&mut out, &binding, *icase)?;
+                    self.reference(&mut out, &binding, *icase, back)?;
                 }
             }
         }
         Ok(out)
     }
 
-    fn reference(&mut self, out: &mut Out, binding: &Binding, icase: bool) -> Result<(), Stop> {
+    fn reference(&mut self, out: &mut Out, binding: &Binding, icase: bool, back: bool) -> Result<(), Stop> {
         match binding {
             Binding::Unset => {}
-            Binding::Group(instance) => {
-                self.fits(1)?;
-                self.spend(8)?;
-                out.0.push(Piece::Ref(*instance, icase));
-            }
-            Binding::Iterations(copies) => self.down(1, |e| e.iterations(out, copies, icase))?,
+            Binding::Group(instance) => match self.held.get(instance).copied() {
+                Some(holds) if icase => out.append(self.compared(*instance, holds, back)?),
+                _ => {
+                    self.fits(1)?;
+                    self.spend(8)?;
+                    out.0.push(Piece::Ref(*instance, icase));
+                }
+            },
+            Binding::Iterations(copies) => self.down(1, |e| e.iterations(out, copies, icase, back))?,
         }
         Ok(())
     }
 
+    /// A case-insensitive reference to `group` in a pattern without the `u` flag, where the group may hold a
+    /// character regress compares wrongly ([`held`]). regress's own comparison accepts everything ECMA-262 does,
+    /// so it is kept, and what it accepts wrongly is refused before it: a place where the text has a character of
+    /// [`ONE_OF_A_PAIR`] and the group another, or the group has one of [`DOTLESS`] and the text another.
+    ///
+    /// A text that is the group's own, case and all, needs none of this, and the reference as regress has it with
+    /// case is the first alternative. The second is for a text that differs: it costs a pass over the string.
+    ///
+    /// The rest of the text from a position says which position it is, so a group that takes it is a pointer.
+    /// `left` and `right` are the ends of the text the reference is compared with. `start` and `end` are the ends
+    /// of the first place in the string that has the group's text, which serves as the group (the group's own
+    /// place is such a place). To look at the group's character for a character of the text: the text from `left`
+    /// to there is taken, and from `start` it is matched again without case, which regress does one code unit for
+    /// one. Looking from the group to the text is the same the other way round.
+    fn compared(&mut self, group: u32, holds: u8, back: bool) -> Result<Out, Stop> {
+        // The deepest of it: the alternative, a lookbehind for a reference in a lookbehind, the scan, the two
+        // jumps one in the other, each a lookbehind with two lookaheads in it, and the group of a reference.
+        self.fits(10)?;
+        self.spend(640)?;
+        let (start, end, left, right) = (self.instance(), self.instance(), self.instance(), self.instance());
+        // `%` opens a group, `@` reads one, `~` reads one without case, and the letter after says which.
+        let write = |template: &str, groups: &[(char, u32)]| {
+            let mut out = Out::default();
+            let mut chars = template.chars();
+            while let Some(c) = chars.next() {
+                if !matches!(c, '%' | '@' | '~') {
+                    out.text(c.encode_utf8(&mut [0; 4]));
+                    continue;
+                }
+                let name = chars.next();
+                let instance = groups.iter().find(|(n, _)| Some(*n) == name).map_or(0, |(_, instance)| *instance);
+                out.0.push(match c {
+                    '%' => Piece::Open(instance),
+                    '@' => Piece::Ref(instance, false),
+                    _ => Piece::Ref(instance, true),
+                });
+            }
+            out
+        };
+        // "At the position `p` points to, `then`", from anywhere: back to the start of the text, and on to where
+        // the rest of the text is what `p` took. A lookbehind matches from its end, so the start of the text is
+        // written after the lookahead to be found before it is tried.
+        let at = |p: char, then: &str| format!("(?<=(?=[^]*?(?=@{p}(?![^])){then}){START}[^]*)");
+        let mut groups = vec![('g', group), ('s', start), ('e', end), ('l', left), ('r', right)];
+        // The first place that has the group's text, and then the scans, in the order they are matched in.
+        let mut scans = vec![format!("(?<=(?=[^]*?(?=@g)(?=%s[^]*))@g%e[^]*)){START}[^]*)")];
+        // From `from` (the text or the group, which ends at `to`): a character of `class` that is not what the
+        // other has there. `x` is the character and `c` what was taken before it.
+        let mut scan = |e: &mut Self, class: &str, (from, to, other): (char, char, char)| {
+            let (x, c) = (e.instance(), e.instance());
+            let (xn, cn) = ((b'A' + groups.len() as u8) as char, (b'A' + groups.len() as u8 + 1) as char);
+            groups.push((xn, x));
+            groups.push((cn, c));
+            let there = at(other, &format!("~{cn}(?!@{xn})"));
+            format!("[^]*?(?=%{xn}{class}))(?=[^]+?(?=@{to}(?![^])))(?<=(?=@{from}(?![^]))%{cn}[^]*?)){there}")
+        };
+        if holds & HOLDS_PARTNER != 0 {
+            let found = scan(self, ONE_OF_A_PAIR, ('l', 'r', 's'));
+            scans.push(format!("(?!{found})"));
+        }
+        if holds & HOLDS_DOTLESS != 0 {
+            let found = scan(self, DOTLESS, ('s', 'e', 'l'));
+            scans.push(format!("(?!{})", at('s', &found)));
+        }
+        // Forwards the reference is at its left end. Backwards it is at its right end, what is written last is
+        // matched first, and the scans are made from the left end, inside a lookbehind.
+        let template = if back {
+            scans.reverse();
+            format!("(?:@g|~g(?<={}(?=%l[^]*))~g)(?=%r[^]*))(?<!@g))", scans.concat())
+        } else {
+            format!("(?:@g|(?!@g)(?=~g%r[^]*))(?=%l[^]*)){}~g)", scans.concat())
+        };
+        Ok(write(&template, &groups))
+    }
+
     /// A reference to the last copy that ran, of `copies`: an alternation, in a group.
-    fn iterations(&mut self, out: &mut Out, copies: &[Iteration], icase: bool) -> Result<(), Stop> {
+    fn iterations(&mut self, out: &mut Out, copies: &[Iteration], icase: bool, back: bool) -> Result<(), Stop> {
         // The deepest of it: a lookbehind, a lookahead in it, and the group of a reference in that.
         self.fits(3)?;
         self.text(out, "(?:")?;
@@ -1517,7 +1693,7 @@ impl Emitter {
                 }
             }
             self.text(out, "[^]*)")?;
-            self.reference(out, &copy.value, icase)?;
+            self.reference(out, &copy.value, icase, back)?;
         }
         self.text(out, ")")?;
         Ok(())
@@ -1895,6 +2071,48 @@ mod tests {
         let written = rewritten("^(?i:[\u{1F600}a])\\&$").unwrap();
         let expected = units("^(?:[\\u0041\\u0061\u{1F600}])\\u0026$").into_iter().map(u32::from).collect::<Vec<_>>();
         assert_eq!(code_units(&written).collect::<Vec<_>>(), expected);
+    }
+
+    /// A case-insensitive reference to a group that can hold none of the characters regress compares wrongly is
+    /// left to regress. One to a group that can is written with the scans of `Emitter::compared`: from the text
+    /// where the group may hold a letter regress equates with another character, and from the group where it may
+    /// hold U+0131 or U+017F.
+    #[test]
+    fn a_case_insensitive_reference_is_compared_by_hand_where_regress_is_wrong() {
+        for pattern in [r"^(?i:(\d)\1)\&$", r"^(?i:(k)\1)\&$", r"^(?i:([a-hj-rt-z]+)\1)\&$", r"^(?i:(\s|-)\1)\&$"] {
+            let written = rewritten(pattern).unwrap();
+            assert!(written.contains(r"(?i:\1)") && !written.contains("[^]"), "{pattern} as {written}");
+        }
+        for (pattern, from_the_text, from_the_group) in [
+            (r"^(?i:(\w)\1)\&$", true, false),
+            (r"^(?i:([r-t])\1)\&$", true, false),
+            (r"^(?i:(\u1f80|x)\1)\&$", true, false),
+            (r"^(?i:(\u0131)\1)\&$", false, true),
+            (r"^(?i:([\u017f])\1)\&$", false, true),
+            (r"^(?i:(.)\1)\&$", true, true),
+            (r"^(?i:([^a])\1)\&$", true, true),
+            (r"^(?i:(\W)\1)\&$", true, true),
+            (r"^(?i:(x)((?:a\1)+)\2)\&$", true, true),
+            (r"^(.)(?i:\1)\&$", true, true),
+            (r"^(?i:.(?<=\1(s)))\&$", true, false),
+        ] {
+            let written = rewritten(pattern).unwrap();
+            assert_eq!(written.contains(&format!("(?=({ONE_OF_A_PAIR}))")), from_the_text, "{pattern} as {written}");
+            assert_eq!(written.contains(&format!("(?=({DOTLESS}))")), from_the_group, "{pattern} as {written}");
+        }
+        // Group 1 is the group. Groups 2 and 3 are the right and left ends of the text, 4 and 5 the ends of the
+        // first place with the group's text, 6 a character of the text and 7 the text before it.
+        assert_eq!(
+            rewritten(r"^(?i:(\d|s)\1)\&$").unwrap(),
+            [
+                r"^(?:(\d|[\u0053\u0073])(?:(?:\1)|(?!(?:\1))(?=(?i:\1)([^]*))(?=([^]*))",
+                r"(?<=(?=[^]*?(?=(?:\1))(?=([^]*))(?:\1)([^]*))(?<![^])[^]*)",
+                r"(?![^]*?(?=([\u0131\u017f\u1f80-\u1faf\u1fb3\u1fbc\u1fc3\u1fcc\u1ff3\u1ffc]))(?=[^]+?(?=(?:\2)(?![^])))",
+                r"(?<=(?=(?:\3)(?![^]))([^]*?))(?<=(?=[^]*?(?=(?:\4)(?![^]))(?i:\7)(?!(?:\6)))(?<![^])[^]*))",
+                r"(?i:\1)))\u0026$",
+            ]
+            .concat()
+        );
     }
 
     /// Annex B reads an escape of a number that is no group as an octal escape or as the digit. It is written as
