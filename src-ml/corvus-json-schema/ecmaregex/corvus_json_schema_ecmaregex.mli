@@ -292,6 +292,10 @@ module Internal : sig
   val no_match : int
   (** The need of a program that no text matches. *)
 
+  val need_passes : t -> int
+  (** [need_passes re] is the number of passes over the program that working out its needs took, the last of which
+      changed nothing. *)
+
   val prefix : t -> string
   (** [prefix re] is the literal text the search for a match looks for at each position of the text: the first bytes, 16
       at most, of the literal text every match starts with, or [""]. *)

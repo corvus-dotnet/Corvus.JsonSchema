@@ -1252,12 +1252,27 @@ let test_needs () =
       | Some re ->
           let found, found_loops = Re.Internal.needs re in
           let found_iterations = Re.Internal.iterations re in
+          (* One pass settles the needs and a second finds nothing to change, however the loops nest. *)
+          if Re.Internal.need_passes re > 2 then
+            fail "%S: %d passes to work out its needs" p (Re.Internal.need_passes re);
           if found <> need || found_loops <> loops || found_iterations <> iterations then begin
             fail "%S: need %d, loops [%s], iterations [%s], want %d, [%s] and [%s]" p found (show found_loops)
               (show found_iterations) need (show loops) (show iterations);
             needs_work := false
           end)
     cases;
+  (* Loops a hundred deep, of each kind: the passes do not grow with the depth. A pass for each loop of a nest made
+     the largest nest the limits admit take a fifth of a second and 330 MB of garbage to compile. *)
+  List.iter
+    (fun (opening, closing) ->
+      let nest part = String.concat "" (List.init 100 (fun _ -> part)) in
+      match compiled (nest opening ^ "a?b" ^ nest closing) with
+      | None -> ()
+      | Some re ->
+          let passes = Re.Internal.need_passes re in
+          if passes > 2 then
+            fail "%d passes to work out the needs of loops a hundred deep (%s...%s)" passes opening closing)
+    [ ("(?:", "){2,3}"); ("(?:", ")*"); ("(?:", ")+?"); ("(", "){0,2}?"); ("(?:", "){2}") ];
   log "%d patterns" (List.length cases)
 
 (* Checks the matcher uses the least count of a counted loop: a pattern that needs a million characters, or two

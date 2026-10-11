@@ -82,6 +82,7 @@ type program = {
       (** Says the pattern was read without the u flag, so the text is matched by UTF-16 code unit (see utf8.ml). *)
   anchored : bool;  (** Says every match starts at the start of the text. *)
   need : int;  (** The least number of bytes a match consumes (see {!set_needs}). *)
+  need_passes : int;  (** The passes over the instructions that {!set_needs} made, the last of which changed nothing. *)
   prefix : string;  (** Literal text every match starts with. *)
   first : Charset.t;
       (** Every code point a match can start with. It is in use when [has_first] is set, which it is not when a match
@@ -418,10 +419,10 @@ let rec first_chars n pairs =
   | _ -> true
 
 (** [set_needs insts] works out, for every instruction, the least number of bytes of text that any way from it to a
-    match consumes going forward, and writes it into the counted loops. It returns the need of the whole program. The
-    matcher gives up at a counted loop when fewer bytes than that are left, as V8 does at every choice. A loop whose
-    iterations can be empty would otherwise try every combination of its ways at a position from which the rest of the
-    pattern cannot match at all.
+    match consumes going forward, and writes it into the counted loops. It returns the need of the whole program, and
+    the number of passes it made. The matcher gives up at a counted loop when fewer bytes than that are left, as V8 does
+    at every choice. A loop whose iterations can be empty would otherwise try every combination of its ways at a
+    position from which the rest of the pattern cannot match at all.
 
     A counted loop that is entered needs its least count of iterations, each of them the least its body consumes
     ([iter]), and then what follows it. The loop instruction itself is also reached after each iteration, so its own
@@ -435,13 +436,21 @@ let set_needs insts =
   let count = Array.length insts in
   let need = Array.make count no_match in
   (* The needs only fall, and nearly every way goes forward, so going through the instructions from the last to the
-     first settles all but the loops in one pass. *)
-  let changed = ref true in
+     first settles them in one pass, and a second pass finds nothing to change. The one way that goes back is the jump
+     at the end of the body of a counted loop, to the loop instruction. The need of that instruction is the need of
+     what follows the loop, since the other way from it, through the body, comes back to it and cannot need less. So
+     the jump takes the need of what follows the loop, which this pass has settled already. The jump at the end of the
+     body of a plain loop goes back to a choice between the body and what follows, and takes the lesser of the two in
+     the same way. Taking the need of the
+     loop instruction, which this pass has not reached, would settle one loop of a nest for each pass: a thousand
+     passes for loops a thousand deep. *)
+  let next target weight = need.(target) + weight in
+  let changed = ref true and passes = ref 0 in
   while !changed do
     changed := false;
+    incr passes;
     for pc = count - 1 downto 0 do
       let i = insts.(pc) in
-      let next target weight = need.(target) + weight in
       let n =
         match i.op with
         | Op_match | Op_look_ok | Op_look_fail -> 0
@@ -449,6 +458,8 @@ let set_needs insts =
         | Op_char | Op_set -> next (pc + 1) 1
         | Op_lit -> next (pc + 1) (String.length i.lit)
         | Op_rep | Op_rep_lazy -> next (pc + 1) i.min
+        | Op_jmp when i.x < pc && insts.(i.x).op = Op_loop -> next insts.(i.x).x 0
+        | Op_jmp when i.x < pc && insts.(i.x).op = Op_split -> min (next insts.(i.x).x 0) (next insts.(i.x).y 0)
         | Op_jmp | Op_look -> next i.x 0
         | Op_split -> min (next i.x 0) (next i.y 0)
         | Op_loop -> min (next (pc + 1) 0) (next i.x 0)
@@ -465,7 +476,7 @@ let set_needs insts =
     done
   done;
   Array.iteri (fun pc i -> if i.op = Op_loop then i.need <- need.(pc)) insts;
-  need.(0)
+  (need.(0), !passes)
 
 (** The most bytes of the literal text a match starts with that the search for a match looks for. *)
 let max_prefix = 16
@@ -501,7 +512,7 @@ let compile_program root group_count unicode_mode =
       | exception Unknown_first -> None
   in
   let insts = Array.sub c.code 0 c.count in
-  let need = set_needs insts in
+  let need, need_passes = set_needs insts in
   {
     insts;
     groups = !slots;
@@ -509,6 +520,7 @@ let compile_program root group_count unicode_mode =
     units = not unicode_mode;
     anchored;
     need;
+    need_passes;
     (* The search looks for the prefix at every position of the text, a byte at a time, so only its first bytes are
        used: a long prefix that nearly matches everywhere would cost its length at each position, outside the steps
        the matcher counts. The matcher compares the rest when it runs. *)

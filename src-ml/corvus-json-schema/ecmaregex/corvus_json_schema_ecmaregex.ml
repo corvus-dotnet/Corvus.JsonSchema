@@ -185,6 +185,7 @@ module Internal = struct
          (Array.to_list re.prog.insts))
 
   let no_match = Compile.no_match
+  let need_passes re = re.prog.need_passes
   let prefix re = re.prog.prefix
   let size pattern unicode = match Parse.parse pattern unicode with Ok (_, ps) -> ps.size | Error _ -> -1
   let unpack packed = (Utf8.rune packed, Utf8.width packed)
