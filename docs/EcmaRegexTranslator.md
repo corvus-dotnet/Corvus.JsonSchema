@@ -176,6 +176,33 @@ grows much faster than the pattern.
 - **More than about ten thousand groups that no backreference reads, one after another in one sequence**
   (`(a)(b)(c)...`), which are written as plain groups.
 
+### What the limits were measured against
+
+A probe gives the translator and both of .NET's engines 119 shapes built to cost as much as they can: 111 patterns
+of at most 1,000 characters against texts of at most 100,000, and 8 patterns of up to 700,000 characters. They are
+repetitions of what can match nothing, one inside another, backreferences in repetitions, counts large and one
+inside another, 10,000 open parentheses, long alternations, lookbehinds over a long text, case-insensitive
+backreferences to groups that hold any character, and classes of large properties. Before the limits, and with the
+match limit at 10 seconds, ten of its runs were stopped when the process passed 3 GB, five of them in the
+translator and five in .NET's `Regex` constructor, and one pattern of 610 characters was translated to 49 million
+characters and kept 453 MB.
+
+With the limits, on a machine with a load of 7 to 8 from other work, every run ends in an answer, in the error of
+a pattern that is too large, or in `RegexMatchTimeoutException`:
+
+| For a pattern of at most 1,000 characters | The most measured |
+|---|---|
+| Time to translate it or to refuse it | 110 ms |
+| Time for .NET to construct the regular expression | 43 ms |
+| Memory kept for it, the translation and the regular expression | 3.5 MB |
+| Time of one match, which is the match limit | 1.01 s |
+| Memory of the process while it matched | 195 MB |
+
+The eight larger patterns, and forty more of up to a megabyte, are translated or refused in at most 0.31 seconds,
+and what is accepted of the eight is constructed in at most 45 ms and keeps at most 6.8 MB. At the limits themselves, .NET keeps about 11 bytes for each character
+of a translation it interprets, so a translation of 1,048,576 characters keeps about 11 MB for as long as an
+evaluator holds it.
+
 A pattern that is over no limit is translated in the steps it takes. The most that a pattern of the
 [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) takes is 180,606
 steps and a translation of 946,581 characters, for a pattern with six case-insensitive backreferences. None of its
@@ -222,9 +249,26 @@ pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTable
   does not always return from a match of the second kind
   (see [the translations](./EcmaRegexTranslations.md#repetitions)). Only a pattern with a lazy repetition of a group
   inside a lookaround whose captures a backreference reads has such a translation.
+- **Memory while a match runs.** The match limit bounds the time of a match and not its memory. A backtracking
+  engine keeps what it may have to come back to, and a match that runs to the limit can keep more for as long as
+  it runs. The most the probe above provoked in the second a match is given is 195 MB for the whole process, 160 MB
+  of it the match: a repetition over 110 groups that a backreference reads, on 80,000 characters, in the
+  interpreted engine. .NET has no limit on the memory of a match. Where neither the schema nor the instance is
+  trusted, set a shorter `RegexMatchTimeout`, bound the length of the instance, or give the process a memory limit.
+- **Code that was generated before the match limit has none.** The limit is written into generated code when it
+  is generated. Of the code checked in to this repository, the V4 models of Draft 2019-09, Draft 2020-12, OpenAPI
+  3.0 and OpenAPI 3.1 (`src-v4/Corvus.Json.JsonSchema.Draft201909`, `Draft202012`, `OpenApi30` and `OpenApi31`)
+  have not been regenerated. Their regular expressions are the ones they were generated with, and have no match
+  limit.
 - **Time.** ECMA-262 does not say how long a match may take, and a backtracking engine can take very long. The
-  evaluator's match timeout (`JsonSchemaEvaluatorOptions.RegexMatchTimeout`) bounds it. A translation gives V8's
-  answer and not V8's time, in three ways.
+  evaluator's match limit (`JsonSchemaEvaluatorOptions.RegexMatchTimeout`, 1 second unless it is set) bounds it,
+  and a match that reaches it throws `RegexMatchTimeoutException` and gives no answer. V8 answers every text of
+  the ECMA-262 regular expression test data in under 250,000 backtracks. Two of its 98,839 patterns reach the
+  limit here, in every configuration: `^a{2}?(((?!)|((|a){2,}(|a)\B|){2,3}?){2,3}.{3}a{2})\4`, whose hardest text
+  takes V8 238,314 backtracks, and a pattern of 190 characters with `(a|)(a|)` in a group that is read, three
+  repetitions deep, whose hardest text takes V8 113,530. Both repeat, several deep, a body that matches the empty
+  string in more than one way, and .NET goes through every way where V8 does too, at many times the cost of a
+  step. A translation gives V8's answer and not V8's time, in four ways.
   - A repetition whose body can match the empty string, with no backreference in it and no group that one reads
     (`(?:a?b?)*`), is written as it is. .NET takes an iteration that matched nothing and, when the rest fails, tries
     again without it, where ECMA-262 refuses the iteration. A search that passes twenty such repetitions is made

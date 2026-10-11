@@ -247,7 +247,9 @@ So a match has a timeout. `JsonSchemaEvaluatorOptions.RegexMatchTimeout` sets it
 - Set `RegexMatchTimeout = Regex.InfiniteMatchTimeout` to match with no timeout, which was the behaviour before
   the default was introduced.
 - The timeout limits time and not memory. A match that runs for long can grow the engine's backtracking stack as
-  it goes. Choose a shorter timeout for schemas that are not trusted.
+  it goes: the most measured in the second of the default, over patterns built for it, is 160 MB for one match
+  (see [the translator guide](EcmaRegexTranslator.md#known-limits)). Choose a shorter timeout, or a memory limit
+  for the process, where neither the schema nor the instance is trusted.
 
 ```csharp
 using System.Text.RegularExpressions;

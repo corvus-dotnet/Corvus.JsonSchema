@@ -49,6 +49,12 @@ public sealed class JsonSchemaEvaluatorOptions
     /// Set <see cref="RegexMatchTimeout"/> to <see cref="Regex.InfiniteMatchTimeout"/> to match with no timeout, as
     /// the evaluator did before this default.
     /// </para>
+    /// <para>
+    /// The timeout bounds the time of a match and not its memory. A match that backtracks keeps what it may have to
+    /// come back to, and it can keep more for as long as it runs, so the timeout bounds that only as far as it
+    /// bounds the time. Set a shorter timeout, or a limit on the memory of the process, where neither the schema
+    /// nor the instance is trusted.
+    /// </para>
     /// </remarks>
     public static readonly TimeSpan DefaultRegexMatchTimeout = TimeSpan.FromSeconds(1);
 

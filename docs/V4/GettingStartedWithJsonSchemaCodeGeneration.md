@@ -1020,8 +1020,11 @@ A generated type then gives the answer a JavaScript engine gives. Three things f
   throws `RegexMatchTimeoutException` from `Validate()`. It is not reported as an instance that is not valid. The
   `format` checks that use a regular expression answer "not valid" on a timeout, as they did.
 
-Regenerate your types with this version of the generator to get all three. Types generated before it keep the
-translation and the expressions they were generated with.
+Regenerate your types with this version of the generator to get all of these. Types generated before it keep the
+translation and the expressions they were generated with, and have no match timeout. That is so for four of the
+models this repository ships: `Corvus.Json.JsonSchema.Draft201909`, `Corvus.Json.JsonSchema.Draft202012`,
+`Corvus.Json.JsonSchema.OpenApi30` and `Corvus.Json.JsonSchema.OpenApi31` have not been regenerated, and a match
+of one of their patterns has no limit. `Corvus.Json.JsonSchema.OpenApi20` has been, and has the limit of 1 second.
 
 ## Values, Null, and Undefined
 
