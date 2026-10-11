@@ -163,8 +163,16 @@ What is exact:
 - Every construct but the two below, for every pattern, whether it is valid with the `u` flag or only without it.
   That includes a backreference to a group that has not taken part, the groups of a repeated body, an iteration that
   matches the empty string, and a backreference inside a lookbehind to a group at its end.
+- A pattern that is valid only without the `u` flag (one with an identity escape such as `\-` or `\&`) matches the
+  UTF-16 code units of the string, as ECMA-262 says. A character beyond the Basic Multilingual Plane is two code
+  units, so `^\-?.$` does not match U+10400, which `^.$` matches. A quantifier after such a character in the pattern
+  repeats its second half, `\u{...}` is the letter `u` counted, and a class range from one such character to
+  another is an error.
 - A case-insensitive backreference such as `(.)(?i:\1)`, in every pattern that is valid with the `u` flag, with
-  Julia 1.13. PCRE2 makes the comparison, by Unicode simple case folding, as ECMA-262 does with the `u` flag.
+  Julia 1.13. PCRE2 makes the comparison, by Unicode simple case folding, as ECMA-262 does with the `u` flag. It
+  compares one character at a time. V8 13.6 compares the whole text by full case folding there, and says that
+  `^(..)\1$` with the `i` flag matches U+00DF, `S`, `s`, U+1E9E. The package follows ECMA-262 and says that it does
+  not.
 - A backreference to a group of a lookbehind, where the lookbehind has a fixed length, where the group is at a
   fixed distance from its end (`(?<=a*(x))-\1`), and where the lookbehind is a term of the pattern itself and starts
   with a repetition of a body of a fixed length (`(?<=([abc])+)x\1`) or with alternatives of fixed lengths
@@ -182,8 +190,8 @@ the schema throws a `CompileError` that names the construct. It is never run wit
   the ways through the lookbehind from its end (`(?<=(a*)(x+))-\1`).
 - A backreference inside a lookbehind to a group that the lookbehind matches before it, where the group is not in
   an end of the lookbehind of a fixed length (`(?<=\1(a+))`).
-- Repetitions that have to be written twice inside one another past 65,536 characters, more than 253 lookbehinds of
-  no fixed length in one pattern, and a pattern too large for PCRE2 to compile.
+- Repetitions that have to be written twice inside one another past 65,536 characters, more than 252 lookbehinds of
+  no fixed length in one pattern, and a pattern too large for PCRE2 to compile (counted groups nested several deep).
 
 **The lookbehind exception.** A pattern that is valid with the `u` flag is run, and answers as V8 does, with one
 named exception. Two uses of a lookbehind need it to be matched backwards, as ECMA-262 matches it, which PCRE2 cannot
@@ -201,6 +209,9 @@ translation are the only other refusals of such a pattern.
 PCRE2 backtracks, and it limits the steps and the memory of a match. A match that reaches a limit throws
 `CorvusJsonSchema.EcmaRegex.MatchError`, from `isvalid` as from `validate` and `evaluate`. It is never reported as a
 string that does not match. Validate inside `try` when the schema's patterns are not trusted.
+
+A JSON string with the escape of a surrogate that is not half of a pair, such as `"\ud800"`, is not Unicode text. The
+parser refuses a document that has one, an instance or a schema, so a pattern is never matched against such a string.
 
 ### Julia 1.10
 

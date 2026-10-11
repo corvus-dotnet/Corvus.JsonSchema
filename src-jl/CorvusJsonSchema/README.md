@@ -221,7 +221,22 @@ Julia version, with one exception for Julia 1.10 that is listed [below](#julia-1
 - **Case-insensitive backreferences.** `(.)(?i:\1)` compares its text as PCRE2 compares, by Unicode simple case
   folding, which is what ECMA-262 does with the `u` flag. A pattern that is valid with the `u` flag is never refused
   for one. With Julia 1.13 the answers are those of V8 13.6 for every pair of characters. With Julia 1.10 they are
-  not for thirty pairs of characters (see [Julia 1.10](#julia-110)).
+  not for thirty pairs of characters (see [Julia 1.10](#julia-110)). The comparison is one character at a time, as
+  ECMA-262's Canonicalize is. V8 13.6 compares the whole text by full case folding where the `i` and `u` flags are
+  both set, so it says that `^(..)\1$` matches U+00DF, `S`, `s`, U+1E9E. The package says that it does not.
+- **Patterns valid only without the `u` flag.** A pattern that is not valid with the `u` flag (one with an identity
+  escape such as `\-` or `\&`) is read with the Annex B grammar, and ECMA-262 then matches it against the UTF-16
+  code units of the string. A character beyond the Basic Multilingual Plane is two code units. So `^\-?.$` does not
+  match U+10400, which `^.$` matches. In such a pattern a quantifier after such a character repeats its second
+  half, a class holds each half, `\u{...}` is the letter `u` counted, and a class range from one such character to
+  another is an error, as it runs from a low surrogate down to a high one. A string with no such character is
+  matched as it is. One that has one is written again as code units for the match, which allocates. The name of a
+  group is read by character in both grammars.
+- **Lookbehinds of no fixed length.** PCRE2 takes a lookbehind only when its length is fixed. Any other is a search
+  for where its body starts. The body is held to the place the lookbehind stands at, the starts are tried from
+  that place backwards, and none is tried where the character before the lookbehind is not one the body can end
+  with. `(?<=(?:[ax]+){2,})$` is answered at once on forty characters, where a body that ran on past the
+  lookbehind reached the limit on the steps of a match.
 - **What is refused.** A pattern that is valid ECMA-262 and that the translator cannot write with exactly the same
   meaning is not run with another meaning. Compiling the schema throws a `CompileError` that names the construct.
   These are:
@@ -235,9 +250,11 @@ Julia version, with one exception for Julia 1.10 that is listed [below](#julia-1
     `k`, `s`, U+212A, U+017F and 74 other characters of the Basic Multilingual Plane, and every character beyond it
     that has a case variant. `^(.)(?i:\1)\&?$` is refused, and `^([a-j]+)(?i:\1)\&?$` is run. No pattern that is
     valid with the `u` flag is refused for this;
-  - repetitions that have to be written twice inside one another past 65,536 characters, more than 253 lookbehinds
+  - repetitions that have to be written twice inside one another past 65,536 characters, more than 252 lookbehinds
     of no fixed length in one pattern, and anything PCRE2 does not compile (its compiled form of a pattern is at
-    most 64 KiB, which counted repetitions nested several deep can pass).
+    most 64 KiB, which counted groups nested several deep can pass. A counted character or class does not, so
+    `^(?:(?:(?:a|){1,300}x){1,300}-)+$` is run). The error says "a pattern PCRE2 does not compile (regular
+    expression is too large)".
 
   No pattern of the JSON-Schema-Test-Suite or of the jsonschema-benchmark corpora is refused.
 - **The lookbehind exception.** A pattern that is valid with the `u` flag is run, and answers as V8 does, with one
@@ -255,6 +272,12 @@ Julia version, with one exception for Julia 1.10 that is listed [below](#julia-1
   A match that reaches a limit throws `CorvusJsonSchema.EcmaRegex.MatchError`, from `isvalid` as from `validate`
   and `evaluate`. It is never reported as a string that does not match. A schema whose patterns are not trusted
   should be validated inside `try`.
+- **Surrogates.** A JSON string with the escape of a surrogate that is not half of a pair, such as `"\ud800"`, is
+  not a string of Unicode text, and the parser refuses the document ("lone leading surrogate in hex escape"), in an
+  instance and in a schema. So no instance holds one, and a pattern is never matched against one. A pattern may
+  name one by its own escape (`\ud800` in the pattern, which is `"\\ud800"` in JSON). With the `u` flag it matches
+  nothing, as no string has one. Without it, it matches that half of a character beyond the Basic Multilingual
+  Plane.
 
 ## Performance
 
