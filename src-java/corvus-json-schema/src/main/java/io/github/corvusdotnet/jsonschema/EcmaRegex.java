@@ -2268,6 +2268,11 @@ final class EcmaRegex {
              * innermost, have matched nothing so far on the path.
              */
             int still;
+            /**
+             * Whether, since the innermost of those iterations started, the path wrote a part that may match
+             * something and that is not a decision of the plan. Without one the iteration is known to match nothing.
+             */
+            boolean unsure;
 
             Env(int n) {
                 name = new String[n];
@@ -2289,11 +2294,14 @@ final class EcmaRegex {
                 e.ctx = ctx.clone();
                 e.empty = empty.clone();
                 e.still = still;
+                e.unsure = unsure;
                 return e;
             }
         }
 
         private static final BitSet NOTHING = new BitSet();
+        /** The text of a scope none of whose plans can match. */
+        private static final String NEVER_MATCHES = "(?!)";
 
         private boolean precise;
         private Env env;
@@ -2589,6 +2597,12 @@ final class EcmaRegex {
             out.append("\\k<").append(name).append('>');
         }
 
+        private static BitSet without(BitSet a, BitSet b) {
+            BitSet c = (BitSet) a.clone();
+            c.andNot(b);
+            return c;
+        }
+
         private static BitSet both(BitSet a, BitSet b) {
             BitSet c = (BitSet) a.clone();
             c.and(b);
@@ -2624,6 +2638,22 @@ final class EcmaRegex {
                 decisions.add(new int[] {0, ways});
             }
             return decisions.get(decisionAt++)[0];
+        }
+
+        /**
+         * Thrown where the plan being written turns out to match nothing: an iteration past the minimum of its
+         * repetition in which the plan wrote only parts that match the empty string. ECMA-262 does not take such an
+         * iteration, and the test after it would fail every time. The plan is left out (see {@link #plans}), which
+         * is what keeps a counted repetition of a body that can match the empty string from being written twice
+         * for each iteration.
+         */
+        private static final class DeadPlan extends RuntimeException {
+            private static final long serialVersionUID = 1L;
+            static final DeadPlan INSTANCE = new DeadPlan();
+
+            private DeadPlan() {
+                super(null, null, false, false);
+            }
         }
 
         /** Something that writes text on the plan being written. */
@@ -2695,14 +2725,33 @@ final class EcmaRegex {
                 while (offsets.size() > outerOffsets) {
                     offsets.remove(offsets.size() - 1);
                 }
-                writer.write();
+                Mark mark = new Mark();
+                int wasUnanchored = unanchored;
+                boolean dead = false;
+                try {
+                    writer.write();
+                } catch (DeadPlan e) {
+                    dead = true;
+                }
                 String plan = out.substring(start);
                 out.setLength(start);
-                plans.add(plan);
-                most = Math.max(most, unrolledCopies);
-                longest = Math.max(longest, unrolledLength);
-                length += plan.length();
                 written += plan.length();
+                if (dead) {
+                    // The decisions the plan took stay, so that the next plan differs in the last of them.
+                    List<int[]> taken = new ArrayList<>(mine);
+                    mark.restore();
+                    unanchored = wasUnanchored;
+                    mine.clear();
+                    mine.addAll(taken);
+                    while (offsets.size() > outerOffsets) {
+                        offsets.remove(offsets.size() - 1);
+                    }
+                } else {
+                    plans.add(plan);
+                    most = Math.max(most, unrolledCopies);
+                    longest = Math.max(longest, unrolledLength);
+                    length += plan.length();
+                }
                 if (plans.size() > MAX_PLANS || start + length > MAX_PATHS_LENGTH || written > MAX_PATHS_WRITTEN) {
                     throw new Unsupported(REFUSED_TOO_MANY_PATHS);
                 }
@@ -2723,6 +2772,10 @@ final class EcmaRegex {
             env = entry;
             unrolledCopies = most;
             unrolledLength = longest;
+            if (plans.isEmpty()) {
+                // No plan can match, so the scope is a failure.
+                plans.add(NEVER_MATCHES);
+            }
             return plans;
         }
 
@@ -3543,6 +3596,16 @@ final class EcmaRegex {
         // repetition) is a decision. So where a test is written it is known, of each iteration that is open, whether
         // it has moved, and the test asks of the others that the place they end at is not the place it stands at.
         //
+        // A plan on which an iteration past the minimum wrote only parts that match nothing is not a way ECMA-262
+        // takes, and is left out (see DeadPlan). Without that a body that can match nothing gives two plans for
+        // each iteration, one of them dead, each with the iterations after it, and the text doubles with the count.
+        //
+        // An iteration that another iteration follows is written apart from the plan, as a scope of its own (see
+        // #part): the next iteration unsets what it sets, so nothing after it reads that, and its plans need not be
+        // plans of the lookahead. Whether another follows is a decision taken where the iteration is written. So a
+        // repetition of n iterations whose groups are read after it gives n plans for how many run, each with the
+        // plans of its last iteration, and not a plan for each way through all of them.
+        //
         // Where nothing from a place to the end of the lookahead sets a group read after it, the rest is written as
         // any other part of a plan. No test is needed there: the ways differ in nothing that is read.
 
@@ -3603,6 +3666,7 @@ final class EcmaRegex {
             BitSet wasLive = lookLive;
             int wasIterations = iterations;
             int wasStill = env.still;
+            boolean wasUnsure = env.unsure;
             lookLive = both(n.sets, live);
             iterations = 0;
             env.still = 0;
@@ -3613,6 +3677,7 @@ final class EcmaRegex {
             lookLive = wasLive;
             iterations = wasIterations;
             env.still = wasStill;
+            env.unsure = wasUnsure;
         }
 
         /**
@@ -3621,6 +3686,9 @@ final class EcmaRegex {
          */
         private void way(Node n, Rest rest, BitSet live) {
             if (!n.sets.intersects(lookLive) && (rest == null || !rest.sets.intersects(lookLive))) {
+                if (env.still > 0 && maxLength(n) != 0) {
+                    env.unsure = true;
+                }
                 p(n, live);
                 return;
             }
@@ -3756,6 +3824,9 @@ final class EcmaRegex {
             return chain == null || chainScope != scopeNow ? null : chain + pieces(chainStart, out.length());
         }
 
+        /** How many plans the scope that {@link #alternative} wrote last has. */
+        private int alternatives;
+
         /** The text a writer writes, as a scope of its own that starts here: its plans as alternatives. */
         private String alternative(Writer writer, String since) {
             String wasChain = chain;
@@ -3772,6 +3843,7 @@ final class EcmaRegex {
             chainStart = wasStart;
             chainScope = wasScope;
             env.still = wasStill;
+            alternatives = plans.size();
             return plans.size() == 1 ? plans.get(0) : "(?:" + String.join("|", plans) + ")";
         }
 
@@ -3835,14 +3907,57 @@ final class EcmaRegex {
                 // The tests in a loop hold what follows it.
                 prepare(rest.reads);
             }
+            boolean decided = n == decidedFor;
+            if (decided) {
+                decidedFor = null;
+            }
+            boolean apart = apart(n, rest);
             if (n.min > 0) {
                 // An iteration that is due. It may match nothing.
                 Node again = again(n, n.min - 1, n.max == UNBOUNDED ? UNBOUNDED : n.max - 1);
                 countCopy();
-                unset(body.sets);
-                out.append("(?:");
-                way(body, again.kind == EMPTY ? rest : new Rest(again, rest), live);
-                out.append(')');
+                Rest after = again.kind == EMPTY ? rest : new Rest(again, rest);
+                Writer due = () -> {
+                    unset(body.sets);
+                    out.append("(?:");
+                    way(body, after, live);
+                    out.append(')');
+                };
+                if (apart && (!n.sets.intersects(live) || (again.kind == REPEAT && again.min > 0))) {
+                    // Nothing reads what the iteration sets: nothing after the repetition does, or another
+                    // iteration follows, which unsets it.
+                    BitSet unread = without(live, body.sets);
+                    part(() -> {
+                        unset(body.sets);
+                        out.append("(?:");
+                        way(body, after, unread);
+                        out.append(')');
+                    });
+                } else if (apart && again.kind == REPEAT && again.max != UNBOUNDED) {
+                    // The last iteration that is due. Whether another follows is decided here, so that it is
+                    // written apart when one does.
+                    boolean more = (choose(2) == 0) != n.lazy;
+                    if (more && n.lazy) {
+                        part(() -> {
+                            due.write();
+                            guard(null, rest);
+                        });
+                    } else if (more) {
+                        BitSet unread = without(live, body.sets);
+                        part(() -> {
+                            unset(body.sets);
+                            out.append("(?:");
+                            way(body, after, unread);
+                            out.append(')');
+                        });
+                    } else {
+                        due.write();
+                    }
+                    decidedFor = again;
+                    decidedRuns = more;
+                } else {
+                    due.write();
+                }
                 way(again, rest, live);
                 return;
             }
@@ -3851,13 +3966,15 @@ final class EcmaRegex {
                 // One more iteration and then the rest of them, or none. A greedy repetition tries the iteration
                 // first, and a lazy one tries to stop first.
                 Node again = unbounded ? n : again(n, 0, n.max - 1);
-                if (sameAfter(n, rest, live)) {
+                if (!decided && sameAfter(n, rest, live)) {
                     String since = chainHere();
                     String one = alternative(() -> {
                         if (n.lazy) {
                             guard(null, rest);
                         }
-                        iteration(body, again, rest, live);
+                        // The iteration is a scope of its own, so that its plans do not each hold the iterations
+                        // after it.
+                        part(() -> iteration(body, again, rest, live));
                         way(again, rest, live);
                     }, since);
                     String none = n.lazy ? "" : alternative(() -> guard(made(CAT, made(ITERATION, body), again), rest), since);
@@ -3865,12 +3982,32 @@ final class EcmaRegex {
                     choices++;
                     return;
                 }
-                boolean runs = (choose(2) == 0) != n.lazy;
+                boolean runs = decided ? decidedRuns : (choose(2) == 0) != n.lazy;
                 if (runs) {
-                    if (n.lazy) {
+                    if (n.lazy && !decided) {
                         guard(null, rest);
                     }
-                    iteration(body, again, rest, live);
+                    if (apart && !unbounded && again.kind == REPEAT) {
+                        // Whether another iteration follows this one is decided here. When one does, this one is
+                        // written apart: the next unsets what it sets, so only the tests in it read that.
+                        boolean more = (choose(2) == 0) != n.lazy;
+                        if (more) {
+                            // In a lazy repetition the test that stopping after it fails reads what it sets.
+                            BitSet readAfter = n.lazy ? live : without(live, body.sets);
+                            part(() -> {
+                                iteration(body, again, rest, readAfter);
+                                if (n.lazy) {
+                                    guard(null, rest);
+                                }
+                            });
+                        } else {
+                            iteration(body, again, rest, live);
+                        }
+                        decidedFor = again;
+                        decidedRuns = more;
+                    } else {
+                        iteration(body, again, rest, live);
+                    }
                     way(again, rest, live);
                 } else if (!n.lazy) {
                     guard(made(CAT, made(ITERATION, body), again), rest);
@@ -3902,6 +4039,48 @@ final class EcmaRegex {
         }
 
         /**
+         * The rest of a repetition for which {@link #repeatedWay} has decided, where it wrote the iteration before,
+         * whether it runs another iteration ({@link #decidedRuns}), or null.
+         */
+        private Node decidedFor;
+        private boolean decidedRuns;
+
+        /**
+         * Whether an iteration of a repetition can be written apart from the plan, as a scope of its own (see
+         * {@link #part}): every iteration that is open has moved, and neither the repetition nor what follows reads
+         * a group of a lookaround of this iteration of a loop (see {@link #sameAfter}).
+         */
+        private boolean apart(Node n, Rest rest) {
+            if (env.still != 0 || readsTracked(n)) {
+                return false;
+            }
+            for (Rest r = rest; r != null; r = r.next) {
+                if (readsTracked(r.node)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Writes a part of a plan as a scope of its own that starts here: its plans as alternatives, each with its
+         * tests. What the part sets is forgotten after it, so it is for a part whose groups nothing after it reads.
+         * The plans of the part then add to the text of the plan and do not multiply the plans of the scope around
+         * it. A part that no plan of it can match makes the plan one that cannot match.
+         */
+        private void part(Writer writer) {
+            String text = alternative(writer, chainHere());
+            if (text.equals(NEVER_MATCHES)) {
+                throw DeadPlan.INSTANCE;
+            }
+            out.append(text);
+            if (alternatives > 1) {
+                choices++;
+            }
+            env.still = 0;
+        }
+
+        /**
          * Writes, on the plan, one iteration that is past the minimum of its repetition, which {@code again} is the
          * rest of. It must not match the empty string.
          */
@@ -3927,11 +4106,15 @@ final class EcmaRegex {
             Node moved = made(MOVED);
             moved.min = ++iterations;
             env.still++;
+            env.unsure = false;
             String taken = newName();
             out.append("(?<").append(taken).append('>');
             way(body, new Rest(moved, after), live);
             out.append(')');
             if (env.still > 0) {
+                if (!env.unsure) {
+                    throw DeadPlan.INSTANCE;
+                }
                 String rest = restOfText();
                 out.append("(?!");
                 refer(taken);

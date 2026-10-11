@@ -1789,4 +1789,132 @@ class EcmaRegexTest {
                 () -> assertAnswers(SEARCHED_LOOKBEHINDS,
                         textsOver(4, new String[] {"a", "x", "-"}, MORE_FOR_SEARCHED_LOOKBEHINDS)));
     }
+
+    /**
+     * Lookaheads whose group is read after them, over a counted repetition of a body that can match the empty string
+     * or of a body with alternatives that set groups, with the texts each matches. Such a lookahead is written by
+     * ways, and a way in which an iteration past the minimum matches nothing is not a way ECMA-262 takes.
+     */
+    private static final String[][] COUNTED_REPETITIONS_IN_LOOKAHEADS = {
+            {
+                "(?=((?:a|){0,20}?)a)\\1a$",
+                "|a|aa|ba|xa|aaa|aba|axa|baa|bba|bxa|xaa|xba|xxa|aaaa|aaba|aaxa|abaa|abba|abxa"
+                        + "|axaa|axba|axxa|baaa|baba|baxa|bbaa|bbba|bbxa|bxaa|bxba|bxxa|xaaa|xaba|xaxa"
+                        + "|xbaa|xbba|xbxa|xxaa|xxba|xxxa|aaaaaa|aaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaaa"
+                        + "|aaaaaaaaaaaaaaaaaaaaaa|xaaaaaaaaaaaaaaaaaaaaaa",
+            },
+            {
+                "(?=((?:a?){0,20}?x?))\\1$",
+                "||a|b|x|aa|ab|ax|ba|bb|bx|xa|xb|xx|aaa|aab|aax|aba|abb|abx|axa|axb|axx|baa|bab"
+                        + "|bax|bba|bbb|bbx|bxa|bxb|bxx|xaa|xab|xax|xba|xbb|xbx|xxa|xxb|xxx|aaaa|aaab"
+                        + "|aaax|aaba|aabb|aabx|aaxa|aaxb|aaxx|abaa|abab|abax|abba|abbb|abbx|abxa|abxb"
+                        + "|abxx|axaa|axab|axax|axba|axbb|axbx|axxa|axxb|axxx|baaa|baab|baax|baba|babb"
+                        + "|babx|baxa|baxb|baxx|bbaa|bbab|bbax|bbba|bbbb|bbbx|bbxa|bbxb|bbxx|bxaa|bxab"
+                        + "|bxax|bxba|bxbb|bxbx|bxxa|bxxb|bxxx|xaaa|xaab|xaax|xaba|xabb|xabx|xaxa|xaxb"
+                        + "|xaxx|xbaa|xbab|xbax|xbba|xbbb|xbbx|xbxa|xbxb|xbxx|xxaa|xxab|xxax|xxba|xxbb"
+                        + "|xxbx|xxxa|xxxb|xxxx|aaaaaa|aaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaaa"
+                        + "|aaaaaaaaaaaaaaaaaaaaaa|aaaaaax|abababab|xaaaaaaaaaaaaaaaaaaaaaa"
+                        + "|aaaaaaaaaaaaaaaaaaaaab",
+            },
+            {
+                "(?=((?:.?){0,20}?|a|ab))(?:\\1|a)$",
+                "||a|b|x|aa|ab|ax|ba|bb|bx|xa|xb|xx|aaa|aab|aax|aba|abb|abx|axa|axb|axx|baa|bab"
+                        + "|bax|bba|bbb|bbx|bxa|bxb|bxx|xaa|xab|xax|xba|xbb|xbx|xxa|xxb|xxx|aaaa|aaab"
+                        + "|aaax|aaba|aabb|aabx|aaxa|aaxb|aaxx|abaa|abab|abax|abba|abbb|abbx|abxa|abxb"
+                        + "|abxx|axaa|axab|axax|axba|axbb|axbx|axxa|axxb|axxx|baaa|baab|baax|baba|babb"
+                        + "|babx|baxa|baxb|baxx|bbaa|bbab|bbax|bbba|bbbb|bbbx|bbxa|bbxb|bbxx|bxaa|bxab"
+                        + "|bxax|bxba|bxbb|bxbx|bxxa|bxxb|bxxx|xaaa|xaab|xaax|xaba|xabb|xabx|xaxa|xaxb"
+                        + "|xaxx|xbaa|xbab|xbax|xbba|xbbb|xbbx|xbxa|xbxb|xbxx|xxaa|xxab|xxax|xxba|xxbb"
+                        + "|xxbx|xxxa|xxxb|xxxx|aaaaaa|aaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaaa"
+                        + "|aaaaaaaaaaaaaaaaaaaaaa|aaaaaax|abababab|xaaaaaaaaaaaaaaaaaaaaaa"
+                        + "|aaaaaaaaaaaaaaaaaaaaab",
+            },
+            {".*(?=((?:(a|)){0,20}?)x)\\1+$", ""},
+            {"^(?=((?:(a)?){0,20}?(?:.?){2,3}?|(a*)))\\1a$", "|aaa|aba|axa|baa|bba|bxa|xaa|xba|xxa"},
+            {
+                "(?=(x(?:(|a)){0,20}?))\\1",
+                "|x|ax|bx|xa|xb|xx|aax|abx|axa|axb|axx|bax|bbx|bxa|bxb|bxx|xaa|xab|xax|xba|xbb"
+                        + "|xbx|xxa|xxb|xxx|aaax|aabx|aaxa|aaxb|aaxx|abax|abbx|abxa|abxb|abxx|axaa|axab"
+                        + "|axax|axba|axbb|axbx|axxa|axxb|axxx|baax|babx|baxa|baxb|baxx|bbax|bbbx|bbxa"
+                        + "|bbxb|bbxx|bxaa|bxab|bxax|bxba|bxbb|bxbx|bxxa|bxxb|bxxx|xaaa|xaab|xaax|xaba"
+                        + "|xabb|xabx|xaxa|xaxb|xaxx|xbaa|xbab|xbax|xbba|xbbb|xbbx|xbxa|xbxb|xbxx|xxaa"
+                        + "|xxab|xxax|xxba|xxbb|xxbx|xxxa|xxxb|xxxx|aaaaaax|xaaaaaaaaaaaaaaaaaaaaaa",
+            },
+            {"x?(?=((?:(a*)){0,20}?(?:.?){1,2}?)$)x\\1", ""},
+            {"^(?=((?:a|){0,20}))\\1$", "||a|aa|aaa|aaaa|aaaaaa|aaaaaaaaaaaa"},
+            {"^(?=((?:a|){0,20}?))\\1$", "|"},
+            {"^(?=((?:|a){0,20}))\\1$", "||a|aa|aaa|aaaa|aaaaaa|aaaaaaaaaaaa"},
+            {"^(?=((?:(a)|){0,20})b)\\1\\2b$", "|b"},
+            {
+                "a(?:(?=((?:.?){1,12}?(|a)))\\1){2}$",
+                "|a|aa|ab|ax|ba|xa|aaa|aab|aax|aba|abb|abx|axa|axb|axx|baa|bab|bax|bba|bxa|xaa"
+                        + "|xab|xax|xba|xxa|aaaa|aaab|aaax|aaba|aabb|aabx|aaxa|aaxb|aaxx|abaa|abab|abax"
+                        + "|abba|abxa|axaa|axab|axax|axba|axxa|baaa|baab|baax|baba|babb|babx|baxa|baxb"
+                        + "|baxx|bbaa|bbab|bbax|bbba|bbxa|bxaa|bxab|bxax|bxba|bxxa|xaaa|xaab|xaax|xaba"
+                        + "|xabb|xabx|xaxa|xaxb|xaxx|xbaa|xbab|xbax|xbba|xbxa|xxaa|xxab|xxax|xxba|xxxa"
+                        + "|aaaaaa|aaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaaaa|aaaaaax"
+                        + "|abababab|xaaaaaaaaaaaaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaaab",
+            },
+            {"a(?:(?=((?:.?){0,20}?))\\1a$){3}x", ""},
+            {"^(?:(?=((?:(a)?){0,20}?(?:ab?){2,3}?)x)(?:\\1|a)$){2}x", ""},
+            {"^(?=((?:(a)|(b)){0,12}))\\1\\2\\3$", "|"},
+            {
+                "^(?=((?:(a)|(b)){0,12}?)x)\\1\\3\\2",
+                "|x|xa|xb|xx|xaa|xab|xax|xba|xbb|xbx|xxa|xxb|xxx|xaaa|xaab|xaax|xaba|xabb|xabx"
+                        + "|xaxa|xaxb|xaxx|xbaa|xbab|xbax|xbba|xbbb|xbbx|xbxa|xbxb|xbxx|xxaa|xxab|xxax"
+                        + "|xxba|xxbb|xxbx|xxxa|xxxb|xxxx|xaaaaaaaaaaaaaaaaaaaaaa",
+            },
+            {
+                "^(?=((?:(a)|(b)){3,12}))\\1\\2",
+                "|aab|abb|bab|bbb|aaab|aabb|aabx|abab|abbb|abbx|baab|babb|babx|bbab|bbbb|bbbx"
+                        + "|aaaaaaaaaaaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaaaa|abababab|aaaaaaaaaaaaaaaaaaaaab",
+            },
+            {
+                "^(?=((?:(a)|(b)|){2,14}?)x?)\\1\\3",
+                "||a|b|x|aa|ax|ba|bx|xa|xb|xx|aaa|aab|aax|abb|axa|axb|axx|baa|bab|bax|bbb|bxa"
+                        + "|bxb|bxx|xaa|xab|xax|xba|xbb|xbx|xxa|xxb|xxx|aaaa|aaab|aaax|aaba|aabb|aabx"
+                        + "|aaxa|aaxb|aaxx|abba|abbb|abbx|axaa|axab|axax|axba|axbb|axbx|axxa|axxb|axxx"
+                        + "|baaa|baab|baax|baba|babb|babx|baxa|baxb|baxx|bbba|bbbb|bbbx|bxaa|bxab|bxax"
+                        + "|bxba|bxbb|bxbx|bxxa|bxxb|bxxx|xaaa|xaab|xaax|xaba|xabb|xabx|xaxa|xaxb|xaxx"
+                        + "|xbaa|xbab|xbax|xbba|xbbb|xbbx|xbxa|xbxb|xbxx|xxaa|xxab|xxax|xxba|xxbb|xxbx"
+                        + "|xxxa|xxxb|xxxx|aaaaaa|aaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaaa"
+                        + "|aaaaaaaaaaaaaaaaaaaaaa|aaaaaax|xaaaaaaaaaaaaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaaab",
+            },
+            {"^(?=((?:(?:(a)|b)\\2){0,10}))\\1\\2$", "||b|bb|aaa|aab|bbb|aabb|baaa|baab|bbbb|aaaaaaaaaaaaaaaaaaaaa"},
+            {
+                "^(?=((?:(a)|(b)){2,}))\\1\\3",
+                "|aa|ba|aaa|aax|aba|baa|bax|bba|aaaa|aaax|aaba|aaxa|aaxb|aaxx|abaa|abax|abba"
+                        + "|baaa|baax|baba|baxa|baxb|baxx|bbaa|bbax|bbba|aaaaaa|aaaaaaaaaaaa"
+                        + "|aaaaaaaaaaaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaaaa|aaaaaax",
+            },
+            {
+                "^(?=((?:(a)|(b)(x)?){1,9}?)$)\\1\\2\\4",
+                "|b|ab|bb|aab|abb|bab|bbb|bxb|aaab|aabb|abab|abbb|abxb|baab|babb|bbab|bbbb|bbxb"
+                        + "|bxab|bxbb|abababab",
+            },
+            {
+                "^(?:(?=((?:(a)|b){1,8}))\\1\\2)+$",
+                "|b|ab|bb|aab|abb|bab|bbb|aaab|aabb|abab|abbb|baab|babb|bbab|bbbb|abababab"
+                        + "|aaaaaaaaaaaaaaaaaaaaab",
+            },
+    };
+
+    private static final String[] MORE_FOR_COUNTS = {
+        "aaaaaa", "aaaaaaaaaaaa", "aaaaaaaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaaaaaaaa", "aaaaaax", "abababab",
+        "xaaaaaaaaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaaaaaaab"
+    };
+
+    /**
+     * A counted repetition in a lookahead whose groups are read after it is written with a text that grows with the
+     * count: once for each iteration, and not twice for each as when every way an iteration can match nothing was
+     * written. An iteration that another follows is written apart from the plan, as the next one unsets what it set.
+     */
+    @Test
+    void aCountedRepetitionInALookaheadGrowsWithItsCount() {
+        assertAnswers(COUNTED_REPETITIONS_IN_LOOKAHEADS, textsOver(4, new String[] {"a", "b", "x"}, MORE_FOR_COUNTS));
+        assertTrue(EcmaRegex.translate("(?=((?:a|){0,12}?)a)\\1a$").length() < 500);
+        assertTrue(EcmaRegex.translate("(?=((?:a|){0,20}?)a)\\1a$").length() < 1000);
+        assertTrue(EcmaRegex.translate("(?=((?:a|){0,200}?)a)\\1a$").length() < 10000);
+        assertTrue(EcmaRegex.translate("^(?=((?:(a)|(b)){0,12}))\\1\\2\\3$").length() < 20000);
+    }
 }
