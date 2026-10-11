@@ -760,11 +760,11 @@ end
             (raw"^\P{1,2}$", false, true, "000000"),
         ])
         @test E.translate(raw"\p{1000000000}").main ==
-              raw"(?:(?&d1){119}(?&c1){53}p{18944})(?(DEFINE)(?<c1>(?>p{32768}))(?<d1>(?>(?&c1){256})))"
+              raw"(?:(?&D1){119}(?&C1){53}p{18944})(?(DEFINE)(?<C1>(?>p{32768}))(?<D1>(?>(?&C1){256})))"
         @test E.translate(raw"^[ab]{5,1000000000}?$").main ==
-              raw"\A(?:[\x{61}-\x{62}]{5}(?:(?&d1){0,118}?(?&c1){0,255}?[\x{61}-\x{62}]{0,32767}?|(?&d1){119}" *
-              raw"(?:(?&c1){0,52}?[\x{61}-\x{62}]{0,32767}?|(?&c1){53}[\x{61}-\x{62}]{0,18939}?)))\z" *
-              raw"(?(DEFINE)(?<c1>(?>[\x{61}-\x{62}]{32768}))(?<d1>(?>(?&c1){256})))"
+              raw"\A(?:[\x{61}-\x{62}]{5}(?:(?&D1){0,118}?(?&C1){0,255}?[\x{61}-\x{62}]{0,32767}?|(?&D1){119}" *
+              raw"(?:(?&C1){0,52}?[\x{61}-\x{62}]{0,32767}?|(?&C1){53}[\x{61}-\x{62}]{0,18939}?)))\z" *
+              raw"(?(DEFINE)(?<C1>(?>[\x{61}-\x{62}]{32768}))(?<D1>(?>(?&C1){256})))"
         # A long text does not fill the memory of a match: nothing is kept to come back into a block. (The test is
         # of memory, on a text of five megabytes, so the match has no limit on its time.)
         for trees in (false, true)
@@ -781,14 +781,14 @@ end
         @test E.translate(raw"a{100000}").main == raw"(?:(?:a{65535}){1}a{34465})"
         @test E.translate(raw"^a{0,70000}$").main == raw"\A(?:(?:a{65535}a{0,4465}|a{0,65534}))\z"
         @test startswith(E.translate(raw"^\p{L}{1,1023}$").main, raw"\A(?")
-        @test !occursin("(?<c1>", E.translate(raw"^\p{L}{1,1023}$").main)
+        @test !occursin("(?<C1>", E.translate(raw"^\p{L}{1,1023}$").main)
         # A class that is a call has six sizes of block, each 32 of the one before, on either form of such a class.
         for trees in (false, true)
             E.SEARCH_TREES[] = trees
             try
-                @test occursin(raw"(?:(?&e1){9}(?:(?&d1){4}(?&c1){0,30}", E.translate(raw"^\p{L}{1,300000}$").main)
-                @test occursin(raw"|(?&e1){0,8}(?&d1){0,31}(?&c1){0,31}", E.translate(raw"^\p{L}{1,300000}$").main)
-                @test occursin(raw"{32}))(?<d1>(?>(?&c1){32}))(?<e1>(?>(?&d1){32}))(?<f1>(?>(?&e1){32}))",
+                @test occursin(raw"(?:(?&E1){9}(?:(?&D1){4}(?&C1){0,30}", E.translate(raw"^\p{L}{1,300000}$").main)
+                @test occursin(raw"|(?&E1){0,8}(?&D1){0,31}(?&C1){0,31}", E.translate(raw"^\p{L}{1,300000}$").main)
+                @test occursin(raw"{32}))(?<D1>(?>(?&C1){32}))(?<E1>(?>(?&D1){32}))(?<F1>(?>(?&E1){32}))",
                     E.translate(raw"^\p{L}{1,300000}$").main)
                 letters = E.compile(raw"^\p{L}{2000,300000}$")
                 @test !E.ismatch(letters, "\u00e9"^1999)
@@ -864,11 +864,11 @@ end
             try
                 checkv8table(rows, texts)
                 @test E.translate(raw"^a{27}$").main ==
-                      raw"\A(?:(?&d1){2}a{3})\z(?(DEFINE)(?<c1>(?>a{4}))(?<d1>(?>(?&c1){3})))"
+                      raw"\A(?:(?&D1){2}a{3})\z(?(DEFINE)(?<C1>(?>a{4}))(?<D1>(?>(?&C1){3})))"
                 @test E.translate(raw"^a{3,40}?$").main ==
-                      raw"\A(?:a{3}(?:(?&d1){0,2}?(?&c1){0,2}?a{0,3}?|(?&d1){3}a??))\z" *
-                      raw"(?(DEFINE)(?<c1>(?>a{4}))(?<d1>(?>(?&c1){3})))"
-                @test occursin("(?&e1){3}", E.translate(raw"^\p{L}{3,40}$").main)
+                      raw"\A(?:a{3}(?:(?&D1){0,2}?(?&C1){0,2}?a{0,3}?|(?&D1){3}a??))\z" *
+                      raw"(?(DEFINE)(?<C1>(?>a{4}))(?<D1>(?>(?&C1){3})))"
+                @test occursin("(?&E1){3}", E.translate(raw"^\p{L}{3,40}$").main)
             finally
                 E.BLOCK_SIZES[] = (E.PLAIN_BLOCKS, E.CALLED_BLOCKS)
                 E.SEARCH_TREES[] = nothing
@@ -971,16 +971,16 @@ end
         # for every set (with no bytes for sets where they stand), with small blocks and with the real ones.
         @test E.MAX_INLINED_SETS == 24_000 && E.INLINED_SETS[] == E.MAX_INLINED_SETS
         many = E.translate(join(fill(raw"\p{L}+", 6), "-")).main
-        @test 1 <= count("(?&h1)*", many) < 6
+        @test 1 <= count("(?&H1)*", many) < 6
         real = E.BLOCK_SIZES[]
         E.INLINED_SETS[] = 0
         try
             for trees in (false, true)
                 E.SEARCH_TREES[] = trees
                 main = E.translate(raw"^\p{L}+$").main
-                @test occursin(raw"(?&h1)*(?&g1){0,31}(?&f1){0,31}(?&e1){0,31}(?&d1){0,31}(?&c1){0,31}", main)
-                @test occursin(raw"(?&c1){0,31}?", E.translate(raw"^\p{L}*?$").main)
-                @test occursin(raw"(?&h1)*?", E.translate(raw"^\p{L}*?$").main)
+                @test occursin(raw"(?&H1)*(?&G1){0,31}(?&F1){0,31}(?&E1){0,31}(?&D1){0,31}(?&C1){0,31}", main)
+                @test occursin(raw"(?&C1){0,31}?", E.translate(raw"^\p{L}*?$").main)
+                @test occursin(raw"(?&H1)*?", E.translate(raw"^\p{L}*?$").main)
                 letters = E.compile(raw"^\p{L}+$")
                 @test E.ismatch(letters, "a\u00e9\u4e2d\U10400"^(million ÷ 4), E.MatchLimit(nothing))
                 @test !E.ismatch(letters, "a\u00e9\u4e2d\U10400"^(million ÷ 4) * "1", E.MatchLimit(nothing))
@@ -994,7 +994,7 @@ end
                             (raw"^(\p{L}+)\1$", n -> n >= 2 && iseven(n)), (raw"^(\p{L}*?)\1$", n -> iseven(n)),
                             (raw"^(?:\p{L}+\p{L}{7}){2}$", n -> n >= 16)]
                         compiled = E.compile(pattern)
-                        @test occursin("(?&e1)", compiled.translation.main)
+                        @test occursin("(?&E1)", compiled.translation.main)
                         for n in 0:40
                             @test E.ismatch(compiled, "\u00e9"^n) == wanted(n)
                         end
@@ -1004,10 +1004,21 @@ end
                     E.BLOCK_SIZES[] = real
                 end
             end
+            # The blocks have names of their own. They were c1 to h1, and g1 is the first group of a pattern and e1
+            # a mark of where an iteration started: the call of a block was then the call of the group, and a
+            # pattern with a block and a mark was two groups of one name, which PCRE2 does not compile.
+            first = E.compile(raw"^(a)\p{L}+\1$")
+            @test occursin("(?&G1)", first.translation.main) && occursin("(?<g1>", first.translation.main)
+            @test E.ismatch(first, "aééa") && E.ismatch(first, "aaaa") && !E.ismatch(first, "aé1a")
+            @test !E.ismatch(first, "aa") && !E.ismatch(first, "aééb")
         finally
             E.INLINED_SETS[] = E.MAX_INLINED_SETS
             E.SEARCH_TREES[] = nothing
         end
+        # A pattern of the fuzz sets that was two groups of one name, with the sets a pattern holds as they are.
+        marked = raw"(?m:.*?\w*(ß{1,2}S){2}|ß.+){2}(((μS*|[\s\d\p{L}]+[^\w\n].+)?[^\p{Lu}]*(?i-ms:K{1,2}^ | .*?ſ)*?){1,2}){1,2}|(z{2}\b|$)+$"
+        @test E.unsupportedreason(marked) === nothing && E.toolargelimit(marked) === nothing
+        @test E.ismatch(E.compile(marked), "zz")
     end
 
     # The twenty patterns of the case-folding file of ecma262-regex-test-data that answer differently with a PCRE2

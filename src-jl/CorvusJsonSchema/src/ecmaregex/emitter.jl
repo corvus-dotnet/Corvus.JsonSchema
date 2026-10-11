@@ -1733,7 +1733,7 @@ end
 # time like any group, so \p{L}{30000} is too large as well.
 #
 # Such a count is written in blocks. A block is a group among the definitions of the pattern that the pattern
-# calls: (?<c1>(?>a{32768})) is 32,768 characters, and (?<d1>(?>(?&c1){256})) is 256 of those. A count below 2^31
+# calls: (?<C1>(?>a{32768})) is 32,768 characters, and (?<D1>(?>(?&C1){256})) is 256 of those. A count below 2^31
 # is then at most 255 calls of the larger block, 255 of the smaller and a count of the character, and it is that
 # much text whatever the count. A class that is a call is itself written out for each time, and with search trees
 # it is a class and a call, so it has six sizes of block, each 32 of the one before, and is never written more
@@ -1749,8 +1749,10 @@ const CALLED_BLOCKS = (1 << 10, fill(1 << 5, 6))
 # The two in use, for a character or class that PCRE2 keeps a count of and for one that is a call. The tests set
 # small ones, to try every form on texts of a few characters.
 const BLOCK_SIZES = Ref((PLAIN_BLOCKS, CALLED_BLOCKS))
-# The letters of the names of the blocks, smallest first.
-const BLOCK_LETTERS = "cdefgh"
+# The letters of the names of the blocks, smallest first. They are capitals, which no other name the emitter gives
+# a group starts with: `g1` is the first group of the pattern and `e1` a mark of where an iteration started, and a
+# block of those names was a group of the same name twice, or a call of the wrong one.
+const BLOCK_LETTERS = "CDEFGH"
 
 # What a character or class is written as, or nothing for any other node. Only one character at a time is counted
 # in blocks.
