@@ -39,6 +39,7 @@ uses
   Corvus.JsonSchema.EcmaRegex.Utf8,
   Corvus.JsonSchema.EcmaRegex.CharSet,
   Corvus.JsonSchema.EcmaRegex.Dfa,
+  Corvus.JsonSchema.EcmaRegex.Parse,
   Corvus.JsonSchema.EcmaRegex.Compile,
   Corvus.JsonSchema.EcmaRegex;
 
@@ -2168,6 +2169,314 @@ end;
 { The cases of testdata/v8_cases.json of the Go package, which gen_cases.js beside it writes: patterns with what V8
   says of each, whether it is valid with the u flag and with no flag, and whether it matches each text. The file is
   beside the oracle. }
+{ ---------------------------------------------------------------------------------------------------------------------
+  The limits on the size of one pattern. A schema may come from outside, so no pattern may take long or much memory
+  to read and to compile. Ported from size_cases_test.go and size_limit_test.go of the Go package. }
+
+function Times(const S: UTF8String; N: Int32): UTF8String;
+var
+  K, L: Int32;
+begin
+  L := Length(S);
+  SetLength(Result, L * N);
+  for K := 0 to N - 1 do
+    Move(S[1], Result[K * L + 1], L);
+end;
+
+(* TestTheSizeOfAPattern checks the size the parser counts for each pattern of testdata/size_cases.json of the Go
+  package, under the u flag grammar and under the Annex B grammar (-1 where that grammar does not accept the
+  pattern). The size of a pattern decides whether it is refused as too large, so this engine and the Go package
+  must count the same figure for every pattern, or a schema one compiles would be refused by the other. The file is
+  written by the Go tests and is not to be changed to suit this port. *)
+procedure TestTheSizeOfAPattern;
+var
+  Json: TJson;
+  Root, Item, Valid, Legacy, Invalid, Count, WantU, WantL, GotU, GotL: Int32;
+  P: UTF8String;
+begin
+  if not LoadJson(UTF8String(ExtractFilePath(String(OraclePath))) + 'size_cases.json', Json, Root) then begin
+    Fail('TestTheSizeOfAPattern: cannot read size_cases.json beside ' + OraclePath);
+    Exit;
+  end;
+  Valid := 0;
+  Legacy := 0;
+  Invalid := 0;
+  Count := 0;
+  Item := Json.Nodes[Root].First;
+  while Item >= 0 do begin
+    Inc(Count);
+    P := Json.Text(Item, 'p');
+    WantU := Round(Json.Nodes[Json.Member(Item, 'u')].Number);
+    WantL := Round(Json.Nodes[Json.Member(Item, 'l')].Number);
+    GotU := EcmaRegexSize(P, True);
+    GotL := EcmaRegexSize(P, False);
+    if (GotU <> WantU) or (GotL <> WantL) then
+      Fail(Quote(P) + ': size ' + Num(GotU) + ' with the u flag and ' + Num(GotL) + ' without, the file says ' +
+        Num(WantU) + ' and ' + Num(WantL));
+    if WantU >= 0 then
+      Inc(Valid)
+    else if WantL >= 0 then
+      Inc(Legacy)
+    else
+      Inc(Invalid);
+    Item := Json.Nodes[Item].Next;
+  end;
+  WriteLn('TestTheSizeOfAPattern: ', Count, ' patterns: ', Valid, ' valid with the u flag, ', Legacy,
+    ' only without it, ', Invalid, ' not valid');
+  if (Count <> 122) or (Valid < 90) or (Legacy < 10) or (Invalid < 5) then
+    Fail('TestTheSizeOfAPattern: the cases are not the ones this test is about');
+end;
+
+function Nest(const Open, Body, Close: UTF8String; Depth: Int32): UTF8String;
+begin
+  Result := Times(Open, Depth) + Body + Times(Close, Depth);
+end;
+
+(* TestAPatternOverALimitOfSizeIsTooLarge checks each limit: the pattern at the limit compiles and the pattern over
+  it is refused as too large, with the name of the limit and its value, in both grammars and by EcmaRegexCheck, and
+  a pattern that is over a limit and also not valid is refused for its size. *)
+procedure TestAPatternOverALimitOfSizeIsTooLarge;
+const
+  Terms = MaxSize div (2 * NodeSize);
+
+  procedure Limit(const Name, AtLimit, Over, LimitName: UTF8String; Value: Int32);
+  var
+    Re: TEcmaRegex;
+    Error: UTF8String;
+    Got: TEcmaRegexLimit;
+    Unicode: Boolean;
+  begin
+    if not EcmaRegexCompile(AtLimit, Re, Error, Got) then
+      Fail(Name + ': the pattern at the limit (' + Num(Length(AtLimit)) + ' bytes): ' + Error);
+    if not EcmaRegexCheck(AtLimit, Unicode, Error, Got) then
+      Fail(Name + ': EcmaRegexCheck of the pattern at the limit: ' + Error);
+    if EcmaRegexCompile(Over, Re, Error, Got) or (Got.Name <> LimitName) or (Got.Value <> Value) then
+      Fail(Name + ': the pattern over the limit (' + Num(Length(Over)) + ' bytes): limit ' + Quote(Got.Name) +
+        ' of ' + Num(Got.Value) + ', want ' + LimitName + ' of ' + Num(Value));
+    if Pos('ecmaregex:', Error) > 0 then
+      Fail(Name + ': the message of the pattern over the limit is that of a pattern that is not valid: ' +
+        Copy(Error, 1, 100));
+    if EcmaRegexCheck(Over, Unicode, Error, Got) or (Got.Name <> LimitName) or (Got.Value <> Value) then
+      Fail(Name + ': EcmaRegexCheck of the pattern over the limit: limit ' + Quote(Got.Name) + ' of ' +
+        Num(Got.Value));
+    if EcmaRegexValid(Over) then
+      Fail(Name + ': EcmaRegexValid of the pattern over the limit: true');
+    if EcmaRegexCompile(Over, Re, Error) then
+      Fail(Name + ': the pattern over the limit compiles when the limit is not asked for');
+  end;
+
+  procedure NotValid(const Pattern: UTF8String);
+  var
+    Re: TEcmaRegex;
+    Error: UTF8String;
+    Got: TEcmaRegexLimit;
+    Ok: Boolean;
+  begin
+    Ok := EcmaRegexCompile(Pattern, Re, Error, Got);
+    if Ok or (Got.Name <> '') or (Pos('ecmaregex:', Error) <> 1) then
+      Fail('Compile(' + Quote(Copy(Pattern, 1, 20)) + '): limit ' + Quote(Got.Name) + ' and the message ' +
+        Copy(Error, 1, 80) + ', want the error of a pattern that is not valid');
+  end;
+
+begin
+  Limit('length', '\u{' + Times('0', MaxPatternLength - 6) + '41}', '\u{' + Times('0', MaxPatternLength - 5) + '41}',
+    LimitLength, MaxPatternLength);
+  Limit('nesting', Nest('(?:', 'a', ')', MaxNesting - 1), Nest('(?:', 'a', ')', MaxNesting), LimitNesting,
+    MaxNesting);
+  Limit('size of terms', Times('a', Terms), Times('a', Terms + 1), LimitSize, MaxSize);
+  Limit('size of classes', '[' + Times('ĀĂ', 60000) + ']', '[' + Times('ĀĂ', 70000) + ']',
+    LimitSize, MaxSize);
+  Limit('size without the u flag', Times('\-', Terms), Times('\-', Terms + 1), LimitSize, MaxSize);
+  Limit('nesting without the u flag', '\-' + Nest('(?:', 'a', ')', MaxNesting - 1),
+    '\-' + Nest('(?:', 'a', ')', MaxNesting), LimitNesting, MaxNesting);
+  Limit('nesting, and not valid', Nest('(?:', 'a', ')', MaxNesting - 1) + 'x',
+    Nest('(?:', 'a', ')', MaxNesting) + '*+)', LimitNesting, MaxNesting);
+  Limit('size, and not valid', Times('a', Terms), Times('a', Terms + 1) + '(', LimitSize, MaxSize);
+  // A pattern that is not valid and under every limit is not too large.
+  NotValid('(');
+  NotValid('a**');
+  NotValid('(?<n>a)\k<m>');
+  NotValid('[b-a]');
+  NotValid(Nest('(?:', 'a', ')', MaxNesting - 1) + ')');
+  WriteLn('TestAPatternOverALimitOfSizeIsTooLarge: done');
+end;
+
+{$IFDEF FPC}
+{ The memory manager is wrapped to follow the memory in use while a pattern compiles: Live is the bytes in use now,
+  beyond what was in use when the tracking started, and LivePeak the most that was. }
+var
+  TrackedManager: TMemoryManager;
+  Live, LivePeak: Int64;
+
+procedure Tracked(Delta: Int64); inline;
+begin
+  Inc(Live, Delta);
+  if Live > LivePeak then
+    LivePeak := Live;
+end;
+
+function TrackingGetMem(Size: PtrUInt): Pointer;
+begin
+  Result := TrackedManager.GetMem(Size);
+  Tracked(TrackedManager.MemSize(Result));
+end;
+
+function TrackingAllocMem(Size: PtrUInt): Pointer;
+begin
+  Result := TrackedManager.AllocMem(Size);
+  Tracked(TrackedManager.MemSize(Result));
+end;
+
+function TrackingReAllocMem(var P: Pointer; Size: PtrUInt): Pointer;
+begin
+  if P <> nil then
+    Tracked(-Int64(TrackedManager.MemSize(P)));
+  Result := TrackedManager.ReAllocMem(P, Size);
+  if Result <> nil then
+    Tracked(TrackedManager.MemSize(Result));
+end;
+
+function TrackingFreeMem(P: Pointer): PtrUInt;
+begin
+  if P <> nil then
+    Tracked(-Int64(TrackedManager.MemSize(P)));
+  Result := TrackedManager.FreeMem(P);
+end;
+
+function TrackingFreeMemSize(P: Pointer; Size: PtrUInt): PtrUInt;
+begin
+  if P <> nil then
+    Tracked(-Int64(TrackedManager.MemSize(P)));
+  Result := TrackedManager.FreeMemSize(P, Size);
+end;
+{$ENDIF}
+
+procedure StartTracking;
+{$IFDEF FPC}
+var
+  Tracking: TMemoryManager;
+begin
+  GetMemoryManager(TrackedManager);
+  Tracking := TrackedManager;
+  Tracking.GetMem := @TrackingGetMem;
+  Tracking.AllocMem := @TrackingAllocMem;
+  Tracking.ReAllocMem := @TrackingReAllocMem;
+  Tracking.FreeMem := @TrackingFreeMem;
+  Tracking.FreeMemSize := @TrackingFreeMemSize;
+  Live := 0;
+  LivePeak := 0;
+  SetMemoryManager(Tracking);
+end;
+{$ELSE}
+begin
+end;
+{$ENDIF}
+
+{ StopTracking ends the tracking. Peak is the most memory that was in use since it started, and Kept what is still
+  in use, both beyond what was in use at the start. }
+procedure StopTracking(out Peak, Kept: Int64);
+begin
+  {$IFDEF FPC}
+  SetMemoryManager(TrackedManager);
+  Peak := LivePeak;
+  Kept := Live;
+  {$ELSE}
+  Peak := 0;
+  Kept := 0;
+  {$ENDIF}
+end;
+
+(* TestAPatternAtTheLimitOfSizeIsCheap compiles patterns of each kind that costs something to read or to compile,
+  each a little under MaxSize, and matches each once. The limit of size is what bounds the time and the memory of
+  compiling, so the largest pattern of every kind must take little of both. The bounds asserted are generous. The
+  figures measured are written. *)
+procedure TestAPatternAtTheLimitOfSizeIsCheap;
+const
+  Generous = 20000;
+var
+  LRanges, K: Int32;
+  L: TCharSet;
+  Named: UTF8String;
+
+  function Fit(Each: Int32): Int32;
+  begin
+    Result := (MaxSize - 4096) div Each;
+  end;
+
+  procedure Cheap(const Name, Pattern: UTF8String);
+  var
+    Re: TEcmaRegex;
+    Error: UTF8String;
+    Limit: TEcmaRegexLimit;
+    Text: TBytes;
+    Stop: UInt8;
+    Start, Compile, Match, Peak, Kept: Int64;
+  begin
+    EcmaRegexReleaseThreadScratch;
+    Re := Default(TEcmaRegex);
+    Error := '';
+    StartTracking;
+    Start := Int64(GetTickCount64);
+    if not EcmaRegexCompile(Pattern, Re, Error, Limit) then begin
+      StopTracking(Peak, Kept);
+      Fail(Name + ' (' + Num(Length(Pattern)) + ' bytes): ' + Copy(Error, 1, 100));
+      Exit;
+    end;
+    Compile := Int64(GetTickCount64) - Start;
+    StopTracking(Peak, Kept);
+    // The match may reach a limit, which is an outcome. What matters here is the first match.
+    Text := ToBytes('abc');
+    Start := Int64(GetTickCount64);
+    EcmaRegexIsMatchLimit(Re, Text, 0, Length(Text), 60000, Stop);
+    Match := Int64(GetTickCount64) - Start;
+    WriteLn('TestAPatternAtTheLimitOfSizeIsCheap: ', Name, ', ', Length(Pattern), ' bytes: compile ', Compile,
+      ' ms with ', Peak shr 10, ' KB at the most and ', Kept shr 10, ' KB kept, first match ', Match, ' ms (stop ',
+      Stop, ')');
+    if (Compile > Generous) or (Match > Generous) then
+      Fail(Name + ' took ' + Num(Compile) + ' ms to compile and ' + Num(Match) + ' ms for its first match');
+    if (Peak > 256 shl 20) or (Kept > 32 shl 20) then
+      Fail(Name + ' held ' + Num(Peak shr 20) + ' MB while it compiled and keeps ' + Num(Kept shr 20) + ' MB');
+  end;
+
+begin
+  if not PropertySet('L', L) then begin
+    Fail('TestAPatternAtTheLimitOfSizeIsCheap: no property L');
+    Exit;
+  end;
+  LRanges := Length(L.Ranges) div 2;
+  // Groups of one name: each is charged for the groups before it, so 400 of them cost most of the limit.
+  Named := '(?<n>0)';
+  for K := 1 to 399 do
+    Named := Named + '|(?<n>' + Num(K) + ')';
+  Cheap('literal', Times('a', Fit(2 * NodeSize)));
+  Cheap('alternatives', Times('a|', Fit(3 * NodeSize) - 1) + 'a');
+  Cheap('groups', Times('(a)', Fit(4 * NodeSize)));
+  Cheap('groups read back', Times('(a)', 4000) + Times('\1', 4000) + Times('\4000', 300));
+  Cheap('nested groups', Nest('(', Times('a', Fit(2 * NodeSize) - 2 * MaxNesting), ')', MaxNesting - 1));
+  Cheap('nested counted loops', Nest('(?:', Times('a?b', 2000), '){2,3}', MaxNesting - 1));
+  Cheap('nested lookbehinds', Nest('(?<=', Times('a', 2000), ')', MaxNesting - 1));
+  Cheap('counted loops', Times('(?:a|){2}', Fit(7 * NodeSize)));
+  Cheap('lazy loops', Times('(?:a|b)*?', Fit(7 * NodeSize)));
+  Cheap('properties', Times('\p{L}', Fit(2 * NodeSize)));
+  Cheap('negated properties', Times('\P{L}', Fit(2 * NodeSize + RangeSize * (LRanges + 1))));
+  Cheap('classes of properties', Times('[\p{L}\p{N}]', Fit(2 * NodeSize + RangeSize * (LRanges + 200))));
+  Cheap('folded negated classes', '(?i:' + Times('[^a]', Fit(2 * NodeSize + 32)) + ')');
+  Cheap('folded dots', '(?i:' + Times('.', Fit(2 * NodeSize)) + ')');
+  Cheap('folded wide classes', '(?i:' + Times('[\u0000-\u{10FFFF}]', Fit(3200)) + ')');
+  Cheap('folded wide negations', '(?i:' + Times('[^Ā-\u{10FFFF}]', Fit(3300)) + ')');
+  Cheap('folded properties', '(?i:' + Times('\p{L}', Fit(8600)) + ')');
+  Cheap('folded literal', '(?i:' + Times('k', Fit(2 * NodeSize)) + ')');
+  Cheap('one large class', '[' + Times('ĀĂ', Fit(2 * RangeSize)) + ']');
+  Cheap('groups of one name', Named);
+  Cheap('named groups, nested', Nest('(?:x|', Times('(?<a>b)|(?<c>d)', 40), ')', 600));
+  Cheap('counted, for regexp', Times('(?:a?){1000}', Fit(4 * NodeSize)));
+  Cheap('quantified everything', Times('a{2,5}?', Fit(2 * NodeSize)));
+  Cheap('long escapes', Times('\u{0000000000000000000000000000000000000000000041}', Fit(2 * NodeSize)));
+  // What the Go package looks names up in a map for, and this port reads a list for.
+  Cheap('names read back', Times('(?<a>b)', 1) + Times('\k<a>', Fit(2 * NodeSize) - 4));
+  EcmaRegexReleaseThreadScratch;
+end;
+
 function CasesPath: UTF8String;
 begin
   Result := UTF8String(ExtractFilePath(String(OraclePath))) + 'v8_cases.json';
@@ -2599,11 +2908,14 @@ begin
   TestCountsAreComparedAsWritten;
   TestPropertyNamesAndValues;
   TestAGroupNameUsedTwice;
+  TestTheSizeOfAPattern;
+  TestAPatternOverALimitOfSizeIsTooLarge;
+  TestAPatternAtTheLimitOfSizeIsCheap;
   WriteLn('V8 oracle: ', OracleVerdicts, ' verdicts on validity compared, ', OracleVerdictsAgreed, ' agreed. ',
     OracleAnswers, ' answers on a match compared (each text on both back ends), ', OracleAnswersAgreed, ' agreed.');
   if Failures <> 0 then begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 29 tests, 0 failures');
+  WriteLn('PASS: 32 tests, 0 failures');
 end.

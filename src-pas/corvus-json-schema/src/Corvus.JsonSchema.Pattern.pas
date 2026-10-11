@@ -144,6 +144,10 @@ type
 
   PPattern = ^TPattern;
 
+  { A TPatternLimit names the limit of size a pattern is over, and gives its value (the TEcmaRegexLimit of the
+    engine). }
+  TPatternLimit = TEcmaRegexLimit;
+
   { A TPatternBudget is what one evaluation, or the compilation of one schema, gives every match of a pattern: the
     time each may take. It notes the first match that reached a limit, after which every match is abandoned at
     once. (The patternBudget of pattern_engine.go.) }
@@ -173,8 +177,13 @@ const
   address (see Corvus.JsonSchema.Checked). }
 function SequenceItemAt(const A: TSequenceItemArray; I: NativeInt): PSequenceItem; inline;
 
-{ CompilePattern compiles a pattern. False when it is not a valid ECMA-262 regular expression. }
-function CompilePattern(const Source: UTF8String; out P: TPattern): Boolean;
+{ CompilePattern compiles a pattern. False when it is not a valid ECMA-262 regular expression, and when it is over
+  a limit of size, which Limit then names, with what the engine says of it in Reason. (Limit.Name is empty for a
+  pattern that is not valid.) }
+function CompilePattern(const Source: UTF8String; out P: TPattern; out Limit: TPatternLimit;
+  out Reason: UTF8String): Boolean; overload;
+{ CompilePattern without the limit: false for a pattern that is not valid and for one that is too large. }
+function CompilePattern(const Source: UTF8String; out P: TPattern): Boolean; overload;
 { ValidRegex reports whether a string is a valid ECMA-262 regular expression with the u flag (the regex format, and
   the patterns the engine reads without falling back). }
 function ValidRegex(const Source: UTF8String): Boolean;
@@ -1838,10 +1847,28 @@ end;
 
 function CompilePattern(const Source: UTF8String; out P: TPattern): Boolean;
 var
-  Chosen: Boolean;
+  Limit: TPatternLimit;
+  Reason: UTF8String;
+begin
+  Result := CompilePattern(Source, P, Limit, Reason);
+end;
+
+function CompilePattern(const Source: UTF8String; out P: TPattern; out Limit: TPatternLimit;
+  out Reason: UTF8String): Boolean;
+var
+  Chosen, Unicode: Boolean;
   Engine: TEcmaRegex;
   Error: UTF8String;
 begin
+  { The limits of size come first: nothing below reads a pattern that is over one. }
+  Reason := '';
+  if not EcmaRegexCheck(Source, Unicode, Error, Limit) then begin
+    if Limit.Name <> '' then
+      Reason := Error;
+    ClearPattern(P);
+    Result := False;
+    Exit;
+  end;
   { Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it. A pattern
     with a faster matcher that is valid with the u flag needs no engine at all. A pattern that is valid only
     without the u flag is matched by UTF-16 code unit. The faster matchers read code points, which is the same
@@ -1849,7 +1876,7 @@ begin
     for those texts. When the pattern itself has such a character it is two atoms, which no faster matcher reads,
     and the engine takes every text. }
   Chosen := ChoosePattern(Source, P);
-  if not Chosen or not ValidRegex(Source) then begin
+  if not Chosen or not Unicode then begin
     { The engine compiles the pattern with the u flag, or failing that without it, as many schemas need. }
     if not EcmaRegexCompile(Source, Engine, Error) then begin
       ClearPattern(P);

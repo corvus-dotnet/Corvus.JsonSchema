@@ -88,6 +88,26 @@ type
     property Memory: Boolean read FMemory;
   end;
 
+  { EJsonSchemaPatternTooLarge reports a schema that was not compiled because one of its regular expressions is
+    over a limit of size. It is not the error of a regular expression that is not valid, which is
+    EJsonSchemaCompileError: the pattern was not read to its end, so nothing is known of whether it is valid. }
+  EJsonSchemaPatternTooLarge = class(EJsonSchemaError)
+  private
+    FPattern: UTF8String;
+    FKeyword: UTF8String;
+    FLimit: UTF8String;
+    FValue: Int32;
+  public
+    { Pattern is the regular expression. }
+    property Pattern: UTF8String read FPattern;
+    { Keyword is the keyword that holds it, pattern or patternProperties. }
+    property Keyword: UTF8String read FKeyword;
+    { Limit names the limit: length (the bytes of the pattern), nesting (the depth of its groups) or size (the
+      bytes counted for it as it is read). Value is the value of that limit. }
+    property Limit: UTF8String read FLimit;
+    property Value: Int32 read FValue;
+  end;
+
   { TJsonDocument is JSON text parsed for evaluation: parse once, validate any number of times. It is a value that
     needs no Free, is not changed once parsed, and is safe to read from several threads. }
   TJsonDocument = Corvus.JsonSchema.Document.TDocument;
@@ -193,7 +213,9 @@ type
   end;
 
 { Compiling. Each function raises EJsonParseError when schema text is not JSON, and EJsonSchemaCompileError when
-  the schema cannot be compiled. Each raises EJsonSchemaPatternMatchLimit when matching a regular expression of the
+  the schema cannot be compiled. Each raises EJsonSchemaPatternTooLarge when a regular expression of the schema is
+  over a limit of size (1,048,576 bytes of length, groups 1,000 deep, or a size of 1,048,576 bytes as it is read),
+  and EJsonSchemaPatternMatchLimit when matching a regular expression of the
   schema against a property name the schema declares reached the limit of a match (see WithPatternMatchLimit). }
 
 { CompileJsonSchema compiles a schema given as JSON text. }
@@ -764,6 +786,21 @@ end;
 { ---------------------------------------------------------------------------------------------------------------------
   Compiling }
 
+{ RaiseCompileError raises the error of a schema that was not compiled. }
+procedure RaiseCompileError(const Compiled: TCompiledSchema; const Error: UTF8String);
+var
+  E: EJsonSchemaPatternTooLarge;
+begin
+  if Compiled.TooLarge.Limit = '' then
+    raise EJsonSchemaCompileError.CreateUtf8(Error);
+  E := EJsonSchemaPatternTooLarge.CreateUtf8(Error);
+  E.FPattern := Compiled.TooLarge.Pattern;
+  E.FKeyword := Compiled.TooLarge.Keyword;
+  E.FLimit := Compiled.TooLarge.Limit;
+  E.FValue := Compiled.TooLarge.Value;
+  raise E;
+end;
+
 function NewValidator(const Compiled: TCompiledSchema; const Options: TCompileOptions): IJsonSchemaValidator;
 begin
   Result := TJsonSchemaValidator.Create(Compiled, Options);
@@ -775,7 +812,7 @@ var
   Error: UTF8String;
 begin
   if not CompileDocument(Schema, Options, Compiled, Error) then
-    raise EJsonSchemaCompileError.CreateUtf8(Error);
+    RaiseCompileError(Compiled, Error);
   Result := NewValidator(Compiled, Options);
 end;
 
@@ -810,7 +847,7 @@ var
   Error: UTF8String;
 begin
   if not CompileFromURI(Uri, Options, Compiled, Error) then
-    raise EJsonSchemaCompileError.CreateUtf8(Error);
+    RaiseCompileError(Compiled, Error);
   Result := NewValidator(Compiled, Options);
 end;
 

@@ -65,8 +65,11 @@ unit Corvus.JsonSchema.EcmaRegex;
   alternatives, modifier groups, and Unicode property escapes for every property, value and alias ECMA-262 lists,
   with Unicode 17 data. The properties and the case folding come from the tables of the Ucd unit and never from the
   run-time library of the compiler, so a pattern matches the same texts whichever compiler built the program. The v
-  flag (set notation and properties of strings) does not apply, because a JSON Schema pattern has no flags. Groups
-  may nest 1000 deep.
+  flag (set notation and properties of strings) does not apply, because a JSON Schema pattern has no flags.
+
+  A pattern has three limits of size, which are those of the Go package: 1,048,576 bytes of length, groups 1,000
+  deep, and a size of 1,048,576 bytes as the parser counts it (see MaxSize of the Parse unit). A pattern over one
+  is refused as too large, which is not the error of a pattern that is not valid.
 
   The units
 
@@ -100,12 +103,37 @@ type
     Prog: TProgram;
   end;
 
+  { A TEcmaRegexLimit names the limit of size a pattern is over, and gives its value. Name is empty for a pattern
+    that is over none. The names are those of the Parse unit: length (the bytes of the pattern, 1,048,576),
+    nesting (the depth of its groups, 1,000) and size (the bytes counted for it as it is read, 1,048,576). }
+  TEcmaRegexLimit = record
+    Name: UTF8String;
+    Value: Int32;
+  end;
+
 { EcmaRegexCompile compiles an ECMA-262 pattern with the semantics JSON Schema requires: the u flag grammar first,
-  then Annex B. It returns false, with a message, for a pattern that is not valid. }
+  then Annex B. It returns false, with a message, for a pattern that is not valid, and for a pattern over a limit
+  of size, whether or not it is valid: Limit then names the limit. A pattern over a limit is not read to its end,
+  so nothing is known of whether it is valid. }
+function EcmaRegexCompile(const Pattern: UTF8String; out Regex: TEcmaRegex; out Error: UTF8String;
+  out Limit: TEcmaRegexLimit): Boolean; overload;
+{ EcmaRegexCompile without the limit: false for a pattern that is not valid and for one that is too large. }
 function EcmaRegexCompile(const Pattern: UTF8String; out Regex: TEcmaRegex; out Error: UTF8String): Boolean;
+  overload;
+
+{ EcmaRegexCheck reads the pattern without compiling it. It returns what EcmaRegexCompile would: true for a pattern
+  either grammar accepts, with Unicode saying whether the u flag grammar does, and false with the message for a
+  pattern that is not valid or is over a limit of size, which Limit then names. }
+function EcmaRegexCheck(const Pattern: UTF8String; out Unicode: Boolean; out Error: UTF8String;
+  out Limit: TEcmaRegexLimit): Boolean;
+
+{ EcmaRegexSize is the size the parser counts for a pattern (see MaxSize of the Parse unit) under the u flag
+  grammar, or under the Annex B grammar when Unicode is false. It is -1 for a pattern that grammar does not accept,
+  and for one that is too large. It is for the tests that pin the size against the Go package's. }
+function EcmaRegexSize(const Pattern: UTF8String; Unicode: Boolean): Int32;
 
 { EcmaRegexValid reports whether the pattern is a valid ECMA-262 pattern (for format: regex). It applies the grammar
-  of the u flag alone. }
+  of the u flag alone. A pattern over a limit of size is not read to its end and is reported as not valid. }
 function EcmaRegexValid(const Pattern: UTF8String): Boolean;
 
 { EcmaRegexIsMatch reports whether the pattern matches anywhere in the bytes Text[Start .. Start+Len-1], which are
@@ -197,7 +225,60 @@ begin
   Result := True;
 end;
 
+{ LimitOf is the limit of size a parser stopped at. }
+function LimitOf(const Ps: TParser): TEcmaRegexLimit;
+begin
+  Result.Name := Ps.LimitName;
+  Result.Value := Ps.LimitValue;
+end;
+
 function EcmaRegexCompile(const Pattern: UTF8String; out Regex: TEcmaRegex; out Error: UTF8String): Boolean;
+var
+  Limit: TEcmaRegexLimit;
+begin
+  Result := EcmaRegexCompile(Pattern, Regex, Error, Limit);
+end;
+
+function EcmaRegexCheck(const Pattern: UTF8String; out Unicode: Boolean; out Error: UTF8String;
+  out Limit: TEcmaRegexLimit): Boolean;
+var
+  Ps: TParser;
+  Root: Int32;
+  LegacyError: UTF8String;
+begin
+  Limit := Default(TEcmaRegexLimit);
+  Unicode := Parse(Pattern, True, Ps, Root, Error);
+  if Unicode then
+    Exit(True);
+  if Ps.TooLarge then begin
+    Limit := LimitOf(Ps);
+    Exit(False);
+  end;
+  if not Parse(Pattern, False, Ps, Root, LegacyError) then begin
+    if Ps.TooLarge then begin
+      Limit := LimitOf(Ps);
+      Error := LegacyError;
+    end;
+    Exit(False);
+  end;
+  Error := '';
+  Result := True;
+end;
+
+function EcmaRegexSize(const Pattern: UTF8String; Unicode: Boolean): Int32;
+var
+  Ps: TParser;
+  Root: Int32;
+  Error: UTF8String;
+begin
+  if Parse(Pattern, Unicode, Ps, Root, Error) then
+    Result := Ps.Size
+  else
+    Result := -1;
+end;
+
+function EcmaRegexCompile(const Pattern: UTF8String; out Regex: TEcmaRegex; out Error: UTF8String;
+  out Limit: TEcmaRegexLimit): Boolean;
 var
   Ps: TParser;
   Root: Int32;
@@ -205,11 +286,21 @@ var
   LegacyError: UTF8String;
 begin
   Regex := Default(TEcmaRegex);
+  Limit := Default(TEcmaRegexLimit);
   Unicode := True;
   if not Parse(Pattern, True, Ps, Root, Error) then begin
-    Unicode := False;
-    if not Parse(Pattern, False, Ps, Root, LegacyError) then
+    if Ps.TooLarge then begin
+      Limit := LimitOf(Ps);
       Exit(False);
+    end;
+    Unicode := False;
+    if not Parse(Pattern, False, Ps, Root, LegacyError) then begin
+      if Ps.TooLarge then begin
+        Limit := LimitOf(Ps);
+        Error := LegacyError;
+      end;
+      Exit(False);
+    end;
     Error := '';
   end;
   Regex.Unicode := Unicode;

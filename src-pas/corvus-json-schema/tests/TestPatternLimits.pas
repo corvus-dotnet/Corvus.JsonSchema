@@ -2,9 +2,11 @@ program TestPatternLimits;
 
 {$I corvus.inc}
 
-(* The limits on a match of a pattern. A schema and an instance may both come from outside, so neither a pattern
-  nor a text may make a match run without end or hold memory without bound. A port of match_limit_test.go of the
-  ecmaregex package of the Go module and of pattern_match_limit_test.go of the module.
+(* The limits on a match of a pattern and on the size of one. A schema and an instance may both come from outside,
+  so neither a pattern nor a text may make a match run without end or hold memory without bound, and no pattern
+  may take long or much memory to read and to compile. A port of match_limit_test.go of the ecmaregex package of
+  the Go module and of pattern_match_limit_test.go, pattern_size_test.go and pattern_compile_cost_test.go of the
+  module. (The tests of the size the engine counts are in TestEcmaRegex.)
 
   No test here depends on a quiet machine. A match that must reach its limit runs a pattern that no backtracking
   matcher answers in the life of the machine, and the bounds on the time it is given are many times what it needs.
@@ -709,6 +711,154 @@ begin
   Shape(Rep('a', 15000) + 'b(?=c)', Long, MatchEngine);
 end;
 
+{ ---------------------------------------------------------------------------------------------------------------------
+  The limits on the size of one pattern }
+
+(* TestAPatternOverALimitOfSizeIsRefused checks each limit in both keywords: compiling raises
+  EJsonSchemaPatternTooLarge, which names the keyword, the limit and its value, and is neither
+  EJsonSchemaCompileError nor the error of a match. *)
+procedure TestAPatternOverALimitOfSizeIsRefused;
+
+  function Nest(Depth: Int32): UTF8String;
+  begin
+    Result := Rep('(?:', Depth) + 'a' + Rep(')', Depth);
+  end;
+
+  { Unescaped is a pattern as the schema holds it, from the pattern as it stands in JSON text. }
+  function Unescaped(const Json: UTF8String): UTF8String;
+  begin
+    Result := UTF8String(StringReplace(String(Json), '\\', '\', [rfReplaceAll]));
+  end;
+
+  procedure Limit(const Name, AtLimit, Over, LimitName: UTF8String; Value: Int32; const Message: UTF8String);
+  const
+    Keywords: array[0..1] of UTF8String = ('pattern', 'patternProperties');
+  var
+    K: Int32;
+    Start, Took: Int64;
+    Raised: Boolean;
+    Want: UTF8String;
+
+    function Schema(const Pattern: UTF8String): UTF8String;
+    begin
+      if K = 0 then
+        Result := '{"pattern": "' + Pattern + '"}'
+      else
+        Result := '{"patternProperties": {"' + Pattern + '": true}}';
+    end;
+
+  begin
+    for K := 0 to 1 do begin
+      Start := MonotonicMilliseconds;
+      try
+        CompileJsonSchema(Schema(AtLimit));
+      except
+        on E: Exception do
+          Check(False, Name + ' in ' + Keywords[K] + ': the pattern at the limit: ' + UTF8String(E.ClassName));
+      end;
+      Raised := False;
+      try
+        CompileJsonSchema(Schema(Over));
+      except
+        on E: EJsonSchemaPatternTooLarge do begin
+          Raised := True;
+          Check((E.Keyword = Keywords[K]) and (E.Limit = LimitName) and (E.Value = Value)
+            and (E.Pattern = Unescaped(Over)), Name + ' in ' + Keywords[K] + ': the exception holds the keyword '
+            + E.Keyword + ', the limit ' + E.Limit + ' and the value ' + Number(E.Value));
+          Want := ''' (' + Number(Length(E.Pattern)) + ' bytes) in ' + Keywords[K]
+            + ' is too large to read as an ECMA-262 regular expression: ' + Message + '.';
+          Check((Pos('The regular expression ''', E.Utf8Message) = 1) and (Length(E.Utf8Message) <= 400)
+            and (Copy(E.Utf8Message, Length(E.Utf8Message) - Length(Want) + 1, Length(Want)) = Want), Name + ' in '
+            + Keywords[K] + ': the message is ' + Copy(E.Utf8Message, 1, 300));
+          Check(Pos('nvalid', E.Utf8Message) = 0, Name + ' in ' + Keywords[K]
+            + ': the message says the pattern is not valid');
+          Check(not E.InheritsFrom(EJsonSchemaCompileError), Name + ' in ' + Keywords[K]
+            + ': the exception is also EJsonSchemaCompileError');
+        end;
+        on E: Exception do
+          Check(False, Name + ' in ' + Keywords[K] + ': raised ' + UTF8String(E.ClassName));
+      end;
+      Check(Raised, Name + ' in ' + Keywords[K] + ': the pattern over the limit compiled');
+      Took := MonotonicMilliseconds - Start;
+      Check(Took <= Generous, Name + ' in ' + Keywords[K] + ': compiling took ' + Number(Took) + ' ms');
+    end;
+  end;
+
+begin
+  Limit('length', '\\u{' + Rep('0', 1048576 - 6) + '41}', '\\u{' + Rep('0', 1048576 - 5) + '41}', 'length', 1048576,
+    'the pattern is longer than 1048576 bytes');
+  Limit('nesting', Nest(999), Nest(1000), 'nesting', 1000, 'the groups of the pattern nest more than 1000 deep');
+  Limit('size', Rep('a', 16384), Rep('a', 16385), 'size', 1048576,
+    'the pattern has a size of more than 1048576 bytes when it is read');
+  Limit('size of a class', '[' + Rep('\\u0100\\u0102', 60000) + ']', '[' + Rep('\\u0100\\u0102', 70000) + ']', 'size',
+    1048576, 'the pattern has a size of more than 1048576 bytes when it is read');
+  Limit('nesting, and not valid', Nest(999), Nest(1000) + '*+)', 'nesting', 1000,
+    'the groups of the pattern nest more than 1000 deep');
+end;
+
+{ TestAPatternThatIsNotValidIsNotTooLarge checks the two errors stay apart: a pattern under every limit that is not
+  valid raises EJsonSchemaCompileError. }
+procedure TestAPatternThatIsNotValidIsNotTooLarge;
+
+  procedure NotValid(const Pattern: UTF8String);
+  var
+    Raised: Boolean;
+  begin
+    Raised := False;
+    try
+      CompileJsonSchema('{"pattern": "' + Pattern + '"}');
+    except
+      on E: EJsonSchemaCompileError do begin
+        Raised := True;
+        Check(Pos('Invalid regular expression ''', E.Utf8Message) = 1, Copy(Pattern, 1, 20) + ': the message is '
+          + Copy(E.Utf8Message, 1, 100));
+      end;
+      on E: Exception do
+        Check(False, Copy(Pattern, 1, 20) + ': raised ' + UTF8String(E.ClassName));
+    end;
+    Check(Raised, Copy(Pattern, 1, 20) + ' compiled');
+  end;
+
+begin
+  NotValid('(');
+  NotValid('a**');
+  NotValid('[b-a]');
+  NotValid('(?<n>a)\\k<m>');
+  NotValid(Rep('(?:', 999) + 'a' + Rep(')', 1000));
+end;
+
+{ TestTheRegexFormatRefusesAPatternOverALimit checks the regex format, which reads a string of the instance as a
+  pattern: a string over a limit of size is not read to its end and is not a valid regular expression. }
+procedure TestTheRegexFormatRefusesAPatternOverALimit;
+var
+  V: IJsonSchemaValidator;
+  O: TJsonSchemaOptions;
+
+  procedure Format(const Text: UTF8String; Want: Boolean);
+  var
+    Error: UTF8String;
+    Start, Took: Int64;
+    Ok: Boolean;
+  begin
+    Start := MonotonicMilliseconds;
+    Ok := V.TryIsValid('"' + Text + '"', Error);
+    Took := MonotonicMilliseconds - Start;
+    Check((Ok = Want) and (Error = ''), 'a string of ' + Number(Length(Text)) + ' bytes: ' + Error);
+    Check(Took <= Generous, 'a string of ' + Number(Length(Text)) + ' bytes took ' + Number(Took) + ' ms');
+  end;
+
+begin
+  O := DefaultJsonSchemaOptions;
+  WithAssertFormat(O, True);
+  V := CompileJsonSchema('{"format": "regex"}', O);
+  Format('^[a-z]+$', True);
+  Format('(', False);
+  Format(Rep('a', 16384), True);
+  Format(Rep('a', 16385), False);
+  Format(Rep('(?:', 999) + 'a' + Rep(')', 999), True);
+  Format(Rep('(?:', 1000) + 'a' + Rep(')', 1000), False);
+end;
+
 {$IFDEF FPC}
 var
   { The memory manager is wrapped to count the requests for memory of TestALongPatternIsCopiedARunAtATime. }
@@ -812,6 +962,9 @@ begin
   TestAnOrdinaryPatternIsNotAffectedByTheLimit;
   TestTheMatchersWithNoLimitReadTheTextABoundedNumberOfTimes;
   TestALongPatternIsCopiedARunAtATime;
+  TestAPatternOverALimitOfSizeIsRefused;
+  TestAPatternThatIsNotValidIsNotTooLarge;
+  TestTheRegexFormatRefusesAPatternOverALimit;
   JsonSchemaReleaseThreadScratch;
   WriteLn(Checks - Failures, '/', Checks, ' checks passed');
   if Failures <> 0 then

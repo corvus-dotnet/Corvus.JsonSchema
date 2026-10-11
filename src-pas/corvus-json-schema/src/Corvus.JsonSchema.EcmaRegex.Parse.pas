@@ -48,8 +48,28 @@ const
   { MaxCount caps the bounds of a counted quantifier. No text that fits in memory reaches a larger count. }
   MaxCount = High(Int32);
 
+  { The limits on the size of one pattern. A pattern may come from outside, so reading and compiling one must take
+    bounded time and memory whatever it holds. A pattern over a limit is refused as too large (TooLarge of the
+    parser), which is not the error of a pattern that is not valid. The limits, and what the size counts, are
+    those of the Go package, so that the two refuse the same patterns. }
+
+  { MaxPatternLength is the longest pattern that is read, in bytes of UTF-8. }
+  MaxPatternLength = 1 shl 20;
   { MaxNesting caps the depth of groups, which bounds the recursion of the parser and of the compilers. }
   MaxNesting = 1000;
+  { MaxSize is the largest size a pattern may have, in the bytes the parser counts for it: NodeSize for each node
+    of its syntax tree, and RangeSize for each range of a class as its members are read, for each range a case
+    insensitive group or a negated property adds, for each alternative that encloses a named group and for each
+    group that shares its name. The tree, the program compiled from it and the time to make both are proportional
+    to that size, so it bounds them all. }
+  MaxSize = 1 shl 20;
+  NodeSize = 32;
+  RangeSize = 8;
+
+  { The names of the limits. }
+  LimitLength = 'length';
+  LimitNesting = 'nesting';
+  LimitSize = 'size';
 
 type
   TInt32Array = array of Int32;
@@ -92,6 +112,12 @@ type
     Path: TBranches;
   end;
 
+  { The set of a property expression the pattern has named, kept so that naming it again builds nothing. }
+  TPropertyEntry = record
+    Expr: UTF8String;
+    CharSet: TCharSet;
+  end;
+
   { The groups that share one name. }
   TGroupName = record
     Name: UTF8String;
@@ -127,12 +153,27 @@ type
     NodeCount: Int32;
     Sets: TCharSets;
     SetCount: Int32;
+    { Properties holds the set of each property expression the pattern has named so far. The Go package keeps the
+      sets of every pattern in one map for the process. Here a pattern keeps its own, so that a property named
+      16,000 times is one set of some 700 ranges and not 16,000 of them. There are few, so one is found by reading
+      the list. }
+    Properties: array of TPropertyEntry;
     { Failed says the pattern is not valid, Msg why, and Pos where. }
     Failed: Boolean;
     Msg: UTF8String;
     Pos: Int32;
+    { Size is the size of what has been read so far (see MaxSize). }
+    Size: Int32;
+    { TooLarge says the pattern is over a limit of size, which the parser stopped reading at: LimitName names the
+      limit and LimitValue is its value. Failed is set too, and nothing is known of whether the pattern is valid. }
+    TooLarge: Boolean;
+    LimitName: UTF8String;
+    LimitValue: Int32;
 
     procedure Fail(const Message: UTF8String);
+    procedure FailTooLarge(const Limit: UTF8String; Value: Int32);
+    procedure Charge(Bytes: Int32);
+    function Fold(const CharSet: TCharSet): TCharSet;
     function NewNode(Kind: TNodeKind): Int32;
     function NewParent(Kind: TNodeKind; Sub: Int32): Int32;
     function AddSet(const CharSet: TCharSet): Int32;
@@ -157,6 +198,7 @@ type
     function AtomEscape(out Quantifiable: Boolean): Int32;
     function LegacyOctal: Int32;
     function ClassEscape(C: Int32; out CharSet: TCharSet): Boolean;
+    function PropertyOf(const Expr: UTF8String; out CharSet: TCharSet): Boolean;
     function Hex(N: Int32): Int32;
     function CharacterEscape(InClass: Boolean): Int32;
     function UnicodeEscape(UnicodeMode: Boolean): Int32;
@@ -165,7 +207,8 @@ type
   end;
 
 { Parse reads the pattern. It returns false, with the reason, for a pattern that is not valid under the chosen
-  grammar. Root is the node the tree starts at. }
+  grammar, and for a pattern over a limit of size, which it stops reading at the limit: Ps.TooLarge says which of
+  the two. Root is the node the tree starts at. }
 function Parse(const Pattern: UTF8String; Unicode: Boolean; out Ps: TParser; out Root: Int32;
   out Error: UTF8String): Boolean;
 
@@ -190,6 +233,64 @@ begin
   end;
   // Nothing is left to read, so every loop of the parser ends.
   I := Length(P);
+end;
+
+function IntToUtf8(Value: Int32): UTF8String;
+var
+  Digits: array[0..11] of AnsiChar;
+  N, K: Int32;
+begin
+  N := 0;
+  repeat
+    Digits[N] := AnsiChar(Ord('0') + Value mod 10);
+    Value := Value div 10;
+    Inc(N);
+  until Value = 0;
+  SetLength(Result, N);
+  for K := 1 to N do
+    Result[K] := Digits[N - K];
+end;
+
+{ TooLargeMessage says which limit a pattern is over. }
+function TooLargeMessage(const Limit: UTF8String; Value: Int32): UTF8String;
+begin
+  if Limit = LimitLength then
+    Result := 'the pattern is longer than ' + IntToUtf8(Value) + ' bytes'
+  else if Limit = LimitNesting then
+    Result := 'the groups of the pattern nest more than ' + IntToUtf8(Value) + ' deep'
+  else
+    Result := 'the pattern has a size of more than ' + IntToUtf8(Value) + ' bytes when it is read';
+end;
+
+{ FailTooLarge stops the parser at a limit of size. A pattern that has failed already keeps its first failure. }
+procedure TParser.FailTooLarge(const Limit: UTF8String; Value: Int32);
+begin
+  if not Failed then begin
+    TooLarge := True;
+    LimitName := Limit;
+    LimitValue := Value;
+  end;
+  Fail(TooLargeMessage(Limit, Value));
+end;
+
+{ Charge adds to the size of the pattern, and stops the parser when the size is over its limit. }
+procedure TParser.Charge(Bytes: Int32);
+begin
+  if Failed then
+    Exit;
+  Inc(Size, Bytes);
+  if Size > MaxSize then
+    FailTooLarge(LimitSize, MaxSize);
+end;
+
+{ Fold returns the set with every character equivalent to one of its members, and charges the pattern for the work
+  and for the set: a byte for each character with a case variant that the set holds, and its ranges. }
+function TParser.Fold(const CharSet: TCharSet): TCharSet;
+var
+  Variants: Int32;
+begin
+  Result := FoldClosure(CharSet, Unicode, Variants);
+  Charge(Variants + RangeSize * (Length(Result.Ranges) div 2));
 end;
 
 { NewNode adds a node of a kind and returns its index. }
@@ -221,22 +322,6 @@ begin
   Sets[Result] := CharSet;
 end;
 
-function IntToUtf8(Value: Int32): UTF8String;
-var
-  Digits: array[0..11] of AnsiChar;
-  N, K: Int32;
-begin
-  N := 0;
-  repeat
-    Digits[N] := AnsiChar(Ord('0') + Value mod 10);
-    Value := Value div 10;
-    Inc(N);
-  until Value = 0;
-  SetLength(Result, N);
-  for K := 1 to N do
-    Result[K] := Digits[N - K];
-end;
-
 function Parse(const Pattern: UTF8String; Unicode: Boolean; out Ps: TParser; out Root: Int32;
   out Error: UTF8String): Boolean;
 var
@@ -246,6 +331,12 @@ begin
   Ps := Default(TParser);
   Ps.Unicode := Unicode;
   Error := '';
+  if Length(Pattern) > MaxPatternLength then begin
+    Root := 0;
+    Ps.FailTooLarge(LimitLength, MaxPatternLength);
+    Error := Ps.Msg;
+    Exit(False);
+  end;
   // The pattern as code points. A malformed byte is U+FFFD. Without the u flag ECMA-262 reads a pattern, and
   // matches a text, a UTF-16 code unit at a time, so the pattern is code units. A character beyond the Basic
   // Multilingual Plane is then two atoms, a quantifier after it repeats the second, and in a class it is two
@@ -296,7 +387,10 @@ begin
     end;
   if Ps.Failed then begin
     Root := 0;
-    Error := 'ecmaregex: ' + Ps.Msg + ' at offset ' + IntToUtf8(Ps.Pos) + ' in "' + Pattern + '"';
+    if Ps.TooLarge then
+      Error := Ps.Msg
+    else
+      Error := 'ecmaregex: ' + Ps.Msg + ' at offset ' + IntToUtf8(Ps.Pos) + ' in "' + Pattern + '"';
     Exit(False);
   end;
   Result := True;
@@ -359,7 +453,7 @@ var
 begin
   Inc(Depth);
   if Depth > MaxNesting then begin
-    Fail('groups nested too deeply');
+    FailTooLarge(LimitNesting, MaxNesting);
     Exit(0);
   end;
   Inc(Disjunctions);
@@ -381,6 +475,7 @@ begin
   Subs[0] := First;
   N := 1;
   while Eat(Ord('|')) do begin
+    Charge(NodeSize);
     Inc(Path[Last].Alternative);
     Sub := Alternative;
     if Failed then
@@ -428,10 +523,10 @@ end;
 function TParser.CharNode(C: Int32): Int32;
 var
   CharSet: TCharSet;
-  SetIx: Int32;
+  SetIx, Variants: Int32;
 begin
   if ICase then begin
-    CharSet := FoldClosure(NewCharSet([C, C], False), Unicode);
+    CharSet := FoldClosure(NewCharSet([C, C], False), Unicode, Variants);
     if (Length(CharSet.Ranges) <> 2) or (CharSet.Ranges[0] <> CharSet.Ranges[1]) then begin
       SetIx := AddSet(CharSet);
       Result := NewNode(NSet);
@@ -450,7 +545,7 @@ var
   SetIx: Int32;
 begin
   if ICase then
-    SetIx := AddSet(FoldClosure(CharSet, Unicode))
+    SetIx := AddSet(Fold(CharSet))
   else
     SetIx := AddSet(CharSet);
   Result := NewNode(NSet);
@@ -462,6 +557,10 @@ var
   C, Atom, Min, Max, SetIx: Int32;
   Quantifiable, Lazy: Boolean;
 begin
+  // The atom, and the repetition or the group around it.
+  Charge(2 * NodeSize);
+  if Failed then
+    Exit(0);
   C := Peek;
   Quantifiable := True;
   Atom := 0;
@@ -818,6 +917,8 @@ begin
       Names[Found].Name := Name;
     end;
     K := Length(Names[Found].Groups);
+    // The path is kept, and every group of the same name is compared with it.
+    Charge(RangeSize * (PathLen + K));
     SetLength(Names[Found].Groups, K + 1);
     Names[Found].Groups[K].Group := Groups;
     Names[Found].Groups[K].Path := Copy(Path, 0, PathLen);
@@ -1044,17 +1145,39 @@ begin
         Fail('invalid property name');
         Exit(False);
       end;
-      if not PropertySet(Expr, CharSet) then begin
+      if not PropertyOf(Expr, CharSet) then begin
         Fail('invalid property name');
         Exit(False);
       end;
-      if C = Ord('P') then
+      if C = Ord('P') then begin
+        Charge(RangeSize * (Length(CharSet.Ranges) div 2));
         CharSet := NewCharSet(CharSet.Ranges, True);
+      end;
     end;
   else
     Exit(False);
   end;
   Result := True;
+end;
+
+{ PropertyOf is PropertySet for a pattern: the set of a property expression, built the first time the pattern names
+  it. }
+function TParser.PropertyOf(const Expr: UTF8String; out CharSet: TCharSet): Boolean;
+var
+  K: Int32;
+begin
+  for K := 0 to High(Properties) do
+    if Properties[K].Expr = Expr then begin
+      CharSet := Properties[K].CharSet;
+      Exit(True);
+    end;
+  Result := PropertySet(Expr, CharSet);
+  if Result then begin
+    K := Length(Properties);
+    SetLength(Properties, K + 1);
+    Properties[K].Expr := Expr;
+    Properties[K].CharSet := CharSet;
+  end;
 end;
 
 function HexValue(C: Int32): Int32;
@@ -1258,13 +1381,15 @@ function TParser.CharClass: Int32;
 var
   Negated, FirstIsSet, SecondIsSet: Boolean;
   Pairs: TRunes;
-  N, First, Second, SetIx: Int32;
+  N, First, Second, SetIx, Charged: Int32;
   FirstSet, SecondSet, CharSet: TCharSet;
 begin
   Inc(I);
   Negated := Eat(Ord('^'));
   Pairs := nil;
   N := 0;
+  // The ranges read so far that the size of the pattern has been charged for.
+  Charged := 0;
   while True do begin
     if not More then begin
       Fail('unterminated character class');
@@ -1272,6 +1397,10 @@ begin
     end;
     if Eat(Ord(']')) then
       Break;
+    Charge(RangeSize * (N div 2 - Charged));
+    Charged := N div 2;
+    if Failed then
+      Exit(0);
     FirstIsSet := ClassAtom(First, FirstSet);
     if Failed then
       Exit(0);
@@ -1302,10 +1431,13 @@ begin
   end;
   // Inside a case-insensitive group a character matches the class when it is equivalent to a member, and a
   // negated class excludes exactly those characters.
+  Charge(RangeSize * (N div 2 - Charged));
+  if Failed then
+    Exit(0);
   SetLength(Pairs, N);
   CharSet := NewCharSet(Pairs, False);
   if ICase then
-    CharSet := FoldClosure(CharSet, Unicode);
+    CharSet := Fold(CharSet);
   if Negated then
     CharSet := NewCharSet(CharSet.Ranges, True);
   SetIx := AddSet(CharSet);
