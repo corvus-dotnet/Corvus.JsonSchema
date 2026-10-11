@@ -2403,6 +2403,19 @@ begin
     Fail('the cases of TestCountsAreComparedAsWritten are not the ones the test is about');
 end;
 
+(* TestPropertyNamesAndValues checks the names and values of \p{...} where V8 13.6 departs from ECMA-262. WSpace is
+  not a name ECMA-262 lists, so \p{WSpace} is an error with the u flag and is read with no flag, as the characters
+  p{WSpace}. Katakana_Or_Hiragana (Hrkt) is a Script value, which no character has, so \p{sc=Hrkt} matches nothing
+  and \P{sc=Hrkt} matches any character. *)
+procedure TestPropertyNamesAndValues;
+var
+  Patterns, Invalid, Departures: Int32;
+begin
+  CheckSyntax('TestPropertyNamesAndValues', 'properties', Patterns, Invalid, Departures);
+  if (Patterns < 30) or (Departures < 24) then
+    Fail('the cases of TestPropertyNamesAndValues are not the ones the test is about');
+end;
+
 { TestCodeUnitPositions checks the two readers of a code unit on every position of a text, forwards and
   backwards. }
 procedure TestCodeUnitPositions;
@@ -2501,11 +2514,12 @@ begin
   TestCodeUnitPositions;
   TestEscapedKInAClass;
   TestCountsAreComparedAsWritten;
+  TestPropertyNamesAndValues;
   WriteLn('V8 oracle: ', OracleVerdicts, ' verdicts on validity compared, ', OracleVerdictsAgreed, ' agreed. ',
     OracleAnswers, ' answers on a match compared (each text on both back ends), ', OracleAnswersAgreed, ' agreed.');
   if Failures <> 0 then begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 26 tests, 0 failures');
+  WriteLn('PASS: 27 tests, 0 failures');
 end.

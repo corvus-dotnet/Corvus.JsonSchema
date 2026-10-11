@@ -476,10 +476,18 @@ begin
   Result := FindTable(BinaryTableNames, BinaryTableTables, Name);
 end;
 
+var
+  { The table of the Script value Katakana_Or_Hiragana (Hrkt). PropertyValueAliases.txt lists the value, and no code
+    point has it, in Script or in Script_Extensions. Scripts.txt has no line for it, so the generated tables do not
+    have it. }
+  KatakanaOrHiragana: TUcdTable;
+
 function UcdScript(const Name: UTF8String): PUcdTable;
 begin
   if (Name = 'Unknown') or (Name = 'Zzzz') then
     Exit(UcdUnknownScript);
+  if (Name = 'Katakana_Or_Hiragana') or (Name = 'Hrkt') then
+    Exit(@KatakanaOrHiragana);
   Result := FindTable(ScriptTableNames, ScriptTableTables, Name);
 end;
 
@@ -487,6 +495,8 @@ function UcdScriptExtensions(const Name: UTF8String): PUcdTable;
 begin
   if (Name = 'Unknown') or (Name = 'Zzzz') then
     Exit(UcdUnknownScript);
+  if (Name = 'Katakana_Or_Hiragana') or (Name = 'Hrkt') then
+    Exit(@KatakanaOrHiragana);
   Result := FindTable(ScriptExtensionsTableNames, ScriptExtensionsTableTables, Name);
 end;
 
