@@ -426,7 +426,7 @@ def test_a_text_is_split_into_code_units_only_for_a_pattern_that_can_tell() -> N
         assert translate(pattern) is None, pattern
         t = pattern_module._translate(pattern, False, False)
         assert t is not None, pattern
-        return t[2]
+        return t.wide
 
     # Nothing here takes a character from U+D800 up, and there is no lookaround and no \\B.
     for pattern in ("^[\\w\\-\\.]+\\&?$", "^\\-?[a-z]*$", "\\-?\\ba\\b", "(?m:\\-?^a$)"):

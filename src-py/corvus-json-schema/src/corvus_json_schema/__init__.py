@@ -34,8 +34,11 @@ from .options import (
     CompileOptions,
     DocumentResolver,
     FormatValidator,
+    PatternMatchLimitError,
+    PatternTooLargeError,
     SchemaCompilationError,
     SchemaEvaluationDepthError,
+    match_limit,
 )
 from .results import (
     Annotation,
@@ -56,6 +59,8 @@ __all__ = [
     "DocumentResolver",
     "FormatValidator",
     "JsonSchemaResultsCollector",
+    "PatternMatchLimitError",
+    "PatternTooLargeError",
     "ResultsLevel",
     "SchemaCompilationError",
     "SchemaEvaluationDepthError",
@@ -76,7 +81,11 @@ class Validator(Protocol):
 
     def evaluate(self, instance: Any, collector: JsonSchemaResultsCollector | None = None) -> bool:
         """Evaluates the instance, reporting results to the collector when one is given (every keyword is evaluated
-        and reported, at the collector's level); without a collector this is the validator itself."""
+        and reported, at the collector's level); without a collector this is the validator itself.
+
+        Both this and the call raise ``PatternMatchLimitError`` when a match of a regular expression reaches the
+        limit of the ``pattern_match_limit`` option, and ``SchemaEvaluationDepthError`` when the schema recurses in
+        place beyond ``max_depth``. Neither is an answer."""
         ...
 
     @property
@@ -87,7 +96,10 @@ class Validator(Protocol):
 
 def _options(options: CompileOptions | None, overrides: Mapping[str, Any]) -> CompileOptions:
     base = options if options is not None else CompileOptions()
-    return replace(base, **overrides) if overrides else base
+    opts = replace(base, **overrides) if overrides else base
+    # None, zero or less turns the limit of a match off. Anything that is not a number of seconds is refused here.
+    limit = match_limit(opts.pattern_match_limit)
+    return opts if limit == opts.pattern_match_limit else replace(opts, pattern_match_limit=limit)
 
 
 def _parse_schema(schema: Any) -> Any:
@@ -102,7 +114,12 @@ def _generate(schema: Any, options: CompileOptions) -> tuple[GeneratedCode, Comp
 def _collecting_program(program: CompiledSchema) -> CollectingProgram:
     resolve_annotations(program)
     return CollectingProgram(
-        program.nodes, program.root, program.uses_dynamic_scope, program.options.max_depth, program.options.formats
+        program.nodes,
+        program.root,
+        program.uses_dynamic_scope,
+        program.options.max_depth,
+        program.options.formats,
+        program.options.pattern_match_limit,
     )
 
 
@@ -181,7 +198,16 @@ def compile(schema: Any, options: CompileOptions | None = None, **kwargs: Any) -
 
     The schema is loaded, its references are resolved and analysed, and the result is emitted as specialised Python
     and compiled once. Options are given as a ``CompileOptions`` or as its fields by keyword (``default_dialect``,
-    ``assert_format``, ``formats``, ``resolve_document``, ``base_uri``, ``entry_point``, ``max_depth`` and so on).
+    ``assert_format``, ``formats``, ``resolve_document``, ``base_uri``, ``entry_point``, ``max_depth``,
+    ``pattern_match_limit`` and so on).
+
+    A schema with a regular expression that is not valid raises ``SchemaCompilationError``, and one with a regular
+    expression over a limit of size raises ``PatternTooLargeError``, which is a ``SchemaCompilationError``.
+
+    One match of a ``pattern`` or ``patternProperties`` regular expression may take ``pattern_match_limit`` seconds
+    (1.0 unless the option says otherwise, and None or zero for no limit). A validation whose match reaches the
+    limit raises ``PatternMatchLimitError``, from the validator and from ``evaluate`` with a collector or without:
+    the instance is then neither valid nor not valid.
     """
     opts = _options(options, kwargs)
     g, program = _generate(schema, opts)
@@ -230,6 +256,9 @@ def generate_module(
     needed where it runs. With ``collecting`` (the default) it also defines ``evaluate(instance, collector=None)``,
     embedding the program image for results collection. Custom format functions cannot be serialised; supply them to
     ``compile`` instead.
+
+    The ``pattern_match_limit`` option is written into the module (where it is not the default of one second), so
+    the module has the limit it was generated with.
     """
     opts = _options(options, kwargs)
     g, program = _generate(schema, opts)

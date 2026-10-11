@@ -140,9 +140,10 @@ def test_a_translation_the_engine_does_not_compile_is_a_fault(monkeypatch: pytes
         cjs.compile({"pattern": "\\p{Nope}+*"})
     # Anything else the engine does not compile is a fault of the translation. It is raised as one, and is not
     # passed off as a pattern that is not valid.
-    monkeypatch.setattr(pattern_module, "_translate", lambda pattern, unicode, for_regex: ("(?P<a>", True, False))
+    broken = pattern_module._Translation("(?P<a>", True, False, False)
+    monkeypatch.setattr(pattern_module, "_translate", lambda pattern, unicode, for_regex: broken)
     with pytest.raises(RuntimeError, match="fault of the package"):
-        pattern_module._compile("a", True)
+        pattern_module._compile("a", True, None)
     assert is_valid_ecma_regex("a")
 
 

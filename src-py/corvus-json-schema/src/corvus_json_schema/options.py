@@ -47,9 +47,50 @@ class CompileOptions:
     max_depth: int = 128
     """Maximum depth of in-place recursion on a cycle before evaluation is abandoned."""
 
+    pattern_match_limit: float | None = 1.0
+    """The time one match of a ``pattern`` or ``patternProperties`` regular expression against one string may take,
+    in seconds. A match that takes longer is abandoned and the validation raises ``PatternMatchLimitError``. ``None``
+    or zero turns the limit off, for a caller who trusts both the schema and the instances.
+
+    A pattern that is proved to match in time proportional to the text is run by the standard library's ``re``,
+    which needs no limit and has none. Every other pattern is run by the ``regex`` package with the limit as its
+    ``timeout``, which counts the processor time of the whole process (see the package's README)."""
+
 
 class SchemaCompilationError(Exception):
     """Raised when a schema cannot be compiled (an unresolvable reference, an invalid pattern)."""
+
+
+class PatternTooLargeError(SchemaCompilationError):
+    """Raised when a schema cannot be compiled because one of its regular expressions is over a limit of size
+    (32,768 characters of pattern or of its translation for Python's engines, 100 levels of groups, or 10,000 copies
+    of what the ``regex`` package writes out for a count). It is never raised for a pattern that is not valid, which
+    is a plain ``SchemaCompilationError``."""
+
+
+class PatternMatchLimitError(Exception):
+    """Raised when one match of a ``pattern`` or ``patternProperties`` regular expression reaches its limit (see the
+    ``pattern_match_limit`` option of ``compile``). The instance is then neither valid nor not valid."""
+
+    def __init__(self, pattern: str, limit: float) -> None:
+        shown = pattern if len(pattern) <= 200 else f"{pattern[:200]}... ({len(pattern)} characters)"
+        super().__init__(
+            f"A match of the regular expression '{shown}' was abandoned: it took longer than the limit of {limit:g} s."
+        )
+        self.pattern = pattern
+        """The regular expression."""
+        self.limit = limit
+        """The time the match was allowed, in seconds."""
+
+
+def match_limit(seconds: float | None) -> float | None:
+    """The limit of a match as the engines take it: the seconds, or None when ``seconds`` is None, zero or less
+    (the limit is off). A value that is not a number of seconds raises ValueError."""
+    if seconds is None:
+        return None
+    if isinstance(seconds, bool) or not isinstance(seconds, (int, float)) or seconds != seconds:
+        raise ValueError("pattern_match_limit is not a number of seconds.")
+    return float(seconds) if seconds > 0 else None
 
 
 class SchemaEvaluationDepthError(Exception):

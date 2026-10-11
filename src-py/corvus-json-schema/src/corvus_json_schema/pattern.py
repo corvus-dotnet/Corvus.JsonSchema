@@ -54,11 +54,13 @@ from __future__ import annotations
 
 import re
 import sys
+import threading
 from bisect import bisect_left
+from collections import OrderedDict
 from collections.abc import Callable
 from typing import Any
 
-from .options import SchemaCompilationError
+from .options import PatternMatchLimitError, PatternTooLargeError, match_limit
 
 # ECMA-262 WhiteSpace and LineTerminator (what \s matches).
 _SPACE = "\\t\\n\\x0b\\x0c\\r \\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff"
@@ -75,9 +77,26 @@ _ASCII_NAME_RE = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
 
 # A count from here up is more characters than a text has. As a maximum it is no maximum.
 _MAX_COUNT = 2**31 - 1
-# The most text a translation may have. A repetition written without a count (see _Writer._repeat) multiplies out
-# when it is inside another, and a pattern that passes this is refused.
-_MAX_TRANSLATED = 65_536
+# The limits of size. A schema may come from outside, so what one pattern can cost to compile is bounded, and a
+# pattern over a limit is refused as too large (PatternTooLargeError), which is not the same as not valid.
+#
+# The most characters a pattern may have, and the most its translation may have. A repetition written without a
+# count (see _Writer._repeat) multiplies out when it is inside another. Both engines read a pattern with a parser
+# written in Python, which takes up to 10 microseconds for a character, and keep up to 230 bytes for one.
+MAX_PATTERN = 32_768
+_MAX_TRANSLATED = 32_768
+# The most levels of groups a pattern may have. Both engines and this translator read a group inside a group by
+# recursion, and the regex package takes five frames of Python's stack for a level.
+MAX_NESTING = 100
+# The most copies the regex package may have to write out. It compiles X{1000} as a thousand and one copies of X
+# and X+ as two, and a repetition inside a repetition multiplies: (?:a{1000}){1000} took 125 MB, and sixteen groups
+# with a + inside each other took 41 MB and most of a second. The standard library's engine keeps a count as a
+# number.
+MAX_COPIES = 4_096
+# The most text the tests of the case-insensitive references of a pattern may have (see _Writer._test). The test for
+# every character that has another case is as long as the table of case, about 54,000 characters, and a pattern
+# that would need more than this in several tests has that one for all of them.
+_MAX_TESTS = 65_536
 # The most nodes the tree of a pattern may have once its repetitions are written without the iterations that match
 # nothing (see _Plain). A pattern that would pass it is written as it is.
 _MAX_PLAIN = 20_000
@@ -168,7 +187,16 @@ def _both_ways(properties: list[str]) -> bool:
 
 
 class _TooLarge(Exception):
-    """The pattern is valid, and its translation would pass _MAX_TRANSLATED."""
+    """The pattern is over a limit of size. ``reason`` names the limit and its value. ``unread``: the pattern was
+    not read to its end, so nothing is known of whether it is valid."""
+
+    def __init__(self, reason: str = "", unread: bool = False) -> None:
+        super().__init__(reason)
+        self.unread = unread
+        self.reason = reason or (
+            f"its translation for Python's engines is longer than {_MAX_TRANSLATED:,} characters once its "
+            "repetitions are written out"
+        )
 
 
 def _literal(c: str) -> str:
@@ -257,6 +285,7 @@ class _Node:
         "same",
         "state",
         "text",
+        "weight",
     )
 
     def __init__(self, kind: int, text: str = "", items: list[_Node] | None = None, group: int = 0) -> None:
@@ -291,6 +320,9 @@ class _Node:
         self.first = 0
         self.last = 0
         self.back = False
+        # Set by _Writer as it writes: how many copies of a character or a reference the regex package makes of
+        # the node (see MAX_COPIES).
+        self.weight = 1
 
 
 def _matches_nothing(n: _Node) -> bool:
@@ -572,6 +604,397 @@ def _has_a_repeat(n: _Node) -> bool:
     return (n.kind == _REPEAT and n.max != 0) or any(_has_a_repeat(x) for x in n.items)
 
 
+_EVERY: _Ranges = [(0, 0x10FFFF)]
+_INFINITE = float("inf")
+
+
+def _meet(a: _Ranges, b: _Ranges) -> bool:
+    """Whether two sets of characters (each merged, in order) have a character in common."""
+    i = j = 0
+    while i < len(a) and j < len(b):
+        if a[i][1] < b[j][0]:
+            i += 1
+        elif b[j][1] < a[i][0]:
+            j += 1
+        else:
+            return True
+    return False
+
+
+class _NotLinear(Exception):
+    pass
+
+
+class _Linear:
+    """Proves that the standard library's engine matches a pattern in time proportional to the text, whatever the
+    text is. That engine cannot be stopped once it has started (it looks at signals in the main thread only, and has
+    no limit of its own), so with the limit of a match in force it is given the patterns this class proves and no
+    others. Every other pattern goes to the regex package, which takes a timeout.
+
+    The engine tries one way through a pattern and goes back to the last choice when it fails. The proof is that no
+    text makes it go over more than a bounded number of characters a second time. It holds when, at every choice
+    (the alternatives of an alternation, one more iteration of a repetition or none), the next character of the
+    text says which way to go: the sets of characters that the ways can start with, or that can follow the choice
+    where a way can match nothing, have no character in common, and at most one way can match nothing. A way that
+    is not taken then fails at its first character. The body of a repetition has to take a character.
+
+    Some things are allowed beyond that, each for a bounded cost. ``factor`` is the product of the costs, and the
+    work for a character of the text is at most ``factor`` times the nodes of the tree.
+
+    - A pattern that can take a bounded number of characters and has no lookahead, when all the ways through it
+      come to few characters (``^(?:es5|es6|es2015)$``): the engine cannot do more than try each way.
+    - A repetition where the next character does not say whether to leave it, such as the first of
+      ``^[a-z0-9]*[a-z]$``, when what follows it can take ``w`` characters at most and still fail. Each place to
+      leave it is tried once, and each try costs ``w``.
+    - An alternation whose alternatives start with the same character, when they take a bounded number of
+      characters and no text matches one and starts with a match of another (``txt|trie``): one of them matches at
+      most, and the others cost what they are. Where one can start with another (``http|https``) each is a way to
+      go on, which is allowed outside any repetition, for a cost of the number of ways.
+    - A lookahead of at most ``w`` characters, anywhere. A lookahead with no such bound (``(?=.*[a-z])``) is
+      allowed where it is tried once only: at the start of a pattern that starts with ``^``.
+    - A pattern that does not start with ``^`` is tried at every place in the text, so a try that fails may take
+      ``w`` characters at most. ``[a-z][a-z0-9]*`` takes one: after its first character nothing can fail.
+
+    A pattern with a reference that reads a group, or a lookbehind, is not proved. The proof reads the tree that is
+    written for the engine, so it is of the translation and not of the pattern as ECMA-262 has it."""
+
+    # The most a proved pattern may cost: the product of the costs above, and that times the nodes of its tree.
+    MAX_FACTOR = 64
+    MAX_WORK = 4096
+    # The most ways through a bounded part that are written out to compare them, and the most characters they may
+    # come to for a pattern that is tried at every place in the text.
+    MAX_WAYS = 256
+    MAX_WAYS_WORK = 1024
+
+    def __init__(self) -> None:
+        self.factor = 1.0
+        self.nodes = 0
+        self.firsts: dict[int, _Ranges] = {}
+        self.lengths: dict[int, float] = {}
+        # The lookaheads that are tried once (by the place of the node in memory).
+        self.once: set[int] = set()
+
+    def proves(self, root: _Node) -> bool:
+        try:
+            anchored = self.anchored(root)
+            if self.bounded(root, anchored):
+                return True
+            if anchored:
+                self.mark_once(root)
+            else:
+                top = root
+                while top.kind == _GROUP:
+                    top = top.items[0]
+                # An alternative that starts with ^ fails at once everywhere but at the start of the text.
+                ways = top.items if top.kind == _ALTERNATION else [top]
+                self.cost(max([self.fails_within(x, True) for x in ways if not self.anchored(x)], default=0.0))
+            self.visit(root, [], True, 0.0, True, True)
+        except _NotLinear:
+            return False
+        return self.factor * self.nodes <= self.MAX_WORK
+
+    def cost(self, width: float) -> None:
+        self.factor *= 1 + width
+        if self.factor > self.MAX_FACTOR:
+            raise _NotLinear()
+
+    def bounded(self, root: _Node, anchored: bool) -> bool:
+        """Whether the pattern takes a bounded number of characters, has no lookahead, and has few ways through
+        it."""
+        if self.length(root) == _INFINITE or self.has_look(root):
+            return False
+        ways = self.ways(root)
+        if ways is None:
+            return False
+        work = sum(len(w) + 1 for w in ways)
+        return work <= (self.MAX_WORK if anchored else self.MAX_WAYS_WORK)
+
+    def has_look(self, n: _Node) -> bool:
+        return n.kind == _LOOK or any(self.has_look(x) for x in n.items)
+
+    def ways(self, n: _Node) -> list[tuple[_Ranges, ...]] | None:
+        """The ways through a node that takes a bounded number of characters, each as the sets of characters it
+        takes in order (an assertion or a lookahead takes none). None: there are too many, or no bound."""
+        k = n.kind
+        if k == _TEXT:
+            return [()] if n.nothing is not False else [(self.first(n),)]
+        if k == _LOOK:
+            return [()]
+        if k == _REFERENCE:
+            return [()] if n.state == _EMPTY else None
+        if k == _GROUP:
+            return self.ways(n.items[0])
+        if k == _ALTERNATION:
+            out: list[tuple[_Ranges, ...]] = []
+            for x in n.items:
+                more = self.ways(x)
+                if more is None or len(out) + len(more) > self.MAX_WAYS:
+                    return None
+                out.extend(more)
+            return out
+        if k == _SEQUENCE:
+            out = [()]
+            for x in n.items:
+                more = self.ways(x)
+                if more is None or len(out) * len(more) > self.MAX_WAYS:
+                    return None
+                if more != [()]:
+                    out = [a + b for a in out for b in more]
+            return out
+        # A repetition.
+        if n.max == 0 or _only_nothing(n.items[0]):
+            return [()]
+        if n.max == -1 or n.max > self.MAX_WAYS:
+            return None
+        body = self.ways(n.items[0])
+        if body is None:
+            return None
+        out = []
+        some: list[tuple[_Ranges, ...]] = [()]
+        for count in range(n.max + 1):
+            if count >= n.min:
+                if len(out) + len(some) > self.MAX_WAYS:
+                    return None
+                out.extend(some)
+            if count < n.max:
+                if len(some) * len(body) > self.MAX_WAYS or len(some[0]) > self.MAX_WAYS:
+                    return None
+                some = [a + b for a in some for b in body]
+        return out
+
+    @staticmethod
+    def starts_with(a: tuple[_Ranges, ...], b: tuple[_Ranges, ...]) -> bool:
+        """Whether some text that one way takes can start with a text that the other takes."""
+        for x, y in zip(a, b):  # noqa: B905 - the shorter one is compared with the start of the longer
+            if not _meet(x, y):
+                return False
+        return True
+
+    def first(self, n: _Node) -> _Ranges:
+        """The characters the text that the node matches can start with."""
+        key = id(n)
+        got = self.firsts.get(key)
+        if got is None:
+            k = n.kind
+            if k == _TEXT:
+                if n.nothing is not False:
+                    got = []
+                elif n.chars is None:
+                    got = _EVERY
+                else:
+                    got = _complement(n.chars) if n.others else _merged(n.chars)
+            elif k == _SEQUENCE:
+                parts: _Ranges = []
+                for x in n.items:
+                    parts.extend(self.first(x))
+                    if not _matches_nothing(x):
+                        break
+                got = _merged(parts)
+            elif k in (_LOOK, _REFERENCE) or (k == _REPEAT and n.max == 0):
+                got = []
+            else:
+                got = _merged([r for x in n.items for r in self.first(x)])
+            self.firsts[key] = got
+        return got
+
+    def length(self, n: _Node) -> float:
+        """The most characters the node can take."""
+        key = id(n)
+        got = self.lengths.get(key)
+        if got is None:
+            k = n.kind
+            if k == _TEXT:
+                got = 0.0 if n.nothing is not False else 1.0
+            elif k in (_LOOK, _REFERENCE):
+                got = 0.0
+            elif k == _ALTERNATION:
+                got = max(self.length(x) for x in n.items)
+            elif k == _REPEAT:
+                body = self.length(n.items[0])
+                got = 0.0 if n.max == 0 or body == 0 else _INFINITE if n.max == -1 else n.max * body
+            else:
+                got = sum(self.length(x) for x in n.items)
+            self.lengths[key] = got
+        return got
+
+    def anchored(self, n: _Node) -> bool:
+        """Whether every way through the node starts with ``^``, so that a search is tried at the start of the text
+        and nowhere else."""
+        k = n.kind
+        if k == _TEXT:
+            return n.text == "^"
+        if k == _SEQUENCE:
+            for x in n.items:
+                if self.anchored(x):
+                    return True
+                # Before the ^ there may be what takes no character, other than a lookahead, which would be tried
+                # at every place.
+                if self.length(x) != 0 or self.has_look(x):
+                    return False
+            return False
+        if k == _ALTERNATION:
+            return all(self.anchored(x) for x in n.items)
+        if k == _GROUP:
+            return self.anchored(n.items[0])
+        if k == _REPEAT:
+            return n.min >= 1 and self.anchored(n.items[0])
+        return False
+
+    def mark_once(self, n: _Node) -> None:
+        """Marks the lookaheads at the start of an anchored pattern, before anything that takes a character or is a
+        choice. Each is tried once."""
+        while n.kind == _GROUP:
+            n = n.items[0]
+        if n.kind != _SEQUENCE:
+            return
+        for x in n.items:
+            if x.kind == _LOOK:
+                self.once.add(id(x))
+            elif x.kind != _TEXT or x.nothing is False:
+                return
+
+    def never_fails(self, n: _Node) -> bool:
+        k = n.kind
+        if k == _TEXT:
+            return n.text in ("", "(?:)")
+        if k == _REFERENCE:
+            return n.state == _EMPTY
+        if k == _LOOK:
+            return False
+        if k == _REPEAT:
+            return n.min == 0 or n.max == 0
+        if k == _ALTERNATION:
+            return any(self.never_fails(x) for x in n.items)
+        return all(self.never_fails(x) for x in n.items)
+
+    def fails_within(self, n: _Node, last: bool) -> float:
+        """The most characters a try at the node can take and still fail. ``last``: once the node has matched,
+        nothing after it can fail."""
+        k = n.kind
+        if not last:
+            return self.length(n) if k != _LOOK else self.length(n.items[0])
+        if k == _TEXT:
+            return 0.0 if n.nothing is not False else 1.0
+        if k == _LOOK:
+            return self.length(n.items[0])
+        if k == _REFERENCE:
+            return 0.0
+        if k == _GROUP:
+            return self.fails_within(n.items[0], True)
+        if k == _ALTERNATION:
+            return max(self.fails_within(x, True) for x in n.items)
+        if k == _REPEAT:
+            if n.max == 0 or n.min == 0:
+                return 0.0
+            body = n.items[0]
+            before = (n.min - 1) * self.length(body) if n.min > 1 else 0.0
+            return before + self.fails_within(body, True)
+        # A sequence: the items after the last one that can fail cost nothing.
+        items = n.items
+        j = len(items) - 1
+        while j >= 0 and self.never_fails(items[j]):
+            j -= 1
+        if j < 0:
+            return 0.0
+        width = self.fails_within(items[j], True)
+        for x in items[:j]:
+            width += self.fails_within(x, False)
+        return width
+
+    def visit(self, n: _Node, follow: _Ranges, end: bool, after: float, never: bool, single: bool) -> None:
+        """Checks the node. ``follow``: the characters that can come after it. ``end``: the pattern (or the
+        lookahead the node is in) can end after it. ``after``: the most characters that what comes after it can
+        take and still fail, and ``never``: what comes after it cannot fail. ``single``: the node is in no
+        repetition, so it is tried once for each try at the pattern."""
+        self.nodes += 1
+        k = n.kind
+        if k == _TEXT:
+            return
+        if k == _REFERENCE:
+            if n.state != _EMPTY:
+                raise _NotLinear()
+            return
+        if k == _GROUP:
+            self.visit(n.items[0], follow, end, after, never, single)
+            return
+        if k == _LOOK:
+            if n.behind:
+                raise _NotLinear()
+            width = self.length(n.items[0])
+            if width == _INFINITE:
+                if id(n) not in self.once:
+                    raise _NotLinear()
+            else:
+                self.cost(width)
+            self.visit(n.items[0], [], True, 0.0, True, single)
+            return
+        if k == _SEQUENCE:
+            items = n.items
+            for i in range(len(items) - 1, -1, -1):
+                x = items[i]
+                self.visit(x, follow, end, after, never, single)
+                if _matches_nothing(x):
+                    follow = _merged(follow + self.first(x))
+                else:
+                    follow, end = self.first(x), False
+                if never:
+                    if not self.never_fails(x):
+                        after, never = self.fails_within(x, True), False
+                else:
+                    after += self.length(x)
+            return
+        if k == _ALTERNATION:
+            seen: _Ranges = []
+            nothing = clash = False
+            for x in n.items:
+                starts = self.first(x)
+                if _matches_nothing(x):
+                    clash = clash or nothing
+                    nothing = True
+                    starts = _merged(starts + follow)
+                clash = clash or _meet(seen, starts)
+                seen = _merged(seen + starts)
+            if clash:
+                # The next character does not say which alternative to take.
+                ways = self.ways(n) if self.length(n) != _INFINITE else None
+                if ways is None:
+                    raise _NotLinear()
+                if any(self.starts_with(a, b) for i, a in enumerate(ways) for b in ways[:i]):
+                    # A text can match two of them. Each is a way to go on.
+                    if not single:
+                        raise _NotLinear()
+                    self.cost(len(ways) - 1)
+                self.nodes += sum(len(w) for w in ways)
+            for x in n.items:
+                self.visit(x, follow, end, after, never, single)
+            return
+        # A repetition.
+        if n.max == 0:
+            return
+        body = n.items[0]
+        if _only_nothing(body):
+            # Written as the body once, or as nothing.
+            if n.min:
+                self.visit(body, follow, end, after, never, single)
+            return
+        if n.max == 1 and n.min == 1:
+            self.visit(body, follow, end, after, never, single)
+            return
+        if _matches_nothing(body):
+            raise _NotLinear()
+        starts = self.first(body)
+        if n.min != n.max and _meet(starts, follow):
+            # The next character does not say whether to leave the repetition. Each place to leave it is tried.
+            if after == _INFINITE:
+                raise _NotLinear()
+            self.cost(after)
+        if n.max == 1:
+            self.visit(body, follow, end, after, never, single)
+        else:
+            rest = _INFINITE if n.max == -1 else after + (n.max - 1) * self.length(body)
+            self.visit(body, _merged(follow + starts), end, rest, False, False)
+
+
 class _Translator:
     def __init__(self, pattern: str, unicode: bool, ascii_flag: bool, plain: bool = True) -> None:
         self.p = pattern
@@ -602,6 +1025,13 @@ class _Translator:
         # Set by translate for a pattern without the u flag: whether a text is matched as its code units (see
         # _sees_code_units).
         self.wide = False
+        # Set by translate: whether the standard library's engine is proved to match the translation in time
+        # proportional to the text (see _Linear).
+        self.linear = False
+        # Set by translate for the regex package: how many copies it writes out for the counts (see _copies).
+        self.copies = 0
+        # How many groups the parser is inside.
+        self.depth = 0
 
     def error(self) -> _Invalid:
         return _Invalid(self.p)
@@ -639,11 +1069,20 @@ class _Translator:
                     again = _Translator(self.p, self.u, self.ascii_flag, plain=False)
                     text = again.translate()
                     self.needs_regex = again.needs_regex
+                    self.linear = again.linear
+                    self.copies = again.copies
                     return text
-                self.needs_regex = self.needs_regex or writer.needs_regex
-                return text
+                return self._written(writer, text)
+        return self._written(writer, writer.write())
+
+    def _written(self, writer: _Writer, text: str) -> str:
         self.needs_regex = self.needs_regex or writer.needs_regex
-        return writer.write()
+        if self.ascii_flag:
+            self.linear = not self.needs_regex and _Linear().proves(writer.root)
+        else:
+            # What the counts add to the characters and references the pattern has as it is written.
+            self.copies = writer.root.weight - writer.leaves
+        return text
 
     def _count_groups(self) -> None:
         i = 0
@@ -772,6 +1211,15 @@ class _Translator:
         return self._one(_literal(c), [(ord(c), ord(c))])
 
     def _group(self) -> tuple[_Node, bool]:
+        self.depth += 1
+        if self.depth > MAX_NESTING:
+            raise _TooLarge(f"its groups nest more than {MAX_NESTING} deep", unread=True)
+        try:
+            return self._group_inside()
+        finally:
+            self.depth -= 1
+
+    def _group_inside(self) -> tuple[_Node, bool]:
         p = self.p
         i = self.i
         if p.startswith("(?:", i):
@@ -1193,6 +1641,8 @@ class _Writer:
         self.groups: dict[int, _Node] = {}
         self.refs: list[_Node] = []
         self.count = 0
+        # How many nodes take a character or are a reference.
+        self.leaves = 0
         self._number(root, None, False)
         # The groups a reference reads, which get a name, and the ones a _DYNAMIC reference reads, which are reset.
         self.read: set[int] = set()
@@ -1248,6 +1698,9 @@ class _Writer:
             self.groups[n.group] = n
         elif n.kind == _REFERENCE:
             self.refs.append(n)
+            self.leaves += 1
+        elif n.kind == _TEXT:
+            self.leaves += 1
         elif n.kind == _LOOK:
             back = n.behind
         for item in n.items:
@@ -1347,7 +1800,14 @@ class _Writer:
         # The tests and the comparisons are written once each, and are not counted in the size: a test is as long as
         # the sets it is for, which no repetition multiplies.
         tests = "".join(self._test(name, key) for key, name in self.tests.items())
+        if len(tests) > _MAX_TESTS:
+            # One test for the sets of all of them, which is right for each, and the others call it.
+            sets = tuple(sorted({members for key in self.tests for members in key}))
+            names = list(self.tests.values())
+            tests = self._test(names[0], sets) + "".join(f"(?P<{name}>(?&{names[0]}))" for name in names[1:])
         comparisons = "".join(f"(?P<{name}>{text})" for name, text in self.comparisons.values())
+        if len(out) + len(comparisons) > _MAX_TRANSLATED:
+            raise _TooLarge()
         return f"(?(DEFINE){tests}{comparisons}){out}"
 
     @staticmethod
@@ -1421,18 +1881,29 @@ class _Writer:
         k = n.kind
         if k == _TEXT:
             return n.text
-        if k == _SEQUENCE:
-            return "".join([self._write(x) for x in n.items])
-        if k == _ALTERNATION:
-            return "|".join([self._write(x) for x in n.items])
+        if k in (_SEQUENCE, _ALTERNATION):
+            parts = []
+            size = 0
+            for x in n.items:
+                part = self._write(x)
+                size += len(part) + (k == _ALTERNATION)
+                if size > _MAX_TRANSLATED + 1:
+                    # Nothing longer than the limit is built, whatever the pattern.
+                    raise _TooLarge()
+                parts.append(part)
+            n.weight = sum(x.weight for x in n.items)
+            return ("" if k == _SEQUENCE else "|").join(parts)
         if k == _GROUP:
             body = self._write(n.items[0])
+            n.weight = n.items[0].weight
             if n.group in self.read:
                 return f"(?P<g{n.group}>{body})"
             # In a pattern with a reference that reads a group, a group that none reads does not capture.
             return f"({body})" if n.group and not self.read else f"(?:{body})"
         if k == _LOOK:
-            return f"(?{'<' if n.behind else ''}{'!' if n.negative else '='}{self._write(n.items[0])})"
+            inside = self._write(n.items[0])
+            n.weight = n.items[0].weight
+            return f"(?{'<' if n.behind else ''}{'!' if n.negative else '='}{inside})"
         if k == _REFERENCE:
             if n.state == _EMPTY:
                 return "(?:)"
@@ -1443,18 +1914,23 @@ class _Writer:
     def _repeat(self, n: _Node) -> str:
         body = n.items[0]
         lo, hi = n.min, n.max
+        n.weight = 1
         if hi == 0:
             return "(?:)"
         if _only_nothing(body):
             # Every iteration matches nothing, and ECMA-262 refuses one that does once the minimum count is met. So
             # none runs for a minimum of 0. For any other, the groups are left as one iteration leaves them.
-            return self._write(body) if lo else "(?:)"
+            if not lo:
+                return "(?:)"
+            once = self._write(body)
+            n.weight = body.weight
+            return once
         if lo >= _MAX_COUNT:
             if not _matches_nothing(body):
                 # More characters than a text has.
                 return "(?!)"
             # That many iterations, of which all but a few match nothing, are beyond both engines.
-            raise _TooLarge()
+            raise _TooLarge(f"it repeats what can match nothing at least {_MAX_COUNT:,} times")
         text = self._write(body)
         k = bisect_left(self.live, n.first)
         read = self.seen != "" and (
@@ -1467,6 +1943,8 @@ class _Writer:
             if body.kind == _SEQUENCE or not text.startswith("("):
                 text = f"(?:{text})"
             counted = text + self._count(lo, hi, n.lazy)
+            # The regex package writes a minimum count out, and then the body once more for the rest.
+            n.weight = body.weight * (1 if hi == 1 or lo == 0 else lo + 1)
             # What the engine matches after the repetition is at its left in a lookbehind, which it matches
             # backwards, and the reference it has to see is there.
             return self.seen + counted if n.back else counted + self.seen
@@ -1489,6 +1967,7 @@ class _Writer:
         # The iterations up to the minimum, then the rest. In a lookbehind the first iteration is the rightmost.
         if lo * len(one) > _MAX_TRANSLATED or (hi - lo) * len(more) > _MAX_TRANSLATED:
             raise _TooLarge()
+        n.weight = body.weight * (lo + (1 if hi == -1 else hi - lo))
         out = one * lo
         if hi == -1:
             rest = f"(?:{self.seen}{more}{self.seen})*{'?' if n.lazy else ''}"
@@ -1522,21 +2001,52 @@ class _Writer:
         return q + "?" if lazy else q
 
 
-def _translate(pattern: str, unicode: bool, for_regex: bool) -> tuple[str, bool, bool] | None:
-    """As ``translate``, and whether the pattern is one without the ``u`` flag for which a text is matched as its
-    code units (see ``_units``)."""
+class _Translation:
+    """A pattern as it is written for one of the engines."""
+
+    __slots__ = ("for_regex", "linear", "text", "wide")
+
+    def __init__(self, text: str, for_regex: bool, wide: bool, linear: bool) -> None:
+        self.text = text
+        # Whether it is for the regex package (and so is compiled without the ASCII flag).
+        self.for_regex = for_regex
+        # Whether the pattern is one without the u flag for which a text is matched as its code units (see _units).
+        self.wide = wide
+        # Whether the standard library's engine is proved to match it in time proportional to the text.
+        self.linear = linear
+
+
+def _translate(pattern: str, unicode: bool, for_regex: bool) -> _Translation | None:
+    """The pattern as it is written for the standard library's engine, or for the regex package when the pattern
+    needs it or ``for_regex`` asks. None: the pattern is not valid in the grammar. A pattern over a limit of size
+    raises _TooLarge."""
     try:
         if not unicode:
             pattern = _units(pattern)
         if not for_regex:
             t = _Translator(pattern, unicode, True)
-            text = t.translate()
+            try:
+                text = t.translate()
+            except _TooLarge:
+                # The regex package may take less text for the same pattern.
+                text = ""
+                t.needs_regex = True
             if not t.needs_regex:
-                return text, False, t.wide
+                return _Translation(text, False, t.wide, t.linear)
         t = _Translator(pattern, unicode, False)
-        return t.translate(), True, t.wide
+        text = t.translate()
+        if t.copies > MAX_COPIES:
+            raise _TooLarge(
+                f"its counts come to more than {MAX_COPIES:,} copies of what they repeat, which the regex package "
+                "writes out"
+            )
+        return _Translation(text, True, t.wide, False)
     except (_Invalid, KeyError, ValueError, IndexError):
         return None
+    except RecursionError:
+        # The limit of nesting keeps the translator within some hundreds of frames. This is for a caller that was
+        # already near the end of Python's stack.
+        raise _TooLarge("it nests deeper than the stack that was left for reading it", unread=True) from None
 
 
 def translate(pattern: str, unicode: bool = True, for_regex: bool = False) -> tuple[str, bool] | None:
@@ -1544,7 +2054,7 @@ def translate(pattern: str, unicode: bool = True, for_regex: bool = False) -> tu
     (and so is compiled without the ASCII flag), or None when the pattern is not valid in the grammar. It is for
     ``regex`` when the pattern needs it or ``for_regex`` asks."""
     t = _translate(pattern, unicode, for_regex)
-    return None if t is None else t[:2]
+    return None if t is None else (t.text, t.for_regex)
 
 
 _ASTRAL_RE = re.compile("[\\U00010000-\\U0010ffff]")
@@ -1566,11 +2076,39 @@ def _units(s: str) -> str:
 
 Matcher = Callable[[str], Any]
 
-_cache: dict[str, Matcher | None] = {}
+DEFAULT_MATCH_LIMIT = 1.0
+"""The limit of a match unless ``pattern_match_limit`` says otherwise, in seconds."""
+
+# The patterns compiled last, each with the limit it was compiled for, so that the check of a schema and the
+# validator made from it share one compilation. It holds _CACHE_PATTERNS matchers at most, of patterns of
+# _CACHE_PATTERN characters at most (a longer pattern is compiled each time it is asked for).
+_CACHE_PATTERNS = 256
+_CACHE_PATTERN = 1024
+_cache: OrderedDict[tuple[str, float | None], Matcher | None] = OrderedDict()
+_cache_lock = threading.Lock()
+
+# The standard library keeps the patterns it compiled last (512 of them) and gives no way to compile one that it
+# does not keep. So it is given translations of this many characters at most, and its cache holds 512 of those at
+# most for this package (16 bytes kept for a character, as measured: 8 MB). A longer one goes to the regex package,
+# which is asked not to keep it.
+_MAX_FOR_RE = 1024
 
 
-def _compile(pattern: str, unicode: bool) -> Matcher | None:
-    search = _search(pattern, unicode)
+def _limited(search: Matcher, limit: float, pattern: str) -> Matcher:
+    """The search function of a pattern that the regex package runs, with the limit of a match. The package counts
+    the time on the processor of the whole process (C's ``clock``), and looks at it every 256 steps of the match."""
+
+    def limited(text: str) -> Any:
+        try:
+            return search(text, timeout=limit)  # type: ignore[call-arg]
+        except TimeoutError:
+            raise PatternMatchLimitError(pattern, limit) from None
+
+    return limited
+
+
+def _compile(pattern: str, unicode: bool, limit: float | None) -> Matcher | None:
+    search = _search(pattern, unicode, limit)
     if search is None or unicode or not search[1]:
         return None if search is None else search[0]
     find = search[0]
@@ -1581,53 +2119,83 @@ def _compile(pattern: str, unicode: bool) -> Matcher | None:
     return by_code_unit
 
 
-def _search(pattern: str, unicode: bool) -> tuple[Matcher, bool] | None:
+def _search(pattern: str, unicode: bool, limit: float | None) -> tuple[Matcher, bool] | None:
     t = _translate(pattern, unicode, False)
     if t is None:
         return None
-    if not t[1]:
+    if not t.for_regex and len(t.text) <= _MAX_FOR_RE and (limit is None or t.linear):
         try:
-            return re.compile(t[0], re.ASCII).search, t[2]
+            return re.compile(t.text, re.ASCII).search, t.wide
         except re.error:
             # The regex package takes more (a lookbehind that the standard library does not, say).
-            t = _translate(pattern, unicode, True)
-            if t is None:
-                return None
-    import regex  # only patterns the standard library cannot run need it
+            pass
+        except RecursionError:
+            raise _TooLarge("it nests deeper than the stack that was left for compiling it") from None
+    if not t.for_regex:
+        t = _translate(pattern, unicode, True)
+        if t is None:
+            return None
+    import regex  # only patterns the standard library cannot run, or is not proved to run in linear time, need it
 
     try:
-        return regex.compile(t[0]).search, t[2]
+        search = regex.compile(t.text, cache_pattern=False).search
     except regex.error as e:
         # The pattern is valid, and every property in it is one the engine has. A translation the engine does not
         # compile is a fault of the translator, and is not passed off as a pattern that is not valid.
         raise RuntimeError(
             f"corvus-json-schema translated the regular expression {pattern!r} to one that the regex package does "
-            f"not compile ({e}). This is a fault of the package. The translation starts {t[0][:500]!r}."
+            f"not compile ({e}). This is a fault of the package. The translation starts {t.text[:500]!r}."
         ) from None
+    except RecursionError:
+        raise _TooLarge("it nests deeper than the stack that was left for compiling it") from None
+    return (search if limit is None else _limited(search, limit, pattern)), t.wide
 
 
-def compile_pattern(pattern: str) -> Matcher | None:
-    """A search function for an ECMA-262 pattern (truthy on a match), or None when the pattern is invalid. A valid
-    pattern whose translation would be too large raises SchemaCompilationError."""
-    if pattern in _cache:
-        return _cache[pattern]
+def _shown(pattern: str) -> str:
+    return pattern if len(pattern) <= 200 else f"{pattern[:200]}... ({len(pattern):,} characters)"
+
+
+def compile_pattern(pattern: str, limit: float | None = DEFAULT_MATCH_LIMIT) -> Matcher | None:
+    """A search function for an ECMA-262 pattern (truthy on a match), or None when the pattern is invalid.
+
+    ``limit`` is the time one match may take, in seconds (None, zero or less: no limit). A pattern that the
+    standard library's engine is proved to match in time proportional to the text is run by that engine, which has
+    no limit and needs none. Any other pattern is run by the regex package, and a match that reaches the limit
+    raises PatternMatchLimitError. With no limit the standard library runs every pattern it can.
+
+    A pattern over a limit of size raises PatternTooLargeError (see MAX_PATTERN, MAX_NESTING and MAX_COPIES)."""
+    limit = match_limit(limit)
+    key = (pattern, limit)
+    with _cache_lock:
+        if key in _cache:
+            _cache.move_to_end(key)
+            return _cache[key]
     try:
-        matcher = _compile(pattern, True)
+        if len(pattern) > MAX_PATTERN:
+            raise _TooLarge(f"it is longer than {MAX_PATTERN:,} characters", unread=True)
+        matcher = _compile(pattern, True, limit)
         if matcher is None:
-            matcher = _compile(pattern, False)
-    except _TooLarge:
-        raise SchemaCompilationError(
-            f"The regular expression '{pattern}' is valid, and too large for the engine once its repetitions are "
-            "written out."
+            matcher = _compile(pattern, False, limit)
+    except _TooLarge as e:
+        raise PatternTooLargeError(
+            f"The regular expression '{_shown(pattern)}' is too large to compile as an ECMA-262 regular expression: "
+            f"{e.reason}."
         ) from None
-    _cache[pattern] = matcher
+    if len(pattern) <= _CACHE_PATTERN:
+        with _cache_lock:
+            _cache[key] = matcher
+            if len(_cache) > _CACHE_PATTERNS:
+                _cache.popitem(last=False)
     return matcher
 
 
 def is_valid_ecma_regex(s: str) -> bool:
-    """Whether the text is a valid ECMA-262 pattern with the ``u`` flag (``format: regex``)."""
+    """Whether the text is a valid ECMA-262 pattern with the ``u`` flag (``format: regex``). The text is read and
+    not compiled. One that is longer than MAX_PATTERN or nests deeper than MAX_NESTING is not read to its end and
+    is not valid. One that is read to its end and is too large to write out for the engines is valid."""
+    if len(s) > MAX_PATTERN:
+        return False
     try:
-        return _compile(s, True) is not None
-    except (_TooLarge, RuntimeError):
-        # The pattern is valid, whatever the engine made of its translation.
-        return True
+        return _translate(s, True, False) is not None
+    except _TooLarge as e:
+        return not e.unread

@@ -18,7 +18,7 @@ from typing import Any
 
 from .formats import FORMAT_VALIDATORS, NUMERIC_FORMAT_VALIDATORS, legacy_hostname
 from .options import SchemaCompilationError, SchemaEvaluationDepthError
-from .pattern import Matcher, compile_pattern
+from .pattern import DEFAULT_MATCH_LIMIT, Matcher, compile_pattern
 
 __all__ = [
     "FORMAT_VALIDATORS",
@@ -53,9 +53,11 @@ def never(_: Any) -> bool:
     return False
 
 
-def pattern(source: str) -> Matcher:
-    """The search function of an ECMA-262 pattern (truthy on a match)."""
-    matcher = compile_pattern(source)
+def pattern(source: str, limit: float | None = DEFAULT_MATCH_LIMIT) -> Matcher:
+    """The search function of an ECMA-262 pattern (truthy on a match). ``limit`` is the time one match may take, in
+    seconds (the ``pattern_match_limit`` option, None for no limit). A match that reaches it raises
+    PatternMatchLimitError."""
+    matcher = compile_pattern(source, limit)
     if matcher is None:
         raise SchemaCompilationError(f"Invalid regular expression '{source}'.")
     return matcher

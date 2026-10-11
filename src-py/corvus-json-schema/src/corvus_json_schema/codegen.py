@@ -40,7 +40,7 @@ from .node import (
     SchemaNode,
 )
 from .options import SchemaCompilationError
-from .pattern import compile_pattern
+from .pattern import DEFAULT_MATCH_LIMIT, compile_pattern
 
 KINDS = ("string", "number", "object", "array", "boolean", "null")
 
@@ -1221,9 +1221,13 @@ class CodeGenerator:
             return text.replace("$V", v)
         if kind == "set":
             return f"{v} in {self.constant(text)}"
-        if compile_pattern(pattern) is None:
+        limit = self.program.options.pattern_match_limit
+        if compile_pattern(pattern, limit) is None:
             raise SchemaCompilationError(f"Invalid regular expression '{pattern}'.")
-        return f"{self.constant(f'R.pattern({lit(pattern)})')}({v})"
+        # The limit of a match is written where it is not the default, so a module generated for the default is the
+        # same text as before the limit existed.
+        argument = "" if limit == DEFAULT_MATCH_LIMIT else f", {limit!r}"
+        return f"{self.constant(f'R.pattern({lit(pattern)}{argument})')}({v})"
 
     def format_function(self, fmt: str, kind: str, dialect: Dialect) -> str | None:
         custom = self.program.options.formats.get(fmt)
