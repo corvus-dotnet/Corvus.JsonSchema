@@ -1619,4 +1619,97 @@ class EcmaRegexTest {
         assertTrue(EcmaRegex.translate("(?i:^(.)\\1$)").length() < 20000);
         assertTrue(EcmaRegex.translate("(?i:^(..\\W)\\1$)").length() < 40000);
     }
+
+    /**
+     * Case-insensitive backreferences, with the u flag, to a group of several characters, with the texts ECMA-262
+     * says each matches. ECMA-262 compares the text of the group with the text at the reference one character at a
+     * time, by Canonicalize, which is simple case folding. V8 13.6 compares the two texts by full case folding
+     * instead, so that U+00DF matches "ss" (a deviation of V8, the class "full-case-folding" of the test data). The
+     * answers here are those V8 gives for the same pattern written with a group for each character, where it has
+     * no such fault: {@code ^(..)\\1$} is {@code ^(.)(.)\\1\\2$}.
+     */
+    private static final String[][] REFERENCES_OF_SEVERAL_CHARACTERS = {
+            {
+                "(?i:^(..)\\1$)",
+                "|\u00df\u00df\u00df\u00df|\u00df\u00df\u00df\u1e9e|\u00df\u00df\u1e9e\u00df"
+                        + "|\u00df\u00df\u1e9e\u1e9e|\u00df\u1e9e\u00df\u00df|\u00df\u1e9e\u00df\u1e9e"
+                        + "|\u00df\u1e9e\u1e9e\u00df|\u00df\u1e9e\u1e9e\u1e9e|\u00dfs\u00dfs"
+                        + "|\u00dfs\u1e9es|\u1e9e\u00df\u00df\u00df|\u1e9e\u00df\u00df\u1e9e"
+                        + "|\u1e9e\u00df\u1e9e\u00df|\u1e9e\u00df\u1e9e\u1e9e|\u1e9e\u1e9e\u00df\u00df"
+                        + "|\u1e9e\u1e9e\u00df\u1e9e|\u1e9e\u1e9e\u1e9e\u00df|\u1e9e\u1e9e\u1e9e\u1e9e"
+                        + "|\u1e9es\u00dfs|\u1e9es\u1e9es|s\u00dfs\u00df|s\u00dfs\u1e9e|s\u1e9es\u00df"
+                        + "|s\u1e9es\u1e9e|ssss|sSsS",
+            },
+            {"(?i:^(...)\\1$)", "|\u1e9e\u00df\u00df\u1e9e\u00df\u1e9e"},
+            {
+                "(?i:^(?:(..)\\1)+$)",
+                "|\u00df\u00df\u00df\u00df|\u00df\u00df\u00df\u1e9e|\u00df\u00df\u1e9e\u00df"
+                        + "|\u00df\u00df\u1e9e\u1e9e|\u00df\u1e9e\u00df\u00df|\u00df\u1e9e\u00df\u1e9e"
+                        + "|\u00df\u1e9e\u1e9e\u00df|\u00df\u1e9e\u1e9e\u1e9e|\u00dfs\u00dfs"
+                        + "|\u00dfs\u1e9es|\u1e9e\u00df\u00df\u00df|\u1e9e\u00df\u00df\u1e9e"
+                        + "|\u1e9e\u00df\u1e9e\u00df|\u1e9e\u00df\u1e9e\u1e9e|\u1e9e\u1e9e\u00df\u00df"
+                        + "|\u1e9e\u1e9e\u00df\u1e9e|\u1e9e\u1e9e\u1e9e\u00df|\u1e9e\u1e9e\u1e9e\u1e9e"
+                        + "|\u1e9es\u00dfs|\u1e9es\u1e9es|s\u00dfs\u00df|s\u00dfs\u1e9e|s\u1e9es\u00df"
+                        + "|s\u1e9es\u1e9e|ssss|sSsS",
+            },
+            {"(?i:^(..\\W)\\1{2}$)", "|\u00df\u1e9e-\u1e9e\u00df-\u00df\u00df-|sS-Ss-ss-"},
+            {
+                "(?i:^(?=..(..))\\1)",
+                "|\u00df\u00df\u00df\u00df|\u00df\u00df\u00df\u1e9e|\u00df\u00df\u1e9e\u00df"
+                        + "|\u00df\u00df\u1e9e\u1e9e|\u00df\u1e9e\u00df\u00df|\u00df\u1e9e\u00df\u1e9e"
+                        + "|\u00df\u1e9e\u1e9e\u00df|\u00df\u1e9e\u1e9e\u1e9e|\u00dfs\u00dfs"
+                        + "|\u00dfs\u1e9es|\u1e9e\u00df\u00df\u00df|\u1e9e\u00df\u00df\u1e9e"
+                        + "|\u1e9e\u00df\u1e9e\u00df|\u1e9e\u00df\u1e9e\u1e9e|\u1e9e\u1e9e\u00df\u00df"
+                        + "|\u1e9e\u1e9e\u00df\u1e9e|\u1e9e\u1e9e\u1e9e\u00df|\u1e9e\u1e9e\u1e9e\u1e9e"
+                        + "|\u1e9es\u00dfs|\u1e9es\u1e9es|s\u00dfs\u00df|s\u00dfs\u1e9e|s\u1e9es\u00df"
+                        + "|s\u1e9es\u1e9e|ssss|sSsS|\u1e9e\u00df\u00df\u1e9e\u00df\u1e9e",
+            },
+            {
+                "(?i:^....(?<=\\1(..))$)",
+                "|\u00df\u00df\u00df\u00df|\u00df\u00df\u00df\u1e9e|\u00df\u00df\u1e9e\u00df"
+                        + "|\u00df\u00df\u1e9e\u1e9e|\u00df\u1e9e\u00df\u00df|\u00df\u1e9e\u00df\u1e9e"
+                        + "|\u00df\u1e9e\u1e9e\u00df|\u00df\u1e9e\u1e9e\u1e9e|\u00dfs\u00dfs"
+                        + "|\u00dfs\u1e9es|\u1e9e\u00df\u00df\u00df|\u1e9e\u00df\u00df\u1e9e"
+                        + "|\u1e9e\u00df\u1e9e\u00df|\u1e9e\u00df\u1e9e\u1e9e|\u1e9e\u1e9e\u00df\u00df"
+                        + "|\u1e9e\u1e9e\u00df\u1e9e|\u1e9e\u1e9e\u1e9e\u00df|\u1e9e\u1e9e\u1e9e\u1e9e"
+                        + "|\u1e9es\u00dfs|\u1e9es\u1e9es|s\u00dfs\u00df|s\u00dfs\u1e9e|s\u1e9es\u00df"
+                        + "|s\u1e9es\u1e9e|ssss|sSsS",
+            },
+            {
+                "(?i:^(.+)\\1$)",
+                "|\u00df\u00df|\u00df\u1e9e|\u1e9e\u00df|\u1e9e\u1e9e|ss"
+                        + "|\u00df\u00df\u00df\u00df|\u00df\u00df\u00df\u1e9e|\u00df\u00df\u1e9e\u00df"
+                        + "|\u00df\u00df\u1e9e\u1e9e|\u00df\u1e9e\u00df\u00df|\u00df\u1e9e\u00df\u1e9e"
+                        + "|\u00df\u1e9e\u1e9e\u00df|\u00df\u1e9e\u1e9e\u1e9e|\u00dfs\u00dfs"
+                        + "|\u00dfs\u1e9es|\u1e9e\u00df\u00df\u00df|\u1e9e\u00df\u00df\u1e9e"
+                        + "|\u1e9e\u00df\u1e9e\u00df|\u1e9e\u00df\u1e9e\u1e9e|\u1e9e\u1e9e\u00df\u00df"
+                        + "|\u1e9e\u1e9e\u00df\u1e9e|\u1e9e\u1e9e\u1e9e\u00df|\u1e9e\u1e9e\u1e9e\u1e9e"
+                        + "|\u1e9es\u00dfs|\u1e9es\u1e9es|s\u00dfs\u00df|s\u00dfs\u1e9e|s\u1e9es\u00df"
+                        + "|s\u1e9es\u1e9e|ssss|sSsS|\u1e9e\u00df\u00df\u1e9e\u00df\u1e9e",
+            },
+            {"(?i:^(?<n0>\\1|\u00df)*?(..\\W){1,2}\\2{2}$)", "|\u00df\u1e9e-\u1e9e\u00df-\u00df\u00df-|sS-Ss-ss-"},
+    };
+
+    private static final String[] SHARP_S = {
+        "\u00df", "\u1e9e", "s"
+    };
+    private static final String[] MORE_SHARP_S = {
+        "\u1e9e\u0053\u00df\u1e9e\u00df\u017f", "\ufb00\u0066\u0066\ufb00", "\u0066\u0066\ufb00\ufb00",
+        "\u00df\u0053\u0073\u1e9e", "\u1e9e\u017f\u00df\u1e9e\u0053\u00df\u1e9e\u00df\u017f", "sSsS",
+        "\u00df\u1e9e\u002d\u1e9e\u00df\u002d\u00df\u00df\u002d", "sS-Ss-ss-",
+        "\u00df\u00df\u002d\u00df\u0073\u002d\u00df\u00df\u002d", "\u1e9e\u00df\u00df\u1e9e\u00df\u1e9e",
+        "\u00df\u00df\u00df\u0073\u0073\u0073"
+    };
+
+    /** A reference to a group of several characters is compared character by character, as ECMA-262 says. */
+    @Test
+    void aCaseInsensitiveBackreferenceIsComparedCharacterByCharacter() {
+        assertAnswers(REFERENCES_OF_SEVERAL_CHARACTERS, textsOver(4, SHARP_S, MORE_SHARP_S));
+        // V8 says each of these matches, by full case folding.
+        assertNoMatch("(?i:^(...)\\1$)", "\u1e9eS\u00df\u1e9e\u00df\u017f");
+        assertNoMatch("(?i:^(..)\\1$)", "\u00dfSs\u1e9e");
+        assertNoMatch("(?i:^(..)\\1$)", "\ufb00ff\ufb00");
+        assertNoMatch("(?i:^(?<n0>\\1|\u00df)*?(..\\W){1,2}\\2{2}$)",
+                "\u00df\u1e9e\u017f\u00df\u1e9eS\u00df\u1e9e\u00df\u017f");
+    }
 }

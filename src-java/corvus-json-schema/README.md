@@ -149,7 +149,9 @@ A JSON string cannot hold a surrogate that is not half of a pair. The parser ref
   matches, so after `(?=(a)?b)` the group holds "a" before "ab" and nothing before "b". A group of a lookaround is
   the one its own iteration set, so `^(?:(?=([ab]))[ab](?:c|ca)\1)*$` takes "acaa" and not "acab". Inside a
   case-insensitive group a backreference compares by ECMA-262's case folding, the same on every JDK:
-  `^(?i:(.)\1)$` takes "sſ" and "kK" (U+017F, U+212A) and not "iİ" (U+0130). Such a pattern is written once for
+  `^(?i:(.)\1)$` takes "sſ" and "kK" (U+017F, U+212A) and not "iİ" (U+0130). A reference to a group of several
+  characters is compared one character at a time, as ECMA-262 says: `^(?i:(..)\1)$` does not take "ßSsẞ" (U+00DF,
+  U+1E9E), which V8 13.6 takes, as it compares the two texts by full case folding. Such a pattern is written once for
   each way through the groups it reads, and a case-insensitive backreference with its comparison written out, so
   the translation can be long: between 12,000 and 25,000 characters for a case-insensitive backreference to a
   group that can hold any character.
