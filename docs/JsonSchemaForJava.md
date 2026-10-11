@@ -142,8 +142,8 @@ A JSON string cannot hold a surrogate that is not half of a pair. The parser ref
   case-insensitive group a backreference compares by ECMA-262's case folding, the same on every JDK:
   `^(?i:(.)\1)$` takes "sſ" and "kK" (U+017F, U+212A) and not "iİ" (U+0130). Such a pattern is written once for
   each way through the groups it reads, and a case-insensitive backreference with its comparison written out, so
-  the translation can be long: over 100,000 characters for a case-insensitive backreference to a group that can
-  hold any character.
+  the translation can be long: between 12,000 and 25,000 characters for a case-insensitive backreference to a
+  group that can hold any character.
 
 
 The patterns are run by `java.util.regex`, after translation. A pattern that is valid with the `u` flag is run
@@ -169,11 +169,14 @@ A lookbehind none of whose groups is read is not affected, whatever its body.
 
 - more than 256 alternatives for the ways through the groups it reads, or more than 1,048,576 characters ("a
   pattern with this many ways through the groups it reads"), as for
-  `(?:(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?\1\2\3\4\5\6\7\8\9)*`. A case-insensitive backreference to a
-  group that can hold any character takes over 100,000 of those characters each time it is written;
+  `(?:(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?\1\2\3\4\5\6\7\8\9)*`. A lookahead whose group is read after it, over
+  a counted repetition whose body can match nothing, is written with a text that doubles with each iteration of the
+  count, so a count of 13 or more is refused, as for `(?=((?:a|){0,20}?)a)\1a$`;
 - more than 200 copies of a body, or 65,536 characters of them, for a repetition that must run two or more times
   over a body that matches the empty string in some places only, such as `(^|x){201}` ("a repetition this long of a
-  body that can match the empty string");
+  body that can match the empty string"). A backreference is such a body, and a case-insensitive one to a group
+  that can hold any character is 12,000 characters or more, so a count of five or more over one is refused, as for
+  `^(?i:(.)\1{5})$`, and a count of three or more when the group holds two characters;
 - more than `java.util.regex` compiles on the stack of the thread, which is some thousands of groups on a stack of
   1 MB ("a pattern too large for java.util.regex to compile").
 

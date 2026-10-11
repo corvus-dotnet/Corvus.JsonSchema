@@ -4427,20 +4427,25 @@ final class EcmaRegex {
                         refer(copy);
                         out.append(')').append(ANY).append('{').append(length).append('}');
                     } else {
-                        // Character by character: the character d on is this one, or both are in one class.
+                        // Character by character: the character d on is this one, or both are in one class (by the
+                        // tests of foldTests).
                         // Written once for each character when they are few, as java.util.regex does not bound a
                         // lookbehind that holds a repeated group with alternatives.
                         String skip = ANY + "{" + (distance - 1) + "}";
                         long copies = length <= 16 ? length : 1;
+                        String[][] tests = foldTests(classes);
                         for (long k = 0; k < copies; k++) {
                             String one = newName();
                             out.append("(?:(?:(?=(?<").append(one).append('>').append(ANY).append(')').append(skip);
                             refer(one);
-                            out.append(')');
-                            for (int[] members : classes) {
-                                StringBuilder set = new StringBuilder();
-                                appendMembers(set, members);
-                                out.append("|(?=").append(set).append(skip).append(set).append(')');
+                            out.append(")|");
+                            for (String[] test : tests) {
+                                out.append("(?:");
+                                for (int t = 0; t < test.length; t++) {
+                                    out.append(t > 0 ? "|" : "").append("(?=").append(test[t]).append(skip)
+                                            .append(test[t]).append(')');
+                                }
+                                out.append(')');
                             }
                             out.append(')').append(ANY).append(')');
                         }
@@ -4656,14 +4661,84 @@ final class EcmaRegex {
             return group;
         }
 
-        private static void appendMembers(StringBuilder sb, int[] members) {
-            int[] sorted = members.clone();
-            Arrays.sort(sorted);
-            sb.append('[');
-            for (int member : sorted) {
-                EcmaUnicode.appendCodePoint(sb, member);
+        /** Up to this many classes of equivalent characters are tested one by one. */
+        private static final int FOLD_CLASSES_ONE_BY_ONE = 8;
+
+        /**
+         * The tests that say together that two characters are in one of the classes: each test is a list of sets
+         * that share no character, and two characters are in one class when, for every test, one set of it holds
+         * both.
+         *
+         * <p>A few classes are one test, with a set for each class. A group that can hold any character has over
+         * 1,400 classes, and a test of that many sets is long: each set is written with what finds the other
+         * character. So many classes are numbered in their order, and two tests are written. In the first a set
+         * holds the classes of one quotient of the number by the square root of the count, and in the second the
+         * classes of one remainder. Two classes with the same quotient and the same remainder are the same class,
+         * and the two tests have twice the square root of the count of sets between them.
+         */
+        private static String[][] foldTests(int[][] classes) {
+            int n = classes.length;
+            if (n <= FOLD_CLASSES_ONE_BY_ONE) {
+                String[] sets = new String[n];
+                for (int k = 0; k < n; k++) {
+                    sets[k] = members(classes, k, 1, k + 1);
+                }
+                return new String[][] {sets};
             }
-            sb.append(']');
+            int side = (int) Math.ceil(Math.sqrt(n));
+            String[] quotients = new String[(n + side - 1) / side];
+            for (int k = 0; k < quotients.length; k++) {
+                quotients[k] = members(classes, k * side, 1, Math.min(n, (k + 1) * side));
+            }
+            String[] remainders = new String[side];
+            for (int k = 0; k < side; k++) {
+                remainders[k] = members(classes, k, side, n);
+            }
+            return new String[][] {quotients, remainders};
+        }
+
+        /**
+         * A class of java.util.regex with the members of the classes from {@code from}, every {@code step}th, up to
+         * {@code to}. A letter is written as itself, which keeps a class of many members short, and runs of members
+         * as ranges.
+         */
+        private static String members(int[][] classes, int from, int step, int to) {
+            int count = 0;
+            for (int k = from; k < to; k += step) {
+                count += classes[k].length;
+            }
+            int[] sorted = new int[count];
+            count = 0;
+            for (int k = from; k < to; k += step) {
+                System.arraycopy(classes[k], 0, sorted, count, classes[k].length);
+                count += classes[k].length;
+            }
+            Arrays.sort(sorted);
+            StringBuilder sb = new StringBuilder(count + 2).append('[');
+            for (int k = 0; k < count; k++) {
+                int last = k;
+                while (last + 1 < count && sorted[last + 1] == sorted[last] + 1) {
+                    last++;
+                }
+                appendMember(sb, sorted[k]);
+                if (last > k + 1) {
+                    sb.append('-');
+                }
+                if (last > k) {
+                    appendMember(sb, sorted[last]);
+                }
+                k = last;
+            }
+            return sb.append(']').toString();
+        }
+
+        private static void appendMember(StringBuilder sb, int c) {
+            if (c >= 0x80 ? !(c >= Character.MIN_SURROGATE && c <= Character.MAX_SURROGATE)
+                    : (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+                sb.appendCodePoint(c);
+            } else {
+                EcmaUnicode.appendCodePoint(sb, c);
+            }
         }
 
         /**
@@ -4676,7 +4751,8 @@ final class EcmaRegex {
          *
          * <p>A group of at most one character G is compared in one step: the text is G, or its next character is in
          * some class K and G is in K too. That G is in K is shown by a search for a place in the text where G stands
-         * (the place it was captured at, if no other) at a character of K.
+         * (the place it was captured at, if no other) at a character of K. The classes are written as the tests of
+         * {@link #foldTests}.
          */
         private void folded(int group) {
             String name = env.name[group];
@@ -4703,14 +4779,16 @@ final class EcmaRegex {
             out.append("|(?=(?<").append(rest).append('>').append(ANY).append("*))(?!");
             refer(name);
             refer(rest);
-            out.append("\\z)(?:");
-            for (int k = 0; k < classes.length; k++) {
-                StringBuilder set = new StringBuilder();
-                appendMembers(set, classes[k]);
-                out.append(k > 0 ? "|" : "").append("(?=").append(set).append(')')
-                        .append(found("(?=\\k<" + name + ">)(?=" + set + ")", anywhere));
+            out.append("\\z)");
+            for (String[] test : foldTests(classes)) {
+                out.append("(?:");
+                for (int k = 0; k < test.length; k++) {
+                    out.append(k > 0 ? "|" : "").append("(?=").append(test[k]).append(')')
+                            .append(found("(?=\\k<" + name + ">)(?=" + test[k] + ")", anywhere));
+                }
+                out.append(')');
             }
-            out.append(')').append(ANY).append(')');
+            out.append(ANY).append(')');
         }
 
         /**
@@ -4751,10 +4829,11 @@ final class EcmaRegex {
          * </pre>
          *
          * <p>"Same" is {@code (?: (?=X) | (?=[K]) here [K] | ... )}: the character is X, or it and X are in one
-         * class K. "Here [K]" tests the character X from the place looked at, {@code (?=A*?(?=Q\z)[K])}, and "first"
-         * is the test that the iteration stands where the backreference starts, {@code (?=A*?(?=Q\z)(?=Q0\z))}. The
-         * loop is possessive and the whole is atomic. There is one way to compare two texts, and going back into it
-         * would read a P that a later iteration has set.
+         * class K, or with many classes in one set of each test of {@link #foldTests}. "Here [K]" tests the
+         * character X from the place looked at, {@code (?=A*?(?=Q\z)[K])}, and "first" is the test that the iteration
+         * stands where the backreference starts, {@code (?=A*?(?=Q\z)(?=Q0\z))}. The loop is possessive and the whole
+         * is atomic. There is one way to compare two texts, and going back into it would read a P that a later
+         * iteration has set.
          *
          * <p>With {@code anywhere}, for a group set in a lookaround, which can stand after the backreference, each
          * search goes through the whole text and not only back.
@@ -4770,11 +4849,14 @@ final class EcmaRegex {
             String hereStart = anywhere ? "(?<=^(?=" + toHere : "(?=" + toHere;
             String hereEnd = anywhere ? ")" + ANY + "{0,2147483647})" : ")";
             String first = hereStart + "(?=\\k<" + start + ">\\z)" + hereEnd;
-            StringBuilder same = new StringBuilder("(?:(?=\\k<" + next + ">)");
-            for (int[] members : classes) {
-                StringBuilder set = new StringBuilder();
-                appendMembers(set, members);
-                same.append("|(?=").append(set).append(')').append(hereStart).append(set).append(hereEnd);
+            StringBuilder same = new StringBuilder("(?:(?=\\k<" + next + ">)|");
+            for (String[] test : foldTests(classes)) {
+                same.append("(?:");
+                for (int k = 0; k < test.length; k++) {
+                    same.append(k > 0 ? "|" : "").append("(?=").append(test[k]).append(')').append(hereStart)
+                            .append(test[k]).append(hereEnd);
+                }
+                same.append(')');
             }
             same.append(')');
             String notEnded = "(?!\\k<" + end + ">\\z)";

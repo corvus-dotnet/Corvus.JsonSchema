@@ -1554,4 +1554,69 @@ class EcmaRegexTest {
                 EcmaRegex.translate("^\\-?[^a].$"));
         assertEquals("\\x{2d}{0}^[\\x{f0001}\\x{f0400}]\\z", EcmaRegex.translate("\\-{0}^[\\ud801\\udc00]$"));
     }
+
+    /**
+     * Case-insensitive backreferences to a group that can hold any character, under a count. The comparison of such
+     * a group was written with a test for each of the classes of equivalent characters, over 1,400 of them, and a
+     * count of two made it too long to write, so the pattern was refused.
+     */
+    private static final String[][] CASE_INSENSITIVE_BACKREFERENCES_UNDER_A_COUNT = {
+            {"(?i:^(..\\W)\\1{2}$)", "|ak-AK-ak-|ak-AK-a\u212a-"},
+            {
+                "(?i:^(.)\\1{2}$)",
+                "|aaa|aaA|aAa|aAA|Aaa|AaA|AAa|AAA|kkk|kk\u212a|k\u212ak|k\u212a\u212a|\u212akk"
+                        + "|\u212ak\u212a|\u212a\u212ak|\u212a\u212a\u212a|---",
+            },
+            {
+                "(?i:^(.+)\\1{2}$)",
+                "|aaa|aaA|aAa|aAA|Aaa|AaA|AAa|AAA|kkk|kk\u212a|k\u212ak|k\u212a\u212a|\u212akk"
+                        + "|\u212ak\u212a|\u212a\u212ak|\u212a\u212a\u212a|---|ak-AK-ak-|ak-AK-a\u212a-"
+                        + "|\u00e9-\u00c9-\u00e9-|aAaAaA|kK\u212akK\u212a",
+            },
+            {"(?i:^(.)(.)\\2\\1{2}$)", ""},
+            {"(?i:(?<=^\\1{2}(..))$)", "|\u00e9-\u00c9-\u00e9-|aAaAaA|kK\u212akK\u212a"},
+            {"(?i:^(?:(..)\\1?){2}$)", "|\u00e9-\u00c9-\u00e9-|aAaAaA|kK\u212akK\u212a"},
+            {"(?i:^([ab])\\1$)", "|aa|aA|Aa|AA|bB"},
+            {"(?i:^([ab]+)-\\1$)", "|a-a|a-A|A-a|A-A|ab-ab|ab-AB|ab-aB|b-B"},
+            {
+                "(?i:(?:a|ab)(?<=([ab]))\\1$)",
+                "|aa|aA|Aa|AA|aaa|aaA|aAa|aAA|Aaa|AaA|AAa|AAA|kaa|kaA|kAa|kAA|\u212aaa|\u212aaA"
+                        + "|\u212aAa|\u212aAA|-aa|-aA|-Aa|-AA|aAaAaA",
+            },
+            {
+                "(?i:^([abk])\\1{2}$)",
+                "|aaa|aaA|aAa|aAA|Aaa|AaA|AAa|AAA|kkk|kk\u212a|k\u212ak|k\u212a\u212a|\u212akk"
+                        + "|\u212ak\u212a|\u212a\u212ak|\u212a\u212a\u212a",
+            },
+            {
+                "(?i:^(?:([ab])|k)+\\1$)",
+                "|k|\u212a|aa|aA|ak|a\u212a|Aa|AA|Ak|A\u212a|kk|k\u212a|\u212ak|\u212a\u212a"
+                        + "|aaa|aaA|aak|aa\u212a|aAa|aAA|aAk|aA\u212a|akk|ak\u212a|a\u212ak|a\u212a\u212a"
+                        + "|Aaa|AaA|Aak|Aa\u212a|AAa|AAA|AAk|AA\u212a|Akk|Ak\u212a|A\u212ak|A\u212a\u212a"
+                        + "|kaa|kaA|kak|ka\u212a|kAa|kAA|kAk|kA\u212a|kkk|kk\u212a|k\u212ak|k\u212a\u212a"
+                        + "|\u212aaa|\u212aaA|\u212aak|\u212aa\u212a|\u212aAa|\u212aAA|\u212aAk"
+                        + "|\u212aA\u212a|\u212akk|\u212ak\u212a|\u212a\u212ak|\u212a\u212a\u212a|aAaAaA"
+                        + "|kK\u212akK\u212a|bB",
+            },
+            {"(?i:^..(?<=\\1([abk]))$)", "|aa|aA|Aa|AA|kk|k\u212a|\u212ak|\u212a\u212a|bB"},
+    };
+
+    private static final String[] CASED_FOR_COUNTS = {
+        "a", "A", "k", "\u212a", "-"
+    };
+    private static final String[] MORE_CASED_FOR_COUNTS = {
+        "ak-AK-ak-", "\u0061\u006b\u002d\u0041\u004b\u002d\u0061\u212a\u002d", "ak-AK-ax-",
+        "\u00e9\u002d\u00c9\u002d\u00e9\u002d", "aAaAaA", "a-AA-", "\u006b\u004b\u212a\u006b\u004b\u212a", "ab-ab",
+        "ab", "aB", "Ab", "bB", "AB", "ab-AB", "ab-aB", "aba", "abA", "aK-ak", "b-B"
+    };
+
+    /** The comparison of a case-insensitive backreference is short enough to stand under a count. */
+    @Test
+    void aCaseInsensitiveBackreferenceUnderACountIsTranslated() {
+        assertAnswers(CASE_INSENSITIVE_BACKREFERENCES_UNDER_A_COUNT,
+                textsOver(3, CASED_FOR_COUNTS, MORE_CASED_FOR_COUNTS));
+        // The classes of a group that holds any character are written as two tests of about 38 sets each.
+        assertTrue(EcmaRegex.translate("(?i:^(.)\\1$)").length() < 20000);
+        assertTrue(EcmaRegex.translate("(?i:^(..\\W)\\1$)").length() < 40000);
+    }
 }
