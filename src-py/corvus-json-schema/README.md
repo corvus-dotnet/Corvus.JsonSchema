@@ -4,7 +4,8 @@ A JSON Schema evaluator for Python (draft 4, 6, 7, 2019-09 and 2020-12), ported 
 standalone evaluator (`Corvus.Text.Json.RuntimeEvaluator`, see [docs/RuntimeEvaluator.md](../../docs/RuntimeEvaluator.md))
 by way of its TypeScript port. It compiles a schema once into specialised Python and validates parsed JSON values
 (`json.loads` output) against it. Pure Python: its one dependency is [`regex`](https://pypi.org/project/regex/), for
-the ECMA-262 patterns that the standard library's `re` cannot run.
+the ECMA-262 patterns that the standard library's `re` cannot run, or is not proved to run in time proportional to
+the text.
 
 For the same evaluator in Rust, behind the same Python API, see
 [corvus-json-schema-rs](../corvus-json-schema-rs/README.md).
@@ -17,6 +18,9 @@ For the same evaluator in Rust, behind the same Python API, see
   rows (locations, messages, order) as the C# `JsonSchemaResultsCollector`, and annotations as
   `JsonSchemaAnnotationProducer` extracts them; passes all of the suite's annotation tests.
 - **Standalone**: a schema can be emitted as a Python module that depends only on the small runtime.
+- **Bounded**: a match of a regular expression has a limit of one second, and a regular expression has limits of
+  size, so that neither a schema nor an instance from outside can make a validator hang. See
+  [Limits on regular expressions](#limits-on-regular-expressions).
 - Python 3.10 or later; typed (`py.typed`, checked with `mypy --strict` and pyright).
 
 ## Install
@@ -56,8 +60,92 @@ validate({"id": 0})  # False
 | `base_uri` | Base URI of the root document. |
 | `entry_point` | Evaluate from a subschema, e.g. `#/$defs/item`. |
 | `max_depth` | Depth limit for in-place recursion on a cycle (default 128); exceeding it raises `SchemaEvaluationDepthError`. |
+| `pattern_match_limit` | The seconds one match of a regular expression against one string may take (default `1.0`); reaching it raises `PatternMatchLimitError`. `None` or `0` turns the limit off. |
 
-An unresolvable reference or an invalid pattern raises `SchemaCompilationError` at compile time.
+An unresolvable reference or an invalid pattern raises `SchemaCompilationError` at compile time, and a pattern over a
+limit of size raises `PatternTooLargeError`, which is a `SchemaCompilationError`.
+
+### Limits on regular expressions
+
+A schema and an instance may both come from outside, so what a regular expression can cost is bounded. The option
+and the two exceptions have the names and the meanings they have in
+[corvus-json-schema-rs](../corvus-json-schema-rs/README.md), so either package can be used as the other.
+
+- **A match has a limit of time.** `pattern_match_limit` is the seconds that one match of a `pattern` or
+  `patternProperties` regular expression against one string may take. It is `1.0` unless given, and `None`, `0` or
+  less turns the limit off, for a caller who trusts both the schema and the instances. A validation whose match
+  reaches the limit raises `PatternMatchLimitError`, from the validator itself and from `evaluate`, with a results
+  collector or without. The instance is then neither valid nor not valid. The error has the `pattern` and the
+  `limit`.
+- **A pattern has limits of size.** A schema raises `PatternTooLargeError` when it is compiled if one of its regular
+  expressions has more than 32,768 characters, has groups nested more than 100 deep, has a translation for
+  Python's engines of more than 32,768 characters, or has counts that make the `regex` package write out more than
+  4,096 copies of what they repeat. It is a `SchemaCompilationError`, and it is never raised for a pattern that is
+  not valid.
+
+```python
+import corvus_json_schema as cjs
+
+validate = cjs.compile({"pattern": r"^(?:(a+)\1*)+$"}, pattern_match_limit=0.25)
+validate("aaaa")                      # True
+try:
+    validate("a" * 60 + "b")          # no engine that backtracks answers this one
+except cjs.PatternMatchLimitError as e:
+    print(e.limit, e.pattern)         # 0.25 ^(?:(a+)\1*)+$
+
+try:
+    cjs.compile({"pattern": "(?<=b)(?:a{1000}){1000}"})
+except cjs.PatternTooLargeError as e:
+    print(e)                          # ... its counts come to more than 4,096 copies of what they repeat ...
+
+trusting = cjs.compile({"pattern": r"^(a+)+$"}, pattern_match_limit=None)   # no limit: re runs it, as before
+```
+
+`generate_module` writes the limit into the module it generates, and the command line takes
+`--pattern-match-limit <seconds>`. There `validate` prints `no answer` for an instance whose match reaches the
+limit, and exits with 2.
+
+**Which engine runs a pattern.** The standard library's `re` cannot be stopped once a match has started: it has no
+limit of its own, and it looks at signals in the main thread only. The `regex` package takes a timeout. So with the
+limit in force (the default) a pattern goes to `re` only when the package proves that `re` matches it in time
+proportional to the text, whatever the text is. Such a pattern has no limit and needs none, and a match costs
+what it did before, as the search function is the engine's own. Every other pattern goes to the `regex` package
+with the limit as its timeout.
+
+The proof is that at every choice in the pattern (the alternatives of an alternation, one more iteration of a
+repetition or none) the next character of the text says which way to go, and that the body of a repetition takes
+a character. Five things are allowed beyond that, each for a bounded cost: a pattern that takes a bounded number
+of characters and has few ways through it (`^(?:es5|es6|es2015)$`), a repetition that is left with a bounded rest
+of the pattern to try (`^[a-z0-9]*[a-z]$`, `^.*\.json$`), an alternation of bounded alternatives that start alike
+(`txt|trie`, `http|https`), a bounded lookahead anywhere and an unbounded one at the start of a pattern that starts
+with `^` (`^(?=.*[a-z])(?=.*\d).{8,}$`), and a pattern without `^` whose tries fail within a few characters
+(`[a-z][a-z0-9]*`). `^[a-z0-9]+(?:-[a-z0-9]+)*$`, `^\d{3}-\d{4}$` and `^[a-z]+@[a-z]+\.[a-z]{2,}$` are proved.
+`^(a+)+$`, `^([a-z0-9]+[._-]?)*$`, `a*b`, `\{.*\}` and a pattern with a backreference or a lookbehind are not.
+Of the 124 patterns of the jsonschema-benchmark corpora that need a regular expression, 117 are proved, and four of
+the seven that are not take a time that grows as the square of the text or faster. With no limit, `re` runs every
+pattern it can, as it did before there was a limit.
+
+**What the limit is, exactly.** The `regex` package counts the time of the whole process on the processor (C's
+`clock`) and looks at it every 256 steps of the match. So:
+
+- In a process where other threads are running, the limit is reached sooner by the clock on the wall. With three
+  other threads busy, a limit of 1 second was reached after 0.24 seconds. A match that takes less than 256 steps is
+  never abandoned.
+- One step can run over the whole text, so the error can come later than the limit by a time that grows with the
+  text: 0.03 seconds later for a text of a million characters, and 0.8 seconds later for ten million.
+- A match that the `regex` package runs costs more than the match itself, for the clock and the call around it:
+  of the order of a microsecond, measured on a machine that was doing other work. The cost on the benchmark
+  corpora has not been measured on a quiet machine yet.
+
+**What is not bounded.**
+
+- A pattern that `re` runs has no limit. Its time is in proportion to the text, with no bound on the text.
+- The memory a match takes in the `regex` package has no limit of its own. It is bounded by the time: the engine
+  can only fill what it has the time to fill. The most that the adversarial probe provoked is 488 MB for the
+  process, in the one second, by a pattern with 110 groups of one name in a repetition against 100,000 characters
+  (the engine keeps what each group held for every iteration it may have to go back to). No other of its 183
+  patterns took more than 60 MB. A lower limit, or a limit on the memory of the process, takes it down.
+- A custom `formats` function and a `resolve_document` function are the caller's own code.
 
 Instances are the values `json.loads` produces: `dict`, `list`, `str`, `int`, `float`, `bool` and `None`. The generated
 code tests exact types (`type(x) is dict`), so subclasses such as `OrderedDict` are not objects to it; `True` is a
@@ -122,8 +210,9 @@ The pipeline follows the C# evaluator stage for stage:
    - `unevaluatedProperties`/`unevaluatedItems` are decided from static coverage where their contributors allow it,
      with conditions under `if`/`then`/`else` and dependencies decided once per object;
    - patterns that are literals (a prefix, an exact value, alternatives, a substring) match without a regular
-     expression; others are ECMA-262 translated to Python's syntax (`pattern.py`) and run by `re`, or by `regex` for
-     Unicode properties, lookbehind, a backreference to a group that may not have matched and one that ignores case;
+     expression; others are ECMA-262 translated to Python's syntax (`pattern.py`) and run by `re` when it is proved to
+     match them in time proportional to the text, and otherwise by `regex` with the limit of a match (lookbehind, a
+     backreference that reads a group, a repetition that the next character does not decide);
    - structurally identical functions are merged by partition refinement.
 
 Generated code that keeps state (a live dynamic scope or an in-place depth count) evaluates under a lock, so a
@@ -220,11 +309,13 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
   divisor is computed exactly on the shortest decimal forms of the doubles.
 - **Regular expressions** are ECMA-262 translated to Python's syntax with ECMA's meaning (`\d` and `\w` are ASCII, `.`
   excludes every line terminator, `$` matches only at the end, a backreference to a group that has not matched matches
-  the empty string, and a modifier group such as `(?i:...)` folds case by tables of Unicode 16 that the package
+  the empty string, and a modifier group such as `(?i:...)` folds case by tables of Unicode 17 that the package
   carries). A pattern is read with the `u` flag. One that is not valid with it (an identity escape such as `\-`, a
   literal brace) is read as JavaScript's `RegExp` reads it without the flag. Every answer for the 98,839
   patterns of the [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data)
-  is V8's, and one of those patterns passes the size limit below. What is written out for the engines, so that it is
+  is V8's where the package answers. Fifteen of those patterns are over a limit of size, and ten or eleven, by the
+  version of Python and by what else the machine is doing, have a text whose match reaches the limit of one second
+  (both are set out below). What is written out for the engines, so that it is
   exact:
   - A backreference inside a case-insensitive group compares character by character by ECMA-262's Canonicalize, from
     the package's own tables, so the answer is the same on every version of Python and of `regex`. `^(?i:(.)\1)$`
@@ -246,10 +337,16 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
   - A `\p{...}` has one of ECMA-262's names, or the pattern is not valid with the `u` flag: a value of
     General_Category by itself or after `General_Category=` or `gc=`, a value of Script after `Script=`, `sc=`,
     `Script_Extensions=` or `scx=`, or a binary property that ECMA-262 lists, in the spelling of the Unicode
-    Character Database. The names are those of Unicode 16, from a table that the package carries. The other names
-    that the `regex` package has (`\p{Greek}`, `\p{IsLatin}`, `\p{alpha}`, a name in another case) are not taken:
-    such a pattern is read without the `u` flag, where `\p` is the letter `p`. The characters of a property are the
-    `regex` package's, so they follow its version of Unicode (16 in release 2025.9.1, 17 in 2026.9.29).
+    Character Database. The names and the characters of a property are those of Unicode 17, from tables that the
+    package carries and every port of the evaluator shares, whatever version of Unicode the `regex` package that is
+    installed has (16 in release 2025.9.1, 18 in 2026.9.29, which has other characters than Unicode 17 for 89 of
+    the 440 property expressions). So `\p{sc=Sidetic}`, `\p{sc=Tolong_Siki}`, `\p{sc=Beria_Erfe}` and
+    `\p{sc=Tai_Yo}` are names, where V8 13.6, which has Unicode 16, reads such a pattern without the `u` flag. A
+    property is written as ranges of characters for `re`, and for the `regex` package unless it has exactly the
+    same characters for it. There a class of ranges is slower than the package's own property (about half a
+    microsecond for a character that is not ASCII, against a few nanoseconds). The other names that the `regex`
+    package has (`\p{Greek}`, `\p{IsLatin}`, `\p{alpha}`, a name in another case) are not taken: such a pattern is
+    read without the `u` flag, where `\p` is the letter `p`.
 
   - A repetition whose body can match nothing, with a repetition inside it or around it, is written with a body
     that cannot, where no reference reads a group of it: `^(?:(?:a|)*x?)*$` is written as `^(?:a+x?|x)*$` would be.
@@ -258,16 +355,25 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
     each level. Without a reference that reads a group, a pattern only says which texts match, and the two
     writings match the same texts.
 
-  No valid pattern is refused for what it means, and none is answered with another meaning. Two limits remain:
+  No valid pattern is refused for what it means, and none is answered with another meaning. What remains is the
+  limits of [Limits on regular expressions](#limits-on-regular-expressions):
   - both engines backtrack, and neither has V8's short cuts. Where a reference reads a group inside repetitions
-    that can match nothing, the pattern is written as ECMA-262 runs it, iteration by iteration, and may take far
-    longer than it does in V8. So may a count of millions in a pattern that the `regex` package runs, which takes
-    about 270 bytes for each count when it compiles: `(?<=a)b{2000000}` takes 536 MB;
-  - a pattern whose translation would pass 65,536 characters raises `SchemaCompilationError`, as does a minimum
-    count of 2,147,483,647 or more over something that can match nothing. The message says the pattern is valid and
-    too large. That takes a count inside a count around a group that a backreference reads, as in
-    `^(?:(?:(a)|b){300}){300}\1$`, or a count of more than 175 around a case-insensitive backreference inside a
-    lookbehind, or of more than 1,284 around one outside a lookbehind.
+    that can match nothing, the pattern is written as ECMA-262 runs it, iteration by iteration, and a match of it
+    can reach the limit of a match where V8 answers in milliseconds. Eleven patterns of the test data have such a
+    text, ten of them in the `backreferences` file. V8 answers each of those texts within 10,000 backtracks;
+  - a pattern over a limit of size raises `PatternTooLargeError`. The translation of a pattern is longer than the
+    pattern: `a?` is written `(?:a)?`, a character in a case-insensitive group is the class of its forms, and a
+    repetition around a group that a backreference reads is written out copy by copy, as in
+    `^(?:(?:(a)|b){300}){300}\1$`. The `regex` package writes out a minimum count itself, as copies of what is
+    counted, at 125 to 400 bytes a copy: `(?<=a)b{2000000}` took 536 MB before there was a limit, and
+    `(?<=b)a{4097}` is now refused. A count is no matter in a pattern that `re` runs, which keeps it as a number:
+    `^a{100000}$` is proved linear and is compiled in microseconds. A minimum count of 2,147,483,647 or more over
+    something that can match nothing is refused too. Fifteen patterns of the test data are refused: one of the
+    `lookarounds` file, whose translation is too long, and fourteen that repeat one character more than 4,096
+    times in a pattern that is tried at every place in the text (`\u{10400}` without the `u` flag is the letter `u`
+    10,400 times), thirteen of them in the `code-units` file and one in the `hand-written` file;
+  - a repetition with no maximum whose body is nothing but another one is written as the inner one where no
+    reference reads a group of it (`(?:(?:a*)*)*b` as `(?:a)*b`), which is the same texts in linear time.
 
   Where V8 13.6 itself departs from ECMA-262, the package follows ECMA-262. Six such places are known. With the
   `u` flag V8 also starts a match between the two surrogates of a character, so `(?<!^.*)` matches `"\U00010428"`

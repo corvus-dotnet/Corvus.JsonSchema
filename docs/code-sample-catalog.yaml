@@ -1181,8 +1181,9 @@ main-docs:
     blocks:
       - {index: 0, language: sh, lines: [23, 26]}
       - {index: 1, language: python, lines: [30, 41]}
-      - {index: 2, language: python, lines: [75, 84]}
-      - {index: 3, language: python, lines: [94, 98]}
+      - {index: 2, language: python, lines: [80, 88]}
+      - {index: 3, language: python, lines: [92, 101]}
+      - {index: 4, language: python, lines: [111, 115]}
   - path: "docs/JsonSchemaForR.md"
     blocks:
       - {index: 0, language: r, lines: [16, 18]}
