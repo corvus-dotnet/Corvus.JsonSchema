@@ -472,7 +472,7 @@ final class Evaluator {
         }
         Matcher m = matchers[id];
         if (m == null) {
-            m = pattern.regex.matcher("");
+            m = pattern.matcher();
             matchers[id] = m;
         }
         return m;
@@ -486,7 +486,8 @@ final class Evaluator {
         if (pattern.shape != null) {
             return pattern.shape.matches(doc.strBytes(s), doc.strOffset(s), doc.count(s), doc.strAscii(s));
         }
-        return pattern.find(matcher(pattern), pattern.units ? chars.units(doc, s) : chars.of(doc, s));
+        Utf8Chars text = pattern.units ? chars.units(doc, s) : chars.of(doc, s);
+        return pattern.find(matcher(pattern), text.limit(pattern, p.patternMatchLimitNanos), p.patternMatchLimitNanos);
     }
 
     private boolean evalString(SchemaNode n, int x) {

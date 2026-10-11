@@ -352,6 +352,8 @@ final class EcmaRegex {
         boolean lazy;
         /** Marks a REPEAT whose last iteration is written apart from the ones before it. */
         boolean lastApart;
+        /** Marks a REPEAT that is written possessive (see {@link Emitter#markPossessive}). */
+        boolean possessive;
         /** The number of the capturing group of a GROUP, counted from 1 as ECMA-262 does, or 0. */
         int group;
         /**
@@ -535,12 +537,37 @@ final class EcmaRegex {
                     path[2 * level + 1]++;
                     alternatives.add(alternative());
                 }
-                result = new Node(ALT);
-                result.subs = alternatives.toArray(NO_NODES);
+                result = oneCharacter(alternatives);
+                if (result == null) {
+                    result = new Node(ALT);
+                    result.subs = alternatives.toArray(NO_NODES);
+                }
             }
             pathLength--;
             depth--;
             return result;
+        }
+
+        /**
+         * Alternatives that are each one character, as the one set of them, or null when some alternative is
+         * anything else. {@code (?:a|b)} takes what {@code [ab]} takes, whatever the order, and holds no group. It
+         * matters under a repetition: {@code java.util.regex} runs a repeated class in a loop, and a repeated
+         * choice by recursion, a level or more for each iteration, which a long string runs out of stack on.
+         */
+        private static Node oneCharacter(List<Node> alternatives) {
+            int[] set = NO_CHARACTERS;
+            for (Node a : alternatives) {
+                if (a.kind == CHAR) {
+                    set = EcmaUnicode.union(set, new int[] {a.codePoint, a.codePoint});
+                } else if (a.kind == SET && a.parts == null) {
+                    set = EcmaUnicode.union(set, a.set);
+                } else {
+                    return null;
+                }
+            }
+            Node node = new Node(SET);
+            node.set = set;
+            return node;
         }
 
         private Node alternative() {
@@ -685,6 +712,14 @@ final class EcmaRegex {
                 throw error("nothing to repeat");
             }
             repeat.subs = new Node[] {atom};
+            if (zeroWidth(atom)) {
+                // A body that takes no character matches the same, with the same groups, however often it is run in
+                // one place, and ECMA-262 takes an iteration that matched nothing only while iterations are due. So
+                // one iteration stands for any number of them. java.util.regex would run the whole count, without
+                // reading the text, which is where a match is counted (see Ticks).
+                repeat.min = Math.min(repeat.min, 1);
+                repeat.max = repeat.max == 0 ? 0 : 1;
+            }
             repeat.firstGroup = groupsBefore;
             repeat.lastGroup = groups;
             return repeat;
@@ -755,6 +790,27 @@ final class EcmaRegex {
                 }
             }
             return false;
+        }
+
+        /** Whether a node takes no character wherever it matches, by its form: a backreference is not counted so. */
+        private static boolean zeroWidth(Node n) {
+            switch (n.kind) {
+                case CHAR:
+                case SET:
+                case BACKREF:
+                    return false;
+                case REPEAT:
+                    return n.max == 0 || zeroWidth(n.subs[0]);
+                case LOOK:
+                    return true;
+                default:
+                    for (Node sub : n.subs) {
+                        if (!zeroWidth(sub)) {
+                            return false;
+                        }
+                    }
+                    return true;
+            }
         }
 
         /** Reads a quantifier as a REPEAT with no child yet, or returns null when there is none. */
@@ -1418,16 +1474,170 @@ final class EcmaRegex {
                 // A backreference the markers cannot serve. The pattern is written by paths.
                 return translateByPaths();
             }
-            String translated = write();
+            markPossessive();
+            String translated = Ticks.insert(write());
             String error = compileError(translated);
             if (error != null && hasLookbehind) {
                 // java.util.regex cannot bound some lookbehinds whose length is bounded (a repeated group with
                 // alternatives, for one). The form that searches for the start needs no bound.
                 searchingLookbehind = true;
-                translated = write();
+                translated = Ticks.insert(write());
                 error = compileError(translated);
             }
             return compiled(translated, error);
+        }
+
+        // Repetitions the match never needs to go back into.
+
+        /** One character of a set, a number of times: a term of a body that {@link #markPossessive} can read. */
+        private static final class Element {
+            final int[] set;
+            final int min;
+            final int max;
+
+            Element(int[] set, int min, int max) {
+                this.set = set;
+                this.min = min;
+                this.max = max;
+            }
+        }
+
+        /** A node without the groups around it that nothing reads. */
+        private Node bare(Node n) {
+            while (n.kind == GROUP && (n.group == 0 || !referenced[n.group])) {
+                n = n.subs[0];
+            }
+            return n;
+        }
+
+        /** The element a node is, or null when it is anything else. */
+        private Element element(Node n) {
+            n = bare(n);
+            int min = 1;
+            int max = 1;
+            if (n.kind == REPEAT) {
+                if (n.lazy || n.lastApart || n.max == 0) {
+                    return null;
+                }
+                min = n.min;
+                max = n.max;
+                n = bare(n.subs[0]);
+            }
+            if (n.kind == CHAR) {
+                return new Element(new int[] {n.codePoint, n.codePoint}, min, max);
+            }
+            return n.kind == SET && n.set.length != 0 ? new Element(n.set, min, max) : null;
+        }
+
+        /** The elements a node is a sequence of, or null when it is anything else or can match the empty string. */
+        private Element[] elements(Node n) {
+            n = bare(n);
+            Node[] terms = n.kind == CAT ? n.subs : new Node[] {n};
+            Element[] all = new Element[terms.length];
+            boolean takes = false;
+            for (int k = 0; k < terms.length; k++) {
+                all[k] = element(terms[k]);
+                if (all[k] == null) {
+                    return null;
+                }
+                takes |= all[k].min > 0;
+            }
+            return takes ? all : null;
+        }
+
+        /** The characters a sequence of elements can start with, from {@code from} on. */
+        private static int[] firstOf(Element[] sequence, int from) {
+            int[] first = NO_CHARACTERS;
+            for (int k = from; k < sequence.length; k++) {
+                first = EcmaUnicode.union(first, sequence[k].set);
+                if (sequence[k].min > 0) {
+                    break;
+                }
+            }
+            return first;
+        }
+
+        /**
+         * Marks the repetitions of the pattern that are written possessive, as {@code (?:X)*+}: ones the match
+         * never needs to go back into.
+         *
+         * <p>{@code java.util.regex} runs a repetition of a group by recursion, a level or more for each iteration,
+         * unless the iterations are all of one length or the repetition is possessive. So {@code ^(?:[^"\\]|\\.)*$}
+         * runs out of stack on a string of a few thousand characters, where the possessive form runs in a loop.
+         * The two forms give the same answer when the match has nothing to gain by giving iterations back, which
+         * is so for a repetition that is a term of the whole pattern when
+         *
+         * <ul>
+         *   <li>its body is a sequence of characters and classes, each repeated or not, or alternatives that are
+         *       such sequences, and matches at least one character;
+         *   <li>there is one way to match it: the alternatives start with different characters, and a character or
+         *       class that is repeated a number of times or another shares no character with what can follow it,
+         *       which at the end of an alternative is the start of another iteration or of what follows the
+         *       repetition;
+         *   <li>what follows the repetition is nothing, or characters and classes that share no character with the
+         *       start of the body, up to one that must be there or to the end of the text.
+         * </ul>
+         *
+         * <p>Then the iterations the repetition takes from a place are the only ones it can, and each place it
+         * could stop at earlier is followed by a character an iteration starts with, where what follows the
+         * repetition cannot match.
+         */
+        private void markPossessive() {
+            Node[] terms = root.kind == CAT ? root.subs : new Node[] {root};
+            for (int t = 0; t < terms.length; t++) {
+                Node n = bare(terms[t]);
+                if (n.kind != REPEAT || n.lazy || n.lastApart || (n.max != UNBOUNDED && n.max < 2)) {
+                    continue;
+                }
+                Node body = bare(n.subs[0]);
+                if (body.kind != ALT && body.kind != CAT) {
+                    // One character or class: java.util.regex repeats it in a loop as it is.
+                    continue;
+                }
+                Node[] alternatives = body.kind == ALT ? body.subs : new Node[] {body};
+                Element[][] sequences = new Element[alternatives.length][];
+                int[] start = NO_CHARACTERS;
+                boolean one = true;
+                for (int k = 0; k < alternatives.length && one; k++) {
+                    sequences[k] = elements(alternatives[k]);
+                    one = sequences[k] != null;
+                    if (one) {
+                        int[] first = firstOf(sequences[k], 0);
+                        one = !EcmaUnicode.intersects(start, first);
+                        start = EcmaUnicode.union(start, first);
+                    }
+                }
+                // What follows: characters that an iteration does not start with, to one that must be there.
+                int[] after = NO_CHARACTERS;
+                for (int k = t + 1; k < terms.length && one; k++) {
+                    if (bare(terms[k]).kind == EOL) {
+                        break;
+                    }
+                    Element e = element(terms[k]);
+                    one = e != null && !EcmaUnicode.intersects(start, e.set);
+                    if (one) {
+                        after = EcmaUnicode.union(after, e.set);
+                        if (e.min > 0) {
+                            break;
+                        }
+                    }
+                }
+                int[] next = EcmaUnicode.union(start, after);
+                for (int k = 0; k < sequences.length && one; k++) {
+                    Element[] sequence = sequences[k];
+                    for (int j = 0; j < sequence.length && one; j++) {
+                        if (sequence[j].min != sequence[j].max) {
+                            int[] follows = firstOf(sequence, j + 1);
+                            boolean toEnd = true;
+                            for (int m = j + 1; m < sequence.length; m++) {
+                                toEnd &= sequence[m].min == 0;
+                            }
+                            one = !EcmaUnicode.intersects(sequence[j].set, toEnd ? EcmaUnicode.union(follows, next) : follows);
+                        }
+                    }
+                }
+                n.possessive = one;
+            }
         }
 
         /**
@@ -2039,6 +2249,9 @@ final class EcmaRegex {
                 }
                 atom(atom);
                 quantifier(n.min, n.max, n.lazy);
+                if (n.possessive) {
+                    out.append('+');
+                }
                 return;
             }
             out.append("(?:");
@@ -2438,10 +2651,11 @@ final class EcmaRegex {
                 read = root.reads;
                 translated = writePaths();
             }
+            translated = Ticks.insert(translated);
             String error = compileError(translated);
             if (error != null && hasLookbehind) {
                 searchingLookbehind = true;
-                translated = writePaths();
+                translated = Ticks.insert(writePaths());
                 error = compileError(translated);
             }
             return compiled(translated, error);
@@ -5776,6 +5990,329 @@ final class EcmaRegex {
             refer(start);
             out.append("\\z)").append(found("(?=\\k<" + pointer + ">\\z)(?=\\k<" + end + ">\\z)", anywhere))
                     .append("))");
+        }
+    }
+
+    /**
+     * Writes into a translation the tests that let a match be held to its limit of time.
+     *
+     * <p>{@code java.util.regex} has no limit on a match. What the library can see of one is what it does to the
+     * text: {@link Utf8Chars} counts every character the engine reads and every time it asks for the length of the
+     * text, and reads the clock every so many. With the bounds the library gives a matcher (see
+     * {@link SchemaPattern#matcher}) the engine asks for the length at every lookahead, word boundary and end anchor.
+     * So a match is counted wherever it reads a character or meets one of those, which is nearly everywhere: a
+     * backtracking search goes wrong by trying to read the text in many ways.
+     *
+     * <p>It is not everywhere. The engine reads no character at the end of the text (a test of a character fails
+     * there unread), nor to take an empty alternative, enter or leave a group, pass {@code ^}, or compare a group
+     * that holds nothing. A pattern made of such steps can try them in a number of ways that doubles with each
+     * choice, {@code (?:|)(?:|)(?:|)...} for one, and never be counted. So where the engine could take a choice, or
+     * come round a loop, without reading and without asking, a test that asks is written: the empty lookahead
+     * {@code (?=)}, which holds everywhere, takes no character and sets no group, and so changes no answer. It is
+     * written
+     *
+     * <ul>
+     *   <li>before a group with two or more alternatives that can match nothing uncounted (other than a lookahead,
+     *       which asks as it is entered);
+     *   <li>before a repetition that can run no times over a body that can match nothing uncounted, which is a
+     *       choice between two ways to do so;
+     *   <li>at the start of the body of a repetition that must run twice or more over a body that can match nothing
+     *       uncounted, which the engine can run the whole count of;
+     *   <li>at the start of the pattern when it does not start with a step that is counted or that fails at once,
+     *       as the engine runs the pattern from every place in the text.
+     * </ul>
+     *
+     * <p>A part matches nothing uncounted when it can match the empty string by steps that are all uncounted: it
+     * is made of empty alternatives, parts that can run no times, {@code ^}, lookbehinds and backreferences. One
+     * that can match the empty string only past a lookahead, a word boundary or an end anchor is counted there.
+     *
+     * <p>With them, the steps the engine takes between two that are counted are at most the nodes of the
+     * translation, and the interval at which the clock is read is shorter for a longer translation (see
+     * {@link SchemaPattern#interval}).
+     *
+     * <p>The text is read as the translator writes it: a literal that is not a letter or a digit is an escape, a
+     * class is in brackets, and every quantified thing that is not one character is a group.
+     */
+    static final class Ticks {
+        private Ticks() {
+        }
+
+        /** The test that asks for the length of the text and always holds. */
+        static final String TICK = "(?=)";
+
+        private static final int GROUP = 0;
+        private static final int LOOKAHEAD = 1;
+        private static final int LOOKBEHIND = 2;
+        private static final int NEGATIVE_LOOKBEHIND = 3;
+
+        // What is known of the first term of an alternative.
+        private static final int NO_TERM = 0;
+        private static final int COUNTED = 1;
+        private static final int SILENT = 2;
+
+        /** The groups that are open, innermost last. Frame 0 is the pattern. */
+        private static final class Frames {
+            int depth;
+            int[] open = new int[16];
+            int[] body = new int[16];
+            int[] kind = new int[16];
+            /** The alternatives closed so far, and how many of them can match nothing uncounted. */
+            int[] alternatives = new int[16];
+            int[] nullableAlternatives = new int[16];
+            /** What the first term of the alternative being read is, and what that of the first alternative was. */
+            int[] first = new int[16];
+            int[] firstOfAll = new int[16];
+            boolean[] alternativeNullable = new boolean[16];
+            /** The terms read in the group, and whether each was one character. */
+            int[] terms = new int[16];
+            boolean[] onlyCharacters = new boolean[16];
+            boolean[] plain = new boolean[16];
+
+            void push(int openAt, int bodyAt, int kindOf) {
+                if (++depth == open.length) {
+                    int n = 2 * depth;
+                    open = Arrays.copyOf(open, n);
+                    body = Arrays.copyOf(body, n);
+                    kind = Arrays.copyOf(kind, n);
+                    alternatives = Arrays.copyOf(alternatives, n);
+                    nullableAlternatives = Arrays.copyOf(nullableAlternatives, n);
+                    first = Arrays.copyOf(first, n);
+                    firstOfAll = Arrays.copyOf(firstOfAll, n);
+                    alternativeNullable = Arrays.copyOf(alternativeNullable, n);
+                    terms = Arrays.copyOf(terms, n);
+                    onlyCharacters = Arrays.copyOf(onlyCharacters, n);
+                    plain = Arrays.copyOf(plain, n);
+                }
+                open[depth] = openAt;
+                body[depth] = bodyAt;
+                kind[depth] = kindOf;
+                alternatives[depth] = 0;
+                nullableAlternatives[depth] = 0;
+                first[depth] = NO_TERM;
+                firstOfAll[depth] = NO_TERM;
+                alternativeNullable[depth] = true;
+                terms[depth] = 0;
+                onlyCharacters[depth] = true;
+                plain[depth] = true;
+            }
+        }
+
+        /** The places to write the test at. */
+        private static final class Places {
+            int[] at = new int[8];
+            int count;
+
+            void add(int place) {
+                if (count == at.length) {
+                    at = Arrays.copyOf(at, 2 * count);
+                }
+                at[count++] = place;
+            }
+        }
+
+        /** The translation with the tests written into it. It is the same string when it needs none. */
+        static String insert(String t) {
+            Frames f = new Frames();
+            f.depth = -1;
+            f.push(-1, 0, GROUP);
+            Places places = new Places();
+            int n = t.length();
+            if (n == 0) {
+                // The pattern that matches everywhere. Nothing of it is run.
+                return t;
+            }
+            int i = 0;
+            while (i < n) {
+                char c = t.charAt(i);
+                if (c == '|') {
+                    f.plain[f.depth] = false;
+                    endAlternative(f);
+                    i++;
+                    continue;
+                }
+                int start = i;
+                // Whether the atom can match nothing uncounted, and whether its first step is counted or fails at
+                // once. A lookbehind of one character reads it, or fails at the start of the text, and then the
+                // term after it is the first.
+                boolean nullable = false;
+                boolean counted = true;
+                boolean passed = false;
+                // Whether a group has no alternatives and no repetition but one of a fixed count, in it or in a
+                // group of it. java.util.regex runs the whole count of a repetition of such a group.
+                boolean plain = true;
+                boolean character = false;
+                boolean group = false;
+                int groupKind = GROUP;
+                int groupBody = 0;
+                int groupNullable = 0;
+                if (c == '(') {
+                    // A group opens: its terms are read into a frame of their own.
+                    int kind = GROUP;
+                    int body = i + 1;
+                    if (body < n && t.charAt(body) == '?') {
+                        char k = t.charAt(body + 1);
+                        if (k == '=' || k == '!') {
+                            kind = LOOKAHEAD;
+                            body += 2;
+                        } else if (k == '<' && (t.charAt(body + 2) == '=' || t.charAt(body + 2) == '!')) {
+                            kind = t.charAt(body + 2) == '=' ? LOOKBEHIND : NEGATIVE_LOOKBEHIND;
+                            body += 3;
+                        } else if (k == '<') {
+                            body = t.indexOf('>', body) + 1;
+                        } else if (k == ':' || k == '>') {
+                            body += 2;
+                        } else {
+                            // Modifiers, as in (?i:...).
+                            body = t.indexOf(':', body) + 1;
+                        }
+                    }
+                    f.push(i, body, kind);
+                    i = body;
+                    continue;
+                }
+                if (c == ')') {
+                    endAlternative(f);
+                    int d = f.depth--;
+                    if (d == 0) {
+                        throw new IllegalStateException("a translation with a group that is not open: " + t);
+                    }
+                    start = f.open[d];
+                    group = true;
+                    groupKind = f.kind[d];
+                    groupBody = f.body[d];
+                    groupNullable = f.nullableAlternatives[d];
+                    boolean behind = groupKind == LOOKBEHIND || groupKind == NEGATIVE_LOOKBEHIND;
+                    // A lookbehind of one character reads it, except at the start of the text, where it fails
+                    // unread. The negative one holds there, uncounted.
+                    passed = behind && f.terms[d] == 1 && f.onlyCharacters[d];
+                    nullable = groupKind == GROUP ? groupNullable > 0 : behind && !(passed && groupKind == LOOKBEHIND);
+                    counted = groupKind == LOOKAHEAD || (groupKind == GROUP && f.firstOfAll[d] == COUNTED);
+                    plain = f.plain[d];
+                    i++;
+                } else if (c == '[') {
+                    i = Emitter.classEnd(t, i);
+                    character = true;
+                } else if (c == '\\') {
+                    char e = t.charAt(i + 1);
+                    if ((e == 'x' || e == 'p' || e == 'P') && i + 2 < n && t.charAt(i + 2) == '{') {
+                        i = t.indexOf('}', i) + 1;
+                        character = true;
+                    } else if (e == 'k') {
+                        i = t.indexOf('>', i) + 1;
+                        nullable = true;
+                        counted = false;
+                    } else if (e >= '1' && e <= '9') {
+                        i += 2;
+                        while (i < n && t.charAt(i) >= '0' && t.charAt(i) <= '9') {
+                            i++;
+                        }
+                        nullable = true;
+                        counted = false;
+                    } else {
+                        i += 2;
+                        // The end of the text and a word boundary ask for the length. \A fails at once anywhere but
+                        // the start, where it is not counted.
+                        nullable = e == 'A' || e == 'G';
+                        counted = e != 'G';
+                        character = !nullable && e != 'z' && e != 'Z' && e != 'b' && e != 'B';
+                    }
+                } else if (c == '^') {
+                    i++;
+                    nullable = true;
+                } else if (c == '$') {
+                    i++;
+                } else if (c == '*' || c == '+' || c == '?' || c == '{' || c == '}' || c == ']') {
+                    throw new IllegalStateException("a translation that is not read as it was written, at " + i + ": " + t);
+                } else {
+                    i += Character.isHighSurrogate(c) ? 2 : 1;
+                    character = true;
+                }
+                // The quantifier of the term.
+                long min = 1;
+                boolean quantified = false;
+                boolean exact = false;
+                boolean lazy = false;
+                if (i < n) {
+                    char q = t.charAt(i);
+                    if (q == '*' || q == '?') {
+                        min = 0;
+                        quantified = true;
+                        i++;
+                    } else if (q == '+') {
+                        quantified = true;
+                        i++;
+                    } else if (q == '{') {
+                        quantified = true;
+                        min = 0;
+                        for (i++; t.charAt(i) >= '0' && t.charAt(i) <= '9'; i++) {
+                            min = Math.min(min * 10 + (t.charAt(i) - '0'), Integer.MAX_VALUE);
+                        }
+                        exact = t.charAt(i) == '}';
+                        i = t.indexOf('}', i) + 1;
+                    }
+                    if (quantified && i < n && (t.charAt(i) == '?' || t.charAt(i) == '+')) {
+                        lazy = t.charAt(i) == '?';
+                        i++;
+                    }
+                }
+                if (group && groupKind != LOOKAHEAD && groupNullable >= 2) {
+                    places.add(start);
+                    counted = true;
+                }
+                if (quantified && nullable && min == 0) {
+                    places.add(start);
+                    counted = true;
+                }
+                if (quantified && nullable && min >= 2 && group && groupKind == GROUP && plain) {
+                    places.add(groupBody);
+                }
+                int d = f.depth;
+                f.plain[d] &= plain && !(quantified && !exact);
+                f.terms[d]++;
+                f.onlyCharacters[d] &= character && !quantified;
+                if (f.first[d] == NO_TERM && !(passed && !quantified) && !(counted && quantified && min == 0 && lazy)) {
+                    // A lazy repetition that can run no times goes to the term after it first, as a lookbehind of
+                    // one character that held does.
+                    f.first[d] = counted ? COUNTED : SILENT;
+                }
+                f.alternativeNullable[d] &= nullable || (quantified && min == 0);
+            }
+            if (f.depth != 0) {
+                throw new IllegalStateException("a translation with a group that is not closed: " + t);
+            }
+            endAlternative(f);
+            if (f.firstOfAll[0] != COUNTED) {
+                places.add(0);
+            }
+            if (places.count == 0) {
+                return t;
+            }
+            int[] at = Arrays.copyOf(places.at, places.count);
+            Arrays.sort(at);
+            StringBuilder sb = new StringBuilder(n + TICK.length() * at.length);
+            int from = 0;
+            for (int k = 0; k < at.length; k++) {
+                if (k > 0 && at[k] == at[k - 1]) {
+                    continue;
+                }
+                sb.append(t, from, at[k]).append(TICK);
+                from = at[k];
+            }
+            return sb.append(t, from, n).toString();
+        }
+
+        /** Closes the alternative being read in the innermost frame. */
+        private static void endAlternative(Frames f) {
+            int d = f.depth;
+            if (f.alternativeNullable[d]) {
+                f.nullableAlternatives[d]++;
+            }
+            if (f.alternatives[d]++ == 0) {
+                // The engine tries the alternatives in order, so the first step of a group is that of the first.
+                f.firstOfAll[d] = f.first[d] == COUNTED ? COUNTED : SILENT;
+            }
+            f.alternativeNullable[d] = true;
+            f.first[d] = NO_TERM;
         }
     }
 

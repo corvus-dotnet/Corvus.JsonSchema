@@ -3,6 +3,14 @@ package io.github.corvusdotnet.jsonschema;
 /**
  * A reusable {@link CharSequence} over a string value of a document, for the regular expression engine: ASCII strings
  * are read in place, others are decoded into a buffer the view keeps. Not thread-safe; one per evaluation.
+ *
+ * <p>It is also where a match is held to its limit of time (see {@link #limit}). {@code java.util.regex} has no
+ * limit of its own, and what it does to the text is all that can be seen of a match from outside it: it reads a
+ * character with {@link #charAt}, and with the bounds the library gives its matchers (see
+ * {@link SchemaPattern#matcher}) it asks for the {@link #length} at every lookahead, word boundary and end anchor.
+ * Each of those calls is counted, and every {@link SchemaPattern#interval} of them the clock is read. The translation
+ * has a test that asks for the length wherever the engine could otherwise go on for long without either (see
+ * {@link EcmaRegex.Ticks}).
  */
 final class Utf8Chars implements CharSequence {
     private byte[] bytes;
@@ -10,6 +18,13 @@ final class Utf8Chars implements CharSequence {
     private int length;
     private char[] chars = new char[64];
     private boolean ascii;
+    /** The calls left before the clock is read. */
+    private int budget = Integer.MAX_VALUE;
+    /** The pattern being matched, the limit on its match in nanoseconds (0 for none), and when it is over. */
+    private SchemaPattern pattern;
+    private long limitNanos;
+    private long deadline;
+    private boolean timed;
 
     /** Views the string value {@code n} of {@code doc}. */
     Utf8Chars of(JsonDocument doc, int n) {
@@ -69,6 +84,35 @@ final class Utf8Chars implements CharSequence {
         return this;
     }
 
+    /**
+     * Starts a match of {@code pattern} against the string in view, which is abandoned with
+     * {@link PatternMatchLimitException} once it has run for {@code nanos} (0 for no limit). The time is counted
+     * from the first reading of the clock, which is after {@link SchemaPattern#interval} calls: a match that makes
+     * fewer than that reads no clock at all.
+     */
+    Utf8Chars limit(SchemaPattern pattern, long nanos) {
+        this.pattern = pattern;
+        limitNanos = nanos;
+        timed = false;
+        budget = nanos == 0 ? Integer.MAX_VALUE : pattern.interval;
+        return this;
+    }
+
+    private void tick() {
+        if (limitNanos == 0) {
+            budget = Integer.MAX_VALUE;
+            return;
+        }
+        long now = System.nanoTime();
+        if (!timed) {
+            timed = true;
+            deadline = now + limitNanos;
+        } else if (now - deadline >= 0) {
+            throw PatternMatchLimitException.time(pattern.source, limitNanos, length);
+        }
+        budget = pattern.interval;
+    }
+
     /** Decodes valid UTF-8 into UTF-16, returning the number of chars. */
     static int decode(byte[] b, int from, int to, char[] out) {
         int n = 0;
@@ -96,11 +140,17 @@ final class Utf8Chars implements CharSequence {
 
     @Override
     public int length() {
+        if (--budget < 0) {
+            tick();
+        }
         return length;
     }
 
     @Override
     public char charAt(int index) {
+        if (--budget < 0) {
+            tick();
+        }
         return ascii ? (char) bytes[offset + index] : chars[index];
     }
 

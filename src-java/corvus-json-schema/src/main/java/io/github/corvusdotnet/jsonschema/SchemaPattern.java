@@ -32,6 +32,17 @@ final class SchemaPattern {
     final boolean units;
     /** A process-wide index, for evaluators that keep a matcher per pattern. */
     final int id;
+    /**
+     * How many times a match of the pattern reads the text, or asks for its length, between two readings of the
+     * clock (see {@link Utf8Chars#limit}). Between two such calls the engine takes at most about as many steps as
+     * the translation has nodes (see {@link EcmaRegex.Ticks}), so a longer translation has the clock read more often.
+     */
+    final int interval;
+
+    /** The interval for a translation of up to {@link #INTERVAL_SCALE} / MAX_INTERVAL characters. */
+    static final int MAX_INTERVAL = 4096;
+    static final int MIN_INTERVAL = 16;
+    static final int INTERVAL_SCALE = 1 << 22;
 
     private static int nextId;
 
@@ -41,6 +52,9 @@ final class SchemaPattern {
         this.regex = regex;
         this.shape = shape;
         this.units = kind == REGEX && EcmaRegex.matchesCodeUnits(source);
+        this.interval = regex == null
+                ? MAX_INTERVAL
+                : Math.max(MIN_INTERVAL, Math.min(MAX_INTERVAL, INTERVAL_SCALE / Math.max(1, regex.pattern().length())));
         synchronized (SchemaPattern.class) {
             this.id = nextId++;
         }
@@ -116,15 +130,50 @@ final class SchemaPattern {
         return kind == EVERYTHING;
     }
 
-    /** Whether the pattern matches somewhere in the text, using (and resetting) a matcher of this pattern. */
-    boolean find(Matcher m, CharSequence text) {
+    /**
+     * A matcher of the pattern for {@link #find(Matcher, Utf8Chars, long)}. Its bounds are transparent and not
+     * anchoring. Over a whole text, which is all the library matches, that changes no answer. It makes the engine
+     * ask the text for its length at every lookahead, word boundary and end anchor, where with the default bounds it
+     * reads a field of its own, and the asking is counted towards the limit of a match (see {@link Utf8Chars}).
+     */
+    Matcher matcher() {
+        return regex.matcher("").useTransparentBounds(true).useAnchoringBounds(false);
+    }
+
+    /**
+     * Whether the pattern matches somewhere in the text, using (and resetting) a matcher of this pattern that
+     * {@link #matcher} made. The text has been told the limit of time ({@link Utf8Chars#limit}).
+     *
+     * @throws PatternMatchLimitException when the match goes over the limit
+     */
+    boolean find(Matcher m, Utf8Chars text, long limitNanos) {
         if (kind == EVERYTHING) {
             return true;
         }
-        return m.reset(text).find();
+        try {
+            return m.reset(text).find();
+        } catch (StackOverflowError e) {
+            // java.util.regex matches by recursion, and has no limit of depth but the stack. The error is caught
+            // here, where nothing but the engine's own frames is unwound: they hold no lock and no state but the
+            // matcher's, which the next match resets.
+            throw PatternMatchLimitException.stack(source, limitNanos, text.length());
+        }
     }
 
-    /** Whether the pattern matches somewhere in a string (allocates a matcher). */
+    static {
+        // What a match can load for the first time is loaded now, and not deep in a recursion where the stack
+        // could run out as a class is initialized, which would leave the class unusable: the engine's set of the
+        // places a loop failed at, the tables of the character properties of each plane, and the exception.
+        Pattern.compile("(?:(?:a*)*b|\\p{L}\\P{L})").matcher("aa").find();
+        for (int c : new int[] {0x100, 0x10000, 0x20000, 0x30000, 0xE0000, 0xF0000, 0x100000, 0x40000}) {
+            Character.getType(c);
+            Character.toLowerCase(c);
+        }
+        PatternMatchLimitException.stack("", 0, 0);
+        PatternMatchLimitException.time("", 1, 0);
+    }
+
+    /** Whether the pattern matches somewhere in a string (allocates a matcher, and has no limit of time). */
     boolean find(CharSequence text) {
         if (kind == EVERYTHING) {
             return true;

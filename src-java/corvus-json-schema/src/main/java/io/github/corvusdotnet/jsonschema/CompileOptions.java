@@ -1,5 +1,6 @@
 package io.github.corvusdotnet.jsonschema;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +15,12 @@ public final class CompileOptions {
     /** The default options: 2020-12 for documents without {@code $schema}, {@code format} as the vocabularies say. */
     public static final CompileOptions DEFAULT = builder().build();
 
+    /**
+     * The limit on the time of one match of a {@code pattern} or {@code patternProperties} regular expression,
+     * unless {@link Builder#patternMatchLimit} sets another: 1 second.
+     */
+    public static final Duration DEFAULT_PATTERN_MATCH_LIMIT = Duration.ofSeconds(1);
+
     final Dialect defaultDialect;
     final Boolean assertFormat;
     final boolean assertFormatInLegacyDrafts;
@@ -23,6 +30,8 @@ public final class CompileOptions {
     final String baseUri;
     final String entryPoint;
     final int maxDepth;
+    /** The limit on the time of one match of a pattern, in nanoseconds, or 0 for none. */
+    final long patternMatchLimitNanos;
 
     private CompileOptions(Builder b) {
         defaultDialect = b.defaultDialect;
@@ -34,6 +43,7 @@ public final class CompileOptions {
         baseUri = b.baseUri;
         entryPoint = b.entryPoint;
         maxDepth = b.maxDepth;
+        patternMatchLimitNanos = b.patternMatchLimitNanos;
     }
 
     /**
@@ -56,6 +66,7 @@ public final class CompileOptions {
         private String baseUri;
         private String entryPoint;
         private int maxDepth = 128;
+        private long patternMatchLimitNanos = Duration.ofSeconds(1).toNanos();
 
         private Builder() {
         }
@@ -164,6 +175,51 @@ public final class CompileOptions {
                 throw new IllegalArgumentException("maxDepth must be at least 1");
             }
             maxDepth = depth;
+            return this;
+        }
+
+        /**
+         * The limit on the time of one match of a {@code pattern} or {@code patternProperties} regular expression
+         * against one string. Defaults to {@link CompileOptions#DEFAULT_PATTERN_MATCH_LIMIT}, 1 second. A match
+         * that goes over it is abandoned, and the method that was validating throws
+         * {@link PatternMatchLimitException}. A schema and an instance that come from outside can otherwise make a
+         * match run for as long as they like: {@code ^(a+)+$} takes time that doubles with each "a" of a string
+         * that ends in something else.
+         *
+         * <p>The clock is read once every few thousand characters the match reads, so a match is abandoned a little
+         * after the limit and not at it. The matchers the library has for the common shapes of pattern, which use no
+         * regular expression engine, read a string a bounded number of times and have no limit.
+         *
+         * @param limit the limit, which is more than zero
+         * @return this builder
+         * @see #noPatternMatchLimit()
+         */
+        public Builder patternMatchLimit(Duration limit) {
+            Objects.requireNonNull(limit);
+            if (limit.isZero() || limit.isNegative()) {
+                throw new IllegalArgumentException(
+                        "patternMatchLimit must be more than zero. Use noPatternMatchLimit() for no limit.");
+            }
+            long nanos;
+            try {
+                nanos = limit.toNanos();
+            } catch (ArithmeticException e) {
+                nanos = Long.MAX_VALUE;
+            }
+            // Beyond 100 years the deadline would not fit the clock, and is no limit.
+            patternMatchLimitNanos = Math.min(nanos, Long.MAX_VALUE / 4);
+            return this;
+        }
+
+        /**
+         * Turns off the limit on the time of a match (see {@link #patternMatchLimit}), for a caller that trusts
+         * both the schema and the instances. A match that needs more stack than the thread has still throws
+         * {@link PatternMatchLimitException}.
+         *
+         * @return this builder
+         */
+        public Builder noPatternMatchLimit() {
+            patternMatchLimitNanos = 0;
             return this;
         }
 

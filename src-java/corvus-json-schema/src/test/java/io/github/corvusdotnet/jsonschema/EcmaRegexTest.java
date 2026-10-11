@@ -1273,17 +1273,17 @@ class EcmaRegexTest {
     void iterationsAreWrittenApartOnlyWhereTheEnginesDiffer() {
         // A minimum of two, and a body that is empty in some places only.
         assertEquals("(?:^|x)(?:^|x)a", EcmaRegex.translate("(?:^|x){2}a"));
-        assertEquals("(?:^|x)(?:^|x)(?:^|x)*a", EcmaRegex.translate("(?:^|x){2,}a"));
-        assertEquals("(?:^|x)(?:^|x)(?:^|x){0,3}?a", EcmaRegex.translate("(?:^|x){2,5}?a"));
+        assertEquals("(?:^|x)(?:^|x)(?=)(?:^|x)*a", EcmaRegex.translate("(?:^|x){2,}a"));
+        assertEquals("(?:^|x)(?:^|x)(?=)(?:^|x){0,3}?a", EcmaRegex.translate("(?:^|x){2,5}?a"));
         // A minimum below two.
         assertEquals("(?:^|x)+a", EcmaRegex.translate("(?:^|x)+a"));
         assertEquals("(?:^|x){1,4}a", EcmaRegex.translate("(?:^|x){1,4}a"));
-        assertEquals("(?:^|x){0,4}a", EcmaRegex.translate("(?:^|x){0,4}a"));
+        assertEquals("(?=)(?:^|x){0,4}a", EcmaRegex.translate("(?:^|x){0,4}a"));
         // A body that is empty anywhere, one that is never empty and one that is only ever empty.
         assertEquals("(?:x|){3}a", EcmaRegex.translate("(?:x|){3}a"));
         assertEquals("(?:x*){3,}a", EcmaRegex.translate("(?:x*){3,}a"));
         assertEquals("(?:^x){3}a", EcmaRegex.translate("(?:^x){3}a"));
-        assertEquals("(?:^|(?=x)){3}a", EcmaRegex.translate("(?:^|(?=x)){3}a"));
+        assertEquals("(?:^|(?=x)){1}a", EcmaRegex.translate("(?:^|(?=x)){3}a"));
         // Each copy of a body has its own group for the backreference inside it.
         assertEquals("(?:(a|)(?:(?:\\1))|^x)(?:(a|)(?:(?:\\2))|^x)", EcmaRegex.translate("(?:(a|)\\1|^x){2}"));
     }
@@ -1994,7 +1994,7 @@ class EcmaRegexTest {
     void aBodyWithOneWayToMatchIsNotWrittenOnceForEachIteration() {
         assertAnswers(BODIES_WITH_ONE_WAY_TO_MATCH,
                 textsOver(3, new String[] {"a", "A", "k", "\u212a", "-"}, MORE_FOR_ONE_WAY));
-        assertEquals("^(a*)(?:(?:(?:\\1))){2}b\\z", EcmaRegex.translate("^(a*)\\1{2}b$"));
+        assertEquals("^(a*)(?:(?=)(?:(?:\\1))){2}b\\z", EcmaRegex.translate("^(a*)\\1{2}b$"));
         assertEquals("^(?:((?:a)())|b)(?:(?:(?=\\2)(?:\\1)|(?!\\2))){2}\\z", EcmaRegex.translate("^(?:(a)|b)\\1{2}$"));
         assertEquals(EcmaRegex.translate("(?i:^(.)\\1{2}$)").length(), EcmaRegex.translate("(?i:^(.)\\1{9}$)").length());
         // A body with alternatives has more than one way, and is still written apart.
@@ -2149,6 +2149,201 @@ class EcmaRegexTest {
         assertEquals(EcmaRegex.REFUSED_TOO_MANY_PATHS, EcmaRegex.unsupported("(?=((?:a|){0,201}?)a)\\1a$"));
         assertNotNull(EcmaRegex.translate("(?:^|x){200}a"));
         assertEquals(EcmaRegex.REFUSED_EMPTY_ITERATIONS, EcmaRegex.unsupported("(?:^|x){201}a"));
+    }
+
+    // The tables that follow hold V8's answers ({@code new RegExp(pattern, "u").test(text)}, V8 13.6) for the 364
+    // texts of up to five characters over "a", "b" and "c", shortest first and in that order: one hexadecimal digit
+    // for each four texts, the first of the four its lowest bit, set when the pattern matches.
+
+    private static final String[][] ONE_CHARACTER_ALTERNATIVES = {
+        {"^(?:a|b)*$", "7b163c6000b163008d0b100000000063c6000b163000000000c68d00063c6000000000000000000000000000000"},
+        {"^(a|b)*c", "84e9c39fff4e9cff72f4efffffffff9c39fff4e9cfffffffff3972fff9c39ffffffffffffffffffffffffffffff"},
+        {"(?:a|[bc])+a$",
+            "0942942942942942942942942942942942942942942942942942942942942942942942942942942942942942942"},
+        {"^(?:.|\\n)*c$",
+            "8429429429429429429429429429429429429429429429429429429429429429429429429429429429429429429"},
+        {"(?i:^(?:a|B)+$)",
+            "6b163c6000b163008d0b100000000063c6000b163000000000c68d00063c6000000000000000000000000000000"},
+        {"^(?:a|b|)*c$", "8428409000428400021420000000008409000428400000000009021008409000000000000000000000000000000"},
+        {"(a|b)\\1", "011e24e880ff37448b0ff32c58c111effffff71ef748b09322cffc111effffff7127448ff9322c58ff11e24e880"},
+    };
+
+    private static final String[][] POSSESSIVE_REPETITIONS = {
+        {"^(?:ab|c)*$", "9201400018004020000000008000201000000020080400000000000000000000000000000201000000000400018"},
+        {"^(?:ab|c)*a", "274ef30832ffffff7000000cf70074efffffffffffffffffff300000000000000000008ffffff3000000ef30832"},
+        {"^(?:a+b)*$", "1204000000204000000000000000004080000200000000000000000000000000000000000000000000000000000"},
+        {"^(?:a+b)*a*$", "3306100000b060000000000000000061c0000b00000000000000000000000000000000000000000000000000000"},
+        {"^(?:ab|c)*ab$",
+            "0200000010004000000000000000200000000000080000000000000000000000000000000200000000000000010"},
+        {"^(?:a|bc)*b?c$",
+            "8428400400420020000008400000008400400000009000000000000000000000420020000000000000000000000"},
+        {"^a(?:b[ac]*b)*c$",
+            "0400000000000400000000000000000000000020008000000000000000000000000000000000000000000000000"},
+        {"(?:ab|c){2,3}a",
+            "00000000020008001000008020007400001028000c114000e8000020400000028000c110074080000004ef30832"},
+        {"^(?:ab?|c)*$", "b74fd2083af6f8e15000000cb50074fde1d3af610c1d7b00e82000000000000000000087b74f82000000ed2083a"},
+        {"^(?:ab?|b)*$", "7b163c6000b163008d0b100000000063c6000b163000000000c68d00063c6000000000000000000000000000000"},
+        {"(?:a|bc)*", "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
+        {"^(?:a{1,2}b)*$",
+            "1204000000004000000000000000000080000200000000000000000000000000000000000000000000000000000"},
+        {"^(?:[ab]c|c[ab]{2})*$",
+            "14200008d00000090000084000000000000000000000000063000000000000000000c6021420009021000000000"},
+        {"^(?:b*a)*b$", "4204080000204000010200000000004080000204000000000080010004080000000000000000000000000000000"},
+        {"^(?:ab|c)+$", "8201400018004020000000008000201000000020080400000000000000000000000000000201000000000400018"},
+        {"^(?:ab|c){2,}?$",
+            "0001400018004020000000008000201000000020080400000000000000000000000000000201000000000400018"},
+        {"^((?:ab|c)*)$",
+            "9201400018004020000000008000201000000020080400000000000000000000000000000201000000000400018"},
+        {"^(?:(a)b|c)*$",
+            "9201400018004020000000008000201000000020080400000000000000000000000000000201000000000400018"},
+        {"(?:ab|c)*b", "4ab47df7d5abefbeaffffffbeaffab47df7d5ffffff7d5ff57dfffffffffffffffffff7d5ff57dffffff57df7d5"},
+        {"^(?:a[bc]?)*c$",
+            "8408420000429001000000000000008421020421000029000000000000000000000000000000000000000000000"},
+        {"^(?:ab*)*b$", "4204200000214200000000000000004284000214200000000000000000000000000000000000000000000000000"},
+        {"^(?:ab|c)*(?:a|$)",
+            "b74ff3083affffff7000000cf70074ffffffffffffffffffff300000000000000000008ffffff3000000ef3083a"},
+    };
+
+    private static final String[][] REPETITIONS_OF_NO_CHARACTER = {
+        {"(?:^){5}a", "270ef30000ffffff70000000000000efffffffffffffffffff30000000000000000000000000000000000000000"},
+        {"(?:$|^){3,}a", "270ef30000ffffff70000000000000efffffffffffffffffff30000000000000000000000000000000000000000"},
+        {"(?:\\b){2,}a", "270ef30000ffffff70000000000000efffffffffffffffffff30000000000000000000000000000000000000000"},
+        {"(?:(?=a)){2,5}a",
+            "2f4eff3972ffffffffff4e9cff72f4efffffffffffffffffffffffffffff3972fff9c39fffffffff72f4eff3972"},
+        {"^(?:(?:){3}){4}a$",
+            "2000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"},
+        {"(?:(?!b)){2}?.",
+            "afefffbfffffffffffffefffffffffffffffffffffffffffffffffffffffbffffffffffffffffffffffffffffff"},
+        {"a(?:$){0,}", "2f4eff3972ffffffffff4e9cff72f4efffffffffffffffffffffffffffff3972fff9c39fffffffff72f4eff3972"},
+        {"(?:(?:^|$){2147483646}){2147483646}b",
+            "48300cf7000000008ffffff300000000000000000000000000cfffffffffffffffffff700000000000000000000"},
+        {"^(?:(?=(a))){3}\\1",
+            "270ef30000ffffff70000000000000efffffffffffffffffff30000000000000000000000000000000000000000"},
+        {"(?:()|(?=(b))){2}\\1\\2c",
+            "84e9c39fff4e9cff72f4efffffffff9c39fff4e9cfffffffff3972fff9c39ffffffffffffffffffffffffffffff"},
+        {"(?:\\B){1000}b",
+            "029479e2d5abefbe2d5ff579eaffab47df7d5ffffff7d5ff579eaffabeffffffabefbe2d5ff57dffffff57df7d5"},
+        {"a(?:(?<=a)){7,}b",
+            "0204780010a3efb00d120408e0102047cf710ffffff7d120408e8ff204780010a340800d1ff508e010204780010"},
+    };
+
+    private static final String[][] CHOICES_THAT_READ_NOTHING = {
+        {"(?:|a)(?:|b)c",
+            "84e9c39fff4e9cff72f4efffffffff9c39fff4e9cfffffffff3972fff9c39ffffffffffffffffffffffffffffff"},
+        {"(?:a?|b?)c", "84e9c39fff4e9cff72f4efffffffff9c39fff4e9cfffffffff3972fff9c39ffffffffffffffffffffffffffffff"},
+        {"(?:a*|$)*c", "84e9c39fff4e9cff72f4efffffffff9c39fff4e9cfffffffff3972fff9c39ffffffffffffffffffffffffffffff"},
+        {"()\\1{3}a", "2f4eff3972ffffffffff4e9cff72f4efffffffffffffffffffffffffffff3972fff9c39fffffffff72f4eff3972"},
+        {"(a|)\\1{2,}?b",
+            "4ab47df7d5abefbeaffffffbeaffab47df7d5ffffff7d5ff57dfffffffffffffffffff7d5ff57dffffff57df7d5"},
+        {"(?:\\b|a)*?c", "84e9c39fff4e9cff72f4efffffffff9c39fff4e9cfffffffff3972fff9c39ffffffffffffffffffffffffffffff"},
+        {"(?:(?:|a)|(?:|b))*c$",
+            "8429429429429429429429429429429429429429429429429429429429429429429429429429429429429429429"},
+        {"^(?:(?:a|)*?c)*?$",
+            "9409020028401001400000001400409020028000000028008020000000000000000000028008020000008020028"},
+        {"(?:^|c)(?:^|b)*a",
+            "2f4eff3972ffffffffff4e9cff72f4efffffffffffffffffffffffffffff3972fff9c39fffffffff72f4eff3972"},
+        {"(?:(?<!a)|^)b",
+            "48b02df7c509071eaffffff34aff8b021e2c509ef3e284ff17dfffffffffffffffffff7848b07dffffff12df7c5"},
+        {"(?:|){3}(?:b|)c",
+            "84e9c39fff4e9cff72f4efffffffff9c39fff4e9cfffffffff3972fff9c39ffffffffffffffffffffffffffffff"},
+        {"(?<=(?:|a)(?:|b))c",
+            "84e9c39fff4e9cff72f4efffffffff9c39fff4e9cfffffffff3972fff9c39ffffffffffffffffffffffffffffff"},
+    };
+
+    private static void assertAnswersInBits(String[][] cases) {
+        List<String> texts = textsOver(5, new String[] {"a", "b", "c"});
+        List<String> wrong = new ArrayList<>();
+        for (String[] c : cases) {
+            String translation = EcmaRegex.translate(c[0]);
+            if (translation == null) {
+                wrong.add(c[0] + " is refused: " + EcmaRegex.unsupported(c[0]));
+                continue;
+            }
+            Pattern translated = Pattern.compile(translation);
+            Validator validator = Validator.compile("{\"pattern\": " + json(c[0]) + "}");
+            for (int k = 0; k < texts.size(); k++) {
+                boolean matches = (Character.digit(c[1].charAt(k / 4), 16) >> (k % 4) & 1) != 0;
+                if (translated.matcher(texts.get(k)).find() != matches) {
+                    wrong.add(c[0] + (matches ? " does not match " : " matches ") + texts.get(k));
+                }
+                if (validator.isValid(json(texts.get(k))) != matches) {
+                    wrong.add("{\"pattern\": \"" + c[0] + "\"} is " + (matches ? "not " : "") + "valid for " + texts.get(k));
+                }
+            }
+        }
+        assertEquals(List.of(), wrong);
+    }
+
+    /**
+     * Alternatives that are each one character are written as one class, which java.util.regex repeats in a loop
+     * where it repeats a choice by recursion.
+     */
+    @Test
+    void alternativesOfOneCharacterAreAClass() {
+        assertAnswersInBits(ONE_CHARACTER_ALTERNATIVES);
+        assertEquals("^(?:[\\x{61}-\\x{62}])*\\z", EcmaRegex.translate("^(?:a|b)*$"));
+        assertEquals("^(?:[\\x{61}-\\x{63}])+a", EcmaRegex.translate("^(?:a|[bc])+a"));
+        // An alternative that is not one character keeps the choice, and so does a group that is read.
+        assertEquals("^(?:a|bc)*+\\z", EcmaRegex.translate("^(?:a|bc)*$"));
+    }
+
+    /**
+     * A repetition the match never needs to go back into is written possessive, which java.util.regex runs in a
+     * loop: one whose body has one way to match, and that what follows cannot start inside.
+     */
+    @Test
+    void aRepetitionWithOneWayToMatchIsPossessive() {
+        assertAnswersInBits(POSSESSIVE_REPETITIONS);
+        String[][] written = {
+            {"^(?:ab|c)*$", "^(?:ab|c)*+\\z"}, {"^(?:a+b)*$", "^(?:a+b)*+\\z"}, {"(?:ab|c){2,3}a", "(?:ab|c){2,3}a"},
+            {"^(?:ab|c)+$", "^(?:ab|c)++\\z"}, {"^(?:ab?|c)*$", "^(?:ab?|c)*+\\z"}, {"(?:a|bc)*", "(?:a|bc)*+"},
+            // What follows can start as an iteration does, or an alternative can start as another does, or a
+            // repeated character can be the next one too: the match may have to give an iteration back.
+            {"^(?:ab|c)*ab$", "^(?:ab|c)*ab\\z"}, {"^(?:a+b)*a*$", "^(?:a+b)*a*\\z"}, {"^(?:ab?|b)*$", "^(?:ab?|b)*\\z"},
+            {"^(?:ab*)*b$", "^(?:ab*)*b\\z"}, {"^(?:ab|c)*(?:a|$)", "^(?:ab|c)*(?:a|\\z)"},
+            // A lazy repetition, and one inside a group that is read, are left as they are.
+            {"^(?:ab|c){2,}?$", "^(?:ab|c){2,}?\\z"},
+        };
+        for (String[] w : written) {
+            assertEquals(w[1], EcmaRegex.translate(w[0]), w[0]);
+        }
+    }
+
+    /** A repetition of a body that takes no character is run once, whatever its count. */
+    @Test
+    void aRepetitionOfNoCharacterIsRunOnce() {
+        assertAnswersInBits(REPETITIONS_OF_NO_CHARACTER);
+        assertEquals("(?:^){1}a", EcmaRegex.translate("(?:^){5}a"));
+        assertEquals("(?:(?:^|\\z){1}){1}b", EcmaRegex.translate("(?:(?:^|$){2147483646}){2147483646}b"));
+    }
+
+    /**
+     * Where java.util.regex could take a choice, or come round a loop, without reading the text or asking for its
+     * length, the translation has the empty lookahead, which asks (see {@link EcmaRegex.Ticks}). It changes no
+     * answer.
+     */
+    @Test
+    void aChoiceThatReadsNothingIsCounted() {
+        assertAnswersInBits(CHOICES_THAT_READ_NOTHING);
+        String[][] written = {
+            // Two alternatives that can match nothing uncounted, a repetition that can run no times over such a
+            // body, and a counted repetition of one with no choice in it.
+            {"(?:a|)(?:b|)c", "(?:a|)(?:b|)c"}, {"(?:|)(?:|)c", "(?=)(?:|)(?=)(?:|)c"},
+            {"(?:a?|b?)c", "(?=)(?:a?|b?)c"}, {"(?:^|x)*a", "(?=)(?:^|x)*a"}, {"()\\1{3}a", "(?=)()(?:(?=)(?:(?:\\1))){3}a"},
+            // An end anchor, a word boundary and a lookahead ask for the length, so a choice past one is counted.
+            {"(?:$|)(?:$|)c", "(?:\\z|)(?:\\z|)c"}, {"(?:(?=a)|(?!b))c", "(?:(?=a)|(?!b))c"},
+            // The pattern is run from every place in the text: a start that reads nothing is counted.
+            {"()()^(?<=y)", "(?=)(?:(?:)(?:)^(?<=y))(?:|\uD800\uDC00)"}, {"a*?b", "a*?b"}, {"(a|)c", "(?:a|)c"},
+            {"(?<=a)b", "(?:(?<=a)b)(?:|\uD800\uDC00)"}, {"(?<=ab)c", "(?=)(?:(?<=ab)c)(?:|\uD800\uDC00)"},
+            {"(?:|a)(?:|b)c", "(?=)(?:|a)(?:|b)c"},
+        };
+        for (String[] w : written) {
+            assertEquals(w[1], EcmaRegex.translate(w[0]), w[0]);
+        }
+        // The pass reads only what the translator writes, and leaves a text that needs nothing as it is.
+        String plain = "^[a-z]+(?:\\x{2e}[a-z]+)*\\z";
+        assertTrue(plain == EcmaRegex.Ticks.insert(plain));
+        assertEquals("(?:a|)(?=)(?:b|)*c", EcmaRegex.Ticks.insert("(?:a|)(?:b|)*c"));
     }
 
     /**

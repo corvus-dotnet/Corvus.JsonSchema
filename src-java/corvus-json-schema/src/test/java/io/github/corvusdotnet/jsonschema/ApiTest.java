@@ -232,6 +232,175 @@ class ApiTest {
         assertFalse(format.isValid("\"\\\\p{Nope}\""));
     }
 
+    /**
+     * A pattern and a string whose match takes time that doubles with each "a": far beyond any limit. (Without the
+     * backreference, java.util.regex remembers where the repetition failed and answers at once.)
+     */
+    static final String RUNAWAY = "^(?:(a+)\\1*)+$";
+    static final String RUNAWAY_JSON = "\"^(?:(a+)\\\\1*)+$\"";
+    static final String RUNAWAY_TEXT = "\"" + "a".repeat(60) + "b\"";
+
+    /** Runs a validation that must go over the limit on a match, and returns the error and the seconds it took. */
+    private static PatternMatchLimitException overTheLimit(Runnable validation, double[] seconds) {
+        long start = System.nanoTime();
+        PatternMatchLimitException e = assertThrows(PatternMatchLimitException.class, validation::run);
+        seconds[0] = (System.nanoTime() - start) / 1e9;
+        return e;
+    }
+
+    @Test
+    void aMatchIsLimitedToOneSecondByDefault() {
+        assertEquals(java.time.Duration.ofSeconds(1), CompileOptions.DEFAULT_PATTERN_MATCH_LIMIT);
+        Validator pattern = Validator.compile("{\"pattern\": " + RUNAWAY_JSON + "}");
+        Validator properties = Validator.compile(
+                "{\"patternProperties\": {" + RUNAWAY_JSON + ": {\"type\": \"integer\"}}, \"additionalProperties\": false}");
+        String object = "{" + RUNAWAY_TEXT + ": 1}";
+        double[] seconds = new double[1];
+        // Every way to validate reports the limit as an error. None of them answers. The bound on the time is
+        // generous, as the machine may be busy: the match itself would take centuries.
+        Runnable[] ways = {
+            () -> pattern.isValid(RUNAWAY_TEXT),
+            () -> pattern.isValid(RUNAWAY_TEXT.getBytes(StandardCharsets.UTF_8)),
+            () -> pattern.isValid(JsonDocument.parse(RUNAWAY_TEXT)),
+            () -> pattern.validate(JsonDocument.parse(RUNAWAY_TEXT)),
+            () -> pattern.evaluate(JsonDocument.parse(RUNAWAY_TEXT), JsonSchemaResultsCollector.create(ResultsLevel.VERBOSE)),
+            () -> properties.isValid(object),
+            () -> properties.validate(JsonDocument.parse(object)),
+            () -> properties.evaluate(JsonDocument.parse(object), JsonSchemaResultsCollector.create(ResultsLevel.BASIC)),
+        };
+        for (Runnable way : ways) {
+            PatternMatchLimitException e = overTheLimit(way, seconds);
+            assertEquals(RUNAWAY, e.pattern());
+            assertEquals(java.time.Duration.ofSeconds(1), e.limit());
+            assertFalse(e.isStackLimit());
+            assertTrue(e.getMessage().contains("ran for longer than the limit of PT1S"), e.getMessage());
+            assertTrue(seconds[0] >= 0.9 && seconds[0] < 20, "took " + seconds[0] + " s");
+        }
+        // The validator is as it was: the next instance is answered.
+        assertTrue(pattern.isValid("\"aaa\""));
+        assertFalse(pattern.isValid("\"aab\""));
+        assertTrue(properties.isValid("{\"aaa\": 1}"));
+        assertFalse(properties.isValid("{\"aab\": 1}"));
+    }
+
+    @Test
+    void theLimitOnAMatchCanBeSetAndTurnedOff() {
+        String schema = "{\"pattern\": " + RUNAWAY_JSON + "}";
+        double[] seconds = new double[1];
+        Validator quick = Validator.compile(schema,
+                CompileOptions.builder().patternMatchLimit(java.time.Duration.ofMillis(50)).build());
+        PatternMatchLimitException e = overTheLimit(() -> quick.isValid(RUNAWAY_TEXT), seconds);
+        assertEquals(java.time.Duration.ofMillis(50), e.limit());
+        assertTrue(seconds[0] >= 0.04 && seconds[0] < 10, "took " + seconds[0] + " s");
+        // A match of some hundreds of thousands of steps is over a limit of a millisecond, and is answered with no
+        // limit.
+        String long22 = "\"" + "a".repeat(18) + "b\"";
+        Validator tiny = Validator.compile(schema,
+                CompileOptions.builder().patternMatchLimit(java.time.Duration.ofMillis(1)).build());
+        assertThrows(PatternMatchLimitException.class, () -> tiny.isValid(long22));
+        Validator unlimited = Validator.compile(schema, CompileOptions.builder().noPatternMatchLimit().build());
+        assertFalse(unlimited.isValid(long22));
+        assertTrue(unlimited.isValid("\"" + "a".repeat(18) + "\""));
+        // The limit is more than zero.
+        assertThrows(IllegalArgumentException.class,
+                () -> CompileOptions.builder().patternMatchLimit(java.time.Duration.ZERO));
+        assertThrows(IllegalArgumentException.class,
+                () -> CompileOptions.builder().patternMatchLimit(java.time.Duration.ofMillis(-1)));
+        assertThrows(NullPointerException.class, () -> CompileOptions.builder().patternMatchLimit(null));
+    }
+
+    @Test
+    void anOrdinaryMatchIsNotLimited() {
+        // The clock is not read for a match that reads the string a few thousand times, whatever the limit is.
+        CompileOptions shortest = CompileOptions.builder().patternMatchLimit(java.time.Duration.ofNanos(1)).build();
+        Validator v = Validator.compile(
+                "{\"pattern\": \"^[a-z]+(?:-[a-z0-9]+)*@(?:x|y)+$\", \"patternProperties\": {\"^(?:ab|cd)+e$\": true},"
+                        + " \"additionalProperties\": false}", shortest);
+        assertTrue(v.isValid("\"abc-d1-e2@xyx\""));
+        assertFalse(v.isValid("\"abc-d1-e2@xyz\""));
+        assertTrue(v.isValid("{\"abcde\": 1}"));
+        assertFalse(v.isValid("{\"abcdf\": 1}"));
+        // A long string against a pattern that reads it once is answered within the default limit.
+        Validator words = Validator.compile("{\"pattern\": \"^(?:[a-z]+ ?\\\\d*,)*$\"}");
+        assertTrue(words.isValid("\"" + "abc 12,".repeat(100_000) + "\""));
+        assertFalse(words.isValid("\"" + "abc 12,".repeat(100_000) + "!\""));
+    }
+
+    @Test
+    void aMatchThatReadsNoCharacterIsLimitedToo() {
+        // java.util.regex can try a choice between two ways to match nothing without reading the string, which is
+        // what the limit counts. Sixty such choices are 2^60 ways to fail at the end of "y".
+        String schema = "{\"pattern\": \"" + "(?:|)".repeat(60) + "^(?<=y)\"}";
+        Validator v = Validator.compile(schema,
+                CompileOptions.builder().patternMatchLimit(java.time.Duration.ofMillis(100)).build());
+        double[] seconds = new double[1];
+        overTheLimit(() -> v.isValid("\"y\""), seconds);
+        assertTrue(seconds[0] < 10, "took " + seconds[0] + " s");
+        // So is a counted repetition of a backreference to a group that holds nothing.
+        Validator counted = Validator.compile("{\"pattern\": \"()(?:(?:(?:\\\\1){1000}){1000}){1000}^(?<=y)\"}",
+                CompileOptions.builder().patternMatchLimit(java.time.Duration.ofMillis(100)).build());
+        overTheLimit(() -> counted.isValid("\"y\""), seconds);
+        assertTrue(seconds[0] < 10, "took " + seconds[0] + " s");
+        // A repetition of what takes no character is run once, whatever its count.
+        Validator anchors = Validator.compile("{\"pattern\": \"(?:(?:(?:^|$){2147483646}){2147483646})*a\"}");
+        assertTrue(anchors.isValid("\"a\""));
+        assertFalse(anchors.isValid("\"b\""));
+    }
+
+    /** Runs a task on a thread with a small stack, and returns what it threw. */
+    private static Throwable onASmallStack(Runnable task) throws InterruptedException {
+        AtomicReference<Throwable> thrown = new AtomicReference<>();
+        Thread thread = new Thread(null, () -> {
+            try {
+                task.run();
+            } catch (Throwable t) {
+                thrown.set(t);
+            }
+        }, "small stack", 256 * 1024);
+        thread.start();
+        thread.join();
+        return thrown.get();
+    }
+
+    @Test
+    void aMatchThatRunsOutOfStackIsTheLimitError() throws InterruptedException {
+        // java.util.regex matches a repetition of a group with alternatives of different lengths by recursion. A
+        // string of 200,000 characters is more than a stack of 256 KB holds. The outcome is the error of the limit
+        // and not a StackOverflowError, and the validator answers the next instance.
+        Validator v = Validator.compile("{\"pattern\": \"^(?:ab|ba|a|b)*$\"}");
+        String text = "\"" + "ab".repeat(100_000) + "\"";
+        Throwable thrown = onASmallStack(() -> v.isValid(text));
+        assertTrue(thrown instanceof PatternMatchLimitException, String.valueOf(thrown));
+        PatternMatchLimitException e = (PatternMatchLimitException) thrown;
+        assertTrue(e.isStackLimit());
+        assertEquals("^(?:ab|ba|a|b)*$", e.pattern());
+        assertTrue(e.getMessage().contains("needed more of the thread's stack"), e.getMessage());
+        Throwable collecting = onASmallStack(() -> v.evaluate(JsonDocument.parse(text),
+                JsonSchemaResultsCollector.create(ResultsLevel.VERBOSE)));
+        assertTrue(collecting instanceof PatternMatchLimitException, String.valueOf(collecting));
+        assertTrue(v.isValid("\"abba\""));
+        assertFalse(v.isValid("\"abca\""));
+        // The common forms are written so that they run in a loop, and are answered on the same stack.
+        String[][] looped = {
+            {"^(a|b)*$", "ab".repeat(100_000), "ab".repeat(100_000) + "c"},
+            {"^(?:.|\\\\n)*x$", "ab\\n".repeat(50_000) + "x", "ab\\n".repeat(50_000)},
+            {"^'(?:[^'\\\\\\\\]|\\\\\\\\.)*'$", "'" + "ab\\\\n".repeat(50_000) + "'", "'" + "ab\\\\n".repeat(50_000) + "'x"},
+            {"^[a-z]+(?:\\\\.[a-z]+)*@[a-z]+$", "a.".repeat(100_000) + "a@b", "a.".repeat(100_000) + "@b"},
+            {"^(?:[a-z]+,)*$", "ab,".repeat(70_000), "ab,".repeat(70_000) + "a"},
+        };
+        for (String[] c : looped) {
+            Validator w = Validator.compile("{\"pattern\": \"" + c[0] + "\"}");
+            Object[] answers = new Object[2];
+            Throwable t = onASmallStack(() -> {
+                answers[0] = w.isValid("\"" + c[1] + "\"");
+                answers[1] = w.isValid("\"" + c[2] + "\"");
+            });
+            assertEquals(null, t, c[0]);
+            assertEquals(true, answers[0], c[0]);
+            assertEquals(false, answers[1], c[0]);
+        }
+    }
+
     @Test
     void documentsPrintAsJson() {
         String text = "{\"a\":[1,2.50,true,null,\"x\\n\\\"\\u0001\"],\"b\":{}}";
