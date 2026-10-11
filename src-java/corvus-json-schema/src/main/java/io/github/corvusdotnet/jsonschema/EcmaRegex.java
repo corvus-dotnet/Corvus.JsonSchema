@@ -3,6 +3,7 @@ package io.github.corvusdotnet.jsonschema;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -2640,6 +2641,413 @@ final class EcmaRegex {
             return decisions.get(decisionAt++)[0];
         }
 
+        // The plans of a scope, joined.
+        //
+        // The plans of a scope are alternatives, and plans next to each other often start with the same text: what
+        // the scope writes before the first decision, and after it whatever the plans that share a decision write
+        // before the next. A repetition whose last iteration is written apart starts every plan with the iterations
+        // before it, which can be most of the text. So the plans are joined as a tree: what plans next to each other
+        // start with is written once, and the rest of each follows as alternatives, "A(?:B|C)" for "AB|AC". The two
+        // match the same texts from the same place.
+        //
+        // The text of a plan is cut into its terms for this (an atom with its quantifier), with the groups that only
+        // hold a sequence taken away, and terms are compared with the names of the groups they define left out: each
+        // plan has names of its own for the same groups. The rest of a plan whose start is left out is written with
+        // the names of the start that is kept.
+        //
+        // One thing is not shared: a term that sets a group inside a lookaround, when the rest of a plan reads the
+        // group. java.util.regex does not undo such a group, so where the plans are apart a plan that is tried after
+        // another sets the group again, and after a shared start it would read what a later run of the lookaround
+        // left in it (see the notes above Look).
+
+        /** The plans of a scope as one group of alternatives, with what plans next to each other start with once. */
+        private String joined(List<String> plans) {
+            List<List<String>> all = new ArrayList<>(plans.size());
+            for (String plan : plans) {
+                all.add(flat(plan));
+            }
+            StringBuilder sb = new StringBuilder("(?:");
+            alternatives(sb, all, 0, all.size(), 0);
+            sb.append(')');
+            if (out.length() + sb.length() > MAX_PATHS_LENGTH) {
+                throw new Unsupported(REFUSED_TOO_MANY_PATHS);
+            }
+            return sb.toString();
+        }
+
+        /**
+         * Writes the plans from {@code from} to {@code to}, which share their terms before {@code at}, from that term
+         * on.
+         */
+        private static void alternatives(StringBuilder sb, List<List<String>> all, int from, int to, int at) {
+            int k = from;
+            while (k < to) {
+                if (k > from) {
+                    sb.append('|');
+                }
+                List<String> lead = all.get(k);
+                // The plans after this one that start with the same term, and how many terms all of them share.
+                int end = k + 1;
+                int shared = lead.size();
+                List<List<Map<String, String>>> renames = new ArrayList<>();
+                while (end < to && shared > at) {
+                    List<Map<String, String>> same = sameTerms(lead, all.get(end), at, shared);
+                    if (same.isEmpty()) {
+                        break;
+                    }
+                    shared = at + same.size();
+                    renames.add(same);
+                    end++;
+                }
+                int cut = end - k == 1 ? at : cut(all, k, end, at, shared);
+                if (cut == at) {
+                    for (int p = k; p < end; p++) {
+                        sb.append(p > k ? "|" : "");
+                        append(sb, all.get(p), at);
+                    }
+                    k = end;
+                    continue;
+                }
+                for (int t = at; t < cut; t++) {
+                    sb.append(lead.get(t));
+                }
+                for (int p = k + 1; p < end; p++) {
+                    Map<String, String> names = new HashMap<>();
+                    List<Map<String, String>> same = renames.get(p - k - 1);
+                    for (int t = at; t < cut; t++) {
+                        names.putAll(same.get(t - at));
+                    }
+                    List<String> plan = all.get(p);
+                    for (int t = cut; t < plan.size() && !names.isEmpty(); t++) {
+                        plan.set(t, renamed(plan.get(t), names));
+                    }
+                }
+                sb.append("(?:");
+                alternatives(sb, all, k, end, cut);
+                sb.append(')');
+                k = end;
+            }
+        }
+
+        private static void append(StringBuilder sb, List<String> plan, int at) {
+            for (int t = at; t < plan.size(); t++) {
+                sb.append(plan.get(t));
+            }
+        }
+
+        /**
+         * For each term from {@code at} on, up to {@code limit}, that two plans have in common: the names of the
+         * second plan for the groups the term defines, with the names of the first. The list ends at the first term
+         * that differs.
+         */
+        private static List<Map<String, String>> sameTerms(List<String> a, List<String> b, int at, int limit) {
+            List<Map<String, String>> same = new ArrayList<>();
+            Map<String, String> names = new HashMap<>();
+            for (int t = at; t < limit && t < b.size(); t++) {
+                Map<String, String> defined = sameTerm(a.get(t), b.get(t), names);
+                if (defined == null) {
+                    break;
+                }
+                names.putAll(defined);
+                same.add(defined);
+            }
+            return same;
+        }
+
+        /**
+         * Whether two terms are the same but for the names of the groups they define. Returns the names of the second
+         * for those groups with the names of the first, or null when the terms differ. {@code names} holds the same
+         * for the terms before.
+         */
+        private static Map<String, String> sameTerm(String a, String b, Map<String, String> names) {
+            if (a.length() != b.length() && a.indexOf("<g") < 0) {
+                return null;
+            }
+            Map<String, String> defined = new HashMap<>();
+            // The text between the names, and the groups defined.
+            int ia = 0;
+            int ib = 0;
+            while (true) {
+                int na = nextName(a, ia);
+                int nb = nextName(b, ib);
+                int sa = na < 0 ? a.length() : na;
+                int sb = nb < 0 ? b.length() : nb;
+                if ((na < 0) != (nb < 0) || sa - ia != sb - ib || !a.regionMatches(ia, b, ib, sa - ia)) {
+                    return null;
+                }
+                if (na < 0) {
+                    break;
+                }
+                int da = digitsEnd(a, na);
+                int db = digitsEnd(b, nb);
+                ia = a.indexOf('>', da);
+                ib = b.indexOf('>', db);
+                if (ia - da != ib - db || !a.regionMatches(da, b, db, ia - da)) {
+                    return null;
+                }
+                if (a.charAt(na - 2) == '?' && ia == da) {
+                    String name = a.substring(na, da);
+                    String was = defined.put(b.substring(nb, db), name);
+                    if (was != null && !was.equals(name)) {
+                        return null;
+                    }
+                }
+            }
+            // Every name of the second is the name of the first at the same place.
+            ia = 0;
+            ib = 0;
+            while ((ia = nextName(a, ia)) >= 0) {
+                ib = nextName(b, ib);
+                int da = digitsEnd(a, ia);
+                int db = digitsEnd(b, ib);
+                String name = b.substring(ib, db);
+                String mapped = defined.get(name);
+                if (mapped == null) {
+                    mapped = names.getOrDefault(name, name);
+                }
+                if (mapped.length() != da - ia || !a.regionMatches(ia, mapped, 0, da - ia)) {
+                    return null;
+                }
+                ia = da;
+                ib = db;
+            }
+            return defined;
+        }
+
+        /**
+         * Where the next name of a group of the translation stands in a text, from a place on, or -1: the "g" of
+         * "(?<g12>" or "\\k<g12>". The translation has "<g" nowhere else, as it writes such characters by number.
+         */
+        private static int nextName(String text, int from) {
+            for (int at = text.indexOf("<g", from); at >= 0; at = text.indexOf("<g", at + 1)) {
+                if (at >= 2 && at + 2 < text.length() && isDigit(text.charAt(at + 2))
+                        && ((text.charAt(at - 1) == '?' && text.charAt(at - 2) == '(')
+                                || (text.charAt(at - 1) == 'k' && text.charAt(at - 2) == '\\'))) {
+                    return at + 1;
+                }
+            }
+            return -1;
+        }
+
+        /** The place after the number of the name that starts at {@code name}. */
+        private static int digitsEnd(String text, int name) {
+            int end = name + 1;
+            while (isDigit(text.charAt(end))) {
+                end++;
+            }
+            return end;
+        }
+
+        private static boolean isDigit(char c) {
+            return c >= '0' && c <= '9';
+        }
+
+        /** A term with other names for some groups. */
+        private static String renamed(String term, Map<String, String> names) {
+            StringBuilder sb = null;
+            int from = 0;
+            for (int at = nextName(term, 0); at >= 0; at = nextName(term, at)) {
+                int end = digitsEnd(term, at);
+                String to = names.get(term.substring(at, end));
+                if (to != null) {
+                    sb = sb != null ? sb : new StringBuilder(term.length() + 8);
+                    sb.append(term, from, at).append(to);
+                    from = end;
+                }
+                at = end;
+            }
+            return sb == null ? term : sb.append(term, from, term.length()).toString();
+        }
+
+        /**
+         * How many of the terms that the plans from {@code from} to {@code to} share, from {@code at} up to
+         * {@code shared}, can be written once: the most for which none of them sets a group in a lookaround that a
+         * term after them reads, in any of the plans.
+         */
+        private static int cut(List<List<String>> all, int from, int to, int at, int shared) {
+            int cut = shared;
+            for (int p = from; p < to && cut > at; p++) {
+                List<String> plan = all.get(p);
+                // For each name set in a lookaround in the shared terms: the term that sets it.
+                Map<String, Integer> sticky = new HashMap<>();
+                for (int t = at; t < cut; t++) {
+                    setInLookarounds(plan.get(t), t, sticky);
+                }
+                if (sticky.isEmpty()) {
+                    continue;
+                }
+                // The last term that reads a group each term sets.
+                int[] last = new int[cut - at];
+                for (int t = at + 1; t < plan.size(); t++) {
+                    String term = plan.get(t);
+                    for (int name = nextName(term, 0); name >= 0; name = nextName(term, name)) {
+                        int end = digitsEnd(term, name);
+                        Integer set = term.charAt(name - 2) == '?' ? null : sticky.get(term.substring(name, end));
+                        if (set != null && set < t) {
+                            last[set - at] = t;
+                        }
+                        name = end;
+                    }
+                }
+                // The most terms such that what reads a group they set is among them.
+                int best = at;
+                int need = at;
+                for (int t = at; t < cut; t++) {
+                    need = Math.max(need, last[t - at]);
+                    if (need <= t) {
+                        best = t + 1;
+                    }
+                }
+                cut = best;
+            }
+            return cut;
+        }
+
+        /** Notes, for each group a term defines inside a lookaround, the number of the term. */
+        private static void setInLookarounds(String term, int number, Map<String, Integer> sticky) {
+            if (term.indexOf("(?<g") < 0) {
+                return;
+            }
+            // For each group that is open, whether it is in a lookaround. An atomic group counts as one, and so
+            // does a term with a possessive quantifier: the engine does not undo what was set in those either.
+            BitSet inLook = new BitSet();
+            inLook.set(0, term.indexOf("*+") >= 0 || term.indexOf("++") >= 0 || term.indexOf("?+") >= 0
+                    || term.indexOf("}+") >= 0);
+            int depth = 0;
+            for (int i = 0, n = term.length(); i < n;) {
+                char c = term.charAt(i);
+                if (c == '\\') {
+                    i += 2;
+                } else if (c == '[') {
+                    i = classEnd(term, i);
+                } else {
+                    if (c == '(') {
+                        boolean look = term.startsWith("(?=", i) || term.startsWith("(?!", i)
+                                || term.startsWith("(?<=", i) || term.startsWith("(?<!", i)
+                                || term.startsWith("(?>", i);
+                        inLook.set(depth + 1, look || inLook.get(depth));
+                        depth++;
+                        if (inLook.get(depth) && term.startsWith("(?<g", i)) {
+                            int end = term.indexOf('>', i);
+                            int digits = i + 4;
+                            while (digits < end && Character.isDigit(term.charAt(digits))) {
+                                digits++;
+                            }
+                            sticky.put(term.substring(i + 3, digits), number);
+                        }
+                    } else if (c == ')') {
+                        depth--;
+                    }
+                    i++;
+                }
+            }
+        }
+
+        /**
+         * The terms of a text of the translation: each an atom with its quantifier. A group that only holds a
+         * sequence, with no quantifier, gives its terms in its place. A text with alternatives is one term.
+         */
+        private static List<String> flat(String text) {
+            List<String> terms = new ArrayList<>();
+            List<String> todo = terms(text);
+            if (todo == null) {
+                terms.add(text);
+                return terms;
+            }
+            Collections.reverse(todo);
+            while (!todo.isEmpty()) {
+                String next = todo.remove(todo.size() - 1);
+                List<String> parts = next.startsWith("(?:") && atomEnd(next, 0) == next.length()
+                        ? terms(next.substring(3, next.length() - 1)) : null;
+                if (parts == null) {
+                    terms.add(next);
+                    continue;
+                }
+                for (int k = parts.size() - 1; k >= 0; k--) {
+                    todo.add(parts.get(k));
+                }
+            }
+            return terms;
+        }
+
+        /** The terms of a text, or null when it is alternatives. */
+        private static List<String> terms(String text) {
+            List<String> terms = new ArrayList<>();
+            int n = text.length();
+            for (int i = 0; i < n;) {
+                char c = text.charAt(i);
+                if (c == '|') {
+                    return null;
+                }
+                if (c == ')' || c == '*' || c == '+' || c == '?' || c == '{') {
+                    throw new IllegalStateException("a stretch of a translation that is not a term");
+                }
+                int end = atomEnd(text, i);
+                if (end < n) {
+                    char q = text.charAt(end);
+                    int after = q == '{' ? text.indexOf('}', end) + 1 : end;
+                    if (q == '*' || q == '+' || q == '?') {
+                        after = end + 1;
+                    }
+                    if (after > end && after < n && (text.charAt(after) == '?' || text.charAt(after) == '+')) {
+                        after++;
+                    }
+                    end = after;
+                }
+                terms.add(text.substring(i, end));
+                i = end;
+            }
+            return terms;
+        }
+
+        /** The place after the atom that starts at {@code i} in a text of the translation. */
+        private static int atomEnd(String text, int i) {
+            char c = text.charAt(i);
+            if (c == '\\') {
+                char e = text.charAt(i + 1);
+                if (e == 'x' && text.charAt(i + 2) == '{') {
+                    return text.indexOf('}', i) + 1;
+                }
+                return e == 'k' ? text.indexOf('>', i) + 1 : i + 2;
+            }
+            if (c == '[') {
+                return classEnd(text, i);
+            }
+            if (c != '(') {
+                return Character.isHighSurrogate(c) ? i + 2 : i + 1;
+            }
+            int depth = 0;
+            do {
+                c = text.charAt(i);
+                if (c == '\\') {
+                    i += 2;
+                } else if (c == '[') {
+                    i = classEnd(text, i);
+                } else {
+                    depth += c == '(' ? 1 : c == ')' ? -1 : 0;
+                    i++;
+                }
+            } while (depth > 0);
+            return i;
+        }
+
+        /** The place after the class that starts at {@code i} in a text of the translation. */
+        private static int classEnd(CharSequence text, int i) {
+            int depth = 0;
+            do {
+                char c = text.charAt(i);
+                if (c == '\\') {
+                    i++;
+                } else if (c == '[') {
+                    depth++;
+                } else if (c == ']') {
+                    depth--;
+                }
+                i++;
+            } while (depth > 0);
+            return i;
+        }
+
         /**
          * Thrown where the plan being written turns out to match nothing: an iteration past the minimum of its
          * repetition in which the plan wrote only parts that match the empty string. ECMA-262 does not take such an
@@ -2691,7 +3099,7 @@ final class EcmaRegex {
                 throw new NotOneWay();
             }
             choices++;
-            return "(?:" + String.join("|", plans) + ")";
+            return joined(plans);
         }
 
         /** The text a writer writes, once for each way of taking the decisions it meets. */
@@ -2705,7 +3113,6 @@ final class EcmaRegex {
             List<int[]> mine = new ArrayList<>();
             List<String> plans = new ArrayList<>();
             int start = out.length();
-            int length = 0;
             // The copies of bodies are counted along one way through the pattern, which is what the depth of the
             // recursion of java.util.regex follows.
             int copies = unrolledCopies;
@@ -2750,9 +3157,9 @@ final class EcmaRegex {
                     plans.add(plan);
                     most = Math.max(most, unrolledCopies);
                     longest = Math.max(longest, unrolledLength);
-                    length += plan.length();
                 }
-                if (plans.size() > MAX_PLANS || start + length > MAX_PATHS_LENGTH || written > MAX_PATHS_WRITTEN) {
+                if (plans.size() > MAX_PLANS || start + plan.length() > MAX_PATHS_LENGTH
+                        || written > MAX_PATHS_WRITTEN) {
                     throw new Unsupported(REFUSED_TOO_MANY_PATHS);
                 }
                 more = false;
@@ -3056,7 +3463,7 @@ final class EcmaRegex {
                     throw new NotOneWay();
                 }
                 choices++;
-                text = "(?:" + String.join("|", plans) + ")";
+                text = joined(plans);
             }
             return mine == null || mine.stamp == null ? text : stamped(mine, text);
         }
@@ -3844,7 +4251,7 @@ final class EcmaRegex {
             chainScope = wasScope;
             env.still = wasStill;
             alternatives = plans.size();
-            return plans.size() == 1 ? plans.get(0) : "(?:" + String.join("|", plans) + ")";
+            return plans.size() == 1 ? plans.get(0) : joined(plans);
         }
 
         /**
@@ -4166,7 +4573,7 @@ final class EcmaRegex {
             if (unanchored != references && (plans.size() != 1 || choices != wasChoices || lazy)) {
                 throw new Unsupported(REFUSED_LOOKAROUND_IN_REPETITION);
             }
-            String text = "(?:" + String.join("|", plans) + ")";
+            String text = plans.size() == 1 ? "(?:" + plans.get(0) + ")" : joined(plans);
             String quantifier = lazy ? "*?" : "*";
             if (mine.stamp == null) {
                 return text + quantifier;
@@ -4356,19 +4763,7 @@ final class EcmaRegex {
 
         /** The place after the class that starts at {@code i} in the translation. */
         private int classEnd(int i) {
-            int depth = 0;
-            do {
-                char c = out.charAt(i);
-                if (c == '\\') {
-                    i++;
-                } else if (c == '[') {
-                    depth++;
-                } else if (c == ']') {
-                    depth--;
-                }
-                i++;
-            } while (depth > 0);
-            return i;
+            return classEnd(out, i);
         }
 
         /** The length of what opens the group at {@code at} in the translation. */

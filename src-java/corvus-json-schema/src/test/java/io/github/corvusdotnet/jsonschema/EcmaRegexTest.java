@@ -1917,4 +1917,43 @@ class EcmaRegexTest {
         assertTrue(EcmaRegex.translate("(?=((?:a|){0,200}?)a)\\1a$").length() < 10000);
         assertTrue(EcmaRegex.translate("^(?=((?:(a)|(b)){0,12}))\\1\\2\\3$").length() < 20000);
     }
+
+    /**
+     * The plans of a scope are written as a tree: what plans next to each other start with stands once, and the rest
+     * of each follows as alternatives. The second pattern is one of the test data that was refused as too long
+     * without that (over a million characters).
+     */
+    @Test
+    void thePlansOfAScopeShareWhatTheyStartWith() {
+        assertAnswers(JOINED_PLANS, textsOver(4, new String[] {"a", "b", "c"}, MORE_FOR_JOINED_PLANS));
+        assertEquals("^(?:(?:(?:(?:xy(?:(a)(?:\\1)|b))|z)))*\\z", EcmaRegex.translate("^(?:xy(?:(a)|b)\\1|z)*$"));
+        assertTrue(EcmaRegex.translate(JOINED_PLANS[JOINED_PLANS.length - 1][0]).length() < 250000);
+    }
+
+    /** Patterns whose plans start with the same text, with the texts each matches. */
+    private static final String[][] JOINED_PLANS = {
+            {"^(?:xy(?:(a)|b)\\1|z)*$", "||xyb|xyaa|xyaaz|zxybz|xyaaxyb|zz"},
+            {"^(?:(?:(a)|b)\\1(?:(c)|b)\\2)+$", "|bb|aab|bcc|aacc|bbbb|aabbcc|bbbbbb"},
+            {
+                "^(?:[ab](?:(a)|b)(?:c\\1|b)|c)*\\1$",
+                "||c|cc|abb|abc|bbb|bbc|ccc|aaba|aabc|abbc|abcc|baba|babc|bbbc|bbcc|cabb|cabc"
+                        + "|cbbb|cbbc|cccc|abcabc|bbbbbb",
+            },
+            {
+                "^(?:[ab]?(?=(?:((?:[bc][^a]|.))|a)(?:[ab](?:(a)|(a.)))*?(?:(?:(?:(b)|a)(?:[ab].)??(?:[^a]b|[^a])|((?:b|[^a]a))?bc))*?)(?=[bc]\\3)\\3$(?:b\\2|[bc]b\\3)(?=([ab]c?))[^a]\\4|b)*?\\4",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab"
+                        + "|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb"
+                        + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb"
+                        + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
+                        + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
+                        + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
+                        + "|ccbc|ccca|cccb|cccc|xya|xyb|xyaa|xyaaz|zxybz|xyaaxyb|zz|ababab|bcbcbc|abcabc"
+                        + "|aabbcc|bbbbbb",
+            },
+    };
+
+    private static final String[] MORE_FOR_JOINED_PLANS = {
+        "xya", "xyb", "xyaa", "xyaaz", "zxybz", "xyaaxyb", "zz", "ababab", "bcbcbc", "abcabc", "aabbcc", "bbbbbb"
+    };
 }
