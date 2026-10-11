@@ -299,8 +299,10 @@ function callout(block::Ptr{CalloutBlock}, frameptr::Ptr{Frame})::Cint
     frame = unsafe_load(frameptr)
     if number == CALLOUT_AT_TARGET
         return b.current_position == frame.target ? Cint(0) : Cint(1)
-    elseif number == CALLOUT_NOT_PAST_TARGET
-        return b.current_position > frame.target ? PCRE2_ERROR_NOMATCH : Cint(0)
+    elseif number == CALLOUT_AT_START
+        return b.current_position > 0 ? PCRE2_ERROR_NOMATCH : Cint(0)
+    elseif number == CALLOUT_BEFORE_TARGET
+        return b.current_position < frame.target ? Cint(0) : Cint(1)
     end
     # The callout of a lookbehind. Its body is searched for in the whole text, with the next frame.
     pattern = unsafe_pointer_to_objref(frame.pattern)::Pattern

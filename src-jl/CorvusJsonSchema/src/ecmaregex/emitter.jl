@@ -104,12 +104,19 @@ const PCRE_MAX_COUNT = 65535
 const MAX_COPIED_TRANSLATION = 65536
 # The callouts that end and begin the body of a lookbehind (see `lookbehind`). The others name a lookbehind.
 const CALLOUT_AT_TARGET = 0
-const CALLOUT_NOT_PAST_TARGET = 1
+const CALLOUT_AT_START = 1
 const CALLOUT_FIRST_LOOKBEHIND = 2
 # How the body of a lookbehind that is a callout starts, which no other pattern does.
 const LOOKBEHIND_PREFIX = "(?C1)"
-# PCRE2 numbers the callouts it adds itself 255.
-const PCRE_MAX_LOOKBEHIND_CALLOUT = 254
+# PCRE2 numbers the callouts it adds itself 255. The one before it is the callout that stands before each character
+# the body of a lookbehind takes, and lets it be taken only before the position of the lookbehind.
+const CALLOUT_BEFORE_TARGET = 254
+const PCRE_MAX_LOOKBEHIND_CALLOUT = 253
+# The body of a lookbehind that is a callout is tried only from where every character up to the lookbehind is one
+# it can take, when those characters are a set of up to this many ranges.
+const MAX_REACH_RANGES = 8
+# The largest count of a repetition in such a body under which each character is held to the position.
+const MAX_HELD_COUNT = 64
 
 const LINE_TERMINATOR_CLASS = "[\\x{a}\\x{d}\\x{2028}\\x{2029}]"
 const ANY_CHARACTER = "(?s:.)"
@@ -178,13 +185,15 @@ mutable struct Emitter
     walks::Vector{String}
     # The name of the group that holds the rest of the text where the lookbehind being written as a search stands.
     edgerest::String
+    # Whether the writer is in the body of a lookbehind that is a callout, outside the lookarounds of that body.
+    within::Bool
 end
 
 function Emitter(parser::Parser, root::Node)
     n = parser.groupcount
     return Emitter(parser.pattern, parser.unicode, root, Vector{Union{Nothing,Node}}(nothing, n), Node[], Node[],
         fill(false, n), fill(typemax(Int), n), [NO_NODES for _ in 1:n], [NO_NODES for _ in 1:n], IOBuffer(), String[],
-        fill("", n), zeros(Int, n), 0, false, 0, false, false, false, String[], CodeSet[], String[], "")
+        fill("", n), zeros(Int, n), 0, false, 0, false, false, false, String[], CodeSet[], String[], "", false)
 end
 
 # Works out what each backreference reads, and refuses the pattern when one cannot be written exactly.
@@ -571,6 +580,7 @@ function translation(E::Emitter, searching::Bool)
     E.haslookbehind = false
     E.backwards = false
     E.uncaptured = 0
+    E.within = false
     E.serial = 0
     empty!(E.names)
     empty!(E.lookbehinds)
@@ -881,10 +891,15 @@ function node(E::Emitter, n::Node)
     kind = n.kind
     out = E.out
     if kind == EMPTY
-    elseif kind == CHAR
-        literal(out, n.codepoint)
-    elseif kind == SET
-        writeclass(E, n.set)
+    elseif kind == CHAR || kind == SET
+        # In a group, so that a quantifier after the character repeats the callout with it.
+        E.within && print(out, "(?:(?C", CALLOUT_BEFORE_TARGET, ')')
+        if kind == CHAR
+            literal(out, n.codepoint)
+        else
+            writeclass(E, n.set)
+        end
+        E.within && print(out, ')')
     elseif kind == CAT
         if n === E.root
             terms(E, n.subs, 1)
@@ -914,6 +929,9 @@ function node(E::Emitter, n::Node)
         w = n.fold ? FOLD_WORD_CLASS : WORD_CLASS
         print(out, "(?:(?<=", w, ")(?=", w, ")|(?<!", w, ")(?!", w, "))")
     elseif kind == LOOK
+        # A lookaround inside the body of a lookbehind is not held to the position of that lookbehind.
+        within = E.within
+        E.within = false
         if n.behind
             lookbehind(E, n)
         else
@@ -924,6 +942,7 @@ function node(E::Emitter, n::Node)
             print(out, ')')
             E.backwards = backwards
         end
+        E.within = within
     elseif kind == BACKREF
         backreference(E, n)
     else
@@ -1422,6 +1441,20 @@ end
 # copies multiply when such repetitions are inside one another, and a pattern whose translation passes
 # MAX_COPIED_TRANSLATION is refused.
 function writerepeat(E::Emitter, n::Node)
+    # PCRE2 writes a repeated group out once for each iteration, and the callout before a character puts it in
+    # a group. So under a large count the characters are written without it, as a{70000} is, which PCRE2 keeps as
+    # a count. The callout only cuts short what cannot match.
+    if E.within && (n.min > MAX_HELD_COUNT || (n.max != UNBOUNDED && n.max < MAX_COUNT && n.max > MAX_HELD_COUNT))
+        E.within = false
+        repeated(E, n)
+        E.within = true
+    else
+        repeated(E, n)
+    end
+    return nothing
+end
+
+function repeated(E::Emitter, n::Node)
     neverruns(n) && return nothing
     body = n.subs[1]
     out = E.out
@@ -1713,14 +1746,97 @@ end
 #
 # PCRE2 10.42 takes a body only when its length is fixed, and later versions take one whose length is bounded and
 # short. So that a pattern means the same on each, a body is written as it is only when its length is fixed. Any
-# other body X is compiled apart, as (?C1)(?:X)(?C0), and the lookbehind is written as the callout (?Cn) that names
-# it, inside (?!...) when it is negative. When the match reaches the callout, the matcher searches the whole text
-# for X from the start. The callout 0 after X lets the search succeed only where X ends at the position of the
-# lookbehind, and the callout 1 before X ends the search once it starts past that position. That is the definition
-# of a lookbehind, which holds when its body matches some stretch of the text that ends where it stands. The search
-# takes time that grows with the square of the length of the text.
+# other body X is compiled apart, as (?C1)S(?:X)(?C0), and the lookbehind is written as the callout (?Cn) that names
+# it, inside (?!...) when it is negative. When the match reaches the callout, the matcher searches the text for X.
+# S takes the text up to a start (see below), and the callout 0 after X lets the search succeed only where X ends
+# at the position of the lookbehind. That is the definition of a lookbehind, which holds when its body matches some
+# stretch of the text that ends where it stands. The search takes time that grows with the square of the length of
+# the text.
+#
+# X can match only up to the position of the lookbehind, and left to itself it runs on past that position and comes
+# back, which for a repetition inside a repetition, as in (?<=(?:[ax]+){2,})\$, is every way to split the text after
+# the position before the first way that ends at it. ECMA-262 runs the body backwards from the position and never
+# sees the text after it. So each character X takes is written after the callout 254, which lets it be taken only
+# before the position: (?:(?C254)[ax]). A lookaround inside X is not held to the position.
+#
+# For the same reason the starts are tried from the position backwards, the nearest first, as ECMA-262 comes to
+# them. The callout 1 holds the search to the start of the text, and what stands before X takes the text up to the
+# start that is tried: (?:(?C254)(?s:.))*, which goes as far as the position and gives back one character at a
+# time. When the characters X can take are a set T of few ranges, no start before a character outside T is tried,
+# as X cannot match from one and would try every way to split the text up to that character. What stands before X
+# is then (?>(?:(?:(?C254)(?s:.))*(?C254)[^T])?)(?:(?C254)T)*: up to just after the last character before the
+# position that is not in T, once, and then over characters of T. An X that begins with ^ has one start, the start
+# of the text, and nothing stands before it.
+#
+# ECMA-262 comes first to the last character of X. So when X takes at least one character and the characters it
+# can end with are a set of few ranges, the callout stands after a lookbehind for one character of that set, and
+# X is not searched for where it cannot end: (?<=[x])(?C2) for (?<=(?:a+)+x).
 #
 # A body that holds a LIVE backreference is a search that PCRE2 runs (see `walk`).
+# The characters a node can take, outside the lookarounds in it, or nothing when that is any character (a
+# backreference takes what its group holds).
+function taken(n::Node)::Union{Nothing,CodeSet}
+    kind = n.kind
+    kind == CHAR && return Int32[n.codepoint, n.codepoint]
+    kind == SET && return n.set
+    kind == LOOK && return NO_CHARACTERS
+    if kind == BACKREF
+        # One that never reads a group takes nothing.
+        return all(==(NEVER), n.statuses) ? NO_CHARACTERS : nothing
+    end
+    set = NO_CHARACTERS
+    for sub in n.subs
+        one = taken(sub)
+        one === nothing && return nothing
+        set = setunion(set, one)
+    end
+    return set
+end
+
+# The characters that can be the last a node takes when it takes one, or nothing when that is not known (a
+# backreference ends with what its group holds).
+function ends(n::Node)::Union{Nothing,CodeSet}
+    kind = n.kind
+    kind == CHAR && return Int32[n.codepoint, n.codepoint]
+    kind == SET && return n.set
+    if kind == BACKREF
+        return all(==(NEVER), n.statuses) ? NO_CHARACTERS : nothing
+    elseif kind == GROUP || kind == REPEAT
+        return ends(n.subs[1])
+    elseif kind == ALT
+        set = NO_CHARACTERS
+        for sub in n.subs
+            one = ends(sub)
+            one === nothing && return nothing
+            set = setunion(set, one)
+        end
+        return set
+    elseif kind == CAT
+        # The last term, and the one before it when the last can match the empty string, and so on.
+        set = NO_CHARACTERS
+        for k in length(n.subs):-1:1
+            sub = n.subs[k]
+            one = ends(sub)
+            one === nothing && return nothing
+            set = setunion(set, one)
+            minlength(sub) > 0 && break
+        end
+        return set
+    end
+    # An assertion takes nothing.
+    return NO_CHARACTERS
+end
+
+# Whether a node can match only from the start of the text: it begins with ^ outside a group with the m modifier.
+function startsthetext(n::Node)
+    kind = n.kind
+    kind == BOL && return true
+    kind == GROUP && return startsthetext(n.subs[1])
+    kind == CAT && return !isempty(n.subs) && startsthetext(n.subs[1])
+    kind == ALT && return all(startsthetext, n.subs)
+    return false
+end
+
 function lookbehind(E::Emitter, n::Node)
     E.haslookbehind = true
     body = n.subs[1]
@@ -1755,7 +1871,7 @@ function lookbehind(E::Emitter, n::Node)
     index = length(E.lookbehinds)
     number = CALLOUT_FIRST_LOOKBEHIND + index - 1
     if number > PCRE_MAX_LOOKBEHIND_CALLOUT
-        unsupported(E, REFUSED_BY_ENGINE * " (more than 253 lookbehinds of no fixed length)")
+        unsupported(E, REFUSED_BY_ENGINE * " (more than 252 lookbehinds of no fixed length)")
     end
     # The body is a pattern of its own, with its own definitions. It holds no group that is read and no LIVE
     # backreference, and the names it writes for itself are its own.
@@ -1768,8 +1884,28 @@ function lookbehind(E::Emitter, n::Node)
     E.largesets = CodeSet[]
     E.walks = String[]
     E.names = String[]
-    print(E.out, LOOKBEHIND_PREFIX, "(?:")
+    print(E.out, LOOKBEHIND_PREFIX)
+    before = string("(?C", CALLOUT_BEFORE_TARGET, ')')
+    reach = taken(body)
+    if startsthetext(body)
+        # X can match only from the start of the text, which is where the search starts.
+    elseif reach !== nothing && length(reach) <= 2 * MAX_REACH_RANGES
+        # To just after the last character before the position that X cannot take, and then over those it can.
+        print(E.out, "(?>(?:(?:", before, "(?s:.))*", before)
+        writeclass(E, complement(reach))
+        print(E.out, ")?)")
+        if !isempty(reach)
+            print(E.out, "(?:", before)
+            writeclass(E, reach)
+            print(E.out, ")*")
+        end
+    else
+        print(E.out, "(?:", before, "(?s:.))*")
+    end
+    print(E.out, "(?:")
+    E.within = true
     node(E, body)
+    E.within = false
     print(E.out, ")(?C", CALLOUT_AT_TARGET, ')')
     definitions(E)
     E.lookbehinds[index] = String(take!(E.out))
@@ -1778,10 +1914,18 @@ function lookbehind(E::Emitter, n::Node)
     E.walks = walks
     E.names = names
     E.backwards = backwards
+    # The body is searched for only where the character before the lookbehind is one the body can end with.
+    last = minlength(body) > 0 ? ends(body) : nothing
+    test = IOBuffer()
+    if last !== nothing && min(length(last), length(complement(last))) <= 2 * MAX_REACH_RANGES
+        print(test, "(?<=")
+        writeset(test, last)
+        print(test, ')')
+    end
     if n.negative
-        print(out, "(?!(?C", number, "))")
+        print(out, "(?!", String(take!(test)), "(?C", number, "))")
     else
-        print(out, "(?C", number, ')')
+        print(out, String(take!(test)), "(?C", number, ')')
     end
     return nothing
 end

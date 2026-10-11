@@ -422,7 +422,8 @@ end
         end
         # A group in an end of a fixed length: that end, and then a lookbehind for what stands before it.
         @test E.translate("(?<=a*(x))-\\1").main == "(?<=(?<g1>x)(?<=(?C2)(?s:.){1}))\\x{2d}\\k<g1>"
-        @test E.translate("(?<=a*(x))-\\1").lookbehinds == ["(?C1)(?:a*)(?C0)"]
+        @test E.translate("(?<=a*(x))-\\1").lookbehinds == ["(?C1)(?>(?:(?:(?C254)(?s:.))*(?C254)[^\\x{61}])?)" *
+            "(?:(?C254)[\\x{61}])*(?:(?:(?C254)a)*)(?C0)"]
         # A repetition first: a search for where it starts, with the rest of the pattern inside the search. The
         # search stops where the lookbehind first matches, as the condition of a group does not take another way.
         @test E.translate("(?<=(a)+)x\\1").main == "(?=(?<r1>(?s:.*)))(?=(?&w2))(?(DEFINE)(?<w2>(?(?=(?<m3>" *
@@ -432,7 +433,8 @@ end
         @test E.translate("(?<=(|a)x)-\\1").main == "(?<=(?:)x)\\x{2d}"
         @test E.translate("(?<=(?<!|\\1)(a)|x)-\\1").main == "(?<=x)\\x{2d}"
         # A pattern with no backreference is written as it was.
-        @test E.translate("(?<=(|a)x)-").lookbehinds == ["(?C1)(?:(?:|a)x)(?C0)"]
+        @test E.translate("(?<=(|a)x)-").lookbehinds == ["(?C1)(?>(?:(?:(?C254)(?s:.))*(?C254)[^\\x{61}\\x{78}])?)" *
+            "(?:(?C254)[\\x{61}\\x{78}])*(?:(?:|(?:(?C254)a))(?:(?C254)x))(?C0)"]
         @test E.translate("a(?!)b|c").main == "a(?!)b|c"
         # The match does not come back into the lookbehind: with the group set to "a", this cannot match "ax-".
         @test !matches("(?<=(?:(a)|.)+)x\\1", "ax-")
@@ -540,5 +542,71 @@ end
         @test E.ismatch(dot, "\u00e9")
         # A pattern that is valid with the u flag matches characters.
         @test E.ismatch(E.compile("^.\$"), "\U10400")
+    end
+
+    # A lookbehind of no fixed length is a search for where its body starts. The body is held to the place the
+    # lookbehind stands at, and the starts are tried from that place backwards. Before, the body ran on past the
+    # place and the starts were tried from the start of the text, and each of these patterns reached the limit on
+    # the steps of a search on some of the long texts, where V8 answers at once.
+    @testset "the search for a lookbehind" begin
+        long = ["aaaaaaaaaaaaa", "aaaaaaaaaaaaaa-", "aaaaaaaaaaax", "aaaaaaaaaaxa", "aaaaaaaaaxaaaaaaaaaa",
+            "axaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxax-", "xaaaaaaaaaaaaaa", "-axaxaxaxaxaxaxaxaxaxaxaxaxaxaxax",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-a"]
+        matched = [
+            (raw"(?<=((?:[ax]+){2,}))$", ["aaaaaaaaaaaaa", "aaaaaaaaaaax", "aaaaaaaaaaxa", "aaaaaaaaaxaaaaaaaaaa", "xaaaaaaaaaaaaaa", "-axaxaxaxaxaxaxaxaxaxaxaxaxaxaxax"]),
+            (raw"(?<=((?:(?:\b)*[ax]+){2,}))$", ["aaaaaaaaaaaaa", "aaaaaaaaaaax", "aaaaaaaaaaxa", "aaaaaaaaaxaaaaaaaaaa", "xaaaaaaaaaaaaaa", "-axaxaxaxaxaxaxaxaxaxaxaxaxaxaxax"]),
+            (raw"(?<=((?:(?:[ax]+|\2){1,2}|(?:(a){0})?|(?:[ax]+x{0}){2}?){2}))$", ["aaaaaaaaaaaaa", "aaaaaaaaaaaaaa-", "aaaaaaaaaaax", "aaaaaaaaaaxa", "aaaaaaaaaxaaaaaaaaaa", "axaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxax-", "xaaaaaaaaaaaaaa", "-axaxaxaxaxaxaxaxaxaxaxaxaxaxaxax", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-a"]),
+            (raw"(?<=((?:()|(?:[ax]+|(?<!))+(?:\b|(?!)){2}?){1,3}))$", ["aaaaaaaaaaaaa", "aaaaaaaaaaaaaa-", "aaaaaaaaaaax", "aaaaaaaaaaxa", "aaaaaaaaaxaaaaaaaaaa", "axaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxax-", "xaaaaaaaaaaaaaa", "-axaxaxaxaxaxaxaxaxaxaxaxaxaxaxax", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-a"]),
+            (raw"(?<=((?:(?:(?:x|)+|a){3}|(?<=)){3}))$", ["aaaaaaaaaaaaa", "aaaaaaaaaaaaaa-", "aaaaaaaaaaax", "aaaaaaaaaaxa", "aaaaaaaaaxaaaaaaaaaa", "axaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxax-", "xaaaaaaaaaaaaaa", "-axaxaxaxaxaxaxaxaxaxaxaxaxaxaxax", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-a"]),
+            (raw"(?<=(?:a|aa)+)x", ["aaaaaaaaaaax", "aaaaaaaaaaxa", "aaaaaaaaaxaaaaaaaaaa", "axaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxax-", "-axaxaxaxaxaxaxaxaxaxaxaxaxaxaxax"]),
+            (raw"(?<!(?:a+|x)+-)a$", ["aaaaaaaaaaaaa", "aaaaaaaaaaxa", "aaaaaaaaaxaaaaaaaaaa", "xaaaaaaaaaaaaaa"]),
+            (raw"(?<=(?=a)(?:[ax]+)+)-", ["aaaaaaaaaaaaaa-", "axaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxax-", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-a"]),
+            (raw"(?<=^(?:a|x)+)-", ["aaaaaaaaaaaaaa-", "axaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxaxax-", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-a"]),
+            (raw"(?<=(?:a+)+x)a$", ["aaaaaaaaaaxa"]),
+            (raw"(?<=-(?:a|x)+(?!a))x", ["-axaxaxaxaxaxaxaxaxaxaxaxaxaxaxax"]),
+        ]
+        for (pattern, texts) in matched
+            compiled = E.compile(pattern)
+            for text in long
+                got = try
+                    E.ismatch(compiled, text)
+                catch e
+                    e isa E.MatchError || rethrow()
+                    sprint(showerror, e)
+                end
+                got == (text in texts) || println("[v8tests] ", repr(pattern), " on ", repr(text), ": ", got)
+                @test got == (text in texts)
+            end
+        end
+        checkv8table([
+            (raw"(?<=((?:[ax]+){2,}))$", "0d86c361b0ca"),
+            (raw"(?<=((?:(?:\b)*[ax]+){2,}))$", "0d86c361b0ca"),
+            (raw"(?<=((?:(?:[ax]+|\2){1,2}|(?:(a){0})?|(?:[ax]+x{0}){2}?){2}))$", "ffffffffffff"),
+            (raw"(?<=((?:()|(?:[ax]+|(?<!))+(?:\b|(?!)){2}?){1,3}))$", "ffffffffffff"),
+            (raw"(?<=((?:(?:(?:x|)+|a){3}|(?<=)){3}))$", "ffffffffffff"),
+            (raw"(?<=(?:a|aa)+)x", "0402e100800a"),
+            (raw"(?<!(?:a+|x)+-)a$", "492482412482"),
+            (raw"(?<=(?=a)(?:[ax]+)+)-", "02013c804034"),
+            (raw"(?<=^(?:a|x)+)-", "02413c9e0031"),
+            (raw"(?<=(?:a+)+x)a$", "000080000000"),
+            (raw"(?<=-(?:a|x)+(?!a))x", "000000009000"),
+        ])
+        # How the body is written: the callout 254 before each character, and before the body what takes the
+        # text up to the start that is tried. A body that begins with ^ has one start.
+        @test E.translate("(?<=(?:a|aa)+)x").lookbehinds == [raw"(?C1)(?>(?:(?:(?C254)(?s:.))*(?C254)[^\x{61}])?)" *
+            raw"(?:(?C254)[\x{61}])*(?:(?:(?:(?C254)a)|(?:(?C254)a)(?:(?C254)a))+)(?C0)"]
+        @test E.translate("(?<=^a+)b").lookbehinds == [raw"(?C1)(?:\A(?:(?C254)a)+)(?C0)"]
+        # Under a large count the characters are written without the callout, as PCRE2 keeps the count of a
+        # character and writes a group out once for each iteration.
+        @test E.translate("(?<=a{70}b*)x").lookbehinds == [raw"(?C1)(?>(?:(?:(?C254)(?s:.))*(?C254)[^\x{61}-\x{62}])?)" *
+            raw"(?:(?C254)[\x{61}-\x{62}])*(?:a{70}(?:(?C254)b)*)(?C0)"]
+        # The body is searched for only where the character before the lookbehind is one it can end with.
+        @test E.translate(raw"(?<=(?:a+)+x)a$").main == raw"(?<=[\x{78}])(?C2)a\z"
+        @test E.translate(raw"(?<!(?:a+|x)+-)a$").main == raw"(?!(?<=[\x{2d}])(?C2))a\z"
+        @test E.translate("(?<=a?)x").main == "(?C2)x"
+        # A lookahead inside the body sees the text after the lookbehind.
+        @test matches("(?<=a+(?=.*x))-", "aa-x")
+        @test !matches("(?<=a+(?=.*x))-", "aa-a")
+        @test matches("(?<=a+(?=-x))-", "aa-x")
     end
 end

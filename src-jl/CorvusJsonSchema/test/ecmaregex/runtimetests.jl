@@ -137,13 +137,20 @@ end
         @test error.pattern == "^(?:a|a)+\$"
         @test error.code == -47
         @test occursin("match limit", sprint(showerror, error))
-        # The same through a lookbehind that is a callout. The error comes out of the search for its body.
-        behind = E.compile("^a*(?<=^(?:a|a)+)c")
-        @test E.ismatch(behind, "a"^40 * "c")
-        @test_throws E.MatchError E.ismatch(behind, "a"^40 * "bc")
-        # The searches for the lookbehinds of one match have a limit together.
-        many = E.compile("^a*(?<=^(?:a|aa)*)b")
-        @test E.ismatch(many, "aaab")
+        # The same through a lookbehind that is a callout. The error comes out of the search for its body, which
+        # tries every way to take the forty a before it finds no b.
+        behind = E.compile("^a*b?(?<=^(?:a|a)+ba*)c")
+        @test E.ismatch(behind, "a"^40 * "bc")
+        @test_throws E.MatchError E.ismatch(behind, "a"^40 * "c")
+        # The body of a lookbehind does not run past the place the lookbehind stands at, and its starts are tried
+        # from that place backwards, so these two end at once. Each reached the limit before.
+        @test !E.ismatch(E.compile("^a*(?<=^(?:a|a)+)c"), "a"^40 * "bc")
+        @test !E.ismatch(E.compile("^a*(?<=^(?:a|aa)*)b"), "a"^60 * "c")
+        # The searches for the lookbehinds of one match have a limit together. One search of this one tries a
+        # thousand ways and more from each start, and a text of sixty a has it searched sixty times.
+        many = E.compile("^[ab]*(?<=(?:a|aa){10}ba*)c")
+        @test E.ismatch(many, "a"^12 * "bc")
+        @test !E.ismatch(many, "a"^30 * "c")
         @test_throws E.MatchError E.ismatch(many, "a"^60 * "c")
         # The pattern is still good after an error.
         @test E.ismatch(slow, "aaa")
