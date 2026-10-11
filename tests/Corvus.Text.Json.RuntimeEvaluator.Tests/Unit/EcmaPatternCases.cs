@@ -370,6 +370,32 @@ internal static class EcmaPatternCases
     ];
 
     /// <summary>
+    /// Patterns with a part that never matches: an empty class, a negative lookaround of nothing. The first three
+    /// have such a part as an alternative beside an empty one, inside a repetition whose group a backreference
+    /// reads. It was written as an optional group around an assertion that never holds, which .NET sees through,
+    /// and .NET then ran the repetition as if it had no empty alternative. The first was found by comparing random
+    /// patterns with V8. The others pin what the parts taken out must not change.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] PartsThatNeverMatch =
+    [
+        ("(?=((?:(x)+|(?:(?<!)|()){3}(?:()){2}?){2}))\\1$", ["", "a", "x", "xx", "ax", "xa", "b", "bb", "ab", "c", "xxx", "aa", "xb"], []),
+        ("(?=((?:x+|(?:[]|)){2}))\\1$", ["", "a", "x", "xx", "ax", "xa", "b", "bb", "ab", "c", "xxx", "aa", "xb"], []),
+        ("^(?=((?:x+|(?:(?<!)|())){2}b))\\1$", ["b", "xb"], ["", "a", "x", "xx", "ax", "xa", "bb", "ab", "c", "xxx", "aa"]),
+        ("^((?:x+|(?:[]|)){2})\\1$", ["", "xx"], ["a", "x", "ax", "xa", "b", "bb", "ab", "c", "xxx", "aa", "xb"]),
+        ("^(?:x+|(?<!)|){2}$", ["", "x", "xx", "xxx"], ["a", "ax", "xa", "b", "bb", "ab", "c", "aa", "xb"]),
+        ("^(?:x+|[]|){2}$", ["", "x", "xx", "xxx"], ["a", "ax", "xa", "b", "bb", "ab", "c", "aa", "xb"]),
+        ("^(?:x+|(?:(?<!)|())){2}$", ["", "x", "xx", "xxx"], ["a", "ax", "xa", "b", "bb", "ab", "c", "aa", "xb"]),
+        ("^(?:a|[])+$", ["a", "aa"], ["", "x", "xx", "ax", "xa", "b", "bb", "ab", "c", "xxx", "xb"]),
+        ("^(?:[])*b$", ["b"], ["", "a", "x", "xx", "ax", "xa", "bb", "ab", "c", "xxx", "aa", "xb"]),
+        ("^(?:(a[])|b)\\1$", ["b"], ["", "a", "x", "xx", "ax", "xa", "bb", "ab", "c", "xxx", "aa", "xb"]),
+        ("^(?!(?:[]))a$", ["a"], ["", "x", "xx", "ax", "xa", "b", "bb", "ab", "c", "xxx", "aa", "xb"]),
+        ("^(?:a[]|(b)(?=[])|c)$", ["c"], ["", "a", "x", "xx", "ax", "xa", "b", "bb", "ab", "xxx", "aa", "xb"]),
+        ("^(?:x+|(?:[]|)){3}b?$", ["", "x", "xx", "b", "xxx", "xb"], ["a", "ax", "xa", "bb", "ab", "c", "aa"]),
+        ("^(?:(?:x+|(?<!)|())\\1){2}$", ["", "x", "xx", "xxx"], ["a", "ax", "xa", "b", "bb", "ab", "c", "aa", "xb"]),
+        ("^(?:x|(?=[])x|)+a$", ["a", "xa"], ["", "x", "xx", "ax", "b", "bb", "ab", "c", "xxx", "aa", "xb"]),
+    ];
+
+    /// <summary>
     /// Patterns whose validity is ECMA-262's where V8 13.6 says otherwise. The counts of a quantifier are numbers,
     /// and the first may not be the greater. V8 keeps a count past 2,147,483,647 as that number, so it accepts
     /// <c>a{2147483648,2147483647}</c>, and any two counts past it in either order. The Script value

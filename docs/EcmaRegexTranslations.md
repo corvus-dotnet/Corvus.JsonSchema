@@ -439,6 +439,14 @@ what must be matched first on the right.
 A negative lookaround whose body matches the empty string wherever it stands, such as `(?!)` or `(?<!a*)`, never
 holds and is written `(?!\z|[\s\S])`.
 
+What never matches takes what depends on it out of the pattern, before anything is written. Terms one after
+another with such a part never match, so `a(?!)b` is `(?!\z|[\s\S])`. An alternative that never matches is no
+alternative, so `a(?!)b|c` is `c` and `^(?:x+|[]|){2}$` is `^(?:(?:x+)?){0,2}\z`. A repetition that need not run
+of what never matches is nothing, and so is a negative lookaround of it. This is for .NET. An alternative that
+never matches beside an empty one would be an optional group around `(?!\z|[\s\S])`, which .NET sees through, and
+it then runs `(?:x+|(?:(?!\z|[\s\S]))?){2}` as it runs `(?:x+|){2}`: as `(?:x+){2}` (see
+[Alternatives](#alternatives)).
+
 Without the `u` flag a lookahead may be quantified. It is a body that can only match the empty string, so it is
 written once or not at all.
 

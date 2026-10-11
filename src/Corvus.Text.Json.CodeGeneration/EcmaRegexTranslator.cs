@@ -591,7 +591,7 @@ internal static class EcmaRegexTranslator
                     }
                 }
 
-                return n;
+                return this.WithoutWhatNeverMatches(n);
             }
 
             bool opens = n.Kind == EcmaRegexNodeKind.Group && n.Group != 0;
@@ -632,7 +632,60 @@ internal static class EcmaRegexTranslator
                 }
             }
 
-            return n;
+            return this.WithoutWhatNeverMatches(n);
+        }
+
+        /// <summary>
+        /// Takes a part that never matches out of a node whose parts have been simplified: an alternative that never
+        /// matches is no alternative, terms one after another never match when one of them does not, and neither
+        /// does a group or a repetition that must run. A repetition that need not run of what never matches is
+        /// nothing, and so is a negative lookaround of it. The groups of what is taken out never take part.
+        /// <para>
+        /// This is for .NET and not for tidiness. An alternative such as <c>(?&lt;!)</c> beside an empty one would be
+        /// written <c>(?:(?!\z|[\s\S]))?</c>, an optional group that .NET sees through, and it then runs
+        /// <c>(?:x+|(?:(?!\z|[\s\S]))?){2}</c> as it runs <c>(?:x+|){2}</c>: as <c>(?:x+){2}</c>.
+        /// </para>
+        /// </summary>
+        private EcmaRegexNode WithoutWhatNeverMatches(EcmaRegexNode n)
+        {
+            switch (n.Kind)
+            {
+                case EcmaRegexNodeKind.Alt when Array.Exists(n.Subs, IsNever):
+                {
+                    EcmaRegexNode[] subs = Array.FindAll(n.Subs, sub => !IsNever(sub));
+                    if (subs.Length == 0)
+                    {
+                        return NeverNode();
+                    }
+
+                    if (subs.Length == 1)
+                    {
+                        return subs[0];
+                    }
+
+                    n.Subs = subs;
+                    return n;
+                }
+
+                case EcmaRegexNodeKind.Cat when Array.Exists(n.Subs, IsNever):
+                case EcmaRegexNodeKind.Group when IsNever(n.Subs[0]):
+                case EcmaRegexNodeKind.Look when IsNever(n.Subs[0]):
+                case EcmaRegexNodeKind.Repeat when IsNever(n.Subs[0]):
+                {
+                    List<int> groups = [];
+                    CollectGroups(n, groups);
+                    foreach (int g in groups)
+                    {
+                        this.dead[g] = true;
+                    }
+
+                    bool nothing = n.Kind == EcmaRegexNodeKind.Look ? n.Negative : n.Kind == EcmaRegexNodeKind.Repeat && n.Min == 0;
+                    return nothing ? new EcmaRegexNode(EcmaRegexNodeKind.Empty) : NeverNode();
+                }
+
+                default:
+                    return n;
+            }
         }
 
         /// <summary>

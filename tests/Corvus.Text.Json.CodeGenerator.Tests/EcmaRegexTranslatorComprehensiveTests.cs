@@ -832,7 +832,8 @@ public class EcmaRegexTranslatorComprehensiveTests
     [DataRow("(?=a(?=b))", "(?=a(?=b))")]
     [DataRow("(?=a(?!b))", "(?=a(?!b))")]
     [DataRow("a(?=)b", "ab")]
-    [DataRow("a(?!)b", @"a(?!\z|[\s\S])b")]
+    [DataRow("a(?!)b", @"(?!\z|[\s\S])")]
+    [DataRow("a(?!)b|c", "c")]
     public void NestedLookaroundTranslation(string ecma, string expected)
     {
         Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));

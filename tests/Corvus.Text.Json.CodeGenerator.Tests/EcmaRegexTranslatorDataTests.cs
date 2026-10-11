@@ -219,6 +219,30 @@ public class EcmaRegexTranslatorDataTests
         AssertCases(EcmaPatternCases.ScriptOfNoCharacter, engine);
     }
 
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
+    public void PatternsWithAPartThatNeverMatchesAnswerAsV8(RegexOptions engine)
+    {
+        AssertCases(EcmaPatternCases.PartsThatNeverMatch, engine);
+    }
+
+    /// <summary>
+    /// A part that never matches is taken out before anything is written: an alternative that never matches is no
+    /// alternative, and a repetition that need not run of what never matches is nothing.
+    /// </summary>
+    [TestMethod]
+    [DataRow(@"^(?:a|[])+$", @"^(?:a)+\z")]
+    [DataRow(@"^(?:[])*b$", @"^b\z")]
+    [DataRow(@"^(?!(?:[]))a$", @"^a\z")]
+    [DataRow(@"^(?:x+|(?<!)|){2}$", @"^(?:(?:x+)?){0,2}\z")]
+    [DataRow(@"a[]", @"(?!\z|[\s\S])")]
+    public void APartThatNeverMatchesIsTakenOut(string pattern, string expected)
+    {
+        Assert.IsTrue(EcmaRegexTranslator.TryTranslate(pattern, out string translated, out string error), error);
+        Assert.AreEqual(expected, translated);
+    }
+
     /// <summary>
     /// A lazy repetition with more than eight iterations left to choice, inside a lookaround whose captures a
     /// backreference reads, is written as a repetition with no highest count whose iterations a group counts. The
