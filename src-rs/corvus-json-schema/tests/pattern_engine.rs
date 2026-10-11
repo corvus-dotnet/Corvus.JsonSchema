@@ -709,3 +709,37 @@ fn k_in_a_class_is_not_valid_in_a_pattern_with_a_named_group() {
         (r"^[(?<n>]\k$", &["nk", "(k", "<k"], &["k", "n", "ak"]),
     ]);
 }
+
+/// The two numbers of a count are compared as they are written, however long. The engine reads a number of more
+/// than ten digits as its largest, and then took `a{99999999999999999999,99999999999999999998}`. V8 takes it
+/// too, and `a{2147483648,2147483647}`: ECMA-262 says a first number greater than the second is a syntax error,
+/// and that is the answer here.
+#[test]
+fn the_numbers_of_a_count_are_compared_as_they_are_written() {
+    for pattern in [
+        r"a{99999999999999999999,99999999999999999998}",
+        r"a{2147483648,2147483647}",
+        r"a{4294967296,4294967295}",
+        r"a{00000000000000000000000002,1}",
+        r"a{010,9}",
+        r"a{3,2}\-",
+        r"x{1,2}{99999999999999999999,99999999999999999998}",
+        r"^{99999999999999999999,99999999999999999998}",
+        r"(?:a|b{99999999999999999999,99999999999999999998})",
+        r"(?<=a{99999999999999999999,99999999999999999998})",
+        r"\-{99999999999999999999,99999999999999999998}",
+    ] {
+        let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
+        assert_eq!(e.message(), format!("Invalid regular expression '{pattern}' in pattern."));
+    }
+    check_texts(&[
+        (r"^a{9,010}$", &["aaaaaaaaa", "aaaaaaaaaa"], &["aaaaaaaa", "aaaaaaaaaaa"]),
+        (r"^a{00000000000000000000000001,2}$", &["a", "aa"], &["", "aaa"]),
+        (r"^a{99999999999999999998,99999999999999999999}$", &[], &["", "a", "aaaa"]),
+        (r"^a{0,99999999999999999999}$", &["", "a", "aaaa"], &["b"]),
+        // In a class, after a backslash and without its closing brace it is no count.
+        (r"^[{99999999999999999999,99999999999999999998}]+$", &["{9,8}", "9"], &["", "a"]),
+        (r"^\{3,2}$", &["{3,2}"], &["", "{{{"]),
+        (r"^a{3,2$", &["a{3,2"], &["", "aaa"]),
+    ]);
+}

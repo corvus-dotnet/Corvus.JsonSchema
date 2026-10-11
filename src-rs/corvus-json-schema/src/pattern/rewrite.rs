@@ -122,7 +122,46 @@ fn quantified_assertion(pattern: &str, unicode: bool) -> bool {
 /// Whether the pattern is one regress takes (with the `u` flag when `unicode`, and otherwise without it) and
 /// ECMA-262 does not.
 pub(super) fn not_valid(pattern: &str, unicode: bool) -> bool {
-    quantified_assertion(pattern, unicode) || (!unicode && k_in_a_class(pattern))
+    quantified_assertion(pattern, unicode) || counts_out_of_order(pattern) || (!unicode && k_in_a_class(pattern))
+}
+
+/// Whether the pattern has a count whose first number is greater than its second, as `a{3,2}` has. regress reads a
+/// number that does not fit as the largest it holds, and then takes `a{99999999999999999999,99999999999999999998}`.
+/// The numbers are compared here as they are written.
+///
+/// Outside a class, `{`, digits, `,`, digits and `}` are a count in both grammars wherever they come, unless the
+/// brace is escaped: after a term it is its quantifier, and anywhere else no pattern has it.
+fn counts_out_of_order(pattern: &str) -> bool {
+    let b = pattern.as_bytes();
+    let digits = |from: usize| from + b[from..].iter().take_while(|d| d.is_ascii_digit()).count();
+    // A number without its leading zeros is greater when it is longer, and then by its digits.
+    let number = |from: usize, to: usize| {
+        let zeros = b[from..to].iter().take_while(|&&d| d == b'0').count();
+        (to - from - zeros, &b[from + zeros..to])
+    };
+    let (mut in_class, mut i) = (false, 0);
+    while i < b.len() {
+        match b[i] {
+            b'\\' => i += 1,
+            b'[' => in_class = true,
+            b']' => in_class = false,
+            b'{' if !in_class => {
+                let first = digits(i + 1);
+                if first > i + 1 && b.get(first) == Some(&b',') {
+                    let second = digits(first + 1);
+                    if second > first + 1
+                        && b.get(second) == Some(&b'}')
+                        && number(i + 1, first) > number(first + 1, second)
+                    {
+                        return true;
+                    }
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    false
 }
 
 /// Whether the pattern has a named group and `\k` in a class. Without the `u` flag `\k` is the letter only in a
@@ -2481,6 +2520,38 @@ mod tests {
         }
         for pattern in [r"\\b+", r"[\b+]", r"(?:\b)+", r"a\b", r"\b\{", r"\b{", r"\b{a}"] {
             assert!(!quantified_assertion(pattern, false), "{pattern}");
+        }
+    }
+
+    #[test]
+    fn a_count_with_its_numbers_out_of_order() {
+        for pattern in [
+            r"a{3,2}",
+            r"a{10,9}",
+            r"a{99999999999999999999,99999999999999999998}",
+            r"a{0002,1}",
+            r"\\{3,2}",
+            r"[a]{3,2}",
+            r"[]{3,2}",
+            r"\]{3,2}",
+        ] {
+            assert!(counts_out_of_order(pattern), "{pattern}");
+        }
+        for pattern in [
+            r"a{2,3}",
+            r"a{9,10}",
+            r"a{2,0003}",
+            r"a{3,3}",
+            r"a{99999999999999999998,99999999999999999999}",
+            r"\{3,2}",
+            r"[{3,2}]",
+            r"[\]{3,2}]",
+            r"a{3,2",
+            r"a{3,}",
+            r"a{,2}",
+            r"a{3 ,2}",
+        ] {
+            assert!(!counts_out_of_order(pattern), "{pattern}");
         }
     }
 
