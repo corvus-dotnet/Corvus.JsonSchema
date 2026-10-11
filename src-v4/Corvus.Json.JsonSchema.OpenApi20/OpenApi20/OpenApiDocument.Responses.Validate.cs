@@ -308,16 +308,16 @@ public readonly partial struct OpenApiDocument
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^(?:[0-9]{3})\\z|^(?:default)\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]
+            [GeneratedRegex("^(?:[0-9]{3})\\z|^(?:default)\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
             private static partial Regex CreatePatternProperties1();
 #else
-            private static Regex CreatePatternProperties1() => new("^(?:[0-9]{3})\\z|^(?:default)\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));
+            private static Regex CreatePatternProperties1() => new("^(?:[0-9]{3})\\z|^(?:default)\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));
 #endif
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^x-", RegexOptions.None, matchTimeoutMilliseconds: 10000)]
+            [GeneratedRegex("^x-", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
             private static partial Regex CreatePatternProperties2();
 #else
-            private static Regex CreatePatternProperties2() => new("^x-", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));
+            private static Regex CreatePatternProperties2() => new("^x-", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));
 #endif
         }
     }

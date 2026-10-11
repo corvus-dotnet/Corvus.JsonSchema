@@ -67,10 +67,10 @@ public readonly partial struct AsyncApiDocument
                 }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                [GeneratedRegex("^[a-zA-Z0-9_0-9.\\-_]+\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]
+                [GeneratedRegex("^[a-zA-Z0-9_0-9.\\-_]+\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
                 private static partial Regex CreatePatternProperties();
 #else
-                private static Regex CreatePatternProperties() => new("^[a-zA-Z0-9_0-9.\\-_]+\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));
+                private static Regex CreatePatternProperties() => new("^[a-zA-Z0-9_0-9.\\-_]+\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));
 #endif
             }
         }

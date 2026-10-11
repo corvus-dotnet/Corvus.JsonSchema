@@ -49,7 +49,7 @@ internal static class CorvusJsonSchemaProgram
             AssertFormat = true,
             AssertFormatInLegacyDrafts = true,
             DocumentResolver = TryGetDocument,
-            RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(10000),
+            RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(1000),
         };
     }
 

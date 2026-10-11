@@ -161,10 +161,10 @@ public readonly partial struct MigrationPatternUnion
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^corvus-[0-9]+\\z", RegexOptions.None, matchTimeoutMilliseconds: 10000)]
+            [GeneratedRegex("^corvus-[0-9]+\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
             private static partial Regex CreatePattern();
 #else
-            private static Regex CreatePattern() => new("^corvus-[0-9]+\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(10000));
+            private static Regex CreatePattern() => new("^corvus-[0-9]+\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));
 #endif
         }
     }
