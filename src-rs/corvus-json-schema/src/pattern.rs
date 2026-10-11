@@ -297,9 +297,9 @@ static CACHE: LazyLock<Mutex<HashMap<String, Arc<Pattern>>>> = LazyLock::new(|| 
 pub(crate) enum PatternError {
     /// It is not a valid ECMA-262 regular expression.
     Invalid,
-    /// It is valid, and it has a repetition inside a repetition that has to be written out for the engine (see
-    /// `rewrite`), whose body can match nothing, so that the engine cannot be given it as it is written, and
-    /// whose minimum comes to more than the engine is given, or whose groups a reference outside it reads.
+    /// It is valid, and the engine answers it wrongly as it is written, and the pattern the engine is given in
+    /// its place (see `rewrite`) comes to more than the engine is given: a repetition inside a repetition is
+    /// written out as copies, and the copies are too many.
     TooLarge,
 }
 
@@ -323,6 +323,7 @@ pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
     }
     // Validity is ECMA-262's: a pattern regress rejects is an error, whichever matcher would run it. regress allows
     // a quantifier on a word boundary, which ECMA-262 does not.
+    let source = pattern;
     let (regress, unicode) = compile_regress(pattern).ok_or(PatternError::Invalid)?;
     if rewrite::quantified_assertion(pattern, unicode) {
         return Err(PatternError::Invalid);
@@ -362,8 +363,8 @@ pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
             }
         }
     };
-    let p = Arc::new(Pattern { source: pattern.to_string(), matcher });
-    CACHE.lock().unwrap().insert(pattern.to_string(), p.clone());
+    let p = Arc::new(Pattern { source: source.to_string(), matcher });
+    CACHE.lock().unwrap().insert(source.to_string(), p.clone());
     Ok(p)
 }
 

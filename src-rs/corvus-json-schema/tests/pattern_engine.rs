@@ -487,11 +487,11 @@ fn long_texts() -> Vec<String> {
     ]
 }
 
-/// A repetition that is written out as copies multiplies with the repetitions around it, and each optional copy
-/// is a group inside the one before. Past 65,536 characters, or deeper than the 256 levels the engine reads, a
-/// repetition whose body cannot match the empty string is given to the engine as it is written, with its count.
-/// These compiled before 0.1.7, and the first cut of 0.1.7 refused them. The answers are V8's, on [`texts`] and
-/// then on [`long_texts`].
+/// A repetition inside a repetition is written out as copies, and each optional copy is a group inside the one
+/// before. The engine reads 256 levels of groups, so more optional copies than that are written in chunks, one
+/// after another, and the count stays exact. 0.1.6 gave these to the engine as they are written, and so did the
+/// first cut of 0.1.7, with a count the engine can lose. The answers are V8's, on [`texts`] and then on
+/// [`long_texts`].
 #[rustfmt::skip]
 const TOO_LARGE_TO_WRITE_OUT: &[(&str, &str, &str)] = &[
     ("^(?!-)(?:(?:a|x){1,300}-)+$", "FFFFFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFTTF", "TFTFTFTFFF"),
@@ -499,6 +499,8 @@ const TOO_LARGE_TO_WRITE_OUT: &[(&str, &str, &str)] = &[
     ("^(?!-)(?:(?:a|x-?){2,300}-)*$", "TFFFFFFFFFFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFFTF", "TFTFFFTFTF"),
     ("(?<=^(?:(?:a|x){1,300}?-)+)a", "FFFFFFFFFFFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFTTT", "FFFFTTTFFF"),
     (r#"^(?!-)(?:(?:(a)|x){1,300}\1-)+$"#, "FFFFFFFFFTFFFFFTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF", "TTTFFFTFFF"),
+    // A reference outside a repetition whose body can be empty reads the last iteration that ran.
+    (r#"^(?!-)(?:(?:(a)|){1,300}\1-)+$"#, "FFFFFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", "TTFFFFFFFF"),
     // The rest of the pattern is still written for the engine: the reference from inside its group, and the
     // small repetition whose body can be empty.
     (r#"^(?!-)(?:(?:a|x){1,300}-)+(x|\1)x$"#, "FFFFFFFFFFFFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFF", "FFFFFFFFFF"),
@@ -513,14 +515,12 @@ const TOO_LARGE_TO_WRITE_OUT_ON_SHORT_TEXTS: &[(&str, &str)] = &[
     ("^(?!-)(?:(?:(?:a|x){1,3}-?){1,300}-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF"),
     ("^(?!-)(?:(?:(?:a|x){1,2}-){1,300}x?)+$", "FFFFFFTFFTFFFFFTFFTFTFFFTFFTFTFFFFFFFFFFFFFFTTF"),
     ("^(?!-)(?:(?:(?:a|x){2}-?){1,300}a)+$", "FFFFFFFFFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFFFFFT"),
-    ("^(?!-)(?:(?:(?:a|x){200}-|a){200}x)+$", "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
-    ("^(?!-)(?:(?:a|x){4294967295}-)+$", "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
-    // The outer repetition, whose body can be empty, is written out around the inner one, which keeps its count.
+    // The outer repetition, whose body can be empty, is written out around the inner one.
     ("^(?!-)(?:(?:(?:a|x){1,300}-|a?){3}x)+$", "FFTFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFTFFFF"),
 ];
 
 #[test]
-fn a_repetition_too_large_to_write_out_keeps_its_count_when_its_body_cannot_be_empty() {
+fn a_repetition_too_deep_to_write_in_one_keeps_its_count() {
     check(TOO_LARGE_TO_WRITE_OUT_ON_SHORT_TEXTS);
     let short: Vec<(&str, &str)> =
         TOO_LARGE_TO_WRITE_OUT.iter().map(|&(pattern, answers, _)| (pattern, answers)).collect();
@@ -533,15 +533,13 @@ fn a_repetition_too_large_to_write_out_keeps_its_count_when_its_body_cannot_be_e
     }
 }
 
-/// A repetition that is too large to write out and whose body can match the empty string is the one the engine
-/// does not end on when it has it as written. Its iterations up to the minimum are written out, and those after
-/// it keep their count, each made to take a character, which is what ECMA-262 says of an iteration after the
-/// minimum. The answers are V8's on [`texts`]. V8 takes minutes over the long texts for all but the last two.
+/// The same for a repetition whose body can match the empty string, which is the one the engine does not end on
+/// when it has it as written. Each copy after the minimum is made to take a character, which is what ECMA-262
+/// says of an iteration after the minimum. The answers are V8's on [`texts`]. V8 takes minutes over the long
+/// texts for all but the last two.
 #[rustfmt::skip]
 const TOO_LARGE_TO_WRITE_OUT_WITH_A_BODY_THAT_CAN_BE_EMPTY: &[(&str, &str)] = &[
     ("^(?!-)(?:(?:a|){1,300}-)+$", "FFFFFFTFFFFFFFFTFFFFFTFFFFFFFFFFFFFFFFFFFFFFTFF"),
-    ("^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF"),
-    ("^(?!-)(?:(?:(?:a|){1,300}x){1,300}-)+$", "FFFFFFFFFTFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF"),
     ("^(?!-)(?:(?:a*x*){2,300}?-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF"),
     ("(?<=(?:(?:a|){1,300}-)+)x", "FFFFFFFFFFFTFFFFFFFFTFFFFFFFFTFFFFTTTFTFFFFFFFT"),
     (r#"^(?!-)(?:(?:(a)\1|){1,300}-)+$"#, "FFFFFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
@@ -552,7 +550,7 @@ const TOO_LARGE_WITH_A_BODY_THAT_CAN_BE_EMPTY_ON_LONG_TEXTS: &[(&str, &str)] =
     &[("(?<=(?:(?:a|){1,300}-)+)x", "FFTTFFFFFF"), (r"^(?!-)(?:(?:(a)\1|){1,300}-)+$", "TFFFFFFTFF")];
 
 #[test]
-fn a_repetition_too_large_to_write_out_keeps_the_count_after_its_minimum_when_its_body_can_be_empty() {
+fn a_repetition_too_deep_to_write_in_one_whose_body_can_be_empty_keeps_its_count() {
     check(TOO_LARGE_TO_WRITE_OUT_WITH_A_BODY_THAT_CAN_BE_EMPTY);
     let texts = long_texts();
     for &(pattern, answers) in TOO_LARGE_WITH_A_BODY_THAT_CAN_BE_EMPTY_ON_LONG_TEXTS {
@@ -562,15 +560,103 @@ fn a_repetition_too_large_to_write_out_keeps_the_count_after_its_minimum_when_it
     }
 }
 
-/// It is refused, with a reason of its own, when its minimum is too large to write out, and when a reference
-/// outside it reads one of its groups (the reference reads the last iteration that ran, which only the copies
-/// say). It is not run with another meaning.
+/// The count the engine loses. 0.1.6 and the first cut of 0.1.7 gave the engine a repetition of 300 as it is
+/// written, and it then ran more iterations than the maximum: `^(?!-)(?:(?:a|ax){0,300}){2}$` matched `ax` and
+/// 600 times `a`, which is 601 iterations for two repetitions of 300. The answers are V8's on [`count_texts`].
+#[rustfmt::skip]
+const COUNTS: &[(&str, &str)] = &[
+    (r#"^(?!-)(?:(?:a|ax){0,300}){2}$"#, "TFFFFFFFFFFFFFFFFFTT"),
+    (r#"^(?!-)(?:(?:a|a-a|b){0,300}-)+$"#, "FFFTTFTTFTFFFTTTFFFF"),
+    (r#"^(?!-)(?:(?:a|a-a|b){2,300}?-)+$"#, "FFFTTFTTFTFFFTTTFFFF"),
+    (r#"^(?!-)(?:(?:a|a-a|b){64,300}-)+$"#, "FFFTTFTTFTFFFTTTFFFF"),
+    (r#"^(?!-)(?:(?:(a)|){1,300}\1-)+$"#, "FFFFFFTTTTTFFTFFFFFF"),
+    (r#"^(?!-)(?:(?:(a)|b|a-a){0,300}\1-)+$"#, "FFFTTFTTTTTFFTTTFFFF"),
+    (r#"(?<=^(?:(?:a|a-a|b){0,300}-)+)$"#, "FFFTTFTTFTFFFTTTFFFF"),
+    (r#"^(?!-)(?:(?:a|ab|){0,300}b?-)+$"#, "FFFFFFTTFTFTFTFFFFFF"),
+    // A group of a lookahead that is read outside it has what the first way through the lookahead gave it: the
+    // copies are tried in the order the iterations are.
+    (r#"^(?=((?:(?:a|ab){1,300}?b?-?)+))\1$"#, "FFFFFFTTTTTTTTFFFFTT"),
+    (r#"^(?=(?:(?:a|a-a|b){0,300}(b?)-)+)[^]*\1$"#, "FFFTTFTTFTTFFTTTTFFF"),
+];
+
+/// Twenty texts around a count of 300.
+fn count_texts() -> Vec<String> {
+    let r = |s: &str, n: usize| s.repeat(n);
+    vec![
+        format!("ax{}", r("a", 599)),
+        format!("ax{}", r("a", 600)),
+        format!("ax{}", r("a", 601)),
+        format!("a-a{}-", r("b", 298)),
+        format!("a-a{}-", r("b", 299)),
+        format!("a-a{}-", r("b", 300)),
+        r("a", 299) + "-",
+        r("a", 300) + "-",
+        r("a", 301) + "-",
+        r("a", 300) + "-" + &r("a", 300) + "-",
+        r("a", 300) + "-" + &r("a", 301) + "-",
+        r("ab", 300) + "-",
+        r("ab", 301) + "-",
+        r("a", 64) + "-",
+        r("a", 65) + "-" + &r("b", 129) + "-",
+        r("a", 150) + "-a-a" + &r("b", 150) + "-",
+        format!("a-a{}a-", r("b", 300)),
+        r("b", 300) + "a-a-",
+        r("a", 300),
+        r("a", 301),
+    ]
+}
+
 #[test]
-fn a_repetition_too_large_to_write_out_is_refused_when_its_body_can_be_empty() {
+fn a_repetition_of_three_hundred_inside_a_repetition_keeps_its_count() {
+    let texts = count_texts();
+    for &(pattern, answers) in COUNTS {
+        let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
+        let got: String = texts.iter().map(|text| if v.is_valid(&json!(text)) { 'T' } else { 'F' }).collect();
+        assert_eq!(got, answers, "{pattern}");
+    }
+}
+
+/// Many iterations of a character that may be left out, as `(?:a|){1,300}`, are up to as many of the character,
+/// which the engine keeps the count of, so they are not copies and any count compiles. The answers are V8's on
+/// [`texts`], and for the last three on [`long_texts`] too. V8 does not answer the long texts for the others in
+/// minutes, nor any text for `(?:a|){100000}`: its answers there are those of `a{0,100000}` in its place, which
+/// matches the same texts (each iteration takes the character or nothing).
+#[rustfmt::skip]
+const A_CHARACTER_THAT_MAY_BE_LEFT_OUT: &[(&str, &str, &str)] = &[
+    ("^(?!-)(?:(?:[ax]?){2,300}-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF", ""),
+    ("^(?!-)(?:(?:[ax]?){17}-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF", ""),
+    ("^(?!-)(?:(?:a|){20}x)+$", "FFTFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFTFFFF", ""),
+    ("^(?!-)(?:(?:(?:a|){1,300}x){1,300}-)+$", "FFFFFFFFFTFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF", ""),
+    ("^(?!-)(?:(?:(?:a|){1,300}x){1,3}-)+$", "FFFFFFFFFTFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF", "FFFFFFTFFF"),
+    ("(?<=^(?:(?:a|){300}-)+)a", "FFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFTTTFFFTFFFFFFTFF", "FFFFTTFFFT"),
+    ("^(?!-)(?:(?:a|){100000}-)+$", "FFFFFFTFFFFFFFFTFFFFFTFFFFFFFFFFFFFFFFFFFFFFTFF", "TTFFTFFTFF"),
+];
+
+#[test]
+fn many_iterations_of_a_character_that_may_be_left_out_keep_their_count() {
+    let short: Vec<(&str, &str)> =
+        A_CHARACTER_THAT_MAY_BE_LEFT_OUT.iter().map(|&(pattern, answers, _)| (pattern, answers)).collect();
+    check(&short);
+    let texts = long_texts();
+    for &(pattern, _, answers) in A_CHARACTER_THAT_MAY_BE_LEFT_OUT.iter().filter(|case| !case.2.is_empty()) {
+        let v = compile(&json!({ "pattern": pattern })).unwrap();
+        let got: String = texts.iter().map(|text| if v.is_valid(&json!(text)) { 'T' } else { 'F' }).collect();
+        assert_eq!(got, answers, "{pattern}");
+    }
+}
+
+/// A pattern that comes to more than 65,536 characters written out is refused, with a reason of its own. It is
+/// not run with another meaning, and the engine is not given a count it can lose. The first three compiled
+/// before, with such a count.
+#[test]
+fn a_repetition_too_large_to_write_out_is_refused() {
     for pattern in [
+        r"^(?!-)(?:(?:a|x){4294967295}-)+$",
+        r"^(?!-)(?:(?:(?:a|x){200}-|a){200}x)+$",
+        r"^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$",
         r"^(?!-)(?:(?:a|x|){4294967295}-)+$",
         r"^(?!-)(?:(?:(?:a|x|){200}-|a?){200}x)+$",
-        r"^(?!-)(?:(?:(a)|){1,300}\1-)+$",
+        r"^(?!-)(?:(?:a|x|){100000}-)+$",
     ] {
         let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
         assert_eq!(

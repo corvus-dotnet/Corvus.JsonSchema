@@ -34,27 +34,34 @@
 //!   Two escapes are not given as they are written, as regress reads them as it would with the flag (see
 //!   [`legacy_units`]).
 //!
-//! **A repetition that is too large to write out.** The copies multiply with the repetitions around them, and each
-//! optional copy is a group inside the one before. regress is given at most [`MAX_REWRITTEN`] characters and reads
-//! at most [`MAX_DEPTH`] levels. The rule for a pattern that comes to more is by repetition, not by pattern:
+//! **The count of a repetition is exact, or the pattern is refused.** regress is never given a repetition with a
+//! count it can lose. Which repetitions those are is read from its matcher (`classicalbacktrack.rs` of 0.12.0):
 //!
-//! - A repetition whose body cannot match nothing is left as it is written, with its count, and the rest of the
-//!   pattern (its own body too) is rewritten as before. regress may then lose its count: it can run more
-//!   iterations than its maximum, or leave before its minimum. It cannot go round for ever, as each iteration
-//!   takes a character. This is what regress was given before there was a rewriter.
-//! - A repetition whose body can match nothing is never left so. With a lost count regress does not refuse its
-//!   empty iterations, and that is the match that takes memory without bound. Its iterations up to the minimum
-//!   are written out, and those after it are left as one repetition with a count, of the body made to take a
-//!   character (`X{1,300}` as `X(?:X'){0,299}`). ECMA-262 refuses an iteration after the minimum that matches
-//!   nothing, so they are the same iterations, and regress cannot go round for ever in one that takes a
-//!   character. If the minimum does not fit, or a reference outside the repetition reads a group of it (it reads
-//!   the last iteration that ran, which only the copies say), the pattern is refused ([`Rewrite::TooLarge`]).
+//! - The count is lost in one way. `EnterLoop` sets it to zero, and the only records that put a count back are the
+//!   one each iteration leaves (`SetLoopData`, with the count before the iteration) and the one a lazy repetition
+//!   leaves when it goes on (`EnterNonGreedyLoop`, with the count it had). So the count is wrong only between a
+//!   later `EnterLoop` and the next of those records of an earlier run: when the match comes back, after a later
+//!   run of the repetition, to a choice inside the body of an iteration of an earlier run.
+//! - A repetition that is entered once on its backtrack stack has no earlier run. That is one that is not inside a
+//!   repetition that can run twice, or is inside a lookaround inside that: a lookaround runs on a backtrack stack
+//!   of its own (`run_lookaround`), which is dropped when it ends, and every try at a start position has a new
+//!   stack.
+//! - A repetition whose body leaves no choice behind (`choice_free`) is never come back into inside its body. The
+//!   match comes back to its own records, which hold the count.
+//! - `X*` over a body that cannot match nothing reads its count for nothing: there is no maximum to meet, no
+//!   minimum to wait for, and the test for an iteration that matched nothing is not made with a count of zero.
 //!
-//! The rule can be by repetition because each loop of regress has a count of its own, and the fault is in how one
-//! loop's count is kept. regress's backtrack stack is as long as the path it is on, and a path is long without
-//! bound only when some loop goes round without taking a character. That loop has a body that can match nothing
-//! and a count that was lost, so it is one of those written out here. A loop left with its count is not it.
-//! [`Emitter::limit`] says which repetition is left when a limit is met.
+//! Every other repetition (`loses_count`, inside a repetition) is written out as copies, whatever its count, and
+//! the copies have no count to lose. The iterations up to the minimum are copies one after another. The optional
+//! ones are each a group inside the one before, and regress reads [`MAX_DEPTH`] levels, so where there are more
+//! they are written in chunks one after another, with the copies tried in the same order
+//! (`Emitter::write_out`). A reference outside the repetition reads the last iteration that ran
+//! (`Emitter::stop`).
+//!
+//! What is written is at most [`MAX_REWRITTEN`] characters. A pattern that comes to more is refused
+//! ([`Rewrite::TooLarge`]): about five thousand copies of a body of seven characters, or fewer of a longer one,
+//! and the copies of a repetition multiply with those of the repetitions around it. regress is not given such a
+//! pattern as it is written, as its answer could be wrong.
 //!
 //! One more rewriting is for time, not for the answer: a repetition of a body that can only match nothing is its
 //! body once (see `Emitter::repeat`).
@@ -71,25 +78,25 @@
 //! `EnterLoop` resets it, and one for the end of a group in `EndCaptureGroup`
 //! (`classicalbacktrack.rs`). With those, the rewriting of repetitions and of references could go.
 
-/// The most text a rewritten pattern may have. A repetition of repetitions multiplies out, and past this a
-/// repetition is left with its count, or the pattern is refused.
+/// The most text a rewritten pattern may have. A repetition of repetitions multiplies out, and a pattern that
+/// comes to more is refused. It bounds what compiling a pattern costs: the passes of the writer, and the size of
+/// the program regress makes of what is written.
 const MAX_REWRITTEN: usize = 65_536;
 
 /// The deepest pattern regress reads (its `MAX_NESTING_DEPTH`): the pattern is level 1, and what is in a group is a
 /// level below the group.
 const MAX_DEPTH: u32 = 256;
 
-/// How many repetitions are left with their counts one at a time, each with the pattern written again, before
-/// every repetition that may be left so is.
-const MAX_LEFT_ONE_AT_A_TIME: usize = 8;
+/// How many optional copies of a repetition are written one inside another, pass by pass: all of them, and then
+/// fewer each time the pattern comes out deeper than regress reads.
+const CHUNKS: [u32; 9] = [u32::MAX, 192, 128, 64, 32, 16, 8, 4, 1];
 
 pub(super) enum Rewrite {
     /// regress takes the pattern as written.
     Unchanged,
     Rewritten(String),
-    /// The rewritten pattern would be too large, and regress may not have the pattern as written: it has a
-    /// repetition whose body can match nothing, and whose minimum is too large to write out or whose groups are
-    /// read outside it.
+    /// The rewritten pattern would be too large, and regress may not have the pattern as it is written: its answer
+    /// could be wrong.
     TooLarge,
 }
 
@@ -240,7 +247,6 @@ fn rewrite(pattern: &str, unicode: bool, always: bool) -> Rewrite {
     let mut scan = Scan {
         refs: vec![0; parsed.groups as usize + 1],
         needed: parsed.special,
-        unbounded: false,
         open: Vec::new(),
         compared: vec![false; parsed.groups as usize + 1],
     };
@@ -260,40 +266,28 @@ fn rewrite(pattern: &str, unicode: bool, always: bool) -> Rewrite {
         spent: 0,
         depth: 1,
         deepest: 1,
-        left: std::collections::HashSet::new(),
-        leave_all: false,
-        leave_optional_all: false,
-        writing: Vec::new(),
-        leave: None,
+        chunk: u32::MAX,
+        too_deep: false,
     };
-    // Each pass writes the whole pattern. One that meets a limit names a repetition to leave with its count
-    // (`Emitter::limit`), and the next pass leaves it.
-    loop {
+    // Each pass writes the whole pattern. One that is too deep for regress is written again with the optional
+    // copies of a repetition in smaller chunks (`Emitter::write_out`). One that is too long is too large.
+    for chunk in CHUNKS {
         emitter.bind = vec![Binding::Unset; parsed.groups as usize + 1];
         (emitter.instances, emitter.spent, emitter.depth, emitter.deepest) = (0, 0, 1, 1);
-        emitter.writing.clear();
+        (emitter.chunk, emitter.too_deep) = (chunk, false);
         emitter.held.clear();
-        emitter.leave = None;
         match emitter.node(&parsed.root, false, false) {
             Ok(out) => {
                 let written = out.render(emitter.instances);
                 debug_assert!(nesting(&written) <= emitter.deepest, "{pattern} as {written}");
                 return Rewrite::Rewritten(written);
             }
-            Err(_) => match emitter.leave.take() {
-                // One that is named was being written out, so it is not one of those left already.
-                Some(repetition) if !emitter.leave_optional_all => {
-                    emitter.left.insert(repetition);
-                    emitter.leave_all = emitter.left.len() > MAX_LEFT_ONE_AT_A_TIME;
-                    emitter.leave_optional_all = emitter.left.len() > 2 * MAX_LEFT_ONE_AT_A_TIME;
-                }
-                // No repetition that may be left with its count is being written where the limit is met. With no
-                // repetition in the whole pattern that goes round for ever in regress, regress has the pattern as
-                // it is written, which is what it had before there was a rewriter.
-                _ => return if scan.unbounded { Rewrite::TooLarge } else { Rewrite::Unchanged },
-            },
+            Err(_) if emitter.too_deep => {}
+            Err(_) => break,
         }
     }
+    // regress answers the pattern as it is written wrongly for some string, so it is not given it.
+    Rewrite::TooLarge
 }
 
 /// How deep the groups of a written pattern go, as regress counts it. No class of a written pattern has a class
@@ -420,6 +414,27 @@ fn can_take_some(n: &Node) -> bool {
         // A character repeated from zero times is repeated from once.
         Node::Repeat { min: 0, body, .. } => matches!(**body, Node::Atom(_)),
         _ => false,
+    }
+}
+
+/// The fewest iterations of a character that may be left out that are written as one repetition of the character
+/// (see `Emitter::repeat`).
+const MOST_COPIES_OF_AN_OPTIONAL_CHARACTER: u32 = 16;
+
+/// The character of a body that is one character or nothing, with the character tried first: `(?:a|)`, `a?`, or
+/// either in groups that nothing reads.
+fn optional_character<'a>(n: &'a Node, refs: &[u32]) -> Option<&'a str> {
+    match n {
+        Node::Group { index, modifiers: None, body } if refs[*index as usize] == 0 => optional_character(body, refs),
+        Node::Alt(v) => match v.as_slice() {
+            [(Node::Atom(character), _), (Node::Empty, _)] => Some(character),
+            _ => None,
+        },
+        Node::Repeat { min: 0, max: Some(1), lazy: false, body, .. } => match &**body {
+            Node::Atom(character) => Some(character),
+            _ => None,
+        },
+        _ => None,
     }
 }
 
@@ -1273,9 +1288,6 @@ struct Scan {
     /// How many references name each group.
     refs: Vec<u32>,
     needed: bool,
-    /// The pattern has a repetition that regress, given the pattern as written, can go round for ever in: it
-    /// loses the count and the body can match nothing.
-    unbounded: bool,
     /// The capturing groups the scan is inside.
     open: Vec<u32>,
     /// The groups a case-insensitive reference names (in a pattern without the `u` flag).
@@ -1298,7 +1310,6 @@ impl Scan {
             Node::Look { body, .. } => self.node(body, false),
             Node::Repeat { min, max, body, .. } => {
                 self.needed |= in_loop && loses_count(*min, *max, body);
-                self.unbounded |= in_loop && loses_count(*min, *max, body) && nullable(body);
                 // Not a fault of regress: it tries every way through every iteration of a body that matches
                 // nothing, and one iteration says as much (see `Emitter::repeat`).
                 self.needed |= zero_width(body) && !choice_free(body);
@@ -1375,6 +1386,11 @@ impl Out {
     }
 }
 
+/// The most optional copies of a repetition that each end with a marker, for a reference outside the repetition.
+/// With more, the places the copies stop at have groups instead ([`Emitter::stop`]): a reference to one of many
+/// marked copies is an alternation of as many, each of which goes to the start of the text.
+const MOST_MARKED: u32 = 8;
+
 /// What a reference to a group reads, from where the rewriting has got to.
 #[derive(Clone)]
 enum Binding {
@@ -1382,8 +1398,12 @@ enum Binding {
     Unset,
     /// One group of the rewritten pattern.
     Group(u32),
-    /// The group is in a repetition that is written as copies, and the reference reads the last copy that ran.
+    /// The group is in a repetition that is written as a few copies, or one with no maximum, and the reference
+    /// reads the last copy that ran, which the markers of the copies say.
     Iterations(Vec<Iteration>),
+    /// The group is in a repetition that is written as many copies, and the reference reads the last copy that
+    /// ran: the groups of the places the copies stop at ([`Emitter::stop`]), of which one has a value.
+    OneOf(Vec<u32>),
 }
 
 /// One iteration of a repetition written as copies: `value` is read when the marker `ran` has a value and the marker `next` has none. A
@@ -1416,45 +1436,27 @@ struct Emitter {
     /// The level, as regress counts it, of what is being written, and the deepest level written.
     depth: u32,
     deepest: u32,
-    /// The repetitions that are left with their counts, by body, and whether every one that may be is.
-    left: std::collections::HashSet<*const Node>,
-    leave_all: bool,
-    /// Whether every repetition whose body can match nothing, and that may be left with the count of its
-    /// iterations after the minimum, is.
-    leave_optional_all: bool,
-    /// The repetitions being written out that may be left with their counts instead, from the outermost: the body
-    /// and how many copies it comes to.
-    writing: Vec<(*const Node, u64)>,
-    /// The repetition to leave with its count, once a limit has been met.
-    leave: Option<*const Node>,
+    /// The most optional copies of a repetition that are written one inside another ([`CHUNKS`]).
+    chunk: u32,
+    /// Whether the pass stopped because the pattern came out deeper than regress reads.
+    too_deep: bool,
 }
 
 impl Emitter {
-    /// A limit is met. Of the repetitions being written out here whose bodies cannot match nothing, the one with
-    /// the most copies is to be left with its count (the outermost of two with as many): the copies are what
-    /// multiplies, and what nests. A repetition whose body can match nothing is never chosen.
-    fn limit(&mut self) -> Stop {
-        if self.leave.is_none() {
-            let mut most = 0;
-            for &(body, copies) in &self.writing {
-                if copies > most {
-                    (most, self.leave) = (copies, Some(body));
-                }
-            }
-        }
-        Stop::TooLarge
-    }
-
     fn spend(&mut self, n: usize) -> Result<(), Stop> {
         self.spent += n;
-        if self.spent > MAX_REWRITTEN { Err(self.limit()) } else { Ok(()) }
+        if self.spent > MAX_REWRITTEN { Err(Stop::TooLarge) } else { Ok(()) }
     }
 
     /// Checks that regress reads groups `levels` deep from here.
     fn fits(&mut self, levels: u32) -> Result<(), Stop> {
         let depth = self.depth.saturating_add(levels);
         self.deepest = self.deepest.max(depth);
-        if depth > MAX_DEPTH { Err(self.limit()) } else { Ok(()) }
+        if depth > MAX_DEPTH {
+            self.too_deep = true;
+            return Err(Stop::TooLarge);
+        }
+        Ok(())
     }
 
     /// Writes with `f` what is `levels` groups below here.
@@ -1611,6 +1613,12 @@ impl Emitter {
                 }
             },
             Binding::Iterations(copies) => self.down(1, |e| e.iterations(out, copies, icase, back))?,
+            // At most one of them has a value, and one without a value matches nothing.
+            Binding::OneOf(instances) => {
+                for &instance in instances {
+                    self.reference(out, &Binding::Group(instance), icase, back)?;
+                }
+            }
         }
         Ok(())
     }
@@ -1794,11 +1802,22 @@ impl Emitter {
             self.unset(groups);
             return if min == 0 || max == Some(0) { Ok(Out::default()) } else { self.node(body, back, in_loop) };
         }
-        let can_be_empty = nullable(body);
-        // regress keeps the count of a repetition that is entered once, and of one that cannot be resumed. One
-        // that is too large to write out has its count too, where no iteration of it can match nothing.
-        let left = !can_be_empty && (self.leave_all || self.left.contains(&std::ptr::from_ref(body)));
-        if !in_loop || !loses_count(min, max, body) || left {
+        // Many times a character that may be left out, as `(?:a|){1,300}` or `(?:a?){300}`: up to as many of the
+        // character, a repetition regress keeps the count of. Each iteration tries the character first, so the
+        // lengths are tried from the longest down, as they are for `a{0,300}`. (A few such iterations are copies,
+        // as any others.)
+        if let (Some(max), false, Some(character)) = (max, lazy, optional_character(body, &self.refs))
+            && in_loop
+            && max > MOST_COPIES_OF_AN_OPTIONAL_CHARACTER
+        {
+            self.unset(groups);
+            let mut out = Out::default();
+            self.text(&mut out, character)?;
+            self.text(&mut out, &format!("{{0,{max}}}"))?;
+            return Ok(out);
+        }
+        // regress keeps the count of a repetition that is entered once, and of one that cannot be resumed.
+        if !in_loop || !loses_count(min, max, body) {
             self.unset(groups);
             let in_loop = in_loop || max.is_none_or(|max| max >= 2);
             // `X*` over a body that cannot match nothing is left as it is too: no count decides anything in it.
@@ -1813,57 +1832,7 @@ impl Emitter {
             self.text(&mut out, text)?;
             return Ok(out);
         }
-        // Written out, it may come to more than regress is given. If its body cannot match nothing it is one of
-        // those that can be left with its count instead. One whose body can is left with the count of its
-        // iterations after the minimum, when it has a maximum and nothing outside reads a group of it.
-        let optional = can_be_empty && max.is_some() && !self.read_outside(body, groups);
-        if optional && (self.leave_optional_all || self.left.contains(&std::ptr::from_ref(body))) {
-            return self.leave_optional((min, max.unwrap_or(min), lazy), body, groups, back);
-        }
-        let may_be_left = !can_be_empty || optional;
-        if may_be_left {
-            let copies = u64::from(min) + max.map_or(1, |max| u64::from(max - min));
-            self.writing.push((std::ptr::from_ref(body), copies));
-        }
-        let written = self.write_out((min, max, lazy), body, groups, back)?;
-        if may_be_left {
-            self.writing.pop();
-        }
-        Ok(written)
-    }
-
-    /// A repetition whose body can match nothing, and that is too large to write out: the iterations up to the
-    /// minimum are written out, each of which may match nothing, and those after it are one repetition with a
-    /// count, of the body made to take a character. ECMA-262 refuses an iteration after the minimum that matches
-    /// nothing, so they are the same iterations. With every iteration taking a character regress cannot go round
-    /// for ever in it, which is what it does in the repetition as written. Its count may still be lost, as for a
-    /// repetition whose body cannot match nothing.
-    fn leave_optional(
-        &mut self,
-        (min, max, lazy): (u32, u32, bool),
-        body: &Node,
-        groups: &Groups,
-        back: bool,
-    ) -> Result<Out, Stop> {
-        let mut parts = Vec::new();
-        for _ in 0..min {
-            self.spend(1)?;
-            self.unset(groups);
-            parts.push(self.node(body, back, true)?);
-        }
-        self.unset(groups);
-        let copy = self.down(1, |e| {
-            let some = can_take_some(body);
-            let copy = e.write(body, back, true, some)?;
-            if some { Ok(copy) } else { e.not_empty(copy, back) }
-        })?;
-        let mut tail = Out::default();
-        self.text(&mut tail, "(?:")?;
-        tail.append(copy);
-        self.text(&mut tail, &format!("){{0,{}}}{}", max - min, if lazy { "?" } else { "" }))?;
-        self.unset(groups);
-        parts.push(tail);
-        Ok(self.sequence(parts, back))
+        self.write_out((min, max, lazy), body, groups, back)
     }
 
     /// A repetition that loses its count in regress, without a count: see the top of the file.
@@ -1876,7 +1845,6 @@ impl Emitter {
     ) -> Result<Out, Stop> {
         let range = groups.start as usize + 1..groups.end as usize + 1;
         let read_outside = self.read_outside(body, groups);
-        let can_be_empty = nullable(body);
         // The iterations up to the minimum, each of which may match nothing.
         let mut parts = Vec::new();
         for _ in 0..min {
@@ -1885,40 +1853,88 @@ impl Emitter {
             parts.push(self.node(body, back, true)?);
         }
         let required = self.bind[range.clone()].to_vec();
-        // The iterations after the minimum, none of which may match nothing.
-        let mut copies: Vec<(Out, Option<u32>, Vec<Binding>)> = Vec::new();
-        for k in 0..max.map_or(1, |max| max - min) {
+        let Some(max) = max else {
+            parts.push(self.any_number(lazy, body, groups, back, &required)?);
+            return Ok(self.sequence(parts, back));
+        };
+        // The iterations after the minimum, none of which may match nothing: `(?:X(?:X|)|)`, and
+        // `(?:|X(?:|X))` for a lazy quantifier, each optional copy in the group of the one before it.
+        //
+        // regress reads no more than `MAX_DEPTH` groups one inside another, so past `self.chunk` copies the next
+        // ones are a chunk of their own, after this one and not inside it: `(?:X(?:X|)|)(?:X(?:X|)|)`. A chunk
+        // after the first may run only where the one before it ran to its last copy. That copy ends with a group
+        // that takes the rest of the text (the text up to there, backwards), and the next chunk starts by
+        // matching what the group took up to the end of the text, which it does at that position only. A group
+        // with no value matches nothing, which is all there is before the end of the text at the end of it:
+        // there the chunk may start, and no copy can run, as every one takes a character. So the copies run in
+        // the order, and with the choices, of the copies one inside another.
+        //
+        // A reference after the repetition reads the last iteration that ran. Where the copies stop is a place
+        // in the pattern (the empty alternative after a copy, or the end of the last copy), and each such place
+        // has groups of its own that take again what the groups of that copy hold (`Emitter::stop`). Only the
+        // place the match went through has groups with a value, so the reference is all of them, one after
+        // another.
+        //
+        // A few copies end with a marker each instead, as the one copy of a repetition with no maximum does
+        // (`Emitter::any_number`): a marker costs nothing where no reference is read, and a reference to one of a
+        // few copies is an alternation of as few.
+        let (count, chunk) = (max - min, self.chunk);
+        let stops = read_outside && count > MOST_MARKED;
+        let marked = read_outside && !stops;
+        // With the stops, a chunk after the first is a group inside the group that says whether it may run.
+        let level = |k: u32| k % chunk + 1 + u32::from(stops && k >= chunk);
+        let mut copies: Vec<(Out, Vec<Binding>, Option<u32>)> = Vec::new();
+        let mut markers = Vec::new();
+        // The group that says where the chunk being written ended, for the chunk after it.
+        let mut pointer = None;
+        for k in 0..count {
             self.spend(1)?;
             self.unset(groups);
-            // Each optional copy is in the group of the one before it, and the one copy of `(?:X)*` is in a group.
-            let copy = self.down(k.saturating_add(1), |e| {
-                // Written so that it takes a character where the body can be, and held to it by a group otherwise.
-                let some = can_be_empty && can_take_some(body);
-                let mut copy = e.write(body, back, true, some)?;
-                if can_be_empty && !some {
-                    copy = e.not_empty(copy, back)?;
+            let guard = if k % chunk == 0 && k > 0 { pointer } else { None };
+            pointer = (k % chunk == chunk - 1 && k + 1 < count).then(|| self.instance());
+            let copy = self.down(level(k), |e| {
+                let mut copy = e.taking_a_character(body, back)?;
+                if marked {
+                    let (with_marker, marker) = e.marked(copy, back)?;
+                    copy = with_marker;
+                    markers.push(marker);
                 }
-                let mut marker = None;
-                if read_outside {
-                    let (marked, instance) = e.marked(copy, back)?;
-                    (copy, marker) = (marked, Some(instance));
-                }
-                Ok((copy, marker))
+                let Some(pointer) = pointer else { return Ok(copy) };
+                e.fits(2)?;
+                e.spend(16)?;
+                let mut after = Out::default();
+                after.text(if back { "(?<=" } else { "(?=" });
+                after.0.push(Piece::Open(pointer));
+                after.text("[^]*))");
+                Ok(e.sequence(vec![copy, after], back))
             })?;
-            copies.push((copy.0, copy.1, self.bind[range.clone()].to_vec()));
+            copies.push((copy, self.bind[range.clone()].to_vec(), guard));
         }
-        // A reference after the repetition reads the last iteration that ran.
-        if read_outside && !copies.is_empty() {
-            for (k, g) in range.clone().enumerate() {
+        // The places the copies stop at: before the first copy, between two, and after the last.
+        let mut places = Vec::new();
+        if stops {
+            let in_lookaround: Vec<bool> = groups.clone().map(|g| inside_lookaround(body, g + 1, false)).collect();
+            let mut found = vec![Vec::new(); range.len()];
+            for j in 0..=count {
+                let values = if j == 0 { &required } else { &copies[j as usize - 1].1 };
+                let at = level(j.min(count - 1));
+                places.push(self.down(at, |e| e.stop(values, &in_lookaround, back, &mut found))?);
+            }
+            for (g, found) in range.zip(found) {
+                self.bind[g] = if found.is_empty() { Binding::Unset } else { Binding::OneOf(found) };
+            }
+        } else if marked && count > 0 {
+            // The last copy that ran: its marker has a value and the marker of the copy after it has none.
+            for (k, g) in range.enumerate() {
                 let mut cases: Vec<Iteration> = (0..copies.len())
                     .rev()
                     .map(|j| Iteration {
-                        ran: copies[j].1,
-                        next: copies.get(j + 1).and_then(|c| c.1),
-                        value: copies[j].2[k].clone(),
+                        ran: Some(markers[j]),
+                        next: markers.get(j + 1).copied(),
+                        value: copies[j].1[k].clone(),
                     })
                     .collect();
-                cases.push(Iteration { ran: None, next: copies[0].1, value: required[k].clone() });
+                cases.push(Iteration { ran: None, next: Some(markers[0]), value: required[k].clone() });
                 self.bind[g] = if cases.iter().all(|c| matches!(c.value, Binding::Unset)) {
                     Binding::Unset
                 } else {
@@ -1928,24 +1944,178 @@ impl Emitter {
         } else {
             self.bind[range].clone_from_slice(&required);
         }
-        let mut tail = Out::default();
-        if max.is_none() {
-            let (copy, ..) = copies.pop().unwrap();
-            self.text(&mut tail, "(?:")?;
-            tail.append(copy);
-            self.text(&mut tail, if lazy { ")*?" } else { ")*" })?;
-        } else {
-            // From the last optional copy outwards: `(?:X(?:X|)|)`, and `(?:|X(?:|X))` for a lazy quantifier.
-            for (copy, ..) in copies.into_iter().rev() {
-                let inner = self.sequence(vec![copy, tail], back);
-                tail = Out::default();
-                self.text(&mut tail, if lazy { "(?:|" } else { "(?:" })?;
-                tail.append(inner);
-                self.text(&mut tail, if lazy { ")" } else { "|)" })?;
+        let mut tail = places.pop().unwrap_or_default();
+        let mut chunks = Vec::new();
+        for (k, (copy, _, guard)) in copies.into_iter().enumerate().rev() {
+            let place = places.pop();
+            // What says the chunk before this one ran to its end, and what says it did not.
+            let mut guards = [Out::default(), Out::default()];
+            if let Some(guard) = guard {
+                self.down(level(k as u32), |e| e.fits(2))?;
+                for (out, open) in guards.iter_mut().zip(if back { ["(?<=", "(?<!"] } else { ["(?=", "(?!"] }) {
+                    self.spend(20)?;
+                    out.text(open);
+                    out.text(if back { "(?<![^])" } else { "" });
+                    out.0.push(Piece::Ref(guard, false));
+                    out.text(if back { ")" } else { "(?![^]))" });
+                }
+            }
+            let [may_run, may_not_run] = guards;
+            // Without the stops the first copy of a chunk says whether the chunk may run.
+            let (first, may_run) = if stops { (Out::default(), may_run) } else { (may_run, Out::default()) };
+            let inner = self.sequence(vec![first, copy, tail], back);
+            let mut group = Out::default();
+            self.text(&mut group, "(?:")?;
+            let place = place.unwrap_or_default();
+            let alternatives = if lazy { [place, inner] } else { [inner, place] };
+            let [first, second] = alternatives;
+            group.append(first);
+            self.text(&mut group, "|")?;
+            group.append(second);
+            self.text(&mut group, ")")?;
+            // With the stops, a chunk that may not run is passed over by an alternative of its own, so that the
+            // place before its first copy is gone through only where that many copies ran.
+            if stops && guard.is_some() {
+                let runs = self.sequence(vec![may_run, group], back);
+                group = Out::default();
+                self.text(&mut group, "(?:")?;
+                let [first, second] = if lazy { [may_not_run, runs] } else { [runs, may_not_run] };
+                group.append(first);
+                self.text(&mut group, "|")?;
+                group.append(second);
+                self.text(&mut group, ")")?;
+            }
+            tail = group;
+            if (k as u32).is_multiple_of(chunk) {
+                chunks.push(std::mem::take(&mut tail));
             }
         }
-        parts.push(tail);
+        chunks.reverse();
+        parts.append(&mut chunks);
         Ok(self.sequence(parts, back))
+    }
+
+    /// A copy of `body` for an iteration after the minimum, which may not match nothing: written so that it takes
+    /// a character where the body can be, and held to it by a group otherwise.
+    fn taking_a_character(&mut self, body: &Node, back: bool) -> Result<Out, Stop> {
+        let can_be_empty = nullable(body);
+        let some = can_be_empty && can_take_some(body);
+        let copy = self.write(body, back, true, some)?;
+        if can_be_empty && !some { self.not_empty(copy, back) } else { Ok(copy) }
+    }
+
+    /// A place the copies of a repetition stop at, for the references after the repetition. `values` is what
+    /// the groups of the repetition hold there. For each that holds something a new group takes it again: the
+    /// nearest text before the place that is what the group holds (after the place, backwards), which is the
+    /// group's own text if no other is nearer. A reference then reads the new group, which has a value only
+    /// where the match went through this place. A group that is in a lookaround may hold text on either side, and
+    /// the first such text of the string is taken.
+    fn stop(
+        &mut self,
+        values: &[Binding],
+        in_lookaround: &[bool],
+        back: bool,
+        found: &mut [Vec<u32>],
+    ) -> Result<Out, Stop> {
+        let mut out = Out::default();
+        for (k, value) in values.iter().enumerate() {
+            if matches!(value, Binding::Unset) {
+                continue;
+            }
+            let instance = self.instance();
+            let holds = self.holds_of(value);
+            if holds != 0 {
+                self.held.insert(instance, holds);
+            }
+            found[k].push(instance);
+            self.spend(24)?;
+            let mut taken = Out::default();
+            taken.0.push(Piece::Open(instance));
+            self.down(if in_lookaround[k] { 3 } else { 2 }, |e| e.reference(&mut taken, value, false, !back))?;
+            taken.text(")");
+            if in_lookaround[k] {
+                out.text("(?<=(?=[^]*?");
+                out.append(taken);
+                out.text(")(?<![^])[^]*)");
+            } else if back {
+                out.text("(?=[^]*?");
+                out.append(taken);
+                out.text(")");
+            } else {
+                out.text("(?<=");
+                out.append(taken);
+                out.text("[^]*?)");
+            }
+        }
+        Ok(out)
+    }
+
+    /// What the groups a reference reads may hold that regress compares wrongly without case ([`held`]).
+    fn holds_of(&self, value: &Binding) -> u8 {
+        match value {
+            Binding::Unset => 0,
+            Binding::Group(instance) => self.held.get(instance).copied().unwrap_or(0),
+            Binding::OneOf(instances) => {
+                instances.iter().fold(0, |holds, instance| holds | self.held.get(instance).copied().unwrap_or(0))
+            }
+            Binding::Iterations(copies) => copies.iter().fold(0, |holds, copy| holds | self.holds_of(&copy.value)),
+        }
+    }
+
+    /// The iterations after the minimum of a repetition with no maximum: `(?:X)*`, of the body made to take a
+    /// character. A reference after the repetition reads the group of the one copy when the copy ran, which a
+    /// marker says, and what the group held before it otherwise.
+    fn any_number(
+        &mut self,
+        lazy: bool,
+        body: &Node,
+        groups: &Groups,
+        back: bool,
+        required: &[Binding],
+    ) -> Result<Out, Stop> {
+        let range = groups.start as usize + 1..groups.end as usize + 1;
+        let read_outside = self.read_outside(body, groups);
+        self.spend(1)?;
+        self.unset(groups);
+        let (copy, marker) = self.down(1, |e| {
+            let copy = e.taking_a_character(body, back)?;
+            if !read_outside {
+                return Ok((copy, None));
+            }
+            let (marked, instance) = e.marked(copy, back)?;
+            Ok((marked, Some(instance)))
+        })?;
+        let values = self.bind[range.clone()].to_vec();
+        for (k, g) in range.enumerate() {
+            let cases = vec![
+                Iteration { ran: marker, next: None, value: values[k].clone() },
+                Iteration { ran: None, next: marker, value: required[k].clone() },
+            ];
+            self.bind[g] = match (marker, cases.iter().all(|c| matches!(c.value, Binding::Unset))) {
+                (None, _) => required[k].clone(),
+                (Some(_), true) => Binding::Unset,
+                (Some(_), false) => Binding::Iterations(cases),
+            };
+        }
+        let mut out = Out::default();
+        self.text(&mut out, "(?:")?;
+        out.append(copy);
+        self.text(&mut out, if lazy { ")*?" } else { ")*" })?;
+        Ok(out)
+    }
+}
+
+/// Whether the capturing group numbered `group` is in a lookaround of `n`.
+fn inside_lookaround(n: &Node, group: u32, in_lookaround: bool) -> bool {
+    match n {
+        Node::Cat(v) => v.iter().any(|n| inside_lookaround(n, group, in_lookaround)),
+        Node::Alt(v) => v.iter().any(|(n, _)| inside_lookaround(n, group, in_lookaround)),
+        Node::Group { index, body, .. } => {
+            (*index == group && in_lookaround) || inside_lookaround(body, group, in_lookaround)
+        }
+        Node::Look { body, .. } => inside_lookaround(body, group, true),
+        Node::Repeat { body, .. } => inside_lookaround(body, group, in_lookaround),
+        _ => false,
     }
 }
 
@@ -2058,7 +2228,10 @@ mod tests {
             assert!(!written.contains('{'), "{written}");
             assert_eq!(nesting(&written), copies + 2);
         }
-        assert_eq!(rewritten(&pattern(MAX_DEPTH - 1)), Some(pattern(MAX_DEPTH - 1)));
+        // One copy more is written in chunks.
+        let written = rewritten(&pattern(MAX_DEPTH - 1)).unwrap();
+        assert!(!written.contains('{') && written.contains("(?=([^]*))"), "{written}");
+        assert_eq!(nesting(&written), 2 + 192 + 2);
         let groups = |depth: usize| format!("{}a{}", "(?:".repeat(depth), ")".repeat(depth));
         assert_eq!(nesting(&groups(MAX_DEPTH as usize - 1)), MAX_DEPTH);
         assert!(regress::Regex::with_flags(&groups(MAX_DEPTH as usize - 1), "u").is_ok());
@@ -2076,10 +2249,90 @@ mod tests {
                 r"^(?:(?:(a)|x){1,2}\1-)+$",
                 r"^(?:(?:(a)|x)(?:(?:(a)|x)(?<=([^]))|)(?:(?<=(?<![^])(?!(?:\3)(?<![^]))[^]*)(?:\2)|(?<=(?<![^])(?=(?:\3)(?<![^]))[^]*)(?:\1))-)+$",
             ),
+            // With no maximum there is one copy, with a marker.
+            (
+                r"^(?:(?:(a)|x){1,}\1-)+$",
+                r"^(?:(?:(a)|x)(?:(?:(a)|x)(?<=([^])))*(?:(?<=(?<![^])(?!(?:\3)(?<![^]))[^]*)(?:\2)|(?<=(?<![^])(?=(?:\3)(?<![^]))[^]*)(?:\1))-)+$",
+            ),
             (r"(x|\1)x", r"(x|)x"),
             (r"(?:(?<n>a)|(?<n>x))\k<n>", r"(?:(a)|(x))(?:\1)(?:\2)"),
         ] {
             assert_eq!(rewritten(pattern).as_deref(), Some(expected), "{pattern}");
+        }
+    }
+
+    /// With more than a few optional copies, a group at each place the copies stop at takes again what the group
+    /// of the last copy that ran holds: after the last copy, and in the alternative that is taken when a copy does
+    /// not run. The reference is all those groups, of which one has a value.
+    #[test]
+    fn a_reference_to_a_group_of_many_copies_reads_the_place_they_stopped_at() {
+        // Group 1 is the group of the one copy that must run, and the groups of the nine optional copies and of
+        // the ten places follow in the order they are written.
+        let written = rewritten(r"^(?:(?:(a)|x){1,10}\1-)+$").unwrap();
+        assert!(written.starts_with(r"^(?:(?:(a)|x)(?:(?:(a)|x)(?:(?:(a)|x)(?:"), "{written}");
+        assert!(
+            written.contains(r"(?:(?:(a)|x)(?<=((?:\10))[^]*?)|(?<=((?:\9))[^]*?))|(?<=((?:\8))[^]*?))"),
+            "{written}"
+        );
+        assert!(
+            written.ends_with(
+                r"|(?<=((?:\1))[^]*?))(?:\20)(?:\19)(?:\18)(?:\17)(?:\16)(?:\15)(?:\14)(?:\13)(?:\12)(?:\11)-)+$"
+            ),
+            "{written}"
+        );
+        // A lazy one stops before it goes on.
+        let written = rewritten(r"^(?:(?:(a)|x){0,9}?\1-)+$").unwrap();
+        assert!(
+            written.starts_with(r"^(?:(?:|(?:(a)|x)(?:(?<=((?:\1))[^]*?)|(?:(a)|x)(?:(?<=((?:\3))[^]*?)|"),
+            "{written}"
+        );
+        // In a lookbehind the text of the copy is after the place.
+        let written = rewritten(r"(?<=(?:\1(?:(a)|x){1,10}-)+)x").unwrap();
+        assert!(written.contains(r"(?=[^]*?((?:\2)))(?:(a)|x)|(?=[^]*?((?:\4))))(?:(a)|x)|"), "{written}");
+        // A group in a lookaround may hold text on either side of the place, and the first such text is taken.
+        let written = rewritten(r"^(?:(?:(?=(a))a|x){1,10}\1-)+$").unwrap();
+        assert!(written.contains(r"(?<=(?=[^]*?((?:\1)))(?<![^])[^]*))"), "{written}");
+        // In chunks, a chunk after the first is in a group that says whether it may run, so that the place before
+        // its first copy is gone through only where the chunk before it ran to its end.
+        let written = rewritten(r"^(?!-)(?:(?:(a)|x){0,300}\1-)+$").unwrap();
+        let (may_run, may_not_run) = (written.find("(?:(?=(?:\\").unwrap(), written.find("|(?!(?:\\").unwrap());
+        let pointer: String = written[may_run + 10..].chars().take_while(char::is_ascii_digit).collect();
+        assert!(written[may_run..].starts_with(&format!(r"(?:(?=(?:\{pointer})(?![^]))(?:(?:(a)|x)(?:")), "{written}");
+        assert!(written[may_not_run..].starts_with(&format!(r"|(?!(?:\{pointer})(?![^])))")), "{written}");
+        // The last copy of the first chunk takes the rest of the text, and the place after it is in the second.
+        assert_eq!(pointer, "193");
+        assert!(written.contains(r"(?:(?:(a)|x)(?=([^]*))|(?<=((?:\191))[^]*?))"), "{written}");
+        assert!(written.contains(r"|(?<=((?:\192))[^]*?))|(?!(?:\193)(?![^])))"), "{written}");
+    }
+
+    /// Many times a character that may be left out is up to as many of the character, which regress keeps the
+    /// count of. A few are copies, and so is any other body.
+    #[test]
+    fn many_iterations_of_a_character_that_may_be_left_out() {
+        for (pattern, expected) in [
+            (r"^(?!-)(?:(?:a|){1,300}-)+$", r"^(?!-)(?:a{0,300}-)+$"),
+            (r"^(?!-)(?:(?:a|){100000}-)+$", r"^(?!-)(?:a{0,100000}-)+$"),
+            (r"^(?!-)(?:(?:[ax]?){17}-)+$", r"^(?!-)(?:[ax]{0,17}-)+$"),
+            (r"^(?!-)(?:((?:\w|)){2,4294967295}-)+$", r"^(?!-)(?:\w{0,4294967295}-)+$"),
+            (r"(?<=(?:(?:a|){1,300}-)+)x", r"(?<=(?:a{0,300}-)+)x"),
+            (
+                r"^(?!-)(?:(?:(?:a|){1,300}x){1,3}-)+$",
+                r"^(?!-)(?:(?:a{0,300}x)(?:(?:a{0,300}x)(?:(?:a{0,300}x)|)|)-)+$",
+            ),
+            (r"^(?!-)(?:(?:a|){1,16}-)+$", &format!("^(?!-)(?:(?:a|){}{}-)+$", "(?:(?:a)".repeat(15), "|)".repeat(15))),
+        ] {
+            assert_eq!(rewritten(pattern).as_deref(), Some(expected), "{pattern}");
+        }
+        // The empty alternative first, a lazy quantifier, a group that is read and two characters are not it.
+        for pattern in [
+            r"^(?!-)(?:(?:|a){1,300}-)+$",
+            r"^(?!-)(?:(?:a|){1,300}?-)+$",
+            r"^(?!-)(?:(a|){1,300}\1-)+$",
+            r"^(?!-)(?:(?:ab|){1,300}-)+$",
+            r"^(?!-)(?:(?:a|b|){1,300}-)+$",
+        ] {
+            let written = rewritten(pattern).unwrap();
+            assert!(!written.contains('{') && written.contains("(?=([^]*))"), "{pattern} as {written}");
         }
     }
 
@@ -2200,92 +2453,85 @@ mod tests {
         }
     }
 
-    /// A repetition that is too large to write out is left with its count when its body cannot match nothing. Of
-    /// those being written where the limit is met, it is the one with the most copies, and the outermost of two
-    /// with as many. The rest is written as it would be.
+    /// A repetition with more optional copies than regress reads one inside another has them in chunks, one after
+    /// another. A chunk after the first starts by matching, up to the end of the text, what the last copy of the
+    /// chunk before it took of the rest of the text.
     #[test]
-    fn a_repetition_too_large_to_write_out_is_left_with_its_count() {
-        for (pattern, expected) in [
-            (r"^(?!-)(?:(?:a|x){1,300}-)+$", r"^(?!-)(?:(?:a|x){1,300}-)+$"),
-            (r"^(?!-)(?:(?:a|x){4294967295}?-)+$", r"^(?!-)(?:(?:a|x){4294967295}?-)+$"),
-            // The one with the most copies is left, and the other is written out, whichever is inside.
-            (r"^(?!-)(?:(?:(?:a|x){1,2}-?){1,300}-)+$", r"^(?!-)(?:(?:(?:a|x)(?:(?:a|x)|)-?){1,300}-)+$"),
-            (r"^(?!-)(?:(?:(?:a|x){1,300}-?){1,2}-)+$", r"^(?!-)(?:(?:(?:a|x){1,300}-?)(?:(?:(?:a|x){1,300}-?)|)-)+$"),
-            // 200 copies of 200 copies: the outer one is left, and its body has the inner one written out.
-            (
-                r"^(?!-)(?:(?:(?:a|x){200}-|a){200}x)+$",
-                &format!(r"^(?!-)(?:(?:{}-|a){{200}}x)+$", "(?:a|x)".repeat(200)),
-            ),
-            // One whose body can match nothing is written out inside one that is left, and around one.
-            (r"^(?!-)(?:(?:(?:a|){1,2}x){1,300}-)+$", r"^(?!-)(?:(?:(?:a|)(?:(?:a)|)x){1,300}-)+$"),
-            (r"^(?!-)(?:(?:(?:a|x){1,300}|){1,2}-)+$", r"^(?!-)(?:(?:(?:a|x){1,300}|)(?:(?:(?:a|x){1,300})|)-)+$"),
-            // A reference to a group of the one that is left reads what it read before there was a rewriter.
-            (r"^(?!-)(?:(?:(a)|x){1,300}\1-)+$", r"^(?!-)(?:(?:(a)|x){1,300}(?:\1)-)+$"),
-        ] {
-            assert_eq!(rewritten(pattern).as_deref(), Some(expected), "{pattern}");
-        }
+    fn a_repetition_too_deep_to_write_in_one_is_written_in_chunks() {
+        // 299 optional copies: 192 in the first chunk and 107 in the second.
+        let written = rewritten(r"^(?!-)(?:(?:a|x){1,300}-)+$").unwrap();
+        // A chunk from its last copy outwards. The last copy of the first chunk ends with the group, and the first
+        // copy of the second starts with the reference.
+        let chunk = |last: &str, copies: usize, first: &str| {
+            let mut text = last.to_string();
+            for _ in 0..copies {
+                text = format!("(?:(?:a|x){text}|)");
+            }
+            format!("(?:{first}(?:a|x){text}|)")
+        };
+        let expected = [
+            "^(?!-)(?:(?:a|x)",
+            &chunk("(?:(?:a|x)(?=([^]*))|)", 190, ""),
+            &chunk("", 106, r"(?=(?:\1)(?![^]))"),
+            "-)+$",
+        ]
+        .concat();
+        assert_eq!(written, expected);
+        assert_eq!(nesting(&written), 2 + 192 + 2);
+        // A lazy one, and one in a lookbehind, which is matched from its end: the chunks are written from the
+        // last, each copy before the one it follows, and the text up to a place says which place it is.
+        let written = rewritten(r"^(?!-)(?:(?:a|x){0,300}?-)+$").unwrap();
+        assert!(written.starts_with("^(?!-)(?:(?:|(?:a|x)(?:|(?:a|x)(?:|"), "{written}");
+        assert!(written.contains(r"(?:|(?:a|x)(?=([^]*)))))"), "{written}");
+        assert!(written.contains(r")(?:|(?=(?:\1)(?![^]))(?:a|x)(?:|(?:a|x)(?:|"), "{written}");
+        let written = rewritten(r"(?<=(?:(?:a|x){0,300}-)+)x").unwrap();
+        assert!(written.starts_with("(?<=(?:(?:(?:(?:"), "{written}");
+        assert!(written.contains(r"|)(?:a|x)|)(?:a|x)(?<=(?<![^])(?:\1))|)(?:(?:"), "{written}");
+        assert!(written.contains(r"(?:(?<=([^]*))(?:a|x)|)(?:a|x)|)(?:a|x)|)"), "{written}");
+        assert!(written.ends_with(r"(?:a|x)|)(?:a|x)|)-)+)x"), "{written}");
+        // A reference outside the repetition reads the last copy that ran, in whichever chunk.
+        let written = rewritten(r"^(?!-)(?:(?:(a)|){1,300}\1-)+$").unwrap();
+        assert!(written.len() < MAX_REWRITTEN && nesting(&written) <= 2 + 192 + 5, "{}", nesting(&written));
+        // Repetitions one inside another, each in chunks, and smaller chunks where the pattern is deep already.
+        let written = rewritten(r"^(?!-)(?:(?:(?:a|x){1,70}-?){1,70}-)+$").unwrap();
+        assert!(nesting(&written) <= MAX_DEPTH && !written.contains('{'), "{}", nesting(&written));
+        let deep = format!("^(?!-){}(?:(?:a|x){{1,70}}-)+{}$", "(?:".repeat(200), ")".repeat(200));
+        let written = rewritten(&deep).unwrap();
+        assert_eq!(nesting(&written), 200 + 2 + 32 + 2);
     }
 
-    /// A repetition whose body can match nothing is not left as it is written, whatever is inside it or around it.
-    /// Its iterations up to the minimum are written out, and those after it are left with their count, of the
-    /// body made to take a character.
+    /// A repetition that regress would lose the count of is never given to it with a count. One that comes to
+    /// more text than regress is given is too large, whether or not its body can match nothing.
     #[test]
-    fn a_repetition_too_large_to_write_out_whose_body_can_be_empty_keeps_the_count_after_its_minimum() {
-        for (pattern, expected) in [
-            (r"^(?!-)(?:(?:a|){1,300}-)+$", r"^(?!-)(?:(?:a|)(?:(?:a)){0,299}-)+$"),
-            (r"^(?!-)(?:(?:a|){2,300}?-)+$", r"^(?!-)(?:(?:a|)(?:a|)(?:(?:a)){0,298}?-)+$"),
-            (
-                r"^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$",
-                r"^(?!-)(?:(?:(?:a|x){1,300}|)(?:(?:(?:a|x){1,300})){0,299}-)+$",
-            ),
-            (r"^(?!-)(?:(?:(?:a|){1,300}x){1,300}-)+$", r"^(?!-)(?:(?:(?:a|)(?:(?:a)){0,299}x){1,300}-)+$"),
-            // A body with more than one part that may be empty is held to a character by a group.
-            (
-                r"^(?!-)(?:(?:a*x*){2,300}?-)+$",
-                r"^(?!-)(?:(?:a*x*)(?:a*x*)(?:(?=([^]*))(?:a*x*)(?!(?:\1))){0,298}?-)+$",
-            ),
-            // A reference inside the body reads the group of its own iteration.
-            (r"^(?!-)(?:(?:(a)\1|){1,300}-)+$", r"^(?!-)(?:(?:(a)(?:\1)|)(?:(?:(a)(?:\2))){0,299}-)+$"),
-            // In a lookbehind the iterations after the minimum are matched last, and written first.
-            (r"(?<=(?:(?:a|){1,300}-)+)x", r"(?<=(?:(?:(?:a)){0,299}(?:a|)-)+)x"),
-        ] {
-            assert_eq!(rewritten(pattern).as_deref(), Some(expected), "{pattern}");
-        }
-    }
-
-    /// It is too large when its minimum is, and when a reference outside it reads a group of it: the reference
-    /// reads the last iteration that ran, which only the copies say.
-    #[test]
-    fn a_repetition_too_large_to_write_out_whose_body_can_be_empty_is_too_large() {
+    fn a_repetition_too_large_to_write_out_is_too_large() {
         for pattern in [
-            r"^(?!-)(?:(?:a|){4294967295}-)+$",
+            r"^(?!-)(?:(?:a|x){4294967295}?-)+$",
+            r"^(?!-)(?:(?:a|x){1,10000}-)+$",
+            r"^(?!-)(?:(?:a|x|){4294967295}-)+$",
+            r"^(?!-)(?:(?:a|x|){100000}-)+$",
             r"^(?!-)(?:(?:(?:a|x|){200}-|a?){200}x)+$",
-            r"^(?!-)(?:(?:(a)|){1,300}\1-)+$",
+            r"^(?!-)(?:(?:(?:a|x){1,300}-?){1,300}-)+$",
         ] {
             assert!(matches!(for_engine(pattern, true), Rewrite::TooLarge), "{pattern}");
         }
-    }
-
-    /// With more repetitions to leave than are left one at a time, every one that may be left is.
-    #[test]
-    fn many_repetitions_too_large_to_write_out() {
-        let pattern = format!("^(?!-)(?:{}-)+$", "(?:a|x){1,300}".repeat(MAX_LEFT_ONE_AT_A_TIME + 4));
-        assert_eq!(rewritten(&pattern).as_deref(), Some(pattern.as_str()));
-        let pattern = format!("^(?!-)(?:{}(?:a|){{1,2}}-)+$", "(?:a|x){1,300}".repeat(MAX_LEFT_ONE_AT_A_TIME + 4));
-        assert!(rewritten(&pattern).unwrap().ends_with("{1,300}(?:a|)(?:(?:a)|)-)+$"));
         // Each of a hundred repetitions doubles the ones inside it.
         let pattern = format!("^(?!-)(?:{}(?:a|x){}-)+$", "(?:".repeat(100), "{1,2}-)".repeat(100));
-        assert_eq!(rewritten(&pattern).as_deref(), Some(pattern.as_str()));
+        assert!(matches!(for_engine(&pattern, true), Rewrite::TooLarge));
+        // Among the largest that are written: four thousand copies of a body of seven characters.
+        for pattern in [r"^(?!-)(?:(?:a|x){1,4000}-)+$", r"^(?!-)(?:(?:a|x|){4000}-)+$"] {
+            let written = rewritten(pattern).unwrap();
+            assert!(written.len() <= MAX_REWRITTEN && !written.contains('{'), "{}", written.len());
+        }
     }
 
-    /// A pattern that is too large for a reason no repetition can mend goes to regress as it is written, unless
-    /// it has a repetition that regress would not end on.
+    /// A pattern regress answers wrongly as it is written, and that is too long written again, is too large.
     #[test]
-    fn a_pattern_too_large_with_no_repetition_to_leave() {
+    fn a_pattern_too_large_with_no_repetition() {
         let long = format!(r"^(x|\1){}$", "a".repeat(MAX_REWRITTEN));
-        assert!(matches!(for_engine(&long, true), Rewrite::Unchanged));
-        let long = format!(r"^(?!-)(?:(?:a|)+-)+(x|\1){}$", "a".repeat(MAX_REWRITTEN));
         assert!(matches!(for_engine(&long, true), Rewrite::TooLarge));
+        // One that regress answers as it is written is not written again, however long.
+        let long = format!(r"^(?!-)(x|y){}$", "a".repeat(MAX_REWRITTEN));
+        assert!(matches!(for_engine(&long, true), Rewrite::Unchanged));
     }
 }
 
