@@ -53,8 +53,10 @@ Validation must allocate nothing in the steady state, compiled or interpreted, f
 `byte[]`. `AllocationTest` measures every keyword path with `ThreadMXBean.getCurrentThreadAllocatedBytes`, and runs
 again with `-XX:-DoEscapeAnalysis` so that a path that is only allocation-free after C2 scalar replacement fails. Add a
 case for every new keyword path. Scratch space comes from the `Evaluator` (its arena and buffers, found through the
-validator's owner-thread cache and then a `ThreadLocal`); formats read the UTF-8 bytes through `Utf8Chars` with reused
-matchers (`Formats.Context`).
+validator's owner-thread cache and then a `ThreadLocal`); formats read the UTF-8 bytes through `Utf8Chars` with
+scanners that pass over the text once and the readers that keep buffers (`Formats.Context`). No format check runs
+`java.util.regex`, which recurses for each character of a text and is under no limit there: keep it so
+(`FormatLimitsTest`).
 
 ## Generated code
 
