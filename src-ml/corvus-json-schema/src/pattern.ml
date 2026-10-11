@@ -183,8 +183,12 @@ type matcher =
   | Excluded_class_with_word of { set : char_set; bangs : bool }
   | Engine of Pattern_engine.t
 
-(* t is a compiled pattern. Nothing writes to it after compile. *)
-type t = { source : string; matcher : matcher }
+(* t is a compiled pattern. Nothing writes to it after compile.
+
+   units is the engine of a pattern that has a faster matcher and is valid only without the u flag. ECMA-262 matches
+   such a pattern by UTF-16 code unit, and the faster matchers read code points, so the engine answers for a text with
+   a character beyond the Basic Multilingual Plane. *)
+type t = { source : string; matcher : matcher; units : Pattern_engine.t option }
 
 let source p = p.source
 
@@ -248,6 +252,11 @@ let rec is_ascii_range b at stop =
   at >= stop || (Char.code (Bytes.get b at) < rune_self && is_ascii_range b (at + 1) stop)
 
 let is_ascii b off len = is_ascii_range b off (off + len)
+
+(* has_supplementary reports whether the bytes at up to stop have a character beyond the Basic Multilingual Plane,
+   which is the only kind of text that code units and code points read differently. Such a character starts with a
+   byte of 0xF0 or more. *)
+let rec has_supplementary b at stop = at < stop && (Bytes.get b at >= '\xF0' || has_supplementary b (at + 1) stop)
 
 let text_is_ascii s =
   let rec from i = i = String.length s || (Char.code s.[i] < rune_self && from (i + 1)) in
@@ -492,9 +501,8 @@ let rec match_excluded set b at stop word =
 (* ---------------------------------------------------------------------------------------------------------------------
    Matching *)
 
-(* matches reports whether the pattern matches somewhere in the len bytes of b from off, ascii saying whether that
-   text is known to be ASCII (a document knows that of its strings). *)
-let matches p scratch b off len ascii =
+(* matches_shape is matches for a pattern matched by code point: the matcher the pattern was given. *)
+let matches_shape p scratch b off len ascii =
   let stop = off + len in
   match p.matcher with
   | Everything -> true
@@ -521,6 +529,16 @@ let matches p scratch b off len ascii =
         rest <> off && rest <> stop && match_excluded set b rest stop false
       else match_excluded set b off stop false
   | Engine engine -> Pattern_engine.is_match scratch engine b off len
+
+(* matches reports whether the pattern matches somewhere in the len bytes of b from off, ascii saying whether that
+   text is known to be ASCII (a document knows that of its strings). A pattern that is valid only without the u flag
+   goes to the engine, which matches by code unit, when the text has a character beyond the Basic Multilingual
+   Plane. *)
+let matches p scratch b off len ascii =
+  match p.units with
+  | Some engine when (not ascii) && has_supplementary b off (off + len) ->
+      Pattern_engine.is_match scratch engine b off len
+  | _ -> matches_shape p scratch b off len ascii
 
 (* match_string is matches for a string that is not known to be ASCII. It copies the string. *)
 let match_string p scratch s =
@@ -1119,16 +1137,24 @@ and choose_shape p =
 
 (* shape is the faster matcher of a pattern, if it has one, with no test of the pattern's validity and no engine. For
    the tests. *)
-let shape source = match choose_pattern source with Some matcher -> Some { source; matcher } | None -> None
+let shape source =
+  match choose_pattern source with Some matcher -> Some { source; matcher; units = None } | None -> None
 
 (* compile compiles a pattern. None when it is not a valid ECMA-262 regular expression. *)
 let compile source =
   (* Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it. A pattern with a
-     faster matcher that is valid with the u flag needs no engine at all. The engine reads a pattern that is valid only
-     without the u flag by code point too, so the faster matchers decide those the same way. *)
+     faster matcher that is valid with the u flag needs no engine at all. A pattern that is valid only without the u
+     flag is matched by UTF-16 code unit. The faster matchers read code points, which is the same thing unless the text
+     has a character beyond the Basic Multilingual Plane, so such a pattern keeps its engine for those texts. When the
+     pattern itself has such a character it is two atoms, which no faster matcher reads, and the engine takes every
+     text. *)
   match choose_pattern source with
-  | Some matcher when Pattern_engine.valid source -> Some { source; matcher }
+  | Some matcher when Pattern_engine.valid source -> Some { source; matcher; units = None }
   | chosen -> (
       match Pattern_engine.compile source with
       | None -> None
-      | Some engine -> Some { source; matcher = (match chosen with Some matcher -> matcher | None -> Engine engine) })
+      | Some engine -> (
+          match chosen with
+          | Some matcher when not (String.exists (fun c -> c >= '\xF0') source) ->
+              Some { source; matcher; units = Some engine }
+          | _ -> Some { source; matcher = Engine engine; units = None }))

@@ -4,6 +4,8 @@
 module Check = Corvus_json_schema_test_support.Check
 module Pattern = Corvus_json_schema__Pattern
 module Pattern_engine = Corvus_json_schema__Pattern_engine
+module Document = Corvus_json_schema__Document
+module Suite = Corvus_json_schema_test_helpers.Suite
 
 let test_patterns =
   [|
@@ -831,6 +833,12 @@ let allocation_patterns =
     ("engine", {p|^(?!x)[\w\/.]+$|p});
     ("engine", "^[a-z]*a[a-z]*$");
     ("engine", "^(é,)*a$");
+    (* Valid only without the u flag, so matched by UTF-16 code unit. One with a faster matcher goes to its engine for
+       the texts with a character beyond the Basic Multilingual Plane. *)
+    ("sequence", {p|^[^\%]{1,3}$|p});
+    ("sequence", {p|^.{3}\_?$|p});
+    ("engine", {p|\-{0}^(..)\1|p});
+    ("engine", {p|\-{0}(?<=\W)\W$|p});
   ]
 
 (* Matching allocates nothing, whichever matcher runs: the words allocated by a loop of matches are those of the same
@@ -873,7 +881,7 @@ let test_matching_allocates_nothing () =
   in
   List.iter
     (fun (kind, source) ->
-      if kind <> "engine" then
+      if kind <> "engine" && Pattern_engine.valid source then
         match Pattern.shape source with
         | None -> Check.fail (Printf.sprintf "%S has no shape" source)
         | Some p -> measure kind source p)
@@ -906,6 +914,44 @@ let test_matching_allocates_nothing () =
     (rounds * 3 * n)
     (String.concat ", " (List.rev !kinds))
 
+(* The cases of ecmaregex/v8_cases.json, which gen_cases.js of the Go module writes: the set "fast" is patterns of the
+   shapes the faster matchers take that are valid only without the u flag, with V8's answers. ECMA-262 matches such a
+   pattern by UTF-16 code unit, so a character beyond the Basic Multilingual Plane is two characters to it. The faster
+   matchers read code points, and hand a text with such a character to the engine. *)
+let test_patterns_valid_only_without_the_u_flag_match_code_units () =
+  Check.section "patterns valid only without the u flag match code units";
+  match Suite.read_file (Filename.concat "ecmaregex" "v8_cases.json") with
+  | None -> Check.fail "ecmaregex/v8_cases.json is not there"
+  | Some data -> (
+      match Document.parse_string data with
+      | Error e -> Check.fail (Document.error_to_string e)
+      | Ok d ->
+          let cases = Suite.items d (Suite.member d (Document.root d) "fast") in
+          let fast = ref 0 and answers = ref 0 in
+          List.iter
+            (fun c ->
+              let source = Suite.string d (Suite.member d c "p") in
+              let valid_unicode = Suite.text d (Suite.member d c "u") = "true" in
+              match Pattern.compile source with
+              | None -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
+              | Some p ->
+                  if Pattern.kind_name p <> "engine" then incr fast;
+                  Check.checkf
+                    (Pattern_engine.valid source = valid_unicode)
+                    "%S: valid with the u flag is %b, V8 says %b" source (not valid_unicode) valid_unicode;
+                  List.iter
+                    (fun test ->
+                      incr answers;
+                      check_every_way p
+                        (Suite.string d (Suite.member d test "t"))
+                        (Suite.text d (Suite.member d test "want") = "true"))
+                    (Suite.items d (Suite.member d c "tests")))
+            cases;
+          Printf.printf "%d patterns, %d of them with a faster matcher, %d answers\n" (List.length cases) !fast !answers;
+          Check.checkf
+            (!fast >= List.length cases / 2)
+            "only %d of %d patterns have a faster matcher" !fast (List.length cases))
+
 let () =
   test_matchers_agree_with_the_engine ();
   test_more_shapes_agree_with_the_engine ();
@@ -916,4 +962,5 @@ let () =
   test_fast_matchers_without_the_engine ();
   test_is_ascii_and_source ();
   test_matching_allocates_nothing ();
+  test_patterns_valid_only_without_the_u_flag_match_code_units ();
   Check.finish "pattern"

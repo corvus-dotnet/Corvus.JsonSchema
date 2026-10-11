@@ -74,6 +74,49 @@ let decode_last t lo limit =
     let packed = decode t start limit in
     if start + width packed <> limit then error1 else packed
 
+(* Matching by UTF-16 code unit over UTF-8 text (units.go of the Go package).
+
+   ECMA-262 matches a pattern that has no u flag a code unit at a time. The engine reads a pattern without the u flag
+   only when the u flag grammar refuses it, and such a pattern is matched that way. A character of one, two or three
+   bytes of UTF-8 is one code unit. A character of four bytes is two, a high surrogate and a low one, so the matcher
+   has to be able to stand between them. That position is written as the index of the character's third byte. Each
+   half then spans two bytes, every position is still an index into the text, a group is still a pair of indexes, and
+   no UTF-16 copy of the text is made.
+
+   The third byte of a character is a continuation byte, which is no position at all when matching by code point, so
+   the two readings cannot be confused. Only a text with a character of four bytes differs between the two, and the
+   instructions that compare bytes (a literal run, a word boundary, a line terminator) need no change: none of them
+   can hold at the position between the halves, and all of them are right at every other. *)
+
+(** The two UTF-16 code units of a code point beyond the Basic Multilingual Plane. *)
+let high_surrogate r = 0xD800 + ((r - 0x10000) lsr 10)
+
+let low_surrogate r = 0xDC00 + ((r - 0x10000) land 0x3FF)
+
+(** [unit_at t lo at hi] reads the code unit at [at] of the text, which is the bytes [lo] up to [hi]. [at] is below
+    [hi]. A half of a character of four bytes has a width of two. *)
+let unit_at t lo at hi =
+  let c = byte t at in
+  if c >= 0xF0 then
+    let packed = decode t at hi in
+    if width packed = 4 then (high_surrogate (rune packed) lsl 3) lor 2 else error1
+  else if c >= 0x80 && c < 0xC0 && at - lo >= 2 && byte t (at - 2) >= 0xF0 then
+    (* Between the halves of the character that starts two bytes back. *)
+    let packed = decode t (at - 2) hi in
+    if width packed = 4 then (low_surrogate (rune packed) lsl 3) lor 2 else decode t at hi
+  else decode t at hi
+
+(** [unit_before t lo at hi] reads the code unit that ends at [at] of the text, which is the bytes [lo] up to [hi]. [at]
+    is above [lo]. *)
+let unit_before t lo at hi =
+  let packed = decode_last t lo at in
+  if width packed = 4 then (low_surrogate (rune packed) lsl 3) lor 2
+  else if packed = error1 && at - lo >= 2 && hi - at >= 2 && byte t (at - 2) >= 0xF0 then
+    (* Between the halves of the character that starts two bytes back. *)
+    let whole = decode t (at - 2) hi in
+    if width whole = 4 then (high_surrogate (rune whole) lsl 3) lor 2 else packed
+  else packed
+
 (** Reports whether a code point has an encoding: it is in range and not a surrogate. *)
 let valid_rune r = (r >= 0 && r < 0xD800) || (r >= 0xE000 && r <= 0x10FFFF)
 
@@ -99,16 +142,26 @@ let add_rune buffer r =
     add (0x80 lor (r land 0x3F))
   end
 
-(** The code points of a string, with U+FFFD for each malformed byte. It is the conversion to a slice of runes of Go. *)
-let runes s =
+(** [runes s units] is the code points of a string, with U+FFFD for each malformed byte. It is the conversion to a slice
+    of runes of Go. With [units] it is the UTF-16 code units of the string: a character beyond the Basic Multilingual
+    Plane is its two surrogates. (Two units are no more elements than the four bytes of the character.) *)
+let runes s units =
   let t = { b = Bytes.empty; s; is_string = true } in
   let n = String.length s in
   let out = Array.make n 0 in
   let count = ref 0 and at = ref 0 in
   while !at < n do
     let packed = decode t !at n in
-    out.(!count) <- rune packed;
-    incr count;
+    let r = rune packed in
+    if units && r > 0xFFFF then begin
+      out.(!count) <- high_surrogate r;
+      out.(!count + 1) <- low_surrogate r;
+      count := !count + 2
+    end
+    else begin
+      out.(!count) <- r;
+      incr count
+    end;
     at := !at + width packed
   done;
   Array.sub out 0 !count

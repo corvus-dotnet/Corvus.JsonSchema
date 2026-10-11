@@ -13,9 +13,21 @@
     that neither grammar accepts is an error. This is the choice the Rust, Java, Go and Object Pascal ports make.
     {!valid}, which backs the regex format, accepts only the u flag grammar, as those ports do.
 
-    Whichever grammar accepts the pattern, matching is by Unicode code point over the UTF-8 text. The dot, a class and a
+    A pattern the u flag grammar accepts is matched by Unicode code point over the UTF-8 text. The dot, a class and a
     quantifier each see a character beyond the Basic Multilingual Plane as one character, and a surrogate pair written
-    as two [\u] escapes names one code point. Malformed UTF-8 in the text is read one byte at a time as U+FFFD.
+    as two [\u] escapes names one code point.
+
+    A pattern that only the Annex B grammar accepts is matched by UTF-16 code unit, as ECMA-262 matches a pattern with
+    no u flag, and as the Go package and the Object Pascal port do. A character beyond the Basic Multilingual Plane is
+    then two characters, a high surrogate and a low one, to the dot, a class, a quantifier, a group and a backreference.
+    A match can start or end between the two. Such a character in the pattern is two atoms, and a class range between
+    two of them is an error. Case is folded by the Canonicalize of a pattern with no u flag. The text stays UTF-8 and no
+    UTF-16 copy of it is made (see utf8.ml). Only a text with a character beyond the Basic Multilingual Plane is read
+    differently by the two.
+
+    Malformed UTF-8 in the text is read one byte at a time as U+FFFD. The text is UTF-8, so it cannot hold half of a
+    surrogate pair, and a pattern that names one, such as [\ud800], matches it only as half of a character and only when
+    the pattern has no u flag.
 
     JSON Schema gives a pattern no flags, so matching is case sensitive, [^] and [$] match only at the ends of the text,
     and the dot excludes the four line terminators. A pattern can change that for part of itself with a modifier group
@@ -179,4 +191,12 @@ module Internal : sig
 
   val category_names : string array
   (** Every name and alias of a General_Category value that a property expression can use. *)
+
+  val unit_at : string -> int -> int * int
+  (** [unit_at text at] is the UTF-16 code unit at the index [at] of the text and the number of bytes it spans, as the
+      matcher reads it for a pattern with no u flag. A half of a character of four bytes spans two. *)
+
+  val unit_before : string -> int -> int * int
+  (** [unit_before text at] is the code unit that ends at the index [at] of the text and the number of bytes it spans.
+  *)
 end

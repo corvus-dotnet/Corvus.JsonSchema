@@ -52,6 +52,9 @@ type state = {
   mutable tmp : int array;  (** The position at which each tracked group was entered. *)
   mutable counts : int array;
       (** For each loop, the number of iterations started and the position at which the last one started. *)
+  mutable units : bool;
+      (** Says the program of the match in hand matches by UTF-16 code unit (see utf8.ml). It is set from the program
+          when a match starts. *)
 }
 (** The working memory of one match. A match allocates only while the stack is still growing to the depth the pattern
     and the text need. *)
@@ -59,7 +62,9 @@ type state = {
 (** The largest stack kept between matches, in entries. *)
 let max_retained_stack = 1 lsl 16
 
-let new_state () = { text = Utf8.new_text (); stack = [||]; sp = 0; caps = [||]; tmp = [||]; counts = [||] }
+let new_state () =
+  { text = Utf8.new_text (); stack = [||]; sp = 0; caps = [||]; tmp = [||]; counts = [||]; units = false }
+
 let byte (t : Utf8.text) i = if t.is_string then Char.code (String.get t.s i) else Char.code (Bytes.get t.b i)
 
 let grow st =
@@ -117,13 +122,18 @@ let rec index_of t at hi lit =
   else if byte t at = Char.code (String.get lit 0) && equal_lit t at lit 1 then at
   else index_of t (at + 1) hi lit
 
+(* Reads the character at the position at, which is not ASCII: a code unit when the match is by code unit, and a code
+   point otherwise. decode_before reads the character that ends at the position. *)
+let decode_at st t lo at hi = if st.units then Utf8.unit_at t lo at hi else Utf8.decode t at hi
+let decode_before st t lo at hi = if st.units then Utf8.unit_before t lo at hi else Utf8.decode_last t lo at
+
 (* Returns the width of the character at the position at when the instruction's character or class matches it, and 0
-   otherwise. *)
-let one i t at hi =
+   otherwise. The character is a code unit when the match is by code unit. *)
+let one st i t lo at hi =
   if at >= hi then 0
   else
     let c = byte t at in
-    let packed = if c < Utf8.rune_self then (c lsl 3) lor 1 else Utf8.decode t at hi in
+    let packed = if c < Utf8.rune_self then (c lsl 3) lor 1 else decode_at st t lo at hi in
     let r = Utf8.rune packed in
     if i.has_set then if Charset.contains i.set r then Utf8.width packed else 0
     else if r = i.r then Utf8.width packed
@@ -132,20 +142,20 @@ let one i t at hi =
 (* The greedy single character loop of Op_rep. It takes characters from at while the instruction matches and the max
    allows, and then pushes the choice of giving some back. n counts the characters taken and floor is the position
    once the minimum was met. It returns the position reached, or -1 when the minimum was not met. *)
-let rec rep st i t hi pc at n floor =
+let rec rep st i t lo hi pc at n floor =
   if n <> i.max && at < hi then
     let c = byte t at in
     let w =
       if c < Utf8.rune_self then if if i.has_set then Charset.ascii_has i.set.ascii c else c = i.r then 1 else 0
       else
-        let packed = Utf8.decode t at hi in
+        let packed = decode_at st t lo at hi in
         let r = Utf8.rune packed in
         if if i.has_set then Charset.contains i.set r else r = i.r then Utf8.width packed else 0
     in
     if w = 0 then rep_done st i pc at n floor
     else
       let at = at + w and n = n + 1 in
-      rep st i t hi pc at n (if n = i.min then at else floor)
+      rep st i t lo hi pc at n (if n = i.min then at else floor)
   else rep_done st i pc at n floor
 
 and rep_done st i pc at n floor =
@@ -155,29 +165,32 @@ and rep_done st i pc at n floor =
   end
   else -1
 
-(* Compares the group from..to with the text at the position at, going forward and ignoring case. It returns the
-   position after the text that matched, or -1. *)
-let rec backref_fold t hi flag from until at =
+(* Compares the group from..until with the text at the position at, going forward, a character at a time: to fold
+   case (with fold), or because a group matched by code unit can begin or end between the halves of a character,
+   where its bytes do not say what it holds. It returns the position after the text that matched, or -1. (The second
+   half of a character lies beyond the end of a group that ends between the halves, so a code unit of the group is
+   read from the whole text.) *)
+let rec backref_chars st t lo hi fold flag from until at =
   if from >= until then at
   else if at >= hi then -1
   else
-    let want = Utf8.decode t from until in
-    let got = Utf8.decode t at hi in
+    let want = if st.units then Utf8.unit_at t lo from hi else Utf8.decode t from until in
+    let got = decode_at st t lo at hi in
     let w = Utf8.rune want and g = Utf8.rune got in
-    if g = w || Charset.canonicalize g flag = Charset.canonicalize w flag then
-      backref_fold t hi flag (from + Utf8.width want) until (at + Utf8.width got)
+    if g = w || (fold && Charset.canonicalize g flag = Charset.canonicalize w flag) then
+      backref_chars st t lo hi fold flag (from + Utf8.width want) until (at + Utf8.width got)
     else -1
 
 (* The same going backward: the group is read from its end and the text before the position at. *)
-let rec backref_fold_back t lo flag from until at =
+let rec backref_chars_back st t lo hi fold flag from until at =
   if from >= until then at
   else if at <= lo then -1
   else
-    let want = Utf8.decode_last t from until in
-    let got = Utf8.decode_last t lo at in
+    let want = if st.units then Utf8.unit_before t lo until hi else Utf8.decode_last t from until in
+    let got = decode_before st t lo at hi in
     let w = Utf8.rune want and g = Utf8.rune got in
-    if g = w || Charset.canonicalize g flag = Charset.canonicalize w flag then
-      backref_fold_back t lo flag from (until - Utf8.width want) (at - Utf8.width got)
+    if g = w || (fold && Charset.canonicalize g flag = Charset.canonicalize w flag) then
+      backref_chars_back st t lo hi fold flag from (until - Utf8.width want) (at - Utf8.width got)
     else -1
 
 (* Reports whether a code point before or at a position is a word character of a case-insensitive word boundary. *)
@@ -196,7 +209,7 @@ let rec step insts st t lo hi pc pos =
         if c < Utf8.rune_self then
           if c = i.r then step insts st t lo hi (pc + 1) (pos + 1) else backtrack insts st t lo hi
         else
-          let packed = Utf8.decode t pos hi in
+          let packed = decode_at st t lo pos hi in
           if Utf8.rune packed = i.r then step insts st t lo hi (pc + 1) (pos + Utf8.width packed)
           else backtrack insts st t lo hi
       else backtrack insts st t lo hi
@@ -207,7 +220,7 @@ let rec step insts st t lo hi pc pos =
           if Charset.ascii_has i.set.ascii c then step insts st t lo hi (pc + 1) (pos + 1)
           else backtrack insts st t lo hi
         else
-          let packed = Utf8.decode t pos hi in
+          let packed = decode_at st t lo pos hi in
           if Charset.contains i.set (Utf8.rune packed) then step insts st t lo hi (pc + 1) (pos + Utf8.width packed)
           else backtrack insts st t lo hi
       else backtrack insts st t lo hi
@@ -218,14 +231,14 @@ let rec step insts st t lo hi pc pos =
   | Op_char_back ->
       if pos > lo then
         let c = byte t (pos - 1) in
-        let packed = if c < Utf8.rune_self then (c lsl 3) lor 1 else Utf8.decode_last t lo pos in
+        let packed = if c < Utf8.rune_self then (c lsl 3) lor 1 else decode_before st t lo pos hi in
         if Utf8.rune packed = i.r then step insts st t lo hi (pc + 1) (pos - Utf8.width packed)
         else backtrack insts st t lo hi
       else backtrack insts st t lo hi
   | Op_set_back ->
       if pos > lo then
         let c = byte t (pos - 1) in
-        let packed = if c < Utf8.rune_self then (c lsl 3) lor 1 else Utf8.decode_last t lo pos in
+        let packed = if c < Utf8.rune_self then (c lsl 3) lor 1 else decode_before st t lo pos hi in
         if Charset.contains i.set (Utf8.rune packed) then step insts st t lo hi (pc + 1) (pos - Utf8.width packed)
         else backtrack insts st t lo hi
       else backtrack insts st t lo hi
@@ -296,17 +309,17 @@ let rec step insts st t lo hi pc pos =
         let n = until - from in
         if pos - lo >= n && equal_spans t (pos - n) from n then step insts st t lo hi (pc + 1) (pos - n)
         else backtrack insts st t lo hi
-  | Op_backref_fold ->
+  | Op_backref_fold | Op_backref_units ->
       let from = st.caps.(2 * i.a) and until = st.caps.((2 * i.a) + 1) in
       if from < 0 then step insts st t lo hi (pc + 1) pos
       else
-        let at = backref_fold t hi i.flag from until pos in
+        let at = backref_chars st t lo hi (i.op = Op_backref_fold) i.flag from until pos in
         if at >= 0 then step insts st t lo hi (pc + 1) at else backtrack insts st t lo hi
-  | Op_backref_fold_back ->
+  | Op_backref_fold_back | Op_backref_units_back ->
       let from = st.caps.(2 * i.a) and until = st.caps.((2 * i.a) + 1) in
       if from < 0 then step insts st t lo hi (pc + 1) pos
       else
-        let at = backref_fold_back t lo i.flag from until pos in
+        let at = backref_chars_back st t lo hi (i.op = Op_backref_fold_back) i.flag from until pos in
         if at >= 0 then step insts st t lo hi (pc + 1) at else backtrack insts st t lo hi
   | Op_look ->
       push st (if i.flag then e_look_neg else e_look) i.x pos 0;
@@ -345,12 +358,12 @@ let rec step insts st t lo hi pc pos =
       st.sp <- !e;
       backtrack insts st t lo hi
   | Op_rep ->
-      let at = rep st i t hi pc pos 0 pos in
+      let at = rep st i t lo hi pc pos 0 pos in
       if at >= 0 then step insts st t lo hi (pc + 1) at else backtrack insts st t lo hi
   | Op_rep_lazy ->
       let at = ref pos and n = ref 0 and stuck = ref false in
       while !n < i.min && not !stuck do
-        let w = one i t !at hi in
+        let w = one st i t lo !at hi in
         if w = 0 then stuck := true
         else begin
           at := !at + w;
@@ -406,7 +419,11 @@ and backtrack insts st t lo hi =
       (* Give back the last character taken. The characters between a and pos were decoded going forward, and
          decoding the last of them going backward finds the same boundary. *)
       let pos = stack.(e + 2) and floor = stack.(e + 3) in
-      let w = if byte t (pos - 1) >= Utf8.rune_self then Utf8.width (Utf8.decode_last t floor pos) else 1 in
+      let w =
+        if byte t (pos - 1) < Utf8.rune_self then 1
+        else if st.units then Utf8.width (Utf8.unit_before t lo pos hi)
+        else Utf8.width (Utf8.decode_last t floor pos)
+      in
       let pos = pos - w in
       stack.(e + 2) <- pos;
       if pos <= floor then st.sp <- e;
@@ -415,7 +432,7 @@ and backtrack insts st t lo hi =
     else if kind = e_rep_lazy then begin
       let pc = stack.(e + 1) in
       let rep = insts.(pc) in
-      let w = one rep t stack.(e + 2) hi in
+      let w = one st rep t lo stack.(e + 2) hi in
       if w = 0 then begin
         st.sp <- e;
         backtrack insts st t lo hi
@@ -457,7 +474,7 @@ let rec search_first p st t lo hi at =
   if at = hi then (not p.has_first) && run p st t lo hi at
   else
     let c = byte t at in
-    let packed = if c < Utf8.rune_self then (c lsl 3) lor 1 else Utf8.decode t at hi in
+    let packed = if c < Utf8.rune_self then (c lsl 3) lor 1 else decode_at st t lo at hi in
     if ((not p.has_first) || Charset.contains p.first (Utf8.rune packed)) && run p st t lo hi at then true
     else search_first p st t lo hi (at + Utf8.width packed)
 
@@ -479,6 +496,7 @@ let match_text p st lo hi =
   for k = 0 to (2 * p.groups) - 1 do
     st.caps.(k) <- -1
   done;
+  st.units <- p.units;
   let t = st.text in
   match search p st t lo hi with
   | matched ->

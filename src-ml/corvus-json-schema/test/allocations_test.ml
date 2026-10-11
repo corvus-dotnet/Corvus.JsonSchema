@@ -157,6 +157,30 @@ let allocation_cases () =
           {|{"json": "bm90IGpzb24="}|};
         ];
     };
+    (* Patterns that are valid only without the u flag, which are matched by UTF-16 code unit, on strings with
+       characters beyond the Basic Multilingual Plane: one with a faster matcher, which hands such a string to the
+       engine, and ones the engine matches. *)
+    {
+      name = "patterns matched by code unit";
+      options = default_options;
+      schema =
+        {|{
+          "type": "object",
+          "properties": {
+            "a": { "pattern": "^[^\\%]{1,3}$" },
+            "b": { "pattern": "\\-{0}^(..)\\1" },
+            "c": { "pattern": "\\-{0}(?<=\\W)\\W$" }
+          },
+          "patternProperties": { "^\\-?.$": { "type": "integer" } }
+        }|};
+      instances =
+        [
+          "{\"a\": \"\xf0\x90\x90\x80\", \"b\": \"\xf0\x9f\x98\x80\xf0\x9f\x98\x80\", \"c\": \"x\xf0\x90\x90\x80\"}";
+          "{\"a\": \"\xf0\x90\x90\x80\xf0\x90\x90\x80\", \"b\": \"\xf0\x9f\x98\x80\xf0\x90\x90\x80\", \"c\": \"ab\"}";
+          "{\"a\": \"abc\", \"b\": \"abab\", \"\xf0\x90\x90\x80\": 1, \"z\": 1, \"\xc3\xa9\": 2}";
+          "{\"z\": \"no\"}";
+        ];
+    };
     (* Beyond Go's cases: numbers of every representation against bounds of every representation, which is where an
        OCaml port could box a float or an Int64. *)
     {

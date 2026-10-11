@@ -15,8 +15,8 @@
   suite_test
   version_test)
  (modules :standard \ readme_test)
- ; version_test reads the package's version history.
- (deps %{project_root}/VERSIONHISTORY.md)
+ ; version_test reads the package's version history, and pattern_test the cases of the engine's tests.
+ (deps %{project_root}/VERSIONHISTORY.md ecmaregex/v8_cases.json)
  (libraries
   corvus-json-schema
   corvus_json_schema_test_support

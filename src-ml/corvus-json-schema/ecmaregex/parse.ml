@@ -72,7 +72,7 @@ type named_group = { number : int; group_path : (int * int) array }
 (** A capturing group with a name, and the alternatives that enclose it, outermost first. *)
 
 type parser = {
-  p : int array;
+  p : int array;  (** The pattern as code points with the u flag, and as UTF-16 code units without it. *)
   mutable i : int;
   unicode : bool;
   mutable depth : int;
@@ -247,10 +247,11 @@ let hex p n =
     read 0 0
 
 (* Reads what follows a \u and returns the code point, or -1, consuming nothing, when it is not a well-formed escape.
-   With braces set it accepts the \u{...} form. A surrogate pair written as two escapes is one code point. *)
-let unicode_escape p braces =
+   With unicode_mode set, as it is with the u flag and always in a group name, it accepts the \u{...} form and reads a
+   surrogate pair written as two escapes as one code point. Without it each escape is one code unit. *)
+let unicode_escape p unicode_mode =
   let start = p.i in
-  if braces && eat p '{' then begin
+  if unicode_mode && eat p '{' then begin
     let digits = p.i in
     let v = ref 0 in
     while more p && hex_value (peek p) >= 0 do
@@ -267,7 +268,7 @@ let unicode_escape p braces =
     let u = hex p 4 in
     if u < 0 then -1
     else if
-      u >= 0xD800 && u <= 0xDBFF
+      unicode_mode && u >= 0xD800 && u <= 0xDBFF
       && p.i + 6 <= Array.length p.p
       && p.p.(p.i) = 0x5C (* \ *)
       && p.p.(p.i + 1) = 0x75 (* u *)
@@ -300,6 +301,12 @@ let group_name p =
         let c = unicode_escape p true in
         if c < 0 then fail p "invalid group name";
         c
+      end
+      else if c >= 0xD800 && c <= 0xDBFF && peek p >= 0xDC00 && peek p <= 0xDFFF then begin
+        (* Without the u flag the pattern is code units, and a name still takes a surrogate pair as one character. *)
+        let low = peek p in
+        p.i <- p.i + 1;
+        0x10000 + ((c - 0xD800) lsl 10) + (low - 0xDC00)
       end
       else c
     in
@@ -718,11 +725,16 @@ let quote pattern =
   Buffer.contents out
 
 (** [parse pattern unicode] reads the pattern with the grammar of the u flag, or with the Annex B grammar. It returns
-    the root of the tree and the parser, or the reason the pattern is not valid under that grammar. *)
+    the root of the tree and the parser, or the reason the pattern is not valid under that grammar.
+
+    Without the u flag ECMA-262 reads a pattern, and matches a text, a UTF-16 code unit at a time, so the pattern is
+    read as code units. A character beyond the Basic Multilingual Plane is then two atoms, a quantifier after it repeats
+    the second, and in a class it is two members, so a range between two such characters runs from a low surrogate to a
+    high one and is an error. *)
 let parse pattern unicode =
   let p =
     {
-      p = Utf8.runes pattern;
+      p = Utf8.runes pattern (not unicode);
       i = 0;
       unicode;
       depth = 0;

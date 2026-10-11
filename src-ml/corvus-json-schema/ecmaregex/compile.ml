@@ -31,6 +31,10 @@ type opcode =
   | Op_backref_back
   | Op_backref_fold
   | Op_backref_fold_back
+  | Op_backref_units
+      (** [Op_backref_units] and [Op_backref_units_back] compare a group a code unit at a time, for a pattern matched by
+          code unit. *)
+  | Op_backref_units_back
   | Op_look
       (** Opens a lookaround. [Op_look_ok] ends the body of a positive one and [Op_look_fail] the body of a negative
           one. *)
@@ -70,6 +74,8 @@ type program = {
   insts : inst array;
   groups : int;  (** The number of capturing groups some backreference names. *)
   loops : int;  (** The number of counted loops. *)
+  units : bool;
+      (** Says the pattern was read without the u flag, so the text is matched by UTF-16 code unit (see utf8.ml). *)
   anchored : bool;  (** Says every match starts at the start of the text. *)
   prefix : string;  (** Literal text every match starts with. *)
   first : Charset.t;
@@ -207,8 +213,9 @@ let rec emit c n back =
       let op =
         if n.fold && back then Op_backref_fold_back
         else if n.fold then Op_backref_fold
-        else if back then Op_backref_back
-        else Op_backref
+        else if back then if c.unicode_mode then Op_backref_back else Op_backref_units_back
+        else if c.unicode_mode then Op_backref
+        else Op_backref_units
       in
       (* When several groups share the name, at most one has taken part, and the others match the empty string. So
          matching each in turn matches the one that took part. *)
@@ -378,6 +385,7 @@ let compile_program root group_count unicode_mode =
     insts = Array.sub c.code 0 c.count;
     groups = !slots;
     loops = c.loop_count;
+    units = not unicode_mode;
     anchored;
     prefix = Buffer.contents prefix;
     first = (match first with Some set -> set | None -> Charset.none);

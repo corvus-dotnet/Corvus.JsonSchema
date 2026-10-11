@@ -403,12 +403,6 @@ let bit hex k =
   let digit = if digit >= 'a' then Char.code digit - Char.code 'a' + 10 else Char.code digit - Char.code '0' in
   (digit lsr (3 - (k mod 4))) land 1 = 1
 
-(* Reports whether the text has a character beyond the Basic Multilingual Plane. V8 matches a pattern with no flag by
-   UTF-16 code unit and this engine matches by code point, so the oracle is not asked about such a text for a pattern
-   that is valid only with no flag. A character beyond the plane is the one whose UTF-8 has a lead byte of F0 or
-   above, and the texts of the oracle are well-formed. *)
-let beyond_bmp s = String.exists (fun c -> Char.code c >= 0xF0) s
-
 (* The patterns for which V8 13.6 answers a case-insensitive modifier group differently from the same pattern with
    the i flag. ECMA-262 gives the two the same meaning. Only the validity of these patterns is taken from the oracle.
    test_oracle_flags checks the behaviour of each through the i flag, where V8 agrees with this engine. *)
@@ -444,24 +438,27 @@ let check_verdict p valid_unicode valid_legacy =
         Some (re, backtracking p)
       end
 
-(* Compares the answers of both back ends with the oracle's on every text. It adds to answers the number of answers
-   compared and to matched the number of those that are a match. *)
+(* Compares the answers of both back ends with one of V8's. *)
+let check_answer p re backtrack s want =
+  oracle_answers := !oracle_answers + 2;
+  let got = Re.is_match_string re s in
+  if got <> want then fail "%S on %S (as compiled, %s): got %b, V8 says %b" p s (Re.engine_name (Re.engine re)) got want
+  else incr oracle_answers_agreed;
+  let got = match_bytes backtrack s in
+  if got <> want then fail "%S on %S (forced backtrack): got %b, V8 says %b" p s got want
+  else incr oracle_answers_agreed
+
+(* Compares the answers of both back ends with the oracle's on every text, the texts with a character beyond the Basic
+   Multilingual Plane among them: a pattern that is valid only with no flag is matched by UTF-16 code unit, as V8
+   matches it. It adds to answers the number of answers compared and to matched the number of those that are a
+   match. *)
 let check_answers p re backtrack inputs bits answers matched =
   List.iteri
     (fun i s ->
-      if Re.unicode re || not (beyond_bmp s) then begin
-        let want = bit bits i in
-        incr answers;
-        if want then incr matched;
-        oracle_answers := !oracle_answers + 2;
-        let got = Re.is_match_string re s in
-        if got <> want then
-          fail "%S on %S (as compiled, %s): got %b, V8 says %b" p s (Re.engine_name (Re.engine re)) got want
-        else incr oracle_answers_agreed;
-        let got = match_bytes backtrack s in
-        if got <> want then fail "%S on %S (forced backtrack): got %b, V8 says %b" p s got want
-        else incr oracle_answers_agreed
-      end)
+      let want = bit bits i in
+      incr answers;
+      if want then incr matched;
+      check_answer p re backtrack s want)
     inputs
 
 (* Checks the hand-written patterns (the Java port's validator cases, the Rust port's pattern cases and the Go
@@ -696,6 +693,10 @@ let test_allocations () =
       ({|^(?:(\w)(?!\1)|\W){3,}?$|}, false); ({|(?<n>[a-z])\k<n>|}, false); ({|café(?= )|}, false);
       ({|(?i:QUICK|ÉCOLE)|}, true); ({|(\w)(?i:\1)|}, false); ({|(?m:^)\w+(?m:$)|}, false);
       ({|(?i:\bCAF\b)|}, false);
+      (* Valid only with no flag, so matched by UTF-16 code unit: the text with characters beyond the Basic
+         Multilingual Plane is read a unit at a time. *)
+      ({|^\-?[^\d]+$|}, true); ({|\-?\W{2} na.+\W{2}$|}, true); ({|\-{0}(\W)\1 |}, false);
+      ({|\-{0}(?<=\W{2}) (?i:CAF\W)(?= (.)(.)$)|}, false);
     ]
     [@ocamlformat "disable"]
   in
@@ -1061,6 +1062,93 @@ let test_slices () =
   | None -> ());
   log "done"
 
+(* The cases of v8_cases.json, which gen_cases.js of the Go package writes: patterns with what V8 says of each, whether
+   it is valid with the u flag and with no flag, and whether it matches each text. Where V8 departs from ECMA-262 the
+   answers are ECMA-262's, and the case names the departure. The file is a copy of the Go package's. *)
+let cases = lazy (Json.load "v8_cases.json")
+
+(* The totals of one set of the cases. *)
+type totals = {
+  mutable patterns : int;
+  mutable answers : int;
+  mutable matched : int;
+  mutable legacy : int;  (** The patterns that are valid only with no flag. *)
+  mutable invalid : int;
+  mutable departures : int;  (** The patterns where V8 departs from ECMA-262. *)
+}
+
+(* Compares one set of the cases with V8: the validity of each pattern and the answers of both back ends. *)
+let check_cases name =
+  let t = { patterns = 0; answers = 0; matched = 0; legacy = 0; invalid = 0; departures = 0 } in
+  List.iter
+    (fun c ->
+      let p = Json.text "p" c in
+      t.patterns <- t.patterns + 1;
+      if Json.member "ecma262" c <> None then t.departures <- t.departures + 1;
+      match check_verdict p (Json.flag "u" c) (Json.flag "l" c) with
+      | None -> t.invalid <- t.invalid + 1
+      | Some (re, backtrack) ->
+          if not (Json.flag "u" c) then t.legacy <- t.legacy + 1;
+          List.iter
+            (fun test ->
+              let want = Json.flag "want" test in
+              t.answers <- t.answers + 1;
+              if want then t.matched <- t.matched + 1;
+              check_answer p re backtrack (Json.text "t" test) want)
+            (Json.items "tests" c))
+    (Json.items name (Lazy.force cases));
+  t
+
+(* Checks matching by UTF-16 code unit against V8. A pattern that is valid only with no flag is matched a code unit at
+   a time. A character beyond the Basic Multilingual Plane is two units to the dot, to a class, to a quantifier, to a
+   group and to a backreference, a match can start and end between them, and such a character in the pattern is two
+   atoms. A class range between two of them is an error in both grammars. *)
+let test_code_units () =
+  let t = check_cases "units" in
+  log "%d patterns (%d valid only with no flag, %d not valid), %d answers per back end (%d of them a match)" t.patterns
+    t.legacy t.invalid t.answers t.matched;
+  if t.legacy < 90 || t.invalid < 3 || t.matched < 500 then fail "the cases are not the ones this test is about"
+
+(* Checks the two readers of a code unit on every position of a text, forwards and backwards. *)
+let test_code_unit_positions () =
+  let text = "a\u{e9}\u{20ac}\u{10400}\u{10FFFF}z" in
+  let want = [| 0x61; 0xE9; 0x20AC; 0xD801; 0xDC00; 0xDBFF; 0xDFFF; 0x7A |] in
+  let ends = Array.make (Array.length want) 0 in
+  let pos = ref 0 in
+  Array.iteri
+    (fun k unit ->
+      let got, w = Re.Internal.unit_at text !pos in
+      if got <> unit then fail "unit_at(%d) = %#x, want %#x" !pos got unit;
+      pos := !pos + w;
+      ends.(k) <- !pos)
+    want;
+  if !pos <> String.length text then fail "the units end at %d of %d bytes" !pos (String.length text);
+  for k = Array.length want - 1 downto 0 do
+    let got, w = Re.Internal.unit_before text ends.(k) in
+    if got <> want.(k) then fail "unit_before(%d) = %#x, want %#x" ends.(k) got want.(k);
+    let start = if k > 0 then ends.(k - 1) else 0 in
+    if ends.(k) - w <> start then fail "unit_before(%d) spans %d bytes, want %d" ends.(k) w (ends.(k) - start)
+  done;
+  (* Text that is not UTF-8 is read a byte at a time, as it is when matching by code point. *)
+  List.iter
+    (fun bad ->
+      let n = String.length bad in
+      let pos = ref 0 in
+      while !pos < n do
+        let r, w = Re.Internal.unit_at bad !pos in
+        if w <> 1 || (r <> 0xFFFD && r <> Char.code bad.[!pos]) then fail "unit_at(%S, %d) = %#x, %d" bad !pos r w;
+        pos := !pos + w
+      done;
+      let pos = ref n in
+      while !pos > 0 do
+        let r, w = Re.Internal.unit_before bad !pos in
+        if w <> 1 || (r <> 0xFFFD && r <> Char.code bad.[!pos - 1]) then
+          fail "unit_before(%S, %d) = %#x, %d" bad !pos r w;
+        pos := !pos - w
+      done)
+    [ "\xf0\x9f"; "\xf0\x9f\x98"; "\x80\x80\x80"; "\xf0a\x80\x80"; "\xf8\x88\x80\x80\x80" ];
+  log "done"
+
 let () =
   let ran = ref 0 in
   List.iter
@@ -1088,6 +1176,8 @@ let () =
       ("oracle hand written", test_oracle_hand_written);
       ("oracle flags", test_oracle_flags);
       ("oracle generated", test_oracle_generated);
+      ("code units", test_code_units);
+      ("code unit positions", test_code_unit_positions);
     ];
   Printf.printf
     "V8 oracle: %d verdicts on validity compared, %d agreed. %d answers on a match compared (each text on both back \

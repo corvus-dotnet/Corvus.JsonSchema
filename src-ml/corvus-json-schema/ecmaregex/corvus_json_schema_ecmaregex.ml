@@ -141,4 +141,9 @@ module Internal = struct
   let property_pairs = Charset.property_pairs
   let binary_names = Array.map fst Charset.binary_names
   let category_names = Array.map fst Charset.category_names
+  let unpack packed = (Utf8.rune packed, Utf8.width packed)
+  let unit_at text at = unpack (Utf8.unit_at { b = Bytes.empty; s = text; is_string = true } 0 at (String.length text))
+
+  let unit_before text at =
+    unpack (Utf8.unit_before { b = Bytes.empty; s = text; is_string = true } 0 at (String.length text))
 end

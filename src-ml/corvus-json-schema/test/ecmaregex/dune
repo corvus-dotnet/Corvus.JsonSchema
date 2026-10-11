@@ -1,11 +1,12 @@
 ; The tests of the ECMA-262 regular expression engine: ecmaregex_test.go, oracle_test.go and suite_test.go of the Go
 ; module, as TestEcmaRegex.pas of the Object Pascal port has them. v8_oracle.json is the oracle of the Go package
-; (testdata/v8_oracle.json there, which testdata/gen_oracle.js writes).
+; (testdata/v8_oracle.json there, which testdata/gen_oracle.js writes), and v8_cases.json its cases
+; (testdata/v8_cases.json, which testdata/gen_cases.js writes).
 
 (test
  (name test_ecmaregex)
  (modules test_ecmaregex json)
- (deps v8_oracle.json)
+ (deps v8_oracle.json v8_cases.json)
  (libraries
   corvus-json-schema.ecmaregex
   corvus-json-schema.ucd
