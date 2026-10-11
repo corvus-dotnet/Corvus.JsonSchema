@@ -93,6 +93,65 @@ func TestCodeUnits(t *testing.T) {
 	}
 }
 
+// TestRepetitionsThatCannotConsume checks, against V8, repetitions whose body can match only the empty string and
+// backreferences inside the group they name. The matcher runs such a body once, or not at all when the minimum is
+// zero, and reads such a backreference as the empty string (see simplify). Run as written, the first patterns of the
+// set take time exponential in their counts, so each pattern has ten seconds for all its texts. The others pin
+// what the groups of such a body hold afterwards.
+func TestRepetitionsThatCannotConsume(t *testing.T) {
+	c := loadCases(t)
+	start := time.Now()
+	answers, matched, _, _ := checkCases(t, c.Loops, 10*time.Second)
+	t.Logf("%d patterns, %d answers per back end (%d of them a match) in %v", len(c.Loops), answers, matched,
+		time.Since(start).Round(time.Millisecond))
+}
+
+// TestSimplify checks the two rewrites of simplify on the syntax tree, and that it leaves the tree it was given
+// alone.
+func TestSimplify(t *testing.T) {
+	for _, c := range []struct {
+		pattern string
+		// loops is the number of counted loops of the program, and backrefs the number of its backreferences.
+		loops, backrefs int
+	}{
+		{`(?:\b|(?=a)|){4,5}`, 0, 0}, {`(?:(?=(a))|){2}\1`, 0, 1}, {`(?:(?=a))*b`, 0, 0}, {`(?:a|(?=b)){2,3}`, 1, 0},
+		{`(a\1)+`, 0, 0}, {`(?:(a)|b\1){2}`, 1, 1}, {`((\1|\2|)){3}`, 0, 0}, {`(?<n>a\k<n>)`, 0, 0},
+		{`(?:(?<n>a)|(?<n>b\k<n>)){2}`, 1, 2}, {`(?:(\1){3}|(?!a)){2,}(?<=b)`, 0, 0}, {`(?:\1(a)){2}`, 1, 1},
+	} {
+		root, _, err := parse(c.pattern, true)
+		if err != nil {
+			t.Fatalf("parse(%q): %v", c.pattern, err)
+		}
+		before := dump(root)
+		p := compileProgram(root, true)
+		if after := dump(root); after != before {
+			t.Errorf("%q: compiling changed the tree from %s to %s", c.pattern, before, after)
+		}
+		backrefs := 0
+		for _, i := range p.insts {
+			if i.op == opBackref {
+				backrefs++
+			}
+		}
+		if p.loops != c.loops || backrefs != c.backrefs {
+			t.Errorf("%q: %d counted loops and %d backreferences, want %d and %d", c.pattern, p.loops, backrefs, c.loops,
+				c.backrefs)
+		}
+	}
+}
+
+// dump writes the shape of a tree, for comparing two trees.
+func dump(n *node) string {
+	s := string(rune('A'+int(n.kind))) + "("
+	if n.kind == nRepeat {
+		s += string(rune('0'+n.min%10)) + string(rune('0'+(n.max+1)%10))
+	}
+	for _, sub := range n.subs {
+		s += dump(sub)
+	}
+	return s + ")"
+}
+
 // TestCodeUnitPositions checks the two readers of a code unit on every position of a text, forwards and backwards.
 func TestCodeUnitPositions(t *testing.T) {
 	text := []byte("a\u00e9\u20ac\U00010400\U0010FFFFz")

@@ -102,6 +102,7 @@ type compiler struct {
 }
 
 func compileProgram(root *node, unicode bool) *program {
+	root = simplify(root, nil)
 	c := &compiler{tracked: map[int]int32{}, unicode: unicode}
 	var referenced []int
 	collectBackrefs(root, &referenced)
@@ -135,6 +136,77 @@ func compileProgram(root *node, unicode bool) *program {
 		return &state{caps: make([]int, 2*p.groups), tmp: make([]int, p.groups), counts: make([]int, 2*p.loops)}
 	}
 	return p
+}
+
+// simplify returns the tree with two rewrites, both of which V8 makes. Neither changes what the pattern matches or
+// what any group holds. Without them a pattern can take time exponential in its counts for no reason that ECMA-262
+// gives. The tree is shared, so a node that changes is copied.
+//
+// A backreference to a group it is inside of is the empty string. The group is not set until it closes, and the
+// repetition around a group clears it at the start of each iteration, so inside the group it is never set.
+//
+// A repetition whose body cannot consume a character, such as (?:\b|(?=a)|){4,5}, is the body once when its minimum
+// is one or more, and nothing when its minimum is zero. Every iteration of such a body is empty. ECMA-262 refuses an
+// empty iteration after the minimum, so the iterations are exactly the minimum. Each of them starts with the groups
+// of the body cleared and at the same position, so what the last one can do does not depend on the ones before it,
+// and the ways through the last one come in the same order whatever the others chose. Run as written, the matcher
+// would try every combination of the ways through every iteration.
+func simplify(n *node, open []int) *node {
+	if n.kind == nBackref {
+		for _, g := range n.groups {
+			inside := false
+			for _, o := range open {
+				inside = inside || o == g
+			}
+			if !inside {
+				return n
+			}
+		}
+		return &node{kind: nEmpty}
+	}
+	if len(n.subs) == 0 {
+		return n
+	}
+	if n.kind == nGroup && n.group > 0 {
+		open = append(open, n.group)
+	}
+	out := n
+	for i, sub := range n.subs {
+		s := simplify(sub, open)
+		if s == sub {
+			continue
+		}
+		if out == n {
+			c := *n
+			c.subs = append([]*node(nil), n.subs...)
+			out = &c
+		}
+		out.subs[i] = s
+	}
+	if out.kind == nRepeat && out.max != 0 && !consumes(out.subs[0]) {
+		if out.min == 0 {
+			return &node{kind: nEmpty}
+		}
+		return out.subs[0]
+	}
+	return out
+}
+
+// consumes reports whether n can match one character or more. It errs towards true.
+func consumes(n *node) bool {
+	switch n.kind {
+	case nChar, nSet, nBackref:
+		return true
+	case nCat, nAlt, nGroup:
+		for _, sub := range n.subs {
+			if consumes(sub) {
+				return true
+			}
+		}
+	case nRepeat:
+		return n.max != 0 && consumes(n.subs[0])
+	}
+	return false
 }
 
 func collectBackrefs(n *node, out *[]int) {

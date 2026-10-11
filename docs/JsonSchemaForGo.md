@@ -198,6 +198,12 @@ A JSON string can name half of a surrogate pair with an escape, as in `"\ud800"`
 `Document` is UTF-8 and cannot hold it. `ParseDocument` returns a `*ParseError` for it, and `IsValidString` and
 `IsValidBytes` report it as not valid, whatever the schema. So a pattern is never matched against such a string.
 
+A pattern with a lookaround or a backreference runs on a backtracking matcher, which has no step budget, so nested
+quantifiers can take it exponential time on a string that does not match. A repetition whose body cannot consume a
+character, such as `(?:\b|(?=a)|){4,5}`, is not such a case. Every iteration of it is empty, so the matcher runs
+the body once when the minimum is one or more and not at all when it is zero, which is what ECMA-262 says such a
+repetition matches.
+
 ## Performance
 
 Measured with [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark)'s 37 corpora, each
