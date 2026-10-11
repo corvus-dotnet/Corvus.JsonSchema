@@ -415,10 +415,6 @@ let rec match_ascii_from q b at stop i =
 (* match_ascii matches over ASCII text, a byte per character. *)
 let match_ascii q b off stop = if q.pinned >= 0 then match_pinned q b off stop true else match_ascii_from q b off stop 0
 
-(* match_sequence is match of the Go source's sequence: for a text that is not known to be ASCII. *)
-let match_sequence q b off stop =
-  if is_ascii_range b off stop then match_ascii q b off stop else match_chars q b off stop
-
 (* ---------------------------------------------------------------------------------------------------------------------
    Separated lists *)
 
@@ -432,22 +428,28 @@ let rec match_list_rest l b at stop repeats =
     let m = consume l.repeated b n stop in
     m >= 0 && match_list_rest l b m stop (repeats + 1)
 
-(* The second form: repeated items and separators until the final item matches the whole remainder. *)
-let rec match_list_final l final b at stop repeats =
-  (repeats >= l.min_repeats && match_sequence final b at stop)
+(* The second form: repeated items and separators until the final item matches the whole remainder. Whether the text
+   is ASCII is worked out once, for the whole of it. The final sequence is tried after every item, and reading what is
+   left of the text each time to see whether it is ASCII made the match take time quadratic in the number of items:
+   33,333 items took 2.2 seconds. *)
+let rec match_list_final l final b at stop repeats ascii =
+  (repeats >= l.min_repeats && if ascii then match_ascii final b at stop else match_chars final b at stop)
   ||
   let n = consume l.repeated b at stop in
   n >= 0
   &&
   let m = consume l.separator b n stop in
-  m >= 0 && match_list_final l final b m stop (repeats + 1)
+  m >= 0 && match_list_final l final b m stop (repeats + 1) ascii
 
 let match_list l b off stop =
   match l.first with
   | Some first ->
       let n = consume first b off stop in
       n >= 0 && match_list_rest l b n stop 0
-  | None -> ( match l.final with Some final -> match_list_final l final b off stop 0 | None -> false)
+  | None -> (
+      match l.final with
+      | Some final -> match_list_final l final b off stop 0 (is_ascii_range b off stop)
+      | None -> false)
 
 (* ---------------------------------------------------------------------------------------------------------------------
    Alternatives *)
@@ -1117,7 +1119,17 @@ let parse_separated_list p =
               parse_sequence ("^" ^ unwrapped ^ "$") >>= fun final ->
               search 1 (fun k ->
                   let repeated, separator = split group_items k in
-                  if fixed separator && greedy_before repeated separator.(0).set then
+                  (* The final sequence is tried after every item, against all that is left of the text. It must not
+                     read far each time, or the match takes time quadratic in the number of items, with no limit: 4.5
+                     and 7.4 seconds for 33,333 items. So a pattern is a list only when its final sequence is not one
+                     matched by the length of the text, which reads that length, and when no item of it holds a
+                     character the first item of the separator holds: tried at the start of an item, it then fails at
+                     the separator after that item at the latest. Any other pattern runs on the engine, whose matches
+                     have the limit. *)
+                  let final_stops =
+                    final.pinned < 0 && Array.for_all (fun item -> disjoint item.set separator.(0).set) final.items
+                  in
+                  if fixed separator && greedy_before repeated separator.(0).set && final_stops then
                     Some
                       {
                         first = None;

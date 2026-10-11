@@ -344,6 +344,47 @@ let test_a_search_with_no_limit_is_narrow () =
     ]
     [@ocamlformat "disable"]
 
+(* Checks the matcher of a list that ends in a final sequence, "^(RS)*F$", which has no limit. The final sequence is
+   tried after every item against all that is left of the text, so it must not read far each time. A pattern is such a
+   list only when no item of its final sequence holds a character the separator starts with and the sequence is not
+   one matched by the length of the text. Any other runs on the engine. And whether the text is ASCII is worked out
+   once: 33,333 items took 2.2 to 7.4 seconds before, with no limit to end them. A list of 300,000 items is matched
+   here, which would take minutes that way. *)
+let test_the_final_sequence_of_a_list_does_not_read_far () =
+  Check.section "TestTheFinalSequenceOfAListDoesNotReadFar";
+  let kind source = match Pattern.compile source with Ok p -> Pattern.kind_name p | Error _ -> "not compiled" in
+  let list = kind {|^(?:[a-z]+,)*[a-z]{2}[0-9]$|} in
+  List.iter
+    (fun (source, is_list) ->
+      Check.checkf
+        (kind source = list = is_list)
+        "the matcher of %S is %s, and that of a list is %s" source (kind source) list)
+    [
+      ({|^(?:[a-z]+,)*[a-z]{2}[0-9]$|}, true); ({|^(?:[a-z]+,)*[a-z]+[0-9]$|}, true); ({|^(?:[a-z]+\.)*[a-z]+$|}, true);
+      (* The final sequence holds the separator, or is matched by the length of the text. *)
+      ({|^(?:[a-z]+,)*[a-z,]+[0-9]$|}, false); ({|^(?:[a-z]+,)*[a-z,]*[0-9]$|}, false);
+      ({|^(?:[a-z]+,)*[0-9],?$|}, false); ({|^(?:[a-z]+,)*[a-z]*[a-z0-9]$|}, false);
+    ]
+    [@ocamlformat "disable"];
+  Check.checkf (list <> "engine") "a list has the matcher %s" list;
+  let items = repeat 300000 "ab," in
+  List.iter
+    (fun (pattern, instance, want) ->
+      let v = compile (Printf.sprintf {|{"pattern": "%s"}|} pattern) in
+      let start = Unix.gettimeofday () in
+      let result = Validator.validate_string v (Printf.sprintf {|"%s"|} instance) in
+      let took = Unix.gettimeofday () -. start in
+      Check.checkf
+        (match result with Ok ok -> ok = want | Error (Pattern_match_limit _) -> true | Error _ -> false)
+        "%S on 300,000 items: want %b or the limit of a match" pattern want;
+      Check.checkf (took <= 1.0 +. generous_time) "%S on 300,000 items took %gs" pattern took)
+    [
+      ({|^(?:[a-z]+,)*[a-z]{2}[0-9]$|}, items, false); ({|^(?:[a-z]+,)*[a-z]{2}[0-9]$|}, items ^ "ab1", true);
+      ({|^(?:[a-z\u00e9]+,)*[a-z]{2}[0-9]$|}, {|\u00e9,|} ^ items, false); ({|^(?:[a-z]+,)*[a-z,]+[0-9]$|}, items, false);
+      ({|^(?:[a-z]+,)*[a-z,]*[0-9]$|}, items ^ "1", true); ({|^(?:[a-z]+,)*[a-z]*[a-z0-9]$|}, items, false);
+    ]
+    [@ocamlformat "disable"]
+
 (* The limits on the size of one pattern. *)
 
 (* Checks each limit in both keywords: the error is Pattern_too_large, which names the keyword, the limit and its
@@ -504,6 +545,7 @@ let () =
   test_a_match_while_compiling_has_the_limit ();
   test_an_ordinary_pattern_is_not_affected_by_the_limit ();
   test_a_search_with_no_limit_is_narrow ();
+  test_the_final_sequence_of_a_list_does_not_read_far ();
   test_a_pattern_over_a_limit_of_size_is_refused ();
   test_a_pattern_that_is_not_valid_is_not_too_large ();
   test_a_long_pattern_compiles_in_memory_proportional_to_its_length ();
