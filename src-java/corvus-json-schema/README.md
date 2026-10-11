@@ -242,6 +242,7 @@ whether it is valid is not known. It never says the pattern is invalid. The limi
 | Characters written on the way to the translation | 16,777,216 | writing it for java.util.regex takes more than 16,777,216 characters of text |
 | Copies of the body of a repetition | 200 | it needs more than 200 copies of the body of a repetition |
 | Groups times parts, for a pattern written by its ways | 268,435,456 | the number of its groups times the number of its parts is more than 268,435,456 |
+| What `java.util.regex` keeps for it, as the library counts | 8,388,608 bytes | java.util.regex would keep more than 8,388,608 bytes for it, as the library counts them |
 | What `java.util.regex` compiles | the stack of the thread | java.util.regex needs more of the thread's stack to compile it than there is |
 
 The first four are read off the pattern. The others are about what the library writes for `java.util.regex`:
@@ -259,6 +260,22 @@ The first four are read off the pattern. The others are about what the library w
   for Java 17, which is the longest, and the pattern is then translated for the engine that runs it. So a pattern
   is refused on every JDK or on none. `\p{L}` counts 3,103 characters, and is 3,079 on Java 17, 1,472 on Java 21
   and 771 on Java 25: 300 of them in one pattern are accepted and 400 are refused.
+- `java.util.regex` keeps 5 bytes for a character of literal text, and much more for the other things a
+  translation is written with: 320 bytes for a class of one Latin-1 character, which is eight characters of
+  translation, and 66 for an optional character, which is two. So the limit on the length of a translation did not
+  bound what a compiled pattern keeps: 131,070 classes of one character, in a pattern of 393,226 characters, held
+  42 MB. The library counts what the engine keeps for a translation: a byte for each character, 36 bytes and 4 a
+  character for a run of literal text, 48 for a group, 72 for a lookahead, 104 for a lookbehind, 84 for the first
+  alternative after another and 12 for each one after, 72 for a repetition of a group and 32 for any other, 16 for
+  an anchor, 24 for a backreference, and for a class 8, 48 for each range, 40 for each character beyond Latin-1 that
+  stands by itself, and 312 when a Latin-1 character does, for the table of 256 bytes the engine keeps then. A
+  pattern counted over 8,388,608 bytes is refused. Over 60 shapes of translation on Java 17, 21 and 25, and the
+  largest translations of the test data, what a compiled translation held was never more than 1% over its count,
+  with compressed object pointers. `[a]` 25,572 times is accepted and holds 8.2 MB, and no pattern the limits accept
+  was found to hold more than 8.4 MB, where the most was 42 MB. A translation of 1,048,576 characters of literal text
+  is counted 5.2 MB. Like the limit on the translation, this one is applied to the translation for Java 17, so a
+  pattern is refused on every JDK or on none: `^(?i:(.)\1)$` with the group and its reference 50 times is accepted
+  and 60 times is refused.
 - The compiler of `java.util.regex` recurses along a pattern. On a stack of 1 MB it compiled 4,096 classes in a
   row and not 16,384, which are refused as too large. This limit is the one that depends on where the library is
   called: the stack size of the thread, and how deep the caller already is.
@@ -348,16 +365,19 @@ heap before the next tenth.
 - **The stack.** `java.util.regex` recurses to compile a pattern and to match it, and has no limit of depth but the
   stack of the thread. The library does not make that impossible. It makes the outcome one of its two errors:
   `PatternTooLargeException` when the schema is compiled, `PatternMatchLimitException` when an instance is
-  validated. How long a string a recursing pattern takes depends on the stack size of the thread (`-Xss`, or the
-  size given to the `Thread`).
+  validated. The `StackOverflowError` of a match is caught at the one place the library calls the engine to match,
+  where the frames that are unwound are the engine's own and hold no lock and no state but the matcher's, which the
+  next match resets. It is thrown as `PatternMatchLimitException` with `isStackLimit()` true, and never as an
+  answer. How long a string a recursing pattern takes depends on the stack size of the thread (`-Xss`, or the size
+  given to the `Thread`).
 - **The memory of a match.** The limit bounds the time of a match and not what it keeps. `java.util.regex` keeps
   its state on the stack, and for some repetitions the places they failed at, one number for each place of the
   string. In the probe no process held more than the figure above.
-- **What a compiled pattern keeps.** `java.util.regex` keeps between 2 and 28 bytes for each character of a
-  translation: 2 MB for 1,048,576 characters of literal text, and 30 MB for 116,508 repetitions of a small group in
-  as many characters. So the limit on the translation holds a pattern to tens of megabytes and not to a few.
-  The cache of the process is bounded (see above), and a validator keeps the patterns of its own schema for as long
-  as it lives.
+- **What a compiled pattern keeps with object pointers that are not compressed.** The limit on what
+  `java.util.regex` keeps for a pattern counts what it was measured to keep with compressed object pointers, which a
+  JVM uses for a heap under 32 GB. With a larger heap an object takes more, and a pattern at the limit keeps more
+  than the 8 MB it is counted as. The cache of the process is bounded (see above), and a validator keeps the
+  patterns of its own schema for as long as it lives.
 - **The start of a match.** The clock is first read after the first 4,096 reads (fewer for a long translation),
   and the limit runs from there.
 

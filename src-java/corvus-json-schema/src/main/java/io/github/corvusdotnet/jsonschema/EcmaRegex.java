@@ -170,6 +170,15 @@ final class EcmaRegex {
             "the number of its groups times the number of its parts is more than 268,435,456";
     /** The most capturing groups of a pattern, and the most numbers in the sets of its classes (two to a range). */
     static final int MAX_GROUPS = 1 << 15;
+    /**
+     * The most {@code java.util.regex} keeps for a translation, by the library's count (see {@link #held}). The
+     * limit on the length of a translation bounds what the engine keeps for literal text, 5 bytes a character, and
+     * not what it keeps for the rest: 320 bytes for a class of eight characters of translation, 66 for a
+     * repetition of two. A translation of 1,048,576 characters could hold 42 MB so.
+     */
+    static final long MAX_HELD = 8L << 20;
+    static final String LIMIT_HELD = "java.util.regex would keep more than 8,388,608 bytes for it, as the library "
+            + "counts them";
     static final int MAX_SET_NUMBERS = 1 << 20;
 
     /**
@@ -213,6 +222,229 @@ final class EcmaRegex {
         } catch (IllegalArgumentException e) {
             return true;
         }
+    }
+
+    /**
+     * A count of the bytes {@code java.util.regex} keeps for a translation once it is compiled, which
+     * {@link #MAX_HELD} bounds. It is the sum of what the engine was measured to keep for each thing a translation
+     * is written with, on Java 17, 21 and 25 with compressed object pointers:
+     *
+     * <ul>
+     *   <li>{@value #HELD_PATTERN} bytes, and 1 for each character of the translation, which the engine keeps as
+     *       text;
+     *   <li>for a run of literal characters {@value #HELD_RUN} bytes and 4 for each character, and the same again
+     *       where the last character of a run is repeated;
+     *   <li>for a group {@value #HELD_GROUP}, for a lookahead {@value #HELD_LOOKAHEAD} and for a lookbehind
+     *       {@value #HELD_LOOKBEHIND};
+     *   <li>for the first alternative after another in a group {@value #HELD_ALTERNATIVE}, and for each one after
+     *       it {@value #HELD_NEXT_ALTERNATIVE};
+     *   <li>for a repetition of a group {@value #HELD_GROUP_REPETITION}, and of anything else
+     *       {@value #HELD_REPETITION};
+     *   <li>for an anchor {@value #HELD_ANCHOR}, and for an escape that is not the escape of a character (a
+     *       backreference, or an anchor or a class of the engine) {@value #HELD_ESCAPE};
+     *   <li>for a class {@value #HELD_CLASS}, for each range in it {@value #HELD_RANGE}, for each character beyond
+     *       Latin-1 that stands in it by itself {@value #HELD_MEMBER}, and {@value #HELD_TABLE} when a Latin-1
+     *       character stands in it by itself, however many do: the engine keeps a table of 256 bytes for them.
+     * </ul>
+     *
+     * <p>The tests compare the count with the heap that compiled translations hold: it is the count, or less, to
+     * within 2%. With object pointers that are not compressed (a heap of 32 GB or more) the engine keeps more than
+     * is counted.
+     */
+    static long held(String translated) {
+        int n = translated.length();
+        long held = HELD_PATTERN + n;
+        int classDepth = 0;
+        // In a class: whether a member that may stand by itself came before this place, whether it is a Latin-1
+        // character, whether a range has been opened, and whether the class has its table.
+        boolean member = false;
+        boolean latin = false;
+        boolean range = false;
+        boolean table = false;
+        // Outside a class: whether a run of literal characters is being read, and for each group that is open
+        // whether an alternative of it has been counted.
+        boolean run = false;
+        int runLength = 0;
+        boolean[] alternatives = new boolean[16];
+        int depth = 0;
+        for (int i = 0; i < n; i++) {
+            char c = translated.charAt(i);
+            boolean literal = true;
+            boolean latinValue = true;
+            if (c == '\\') {
+                char e = ++i < n ? translated.charAt(i) : 0;
+                if ((e == 'x' || e == 'u') && i + 1 < n && translated.charAt(i + 1) == '{') {
+                    // The escape of a character, as the translation writes one: \x{...}.
+                    int end = translated.indexOf('}', i);
+                    if (end < 0) {
+                        break;
+                    }
+                    latinValue = end - i - 2 <= 2;
+                    i = end;
+                } else if ((e >= 'a' && e <= 'z') || (e >= 'A' && e <= 'Z') || (e >= '0' && e <= '9')) {
+                    held += HELD_ESCAPE;
+                    run = false;
+                    if (classDepth == 0) {
+                        continue;
+                    }
+                    if (e == 'p' || e == 'P') {
+                        // A class of the engine, by name: no member of the class it stands in.
+                        int end = i + 1 < n && translated.charAt(i + 1) == '{' ? translated.indexOf('}', i) : i;
+                        i = end < 0 ? n : end;
+                        member = false;
+                        continue;
+                    }
+                    latinValue = false;
+                }
+            } else if (classDepth > 0) {
+                if (c == '[') {
+                    classDepth++;
+                    held += HELD_CLASS;
+                    member = false;
+                    range = false;
+                    table = false;
+                    continue;
+                }
+                if (c == ']') {
+                    if (member) {
+                        held += latin ? (table ? 0 : HELD_TABLE) : HELD_MEMBER;
+                    }
+                    classDepth--;
+                    member = false;
+                    range = false;
+                    // The class around this one may hold a Latin-1 character by itself as well.
+                    table = false;
+                    continue;
+                }
+                if (c == '&' && i + 1 < n && translated.charAt(i + 1) == '&') {
+                    i++;
+                    continue;
+                }
+                if (c == '^' && translated.charAt(i - 1) == '[') {
+                    held += HELD_ANCHOR;
+                    continue;
+                }
+                if (c == '-' && member && i + 1 < n && translated.charAt(i + 1) != ']') {
+                    range = true;
+                    member = false;
+                    held += HELD_RANGE;
+                    continue;
+                }
+                latinValue = c < 0x100;
+            } else {
+                literal = false;
+                switch (c) {
+                    case '[':
+                        classDepth = 1;
+                        held += HELD_CLASS;
+                        member = false;
+                        range = false;
+                        table = false;
+                        break;
+                    case '(':
+                        if (translated.startsWith("?=", i + 1) || translated.startsWith("?!", i + 1)) {
+                            held += HELD_LOOKAHEAD;
+                        } else if (translated.startsWith("?<=", i + 1) || translated.startsWith("?<!", i + 1)) {
+                            held += HELD_LOOKBEHIND;
+                        } else {
+                            held += HELD_GROUP;
+                        }
+                        if (++depth == alternatives.length) {
+                            alternatives = Arrays.copyOf(alternatives, 2 * depth);
+                        }
+                        alternatives[depth] = false;
+                        if (i + 1 < n && translated.charAt(i + 1) == '?') {
+                            // What says the kind of the group, or names it, is no literal text: (?: (?<= (?<name>
+                            for (i += 2; i < n && ":=!>".indexOf(translated.charAt(i)) < 0; i++) {
+                            }
+                        }
+                        break;
+                    case ')':
+                        depth = Math.max(0, depth - 1);
+                        break;
+                    case '|':
+                        held += alternatives[depth] ? HELD_NEXT_ALTERNATIVE : HELD_ALTERNATIVE;
+                        alternatives[depth] = true;
+                        break;
+                    case '^':
+                    case '$':
+                        held += HELD_ANCHOR;
+                        break;
+                    case '{':
+                    case '?':
+                    case '*':
+                    case '+':
+                        // The ? of a lazy repetition and the + of a possessive one are not repetitions.
+                        if (c == '{' || !(i > 0 && isRepetition(translated, i - 1))) {
+                            held += i > 0 && translated.charAt(i - 1) == ')' ? HELD_GROUP_REPETITION : HELD_REPETITION;
+                            if (run && runLength > 1) {
+                                // The last character of the run is repeated, and is a node apart from the others.
+                                held += HELD_RUN;
+                            }
+                        }
+                        if (c == '{') {
+                            i = translated.indexOf('}', i);
+                            if (i < 0) {
+                                return held;
+                            }
+                        }
+                        break;
+                    default:
+                        literal = true;
+                        break;
+                }
+            }
+            if (classDepth > 0) {
+                if (!literal) {
+                    continue;
+                }
+                // A member of a class: the end of a range, or a character that may stand by itself.
+                if (member) {
+                    // The member before this one stood by itself.
+                    held += latin ? (table ? 0 : HELD_TABLE) : HELD_MEMBER;
+                    table |= latin;
+                }
+                member = !range;
+                latin = latinValue;
+                range = false;
+            } else if (literal) {
+                held += run ? 4 : HELD_RUN + 4;
+                runLength = run ? runLength + 1 : 1;
+                run = true;
+            } else {
+                run = false;
+            }
+        }
+        return held;
+    }
+
+    private static final int HELD_PATTERN = 512;
+    private static final int HELD_RUN = 36;
+    private static final int HELD_GROUP = 48;
+    private static final int HELD_LOOKAHEAD = 72;
+    private static final int HELD_LOOKBEHIND = 104;
+    private static final int HELD_ALTERNATIVE = 84;
+    private static final int HELD_NEXT_ALTERNATIVE = 12;
+    private static final int HELD_GROUP_REPETITION = 72;
+    private static final int HELD_REPETITION = 32;
+    private static final int HELD_ANCHOR = 16;
+    private static final int HELD_ESCAPE = 24;
+    private static final int HELD_CLASS = 8;
+    private static final int HELD_RANGE = 48;
+    private static final int HELD_MEMBER = 40;
+    private static final int HELD_TABLE = 312;
+
+    /** Whether the character at {@code at} of a translation ends a repetition: an unescaped ?, *, + or }. */
+    private static boolean isRepetition(String translated, int at) {
+        char c = translated.charAt(at);
+        if (c != '?' && c != '*' && c != '+' && c != '}') {
+            return false;
+        }
+        int slashes = 0;
+        for (int k = at - 1; k >= 0 && translated.charAt(k) == '\\'; k--) {
+            slashes++;
+        }
+        return slashes % 2 == 0;
     }
 
     /**
@@ -363,7 +595,8 @@ final class EcmaRegex {
      * taking the translator, or {@code java.util.regex} when it compiles what is written, more than a fraction of a
      * second or more than a few megabytes: the pattern and the translation are at most 1,048,576 characters, and
      * what multiplies the text on the way to it is bounded too (see {@link Emitter#MAX_PLANS},
-     * {@link Emitter#MAX_PATHS_WRITTEN} and {@link Emitter#MAX_UNROLLED_COPIES}). {@link #limit} ends the sentence
+     * {@link Emitter#MAX_PATHS_WRITTEN} and {@link Emitter#MAX_UNROLLED_COPIES}), and so is what
+     * {@code java.util.regex} keeps for the translation once it is compiled (see {@link #MAX_HELD}). {@link #limit} ends the sentence
      * "the pattern is too large:" with the limit and its value. A pattern over a limit is never said to be invalid.
      */
     private static final class TooLarge extends Unsupported {
@@ -1820,8 +2053,14 @@ final class EcmaRegex {
          * What {@code java.util.regex} says against a translation, or null when it compiles it. A translation whose
          * compilation overflows the stack is refused as too large: the compiler of {@code java.util.regex} recurses
          * along the pattern, some thousands of groups deep on a stack of 1 MB.
+         *
+         * <p>The translation of reference is held to the limit on its parts first (see {@link EcmaRegex#held}),
+         * so that a pattern over that limit is refused for it whatever the stack of the thread.
          */
-        private static String compileError(String translated) {
+        private String compileError(String translated) {
+            if (reference && held(translated) > MAX_HELD) {
+                throw new TooLarge(REFUSED_TOO_LARGE, LIMIT_HELD);
+            }
             try {
                 Pattern.compile(translated);
                 return null;
