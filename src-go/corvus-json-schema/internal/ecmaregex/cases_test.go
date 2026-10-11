@@ -49,9 +49,14 @@ func loadCases(t *testing.T) *v8Cases {
 }
 
 // checkCases compares the validity of each pattern and the answers of both back ends with V8's. A pattern has
-// limit to answer all its texts.
+// limit to answer all its texts, and ten times that under the race detector, which slows the matcher about eight
+// times: the slowest pattern of the sets takes over a second for its texts on both back ends, which V8 takes a
+// tenth of a second for, and a pattern that the limit is there to catch does not finish at all.
 func checkCases(t *testing.T, cases []v8Case, limit time.Duration) (answers, matched, legacy, invalid int) {
 	t.Helper()
+	if raceEnabled {
+		limit *= 10
+	}
 	for _, c := range cases {
 		re, backtrack := checkVerdict(t, c.P, c.U, c.L)
 		if re == nil {
