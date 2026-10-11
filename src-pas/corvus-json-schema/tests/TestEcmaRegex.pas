@@ -3203,6 +3203,44 @@ begin
   WriteLn('TestTheMemoryIsBounded: done');
 end;
 
+(* TestTheNeedsSettleInFewPasses checks the number of passes over a program that work out its needs and what can
+  come next from each instruction. The jump at the end of the body of a loop goes back, so a pass that took what
+  the head of the loop had after the pass before settled one loop of a nest each time: 999 passes for loops 999
+  deep, which made that pattern the slowest of any at the limit of size to compile. The needs take two passes and
+  the next characters three, whatever the depth. *)
+procedure TestTheNeedsSettleInFewPasses;
+var
+  Count: Int32;
+
+  procedure Few(const Pattern: UTF8String);
+  var
+    Re: TEcmaRegex;
+  begin
+    Inc(Count);
+    if not Compiled(Pattern, Re) then
+      Exit;
+    if (Re.Prog.NeedPasses > 2) or (Re.Prog.QuickPasses > 3) then
+      Fail(Quote(Copy(Pattern, 1, 30)) + ' (' + Num(Length(Re.Prog.Insts)) + ' instructions): ' +
+        Num(Re.Prog.NeedPasses) + ' passes for the needs and ' + Num(Re.Prog.QuickPasses) +
+        ' for the next characters, want 2 and 3 at most');
+  end;
+
+begin
+  Count := 0;
+  Few('abc');
+  Few('(?:a|b)*c');
+  Few('(?:a?b?)*c');
+  Few('(?:(?:a+)+b?)*');
+  Few(Nest('(?:', 'a?b', '){2,3}', 999));
+  Few(Nest('(?:', 'a?b', ')*', 999));
+  Few(Nest('(?:', 'a?b?', ')*', 999));
+  Few(Nest('(?:', 'a?b', ')+?', 999));
+  Few(Nest('(?:x|', 'a?b', ')*y?', 500));
+  Few(Nest('(?:(?=', 'a', ')b?)*', 400));
+  Few(Nest('(?:', 'a|b', '){0,5}?c', 999));
+  WriteLn('TestTheNeedsSettleInFewPasses: ', Count, ' patterns');
+end;
+
 { CheckSyntax checks one of the sets of what is a pattern: which patterns are valid, in each grammar, and what the
   valid ones match. The expectations are V8's, and ECMA-262's where V8 13.6 departs from it, which gen_cases.js of
   the Go package works out and marks with the name of the departure. Departures counts the marked patterns. }
@@ -3378,6 +3416,7 @@ begin
   TestFailedPlacesAreRemembered;
   TestARepetitionInARepetitionIsAnswered;
   TestABackreferenceTurnsTheMemoryOff;
+  TestTheNeedsSettleInFewPasses;
   TestCodeUnitPositions;
   TestEscapedKInAClass;
   TestCountsAreComparedAsWritten;
@@ -3392,5 +3431,5 @@ begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 40 tests, 0 failures');
+  WriteLn('PASS: 41 tests, 0 failures');
 end.

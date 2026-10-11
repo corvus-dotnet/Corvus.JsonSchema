@@ -147,6 +147,9 @@ type
     Anchored: Boolean;
     { Need is the least number of bytes a match consumes (see SetNeeds). }
     Need: Int32;
+    { NeedPasses and QuickPasses are the passes over the instructions that worked out the needs and the quick
+      sets, the last of which changed nothing. The tests read them. }
+    NeedPasses, QuickPasses: Int32;
     { Points holds the memo points of the program (see TMemoPoint). }
     Points: TMemoPoints;
     { Quick says, for each instruction, which characters can come next on a way from it to the end of its match
@@ -187,6 +190,8 @@ type
       number, its least count, and whether its state is one bit to a memo point (no upper bound, and a least count
       of zero or one). Points collects the memo points, of which there are PointCount. }
     Memo: Boolean;
+    { MinKnown holds what MinLength has worked out for each node. }
+    MinKnown: TInt32Array;
     OpenLoop, OpenMin: TInt32Array;
     OpenSimple: array of Boolean;
     OpenBase, OpenCount: Int32;
@@ -363,6 +368,9 @@ function TCompiler.GroupRange(N: Int32; out Lo, Hi: Int32): Boolean;
 begin
   Lo := -1;
   Hi := -1;
+  // No group is tracked in a pattern with no backreference, and then there is nothing to look for.
+  if TrackedCount = 0 then
+    Exit(False);
   WalkGroupRange(N, Lo, Hi);
   Result := Lo >= 0;
 end;
@@ -391,10 +399,14 @@ end;
 { MinLength returns the least number of bytes a match of N consumes, capped at NoMatch. Like the needs, it counts a
   character as its UTF-8 bytes when the matcher compares bytes for it and as one byte otherwise, so it can only be
   too small. }
-function MinLength(const Nodes: TNodes; const Sets: TCharSets; N: Int32): Int32;
+function MinLength(const Nodes: TNodes; const Sets: TCharSets; var Known: TInt32Array; N: Int32): Int32;
 var
   K, L: Int32;
 begin
+  // Known holds the answer for a node once it has been worked out, as the answer plus one. Every repetition asks
+  // for the least of its body, so without it repetitions a thousand deep would each walk all that is inside them.
+  if Known[N] > 0 then
+    Exit(Known[N] - 1);
   Result := 0;
   case Nodes[N].Kind of
     NChar:
@@ -414,24 +426,27 @@ begin
         Result := 1;
     NCat:
       for K := 0 to High(Nodes[N].Subs) do begin
-        L := MinLength(Nodes, Sets, Nodes[N].Subs[K]);
-        if (L >= NoMatch) or (Result + L >= NoMatch) then
-          Exit(NoMatch);
+        L := MinLength(Nodes, Sets, Known, Nodes[N].Subs[K]);
+        if (L >= NoMatch) or (Result + L >= NoMatch) then begin
+          Result := NoMatch;
+          Break;
+        end;
         Inc(Result, L);
       end;
     NAlt: begin
       Result := NoMatch;
       for K := 0 to High(Nodes[N].Subs) do begin
-        L := MinLength(Nodes, Sets, Nodes[N].Subs[K]);
+        L := MinLength(Nodes, Sets, Known, Nodes[N].Subs[K]);
         if L < Result then
           Result := L;
       end;
     end;
     NGroup:
-      Result := MinLength(Nodes, Sets, Nodes[N].Subs[0]);
+      Result := MinLength(Nodes, Sets, Known, Nodes[N].Subs[0]);
     NRepeat:
-      Result := TimesNeed(Nodes[N].Min, MinLength(Nodes, Sets, Nodes[N].Subs[0]));
+      Result := TimesNeed(Nodes[N].Min, MinLength(Nodes, Sets, Known, Nodes[N].Subs[0]));
   end;
+  Known[N] := Result + 1;
 end;
 
 { Nullable reports whether N can match without consuming anything. It errs towards true. }
@@ -702,7 +717,7 @@ begin
   Insts[Loop].Max := Max;
   Insts[Loop].Flag := Lazy;
   if not Back then
-    Insts[Loop].Iter := MinLength(Nodes, Sets, Body);
+    Insts[Loop].Iter := MinLength(Nodes, Sets, MinKnown, Body);
   Simple := (Max = Unbounded) and (Min <= 1);
   // The loop is left or entered from here, and what follows either depends on the loops around this one.
   if Simple then
@@ -857,10 +872,10 @@ end;
   figure can only be too small. The body of a lookaround ends at its own last instruction and the instruction that
   opens one goes straight to what follows it, so a body is counted by itself. An instruction that matches right to
   left, which is the body of a lookbehind, counts nothing. }
-function SetNeeds(var Insts: TInsts): Int32;
+function SetNeeds(var Insts: TInsts; out Passes: Int32): Int32;
 var
   Need: TInt32Array;
-  Pc, N: Int32;
+  Pc, N, Head: Int32;
   Changed: Boolean;
 
   procedure Next(Target, Weight: Int32);
@@ -881,8 +896,10 @@ begin
     Need[Pc] := NoMatch;
   // The needs only fall, and nearly every way goes forward, so going through the instructions from the last to
   // the first settles all but the loops in one pass.
+  Passes := 0;
   repeat
     Changed := False;
+    Inc(Passes);
     for Pc := High(Insts) downto 0 do begin
       N := NoMatch;
       case Insts[Pc].Op of
@@ -896,7 +913,22 @@ begin
           Next(Pc + 1, Length(Insts[Pc].Lit));
         OpRep, OpRepLazy:
           Next(Pc + 1, Insts[Pc].Min);
-        OpJmp, OpLook:
+        OpJmp: begin
+          // The one way that goes back is the jump at the end of the body of a loop, to the instruction at its
+          // head, which this pass has not reached. The need of that instruction is the need of what follows the
+          // loop, since its other way, through the body, comes back to it and cannot need less. So the jump takes
+          // what follows the loop, which this pass has settled. Taking the need of the head would settle one loop
+          // of a nest for each pass: a thousand passes for loops a thousand deep.
+          Head := Insts[Pc].X;
+          if (Head < Pc) and (Insts[Head].Op = OpLoop) then
+            Next(Insts[Head].X, 0)
+          else if (Head < Pc) and (Insts[Head].Op = OpSplit) then begin
+            Next(Insts[Head].X, 0);
+            Next(Insts[Head].Y, 0);
+          end else
+            Next(Head, 0);
+        end;
+        OpLook:
           Next(Insts[Pc].X, 0);
         OpSplit: begin
           Next(Insts[Pc].X, 0);
@@ -960,11 +992,11 @@ end;
   is taken to hold, a backreference and an instruction that matches right to left (the body of a lookbehind) to
   allow anything. A positive lookahead needs both its body and what follows it to go on from the same position, so
   it allows what both allow. }
-function SetQuick(const Insts: TInsts; const Sets: TCharSets): TQuicks;
+function SetQuick(const Insts: TInsts; const Sets: TCharSets; out Passes: Int32): TQuicks;
 var
   Q: TQuicks;
   All, N, B: TQuick;
-  Pc: Int32;
+  Pc, Head: Int32;
   Changed: Boolean;
 begin
   SetLength(Q, Length(Insts));
@@ -977,8 +1009,10 @@ begin
   All.AtEnd := True;
   // The sets only grow, and nearly every way goes forward, so going through the instructions from the last to the
   // first settles all but the loops in one pass.
+  Passes := 0;
   repeat
     Changed := False;
+    Inc(Passes);
     for Pc := High(Insts) downto 0 do begin
       N := Default(TQuick);
       case Insts[Pc].Op of
@@ -1000,8 +1034,20 @@ begin
           if Insts[Pc].Min = 0 then
             QuickUnion(N, Q[Pc + 1]);
         end;
-        OpJmp:
-          N := Q[Insts[Pc].X];
+        OpJmp: begin
+          // The jump at the end of the body of a loop goes back to the head of the loop, which this pass has not
+          // reached. The head allows what follows the loop, which this pass has settled, and what the body starts
+          // with. So the jump takes what follows the loop too, and the first pass settles the head of every loop,
+          // the second every instruction, and the third finds nothing to change, however deep the loops nest.
+          Head := Insts[Pc].X;
+          N := Q[Head];
+          if (Head < Pc) and (Insts[Head].Op = OpLoop) then
+            QuickUnion(N, Q[Insts[Head].X])
+          else if (Head < Pc) and (Insts[Head].Op = OpSplit) then begin
+            QuickUnion(N, Q[Insts[Head].X]);
+            QuickUnion(N, Q[Insts[Head].Y]);
+          end;
+        end;
         OpSplit: begin
           N := Q[Insts[Pc].X];
           QuickUnion(N, Q[Insts[Pc].Y]);
@@ -1070,6 +1116,7 @@ begin
     end else
       C.Tracked[G] := -1;
   C.Memo := C.TrackedCount = 0;
+  SetLength(C.MinKnown, Length(C.Nodes));
   C.Emit(Root, False);
   C.Add(OpMatch);
   SetLength(C.Insts, C.InstCount);
@@ -1080,9 +1127,9 @@ begin
   Result.Groups := C.TrackedCount;
   Result.Loops := C.Loops;
   Result.Units := not Unicode;
-  Result.Need := SetNeeds(Result.Insts);
+  Result.Need := SetNeeds(Result.Insts, Result.NeedPasses);
   Result.Points := C.Points;
-  Result.Quick := SetQuick(Result.Insts, Result.Sets);
+  Result.Quick := SetQuick(Result.Insts, Result.Sets, Result.QuickPasses);
   Result.First := -1;
   Result.Anchored := StartsAtBOL(C.Nodes, Root);
   if not Result.Anchored then begin
