@@ -184,6 +184,11 @@ let test_the_data_is_unicode_17 () =
       (Ucd.binary "Emoji", 0x1FAE9, true, "U+1FAE9 is an emoji of Unicode 16");
       (Ucd.script "Han", 0x323B0, true, "U+323B0 starts CJK extension J of Unicode 17");
       (Some Ucd.unknown_script, 0x10D40, false, "U+10D40 has a script");
+      (* Katakana_Or_Hiragana is a Script value of PropertyValueAliases.txt that no code point has. *)
+      (Ucd.script "Katakana_Or_Hiragana", 0x3042, false, "Katakana_Or_Hiragana is a script with no code point");
+      (Ucd.script "Hrkt", 0x30FC, false, "Hrkt is a script with no code point");
+      (Ucd.script_extensions "Katakana_Or_Hiragana", 0x30FC, false, "Katakana_Or_Hiragana has no code point");
+      (Ucd.script_extensions "Hrkt", 0x3042, false, "Hrkt has no code point");
       (Some Ucd.assigned, 0x10FFFF, false, "U+10FFFF is a noncharacter");
     ];
   (* Case pairs of Unicode 16 and 17. *)
@@ -202,7 +207,7 @@ let test_the_data_is_unicode_17 () =
         || Ucd.script_extensions name <> None
         || Ucd.binary name <> None
       then fail "%S names a table" name)
-    [ "Nope"; ""; "l"; "Latn="; "Any"; "ASCII" ]
+    [ "Nope"; ""; "l"; "Latn="; "Any"; "ASCII"; "hrkt"; "Katakana_or_Hiragana" ]
 
 (* Checks fold and to_upper over every code point. *)
 let test_case_mappings () =

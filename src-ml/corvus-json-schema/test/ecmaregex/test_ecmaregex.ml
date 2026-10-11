@@ -1268,6 +1268,14 @@ let test_counts_are_compared_as_written () =
   let t = check_syntax "counts" in
   if t.invalid < 20 || t.departures < 10 then fail "the cases are not the ones this test is about"
 
+(* Checks the names and values of \p{...} where V8 13.6 departs from ECMA-262. WSpace is not a name ECMA-262 lists, so
+   \p{WSpace} is an error with the u flag and is read with no flag, as the characters p{WSpace}. Katakana_Or_Hiragana
+   (Hrkt) is a Script value, which no character has, so \p{sc=Hrkt} matches nothing and \P{sc=Hrkt} matches any
+   character. *)
+let test_property_names_and_values () =
+  let t = check_syntax "properties" in
+  if t.patterns < 30 || t.departures < 24 then fail "the cases are not the ones this test is about"
+
 let () =
   let ran = ref 0 in
   List.iter
@@ -1303,6 +1311,7 @@ let () =
       ("loops give up when the rest cannot fit", test_loops_give_up_when_the_rest_cannot_fit);
       ("escaped k in a class", test_escaped_k_in_a_class);
       ("counts are compared as written", test_counts_are_compared_as_written);
+      ("property names and values", test_property_names_and_values);
     ];
   Printf.printf
     "V8 oracle: %d verdicts on validity compared, %d agreed. %d answers on a match compared (each text on both back \

@@ -167,10 +167,20 @@ let category = function
   | name -> Tables.category_table name
 
 let binary = function "Assigned" -> some_assigned | name -> Tables.binary_table name
-let script = function "Unknown" | "Zzzz" -> some_unknown_script | name -> Tables.script_table name
+
+(* The table of the Script value Katakana_Or_Hiragana (Hrkt). PropertyValueAliases.txt lists the value, and no code
+   point has it, in Script or in Script_Extensions. Scripts.txt has no line for it, so the generated tables do not
+   have it. *)
+let some_katakana_or_hiragana = Some (new_table [||])
+
+let script = function
+  | "Unknown" | "Zzzz" -> some_unknown_script
+  | "Katakana_Or_Hiragana" | "Hrkt" -> some_katakana_or_hiragana
+  | name -> Tables.script_table name
 
 let script_extensions = function
   | "Unknown" | "Zzzz" -> some_unknown_script
+  | "Katakana_Or_Hiragana" | "Hrkt" -> some_katakana_or_hiragana
   | name -> Tables.script_extensions_table name
 
 let script_names = Tables.script_names

@@ -94,7 +94,8 @@ val binary : string -> table option
 
 val script : string -> table option
 (** [script name] returns the table of a Script value by its long name or an alias, such as ["Greek"] or ["Grek"]. It
-    returns [None] for any other name. *)
+    returns [None] for any other name. The value Katakana_Or_Hiragana (Hrkt), which PropertyValueAliases.txt lists and
+    no code point has, is a table with no code point, here and in {!script_extensions}. *)
 
 val script_extensions : string -> table option
 (** [script_extensions name] returns the table of a Script_Extensions value by the long name of the script or an alias.
