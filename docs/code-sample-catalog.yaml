@@ -1171,7 +1171,7 @@ main-docs:
       - {index: 5, language: pascal, lines: [172, 193]}
       - {index: 6, language: pascal, lines: [199, 220]}
       - {index: 7, language: pascal, lines: [229, 245]}
-      - {index: 8, language: pascal, lines: [325, 360]}
+      - {index: 8, language: pascal, lines: [330, 365]}
   - path: "docs/JsonSchemaForPhp.md"
     blocks:
       - {index: 0, language: sh, lines: [18, 20]}

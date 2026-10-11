@@ -552,6 +552,14 @@ refused for its size.
 The `regex` format reads a string of the instance as a pattern, with the same limits. A string over one is not a
 valid regular expression to it.
 
+The other checks of the `format` keyword read strings of the instance too, and are not under the limit of a match,
+so each takes time proportional to the string. Every one is a scanner that passes over the string once. `hostname`
+reads nothing of a string over 253 bytes. `idn-hostname`, and the domain of an `idn-email`, read nothing of a string
+over 1,012 bytes: an internationalized host name has 253 characters at most, and its check decodes and encodes
+Punycode and walks around every joiner, which takes time that grows with the square of a label. Of 248 strings of a
+million characters made to be slow, across the 19 formats, the slowest took 77 ms (`regex`, on a machine under
+load).
+
 ### What reaches a limit
 
 A pattern of a few characters can still need more steps than a second holds. The answer is then

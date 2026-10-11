@@ -137,7 +137,14 @@ type
     GroupCount: Int32;
     HasNames: Boolean;
     Groups: Int32;
+    { Names holds the names of the groups, the first NameCount of its elements. NameSlots finds a name among them
+      without going through them all: it is a hash table of the numbers of the names, each plus one, with 0 for an
+      empty slot, and has a power of two of slots, more than twice the names. A pattern may have as many names as
+      the limit of size admits groups, and a search of them all for each group and each reference took time that
+      grows with the square of that. }
     Names: array of TGroupName;
+    NameCount: Int32;
+    NameSlots: TInt32Array;
     NamedRefs: TInt32Array;
     { Path lists the alternatives that enclose the current position, innermost last. It has PathLen elements. }
     Path: TBranches;
@@ -192,6 +199,7 @@ type
     function Quantifier(out Min, Max: Int32; out Lazy: Boolean): Boolean;
     function Group(out Quantifiable: Boolean): Int32;
     function ModifierGroup: Int32;
+    function FindName(const Name: UTF8String; Add: Boolean): Int32;
     function Capture(const Name: UTF8String): Int32;
     procedure Close;
     function GroupName: UTF8String;
@@ -372,10 +380,7 @@ begin
   if not Ps.Failed then
     for K := 0 to High(Ps.NamedRefs) do begin
       Ref := Ps.NamedRefs[K];
-      Found := -1;
-      for N := 0 to High(Ps.Names) do
-        if Ps.Names[N].Name = Ps.Nodes[Ref].Name then
-          Found := N;
+      Found := Ps.FindName(Ps.Nodes[Ref].Name, False);
       if Found < 0 then begin
         Ps.Fail('reference to an unknown group name');
         Break;
@@ -825,14 +830,14 @@ begin
       Exit(0);
     // Two groups may share a name only when they are in separate alternatives of one disjunction, so that no
     // match can go through both.
-    for N := 0 to High(Names) do
-      if Names[N].Name = Name then
-        for K := 0 to High(Names[N].Groups) do
-          if not SeparateAlternatives(Names[N].Groups[K].Path, Length(Names[N].Groups[K].Path), Path,
-            PathLen) then begin
-            Fail('duplicate group name');
-            Exit(0);
-          end;
+    N := FindName(Name, False);
+    if N >= 0 then
+      for K := 0 to High(Names[N].Groups) do
+        if not SeparateAlternatives(Names[N].Groups[K].Path, Length(Names[N].Groups[K].Path), Path,
+          PathLen) then begin
+          Fail('duplicate group name');
+          Exit(0);
+        end;
     Exit(Capture(Name));
   end;
   Fail('invalid group');
@@ -899,23 +904,68 @@ begin
   Result := NewParent(NGroup, Body);
 end;
 
+{ NameHash is FNV-1a over the bytes of a name, kept to 32 bits. }
+function NameHash(const Name: UTF8String): UInt64;
+var
+  K: Int32;
+begin
+  Result := 2166136261;
+  for K := 1 to Length(Name) do
+    Result := ((Result xor Ord(Name[K])) * 16777619) and $FFFFFFFF;
+end;
+
+{ FindName returns the number of a group name in Names, or -1 when no group has it. With Add, a name that no group
+  has is added, and its number returned. }
+function TParser.FindName(const Name: UTF8String; Add: Boolean): Int32;
+var
+  Mask, Slot, K: Int32;
+begin
+  if Length(NameSlots) <> 0 then begin
+    Mask := Length(NameSlots) - 1;
+    Slot := Int32(NameHash(Name) and UInt64(Mask));
+    while NameSlots[Slot] <> 0 do begin
+      if Names[NameSlots[Slot] - 1].Name = Name then
+        Exit(NameSlots[Slot] - 1);
+      Slot := (Slot + 1) and Mask;
+    end;
+  end;
+  if not Add then
+    Exit(-1);
+  if NameCount = Length(Names) then
+    SetLength(Names, 2 * NameCount + 8);
+  Names[NameCount].Name := Name;
+  Inc(NameCount);
+  if 2 * NameCount >= Length(NameSlots) then begin
+    // Twice the slots, with every name put in again, this one among them. A name's hash is not kept, so it is
+    // worked out again, once for each doubling.
+    K := 2 * Length(NameSlots);
+    if K = 0 then
+      K := 16;
+    NameSlots := nil;
+    SetLength(NameSlots, K);
+    K := 0;
+  end else
+    K := NameCount - 1;
+  Mask := Length(NameSlots) - 1;
+  while K < NameCount do begin
+    Slot := Int32(NameHash(Names[K].Name) and UInt64(Mask));
+    while NameSlots[Slot] <> 0 do
+      Slot := (Slot + 1) and Mask;
+    NameSlots[Slot] := K + 1;
+    Inc(K);
+  end;
+  Result := NameCount - 1;
+end;
+
 function TParser.Capture(const Name: UTF8String): Int32;
 var
-  G, N, Found, K, Body: Int32;
+  G, Found, K, Body: Int32;
 begin
   Inc(Groups);
   G := NewNode(NGroup);
   Nodes[G].Group := Groups;
   if Name <> '' then begin
-    Found := -1;
-    for N := 0 to High(Names) do
-      if Names[N].Name = Name then
-        Found := N;
-    if Found < 0 then begin
-      Found := Length(Names);
-      SetLength(Names, Found + 1);
-      Names[Found].Name := Name;
-    end;
+    Found := FindName(Name, True);
     K := Length(Names[Found].Groups);
     // The path is kept, and every group of the same name is compared with it.
     Charge(RangeSize * (PathLen + K));

@@ -322,6 +322,11 @@ A pattern of 16,384 literal characters is at the limit of size. The largest patt
 is known of whether it is valid. The `regex` format reads a string of the instance with the same limits, and a
 string over one is not a valid regular expression to it. The limits and the size are those of the Go module.
 
+The other checks of the `format` keyword are not under the limit of a match, and each takes time proportional to
+the string. `idn-hostname`, and the domain of an `idn-email`, read nothing of a string over 1,012 bytes, since an
+internationalized host name has 253 characters at most and its check takes time that grows with the square of a
+label.
+
 ```pascal
 procedure ExampleLimits;
 var

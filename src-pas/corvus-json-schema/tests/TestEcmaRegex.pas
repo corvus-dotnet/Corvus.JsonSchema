@@ -2397,6 +2397,69 @@ begin
   {$ENDIF}
 end;
 
+(* TestManyGroupNamesAreReadInTimeProportionalToTheirNumber compiles patterns with as many group names as the limit
+  of size admits, and with references to them. The parser looked for a name by going through every name it had, for
+  each group and for each reference, so 8,000 names of 40 characters took 1.4 to 2 seconds to read (load 7 to 15).
+  A pattern that the limits admit must compile in well under a second, and so must a string of the instance that
+  the regex format reads as a pattern. The names are now found through a hash table, and the same pattern takes
+  40 to 60 ms. The bound asserted is half a second. *)
+procedure TestManyGroupNamesAreReadInTimeProportionalToTheirNumber;
+const
+  Bound = 500;
+var
+  Names, Long, Refs: UTF8String;
+  K: Int32;
+
+  procedure Quick(const Name, Pattern: UTF8String; Valid: Boolean);
+  var
+    Re: TEcmaRegex;
+    Error: UTF8String;
+    Limit: TEcmaRegexLimit;
+    Start, Took: Int64;
+    Compiled: Boolean;
+  begin
+    Re := Default(TEcmaRegex);
+    Error := '';
+    Start := Int64(GetTickCount64);
+    Compiled := EcmaRegexCompile(Pattern, Re, Error, Limit);
+    Took := Int64(GetTickCount64) - Start;
+    WriteLn('TestManyGroupNamesAreReadInTimeProportionalToTheirNumber: ', Name, ', ', Length(Pattern), ' bytes: ',
+      Took, ' ms');
+    if Compiled and not Valid then
+      Fail(Name + ' compiled')
+    else if Valid and not Compiled then
+      Fail(Name + ' did not compile: ' + Copy(Error, 1, 100));
+    if Took > Bound then
+      Fail(Name + ' took ' + Num(Took) + ' ms to read');
+  end;
+
+begin
+  Names := '';
+  Long := '';
+  Refs := '';
+  // A group with no body is counted as two terms, so the limit of size admits 8,191 of them.
+  for K := 1 to 8000 do
+    Names := Names + '(?<n' + Num(K) + '>)';
+  for K := 1 to 8000 do
+    Long := Long + '(?<' + Times('n', 40) + Num(K) + '>)';
+  for K := 1 to 5000 do
+    Refs := Refs + '(?<n' + Num(K) + '>)';
+  for K := 1 to 5000 do
+    Refs := Refs + '\k<n' + Num(K) + '>';
+  Quick('8,000 names', Names, True);
+  Quick('8,000 names of 40 characters', Long, True);
+  Quick('5,000 names and a reference to each', Refs, True);
+  Quick('a reference to a name that is not there, after 5,000', Refs + '\k<m>', False);
+  // The same name twice in one alternative is still an error, wherever the first one is, and is not one in another.
+  Quick('the first name again, after 8,000', Names + '(?<n1>)', False);
+  Quick('the last name again, after 8,000', Names + '(?<n8000>)', False);
+  Quick('a name again in another alternative, after 8,000', Names + '|(?<n1>)', True);
+  Long := '';
+  for K := 1 to 3000 do
+    Long := Long + '(?<' + Times('n', 40) + Num(K) + '>)';
+  Quick('3,000 names of 40 characters, each again in another alternative', Long + '|' + Long, True);
+end;
+
 (* TestAPatternAtTheLimitOfSizeIsCheap compiles patterns of each kind that costs something to read or to compile,
   each a little under MaxSize, and matches each once. The limit of size is what bounds the time and the memory of
   compiling, so the largest pattern of every kind must take little of both. The bounds asserted are generous. The
@@ -3425,6 +3488,7 @@ begin
   TestTheSizeOfAPattern;
   TestAPatternOverALimitOfSizeIsTooLarge;
   TestAPatternAtTheLimitOfSizeIsCheap;
+  TestManyGroupNamesAreReadInTimeProportionalToTheirNumber;
   WriteLn('V8 oracle: ', OracleVerdicts, ' verdicts on validity compared, ', OracleVerdictsAgreed, ' agreed. ',
     OracleAnswers, ' answers on a match compared (each text on both back ends), ', OracleAnswersAgreed, ' agreed.');
   if Failures <> 0 then begin
