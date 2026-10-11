@@ -1267,12 +1267,23 @@ class _Linear:
 
 
 class _Translator:
-    def __init__(self, pattern: str, unicode: bool, ascii_flag: bool, plain: bool = True, share: bool = False) -> None:
+    def __init__(
+        self,
+        pattern: str,
+        unicode: bool,
+        ascii_flag: bool,
+        plain: bool = True,
+        share: bool = False,
+        counts: bool = False,
+    ) -> None:
         self.p = pattern
         # Whether repetitions inside repetitions are written without the iterations that match nothing (_Plain).
         self.plain = plain
         # Whether a long class is written once for the regex package and called (see _Writer.write).
         self.share = share
+        # Whether a minimum count of one character is written for the regex package without the count (see
+        # _Writer._counted).
+        self.counts = counts
         # With the ASCII flag (the standard library's engine), \d, \w and \b are ECMA's; without it (the regex
         # package, whose ASCII flag would also narrow \p{...}), they are spelled out.
         self.ascii_flag = ascii_flag
@@ -1339,18 +1350,20 @@ class _Translator:
                 ref = _Node(_REFERENCE, group=group)
                 ref.icase = node.icase
                 node.items.append(ref)
-        writer = _Writer(root, not self.ascii_flag, self.u, self.share)
+        writer = _Writer(root, not self.ascii_flag, self.u, self.share, self.counts)
         self.wide = not self.u and _sees_code_units(root)
         if self.plain and _repeats_inside_repeats(root):
             plain = _plain(root, writer)
             if plain is not None:
-                writer = _Writer(plain, not self.ascii_flag, self.u, self.share)
+                writer = _Writer(plain, not self.ascii_flag, self.u, self.share, self.counts)
                 try:
                     text = writer.write()
                 except _TooLarge:
                     # Written that way it is too large. The tree has been changed, so the pattern is read again
                     # and written as it is.
-                    again = _Translator(self.p, self.u, self.ascii_flag, plain=False, share=self.share)
+                    again = _Translator(
+                        self.p, self.u, self.ascii_flag, plain=False, share=self.share, counts=self.counts
+                    )
                     text = again.translate()
                     self.needs_regex = again.needs_regex
                     self.linear = again.linear
@@ -1947,10 +1960,13 @@ class _Writer:
     the engine sees, and a repetition with a reference or a reset group inside it is written without a count:
     ``X{2,4}`` as ``XX(?:X(?:X|)|)`` and ``X{2,}`` as ``XX(?:X)*``."""
 
-    def __init__(self, root: _Node, for_regex: bool, unicode: bool = True, share: bool = False) -> None:
+    def __init__(
+        self, root: _Node, for_regex: bool, unicode: bool = True, share: bool = False, counts: bool = False
+    ) -> None:
         self.root = root
         self.unicode = unicode
         self.for_regex = for_regex
+        self.counts = counts and for_regex
         # The long classes, each with how many times it is written. With ``share`` (for the regex package) each
         # is written once, as a group that is called, and this has the number of each one's group.
         self.share = share
@@ -2313,6 +2329,9 @@ class _Writer:
             # character, escape or class needs no group.
             if body.kind == _SEQUENCE or not (text.startswith("(") or _ATOM_RE.fullmatch(text)):
                 text = f"(?:{text})"
+            if self.counts and lo > 1 and self._scanned(body) >= 0:
+                n.weight = body.weight * 3
+                return self._counted(text, lo, hi, n.lazy, n.back)
             counted = text + self._count(lo, hi, n.lazy)
             # The regex package writes a minimum count out, and then the body once more for the rest.
             n.weight = body.weight * (1 if hi == 1 or lo == 0 else lo + 1)
@@ -2354,6 +2373,33 @@ class _Writer:
         if len(out) > _MAX_TRANSLATED:
             raise _TooLarge()
         return out
+
+    def _counted(self, one: str, lo: int, hi: int, lazy: bool, back: bool) -> str:
+        """``X{lo,hi}`` for one character or class X, without a minimum count. The regex package writes a minimum
+        count out as copies of what is counted, 270 bytes each: ``u{10400}`` is 3 MB, and a pattern may have no
+        more than ``MAX_COPIES`` copies. A maximum count costs it nothing. So the count is written as three things
+        that have none:
+
+        - ``(?!X{0,lo-1}(?!X))``: it is not so that at most ``lo - 1`` characters of X are followed by one that is
+          not X, which is to say that there are ``lo`` of them here;
+        - ``(?>X{0,lo})``: ``lo`` of them are taken, and none is given back;
+        - ``X{0,hi-lo}``: the rest, as the count has them (the most first, or the fewest for a lazy one).
+
+        In a lookbehind the engine matches backwards, from the last of these to the first, and the first of the
+        three looks behind: ``X{0,hi-lo}(?>X{0,lo})(?<!(?<!X)X{0,lo-1})``.
+
+        This is slower than the count where the count is not refused (it goes over the first ``lo`` characters
+        twice), so it is written only for a pattern whose copies are over the limit (see ``_translate``)."""
+        z = self.seen
+        if not (one.startswith("(") or _ATOM_RE.fullmatch(one)):
+            one = f"(?:{one})"
+        fewer = f"{one}{{0,{lo - 1}}}"
+        here = f"(?<!(?<!{one}){fewer})" if back else f"(?!{fewer}(?!{one}))"
+        taken = f"(?>{one}{{0,{lo}}})"
+        rest = "" if hi == lo else one + self._count(0, -1 if hi == -1 else hi - lo, lazy)
+        if back:
+            return (z + rest if rest else "") + z + taken + here
+        return here + taken + z + (rest + z if rest else "")
 
     def _scanned(self, n: _Node) -> int:
         """How many ranges the regex package goes through for a character when the node is the body of a
@@ -2431,6 +2477,10 @@ def _translate(pattern: str, unicode: bool, for_regex: bool) -> _Translation | N
                 raise
             # Again, with each long class written once and called.
             t = _Translator(pattern, unicode, False, share=True)
+            text = t.translate()
+        if t.copies > MAX_COPIES:
+            # Again, with the minimum counts of one character written without copies.
+            t = _Translator(pattern, unicode, False, share=t.share, counts=True)
             text = t.translate()
         if t.copies > MAX_COPIES:
             raise _TooLarge(

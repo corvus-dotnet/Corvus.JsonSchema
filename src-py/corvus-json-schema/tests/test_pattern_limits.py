@@ -534,13 +534,23 @@ def test_a_pattern_too_long_or_too_deep_to_read_is_refused_at_once(pattern: str)
 
 # A count the regex package would write out as copies, or a repetition this package writes without a count.
 COPIES = [
+    "(?<=b)(?:ab){10001}",
+    "(?<=b)(?:(?:ab){1000}){1000}",
+    "(?:(?:ab){1000}){1000}",
+    "(?<=x)(?:(?:[ab]{100}){100}){100}",
+    "(?<=b)(?:a{4000}|b{4000}){1000}",
+    "^(?:(?:(a)|b){300}){300}\\1$",
+    "(?=a)" + "(?:ab){999}" * 160,
+    "^" + "(" * 14 + "a|b" + ")+" * 14 + "\\1$",
+]
+# A minimum count of one character or class is written for the regex package without copies in a pattern that would
+# have too many (see test_a_large_count_of_one_character_is_not_too_large), so these are compiled, in kilobytes.
+COUNTS_OF_ONE = [
     "(?<=b)a{10001}",
     "(?<=b)(?:a{1000}){1000}",
     "(?:a{1000}){1000}",
-    "(?<=x)(?:(?:[ab]{100}){100}){100}",
-    "^(?:(?:(a)|b){300}){300}\\1$",
     "(?=a)" + "a{999}" * 160,
-    "^" + "(" * 14 + "a|b" + ")+" * 14 + "\\1$",
+    "(?<=b)[ab]{1000000}",
 ]
 
 
@@ -561,6 +571,24 @@ def test_a_count_that_would_be_written_out_too_many_times_is_refused(pattern: st
     assert took < 20
     # It is read to its end, so it is known to be valid.
     assert is_valid_ecma_regex(pattern)
+
+
+@pytest.mark.parametrize("pattern", COUNTS_OF_ONE)
+def test_a_count_of_one_character_is_compiled_whatever_the_count(pattern: str) -> None:
+    pattern_module._cache.clear()
+    tracemalloc.start()
+    try:
+        start = time.process_time()
+        matcher = compile_pattern(pattern)
+        took = time.process_time() - start
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    # As copies the first took 13 MB to compile and the third 125 MB. A quiet machine takes 3 MB and 6 ms at most.
+    assert matcher is not None and _engine(matcher) == "regex"
+    assert peak < 16 * 1024 * 1024, peak
+    assert took < 5
+    assert matcher("ab") is None
 
 
 def test_the_longest_pattern_is_read_proved_and_compiled_in_time_in_proportion_to_it(
@@ -847,6 +875,85 @@ def test_the_limit_is_not_seconds_late_for_a_repetition_of_a_class_of_many_range
         # It is tried three times (see pattern._again), and each try may be late. A quiet machine takes 0.2 to 0.6
         # seconds of the processor's time for a limit of 0.1.
         assert _costly(0.1, pattern, unit * 100_000) < 2.5, one[:30]
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# A large count of one character
+
+
+# Without the u flag \\u{10400} is the letter u 10,400 times. The regex package writes a minimum count out as copies,
+# 270 bytes each, so a pattern of it had more copies than the limit of them and was refused.
+_U = "u" * 10400
+_LARGE_COUNTS = [
+    ("\\-{0}\\u{10400}", {_U: True, "x" + _U + "x": True, _U[1:]: False, _U[:5000] + "x" + _U[:5399]: False}),
+    ("\\-{0}(?<=\\u{10400})a", {_U + "a": True, _U[1:] + "a": False, "xu" + _U + "a": True, _U + "xa": False}),
+    ("\\-{0}(?<!\\u{10400})a$", {_U + "a": False, _U[1:] + "a": True, "a": True, _U + "xa": True}),
+    ("\\-{0}\\u{10400}\\b", {_U: True, _U + "u": True, _U + "-": True, _U[1:] + "-": False}),
+    ("\\-{0}^(?=\\u{10400}).{2}$", {"uu": False, _U: False}),
+    ("\\-{0}a\\u{10400}|\\u{10400}a", {"a" + _U: True, _U + "a": True, _U[1:] + "a": False, "a" + _U[1:] + "x": False}),
+    ("\\-{0}[^\\p{Ll}\\P{L}]{1,2}\\u{10400}?$", {"}": False, "x" + _U: True, "xx": False, "x" + _U[1:]: False}),
+    ("\\-{0}^(.){2,}\\u{10400}$", {"ab" + _U: True, "a" + _U: False, _U + "uu": True, _U: False}),
+    ("\\u{110000}", {"u" * 110000: True, "x" + "u" * 110000: True, "u" * 300 + "x" + "u" * 300: False}),
+    (
+        "(?<=^)a{5000}b{5000,5002}?c{5000,}$",
+        {"a" * 5000 + "b" * 5001 + "c" * 6000: True, "a" * 5000 + "b" * 5003 + "c" * 5000: False},
+    ),
+    ("(?<=^[ab]{3000}\\d{3000})x", {"ab" * 1500 + "7" * 3000 + "x": True, "ab" * 1500 + "7" * 2999 + "x": False}),
+]
+
+
+@pytest.mark.parametrize(("pattern", "answers"), _LARGE_COUNTS)
+def test_a_large_count_of_one_character_is_not_too_large(pattern: str, answers: dict[str, bool]) -> None:
+    matcher = compile_pattern(pattern)
+    assert matcher is not None
+    for text, answer in answers.items():
+        assert (matcher(text) is not None) is answer, (pattern, len(text), text[:3], text[-3:])
+
+
+def test_a_count_that_is_not_written_out_means_what_the_count_does() -> None:
+    import itertools
+
+    import regex
+
+    # The regex package is given a minimum count of one character without copies only in a pattern that would be
+    # refused for its copies. Here every pattern is written both ways, and the two give the same answer for every
+    # text of up to seven characters of a, u and x.
+    texts = ["".join(w) for k in range(8) for w in itertools.product("aux", repeat=k)]
+    for pattern in (
+        "u{3}",
+        "^a?u{3,5}x",
+        "^a?u{3,5}?u?x",
+        "u{2,}a",
+        "u{2,}?ua",
+        "(?<=u{3})a",
+        "(?<!u{3})a",
+        "(?<=xu{2,4})a",
+        "(?<=^u{2,}?a?)x",
+        "(?<=[au]{2}x[ux]{2,3})a$",
+        "^(a|x)u{2}\\1",
+        "^(?:(a)|x)u{2,}\\1$",
+        "(?<=(a|x)u{2,3})\\1",
+        "^(?:[au]{2}x?){2}$",
+        "^(?:u{2}|a{3}x)+$",
+        "(?i:^(a)U{2,}\\1$)",
+    ):
+        written = []
+        for counts in (False, True):
+            translator = pattern_module._Translator(pattern, True, False, counts=counts)
+            written.append(translator.translate())
+        assert written[0] != written[1] and "{0," in written[1], pattern
+        plain, counted = (regex.compile(text) for text in written)
+        for text in texts:
+            assert (plain.search(text) is None) is (counted.search(text) is None), (pattern, text)
+    # The memory of the compiled pattern is what the copies were.
+    tracemalloc.start()
+    try:
+        pattern_module._cache.clear()
+        compile_pattern("\\-{0}(?<=\\u{100000})a")
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert peak < 4 * 1024 * 1024, peak
 
 
 # ---------------------------------------------------------------------------------------------------------------------
