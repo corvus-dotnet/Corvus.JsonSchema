@@ -183,6 +183,22 @@ const PROPERTY_CATEGORY = 1 << 16
 const PROPERTY_BINARY = 2 << 16
 const PROPERTY_SCRIPT = 3 << 16
 const PROPERTY_SCRIPT_EXTENSIONS = 4 << 16
+# A script that no character has, by either property.
+const PROPERTY_EMPTY_SCRIPT = 5 << 16
+
+# The two names of the Script value Katakana_Or_Hiragana. PropertyValueAliases.txt has it, so ECMA-262 does, and
+# \p{sc=Hrkt} is a valid pattern. No character has had the value since Unicode 4.1, which gave Script_Extensions
+# to the characters the two scripts share. The tables are made from data that lists the scripts by their characters,
+# so they have no entry for it, and it is named here. (V8 13.6 does not know the name.)
+const EMPTY_SCRIPT_NAMES = String["Katakana_Or_Hiragana", "Hrkt"]
+
+# The index of a script value, as a property of the kind given.
+function resolvescript(kind::Int, p::AbstractVector{<:Integer}, start::Int, stop::Int)
+    script = findname(SCRIPT_NAMES, p, start, stop)
+    script > 0 && return kind | script
+    empty = findname(EMPTY_SCRIPT_NAMES, p, start, stop)
+    return empty > 0 ? PROPERTY_EMPTY_SCRIPT | empty : PROPERTY_NONE
+end
 
 # Resolves the expression p[start:stop] between the braces of \p{...}, as ECMA-262 does: a name and a value of
 # General_Category, Script or Script_Extensions joined by =, or the lone name of a General_Category value or of a
@@ -206,12 +222,10 @@ function resolveproperty(p::AbstractVector{<:Integer}, start::Int, stop::Int)
         return category > 0 ? PROPERTY_CATEGORY | category : PROPERTY_NONE
     end
     if isname("Script", p, start, eq - 1) || isname("sc", p, start, eq - 1)
-        script = findname(SCRIPT_NAMES, p, eq + 1, stop)
-        return script > 0 ? PROPERTY_SCRIPT | script : PROPERTY_NONE
+        return resolvescript(PROPERTY_SCRIPT, p, eq + 1, stop)
     end
     if isname("Script_Extensions", p, start, eq - 1) || isname("scx", p, start, eq - 1)
-        script = findname(SCRIPT_NAMES, p, eq + 1, stop)
-        return script > 0 ? PROPERTY_SCRIPT_EXTENSIONS | script : PROPERTY_NONE
+        return resolvescript(PROPERTY_SCRIPT_EXTENSIONS, p, eq + 1, stop)
     end
     return PROPERTY_NONE
 end
@@ -232,6 +246,8 @@ function property(p::AbstractVector{<:Integer}, start::Int, stop::Int)
         return table(BINARY_TABLES[index])
     elseif kind == PROPERTY_SCRIPT
         return table(SCRIPT_TABLES[index])
+    elseif kind == PROPERTY_EMPTY_SCRIPT
+        return CodeSet()
     end
     return table(SCRIPT_EXTENSION_TABLES[index])
 end

@@ -115,7 +115,7 @@ end
         @test E.property("L") === E.property("gc=Letter")
         @test E.property("sc=Grek") === E.property("Script=Greek")
         # Names are matched exactly, and a name of one kind is not a name of another.
-        for bad in ["lu", "Greek", "sc=Lu", "gc=Greek", "gc=Alphabetic", "Script", "", "=", "sc=", "Lu=", "scx=Hrkt"]
+        for bad in ["lu", "Greek", "sc=Lu", "gc=Greek", "gc=Alphabetic", "Script", "", "=", "sc=", "Lu=", "scx=Hrk"]
             @test E.property(bad) === nothing
             @test !E.isproperty(bad)
         end

@@ -288,6 +288,15 @@ const ANCHOR_CASES = Tuple{String,Vector{String},Vector{String}}[
         @test C.valid_regex(raw"a{2147483647,2147483648}")
     end
 
+    # The script that no character has is a name ECMA-262 has.
+    @testset "the script Katakana_Or_Hiragana" begin
+        @test C.valid_regex(raw"\p{sc=Hrkt}")
+        v = compile_schema("{\"pattern\": " * quote_json(raw"^\P{Script_Extensions=Katakana_Or_Hiragana}$") * "}")
+        @test isvalid(v, "\"\u30ab\"")
+        @test !isvalid(v, "\"\u30ab\u3042\"")
+        @test !isvalid(compile_schema("{\"pattern\": " * quote_json(raw"\p{sc=Hrkt}") * "}"), "\"\u30ab\"")
+    end
+
     # A pattern that is valid only without the u flag (one with an identity escape such as \- or \&) matches UTF-16
     # code units, as ECMA-262 says, so a character beyond the Basic Multilingual Plane is two characters to it. The
     # faster matchers go by character. They decide the strings within the Basic Multilingual Plane, where the two are

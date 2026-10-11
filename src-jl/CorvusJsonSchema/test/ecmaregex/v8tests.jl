@@ -713,4 +713,36 @@ end
         @test !isnotapattern(raw"a{2147483647,2147483648}")
         @test E.isvalidpattern(raw"a{99999999999999999998,99999999999999999999}")
     end
+
+    # The Script value Katakana_Or_Hiragana, or Hrkt, is in PropertyValueAliases.txt, so ECMA-262 has it. No
+    # character has it. V8 13.6 does not know the name. The answers here are V8's for the same pattern with
+    # \P{Any} where it has \p{sc=Hrkt}, and \p{Any} where it has \P{sc=Hrkt}.
+    @testset "the script that no character has" begin
+        rows = [
+            (raw"\p{sc=Hrkt}", "000000"),
+            (raw"\P{sc=Hrkt}", "7fffff"),
+            (raw"^\p{Script=Katakana_Or_Hiragana}$", "000000"),
+            (raw"^\P{Script=Katakana_Or_Hiragana}$", "7f00f6"),
+            (raw"^[\p{scx=Hrkt}a]$", "400000"),
+            (raw"^[^\p{Script_Extensions=Katakana_Or_Hiragana}a]$", "3f00f6"),
+            (raw"^[\P{scx=Hrkt}]+$", "7fffff"),
+            (raw"^[^\P{sc=Hrkt}]$", "000000"),
+            (raw"^[\P{sc=Hrkt}\p{sc=Hrkt}]$", "7f00f6"),
+            (raw"^(?:\p{sc=Hrkt}|k)+$", "202000"),
+            (raw"(?i:\P{scx=Katakana_Or_Hiragana}k)", "00b000"),
+        ]
+        checkv8table(rows, V8_NAME_TEXTS)
+        for (pattern, _) in rows
+            @test E.parsesunicode(pattern)
+            @test E.isvalidpattern(pattern)
+        end
+        @test isempty(E.property("sc=Hrkt"))
+        @test isempty(E.property("Script_Extensions=Katakana_Or_Hiragana"))
+        @test E.property("scx=Hira") != E.property("sc=Hira")
+        # The name is a value of Script and of Script_Extensions only, and it is matched exactly.
+        for expression in ["Hrkt", "Katakana_Or_Hiragana", "sc=hrkt", "gc=Hrkt", "sc=Katakana_or_Hiragana", "sc=Hrkt "]
+            @test !E.isproperty(expression)
+            @test !E.parsesunicode("\\p{" * expression * "}")
+        end
+    end
 end
