@@ -334,6 +334,11 @@ There is one alternative for each class of case variants that has a member the g
 behind a look at the next character. See [Known Limits](./EcmaRegexTranslator.md#known-limits) for what that costs
 when the group can capture any letter.
 
+A group can hold the text of another group through a backreference inside it, and that group can read the first.
+So what each group can capture is worked out for all of them together: every set starts empty, and each is worked
+out from the others until none grows. `(?i:(?:(\2a)(\1b))+)` has two groups that can each capture `a` and `b` and
+nothing else, and both of its backreferences are left to .NET's comparison.
+
 ## Repetitions
 
 A quantifier is written as it is, except in the cases below. They concern a body that can match the empty string,

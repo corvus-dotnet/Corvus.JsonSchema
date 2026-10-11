@@ -11,8 +11,9 @@ namespace Corvus.Text.Json.Tests.EcmaPatterns;
 /// expression test data (https://github.com/corvus-dotnet/ecma262-regex-test-data). The patterns of
 /// <see cref="EngineFaults"/> and <see cref="CaseInsensitiveBackreferences"/> are not in that data. The first were
 /// found by comparing random patterns with the same V8, and the second were written for the pairs of characters
-/// on which .NET and ECMA-262 differ, with the <c>i</c> of each given to V8 as a flag. Every pattern here was
-/// answered wrongly, refused, or not answered at all before the change its table is named for.
+/// on which .NET and ECMA-262 differ, with the <c>i</c> of each given to V8 as a flag. So were the first patterns
+/// of <see cref="CaseInsensitiveBackreferencesToTheirOwnGroup"/>. Every pattern here was answered wrongly, refused,
+/// or not answered at all before the change its table is named for.
 /// </summary>
 internal static class EcmaPatternCases
 {
@@ -268,6 +269,36 @@ internal static class EcmaPatternCases
         ("(?i:^(\\p{L}+)-?[^]+(?<=\\1)$)", ["aa", "aA", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u00B5\u03BC", "\u03BC\u039C", "\u0432\u1C80", "\u1C80\u0412", "iI", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD83A\uDD00\uD83A\uDD22", "abAB", "abAb", "\u03C3\u03C2\u03A3\u03C3", "sk\u017F\u212A", "SK\u017F\u212A", "\uD801\uDC00a\uD801\uDC28A", "ss\u017F\u017F", "a\u03C2-A\u03C3", "a\u03C2A\u03C3", "xyXY"], ["ab", "\u03C2\u03B1", "\u00B5\u03B1", "i\u0130", "\u0131I", "\uD801\uDC00\uD801\uDC29", "\uD83D\uDE00\uD83D\uDE00", "", "a", "\uD801\uDC00a\uD801\uDC28b", "xyXz"]),
         ("(?i:^(\\u{10400})\\1$)", ["\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00"], ["aa", "aA", "ab", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u03C2\u03B1", "\u00B5\u03BC", "\u03BC\u039C", "\u00B5\u03B1", "\u0432\u1C80", "\u1C80\u0412", "iI", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a"]),
         ("(?i:^(\\w)\\1$)", ["aa", "aA", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "iI"], ["ab", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u03C2\u03B1", "\u00B5\u03BC", "\u03BC\u039C", "\u00B5\u03B1", "\u0432\u1C80", "\u1C80\u0412", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a backreference that ignores case inside the group it reads, or to a group that reads it back.
+    /// The translator did not finish translating one whose group refers to itself twice. 11 of them were written for
+    /// this, with the <c>i</c> of each given to V8 as a flag, and 9 are from the case-folding family of the test
+    /// data. The last 5 are valid only without the <c>u</c> flag.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] CaseInsensitiveBackreferencesToTheirOwnGroup =
+    [
+        ("(?i:^(\\1\\1a)$)", ["a", "A"], ["", "aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(\\1a)+$)", ["a", "A", "aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "aaA"], ["", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "bab"]),
+        ("(?i:^(\\1\\1[as])\\1$)", ["aa", "aA", "Aa", "ss", "s\u017F", "\u017FS"], ["", "a", "A", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(?:(\\1\\1.)\\1)+$)", ["aa", "aA", "Aa", "aaaa", "ss", "s\u017F", "\u017FS", "k\u212A", "\u03C3\u03C2", "\uD801\uDC00\uD801\uDC28"], ["", "a", "A", "aaa", "aAa", "AAA", "ab", "aba", "abab", "abAB", "aBAb", "s", "sS\u017F", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(?:(\\2a)(\\1\\1b))+$)", [], ["", "a", "A", "aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(?:\\2(.)|\\1(s))+$)", ["a", "A", "aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"], [""]),
+        ("(?i:^(?<n>\\k<n>\\k<n>[a-z])\\k<n>$)", ["aa", "aA", "Aa", "ss", "s\u017F", "\u017FS", "k\u212A"], ["", "a", "A", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "sS\u017F", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(?:(\\1\\1.))+(?<=\\1\\1)$)", ["aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA"], ["", "a", "A", "ab", "aba", "abab", "abAB", "aBAb", "s", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "bab"]),
+        ("(?i:^((\\1\\2|\\2\\1|[ab])+)\\1$)", ["", "aa", "aA", "Aa", "aaaa", "abab", "abAB", "aBAb"], ["a", "A", "aaa", "aAa", "AAA", "ab", "aba", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^\\b(\\1?[^k]\\1)?\u0130$)", [], ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"]),
+        ("(?i:^[^a](\\1\\1?)?|\\b$)", ["s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5", "\u01C4"], ["", "A\uAB70A\u13A0\u03B8"]),
+        ("(?i:^((\\2+I\\2)[^a])??$)", ["", "I\u03A3"], ["s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5", "\u01C4"]),
+        ("(?i:^\u03B8\uD83A\uDD22(.(\\1\\u0131\\B)*\\2)??$)", [], ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"]),
+        ("(?i:^\\u017f(?<n0>\\k<n0>?\u00DF\\1+)\\1{2})", [], ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"]),
+        ("(?i:(?![\\u03b1-\\u03c9])(\\1+\\1?\\1?)+?\u03C3)", [], ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"]),
+        ("(?i:^(\\1\\1a)\\1$\\&?)", ["aa", "aA", "Aa"], ["", "a", "A", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(?:(\\2s)(\\1\\1.))+\\2$\\&?)", [], ["", "a", "A", "aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:\\-{0}(\\1\\1?\\b)$)", ["s", "S", "k", "K", "i", "I", "a", "A", "0", "a\u01C5\u01C4I", "\u212As\u212AS", "\u00E5kK", "\u01C5\u03BCI", "\u03C2\uD801\uDC00S\u03C3\uD801\uDC28S"], ["", "\u017F", "\u212A", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5", "\u01C4", "\u01C6", "\u1F80", "\u1F88", "\u03C3", "\u03C2"]),
+        ("(?i:\\-{0}(\\1?\\1){2}\\1?)", ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"], []),
+        ("(?i:\\-{0}^(?:\u1F88(?<n0>\\1\\1(\\2+)*?)*)$)", ["\u1F88"], ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"]),
     ];
 
     /// <summary>

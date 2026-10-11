@@ -101,6 +101,58 @@ public class EcmaRegexTranslatorDataTests
     }
 
     /// <summary>
+    /// A backreference that ignores case can stand inside the group it reads, or read a group that reads it. The
+    /// translator works out what each group can capture for all the groups together. It used to follow each
+    /// backreference to its group, which did not end for a group that refers to itself twice, so the translation
+    /// is made on another thread here and a translation that does not finish is a failure of the test.
+    /// </summary>
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
+    public void PatternsWithACaseInsensitiveBackreferenceToItsOwnGroupAnswerAsV8(RegexOptions engine)
+    {
+        Exception failure = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                AssertCases(EcmaPatternCases.CaseInsensitiveBackreferencesToTheirOwnGroup, engine, asTheEvaluator: true);
+            }
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
+        })
+        {
+            IsBackground = true,
+        };
+        thread.Start();
+        Assert.IsTrue(thread.Join(TimeSpan.FromSeconds(120)), "The patterns were not translated and matched in 120 seconds.");
+        if (failure is not null)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+        }
+    }
+
+    /// <summary>
+    /// A group that reads itself, or a group that reads it, can capture only what the other parts of the groups can.
+    /// Such a group was taken to capture every character, and the comparison that ignores case was written out for
+    /// every class of case variants there is, in 157,476 characters for each backreference. Here the groups capture
+    /// letters of ASCII that .NET compares as ECMA-262 does.
+    /// </summary>
+    [TestMethod]
+    public void AGroupThatReadsItselfCapturesWhatItsOtherPartsCan()
+    {
+        Assert.IsTrue(EcmaRegexTranslator.TryTranslate(@"(?i:^(\1a)+$)", out string translated, out _));
+        Assert.IsTrue(translated.Length < 100, $"{translated.Length} characters: {translated}");
+
+        // Two groups that read each other, and a third that reads both and itself.
+        Assert.IsTrue(EcmaRegexTranslator.TryTranslate(@"(?i:^(?:(\2a)(\1b))+(\1\2\3)$)", out translated, out _));
+        StringAssert.StartsWith(translated, @"(?:^(?:(?(1)(?<-1>))(?(2)(?<-2>))(?:(?<1>(?(2)(?i:\2))[Aa])(?<2>(?(1)(?i:\1))[Bb])))+(?<3>(?(1)(?i:\1))(?(2)(?i:\2))");
+        Assert.IsTrue(translated.Length < 200, $"{translated.Length} characters: {translated}");
+    }
+
+    /// <summary>
     /// A lazy repetition with more than eight iterations left to choice, inside a lookaround whose captures a
     /// backreference reads, is written as a repetition with no highest count whose iterations a group counts. The
     /// count holds, also when the repetition is entered again and in a lookbehind. The answers are V8's.
@@ -130,7 +182,7 @@ public class EcmaRegexTranslatorDataTests
         AssertCases(cases, engine);
     }
 
-    private static void AssertCases((string Pattern, string[] Matches, string[] Fails)[] cases, RegexOptions engine)
+    private static void AssertCases((string Pattern, string[] Matches, string[] Fails)[] cases, RegexOptions engine, bool asTheEvaluator = false)
     {
         var failures = new List<string>();
         int wrongPatterns = 0;
@@ -149,7 +201,9 @@ public class EcmaRegexTranslatorDataTests
             try
             {
                 // A match that does not return is a failure here and not a test run that never ends.
-                regex = new Regex(translated, engine | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(5));
+                // The evaluator gives the interpreted engine a translation that is not for the compiled one.
+                RegexOptions used = asTheEvaluator && !EcmaRegexTranslator.IsForCompiledEngine(translated) ? RegexOptions.None : engine;
+                regex = new Regex(translated, used | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(5));
             }
             catch (ArgumentException ex)
             {

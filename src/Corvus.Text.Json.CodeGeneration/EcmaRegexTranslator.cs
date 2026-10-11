@@ -301,6 +301,9 @@ internal static class EcmaRegexTranslator
         private readonly StringBuilder sb = new();
         private int markers;
 
+        /// <summary>For each group, every character its text can hold (see <see cref="CapturedSets"/>).</summary>
+        private int[][]? capturedSets;
+
         /// <summary>
         /// How many positive lookarounds that hold a group a backreference reads enclose what is being written. The
         /// first path through such a lookaround is the one whose captures are kept.
@@ -1308,7 +1311,7 @@ internal static class EcmaRegexTranslator
         /// </summary>
         private void FoldedBackreference(int g, string number, bool backward)
         {
-            int[] captured = this.CapturedSet(this.groupNodes[g]!, 0);
+            int[] captured = this.CapturedSets()[g];
             if (captured[captured.Length - 1] < 0x80 && !EcmaRegexUnicode.Intersects(captured, NotPlainAsciiLetters))
             {
                 // The text of the group is ASCII with none of the letters that have a case variant outside ASCII, and
@@ -1419,12 +1422,53 @@ internal static class EcmaRegexTranslator
         /// <summary>Whether the text a group captures can hold a character that has a case variant.</summary>
         private bool CapturesCased(int g)
         {
-            EcmaRegexNode? group = this.groupNodes[g];
-            return group is not null && EcmaRegexUnicode.Intersects(this.CapturedSet(group, 0), EcmaRegexUnicode.Cased(this.unicode));
+            return this.groupNodes[g] is not null && EcmaRegexUnicode.Intersects(this.CapturedSets()[g], EcmaRegexUnicode.Cased(this.unicode));
         }
 
-        /// <summary>Every character the text a node matches can hold.</summary>
-        private int[] CapturedSet(EcmaRegexNode n, int depth)
+        /// <summary>
+        /// For each group, every character the text it captures can hold. A group can hold the text of another
+        /// through a backreference, and of itself, in any order, so the sets are the least ones that satisfy every
+        /// group: they start empty and are worked out again until none of them grows. Following each backreference
+        /// to its group instead does not end for a group that refers to itself twice.
+        /// </summary>
+        private int[][] CapturedSets()
+        {
+            if (this.capturedSets is int[][] known)
+            {
+                return known;
+            }
+
+            int[][] sets = new int[this.groupNodes.Length][];
+            for (int g = 0; g < sets.Length; g++)
+            {
+                sets[g] = [];
+            }
+
+            bool grew;
+            do
+            {
+                grew = false;
+                for (int g = 1; g < sets.Length; g++)
+                {
+                    if (this.groupNodes[g] is EcmaRegexNode group)
+                    {
+                        int[] set = this.CapturedSet(group, sets);
+                        if (!EcmaRegexUnicode.SetEquals(set, sets[g]))
+                        {
+                            sets[g] = set;
+                            grew = true;
+                        }
+                    }
+                }
+            }
+            while (grew);
+
+            this.capturedSets = sets;
+            return sets;
+        }
+
+        /// <summary>Every character the text a node matches can hold, given what each group can.</summary>
+        private int[] CapturedSet(EcmaRegexNode n, int[][] groups)
         {
             switch (n.Kind)
             {
@@ -1436,19 +1480,10 @@ internal static class EcmaRegexTranslator
                     return [];
                 case EcmaRegexNodeKind.Backref:
                 {
-                    if (depth > EcmaRegexParser.MaxNesting)
-                    {
-                        return [0, EcmaRegexUnicode.Max];
-                    }
-
                     int[] set = [];
                     foreach (int g in n.Groups)
                     {
-                        if (this.groupNodes[g] is EcmaRegexNode target)
-                        {
-                            int[] captured = this.CapturedSet(target, depth + 1);
-                            set = EcmaRegexUnicode.Union(set, n.Fold ? EcmaRegexUnicode.FoldClosure(captured, this.unicode) : captured);
-                        }
+                        set = EcmaRegexUnicode.Union(set, n.Fold ? EcmaRegexUnicode.FoldClosure(groups[g], this.unicode) : groups[g]);
                     }
 
                     return set;
@@ -1459,7 +1494,7 @@ internal static class EcmaRegexTranslator
                     int[] set = [];
                     foreach (EcmaRegexNode sub in n.Subs)
                     {
-                        set = EcmaRegexUnicode.Union(set, this.CapturedSet(sub, depth));
+                        set = EcmaRegexUnicode.Union(set, this.CapturedSet(sub, groups));
                     }
 
                     return set;

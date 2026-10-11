@@ -74,6 +74,40 @@ public class EcmaPatternSemanticsTests
     }
 
     /// <summary>
+    /// Patterns with a backreference that ignores case inside the group it reads. Compiling a schema with one of
+    /// them did not return when the group refers to itself twice, so the schemas are compiled on another thread
+    /// here and one that does not compile in time is a failure of the test.
+    /// </summary>
+    [TestMethod]
+    [DataRow(Engine.CompiledRegex)]
+    [DataRow(Engine.InterpretedRegex)]
+    [DataRow(Engine.GeneratedCode)]
+    public void PatternsWithACaseInsensitiveBackreferenceToItsOwnGroupAnswerAsV8(Engine engine)
+    {
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                AssertCases(EcmaPatternCases.CaseInsensitiveBackreferencesToTheirOwnGroup, engine);
+            }
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
+        })
+        {
+            IsBackground = true,
+        };
+        thread.Start();
+        Assert.IsTrue(thread.Join(TimeSpan.FromSeconds(120)), "The schemas were not compiled and evaluated in 120 seconds.");
+        if (failure is not null)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+        }
+    }
+
+    /// <summary>
     /// Patterns whose translation keeps a lazy repetition of a group in a lookbehind, after a repetition whose
     /// iterations hold a lookbehind and can match nothing. .NET's compiled engine does not return from a match of
     /// these, and its interpreted engine answers. The translation is marked for the interpreted engine, and the
