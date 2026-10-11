@@ -8,7 +8,8 @@ import (
 	"unicode/utf8"
 )
 
-// pattern and patternProperties matching with ECMA-262 semantics (the u flag), as JSON Schema specifies.
+// pattern and patternProperties matching with ECMA-262 semantics (the u flag, or no flag for a pattern that is
+// valid only without it), as JSON Schema specifies.
 //
 // A pattern gets the cheapest matcher that decides it exactly:
 //
@@ -62,6 +63,10 @@ type pattern struct {
 	alts     []alternative
 	set      charSet
 	engine   patternEngine
+	// units is the engine of a pattern that has a faster matcher and is valid only without the u flag. ECMA-262
+	// matches such a pattern by UTF-16 code unit, and the faster matchers read code points, so the engine answers
+	// for a text with a character beyond the Basic Multilingual Plane. Nil for every other pattern.
+	units patternEngine
 }
 
 // matchString is match for a string that is not known to be ASCII.
@@ -73,6 +78,9 @@ func (p *pattern) matchString(s string) bool {
 // match reports whether the pattern matches somewhere in s, ascii saying whether s is known to be ASCII (a document
 // knows that of its strings).
 func (p *pattern) match(s []byte, ascii bool) bool {
+	if p.units != nil && !ascii && hasSupplementary(s) {
+		return p.units.Match(s)
+	}
 	switch p.kind {
 	case matchEverything:
 		return true
@@ -160,6 +168,17 @@ func decodeRune(s []byte, i int) (rune, int) {
 		return rune(c), 1
 	}
 	return utf8.DecodeRune(s[i:])
+}
+
+// hasSupplementary reports whether the text has a character beyond the Basic Multilingual Plane (four bytes of
+// UTF-8, the first of them 0xF0 or more).
+func hasSupplementary(s []byte) bool {
+	for _, c := range s {
+		if c >= 0xF0 {
+			return true
+		}
+	}
+	return false
 }
 
 func isASCII(s []byte) bool {
@@ -284,16 +303,22 @@ func compilePattern(source string) (*pattern, bool) {
 		return p.(*pattern), true
 	}
 	// Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it. A pattern
-	// with a faster matcher that is valid with the u flag needs no engine at all. The engine reads a pattern that
-	// is valid only without the u flag by code point too, so the faster matchers decide those the same way.
+	// with a faster matcher that is valid with the u flag needs no engine at all. A pattern that is valid only
+	// without the u flag is matched by UTF-16 code unit. The faster matchers read code points, which is the same
+	// thing unless the text has a character beyond the Basic Multilingual Plane, so such a pattern keeps its engine
+	// for those texts. When the pattern itself has such a character it is two atoms, which no faster matcher
+	// reads, and the engine takes every text.
 	p := choosePattern(source)
 	if p == nil || !validRegex(source) {
 		engine, ok := compileEngine(source)
 		if !ok {
 			return nil, false
 		}
-		if p == nil {
+		switch {
+		case p == nil || hasSupplementary([]byte(source)):
 			p = &pattern{kind: matchEngine, engine: engine}
+		default:
+			p.units = engine
 		}
 	}
 	p.source = source

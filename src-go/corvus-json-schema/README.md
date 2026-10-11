@@ -241,11 +241,25 @@ slower to compile a schema, and far slower on the first pass.
 
 [corvus-json-schema-bench](../corvus-json-schema-bench) has the harnesses and how to run them.
 
+## Patterns
+
+`pattern` and `patternProperties` have ECMA-262 semantics, and the answers are those of V8. A pattern is read with the
+grammar of the `u` flag and matched by Unicode code point. A pattern that grammar refuses is read with the Annex B
+grammar of a pattern with no flag, which many schemas need (`\-` outside a class, `\_`, a lone `{`). Such a pattern is
+matched by UTF-16 code unit, as ECMA-262 matches a pattern with no `u` flag. The two differ only for a string with a
+character beyond the Basic Multilingual Plane, which is two code units. `^.$` matches `"\ud801\udc00"` (the one
+character U+10400), and `^\-?.$` does not, because the dot takes one unit of the two. A pattern that neither
+grammar accepts is a `*CompileError`.
+
+A JSON string can name half of a surrogate pair with an escape, as in `"\ud800"`. That is not Unicode text, and a
+`Document` is UTF-8 and cannot hold it. `ParseDocument` returns a `*ParseError` for it, and `IsValidString` and
+`IsValidBytes` report it as not valid, whatever the schema. So a pattern is never matched against such a string.
+
 ## Differences from the Rust crate
 
 - Instances are always `Document` values (the tape). There is no counterpart of the Rust `Instance` trait.
-- A pattern that is valid only without the ECMA-262 `u` flag is matched by code point, as the Java port does. The
-  Rust crate matches such a pattern by UTF-16 code unit.
+- A pattern that is valid only without the ECMA-262 `u` flag is matched by UTF-16 code unit, as ECMA-262 says and
+  as the Rust crate does. Here the engine is the module's own and reads the code units from the UTF-8 text.
 - A class sequence anchored at both ends with one variable item (`^[a-z]*a$`) is decided by the length of the
   string, where the Rust crate uses the `regex` crate.
 - Annotation values and the numbers in messages are written as the schema wrote them.
@@ -291,7 +305,8 @@ go test -p 4 ./...
   nothing in the steady state. It is skipped under the race detector, which makes `sync.Pool` drop values.
 - `pattern_test.go`, `document_test.go`, `plan_test.go`: the regex-free matchers against the engine, the parser
   against `encoding/json` and `strconv`, and the name lookup.
-- `internal/ecmaregex`: the engine against answers recorded from V8 (`testdata/v8_oracle.json`).
+- `internal/ecmaregex`: the engine against answers recorded from V8 (`testdata/v8_oracle.json`, and
+  `testdata/v8_cases.json` for matching by UTF-16 code unit and for repetitions that cannot consume a character).
 - `internal/ucd`: the Unicode tables. They are compared with the `unicode` package when the toolchain carries the
   same version of Unicode (Go 1.27).
 - `TestNoToolchainUnicodeData`: no file of the module but a test reads the toolchain's Unicode data.

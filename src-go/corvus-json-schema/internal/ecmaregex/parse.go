@@ -65,6 +65,7 @@ type node struct {
 // A parser reads a pattern by recursive descent. With unicode set it applies the grammar of the u flag. Without it,
 // it applies the Annex B grammar of patterns with no flag.
 type parser struct {
+	// p holds the pattern as code points with the u flag, and as UTF-16 code units without it (see codeUnits).
 	p       []rune
 	i       int
 	unicode bool
@@ -109,6 +110,9 @@ func (p *parser) fail(msg string) {
 // parse reads the pattern. It returns an error for a pattern that is not valid under the chosen grammar.
 func parse(pattern string, unicode bool) (root *node, ps *parser, err error) {
 	ps = &parser{p: []rune(pattern), unicode: unicode}
+	if !unicode {
+		ps.p = codeUnits(ps.p)
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			pe, ok := r.(parseError)
@@ -137,6 +141,36 @@ func parse(pattern string, unicode bool) (root *node, ps *parser, err error) {
 	}
 	return root, ps, nil
 }
+
+// codeUnits returns the UTF-16 code units of a pattern. Without the u flag ECMA-262 reads a pattern, and matches a
+// text, a code unit at a time. A character beyond the Basic Multilingual Plane is then two atoms, a quantifier after
+// it repeats the second, and in a class it is two members, so a range between two such characters runs from a low
+// surrogate to a high one and is an error.
+func codeUnits(p []rune) []rune {
+	n := 0
+	for _, c := range p {
+		if c > 0xFFFF {
+			n++
+		}
+	}
+	if n == 0 {
+		return p
+	}
+	units := make([]rune, 0, len(p)+n)
+	for _, c := range p {
+		if c > 0xFFFF {
+			units = append(units, highSurrogate(c), lowSurrogate(c))
+		} else {
+			units = append(units, c)
+		}
+	}
+	return units
+}
+
+// highSurrogate and lowSurrogate are the two UTF-16 code units of a code point beyond the Basic Multilingual Plane.
+func highSurrogate(c rune) rune { return 0xD800 + (c-0x10000)>>10 }
+
+func lowSurrogate(c rune) rune { return 0xDC00 + (c-0x10000)&0x3FF }
 
 // scanGroups counts the capturing groups of the pattern and notes whether any is named.
 func (p *parser) scanGroups() {
@@ -506,6 +540,10 @@ func (p *parser) groupName() string {
 			if c < 0 {
 				p.fail("invalid group name")
 			}
+		} else if c >= 0xD800 && c <= 0xDBFF && p.peek() >= 0xDC00 && p.peek() <= 0xDFFF {
+			// Without the u flag the pattern is code units, and a name still takes a surrogate pair as one character.
+			c = 0x10000 + (c-0xD800)<<10 + (p.peek() - 0xDC00)
+			p.i++
 		}
 		if len(name) == 0 {
 			if !(c == '$' || c == '_' || idStart.Contains(c)) {
@@ -778,11 +816,12 @@ func (p *parser) characterEscape(inClass bool) rune {
 }
 
 // unicodeEscape reads what follows a \u and returns the code point, or -1, consuming nothing, when it is not a
-// well-formed escape. With braces set it accepts the \u{...} form. A surrogate pair written as two escapes is one code
-// point.
-func (p *parser) unicodeEscape(braces bool) rune {
+// well-formed escape. With unicodeMode set, as it is with the u flag and always in a group name, it accepts the
+// \u{...} form and reads a surrogate pair written as two escapes as one code point. Without it each escape is one
+// code unit.
+func (p *parser) unicodeEscape(unicodeMode bool) rune {
 	start := p.i
-	if braces && p.eat('{') {
+	if unicodeMode && p.eat('{') {
 		digits := p.i
 		v := rune(0)
 		for p.more() && hexValue(p.peek()) >= 0 {
@@ -801,7 +840,7 @@ func (p *parser) unicodeEscape(braces bool) rune {
 	if u < 0 {
 		return -1
 	}
-	if u >= 0xD800 && u <= 0xDBFF && p.i+6 <= len(p.p) && p.p[p.i] == '\\' && p.p[p.i+1] == 'u' {
+	if unicodeMode && u >= 0xD800 && u <= 0xDBFF && p.i+6 <= len(p.p) && p.p[p.i] == '\\' && p.p[p.i+1] == 'u' {
 		save := p.i
 		p.i += 2
 		if low := p.hex(4); low >= 0xDC00 && low <= 0xDFFF {

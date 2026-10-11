@@ -2,6 +2,7 @@ package jsonschema
 
 import (
 	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 
@@ -81,6 +82,55 @@ func TestMatchersAgreeWithTheEngine(t *testing.T) {
 	}
 	if engines > len(testPatterns)/2 {
 		t.Errorf("%d of %d patterns run on the engine", engines, len(testPatterns))
+	}
+}
+
+// TestPatternsValidOnlyWithoutTheUFlagMatchCodeUnits checks, against V8, patterns of the shapes the faster matchers
+// take that are valid only without the u flag. ECMA-262 matches such a pattern by UTF-16 code unit, so a character
+// beyond the Basic Multilingual Plane is two characters to it. The faster matchers read code points, and hand a
+// text with such a character to the engine.
+func TestPatternsValidOnlyWithoutTheUFlagMatchCodeUnits(t *testing.T) {
+	data, err := os.ReadFile("internal/ecmaregex/testdata/v8_cases.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cases struct {
+		Fast []struct {
+			P     string `json:"p"`
+			U     bool   `json:"u"`
+			Tests []struct {
+				T    string `json:"t"`
+				Want bool   `json:"want"`
+			} `json:"tests"`
+		} `json:"fast"`
+	}
+	if err := json.Unmarshal(data, &cases); err != nil {
+		t.Fatal(err)
+	}
+	fast, answers := 0, 0
+	for _, c := range cases.Fast {
+		compiled, ok := compilePattern(c.P)
+		if !ok {
+			t.Errorf("%q is not a valid pattern", c.P)
+			continue
+		}
+		if compiled.kind != matchEngine {
+			fast++
+			if (compiled.units == nil) != c.U {
+				t.Errorf("%q: valid with the u flag is %v, and the engine for code units is kept: %v", c.P, c.U,
+					compiled.units != nil)
+			}
+		}
+		for _, test := range c.Tests {
+			answers++
+			if got := compiled.matchString(test.T); got != test.Want {
+				t.Errorf("%q on %q: %v, V8 says %v", c.P, test.T, got, test.Want)
+			}
+		}
+	}
+	t.Logf("%d patterns, %d of them with a faster matcher, %d answers", len(cases.Fast), fast, answers)
+	if fast < len(cases.Fast)/2 {
+		t.Errorf("only %d of %d patterns have a faster matcher", fast, len(cases.Fast))
 	}
 }
 

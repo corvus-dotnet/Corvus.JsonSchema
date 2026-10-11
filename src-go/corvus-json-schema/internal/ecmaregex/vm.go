@@ -85,7 +85,7 @@ func (p *program) search(st *state, in []byte) bool {
 		}
 		r, w := rune(in[at]), 1
 		if r >= utf8.RuneSelf {
-			r, w = utf8.DecodeRune(in[at:])
+			r, w = decode(in, at, p.units)
 		}
 		if (p.first == nil || p.first.contains(r)) && p.run(st, in, at) {
 			return true
@@ -101,6 +101,8 @@ func (p *program) run(st *state, in []byte, start int) bool {
 	insts := p.insts
 	stack := st.stack[:0]
 	caps, counts := st.caps, st.counts
+	// units says the text is matched by UTF-16 code unit (see units.go).
+	units := p.units
 	pc, pos := 0, start
 	for {
 		i := &insts[pc]
@@ -113,7 +115,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 						pc++
 						continue
 					}
-				} else if r, w := utf8.DecodeRune(in[pos:]); r == i.r {
+				} else if r, w := decode(in, pos, units); r == i.r {
 					pos += w
 					pc++
 					continue
@@ -127,7 +129,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 						pc++
 						continue
 					}
-				} else if r, w := utf8.DecodeRune(in[pos:]); i.set.contains(r) {
+				} else if r, w := decode(in, pos, units); i.set.contains(r) {
 					pos += w
 					pc++
 					continue
@@ -143,7 +145,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			if pos > 0 {
 				r, w := rune(in[pos-1]), 1
 				if r >= utf8.RuneSelf {
-					r, w = utf8.DecodeLastRune(in[:pos])
+					r, w = decodeLast(in, pos, units)
 				}
 				if r == i.r {
 					pos -= w
@@ -155,7 +157,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			if pos > 0 {
 				r, w := rune(in[pos-1]), 1
 				if r >= utf8.RuneSelf {
-					r, w = utf8.DecodeLastRune(in[:pos])
+					r, w = decodeLast(in, pos, units)
 				}
 				if i.set.contains(r) {
 					pos -= w
@@ -258,7 +260,9 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				pc++
 				continue
 			}
-		case opBackrefFold:
+		case opBackrefFold, opBackrefUnits:
+			// A character at a time: to fold case, or because a group matched by code unit can begin or end between
+			// the halves of a character, where its bytes do not say what it holds.
 			from, to := caps[2*i.a], caps[2*i.a+1]
 			if from < 0 {
 				pc++
@@ -266,22 +270,22 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			}
 			at, ok := pos, true
 			for from < to && ok {
-				want, w := utf8.DecodeRune(in[from:to])
+				want, w := decode(in, from, units)
 				from += w
 				if at >= len(in) {
 					ok = false
 					break
 				}
-				got, w := utf8.DecodeRune(in[at:])
+				got, w := decode(in, at, units)
 				at += w
-				ok = got == want || canonicalize(got, i.flag) == canonicalize(want, i.flag)
+				ok = got == want || i.op == opBackrefFold && canonicalize(got, i.flag) == canonicalize(want, i.flag)
 			}
 			if ok {
 				pos = at
 				pc++
 				continue
 			}
-		case opBackrefFoldBack:
+		case opBackrefFoldBack, opBackrefUnitsBack:
 			from, to := caps[2*i.a], caps[2*i.a+1]
 			if from < 0 {
 				pc++
@@ -289,15 +293,15 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			}
 			at, ok := pos, true
 			for from < to && ok {
-				want, w := utf8.DecodeLastRune(in[from:to])
+				want, w := decodeLast(in, to, units)
 				to -= w
 				if at <= 0 {
 					ok = false
 					break
 				}
-				got, w := utf8.DecodeLastRune(in[:at])
+				got, w := decodeLast(in, at, units)
 				at -= w
-				ok = got == want || canonicalize(got, i.flag) == canonicalize(want, i.flag)
+				ok = got == want || i.op == opBackrefFoldBack && canonicalize(got, i.flag) == canonicalize(want, i.flag)
 			}
 			if ok {
 				pos = at
@@ -350,7 +354,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 						}
 						at++
 					} else {
-						r, w := utf8.DecodeRune(in[at:])
+						r, w := decode(in, at, units)
 						if !set.contains(r) {
 							break
 						}
@@ -365,7 +369,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				for n != i.max && at < len(in) {
 					r, w := rune(in[at]), 1
 					if r >= utf8.RuneSelf {
-						r, w = utf8.DecodeRune(in[at:])
+						r, w = decode(in, at, units)
 					}
 					if r != i.r {
 						break
@@ -388,7 +392,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 		case opRepLazy:
 			at, n := pos, int32(0)
 			for n < i.min {
-				w := i.one(in, at)
+				w := i.one(in, at, units)
 				if w == 0 {
 					break
 				}
@@ -456,7 +460,11 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				// and decoding the last of them going backward finds the same boundary.
 				w := 1
 				if in[e.pos-1] >= utf8.RuneSelf {
-					_, w = utf8.DecodeLastRune(in[e.a:e.pos])
+					if units {
+						_, w = unitBefore(in, e.pos)
+					} else {
+						_, w = utf8.DecodeLastRune(in[e.a:e.pos])
+					}
 				}
 				e.pos -= w
 				pc, pos = int(e.pc), e.pos
@@ -466,7 +474,7 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				break backtrack
 			case eRepLazy:
 				rep := &insts[e.pc]
-				w := rep.one(in, e.pos)
+				w := rep.one(in, e.pos, units)
 				if w == 0 {
 					stack = stack[:len(stack)-1]
 					continue
@@ -529,14 +537,14 @@ func (st *state) undo(e entry) {
 }
 
 // one returns the width of the character at the position at when the instruction's character or class matches it,
-// and 0 otherwise.
-func (i *inst) one(in []byte, at int) int {
+// and 0 otherwise. The character is a code unit with units set.
+func (i *inst) one(in []byte, at int, units bool) int {
 	if at >= len(in) {
 		return 0
 	}
 	r, w := rune(in[at]), 1
 	if r >= utf8.RuneSelf {
-		r, w = utf8.DecodeRune(in[at:])
+		r, w = decode(in, at, units)
 	}
 	if i.set != nil {
 		if !i.set.contains(r) {

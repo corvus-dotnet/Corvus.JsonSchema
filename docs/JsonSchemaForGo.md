@@ -184,6 +184,20 @@ fmt.Println(annotations[""]["title"]["#"])                      // "Person"
 fmt.Println(annotations["/name"]["title"]["#/properties/name"]) // "Name"
 ```
 
+## Patterns
+
+`pattern` and `patternProperties` have ECMA-262 semantics, and the answers are those of V8. A pattern is read with the
+grammar of the `u` flag and matched by Unicode code point. A pattern that grammar refuses is read with the Annex B
+grammar of a pattern with no flag, which many schemas need (`\-` outside a class, `\_`, a lone `{`). Such a pattern is
+matched by UTF-16 code unit, as ECMA-262 matches a pattern with no `u` flag. The two differ only for a string with a
+character beyond the Basic Multilingual Plane, which is two code units. `^.$` matches `"\ud801\udc00"` (the one
+character U+10400), and `^\-?.$` does not, because the dot takes one unit of the two. A pattern that neither
+grammar accepts is a `*CompileError`.
+
+A JSON string can name half of a surrogate pair with an escape, as in `"\ud800"`. That is not Unicode text, and a
+`Document` is UTF-8 and cannot hold it. `ParseDocument` returns a `*ParseError` for it, and `IsValidString` and
+`IsValidBytes` report it as not valid, whatever the schema. So a pattern is never matched against such a string.
+
 ## Performance
 
 Measured with [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark)'s 37 corpora, each

@@ -39,6 +39,10 @@ const (
 	opBackrefBack
 	opBackrefFold
 	opBackrefFoldBack
+	// opBackrefUnits and opBackrefUnitsBack compare a group a code unit at a time, for a pattern matched by code
+	// unit.
+	opBackrefUnits
+	opBackrefUnitsBack
 	// opLook opens a lookaround. opLookOK ends the body of a positive one and opLookFail the body of a negative one.
 	opLook
 	opLookOK
@@ -75,6 +79,8 @@ type program struct {
 	insts []inst
 	// groups is the number of capturing groups some backreference names, and loops the number of counted loops.
 	groups, loops int
+	// units says the pattern was read without the u flag, so the text is matched by UTF-16 code unit (see units.go).
+	units bool
 	// anchored says every match starts at the start of the text.
 	anchored bool
 	// prefix is literal text every match starts with.
@@ -115,7 +121,7 @@ func compileProgram(root *node, unicode bool) *program {
 	}
 	c.emit(root, false)
 	c.add(inst{op: opMatch})
-	p := &program{insts: c.insts, groups: len(c.tracked), loops: c.loops}
+	p := &program{insts: c.insts, groups: len(c.tracked), loops: c.loops, units: !unicode}
 	p.anchored = startsAtBOL(root)
 	if !p.anchored {
 		p.prefix = literalPrefix(root, nil)
@@ -264,8 +270,12 @@ func (c *compiler) emit(n *node, back bool) {
 			op = opBackrefFoldBack
 		case n.fold:
 			op = opBackrefFold
+		case back && !c.unicode:
+			op = opBackrefUnitsBack
 		case back:
 			op = opBackrefBack
+		case !c.unicode:
+			op = opBackrefUnits
 		}
 		// When several groups share the name, at most one has taken part, and the others match the empty string. So
 		// matching each in turn matches the one that took part.

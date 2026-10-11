@@ -3,8 +3,8 @@
 // (modifier groups and duplicate group names). The tests do not run it. They read its output.
 //
 // A pattern is read with the u flag when that is valid and with no flag otherwise, which is what Compile does. V8
-// matches UTF-16 code units for a pattern with no flag, and this package matches code points, so a pattern that is
-// only valid with no flag is not asked about texts that have a character beyond the Basic Multilingual Plane.
+// matches UTF-16 code units for a pattern with no flag, and so does this package, so every pattern is asked about
+// every text, the ones with a character beyond the Basic Multilingual Plane among them.
 //
 // V8 13.6 answers some case-insensitive modifier groups differently from the same pattern with the i flag, which the
 // specification does not allow. oracle_test.go lists those patterns and takes only their validity from here. The
@@ -276,8 +276,6 @@ function compile(p) {
   return { u, l };
 }
 
-const beyondBmp = (s) => /[\ud800-\udfff]/.test(s);
-
 // hexBits packs a string of 0s and 1s into hexadecimal digits, four to a digit, padded with 0s at the end.
 function hexBits(bits) {
   let out = "";
@@ -285,13 +283,12 @@ function hexBits(bits) {
   return out;
 }
 
-// matches returns one bit per text, packed by hexBits. The bit of a text the pattern is not asked about is 0, and the
-// test skips it by the same rule.
+// matches returns one bit per text, packed by hexBits.
 function matches(c, texts) {
   const re = c.u || c.l;
   let out = "";
   for (const s of texts) {
-    out += !c.u && beyondBmp(s) ? "0" : re.test(s) ? "1" : "0";
+    out += re.test(s) ? "1" : "0";
   }
   return hexBits(out);
 }
