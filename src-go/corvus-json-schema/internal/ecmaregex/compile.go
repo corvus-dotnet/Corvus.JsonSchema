@@ -584,6 +584,13 @@ func timesNeed(count, need int) int {
 // opens one goes straight to what follows it, so a body is counted by itself. An instruction that matches right to
 // left, which is the body of a lookbehind, counts nothing.
 func setNeeds(insts []inst) int {
+	need, _ := needs(insts)
+	return need
+}
+
+// needs is setNeeds, and also returns the number of passes over the instructions it made, the last of which changed
+// nothing.
+func needs(insts []inst) (programNeed, passes int) {
 	need := make([]int32, len(insts))
 	for pc := range need {
 		need[pc] = noMatch
@@ -592,6 +599,7 @@ func setNeeds(insts []inst) int {
 	// first settles all but the loops in one pass.
 	for changed := true; changed; {
 		changed = false
+		passes++
 		for pc := len(insts) - 1; pc >= 0; pc-- {
 			i := &insts[pc]
 			n := int32(noMatch)
@@ -611,7 +619,22 @@ func setNeeds(insts []inst) int {
 				next(int32(pc+1), int32(len(i.lit)))
 			case opRep, opRepLazy:
 				next(int32(pc+1), i.min)
-			case opJmp, opLook:
+			case opJmp:
+				// The one way that goes back is the jump at the end of the body of a loop, to the instruction at its
+				// head, which this pass has not reached. The need of that instruction is the need of what follows
+				// the loop, since its other way, through the body, comes back to it and cannot need less. So the
+				// jump takes what follows the loop, which this pass has settled. Taking the need of the head would
+				// settle one loop of a nest for each pass: a thousand passes for loops a thousand deep.
+				switch head := &insts[i.x]; {
+				case int(i.x) < pc && head.op == opLoop:
+					next(head.x, 0)
+				case int(i.x) < pc && head.op == opSplit:
+					next(head.x, 0)
+					next(head.y, 0)
+				default:
+					next(i.x, 0)
+				}
+			case opLook:
 				next(i.x, 0)
 			case opSplit:
 				next(i.x, 0)
@@ -638,7 +661,7 @@ func setNeeds(insts []inst) int {
 			insts[pc].need = need[pc]
 		}
 	}
-	return int(need[0])
+	return int(need[0]), passes
 }
 
 // A quick says what can come next on a way from an instruction to the end of its match, which is the end of the
@@ -699,12 +722,20 @@ func (q *quick) union(o quick) {
 // lookbehind) to allow anything. A positive lookahead needs both its body and what follows it to go on from the
 // same position, so it allows what both allow.
 func setQuick(insts []inst) []quick {
-	q := make([]quick, len(insts))
+	q, _ := quicks(insts)
+	return q
+}
+
+// quicks is setQuick, and also returns the number of passes over the instructions it made, the last of which changed
+// nothing.
+func quicks(insts []inst) (q []quick, passes int) {
+	q = make([]quick, len(insts))
 	all := quick{ascii: [2]uint64{^uint64(0), ^uint64(0)}, other: true, mid: true, end: true}
 	// The sets only grow, and nearly every way goes forward, so going through the instructions from the last to the
 	// first settles all but the loops in one pass.
 	for changed := true; changed; {
 		changed = false
+		passes++
 		for pc := len(insts) - 1; pc >= 0; pc-- {
 			i := &insts[pc]
 			var n quick
@@ -728,7 +759,18 @@ func setQuick(insts []inst) []quick {
 					n.union(q[pc+1])
 				}
 			case opJmp:
+				// The jump at the end of the body of a loop goes back to the head of the loop, which this pass has
+				// not reached. The head allows what follows the loop, which this pass has settled, and what the body
+				// starts with. So the jump takes what follows the loop too, and the first pass settles the head of
+				// every loop, the second every instruction, and the third finds nothing to change, however deep
+				// the loops nest.
 				n = q[i.x]
+				if head := &insts[i.x]; int(i.x) < pc && head.op == opLoop {
+					n.union(q[head.x])
+				} else if int(i.x) < pc && head.op == opSplit {
+					n.union(q[head.x])
+					n.union(q[head.y])
+				}
 			case opSplit:
 				n = q[i.x]
 				n.union(q[i.y])
@@ -755,7 +797,7 @@ func setQuick(insts []inst) []quick {
 			}
 		}
 	}
-	return q
+	return q, passes
 }
 
 // literalRune reports whether a code point can be matched by comparing its UTF-8 bytes. A surrogate has no encoding,

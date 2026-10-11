@@ -333,7 +333,7 @@ read past the limit, so the message says it is too large to read and nothing of 
 | `size` | 1,048,576 | Bytes counted as the pattern is read. 64 for each term (a character, a class, a group, an assertion, with its quantifier) and 32 for each further alternative. 8 for each range of a class as its members are read, for each range that case folding or a negated property builds, and for each enclosing alternative and each group of the same name that a named group is compared with. 1 for each character with a case variant in a class that is folded. |
 
 The syntax tree, the compiled program and the time to make them are proportional to the size. The largest pattern of
-each of 24 kinds that the limits admit compiled in under 80 ms and kept 3.7 MB at most, on a machine under load. A
+each of 24 kinds that the limits admit compiled in 110 ms at most and kept 4.7 MB, on a machine under load. A
 literal of 16,384 characters is the longest the size admits, and `\p{L}` can be written 16,384 times. The number of
 groups has no limit of its own, since each is a term. The `regex` format reads a string of the instance as a pattern
 with the same limits, and a string over one is not a valid regular expression to it.

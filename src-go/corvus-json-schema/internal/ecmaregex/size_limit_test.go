@@ -144,3 +144,29 @@ func TestAPatternOverALimitOfSizeIsTooLarge(t *testing.T) {
 		}
 	}
 }
+
+// TestTheNeedsSettleInFewPasses checks the number of passes over a program that work out its needs and what can
+// come next from each instruction. The jump at the end of the body of a loop goes back, so a pass that took what
+// the head of the loop had after the pass before settled one loop of a nest each time: 999 passes for loops 999
+// deep, which made that pattern the slowest of any at the limit of size to compile (174 ms). The needs take two
+// passes and the next characters three, whatever the depth.
+func TestTheNeedsSettleInFewPasses(t *testing.T) {
+	nest := func(open, body, close string, depth int) string {
+		return strings.Repeat(open, depth) + body + strings.Repeat(close, depth)
+	}
+	for _, pattern := range []string{
+		`abc`, `(?:a|b)*c`, `(?:a?b?)*c`, `(?:(?:a+)+b?)*`, nest("(?:", "a?b", "){2,3}", 999), nest("(?:", "a?b", ")*", 999), nest("(?:", "a?b?", ")*", 999),
+		nest("(?:", "a?b", ")+?", 999), nest("(?:x|", "a?b", ")*y?", 500), nest("(?:(?=", "a", ")b?)*", 400), nest("(?:", "a|b", "){0,5}?c", 999),
+	} {
+		root, _, err := parse(pattern, true)
+		if err != nil {
+			t.Fatalf("parse(%.30q): %v", pattern, err)
+		}
+		p := compileProgram(root, true)
+		_, needPasses := needs(p.insts)
+		_, quickPasses := quicks(p.insts)
+		if needPasses > 2 || quickPasses > 3 {
+			t.Errorf("%.30q (%d instructions): %d passes for the needs and %d for the next characters, want 2 and 3 at most", pattern, len(p.insts), needPasses, quickPasses)
+		}
+	}
+}
