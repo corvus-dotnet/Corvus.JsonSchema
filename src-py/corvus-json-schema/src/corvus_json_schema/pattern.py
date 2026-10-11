@@ -78,6 +78,9 @@ _MAX_COUNT = 2**31 - 1
 # The most text a translation may have. A repetition written without a count (see _Writer._repeat) multiplies out
 # when it is inside another, and a pattern that passes this is refused.
 _MAX_TRANSLATED = 65_536
+# The most nodes the tree of a pattern may have once its repetitions are written without the iterations that match
+# nothing (see _Plain). A pattern that would pass it is written as it is.
+_MAX_PLAIN = 20_000
 
 # Before CPython 3.11 the standard library's engine did not put back what a group held when it backtracked into a
 # repetition (bpo-35859), so a reference could read what a group took on a path the match had left.
@@ -240,6 +243,7 @@ class _Node:
         "group",
         "icase",
         "items",
+        "kept",
         "kind",
         "last",
         "lazy",
@@ -268,6 +272,8 @@ class _Node:
         self.min = 0
         self.max = 0  # -1: no maximum
         self.lazy = False
+        # _REPEAT, set by _Plain: the repetition is left as it is written.
+        self.kept = False
         # Whether the node can match without taking a character (None: not worked out yet).
         self.nothing: bool | None = None
         self.only_nothing: bool | None = None
@@ -351,9 +357,226 @@ def _taken(n: _Node, out: _Ranges) -> bool:
     return all(_taken(x, out) for x in n.items)
 
 
+class _Keep(Exception):
+    """A repetition is left as it is written (see ``_Plain``)."""
+
+
+class _Plain:
+    """Writes a pattern that no reference reads a group of without the iterations that match nothing.
+
+    ECMA-262 refuses an iteration that matches nothing once the minimum count is met, and leaves the repetition
+    there. Both engines accept the iteration and go on to what follows the repetition, and when that fails they
+    leave the repetition as ECMA-262 does and try what follows again. One repetition inside another does that at
+    each level, so a text that does not match takes a time that doubles with each repetition, where V8 answers at
+    once. ``(?:(?:(-|){3,})+|){3}-$`` took over a minute for a text of twelve characters.
+
+    Where no reference reads a group, a pattern only says which texts match, and which way a text matches does not
+    show. So a repetition ``X{m,n}`` whose body can match nothing is written with a body that cannot, ``Y{0,n}``,
+    where Y matches what X matches except nothing: the iterations that matched nothing are left out, and those up
+    to the minimum were free to. That holds when X matches nothing wherever it is tried, or when m is 0. A body
+    that matches nothing only where an assertion holds, under a minimum of 1 or more, is left as it is written, and
+    so is each repetition around it whose body can match nothing.
+
+    ``without`` gives Y for a node and ``nothing`` gives what the node is where it matches nothing (its
+    assertions), each None when there is no such match. Y for a sequence is an alternative for each item that can
+    be the first to take a character: the items before it as they are where they match nothing, the item with
+    what it takes, and the rest as written. A pattern whose tree would grow past ``_MAX_PLAIN`` nodes is left as it
+    is."""
+
+    def __init__(self) -> None:
+        self.nodes = 0
+
+    def copy(self, n: _Node, items: list[_Node] | None = None) -> _Node:
+        self.nodes += 1
+        if self.nodes > _MAX_PLAIN:
+            raise _TooLarge()
+        out = _Node(n.kind, n.text, [self.copy(x) for x in n.items] if items is None else items)
+        out.behind, out.negative, out.min, out.max, out.lazy = n.behind, n.negative, n.min, n.max, n.lazy
+        out.chars, out.others = n.chars, n.others
+        if n.kind == _TEXT:
+            out.nothing = n.nothing
+        elif n.kind == _REPEAT:
+            out.kept = n.kept
+        return out
+
+    def plain(self, n: _Node) -> _Node:
+        """The node with every repetition inside it written without the iterations that match nothing."""
+        k = n.kind
+        if k == _REFERENCE:
+            # No reference is read after its group has matched: each matches nothing.
+            return _Node(_SEQUENCE)
+        if k != _REPEAT:
+            return self.copy(n, [self.plain(x) for x in n.items])
+        if n.max == 0:
+            return _Node(_SEQUENCE)
+        body = self.plain(n.items[0])
+        out = self.copy(n, [body])
+        if not _matches_nothing(body):
+            return out
+        try:
+            rest, empty = self.without(body), self.nothing(body)
+        except _Keep:
+            out.kept = True
+            return out
+        if empty is None:
+            return out
+        if rest is None:
+            return empty if n.min else _Node(_SEQUENCE)
+        if n.min and not _is_nothing(empty):
+            out.kept = True
+            return out
+        out.items = [rest]
+        out.min = 0
+        if out.max >= _MAX_COUNT:
+            out.max = -1
+        return out
+
+    def without(self, n: _Node) -> _Node | None:
+        """What matches the texts the node matches other than the empty text, or None when it matches no other."""
+        k = n.kind
+        if k == _TEXT:
+            return self.copy(n) if n.nothing is False else None
+        if k == _LOOK:
+            return None
+        if k == _GROUP:
+            inner = self.without(n.items[0])
+            return None if inner is None else self.copy(n, [inner])
+        if k == _ALTERNATION:
+            return self.either([self.without(x) for x in n.items])
+        if k == _SEQUENCE:
+            ways: list[_Node | None] = []
+            before: list[_Node] = []
+            for i, x in enumerate(n.items):
+                first = self.without(x)
+                if first is not None:
+                    after = [self.copy(y) for y in n.items[i + 1 :]]
+                    ways.append(_Node(_SEQUENCE, items=[*[self.copy(b) for b in before], first, *after]))
+                empty = self.nothing(x)
+                if empty is None:
+                    break
+                before.append(empty)
+            return self.either(ways)
+        if n.kept:
+            raise _Keep()
+        # A repetition whose body takes a character.
+        if n.min:
+            return self.copy(n)
+        out = self.copy(n)
+        out.min = 1
+        return out
+
+    def nothing(self, n: _Node) -> _Node | None:
+        """What holds where the node matches the empty text (an empty sequence: it does anywhere), or None when it
+        never does."""
+        k = n.kind
+        if k == _TEXT:
+            return None if n.nothing is False else self.copy(n)
+        if k == _LOOK:
+            return self.copy(n)
+        if k == _GROUP:
+            return self.nothing(n.items[0])
+        if k == _ALTERNATION:
+            ways = [self.nothing(x) for x in n.items]
+            if any(w is not None and _is_nothing(w) for w in ways):
+                return _Node(_SEQUENCE)
+            return self.either(ways)
+        if k == _SEQUENCE:
+            items = []
+            for x in n.items:
+                empty = self.nothing(x)
+                if empty is None:
+                    return None
+                if not _is_nothing(empty):
+                    items.append(empty)
+            return _Node(_SEQUENCE, items=items)
+        if n.kept:
+            raise _Keep()
+        return _Node(_SEQUENCE) if n.min == 0 else None
+
+    @staticmethod
+    def either(ways: list[_Node | None]) -> _Node | None:
+        found = [w for w in ways if w is not None]
+        if len(found) < 2:
+            return found[0] if found else None
+        return _Node(_GROUP, items=[_Node(_ALTERNATION, items=found)])
+
+
+def _plain(root: _Node, writer: _Writer) -> _Node | None:
+    """The tree of a pattern without the iterations that match nothing (see ``_Plain``), or None when nothing is to
+    be written another way or the tree would be too large.
+
+    In a pattern where a reference reads a group, the same holds for a repetition that has no such reference and no
+    such group inside it: all that the rest of the pattern sees of it is where it ends, and it ends in the same
+    places. A repetition inside a lookaround with a group that is read outside it is left as it is, as the first
+    way through such a lookaround decides what the group holds."""
+    plain = _Plain()
+    if writer.live:
+        read = sorted(writer.groups[g].first for g in writer.read)
+        if not _plain_parts(root, writer, plain, read):
+            return None
+        # The tree is read again. A reference that is never read after its group has matched may have had its
+        # group inside a repetition that is now written another way, without groups.
+        _drop_empty_references(root)
+        return root
+    try:
+        return plain.plain(root)
+    except _TooLarge:
+        return None
+
+
+def _drop_empty_references(n: _Node) -> None:
+    if n.kind == _REFERENCE and n.state == _EMPTY:
+        n.kind = _SEQUENCE
+    for x in n.items:
+        _drop_empty_references(x)
+
+
+def _plain_parts(n: _Node, writer: _Writer, plain: _Plain, read: list[int]) -> bool:
+    changed = False
+    for i, x in enumerate(n.items):
+        if x.kind == _LOOK and x.first in writer.leaky:
+            continue
+        if (
+            x.kind == _REPEAT
+            and _repeats_inside_repeats(x)
+            and not writer._holds_one(writer.live, x)
+            and not writer._holds_one(read, x)
+        ):
+            try:
+                n.items[i] = plain.plain(x)
+                changed = True
+            except _TooLarge:
+                pass  # this one as it is written, and any other that would pass the limit
+        elif _plain_parts(x, writer, plain, read):
+            changed = True
+    return changed
+
+
+def _is_nothing(n: _Node) -> bool:
+    """Whether the node is an empty sequence: it matches the empty text anywhere, and nothing else."""
+    return n.kind == _SEQUENCE and not n.items
+
+
+def _repeats_inside_repeats(n: _Node, inside: bool = False) -> bool:
+    """Whether a repetition whose body can match nothing is inside a repetition or has one inside it."""
+    if n.kind == _REPEAT and n.max != 0:
+        if inside and _matches_nothing(n.items[0]):
+            return True
+        if _matches_nothing(n.items[0]) and _has_a_repeat(n.items[0]):
+            return True
+        inside = True
+    return any(_repeats_inside_repeats(x, inside) for x in n.items)
+
+
+def _has_a_repeat(n: _Node) -> bool:
+    return (n.kind == _REPEAT and n.max != 0) or any(_has_a_repeat(x) for x in n.items)
+
+
 class _Translator:
-    def __init__(self, pattern: str, unicode: bool, ascii_flag: bool) -> None:
+    def __init__(self, pattern: str, unicode: bool, ascii_flag: bool, plain: bool = True) -> None:
         self.p = pattern
+        # Whether repetitions inside repetitions are written without the iterations that match nothing (_Plain).
+        self.plain = plain
         # With the ASCII flag (the standard library's engine), \d, \w and \b are ECMA's; without it (the regex
         # package, whose ASCII flag would also narrow \p{...}), they are spelled out.
         self.ascii_flag = ascii_flag
@@ -403,8 +626,23 @@ class _Translator:
                 ref.icase = node.icase
                 node.items.append(ref)
         writer = _Writer(root, not self.ascii_flag, self.u)
-        self.needs_regex = self.needs_regex or writer.needs_regex
         self.wide = not self.u and _sees_code_units(root)
+        if self.plain and _repeats_inside_repeats(root):
+            plain = _plain(root, writer)
+            if plain is not None:
+                writer = _Writer(plain, not self.ascii_flag, self.u)
+                try:
+                    text = writer.write()
+                except _TooLarge:
+                    # Written that way it is too large. The tree has been changed, so the pattern is read again
+                    # and written as it is.
+                    again = _Translator(self.p, self.u, self.ascii_flag, plain=False)
+                    text = again.translate()
+                    self.needs_regex = again.needs_regex
+                    return text
+                self.needs_regex = self.needs_regex or writer.needs_regex
+                return text
+        self.needs_regex = self.needs_regex or writer.needs_regex
         return writer.write()
 
     def _count_groups(self) -> None:

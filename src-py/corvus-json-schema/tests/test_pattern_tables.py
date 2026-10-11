@@ -1120,3 +1120,120 @@ def test_the_reference_the_engine_has_to_see_is_at_the_left_of_a_repetition_in_a
     assert for_regex and "(?<=(?P=z)(?:(?P=z)(?:x){2,})*)" in text
     text, for_regex = translate("(.)?(?=(?:x{2,})*)\\1a") or ("", False)
     assert for_regex and "(?=(?:(?:x){2,}(?P=z))*(?P=z))" in text
+
+
+# A repetition whose body can match nothing, inside another repetition or with one inside it, in a pattern where no
+# reference reads a group. It is written without the iterations that match nothing.
+
+_REPETITIONS_INSIDE_REPETITIONS: list[tuple[str, str, str]] = [
+    ("(?:(?:(-|){3,})+|){3}-$", "AXD", "249249249249249249249249249249"),
+    (
+        "(?:\\-|)(?:((?:[ax]x\\1|\\2)?(-|\\2{2}){3,}){1,}|(?<n0>(ax){3,4}|\\4){0,0}?){3}-$",
+        "AXD",
+        "249249249249249249249249249249",
+    ),
+    ("^(?:(?:x{0}|()(?:(?:x+)?|(?:x+)?)+?){1,3})+$", "AXD", "1410000400000000000010000000000"),
+    ("^(?:(?:(?:()|())|(?:x|)+(?:()|()))+?|(?:(?:(?:))|(?:|)){2,}(?:xa)+)+$", "AXD", "1430002c000000000060b0000000000"),
+    ("^(?:(?:(?:\\2|(?:x|)+){2,}|(?:){2}(?:(x)+|(?!)){2}?){3})+$", "AXD", "1410000400000000000010000000000"),
+    ("^(?:(?:(?:x|)+|x*(?!a{0})|(?:(?:\\b)*$|\\1)?){2,})+$", "AXD", "1410000400000000000010000000000"),
+    ("(?:$-|((-??|\\b)*|){3,5}\\b|a??$)+$", "AXD", "1ffffffffffffffffffffffffffffff"),
+    ("(($(?:)|[^a]??|(a|))+?){2,}x$", "AXD", "492492492492492492492492492492"),
+    ("(((-?|){3,}(?:x|a)+){2,}|[^a]|\\2\\b){1,}(?:[ax]){2,}$", "AXD", "1b0d86c361b0d86c361b0d86c361b0"),
+    ("(?:((?:){2,3}?|a|$)+a|(|(|\\1a)+){2,}|(?=x)){4,}a", "AXD", "9e4fff93c9fffffffffe4f27ffc9e4"),
+    ("(?:a*|(x*?x||)*(?:[^a]|\\b(?!x)){3,}?){4,}?($|x\\B){1,}a$", "AXD", "20100804020100804020100804020"),
+    ("^(?:(?:(?:|(|a)){1}?|a*?){1,}?-?|(?=x)){1,}?a$", "AXD", "904820020904004100000004100104"),
+    ("(a((?:)(?:[ax]){4}){1}|(((?!$)|x)?(?:ax|-*?){3,}||){2,4}x){3,}?x", "AXD", "10000000000"),
+    ("^(?:(?:\\b|a)+|x)+$", "AXD", "db0d86c001b0d800361b0000000000"),
+    ("^(?:(?:\\b|a){2}|-)*$", "AXD", "1b45a28028b45005140000005140145"),
+    ("^(?:(?:\\b|a){2,}?-|x)*$", "AXD", "145821168004200160845a2c0000000"),
+    ("^(?:(?:(?=a)|a)*|x)*$", "AXD", "1db0d86c001b0d800361b0000000000"),
+    ("^(?:(?:$|a|-\\b){3}x?)+$", "AXD", "1904820020186006000000006180000"),
+    ("(?<=(?:(?:a|)*x|)+)-", "AXD", "24f2793ffe4f27ffc9e4ffffffffff"),
+    ("(?<=^(?:(?:a|\\b)+x?)*)-", "AXD", "24f2791ffe4f23ffc9e00fffffffff"),
+    ("^(?!(?:(?:a|)+|x)*$)", "AXD", "24f2793ffe4f27ffc9e4ffffffffff"),
+    ("^(?=(?:(?:a|)+|x)*-)", "AXD", "24f2793ffe4f27ffc9e4ffffffffff"),
+    ("(?:(?:a|){2,3}){2}$", "AXD", "1ffffffffffffffffffffffffffffff"),
+    ("^(?:(?:a?){2}x?){2,}$", "AXD", "1db0d86c001b0d800361b0000000000"),
+    ("^(?:a?x?-?)*$", "AXD", "1ffffffffffffffffffffffffffffff"),
+    ("^(?:(?:a*x*)*-?)+$", "AXD", "1ffffffffffffffffffffffffffffff"),
+    ("^(?:a*?(?:x|)+?)*?-$", "AXD", "248241200048240009048000000000"),
+    ("^(?:(?:a|x|)*-)*$", "AXD", "1249249249249249249249249249249"),
+    ("^(?:(?:a??x??)+?-??){2,3}?$", "AXD", "1fffffffffffffffffffffffffffff8"),
+    ("^(?:(?:a{0,2}){0,2}x){1,2}$", "AXD", "490482000090400010000000000000"),
+    ("^(?:(?:(?:a|)*){2}|-){3}$", "AXD", "1b45a28028b45004000000005000100"),
+    ("^(?:(?:a*)*)*x$", "AXD", "480400000080000000000000000000"),
+    ("^(?:(?:(?:a*)+)?|x)+-$", "AXD", "248241200048240009048000000000"),
+    ("^(?:(?:(?:a?){3}){2,}?x|-)*$", "AXD", "169b4c26d36984d801309b4da61369b"),
+    ("^(?:(?:^|a)*x)*$", "AXD", "1490482400090480012090000000000"),
+    ("^(?:(?:\\B|a)*(?:x|$))+$", "AXD", "1db0d86c001b0d800361b0000000000"),
+    ("(?:(?:a|){5}x|-)+$", "AXD", "6db6db6db6db6db6db6db6db6db6db"),
+    ("^(?:(?:(?:(?:(?:a|)*|x)*|-)*)*)*$", "AXD", "1ffffffffffffffffffffffffffffff"),
+    ("^(?:(?:[^]|){2}){2}$", "AXD", "1ffffffffffffffffffffffffffffff"),
+    ("^(?:(?:(?:a|x)?){2}-){2}$", "AXD", "1008049001009200201241209000"),
+]
+# The same in a pattern with a reference that reads a group: a repetition with no such reference and no such group
+# inside it is written that way, and the others are written as before.
+
+_REPETITIONS_BESIDE_A_REFERENCE: list[tuple[str, str, str]] = [
+    ("^(a)(?:(?:(?:x|)+|-)*)\\1$", "AXD", "100120000000120900000000000000"),
+    ("^(?:(a)|(?:(?:x|)*-?)+)+\\1$", "AXD", "17dbedf6fb7dbedf6fb7dbedf6fb7db"),
+    ("(a|x)(?:(?:-|)+)*\\1", "AXD", "110ea4ea21ff9d753a9ff9d7527510"),
+    ("^(?=((?:(?:|a)*)*))\\1x", "AXD", "4b85c7fc00b8ff803ffffff8000000"),
+    ("^(a)?(?:(?:x|\\b)*-?)+\\1$", "AXD", "171b1206c360012090001b0d800361b"),
+    ("^(?:(a|x)(?:(?:-|)*){2,}\\1)+$", "AXD", "110020080110000100110010000000"),
+    ("^(a*)(?:(?:x|)+|(-))*\\1\\2?$", "AXD", "171b1206c370012190001b0d800361b"),
+    ("^(?<n>a|)(?:(?:(?:x|){2}){2}-)*\\k<n>$", "AXD", "1309020241200020100009048001209"),
+    ("(?<=(a)(?:(?:x|)*)*)-\\1", "AXD", "20000004027000800000100000"),
+    ("^(?:(?:(a)|)*(?:(?:x|)+)*)*\\1-$", "AXD", "208240200048240009008000000000"),
+    ("^((?:(?:a|)*)*)x\\1$", "AXD", "400100000000000000000000000000"),
+    ("^(?:(?:(a)|)*)*x\\1$", "AXD", "400100000020000000000000000000"),
+    ("^(?:(?:(?:a|)+)+(x))+\\1$", "AXD", "10080400010080002010000000000"),
+]
+
+
+@pytest.mark.parametrize(
+    ("pattern", "texts", "answers"), _REPETITIONS_INSIDE_REPETITIONS + _REPETITIONS_BESIDE_A_REFERENCE
+)
+def test_a_repetition_is_written_without_the_iterations_that_match_nothing(
+    pattern: str, texts: str, answers: str
+) -> None:
+    _check(pattern, _words("ax-", 4), answers)
+
+
+def test_repetitions_inside_repetitions_are_written_with_bodies_that_take_a_character() -> None:
+    # Both engines try what follows a repetition again after an iteration that matched nothing, at each level.
+    # This one took the standard library's engine over a minute for a text of twelve characters.
+    assert translate("(?:(?:(-|){3,})+|){3}-$") == ("(?:(?:(?:\\-)+)+){0,3}\\-\\Z", False)
+    assert translate("^(?:(?:a|)*x?)*$") == ("^(?:(?:(?:a)+(?:x)?|(?:x){1}))*\\Z", False)
+    # A body that matches nothing only where an assertion holds: with no minimum the assertion is not needed.
+    assert translate("^(?:(?:\\b|a)*x)*$") == ("^(?:(?:a)*x)*\\Z", False)
+    # Under a minimum it is, and the repetition is left as it is written, with the one around it.
+    assert translate("^(?:(?:\\b|a){2}|-)*$") == ("^(?:(?:\\b|a){2}|\\-)*\\Z", False)
+    # One repetition by itself is left as it is written.
+    assert translate("^(?:a|)*$") == ("^(?:a|)*\\Z", False)
+    assert translate("^(?:a?x)+$") == ("^(?:(?:a)?x)+\\Z", False)
+    # An optional item is a repetition too.
+    assert translate("^(?:a?x?)+$") == ("^(?:(?:(?:a){1}(?:x)?|(?:x){1}))*\\Z", False)
+
+
+def test_a_pattern_that_would_be_too_large_without_them_is_written_as_it_is() -> None:
+    dot = "[^\\n\\r\\u2028\\u2029]"
+    # Past the size a translation may have.
+    assert translate("^(?:" + ".?" * 100 + ")*$") == ("^(?:" + f"(?:{dot})?" * 100 + ")*\\Z", False)
+    # Past the size the tree may have.
+    assert translate("^(?:" + "a?" * 200 + ")*$") == ("^(?:" + "(?:a)?" * 200 + ")*\\Z", False)
+    validate = cjs.compile({"pattern": "^(?:" + ".?" * 100 + ")*$"})
+    assert validate("abc") and not validate("a\nb")
+
+
+def test_a_repetition_beside_a_reference_is_written_that_way_when_nothing_in_it_is_read() -> None:
+    text, for_regex = translate("^(a)(?:(?:(?:x|)+|-)*)\\1$") or ("", False)
+    assert not for_regex and text == "^(?P<g1>a)(?:(?:(?:(?:x)+|\\-))*)(?P=g1)\\Z"
+    # The repetition holds the group that the reference reads: as before.
+    text, for_regex = translate("^(?:(?:(a)|)*)*x\\1$") or ("", False)
+    assert for_regex and "(?P<g1>a)|)" in text
+    # The group holds the repetition: where the repetition ends is all that the group shows of it.
+    assert translate("^((?:(?:a|)*)*)x\\1$") == ("^(?P<g1>(?:(?:a)+)*)x(?P=g1)\\Z", False)
+    # Inside a lookahead with a group that is read outside it, the first way through decides what the group holds.
+    text, for_regex = translate("^(?=((?:(?:|a)*)*))\\1x") or ("", False)
+    assert for_regex and "(?P<e1>" in text

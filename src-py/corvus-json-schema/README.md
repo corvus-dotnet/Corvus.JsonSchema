@@ -250,9 +250,18 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
     such a pattern is read without the `u` flag, where `\p` is the letter `p`. The characters of a property are the
     `regex` package's, so they follow its version of Unicode (16 in release 2025.9.1, 17 in 2026.9.29).
 
+  - A repetition whose body can match nothing, with a repetition inside it or around it, is written with a body
+    that cannot, where no reference reads a group of it: `^(?:(?:a|)*x?)*$` is written as `^(?:a+x?|x)*$` would be.
+    ECMA-262 refuses an iteration that matches nothing once the minimum count is met. Both engines accept it and try
+    what follows the repetition twice, at each level, so a text that does not match took a time that doubles with
+    each level. Without a reference that reads a group, a pattern only says which texts match, and the two
+    writings match the same texts.
+
   No valid pattern is refused for what it means, and none is answered with another meaning. Two limits remain:
-  - both engines backtrack, and neither has V8's short cuts, so a pattern of repetitions inside repetitions that can
-    match nothing may take far longer than it does in V8;
+  - both engines backtrack, and neither has V8's short cuts. Where a reference reads a group inside repetitions
+    that can match nothing, the pattern is written as ECMA-262 runs it, iteration by iteration, and may take far
+    longer than it does in V8. So may a count of millions in a pattern that the `regex` package runs, which takes
+    about 270 bytes for each count when it compiles: `(?<=a)b{2000000}` takes 536 MB;
   - a pattern whose translation would pass 65,536 characters raises `SchemaCompilationError`, as does a minimum
     count of 2,147,483,647 or more over something that can match nothing. The message says the pattern is valid and
     too large. That takes a count inside a count around a group that a backreference reads, as in

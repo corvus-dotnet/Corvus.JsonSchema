@@ -132,8 +132,10 @@ No valid pattern is refused for what it means, and none is run with another mean
   as in `^(?:(?:(a)|b){300}){300}\1$`, a count of more than 175 around a case-insensitive backreference inside a
   lookbehind (more than 1,284 around one outside a lookbehind), or a minimum count of 2,147,483,647 or more over
   something that can match nothing. The `regex` format still accepts such a pattern.
-- Both engines backtrack, and neither has V8's short cuts, so a pattern of repetitions inside repetitions that can
-  match nothing may take far longer than it does in V8.
+- Both engines backtrack, and neither has V8's short cuts. A repetition whose body can match nothing, inside
+  another repetition or around one, is written with a body that cannot wherever no reference reads a group of it,
+  so that a text that does not match is answered as quickly as in V8. Where a reference reads a group inside such
+  repetitions, the pattern is written as ECMA-262 runs it, and may take far longer than it does in V8.
 
 Where V8 itself departs from ECMA-262, the package follows ECMA-262. With the `u` flag V8 13.6 also starts a match
 between the two surrogates of a character, and with the `i` and `u` flags it compares a backreference to a group of
