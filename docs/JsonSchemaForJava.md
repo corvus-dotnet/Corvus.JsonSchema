@@ -87,6 +87,7 @@ boolean valid = validator.isValid(document);
 | `baseUri` | The base URI of the root document. |
 | `entryPoint` | A subschema to validate against, such as `#/$defs/item`. |
 | `maxDepth` | The deepest the evaluator recurses in place (default 128). |
+| `patternMatchLimit` | The longest one match of a `pattern` or `patternProperties` regular expression may take (default 1 second). `noPatternMatchLimit()` turns the limit off. See [Regular expressions](#regular-expressions). |
 
 ## Results and annotations
 
@@ -149,15 +150,15 @@ A JSON string cannot hold a surrogate that is not half of a pair. The parser ref
   classes of equivalent characters written into the translation. Which characters those are is found by asking the
   engine of the JVM the library runs on, once. Java 17 fails on a character beyond the Basic Multilingual Plane,
   Java 21 lacks the pairs that Unicode 15.1 and 16 added, and every JDK equates "i" with U+0130 and U+0131. So the
-  answers are the same on every JDK, and the text is not: `^(?i:(.)\1)$` is 1,370 characters on Java 25, 2,128 on
-  Java 21 and 5,729 on Java 17.
+  answers are the same on every JDK, and the text is not: `^(?i:(.)\1)$` is 1,370 characters on Java 25, 2,139 on
+  Java 21 and 5,751 on Java 17.
 
 
 The patterns are run by `java.util.regex`, after translation. A pattern that is valid with the `u` flag is run
-with the meaning ECMA-262 gives it. There is one exception, and there are limits of size. A pattern that falls under
-either is refused. Compiling a schema with it throws `SchemaCompilationException` with a message that starts
-"Unsupported regular expression" and names the reason. It is never run with another meaning. The `regex` format
-still accepts it, as it is a valid pattern.
+with the meaning ECMA-262 gives it. There is one exception, and there are limits: of size, and on the time of a
+match. A pattern that falls under the exception is refused. Compiling a schema with it throws
+`SchemaCompilationException` with a message that starts "Unsupported regular expression" and names the reason. It is
+never run with another meaning. The `regex` format still accepts it, as it is a valid pattern.
 
 **The exception is a group of a lookbehind that only matching backwards can tell.** ECMA-262 matches a lookbehind
 backwards, from its last term to its first, and `java.util.regex` matches forwards. The library writes a lookbehind
@@ -172,54 +173,154 @@ body of fixed length that stands first, such as `(?<=([abc])+)x\1`. Any other is
 
 A lookbehind none of whose groups is read is not affected, whatever its body.
 
-**The limits of size.** A pattern is refused when its translation would be too large. The limits are far beyond
-what a pattern of ordinary size comes to. None of the 98,839 patterns of the
-[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) reaches one, on
-Java 17, 21 or 25.
+**The limit on a match.** A schema and an instance that come from outside can make a backtracking engine run for
+as long as they like: `^(?:(a+)\1*)+$` takes time that doubles with each "a" of a string that ends in "b". So one
+match of a `pattern` or `patternProperties` regular expression against one string is limited to 1 second, unless the
+options say otherwise.
 
-- "a pattern with this many ways through the groups it reads". A pattern with a backreference that
-  `java.util.regex` would read wrongly is written once for each way through the choices that decide what the groups
-  it reads hold. The ways through one part of the pattern are written as a tree, so what they start with is written
-  once. There may be 65,536 ways through one part, 16,777,216 characters of translation, 134,217,728 characters
-  written on the way to it, and 200 iterations of a lookahead written one by one. Sixteen groups that may each be
-  set or not, all of them read, are 65,536 ways, and are written: `(?:(a)?(b)?...(p)?\1\2...\16)*` comes to 5.3
-  million characters. Seventeen such groups are refused, and so are sixteen that are each read three times, which
-  come to more text than that. A lookahead whose group is read after it, over a counted repetition, is written once
-  for each iteration: `(?=((?:a|){0,200}?)a)\1a$` comes to 4,216 characters, and a count of 201 is refused. The smallest pattern found that writes too much on the way is
-  `.*(?:(?=((?:(a|))*(?:(a)|(b)|){3,16}?\b))(?:\3)*?\1a$)*\2`: a lookahead with two repetitions whose groups are
-  read, inside a repetition, with a reference to it inside another. With a count of 15 it is written, in 376,889
-  characters;
-- "a repetition this long of a body that can match the empty string". A repetition that must run two or more times,
-  over a body that matches the empty string in some places only and has more than one way to match, is written
-  with a copy of the body for each iteration, and there may be 200 copies: `(^|x){200}` is written and `(^|x){201}`
-  is refused. A body with one way to match is not copied, so `^(?i:(.)\1{5})$` and any other count over a
-  backreference are written;
-- "a pattern too large for java.util.regex to compile": more than `java.util.regex` compiles on the stack of the
-  thread, which is some thousands of groups on a stack of 1 MB.
+```java
+CompileOptions options = CompileOptions.builder()
+        .patternMatchLimit(Duration.ofMillis(100)) // or .noPatternMatchLimit()
+        .build();
+Validator validator = Validator.compile(schema, options);
+try {
+    validator.isValid(instance);
+} catch (PatternMatchLimitException e) {
+    // Neither valid nor invalid. e.pattern(), e.limit() and e.isStackLimit() say what happened.
+}
+```
+
+A match that goes over the limit is abandoned, and the method that was validating throws
+`PatternMatchLimitException`. That is so for `isValid`, `validate` and `evaluate`, for compiled code and for the
+interpreter, and whether results are collected or not. None of them answers `false` for it. The validator is as it
+was, and answers the next instance. `noPatternMatchLimit()` turns the limit off, for a caller that trusts both the
+schema and the instances.
+
+`java.util.regex` has no limit of its own, so the library counts what the engine does to the string: each character
+it reads, and each time it asks for the length, which it does at every lookahead, word boundary and end anchor. The
+clock is read once every 4,096 of those for a translation of up to 1,024 characters, and more often for a longer
+one. So a match ends a little after the limit and not at it, and a match that reads the string fewer times than that
+reads no clock at all. Where the engine could go on for long without reading, as in a choice between two ways to
+match nothing at the end of the string, the translation holds an empty lookahead, which is counted. Nothing is
+allocated for the limit. The matchers the library has for the common shapes of pattern use no regular expression
+engine, read a string a bounded number of times, and have no limit.
+
+`java.util.regex` matches by recursion, and a repetition of a group takes a level or more of the stack for each
+iteration. A match that runs out of stack throws the same `PatternMatchLimitException`, with `isStackLimit()` true,
+and not a `StackOverflowError`. The library writes the common forms so that they do not recurse. Alternatives that
+are each one character, as in `^(a|b)*$`, are one class. A repetition whose body has one way to match, and that what
+follows cannot start inside, as in `^"(?:[^"\\]|\\.)*"$` and `^[a-z]+(?:\.[a-z]+)*@`, is written possessive. Any
+other repetition of a group of alternatives or of varying length, such as `^(?:\w+\s?)*$`, still recurses, and on a
+thread with a stack of 1 MB runs out after some thousands of iterations.
+
+**The limits of size.** A pattern that comes from outside must not take long to compile or keep much memory. So a
+pattern has limits of size. One over a limit is refused when the schema is compiled, with
+`PatternTooLargeException`. That is a `SchemaCompilationException`, so code that catches the one catches the other.
+Its message names the limit and its value. It says "It is a valid ECMA-262 regular expression, and is too large",
+or, for a limit that is met before the pattern is read to its end, "It is too large to be read", and then that
+whether it is valid is not known. It never says the pattern is invalid. The limits are fixed, and none is an option.
+
+| Limit | Value | The message ends |
+|---|---|---|
+| Characters of the pattern | 1,048,576 | it has more than 1,048,576 characters |
+| Groups, one inside another | 200 | its groups are nested more than 200 deep |
+| Capturing groups | 32,768 | it has more than 32,768 capturing groups |
+| Ranges of characters in its classes | 524,288 | its classes hold more than 524,288 ranges of characters |
+| Characters of the translation | 1,048,576 | what is written for java.util.regex to run it is more than 1,048,576 characters |
+| Ways through one part of the pattern | 8,192 | it is written once for each way through the groups its backreferences read, and one part of it has more than 8,192 ways |
+| Characters written on the way to the translation | 16,777,216 | writing it for java.util.regex takes more than 16,777,216 characters of text |
+| Copies of the body of a repetition | 200 | it needs more than 200 copies of the body of a repetition |
+| Groups times parts, for a pattern written by its ways | 268,435,456 | the number of its groups times the number of its parts is more than 268,435,456 |
+| What `java.util.regex` compiles | the stack of the thread | java.util.regex needs more of the thread's stack to compile it than there is |
+
+The first four are read off the pattern. The others are about what the library writes for `java.util.regex`:
+
+- A pattern with a backreference that `java.util.regex` would read wrongly is written once for each way through
+  the choices that decide what the groups it reads hold. Thirteen groups that may each be set or not, all of them
+  read, are 8,192 ways: `(?:(a)?(b)?...(m)?\1\2...\13)*` is written, in 499,547 characters. Fourteen are refused.
+- A repetition that must run two or more times, over a body that matches the empty string in some places only and
+  has more than one way to match, is written with a copy of the body for each iteration: `(^|x){200}` is written
+  and `(^|x){201}` is refused. So is a lookahead whose group is read after it, over a counted repetition whose body
+  has a group that can be empty: `(?=((?:a|(?:)){0,200}?)a)\1a$` is written and a count of 201 is refused.
+- The limit on the translation counts the same length on every JDK. Two things are written with what the engine
+  of the JVM knows, and are shorter on a later JDK: the comparison of a case-insensitive backreference, and the
+  class of a property the engine has a class for, with what corrects it. The limits are applied to the translation
+  for Java 17, which is the longest, and the pattern is then translated for the engine that runs it. So a pattern
+  is refused on every JDK or on none. `\p{L}` counts 3,103 characters, and is 3,079 on Java 17, 1,472 on Java 21
+  and 771 on Java 25: 300 of them in one pattern are accepted and 400 are refused.
+- The compiler of `java.util.regex` recurses along a pattern. On a stack of 1 MB it compiled 4,096 classes in a
+  row and not 16,384, which are refused as too large. This limit is the one that depends on where the library is
+  called: the stack size of the thread, and how deep the caller already is.
+
+A pattern of a few hundred characters meets a limit only where what is written for it multiplies. Of the 98,839
+patterns of the [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data),
+four are over a limit, the same ones on Java 17, 21 and 25: two would be written in more than 1,048,576
+characters and two take more than 16,777,216 on the way. Each has a lookahead with several repetitions whose groups
+are read after it, inside a repetition.
 
 The translator keeps one more reason, "a backreference to a group of a lookaround, in a repetition that can go back
 to before the backreference", for a reference it could not give a run of the lookaround of its own. No pattern is
 known that it refuses: none of 215,803 generated patterns does.
 
-**Slow patterns.** The library sets no time limit on a match. A pattern that is deliberately hard, with nested
-repetitions over groups that are read, can be slow: the translation finds some places by search, and
-`java.util.regex` matches by backtracking, where V8 answers in milliseconds.
+**What the limits were measured against.** A probe of 287 adversarial cases, each a pattern of at most
+1,000 characters against a string of at most 100,000 (and eight larger shapes), run each in a JVM of its own: nested
+repetitions of what can match nothing, backreferences inside nested loops, counts inside counts, deep nesting, long
+alternations, lookbehinds over a long string, case-insensitive backreferences to wide groups, large property
+classes, choices that read no character, and repetitions that recurse. Before the limits, with a heap of 1 GB,
+93 of them had not answered after 20 seconds, 64 threw `StackOverflowError`, and one took
+the whole heap while the schema was compiled. With the limits, on Java 21, with a heap of 256 MB, on a machine with a
+load of 14 to 17 from other work:
 
-Of the 98,839 patterns of the test data, ten do not answer for all their texts within five seconds on one JDK or
-another, with four of them running at once. Each nests repetitions whose bodies can match nothing around groups
-that are read, or holds a lookbehind that is searched for. Run alone on Java 21, each gives V8's answers. The time
-is for all the texts of the pattern (between 50 and 160 of them), with the start of the JVM and the translation:
+| | Compiled | Interpreter |
+|---|---|---|
+| Cases that end in an answer | 122 | 122 |
+| Cases that end in `PatternMatchLimitException` | 144 | 144 |
+| Cases refused as too large when the schema is compiled | 19 | 19 |
+| Cases refused for another reason (not valid, or the lookbehind exception) | 2 | 2 |
+| Longest translation of a pattern, and compilation by `java.util.regex` | 645 ms, 25 ms | 784 ms, 37 ms |
+| Longest match, which is the limit and what it overran by | 1,048 ms | 1,054 ms |
+| Most memory the process held | 264 MB | 263 MB |
 
-- 1.7 s, `lookarounds`: `^(?:b?(?=(?:((?:.|b[ab]))?\1){1,2}(?:a{2}(?:c(b)){1,2})?(?:(?:c(c))?((?:c|.[^a]))*|((?:[bc]|ba))??))(?:b\2|[ab][bc]\1)a{2,}(?<=\3.?)\4c){2}\2`
-- 4.7 s, `empty-loops`: `(?:(?:(?<=$|(|a)\b)(|-)?|.x){4,}?\1){2,}a`
-- 15.2 s, `backreferences`: `^(x){0}\1(?<n0>(\3{2}){0,2}\2(?:(?!$)(\k<n0>\1)?){3,}|(?:(?<n1>(?<=x)[^a])|(?<n1>\6+?)){2,}(?:(?<n2>\2(?:(?<n3>a(x)*)|(?<n3>\7?a)){3,}?\3{2})|(?<n2>[^a]-))+|(?:(?:x){2,4}|\11*){1,3}\11{2}x){3,}?x$`
-- 16.1 s, `backreferences`: `^(.|.)*?(?<n0>(-??){3,5}\3(?:(?<n1>x\4*x|(?<!a)){0,2}\3a?){2,}?|a()){2,3}\k<n1>x$`
-- 18.9 s, `engine-faults`: `^(?=((?:(?:(|a)(?:(?:(?:(a|)){1,3}?(?:.?)??))*?(?:.?)+))*[ax]))\1$`
-- 20.0 s, `lookarounds`: `(?:(?:(?<=$|(|a)\b)(|-)?|.x){4,}?\1){2,}a`
-- 24.5 s, `empty-loops`: `((?!\Bx??|)-??|-(?:a|(?:a*|[ax]){2,}?){2}|(.(?<!a)|\B|($){3,}(\B|(?!$)){2,}?){4,}a*?){4}x`
-- 30.6 s, `case-folding` with the `i` flag: `^S|^((?:(?!.[\w\u017f\u212a\u0130]|\u{10400})(..\u01c6)*?(?<n0>\2?.|-\k<n0>+\u1fd3)??)*)+(?:\u01c5.)+?$`
-- 62.2 s, `empty-loops`: `^(?:((?!|-$)|(?=).|(?<=[^a])){2}){0}(?:\1|(?:(?<!^)(?:[^a]*\b|[^a]){2,3}|[^a]){3,4}(?:(|)|)*){3}a$`
-- 289.5 s, `backreferences`: `^((?<n0>\k<n0>?|(?:\1?(|a)\k<n0>|()(x)*){0,2}){1,2}?((?:a){0,0}?^x{1,2})?|(a|)){1,}?\4\3-$`
+No case ran longer, threw anything else, or ran out of memory.
+
+**What is not bounded.**
+
+- **The stack.** `java.util.regex` recurses to compile a pattern and to match it, and has no limit of depth but the
+  stack of the thread. The library does not make that impossible. It makes the outcome one of its two errors:
+  `PatternTooLargeException` when the schema is compiled, `PatternMatchLimitException` when an instance is
+  validated. How long a string a recursing pattern takes depends on the stack size of the thread (`-Xss`, or the
+  size given to the `Thread`).
+- **The memory of a match.** The limit bounds the time of a match and not what it keeps. `java.util.regex` keeps
+  its state on the stack, and for some repetitions the places they failed at, one number for each place of the
+  string. In the probe no process held more than the figure above.
+- **What a compiled pattern keeps.** `java.util.regex` keeps between 2 and 28 bytes for each character of a
+  translation: 2 MB for 1,048,576 characters of literal text, and 30 MB for 116,508 repetitions of a small group in
+  as many characters. So the limit on the translation holds a pattern to tens of megabytes and not to a few.
+  Compiled patterns are also kept, by pattern text, for the life of the process, so a process that compiles schemas
+  from outside without end keeps every pattern it has seen.
+- **The start of a match.** The clock is first read after the first 4,096 reads (fewer for a long translation),
+  and the limit runs from there.
+- **The formats.** The library's own regular expressions for `format` are not under the limit.
+
+**Slow patterns.** `java.util.regex` matches by backtracking, and the translation finds some places by search, so
+a pattern that is deliberately hard can take a second where V8 answers in milliseconds. Of the 98,839 patterns of the
+test data, seven go over the limit of 1 second for some of their texts, on every JDK and in both modes.
+Each nests repetitions whose bodies can match nothing around groups that are read, or holds a lookbehind that is
+searched for, and each gave V8's answers when it was run with no limit:
+
+- `^((?:a|(?<n0>\k<n0>+?|(|a)){2,}\1\3{2}){0,}){0,}?\1\k<n0>$` (`backreferences`)
+- `^(?=((?:(?:(|a)(?:(?:(?:(a|)){1,3}?(?:.?)??))*?(?:.?)+))*[ax]))\1$` (`engine-faults`)
+- `((?!\Bx??|)-??|-(?:a|(?:a*|[ax]){2,}?){2}|(.(?<!a)|\B|($){3,}(\B|(?!$)){2,}?){4,}a*?){4}x` (`empty-loops`)
+- `^((?<n0>\k<n0>?|(?:\1?(|a)\k<n0>|()(x)*){0,2}){1,2}?((?:a){0,0}?^x{1,2})?|(a|)){1,}?\4\3-$` (`backreferences`)
+- `^S|^((?:(?!.[\w\u017f\u212a\u0130]|\u{10400})(..ǆ)*?(?<n0>\2?.|-\k<n0>+\u1fd3)??)*)+(?:\u01c5.)+?$` (`case-folding`)
+- `^(?:((?!|-$)|(?=).|(?<=[^a])){2}){0}(?:\1|(?:(?<!^)(?:[^a]*\b|[^a]){2,3}|[^a]){3,4}(?:(|)|)*){3}a$` (`empty-loops`)
+- `^(x){0}\1(?<n0>(\3{2}){0,2}\2(?:(?!$)(\k<n0>\1)?){3,}|(?:(?<n1>(?<=x)[^a])|(?<n1>\6+?)){2,}(?:(?<n2>\2(?:(?<n3>a(x)*)|(?<n3>\7?a)){3,}?\3{2})|(?<n2>[^a]-))+|(?:(?:x){2,4}|\11*){1,3}\11{2}x){3,}?x$` (`backreferences`)
+
+2 more went over the limit in some of the four runs and not in others, on a busy machine, as a time
+limit will have it. Earlier versions of this page listed ten slow patterns. One of them, which is in two of the
+files, is now fast, and so is `^(?:(?:a|)*?x)*?$`, which read a string of 41 characters nine million times: a
+repetition that can run no times is written without the empty alternatives of its body, which ECMA-262 never takes
+there. Another of the ten is now over a limit of size.
 
 ## Performance
 
