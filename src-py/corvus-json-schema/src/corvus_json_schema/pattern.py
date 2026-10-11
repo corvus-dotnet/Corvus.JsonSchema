@@ -1228,7 +1228,10 @@ class _Writer:
             # A reference to a name that two groups have is two references, which the count is for together.
             if body.kind == _SEQUENCE or not text.startswith("("):
                 text = f"(?:{text})"
-            return text + self._count(lo, hi, n.lazy) + self.seen
+            counted = text + self._count(lo, hi, n.lazy)
+            # What the engine matches after the repetition is at its left in a lookbehind, which it matches
+            # backwards, and the reference it has to see is there.
+            return self.seen + counted if n.back else counted + self.seen
         # The groups inside that a reference may read without their having matched lose their values at the start
         # of each iteration (at its right, in a lookbehind).
         inside = [g for g in sorted(self.reset) if n.first < self.groups[g].first < n.last]
@@ -1250,7 +1253,8 @@ class _Writer:
             raise _TooLarge()
         out = one * lo
         if hi == -1:
-            rest = f"(?:{self.seen}{more}{self.seen})*{'?' if n.lazy else ''}{self.seen}"
+            rest = f"(?:{self.seen}{more}{self.seen})*{'?' if n.lazy else ''}"
+            rest = self.seen + rest if n.back else rest + self.seen
         else:
             rest = ""
             for _ in range(hi - lo):

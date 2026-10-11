@@ -1088,3 +1088,35 @@ def test_where_v8_departs_from_ecma_262_in_the_names_it_takes() -> None:
         assert translate(f"\\p{{{name}}}") is not None, name
         assert not any(cjs.compile({"pattern": f"\\p{{{name}}}"})(text) for text in _NAME_TEXTS), name
         assert cjs.compile({"pattern": f"^\\P{{{name}}}$"})("\u30ab"), name
+
+
+# A repetition in a lookbehind, with a reference at its left to a group that may not have matched. The regex package
+# remembers where what follows a repetition has failed, and in a lookbehind what follows is at the left.
+
+_REPETITIONS_IN_A_LOOKBEHIND: list[tuple[str, str, str]] = [
+    ("(.)?(?<=(?=\\1\\b)(?:[^a]{2,})*)\\1xa", "AXD", "2000700400000083fe20100038020"),
+    ("(.)?(?<=(?=\\1\\b)(?:[^a]{2,}[ax]?)*?(a)?)\\1xa", "AXD", "20107004000e0083fe20100838020"),
+    ("(.)?(?<=(?=\\1\\b)(?:[^a]{2,5})*)\\1xa", "AXD", "2000700400000083fe20100038020"),
+    ("(.)?(?<=(?=\\1\\b)(?:[^a][^a]+)*)\\1xa", "AXD", "2000700400000083fe20100038020"),
+    ("(a|x)?(?<=(?=\\1\\b)(?:[ax]{2,})+)\\1-", "AXD", "24120004f278009e4f001209000"),
+    ("(.)?(?<=(?=\\1\\b)(?:x+a?)*)\\1xa", "AXD", "2000780400000083ffe010003c020"),
+    ("(.)?(?<=(?=\\1\\b)(?:xx)*)\\1xa", "AXD", "2000700400000083fe20100038020"),
+    ("(.)?(?<=(?=\\1\\b(x?){3})([^a]{2,}[ax]?|\\3*)+?(a)?)\\1xa", "AXD", "20107004000e0083fe20100838020"),
+    ("(.)?(?<=(?=\\1$|\\1\\b)(?:.{2,})*)\\1a", "AXD", "9c4ffc9389fffffffc9e4f27fe49c4"),
+    ("(.)?(?<=^\\1?(?:x{2,})*)\\1xa", "AXD", "2000700002000003fe20000000020"),
+    ("(?:(a)|x)(?<=(?=\\1?x)(?:x{2,})*)\\1x", "AXD", "10480e020b81c04121ff082407010"),
+]
+
+
+@pytest.mark.parametrize(("pattern", "texts", "answers"), _REPETITIONS_IN_A_LOOKBEHIND)
+def test_a_repetition_in_a_lookbehind_is_tried_again_when_a_group_has_another_value(
+    pattern: str, texts: str, answers: str
+) -> None:
+    _check(pattern, _words("ax-", 4), answers)
+
+
+def test_the_reference_the_engine_has_to_see_is_at_the_left_of_a_repetition_in_a_lookbehind() -> None:
+    text, for_regex = translate("(.)?(?<=(?:x{2,})*)\\1a") or ("", False)
+    assert for_regex and "(?<=(?P=z)(?:(?P=z)(?:x){2,})*)" in text
+    text, for_regex = translate("(.)?(?=(?:x{2,})*)\\1a") or ("", False)
+    assert for_regex and "(?=(?:(?:x){2,}(?P=z))*(?P=z))" in text
