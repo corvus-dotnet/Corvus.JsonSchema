@@ -808,8 +808,12 @@ func (p *parser) characterEscape(inClass bool) rune {
 		return p.legacyOctal()
 	}
 	// Identity escapes. The u flag allows only the syntax characters and '/', and '-' in a class. Annex B allows
-	// any character.
+	// any character, except k in a pattern with a named group. Outside a class atomEscape reads \k before this is
+	// reached, so here the \k of such a pattern is in a class, where it is not a reference either.
 	if p.unicode && !syntaxCharacter(c) && !(inClass && c == '-') {
+		p.fail("invalid escape")
+	}
+	if c == 'k' && p.hasNames {
 		p.fail("invalid escape")
 	}
 	return c

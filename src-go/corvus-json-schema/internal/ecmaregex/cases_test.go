@@ -9,12 +9,14 @@ import (
 )
 
 // A v8Case is one pattern of testdata/v8_cases.json with what V8 says of it: whether it is valid with the u flag and
-// with no flag, and whether it matches each text. testdata/gen_cases.js writes the file.
+// with no flag, and whether it matches each text. testdata/gen_cases.js writes the file. Where V8 departs from
+// ECMA-262 the answers are ECMA-262's, and Ecma262 names the departure.
 type v8Case struct {
-	P     string `json:"p"`
-	U     bool   `json:"u"`
-	L     bool   `json:"l"`
-	Tests []struct {
+	P       string `json:"p"`
+	U       bool   `json:"u"`
+	L       bool   `json:"l"`
+	Ecma262 string `json:"ecma262"`
+	Tests   []struct {
 		T    string `json:"t"`
 		Want bool   `json:"want"`
 	} `json:"tests"`
@@ -26,6 +28,8 @@ type v8Cases struct {
 	Loops []v8Case `json:"loops"`
 	Fast  []v8Case `json:"fast"`
 	Needs []v8Case `json:"needs"`
+	// The four sets of what is a pattern.
+	ClassK []v8Case `json:"classK"`
 }
 
 func loadCases(t *testing.T) *v8Cases {
@@ -91,6 +95,34 @@ func TestCodeUnits(t *testing.T) {
 	t.Logf("%d patterns (%d valid only with no flag, %d not valid), %d answers per back end (%d of them a match), from Node %s",
 		len(c.Units), legacy, invalid, answers, matched, c.Node)
 	if legacy < 90 || invalid < 3 || matched < 500 {
+		t.Errorf("the cases are not the ones this test is about")
+	}
+}
+
+// checkSyntax checks one of the sets of what is a pattern: which patterns are valid, in each grammar, and what the
+// valid ones match. The expectations are V8's, and ECMA-262's where V8 13.6 departs from it, which gen_cases.js
+// works out and marks. It returns the number of patterns that are not valid, and the number marked for each
+// departure.
+func checkSyntax(t *testing.T, cases []v8Case) (invalid int, departures map[string]int) {
+	t.Helper()
+	answers, matched, legacy, invalid := checkCases(t, cases, 10*time.Second)
+	departures = map[string]int{}
+	for _, c := range cases {
+		if c.Ecma262 != "" {
+			departures[c.Ecma262]++
+		}
+	}
+	t.Logf("%d patterns (%d valid only with no flag, %d not valid), %d answers per back end (%d of them a match), %v where V8 departs from ECMA-262",
+		len(cases), legacy, invalid, answers, matched, departures)
+	return invalid, departures
+}
+
+// TestEscapedKInAClass checks \k in a class. In a pattern with no named group and no u flag it is the letter k. In a
+// pattern with a named group it is an error, in a class as outside one: the identity escapes of Annex B leave k out
+// when the pattern has a group name, and \k is a reference only outside a class.
+func TestEscapedKInAClass(t *testing.T) {
+	c := loadCases(t)
+	if invalid, _ := checkSyntax(t, c.ClassK); len(c.ClassK) < 30 || invalid < 9 {
 		t.Errorf("the cases are not the ones this test is about")
 	}
 }

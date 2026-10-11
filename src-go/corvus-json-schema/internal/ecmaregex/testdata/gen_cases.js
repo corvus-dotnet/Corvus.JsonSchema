@@ -1,6 +1,6 @@
-// Writes v8_cases.json, the expectations of the tests of matching by UTF-16 code unit and of repetitions that cannot
-// consume a character (cases_test.go here, pattern_test.go of the module, and TestEcmaRegex.pas of the Object Pascal
-// port). Run it with "node gen_cases.js > v8_cases.json". It needs Node 24 or later. The tests do not run it. They
+// Writes v8_cases.json, the expectations of the tests of matching by UTF-16 code unit, of repetitions that cannot
+// consume a character and of what is a pattern (cases_test.go here, pattern_test.go of the module, and
+// TestEcmaRegex.pas of the Object Pascal port). Run it with "node gen_cases.js > v8_cases.json". It needs Node 24 or later. The tests do not run it. They
 // read its output.
 //
 // A pattern is read with the u flag when that is valid and with no flag otherwise, which is what Compile does. Each
@@ -14,6 +14,10 @@
 //   - needs: counted loops whose iterations can be empty, before a rest of the pattern that needs more text than is
 //     left. The first three do not finish unless the matcher gives up at such a loop, as V8 does. The others have
 //     such loops inside and around lookaheads and lookbehinds, where a wrong count of what is left would show.
+//   - classK: \k in a class, which is the letter k only in a pattern with no named group and no u flag.
+//
+// The answers are V8's, except in the places where V8 13.6 departs from ECMA-262. There a case has ECMA-262's
+// answer, and "ecma262" names the departure (see departure below).
 'use strict';
 const A = "\u{10400}", B = "\u{10428}", E = "\u{1F600}";
 function ask(p, texts) {
@@ -86,11 +90,54 @@ const needsPatterns = [
   "(?<=(?=(?:x|){3}a)(?:a|x|){2})a$", "^(?:(?:a|){2}){2}$", "^(?:(?:a|){2,}?x){2}$", "(?:a|){3}(?<=^(?:a|){3})xx", "(?:(?:x|){2}(?!(?:a|){2}-)){2}a$",
   "^(?:(?:a|x|-|){3}){3}(?<=(?:a|){2}x)-", "(?:(?:a|){2}\\b){2}x-", "^(?:(?:(a)|){2}\\1){2}x$",
 ];
+const syntaxTexts = ["", "a", "k", "kk", "aa", "aaa", "ak", "<a>", "x", "ax", "ab", "b", "-", "z", "p{WSpace}", " ", "\u00a0", "\u3042", "\u30ab", "\u30fc",
+  "\u3042a", "p{sc=Hrkt}", "P{sc=Hrkt}", A, "aaaaaaaaaaaa"];
+// \k in a class. It is the letter k only in a pattern with no named group and no u flag.
+const classKPatterns = [
+  "[\\k]", "^[\\k]+$", "^[\\k<a>]+$", "[^\\k]", "(a)[\\k]", "(?:a)[\\k]", "(?<=a)[\\k]", "(?<!a)[\\k]", "[(?<n>][\\k]", "\\(?<n>[\\k]", "[\\k-z]", "[a-\\k]",
+  "(?<n>a)[\\k]", "[\\k](?<n>a)", "(?<n>a)[\\k<n>]", "[\\k<n>](?<n>a)", "(?<n>a)[^\\k]", "(?<n>a)[\\k-z]", "(?<n>a)[a-\\k]", "(?<n>a)[\\d-\\k]", "(?<n>a)|[\\k]",
+  "(?<n>a)\\k<n>[k]", "(?<n>a)[k]", "\\k", "\\k<n>", "(?<n>a)\\k", "(?<n>a)\\k<n>", "(?<n>a)[\\b]", "(?<n>a)[\\-]", "(?<n>a)[\\a]", "(?<n>a)[\\c]", "(?<n>a)[\\_]",
+];
+// departure names the place where V8 13.6 departs from ECMA-262 for a pattern, and gives ECMA-262's answer.
+//   - count-order: V8 keeps a count as a number that stops at 2^31 - 1, so it takes a{2147483648,2147483647}. A
+//     first count greater than the second is an error at any size (22.2.1.1 Early Errors of QuantifierPrefix).
+//   - duplicate-name: V8 takes some patterns with one name on two groups that can both take part in a match, such as
+//     (?<m>a)(?:x|(?<m>b)). The two must be in separate alternatives of one disjunction (MightBothParticipate).
+//   - property-name: V8 takes \p{WSpace}. Table 66 of ECMA-262 has White_Space and space only, so with the u flag it
+//     is an error, and the pattern is read with no flag.
+//   - script-value: V8 refuses the Script value Katakana_Or_Hiragana (Hrkt), which PropertyValueAliases.txt has. No
+//     character has it, so the answers are those of the same pattern with \P{Any} for \p and \p{Any} for \P.
+const duplicateNames = new Set(["(?<m>a)(?:x|(?<m>b))", "(|((?<m>))(?<m>|))", "(|(?:(?<m>))(?<m>|))", "(|(?=(?<m>))(?<m>|))"]);
+const HRKT = /\\([pP])\{(?:Script|sc|Script_Extensions|scx)=(?:Hrkt|Katakana_Or_Hiragana)\}/g;
+function departure(p) {
+  const v8 = ask(p, syntaxTexts);
+  const notValid = (why) => {
+    if (!v8.l) throw new Error("V8 does not take " + p);
+    return { p, u: false, l: false, tests: [], ecma262: why };
+  };
+  if (duplicateNames.has(p)) return notValid("duplicate-name");
+  // A count in a class is not a count.
+  for (const m of p.replace(/\[[^\]]*\]/g, "[]").matchAll(/\{(\d+),(\d+)\}/g)) {
+    if (BigInt(m[1]) > BigInt(m[2]) && (v8.u || v8.l)) return notValid("count-order");
+  }
+  if (/\\[pP]\{WSpace\}/.test(p)) {
+    if (!v8.u) throw new Error("V8 does not take " + p);
+    const l = new RegExp(p);
+    return { p, u: false, l: true, tests: syntaxTexts.map((t) => ({ t, want: l.test(t) })), ecma262: "property-name" };
+  }
+  if (p.search(HRKT) >= 0) {
+    if (v8.u) throw new Error("V8 takes " + p);
+    const standIn = ask(p.replace(HRKT, (m, c) => (c === "p" ? "\\P{Any}" : "\\p{Any}")), syntaxTexts);
+    return { p, u: standIn.u, l: standIn.l, tests: standIn.tests, ecma262: "script-value" };
+  }
+  return v8;
+}
 const out = {
   node: process.version,
   units: unitPatterns.map((p) => ask(p, unitTexts)),
   loops: loopPatterns.map((p) => ask(p, loopTexts)),
   fast: fastPatterns.map((p) => ask(p, fastTexts)),
   needs: needsPatterns.map((p) => ask(p, loopTexts)),
+  classK: classKPatterns.map(departure),
 };
 process.stdout.write(JSON.stringify(out));
