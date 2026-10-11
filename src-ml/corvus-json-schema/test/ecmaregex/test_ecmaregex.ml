@@ -48,7 +48,8 @@ let oracle_answers_agreed = ref 0
 let compiled pattern =
   match Re.compile pattern with
   | Ok re -> Some re
-  | Error message ->
+  | Error error ->
+      let message = Re.error_message error in
       fail "compile(%S): %s" pattern message;
       None
 
@@ -56,7 +57,9 @@ let compiled pattern =
 let backtracking pattern =
   match Re.compile_backtrack pattern with
   | Ok re -> re
-  | Error message -> failwith (Printf.sprintf "compile_backtrack(%S): %s" pattern message)
+  | Error error ->
+      let message = Re.error_message error in
+      failwith (Printf.sprintf "compile_backtrack(%S): %s" pattern message)
 
 let match_bytes re s = Re.is_match re (Bytes.of_string s) 0 (String.length s)
 
@@ -123,7 +126,9 @@ let suite_pattern p =
       | Ok re ->
           Hashtbl.replace suite_patterns p re;
           re
-      | Error message -> failwith (Printf.sprintf "compile(%S): %s" p message))
+      | Error error ->
+          let message = Re.error_message error in
+          failwith (Printf.sprintf "compile(%S): %s" p message))
 
 let has_type name (data : Json.t) =
   match (name, data) with
@@ -278,7 +283,9 @@ let test_java_hand_written_patterns () =
           if not valid then fail "compile(%S) gives no error, want one" pattern;
           if Re.unicode re <> unicode then fail "unicode(compile(%S)) = %b, want %b" pattern (Re.unicode re) unicode;
           if Re.pattern re <> pattern then fail "pattern(compile(%S)) = %S" pattern (Re.pattern re)
-      | Error message -> if valid then fail "compile(%S) error %s, want valid" pattern message)
+      | Error error ->
+          let message = Re.error_message error in
+          if valid then fail "compile(%S) error %s, want valid" pattern message)
     java_hand;
   log "%d patterns" (List.length java_hand)
 
@@ -299,7 +306,9 @@ let test_suite_corpus () =
             match result with
             | Ok re when Re.unicode re -> ()
             | Ok _ -> fail "valid(%S) but compile used the Annex B grammar" p
-            | Error message -> fail "valid(%S) but compile gives %s" p message
+            | Error error ->
+                let message = Re.error_message error in
+                fail "valid(%S) but compile gives %s" p message
           end;
           match result with
           | Error _ -> ()
@@ -419,7 +428,8 @@ let check_verdict p valid_unicode valid_legacy =
     agreed := false
   end;
   match Re.compile p with
-  | Error message ->
+  | Error error ->
+      let message = Re.error_message error in
       if valid_unicode || valid_legacy then
         fail "compile(%S) error %s, V8 valid with u %b, with no flag %b" p message valid_unicode valid_legacy
       else if !agreed then incr oracle_verdicts_agreed;

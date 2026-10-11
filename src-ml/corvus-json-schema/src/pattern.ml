@@ -1165,8 +1165,9 @@ and choose_shape p =
 let shape source =
   match choose_pattern source with Some matcher -> Some { source; matcher; units = None } | None -> None
 
-(* compile compiles a pattern. None when it is not a valid ECMA-262 regular expression. *)
-let compile source =
+(* compile_checked compiles a pattern that is under the limits of size and valid, unicode saying whether it is valid
+   with the u flag. *)
+let compile_checked source unicode =
   (* Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it. A pattern with a
      faster matcher that is valid with the u flag needs no engine at all. A pattern that is valid only without the u
      flag is matched by UTF-16 code unit. The faster matchers read code points, which is the same thing unless the text
@@ -1174,12 +1175,20 @@ let compile source =
      pattern itself has such a character it is two atoms, which no faster matcher reads, and the engine takes every
      text. *)
   match choose_pattern source with
-  | Some matcher when Pattern_engine.valid source -> Some { source; matcher; units = None }
+  | Some matcher when unicode -> Ok { source; matcher; units = None }
   | chosen -> (
       match Pattern_engine.compile source with
-      | None -> None
-      | Some engine -> (
+      | Error e -> Error e
+      | Ok engine -> (
           match chosen with
           | Some matcher when not (String.exists (fun c -> c >= '\xF0') source) ->
-              Some { source; matcher; units = Some engine }
-          | _ -> Some { source; matcher = Engine engine; units = None }))
+              Ok { source; matcher; units = Some engine }
+          | _ -> Ok { source; matcher = Engine engine; units = None }))
+
+(* compile compiles a pattern. The error says whether it is not a valid ECMA-262 regular expression or is over a
+   limit of size. *)
+let compile source =
+  (* The limits of size come first: nothing below reads a pattern that is over one. *)
+  match Pattern_engine.check source with
+  | Error e -> Error e
+  | Ok unicode -> compile_checked source unicode

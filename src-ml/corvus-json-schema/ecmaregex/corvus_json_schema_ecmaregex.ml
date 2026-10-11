@@ -46,22 +46,37 @@ let rec repeat_is_valid (n : Parse.node) limit =
    bounds the work of building one (see Dfa.build). The other limits of the regexp package, on the size and the depth
    of a pattern, are not kept: a pattern beyond them is too large for an automaton in any case. *)
 let rec within_regexp_limits (n : Parse.node) =
-  Array.for_all within_regexp_limits n.subs
-  && not
-       (n.kind = Parse.Repeat && is_counted n
-       && (n.min > max_regexp_repeat || n.max > max_regexp_repeat
-          || ((n.min >= 2 || n.max >= 2) && not (repeat_is_valid n max_regexp_repeat))))
+  (* The quantifier itself first, so that a nest of quantifiers that is too large is found at its outermost. *)
+  (not
+     (n.kind = Parse.Repeat && is_counted n
+     && (n.min > max_regexp_repeat || n.max > max_regexp_repeat
+        || ((n.min >= 2 || n.max >= 2) && not (repeat_is_valid n max_regexp_repeat)))))
+  && Array.for_all within_regexp_limits n.subs
 
 (* compile with a way to leave out the automaton, which the tests use to compare the back ends. *)
+type error = Parse.error = Invalid of string | Too_large of string * int
+
+let error_message = Parse.error_message
+let max_pattern_length = Parse.max_pattern_length
+let max_nesting = Parse.max_nesting
+let max_size = Parse.max_size
+
+(* Reads the pattern with the u flag grammar and, failing that, with the Annex B grammar. A pattern over a limit of
+   size under either is too large, whether or not it is valid. A pattern neither accepts has the error of the u flag
+   grammar. *)
+let parse_either pattern =
+  match Parse.parse pattern true with
+  | Ok (root, ps) -> Ok (root, ps, true)
+  | Error (Too_large _ as large) -> Error large
+  | Error invalid -> (
+      match Parse.parse pattern false with
+      | Ok (root, ps) -> Ok (root, ps, false)
+      | Error (Too_large _ as large) -> Error large
+      | Error _ -> Error invalid)
+
 let compile_with pattern force_backtrack =
-  let parsed =
-    match Parse.parse pattern true with
-    | Ok (root, ps) -> Ok (root, ps, true)
-    | Error message -> (
-        match Parse.parse pattern false with Ok (root, ps) -> Ok (root, ps, false) | Error _ -> Error message)
-  in
-  match parsed with
-  | Error message -> Error message
+  match parse_either pattern with
+  | Error error -> Error error
   | Ok (root, ps, unicode) ->
       let regular = (not ps.needs_backtracking) && within_regexp_limits root in
       let dfa = if regular && not force_backtrack then Dfa.build root else None in
@@ -71,6 +86,7 @@ let compile_with pattern force_backtrack =
 let compile pattern = compile_with pattern false
 let compile_backtrack pattern = compile_with pattern true
 let valid pattern = match Parse.parse pattern true with Ok _ -> true | Error _ -> false
+let check pattern = match parse_either pattern with Ok (_, _, unicode) -> Ok unicode | Error error -> Error error
 let check_range name length off len = if off < 0 || len < 0 || off > length - len then invalid_arg name
 
 type scratch = Vm.state
@@ -162,6 +178,7 @@ module Internal = struct
            (Array.to_list re.prog.insts)) )
 
   let no_match = Compile.no_match
+  let size pattern unicode = match Parse.parse pattern unicode with Ok (_, ps) -> ps.size | Error _ -> -1
   let unpack packed = (Utf8.rune packed, Utf8.width packed)
   let unit_at text at = unpack (Utf8.unit_at { b = Bytes.empty; s = text; is_string = true } 0 at (String.length text))
 

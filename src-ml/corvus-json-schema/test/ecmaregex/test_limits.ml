@@ -1,6 +1,7 @@
-(* The tests of the limit on a match of the regular expression engine. They are match_limit_test.go of the ecmaregex
-   package of the Go module. A schema and an instance may both come from outside, so neither a pattern nor a text may
-   make a match run without end or hold memory without bound.
+(* The tests of the limits of the regular expression engine: the limit on a match, and the limits on the size of one
+   pattern. They are match_limit_test.go and size_limit_test.go of the ecmaregex package of the Go
+   module. A schema and an instance may both come from outside, so neither a pattern nor a text may make a match run
+   without end or hold memory without bound, and no pattern may take long or much memory to read and to compile.
 
    No test here depends on a quiet machine. A match that must reach its limit runs a pattern that would take longer
    than the age of the universe, and the bounds on the time it is given are many times what it needs.
@@ -28,7 +29,7 @@ let repeat n s = String.concat "" (List.init n (fun _ -> s))
 let compiled pattern =
   match Re.compile_backtrack pattern with
   | Ok re -> re
-  | Error message -> failwith (Printf.sprintf "compile(%S): %s" pattern message)
+  | Error e -> failwith (Printf.sprintf "compile(%S): %s" pattern (Re.error_message e))
 
 (* What a match came to. *)
 type outcome = Matched of bool | Time | Memory
@@ -128,7 +129,7 @@ let test_a_limit_does_not_change_an_answer () =
         (fun force ->
           let re =
             if force then compiled pattern
-            else match Re.compile pattern with Ok re -> re | Error message -> failwith message
+            else match Re.compile pattern with Ok re -> re | Error e -> failwith (Re.error_message e)
           in
           List.iter
             (fun limit ->
@@ -207,6 +208,144 @@ let test_a_limited_match_allocates_nothing () =
     ]
     [@ocamlformat "disable"]
 
+(* The limits of size. *)
+
+let node_size = 32
+let range_size = 8
+
+(* Patterns of each kind that costs something to read or to compile, each a little under max_size. *)
+let at_the_limit () =
+  let fit each = (Re.max_size - 4096) / each in
+  let l_ranges = match Re.Internal.property_pairs "L" with Some pairs -> Array.length pairs / 2 | None -> 0 in
+  let nest opening body closing depth = repeat depth opening ^ body ^ repeat depth closing in
+  (* Groups of one name: each is charged for the groups before it, so 400 of them cost most of the limit. *)
+  let named = String.concat "|" (List.init 400 (fun k -> Printf.sprintf "(?<n>%d)" k)) in
+  let alternatives = repeat (fit (3 * node_size)) "a|" in
+  [
+    ("literal", repeat (fit (2 * node_size)) "a");
+    ("alternatives", String.sub alternatives 0 (String.length alternatives - 1));
+    ("groups", repeat (fit (4 * node_size)) "(a)");
+    ("groups read back", repeat 4000 "(a)" ^ repeat 4000 {|\1|} ^ repeat 300 {|\4000|});
+    ("nested groups", nest "(" (repeat (fit (2 * node_size) - (2 * Re.max_nesting)) "a") ")" (Re.max_nesting - 1));
+    ("nested counted loops", nest "(?:" (repeat 2000 "a?b") "){2,3}" (Re.max_nesting - 1));
+    ("nested lookbehinds", nest "(?<=" (repeat 2000 "a") ")" (Re.max_nesting - 1));
+    ("counted loops", repeat (fit (7 * node_size)) "(?:a|){2}");
+    ("lazy loops", repeat (fit (7 * node_size)) "(?:a|b)*?");
+    ("properties", repeat (fit (2 * node_size)) {|\p{L}|});
+    ("negated properties", repeat (fit ((2 * node_size) + (range_size * (l_ranges + 1)))) {|\P{L}|});
+    ("classes of properties", repeat (fit ((2 * node_size) + (range_size * (l_ranges + 200)))) {|[\p{L}\p{N}]|});
+    ("folded negated classes", "(?i:" ^ repeat (fit ((2 * node_size) + 32)) {|[^a]|} ^ ")");
+    ("folded dots", "(?i:" ^ repeat (fit (2 * node_size)) "." ^ ")");
+    ("folded wide classes", "(?i:" ^ repeat (fit 3200) {|[\u0000-\u{10FFFF}]|} ^ ")");
+    ("folded wide negations", "(?i:" ^ repeat (fit 3300) {|[^Ā-\u{10FFFF}]|} ^ ")");
+    ("folded properties", "(?i:" ^ repeat (fit 8600) {|\p{L}|} ^ ")");
+    ("folded literal", "(?i:" ^ repeat (fit (2 * node_size)) "k" ^ ")");
+    ("one large class", "[" ^ repeat (fit (2 * range_size)) {|ĀĂ|} ^ "]");
+    ("groups of one name", named);
+    ("named groups, nested", nest "(?:x|" (repeat 40 "(?<a>b)|(?<c>d)") ")" 600);
+    ("counted, for regexp", repeat (fit (4 * node_size)) "(?:a?){1000}");
+    ("quantified everything", repeat (fit (2 * node_size)) "a{2,5}?");
+    ("long escapes", repeat (fit (2 * node_size)) {|\u{0000000000000000000000000000000000000000000041}|});
+  ]
+
+(* Compiles the patterns of at_the_limit and matches each once. The limit of size is what bounds the time and the
+   memory of compiling, so the largest pattern of every kind must take little of both. The bounds asserted are
+   generous. The figures measured are logged. *)
+let test_a_pattern_at_the_limit_of_size_is_cheap () =
+  let scratch = Re.create_scratch () in
+  List.iter
+    (fun (name, pattern) ->
+      Gc.full_major ();
+      let live = (Gc.stat ()).Gc.live_words in
+      let before = Gc.allocated_bytes () in
+      let start = Unix.gettimeofday () in
+      match Re.compile pattern with
+      | Error e -> fail "%s (%d bytes): %s" name (String.length pattern) (Re.error_message e)
+      | Ok re ->
+          let took = Unix.gettimeofday () -. start in
+          (* The match may reach a limit, which is an outcome. What matters here is that the first match is cheap. *)
+          let start = Unix.gettimeofday () in
+          let outcome = match_limit scratch re "abc" 60. in
+          let matched = Unix.gettimeofday () -. start in
+          let grew = Gc.allocated_bytes () -. before in
+          Gc.full_major ();
+          let retained = (Gc.stat ()).Gc.live_words - live in
+          log
+            "%-24s %7d bytes, %s: compile %.1f ms, first match %.1f ms (%s), %.0f MB allocated by both, %d KB retained"
+            name (String.length pattern)
+            (Re.engine_name (Re.engine re))
+            (took *. 1000.) (matched *. 1000.) (outcome_name outcome) (grew /. 1048576.)
+            (retained * 8 / 1024);
+          if took > generous || matched > generous then
+            fail "%s took %gs to compile and %gs for its first match" name took matched;
+          if grew > 512. *. 1048576. || retained * 8 > 64 * 1048576 then
+            fail "%s allocated %.0f MB and retained %d MB" name (grew /. 1048576.) (retained * 8 / 1048576);
+          ignore (Sys.opaque_identity re))
+    (at_the_limit ())
+
+(* Checks each limit: the pattern at the limit compiles and the pattern over it is refused with Too_large, which names
+   the limit, in both grammars and by check, and a pattern that is over a limit and also not valid is refused for its
+   size. *)
+let test_a_pattern_over_a_limit_of_size_is_too_large () =
+  let nest depth = repeat depth "(?:" ^ "a" ^ repeat depth ")" in
+  let terms = Re.max_size / (2 * node_size) in
+  List.iter
+    (fun (name, at, over, limit, value) ->
+      (match Re.compile at with
+      | Ok _ -> ()
+      | Error e -> fail "%s: the pattern at the limit (%d bytes): %s" name (String.length at) (Re.error_message e));
+      (match Re.check at with
+      | Ok _ -> ()
+      | Error e -> fail "%s: check of the pattern at the limit: %s" name (Re.error_message e));
+      let expect what = function
+        | Error (Re.Too_large (l, v)) when l = limit && v = value -> ()
+        | Error e ->
+            fail "%s: %s of the pattern over the limit (%d bytes): %s, want Too_large for %s of %d" name what
+              (String.length over) (Re.error_message e) limit value
+        | Ok _ ->
+            fail "%s: %s of the pattern over the limit (%d bytes) gives no error, want Too_large for %s of %d" name what
+              (String.length over) limit value
+      in
+      expect "compile" (Result.map ignore (Re.compile over));
+      expect "check" (Result.map ignore (Re.check over));
+      if Re.valid over then fail "%s: valid of the pattern over the limit: true" name)
+    [
+      ( "length",
+        {|\u{|} ^ repeat (Re.max_pattern_length - 6) "0" ^ "41}",
+        {|\u{|} ^ repeat (Re.max_pattern_length - 5) "0" ^ "41}",
+        "length",
+        Re.max_pattern_length );
+      ("nesting", nest (Re.max_nesting - 1), nest Re.max_nesting, "nesting", Re.max_nesting);
+      ("size of terms", repeat terms "a", repeat (terms + 1) "a", "size", Re.max_size);
+      ("size of classes", "[" ^ repeat 60000 {|ĀĂ|} ^ "]", "[" ^ repeat 70000 {|ĀĂ|} ^ "]", "size", Re.max_size);
+      ("size without the u flag", repeat terms {|\-|}, repeat (terms + 1) {|\-|}, "size", Re.max_size);
+      ( "nesting without the u flag",
+        {|\-|} ^ nest (Re.max_nesting - 1),
+        {|\-|} ^ nest Re.max_nesting,
+        "nesting",
+        Re.max_nesting );
+      ("nesting, and not valid", nest (Re.max_nesting - 1) ^ "x", nest Re.max_nesting ^ "*+)", "nesting", Re.max_nesting);
+      ("size, and not valid", repeat terms "a", repeat (terms + 1) "a" ^ "(", "size", Re.max_size);
+    ];
+  (* The messages are those of the Go package. *)
+  List.iter
+    (fun (error, want) ->
+      if Re.error_message error <> want then fail "the message is %S, want %S" (Re.error_message error) want)
+    [
+      (Re.Too_large ("length", 1048576), "the pattern is longer than 1048576 bytes");
+      (Re.Too_large ("nesting", 1000), "the groups of the pattern nest more than 1000 deep");
+      (Re.Too_large ("size", 1048576), "the pattern has a size of more than 1048576 bytes when it is read");
+    ];
+  (* A pattern that is not valid and under every limit is not too large. *)
+  List.iter
+    (fun pattern ->
+      match Re.compile pattern with
+      | Error (Re.Invalid _) -> ()
+      | Error (Re.Too_large _) | Ok _ ->
+          fail "compile(%S): want the error of a pattern that is not valid"
+            (String.sub pattern 0 (min 20 (String.length pattern))))
+    [ "("; "a**"; {|(?<n>a)\k<m>|}; "[b-a]"; nest (Re.max_nesting - 1) ^ ")" ]
+
 let () =
   let ran = ref 0 in
   List.iter
@@ -222,6 +361,8 @@ let () =
       ("a match is abandoned at its memory limit", test_a_match_is_abandoned_at_its_memory_limit);
       ("a limit does not change an answer", test_a_limit_does_not_change_an_answer);
       ("a limited match allocates nothing", test_a_limited_match_allocates_nothing);
+      ("a pattern at the limit of size is cheap", test_a_pattern_at_the_limit_of_size_is_cheap);
+      ("a pattern over a limit of size is too large", test_a_pattern_over_a_limit_of_size_is_too_large);
     ];
   if !failures <> 0 then begin
     Printf.printf "FAILED: %d failures\n" !failures;

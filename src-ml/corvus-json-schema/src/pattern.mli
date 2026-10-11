@@ -15,9 +15,10 @@
 type t
 (** A compiled pattern. It is immutable, and safe to share between threads and domains. *)
 
-val compile : string -> t option
-(** [compile source] compiles a pattern. [None] when it is not a valid ECMA-262 regular expression. (compilePattern of
-    the Go source.)
+val compile : string -> (t, Pattern_engine.error) result
+(** [compile source] compiles a pattern. The error is [Invalid] when it is not a valid ECMA-262 regular expression, and
+    [Too_large] when it is over a limit of size, which is looked at before anything else reads the pattern.
+    (compilePattern of the Go source.)
 
     There is no process-wide cache. The Go source keeps every compiled pattern in one, and this library keeps no
     process-wide table of patterns (its only process-wide state is the regular expression engine's case-folding tables,

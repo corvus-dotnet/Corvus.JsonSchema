@@ -82,8 +82,10 @@
 
     The limits are those of the Go package and of the Object Pascal port.
 
-    - Groups may nest 1000 deep. A pattern beyond that is not valid.
-    - A pattern may be of any length. The bounds of a counted quantifier saturate at 2,147,483,647.
+    - A pattern has three limits of size: {!max_pattern_length} bytes, groups {!max_nesting} deep, and a size of
+      {!max_size} as the parser counts it. A pattern over one is refused with {!Too_large}, which is not the error of a
+      pattern that is not valid.
+    - The bounds of a counted quantifier saturate at 2,147,483,647.
     - A pattern is tried for an automaton when it is {!regular}. It gets one when the automaton has at most 256 states
       built from at most 512 states of the pattern in at most 400,000 steps. Finding out that a pattern is too large
       costs about a millisecond when it is compiled.
@@ -108,14 +110,44 @@ type engine =
 val engine_name : engine -> string
 (** The name of the engine, ["dfa"] or ["backtrack"]. *)
 
-val compile : string -> (t, string) result
+(** Why a pattern was not compiled. *)
+type error =
+  | Invalid of string  (** The pattern is not valid under either grammar, with the message of the u flag grammar. *)
+  | Too_large of string * int
+      (** The pattern is over a limit of size: the name of the limit (["length"], ["nesting"] or ["size"]) and its
+          value. The pattern was not read to its end, so this says nothing of whether it is valid. *)
+
+val error_message : error -> string
+(** [error_message e] is what the engine says of the error. For a pattern that is too large it is
+    ["the pattern is longer than 1048576 bytes"], ["the groups of the pattern nest more than 1000 deep"] or
+    ["the pattern has a size of more than 1048576 bytes when it is read"]. *)
+
+val max_pattern_length : int
+(** The longest pattern that is read, in bytes of UTF-8: 1,048,576. *)
+
+val max_nesting : int
+(** The deepest groups may nest: 1,000. It bounds the recursion of the parser and of the compilers. *)
+
+val max_size : int
+(** The largest size a pattern may have, 1,048,576, in the bytes the parser counts for it as it reads: 64 for each term
+    (an atom and the repetition or group around it) and 32 for each further alternative, 8 for each range of a class as
+    its members are read, for each range that case folding or a negated property builds, and for each enclosing
+    alternative and each group of the same name that a named group is compared with, and 1 for each character with a
+    case variant in a class that is folded. The syntax tree, the program and the time to make them are proportional to
+    this figure. The Go package and the Object Pascal port count the same figure for every pattern. *)
+
+val compile : string -> (t, error) result
 (** [compile pattern] compiles an ECMA-262 pattern (UTF-8) with the semantics JSON Schema requires. The u flag grammar
-    is tried first, then Annex B. It returns [Error message] for a pattern that neither accepts, with the message of the
-    u flag grammar. *)
+    is tried first, then Annex B. It returns [Error (Invalid message)] for a pattern that neither accepts, and
+    [Error (Too_large _)] for a pattern over a limit of size, whether or not it is valid. *)
 
 val valid : string -> bool
 (** [valid pattern] reports whether the pattern is a valid ECMA-262 pattern (for [format: regex]). It applies the
-    grammar of the u flag alone. *)
+    grammar of the u flag alone. A pattern over a limit of size is not read to its end and is reported as not valid. *)
+
+val check : string -> (bool, error) result
+(** [check pattern] reads the pattern without compiling it. It is [Ok true] for a pattern valid with the u flag grammar,
+    [Ok false] for one valid only with the Annex B grammar, and the error {!compile} would return otherwise. *)
 
 val is_match : t -> Bytes.t -> int -> int -> bool
 (** [is_match re text off len] reports whether the pattern matches anywhere in the [len] bytes of [text] from [off],
@@ -201,7 +233,7 @@ val regular : t -> bool
 
 (** {1 For the tests} *)
 
-val compile_backtrack : string -> (t, string) result
+val compile_backtrack : string -> (t, error) result
 (** {!compile} without the automaton, so that every text runs on the backtracking matcher. The tests use it to compare
     the back ends. *)
 
@@ -245,6 +277,10 @@ module Internal : sig
 
   val no_match : int
   (** The need of a program that no text matches. *)
+
+  val size : string -> bool -> int
+  (** [size pattern unicode] is the size the parser counts for the pattern (see {!max_size}) under the u flag grammar or
+      under the Annex B grammar, or -1 when that grammar does not accept it or the pattern is over a limit. *)
 
   val unit_before : string -> int -> int * int
   (** [unit_before text at] is the code unit that ends at the index [at] of the text and the number of bytes it spans.

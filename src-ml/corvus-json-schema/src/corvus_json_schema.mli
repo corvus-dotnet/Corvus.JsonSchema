@@ -246,6 +246,14 @@ type error =
       (** The schema cannot be compiled (an unresolvable reference, an invalid pattern), with the reason. *)
   | Depth_exceeded
       (** Evaluation recursed in place beyond the maximum depth (a schema that loops without consuming the instance). *)
+  | Pattern_too_large of { pattern : string; keyword : string; limit : string; value : int }
+      (** The schema was not compiled because one of its regular expressions is over a limit of size: the regular
+          expression, the keyword that holds it ([pattern] or [patternProperties]), the name of the limit and its value.
+          The limits are ["length"] (1,048,576 bytes of pattern), ["nesting"] (groups 1,000 deep) and ["size"]
+          (1,048,576 bytes counted for the pattern as it is read: 64 for each term and 32 for each further alternative,
+          8 for each range of a class, and what case folding and named groups add). It is not the error of a regular
+          expression that is not valid, which is a [Compile_error]: the pattern was not read to its end, so nothing is
+          known of whether it is valid. *)
   | Pattern_match_limit of { pattern : string; limit : float; memory : bool }
       (** A validation was abandoned because one match of a regular expression reached its limit: the regular
           expression, the time in seconds the match was allowed (see [pattern_match_limit] of {!type-options}), and
@@ -260,7 +268,9 @@ exception Pattern_match_limit_reached of { pattern : string; limit : float; memo
     functions that return a result give. *)
 
 val error_to_string : error -> string
-(** [error_to_string e] is the reason as text. For [Pattern_match_limit] it is
+(** [error_to_string e] is the reason as text. For [Pattern_too_large] it is
+    ["The regular expression '...' in pattern is too large to read as an ECMA-262 regular expression: ..."] with what
+    the limit is, and for [Pattern_match_limit] it is
     ["A match of the regular expression '...' was abandoned: it took longer than the limit of 1s."]. A regular
     expression of more than 120 bytes is cut there and its length given. *)
 
@@ -286,8 +296,9 @@ module Validator : sig
   (** {1 Compiling}
 
       Each function returns [Error (Parse_error _)] when schema text is not JSON, and [Error (Compile_error _)] when the
-      schema cannot be compiled. It returns [Error (Pattern_match_limit _)] when matching a regular expression of the
-      schema against a property name the schema declares reached the limit of a match. *)
+      schema cannot be compiled. It returns [Error (Pattern_too_large _)] when a regular expression of the schema is
+      over a limit of size, and [Error (Pattern_match_limit _)] when matching one against a property name the schema
+      declares reached the limit of a match. *)
 
   val compile : ?options:options -> string -> (t, error) result
   (** [compile schema] is {!compile_string}. *)

@@ -53,16 +53,27 @@ type t = {
   mutable entry_node : int;
   (* Each pattern of the schema, compiled once. Go keeps one cache for the process, and this library has no global
      state, so the cache is the compilation's. *)
-  patterns : (string, Pattern.t option) Hashtbl.t;
+  patterns : (string, (Pattern.t, Pattern_engine.error) result) Hashtbl.t;
 }
 
-let compile_pattern c source =
-  match Hashtbl.find_opt c.patterns source with
-  | Some p -> p
-  | None ->
-      let p = Pattern.compile source in
-      Hashtbl.replace c.patterns source p;
-      p
+(* compile_pattern compiles the pattern of a keyword, or raises the error of a schema whose keyword holds a pattern
+   that could not be compiled: Pattern_too_large for one over a limit of size, and Compile_error for one that is not
+   valid. *)
+let compile_pattern c source keyword =
+  let compiled =
+    match Hashtbl.find_opt c.patterns source with
+    | Some p -> p
+    | None ->
+        let p = Pattern.compile source in
+        Hashtbl.replace c.patterns source p;
+        p
+  in
+  match compiled with
+  | Ok pattern -> pattern
+  | Error (Pattern_engine.Too_large (limit, value, reason)) ->
+      raise (Options.Pattern_too_large (source, keyword, limit, value, reason))
+  | Error Pattern_engine.Invalid ->
+      Options.compile_error ("Invalid regular expression '" ^ source ^ "' in " ^ keyword ^ ".")
 
 (* uint_value is a non-negative integer keyword value, or no_count. *)
 let uint_value d n =
@@ -351,9 +362,8 @@ let compile_node c id (target : Loader.target) =
             let out = ref [] in
             for i = 0 to count d pp - 1 do
               let source = Document.string_value d (k + (2 * i)) in
-              match compile_pattern c source with
-              | None -> Options.compile_error ("Invalid regular expression '" ^ source ^ "' in patternProperties.")
-              | Some pattern ->
+              match compile_pattern c source "patternProperties" with
+              | pattern ->
                   let node =
                     child c target (k + (2 * i) + 1) ("/patternProperties/" ^ Uri.escape_pointer_token source)
                   in
@@ -470,10 +480,7 @@ let compile_node c id (target : Loader.target) =
           n.min_length <- count_value n d (get "minLength") "minLength";
           n.max_length <- count_value n d (get "maxLength") "maxLength";
           (match Loader.string_value d (get "pattern") with
-          | Some p -> (
-              match compile_pattern c p with
-              | None -> Options.compile_error ("Invalid regular expression '" ^ p ^ "' in pattern.")
-              | Some compiled -> n.pattern <- Some compiled)
+          | Some p -> n.pattern <- Some (compile_pattern c p "pattern")
           | None -> ());
           let num name =
             let v = get name in

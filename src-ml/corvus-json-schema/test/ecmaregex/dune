@@ -18,8 +18,8 @@
   corvus-json-schema.ucd
   threads.posix))
 
-; The limit on a match of the engine (match_limit_test.go of the Go module). unix is for the time of the wall, which the
-; tests measure.
+; The limits of the engine: the limit on a match and the limits on the size of a pattern (match_limit_test.go and
+; size_limit_test.go of the Go module). unix is for the time of the wall, which the tests measure.
 
 (test
  (name test_limits)

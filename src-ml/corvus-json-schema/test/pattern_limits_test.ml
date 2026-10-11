@@ -267,6 +267,98 @@ let test_an_ordinary_pattern_is_not_affected_by_the_limit () =
     ]
     [@ocamlformat "disable"]
 
+(* The limits on the size of one pattern. *)
+
+(* Checks each limit in both keywords: the error is Pattern_too_large, which names the keyword, the limit and its
+   value, and is neither a Compile_error nor the error of a match. *)
+let test_a_pattern_over_a_limit_of_size_is_refused () =
+  Check.section "TestAPatternOverALimitOfSizeIsRefused";
+  let nest depth = repeat depth "(?:" ^ "a" ^ repeat depth ")" in
+  let size_message = "the pattern has a size of more than 1048576 bytes when it is read" in
+  List.iter
+    (fun (name, at, over, limit, value, message) ->
+      List.iter
+        (fun keyword ->
+          let schema pattern =
+            if keyword = "pattern" then Printf.sprintf {|{"pattern": "%s"}|} pattern
+            else Printf.sprintf {|{"patternProperties": {"%s": true}}|} pattern
+          in
+          let start = Unix.gettimeofday () in
+          (match Validator.compile_string (schema at) with
+          | Ok _ -> ()
+          | Error e ->
+              Check.fail (Printf.sprintf "%s in %s: the pattern at the limit: %s" name keyword (error_to_string e)));
+          let result = Validator.compile_string (schema over) in
+          let took = Unix.gettimeofday () -. start in
+          Check.checkf (took <= generous_time) "%s in %s: compiling took %gs" name keyword took;
+          match result with
+          | Error (Pattern_too_large { pattern; keyword = found_keyword; limit = found_limit; value = found } as e) ->
+              Check.checkf
+                (found_keyword = keyword && found_limit = limit && found = value)
+                "%s in %s: the error holds the keyword %S, the limit %S and the value %d" name keyword found_keyword
+                found_limit found;
+              let text = error_to_string e in
+              let want =
+                Printf.sprintf "' (%d bytes) in %s is too large to read as an ECMA-262 regular expression: %s."
+                  (String.length pattern) keyword message
+              in
+              Check.checkf
+                (String.starts_with ~prefix:"The regular expression '" text
+                && String.ends_with ~suffix:want text
+                && String.length text <= 400)
+                "%s in %s: the message is %S" name keyword
+                (String.sub text 0 (min 300 (String.length text)));
+              Check.checkf
+                (not (contains (String.lowercase_ascii text) "invalid"))
+                "%s in %s: the message says the pattern is not valid" name keyword
+          | Ok _ -> Check.fail (Printf.sprintf "%s in %s: the pattern over the limit compiled" name keyword)
+          | Error e ->
+              let text = error_to_string e in
+              Check.fail
+                (Printf.sprintf "%s in %s: the error is %s, want Pattern_too_large" name keyword
+                   (String.sub text 0 (min 200 (String.length text)))))
+        [ "pattern"; "patternProperties" ])
+    [
+      ( "length",
+        {|\\u{|} ^ repeat ((1 lsl 20) - 6) "0" ^ "41}",
+        {|\\u{|} ^ repeat ((1 lsl 20) - 5) "0" ^ "41}",
+        "length",
+        1 lsl 20,
+        "the pattern is longer than 1048576 bytes" );
+      ("nesting", nest 999, nest 1000, "nesting", 1000, "the groups of the pattern nest more than 1000 deep");
+      ("size", repeat 16384 "a", repeat 16385 "a", "size", 1 lsl 20, size_message);
+      ( "size of a class",
+        "[" ^ repeat 60000 {|\\u0100\\u0102|} ^ "]",
+        "[" ^ repeat 70000 {|\\u0100\\u0102|} ^ "]",
+        "size",
+        1 lsl 20,
+        size_message );
+      ( "nesting, and not valid",
+        nest 999,
+        nest 1000 ^ "*+)",
+        "nesting",
+        1000,
+        "the groups of the pattern nest more than 1000 deep" );
+    ]
+
+(* Checks the two errors stay apart: a pattern under every limit that is not valid is a Compile_error. *)
+let test_a_pattern_that_is_not_valid_is_not_too_large () =
+  Check.section "TestAPatternThatIsNotValidIsNotTooLarge";
+  List.iter
+    (fun pattern ->
+      match Validator.compile_string (Printf.sprintf {|{"pattern": "%s"}|} pattern) with
+      | Error (Compile_error message) ->
+          Check.checkf
+            (String.starts_with ~prefix:"Invalid regular expression '" message)
+            "%S: the message is %S"
+            (String.sub pattern 0 (min 20 (String.length pattern)))
+            message
+      | Ok _ | Error _ ->
+          Check.fail
+            (Printf.sprintf "%S: want a Compile_error for a pattern that is not valid"
+               (String.sub pattern 0 (min 20 (String.length pattern)))))
+    [ "("; "a**"; "[b-a]"; {|(?<n>a)\\k<m>|}; repeat 999 "(?:" ^ "a" ^ repeat 1000 ")" ]
+
 (* Compiles literal patterns of growing length through every matcher a literal can take, and counts the bytes
    allocated, which no load on the machine changes. A pattern of 100,000 characters took half a second when the
    alternatives of a pattern were built a character at a time, each step copying what was built so far. A long pattern
@@ -307,6 +399,24 @@ let test_a_long_pattern_compiles_in_memory_proportional_to_its_length () =
       ("in a group", fun s -> "(" ^ String.sub s 0 (String.length s - 4) ^ ")");
     ]
 
+(* Checks the regex format, which reads a string of the instance as a pattern: a string over a limit of size is not
+   read to its end and is not a valid regular expression. *)
+let test_the_regex_format_refuses_a_pattern_over_a_limit () =
+  Check.section "TestTheRegexFormatRefusesAPatternOverALimit";
+  let v = compile ~options:(options ~assert_format:true ()) {|{"format": "regex"}|} in
+  List.iter
+    (fun (text, want) ->
+      let start = Unix.gettimeofday () in
+      let result = Validator.validate_string v (Printf.sprintf {|"%s"|} text) in
+      let took = Unix.gettimeofday () -. start in
+      Check.checkf (result = Ok want) "a string of %d bytes: want %b" (String.length text) want;
+      Check.checkf (took <= generous_time) "a string of %d bytes took %gs" (String.length text) took)
+    [
+      ("^[a-z]+$", true); ("(", false); (repeat 16384 "a", true); (repeat 16385 "a", false);
+      (repeat 999 "(?:" ^ "a" ^ repeat 999 ")", true); (repeat 1000 "(?:" ^ "a" ^ repeat 1000 ")", false);
+    ]
+    [@ocamlformat "disable"]
+
 let () =
   test_a_match_that_reaches_its_limit_is_an_error ();
   test_the_default_match_limit_is_one_second ();
@@ -315,5 +425,8 @@ let () =
   test_a_match_that_reaches_its_memory_limit_is_an_error ();
   test_a_match_while_compiling_has_the_limit ();
   test_an_ordinary_pattern_is_not_affected_by_the_limit ();
+  test_a_pattern_over_a_limit_of_size_is_refused ();
+  test_a_pattern_that_is_not_valid_is_not_too_large ();
   test_a_long_pattern_compiles_in_memory_proportional_to_its_length ();
+  test_the_regex_format_refuses_a_pattern_over_a_limit ();
   Check.finish "pattern limits"

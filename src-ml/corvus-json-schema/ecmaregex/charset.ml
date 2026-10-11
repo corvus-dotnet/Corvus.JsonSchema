@@ -328,14 +328,16 @@ let rec first_at_least points lo from until =
     if points.(mid) >= lo then first_at_least points lo from mid else first_at_least points lo (mid + 1) until
 
 (** Returns the set of every character equivalent to some member of the set. *)
-let fold_closure set unicode_mode =
+let fold_closure_counted set unicode_mode =
   let table = fold_classes unicode_mode in
   let extra = ref [] in
+  let variants = ref 0 in
   let i = ref 0 in
   while !i < Array.length set.ranges do
     let lo = set.ranges.(!i) and hi = set.ranges.(!i + 1) in
     let k = ref (first_at_least table.points lo 0 (Array.length table.points)) in
     while !k < Array.length table.points && table.points.(!k) <= hi do
+      incr variants;
       Array.iter
         (fun member -> if not (contains set member) then extra := member :: member :: !extra)
         table.classes.(!k);
@@ -343,7 +345,9 @@ let fold_closure set unicode_mode =
     done;
     i := !i + 2
   done;
-  if !extra = [] then set else make (Array.append (Array.of_list !extra) set.ranges) false
+  ((if !extra = [] then set else make (Array.append (Array.of_list !extra) set.ranges) false), !variants)
+
+let fold_closure set unicode_mode = fst (fold_closure_counted set unicode_mode)
 
 (* With the u flag and case-insensitive matching, \w and \b also count the two characters that fold to an ASCII
    letter (U+017F, the long s, and U+212A, the Kelvin sign) as word characters. *)

@@ -9,9 +9,18 @@ type scratch = Engine.scratch
 
 let create_scratch = Engine.create_scratch
 
-(* compile compiles an ECMA-262 pattern (with the u flag, or failing that without it, as many schemas need). None when
-   the pattern is invalid. *)
-let compile source = match Engine.compile source with Ok re -> Some re | Error _ -> None
+(* Why a pattern was not compiled: it is not valid, or it is over a limit of size, with the name of the limit, its
+   value and what the engine says of it. *)
+type error = Invalid | Too_large of string * int * string
+
+let error_of (e : Engine.error) =
+  match e with Invalid _ -> Invalid | Too_large (limit, value) -> Too_large (limit, value, Engine.error_message e)
+
+(* compile compiles an ECMA-262 pattern (with the u flag, or failing that without it, as many schemas need). *)
+let compile source = match Engine.compile source with Ok re -> Ok re | Error e -> Error (error_of e)
+
+(* check reads a pattern without compiling it, and reports whether it is valid with the u flag. *)
+let check source = match Engine.check source with Ok unicode -> Ok unicode | Error e -> Error (error_of e)
 
 (* valid reports whether a string is a valid ECMA-262 regular expression with the u flag (the regex format, and the
    patterns the engine reads without falling back). *)

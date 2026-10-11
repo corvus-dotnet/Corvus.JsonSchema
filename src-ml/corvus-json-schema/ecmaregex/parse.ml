@@ -26,8 +26,47 @@ let unbounded = -1
     32-bit integer, as in the Go source, and an [int] holds it. *)
 let max_count = 0x7FFFFFFF
 
+(* The limits on the size of one pattern. A pattern may come from outside, so reading and compiling one must take
+   bounded time and memory whatever it holds. A pattern over a limit is refused with the error Too_large, which is not the error
+   of a pattern that is not valid. They are the limits of the Go package, counted the same way, so that the same
+   patterns are refused. *)
+
+(** The longest pattern that is read, in bytes of UTF-8. *)
+let max_pattern_length = 1 lsl 20
+
 (** Caps the depth of groups, which bounds the recursion of the parser and of the compilers. *)
 let max_nesting = 1000
+
+(** The largest size a pattern may have, in the bytes the parser counts for it: [node_size] for each node of its syntax
+    tree, and [range_size] for each range of a class as its members are read, for each range a case-insensitive group or
+    a negated property adds, for each alternative that encloses a named group and for each group that shares its name.
+    The tree, the program compiled from it and the time to make both are proportional to that size, so it bounds them
+    all. *)
+let max_size = 1 lsl 20
+
+let node_size = 32
+let range_size = 8
+
+(* The names of the limits. *)
+let limit_length = "length"
+let limit_nesting = "nesting"
+let limit_size = "size"
+
+exception Over_limit of string * int
+(** A pattern over one of the limits of size: the name of the limit and its value. The pattern was not read to its end,
+    so this says nothing of whether it is valid. *)
+
+type error =
+  | Invalid of string  (** The pattern is not valid, with the reason. *)
+  | Too_large of string * int  (** The pattern is over a limit of size: the name of the limit and its value. *)
+
+(** What the engine says of an error. For a pattern that is too large it is the wording of the Go package. *)
+let error_message = function
+  | Invalid message -> message
+  | Too_large (limit, value) ->
+      if limit = limit_length then Printf.sprintf "the pattern is longer than %d bytes" value
+      else if limit = limit_nesting then Printf.sprintf "the groups of the pattern nest more than %d deep" value
+      else Printf.sprintf "the pattern has a size of more than %d bytes when it is read" value
 
 type node = {
   kind : kind;
@@ -92,6 +131,11 @@ type parser = {
   mutable dot_all : bool;
   mutable needs_backtracking : bool;
       (** Records that the pattern has a construct only the backtracking matcher can run. *)
+  mutable size : int;  (** The size of what has been read so far (see {!max_size}). *)
+  properties : (string, Charset.t) Hashtbl.t;
+      (** The set of each property expression the pattern has named, so that a property written many times is one set.
+          The Go package keeps these for the process. This library keeps no table for the process, so the table is the
+          parser's. *)
 }
 (** A parser reads a pattern by recursive descent. With [unicode] set it applies the grammar of the u flag. Without it,
     it applies the Annex B grammar of patterns with no flag. *)
@@ -100,6 +144,18 @@ exception Parse_error of string * int
 (** The reason a pattern is not valid, and the offset in characters at which it was found. *)
 
 let fail p message = raise (Parse_error (message, p.i))
+
+(* Adds to the size of the pattern, and stops the parser when the size is over its limit. *)
+let charge p bytes =
+  p.size <- p.size + bytes;
+  if p.size > max_size then raise (Over_limit (limit_size, max_size))
+
+(* Returns the set with every character equivalent to one of its members, and charges the pattern for the work and
+   for the set: a byte for each character with a case variant that the set holds, and its ranges. *)
+let fold p set =
+  let closed, variants = Charset.fold_closure_counted set p.unicode in
+  charge p (variants + (range_size * Array.length closed.ranges / 2));
+  closed
 
 (* Counts the capturing groups of the pattern and notes whether any is named. *)
 let scan_groups p =
@@ -146,7 +202,7 @@ let char_node p c =
 
 (* Returns the node for a class. Inside a case-insensitive group the class also takes every character equivalent to
    one of its members. *)
-let set_node p set = { empty_node with kind = Set; set = (if p.icase then Charset.fold_closure set p.unicode else set) }
+let set_node p set = { empty_node with kind = Set; set = (if p.icase then fold p set else set) }
 let is_digit c = c >= 0x30 && c <= 0x39
 
 (* Reports whether the text at the current '{' reads as {n}, {n,} or {n,m}. *)
@@ -374,7 +430,7 @@ let class_escape p c =
   | 'W' -> take (if p.unicode && p.icase then Charset.not_fold_word_set else Charset.not_word_set)
   | 's' -> take Charset.space_set
   | 'S' -> take Charset.not_space_set
-  | ('p' | 'P') when p.unicode -> (
+  | ('p' | 'P') when p.unicode ->
       (* Without the u flag \p is the letter p. *)
       p.i <- p.i + 1;
       if not (eat p '{') then fail p "invalid property name";
@@ -387,9 +443,22 @@ let class_escape p c =
         Utf8.add_rune expr p.p.(k)
       done;
       if not (eat p '}') then fail p "invalid property name";
-      match Charset.property_set (Buffer.contents expr) with
-      | None -> fail p "invalid property name"
-      | Some set -> if c = 0x50 (* P *) then Some (Charset.make set.ranges true) else Some set)
+      let expr = Buffer.contents expr in
+      let set =
+        match Hashtbl.find_opt p.properties expr with
+        | Some set -> set
+        | None -> (
+            match Charset.property_set expr with
+            | None -> fail p "invalid property name"
+            | Some set ->
+                Hashtbl.replace p.properties expr set;
+                set)
+      in
+      if c = 0x50 (* P *) then begin
+        charge p (range_size * Array.length set.ranges / 2);
+        Some (Charset.make set.ranges true)
+      end
+      else Some set
   | _ -> None
 
 let is_ascii_letter c = (c >= 0x61 && c <= 0x7A) || (c >= 0x41 && c <= 0x5A)
@@ -486,12 +555,22 @@ let class_ p =
   p.i <- p.i + 1;
   let negated = eat p '^' in
   let pairs = ref [] in
-  let add more_pairs = pairs := more_pairs :: !pairs in
+  (* The ranges read so far, and those of them the size of the pattern has been charged for. *)
+  let count = ref 0 and charged = ref 0 in
+  let add more_pairs =
+    pairs := more_pairs :: !pairs;
+    count := !count + (Array.length more_pairs / 2)
+  in
+  let charge_read () =
+    charge p (range_size * (!count - !charged));
+    charged := !count
+  in
   let finished = ref false in
   while not !finished do
     if not (more p) then fail p "unterminated character class";
     if eat p ']' then finished := true
     else begin
+      charge_read ();
       let first = class_atom p in
       if peek p = 0x2D (* - *) && p.i + 1 < Array.length p.p && p.p.(p.i + 1) <> 0x5D (* ] *) then begin
         p.i <- p.i + 1;
@@ -512,14 +591,15 @@ let class_ p =
   done;
   (* Inside a case-insensitive group a character matches the class when it is equivalent to a member, and a negated
      class excludes exactly those characters. *)
+  charge_read ();
   let set = Charset.make (Array.concat (List.rev !pairs)) false in
-  let set = if p.icase then Charset.fold_closure set p.unicode else set in
+  let set = if p.icase then fold p set else set in
   let set = if negated then Charset.make set.ranges true else set in
   { empty_node with kind = Set; set }
 
 let rec disjunction p =
   p.depth <- p.depth + 1;
-  if p.depth > max_nesting then fail p "groups nested too deeply";
+  if p.depth > max_nesting then raise (Over_limit (limit_nesting, max_nesting));
   p.disjunctions <- p.disjunctions + 1;
   let branch = { disjunction = p.disjunctions; alternative = 0 } in
   let outer = p.path in
@@ -530,6 +610,7 @@ let rec disjunction p =
     else begin
       let subs = ref [ first ] in
       while eat p '|' do
+        charge p node_size;
         branch.alternative <- branch.alternative + 1;
         subs := alternative p :: !subs
       done;
@@ -551,6 +632,8 @@ and alternative p =
   | terms -> { empty_node with kind = Cat; subs = Array.of_list (List.rev terms) }
 
 and term p =
+  (* The atom, and the repetition or the group around it. *)
+  charge p (2 * node_size);
   let c = peek p in
   let atom, quantifiable =
     match ascii c with
@@ -679,10 +762,12 @@ and modifier_group p =
 and capture p name =
   p.groups <- p.groups + 1;
   let number = p.groups in
-  if name <> "" then
-    Hashtbl.replace p.names name
-      ((match Hashtbl.find_opt p.names name with Some named -> named | None -> [])
-      @ [ { number; group_path = current_path p } ]);
+  if name <> "" then begin
+    let named = match Hashtbl.find_opt p.names name with Some named -> named | None -> [] in
+    (* The path is kept, and every group of the same name is compared with it. *)
+    charge p (range_size * (List.length p.path + List.length named));
+    Hashtbl.replace p.names name (named @ [ { number; group_path = current_path p } ])
+  end;
   let body = disjunction p in
   close p;
   { empty_node with kind = Group; group = number; subs = [| body |] }
@@ -751,13 +836,14 @@ let quote pattern =
   Buffer.contents out
 
 (** [parse pattern unicode] reads the pattern with the grammar of the u flag, or with the Annex B grammar. It returns
-    the root of the tree and the parser, or the reason the pattern is not valid under that grammar.
+    the root of the tree and the parser, or [Invalid] with the reason the pattern is not valid under that grammar, or
+    [Too_large] for a pattern over a limit of size, which it stops reading at the limit.
 
     Without the u flag ECMA-262 reads a pattern, and matches a text, a UTF-16 code unit at a time, so the pattern is
     read as code units. A character beyond the Basic Multilingual Plane is then two atoms, a quantifier after it repeats
     the second, and in a class it is two members, so a range between two such characters runs from a low surrogate to a
     high one and is an error. *)
-let parse pattern unicode =
+let parse_within pattern unicode =
   let p =
     {
       p = Utf8.runes pattern (not unicode);
@@ -775,6 +861,8 @@ let parse pattern unicode =
       multiline = false;
       dot_all = false;
       needs_backtracking = false;
+      size = 0;
+      properties = Hashtbl.create 8;
     }
   in
   try
@@ -789,5 +877,11 @@ let parse pattern unicode =
         | Some named -> reference.groups <- Array.of_list (List.map (fun g -> g.number) named))
       p.named_refs;
     Ok (root, p)
-  with Parse_error (message, position) ->
-    Error (Printf.sprintf "ecmaregex: %s at offset %d in %s" message position (quote pattern))
+  with
+  | Parse_error (message, position) ->
+      Error (Invalid (Printf.sprintf "ecmaregex: %s at offset %d in %s" message position (quote pattern)))
+  | Over_limit (limit, value) -> Error (Too_large (limit, value))
+
+let parse pattern unicode =
+  if String.length pattern > max_pattern_length then Error (Too_large (limit_length, max_pattern_length))
+  else parse_within pattern unicode

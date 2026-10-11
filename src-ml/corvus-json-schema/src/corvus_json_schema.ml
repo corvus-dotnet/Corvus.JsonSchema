@@ -102,6 +102,7 @@ type error =
   | Parse_error of Document.error
   | Compile_error of string
   | Depth_exceeded
+  | Pattern_too_large of { pattern : string; keyword : string; limit : string; value : int }
   | Pattern_match_limit of { pattern : string; limit : float; memory : bool }
 
 exception Pattern_match_limit_reached of { pattern : string; limit : float; memory : bool }
@@ -131,6 +132,10 @@ let error_to_string = function
   | Parse_error e -> Document.error_to_string e
   | Compile_error message -> message
   | Depth_exceeded -> "the schema recursed in place beyond the maximum depth"
+  | Pattern_too_large { pattern; keyword; limit; value } ->
+      Printf.sprintf "The regular expression %s in %s is too large to read as an ECMA-262 regular expression: %s."
+        (shown_pattern pattern) keyword
+        (Corvus_json_schema_ecmaregex.error_message (Too_large (limit, value)))
   | Pattern_match_limit { pattern; limit; memory } -> match_limit_message pattern limit memory
 
 let () =
@@ -177,6 +182,8 @@ module Validator = struct
     match make (build options) options with
     | validator -> Ok validator
     | exception Options.Compile_error message -> Error (Compile_error message)
+    | exception Options.Pattern_too_large (pattern, keyword, limit, value, _) ->
+        Error (Pattern_too_large { pattern; keyword; limit; value })
     | exception Pattern.Match_limit (pattern, memory) ->
         Error (Pattern_match_limit { pattern; limit = options.pattern_match_limit; memory })
 

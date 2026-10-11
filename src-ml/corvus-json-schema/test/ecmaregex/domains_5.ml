@@ -9,7 +9,8 @@ let () =
   List.iter
     (fun p ->
       match Re.compile p with
-      | Error message ->
+      | Error error ->
+          let message = Re.error_message error in
           prerr_endline ("FAIL: " ^ message);
           incr failures
       | Ok re ->

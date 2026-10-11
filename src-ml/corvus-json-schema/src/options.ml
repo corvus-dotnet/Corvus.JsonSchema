@@ -36,3 +36,8 @@ let default =
 exception Compile_error of string
 
 let compile_error message = raise (Compile_error message)
+
+(* Raised inside the compiler for a pattern over a limit of size: the pattern, the keyword that holds it, the name of
+   the limit, its value, and what the engine says of it. It is not a Compile_error, which a pattern that is not valid
+   is. The public functions return it as an [Error]. *)
+exception Pattern_too_large of string * string * string * int * string

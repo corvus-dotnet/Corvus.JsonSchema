@@ -13,9 +13,19 @@ val create_scratch : unit -> scratch
 (** [create_scratch ()] makes working memory for {!is_match}. It can serve any number of compiled patterns, one match at
     a time. *)
 
-val compile : string -> t option
+(** Why a pattern was not compiled. *)
+type error =
+  | Invalid  (** The pattern is not a valid ECMA-262 regular expression. *)
+  | Too_large of string * int * string
+      (** The pattern is over a limit of size: the name of the limit, its value, and what the engine says of it. *)
+
+val compile : string -> (t, error) result
 (** [compile source] compiles an ECMA-262 pattern (with the u flag, or failing that without it, as many schemas need).
-    [None] when the pattern is invalid. (compileEngine of the Go source.) *)
+    (compileEngine of the Go source.) *)
+
+val check : string -> (bool, error) result
+(** [check source] reads a pattern without compiling it. It is [Ok true] for a pattern valid with the u flag, [Ok false]
+    for one valid only without it, and the error {!compile} would return otherwise. (checkRegex of the Go source.) *)
 
 val valid : string -> bool
 (** [valid source] reports whether a string is a valid ECMA-262 regular expression with the u flag (the regex format,

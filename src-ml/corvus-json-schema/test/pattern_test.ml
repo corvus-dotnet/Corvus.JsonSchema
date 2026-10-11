@@ -266,9 +266,9 @@ let test_matchers_agree_with_the_engine () =
     Array.iter
       (fun source ->
         match (Pattern_engine.compile source, Pattern.compile source) with
-        | None, _ -> Check.fail (Printf.sprintf "%S does not compile" source)
-        | _, None -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
-        | Some reference, Some compiled ->
+        | Error _, _ -> Check.fail (Printf.sprintf "%S does not compile" source)
+        | _, Error _ -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
+        | Ok reference, Ok compiled ->
             Check.equal_string "the source" ~expected:source (Pattern.source compiled);
             if Pattern.kind_name compiled = "engine" then incr engines;
             let i = ref 1 in
@@ -382,9 +382,9 @@ let test_more_shapes_agree_with_the_engine () =
     Array.iter
       (fun source ->
         match (Pattern_engine.compile source, Pattern.compile source) with
-        | None, _ -> Check.fail (Printf.sprintf "%S does not compile" source)
-        | _, None -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
-        | Some reference, Some compiled ->
+        | Error _, _ -> Check.fail (Printf.sprintf "%S does not compile" source)
+        | _, Error _ -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
+        | Ok reference, Ok compiled ->
             let i = ref 1 in
             while !i <= 4000 do
               let text = random_text 7 in
@@ -470,8 +470,8 @@ let test_simple_patterns_take_the_fast_matchers () =
         List.iter
           (fun source ->
             match Pattern.compile source with
-            | None -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
-            | Some p ->
+            | Error _ -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
+            | Ok p ->
                 Check.checkf
                   (Pattern.kind_name p = kind)
                   "%S takes matcher %s, want %s" source (Pattern.kind_name p) kind)
@@ -483,7 +483,7 @@ let test_invalid_patterns_are_rejected () =
   (* While the engine is a stub every pattern is rejected, and this would pass for the wrong reason. *)
   if needs_engine "TestInvalidPatternsAreRejected" then begin
     List.iter
-      (fun source -> Check.check (Printf.sprintf "%S compiled" source) (Pattern.compile source = None))
+      (fun source -> Check.check (Printf.sprintf "%S compiled" source) (Pattern.compile source = Error Pattern_engine.Invalid))
       [
         "a("; "[a"; "a{2,1}"; "(?<n>a)(?<n>b)"; "*a"; "^(?=a"; {p|(?<n>a)[\k]|p}; {p|^[\k]+(?<n>a)$|p};
         "^a{2147483648,2147483647}$"; "^[a-z]{99999999999999999999,99999999999999999998}$"; "^.{4294967296,1}$"; "(?<m>a)(?:x|(?<m>b))";
@@ -529,8 +529,8 @@ let test_excluded_class_with_a_member_outside_ascii () =
     List.iter
       (fun (source, excluded) ->
         match Pattern.compile source with
-        | None -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
-        | Some p ->
+        | Error _ -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
+        | Ok p ->
             Check.equal_string (source ^ " is matched by the engine") ~expected:"engine" (Pattern.kind_name p);
             List.iter
               (fun text ->
@@ -545,8 +545,8 @@ let m source text expected =
   (match Pattern.shape source with Some p -> check_every_way p text expected | None -> ());
   if engine_ready then
     match Pattern.compile source with
-    | None -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
-    | Some p -> check_every_way p text expected
+    | Error _ -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
+    | Ok p -> check_every_way p text expected
 
 (* The matchers one by one, on texts chosen for each. (TestMatchersByHand of the Object Pascal port.) *)
 let test_matchers_by_hand () =
@@ -894,8 +894,8 @@ let test_matching_allocates_nothing () =
     List.iter
       (fun (kind, source) ->
         match Pattern.compile source with
-        | None -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
-        | Some p -> measure kind source p)
+        | Error _ -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
+        | Ok p -> measure kind source p)
       allocation_patterns;
   List.iter
     (fun kind -> Check.check ("no allocation was measured for matcher " ^ kind) (List.mem kind !kinds))
@@ -1036,8 +1036,8 @@ let test_an_anchor_or_an_assertion_inside_a_shape_is_not_dropped () =
     List.iter
       (fun (source, matches, fails) ->
         match Pattern.compile source with
-        | None -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
-        | Some p ->
+        | Error _ -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
+        | Ok p ->
             List.iter (fun text -> check_every_way p text true) matches;
             List.iter (fun text -> check_every_way p text false) fails)
       anchor_cases;
@@ -1064,8 +1064,8 @@ let test_patterns_valid_only_without_the_u_flag_match_code_units () =
               let source = Suite.string d (Suite.member d c "p") in
               let valid_unicode = Suite.text d (Suite.member d c "u") = "true" in
               match Pattern.compile source with
-              | None -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
-              | Some p ->
+              | Error _ -> Check.fail (Printf.sprintf "%S is not a valid pattern" source)
+              | Ok p ->
                   if Pattern.kind_name p <> "engine" then incr fast;
                   Check.checkf
                     (Pattern_engine.valid source = valid_unicode)
