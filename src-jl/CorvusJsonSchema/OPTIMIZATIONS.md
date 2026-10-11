@@ -329,8 +329,8 @@ Each has to be measured before it is kept.
   code generator). They work around metadata rows of varying size and numbers kept as text. Here every value is two
   words, a container's children are consecutive, and a number's value is in the tape.
 - **Translation to RE2 with an automaton and a backtracking matcher** (Go), **translation to `java.util.regex`
-  with reused matchers** (Java), **the `regex` and `regress` crates** (Rust), **compiled IL regular expressions**
-  (C#). `EcmaRegex` over PCRE2 is this port's engine. The automaton alone is Todo 12.
+  with reused matchers** (Java), **the `regex` crate and a port of the Go engine** (Rust), **compiled IL regular
+  expressions** (C#). `EcmaRegex` over PCRE2 is this port's engine. The automaton alone is Todo 12.
 - **A vectorised search API** (`SearchValues` and `IndexOfAny` in C#). The source has no `@simd` loop and no
   vector API. Todo 4 would use the search `Base` has.
 - **Release profile settings** (the Rust crate's `lto` and `codegen-units`). The optimisation level belongs to the
