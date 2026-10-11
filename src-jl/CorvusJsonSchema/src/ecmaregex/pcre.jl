@@ -16,6 +16,8 @@ const PCRE2_ERROR_NOMATCH = Cint(-1)
 const PCRE2_ERROR_JIT_STACKLIMIT = Cint(-46)
 const PCRE2_ERROR_MATCHLIMIT = Cint(-47)
 const PCRE2_ERROR_NOMEMORY = Cint(-48)
+const PCRE2_ERROR_DEPTHLIMIT = Cint(-53)
+const PCRE2_ERROR_HEAPLIMIT = Cint(-63)
 const PCRE2_CONFIG_UNICODE_VERSION = 10
 const PCRE2_CONFIG_VERSION = 11
 
@@ -43,8 +45,26 @@ const LOOKBEHIND_COMPILE_OPTIONS = PCRE2_AUTO_CALLOUT
 # The number PCRE2 gives the callouts it adds.
 const CALLOUT_AUTOMATIC = 255
 # The most items the searches for the lookbehinds of one match may run. It is the number of steps PCRE2 allows one
-# call of pcre2_match.
+# call of pcre2_match when nothing sets another (see MATCH_LIMIT, which this module sets for the match itself).
 const STEP_LIMIT = 10_000_000
+
+# The most steps of one call of pcre2_match, which PCRE2 counts as it backtracks. A match that takes more is given
+# up, and is a MatchError ("match limit exceeded"). It is what stops a pattern that backtracks without end on a
+# text, so it is not lifted, and it is set here and not left to PCRE2, whose own figure is ten million unless the
+# library was built with another.
+#
+# Ten million is too few for three patterns of the ecma262-regex-test-data files that V8 answers. The most any of
+# them needs on any text is 157,454,775 steps with the JIT code of PCRE2 10.46 (32,325,636 with that of 10.42), and
+# 358,952,367 with the interpreter of either, which runs a match only when the JIT code ran out of stack or PCRE2
+# has no JIT compiler. Five hundred million is above all of those. A match that reaches it has taken one to four
+# seconds with the JIT code and seven to fifteen with the interpreter, on the machine that was measured.
+const MATCH_LIMIT = UInt32(500_000_000)
+# How deep the interpreter may nest what it backtracks over. PCRE2's own figure is its match limit as built, ten
+# million. It is set to the match limit, which a depth cannot pass, so that it is not a third limit of its own: the
+# steps of a match are limited by MATCH_LIMIT, and the memory of the interpreter by HEAP_LIMIT_KIB, which a match
+# reaches long before that depth (it is 64 MiB, which `^(?:ab|cd)*$` fills at fewer than two million levels). The
+# JIT code has neither limit. Its memory is its stack, and a match that fills that is run again by the interpreter.
+const DEPTH_LIMIT = MATCH_LIMIT
 
 # Where the stack of the code the JIT compiler writes starts, and how far it grows. They are the sizes Julia gives
 # its own.
@@ -54,9 +74,11 @@ const JIT_STACK_MAX = 1048576
 # did not take the pattern or its stack was too small for the match.
 const HEAP_LIMIT_KIB = 65536
 
-# Thrown when a match was given up. A pattern that backtracks without end on the text reaches the match limit of
-# PCRE2, the limit of its memory, or the limit of this module on the search for lookbehinds (STEP_LIMIT). Whether
-# the text matches is then not known, so it is never reported as no match.
+# Thrown when a match was given up. A pattern that backtracks without end on the text reaches the limit on the steps
+# of a match (MATCH_LIMIT, with the code -47 and the message "match limit exceeded"), the limit on the memory of the
+# interpreter (HEAP_LIMIT_KIB, -63, "heap limit exceeded"), or the limit of this module on the search for
+# lookbehinds (STEP_LIMIT, which is -47 too). Whether the text matches is then not known, so it is never reported
+# as no match.
 struct MatchError <: Exception
     pattern::String
     code::Int
@@ -357,6 +379,9 @@ function newframe(calloutfunction::Ptr{Cvoid}, root::Ptr{Frame})
         ccall((:pcre2_jit_stack_assign_8, PCRE_LIB), Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), context, C_NULL,
             stack)
     end
+    # The limits are set once, in the context a frame keeps, so a match sets nothing.
+    ccall((:pcre2_set_match_limit_8, PCRE_LIB), Cint, (Ptr{Cvoid}, UInt32), context, MATCH_LIMIT)
+    ccall((:pcre2_set_depth_limit_8, PCRE_LIB), Cint, (Ptr{Cvoid}, UInt32), context, DEPTH_LIMIT)
     ccall((:pcre2_set_heap_limit_8, PCRE_LIB), Cint, (Ptr{Cvoid}, UInt32), context, HEAP_LIMIT_KIB)
     ccall((:pcre2_set_callout_8, PCRE_LIB), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), context, calloutfunction,
         frame)

@@ -123,7 +123,8 @@ end
 
     # A match PCRE2 gives up on is an error, never "no match".
     @testset "a match that reaches a limit is an error" begin
-        # Each a can be matched two ways, so this backtracks through more ways than PCRE2's limit of ten million.
+        # Each a can be matched two ways, so this backtracks through more ways than the limit on the steps of a
+        # match, MATCH_LIMIT.
         slow = E.compile("^(?:a|a)+\$")
         @test E.ismatch(slow, "a"^40)
         @test_throws E.MatchError E.ismatch(slow, "a"^40 * "b")
@@ -155,6 +156,59 @@ end
         # The pattern is still good after an error.
         @test E.ismatch(slow, "aaa")
         @test !E.ismatch(slow, "b")
+    end
+
+    # PCRE2 allows a match ten million steps unless it is told another number, which is too few for three patterns
+    # of the ecma262-regex-test-data files on these texts. V8 answers each, and so does the package, which sets the
+    # limit to MATCH_LIMIT. The first is the one that takes the most steps of any pattern of those files.
+    @testset "a match that takes more steps than PCRE2 allows by itself" begin
+        @test E.MATCH_LIMIT == 500_000_000
+        @test E.DEPTH_LIMIT == E.MATCH_LIMIT
+        cases = [
+            (raw"^(?:(?!$)|(?:(?<n0>(?:(?<n1>(a|)(a|))|(?<n1>(|a)xx)){3,4}(a|))|(?<n0>.a)){3,}^.){2,2}" *
+             raw"(?:(?<!a)\6|[^a](((?=a)){2,2}(?:ax*|\10{2}){0,0}?|\8\10|a-){1,2}|(?<=x)\k<n1>*($|(a$(|a))+|a*?x+){1,}?){2,}x$",
+                "aaaaa", false),
+            (raw"(?:\1?){3,4}?\1(?:(?<n0>a(?=a))|(?<n0>((?:.*?a|\3){3,}|^|(?<=x)){3,}[ax](?<n1>\2.){0,2}?))*?\2a",
+                "xaxax", true),
+            (raw"^a{2}?(((?!)|((|a){2,}(|a)\B|){2,3}?){2,3}.{3}a{2})\4", "aaaaaaaaaaxa", true),
+        ]
+        for (pattern, text, wanted) in cases
+            @test E.ismatch(E.compile(pattern), text) == wanted
+        end
+        # With the limit PCRE2 has by itself, the first is given up, by the JIT code of either PCRE2.
+        compiled = E.compile(cases[1][1])
+        text = cases[1][2]
+        frame = unsafe_load(E.threadframe())
+        limit(steps) = ccall((:pcre2_set_match_limit_8, E.PCRE_LIB), Cint, (Ptr{Cvoid}, UInt32), frame.context, steps)
+        limit(10_000_000)
+        try
+            @test E.pcrematch(compiled.code, pointer(text), Csize_t(sizeof(text)), UInt32(0), frame) ==
+                  E.PCRE2_ERROR_MATCHLIMIT
+        finally
+            limit(E.MATCH_LIMIT)
+        end
+        @test !E.ismatch(compiled, text)
+        # A thread that has matched nothing yet has the limit too: its frame is made with it.
+        fresh = Threads.@spawn E.ismatch(E.compile(cases[3][1]), cases[3][2])
+        @test fetch(fresh)
+        # The interpreter, which runs a match when the JIT code is out of stack, has the same limit, and its
+        # memory is limited too. The error names the limit that was reached.
+        deep = E.compile("^(?:ab|cd)*\$")
+        error = try
+            E.ismatch(deep, "ab"^2_000_000)
+            nothing
+        catch e
+            e
+        end
+        @test error isa E.MatchError
+        @test error.code == E.PCRE2_ERROR_HEAPLIMIT
+        @test occursin("heap limit", sprint(showerror, error))
+        # A match sets no limit and makes no context: the frame of the thread and its context are the same after
+        # matches as before, and the matches allocate nothing.
+        before = (E.threadframe(), unsafe_load(E.threadframe()).context)
+        @test allocated(E.compile("^[a-z]+\\d\$"), "abc1", 10_000) == 0
+        @test allocated(E.compile("(?<=^(?:ab)*)c"), "ababc", 10_000) == 0
+        @test (E.threadframe(), unsafe_load(E.threadframe()).context) == before
     end
 
     # JIT code keeps what it may backtrack to on a stack of a megabyte. A match that needs more is run again by the
