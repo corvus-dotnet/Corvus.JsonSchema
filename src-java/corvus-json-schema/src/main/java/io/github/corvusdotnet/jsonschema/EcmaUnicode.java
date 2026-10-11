@@ -203,6 +203,13 @@ final class EcmaUnicode {
     private static final int BINARY = 2 << 16;
     private static final int SCRIPT = 3 << 16;
     private static final int SCRIPT_EXTENSIONS = 4 << 16;
+    /**
+     * The Script value Katakana_Or_Hiragana (Hrkt). PropertyValueAliases.txt has it, so ECMA-262 does, for Script and
+     * for Script_Extensions. No character has it: Scripts.txt gives it to none, and ScriptExtensions.txt names the
+     * two scripts apart. So its set is empty and it has no table.
+     */
+    private static final int NO_CHARACTER_SCRIPT = 5 << 16;
+    private static final int[] NO_CHARACTERS = new int[0];
 
     /**
      * Resolves the expression p[start, end) between the braces of {@code \p{...}}, as ECMA-262 does: a name and a
@@ -229,13 +236,13 @@ final class EcmaUnicode {
             int category = find(EcmaUnicodeData.CATEGORY_NAMES, p, eq + 1, end);
             return category >= 0 ? CATEGORY | category : NONE;
         }
-        if (is("Script", p, start, eq) || is("sc", p, start, eq)) {
-            int script = find(EcmaUnicodeData.SCRIPT_NAMES, p, eq + 1, end);
-            return script >= 0 ? SCRIPT | script : NONE;
-        }
-        if (is("Script_Extensions", p, start, eq) || is("scx", p, start, eq)) {
-            int script = find(EcmaUnicodeData.SCRIPT_NAMES, p, eq + 1, end);
-            return script >= 0 ? SCRIPT_EXTENSIONS | script : NONE;
+        boolean script = is("Script", p, start, eq) || is("sc", p, start, eq);
+        if (script || is("Script_Extensions", p, start, eq) || is("scx", p, start, eq)) {
+            int value = find(EcmaUnicodeData.SCRIPT_NAMES, p, eq + 1, end);
+            if (value >= 0) {
+                return (script ? SCRIPT : SCRIPT_EXTENSIONS) | value;
+            }
+            return is("Katakana_Or_Hiragana", p, eq + 1, end) || is("Hrkt", p, eq + 1, end) ? NO_CHARACTER_SCRIPT : NONE;
         }
         return NONE;
     }
@@ -269,6 +276,8 @@ final class EcmaUnicode {
             }
             case SCRIPT:
                 return table(EcmaUnicodeData.SCRIPT_TABLES[index]);
+            case NO_CHARACTER_SCRIPT:
+                return NO_CHARACTERS;
             default:
                 return table(EcmaUnicodeData.SCRIPT_EXTENSION_TABLES[index]);
         }

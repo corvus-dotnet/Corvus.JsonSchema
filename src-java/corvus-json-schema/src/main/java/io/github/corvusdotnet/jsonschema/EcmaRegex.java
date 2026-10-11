@@ -720,7 +720,33 @@ final class EcmaRegex {
             if (start == i) {
                 throw error("expected a number");
             }
+            while (start < i - 1 && p[start] == '0') {
+                start++;
+            }
+            numberStart = start;
+            numberEnd = i;
             return (int) v;
+        }
+
+        /** Where the digits of the number read last stand in the pattern, without the zeros it starts with. */
+        private int numberStart;
+        private int numberEnd;
+
+        /**
+         * Whether the number read last is less than the one whose digits stand at {@code start} to {@code end}. The
+         * numbers are compared as they are written: a count is kept only up to {@link #MAX_COUNT}, and ECMA-262
+         * compares the two counts of a quantifier whatever their size.
+         */
+        private boolean lessThan(int start, int end) {
+            if (numberEnd - numberStart != end - start) {
+                return numberEnd - numberStart < end - start;
+            }
+            for (int k = 0; k < end - start; k++) {
+                if (p[numberStart + k] != p[start + k]) {
+                    return p[numberStart + k] < p[start + k];
+                }
+            }
+            return false;
         }
 
         /** Reads a quantifier as a REPEAT with no child yet, or returns null when there is none. */
@@ -741,13 +767,21 @@ final class EcmaRegex {
                 i++;
                 repeat.min = number();
                 repeat.max = repeat.min;
+                int minStart = numberStart;
+                int minEnd = numberEnd;
+                boolean ordered = true;
                 if (eat(',')) {
-                    repeat.max = peek() == '}' ? UNBOUNDED : number();
+                    if (peek() == '}') {
+                        repeat.max = UNBOUNDED;
+                    } else {
+                        repeat.max = number();
+                        ordered = !lessThan(minStart, minEnd);
+                    }
                 }
                 if (!eat('}')) {
                     throw error("malformed quantifier");
                 }
-                if (repeat.max != UNBOUNDED && repeat.max < repeat.min) {
+                if (!ordered) {
                     throw error("numbers out of order in quantifier");
                 }
             } else {
@@ -5927,7 +5961,29 @@ final class EcmaRegex {
             if (start == i) {
                 throw INVALID;
             }
+            while (start < i - 1 && p.charAt(start) == '0') {
+                start++;
+            }
+            numberStart = start;
+            numberEnd = i;
             return v;
+        }
+
+        /** Where the digits of the number read last stand in the pattern, without the zeros it starts with. */
+        private int numberStart;
+        private int numberEnd;
+
+        /** Whether the number read last is less than the one at {@code start} to {@code end}, as they are written. */
+        private boolean lessThan(int start, int end) {
+            if (numberEnd - numberStart != end - start) {
+                return numberEnd - numberStart < end - start;
+            }
+            for (int k = 0; k < end - start; k++) {
+                if (p.charAt(numberStart + k) != p.charAt(start + k)) {
+                    return p.charAt(numberStart + k) < p.charAt(start + k);
+                }
+            }
+            return false;
         }
 
         private boolean quantifier() {
@@ -5936,17 +5992,15 @@ final class EcmaRegex {
                 i++;
             } else if (c == '{' && looksLikeQuantifier()) {
                 i++;
-                long min = number();
-                long max = min;
-                boolean open = false;
-                if (eat(',')) {
-                    if (peek() == '}') {
-                        open = true;
-                    } else {
-                        max = number();
-                    }
+                number();
+                int minStart = numberStart;
+                int minEnd = numberEnd;
+                boolean ordered = true;
+                if (eat(',') && peek() != '}') {
+                    number();
+                    ordered = !lessThan(minStart, minEnd);
                 }
-                if (!eat('}') || (!open && max < min)) {
+                if (!eat('}') || !ordered) {
                     throw INVALID;
                 }
             } else {

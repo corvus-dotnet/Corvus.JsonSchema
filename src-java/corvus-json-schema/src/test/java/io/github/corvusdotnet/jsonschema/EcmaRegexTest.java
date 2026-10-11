@@ -2172,4 +2172,47 @@ class EcmaRegexTest {
         assertMatches("^(a)[\\k<a>]$", "a<");
         assertMatches("^(?<n>a)\\k<n>[k]$", "aak");
     }
+
+    /**
+     * Two places where ECMA-262 and V8 13.6 differ on what is a valid pattern, in which the translator follows
+     * ECMA-262. The Script value Katakana_Or_Hiragana (Hrkt) is in PropertyValueAliases.txt, so ECMA-262 has it, and
+     * no character has it. V8 refuses it. And the two counts of a quantifier are compared whatever their size, where
+     * V8 keeps a count only up to 2,147,483,647 and so takes a first count that is greater than the second.
+     */
+    @Test
+    void whereEcma262AndV8DifferOnWhatIsValid() {
+        for (String p : new String[] {
+            "\\p{sc=Hrkt}", "\\p{Script=Katakana_Or_Hiragana}", "\\p{scx=Hrkt}",
+            "\\p{Script_Extensions=Katakana_Or_Hiragana}", "\\P{sc=Hrkt}", "[\\p{sc=Hrkt}a]", "[^\\p{scx=Hrkt}]",
+        }) {
+            assertValid(p);
+        }
+        for (String text : new String[] {"a", "\u3042", "\u30a2", "\u30fc", "\ud83d\ude00"}) {
+            assertNoMatch("\\p{sc=Hrkt}", text);
+            assertNoMatch("\\p{scx=Katakana_Or_Hiragana}", text);
+            assertMatches("^\\P{sc=Hrkt}$", text);
+            assertMatches("^[^\\p{scx=Hrkt}]$", text);
+        }
+        assertMatches("^[\\p{sc=Hrkt}a]$", "a");
+        // Not names of ECMA-262: the value alone, and the name V8 takes for White_Space.
+        assertNotValid("\\p{Hrkt}");
+        assertNotValid("\\p{Katakana_Or_Hiragana}");
+        assertNotValid("\\p{WSpace}");
+        for (String p : new String[] {
+            "a{2147483648,2147483647}", "(?<n>a)a{2147483648,2147483647}", "(?i:a{2147483648,2147483647})",
+            "a{99999999999999999999,99999999999999999998}", "a{010,9}", "a{2,1}",
+        }) {
+            assertNotValid(p);
+            assertNull(EcmaRegex.translate(p), p);
+            assertNull(EcmaRegex.unsupported(p), p);
+        }
+        for (String p : new String[] {
+            "a{2147483647,2147483648}", "a{2147483648,2147483648}", "a{2,002}", "a{0,99999999999999999999}",
+            "a{00000000000000000000001,2}",
+        }) {
+            assertValid(p);
+        }
+        assertMatches("^a{00000000000000000000001,2}$", "aa");
+        assertNoMatch("^a{00000000000000000000001,2}$", "aaa");
+    }
 }
