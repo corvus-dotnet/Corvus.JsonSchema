@@ -108,6 +108,12 @@ this way, through CPython's C API.
     `SchemaCompilationError::kind` is `PatternTooLarge`. A pattern of plain characters can be 16,384 characters long.
   - *What the crate keeps is bounded.* The cache of compiled patterns of the process holds 1,024 patterns and 64 MiB
     at most, and the `regex` crate is given no program over 2 MiB.
+  - *The format checks take time proportional to the string.* They read strings of the instance and are not under
+    the limit of a match. Dates, times, UUIDs, IP addresses and host names are read by scanners that pass over the
+    string once, and the others are regular expressions on the `regex` crate, which is linear. `regex` reads the
+    string as a pattern, with the limits of size. `idn-hostname`, and the domain of an `idn-email`, read nothing of
+    a string over 1,012 bytes: an internationalized host name has 253 characters at most, and its check decodes and
+    encodes Punycode, which takes time that grows with the square of a label.
   - *What is not bounded.* The limit is for each match, not for a validation. The matchers that read a string once
     are not stopped, and `regex` is given a string only when it can answer within the limit. With the limit turned
     off, nothing bounds a match: a group read back inside a repetition, as in `^(?:(a+)\1*)+$`, takes time that

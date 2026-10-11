@@ -173,6 +173,7 @@ assert_eq!(error.kind(), &SchemaCompilationErrorKind::InvalidPattern);
 | The limits of size | 1,048,576 bytes of pattern (`length`), 1,000 levels of groups (`nesting`), and 1,048,576 counted as the pattern is read (`size`: 64 for a term, 32 for an alternative, 8 for a range of a class). |
 | Over one | `compile` returns a `SchemaCompilationError` whose `kind()` is `PatternTooLarge`, with the pattern, the keyword, the name of the limit and its value. A pattern that is not valid is `InvalidPattern`. The `regex` format answers `false`. |
 | What the process keeps | The cache of compiled patterns holds 1,024 patterns and 64 MiB at most. The `regex` crate compiles no program over 2 MiB. |
+| The format checks | They read strings of the instance, are not under the limit of a match, and take time proportional to the string: scanners that pass over it once, and regular expressions on the `regex` crate. `regex` reads the string as a pattern, with the limits of size. `idn-hostname` and the domain of an `idn-email` read nothing of a string over 1,012 bytes. |
 | What is not bounded | The limit is for each match, so a validation takes the sum of its matches. The matchers that read a string once are not stopped, and `regex` is given a string only when it can answer within the limit. With the limit turned off nothing bounds a match. |
 
 ## Performance
