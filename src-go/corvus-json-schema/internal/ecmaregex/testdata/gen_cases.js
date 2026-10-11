@@ -11,6 +11,9 @@
 //   - loops: repetitions whose body cannot consume a character, and backreferences inside the group they name. The
 //     first thirteen took the matcher longer than anyone would wait before it rewrote them.
 //   - fast: patterns of the shapes the module matches without the engine, valid only without the u flag.
+//   - needs: counted loops whose iterations can be empty, before a rest of the pattern that needs more text than is
+//     left. The first three do not finish unless the matcher gives up at such a loop, as V8 does. The others have
+//     such loops inside and around lookaheads and lookbehinds, where a wrong count of what is left would show.
 'use strict';
 const A = "\u{10400}", B = "\u{10428}", E = "\u{1F600}";
 function ask(p, texts) {
@@ -73,10 +76,21 @@ const fastPatterns = [
   "^[^\\#]{2,4}$", "^a.\\-?b$", "^\\-?" + A + "$", "^\\-" + A + "?$", "^\\-?" + A + "+$", "^(\\-|" + A + ")$", "^a\\-?|" + A + "{2}$", "^[^\\-]$", "^[^\\-][^\\-]$",
   "^x\\-", "^\\_?.{1,2}$", "^.{3}\\_?$", "\\-?.{3}", "^\\-?[^a]$", "^[a\\-]?.$",
 ];
+const needsPatterns = [
+  "(?:\\1|[^a]|$(?:a?|(?<!^)){4}?){8,9}?(\\b|a)+?a$", "(?:\\1|x|$(?:x?|(?<!^)){5}){7,}(\\B|-)+?-$",
+  "(?:(?:-|$(?:(?<!^)|x?){5})|\\1){6,}(a)x$",
+  "(?:\\1|[^a]|$(?:a?|(?<!^)){4}?){4,6}?(\\b|a)+?a$",
+  "(?:(?:a|x|){2,}){5}(?=(?:a|){3}x)ax", "(?:(?<=(a|)\\1)|[ax]|$(?:|\\b|\\B|a?){6}){6}(?:a|x)$",
+  "^(?:a|){2,3}(?<=(?:a|){2,3}x?)$", "(?<=(?:x|a|){3,4}a)(?:-|){2,}$", "(?!(?:a|){2}xx)(?:x|){2}x", "(?=(?:a|){3}x)(?:a|x|){2}",
+  "^(?:(?=(?:a|){2}(x))|a){2,}\\1", "(?<!(?:(?:a|){2}x){2})-$", "^(?:(a)|){2,}\\1\\1$", "(?:(?:a|){2}(?=(?:x|){2}-)){2}x",
+  "(?<=(?=(?:x|){3}a)(?:a|x|){2})a$", "^(?:(?:a|){2}){2}$", "^(?:(?:a|){2,}?x){2}$", "(?:a|){3}(?<=^(?:a|){3})xx", "(?:(?:x|){2}(?!(?:a|){2}-)){2}a$",
+  "^(?:(?:a|x|-|){3}){3}(?<=(?:a|){2}x)-", "(?:(?:a|){2}\\b){2}x-", "^(?:(?:(a)|){2}\\1){2}x$",
+];
 const out = {
   node: process.version,
   units: unitPatterns.map((p) => ask(p, unitTexts)),
   loops: loopPatterns.map((p) => ask(p, loopTexts)),
   fast: fastPatterns.map((p) => ask(p, fastTexts)),
+  needs: needsPatterns.map((p) => ask(p, loopTexts)),
 };
 process.stdout.write(JSON.stringify(out));

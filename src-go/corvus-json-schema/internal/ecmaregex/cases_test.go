@@ -3,6 +3,7 @@ package ecmaregex
 import (
 	"encoding/json"
 	"os"
+	"slices"
 	"testing"
 	"time"
 )
@@ -24,6 +25,7 @@ type v8Cases struct {
 	Units []v8Case `json:"units"`
 	Loops []v8Case `json:"loops"`
 	Fast  []v8Case `json:"fast"`
+	Needs []v8Case `json:"needs"`
 }
 
 func loadCases(t *testing.T) *v8Cases {
@@ -150,6 +152,55 @@ func dump(n *node) string {
 		s += dump(sub)
 	}
 	return s + ")"
+}
+
+// TestLoopsGiveUpWhenTheRestCannotFit checks, against V8, counted loops whose iterations can be empty, before a rest
+// of the pattern that needs more text than is left. The matcher gives up at such a loop (see setNeeds). Without
+// that, the first three patterns of the set do not finish: at the end of the text their loops try every combination
+// of the ways through every iteration. Each pattern has ten seconds for all its texts. The other patterns have such
+// loops inside and around lookaheads and lookbehinds, where a wrong count of what is left would give a wrong answer.
+func TestLoopsGiveUpWhenTheRestCannotFit(t *testing.T) {
+	c := loadCases(t)
+	start := time.Now()
+	answers, matched, _, _ := checkCases(t, c.Needs, 10*time.Second)
+	t.Logf("%d patterns, %d answers per back end (%d of them a match) in %v", len(c.Needs), answers, matched,
+		time.Since(start).Round(time.Millisecond))
+	if len(c.Needs) < 20 || matched < 100 {
+		t.Errorf("the cases are not the ones this test is about")
+	}
+}
+
+// TestNeeds checks the least number of bytes a match consumes, which setNeeds works out for a program and for each
+// of its counted loops. The figure is a lower bound: the way out of a counted loop is counted without its minimum
+// number of iterations.
+func TestNeeds(t *testing.T) {
+	for _, c := range []struct {
+		pattern string
+		// need is the need of the program, and loops the needs of its counted loops in order.
+		need  int
+		loops []int32
+	}{
+		{`abc`, 3, nil}, {`a+b{2,}c?`, 3, nil}, {`(?:a|bc)d`, 2, nil}, {`(?=abc)a`, 1, nil}, {`(?<=abc)d`, 1, nil},
+		{`\u00e9{2}\u{10400}`, 3, nil}, {`(?:a|){3}xy$`, 2, []int32{2}}, {`(?:a|){3}`, 0, []int32{0}},
+		{`(?:(?:a|){2}b){2}c`, 1, []int32{1, 2}}, {`(?=(?:a|){2}xyz)(?:b|){2}c`, 1, []int32{3, 1}},
+		{`(?<=(?:ab|){2}c)(?:d|){2}ef`, 2, []int32{0, 2}}, {`(?!(?:a|){2}xx)(?:(x)|){2}\1y`, 1, []int32{2, 1}},
+		{`(?:a|){2}[]`, noMatch, []int32{noMatch}}, {`(?:(?:a|){2}|bcd)e`, 1, []int32{1}},
+	} {
+		root, _, err := parse(c.pattern, true)
+		if err != nil {
+			t.Fatalf("parse(%q): %v", c.pattern, err)
+		}
+		p := compileProgram(root, true)
+		var loops []int32
+		for _, i := range p.insts {
+			if i.op == opLoop {
+				loops = append(loops, i.need)
+			}
+		}
+		if p.need != c.need || !slices.Equal(loops, c.loops) {
+			t.Errorf("%q: need %d, loops %v, want %d and %v", c.pattern, p.need, loops, c.need, c.loops)
+		}
+	}
 }
 
 // TestCodeUnitPositions checks the two readers of a code unit on every position of a text, forwards and backwards.

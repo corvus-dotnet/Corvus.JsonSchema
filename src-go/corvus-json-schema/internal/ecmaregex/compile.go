@@ -72,6 +72,9 @@ type inst struct {
 	a, b int32
 	// min and max bound a repetition. A max of -1 is no bound.
 	min, max int32
+	// need is the least number of bytes of text that every way from this instruction to a match consumes going
+	// forward (see setNeeds). It is set for an opLoop.
+	need int32
 }
 
 // A program is a pattern compiled for the backtracking matcher.
@@ -85,6 +88,8 @@ type program struct {
 	anchored bool
 	// prefix is literal text every match starts with.
 	prefix []byte
+	// need is the least number of bytes a match consumes (see setNeeds).
+	need int
 	// first holds every code point a match can start with. It is nil when a match can be empty or when the set is
 	// not known.
 	first *charSet
@@ -123,6 +128,7 @@ func compileProgram(root *node, unicode bool) *program {
 	c.emit(root, false)
 	c.add(inst{op: opMatch})
 	p := &program{insts: c.insts, groups: len(c.tracked), loops: c.loops, units: !unicode}
+	p.need = setNeeds(p.insts)
 	p.anchored = startsAtBOL(root)
 	if !p.anchored {
 		p.prefix = literalPrefix(root, nil)
@@ -431,6 +437,73 @@ func (c *compiler) emitRepeat(n *node, back bool) {
 	emitBody()
 	c.add(inst{op: opJmp, x: loop})
 	c.insts[loop].x = c.pc()
+}
+
+// noMatch is the need of an instruction from which no way leads to a match.
+const noMatch = 1 << 30
+
+// setNeeds works out, for every instruction, the least number of bytes of text that any way from it to a match
+// consumes going forward, and writes it into the counted loops. It returns the need of the whole program. The
+// matcher gives up at a counted loop when fewer bytes than that are left, as V8 does at every choice. A loop whose
+// iterations can be empty would otherwise try every combination of its ways at a position from which the rest of
+// the pattern cannot match at all.
+//
+// A character is counted as one byte, a literal run as its bytes and a single character loop as its minimum, so the
+// figure can only be too small. The body of a lookaround ends at its own last instruction and the instruction that
+// opens one goes straight to what follows it, so a body is counted by itself. An instruction that matches right to
+// left, which is the body of a lookbehind, counts nothing.
+func setNeeds(insts []inst) int {
+	need := make([]int32, len(insts))
+	for pc := range need {
+		need[pc] = noMatch
+	}
+	// The needs only fall, and nearly every way goes forward, so going through the instructions from the last to the
+	// first settles all but the loops in one pass.
+	for changed := true; changed; {
+		changed = false
+		for pc := len(insts) - 1; pc >= 0; pc-- {
+			i := &insts[pc]
+			n := int32(noMatch)
+			next := func(to int32, weight int32) {
+				if v := need[to] + weight; v < n {
+					n = v
+				}
+			}
+			switch i.op {
+			case opMatch, opLookOK, opLookFail:
+				n = 0
+			case opFail:
+			case opChar, opSet:
+				next(int32(pc+1), 1)
+			case opLit:
+				next(int32(pc+1), int32(len(i.lit)))
+			case opRep, opRepLazy:
+				next(int32(pc+1), i.min)
+			case opJmp, opLook:
+				next(i.x, 0)
+			case opSplit:
+				next(i.x, 0)
+				next(i.y, 0)
+			case opLoop:
+				next(int32(pc+1), 0)
+				next(i.x, 0)
+			default:
+				next(int32(pc+1), 0)
+			}
+			if n > noMatch {
+				n = noMatch
+			}
+			if n < need[pc] {
+				need[pc], changed = n, true
+			}
+		}
+	}
+	for pc := range insts {
+		if insts[pc].op == opLoop {
+			insts[pc].need = need[pc]
+		}
+	}
+	return int(need[0])
 }
 
 // literalRune reports whether a code point can be matched by comparing its UTF-8 bytes. A surrogate has no encoding,

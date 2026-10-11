@@ -259,7 +259,8 @@ A pattern with a lookaround or a backreference runs on a backtracking matcher, w
 quantifiers can take it exponential time on a string that does not match. A repetition whose body cannot consume a
 character, such as `(?:\b|(?=a)|){4,5}`, is not such a case. Every iteration of it is empty, so the matcher runs
 the body once when the minimum is one or more and not at all when it is zero, which is what ECMA-262 says such a
-repetition matches.
+repetition matches. And a counted repetition is not tried at all at a place where the rest of the pattern needs more
+of the string than is left.
 
 ## Differences from the Rust crate
 

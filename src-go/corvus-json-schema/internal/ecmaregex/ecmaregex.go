@@ -43,7 +43,9 @@
 // explicit pooled stack, so a long text cannot overflow the goroutine stack and a match does not allocate once the
 // stack has grown. It has no step budget, so a pattern with nested quantifiers and a lookaround or a backreference
 // can take exponential time, as it can in any backtracking engine. A repetition whose body cannot consume a
-// character is not such a pattern. It is run once, or not at all (see simplify), as V8 runs it.
+// character is not such a pattern. It is run once, or not at all (see simplify), as V8 runs it. And a counted loop
+// gives up at a position from which the rest of the pattern needs more text than is left (see setNeeds), as V8
+// does, so a loop whose iterations can be empty does not try every combination of them there.
 //
 // # Coverage and limits
 //

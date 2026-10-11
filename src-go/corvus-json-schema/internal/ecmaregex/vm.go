@@ -64,6 +64,9 @@ func (p *program) match(in []byte) bool {
 }
 
 func (p *program) search(st *state, in []byte) bool {
+	if len(in) < p.need {
+		return false
+	}
 	if p.anchored {
 		return p.run(st, in, 0)
 	}
@@ -85,7 +88,11 @@ func (p *program) search(st *state, in []byte) bool {
 		}
 		r, w := rune(in[at]), 1
 		if r >= utf8.RuneSelf {
-			r, w = decode(in, at, p.units)
+			if p.units {
+				r, w = unitAt(in, at)
+			} else {
+				r, w = utf8.DecodeRune(in[at:])
+			}
 		}
 		if (p.first == nil || p.first.contains(r)) && p.run(st, in, at) {
 			return true
@@ -115,10 +122,19 @@ func (p *program) run(st *state, in []byte, start int) bool {
 						pc++
 						continue
 					}
-				} else if r, w := decode(in, pos, units); r == i.r {
-					pos += w
-					pc++
-					continue
+				} else {
+					var r rune
+					var w int
+					if units {
+						r, w = unitAt(in, pos)
+					} else {
+						r, w = utf8.DecodeRune(in[pos:])
+					}
+					if r == i.r {
+						pos += w
+						pc++
+						continue
+					}
 				}
 			}
 		case opSet:
@@ -129,10 +145,19 @@ func (p *program) run(st *state, in []byte, start int) bool {
 						pc++
 						continue
 					}
-				} else if r, w := decode(in, pos, units); i.set.contains(r) {
-					pos += w
-					pc++
-					continue
+				} else {
+					var r rune
+					var w int
+					if units {
+						r, w = unitAt(in, pos)
+					} else {
+						r, w = utf8.DecodeRune(in[pos:])
+					}
+					if i.set.contains(r) {
+						pos += w
+						pc++
+						continue
+					}
 				}
 			}
 		case opLit:
@@ -145,7 +170,11 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			if pos > 0 {
 				r, w := rune(in[pos-1]), 1
 				if r >= utf8.RuneSelf {
-					r, w = decodeLast(in, pos, units)
+					if units {
+						r, w = unitBefore(in, pos)
+					} else {
+						r, w = utf8.DecodeLastRune(in[:pos])
+					}
 				}
 				if r == i.r {
 					pos -= w
@@ -157,7 +186,11 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			if pos > 0 {
 				r, w := rune(in[pos-1]), 1
 				if r >= utf8.RuneSelf {
-					r, w = decodeLast(in, pos, units)
+					if units {
+						r, w = unitBefore(in, pos)
+					} else {
+						r, w = utf8.DecodeLastRune(in[:pos])
+					}
 				}
 				if i.set.contains(r) {
 					pos -= w
@@ -354,7 +387,13 @@ func (p *program) run(st *state, in []byte, start int) bool {
 						}
 						at++
 					} else {
-						r, w := decode(in, at, units)
+						var r rune
+						var w int
+						if units {
+							r, w = unitAt(in, at)
+						} else {
+							r, w = utf8.DecodeRune(in[at:])
+						}
 						if !set.contains(r) {
 							break
 						}
@@ -369,7 +408,11 @@ func (p *program) run(st *state, in []byte, start int) bool {
 				for n != i.max && at < len(in) {
 					r, w := rune(in[at]), 1
 					if r >= utf8.RuneSelf {
-						r, w = decode(in, at, units)
+						if units {
+							r, w = unitAt(in, at)
+						} else {
+							r, w = utf8.DecodeRune(in[at:])
+						}
 					}
 					if r != i.r {
 						break
@@ -413,6 +456,10 @@ func (p *program) run(st *state, in []byte, start int) bool {
 			pc++
 			continue
 		case opLoop:
+			// Fewer bytes are left than any way from here to a match consumes.
+			if len(in)-pos < int(i.need) {
+				break
+			}
 			n := counts[2*i.a]
 			// Once the minimum is met, ECMA-262 rejects an iteration that consumed nothing. That is what stops a
 			// loop over a body that can be empty.
@@ -544,7 +591,11 @@ func (i *inst) one(in []byte, at int, units bool) int {
 	}
 	r, w := rune(in[at]), 1
 	if r >= utf8.RuneSelf {
-		r, w = decode(in, at, units)
+		if units {
+			r, w = unitAt(in, at)
+		} else {
+			r, w = utf8.DecodeRune(in[at:])
+		}
 	}
 	if i.set != nil {
 		if !i.set.contains(r) {

@@ -62,7 +62,8 @@ func unitBefore(in []byte, pos int) (rune, int) {
 }
 
 // decode returns the character at the position and its width in bytes: a code unit with units set, and a code point
-// otherwise.
+// otherwise. It is for the places that are not hot. The matcher's own instructions make the choice themselves, so
+// that reading a code point stays one call.
 func decode(in []byte, pos int, units bool) (rune, int) {
 	if units {
 		return unitAt(in, pos)
