@@ -845,6 +845,59 @@ def test_the_limit_is_not_seconds_late_for_a_repetition_of_a_class_of_many_range
         assert _costly(0.1, pattern, unit * 100_000) < 2.5, one[:30]
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# A long literal
+
+
+def _first_match(pattern: str, text: str, limit: float | None = 0.5) -> tuple[bool, float]:
+    """The answer of a pattern that has not been compiled before, and the processor's time it took."""
+    pattern_module._cache.pop((pattern, limit), None)
+    start = time.process_time()
+    matcher = compile_pattern(pattern, limit)
+    assert matcher is not None and _engine(matcher) == "regex"
+    answer = matcher(text) is not None
+    return answer, time.process_time() - start
+
+
+@pytest.mark.parametrize("unit", ["a", "ab", "abcd"])
+def test_a_long_literal_does_not_hold_the_regex_package(unit: str) -> None:
+    # Before the first match of a pattern the engine builds the tables of a search for a literal, in a step that
+    # its timeout does not interrupt. For a literal that repeats itself the step took 3 to 7 seconds for 4,000
+    # characters and eight times that for twice as many, with a limit of half a second in force.
+    literal = unit * (6000 // len(unit))
+    for pattern, text in (
+        (f"(?<=^){literal}$", literal),
+        (f"(?<={literal})$", literal),
+        (f"(?<=^)(?:{literal}x|{literal}y|{literal})$", literal),
+        ("(?<=^)" + f"(?:{unit})" * (6000 // len(unit)) + "$", literal),
+        ("(?<=^)" + "".join(f"[{c}]" for c in literal) + "$", literal),
+    ):
+        answer, took = _first_match(pattern, text)
+        assert answer and took < 5, (pattern[:30], took)
+
+
+def test_a_long_literal_in_pieces_is_the_same_literal() -> None:
+    assert pattern_module._MAX_LITERAL == 256
+    literal = "ab" * 700
+    written = pattern_module.translate(f"(?<=^){literal}$")
+    assert written is not None and written[1]
+    assert written[0].count(pattern_module._AFTER_A_CHARACTER) == len(literal) // 256
+    # A text that differs by one character anywhere, at the places where the literal is parted among them, is not
+    # matched, forwards or in a lookbehind.
+    forwards, behind = compile_pattern(f"(?<=^){literal}$"), compile_pattern(f"(?<={literal})$")
+    assert forwards is not None and behind is not None
+    assert forwards(literal) and behind("x" + literal) and behind(literal)
+    for at in (0, 1, 254, 255, 256, 257, 511, 512, 513, 1023, 1024, len(literal) - 1):
+        other = literal[:at] + "c" + literal[at + 1 :]
+        assert forwards(other) is None and behind(other) is None, at
+    assert forwards(literal[1:]) is None and behind(literal[1:]) is None
+    # A literal within the limit of a pattern is within the limit of a translation: the parts do not count.
+    longest = "(?<=^)" + "ab" * 16380
+    assert len(longest) <= pattern_module.MAX_PATTERN
+    answer, took = _first_match(longest, "ab" * 16380)
+    assert answer and took < 20
+
+
 def test_a_count_is_no_matter_to_the_standard_library() -> None:
     # The standard library's engine keeps a count as a number, so a pattern it is proved to run in linear time may
     # have any count.

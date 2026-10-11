@@ -118,6 +118,13 @@ _LONG_CLASS = 64
 _CALL = 8
 # The most characters of a translation for the standard library's engine, with every copy of a long class counted.
 _MAX_WRITTEN_FOR_RE = 262_144
+# The most characters of a literal that the regex package is given in one piece. Before the first match of a
+# pattern the engine builds the tables of a search for each literal in it, in one step that its timeout does not
+# interrupt, and for a literal that repeats itself that step takes a time that grows as the cube of the length: 0.05
+# seconds for 1,000 characters of "ab", 3.3 for 4,000 and 27 for 8,000. A longer literal is written with something
+# between its pieces that takes no character and always holds there: there is a character before this place.
+_MAX_LITERAL = 256
+_AFTER_A_CHARACTER = "(?<=(?s:.))"
 # The most ranges of a class that the regex package may go through for each character of a text in one step of a
 # match. The engine takes a repetition of one character or class as one step, however much of the text it runs
 # over, and looks at its clock every 256 steps. It goes through the ranges of a class one by one, so with a class
@@ -1936,6 +1943,12 @@ class _Writer:
         # microsecond for a character and keeps a table for it, so it is given more, with each long class counted
         # once (see write).
         self.most = _MAX_TRANSLATED if for_regex else _MAX_WRITTEN_FOR_RE
+        # How many characters of literals have been written for the regex package, and how many times one was
+        # followed by what parts a long literal (see _MAX_LITERAL). The parts do not count towards the length.
+        self.literals = 0
+        self.parted = 0
+        if for_regex:
+            self.most += (_MAX_TRANSLATED // _MAX_LITERAL + 1) * len(_AFTER_A_CHARACTER)
         self.groups: dict[int, _Node] = {}
         self.refs: list[_Node] = []
         self.count = 0
@@ -2104,15 +2117,16 @@ class _Writer:
         if self.reset or self.seen:
             before = "(?P<z>)" if self.seen else ""
             out = before + "".join(f"(?P<g{g}>)" for g in sorted(self.reset)) + f"(?:{out})"
+        length = len(out) - self.parted * len(_AFTER_A_CHARACTER)
         if self.share:
             # The groups of the classes come first, so that they have the numbers they are called by.
             classes = "".join(f"({text})" for text in self.classes)
-            if len(out) + len(classes) > _MAX_TRANSLATED:
+            if length + len(classes) > _MAX_TRANSLATED:
                 raise _TooLarge()
         else:
             classes = ""
             again = sum((times - 1) * (len(text) - _CALL) for text, times in self.classes.items())
-            if len(out) - (0 if self.for_regex else again) > _MAX_TRANSLATED:
+            if length - (0 if self.for_regex else again) > _MAX_TRANSLATED:
                 raise _TooLarge()
         if not self.tests:
             return f"(?(DEFINE){classes}){out}" if classes else out
@@ -2125,7 +2139,7 @@ class _Writer:
             names = list(self.tests.values())
             tests = self._test(names[0], sets) + "".join(f"(?P<{name}>(?&{names[0]}))" for name in names[1:])
         comparisons = "".join(f"(?P<{name}>{text})" for name, text in self.comparisons.values())
-        if len(out) + len(classes) + len(comparisons) > _MAX_TRANSLATED:
+        if length + len(classes) + len(comparisons) > _MAX_TRANSLATED:
             raise _TooLarge()
         return f"(?(DEFINE){classes}{tests}{comparisons}){out}"
 
@@ -2200,6 +2214,16 @@ class _Writer:
         k = n.kind
         if k == _TEXT:
             text = n.text
+            if self.for_regex and n.nothing is False and n.chars is not None and not n.others:
+                chars = n.chars if len(n.chars) == 1 else _merged(n.chars) if len(n.chars) < 8 else n.chars
+                if len(chars) == 1 and chars[0][0] == chars[0][1]:
+                    # One character, which the engine makes a literal of with those around it, whatever groups
+                    # that do not capture are between them.
+                    self.literals += 1
+                    if self.literals % _MAX_LITERAL == 0:
+                        self.parted += 1
+                        return text + _AFTER_A_CHARACTER
+                    return text
             if len(text) <= _LONG_CLASS or n.nothing is not False:
                 return text
             if not self.share:
