@@ -261,6 +261,29 @@ ECMAScript:  (?<year>\d{4})-\k<year>
 .NET:        (?<1>[0-9]{4})-(?(1)\1)
 ```
 
+A group that is read and can capture the empty string is written apart: its body where that matches something, in
+the group, or else its body where that matches nothing, in no group.
+
+```
+ECMAScript:  ^(a|)\1?b$
+.NET:        ^(?:(?<1>a))?(?:\1)?b\z
+
+ECMAScript:  ^(^|a)\1?b$
+.NET:        ^(?:(?<1>a)|^)(?:\1)?b\z
+
+ECMAScript:  ^(a?b?)\1?c$
+.NET:        ^(?:(?<1>ab?|b))?(?:\1)?c\z
+```
+
+ECMA-262 cannot tell a group that captured the empty string from a group that is unset: a backreference to either
+matches the empty string, and nothing else reads a group. .NET can tell them apart, and it is the only thing a
+translation can ask .NET about a group. So the group is left unset where it would capture nothing, and is then
+set exactly when it captured something. A backreference that has to match something, or fail, can then be .NET's
+own with no test around it (see [Repetitions](#repetitions)). The group stays whole in three places: in a
+lookaround whose captures a backreference reads, where the order of the paths counts and this changes it, where it
+holds another group that is read, and where it can only match the empty string (`()`), since nothing would define
+it.
+
 ## Backreferences
 
 In ECMA-262 a backreference matches what its group captured when the group last took part, and the empty string
@@ -359,20 +382,48 @@ refuses an iteration that matched nothing once they are done.
 | A body that can only match the empty string (`(?:^)*`, `(?=a){3}`, `\b+` is not valid) | Nothing when no iteration must run, and the body once when one must. |
 | A lazy repetition of anything but one code unit (`(?:a\|b)*?`, `(a\|){2,}?`) | The greedy form. Whether a pattern matches does not depend on which path is tried first. .NET's lazy repetition of a group can fail to end, or throw. |
 | A body that matches the empty string wherever it stands, with a least count (`(a\|){2,3}`) | The least count becomes 0: `(?:(?:a)?){0,3}`. |
-| A body with a group a backreference reads, which can match the empty string, with iterations that need not run | Those iterations are written apart and made to fail when they matched nothing (below). |
-| A body with a backreference, which can match the empty string, with iterations that need not run (`(a)\1?`, `(?:\1\|b)*`) | Those iterations are written apart as a body that cannot match the empty string, or made to fail when they matched nothing where there is no such body (below). |
+| A body with a group a backreference reads, which can match the empty string, with iterations that need not run (`(?:(a)\|b\|)*\1`) | Those iterations are written apart as a body that cannot match the empty string, or made to fail when they matched nothing where there is no such body (below). |
+| A body with a backreference, which can match the empty string, with iterations that need not run (`(a)\1?`, `(?:\1\|b)*`) | The same. |
 
-The last case in full, for `^(?:(a)|)*\1`:
+The case of a body with a group that is read is about the answer. .NET would take an iteration that matched
+nothing and leave the repetition with the group unset, where ECMA-262 refuses the iteration and leaves the group as
+the last iteration that matched something set it. So the iterations that need not run are given a body that
+cannot match the empty string:
 
 ```
-^(?:(?(1)(?<-1>))(?=(?<e1>[\s\S]*))(?:(?:(?<1>a))?)(?!\k<e1>\z))*(?(1)\1)
+ECMAScript:  ^(?:(a)|)*\1             .NET:  ^(?:(?(1)(?<-1>))(?<1>a))*(?(1)\1)
+ECMAScript:  ^(?:(a)|b|)*\1$          .NET:  ^(?:(?(1)(?<-1>))(?:(?<1>a)|b))*(?(1)\1)\z
+ECMAScript:  ^(?:(a)|b|){2,4}\1$      .NET:  ^(?:(?(1)(?<-1>))(?:(?<1>a)|b|)){2}(?:(?(1)(?<-1>))(?:(?<1>a)|b)){0,2}(?(1)\1)\z
+ECMAScript:  ^((a|)\2)*$              .NET:  ^(?:(?(2)(?<-2>))(?:(?<2>a)(?(2)\2)|(?:\2)))*\z
+```
+
+In the third line the two iterations that must run have the body as it is, empty alternative and all, and the two
+that need not have it without. In the fourth the body is `(a|)` and then `\2`: either the group matches `a` and the
+backreference is as it was, or the group matches nothing, is left unset, and the backreference has to match
+something, which with the group unset it cannot. A group inside the body is still a group in the body that cannot
+match the empty string, around what it matches that is not the empty string.
+
+Where there is no such body the iteration is made to fail when it has matched nothing, for `^(?:(?=(a))|x)*\1`:
+
+```
+^(?:(?(1)(?<-1>))(?=(?<e1>[\s\S]*))(?:(?=(?<1>a))|x)(?!\k<e1>\z))*(?(1)\1)
 ```
 
 `(?=(?<e1>[\s\S]*))` captures the rest of the input when an iteration starts, and `(?!\k<e1>\z)` fails the
-iteration when the rest of the input is still that text. Without it .NET would take an iteration that matched
-nothing and leave the repetition with group 1 unset, where ECMA-262 leaves it as the last iteration that matched
-something set it. The check reads the rest of the input, so such a repetition takes time in proportion to the
-square of the length of the text. It is written only where a backreference could see the difference.
+iteration when the rest of the input is still that text. .NET's interpreted engine reads the rest of the input one
+character at a time to capture it, so a repetition with the check takes that engine time in proportion to the
+square of the length of the text: a pattern as plain as `^(a|)(?:\1|b)*$` took it 24 seconds on 100,000 characters
+when it had the check. The check is written only where there is no body that cannot match the empty string:
+
+- inside a lookaround whose captures a backreference reads, where the order of the paths counts,
+- where the body holds a repetition, with two or more iterations that must run, of a group that is read
+  (`(?:(?:(a)|){2}c)*\1`): the last of those iterations may match nothing after one that matched something, and
+  it leaves the group unset,
+- where a group that is read would be left with nothing to define it, because it only ever matches the empty
+  string and no iteration must run (`(?:(^)x?)*\1`),
+- where the body holds a backreference that ignores case, which may be written as 160,000 characters (see
+  [A Backreference That Ignores Case](#a-backreference-that-ignores-case)) and would be written twice,
+- and where the body is too large to write this way (256 nodes).
 
 The case of a body with a backreference is about time and not about the answer. A backreference matches nothing
 whenever its group is unset, so `\1?` and `(?:\1|b)*` have iterations that match nothing. .NET takes such an
@@ -400,8 +451,10 @@ ECMAScript:  ^(a)\1{2,5}$         .NET:  ^(?<1>a)(?:(?(1)\1)){2,5}\z
 - A lone backreference with an iteration that must run is left as it was (the fourth line). When that iteration
   matches nothing .NET runs no other, and when it matches something so does every other.
 
-Where the group can capture the empty string (`^(a|)\1?b$`), or the body is too large to write this way, the
-iteration is made to fail when it has matched nothing, with the check of the case before. A repetition whose body
+A backreference to a group that can capture the empty string is written the same way where the group is written
+apart (see [Groups](#groups)): `^(a|)\1?b$` is `^(?:(?<1>a))?(?:\1)?b\z`, and `^(a|)(?:\1|b)*$` is
+`^(?:(?<1>a))?(?:(?:\1)|b)*\z`. Where it is not, or the body is too large to write this way, the iteration is made
+to fail when it has matched nothing, with the check above. A repetition whose body
 can match the empty string and holds no backreference and no group that one reads (`(?:a?b?)*`) is written as it
 is. .NET searches it in the same doubled way (see [Known Limits](./EcmaRegexTranslator.md#known-limits)).
 

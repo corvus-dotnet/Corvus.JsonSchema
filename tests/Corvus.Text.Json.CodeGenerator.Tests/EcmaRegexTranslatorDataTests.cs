@@ -191,8 +191,9 @@ public class EcmaRegexTranslatorDataTests
     /// written as a body that cannot match it. A backreference to a group that cannot capture the empty string is
     /// then written with no test of the group around it, which .NET fails when the group is unset: with the group
     /// unset no such iteration runs, and with it set none matches nothing. Where the group can capture the empty
-    /// string the iteration is made to fail when it has matched nothing. A body that cannot match the empty string
-    /// is written as it was, and so is a lone backreference with an iteration that must run.
+    /// string and is not written apart (it is in a lookaround whose captures are read, in the ninth row) the
+    /// iteration is made to fail when it has matched nothing. A body that cannot match the empty string is written
+    /// as it was, and so is a lone backreference with an iteration that must run.
     /// </summary>
     [TestMethod]
     [DataRow(@"^(a)\1?$", @"^(?<1>a)(?:\1)?\z")]
@@ -203,9 +204,46 @@ public class EcmaRegexTranslatorDataTests
     [DataRow(@"^(a)(?:\1?x?)*$", @"^(?<1>a)(?:(?:\1)x?|x)*\z")]
     [DataRow(@"^(?:(?<n>a)|(?<n>b))\k<n>*c?$", @"^(?:(?<1>a)|(?<2>b))(?:\1|\2)*c?\z")]
     [DataRow(@"^(?:(a)|(b))(?:\1\2)*c?$", @"^(?:(?<1>a)|(?<2>b))(?:(?:\1)(?(2)\2)|(?=(?(1)(?!\z|[\s\S])))(?:\2))*c?\z")]
-    [DataRow(@"^(a|)\1?b$", @"^(?<1>(?:a)?)(?:(?=(?<e1>[\s\S]*))(?(1)\1)(?!\k<e1>\z))?b\z")]
+    [DataRow(@"^(?=(a|))\1?b", @"^(?=(?<1>(?:a)?))(?:(?=(?<e1>[\s\S]*))(?(1)\1)(?!\k<e1>\z))?b")]
     [DataRow(@"^(a)(?:\1b)*$", @"^(?<1>a)(?:(?(1)\1)b)*\z")]
     public void AnIterationThatNeedNotRunOfABodyWithABackreferenceDoesNotMatchNothing(string pattern, string expected)
+    {
+        Assert.IsTrue(EcmaRegexTranslator.TryTranslate(pattern, out string translated, out string error), error);
+        Assert.AreEqual(expected, translated);
+    }
+
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
+    public void PatternsWithAGroupThatCapturesTheEmptyStringAnswerAsV8(RegexOptions engine)
+    {
+        AssertCases(EcmaPatternCases.GroupsThatCaptureTheEmptyString, engine);
+    }
+
+    /// <summary>
+    /// A group that a backreference reads and that can capture the empty string is written apart: as its body where
+    /// that matches something, in the group, or its body where that matches nothing, in no group. The group is then
+    /// set exactly when it captured something, and a backreference to it with no test around it matches something
+    /// or fails, which is what an iteration that need not run has to do. A repetition whose body holds such a group
+    /// is written with that body for the iterations that need not run, and no longer with a check that reads the
+    /// rest of the input. The check stays where the order of the paths counts (a lookaround whose captures are
+    /// read), where a repetition inside has two or more iterations that must run, and where a group would be left
+    /// with nothing to define it.
+    /// </summary>
+    [TestMethod]
+    [DataRow(@"^(a|)(?:\1|b)*$", @"^(?:(?<1>a))?(?:(?:\1)|b)*\z")]
+    [DataRow(@"^(a|)\1?b$", @"^(?:(?<1>a))?(?:\1)?b\z")]
+    [DataRow(@"^(a*)(?:\1|b)*$", @"^(?:(?<1>a+))?(?:(?:\1)|b)*\z")]
+    [DataRow(@"^(^|a)(?:\1|b)*$", @"^(?:(?<1>a)|^)(?:(?:\1)|b)*\z")]
+    [DataRow(@"^(a?b?)\1?c$", @"^(?:(?<1>ab?|b))?(?:\1)?c\z")]
+    [DataRow(@"^(?:(a)|b|)*\1$", @"^(?:(?(1)(?<-1>))(?:(?<1>a)|b))*(?(1)\1)\z")]
+    [DataRow(@"^((a|)\2)*$", @"^(?:(?(2)(?<-2>))(?:(?<2>a)(?(2)\2)|(?:\2)))*\z")]
+    [DataRow(@"^(?:(a*)\1)*b$", @"^(?:(?(1)(?<-1>))(?:(?<1>a+)(?(1)\1)|(?:\1)))*b\z")]
+    [DataRow(@"^(?:(a)|b|){2,4}\1$", @"^(?:(?(1)(?<-1>))(?:(?<1>a)|b|)){2}(?:(?(1)(?<-1>))(?:(?<1>a)|b)){0,2}(?(1)\1)\z")]
+    [DataRow(@"^()\1(?:\1|a)*$", @"^(?<1>)(?(1)\1)(?:(?=(?<e1>[\s\S]*))(?:(?(1)\1)|a)(?!\k<e1>\z))*\z")]
+    [DataRow(@"^(?=(a|))\1b", @"^(?=(?<1>(?:a)?))(?(1)\1)b")]
+    [DataRow(@"^(?:(?=(a))|x)*\1", @"^(?:(?(1)(?<-1>))(?=(?<e1>[\s\S]*))(?:(?=(?<1>a))|x)(?!\k<e1>\z))*(?(1)\1)")]
+    public void AGroupThatCanCaptureTheEmptyStringIsLeftUnsetWhenItDoes(string pattern, string expected)
     {
         Assert.IsTrue(EcmaRegexTranslator.TryTranslate(pattern, out string translated, out string error), error);
         Assert.AreEqual(expected, translated);

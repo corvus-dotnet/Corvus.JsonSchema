@@ -14,7 +14,8 @@ namespace Corvus.Text.Json.Tests.EcmaPatterns;
 /// on which .NET and ECMA-262 differ, with the <c>i</c> of each given to V8 as a flag. So were the first patterns
 /// of <see cref="CaseInsensitiveBackreferencesToTheirOwnGroup"/>, and all but the last two of
 /// <see cref="BackreferencesToGroupsThatAreNotSet"/> and all but the last two of
-/// <see cref="RepeatedBackreferences"/> were written for those tables. Every pattern here was answered
+/// <see cref="RepeatedBackreferences"/> were written for those tables, and so were all of
+/// <see cref="GroupsThatCaptureTheEmptyString"/>. Every pattern here was answered
 /// wrongly, refused, or not answered at all before the change its table is named for, or pins what that change
 /// must not alter.
 /// </summary>
@@ -393,6 +394,54 @@ internal static class EcmaPatternCases
         ("^(?:x+|(?:[]|)){3}b?$", ["", "x", "xx", "b", "xxx", "xb"], ["a", "ax", "xa", "bb", "ab", "c", "aa"]),
         ("^(?:(?:x+|(?<!)|())\\1){2}$", ["", "x", "xx", "xxx"], ["a", "ax", "xa", "b", "bb", "ab", "c", "aa", "xb"]),
         ("^(?:x|(?=[])x|)+a$", ["a", "xa"], ["", "x", "xx", "ax", "b", "bb", "ab", "c", "xxx", "aa", "xb"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a backreference to a group that can capture the empty string, and patterns with a repetition
+    /// whose body can match the empty string and holds a group that a backreference reads. ECMA-262 cannot tell a
+    /// group that captured the empty string from a group that is unset, and the translation leaves such a group
+    /// unset where it can, so that an iteration that need not run is written as a body that cannot match nothing
+    /// and no check reads the rest of the input. All were written for this table. They pin the answers of the forms
+    /// that changed and of the ones that keep the check: a repetition in a lookaround whose captures are read, a
+    /// repetition inside with two or more iterations that must run, and a group that only ever matches nothing.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] GroupsThatCaptureTheEmptyString =
+    [
+        ("^(a|)(?:\\1|b)*$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(a|)\\1?b$", ["b", "ab", "aab"], ["", "a", "x", "aa", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(a?)(?:\\1|b)+$", ["", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["a", "x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(a*)(?:\\1|b)*$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(a|b|)(?:\\1|x)*$", ["", "a", "b", "x", "aa", "bb", "ax", "xx", "bx", "aaa", "aax", "axa", "aaaa", "aaax", "axax", "aaaaa"], ["ab", "ba", "xa", "aab", "aba", "abb", "baa", "bab", "bba", "xax", "abx", "bax", "abab", "aabb", "abba", "aaaab", "abaab", "ababa"]),
+        ("^(^|a)(?:\\1|b)*$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(a|)(?:\\1{2}|b)*$", ["", "a", "b", "ab", "bb", "aaa", "abb", "aaaaa", "abaab"], ["x", "aa", "ba", "ax", "xa", "xx", "bx", "aab", "aba", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaab", "ababa"]),
+        ("^(a|)(?:b|\\1)*?$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(a|)(?:\\1|b){1,3}$", ["", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba"], ["a", "x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(a|)(?:\\1|b){2,}x?$", ["", "b", "x", "bb", "bx", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaax", "aaaaa", "aaaab", "abaab", "ababa"], ["a", "aa", "ab", "ba", "ax", "xa", "xx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "axax"]),
+        ("^(a|)(b|)(?:\\1\\2|x)*$", ["", "a", "b", "x", "aa", "ab", "bb", "ax", "xx", "bx", "aaa", "aax", "axa", "abx", "aaaa", "abab", "aaax", "axax", "aaaaa"], ["ba", "xa", "aab", "aba", "abb", "baa", "bab", "bba", "xax", "bax", "aabb", "abba", "aaaab", "abaab", "ababa"]),
+        ("^(a|)(?:\\1|(b|)\\2x?)*$", ["", "a", "x", "aa", "bb", "ax", "xx", "aaa", "abb", "aax", "axa", "aaaa", "aabb", "abba", "aaax", "axax", "aaaaa"], ["b", "ab", "ba", "xa", "bx", "aab", "aba", "baa", "bab", "bba", "xax", "abx", "bax", "abab", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a|)x)*\\1$", ["", "x", "xx", "axa"], ["a", "b", "aa", "ab", "ba", "bb", "ax", "xa", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?<n>a|)(?:\\k<n>|b)*$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(?:(?<n>a|)|(?<n>b))\\k<n>*x?$", ["", "a", "b", "x", "aa", "bb", "ax", "bx", "aaa", "aax", "aaaa", "aaax", "aaaaa"], ["ab", "ba", "xa", "xx", "aab", "aba", "abb", "baa", "bab", "bba", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "axax", "aaaab", "abaab", "ababa"]),
+        ("(?<=(a|)(?:\\1|b)*)x", ["x", "ax", "xa", "xx", "bx", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"], ["", "a", "b", "aa", "ab", "ba", "bb", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(a|)(?:(?!\\1b)\\1|b)*$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aba", "abb", "aaaa", "abba", "aaaaa"], ["x", "ba", "ax", "xa", "xx", "bx", "aab", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "aaax", "axax", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a)|b|)*\\1$", ["", "b", "aa", "ab", "bb", "aaa", "aab", "abb", "baa", "bab", "aaaa", "abab", "aabb", "aaaaa", "aaaab", "abaab"], ["a", "x", "ba", "ax", "xa", "xx", "bx", "aba", "bba", "aax", "axa", "xax", "abx", "bax", "abba", "aaax", "axax", "ababa"]),
+        ("^(?:(a)|b|)+\\1$", ["", "b", "aa", "ab", "bb", "aaa", "aab", "abb", "baa", "bab", "aaaa", "abab", "aabb", "aaaaa", "aaaab", "abaab"], ["a", "x", "ba", "ax", "xa", "xx", "bx", "aba", "bba", "aax", "axa", "xax", "abx", "bax", "abba", "aaax", "axax", "ababa"]),
+        ("^(?:(a)|b|){2,4}\\1$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "abb", "baa", "bab", "aaaa", "abab", "aabb", "aaaaa"], ["x", "ba", "ax", "xa", "xx", "bx", "aba", "bba", "aax", "axa", "xax", "abx", "bax", "abba", "aaax", "axax", "aaaab", "abaab", "ababa"]),
+        ("^((a|)\\2)*$", ["", "aa", "aaaa"], ["a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a*)\\1)*b$", ["b", "aab", "aaaab"], ["", "a", "x", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "abaab", "ababa"]),
+        ("^(?:(|a)\\1)+$", ["", "aa", "aaaa"], ["a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a)?(b)?\\1\\2)*$", ["", "aa", "bb", "aaaa", "abab", "aabb"], ["a", "b", "x", "ab", "ba", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(?:(a)|b|)*x?)*\\1$", ["", "b", "x", "aa", "ab", "bb", "ax", "xx", "bx", "aaa", "aab", "abb", "baa", "bab", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "aaax", "axax", "aaaaa", "aaaab", "abaab"], ["a", "ba", "xa", "aba", "bba", "abba", "ababa"]),
+        ("^(?:(?:(a)|){2}x?)*\\1$", ["", "a", "x", "aa", "ax", "xa", "xx", "aaa", "aax", "axa", "xax", "aaaa", "aaax", "axax", "aaaaa"], ["b", "ab", "ba", "bb", "bx", "aab", "aba", "abb", "baa", "bab", "bba", "abx", "bax", "abab", "aabb", "abba", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a)|(b)|\\1\\2x){0,3}$", ["", "a", "b", "x", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax"], ["aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a)|\\1?b|)*x$", ["x", "ax", "bx", "aax", "abx", "bax", "aaax"], ["", "a", "b", "aa", "ab", "ba", "bb", "xa", "xx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "axa", "xax", "aaaa", "abab", "aabb", "abba", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("(?<=(?:(a)|b|)*)\\1x", ["x", "xa", "xx", "bx", "aax", "xax", "bax", "aaax"], ["", "a", "b", "aa", "ab", "ba", "bb", "ax", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "axa", "abx", "aaaa", "abab", "aabb", "abba", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(?=(a))|x)*\\1", ["", "a", "b", "x", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"], []),
+        ("^()\\1(?:\\1|a)*$", ["", "a", "aa", "aaa", "aaaa", "aaaaa"], ["b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaab", "abaab", "ababa"]),
+        ("^(?:(^)a?)*\\1b?$", ["", "a", "b", "ab"], ["x", "aa", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a|)(b|)\\1\\2)*$", ["", "aa", "bb", "aaaa", "abab", "aabb"], ["a", "b", "x", "ab", "ba", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:((a)|b)|\\2x|)*\\1$", ["", "x", "aa", "bb", "ax", "xx", "bx", "aaa", "abb", "baa", "aax", "xax", "abx", "bax", "aaaa", "aabb", "aaax", "axax", "aaaaa"], ["a", "b", "ab", "ba", "xa", "aab", "aba", "bab", "bba", "axa", "abab", "abba", "aaaab", "abaab", "ababa"]),
+        ("^(a|)(?:\\1|b)*(x|)(?:\\2|y)*$", ["", "a", "b", "x", "aa", "ab", "bb", "ax", "xx", "bx", "aaa", "aab", "aba", "abb", "aax", "abx", "aaaa", "abab", "aabb", "abba", "aaax", "aaaaa", "aaaab", "abaab", "ababa"], ["ba", "xa", "baa", "bab", "bba", "axa", "xax", "bax", "axax"]),
     ];
 
     /// <summary>

@@ -123,6 +123,13 @@ internal sealed class EcmaRegexNode(EcmaRegexNodeKind kind)
     /// </summary>
     public int ReferenceForm { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether a capturing Group the translator made is written as it stands, and
+    /// not apart as the group of the pattern it stands for may be. Its body is the part of that group's body that
+    /// matches something.
+    /// </summary>
+    public bool AsItStands { get; set; }
+
     /// <summary>Gets or sets a value indicating whether a Look is a lookbehind.</summary>
     public bool Behind { get; set; }
 

@@ -128,12 +128,18 @@ hold much memory. `EcmaRegexLimits` has the limits, and `docs/EcmaRegexTranslato
   such as `(|\2|\1\2)` is then seen to match only the empty string, and its repetition is the body once.
   Following a backreference to its group to learn something about it must not recurse: what the groups can capture
   is a fixed point over all of them (`CapturedSets`), since a group can read itself.
-- **An iteration that need not run must not match nothing where a backreference is in the body.** .NET takes the
-  empty iteration and then tries again without it, which doubles the search at each such repetition. `NonEmpty`
-  writes a body that cannot match the empty string (a backreference to a group that cannot capture it is then
-  .NET's own, `(?:\1)`, which fails when the group is unset), and the rest-of-input check is the fallback. The
-  check costs the length of the rest of the input in the interpreted engine for each iteration, so do not add it
-  to shapes that ordinary patterns have.
+- **An iteration that need not run must not match nothing where a backreference is in the body, or a group that
+  one reads.** .NET takes the empty iteration and then tries again without it, which doubles the search at each
+  such repetition, and it leaves the groups as the empty iteration left them. `NonEmpty` writes a body that cannot
+  match the empty string (a backreference to a group that cannot capture it is then .NET's own, `(?:\1)`, which
+  fails when the group is unset, and a group that is read stays a group), and the rest-of-input check is the
+  fallback. The check costs the length of the rest of the input in the interpreted engine for each iteration, so
+  do not add it to shapes that ordinary patterns have.
+- **A group that is read is set exactly when it captured something, wherever it can be written so**
+  (`IsWrittenApart`): `(a|)` is `(?:(?<1>a))?`. ECMA-262 cannot tell an empty capture from an unset group, and .NET
+  can only be asked whether a group is set. Never write a form that leaves such a group set to the empty string.
+  A group stays whole (`(?<1>(?:a)?)`) in a lookaround whose captures are read, where it holds another group that
+  is read, and where it can only match nothing.
 - **In a lookbehind** .NET matches right to left, as ECMA-262 does. Whatever must run first is written last.
 
 ## Regex-Free Matchers

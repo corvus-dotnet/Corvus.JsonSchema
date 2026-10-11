@@ -155,11 +155,13 @@ grows much faster than the pattern.
   Each is written as a comparison of about 157,000 characters with the `u` flag grammar and about 117,000 without
   (see [Known Limits](#known-limits)), so six are under the limit on the translation and seven are over it. A
   backreference to a group of ASCII letters is a few hundred characters, and hundreds of those are under it.
-- **Repetitions written more than once, one inside another.** An iteration that need not run, of a body that can
-  match the empty string and holds a group a backreference reads, is written apart from the iterations that must
-  run, so the body is written twice. So is a lazy repetition with a highest count inside a lookaround whose captures
-  are read, up to eight times. Some twenty of the first one inside another, or six of the second, are over the limit
-  on the translation.
+- **Repetitions written more than once, one inside another.** A repetition whose iterations that need not run are
+  made to fail by the check that reads the rest of the input is written as its body twice (see
+  [the translations](./EcmaRegexTranslations.md#repetitions) for where the check is kept). So is a lazy repetition
+  with a highest count inside a lookaround whose captures are read, up to eight times. Fourteen of the first one
+  inside another, in such a lookaround, or six of the second, are over the limit on the translation. Outside such
+  a lookaround a repetition of a body that holds a group a backreference reads is written without the check, and
+  sixty one inside another are under the limit.
 - **Counts of 2, 3 or 4 one inside another**, from about twelve counts of 2 or eight counts of 4
   (`(?:(?:(?:a{4}){4}){4}...`). A count of 5 or more is not written out by .NET, and neither is a count of 1 or a
   range from 0, so `(?:(?:a{1000}){1000}){1000}` is under the limit.
@@ -175,8 +177,8 @@ grows much faster than the pattern.
   (`(a)(b)(c)...`), which are written as plain groups.
 
 A pattern that is over no limit is translated in the steps it takes. The most that a pattern of the
-[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) takes is 180,524
-steps and a translation of 946,616 characters, for a pattern with six case-insensitive backreferences. None of its
+[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) takes is 180,606
+steps and a translation of 946,581 characters, for a pattern with six case-insensitive backreferences. None of its
 98,839 patterns is over a limit.
 
 ## Costs
@@ -233,6 +235,9 @@ pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTable
     match does: .NET can search long before it reaches the path V8 takes first.
   - Unsetting groups when an iteration starts and refusing an iteration that matched nothing are written with
     conditionals, balancing groups and lookarounds, so a step of such a search costs more in .NET than in V8.
+  - Where an iteration that need not run is made to fail by the check that reads the rest of the input
+    (see [the translations](./EcmaRegexTranslations.md#repetitions) for the five places), .NET's interpreted engine
+    takes time in proportion to the square of the length of the text. The compiled engine does not.
 - **Where V8 is not ECMA-262.** The answers are tested against V8 13.6, and the translator follows ECMA-262 where
   that V8 departs from it. The Script value `Katakana_Or_Hiragana` (`Hrkt`) is accepted, and matches no character,
   since none has it: V8 refuses it. `\p{WSpace}` is refused, since ECMA-262 lists `White_Space` and `space` only:

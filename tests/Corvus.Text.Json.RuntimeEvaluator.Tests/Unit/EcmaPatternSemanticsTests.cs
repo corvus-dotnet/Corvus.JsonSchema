@@ -129,6 +129,60 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    public void PatternsWithAGroupThatCapturesTheEmptyStringAnswerAsV8(Engine engine)
+    {
+        AssertCases(EcmaPatternCases.GroupsThatCaptureTheEmptyString, engine);
+    }
+
+    /// <summary>
+    /// Plain patterns of that kind on a text of 100,000 characters, with the default match limit of 1 second. Each
+    /// is answered, in every engine. Before the groups were left unset where they capture nothing, an iteration of
+    /// each was made to fail when it matched nothing by a check that reads the rest of the input, which .NET's
+    /// interpreted engine does one character at a time: the first pattern took it 24 seconds on this text, and under
+    /// the limit that is an exception and no answer. V8 answers each of these in time in proportion to the text.
+    /// </summary>
+    [TestMethod]
+    [DataRow(Engine.CompiledRegex)]
+    [DataRow(Engine.InterpretedRegex)]
+    [DataRow(Engine.GeneratedCode)]
+    public void ALongTextIsAnsweredWithinTheDefaultLimitWhereAGroupCapturesTheEmptyString(Engine engine)
+    {
+        const int Half = 50_000;
+        string ab = string.Concat(Enumerable.Repeat("ab", Half));
+        (string Pattern, string Matches, string Fails)[] cases =
+        [
+            (@"^(a|)(?:\1|b)*$", "a" + new string('b', 2 * Half), "a" + new string('b', 2 * Half) + "!"),
+            (@"^(a|)(?:\1|b)*(c|)(?:\2|d)*$", "a" + new string('b', Half) + "c" + new string('d', Half), "a" + new string('b', Half) + "c" + new string('d', Half) + "!"),
+            (@"^(?:(a)|b|)*\1$", ab + "aa", ab + "a!"),
+            (@"^((a|)\2)*$", new string('a', 2 * Half), new string('a', 2 * Half) + "!"),
+            (@"^(?:(|a)\1)+$", new string('a', 2 * Half), new string('a', 2 * Half) + "!"),
+            (@"^(?:(a*)\1b|c)*$", string.Concat(Enumerable.Repeat("aab", Half / 2)), string.Concat(Enumerable.Repeat("aab", Half / 2)) + "!"),
+        ];
+
+        if (engine == Engine.GeneratedCode && !PatternValidityTests.GeneratedCodeIsSupported)
+        {
+            Assert.Inconclusive("Dynamic code is not supported here.");
+        }
+
+        // The options have the default limit: none is set.
+        var options = new JsonSchemaEvaluatorOptions
+        {
+            CompileRegularExpressions = engine != Engine.InterpretedRegex,
+            CodeGeneration = engine == Engine.GeneratedCode ? JsonSchemaCodeGeneration.Eager : JsonSchemaCodeGeneration.Disabled,
+        };
+
+        foreach ((string pattern, string matches, string fails) in cases)
+        {
+            using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile("{\"pattern\": " + PatternValidityTests.Json(pattern) + "}", options);
+            Assert.IsTrue(evaluator.Evaluate("\"" + matches + "\""), pattern);
+            Assert.IsFalse(evaluator.Evaluate("\"" + fails + "\""), pattern);
+        }
+    }
+
+    [TestMethod]
+    [DataRow(Engine.CompiledRegex)]
+    [DataRow(Engine.InterpretedRegex)]
+    [DataRow(Engine.GeneratedCode)]
     public void PatternsWithTheScriptOfNoCharacterAnswerAsEcma262Says(Engine engine)
     {
         AssertCases(EcmaPatternCases.ScriptOfNoCharacter, engine);

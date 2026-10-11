@@ -67,22 +67,38 @@ public class EcmaRegexLimitsTests
     }
 
     /// <summary>
-    /// A repetition whose iterations that need not run have to fail when they match nothing is written as its body
-    /// twice, so one inside another doubles what is written. Before the limit, twenty of them were written as a
-    /// hundred million characters and seventy as more than the machine has memory for.
+    /// A repetition whose iterations that need not run are made to fail when they match nothing, by the check that
+    /// reads the rest of the input, is written as its body twice, so one inside another doubles what is written.
+    /// Before the limit, twenty of them were written as a hundred million characters and seventy as more than the
+    /// machine has memory for. The check is written inside a lookaround whose captures a backreference reads, and
+    /// where the body is too large to be written as one that cannot match the empty string.
     /// </summary>
     [TestMethod]
-    [DataRow(20)]
-    [DataRow(70)]
-    [DataRow(190)]
-    public void RepetitionsWrittenTwiceOneInAnotherAreTooLargeAndNotWritten(int depth)
+    [DataRow(true, 20)]
+    [DataRow(true, 70)]
+    [DataRow(false, 70)]
+    [DataRow(false, 190)]
+    public void RepetitionsWrittenTwiceOneInAnotherAreTooLargeAndNotWritten(bool inALookaround, int depth)
     {
-        string pattern = "^" + Nested("(?:", "(a)", "|){1,2}", depth) + @"\1$";
+        string nested = Nested("(?:", "(a)", "|){1,2}", depth);
+        string pattern = inALookaround ? "^(?=(" + nested + @"))\1\2$" : "^" + nested + @"\1$";
 
         long before = GC.GetTotalAllocatedBytes(precise: true);
         AssertTooLarge(pattern, read: true, "What is written for .NET from it is longer than 1,048,576 characters.");
         long allocated = GC.GetTotalAllocatedBytes(precise: true) - before;
         Assert.IsTrue(allocated < 256L * 1024 * 1024, $"Allocated {allocated:N0} bytes.");
+    }
+
+    /// <summary>
+    /// Outside such a lookaround the iterations that need not run are written as a body that cannot match the empty
+    /// string, which holds the repetitions inside it once. Twenty one inside another are then a few thousand
+    /// characters, where each used to double what the one inside it had written.
+    /// </summary>
+    [TestMethod]
+    public void RepetitionsOfABodyThatCannotMatchNothingOneInAnotherAreNotDoubled()
+    {
+        Assert.IsTrue(EcmaRegexTranslator.TryTranslate("^" + Nested("(?:", "(a)", "|){1,2}", 20) + @"\1$", out string translated, out _));
+        Assert.IsTrue(translated.Length < 10_000, translated.Length.ToString());
     }
 
     [TestMethod]

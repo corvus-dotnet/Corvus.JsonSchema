@@ -718,6 +718,20 @@ internal static class EcmaRegexTranslator
         private int[][]? capturedSets;
 
         /// <summary>
+        /// For each group, whether it stands in a positive lookaround that holds a group a backreference reads. The
+        /// first path through such a lookaround is the one whose captures are kept, so nothing in it is written in
+        /// another order.
+        /// </summary>
+        private readonly bool[] ordered;
+
+        /// <summary>For each group, whether it is written apart (see <see cref="IsWrittenApart"/>): 0 not yet known, 1 being worked out, 2 no, 3 yes.</summary>
+        private readonly byte[] apartState;
+
+        /// <summary>For each group written apart, what its body matches that is not the empty string, and where it matches the empty string.</summary>
+        private readonly EcmaRegexNode?[] apartNonEmpty;
+        private readonly EcmaRegexNode?[] apartOnlyEmpty;
+
+        /// <summary>
         /// How many positive lookarounds that hold a group a backreference reads enclose what is being written. The
         /// first path through such a lookaround is the one whose captures are kept.
         /// </summary>
@@ -739,6 +753,10 @@ internal static class EcmaRegexTranslator
             this.groupNodes = new EcmaRegexNode?[n];
             this.referenced = new bool[n];
             this.dead = new bool[n];
+            this.ordered = new bool[n];
+            this.apartState = new byte[n];
+            this.apartNonEmpty = new EcmaRegexNode?[n];
+            this.apartOnlyEmpty = new EcmaRegexNode?[n];
             this.root = this.Simplify(root, new bool[n], new int[n]);
         }
 
@@ -772,6 +790,7 @@ internal static class EcmaRegexTranslator
             this.Survey(this.root);
             this.root = this.Prune(this.root);
             this.RefuseManyCopies();
+            this.MarkOrdered(this.root, inside: false);
             if (this.unicode && this.StartOf(this.root, top: true, backward: false) == Start.Unsafe)
             {
                 // .NET tries a match at every code unit, and so between the two halves of a character beyond the
@@ -1192,6 +1211,86 @@ internal static class EcmaRegexTranslator
             }
         }
 
+        /// <summary>Notes the groups that stand in a positive lookaround whose captures a backreference reads.</summary>
+        private void MarkOrdered(EcmaRegexNode n, bool inside)
+        {
+            this.work.Spend();
+            if (n.Kind == EcmaRegexNodeKind.Look && !n.Negative && !inside)
+            {
+                inside = this.AnyReferenced(n);
+            }
+            else if (n.Kind == EcmaRegexNodeKind.Group && n.Group != 0)
+            {
+                this.ordered[n.Group] = inside;
+            }
+
+            foreach (EcmaRegexNode sub in n.Subs)
+            {
+                this.MarkOrdered(sub, inside);
+            }
+        }
+
+        /// <summary>
+        /// Whether a group a backreference reads is written apart: as its body where that matches something, in the
+        /// group, or else its body where that matches the empty string, in no group. A group written so is set
+        /// exactly when it has captured something.
+        /// <para>
+        /// ECMA-262 cannot tell a group that captured the empty string from a group that is unset: a backreference
+        /// to either matches the empty string, and nothing else reads a group. .NET can, and a translation that has
+        /// to know whether a backreference matches something can ask .NET only whether its group is set. So a group
+        /// that can capture the empty string is left unset when it does, where that can be written: the group is
+        /// not in a lookaround whose captures are read (there the order of the paths counts, and this changes it),
+        /// holds no group that a backreference reads, and its body can be written both ways within
+        /// <see cref="NonEmptyBudget"/>. A repetition around a group unsets it when each iteration starts, so the
+        /// capture of an earlier iteration is never what is left.
+        /// </para>
+        /// </summary>
+        private bool IsWrittenApart(int g)
+        {
+            if (this.apartState[g] == 0)
+            {
+                // A group that asks about itself, through a backreference in its body to a group that holds one to
+                // it, is answered no, and what was asked is then worked out as for a group that is not written apart.
+                this.apartState[g] = 1;
+                bool apart = false;
+                if (this.referenced[g] && !this.dead[g] && !this.ordered[g] && this.groupNodes[g] is EcmaRegexNode group
+                    && this.MinLength(group) == 0 && !this.AnyReferencedInside(group))
+                {
+                    int budget = NonEmptyBudget;
+
+                    // A group that only ever matches the empty string stays a group, or nothing would define it.
+                    if (this.NonEmpty(group.Subs[0], ref budget) is EcmaRegexNode nonEmpty
+                        && !IsNever(nonEmpty)
+                        && this.OnlyEmpty(group.Subs[0], ref budget) is EcmaRegexNode onlyEmpty
+                        && budget >= 0)
+                    {
+                        this.apartNonEmpty[g] = nonEmpty;
+                        this.apartOnlyEmpty[g] = onlyEmpty;
+                        apart = true;
+                    }
+                }
+
+                this.apartState[g] = (byte)(apart ? 3 : 2);
+            }
+
+            return this.apartState[g] == 3;
+        }
+
+        /// <summary>Whether a backreference reads a group inside a capturing group, the group itself left out.</summary>
+        private bool AnyReferencedInside(EcmaRegexNode group)
+        {
+            this.work.Spend(group.LastGroup - group.Group);
+            for (int g = group.Group + 1; g <= group.LastGroup; g++)
+            {
+                if (this.referenced[g])
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>The translation, marked for the interpreted engine when it keeps a lazy repetition of a group.</summary>
         private string Finish()
         {
@@ -1536,6 +1635,32 @@ internal static class EcmaRegexTranslator
 
         private void Group(EcmaRegexNode n, Context context, EcmaRegexNode? next)
         {
+            if (n.Group != 0 && this.referenced[n.Group] && !n.AsItStands && this.IsWrittenApart(n.Group))
+            {
+                // (?:(?<1>X)|Y): X is the body where it matches something and Y the body where it matches nothing.
+                // With nothing to hold where the body matches nothing it is (?:(?<1>X))?, as an empty alternative
+                // beside one other is written (see Alternation).
+                EcmaRegexNode nonEmpty = this.apartNonEmpty[n.Group]!;
+                EcmaRegexNode onlyEmpty = this.apartOnlyEmpty[n.Group]!;
+                this.sb.Append("(?:(?<").Append(n.Group.ToString(CultureInfo.InvariantCulture)).Append('>');
+                this.Node(nonEmpty, context, next);
+                this.sb.Append(')');
+                if (onlyEmpty.Kind == EcmaRegexNodeKind.Empty)
+                {
+                    this.sb.Append(")?");
+                    return;
+                }
+
+                if (!IsNever(onlyEmpty))
+                {
+                    this.sb.Append('|');
+                    this.Node(onlyEmpty, context, next);
+                }
+
+                this.sb.Append(')');
+                return;
+            }
+
             if (n.Group == 0 || !this.referenced[n.Group])
             {
                 this.sb.Append("(?:");
@@ -1670,7 +1795,9 @@ internal static class EcmaRegexTranslator
         /// as ECMA-262 does. .NET takes an iteration that matched nothing and then leaves the repetition, where
         /// ECMA-262 refuses such an iteration once the iterations that must run are done. The two reach the same
         /// places in the text, but .NET reaches them with the groups as the empty iteration left them. So the
-        /// iterations that need not run are then written apart, each made to fail when it has matched nothing.
+        /// iterations that need not run are then written apart, as a body that cannot match the empty string
+        /// (<see cref="NonEmpty"/>). Where there is no such body, each is made to fail when it has matched nothing,
+        /// with a check that reads the rest of the input (<see cref="Iteration"/>).
         /// </para>
         /// <para>
         /// A lazy repetition of anything but one code unit is written greedy. Whether a pattern matches does not
@@ -1746,10 +1873,11 @@ internal static class EcmaRegexTranslator
                 min = 0;
             }
 
-            // An iteration that need not run is made to fail when it has matched nothing, where .NET would go on with
-            // the groups as that iteration left them, and where the order of the paths counts.
+            // An iteration that need not run may not match nothing, where .NET would go on with the groups as that
+            // iteration left them, and where the order of the paths counts.
             bool guarded = nullable && max != min && (this.inCapturingLookaround > 0 || this.AnyReferenced(n));
-            if (!guarded && nullable && max != min && this.HoldsBackreference(body) && !(min > 0 && IsOneReference(body)))
+            if (nullable && max != min && this.inCapturingLookaround == 0
+                && (guarded ? !this.HoldsWrittenOutComparison(body) : this.HoldsBackreference(body) && !(min > 0 && IsOneReference(body))))
             {
                 // A backreference matches nothing whenever its group is unset or empty. .NET takes an iteration that
                 // matched nothing and then tries again without it, from the same place and with the same groups, so a
@@ -1758,24 +1886,33 @@ internal static class EcmaRegexTranslator
                 // made to fail when they have, where there is no such body. A body that is one backreference, with
                 // an iteration that must run, needs neither: when that iteration matches nothing .NET runs no other,
                 // and when it matches something so does every other.
+                //
+                // The same body is what a repetition whose groups a backreference reads is written with, outside a
+                // lookaround whose captures are read (there the order of the paths counts, and that body changes it).
+                // It keeps the groups, and the check that an iteration matched something costs nothing: the check it
+                // replaces reads the rest of the input for each iteration in .NET's interpreted engine. A body that
+                // holds a backreference that ignores case keeps the check, as it may be 160,000 characters long and
+                // would be written twice.
                 int budget = NonEmptyBudget;
-                if (this.NonEmpty(body, ref budget) is EcmaRegexNode nonEmpty)
+                if (this.NonEmpty(body, ref budget) is EcmaRegexNode nonEmpty && (min > 0 || this.DefinesEveryGroupRead(n, nonEmpty)))
                 {
+                    // Each iteration starts by unsetting the groups of the body that a backreference reads.
+                    string unset = resets ? this.Resets(n) : string.Empty;
                     if (!backward && min > 0)
                     {
-                        this.Atom(body, inner, null);
+                        this.Iteration(body, inner, unset, null);
                         this.Quantifier(min, min, lazy: false);
                     }
 
                     if (!IsNever(nonEmpty))
                     {
-                        this.Atom(nonEmpty, inner, null);
+                        this.Iteration(nonEmpty, inner, unset, null);
                         this.Quantifier(0, max == EcmaRegexNode.Unbounded ? max : max - min, lazy: false);
                     }
 
                     if (backward && min > 0)
                     {
-                        this.Atom(body, inner, null);
+                        this.Iteration(body, inner, unset, null);
                         this.Quantifier(min, min, lazy: false);
                     }
 
@@ -1878,10 +2015,65 @@ internal static class EcmaRegexTranslator
         }
 
         /// <summary>
+        /// Whether a node holds a backreference that ignores case. Such a backreference can be written as a comparison
+        /// of some 160,000 characters (see <see cref="FoldedBackreference"/>), and a body that holds one is not
+        /// written a second time for the iterations that match something.
+        /// </summary>
+        private bool HoldsWrittenOutComparison(EcmaRegexNode n)
+        {
+            this.work.Spend();
+            if (n.Kind == EcmaRegexNodeKind.Backref && n.Fold)
+            {
+                return true;
+            }
+
+            foreach (EcmaRegexNode sub in n.Subs)
+            {
+                if (this.HoldsWrittenOutComparison(sub))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Whether every group of a repetition that a backreference reads is still a group in the body written for
+        /// the iterations that match something. A group that only ever matches the empty string is not, and with no
+        /// iteration that must run nothing else would define it for the backreference.
+        /// </summary>
+        private bool DefinesEveryGroupRead(EcmaRegexNode n, EcmaRegexNode nonEmpty)
+        {
+            if (!this.AnyReferenced(n))
+            {
+                return true;
+            }
+
+            List<int> defined = [];
+            this.CollectGroups(nonEmpty, defined);
+            for (int g = n.FirstGroup + 1; g <= n.LastGroup; g++)
+            {
+                if (this.referenced[g] && !this.dead[g] && !defined.Contains(g))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// A tree that matches what a node matches, the empty string left out, or null when there is none to be had
         /// within <see cref="NonEmptyBudget"/>. A node that never matches stands for a node that can only match the
-        /// empty string. The node holds no group a backreference reads, and is not in a lookaround whose captures one
-        /// reads, so neither the groups nor the order of the paths count.
+        /// empty string. The node is not in a lookaround whose captures a backreference reads, so the order of the
+        /// paths does not count.
+        /// <para>
+        /// A group that a backreference reads stays a group in the tree, around what it matches that is not the
+        /// empty string. Where it matches the empty string it is in no group and is left unset, which ECMA-262
+        /// cannot tell from a group that captured the empty string (see <see cref="IsWrittenApart"/>). The groups of
+        /// the node are unset when it starts, as a repetition unsets them for each iteration.
+        /// </para>
         /// <para>
         /// Terms one after another match something when one of them is the first to: the terms before it match
         /// nothing (<see cref="OnlyEmpty"/>), it matches something, and the rest match as they do. A repetition
@@ -1908,11 +2100,35 @@ internal static class EcmaRegexTranslator
                         ? new EcmaRegexNode(EcmaRegexNodeKind.Backref) { Groups = n.Groups, Fold = n.Fold, ReferenceForm = 1 }
                         : null;
                 case EcmaRegexNodeKind.Group:
-                    return this.NonEmpty(n.Subs[0], ref budget) is EcmaRegexNode grouped
-                        ? (IsNever(grouped) || grouped.Kind is EcmaRegexNodeKind.Backref or EcmaRegexNodeKind.Char or EcmaRegexNodeKind.Set or EcmaRegexNodeKind.Group
-                            ? grouped
-                            : new EcmaRegexNode(EcmaRegexNodeKind.Group) { Subs = [grouped] })
-                        : null;
+                {
+                    if (this.NonEmpty(n.Subs[0], ref budget) is not EcmaRegexNode grouped)
+                    {
+                        return null;
+                    }
+
+                    if (IsNever(grouped))
+                    {
+                        return grouped;
+                    }
+
+                    if (n.Group != 0 && this.referenced[n.Group])
+                    {
+                        // The group captures what it matches, which here is never the empty string.
+                        return new EcmaRegexNode(EcmaRegexNodeKind.Group)
+                        {
+                            Group = n.Group,
+                            AsItStands = true,
+                            Subs = [grouped],
+                            FirstGroup = n.FirstGroup,
+                            LastGroup = n.LastGroup,
+                        };
+                    }
+
+                    return grouped.Kind is EcmaRegexNodeKind.Backref or EcmaRegexNodeKind.Char or EcmaRegexNodeKind.Set or EcmaRegexNodeKind.Group
+                        ? grouped
+                        : new EcmaRegexNode(EcmaRegexNodeKind.Group) { Subs = [grouped], FirstGroup = n.FirstGroup, LastGroup = n.LastGroup };
+                }
+
                 case EcmaRegexNodeKind.Alt:
                 {
                     List<EcmaRegexNode> subs = [];
@@ -2000,20 +2216,26 @@ internal static class EcmaRegexTranslator
                     if (this.MinLength(body) > 0)
                     {
                         // Every iteration matches something, so the repetition does when one runs.
-                        return n.Min > 0 ? n : new EcmaRegexNode(EcmaRegexNodeKind.Repeat) { Subs = [body], Min = 1, Max = n.Max, Lazy = n.Lazy };
+                        return n.Min > 0
+                            ? n
+                            : new EcmaRegexNode(EcmaRegexNodeKind.Repeat) { Subs = [body], Min = 1, Max = n.Max, Lazy = n.Lazy, FirstGroup = n.FirstGroup, LastGroup = n.LastGroup };
                     }
 
                     // With one iteration that must run, or none, the repetition matches something exactly when some
                     // number of iterations, up to its highest count, each match something: an iteration that must run
-                    // and matches nothing adds no text. With two or more that must run it is so when an iteration
-                    // can match nothing wherever it stands.
-                    if (n.Min > 1 && !this.EmptyAnywhere(body))
+                    // and matches nothing adds no text, and the iteration after it unsets what it captured. With two
+                    // or more that must run it is so when an iteration can match nothing wherever it stands, and no
+                    // backreference reads a group of the body. The last iteration that must run may be one that
+                    // matches nothing after one that matched something, and it leaves the groups unset.
+                    if (n.Min > 1 && (!this.EmptyAnywhere(body) || this.AnyReferenced(n)))
                     {
                         return null;
                     }
 
                     return this.NonEmpty(body, ref budget) is EcmaRegexNode repeated
-                        ? (IsNever(repeated) ? repeated : new EcmaRegexNode(EcmaRegexNodeKind.Repeat) { Subs = [repeated], Min = 1, Max = n.Max, Lazy = n.Lazy })
+                        ? (IsNever(repeated)
+                            ? repeated
+                            : new EcmaRegexNode(EcmaRegexNodeKind.Repeat) { Subs = [repeated], Min = 1, Max = n.Max, Lazy = n.Lazy, FirstGroup = n.FirstGroup, LastGroup = n.LastGroup })
                         : null;
                 }
 
@@ -2119,7 +2341,8 @@ internal static class EcmaRegexTranslator
             {
                 if (!this.dead[g])
                 {
-                    if (this.groupNodes[g] is not EcmaRegexNode group || this.MinLength(group) == 0)
+                    // A group that can capture the empty string is as good, when it is left unset where it does.
+                    if (this.groupNodes[g] is not EcmaRegexNode group || (this.MinLength(group) == 0 && !this.IsWrittenApart(g)))
                     {
                         return false;
                     }
