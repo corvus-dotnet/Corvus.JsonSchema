@@ -146,6 +146,14 @@ module Internal = struct
     ( re.prog.loops,
       Array.fold_left (fun n (i : Compile.inst) -> if i.op = Compile.Op_backref then n + 1 else n) 0 re.prog.insts )
 
+  let needs re =
+    ( re.prog.need,
+      Array.of_list
+        (List.filter_map
+           (fun (i : Compile.inst) -> if i.op = Compile.Op_loop then Some i.need else None)
+           (Array.to_list re.prog.insts)) )
+
+  let no_match = Compile.no_match
   let unpack packed = (Utf8.rune packed, Utf8.width packed)
   let unit_at text at = unpack (Utf8.unit_at { b = Bytes.empty; s = text; is_string = true } 0 at (String.length text))
 

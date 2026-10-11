@@ -1193,6 +1193,56 @@ let test_repetitions_that_cannot_consume () =
     if t.patterns < 50 || t.matched < 300 then fail "the cases are not the ones this test is about"
   end
 
+(* Set by test_needs when the needs are in place. *)
+let needs_work = ref false
+
+(* Checks the least number of bytes a match consumes, which set_needs works out for a program and for each of its
+   counted loops. The figure is a lower bound: the way out of a counted loop is counted without its minimum number of
+   iterations. Each case is a pattern, the need of its program and the needs of its counted loops in order. *)
+let test_needs () =
+  let none = Re.Internal.no_match in
+  let cases =
+    [
+      ({|abc|}, 3, [||]); ({|a+b{2,}c?|}, 3, [||]); ({|(?:a|bc)d|}, 2, [||]); ({|(?=abc)a|}, 1, [||]);
+      ({|(?<=abc)d|}, 1, [||]); ({|\u00e9{2}\u{10400}|}, 3, [||]); ({|(?:a|){3}xy$|}, 2, [| 2 |]);
+      ({|(?:a|){3}|}, 0, [| 0 |]); ({|(?:(?:a|){2}b){2}c|}, 1, [| 1; 2 |]);
+      ({|(?=(?:a|){2}xyz)(?:b|){2}c|}, 1, [| 3; 1 |]); ({|(?<=(?:ab|){2}c)(?:d|){2}ef|}, 2, [| 0; 2 |]);
+      ({|(?!(?:a|){2}xx)(?:(x)|){2}\1y|}, 1, [| 2; 1 |]); ({|(?:a|){2}[]|}, none, [| none |]);
+      ({|(?:(?:a|){2}|bcd)e|}, 1, [| 1 |]);
+    ]
+    [@ocamlformat "disable"]
+  in
+  needs_work := true;
+  List.iter
+    (fun (p, need, loops) ->
+      match compiled p with
+      | None -> needs_work := false
+      | Some re ->
+          let found, found_loops = Re.Internal.needs re in
+          if found <> need || found_loops <> loops then begin
+            fail "%S: need %d, loops [%s], want %d and [%s]" p found
+              (String.concat "; " (Array.to_list (Array.map string_of_int found_loops)))
+              need
+              (String.concat "; " (Array.to_list (Array.map string_of_int loops)));
+            needs_work := false
+          end)
+    cases;
+  log "%d patterns" (List.length cases)
+
+(* Checks, against V8, counted loops whose iterations can be empty, before a rest of the pattern that needs more text
+   than is left. The matcher gives up at such a loop (see set_needs). Without that, the first three patterns of the
+   set do not finish, so the test fails without running them when test_needs has found the needs missing. The other
+   patterns have such loops inside and around lookaheads and lookbehinds, where a wrong count of what is left would
+   give a wrong answer. *)
+let test_loops_give_up_when_the_rest_cannot_fit () =
+  if not !needs_work then
+    fail "not run, because the needs of set_needs are missing and the patterns of this test would not finish"
+  else begin
+    let t = check_cases "needs" in
+    log "%d patterns, %d answers per back end (%d of them a match)" t.patterns t.answers t.matched;
+    if t.patterns < 20 || t.matched < 100 then fail "the cases are not the ones this test is about"
+  end
+
 let () =
   let ran = ref 0 in
   List.iter
@@ -1224,6 +1274,8 @@ let () =
       ("code unit positions", test_code_unit_positions);
       ("simplify", test_simplify);
       ("repetitions that cannot consume", test_repetitions_that_cannot_consume);
+      ("needs", test_needs);
+      ("loops give up when the rest cannot fit", test_loops_give_up_when_the_rest_cannot_fit);
     ];
   Printf.printf
     "V8 oracle: %d verdicts on validity compared, %d agreed. %d answers on a match compared (each text on both back \

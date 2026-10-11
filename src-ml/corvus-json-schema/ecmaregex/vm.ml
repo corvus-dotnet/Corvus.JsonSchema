@@ -384,8 +384,9 @@ let rec step insts st t lo hi pc pos =
   | Op_loop ->
       let n = st.counts.(2 * i.a) in
       (* Once the minimum is met, ECMA-262 rejects an iteration that consumed nothing. That is what stops a loop over
-         a body that can be empty. *)
-      if n > i.min && pos = st.counts.((2 * i.a) + 1) then backtrack insts st t lo hi
+         a body that can be empty. The loop also gives up when fewer bytes are left than any way from here to a match
+         consumes. *)
+      if hi - pos < i.need || (n > i.min && pos = st.counts.((2 * i.a) + 1)) then backtrack insts st t lo hi
       else if n < i.min then step insts st t lo hi (pc + 1) pos
       else if i.max >= 0 && n >= i.max then step insts st t lo hi i.x pos
       else if i.flag then begin
@@ -479,7 +480,8 @@ let rec search_first p st t lo hi at =
     else search_first p st t lo hi (at + Utf8.width packed)
 
 let search p st t lo hi =
-  if p.anchored then run p st t lo hi lo
+  if hi - lo < p.need then false
+  else if p.anchored then run p st t lo hi lo
   else if String.length p.prefix > 0 then search_prefix p st t lo hi lo
   else search_first p st t lo hi lo
 

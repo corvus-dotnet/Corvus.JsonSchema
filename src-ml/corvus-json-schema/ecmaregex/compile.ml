@@ -62,12 +62,15 @@ type inst = {
   b : int;
   min : int;  (** [min] and [max] bound a repetition. A max of -1 is no bound. *)
   max : int;
+  mutable need : int;
+      (** The least number of bytes of text that every way from this instruction to a match consumes going forward (see
+          {!set_needs}). It is set for an [Op_loop]. *)
 }
 (** One instruction of the backtracking matcher. The Go source holds the jump targets, the groups and the bounds in 32
     bits. Here each is an [int]. *)
 
 let no_inst =
-  { op = Op_fail; flag = false; r = 0; set = Charset.none; has_set = false; lit = ""; x = 0; y = 0; a = 0; b = 0; min = 0; max = 0 }
+  { op = Op_fail; flag = false; r = 0; set = Charset.none; has_set = false; lit = ""; x = 0; y = 0; a = 0; b = 0; min = 0; max = 0; need = 0 }
 [@@ocamlformat "disable"]
 
 type program = {
@@ -77,6 +80,7 @@ type program = {
   units : bool;
       (** Says the pattern was read without the u flag, so the text is matched by UTF-16 code unit (see utf8.ml). *)
   anchored : bool;  (** Says every match starts at the start of the text. *)
+  need : int;  (** The least number of bytes a match consumes (see {!set_needs}). *)
   prefix : string;  (** Literal text every match starts with. *)
   first : Charset.t;
       (** Every code point a match can start with. It is in use when [has_first] is set, which it is not when a match
@@ -385,6 +389,52 @@ let rec first_chars n pairs =
   | Backref -> raise Unknown_first
   | _ -> true
 
+(** The need of an instruction from which no way leads to a match. *)
+let no_match = 1 lsl 30
+
+(** [set_needs insts] works out, for every instruction, the least number of bytes of text that any way from it to a
+    match consumes going forward, and writes it into the counted loops. It returns the need of the whole program. The
+    matcher gives up at a counted loop when fewer bytes than that are left, as V8 does at every choice. A loop whose
+    iterations can be empty would otherwise try every combination of its ways at a position from which the rest of the
+    pattern cannot match at all.
+
+    A character is counted as one byte, a literal run as its bytes and a single character loop as its minimum, so the
+    figure can only be too small. The body of a lookaround ends at its own last instruction and the instruction that
+    opens one goes straight to what follows it, so a body is counted by itself. An instruction that matches right to
+    left, which is the body of a lookbehind, counts nothing. *)
+let set_needs insts =
+  let count = Array.length insts in
+  let need = Array.make count no_match in
+  (* The needs only fall, and nearly every way goes forward, so going through the instructions from the last to the
+     first settles all but the loops in one pass. *)
+  let changed = ref true in
+  while !changed do
+    changed := false;
+    for pc = count - 1 downto 0 do
+      let i = insts.(pc) in
+      let next target weight = need.(target) + weight in
+      let n =
+        match i.op with
+        | Op_match | Op_look_ok | Op_look_fail -> 0
+        | Op_fail -> no_match
+        | Op_char | Op_set -> next (pc + 1) 1
+        | Op_lit -> next (pc + 1) (String.length i.lit)
+        | Op_rep | Op_rep_lazy -> next (pc + 1) i.min
+        | Op_jmp | Op_look -> next i.x 0
+        | Op_split -> min (next i.x 0) (next i.y 0)
+        | Op_loop -> min (next (pc + 1) 0) (next i.x 0)
+        | _ -> next (pc + 1) 0
+      in
+      let n = min n no_match in
+      if n < need.(pc) then begin
+        need.(pc) <- n;
+        changed := true
+      end
+    done
+  done;
+  Array.iteri (fun pc i -> if i.op = Op_loop then i.need <- need.(pc)) insts;
+  need.(0)
+
 (** Compiles the tree the parser read for the backtracking matcher. [group_count] is the number of capturing groups of
     the pattern. *)
 let compile_program root group_count unicode_mode =
@@ -415,12 +465,15 @@ let compile_program root group_count unicode_mode =
       | true -> None
       | exception Unknown_first -> None
   in
+  let insts = Array.sub c.code 0 c.count in
+  let need = set_needs insts in
   {
-    insts = Array.sub c.code 0 c.count;
+    insts;
     groups = !slots;
     loops = c.loop_count;
     units = not unicode_mode;
     anchored;
+    need;
     prefix = Buffer.contents prefix;
     first = (match first with Some set -> set | None -> Charset.none);
     has_first = first <> None;

@@ -46,7 +46,9 @@
     its choices on an explicit stack, so a long text cannot overflow the stack of the thread and a match does not
     allocate once the stack has grown. It has no step budget, so a pattern with nested quantifiers can take exponential
     time on a text it does not match, as it can in any backtracking engine. A repetition whose body cannot consume a
-    character is not such a pattern. It is run once, or not at all (see simplify of compile.ml), as V8 runs it.
+    character is not such a pattern. It is run once, or not at all (see simplify of compile.ml), as V8 runs it. And a
+    counted loop gives up at a position from which the rest of the pattern needs more text than is left (see set_needs
+    of compile.ml), as V8 does, so a loop whose iterations can be empty does not try every combination of them there.
 
     The automaton is built when the pattern is compiled, where Go builds it on the first match.
 
@@ -200,6 +202,13 @@ module Internal : sig
   val program_shape : t -> int * int
   (** [program_shape re] is the number of counted loops of the program of the backtracking matcher, and the number of
       its instructions that compare a backreference by its bytes. *)
+
+  val needs : t -> int * int array
+  (** [needs re] is the least number of bytes a match of the program of the backtracking matcher consumes, and the same
+      figure for each of its counted loops, in order. *)
+
+  val no_match : int
+  (** The need of a program that no text matches. *)
 
   val unit_before : string -> int -> int * int
   (** [unit_before text at] is the code unit that ends at the index [at] of the text and the number of bytes it spans.
