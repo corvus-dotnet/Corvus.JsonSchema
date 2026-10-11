@@ -1244,8 +1244,10 @@ internal sealed class EcmaRegexParser
         }
 
         // Identity escapes. The u flag allows only the syntax characters and '/', and '-' in a class. Annex B
-        // allows any character.
-        if (this.Unicode && !(c < 128 && "^$\\.*+?()[]{}|/".IndexOf((char)c) >= 0) && !(inClass && c == '-'))
+        // allows any character, but k in a pattern with a named group: there \k is the start of a named reference
+        // wherever it stands, and a class has none.
+        if ((this.Unicode && !(c < 128 && "^$\\.*+?()[]{}|/".IndexOf((char)c) >= 0) && !(inClass && c == '-'))
+            || (c == 'k' && this.hasNames))
         {
             this.i--;
             throw this.Error("Invalid escape");

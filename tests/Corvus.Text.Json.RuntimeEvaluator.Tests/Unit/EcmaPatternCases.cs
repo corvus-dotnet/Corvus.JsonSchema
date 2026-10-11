@@ -376,6 +376,15 @@ internal static class EcmaPatternCases
     public static readonly (string Pattern, bool ValidWithU, bool ValidWithoutU)[] Validity =
     [
         ("$+", false, false),
+        ("(?<a>x)[\\k]", false, false),
+        ("(?<n>a)[\\k<a>]", false, false),
+        ("(?<n>a)[\\k]", false, false),
+        ("(?<n>a)[\\\\k]", true, true),
+        ("(?<n>a)[k]", true, true),
+        ("(?<n>a)\\k<n>", true, true),
+        ("(a)[\\k]", false, true),
+        ("[\\k<a>](?<n>a)", false, false),
+        ("[\\k](?<n>a)", false, false),
         ("(()", false, false),
         ("())", false, false),
         ("(*)", false, false),
