@@ -868,15 +868,28 @@ let rec expand_alternatives c i =
   let branch = ref [ "" ] in
   let i = ref i in
   let closed = ref false in
-  let append_all text = branch := List.map (fun b -> b ^ text) !branch in
+  (* The characters that are copied are added to the branches a run at a time, when something else follows the run.
+     Adding them one at a time would copy the branch for each, which takes time quadratic in its length. run is where
+     the run that has not been added starts, or -1. *)
+  let run = ref (-1) in
+  let flush stop =
+    if !run >= 0 then begin
+      let text = slice c !run stop in
+      branch := List.map (fun b -> b ^ text) !branch;
+      run := -1
+    end
+  in
+  let copied from = if !run < 0 then run := from in
   while (not !closed) && !i < n do
     (match c.[!i] with
     | '|' ->
+        flush !i;
         all := !all @ !branch;
         branch := [ "" ];
         incr i
     | ')' -> closed := true
     | '(' ->
+        flush !i;
         incr i;
         if byte_or c !i = Char.code '?' then begin
           if byte_or c (!i + 1) <> Char.code ':' then raise No_shape;
@@ -924,16 +937,17 @@ let rec expand_alternatives c i =
           incr i
         done;
         incr i;
-        append_all (slice c start !i)
+        copied start
     | '\\' ->
         if !i + 2 > n then raise No_shape;
-        append_all (slice c !i (!i + 2));
+        copied !i;
         i := !i + 2
-    | ch ->
-        append_all (String.make 1 ch);
+    | _ ->
+        copied !i;
         incr i);
     if (not !closed) && List.length !all + List.length !branch > max_alternatives then raise No_shape
   done;
+  flush !i;
   (!all @ !branch, !i)
 
 (* parse_alternatives reads two or more alternatives once groups of alternatives (and optional groups) are expanded

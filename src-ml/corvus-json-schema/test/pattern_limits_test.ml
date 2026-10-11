@@ -267,6 +267,46 @@ let test_an_ordinary_pattern_is_not_affected_by_the_limit () =
     ]
     [@ocamlformat "disable"]
 
+(* Compiles literal patterns of growing length through every matcher a literal can take, and counts the bytes
+   allocated, which no load on the machine changes. A pattern of 100,000 characters took half a second when the
+   alternatives of a pattern were built a character at a time, each step copying what was built so far. A long pattern
+   must allocate no more than a few times its share of what a short one does. *)
+let test_a_long_pattern_compiles_in_memory_proportional_to_its_length () =
+  Check.section "TestALongPatternCompilesInMemoryProportionalToItsLength";
+  let round = ref 0 in
+  let compile_bytes n shape =
+    incr round;
+    let pattern = shape (repeat (n - 8) "a" ^ Printf.sprintf "%08d" !round) in
+    let schema = Printf.sprintf {|{"pattern": "%s"}|} pattern in
+    let before = Gc.allocated_bytes () in
+    (match Validator.compile_string schema with
+    | Ok _ -> ()
+    | Error e -> failwith (Printf.sprintf "a pattern of %d characters: %s" n (error_to_string e)));
+    Gc.allocated_bytes () -. before
+  in
+  List.iter
+    (fun (name, shape) ->
+      let short = compile_bytes 1000 shape and long = compile_bytes 16000 shape in
+      Printf.printf "  %s: 1,000 characters allocate %.0f KB, 16,000 allocate %.0f KB\n" name (short /. 1024.)
+        (long /. 1024.);
+      (* Sixteen times the length. Quadratic growth is 256 times. *)
+      Check.checkf
+        (long <= 64. *. short)
+        "%s: 16,000 characters allocate %.0f KB and 1,000 allocate %.0f KB" name (long /. 1024.) (short /. 1024.))
+    [
+      ("a literal", fun s -> s);
+      ("anchored", fun s -> "^" ^ s ^ "$");
+      ( "alternatives",
+        fun s ->
+          let n = String.length s in
+          "^(?:" ^ String.sub s 0 (n - 200) ^ "|x" ^ String.sub s (n - 100) 100 ^ ")$" );
+      ( "with an escape",
+        fun s ->
+          let n = String.length s in
+          String.sub s 0 (n / 2) ^ {|\\.|} ^ String.sub s ((n / 2) + 2) (n - (n / 2) - 2) );
+      ("in a group", fun s -> "(" ^ String.sub s 0 (String.length s - 4) ^ ")");
+    ]
+
 let () =
   test_a_match_that_reaches_its_limit_is_an_error ();
   test_the_default_match_limit_is_one_second ();
@@ -275,4 +315,5 @@ let () =
   test_a_match_that_reaches_its_memory_limit_is_an_error ();
   test_a_match_while_compiling_has_the_limit ();
   test_an_ordinary_pattern_is_not_affected_by_the_limit ();
+  test_a_long_pattern_compiles_in_memory_proportional_to_its_length ();
   Check.finish "pattern limits"
