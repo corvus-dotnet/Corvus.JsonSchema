@@ -2150,4 +2150,26 @@ class EcmaRegexTest {
         assertNotNull(EcmaRegex.translate("(?:^|x){200}a"));
         assertEquals(EcmaRegex.REFUSED_EMPTY_ITERATIONS, EcmaRegex.unsupported("(?:^|x){201}a"));
     }
+
+    /**
+     * In a pattern with a named group ECMA-262 has {@code \k} only as a reference to one, in the grammar without the
+     * u flag too, so it is no escape of the letter k in a class either. In a pattern with no named group it is the
+     * letter, as Annex B says. V8's verdicts.
+     */
+    @Test
+    void anEscapedKInAClassIsNotValidInAPatternWithANamedGroup() {
+        for (String p : new String[] {
+            "(?<n>a)[\\k]", "[\\k](?<n>a)", "(?<n>a)[\\k<a>]", "[\\k<a>](?<n>a)", "(?<n>a)^[\\k<a>]$", "^[\\k<a>]$(?<n>a)",
+            "(?<a>x)[\\k]", "(?<a>x)[\\k<a>]", "(?<n>a)[^\\k]", "(?<n>a)[a-\\k]",
+        }) {
+            assertNotValid(p);
+            assertNull(EcmaRegex.translate(p), p);
+            assertNull(EcmaRegex.unsupported(p), p);
+        }
+        assertMatches("^[\\k]$", "k");
+        assertNoMatch("^[\\k]$", "a");
+        assertMatches("^(a)[\\k<a>]$", "ak");
+        assertMatches("^(a)[\\k<a>]$", "a<");
+        assertMatches("^(?<n>a)\\k<n>[k]$", "aak");
+    }
 }

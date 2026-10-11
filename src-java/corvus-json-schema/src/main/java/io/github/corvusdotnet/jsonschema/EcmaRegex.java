@@ -1153,8 +1153,12 @@ final class EcmaRegex {
                 return legacyOctal();
             }
             // Identity escapes. The u flag allows only the syntax characters and '/', and '-' in a class. Annex B
-            // allows any character.
+            // allows any character, but for k in a pattern with a named group, where \k is only ever a reference
+            // to one (so not in a class either).
             if (unicode && "^$\\.*+?()[]{}|/".indexOf(c) < 0 && !(inClass && c == '-')) {
+                throw error("invalid escape");
+            }
+            if (c == 'k' && hasNames) {
                 throw error("invalid escape");
             }
             return c;
