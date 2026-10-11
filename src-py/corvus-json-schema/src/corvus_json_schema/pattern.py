@@ -746,6 +746,9 @@ class _Translator:
                 raise self.error()
             self.i -= 1  # '\c' is a literal backslash then 'c'
             return "", "\\"
+        if e == "k" and self.has_names:
+            # Annex B: in a pattern with a named group, \k is a reference to one and nothing else.
+            raise self.error()
         if e == "x":
             hexa = self.p[self.i : self.i + 2]
             if len(hexa) == 2 and all(h in "0123456789abcdefABCDEF" for h in hexa):

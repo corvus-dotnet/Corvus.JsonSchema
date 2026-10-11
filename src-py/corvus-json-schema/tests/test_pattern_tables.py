@@ -999,6 +999,9 @@ _ANNEX_B: list[tuple[str, str, str]] = [
 
 # V8 refuses each of these with the u flag and without it.
 _NOT_VALID = [
+    "(?<n>a)[\\k]",
+    "[\\k](?<n>a)",
+    "(?<n>a)[\\k<n>]",
     "(?<a>x)\\k",
     "(?<a>x)\\k<b>",
     "(?<a>x)\\k<a",
