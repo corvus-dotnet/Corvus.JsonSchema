@@ -72,19 +72,25 @@ from typing import Any
 from .options import PatternMatchLimitError, PatternTooLargeError, match_limit
 
 # ECMA-262 WhiteSpace and LineTerminator (what \s matches).
-_SPACE = "\\t\\n\\x0b\\x0c\\r \\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff"
-_DOT = "[^\\n\\r\\u2028\\u2029]"
+# (Characters beyond U+00A0 are written as they are, here and in every translation: an escape of one is six
+# characters, and a translation has a limit of length.)
+_SPACE = "\\t-\\r \\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff"
+_DOT = "[^\\n\\r\u2028\u2029]"
 _ANY = "(?s:.)"
 # What an empty class is: nothing matches it. (The regex package reads [^\s\S] as any character.)
 _NEVER = "(?!)"
 # ^ and $ inside a group with the m modifier: at the start or the end of the text or next to a line terminator.
-_LINE_START = "(?<![^\\n\\r\\u2028\\u2029])"
-_LINE_END = "(?![^\\n\\r\\u2028\\u2029])"
+_LINE_START = "(?<![^\\n\\r\u2028\u2029])"
+_LINE_END = "(?![^\\n\\r\u2028\u2029])"
 _SYNTAX = set("^$\\.*+?()[]{}|/")
 # A digit of a pattern is one of these. (str.isdigit and \d in a pattern for text take the decimal digits of every
 # script, of the version of Unicode that the interpreter has.)
 _DIGITS = frozenset("0123456789")
 _QUANTIFIER_RE = re.compile(r"\{([0-9]+)(,([0-9]*))?\}")
+# One character, escape or class as it is written, which a quantifier can follow without a group around it.
+_ATOM_RE = re.compile(
+    r"\[(?:[^\]\\]|\\.)*\]|\\[pP]\{[^}]*\}|\\x[0-9a-f]{2}|\\u[0-9a-f]{4}|\\.|[^\\\[\]()|^$.*+?{}]", re.DOTALL
+)
 _PROPERTY_RE = re.compile(r"\\[pP]\{[^}]*\}")
 # A call of a class that is written once (see _Writer.write).
 _CALL_RE = re.compile(r"\(\?[0-9]+\)|\(\?:\(\?=\(\?[0-9]+\)\)\(\?s:\.\)\)")
@@ -116,6 +122,9 @@ _MAX_TESTS = 65_536
 # many times the pattern has it, and a call of it counts this much (see _Writer.write).
 _LONG_CLASS = 64
 _CALL = 8
+# With each class written once for the regex package (see _Writer.write), a class of more characters than this is
+# one that is called.
+_SHARED = 6
 # The most characters of a translation for the standard library's engine, with every copy of a long class counted.
 _MAX_WRITTEN_FOR_RE = 262_144
 # The most characters of a literal that the regex package is given in one piece. Before the first match of a
@@ -148,7 +157,7 @@ _WORD: _Ranges = [(0x30, 0x39), (0x41, 0x5A), (0x5F, 0x5F), (0x61, 0x7A)]
 # With the u flag, case-insensitive \w and \b also count the two characters that fold to an ASCII letter (the long
 # s and the Kelvin sign).
 _FOLD_WORD: _Ranges = [*_WORD, (0x17F, 0x17F), (0x212A, 0x212A)]
-_FOLD_WORD_CLASS = "[0-9A-Za-z_\\u017f\\u212a]"
+_FOLD_WORD_CLASS = "[0-9A-Za-z_\u017f\u212a]"
 _WHITE: _Ranges = [
     (0x09, 0x0D),
     (0x20, 0x20),
@@ -369,13 +378,8 @@ def _minus(a: _Ranges, b: _Ranges) -> _Ranges:
 
 
 def _table_class(ranges: _Ranges) -> str:
-    """Ranges of a table as members of a class. A character from U+00A1 up that is not a surrogate is written as
-    it is, which is a third of the length of an escape."""
-
-    def one(o: int) -> str:
-        return chr(o) if o >= 0xA1 and not 0xD800 <= o <= 0xDFFF else _literal(chr(o))
-
-    return "".join(one(lo) if lo == hi else f"{one(lo)}-{one(hi)}" for lo, hi in ranges)
+    """Ranges as members of a class."""
+    return "".join(_literal(chr(lo)) if lo == hi else f"{_literal(chr(lo))}-{_literal(chr(hi))}" for lo, hi in ranges)
 
 
 def _holds(ranges: _Ranges, o: int) -> bool:
@@ -432,16 +436,23 @@ class _TooLarge(Exception):
         )
 
 
+# The characters of ASCII that are written with a backslash: those that mean something to either engine outside a
+# class or inside one (the regex package reads ``[``, ``&&``, ``||``, ``~~`` and ``--`` in a class).
+_ESCAPED = frozenset("\\.^$*+?{}[]|()-&~")
+
+
 def _literal(c: str) -> str:
-    """A character as a pattern literal (outside or inside a class)."""
+    """A character as a pattern literal (outside or inside a class). A control character, a surrogate and what is
+    between U+007F and U+00A0 are escapes. Any other character is written as it is, with a backslash before the
+    ones of ``_ESCAPED``: a pattern of plain characters is as long translated as it was."""
     o = ord(c)
-    if o < 32 or o == 127:
+    if o < 32 or 0x7F <= o <= 0xA0:
         return f"\\x{o:02x}"
     if o < 128:
-        return c if c.isalnum() else "\\" + c
-    if o < 0x10000:
+        return "\\" + c if c in _ESCAPED else c
+    if 0xD800 <= o <= 0xDFFF:
         return f"\\u{o:04x}"
-    return f"\\U{o:08x}"
+    return c
 
 
 def _merged(ranges: _Ranges) -> _Ranges:
@@ -465,10 +476,6 @@ def _complement(ranges: _Ranges) -> _Ranges:
     if at <= 0x10FFFF:
         out.append((at, 0x10FFFF))
     return out
-
-
-def _class_text(ranges: _Ranges) -> str:
-    return "".join(_literal(chr(lo)) if lo == hi else f"{_literal(chr(lo))}-{_literal(chr(hi))}" for lo, hi in ranges)
 
 
 _fold_tables: dict[bool, tuple[list[int], dict[int, str]]] = {}
@@ -893,7 +900,10 @@ class _Linear:
     is not taken then fails at its first character. The body of a repetition has to take a character.
 
     Some things are allowed beyond that, each for a bounded cost. ``factor`` is the product of the costs, and the
-    work for a character of the text is at most ``factor`` times the nodes of the tree.
+    work for a character of the text is at most ``factor`` times the nodes of the tree that a character can pass
+    more than once in a try: those inside a repetition, and in a pattern that does not start with ``^``, which is
+    tried at every place in the text, all of them. In a pattern that starts with ``^`` the nodes outside every
+    repetition are passed once for a text, so a pattern of 16,000 digits one after another is proved.
 
     - A pattern that can take a bounded number of characters and has no lookahead, when all the ways through it
       come to few characters (``^(?:es5|es6|es2015)$``): the engine cannot do more than try each way.
@@ -922,7 +932,9 @@ class _Linear:
 
     def __init__(self) -> None:
         self.factor = 1.0
+        # The nodes of the tree, and those of them that are inside a repetition.
         self.nodes = 0
+        self.repeated = 0
         self.firsts: dict[int, _Ranges] = {}
         self.lengths: dict[int, float] = {}
         # The lookaheads that are tried once (by the place of the node in memory).
@@ -945,7 +957,7 @@ class _Linear:
             self.visit(root, [], True, 0.0, True, True)
         except _NotLinear:
             return False
-        return self.factor * self.nodes <= self.MAX_WORK
+        return self.factor * (self.repeated if anchored else self.nodes) <= self.MAX_WORK
 
     def cost(self, width: float) -> None:
         self.factor *= 1 + width
@@ -1162,6 +1174,8 @@ class _Linear:
         take and still fail, and ``never``: what comes after it cannot fail. ``single``: the node is in no
         repetition, so it is tried once for each try at the pattern."""
         self.nodes += 1
+        if not single:
+            self.repeated += 1
         k = n.kind
         if k == _TEXT:
             return
@@ -1220,6 +1234,8 @@ class _Linear:
                         raise _NotLinear()
                     self.cost(len(ways) - 1)
                 self.nodes += sum(len(w) for w in ways)
+                if not single:
+                    self.repeated += sum(len(w) for w in ways)
             for x in n.items:
                 self.visit(x, follow, end, after, never, single)
             return
@@ -1466,7 +1482,7 @@ class _Translator:
         # and classes are already twice the limit of a translation is not read to its end: a class of a property
         # in a case-insensitive group takes milliseconds to work out, and a pattern of 1,000 characters has room
         # for eighty. A long class that is written again counts as a call of it (see _Writer.write).
-        if len(text) > _LONG_CLASS:
+        if len(text) > (_SHARED if self.share else _LONG_CLASS):
             if text in self.long:
                 self.size += _CALL
             else:
@@ -1677,7 +1693,7 @@ class _Translator:
         e = self.p[self.i]
         self.i += 1
         if e == "d":
-            return ("0-9" if in_class else "[0-9]"), None
+            return ("\\d" if self.ascii_flag else "0-9" if in_class else "[0-9]"), None
         if e == "D":
             return ("\\D" if self.ascii_flag else "[^0-9]"), None
         if e == "w":
@@ -2151,8 +2167,7 @@ class _Writer:
         lookaround it enters). Many sets are tried forty at a time, after a test that the character is in one of
         the forty."""
 
-        def raw(c: str) -> str:
-            return c if ord(c) > 127 else _literal(c)
+        raw = _literal
 
         at_pointer = "(?P=fr)(?<=(?=%s)(?P=fp))"
         tests = []
@@ -2224,7 +2239,7 @@ class _Writer:
                         self.parted += 1
                         return text + _AFTER_A_CHARACTER
                     return text
-            if len(text) <= _LONG_CLASS or n.nothing is not False:
+            if n.nothing is not False or len(text) <= (_SHARED if self.share else _LONG_CLASS):
                 return text
             if not self.share:
                 self.classes[text] = self.classes.get(text, 0) + 1
@@ -2294,8 +2309,9 @@ class _Writer:
             or any(n.first < self.groups[g].first < n.last for g in self.read)
         )
         if not read and not (self.seen and k < len(self.live) and self.live[k] < n.last):
-            # A reference to a name that two groups have is two references, which the count is for together.
-            if body.kind == _SEQUENCE or not text.startswith("("):
+            # A reference to a name that two groups have is two references, which the count is for together. One
+            # character, escape or class needs no group.
+            if body.kind == _SEQUENCE or not (text.startswith("(") or _ATOM_RE.fullmatch(text)):
                 text = f"(?:{text})"
             counted = text + self._count(lo, hi, n.lazy)
             # The regex package writes a minimum count out, and then the body once more for the rest.

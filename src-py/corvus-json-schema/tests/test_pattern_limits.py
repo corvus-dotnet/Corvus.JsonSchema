@@ -589,10 +589,14 @@ def test_the_longest_pattern_is_read_proved_and_compiled_in_time_in_proportion_t
         # Twenty times what the whole compilation takes on a quiet machine.
         assert time.process_time() - start < 10, pattern[:20]
     assert max(lengths, default=0) <= pattern_module._Linear.MAX_WORK
-    # A proved pattern has 4,096 nodes at most, which bounds the work of the engine for a character of the text. A
-    # longer one goes to the engine with the limit.
+    # A proved pattern has 4,096 nodes at most that a character of the text can pass more than once in a try, which
+    # bounds the work of the engine for a character: the nodes inside a repetition, and all of them in a pattern
+    # that is tried at every place in the text. A pattern with more goes to the engine with the limit.
     assert _engine(compile_pattern("^[ab]" + "a" * 3000 + "$")) == "re"
-    assert _engine(compile_pattern("^[ab]" + "a" * 32000 + "$")) == "regex"
+    assert _engine(compile_pattern("^[ab]" + "a" * 32000 + "$")) == "re"
+    assert _engine(compile_pattern("^(?:[ab]" + "a" * 3000 + ")+$")) == "re"
+    assert _engine(compile_pattern("[ab]" + "a" * 5000 + "$")) == "regex"
+    assert _engine(compile_pattern("[ab]" + "a?" * 5000 + "$")) == "regex"
     # A bounded pattern within the bound is still proved by its ways.
     lengths.clear()
     assert _proved("^(?:es5|es6|es2015)$") and lengths
@@ -758,7 +762,7 @@ def test_a_property_is_written_for_the_regex_package_as_its_own_with_what_is_dif
         assert "\\p{" in written[0] or "\\P{" in written[0], pattern
     # A property that every release has alike is the property and nothing else.
     assert pattern_module.translate("\\p{Lt}", True, True) == ("\\p{gc=Lt}", True)
-    assert pattern_module.translate("\\P{sc=Thai}+", True, True) == ("(?:\\P{sc=Thai})+", True)
+    assert pattern_module.translate("\\P{sc=Thai}+", True, True) == ("\\P{sc=Thai}+", True)
 
 
 # Patterns that were refused as too large: the classes of properties were written as ranges, each time.
@@ -846,6 +850,66 @@ def test_the_limit_is_not_seconds_late_for_a_repetition_of_a_class_of_many_range
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# A plain pattern is about as long translated as it was
+
+
+def test_a_plain_term_is_written_as_it_is() -> None:
+    # A character, an escape or a class under a quantifier has no group around it, and a character that means
+    # nothing to the engines has no backslash before it and is not an escape.
+    assert pattern_module.translate("^a?b*c+d{2}[ef]?\\d*\\.{2,3}x??\\w+?$") == (
+        "^a?b*c+d{2}[ef]?\\d*\\.{2,3}x??\\w+?\\Z",
+        False,
+    )
+    assert pattern_module.translate("^a?\\d*\\w+[^a]{2}\\p{Lt}?$", True, True) == (
+        "^a?[0-9]*[0-9A-Za-z_]+[^a]{2}\\p{gc=Lt}?\\Z",
+        True,
+    )
+    assert pattern_module.translate("^\u00e9+ - ,:;<=>!\"#%'/@_`\u4e2d\U00020000?$") == (
+        "^\u00e9+ \\- ,:;<=>!\"#%'/@_`\u4e2d\U00020000?\\Z",
+        False,
+    )
+    assert pattern_module.translate("^[\u00e9 _,:/\\-\\]\\[&|~^]\\{\\}\\(\\)\\|\\*\\+\\?\\.\\^\\$\\\\$") == (
+        "^[\u00e9 _,:/\\-\\]\\[\\&\\|\\~\\^]\\{\\}\\(\\)\\|\\*\\+\\?\\.\\^\\$\\\\\\Z",
+        False,
+    )
+    # A control character, a surrogate and a character from U+007F to U+00A0 are escapes.
+    assert pattern_module.translate("^\\0\\t\x7f\u0085\u00a0\\ud800$") == (
+        "^\\x00\\x09\\x7f\\x85\\xa0\\ud800\\Z",
+        False,
+    )
+    # More than one term under a quantifier keeps its group.
+    assert pattern_module.translate("^(?:ab)?(?:a|b)*(a)+$") == ("^(?:ab)?(?:a|b)*(a)+\\Z", False)
+
+
+# Patterns that are within the limit of a pattern, and were refused because the translation of each term was several
+# times as long as the term: (?:a)? for a?, six characters for a letter beyond ASCII, a backslash before a space.
+_PLAIN = [
+    ("a?" * 8000, "a" * 8000, None),
+    ("^" + "a?" * 16000 + "$", "a" * 16000, None),
+    ("^" + "[ab]*c" * 5000 + "$", "abc" * 5000, "abc" * 4999 + "abd"),
+    ("(?<=^)" + "[ab]*c?" * 4000 + "$", "abc" * 4000, None),
+    ("^" + "\u4e2d\u6587" * 16000 + "$", "\u4e2d\u6587" * 16000, "\u4e2d\u6587" * 15999 + "\u4e2d"),
+    ("^" + "\U00020000\u00e9" * 16000 + "$", "\U00020000\u00e9" * 16000, "\U00020000\u00e9" * 15999),
+    ("^" + "a, b: c/d " * 3000 + "$", "a, b: c/d " * 3000, "a, b: c/d " * 2999),
+    ("^" + "\\d" * 16000 + "$", "7" * 16000, "7" * 15999 + "x"),
+    ("^" + "\\s" * 1500 + "$", " \t" * 750, " \t" * 749 + " x"),
+    ("^" + "\\s" * 6000 + "$", " \t" * 3000, " \t" * 2999 + " x"),
+    ("^" + "." * 3000 + "$", "x" * 3000, "x" * 2999 + "\n"),
+    ("^" + "." * 7000 + "$", "x" * 7000, "x" * 6999 + "\n"),
+    ("(?<=^)" + "\\w\\s" * 3000 + "$", "a " * 3000, "a " * 2999 + "a_"),
+]
+
+
+@pytest.mark.parametrize(("pattern", "matches", "fails"), _PLAIN)
+def test_a_pattern_of_plain_terms_is_not_too_large(pattern: str, matches: str, fails: str | None) -> None:
+    assert len(pattern) <= pattern_module.MAX_PATTERN
+    matcher = compile_pattern(pattern)
+    assert matcher is not None
+    assert matcher(matches) is not None
+    assert fails is None or matcher(fails) is None
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # A long literal
 
 
@@ -859,7 +923,7 @@ def _first_match(pattern: str, text: str, limit: float | None = 0.5) -> tuple[bo
     return answer, time.process_time() - start
 
 
-@pytest.mark.parametrize("unit", ["a", "ab", "abcd"])
+@pytest.mark.parametrize("unit", ["a", "ab", "abc\u00e9"])
 def test_a_long_literal_does_not_hold_the_regex_package(unit: str) -> None:
     # Before the first match of a pattern the engine builds the tables of a search for a literal, in a step that
     # its timeout does not interrupt. For a literal that repeats itself the step took 3 to 7 seconds for 4,000
@@ -921,8 +985,8 @@ def test_a_repetition_of_nothing_but_a_repetition_is_written_as_one() -> None:
     # twenty groups with a * of what can match nothing inside each other took it 331 MB and 6 s to compile.
     for depth in (2, 3, 20, 60):
         nested = "(?:" * depth + "a*" + ")*" * depth
-        assert pattern_module.translate(nested + "b") == ("(?:a)*b", False), depth
-        assert pattern_module.translate(nested + "b", for_regex=True) == ("(?:a)*b", True), depth
+        assert pattern_module.translate(nested + "b") == ("a*b", False), depth
+        assert pattern_module.translate(nested + "b", for_regex=True) == ("a*b", True), depth
         assert pattern_module.translate("^" + "(" * depth + "a|" + ")+" * depth + "$") == ("^(?:a)*\\Z", False), depth
     tracemalloc.start()
     try:
@@ -936,7 +1000,7 @@ def test_a_repetition_of_nothing_but_a_repetition_is_written_as_one() -> None:
     finally:
         tracemalloc.stop()
     # A repetition with a count, or with something beside the inner one, is not such a repetition.
-    assert pattern_module.translate("^(?:(?:a|)*x?){2,}$") == ("^(?:(?:(?:a)+(?:x)?|(?:x){1}))*\\Z", False)
+    assert pattern_module.translate("^(?:(?:a|)*x?){2,}$") == ("^(?:(?:(?:a)+x?|x{1}))*\\Z", False)
     assert pattern_module.translate("^(?:(?:a|){2,3})*$") == ("^(?:(?:a){1,3})*\\Z", False)
     # Nor is one that a reference reads a group of.
     text, for_regex = pattern_module.translate("^(?:(?:(a)|)*)*\\1$") or ("", False)

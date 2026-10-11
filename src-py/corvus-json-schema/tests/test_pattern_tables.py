@@ -251,7 +251,7 @@ def test_a_case_insensitive_reference_compares_by_canonicalize(pattern: str, tex
 def test_a_case_insensitive_reference_is_written_out_where_its_group_can_hold_a_letter() -> None:
     # A group of digits can hold no character that has another case. Its reference stays a reference, and the
     # standard library's engine runs the pattern.
-    assert translate("^(?i:(\\d+)-\\1)$") == ("^(?:(?P<g1>(?:[0-9])+)\\-(?P=g1))\\Z", False)
+    assert translate("^(?i:(\\d+)-\\1)$") == ("^(?:(?P<g1>\\d+)\\-(?P=g1))\\Z", False)
     # Any other is compared by a group that is written once, with the sets of the letters the group can hold, and
     # called from each reference. Neither engine's own case-insensitive comparison is used.
     text, for_regex = translate("^(?i:(?:([a-c])\\1){3})$") or ("", False)
@@ -436,7 +436,7 @@ def test_a_text_is_split_into_code_units_only_for_a_pattern_that_can_tell() -> N
         assert split(pattern), pattern
     # The pattern is read by code unit too: a quantifier after a character beyond the Basic Multilingual Plane
     # repeats its second surrogate.
-    assert translate("^\\-?\U00010400*$", False) == ("^(?:\\-)?\\ud801(?:\\udc00)*\\Z", False)
+    assert translate("^\\-?\U00010400*$", False) == ("^\\-?\\ud801\\udc00*\\Z", False)
 
 
 _PROPERTY_TEXTS = ["", "a", "B", "1", "-", "\u00e9", "\u03a3", "ab", "aB", "a1", "Ba", "1-", "\U00010400"]
@@ -1062,10 +1062,10 @@ def test_the_engine_is_never_asked_what_a_property_name_means(monkeypatch: pytes
     assert _for_regex("\\p{Lt}") == _for_regex("\\p{gc=Titlecase_Letter}") == (titles, True)
     assert translate("^\\p{Lt}$") == (f"^{titles}\\Z", False)
     assert translate("^[\\p{Lt}x]$") == (f"^[{titles[1:-1]}x]\\Z", False)
-    assert translate("^\\p{sc=Sidetic}+$") == ("^(?:[\U00010940-\U00010959])+\\Z", False)
+    assert translate("^\\p{sc=Sidetic}+$") == ("^[\U00010940-\U00010959]+\\Z", False)
     # ASCII and Any are ranges for both engines.
     assert translate("^\\p{ASCII}$") == ("^[\\x00-\\x7f]\\Z", False)
-    assert translate("^[^\\P{ASCII}a]$") == ("^[^\\u0080-\U0010ffffa]\\Z", False)
+    assert translate("^[^\\P{ASCII}a]$") == ("^[^\\x80-\U0010ffffa]\\Z", False)
     assert translate("\\P{Any}") == translate("[\\P{Any}]") == ("(?!)", False)
     for pattern in (
         "\\p{Greek}",
@@ -1219,9 +1219,9 @@ def test_a_repetition_in_a_lookbehind_is_tried_again_when_a_group_has_another_va
 
 def test_the_reference_the_engine_has_to_see_is_at_the_left_of_a_repetition_in_a_lookbehind() -> None:
     text, for_regex = translate("(.)?(?<=(?:x{2,})*)\\1a") or ("", False)
-    assert for_regex and "(?<=(?P=z)(?:(?P=z)(?:x){2,})*)" in text
+    assert for_regex and "(?<=(?P=z)(?:(?P=z)x{2,})*)" in text
     text, for_regex = translate("(.)?(?=(?:x{2,})*)\\1a") or ("", False)
-    assert for_regex and "(?=(?:(?:x){2,}(?P=z))*(?P=z))" in text
+    assert for_regex and "(?=(?:x{2,}(?P=z))*(?P=z))" in text
 
 
 # A repetition whose body can match nothing, inside another repetition or with one inside it, in a pattern where no
@@ -1307,24 +1307,24 @@ def test_repetitions_inside_repetitions_are_written_with_bodies_that_take_a_char
     # This one took the standard library's engine over a minute for a text of twelve characters.
     # (A repetition with no maximum of nothing but another one is written as the one.)
     assert translate("(?:(?:(-|){3,})+|){3}-$") == ("(?:(?:\\-)+){0,3}\\-\\Z", False)
-    assert translate("^(?:(?:a|)*x?)*$") == ("^(?:(?:(?:a)+(?:x)?|(?:x){1}))*\\Z", False)
+    assert translate("^(?:(?:a|)*x?)*$") == ("^(?:(?:(?:a)+x?|x{1}))*\\Z", False)
     # A body that matches nothing only where an assertion holds: with no minimum the assertion is not needed.
     assert translate("^(?:(?:\\b|a)*x)*$") == ("^(?:(?:a)*x)*\\Z", False)
     # Under a minimum it is, and the repetition is left as it is written, with the one around it.
     assert translate("^(?:(?:\\b|a){2}|-)*$") == ("^(?:(?:\\b|a){2}|\\-)*\\Z", False)
     # One repetition by itself is left as it is written.
     assert translate("^(?:a|)*$") == ("^(?:a|)*\\Z", False)
-    assert translate("^(?:a?x)+$") == ("^(?:(?:a)?x)+\\Z", False)
+    assert translate("^(?:a?x)+$") == ("^(?:a?x)+\\Z", False)
     # An optional item is a repetition too.
-    assert translate("^(?:a?x?)+$") == ("^(?:(?:(?:a){1}(?:x)?|(?:x){1}))*\\Z", False)
+    assert translate("^(?:a?x?)+$") == ("^(?:(?:a{1}x?|x{1}))*\\Z", False)
 
 
 def test_a_pattern_that_would_be_too_large_without_them_is_written_as_it_is() -> None:
-    dot = "[^\\n\\r\\u2028\\u2029]"
+    dot = "[^\\n\\r\u2028\u2029]"
     # Past the size a translation may have.
-    assert translate("^(?:" + ".?" * 100 + ")*$") == ("^(?:" + f"(?:{dot})?" * 100 + ")*\\Z", False)
+    assert translate("^(?:" + ".?" * 100 + ")*$") == ("^(?:" + f"{dot}?" * 100 + ")*\\Z", False)
     # Past the size the tree may have.
-    assert translate("^(?:" + "a?" * 200 + ")*$") == ("^(?:" + "(?:a)?" * 200 + ")*\\Z", False)
+    assert translate("^(?:" + "a?" * 200 + ")*$") == ("^(?:" + "a?" * 200 + ")*\\Z", False)
     validate = cjs.compile({"pattern": "^(?:" + ".?" * 100 + ")*$"})
     assert validate("abc") and not validate("a\nb")
 

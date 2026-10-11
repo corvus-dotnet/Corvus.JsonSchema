@@ -154,7 +154,7 @@ def test_the_regex_package_is_a_release_that_runs_what_is_written_for_it() -> No
     # there and took a letter beyond ASCII for a word character. Release 2025.8.29 does not compile a dot that takes
     # every character where it is an alternative. So the package asks for 2025.9.1, the first release after both.
     assert regex.search("(?a:\\b)", "\u00e9") is None
-    assert translate("(?<=\u00e9)\\b") == ("(?<=\\u00e9)(?a:\\b)", True)
+    assert translate("(?<=\u00e9)\\b") == ("(?<=\u00e9)(?a:\\b)", True)
     assert cjs.compile({"pattern": "(?<=\u00e9)\\b"})("\u00e9") is False
     assert translate("(?<![^]|\\r)$") == ("(?<!(?s:.)|\\x0d)\\Z", True)
     assert cjs.compile({"pattern": "(?<![^]|\\r)$"})("") is True
