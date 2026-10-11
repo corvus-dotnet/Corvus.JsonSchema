@@ -745,4 +745,134 @@ end
             @test !E.parsesunicode("\\p{" * expression * "}")
         end
     end
+
+    # PCRE2 counts to 65535, writes a counted group out once for each time and holds a compiled pattern of at most
+    # 64 KiB. A count of one character or class that is too large for that is written in blocks, which are groups
+    # among the definitions of the pattern that the pattern calls. \p{1000000000} is the letter p a thousand
+    # million times in a pattern that is not valid with the u flag, and it was refused as too large for PCRE2. So
+    # was \p{L}{30000}, as a class of many ranges is a call of a group.
+    @testset "a count beyond what PCRE2 writes out" begin
+        checkgrammars([
+            (raw"\p{1000000000}", false, true, "000000"),
+            (raw"^\p{1000000000}", false, true, "000000"),
+            (raw"\p{2}", false, true, "000001"),
+            (raw"^\P{1,2}$", false, true, "000000"),
+        ])
+        @test E.translate(raw"\p{1000000000}").main ==
+              raw"(?:(?&d1){119}(?&c1){53}p{18944})(?(DEFINE)(?<c1>(?>p{32768}))(?<d1>(?>(?&c1){256})))"
+        @test E.translate(raw"^[ab]{5,1000000000}?$").main ==
+              raw"\A(?:[\x{61}-\x{62}]{5}(?:(?&d1){0,118}?(?&c1){0,255}?[\x{61}-\x{62}]{0,32767}?|(?&d1){119}" *
+              raw"(?:(?&c1){0,52}?[\x{61}-\x{62}]{0,32767}?|(?&c1){53}[\x{61}-\x{62}]{0,18939}?)))\z" *
+              raw"(?(DEFINE)(?<c1>(?>[\x{61}-\x{62}]{32768}))(?<d1>(?>(?&c1){256})))"
+        # A long text does not fill the memory of a match: nothing is kept to come back into a block.
+        for trees in (false, true)
+            E.SEARCH_TREES[] = trees
+            try
+                lazy = E.compile(raw"^[^\P{L}x]{0,2000000}?$")
+                @test E.ismatch(lazy, "a\u00e9\U10400"^600000)
+                @test !E.ismatch(lazy, "a\u00e9\U10400"^600000 * "x")
+            finally
+                E.SEARCH_TREES[] = nothing
+            end
+        end
+        # A count below 2^20 is written as it was, and one below 2^10 of a class that is a call.
+        @test E.translate(raw"a{100000}").main == raw"(?:(?:a{65535}){1}a{34465})"
+        @test E.translate(raw"^a{0,70000}$").main == raw"\A(?:(?:a{65535}a{0,4465}|a{0,65534}))\z"
+        @test startswith(E.translate(raw"^\p{L}{1,1023}$").main, raw"\A(?")
+        @test !occursin("(?<c1>", E.translate(raw"^\p{L}{1,1023}$").main)
+        # A class that is a call has six sizes of block, each 32 of the one before, on either form of such a class.
+        for trees in (false, true)
+            E.SEARCH_TREES[] = trees
+            try
+                @test occursin(raw"(?:(?&e1){9}(?:(?&d1){4}(?&c1){0,30}", E.translate(raw"^\p{L}{1,300000}$").main)
+                @test occursin(raw"|(?&e1){0,8}(?&d1){0,31}(?&c1){0,31}", E.translate(raw"^\p{L}{1,300000}$").main)
+                @test occursin(raw"{32}))(?<d1>(?>(?&c1){32}))(?<e1>(?>(?&d1){32}))(?<f1>(?>(?&e1){32}))",
+                    E.translate(raw"^\p{L}{1,300000}$").main)
+                letters = E.compile(raw"^\p{L}{2000,300000}$")
+                @test !E.ismatch(letters, "\u00e9"^1999)
+                @test E.ismatch(letters, "\u00e9"^2000)
+                @test E.ismatch(letters, "a\u00e9\U10400"^100000)
+                @test !E.ismatch(letters, "a\u00e9\U10400"^100000 * "x")
+                @test !E.ismatch(letters, "a\u00e9\U10400"^50000 * "1")
+                @test E.unsupportedreason(raw"\P{L}{0,2147483645}?\p{Lu}{2147483645}") === nothing
+            finally
+                E.SEARCH_TREES[] = nothing
+            end
+        end
+        # Texts of the lengths the counts name.
+        for (pattern, length, wanted) in [(raw"^a{1048576}$", 1048576, (false, true, false)),
+            (raw"^a{1048576,3000000}$", 3000000, (true, true, false)),
+            (raw"^a{5,3000000}?$", 5, (false, true, true)),
+            (raw"^(?=(a{0,3000000}))\1$", 3000000, (true, true, false)),
+            (raw"^(?=(a{1048577,3000000}?))\1$", 1048577, (false, true, false)),
+            (raw"^a{3000000,}$", 3000000, (false, true, true)),
+            (raw"^\p{1000000000}$", 3000000, (false, false, false))]
+            compiled = E.compile(pattern)
+            @test ntuple(k -> E.ismatch(compiled, "a"^(length + k - 2)), 3) == wanted
+        end
+        # Every form of the blocks, with blocks of four characters and of three of those (and of two, of three of
+        # those and of two of those for a class that is a call), on texts of 0 to 47 "a". The rows are V8's
+        # answers. A lookahead takes the first number of times that is tried, so the rows with one tell the order
+        # the numbers are tried in.
+        rows = [
+            (raw"^a{27}$", "000000100000"),
+            (raw"^a{10,}$", "003fffffffff"),
+            (raw"^a{37,}$", "0000000007ff"),
+            (raw"^a{3,40}$", "1fffffffff80"),
+            (raw"^a{3,40}?$", "1fffffffff80"),
+            (raw"^a{0,10}$", "ffe000000000"),
+            (raw"^a{0,11}$", "fff000000000"),
+            (raw"^a{0,12}$", "fff800000000"),
+            (raw"^a{0,13}$", "fffc00000000"),
+            (raw"^a{0,23}$", "ffffff000000"),
+            (raw"^a{0,24}$", "ffffff800000"),
+            (raw"^a{0,25}$", "ffffffc00000"),
+            (raw"^a{0,35}$", "fffffffff000"),
+            (raw"^a{0,36}$", "fffffffff800"),
+            (raw"^a{0,37}$", "fffffffffc00"),
+            (raw"^a{11,22}$", "001ffe000000"),
+            (raw"^a{12,24}$", "000fff800000"),
+            (raw"^a{13,26}$", "0007ffe00000"),
+            (raw"^a{1,45}?$", "7ffffffffffc"),
+            # A lookahead takes the first number of times that is tried, so these tell the order.
+            (raw"^(?=(a{0,10}))\1$", "ffe000000000"),
+            (raw"^(?=(a{0,29}))\1$", "fffffffc0000"),
+            (raw"^(?=(a{5,41}))\1$", "07ffffffffc0"),
+            (raw"^(?=(a{0,29}?))\1a{5}$", "040000000000"),
+            (raw"^(?=(a{7,29}?))\1a{5}$", "000800000000"),
+            (raw"^(?=(a{0,29})a{3}$)\1aaa$", "1fffffff8000"),
+            (raw"^(?=(a{0,29}?)a{3}$)\1aaa$", "1fffffff8000"),
+            (raw"^(?=(a{2,38})a{0,3}$)\1a$", "000000000100"),
+            (raw"^(?=(a{2,38}?)(?:a{12})*$)\1a{12}$", "0003ffc00000"),
+            (raw"^(?=([ax]{0,29}))\1$", "fffffffc0000"),
+            (raw"^(?=(.{12,30}?)a{2,3}$)\1aa$", "000200000000"),
+            # A class of many ranges, which is a call of a group.
+            (raw"^\p{L}{27}$", "000000100000"),
+            (raw"^\p{L}{3,40}$", "1fffffffff80"),
+            (raw"^\p{L}{0,23}?$", "ffffff000000"),
+            (raw"^(?=(\p{L}{0,29}))\1$", "fffffffc0000"),
+            (raw"^(?=(\p{L}{0,29}?))\1a{5}$", "040000000000"),
+            (raw"^(?=(\p{L}{7,38})a{0,3}$)\1a$", "000000000100"),
+            (raw"^(?=([^\P{L}x]{2,38}?)(?:a{12})*$)\1a{12}$", "0003ffc00000"),
+        ]
+        texts = ["a"^k for k in 0:47]
+        for trees in (false, true)
+            E.BLOCK_SIZES[] = ((10, [4, 3]), (10, [2, 3, 2]))
+            E.SEARCH_TREES[] = trees
+            try
+                checkv8table(rows, texts)
+                @test E.translate(raw"^a{27}$").main ==
+                      raw"\A(?:(?&d1){2}a{3})\z(?(DEFINE)(?<c1>(?>a{4}))(?<d1>(?>(?&c1){3})))"
+                @test E.translate(raw"^a{3,40}?$").main ==
+                      raw"\A(?:a{3}(?:(?&d1){0,2}?(?&c1){0,2}?a{0,3}?|(?&d1){3}a??))\z" *
+                      raw"(?(DEFINE)(?<c1>(?>a{4}))(?<d1>(?>(?&c1){3})))"
+                @test occursin("(?&e1){3}", E.translate(raw"^\p{L}{3,40}$").main)
+            finally
+                E.BLOCK_SIZES[] = (E.PLAIN_BLOCKS, E.CALLED_BLOCKS)
+                E.SEARCH_TREES[] = nothing
+            end
+        end
+        # The same rows with the counts as PCRE2 has them.
+        checkv8table(rows, texts)
+    end
 end

@@ -183,6 +183,9 @@ mutable struct Emitter
     # searches for its lookbehinds, which it calls by name (see `walk`).
     largesets::Vector{CodeSet}
     walks::Vector{String}
+    # The characters and classes that the pattern being written counts further than PCRE2 can be given, each as
+    # it is written. The pattern calls their blocks by number (see `blocks`).
+    blocks::Vector{String}
     # The name of the group that holds the rest of the text where the lookbehind being written as a search stands.
     edgerest::String
     # Whether the writer is in the body of a lookbehind that is a callout, outside the lookarounds of that body.
@@ -193,7 +196,8 @@ function Emitter(parser::Parser, root::Node)
     n = parser.groupcount
     return Emitter(parser.pattern, parser.unicode, root, Vector{Union{Nothing,Node}}(nothing, n), Node[], Node[],
         fill(false, n), fill(typemax(Int), n), [NO_NODES for _ in 1:n], [NO_NODES for _ in 1:n], IOBuffer(), String[],
-        fill("", n), zeros(Int, n), 0, false, 0, false, false, false, String[], CodeSet[], String[], "", false)
+        fill("", n), zeros(Int, n), 0, false, 0, false, false, false, String[], CodeSet[], String[], String[], "",
+        false)
 end
 
 # Works out what each backreference reads, and refuses the pattern when one cannot be written exactly.
@@ -588,6 +592,7 @@ function translation(E::Emitter, searching::Bool)
     fill!(E.written, 0)
     empty!(E.largesets)
     empty!(E.walks)
+    empty!(E.blocks)
     node(E, E.root)
     definitions(E)
     return Translation(String(take!(E.out)), copy(E.lookbehinds))
@@ -1062,9 +1067,17 @@ end
 # for its lookbehinds (see `walk`) and the groups of its sets of many ranges. A search can hold such a set, so the
 # searches come first.
 function definitions(E::Emitter)
-    isempty(E.largesets) && isempty(E.walks) && return nothing
+    isempty(E.largesets) && isempty(E.walks) && isempty(E.blocks) && return nothing
     out = E.out
     print(out, "(?(DEFINE)")
+    for (number, text) in enumerate(E.blocks)
+        # A block is so many characters, which is matched in one way, so nothing is kept to come back into it.
+        for (level, size) in enumerate(blocksizes(text)[2])
+            print(out, "(?<", BLOCK_LETTERS[level], number, ">(?>")
+            level == 1 ? print(out, text) : print(out, "(?&", BLOCK_LETTERS[level - 1], number, ')')
+            print(out, '{', size, "}))")
+        end
+    end
     for text in E.walks
         print(out, text)
     end
@@ -1650,7 +1663,10 @@ end
 # once, which a body with a group that a backreference reads is not: `writerepeat` writes such a body itself.
 function counted(E::Emitter, body::Node, lo::Int, hi::Int, lazy::Bool)
     out = E.out
-    if lo <= PCRE_MAX_COUNT && (hi == UNBOUNDED || hi <= PCRE_MAX_COUNT)
+    largest = hi == UNBOUNDED ? lo : hi
+    # A count that PCRE2 can be given, of a node that is not written in blocks from it.
+    if largest <= PCRE_MAX_COUNT &&
+       (largest < min(BLOCK_SIZES[][1][1], BLOCK_SIZES[][2][1]) || largest < blockcount(E, body))
         atom(E, body)
         quantifier(out, lo, hi, lazy)
         return nothing
@@ -1667,9 +1683,151 @@ function counted(E::Emitter, body::Node, lo::Int, hi::Int, lazy::Bool)
     return nothing
 end
 
+# Counts of one character or class beyond what PCRE2 can be given.
+#
+# PCRE2 keeps the count of a character or class as a number up to 65535, writes a counted group out once for each
+# time, takes a nest of groups to a depth of 250, and holds a compiled pattern of at most 64 KiB. So
+# `(?:a{65535}){15259}`, which is a{1000000000}, is too large for it, and so is the nest that `upto` writes for
+# a{0,1000000000}. A class of many ranges is a call of a group (see `writeclass`), which PCRE2 writes out for each
+# time like any group, so \p{L}{30000} is too large as well.
+#
+# Such a count is written in blocks. A block is a group among the definitions of the pattern that the pattern
+# calls: (?<c1>(?>a{32768})) is 32,768 characters, and (?<d1>(?>(?&c1){256})) is 256 of those. A count below 2^31
+# is then at most 255 calls of the larger block, 255 of the smaller and a count of the character, and it is that
+# much text whatever the count. A class that is a call is itself written out for each time, and with search trees
+# it is a class and a call, so it has six sizes of block, each 32 of the one before, and is never written more
+# than 32 times together. A call matches what the group matches, and one character at a time is matched in one
+# way only, so the blocks change nothing of what is matched or of the order in which the numbers of times are
+# tried (see `uptoblocks`). For the same reason a block is an atomic group: PCRE2 keeps nothing to come back into it, so the
+# memory of a match does not grow with the count.
+#
+# For each kind, the count from which blocks are written and the sizes of the blocks, each in blocks of the size
+# before it. A smaller count is written as it was before there were blocks.
+const PLAIN_BLOCKS = (1 << 20, [1 << 15, 1 << 8])
+const CALLED_BLOCKS = (1 << 10, fill(1 << 5, 6))
+# The two in use, for a character or class that PCRE2 keeps a count of and for one that is a call. The tests set
+# small ones, to try every form on texts of a few characters.
+const BLOCK_SIZES = Ref((PLAIN_BLOCKS, CALLED_BLOCKS))
+# The letters of the names of the blocks, smallest first.
+const BLOCK_LETTERS = "cdefgh"
+
+# What a character or class is written as, or nothing for any other node. Only one character at a time is counted
+# in blocks.
+function unittext(E::Emitter, body::Node)
+    unit = (body.kind == CHAR && !issurrogate(body.codepoint)) ||
+        (body.kind == SET && intersects(body.set, NOT_SURROGATE_SET))
+    unit || return nothing
+    out = E.out
+    E.out = IOBuffer()
+    node(E, body)
+    text = String(take!(E.out))
+    E.out = out
+    return text
+end
+
+# The count from which a character or class with this text is written in blocks, and the sizes of its blocks.
+blocksizes(text::String) = startswith(text, '(') ? BLOCK_SIZES[][2] : BLOCK_SIZES[][1]
+
+# The count from which the node is written in blocks, or a count no pattern has when it never is.
+function blockcount(E::Emitter, body::Node)
+    text = unittext(E, body)
+    return text === nothing ? typemax(Int) : blocksizes(text)[1]
+end
+
+# The number of the blocks of a character or class in the pattern being written and their sizes in characters,
+# smallest first, when `count` is one that is written in blocks. Otherwise 0.
+function blocks(E::Emitter, body::Node, count::Int)
+    count >= min(BLOCK_SIZES[][1][1], BLOCK_SIZES[][2][1]) || return 0, NO_INTS
+    text = unittext(E, body)
+    text === nothing && return 0, NO_INTS
+    from, sizes = blocksizes(text)
+    count >= from || return 0, NO_INTS
+    number = findfirst(==(text), E.blocks)
+    if number === nothing
+        push!(E.blocks, text)
+        number = length(E.blocks)
+    end
+    return number, cumprod(sizes)
+end
+
+# Writes from `least` to `most` calls of the block of a level, most first unless `lazy`.
+function calls(out::IO, level::Int, number::Int, least::Int, most::Int, lazy::Bool)
+    most == 0 && return nothing
+    print(out, "(?&", BLOCK_LETTERS[level], number, ')')
+    quantifier(out, least, most, lazy)
+    return nothing
+end
+
+# Writes from `least` to `most` times the character or class itself.
+function units(E::Emitter, body::Node, least::Int, most::Int, lazy::Bool)
+    most == 0 && return nothing
+    node(E, body)
+    quantifier(E.out, least, most, lazy)
+    return nothing
+end
+
+# Writes a character or class, whose blocks have the number and the sizes given, repeated exactly `count` times.
+function exactblocks(E::Emitter, body::Node, number::Int, sizes::Vector{Int}, count::Int)
+    for level in length(sizes):-1:1
+        calls(E.out, level, number, count ÷ sizes[level], count ÷ sizes[level], false)
+        count %= sizes[level]
+    end
+    units(E, body, count, count, false)
+    return nothing
+end
+
+# Writes a character or class repeated up to `count` times, with the blocks of the levels up to `level`. A number
+# of times is so many of the largest block, fewer of each smaller one than make the next, and fewer of the character
+# than make the smallest, in one way only. The alternatives and the counts are in the order that tries the numbers
+# of times from the largest down, or from the smallest up when the repetition is lazy, which is the order ECMA-262
+# tries them in. Every number of times up to the length of the run of the character can be taken, so the first that
+# is tried and fits is the one ECMA-262 takes first.
+function uptoblocks(E::Emitter, body::Node, number::Int, sizes::Vector{Int}, level::Int, count::Int, lazy::Bool)
+    out = E.out
+    if level == 0
+        units(E, body, 0, count, lazy)
+        return nothing
+    end
+    most = count ÷ sizes[level]
+    rest = count % sizes[level]
+    if most == 0
+        uptoblocks(E, body, number, sizes, level - 1, rest, lazy)
+        return nothing
+    end
+    if rest == sizes[level] - 1
+        # Any number of blocks up to the most, each with any number of times below one more.
+        calls(out, level, number, 0, most, lazy)
+        uptoblocks(E, body, number, sizes, level - 1, rest, lazy)
+        return nothing
+    end
+    # Every block of this level and up to the rest, or fewer blocks and any number of times below one more.
+    function all()
+        calls(out, level, number, most, most, false)
+        uptoblocks(E, body, number, sizes, level - 1, rest, lazy)
+    end
+    function fewer()
+        calls(out, level, number, 0, most - 1, lazy)
+        uptoblocks(E, body, number, sizes, level - 1, sizes[level] - 1, lazy)
+    end
+    print(out, "(?:")
+    if lazy
+        fewer()
+        print(out, '|')
+        all()
+    else
+        all()
+        print(out, '|')
+        fewer()
+    end
+    print(out, ')')
+    return nothing
+end
+
 # Writes a node repeated exactly `count` times, for any count, as X{65535} as often as it goes and then the rest.
 function exactly(E::Emitter, body::Node, count::Int)
     out = E.out
+    number, sizes = blocks(E, body, count)
+    number > 0 && return exactblocks(E, body, number, sizes, count)
     whole = count ÷ PCRE_MAX_COUNT
     rest = count % PCRE_MAX_COUNT
     if whole > 0
@@ -1692,6 +1850,8 @@ end
 # ECMA-262 tries them.
 function upto(E::Emitter, body::Node, count::Int, lazy::Bool)
     out = E.out
+    number, sizes = blocks(E, body, count)
+    number > 0 && return uptoblocks(E, body, number, sizes, length(sizes), count, lazy)
     if count <= PCRE_MAX_COUNT
         atom(E, body)
         quantifier(out, 0, count, lazy)
@@ -1892,12 +2052,14 @@ function lookbehind(E::Emitter, n::Node)
     # backreference, and the names it writes for itself are its own.
     largesets = E.largesets
     walks = E.walks
+    blocks = E.blocks
     names = E.names
     backwards = E.backwards
     E.backwards = false
     E.out = IOBuffer()
     E.largesets = CodeSet[]
     E.walks = String[]
+    E.blocks = String[]
     E.names = String[]
     print(E.out, LOOKBEHIND_PREFIX)
     before = string("(?C", CALLOUT_BEFORE_TARGET, ')')
@@ -1927,6 +2089,7 @@ function lookbehind(E::Emitter, n::Node)
     E.out = out
     E.largesets = largesets
     E.walks = walks
+    E.blocks = blocks
     E.names = names
     E.backwards = backwards
     # The body is searched for only where the character before the lookbehind is one the body can end with.

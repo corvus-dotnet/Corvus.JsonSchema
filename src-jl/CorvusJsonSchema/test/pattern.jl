@@ -297,6 +297,16 @@ const ANCHOR_CASES = Tuple{String,Vector{String},Vector{String}}[
         @test !isvalid(compile_schema("{\"pattern\": " * quote_json(raw"\p{sc=Hrkt}") * "}"), "\"\u30ab\"")
     end
 
+    # A count no text reaches is a pattern like another.
+    @testset "a count of a thousand million" begin
+        v = compile_schema("{\"pattern\": " * quote_json(raw"\p{1000000000}") * "}")
+        @test !isvalid(v, "\"ppp\"")
+        @test !isvalid(v, "\"p{1000000000}\"")
+        v = compile_schema("{\"pattern\": " * quote_json(raw"^a{0,1000000000}$") * "}")
+        @test isvalid(v, "\"aaa\"")
+        @test !isvalid(v, "\"aab\"")
+    end
+
     # A pattern that is valid only without the u flag (one with an identity escape such as \- or \&) matches UTF-16
     # code units, as ECMA-262 says, so a character beyond the Basic Multilingual Plane is two characters to it. The
     # faster matchers go by character. They decide the strings within the Basic Multilingual Plane, where the two are
