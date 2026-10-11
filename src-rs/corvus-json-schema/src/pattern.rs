@@ -1,4 +1,6 @@
-//! `pattern`/`patternProperties` matching with ECMA-262 semantics (the `u` flag), as JSON Schema specifies.
+//! `pattern`/`patternProperties` matching with ECMA-262 semantics (the `u` flag), as JSON Schema specifies. A
+//! pattern that is valid only without the flag is accepted too, and matched as ECMA-262 says for it: by UTF-16
+//! code unit.
 //!
 //! A pattern gets the cheapest matcher that decides it exactly:
 //!
@@ -61,9 +63,13 @@ enum Matcher {
     Regex(regex::Regex),
     /// A pattern that is valid only without the `u` flag (an identity escape such as `\&`), so matching UTF-16 code
     /// units: translated for `regex`, which decides it exactly on strings with no character beyond the Basic
-    /// Multilingual Plane (where code units are characters); regress decides the rest.
+    /// Multilingual Plane (where code units are characters); regress decides the rest, by code unit.
     RegexBmp(regex::Regex, regress::Regex),
+    /// A pattern with the `u` flag, matched by character.
     Regress(regress::Regex),
+    /// A pattern that is valid only without the `u` flag and that `regex` does not take, matched by UTF-16 code
+    /// unit.
+    RegressUnits(regress::Regex),
 }
 
 impl fmt::Debug for Pattern {
@@ -122,13 +128,34 @@ impl Pattern {
             // A UTF-8 lead byte of 0xF0 or above starts a character beyond the BMP.
             Matcher::RegexBmp(re, fallback) => {
                 if s.bytes().any(|b| b >= 0xF0) {
-                    fallback.find(s).is_some()
+                    is_match_units(fallback, s)
                 } else {
                     re.is_match(s)
                 }
             }
             Matcher::Regress(re) => re.find(s).is_some(),
+            Matcher::RegressUnits(re) => is_match_units(re, s),
         }
+    }
+}
+
+/// Whether `re`, a pattern without the `u` flag, matches in the UTF-16 code units of `s`. Without the flag a
+/// character beyond the Basic Multilingual Plane is two code units, each matched on its own. A short string is
+/// written as code units where it is, and a longer one is given the memory for it.
+fn is_match_units(re: &regress::Regex, s: &str) -> bool {
+    const SHORT: usize = 256;
+    // A string has at most as many UTF-16 code units as UTF-8 bytes.
+    if s.len() <= SHORT {
+        let mut units = [0u16; SHORT];
+        let mut n = 0;
+        for unit in s.encode_utf16() {
+            units[n] = unit;
+            n += 1;
+        }
+        re.find_from_ucs2(&units[..n], 0).next().is_some()
+    } else {
+        let units: Vec<u16> = s.encode_utf16().collect();
+        re.find_from_ucs2(&units, 0).next().is_some()
     }
 }
 
@@ -241,10 +268,16 @@ impl Alternative {
 }
 
 /// Compiles a pattern with the `u` flag, or (as many validators accept them) without it; the flag is returned.
+/// Without the flag the pattern is its UTF-16 code units, as ECMA-262 reads it: a character beyond the Basic
+/// Multilingual Plane is two of them, and a quantifier after it repeats the second (see `rewrite::legacy_units`
+/// for the two escapes regress is not given as they are written).
 fn compile_regress(pattern: &str) -> Option<(regress::Regex, bool)> {
     match regress::Regex::with_flags(pattern, "u") {
         Ok(re) => Some((re, true)),
-        Err(_) => regress::Regex::new(pattern).ok().map(|re| (re, false)),
+        Err(_) => {
+            let units = rewrite::legacy_units(pattern).into_iter().map(u32::from);
+            regress::Regex::from_unicode(units, "").ok().map(|re| (re, false))
+        }
     }
 }
 
@@ -291,16 +324,22 @@ pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
             // regress matches it, and is given a pattern for which its answers are ECMA-262's.
             let regress = match rewrite::for_engine(pattern, unicode) {
                 rewrite::Rewrite::Unchanged => regress,
+                rewrite::Rewrite::Rewritten(rewritten) if unicode => {
+                    regress::Regex::with_flags(&rewritten, "u").map_err(|_| PatternError::TooLarge)?
+                }
                 rewrite::Rewrite::Rewritten(rewritten) => {
-                    let flags = if unicode { "u" } else { "" };
-                    regress::Regex::with_flags(&rewritten, flags).map_err(|_| PatternError::TooLarge)?
+                    regress::Regex::from_unicode(rewrite::code_units(&rewritten), "")
+                        .map_err(|_| PatternError::TooLarge)?
                 }
                 rewrite::Rewrite::TooLarge => return Err(PatternError::TooLarge),
             };
-            let bmp = if unicode { None } else { translate(pattern, false).and_then(|t| regex::Regex::new(&t).ok()) };
-            match bmp {
-                Some(re) => Matcher::RegexBmp(re, regress),
-                None => Matcher::Regress(regress),
+            if unicode {
+                Matcher::Regress(regress)
+            } else {
+                match translate(pattern, false).and_then(|t| regex::Regex::new(&t).ok()) {
+                    Some(re) => Matcher::RegexBmp(re, regress),
+                    None => Matcher::RegressUnits(regress),
+                }
             }
         }
     };
@@ -1146,6 +1185,11 @@ const ECMA_SPACE: &str =
 /// escapes of any non-alphanumeric character), and the translation has its meaning on strings within the BMP.
 fn translate(p: &str, unicode: bool) -> Option<String> {
     let c: Vec<char> = p.chars().collect();
+    // Without the flag a character beyond the BMP is two code units, and what is around it (a quantifier, the ends
+    // of a range) applies to one of them. That has no translation.
+    if !unicode && c.iter().any(|&ch| ch as u32 > 0xFFFF) {
+        return None;
+    }
     let mut out = String::with_capacity(p.len() * 2);
     let mut i = 0;
     while i < c.len() {
@@ -1296,6 +1340,10 @@ fn escape(c: &[char], i: usize, in_class: bool, unicode: bool) -> Option<(String
         // Without the `u` flag, `\u{...}` is not a code point escape.
         'u' if unicode || c.get(i + 1) != Some(&'{') => {
             let (code, next) = unicode_escape(c, i + 1)?;
+            // Without the flag, two escapes that are a surrogate pair are two code units.
+            if !unicode && code > 0xFFFF {
+                return None;
+            }
             push_literal(&mut out, char::from_u32(code)?);
             next
         }
@@ -1567,12 +1615,14 @@ mod tests {
             seed
         };
         for &p in PATTERNS {
-            let (reference, _) = compile_regress(p).unwrap();
+            let (reference, unicode) = compile_regress(p).unwrap();
             let compiled = compile(p).unwrap();
             for _ in 0..4000 {
                 let len = next() % 9;
                 let s: String = (0..len).map(|_| alphabet[(next() % alphabet.len() as u64) as usize]).collect();
-                assert_eq!(compiled.is_match(&s), reference.find(&s).is_some(), "{p:?} on {s:?}");
+                // Without the `u` flag regress matches the UTF-16 code units of the string.
+                let found = if unicode { reference.find(&s).is_some() } else { is_match_units(&reference, &s) };
+                assert_eq!(compiled.is_match(&s), found, "{p:?} on {s:?}");
             }
         }
     }
@@ -1651,8 +1701,12 @@ mod tests {
         for p in ["^\\/[^\\*\\?\\&\\%]*(\\/\\*)?$", "a\\&.b", "^\\-a"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::RegexBmp(..)), "{p}");
         }
-        for p in ["^((\\.(?!\\.)\\/)?\\w+\\/?)+$", "^\\1(a)", "^\\p{L}\\&"] {
+        for p in ["^((\\.(?!\\.)\\/)?\\w+\\/?)+$", "^\\1(a)"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Regress(_)), "{p}");
+        }
+        // Valid only without the `u` flag, and not in the syntax `regex` takes: regress, by code unit.
+        for p in ["^\\p{L}\\&", "^\\-?\u{10400}*$", "^\\-(?=a)"] {
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::RegressUnits(_)), "{p}");
         }
     }
 }

@@ -10,6 +10,8 @@
 //! - A quantifier on a word boundary, which is not valid and was accepted.
 //! - A case-insensitive group in a pattern that is valid only without the `u` flag, and `\W` in a class of one
 //!   with it.
+//! - A pattern that is valid only without the `u` flag, which matches UTF-16 code units. Before 0.1.7 it was
+//!   matched by character, so `^\-?.$` matched a character beyond the Basic Multilingual Plane.
 //!
 //! One class is not regress's: `\B` beside a character of several bytes, which the `regex` crate answered.
 
@@ -258,6 +260,57 @@ fn a_case_insensitive_group_compares_as_its_grammar_says() {
     check_texts(CASE_INSENSITIVE);
 }
 
+/// Patterns that are valid only without the `u` flag (each has an identity escape the flag does not allow), with
+/// the texts V8 matches without the flag and the texts it does not. Such a pattern is its UTF-16 code units, and
+/// so is the text: a character beyond the Basic Multilingual Plane is two, a dot takes one of them, a quantifier
+/// after such a character repeats its second code unit, and a class holds each of the two. `\u{3}` is `u` three
+/// times, and the escape of a surrogate is that code unit. Before 0.1.7 the pattern and the text were read by
+/// character.
+#[rustfmt::skip]
+const BY_CODE_UNIT: &[(&str, &[&str], &[&str])] = &[
+    ("^\\-?.$", &["a", "u", "0", "{", "-"], &["", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "uuu", "ab"]),
+    ("^\\-?..$", &["\u{10400}", "\u{10428}", "\u{1f600}", "ab"], &["", "a", "\u{10400}\u{10400}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "-"]),
+    ("^\\-?\u{10400}*$", &["\u{10400}"], &["", "a", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\u{10400}+$", &["\u{10400}"], &["", "a", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\u{10400}?$", &["\u{10400}"], &["", "a", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\u{10400}{2}$", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\u{1f600}]$", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\u{1f600}]{2}$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[^\u{1f600}]$", &["a", "u", "0", "{", "-"], &["", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "uuu", "ab"]),
+    ("^\\-?[^\u{1f600}]+$", &["a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "u", "uuu", "0", "{", "ab", "-"], &["", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a"]),
+    ("^\\-?[a-\u{10400}]+$", &["a", "\u{10400}", "\u{10400}\u{10400}", "u", "uuu", "{", "ab"], &["", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "0", "-"]),
+    ("^\\-?\\ud83d\\ude00$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\\ud83d+\\ude00$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\\ud83d\\ude00+$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\\ud83d\\ude00]$", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\\ud83d\\ude00]{2}$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\\ud800-\\udbff][\\udc00-\\udfff]$", &["\u{10400}", "\u{10428}", "\u{1f600}"], &["", "a", "\u{10400}\u{10400}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\\ud801\\ud83d$", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\\ud801\\ud83d]\\ude00$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\\u{3}$", &["uuu"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "0", "{", "ab", "-"]),
+    ("^\\-?[\\u{3}]$", &["u", "{"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "uuu", "0", "ab", "-"]),
+    ("^\\-?[\\u{10400}]+$", &["u", "uuu", "0", "{"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "ab", "-"]),
+    ("(?<=\\ud83d)\\ude00\\-?$", &["\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("(?<!\\ud83d)\\ude00\\-?", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\\S\\B", &["\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "\u{1f600}a", "uuu", "{", "ab", "-"], &["", "a", "a\u{1f600}", "u", "0"]),
+    ("^\\-?\\W{2}$", &["\u{10400}", "\u{10428}", "\u{1f600}"], &["", "a", "\u{10400}\u{10400}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?(.)\\1$", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?(?:.{2})+$", &["\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "ab"], &["", "a", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "-"]),
+    ("^\\-?\\S{1,3}$", &["a", "\u{10400}", "\u{10428}", "\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"], &["", "\u{10400}\u{10400}", "\u{1f600}\u{1f600}"]),
+    ("a\\&?.$", &["ab"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "-"]),
+    ("\\ud83d\\-?", &["\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "u", "uuu", "0", "{", "ab", "-"]),
+    ("\\ude00\\-?$", &["\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[^a]{2,3}$", &["\u{10400}", "\u{10428}", "\u{1f600}", "uuu"], &["", "a", "\u{10400}\u{10400}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "0", "{", "ab", "-"]),
+    ("(?i:^\\-?\u{10400}$)", &["\u{10400}"], &["", "a", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("(?i:^\\-?[\u{10400}]{2}$)", &["\u{10400}"], &["", "a", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("(?i:^\\-?.A$)", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+];
+
+#[test]
+fn a_pattern_without_the_u_flag_matches_utf16_code_units() {
+    check_texts(BY_CODE_UNIT);
+}
+
 /// `\B` in patterns the `regex` crate would otherwise match. Its `(?-u:\B)` also holds between the bytes of a
 /// character that takes several, and `is_match` then said no where there is a match: `s*?\B|.{2}.$` on
 /// `k\u{17f}k` (before 0.1.7). The answers are V8's with the `u` flag.
@@ -281,6 +334,20 @@ const NOT_A_WORD_BOUNDARY: &[(&str, &[&str], &[&str])] = &[
 #[test]
 fn not_a_word_boundary_beside_a_character_of_several_bytes() {
     check_texts(NOT_A_WORD_BOUNDARY);
+}
+
+/// A pattern ECMA-262 refuses in both grammars is refused, and one it accepts only without the `u` flag is not.
+#[test]
+fn a_pattern_that_is_not_valid_is_refused() {
+    for pattern in
+        [r"a{2,1}", r"(?i)a", r"\b+", r"a\B{2}", r"(?<\u>a)", r"(?<n>a)(?<n>b)", r"[b-a]", r"(?<=a)+", r"\k<n>(?<m>a)"]
+    {
+        assert!(compile(&json!({ "pattern": pattern })).is_err(), "{pattern}");
+    }
+    for pattern in [r"^\u{110000}\-?$", r"^\u{3}\-?$", r"\k<n>\-", r"(?=a)+\-?", r"a{,2}", r"\c", r"[\c]", r"\8", r"]"]
+    {
+        assert!(compile(&json!({ "pattern": pattern })).is_ok(), "{pattern}");
+    }
 }
 
 /// Ten texts for the repetitions with a count of 300.

@@ -28,6 +28,10 @@
 //!   group cannot be written out, and is still compared by folding. With the flag, `\W` in a class of such a group
 //!   does not hold the two characters that fold to a word character.
 //!
+//! - **A pattern without the `u` flag.** It is matched by UTF-16 code unit, and regress is given its code units.
+//!   Two escapes are not given as they are written, as regress reads them as it would with the flag (see
+//!   [`legacy_units`]).
+//!
 //! **A repetition that is too large to write out.** The copies multiply with the repetitions around them, and each
 //! optional copy is a group inside the one before. regress is given at most [`MAX_REWRITTEN`] characters and reads
 //! at most [`MAX_DEPTH`] levels. The rule for a pattern that comes to more is by repetition, not by pattern:
@@ -128,7 +132,95 @@ fn with_stack<T: Send>(pattern: &str, f: impl FnOnce() -> T + Send) -> Option<T>
     })
 }
 
-/// The pattern regress should compile for `pattern`, which it has accepted (with the `u` flag when `unicode`).
+/// A surrogate code unit of a pattern without the `u` flag is, here, the character this much above its place among
+/// the surrogates: a private-use character of plane 15, which no such pattern holds, as there every character
+/// beyond the Basic Multilingual Plane is two code units.
+const SURROGATE: u32 = 0xF_0000 - 0xD800;
+
+/// A UTF-16 code unit as a character: itself, or the character that stands for a surrogate.
+fn unit_char(unit: u16) -> char {
+    let unit = u32::from(unit);
+    let surrogate = (0xD800..0xE000).contains(&unit);
+    char::from_u32(if surrogate { unit + SURROGATE } else { unit }).unwrap_or(char::REPLACEMENT_CHARACTER)
+}
+
+/// The UTF-16 code units of a pattern that is valid only without the `u` flag, as regress is to read them. regress
+/// reads two things there as it would with the flag, and each is written here as what ECMA-262 says it is:
+///
+/// - `\u` before anything but four hexadecimal digits is the letter `u`. regress reads `\u{...}` as the escape of a
+///   code point, where `\u{3}` is `u` three times.
+/// - The escape of a surrogate is that code unit. regress reads the escapes of a high and a low surrogate as one
+///   character, which no code unit matches, and drops an escape that follows the escape of a high surrogate and is
+///   not a low one. The code unit itself is read as it is.
+pub(super) fn legacy_units(pattern: &str) -> Vec<u16> {
+    let units: Vec<u16> = pattern.encode_utf16().collect();
+    let is = |k: usize, c: u8| units.get(k) == Some(&u16::from(c));
+    // Where a group name starts at `k`, with `(?<` (which is not a lookbehind) or `\k<`.
+    let names = |k: usize, open: [u8; 2]| is(k, open[0]) && is(k + 1, open[1]) && is(k + 2, b'<');
+    let named = |k: usize| names(k, *b"(?") && !is(k + 3, b'=') && !is(k + 3, b'!');
+    // `\k<` is a reference only in a pattern with a named group.
+    let (mut any_named, mut in_class, mut k) = (false, false, 0);
+    while k < units.len() {
+        match u8::try_from(units[k]) {
+            Ok(b'\\') => k += 1,
+            Ok(b'[') => in_class = true,
+            Ok(b']') => in_class = false,
+            _ => any_named |= !in_class && named(k),
+        }
+        k += 1;
+    }
+    let mut out = Vec::with_capacity(units.len());
+    let (mut in_class, mut i) = (false, 0);
+    while i < units.len() {
+        // A group name is left as it is written: an escape in it is read as with the flag.
+        if !in_class && (named(i) || (any_named && names(i, *b"\\k"))) {
+            let end = units[i..].iter().position(|&u| u == u16::from(b'>')).map_or(units.len(), |n| i + n + 1);
+            out.extend(&units[i..end]);
+            i = end;
+            continue;
+        }
+        if units[i] != u16::from(b'\\') || i + 1 == units.len() {
+            in_class = if is(i, b'[') { true } else { in_class && !is(i, b']') };
+            out.push(units[i]);
+            i += 1;
+            continue;
+        }
+        if !is(i + 1, b'u') {
+            out.extend([units[i], units[i + 1]]);
+            i += 2;
+            continue;
+        }
+        let digit = |k: usize| units.get(i + 2 + k).and_then(|&u| char::from_u32(u32::from(u))?.to_digit(16));
+        match (digit(0), digit(1), digit(2), digit(3)) {
+            (Some(a), Some(b), Some(c), Some(d)) => {
+                let value = (a << 12 | b << 8 | c << 4 | d) as u16;
+                if (0xD800..0xE000).contains(&value) {
+                    out.push(value);
+                } else {
+                    out.extend(&units[i..i + 6]);
+                }
+                i += 6;
+            }
+            _ => {
+                out.push(u16::from(b'u'));
+                i += 2;
+            }
+        }
+    }
+    out
+}
+
+/// The code units regress is to read for a pattern rewritten without the `u` flag. A surrogate goes as it is, not
+/// as an escape (see [`legacy_units`]).
+pub(super) fn code_units(rewritten: &str) -> impl Iterator<Item = u32> + Clone + '_ {
+    rewritten.chars().map(|c| {
+        let c = c as u32;
+        if c >= 0xD800 + SURROGATE { c - SURROGATE } else { c }
+    })
+}
+
+/// The pattern regress should compile for `pattern`, which it has accepted (with the `u` flag when `unicode`). One
+/// written for a pattern without the flag is read with [`code_units`].
 pub(super) fn for_engine(pattern: &str, unicode: bool) -> Rewrite {
     with_stack(pattern, || rewrite(pattern, unicode, false)).unwrap_or(Rewrite::TooLarge)
 }
@@ -356,7 +448,12 @@ enum Escape {
 impl Parser {
     fn parse(pattern: &str, unicode: bool) -> Result<Parsed, Stop> {
         let mut p = Parser {
-            c: pattern.chars().collect(),
+            // Without the `u` flag a pattern is its UTF-16 code units.
+            c: if unicode {
+                pattern.chars().collect()
+            } else {
+                legacy_units(pattern).into_iter().map(unit_char).collect()
+            },
             i: 0,
             unicode,
             group_count: 0,
@@ -423,6 +520,12 @@ impl Parser {
         self.c.get(self.i).copied()
     }
 
+    /// What a character of the pattern stands for: a code point, or without the `u` flag a UTF-16 code unit.
+    fn value(&self, c: char) -> u32 {
+        let c = c as u32;
+        if !self.unicode && c >= 0xD800 + SURROGATE { c - SURROGATE } else { c }
+    }
+
     fn eat(&mut self, c: char) -> bool {
         let found = self.peek() == Some(c);
         self.i += usize::from(found);
@@ -483,8 +586,14 @@ impl Parser {
             _ => {
                 self.i += 1;
                 // Annex B reads a lone bracket or brace as itself. Escaped, it stays one wherever it lands.
-                let text = if matches!(c, '{' | '}' | ']') { format!("\\{c}") } else { c.to_string() };
-                (self.character(c as u32, text), true)
+                let text = if matches!(c, '{' | '}' | ']') {
+                    format!("\\{c}")
+                } else if self.unicode || c.is_ascii() {
+                    c.to_string()
+                } else {
+                    unit_text(self.value(c))
+                };
+                (self.character(self.value(c), text), true)
             }
         };
         let Some((min, max, lazy, text)) = self.quantifier()? else { return Ok(atom) };
@@ -809,7 +918,7 @@ impl Parser {
                 self.i -= 1;
                 self.legacy_octal()
             }
-            _ => c as u32,
+            _ => self.value(c),
         }))
     }
 
@@ -849,11 +958,8 @@ impl Parser {
         let start = self.i;
         self.i += 1;
         let negated = self.eat('^');
-        // The members as code units, for a class of a case-insensitive group without the `u` flag.
-        let mut set = (self.icase && !self.unicode).then(CodeUnits::new);
-        // Whether the members are all read as code units, which a class with a character beyond the Basic
-        // Multilingual Plane is not.
-        let mut units = true;
+        // The members as code units, for a class without the `u` flag.
+        let mut set = (!self.unicode).then(CodeUnits::new);
         // Where `\W` is, for a class of a case-insensitive group with the `u` flag.
         let mut not_word = Vec::new();
         loop {
@@ -871,30 +977,26 @@ impl Parser {
                 let Some(set) = &mut set else { continue };
                 match (first, second) {
                     (Some(lo), Some(hi)) if lo <= hi && hi <= 0xFFFF => set.insert(lo as u16, hi as u16),
-                    (Some(_), Some(_)) => units = false,
+                    (Some(_), Some(_)) => return Err(Stop::Unread),
                     // Annex B reads the `-` as itself when a set is at either end.
                     (lo, hi) => {
                         set.insert(b'-' as u16, b'-' as u16);
                         for end in [lo, hi].into_iter().flatten() {
-                            units &= end <= 0xFFFF;
                             set.insert(end as u16, end as u16);
                         }
                     }
                 }
             } else if let (Some(c), Some(set)) = (first, &mut set) {
-                units &= c <= 0xFFFF;
                 set.insert(c as u16, c as u16);
             }
         }
         let text: String = self.c[start..self.i].iter().collect();
-        if !self.icase {
-            return Ok(Node::Atom(text));
-        }
         if let Some(set) = set {
-            // Compared by the uppercase form of each code unit: the class of everything equal to a member.
-            return Ok(Node::Atom(if units { set.fold().write(negated) } else { format!("(?i:{text})") }));
+            // Without case, compared by the uppercase form of each code unit: the class of everything equal to a
+            // member.
+            return Ok(Node::Atom(if self.icase { set.fold().write(negated) } else { text }));
         }
-        if not_word.is_empty() {
+        if !self.icase || not_word.is_empty() {
             return Ok(Node::Atom(text));
         }
         // With the `u` flag and no case, `\W` leaves out the two characters that fold to a word character (U+017F
@@ -920,7 +1022,7 @@ impl Parser {
         let c = self.peek().ok_or(Stop::Unread)?;
         self.i += 1;
         if c != '\\' {
-            return Ok(Some(c as u32));
+            return Ok(Some(self.value(c)));
         }
         let e = self.peek().ok_or(Stop::Unread)?;
         if e == 'b' {
@@ -947,9 +1049,10 @@ const NOT_WORD_FOLDED: &str =
 /// Named references hold `NAME_BASE` plus the index of their name until the pattern is read to its end.
 const NAME_BASE: u32 = 1 << 24;
 
-/// A UTF-16 code unit as regress reads it without the `u` flag.
+/// A UTF-16 code unit as regress reads it without the `u` flag: an escape, or the character that stands for a
+/// surrogate.
 fn unit_text(value: u32) -> String {
-    format!("\\u{value:04x}")
+    if (0xD800..0xE000).contains(&value) { unit_char(value as u16).to_string() } else { format!("\\u{value:04x}") }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1614,12 +1717,19 @@ impl Emitter {
 mod tests {
     use super::*;
 
+    fn engine(written: &str, unicode: bool) -> Result<regress::Regex, regress::Error> {
+        if unicode {
+            regress::Regex::with_flags(written, "u")
+        } else {
+            regress::Regex::from_unicode(code_units(written), "")
+        }
+    }
+
     fn rewritten(pattern: &str) -> Option<String> {
         let unicode = regress::Regex::with_flags(pattern, "u").is_ok();
         match for_engine(pattern, unicode) {
             Rewrite::Rewritten(text) => {
-                let flags = if unicode { "u" } else { "" };
-                assert!(regress::Regex::with_flags(&text, flags).is_ok(), "{pattern} as {text}");
+                assert!(engine(&text, unicode).is_ok(), "{pattern} as {text}");
                 Some(text)
             }
             Rewrite::Unchanged => None,
@@ -1752,6 +1862,41 @@ mod tests {
         }
     }
 
+    /// Without the `u` flag regress is given the code units of the pattern, with `\u` before anything but four
+    /// hexadecimal digits as the letter and the escape of a surrogate as the code unit. A group name is left as it
+    /// is written.
+    #[test]
+    fn a_pattern_without_the_u_flag_is_its_code_units() {
+        let units = |text: &str| text.encode_utf16().collect::<Vec<u16>>();
+        for (pattern, expected) in [
+            (r"\u{3}", "u{3}"),
+            (r"[\u{3}]\u12\u", "[u{3}]u12u"),
+            (r"\\u{3}", r"\\u{3}"),
+            (r"\u0041\x41\cA", r"\u0041\x41\cA"),
+            (r"(?<=\u{2})(?<!\u{2})", "(?<=u{2})(?<!u{2})"),
+            (r"(?<\u{61}>a)\k<\u{61}>\u{2}", r"(?<\u{61}>a)\k<\u{61}>u{2}"),
+            (r"[(?<n>]\k<\u{2}>", r"[(?<n>]\k<u{2}>"),
+        ] {
+            assert_eq!(legacy_units(pattern), units(expected), "{pattern}");
+        }
+        let plus = u16::from(b'+');
+        assert_eq!(legacy_units(r"\ud83d\ude00+\uD801\ud83d"), [0xD83D, 0xDE00, plus, 0xD801, 0xD83D]);
+        assert_eq!(legacy_units("\u{1F600}+"), [0xD83D, 0xDE00, plus]);
+        // What is written again has the surrogates as they are, whether they came as a character or as escapes.
+        for pattern in ["^(?!-)(?:(?:\u{1F600}|x){1,2}\\-)+$", r"^(?!-)(?:(?:\ud83d\ude00|x){1,2}\-)+$"] {
+            let written = rewritten(pattern).unwrap();
+            let expected = "^(?!-)(?:(?:\u{1F600}|x)(?:(?:\u{1F600}|x)|)\\u002d)+$";
+            assert_eq!(
+                code_units(&written).collect::<Vec<_>>(),
+                units(expected).into_iter().map(u32::from).collect::<Vec<_>>()
+            );
+        }
+        // A class of a case-insensitive group holds each code unit of a character beyond the BMP.
+        let written = rewritten("^(?i:[\u{1F600}a])\\&$").unwrap();
+        let expected = units("^(?:[\\u0041\\u0061\u{1F600}])\\u0026$").into_iter().map(u32::from).collect::<Vec<_>>();
+        assert_eq!(code_units(&written).collect::<Vec<_>>(), expected);
+    }
+
     /// Annex B reads an escape of a number that is no group as an octal escape or as the digit. It is written as
     /// the character, as the rewritten pattern may have that many groups.
     #[test]
@@ -1861,7 +2006,8 @@ mod statistics {
             let record: serde_json::Value = serde_json::from_str(line).unwrap();
             let pattern = record["pattern"].as_str().unwrap();
             let unicode = regress::Regex::with_flags(pattern, "u").is_ok();
-            if !unicode && regress::Regex::new(pattern).is_err() {
+            let units = legacy_units(pattern).into_iter().map(u32::from);
+            if !unicode && regress::Regex::from_unicode(units, "").is_err() {
                 continue;
             }
             total += 1;
@@ -1923,19 +2069,26 @@ mod statistics {
                 }
                 Rewrite::TooLarge => panic!("{pattern} is too large"),
             };
-            let engine = regress::Regex::with_flags(&written, if unicode { "u" } else { "" })
-                .unwrap_or_else(|e| panic!("{pattern} as {written}: {e}"));
+            let engine = if unicode {
+                regress::Regex::with_flags(&written, "u")
+            } else {
+                regress::Regex::from_unicode(code_units(&written), "")
+            }
+            .unwrap_or_else(|e| panic!("{pattern} as {written}: {e}"));
             patterns += 1;
             let Some(tests) = record["tests"].as_array() else { continue };
             for test in tests {
                 let text = test["text"].as_str().unwrap();
-                // Without the `u` flag V8 matches code units, and a character beyond the BMP is two of them.
-                if !unicode && text.chars().any(|c| c as u32 > 0xFFFF) {
-                    continue;
-                }
                 let want = test[if unicode { "unicode" } else { "legacy" }] == true;
                 answers += 1;
-                if engine.find(text).is_some() != want {
+                // Without the `u` flag V8 matches code units, and a character beyond the BMP is two of them.
+                let found = if unicode {
+                    engine.find(text).is_some()
+                } else {
+                    let units: Vec<u16> = text.encode_utf16().collect();
+                    engine.find_from_ucs2(&units, 0).next().is_some()
+                };
+                if found != want {
                     wrong += 1;
                     if wrong <= 40 {
                         println!("{pattern} as {written} on {text:?}: V8 says {want}");
