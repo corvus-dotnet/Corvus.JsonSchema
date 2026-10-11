@@ -5414,12 +5414,14 @@ final class EcmaRegex {
          * backreference character by character, by its Canonicalize. The case-insensitive backreference of
          * java.util.regex compares by the case mappings of the JDK it runs on, which equate other pairs (among them
          * "i" and U+0130 or U+0131), and on Java 17 it miscounts a character beyond the Basic Multilingual Plane. So
-         * the comparison is written out with the classes of equivalent characters of {@link EcmaUnicode}, the ones a
-         * character of the group can belong to.
+         * it is used only for the characters it compares as ECMA-262 does (see {@link #engineDiffers}), and for the
+         * others the comparison is written out with the classes of equivalent characters of {@link EcmaUnicode}, the
+         * ones a character of the group can belong to.
          *
-         * <p>A group of at most one character G is compared in one step: the text is G, or its next character is in
-         * some class K and G is in K too. That G is in K is shown by a search for a place in the text where G stands
-         * (the place it was captured at, if no other) at a character of K. The classes are written as the tests of
+         * <p>A group of at most one character G is compared in one step: the text is G, or its next character is
+         * one the engine compares rightly and the engine takes it for G, or it is in some class K that is written
+         * out and G is in K too. That G is in K is shown by a search for a place in the text where G stands (the
+         * place it was captured at, if no other) at a character of K. The classes are written as the tests of
          * {@link #foldTests}.
          */
         private void folded(int group) {
@@ -5448,7 +5450,19 @@ final class EcmaRegex {
             refer(name);
             refer(rest);
             out.append("\\z)");
-            for (String[] test : foldTests(classes)) {
+            int[][] written = writtenOut(classes);
+            if (written.length < classes.length) {
+                // The character is one the engine compares as ECMA-262 does, and the engine says it is the same.
+                out.append("(?:").append(engineCompares()).append("(?=(?iu:");
+                refer(name);
+                out.append("))");
+                if (written.length == 0) {
+                    out.append(')').append(ANY).append(')');
+                    return;
+                }
+                out.append('|');
+            }
+            for (String[] test : foldTests(written)) {
                 out.append("(?:");
                 for (int k = 0; k < test.length; k++) {
                     out.append(k > 0 ? "|" : "").append("(?=").append(test[k]).append(')')
@@ -5456,7 +5470,165 @@ final class EcmaRegex {
                 }
                 out.append(')');
             }
-            out.append(ANY).append(')');
+            out.append(written.length < classes.length ? ")" : "").append(ANY).append(')');
+        }
+
+        // The comparison of the engine.
+        //
+        // The case-insensitive backreference of java.util.regex, with its flag for Unicode case, compares two
+        // characters by the case mappings of the JDK it runs on. For most characters that is the comparison of
+        // ECMA-262, and it is one step where the comparison written out is a search. So the engine compares the
+        // characters for which it is known to agree, and the others are compared by the classes written out.
+        //
+        // Which characters those are is not taken from a table: the JDKs differ (Java 21 does not equate the
+        // pairs that Unicode 15.1 and 16 added, every JDK equates "i" with U+0130 and U+0131, and Java 17 fails on
+        // a character beyond the Basic Multilingual Plane). It is found by asking the engine of this JVM, once, about
+        // every pair of characters that a case mapping of the JDK or a class of ECMA-262 relates. A character is
+        // left to the engine only when the engine agreed with ECMA-262 on every pair it is in.
+
+        /** For each grammar (with the u flag, without it): the characters not left to the engine, once worked out. */
+        private static final int[][] ENGINE_DIFFERS = new int[2][];
+        /** The same, as a test that the next character is not one of them. */
+        private static final String[] ENGINE_COMPARES = new String[2];
+
+        /** A test that the next character is one the engine compares as ECMA-262 does with every character. */
+        private String engineCompares() {
+            engineDiffers(unicode);
+            return ENGINE_COMPARES[unicode ? 0 : 1];
+        }
+
+        /** The classes among these that have a character the engine does not compare as ECMA-262 does. */
+        private int[][] writtenOut(int[][] classes) {
+            int[] differs = engineDiffers(unicode);
+            List<int[]> kept = new ArrayList<>();
+            for (int[] members : classes) {
+                for (int c : members) {
+                    if (EcmaUnicode.contains(differs, c)) {
+                        kept.add(members);
+                        break;
+                    }
+                }
+            }
+            return kept.size() == classes.length ? classes : kept.toArray(new int[0][]);
+        }
+
+        /**
+         * The characters that the case-insensitive backreference of the java.util.regex of this JVM does not compare,
+         * with some character, as the Canonicalize of a grammar does. Both characters of a pair it gets wrong are in
+         * the set, whichever of them stands in the group.
+         */
+        private static int[] engineDiffers(boolean unicode) {
+            int at = unicode ? 0 : 1;
+            synchronized (ENGINE_DIFFERS) {
+                if (ENGINE_DIFFERS[at] == null) {
+                    int[] differs = askEngine(unicode);
+                    StringBuilder sb = new StringBuilder("(?!");
+                    if (differs.length == 0) {
+                        sb.setLength(0);
+                    } else {
+                        EcmaUnicode.appendClass(sb, differs);
+                        sb.append(')');
+                    }
+                    ENGINE_COMPARES[at] = sb.toString();
+                    ENGINE_DIFFERS[at] = differs;
+                }
+                return ENGINE_DIFFERS[at];
+            }
+        }
+
+        private static final int CODE_POINTS = EcmaUnicode.MAX + 1;
+
+        private static int root(int[] parent, int c) {
+            while (parent[c] != c) {
+                parent[c] = parent[parent[c]];
+                c = parent[c];
+            }
+            return c;
+        }
+
+        private static void relate(int[] parent, int a, int b) {
+            int ra = root(parent, a);
+            int rb = root(parent, b);
+            if (ra != rb) {
+                parent[Math.max(ra, rb)] = Math.min(ra, rb);
+            }
+        }
+
+        private static int[] askEngine(boolean unicode) {
+            // The characters that may be compared as the same: those a case mapping of the JDK relates, which is
+            // what the engine goes by, and those of one class of ECMA-262.
+            int[] parent = new int[CODE_POINTS];
+            for (int c = 0; c < CODE_POINTS; c++) {
+                parent[c] = c;
+            }
+            for (int c = 0; c < CODE_POINTS; c++) {
+                if (c < Character.MIN_SURROGATE || c > Character.MAX_SURROGATE) {
+                    relate(parent, c, Character.toUpperCase(c));
+                    relate(parent, c, Character.toLowerCase(c));
+                    relate(parent, c, Character.toTitleCase(c));
+                }
+            }
+            int[][] classes = EcmaUnicode.foldClasses(new int[] {0, EcmaUnicode.MAX}, unicode);
+            int[] classOf = new int[CODE_POINTS];
+            for (int k = 0; k < classes.length; k++) {
+                for (int c : classes[k]) {
+                    classOf[c] = k + 1;
+                    relate(parent, classes[k][0], c);
+                }
+            }
+            Map<Integer, List<Integer>> related = new HashMap<>();
+            for (int c = 0; c < CODE_POINTS; c++) {
+                int r = root(parent, c);
+                if (r != c) {
+                    related.computeIfAbsent(r, k -> new ArrayList<>(List.of(k))).add(c);
+                }
+            }
+            Pattern probe = Pattern.compile("(" + ANY + ")(?iu:\\1)");
+            BitSet differs = new BitSet();
+            StringBuilder two = new StringBuilder(4);
+            for (List<Integer> members : related.values()) {
+                for (int inGroup : members) {
+                    for (int inText : members) {
+                        boolean ecma = inGroup == inText
+                                || (classOf[inGroup] != 0 && classOf[inGroup] == classOf[inText]);
+                        if (same(probe, two, inGroup, inText) != (ecma ? 1 : 0)) {
+                            differs.set(inGroup);
+                            differs.set(inText);
+                        }
+                    }
+                }
+            }
+            // A character that no mapping relates to another is compared with itself only. The engine of Java 17
+            // fails on that for a character beyond the Basic Multilingual Plane.
+            for (int c : new int[] {'-', 0x3042, 0x10000, 0x1F600, UNIT_BASE, EcmaUnicode.MAX}) {
+                if (same(probe, two, c, c) != 1 || same(probe, two, c, c - 1) != 0 || same(probe, two, c - 1, c) != 0) {
+                    differs.set(c < 0x10000 ? 0 : 0x10000, c < 0x10000 ? 0x10000 : CODE_POINTS);
+                }
+            }
+            int[] pairs = new int[2 * differs.cardinality()];
+            int count = 0;
+            for (int c = differs.nextSetBit(0); c >= 0; c = differs.nextSetBit(c + 1)) {
+                int last = differs.nextClearBit(c) - 1;
+                pairs[2 * count] = c;
+                pairs[2 * count + 1] = last;
+                count++;
+                c = last;
+            }
+            return Arrays.copyOf(pairs, 2 * count);
+        }
+
+        /**
+         * Whether the engine takes the second character for a case-insensitive backreference to the first: 1 when it
+         * does, 0 when it does not, and -1 when it fails on the pair, which is then not left to it.
+         */
+        private static int same(Pattern probe, StringBuilder two, int inGroup, int inText) {
+            two.setLength(0);
+            two.appendCodePoint(inGroup).appendCodePoint(inText);
+            try {
+                return probe.matcher(two).matches() ? 1 : 0;
+            } catch (RuntimeException e) {
+                return -1;
+            }
         }
 
         /**
@@ -5496,12 +5668,13 @@ final class EcmaRegex {
          *     | (?!Q0\z) (?&lt;=(?=P\z)(?=E\z) A{0,2147483647}) ) )    or the pointer is at the end of G
          * </pre>
          *
-         * <p>"Same" is {@code (?: (?=X) | (?=[K]) here [K] | ... )}: the character is X, or it and X are in one
-         * class K, or with many classes in one set of each test of {@link #foldTests}. "Here [K]" tests the
-         * character X from the place looked at, {@code (?=A*?(?=Q\z)[K])}, and "first" is the test that the iteration
-         * stands where the backreference starts, {@code (?=A*?(?=Q\z)(?=Q0\z))}. The loop is possessive and the whole
-         * is atomic. There is one way to compare two texts, and going back into it would read a P that a later
-         * iteration has set.
+         * <p>"Same" is {@code (?: (?=X) | (?![D]) (?=(?iu:X)) | (?=[K]) here [K] | ... )}: the character is X, or it
+         * is not one of the characters D the engine compares wrongly and the engine takes it for X, or it and X are
+         * in one class K that is written out, or with many such classes in one set of each test of
+         * {@link #foldTests}. "Here [K]" tests the character X from the place looked at,
+         * {@code (?=A*?(?=Q\z)[K])}, and "first" is the test that the iteration stands where the backreference
+         * starts, {@code (?=A*?(?=Q\z)(?=Q0\z))}. The loop is possessive and the whole is atomic. There is one way to
+         * compare two texts, and going back into it would read a P that a later iteration has set.
          *
          * <p>With {@code anywhere}, for a group set in a lookaround, which can stand after the backreference, each
          * search goes through the whole text and not only back.
@@ -5518,7 +5691,13 @@ final class EcmaRegex {
             String hereEnd = anywhere ? ")" + ANY + "{0,2147483647})" : ")";
             String first = hereStart + "(?=\\k<" + start + ">\\z)" + hereEnd;
             StringBuilder same = new StringBuilder("(?:(?=\\k<" + next + ">)|");
-            for (String[] test : foldTests(classes)) {
+            int[][] written = writtenOut(classes);
+            if (written.length < classes.length) {
+                // The character of the group is one the engine compares as ECMA-262 does, and it says so.
+                same.append(engineCompares()).append("(?=(?iu:\\k<").append(next).append(">))")
+                        .append(written.length == 0 ? "" : "|");
+            }
+            for (String[] test : foldTests(written)) {
                 same.append("(?:");
                 for (int k = 0; k < test.length; k++) {
                     same.append(k > 0 ? "|" : "").append("(?=").append(test[k]).append(')').append(hereStart)

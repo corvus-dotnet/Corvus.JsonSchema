@@ -1615,7 +1615,7 @@ class EcmaRegexTest {
     void aCaseInsensitiveBackreferenceUnderACountIsTranslated() {
         assertAnswers(CASE_INSENSITIVE_BACKREFERENCES_UNDER_A_COUNT,
                 textsOver(3, CASED_FOR_COUNTS, MORE_CASED_FOR_COUNTS));
-        // The classes of a group that holds any character are written as two tests of about 38 sets each.
+        // The classes that are written out stand in two tests when they are many (see foldTests).
         assertTrue(EcmaRegex.translate("(?i:^(.)\\1$)").length() < 20000);
         assertTrue(EcmaRegex.translate("(?i:^(..\\W)\\1$)").length() < 40000);
     }
@@ -1995,5 +1995,98 @@ class EcmaRegexTest {
         assertEquals(EcmaRegex.translate("(?i:^(.)\\1{2}$)").length(), EcmaRegex.translate("(?i:^(.)\\1{9}$)").length());
         // A body with alternatives has more than one way, and is still written apart.
         assertEquals("(?:^|x)(?:^|x)a", EcmaRegex.translate("(?:^|x){2}a"));
+    }
+
+    /**
+     * Case-insensitive backreferences on the characters the JDKs compare differently from ECMA-262 and from each
+     * other, with the texts each matches: "i" with U+0130 and U+0131, the pairs Unicode 15.1 and 16 added, and
+     * characters beyond the Basic Multilingual Plane.
+     */
+    private static final String[][] CASE_INSENSITIVE_BACKREFERENCES_ON_EVERY_JDK = {
+            {
+                "(?i:^(.)\\1$)",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|kk|k\u212a|\u212ak|\u212a\u212a"
+                        + "|\u01c5\u01c5|\u01c5\u01c6|\u01c6\u01c5|\u01c6\u01c6|\ud801\udc00\ud801\udc28"
+                        + "|\ud801\udc28\ud801\udc00|\ud801\udc00\ud801\udc00|\ud83d\ude00\ud83d\ude00"
+                        + "|\u019b\ua7dc|\ua7dc\u019b|\u1c89\u1c8a|\u0390\u1fd3|\ufb05\ufb06|\u00b5\u03bc"
+                        + "|\u03bc\u039c|\u017fs|S\u017f|\u00df\u1e9e",
+            },
+            {"(?i:^(.)\\1{2}$)", "|iIi|kK\u212a|\u212akk|\u01c4\u01c5\u01c6|\u0131\u0131\u0131|\u0130\u0130\u0130"},
+            {
+                "(?i:^(..)\\1$)",
+                "|iIiI|kKk\u212a|\ud801\udc00\ud801\udc28\ud801\udc00\ud801\udc28"
+                        + "|\ud801\udc00a\ud801\udc28A",
+            },
+            {
+                "(?i:^(.+)\\1$)",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|kk|k\u212a|\u212ak|\u212a\u212a"
+                        + "|\u01c5\u01c5|\u01c5\u01c6|\u01c6\u01c5|\u01c6\u01c6|\ud801\udc00\ud801\udc28"
+                        + "|\ud801\udc28\ud801\udc00|\ud801\udc00\ud801\udc00|\ud83d\ude00\ud83d\ude00"
+                        + "|\u019b\ua7dc|\ua7dc\u019b|\u1c89\u1c8a|\u0390\u1fd3|\ufb05\ufb06|\u00b5\u03bc"
+                        + "|\u03bc\u039c|\u017fs|S\u017f|\u00df\u1e9e|iIiI|kKk\u212a"
+                        + "|\ud801\udc00\ud801\udc28\ud801\udc00\ud801\udc28|\ud801\udc00a\ud801\udc28A",
+            },
+            {
+                "(?i:^(.)(.)\\1\\2$)",
+                "|iIiI|kKk\u212a|\ud801\udc00\ud801\udc28\ud801\udc00\ud801\udc28"
+                        + "|\ud801\udc00a\ud801\udc28A",
+            },
+            {
+                "(?i:^(?:(.)\\1)+$)",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|kk|k\u212a|\u212ak|\u212a\u212a"
+                        + "|\u01c5\u01c5|\u01c5\u01c6|\u01c6\u01c5|\u01c6\u01c6|\ud801\udc00\ud801\udc28"
+                        + "|\ud801\udc28\ud801\udc00|\ud801\udc00\ud801\udc00|\ud83d\ude00\ud83d\ude00"
+                        + "|\u019b\ua7dc|\ua7dc\u019b|\u1c89\u1c8a|\u0390\u1fd3|\ufb05\ufb06|\u00b5\u03bc"
+                        + "|\u03bc\u039c|\u017fs|S\u017f|\u00df\u1e9e|iIiI|kKk\u212a"
+                        + "|\ud801\udc00\ud801\udc28\ud801\udc00\ud801\udc28",
+            },
+            {"(?i:^([ik])\\1$)", "|ii|iI|Ii|II|kk|k\u212a|\u212ak|\u212a\u212a"},
+            {
+                "(?i:^(.)(?=\\1).)",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|kk|k\u212a|\u212ak|\u212a\u212a"
+                        + "|\u01c5\u01c5|\u01c5\u01c6|\u01c6\u01c5|\u01c6\u01c6|\ud801\udc00\ud801\udc28"
+                        + "|\ud801\udc28\ud801\udc00|\ud801\udc00\ud801\udc00|\ud83d\ude00\ud83d\ude00"
+                        + "|\u019b\ua7dc|\ua7dc\u019b|\u1c89\u1c8a|\u0390\u1fd3|\ufb05\ufb06|\u00b5\u03bc"
+                        + "|\u03bc\u039c|\u017fs|S\u017f|\u00df\u1e9e|iIi|iI\u0130|kK\u212a|\u212akk"
+                        + "|\u01c4\u01c5\u01c6|iIiI|kKk\u212a"
+                        + "|\ud801\udc00\ud801\udc28\ud801\udc00\ud801\udc28|\u0131\u0131\u0131"
+                        + "|\u0130\u0130\u0130",
+            },
+    };
+
+    /** The same without the u flag, where the comparison is by the uppercase of one UTF-16 code unit. */
+    private static final String[][] CASE_INSENSITIVE_BACKREFERENCES_ON_EVERY_JDK_WITHOUT_THE_U_FLAG = {
+            {
+                "(?i:^(.)\\1\\-?$)",
+                "|ii|iI|Ii|II|\u0130\u0130|\u0131\u0131|kk|\u212a\u212a|\u01c5\u01c5"
+                        + "|\u01c5\u01c6|\u01c6\u01c5|\u01c6\u01c6|\u019b\ua7dc|\ua7dc\u019b|\u1c89\u1c8a"
+                        + "|\u00b5\u03bc|\u03bc\u039c",
+            },
+            {"(?i:^(..)\\1\\-?$)", "|\ud801\udc00\ud801\udc00|\ud83d\ude00\ud83d\ude00|iIiI"},
+    };
+
+    private static final String[] CASED_ON_EVERY_JDK = {
+        "i", "I", "\u0130", "\u0131", "k", "\u212a", "\u01c5", "\u01c6"
+    };
+
+    private static final String[] MORE_CASED_ON_EVERY_JDK = {
+        "𐐀𐐨", "𐐨𐐀", "𐐀𐐀", "𐐀𐐁", "😀😀", "😀a", "ƛꟜ", "Ƛƛ", "Ᲊᲊ", "ΐΐ", "ﬅﬆ", "µμ", "μΜ", "ſs", "Sſ", "ßẞ", "iIi", "iIİ",
+        "kKK", "Kkk", "Ǆǅǆ", "iIiI", "kKkK", "𐐀𐐨𐐀𐐨", "𐐀a𐐨A", "ııı", "İİİ", "iı", "ıI"
+    };
+
+    /**
+     * A case-insensitive backreference leaves to {@code java.util.regex} the characters it compares as ECMA-262
+     * does, which the translator finds by asking the engine it runs on, and writes the comparison out for the
+     * others. The answers are the same on every JDK, and the text is a fraction of the comparison written out in
+     * full.
+     */
+    @Test
+    void aCaseInsensitiveBackreferenceLeavesToTheEngineWhatItComparesRightly() {
+        List<String> texts = textsOver(2, CASED_ON_EVERY_JDK, MORE_CASED_ON_EVERY_JDK);
+        assertAnswers(CASE_INSENSITIVE_BACKREFERENCES_ON_EVERY_JDK, texts);
+        assertValidatorAnswers(CASE_INSENSITIVE_BACKREFERENCES_ON_EVERY_JDK_WITHOUT_THE_U_FLAG, texts);
+        // Java 17 has the longest text: its engine fails on every character beyond the Basic Multilingual Plane.
+        assertTrue(EcmaRegex.translate("(?i:^(.)\\1$)").length() < 8000);
+        assertTrue(EcmaRegex.translate("(?i:^(..\\W)\\1$)").length() < 16000);
     }
 }
