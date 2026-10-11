@@ -96,9 +96,9 @@ Path("person_validator.py").write_text(cjs.generate_module(schema))
 ECMAScript 2025. This section is about the pure package, which translates a pattern for Python's engines: the
 standard library's `re`, and the `regex` package for what `re` cannot run. A pattern is read with the `u` flag, and a
 pattern that is not valid with it is read as a pattern with no flag, which accepts what many schemas hold (`\&`, a
-lone brace). The `regex` format accepts only the `u` flag grammar. The answers are V8's for every pattern and text of
-the [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data), on every
-supported version of Python.
+lone brace). The `regex` format accepts only the `u` flag grammar. Every answer for the 98,839 patterns of
+the [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) is V8's, on
+CPython 3.10, 3.12 and 3.14, and one of those patterns passes the size limit below.
 
 - `\d`, `\w` and `\b` are ASCII, the dot excludes the four line terminators, and `$` holds only at the end.
 - Modifier groups (`(?i:...)`, `(?m:...)`, `(?s:...)`, `(?i-s:...)`) ignore case, match at line terminators and let

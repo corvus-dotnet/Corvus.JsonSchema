@@ -222,9 +222,10 @@ JSON-Schema-Test-Suite`), or from `$JSON_SCHEMA_TEST_SUITE`.
   excludes every line terminator, `$` matches only at the end, a backreference to a group that has not matched matches
   the empty string, and a modifier group such as `(?i:...)` folds case by tables of Unicode 16 that the package
   carries). A pattern is read with the `u` flag. One that is not valid with it (an identity escape such as `\-`, a
-  literal brace) is read as JavaScript's `RegExp` reads it without the flag. The answers are V8's for every pattern of
-  the [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data). What is
-  written out for the engines, so that it is exact:
+  literal brace) is read as JavaScript's `RegExp` reads it without the flag. Every answer for the 98,839
+  patterns of the [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data)
+  is V8's, and one of those patterns passes the size limit below. What is written out for the engines, so that it is
+  exact:
   - A backreference inside a case-insensitive group compares character by character by ECMA-262's Canonicalize, from
     the package's own tables, so the answer is the same on every version of Python and of `regex`. `^(?i:(.)\1)$`
     takes `"s\u017f"` and `"k\u212a"` and not `"i\u0130"`, and in a pattern that is valid only without the `u` flag it
