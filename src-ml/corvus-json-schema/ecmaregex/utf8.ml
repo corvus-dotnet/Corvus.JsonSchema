@@ -120,6 +120,9 @@ let unit_before t lo at hi =
 (** Reports whether a code point has an encoding: it is in range and not a surrogate. *)
 let valid_rune r = (r >= 0 && r < 0xD800) || (r >= 0xE000 && r <= 0x10FFFF)
 
+(** The number of bytes of the UTF-8 encoding of a code point that has one. *)
+let rune_length r = if r < 0x80 then 1 else if r < 0x800 then 2 else if r < 0x10000 then 3 else 4
+
 (** Appends the UTF-8 encoding of a code point. One that has none is written as U+FFFD, as utf8.AppendRune of Go does.
 *)
 let add_rune buffer r =

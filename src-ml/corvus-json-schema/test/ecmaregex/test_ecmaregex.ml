@@ -1218,37 +1218,74 @@ let test_repetitions_that_cannot_consume () =
 let needs_work = ref false
 
 (* Checks the least number of bytes a match consumes, which set_needs works out for a program and for each of its
-   counted loops. The figure is a lower bound: the way out of a counted loop is counted without its minimum number of
-   iterations. Each case is a pattern, the need of its program and the needs of its counted loops in order. *)
+   counted loops, and the least one iteration of each loop consumes. The figures are lower bounds. The need of a loop
+   counts what follows it and none of its iterations, which the matcher adds from the count it has reached. The need
+   of the program counts the least number of iterations of every loop it must go through. Each case is a pattern, the
+   need of its program, the needs of its counted loops in order, and the least bytes of one iteration of each. *)
 let test_needs () =
   let none = Re.Internal.no_match in
   let cases =
     [
-      ({|abc|}, 3, [||]); ({|a+b{2,}c?|}, 3, [||]); ({|(?:a|bc)d|}, 2, [||]); ({|(?=abc)a|}, 1, [||]);
-      ({|(?<=abc)d|}, 1, [||]); ({|\u00e9{2}\u{10400}|}, 3, [||]); ({|(?:a|){3}xy$|}, 2, [| 2 |]);
-      ({|(?:a|){3}|}, 0, [| 0 |]); ({|(?:(?:a|){2}b){2}c|}, 1, [| 1; 2 |]);
-      ({|(?=(?:a|){2}xyz)(?:b|){2}c|}, 1, [| 3; 1 |]); ({|(?<=(?:ab|){2}c)(?:d|){2}ef|}, 2, [| 0; 2 |]);
-      ({|(?!(?:a|){2}xx)(?:(x)|){2}\1y|}, 1, [| 2; 1 |]); ({|(?:a|){2}[]|}, none, [| none |]);
-      ({|(?:(?:a|){2}|bcd)e|}, 1, [| 1 |]);
+      ({|abc|}, 3, [||], [||]); ({|a+b{2,}c?|}, 3, [||], [||]); ({|(?:a|bc)d|}, 2, [||], [||]);
+      ({|(?=abc)a|}, 1, [||], [||]); ({|(?<=abc)d|}, 1, [||], [||]); ({|\u00e9{2}\u{10400}|}, 3, [||], [||]);
+      ({|(?:a|){3}xy$|}, 2, [| 2 |], [| 0 |]); ({|(?:a|){3}|}, 0, [| 0 |], [| 0 |]);
+      ({|(?:(?:a|){2}b){2}c|}, 3, [| 1; 2 |], [| 1; 0 |]);
+      ({|(?=(?:a|){2}xyz)(?:b|){2}c|}, 1, [| 3; 1 |], [| 0; 0 |]);
+      ({|(?<=(?:ab|){2}c)(?:d|){2}ef|}, 2, [| 0; 2 |], [| 0; 0 |]);
+      ({|(?!(?:a|){2}xx)(?:(x)|){2}\1y|}, 1, [| 2; 1 |], [| 0; 0 |]); ({|(?:a|){2}[]|}, none, [| none |], [| 0 |]);
+      ({|(?:(?:a|){2}|bcd)e|}, 1, [| 1 |], [| 0 |]);
+      (* The least count of a loop times the least of its body. *)
+      ({|(?:a|b){5}c|}, 6, [| 1 |], [| 1 |]); ({|(?:ab|cde){3,}?x|}, 7, [| 1 |], [| 2 |]);
+      ({|(?:a{1000}){1000}|}, 1000000, [| 0 |], [| 1000 |]); ({|(?:\u00e9|xyz){2}|}, 4, [| 0 |], [| 2 |]);
+      ({|(?:a|b){2147483647}c|}, none, [| 1 |], [| 1 |]); ({|(?:(?:a|bc){2}d){3}|}, 9, [| 0; 1 |], [| 3; 1 |]);
+      (* The body of a lookbehind is matched backwards and counts nothing. *)
+      ({|(?<=(?:ab|c){2}d)e|}, 1, [| 0 |], [| 0 |]); ({|(?:a|(?=(?:b|c){3}))x{2}|}, 2, [| 0 |], [| 1 |]);
     ]
     [@ocamlformat "disable"]
   in
   needs_work := true;
+  let show a = String.concat "; " (Array.to_list (Array.map string_of_int a)) in
   List.iter
-    (fun (p, need, loops) ->
+    (fun (p, need, loops, iterations) ->
       match compiled p with
       | None -> needs_work := false
       | Some re ->
           let found, found_loops = Re.Internal.needs re in
-          if found <> need || found_loops <> loops then begin
-            fail "%S: need %d, loops [%s], want %d and [%s]" p found
-              (String.concat "; " (Array.to_list (Array.map string_of_int found_loops)))
-              need
-              (String.concat "; " (Array.to_list (Array.map string_of_int loops)));
+          let found_iterations = Re.Internal.iterations re in
+          if found <> need || found_loops <> loops || found_iterations <> iterations then begin
+            fail "%S: need %d, loops [%s], iterations [%s], want %d, [%s] and [%s]" p found (show found_loops)
+              (show found_iterations) need (show loops) (show iterations);
             needs_work := false
           end)
     cases;
   log "%d patterns" (List.length cases)
+
+(* Checks the matcher uses the least count of a counted loop: a pattern that needs a million characters, or two
+   thousand million, answers a text of a hundred thousand at once. Without the count in the need, the matcher runs each
+   loop as far as the text goes from every position of the text, which no run of the first of these was waited out
+   for. The limit of the match here is a small part of that, so a match that does the work is abandoned and the test
+   fails on that. *)
+let test_a_loop_gives_up_when_its_iterations_cannot_fit () =
+  let text = String.make 100000 'a' in
+  let scratch = Re.create_scratch () in
+  let limited re text limit =
+    Re.set_limit scratch limit;
+    match Re.is_match_sub_with scratch re text 0 (String.length text) with
+    | matched -> string_of_bool matched
+    | exception Re.Match_time -> "Match_time"
+    | exception Re.Match_memory -> "Match_memory"
+  in
+  List.iter
+    (fun pattern ->
+      let got = limited (backtracking pattern) text 0.2 in
+      if got <> "false" then fail "%S on 100,000 characters: %s, want false" pattern got)
+    [ {|(?:a{1000}){1000}|}; {|(?:a|b){2147483647}c|}; {|(?=.)(?:(?:ab|a){500}){500}|}; {|x?(?:[ab]c?){100001}$|} ];
+  (* A text that is long enough still matches. *)
+  let re = backtracking {|^(?:a{10}){100}$|} in
+  let got = limited re (String.sub text 0 1000) 60. in
+  if got <> "true" then fail "a thousand characters: %s, want true" got;
+  let got = limited re (String.sub text 0 999) 60. in
+  if got <> "false" then fail "999 characters: %s, want false" got
 
 (* Checks, against V8, counted loops whose iterations can be empty, before a rest of the pattern that needs more text
    than is left. The matcher gives up at such a loop (see set_needs). Without that, the first three patterns of the
@@ -1337,6 +1374,7 @@ let () =
       ("repetitions that cannot consume", test_repetitions_that_cannot_consume);
       ("needs", test_needs);
       ("loops give up when the rest cannot fit", test_loops_give_up_when_the_rest_cannot_fit);
+      ("a loop gives up when its iterations cannot fit", test_a_loop_gives_up_when_its_iterations_cannot_fit);
       ("escaped k in a class", test_escaped_k_in_a_class);
       ("counts are compared as written", test_counts_are_compared_as_written);
       ("property names and values", test_property_names_and_values);

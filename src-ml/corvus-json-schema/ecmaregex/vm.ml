@@ -490,8 +490,14 @@ and exec insts st t lo hi pc pos =
       let n = st.counts.(2 * i.a) in
       (* Once the minimum is met, ECMA-262 rejects an iteration that consumed nothing. That is what stops a loop over
          a body that can be empty. The loop also gives up when fewer bytes are left than any way from here to a match
-         consumes. *)
-      if hi - pos < i.need || (n > i.min && pos = st.counts.((2 * i.a) + 1)) then backtrack insts st t lo hi
+         consumes: what follows the loop, and the iterations it has still to make. A count is below 2^31 and a need at
+         most 2^30, so their product fits an int. *)
+      let left = hi - pos in
+      if
+        left < i.need
+        || (n < i.min && i.iter <> 0 && left - i.need < (i.min - n) * i.iter)
+        || (n > i.min && pos = st.counts.((2 * i.a) + 1))
+      then backtrack insts st t lo hi
       else if n < i.min then step insts st t lo hi (pc + 1) pos
       else if i.max >= 0 && n >= i.max then step insts st t lo hi i.x pos
       else if i.flag then begin
@@ -574,13 +580,14 @@ let run p st t lo hi start =
 
 let rec search_prefix p st t lo hi at =
   let at = index_of t at hi p.prefix in
-  if at < 0 then false
+  if at < 0 || hi - at < p.need then false
   else if run p st t lo hi at then true
   else if st.stop <> stop_none then false
   else search_prefix p st t lo hi (at + 1)
 
 let rec search_first p st t lo hi at =
-  if at = hi then (not p.has_first) && run p st t lo hi at
+  if hi - at < p.need then false
+  else if at = hi then (not p.has_first) && run p st t lo hi at
   else
     let c = byte t at in
     let packed = if c < Utf8.rune_self then (c lsl 3) lor 1 else decode_at st t lo at hi in

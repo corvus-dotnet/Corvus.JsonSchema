@@ -64,13 +64,14 @@ type inst = {
   max : int;
   mutable need : int;
       (** The least number of bytes of text that every way from this instruction to a match consumes going forward (see
-          {!set_needs}). It is set for an [Op_loop]. *)
+          {!set_needs}). It is set for an [Op_loop], and counts none of the iterations the loop has still to make. *)
+  iter : int;  (** The least number of bytes one iteration of the body of an [Op_loop] consumes going forward. *)
 }
 (** One instruction of the backtracking matcher. The Go source holds the jump targets, the groups and the bounds in 32
     bits. Here each is an [int]. *)
 
 let no_inst =
-  { op = Op_fail; flag = false; r = 0; set = Charset.none; has_set = false; lit = ""; x = 0; y = 0; a = 0; b = 0; min = 0; max = 0; need = 0 }
+  { op = Op_fail; flag = false; r = 0; set = Charset.none; has_set = false; lit = ""; x = 0; y = 0; a = 0; b = 0; min = 0; max = 0; need = 0; iter = 0 }
 [@@ocamlformat "disable"]
 
 type program = {
@@ -170,6 +171,32 @@ let group_range c n =
 (** Reports whether a code point can be matched by comparing its UTF-8 bytes. A surrogate has no encoding, and U+FFFD is
     also what a malformed byte of the text decodes to. *)
 let literal_rune r = Utf8.valid_rune r && r <> Utf8.rune_error
+
+(** The need of an instruction from which no way leads to a match. Every need is capped at it. *)
+let no_match = 1 lsl 30
+
+(** Returns count times need, capped at [no_match]. *)
+let times_need count need =
+  if count = 0 || need = 0 then 0 else if need >= no_match || count >= no_match / need then no_match else count * need
+
+(** Returns the least number of bytes a match of n consumes, capped at [no_match]. Like the needs, it counts a character
+    as its UTF-8 bytes when the matcher compares bytes for it and as one byte otherwise, so it can only be too small. *)
+let rec min_length n =
+  match n.kind with
+  | Char -> if literal_rune n.r then Utf8.rune_length n.r else 1
+  | Set -> if Charset.is_empty n.set then no_match else 1
+  | Cat ->
+      let rec sum i total =
+        if i = Array.length n.subs then total
+        else
+          let total = total + min_length n.subs.(i) in
+          if total >= no_match then no_match else sum (i + 1) total
+      in
+      sum 0 0
+  | Alt -> Array.fold_left (fun least sub -> min least (min_length sub)) no_match n.subs
+  | Group -> min_length n.subs.(0)
+  | Repeat -> times_need n.min (min_length n.subs.(0))
+  | _ -> 0
 
 (** Reports whether n can match without consuming anything. It errs towards true. *)
 let rec nullable n =
@@ -323,7 +350,8 @@ and emit_repeat c n back =
         let k = c.loop_count in
         c.loop_count <- c.loop_count + 1;
         ignore (add c { no_inst with op = Op_loop_init; a = k });
-        let loop = add c { no_inst with op = Op_loop; a = k; min = n.min; max = n.max; flag = n.lazy_ } in
+        let iter = if back then 0 else min_length body in
+        let loop = add c { no_inst with op = Op_loop; a = k; min = n.min; max = n.max; flag = n.lazy_; iter } in
         ignore (add c { no_inst with op = Op_loop_iter; a = k });
         emit_body ();
         ignore (add c { no_inst with op = Op_jmp; x = loop });
@@ -389,14 +417,15 @@ let rec first_chars n pairs =
   | Backref -> raise Unknown_first
   | _ -> true
 
-(** The need of an instruction from which no way leads to a match. *)
-let no_match = 1 lsl 30
-
 (** [set_needs insts] works out, for every instruction, the least number of bytes of text that any way from it to a
     match consumes going forward, and writes it into the counted loops. It returns the need of the whole program. The
     matcher gives up at a counted loop when fewer bytes than that are left, as V8 does at every choice. A loop whose
     iterations can be empty would otherwise try every combination of its ways at a position from which the rest of the
     pattern cannot match at all.
+
+    A counted loop that is entered needs its least count of iterations, each of them the least its body consumes
+    ([iter]), and then what follows it. The loop instruction itself is also reached after each iteration, so its own
+    need counts only what follows, and the matcher adds the iterations it has still to make.
 
     A character is counted as one byte, a literal run as its bytes and a single character loop as its minimum, so the
     figure can only be too small. The body of a lookaround ends at its own last instruction and the instruction that
@@ -423,6 +452,9 @@ let set_needs insts =
         | Op_jmp | Op_look -> next i.x 0
         | Op_split -> min (next i.x 0) (next i.y 0)
         | Op_loop -> min (next (pc + 1) 0) (next i.x 0)
+        | Op_loop_init ->
+            let loop = insts.(pc + 1) in
+            next (pc + 1) (times_need loop.min loop.iter)
         | _ -> next (pc + 1) 0
       in
       let n = min n no_match in

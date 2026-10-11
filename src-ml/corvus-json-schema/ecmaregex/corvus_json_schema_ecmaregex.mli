@@ -272,8 +272,12 @@ module Internal : sig
       its instructions that compare a backreference by its bytes. *)
 
   val needs : t -> int * int array
-  (** [needs re] is the least number of bytes a match of the program of the backtracking matcher consumes, and the same
-      figure for each of its counted loops, in order. *)
+  (** [needs re] is the least number of bytes a match of the program of the backtracking matcher consumes, and for each
+      of its counted loops, in order, the least that what follows the loop consumes. *)
+
+  val iterations : t -> int array
+  (** [iterations re] is the least number of bytes one iteration of each counted loop of the program consumes, in order.
+  *)
 
   val no_match : int
   (** The need of a program that no text matches. *)

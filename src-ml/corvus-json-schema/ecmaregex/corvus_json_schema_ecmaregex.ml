@@ -177,6 +177,12 @@ module Internal = struct
            (fun (i : Compile.inst) -> if i.op = Compile.Op_loop then Some i.need else None)
            (Array.to_list re.prog.insts)) )
 
+  let iterations re =
+    Array.of_list
+      (List.filter_map
+         (fun (i : Compile.inst) -> if i.op = Compile.Op_loop then Some i.iter else None)
+         (Array.to_list re.prog.insts))
+
   let no_match = Compile.no_match
   let size pattern unicode = match Parse.parse pattern unicode with Ok (_, ps) -> ps.size | Error _ -> -1
   let unpack packed = (Utf8.rune packed, Utf8.width packed)
