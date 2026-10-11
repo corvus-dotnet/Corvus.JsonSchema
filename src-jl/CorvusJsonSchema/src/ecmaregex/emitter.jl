@@ -1358,19 +1358,20 @@ function nonempty(E::Emitter, n::Node, strict::Bool, budget::Base.RefValue{Int})
             atleastonce.min = 1
             return atleastonce
         end
-        # Every iteration is past the minimum, so each takes a character. The first is written as one that does,
-        # and `writerepeat` sees to the others.
+        # Every iteration is past the minimum, so each takes a character: an iteration that matches the empty
+        # string ends the repetition, and ECMA-262 then tries the next way through the body. So the repetition
+        # is one or more iterations of the body as it is when it takes a character, up to as many as it had, and
+        # the ways are tried in the same order. The body is written once. (It was written twice, as the first
+        # iteration and then the repetition of the rest, and so was the body of a repetition inside it, so that
+        # `(?:(?:(?:a*)*)*)*` doubled with each level and twelve levels were more than PCRE2 holds.)
         way = nonempty(E, body, strict, budget)
         (way === nothing || way === NO_WAY) && return way
         n.max == 1 && return way
         (strict && holdsreferenced(E, n)) && return nothing
-        rest = withsubs(n, n.subs)
-        rest.max = n.max == UNBOUNDED ? UNBOUNDED : n.max - 1
-        sequence = Node(CAT)
-        sequence.firstgroup = n.firstgroup
-        sequence.lastgroup = n.lastgroup
-        sequence.subs = Node[way, rest]
-        return sequence
+        spend!(budget) || return nothing
+        atleastonce = withsubs(n, Node[way])
+        atleastonce.min = 1
+        return atleastonce
     end
     return nothing
 end

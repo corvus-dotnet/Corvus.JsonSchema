@@ -877,6 +877,53 @@ end
         checkv8table(rows, texts)
     end
 
+    # A repetition whose iterations can match the empty string is written so that each takes a character, as
+    # ECMA-262 refuses one that takes none. That was written as the first iteration, which takes a character, and
+    # the repetition of the rest, so the body was written twice, and so was the body of a repetition inside it:
+    # the translation doubled with each level of a nest, and twelve levels were more than PCRE2 holds. It is one
+    # or more iterations of the body as it is when it takes a character, written once.
+    @testset "a repetition of what can match the empty string, inside another" begin
+        checkv8table([
+            # A repetition of what can match the empty string, inside another, with no group that is read.
+            (raw"^(?:(?:a*)*)*$", "c80400000080"),
+            (raw"^(?:(?:(?:a|)*)*x?)*$", "ed86c36000ca"),
+            (raw"^(?:(?:a?-?)*x)*$", "a4924924926c"),
+            (raw"^(?:(?:a*x*)*-)*?$", "924924924911"),
+            (raw"^(?:(?:(?:a*)*)*)*x", "25c2e3fe006b"),
+            (raw"(?:(?:a|x*)*?-){2,}", "000804024f15"),
+            (raw"^(?:(?:a{0,2})*x){0,3}$", "a48241200008"),
+            (raw"^(?:(?:(?:a?){0,2}x?)*-?){1,3}$", "ffffffffffff"),
+            (raw"^(?:(?:(?=a)|a|x)*-)*$", "924924924911"),
+            (raw"^(?:(?:\b|a|-)*x)+$", "24924924926c"),
+            (raw"^(?:(?:(?:(?:a?)*)*x)*)*-$", "104020100000"),
+            (raw"^(?:(?:(a)|x*)*-)*$", "924924924911"),
+            (raw"^(?:(?:a|(?:x*)*)*?(?:-|a))+$", "5b6db6db6d93"),
+            (raw"^(?:(?:(?:a|x?)*){2}-?)*$", "ffffffffffff"),
+            (raw"(?:(?:a*?)*?x)*?-$", "124924924911"),
+            (raw"^(?:(?:a*(?!x))*x?)*$", "e984026000c0"),
+            (raw"^(?:(?:(?<=a)|a|-)*x)*$", "a4924924926c"),
+            # The same where a group of the inner repetition is read after it: the body is not written twice either.
+            (raw"^(?:(a|)*x)*\1$", "a080c0200040"),
+            (raw"^(?:(?:(a)|)*x)*\1-$", "104000100000"),
+            (raw"^(?:((?:a|x?)*)-)*\1$", "900814060100"),
+        ])
+        # The translation grows with the depth, and not with its power of two.
+        for (open, close) in (("(?:", ")*"), ("(", ")*"), ("(?:", ")*?"), ("(?:", "){0,}"), ("(?:", ")?"))
+            sizes = [ncodeunits(E.translate(open^depth * "a*" * close^depth * "\$").main) for depth in (10, 20, 40, 80)]
+            @test sizes[4] < 1200
+            @test sizes[4] - sizes[3] <= 2 * (sizes[3] - sizes[2]) + 400
+        end
+        for depth in (1, 2, 3, 12, 40, 100)
+            stars = E.compile("^" * "(?:"^depth * "a*" * ")*"^depth * "\$")
+            @test E.ismatch(stars, "") && E.ismatch(stars, "aaaa") && !E.ismatch(stars, "aab")
+            groups = E.compile("^" * "("^depth * "a|x?" * ")*"^depth * "-\$")
+            @test E.ismatch(groups, "-") && E.ismatch(groups, "axxa-") && !E.ismatch(groups, "ab-")
+        end
+        nested = E.compile("^(?:(?:(?:a*)*)*)*b\$")
+        @test !E.ismatch(nested, "a"^12)
+        @test E.ismatch(nested, "a"^100_000 * "b")
+    end
+
     # A set of many ranges, such as that of \p{L}, is a call of a group where it stands, and PCRE2 keeps a place to
     # come back to for every turn of a repeated group. So ^\p{L}+$ kept one for each character, and was a
     # MatchError ("heap limit exceeded") on a text of 150,000 letters. Under a repetition with no upper count the
