@@ -875,4 +875,55 @@ end
         # The same rows with the counts as PCRE2 has them.
         checkv8table(rows, texts)
     end
+
+    # The twenty patterns of the case-folding file of ecma262-regex-test-data that answer differently with a PCRE2
+    # whose case folding is that of Unicode 14 (10.42, in Julia 1.10), on the sixty texts of the thirty pairs of
+    # PAIRS_SINCE_UNICODE_14, each pair both ways round. A row is the pattern, V8's answers on the sixty texts, and
+    # which of them the file asks of the pattern, which are 1,026 in all. Such a PCRE2 answers every one of the
+    # sixty differently from V8, for each of the patterns, and nothing else in that file. Nothing is done about
+    # them: the README lists the pairs and says that the fix is Julia 1.13. With the data of Unicode 16 (10.46, in
+    # Julia 1.13) every answer is V8's.
+    @testset "the pairs a PCRE2 of Unicode 14 lacks, in the patterns of the test data" begin
+        texts = String[]
+        for (a, b) in PAIRS_SINCE_UNICODE_14
+            push!(texts, string(Char(a), Char(b)), string(Char(b), Char(a)))
+        end
+        @test length(texts) == 60
+        rows = [
+            (raw"(?i:^(.)\1$)", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^(?<n>.)\k<n>$)", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^(.+)\1$)", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^(?:(.)\1)+$)", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^([^])\1$)", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^(\W)\1$)", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^([^a])\1$)", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^..(?<=\1(.))$)", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^(.).(?<=\1)$)", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^(?=.(.))\1)", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^(.)(?!\1).$)", "000000000000000", "fffffffffffffff"),
+            (raw"^(.)(?i:\1)$", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^(.)\1$)", "fffffffffffffff", "fffffffffffffff"),
+            (raw"^(?i:(.)\1)$", "fffffffffffffff", "fffffffffffffff"),
+            (raw"^(.)(?i:\1)(?-i:\1)?$", "fffffffffffffff", "fffffffffffffff"),
+            (raw"^(?:(.)|-)(?i:\1)$", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?<=(?i:\1)(.))$", "fffffffffffffff", "fffffffffffffff"),
+            (raw"(?i:^(?:(?=(?<=..)Ω)(?<n0>\k<n0>𐐀K))*(([^-])?)\2?$)", "fffffffffffffff", "440000000000000"),
+            (raw"(?i:^(.){1,2}\1)", "fffffffffffffff", "440000000000000"),
+            (raw"(?i:(?<n0>(?![^-]^)[^a]\1)?(?<!\1\1)$)", "000000000000000", "440000000000000"),
+        ]
+        @test length(rows) == 20
+        engine = VersionNumber(E.pcreunicodeversion())
+        asked = 0
+        for (pattern, hex, infile) in rows
+            @test E.parsesunicode(pattern)
+            differences = v8differences(pattern, hex, texts)
+            asked += count(k -> bit(infile, k - 1), eachindex(texts))
+            if engine >= v"16"
+                @test isempty(differences)
+            elseif engine < v"15"
+                @test differences == texts
+            end
+        end
+        @test asked == 1026
+    end
 end
