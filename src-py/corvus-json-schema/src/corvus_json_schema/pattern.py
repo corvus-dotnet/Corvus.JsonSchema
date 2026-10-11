@@ -82,6 +82,9 @@ _LINE_START = "(?<![^\\n\\r\\u2028\\u2029])"
 _LINE_END = "(?![^\\n\\r\\u2028\\u2029])"
 _SYNTAX = set("^$\\.*+?()[]{}|/")
 _QUANTIFIER_RE = re.compile(r"\{(\d+)(,(\d*))?\}")
+_PROPERTY_RE = re.compile(r"\\[pP]\{[^}]*\}")
+# A call of a class that is written once (see _Writer.write).
+_CALL_RE = re.compile(r"\(\?[0-9]+\)|\(\?:\(\?=\(\?[0-9]+\)\)\(\?s:\.\)\)")
 _ASCII_NAME_RE = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
 
 # A count from here up is more characters than a text has. As a maximum it is no maximum.
@@ -106,6 +109,19 @@ MAX_COPIES = 4_096
 # every character that has another case is as long as the table of case, about 54,000 characters, and a pattern
 # that would need more than this in several tests has that one for all of them.
 _MAX_TESTS = 65_536
+# A class that is written with more characters than this counts once towards the length of a translation however
+# many times the pattern has it, and a call of it counts this much (see _Writer.write).
+_LONG_CLASS = 64
+_CALL = 8
+# The most characters of a translation for the standard library's engine, with every copy of a long class counted.
+_MAX_WRITTEN_FOR_RE = 262_144
+# The most ranges of a class that the regex package may go through for each character of a text in one step of a
+# match. The engine takes a repetition of one character or class as one step, however much of the text it runs
+# over, and looks at its clock every 256 steps. It goes through the ranges of a class one by one, so with a class
+# of 250 ranges and a text of 100,000 characters its timeout came 2.4 seconds late, and with one of 24 ranges 0.15
+# seconds. A class of more ranges than this is written under a repetition so that each character is a step (see
+# _Writer._repeat), which costs a tenth of a microsecond more for a character.
+_MAX_SCANNED = 24
 # The most nodes the tree of a pattern may have once its repetitions are written without the iterations that match
 # nothing (see _Plain). A pattern that would pass it is written as it is.
 _MAX_PLAIN = 20_000
@@ -197,7 +213,7 @@ def _property(body: str) -> tuple[tuple[str, str] | None, _Ranges] | None:
 
     The characters are those of Unicode 17, from the tables of ``_properties`` (which every port of the evaluator
     has), whatever version of Unicode the regex package that is installed has. The package's own property is
-    written only where it has the same characters (see ``_host_agrees``)."""
+    written with what is different between the two (see ``_host_form``)."""
     if not _properties:
         from . import _properties as tables
 
@@ -254,20 +270,24 @@ def _table_names() -> dict[str, str]:
     return _table_texts
 
 
-_host: dict[str, bool] = {}
+# What the regex package that is installed has for a property expression: its characters (None: it has no such
+# property), and how a property is written for it (see _host_form).
+_host_sets: dict[str, _Ranges | None] = {}
+_host: dict[str, tuple[str, str, int]] = {}
 _every_character: list[str] = []
 
 
-def _host_agrees(expression: str, ranges: _Ranges) -> bool:
-    """Whether the regex package that is installed has the characters of ``ranges``, and no others, for a property
-    expression. The package has the version of Unicode of its release (16 in 2025.9.1, 17 in 2026.9.29), and the
-    property is written for it only where that makes no difference: it looks a character up in a table, where a
-    class of some hundreds of ranges is searched range by range.
+def _host_set(expression: str) -> _Ranges | None:
+    """The characters that the regex package that is installed has for a property expression, or None when it has
+    no such property. The package has the version of Unicode of its release (16 in 2025.9.1, 18 in 2026.9.29).
 
     Every character is asked about, once for an expression, which takes some milliseconds. The text of every
     character (4 MB) is kept from the first time."""
-    agrees = _host.get(expression)
-    if agrees is None:
+    return _found(expression, _host_sets)
+
+
+def _found(expression: str, known: dict[str, _Ranges | None]) -> _Ranges | None:
+    if expression not in known:
         import regex
 
         if not _every_character:
@@ -277,11 +297,65 @@ def _host_agrees(expression: str, ranges: _Ranges) -> bool:
                 units.decode("utf-32-le" if sys.byteorder == "little" else "utf-32-be", "surrogatepass")
             )
         try:
-            found = [(m.start(), m.end() - 1) for m in regex.compile(expression + "+").finditer(_every_character[0])]
+            compiled = regex.compile(f"(?:{expression})+", cache_pattern=False)
+            known[expression] = [(m.start(), m.end() - 1) for m in compiled.finditer(_every_character[0])]
         except regex.error:
-            found = None
-        agrees = _host[expression] = found == ranges
-    return agrees
+            known[expression] = None
+    return known[expression]
+
+
+def _host_form(here: str, other: str, target: _Ranges) -> tuple[str, str, int]:
+    """How the characters ``target`` are written for the regex package, given the package's own expression for
+    them (``here``) and for all the others (``other``): members of a class, one more class that stands beside it
+    (either may be empty: the characters are those of the two together), and how many ranges the two have, which
+    is what a character costs the engine.
+
+    The engine looks a character up in a table for a property of its own, where it goes through the ranges of a
+    class one by one: 3 nanoseconds a character against 45 to 1,000 for the 684 ranges of ``\\p{L}``. But its
+    property is that of its version of Unicode, and the characters here are those of Unicode 17. So its property
+    is written with what is different:
+
+    - the same characters: the property;
+    - the engine has too few: the property and the ranges it lacks, as members of a class;
+    - the engine has too many: ``[^\\P{..}ranges]``, the characters that are not outside the property and not in
+      the ranges it has too many of, which is a class of its own.
+
+    Two releases of Unicode differ by tens of ranges for the properties they differ on at all. Where the engine
+    has no such property, or what is different is longer than the ranges themselves, the ranges are written. What
+    is written is then asked about for every character, and has to give the characters of the tables exactly."""
+    form = _host.get(here)
+    if form is None:
+        plain = (_table_class(target), "", len(target))
+        form = plain
+        has = _host_set(here)
+        if has is not None:
+            add, rem = _minus(target, has), _minus(has, target)
+            members = (here if not rem else "") + _table_class(add)
+            beside = f"[^{other}{_table_class(rem)}]" if rem else ""
+            if len(members) + len(beside) < len(plain[0]):
+                written = "|".join(([f"[{members}]"] if members else []) + ([beside] if beside else []))
+                if not written or _found(written, {}) == target:
+                    form = (members, beside, len(add) + len(rem))
+        _host[here] = form
+    return form
+
+
+def _minus(a: _Ranges, b: _Ranges) -> _Ranges:
+    """The characters of ``a`` that are not in ``b`` (each merged, in order)."""
+    out: _Ranges = []
+    j = 0
+    for lo, hi in a:
+        while j < len(b) and b[j][1] < lo:
+            j += 1
+        k = j
+        while k < len(b) and b[k][0] <= hi:
+            if b[k][0] > lo:
+                out.append((lo, b[k][0] - 1))
+            lo = b[k][1] + 1
+            k += 1
+        if lo <= hi:
+            out.append((lo, hi))
+    return out
 
 
 def _table_class(ranges: _Ranges) -> str:
@@ -299,6 +373,32 @@ def _holds(ranges: _Ranges, o: int) -> bool:
     return k >= 0 and ranges[k][1] >= o
 
 
+# A property as it is written for an engine: members of a class, a class that stands beside it (either may be
+# empty), the characters of the two together, and how many ranges the engine goes through for a character.
+_Property = tuple[str, str, _Ranges, int]
+
+
+def _class_of(members: list[str], beside: list[str], negated: bool = False) -> str:
+    """A class as it is written: the characters of the members and of the classes that stand beside them (what a
+    class of Python cannot have inside it: ECMA's ``\\S``, and a property of the regex package that has too many
+    characters, see ``_host_form``), or with ``negated`` every other character."""
+    members = list(dict.fromkeys(members))
+    beside = list(dict.fromkeys(beside))
+    if not members and not beside:
+        return _ANY if negated else _NEVER
+    if not negated:
+        if not beside and len(members) == 1 and _PROPERTY_RE.fullmatch(members[0]):
+            return members[0]
+        ways = ([f"[{''.join(members)}]"] if members else []) + beside
+        return ways[0] if len(ways) == 1 else "(?:" + "|".join(ways) + ")"
+    if not beside and not _both_ways(members):
+        return f"[^{''.join(members)}]"
+    if not members and len(beside) == 1 and beside[0].startswith("[^"):
+        # Every character but those that are not in a class.
+        return "[" + beside[0][2:]
+    return f"(?:(?!{_class_of(members, beside)}){_ANY})"
+
+
 def _both_ways(properties: list[str]) -> bool:
     """Whether a class has a ``\\p{...}`` and a ``\\P{...}``. The regex package (2025.9.1 to 2026.9.29 at least) reads
     a class with a property and the same property negated as every character and then drops a ``^`` before it, so
@@ -314,6 +414,8 @@ class _TooLarge(Exception):
     def __init__(self, reason: str = "", unread: bool = False) -> None:
         super().__init__(reason)
         self.unread = unread
+        # Whether it is the length of the translation that is over the limit.
+        self.length = not reason
         self.reason = reason or (
             f"its translation for Python's engines is longer than {_MAX_TRANSLATED:,} characters once its "
             "repetitions are written out"
@@ -388,6 +490,7 @@ class _Node:
         "back",
         "behind",
         "chars",
+        "cost",
         "first",
         "group",
         "icase",
@@ -431,6 +534,9 @@ class _Node:
         # but those. On a _TEXT that takes none, ``others`` marks a \B.
         self.chars: _Ranges | None = None
         self.others = False
+        # _TEXT that takes a character: how many ranges the regex package goes through, one by one, to find that a
+        # character is not in the class (see _Writer._scanned).
+        self.cost = 0
         self.state = _PLAIN
         # _REFERENCE, set by _Writer: the name of the test that two characters are equal without case, when the
         # reference is inside a case-insensitive group and its group can take a character that has another case.
@@ -545,7 +651,7 @@ class _Plain:
             raise _TooLarge()
         out = _Node(n.kind, n.text, [self.copy(x) for x in n.items] if items is None else items)
         out.behind, out.negative, out.min, out.max, out.lazy = n.behind, n.negative, n.min, n.max, n.lazy
-        out.chars, out.others = n.chars, n.others
+        out.chars, out.others, out.cost = n.chars, n.others, n.cost
         if n.kind == _TEXT:
             out.nothing = n.nothing
         elif n.kind == _REPEAT:
@@ -1135,10 +1241,12 @@ class _Linear:
 
 
 class _Translator:
-    def __init__(self, pattern: str, unicode: bool, ascii_flag: bool, plain: bool = True) -> None:
+    def __init__(self, pattern: str, unicode: bool, ascii_flag: bool, plain: bool = True, share: bool = False) -> None:
         self.p = pattern
         # Whether repetitions inside repetitions are written without the iterations that match nothing (_Plain).
         self.plain = plain
+        # Whether a long class is written once for the regex package and called (see _Writer.write).
+        self.share = share
         # With the ASCII flag (the standard library's engine), \d, \w and \b are ECMA's; without it (the regex
         # package, whose ASCII flag would also narrow \p{...}), they are spelled out.
         self.ascii_flag = ascii_flag
@@ -1174,7 +1282,14 @@ class _Translator:
         # The length of the characters and classes read so far, as they are written (see _one).
         self.size = 0
         # The case-insensitive classes worked out so far, by what was written in them (see _folded_class).
-        self.folded: dict[tuple[Any, ...], tuple[str, _Ranges]] = {}
+        self.folded: dict[tuple[Any, ...], tuple[str, _Ranges, int]] = {}
+        # The long classes read so far, as they are written.
+        self.long: set[str] = set()
+        # The properties read so far, as they are written (a pattern may have one thousands of times).
+        self.properties: dict[tuple[str, bool, bool], _Property] = {}
+        # For each property read in a case-insensitive group, the characters that are equal to one of its
+        # characters without case and are not its own.
+        self.equal: dict[tuple[str, str], _Ranges] = {}
 
     def error(self) -> _Invalid:
         return _Invalid(self.p)
@@ -1198,18 +1313,18 @@ class _Translator:
                 ref = _Node(_REFERENCE, group=group)
                 ref.icase = node.icase
                 node.items.append(ref)
-        writer = _Writer(root, not self.ascii_flag, self.u)
+        writer = _Writer(root, not self.ascii_flag, self.u, self.share)
         self.wide = not self.u and _sees_code_units(root)
         if self.plain and _repeats_inside_repeats(root):
             plain = _plain(root, writer)
             if plain is not None:
-                writer = _Writer(plain, not self.ascii_flag, self.u)
+                writer = _Writer(plain, not self.ascii_flag, self.u, self.share)
                 try:
                     text = writer.write()
                 except _TooLarge:
                     # Written that way it is too large. The tree has been changed, so the pattern is read again
                     # and written as it is.
-                    again = _Translator(self.p, self.u, self.ascii_flag, plain=False)
+                    again = _Translator(self.p, self.u, self.ascii_flag, plain=False, share=self.share)
                     text = again.translate()
                     self.needs_regex = again.needs_regex
                     self.linear = again.linear
@@ -1335,19 +1450,27 @@ class _Translator:
         self.i += 1
         return self._char(c), True
 
-    def _one(self, text: str, chars: _Ranges | None = None, others: bool = False) -> _Node:
+    def _one(self, text: str, chars: _Ranges | None = None, others: bool = False, cost: int = 0) -> _Node:
         """The node of something that takes one character: one of ``chars``, or any (see ``_Node.chars``)."""
         # What is read is written at least once, but for what a count of 0 is around. A pattern whose characters
         # and classes are already twice the limit of a translation is not read to its end: a class of a property
         # in a case-insensitive group takes milliseconds to work out, and a pattern of 1,000 characters has room
-        # for eighty.
-        self.size += len(text)
+        # for eighty. A long class that is written again counts as a call of it (see _Writer.write).
+        if len(text) > _LONG_CLASS:
+            if text in self.long:
+                self.size += _CALL
+            else:
+                self.long.add(text)
+                self.size += len(text)
+        else:
+            self.size += len(text)
         if self.size > 2 * _MAX_TRANSLATED:
             raise _TooLarge()
         n = _Node(_TEXT, text)
         n.nothing = False
         n.chars = chars
         n.others = others
+        n.cost = cost
         return n
 
     def _char(self, c: str) -> _Node:
@@ -1508,12 +1631,13 @@ class _Translator:
             self.named_refs.append((ref, self._group_name()))
             return ref, True
         if e in "pP" and self.u:
-            member, ranges, host = self._property_escape()
+            written = self._property_escape()
             if self.icase:
-                return self._folded_class([], [(member, ranges)], False), True
-            if host:
-                return self._one(member, ranges), True
-            return self._one(f"[{member}]" if ranges else _NEVER, ranges), True
+                return self._folded_class([], [written], False), True
+            members, beside, ranges, cost = written
+            return self._one(
+                _class_of([members] if members else [], [beside] if beside else []), ranges, cost=cost
+            ), True
         text, char = self._char_escape(in_class=False)
         if char is not None:
             return self._char(char), True
@@ -1614,25 +1738,33 @@ class _Translator:
         # Annex B identity escape.
         return "", e
 
-    def _property_escape(self) -> tuple[str, _Ranges, bool]:
-        """A ``\\p{...}`` or ``\\P{...}`` of a pattern with the ``u`` flag, from its ``p``: the class member that
-        takes its characters, the characters as ranges, and whether the member is the regex package's own property
-        (it is a list of ranges otherwise, see ``_property``). Without the ``u`` flag ``\\p`` is the letter ``p``
+    def _property_escape(self) -> _Property:
+        """A ``\\p{...}`` or ``\\P{...}`` of a pattern with the ``u`` flag, from its ``p``: how its characters are
+        written for the engine (members of a class, and a class that stands beside it, see ``_host_form``), the
+        characters as ranges, and what a character costs. Without the ``u`` flag ``\\p`` is the letter ``p``
         (Annex B), which ``_char_escape`` reads."""
         negated = self.p[self.i] == "P"
         end = self.p.find("}", self.i)
-        known = _property(self.p[self.i + 2 : end]) if end > 0 and self.peek(1) == "{" else None
-        if known is None:
-            raise self.error()
+        body = self.p[self.i + 2 : end] if end > 0 and self.peek(1) == "{" else ""
+        key = (body, negated, self.ascii_flag)
+        written = self.properties.get(key)
+        if written is None:
+            known = _property(body)
+            if known is None:
+                raise self.error()
+            host, ranges = known
+            if negated:
+                ranges = _complement(ranges)
+            # The standard library's engine has no properties, and finds a character in a class of any size in
+            # one step. The regex package is given its own property with what is different.
+            if host is None or self.ascii_flag:
+                written = (_table_class(ranges), "", ranges, 0 if self.ascii_flag else len(ranges))
+            else:
+                members, beside, cost = _host_form(host[negated], host[not negated], ranges)
+                written = (members, beside, ranges, cost)
+            self.properties[key] = written
         self.i = end + 1
-        host, ranges = known
-        # The standard library's engine has no properties. The regex package is given its own where it has the
-        # same characters for it.
-        if host is not None and not self.ascii_flag and _host_agrees(host[0], ranges):
-            return (host[1] if negated else host[0]), (_complement(ranges) if negated else ranges), True
-        if negated:
-            ranges = _complement(ranges)
-        return _table_class(ranges), ranges, False
+        return written
 
     def _legacy_octal_after_zero(self) -> str:
         self.i -= 1
@@ -1678,7 +1810,7 @@ class _Translator:
         # The same class as sets of characters: the ranges of what is written in it, and each property as it is
         # written for the engine with its characters.
         ranges: _Ranges = []
-        properties: list[tuple[str, _Ranges]] = []
+        properties: list[_Property] = []
         while True:
             if self.i >= self.n:
                 raise self.error()
@@ -1709,17 +1841,17 @@ class _Translator:
                 ranges.append((ord(lo_char), ord(lo_char)))
         if self.icase:
             return self._folded_class(ranges, properties, negated)
-        if not members and not outside:
-            text = _NEVER if not negated else _ANY
-        else:
-            alternatives = ([f"[{''.join(members)}]"] if members else []) + outside
-            text = alternatives[0] if len(alternatives) == 1 else "(?:" + "|".join(alternatives) + ")"
-            if negated:
-                apart = outside or _both_ways([p for p, _ in properties])
-                text = f"(?:(?!{text}){_ANY})" if apart else f"[^{''.join(members)}]"
-        return self._one(text, ranges + [r for _, held in properties for r in held], negated)
+        # What the regex package goes through for a character that is in none of them: the members that are
+        # written in the class, and the ranges of the properties.
+        properties = list({p[:2]: p for p in properties}.values())
+        cost = 0 if self.ascii_flag else len(members) + len(outside) + sum(p[3] for p in properties)
+        # (A property first: the engine goes through the members in order, and looks a property up in one step.)
+        members = [p[0] for p in properties if p[0]] + members
+        outside += [p[1] for p in properties if p[1]]
+        text = _class_of(members, outside, negated)
+        return self._one(text, ranges + [r for p in properties for r in p[2]], negated, cost)
 
-    def _class_atom(self, ranges: _Ranges, properties: list[tuple[str, _Ranges]]) -> tuple[str, str | None]:
+    def _class_atom(self, ranges: _Ranges, properties: list[_Property]) -> tuple[str, str | None]:
         """One class atom: its translation and, when it is a single character, that character. An escape that is a
         set joins ``ranges`` or ``properties``, which a case-insensitive group reads."""
         c = self.peek()
@@ -1731,9 +1863,8 @@ class _Translator:
             raise self.error()
         e = self.p[self.i]
         if e in "pP" and self.u:
-            member, held, _ = self._property_escape()
-            properties.append((member, held))
-            return member, None
+            properties.append(self._property_escape())
+            return "", None
         text, char = self._char_escape(in_class=True)
         if char is not None:
             return _literal(char), char
@@ -1742,33 +1873,41 @@ class _Translator:
         ranges.extend(positive if e in "dws" else _complement(positive))
         return text, None
 
-    def _folded_class(self, ranges: _Ranges, properties: list[tuple[str, _Ranges]], negated: bool) -> _Node:
+    def _folded_class(self, ranges: _Ranges, properties: list[_Property], negated: bool) -> _Node:
         """A class inside a case-insensitive group: it has every character that is equal, without case, to one of
         its members, and it is negated after that. ``properties``: the properties in it, each as it is written for
         the engine and with its characters."""
         ranges = _merged(ranges)
-        written = [p for p, _ in properties]
+        properties = list({p[:2]: p for p in properties}.values())
         # A class that is written again in the pattern is worked out once.
-        key = (tuple(ranges), tuple(written), negated)
+        key = (tuple(ranges), tuple(p[:2] for p in properties), negated)
         known = self.folded.get(key)
         if known is None:
-            points, sets = _fold_table(self.u)
-            more: list[str] = []
-            for held in [ranges, *[held for _, held in properties]]:
-                for lo, hi in held:
-                    k = bisect_left(points, lo)
-                    while k < len(points) and points[k] <= hi:
-                        more.append(sets[points[k]])
-                        k += 1
-            ranges = _merged(ranges + [(ord(c), ord(c)) for c in set("".join(more))])
-            if not ranges and not any(written):
-                text = _ANY if negated else _NEVER
-            else:
-                text = f"[{_class_text(ranges)}{''.join(written)}]"
-                if negated:
-                    text = f"(?:(?!{text}){_ANY})" if _both_ways(written) else "[^" + text[1:]
-            known = self.folded[key] = (text, ranges + [r for _, held in properties for r in held])
-        return self._one(known[0], known[1], negated)
+            ranges = _merged(ranges + self._equal(ranges))
+            for p in properties:
+                # What a property adds is worked out once for the pattern: it takes milliseconds for the 684 ranges
+                # of the letters.
+                more = self.equal.get(p[:2])
+                if more is None:
+                    more = self.equal[p[:2]] = _minus(_merged(self._equal(p[2])), p[2])
+                if more:
+                    ranges = _merged(ranges + more)
+            members = [p[0] for p in properties if p[0]] + ([_table_class(ranges)] if ranges else [])
+            text = _class_of(members, [p[1] for p in properties if p[1]], negated)
+            cost = 0 if self.ascii_flag else len(ranges) + sum(p[3] for p in properties)
+            known = self.folded[key] = (text, ranges + [r for p in properties for r in p[2]], cost)
+        return self._one(known[0], known[1], negated, known[2])
+
+    def _equal(self, ranges: _Ranges) -> _Ranges:
+        """The characters that are equal, without case, to a character of ``ranges``."""
+        points, sets = _fold_table(self.u)
+        more: set[str] = set()
+        for lo, hi in ranges:
+            k = bisect_left(points, lo)
+            while k < len(points) and points[k] <= hi:
+                more.update(sets[points[k]])
+                k += 1
+        return [(ord(c), ord(c)) for c in more]
 
 
 class _Writer:
@@ -1782,9 +1921,18 @@ class _Writer:
     the engine sees, and a repetition with a reference or a reset group inside it is written without a count:
     ``X{2,4}`` as ``XX(?:X(?:X|)|)`` and ``X{2,}`` as ``XX(?:X)*``."""
 
-    def __init__(self, root: _Node, for_regex: bool, unicode: bool = True) -> None:
+    def __init__(self, root: _Node, for_regex: bool, unicode: bool = True, share: bool = False) -> None:
         self.root = root
         self.unicode = unicode
+        self.for_regex = for_regex
+        # The long classes, each with how many times it is written. With ``share`` (for the regex package) each
+        # is written once, as a group that is called, and this has the number of each one's group.
+        self.share = share
+        self.classes: dict[str, int] = {}
+        # The most characters that are written. The standard library's engine reads a class of ranges at a
+        # microsecond for a character and keeps a table for it, so it is given more, with each long class counted
+        # once (see write).
+        self.most = _MAX_TRANSLATED if for_regex else _MAX_WRITTEN_FOR_RE
         self.groups: dict[int, _Node] = {}
         self.refs: list[_Node] = []
         self.count = 0
@@ -1936,14 +2084,35 @@ class _Writer:
             self._force(item, inside)
 
     def write(self) -> str:
+        """The pattern as it is written for the engine.
+
+        A translation has a limit of length because both engines read a pattern with a parser written in Python.
+        A class of a property can be thousands of characters (the 684 ranges of ``\\p{L}``), and a pattern may
+        have the same class many times. A class of more than ``_LONG_CLASS`` characters counts once towards the
+        limit, and each time after the first as a call of it:
+
+        - The standard library's engine has no way to write a class once. It is given every copy, up to
+          ``_MAX_WRITTEN_FOR_RE`` characters in all, which it reads in a fifth of a second.
+        - The regex package is given the classes as they are while the whole is within the limit. A pattern over
+          it is written again with each long class once, as a group in the ``(?(DEFINE)...)`` at the start, and
+          a call of the group by its number where the class stands (``share``). A call is slower than the class
+          (0.15 microseconds), which is why it is not the first way."""
         out = self._write(self.root)
         if self.reset or self.seen:
             before = "(?P<z>)" if self.seen else ""
             out = before + "".join(f"(?P<g{g}>)" for g in sorted(self.reset)) + f"(?:{out})"
-        if len(out) > _MAX_TRANSLATED:
-            raise _TooLarge()
+        if self.share:
+            # The groups of the classes come first, so that they have the numbers they are called by.
+            classes = "".join(f"({text})" for text in self.classes)
+            if len(out) + len(classes) > _MAX_TRANSLATED:
+                raise _TooLarge()
+        else:
+            classes = ""
+            again = sum((times - 1) * (len(text) - _CALL) for text, times in self.classes.items())
+            if len(out) - (0 if self.for_regex else again) > _MAX_TRANSLATED:
+                raise _TooLarge()
         if not self.tests:
-            return out
+            return f"(?(DEFINE){classes}){out}" if classes else out
         # The tests and the comparisons are written once each, and are not counted in the size: a test is as long as
         # the sets it is for, which no repetition multiplies.
         tests = "".join(self._test(name, key) for key, name in self.tests.items())
@@ -1953,9 +2122,9 @@ class _Writer:
             names = list(self.tests.values())
             tests = self._test(names[0], sets) + "".join(f"(?P<{name}>(?&{names[0]}))" for name in names[1:])
         comparisons = "".join(f"(?P<{name}>{text})" for name, text in self.comparisons.values())
-        if len(out) + len(comparisons) > _MAX_TRANSLATED:
+        if len(out) + len(classes) + len(comparisons) > _MAX_TRANSLATED:
             raise _TooLarge()
-        return f"(?(DEFINE){tests}{comparisons}){out}"
+        return f"(?(DEFINE){classes}{tests}{comparisons}){out}"
 
     @staticmethod
     def _test(name: str, sets: tuple[str, ...]) -> str:
@@ -2027,14 +2196,23 @@ class _Writer:
     def _write(self, n: _Node) -> str:
         k = n.kind
         if k == _TEXT:
-            return n.text
+            text = n.text
+            if len(text) <= _LONG_CLASS or n.nothing is not False:
+                return text
+            if not self.share:
+                self.classes[text] = self.classes.get(text, 0) + 1
+                return text
+            number = self.classes.setdefault(text, len(self.classes) + 1)
+            # The engine matches a group that it calls forwards, also where it is matching backwards (in a
+            # lookbehind). There the character is taken backwards, and the call is in a lookahead.
+            return f"(?:(?=(?{number})){_ANY})" if n.back else f"(?{number})"
         if k in (_SEQUENCE, _ALTERNATION):
             parts = []
             size = 0
             for x in n.items:
                 part = self._write(x)
                 size += len(part) + (k == _ALTERNATION)
-                if size > _MAX_TRANSLATED + 1:
+                if size > self.most + 1:
                     # Nothing longer than the limit is built, whatever the pattern.
                     raise _TooLarge()
                 parts.append(part)
@@ -2079,6 +2257,9 @@ class _Writer:
             # That many iterations, of which all but a few match nothing, are beyond both engines.
             raise _TooLarge(f"it repeats what can match nothing at least {_MAX_COUNT:,} times")
         text = self._write(body)
+        if self.for_regex and self._scanned(body) > _MAX_SCANNED and not _CALL_RE.fullmatch(text):
+            # A lookahead and then any character: the same characters, and a step of the match for each.
+            text = f"(?:(?={text}){_ANY})"
         k = bisect_left(self.live, n.first)
         read = self.seen != "" and (
             n.first in self.forced
@@ -2130,6 +2311,23 @@ class _Writer:
         if len(out) > _MAX_TRANSLATED:
             raise _TooLarge()
         return out
+
+    def _scanned(self, n: _Node) -> int:
+        """How many ranges the regex package goes through for a character when the node is the body of a
+        repetition that it takes as one step (see ``_MAX_SCANNED``): the node is one character or class, or an
+        alternation of those, which the engine makes one class of. -1: it is not such a body."""
+        k = n.kind
+        if k == _TEXT:
+            return n.cost if n.nothing is False else -1
+        if k == _SEQUENCE:
+            return self._scanned(n.items[0]) if len(n.items) == 1 else -1
+        if k == _GROUP:
+            captures = n.group in self.read or (n.group and not self.read)
+            return -1 if captures else self._scanned(n.items[0])
+        if k == _ALTERNATION:
+            costs = [self._scanned(x) for x in n.items]
+            return -1 if min(costs) < 0 else sum(costs) + len(costs)
+        return -1
 
     @staticmethod
     def _holds_one(places: list[int], n: _Node) -> bool:
@@ -2183,7 +2381,14 @@ def _translate(pattern: str, unicode: bool, for_regex: bool) -> _Translation | N
             if not t.needs_regex:
                 return _Translation(text, False, t.wide, t.linear)
         t = _Translator(pattern, unicode, False)
-        text = t.translate()
+        try:
+            text = t.translate()
+        except _TooLarge as e:
+            if not e.length:
+                raise
+            # Again, with each long class written once and called.
+            t = _Translator(pattern, unicode, False, share=True)
+            text = t.translate()
         if t.copies > MAX_COPIES:
             raise _TooLarge(
                 f"its counts come to more than {MAX_COPIES:,} copies of what they repeat, which the regex package "

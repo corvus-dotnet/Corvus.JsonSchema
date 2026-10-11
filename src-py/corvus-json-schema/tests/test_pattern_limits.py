@@ -600,26 +600,37 @@ def test_the_longest_pattern_is_read_proved_and_compiled_in_time_in_proportion_t
 
 def test_the_classes_of_a_pattern_are_worked_out_within_a_bound(monkeypatch: pytest.MonkeyPatch) -> None:
     # A class of a property in a case-insensitive group takes some milliseconds to work out, and a pattern of 1,000
-    # characters has room for eighty. Three of them are already over the limit of a translation.
-    written: list[int] = []
-    original = pattern_module._class_text
+    # characters has room for eighty, one of 32,768 for thousands.
+    classes: list[int] = []
+    closures: list[int] = []
+    class_of, equal = pattern_module._class_of, pattern_module._Translator._equal
 
-    def class_text(ranges: Any) -> str:
-        written.append(len(ranges))
-        return original(ranges)
+    def counted_class_of(members: Any, beside: Any, negated: bool = False) -> str:
+        classes.append(len(members))
+        return class_of(members, beside, negated)
 
-    monkeypatch.setattr(pattern_module, "_class_text", class_text)
-    # The same class again and again is worked out once (for each engine it is written for).
-    with pytest.raises(cjs.PatternTooLargeError):
-        compile_pattern("(?i:^" + "[\\p{Lu}\\p{Ll}]" * 60 + "$)")
-    assert 1 <= len(written) <= 2, len(written)
-    # Eighty classes that differ are not all worked out: reading stops at twice the limit of a translation.
-    written.clear()
-    different = "".join(f"[\\p{{L}}{chr(0x4E00 + k)}]" for k in range(80))
-    with pytest.raises(cjs.PatternTooLargeError):
-        compile_pattern(f"(?i:^{different}$)")
-    assert len(written) < 50, len(written)
-    # A few such classes are within the limits, and mean what they did.
+    def counted_equal(self: Any, ranges: Any) -> Any:
+        closures.append(len(ranges))
+        return equal(self, ranges)
+
+    monkeypatch.setattr(pattern_module, "_class_of", counted_class_of)
+    monkeypatch.setattr(pattern_module._Translator, "_equal", counted_equal)
+    # The same class again and again is worked out once (for each engine and grammar it is read for).
+    matcher = compile_pattern("(?i:^" + "[\\p{Lu}\\p{Ll}]" * 60 + "$)")
+    assert matcher is not None and matcher("aB" * 30) and not matcher("aB" * 29 + "a1")
+    assert 1 <= len(classes) <= 3, len(classes)
+    # In classes that differ, what a property adds without case is worked out once, and the rest of the work for a
+    # class is for what is written in it beside the property.
+    classes.clear()
+    closures.clear()
+    different = "".join(f"[\\p{{L}}{chr(0x2460 + k)}]" for k in range(80))
+    matcher = compile_pattern(f"(?i:(?<=^){different}$)")
+    assert (
+        matcher is not None and matcher("a" * 80) and matcher("\u2460" + "A" * 79) and not matcher("\u2461" + "a" * 79)
+    )
+    assert 80 <= len(classes) <= 3 * 80, len(classes)
+    assert sum(1 for n in closures if n > 100) <= 3, closures
+    # A few such classes mean what they did.
     monkeypatch.undo()
     validate = cjs.compile({"pattern": "(?i:^[\\p{Lu}_][\\p{Lu}_]$)"})
     assert validate("aB") and validate("_\u00e9") and not validate("a1")
@@ -635,21 +646,203 @@ def test_translate_reads_nothing_longer_than_the_limit() -> None:
 
 
 def test_asking_the_regex_package_about_a_property_takes_megabytes_and_not_tens_of_them() -> None:
-    # Whether the package has the characters of the tables for a property is found by asking it about every
-    # character. The text of every character is 4 MB. Building it from a million strings took 85 MB.
+    # What the package has for a property is found by asking it about every character, and so is whether what is
+    # written for it has the characters of the tables. The text of every character is 4 MB. Building it from a
+    # million strings took 85 MB.
     pattern_module._every_character.clear()
     pattern_module._host.clear()
-    known = pattern_module._property("Lt")
-    assert known is not None and known[0] is not None
-    tracemalloc.start()
-    try:
-        pattern_module._host_agrees(known[0][0], known[1])
-        peak = tracemalloc.get_traced_memory()[1]
-    finally:
-        tracemalloc.stop()
-    assert peak < 24 * 1024 * 1024, peak
+    pattern_module._host_sets.clear()
+    for name in ("Lt", "L", "Cn"):
+        known = pattern_module._property(name)
+        assert known is not None and known[0] is not None
+        tracemalloc.start()
+        try:
+            pattern_module._host_form(known[0][0], known[0][1], known[1])
+            peak = tracemalloc.get_traced_memory()[1]
+        finally:
+            tracemalloc.stop()
+        assert peak < 24 * 1024 * 1024, (name, peak)
     assert len(pattern_module._every_character[0]) == 0x110000
     assert [ord(c) for c in pattern_module._every_character[0][0xD7FF:0xD802]] == [0xD7FF, 0xD800, 0xD801]
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Properties: the characters of Unicode 17, by the engine's own property where it has one
+
+
+def _every_character() -> str:
+    pattern_module._host_set("\\p{gc=Lt}")
+    return pattern_module._every_character[0]
+
+
+def _taken_by(pattern: str, for_regex: bool) -> list[tuple[int, int]]:
+    """The characters that a pattern of one character takes, as it is written for an engine."""
+    import re
+
+    import regex
+
+    written = pattern_module.translate(pattern, True, for_regex)
+    assert written is not None, pattern
+    text, by_regex = written
+    assert by_regex == for_regex, pattern
+    compiled = regex.compile(f"(?:{text})+") if for_regex else re.compile(f"(?:{text})+", re.ASCII)
+    return [(m.start(), m.end() - 1) for m in compiled.finditer(_every_character())]
+
+
+# Properties that the releases of the regex package have with other characters than Unicode 17 (more in one, fewer
+# in another), some that all have alike, and some that the package does not have at all.
+_SOME_PROPERTIES = [
+    "L",
+    "Lu",
+    "Ll",
+    "Lo",
+    "N",
+    "S",
+    "Mn",
+    "C",
+    "Cn",
+    "Zs",
+    "Alphabetic",
+    "ID_Start",
+    "ID_Continue",
+    "Extended_Pictographic",
+    "Emoji",
+    "Lowercase",
+    "Script=Latin",
+    "sc=Zyyy",
+    "sc=Zzzz",
+    "scx=Han",
+    "Script=Sidetic",
+    "Assigned",
+    "Any",
+    "ASCII",
+    "Changes_When_NFKC_Casefolded",
+]
+
+
+@pytest.mark.parametrize("name", _SOME_PROPERTIES)
+def test_a_property_is_the_characters_of_the_tables_however_it_is_written_for_an_engine(name: str) -> None:
+    known = pattern_module._property(name)
+    digits = pattern_module._property("Nd")
+    assert known is not None and digits is not None
+    merged, complement = pattern_module._merged, pattern_module._complement
+    has, others = known[1], complement(known[1])
+    extra = [(0x30, 0x39), (0x5F, 0x5F), (0x4E00, 0x4E00)]
+    for for_regex in (False, True):
+        for pattern, expected in (
+            (f"\\p{{{name}}}", has),
+            (f"\\P{{{name}}}", others),
+            (f"[\\p{{{name}}}]", has),
+            (f"[^\\p{{{name}}}]", others),
+            (f"[^\\P{{{name}}}]", has),
+            (f"[\\p{{{name}}}0-9_\u4e00]", merged(has + extra)),
+            (f"[^\\p{{{name}}}0-9_\u4e00]", complement(merged(has + extra))),
+            (f"[\\P{{{name}}}0-9_\u4e00]", merged(others + extra)),
+            (f"[^\\P{{{name}}}0-9_\u4e00]", complement(merged(others + extra))),
+            (f"[\\p{{{name}}}\\p{{Nd}}\\p{{{name}}}]", merged(has + digits[1])),
+            (f"[^\\p{{Nd}}\\p{{{name}}}]", complement(merged(has + digits[1]))),
+            (f"[\\p{{{name}}}\\P{{{name}}}]", [(0, 0x10FFFF)]),
+            (f"[^\\p{{{name}}}\\P{{{name}}}]", []),
+        ):
+            assert _taken_by(pattern, for_regex) == expected, (pattern, for_regex)
+
+
+def test_a_property_is_written_for_the_regex_package_as_its_own_with_what_is_different() -> None:
+    letters = pattern_module._property("L")
+    assert letters is not None and letters[0] is not None
+    # The 684 ranges of the letters are 1,900 characters as a class. The package has the letters of its own version
+    # of Unicode, and they are written with the tens of ranges that are different.
+    for pattern in ("\\p{L}", "\\P{L}", "[\\p{L}\\p{N}_-]", "[^\\p{L}\\p{N}_-]", "\\p{Lu}", "\\p{Alphabetic}"):
+        written = pattern_module.translate(pattern, True, True)
+        assert written is not None and len(written[0]) < 400, (pattern, len(written[0]))
+        assert "\\p{" in written[0] or "\\P{" in written[0], pattern
+    # A property that every release has alike is the property and nothing else.
+    assert pattern_module.translate("\\p{Lt}", True, True) == ("\\p{gc=Lt}", True)
+    assert pattern_module.translate("\\P{sc=Thai}+", True, True) == ("(?:\\P{sc=Thai})+", True)
+
+
+# Patterns that were refused as too large: the classes of properties were written as ranges, each time.
+_MANY_PROPERTIES = [
+    (
+        "^(?:"
+        + "|".join(f"\\p{{{n}}}" for n in ["L", "N", "M", "P", "S", "Z", "Cf", "Lu", "Ll", "Lt", "Lm", "Lo"] * 6)
+        + ")*$",
+        "aB1 \u00e9",
+        "aB1\x00",
+    ),
+    ("^" + "[\\p{L}\\p{N}\\p{M}\\p{P}\\p{S}]" * 36 + "$", "a1\u0301.+" * 7 + "a", "a" * 35 + " "),
+    ("^" + "\\P{L}" * 190 + "$", "1" * 190, "1" * 189 + "a"),
+    ("(?i:^" + "[\\p{Lu}\\p{Ll}]" * 60 + "$)", "aB" * 30, "aB" * 29 + "a1"),
+    ("(?i:^" + "[^\\p{Lu}]" * 100 + "$)", "1" * 100, "1" * 99 + "a"),
+    ("[" + "\\p{L}" * 199 + "]", "\u00e9", "1"),
+    ("^" + "\\p{L}{1000}" * 90 + "$", "\u00e9" * 90000, "\u00e9" * 89999),
+    ("(?i:^" + "\\p{L}{1000}" * 90 + "$)", "\u00e9" * 90000, "\u00e9" * 89999 + "1"),
+    ("^" + "[\\p{L}\\p{N}\\p{P}\\p{S}\\p{M}]" * 40, "a1.+\u0301" * 8, "a1.+\u0301" * 7 + "a1.+ "),
+    ("(?i:^" + "[\\p{L}\\p{N}\\p{P}\\p{S}\\p{M}]" * 40 + ")", "a1.+\u0301" * 8, "a1.+\u0301" * 7 + "a1.+ "),
+    # Ordinary patterns of names in more languages than one, at the length a schema may have them.
+    ("^" + "[\\p{L}\\p{N}_-]+\\." * 40 + "$", "\u00e91_-." * 40, "\u00e91_-." * 39 + "\u00e9 ."),
+    ("(?<=^)" + "\\p{L}" * 3000 + "$", "\u00e9" * 3000, "\u00e9" * 2999 + "1"),
+    ("(?<=" + "\\p{Lu}\\p{Ll}" * 400 + ")x", "A\u00e9" * 400 + "x", "A\u00e9" * 399 + "AAx"),
+    ("^" + "\\p{L}" * 6000 + "$", "\u4e00" * 6000, "\u4e00" * 5999 + "1"),
+]
+
+
+@pytest.mark.parametrize(("pattern", "matches", "fails"), _MANY_PROPERTIES)
+def test_a_pattern_with_many_classes_of_properties_is_not_too_large(pattern: str, matches: str, fails: str) -> None:
+    assert len(pattern) <= pattern_module.MAX_PATTERN
+    start = time.process_time()
+    matcher = compile_pattern(pattern)
+    assert time.process_time() - start < 30, "many times what a quiet machine takes"
+    assert matcher is not None
+    assert matcher(matches) is not None
+    assert matcher(fails) is None
+
+
+def test_a_pattern_of_names_in_many_languages_is_run_by_the_standard_library() -> None:
+    name = "[\\p{L}\\p{N}_-]+"
+    for pattern in (f"^{name}(?:\\.{name})*$", "^" + f"{name}\\." * 40 + "$", "^\\p{L}{1,64}$"):
+        assert _engine(compile_pattern(pattern)) == "re", pattern[:40]
+    # Each copy of a long class is written for the standard library, which has no way to write it once. They count
+    # once towards the limit of a translation, and all of them have a limit of their own.
+    assert pattern_module._MAX_WRITTEN_FOR_RE == 262_144
+    written = pattern_module.translate("^" + f"{name}\\." * 40 + "$")
+    assert written is not None and not written[1]
+    assert pattern_module._MAX_TRANSLATED < len(written[0]) <= pattern_module._MAX_WRITTEN_FOR_RE
+    # More copies than that go to the regex package, which is given each long class once.
+    many = "^" + "\\p{L}" * 6000 + "$"
+    assert pattern_module.translate(many) == pattern_module.translate(many, True, True)
+    written = pattern_module.translate(many)
+    assert written is not None and written[1] and written[0].startswith("(?(DEFINE)(")
+    assert len(written[0]) <= pattern_module._MAX_TRANSLATED
+
+
+def _costly(limit: float, pattern: str, text: str) -> float:
+    """The processor's time until the limit of a match is reached, for a match that never answers."""
+    matcher = compile_pattern(pattern, limit)
+    assert matcher is not None and _engine(matcher) == "regex"
+    start = time.process_time()
+    with pytest.raises(cjs.PatternMatchLimitError):
+        matcher(text)
+    return time.process_time() - start
+
+
+def test_the_limit_is_not_seconds_late_for_a_repetition_of_a_class_of_many_ranges() -> None:
+    # The regex package takes a repetition of one class as one step of a match, however much of the text it runs
+    # over, and looks at its clock every 256 steps. A class of hundreds of ranges, which it goes through one by one
+    # for each character, made the error of a limit of one second come after 4.4 seconds for 100,000 characters.
+    many = "".join(f"\\u{0x1000 + 40 * k:04x}-\\u{0x1010 + 40 * k:04x}" for k in range(120))
+    for one, unit in (
+        ("[\\p{L}\\p{N}]", "\u4e00"),
+        ("\\p{L}", "\U00020000"),
+        ("(?i:\\p{Lu})", "\U0001e943"),
+        ("\\p{Changes_When_NFKC_Casefolded}", "\U0001d7ff"),
+        (f"[{many}\u4e00]", "\u4e00"),
+        (f"(?:[{many[: len(many) // 2]}]|\u4e00|[{many[len(many) // 2 :]}])", "\u4e00"),
+    ):
+        pattern = f"(?:{one}*1|{one}*2|{one}*3)"
+        # It is tried three times (see pattern._again), and each try may be late. A quiet machine takes 0.2 to 0.6
+        # seconds of the processor's time for a limit of 0.1.
+        assert _costly(0.1, pattern, unit * 100_000) < 2.5, one[:30]
 
 
 def test_a_count_is_no_matter_to_the_standard_library() -> None:

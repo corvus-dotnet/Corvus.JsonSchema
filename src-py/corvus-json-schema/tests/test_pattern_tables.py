@@ -1043,17 +1043,21 @@ def _for_regex(pattern: str) -> tuple[str, bool] | None:
     return translate(pattern, for_regex=True)
 
 
+def _as_ranges(here: str, other: str, target: list[tuple[int, int]]) -> tuple[str, str, int]:
+    return pattern_module._table_class(target), "", len(target)
+
+
 def test_the_engine_is_never_asked_what_a_property_name_means(monkeypatch: pytest.MonkeyPatch) -> None:
     # Where the regex package has the characters that the package's tables have for a property, the property is
     # written for it by name: the property named, and a value by its short name, whatever alias was used.
-    monkeypatch.setattr(pattern_module, "_host_agrees", lambda expression, ranges: True)
+    monkeypatch.setattr(pattern_module, "_host_form", lambda here, other, target: (here, "", 0))
     assert _for_regex("\\p{Lu}") == _for_regex("\\p{Uppercase_Letter}") == ("\\p{gc=Lu}", True)
     assert _for_regex("\\P{Script=Greek}") == _for_regex("\\P{sc=Grek}") == ("\\P{sc=Grek}", True)
     assert _for_regex("[\\p{scx=Greek}\\p{Alpha}]") == ("[\\p{scx=Grek}\\p{Alphabetic=Yes}]", True)
     assert _for_regex("\\p{Assigned}") == ("\\P{gc=Cn}", True)
-    # Where it does not (an older release has an older Unicode), and for the standard library's engine, which has
-    # no properties, the characters are written as ranges from the package's tables.
-    monkeypatch.setattr(pattern_module, "_host_agrees", lambda expression, ranges: False)
+    # Where it has no such property (an older release has an older Unicode), and for the standard library's engine,
+    # which has no properties, the characters are written as ranges from the package's tables.
+    monkeypatch.setattr(pattern_module, "_host_form", _as_ranges)
     titles = "[ǅǈǋǲᾈ-ᾏᾘ-ᾟᾨ-ᾯᾼῌῼ]"
     assert _for_regex("\\p{Lt}") == _for_regex("\\p{gc=Titlecase_Letter}") == (titles, True)
     assert translate("^\\p{Lt}$") == (f"^{titles}\\Z", False)
@@ -1126,9 +1130,9 @@ def test_a_property_has_the_characters_of_the_tables_whatever_the_regex_package_
         return [(m.start(), m.end() - 1) for m in search(pattern).finditer(_EVERY_CHARACTER)]
 
     for agrees in (False, True):
-        # False: as with a release of the regex package that has another version of Unicode.
+        # False: as with a release of the regex package that has no such property.
         if not agrees:
-            monkeypatch.setattr(pattern_module, "_host_agrees", lambda expression, ranges: False)
+            monkeypatch.setattr(pattern_module, "_host_form", _as_ranges)
         else:
             monkeypatch.undo()
         positive, negative = _for_regex(f"\\p{{{name}}}+"), _for_regex(f"\\P{{{name}}}+")
