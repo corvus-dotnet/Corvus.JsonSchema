@@ -22,7 +22,7 @@
 //!
 //! Patterns compile once per process (a pattern is immutable, so identical patterns share one matcher).
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fmt;
 use std::sync::{Arc, LazyLock, Mutex, OnceLock};
 use std::time::Duration;
@@ -36,6 +36,8 @@ use crate::options::{
 pub(crate) struct Pattern {
     pub source: String,
     matcher: Matcher,
+    /// What the pattern is counted as in the cache of compiled patterns, in bytes (see [`Cache`]).
+    retained: usize,
 }
 
 enum Matcher {
@@ -378,7 +380,73 @@ impl Alternative {
     }
 }
 
-static CACHE: LazyLock<Mutex<HashMap<String, Arc<Pattern>>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+/// The most patterns the process-wide cache holds.
+const MAX_CACHED_PATTERNS: usize = 1024;
+
+/// The most the patterns of the cache come to, in the bytes counted for each: 64 MiB. A pattern is counted as its
+/// source, the size the engine's parser counted for it four times over (its program is proportional to that), and
+/// for a pattern on the `regex` crate the memory estimated for that crate's program (`ecmaregex::Facts::linear_size`,
+/// which is an estimate: the crate does not say what it holds), up to three times [`REGEX_SIZE_LIMIT`].
+const MAX_CACHED_BYTES: usize = 64 << 20;
+
+/// A pattern counted as more than this is compiled for the schema that has it and not kept in the cache.
+const MAX_CACHED_PATTERN_BYTES: usize = MAX_CACHED_BYTES / 32;
+
+/// The largest program the `regex` crate compiles for a pattern, in bytes: 2 MiB. (Its own default is 10 MiB.) A
+/// pattern that needs more is the engine's, which holds a class once however often the pattern repeats it.
+const REGEX_SIZE_LIMIT: usize = 2 << 20;
+
+/// The most the `regex` crate's lazy automaton caches for one pattern and one thread, in bytes: 2 MiB, which is
+/// that crate's default, said here so that it stays so.
+const REGEX_DFA_SIZE_LIMIT: usize = 2 << 20;
+
+/// The compiled patterns of the process, so that identical patterns share one matcher. It is bounded in number and
+/// in size, since the patterns of a schema may come from outside: when it is over either bound the patterns that
+/// were compiled first go, oldest first. A validator holds the patterns of its schema itself, so a pattern that has
+/// left the cache is still matched by the validators that have it, and is compiled again only for a schema compiled
+/// later.
+#[derive(Default)]
+struct Cache {
+    patterns: HashMap<Arc<str>, Arc<Pattern>>,
+    /// The sources in the order they were compiled.
+    order: VecDeque<Arc<str>>,
+    /// The sum of what the patterns are counted as.
+    bytes: usize,
+}
+
+impl Cache {
+    fn get(&self, source: &str) -> Option<Arc<Pattern>> {
+        self.patterns.get(source).cloned()
+    }
+
+    /// Keeps a pattern, and returns the one to use: the pattern itself, or the one another thread kept for the same
+    /// source meanwhile.
+    fn insert(&mut self, pattern: Arc<Pattern>) -> Arc<Pattern> {
+        if pattern.retained > MAX_CACHED_PATTERN_BYTES {
+            return pattern;
+        }
+        if let Some(kept) = self.patterns.get(pattern.source.as_str()) {
+            return kept.clone();
+        }
+        let source: Arc<str> = Arc::from(pattern.source.as_str());
+        self.bytes += pattern.retained;
+        self.patterns.insert(source.clone(), pattern.clone());
+        self.order.push_back(source);
+        while self.patterns.len() > MAX_CACHED_PATTERNS || self.bytes > MAX_CACHED_BYTES {
+            let Some(oldest) = self.order.pop_front() else { break };
+            if let Some(evicted) = self.patterns.remove(&oldest) {
+                self.bytes -= evicted.retained;
+            }
+        }
+        pattern
+    }
+}
+
+static CACHE: LazyLock<Mutex<Cache>> = LazyLock::new(|| Mutex::new(Cache::default()));
+
+fn cache() -> std::sync::MutexGuard<'static, Cache> {
+    CACHE.lock().unwrap_or_else(|e| e.into_inner())
+}
 
 /// Why a pattern does not compile.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -430,8 +498,8 @@ pub(crate) fn shown_pattern(pattern: &str) -> String {
 
 /// Compiles (or fetches from the process-wide cache) a pattern.
 pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
-    if let Some(p) = CACHE.lock().unwrap().get(pattern) {
-        return Ok(p.clone());
+    if let Some(p) = cache().get(pattern) {
+        return Ok(p);
     }
     // The limits of size come first: nothing below reads a pattern that is over one. Validity is ECMA-262's: a
     // pattern the engine's parser rejects is an error, whichever matcher would run it.
@@ -445,9 +513,15 @@ pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
             None => Matcher::Engine(ecmaregex::compile(pattern)?),
         },
     };
-    let p = Arc::new(Pattern { source: pattern.to_string(), matcher });
-    CACHE.lock().unwrap().insert(pattern.to_string(), p.clone());
-    Ok(p)
+    // What the cache counts for the pattern (see `MAX_CACHED_BYTES`).
+    let mut retained = pattern.len() + 256;
+    if matches!(matcher, Matcher::Regex(_) | Matcher::RegexBmp(_) | Matcher::Engine(_)) {
+        retained += 4 * facts.size;
+    }
+    if matches!(matcher, Matcher::Regex(_) | Matcher::RegexBmp(_)) {
+        retained += (facts.linear_size as usize).min(3 * REGEX_SIZE_LIMIT);
+    }
+    Ok(cache().insert(Arc::new(Pattern { source: pattern.to_string(), matcher, retained })))
 }
 
 /// The pattern translated for the `regex` crate and compiled by it, when it is in the syntax both have and its
@@ -457,7 +531,11 @@ fn linear(pattern: &str, facts: &ecmaregex::Facts) -> Option<Linear> {
     if facts.re2_cost > ecmaregex::MAX_RE2_COST {
         return None;
     }
-    let re = regex::Regex::new(&translate(pattern, facts.unicode)?).ok()?;
+    let re = regex::RegexBuilder::new(&translate(pattern, facts.unicode)?)
+        .size_limit(REGEX_SIZE_LIMIT)
+        .dfa_size_limit(REGEX_DFA_SIZE_LIMIT)
+        .build()
+        .ok()?;
     let engine = OnceLock::new();
     if !facts.unicode || !ecmaregex::shallow(pattern) {
         // The engine has the strings with a character beyond the Basic Multilingual Plane, so it is compiled now.
@@ -1985,6 +2063,53 @@ mod limits {
         assert!(linear.fits(&long, &unlimited) && !compiled.is_match(&format!("{long}y"), &mut unlimited));
     }
 
+    /// The cache of compiled patterns is bounded in number and in size, and a pattern that has left it is still
+    /// matched by whoever holds it.
+    #[test]
+    fn the_cache_of_patterns_is_bounded() {
+        let mut budget = PatternBudget::new(PatternLimit::new(None));
+        let first = compile("^cache-bound-0+$").unwrap();
+        let held: Vec<Arc<Pattern>> =
+            (0..3 * MAX_CACHED_PATTERNS).map(|n| compile(&format!("^cache-bound-{n}(?=x)x$")).unwrap()).collect();
+        {
+            let cache = cache();
+            assert!(cache.patterns.len() <= MAX_CACHED_PATTERNS && cache.bytes <= MAX_CACHED_BYTES);
+            assert_eq!(cache.patterns.len(), cache.order.len());
+            assert_eq!(cache.bytes, cache.patterns.values().map(|p| p.retained).sum::<usize>());
+            assert!(cache.get("^cache-bound-0+$").is_none(), "the oldest pattern is still in the cache");
+        }
+        assert!(first.is_match("cache-bound-000", &mut budget));
+        assert!(held[0].is_match("cache-bound-0x", &mut budget) && !held[7].is_match("cache-bound-0x", &mut budget));
+        // The same source compiles again, to a matcher of its own.
+        let again = compile("^cache-bound-0+$").unwrap();
+        assert!(!Arc::ptr_eq(&first, &again) && again.is_match("cache-bound-0", &mut budget));
+        // Large patterns leave the cache by size, well before their number is the bound.
+        let class = r"[\u0100\u0102\u0104\u0106]".repeat(1500);
+        let large: Vec<Arc<Pattern>> = (0..200).map(|n| compile(&format!("^(?=large-{n}){class}$")).unwrap()).collect();
+        assert!(large[0].retained > 256 << 10, "a large pattern is counted as {} bytes", large[0].retained);
+        assert!(cache().bytes <= MAX_CACHED_BYTES);
+        // A pattern too large for the cache is not kept at all.
+        let huge = compile(&format!("^(?=huge){}$", "a".repeat(15000))).unwrap();
+        assert!(huge.retained > MAX_CACHED_PATTERN_BYTES && cache().get(&huge.source).is_none());
+    }
+
+    /// The `regex` crate compiles no program over its limit of size: a class of a Unicode property repeated often
+    /// is the engine's, which holds the class once.
+    #[test]
+    fn regex_compiles_no_program_over_its_limit() {
+        for (pattern, want) in [
+            (r"^\p{L}+$", "regex"),
+            (r"^[\p{L}\p{N}_-]{1,8}$", "regex"),
+            (r"^[\p{L}\p{N}_-]{1,64}$", "engine"),
+            (r"^[\p{Alphabetic}\p{Nd}]{1,255}$", "engine"),
+        ] {
+            let compiled = compile(pattern).unwrap();
+            assert_eq!(kind(&compiled), want, "{pattern}");
+            let mut budget = PatternBudget::new(PatternLimit::new(Some(Duration::from_secs(1))));
+            assert!(compiled.is_match("caf\u{e9}", &mut budget) && !compiled.is_match("caf\u{e9}!", &mut budget));
+        }
+    }
+
     /// The translation for `regex` names no Unicode class: every property is written as the ranges of the engine's
     /// own tables, so the answer does not depend on the tables of the `regex` crate.
     #[test]
@@ -2045,7 +2170,10 @@ mod corpus_patterns {
                 "regex" | "regex-bmp" => super::translate(p, unicode).unwrap_or_default(),
                 _ => String::new(),
             };
-            println!("{kind}\t{corpus}\t{p}\t{given}");
+            // And what the cache counts for the pattern, which for a pattern on `regex` holds the estimate of
+            // that crate's program.
+            let retained = super::compile(p).map_or(0, |c| c.retained);
+            println!("{kind}\t{corpus}\t{p}\t{given}\t{retained}");
         }
     }
 }

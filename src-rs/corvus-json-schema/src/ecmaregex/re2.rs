@@ -7,6 +7,56 @@
 
 use super::parse::{Node, NodeKind, UNBOUNDED};
 
+/// The cap on [`linear_size`]: a program of that size is never compiled.
+const MAX_LINEAR_SIZE: i64 = 1 << 30;
+
+/// Estimates the memory the `regex` crate holds for the program it compiles for a tree, in bytes. That crate does
+/// not say what a compiled pattern holds, so this is what the cache of compiled patterns counts for one. A
+/// character is a state or a few, a class of ASCII characters is one, and a class with characters beyond ASCII is
+/// the automaton of their UTF-8 forms, which grows with its ranges. A counted repetition is written out. Measured
+/// against what the matcher of that crate reports (`regex-automata`'s `memory_usage`), the estimate was above it
+/// for every pattern of the benchmark corpora that the crate is given and for classes of Unicode properties.
+pub(crate) fn linear_size(n: &Node) -> i64 {
+    /// The bytes of one state, with its share of what the matcher holds beside the program.
+    const STATE: i64 = 96;
+    /// The states of a class with characters beyond ASCII, before its ranges are counted.
+    const WIDE_CLASS: i64 = 64;
+    /// What the matcher holds for any pattern, in states.
+    const FIXED: i64 = 56;
+    fn states(n: &Node) -> i64 {
+        match n.kind {
+            NodeKind::Empty => 0,
+            NodeKind::Char => {
+                if n.r < 0x80 {
+                    1
+                } else {
+                    4
+                }
+            }
+            NodeKind::Set => {
+                let ranges = &n.class().ranges;
+                if ranges.last().is_none_or(|&last| last < 0x80) { 1 } else { WIDE_CLASS + ranges.len() as i64 / 2 }
+            }
+            NodeKind::Cat | NodeKind::Alt | NodeKind::Group => {
+                let mut total = n.subs.len() as i64;
+                for sub in &n.subs {
+                    total += states(sub);
+                    if total > MAX_LINEAR_SIZE {
+                        return MAX_LINEAR_SIZE;
+                    }
+                }
+                total
+            }
+            NodeKind::Repeat => {
+                let copies = (if n.max == UNBOUNDED { n.min } else { n.max }).max(1) as i64;
+                (copies * (states(&n.subs[0]) + 1)).min(MAX_LINEAR_SIZE)
+            }
+            _ => 1,
+        }
+    }
+    (STATE * (states(n) + FIXED)).min(MAX_LINEAR_SIZE)
+}
+
 /// The largest program a linear matcher is asked to compile, in the instructions estimated for it before it is
 /// written (see [`re2_cost`]). A counted repetition is written out, so `a{1000}` is a thousand instructions, and a
 /// linear matcher takes time proportional to its program to compile and, for every character of a text, to match.

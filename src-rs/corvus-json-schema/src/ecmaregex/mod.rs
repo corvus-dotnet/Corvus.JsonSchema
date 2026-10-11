@@ -132,6 +132,9 @@ pub(crate) struct Facts {
     /// The number of instructions estimated for the program a linear matcher compiles for the pattern, which stops
     /// counting above [`MAX_RE2_COST`].
     pub(crate) re2_cost: i64,
+    /// The memory estimated for the program the `regex` crate compiles for the pattern, in bytes (see
+    /// `re2::linear_size`).
+    pub(crate) linear_size: i64,
 }
 
 fn invalid(pattern: &str, msg: &str, pos: usize) -> Error {
@@ -149,8 +152,13 @@ fn read(pattern: &str) -> Result<(parse::Node, Facts), Error> {
             Err(parse::ParseError::Syntax(..)) => return Err(invalid(pattern, msg, pos)),
         },
     };
-    let facts =
-        Facts { unicode, needs_backtracking: ps.needs_backtracking, size: ps.size, re2_cost: re2::re2_cost(&root) };
+    let facts = Facts {
+        unicode,
+        needs_backtracking: ps.needs_backtracking,
+        size: ps.size,
+        re2_cost: re2::re2_cost(&root),
+        linear_size: re2::linear_size(&root),
+    };
     Ok((root, facts))
 }
 
@@ -202,7 +210,7 @@ pub(crate) struct Regexp {
     /// again to build it, which cannot fail.
     dfa: OnceLock<Option<dfa::Dfa>>,
     /// The size the parser counted for the pattern.
-    #[allow(dead_code)]
+    #[cfg(test)]
     size: usize,
 }
 
@@ -231,6 +239,7 @@ pub(crate) fn compile(pattern: &str) -> Result<Regexp, Error> {
             unicode: facts.unicode,
             regular,
             dfa,
+            #[cfg(test)]
             size: facts.size,
         })
     })
@@ -284,7 +293,7 @@ impl Regexp {
 
     /// The size the parser counted for the pattern, which the tree, the program and the time to make both are
     /// proportional to (see [`MAX_SIZE`]).
-    #[allow(dead_code)]
+    #[cfg(test)]
     pub(crate) fn size(&self) -> usize {
         self.size
     }
