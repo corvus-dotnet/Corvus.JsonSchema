@@ -624,4 +624,19 @@ end
               raw"\A(?!\x{2d})(?:(?:(?:(?:a|)a{0,299})x){1,300}\x{2d})+\z"
         @test E.translate(raw"^(?:a|\b|x)*$").main == raw"\A(?:[\x{61}\x{78}]*)\z"
     end
+
+    # ECMA-262 compares a case-insensitive backreference one character at a time, by Canonicalize, which is simple
+    # case folding with the u flag. V8 13.6 compares the whole text by full case folding, under which U+00DF is
+    # "ss" and U+FB00 is "ff", and so says that each of these matches. The answers here are those of ECMA-262.
+    @testset "a case-insensitive backreference is compared character by character" begin
+        @test !matches(raw"(?i:^(...)\1$)", "\u1e9eS\u00df\u1e9e\u00df\u017f")
+        @test !matches(raw"(?i:^(..)\1$)", "\u00dfSs\u1e9e")
+        @test !matches(raw"(?i:^(..)\1$)", "\ufb00ff\ufb00")
+        @test !matches(raw"(?i:^(?<n0>\1|\u00df)*?(..\W){1,2}\2{2}$)", "\u00df\u1e9e\u017f\u00df\u1e9eS\u00df\u1e9e\u00df\u017f")
+        # Character by character these are the same text.
+        @test matches(raw"(?i:^(...)\1$)", "\u1e9eS\u00df\u00dfs\u1e9e")
+        @test matches(raw"(?i:^(..)\1$)", "\u00dfS\u1e9e\u017f")
+        @test matches(raw"(?i:^(.)(.)(.)\1\2\3$)", "\u1e9eS\u00df\u00dfs\u1e9e")
+        @test !matches(raw"(?i:^(.)(.)(.)\1\2\3$)", "\u1e9eS\u00df\u1e9e\u00df\u017f")
+    end
 end
