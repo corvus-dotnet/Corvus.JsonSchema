@@ -1608,9 +1608,12 @@ fn escape(c: &[char], i: usize, in_class: bool, unicode: bool) -> Option<(String
 }
 
 /// The ranges of a set, each end spelled as an escape. A surrogate is no character to the `regex` crate, and no
-/// string holds one, so a range is written without the surrogates it spans.
+/// string holds one, so a range is written without the surrogates it spans. Two ranges that then touch, one ending
+/// at U+D7FF and the next starting at U+E000, are written as one: see [`class`] for what `regex` makes of the two.
 fn push_ranges(out: &mut String, set: &ecmaregex::CharSet) {
-    let mut range = |lo: u32, hi: u32| {
+    // The range that has been read and not yet written.
+    let mut pending: Option<(u32, u32)> = None;
+    let write = |out: &mut String, (lo, hi): (u32, u32)| {
         if let (Some(lo), Some(hi)) = (char::from_u32(lo), char::from_u32(hi)) {
             push_literal(out, lo);
             if lo != hi {
@@ -1620,16 +1623,23 @@ fn push_ranges(out: &mut String, set: &ecmaregex::CharSet) {
         }
     };
     for &[lo, hi] in set.ranges.as_chunks::<2>().0 {
-        let (lo, hi) = (lo as u32, hi as u32);
-        if lo <= 0xD7FF && hi >= 0xD800 {
-            range(lo, 0xD7FF);
+        // The ends that are surrogates move out of the surrogates. A range of surrogates alone is nothing.
+        let lo = if (0xD800..=0xDFFF).contains(&lo) { 0xE000 } else { lo as u32 };
+        let hi = if (0xD800..=0xDFFF).contains(&hi) { 0xD7FF } else { hi as u32 };
+        if lo > hi {
+            continue;
         }
-        if hi >= 0xE000 && lo <= 0xDFFF {
-            range(0xE000, hi);
+        match pending {
+            Some((first, 0xD7FF)) if lo == 0xE000 => pending = Some((first, hi)),
+            Some(range) => {
+                write(out, range);
+                pending = Some((lo, hi));
+            }
+            None => pending = Some((lo, hi)),
         }
-        if hi <= 0xD7FF || lo >= 0xE000 {
-            range(lo, hi);
-        }
+    }
+    if let Some(range) = pending {
+        write(out, range);
     }
 }
 
@@ -1715,6 +1725,13 @@ fn class(c: &[char], mut i: usize, unicode: bool) -> Option<(String, usize)> {
     }
     if members == 0 {
         return None; // `[]` and `[^]` have no counterpart.
+    }
+    // `regex` 1.13.1 (regex-syntax 0.8.11) negates wrongly a class with a range that ends at U+D7FF and another
+    // that starts at U+E000, the characters on either side of the surrogates: the complement takes both in, so
+    // `[^\x{D7FF}\x{E000}]` matches every character. A negated class that names both (every literal here is
+    // spelled `\x{...}`, so a `^` is a negation) is left to the engine.
+    if out.contains('^') && out.contains(r"\x{D7FF}") && out.contains(r"\x{E000}") {
+        return None;
     }
     out.push(']');
     Some((out, i))
@@ -2143,6 +2160,41 @@ mod limits {
             assert_eq!(kind(&compiled), "regex", "{p}");
             assert!(compiled.is_match(text, &mut budget) && !compiled.is_match("a!", &mut budget), "{p}");
         }
+        // The complement of a set whose ranges meet at the surrogates, which `regex` gets wrong when it is given
+        // the two ranges: Unknown holds U+D7FC to U+D7FF and U+E000 to U+F8FF. And the same written by hand, which
+        // is the engine's.
+        for (p, want) in [
+            (r"^\P{sc=Unknown}$", "regex"),
+            (r"^[^\p{scx=Unknown}]$", "regex"),
+            (r"^[^\p{Script=Unknown}a]$", "regex"),
+            (r"^[^\ud7ff\ue000]$", "engine"),
+            (r"^[^\ud7fc-\ud7ff\ue000-\uf8ff]$", "engine"),
+            (r"^[^\p{Co}\ud7ff]$", "engine"),
+            (r"^[^\p{Cn}\ue000]$", "engine"),
+        ] {
+            let compiled = compile(p).unwrap();
+            assert_eq!(kind(&compiled), want, "{p}");
+            let engine = ecmaregex::compile(p).unwrap();
+            for text in ["\u{D7FB}", "\u{D7FC}", "\u{D7FF}", "\u{E000}", "\u{E001}", "\u{F8FF}", "\u{F900}", "a", "b"] {
+                assert_eq!(
+                    compiled.is_match(text, &mut budget),
+                    engine.match_backtrack(text, None).unwrap(),
+                    "{p} on {text:?}"
+                );
+            }
+            assert!(!compiled.is_match("\u{E000}", &mut budget), "{p} matches U+E000");
+        }
+        // A set with a range on each side of the surrogates and none of them is written as one range, and a range
+        // of surrogates alone as nothing.
+        let mut written = String::new();
+        push_ranges(&mut written, &ecmaregex::CharSet::new(&[0x61, 0x7A, 0xD700, 0xD7FF, 0xE000, 0xE0FF], false));
+        assert_eq!(written, r"\x{61}-\x{7A}\x{D700}-\x{E0FF}");
+        written.clear();
+        push_ranges(&mut written, &ecmaregex::CharSet::new(&[0xD7FF, 0xDBFF, 0xDC00, 0xDFFF, 0xDFFF, 0xE000], false));
+        assert_eq!(written, r"\x{D7FF}-\x{E000}");
+        written.clear();
+        push_ranges(&mut written, &ecmaregex::CharSet::new(&[0xD800, 0xDFFF], false));
+        assert_eq!(written, "");
         // A property no character has, and its complement.
         for (p, yes, no) in
             [(r"^\P{sc=Hrkt}$", "a", "aa"), (r"^[\p{sc=Hrkt}a]$", "a", "b"), (r"^[^\P{sc=Hrkt}]?$", "", "a")]
