@@ -1136,19 +1136,24 @@ class EcmaRegexTest {
      */
     @Test
     void aTranslationTooLargeForTheEngineIsRefusedAsSuch() throws InterruptedException {
-        String pattern = "(?:a|b)".repeat(20000);
-        String[] found = new String[3];
+        String pattern = "(?:a|bc)".repeat(20000);
+        Object[] found = new Object[4];
         Thread thread = new Thread(null, () -> {
             found[0] = EcmaRegex.unsupported(pattern);
             found[1] = EcmaRegex.translate(pattern);
             found[2] = SchemaPattern.failure(pattern, "pattern");
+            found[3] = EcmaRegex.tooLarge(pattern);
         }, "small stack", 256 * 1024);
         thread.start();
         thread.join();
         assertEquals(EcmaRegex.REFUSED_TOO_LARGE, found[0]);
         assertNull(found[1]);
-        assertTrue(found[2].endsWith("' in pattern. It is valid ECMA-262, but this library cannot run a pattern too "
-                + "large for java.util.regex to compile with the meaning ECMA-262 gives it."), found[2]);
+        assertEquals(EcmaRegex.LIMIT_STACK, found[3]);
+        assertTrue(found[2] instanceof PatternTooLargeException);
+        String message = ((PatternTooLargeException) found[2]).getMessage();
+        assertTrue(message.endsWith("' (of 160000 characters) in pattern is over a limit of size. It is a valid ECMA-262 "
+                + "regular expression, and is too large: java.util.regex needs more of the thread's stack to compile it "
+                + "than there is."), message);
         assertTrue(EcmaRegex.isValid(pattern));
     }
 
@@ -1219,6 +1224,17 @@ class EcmaRegexTest {
         String deep = "(".repeat(100_000) + ")".repeat(100_000);
         assertFalse(EcmaRegex.isValid(deep));
         assertNull(EcmaRegex.translate(deep));
+        // It is too large, and not known to be valid or not: it is not read to its end.
+        assertEquals(EcmaRegex.LIMIT_GROUPS, EcmaRegex.tooLarge(deep));
+        assertFalse(EcmaRegex.wasRead(deep));
+        String nested = "(?:".repeat(100_000) + ")".repeat(100_000);
+        assertEquals(EcmaRegex.LIMIT_NESTING, EcmaRegex.tooLarge(nested));
+        assertFalse(EcmaRegex.wasRead(nested));
+        assertEquals(EcmaRegex.LIMIT_NESTING, EcmaRegex.tooLarge("(?:".repeat(100_000)));
+        // The groups of a pattern, and the ranges of its classes, are counted as it is read.
+        assertNotNull(EcmaRegex.translate("(a)|".repeat(1 << 15)));
+        assertEquals(EcmaRegex.LIMIT_GROUPS, EcmaRegex.tooLarge("(a)|".repeat((1 << 15) + 1)));
+        assertEquals(EcmaRegex.LIMIT_SETS, EcmaRegex.tooLarge("[\\p{L}a]|".repeat(2000)));
         String shallow = "(?:".repeat(150) + "a" + ")".repeat(150);
         assertValid(shallow);
         assertEquals(true, matches(shallow, "a"));
@@ -2133,22 +2149,33 @@ class EcmaRegexTest {
     @Test
     void theLimitsOfSize() {
         assertAnswers(WITHIN_THE_LIMITS_OF_SIZE, textsOver(4, new String[] {"a", "b", "x"}, MORE_FOR_LIMITS));
-        // A pattern of the test data whose translation is over a million characters.
+        // A pattern of the test data whose translation would be over a million characters is too large. So is one
+        // of 1,048,577 characters, which is not read.
         String large = "(?:b(?=(?:(?:((?:[^a]??(?:b[ab]){0,2}?){2,})|b??)(?=[^a]?))*?((?:b|a[bc]))*?c)(?:b\\1){0,2}?(?:c"
                 + "\\1){2}\\2a\\1$)*$";
-        String translation = EcmaRegex.translate(large);
-        assertNotNull(translation, () -> EcmaRegex.unsupported(large));
-        assertTrue(translation.length() > 1 << 20 && translation.length() < 1 << 24);
-        // Sixteen groups that may each be set or not are 65,536 ways. Seventeen are too many.
-        String sixteen = "(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?(j)?(k)?(l)?(m)?(n)?(o)?(p)?";
-        String read = "\\1\\2\\3\\4\\5\\6\\7\\8\\9\\10\\11\\12\\13\\14\\15\\16";
-        assertNotNull(EcmaRegex.translate("(?:" + sixteen + read + ")*"));
-        assertEquals(EcmaRegex.REFUSED_TOO_MANY_PATHS, EcmaRegex.unsupported("(?:" + sixteen + "(q)?" + read + "\\17)*"));
+        assertNull(EcmaRegex.translate(large));
+        assertEquals(EcmaRegex.LIMIT_TRANSLATION, EcmaRegex.tooLarge(large));
+        assertTrue(EcmaRegex.wasRead(large));
+        assertEquals(EcmaRegex.LIMIT_PATTERN, EcmaRegex.tooLarge("a".repeat((1 << 20) + 1)));
+        assertFalse(EcmaRegex.wasRead("a".repeat((1 << 20) + 1)));
+        assertEquals(EcmaRegex.LIMIT_TRANSLATION, EcmaRegex.tooLarge("\\p{L}".repeat(400)));
+        // A pattern that is not valid is not too large, whatever its size.
+        assertNull(EcmaRegex.tooLarge("\\p{L}".repeat(400) + "("));
+        assertNull(EcmaRegex.tooLarge("(a"));
+        // Thirteen groups that may each be set or not are 8,192 ways. Fourteen are too many.
+        String thirteen = "(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?(j)?(k)?(l)?(m)?";
+        String read = "\\1\\2\\3\\4\\5\\6\\7\\8\\9\\10\\11\\12\\13";
+        assertNotNull(EcmaRegex.translate("(?:" + thirteen + read + ")*"));
+        String fourteen = "(?:" + thirteen + "(q)?" + read + "\\14)*";
+        assertEquals(EcmaRegex.REFUSED_TOO_MANY_PATHS, EcmaRegex.unsupported(fourteen));
+        assertEquals(EcmaRegex.LIMIT_PLANS, EcmaRegex.tooLarge(fourteen));
         // Two hundred iterations of a lookahead by ways, and two hundred copies of a body, are written.
         assertNotNull(EcmaRegex.translate("(?=((?:a|){0,200}?)a)\\1a$"));
         assertEquals(EcmaRegex.REFUSED_TOO_MANY_PATHS, EcmaRegex.unsupported("(?=((?:a|){0,201}?)a)\\1a$"));
+        assertEquals(EcmaRegex.LIMIT_COPIES, EcmaRegex.tooLarge("(?=((?:a|){0,201}?)a)\\1a$"));
         assertNotNull(EcmaRegex.translate("(?:^|x){200}a"));
         assertEquals(EcmaRegex.REFUSED_EMPTY_ITERATIONS, EcmaRegex.unsupported("(?:^|x){201}a"));
+        assertEquals(EcmaRegex.LIMIT_COPIES, EcmaRegex.tooLarge("(?:^|x){201}a"));
     }
 
     // The tables that follow hold V8's answers ({@code new RegExp(pattern, "u").test(text)}, V8 13.6) for the 364
@@ -2344,6 +2371,36 @@ class EcmaRegexTest {
         String plain = "^[a-z]+(?:\\x{2e}[a-z]+)*\\z";
         assertTrue(plain == EcmaRegex.Ticks.insert(plain));
         assertEquals("(?:a|)(?=)(?:b|)*c", EcmaRegex.Ticks.insert("(?:a|)(?:b|)*c"));
+    }
+
+    /**
+     * The limit on the size of a translation counts the same length on every JDK: that of the translation for
+     * JDK 17, whose engine needs the most written out for it. The lengths here are the same whatever JDK runs the
+     * test. The translation that is run is the one for the engine of this JVM, and is no longer.
+     */
+    @Test
+    void theLimitOfSizeDoesNotDependOnTheJdk() {
+        Object[][] measured = {
+            {"\\p{L}", 3103}, {"\\p{Lu}", 513}, {"\\p{N}", 453}, {"[\\p{L}\\p{N}\\p{M}\\p{P}\\p{S}]", 6806},
+            {"[^\\p{Lu}\\p{Nd}x]", 911}, {"\\p{Zl}", 32}, {"\\p{Script=Greek}", 1023}, {"(?i:^(.)\\1$)", 5729},
+            {"(?i:^(.*)\\1$)", 10739}, {"(?i:^([\\p{L}\\p{N}_-]+)\\1)", 35796}, {"^(?:a|b)*$", 23},
+        };
+        for (Object[] m : measured) {
+            String pattern = (String) m[0];
+            assertEquals(m[1], EcmaRegex.measuredLength(pattern), pattern);
+            assertTrue(EcmaRegex.translate(pattern).length() <= (Integer) m[1], pattern);
+        }
+        // Each class the engine has for a property is no longer, corrected for this JDK, than it is counted at.
+        String[] names = {
+            "Lu", "Ll", "Lt", "Lm", "Lo", "Mn", "Mc", "Me", "Nd", "Nl", "No", "Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po",
+            "Sm", "Sc", "Sk", "So", "Zs", "Zl", "Zp", "Cc", "Cf", "Cs", "Co", "Cn", "LC", "L", "M", "N", "P", "S", "Z", "C",
+            "Alphabetic", "Lowercase", "Uppercase",
+        };
+        for (String name : names) {
+            String pattern = "\\p{" + name + "}";
+            int counted = EcmaRegex.measuredLength(pattern);
+            assertTrue(EcmaRegex.translate(pattern).length() + 20 <= counted, pattern);
+        }
     }
 
     /**

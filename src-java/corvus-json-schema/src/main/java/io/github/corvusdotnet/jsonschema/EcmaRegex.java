@@ -150,6 +150,27 @@ final class EcmaRegex {
 
     /** Groups may nest this deep. It bounds the recursion of the readers. */
     static final int MAX_NESTING = 200;
+    /** The most characters of a pattern, and of what is written for {@code java.util.regex} to run it. */
+    static final int MAX_PATTERN_LENGTH = 1 << 20;
+    static final int MAX_TRANSLATION_LENGTH = 1 << 20;
+
+    // What the message of a pattern that is over a limit of size says of the limit (see TooLarge).
+    static final String LIMIT_PATTERN = "it has more than 1,048,576 characters";
+    static final String LIMIT_NESTING = "its groups are nested more than 200 deep";
+    static final String LIMIT_TRANSLATION =
+            "what is written for java.util.regex to run it is more than 1,048,576 characters";
+    static final String LIMIT_PLANS = "it is written once for each way through the groups its backreferences read, and "
+            + "one part of it has more than 8,192 ways";
+    static final String LIMIT_WRITTEN = "writing it for java.util.regex takes more than 16,777,216 characters of text";
+    static final String LIMIT_COPIES = "it needs more than 200 copies of the body of a repetition";
+    static final String LIMIT_STACK = "java.util.regex needs more of the thread's stack to compile it than there is";
+    static final String LIMIT_GROUPS = "it has more than 32,768 capturing groups";
+    static final String LIMIT_SETS = "its classes hold more than 524,288 ranges of characters";
+    static final String LIMIT_GROUP_PARTS =
+            "the number of its groups times the number of its parts is more than 268,435,456";
+    /** The most capturing groups of a pattern, and the most numbers in the sets of its classes (two to a range). */
+    static final int MAX_GROUPS = 1 << 15;
+    static final int MAX_SET_NUMBERS = 1 << 20;
 
     /**
      * The translation of an ECMA-262 pattern. It is null when the pattern is not a valid one, and when it is valid
@@ -161,6 +182,48 @@ final class EcmaRegex {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    /**
+     * What is over a limit of size in a pattern that is refused for that, as the end of a sentence that names the
+     * limit and its value, or null when the pattern is not refused for its size. {@link #wasRead} tells whether the
+     * pattern is known to be valid.
+     */
+    static String tooLarge(String pattern) {
+        try {
+            translation(pattern);
+            return null;
+        } catch (TooLarge e) {
+            return e.limit;
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Whether a pattern that {@link #tooLarge} refuses was read to its end before the limit was met, and so is a
+     * valid ECMA-262 pattern. One that is too long, or nested too deep, to be read is not known to be.
+     */
+    static boolean wasRead(String pattern) {
+        try {
+            translation(pattern);
+            return true;
+        } catch (TooLarge e) {
+            return e.read;
+        } catch (IllegalArgumentException e) {
+            return true;
+        }
+    }
+
+    /**
+     * The length the limit on the size of a translation counts for a pattern: that of its translation of reference
+     * (see {@link #translation}), which is the same on every JDK. For tests.
+     */
+    static int measuredLength(String pattern) {
+        Parser parser = new Parser(pattern, true);
+        Emitter emitter = new Emitter(parser, parser.parse());
+        emitter.reference = true;
+        return emitter.translate().length();
     }
 
     /** Why a valid ECMA-262 pattern cannot be run by this library, or null when it can be or is not valid. */
@@ -252,15 +315,38 @@ final class EcmaRegex {
     }
 
     private static String translation(String pattern) {
+        if (pattern.length() > MAX_PATTERN_LENGTH) {
+            throw new TooLarge(REFUSED_TOO_LARGE, LIMIT_PATTERN, false);
+        }
         Parser parser = new Parser(pattern, true);
         Node root;
         try {
             root = parser.parse();
+        } catch (TooLarge e) {
+            throw e;
         } catch (IllegalArgumentException unicodeError) {
             parser = new Parser(pattern, false);
             root = parser.parse();
         }
-        return new Emitter(parser, root).translate();
+        // Two things are written with what the engine of this JVM knows, so their length depends on the JDK: the
+        // comparison of a case-insensitive backreference, which uses the engine's for the characters it compares
+        // rightly (see Emitter#folded), and the set of a property the engine has a class for, which is that class
+        // and what corrects it (see Emitter#engineSet). A limit of size must not depend on the JDK: a pattern is
+        // refused on every JDK or on none. So the translation is made first for the engine of reference, that of
+        // JDK 17, which gets the most wrong, and that one is held to the limits. When it wrote either, the pattern
+        // is translated again for this engine, which is the shorter text.
+        Emitter emitter = new Emitter(parser, root);
+        emitter.reference = true;
+        String translated = emitter.translate();
+        if (!emitter.paddedSets && (!emitter.comparedByEngine || Emitter.isReference(parser.unicode))) {
+            return translated;
+        }
+        try {
+            Parser again = new Parser(pattern, parser.unicode);
+            return new Emitter(again, again.parse()).translate();
+        } catch (TooLarge e) {
+            return translated;
+        }
     }
 
     /** Thrown for a valid pattern that cannot be run with the same meaning. The message is the reason. */
@@ -269,6 +355,32 @@ final class EcmaRegex {
 
         Unsupported(String reason) {
             super(reason);
+        }
+    }
+
+    /**
+     * Thrown for a pattern that is over a limit of size. The limits keep a pattern that comes from outside from
+     * taking the translator, or {@code java.util.regex} when it compiles what is written, more than a fraction of a
+     * second or more than a few megabytes: the pattern and the translation are at most 1,048,576 characters, and
+     * what multiplies the text on the way to it is bounded too (see {@link Emitter#MAX_PLANS},
+     * {@link Emitter#MAX_PATHS_WRITTEN} and {@link Emitter#MAX_UNROLLED_COPIES}). {@link #limit} ends the sentence
+     * "the pattern is too large:" with the limit and its value. A pattern over a limit is never said to be invalid.
+     */
+    private static final class TooLarge extends Unsupported {
+        private static final long serialVersionUID = 1L;
+
+        final String limit;
+        /** Whether the whole pattern was read, and found valid, before the limit was met. */
+        final boolean read;
+
+        TooLarge(String reason, String limit) {
+            this(reason, limit, true);
+        }
+
+        TooLarge(String reason, String limit, boolean read) {
+            super(reason);
+            this.limit = limit;
+            this.read = read;
         }
     }
 
@@ -449,6 +561,10 @@ final class EcmaRegex {
          */
         private int[] engineProperty;
         private boolean enginePropertyNegated;
+        /** The numbers in the sets made so far, and the complement of each property that was negated. */
+        private long setNumbers;
+        private final Map<int[], int[]> complements = new java.util.IdentityHashMap<>();
+        private final Map<int[], int[]> closures = new java.util.IdentityHashMap<>();
 
         Parser(String pattern, boolean unicode) {
             this.pattern = pattern;
@@ -463,6 +579,10 @@ final class EcmaRegex {
 
         Node parse() {
             scanGroups();
+            if (groupCount > MAX_GROUPS) {
+                // What is worked out for a pattern holds a bit for each group, in many places.
+                throw new TooLarge(REFUSED_TOO_LARGE, LIMIT_GROUPS, false);
+            }
             Node root = disjunction();
             if (i < p.length) {
                 throw error(p[i] == ')' ? "unmatched ')'" : "unexpected character");
@@ -520,7 +640,7 @@ final class EcmaRegex {
 
         private Node disjunction() {
             if (++depth > MAX_NESTING) {
-                throw error("groups nested too deeply");
+                throw new TooLarge(REFUSED_TOO_LARGE, LIMIT_NESTING, false);
             }
             if (2 * pathLength + 2 > path.length) {
                 path = Arrays.copyOf(path, path.length * 2);
@@ -605,6 +725,11 @@ final class EcmaRegex {
         }
 
         private Node setNode(int[] set) {
+            if ((setNumbers += set.length) > MAX_SET_NUMBERS) {
+                // A class of a large property is some thousands of numbers, and a pattern can name one in every few
+                // characters. Written out, this many ranges are far over the limit on the translation.
+                throw new TooLarge(REFUSED_TOO_LARGE, LIMIT_SETS, false);
+            }
             Node node = new Node(SET);
             node.set = unicode ? set : unitSet(set);
             return node;
@@ -640,7 +765,11 @@ final class EcmaRegex {
 
         /** The set that also holds, inside a case-insensitive group, every character equivalent to a member. */
         private int[] folded(int[] set) {
-            return ignoreCase ? EcmaUnicode.foldClosure(set, unicode) : set;
+            if (!ignoreCase) {
+                return set;
+            }
+            // The set of a property is one array wherever the property is named, and its closure is worked out once.
+            return closures.computeIfAbsent(set, s -> EcmaUnicode.foldClosure(s, unicode));
         }
 
         private Node term() {
@@ -1146,7 +1275,7 @@ final class EcmaRegex {
                         engineProperty = set;
                         enginePropertyNegated = c == 'P';
                     }
-                    return c == 'P' ? EcmaUnicode.complement(set) : set;
+                    return c == 'P' ? complements.computeIfAbsent(set, EcmaUnicode::complement) : set;
                 }
                 default:
                     return null;
@@ -1426,7 +1555,7 @@ final class EcmaRegex {
          * body are more than a stack of 512 KB holds.
          */
         static final int MAX_UNROLLED_COPIES = 200;
-        static final int MAX_UNROLLED_LENGTH = 1 << 24;
+        static final int MAX_UNROLLED_LENGTH = MAX_TRANSLATION_LENGTH;
 
         private final boolean unicode;
         private Node root;
@@ -1652,11 +1781,11 @@ final class EcmaRegex {
             } catch (PatternSyntaxException e) {
                 // The compiler reports the overflow of its own recursion this way.
                 if (e.getDescription().startsWith("Stack overflow")) {
-                    throw new Unsupported(REFUSED_TOO_LARGE);
+                    throw new TooLarge(REFUSED_TOO_LARGE, LIMIT_STACK);
                 }
                 return e.getDescription() + " near index " + e.getIndex();
             } catch (StackOverflowError e) {
-                throw new Unsupported(REFUSED_TOO_LARGE);
+                throw new TooLarge(REFUSED_TOO_LARGE, LIMIT_STACK);
             }
         }
 
@@ -1665,6 +1794,9 @@ final class EcmaRegex {
          * and not a reason to refuse the pattern, so it is not reported as one.
          */
         private static String compiled(String translated, String error) {
+            if (translated.length() > MAX_TRANSLATION_LENGTH) {
+                throw new TooLarge(REFUSED_TOO_LARGE, LIMIT_TRANSLATION);
+            }
             if (error != null) {
                 throw new IllegalStateException("java.util.regex does not compile the translation of a valid ECMA-262 "
                         + "pattern (" + error + "). This is a fault of the library. The translation is " + translated);
@@ -2036,6 +2168,9 @@ final class EcmaRegex {
         // Writing.
 
         private void node(Node n) {
+            if (out.length() > MAX_TRANSLATION_LENGTH) {
+                throw new TooLarge(REFUSED_TOO_LARGE, LIMIT_TRANSLATION);
+            }
             switch (n.kind) {
                 case EMPTY:
                     break;
@@ -2187,9 +2322,12 @@ final class EcmaRegex {
          */
         private void engineSet(Node n) {
             int[] others = n.rest;
+            int start = out.length();
+            int nominal = REFERENCE_PADDING;
             out.append(n.partsNegated ? "[^" : "[");
             for (int[] part : n.parts) {
                 EcmaUnicode.EngineClass engine = EcmaUnicode.engineClass(part);
+                nominal += EcmaUnicode.referenceLength(engine.name);
                 if (engine.removed.length == 0) {
                     out.append(engine.name);
                 } else {
@@ -2200,8 +2338,28 @@ final class EcmaRegex {
                 others = EcmaUnicode.union(others, engine.added);
             }
             EcmaUnicode.appendSearchTree(out, others);
+            if (reference) {
+                // What corrects the class of the engine depends on the JDK, and so does its length. The translation
+                // of reference has every such set at one length, whatever the JDK: the length it has on JDK 17,
+                // which needs the most corrections, made up with members that add nothing to the set.
+                paddedSets = true;
+                StringBuilder rest = new StringBuilder();
+                EcmaUnicode.appendSearchTree(rest, n.rest);
+                int pad = nominal + rest.length() - (out.length() + 1 - start);
+                if (pad >= REFERENCE_PADDING_LEAST) {
+                    out.append("&&[\\x{0}-\\x{10ffff}");
+                    for (int k = REFERENCE_PADDING_LEAST; k < pad; k++) {
+                        out.append('a');
+                    }
+                    out.append(']');
+                }
+            }
             out.append(']');
         }
+
+        /** The least a set can be padded by, which is the text that holds the padding, and what every set is given. */
+        private static final int REFERENCE_PADDING_LEAST = 20;
+        private static final int REFERENCE_PADDING = 24;
 
         private void group(Node n) {
             if (n.group == 0 || !referenced[n.group]) {
@@ -2375,8 +2533,11 @@ final class EcmaRegex {
             int start = out.length();
             atom(atom);
             unrolledLength += out.length() - start;
-            if (++unrolledCopies > MAX_UNROLLED_COPIES || unrolledLength > MAX_UNROLLED_LENGTH) {
-                throw new Unsupported(REFUSED_EMPTY_ITERATIONS);
+            if (++unrolledCopies > MAX_UNROLLED_COPIES) {
+                throw new TooLarge(REFUSED_EMPTY_ITERATIONS, LIMIT_COPIES);
+            }
+            if (unrolledLength > MAX_UNROLLED_LENGTH) {
+                throw new TooLarge(REFUSED_EMPTY_ITERATIONS, LIMIT_TRANSLATION);
             }
         }
 
@@ -2529,14 +2690,14 @@ final class EcmaRegex {
         // and is written only when it has no decision.
 
         /** The most plans of one scope. */
-        static final int MAX_PLANS = 1 << 16;
+        static final int MAX_PLANS = 1 << 13;
         /** The most text of a translation by paths. */
-        static final int MAX_PATHS_LENGTH = 1 << 24;
+        static final int MAX_PATHS_LENGTH = MAX_TRANSLATION_LENGTH;
         /**
          * The most text written while a translation by paths is made. A scope inside a scope is written again for
          * each plan of the outer one, so this is what bounds the time a translation takes.
          */
-        static final long MAX_PATHS_WRITTEN = 8L * MAX_PATHS_LENGTH;
+        static final long MAX_PATHS_WRITTEN = 16L * MAX_PATHS_LENGTH;
 
         /** What a path has set: for each group of the pattern, the group of the translation, or null. */
         private static final class Env {
@@ -2635,6 +2796,10 @@ final class EcmaRegex {
                 flow(root, new BitSet(), new BitSet(), false);
                 root = simplify(root);
             } while (changed);
+            if ((long) groupNodes.length * countNodes(root) > MAX_GROUP_PARTS) {
+                // Each part of the pattern is given the set of the groups it sets and of those it reads.
+                throw new TooLarge(REFUSED_TOO_LARGE, LIMIT_GROUP_PARTS);
+            }
             index(root);
             read = root.reads;
             String translated = writePaths();
@@ -2659,6 +2824,16 @@ final class EcmaRegex {
                 error = compileError(translated);
             }
             return compiled(translated, error);
+        }
+
+        private static final long MAX_GROUP_PARTS = 1L << 28;
+
+        private static long countNodes(Node n) {
+            long count = 1;
+            for (Node sub : n.subs) {
+                count += countNodes(sub);
+            }
+            return count;
         }
 
         /** Makes of every backreference to groups no plan read a backreference to nothing. */
@@ -2959,7 +3134,7 @@ final class EcmaRegex {
             alternatives(sb, all, 0, all.size(), 0);
             sb.append(')');
             if (out.length() + sb.length() > MAX_PATHS_LENGTH) {
-                throw new Unsupported(REFUSED_TOO_MANY_PATHS);
+                throw new TooLarge(REFUSED_TOO_MANY_PATHS, LIMIT_TRANSLATION);
             }
             return sb.toString();
         }
@@ -3447,9 +3622,14 @@ final class EcmaRegex {
                     most = Math.max(most, unrolledCopies);
                     longest = Math.max(longest, unrolledLength);
                 }
-                if (plans.size() > MAX_PLANS || start + plan.length() > MAX_PATHS_LENGTH
-                        || written > MAX_PATHS_WRITTEN) {
-                    throw new Unsupported(REFUSED_TOO_MANY_PATHS);
+                if (plans.size() > MAX_PLANS) {
+                    throw new TooLarge(REFUSED_TOO_MANY_PATHS, LIMIT_PLANS);
+                }
+                if (start + plan.length() > MAX_PATHS_LENGTH) {
+                    throw new TooLarge(REFUSED_TOO_MANY_PATHS, LIMIT_TRANSLATION);
+                }
+                if (written > MAX_PATHS_WRITTEN) {
+                    throw new TooLarge(REFUSED_TOO_MANY_PATHS, LIMIT_WRITTEN);
                 }
                 more = false;
                 while (!mine.isEmpty()) {
@@ -3683,10 +3863,10 @@ final class EcmaRegex {
                 unrolledLength += length;
             }
             if (++unrolledCopies > MAX_UNROLLED_COPIES) {
-                throw new Unsupported(early ? REFUSED_EMPTY_ITERATIONS : REFUSED_TOO_MANY_PATHS);
+                throw new TooLarge(early ? REFUSED_EMPTY_ITERATIONS : REFUSED_TOO_MANY_PATHS, LIMIT_COPIES);
             }
             if (unrolledLength > MAX_UNROLLED_LENGTH) {
-                throw new Unsupported(REFUSED_EMPTY_ITERATIONS);
+                throw new TooLarge(REFUSED_EMPTY_ITERATIONS, LIMIT_TRANSLATION);
             }
         }
 
@@ -4576,7 +4756,7 @@ final class EcmaRegex {
 
         private void countCopy() {
             if (++unrolledCopies > MAX_UNROLLED_COPIES) {
-                throw new Unsupported(REFUSED_TOO_MANY_PATHS);
+                throw new TooLarge(REFUSED_TOO_MANY_PATHS, LIMIT_COPIES);
             }
         }
 
@@ -5333,7 +5513,7 @@ final class EcmaRegex {
                             env = saved;
                         }
                         if (++unrolledCopies > MAX_UNROLLED_COPIES) {
-                            throw new Unsupported(REFUSED_EMPTY_ITERATIONS);
+                            throw new TooLarge(REFUSED_EMPTY_ITERATIONS, LIMIT_COPIES);
                         }
                     }
                     place(n.subs[0], start);
@@ -5753,19 +5933,47 @@ final class EcmaRegex {
         // left to the engine only when the engine agreed with ECMA-262 on every pair it is in.
 
         /** For each grammar (with the u flag, without it): the characters not left to the engine, once worked out. */
-        private static final int[][] ENGINE_DIFFERS = new int[2][];
+        private static final int[][] ENGINE_DIFFERS = new int[4][];
         /** The same, as a test that the next character is not one of them. */
-        private static final String[] ENGINE_COMPARES = new String[2];
+        private static final String[] ENGINE_COMPARES = new String[4];
+        /**
+         * The characters the engine of JDK 17 does not compare as ECMA-262 does, with the u flag and without it.
+         * Those of JDK 21 and of JDK 25 are among them (JDK 17 compares no character beyond the Basic Multilingual
+         * Plane). A translation made for these (see {@link #reference}) is the same text on every one of the three.
+         */
+        private static final int[][] REFERENCE_DIFFERS = {
+            {
+                0x49, 0x49, 0x69, 0x69, 0x130, 0x131, 0x19B, 0x19B, 0x264, 0x264, 0x390, 0x390, 0x3B0, 0x3B0, 0x1C89,
+                0x1C8A, 0x1FD3, 0x1FD3, 0x1FE3, 0x1FE3, 0x2C2F, 0x2C2F, 0x2C5F, 0x2C5F, 0xA7C0, 0xA7C1, 0xA7CB, 0xA7DC,
+                0xFB05, 0xFB06, 0x10000, 0x10FFFF,
+            },
+            {
+                0x49, 0x49, 0x4B, 0x4B, 0x53, 0x53, 0x69, 0x69, 0x6B, 0x6B, 0x73, 0x73, 0xC5, 0xC5, 0xDF, 0xDF, 0xE5,
+                0xE5, 0x130, 0x131, 0x17F, 0x17F, 0x19B, 0x19B, 0x264, 0x264, 0x398, 0x398, 0x3A9, 0x3A9, 0x3B8, 0x3B8,
+                0x3C9, 0x3C9, 0x3D1, 0x3D1, 0x3F4, 0x3F4, 0x1C89, 0x1C8A, 0x1E9E, 0x1E9E, 0x1F80, 0x1FAF, 0x1FB3, 0x1FB3,
+                0x1FBC, 0x1FBC, 0x1FC3, 0x1FC3, 0x1FCC, 0x1FCC, 0x1FF3, 0x1FF3, 0x1FFC, 0x1FFC, 0x2126, 0x2126, 0x212A,
+                0x212B, 0x2C2F, 0x2C2F, 0x2C5F, 0x2C5F, 0xA7C0, 0xA7C1, 0xA7CB, 0xA7DC, 0x10000, 0x10FFFF,
+            },
+        };
+        /**
+         * Whether the translation is made for the engine of reference, and whether it wrote a comparison that
+         * depends on the engine. See {@link EcmaRegex#translation}.
+         */
+        boolean reference;
+        boolean comparedByEngine;
+        boolean paddedSets;
 
         /** A test that the next character is one the engine compares as ECMA-262 does with every character. */
         private String engineCompares() {
-            engineDiffers(unicode);
-            return ENGINE_COMPARES[unicode ? 0 : 1];
+            comparedByEngine = true;
+            engineDiffers(unicode, reference);
+            return ENGINE_COMPARES[(unicode ? 0 : 1) + (reference ? 2 : 0)];
         }
 
         /** The classes among these that have a character the engine does not compare as ECMA-262 does. */
         private int[][] writtenOut(int[][] classes) {
-            int[] differs = engineDiffers(unicode);
+            comparedByEngine = true;
+            int[] differs = engineDiffers(unicode, reference);
             List<int[]> kept = new ArrayList<>();
             for (int[] members : classes) {
                 for (int c : members) {
@@ -5783,11 +5991,17 @@ final class EcmaRegex {
          * with some character, as the Canonicalize of a grammar does. Both characters of a pair it gets wrong are in
          * the set, whichever of them stands in the group.
          */
-        private static int[] engineDiffers(boolean unicode) {
-            int at = unicode ? 0 : 1;
+        private static int[] engineDiffers(boolean unicode, boolean reference) {
+            if (reference) {
+                // What this engine gets wrong is part of it too, whatever the JDK, so that the answers are right.
+                engineDiffers(unicode, false);
+            }
+            int at = (unicode ? 0 : 1) + (reference ? 2 : 0);
             synchronized (ENGINE_DIFFERS) {
                 if (ENGINE_DIFFERS[at] == null) {
-                    int[] differs = askEngine(unicode);
+                    int[] differs = reference
+                            ? EcmaUnicode.union(REFERENCE_DIFFERS[unicode ? 0 : 1], ENGINE_DIFFERS[unicode ? 0 : 1])
+                            : askEngine(unicode);
                     StringBuilder sb = new StringBuilder("(?!");
                     if (differs.length == 0) {
                         sb.setLength(0);
@@ -5800,6 +6014,11 @@ final class EcmaRegex {
                 }
                 return ENGINE_DIFFERS[at];
             }
+        }
+
+        /** Whether the engine of this JVM gets wrong every character the engine of reference does. */
+        static boolean isReference(boolean unicode) {
+            return Arrays.equals(engineDiffers(unicode, false), engineDiffers(unicode, true));
         }
 
         private static final int CODE_POINTS = EcmaUnicode.MAX + 1;

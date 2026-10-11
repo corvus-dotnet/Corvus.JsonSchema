@@ -402,6 +402,42 @@ class ApiTest {
     }
 
     @Test
+    void aPatternOverALimitOfSizeIsRefusedAsTooLarge() {
+        // Four hundred classes of every letter are valid, and are over a million characters as java.util.regex is
+        // given them.
+        String classes = "\\\\p{L}".repeat(400);
+        long start = System.nanoTime();
+        PatternTooLargeException large = assertThrows(PatternTooLargeException.class,
+                () -> Validator.compile("{\"pattern\": \"" + classes + "\"}"));
+        assertTrue((System.nanoTime() - start) / 1e9 < 20);
+        assertEquals("\\p{L}".repeat(400), large.pattern());
+        assertEquals("The regular expression '" + "\\p{L}".repeat(24) + "...' (of 2000 characters) in pattern is over a "
+                + "limit of size. It is a valid ECMA-262 regular expression, and is too large: what is written for "
+                + "java.util.regex to run it is more than 1,048,576 characters.", large.getMessage());
+        // It is an error of compilation, in patternProperties too, and not the error of a pattern that is not valid.
+        assertThrows(SchemaCompilationException.class,
+                () -> Validator.compile("{\"patternProperties\": {\"" + classes + "\": {}}}"));
+        SchemaCompilationException invalid = assertThrows(SchemaCompilationException.class,
+                () -> Validator.compile("{\"pattern\": \"" + classes + "(\"}"));
+        assertFalse(invalid instanceof PatternTooLargeException);
+        // A pattern of more than 1,048,576 characters, or with groups more than 200 deep, is not read.
+        PatternTooLargeException longer = assertThrows(PatternTooLargeException.class,
+                () -> Validator.compile("{\"pattern\": \"" + "a".repeat((1 << 20) + 1) + "\"}"));
+        assertTrue(longer.getMessage().endsWith("is over a limit of size. It is too large to be read: it has more "
+                + "than 1,048,576 characters. Whether it is valid is not known."), longer.getMessage());
+        PatternTooLargeException deep = assertThrows(PatternTooLargeException.class,
+                () -> Validator.compile("{\"pattern\": \"" + "(?:".repeat(201) + "a" + ")".repeat(201) + "\"}"));
+        assertTrue(deep.getMessage().endsWith("It is too large to be read: its groups are nested more than 200 deep. "
+                + "Whether it is valid is not known."), deep.getMessage());
+        // What is under the limits compiles, and matches.
+        Validator most = Validator.compile("{\"pattern\": \"^" + "\\\\p{L}".repeat(300) + "$\"}");
+        assertTrue(most.isValid("\"" + "a".repeat(300) + "\""));
+        assertFalse(most.isValid("\"" + "a".repeat(299) + "1\""));
+        Validator nested = Validator.compile("{\"pattern\": \"^" + "(?:".repeat(199) + "a" + ")".repeat(199) + "$\"}");
+        assertTrue(nested.isValid("\"a\""));
+    }
+
+    @Test
     void documentsPrintAsJson() {
         String text = "{\"a\":[1,2.50,true,null,\"x\\n\\\"\\u0001\"],\"b\":{}}";
         assertEquals(text, JsonDocument.parse(text).toString());

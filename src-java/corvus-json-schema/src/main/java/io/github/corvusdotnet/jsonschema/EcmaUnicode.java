@@ -426,6 +426,32 @@ final class EcmaUnicode {
         }
     }
 
+    /** The names of the classes of {@link #engineClass}, and for each the length of {@link #referenceLength}. */
+    private static final String[] REFERENCE_NAMES = {
+        "Lu", "Ll", "Lt", "Lm", "Lo", "Mn", "Mc", "Me", "Nd", "Nl", "No", "Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po", "Sm",
+        "Sc", "Sk", "So", "Zs", "Zl", "Zp", "Cc", "Cf", "Cs", "Co", "Cn", "LC", "L", "M", "N", "P", "S", "Z", "C",
+        "IsAlphabetic", "IsLowercase", "IsUppercase",
+    };
+    private static final int[] REFERENCE_LENGTHS = {
+        489, 659, 8, 545, 2158, 1381, 495, 8, 392, 52, 52, 8, 49, 63, 63, 8, 8, 402, 80, 48, 45, 1457, 8, 8, 8, 8, 65, 8,
+        8, 5754, 762, 3079, 1353, 429, 411, 1510, 7, 5753, 3261, 789, 498,
+    };
+
+    /**
+     * The length of what is written for the set of a property with the engine class of this name, alone in a class,
+     * on JDK 17: the class and what corrects it for Unicode 13. On a later JDK, which knows a later Unicode version,
+     * less corrects it and the text is shorter. The limit on the size of a translation counts a set at this length
+     * on every JDK, so that it refuses the same patterns on each (see {@link EcmaRegex#translation}).
+     */
+    static int referenceLength(String engineName) {
+        for (int k = 0; k < REFERENCE_NAMES.length; k++) {
+            if (engineName.length() == REFERENCE_NAMES[k].length() + 4 && engineName.startsWith(REFERENCE_NAMES[k], 3)) {
+                return REFERENCE_LENGTHS[k];
+            }
+        }
+        throw new IllegalStateException(engineName);
+    }
+
     /** The code points of {@code a} that are not in {@code b}. */
     static int[] difference(int[] a, int[] b) {
         return complement(union(complement(a), b));

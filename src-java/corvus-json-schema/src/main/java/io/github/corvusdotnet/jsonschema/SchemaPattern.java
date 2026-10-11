@@ -61,21 +61,42 @@ final class SchemaPattern {
     }
 
     /**
-     * The message for a pattern {@link #compile} returned null for, where {@code keyword} is the keyword that holds
+     * The error for a pattern {@link #compile} returned null for, where {@code keyword} is the keyword that holds
      * it. A pattern that is valid ECMA-262 and that cannot be run with the same meaning says why (see
-     * {@link EcmaRegex}).
+     * {@link EcmaRegex}). One that is over a limit of size is a {@link PatternTooLargeException}, which names the
+     * limit, and is not said to be invalid.
      */
-    static String failure(String pattern, String keyword) {
+    static SchemaCompilationException failure(String pattern, String keyword) {
+        String limit = EcmaRegex.tooLarge(pattern);
+        if (limit != null) {
+            String valid = EcmaRegex.wasRead(pattern)
+                    ? "It is a valid ECMA-262 regular expression, and is too large: " + limit + "."
+                    : "It is too large to be read: " + limit + ". Whether it is valid is not known.";
+            return new PatternTooLargeException(
+                    "The regular expression " + shown(pattern) + " in " + keyword + " is over a limit of size. " + valid,
+                    pattern);
+        }
         String reason = EcmaRegex.unsupported(pattern);
         if (reason == null && EcmaRegex.translate(pattern) != null) {
             // It is translated now: it was too large for the stack as it stood when it was compiled.
-            reason = EcmaRegex.REFUSED_TOO_LARGE;
+            return new PatternTooLargeException(
+                    "The regular expression " + shown(pattern) + " in " + keyword + " is over a limit of size. It is a "
+                            + "valid ECMA-262 regular expression, and is too large: " + EcmaRegex.LIMIT_STACK + ".",
+                    pattern);
         }
         if (reason == null) {
-            return "Invalid regular expression '" + pattern + "' in " + keyword + ".";
+            return new SchemaCompilationException("Invalid regular expression '" + pattern + "' in " + keyword + ".");
         }
-        return "Unsupported regular expression '" + pattern + "' in " + keyword + ". It is valid ECMA-262, but this "
-                + "library cannot run " + reason + " with the meaning ECMA-262 gives it.";
+        return new SchemaCompilationException(
+                "Unsupported regular expression '" + pattern + "' in " + keyword + ". It is valid ECMA-262, but this "
+                        + "library cannot run " + reason + " with the meaning ECMA-262 gives it.");
+    }
+
+    /** A pattern as a message shows it: the first 120 characters of a long one, and its length. */
+    private static String shown(String pattern) {
+        return pattern.length() <= 120
+                ? "'" + pattern + "'"
+                : "'" + pattern.substring(0, 120) + "...' (of " + pattern.length() + " characters)";
     }
 
     /**

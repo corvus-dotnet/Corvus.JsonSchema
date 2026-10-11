@@ -522,6 +522,8 @@ final class PatternShapes {
         return (b, off, len, ascii) -> map.get(b, off, len) >= 0;
     }
 
+    /** At most this many characters of one alternative after expanding the groups with a count. */
+    private static final int MAX_EXPANDED_LENGTH = 1 << 12;
     /** At most this many alternatives after expanding groups. */
     private static final int MAX_ALTERNATIVES = 64;
     /** At most this many alternatives when any is a class sequence. */
@@ -594,6 +596,10 @@ final class PatternShapes {
                         List<String> r = new ArrayList<>();
                         for (String a : repeated) {
                             for (String x : inner) {
+                                if (a.length() + x.length() > MAX_EXPANDED_LENGTH) {
+                                    // Counts inside counts multiply: (?:(?:a{2}){2}){2}... doubles at each level.
+                                    return null;
+                                }
                                 r.add(a + x);
                             }
                         }
