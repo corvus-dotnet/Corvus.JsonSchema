@@ -22,6 +22,11 @@ regex = "1.13.1"
 regress = { version = "0.12.0", features = ["utf16"] }
 serde_json = { version = "1.0.151", features = ["preserve_order", "float_roundtrip"] }
 
+[lints.rust]
+# A build with this cfg makes every match of the regular expression engine use its memory of failed places from its
+# first step (see src/ecmaregex/vm.rs), which is how the test data is run with the memory in use for every pattern.
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(corvus_memo_from_the_start)'] }
+
 [profile.release]
 codegen-units = 1
 lto = "fat"

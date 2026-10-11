@@ -22,6 +22,8 @@
 mod compiler;
 mod dialect;
 mod document;
+#[allow(dead_code)]
+mod ecmaregex;
 mod eval;
 mod formats;
 mod instance;
