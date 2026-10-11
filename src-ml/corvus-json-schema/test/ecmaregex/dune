@@ -18,13 +18,16 @@
   corvus-json-schema.ucd
   threads.posix))
 
-; The limits of the engine: the limit on a match and the limits on the size of a pattern (match_limit_test.go and
-; size_limit_test.go of the Go module). unix is for the time of the wall, which the tests measure.
+; The limits of the engine: the limit on a match and the limits on the size of a pattern (match_limit_test.go,
+; size_limit_test.go and size_cases_test.go of the Go module). size_cases.json is the file of the Go package
+; (testdata/size_cases.json there), with the size the Go parser counts for each pattern. unix is for the time of the
+; wall, which the tests measure, and the library does not use it.
 
 (test
  (name test_limits)
  (modules test_limits)
- (libraries corvus-json-schema.ecmaregex unix))
+ (deps size_cases.json)
+ (libraries corvus-json-schema.ecmaregex test_ecmaregex_json unix))
 
 ; One compiled pattern matched from several domains at once. Domains need OCaml 5, so the source of the test is
 ; domains_5.ml there and a line that says so on OCaml 4.

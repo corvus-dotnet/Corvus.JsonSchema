@@ -1,5 +1,5 @@
 (* The tests of the limits of the regular expression engine: the limit on a match, and the limits on the size of one
-   pattern. They are match_limit_test.go and size_limit_test.go of the ecmaregex package of the Go
+   pattern. They are match_limit_test.go, size_limit_test.go and size_cases_test.go of the ecmaregex package of the Go
    module. A schema and an instance may both come from outside, so neither a pattern nor a text may make a match run
    without end or hold memory without bound, and no pattern may take long or much memory to read and to compile.
 
@@ -346,6 +346,33 @@ let test_a_pattern_over_a_limit_of_size_is_too_large () =
             (String.sub pattern 0 (min 20 (String.length pattern))))
     [ "("; "a**"; {|(?<n>a)\k<m>|}; "[b-a]"; nest (Re.max_nesting - 1) ^ ")" ]
 
+(* Checks the size the parser counts for each pattern of size_cases.json, under each grammar, against the size the Go
+   package counts, which is in the file. The size of a pattern decides whether it is refused as too large, so the
+   engines must count the same figure for every pattern, or a schema one of them compiles would be refused by another.
+   The file is the one of the Go package (testdata/size_cases.json there) and is not changed here. *)
+let test_the_size_of_a_pattern () =
+  let data = In_channel.with_open_bin "size_cases.json" In_channel.input_all in
+  let cases =
+    match Json.parse data with Json.Array cases -> cases | _ -> failwith "size_cases.json is not an array"
+  in
+  let valid = ref 0 and legacy = ref 0 and invalid = ref 0 in
+  let number name c =
+    match Json.member name c with Some (Json.Number n) -> int_of_float n | _ -> failwith ("no number " ^ name)
+  in
+  List.iter
+    (fun c ->
+      let p = Json.text "p" c in
+      let want_u = number "u" c and want_l = number "l" c in
+      let u = Re.Internal.size p true and l = Re.Internal.size p false in
+      if u <> want_u || l <> want_l then
+        fail "%S: size %d with the u flag and %d without, the Go package counts %d and %d" p u l want_u want_l;
+      if want_u >= 0 then incr valid else if want_l >= 0 then incr legacy else incr invalid)
+    cases;
+  log "%d patterns: %d valid with the u flag, %d only without it, %d not valid" (List.length cases) !valid !legacy
+    !invalid;
+  if List.length cases <> 122 || !valid < 90 || !legacy < 10 || !invalid < 5 then
+    fail "the cases are not the ones this test is about"
+
 let () =
   let ran = ref 0 in
   List.iter
@@ -363,6 +390,7 @@ let () =
       ("a limited match allocates nothing", test_a_limited_match_allocates_nothing);
       ("a pattern at the limit of size is cheap", test_a_pattern_at_the_limit_of_size_is_cheap);
       ("a pattern over a limit of size is too large", test_a_pattern_over_a_limit_of_size_is_too_large);
+      ("the size of a pattern", test_the_size_of_a_pattern);
     ];
   if !failures <> 0 then begin
     Printf.printf "FAILED: %d failures\n" !failures;
