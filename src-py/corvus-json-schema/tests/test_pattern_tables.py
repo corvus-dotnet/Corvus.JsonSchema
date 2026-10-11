@@ -5,13 +5,14 @@ for the same pattern with the i flag. A pattern with ``\\-`` outside a class is 
 
 from __future__ import annotations
 
-from itertools import product
+from itertools import pairwise, product
+from typing import Any
 
 import pytest
 
 import corvus_json_schema as cjs
 from corvus_json_schema import pattern as pattern_module
-from corvus_json_schema.pattern import translate
+from corvus_json_schema.pattern import compile_pattern, translate
 
 
 def _words(alphabet: str, longest: int) -> list[str]:
@@ -785,12 +786,6 @@ _NAMES_ONLY_AN_ENGINE_HAS: list[tuple[str, str, str]] = [
     ("^[\\P{ScriptExtensions=Greek}]+$", "NAMES", "c000006030"),
     ("\\p{scx=Any}", "NAMES", "c"),
     ("^[\\P{scx=Any}]+$", "NAMES", "4000006000"),
-    ("\\p{sc=Sidetic}", "NAMES", "c"),
-    ("^[\\P{sc=Sidetic}]+$", "NAMES", "4000006000"),
-    ("\\p{sc=Sidt}", "NAMES", "c"),
-    ("^[\\P{sc=Sidt}]+$", "NAMES", "4000006000"),
-    ("\\p{sc=Tolong_Siki}", "NAMES", "c"),
-    ("^[\\P{sc=Tolong_Siki}]+$", "NAMES", "4008006800"),
     ("\\p{blk=ASCII}", "NAMES", "c"),
     ("^[\\P{blk=ASCII}]+$", "NAMES", "4000006000"),
     ("\\p{Block=Greek}", "NAMES", "c"),
@@ -1044,15 +1039,29 @@ def test_a_pattern_neither_grammar_takes_is_refused(pattern: str) -> None:
         cjs.compile({"pattern": pattern})
 
 
-def test_the_engine_is_never_asked_what_a_property_name_means() -> None:
-    # Each expression is written with its property named and a value by its short name, whatever alias was used.
-    assert translate("\\p{Lu}") == translate("\\p{Uppercase_Letter}") == ("\\p{gc=Lu}", True)
-    assert translate("\\P{Script=Greek}") == translate("\\P{sc=Grek}") == ("\\P{sc=Grek}", True)
-    assert translate("[\\p{scx=Greek}\\p{Alpha}]") == ("[\\p{scx=Grek}\\p{Alphabetic=Yes}]", True)
-    assert translate("\\p{Assigned}") == ("\\P{gc=Cn}", True)
-    # ASCII and Any are ranges, which the standard library's engine runs.
+def _for_regex(pattern: str) -> tuple[str, bool] | None:
+    return translate(pattern, for_regex=True)
+
+
+def test_the_engine_is_never_asked_what_a_property_name_means(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Where the regex package has the characters that the package's tables have for a property, the property is
+    # written for it by name: the property named, and a value by its short name, whatever alias was used.
+    monkeypatch.setattr(pattern_module, "_host_agrees", lambda expression, ranges: True)
+    assert _for_regex("\\p{Lu}") == _for_regex("\\p{Uppercase_Letter}") == ("\\p{gc=Lu}", True)
+    assert _for_regex("\\P{Script=Greek}") == _for_regex("\\P{sc=Grek}") == ("\\P{sc=Grek}", True)
+    assert _for_regex("[\\p{scx=Greek}\\p{Alpha}]") == ("[\\p{scx=Grek}\\p{Alphabetic=Yes}]", True)
+    assert _for_regex("\\p{Assigned}") == ("\\P{gc=Cn}", True)
+    # Where it does not (an older release has an older Unicode), and for the standard library's engine, which has
+    # no properties, the characters are written as ranges from the package's tables.
+    monkeypatch.setattr(pattern_module, "_host_agrees", lambda expression, ranges: False)
+    titles = "[ǅǈǋǲᾈ-ᾏᾘ-ᾟᾨ-ᾯᾼῌῼ]"
+    assert _for_regex("\\p{Lt}") == _for_regex("\\p{gc=Titlecase_Letter}") == (titles, True)
+    assert translate("^\\p{Lt}$") == (f"^{titles}\\Z", False)
+    assert translate("^[\\p{Lt}x]$") == (f"^[{titles[1:-1]}x]\\Z", False)
+    assert translate("^\\p{sc=Sidetic}+$") == ("^(?:[\U00010940-\U00010959])+\\Z", False)
+    # ASCII and Any are ranges for both engines.
     assert translate("^\\p{ASCII}$") == ("^[\\x00-\\x7f]\\Z", False)
-    assert translate("^[^\\P{ASCII}a]$") == ("^[^\\u0080-\\U0010ffffa]\\Z", False)
+    assert translate("^[^\\P{ASCII}a]$") == ("^[^\\u0080-\U0010ffffa]\\Z", False)
     assert translate("\\P{Any}") == translate("[\\P{Any}]") == ("(?!)", False)
     for pattern in (
         "\\p{Greek}",
@@ -1068,13 +1077,102 @@ def test_the_engine_is_never_asked_what_a_property_name_means() -> None:
         assert translate(pattern, False) is not None, pattern
 
 
-def test_the_regex_package_has_every_property_of_ecma_262() -> None:
+def test_every_property_of_ecma_262_has_its_characters_in_the_package() -> None:
+    from corvus_json_schema import _properties
+
+    assert _properties.UNICODE_VERSION == "17.0.0"
     assert pattern_module._property("L") is not None
     names = sorted(pattern_module._properties)
-    assert len(names) == 1690
+    assert len(names) == 1722
     for name in names:
+        known = pattern_module._property(name)
+        assert known is not None
+        ranges = known[1]
+        # In order, and no two ranges touch.
+        assert all(a[1] + 1 < b[0] for a, b in pairwise(ranges)), name
+        assert all(0 <= lo <= hi <= 0x10FFFF for lo, hi in ranges), name
         for pattern in (f"\\p{{{name}}}", f"[^\\P{{{name}}}a]"):
             assert cjs.compile({"pattern": pattern})("a") in (True, False), pattern
+    # The values that follow from the others.
+    letters = pattern_module._property("L")
+    cased = pattern_module._property("LC")
+    assert letters is not None and cased is not None
+    assert pattern_module._holds(letters[1], ord("a")) and pattern_module._holds(letters[1], 0x4E2D)
+    assert pattern_module._holds(cased[1], ord("a")) and not pattern_module._holds(cased[1], 0x4E2D)
+    unknown, assigned = pattern_module._property("sc=Zzzz"), pattern_module._property("Assigned")
+    assert unknown is not None and assigned is not None
+    assert pattern_module._holds(unknown[1], 0x378) and not pattern_module._holds(assigned[1], 0x378)
+
+
+_EVERY_CHARACTER = "".join(map(chr, range(0x110000)))
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["sc=Sidetic", "sc=Grek", "scx=Grek", "Lt", "Zs", "Nl", "Bidi_Control", "Regional_Indicator", "Assigned", "Any"],
+)
+def test_a_property_has_the_characters_of_the_tables_whatever_the_regex_package_has(
+    name: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import re
+
+    import regex
+
+    known = pattern_module._property(name)
+    assert known is not None
+    ranges = known[1]
+
+    def found(search: Any, pattern: str) -> list[tuple[int, int]]:
+        return [(m.start(), m.end() - 1) for m in search(pattern).finditer(_EVERY_CHARACTER)]
+
+    for agrees in (False, True):
+        # False: as with a release of the regex package that has another version of Unicode.
+        if not agrees:
+            monkeypatch.setattr(pattern_module, "_host_agrees", lambda expression, ranges: False)
+        else:
+            monkeypatch.undo()
+        positive, negative = _for_regex(f"\\p{{{name}}}+"), _for_regex(f"\\P{{{name}}}+")
+        assert positive is not None and negative is not None
+        assert found(regex.compile, positive[0]) == ranges, name
+        assert found(regex.compile, negative[0]) == pattern_module._complement(ranges), name
+        inside = _for_regex(f"[\\p{{{name}}}]+")
+        assert inside is not None and found(regex.compile, inside[0]) == ranges, name
+    # And for the standard library's engine, which has no properties.
+    plain = translate(f"\\p{{{name}}}+")
+    assert plain is not None and not plain[1]
+    assert found(lambda p: re.compile(p, re.ASCII), plain[0]) == ranges, name
+
+
+def test_the_scripts_and_the_case_pairs_of_unicode_17_are_known() -> None:
+    # The four scripts of Unicode 17, by long name and by code, with a character of each. V8 13.6 has Unicode 16,
+    # where these are not names, so a pattern with one is read there without the u flag.
+    for long, code, first in (
+        ("Sidetic", "Sidt", 0x10940),
+        ("Tolong_Siki", "Tols", 0x11DB0),
+        ("Beria_Erfe", "Berf", 0x16EA0),
+        ("Tai_Yo", "Tayo", 0x1E6C0),
+    ):
+        for name in (f"sc={long}", f"Script={code}", f"scx={code}", f"Script_Extensions={long}"):
+            validate = cjs.compile({"pattern": f"^\\p{{{name}}}$"})
+            assert validate(chr(first)) and not validate("a") and not validate("p"), name
+            assert cjs.compile({"pattern": f"^\\P{{{name}}}$"})("a"), name
+        assert cjs.compile({"pattern": f"^[\\p{{sc={long}}}x]+$"})("x" + chr(first))
+    # U+16EA0 is an uppercase letter of Unicode 17, and was not assigned in Unicode 16.
+    assert cjs.compile({"pattern": "^\\p{Lu}\\p{Ll}$"})("\U00016ea0\U00016ebb")
+    assert not cjs.compile({"pattern": "^\\p{Cn}$"})("\U00016ea0")
+    # Its case pairs: three of Latin and the letters of Beria Erfe.
+    for upper, lower in (("꟎", "꟏"), ("꟒", "ꟓ"), ("꟔", "ꟕ"), ("\U00016ea0", "\U00016ebb")):
+        for pattern in (f"(?i:^{upper}$)", f"(?i:^[{lower}]$)", f"(?i:^({upper})\\1$)"):
+            validate = cjs.compile({"pattern": pattern})
+            text = lower if "\\1" not in pattern else upper + lower
+            assert validate(text), (pattern, text)
+        assert not cjs.compile({"pattern": f"^{upper}$"})(lower)
+    # Without the u flag a case pair is of UTF-16 code units, so the three of Latin and no letter of Beria Erfe.
+    assert cjs.compile({"pattern": "(?i:^\\-?꟎$)"})("꟏")
+    assert not cjs.compile({"pattern": "(?i:^\\-?\U00016ea0$)"})("\U00016ebb")
+    # A group name is an identifier by the same tables: these letters start one.
+    assert compile_pattern("(?<\U00016ea0\U00010940>a)\\k<\U00016ea0\U00010940>") is not None
+    assert compile_pattern("(?<͸>a)") is None
 
 
 def test_where_v8_departs_from_ecma_262_in_the_names_it_takes() -> None:

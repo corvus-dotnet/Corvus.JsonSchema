@@ -19,8 +19,8 @@ match.
 Inside ``s`` the dot is any character. Inside ``m``, ``^`` and ``$`` are lookarounds for ECMA's four line
 terminators. Inside ``i`` a character is the class of the characters equal to it without case, and a class takes
 every character equal to a member. Equal means the same simple case folding with the ``u`` flag and the same
-uppercase form of a UTF-16 code unit without it, from the tables of ``_casefold`` (Unicode 16), which are the same
-on every version of Python. A backreference inside ``i`` is compared character by character with the same tables,
+uppercase form of a UTF-16 code unit without it, from the tables of ``_casefold`` (Unicode 17), which are the same
+on every version of Python and with every release of the ``regex`` package. A backreference inside ``i`` is compared character by character with the same tables,
 by a loop written out for the ``regex`` package (see ``_Writer._folded``). Neither engine's own case-insensitive
 backreference is used: both take ``i`` for U+0130, and each has the case pairs of its own version of Unicode.
 
@@ -132,50 +132,158 @@ class _Invalid(Exception):
     pass
 
 
-_properties: dict[str, tuple[str, str, _Ranges | None]] = {}
+# A property expression of ECMA-262: how the regex package is asked for its characters and for the others (None:
+# the package has no such property), and what gives the characters as ranges.
+_properties: dict[str, tuple[tuple[str, str] | None, Callable[[], _Ranges]]] = {}
+_tables: dict[str, _Ranges] = {}
+_table_texts: dict[str, str] = {}
+_GROUPS = {"LC": ("Ll", "Lt", "Lu")}
 
 
-def _property(body: str) -> tuple[str, str, _Ranges | None] | None:
-    """What a property expression of ECMA-262 (the text between the braces of a ``\\p{...}``) is for the regex
-    package: the class member that takes its characters and the one that takes the others, or the ranges of its
-    characters for a property that the package does not have. None: ECMA-262 has no such expression.
+def _table(key: str) -> _Ranges:
+    """The characters of one table of ``_properties`` (the module), by ``gc:``, ``sc:``, ``scx:`` or ``b:`` and
+    the name the table has there. They are read from the module's text when they are first asked for."""
+    got = _tables.get(key)
+    if got is None:
+        if not _table_texts:
+            from . import _properties as tables
+
+            for kind, entries in (
+                ("gc", tables.GENERAL_CATEGORY_RANGES),
+                ("sc", tables.SCRIPT_RANGES),
+                ("scx", tables.SCRIPT_EXTENSIONS_RANGES),
+                ("b", tables.BINARY_RANGES),
+            ):
+                for entry in entries.split(";"):
+                    name, _, text = entry.partition(":")
+                    _table_texts[f"{kind}:{name}"] = text
+        got = []
+        for item in _table_texts[key].split(" "):
+            lo, _, hi = item.partition("-")
+            got.append((int(lo, 16), int(hi or lo, 16)))
+        _tables[key] = got
+    return got
+
+
+def _union(keys: list[str]) -> Callable[[], _Ranges]:
+    def ranges() -> _Ranges:
+        key = "+".join(keys)
+        got = _tables.get(key)
+        if got is None:
+            got = _tables[key] = _merged([r for k in keys for r in _table(k)])
+        return got
+
+    return ranges
+
+
+def _property(body: str) -> tuple[tuple[str, str] | None, _Ranges] | None:
+    """What a property expression of ECMA-262 (the text between the braces of a ``\\p{...}``) is: how the regex
+    package is asked for its characters and for the others, and its characters as ranges. None: ECMA-262 has no
+    such expression.
 
     The names are ECMA-262's and no others, and their case matters: a value of General_Category by itself or after
     ``General_Category=`` or ``gc=``, a value of Script after ``Script=``, ``sc=``, ``Script_Extensions=`` or
     ``scx=``, and a binary property that ECMA-262 lists. The regex package has many more (``\\p{Greek}``,
-    ``\\p{IsLatin}``, ``\\p{alpha}``, block names, any case), so it is never asked what a name means: each
-    expression is written for it with the property named, and a value by its short name."""
+    ``\\p{IsLatin}``, ``\\p{alpha}``, block names, any case), so it is never asked what a name means.
+
+    The characters are those of Unicode 17, from the tables of ``_properties`` (which every port of the evaluator
+    has), whatever version of Unicode the regex package that is installed has. The package's own property is
+    written only where it has the same characters (see ``_host_agrees``)."""
     if not _properties:
         from . import _properties as tables
 
-        for names in tables.GENERAL_CATEGORY.split(";"):
-            short = names.split(" ")[0]
-            entry: tuple[str, str, _Ranges | None] = (f"\\p{{gc={short}}}", f"\\P{{gc={short}}}", None)
-            for name in names.split(" "):
+        values = [names.split(" ") for names in tables.GENERAL_CATEGORY.split(";")]
+        shorts = [names[0] for names in values]
+        for names in values:
+            short = names[0]
+            # A group (L, LC, M and so on) has the values whose names start with its letter.
+            members = _GROUPS.get(short) or (
+                [s for s in shorts if len(s) == 2 and s[0] == short and s[1].islower()] or [short]
+            )
+            entry = ((f"\\p{{gc={short}}}", f"\\P{{gc={short}}}"), _union([f"gc:{m}" for m in members]))
+            for name in names:
                 _properties[name] = _properties[f"gc={name}"] = _properties[f"General_Category={name}"] = entry
-        for names in tables.SCRIPT.split(";"):
-            short = names.split(" ")[0]
-            for kind, long in (("sc", "Script"), ("scx", "Script_Extensions")):
-                entry = (f"\\p{{{kind}={short}}}", f"\\P{{{kind}={short}}}", None)
-                for name in names.split(" "):
-                    _properties[f"{kind}={name}"] = _properties[f"{long}={name}"] = entry
-        changes: _Ranges = []
-        for item in tables.CHANGES_WHEN_NFKC_CASEFOLDED.split(" "):
-            lo, _, hi = item.partition("-")
-            changes.append((int(lo, 16), int(hi or lo, 16)))
+        for script in tables.SCRIPT.split(";"):
+            names = script.split(" ")
+            short, long = names[0], (names * 2)[1]
+            for kind, property_name in (("sc", "Script"), ("scx", "Script_Extensions")):
+                if short == "Zzzz":
+                    # What no script has: the characters that are not assigned, of private use and surrogates.
+                    ranges = _union(["gc:Cn", "gc:Co", "gc:Cs"])
+                elif short == "Hrkt":
+                    # No character has this value.
+                    ranges = _union([])
+                else:
+                    table = f"scx:{long}" if kind == "scx" and f"scx:{long}" in _table_names() else f"sc:{long}"
+                    ranges = _union([table])
+                entry = ((f"\\p{{{kind}={short}}}", f"\\P{{{kind}={short}}}"), ranges)
+                for name in names:
+                    _properties[f"{kind}={name}"] = _properties[f"{property_name}={name}"] = entry
+
+        def assigned() -> _Ranges:
+            return _complement(_table("gc:Cn"))
+
         # The regex package has no property of these names, or (ASCII) has a block of the name.
-        special: dict[str, tuple[str, str, _Ranges | None]] = {
-            "ASCII": ("", "", [(0, 0x7F)]),
-            "Any": ("", "", [(0, 0x10FFFF)]),
-            "Assigned": ("\\P{gc=Cn}", "\\p{gc=Cn}", None),
-            "Changes_When_NFKC_Casefolded": ("", "", changes),
+        special: dict[str, tuple[tuple[str, str] | None, Callable[[], _Ranges]]] = {
+            "ASCII": (None, lambda: [(0, 0x7F)]),
+            "Any": (None, lambda: [(0, 0x10FFFF)]),
+            "Assigned": (("\\P{gc=Cn}", "\\p{gc=Cn}"), assigned),
+            "Changes_When_NFKC_Casefolded": (None, _union(["b:Changes_When_NFKC_Casefolded"])),
         }
-        for names in tables.BINARY.split(";"):
-            long = names.split(" ")[0]
-            binary = special.get(long, (f"\\p{{{long}=Yes}}", f"\\P{{{long}=Yes}}", None))
-            for name in names.split(" "):
+        for property_names in tables.BINARY.split(";"):
+            long = property_names.split(" ")[0]
+            binary = special.get(long) or ((f"\\p{{{long}=Yes}}", f"\\P{{{long}=Yes}}"), _union([f"b:{long}"]))
+            for name in property_names.split(" "):
                 _properties[name] = binary
-    return _properties.get(body)
+    known = _properties.get(body)
+    return None if known is None else (known[0], known[1]())
+
+
+def _table_names() -> dict[str, str]:
+    if not _table_texts:
+        _table("gc:Lu")
+    return _table_texts
+
+
+_host: dict[str, bool] = {}
+_every_character: list[str] = []
+
+
+def _host_agrees(expression: str, ranges: _Ranges) -> bool:
+    """Whether the regex package that is installed has the characters of ``ranges``, and no others, for a property
+    expression. The package has the version of Unicode of its release (16 in 2025.9.1, 17 in 2026.9.29), and the
+    property is written for it only where that makes no difference: it looks a character up in a table, where a
+    class of some hundreds of ranges is searched range by range.
+
+    Every character is asked about, once for an expression, which takes some milliseconds. The text of every
+    character (4 MB) is kept from the first time."""
+    agrees = _host.get(expression)
+    if agrees is None:
+        import regex
+
+        if not _every_character:
+            _every_character.append("".join(map(chr, range(0x110000))))
+        try:
+            found = [(m.start(), m.end() - 1) for m in regex.compile(expression + "+").finditer(_every_character[0])]
+        except regex.error:
+            found = None
+        agrees = _host[expression] = found == ranges
+    return agrees
+
+
+def _table_class(ranges: _Ranges) -> str:
+    """Ranges of a table as members of a class. A character from U+00A1 up that is not a surrogate is written as
+    it is, which is a third of the length of an escape."""
+
+    def one(o: int) -> str:
+        return chr(o) if o >= 0xA1 and not 0xD800 <= o <= 0xDFFF else _literal(chr(o))
+
+    return "".join(one(lo) if lo == hi else f"{one(lo)}-{one(hi)}" for lo, hi in ranges)
+
+
+def _holds(ranges: _Ranges, o: int) -> bool:
+    k = bisect_left(ranges, (o + 1,)) - 1
+    return k >= 0 and ranges[k][1] >= o
 
 
 def _both_ways(properties: list[str]) -> bool:
@@ -1324,13 +1432,14 @@ class _Translator:
                 c = chr(code)
             name += c
         if _ASCII_NAME_RE.fullmatch(name) is None:
-            import regex
-
             if not self.u:
                 # The pattern is read by code unit (see _units), and a name is of characters.
                 name = name.encode("utf-16-le", "surrogatepass").decode("utf-16-le", "surrogatepass")
-
-            if regex.fullmatch(r"[\p{ID_Start}$_][\p{ID_Continue}$\u200c\u200d]*", name) is None:
+            # An identifier of ECMA-262, by the tables of Unicode 17 that the package has.
+            starts, continues = _table("b:ID_Start"), _table("b:ID_Continue")
+            if name == "" or not (name[0] in "$_" or _holds(starts, ord(name[0]))):
+                raise self.error()
+            if not all(c in "$\u200c\u200d" or _holds(continues, ord(c)) for c in name[1:]):
                 raise self.error()
         return name
 
@@ -1375,11 +1484,11 @@ class _Translator:
             self.named_refs.append((ref, self._group_name()))
             return ref, True
         if e in "pP" and self.u:
-            member, ranges = self._property_escape()
+            member, ranges, host = self._property_escape()
             if self.icase:
-                return self._folded_class(ranges or [], [member] if ranges is None else [], False), True
-            if ranges is None:
-                return self._one(member), True
+                return self._folded_class([], [(member, ranges)], False), True
+            if host:
+                return self._one(member, ranges), True
             return self._one(f"[{member}]" if ranges else _NEVER, ranges), True
         text, char = self._char_escape(in_class=False)
         if char is not None:
@@ -1481,23 +1590,25 @@ class _Translator:
         # Annex B identity escape.
         return "", e
 
-    def _property_escape(self) -> tuple[str, _Ranges | None]:
+    def _property_escape(self) -> tuple[str, _Ranges, bool]:
         """A ``\\p{...}`` or ``\\P{...}`` of a pattern with the ``u`` flag, from its ``p``: the class member that
-        takes its characters, and the characters as ranges when the member is written from them (see ``_property``).
-        Without the ``u`` flag ``\\p`` is the letter ``p`` (Annex B), which ``_char_escape`` reads."""
+        takes its characters, the characters as ranges, and whether the member is the regex package's own property
+        (it is a list of ranges otherwise, see ``_property``). Without the ``u`` flag ``\\p`` is the letter ``p``
+        (Annex B), which ``_char_escape`` reads."""
         negated = self.p[self.i] == "P"
         end = self.p.find("}", self.i)
         known = _property(self.p[self.i + 2 : end]) if end > 0 and self.peek(1) == "{" else None
         if known is None:
             raise self.error()
         self.i = end + 1
-        positive, negative, ranges = known
-        if ranges is None:
-            self.needs_regex = True
-            return (negative if negated else positive), None
+        host, ranges = known
+        # The standard library's engine has no properties. The regex package is given its own where it has the
+        # same characters for it.
+        if host is not None and not self.ascii_flag and _host_agrees(host[0], ranges):
+            return (host[1] if negated else host[0]), (_complement(ranges) if negated else ranges), True
         if negated:
             ranges = _complement(ranges)
-        return _class_text(ranges), ranges
+        return _table_class(ranges), ranges, False
 
     def _legacy_octal_after_zero(self) -> str:
         self.i -= 1
@@ -1540,9 +1651,10 @@ class _Translator:
         members: list[str] = []
         # Class escapes that Python cannot nest in a class (ECMA's \S), kept aside as alternatives.
         outside: list[str] = []
-        # The same class as sets of characters, for a case-insensitive group: ranges, and properties as written.
+        # The same class as sets of characters: the ranges of what is written in it, and each property as it is
+        # written for the engine with its characters.
         ranges: _Ranges = []
-        properties: list[str] = []
+        properties: list[tuple[str, _Ranges]] = []
         while True:
             if self.i >= self.n:
                 raise self.error()
@@ -1579,11 +1691,11 @@ class _Translator:
             alternatives = ([f"[{''.join(members)}]"] if members else []) + outside
             text = alternatives[0] if len(alternatives) == 1 else "(?:" + "|".join(alternatives) + ")"
             if negated:
-                apart = outside or _both_ways(properties)
+                apart = outside or _both_ways([p for p, _ in properties])
                 text = f"(?:(?!{text}){_ANY})" if apart else f"[^{''.join(members)}]"
-        return self._one(text, None if properties else ranges, negated)
+        return self._one(text, ranges + [r for _, held in properties for r in held], negated)
 
-    def _class_atom(self, ranges: _Ranges, properties: list[str]) -> tuple[str, str | None]:
+    def _class_atom(self, ranges: _Ranges, properties: list[tuple[str, _Ranges]]) -> tuple[str, str | None]:
         """One class atom: its translation and, when it is a single character, that character. An escape that is a
         set joins ``ranges`` or ``properties``, which a case-insensitive group reads."""
         c = self.peek()
@@ -1595,11 +1707,8 @@ class _Translator:
             raise self.error()
         e = self.p[self.i]
         if e in "pP" and self.u:
-            member, sets = self._property_escape()
-            if sets is None:
-                properties.append(member)
-            else:
-                ranges.extend(sets)
+            member, held, _ = self._property_escape()
+            properties.append((member, held))
             return member, None
         text, char = self._char_escape(in_class=True)
         if char is not None:
@@ -1609,36 +1718,28 @@ class _Translator:
         ranges.extend(positive if e in "dws" else _complement(positive))
         return text, None
 
-    def _folded_class(self, ranges: _Ranges, properties: list[str], negated: bool) -> _Node:
+    def _folded_class(self, ranges: _Ranges, properties: list[tuple[str, _Ranges]], negated: bool) -> _Node:
         """A class inside a case-insensitive group: it has every character that is equal, without case, to one of
-        its members, and it is negated after that."""
+        its members, and it is negated after that. ``properties``: the properties in it, each as it is written for
+        the engine and with its characters."""
         points, sets = _fold_table(self.u)
         ranges = _merged(ranges)
         more: list[str] = []
-        for lo, hi in ranges:
-            k = bisect_left(points, lo)
-            while k < len(points) and points[k] <= hi:
-                more.append(sets[points[k]])
-                k += 1
-        if properties:
-            import regex
-
-            try:
-                members = [regex.compile(p).match for p in properties]
-            except regex.error:
-                raise self.error() from None
-            for point in points:
-                c = chr(point)
-                if any(m(c) for m in members):
-                    more.append(sets[point])
+        for held in [ranges, *[held for _, held in properties]]:
+            for lo, hi in held:
+                k = bisect_left(points, lo)
+                while k < len(points) and points[k] <= hi:
+                    more.append(sets[points[k]])
+                    k += 1
         ranges = _merged(ranges + [(ord(c), ord(c)) for c in set("".join(more))])
-        if not ranges and not properties:
+        written = [p for p, _ in properties]
+        if not ranges and not any(written):
             text = _ANY if negated else _NEVER
         else:
-            text = f"[{_class_text(ranges)}{''.join(properties)}]"
+            text = f"[{_class_text(ranges)}{''.join(written)}]"
             if negated:
-                text = f"(?:(?!{text}){_ANY})" if _both_ways(properties) else "[^" + text[1:]
-        return self._one(text, None if properties else ranges, negated)
+                text = f"(?:(?!{text}){_ANY})" if _both_ways(written) else "[^" + text[1:]
+        return self._one(text, ranges + [r for _, held in properties for r in held], negated)
 
 
 class _Writer:
