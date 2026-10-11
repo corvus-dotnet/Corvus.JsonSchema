@@ -139,9 +139,9 @@ fn with_stack<T: Send>(pattern: &str, f: impl FnOnce() -> T + Send) -> Option<T>
 /// beyond the Basic Multilingual Plane is two code units.
 const SURROGATE: u32 = 0xF_0000 - 0xD800;
 
-/// A UTF-16 code unit as a character: itself, or the character that stands for a surrogate.
-fn unit_char(unit: u16) -> char {
-    let unit = u32::from(unit);
+/// A UTF-16 code unit as a character: itself, or the character that stands for a surrogate. A character of a
+/// group name is itself.
+fn unit_char(unit: u32) -> char {
     let surrogate = (0xD800..0xE000).contains(&unit);
     char::from_u32(if surrogate { unit + SURROGATE } else { unit }).unwrap_or(char::REPLACEMENT_CHARACTER)
 }
@@ -154,7 +154,7 @@ fn unit_char(unit: u16) -> char {
 /// - The escape of a surrogate is that code unit. regress reads the escapes of a high and a low surrogate as one
 ///   character, which no code unit matches, and drops an escape that follows the escape of a high surrogate and is
 ///   not a low one. The code unit itself is read as it is.
-pub(super) fn legacy_units(pattern: &str) -> Vec<u16> {
+pub(super) fn legacy_units(pattern: &str) -> Vec<u32> {
     let units: Vec<u16> = pattern.encode_utf16().collect();
     let is = |k: usize, c: u8| units.get(k) == Some(&u16::from(c));
     // Where a group name starts at `k`, with `(?<` (which is not a lookbehind) or `\k<`.
@@ -174,37 +174,38 @@ pub(super) fn legacy_units(pattern: &str) -> Vec<u16> {
     let mut out = Vec::with_capacity(units.len());
     let (mut in_class, mut i) = (false, 0);
     while i < units.len() {
-        // A group name is left as it is written: an escape in it is read as with the flag.
+        // A group name is left as it is written, by character: an escape in it is read as with the flag, and so
+        // is a character beyond the BMP.
         if !in_class && (named(i) || (any_named && names(i, *b"\\k"))) {
             let end = units[i..].iter().position(|&u| u == u16::from(b'>')).map_or(units.len(), |n| i + n + 1);
-            out.extend(&units[i..end]);
+            out.extend(char::decode_utf16(units[i..end].iter().copied()).map(|c| c.map_or(0xFFFD, u32::from)));
             i = end;
             continue;
         }
         if units[i] != u16::from(b'\\') || i + 1 == units.len() {
             in_class = if is(i, b'[') { true } else { in_class && !is(i, b']') };
-            out.push(units[i]);
+            out.push(u32::from(units[i]));
             i += 1;
             continue;
         }
         if !is(i + 1, b'u') {
-            out.extend([units[i], units[i + 1]]);
+            out.extend([u32::from(units[i]), u32::from(units[i + 1])]);
             i += 2;
             continue;
         }
         let digit = |k: usize| units.get(i + 2 + k).and_then(|&u| char::from_u32(u32::from(u))?.to_digit(16));
         match (digit(0), digit(1), digit(2), digit(3)) {
             (Some(a), Some(b), Some(c), Some(d)) => {
-                let value = (a << 12 | b << 8 | c << 4 | d) as u16;
+                let value = a << 12 | b << 8 | c << 4 | d;
                 if (0xD800..0xE000).contains(&value) {
                     out.push(value);
                 } else {
-                    out.extend(&units[i..i + 6]);
+                    out.extend(units[i..i + 6].iter().map(|&u| u32::from(u)));
                 }
                 i += 6;
             }
             _ => {
-                out.push(u16::from(b'u'));
+                out.push(u32::from(b'u'));
                 i += 2;
             }
         }
@@ -1138,7 +1139,7 @@ const NAME_BASE: u32 = 1 << 24;
 /// A UTF-16 code unit as regress reads it without the `u` flag: an escape, or the character that stands for a
 /// surrogate.
 fn unit_text(value: u32) -> String {
-    if (0xD800..0xE000).contains(&value) { unit_char(value as u16).to_string() } else { format!("\\u{value:04x}") }
+    if (0xD800..0xE000).contains(&value) { unit_char(value).to_string() } else { format!("\\u{value:04x}") }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -2053,9 +2054,13 @@ mod tests {
             (r"(?<\u{61}>a)\k<\u{61}>\u{2}", r"(?<\u{61}>a)\k<\u{61}>u{2}"),
             (r"[(?<n>]\k<\u{2}>", r"[(?<n>]\k<u{2}>"),
         ] {
-            assert_eq!(legacy_units(pattern), units(expected), "{pattern}");
+            assert_eq!(
+                legacy_units(pattern),
+                units(expected).into_iter().map(u32::from).collect::<Vec<_>>(),
+                "{pattern}"
+            );
         }
-        let plus = u16::from(b'+');
+        let plus = u32::from(b'+');
         assert_eq!(legacy_units(r"\ud83d\ude00+\uD801\ud83d"), [0xD83D, 0xDE00, plus, 0xD801, 0xD83D]);
         assert_eq!(legacy_units("\u{1F600}+"), [0xD83D, 0xDE00, plus]);
         // What is written again has the surrogates as they are, whether they came as a character or as escapes.
@@ -2224,8 +2229,7 @@ mod statistics {
             let record: serde_json::Value = serde_json::from_str(line).unwrap();
             let pattern = record["pattern"].as_str().unwrap();
             let unicode = regress::Regex::with_flags(pattern, "u").is_ok();
-            let units = legacy_units(pattern).into_iter().map(u32::from);
-            if !unicode && regress::Regex::from_unicode(units, "").is_err() {
+            if !unicode && regress::Regex::from_unicode(legacy_units(pattern).into_iter(), "").is_err() {
                 continue;
             }
             total += 1;

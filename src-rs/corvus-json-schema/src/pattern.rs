@@ -285,8 +285,7 @@ fn compile_regress(pattern: &str) -> Option<(regress::Regex, bool)> {
     match regress::Regex::with_flags(pattern, "u") {
         Ok(re) => Some((re, true)),
         Err(_) => {
-            let units = rewrite::legacy_units(pattern).into_iter().map(u32::from);
-            regress::Regex::from_unicode(units, "").ok().map(|re| (re, false))
+            regress::Regex::from_unicode(rewrite::legacy_units(pattern).into_iter(), "").ok().map(|re| (re, false))
         }
     }
 }
@@ -337,7 +336,7 @@ pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
             let mut surrogates = false;
             let regress = match rewrite::for_engine(pattern, unicode) {
                 rewrite::Rewrite::Unchanged => {
-                    surrogates = !unicode && rewrite::legacy_units(pattern).into_iter().any(|u| surrogate(u.into()));
+                    surrogates = !unicode && rewrite::legacy_units(pattern).into_iter().any(surrogate);
                     regress
                 }
                 rewrite::Rewrite::Rewritten(rewritten) if unicode => {

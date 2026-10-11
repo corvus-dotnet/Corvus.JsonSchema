@@ -312,6 +312,21 @@ fn a_pattern_without_the_u_flag_matches_utf16_code_units() {
     check_texts(BY_CODE_UNIT);
 }
 
+/// A group name with a character beyond the Basic Multilingual Plane, in patterns that are valid only without the
+/// `u` flag. The name is read by character there too. Before 0.1.7 such a pattern was matched by character, and
+/// the first cut of code units refused it.
+#[rustfmt::skip]
+const GROUP_NAMES_BEYOND_THE_BMP: &[(&str, &[&str], &[&str])] = &[
+    ("^\\-?(?<\u{10400}>.)\\k<\u{10400}>$", &["aa"], &["", "a", "ab", "\u{10400}", "\u{10400}\u{10400}", "a\u{10400}"]),
+    ("^\\-?(?<n\u{10400}>a)\u{10400}*$", &["a\u{10400}"], &["", "a", "aa", "ab", "\u{10400}", "\u{10400}\u{10400}"]),
+    ("^\\-?(?<\u{10400}>.)(?<b>.)\\k<b>\\k<\u{10400}>$", &[], &["", "a", "aa", "ab", "\u{10400}", "\u{10400}\u{10400}", "a\u{10400}"]),
+];
+
+#[test]
+fn a_group_name_beyond_the_bmp_without_the_u_flag() {
+    check_texts(GROUP_NAMES_BEYOND_THE_BMP);
+}
+
 /// Case-insensitive references, with V8's answers for the pattern with the `i` flag in place of the group. The
 /// patterns with `\&` are valid only without the `u` flag. There two code units are equal when their uppercase
 /// forms are: `s` is not U+017F, `i` is not U+0131, and U+1F80 is not U+1F88, each of which regress's own
