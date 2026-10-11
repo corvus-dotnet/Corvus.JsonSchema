@@ -621,6 +621,35 @@ internal sealed class EcmaRegexParser
         return k < this.p.Length && this.p[k] == '}';
     }
 
+    /// <summary>Compares two runs of decimal digits as numbers, whatever their lengths.</summary>
+    private static int CompareDigits(ReadOnlySpan<int> a, ReadOnlySpan<int> b)
+    {
+        while (a.Length > 0 && a[0] == '0')
+        {
+            a = a.Slice(1);
+        }
+
+        while (b.Length > 0 && b[0] == '0')
+        {
+            b = b.Slice(1);
+        }
+
+        if (a.Length != b.Length)
+        {
+            return a.Length.CompareTo(b.Length);
+        }
+
+        for (int k = 0; k < a.Length; k++)
+        {
+            if (a[k] != b[k])
+            {
+                return a[k].CompareTo(b[k]);
+            }
+        }
+
+        return 0;
+    }
+
     /// <summary>Reads a run of decimal digits, which saturates at <see cref="MaxCount"/>.</summary>
     private int Number()
     {
@@ -664,11 +693,25 @@ internal sealed class EcmaRegexParser
         else if (c == '{' && this.LooksLikeQuantifier())
         {
             this.i++;
+            int minStart = this.i;
             repeat.Min = this.Number();
+            int minEnd = this.i;
             repeat.Max = repeat.Min;
+            bool outOfOrder = false;
             if (this.Eat(','))
             {
-                repeat.Max = this.Peek() == '}' ? EcmaRegexNode.Unbounded : this.Number();
+                if (this.Peek() == '}')
+                {
+                    repeat.Max = EcmaRegexNode.Unbounded;
+                }
+                else
+                {
+                    // The counts are compared as the numbers written, which can be past what a count is kept as:
+                    // a{2147483648,2147483647} is out of order though both are kept as the greatest count.
+                    int maxStart = this.i;
+                    repeat.Max = this.Number();
+                    outOfOrder = CompareDigits(this.p.AsSpan(maxStart, this.i - maxStart), this.p.AsSpan(minStart, minEnd - minStart)) < 0;
+                }
             }
 
             if (!this.Eat('}'))
@@ -676,7 +719,7 @@ internal sealed class EcmaRegexParser
                 throw this.Error("Incomplete quantifier");
             }
 
-            if (repeat.Max != EcmaRegexNode.Unbounded && repeat.Max < repeat.Min)
+            if (outOfOrder)
             {
                 throw this.Error("Numbers out of order in {} quantifier");
             }

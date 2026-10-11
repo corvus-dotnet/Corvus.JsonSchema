@@ -370,11 +370,32 @@ internal static class EcmaPatternCases
     ];
 
     /// <summary>
+    /// Patterns whose validity is ECMA-262's where V8 13.6 says otherwise. The counts of a quantifier are numbers,
+    /// and the first may not be the greater. V8 keeps a count past 2,147,483,647 as that number, so it accepts
+    /// <c>a{2147483648,2147483647}</c>, and any two counts past it in either order.
+    /// </summary>
+    public static readonly (string Pattern, bool ValidWithU, bool ValidWithoutU)[] ValidityWhereV8DepartsFromEcma262 =
+    [
+        ("a{2147483648,2147483647}", false, false),
+        ("(?<n>a)a{2147483648,2147483647}", false, false),
+        ("a{4294967296,4294967295}", false, false),
+        ("a{99999999999999999999,99999999999999999998}", false, false),
+        ("a{2147483647,2147483648}", true, true),
+        ("a{99999999999999999998,99999999999999999999}", true, true),
+        ("a{0,2147483648}", true, true),
+        ("a{9,010}", true, true),
+        ("a{010,9}", false, false),
+        ("a{00,0}", true, true),
+    ];
+
+    /// <summary>
     /// Patterns with whether V8 accepts each with the <c>u</c> flag and with no flag. A pattern neither accepts is
-    /// not a valid ECMA-262 regular expression.
+    /// not a valid ECMA-262 regular expression. The rows of <see cref="ValidityWhereV8DepartsFromEcma262"/> are
+    /// tested with these.
     /// </summary>
     public static readonly (string Pattern, bool ValidWithU, bool ValidWithoutU)[] Validity =
     [
+        .. ValidityWhereV8DepartsFromEcma262,
         ("$+", false, false),
         ("(?<a>x)[\\k]", false, false),
         ("(?<n>a)[\\k<a>]", false, false),
