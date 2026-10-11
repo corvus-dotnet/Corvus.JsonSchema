@@ -179,7 +179,7 @@ func TestSimplePatternsTakeTheFastMatchers(t *testing.T) {
 func TestInvalidPatternsAreRejected(t *testing.T) {
 	for _, source := range []string{
 		"a(", "[a", "a{2,1}", "(?<n>a)(?<n>b)", "*a", `^(?=a`, `(?<n>a)[\k]`, `^[\k]+(?<n>a)$`, "^a{2147483648,2147483647}$",
-		"^[a-z]{99999999999999999999,99999999999999999998}$", "^.{4294967296,1}$",
+		"^[a-z]{99999999999999999999,99999999999999999998}$", "^.{4294967296,1}$", "(?<m>a)(?:x|(?<m>b))",
 	} {
 		if _, ok := compilePattern(source); ok {
 			t.Errorf("%q compiled", source)

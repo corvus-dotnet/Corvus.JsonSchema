@@ -32,6 +32,7 @@ type v8Cases struct {
 	ClassK     []v8Case `json:"classK"`
 	Counts     []v8Case `json:"counts"`
 	Properties []v8Case `json:"properties"`
+	Names      []v8Case `json:"names"`
 }
 
 func loadCases(t *testing.T) *v8Cases {
@@ -146,6 +147,16 @@ func TestCountsAreComparedAsWritten(t *testing.T) {
 func TestPropertyNamesAndValues(t *testing.T) {
 	c := loadCases(t)
 	if _, departures := checkSyntax(t, c.Properties); departures["property-name"] < 3 || departures["script-value"] < 20 {
+		t.Errorf("the cases are not the ones this test is about")
+	}
+}
+
+// TestAGroupNameUsedTwice checks a name on two groups. It is valid only when the groups are in separate alternatives
+// of one disjunction, so that no match goes through both. V8 13.6 takes some patterns where both can take part,
+// such as (?<m>a)(?:x|(?<m>b)). Those cases have ECMA-262's answer.
+func TestAGroupNameUsedTwice(t *testing.T) {
+	c := loadCases(t)
+	if invalid, departures := checkSyntax(t, c.Names); invalid < 15 || departures["duplicate-name"] < 4 {
 		t.Errorf("the cases are not the ones this test is about")
 	}
 }

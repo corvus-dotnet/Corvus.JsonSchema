@@ -194,6 +194,15 @@ character beyond the Basic Multilingual Plane, which is two code units. `^.$` ma
 character U+10400), and `^\-?.$` does not, because the dot takes one unit of the two. A pattern that neither
 grammar accepts is a `*CompileError`.
 
+The answers are V8's except where V8 itself departs from ECMA-262, and there the module follows ECMA-262. A
+quantifier whose first count is greater than its second is an error whatever the size of the numbers, so
+`a{2147483648,2147483647}` is refused, which V8 takes. A group name used twice is an error unless the two groups
+are in separate alternatives of one disjunction, so `(?<m>a)(?:x|(?<m>b))` is refused, which V8 takes.
+`\p{WSpace}` is not a property name ECMA-262 lists, so the pattern is read with no flag, as the characters
+`p{WSpace}`, where V8 reads it as `\p{White_Space}`. `Katakana_Or_Hiragana` (`Hrkt`) is a Script value that no
+character has, so `\p{sc=Hrkt}` is valid and matches nothing, where V8 refuses it. And the properties are those of
+Unicode 17, so the scripts Sidetic, Tolong_Siki, Beria_Erfe and Tai_Yo are known, which V8 13.6 does not know.
+
 A JSON string can name half of a surrogate pair with an escape, as in `"\ud800"`. That is not Unicode text, and a
 `Document` is UTF-8 and cannot hold it. `ParseDocument` returns a `*ParseError` for it, and `IsValidString` and
 `IsValidBytes` report it as not valid, whatever the schema. So a pattern is never matched against such a string.

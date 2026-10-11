@@ -17,6 +17,7 @@
 //   - classK: \k in a class, which is the letter k only in a pattern with no named group and no u flag.
 //   - counts: the two counts of a quantifier, which are compared as the numbers written, whatever their size.
 //   - properties: the names and the values of \p{...} where V8 and ECMA-262 differ.
+//   - names: a group name used twice, which is valid only in separate alternatives of one disjunction.
 //
 // The answers are V8's, except in the places where V8 13.6 departs from ECMA-262. There a case has ECMA-262's
 // answer, and "ecma262" names the departure (see departure below).
@@ -118,6 +119,14 @@ const propertyPatterns = [
   "(?i:\\p{sc=Hrkt})", "(?i:^\\P{sc=Hrkt}$)", "(?i:^[^\\p{sc=Hrkt}]$)", "^\\p{sc=Hrkt}*$", "^(?:\\p{sc=Hrkt}|a)+$", "\\p{Hrkt}", "\\p{gc=Hrkt}", "\\p{sc=hrkt}",
   "\\p{sc=Katakana_or_Hiragana}", "^\\p{sc=Hira}$", "^\\p{sc=Kana}$", "^\\p{scx=Hira}$", "^\\p{scx=Kana}$",
 ];
+// A group name used twice. The two groups must be in separate alternatives of one disjunction.
+const namePatterns = [
+  "(?<m>a)(?<m>b)", "(?<m>a)|(?<m>b)", "(?:(?<m>a)|(?<m>b))\\k<m>", "(?:(?<m>a)|b)(?<m>c)", "((?<m>a))|(?<m>b)", "(?<m>a|(?<m>b))", "(?<m>a)(?:x|(?<m>b))",
+  "(?:(?<m>a)|(?<m>b))(?:(?<m>c)|d)", "(?:x|((?<m>a))(?<m>b))", "((?<m>a)|x)(?<m>b)", "(?:x|(?<m>a)(?<m>b))", "(x|((?<m>))(?<m>))", "(|((?<m>))(?<m>|))",
+  "(|(?:(?<m>))(?<m>|))", "(|(?=(?<m>))(?<m>|))", "(|((?<m>))(?<m>))", "(((?<m>))(?<m>|))", "|((?<m>))(?<m>|)", "(?<m>)|(?<m>)(?<m>)", "(?<m>a)|(?:(?<m>b)|(?<m>k))",
+  "(?:(?<m>a)|x)|(?:b(?<m>k))", "(?=(?<m>a))|(?!(?<m>b))", "^(?:(?<m>a)|(?<m>b)|(?<m>k))\\k<m>$", "(?<m>a)|(?<m>b)(?<m>k)", "(?:(?<m>a)|(?<n>b))(?:(?<n>a)|(?<m>k))",
+  "(?<=(?<m>a)|(?<m>b))k", "(?<=(?<m>a)(?<m>b))k", "(?:(?<m>a)|(?:(?<m>b)|(?<m>k)))\\k<m>",
+];
 // departure names the place where V8 13.6 departs from ECMA-262 for a pattern, and gives ECMA-262's answer.
 //   - count-order: V8 keeps a count as a number that stops at 2^31 - 1, so it takes a{2147483648,2147483647}. A
 //     first count greater than the second is an error at any size (22.2.1.1 Early Errors of QuantifierPrefix).
@@ -161,5 +170,6 @@ const out = {
   classK: classKPatterns.map(departure),
   counts: countPatterns.map(departure),
   properties: propertyPatterns.map(departure),
+  names: namePatterns.map(departure),
 };
 process.stdout.write(JSON.stringify(out));
