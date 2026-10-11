@@ -180,7 +180,10 @@ public final class BowtieHarness {
             results.append(i == 0 ? "" : ",");
             try {
                 if (!annotations) {
-                    results.append("{\"valid\":").append(validator.validate(instance)).append('}');
+                    // The answer is worked out before anything of it is written: an evaluation that throws (the
+                    // depth of a recursion, the limit on a match of a pattern) is an error and no verdict.
+                    boolean valid = validator.validate(instance);
+                    results.append("{\"valid\":").append(valid).append('}');
                     continue;
                 }
                 JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.create(ResultsLevel.VERBOSE);

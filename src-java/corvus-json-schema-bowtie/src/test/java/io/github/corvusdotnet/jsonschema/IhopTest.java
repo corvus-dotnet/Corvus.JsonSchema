@@ -168,6 +168,32 @@ class IhopTest {
         assertTrue(total > 4000, "only " + total + " tests ran");
     }
 
+    /**
+     * A match of a pattern that goes over its limit, and a pattern over a limit of size, are reported as errors:
+     * the one for its test alone, the other for the whole case. Neither is a verdict.
+     */
+    @Test
+    void aLimitOnAPatternIsAnErrorAndNoVerdict() throws Exception {
+        try (Harness h = new Harness()) {
+            h.send("{\"cmd\":\"dialect\",\"dialect\":\"https://json-schema.org/draft/2020-12/schema\"}");
+            JsonDocument r = h.send("{\"cmd\":\"run\",\"seq\":1,\"case\":{\"description\":\"limit\",\"schema\":"
+                    + "{\"pattern\":\"^(?:(a+)\\\\1*)+$\"},\"tests\":[{\"description\":\"runaway\",\"instance\":\""
+                    + "a".repeat(60) + "b\"},{\"description\":\"answered\",\"instance\":\"aaa\"}]}}");
+            int results = r.property(r.root(), "results");
+            assertEquals(2, r.count(results));
+            int first = r.first(results);
+            assertTrue(r.bool(r.property(first, "errored")), r.toString());
+            assertTrue(r.property(first, "valid") < 0, r.toString());
+            assertTrue(r.toString().contains("PatternMatchLimitException"), r.toString());
+            assertTrue(r.bool(r.property(first + 1, "valid")), r.toString());
+            JsonDocument large = h.send("{\"cmd\":\"run\",\"seq\":2,\"case\":{\"description\":\"size\",\"schema\":"
+                    + "{\"pattern\":\"" + "\\\\p{L}".repeat(400) + "\"},\"tests\":[{\"description\":\"x\",\"instance\":\"a\"}]}}");
+            assertTrue(large.bool(large.property(large.root(), "errored")), large.toString());
+            assertTrue(large.property(large.root(), "results") < 0, large.toString());
+            assertTrue(large.toString().contains("PatternTooLargeException"), large.toString());
+        }
+    }
+
     @Test
     void annotationSuiteOverIhop() throws Exception {
         Path root = suiteRoot();
