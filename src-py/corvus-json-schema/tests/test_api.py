@@ -601,6 +601,33 @@ def test_a_modifier_group_names_each_modifier_once_and_at_least_one() -> None:
         assert compile_pattern(pattern) is None, pattern
 
 
+# V8's answers. A digit of a pattern is one of 0 to 9: a digit of another script after a reference, in a count or after
+# \\0 or \\c is a character like any other. (Python's str.isdigit and \\d take every decimal digit of the version of
+# Unicode that the interpreter has.)
+_DIGITS_OF_OTHER_SCRIPTS = [
+    ("^(a)\\1\u0663$", True, {"aa\u0663": True, "a\x01\u0663": False}),
+    ("^a{\u0663}$", False, {"a{\u0663}": True, "aaa": False}),
+    ("^a{1,\u0663}$", False, {"a{1,\u0663}": True, "aa": False}),
+    ("^a{2}\u0663$", True, {"aa\u0663": True}),
+    ("^\\0\u0663$", True, {"\x00\u0663": True, "\x00": False}),
+    ("^[\\0\u0663]$", True, {"\x00": True, "\u0663": True, "\x03": False}),
+    ("^\\1\u0663$", False, {"\x01\u0663": True, "\u0663": False}),
+    ("^[\\1\u0663]+$", False, {"\x01\u0663": True, "\x0b": False}),
+    ("^[\\c\u0663]$", False, {"\x13": False, "\\": True, "c": True, "\u0663": True}),
+    ("^(a)\\1\uff11$", True, {"aa\uff11": True}),
+]
+
+
+@pytest.mark.parametrize(("pattern", "with_u", "answers"), _DIGITS_OF_OTHER_SCRIPTS)
+def test_a_digit_of_a_pattern_is_an_ascii_digit(pattern: str, with_u: bool, answers: dict[str, bool]) -> None:
+    assert is_valid_ecma_regex(pattern) is with_u
+    for limit in (1.0, None):
+        matcher = compile_pattern(pattern, limit)
+        assert matcher is not None
+        for text, answer in answers.items():
+            assert bool(matcher(text)) is answer, (pattern, text)
+
+
 def test_every_character_matches_its_case_variants_in_a_case_insensitive_group() -> None:
     # The sets of _casefold.py, which are checked against V8 when the file is made. A member, as a literal and in
     # a class, matches every member of its set and no member of the next one. \& makes a pattern one that is valid

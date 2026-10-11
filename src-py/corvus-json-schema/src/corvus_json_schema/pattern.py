@@ -81,7 +81,10 @@ _NEVER = "(?!)"
 _LINE_START = "(?<![^\\n\\r\\u2028\\u2029])"
 _LINE_END = "(?![^\\n\\r\\u2028\\u2029])"
 _SYNTAX = set("^$\\.*+?()[]{}|/")
-_QUANTIFIER_RE = re.compile(r"\{(\d+)(,(\d*))?\}")
+# A digit of a pattern is one of these. (str.isdigit and \d in a pattern for text take the decimal digits of every
+# script, of the version of Unicode that the interpreter has.)
+_DIGITS = frozenset("0123456789")
+_QUANTIFIER_RE = re.compile(r"\{([0-9]+)(,([0-9]*))?\}")
 _PROPERTY_RE = re.compile(r"\\[pP]\{[^}]*\}")
 # A call of a class that is written once (see _Writer.write).
 _CALL_RE = re.compile(r"\(\?[0-9]+\)|\(\?:\(\?=\(\?[0-9]+\)\)\(\?s:\.\)\)")
@@ -1610,7 +1613,7 @@ class _Translator:
             return node, False
         if e in "123456789":
             j = self.i
-            while j < self.n and self.p[j].isdigit():
+            while j < self.n and self.p[j] in _DIGITS:
                 j += 1
             number = int(self.p[self.i : j])
             if number <= self.group_count:
@@ -1688,7 +1691,7 @@ class _Translator:
             return "", "\x0c"
         if e == "v":
             return "", "\x0b"
-        if e == "0" and not self.peek().isdigit():
+        if e == "0" and self.peek() not in _DIGITS:
             return "", "\x00"
         if e == "b" and in_class:
             return "", "\x08"
@@ -1699,7 +1702,7 @@ class _Translator:
             if ("a" <= c <= "z") or ("A" <= c <= "Z"):
                 self.i += 1
                 return "", chr(ord(c) % 32)
-            if in_class and not self.u and (c.isdigit() or c == "_"):
+            if in_class and not self.u and (c in _DIGITS or c == "_"):
                 self.i += 1
                 return "", chr(ord(c) % 32)
             if self.u:
@@ -1732,7 +1735,7 @@ class _Translator:
             raise self.error()
         if e == "0":
             return "", self._legacy_octal_after_zero()
-        if in_class and e.isdigit():
+        if in_class and e in _DIGITS:
             self.i -= 1
             return "", self._legacy_octal_or_identity()
         # Annex B identity escape.
