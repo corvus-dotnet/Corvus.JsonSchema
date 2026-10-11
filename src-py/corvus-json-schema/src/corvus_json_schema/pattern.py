@@ -7,8 +7,8 @@ literal is escaped. A ``\\p{...}`` is the characters of Unicode 17 that the pack
 Two engines run the translations. The standard library's ``re`` cannot be stopped once a match has started, and
 the ``regex`` package takes a timeout. So with the limit of a match in force (``pattern_match_limit``, one second
 unless the caller says otherwise) ``re`` runs the patterns that are proved to match in time proportional to the
-text (see ``_Linear``), and the ``regex`` package runs the rest with the limit as its timeout: a lookbehind, the
-backreferences described below, and anything else that is not proved. With no limit ``re`` runs what it can. A
+text (see ``_Linear``), and the ``regex`` package runs the rest with the limit, which is of time on the clock
+(see ``_limited``): a lookbehind, the backreferences described below, and anything else that is not proved. With no limit ``re`` runs what it can. A
 pattern over a limit of size (``MAX_PATTERN``, ``MAX_NESTING``, ``MAX_COPIES`` and the length of the translation)
 is refused as too large, which is not the same as not valid.
 
@@ -66,6 +66,7 @@ from array import array
 from bisect import bisect_left
 from collections import OrderedDict
 from collections.abc import Callable
+from time import monotonic
 from typing import Any
 
 from .options import PatternMatchLimitError, PatternTooLargeError, match_limit
@@ -2256,17 +2257,75 @@ def _compile_for_re(text: str) -> Any:
     return compiler.compile(text, re.ASCII.value)
 
 
+# The shares of the limit that the first two tries at a match are allowed, of the processor's time (see _limited).
+_FIRST_TRY = 1 / 32
+_SECOND_TRY = 1 / 16
+# A match is abandoned once this share of the limit has passed on the clock since its first try ended.
+_NEAR_THE_LIMIT = 0.9
+# No try is allowed more of the processor's time than is left of this many times the limit, by the clock. A try
+# takes its allowance on the clock when no other thread is at work, so this is the most a match can take.
+_MOST_LIMITS = 2.0
+
+
 def _limited(search: Matcher, limit: float, pattern: str) -> Matcher:
-    """The search function of a pattern that the regex package runs, with the limit of a match. The package counts
-    the time on the processor of the whole process (C's ``clock``), and looks at it every 256 steps of the match."""
+    """The search function of a pattern that the regex package runs, with the limit of a match, which is of time
+    on the clock.
+
+    The package's own timeout is not. It counts the time of the whole process on the processor (C's ``clock``), and
+    it runs a match without the interpreter's lock, so with other threads at work that time passes several times
+    as fast as the clock: with seven of them a timeout of one second came after an eighth of a second. So the
+    package's timeout is used as an allowance of the processor's time, and the clock decides.
+
+    The first try is allowed a thirty-second of the limit, and nothing is measured around it: a match that answers
+    costs what the call of the engine costs. A match that does not answer in that is tried again from its start
+    (see ``_again``)."""
+    first = limit * _FIRST_TRY
 
     def limited(text: str) -> Any:
         try:
-            return search(text, timeout=limit)  # type: ignore[call-arg]
+            return search(text, timeout=first)  # type: ignore[call-arg]
         except TimeoutError:
-            raise PatternMatchLimitError(pattern, limit) from None
+            pass
+        return _again(search, text, limit, pattern)
 
     return limited
+
+
+def _again(search: Matcher, text: str, limit: float, pattern: str) -> Any:
+    """The answer of a match whose first try was abandoned, or PatternMatchLimitError once the limit has passed on
+    the clock.
+
+    Each try starts the match again, with an allowance of the processor's time. The second try is a short one (a
+    sixteenth of the limit), and the two times it took, on the processor and on the clock, say how fast the
+    processor's time is passing: once the clock's with no other thread at work, and eight times with seven. Each
+    try after it is allowed what should come to the limit on the clock at the rate of the try before.
+
+    A try cannot be stopped by the clock. One that was allowed the time of several threads goes on for all of it
+    when the other threads stop, and a caller could be kept for as many limits as the machine has processors. So no
+    try is allowed more than is left of twice the limit, which bounds a match at twice the limit and a little more
+    whatever the other threads do. The price is that with more than one other thread at work throughout, a try
+    gets less than the limit on the clock: half of it with three other threads, a quarter with seven. A match that
+    needs more than that and less than the limit is abandoned, where it would have been answered alone. That is
+    twice what the package's timeout by itself gave, and the error no longer comes early.
+
+    The error is raised when the tries from the second on have taken nine tenths of the limit on the clock, and
+    never before. On a machine where the process does not get a processor to itself, a try takes longer on the clock
+    than it was allowed, and the bound of twice the limit does not hold."""
+    start = monotonic()
+    allowance = limit * _SECOND_TRY
+    while True:
+        began = monotonic()
+        try:
+            return search(text, timeout=allowance)  # type: ignore[call-arg]
+        except TimeoutError:
+            pass
+        now = monotonic()
+        passed = now - start
+        if passed >= limit * _NEAR_THE_LIMIT:
+            raise PatternMatchLimitError(pattern, limit) from None
+        # How fast the processor's time passed during the try (at least as fast as the clock).
+        rate = max(allowance / max(now - began, 1e-9), 1.0)
+        allowance = min(rate * limit, _MOST_LIMITS * limit - passed)
 
 
 def _compile(pattern: str, unicode: bool, limit: float | None) -> Matcher | None:
@@ -2322,7 +2381,7 @@ def _shown(pattern: str) -> str:
 def compile_pattern(pattern: str, limit: float | None = DEFAULT_MATCH_LIMIT) -> Matcher | None:
     """A search function for an ECMA-262 pattern (truthy on a match), or None when the pattern is invalid.
 
-    ``limit`` is the time one match may take, in seconds (None, zero or less: no limit). A pattern that the
+    ``limit`` is the time one match may take on the clock, in seconds (None, zero or less: no limit). A pattern that the
     standard library's engine is proved to match in time proportional to the text is run by that engine, which has
     no limit and needs none. Any other pattern is run by the regex package, and a match that reaches the limit
     raises PatternMatchLimitError. With no limit the standard library runs every pattern it can.

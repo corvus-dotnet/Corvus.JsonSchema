@@ -53,8 +53,9 @@ class CompileOptions:
     or zero turns the limit off, for a caller who trusts both the schema and the instances.
 
     A pattern that is proved to match in time proportional to the text is run by the standard library's ``re``,
-    which needs no limit and has none. Every other pattern is run by the ``regex`` package with the limit as its
-    ``timeout``, which counts the processor time of the whole process (see the package's README)."""
+    which needs no limit and has none. Every other pattern is run by the ``regex`` package, and the limit is of
+    time on the clock: the error is not raised before nine tenths of the limit have passed, and a match is bounded
+    at about twice the limit whatever other threads are doing (see the package's README)."""
 
 
 class SchemaCompilationError(Exception):

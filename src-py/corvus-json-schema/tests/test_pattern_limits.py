@@ -3,12 +3,13 @@ has a limit of time (one second unless ``pattern_match_limit`` says otherwise), 
 Reaching either raises an exception of its own, and is never an answer.
 
 No test here needs a quiet machine. A match that is to reach its limit would run for longer than the age of the
-universe, the time until the limit is measured on the processor (which is what the regex package counts), and the
-upper bounds on the clock are many times what a quiet machine takes.
+universe, the limit is never reached before nine tenths of it have passed on the clock, and the upper bounds are many
+times what a quiet machine takes.
 """
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import sys
 import threading
@@ -45,11 +46,11 @@ def _raises_at_the_limit(check: Any, limit: float) -> cjs.PatternMatchLimitError
     with pytest.raises(cjs.PatternMatchLimitError) as raised:
         check()
     wall, cpu = time.monotonic() - wall, time.process_time() - cpu
-    # The engine counts the time of the process on the processor. It is at the limit, and within twice the limit of
-    # it but for what the test itself costs (the collectors, pytest). The clock on the wall only has to show that
-    # nothing hung.
-    assert limit * 0.9 <= cpu < 2 * limit + 2, (cpu, limit)
-    assert wall < 60, wall
+    # The limit has passed on the clock, to within a tenth of it. With no other thread at work the processor's time
+    # is the clock's, and it is within twice the limit but for what the test itself costs (the collectors, pytest).
+    # The upper bound on the clock only has to show that nothing hung.
+    assert limit * 0.9 <= wall < 60, (wall, limit)
+    assert cpu < 2 * limit + 2, (cpu, limit)
     return raised.value
 
 
@@ -126,6 +127,164 @@ def test_the_limit_holds_in_a_thread_that_is_not_the_main_one() -> None:
     thread.join(60)
     assert not thread.is_alive()
     assert len(seen) == 1 and isinstance(seen[0], cjs.PatternMatchLimitError)
+
+
+# The limit is of time on the clock. The regex package counts the time of the whole process on the processor, which
+# passes several times as fast as the clock while other threads are at work.
+
+
+class _Busy:
+    """Other threads at work for as long as it is entered. Each hashes a megabyte over and over, which the standard
+    library does without the interpreter's lock, so they run beside a match whatever the build of Python."""
+
+    def __init__(self, threads: int) -> None:
+        self.stop = threading.Event()
+        self.threads = [threading.Thread(target=self.work, daemon=True) for _ in range(threads)]
+
+    def work(self) -> None:
+        block = bytes(1 << 20)
+        while not self.stop.is_set():
+            hashlib.sha256(block).digest()
+
+    def __enter__(self) -> None:
+        for thread in self.threads:
+            thread.start()
+
+    def __exit__(self, *_: object) -> None:
+        self.stop.set()
+        for thread in self.threads:
+            thread.join(60)
+
+
+def test_the_limit_is_of_time_on_the_clock_whatever_other_threads_do() -> None:
+    limit = 0.5
+    v = cjs.compile({"pattern": NEVER_ANSWERS}, pattern_match_limit=limit)
+    with _Busy(7):
+        for _ in range(3):
+            start = time.monotonic()
+            with pytest.raises(cjs.PatternMatchLimitError):
+                v(NEVER_ANSWERED)
+            wall = time.monotonic() - start
+            # Never before the limit, to within a tenth of it. A machine that is doing other work only makes it
+            # later, and the upper bound only has to show that nothing hung.
+            assert 0.9 * limit <= wall < 60, wall
+
+
+def test_a_match_that_is_within_the_limit_is_answered_while_another_thread_is_at_work() -> None:
+    # A match that takes a good part of a second by itself: some thousands of tries, each over the rest of the text.
+    pattern, text = "(?:a|b)*(?<=x)c$", "ab" * 2000 + "c"
+    slow = compile_pattern(pattern, None)
+    assert slow is not None
+    start = time.monotonic()
+    assert slow(text) is None
+    alone = time.monotonic() - start
+    limit = max(1.5 * alone, 0.2)
+    matcher = compile_pattern(pattern, limit)
+    assert matcher is not None and _engine(matcher) == "regex"
+    with _Busy(1):
+        for _ in range(3):
+            start = time.monotonic()
+            try:
+                # With one other thread the processor's time passes twice as fast as the clock, and the engine's own
+                # limit is reached after half of the limit, which is three quarters of what the match needs.
+                assert matcher(text) is None
+            except cjs.PatternMatchLimitError:
+                # A machine that is doing other work may make the match half as slow again. Then the error is
+                # right, when the limit has passed on the clock.
+                assert time.monotonic() - start >= 0.9 * limit
+
+
+class _Engine:
+    """A search function as the regex package's, of a match that needs ``needs`` seconds on the clock, in a process
+    where the processor's time passes ``rate`` times as fast as the clock (and as fast as the clock from ``quiet``
+    seconds after the first call)."""
+
+    def __init__(self, needs: float, rate: float, quiet: float = 1e9) -> None:
+        self.needs = needs
+        self.rate = rate
+        self.quiet = quiet
+        self.timeouts: list[float] = []
+        self.starts: list[float] = []
+
+    def __call__(self, text: str, timeout: float) -> str:
+        now = time.monotonic()
+        self.timeouts.append(timeout)
+        self.starts.append(now)
+        rate = self.rate if now - self.starts[0] < self.quiet else 1.0
+        if timeout / rate < self.needs:
+            time.sleep(timeout / rate)
+            raise TimeoutError
+        time.sleep(self.needs)
+        return text
+
+    def bounded(self, limit: float) -> bool:
+        """Whether no try was allowed more than was left of twice the limit, counted from the second try (a try
+        takes its allowance on the clock at most, where the process has a processor to itself). Half a limit more
+        is let pass, for a machine that keeps the test waiting between the reading of the clock and the try."""
+        return all(
+            (start - self.starts[1]) + allowed <= 2.5 * limit
+            for start, allowed in zip(self.starts[1:], self.timeouts[1:], strict=True)
+        )
+
+
+@pytest.mark.parametrize("rate", [1.0, 1.05, 1.5, 2.0, 4.0, 16.0])
+def test_a_match_is_tried_again_until_the_limit_has_passed_on_the_clock(rate: float) -> None:
+    limit = 0.4
+    engine = _Engine(1e9, rate)
+    limited = pattern_module._limited(engine, limit, "p")
+    start = time.monotonic()
+    with pytest.raises(cjs.PatternMatchLimitError) as raised:
+        limited("text")
+    wall = time.monotonic() - start
+    assert raised.value.pattern == "p" and raised.value.limit == limit
+    assert 0.9 * limit <= wall < 60, wall
+    # The first try is a small share of the limit, and nothing is measured around it. The second is a short one
+    # that shows how fast the processor's time is passing, and the third is allowed the limit on the clock at
+    # that rate, or what is left of twice the limit.
+    assert engine.timeouts[:2] == [limit / 32, limit / 16]
+    assert engine.timeouts[2] <= min(rate * limit * 1.05, 2 * limit)
+    assert engine.bounded(limit), (engine.starts, engine.timeouts)
+    # With no other thread at work the third try is the last. (With some, a machine that keeps this test's sleeps
+    # waiting makes the rate look lower than it is, and the third try shorter.)
+    assert rate > 1.05 or len(engine.timeouts) == 3, engine.timeouts
+    assert len(engine.timeouts) <= 3 + rate, engine.timeouts
+
+
+@pytest.mark.parametrize(("rate", "share"), [(1.0, 0.7), (2.0, 0.7), (4.0, 0.3), (16.0, 0.05), (16.0, 0.001)])
+def test_a_match_that_needs_less_than_the_limit_is_answered_with_other_threads_at_work(
+    rate: float, share: float
+) -> None:
+    limit = 0.3
+    engine = _Engine(share * limit, rate)
+    limited = pattern_module._limited(engine, limit, "p")
+    try:
+        assert limited("text") == "text"
+    except cjs.PatternMatchLimitError:
+        # Only where the machine made the sleeps of this test so long that the limit passed on the clock.
+        assert time.monotonic() - engine.starts[1] >= 0.9 * limit
+        return
+    assert len(engine.timeouts) <= 3
+    assert engine.bounded(limit)
+
+
+@pytest.mark.parametrize("quiet", [0.0, 0.01, 0.05, 0.2])
+def test_a_match_is_bounded_at_twice_the_limit_when_the_other_threads_stop(quiet: float) -> None:
+    # Sixteen threads at work, which stop while the match is being tried. A try that was allowed sixteen times the
+    # limit of the processor's time would go on for sixteen times the limit.
+    limit = 0.3
+    engine = _Engine(1e9, 16.0, quiet)
+    limited = pattern_module._limited(engine, limit, "p")
+    with pytest.raises(cjs.PatternMatchLimitError):
+        limited("text")
+    assert engine.bounded(limit), (engine.starts, engine.timeouts)
+    assert max(engine.timeouts) <= 2 * limit
+
+
+def test_a_match_that_answers_at_once_is_one_call_of_the_engine() -> None:
+    engine = _Engine(0.0, 8.0)
+    limited = pattern_module._limited(engine, 1.0, "p")
+    assert limited("text") == "text"
+    assert engine.timeouts == [1.0 / 32]
 
 
 # What ECMA-262 patterns have brought validators down with. Each runs for longer than anyone can wait on its text
