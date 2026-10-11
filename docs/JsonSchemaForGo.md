@@ -296,6 +296,17 @@ process that compiles schemas from outside for as long as it runs does not grow 
 schemas with patterns of their own left the heap where the first 1,024 had (10 MB). Nothing reads the cache when an
 instance is evaluated.
 
+**The format checks.** The checks of the `format` keyword read strings of the instance and are not under the limit
+of a match, so each takes time proportional to the string. Dates, times, durations, UUIDs, IP addresses, host names
+and JSON pointers are read by scanners that pass over the string once. `uri`, `uri-reference`, `iri`,
+`iri-reference`, `uri-template` and the local part of `email` and `idn-email` are regular expressions on the
+standard library's `regexp`, which takes time proportional to the string. `regex` reads the string as a pattern,
+with the limits of size above. `hostname` reads nothing of a string over 253 bytes. `idn-hostname`, and the domain
+of an `idn-email`, read nothing of a string over 1,012 bytes: an internationalized host name has 253 characters at
+most, and its check decodes and encodes Punycode and walks around every joiner, which takes time that grows with
+the square of a label. Of 248 strings of a million characters made to be slow, across the 19 formats, the slowest
+took 169 ms (`iri-reference`, on a machine under load).
+
 **What still reaches the limit of a match.** These are answered by no backtracking matcher in reasonable time, and
 now end in the error after one second. V8 has no limit. It does not answer the first two kinds in 90 seconds either,
 and needs more than 268 million backtracks for the searches. It does answer the two lookaheads, in 100,002

@@ -1039,7 +1039,21 @@ func isLabelSeparator(r rune) bool {
 	return r == '.' || r == 0x3002 || r == 0xff0e || r == 0xff61
 }
 
+// maxIDNHostnameBytes is the most bytes an internationalized host name has. A name is 253 characters at most as
+// A-labels, and no label is shorter as an A-label than it has characters: a letter of ASCII is itself there, any
+// other character is a digit or more, and "xn--" comes before them. So a name has 253 characters at most, each of
+// four bytes at most.
+const maxIDNHostnameBytes = 4 * 253
+
+// isIDNHostname checks an internationalized host name. A string over maxIDNHostnameBytes is not one, and is not
+// read: the check decodes and encodes Punycode and walks around every joiner and every katakana middle dot, which
+// take time that grows with the square of a label, so it must not be given a label of any length.
 func isIDNHostname(s string) bool {
+	return len(s) <= maxIDNHostnameBytes && idnHostname(s)
+}
+
+// idnHostname is the check itself, for a string of any length.
+func idnHostname(s string) bool {
 	if s == "" {
 		return false
 	}
