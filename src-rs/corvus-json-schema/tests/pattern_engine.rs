@@ -389,6 +389,34 @@ fn not_a_word_boundary_beside_a_character_of_several_bytes() {
     check_texts(NOT_A_WORD_BOUNDARY);
 }
 
+/// Patterns that another engine of this family answered wrongly at some point: a reference to a group of a
+/// repetition, of a lookahead and of a lookbehind, an iteration that matches nothing inside a lookahead, and a
+/// negated class of a property and its complement. The crate answers them all as V8 does, before 0.1.7 too. They
+/// are here so that it stays so.
+#[rustfmt::skip]
+const ANSWERED_WRONGLY_ELSEWHERE: &[(&str, &[&str], &[&str])] = &[
+    ("^(?:x(.)){1,2}\\1", &["xxxb", "xxxx"], &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "\u{e9}", "1", "-"]),
+    ("(a(){1})?\\2a", &["a", "ab", "ax", "xa", "ax-", "axa", "acab", "acaab", "acb", "aca", "bab", "aba", "abxb", "abxa", "bax", "aax"], &["", "b", "c", "x", "xxxb", "xxb", "xb", "bb", "bx", "cc", "xxxx", "\u{e9}", "1", "-"]),
+    ("(?=(a)?b)\\1", &["b", "ab", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax"], &["", "a", "c", "x", "ax", "xa", "ax-", "axa", "aca", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^(?:(?=([ab]))[ab](?:c|ca)\\1)*$", &["", "aca"], &["a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^(?:(?=([ab]))[ab](?:c\\1|ca\\1))*$", &["", "aca"], &["a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^(?:(?=([ab]+?))(?:\\1.)*?b)+$", &["b", "acaab", "acb", "bab", "bb"], &["", "a", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "aca", "aba", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^(?=((?:|a)*))\\1$", &["", "a"], &["b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^(?=((?:c??)?))\\1$", &["", "c"], &["a", "b", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("(?<=(x*?)a*)\\1", &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"], &[]),
+    ("(?<=\\1a*(b))x", &[], &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("(?<=([abc])+)x\\1", &["axa", "abxa"], &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("(?<=(?:(a)|.)+)x\\1", &["axa", "xxxb", "xxb", "abxa", "bx", "bax", "xxxx"], &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "cc", "aax", "\u{e9}", "1", "-"]),
+    ("[^\\p{L}\\P{L}]", &[], &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^[^\\p{L}\\P{L}]*$", &[""], &["a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("[\\p{L}\\P{L}]", &["a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"], &[""]),
+];
+
+#[test]
+fn patterns_another_engine_answered_wrongly() {
+    check_texts(ANSWERED_WRONGLY_ELSEWHERE);
+}
+
 /// A pattern ECMA-262 refuses in both grammars is refused, and one it accepts only without the `u` flag is not.
 #[test]
 fn a_pattern_that_is_not_valid_is_refused() {
