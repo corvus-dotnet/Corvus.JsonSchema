@@ -376,7 +376,7 @@ results collector allocate.
 pattern only that accepts), whichever compiler built the program. A pattern outside the common shapes runs on the
 package's own engine, a port of the Go module's `internal/ecmaregex`. The grammar is that of ECMAScript 2025, with
 lookbehind, named groups, modifier groups and Unicode property escapes. The engine was compared with answers
-recorded from V8: it agrees on 61,560 patterns and 1,087,080 match answers.
+recorded from V8: it agrees on 61,694 patterns and 1,091,280 match answers.
 
 A pattern is read with the grammar of the `u` flag and matched by Unicode code point. A pattern that grammar refuses
 is read with the Annex B grammar of a pattern with no flag, which many schemas need (`\-` outside a class, `\_`, a
@@ -384,6 +384,15 @@ lone `{`). Such a pattern is matched by UTF-16 code unit, as ECMA-262 matches a 
 differ only for a string with a character beyond the Basic Multilingual Plane, which is two code units. `^.$`
 matches `"\ud801\udc00"` (the one character U+10400), and `^\-?.$` does not, because the dot takes one unit of the
 two. A pattern that neither grammar accepts is an `EJsonSchemaCompileError`.
+
+The answers are V8's except where V8 itself departs from ECMA-262, and there the package follows ECMA-262. A
+quantifier whose first count is greater than its second is an error whatever the size of the numbers, so
+`a{2147483648,2147483647}` is refused, which V8 takes. A group name used twice is an error unless the two groups
+are in separate alternatives of one disjunction, so `(?<m>a)(?:x|(?<m>b))` is refused, which V8 takes.
+`\p{WSpace}` is not a property name ECMA-262 lists, so the pattern is read with no flag, as the characters
+`p{WSpace}`, where V8 reads it as `\p{White_Space}`. `Katakana_Or_Hiragana` (`Hrkt`) is a Script value that no
+character has, so `\p{sc=Hrkt}` is valid and matches nothing, where V8 refuses it. And the properties are those of
+Unicode 17, so the scripts Sidetic, Tolong_Siki, Beria_Erfe and Tai_Yo are known, which V8 13.6 does not know.
 
 A JSON string can name half of a surrogate pair with an escape, as in `"\ud800"`. That is not Unicode text, and a
 `TJsonDocument` is UTF-8 and cannot hold it. Parsing such text raises `EJsonParseError`, and `TryIsValid` returns

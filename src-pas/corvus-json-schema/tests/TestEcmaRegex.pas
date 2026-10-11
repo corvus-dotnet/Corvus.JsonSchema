@@ -2416,6 +2416,18 @@ begin
     Fail('the cases of TestPropertyNamesAndValues are not the ones the test is about');
 end;
 
+{ TestAGroupNameUsedTwice checks a name on two groups. It is valid only when the groups are in separate alternatives
+  of one disjunction, so that no match goes through both. V8 13.6 takes some patterns where both can take part,
+  such as (?<m>a)(?:x|(?<m>b)). Those cases have ECMA-262's answer. }
+procedure TestAGroupNameUsedTwice;
+var
+  Patterns, Invalid, Departures: Int32;
+begin
+  CheckSyntax('TestAGroupNameUsedTwice', 'names', Patterns, Invalid, Departures);
+  if (Invalid < 15) or (Departures < 4) then
+    Fail('the cases of TestAGroupNameUsedTwice are not the ones the test is about');
+end;
+
 { TestCodeUnitPositions checks the two readers of a code unit on every position of a text, forwards and
   backwards. }
 procedure TestCodeUnitPositions;
@@ -2515,11 +2527,12 @@ begin
   TestEscapedKInAClass;
   TestCountsAreComparedAsWritten;
   TestPropertyNamesAndValues;
+  TestAGroupNameUsedTwice;
   WriteLn('V8 oracle: ', OracleVerdicts, ' verdicts on validity compared, ', OracleVerdictsAgreed, ' agreed. ',
     OracleAnswers, ' answers on a match compared (each text on both back ends), ', OracleAnswersAgreed, ' agreed.');
   if Failures <> 0 then begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 27 tests, 0 failures');
+  WriteLn('PASS: 28 tests, 0 failures');
 end.
