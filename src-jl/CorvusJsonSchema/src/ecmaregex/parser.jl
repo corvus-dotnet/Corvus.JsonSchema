@@ -1,8 +1,13 @@
 # Reads an ECMA-262 pattern by recursive descent into a tree. The grammar is that of ECMAScript 2025. With `unicode`
 # the parser applies the grammar of the u flag, and without it the Annex B grammar of a pattern with no flag.
 
-# Groups may nest this deep. It bounds the recursion of the readers.
+# Groups may nest this deep. It bounds the recursion of the readers, which count the pattern itself as one more.
 const MAX_NESTING = 200
+# A pattern may have this many terms and alternatives, which bounds the tree it is read into. A term is some 300
+# bytes of tree while the pattern is compiled, so a pattern of a megabyte of single characters was read into 450 MB
+# before it was found to be more than PCRE2 holds. PCRE2, as Julia builds it, holds a compiled pattern of at most
+# 64 KiB, which is at most 65,536 terms, so no pattern it takes has more than these.
+const MAX_PATTERN_TERMS = 1 << 17
 
 # The classes ECMA-262 defines, as sets. \d and \w are ASCII only, \s is WhiteSpace and LineTerminator, and the dot
 # is everything but the four line terminators.
@@ -133,6 +138,8 @@ mutable struct Parser
     pairs::Vector{Int32}
     # The set of the class atom `classatom` last read, when it was a class escape, and nothing otherwise.
     atomset::Union{Nothing,CodeSet}
+    # The terms and the alternatives read so far.
+    terms::Int
 end
 
 function Parser(pattern::String, unicode::Bool)
@@ -151,7 +158,7 @@ function Parser(pattern::String, unicode::Bool)
         end
     end
     return Parser(pattern, p, unicode, 0, 0, 0, false, 0, Dict{String,Vector{Vector{Int}}}(), Node[], Int[], 0, false,
-        false, false, Int32[], nothing)
+        false, false, Int32[], nothing, 0)
 end
 
 syntaxerror(P::Parser, message::String) = throw(PatternError(P.pattern, string(message, " at ", P.i), false))
@@ -214,7 +221,9 @@ end
 
 function disjunction(P::Parser)
     P.depth += 1
-    P.depth > MAX_NESTING && syntaxerror(P, "groups nested too deeply")
+    # Not a syntax error: nothing is wrong with the pattern, and nothing is known of the rest of it.
+    P.depth > MAX_NESTING + 1 && throw(TooLargeError(P.pattern,
+        string("its groups nest over the limit of ", MAX_NESTING, " deep"), false))
     P.disjunctions += 1
     push!(P.path, P.disjunctions, 0)
     level = length(P.path)
@@ -233,10 +242,20 @@ function disjunction(P::Parser)
     return result
 end
 
+# Counts a term or an alternative. Past the limit the pattern is too large to read, which is not a syntax error.
+function counted!(P::Parser)
+    P.terms += 1
+    P.terms > MAX_PATTERN_TERMS && throw(TooLargeError(P.pattern,
+        string("it has over the limit of ", MAX_PATTERN_TERMS, " terms and alternatives"), false))
+    return nothing
+end
+
 function alternative(P::Parser)
     terms = Node[]
+    counted!(P)
     while more(P) && peekchar(P) != '|' && peekchar(P) != ')'
         push!(terms, term(P))
+        counted!(P)
     end
     isempty(terms) && return Node(EMPTY)
     length(terms) == 1 && return terms[1]

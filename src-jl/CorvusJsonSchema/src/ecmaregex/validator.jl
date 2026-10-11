@@ -139,7 +139,7 @@ end
 
 function disjunction(v::Validator)
     v.depth += 1
-    v.depth > MAX_NESTING && invalid()
+    v.depth > MAX_NESTING + 1 && invalid()
     v.disjunctions += 1
     push!(v.path, v.disjunctions, 0)
     level = length(v.path)

@@ -86,13 +86,32 @@ const REFUSED_GROUP_IN_LOOKBEHIND =
 # ECMA-262 compares differently there than PCRE2 does.
 const REFUSED_CASE_INSENSITIVE_BACKREFERENCE =
     "a case-insensitive backreference, in a pattern that is not valid with the u flag, to text that PCRE2 compares differently"
-# A repetition whose groups are read after it is written twice (see `writerepeat`), and the copies multiply. Or a
-# repetition has a minimum no text reaches and a body that can match the empty string.
-const REFUSED_TOO_LARGE = "a repetition too large to write out"
-# PCRE2 did not compile the translation. The error message carries what PCRE2 said.
+# PCRE2 did not compile the translation, and not for its size. The error message carries what PCRE2 said.
 const REFUSED_BY_ENGINE = "a pattern PCRE2 does not compile"
 
 unsupported(E, reason::String) = throw(PatternError(E.pattern, reason, true))
+
+# The limits on the size of what is written for a pattern. A pattern over one is valid, and is a TooLargeError.
+#
+# A repetition whose groups are read after it is written twice (see `writerepeat`), and the copies multiply. Or a
+# repetition has a minimum no text reaches and a body that can match the empty string.
+const TOO_LARGE_REPETITION = "a repetition that is written out is over the limit of 65536 bytes"
+const TOO_LARGE_COUNT = "a repetition of what can match the empty string has a count over the limit of 2147483646"
+# The translation is at most this many bytes, with the bodies of its lookbehinds, and so is each part of it as it
+# is written. It is the limit on what PCRE2 is given. PCRE2, as Julia builds it, holds a compiled pattern of at
+# most 64 KiB, so it refuses most translations of this length itself, and that is a TooLargeError too.
+const MAX_TRANSLATION_LENGTH = 1 << 20
+const TOO_LARGE_TRANSLATION = "its translation is over the limit of 1048576 bytes"
+# The nodes of the pattern the emitter may write, counting each as often as it is written. A pattern is at most
+# MAX_PATTERN_LENGTH bytes, and its translation writes a node a few times at most, but for a repetition that is
+# written twice, where the copies multiply with the depth: seventy of them, one inside another, would be written
+# 2^70 times before the translation was found too large. PCRE2 holds a compiled pattern of at most 64 KiB, which
+# is 65,536 items at most, so a pattern PCRE2 takes is nowhere near this many.
+const MAX_TRANSLATION_STEPS = 1 << 19
+const TOO_LARGE_STEPS = "its translation takes over the limit of 524288 steps to write"
+const TOO_MANY_LOOKBEHINDS = "it has over the limit of 252 lookbehinds of no fixed length"
+
+toolarge(E, limit::String) = throw(TooLargeError(E.pattern, limit, true))
 
 # A length with no bound.
 const INFINITE = typemax(Int64)
@@ -193,6 +212,8 @@ mutable struct Emitter
     # The bytes of the sets of many ranges that the pattern being written holds where they stand, under a
     # repetition with no upper count (see `unbounded`).
     inlined::Int
+    # The nodes written for the pattern so far, in every form that was tried.
+    steps::Int
 end
 
 function Emitter(parser::Parser, root::Node)
@@ -200,7 +221,7 @@ function Emitter(parser::Parser, root::Node)
     return Emitter(parser.pattern, parser.unicode, root, Vector{Union{Nothing,Node}}(nothing, n), Node[], Node[],
         fill(false, n), fill(typemax(Int), n), [NO_NODES for _ in 1:n], [NO_NODES for _ in 1:n], IOBuffer(), String[],
         fill("", n), zeros(Int, n), 0, false, 0, false, false, false, String[], CodeSet[], String[], String[], "",
-        false, 0)
+        false, 0, 0)
 end
 
 # Works out what each backreference reads, and refuses the pattern when one cannot be written exactly.
@@ -599,7 +620,10 @@ function translation(E::Emitter, searching::Bool)
     E.inlined = 0
     node(E, E.root)
     definitions(E)
-    return Translation(String(take!(E.out)), copy(E.lookbehinds))
+    main = String(take!(E.out))
+    ncodeunits(main) + sum(ncodeunits, E.lookbehinds; init=0) > MAX_TRANSLATION_LENGTH &&
+        toolarge(E, TOO_LARGE_TRANSLATION)
+    return Translation(main, copy(E.lookbehinds))
 end
 
 # What a backreference reads.
@@ -899,6 +923,11 @@ end
 function node(E::Emitter, n::Node)
     kind = n.kind
     out = E.out
+    # A set is as many steps as it has ranges, by eight: what is worked out of a set of many ranges where it is
+    # written takes that much longer (25 microseconds for the set of \p{L}, which is 85 steps).
+    E.steps += kind == SET ? 1 + length(n.set) >> 4 : 1
+    E.steps > MAX_TRANSLATION_STEPS && toolarge(E, TOO_LARGE_STEPS)
+    position(out) > MAX_TRANSLATION_LENGTH && toolarge(E, TOO_LARGE_TRANSLATION)
     if kind == EMPTY
     elseif kind == CHAR || kind == SET
         # In a group, so that a quantifier after the character repeats the callout with it.
@@ -1507,7 +1536,7 @@ function repeated(E::Emitter, n::Node)
     end
     if lo >= MAX_COUNT
         # More iterations than a text has characters.
-        minlength(body) > 0 || unsupported(E, REFUSED_TOO_LARGE)
+        minlength(body) > 0 || toolarge(E, TOO_LARGE_COUNT)
         print(out, NEVER_MATCHES)
         return nothing
     end
@@ -1574,7 +1603,7 @@ function repeated(E::Emitter, n::Node)
             isempty(before[k]) && continue
             E.read[g] = string("(?(?=(?s:.*+)\\k<", mark, ">)", before[k], '|', E.read[g], ')')
         end
-        position(out) - start > MAX_COPIED_TRANSLATION && unsupported(E, REFUSED_TOO_LARGE)
+        position(out) - start > MAX_COPIED_TRANSLATION && toolarge(E, TOO_LARGE_REPETITION)
     end
     return nothing
 end
@@ -2120,7 +2149,7 @@ function lookbehind(E::Emitter, n::Node)
     index = length(E.lookbehinds)
     number = CALLOUT_FIRST_LOOKBEHIND + index - 1
     if number > PCRE_MAX_LOOKBEHIND_CALLOUT
-        unsupported(E, REFUSED_BY_ENGINE * " (more than 252 lookbehinds of no fixed length)")
+        toolarge(E, TOO_MANY_LOOKBEHINDS)
     end
     # The body is a pattern of its own, with its own definitions. It holds no group that is read and no LIVE
     # backreference, and the names it writes for itself are its own.

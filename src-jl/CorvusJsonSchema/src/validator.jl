@@ -37,7 +37,9 @@ Base.show(io::IO, v::Validator) = print(io, "Validator(", length(v.program.nodes
 Compile a JSON Schema (draft 4, 6, 7, 2019-09 or 2020-12) given as JSON text in a string, as a vector of UTF-8
 bytes, or as a parsed [`Document`](@ref). A vector of bytes is kept, not copied, so do not modify it afterwards.
 
-Throws [`ParseError`](@ref) when the text is not JSON and [`CompileError`](@ref) when the schema cannot be compiled.
+Throws [`ParseError`](@ref) when the text is not JSON, [`CompileError`](@ref) when the schema cannot be compiled,
+and [`PatternTooLargeError`](@ref) when a pattern of the schema is over a limit of size, which is not a pattern
+that is not valid.
 A property name that the schema declares is matched against its `patternProperties` here, so a match that reaches a
 limit throws its [`PatternMatchError`](@ref) from here.
 

@@ -72,8 +72,11 @@ function check!(tally::Tally, p::String, validunicode::Bool, validlegacy::Bool, 
     try
         compiled = EcmaRegex.compile(p)
     catch e
-        e isa EcmaRegex.PatternError || rethrow()
-        if e.unsupported
+        e isa Union{EcmaRegex.PatternError,EcmaRegex.TooLargeError} || rethrow()
+        if e isa EcmaRegex.TooLargeError
+            # Valid, and over a limit of size, which is counted with what is refused.
+            reason = "too large"
+        elseif e.unsupported
             reason = reasonof(e)
         else
             invalid = e.reason

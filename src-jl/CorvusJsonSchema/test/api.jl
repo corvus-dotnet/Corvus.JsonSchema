@@ -103,6 +103,85 @@
         @test throws(() -> compile_schema("""{ "type": """), ParseError)
     end
 
+    # A pattern has limits of size, and a schema with a pattern over one does not compile. The error is a
+    # PatternTooLargeError, which names the limit, and never the CompileError of a pattern that is not valid.
+    @testset "a pattern over a limit of size is too large, and not invalid" begin
+        function compiling(schema)
+            started = time()
+            error = try
+                compile_schema(schema)
+                nothing
+            catch e
+                e
+            end
+            return error, time() - started
+        end
+        megabyte = "a"^1_048_577
+        for (pattern, valid, limit) in [
+                (megabyte, false, "its length is over the limit of 1048576 bytes"),
+                ("(?=a)" * "a"^140_000, false, "it has over the limit of 131072 terms and alternatives"),
+                ("("^201 * "a" * ")"^201, false, "its groups nest over the limit of 200 deep"),
+                ("(?:(?:a{1000}){1000}){1000}", true, "PCRE2 does not hold it"),
+                ("^(a|)" * "(?:"^60 * "\\\\1" * "|b){1,2}"^60 * "\$", true, "steps to write"),
+                ("(?:a|){2147483648}", true, "a count over the limit of 2147483646")],
+            schema in ("""{ "pattern": "$pattern" }""", """{ "patternProperties": { "$pattern": true } }""",
+                """{ "items": { "anyOf": [{ "type": "null" }, { "pattern": "$pattern" }] } }""")
+            error, took = compiling(schema)
+            @test error isa PatternTooLargeError
+            @test !(error isa CompileError)
+            @test error isa PatternTooLargeError && error.valid == valid
+            @test error isa PatternTooLargeError && occursin(limit, error.limit)
+            message = sprint(showerror, error)
+            @test occursin(valid ? "is a valid ECMA-262 regular expression, and is too large: " : "is too large to read: ",
+                message)
+            @test !occursin("nvalid", message) && !occursin("not an ECMA-262", message)
+            @test ncodeunits(message) < 600
+            @test took < 30
+        end
+        # A pattern that is not valid is a CompileError still, whatever its size is under the limits.
+        error, _ = compiling("""{ "pattern": "a(" }""")
+        @test error isa CompileError && occursin("Invalid regular expression", error.message)
+        error, _ = compiling("""{ "pattern": "$("(?:"^150)a$(")"^149)" }""")
+        @test error isa CompileError
+        # A pattern of ordinary size is not touched by the limits, and neither is a large one that is within them.
+        words = join(("word$k" for k in 1:3000), "|")
+        v = compile_schema("""{ "pattern": "^(?:$words)\$", "patternProperties": { "^(?:[a-z]{2,8}-){0,40}[a-z]+\$": true } }""")
+        @test expect_valid(v, "\"word2999\"", true)
+        @test expect_valid(v, "\"word3001\"", false)
+        @test expect_valid(v, """{"ab-cd-ef": 1}""", true)
+        # The regex format reads a string of the instance as a pattern with the limits of length and of nesting,
+        # and a string over one is not a valid regular expression to it.
+        format = compile_schema("""{ "format": "regex" }"""; assert_format=true)
+        @test expect_valid(format, "\"" * "("^200 * "a" * ")"^200 * "\"", true)
+        @test expect_valid(format, "\"" * "("^201 * "a" * ")"^201 * "\"", false)
+        @test expect_valid(format, "\"" * "a"^1_048_576 * "\"", true)
+        @test expect_valid(format, "\"" * megabyte * "\"", false)
+        # (It does not read a pattern into a tree, so it has no limit on terms.)
+    end
+
+    # The patterns a process has compiled are kept, for the next schema that has them, up to 4,096 patterns and
+    # 32 MiB. A schema may come from outside, and each has patterns of its own.
+    @testset "the cache of compiled patterns is bounded" begin
+        C = CorvusJsonSchema
+        @test C.MAX_CACHED_PATTERNS == 4096 && C.MAX_CACHED_PATTERN_BYTES == 32 << 20
+        for k in 1:5000
+            compile_schema("""{ "pattern": "^cached\\\\d{$k}x+\$" }""")
+        end
+        @test 0 < length(C.PATTERN_CACHE) <= C.MAX_CACHED_PATTERNS
+        @test 0 < C.PATTERN_CACHE_BYTES[] <= C.MAX_CACHED_PATTERN_BYTES
+        # A pattern that is still in the cache is the one a second schema gets.
+        first = compile_schema("""{ "pattern": "^kept\\\\d+x*\$" }""")
+        second = compile_schema("""{ "pattern": "^kept\\\\d+x*\$" }""")
+        pattern_of(v) = only(n.pattern for n in v.program.nodes if n.pattern !== nothing)
+        @test pattern_of(first) === pattern_of(second)
+        # A pattern counts as the bytes of its text and what the engine keeps for it.
+        before = C.PATTERN_CACHE_BYTES[]
+        source = "^" * "\\p{L}"^50 * "y{7}\$"
+        compiled = C.compile_pattern(source)
+        @test C.PATTERN_CACHE_BYTES[] - before == ncodeunits(source) + C.engine_bytes(compiled.engine)
+        @test C.engine_bytes(compiled.engine) > 5_000
+    end
+
     # A not whose subschema leads back to the schema it is in recurses in place like any other applicator. It stops
     # at the maximum depth: the validation is an error, and isvalid reports the instance as invalid. (Evaluating not
     # went around the depth guard, so the first of these schemas overflowed the stack, and for the others the not

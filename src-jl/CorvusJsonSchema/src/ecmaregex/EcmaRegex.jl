@@ -3,7 +3,9 @@
 
 ECMA-262 regular expressions, as JSON Schema's `pattern`, `patternProperties` and `format: regex` require them, run
 by the PCRE2 that Julia bundles after an exact translation. A pattern that cannot be translated exactly is refused
-with an error that names the construct. It is never run with another meaning.
+with an error that names the construct. It is never run with another meaning. A pattern has limits of size and a
+match has limits of time and memory, and a pattern or a match over one is an error of its own
+([`TooLargeError`](@ref), [`MatchError`](@ref)), never an answer.
 
 The module started as a port of `EcmaRegex.java` of the Java library, which does the same for `java.util.regex`. The
 parser, the validator and the Unicode data are the same. What is written for the engine is PCRE2's own, and
@@ -22,9 +24,12 @@ refuses it. PCRE2 does neither, so the translation writes both out (see `emitter
   by matching the lookbehind backwards, as ECMA-262 does, such as `(?<=(a*)(x+))-\\1` (see Lookbehinds below);
 * a case-insensitive backreference in a pattern that is only valid with no flag, where the group can hold a
   character that ECMA-262 compares differently there than PCRE2 does (see Unicode below);
-* repetitions that have to be written twice, inside one another, past 65,536 characters of translation, and a
-  pattern PCRE2 does not compile, which a count of several thousand of a group of several characters is (a count
-  of one character or class never is, see `blocks` in `emitter.jl`).
+* a pattern PCRE2 does not compile for a reason that is not its size, which no pattern is known to be.
+
+A pattern that is valid and too large is not refused in this way. It is a [`TooLargeError`](@ref), which names the
+limit. Repetitions that have to be written twice, inside one another, past 65,536 bytes of translation, are over
+one, and so is a pattern PCRE2 does not hold, which a count of several thousand of a group of several characters is
+(a count of one character or class never is, see `blocks` in `emitter.jl`).
 
 # Lookbehinds
 
@@ -162,6 +167,46 @@ function Base.showerror(io::IO, e::PatternError)
     end
 end
 
+"""
+    TooLargeError
+
+Thrown by [`compile`](@ref) for a pattern that is over a limit of size. It is not the error of a pattern that is
+not valid, which is a [`PatternError`](@ref). `limit` names the limit and its value. `valid` says whether the whole
+pattern was read before the limit was met: it is then a valid ECMA-262 pattern that is too large to run, and
+otherwise it is too large to read, and nothing is known of whether it is valid.
+
+The limits (`pcre.jl` and `emitter.jl` say what was measured):
+
+- the pattern is at most `MAX_PATTERN_LENGTH` bytes of UTF-8, 1,048,576;
+- its groups nest at most `MAX_NESTING` deep, 200, and it has at most `MAX_PATTERN_TERMS` terms and alternatives,
+  131,072;
+- its translation, which is what PCRE2 is given, is at most `MAX_TRANSLATION_LENGTH` bytes, 1,048,576, and is
+  written in at most `MAX_TRANSLATION_STEPS` steps, 524,288;
+- a repetition that has to be written out twice (`writerepeat` in `emitter.jl`) is at most 65,536 bytes;
+- PCRE2 takes the translation. As Julia builds it, PCRE2 holds a compiled pattern of at most 64 KiB, nests
+  parentheses 250 deep, and has 65,535 groups, 10,000 of them named;
+- the compiled pattern and those of its lookbehinds of no fixed length are at most `MAX_COMPILED_BYTES` together,
+  1,048,576.
+
+The JIT code of a pattern is at most `MAX_JIT_BYTES`, 4 MiB. Nothing is refused for that: a part that would pass it
+is run by the interpreter of PCRE2.
+"""
+struct TooLargeError <: Exception
+    pattern::String
+    limit::String
+    valid::Bool
+end
+
+function Base.showerror(io::IO, e::TooLargeError)
+    print(io, "EcmaRegex.TooLargeError: the pattern ", repr(first(e.pattern, 120)))
+    ncodeunits(e.pattern) > ncodeunits(first(e.pattern, 120)) && print(io, " and so on")
+    print(io, " (", ncodeunits(e.pattern), " bytes) ")
+    print(io, e.valid ? "is a valid ECMA-262 regular expression, and is too large: " : "is too large to read: ", e.limit)
+end
+
+# The most bytes of a pattern.
+const MAX_PATTERN_LENGTH = 1 << 20
+
 include("unicode_data.jl")
 include("unicode.jl")
 include("parser.jl")
@@ -171,6 +216,7 @@ include("pcre.jl")
 
 # Reads a pattern with the grammar of the u flag, and with the Annex B grammar when that one does not accept it.
 function parsepattern(pattern::String)
+    checklength(pattern)
     parser = Parser(pattern, true)
     try
         return parser, parse!(parser)
@@ -189,6 +235,9 @@ function compileparsed(parser::Parser, root::Node)
         compiled = pcrecompile(translation(emitter, true), parser.pattern, parser.unicode)
     end
     if compiled isa Refusal
+        # PCRE2 says the translation is too large for it, or something else, which no pattern is known to reach.
+        toolarge(compiled) && throw(TooLargeError(parser.pattern, string("PCRE2 does not hold it, and says \"",
+            compiled.message, "\" (PCRE2 error ", compiled.code, ")"), true))
         unsupported(emitter, string(REFUSED_BY_ENGINE, " (", compiled.message, ")"))
     end
     return compiled
@@ -198,11 +247,19 @@ end
     compile(pattern::AbstractString) -> Pattern
 
 Compiles an ECMA-262 pattern with the semantics JSON Schema requires. Throws a [`PatternError`](@ref) for a pattern
-that is not valid ECMA-262, or that cannot be run exactly (the message says which construct).
+that is not valid ECMA-262, or that cannot be run exactly (the message says which construct), and a
+[`TooLargeError`](@ref) for a pattern that is over a limit of size.
 """
 function compile(pattern::AbstractString)::Pattern
     parser, root = parsepattern(String(pattern))
     return compileparsed(parser, root)
+end
+
+# A pattern of more bytes than a pattern may have is not read.
+function checklength(pattern::String)
+    ncodeunits(pattern) > MAX_PATTERN_LENGTH && throw(TooLargeError(pattern,
+        string("its length is over the limit of ", MAX_PATTERN_LENGTH, " bytes"), false))
+    return nothing
 end
 
 """
@@ -354,9 +411,12 @@ const VALIDATOR_LOCK = Threads.SpinLock()
     isvalidpattern(pattern::AbstractString) -> Bool
 
 Whether the pattern is a valid ECMA-262 pattern under the `u` flag (for `format: regex`). It does not compile the
-pattern, and for a `String` it allocates nothing once the validators it keeps have grown.
+pattern, and for a `String` it allocates nothing once the validators it keeps have grown. A string over the limit
+on the length of a pattern or on the nesting of its groups (see [`TooLargeError`](@ref)) is not a valid pattern to
+it.
 """
 function isvalidpattern(pattern::String)::Bool
+    ncodeunits(pattern) > MAX_PATTERN_LENGTH && return false
     lock(VALIDATOR_LOCK)
     validator = isempty(VALIDATORS) ? nothing : pop!(VALIDATORS)
     unlock(VALIDATOR_LOCK)
@@ -386,15 +446,33 @@ function translate(pattern::AbstractString)
 end
 
 """
+    toolargelimit(pattern) -> Union{Nothing,String}
+
+The limit of size a pattern is over, or nothing when it is over none or is not valid.
+"""
+function toolargelimit(pattern::AbstractString)
+    try
+        compile(pattern)
+        return nothing
+    catch e
+        e isa TooLargeError && return e.limit
+        e isa PatternError || rethrow()
+        return nothing
+    end
+end
+
+"""
     unsupportedreason(pattern) -> Union{Nothing,String}
 
-Why a valid ECMA-262 pattern cannot be run, or nothing when it can be or is not valid.
+Why a valid ECMA-262 pattern cannot be run with the same meaning, or nothing when it can be, is not valid, or is
+over a limit of size (see [`toolargelimit`](@ref)).
 """
 function unsupportedreason(pattern::AbstractString)
     try
         compile(pattern)
         return nothing
     catch e
+        e isa TooLargeError && return nothing
         e isa PatternError || rethrow()
         return e.unsupported ? e.reason : nothing
     end
@@ -426,6 +504,7 @@ function verdict(pattern::AbstractString)
     root = try
         parse!(parser)
     catch e
+        e isa TooLargeError && return 2
         e isa PatternError || rethrow()
         return 0
     end
@@ -433,7 +512,7 @@ function verdict(pattern::AbstractString)
         compileparsed(parser, root)
         return 1
     catch e
-        e isa PatternError || rethrow()
+        e isa Union{PatternError,TooLargeError} || rethrow()
         return 2
     end
 end

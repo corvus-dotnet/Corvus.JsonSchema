@@ -551,6 +551,29 @@ end
 
 const PATTERN_CACHE = Dict{String,Pattern}()
 const PATTERN_CACHE_LOCK = ReentrantLock()
+# What the cache may hold: so many patterns, and so many bytes of their text and of what the engine keeps for them
+# as they are compiled. A schema may come from outside, and each has patterns of its own, so a cache with no bound
+# would keep every pattern a process has ever seen. A pattern that would take it past either bound empties it
+# first. The validators that hold the patterns it held keep them.
+const MAX_CACHED_PATTERNS = 4096
+const MAX_CACHED_PATTERN_BYTES = 32 << 20
+const PATTERN_CACHE_BYTES = Ref(0)
+
+# Puts a compiled pattern in the cache, and returns the one that is there for its text.
+function cache_pattern(source::String, p::Pattern)
+    return lock(PATTERN_CACHE_LOCK) do
+        cached = get(PATTERN_CACHE, source, nothing)
+        cached === nothing || return cached
+        bytes = ncodeunits(source) + (p.engine === nothing ? 0 : engine_bytes(p.engine::EnginePattern))
+        if length(PATTERN_CACHE) >= MAX_CACHED_PATTERNS || PATTERN_CACHE_BYTES[] + bytes > MAX_CACHED_PATTERN_BYTES
+            empty!(PATTERN_CACHE)
+            PATTERN_CACHE_BYTES[] = 0
+        end
+        PATTERN_CACHE[source] = p
+        PATTERN_CACHE_BYTES[] += bytes
+        return p
+    end
+end
 
 # Compiles (or fetches from the process-wide cache) a pattern, or returns nothing when it is not a valid ECMA-262
 # regular expression.
@@ -572,8 +595,7 @@ function compile_pattern(source::String)
             p = with_units(p, engine)
         end
     end
-    p = with_source(p, source)
-    return lock(() -> get!(PATTERN_CACHE, source, p), PATTERN_CACHE_LOCK)
+    return cache_pattern(source, with_source(p, source))
 end
 
 # Whether a pattern has a character beyond the Basic Multilingual Plane (a byte of 0xF0 or more) or a \u escape.

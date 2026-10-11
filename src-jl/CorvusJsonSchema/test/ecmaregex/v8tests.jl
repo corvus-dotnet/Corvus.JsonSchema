@@ -177,7 +177,8 @@ end
         for _ in 1:12
             nested = "(?:" * nested * "|x)+\\1"
         end
-        @test E.unsupportedreason("^" * nested * "\$") == E.REFUSED_TOO_LARGE
+        @test E.toolargelimit("^" * nested * "\$") == E.TOO_LARGE_REPETITION
+        @test E.unsupportedreason("^" * nested * "\$") === nothing
     end
 
     # ECMA-262 refuses an iteration past the minimum that matches the empty string. PCRE2 takes one, and tries every

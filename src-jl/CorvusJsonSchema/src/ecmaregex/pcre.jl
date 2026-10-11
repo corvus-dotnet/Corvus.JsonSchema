@@ -133,8 +133,10 @@ never reported as no match. `limit` says which limit:
 - `:time`: the match ran for the limit on its time, which is one second unless the caller set another;
 - `:memory`: the match needed more memory than the 64 MiB the interpreter of PCRE2 may take (`HEAP_LIMIT_KIB`),
   which a pattern that repeats a group reaches on a text of some hundreds of thousands of characters;
-- `:steps`: with the limit on time turned off, the match took the 4,294,967,295 steps that are the most PCRE2 can
-  be told to allow;
+- `:steps`: the match used its steps and could not be timed. That is a match with the limit on time turned off
+  that took the 4,294,967,295 steps that are the most PCRE2 can be told to allow, and a match of a pattern too
+  large for PCRE2 to hold with the callouts that read the clock (an alternation of 3,000 words is one) that used
+  the steps of its first stage, which is sooner than the limit on its time;
 - `:engine`: any other error of PCRE2.
 
 `pattern` is the ECMA-262 pattern, `code` the error of PCRE2 (0 for the limit on time, which is not PCRE2's) and
@@ -216,9 +218,36 @@ struct Refusal
     message::String
 end
 
-# Compiles one PCRE2 pattern, with the JIT compiler where PCRE2 has one, as Julia does by default. Returns the code,
-# or what PCRE2 said when it does not take the pattern.
-function pcrecompile(pattern::String, more::UInt32=UInt32(0))::Union{Ptr{Cvoid},Refusal}
+# The errors of pcre2_compile that say a pattern is too large for PCRE2, and not that something is wrong with it:
+# parentheses too deeply nested (119, 133, 184), a compiled pattern over the 64 KiB that PCRE2 holds as Julia builds
+# it (120, 186, 201), a lookbehind too long or too complicated (135, 187, 200), and too many groups or too long a
+# name (148, 149, 161, 197). TOO_MUCH_CODE is this module's, for a pattern whose parts PCRE2 compiles each and that
+# are over MAX_COMPILED_BYTES together.
+const TOO_MUCH_CODE = 1
+const SIZE_REFUSALS = (TOO_MUCH_CODE, 119, 120, 133, 135, 148, 149, 161, 184, 186, 187, 197, 200, 201)
+
+toolarge(r::Refusal) = r.code in SIZE_REFUSALS
+
+# What a compiled pattern may keep.
+#
+# PCRE2, as Julia builds it, holds one compiled pattern of at most 64 KiB. A pattern is one of those and one more
+# for each lookbehind that is a callout (252 at most). Together they are at most MAX_COMPILED_BYTES, and a pattern
+# over that is too large. (The code that times a match, which is compiled when a match first needs it, is one more
+# of 64 KiB at most.)
+#
+# The JIT compiler writes machine code from the compiled pattern, and it writes the body of a group again at every
+# call of it: the code of one call of the class of \p{L} was measured at 12.4 KB, so a pattern of 10,000 of them,
+# which is 60 KB of pattern and 30 KB compiled, took 5.3 s to compile and kept 124 MB. So the JIT code of a pattern
+# and of its lookbehinds is at most MAX_JIT_BYTES together, and so is that of the code that times a match. A part
+# that would pass that, by the count of its calls before the JIT compiler is run or by its size after, is left to
+# the interpreter, which runs any compiled pattern and is slower. Nothing is refused for it.
+const MAX_COMPILED_BYTES = 1 << 20
+const MAX_JIT_BYTES = 4 << 20
+const JIT_BYTES_A_CALL = 12_000
+
+# Compiles one PCRE2 pattern, with the JIT compiler where PCRE2 has one and `jit` says so, as Julia does by
+# default. Returns the code, or what PCRE2 said when it does not take the pattern.
+function pcrecompile(pattern::String, more::UInt32=UInt32(0), jit::Bool=true)::Union{Ptr{Cvoid},Refusal}
     options = compileoptions(pattern) | more
     errorcode = Ref{Cint}(0)
     erroroffset = Ref{Csize_t}(0)
@@ -232,7 +261,7 @@ function pcrecompile(pattern::String, more::UInt32=UInt32(0))::Union{Ptr{Cvoid},
         # A pattern the JIT compiler does not take, or a PCRE2 built without it, is run by the interpreter. PCRE2
         # does not say the same thing in every version when it does not take one, so the result is not looked at
         # (see `hasjitcode`).
-        ccall((:pcre2_jit_compile_8, PCRE_LIB), Cint, (Ptr{Cvoid}, UInt32), code, PCRE2_JIT_COMPLETE)
+        jit && ccall((:pcre2_jit_compile_8, PCRE_LIB), Cint, (Ptr{Cvoid}, UInt32), code, PCRE2_JIT_COMPLETE)
         return code
     finally
         unlock(compiling)
@@ -245,12 +274,36 @@ function patterninfo(code::Ptr{Cvoid}, what::Integer, ::Type{T}) where {T}
     return value[]
 end
 
-# Whether the JIT compiler took a pattern, and whether PCRE2 tries it from the start of the text only.
-hasjitcode(code::Ptr{Cvoid}) = patterninfo(code, PCRE2_INFO_JITSIZE, Csize_t) > 0
+# The bytes of a compiled pattern and of its JIT code, which is none when the JIT compiler did not take it, and
+# whether PCRE2 tries the pattern from the start of the text only.
+compiledsize(code::Ptr{Cvoid}) = Int(patterninfo(code, PCRE2_INFO_SIZE, Csize_t))
+jitsize(code::Ptr{Cvoid}) = Int(patterninfo(code, PCRE2_INFO_JITSIZE, Csize_t))
+hasjitcode(code::Ptr{Cvoid}) = jitsize(code) > 0
 isanchored(code::Ptr{Cvoid}) = patterninfo(code, PCRE2_INFO_ALLOPTIONS, UInt32) & PCRE2_ANCHORED != 0
 # The bytes PCRE2 keeps for a compiled pattern: its code and its JIT code.
-codesize(code::Ptr{Cvoid}) =
-    Int(patterninfo(code, PCRE2_INFO_SIZE, Csize_t)) + Int(patterninfo(code, PCRE2_INFO_JITSIZE, Csize_t))
+codesize(code::Ptr{Cvoid}) = compiledsize(code) + jitsize(code)
+
+# The calls of groups in a translation.
+function callcount(pattern::String)
+    count = 0
+    at = findfirst("(?&", pattern)
+    while at !== nothing
+        count += 1
+        at = findnext("(?&", pattern, last(at) + 1)
+    end
+    return count
+end
+
+# Compiles one PCRE2 pattern whose JIT code may be `room` bytes at most. With more, it has none.
+function pcrecompilewithin(pattern::String, more::UInt32, room::Int)::Union{Ptr{Cvoid},Refusal}
+    jit = callcount(pattern) * JIT_BYTES_A_CALL <= room
+    code = pcrecompile(pattern, more, jit)
+    if code isa Ptr{Cvoid} && jit && jitsize(code) > room
+        pcrefree(code)
+        code = pcrecompile(pattern, more, false)
+    end
+    return code
+end
 
 pcrefree(code::Ptr{Cvoid}) = ccall((:pcre2_code_free_8, PCRE_LIB), Cvoid, (Ptr{Cvoid},), code)
 
@@ -280,13 +333,15 @@ mutable struct Pattern
     jit::Bool
     # The longest text, in bytes, that QUICK_STEPS are within the first stage of a match of, or -1.
     freelength::Int
+    # Whether PCRE2 does not hold the pattern with automatic callouts, so that no match of it is timed.
+    untimed::Bool
 
     function Pattern(code::Ptr{Cvoid}, lookbehinds::Vector{Ptr{Cvoid}}, source::String, unicode::Bool,
             translation::Translation)
         fixedcost, textcost = stepcost(translation.main)
         anchored, jit = isanchored(code), hasjitcode(code)
         return finalizer(freepattern, new(code, lookbehinds, source, unicode, translation, C_NULL, fixedcost,
-            textcost, anchored, jit, freelength(fixedcost, textcost, anchored, jit)))
+            textcost, anchored, jit, freelength(fixedcost, textcost, anchored, jit), false))
     end
 end
 
@@ -303,16 +358,23 @@ end
 Base.show(io::IO, p::Pattern) = print(io, "EcmaRegex.Pattern(", repr(p.source), ")")
 
 # Compiles the patterns of a translation. Returns their codes, the one PCRE2 searches for first, or what PCRE2 said
-# when it does not take one of them.
+# when it does not take one of them, or that they are too much together.
 function pcrecompile(t::Translation)::Union{Vector{Ptr{Cvoid}},Refusal}
     codes = Ptr{Cvoid}[]
+    compiled = 0
+    jitted = 0
     for text in Iterators.flatten(((t.main,), t.lookbehinds))
-        code = pcrecompile(text)
-        if code isa Refusal
-            foreach(pcrefree, codes)
-            return code
+        code = pcrecompilewithin(text, UInt32(0), MAX_JIT_BYTES - jitted)
+        if code isa Ptr{Cvoid}
+            push!(codes, code)
+            compiled += compiledsize(code)
+            jitted += jitsize(code)
+            compiled <= MAX_COMPILED_BYTES && continue
+            code = Refusal(TOO_MUCH_CODE, string("the compiled pattern and those of its lookbehinds are over the limit of ",
+                MAX_COMPILED_BYTES, " bytes together"))
         end
-        push!(codes, code)
+        foreach(pcrefree, codes)
+        return code
     end
     return codes
 end
@@ -327,18 +389,23 @@ end
 const RESTORE_LOCK = ReentrantLock()
 
 # The code of a pattern with automatic callouts, which a match that is timed runs. It is compiled when a match of
-# the pattern first needs it, so a pattern whose matches all end in their first stage keeps one code. A pattern
-# PCRE2 compiled without callouts and does not compile with them (they add to the size of the code, which has a
-# limit) cannot be timed, and the match that needed it is an error.
+# the pattern first needs it, so a pattern whose matches all end in their first stage keeps one code.
+#
+# PCRE2, as Julia builds it, holds a compiled pattern of at most 64 KiB, and an automatic callout is six bytes
+# before every item, so a pattern of some 20 KiB and more compiled may not fit with its callouts: an alternation
+# of 3,000 words does not. Such a pattern is not refused, as its matches seldom need more than their first stage.
+# One that does cannot be timed, and is given up there: a MatchError whose limit is :steps, sooner than the limit
+# on its time. (C_NULL is returned, and the pattern remembers it.)
 @noinline function timedcode(p::Pattern)::Ptr{Cvoid}
     lock(RESTORE_LOCK)
     try
-        if p.timed == C_NULL
-            code = pcrecompile(p.translation.main, TIMED_COMPILE_OPTIONS)
-            code isa Refusal && throw(MatchError(p.source, code.code,
-                "the match used the steps it has before it is timed, and PCRE2 does not compile the pattern with the callouts that time it: " *
-                code.message, :engine))
-            p.timed = code
+        if p.timed == C_NULL && !p.untimed
+            code = pcrecompilewithin(p.translation.main, TIMED_COMPILE_OPTIONS, MAX_JIT_BYTES)
+            if code isa Refusal
+                p.untimed = true
+            else
+                p.timed = code
+            end
         end
         return p.timed
     finally
@@ -348,6 +415,8 @@ end
 
 # The codes a pattern has been compiled to for timing, for the tests and the probes.
 timedcodes(p::Pattern) = p.timed == C_NULL ? Ptr{Cvoid}[] : Ptr{Cvoid}[p.timed]
+# The bytes PCRE2 keeps for a pattern: its compiled forms and their JIT code.
+keptbytes(p::Pattern) = sum(codesize, Iterators.flatten(((p.code,), p.lookbehinds, timedcodes(p))))
 
 # Compiles again a pattern that has lost its code.
 @noinline function restore!(p::Pattern)
@@ -1080,6 +1149,9 @@ function timedmatch(p::Pattern, subject::Ptr{UInt8}, len::Int, from::Csize_t, de
         interpreted::Bool)::Bool
     # Compiling takes a lock, which a task may wait on and be resumed on another thread. The frame is read after.
     code = timedcode(p)
+    code == C_NULL && throw(MatchError(p.source, PCRE2_ERROR_MATCHLIMIT, string("the match used the steps it has ",
+        "before it is timed, and the pattern cannot be timed: PCRE2 does not hold it with the callouts that read the clock"),
+        :steps))
     rc = timedrun(p, code, subject, len, from, deadline, interpreted ? PCRE2_NO_JIT : UInt32(0))
     if rc == PCRE2_ERROR_JIT_STACKLIMIT && !interpreted
         rc = timedrun(p, code, subject, len, from, deadline, PCRE2_NO_JIT)

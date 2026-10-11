@@ -417,7 +417,8 @@ const GRINNING_FACE = "\U1F600"
         @test matches("^a{2,2147483648}\$", "aaa")
         @test isvalid262("a{2147483648}")
         # With a body that can match the empty string, that many iterations are neither.
-        @test E.unsupportedreason("(?:a|){2147483648}") == E.REFUSED_TOO_LARGE
+        @test E.toolargelimit("(?:a|){2147483648}") == E.TOO_LARGE_COUNT
+        @test E.unsupportedreason("(?:a|){2147483648}") === nothing
     end
 
     # Smaller points on which the translator differed from V8.
@@ -544,13 +545,211 @@ const GRINNING_FACE = "\U1F600"
         @test direct > 300
     end
 
-    # A pattern nested too deeply to read is refused and is not an error of the stack.
+    # A pattern has limits of size, and one over a limit is a TooLargeError, which names the limit. It is not the
+    # error of a pattern that is not valid. The tests of time are of what took minutes or did not end, with bounds
+    # a loaded machine keeps.
+    function toolarge(pattern)
+        started = time()
+        error = try
+            E.compile(pattern)
+            nothing
+        catch e
+            e
+        end
+        return error, time() - started
+    end
+
+    # A pattern nested too deeply to read is too large, and is not an error of the stack. Nothing is wrong with it,
+    # and it is not read past the limit, so nothing is known of the rest of it.
     @testset "deep nesting" begin
         deep = "("^100_000 * ")"^100_000
         @test !isvalid262(deep)
-        @test isnotapattern(deep)
+        error, took = toolarge(deep)
+        @test error isa E.TooLargeError
+        @test !error.valid
+        @test error.limit == "its groups nest over the limit of 200 deep"
+        @test occursin("is too large to read: its groups nest over the limit of 200 deep", sprint(showerror, error))
+        @test !occursin("valid", sprint(showerror, error))
+        @test took < 20
+        @test E.MAX_NESTING == 200
         shallow = "(?:"^150 * "a" * ")"^150
         @test validandcompiles(shallow)
         @test matches(shallow, "a")
+        # Two hundred groups, one inside another, are read, with either grammar, and one more is not. (PCRE2
+        # takes a nest of 250, so what is read is not always run: a lookahead is two parentheses to it.)
+        for (open, close) in (("(", ")"), ("(?:", ")"), ("(?=", ")"), ("(?<!", ")"))
+            for prefix in ("", "\\-")
+                within = toolarge(prefix * open^200 * "a" * close^200)[1]
+                @test within === nothing || (within isa E.TooLargeError && within.valid)
+                over = toolarge(prefix * open^201 * "a" * close^201)[1]
+                @test over isa E.TooLargeError && !over.valid
+                @test over isa E.TooLargeError && over.limit == "its groups nest over the limit of 200 deep"
+            end
+        end
+        @test toolarge("("^200 * "a" * ")"^200)[1] === nothing
+        @test isvalid262("("^200 * "a" * ")"^200)
+        @test !isvalid262("("^201 * "a" * ")"^201)
+        # A pattern that is not valid is said to be so when what is wrong is read before the limit.
+        @test isnotapattern("a)" * "("^300)
+        @test toolarge("("^300 * "a)")[1] isa E.TooLargeError
     end
+
+    # A pattern is read into a tree, which is some 300 bytes for a term. A pattern of a megabyte of single
+    # characters was read into 450 MB before it was found to be more than PCRE2 holds.
+    @testset "a pattern of more than 131,072 terms is not read" begin
+        @test E.MAX_PATTERN_TERMS == 131_072
+        for pattern in ["a"^140_000, join(fill("a", 70_000), "|"), "(a)"^50_000, "[a-c]"^140_000, "a?"^140_000,
+                "\\-" * "a"^140_000]
+            error, took = toolarge(pattern)
+            @test error isa E.TooLargeError && !error.valid
+            @test error isa E.TooLargeError && error.limit == "it has over the limit of 131072 terms and alternatives"
+            @test took < 20
+        end
+        # Fewer are read, and are then more than PCRE2 holds, which is said of a pattern that is valid.
+        error, _ = toolarge("a"^120_000)
+        @test error isa E.TooLargeError && error.valid
+        # What is wrong with a pattern is said when it is read before the limit.
+        @test isnotapattern("a)" * "a"^140_000)
+    end
+
+    @testset "a pattern of more than 1,048,576 bytes is not read" begin
+        @test E.MAX_PATTERN_LENGTH == 1_048_576
+        longest = "a"^E.MAX_PATTERN_LENGTH
+        error, took = toolarge(longest * "a")
+        @test error isa E.TooLargeError && !error.valid
+        @test error.limit == "its length is over the limit of 1048576 bytes"
+        @test occursin("(1048577 bytes) is too large to read", sprint(showerror, error))
+        # The message carries the first 120 characters of the pattern, and not the megabyte.
+        @test ncodeunits(sprint(showerror, error)) < 400
+        @test took < 20
+        # A pattern that is not valid is not read either, and is not said to be invalid.
+        @test toolarge("(" * longest)[1] isa E.TooLargeError
+        @test !isvalid262(longest * "a")
+        @test isvalid262(longest)
+        # The longest pattern is not over this limit. A literal of a megabyte is over the limit on terms, and one
+        # class of a megabyte, which is one term, is read and run.
+        error, took = toolarge(longest)
+        @test error isa E.TooLargeError && !error.valid
+        @test error.limit == "it has over the limit of 131072 terms and alternatives"
+        @test took < 20
+        class = "^[c" * "ab"^((E.MAX_PATTERN_LENGTH - 6) ÷ 2) * "]+\$"
+        @test ncodeunits(class) == E.MAX_PATTERN_LENGTH
+        @test matches(class, "abba") && !matches(class, "abd")
+        @test isvalid262(class)
+        # Characters of several bytes count as their bytes.
+        @test toolarge("é"^(E.MAX_PATTERN_LENGTH ÷ 2) * "a")[1].limit == "its length is over the limit of 1048576 bytes"
+    end
+
+    # PCRE2, as Julia builds it, holds a compiled pattern of at most 64 KiB, writes a counted group out once for
+    # each time, nests parentheses 250 deep and numbers 65,535 groups. A translation it does not take for its size
+    # is too large, and was "a pattern PCRE2 does not compile", which read as a fault of the pattern.
+    @testset "a translation PCRE2 does not hold" begin
+        for pattern in ["(?:(?:a{1000}){1000}){1000}", "(?:ab){65535}", "^(?:(?:a{0,1000}){0,1000}){0,1000}\$",
+                "(?:" * "a?"^600 * "){200}", join(("w$k" for k in 1:12_000), "|"), "()"^40_000,
+                "(?:"^150 * "a*" * ")*"^150]
+            error, took = toolarge(pattern)
+            @test error isa E.TooLargeError && error.valid
+            @test error isa E.TooLargeError && startswith(error.limit, "PCRE2 does not hold it, and says \"")
+            @test error isa E.TooLargeError && occursin(r"\(PCRE2 error 1[0-9][0-9]\)$", error.limit)
+            @test E.unsupportedreason(pattern) === nothing
+            @test took < 20
+        end
+        # What PCRE2 holds is run: a count of a count that is a megabyte of text, and an alternation of 3,000 words.
+        @test matches("^(?:a{1000}){1000}\$", "a"^1_000_000)
+        @test !matches("^(?:a{1000}){1000}\$", "a"^999_999)
+        @test matches("^(?:" * join(("w$k" for k in 1:3000), "|") * ")\$", "w2999")
+        # A lookbehind of no fixed length is a callout, and PCRE2 numbers 253 of them for the module.
+        @test toolarge("(?<=a*)"^252 * "b")[1] === nothing
+        @test toolarge("(?<=a*)"^253 * "b")[1].limit == E.TOO_MANY_LOOKBEHINDS
+    end
+
+    # A repetition whose iterations past the minimum can match the empty string is written twice where a group of
+    # it is read after it, and the copies multiply with the depth. Seventy of them inside one another were written
+    # 2^70 times, which did not end. The emitter now counts the nodes it writes.
+    @testset "a translation that takes too long to write" begin
+        @test E.MAX_TRANSLATION_STEPS == 524_288
+        @test E.MAX_TRANSLATION_LENGTH == 1_048_576
+        for pattern in ["^(?=(" * "(?:"^95 * "a" * "){0,8}?"^95 * "))\\1\$",
+                "^(a|)" * "(?:"^60 * "\\1" * "|b){1,2}"^60 * "\$",
+                "^(?=(" * "(?:"^75 * "a" * "){0,1000}?"^75 * "))\\1\$",
+                "(?:"^190 * "a*" * ")+"^190 * "\$"]
+            error, took = toolarge(pattern)
+            @test error isa E.TooLargeError && error.valid
+            # Which limit it is over depends on the form: the steps to write it, or what PCRE2 holds.
+            @test error isa E.TooLargeError && (error.limit in (E.TOO_LARGE_STEPS, E.TOO_LARGE_TRANSLATION,
+                E.TOO_LARGE_REPETITION) || startswith(error.limit, "PCRE2 does not hold it"))
+            @test took < 30
+        end
+        @test toolarge("^(a|)" * "(?:"^60 * "\\1" * "|b){1,2}"^60 * "\$")[1].limit == E.TOO_LARGE_STEPS
+        # 30,000 classes of four ranges are a translation of more than a megabyte.
+        error, took = toolarge("\\w"^30_000)
+        @test error isa E.TooLargeError && error.limit == E.TOO_LARGE_TRANSLATION
+        @test took < 20
+        # A pattern of ordinary size is written in a few steps: these are the most of the patterns of the
+        # ecma262-regex-test-data files, which is 294 steps.
+        parser, root = E.parsepattern(raw"^(-(?:(?:\2+?.x)*?(?:[^a]{1,2}){1,}|(?<n0>^-|(|a)){3,3}(?!$)))")
+        emitter = E.analyse!(E.Emitter(parser, root))
+        E.translation(emitter, false)
+        @test 0 < emitter.steps < 2000
+    end
+
+    # What a compiled pattern keeps is bounded. The compiled pattern, those of its lookbehinds and the one that
+    # times a match are a megabyte together at most, and the JIT code of a pattern is 4 MiB at most: a part that
+    # would pass that is run by the interpreter. A call of the class of \p{L} is 12 KB of JIT code, and a pattern
+    # of 10,000 of them took 5.3 s to compile and kept 124 MB.
+    @testset "what a compiled pattern keeps" begin
+        @test E.MAX_COMPILED_BYTES == 1 << 20 && E.MAX_JIT_BYTES == 4 << 20
+        few = E.compile("^" * "\\p{L}"^100 * "\$")
+        @test few.jit
+        @test E.keptbytes(few) < 3_000_000
+        @test E.ismatch(few, "é"^100) && !E.ismatch(few, "é"^99 * "1")
+        started = time()
+        many = E.compile("^" * "\\p{L}"^400 * "\$")
+        @test time() - started < 20
+        # Left to the interpreter, which keeps the compiled pattern alone, and answers the same.
+        @test !many.jit
+        @test E.keptbytes(many) < 200_000
+        @test E.ismatch(many, "aé"^200) && !E.ismatch(many, "aé"^199 * "a1")
+        @test !E.ismatch(many, "aé"^200 * "a")
+        # A pattern of 10,000 is more steps to write than a translation has: a set of many ranges is as many
+        # steps as it has ranges, by eight.
+        error, took = toolarge("\\p{L}"^10_000)
+        @test error isa E.TooLargeError && error.valid
+        @test error isa E.TooLargeError && error.limit == E.TOO_LARGE_STEPS
+        @test took < 30
+        # PCRE2 holds a compiled pattern of 64 KiB, and the code that times a match has a callout of six bytes
+        # before every item, so a pattern PCRE2 holds may be one it does not hold with them. An alternation of
+        # 3,000 words is one. It is not refused: its matches end in their first stage. A match of it that uses
+        # the steps of that stage cannot be timed, and is given up there, sooner than the limit on its time.
+        words = join(("word$k" for k in 1:3000), "|")
+        large = E.compile("^(?:" * words * ")+\$")
+        @test E.compiledsize(large.code) > 20_000
+        @test E.ismatch(large, "word7word2999") && !E.ismatch(large, "word7word3001x")
+        @test isempty(E.timedcodes(large)) && !large.untimed
+        hostile = E.compile("^(?:" * words * "|a|a)+\$")
+        @test E.ismatch(hostile, "aaword12a")
+        started = time()
+        error = try
+            E.ismatch(hostile, "a"^40 * "b")
+        catch e
+            e
+        end
+        @test error isa E.MatchError && error.limit == :steps
+        @test error isa E.MatchError && occursin("the pattern cannot be timed", error.message)
+        @test time() - started < 20
+        @test hostile.untimed && isempty(E.timedcodes(hostile))
+        # The same again, and the pattern is good for other texts.
+        @test_throws E.MatchError E.ismatch(hostile, "a"^40 * "b")
+        @test E.ismatch(hostile, "aaword12a")
+        @test_throws E.MatchError E.ismatch(hostile, "a"^40 * "b", E.MatchLimit(0.01))
+        # With no limit on time it is run as any pattern is.
+        @test !E.ismatch(hostile, "a"^14 * "b", E.MatchLimit(nothing))
+        # The lookbehinds of a pattern are compiled each, and together with it they have the megabyte.
+        behinds = E.compile("(?<=a*)"^200 * "b")
+        @test length(behinds.lookbehinds) == 200
+        @test E.keptbytes(behinds) < 2_000_000
+        error, _ = toolarge(join(("(?<=(?:ab|c{$(k)}){1,3000}x*)" for k in 1:40)) * "b")
+        @test error isa E.TooLargeError && error.valid
+    end
+
 end
