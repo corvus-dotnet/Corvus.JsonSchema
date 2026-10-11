@@ -20,7 +20,8 @@ import (
 //     and separated lists ("^([a-z]+)(\.[a-z]+)*$");
 //   - anything else by the regular expression engine (see pattern_engine.go).
 //
-// Patterns compile once per process (a pattern is immutable, so identical patterns share one matcher).
+// A pattern is immutable, so identical patterns share one matcher, through a cache for the process that is bounded
+// in number and in size (see patternStore).
 
 type matcherKind uint8
 
@@ -67,6 +68,8 @@ type pattern struct {
 	// matches such a pattern by UTF-16 code unit, and the faster matchers read code points, so the engine answers
 	// for a text with a character beyond the Basic Multilingual Plane. Nil for every other pattern.
 	units patternEngine
+	// retained is what the pattern is counted as in the cache of compiled patterns, in bytes (see count).
+	retained int
 }
 
 // matchString is match for a string that is not known to be ASCII.
@@ -295,13 +298,72 @@ func indexString(s []byte, text string) int {
 	return -1
 }
 
-var patternCache sync.Map
+const (
+	// maxCachedPatterns is the most patterns the process-wide cache holds.
+	maxCachedPatterns = 1024
+	// maxCachedBytes is the most the patterns of the cache come to, in the bytes counted for each (see
+	// pattern.count): 64 MiB.
+	maxCachedBytes = 64 << 20
+	// maxCachedPatternBytes is the most a pattern of the cache is counted as. A larger one is compiled for the
+	// schema that has it and not kept.
+	maxCachedPatternBytes = maxCachedBytes / 32
+)
+
+// patternStore holds the compiled patterns of the process, so that identical patterns share one matcher. It is
+// bounded in number and in size, since the patterns of a schema may come from outside: when it is over either bound
+// the patterns that were compiled first go, oldest first. A validator holds the patterns of its schema itself, so a
+// pattern that has left the cache is still matched by the validators that have it, and is compiled again only for
+// a schema compiled later. Nothing reads the cache when an instance is evaluated.
+type patternStore struct {
+	mu       sync.RWMutex
+	patterns map[string]*pattern
+	// order holds the sources of the patterns in the order they were compiled, as a ring: count of them from first.
+	order        [maxCachedPatterns + 1]string
+	first, count int
+	// bytes is the sum of what the patterns are counted as.
+	bytes int
+}
+
+var patternCache = patternStore{patterns: map[string]*pattern{}}
+
+// get returns the pattern kept for a source, or nil.
+func (c *patternStore) get(source string) *pattern {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.patterns[source]
+}
+
+// keep keeps a pattern, and returns the one to use: the pattern itself, or the one another goroutine kept for the
+// same source meanwhile.
+func (c *patternStore) keep(p *pattern) *pattern {
+	if p.retained > maxCachedPatternBytes {
+		return p
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if kept, ok := c.patterns[p.source]; ok {
+		return kept
+	}
+	c.patterns[p.source] = p
+	c.order[(c.first+c.count)%len(c.order)] = p.source
+	c.count++
+	c.bytes += p.retained
+	for c.count > maxCachedPatterns || c.bytes > maxCachedBytes {
+		oldest := c.order[c.first]
+		c.order[c.first] = ""
+		c.first = (c.first + 1) % len(c.order)
+		c.count--
+		c.bytes -= c.patterns[oldest].retained
+		delete(c.patterns, oldest)
+	}
+	return p
+}
 
 // compilePattern compiles (or fetches from the process-wide cache) a pattern. The error is errInvalidPattern when
 // it is not a valid ECMA-262 regular expression, and a *patternSizeError when it is over a limit of size.
 func compilePattern(source string) (*pattern, error) {
-	if p, ok := patternCache.Load(source); ok {
-		return p.(*pattern), nil
+	if p := patternCache.get(source); p != nil {
+		return p, nil
 	}
 	// The limits of size come first: nothing below reads a pattern that is over one.
 	unicode, err := checkRegex(source)
@@ -328,8 +390,51 @@ func compilePattern(source string) (*pattern, error) {
 		}
 	}
 	p.source = source
-	actual, _ := patternCache.LoadOrStore(source, p)
-	return actual.(*pattern), nil
+	p.retained = p.count()
+	return patternCache.keep(p), nil
+}
+
+// count returns what the pattern is counted as in the cache of compiled patterns, in bytes: an estimate of what it
+// holds that is not below it. A text is counted as its length and an eighth, which is what the allocator can round
+// it up by, with the 16 bytes of a string. A member of a set of literals is counted with the 64 bytes a map has for
+// it, an item of a class sequence as 48 bytes, and an engine as it counts itself (see ecmaregex.Regexp.Retained).
+// Measured, no pattern held more than its count (see TestAPatternIsCountedAsNoLessThanItHolds).
+func (p *pattern) count() int {
+	const (
+		fixedBytes  = 256
+		stringBytes = 16
+		memberBytes = 64
+		itemBytes   = 48
+	)
+	text := func(s string) int {
+		return stringBytes + len(s) + len(s)/8
+	}
+	sequence := func(s *sequence) int {
+		if s == nil {
+			return 0
+		}
+		return fixedBytes + itemBytes*len(s.items)
+	}
+	n := fixedBytes + text(p.source) + text(p.text) + sequence(p.seq)
+	if p.list != nil {
+		n += fixedBytes + sequence(p.list.first) + sequence(p.list.repeated) + sequence(p.list.separator) + sequence(p.list.final)
+	}
+	for _, member := range p.few {
+		n += text(member)
+	}
+	for member := range p.many {
+		n += memberBytes + text(member)
+	}
+	for i := range p.alts {
+		n += memberBytes + text(p.alts[i].text) + sequence(p.alts[i].seq)
+	}
+	if p.engine != nil {
+		n += p.engine.Retained()
+	}
+	if p.units != nil {
+		n += p.units.Retained()
+	}
+	return n
 }
 
 func choosePattern(p string) *pattern {
@@ -360,7 +465,9 @@ func choosePattern(p string) *pattern {
 		if len(texts) <= 8 {
 			m.few = texts
 		} else {
-			m.many = make(map[string]struct{}, len(texts))
+			// The map grows as its members are added. The alternatives may repeat one text thousands of times, and a
+			// map made for their number would hold room for them all.
+			m.many = make(map[string]struct{})
 			for _, t := range texts {
 				m.many[t] = struct{}{}
 			}

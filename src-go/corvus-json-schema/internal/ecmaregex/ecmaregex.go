@@ -37,7 +37,7 @@
 // not ASCII. The translation spells out every literal and every class as code points, so
 // none of the places where RE2 and ECMA-262 read the same syntax differently (\d, \w, \s, the dot, $, Unicode
 // classes, case folding) can show through. Every other pattern, and any pattern whose translation regexp refuses or
-// would compile to a large program (see maxRE2Cost), runs on a backtracking matcher in this package. So does a
+// would compile to a large program (see maxRE2Cost and maxRE2Size), runs on a backtracking matcher in this package. So does a
 // pattern with no u flag on a text with a character beyond the Basic Multilingual Plane, since the regexp package
 // matches code points, and so does a text too long for the regexp package to answer within the limit of a match
 // (see MatchLimit), since a match there cannot be stopped.
@@ -100,6 +100,9 @@ type Regexp struct {
 	backProg *program
 	// reCost is the number of instructions of the program the regexp package runs.
 	reCost int
+	// size is the size the parser counted for the pattern (see MaxSize), and reSize what the regexp package is
+	// estimated to hold for it (see re2Size), or zero for a pattern on the backtracking matcher.
+	size, reSize int
 }
 
 const (
@@ -158,13 +161,13 @@ func compile(pattern string, forceBacktrack bool) (*Regexp, error) {
 			return nil, err
 		}
 	}
-	r := &Regexp{pattern: pattern, unicode: unicode}
-	if !forceBacktrack && !ps.needsBacktracking {
-		if re2Cost(root) <= maxRE2Cost {
+	r := &Regexp{pattern: pattern, unicode: unicode, size: ps.size}
+	if !forceBacktrack && !ps.needsBacktracking && re2Cost(root) <= maxRE2Cost {
+		if size := re2Size(root); size <= maxRE2Size {
 			var b strings.Builder
 			writeRE2(&b, root)
 			if re, cost := compileRE2(b.String()); re != nil {
-				r.re, r.root, r.reCost = re, root, cost
+				r.re, r.root, r.reCost, r.reSize = re, root, cost, size
 				return r, nil
 			}
 		}
@@ -252,6 +255,24 @@ func (r *Regexp) Engine() Engine {
 	}
 	return EngineBacktrack
 }
+
+// Retained estimates what the pattern holds in memory, in bytes, so that whoever keeps compiled patterns can bound
+// what they come to. It counts the source, four times the size the parser counted for the pattern, which the program
+// of the backtracking matcher is proportional to, and for a pattern on the regexp package what that package is
+// estimated to hold (see re2Size) and the automaton over ASCII text at its largest (see maxDFABytes). A pattern on
+// the regexp package is counted with the program of the backtracking matcher too, since it builds one for the texts
+// the package is not given. The count is an estimate from above: measured, no pattern held more than it (see
+// TestAPatternIsCountedAsNoLessThanItHolds).
+func (r *Regexp) Retained() int {
+	retained := len(r.pattern) + retainedFixed + 4*r.size
+	if r.re != nil {
+		retained += r.reSize + maxDFABytes
+	}
+	return retained
+}
+
+// retainedFixed is what a compiled pattern holds whatever the pattern is, in bytes.
+const retainedFixed = 512
 
 // Unicode reports whether the pattern is valid with the ECMA-262 u flag. When it is not, the pattern was read with
 // the Annex B grammar.

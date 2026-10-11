@@ -264,6 +264,10 @@ byte, as measured). So it is given no program estimated at more than 10,000 inst
 is given a string only when the program times the string, at 16 ns each, is within the limit. Any other string goes
 to the backtracking matcher. Validation still allocates nothing in the steady state with the limit on.
 
+`regexp` also keeps the ranges of a class for every copy of it that a counted repetition writes out, so it is given
+no program estimated to hold more than 2 MiB. `^[\p{L}\p{N}_-]{1,450}$`, a pattern of 25 characters, held 10 MB
+there. It now runs on the backtracking matcher, which holds a class once, and holds 7 KB.
+
 **The limits of size.** A pattern over one of these is refused when the schema is compiled, with a
 `*PatternTooLargeError`, which `errors.Is` matches with `ErrPatternTooLarge` and which names the keyword, the limit
 and its value. It is not the error of a pattern that is not valid, which is a `*CompileError`. The pattern is not
@@ -280,6 +284,17 @@ each of 24 kinds that the limits admit compiled in 110 ms at most and kept 4.7 M
 literal of 16,384 characters is the longest the size admits, and `\p{L}` can be written 16,384 times. The number of
 groups has no limit of its own, since each is a term. The `regex` format reads a string of the instance as a pattern
 with the same limits, and a string over one is not a valid regular expression to it.
+
+**The cache of compiled patterns.** Identical patterns share one matcher through a cache for the whole process. It
+holds 1,024 patterns at most, and 64 MiB at most in the bytes counted for them. Over either bound the patterns
+compiled first go, oldest first. A validator holds the patterns of its own schema, so a pattern that has left the
+cache is still matched by every validator that has it, and is compiled again only for a schema compiled later. A
+pattern counted as more than 2 MiB is not kept at all. A pattern is counted as an estimate of what it holds that is
+not below it: its source, its texts and class sequences, four times its size as it is read for the engine, and for
+a pattern on `regexp` the estimate of that package's program and 33 KB for its automaton over ASCII text. So a
+process that compiles schemas from outside for as long as it runs does not grow with the patterns it has seen: 6,000
+schemas with patterns of their own left the heap where the first 1,024 had (10 MB). Nothing reads the cache when an
+instance is evaluated.
 
 **What still reaches the limit of a match.** These are answered by no backtracking matcher in reasonable time, and
 now end in the error after one second. V8 has no limit. It does not answer the first two kinds in 90 seconds either,
