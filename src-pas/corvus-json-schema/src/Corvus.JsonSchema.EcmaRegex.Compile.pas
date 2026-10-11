@@ -128,6 +128,8 @@ type
     { Unicode says the pattern was read with the u flag grammar, which decides how a backreference folds case. }
     Unicode: Boolean;
 
+    function Consumes(N: Int32): Boolean;
+    procedure Simplify(N: Int32; var Open: TInt32Array; OpenCount: Int32);
     function Add(Op: TOpcode): Int32;
     function Pc: Int32;
     function TrackedSlot(Group: Int32): Int32;
@@ -148,6 +150,79 @@ begin
       Seen[Nodes[N].Groups[K]] := True;
   for K := 0 to High(Nodes[N].Subs) do
     CollectBackrefs(Nodes, Nodes[N].Subs[K], Seen);
+end;
+
+{ Consumes reports whether N can match one character or more. It errs towards true. }
+function TCompiler.Consumes(N: Int32): Boolean;
+var
+  K: Int32;
+begin
+  Result := False;
+  case Nodes[N].Kind of
+    NChar, NSet, NBackref:
+      Result := True;
+    NCat, NAlt, NGroup:
+      for K := 0 to High(Nodes[N].Subs) do
+        if Consumes(Nodes[N].Subs[K]) then
+          Exit(True);
+    NRepeat:
+      Result := (Nodes[N].Max <> 0) and Consumes(Nodes[N].Subs[0]);
+  end;
+end;
+
+(* Simplify rewrites the tree at and below N in two ways, both of which V8 makes. Neither changes what the pattern
+  matches or what any group holds. Without them a pattern can take time exponential in its counts for no reason
+  that ECMA-262 gives. Open holds the capturing groups N is inside of, of which there are OpenCount.
+
+  A backreference to a group it is inside of is the empty string. The group is not set until it closes, and the
+  repetition around a group clears it at the start of each iteration, so inside the group it is never set.
+
+  A repetition whose body cannot consume a character, such as (?:\b|(?=a)|){4,5}, is the body once when its minimum
+  is one or more, and nothing when its minimum is zero. Every iteration of such a body is empty. ECMA-262 refuses
+  an empty iteration after the minimum, so the iterations are exactly the minimum. Each of them starts with the
+  groups of the body cleared and at the same position, so what the last one can do does not depend on the ones
+  before it, and the ways through the last one come in the same order whatever the others chose. Run as written,
+  the matcher would try every combination of the ways through every iteration.
+
+  The Go source returns a new tree, because its tree is shared. Here the compiler has its own copy of the nodes
+  (see CompileProgram), and a node is rewritten where it is: a node that becomes empty loses its children, and a
+  repetition that becomes its body takes the body's place. No node changes its index. *)
+procedure TCompiler.Simplify(N: Int32; var Open: TInt32Array; OpenCount: Int32);
+var
+  K, G: Int32;
+  Inside: Boolean;
+begin
+  if Nodes[N].Kind = NBackref then begin
+    for K := 0 to High(Nodes[N].Groups) do begin
+      Inside := False;
+      for G := 0 to OpenCount - 1 do
+        Inside := Inside or (Open[G] = Nodes[N].Groups[K]);
+      if not Inside then
+        Exit;
+    end;
+    Nodes[N].Kind := NEmpty;
+    Nodes[N].Groups := nil;
+    Exit;
+  end;
+  if Length(Nodes[N].Subs) = 0 then
+    Exit;
+  if (Nodes[N].Kind = NGroup) and (Nodes[N].Group > 0) then begin
+    if OpenCount = Length(Open) then
+      SetLength(Open, 2 * OpenCount + 8);
+    Open[OpenCount] := Nodes[N].Group;
+    Inc(OpenCount);
+  end;
+  for K := 0 to High(Nodes[N].Subs) do
+    Simplify(Nodes[N].Subs[K], Open, OpenCount);
+  if (Nodes[N].Kind = NRepeat) and (Nodes[N].Max <> 0) and not Consumes(Nodes[N].Subs[0]) then begin
+    if Nodes[N].Min = 0 then begin
+      Nodes[N].Kind := NEmpty;
+      Nodes[N].Subs := nil;
+    end else begin
+      K := Nodes[N].Subs[0];
+      Nodes[N] := Nodes[K];
+    end;
+  end;
 end;
 
 { Add writes an instruction with nothing but its opcode set and returns its index. }
@@ -597,11 +672,15 @@ var
   G, MaxGroup, Count: Int32;
   Pairs: TRunes;
   Empty: Boolean;
+  Open: TInt32Array;
 begin
   C := Default(TCompiler);
-  C.Nodes := Ps.Nodes;
+  // A copy of the nodes, which Simplify rewrites. The parser's tree is left as it was read.
+  C.Nodes := Copy(Ps.Nodes, 0, Ps.NodeCount);
   C.Sets := Ps.Sets;
   C.Unicode := Unicode;
+  Open := nil;
+  C.Simplify(Root, Open, 0);
   // A backreference names a group the scan of the pattern counted, which the parser need not have read.
   MaxGroup := Ps.GroupCount;
   if Ps.Groups > MaxGroup then

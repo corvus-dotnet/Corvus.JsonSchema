@@ -246,7 +246,7 @@ end;
 `pattern` and `patternProperties` have ECMA-262 semantics. The common shapes of pattern are matched with no regular
 expression engine. Any other pattern runs on the package's own engine, which reads every character class from the
 package's own Unicode 17 data, so a pattern means the same whichever compiler built the program. The engine agrees
-with answers recorded from V8 on 61,487 patterns and 1,083,480 match answers.
+with answers recorded from V8 on 61,538 patterns and 1,085,980 match answers.
 
 A pattern is read with the grammar of the `u` flag and matched by Unicode code point. A pattern that grammar refuses
 is read with the Annex B grammar of a pattern with no flag, which many schemas need (`\-` outside a class, `\_`, a
@@ -264,6 +264,9 @@ ASCII text with one table read per byte, when the automaton is small enough. Eve
 is not ASCII, runs on a backtracking matcher. The Go module hands most patterns to Go's linear-time `regexp`
 package, which Object Pascal has no counterpart of. The backtracking matcher has no step budget, so a pattern with
 nested quantifiers can take exponential time on a text it does not match, in cases where the Go module's would not.
+A repetition whose body cannot consume a character, such as `(?:\b|(?=a)|){4,5}`, is not such a case. Every
+iteration of it is empty, so the matcher runs the body once when the minimum is one or more and not at all when it
+is zero, which is what ECMA-262 says such a repetition matches.
 
 ## Performance
 

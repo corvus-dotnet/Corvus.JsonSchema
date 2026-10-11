@@ -2214,6 +2214,72 @@ begin
     Fail('only ' + Num(Faster) + ' of ' + Num(Patterns) + ' patterns have a faster matcher');
 end;
 
+var
+  { Set by TestSimplify when the rewrites are in place. }
+  Simplifies: Boolean = False;
+
+(* TestSimplify checks the two rewrites of Simplify on the compiled program: a repetition whose body cannot consume
+  a character is the body once, or nothing, and a backreference inside the group it names is the empty string. *)
+procedure TestSimplify;
+var
+  Count: Int32;
+
+  procedure Expect(const Pattern: UTF8String; Loops, Backrefs: Int32);
+  var
+    Re: TEcmaRegex;
+    K, Found: Int32;
+  begin
+    Inc(Count);
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Found := 0;
+    for K := 0 to High(Re.Prog.Insts) do
+      if Re.Prog.Insts[K].Op = OpBackref then
+        Inc(Found);
+    if (Re.Prog.Loops <> Loops) or (Found <> Backrefs) then begin
+      Fail(Quote(Pattern) + ': ' + Num(Re.Prog.Loops) + ' counted loops and ' + Num(Found) +
+        ' backreferences, want ' + Num(Loops) + ' and ' + Num(Backrefs));
+      Simplifies := False;
+    end;
+  end;
+
+begin
+  Count := 0;
+  Simplifies := True;
+  Expect('(?:\b|(?=a)|){4,5}', 0, 0);
+  Expect('(?:(?=(a))|){2}\1', 0, 1);
+  Expect('(?:(?=a))*b', 0, 0);
+  Expect('(?:a|(?=b)){2,3}', 1, 0);
+  Expect('(a\1)+', 0, 0);
+  Expect('(?:(a)|b\1){2}', 1, 1);
+  Expect('((\1|\2|)){3}', 0, 0);
+  Expect('(?<n>a\k<n>)', 0, 0);
+  Expect('(?:(?<n>a)|(?<n>b\k<n>)){2}', 1, 2);
+  Expect('(?:(\1){3}|(?!a)){2,}(?<=b)', 0, 0);
+  Expect('(?:\1(a)){2}', 1, 1);
+  WriteLn('TestSimplify: ', Count, ' patterns');
+end;
+
+{ TestRepetitionsThatCannotConsume checks, against V8, repetitions whose body can match only the empty string and
+  backreferences inside the group they name. Run as written, the first patterns of the set take time exponential
+  in their counts and the program would not end, so the test fails without running them when TestSimplify has
+  found the rewrites missing. The other patterns pin what the groups of such a body hold afterwards. }
+procedure TestRepetitionsThatCannotConsume;
+var
+  Patterns, Answers, Matched, Legacy, Invalid: Int32;
+begin
+  if not Simplifies then begin
+    Fail('TestRepetitionsThatCannotConsume: not run, because the rewrites of Simplify are missing and its ' +
+      'patterns would not finish');
+    Exit;
+  end;
+  CheckCases('loops', False, Patterns, Answers, Matched, Legacy, Invalid);
+  WriteLn('TestRepetitionsThatCannotConsume: ', Patterns, ' patterns, ', Answers, ' answers per back end (', Matched,
+    ' of them a match)');
+  if (Patterns < 50) or (Matched < 300) then
+    Fail('the cases of TestRepetitionsThatCannotConsume are not the ones the test is about');
+end;
+
 { TestCodeUnitPositions checks the two readers of a code unit on every position of a text, forwards and
   backwards. }
 procedure TestCodeUnitPositions;
@@ -2305,6 +2371,8 @@ begin
   TestOracleGenerated;
   TestCodeUnits;
   TestFastMatchersMatchCodeUnits;
+  TestSimplify;
+  TestRepetitionsThatCannotConsume;
   TestCodeUnitPositions;
   WriteLn('V8 oracle: ', OracleVerdicts, ' verdicts on validity compared, ', OracleVerdictsAgreed, ' agreed. ',
     OracleAnswers, ' answers on a match compared (each text on both back ends), ', OracleAnswersAgreed, ' agreed.');
@@ -2312,5 +2380,5 @@ begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 20 tests, 0 failures');
+  WriteLn('PASS: 22 tests, 0 failures');
 end.

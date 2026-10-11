@@ -48,7 +48,9 @@ unit Corvus.JsonSchema.EcmaRegex;
   allocate once the stack has grown. It has no step budget, so a pattern with nested quantifiers can take
   exponential time on a text it does not match, as it can in any backtracking engine. In Go that is so only for a
   pattern with a lookaround or a backreference, because the regexp package matches the others in linear time. Here
-  it is also so for a pattern that has no automaton, and for a text that is not ASCII.
+  it is also so for a pattern that has no automaton, and for a text that is not ASCII. A repetition whose body
+  cannot consume a character is not such a pattern. It is run once, or not at all (see Simplify of the Compile
+  unit), as V8 runs it.
 
   The automaton is built when the pattern is compiled, where Go builds it on the first match. A compiled pattern is
   then a value that nothing writes to, which is what lets threads share it without a lock.

@@ -376,7 +376,7 @@ results collector allocate.
 pattern only that accepts), whichever compiler built the program. A pattern outside the common shapes runs on the
 package's own engine, a port of the Go module's `internal/ecmaregex`. The grammar is that of ECMAScript 2025, with
 lookbehind, named groups, modifier groups and Unicode property escapes. The engine was compared with answers
-recorded from V8: it agrees on 61,487 patterns and 1,083,480 match answers.
+recorded from V8: it agrees on 61,538 patterns and 1,085,980 match answers.
 
 A pattern is read with the grammar of the `u` flag and matched by Unicode code point. A pattern that grammar refuses
 is read with the Annex B grammar of a pattern with no flag, which many schemas need (`\-` outside a class, `\_`, a
@@ -400,7 +400,9 @@ The engine has two matchers:
 
 The backtracking matcher has no step budget. A pattern with nested quantifiers can take exponential time on a text
 it does not match, as it can in any backtracking engine. A schema whose patterns are not trusted should not be given
-texts that are not trusted.
+texts that are not trusted. A repetition whose body cannot consume a character, such as `(?:\b|(?=a)|){4,5}`, is not
+such a case. Every iteration of it is empty, so the matcher runs the body once when the minimum is one or more and
+not at all when it is zero, which is what ECMA-262 says such a repetition matches.
 
 ## Differences from the Go module
 
