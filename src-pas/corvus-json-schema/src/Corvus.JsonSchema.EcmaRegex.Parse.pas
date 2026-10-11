@@ -147,6 +147,7 @@ type
     function Term: Int32;
     function LooksLikeQuantifier: Boolean;
     function Number: Int32;
+    function GreaterAsWritten(A, AEnd, B, BEnd: Int32): Boolean;
     function Quantifier(out Min, Max: Int32; out Lazy: Boolean): Boolean;
     function Group(out Quantifiable: Boolean): Int32;
     function ModifierGroup: Int32;
@@ -586,9 +587,29 @@ begin
   Result := Int32(V);
 end;
 
+{ GreaterAsWritten reports whether the first of two runs of decimal digits of the pattern, P[A..AEnd-1] and
+  P[B..BEnd-1], is the greater number. The runs are compared as written, because a count has no limit of size in the
+  grammar and Number stops at MaxCount. }
+function TParser.GreaterAsWritten(A, AEnd, B, BEnd: Int32): Boolean;
+begin
+  while (A < AEnd) and (P[A] = Ord('0')) do
+    Inc(A);
+  while (B < BEnd) and (P[B] = Ord('0')) do
+    Inc(B);
+  if AEnd - A <> BEnd - B then
+    Exit(AEnd - A > BEnd - B);
+  while A < AEnd do begin
+    if P[A] <> P[B] then
+      Exit(P[A] > P[B]);
+    Inc(A);
+    Inc(B);
+  end;
+  Result := False;
+end;
+
 function TParser.Quantifier(out Min, Max: Int32; out Lazy: Boolean): Boolean;
 var
-  C: Int32;
+  C, First, FirstEnd, Second: Int32;
 begin
   Min := 0;
   Max := 0;
@@ -608,22 +629,27 @@ begin
     Max := 1;
   end else if (C = Ord('{')) and LooksLikeQuantifier then begin
     Inc(I);
+    First := I;
     Min := Number;
     Max := Min;
+    FirstEnd := I;
     if Eat(Ord(',')) then begin
       if Peek = Ord('}') then
         Max := Unbounded
-      else
+      else begin
+        Second := I;
         Max := Number;
+        // Both counts stop at MaxCount, so the numbers are compared as they are written.
+        if (not Failed) and GreaterAsWritten(First, FirstEnd, Second, I) then begin
+          Fail('numbers out of order in quantifier');
+          Exit(False);
+        end;
+      end;
     end;
     if Failed then
       Exit(False);
     if not Eat(Ord('}')) then begin
       Fail('malformed quantifier');
-      Exit(False);
-    end;
-    if (Max <> Unbounded) and (Max < Min) then begin
-      Fail('numbers out of order in quantifier');
       Exit(False);
     end;
   end else

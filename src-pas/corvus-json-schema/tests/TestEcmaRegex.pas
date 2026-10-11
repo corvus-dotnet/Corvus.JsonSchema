@@ -2391,6 +2391,18 @@ begin
     Fail('the cases of TestEscapedKInAClass are not the ones the test is about');
 end;
 
+(* TestCountsAreComparedAsWritten checks the two counts of a quantifier. A first count greater than the second is an
+  error whatever the size of the numbers. V8 13.6 keeps a count as a number that stops at 2^31 - 1 and so takes
+  a{2147483648,2147483647}. Those cases have ECMA-262's answer. *)
+procedure TestCountsAreComparedAsWritten;
+var
+  Patterns, Invalid, Departures: Int32;
+begin
+  CheckSyntax('TestCountsAreComparedAsWritten', 'counts', Patterns, Invalid, Departures);
+  if (Invalid < 20) or (Departures < 10) then
+    Fail('the cases of TestCountsAreComparedAsWritten are not the ones the test is about');
+end;
+
 { TestCodeUnitPositions checks the two readers of a code unit on every position of a text, forwards and
   backwards. }
 procedure TestCodeUnitPositions;
@@ -2488,11 +2500,12 @@ begin
   TestLoopsGiveUpWhenTheRestCannotFit;
   TestCodeUnitPositions;
   TestEscapedKInAClass;
+  TestCountsAreComparedAsWritten;
   WriteLn('V8 oracle: ', OracleVerdicts, ' verdicts on validity compared, ', OracleVerdictsAgreed, ' agreed. ',
     OracleAnswers, ' answers on a match compared (each text on both back ends), ', OracleAnswersAgreed, ' agreed.');
   if Failures <> 0 then begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 25 tests, 0 failures');
+  WriteLn('PASS: 26 tests, 0 failures');
 end.
