@@ -327,6 +327,30 @@ fn a_group_name_beyond_the_bmp_without_the_u_flag() {
     check_texts(GROUP_NAMES_BEYOND_THE_BMP);
 }
 
+/// The escape of a surrogate that is not half of a pair, in patterns that are valid with the `u` flag. No string
+/// of characters has one, so it matches nothing, and a quantifier that allows none of it matches. Before 0.1.7
+/// the engine lost the quantifier: `^\ud801*$` did not match the empty string.
+#[rustfmt::skip]
+const LONE_SURROGATE_ESCAPES: &[(&str, &[&str], &[&str])] = &[
+    ("^\\ud801*$", &[""], &["a", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^\\ud801?a$", &["a"], &["", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^(?:\\ud801)*$", &[""], &["a", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^\\udc00*?a", &["a", "aa", "a\u{10400}"], &["", "\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^[\\ud801]*$", &[""], &["a", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("a\\ud801{0,2}$", &["a", "aa", "\u{10400}a"], &["", "\u{10400}", "a\u{10400}", "\u{10428}"]),
+    ("^\\ud801+$", &[], &["", "a", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^\\ud801|a$", &["a", "aa", "\u{10400}a"], &["", "\u{10400}", "a\u{10400}", "\u{10428}"]),
+    ("^\\u{d801}*a$", &["a"], &["", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^\\ud801*\\ud801\\udc00$", &["\u{10400}"], &["", "a", "aa", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^\\udc00?.$", &["a", "\u{10400}", "\u{10428}"], &["", "aa", "a\u{10400}", "\u{10400}a"]),
+    ("^(?i:\\ud801*a)$", &["a"], &["", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+];
+
+#[test]
+fn the_escape_of_a_lone_surrogate_with_the_u_flag() {
+    check_texts(LONE_SURROGATE_ESCAPES);
+}
+
 /// Case-insensitive references, with V8's answers for the pattern with the `i` flag in place of the group. The
 /// patterns with `\&` are valid only without the `u` flag. There two code units are equal when their uppercase
 /// forms are: `s` is not U+017F, `i` is not U+0131, and U+1F80 is not U+1F88, each of which regress's own

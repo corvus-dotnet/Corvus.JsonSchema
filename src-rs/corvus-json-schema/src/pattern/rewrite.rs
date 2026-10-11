@@ -808,6 +808,13 @@ impl Parser {
     fn character(&mut self, value: u32, text: String) -> Node {
         // Without case a character is equal to itself and to the other case of its letter, which hold the same.
         self.hold(held(value));
+        // With the `u` flag the escape of a surrogate that is not half of a pair matches nothing in a string of
+        // characters. regress has it so as a class, and loses the quantifier of one written as a character:
+        // `^\ud801*$` does not match the empty string.
+        if self.unicode && (0xD800..0xE000).contains(&value) {
+            self.special = true;
+            return Node::Atom(format!("[\\u{value:04x}]"));
+        }
         if self.icase && !self.unicode && value <= 0xFFFF {
             let mut set = CodeUnits::new();
             set.insert(value as u16, value as u16);
