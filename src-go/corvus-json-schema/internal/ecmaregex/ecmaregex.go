@@ -36,16 +36,27 @@
 // which decides an ASCII text with one table read per byte. The regexp package then only sees the texts that are
 // not ASCII. The translation spells out every literal and every class as code points, so
 // none of the places where RE2 and ECMA-262 read the same syntax differently (\d, \w, \s, the dot, $, Unicode
-// classes, case folding) can show through. Every other pattern, and any pattern whose translation regexp refuses (a repeat count
-// above its limit, for example), runs on a backtracking matcher in this package. So does a pattern with no u flag
-// on a text with a character beyond the Basic Multilingual Plane, since the regexp package matches code points.
-// That matcher keeps its choices on an
-// explicit pooled stack, so a long text cannot overflow the goroutine stack and a match does not allocate once the
-// stack has grown. It has no step budget, so a pattern with nested quantifiers and a lookaround or a backreference
-// can take exponential time, as it can in any backtracking engine. A repetition whose body cannot consume a
-// character is not such a pattern. It is run once, or not at all (see simplify), as V8 runs it. And a counted loop
-// gives up at a position from which the rest of the pattern needs more text than is left (see setNeeds), as V8
-// does, so a loop whose iterations can be empty does not try every combination of them there.
+// classes, case folding) can show through. Every other pattern, and any pattern whose translation regexp refuses or
+// would compile to a large program (see maxRE2Cost), runs on a backtracking matcher in this package. So does a
+// pattern with no u flag on a text with a character beyond the Basic Multilingual Plane, since the regexp package
+// matches code points, and so does a text too long for the regexp package to answer within the limit of a match
+// (see MatchLimit), since a match there cannot be stopped.
+//
+// The backtracking matcher keeps its choices on an explicit pooled stack, so a long text cannot overflow the
+// goroutine stack and a match does not allocate once the stack has grown. Four things keep it from the time a
+// backtracking matcher can take. A repetition whose body cannot consume a character is run once, or not at all (see
+// simplify), as V8 runs it. A counted loop gives up at a position from which the rest of the pattern, with the
+// iterations the loop still owes, needs more text than is left (see setNeeds). A way the next character of the text
+// rules out is not taken (see setQuick), as in V8. And where a pattern has no backreference the matcher remembers
+// the places from which every way has failed (see memo in vm.go), so a repetition inside a repetition takes time
+// proportional to the pattern times the text. What is left, a group read back inside a repetition above all, can
+// still take time that doubles with each character, and is ended by the limit of the match.
+//
+// # Limits
+//
+// MatchLimit gives a match a limit of time, and with it a cap on the memory of its backtracking. Compile refuses a
+// pattern over a limit of size (MaxPatternLength, MaxNesting, MaxSize) with a *TooLargeError, so that reading and
+// compiling a pattern take bounded time and memory whatever the pattern holds.
 //
 // # Coverage and limits
 //
@@ -54,7 +65,7 @@
 // Unicode 17 data. The properties and the case folding come from the tables of the ucd package and never from the
 // unicode package of the Go toolchain, and the regexp package is given explicit ranges, so a pattern matches the same
 // texts whichever toolchain built the program. The v flag (set notation and properties of strings) does not apply, because a JSON Schema pattern
-// has no flags. Groups may nest 1000 deep.
+// has no flags.
 package ecmaregex
 
 import (

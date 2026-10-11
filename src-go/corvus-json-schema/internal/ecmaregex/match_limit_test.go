@@ -263,3 +263,39 @@ func TestALimitedMatchAllocatesNothing(t *testing.T) {
 		}
 	}
 }
+
+// BenchmarkMatchLimit matches patterns that run on the backtracking matcher with no limit and with a limit they do
+// not reach, to show what counting the steps and reading the clock cost. The first group ends before its first
+// check. The second makes tens of thousands of steps for each match, so the clock is read several times. The third
+// takes the memory of failed places into use.
+func BenchmarkMatchLimit(b *testing.B) {
+	short := []byte("the quick brown fox jumps over the lazy dog 12345")
+	long := []byte(strings.Repeat("ab", 5000) + "!")
+	for _, c := range []struct {
+		pattern string
+		text    []byte
+	}{
+		{`^(?!.*\d{6})(?=.*\bfox\b).+$`, short}, {`(?<=dog )\d+$`, short}, {`(\w)\1`, short}, {`^(?=.)(?:\w+\s?)+$`, short},
+		{`^(?=.)(?:a|b)*c$`, long}, {`^(?:(a|b)\1?)+$`, long}, {`(?=.)(?:a|b)*c`, long[:2000]},
+		{`^(?=.)(?:a|aa)+$`, []byte(strings.Repeat("a", 500) + "b")}, {`^(?=.)(?:a?b?)*x`, long[:1000]},
+	} {
+		re, err := Compile(c.pattern)
+		if err != nil {
+			b.Fatal(err)
+		}
+		for _, limit := range []time.Duration{0, time.Minute} {
+			name := "no limit"
+			if limit > 0 {
+				name = "limit"
+			}
+			b.Run(c.pattern+"/"+name, func(b *testing.B) {
+				b.ReportAllocs()
+				for i := 0; i < b.N; i++ {
+					if _, err := re.MatchLimit(c.text, limit); err != nil {
+						b.Fatal(err)
+					}
+				}
+			})
+		}
+	}
+}

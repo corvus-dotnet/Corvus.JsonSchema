@@ -3,6 +3,8 @@ package jsonschema_test
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	jsonschema "github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema"
 )
@@ -153,4 +155,33 @@ func ExampleCompileString_errors() {
 	// Output:
 	// true
 	// true
+}
+
+func ExampleWithPatternMatchLimit() {
+	// A group read back inside a repetition, on a string that fails at its end: no backtracking matcher answers
+	// this in the life of the machine. One match may take a second by default. Here it may take 50 milliseconds.
+	validator, err := jsonschema.CompileString(
+		`{"pattern": "^(?:(a+)\\1*)+$"}`,
+		jsonschema.WithPatternMatchLimit(50*time.Millisecond),
+	)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	_, err = validator.ValidateString(`"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"`)
+	var limit *jsonschema.PatternMatchLimitError
+	fmt.Println(errors.Is(err, jsonschema.ErrPatternMatchLimit), errors.As(err, &limit))
+	fmt.Println(limit.Pattern, limit.Limit, limit.Memory)
+
+	// A pattern over a limit of size is refused when the schema is compiled. It is not a pattern that is not valid.
+	_, err = jsonschema.CompileString(`{"pattern": "` + strings.Repeat("(?:", 1000) + "a" + strings.Repeat(")", 1000) + `"}`)
+	var large *jsonschema.PatternTooLargeError
+	var compileError *jsonschema.CompileError
+	fmt.Println(errors.Is(err, jsonschema.ErrPatternTooLarge), errors.As(err, &large), errors.As(err, &compileError))
+	fmt.Println(large.Keyword, large.Limit, large.Value)
+	// Output:
+	// true true
+	// ^(?:(a+)\1*)+$ 50ms false
+	// true true false
+	// pattern nesting 1000
 }
