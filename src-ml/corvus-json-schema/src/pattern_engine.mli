@@ -25,4 +25,20 @@ val is_match : scratch -> t -> Bytes.t -> int -> int -> bool
 (** [is_match scratch re text off len] reports whether the pattern matches somewhere in the [len] bytes of [text] from
     [off]. It allocates nothing once the scratch has grown to what the match needs.
 
-    @raise Invalid_argument if [off] and [len] do not name a range of [text]. *)
+    @raise Invalid_argument if [off] and [len] do not name a range of [text].
+    @raise Match_time when the scratch has a limit and the match ran for longer.
+    @raise Match_memory when the scratch has a limit and the match needed more backtracking memory than a match may. *)
+
+exception Match_time
+(** A match was abandoned because it ran for longer than the limit of its scratch. It is not an answer. *)
+
+exception Match_memory
+(** A match was abandoned because its backtracking stack reached the cap a match with a limit has. It is not an answer.
+*)
+
+val set_limit : scratch -> float -> unit
+(** [set_limit scratch seconds] gives every match with the scratch from now on a limit of that many seconds of processor
+    time. Zero or less is no limit. *)
+
+val create_limited_scratch : float -> scratch
+(** [create_limited_scratch seconds] is {!create_scratch} followed by {!set_limit}. *)

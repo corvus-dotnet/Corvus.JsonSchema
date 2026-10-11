@@ -51,9 +51,7 @@ let expect_valid v instance want =
   let got = Validator.is_valid_document v document in
   Check.checkf (got = want) "is_valid_document(%s) = %b, want %b" instance got want
 
-let is_depth_exceeded = function
-  | Error Depth_exceeded -> true
-  | Ok _ | Error (Parse_error _ | Compile_error _) -> false
+let is_depth_exceeded = function Error Depth_exceeded -> true | Ok _ | Error _ -> false
 
 (* describe is a result as text, for the description of a check. *)
 let describe = function Ok b -> string_of_bool b | Error e -> error_to_string e
@@ -197,14 +195,8 @@ let default_dialect_applies_to_schemas_without_schema () =
 
 let compilation_errors () =
   let compiled = function Ok _ -> "it compiled" | Error e -> error_to_string e in
-  let is_compile_error = function
-    | Error (Compile_error _) -> true
-    | Ok _ | Error (Parse_error _ | Depth_exceeded) -> false
-  in
-  let is_parse_error = function
-    | Error (Parse_error _) -> true
-    | Ok _ | Error (Compile_error _ | Depth_exceeded) -> false
-  in
+  let is_compile_error = function Error (Compile_error _) -> true | Ok _ | Error _ -> false in
+  let is_parse_error = function Error (Parse_error _) -> true | Ok _ | Error _ -> false in
   let r = Validator.compile_string {|{ "$ref": "https://example.com/missing.json" }|} in
   Check.checkf (is_compile_error r) "an unresolvable reference: %s" (compiled r);
   let r = Validator.compile_string {|{ "pattern": "a(" }|} in
@@ -515,9 +507,7 @@ let validates_json_text () =
   let r = Validator.validate_bytes v (Bytes.of_string {|[1, "2"]|}) in
   Check.checkf (r = Ok false) {|[1, "2"]: %s|} (describe r);
   let r = Validator.validate_string v "[1, 2" in
-  Check.checkf
-    (match r with Error (Parse_error e) -> e.offset = 5 | Ok _ | Error (Compile_error _ | Depth_exceeded) -> false)
-    "[1, 2: %s" (describe r);
+  Check.checkf (match r with Error (Parse_error e) -> e.offset = 5 | Ok _ | Error _ -> false) "[1, 2: %s" (describe r);
   Check.check "text that is not JSON is valid"
     (not (Validator.is_valid_string v "[1, 2" || Validator.is_valid_bytes v Bytes.empty));
   let c = Results.create Results.Detailed in
@@ -536,7 +526,7 @@ let validates_json_text () =
           (Results.results c)));
   let r = Validator.evaluate_string v ~results:c {|[|} in
   Check.checkf
-    (match r with Error (Parse_error _) -> true | Ok _ | Error (Compile_error _ | Depth_exceeded) -> false)
+    (match r with Error (Parse_error _) -> true | Ok _ | Error _ -> false)
     "evaluate_string of text that is not JSON: %s" (describe r)
 
 (* A format callback that validates JSON text itself, during a validation of JSON text on the same thread, gets

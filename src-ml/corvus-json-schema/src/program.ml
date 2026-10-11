@@ -430,6 +430,8 @@ type t = {
   entry : int;
   uses_dynamic_scope : bool;
   max_depth : int;
+  (* The time in seconds one match of a pattern may take, or zero for no limit. *)
+  pattern_match_limit : float;
   (* The custom format of each node whose format names one. Go looks the name up in a map where it is asserted. *)
   custom_formats : (string -> bool) option array;
   (* For fail-fast evaluation: each node's target after following pure $ref hops. *)

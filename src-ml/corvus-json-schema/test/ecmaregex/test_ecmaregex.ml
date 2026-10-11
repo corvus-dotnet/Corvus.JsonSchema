@@ -438,6 +438,12 @@ let check_verdict p valid_unicode valid_legacy =
         Some (re, backtracking p)
       end
 
+(* A scratch whose matches have a limit of a nanosecond. *)
+let limited_scratch =
+  let scratch = Re.create_scratch () in
+  Re.set_limit scratch 1e-9;
+  scratch
+
 (* Compares the answers of both back ends with one of V8's. *)
 let check_answer p re backtrack s want =
   oracle_answers := !oracle_answers + 2;
@@ -446,7 +452,12 @@ let check_answer p re backtrack s want =
   else incr oracle_answers_agreed;
   let got = match_bytes backtrack s in
   if got <> want then fail "%S on %S (forced backtrack): got %b, V8 says %b" p s got want
-  else incr oracle_answers_agreed
+  else incr oracle_answers_agreed;
+  (* The same with a limit on the match, which a match that ends before its first look at the clock does not reach. A
+     match that is abandoned says nothing. *)
+  match Re.is_match_sub_with limited_scratch backtrack s 0 (String.length s) with
+  | got -> if got <> want then fail "%S on %S (with a limit): got %b, V8 says %b" p s got want
+  | exception Re.Match_time -> ()
 
 (* Compares the answers of both back ends with the oracle's on every text, the texts with a character beyond the Basic
    Multilingual Plane among them: a pattern that is valid only with no flag is matched by UTF-16 code unit, as V8

@@ -125,12 +125,10 @@ let example_compile_string_errors () =
   let is_compile_error =
     match Validator.compile_string {|{"$ref": "#/$defs/missing"}|} with
     | Error (Compile_error _) -> true
-    | Ok _ | Error (Parse_error _ | Depth_exceeded) -> false
+    | Ok _ | Error _ -> false
   in
   let is_parse_error =
-    match Validator.compile_string {|{"type": |} with
-    | Error (Parse_error _) -> true
-    | Ok _ | Error (Compile_error _ | Depth_exceeded) -> false
+    match Validator.compile_string {|{"type": |} with Error (Parse_error _) -> true | Ok _ | Error _ -> false
   in
   [ string_of_bool is_compile_error; string_of_bool is_parse_error ]
 

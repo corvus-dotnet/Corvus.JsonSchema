@@ -17,3 +17,14 @@ let compile source = match Engine.compile source with Ok re -> Some re | Error _
    patterns the engine reads without falling back). *)
 let valid source = Engine.valid source
 let is_match scratch re text off len = Engine.is_match_with scratch re text off len
+
+exception Match_time = Engine.Match_time
+exception Match_memory = Engine.Match_memory
+
+let set_limit = Engine.set_limit
+
+(* create_limited_scratch makes working memory whose matches have a limit of that many seconds, or none for zero. *)
+let create_limited_scratch seconds =
+  let scratch = Engine.create_scratch () in
+  Engine.set_limit scratch seconds;
+  scratch

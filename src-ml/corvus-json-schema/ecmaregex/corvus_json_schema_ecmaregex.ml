@@ -77,6 +77,14 @@ type scratch = Vm.state
 
 let create_scratch = Vm.new_state
 
+exception Match_time = Vm.Match_time
+exception Match_memory = Vm.Match_memory
+
+let set_limit = Vm.set_limit
+let limit = Vm.limit
+let check_every = Vm.check_every
+let max_stack = Vm.max_stack
+
 let is_match_with scratch re text off len =
   check_range "Corvus_json_schema_ecmaregex.is_match_with" (Bytes.length text) off len;
   let answer = match re.dfa with Some d -> Dfa.match_bytes d text off (off + len) | None -> Dfa.undecided in

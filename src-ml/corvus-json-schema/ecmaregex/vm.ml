@@ -43,6 +43,30 @@ let e_cap = 6
 (** Restores the count and the iteration start of loop pc to pos and a. *)
 let e_counter = 7
 
+exception Match_time
+(** A match was abandoned because it ran for longer than its limit. It is not an answer. *)
+
+exception Match_memory
+(** A match was abandoned because its backtracking stack reached [max_stack] entries. It is not an answer. *)
+
+(** The number of steps the matcher takes between two looks at the clock and at the depth of its stack. A step is one
+    instruction, and eight characters of a single character loop or of a backreference. A step takes a few nanoseconds,
+    so the clock is read every few tens of microseconds, a match that ends before its first check never reads it, and a
+    match goes past its limit by that much at most. *)
+let check_every = 1 lsl 12
+
+(** The number of entries the backtracking stack of a match with a limit may hold (four words each, which is 32 MB). A
+    match that needs more is abandoned. A pattern that keeps a choice for every character of its text needs one entry or
+    a few for each, so this is room for a text of some hundred thousand characters, and a pattern that pushes without
+    consuming, such as [(?:a?){2147483647}], reaches it in a few milliseconds. It is looked at with the clock, so the
+    stack can go past it by [check_every] entries. *)
+let max_stack = 1 lsl 20
+
+(* Why a match was abandoned. *)
+let stop_none = 0
+let stop_time = 1
+let stop_memory = 2
+
 type state = {
   text : Utf8.text;
   mutable stack : int array;
@@ -55,6 +79,14 @@ type state = {
   mutable units : bool;
       (** Says the program of the match in hand matches by UTF-16 code unit (see utf8.ml). It is set from the program
           when a match starts. *)
+  clock : float array;
+      (** Three times in seconds, in an array of floats so that none is a block of its own and reading the clock
+          allocates nothing. The first is the limit of a match, or zero for no limit: it belongs to the state and every
+          match with the state has it. The second is the deadline of the match in hand, set at its first check, and the
+          third the time of its last check. *)
+  mutable timed : bool;  (** Says the deadline of the match in hand is set. *)
+  mutable steps : int;  (** The number of steps left before the next check. *)
+  mutable stop : int;  (** Why the match in hand was abandoned, or [stop_none]. *)
 }
 (** The working memory of one match. A match allocates only while the stack is still growing to the depth the pattern
     and the text need. *)
@@ -63,12 +95,72 @@ type state = {
 let max_retained_stack = 1 lsl 16
 
 let new_state () =
-  { text = Utf8.new_text (); stack = [||]; sp = 0; caps = [||]; tmp = [||]; counts = [||]; units = false }
+  {
+    text = Utf8.new_text ();
+    stack = [||];
+    sp = 0;
+    caps = [||];
+    tmp = [||];
+    counts = [||];
+    units = false;
+    clock = [| 0.; 0.; 0. |];
+    timed = false;
+    steps = 0;
+    stop = stop_none;
+  }
+
+(** [set_limit st seconds] sets the time every match with the state may take from now on. Zero or less, or a value that
+    is not a number, is no limit. *)
+let set_limit st seconds = st.clock.(0) <- (if seconds > 0. then seconds else 0.)
+
+(** [limit st] is the limit of the state, or zero for none. *)
+let limit st = st.clock.(0)
+
+(* The clock is the time of day, from Unix.gettimeofday, which returns an unboxed float and allocates nothing. The
+   standard library has one clock of its own, Sys.time, which is the processor time of the whole process: in a program
+   that computes on several domains at once it runs as many times faster than the time that passes, so a limit of one
+   second would be a fraction of one. OCaml has no monotonic clock without a package from outside its distribution.
+   The time of day can be set. Set forward, a match is abandoned early, which is an error and not a wrong answer. Set
+   back, the deadline is counted again from the new time, so a match never gets more than its limit after a change.
+
+   check is called every check_every steps. It reports whether the match may go on. The clock starts at the first
+   check. *)
+let check st =
+  st.steps <- check_every;
+  let limit = st.clock.(0) in
+  if limit <= 0. then true
+  else if st.sp > 4 * max_stack then begin
+    st.stop <- stop_memory;
+    false
+  end
+  else
+    let now = Unix.gettimeofday () in
+    if (not st.timed) || now < st.clock.(2) then begin
+      st.timed <- true;
+      st.clock.(1) <- now +. limit;
+      st.clock.(2) <- now;
+      true
+    end
+    else if now > st.clock.(1) then begin
+      st.stop <- stop_time;
+      false
+    end
+    else begin
+      st.clock.(2) <- now;
+      true
+    end
 
 let byte (t : Utf8.text) i = if t.is_string then Char.code (String.get t.s i) else Char.code (Bytes.get t.b i)
 
+(* The stack grows to twice its size. A match with a limit is abandoned at the first check after its stack has passed
+   max_stack entries, so its stack is not grown far beyond what it can use before then: the entries of max_stack, of
+   the steps between two checks, and of the groups one instruction can clear. *)
 let grow st =
-  let grown = Array.make ((2 * Array.length st.stack) + 256) 0 in
+  let length = Array.length st.stack in
+  let doubled = (2 * length) + 256 in
+  let enough = 4 * (max_stack + check_every + (1 lsl 16)) in
+  let size = if st.clock.(0) > 0. && length < enough && doubled > enough then enough else doubled in
+  let grown = Array.make size 0 in
   Array.blit st.stack 0 grown 0 st.sp;
   st.stack <- grown
 
@@ -159,6 +251,7 @@ let rec rep st i t lo hi pc at n floor =
   else rep_done st i pc at n floor
 
 and rep_done st i pc at n floor =
+  st.steps <- st.steps - (n lsr 3);
   if n >= i.min then begin
     if at > floor then push st e_rep (pc + 1) at floor;
     at
@@ -201,6 +294,11 @@ let fold_word_at t pos hi = pos < hi && Charset.is_fold_word_rune (Utf8.rune (Ut
    an explicit stack, so the depth of the search is bounded by memory and not by the stack of the thread. When it
    fails, every group and counter is back to the value it had on entry. *)
 let rec step insts st t lo hi pc pos =
+  let left = st.steps - 1 in
+  st.steps <- left;
+  if left < 0 && not (check st) then false else exec insts st t lo hi pc pos
+
+and exec insts st t lo hi pc pos =
   let i = insts.(pc) in
   match i.op with
   | Op_char ->
@@ -226,6 +324,7 @@ let rec step insts st t lo hi pc pos =
       else backtrack insts st t lo hi
   | Op_lit ->
       let n = String.length i.lit in
+      st.steps <- st.steps - (n lsr 3);
       if hi - pos >= n && equal_lit t pos i.lit 0 then step insts st t lo hi (pc + 1) (pos + n)
       else backtrack insts st t lo hi
   | Op_char_back ->
@@ -286,6 +385,7 @@ let rec step insts st t lo hi pc pos =
       step insts st t lo hi (pc + 1) pos
   | Op_clear ->
       let caps = st.caps in
+      st.steps <- st.steps - (i.b - i.a);
       for g = i.a to i.b do
         if caps.(2 * g) >= 0 then begin
           push st e_cap g caps.(2 * g) caps.((2 * g) + 1);
@@ -300,6 +400,7 @@ let rec step insts st t lo hi pc pos =
       if from < 0 then step insts st t lo hi (pc + 1) pos
       else
         let n = until - from in
+        st.steps <- st.steps - (n lsr 3);
         if hi - pos >= n && equal_spans t pos from n then step insts st t lo hi (pc + 1) (pos + n)
         else backtrack insts st t lo hi
   | Op_backref_back ->
@@ -307,18 +408,21 @@ let rec step insts st t lo hi pc pos =
       if from < 0 then step insts st t lo hi (pc + 1) pos
       else
         let n = until - from in
+        st.steps <- st.steps - (n lsr 3);
         if pos - lo >= n && equal_spans t (pos - n) from n then step insts st t lo hi (pc + 1) (pos - n)
         else backtrack insts st t lo hi
   | Op_backref_fold | Op_backref_units ->
       let from = st.caps.(2 * i.a) and until = st.caps.((2 * i.a) + 1) in
       if from < 0 then step insts st t lo hi (pc + 1) pos
       else
+        let () = st.steps <- st.steps - ((until - from) lsr 3) in
         let at = backref_chars st t lo hi (i.op = Op_backref_fold) i.flag from until pos in
         if at >= 0 then step insts st t lo hi (pc + 1) at else backtrack insts st t lo hi
   | Op_backref_fold_back | Op_backref_units_back ->
       let from = st.caps.(2 * i.a) and until = st.caps.((2 * i.a) + 1) in
       if from < 0 then step insts st t lo hi (pc + 1) pos
       else
+        let () = st.steps <- st.steps - ((until - from) lsr 3) in
         let at = backref_chars_back st t lo hi (i.op = Op_backref_fold_back) i.flag from until pos in
         if at >= 0 then step insts st t lo hi (pc + 1) at else backtrack insts st t lo hi
   | Op_look ->
@@ -370,6 +474,7 @@ let rec step insts st t lo hi pc pos =
           incr n
         end
       done;
+      st.steps <- st.steps - (!n lsr 3);
       if !n = i.min then begin
         if !n <> i.max then push st e_rep_lazy pc !at !n;
         step insts st t lo hi (pc + 1) !at
@@ -469,7 +574,10 @@ let run p st t lo hi start =
 
 let rec search_prefix p st t lo hi at =
   let at = index_of t at hi p.prefix in
-  if at < 0 then false else run p st t lo hi at || search_prefix p st t lo hi (at + 1)
+  if at < 0 then false
+  else if run p st t lo hi at then true
+  else if st.stop <> stop_none then false
+  else search_prefix p st t lo hi (at + 1)
 
 let rec search_first p st t lo hi at =
   if at = hi then (not p.has_first) && run p st t lo hi at
@@ -477,6 +585,7 @@ let rec search_first p st t lo hi at =
     let c = byte t at in
     let packed = if c < Utf8.rune_self then (c lsl 3) lor 1 else decode_at st t lo at hi in
     if ((not p.has_first) || Charset.contains p.first (Utf8.rune packed)) && run p st t lo hi at then true
+    else if st.stop <> stop_none then false
     else search_first p st t lo hi (at + Utf8.width packed)
 
 let search p st t lo hi =
@@ -485,7 +594,9 @@ let search p st t lo hi =
   else if String.length p.prefix > 0 then search_prefix p st t lo hi lo
   else search_first p st t lo hi lo
 
-(* Makes the state ready for a match of the program, searches, and lets go of the text. *)
+(* Makes the state ready for a match of the program, searches, and lets go of the text. With a limit in the state the
+   match is abandoned when it has run for longer than that, or when its stack has reached max_stack, and the exception
+   says which. *)
 let match_text p st lo hi =
   (* The memory grows to what this program needs. The groups start out not having taken part. The entry positions and
      the counters need no start value: a match writes each before it uses it, and until then only saves and restores
@@ -499,13 +610,17 @@ let match_text p st lo hi =
     st.caps.(k) <- -1
   done;
   st.units <- p.units;
+  st.timed <- false;
+  st.steps <- check_every;
+  st.stop <- stop_none;
   let t = st.text in
   match search p st t lo hi with
   | matched ->
       if Array.length st.stack > 4 * max_retained_stack then st.stack <- [||];
       t.b <- Bytes.empty;
       t.s <- "";
-      matched
+      (* A match that was abandoned has no answer. The exceptions carry nothing, so raising one allocates nothing. *)
+      if st.stop = stop_time then raise Match_time else if st.stop = stop_memory then raise Match_memory else matched
   | exception e ->
       st.stack <- [||];
       t.b <- Bytes.empty;

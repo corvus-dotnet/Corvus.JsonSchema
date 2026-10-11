@@ -596,7 +596,7 @@ let try_fuse (p : Program.t) id same_resource (child_of : int -> child) =
           in
           let f_contributors = Array.append branch_contributors extra_contributors in
           let known = Vec.to_array known in
-          let scratch = Pattern_engine.create_scratch () in
+          let scratch = Pattern_engine.create_limited_scratch p.pattern_match_limit in
           let tests =
             Array.mapi
               (fun e name ->

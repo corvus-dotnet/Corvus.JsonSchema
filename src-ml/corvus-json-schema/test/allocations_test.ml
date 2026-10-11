@@ -211,6 +211,37 @@ let allocation_cases () =
         ];
     };
   ]
+  (* Patterns that run on the backtracking matcher, on strings long enough for the matcher to read the clock, with
+     the default limit of a match, a limit of their own and none. The limit and the deadline of a match are in an array
+     of floats of the evaluator's working memory, and the clock is read into it. (The cases of
+     TestValidationWithAMatchLimitAllocatesNothing of the Go module.) *)
+  @ List.map
+      (fun (name, options) ->
+        let long = String.concat "" (List.init 2000 (fun _ -> "ab")) in
+        {
+          name;
+          options;
+          schema =
+            {|{
+              "type": "object",
+              "properties": {
+                "look": { "pattern": "^(?=.)(?:a|b)*c?$" },
+                "back": { "pattern": "^(?:(a|b)\\1?)+$" },
+                "wide": { "pattern": "^[ab\u00e9]{0,60000}c?$" }
+              },
+              "patternProperties": { "^(?=x)(?:x|-)+$": { "type": "integer" } }
+            }|};
+          instances =
+            [
+              Printf.sprintf {|{"look": "%s", "back": "%s", "wide": "\u00e9%s", "x-x--x": 1}|} long long long;
+              Printf.sprintf {|{"look": "%sd", "back": "%sc", "wide": "\u00e9%sd", "x-x--x": "no"}|} long long long;
+            ];
+        })
+      [
+        ("backtracking patterns with the default limit of a match", default_options);
+        ("backtracking patterns with a limit of a minute", options ~pattern_match_limit:60. ());
+        ("backtracking patterns with no limit", options ~pattern_match_limit:no_pattern_match_limit ());
+      ]
 
 (* The words allocated by run, on the minor heap and directly on the major heap, beyond what reading the counters
    allocates. *)

@@ -3,14 +3,28 @@
 ; (testdata/v8_oracle.json there, which testdata/gen_oracle.js writes), and v8_cases.json its cases
 ; (testdata/v8_cases.json, which testdata/gen_cases.js writes).
 
+(library
+ (name test_ecmaregex_json)
+ (modules json)
+ (wrapped false))
+
 (test
  (name test_ecmaregex)
- (modules test_ecmaregex json)
+ (modules test_ecmaregex)
  (deps v8_oracle.json v8_cases.json)
  (libraries
+  test_ecmaregex_json
   corvus-json-schema.ecmaregex
   corvus-json-schema.ucd
   threads.posix))
+
+; The limit on a match of the engine (match_limit_test.go of the Go module). unix is for the time of the wall, which the
+; tests measure.
+
+(test
+ (name test_limits)
+ (modules test_limits)
+ (libraries corvus-json-schema.ecmaregex unix))
 
 ; One compiled pattern matched from several domains at once. Domains need OCaml 5, so the source of the test is
 ; domains_5.ml there and a line that says so on OCaml 4.

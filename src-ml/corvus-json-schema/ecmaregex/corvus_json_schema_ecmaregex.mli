@@ -44,11 +44,12 @@
     boundary, which decides an ASCII text with one table read per byte. Every other case runs on the backtracking
     matcher: a pattern with no automaton, and a text that is not ASCII for a pattern that has one. That matcher keeps
     its choices on an explicit stack, so a long text cannot overflow the stack of the thread and a match does not
-    allocate once the stack has grown. It has no step budget, so a pattern with nested quantifiers can take exponential
-    time on a text it does not match, as it can in any backtracking engine. A repetition whose body cannot consume a
-    character is not such a pattern. It is run once, or not at all (see simplify of compile.ml), as V8 runs it. And a
-    counted loop gives up at a position from which the rest of the pattern needs more text than is left (see set_needs
-    of compile.ml), as V8 does, so a loop whose iterations can be empty does not try every combination of them there.
+    allocate once the stack has grown. A pattern with nested quantifiers can take exponential time on a text it does not
+    match, as it can in any backtracking engine, so a match can be given a limit (see the limits below). A repetition
+    whose body cannot consume a character is not such a pattern. It is run once, or not at all (see simplify of
+    compile.ml), as V8 runs it. And a counted loop gives up at a position from which the rest of the pattern needs more
+    text than is left (see set_needs of compile.ml), as V8 does, so a loop whose iterations can be empty does not try
+    every combination of them there.
 
     The automaton is built when the pattern is compiled, where Go builds it on the first match.
 
@@ -86,9 +87,11 @@
     - A pattern is tried for an automaton when it is {!regular}. It gets one when the automaton has at most 256 states
       built from at most 512 states of the pattern in at most 400,000 steps. Finding out that a pattern is too large
       costs about a millisecond when it is compiled.
-    - The backtracking matcher has no step budget and no limit on its stack but memory. Its working memory keeps what
-      the largest match needed, up to 65,536 entries of four words. A match that needed more gives the memory back when
-      it ends.
+    - A match with a {!scratch} that has a limit ({!set_limit}) is abandoned when it has run for longer than the limit
+      ({!Match_time}), or when its backtracking stack has reached {!max_stack} entries ({!Match_memory}). The matcher
+      counts its steps and reads the clock every {!check_every} of them. A match with no limit has neither bound.
+    - The working memory of the matcher keeps what the largest match needed, up to 65,536 entries of four words. A match
+      that needed more gives the memory back when it ends.
 
     The library assumes the 63-bit [int] of a 64-bit OCaml. *)
 
@@ -117,7 +120,7 @@ val valid : string -> bool
 val is_match : t -> Bytes.t -> int -> int -> bool
 (** [is_match re text off len] reports whether the pattern matches anywhere in the [len] bytes of [text] from [off],
     which are UTF-8 (an unanchored search). It allocates nothing in the steady state and is safe for one compiled
-    pattern used from several threads or domains (see the notes on sharing above).
+    pattern used from several threads or domains (see the notes on sharing above). It has no limit of time.
 
     It raises [Invalid_argument] if [off] and [len] do not name a range of [text]. *)
 
@@ -135,13 +138,46 @@ type scratch
 
 val create_scratch : unit -> scratch
 (** [create_scratch ()] makes working memory for {!is_match_with} and {!is_match_sub_with}. It can serve any number of
-    compiled patterns, one match at a time. *)
+    compiled patterns, one match at a time. It has no limit until {!set_limit} gives it one. *)
+
+(** {1 The limit of a match} *)
+
+val set_limit : scratch -> float -> unit
+(** [set_limit scratch seconds] gives every match with the scratch from now on a limit of that many seconds. Zero or
+    less, or a value that is not a number, is no limit.
+
+    The time is the time that passes, read from [Unix.gettimeofday]. (The clock of the standard library, [Sys.time], is
+    the processor time of the whole process, which runs several times faster in a program that computes on several
+    domains.) The time of day is not monotonic: when it is set forward during a match the match is abandoned early, and
+    when it is set back the limit is counted again from the new time. The clock is read every {!check_every} steps of
+    the backtracking matcher and starts at the first read, so a match that ends before then never reads it, and a match
+    goes past its limit by the time those steps take. Reading it allocates nothing. The automaton takes time
+    proportional to the text and is not stopped. *)
+
+val limit : scratch -> float
+(** [limit scratch] is the limit of the scratch in seconds, or [0.] for none. *)
+
+exception Match_time
+(** A match was abandoned because it ran for longer than its limit. It is not an answer. *)
+
+exception Match_memory
+(** A match was abandoned because its backtracking stack reached {!max_stack} entries, which only a match with a limit
+    is held to. It is not an answer. *)
+
+val check_every : int
+(** The number of steps the backtracking matcher takes between two looks at the clock and at the depth of its stack:
+    4,096. A step is one instruction, and eight characters of a single character loop or of a backreference. *)
+
+val max_stack : int
+(** The number of entries the backtracking stack of a match with a limit may hold: 1,048,576, of four words each, which
+    is 32 MB. *)
 
 val is_match_with : scratch -> t -> Bytes.t -> int -> int -> bool
 (** [is_match_with scratch re text off len] is {!is_match} with working memory the caller owns. It never contends with
     another thread or domain and allocates nothing once the scratch has grown.
 
-    It raises [Invalid_argument] if [off] and [len] do not name a range of [text]. *)
+    It raises [Invalid_argument] if [off] and [len] do not name a range of [text], and {!Match_time} or {!Match_memory}
+    when the scratch has a limit and the match reached it. *)
 
 val is_match_sub_with : scratch -> t -> string -> int -> int -> bool
 (** [is_match_sub_with scratch re text off len] is {!is_match_with} for a range of a string.

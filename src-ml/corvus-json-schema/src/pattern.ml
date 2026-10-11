@@ -501,7 +501,19 @@ let rec match_excluded set b at stop word =
 (* ---------------------------------------------------------------------------------------------------------------------
    Matching *)
 
-(* matches_shape is matches for a pattern matched by code point: the matcher the pattern was given. *)
+exception Match_limit of string * bool
+
+(* engine_match matches the text on the engine with the limit of the scratch. A match that reached the limit has no
+   answer: Match_limit carries the source of the pattern and whether the memory of the match was the limit, not its
+   time. Entering the handler costs nothing, and the exception is made only when a limit is reached. *)
+let engine_match p scratch engine b off len =
+  try Pattern_engine.is_match scratch engine b off len with
+  | Pattern_engine.Match_time -> raise (Match_limit (p.source, false))
+  | Pattern_engine.Match_memory -> raise (Match_limit (p.source, true))
+
+(* matches_shape is matches for a pattern matched by code point: the matcher the pattern was given. The engine matches
+   with the limit of the scratch. Every other matcher reads the text once, or a bounded number of times, and has no
+   limit. *)
 let matches_shape p scratch b off len ascii =
   let stop = off + len in
   match p.matcher with
@@ -528,7 +540,7 @@ let matches_shape p scratch b off len ascii =
         let rest = skip_bangs b off stop in
         rest <> off && rest <> stop && match_excluded set b rest stop false
       else match_excluded set b off stop false
-  | Engine engine -> Pattern_engine.is_match scratch engine b off len
+  | Engine engine -> engine_match p scratch engine b off len
 
 (* matches reports whether the pattern matches somewhere in the len bytes of b from off, ascii saying whether that
    text is known to be ASCII (a document knows that of its strings). A pattern that is valid only without the u flag
@@ -536,8 +548,7 @@ let matches_shape p scratch b off len ascii =
    Plane. *)
 let matches p scratch b off len ascii =
   match p.units with
-  | Some engine when (not ascii) && has_supplementary b off (off + len) ->
-      Pattern_engine.is_match scratch engine b off len
+  | Some engine when (not ascii) && has_supplementary b off (off + len) -> engine_match p scratch engine b off len
   | _ -> matches_shape p scratch b off len ascii
 
 (* match_string is matches for a string that is not known to be ASCII. It copies the string. *)

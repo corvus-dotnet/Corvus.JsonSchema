@@ -13,6 +13,8 @@ type t = {
   base_uri : string;
   entry_point : string option;
   max_depth : int;
+  (* The time in seconds one match of a pattern may take, or zero for no limit. *)
+  pattern_match_limit : float;
 }
 
 let default =
@@ -26,6 +28,7 @@ let default =
     base_uri = "";
     entry_point = None;
     max_depth = 128;
+    pattern_match_limit = 1.0;
   }
 
 (* Raised inside the compiler with the reason compilation failed (an unresolvable reference, an invalid pattern).

@@ -33,10 +33,16 @@ val matches : t -> Pattern_engine.scratch -> Bytes.t -> int -> int -> bool -> bo
     its strings). It must be [false] when that is not known, and may be [false] for ASCII text. (match of the Go
     source.)
 
-    It allocates nothing. Only a pattern matched by the engine uses [scratch], which one match at a time may hold.
-    Nothing is written to [text], and no byte outside the range is read.
+    It allocates nothing. Only a pattern matched by the engine uses [scratch], which one match at a time may hold, and
+    such a match has the limit of the scratch (see {!Pattern_engine.set_limit}). Nothing is written to [text], and no
+    byte outside the range is read.
 
-    @raise Invalid_argument if [off] and [len] do not name a range of [text] and the matcher reads outside it. *)
+    @raise Invalid_argument if [off] and [len] do not name a range of [text] and the matcher reads outside it.
+    @raise Match_limit when the match reached the limit of the scratch. *)
+
+exception Match_limit of string * bool
+(** A match on the engine reached the limit of its scratch and was abandoned: the source of the pattern, and whether the
+    memory of the match was the limit and not its time. It is not an answer. *)
 
 val match_string : t -> Pattern_engine.scratch -> string -> bool
 (** [match_string p scratch s] is {!matches} for a string that is not known to be ASCII, for the schema compiler and the

@@ -61,7 +61,11 @@ type options = {
   base_uri : string option;
   entry_point : string option;
   max_depth : int;
+  pattern_match_limit : float;
 }
+
+let default_pattern_match_limit = 1.0
+let no_pattern_match_limit = 0.0
 
 let default_options =
   {
@@ -74,12 +78,13 @@ let default_options =
     base_uri = None;
     entry_point = None;
     max_depth = 128;
+    pattern_match_limit = default_pattern_match_limit;
   }
 
 let options ?(default_dialect = default_options.default_dialect) ?assert_format
     ?(assert_format_in_legacy_drafts = default_options.assert_format_in_legacy_drafts)
     ?(assert_content = default_options.assert_content) ?(formats = []) ?resolver ?base_uri ?entry_point
-    ?(max_depth = default_options.max_depth) () =
+    ?(max_depth = default_options.max_depth) ?(pattern_match_limit = default_options.pattern_match_limit) () =
   {
     default_dialect;
     assert_format;
@@ -90,14 +95,49 @@ let options ?(default_dialect = default_options.default_dialect) ?assert_format
     base_uri;
     entry_point;
     max_depth;
+    pattern_match_limit;
   }
 
-type error = Parse_error of Document.error | Compile_error of string | Depth_exceeded
+type error =
+  | Parse_error of Document.error
+  | Compile_error of string
+  | Depth_exceeded
+  | Pattern_match_limit of { pattern : string; limit : float; memory : bool }
+
+exception Pattern_match_limit_reached of { pattern : string; limit : float; memory : bool }
+
+(* shown_pattern quotes a pattern for a message, or its first 120 bytes and its length when it is longer. *)
+let shown_pattern pattern =
+  let shown = 120 in
+  if String.length pattern <= shown then "'" ^ pattern ^ "'"
+  else begin
+    (* Not in the middle of a character. *)
+    let cut = ref shown in
+    while !cut > 0 && Char.code pattern.[!cut] land 0xC0 = 0x80 do
+      decr cut
+    done;
+    Printf.sprintf "'%s...' (%d bytes)" (String.sub pattern 0 !cut) (String.length pattern)
+  end
+
+let match_limit_message pattern limit memory =
+  if memory then
+    "A match of the regular expression " ^ shown_pattern pattern
+    ^ " was abandoned: it needed more than the limit of 1,048,576 backtracking entries."
+  else
+    Printf.sprintf "A match of the regular expression %s was abandoned: it took longer than the limit of %gs."
+      (shown_pattern pattern) limit
 
 let error_to_string = function
   | Parse_error e -> Document.error_to_string e
   | Compile_error message -> message
   | Depth_exceeded -> "the schema recursed in place beyond the maximum depth"
+  | Pattern_match_limit { pattern; limit; memory } -> match_limit_message pattern limit memory
+
+let () =
+  Printexc.register_printer (function
+    | Pattern_match_limit_reached { pattern; limit; memory } ->
+        Some ("Corvus_json_schema.Pattern_match_limit_reached: " ^ match_limit_message pattern limit memory)
+    | _ -> None)
 
 (* The options as the compiler takes them. *)
 let internal_options (o : options) : Options.t =
@@ -113,6 +153,8 @@ let internal_options (o : options) : Options.t =
     entry_point = o.entry_point;
     (* Values below 1 are ignored. *)
     max_depth = (if o.max_depth >= 1 then o.max_depth else Options.default.max_depth);
+    (* Zero or less, or a value that is not a number, is no limit. *)
+    pattern_match_limit = (if o.pattern_match_limit > 0. then o.pattern_match_limit else 0.);
   }
 
 module Scratch = struct
@@ -129,15 +171,17 @@ module Validator = struct
   let make compiled options =
     { program = Plan.new_program compiled options; own = Eval.create (); busy = Atomic.make false }
 
-  let compile_with build =
-    match build () with
-    | compiled, options -> Ok (make compiled options)
+  (* The schema is compiled and its plans are made inside the handler: the plans match each pattern against the
+     property names the schema declares, and that match has the limit too. *)
+  let compile_with (options : Options.t) build =
+    match make (build options) options with
+    | validator -> Ok validator
     | exception Options.Compile_error message -> Error (Compile_error message)
+    | exception Pattern.Match_limit (pattern, memory) ->
+        Error (Pattern_match_limit { pattern; limit = options.pattern_match_limit; memory })
 
   let compile_document ?(options = default_options) schema =
-    compile_with (fun () ->
-        let options = internal_options options in
-        (Compiler.compile_document schema options, options))
+    compile_with (internal_options options) (Compiler.compile_document schema)
 
   let compile_bytes ?options schema =
     match Document.parse_bytes schema with
@@ -152,9 +196,7 @@ module Validator = struct
   let compile = compile_string
 
   let compile_uri ?(options = default_options) uri =
-    compile_with (fun () ->
-        let options = internal_options options in
-        (Compiler.compile_from_uri uri options, options))
+    compile_with (internal_options options) (Compiler.compile_from_uri uri)
 
   (* acquire takes the evaluator of an evaluation: the scratch given, or the validator's own, or a new one when that
      one is in use (by another thread or domain, or by this evaluation's caller further up the stack). *)
@@ -176,9 +218,14 @@ module Validator = struct
   let valid = 1
   let depth_exceeded = 2
 
+  (* limit_reached is the exception of a match of the validator's that reached its limit. *)
+  let limit_reached v pattern memory =
+    Pattern_match_limit_reached { pattern; limit = v.program.pattern_match_limit; memory }
+
   (* run validates a document with an evaluator, failing fast, and gives the evaluator back whatever happens. The
      outcome is read, and the text of the evaluator's own document let go of, before the evaluator is given back,
-     since another thread may take it at once. *)
+     since another thread may take it at once. A match that reached its limit has no outcome: the evaluation is
+     abandoned and Pattern_match_limit_reached is raised. *)
   let run v (e : Eval.t) instance is_text =
     match Eval.validate e v.program instance with
     | ok ->
@@ -190,7 +237,8 @@ module Validator = struct
         Eval.finish e;
         Json.release_source e.text;
         release v e;
-        raise raised
+        raise
+          (match raised with Pattern.Match_limit (pattern, memory) -> limit_reached v pattern memory | _ -> raised)
 
   let is_valid_document ?scratch v instance = run v (acquire v scratch) instance false = valid
 
@@ -226,10 +274,17 @@ module Validator = struct
   let result_of outcome =
     if outcome = depth_exceeded then Error Depth_exceeded else if outcome = valid then Ok true else Ok false
 
-  let validate_document ?scratch v instance = result_of (run v (acquire v scratch) instance false)
+  (* run_result is run for the functions that return a result: the limit of a match is an error of theirs. *)
+  let run_result v e instance is_text =
+    match run v e instance is_text with
+    | outcome -> result_of outcome
+    | exception Pattern_match_limit_reached { pattern; limit; memory } ->
+        Error (Pattern_match_limit { pattern; limit; memory })
+
+  let validate_document ?scratch v instance = run_result v (acquire v scratch) instance false
 
   let validate_text v (e : Eval.t) parsed =
-    if parsed then result_of (run v e e.text true)
+    if parsed then run_result v e e.text true
     else begin
       let error = Json.parser_error e.parser in
       Json.release_source e.text;
@@ -252,10 +307,13 @@ module Validator = struct
         let result = if e.depth_exceeded then Error Depth_exceeded else Ok ok in
         release v e;
         result
-    | exception raised ->
+    | exception raised -> (
         Eval.finish e;
         release v e;
-        raise raised
+        match raised with
+        | Pattern.Match_limit (pattern, memory) ->
+            Error (Pattern_match_limit { pattern; limit = v.program.pattern_match_limit; memory })
+        | _ -> raise raised)
 
   let evaluate_bytes ?scratch v ~results json =
     match Document.parse_bytes json with

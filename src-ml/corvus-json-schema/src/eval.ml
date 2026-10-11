@@ -62,6 +62,7 @@ let no_program : Program.t =
     entry = no_node;
     uses_dynamic_scope = false;
     max_depth = 0;
+    pattern_match_limit = 0.;
     custom_formats = [||];
     fast_target = [||];
     property_maps = [||];
@@ -1953,6 +1954,8 @@ and eval_in_place e (n : Node.t) x bits =
 let start e p d =
   e.p <- p;
   e.d <- d;
+  (* Every match of this evaluation has the limit of the program. *)
+  Pattern_engine.set_limit e.regex p.pattern_match_limit;
   e.collect <- false;
   e.depth <- 0;
   e.depth_exceeded <- false;

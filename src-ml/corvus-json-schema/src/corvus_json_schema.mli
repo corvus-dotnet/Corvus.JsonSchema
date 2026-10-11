@@ -193,12 +193,33 @@ type options = {
   max_depth : int;
       (** The maximum depth of in-place recursion on a cycle before evaluation is abandoned. The default is 128. Values
           below 1 are ignored. *)
+  pattern_match_limit : float;
+      (** The time in seconds that one match of a [pattern] or [patternProperties] regular expression against one string
+          may take. The default is {!default_pattern_match_limit}, one second. A match that takes longer is abandoned,
+          and the validation it belongs to ends in the error [Pattern_match_limit] (see {!type-error}). Zero
+          ({!no_pattern_match_limit}) or less turns the limit off, for a caller who trusts both the schema and the
+          instances. Without the limit a match also has no limit on its memory.
+
+          The limit is on each match, not on the validation. The time is the time that passes, read from
+          [Unix.gettimeofday], so setting the time of day forward during a match abandons it early (setting it back
+          counts the limit again from the new time). Only the backtracking matcher can take long, and it reads the clock
+          every 4,096 steps, so a match is abandoned within tens of microseconds of the limit, or a few milliseconds for
+          a pattern whose steps are long comparisons. The matchers that take time proportional to the text are not
+          stopped. *)
 }
 (** The options for compiling a schema. Start from {!default_options}, or build one with {!val-options}. *)
 
 val default_options : options
 (** The default options: 2020-12 for documents without [$schema], [format] as the vocabularies say, content asserted in
-    draft 7, no custom format, no resolver, no base URI, the root as the entry point and a maximum depth of 128. *)
+    draft 7, no custom format, no resolver, no base URI, the root as the entry point, a maximum depth of 128 and a limit
+    of one second on a match of a pattern. *)
+
+val default_pattern_match_limit : float
+(** The time one match of a [pattern] or [patternProperties] regular expression against one string may take unless the
+    options say otherwise: [1.0], one second. *)
+
+val no_pattern_match_limit : float
+(** The value of [pattern_match_limit] that turns the limit on a match off: [0.0]. *)
 
 val options :
   ?default_dialect:dialect ->
@@ -210,6 +231,7 @@ val options :
   ?base_uri:string ->
   ?entry_point:string ->
   ?max_depth:int ->
+  ?pattern_match_limit:float ->
   unit ->
   options
 (** [options ?default_dialect ... ()] is {!default_options} with the fields given, for example
@@ -224,9 +246,23 @@ type error =
       (** The schema cannot be compiled (an unresolvable reference, an invalid pattern), with the reason. *)
   | Depth_exceeded
       (** Evaluation recursed in place beyond the maximum depth (a schema that loops without consuming the instance). *)
+  | Pattern_match_limit of { pattern : string; limit : float; memory : bool }
+      (** A validation was abandoned because one match of a regular expression reached its limit: the regular
+          expression, the time in seconds the match was allowed (see [pattern_match_limit] of {!type-options}), and
+          whether the match was abandoned for the memory of its backtracking and not for its time (it held 1,048,576
+          choices, which is 32 MB). The instance is then neither valid nor not valid. Compiling a schema returns it too,
+          when the match was of a pattern against a property name the schema declares. *)
+
+exception Pattern_match_limit_reached of { pattern : string; limit : float; memory : bool }
+(** Raised by the functions that return a [bool] alone ({!Validator.is_valid_document}, {!Validator.is_valid_string} and
+    {!Validator.is_valid_bytes}) when a match of a regular expression reached its limit. They have no other way to say
+    that the instance is neither valid nor not valid. The fields are those of the error [Pattern_match_limit], which the
+    functions that return a result give. *)
 
 val error_to_string : error -> string
-(** [error_to_string e] is the reason as text. *)
+(** [error_to_string e] is the reason as text. For [Pattern_match_limit] it is
+    ["A match of the regular expression '...' was abandoned: it took longer than the limit of 1s."]. A regular
+    expression of more than 120 bytes is cut there and its length given. *)
 
 (** {1 Validators} *)
 
@@ -250,7 +286,8 @@ module Validator : sig
   (** {1 Compiling}
 
       Each function returns [Error (Parse_error _)] when schema text is not JSON, and [Error (Compile_error _)] when the
-      schema cannot be compiled. *)
+      schema cannot be compiled. It returns [Error (Pattern_match_limit _)] when matching a regular expression of the
+      schema against a property name the schema declares reached the limit of a match. *)
 
   val compile : ?options:options -> string -> (t, error) result
   (** [compile schema] is {!compile_string}. *)
@@ -274,27 +311,39 @@ module Validator : sig
       These fail fast and report nothing but the answer. Text that is not JSON is not valid, and neither is an instance
       on which the schema recursed in place beyond the maximum depth. The [validate] functions tell those apart.
 
+      A match of a regular expression that reached its limit is not an answer. The [is_valid] functions raise
+      {!Pattern_match_limit_reached} for it, and the [validate] functions return [Error (Pattern_match_limit _)]. The
+      evaluation is abandoned at that match and its working memory is given back.
+
       Each takes the working memory of the evaluation from [?scratch] when it is given, and from the validator when it
       is not (see the notes at the top). *)
 
   val is_valid_document : ?scratch:Scratch.t -> t -> Document.t -> bool
-  (** [is_valid_document v instance] reports whether an instance is valid. *)
+  (** [is_valid_document v instance] reports whether an instance is valid.
+
+      @raise Pattern_match_limit_reached when a match of a regular expression reached its limit. *)
 
   val is_valid_string : ?scratch:Scratch.t -> t -> string -> bool
   (** [is_valid_string v json] reports whether JSON text is a valid instance. The text is copied and parsed into buffers
-      that are reused, so a validation allocates nothing in the steady state. *)
+      that are reused, so a validation allocates nothing in the steady state.
+
+      @raise Pattern_match_limit_reached when a match of a regular expression reached its limit. *)
 
   val is_valid_bytes : ?scratch:Scratch.t -> t -> Bytes.t -> bool
   (** [is_valid_bytes v json] reports whether UTF-8 JSON text is a valid instance. The text is parsed where it is, into
-      buffers that are reused, so a validation allocates nothing in the steady state. Nothing is kept of the bytes. *)
+      buffers that are reused, so a validation allocates nothing in the steady state. Nothing is kept of the bytes.
+
+      @raise Pattern_match_limit_reached when a match of a regular expression reached its limit. *)
 
   val validate_document : ?scratch:Scratch.t -> t -> Document.t -> (bool, error) result
   (** [validate_document v instance] reports whether an instance is valid. It is [Error Depth_exceeded] when evaluation
-      recursed in place beyond the maximum depth. *)
+      recursed in place beyond the maximum depth, and [Error (Pattern_match_limit _)] when a match of a regular
+      expression reached its limit. *)
 
   val validate_string : ?scratch:Scratch.t -> t -> string -> (bool, error) result
   (** [validate_string v json] reports whether JSON text is a valid instance. It is [Error (Parse_error _)] when the
-      text is not JSON, and [Error Depth_exceeded] when evaluation recursed in place beyond the maximum depth. *)
+      text is not JSON, [Error Depth_exceeded] when evaluation recursed in place beyond the maximum depth, and
+      [Error (Pattern_match_limit _)] when a match of a regular expression reached its limit. *)
 
   val validate_bytes : ?scratch:Scratch.t -> t -> Bytes.t -> (bool, error) result
   (** [validate_bytes v json] is {!validate_string} for UTF-8 JSON text, parsed where it is. *)
@@ -306,7 +355,9 @@ module Validator : sig
 
   val evaluate : ?scratch:Scratch.t -> t -> results:Results.t -> Document.t -> (bool, error) result
   (** [evaluate v ~results instance] evaluates an instance exhaustively, reporting to the collector. It is
-      [Error Depth_exceeded] when evaluation recursed in place beyond the maximum depth. *)
+      [Error Depth_exceeded] when evaluation recursed in place beyond the maximum depth, and
+      [Error (Pattern_match_limit _)] when a match of a regular expression reached its limit. The evaluation is then
+      abandoned at that match, and what it had put in the collector is not a report of the instance. *)
 
   val evaluate_string : ?scratch:Scratch.t -> t -> results:Results.t -> string -> (bool, error) result
   (** [evaluate_string v ~results json] is {!evaluate} for JSON text. It is [Error (Parse_error _)] when the text is not
