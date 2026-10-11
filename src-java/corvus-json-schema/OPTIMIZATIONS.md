@@ -28,10 +28,11 @@ technique; this is the checklist.
 - **Arrays.** Length read once; `prefixItems` guarded by length and skipped when `true`; `items: false` as a length
   check and `items: true` as nothing; `contains` skipped when it cannot fail and stopped at `minContains` when there is
   no maximum; `uniqueItems` only above one item, pairwise up to 16, otherwise sorted by hash in reused scratch.
-- **Strings.** Code points counted only for non-ASCII strings; patterns compiled once per process; pattern shapes
-  decided without a regex engine over the UTF-8 bytes: everything (`.*` …), has-content (`.`, `.+`), line length
-  (`^.{m,n}$`), `^X.*` reduced to `^X`, anchored literals and anchored class sequences (greedy where exact); everything
-  else translated to `java.util.regex` with a matcher reused per evaluator.
+- **Strings.** Code points counted only for non-ASCII strings; identical patterns shared through a bounded cache of
+  the process; pattern shapes decided without a regex engine over the UTF-8 bytes: everything (`.*` …), has-content
+  (`.`, `.+`), line length (`^.{m,n}$`), `^X.*` reduced to `^X`, anchored literals and anchored class sequences
+  (greedy where exact); everything else translated to `java.util.regex` with a matcher reused per evaluator, at a
+  place of its own schema.
 - **Numbers.** Exact comparison across long, unsigned long and double; bounds digested at compile time; integer
   `multipleOf` by `%`; other `multipleOf` exactly on the decimal digits of the text with long arithmetic.
 - **Formats and content.** Format kind and assertion decided at compile time per dialect; all formats over the UTF-8

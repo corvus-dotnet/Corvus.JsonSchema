@@ -51,6 +51,15 @@ class AllocationTest {
                 "{\"id\": \"abc_1\", \"code\": \"abcde\", \"line\": \"short\", \"x-a\": \"s\", \"a123\": 1, \"q\": true}",
                 "{\"code\": \"éabcde\", \"line\": \"café\"}", "{\"id\": \"1abc\"}", "{\"code\": \"abx\"}",
                 "{\"q\": 1}", "{\"a-very-long-property-name\": true}"));
+        // Patterns that the regular expression engine runs, each with a matcher at its own place in the evaluator:
+        // a lookahead, a backreference, one read by UTF-16 code unit, a lookbehind, and one for property names.
+        c.add(new Case("patterns of the engine", """
+                {"properties": {"a": {"pattern": "^(?=[a-z])[a-z0-9]+$"}, "b": {"pattern": "^(ab|c)\\\\1$"},
+                 "c": {"pattern": "^\\\\-?..$"}, "d": {"pattern": "(?<=x)y$"}, "e": {"pattern": "^(?=[a-z])[a-z0-9]+$"}},
+                 "patternProperties": {"^(?!x)[a-z]{2}$": {"type": "string"}}}""", DEFAULT,
+                "{\"a\": \"abc1\", \"b\": \"abab\", \"c\": \"-é中\", \"d\": \"axy\", \"e\": \"z9\", \"qq\": \"s\"}",
+                "{\"c\": \"𐐀\"}", "{\"a\": \"1abc\"}", "{\"b\": \"abc\"}", "{\"d\": \"ay\"}", "{\"qq\": 1}",
+                "{\"e\": \"É\"}"));
         c.add(new Case("enum and const", """
                 {"properties": {"few": {"enum": ["a", "b", "c"]}, "many": {"enum": ["a", "b", "c", "d", "e", "f",
                  "g", "h", "i", "j", "k"]}, "mixed": {"enum": [1, "x", null, true, {"a": [1]}]},

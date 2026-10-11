@@ -283,6 +283,30 @@ load of 5 to 18 from other work:
 
 No case ran longer, threw anything else, or ran out of memory.
 
+**The cache of compiled patterns.** A pattern is immutable, so schemas with the same pattern share what was
+compiled for it, through a cache of the process. A schema may come from outside, so the cache is bounded. It holds
+1,024 patterns at most, counted as 64 MiB at most. Over either bound the patterns compiled first go, oldest first. A
+pattern counted as more than 2 MiB is not kept in it. These are the bounds of the Go module and the Rust crate. A
+validator holds the patterns of its own schema, so a pattern that has left the cache is still matched, and is
+compiled again only for a schema compiled later. The cache is read when a schema is compiled and never when an
+instance is validated.
+
+A pattern is counted as an estimate of what it holds that is not below it: 512 bytes, 2 for each character of its
+source, and 130 for each character of its translation. `java.util.regex` keeps a class of Latin-1 characters as a
+table of 256 bytes however short the class is written, which the 130 allows for. Of 59 shapes of pattern compiled on
+Java 17, 21 and 25, none held more than a third of what it was counted as. So a pattern whose translation is over
+16,131 characters is not kept in the cache, and 64 MiB counted is about 20 MB on the heap or less.
+
+An evaluator keeps a matcher of `java.util.regex` for each pattern of its schema that the engine runs, at a place
+the compiler of the schema gives the pattern. So the array of matchers of an evaluator is as long as its own schema
+has such patterns, and none for a schema whose patterns the library matches by itself.
+
+A process that compiled 60,000 schemas one after another on one thread, each with two patterns of its own, validated
+with each and dropped it, ran in a heap of 96 MB. At each tenth of the way the heap in use after a collection was
+between 3 and 7 MB with compiled code and between 6 and 10 MB with the interpreter. Before the cache was bounded it
+was 91 MB after 42,000 schemas with compiled code and 81 MB after 30,000 with the interpreter, and both ran out of
+heap before the next tenth.
+
 **What is not bounded.**
 
 - **The stack.** `java.util.regex` recurses to compile a pattern and to match it, and has no limit of depth but the
@@ -296,8 +320,8 @@ No case ran longer, threw anything else, or ran out of memory.
 - **What a compiled pattern keeps.** `java.util.regex` keeps between 2 and 28 bytes for each character of a
   translation: 2 MB for 1,048,576 characters of literal text, and 30 MB for 116,508 repetitions of a small group in
   as many characters. So the limit on the translation holds a pattern to tens of megabytes and not to a few.
-  Compiled patterns are also kept, by pattern text, for the life of the process, so a process that compiles schemas
-  from outside without end keeps every pattern it has seen.
+  The cache of the process is bounded (see above), and a validator keeps the patterns of its own schema for as long
+  as it lives.
 - **The start of a match.** The clock is first read after the first 4,096 reads (fewer for a long translation),
   and the limit runs from there.
 - **The formats.** The library's own regular expressions for `format` are not under the limit.

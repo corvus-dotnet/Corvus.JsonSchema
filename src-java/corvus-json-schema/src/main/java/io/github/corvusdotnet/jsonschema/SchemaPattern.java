@@ -1,13 +1,18 @@
 package io.github.corvusdotnet.jsonschema;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * A compiled {@code pattern} with ECMA-262 semantics: the cheapest matcher that decides it exactly, falling back to
- * the pattern translated for {@code java.util.regex}. Patterns compile once per process (a pattern is immutable, so
- * identical patterns share one matcher).
+ * the pattern translated for {@code java.util.regex}. A pattern is immutable, so identical patterns share what was
+ * compiled for them, through a cache of the process that is bounded in number and in size (see {@link #compile}).
+ *
+ * <p>An evaluator keeps a {@link Matcher} for each pattern of its schema that the engine runs. Its place in the
+ * evaluator's array is the pattern's {@link #slot}, which the compiler of the schema gives it ({@link #inSlot}), so
+ * the array is as long as the schema has such patterns, however many patterns the process has compiled.
  *
  * <p>A pattern that is valid with the u flag matches characters. One that is valid only without it matches UTF-16
  * code units, as ECMA-262 says: {@code ^\-?.$} does not match one character beyond the Basic Multilingual Plane, which
@@ -18,7 +23,19 @@ final class SchemaPattern {
     private static final int REGEX = 1;
     private static final int SHAPE = 2;
 
-    private static final ConcurrentHashMap<String, SchemaPattern> CACHE = new ConcurrentHashMap<>();
+    /** The most patterns the cache of the process holds. */
+    static final int MAX_CACHED_PATTERNS = 1024;
+    /** The most the patterns of the cache come to, in the bytes they are counted as ({@link #counted}). */
+    static final long MAX_CACHED_BYTES = 64L << 20;
+    /** A pattern counted as more than this is not kept in the cache. */
+    static final long MAX_CACHED_PATTERN_BYTES = 2L << 20;
+
+    /**
+     * The compiled patterns of the process by source, in the order they were compiled. It is read and written only
+     * when a schema is compiled, under its own lock. Nothing reads it when an instance is evaluated.
+     */
+    private static final LinkedHashMap<String, SchemaPattern> CACHE = new LinkedHashMap<>();
+    private static long cachedBytes;
 
     final String source;
     private final int kind;
@@ -30,8 +47,17 @@ final class SchemaPattern {
      * of the text, and the translation is given the text as {@link EcmaRegex#codeUnits} writes it.
      */
     final boolean units;
-    /** A process-wide index, for evaluators that keep a matcher per pattern. */
-    final int id;
+    /**
+     * The place of the pattern's matcher in an evaluator of the schema the pattern was compiled for, or -1: for the
+     * pattern as the cache holds it, and for one whose matches use no matcher of the engine.
+     */
+    final int slot;
+    /**
+     * What the pattern is counted as in the cache, in bytes: an estimate of what it holds that is not below it. It
+     * is the source, the translation as {@code java.util.regex} keeps it, and {@link #COUNT_PER_CHARACTER} bytes for
+     * each character of the translation for what the engine compiles it to.
+     */
+    final long counted;
     /**
      * How many times a match of the pattern reads the text, or asks for its length, between two readings of the
      * clock (see {@link Utf8Chars#limit}). Between two such calls the engine takes at most about as many steps as
@@ -44,7 +70,13 @@ final class SchemaPattern {
     static final int MIN_INTERVAL = 16;
     static final int INTERVAL_SCALE = 1 << 22;
 
-    private static int nextId;
+    /**
+     * The bytes counted for each character of a translation. {@code java.util.regex} compiles a class of Latin-1
+     * characters to a table of 256 bytes whatever its length, so {@code [ab]}, four characters, holds 330 bytes or
+     * so. The tests compare the count with the heap a pattern holds.
+     */
+    static final int COUNT_PER_CHARACTER = 128;
+    private static final int COUNT_FIXED = 512;
 
     private SchemaPattern(String source, int kind, Pattern regex, PatternShapes.Matcher shape) {
         this.source = source;
@@ -55,9 +87,33 @@ final class SchemaPattern {
         this.interval = regex == null
                 ? MAX_INTERVAL
                 : Math.max(MIN_INTERVAL, Math.min(MAX_INTERVAL, INTERVAL_SCALE / Math.max(1, regex.pattern().length())));
-        synchronized (SchemaPattern.class) {
-            this.id = nextId++;
-        }
+        this.slot = -1;
+        this.counted = COUNT_FIXED + 2L * source.length()
+                + (regex == null ? 0 : (2L + COUNT_PER_CHARACTER) * regex.pattern().length());
+    }
+
+    private SchemaPattern(SchemaPattern shared, int slot) {
+        this.source = shared.source;
+        this.kind = shared.kind;
+        this.regex = shared.regex;
+        this.shape = shared.shape;
+        this.units = shared.units;
+        this.interval = shared.interval;
+        this.counted = shared.counted;
+        this.slot = slot;
+    }
+
+    /** Whether a match of the pattern runs the engine, and so needs a matcher of the evaluator. */
+    boolean needsMatcher() {
+        return kind == REGEX;
+    }
+
+    /**
+     * The pattern for one schema, with a place for its matcher in the evaluators of that schema. It shares all that
+     * was compiled with this one.
+     */
+    SchemaPattern inSlot(int slot) {
+        return new SchemaPattern(this, slot);
     }
 
     /**
@@ -102,11 +158,20 @@ final class SchemaPattern {
     /**
      * Compiles (or fetches from the cache) a pattern; null when it is not a valid ECMA-262 regular expression, or is
      * one that cannot be run with the same meaning ({@link #failure} tells the two apart).
+     *
+     * <p>The cache is bounded, since the patterns of a schema may come from outside. It holds
+     * {@link #MAX_CACHED_PATTERNS} patterns at most, counted as {@link #MAX_CACHED_BYTES} at most. Over either bound
+     * the patterns compiled first go, oldest first. A pattern counted as more than
+     * {@link #MAX_CACHED_PATTERN_BYTES} is not kept at all. A schema holds the patterns it was compiled with, so a
+     * pattern that has left the cache is still matched by the validators that have it, and is compiled again only
+     * for a schema compiled later.
      */
     static SchemaPattern compile(String pattern) {
-        SchemaPattern cached = CACHE.get(pattern);
-        if (cached != null) {
-            return cached;
+        synchronized (CACHE) {
+            SchemaPattern cached = CACHE.get(pattern);
+            if (cached != null) {
+                return cached;
+            }
         }
         String translated = EcmaRegex.translate(pattern);
         if (translated == null) {
@@ -122,8 +187,48 @@ final class SchemaPattern {
         } else {
             p = new SchemaPattern(pattern, REGEX, Pattern.compile(translated), null);
         }
-        SchemaPattern previous = CACHE.putIfAbsent(pattern, p);
-        return previous != null ? previous : p;
+        return keep(p);
+    }
+
+    /** Keeps a pattern in the cache, and returns the one to use: it, or the one another thread kept first. */
+    private static SchemaPattern keep(SchemaPattern p) {
+        if (p.counted > MAX_CACHED_PATTERN_BYTES) {
+            return p;
+        }
+        synchronized (CACHE) {
+            SchemaPattern previous = CACHE.putIfAbsent(p.source, p);
+            if (previous != null) {
+                return previous;
+            }
+            cachedBytes += p.counted;
+            Iterator<SchemaPattern> oldest = CACHE.values().iterator();
+            while (CACHE.size() > MAX_CACHED_PATTERNS || cachedBytes > MAX_CACHED_BYTES) {
+                cachedBytes -= oldest.next().counted;
+                oldest.remove();
+            }
+            return p;
+        }
+    }
+
+    /** The pattern the cache holds for a source, or null. */
+    static SchemaPattern cached(String pattern) {
+        synchronized (CACHE) {
+            return CACHE.get(pattern);
+        }
+    }
+
+    /**
+     * What the cache holds: the number of its patterns, the bytes it counts for them, and the sum of what its
+     * patterns are counted as, which is the same number.
+     */
+    static long[] cacheFigures() {
+        synchronized (CACHE) {
+            long sum = 0;
+            for (SchemaPattern p : CACHE.values()) {
+                sum += p.counted;
+            }
+            return new long[] {CACHE.size(), cachedBytes, sum};
+        }
     }
 
     /**

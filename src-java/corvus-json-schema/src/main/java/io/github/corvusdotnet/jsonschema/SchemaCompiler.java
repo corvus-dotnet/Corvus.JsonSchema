@@ -63,13 +63,17 @@ final class SchemaCompiler {
         final boolean usesDynamicScope;
         final JsonDocument[] documents;
         final AnnotationSource[] annotationSources;
+        /** How many of the schema's patterns have a slot for a matcher (see {@link SchemaPattern#slot}). */
+        final int matcherSlots;
 
         Compiled(
                 SchemaNode[] nodes,
                 int root,
                 boolean usesDynamicScope,
                 JsonDocument[] documents,
-                AnnotationSource[] annotationSources) {
+                AnnotationSource[] annotationSources,
+                int matcherSlots) {
+            this.matcherSlots = matcherSlots;
             this.nodes = nodes;
             this.root = root;
             this.usesDynamicScope = usesDynamicScope;
@@ -104,6 +108,9 @@ final class SchemaCompiler {
     private int worklistHead;
     private List<PendingDynamicRef> pendingDynamicRefs = new ArrayList<>();
     private int entryNode;
+    /** The patterns of the schema by source, and how many of them have a slot for a matcher. */
+    private final Map<String, SchemaPattern> patterns = new HashMap<>();
+    private int matcherSlots;
 
     private SchemaCompiler(SchemaLoader loader, CompileOptions options) {
         this.loader = loader;
@@ -148,7 +155,25 @@ final class SchemaCompiler {
                 c.entryNode,
                 usesDynamicScope,
                 documents,
-                c.annotationSources.toArray(new AnnotationSource[0]));
+                c.annotationSources.toArray(new AnnotationSource[0]),
+                c.matcherSlots);
+    }
+
+    /**
+     * The pattern of a keyword, for this schema: identical patterns of the schema are one pattern, and one that the
+     * engine runs has the next place for its matcher in the schema's evaluators.
+     */
+    private SchemaPattern pattern(String source, String keyword) {
+        SchemaPattern p = patterns.get(source);
+        if (p == null) {
+            SchemaPattern shared = SchemaPattern.compile(source);
+            if (shared == null) {
+                throw SchemaPattern.failure(source, keyword);
+            }
+            p = shared.needsMatcher() ? shared.inSlot(matcherSlots++) : shared;
+            patterns.put(source, p);
+        }
+        return p;
     }
 
     private int getNode(SchemaTarget target) {
@@ -378,10 +403,7 @@ final class SchemaCompiler {
                 int k = d.first(v);
                 for (int i = 0; i < list.length; i++, k += 2) {
                     String pattern = d.string(k);
-                    SchemaPattern compiled = SchemaPattern.compile(pattern);
-                    if (compiled == null) {
-                        throw SchemaPattern.failure(pattern, "patternProperties");
-                    }
+                    SchemaPattern compiled = pattern(pattern, "patternProperties");
                     list[i] = new PatternProperty(
                             compiled, child(target, k + 1, "/patternProperties/" + Uris.escapePointerToken(pattern)));
                 }
@@ -508,10 +530,7 @@ final class SchemaCompiler {
             n.maxLength = getUint(d, d.property(e, "maxLength"));
             String p = stringOf(d, d.property(e, "pattern"));
             if (p != null) {
-                n.pattern = SchemaPattern.compile(p);
-                if (n.pattern == null) {
-                    throw SchemaPattern.failure(p, "pattern");
-                }
+                n.pattern = pattern(p, "pattern");
             }
             SchemaNode.Num m = num(d, d.property(e, "multipleOf"));
             if (m != null) {

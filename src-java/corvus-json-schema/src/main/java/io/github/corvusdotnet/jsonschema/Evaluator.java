@@ -62,10 +62,12 @@ final class Evaluator {
     private int depth;
     boolean depthExceeded;
     private final Utf8Chars chars = new Utf8Chars();
-    private Matcher[] matchers = new Matcher[0];
+    /** A matcher for each pattern of the schema that the engine runs, by {@link SchemaPattern#slot}. */
+    private final Matcher[] matchers;
 
     Evaluator(Program p, JsonSchemaResultsCollector c) {
         this.p = p;
+        this.matchers = new Matcher[p.matcherSlots];
         this.nodes = p.nodes;
         this.c = c;
         this.collect = c != null;
@@ -466,14 +468,10 @@ final class Evaluator {
     }
 
     private Matcher matcher(SchemaPattern pattern) {
-        int id = pattern.id;
-        if (id >= matchers.length) {
-            matchers = java.util.Arrays.copyOf(matchers, Math.max(id + 1, matchers.length * 2));
-        }
-        Matcher m = matchers[id];
+        Matcher m = matchers[pattern.slot];
         if (m == null) {
             m = pattern.matcher();
-            matchers[id] = m;
+            matchers[pattern.slot] = m;
         }
         return m;
     }
