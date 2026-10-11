@@ -202,9 +202,27 @@ begin
   Result := -1;
 end;
 
+{ Decode returns the character at the position At and its width in bytes: a code unit with Units set, and a code
+  point otherwise. DecodeLast is Decode for the character that ends at the position. }
+function Decode(const Text: TBytes; Lo, At, Hi: Int32; Units: Boolean; out W: Int32): Int32; inline;
+begin
+  if Units then
+    Result := UnitAt(Text, Lo, At, Hi, W)
+  else
+    Result := DecodeRune(Text, At, Hi, W);
+end;
+
+function DecodeLast(const Text: TBytes; Lo, At, Hi: Int32; Units: Boolean; out W: Int32): Int32; inline;
+begin
+  if Units then
+    Result := UnitBefore(Text, Lo, At, Hi, W)
+  else
+    Result := DecodeLastRune(Text, Lo, At, W);
+end;
+
 { One returns the width of the character at the position At when the instruction's character or class matches it,
-  and 0 otherwise. }
-function One(const Prog: TProgram; const Inst: TInst; const Text: TBytes; At, Hi: Int32): Int32;
+  and 0 otherwise. The character is a code unit when the program matches by code unit. }
+function One(const Prog: TProgram; const Inst: TInst; const Text: TBytes; Lo, At, Hi: Int32): Int32;
 var
   R, W: Int32;
 begin
@@ -213,7 +231,7 @@ begin
   R := Text[At];
   W := 1;
   if R >= RuneSelf then
-    R := DecodeRune(Text, At, Hi, W);
+    R := Decode(Text, Lo, At, Hi, Prog.Units, W);
   if Inst.SetIx >= 0 then begin
     if not Prog.Sets[Inst.SetIx].Contains(R) then
       Exit(0);
@@ -235,9 +253,11 @@ var
   CharSet: PCharSet;
   E: PEntry;
   Undone: TEntry;
-  Before, After, Ok: Boolean;
+  Before, After, Ok, Units: Boolean;
   Kind: UInt8;
 begin
+  // Units says the text is matched by UTF-16 code unit (see Corvus.JsonSchema.EcmaRegex.Utf8).
+  Units := Prog.Units;
   St.Sp := 0;
   Pc := 0;
   Pos := Start;
@@ -253,7 +273,7 @@ begin
               Inc(Pc);
               Continue;
             end;
-          end else if DecodeRune(Text, Pos, Hi, W) = I^.R then begin
+          end else if Decode(Text, Lo, Pos, Hi, Units, W) = I^.R then begin
             Inc(Pos, W);
             Inc(Pc);
             Continue;
@@ -269,7 +289,7 @@ begin
               Inc(Pc);
               Continue;
             end;
-          end else if CharSet^.Contains(DecodeRune(Text, Pos, Hi, W)) then begin
+          end else if CharSet^.Contains(Decode(Text, Lo, Pos, Hi, Units, W)) then begin
             Inc(Pos, W);
             Inc(Pc);
             Continue;
@@ -286,7 +306,7 @@ begin
           R := Text[Pos - 1];
           W := 1;
           if R >= RuneSelf then
-            R := DecodeLastRune(Text, Lo, Pos, W);
+            R := DecodeLast(Text, Lo, Pos, Hi, Units, W);
           if R = I^.R then begin
             Dec(Pos, W);
             Inc(Pc);
@@ -298,7 +318,7 @@ begin
           R := Text[Pos - 1];
           W := 1;
           if R >= RuneSelf then
-            R := DecodeLastRune(Text, Lo, Pos, W);
+            R := DecodeLast(Text, Lo, Pos, Hi, Units, W);
           if Prog.Sets[I^.SetIx].Contains(R) then begin
             Dec(Pos, W);
             Inc(Pc);
@@ -413,7 +433,10 @@ begin
           Continue;
         end;
       end;
-      OpBackrefFold: begin
+      OpBackrefFold, OpBackrefUnits: begin
+        // A character at a time: to fold case, or because a group matched by code unit can begin or end between
+        // the halves of a character, where its bytes do not say what it holds. (The second half of a character
+        // lies beyond the end of a group that ends between the halves, so a code unit is read from the text.)
         From := St.Caps[2 * I^.A];
         Till := St.Caps[2 * I^.A + 1];
         if From < 0 then begin
@@ -423,15 +446,19 @@ begin
         At := Pos;
         Ok := True;
         while (From < Till) and Ok do begin
-          Want := DecodeRune(Text, From, Till, W);
+          if Units then
+            Want := UnitAt(Text, Lo, From, Hi, W)
+          else
+            Want := DecodeRune(Text, From, Till, W);
           Inc(From, W);
           if At >= Hi then begin
             Ok := False;
             Break;
           end;
-          Got := DecodeRune(Text, At, Hi, W);
+          Got := Decode(Text, Lo, At, Hi, Units, W);
           Inc(At, W);
-          Ok := (Got = Want) or (Canonicalize(Got, I^.Flag) = Canonicalize(Want, I^.Flag));
+          Ok := (Got = Want) or ((I^.Op = OpBackrefFold) and
+            (Canonicalize(Got, I^.Flag) = Canonicalize(Want, I^.Flag)));
         end;
         if Ok then begin
           Pos := At;
@@ -439,7 +466,7 @@ begin
           Continue;
         end;
       end;
-      OpBackrefFoldBack: begin
+      OpBackrefFoldBack, OpBackrefUnitsBack: begin
         From := St.Caps[2 * I^.A];
         Till := St.Caps[2 * I^.A + 1];
         if From < 0 then begin
@@ -449,15 +476,19 @@ begin
         At := Pos;
         Ok := True;
         while (From < Till) and Ok do begin
-          Want := DecodeLastRune(Text, From, Till, W);
+          if Units then
+            Want := UnitBefore(Text, Lo, Till, Hi, W)
+          else
+            Want := DecodeLastRune(Text, From, Till, W);
           Dec(Till, W);
           if At <= Lo then begin
             Ok := False;
             Break;
           end;
-          Got := DecodeLastRune(Text, Lo, At, W);
+          Got := DecodeLast(Text, Lo, At, Hi, Units, W);
           Dec(At, W);
-          Ok := (Got = Want) or (Canonicalize(Got, I^.Flag) = Canonicalize(Want, I^.Flag));
+          Ok := (Got = Want) or ((I^.Op = OpBackrefFoldBack) and
+            (Canonicalize(Got, I^.Flag) = Canonicalize(Want, I^.Flag)));
         end;
         if Ok then begin
           Pos := At;
@@ -512,7 +543,7 @@ begin
                 Break;
               Inc(At);
             end else begin
-              if not CharSet^.Contains(DecodeRune(Text, At, Hi, W)) then
+              if not CharSet^.Contains(Decode(Text, Lo, At, Hi, Units, W)) then
                 Break;
               Inc(At, W);
             end;
@@ -525,7 +556,7 @@ begin
             R := Text[At];
             W := 1;
             if R >= RuneSelf then
-              R := DecodeRune(Text, At, Hi, W);
+              R := Decode(Text, Lo, At, Hi, Units, W);
             if R <> I^.R then
               Break;
             Inc(At, W);
@@ -546,7 +577,7 @@ begin
         At := Pos;
         N := 0;
         while N < I^.Min do begin
-          W := One(Prog, I^, Text, At, Hi);
+          W := One(Prog, I^, Text, Lo, At, Hi);
           if W = 0 then
             Break;
           Inc(At, W);
@@ -612,8 +643,12 @@ begin
           // Give back the last character taken. The characters between A and Pos were decoded going forward,
           // and decoding the last of them going backward finds the same boundary.
           W := 1;
-          if Text[E^.Pos - 1] >= RuneSelf then
-            DecodeLastRune(Text, E^.A, E^.Pos, W);
+          if Text[E^.Pos - 1] >= RuneSelf then begin
+            if Units then
+              UnitBefore(Text, Lo, E^.Pos, Hi, W)
+            else
+              DecodeLastRune(Text, E^.A, E^.Pos, W);
+          end;
           Dec(E^.Pos, W);
           Pc := E^.Pc;
           Pos := E^.Pos;
@@ -623,7 +658,7 @@ begin
         end;
         ERepLazy: begin
           Rep := @Prog.Insts[E^.Pc];
-          W := One(Prog, Rep^, Text, E^.Pos, Hi);
+          W := One(Prog, Rep^, Text, Lo, E^.Pos, Hi);
           if W = 0 then begin
             Dec(St.Sp);
             Continue;
@@ -678,7 +713,7 @@ begin
     R := Text[At];
     W := 1;
     if R >= RuneSelf then
-      R := DecodeRune(Text, At, Hi, W);
+      R := Decode(Text, Lo, At, Hi, Prog.Units, W);
     if ((Prog.First < 0) or Prog.Sets[Prog.First].Contains(R)) and Run(Prog, St, Text, Lo, Hi, At) then
       Exit(True);
     Inc(At, W);

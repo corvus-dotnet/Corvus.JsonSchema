@@ -101,6 +101,7 @@ type
   { A TParser reads a pattern by recursive descent. With Unicode set it applies the grammar of the u flag. Without
     it, it applies the Annex B grammar of patterns with no flag. }
   TParser = record
+    { P holds the pattern as code points with the u flag, and as UTF-16 code units without it. }
     P: TRunes;
     I: Int32;
     Unicode: Boolean;
@@ -157,7 +158,7 @@ type
     function ClassEscape(C: Int32; out CharSet: TCharSet): Boolean;
     function Hex(N: Int32): Int32;
     function CharacterEscape(InClass: Boolean): Int32;
-    function UnicodeEscape(Braces: Boolean): Int32;
+    function UnicodeEscape(UnicodeMode: Boolean): Int32;
     function CharClass: Int32;
     function ClassAtom(out C: Int32; out CharSet: TCharSet): Boolean;
   end;
@@ -244,7 +245,11 @@ begin
   Ps := Default(TParser);
   Ps.Unicode := Unicode;
   Error := '';
-  // The pattern as code points. A malformed byte is U+FFFD.
+  // The pattern as code points. A malformed byte is U+FFFD. Without the u flag ECMA-262 reads a pattern, and
+  // matches a text, a UTF-16 code unit at a time, so the pattern is code units. A character beyond the Basic
+  // Multilingual Plane is then two atoms, a quantifier after it repeats the second, and in a class it is two
+  // members, so a range between two such characters runs from a low surrogate to a high one and is an error. (Two
+  // units are no more elements than the four bytes of the character.)
   SetLength(Bytes, Length(Pattern));
   for K := 1 to Length(Pattern) do
     Bytes[K - 1] := UInt8(Pattern[K]);
@@ -253,6 +258,11 @@ begin
   At := 0;
   while At < Length(Bytes) do begin
     Ps.P[N] := DecodeRune(Bytes, At, Length(Bytes), Width);
+    if (not Unicode) and (Ps.P[N] > $FFFF) then begin
+      Ps.P[N + 1] := LowSurrogate(Ps.P[N]);
+      Ps.P[N] := HighSurrogate(Ps.P[N]);
+      Inc(N);
+    end;
     Inc(At, Width);
     Inc(N);
   end;
@@ -826,6 +836,10 @@ begin
         Fail('invalid group name');
         Exit('');
       end;
+    end else if (C >= $D800) and (C <= $DBFF) and (Peek >= $DC00) and (Peek <= $DFFF) then begin
+      // Without the u flag the pattern is code units, and a name still takes a surrogate pair as one character.
+      C := $10000 + ((C - $D800) shl 10) + (Peek - $DC00);
+      Inc(I);
     end;
     if N = 0 then begin
       if not ((C = Ord('$')) or (C = Ord('_')) or IdStart^.Contains(C)) then begin
@@ -1147,14 +1161,15 @@ begin
 end;
 
 (* UnicodeEscape reads what follows a \u and returns the code point, or -1, consuming nothing, when it is not a
-  well-formed escape. With Braces set it accepts the \u{...} form. A surrogate pair written as two escapes is one
-  code point. *)
-function TParser.UnicodeEscape(Braces: Boolean): Int32;
+  well-formed escape. With UnicodeMode set, as it is with the u flag and always in a group name, it accepts the
+  \u{...} form and reads a surrogate pair written as two escapes as one code point. Without it each escape is one
+  code unit. *)
+function TParser.UnicodeEscape(UnicodeMode: Boolean): Int32;
 var
   Start, Digits, V, U, Save, Low: Int32;
 begin
   Start := I;
-  if Braces and Eat(Ord('{')) then begin
+  if UnicodeMode and Eat(Ord('{')) then begin
     Digits := I;
     V := 0;
     while More and (HexValue(Peek) >= 0) do begin
@@ -1171,7 +1186,8 @@ begin
   U := Hex(4);
   if U < 0 then
     Exit(-1);
-  if (U >= $D800) and (U <= $DBFF) and (I + 6 <= Length(P)) and (P[I] = Ord('\')) and (P[I + 1] = Ord('u')) then begin
+  if UnicodeMode and (U >= $D800) and (U <= $DBFF) and (I + 6 <= Length(P)) and (P[I] = Ord('\')) and
+    (P[I + 1] = Ord('u')) then begin
     Save := I;
     Inc(I, 2);
     Low := Hex(4);

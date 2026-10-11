@@ -48,6 +48,10 @@ type
     OpBackrefBack,
     OpBackrefFold,
     OpBackrefFoldBack,
+    // OpBackrefUnits and OpBackrefUnitsBack compare a group a code unit at a time, for a pattern matched by code
+    // unit.
+    OpBackrefUnits,
+    OpBackrefUnitsBack,
     // OpLook opens a lookaround. OpLookOK ends the body of a positive one and OpLookFail the body of a negative
     // one.
     OpLook,
@@ -89,6 +93,9 @@ type
     Sets: TCharSets;
     { Groups is the number of capturing groups some backreference names, and Loops the number of counted loops. }
     Groups, Loops: Int32;
+    { Units says the pattern was read without the u flag, so the text is matched by UTF-16 code unit (see
+      Corvus.JsonSchema.EcmaRegex.Utf8). }
+    Units: Boolean;
     { Anchored says every match starts at the start of the text. }
     Anchored: Boolean;
     { Prefix is literal text every match starts with. }
@@ -342,8 +349,12 @@ begin
         Op := OpBackrefFoldBack
       else if Nodes[N].Fold then
         Op := OpBackrefFold
+      else if Back and not Unicode then
+        Op := OpBackrefUnitsBack
       else if Back then
-        Op := OpBackrefBack;
+        Op := OpBackrefBack
+      else if not Unicode then
+        Op := OpBackrefUnits;
       // When several groups share the name, at most one has taken part, and the others match the empty string.
       // So matching each in turn matches the one that took part.
       for I := 0 to High(Nodes[N].Groups) do begin
@@ -614,6 +625,7 @@ begin
   Result.Sets := Copy(Ps.Sets, 0, Ps.SetCount);
   Result.Groups := C.TrackedCount;
   Result.Loops := C.Loops;
+  Result.Units := not Unicode;
   Result.First := -1;
   Result.Anchored := StartsAtBOL(C.Nodes, Root);
   if not Result.Anchored then begin

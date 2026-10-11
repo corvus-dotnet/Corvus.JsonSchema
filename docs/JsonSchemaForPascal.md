@@ -246,7 +246,18 @@ end;
 `pattern` and `patternProperties` have ECMA-262 semantics. The common shapes of pattern are matched with no regular
 expression engine. Any other pattern runs on the package's own engine, which reads every character class from the
 package's own Unicode 17 data, so a pattern means the same whichever compiler built the program. The engine agrees
-with answers recorded from V8 on 61,383 patterns and 1,057,650 match answers.
+with answers recorded from V8 on 61,487 patterns and 1,083,480 match answers.
+
+A pattern is read with the grammar of the `u` flag and matched by Unicode code point. A pattern that grammar refuses
+is read with the Annex B grammar of a pattern with no flag, which many schemas need (`\-` outside a class, `\_`, a
+lone `{`). Such a pattern is matched by UTF-16 code unit, as ECMA-262 matches a pattern with no `u` flag. The two
+differ only for a string with a character beyond the Basic Multilingual Plane, which is two code units. `^.$`
+matches `"\ud801\udc00"` (the one character U+10400), and `^\-?.$` does not, because the dot takes one unit of the
+two. A pattern that neither grammar accepts is an `EJsonSchemaCompileError`.
+
+A JSON string can name half of a surrogate pair with an escape, as in `"\ud800"`. That is not Unicode text, and a
+`TJsonDocument` is UTF-8 and cannot hold it. Parsing such text raises `EJsonParseError`, and `TryIsValid` returns
+`False` with that reason, whatever the schema. So a pattern is never matched against such a string.
 
 A pattern with no lookaround, backreference, multiline anchor or word boundary gets an automaton that decides an
 ASCII text with one table read per byte, when the automaton is small enough. Every other pattern, and a text that

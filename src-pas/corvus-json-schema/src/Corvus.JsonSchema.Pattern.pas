@@ -136,6 +136,10 @@ type
     Alts: TAlternativeArray;
     Chars: TCharSet;
     Engine: TEcmaRegex;
+    { Units says the pattern has a faster matcher and is valid only without the u flag. ECMA-262 matches such a
+      pattern by UTF-16 code unit, and the faster matchers read code points, so Engine answers for a text with a
+      character beyond the Basic Multilingual Plane. }
+    Units: Boolean;
   end;
 
 const
@@ -1754,8 +1758,11 @@ var
   Error: UTF8String;
 begin
   { Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it. A pattern
-    with a faster matcher that is valid with the u flag needs no engine at all. The engine reads a pattern that is
-    valid only without the u flag by code point too, so the faster matchers decide those the same way. }
+    with a faster matcher that is valid with the u flag needs no engine at all. A pattern that is valid only
+    without the u flag is matched by UTF-16 code unit. The faster matchers read code points, which is the same
+    thing unless the text has a character beyond the Basic Multilingual Plane, so such a pattern keeps its engine
+    for those texts. When the pattern itself has such a character it is two atoms, which no faster matcher reads,
+    and the engine takes every text. }
   Chosen := ChoosePattern(Source, P);
   if not Chosen or not ValidRegex(Source) then begin
     { The engine compiles the pattern with the u flag, or failing that without it, as many schemas need. }
@@ -1764,9 +1771,13 @@ begin
       Result := False;
       Exit;
     end;
-    if not Chosen then begin
+    if (not Chosen) or HasSupplementary(BytesOf(Source), 0, Length(Source)) then begin
+      ClearPattern(P);
       P.Kind := MatchEngine;
       P.Engine := Engine;
+    end else begin
+      P.Engine := Engine;
+      P.Units := True;
     end;
   end;
   P.Source := Source;
@@ -1893,6 +1904,10 @@ var
   Word: Boolean;
 begin
   Stop := Start + Len;
+  if P.Units and (not Ascii) and HasSupplementary(S, Start, Stop) then begin
+    Result := EcmaRegexIsMatch(P.Engine, S, Start, Len);
+    Exit;
+  end;
   case P.Kind of
     MatchEverything: Result := True;
     MatchLiteral:

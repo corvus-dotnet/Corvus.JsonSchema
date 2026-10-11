@@ -376,7 +376,18 @@ results collector allocate.
 pattern only that accepts), whichever compiler built the program. A pattern outside the common shapes runs on the
 package's own engine, a port of the Go module's `internal/ecmaregex`. The grammar is that of ECMAScript 2025, with
 lookbehind, named groups, modifier groups and Unicode property escapes. The engine was compared with answers
-recorded from V8: it agrees on 61,383 patterns and 1,057,650 match answers.
+recorded from V8: it agrees on 61,487 patterns and 1,083,480 match answers.
+
+A pattern is read with the grammar of the `u` flag and matched by Unicode code point. A pattern that grammar refuses
+is read with the Annex B grammar of a pattern with no flag, which many schemas need (`\-` outside a class, `\_`, a
+lone `{`). Such a pattern is matched by UTF-16 code unit, as ECMA-262 matches a pattern with no `u` flag. The two
+differ only for a string with a character beyond the Basic Multilingual Plane, which is two code units. `^.$`
+matches `"\ud801\udc00"` (the one character U+10400), and `^\-?.$` does not, because the dot takes one unit of the
+two. A pattern that neither grammar accepts is an `EJsonSchemaCompileError`.
+
+A JSON string can name half of a surrogate pair with an escape, as in `"\ud800"`. That is not Unicode text, and a
+`TJsonDocument` is UTF-8 and cannot hold it. Parsing such text raises `EJsonParseError`, and `TryIsValid` returns
+`False` with that reason, whatever the schema. So a pattern is never matched against such a string.
 
 The engine has two matchers:
 
@@ -445,8 +456,8 @@ program that leaves memory unfreed.
 - `TestChecked`: the array reads that make their own bounds check (`Corvus.JsonSchema.Checked` and the `At`
   functions next to the array types) raise `ERangeError` for an index outside the array, one beyond 32 bits
   included.
-- `TestEcmaRegex`: the pattern engine against answers recorded from V8 (the Go module's `v8_oracle.json`), and the
-  patterns of the suite. It reads the suite from `CORVUS_JSON_SCHEMA_TEST_SUITE` when the submodule is elsewhere.
+- `TestEcmaRegex`: the pattern engine against answers recorded from V8 (the Go module's `v8_oracle.json` and
+  `v8_cases.json`), and the patterns of the suite. It reads the suite from `CORVUS_JSON_SCHEMA_TEST_SUITE` when the submodule is elsewhere.
 - `TestDifferential`: the plans against the general evaluator on the jsonschema-benchmark corpora and on mutations
   of their instances (200,773 instances, with no disagreement). It runs when `JSONSCHEMA_BENCHMARK` names a
   checkout, and says that it was skipped otherwise.

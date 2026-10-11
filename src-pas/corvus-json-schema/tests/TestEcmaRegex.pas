@@ -34,9 +34,12 @@ uses
   SysUtils,
   Classes,
   Corvus.JsonSchema.Ucd,
+  // (Before the units of the engine: both have a TCharSet, and the engine's is the one meant here.)
+  Corvus.JsonSchema.Pattern,
   Corvus.JsonSchema.EcmaRegex.Utf8,
   Corvus.JsonSchema.EcmaRegex.CharSet,
   Corvus.JsonSchema.EcmaRegex.Dfa,
+  Corvus.JsonSchema.EcmaRegex.Compile,
   Corvus.JsonSchema.EcmaRegex;
 
 type
@@ -1168,24 +1171,6 @@ begin
   Result := ((Digit shr (3 - K mod 4)) and 1) = 1;
 end;
 
-{ BeyondBMP reports whether the text has a character beyond the Basic Multilingual Plane. V8 matches a pattern with
-  no flag by UTF-16 code unit and this package matches by code point, so the oracle is not asked about such a text
-  for a pattern that is valid only with no flag. }
-function BeyondBMP(const S: UTF8String): Boolean;
-var
-  Text: TBytes;
-  At, Width: Int32;
-begin
-  Text := ToBytes(S);
-  At := 0;
-  while At < Length(Text) do begin
-    if DecodeRune(Text, At, Length(Text), Width) > $FFFF then
-      Exit(True);
-    Inc(At, Width);
-  end;
-  Result := False;
-end;
-
 { V8ModifierBug reports whether a pattern is one for which V8 13.6 answers a case-insensitive modifier group
   differently from the same pattern with the i flag. ECMA-262 gives the two the same meaning. Only the validity of
   these patterns is taken from the oracle. TestOracleFlags checks the behaviour of each through the i flag, where V8
@@ -1247,8 +1232,10 @@ begin
   Result := True;
 end;
 
-{ CheckAnswers compares the answers of both back ends with the oracle's on every text. It adds to Answers the number
-  of answers compared and to Matched the number of those that are a match. }
+{ CheckAnswers compares the answers of both back ends with the oracle's on every text, the texts with a character
+  beyond the Basic Multilingual Plane among them: a pattern that is valid only with no flag is matched by UTF-16
+  code unit, as V8 matches it. It adds to Answers the number of answers compared and to Matched the number of those
+  that are a match. }
 procedure CheckAnswers(const P: UTF8String; const Re, Backtrack: TEcmaRegex; const Inputs: TTexts;
   const Bits: UTF8String; var Answers, Matched: Int64);
 var
@@ -1257,8 +1244,6 @@ var
   Text: TBytes;
 begin
   for I := 0 to High(Inputs) do begin
-    if (not Re.Unicode) and BeyondBMP(Inputs[I]) then
-      Continue;
     Want := Bit(Bits, I);
     Inc(Answers);
     if Want then
@@ -1698,6 +1683,11 @@ begin
   Alloc('(\w)(?i:\1)', False);
   Alloc('(?m:^)\w+(?m:$)', False);
   Alloc('(?i:\bCAF\b)', False);
+  // Valid only with no flag, so matched by UTF-16 code unit.
+  Alloc('^\-?[^\d]+$', True);
+  Alloc('\-?\W{2} na.+\W{2}$', True);
+  Alloc('\-{0}(\W)\1 ', False);
+  Alloc('\-{0}(?<=\W{2}) (?i:CAF\W)(?= (.)(.)$)', False);
   WriteLn('TestAllocations: ', Patterns, ' patterns, each matched 200 times on ', Length(Texts), ' texts');
 end;
 {$ELSE}
@@ -2105,6 +2095,192 @@ begin
   WriteLn('TestSlices: done');
 end;
 
+{ The cases of testdata/v8_cases.json of the Go package, which gen_cases.js beside it writes: patterns with what V8
+  says of each, whether it is valid with the u flag and with no flag, and whether it matches each text. The file is
+  beside the oracle. }
+function CasesPath: UTF8String;
+begin
+  Result := UTF8String(ExtractFilePath(String(OraclePath))) + 'v8_cases.json';
+end;
+
+{ CheckCases compares one set of the cases with V8. For a set of the engine it compares the validity of each
+  pattern and the answers of both back ends. For the set of the faster matchers (Fast) it compiles each pattern as a
+  schema does, and counts in Legacy the patterns that have a faster matcher. }
+procedure CheckCases(const Name: UTF8String; Fast: Boolean; out Patterns, Answers, Matched, Legacy, Invalid: Int32);
+var
+  Json: TJson;
+  Root, Item, Test: Int32;
+  P, T: UTF8String;
+  Want, Got: Boolean;
+  Re, Backtrack: TEcmaRegex;
+  Compiled: TPattern;
+  Text: TBytes;
+begin
+  Patterns := 0;
+  Answers := 0;
+  Matched := 0;
+  Legacy := 0;
+  Invalid := 0;
+  Compiled := Default(TPattern);
+  Re := Default(TEcmaRegex);
+  Backtrack := Default(TEcmaRegex);
+  if not LoadJson(CasesPath, Json, Root) then begin
+    Fail('the cases cannot be read at ' + CasesPath);
+    Exit;
+  end;
+  Item := Json.Nodes[Json.Member(Root, Name)].First;
+  while Item >= 0 do begin
+    Inc(Patterns);
+    P := Json.Text(Item, 'p');
+    if Fast then begin
+      if not CompilePattern(P, Compiled) then begin
+        Fail(Quote(P) + ' is not a valid pattern');
+        Item := Json.Nodes[Item].Next;
+        Continue;
+      end;
+      if Compiled.Kind <> MatchEngine then begin
+        Inc(Legacy);
+        if Compiled.Units = Json.Flag(Item, 'u') then
+          Fail(Quote(P) + ': valid with the u flag is ' + Bool(Json.Flag(Item, 'u')) +
+            ', and the engine for code units is kept: ' + Bool(Compiled.Units));
+      end;
+    end else begin
+      if not CheckVerdict(P, Json.Flag(Item, 'u'), Json.Flag(Item, 'l'), Re, Backtrack) then begin
+        Inc(Invalid);
+        Item := Json.Nodes[Item].Next;
+        Continue;
+      end;
+      if not Json.Flag(Item, 'u') then
+        Inc(Legacy);
+    end;
+    Test := Json.Nodes[Json.Member(Item, 'tests')].First;
+    while Test >= 0 do begin
+      T := Json.Text(Test, 't');
+      Want := Json.Flag(Test, 'want');
+      Inc(Answers);
+      if Want then
+        Inc(Matched);
+      if Fast then begin
+        if PatternMatchString(Compiled, T) <> Want then
+          Fail(Quote(P) + ' on ' + Quote(T) + ': ' + Bool(not Want) + ', V8 says ' + Bool(Want));
+      end else begin
+        Text := ToBytes(T);
+        Inc(OracleAnswers, 2);
+        Got := EcmaRegexIsMatch(Re, Text, 0, Length(Text));
+        if Got <> Want then
+          Fail(Quote(P) + ' on ' + Quote(T) + ' (as compiled, automaton ' + Bool(Re.HasDfa) + '): got ' + Bool(Got) +
+            ', V8 says ' + Bool(Want))
+        else
+          Inc(OracleAnswersAgreed);
+        Got := EcmaRegexIsMatch(Backtrack, Text, 0, Length(Text));
+        if Got <> Want then
+          Fail(Quote(P) + ' on ' + Quote(T) + ' (forced backtrack): got ' + Bool(Got) + ', V8 says ' + Bool(Want))
+        else
+          Inc(OracleAnswersAgreed);
+      end;
+      Test := Json.Nodes[Test].Next;
+    end;
+    Item := Json.Nodes[Item].Next;
+  end;
+end;
+
+{ TestCodeUnits checks matching by UTF-16 code unit against V8. A pattern that is valid only with no flag is matched
+  a code unit at a time. A character beyond the Basic Multilingual Plane is two units to the dot, to a class, to a
+  quantifier, to a group and to a backreference, a match can start and end between them, and such a character in
+  the pattern is two atoms. A class range between two of them is an error in both grammars. }
+procedure TestCodeUnits;
+var
+  Patterns, Answers, Matched, Legacy, Invalid: Int32;
+begin
+  CheckCases('units', False, Patterns, Answers, Matched, Legacy, Invalid);
+  WriteLn('TestCodeUnits: ', Patterns, ' patterns (', Legacy, ' valid only with no flag, ', Invalid, ' not valid), ',
+    Answers, ' answers per back end (', Matched, ' of them a match)');
+  if (Legacy < 90) or (Invalid < 3) or (Matched < 500) then
+    Fail('the cases of TestCodeUnits are not the ones the test is about');
+end;
+
+{ TestFastMatchersMatchCodeUnits checks, against V8, patterns of the shapes the faster matchers of the Pattern unit
+  take that are valid only without the u flag. The faster matchers read code points, and hand a text with a
+  character beyond the Basic Multilingual Plane to the engine. (In Go this test is in pattern_test.go of the
+  module.) }
+procedure TestFastMatchersMatchCodeUnits;
+var
+  Patterns, Answers, Matched, Faster, Invalid: Int32;
+begin
+  CheckCases('fast', True, Patterns, Answers, Matched, Faster, Invalid);
+  WriteLn('TestFastMatchersMatchCodeUnits: ', Patterns, ' patterns, ', Faster, ' of them with a faster matcher, ',
+    Answers, ' answers');
+  if Faster < Patterns div 2 then
+    Fail('only ' + Num(Faster) + ' of ' + Num(Patterns) + ' patterns have a faster matcher');
+end;
+
+{ TestCodeUnitPositions checks the two readers of a code unit on every position of a text, forwards and
+  backwards. }
+procedure TestCodeUnitPositions;
+const
+  Want: array[0..7] of Int32 = (Ord('a'), $E9, $20AC, $D801, $DC00, $DBFF, $DFFF, Ord('z'));
+var
+  Text, Bad: TBytes;
+  Ends: array[0..7] of Int32;
+  Pos, K, R, W, B: Int32;
+  Bads: array[0..4] of UTF8String;
+begin
+  Text := ToBytes('a' + U($E9) + U($20AC) + U($10400) + U($10FFFF) + 'z');
+  // The text is read from the middle of a longer array, as a string of a document is.
+  SetLength(Bad, Length(Text) + 4);
+  for K := 0 to High(Text) do
+    Bad[K + 2] := Text[K];
+  Bad[0] := $F0;
+  Bad[1] := $90;
+  Bad[Length(Text) + 2] := $80;
+  Bad[Length(Text) + 3] := $80;
+  Text := Bad;
+  Pos := 2;
+  for K := 0 to High(Want) do begin
+    R := UnitAt(Text, 2, Pos, Length(Text) - 2, W);
+    if R <> Want[K] then
+      Fail('UnitAt(' + Num(Pos) + ') = ' + Num(R) + ', want ' + Num(Want[K]));
+    Inc(Pos, W);
+    Ends[K] := Pos;
+  end;
+  if Pos <> Length(Text) - 2 then
+    Fail('the units end at ' + Num(Pos) + ' of ' + Num(Length(Text) - 2) + ' bytes');
+  for K := High(Want) downto 0 do begin
+    R := UnitBefore(Text, 2, Ends[K], Length(Text) - 2, W);
+    if R <> Want[K] then
+      Fail('UnitBefore(' + Num(Ends[K]) + ') = ' + Num(R) + ', want ' + Num(Want[K]));
+    if (K > 0) and (Ends[K] - W <> Ends[K - 1]) then
+      Fail('UnitBefore(' + Num(Ends[K]) + ') spans ' + Num(W) + ' bytes');
+  end;
+  if (not HasSupplementary(Text, 2, Length(Text) - 2)) or
+    HasSupplementary(ToBytes('a' + U($E9) + U($20AC) + U($FFFF)), 0, 9) then
+    Fail('HasSupplementary is wrong');
+  // Text that is not UTF-8 is read a byte at a time, as it is when matching by code point.
+  Bads[0] := HexBytes('f09f');
+  Bads[1] := HexBytes('f09f98');
+  Bads[2] := HexBytes('808080');
+  Bads[3] := HexBytes('f0618080');
+  Bads[4] := HexBytes('f888808080');
+  for B := 0 to High(Bads) do begin
+    Bad := ToBytes(Bads[B]);
+    Pos := 0;
+    while Pos < Length(Bad) do begin
+      R := UnitAt(Bad, 0, Pos, Length(Bad), W);
+      if (W <> 1) or ((R <> RuneError) and (R <> Bad[Pos])) then
+        Fail('UnitAt on text that is not UTF-8 (' + Num(B) + ', ' + Num(Pos) + ') = ' + Num(R) + ', ' + Num(W));
+      Inc(Pos);
+    end;
+    Pos := Length(Bad);
+    while Pos > 0 do begin
+      R := UnitBefore(Bad, 0, Pos, Length(Bad), W);
+      if (W <> 1) or ((R <> RuneError) and (R <> Bad[Pos - 1])) then
+        Fail('UnitBefore on text that is not UTF-8 (' + Num(B) + ', ' + Num(Pos) + ') = ' + Num(R) + ', ' + Num(W));
+      Dec(Pos);
+    end;
+  end;
+  WriteLn('TestCodeUnitPositions: done');
+end;
+
 begin
   if ParamCount >= 1 then
     OraclePath := UTF8String(ParamStr(1));
@@ -2127,11 +2303,14 @@ begin
   TestOracleHandWritten;
   TestOracleFlags;
   TestOracleGenerated;
+  TestCodeUnits;
+  TestFastMatchersMatchCodeUnits;
+  TestCodeUnitPositions;
   WriteLn('V8 oracle: ', OracleVerdicts, ' verdicts on validity compared, ', OracleVerdictsAgreed, ' agreed. ',
     OracleAnswers, ' answers on a match compared (each text on both back ends), ', OracleAnswersAgreed, ' agreed.');
   if Failures <> 0 then begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 17 tests, 0 failures');
+  WriteLn('PASS: 20 tests, 0 failures');
 end.
