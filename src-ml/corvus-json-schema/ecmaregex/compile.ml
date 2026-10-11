@@ -97,6 +97,39 @@ type compiler = {
       (** Says the pattern was read with the u flag grammar, which decides how a backreference folds case. *)
 }
 
+(** Reports whether n can match one character or more. It errs towards true. *)
+let rec consumes n =
+  match n.kind with
+  | Char | Set | Backref -> true
+  | Cat | Alt | Group -> Array.exists consumes n.subs
+  | Repeat -> n.max <> 0 && consumes n.subs.(0)
+  | _ -> false
+
+(** [simplify n inside] returns the tree with two rewrites, both of which V8 makes. Neither changes what the pattern
+    matches or what any group holds. Without them a pattern can take time exponential in its counts for no reason that
+    ECMA-262 gives. [inside] is the capturing groups n is inside of. The tree is a value nothing writes to, so a node
+    that changes is a new node.
+
+    A backreference to a group it is inside of is the empty string. The group is not set until it closes, and the
+    repetition around a group clears it at the start of each iteration, so inside the group it is never set.
+
+    A repetition whose body cannot consume a character, such as [(?:\b|(?=a)|){4,5}], is the body once when its minimum
+    is one or more, and nothing when its minimum is zero. Every iteration of such a body is empty. ECMA-262 refuses an
+    empty iteration after the minimum, so the iterations are exactly the minimum. Each of them starts with the groups of
+    the body cleared and at the same position, so what the last one can do does not depend on the ones before it, and
+    the ways through the last one come in the same order whatever the others chose. Run as written, the matcher would
+    try every combination of the ways through every iteration. *)
+let rec simplify n inside =
+  if n.kind = Backref then if Array.for_all (fun g -> List.mem g inside) n.groups then empty_node else n
+  else if Array.length n.subs = 0 then n
+  else
+    let inside = if n.kind = Group && n.group > 0 then n.group :: inside else inside in
+    let subs = Array.map (fun sub -> simplify sub inside) n.subs in
+    let out = if Array.for_all2 ( == ) subs n.subs then n else { n with subs } in
+    if out.kind = Repeat && out.max <> 0 && not (consumes out.subs.(0)) then
+      if out.min = 0 then empty_node else out.subs.(0)
+    else out
+
 let rec collect_backrefs n seen =
   if n.kind = Backref then Array.iter (fun g -> seen.(g) <- true) n.groups;
   Array.iter (fun sub -> collect_backrefs sub seen) n.subs
@@ -355,6 +388,7 @@ let rec first_chars n pairs =
 (** Compiles the tree the parser read for the backtracking matcher. [group_count] is the number of capturing groups of
     the pattern. *)
 let compile_program root group_count unicode_mode =
+  let root = simplify root [] in
   let seen = Array.make (group_count + 1) false in
   collect_backrefs root seen;
   (* Slots follow group order, so the groups inside any one subtree take a contiguous range of slots. *)

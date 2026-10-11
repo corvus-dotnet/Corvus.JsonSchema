@@ -1149,6 +1149,50 @@ let test_code_unit_positions () =
     [ "\xf0\x9f"; "\xf0\x9f\x98"; "\x80\x80\x80"; "\xf0a\x80\x80"; "\xf8\x88\x80\x80\x80" ];
   log "done"
 
+(* Set by test_simplify when the rewrites are in place. *)
+let simplifies = ref false
+
+(* Checks the two rewrites of simplify on the compiled program: a repetition whose body cannot consume a character is
+   the body once, or nothing, and a backreference inside the group it names is the empty string. Each case is a
+   pattern, the number of counted loops of its program and the number of its backreferences. *)
+let test_simplify () =
+  let cases =
+    [
+      ({|(?:\b|(?=a)|){4,5}|}, 0, 0); ({|(?:(?=(a))|){2}\1|}, 0, 1); ({|(?:(?=a))*b|}, 0, 0);
+      ({|(?:a|(?=b)){2,3}|}, 1, 0); ({|(a\1)+|}, 0, 0); ({|(?:(a)|b\1){2}|}, 1, 1); ({|((\1|\2|)){3}|}, 0, 0);
+      ({|(?<n>a\k<n>)|}, 0, 0); ({|(?:(?<n>a)|(?<n>b\k<n>)){2}|}, 1, 2); ({|(?:(\1){3}|(?!a)){2,}(?<=b)|}, 0, 0);
+      ({|(?:\1(a)){2}|}, 1, 1);
+    ]
+    [@ocamlformat "disable"]
+  in
+  simplifies := true;
+  List.iter
+    (fun (p, loops, backrefs) ->
+      match compiled p with
+      | None -> simplifies := false
+      | Some re ->
+          let found_loops, found_backrefs = Re.Internal.program_shape re in
+          if found_loops <> loops || found_backrefs <> backrefs then begin
+            fail "%S: %d counted loops and %d backreferences, want %d and %d" p found_loops found_backrefs loops
+              backrefs;
+            simplifies := false
+          end)
+    cases;
+  log "%d patterns" (List.length cases)
+
+(* Checks, against V8, repetitions whose body can match only the empty string and backreferences inside the group
+   they name. Run as written, the first patterns of the set take time exponential in their counts and the program
+   would not end, so the test fails without running them when test_simplify has found the rewrites missing. The
+   other patterns pin what the groups of such a body hold afterwards. *)
+let test_repetitions_that_cannot_consume () =
+  if not !simplifies then
+    fail "not run, because the rewrites of simplify are missing and the patterns of this test would not finish"
+  else begin
+    let t = check_cases "loops" in
+    log "%d patterns, %d answers per back end (%d of them a match)" t.patterns t.answers t.matched;
+    if t.patterns < 50 || t.matched < 300 then fail "the cases are not the ones this test is about"
+  end
+
 let () =
   let ran = ref 0 in
   List.iter
@@ -1178,6 +1222,8 @@ let () =
       ("oracle generated", test_oracle_generated);
       ("code units", test_code_units);
       ("code unit positions", test_code_unit_positions);
+      ("simplify", test_simplify);
+      ("repetitions that cannot consume", test_repetitions_that_cannot_consume);
     ];
   Printf.printf
     "V8 oracle: %d verdicts on validity compared, %d agreed. %d answers on a match compared (each text on both back \

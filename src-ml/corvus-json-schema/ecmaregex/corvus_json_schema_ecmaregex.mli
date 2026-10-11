@@ -45,7 +45,8 @@
     matcher: a pattern with no automaton, and a text that is not ASCII for a pattern that has one. That matcher keeps
     its choices on an explicit stack, so a long text cannot overflow the stack of the thread and a match does not
     allocate once the stack has grown. It has no step budget, so a pattern with nested quantifiers can take exponential
-    time on a text it does not match, as it can in any backtracking engine.
+    time on a text it does not match, as it can in any backtracking engine. A repetition whose body cannot consume a
+    character is not such a pattern. It is run once, or not at all (see simplify of compile.ml), as V8 runs it.
 
     The automaton is built when the pattern is compiled, where Go builds it on the first match.
 
@@ -195,6 +196,10 @@ module Internal : sig
   val unit_at : string -> int -> int * int
   (** [unit_at text at] is the UTF-16 code unit at the index [at] of the text and the number of bytes it spans, as the
       matcher reads it for a pattern with no u flag. A half of a character of four bytes spans two. *)
+
+  val program_shape : t -> int * int
+  (** [program_shape re] is the number of counted loops of the program of the backtracking matcher, and the number of
+      its instructions that compare a backreference by its bytes. *)
 
   val unit_before : string -> int -> int * int
   (** [unit_before text at] is the code unit that ends at the index [at] of the text and the number of bytes it spans.
