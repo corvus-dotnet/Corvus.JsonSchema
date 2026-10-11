@@ -190,6 +190,9 @@ mutable struct Emitter
     edgerest::String
     # Whether the writer is in the body of a lookbehind that is a callout, outside the lookarounds of that body.
     within::Bool
+    # The bytes of the sets of many ranges that the pattern being written holds where they stand, under a
+    # repetition with no upper count (see `unbounded`).
+    inlined::Int
 end
 
 function Emitter(parser::Parser, root::Node)
@@ -197,7 +200,7 @@ function Emitter(parser::Parser, root::Node)
     return Emitter(parser.pattern, parser.unicode, root, Vector{Union{Nothing,Node}}(nothing, n), Node[], Node[],
         fill(false, n), fill(typemax(Int), n), [NO_NODES for _ in 1:n], [NO_NODES for _ in 1:n], IOBuffer(), String[],
         fill("", n), zeros(Int, n), 0, false, 0, false, false, false, String[], CodeSet[], String[], String[], "",
-        false)
+        false, 0)
 end
 
 # Works out what each backreference reads, and refuses the pattern when one cannot be written exactly.
@@ -593,6 +596,7 @@ function translation(E::Emitter, searching::Bool)
     empty!(E.largesets)
     empty!(E.walks)
     empty!(E.blocks)
+    E.inlined = 0
     node(E, E.root)
     definitions(E)
     return Translation(String(take!(E.out)), copy(E.lookbehinds))
@@ -1032,8 +1036,7 @@ usesearchtrees() = something(SEARCH_TREES[], !pcreclassesarefast())
 function writeclass(E::Emitter, set::CodeSet)
     out = E.out
     set = intersects(set, SURROGATE_SET) ? intersection(set, NOT_SURROGATE_SET) : set
-    written = inset(set, 0xFF) && inset(set, 0x100) ? intersection(complement(set), NOT_SURROGATE_SET) : set
-    if length(written) <= 2 * LARGE_SET_RANGES
+    if !manyranges(set)
         writeset(out, set)
     elseif !usesearchtrees()
         print(out, "(?&s", largeset(E, set), ')')
@@ -1051,6 +1054,13 @@ function writeclass(E::Emitter, set::CodeSet)
         end
     end
     return nothing
+end
+
+# Whether a set, which holds no surrogate, is one of many ranges: its class, as `writeset` writes it, has more than
+# LARGE_SET_RANGES.
+function manyranges(set::CodeSet)
+    written = inset(set, 0xFF) && inset(set, 0x100) ? intersection(complement(set), NOT_SURROGATE_SET) : set
+    return length(written) > 2 * LARGE_SET_RANGES
 end
 
 # The number of a set of many ranges in the pattern being written.
@@ -1663,6 +1673,7 @@ end
 # once, which a body with a group that a backreference reads is not: `writerepeat` writes such a body itself.
 function counted(E::Emitter, body::Node, lo::Int, hi::Int, lazy::Bool)
     out = E.out
+    hi == UNBOUNDED && unbounded(E, body, lo, lazy) && return nothing
     largest = hi == UNBOUNDED ? lo : hi
     # A count that PCRE2 can be given, of a node that is not written in blocks from it.
     if largest <= PCRE_MAX_COUNT &&
@@ -1821,6 +1832,68 @@ function uptoblocks(E::Emitter, body::Node, number::Int, sizes::Vector{Int}, lev
     end
     print(out, ')')
     return nothing
+end
+
+# The most bytes of sets of many ranges that a pattern holds where they stand. PCRE2, as Julia builds it, holds a
+# compiled pattern of at most 64 KiB, and the class of \p{L} is some 6,000 bytes as it is written and 4,000
+# compiled.
+const MAX_INLINED_SETS = 24_000
+# The same, for the tests to set, which try the form of the sets past it on short patterns.
+const INLINED_SETS = Ref(MAX_INLINED_SETS)
+
+# Writes a set of many ranges repeated `lo` times or more with no upper count, and says whether it did. (Any other
+# node is written by `counted`.)
+#
+# Such a set is a call of a group where it stands (see `writeclass`), and PCRE2 keeps a place to come back to for
+# every turn of a repeated group, which a call is to it. So `(?&s1)+`, which is what \p{L}+ was written as, kept a
+# place for each character of the text, on the megabyte of stack JIT code has and then in the 64 MiB the
+# interpreter may take, and ^\p{L}+$ was a MatchError on a text of 150,000 letters. A class that stands where it
+# is repeated has no such cost: PCRE2 keeps a count for it.
+#
+# So the set is written as its class, where it stands, for the first sets of a pattern up to MAX_INLINED_SETS
+# bytes together. That is so with either PCRE2. One that tries the ranges of a class one after another (before
+# 10.45) was measured on 100,000 characters at 1 to 2 ns a character up to U+00FF and 250 to 530 ns beyond, where
+# the search tree under a repetition took 170 ns and 1,500 to 2,800 ns, as each character is then several steps,
+# and a match of many steps is timed (jl-probe/r5/inline10.txt).
+#
+# For the sets past those bytes the repetition is written with the blocks of a count: any number of the largest
+# block, then up to one fewer than fills it, as `uptoblocks` writes that. Every number of times is reached in one
+# way, and the numbers are tried from the largest down, or from the smallest up when the repetition is lazy, as
+# before. A block is an atomic group, so what PCRE2 keeps is a place for each block of a level, at most 31 for each
+# level, and one for each of the largest, a block of 2^30 characters.
+function unbounded(E::Emitter, body::Node, lo::Int, lazy::Bool)
+    (body.kind == SET && !E.within) || return false
+    set = intersects(body.set, SURROGATE_SET) ? intersection(body.set, NOT_SURROGATE_SET) : body.set
+    manyranges(set) || return false
+    out = E.out
+    class = sprint(writeset, set)
+    if E.inlined + ncodeunits(class) <= INLINED_SETS[]
+        E.inlined += ncodeunits(class)
+        print(out, class)
+        quantifier(out, lo, UNBOUNDED, lazy)
+        return true
+    end
+    # With search trees a set with no member beyond U+00FF is a class where it stands.
+    text = unittext(E, body)
+    (text === nothing || !startswith(text, '(')) && return false
+    number = findfirst(==(text), E.blocks)
+    if number === nothing
+        push!(E.blocks, text)
+        number = length(E.blocks)
+    end
+    sizes = cumprod(blocksizes(text)[2])
+    top = length(sizes)
+    print(out, "(?:")
+    exactblocks(E, body, number, sizes, lo)
+    if lazy
+        uptoblocks(E, body, number, sizes, top - 1, sizes[top] - 1, true)
+        calls(out, top, number, 0, UNBOUNDED, true)
+    else
+        calls(out, top, number, 0, UNBOUNDED, false)
+        uptoblocks(E, body, number, sizes, top - 1, sizes[top] - 1, false)
+    end
+    print(out, ')')
+    return true
 end
 
 # Writes a node repeated exactly `count` times, for any count, as X{65535} as often as it goes and then the rest.

@@ -877,6 +877,91 @@ end
         checkv8table(rows, texts)
     end
 
+    # A set of many ranges, such as that of \p{L}, is a call of a group where it stands, and PCRE2 keeps a place to
+    # come back to for every turn of a repeated group. So ^\p{L}+$ kept one for each character, and was a
+    # MatchError ("heap limit exceeded") on a text of 150,000 letters. Under a repetition with no upper count the
+    # set is now written as its class, where it stands, which PCRE2 keeps a count for, with either form of a
+    # class of many ranges elsewhere.
+    @testset "a set of many ranges under a repetition with no upper count" begin
+        million = 1_000_000
+        for trees in (false, true)
+            E.SEARCH_TREES[] = trees
+            try
+                for pattern in [raw"^\p{L}+$", raw"^\p{L}*$", raw"^\p{L}{3,}$", raw"^\p{L}+?$", raw"^[\p{L}\s]+$",
+                        raw"^[^\P{L}x]*$", raw"^(?i:\p{Lu}+)$"]
+                    main = E.translate(pattern).main
+                    @test !occursin("(?&", main) && !occursin("DEFINE", main)
+                    @test startswith(main, raw"\A[") || startswith(main, raw"\A(?:[")
+                end
+                letters = E.compile(raw"^\p{L}+$")
+                @test E.ismatch(letters, "a"^million)
+                @test E.ismatch(letters, "\u00e9"^million)
+                @test E.ismatch(letters, "a\u00e9\u4e2d\U10400"^(million ÷ 4))
+                @test !E.ismatch(letters, "a"^million * "1")
+                @test !E.ismatch(letters, "1" * "a"^million)
+                @test !E.ismatch(letters, "a\u00e9\u4e2d\U10400"^(million ÷ 4) * "\u0660")
+                @test !E.ismatch(letters, "")
+                spaced = E.compile(raw"^[\p{L}\s]+$")
+                @test E.ismatch(spaced, "a b\u00e9 "^(million ÷ 5))
+                @test !E.ismatch(spaced, "a b\u00e9 "^(million ÷ 5) * "-")
+                # Elsewhere than under such a repetition the set is a call still, and the pattern holds it once.
+                twice = E.translate(raw"^\p{L}\p{L}?\p{L}{2}$").main
+                @test count("(?&s1)", twice) == 3
+                @test length(findall("(?<s1>", twice)) == 1
+                # A pattern that repeats a set and holds it once more has both forms, and answers.
+                both = E.compile(raw"^\p{L}+-\p{L}$")
+                @test occursin("(?&s1)", both.translation.main)
+                @test E.ismatch(both, "a\u00e9"^1000 * "-\u4e2d")
+                @test !E.ismatch(both, "a\u00e9"^1000 * "-1")
+            finally
+                E.SEARCH_TREES[] = nothing
+            end
+        end
+        # The sets a pattern holds where they stand are 24,000 bytes together at most, as PCRE2 holds a compiled
+        # pattern of 64 KiB. A set past that is a call under its repetition, which is written with the blocks of a
+        # count, so that PCRE2 keeps a place for each block and not for each character. That form is tried here
+        # for every set (with no bytes for sets where they stand), with small blocks and with the real ones.
+        @test E.MAX_INLINED_SETS == 24_000 && E.INLINED_SETS[] == E.MAX_INLINED_SETS
+        many = E.translate(join(fill(raw"\p{L}+", 6), "-")).main
+        @test 1 <= count("(?&h1)*", many) < 6
+        real = E.BLOCK_SIZES[]
+        E.INLINED_SETS[] = 0
+        try
+            for trees in (false, true)
+                E.SEARCH_TREES[] = trees
+                main = E.translate(raw"^\p{L}+$").main
+                @test occursin(raw"(?&h1)*(?&g1){0,31}(?&f1){0,31}(?&e1){0,31}(?&d1){0,31}(?&c1){0,31}", main)
+                @test occursin(raw"(?&c1){0,31}?", E.translate(raw"^\p{L}*?$").main)
+                @test occursin(raw"(?&h1)*?", E.translate(raw"^\p{L}*?$").main)
+                letters = E.compile(raw"^\p{L}+$")
+                @test E.ismatch(letters, "a\u00e9\u4e2d\U10400"^(million ÷ 4), E.MatchLimit(nothing))
+                @test !E.ismatch(letters, "a\u00e9\u4e2d\U10400"^(million ÷ 4) * "1", E.MatchLimit(nothing))
+                # Blocks of two, four and eight characters: every number of times is reached, greedy and lazy,
+                # with a minimum and with what follows taking some of the letters back.
+                E.BLOCK_SIZES[] = (real[1], (4, [2, 2, 2]))
+                try
+                    for (pattern, wanted) in [(raw"^\p{L}+$", n -> n >= 1), (raw"^\p{L}*$", n -> true),
+                            (raw"^\p{L}*?$", n -> true), (raw"^\p{L}{5,}$", n -> n >= 5), (raw"^\p{L}{5,}?$", n -> n >= 5),
+                            (raw"^\p{L}+\p{L}{3}$", n -> n >= 4), (raw"^\p{L}+?\p{L}{3}$", n -> n >= 4),
+                            (raw"^(\p{L}+)\1$", n -> n >= 2 && iseven(n)), (raw"^(\p{L}*?)\1$", n -> iseven(n)),
+                            (raw"^(?:\p{L}+\p{L}{7}){2}$", n -> n >= 16)]
+                        compiled = E.compile(pattern)
+                        @test occursin("(?&e1)", compiled.translation.main)
+                        for n in 0:40
+                            @test E.ismatch(compiled, "\u00e9"^n) == wanted(n)
+                        end
+                        @test !E.ismatch(compiled, "\u00e9"^9 * "1" * "\u00e9"^9)
+                    end
+                finally
+                    E.BLOCK_SIZES[] = real
+                end
+            end
+        finally
+            E.INLINED_SETS[] = E.MAX_INLINED_SETS
+            E.SEARCH_TREES[] = nothing
+        end
+    end
+
     # The twenty patterns of the case-folding file of ecma262-regex-test-data that answer differently with a PCRE2
     # whose case folding is that of Unicode 14 (10.42, in Julia 1.10), on the sixty texts of the thirty pairs of
     # PAIRS_SINCE_UNICODE_14, each pair both ways round. A row is the pattern, V8's answers on the sixty texts, and
