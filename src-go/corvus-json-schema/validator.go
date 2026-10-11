@@ -137,10 +137,10 @@ func (e *evaluator) outcome(ok bool) (bool, error) {
 	return ok, nil
 }
 
-// IsValid reports whether an instance is valid. It has no way to report an error, so it reports false both for a
-// schema that recursed in place beyond the maximum depth and for a match of a regular expression that reached its
-// limit (see WithPatternMatchLimit). In neither case is the instance known to be not valid. Use Validate to tell
-// them from an instance that is not valid.
+// IsValid reports whether an instance is valid. It has no way to report an error, so it fails closed: it reports
+// false both for a schema that recursed in place beyond the maximum depth and for a match of a regular expression
+// that reached its limit (see WithPatternMatchLimit), and never true. In neither case is the instance known to be
+// not valid. Use Validate to tell them from an instance that is not valid.
 func (v *Validator) IsValid(instance *Document) bool {
 	ok, _ := v.run(instance, nil)
 	return ok

@@ -304,7 +304,7 @@ fmt.Println(limit.Pattern, limit.Limit, limit.Memory)                           
 |---|---|
 | `Validate`, `ValidateBytes`, `ValidateString` | `false` and the `*PatternMatchLimitError`. |
 | `Evaluate`, `EvaluateBytes`, `EvaluateString` | `false` and the error, at every level. What the collector holds is not a report of the instance. |
-| `IsValid`, `IsValidBytes`, `IsValidString` | `false`. They return a `bool` alone, and also return `false` for `ErrDepthExceeded`. Use `Validate` where the two must be told from an instance that is not valid. |
+| `IsValid`, `IsValidBytes`, `IsValidString` | `false`. They return a `bool` alone and fail closed: a limit is never reported as valid. They also return `false` for `ErrDepthExceeded`. Use `Validate` where the two must be told from an instance that is not valid. |
 | `Compile`, `CompileString`, `CompileDocument`, `CompileURI` | The error, when the match was of a pattern against a property name the schema declares, which is done when the schema is compiled. |
 
 The limit is on each match and not on the validation. Only the backtracking matcher can take long. It counts its
