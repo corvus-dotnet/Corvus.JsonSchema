@@ -88,9 +88,50 @@ type
     Need: Int32;
     { Iter is the least number of bytes one iteration of the body of an OpLoop consumes going forward. }
     Iter: Int32;
+    { M is the number of the instruction's memo point, counted from 1, or 0 when it has none (see TMemoPoint). It
+      is set for an OpSplit, an OpLoop, an OpRep and an OpRepLazy. }
+    M: Int32;
   end;
   PInst = ^TInst;
   TInsts = array of TInst;
+
+const
+  { MaxMemoLoops is the number of loops whose state a memo point can tell apart. }
+  MaxMemoLoops = 2;
+
+type
+  { A TMemoPoint is a place where the matcher makes a choice and can remember that the choice has failed: a split,
+    a loop that may be entered or left, and what follows a single character loop that gives characters back or
+    takes more. Whether a way from such a place leads to a match depends on the place and the position alone when
+    nothing else the matcher keeps can change what follows. So a pattern with a backreference has no memo points
+    (what a group holds changes what follows), and neither has a place inside a loop that counts its iterations up
+    to a bound. Inside a loop with no upper bound and a least count of zero or one, one thing more decides what
+    follows: whether the loop would refuse the iteration as empty if it ended here. That is one bit for each such
+    loop the place is in (Loops, outermost first, -1 for none, with the least count of each in Mins), and a place
+    in more than MaxMemoLoops of them has no memo point. }
+  TMemoPoint = record
+    Loops: array[0..MaxMemoLoops - 1] of Int32;
+    Mins: array[0..MaxMemoLoops - 1] of Int32;
+  end;
+  TMemoPoints = array of TMemoPoint;
+
+  { A TQuick says what can come next on a way from an instruction to the end of its match, which is the end of the
+    pattern or of the lookaround the instruction is in. The matcher looks at it before it takes a way: when the
+    next character of the text is none that the way can start with, and the way cannot end without one, the way
+    fails, so it is not taken, and where it was one of two no choice is kept for it. V8 makes the same check
+    ("quick check") at its choices. It is what keeps a choice between ways that need different characters from
+    being a choice. }
+  TQuick = record
+    { Ascii holds the characters below 128 a way can consume next, and Other says it can consume a character that
+      is not ASCII. }
+    Ascii: array[0..1] of UInt64;
+    Other: Boolean;
+    { Mid says a way reaches the end of its match consuming nothing more while text is left, and AtEnd that one
+      does at the end of the text. }
+    Mid, AtEnd: Boolean;
+  end;
+  PQuick = ^TQuick;
+  TQuicks = array of TQuick;
 
   { A TProgram is a pattern compiled for the backtracking matcher. }
   TProgram = record
@@ -106,6 +147,11 @@ type
     Anchored: Boolean;
     { Need is the least number of bytes a match consumes (see SetNeeds). }
     Need: Int32;
+    { Points holds the memo points of the program (see TMemoPoint). }
+    Points: TMemoPoints;
+    { Quick says, for each instruction, which characters can come next on a way from it to the end of its match
+      (see SetQuick). }
+    Quick: TQuicks;
     { Prefix is literal text every match starts with. }
     Prefix: TBytes;
     { First names the set of every code point a match can start with. It is -1 when a match can be empty or when
@@ -135,7 +181,19 @@ type
     Loops: Int32;
     { Unicode says the pattern was read with the u flag grammar, which decides how a backreference folds case. }
     Unicode: Boolean;
+    { Memo says the pattern has no backreference, so its choices can have memo points. Open lists the counted
+      loops around the instruction being written, outermost first, inside the innermost lookaround (what a
+      lookaround's body does depends on nothing outside it): the entries OpenBase to OpenCount - 1, each its
+      number, its least count, and whether its state is one bit to a memo point (no upper bound, and a least count
+      of zero or one). Points collects the memo points, of which there are PointCount. }
+    Memo: Boolean;
+    OpenLoop, OpenMin: TInt32Array;
+    OpenSimple: array of Boolean;
+    OpenBase, OpenCount: Int32;
+    Points: TMemoPoints;
+    PointCount: Int32;
 
+    function Point: Int32;
     function Consumes(N: Int32): Boolean;
     procedure Simplify(N: Int32; var Open: TInt32Array; OpenCount: Int32);
     function Add(Op: TOpcode): Int32;
@@ -231,6 +289,32 @@ begin
       Nodes[N] := Nodes[K];
     end;
   end;
+end;
+
+{ Point returns the number of a new memo point for an instruction written here, or 0 when a choice here cannot be
+  remembered. }
+function TCompiler.Point: Int32;
+var
+  K: Int32;
+  P: TMemoPoint;
+begin
+  if (not Memo) or (OpenCount - OpenBase > MaxMemoLoops) then
+    Exit(0);
+  for K := 0 to MaxMemoLoops - 1 do begin
+    P.Loops[K] := -1;
+    P.Mins[K] := 0;
+  end;
+  for K := OpenBase to OpenCount - 1 do begin
+    if not OpenSimple[K] then
+      Exit(0);
+    P.Loops[K - OpenBase] := OpenLoop[K];
+    P.Mins[K - OpenBase] := OpenMin[K];
+  end;
+  if PointCount = Length(Points) then
+    SetLength(Points, 2 * PointCount + 8);
+  Points[PointCount] := P;
+  Inc(PointCount);
+  Result := PointCount;
 end;
 
 { Add writes an instruction with nothing but its opcode set and returns its index. }
@@ -383,7 +467,7 @@ end;
   lookbehind must. }
 procedure TCompiler.Emit(N: Int32; Back: Boolean);
 var
-  I, J, K, T, Split, Look, Count: Int32;
+  I, J, K, T, Split, Look, Count, Outer: Int32;
   Lit: TBytes;
   Jumps: TInt32Array;
   Op: TOpcode;
@@ -445,6 +529,7 @@ begin
           Break;
         end;
         Split := Add(OpSplit);
+        Insts[Split].M := Point;
         Insts[Split].X := Pc;
         Emit(Nodes[N].Subs[I], Back);
         Jumps[I] := Add(OpJmp);
@@ -509,7 +594,12 @@ begin
     NLook: begin
       Look := Add(OpLook);
       Insts[Look].Flag := Nodes[N].Negative;
+      // Whether the body matches depends on nothing outside it, so the loops around the lookaround are out of
+      // sight while it is written.
+      Outer := OpenBase;
+      OpenBase := OpenCount;
       Emit(Nodes[N].Subs[0], Nodes[N].Behind);
+      OpenBase := Outer;
       if Nodes[N].Negative then
         Add(OpLookFail)
       else
@@ -550,7 +640,7 @@ end;
 procedure TCompiler.EmitRepeat(N: Int32; Back: Boolean);
 var
   Body, Min, Max, K, At, Enter, Loop, ClearLo, ClearHi: Int32;
-  Clear, Lazy: Boolean;
+  Clear, Lazy, Simple: Boolean;
 begin
   Body := Nodes[N].Subs[0];
   if Nodes[N].Max = 0 then
@@ -568,6 +658,7 @@ begin
     Insts[K].SetIx := Nodes[Body].SetIx;
     Insts[K].Min := Min;
     Insts[K].Max := Max;
+    Insts[K].M := Point;
     Exit;
   end;
   Clear := GroupRange(Body, ClearLo, ClearHi);
@@ -576,6 +667,7 @@ begin
   if not Nullable(Nodes, Body) then begin
     if (Min = 0) and (Max = Unbounded) then begin
       At := Add(OpSplit);
+      Insts[At].M := Point;
       Enter := Pc;
       EmitBody(Body, Back, Clear, ClearLo, ClearHi);
       K := Add(OpJmp);
@@ -587,11 +679,13 @@ begin
       Enter := Pc;
       EmitBody(Body, Back, Clear, ClearLo, ClearHi);
       At := Add(OpSplit);
+      Insts[At].M := Point;
       SetSplit(At, Enter, Pc, Lazy);
       Exit;
     end;
     if (Min = 0) and (Max = 1) then begin
       At := Add(OpSplit);
+      Insts[At].M := Point;
       Enter := Pc;
       EmitBody(Body, Back, Clear, ClearLo, ClearHi);
       SetSplit(At, Enter, Pc, Lazy);
@@ -609,9 +703,23 @@ begin
   Insts[Loop].Flag := Lazy;
   if not Back then
     Insts[Loop].Iter := MinLength(Nodes, Sets, Body);
+  Simple := (Max = Unbounded) and (Min <= 1);
+  // The loop is left or entered from here, and what follows either depends on the loops around this one.
+  if Simple then
+    Insts[Loop].M := Point;
   At := Add(OpLoopIter);
   Insts[At].A := K;
+  if OpenCount = Length(OpenLoop) then begin
+    SetLength(OpenLoop, 2 * OpenCount + 8);
+    SetLength(OpenMin, Length(OpenLoop));
+    SetLength(OpenSimple, Length(OpenLoop));
+  end;
+  OpenLoop[OpenCount] := K;
+  OpenMin[OpenCount] := Min;
+  OpenSimple[OpenCount] := Simple;
+  Inc(OpenCount);
   EmitBody(Body, Back, Clear, ClearLo, ClearHi);
+  Dec(OpenCount);
   At := Add(OpJmp);
   Insts[At].X := Loop;
   Insts[Loop].X := Pc;
@@ -817,6 +925,119 @@ begin
   Result := Need[0];
 end;
 
+procedure QuickAddRune(var Q: TQuick; R: Int32);
+begin
+  if R < RuneSelf then
+    Q.Ascii[R shr 6] := Q.Ascii[R shr 6] or (UInt64(1) shl (R and 63))
+  else
+    Q.Other := True;
+end;
+
+procedure QuickAddSet(var Q: TQuick; const S: TCharSet);
+begin
+  Q.Ascii[0] := Q.Ascii[0] or S.Ascii[0];
+  Q.Ascii[1] := Q.Ascii[1] or S.Ascii[1];
+  if (Length(S.Ranges) > 0) and (S.Ranges[High(S.Ranges)] >= RuneSelf) then
+    Q.Other := True;
+end;
+
+procedure QuickUnion(var Q: TQuick; const O: TQuick);
+begin
+  Q.Ascii[0] := Q.Ascii[0] or O.Ascii[0];
+  Q.Ascii[1] := Q.Ascii[1] or O.Ascii[1];
+  Q.Other := Q.Other or O.Other;
+  Q.Mid := Q.Mid or O.Mid;
+  Q.AtEnd := Q.AtEnd or O.AtEnd;
+end;
+
+function QuickSame(const A, B: TQuick): Boolean;
+begin
+  Result := (A.Ascii[0] = B.Ascii[0]) and (A.Ascii[1] = B.Ascii[1]) and (A.Other = B.Other) and (A.Mid = B.Mid)
+    and (A.AtEnd = B.AtEnd);
+end;
+
+{ SetQuick works out the quick of every instruction. Every figure is a set that can only be too large: an assertion
+  is taken to hold, a backreference and an instruction that matches right to left (the body of a lookbehind) to
+  allow anything. A positive lookahead needs both its body and what follows it to go on from the same position, so
+  it allows what both allow. }
+function SetQuick(const Insts: TInsts; const Sets: TCharSets): TQuicks;
+var
+  Q: TQuicks;
+  All, N, B: TQuick;
+  Pc: Int32;
+  Changed: Boolean;
+begin
+  SetLength(Q, Length(Insts));
+  for Pc := 0 to High(Q) do
+    Q[Pc] := Default(TQuick);
+  All.Ascii[0] := High(UInt64);
+  All.Ascii[1] := High(UInt64);
+  All.Other := True;
+  All.Mid := True;
+  All.AtEnd := True;
+  // The sets only grow, and nearly every way goes forward, so going through the instructions from the last to the
+  // first settles all but the loops in one pass.
+  repeat
+    Changed := False;
+    for Pc := High(Insts) downto 0 do begin
+      N := Default(TQuick);
+      case Insts[Pc].Op of
+        OpMatch, OpLookOK, OpLookFail:
+          N := All;
+        OpFail:
+          ;
+        OpChar:
+          QuickAddRune(N, Insts[Pc].R);
+        OpSet:
+          QuickAddSet(N, Sets[Insts[Pc].SetIx]);
+        OpLit:
+          QuickAddRune(N, Insts[Pc].Lit[0]);
+        OpRep, OpRepLazy: begin
+          if Insts[Pc].SetIx >= 0 then
+            QuickAddSet(N, Sets[Insts[Pc].SetIx])
+          else
+            QuickAddRune(N, Insts[Pc].R);
+          if Insts[Pc].Min = 0 then
+            QuickUnion(N, Q[Pc + 1]);
+        end;
+        OpJmp:
+          N := Q[Insts[Pc].X];
+        OpSplit: begin
+          N := Q[Insts[Pc].X];
+          QuickUnion(N, Q[Insts[Pc].Y]);
+        end;
+        OpLoop: begin
+          N := Q[Pc + 1];
+          QuickUnion(N, Q[Insts[Pc].X]);
+        end;
+        OpEOL:
+          N.AtEnd := Q[Pc + 1].AtEnd;
+        OpLook: begin
+          N := Q[Insts[Pc].X];
+          if not Insts[Pc].Flag then begin
+            B := Q[Pc + 1];
+            N.Ascii[0] := N.Ascii[0] and B.Ascii[0];
+            N.Ascii[1] := N.Ascii[1] and B.Ascii[1];
+            N.Other := N.Other and B.Other;
+            N.Mid := N.Mid and B.Mid;
+            N.AtEnd := N.AtEnd and B.AtEnd;
+          end;
+        end;
+        OpCharBack, OpSetBack, OpBackref, OpBackrefBack, OpBackrefFold, OpBackrefFoldBack, OpBackrefUnits,
+        OpBackrefUnitsBack:
+          N := All;
+      else
+        N := Q[Pc + 1];
+      end;
+      if not QuickSame(N, Q[Pc]) then begin
+        Q[Pc] := N;
+        Changed := True;
+      end;
+    end;
+  until not Changed;
+  Result := Q;
+end;
+
 function CompileProgram(const Ps: TParser; Root: Int32; Unicode: Boolean): TProgram;
 var
   C: TCompiler;
@@ -848,9 +1069,11 @@ begin
       Inc(C.TrackedCount);
     end else
       C.Tracked[G] := -1;
+  C.Memo := C.TrackedCount = 0;
   C.Emit(Root, False);
   C.Add(OpMatch);
   SetLength(C.Insts, C.InstCount);
+  SetLength(C.Points, C.PointCount);
   Result := Default(TProgram);
   Result.Insts := C.Insts;
   Result.Sets := Copy(Ps.Sets, 0, Ps.SetCount);
@@ -858,6 +1081,8 @@ begin
   Result.Loops := C.Loops;
   Result.Units := not Unicode;
   Result.Need := SetNeeds(Result.Insts);
+  Result.Points := C.Points;
+  Result.Quick := SetQuick(Result.Insts, Result.Sets);
   Result.First := -1;
   Result.Anchored := StartsAtBOL(C.Nodes, Root);
   if not Result.Anchored then begin

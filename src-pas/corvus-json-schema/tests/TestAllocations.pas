@@ -267,6 +267,20 @@ begin
       '{"look": "' + Long + '", "back": "' + Long + '", "wide": "' + Eacute + Long + '", "x-x--x": 1}',
       '{"look": "' + Long + 'd", "back": "' + Long + 'c", "wide": "' + Eacute + Long + 'd", "x-x--x": "no"}']);
   end;
+  { Patterns of repetitions inside repetitions, on strings that fail at their end. The matcher takes its memory of
+    failed places into use for these (without it they do not end), and that memory is kept by the thread with the
+    rest. The second is a plain pattern on a string that is not ASCII, which has no automaton. }
+  Long := '';
+  for I := 1 to 1000 do
+    Long := Long + 'a';
+  AddCase('patterns that use the memory of failed places', '{'
+    + '"properties": {'
+    + '"look": { "pattern": "^(?=.)(?:a|aa)+$" },'
+    + '"plain": { "pattern": "^(?:' + Eacute + '|a+)+$" }'
+    + '}'
+    + '}', DefaultJsonSchemaOptions, [
+    '{"look": "' + Long + 'b", "plain": "' + Eacute + Long + '"}',
+    '{"look": "' + Long + '", "plain": "' + Eacute + Long + 'b"}']);
 end;
 
 { Report records the requests for memory of one form of validation: Runs passes over the instances of a case. }

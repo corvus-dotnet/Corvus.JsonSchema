@@ -53,6 +53,34 @@ const
      the clock, so the stack can go past it by CheckEvery entries. *)
   MaxStack = 1 shl 20;
 
+  { MaxMemoWords is the largest memory of failed places, in words of 64 bits: 8 MB. A match that would need more
+    goes without it. }
+  MaxMemoWords = 1 shl 20;
+  { MemoStepsPerPosition is the number of steps for each position of the text that a match makes before it takes
+    the memory into use. }
+  MemoStepsPerPosition = 64;
+  { MaxRetainedMemo is the largest memory kept between matches. }
+  MaxRetainedMemo = 1 shl 16;
+  { MaxMarkDepth is the depth of the backtracking stack beyond which a memo point is not marked. A mark is an entry
+    of the stack, and a pattern that keeps no choice for a character still marks a place for each, so on a long
+    text the marks alone would reach MaxStack. A place that is not marked is not remembered, which loses time and
+    nothing else, and the places below this depth are remembered when the stack unwinds, so a later start has the
+    room to mark the next ones. }
+  MaxMarkDepth = MaxStack div 2;
+
+var
+  { MemoFromTheStart makes every match take its memory of failed places before its first step. The tests set it,
+    to run every pattern they have with the memory in use. A program built with CORVUS_MEMO_FROM_THE_START defined
+    starts with it set: no program is built that way but the harnesses that run the pattern datasets through the
+    port, which compare the answers of such a build with those of an ordinary one. Remembering a failure must
+    change no answer. }
+  MemoFromTheStart: Boolean = {$IFDEF CORVUS_MEMO_FROM_THE_START}True{$ELSE}False{$ENDIF};
+
+{ MemoWouldBeTaken reports, for a program with Points memo points and a text of Width positions, whether a match
+  has the memory of failed places in use after Checks checks, and in Never whether it never will. It is what the
+  matcher decides at each check, given apart for the tests. }
+function MemoWouldBeTaken(Points, Width, Checks: Int32; out Never: Boolean; out Words: Int32): Boolean;
+
 { ProgramMatch reports whether the program matches anywhere in the bytes Lo to Hi - 1 of the text, with no limit on
   the time or the memory the match takes. }
 function ProgramMatch(const Prog: TProgram; const Text: TBytes; Lo, Hi: Int32): Boolean;
@@ -92,12 +120,15 @@ const
   // restore, and ELookNeg the instruction to continue at when its body has failed.
   ELook = 3;
   ELookNeg = 4;
+  // EMark lies under the choices of a memo point. When it is reached, every way from the point has failed, and
+  // the bit Pos of the memory is set (see Memo of TState).
+  EMark = 5;
   // ETmp restores the entry position of group Pc to Pos.
-  ETmp = 5;
+  ETmp = 6;
   // ECap restores the start and end of group Pc to Pos and A.
-  ECap = 6;
+  ECap = 7;
   // ECounter restores the count and the iteration start of loop Pc to Pos and A.
-  ECounter = 7;
+  ECounter = 8;
 
   { MaxRetainedStack is the largest stack kept between matches. }
   MaxRetainedStack = 1 shl 16;
@@ -131,6 +162,22 @@ type
     { Steps is the number of steps left before the next check, and Stop why the match was abandoned. }
     Steps: Int32;
     Stop: UInt8;
+    { Memo is the memory of the places where a way has failed: one bit for each memo point of the program, each
+      position of the text and each state of the loops around the point (see TMemoPoint). A bit is set when every
+      way from the place has failed, and a way that comes to a place whose bit is set fails at once. So no place is
+      gone through twice, and a pattern of repetitions inside repetitions takes time proportional to its size
+      times the text and not time that doubles with each character.
+
+      The memory costs its size to clear, and a mark on the stack for each place gone through, so a match starts
+      without it. It takes it at the check by which it has made as many steps as the memory has words and
+      MemoStepsPerPosition more for each position of the text, which a match that goes through its text once or a
+      few times never makes. A place whose way failed before then is not remembered, which loses time and nothing
+      else. MemoOn says the memory is in use, MemoOff that it never will be (the program has no memo points, or
+      the memory would be larger than MaxMemoWords), Width is the number of positions of the text, MemoLo its
+      first position and MemoWords the words in use (the array keeps the length it has grown to). }
+    Memo: array of UInt64;
+    MemoOn, MemoOff: Boolean;
+    Width, Checks, Points, MemoLo, MemoWords: Int32;
   end;
   PState = ^TState;
 
@@ -148,7 +195,87 @@ begin
   St^.Caps := nil;
   St^.Tmp := nil;
   St^.Counts := nil;
+  St^.Memo := nil;
   St^.Sp := 0;
+end;
+
+function MemoWouldBeTaken(Points, Width, Checks: Int32; out Never: Boolean; out Words: Int32): Boolean;
+var
+  Bits: Int64;
+begin
+  Never := False;
+  Words := 0;
+  if Points = 0 then begin
+    Never := True;
+    Exit(False);
+  end;
+  Bits := (Int64(Points) * Width) shl MaxMemoLoops;
+  if (Bits + 63) shr 6 > MaxMemoWords then begin
+    Never := True;
+    Exit(False);
+  end;
+  Words := Int32((Bits + 63) shr 6);
+  Result := MemoFromTheStart or (Int64(Checks) * CheckEvery >= Words + Int64(MemoStepsPerPosition) * Width);
+end;
+
+{ Remember takes the memory of failed places into use when the match has made enough steps to pay for it. }
+procedure Remember(var St: TState);
+var
+  Never: Boolean;
+  Words, K: Int32;
+begin
+  if not MemoWouldBeTaken(St.Points, St.Width, St.Checks, Never, Words) then begin
+    St.MemoOff := Never;
+    Exit;
+  end;
+  if Length(St.Memo) < Words then begin
+    St.Memo := nil;
+    SetLength(St.Memo, Words);
+  end else
+    for K := 0 to Words - 1 do
+      St.Memo[K] := 0;
+  St.MemoWords := Words;
+  St.MemoOn := True;
+end;
+
+{ MemoIndex returns the bit of the memory for the memo point M at a position, with the state of the loops around
+  the point: for each, whether it would refuse an iteration that ended here as empty. }
+function MemoIndex(const Prog: TProgram; var St: TState; M, Pos: Int32): Int32;
+var
+  K, L: Int32;
+begin
+  Result := ((M - 1) * St.Width + (Pos - St.MemoLo)) shl MaxMemoLoops;
+  for K := 0 to MaxMemoLoops - 1 do begin
+    L := Prog.Points[M - 1].Loops[K];
+    if (L >= 0) and (St.Counts[2 * L] > Prog.Points[M - 1].Mins[K]) and (St.Counts[2 * L + 1] = Pos) then
+      Result := Result or (1 shl K);
+  end;
+end;
+
+function MemoFailed(var St: TState; Idx: Int32): Boolean; inline;
+begin
+  Result := ((St.Memo[Idx shr 6] shr (Idx and 63)) and 1) <> 0;
+end;
+
+procedure MemoFail(var St: TState; Idx: Int32); inline;
+begin
+  St.Memo[Idx shr 6] := St.Memo[Idx shr 6] or (UInt64(1) shl (Idx and 63));
+end;
+
+{ QuickAllows reports whether a way can go on from the position. }
+function QuickAllows(const Q: TQuick; const Text: TBytes; Pos, Hi: Int32): Boolean; inline;
+var
+  C: UInt8;
+begin
+  if Pos >= Hi then
+    Exit(Q.AtEnd);
+  if Q.Mid then
+    Exit(True);
+  C := Text[Pos];
+  if C < $80 then
+    Result := ((Q.Ascii[C shr 6] shr (C and 63)) and 1) <> 0
+  else
+    Result := Q.Other;
 end;
 
 function MonotonicMilliseconds: Int64;
@@ -165,6 +292,10 @@ function Check(var St: TState): Boolean;
 var
   Now: Int64;
 begin
+  if (not St.MemoOn) and (not St.MemoOff) then begin
+    Inc(St.Checks);
+    Remember(St);
+  end;
   if St.LimitMs <= 0 then
     Exit(True);
   if St.Sp > MaxStack then begin
@@ -351,8 +482,10 @@ var
   CharSet: PCharSet;
   E: PEntry;
   Undone: TEntry;
-  Before, After, Ok, Units: Boolean;
+  Before, After, Ok, Units, Memo, Marked, Last, Pass, Failed: Boolean;
   Kind: UInt8;
+  Idx: Int32;
+  Quick: PQuick;
 begin
   // Units says the text is matched by UTF-16 code unit (see Corvus.JsonSchema.EcmaRegex.Utf8).
   Units := Prog.Units;
@@ -360,6 +493,8 @@ begin
   Pc := 0;
   Pos := Start;
   Steps := St.Steps;
+  // Memo says the match has taken the memory of failed places into use.
+  Memo := St.MemoOn;
   while True do begin
     Dec(Steps);
     if Steps < 0 then begin
@@ -368,6 +503,7 @@ begin
         Exit(False);
       end;
       Steps := CheckEvery;
+      Memo := St.MemoOn;
     end;
     I := @Prog.Insts[Pc];
     case I^.Op of
@@ -484,9 +620,32 @@ begin
         Continue;
       end;
       OpSplit: begin
-        Push(St, EChoice, I^.Y, Pos, 0);
-        Pc := I^.X;
-        Continue;
+        // A place from which every way has failed before fails at once. The mark is under whatever comes of this
+        // place, a choice or not, so that the place is remembered when it has all failed.
+        Failed := False;
+        if Memo and (I^.M <> 0) then begin
+          Idx := MemoIndex(Prog, St, I^.M, Pos);
+          if MemoFailed(St, Idx) then
+            Failed := True
+          else if St.Sp < MaxMarkDepth then
+            Push(St, EMark, 0, Idx, 0);
+        end;
+        if not Failed then begin
+          // A way the next character rules out is not taken, and no choice is kept for it.
+          if not QuickAllows(Prog.Quick[I^.Y], Text, Pos, Hi) then begin
+            if QuickAllows(Prog.Quick[I^.X], Text, Pos, Hi) then begin
+              Pc := I^.X;
+              Continue;
+            end;
+          end else if not QuickAllows(Prog.Quick[I^.X], Text, Pos, Hi) then begin
+            Pc := I^.Y;
+            Continue;
+          end else begin
+            Push(St, EChoice, I^.Y, Pos, 0);
+            Pc := I^.X;
+            Continue;
+          end;
+        end;
       end;
       OpSaveTmp: begin
         Push(St, ETmp, I^.A, St.Tmp[I^.A], 0);
@@ -613,14 +772,16 @@ begin
           Continue;
         end;
       end;
-      OpLook: begin
-        Kind := ELook;
-        if I^.Flag then
-          Kind := ELookNeg;
-        Push(St, Kind, I^.X, Pos, 0);
-        Inc(Pc);
-        Continue;
-      end;
+      OpLook:
+        // What follows a lookaround starts where the lookaround does, and so does the body of a lookahead.
+        if QuickAllows(Prog.Quick[Pc], Text, Pos, Hi) then begin
+          Kind := ELook;
+          if I^.Flag then
+            Kind := ELookNeg;
+          Push(St, Kind, I^.X, Pos, 0);
+          Inc(Pc);
+          Continue;
+        end;
       OpLookOK: begin
         // The body matched. A lookaround is atomic, so the choices made inside it are dropped. The undo entries
         // stay, because the groups it set remain set until something below this point is retried.
@@ -684,11 +845,22 @@ begin
         end;
         Dec(Steps, (At - Pos) shr 3);
         if N >= I^.Min then begin
+          Failed := False;
+          if Memo and (I^.M <> 0) then begin
+            Idx := MemoIndex(Prog, St, I^.M, At);
+            if MemoFailed(St, Idx) then
+              // What follows the loop has failed from here before. The loop gives a character back.
+              Failed := True
+            else if (At = Floor) and (St.Sp < MaxMarkDepth) then
+              Push(St, EMark, 0, Idx, 0);
+          end;
           if At > Floor then
             Push(St, ERep, Pc + 1, At, Floor);
-          Pos := At;
-          Inc(Pc);
-          Continue;
+          if not Failed then begin
+            Pos := At;
+            Inc(Pc);
+            Continue;
+          end;
         end;
       end;
       OpRepLazy: begin
@@ -703,11 +875,22 @@ begin
         end;
         Dec(Steps, N shr 3);
         if N = I^.Min then begin
+          Failed := False;
+          if Memo and (I^.M <> 0) then begin
+            Idx := MemoIndex(Prog, St, I^.M, At);
+            if MemoFailed(St, Idx) then
+              // What follows the loop has failed from here before. The loop takes one more character.
+              Failed := True
+            else if (N = I^.Max) and (St.Sp < MaxMarkDepth) then
+              Push(St, EMark, 0, Idx, 0);
+          end;
           if N <> I^.Max then
             Push(St, ERepLazy, Pc, At, N);
-          Pos := At;
-          Inc(Pc);
-          Continue;
+          if not Failed then begin
+            Pos := At;
+            Inc(Pc);
+            Continue;
+          end;
         end;
       end;
       OpLoopInit: begin
@@ -725,18 +908,38 @@ begin
         if (Hi - Pos >= I^.Need) and not ((N < I^.Min) and (I^.Iter <> 0)
           and (Int64(Hi - Pos) - I^.Need < Int64(I^.Min - N) * I^.Iter))
           and not ((N > I^.Min) and (Pos = St.Counts[2 * I^.A + 1])) then begin
-          if N < I^.Min then
-            Inc(Pc)
-          else if (I^.Max >= 0) and (N >= I^.Max) then
-            Pc := I^.X
-          else if I^.Flag then begin
-            Push(St, EChoice, Pc + 1, Pos, 0);
-            Pc := I^.X;
-          end else begin
-            Push(St, EChoice, I^.X, Pos, 0);
+          if N < I^.Min then begin
             Inc(Pc);
+            Continue;
           end;
-          Continue;
+          if (I^.Max >= 0) and (N >= I^.Max) then begin
+            Pc := I^.X;
+            Continue;
+          end;
+          // The loop may be left or entered from here. A place from which both have failed before fails at once.
+          Failed := False;
+          if Memo and (I^.M <> 0) then begin
+            Idx := MemoIndex(Prog, St, I^.M, Pos);
+            if MemoFailed(St, Idx) then
+              Failed := True
+            else if St.Sp < MaxMarkDepth then
+              Push(St, EMark, 0, Idx, 0);
+          end;
+          if not Failed then begin
+            if not QuickAllows(Prog.Quick[I^.X], Text, Pos, Hi) then
+              // The next character rules out leaving the loop, so there is no choice.
+              Inc(Pc)
+            else if not QuickAllows(Prog.Quick[Pc + 1], Text, Pos, Hi) then
+              Pc := I^.X
+            else if I^.Flag then begin
+              Push(St, EChoice, Pc + 1, Pos, 0);
+              Pc := I^.X;
+            end else begin
+              Push(St, EChoice, I^.X, Pos, 0);
+              Inc(Pc);
+            end;
+            Continue;
+          end;
         end;
       end;
       OpLoopIter: begin
@@ -766,6 +969,11 @@ begin
           Break;
         end;
         ERep: begin
+          // What followed the loop from the position it stood at has failed.
+          Rep := @Prog.Insts[E^.Pc - 1];
+          Marked := Memo and (Rep^.M <> 0);
+          if Marked then
+            MemoFail(St, MemoIndex(Prog, St, Rep^.M, E^.Pos));
           // Give back the last character taken. The characters between A and Pos were decoded going forward,
           // and decoding the last of them going backward finds the same boundary.
           W := 1;
@@ -778,12 +986,37 @@ begin
           Dec(E^.Pos, W);
           Pc := E^.Pc;
           Pos := E^.Pos;
-          if E^.Pos <= E^.A then
+          Last := E^.Pos <= E^.A;
+          // A position from which what follows the loop cannot go on is passed over, and so is one from which it
+          // has failed before.
+          Pass := not QuickAllows(Prog.Quick[Pc], Text, Pos, Hi);
+          if Marked and not Pass then begin
+            Idx := MemoIndex(Prog, St, Rep^.M, Pos);
+            if MemoFailed(St, Idx) then
+              Pass := True
+            else if Last then begin
+              // The loop has nothing more to give back. The entry stays to note this last way.
+              E^.Kind := EMark;
+              E^.Pc := 0;
+              E^.Pos := Idx;
+              E^.A := 0;
+              Break;
+            end;
+          end;
+          if Last then
             Dec(St.Sp);
+          if Pass then begin
+            Dec(Steps);
+            Continue;
+          end;
           Break;
         end;
         ERepLazy: begin
+          // What followed the loop from the position it stood at has failed.
           Rep := @Prog.Insts[E^.Pc];
+          Marked := Memo and (Rep^.M <> 0);
+          if Marked then
+            MemoFail(St, MemoIndex(Prog, St, Rep^.M, E^.Pos));
           W := One(Prog, Rep^, Text, Lo, E^.Pos, Hi);
           if W = 0 then begin
             Dec(St.Sp);
@@ -793,9 +1026,31 @@ begin
           Inc(E^.A);
           Pc := E^.Pc + 1;
           Pos := E^.Pos;
-          if E^.A = Rep^.Max then
+          Last := E^.A = Rep^.Max;
+          if Marked then begin
+            Idx := MemoIndex(Prog, St, Rep^.M, Pos);
+            if MemoFailed(St, Idx) then begin
+              if Last then
+                Dec(St.Sp);
+              Dec(Steps);
+              Continue;
+            end;
+            if Last then begin
+              E^.Kind := EMark;
+              E^.Pc := 0;
+              E^.Pos := Idx;
+              E^.A := 0;
+              Break;
+            end;
+          end;
+          if Last then
             Dec(St.Sp);
           Break;
+        end;
+        EMark: begin
+          // Every way from a memo point has failed.
+          MemoFail(St, E^.Pos);
+          Dec(St.Sp);
         end;
         ELook:
           // The body of a positive lookaround has no way left to match.
@@ -883,12 +1138,22 @@ begin
   St^.Timed := False;
   St^.Steps := CheckEvery;
   St^.Stop := StopNone;
+  St^.MemoOn := False;
+  St^.MemoOff := Length(Prog.Points) = 0;
+  St^.Checks := 0;
+  St^.Width := Hi - Lo + 1;
+  St^.MemoLo := Lo;
+  St^.Points := Length(Prog.Points);
+  if MemoFromTheStart and not St^.MemoOff then
+    Remember(St^);
   Result := Search(Prog, St^, Text, Lo, Hi);
   Stop := St^.Stop;
   if Stop <> StopNone then
     Result := False;
   if Length(St^.Stack) > MaxRetainedStack then
     St^.Stack := nil;
+  if Length(St^.Memo) > MaxRetainedMemo then
+    St^.Memo := nil;
 end;
 
 initialization
