@@ -437,3 +437,7 @@ go test -p 4 ./...
 ## License
 
 Apache 2.0.
+
+The Unicode tables of `internal/ucd` are derived from the Unicode Character Database, which is under the Unicode
+License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice, and the one of the `regress` crate
+that the tables were read from. The file is part of the module, beside `LICENSE`.
