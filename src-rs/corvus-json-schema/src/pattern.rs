@@ -68,8 +68,12 @@ enum Matcher {
     /// A pattern with the `u` flag, matched by character.
     Regress(regress::Regex),
     /// A pattern that is valid only without the `u` flag and that `regex` does not take, matched by UTF-16 code
-    /// unit.
-    RegressUnits(regress::Regex),
+    /// unit. `by_character`: the pattern has no surrogate, so a string with no character beyond the BMP (a code
+    /// unit for each character) is matched as it is.
+    RegressUnits {
+        re: regress::Regex,
+        by_character: bool,
+    },
 }
 
 impl fmt::Debug for Pattern {
@@ -134,7 +138,13 @@ impl Pattern {
                 }
             }
             Matcher::Regress(re) => re.find(s).is_some(),
-            Matcher::RegressUnits(re) => is_match_units(re, s),
+            Matcher::RegressUnits { re, by_character } => {
+                if *by_character && !s.bytes().any(|b| b >= 0xF0) {
+                    re.find(s).is_some()
+                } else {
+                    is_match_units(re, s)
+                }
+            }
         }
     }
 }
@@ -322,12 +332,19 @@ pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
         Some(m) => m,
         None => {
             // regress matches it, and is given a pattern for which its answers are ECMA-262's.
+            let surrogate = |unit: u32| (0xD800..0xE000).contains(&unit);
+            // Whether regress is given a surrogate, in a pattern without the flag.
+            let mut surrogates = false;
             let regress = match rewrite::for_engine(pattern, unicode) {
-                rewrite::Rewrite::Unchanged => regress,
+                rewrite::Rewrite::Unchanged => {
+                    surrogates = !unicode && rewrite::legacy_units(pattern).into_iter().any(|u| surrogate(u.into()));
+                    regress
+                }
                 rewrite::Rewrite::Rewritten(rewritten) if unicode => {
                     regress::Regex::with_flags(&rewritten, "u").map_err(|_| PatternError::TooLarge)?
                 }
                 rewrite::Rewrite::Rewritten(rewritten) => {
+                    surrogates = rewrite::code_units(&rewritten).any(surrogate);
                     regress::Regex::from_unicode(rewrite::code_units(&rewritten), "")
                         .map_err(|_| PatternError::TooLarge)?
                 }
@@ -338,7 +355,10 @@ pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
             } else {
                 match translate(pattern, false).and_then(|t| regex::Regex::new(&t).ok()) {
                     Some(re) => Matcher::RegexBmp(re, regress),
-                    None => Matcher::RegressUnits(regress),
+                    // regress matches a string as it is by character. With a surrogate in the pattern it then
+                    // answers wrongly (`\ud83d*` does not match the empty string), so such a pattern always has
+                    // the string as code units.
+                    None => Matcher::RegressUnits { re: regress, by_character: !surrogates },
                 }
             }
         }
@@ -1706,7 +1726,7 @@ mod tests {
         }
         // Valid only without the `u` flag, and not in the syntax `regex` takes: regress, by code unit.
         for p in ["^\\p{L}\\&", "^\\-?\u{10400}*$", "^\\-(?=a)"] {
-            assert!(matches!(compile(p).unwrap().matcher, Matcher::RegressUnits(_)), "{p}");
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::RegressUnits { .. }), "{p}");
         }
     }
 }
