@@ -1,8 +1,8 @@
-//! Patterns that regress, the engine for the patterns no other matcher takes, answers differently from ECMA-262
-//! when it is given them as they are written. The crate gives it another pattern with the same meaning
-//! (`src/pattern/rewrite.rs`). The answers here are V8's.
+//! Patterns that an engine answered differently from ECMA-262 at some point, with V8's answers. The patterns no
+//! other matcher takes are matched by the crate's own engine (`src/ecmaregex`), which answers each as it is
+//! written. Until 0.1.7 they were matched by the `regress` crate, which this file's classes are from:
 //!
-//! - A repetition inside a repetition. regress loses the iteration count of the inner one when it comes back into
+//! - A repetition inside a repetition. That engine lost the iteration count of the inner one when it came back into
 //!   it by backtracking. It then gave wrong answers, and for a body that can match nothing it did not end:
 //!   `{"pattern": "^(?!-)(?:(?:a*)*)*x"}` on `"a"` took memory until the process was stopped (0.1.0 to 0.1.6).
 //! - A reference to a group from inside that group, which read a value the group does not have yet.
@@ -12,12 +12,22 @@
 //!   with it.
 //! - A pattern that is valid only without the `u` flag, which matches UTF-16 code units. Before 0.1.7 it was
 //!   matched by character, so `^\-?.$` matched a character beyond the Basic Multilingual Plane.
-//! - A case-insensitive reference in such a pattern, which regress compares by a folding of its own.
+//! - A case-insensitive reference in such a pattern, which that engine compared by a folding of its own.
 //!
-//! One class is not regress's: `\B` beside a character of several bytes, which the `regex` crate answered.
+//! One class is not that engine's: `\B` beside a character of several bytes, which the `regex` crate answered.
+//!
+//! Every answer is asked through `try_validate`, so a match that reaches its limit fails a test here and is not
+//! taken for an answer.
 
-use corvus_json_schema::{CompileOptions, compile, compile_with};
+use corvus_json_schema::{CompileOptions, SchemaEvaluationError, Validator, compile, compile_with};
 use serde_json::json;
+use std::time::Duration;
+
+/// Whether the text matches the pattern of the validator. A match that reaches its limit is not an answer, and
+/// fails the test.
+fn answer(v: &Validator, text: &str) -> bool {
+    v.try_validate(&json!(text)).unwrap_or_else(|e| panic!("{text:?}: {e}"))
+}
 
 /// Every text of up to three characters over `a`, `x` and `-`, and seven longer ones: 47 texts.
 fn texts() -> Vec<String> {
@@ -40,7 +50,7 @@ fn check(cases: &[(&str, &str)]) {
         assert_eq!(answers.len(), texts.len(), "{pattern}");
         let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
         for (text, want) in texts.iter().zip(answers.chars()) {
-            if v.is_valid(&json!(text)) != (want == 'T') {
+            if answer(&v, text) != (want == 'T') {
                 wrong.push(format!("{pattern} on {text:?}: want {want}"));
             }
         }
@@ -247,7 +257,7 @@ fn check_texts(cases: &[(&str, &[&str], &[&str])]) {
         let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
         for (texts, want) in [(matches, true), (fails, false)] {
             for &text in texts {
-                if v.is_valid(&json!(text)) != want {
+                if answer(&v, text) != want {
                     wrong.push(format!("{pattern} on {text:?}: want {want}"));
                 }
             }
@@ -528,7 +538,7 @@ fn a_repetition_too_deep_to_write_in_one_keeps_its_count() {
     let texts = long_texts();
     for &(pattern, _, answers) in TOO_LARGE_TO_WRITE_OUT {
         let v = compile(&json!({ "pattern": pattern })).unwrap();
-        let got: String = texts.iter().map(|text| if v.is_valid(&json!(text)) { 'T' } else { 'F' }).collect();
+        let got: String = texts.iter().map(|text| if answer(&v, text) { 'T' } else { 'F' }).collect();
         assert_eq!(got, answers, "{pattern}");
     }
 }
@@ -555,7 +565,7 @@ fn a_repetition_too_deep_to_write_in_one_whose_body_can_be_empty_keeps_its_count
     let texts = long_texts();
     for &(pattern, answers) in TOO_LARGE_WITH_A_BODY_THAT_CAN_BE_EMPTY_ON_LONG_TEXTS {
         let v = compile(&json!({ "pattern": pattern })).unwrap();
-        let got: String = texts.iter().map(|text| if v.is_valid(&json!(text)) { 'T' } else { 'F' }).collect();
+        let got: String = texts.iter().map(|text| if answer(&v, text) { 'T' } else { 'F' }).collect();
         assert_eq!(got, answers, "{pattern}");
     }
 }
@@ -611,7 +621,7 @@ fn a_repetition_of_three_hundred_inside_a_repetition_keeps_its_count() {
     let texts = count_texts();
     for &(pattern, answers) in COUNTS {
         let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
-        let got: String = texts.iter().map(|text| if v.is_valid(&json!(text)) { 'T' } else { 'F' }).collect();
+        let got: String = texts.iter().map(|text| if answer(&v, text) { 'T' } else { 'F' }).collect();
         assert_eq!(got, answers, "{pattern}");
     }
 }
@@ -632,50 +642,94 @@ const A_CHARACTER_THAT_MAY_BE_LEFT_OUT: &[(&str, &str, &str)] = &[
     ("^(?!-)(?:(?:a|){100000}-)+$", "FFFFFFTFFFFFFFFTFFFFFTFFFFFFFFFFFFFFFFFFFFFFTFF", "TTFFTFFTFF"),
 ];
 
+/// A hundred thousand iterations that may each match nothing are a search no engine finishes on a text that does
+/// not match, V8 among them. The answers of the table for this pattern are those of `a{0,100000}` in its place,
+/// which matches the same texts. The crate's engine gives that answer where it comes to one, and where it does not
+/// the match ends at its limit with an error. (0.1.7's first cuts gave the engine of the time `a{0,100000}` for
+/// this shape, and so answered every text.)
+const NO_ENGINE_FINISHES: &str = "^(?!-)(?:(?:a|){100000}-)+$";
+
 #[test]
 fn many_iterations_of_a_character_that_may_be_left_out_keep_their_count() {
-    let short: Vec<(&str, &str)> =
-        A_CHARACTER_THAT_MAY_BE_LEFT_OUT.iter().map(|&(pattern, answers, _)| (pattern, answers)).collect();
+    let short: Vec<(&str, &str)> = A_CHARACTER_THAT_MAY_BE_LEFT_OUT
+        .iter()
+        .filter(|case| case.0 != NO_ENGINE_FINISHES)
+        .map(|&(pattern, answers, _)| (pattern, answers))
+        .collect();
     check(&short);
-    let texts = long_texts();
+    let long = long_texts();
     for &(pattern, _, answers) in A_CHARACTER_THAT_MAY_BE_LEFT_OUT.iter().filter(|case| !case.2.is_empty()) {
+        if pattern == NO_ENGINE_FINISHES {
+            continue;
+        }
         let v = compile(&json!({ "pattern": pattern })).unwrap();
-        let got: String = texts.iter().map(|text| if v.is_valid(&json!(text)) { 'T' } else { 'F' }).collect();
+        let got: String = long.iter().map(|text| if answer(&v, text) { 'T' } else { 'F' }).collect();
         assert_eq!(got, answers, "{pattern}");
     }
+    // The pattern no engine finishes: the right answer, or the error of the limit, and never a wrong answer.
+    let &(pattern, short_answers, long_answers) =
+        A_CHARACTER_THAT_MAY_BE_LEFT_OUT.iter().find(|case| case.0 == NO_ENGINE_FINISHES).unwrap();
+    let limit = CompileOptions { pattern_match_limit: Some(Duration::from_millis(100)), ..CompileOptions::default() };
+    let v = compile_with(&json!({ "pattern": pattern }), &limit).unwrap();
+    let (mut answered, mut abandoned) = (0, 0);
+    for (text, want) in texts().iter().zip(short_answers.chars()).chain(long.iter().zip(long_answers.chars())) {
+        match v.try_validate(&json!(text)) {
+            Ok(got) => {
+                assert_eq!(got, want == 'T', "{pattern} on {text:?}");
+                answered += 1;
+            }
+            Err(SchemaEvaluationError::PatternMatchLimit(e)) => {
+                // The time, or the memory of the backtracking, whichever the match reached first.
+                assert_eq!((e.pattern(), e.limit()), (pattern, Duration::from_millis(100)));
+                assert!(!v.is_valid(&json!(text)), "is_valid is true for a match that reached its limit");
+                abandoned += 1;
+            }
+            Err(e) => panic!("{pattern} on {text:?}: {e}"),
+        }
+    }
+    assert!(answered > 0 && abandoned > 0, "{answered} answered, {abandoned} abandoned");
 }
 
-/// A pattern that comes to more than 65,536 characters written out is refused, with a reason of its own. It is
-/// not run with another meaning, and the engine is not given a count it can lose. The first three compiled
-/// before, with such a count.
+/// A pattern is never refused for what it would come to written another way: these six were refused by 0.1.7's
+/// first cuts as "valid, but too large to compile", when repetitions inside repetitions were written out as copies
+/// for the engine of the time. They compile. A count beyond the text there is cannot match, and the matcher says so
+/// at once (the rest of the pattern needs more text than is left). Where the count can be met by iterations that
+/// match nothing, the match is a search no engine finishes, V8 among them, and it ends at the limit of a match
+/// with an error, never with an answer.
 #[test]
-fn a_repetition_too_large_to_write_out_is_refused() {
-    for pattern in [
-        r"^(?!-)(?:(?:a|x){4294967295}-)+$",
-        r"^(?!-)(?:(?:(?:a|x){200}-|a){200}x)+$",
-        r"^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$",
-        r"^(?!-)(?:(?:a|x|){4294967295}-)+$",
-        r"^(?!-)(?:(?:(?:a|x|){200}-|a?){200}x)+$",
-        r"^(?!-)(?:(?:a|x|){100000}-)+$",
+fn a_large_repetition_inside_a_repetition_compiles() {
+    let limit = CompileOptions { pattern_match_limit: Some(Duration::from_millis(200)), ..CompileOptions::default() };
+    for (pattern, text, want) in [
+        (r"^(?!-)(?:(?:a|x){4294967295}-)+$", "ax-", Some(false)),
+        (r"^(?!-)(?:(?:(?:a|x){200}-|a){200}x)+$", "ax-", Some(false)),
+        (r"^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$", "ax-xxa-", Some(true)),
+        (r"^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$", "ax-xxa", Some(false)),
+        (r"^(?!-)(?:(?:a|x|){4294967295}-)+$", "ax-", None),
+        (r"^(?!-)(?:(?:(?:a|x|){200}-|a?){200}x)+$", "ax-", None),
+        (r"^(?!-)(?:(?:a|x|){100000}-)+$", "ax-", None),
     ] {
-        let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
-        assert_eq!(
-            e.message(),
-            format!(
-                "The regular expression '{pattern}' in pattern is valid, but its repetitions inside repetitions are \
-                 too large to compile."
-            )
-        );
+        let v = compile_with(&json!({ "pattern": pattern }), &limit).unwrap_or_else(|e| panic!("{pattern}: {e}"));
+        match (v.try_validate(&json!(text)), want) {
+            (Ok(got), Some(want)) => assert_eq!(got, want, "{pattern} on {text:?}"),
+            // Whatever the engine comes to within the limit is an answer, and the limit is an error that names
+            // the pattern.
+            (Ok(_), None) => {}
+            (Err(SchemaEvaluationError::PatternMatchLimit(e)), None) => {
+                assert_eq!(e.pattern(), pattern);
+                assert!(!v.is_valid(&json!(text)), "{pattern}: is_valid is true for a match that reached its limit");
+            }
+            (Err(e), _) => panic!("{pattern} on {text:?}: {e}"),
+        }
     }
-    // A count as large on a body that cannot be come back into is not written out.
+    // A count as large on a body that cannot be come back into.
     for (pattern, text) in [
         (r"^(?!-)(?:[ax]{1,300}-)+$", "ax-xxa-"),
         (r"^(?!-)(?:(?:ax){300}-)+$", &format!("{}-", "ax".repeat(300))),
         (r"^(?!-)(?:(?:a|x){1,200}-)+$", "ax-xxa-"),
     ] {
         let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
-        assert!(v.is_valid(&json!(text)), "{pattern}");
-        assert!(!v.is_valid(&json!("ax-xxa")), "{pattern}");
+        assert!(answer(&v, text), "{pattern}");
+        assert!(!answer(&v, "ax-xxa"), "{pattern}");
     }
 }
 

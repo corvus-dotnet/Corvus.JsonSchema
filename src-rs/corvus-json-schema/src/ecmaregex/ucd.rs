@@ -16,6 +16,7 @@ use std::sync::LazyLock;
 use super::Rune;
 use super::tables_gen as tables;
 
+#[cfg(test)]
 pub(crate) use super::tables_gen::VERSION;
 
 /// The last Unicode code point.

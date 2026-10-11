@@ -4,7 +4,7 @@
 //! the C# collecting mode (keyword order, paths, messages, which subschema results are committed or discarded).
 
 use std::collections::HashMap;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
 use serde_json::{Number, Value};
 
@@ -14,7 +14,8 @@ use crate::formats::FormatKind;
 use crate::instance::{ArrayView, Instance, Kind, ObjectView, View};
 use crate::node::*;
 use crate::numbers::{Num, cmp, multiple_of, num_eq, number_text};
-use crate::options::FormatValidator;
+use crate::options::{FormatValidator, SchemaEvaluationDepthError, SchemaEvaluationError};
+use crate::pattern::{PatternBudget, PatternLimit};
 use crate::results::{JsonSchemaResultsCollector, Message, encode_pointer_segment};
 use crate::uri::resolve_pointer;
 
@@ -36,6 +37,11 @@ pub(crate) struct Program {
     pub annotation_sources: Vec<Option<AnnotationSource>>,
     pub annotations: OnceLock<Vec<Option<Vec<AnnotationEntry>>>>,
     pub assert_format_set: bool,
+    /// The limit of a match of a pattern, which every evaluation gives its matches.
+    pub pattern_limit: PatternLimit,
+    /// The budget of the matches made while the plans are compiled (a pattern against the property names the
+    /// schema declares). It is not used once the program is made.
+    pub compile_budget: Mutex<PatternBudget>,
     /// Fail-fast plans (with a dynamic scope kept, bodies push their resource on entry).
     plans: Vec<plan::Plan>,
 }
@@ -53,6 +59,7 @@ impl Program {
         documents: Vec<Box<Value>>,
         annotation_sources: Vec<Option<AnnotationSource>>,
         assert_format_set: bool,
+        pattern_limit: PatternLimit,
     ) -> Program {
         let fast_target = (0..nodes.len() as NodeId)
             .map(|id| {
@@ -98,6 +105,8 @@ impl Program {
             annotation_sources,
             annotations: OnceLock::new(),
             assert_format_set,
+            pattern_limit,
+            compile_budget: Mutex::new(PatternBudget::new(pattern_limit)),
             plans: Vec::new(),
         };
         program.plans = plan::compile_plans(&program);
@@ -547,6 +556,8 @@ pub(crate) struct Evaluator<'p, 'c> {
     scope: Vec<u32>,
     depth: u32,
     pub depth_exceeded: bool,
+    /// What every match of a pattern in this evaluation has, and the first match that reached a limit.
+    pub(crate) budget: PatternBudget,
     /// A string reused to evaluate property names against propertyNames (a `String`, not a `Value`: dropping a
     /// `Value` is an out-of-line call, which every evaluation paid).
     name_buffer: String,
@@ -580,7 +591,16 @@ macro_rules! and {
 impl<'p, 'c> Evaluator<'p, 'c> {
     pub fn new(p: &'p Program, c: Option<&'c mut JsonSchemaResultsCollector>) -> Self {
         let annotations: &'p [Option<Vec<AnnotationEntry>>] = if c.is_some() { p.annotations() } else { &[] };
-        Evaluator { p, annotations, c, scope: Vec::new(), depth: 0, depth_exceeded: false, name_buffer: String::new() }
+        Evaluator {
+            p,
+            annotations,
+            c,
+            scope: Vec::new(),
+            depth: 0,
+            depth_exceeded: false,
+            budget: PatternBudget::new(p.pattern_limit),
+            name_buffer: String::new(),
+        }
     }
 
     #[inline(always)]
@@ -597,8 +617,21 @@ impl<'p, 'c> Evaluator<'p, 'c> {
     pub fn validate<'x, I: Instance<'x>>(&mut self, x: I) -> bool {
         let root = self.p.fast_target[self.p.root as usize];
         // An evaluation that recursed in place beyond the maximum depth is not valid, whatever it came to: the
-        // branch that was abandoned counts as false, which a not above it turns into true.
-        self.fast(root, x) && !self.depth_exceeded
+        // branch that was abandoned counts as false, which a not above it turns into true. The same holds for a
+        // match of a pattern that reached its limit.
+        self.fast(root, x) && !self.depth_exceeded && !self.budget.failed()
+    }
+
+    /// What an evaluation that came to `ok` reports: no answer, and why, when a match of a pattern reached its
+    /// limit or the schema recursed in place beyond the maximum depth.
+    pub fn outcome(&mut self, ok: bool) -> Result<bool, SchemaEvaluationError> {
+        if let Some(e) = self.budget.take_failure() {
+            return Err(SchemaEvaluationError::PatternMatchLimit(e));
+        }
+        if self.depth_exceeded {
+            return Err(SchemaEvaluationError::DepthExceeded(SchemaEvaluationDepthError));
+        }
+        Ok(ok)
     }
 
     /// Fail-fast evaluation of a node, through its plan when there are plans.
@@ -856,7 +889,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 self,
                 M,
                 ok,
-                p.is_match(s),
+                p.is_match(s, &mut self.budget),
                 Message::Lazy(&|| format!("Expected the value to match the regular expression{}", q(&p.source))),
                 "pattern"
             );
@@ -964,7 +997,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 }
                 if let Some(pps) = &n.pattern_properties {
                     for pp in pps {
-                        if !pp.pattern.is_match(k) {
+                        if !pp.pattern.is_match(k, &mut self.budget) {
                             continue;
                         }
                         matched = true;

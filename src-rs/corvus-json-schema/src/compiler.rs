@@ -344,8 +344,7 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
             if let Some(Value::Object(pp)) = e.get("patternProperties") {
                 let mut list = Vec::with_capacity(pp.len());
                 for (pattern, v) in pp {
-                    let compiled = crate::pattern::compile(pattern)
-                        .map_err(|e| SchemaCompilationError::new(e.message(pattern, "patternProperties")))?;
+                    let compiled = crate::pattern::compile(pattern).map_err(|e| e.of(pattern, "patternProperties"))?;
                     let c = self.child(target, v, &format!("/patternProperties/{}", escape_pointer_token(pattern)));
                     list.push(PatternProperty { pattern: compiled, node: c });
                 }
@@ -468,8 +467,7 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
             n.min_length = get_uint(e.get("minLength"));
             n.max_length = get_uint(e.get("maxLength"));
             if let Some(Value::String(p)) = e.get("pattern") {
-                n.pattern =
-                    Some(crate::pattern::compile(p).map_err(|e| SchemaCompilationError::new(e.message(p, "pattern")))?);
+                n.pattern = Some(crate::pattern::compile(p).map_err(|e| e.of(p, "pattern"))?);
             }
             if let Some(Value::Number(m)) = e.get("multipleOf") {
                 n.multiple_of = Some(m.clone());

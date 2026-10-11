@@ -21,7 +21,7 @@ use crate::instance::{ArrayView, Instance, Kind, ObjectView, View, str_eq};
 use crate::node::*;
 use crate::numbers::{Divisor, Num, cmp};
 use crate::options::FormatValidator;
-use crate::pattern::Pattern;
+use crate::pattern::{Pattern, PatternBudget};
 
 /// Every JSON type (a node without `type`).
 const ANY: u8 = 0x7f;
@@ -790,7 +790,8 @@ fn plan_node(p: &Program, id: NodeId, n: &SchemaNode, target: &dyn Fn(NodeId) ->
                 .iter()
                 .map(|name| {
                     let patterns = n.pattern_properties.iter().flatten().enumerate();
-                    patterns.filter(|(_, pp)| pp.pattern.is_match(name)).map(|(j, _)| j as u16).collect()
+                    let mut budget = p.compile_budget.lock().unwrap_or_else(|e| e.into_inner());
+                    patterns.filter(|(_, pp)| pp.pattern.is_match(name, &mut budget)).map(|(j, _)| j as u16).collect()
                 })
                 .collect(),
             additional: n.additional_properties.map(child),
@@ -1086,13 +1087,13 @@ impl Evaluator<'_, '_> {
     #[inline(always)]
     fn enter<'x, I: Instance<'x>>(&mut self, shape: Shape, b: &Body, x: I) -> bool {
         match shape {
-            Shape::Leaf => run_leaf(b, x),
+            Shape::Leaf => run_leaf(b, x, &mut self.budget),
             Shape::StringEnum => match (&b.values[0], x.view()) {
                 (Op::EnumStrings(values), View::String(s)) => values.contains(s),
                 _ => false,
             },
             Shape::Strings => match x.view() {
-                View::String(s) => run_string(&b.string, s),
+                View::String(s) => run_string(&b.string, s, &mut self.budget),
                 _ => true,
             },
             Shape::Object => match x.view() {
@@ -1219,7 +1220,7 @@ impl Evaluator<'_, '_> {
         }
         let ok = match view {
             View::Number(n) => b.number.is_empty() || run_number(&b.number, &n),
-            View::String(s) => b.string.is_empty() || run_string(&b.string, s),
+            View::String(s) => b.string.is_empty() || run_string(&b.string, s, &mut self.budget),
             View::Object(o) => b.object.as_ref().is_none_or(|plan| self.run_object(plan, o, x)),
             View::Array(a) => {
                 b.array.as_ref().is_none_or(|plan| self.run_array::<I>(plan, a))
@@ -1423,7 +1424,7 @@ impl Evaluator<'_, '_> {
     fn visit_pattern<'x, I: Instance<'x>>(&mut self, plan: &ObjectPlan, o: I::Object) -> bool {
         let (pattern, c) = &plan.patterns[0];
         for (k, v) in o.iter() {
-            let applies = if pattern.is_match(k) { Some(*c) } else { plan.additional };
+            let applies = if pattern.is_match(k, &mut self.budget) { Some(*c) } else { plan.additional };
             if let Some(c) = applies
                 && !self.run_child(c, v)
             {
@@ -1455,7 +1456,7 @@ impl Evaluator<'_, '_> {
                 }
             } else {
                 for (pattern, c) in plan.patterns.iter() {
-                    if pattern.is_match(k) {
+                    if pattern.is_match(k, &mut self.budget) {
                         matched = true;
                         if !self.run_child(*c, v) {
                             return None;
@@ -1557,7 +1558,7 @@ fn all_of_type<'x, I: Instance<'x>>(mut items: impl Iterator<Item = I>, types: u
 
 /// A leaf's keywords: its value constraints, then those for the instance's type.
 #[inline]
-fn run_leaf<'x, I: Instance<'x>>(b: &Body, x: I) -> bool {
+fn run_leaf<'x, I: Instance<'x>>(b: &Body, x: I, budget: &mut PatternBudget) -> bool {
     for op in b.values.iter() {
         let ok = match op {
             Op::Const(c) => json_equal(x, c),
@@ -1571,7 +1572,7 @@ fn run_leaf<'x, I: Instance<'x>>(b: &Body, x: I) -> bool {
     }
     match x.view() {
         View::Number(n) => b.number.is_empty() || run_number(&b.number, &n),
-        View::String(s) => b.string.is_empty() || run_string(&b.string, s),
+        View::String(s) => b.string.is_empty() || run_string(&b.string, s, budget),
         _ => true,
     }
 }
@@ -1590,10 +1591,10 @@ fn run_number(ops: &[NumberOp], n: &Number) -> bool {
 }
 
 #[inline(never)]
-fn run_string(ops: &[StringOp], s: &str) -> bool {
+fn run_string(ops: &[StringOp], s: &str, budget: &mut PatternBudget) -> bool {
     ops.iter().all(|op| match op {
         StringOp::Length { min, max } => length_ok(s, *min, *max),
-        StringOp::Pattern(p) => p.is_match(s),
+        StringOp::Pattern(p) => p.is_match(s, budget),
         StringOp::Format(f) => f.string(s),
         StringOp::Content(kind) => content_ok(s, *kind),
     })

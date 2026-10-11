@@ -18,8 +18,6 @@ include = ["src/**", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
 regex = "1.13.1"
-# utf16: a pattern that is valid only without the u flag is matched by UTF-16 code unit.
-regress = { version = "0.12.0", features = ["utf16"] }
 serde_json = { version = "1.0.151", features = ["preserve_order", "float_roundtrip"] }
 
 [lints.rust]

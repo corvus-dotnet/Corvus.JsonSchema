@@ -22,7 +22,6 @@
 mod compiler;
 mod dialect;
 mod document;
-#[allow(dead_code)]
 mod ecmaregex;
 mod eval;
 mod formats;
@@ -45,7 +44,9 @@ pub use dialect::Dialect;
 pub use document::{JsonDocument, JsonDocumentArray, JsonDocumentObject, JsonDocumentValue, JsonParseError};
 pub use instance::{ArrayView, Instance, Kind, ObjectView, View};
 pub use options::{
-    CompileOptions, DocumentResolver, FormatValidator, SchemaCompilationError, SchemaEvaluationDepthError,
+    CompileOptions, DEFAULT_PATTERN_MATCH_LIMIT, DocumentResolver, FormatValidator, PatternMatchLimitError,
+    PatternTooLargeError, SchemaCompilationError, SchemaCompilationErrorKind, SchemaEvaluationDepthError,
+    SchemaEvaluationError,
 };
 pub use results::{
     Annotation, JsonSchemaResultsCollector, ResultsLevel, SchemaResult, collect_annotations, encode_pointer_segment,
@@ -55,12 +56,15 @@ pub use results::{
 /// The version of this crate.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Why JSON text could not be validated.
+/// Why JSON text could not be validated, as [`Validator::validate_json`] and [`Validator::evaluate_json`] report it.
+/// [`Validator::try_validate_json`] and [`Validator::try_evaluate_json`] report a [`SchemaEvaluationError`], which
+/// also tells a match of a regular expression that reached its limit from the maximum depth.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum JsonValidationError {
     /// The text is not valid JSON.
     InvalidJson(JsonParseError),
-    /// Evaluation recursed in place beyond the maximum depth.
+    /// The evaluation was abandoned: it recursed in place beyond the maximum depth, or a match of a regular
+    /// expression reached its limit (see [`without_the_limit`] for why the two are one here).
     DepthExceeded(SchemaEvaluationDepthError),
 }
 
@@ -79,6 +83,24 @@ impl std::error::Error for JsonValidationError {
             JsonValidationError::InvalidJson(e) => Some(e),
             JsonValidationError::DepthExceeded(e) => Some(e),
         }
+    }
+}
+
+/// What the functions whose error type was fixed before the limit of a match existed report for an evaluation that
+/// was abandoned. Their type, [`SchemaEvaluationDepthError`], has one value, so a match that reached its limit is
+/// reported as that value too: an error, and so not an answer, though not one that says which limit it was. The
+/// `try_` functions say which. This is the one place that decides it.
+fn without_the_limit(e: SchemaEvaluationError) -> SchemaEvaluationDepthError {
+    match e {
+        SchemaEvaluationError::DepthExceeded(e) => e,
+        _ => SchemaEvaluationDepthError,
+    }
+}
+
+fn json_error(e: SchemaEvaluationError) -> JsonValidationError {
+    match e {
+        SchemaEvaluationError::InvalidJson(e) => JsonValidationError::InvalidJson(e),
+        other => JsonValidationError::DepthExceeded(without_the_limit(other)),
     }
 }
 
@@ -103,18 +125,21 @@ pub fn compile(schema: &Value) -> Result<Validator, SchemaCompilationError> {
 /// Compiles a schema.
 pub fn compile_with(schema: &Value, options: &CompileOptions) -> Result<Validator, SchemaCompilationError> {
     let compiled = compiler::SchemaCompiler::compile(schema.clone(), options)?;
-    Ok(Validator::from_compiled(compiled, options))
+    Validator::from_compiled(compiled, options)
 }
 
 /// Compiles the schema document at `uri`, fetched through `options.resolve_document` (or one of the standard
 /// metaschemas).
 pub fn compile_from_uri(uri: &str, options: &CompileOptions) -> Result<Validator, SchemaCompilationError> {
     let compiled = compiler::SchemaCompiler::compile_from_uri(uri, options)?;
-    Ok(Validator::from_compiled(compiled, options))
+    Validator::from_compiled(compiled, options)
 }
 
 impl Validator {
-    fn from_compiled(c: compiler::CompiledSchema, options: &CompileOptions) -> Validator {
+    fn from_compiled(
+        c: compiler::CompiledSchema,
+        options: &CompileOptions,
+    ) -> Result<Validator, SchemaCompilationError> {
         let program = eval::Program::new(
             c.nodes,
             c.root,
@@ -124,47 +149,110 @@ impl Validator {
             c.documents,
             c.annotation_sources,
             options.assert_format.is_some(),
+            pattern::PatternLimit::new(options.pattern_match_limit),
         );
-        Validator { program: Arc::new(program) }
+        // Compiling matches each pattern of patternProperties against the property names the schema declares.
+        let failure = program.compile_budget.lock().unwrap_or_else(|e| e.into_inner()).take_failure();
+        if let Some(e) = failure {
+            return Err(SchemaCompilationError::of_kind(
+                e.to_string(),
+                SchemaCompilationErrorKind::PatternMatchLimit(e),
+            ));
+        }
+        Ok(Validator { program: Arc::new(program) })
     }
 
-    /// Whether the instance is valid. A schema that recursed in place beyond the maximum depth is reported as
-    /// invalid; use [`Validator::validate`] to tell the two apart.
+    /// Whether the instance is valid. It has no way to report an error, so it reports false both for a schema that
+    /// recursed in place beyond the maximum depth and for a match of a regular expression that reached its limit
+    /// (see [`CompileOptions::pattern_match_limit`]). In neither case is the instance known to be not valid. Use
+    /// [`Validator::try_validate`] to tell them from an instance that is not valid.
     #[inline]
     pub fn is_valid(&self, instance: &Value) -> bool {
         eval::Evaluator::new(&self.program, None).validate(instance)
     }
 
-    /// Whether the instance is valid, or an error if evaluation recursed in place beyond the maximum depth.
-    pub fn validate(&self, instance: &Value) -> Result<bool, SchemaEvaluationDepthError> {
-        let mut e = eval::Evaluator::new(&self.program, None);
-        let ok = e.validate(instance);
-        if e.depth_exceeded { Err(SchemaEvaluationDepthError) } else { Ok(ok) }
+    /// Whether the instance is valid, or why the evaluation gave no answer: it recursed in place beyond the maximum
+    /// depth, or a match of a regular expression reached its limit.
+    pub fn try_validate(&self, instance: &Value) -> Result<bool, SchemaEvaluationError> {
+        self.try_validate_instance(instance)
     }
 
-    /// Evaluates the instance exhaustively, reporting to the collector. Returns whether it is valid.
+    /// [`Validator::try_validate`] for any [`Instance`]: a value read in place, such as a host language's own
+    /// objects, with no conversion to `serde_json::Value`.
+    pub fn try_validate_instance<'a, I: Instance<'a>>(&self, instance: I) -> Result<bool, SchemaEvaluationError> {
+        let mut e = eval::Evaluator::new(&self.program, None);
+        let ok = e.validate(instance);
+        e.outcome(ok)
+    }
+
+    /// Whether the JSON text is valid, or why there is no answer. The text is parsed into the thread's reused
+    /// buffers and evaluated in place: in the steady state nothing is allocated. Use [`JsonDocument`] to validate
+    /// the same text more than once.
+    pub fn try_validate_json(&self, json: &str) -> Result<bool, SchemaEvaluationError> {
+        JsonDocument::with_document(json, |d| self.try_validate_instance(d.root()))
+            .map_err(SchemaEvaluationError::InvalidJson)?
+    }
+
+    /// Evaluates the instance exhaustively, reporting to the collector. Returns whether it is valid, or why the
+    /// evaluation gave no answer. With an error the collector's results are not complete.
+    pub fn try_evaluate(
+        &self,
+        instance: &Value,
+        collector: &mut JsonSchemaResultsCollector,
+    ) -> Result<bool, SchemaEvaluationError> {
+        self.try_evaluate_instance(instance, collector)
+    }
+
+    /// [`Validator::try_evaluate`] for any [`Instance`].
+    pub fn try_evaluate_instance<'a, I: Instance<'a>>(
+        &self,
+        instance: I,
+        collector: &mut JsonSchemaResultsCollector,
+    ) -> Result<bool, SchemaEvaluationError> {
+        let mut e = eval::Evaluator::new(&self.program, Some(collector));
+        let ok = e.evaluate(instance);
+        e.outcome(ok)
+    }
+
+    /// [`Validator::try_evaluate`] for JSON text, parsed as [`Validator::try_validate_json`] parses it.
+    pub fn try_evaluate_json(
+        &self,
+        json: &str,
+        collector: &mut JsonSchemaResultsCollector,
+    ) -> Result<bool, SchemaEvaluationError> {
+        JsonDocument::with_document(json, |d| self.try_evaluate_instance(d.root(), collector))
+            .map_err(SchemaEvaluationError::InvalidJson)?
+    }
+
+    /// Whether the instance is valid, or an error if the evaluation was abandoned. The error type has one value,
+    /// so it does not say whether the evaluation recursed in place beyond the maximum depth or a match of a regular
+    /// expression reached its limit: [`Validator::try_validate`] does.
+    pub fn validate(&self, instance: &Value) -> Result<bool, SchemaEvaluationDepthError> {
+        self.try_validate(instance).map_err(without_the_limit)
+    }
+
+    /// Evaluates the instance exhaustively, reporting to the collector. Returns whether it is valid. The error is
+    /// that of [`Validator::validate`]: [`Validator::try_evaluate`] says why an evaluation was abandoned.
     pub fn evaluate(
         &self,
         instance: &Value,
         collector: &mut JsonSchemaResultsCollector,
     ) -> Result<bool, SchemaEvaluationDepthError> {
-        self.evaluate_instance(instance, collector)
+        self.try_evaluate(instance, collector).map_err(without_the_limit)
     }
 
     /// [`Validator::validate`] for any [`Instance`]: a value read in place, such as a host language's own objects,
     /// with no conversion to `serde_json::Value`.
     pub fn validate_instance<'a, I: Instance<'a>>(&self, instance: I) -> Result<bool, SchemaEvaluationDepthError> {
-        let mut e = eval::Evaluator::new(&self.program, None);
-        let ok = e.validate(instance);
-        if e.depth_exceeded { Err(SchemaEvaluationDepthError) } else { Ok(ok) }
+        self.try_validate_instance(instance).map_err(without_the_limit)
     }
 
     /// Whether the JSON text is valid. The text is parsed into the thread's reused buffers and evaluated in place: in
-    /// the steady state nothing is allocated. Use [`JsonDocument`] to validate the same text more than once.
+    /// the steady state nothing is allocated. Use [`JsonDocument`] to validate the same text more than once. An
+    /// evaluation that was abandoned is reported as [`JsonValidationError::DepthExceeded`], whichever limit it
+    /// reached: [`Validator::try_validate_json`] says which.
     pub fn validate_json(&self, json: &str) -> Result<bool, JsonValidationError> {
-        JsonDocument::with_document(json, |d| self.validate_instance(d.root()))
-            .map_err(JsonValidationError::InvalidJson)?
-            .map_err(JsonValidationError::DepthExceeded)
+        self.try_validate_json(json).map_err(json_error)
     }
 
     /// [`Validator::evaluate`] for JSON text, parsed as [`Validator::validate_json`] parses it.
@@ -173,9 +261,7 @@ impl Validator {
         json: &str,
         collector: &mut JsonSchemaResultsCollector,
     ) -> Result<bool, JsonValidationError> {
-        JsonDocument::with_document(json, |d| self.evaluate_instance(d.root(), collector))
-            .map_err(JsonValidationError::InvalidJson)?
-            .map_err(JsonValidationError::DepthExceeded)
+        self.try_evaluate_json(json, collector).map_err(json_error)
     }
 
     /// [`Validator::evaluate`] for any [`Instance`].
@@ -184,8 +270,6 @@ impl Validator {
         instance: I,
         collector: &mut JsonSchemaResultsCollector,
     ) -> Result<bool, SchemaEvaluationDepthError> {
-        let mut e = eval::Evaluator::new(&self.program, Some(collector));
-        let ok = e.evaluate(instance);
-        if e.depth_exceeded { Err(SchemaEvaluationDepthError) } else { Ok(ok) }
+        self.try_evaluate_instance(instance, collector).map_err(without_the_limit)
     }
 }

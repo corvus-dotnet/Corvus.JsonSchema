@@ -75,6 +75,8 @@ mod dfa;
 mod fold;
 mod parse;
 mod re2;
+// Generated: it has names of scripts and properties that only the tests read.
+#[allow(dead_code)]
 #[rustfmt::skip]
 mod tables_gen;
 #[cfg(test)]
@@ -87,17 +89,12 @@ use std::fmt;
 use std::sync::OnceLock;
 use std::time::Duration;
 
-#[allow(unused_imports)]
 pub(crate) use charset::{CharSet, property_set};
-#[allow(unused_imports)]
-pub(crate) use parse::{Limit, MAX_NESTING, MAX_PATTERN_LENGTH, MAX_SIZE, TooLargeError};
+pub(crate) use parse::TooLargeError;
+use parse::{Limit, MAX_NESTING};
 pub(crate) use re2::MAX_RE2_COST;
-#[allow(unused_imports)]
-pub(crate) use ucd::VERSION as UNICODE_VERSION;
-#[allow(unused_imports)]
 pub(crate) use units::has_supplementary;
-#[allow(unused_imports)]
-pub(crate) use vm::{MAX_MEMO_WORDS, MAX_STACK, MatchError};
+pub(crate) use vm::MatchError;
 
 /// A code point, or a UTF-16 code unit of a pattern read without the u flag. It is signed, as the `rune` of the Go
 /// source is, and -1 stands for "none".
@@ -171,7 +168,7 @@ const DEEP_STACK: usize = 64 << 20;
 /// thread of its own with a stack for the deepest nesting the limits allow. (Go grows the stack of a goroutine as
 /// it is needed, so the Go engine has no such step.) `None` when that thread could not be started.
 fn on_a_deep_stack<T: Send>(pattern: &str, work: impl FnOnce() -> T + Send) -> Option<T> {
-    if pattern.bytes().filter(|&b| b == b'(').count() <= SHALLOW {
+    if shallow(pattern) {
         return Some(work());
     }
     std::thread::scope(|scope| {
@@ -181,6 +178,11 @@ fn on_a_deep_stack<T: Send>(pattern: &str, work: impl FnOnce() -> T + Send) -> O
             Err(panic) => std::panic::resume_unwind(panic),
         }
     })
+}
+
+/// Whether a pattern opens few enough groups to be read on the stack of the thread that asks.
+pub(crate) fn shallow(pattern: &str) -> bool {
+    pattern.bytes().filter(|&b| b == b'(').count() <= SHALLOW
 }
 
 /// The error of a pattern that nests deeply when no thread could be started to read it: the pattern is refused as
@@ -200,6 +202,7 @@ pub(crate) struct Regexp {
     /// again to build it, which cannot fail.
     dfa: OnceLock<Option<dfa::Dfa>>,
     /// The size the parser counted for the pattern.
+    #[allow(dead_code)]
     size: usize,
 }
 
@@ -217,7 +220,7 @@ pub(crate) fn compile(pattern: &str) -> Result<Regexp, Error> {
         let (root, facts) = read(pattern)?;
         let regular = !facts.needs_backtracking && facts.re2_cost <= MAX_RE2_COST;
         let dfa = OnceLock::new();
-        if regular && pattern.bytes().filter(|&b| b == b'(').count() > SHALLOW {
+        if regular && !shallow(pattern) {
             // The automaton is built from the syntax tree, so that of a pattern that nests deeply is built here
             // and not on the stack of the thread that first matches.
             let _ = dfa.set(dfa::build_dfa(&root));
@@ -274,12 +277,14 @@ impl Regexp {
 
     /// Whether the pattern is valid with the ECMA-262 u flag. When it is not, the pattern was read with the Annex B
     /// grammar.
+    #[cfg(test)]
     pub(crate) fn unicode(&self) -> bool {
         self.unicode
     }
 
     /// The size the parser counted for the pattern, which the tree, the program and the time to make both are
     /// proportional to (see [`MAX_SIZE`]).
+    #[allow(dead_code)]
     pub(crate) fn size(&self) -> usize {
         self.size
     }

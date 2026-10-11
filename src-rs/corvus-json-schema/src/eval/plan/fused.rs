@@ -26,7 +26,7 @@ use crate::eval::{json_equal, matches_type};
 use crate::instance::{Instance, ObjectView, View};
 use crate::node::*;
 use crate::numbers::Num;
-use crate::pattern::Pattern;
+use crate::pattern::{Pattern, PatternBudget};
 
 const MAX_NAMES: usize = 256;
 const MAX_CONDITIONS: usize = 64;
@@ -132,11 +132,11 @@ enum TestKind {
 }
 
 impl ValueTest {
-    fn holds<'x, I: Instance<'x>>(&self, v: I) -> bool {
+    fn holds<'x, I: Instance<'x>>(&self, v: I, budget: &mut PatternBudget) -> bool {
         match &self.kind {
             TestKind::Allowed(values) => values.iter().any(|a| json_equal(a, v)),
             TestKind::Pattern { pattern, requires_string } => match v.view() {
-                View::String(s) => pattern.is_match(s),
+                View::String(s) => pattern.is_match(s, budget),
                 _ => !requires_string,
             },
         }
@@ -696,7 +696,7 @@ pub(super) fn try_fuse(
     // A known name matching an absent pattern fails its condition whatever its value: no constant is allowed.
     for (e, name) in names.iter().enumerate() {
         for (condition, pattern) in &absent {
-            if pattern.is_match(name) {
+            if pattern.is_match(name, &mut p.compile_budget.lock().unwrap_or_else(|e| e.into_inner())) {
                 tests[e].push(ValueTest { condition: *condition, kind: TestKind::Allowed(Box::new([])) });
             }
         }
@@ -714,7 +714,7 @@ pub(super) fn try_fuse(
                 apps.push((c as u16, app_child(schema), Some(p.fast_target[schema as usize])));
             }
             for pp in b.pattern_properties.iter().flatten() {
-                if pp.pattern.is_match(name) {
+                if pp.pattern.is_match(name, &mut p.compile_budget.lock().unwrap_or_else(|e| e.into_inner())) {
                     matched = true;
                     apps.push((c as u16, app_child(pp.node), Some(p.fast_target[pp.node as usize])));
                 }
@@ -942,7 +942,7 @@ impl Evaluator<'_, '_> {
     fn resolve_unknown<'x, I: Instance<'x>>(&mut self, c: &Contributor, name: &str, v: I) -> Option<bool> {
         let mut matched = false;
         for (pattern, child) in c.patterns.iter() {
-            if pattern.is_match(name) {
+            if pattern.is_match(name, &mut self.budget) {
                 matched = true;
                 if !self.apply(*child, v) {
                     return None;
@@ -965,7 +965,11 @@ impl Evaluator<'_, '_> {
             Some(merged) => {
                 let allowed = merged.allowed(v);
                 for (t, test) in entry.tests.iter().enumerate() {
-                    let holds = if merged.keyed & (1 << t) != 0 { allowed & (1 << t) != 0 } else { test.holds(v) };
+                    let holds = if merged.keyed & (1 << t) != 0 {
+                        allowed & (1 << t) != 0
+                    } else {
+                        test.holds(v, &mut self.budget)
+                    };
                     if !holds {
                         pass.failed |= 1 << test.condition;
                     }
@@ -973,7 +977,7 @@ impl Evaluator<'_, '_> {
             }
             None => {
                 for test in entry.tests.iter() {
-                    if !test.holds(v) {
+                    if !test.holds(v, &mut self.budget) {
                         pass.failed |= 1 << test.condition;
                     }
                 }
@@ -1004,7 +1008,7 @@ impl Evaluator<'_, '_> {
             return Outcome::Done { cover, defer };
         }
         for (c, pattern) in f.absent.iter() {
-            if pass.failed & (1 << c) == 0 && pattern.is_match(name) {
+            if pass.failed & (1 << c) == 0 && pattern.is_match(name, &mut self.budget) {
                 pass.failed |= 1 << c;
             }
         }
