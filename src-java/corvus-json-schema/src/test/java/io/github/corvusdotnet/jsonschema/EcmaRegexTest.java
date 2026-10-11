@@ -2382,6 +2382,47 @@ class EcmaRegexTest {
         assertEquals("^(?:a|){2,3}b", EcmaRegex.translate("^(?:a|){2,3}b"));
     }
 
+    /**
+     * What the limit on a match relies on in java.util.regex, on the JDK that runs the test: with the bounds the
+     * library gives a matcher, the engine asks the text for its length at every lookahead, word boundary and end
+     * anchor, and reads a character through the text. A JDK that stopped doing so would leave a match uncounted.
+     */
+    @Test
+    void theEngineAsksTheTextForItsLength() {
+        int[] asked = new int[2];
+        CharSequence text = new CharSequence() {
+            @Override
+            public int length() {
+                asked[0]++;
+                return 10;
+            }
+
+            @Override
+            public char charAt(int index) {
+                asked[1]++;
+                return 'a';
+            }
+
+            @Override
+            public CharSequence subSequence(int start, int end) {
+                return "aaaaaaaaaa".substring(start, end);
+            }
+        };
+        for (String p : new String[] {"(?=)x", "(?!y)x", "(?:(?<=[a-zA-Z0-9_])(?![a-zA-Z0-9_])|\\b)x", "a{9}\\za", "(?=)(?:|)(?=)(?:|)x"}) {
+            SchemaPattern compiled = SchemaPattern.compile("x");
+            java.util.regex.Matcher m = Pattern.compile(p).matcher("").useTransparentBounds(true).useAnchoringBounds(false);
+            assertTrue(m.hasTransparentBounds() && !m.hasAnchoringBounds() && compiled.matcher().hasTransparentBounds()
+                    && !compiled.matcher().hasAnchoringBounds());
+            asked[0] = 0;
+            asked[1] = 0;
+            assertFalse(m.reset(text).find(), p);
+            // Once to reset, and then at least once for each of the places the pattern is tried at, or at its end.
+            boolean anchor = p.startsWith("a{9}");
+            assertTrue(asked[0] >= (anchor ? 2 : 10), p + " asked for the length " + asked[0] + " times");
+            assertTrue(asked[1] >= (anchor ? 9 : 10), p + " read " + asked[1] + " characters");
+        }
+    }
+
     /** A repetition of a body that takes no character is run once, whatever its count. */
     @Test
     void aRepetitionOfNoCharacterIsRunOnce() {
