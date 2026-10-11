@@ -8,9 +8,9 @@
     Unicode version. ECMA-262 follows the latest one. So the library carries its own tables, and a pattern means the
     same on every JDK.
 
-    The data comes from unicodetables.rs of the regress crate, which the Rust port of the evaluator depends on and
-    which is generated from the Unicode Character Database. The Go port's tables come from the same file. The script
-    copies:
+    The data comes from unicodetables.rs of the regress crate, which that crate generates from the Unicode Character
+    Database. The crate is only where the data is read from: no port of the evaluator depends on it. The Go port's
+    tables come from the same file. The script copies:
 
     - the thirty General_Category values that are not unions of others, and the names of all of them;
     - the binary properties ECMA-262 lists, with their names;

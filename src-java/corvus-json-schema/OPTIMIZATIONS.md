@@ -94,6 +94,6 @@ technique; this is the checklist.
 - **Stack allocation, SkipLocalsInit, ArrayPool, inline/no-inline attributes** (C#/Rust): the JVM has no equivalents;
   the arena and per-evaluator scratch play their part, and the JIT decides inlining.
 - **Program image, ReadyToRun, MIBC profiles** (C#): the AOT cache is the JVM's counterpart.
-- **Linear-time `regex` crate translation and `regress`** (Rust), **compiled IL regex** (C#): `java.util.regex` is the
-  JVM's engine; the shapes avoid it where they can.
+- **Linear-time `regex` crate translation and the crate's own ECMA-262 engine** (Rust), **compiled IL regex** (C#):
+  `java.util.regex` is the JVM's engine; the shapes avoid it where they can.
 - **Vectorised search start** (C#'s `IndexOfAny`): no portable vector API on Java 17.
