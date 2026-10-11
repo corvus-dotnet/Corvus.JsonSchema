@@ -849,6 +849,9 @@ final class EcmaRegex {
                 repeat.min = Math.min(repeat.min, 1);
                 repeat.max = repeat.max == 0 ? 0 : 1;
             }
+            if (repeat.min == 0) {
+                withoutEmptyAlternatives(atom);
+            }
             repeat.firstGroup = groupsBefore;
             repeat.lastGroup = groups;
             return repeat;
@@ -919,6 +922,46 @@ final class EcmaRegex {
                 }
             }
             return false;
+        }
+
+        /**
+         * Takes the empty alternatives out of the body of a repetition that can run no times, when the body is a
+         * group of alternatives and one of them is not empty. ECMA-262 does not take an iteration that matched
+         * nothing once the minimum is met, and here it is met from the start, so the empty alternative is never the
+         * way an iteration goes: {@code (?:a|)*} is {@code a*}. For {@code java.util.regex} it is a way, and one
+         * it tries at every place: {@code ^(?:(?:a|)*?x)*?$} read a string of 41 characters nine million times.
+         */
+        private static void withoutEmptyAlternatives(Node atom) {
+            Node holder = null;
+            Node body = atom;
+            while (body.kind == GROUP) {
+                holder = body;
+                body = body.subs[0];
+            }
+            if (holder == null || body.kind != ALT) {
+                return;
+            }
+            List<Node> kept = new ArrayList<>();
+            for (Node sub : body.subs) {
+                if (sub.kind != EMPTY) {
+                    kept.add(sub);
+                }
+            }
+            if (kept.isEmpty() || kept.size() == body.subs.length) {
+                return;
+            }
+            if (kept.size() == 1) {
+                holder.subs[0] = kept.get(0);
+                return;
+            }
+            Node one = oneCharacter(kept);
+            if (one == null) {
+                one = new Node(ALT);
+                one.subs = kept.toArray(NO_NODES);
+            }
+            one.firstGroup = body.firstGroup;
+            one.lastGroup = body.lastGroup;
+            holder.subs[0] = one;
         }
 
         /** Whether a node takes no character wherever it matches, by its form: a backreference is not counted so. */

@@ -2172,9 +2172,9 @@ class EcmaRegexTest {
         assertEquals(EcmaRegex.REFUSED_TOO_MANY_PATHS, EcmaRegex.unsupported(fourteen));
         assertEquals(EcmaRegex.LIMIT_PLANS, EcmaRegex.tooLarge(fourteen));
         // Two hundred iterations of a lookahead by ways, and two hundred copies of a body, are written.
-        assertNotNull(EcmaRegex.translate("(?=((?:a|){0,200}?)a)\\1a$"));
-        assertEquals(EcmaRegex.REFUSED_TOO_MANY_PATHS, EcmaRegex.unsupported("(?=((?:a|){0,201}?)a)\\1a$"));
-        assertEquals(EcmaRegex.LIMIT_COPIES, EcmaRegex.tooLarge("(?=((?:a|){0,201}?)a)\\1a$"));
+        assertNotNull(EcmaRegex.translate("(?=((?:a|(?:)){0,200}?)a)\\1a$"));
+        assertEquals(EcmaRegex.REFUSED_TOO_MANY_PATHS, EcmaRegex.unsupported("(?=((?:a|(?:)){0,201}?)a)\\1a$"));
+        assertEquals(EcmaRegex.LIMIT_COPIES, EcmaRegex.tooLarge("(?=((?:a|(?:)){0,201}?)a)\\1a$"));
         assertNotNull(EcmaRegex.translate("(?:^|x){200}a"));
         assertEquals(EcmaRegex.REFUSED_EMPTY_ITERATIONS, EcmaRegex.unsupported("(?:^|x){201}a"));
         assertEquals(EcmaRegex.LIMIT_COPIES, EcmaRegex.tooLarge("(?:^|x){201}a"));
@@ -2279,6 +2279,35 @@ class EcmaRegexTest {
             "84e9c39fff4e9cff72f4efffffffff9c39fff4e9cfffffffff3972fff9c39ffffffffffffffffffffffffffffff"},
     };
 
+    private static final String[][] EMPTY_ALTERNATIVES_OF_A_REPETITION = {
+        {"(?:a|)*b", "4ab47df7d5abefbeaffffffbeaffab47df7d5ffffff7d5ff57dfffffffffffffffffff7d5ff57dffffff57df7d5"},
+        {"^(?:(?:a|){0,20}?c){0,20}?$",
+            "9409020028401001400000001400409020028000000028008020000000000000000000028008020000008020028"},
+        {"(a|)*\\1b", "4ab47df7d5abefbeaffffffbeaffab47df7d5ffffff7d5ff57dfffffffffffffffffff7d5ff57dffffff57df7d5"},
+        {"(?:|a|b)*c$", "8429429429429429429429429429429429429429429429429429429429429429429429429429429429429429429"},
+        {"(?:(a)|)*?\\1b",
+            "4ab47df7d5abefbeaffffffbeaffab47df7d5ffffff7d5ff57dfffffffffffffffffff7d5ff57dffffff57df7d5"},
+        {"^(?:a|){0,3}b$",
+            "4204000000200000000000000000000000000000000000000000000000000000000000000000000000000000000"},
+        {"^(a|){2,}?\\1c",
+            "84c98308ff4c10cf7000000cffffff98308ff0000008ffffff300000000000000000008ffffffffffffffffffff"},
+        {"(?:|ab|){0,2}c$",
+            "8429429429429429429429429429429429429429429429429429429429429429429429429429429429429429429"},
+        {"^(?:(?:a|)(?:b|))*c$",
+            "8428409000428400021420000000008409000428400000000009021008409000000000000000000000000000000"},
+        {"^((?:a|)|b)*\\1c",
+            "80c90088ff4c14000200e10cffffff98388ff400c30000000001701008008fff0000008ffffffffffffffffffff"},
+        {"^(?:(|a)|b)?\\1c",
+            "80e9000fff0c100000000effffffff10008ff000000000000000000000000000fffffffffffffffffffffffffff"},
+        {"(?:|a)??b", "4ab47df7d5abefbeaffffffbeaffab47df7d5ffffff7d5ff57dfffffffffffffffffff7d5ff57dffffff57df7d5"},
+        {"^(?:(?:|a)+?b)*$",
+            "5214284000214200090210000000004284000214200000000084090004284000000000000000000000000000000"},
+        {"^(?:|(a)|(b))*\\1\\2$",
+            "1112244000112200880110000000002244000112200000000044880002244000000000000000000000000000000"},
+        {"(?<=(?:a|)*b)c",
+            "0020408701020c380010eff3800f020408701020cff7010e140800f020408fffffffff7010e140800fff1408701"},
+    };
+
     private static void assertAnswersInBits(String[][] cases) {
         List<String> texts = textsOver(5, new String[] {"a", "b", "c"});
         List<String> wrong = new ArrayList<>();
@@ -2336,6 +2365,21 @@ class EcmaRegexTest {
         for (String[] w : written) {
             assertEquals(w[1], EcmaRegex.translate(w[0]), w[0]);
         }
+    }
+
+    /**
+     * A repetition that can run no times never takes an iteration that matched nothing, so an empty alternative of
+     * its body is no way through it, and is not written. java.util.regex would try it at every place.
+     */
+    @Test
+    void aRepetitionThatCanRunNoTimesHasNoEmptyAlternative() {
+        assertAnswersInBits(EMPTY_ALTERNATIVES_OF_A_REPETITION);
+        assertEquals("^(?:(?:a)*?x)*?\\z", EcmaRegex.translate("^(?:(?:a|)*?x)*?$"));
+        assertEquals("(?:[\\x{61}-\\x{62}])*c", EcmaRegex.translate("(?:|a|b)*c"));
+        assertEquals("^(?:ab|c){0,3}+d", EcmaRegex.translate("^(?:ab||c){0,3}d"));
+        // A repetition that must run keeps it: its first iterations may match nothing.
+        assertEquals("^(?:a|)+b", EcmaRegex.translate("^(?:a|)+b"));
+        assertEquals("^(?:a|){2,3}b", EcmaRegex.translate("^(?:a|){2,3}b"));
     }
 
     /** A repetition of a body that takes no character is run once, whatever its count. */
