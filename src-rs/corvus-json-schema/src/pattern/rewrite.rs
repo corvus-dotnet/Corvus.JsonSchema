@@ -43,8 +43,12 @@
 //!   iterations than its maximum, or leave before its minimum. It cannot go round for ever, as each iteration
 //!   takes a character. This is what regress was given before there was a rewriter.
 //! - A repetition whose body can match nothing is never left so. With a lost count regress does not refuse its
-//!   empty iterations, and that is the match that takes memory without bound. If it does not fit, the pattern is
-//!   refused ([`Rewrite::TooLarge`]).
+//!   empty iterations, and that is the match that takes memory without bound. Its iterations up to the minimum
+//!   are written out, and those after it are left as one repetition with a count, of the body made to take a
+//!   character (`X{1,300}` as `X(?:X'){0,299}`). ECMA-262 refuses an iteration after the minimum that matches
+//!   nothing, so they are the same iterations, and regress cannot go round for ever in one that takes a
+//!   character. If the minimum does not fit, or a reference outside the repetition reads a group of it (it reads
+//!   the last iteration that ran, which only the copies say), the pattern is refused ([`Rewrite::TooLarge`]).
 //!
 //! The rule can be by repetition because each loop of regress has a count of its own, and the fault is in how one
 //! loop's count is kept. regress's backtrack stack is as long as the path it is on, and a path is long without
@@ -84,7 +88,8 @@ pub(super) enum Rewrite {
     Unchanged,
     Rewritten(String),
     /// The rewritten pattern would be too large, and regress may not have the pattern as written: it has a
-    /// repetition that is too large to write out or stands with one, and a body that can match nothing.
+    /// repetition whose body can match nothing, and whose minimum is too large to write out or whose groups are
+    /// read outside it.
     TooLarge,
 }
 
@@ -146,7 +151,8 @@ fn unit_char(unit: u32) -> char {
     char::from_u32(if surrogate { unit + SURROGATE } else { unit }).unwrap_or(char::REPLACEMENT_CHARACTER)
 }
 
-/// The UTF-16 code units of a pattern that is valid only without the `u` flag, as regress is to read them. regress
+/// The UTF-16 code units of a pattern that is valid only without the `u` flag, as regress is to read them (a group
+/// name apart, which has its characters). regress
 /// reads two things there as it would with the flag, and each is written here as what ECMA-262 says it is:
 ///
 /// - `\u` before anything but four hexadecimal digits is the letter `u`. regress reads `\u{...}` as the escape of a
@@ -256,6 +262,7 @@ fn rewrite(pattern: &str, unicode: bool, always: bool) -> Rewrite {
         deepest: 1,
         left: std::collections::HashSet::new(),
         leave_all: false,
+        leave_optional_all: false,
         writing: Vec::new(),
         leave: None,
     };
@@ -274,9 +281,11 @@ fn rewrite(pattern: &str, unicode: bool, always: bool) -> Rewrite {
                 return Rewrite::Rewritten(written);
             }
             Err(_) => match emitter.leave.take() {
-                Some(repetition) if !emitter.leave_all => {
+                // One that is named was being written out, so it is not one of those left already.
+                Some(repetition) if !emitter.leave_optional_all => {
                     emitter.left.insert(repetition);
                     emitter.leave_all = emitter.left.len() > MAX_LEFT_ONE_AT_A_TIME;
+                    emitter.leave_optional_all = emitter.left.len() > 2 * MAX_LEFT_ONE_AT_A_TIME;
                 }
                 // No repetition that may be left with its count is being written where the limit is met. With no
                 // repetition in the whole pattern that goes round for ever in regress, regress has the pattern as
@@ -1410,6 +1419,9 @@ struct Emitter {
     /// The repetitions that are left with their counts, by body, and whether every one that may be is.
     left: std::collections::HashSet<*const Node>,
     leave_all: bool,
+    /// Whether every repetition whose body can match nothing, and that may be left with the count of its
+    /// iterations after the minimum, is.
+    leave_optional_all: bool,
     /// The repetitions being written out that may be left with their counts instead, from the outermost: the body
     /// and how many copies it comes to.
     writing: Vec<(*const Node, u64)>,
@@ -1802,16 +1814,56 @@ impl Emitter {
             return Ok(out);
         }
         // Written out, it may come to more than regress is given. If its body cannot match nothing it is one of
-        // those that can be left with its count instead.
-        if !can_be_empty {
+        // those that can be left with its count instead. One whose body can is left with the count of its
+        // iterations after the minimum, when it has a maximum and nothing outside reads a group of it.
+        let optional = can_be_empty && max.is_some() && !self.read_outside(body, groups);
+        if optional && (self.leave_optional_all || self.left.contains(&std::ptr::from_ref(body))) {
+            return self.leave_optional((min, max.unwrap_or(min), lazy), body, groups, back);
+        }
+        let may_be_left = !can_be_empty || optional;
+        if may_be_left {
             let copies = u64::from(min) + max.map_or(1, |max| u64::from(max - min));
             self.writing.push((std::ptr::from_ref(body), copies));
         }
         let written = self.write_out((min, max, lazy), body, groups, back)?;
-        if !can_be_empty {
+        if may_be_left {
             self.writing.pop();
         }
         Ok(written)
+    }
+
+    /// A repetition whose body can match nothing, and that is too large to write out: the iterations up to the
+    /// minimum are written out, each of which may match nothing, and those after it are one repetition with a
+    /// count, of the body made to take a character. ECMA-262 refuses an iteration after the minimum that matches
+    /// nothing, so they are the same iterations. With every iteration taking a character regress cannot go round
+    /// for ever in it, which is what it does in the repetition as written. Its count may still be lost, as for a
+    /// repetition whose body cannot match nothing.
+    fn leave_optional(
+        &mut self,
+        (min, max, lazy): (u32, u32, bool),
+        body: &Node,
+        groups: &Groups,
+        back: bool,
+    ) -> Result<Out, Stop> {
+        let mut parts = Vec::new();
+        for _ in 0..min {
+            self.spend(1)?;
+            self.unset(groups);
+            parts.push(self.node(body, back, true)?);
+        }
+        self.unset(groups);
+        let copy = self.down(1, |e| {
+            let some = can_take_some(body);
+            let copy = e.write(body, back, true, some)?;
+            if some { Ok(copy) } else { e.not_empty(copy, back) }
+        })?;
+        let mut tail = Out::default();
+        self.text(&mut tail, "(?:")?;
+        tail.append(copy);
+        self.text(&mut tail, &format!("){{0,{}}}{}", max - min, if lazy { "?" } else { "" }))?;
+        self.unset(groups);
+        parts.push(tail);
+        Ok(self.sequence(parts, back))
     }
 
     /// A repetition that loses its count in regress, without a count: see the top of the file.
@@ -2174,15 +2226,41 @@ mod tests {
         }
     }
 
-    /// A repetition whose body can match nothing is not left with its count, whatever is inside it or around it.
+    /// A repetition whose body can match nothing is not left as it is written, whatever is inside it or around it.
+    /// Its iterations up to the minimum are written out, and those after it are left with their count, of the
+    /// body made to take a character.
+    #[test]
+    fn a_repetition_too_large_to_write_out_whose_body_can_be_empty_keeps_the_count_after_its_minimum() {
+        for (pattern, expected) in [
+            (r"^(?!-)(?:(?:a|){1,300}-)+$", r"^(?!-)(?:(?:a|)(?:(?:a)){0,299}-)+$"),
+            (r"^(?!-)(?:(?:a|){2,300}?-)+$", r"^(?!-)(?:(?:a|)(?:a|)(?:(?:a)){0,298}?-)+$"),
+            (
+                r"^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$",
+                r"^(?!-)(?:(?:(?:a|x){1,300}|)(?:(?:(?:a|x){1,300})){0,299}-)+$",
+            ),
+            (r"^(?!-)(?:(?:(?:a|){1,300}x){1,300}-)+$", r"^(?!-)(?:(?:(?:a|)(?:(?:a)){0,299}x){1,300}-)+$"),
+            // A body with more than one part that may be empty is held to a character by a group.
+            (
+                r"^(?!-)(?:(?:a*x*){2,300}?-)+$",
+                r"^(?!-)(?:(?:a*x*)(?:a*x*)(?:(?=([^]*))(?:a*x*)(?!(?:\1))){0,298}?-)+$",
+            ),
+            // A reference inside the body reads the group of its own iteration.
+            (r"^(?!-)(?:(?:(a)\1|){1,300}-)+$", r"^(?!-)(?:(?:(a)(?:\1)|)(?:(?:(a)(?:\2))){0,299}-)+$"),
+            // In a lookbehind the iterations after the minimum are matched last, and written first.
+            (r"(?<=(?:(?:a|){1,300}-)+)x", r"(?<=(?:(?:(?:a)){0,299}(?:a|)-)+)x"),
+        ] {
+            assert_eq!(rewritten(pattern).as_deref(), Some(expected), "{pattern}");
+        }
+    }
+
+    /// It is too large when its minimum is, and when a reference outside it reads a group of it: the reference
+    /// reads the last iteration that ran, which only the copies say.
     #[test]
     fn a_repetition_too_large_to_write_out_whose_body_can_be_empty_is_too_large() {
         for pattern in [
             r"^(?!-)(?:(?:a|){4294967295}-)+$",
-            r"^(?!-)(?:(?:a|){1,300}-)+$",
             r"^(?!-)(?:(?:(?:a|x|){200}-|a?){200}x)+$",
-            r"^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$",
-            r"^(?!-)(?:(?:(?:a|){1,300}x){1,300}-)+$",
+            r"^(?!-)(?:(?:(a)|){1,300}\1-)+$",
         ] {
             assert!(matches!(for_engine(pattern, true), Rewrite::TooLarge), "{pattern}");
         }

@@ -534,16 +534,43 @@ fn a_repetition_too_large_to_write_out_keeps_its_count_when_its_body_cannot_be_e
 }
 
 /// A repetition that is too large to write out and whose body can match the empty string is the one the engine
-/// does not end on when it has it as written. The pattern is refused with a reason of its own. It is not run with
-/// another meaning. A repetition inside it that could keep its count does not change that.
+/// does not end on when it has it as written. Its iterations up to the minimum are written out, and those after
+/// it keep their count, each made to take a character, which is what ECMA-262 says of an iteration after the
+/// minimum. The answers are V8's on [`texts`]. V8 takes minutes over the long texts for all but the last two.
+#[rustfmt::skip]
+const TOO_LARGE_TO_WRITE_OUT_WITH_A_BODY_THAT_CAN_BE_EMPTY: &[(&str, &str)] = &[
+    ("^(?!-)(?:(?:a|){1,300}-)+$", "FFFFFFTFFFFFFFFTFFFFFTFFFFFFFFFFFFFFFFFFFFFFTFF"),
+    ("^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF"),
+    ("^(?!-)(?:(?:(?:a|){1,300}x){1,300}-)+$", "FFFFFFFFFTFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF"),
+    ("^(?!-)(?:(?:a*x*){2,300}?-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF"),
+    ("(?<=(?:(?:a|){1,300}-)+)x", "FFFFFFFFFFFTFFFFFFFFTFFFFFFFFTFFFFTTTFTFFFFFFFT"),
+    (r#"^(?!-)(?:(?:(a)\1|){1,300}-)+$"#, "FFFFFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+];
+
+/// The last two of them on [`long_texts`].
+const TOO_LARGE_WITH_A_BODY_THAT_CAN_BE_EMPTY_ON_LONG_TEXTS: &[(&str, &str)] =
+    &[("(?<=(?:(?:a|){1,300}-)+)x", "FFTTFFFFFF"), (r"^(?!-)(?:(?:(a)\1|){1,300}-)+$", "TFFFFFFTFF")];
+
+#[test]
+fn a_repetition_too_large_to_write_out_keeps_the_count_after_its_minimum_when_its_body_can_be_empty() {
+    check(TOO_LARGE_TO_WRITE_OUT_WITH_A_BODY_THAT_CAN_BE_EMPTY);
+    let texts = long_texts();
+    for &(pattern, answers) in TOO_LARGE_WITH_A_BODY_THAT_CAN_BE_EMPTY_ON_LONG_TEXTS {
+        let v = compile(&json!({ "pattern": pattern })).unwrap();
+        let got: String = texts.iter().map(|text| if v.is_valid(&json!(text)) { 'T' } else { 'F' }).collect();
+        assert_eq!(got, answers, "{pattern}");
+    }
+}
+
+/// It is refused, with a reason of its own, when its minimum is too large to write out, and when a reference
+/// outside it reads one of its groups (the reference reads the last iteration that ran, which only the copies
+/// say). It is not run with another meaning.
 #[test]
 fn a_repetition_too_large_to_write_out_is_refused_when_its_body_can_be_empty() {
     for pattern in [
-        r"^(?!-)(?:(?:a|){1,300}-)+$",
         r"^(?!-)(?:(?:a|x|){4294967295}-)+$",
         r"^(?!-)(?:(?:(?:a|x|){200}-|a?){200}x)+$",
-        r"^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$",
-        r"^(?!-)(?:(?:(?:a|){1,300}x){1,300}-)+$",
+        r"^(?!-)(?:(?:(a)|){1,300}\1-)+$",
     ] {
         let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
         assert_eq!(

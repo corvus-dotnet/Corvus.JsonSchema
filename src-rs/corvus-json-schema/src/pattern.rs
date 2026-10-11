@@ -298,8 +298,8 @@ pub(crate) enum PatternError {
     /// It is not a valid ECMA-262 regular expression.
     Invalid,
     /// It is valid, and it has a repetition inside a repetition that has to be written out for the engine (see
-    /// `rewrite`), which comes to more than the engine is given, and whose body can match nothing, so that the
-    /// engine cannot be given it as it is written either.
+    /// `rewrite`), whose body can match nothing, so that the engine cannot be given it as it is written, and
+    /// whose minimum comes to more than the engine is given, or whose groups a reference outside it reads.
     TooLarge,
 }
 
