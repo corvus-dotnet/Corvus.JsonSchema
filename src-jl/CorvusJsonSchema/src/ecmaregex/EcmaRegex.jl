@@ -198,9 +198,10 @@ end
     ismatch(p::Pattern, text::AbstractString) -> Bool
 
 Whether the pattern matches anywhere in the UTF-8 text (an unanchored search). It is safe to call from several tasks
-at once. Throws a [`MatchError`](@ref) when PCRE2 reaches one of its limits. It allocates nothing, but for a pattern
-that is only valid with no flag on a text with a character beyond the Basic Multilingual Plane, which is matched by
-UTF-16 code unit and written again for that.
+at once. Throws a [`MatchError`](@ref) when PCRE2 reaches one of its limits. In the steady state it allocates nothing.
+A pattern that is only valid with no flag is matched by UTF-16 code unit, so a text with a character beyond the Basic
+Multilingual Plane is written again for it, into a buffer that the module keeps and uses again (one that has grown
+past 4 MiB is not kept, so such a match of a text of more than 2 MiB allocates).
 
 The bytes of a `Vector{UInt8}`, of a contiguous view of one, of the code units of a `String` and of a `String` or
 `SubString{String}` are matched where they are. Any other vector or string is copied first.
@@ -242,11 +243,13 @@ end
 Writes UTF-8 text as the translation of a pattern without the `u` flag reads it, where each UTF-16 code unit is one
 character. A character beyond the Basic Multilingual Plane is two code units, a surrogate pair, and the surrogate
 U+D800 + n is written as the character U+F0000 + n, so that PCRE2, which matches by character, takes the two halves
-one at a time. Every other character is written as it is. Bytes that are not UTF-8 are copied.
+one at a time. Every other character is written as it is. Bytes that are not UTF-8 are copied. `out` is given the
+length of what is written, and it allocates only when it has to grow.
 """
 function codeunits!(out::Vector{UInt8}, text::AbstractVector{UInt8})
-    empty!(out)
-    sizehint!(out, 2 * length(text))
+    # A character of four bytes is written as two of four, and nothing else grows.
+    resize!(out, 2 * length(text))
+    n = 0
     i = firstindex(text)
     last = lastindex(text)
     while i <= last
@@ -259,24 +262,51 @@ function codeunits!(out::Vector{UInt8}, text::AbstractVector{UInt8})
                 v = c - 0x10000
                 for unit in (v >> 10, 0x400 + (v & 0x3FF))
                     # U+F0000 + unit, which is below U+F0800.
-                    push!(out, 0xF3, 0xB0, 0x80 | ((unit >> 6) % UInt8), 0x80 | ((unit & 0x3F) % UInt8))
+                    out[n+1] = 0xF3
+                    out[n+2] = 0xB0
+                    out[n+3] = 0x80 | ((unit >> 6) % UInt8)
+                    out[n+4] = 0x80 | ((unit & 0x3F) % UInt8)
+                    n += 4
                 end
                 i += 4
                 continue
             end
         end
-        push!(out, b)
+        n += 1
+        out[n] = b
         i += 1
     end
-    return out
+    return resize!(out, n)
 end
 
+# The buffers that texts are written into as code units. A match takes one and puts it back, so that in the steady
+# state it allocates nothing: there are as many as matches of this kind have run at once, and each has grown to the
+# longest text it was given. One that has grown past MAX_KEPT_UNITS bytes is not kept, so that one long string does
+# not hold its size in memory for the life of the process.
+const UNIT_BUFFERS = Vector{UInt8}[]
+const UNIT_BUFFER_LOCK = Threads.SpinLock()
+const MAX_KEPT_UNITS = 4 * 1024 * 1024
+
 # A match of a pattern without the u flag against text with a character beyond the Basic Multilingual Plane. The
-# text is written again as code units, which allocates.
+# text is written again as code units, into a buffer that is kept.
 @noinline function matchunits(p::Pattern, text::AbstractVector{UInt8})::Bool
-    units = codeunits!(UInt8[], text)
-    GC.@preserve p units begin
-        return unsafe_ismatch(p, pointer(units), length(units))
+    lock(UNIT_BUFFER_LOCK)
+    units = isempty(UNIT_BUFFERS) ? nothing : pop!(UNIT_BUFFERS)
+    unlock(UNIT_BUFFER_LOCK)
+    if units === nothing
+        units = UInt8[]
+    end
+    try
+        codeunits!(units, text)
+        GC.@preserve p units begin
+            return unsafe_ismatch(p, pointer(units), length(units))
+        end
+    finally
+        if length(units) <= MAX_KEPT_UNITS
+            lock(UNIT_BUFFER_LOCK)
+            push!(UNIT_BUFFERS, units)
+            unlock(UNIT_BUFFER_LOCK)
+        end
     end
 end
 

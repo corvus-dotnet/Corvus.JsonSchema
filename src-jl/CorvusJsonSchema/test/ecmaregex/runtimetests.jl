@@ -74,6 +74,46 @@ end
         end
         @test E.ismatch(patterns[7], bytes)
         @test !E.ismatch(patterns[8], bytes)
+        # A pattern that is valid only without the u flag is matched by UTF-16 code unit, so a text with a character
+        # beyond the Basic Multilingual Plane is written again for it. It is written into a buffer that is kept.
+        for pattern in [E.compile(raw"^\-?.+$"), E.compile(raw"\&?[\u{1F600}x]{2}"), E.compile(raw"(?:\ud83d)\-?")]
+            @test !pattern.unicode
+            @test allocated(pattern, bytes, 1000) == 0
+            @test allocated(pattern, view(bytes, 3:40), 1000) == 0
+            @test allocated(pattern, codeunits(text), 1000) == 0
+            @test allocated(pattern, text, 1000) == 0
+            @test allocated(pattern, SubString(text, 5, 30), 1000) == 0
+            @test allocated(pattern, "\U10400", 1000) == 0
+            @test allocated(pattern, "a\U1F600"^500, 1000) == 0
+        end
+        @test E.ismatch(E.compile(raw"(?:\ud83d)\-?"), bytes)
+        @test !E.ismatch(E.compile(raw"^\-?.$"), "\U10400")
+        # The buffer has the length of what was written, whatever was written into it before.
+        units = UInt8[]
+        @test String(copy(E.codeunits!(units, codeunits("a\U10400\u00e9\U1F600")))) ==
+              "a\U000f0001\U000f0400\u00e9\U000f003d\U000f0600"
+        @test String(copy(E.codeunits!(units, codeunits("\U10400")))) == "\U000f0001\U000f0400"
+        @test isempty(E.codeunits!(units, UInt8[]))
+        @test E.codeunits!(units, [0xf0, 0x90, 0x61]) == [0xf0, 0x90, 0x61]
+        # A buffer that has grown past MAX_KEPT_UNITS is not kept, and the match is right all the same.
+        long = "\U10400"^(E.MAX_KEPT_UNITS ÷ 8 + 1)
+        @test !E.ismatch(E.compile(raw"^\-?.$"), long)
+        @test E.ismatch(E.compile(raw"^\-?\ud801\udc00\ud801"), long)
+        @test all(buffer -> length(buffer) <= E.MAX_KEPT_UNITS, E.UNIT_BUFFERS)
+        # Matches of this kind from several tasks at once.
+        dot = E.compile(raw"^\-?.{4}$")
+        tasks = map(1:8) do task
+            Threads.@spawn begin
+                wrong = 0
+                for round in 1:2000
+                    wrong += !E.ismatch(dot, "\U10400"^2)
+                    wrong += E.ismatch(dot, "\U10400"^(2 + round % 3 + 1))
+                    (round + task) % 97 == 0 && yield()
+                end
+                wrong
+            end
+        end
+        @test sum(fetch, tasks) == 0
     end
 
     @testset "validating a pattern allocates nothing" begin

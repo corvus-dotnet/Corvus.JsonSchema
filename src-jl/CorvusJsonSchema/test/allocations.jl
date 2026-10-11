@@ -107,6 +107,14 @@ function allocation_cases()
                 """{"a": "a foo", "b": "éa", "ab": 1}""",
                 """{"a": "afoo"}""",
                 """{"b": "é1", "bb": 1}"""]),
+        AllocationCase("patterns valid only without the u flag", """{
+                "properties": { "a": { "pattern": "^\\\\-?.{2}\$" }, "b": { "pattern": "\\\\&|\\\\ud83d" } },
+                "patternProperties": { "^\\\\-?.x\$": { "type": "integer" } }
+            }""", (;), [
+                """{"a": "\U10400", "b": "a\U1F600", "\U10400x": 1}""",
+                """{"a": "a\U10400", "b": "\U10400"}""",
+                """{"a": "ab", "ax": 1, "\u00e9x": "no"}""",
+                """{"a": "\\ud801\\udc00", "b": "\\ud83d\\ude00"}"""]),
         AllocationCase("asserted formats and content", """{
                 "properties": {
                     "date": { "format": "date-time" }, "ip": { "format": "ipv6" }, "host": { "format": "hostname" },
