@@ -133,7 +133,8 @@ A JSON string cannot hold a surrogate that is not half of a pair. The parser ref
   inside a repetition, as in `(?<=(?:[ax]+){2,})$`, does not try the ways to split the text after that place.
 - An iteration of a counted repetition that matches nothing does not end the repetition while iterations are still
   due, so `(^|x){2}a` matches "xa" as ECMA-262 defines, where `java.util.regex` does not. Such a repetition is
-  written with a copy of its body for each iteration it must run.
+  written with a copy of its body for each iteration it must run. A body with one way to match, such as a
+  backreference, needs no copies: when one iteration of it matches nothing, so do the ones after it.
 - A backreference reads what ECMA-262 says its group holds, where `java.util.regex` reads something else. A group
   that did not take part reads as the empty string. The groups of a repeated body are unset when an iteration
   starts, so `^(?:(a)|x)*\1$` takes "ax" and not "axa", and an iteration that matched nothing leaves no group set. A
@@ -143,10 +144,13 @@ A JSON string cannot hold a surrogate that is not half of a pair. The parser ref
   case-insensitive group a backreference compares by ECMA-262's case folding, the same on every JDK:
   `^(?i:(.)\1)$` takes "sſ" and "kK" (U+017F, U+212A) and not "iİ" (U+0130). A reference to a group of several
   characters is compared one character at a time, as ECMA-262 says: `^(?i:(..)\1)$` does not take "ßSsẞ" (U+00DF,
-  U+1E9E), which V8 13.6 takes, as it compares the two texts by full case folding. Such a pattern is written once for
-  each way through the groups it reads, and a case-insensitive backreference with its comparison written out, so
-  the translation can be long: between 12,000 and 25,000 characters for a case-insensitive backreference to a
-  group that can hold any character.
+  U+1E9E), which V8 13.6 takes, as it compares the two texts by full case folding. `java.util.regex` compares the
+  characters for which its own case-insensitive comparison is that of ECMA-262, and the others are compared by
+  classes of equivalent characters written into the translation. Which characters those are is found by asking the
+  engine of the JVM the library runs on, once. Java 17 fails on a character beyond the Basic Multilingual Plane,
+  Java 21 lacks the pairs that Unicode 15.1 and 16 added, and every JDK equates "i" with U+0130 and U+0131. So the
+  answers are the same on every JDK, and the text is not: `^(?i:(.)\1)$` is 1,370 characters on Java 25, 2,128 on
+  Java 21 and 5,729 on Java 17.
 
 
 The patterns are run by `java.util.regex`, after translation. A pattern that is valid with the `u` flag is run
@@ -168,27 +172,54 @@ body of fixed length that stands first, such as `(?<=([abc])+)x\1`. Any other is
 
 A lookbehind none of whose groups is read is not affected, whatever its body.
 
-**The limits of size.** A pattern is refused when its translation would be too large.
+**The limits of size.** A pattern is refused when its translation would be too large. The limits are far beyond
+what a pattern of ordinary size comes to. None of the 98,839 patterns of the
+[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) reaches one, on
+Java 17, 21 or 25.
 
-- more than 256 alternatives for the ways through the groups it reads, or more than 1,048,576 characters ("a
-  pattern with this many ways through the groups it reads"), as for
-  `(?:(a)?(b)?(c)?(d)?(e)?(f)?(g)?(h)?(i)?\1\2\3\4\5\6\7\8\9)*`. A lookahead whose group is read after it, over
-  a counted repetition whose body can match nothing, is written with a text that doubles with each iteration of the
-  count, so a count of 13 or more is refused, as for `(?=((?:a|){0,20}?)a)\1a$`;
-- more than 200 copies of a body, or 65,536 characters of them, for a repetition that must run two or more times
-  over a body that matches the empty string in some places only, such as `(^|x){201}` ("a repetition this long of a
-  body that can match the empty string"). A backreference is such a body, and a case-insensitive one to a group
-  that can hold any character is 12,000 characters or more, so a count of five or more over one is refused, as for
-  `^(?i:(.)\1{5})$`, and a count of three or more when the group holds two characters;
-- more than `java.util.regex` compiles on the stack of the thread, which is some thousands of groups on a stack of
-  1 MB ("a pattern too large for java.util.regex to compile").
+- "a pattern with this many ways through the groups it reads". A pattern with a backreference that
+  `java.util.regex` would read wrongly is written once for each way through the choices that decide what the groups
+  it reads hold. The ways through one part of the pattern are written as a tree, so what they start with is written
+  once. There may be 65,536 ways through one part, 16,777,216 characters of translation, 134,217,728 characters
+  written on the way to it, and 200 iterations of a lookahead written one by one. Sixteen groups that may each be
+  set or not, all of them read, are 65,536 ways, and are written: `(?:(a)?(b)?...(p)?\1\2...\16)*` comes to 5.3
+  million characters. Seventeen such groups are refused, and so are sixteen that are each read three times, which
+  come to more text than that. A lookahead whose group is read after it, over a counted repetition, is written once
+  for each iteration: `(?=((?:a|){0,200}?)a)\1a$` comes to 4,216 characters, and a count of 201 is refused. The smallest pattern found that writes too much on the way is
+  `.*(?:(?=((?:(a|))*(?:(a)|(b)|){3,16}?\b))(?:\3)*?\1a$)*\2`: a lookahead with two repetitions whose groups are
+  read, inside a repetition, with a reference to it inside another. With a count of 15 it is written, in 376,889
+  characters;
+- "a repetition this long of a body that can match the empty string". A repetition that must run two or more times,
+  over a body that matches the empty string in some places only and has more than one way to match, is written
+  with a copy of the body for each iteration, and there may be 200 copies: `(^|x){200}` is written and `(^|x){201}`
+  is refused. A body with one way to match is not copied, so `^(?i:(.)\1{5})$` and any other count over a
+  backreference are written;
+- "a pattern too large for java.util.regex to compile": more than `java.util.regex` compiles on the stack of the
+  thread, which is some thousands of groups on a stack of 1 MB.
 
 The translator keeps one more reason, "a backreference to a group of a lookaround, in a repetition that can go back
 to before the backreference", for a reference it could not give a run of the lookaround of its own. No pattern is
-known that it refuses: none of 200,803 generated patterns does.
+known that it refuses: none of 215,803 generated patterns does.
 
-A pattern that is deliberately hard, with nested repetitions over groups that are read, can be slow. The translation
-finds some places by search, and `java.util.regex` matches by backtracking.
+**Slow patterns.** The library sets no time limit on a match. A pattern that is deliberately hard, with nested
+repetitions over groups that are read, can be slow: the translation finds some places by search, and
+`java.util.regex` matches by backtracking, where V8 answers in milliseconds.
+
+Of the 98,839 patterns of the test data, ten do not answer for all their texts within five seconds on one JDK or
+another, with four of them running at once. Each nests repetitions whose bodies can match nothing around groups
+that are read, or holds a lookbehind that is searched for. Run alone on Java 21, each gives V8's answers. The time
+is for all the texts of the pattern (between 50 and 160 of them), with the start of the JVM and the translation:
+
+- 1.7 s, `lookarounds`: `^(?:b?(?=(?:((?:.|b[ab]))?\1){1,2}(?:a{2}(?:c(b)){1,2})?(?:(?:c(c))?((?:c|.[^a]))*|((?:[bc]|ba))??))(?:b\2|[ab][bc]\1)a{2,}(?<=\3.?)\4c){2}\2`
+- 4.7 s, `empty-loops`: `(?:(?:(?<=$|(|a)\b)(|-)?|.x){4,}?\1){2,}a`
+- 15.2 s, `backreferences`: `^(x){0}\1(?<n0>(\3{2}){0,2}\2(?:(?!$)(\k<n0>\1)?){3,}|(?:(?<n1>(?<=x)[^a])|(?<n1>\6+?)){2,}(?:(?<n2>\2(?:(?<n3>a(x)*)|(?<n3>\7?a)){3,}?\3{2})|(?<n2>[^a]-))+|(?:(?:x){2,4}|\11*){1,3}\11{2}x){3,}?x$`
+- 16.1 s, `backreferences`: `^(.|.)*?(?<n0>(-??){3,5}\3(?:(?<n1>x\4*x|(?<!a)){0,2}\3a?){2,}?|a()){2,3}\k<n1>x$`
+- 18.9 s, `engine-faults`: `^(?=((?:(?:(|a)(?:(?:(?:(a|)){1,3}?(?:.?)??))*?(?:.?)+))*[ax]))\1$`
+- 20.0 s, `lookarounds`: `(?:(?:(?<=$|(|a)\b)(|-)?|.x){4,}?\1){2,}a`
+- 24.5 s, `empty-loops`: `((?!\Bx??|)-??|-(?:a|(?:a*|[ax]){2,}?){2}|(.(?<!a)|\B|($){3,}(\B|(?!$)){2,}?){4,}a*?){4}x`
+- 30.6 s, `case-folding` with the `i` flag: `^S|^((?:(?!.[\w\u017f\u212a\u0130]|\u{10400})(..\u01c6)*?(?<n0>\2?.|-\k<n0>+\u1fd3)??)*)+(?:\u01c5.)+?$`
+- 62.2 s, `empty-loops`: `^(?:((?!|-$)|(?=).|(?<=[^a])){2}){0}(?:\1|(?:(?<!^)(?:[^a]*\b|[^a]){2,3}|[^a]){3,4}(?:(|)|)*){3}a$`
+- 289.5 s, `backreferences`: `^((?<n0>\k<n0>?|(?:\1?(|a)\k<n0>|()(x)*){0,2}){1,2}?((?:a){0,0}?^x{1,2})?|(a|)){1,}?\4\3-$`
 
 ## Performance
 
