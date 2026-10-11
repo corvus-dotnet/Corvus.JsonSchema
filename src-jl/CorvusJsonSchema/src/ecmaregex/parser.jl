@@ -399,6 +399,24 @@ function number(P::Parser)
     return v
 end
 
+# Whether the decimal number at the positions from `a` to before `aend` is greater than the one from `b` to before
+# `bend`, for numbers of any length.
+function greaternumber(P::Parser, a::Int, aend::Int, b::Int, bend::Int)
+    while a < aend - 1 && charat(P, a) == '0'
+        a += 1
+    end
+    while b < bend - 1 && charat(P, b) == '0'
+        b += 1
+    end
+    aend - a == bend - b || return aend - a > bend - b
+    for k in 0:(aend - a - 1)
+        x = charat(P, a + k)
+        y = charat(P, b + k)
+        x == y || return x > y
+    end
+    return false
+end
+
 # Reads a quantifier as a REPEAT with no child yet, or returns nothing when there is none.
 function quantifier(P::Parser)
     c = peekchar(P)
@@ -415,15 +433,21 @@ function quantifier(P::Parser)
         rep.max = 1
     elseif c == '{' && lookslikequantifier(P)
         P.i += 1
+        first = P.i
         rep.min = number(P)
+        firstend = P.i
         rep.max = rep.min
-        if eat(P, ',')
-            rep.max = peekchar(P) == '}' ? UNBOUNDED : number(P)
+        if eat(P, ',') && peekchar(P) == '}'
+            rep.max = UNBOUNDED
+        elseif P.i > firstend
+            second = P.i
+            rep.max = number(P)
+            # The digits are compared, as a count is kept only up to MAX_COUNT: a{2147483648,2147483647} is an error.
+            if greaternumber(P, first, firstend, second, P.i)
+                syntaxerror(P, "numbers out of order in quantifier")
+            end
         end
         eat(P, '}') || syntaxerror(P, "malformed quantifier")
-        if rep.max != UNBOUNDED && rep.max < rep.min
-            syntaxerror(P, "numbers out of order in quantifier")
-        end
     else
         return nothing
     end

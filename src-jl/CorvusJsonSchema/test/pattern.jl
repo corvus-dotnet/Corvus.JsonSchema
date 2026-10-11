@@ -279,6 +279,15 @@ const ANCHOR_CASES = Tuple{String,Vector{String},Vector{String}}[
         @test !isvalid(v, "\"aa\"")
     end
 
+    # A count whose first number is the greater is an error, also where both are past what a count is kept as.
+    @testset "the numbers of a count out of order" begin
+        for pattern in [raw"a{2147483648,2147483647}", raw"^a{2,1}$", raw"x{4294967296,4294967295}"]
+            @test !C.valid_regex(pattern)
+            @test_throws CompileError compile_schema("{\"pattern\": " * quote_json(pattern) * "}")
+        end
+        @test C.valid_regex(raw"a{2147483647,2147483648}")
+    end
+
     # A pattern that is valid only without the u flag (one with an identity escape such as \- or \&) matches UTF-16
     # code units, as ECMA-262 says, so a character beyond the Basic Multilingual Plane is two characters to it. The
     # faster matchers go by character. They decide the strings within the Basic Multilingual Plane, where the two are

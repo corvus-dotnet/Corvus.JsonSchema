@@ -220,24 +220,39 @@ function number(v::Validator)
     return value
 end
 
+# Whether the decimal number at the bytes from `a` to before `aend` is greater than the one from `b` to before
+# `bend`, for numbers of any length.
+function greaternumber(v::Validator, a::Int, aend::Int, b::Int, bend::Int)
+    while a < aend - 1 && byteat(v, a) == UInt8('0')
+        a += 1
+    end
+    while b < bend - 1 && byteat(v, b) == UInt8('0')
+        b += 1
+    end
+    aend - a == bend - b || return aend - a > bend - b
+    for k in 0:(aend - a - 1)
+        x = byteat(v, a + k)
+        y = byteat(v, b + k)
+        x == y || return x > y
+    end
+    return false
+end
+
 function quantifier(v::Validator)
     if isat(v, '*') || isat(v, '+') || isat(v, '?')
         v.i += 1
     elseif isat(v, '{') && lookslikequantifier(v)
         v.i += 1
-        lo = number(v)
-        hi = lo
-        open = false
-        if eat(v, ',')
-            if isat(v, '}')
-                open = true
-            else
-                hi = number(v)
-            end
+        first = v.i
+        number(v)
+        firstend = v.i
+        if eat(v, ',') && !isat(v, '}')
+            second = v.i
+            number(v)
+            # The digits are compared, as the parser compares them.
+            greaternumber(v, first, firstend, second, v.i) && invalid()
         end
-        if !eat(v, '}') || (!open && hi < lo)
-            invalid()
-        end
+        eat(v, '}') || invalid()
     else
         return false
     end

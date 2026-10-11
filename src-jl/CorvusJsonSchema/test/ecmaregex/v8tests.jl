@@ -688,4 +688,29 @@ end
             (raw"\k<n>(?<n>a)", true, true, "40cf00"),
         ])
     end
+
+    # A count whose first number is the greater is an error. The numbers are compared as they are written, and not
+    # as they are kept, which is up to 2^31 - 2.
+    @testset "the numbers of a count out of order" begin
+        checkgrammars([
+            (raw"a{2,1}", false, false, ""),
+            (raw"a{2,01}", false, false, ""),
+            (raw"a{02,1}", false, false, ""),
+            (raw"a{002,2}", true, true, "000800"),
+            (raw"a{10,9}", false, false, ""),
+            (raw"a{9,10}x", true, true, "000000"),
+            (raw"a{2147483647,2147483646}", false, false, ""),
+            (raw"^a{1,2147483648}$", true, true, "400800"),
+            (raw"^a{0,99999999999999999999}$", true, true, "c00800"),
+        ])
+        # V8 13.6 keeps a number up to 2^31 - 1 and compares what it kept, so it takes these three. ECMA-262 says
+        # each is an error, and so does the package.
+        for pattern in [raw"a{2147483648,2147483647}", raw"a{4294967296,4294967295}",
+            raw"(?:a){99999999999999999999,99999999999999999998}"]
+            @test isnotapattern(pattern)
+            @test !E.isvalidpattern(pattern)
+        end
+        @test !isnotapattern(raw"a{2147483647,2147483648}")
+        @test E.isvalidpattern(raw"a{99999999999999999998,99999999999999999999}")
+    end
 end
