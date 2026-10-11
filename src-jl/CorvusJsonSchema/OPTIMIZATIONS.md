@@ -136,9 +136,12 @@ with the reason.
   (`Frame`, `threadframe`), and the text is matched where it lies through a pointer held under `GC.@preserve`
   (`ismatch`, `unsafe_ismatch`). Every class, property and case-insensitive set is written from Unicode data the
   package carries, so nothing depends on the PCRE2 version's tables. A lookbehind of no fixed length runs as a
-  PCRE2 callout that searches for its body (`callout`, `lookbehind` in `emitter.jl`). A match that reaches PCRE2's
-  step or memory limit, or the module's own limit on the steps of lookbehind searches (`STEP_LIMIT`), throws a
-  `MatchError` and is never reported as no match. A pattern that cannot be written with the same meaning is refused
+  PCRE2 callout that searches for its body (`callout`, `lookbehind` in `emitter.jl`). A match that reaches the limit
+  on its steps (`MATCH_LIMIT`, 500 million, set with the depth and heap limits in the match context a thread keeps,
+  so a match sets nothing), the limit on the interpreter's memory, or the module's own limit on the steps of
+  lookbehind searches (`STEP_LIMIT`), throws a `MatchError` and is never reported as no match. A text that a
+  pattern without the `u` flag reads as code units is written into a buffer that is kept (`UNIT_BUFFERS`,
+  `matchunits`). A pattern that cannot be written with the same meaning is refused
   when the schema is compiled (the `REFUSED_` constants, which are the backreference cases, more than 253
   lookbehinds of no fixed length, and anything PCRE2 does not compile). PCRE2 is told not to work out where a match
   can start (`PCRE2_NO_START_OPTIMIZE`), because both PCRE2 versions the module was written against answer wrongly

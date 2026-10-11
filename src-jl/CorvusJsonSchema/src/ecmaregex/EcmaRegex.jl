@@ -22,7 +22,9 @@ refuses it. PCRE2 does neither, so the translation writes both out (see `emitter
   by matching the lookbehind backwards, as ECMA-262 does, such as `(?<=(a*)(x+))-\\1` (see Lookbehinds below);
 * a case-insensitive backreference in a pattern that is only valid with no flag, where the group can hold a
   character that ECMA-262 compares differently there than PCRE2 does (see Unicode below);
-* repetitions that have to be written twice, inside one another, past 65,536 characters of translation.
+* repetitions that have to be written twice, inside one another, past 65,536 characters of translation, and a
+  pattern PCRE2 does not compile, which a count of several thousand of a group of several characters is (a count
+  of one character or class never is, see `blocks` in `emitter.jl`).
 
 # Lookbehinds
 
@@ -68,6 +70,12 @@ not valid with it is read with the Annex B grammar of a pattern with no flag, as
 (identity escapes like `\\&`, lone braces). [`isvalidpattern`](@ref), which backs the `regex` format, accepts only
 the `u` flag grammar.
 
+What is a pattern is what ECMA-262 says, and the answers were checked against V8 13.6, which departs from it in a
+few places. V8 does not know the Script value `Katakana_Or_Hiragana` (`Hrkt`), which Unicode lists and no character
+has, and it takes a count whose first number is the greater when both are past 2^31 - 1
+(`a{2147483648,2147483647}`). Here the first is a name and the second an error. The data of the package is Unicode
+17, so it has the four scripts that version added and V8 13.6 has not.
+
 # Unicode
 
 * A pattern that is valid with the `u` flag matches Unicode code points over UTF-8 text. PCRE2 is given the
@@ -107,14 +115,16 @@ the `u` flag grammar.
 
 # Matching
 
-[`ismatch`](@ref) may be called from several tasks at once. It allocates nothing, but for a pattern that is only
-valid with no flag on a text with a character beyond the Basic Multilingual Plane, which it writes again as code
-units. What a match writes to belongs to the thread it runs on. PCRE2's JIT compiler is used where the PCRE2 of the Julia in use has one, and the interpreter
-runs a pattern the JIT compiler does not take and a match too deep for the stack of JIT code.
+[`ismatch`](@ref) may be called from several tasks at once. In the steady state it allocates nothing. A text with a
+character beyond the Basic Multilingual Plane is written again as code units for a pattern that is only valid with
+no flag, into a buffer that is kept (see `matchunits`). What a match writes to belongs to the thread it runs on.
+PCRE2's JIT compiler is used where the PCRE2 of the Julia in use has one, and the interpreter runs a pattern the JIT
+compiler does not take and a match too deep for the stack of JIT code.
 
-A match that reaches a limit throws a [`MatchError`](@ref). It is never reported as no match. The limits are those
-of PCRE2 on the steps of a match (ten million) and on the memory of the interpreter (64 MiB here), and one of this
-module on the steps of the searches for lookbehinds.
+A match that reaches a limit throws a [`MatchError`](@ref). It is never reported as no match. The limits are on the
+steps of a match (`MATCH_LIMIT`, 500 million, where PCRE2 by itself has ten million), on the memory of the
+interpreter (`HEAP_LIMIT_KIB`, 64 MiB), and one of this module on the steps of the searches for lookbehinds
+(`STEP_LIMIT`). They are set in the match context a thread keeps, so a match sets nothing.
 
 # PCRE2 versions
 

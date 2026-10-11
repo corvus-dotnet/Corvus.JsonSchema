@@ -167,7 +167,16 @@ What is exact:
   UTF-16 code units of the string, as ECMA-262 says. A character beyond the Basic Multilingual Plane is two code
   units, so `^\-?.$` does not match U+10400, which `^.$` matches. A quantifier after such a character in the pattern
   repeats its second half, `\u{...}` is the letter `u` counted, and a class range from one such character to
-  another is an error.
+  another is an error. A string with such a character is written again as code units for the match, into a buffer
+  the package keeps, so the match allocates nothing in the steady state.
+- A count of one character or class, whatever the count. `a{1000000000}` and `^\p{L}{1,300000}$` are run. PCRE2
+  counts to 65,535, and a larger count is written as blocks of the character that the pattern calls.
+- What is a pattern, which is what ECMA-262 says. That is V8's verdict but in three places. `\p{sc=Hrkt}` (the
+  Script value `Katakana_Or_Hiragana`, which Unicode lists and no character has) is a pattern that matches nothing,
+  and V8 13.6 does not know the name. A count whose first number is the greater is an error however large the
+  numbers, so `a{2147483648,2147483647}` is one, which V8 13.6 takes. The four scripts Unicode 17 added (`Sidetic`,
+  `Tolong_Siki`, `Beria_Erfe`, `Tai_Yo`) are names here and not in V8 13.6. `\k` in a class is an error in a
+  pattern with a named group, as in V8: `(?<n>a)[\k]`.
 - A case-insensitive backreference such as `(.)(?i:\1)`, in every pattern that is valid with the `u` flag, with
   Julia 1.13. PCRE2 makes the comparison, by Unicode simple case folding, as ECMA-262 does with the `u` flag. It
   compares one character at a time. V8 13.6 compares the whole text by full case folding there, and says that
@@ -191,7 +200,9 @@ the schema throws a `CompileError` that names the construct. It is never run wit
 - A backreference inside a lookbehind to a group that the lookbehind matches before it, where the group is not in
   an end of the lookbehind of a fixed length (`(?<=\1(a+))`).
 - Repetitions that have to be written twice inside one another past 65,536 characters, more than 252 lookbehinds of
-  no fixed length in one pattern, and a pattern too large for PCRE2 to compile (counted groups nested several deep).
+  no fixed length in one pattern, and a pattern too large for PCRE2 to compile, which holds a compiled pattern of at
+  most 64 KiB and writes a counted group out once for each time: `(?:ab){6552}` is run and `(?:ab){6553}` is not, and
+  `(?:(?:ab){80}c){80}` is run and `(?:(?:ab){81}c){81}` is not. A counted character or class is never too large.
 
 **The lookbehind exception.** A pattern that is valid with the `u` flag is run, and answers as V8 does, with one
 named exception. Two uses of a lookbehind need it to be matched backwards, as ECMA-262 matches it, which PCRE2 cannot
@@ -206,9 +217,25 @@ do, and they are refused with an error that says which:
 A lookbehind with no group that a backreference reads is never refused for this. The limits on the size of a
 translation are the only other refusals of such a pattern.
 
-PCRE2 backtracks, and it limits the steps and the memory of a match. A match that reaches a limit throws
-`CorvusJsonSchema.EcmaRegex.MatchError`, from `isvalid` as from `validate` and `evaluate`. It is never reported as a
-string that does not match. Validate inside `try` when the schema's patterns are not trusted.
+PCRE2 backtracks, and a pattern can backtrack without end on a text, so a match has limits. A match that reaches
+one throws `CorvusJsonSchema.EcmaRegex.MatchError`, from `isvalid` as from `validate` and `evaluate`. It is never
+reported as a string that does not match. Validate inside `try` when the schema's patterns are not trusted.
+
+| Limit | Value | The error says |
+|---|---|---|
+| The steps of a match | 500 million | "match limit exceeded" (PCRE2 error -47) |
+| The memory of a match, in PCRE2's interpreter | 64 MiB | "heap limit exceeded" (PCRE2 error -63) |
+| The searches for the lookbehinds of no fixed length of one match | ten million items | "match limit exceeded" |
+
+PCRE2 by itself allows a match ten million steps. That is too few for three patterns of the
+[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data)
+that V8 answers, and the one that takes the most needs 157 million steps on five characters, in under a second (359
+million where PCRE2's interpreter runs it). A match that reaches the limit of 500 million has taken up to 4.3
+seconds on the machine that was measured, and up to 15 in the interpreter, which runs a match only when PCRE2's JIT
+code has filled its stack of 1 MiB. A repeated group needs memory for each time it has matched, and so does a class
+of many ranges such as `\p{L}` under `*` or `+`: with Julia 1.13 `^\p{L}+$` reaches the memory limit on a string
+of 147,168 letters (233,014 with Julia 1.10), where `^\p{L}{1,3000000}$`, `^\w+$` and `^[a-z]+$` answer on three
+million. The limits are set once for each thread, so a match pays nothing for them.
 
 A JSON string with the escape of a surrogate that is not half of a pair, such as `"\ud800"`, is not Unicode text. The
 parser refuses a document that has one, an instance or a schema, so a pattern is never matched against such a string.
@@ -221,6 +248,12 @@ equivalent and which V8 and Julia 1.13 hold equivalent. So `^(.)(?i:\1)$` matche
 does not with Julia 1.10. Nothing else differs between the two: a literal, a class and every other construct read the
 package's own tables on every Julia. The package does not work around this. The fix is to update to Julia 1.13, where
 the answers are exact.
+
+These thirty are every pair: the package's tests try each character that has a case variant against each other. Of the
+thirteen files of the
+[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data),
+Julia 1.10 differs from V8 on 1,026 answers, in twenty patterns of the case-folding file, and each of them is a text
+of two characters that are one of these pairs.
 
 | Code points | Characters | Code points | Characters |
 |---|---|---|---|
