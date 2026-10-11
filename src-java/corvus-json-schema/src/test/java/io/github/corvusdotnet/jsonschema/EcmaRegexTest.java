@@ -2156,6 +2156,8 @@ class EcmaRegexTest {
         assertNull(EcmaRegex.translate(large));
         assertEquals(EcmaRegex.LIMIT_TRANSLATION, EcmaRegex.tooLarge(large));
         assertTrue(EcmaRegex.wasRead(large));
+        assertNotNull(EcmaRegex.translate("a".repeat((1 << 20) - 4)));
+        assertEquals(EcmaRegex.LIMIT_TRANSLATION, EcmaRegex.tooLarge("a".repeat(1 << 20)));
         assertEquals(EcmaRegex.LIMIT_PATTERN, EcmaRegex.tooLarge("a".repeat((1 << 20) + 1)));
         assertFalse(EcmaRegex.wasRead("a".repeat((1 << 20) + 1)));
         assertEquals(EcmaRegex.LIMIT_TRANSLATION, EcmaRegex.tooLarge("\\p{L}".repeat(400)));
@@ -2371,6 +2373,12 @@ class EcmaRegexTest {
         String plain = "^[a-z]+(?:\\x{2e}[a-z]+)*\\z";
         assertTrue(plain == EcmaRegex.Ticks.insert(plain));
         assertEquals("(?:a|)(?=)(?:b|)*c", EcmaRegex.Ticks.insert("(?:a|)(?:b|)*c"));
+        // A long literal at the start is cut by an empty group, and every sixteenth lookbehind is followed by a
+        // mark, which keep java.util.regex from reading the pattern over and over as it compiles it.
+        String cut = EcmaRegex.translate("a".repeat(3000));
+        assertEquals("a".repeat(1024) + "(?:)" + "a".repeat(1976), cut);
+        String marked = EcmaRegex.translate("(?<=a)".repeat(33) + "b");
+        assertEquals(2, marked.split(java.util.regex.Pattern.quote(EcmaRegex.Ticks.MARK), -1).length - 1);
     }
 
     /**
@@ -2382,7 +2390,7 @@ class EcmaRegexTest {
     void theLimitOfSizeDoesNotDependOnTheJdk() {
         Object[][] measured = {
             {"\\p{L}", 3103}, {"\\p{Lu}", 513}, {"\\p{N}", 453}, {"[\\p{L}\\p{N}\\p{M}\\p{P}\\p{S}]", 6806},
-            {"[^\\p{Lu}\\p{Nd}x]", 911}, {"\\p{Zl}", 32}, {"\\p{Script=Greek}", 1023}, {"(?i:^(.)\\1$)", 5729},
+            {"[^\\p{Lu}\\p{Nd}x]", 911}, {"\\p{Zl}", 32}, {"\\p{Script=Greek}", 1023}, {"(?i:^(.)\\1$)", 5751},
             {"(?i:^(.*)\\1$)", 10739}, {"(?i:^([\\p{L}\\p{N}_-]+)\\1)", 35796}, {"^(?:a|b)*$", 23},
         };
         for (Object[] m : measured) {

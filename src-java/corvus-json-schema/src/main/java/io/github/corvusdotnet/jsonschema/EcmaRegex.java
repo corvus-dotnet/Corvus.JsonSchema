@@ -6335,6 +6335,8 @@ final class EcmaRegex {
             f.depth = -1;
             f.push(-1, 0, GROUP);
             Places places = new Places();
+            Places marks = new Places();
+            int lookbehinds = 0;
             int n = t.length();
             if (n == 0) {
                 // The pattern that matches everywhere. Nothing of it is run.
@@ -6401,6 +6403,9 @@ final class EcmaRegex {
                     groupBody = f.body[d];
                     groupNullable = f.nullableAlternatives[d];
                     boolean behind = groupKind == LOOKBEHIND || groupKind == NEGATIVE_LOOKBEHIND;
+                    if (behind && ++lookbehinds % LOOKBEHINDS_TO_A_MARK == 0) {
+                        marks.add(i + 1);
+                    }
                     // A lookbehind of one character reads it, except at the start of the text, where it fails
                     // unread. The negative one holds there, uncounted.
                     passed = behind && f.terms[d] == 1 && f.onlyCharacters[d];
@@ -6503,21 +6508,70 @@ final class EcmaRegex {
             if (f.firstOfAll[0] != COUNTED) {
                 places.add(0);
             }
-            if (places.count == 0) {
-                return t;
+            if (places.count == 0 && marks.count == 0) {
+                return cut(t);
             }
             int[] at = Arrays.copyOf(places.at, places.count);
             Arrays.sort(at);
-            StringBuilder sb = new StringBuilder(n + TICK.length() * at.length);
+            StringBuilder sb = new StringBuilder(n + TICK.length() * at.length + MARK.length() * marks.count);
             int from = 0;
-            for (int k = 0; k < at.length; k++) {
-                if (k > 0 && at[k] == at[k - 1]) {
+            int mark = 0;
+            for (int k = 0; k <= at.length; k++) {
+                if (k > 0 && k < at.length && at[k] == at[k - 1]) {
                     continue;
                 }
-                sb.append(t, from, at[k]).append(TICK);
-                from = at[k];
+                int to = k < at.length ? at[k] : n;
+                // The marks were found in the order of the text.
+                for (; mark < marks.count && marks.at[mark] <= to; mark++) {
+                    sb.append(t, from, marks.at[mark]).append(MARK);
+                    from = marks.at[mark];
+                }
+                sb.append(t, from, to);
+                if (k < at.length) {
+                    sb.append(TICK);
+                }
+                from = to;
             }
-            return sb.append(t, from, n).toString();
+            return cut(sb.toString());
+        }
+
+        /**
+         * Written after a lookbehind: a choice between nothing and a character beyond the Basic Multilingual Plane
+         * that nothing can follow, so it is always nothing. When {@code java.util.regex} compiles a lookbehind it
+         * reads the pattern from there to the first such character, or to the end, to see how to step back over the
+         * text (see {@link Emitter#write}). The one the translator writes is at the end, so a pattern of many
+         * lookbehinds was read through once for each: 35 seconds for 174,762 of them. With one after every sixteenth
+         * lookbehind the reading is at most sixteen times the pattern.
+         */
+        static final String MARK = "(?:|\uD800\uDC00(?!))";
+        static final int LOOKBEHINDS_TO_A_MARK = 16;
+
+        /** The most literal characters a translation starts with before an empty group is written among them. */
+        static final int MAX_LITERAL_START = 1024;
+
+        /**
+         * A translation that starts with a long run of literal characters, with an empty group written into the
+         * run. {@code java.util.regex} prepares a search for the literal a pattern starts with, and takes time that
+         * grows with the square of its length when the literal repeats itself: 13 seconds for 131,072 times
+         * "a". The group ends the literal it searches for, and changes nothing else.
+         */
+        private static String cut(String t) {
+            int n = t.length();
+            int i = 0;
+            for (int characters = 0; i < n; characters++) {
+                char c = t.charAt(i);
+                if (characters == MAX_LITERAL_START) {
+                    return t.substring(0, i) + "(?:)" + t.substring(i);
+                }
+                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+                    i++;
+                } else if (c == '\\' && i + 2 < n && t.charAt(i + 1) == 'x' && t.charAt(i + 2) == '{') {
+                    i = t.indexOf('}', i) + 1;
+                } else {
+                    break;
+                }
+            }
+            return t;
         }
 
         /** Closes the alternative being read in the innermost frame. */
