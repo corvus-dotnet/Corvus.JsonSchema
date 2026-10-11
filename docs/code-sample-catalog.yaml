@@ -1162,12 +1162,13 @@ main-docs:
     blocks:
       - {index: 0, language: sh, lines: [31, 33]}
       - {index: 1, language: pascal, lines: [40, 52]}
-      - {index: 2, language: pascal, lines: [65, 82]}
-      - {index: 3, language: pascal, lines: [87, 106]}
-      - {index: 4, language: pascal, lines: [127, 165]}
-      - {index: 5, language: pascal, lines: [169, 190]}
-      - {index: 6, language: pascal, lines: [196, 217]}
-      - {index: 7, language: pascal, lines: [226, 242]}
+      - {index: 2, language: pascal, lines: [67, 84]}
+      - {index: 3, language: pascal, lines: [89, 108]}
+      - {index: 4, language: pascal, lines: [130, 168]}
+      - {index: 5, language: pascal, lines: [172, 193]}
+      - {index: 6, language: pascal, lines: [199, 220]}
+      - {index: 7, language: pascal, lines: [229, 245]}
+      - {index: 8, language: pascal, lines: [325, 360]}
   - path: "docs/JsonSchemaForPhp.md"
     blocks:
       - {index: 0, language: sh, lines: [18, 20]}

@@ -53,7 +53,9 @@ end;
 
 A validator is an interface, so nothing frees it. It is not modified by validation and is safe to use from several
 threads at once. A schema that is not JSON raises `EJsonParseError`, and one that cannot be compiled (an unresolvable
-reference, an invalid pattern) raises `EJsonSchemaCompileError`.
+reference, an invalid pattern) raises `EJsonSchemaCompileError`. A schema with a pattern over a limit of size raises
+`EJsonSchemaPatternTooLarge`, and a validation in which a match of a pattern reached its limit raises
+`EJsonSchemaPatternMatchLimit` (see [Limits](#limits)).
 
 ## JSON text
 
@@ -121,6 +123,7 @@ defaults, and these procedures change them:
 | `WithBaseURI` | The base URI of the root document. |
 | `WithEntryPoint` | A subschema to validate against, such as `#/$defs/item`. |
 | `WithMaxDepth` | The deepest the evaluator recurses in place (default 128). |
+| `WithPatternMatchLimit` | The milliseconds one match of a pattern against one string may take (default 1000). `NoPatternMatchLimit` turns the limit off. See [Limits](#limits). |
 
 A custom format and a document resolver are plain functions.
 
@@ -271,12 +274,99 @@ A JSON string can name half of a surrogate pair with an escape, as in `"\ud800"`
 A pattern with no lookaround, backreference, multiline anchor or word boundary gets an automaton that decides an
 ASCII text with one table read per byte, when the automaton is small enough. Every other pattern, and a text that
 is not ASCII, runs on a backtracking matcher. The Go module hands most patterns to Go's linear-time `regexp`
-package, which Object Pascal has no counterpart of. The backtracking matcher has no step budget, so a pattern with
-nested quantifiers can take exponential time on a text it does not match, in cases where the Go module's would not.
-A repetition whose body cannot consume a character, such as `(?:\b|(?=a)|){4,5}`, is not such a case. Every
-iteration of it is empty, so the matcher runs the body once when the minimum is one or more and not at all when it
-is zero, which is what ECMA-262 says such a repetition matches. And a counted repetition is not tried at all at a
-place where the rest of the pattern needs more of the string than is left.
+package, which Object Pascal has no counterpart of. A pattern with nested quantifiers can take exponential time on
+a text it does not match, in cases where the Go module's would not, so a match has a limit on its time and on its
+memory (see [Limits](#limits)). A repetition whose body cannot consume a character, such as `(?:\b|(?=a)|){4,5}`,
+is not such a case. Every iteration of it is empty, so the matcher runs the body once when the minimum is one or
+more and not at all when it is zero, which is what ECMA-262 says such a repetition matches. And a counted
+repetition is not tried at all at a place where the rest of the pattern needs more of the string than is left,
+counting the iterations the repetition has still to make.
+
+## Limits
+
+A schema may come from outside, and so may an instance. Neither is to make a validation run without end, hold
+memory out of proportion to what it was given, or take long to compile.
+
+**One match of a pattern against one string may take one second.** `WithPatternMatchLimit` sets another limit, in
+milliseconds, and `NoPatternMatchLimit` turns it off, for a program that trusts both its schemas and its instances.
+A match that reaches the limit is abandoned and the validation ends with an error. It is never reported as an
+instance that is valid, or as one that is not.
+
+| Entry point | A match that reached its limit |
+|---|---|
+| `IsValid` | Raises `EJsonSchemaPatternMatchLimit`, with the `Pattern`, the `Limit` in milliseconds, and `Memory`. |
+| `TryIsValid` | Returns `False`, with the message of that exception in `Error`. It starts with `A match of the regular expression`. |
+| `Evaluate` | Raises `EJsonSchemaPatternMatchLimit`. What the collector holds is then not a report of the instance. |
+| `TryEvaluate` | Returns `False`, with the message in `Error`. |
+| `CompileJsonSchema`, `CompileJsonSchemaFromUri` | Raise it when the match was of a `patternProperties` pattern against a property name the schema declares. |
+
+The backtracking matcher counts its steps and reads a clock that never goes back every 4,096 of them, which is some
+tens of microseconds, so a match is abandoned within a millisecond or two of its limit. With a limit, the
+backtracking of one match may also hold 1,048,576 entries (16 MB) and no more, and a match that needs more is
+abandoned with the same exception, with `Memory` set. The limit is for each match, so a validation that makes many
+matches takes the sum of them. The matchers that are not the backtracking one read the string a bounded number of
+times and have no limit. With the limit off, a match has no bound on its time or on its memory.
+
+**A pattern has three limits of size**, and compiling a schema with a pattern over one raises
+`EJsonSchemaPatternTooLarge`, with the `Pattern`, the `Keyword`, the name of the `Limit` and its `Value`.
+
+| Limit | Value |
+|---|---|
+| `length` | 1,048,576 bytes of UTF-8. |
+| `nesting` | Groups 1,000 deep. |
+| `size` | 1,048,576 bytes as the parser counts them: 64 for each term, 32 for each further alternative, 8 for each range of a class and of the set that case folding or `\P{...}` builds, 8 for each alternative around a named group and each group of the same name, and 1 for each character with a case variant in a folded class. |
+
+A pattern of 16,384 literal characters is at the limit of size. The largest pattern of each of 25 kinds compiled in
+1 to 96 milliseconds and kept 3.5 MB at the most, on a machine under load. `EJsonSchemaPatternTooLarge` is not
+`EJsonSchemaCompileError`, the error of a pattern that is not valid: a pattern is not read past a limit, so nothing
+is known of whether it is valid. The `regex` format reads a string of the instance with the same limits, and a
+string over one is not a valid regular expression to it. The limits and the size are those of the Go module.
+
+```pascal
+procedure ExampleLimits;
+var
+  Options: TJsonSchemaOptions;
+  Validator: IJsonSchemaValidator;
+  Instance, Error: UTF8String;
+begin
+  // One match of a pattern against one string may take 100 milliseconds. The default is 1000.
+  Options := DefaultJsonSchemaOptions;
+  WithPatternMatchLimit(Options, 100);
+  Validator := CompileJsonSchema('{"pattern": "^(?:(a+)\\1*)+$"}', Options);
+
+  // A pattern that reads a group back inside a repetition, and a string it never answers for.
+  Instance := '"' + StringOfChar('a', 60) + 'b"';
+  try
+    Validator.IsValid(Instance);
+  except
+    on E: EJsonSchemaPatternMatchLimit do
+      WriteLn(E.Limit, ' ms, ', E.Memory, ': ', E.Pattern);  // 100 ms, FALSE: ^(?:(a+)\1*)+$
+  end;
+
+  // The Try form raises nothing. It returns False with the reason, which is empty for an instance that was
+  // evaluated and is not valid.
+  WriteLn(Validator.TryIsValid(Instance, Error));  // FALSE
+  WriteLn(Error);
+  // A match of the regular expression '^(?:(a+)\1*)+$' was abandoned: it took longer than the limit of 100ms.
+
+  // A pattern over a limit of size is refused when the schema is compiled.
+  try
+    CompileJsonSchema('{"pattern": "' + StringOfChar('a', 20000) + '"}');
+  except
+    on E: EJsonSchemaPatternTooLarge do
+      WriteLn(E.Keyword, ': ', E.Limit, ' of ', E.Value);  // pattern: size of 1048576
+  end;
+end;
+```
+
+Most patterns that a backtracking matcher takes long for do not reach the limit. The matcher looks at the next
+character of the string before it takes a way, as V8 does, and for a pattern with no backreference it remembers
+the places where every way has failed, so `(a+)+$`, `(a|aa)+$` and `(\w+\s?)+$` answer at once on any text. A
+pattern of a few characters can still need more than a second: a group read back inside a repetition
+(`^(?:(a+)\1*)+$`), a repetition that counts to a bound around something that matches in more than one way
+(`^(?:a{0,1000}){0,1000}$`), a lookaround that reads to the end of a long text from every position of it. The
+answer is then `EJsonSchemaPatternMatchLimit`, where it was no answer at all. The package's README lists what
+reached a limit in the tests.
 
 ## Performance
 

@@ -97,6 +97,41 @@ begin
   // The schema is not JSON: invalid JSON at offset 9: unexpected end of input
 end;
 
+procedure ExampleLimits;
+var
+  Options: TJsonSchemaOptions;
+  Validator: IJsonSchemaValidator;
+  Instance, Error: UTF8String;
+begin
+  // One match of a pattern against one string may take 100 milliseconds. The default is 1000.
+  Options := DefaultJsonSchemaOptions;
+  WithPatternMatchLimit(Options, 100);
+  Validator := CompileJsonSchema('{"pattern": "^(?:(a+)\\1*)+$"}', Options);
+
+  // A pattern that reads a group back inside a repetition, and a string it never answers for.
+  Instance := '"' + StringOfChar('a', 60) + 'b"';
+  try
+    Validator.IsValid(Instance);
+  except
+    on E: EJsonSchemaPatternMatchLimit do
+      WriteLn(E.Limit, ' ms, ', E.Memory, ': ', E.Pattern);  // 100 ms, FALSE: ^(?:(a+)\1*)+$
+  end;
+
+  // The Try form raises nothing. It returns False with the reason, which is empty for an instance that was
+  // evaluated and is not valid.
+  WriteLn(Validator.TryIsValid(Instance, Error));  // FALSE
+  WriteLn(Error);
+  // A match of the regular expression '^(?:(a+)\1*)+$' was abandoned: it took longer than the limit of 100ms.
+
+  // A pattern over a limit of size is refused when the schema is compiled.
+  try
+    CompileJsonSchema('{"pattern": "' + StringOfChar('a', 20000) + '"}');
+  except
+    on E: EJsonSchemaPatternTooLarge do
+      WriteLn(E.Keyword, ': ', E.Limit, ' of ', E.Value);  // pattern: size of 1048576
+  end;
+end;
+
 // A custom format. The value is the bytes Text[Start .. Start+Len-1]. It must not raise an exception.
 function EvenLength(const Text: TBytes; Start, Len: Int32): Boolean;
 begin
@@ -359,6 +394,9 @@ begin
   Expect('errors', ExampleErrors,
     'The schema cannot be compiled: Invalid regular expression ''('' in pattern.' + #10
     + 'The schema is not JSON: invalid JSON at offset 9: unexpected end of input' + #10);
+  Expect('limits', ExampleLimits, '100 ms, FALSE: ^(?:(a+)\1*)+$' + #10 + 'FALSE' + #10
+    + 'A match of the regular expression ''^(?:(a+)\1*)+$'' was abandoned: it took longer than the limit of 100ms.'
+    + #10 + 'pattern: size of 1048576' + #10);
   Expect('options', ExampleOptions, 'TRUE' + #10 + 'FALSE' + #10);
   Expect('results', ExampleResults, 'FALSE' + #10
     + '/properties/id at "/id": The value was expected to match the subschema.' + #10
