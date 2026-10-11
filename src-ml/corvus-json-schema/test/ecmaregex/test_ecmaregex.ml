@@ -448,6 +448,10 @@ let check_verdict p valid_unicode valid_legacy =
         Some (re, backtracking p)
       end
 
+(* Says check_answer also asks the backtracking matcher with its memory of failed places in use from the first step. A
+   match otherwise takes the memory only once it has made many steps, which few of the short texts here reach. *)
+let memory_too = ref false
+
 (* A scratch whose matches have a limit of a nanosecond. *)
 let limited_scratch =
   let scratch = Re.create_scratch () in
@@ -465,9 +469,16 @@ let check_answer p re backtrack s want =
   else incr oracle_answers_agreed;
   (* The same with a limit on the match, which a match that ends before its first look at the clock does not reach. A
      match that is abandoned says nothing. *)
-  match Re.is_match_sub_with limited_scratch backtrack s 0 (String.length s) with
+  (match Re.is_match_sub_with limited_scratch backtrack s 0 (String.length s) with
   | got -> if got <> want then fail "%S on %S (with a limit): got %b, V8 says %b" p s got want
-  | exception Re.Match_time -> ()
+  | exception Re.Match_time -> ());
+  (* The same with the memory of failed places in use from the first step, when a test asks for that. *)
+  if !memory_too then begin
+    Re.Internal.memo_from_the_start := true;
+    let got = match_bytes backtrack s in
+    Re.Internal.memo_from_the_start := false;
+    if got <> want then fail "%S on %S (with the memory of failed places): got %b, V8 says %b" p s got want
+  end
 
 (* Compares the answers of both back ends with the oracle's on every text, the texts with a character beyond the Basic
    Multilingual Plane among them: a pattern that is valid only with no flag is matched by UTF-16 code unit, as V8
@@ -1238,6 +1249,8 @@ let test_needs () =
       ({|(?:a|b){5}c|}, 6, [| 1 |], [| 1 |]); ({|(?:ab|cde){3,}?x|}, 7, [| 1 |], [| 2 |]);
       ({|(?:a{1000}){1000}|}, 1000000, [| 0 |], [| 1000 |]); ({|(?:\u00e9|xyz){2}|}, 4, [| 0 |], [| 2 |]);
       ({|(?:a|b){2147483647}c|}, none, [| 1 |], [| 1 |]); ({|(?:(?:a|bc){2}d){3}|}, 9, [| 0; 1 |], [| 3; 1 |]);
+      (* A need and a weight that are both the no-match value: the sum is capped at it. *)
+      ({|(?:ab){2147483647}[]|}, none, [| none |], [| 2 |]); ({|(?:(?:ab){2147483647}[]){2147483647}[]|}, none, [| none; none |], [| none; 2 |]);
       (* The body of a lookbehind is matched backwards and counts nothing. *)
       ({|(?<=(?:ab|c){2}d)e|}, 1, [| 0 |], [| 0 |]); ({|(?:a|(?=(?:b|c){3}))x{2}|}, 2, [| 0 |], [| 1 |]);
     ]
@@ -1356,6 +1369,244 @@ let test_a_group_name_used_twice () =
   let t = check_syntax "names" in
   if t.invalid < 15 || t.departures < 4 then fail "the cases are not the ones this test is about"
 
+(* Checks the patterns of the quick set against V8 on both back ends. They have a choice, a loop or a lookaround where
+   the next character of the text rules a way out, with everything a way can end with or go through without a
+   character, which is where ruling a way out wrongly would show. The first three are from a fuzz set and took the
+   matcher seconds for their texts before it looked at the next character. *)
+let test_the_next_character_rules_out_a_way () =
+  let t = check_cases "quick" in
+  log "%d patterns (%d valid only with no flag), %d answers per back end (%d of them a match)" t.patterns t.legacy
+    t.answers t.matched;
+  if t.patterns < 75 || t.matched < 2000 then fail "the cases are not the ones this test is about"
+
+(* Checks what set_quick works out for the first instruction of a program: the ASCII characters a match can start
+   with, whether it can start with one that is not ASCII, and whether it can end without one while text is left and at
+   the end of the text. *)
+let test_quick () =
+  let has ascii c = (Char.code ascii.[Char.code c lsr 3] lsr (Char.code c land 7)) land 1 <> 0 in
+  List.iter
+    (fun (p, chars, other, mid, at_end) ->
+      match compiled p with
+      | None -> ()
+      | Some _ ->
+          let ascii, found_other, found_mid, found_end = Re.Internal.quick (backtracking p) in
+          let ok = ref (found_other = other && found_mid = mid && found_end = at_end) in
+          String.iter (fun c -> if not (has ascii c) then ok := false) chars;
+          (* A character the pattern cannot start with: none of the cases starts with a digit. *)
+          if has ascii '0' <> (p = {|[^a]|}) then ok := false;
+          if not !ok then
+            fail "%S: quick %S, other %b, mid %b, end %b, want %S, %b, %b, %b" p ascii found_other found_mid found_end
+              chars other mid at_end)
+    [
+      ({|abc|}, "a", false, false, false); ({|[a-c]x|}, "abc", false, false, false);
+      ({|a|b|\u00e9|}, "ab", true, false, false); ({|a?b|}, "ab", false, false, false);
+      ({|a*$|}, "a", false, false, true); ({|(?:a|)b|}, "ab", false, false, false); ({|$|}, "", false, false, true);
+      ({|(?:a|$)b|}, "a", false, false, false); ({|(?=a)[a-c]|}, "a", false, false, false);
+      ({|(?=[ab])(?:b|x)|}, "b", false, false, false); ({|(?!a)[a-c]|}, "abc", false, false, false);
+      ({|(?=a|$)(?:a|)$|}, "a", false, false, true); ({|(?<=a)b|}, "b", false, false, false);
+      ({|(?<=a|b)$|}, "", false, false, true); ({|\bx|}, "x", false, false, false); ({|^a|}, "a", false, false, false);
+      ({|(?:a|b)*c|}, "abc", false, false, false); ({|(?:a?b?)*c|}, "abc", false, false, false);
+      ({|(?:a|){2}x|}, "ax", false, false, false); ({|[^a]|}, "bcd", true, false, false);
+      ({|(?=)a|}, "a", false, false, false); ({|[]|a|}, "a", false, false, false); ({|(?!)[]|}, "", false, false, false);
+    ]
+    [@ocamlformat "disable"];
+  (* Loops a hundred deep, of each kind: the passes do not grow with the depth. A pass for each loop of a nest made the
+     largest nest the limits admit allocate 913 MB to compile. *)
+  List.iter
+    (fun (opening, closing) ->
+      let nest part = String.concat "" (List.init 100 (fun _ -> part)) in
+      match compiled (nest opening ^ "a?b" ^ nest closing) with
+      | None -> ()
+      | Some _ ->
+          let passes = Re.Internal.quick_passes (backtracking (nest opening ^ "a?b" ^ nest closing)) in
+          if passes > 4 then
+            fail "%d passes to work out the quick of loops a hundred deep (%s...%s)" passes opening closing)
+    [
+      ("(?:", "){2,3}");
+      ("(?:", ")*");
+      ("(?:", ")+?");
+      ("(", "){0,2}?");
+      ("(?:", "){2}");
+      ("(?:", "c?)*");
+      ("(?:", "c?)+");
+    ];
+  (* A backreference and the body of a lookbehind allow anything. *)
+  List.iter
+    (fun p ->
+      let wild = Re.Internal.quick_of_wild (backtracking p) in
+      if wild = [] then fail "%S has no instruction this is about" p;
+      List.iter
+        (fun (ascii, other, mid, at_end) ->
+          if ascii <> String.make 16 '\255' || not (other && mid && at_end) then
+            fail "%S: an instruction does not allow everything" p)
+        wild)
+    [ {|(a)\1x|}; {|(?<=ab)|} ]
+
+(* Checks the patterns of the memo set against V8, with the memory in use from the first step and as it comes into use
+   by itself. Then it checks every other set and the hand-written patterns of the oracle the same way: remembering a
+   failure must change no answer. *)
+let test_failed_places_are_remembered () =
+  let t = check_cases "memo" in
+  let with_points = ref 0 in
+  List.iter
+    (fun c ->
+      match Re.compile_backtrack (Json.text "p" c) with
+      | Ok re -> if Re.Internal.point_count re > 0 then incr with_points
+      | Error _ -> ())
+    (Json.items "memo" (Lazy.force cases));
+  log "%d patterns (%d with memo points), %d answers per back end (%d of them a match)" t.patterns !with_points
+    t.answers t.matched;
+  if t.patterns < 50 || !with_points < 45 || t.matched < 500 then fail "the cases are not the ones this test is about";
+  memory_too := true;
+  let total = ref 0 in
+  (try
+     List.iter
+       (fun name -> total := !total + (check_cases name).answers)
+       [ "memo"; "quick"; "loops"; "needs"; "units"; "fast" ];
+     let o = Lazy.force oracle in
+     let answers = ref 0 and matched = ref 0 in
+     List.iter
+       (fun h ->
+         match check_verdict h.hp h.hu h.hl with
+         | Some (re, backtrack) when not (List.mem h.hp v8_modifier_bugs) ->
+             check_answers h.hp re backtrack o.inputs h.hm answers matched
+         | _ -> ())
+       o.hand;
+     total := !total + !answers
+   with e ->
+     memory_too := false;
+     raise e);
+  memory_too := false;
+  log "%d answers per back end with the memory in use from the first step" !total
+
+(* Runs patterns that a backtracking matcher with no memory takes time that doubles with each character for, on texts
+   of 40 to 100,000 characters, some of them not ASCII. None has a backreference. With the memory each takes
+   milliseconds. The limit of the match is ten seconds, so a match that goes the long way round is abandoned and fails
+   the test. The first lines are the patterns the Go module has on its backtracking matcher. The last are patterns the
+   Go module runs on the regexp package: there is no such package here, so a text that is not ASCII, which the
+   automaton does not take, comes to the backtracking matcher. *)
+let test_a_repetition_in_a_repetition_is_answered () =
+  let rep n s = String.concat "" (List.init n (fun _ -> s)) in
+  let a = String.make 60 'a' in
+  let scratch = Re.create_scratch () in
+  List.iter
+    (fun (p, text, want) ->
+      match Re.compile p with
+      | Error _ -> fail "compile(%S)" p
+      | Ok re ->
+          if Re.Internal.point_count re = 0 then fail "%S has no memo points" p;
+          List.iter
+            (fun limit ->
+              Re.set_limit scratch limit;
+              match Re.is_match_sub_with scratch re text 0 (String.length text) with
+              | got ->
+                  if got <> want then
+                    fail "%S on %d bytes with a limit of %g s: %b, want %b" p (String.length text) limit got want
+              | exception Re.Match_time ->
+                  fail "%S on %d bytes with a limit of %g s: abandoned for its time" p (String.length text) limit
+              | exception Re.Match_memory ->
+                  fail "%S on %d bytes with a limit of %g s: abandoned for its memory" p (String.length text) limit)
+            [ 10.; 0. ])
+    [
+      ({|(?=a)(a*)*b|}, a, false); ({|(?=a)(a*)*b|}, a ^ "b", true);
+      ({|^(?=.)(?:a+)+$|}, a ^ "x", false); ({|^(?=.)(?:a+)+$|}, a, true);
+      ({|^(?=.)(?:a|aa)+$|}, a ^ "b", false); ({|^(?=.)(?:a|aa)+$|}, a, true);
+      ({|^(?=.)(?:a?b?)*x|}, rep 30 "ab", false); ({|^(?=.)(?:a?b?)*x|}, rep 30 "ab" ^ "x", true);
+      ({|^(?=.)(?:(?:a?b?)*x?)*$|}, rep 30 "ab" ^ "!", false);
+      ({|^(?=.)(?:(?:a*)+b?)+$|}, a ^ "!", false); ({|^(?=.)(?:(?:a*)+b?)+$|}, a ^ "b", true);
+      ({|^(?=.)(?:(?:a?)+?b?)*?x|}, a, false); ({|(?=.)(?:a*?b*?)*?x$|}, a ^ "b", false);
+      ({|(?i:\b(?:\w+\W?)+\b!)|}, rep 40 "ab ", false); ({|(?i:\b(?:\w+\W?)+\b!)|}, rep 40 "ab " ^ "ab!", true);
+      ({|(?m:^(?:\w+\s?)+$)|}, rep 30 "a " ^ "!", false);
+      ({|^(?!(?:a+)+x)a*b|}, a ^ "b", true); ({|^(?!(?:a+)+x)a*b|}, a, false);
+      ({|(?<!(?:a|aa)+b)x$|}, a ^ "x", true);
+      ({|(?=.).*.*.*x|}, String.make 3000 'a', false); ({|(?=.)a*?a*?a*?b|}, String.make 3000 'a', false);
+      (* A choice for every character of the text, from every position of it: the failures of one start serve the
+         next. *)
+      ({|(?=.)(?:a|b)*c|}, rep 50000 "ab", false); ({|(?=.)(?:a|\u00e9)*c|}, rep 30000 "a\u{e9}", false);
+      (* Text that is not ASCII, and patterns with no lookaround. *)
+      ({|(a*)*b|}, "\u{e9}" ^ a, false); ({|(a*)*b|}, "\u{e9}" ^ a ^ "b", true);
+      ({|^(?:\u00e9+)+$|}, rep 40 "\u{e9}" ^ "x", false); ({|^(?:\u00e9+)+$|}, rep 40 "\u{e9}", true);
+      ({|^(?:a|aa|aaa|aaaa)+$|}, "\u{e9}" ^ a, false); ({|^(?:\u00e9|a|aa|aaa)+$|}, "\u{e9}" ^ a ^ "b", false);
+      ({|^(?:\w+\s?)+$|}, rep 30 "a\u{e9} " ^ "!", false); ({|^(?:[a-z]+\.?)+@|}, rep 30 "ab." ^ "\u{e9}", false);
+    ]
+    [@ocamlformat "disable"]
+
+(* Checks a pattern that reads a group back has no memo points: what a group holds changes what follows a place, so a
+   failure there says nothing of the next time. Such a pattern is still abandoned at its limit. *)
+let test_a_backreference_turns_the_memory_off () =
+  List.iter
+    (fun p ->
+      let points = Re.Internal.point_count (backtracking p) in
+      if points <> 0 then fail "%S has %d memo points" p points)
+    [ {|(a*)*\1b|}; {|^(?:(a+)\1*)+$|}; {|(a)(?:b|c)*\1|}; {|(?<n>a)(?:b+)+\k<n>|} ];
+  let scratch = Re.create_scratch () in
+  Re.set_limit scratch 0.05;
+  match Re.is_match_sub_with scratch (backtracking {|(a*)*\1b|}) (String.make 60 'a') 0 60 with
+  | got -> fail "a nested repetition before a backreference: %b, want it abandoned for its time" got
+  | exception Re.Match_time -> ()
+
+(* Checks where a program has memo points and which loops each tells apart. A split, a loop with no upper bound and a
+   least count of zero or one, and a single character loop have one, unless they are inside a loop that counts to a
+   bound or inside more than two loops. A lookaround starts afresh: what its body does depends on nothing outside it.
+   Each point is given as the instruction's operation and its loops. *)
+let test_memo_points () =
+  List.iter
+    (fun (p, points) ->
+      let found = Re.Internal.memo_points (backtracking p) in
+      if found <> points || Re.Internal.point_count (backtracking p) <> List.length points then
+        fail "%S: memo points [%s], want [%s]" p (String.concat "; " found) (String.concat "; " points))
+    [
+      ({|(?:a|b)*c|}, [ "split"; "split" ]);
+      ({|(?:a?b?)*c|}, [ "loop"; "rep 0"; "rep 0" ]);
+      ({|(?:(?:a?)*b)*|}, [ "split"; "loop"; "rep 0" ]);
+      ({|(?:(?:a?)+b?)+x|}, [ "loop"; "loop 0"; "rep 0 1"; "rep 0" ]);
+      (* The innermost a? is inside three loops and has no point. *)
+      ({|(?:(?:(?:a?)*b?)*x?)*|}, [ "loop"; "loop 0"; "loop 0 1"; "rep 0 1"; "rep 0" ]);
+      (* A loop that counts to a bound has no point, and neither has anything in it. *)
+      ({|(?:a|){2,3}(?:b|c)|}, [ "split" ]);
+      ({|(?:(?:a|b){2}x?)*|}, [ "split"; "rep" ]);
+      ({|(?:(?:a?b?)*?(?:c|d)){3}|}, []);
+      (* The body of a lookaround starts afresh. *)
+      ({|(?:a?(?=(?:b|c)*x))*|}, [ "loop"; "rep 0"; "split"; "split" ]);
+      ({|(?:(?:a|){2}(?=b|c))*|}, [ "loop"; "split" ]);
+      ({|(?<=(?:a?b?)*)x|}, [ "loop"; "split 0"; "split 0" ]);
+      ({|a*b*?c{2,3}|}, [ "rep"; "lazy"; "rep" ]);
+      ({|(?:a+)+$|}, [ "rep"; "split" ]);
+      ({|(a)\1(?:b|c)|}, []);
+    ]
+
+(* Checks when a match takes the memory into use: not before it has made as many steps as the memory has words and 64
+   more for each position of the text, and never when the memory would be more than the largest there is. *)
+let test_the_memory_is_bounded () =
+  List.iter
+    (fun (points, width, checks, on, off) ->
+      let found_on, found_off, words = Re.Internal.memory_use points width checks in
+      if found_on <> on || found_off <> off then
+        fail "%d points, %d positions, %d checks: in use %b, never %b, want %b and %b" points width checks found_on
+          found_off on off;
+      let want = ((points * width * 4) + 63) / 64 in
+      if found_on && (words <> want || words > Re.Internal.max_memo_words) then
+        fail "%d points, %d positions: a memory of %d words, want %d" points width words want)
+    [
+      (0, 100, 1000, false, true);
+      (* 19 words and 6,400 steps for the positions: the second check. *)
+      (3, 100, 1, false, false); (3, 100, 2, true, false);
+      (* 18,751 words and 6,400,064 steps: the check after 6,418,815 steps. *)
+      (3, 100001, 1567, false, false); (3, 100001, 1568, true, false);
+      (1000, 100001, 1 lsl 20, false, true); (167, 100001, 1 lsl 20, true, false); (168, 100001, 1 lsl 20, false, true);
+    ]
+    [@ocamlformat "disable"];
+  (* A match too large for the memory still has its limit. *)
+  let alternatives = String.concat "|" (List.init 400 (fun k -> "a" ^ String.make (k mod 7) 'b')) in
+  let re = backtracking ("^(?=.)(?:" ^ alternatives ^ ")+$") in
+  let text = String.concat "" (List.init 50000 (fun _ -> "ab")) ^ "x" in
+  let scratch = Re.create_scratch () in
+  Re.set_limit scratch 0.1;
+  match Re.is_match_sub_with scratch re text 0 (String.length text) with
+  | _ -> ()
+  | exception Re.Match_time -> ()
+  | exception Re.Match_memory -> fail "a match too large for the memory was abandoned for its memory"
+
 let () =
   let ran = ref 0 in
   List.iter
@@ -1390,6 +1641,13 @@ let () =
       ("needs", test_needs);
       ("loops give up when the rest cannot fit", test_loops_give_up_when_the_rest_cannot_fit);
       ("a loop gives up when its iterations cannot fit", test_a_loop_gives_up_when_its_iterations_cannot_fit);
+      ("the next character rules out a way", test_the_next_character_rules_out_a_way);
+      ("quick", test_quick);
+      ("failed places are remembered", test_failed_places_are_remembered);
+      ("a repetition in a repetition is answered", test_a_repetition_in_a_repetition_is_answered);
+      ("a backreference turns the memory off", test_a_backreference_turns_the_memory_off);
+      ("memo points", test_memo_points);
+      ("the memory is bounded", test_the_memory_is_bounded);
       ("escaped k in a class", test_escaped_k_in_a_class);
       ("counts are compared as written", test_counts_are_compared_as_written);
       ("property names and values", test_property_names_and_values);

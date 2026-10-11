@@ -34,14 +34,18 @@ let e_look = 3
 
 let e_look_neg = 4
 
+(** Lies under the choices of a memo point. When it is reached, every way from the point has failed, and the bit pos of
+    the memory is set (see [memo] of the state). *)
+let e_mark = 5
+
 (** Restores the entry position of group pc to pos. *)
-let e_tmp = 5
+let e_tmp = 6
 
 (** Restores the start and end of group pc to pos and a. *)
-let e_cap = 6
+let e_cap = 7
 
 (** Restores the count and the iteration start of loop pc to pos and a. *)
-let e_counter = 7
+let e_counter = 8
 
 exception Match_time
 (** A match was abandoned because it ran for longer than its limit. It is not an answer. *)
@@ -61,6 +65,27 @@ let check_every = 1 lsl 12
     consuming, such as [(?:a?){2147483647}], reaches it in a few milliseconds. It is looked at with the clock, so the
     stack can go past it by [check_every] entries. *)
 let max_stack = 1 lsl 20
+
+(** The largest memory of failed places, in words of 64 bits: 8 MB. A match that would need more goes without it. *)
+let max_memo_words = 1 lsl 20
+
+(** The number of steps for each position of the text that a match makes before it takes the memory into use. *)
+let memo_steps_per_position = 64
+
+(** The largest memory kept in the state between matches, in words of 64 bits. *)
+let max_retained_memo = 1 lsl 16
+
+(** The depth of the backtracking stack, in entries, beyond which a memo point is not marked. A mark is an entry of the
+    stack, and a pattern that keeps no choice for a character still marks a place for each, so on a long text the marks
+    alone would reach [max_stack]. A place that is not marked is not remembered, which loses time and nothing else, and
+    the places below this depth are remembered when the stack unwinds, so a later start has the room to mark the next
+    ones. *)
+let max_mark_depth = max_stack / 2
+
+(** Makes every match take its memory of failed places before its first step. The tests set it, to run every pattern
+    they have with the memory in use, and so does the harness that runs the pattern datasets, to compare the answers
+    with those of a match that takes the memory when it would by itself. Nothing else writes to it. *)
+let memo_from_the_start = ref false
 
 (* Why a match was abandoned. *)
 let stop_none = 0
@@ -90,6 +115,26 @@ type state = {
           time of the process. *)
   mutable steps : int;  (** The number of steps left before the next check. *)
   mutable stop : int;  (** Why the match in hand was abandoned, or [stop_none]. *)
+  mutable memo : Bytes.t;
+      (** The memory of the places where a way has failed: one bit for each memo point of the program, each position of
+          the text and each state of the loops around the point (see [m] of an instruction). A bit is set when every way
+          from the place has failed, and a way that comes to a place whose bit is set fails at once. So no place is gone
+          through twice, and a pattern of repetitions inside repetitions takes time proportional to its size times the
+          text and not time that doubles with each character.
+
+          The memory costs its size to clear, and a mark on the stack for each place gone through, so a match starts
+          without it. It takes it at the check by which it has made as many steps as the memory has words and
+          [memo_steps_per_position] more for each position of the text, which a match that goes through its text once or
+          a few times never makes. A place whose way failed before then is not remembered, which loses time and nothing
+          else. *)
+  mutable memo_on : bool;  (** Says the memory is in use. *)
+  mutable memo_off : bool;
+      (** Says the memory never will be in use: the program has no memo points, or the memory would be larger than
+          [max_memo_words]. *)
+  mutable lo : int;  (** The start of the text of the match in hand. *)
+  mutable width : int;  (** The number of positions of the text. *)
+  mutable checks : int;  (** The checks the match in hand has made. *)
+  mutable points : int;  (** The memo points of the program of the match in hand. *)
 }
 (** The working memory of one match. A match allocates only while the stack is still growing to the depth the pattern
     and the text need. *)
@@ -111,7 +156,40 @@ let new_state () =
     own_clock = None;
     steps = 0;
     stop = stop_none;
+    memo = Bytes.empty;
+    memo_on = false;
+    memo_off = true;
+    lo = 0;
+    width = 0;
+    checks = 0;
+    points = 0;
   }
+
+(* The number of words of 64 bits of the memory of a match. *)
+let memo_words st = ((st.points * (st.width lsl Compile.max_memo_loops)) + 63) lsr 6
+
+(* Takes the memory of failed places into use when the match has made enough steps to pay for it. *)
+let remember st =
+  let words = memo_words st in
+  if words > max_memo_words then st.memo_off <- true
+  else if st.checks * check_every >= words + (memo_steps_per_position * st.width) || !memo_from_the_start then begin
+    if Bytes.length st.memo < 8 * words then st.memo <- Bytes.make (8 * words) '\000'
+    else Bytes.fill st.memo 0 (8 * words) '\000';
+    st.memo_on <- true
+  end
+
+(* Returns the bit of the memory for the memo point of an instruction at a position, with the state of the loops around
+   the point: for each, whether it would refuse an iteration that ended here as empty. *)
+let memo_index st (i : inst) pos =
+  let idx = (((i.m - 1) * st.width) + (pos - st.lo)) lsl Compile.max_memo_loops in
+  let counts = st.counts in
+  let idx = if i.ml0 >= 0 && counts.(2 * i.ml0) > i.mm0 && counts.((2 * i.ml0) + 1) = pos then idx lor 1 else idx in
+  if i.ml1 >= 0 && counts.(2 * i.ml1) > i.mm1 && counts.((2 * i.ml1) + 1) = pos then idx lor 2 else idx
+
+let failed st idx = (Char.code (Bytes.get st.memo (idx lsr 3)) lsr (idx land 7)) land 1 <> 0
+
+let set_failed st idx =
+  Bytes.set st.memo (idx lsr 3) (Char.chr (Char.code (Bytes.get st.memo (idx lsr 3)) lor (1 lsl (idx land 7))))
 
 (** [set_limit st seconds] sets the time every match with the state may take from now on. Zero or less, or a value that
     is not a number, is no limit. *)
@@ -140,6 +218,10 @@ let limit st = st.clock.(0)
    check. *)
 let check st =
   st.steps <- check_every;
+  if (not st.memo_on) && not st.memo_off then begin
+    st.checks <- st.checks + 1;
+    remember st
+  end;
   let limit = st.clock.(0) in
   if limit <= 0. then true
   else if st.sp > 4 * max_stack then begin
@@ -244,6 +326,14 @@ let one st i t lo at hi =
     else if r = i.r then Utf8.width packed
     else 0
 
+(* Reports whether a way with the quick q can go on from the position. *)
+let allows (q : quick) t pos hi =
+  if pos >= hi then q.at_end
+  else if q.mid then true
+  else
+    let c = byte t pos in
+    if c < Utf8.rune_self then (Char.code (Bytes.get q.ascii (c lsr 3)) lsr (c land 7)) land 1 <> 0 else q.other
+
 (* The greedy single character loop of Op_rep. It takes characters from at while the instruction matches and the max
    allows, and then pushes the choice of giving some back. n counts the characters taken and floor is the position
    once the minimum was met. It returns the position reached, or -1 when the minimum was not met. *)
@@ -265,10 +355,24 @@ let rec rep st i t lo hi pc at n floor =
 
 and rep_done st i pc at n floor =
   st.steps <- st.steps - (n lsr 3);
-  if n >= i.min then begin
-    if at > floor then push st e_rep (pc + 1) at floor;
-    at
-  end
+  if n >= i.min then
+    if st.memo_on && i.m <> 0 then begin
+      let idx = memo_index st i at in
+      if failed st idx then begin
+        (* What follows the loop has failed from here before. The loop gives a character back. *)
+        if at > floor then push st e_rep (pc + 1) at floor;
+        -1
+      end
+      else begin
+        if at > floor then push st e_rep (pc + 1) at floor
+        else if st.sp < 4 * max_mark_depth then push st e_mark 0 idx 0;
+        at
+      end
+    end
+    else begin
+      if at > floor then push st e_rep (pc + 1) at floor;
+      at
+    end
   else -1
 
 (* Compares the group from..until with the text at the position at, going forward, a character at a time: to fold
@@ -378,8 +482,20 @@ and exec insts st t lo hi pc pos =
       else backtrack insts st t lo hi
   | Op_jmp -> step insts st t lo hi i.x pos
   | Op_split ->
-      push st e_choice i.y pos 0;
-      step insts st t lo hi i.x pos
+      (* A place from which every way has failed before fails at once. The mark is under whatever comes of this place,
+         a choice or not, so that the place is remembered when it has all failed. *)
+      if st.memo_on && i.m <> 0 && failed st (memo_index st i pos) then backtrack insts st t lo hi
+      else begin
+        if st.memo_on && i.m <> 0 && st.sp < 4 * max_mark_depth then push st e_mark 0 (memo_index st i pos) 0;
+        (* A way the next character rules out is not taken, and no choice is kept for it. *)
+        if not (allows insts.(i.y).q t pos hi) then
+          if not (allows insts.(i.x).q t pos hi) then backtrack insts st t lo hi else step insts st t lo hi i.x pos
+        else if not (allows insts.(i.x).q t pos hi) then step insts st t lo hi i.y pos
+        else begin
+          push st e_choice i.y pos 0;
+          step insts st t lo hi i.x pos
+        end
+      end
   | Op_save_tmp ->
       push st e_tmp i.a st.tmp.(i.a) 0;
       st.tmp.(i.a) <- pos;
@@ -439,8 +555,12 @@ and exec insts st t lo hi pc pos =
         let at = backref_chars_back st t lo hi (i.op = Op_backref_fold_back) i.flag from until pos in
         if at >= 0 then step insts st t lo hi (pc + 1) at else backtrack insts st t lo hi
   | Op_look ->
-      push st (if i.flag then e_look_neg else e_look) i.x pos 0;
-      step insts st t lo hi (pc + 1) pos
+      (* What follows a lookaround starts where the lookaround does, and so does the body of a lookahead. *)
+      if not (allows i.q t pos hi) then backtrack insts st t lo hi
+      else begin
+        push st (if i.flag then e_look_neg else e_look) i.x pos 0;
+        step insts st t lo hi (pc + 1) pos
+      end
   | Op_look_ok ->
       (* The body matched. A lookaround is atomic, so the choices made inside it are dropped. The undo entries stay,
          because the groups it set remain set until something below this point is retried. *)
@@ -488,10 +608,24 @@ and exec insts st t lo hi pc pos =
         end
       done;
       st.steps <- st.steps - (!n lsr 3);
-      if !n = i.min then begin
-        if !n <> i.max then push st e_rep_lazy pc !at !n;
-        step insts st t lo hi (pc + 1) !at
-      end
+      if !n = i.min then
+        if st.memo_on && i.m <> 0 then begin
+          let idx = memo_index st i !at in
+          if failed st idx then begin
+            (* What follows the loop has failed from here before. The loop takes one more character. *)
+            if !n <> i.max then push st e_rep_lazy pc !at !n;
+            backtrack insts st t lo hi
+          end
+          else begin
+            if !n <> i.max then push st e_rep_lazy pc !at !n
+            else if st.sp < 4 * max_mark_depth then push st e_mark 0 idx 0;
+            step insts st t lo hi (pc + 1) !at
+          end
+        end
+        else begin
+          if !n <> i.max then push st e_rep_lazy pc !at !n;
+          step insts st t lo hi (pc + 1) !at
+        end
       else backtrack insts st t lo hi
   | Op_loop_init ->
       let counts = st.counts in
@@ -513,13 +647,23 @@ and exec insts st t lo hi pc pos =
       then backtrack insts st t lo hi
       else if n < i.min then step insts st t lo hi (pc + 1) pos
       else if i.max >= 0 && n >= i.max then step insts st t lo hi i.x pos
-      else if i.flag then begin
-        push st e_choice (pc + 1) pos 0;
-        step insts st t lo hi i.x pos
-      end
+      else if st.memo_on && i.m <> 0 && failed st (memo_index st i pos) then
+        (* The loop may be left or entered from here, and both have failed from here before. *)
+        backtrack insts st t lo hi
       else begin
-        push st e_choice i.x pos 0;
-        step insts st t lo hi (pc + 1) pos
+        if st.memo_on && i.m <> 0 && st.sp < 4 * max_mark_depth then push st e_mark 0 (memo_index st i pos) 0;
+        if not (allows insts.(i.x).q t pos hi) then
+          (* The next character rules out leaving the loop, so there is no choice. *)
+          step insts st t lo hi (pc + 1) pos
+        else if not (allows insts.(pc + 1).q t pos hi) then step insts st t lo hi i.x pos
+        else if i.flag then begin
+          push st e_choice (pc + 1) pos 0;
+          step insts st t lo hi i.x pos
+        end
+        else begin
+          push st e_choice i.x pos 0;
+          step insts st t lo hi (pc + 1) pos
+        end
       end
   | Op_loop_iter ->
       let counts = st.counts in
@@ -541,9 +685,13 @@ and backtrack insts st t lo hi =
       step insts st t lo hi stack.(e + 1) stack.(e + 2)
     end
     else if kind = e_rep then begin
+      let pc = stack.(e + 1) and pos = stack.(e + 2) and floor = stack.(e + 3) in
+      (* What followed the loop from the position it stood at has failed. *)
+      let rep = insts.(pc - 1) in
+      let marked = st.memo_on && rep.m <> 0 in
+      if marked then set_failed st (memo_index st rep pos);
       (* Give back the last character taken. The characters between a and pos were decoded going forward, and
          decoding the last of them going backward finds the same boundary. *)
-      let pos = stack.(e + 2) and floor = stack.(e + 3) in
       let w =
         if byte t (pos - 1) < Utf8.rune_self then 1
         else if st.units then Utf8.width (Utf8.unit_before t lo pos hi)
@@ -551,12 +699,36 @@ and backtrack insts st t lo hi =
       in
       let pos = pos - w in
       stack.(e + 2) <- pos;
-      if pos <= floor then st.sp <- e;
-      step insts st t lo hi stack.(e + 1) pos
+      let last = pos <= floor in
+      (* A position from which what follows the loop cannot go on is passed over, and so is one from which it has
+         failed before. *)
+      if not (allows insts.(pc).q t pos hi) then begin
+        if last then st.sp <- e;
+        st.steps <- st.steps - 1;
+        backtrack insts st t lo hi
+      end
+      else if marked && failed st (memo_index st rep pos) then begin
+        if last then st.sp <- e;
+        st.steps <- st.steps - 1;
+        backtrack insts st t lo hi
+      end
+      else begin
+        if last then
+          if marked then begin
+            (* The loop has nothing more to give back. The entry stays to note this last way. *)
+            stack.(e) <- e_mark;
+            stack.(e + 2) <- memo_index st rep pos
+          end
+          else st.sp <- e;
+        step insts st t lo hi pc pos
+      end
     end
     else if kind = e_rep_lazy then begin
       let pc = stack.(e + 1) in
       let rep = insts.(pc) in
+      (* What followed the loop from the position it stood at has failed. *)
+      let marked = st.memo_on && rep.m <> 0 in
+      if marked then set_failed st (memo_index st rep stack.(e + 2));
       let w = one st rep t lo stack.(e + 2) hi in
       if w = 0 then begin
         st.sp <- e;
@@ -566,9 +738,28 @@ and backtrack insts st t lo hi =
         let pos = stack.(e + 2) + w and taken = stack.(e + 3) + 1 in
         stack.(e + 2) <- pos;
         stack.(e + 3) <- taken;
-        if taken = rep.max then st.sp <- e;
-        step insts st t lo hi (pc + 1) pos
+        let last = taken = rep.max in
+        if marked && failed st (memo_index st rep pos) then begin
+          if last then st.sp <- e;
+          st.steps <- st.steps - 1;
+          backtrack insts st t lo hi
+        end
+        else begin
+          if last then
+            if marked then begin
+              stack.(e) <- e_mark;
+              stack.(e + 2) <- memo_index st rep pos
+            end
+            else st.sp <- e;
+          step insts st t lo hi (pc + 1) pos
+        end
       end
+    end
+    else if kind = e_mark then begin
+      (* Every way from a memo point has failed. *)
+      set_failed st stack.(e + 2);
+      st.sp <- e;
+      backtrack insts st t lo hi
     end
     else if kind = e_look then begin
       (* The body of a positive lookaround has no way left to match. *)
@@ -633,16 +824,25 @@ let match_text p st lo hi =
   st.timed <- false;
   st.steps <- check_every;
   st.stop <- stop_none;
+  st.memo_on <- false;
+  st.memo_off <- p.points = 0;
+  st.checks <- 0;
+  st.lo <- lo;
+  st.width <- hi - lo + 1;
+  st.points <- p.points;
+  if !memo_from_the_start && not st.memo_off then remember st;
   let t = st.text in
   match search p st t lo hi with
   | matched ->
       if Array.length st.stack > 4 * max_retained_stack then st.stack <- [||];
+      if Bytes.length st.memo > 8 * max_retained_memo then st.memo <- Bytes.empty;
       t.b <- Bytes.empty;
       t.s <- "";
       (* A match that was abandoned has no answer. The exceptions carry nothing, so raising one allocates nothing. *)
       if st.stop = stop_time then raise Match_time else if st.stop = stop_memory then raise Match_memory else matched
   | exception e ->
       st.stack <- [||];
+      st.memo <- Bytes.empty;
       t.b <- Bytes.empty;
       t.s <- "";
       raise e

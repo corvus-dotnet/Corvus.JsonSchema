@@ -47,6 +47,26 @@ type opcode =
   | Op_loop_iter
   | Op_match
 
+type quick = {
+  ascii : Bytes.t;
+      (** The characters below 128 a way can consume next, a bit for each in 16 bytes. Nothing writes to it once
+          {!set_quick} has returned. *)
+  other : bool;  (** Says a way can consume a character that is not ASCII. *)
+  mid : bool;  (** Says a way reaches the end of its match consuming nothing more while text is left. *)
+  at_end : bool;  (** Says a way does at the end of the text. *)
+}
+(** What can come next on a way from an instruction to the end of its match, which is the end of the pattern or of the
+    lookaround the instruction is in. The matcher looks at it before it takes a way: when the next character of the text
+    is none that the way can start with, and the way cannot end without one, the way fails, so it is not taken, and
+    where it was one of two no choice is kept for it. V8 makes the same check ("quick check") at its choices. It is what
+    keeps a choice between ways that need different characters from being a choice. *)
+
+let quick_none = { ascii = Bytes.make 16 '\000'; other = false; mid = false; at_end = false }
+let quick_all = { ascii = Bytes.make 16 '\255'; other = true; mid = true; at_end = true }
+
+(** The number of loops whose state a memo point can tell apart. *)
+let max_memo_loops = 2
+
 type inst = {
   op : opcode;
   flag : bool;
@@ -66,12 +86,31 @@ type inst = {
       (** The least number of bytes of text that every way from this instruction to a match consumes going forward (see
           {!set_needs}). It is set for an [Op_loop], and counts none of the iterations the loop has still to make. *)
   iter : int;  (** The least number of bytes one iteration of the body of an [Op_loop] consumes going forward. *)
+  mutable q : quick;  (** What can come next on a way from the instruction (see {!set_quick}). *)
+  m : int;
+      (** The number of the instruction's memo point, counted from 1, or 0 when it has none. It is set for an
+          [Op_split], an [Op_loop], an [Op_rep] and an [Op_rep_lazy].
+
+          A memo point is a place where the matcher makes a choice and can remember that the choice has failed: a split,
+          a loop that may be entered or left, and what follows a single character loop that gives characters back or
+          takes more. Whether a way from such a place leads to a match depends on the place and the position alone when
+          nothing else the matcher keeps can change what follows. So a pattern with a backreference has no memo points
+          (what a group holds changes what follows), and neither has a place inside a loop that counts its iterations up
+          to a bound. Inside a loop with no upper bound and a least count of zero or one, one thing more decides what
+          follows: whether the loop would refuse the iteration as empty if it ended here. That is one bit for each such
+          loop the place is in, and a place in more than [max_memo_loops] of them has no memo point. *)
+  ml0 : int;
+      (** [ml0] and [ml1] are the loops around the memo point, outermost first, or -1, and [mm0] and [mm1] the least
+          count of each. *)
+  ml1 : int;
+  mm0 : int;
+  mm1 : int;
 }
 (** One instruction of the backtracking matcher. The Go source holds the jump targets, the groups and the bounds in 32
     bits. Here each is an [int]. *)
 
 let no_inst =
-  { op = Op_fail; flag = false; r = 0; set = Charset.none; has_set = false; lit = ""; x = 0; y = 0; a = 0; b = 0; min = 0; max = 0; need = 0; iter = 0 }
+  { op = Op_fail; flag = false; r = 0; set = Charset.none; has_set = false; lit = ""; x = 0; y = 0; a = 0; b = 0; min = 0; max = 0; need = 0; iter = 0; q = quick_none; m = 0; ml0 = -1; ml1 = -1; mm0 = 0; mm1 = 0 }
 [@@ocamlformat "disable"]
 
 type program = {
@@ -83,6 +122,9 @@ type program = {
   anchored : bool;  (** Says every match starts at the start of the text. *)
   need : int;  (** The least number of bytes a match consumes (see {!set_needs}). *)
   need_passes : int;  (** The passes over the instructions that {!set_needs} made, the last of which changed nothing. *)
+  points : int;  (** The number of memo points of the program (see [m] of an instruction). *)
+  quick_passes : int;
+      (** The passes over the instructions that {!set_quick} made, the last of which changed nothing. *)
   prefix : string;  (** Literal text every match starts with. *)
   first : Charset.t;
       (** Every code point a match can start with. It is in use when [has_first] is set, which it is not when a match
@@ -101,7 +143,26 @@ type compiler = {
   mutable loop_count : int;
   unicode_mode : bool;
       (** Says the pattern was read with the u flag grammar, which decides how a backreference folds case. *)
+  memo : bool;  (** Says the pattern has no backreference, so its choices can have memo points. *)
+  mutable open_loops : (int * int * bool) list;
+      (** The counted loops around the instruction being written, innermost first, inside the innermost lookaround (what
+          a lookaround's body does depends on nothing outside it): the number of each, its least count, and whether its
+          state is one bit to a memo point (no upper bound, and a least count of zero or one). *)
+  mutable point_count : int;
 }
+
+(* Returns an instruction with the number of a new memo point for a place here, or the instruction as it is when a
+   choice here cannot be remembered. *)
+let with_point c inst =
+  let loops = List.rev c.open_loops in
+  if (not c.memo) || List.length loops > max_memo_loops || List.exists (fun (_, _, simple) -> not simple) loops then
+    inst
+  else begin
+    c.point_count <- c.point_count + 1;
+    let loop k = match List.nth_opt loops k with Some (l, _, _) -> l | None -> -1 in
+    let least k = match List.nth_opt loops k with Some (_, m, _) -> m | None -> 0 in
+    { inst with m = c.point_count; ml0 = loop 0; ml1 = loop 1; mm0 = least 0; mm1 = least 1 }
+  end
 
 (** Reports whether n can match one character or more. It errs towards true. *)
 let rec consumes n =
@@ -251,7 +312,7 @@ let rec emit c n back =
         (fun i sub ->
           if i = last then emit c sub back
           else begin
-            let split = add c { no_inst with op = Op_split } in
+            let split = add c (with_point c { no_inst with op = Op_split }) in
             c.code.(split).x <- pc c;
             emit c sub back;
             jumps := add c { no_inst with op = Op_jmp } :: !jumps;
@@ -287,7 +348,11 @@ let rec emit c n back =
       Array.iter (fun g -> ignore (add c { no_inst with op; a = slot c g; flag = c.unicode_mode })) n.groups
   | Look ->
       let look = add c { no_inst with op = Op_look; flag = n.negative } in
+      (* Whether the body matches depends on nothing outside it. *)
+      let outer = c.open_loops in
+      c.open_loops <- [];
       emit c n.subs.(0) n.behind;
+      c.open_loops <- outer;
       ignore (add c { no_inst with op = (if n.negative then Op_look_fail else Op_look_ok) });
       c.code.(look).x <- pc c
   | Repeat -> emit_repeat c n back
@@ -298,15 +363,16 @@ and emit_repeat c n back =
     if (not back) && (body.kind = Char || (body.kind = Set && not (Charset.is_empty body.set))) then
       ignore
         (add c
-           {
-             no_inst with
-             op = (if n.lazy_ then Op_rep_lazy else Op_rep);
-             r = body.r;
-             set = body.set;
-             has_set = body.kind = Set;
-             min = n.min;
-             max = n.max;
-           })
+           (with_point c
+              {
+                no_inst with
+                op = (if n.lazy_ then Op_rep_lazy else Op_rep);
+                r = body.r;
+                set = body.set;
+                has_set = body.kind = Set;
+                min = n.min;
+                max = n.max;
+              }))
     else begin
       let clear_lo, clear_hi = group_range c body in
       let emit_body () =
@@ -314,7 +380,7 @@ and emit_repeat c n back =
         emit c body back
       in
       (* split writes a choice between entering the body and leaving the loop, in the order the quantifier prefers. *)
-      let split () = add c { no_inst with op = Op_split } in
+      let split () = add c (with_point c { no_inst with op = Op_split }) in
       let set_split at enter leave =
         if n.lazy_ then begin
           c.code.(at).x <- leave;
@@ -352,9 +418,14 @@ and emit_repeat c n back =
         c.loop_count <- c.loop_count + 1;
         ignore (add c { no_inst with op = Op_loop_init; a = k });
         let iter = if back then 0 else min_length body in
-        let loop = add c { no_inst with op = Op_loop; a = k; min = n.min; max = n.max; flag = n.lazy_; iter } in
+        let simple = n.max = unbounded && n.min <= 1 in
+        let loop_inst = { no_inst with op = Op_loop; a = k; min = n.min; max = n.max; flag = n.lazy_; iter } in
+        (* The loop is left or entered from here, and what follows either depends on the loops around this one. *)
+        let loop = add c (if simple then with_point c loop_inst else loop_inst) in
         ignore (add c { no_inst with op = Op_loop_iter; a = k });
+        c.open_loops <- (k, n.min, simple) :: c.open_loops;
         emit_body ();
+        c.open_loops <- List.tl c.open_loops;
         ignore (add c { no_inst with op = Op_jmp; x = loop });
         c.code.(loop).x <- pc c
       end
@@ -478,6 +549,88 @@ let set_needs insts =
   Array.iteri (fun pc i -> if i.op = Op_loop then i.need <- need.(pc)) insts;
   (need.(0), !passes)
 
+let quick_union a b =
+  {
+    ascii = Bytes.init 16 (fun k -> Char.chr (Char.code (Bytes.get a.ascii k) lor Char.code (Bytes.get b.ascii k)));
+    other = a.other || b.other;
+    mid = a.mid || b.mid;
+    at_end = a.at_end || b.at_end;
+  }
+
+let quick_inter a b =
+  {
+    ascii = Bytes.init 16 (fun k -> Char.chr (Char.code (Bytes.get a.ascii k) land Char.code (Bytes.get b.ascii k)));
+    other = a.other && b.other;
+    mid = a.mid && b.mid;
+    at_end = a.at_end && b.at_end;
+  }
+
+let quick_rune r =
+  if r < Utf8.rune_self then begin
+    let ascii = Bytes.make 16 '\000' in
+    Bytes.set ascii (r lsr 3) (Char.chr (1 lsl (r land 7)));
+    { quick_none with ascii }
+  end
+  else { quick_none with other = true }
+
+let quick_set (set : Charset.t) =
+  let n = Array.length set.ranges in
+  { quick_none with ascii = Bytes.of_string set.ascii; other = n > 0 && set.ranges.(n - 1) >= Utf8.rune_self }
+
+let quick_equal a b = Bytes.equal a.ascii b.ascii && a.other = b.other && a.mid = b.mid && a.at_end = b.at_end
+
+(** [set_quick insts] works out the quick of every instruction, and returns the number of passes it made. Every figure
+    is a set that can only be too large: an assertion is taken to hold, a backreference and an instruction that matches
+    right to left (the body of a lookbehind) to allow anything. A positive lookahead needs both its body and what
+    follows it to go on from the same position, so it allows what both allow. *)
+let set_quick insts =
+  let count = Array.length insts in
+  (* The sets only grow, and nearly every way goes forward, so the instructions are gone through from the last to the
+     first until a pass changes nothing. The one way that goes back is the jump at the end of the body of a loop, to
+     the instruction at its head, which the pass has not reached. Taking what that instruction had after the pass
+     before would settle one loop of a nest for each pass: a thousand passes for loops a thousand deep. The head of a
+     loop allows what follows the loop, which this pass has settled, and what its body starts with. So the jump takes
+     what follows the loop too. Then the first pass settles the head of every loop, since all it still lacks at the
+     jump is a part of itself, the second settles every instruction, and the third finds nothing to change, whatever
+     the depth. *)
+  let changed = ref true and passes = ref 0 in
+  while !changed do
+    changed := false;
+    incr passes;
+    for pc = count - 1 downto 0 do
+      let i = insts.(pc) in
+      let q k = insts.(k).q in
+      let n =
+        match i.op with
+        | Op_match | Op_look_ok | Op_look_fail -> quick_all
+        | Op_fail -> quick_none
+        | Op_char -> quick_rune i.r
+        | Op_set -> quick_set i.set
+        | Op_lit -> quick_rune (Char.code (String.get i.lit 0))
+        | Op_rep | Op_rep_lazy ->
+            let own = if i.has_set then quick_set i.set else quick_rune i.r in
+            if i.min = 0 then quick_union own (q (pc + 1)) else own
+        | Op_jmp when i.x < pc && insts.(i.x).op = Op_loop -> quick_union (q i.x) (q insts.(i.x).x)
+        | Op_jmp when i.x < pc && insts.(i.x).op = Op_split ->
+            quick_union (q i.x) (quick_union (q insts.(i.x).x) (q insts.(i.x).y))
+        | Op_jmp -> q i.x
+        | Op_split -> quick_union (q i.x) (q i.y)
+        | Op_loop -> quick_union (q (pc + 1)) (q i.x)
+        | Op_eol -> { quick_none with at_end = (q (pc + 1)).at_end }
+        | Op_look -> if i.flag then q i.x else quick_inter (q i.x) (q (pc + 1))
+        | Op_char_back | Op_set_back | Op_backref | Op_backref_back | Op_backref_fold | Op_backref_fold_back
+        | Op_backref_units | Op_backref_units_back ->
+            quick_all
+        | _ -> q (pc + 1)
+      in
+      if not (quick_equal n i.q) then begin
+        i.q <- n;
+        changed := true
+      end
+    done
+  done;
+  !passes
+
 (** The most bytes of the literal text a match starts with that the search for a match looks for. *)
 let max_prefix = 16
 
@@ -496,7 +649,18 @@ let compile_program root group_count unicode_mode =
       incr slots
     end
   done;
-  let c = { code = [||]; count = 0; tracked; loop_count = 0; unicode_mode } in
+  let c =
+    {
+      code = [||];
+      count = 0;
+      tracked;
+      loop_count = 0;
+      unicode_mode;
+      memo = !slots = 0;
+      open_loops = [];
+      point_count = 0;
+    }
+  in
   emit c root false;
   ignore (add c { no_inst with op = Op_match });
   let anchored = starts_at_bol root in
@@ -513,6 +677,7 @@ let compile_program root group_count unicode_mode =
   in
   let insts = Array.sub c.code 0 c.count in
   let need, need_passes = set_needs insts in
+  let quick_passes = set_quick insts in
   {
     insts;
     groups = !slots;
@@ -521,6 +686,8 @@ let compile_program root group_count unicode_mode =
     anchored;
     need;
     need_passes;
+    points = c.point_count;
+    quick_passes;
     (* The search looks for the prefix at every position of the text, a byte at a time, so only its first bytes are
        used: a long prefix that nearly matches everywhere would cost its length at each position, outside the steps
        the matcher counts. The matcher compares the rest when it runs. *)

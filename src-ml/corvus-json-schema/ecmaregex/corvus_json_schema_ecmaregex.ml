@@ -185,7 +185,51 @@ module Internal = struct
          (Array.to_list re.prog.insts))
 
   let no_match = Compile.no_match
+  let memo_from_the_start = Vm.memo_from_the_start
+
+  let memo_points re =
+    List.filter_map
+      (fun (i : Compile.inst) ->
+        if i.m = 0 then None
+        else
+          let name =
+            match i.op with
+            | Compile.Op_split -> "split"
+            | Compile.Op_loop -> "loop"
+            | Compile.Op_rep -> "rep"
+            | Compile.Op_rep_lazy -> "lazy"
+            | _ -> "?"
+          in
+          let loop l = if l >= 0 then " " ^ string_of_int l else "" in
+          Some (name ^ loop i.ml0 ^ loop i.ml1))
+      (Array.to_list re.prog.insts)
+
+  let point_count re = re.prog.points
+  let shown_quick (q : Compile.quick) = (Bytes.to_string q.ascii, q.other, q.mid, q.at_end)
+  let quick re = shown_quick re.prog.insts.(0).q
+
+  let quick_of_wild re =
+    List.filter_map
+      (fun (i : Compile.inst) ->
+        if i.op = Compile.Op_backref || i.op = Compile.Op_char_back then Some (shown_quick i.q) else None)
+      (Array.to_list re.prog.insts)
+
+  let memory_use points width checks =
+    let st = Vm.new_state () in
+    st.points <- points;
+    st.width <- width;
+    st.memo_off <- points = 0;
+    let k = ref 0 in
+    while !k < checks && (not st.memo_on) && not st.memo_off do
+      st.checks <- st.checks + 1;
+      Vm.remember st;
+      incr k
+    done;
+    (st.memo_on, st.memo_off, Bytes.length st.memo / 8)
+
+  let max_memo_words = Vm.max_memo_words
   let need_passes re = re.prog.need_passes
+  let quick_passes re = re.prog.quick_passes
   let prefix re = re.prog.prefix
   let size pattern unicode = match Parse.parse pattern unicode with Ok (_, ps) -> ps.size | Error _ -> -1
   let unpack packed = (Utf8.rune packed, Utf8.width packed)

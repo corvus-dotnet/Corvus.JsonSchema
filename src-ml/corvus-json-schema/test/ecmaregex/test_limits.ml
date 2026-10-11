@@ -258,6 +258,9 @@ let test_a_limited_match_allocates_nothing () =
     [
       ({|^(?=.)(?:a|b)*c$|}, long, 60., Matched false); ({|^(?:(a|b)\1?)+$|}, String.sub long 0 4000, 60., Matched true);
       ({|^[abé]{0,60000}c$|}, "\u{e9}" ^ long, 60., Matched false);
+      (* Matches that take the memory of failed places into use, which stays in the scratch. *)
+      ({|^(?=.)(?:a|aa)+$|}, String.make 1000 'a' ^ "b", 60., Matched false); ({|(?=.)(?:a|b)*c|}, long, 0., Matched false);
+      ({|(a*)*b|}, "\u{e9}" ^ String.make 1000 'a', 60., Matched false);
       ({|^(?:(a+)\1*)+$|}, repeat 60 "a" ^ "b", 0.001, Time);
     ]
     [@ocamlformat "disable"]

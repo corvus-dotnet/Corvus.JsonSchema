@@ -292,9 +292,42 @@ module Internal : sig
   val no_match : int
   (** The need of a program that no text matches. *)
 
+  val memo_from_the_start : bool ref
+  (** Makes every match take its memory of the places where a way has failed before its first step. A match otherwise
+      takes it only once it has made many steps. The tests set it, to run every pattern they have with the memory in
+      use, and so does the harness that runs the pattern datasets. Remembering a failure must change no answer. *)
+
+  val memo_points : t -> string list
+  (** [memo_points re] is the memo points of the program of the backtracking matcher, in order: for each the operation
+      of its instruction ([split], [loop], [rep] or [lazy]) and the numbers of the loops it tells apart. *)
+
+  val point_count : t -> int
+  (** [point_count re] is the number of memo points of the program. *)
+
+  val quick : t -> string * bool * bool * bool
+  (** [quick re] is what can come next from the first instruction of the program: the characters below 128 a match can
+      start with, a bit for each in 16 bytes, whether it can start with a character that is not ASCII, and whether it
+      can end without one while text is left and at the end of the text. *)
+
+  val quick_of_wild : t -> (string * bool * bool * bool) list
+  (** [quick_of_wild re] is the same for each instruction of the program that reads a group back by its bytes or matches
+      one character right to left. *)
+
+  val memory_use : int -> int -> int -> bool * bool * int
+  (** [memory_use points width checks] says what a match of a program with that many memo points on a text of that many
+      positions has done about its memory after that many checks: whether it is in use, whether it never will be, and
+      its words of 64 bits. *)
+
+  val max_memo_words : int
+  (** The largest memory of failed places, in words of 64 bits. *)
+
   val need_passes : t -> int
   (** [need_passes re] is the number of passes over the program that working out its needs took, the last of which
       changed nothing. *)
+
+  val quick_passes : t -> int
+  (** [quick_passes re] is the number of passes over the program that working out what can come next from each of its
+      instructions took, the last of which changed nothing. *)
 
   val prefix : t -> string
   (** [prefix re] is the literal text the search for a match looks for at each position of the text: the first bytes, 16

@@ -213,7 +213,8 @@ let allocation_cases () =
   ]
   (* Patterns that run on the backtracking matcher, on strings long enough for the matcher to read the clock, with
      the default limit of a match, a limit of their own and none. The limit and the deadline of a match are in an array
-     of floats of the evaluator's working memory, and the clock is read into it. (The cases of
+     of floats of the evaluator's working memory, and the clock is read into it. The memory of the places where a way
+     has failed, which the last instance makes two matches take into use, stays in that working memory too. (The cases of
      TestValidationWithAMatchLimitAllocatesNothing of the Go module.) *)
   @ List.map
       (fun (name, options) ->
@@ -227,7 +228,9 @@ let allocation_cases () =
               "properties": {
                 "look": { "pattern": "^(?=.)(?:a|b)*c?$" },
                 "back": { "pattern": "^(?:(a|b)\\1?)+$" },
-                "wide": { "pattern": "^[ab\u00e9]{0,60000}c?$" }
+                "wide": { "pattern": "^[ab\u00e9]{0,60000}c?$" },
+                "memo": { "pattern": "^(?=.)(?:a|aa)+$" },
+                "star": { "pattern": "(a*)*b" }
               },
               "patternProperties": { "^(?=x)(?:x|-)+$": { "type": "integer" } }
             }|};
@@ -235,6 +238,8 @@ let allocation_cases () =
             [
               Printf.sprintf {|{"look": "%s", "back": "%s", "wide": "\u00e9%s", "x-x--x": 1}|} long long long;
               Printf.sprintf {|{"look": "%sd", "back": "%sc", "wide": "\u00e9%sd", "x-x--x": "no"}|} long long long;
+              (* Two that no match answers without its memory of failed places, the second on text that is not ASCII. *)
+              Printf.sprintf {|{"memo": "%sb", "star": "\u00e9%s"}|} (String.make 1000 'a') (String.make 1000 'a');
             ];
         })
       [
