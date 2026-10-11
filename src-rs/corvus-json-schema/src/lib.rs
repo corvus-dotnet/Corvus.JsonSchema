@@ -104,8 +104,9 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub enum JsonValidationError {
     /// The text is not valid JSON.
     InvalidJson(JsonParseError),
-    /// The evaluation was abandoned: it recursed in place beyond the maximum depth, or a match of a regular
-    /// expression reached its limit (see [`without_the_limit`] for why the two are one here).
+    /// The validation was abandoned at a limit: it recursed in place beyond the maximum depth, or a match of a
+    /// regular expression reached its limit. The name is from when the depth was the one limit, and the message
+    /// names both (see [`without_the_limit`] for why the two are one here).
     DepthExceeded(SchemaEvaluationDepthError),
 }
 
@@ -203,10 +204,11 @@ impl Validator {
         Ok(Validator { program: Arc::new(program) })
     }
 
-    /// Whether the instance is valid. It has no way to report an error, so it reports false both for a schema that
-    /// recursed in place beyond the maximum depth and for a match of a regular expression that reached its limit
-    /// (see [`CompileOptions::pattern_match_limit`]). In neither case is the instance known to be not valid. Use
-    /// [`Validator::try_validate`] to tell them from an instance that is not valid.
+    /// Whether the instance is valid. It has no way to report an error, so it fails closed: it reports false both
+    /// for a schema that recursed in place beyond the maximum depth and for a match of a regular expression that
+    /// reached its limit (see [`CompileOptions::pattern_match_limit`]). A limit is never reported as valid. In
+    /// neither case is the instance known to be not valid. Use [`Validator::try_validate`] to tell them from an
+    /// instance that is not valid.
     #[inline]
     pub fn is_valid(&self, instance: &Value) -> bool {
         eval::Evaluator::new(&self.program, None).validate(instance)
@@ -265,15 +267,17 @@ impl Validator {
             .map_err(SchemaEvaluationError::InvalidJson)?
     }
 
-    /// Whether the instance is valid, or an error if the evaluation was abandoned. The error type has one value,
-    /// so it does not say whether the evaluation recursed in place beyond the maximum depth or a match of a regular
-    /// expression reached its limit: [`Validator::try_validate`] does.
+    /// Whether the instance is valid, or an error if the validation was abandoned at a limit. The error type has
+    /// one value, whose message names both limits, so it does not say whether the evaluation recursed in place
+    /// beyond the maximum depth or a match of a regular expression reached its limit: [`Validator::try_validate`]
+    /// does.
     pub fn validate(&self, instance: &Value) -> Result<bool, SchemaEvaluationDepthError> {
         self.try_validate(instance).map_err(without_the_limit)
     }
 
     /// Evaluates the instance exhaustively, reporting to the collector. Returns whether it is valid. The error is
-    /// that of [`Validator::validate`]: [`Validator::try_evaluate`] says why an evaluation was abandoned.
+    /// that of [`Validator::validate`], for a validation abandoned at either limit: [`Validator::try_evaluate`]
+    /// says which.
     pub fn evaluate(
         &self,
         instance: &Value,
@@ -283,7 +287,8 @@ impl Validator {
     }
 
     /// [`Validator::validate`] for any [`Instance`]: a value read in place, such as a host language's own objects,
-    /// with no conversion to `serde_json::Value`.
+    /// with no conversion to `serde_json::Value`. The error is that of [`Validator::validate`], for a validation
+    /// abandoned at either limit: [`Validator::try_validate_instance`] says which.
     pub fn validate_instance<'a, I: Instance<'a>>(&self, instance: I) -> Result<bool, SchemaEvaluationDepthError> {
         self.try_validate_instance(instance).map_err(without_the_limit)
     }
@@ -296,7 +301,9 @@ impl Validator {
         self.try_validate_json(json).map_err(json_error)
     }
 
-    /// [`Validator::evaluate`] for JSON text, parsed as [`Validator::validate_json`] parses it.
+    /// [`Validator::evaluate`] for JSON text, parsed as [`Validator::validate_json`] parses it. An evaluation that
+    /// was abandoned is [`JsonValidationError::DepthExceeded`], whichever limit it reached:
+    /// [`Validator::try_evaluate_json`] says which.
     pub fn evaluate_json(
         &self,
         json: &str,
@@ -305,7 +312,8 @@ impl Validator {
         self.try_evaluate_json(json, collector).map_err(json_error)
     }
 
-    /// [`Validator::evaluate`] for any [`Instance`].
+    /// [`Validator::evaluate`] for any [`Instance`]. The error is that of [`Validator::validate`], for a validation
+    /// abandoned at either limit: [`Validator::try_evaluate_instance`] says which.
     pub fn evaluate_instance<'a, I: Instance<'a>>(
         &self,
         instance: I,

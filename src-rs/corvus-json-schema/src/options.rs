@@ -243,13 +243,24 @@ impl fmt::Display for PatternMatchLimitError {
 
 impl std::error::Error for PatternMatchLimitError {}
 
-/// Evaluation recursed in place beyond `max_depth` (a schema that loops without consuming the instance).
+/// The validation was abandoned at a limit, and gave no answer. It is the error of the functions whose error type
+/// was there before the limit of a match was (`validate`, `validate_instance`, `evaluate`, `evaluate_instance`, and
+/// inside [`crate::JsonValidationError::DepthExceeded`] `validate_json` and `evaluate_json`).
+///
+/// The name is from when there was one limit: an evaluation that recursed in place beyond `max_depth` (a schema
+/// that loops without consuming the instance). A match of a regular expression that reached its limit (see
+/// [`CompileOptions::pattern_match_limit`]) is reported as this error too. The type has one value, so it does not
+/// say which limit it was, and its message names both. The `try_` functions (`Validator::try_validate` and the
+/// rest) return a [`SchemaEvaluationError`], which says which.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SchemaEvaluationDepthError;
 
 impl fmt::Display for SchemaEvaluationDepthError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("The schema recursed in place beyond the maximum depth.")
+        f.write_str(
+            "The validation was abandoned at a limit: the schema recursed in place beyond the maximum depth, or a \
+             match of a regular expression reached its limit. The try_ functions say which.",
+        )
     }
 }
 
@@ -271,7 +282,11 @@ impl fmt::Display for SchemaEvaluationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             SchemaEvaluationError::InvalidJson(e) => write!(f, "invalid JSON: {e}"),
-            SchemaEvaluationError::DepthExceeded(e) => e.fmt(f),
+            // Not the message of the value inside, which is the one error of the functions that cannot say which
+            // limit it was, and so names both.
+            SchemaEvaluationError::DepthExceeded(_) => {
+                f.write_str("The schema recursed in place beyond the maximum depth.")
+            }
             SchemaEvaluationError::PatternMatchLimit(e) => e.fmt(f),
         }
     }

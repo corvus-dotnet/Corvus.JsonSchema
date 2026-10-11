@@ -97,11 +97,12 @@ this way, through CPython's C API.
     `try_validate_json`, `try_evaluate` and the rest) return `SchemaEvaluationError::PatternMatchLimit` with the
     pattern and the limit. The engine counts its steps and reads the clock every 4,096 of them, so the limit costs
     nothing that allocates and is met within tens of microseconds.
-  - *The functions without the new error.* `is_valid` returns a `bool`, and returns `false` for a match that
-    reached its limit, as it does for the maximum depth. `validate`, `validate_instance`, `validate_json` and the
-    `evaluate` functions report it as the one error their type has for an evaluation that was abandoned
-    (`SchemaEvaluationDepthError`). Neither says the instance is not valid. Use the `try_` functions to know which
-    limit was reached.
+  - *The functions without the new error.* `is_valid` returns a `bool` and fails closed: it returns `false` for a
+    match that reached its limit, as it does for the maximum depth, and never `true`. `validate`,
+    `validate_instance`, `validate_json` and the `evaluate` functions report it as the one error their type has for
+    a validation that was abandoned (`SchemaEvaluationDepthError`, named when the depth was the one limit). Its
+    message says the validation was abandoned at a limit, the maximum depth or the limit of a match, and that the
+    `try_` functions say which. At a limit the instance is not known to be not valid, whatever `is_valid` returned.
   - *A pattern has limits of size.* A pattern longer than 1,048,576 bytes, nested more than 1,000 groups deep, or
     counted as more than 1,048,576 as it is read (64 for a term, 32 for an alternative, 8 for a range of a class) is
     refused when the schema is compiled. The message says it is too large, not that it is not valid, and

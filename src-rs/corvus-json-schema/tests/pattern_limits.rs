@@ -116,6 +116,43 @@ fn a_match_that_reaches_its_limit_is_an_error() {
     }
 }
 
+/// The functions whose error type was there before the limit of a match have one error for an evaluation that was
+/// abandoned. Its message said the schema recursed beyond the maximum depth, which is not so when a match reached
+/// its limit. It says the validation was abandoned at a limit, names both, and points to the `try_` functions.
+/// The `try_` functions keep the message of each.
+#[test]
+fn the_error_of_the_functions_that_were_there_does_not_say_depth_alone() {
+    let text = never_answered();
+    let (_, schema, instance) = limit_schemas(NEVER_ANSWERS, &text).remove(0);
+    let v = compile_with(&schema, &with_limit(Some(Duration::from_millis(50)))).unwrap();
+    let json = instance.to_string();
+    let mut c = JsonSchemaResultsCollector::new(ResultsLevel::Basic);
+    let messages = [
+        v.validate(&instance).unwrap_err().to_string(),
+        v.validate_instance(&instance).unwrap_err().to_string(),
+        v.validate_json(&json).unwrap_err().to_string(),
+        v.evaluate(&instance, &mut c).unwrap_err().to_string(),
+        v.evaluate_instance(&instance, &mut c).unwrap_err().to_string(),
+        v.evaluate_json(&json, &mut c).unwrap_err().to_string(),
+    ];
+    for message in &messages {
+        assert_eq!(
+            message,
+            "The validation was abandoned at a limit: the schema recursed in place beyond the maximum depth, or a \
+             match of a regular expression reached its limit. The try_ functions say which."
+        );
+    }
+    // The functions that say which keep a message for each.
+    let limit = v.try_validate(&instance).unwrap_err().to_string();
+    assert!(limit.starts_with("A match of the regular expression ") && !limit.contains("depth"), "{limit}");
+    let looping =
+        compile(&json!({"$defs": {"loop": {"allOf": [{"$ref": "#/$defs/loop"}]}}, "$ref": "#/$defs/loop"})).unwrap();
+    let depth = looping.try_validate(&json!(1)).unwrap_err();
+    assert!(matches!(depth, SchemaEvaluationError::DepthExceeded(_)));
+    assert_eq!(depth.to_string(), "The schema recursed in place beyond the maximum depth.");
+    assert_eq!(looping.validate(&json!(1)).unwrap_err().to_string(), messages[0]);
+}
+
 #[test]
 fn the_default_match_limit_is_one_second() {
     assert_eq!(DEFAULT_PATTERN_MATCH_LIMIT, Duration::from_secs(1));

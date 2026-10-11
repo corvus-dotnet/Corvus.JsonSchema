@@ -257,7 +257,9 @@ fn invalid_json(e: corvus::JsonParseError) -> Failure {
 fn evaluation_error(e: SchemaEvaluationError) -> Failure {
     match e {
         SchemaEvaluationError::InvalidJson(e) => invalid_json(e),
-        SchemaEvaluationError::DepthExceeded(e) => Failure::new(CJS_DEPTH_EXCEEDED, e.to_string()),
+        // The message of the error and not of the value inside it, which is the one error of the crate's functions
+        // that cannot say which limit was reached, and names both.
+        e @ SchemaEvaluationError::DepthExceeded(_) => Failure::new(CJS_DEPTH_EXCEEDED, e.to_string()),
         SchemaEvaluationError::PatternMatchLimit(e) => Failure::new(CJS_PATTERN_MATCH_LIMIT, e.to_string()),
         // The crate may come to report more. Whatever it is, the evaluation gave no answer.
         other => Failure::new(CJS_DEPTH_EXCEEDED, other.to_string()),
