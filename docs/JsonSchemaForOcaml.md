@@ -3,7 +3,8 @@
 [corvus-json-schema](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-ml/corvus-json-schema) is the
 Corvus JSON Schema evaluator for OCaml: draft 4, 6, 7, 2019-09 and 2020-12. It is a port of the .NET runtime
 evaluator (see [Runtime Evaluator](RuntimeEvaluator.md)) by way of the [Go module](JsonSchemaForGo.md), and gives the
-same results and annotations. It has no dependencies beyond the OCaml standard library, and no C code.
+same results and annotations. It has no dependencies outside the OCaml distribution (the standard library, and `unix`
+for one clock), and no C code.
 
 It needs OCaml 4.14 or later on a 64-bit platform, and is tested with OCaml 4.14 and 5.5.
 
@@ -135,7 +136,7 @@ The compile functions take `?options`, a record that the function `options` buil
 | `entry_point` | A subschema to validate against, such as `#/$defs/item`. |
 | `max_depth` | The deepest the evaluator recurses in place (default 128). |
 | `pattern_match_limit` | The seconds one match of a `pattern` or `patternProperties` regular expression may take (default 1.0). `0.` or less turns the limit off. See [Limits on patterns](#limits-on-patterns). |
-| `pattern_match_clock` | The clock that limit is counted on, a function that returns the time in seconds. Without it the clock is `Sys.time`, the processor time of the process. |
+| `pattern_match_clock` | The clock that limit is counted on, a function that returns the time in seconds. Without it the clock is the time that passes, read from `Unix.gettimeofday`. |
 
 A custom format and a document resolver are plain functions.
 
@@ -342,10 +343,12 @@ its first reading never reads the clock. The limit is on each match and not on t
 pattern against the property names the schema declares, for which the compile functions return the error. The
 evaluation is abandoned at the match and its working memory is given back.
 
-The clock is `Sys.time`, the processor time of the process, which is the one clock the OCaml standard library has.
-It does not move while the process waits. And it is the time of the whole process, so in a program that computes on
-several domains at once it runs that many times faster, and a match there is abandoned sooner than its limit. A
-program for which either matters gives its own clock, such as `options ~pattern_match_clock:Unix.gettimeofday ()`.
+The clock is the time that passes, read from `Unix.gettimeofday` of the `unix` library that comes with the compiler.
+Reading it allocates nothing. It is the time of day and not a monotonic clock, which the OCaml distribution does not
+have: when the time of day is set forward during a match the match is abandoned early, and when it is set back the
+limit is counted again from the new time. A program that has a monotonic clock gives it in the option
+`pattern_match_clock`. The limit is not counted on `Sys.time`, the processor time of the whole process, which does
+not move while the process waits and runs several times faster in a program that computes on several domains.
 
 The automaton and the matchers for the common shapes of pattern take time proportional to the string and have no
 limit. With the limit turned off a match has no limit on its time or its memory.

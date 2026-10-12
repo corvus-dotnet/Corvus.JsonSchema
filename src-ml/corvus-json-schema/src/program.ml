@@ -432,7 +432,7 @@ type t = {
   max_depth : int;
   (* The time in seconds one match of a pattern may take, or zero for no limit. *)
   pattern_match_limit : float;
-  (* The clock that limit is counted on, or None for the processor time of the process. *)
+  (* The clock that limit is counted on, or None for the time that passes. *)
   pattern_match_clock : (unit -> float) option;
   (* The custom format of each node whose format names one. Go looks the name up in a map where it is asserted. *)
   custom_formats : (string -> bool) option array;

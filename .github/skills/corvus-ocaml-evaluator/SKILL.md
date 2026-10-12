@@ -42,8 +42,10 @@ the performance work. Keep it current.
 
 ## Rules of the port
 
-- **No dependencies.** The OCaml standard library only: no `str`, no `unix` and no C stubs in the libraries. Tests
-  may use `unix` and `threads`. The benchmark harness is a project of its own for that reason.
+- **No dependencies outside the OCaml distribution.** The standard library, and `unix` for one thing only: the
+  clock of the limit of a match (`Unix.gettimeofday` in `ecmaregex/vm.ml`). No `str`, no other use of `unix` and no
+  C stubs in the libraries. Tests may use `unix` and `threads`. The benchmark harness is a project of its own for
+  that reason. `dune-project` names `base-unix`, and `corvus-json-schema.opam` is generated from it.
 - **Bounds checks stay on.** No `Obj`, no `unsafe_get`, `unsafe_set` or any other `unsafe_*`, no `-unsafe`. This
   is a standing decision. Do not add unchecked reads to gain speed.
 - **OCaml 4.14 is the minimum.** No domains, no effects, and nothing of the 5.x standard library that 4.14 lacks.
@@ -105,9 +107,14 @@ end or hold memory without bound. These are standing rules.
   `Error (Pattern_match_limit _)` for the functions that return a result and into the exception
   `Pattern_match_limit_reached` for the `is_valid` functions. Do not catch it anywhere between, and do not add a
   handler that turns an exception into `false`.
-- **The clock is `Sys.time`** unless the program gives one (`pattern_match_clock`). That follows from the rule of no
-  dependencies: the standard library has no other clock. `Sys.time` returns an unboxed float. Keep the limit and
-  the deadline in the float array of the state, or the read allocates.
+- **The clock is the time that passes**, `Unix.gettimeofday` (`Vm.default_clock`), unless the program gives one
+  (`pattern_match_clock`). This is the owner's decision. Do not go back to `Sys.time`: it is the processor time of
+  the whole process, it does not move while the process waits, it runs several times faster with several domains,
+  and it was measured 4 to 8 % ahead of the time that passed. The OCaml distribution has no monotonic clock in 4.14
+  or 5.5, and the time of day can be set: forward abandons a match early, back counts the limit again.
+  `Unix.gettimeofday` returns an unboxed float when it is called directly. Keep the limit and the deadline in the
+  float array of the state, or the read allocates. `test_limits.ml` checks the clock over a sleep, and
+  `domains_5.ml` the limit while other domains compute.
 - **A matcher with no limit must take time proportional to the text.** The automaton does. The regex-free matchers
   of `pattern.ml` do, `max_search_width` keeps the search for an alternative with no anchor narrow, and a list with
   a final sequence is a list only when that sequence stops at the next separator (`final_stops`). The prefix

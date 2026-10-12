@@ -103,7 +103,7 @@ with the reason.
 | 51 | **One row on after a scalar, integers read in one pass, integer bounds and consts with no conversion** (the C# code generator). | n/a | Every value is two words, a container's children are consecutive, and a number's value is in the tape or in the document's `floats`. |
 | 52 | **`sync.Pool` and what follows from it** (Go), **thread variables and a call that releases a thread's scratch** (Pascal). | n/a | Neither. See row 24. The automaton is built when the pattern is compiled, so a compiled pattern and a compiled program are values that nothing writes to after compilation, apart from the annotations of row 26. |
 | 53 | **The inliner's budget** (Go). | n/a | No function here is shaped to fit a compiler's inlining threshold. See row 25 for what is marked. |
-| 54 | **Translation to another engine** (`regexp` in Go, `java.util.regex` in Java, the `regex` and `regress` crates in Rust, compiled IL in C#, PCRE2 in Julia). | n/a | The package depends on nothing but the compiler's standard library (`dune-project`), so its own engine is the only one. See row 27. |
+| 54 | **Translation to another engine** (`regexp` in Go, `java.util.regex` in Java, the `regex` and `regress` crates in Rust, compiled IL in C#, PCRE2 in Julia). | n/a | The package depends on nothing outside the OCaml distribution (`dune-project`), which has no such engine, so its own is the only one. See row 27. |
 | 55 | **A vectorised search API** (`SearchValues` and `IndexOfAny` in C#, `bytes.Index` in Go). | n/a | The standard library has none, and the package has no C stubs. Its searches are loops over the bytes. |
 | 56 | **Release profile settings** (the Rust crate's `lto` and `codegen-units`). | n/a | See row 49. |
 

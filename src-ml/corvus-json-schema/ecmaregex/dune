@@ -3,4 +3,6 @@
 (library
  (name corvus_json_schema_ecmaregex)
  (public_name corvus-json-schema.ecmaregex)
- (libraries corvus-json-schema.ucd))
+ ; unix, of the OCaml distribution, is for the clock of the limit of a match: the standard library has no clock but
+ ; the processor time of the whole process.
+ (libraries corvus-json-schema.ucd unix))

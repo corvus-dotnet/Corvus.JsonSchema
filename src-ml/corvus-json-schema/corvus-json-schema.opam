@@ -2,7 +2,7 @@
 opam-version: "2.0"
 version: "0.1.0"
 synopsis:
-  "A fast JSON Schema evaluator (draft 4 to 2020-12) with no dependencies"
+  "A fast JSON Schema evaluator (draft 4 to 2020-12) with no dependencies outside the OCaml distribution"
 description:
   "Compiles a JSON Schema once into fail-fast plans and validates JSON text or parsed documents against it. Passes the JSON-Schema-Test-Suite for draft 4, 6, 7, 2019-09 and 2020-12, with results and annotations at the Basic, Detailed and Verbose levels. A port of the Corvus.Text.Json runtime evaluator."
 maintainer: ["Endjin Limited <hello@endjin.com>"]
@@ -13,6 +13,7 @@ bug-reports: "https://github.com/corvus-dotnet/Corvus.JsonSchema/issues"
 depends: [
   "dune" {>= "3.0"}
   "ocaml" {>= "4.14"}
+  "base-unix"
   "odoc" {with-doc}
 ]
 dev-repo: "git+https://github.com/corvus-dotnet/corvus-json-schema-ocaml.git"

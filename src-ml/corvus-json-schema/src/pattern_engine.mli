@@ -48,8 +48,8 @@ exception Match_memory
 
 val set_limit : scratch -> float -> (unit -> float) option -> unit
 (** [set_limit scratch seconds clock] gives every match with the scratch from now on a limit of that many seconds,
-    counted on [clock], a function that returns the time in seconds, or on the processor time of the process when it is
-    [None]. Zero or less is no limit. *)
+    counted on [clock], a function that returns the time in seconds, or on the time that passes when it is [None]. Zero
+    or less is no limit. *)
 
 val create_limited_scratch : float -> (unit -> float) option -> scratch
 (** [create_limited_scratch seconds clock] is {!create_scratch} followed by {!set_limit}. *)

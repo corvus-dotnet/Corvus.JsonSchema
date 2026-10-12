@@ -31,7 +31,7 @@ exception Match_time = Engine.Match_time
 exception Match_memory = Engine.Match_memory
 
 (* set_limit gives the matches with a scratch a limit of that many seconds, or none for zero, counted on the clock given
-   or, without one, on the processor time of the process. *)
+   or, without one, on the time that passes. *)
 let set_limit scratch seconds clock =
   Engine.set_limit scratch seconds;
   Engine.set_clock scratch clock

@@ -90,16 +90,15 @@ let test_a_match_that_reaches_its_limit_is_an_error () =
       let document = parse instance in
       let bytes = Bytes.of_string instance in
       let scratch = Scratch.create () in
-      (* The limit is counted on the processor time of the process, so that is the time the least is asked of. *)
+      (* The limit is counted on the time that passes, so both bounds are asked of that time. *)
       let timed what run =
-        let start = Unix.gettimeofday () and computed = Sys.time () in
+        let start = Unix.gettimeofday () in
         let result = run () in
-        let computed = Sys.time () -. computed and took = Unix.gettimeofday () -. start in
+        let took = Unix.gettimeofday () -. start in
         expect_match_limit (name ^ ", " ^ what) result limit;
         Check.checkf
-          (computed >= limit && took <= limit +. generous_time)
-          "%s, %s: abandoned after %gs of processor time and %gs in all, with a limit of %gs" name what computed took
-          limit
+          (took >= limit && took <= limit +. generous_time)
+          "%s, %s: abandoned after %gs, with a limit of %gs" name what took limit
       in
       timed "validate_document" (fun () -> Validator.validate_document v document);
       timed "validate_bytes" (fun () -> Validator.validate_bytes v bytes);
@@ -146,13 +145,11 @@ let test_the_default_match_limit_is_one_second () =
   Check.check "the default clock is none of the caller's"
     (default_options.pattern_match_clock = None && (options ()).pattern_match_clock = None);
   let v = compile (Printf.sprintf {|{"pattern": "%s"}|} never_answers) in
-  let start = Unix.gettimeofday () and computed = Sys.time () in
+  let start = Unix.gettimeofday () in
   let result = Validator.validate_string v (Printf.sprintf {|"%s"|} never_answered) in
-  let computed = Sys.time () -. computed and took = Unix.gettimeofday () -. start in
+  let took = Unix.gettimeofday () -. start in
   expect_match_limit "the default limit" result 1.0;
-  Check.checkf
-    (computed >= 1.0 && took <= 1.0 +. generous_time)
-    "abandoned after %gs of processor time and %gs in all with the default limit" computed took
+  Check.checkf (took >= 1.0 && took <= 1.0 +. generous_time) "abandoned after %gs with the default limit" took
 
 (* Checks the clock a program gives in the options. With the time of day the limit is of the time that passes. With a
    clock the test moves, a second at each reading, the match is abandoned at a count of readings that no machine

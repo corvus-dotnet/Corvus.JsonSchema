@@ -178,23 +178,28 @@ val set_limit : scratch -> float -> unit
 (** [set_limit scratch seconds] gives every match with the scratch from now on a limit of that many seconds. Zero or
     less, or a value that is not a number, is no limit.
 
-    The time is counted on the clock of the scratch (see {!set_clock}), which is the processor time of the process
-    unless the caller gives another. The clock is read every {!check_every} steps of the backtracking matcher and starts
-    at the first read, so a match that ends before then never reads it, and a match goes past its limit by the time
-    those steps take. The automaton takes time proportional to the text and is not stopped. *)
+    The time is counted on the clock of the scratch (see {!set_clock}), which is the time that passes unless the caller
+    gives another. The clock is read every {!check_every} steps of the backtracking matcher and starts at the first
+    read, so a match that ends before then never reads it, and a match goes past its limit by the time those steps take.
+    The automaton takes time proportional to the text and is not stopped. *)
 
 val set_clock : scratch -> (unit -> float) option -> unit
 (** [set_clock scratch clock] sets the clock the limit of every match with the scratch is counted on from now on: a
     function that returns the time in seconds, or [None] for the default.
 
-    The default is [Sys.time], the processor time of the process, which is the only clock of the standard library. It
-    allocates nothing. It does not move while the process waits, so a match is abandoned for the time the process
-    computed and not for the time that passed. And it is the time of the whole process, so in a program that computes on
-    several domains at once it runs that many times faster, and a match there is abandoned sooner than its limit.
+    The default is {!default_clock}: the time that passes, read from [Unix.gettimeofday] of the unix library of the
+    OCaml distribution. Reading it allocates nothing. It is the time of day and not a monotonic clock, which the OCaml
+    distribution does not have: when the time of day is set forward during a match the match is abandoned early, and
+    when it is set back the limit is counted again from the new time. (The clock of the standard library, [Sys.time], is
+    the processor time of the whole process. It does not move while the process waits, and it runs several times faster
+    in a program that computes on several domains.)
 
-    A clock of the caller's, such as [Unix.gettimeofday] or a monotonic clock, has neither property. Each read of it
-    allocates the float it returns. When such a clock is set forward during a match the match is abandoned early, and
-    when it is set back the limit is counted again from the new time. *)
+    A clock of the caller's, such as a monotonic clock, is treated the same way when it is set. Each read of it
+    allocates the float it returns. *)
+
+val default_clock : unit -> float
+(** [default_clock ()] is the time in seconds on the clock a limit is counted on when the caller has given none: the
+    time of day, from [Unix.gettimeofday]. *)
 
 val limit : scratch -> float
 (** [limit scratch] is the limit of the scratch in seconds, or [0.] for none. *)

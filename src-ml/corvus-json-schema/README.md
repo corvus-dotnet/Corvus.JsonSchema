@@ -4,7 +4,7 @@ A JSON Schema evaluator for OCaml (draft 4, 6, 7, 2019-09 and 2020-12), ported f
 evaluator (`Corvus.Text.Json.RuntimeEvaluator`) by way of its
 [Go port](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-go/corvus-json-schema). It is a native
 port of the Go module, with its own JSON parser and its own ECMAScript regular expression engine. It has no
-dependencies beyond the OCaml standard library, and no C code.
+dependencies outside the OCaml distribution (the standard library, and `unix` for one clock), and no C code.
 
 OCaml 4.14 or later, on a 64-bit platform. It is tested with OCaml 4.14 and 5.5.
 
@@ -188,7 +188,7 @@ let () =
 | `entry_point` | Evaluate from a subschema, for example `#/$defs/item`. |
 | `max_depth` | Depth limit for in-place recursion on a cycle (default 128). |
 | `pattern_match_limit` | The seconds one match of a `pattern` or `patternProperties` regular expression against one string may take (default 1.0, `default_pattern_match_limit`). `0.` (`no_pattern_match_limit`) or less turns the limit off. See [Limits on patterns](#limits-on-patterns). |
-| `pattern_match_clock` | The clock that limit is counted on, a function that returns the time in seconds. Without it the clock is `Sys.time`, the processor time of the process. |
+| `pattern_match_clock` | The clock that limit is counted on, a function that returns the time in seconds. Without it the clock is the time that passes, read from `Unix.gettimeofday`. |
 
 The options are an ordinary record, so `{ default_options with ... }` works as well. `dialect_to_string` gives a
 dialect's usual name, and `version` is the version of the package.
@@ -510,13 +510,18 @@ answer, on OCaml 4.14 and 5.5, and at 1.1 to 1.5 ms where a step is a case-insen
 characters. The limit is on each match, not on the validation: an array of a thousand strings that each take most
 of a second is validated in most of a thousand seconds.
 
-The clock is `Sys.time`, the processor time of the process. It is the one clock the standard library has, and the
-package uses nothing else. It has two properties a program should know. It does not move while the process waits,
-so a match is abandoned for the time the process computed and not for the time that passed. And it is the time of
-the whole process, so in a program that computes on several domains at once it runs that many times faster, and a
-match there is abandoned sooner than its limit. A program for which either matters gives a clock of its own, such
-as `options ~pattern_match_clock:Unix.gettimeofday ()` or a monotonic clock. A clock set forward during a match
-abandons it early, and one set back counts the limit again from the new time.
+The clock is the time that passes, read from `Unix.gettimeofday` of the `unix` library, which comes with the
+compiler and is the one library the package uses beyond the standard library. Reading it allocates nothing. It is
+the time of day and not a monotonic clock, which the OCaml distribution does not have, in 4.14 or in 5.5. When the
+time of day is set forward during a match the match is abandoned early, and when it is set back the limit is
+counted again from the new time, so a match never gets more than its limit after a change. A program that has a
+monotonic clock gives it in the option, as `options ~pattern_match_clock:clock ()`, and each read of a clock given
+there allocates the float it returns.
+
+The limit is not counted on `Sys.time`, the one clock of the standard library, which is the processor time of the
+whole process. That clock does not move while the process waits, and in a program that computes on several domains
+at once it runs that many times faster, so a match there would be abandoned in a part of its limit. A program that
+wants the limit counted on it all the same gives `options ~pattern_match_clock:Sys.time ()`.
 
 The limit applies wherever a pattern is matched: `pattern` and `patternProperties`, failing fast and collecting,
 and the matches the compiler makes of each pattern against the property names the schema declares, for which the
@@ -621,8 +626,9 @@ than 104 MB, on OCaml 4.14 and 5.5 alike.
 - **The one exception.** The `is_valid` functions return a `bool` alone, and a match that reached its limit is
   neither valid nor not valid, so they raise `Pattern_match_limit_reached` for it. The Go module's `IsValid`
   functions return `false` there.
-- **The clock of the limit.** The Go module counts the limit of a match on its monotonic clock. Here it is counted
-  on `Sys.time`, the processor time of the process, unless the program gives a clock.
+- **The clock of the limit.** The Go module counts the limit of a match on its monotonic clock. The OCaml
+  distribution has none, so here it is counted on the time of day (`Unix.gettimeofday`) unless the program gives a
+  clock.
 - **Working memory.** A validator keeps one set of working memory and a caller can give each thread or domain a
   `Scratch.t`. The Go module takes it from a pool that belongs to the validator, and the Object Pascal port keeps
   it in thread variables that a thread releases before it ends. Here nothing is released by hand, since a scratch

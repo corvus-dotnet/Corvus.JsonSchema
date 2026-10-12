@@ -211,16 +211,14 @@ type options = {
           text are not stopped. *)
   pattern_match_clock : (unit -> float) option;
       (** The clock [pattern_match_limit] is counted on: a function that returns the time in seconds. The default is
-          [None], which is [Sys.time], the processor time of the process. That is the only clock of the standard
-          library, and the package uses nothing else. It does not move while the process waits, so a match is abandoned
-          for the time the process computed and not for the time that passed. And it is the time of the whole process:
-          in a program that computes on several domains at once it runs that many times faster, so a match there is
-          abandoned sooner than its limit.
+          [None], which is the time that passes, read from [Unix.gettimeofday] of the unix library of the OCaml
+          distribution. Reading it allocates nothing. It is the time of day and not a monotonic clock, which the OCaml
+          distribution does not have: when the time of day is set forward during a match the match is abandoned early,
+          and when it is set back the limit is counted again from the new time.
 
-          A program for which either matters gives a clock of its own, such as [Some Unix.gettimeofday] or a monotonic
-          clock. When such a clock is set forward during a match the match is abandoned early, and when it is set back
-          the limit is counted again from the new time. Each read of it allocates the float it returns, once every 4,096
-          steps of a match that runs that long. *)
+          A program that has a monotonic clock gives it here, and one that wants the limit counted on the time the
+          process computed gives [Some Sys.time]. A clock that is set is treated as the time of day is. Each read of a
+          clock given here allocates the float it returns, once every 4,096 steps of a match that runs that long. *)
 }
 (** The options for compiling a schema. Start from {!default_options}, or build one with {!val-options}. *)
 

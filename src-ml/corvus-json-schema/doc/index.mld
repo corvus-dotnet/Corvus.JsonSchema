@@ -1,7 +1,8 @@
 {0 corvus-json-schema}
 
-A JSON Schema evaluator for draft 4, 6, 7, 2019-09 and 2020-12, with no dependencies. A schema is compiled once into
-fail-fast plans, and any number of instances are then validated against it, as JSON text or as parsed documents.
+A JSON Schema evaluator for draft 4, 6, 7, 2019-09 and 2020-12, with no dependencies outside the OCaml distribution.
+A schema is compiled once into fail-fast plans, and any number of instances are then validated against it, as JSON text
+or as parsed documents.
 
 {1 The library}
 

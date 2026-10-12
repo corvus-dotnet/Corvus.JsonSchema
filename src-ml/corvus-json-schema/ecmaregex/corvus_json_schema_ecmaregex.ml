@@ -98,6 +98,7 @@ exception Match_memory = Vm.Match_memory
 
 let set_limit = Vm.set_limit
 let set_clock = Vm.set_clock
+let default_clock = Vm.default_clock
 let limit = Vm.limit
 let check_every = Vm.check_every
 let max_stack = Vm.max_stack

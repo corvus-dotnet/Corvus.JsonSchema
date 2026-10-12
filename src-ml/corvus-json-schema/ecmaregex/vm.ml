@@ -111,8 +111,8 @@ type state = {
           third the time of its last check. *)
   mutable timed : bool;  (** Says the deadline of the match in hand is set. *)
   mutable own_clock : (unit -> float) option;
-      (** The clock the limit is counted on, in seconds, when the caller has given one. Without one it is the processor
-          time of the process. *)
+      (** The clock the limit is counted on, in seconds, when the caller has given one. Without one it is
+          {!default_clock}, the time that passes. *)
   mutable steps : int;  (** The number of steps left before the next check. *)
   mutable stop : int;  (** Why the match in hand was abandoned, or [stop_none]. *)
   mutable memo : Bytes.t;
@@ -196,23 +196,28 @@ let set_failed st idx =
 let set_limit st seconds = st.clock.(0) <- (if seconds > 0. then seconds else 0.)
 
 (** [set_clock st clock] sets the clock the limit of every match with the state is counted on from now on: a function
-    that returns the time in seconds, or [None] for the processor time of the process. *)
+    that returns the time in seconds, or [None] for {!default_clock}. *)
 let set_clock st clock = st.own_clock <- clock
+
+(** [default_clock ()] is the time in seconds on the clock a limit is counted on when the caller has given none: the
+    time of day, from [Unix.gettimeofday]. [check] reads it through this function, which is inlined there. *)
+let[@inline] default_clock () = Unix.gettimeofday ()
 
 (** [limit st] is the limit of the state, or zero for none. *)
 let limit st = st.clock.(0)
 
-(* Without a clock of the caller's, the clock is the processor time of the process, from Sys.time. The standard library
-   has no other clock, and this library uses nothing else. Sys.time returns an unboxed float and allocates nothing. It
-   does not move while the process waits, so a match is abandoned for the time the process computed and not for the
-   time that passed. It is the time of the whole process, so in a program that computes on several domains at once it
-   runs that many times faster, and a match there is abandoned sooner than its limit. A caller for whom that matters
-   gives a clock of its own, such as Unix.gettimeofday or a monotonic one. Such a clock is a closure that returns a
-   float, which is a block of its own for each read.
+(* Without a clock of the caller's, the clock is the time that passes: the time of day, from Unix.gettimeofday of the
+   unix library of the OCaml distribution, which returns an unboxed float and allocates nothing. The standard library
+   has one clock of its own, Sys.time, which is the processor time of the whole process. It does not move while the
+   process waits, and in a program that computes on several domains at once it runs that many times faster than the
+   time that passes, so a limit of one second would be a fraction of one there. The limit was counted on it at first,
+   and it was measured 4 to 8 % ahead of the time that passed on one domain. The OCaml distribution has no monotonic
+   clock, in 4.14 or in 5.5: one needs a package from outside it or a C stub, and this library has neither.
 
-   A clock of the caller's can be set. Set forward, a match is abandoned early, which is an error and not a wrong
-   answer. Set back, the deadline is counted again from the new time, so a match never gets more than its limit after
-   a change.
+   The time of day can be set, and so can a clock of the caller's. Set forward, a match is abandoned early, which is an
+   error and not a wrong answer. Set back, the deadline is counted again from the new time, so a match never gets more
+   than its limit after a change. A clock of the caller's is a closure that returns a float, which is a block of its
+   own for each read.
 
    check is called every check_every steps. It reports whether the match may go on. The clock starts at the first
    check. *)
@@ -229,7 +234,7 @@ let check st =
     false
   end
   else
-    let now = match st.own_clock with None -> Sys.time () | Some clock -> clock () in
+    let now = match st.own_clock with None -> default_clock () | Some clock -> clock () in
     if (not st.timed) || now < st.clock.(2) then begin
       st.timed <- true;
       st.clock.(1) <- now +. limit;

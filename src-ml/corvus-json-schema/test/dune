@@ -23,7 +23,7 @@
   corvus_json_schema_test_helpers))
 
 ; The limit on a match of a pattern and the limits on the size of a pattern. It needs unix for the time of the wall,
-; which the test measures. The library does not use it.
+; which the test measures.
 
 (test
  (name pattern_limits_test)
