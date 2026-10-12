@@ -853,7 +853,7 @@ main-docs:
     blocks:
       - {index: 0, language: csharp, lines: [44, 58], category: compilable, verified: false}
       - {index: 1, language: csharp, lines: [65, 98], category: fragment, verified: false}
-      - {index: 2, language: powershell, lines: [229, 231]}
+      - {index: 2, language: powershell, lines: [231, 233]}
   - path: "docs/ImplementingNatsJetStreamAndAzureServiceBus.md"
     blocks:
       - {index: 0, language: , lines: [14, 33]}

@@ -223,8 +223,10 @@ beyond the Basic Multilingual Plane, which are written out as surrogate pairs (`
 
 ## Regenerating The Unicode Data
 
-`EcmaRegexUnicodeData.cs` is written by `src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1` from the
-Unicode tables of the `regress` crate, which the Rust, Go and Java ports of the evaluator also use:
+`EcmaRegexUnicodeData.cs` is written by `src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1` from
+`src/unicodetables.rs` of the `regress` crate, which that crate generates from the Unicode Character Database. The
+crate is only where the data is read from. No port of the evaluator depends on it, and the Rust crate carries a port
+of the project's own ECMA-262 engine. The tables of the Go and Java ports were read from the same file:
 
 ```powershell
 pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTables ~/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regress-0.12.0/src/unicodetables.rs
