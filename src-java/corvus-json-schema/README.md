@@ -474,3 +474,8 @@ exits is better served by a native implementation.
 ## License
 
 Apache 2.0.
+
+The tables of Unicode properties and of case (`EcmaUnicodeData.java`) are derived from the Unicode Character
+Database, which is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice,
+and the one of the `regress` crate that the tables were read from. The file is in the jar and in the sources jar, as
+`META-INF/THIRD-PARTY-NOTICES.txt` beside `META-INF/LICENSE`.

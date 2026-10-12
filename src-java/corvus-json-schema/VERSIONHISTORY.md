@@ -68,6 +68,10 @@ These came from testing the library against the [ECMA-262 regular expression tes
 
 The library was also run against 215,803 generated patterns of the forms above (repetitions whose bodies can match nothing, lookbehinds, case-insensitive backreferences, lookaround groups that are read, patterns valid only without the `u` flag on texts beyond the Basic Multilingual Plane, counted repetitions in lookaheads whose groups are read, and counts over case-insensitive backreferences), with V8's answers for 48,971,620 texts. Its answer differs from V8's for 1,289 of them, in 136 patterns, and each is one of the three deviations of V8 that the test data names: a match that starts between the two halves of a surrogate pair (690), a backreference compared by full case folding (9), and a case-insensitive modifier group answered differently from the `i` flag (590). It refuses 10,290 of the patterns: 10,286 under the exception for a lookbehind whose groups only matching backwards can tell, and 4 for size, each a lookahead with two or more repetitions whose groups are read, inside a repetition. Before the last seven entries above it refused 5,409 of them for size.
 
+### Notices
+
+- **The notice of the Unicode data is in the jar.** The tables of Unicode properties and of case that the library carries are derived from the Unicode Character Database, which is under the Unicode License V3. That license asks that its notice goes with every copy of the data. `THIRD-PARTY-NOTICES.txt` has it, with the notice of the `regress` crate that the tables were read from. The jar and the sources jar now hold it as `META-INF/THIRD-PARTY-NOTICES.txt`, beside `META-INF/LICENSE`, which they did not hold either. Versions 0.1.0 to 0.1.2 carried no such notice.
+
 ## V0.1.2
 
 V0.1.2 fixes a `StackOverflowError`, and a wrong `isValid` result, for a schema whose `not` is part of a loop, and stops the interpreter allocating when it validates. There are no API changes. `isValid` changes for one more kind of schema, described below. Versions 0.1.0 and 0.1.1 are affected.

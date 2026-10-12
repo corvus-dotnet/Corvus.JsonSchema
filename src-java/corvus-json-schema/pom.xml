@@ -72,6 +72,21 @@
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <!-- The license, and the notice of the Unicode data that EcmaUnicodeData.java is derived from, go wherever the
+           library goes: in META-INF of the jar and of the sources jar. -->
+      <resource>
+        <directory>${project.basedir}</directory>
+        <includes>
+          <include>LICENSE</include>
+          <include>THIRD-PARTY-NOTICES.txt</include>
+        </includes>
+        <targetPath>META-INF</targetPath>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
