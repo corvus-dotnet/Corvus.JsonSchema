@@ -37,6 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\Corvus.Text.Json.CodeGeneration\THIRD-PARTY-NOTICES.txt" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
   <!-- The static optimisation profile for native AOT (see buildTransitive/Corvus.Text.Json.targets). The build's
        GenerateAotProfile task (CI's compile phase, or on request) records it from this code into obj/profiles, which

@@ -22,6 +22,9 @@
     <Using Include="System.Collections.Generic" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\src\Corvus.Text.Json.CodeGeneration\THIRD-PARTY-NOTICES.txt" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="..\Corvus.Json.ExtendedTypes\Corvus.Json\**\*.cs">
       <Link>Corvus.Json.ExtendedTypes\%(RecursiveDir)\%(Filename)%(Extension)</Link>
     </Compile>

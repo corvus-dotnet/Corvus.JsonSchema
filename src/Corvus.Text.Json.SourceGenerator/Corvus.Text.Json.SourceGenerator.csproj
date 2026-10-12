@@ -366,6 +366,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\Corvus.Text.Json.CodeGeneration\THIRD-PARTY-NOTICES.txt" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
   <ItemGroup>
     <!-- Package the generator in the analyzer directory of the nuget package -->
