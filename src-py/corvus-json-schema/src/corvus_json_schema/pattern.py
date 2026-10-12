@@ -1338,6 +1338,8 @@ class _Translator:
         self.folded: dict[tuple[Any, ...], tuple[str, _Ranges, int]] = {}
         # The long classes read so far, as they are written.
         self.long: set[str] = set()
+        # Whether the pattern is only read, to say whether it is valid (see reads).
+        self.read_only = False
         # The properties read so far, as they are written (a pattern may have one thousands of times).
         self.properties: dict[tuple[str, bool, bool], _Property] = {}
         # For each property read in a case-insensitive group, the characters that are equal to one of its
@@ -1350,6 +1352,17 @@ class _Translator:
     def peek(self, k: int = 0) -> str:
         j = self.i + k
         return self.p[j] if j < self.n else ""
+
+    def reads(self) -> bool:
+        """Whether the pattern is valid in the grammar. It is read to its end, whatever it would come to written
+        for an engine. A pattern that nests too deep to read raises _TooLarge."""
+        self.read_only = True
+        try:
+            self._count_groups()
+            self._alternation(top=True)
+            return self.i == self.n and all(name in self.names for _, name in self.named_refs)
+        except (_Invalid, KeyError, ValueError, IndexError):
+            return False
 
     def translate(self) -> str:
         self._count_groups()
@@ -1521,7 +1534,7 @@ class _Translator:
                 self.size += len(text)
         else:
             self.size += len(text)
-        if self.size > 2 * _MAX_TRANSLATED:
+        if self.size > 2 * _MAX_TRANSLATED and not self.read_only:
             raise _TooLarge()
         n = _Node(_TEXT, text)
         n.nothing = False
@@ -2822,11 +2835,11 @@ def compile_pattern(pattern: str, limit: float | None = DEFAULT_MATCH_LIMIT) -> 
 
 def is_valid_ecma_regex(s: str) -> bool:
     """Whether the text is a valid ECMA-262 pattern with the ``u`` flag (``format: regex``). The text is read and
-    not compiled. One that is longer than MAX_PATTERN or nests deeper than MAX_NESTING is not read to its end and
-    is not valid. One that is read to its end and is too large to write out for the engines is valid."""
+    not written for an engine: it is valid or not by the grammar, whatever its translation would come to. One that
+    is longer than MAX_PATTERN or nests deeper than MAX_NESTING is not read to its end and is not valid."""
     if len(s) > MAX_PATTERN:
         return False
     try:
-        return _translate(s, True, False) is not None
-    except _TooLarge as e:
-        return not e.unread
+        return _Translator(s, True, True).reads()
+    except (_TooLarge, RecursionError):
+        return False

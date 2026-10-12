@@ -1328,5 +1328,38 @@ def test_format_regex_reads_within_the_limits() -> None:
     start = time.monotonic()
     assert v("a" * 40000) is False
     assert v("(" * 5000 + ")" * 5000) is False
-    assert v("(?<=b)(?:a{1000}){1000}") is True
+    assert v("(?<=b)(?:(?:ab){1000}){1000}") is True
+    with pytest.raises(cjs.PatternTooLargeError):
+        cjs.compile({"pattern": "(?<=b)(?:(?:ab){1000}){1000}"})
     assert time.monotonic() - start < 10
+
+
+def test_format_regex_reads_a_pattern_to_its_end_whatever_it_would_come_to() -> None:
+    # A pattern is valid or not by the grammar, and is read for that to its end: what its translation would come to
+    # is no matter. Reading used to stop at twice the limit of a translation, and what followed was not looked at,
+    # so a pattern of 19,000 characters with an open group after them was valid.
+    large = "".join(f"(?i:[\\p{{L}}{chr(0x2460 + k)}])" for k in range(1500))
+    assert len(large) < pattern_module.MAX_PATTERN
+    start = time.process_time()
+    assert is_valid_ecma_regex(large) is True
+    for tail in ("(", "\\p{Nope}", "a{2,1}", "\\k<n>", ")", "[b-a]", "(?<n>a)(?<n>b)"):
+        assert is_valid_ecma_regex(large + tail) is False, tail
+        assert is_valid_ecma_regex(tail + large) is False, tail
+    for tail in ("()", "\\p{Lu}", "a{1,2}", "(?<n>a)\\k<n>", "(?<n>a)|(?<n>b)"):
+        assert is_valid_ecma_regex(large + tail) is True, tail
+    v = cjs.compile({"format": "regex"}, assert_format=True)
+    assert v(large) is True and v(large + "(") is False
+    # The longest patterns, of the terms that are longest when they are written, are read in a moment.
+    for longest in (
+        "\\s" * 16000,
+        "." * 32000,
+        "\\p{L}" * 6500,
+        "(?i:" + "[\\p{L}\\p{N}x]" * 2300 + ")",
+        "a{99999}" * 4000,
+    ):
+        assert len(longest) <= pattern_module.MAX_PATTERN
+        assert is_valid_ecma_regex(longest) is True and is_valid_ecma_regex(longest + "(") is False
+    assert time.process_time() - start < 20, "many times what a quiet machine takes"
+    # Too long or too deep to read is not valid, as it was.
+    assert is_valid_ecma_regex("a" * (pattern_module.MAX_PATTERN + 1)) is False
+    assert is_valid_ecma_regex("(" * 101 + ")" * 101) is False and is_valid_ecma_regex("(" * 100 + ")" * 100) is True
