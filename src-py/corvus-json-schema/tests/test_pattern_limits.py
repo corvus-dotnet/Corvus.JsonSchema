@@ -33,11 +33,12 @@ NEVER_ANSWERED = "a" * 60 + "b"
 
 
 def _engine(matcher: Any) -> str:
-    """Which engine a search function belongs to: "re", or "regex" (with the limit of a match around it or not)."""
+    """Which engine a search function belongs to: "re", or "regex" (with the limits of a match around it or not)."""
     owner = getattr(matcher, "__self__", None)
-    if owner is None:
+    while owner is None:
         cells = [c.cell_contents for c in matcher.__closure__ or ()]
-        owner = next(getattr(c, "__self__", None) for c in cells if callable(c))
+        matcher = next(c for c in cells if callable(c))
+        owner = getattr(matcher, "__self__", None)
     return type(owner).__module__.split(".")[0].lstrip("_")
 
 
@@ -878,6 +879,129 @@ def test_the_limit_is_not_seconds_late_for_a_repetition_of_a_class_of_many_range
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# The memory of a match
+
+_PEAK = r"""
+import json, resource, sys
+import corvus_json_schema as cjs
+from corvus_json_schema.pattern import compile_pattern
+resource.setrlimit(resource.RLIMIT_AS, (3 << 30, 3 << 30))
+case = json.load(sys.stdin)
+cjs.compile({"pattern": "(?<=x)(y)\\1"})("xyy")
+matcher = compile_pattern(case["pattern"], case["limit"])
+base = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+try:
+    out = "match" if matcher(case["text"]) else "no match"
+except cjs.PatternMatchLimitError as e:
+    out = "memory" if e.most_characters is not None else "time"
+except MemoryError:
+    out = "MemoryError"
+print(json.dumps([out, (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - base) // 1024]))
+"""
+
+
+def _peak(pattern: str, text: str, limit: float | None = 1.0) -> tuple[str, int]:
+    """How one match of a pattern ends, and the megabytes the process grew by for it, in a process of its own (with
+    a limit of 3 GB of address space, so that a match which is not bounded ends in a MemoryError and no worse)."""
+    import json
+    import subprocess
+
+    source = str(Path(pattern_module.__file__).parents[1])
+    done = subprocess.run(
+        [sys.executable, "-c", _PEAK],
+        input=json.dumps({"pattern": pattern, "text": text, "limit": limit}),
+        capture_output=True,
+        text=True,
+        env={"PYTHONPATH": source},
+        timeout=300,
+        check=False,
+    )
+    assert done.returncode == 0, done.stderr[-2000:]
+    outcome, grew = json.loads(done.stdout)
+    return outcome, grew
+
+
+_AB = "ab" * 50000
+# Patterns of fewer than 1,000 characters with as many groups as that has room for, in a repetition over a text of
+# 100,000 characters. Both engines keep what a group held each time it closes until the match ends: the first of
+# these took 740 MB and ended in a MemoryError, in either engine.
+_GROUPS_NOBODY_READS = [
+    ("^(?:" + "()" * 480 + "a)*$", "a" * 100000, "match"),
+    ("(?<=^)(?:" + "()" * 480 + "a)*$", "a" * 100000, "match"),
+    ("^(?:" + "(a)?(b)?" * 110 + ")*$", _AB, "match"),
+    ("(?<=^)(?:" + "|".join(f"({'ab'[k % 2]})" for k in range(240)) + ")*$", _AB, "match"),
+    ("(?<=^)(?:" + "".join(f"(?<n{k}>a)?" for k in range(80)) + "b)*$", _AB, "match"),
+    ("^(?:(a)|(b))*$", "ab" * 500000, "match"),
+]
+
+
+@pytest.mark.parametrize(("pattern", "text", "outcome"), _GROUPS_NOBODY_READS)
+def test_a_group_that_no_reference_reads_costs_a_match_no_memory(pattern: str, text: str, outcome: str) -> None:
+    assert len(pattern) <= 1000
+    got, grew = _peak(pattern, text)
+    assert got == outcome, got
+    # A quiet machine: 0 to 35 MB. With the groups kept: 240 to 770 MB.
+    assert grew < 100, grew
+    for for_regex in (False, True):
+        written = pattern_module.translate(pattern, True, for_regex)
+        assert written is not None and "(?P<" not in written[0] and "()" not in written[0]
+
+
+# Groups that references read, which are kept. The first is the pattern of the adversarial probe that took 488 MB in
+# the second it had, and the last took 400 MB with 24 characters of pattern: a repetition inside a lookahead inside a
+# repetition closes its group for every character after every character.
+_READ = "".join(f"\\{k}" for k in range(1, 101))
+_GROUPS_KEPT = [
+    ("^(?:" + "|".join(f"(?<n>{'ab'[k % 2]})" for k in range(110)) + ")*\\k<n>$", _AB),
+    ("^(?:" + "|".join(f"({'ab'[k % 2]})" for k in range(100)) + ")*" + _READ + "$", _AB),
+    ("^(?:" + "(a)?(b)?" * 50 + ")*" + _READ + "$", _AB),
+    ("^(?:" + "(?=(a))" * 60 + "a)*" + _READ[: _READ.index("\\61")] + "$", "a" * 100000),
+    ("^(?:(?=(?:(a))*)\\1)*[bc]$", "a" * 100000 + "d"),
+    ("^(?:(?<=(?:(a))*)a\\1?)*[bc]$", "a" * 100000 + "d"),
+    ("^(?:(a)|b)*\\1$", "ab" * 500000),
+]
+
+
+@pytest.mark.parametrize(("pattern", "text"), _GROUPS_KEPT)
+def test_a_match_that_would_keep_too_much_for_its_groups_reaches_the_limit_of_memory(pattern: str, text: str) -> None:
+    assert len(pattern) <= 1000
+    got, grew = _peak(pattern, text)
+    assert got == "memory", got
+    assert grew < 100, grew
+    # The longest text that the pattern is matched against takes megabytes and not hundreds of them (a quiet
+    # machine: 2 to 54 MB), and ends in an answer or at the limit of time.
+    translation = pattern_module._translate(pattern, True, False)
+    assert translation is not None and translation.for_regex and translation.most is not None
+    assert 100 < translation.most < len(text)
+    got, grew = _peak(pattern, text[: translation.most - 1] + text[-1])
+    assert got in ("match", "no match", "time"), got
+    assert grew < 150, grew
+
+
+def test_the_limit_of_memory_is_an_error_of_the_match_and_names_the_most_characters() -> None:
+    v = cjs.compile({"pattern": "^(?:(a)|b)*\\1$"})
+    most = pattern_module._translate("^(?:(a)|b)*\\1$", True, False)
+    assert most is not None and most.most == 262144
+    assert v("ab" * 1000 + "aa") is True and v("ab" * 1000 + "ac") is False
+    start = time.process_time()
+    with pytest.raises(cjs.PatternMatchLimitError) as raised:
+        v("ab" * 200000)
+    assert time.process_time() - start < 1, "it is known from the length of the text, before the match"
+    error = raised.value
+    assert error.most_characters == 262144 and error.limit == 1.0 and error.pattern == "^(?:(a)|b)*\\1$"
+    assert "the text has 400,000 characters, and a match of more than 262,144 could keep more memory" in str(error)
+    # The limit of time has none.
+    assert cjs.PatternMatchLimitError("a", 1.0).most_characters is None
+    # A pattern with no group that a reference reads has no such limit, nor has one whose groups are read where
+    # nothing is repeated, and nor has any pattern when the limit of a match is off.
+    for pattern in ("(?<=x)(a)(b)*", "^(a)(b)\\1\\2$", "^(a+)\\1$", "^[a-z]+$"):
+        translation = pattern_module._translate(pattern, True, False)
+        assert translation is not None and translation.most is None, pattern
+    trusting = cjs.compile({"pattern": "^(?:(a)|b)*\\1$"}, pattern_match_limit=None)
+    assert trusting("ab" * 200000 + "ac") is False
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # A large count of one character
 
 
@@ -985,7 +1109,7 @@ def test_a_plain_term_is_written_as_it_is() -> None:
         False,
     )
     # More than one term under a quantifier keeps its group.
-    assert pattern_module.translate("^(?:ab)?(?:a|b)*(a)+$") == ("^(?:ab)?(?:a|b)*(a)+\\Z", False)
+    assert pattern_module.translate("^(?:ab)?(?:a|b)*(a)+$") == ("^(?:ab)?(?:a|b)*(?:a)+\\Z", False)
 
 
 # Patterns that are within the limit of a pattern, and were refused because the translation of each term was several

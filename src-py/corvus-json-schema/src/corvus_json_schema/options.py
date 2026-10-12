@@ -70,25 +70,37 @@ class PatternTooLargeError(SchemaCompilationError):
 
 
 class PatternMatchLimitError(Exception):
-    """Raised when one match of a ``pattern`` or ``patternProperties`` regular expression reaches its limit (see the
-    ``pattern_match_limit`` option of ``compile``). The instance is then neither valid nor not valid."""
+    """Raised when one match of a ``pattern`` or ``patternProperties`` regular expression reaches a limit: the limit
+    of time (see the ``pattern_match_limit`` option of ``compile``), or the limit of memory, which is a limit on the
+    length of the text for a pattern with groups that the engine keeps for every repetition. The instance is then
+    neither valid nor not valid."""
 
-    def __init__(self, pattern: str, limit: float) -> None:
+    def __init__(self, pattern: str, limit: float, characters: int | None = None, most: int | None = None) -> None:
         shown = pattern if len(pattern) <= 200 else f"{pattern[:200]}... ({len(pattern)} characters)"
-        # The limit as corvus-json-schema-rs writes it: 1s, 250ms, 1.5s.
-        if limit >= 1:
-            time = f"{limit:g}s"
-        elif limit >= 1e-3:
-            time = f"{limit * 1e3:g}ms"
+        if most is not None:
+            super().__init__(
+                f"A match of the regular expression '{shown}' was abandoned: the text has {characters:,} characters, "
+                f"and a match of more than {most:,} could keep more memory than the limit for the groups of the "
+                "pattern, which the engine keeps for every repetition."
+            )
         else:
-            time = f"{limit * 1e6:g}\u00b5s"
-        super().__init__(
-            f"A match of the regular expression '{shown}' was abandoned: it took longer than the limit of {time}."
-        )
+            # The limit as corvus-json-schema-rs writes it: 1s, 250ms, 1.5s.
+            if limit >= 1:
+                time = f"{limit:g}s"
+            elif limit >= 1e-3:
+                time = f"{limit * 1e3:g}ms"
+            else:
+                time = f"{limit * 1e6:g}\u00b5s"
+            super().__init__(
+                f"A match of the regular expression '{shown}' was abandoned: it took longer than the limit of {time}."
+            )
         self.pattern = pattern
         """The regular expression."""
         self.limit = limit
         """The time the match was allowed, in seconds."""
+        self.most_characters = most
+        """The most characters a text may have for this pattern, when it was the limit of memory that the match
+        reached, and None when it was the limit of time."""
 
 
 def match_limit(seconds: float | None) -> float | None:

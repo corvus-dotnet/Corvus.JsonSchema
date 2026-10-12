@@ -127,6 +127,14 @@ _CALL = 8
 _SHARED = 6
 # The most characters of a translation for the standard library's engine, with every copy of a long class counted.
 _MAX_WRITTEN_FOR_RE = 262_144
+# The most that a match of the regex package may keep for the groups of a pattern, in groups closed (see
+# _Writer._keeps and _most_characters). The engine keeps what a group held each time it closes, for as long as the
+# match goes on: 70 to 200 bytes as measured, and about a kilobyte for a group in a lookaround, which counts as
+# _IN_A_LOOKAROUND groups. So this is 50 to 60 MB for the patterns that keep the most.
+_MAX_KEPT = 1 << 19
+_IN_A_LOOKAROUND = 16
+# A repetition that runs at most this many times is not one that a match keeps groups for in proportion to the text.
+_FEW_TIMES = 16
 # The most characters of a literal that the regex package is given in one piece. Before the first match of a
 # pattern the engine builds the tables of a search for each literal in it, in one step that its timeout does not
 # interrupt, and for a literal that repeats itself that step takes a time that grows as the cube of the length: 0.05
@@ -508,6 +516,7 @@ class _Node:
         "behind",
         "chars",
         "cost",
+        "deep",
         "first",
         "group",
         "icase",
@@ -524,6 +533,7 @@ class _Node:
         "others",
         "parent",
         "same",
+        "shut",
         "state",
         "text",
         "weight",
@@ -567,6 +577,10 @@ class _Node:
         # Set by _Writer as it writes: how many copies of a character or a reference the regex package makes of
         # the node (see MAX_COPIES).
         self.weight = 1
+        # Set by _Writer as it writes, for the regex package (see _Writer._keeps): how many groups one pass through
+        # the node closes without taking a character for each, and how many it closes for a character it takes.
+        self.shut = 0
+        self.deep = 0
 
 
 def _matches_nothing(n: _Node) -> bool:
@@ -1312,8 +1326,10 @@ class _Translator:
         # Set by translate: whether the standard library's engine is proved to match the translation in time
         # proportional to the text (see _Linear).
         self.linear = False
-        # Set by translate for the regex package: how many copies it writes out for the counts (see _copies).
+        # Set by translate for the regex package: how many copies it writes out for the counts (see _copies), and
+        # the most characters a text may have for what a match keeps for the groups (None: any number).
         self.copies = 0
+        self.most: int | None = None
         # How many groups the parser is inside.
         self.depth = 0
         # The length of the characters and classes read so far, as they are written (see _one).
@@ -1368,6 +1384,7 @@ class _Translator:
                     self.needs_regex = again.needs_regex
                     self.linear = again.linear
                     self.copies = again.copies
+                    self.most = again.most
                     return text
                 return self._written(writer, text)
         return self._written(writer, writer.write())
@@ -1379,6 +1396,7 @@ class _Translator:
         else:
             # What the counts add to the characters and references the pattern has as it is written.
             self.copies = writer.root.weight - writer.leaves
+            self.most = _most_characters(writer.kept)
         return text
 
     def _count_groups(self) -> None:
@@ -1979,6 +1997,13 @@ class _Writer:
         # followed by what parts a long literal (see _MAX_LITERAL). The parts do not count towards the length.
         self.literals = 0
         self.parted = 0
+        # What a match keeps for the groups of the pattern (see _keeps): for each power of the length of the text,
+        # how many groups are closed. And where the writer is: how many repetitions with a lookaround between them
+        # it is inside, whether it is inside one with no lookaround since, and whether it is inside a lookaround.
+        self.kept: dict[int, int] = {}
+        self.power = 0
+        self.in_loop = False
+        self.in_look = False
         if for_regex:
             self.most += (_MAX_TRANSLATED // _MAX_LITERAL + 1) * len(_AFTER_A_CHARACTER)
         self.groups: dict[int, _Node] = {}
@@ -2261,6 +2286,11 @@ class _Writer:
                 self.classes[text] = self.classes.get(text, 0) + 1
                 return text
             number = self.classes.setdefault(text, len(self.classes) + 1)
+            # A call closes the group it calls.
+            if self.in_look:
+                n.shut = _IN_A_LOOKAROUND
+            else:
+                n.deep = 1
             # The engine matches a group that it calls forwards, also where it is matching backwards (in a
             # lookbehind). There the character is taken backwards, and the call is in a lookahead.
             return f"(?:(?=(?{number})){_ANY})" if n.back else f"(?{number})"
@@ -2275,24 +2305,55 @@ class _Writer:
                     raise _TooLarge()
                 parts.append(part)
             n.weight = sum(x.weight for x in n.items)
+            n.deep = max((x.deep for x in n.items), default=0)
+            shut = [x.shut for x in n.items]
+            n.shut = sum(shut) if k == _SEQUENCE else max(shut, default=0)
             return ("" if k == _SEQUENCE else "|").join(parts)
         if k == _GROUP:
-            body = self._write(n.items[0])
-            n.weight = n.items[0].weight
+            child = n.items[0]
+            body = self._write(child)
+            n.weight, n.shut, n.deep = child.weight, child.shut, child.deep
             if n.group in self.read:
+                if self.in_look or _matches_nothing(child):
+                    n.shut += _IN_A_LOOKAROUND if self.in_look else 1
+                else:
+                    n.deep += 1
                 return f"(?P<g{n.group}>{body})"
-            # In a pattern with a reference that reads a group, a group that none reads does not capture.
-            return f"({body})" if n.group and not self.read else f"(?:{body})"
+            # A group that no reference reads does not capture. Both engines keep what a group held each time it
+            # closes, for as long as the match goes on, so 480 empty groups in a repetition took 740 MB for a text
+            # of 100,000 characters, in either engine.
+            return f"(?:{body})"
         if k == _LOOK:
+            was = (self.in_look, self.in_loop)
+            self.in_look, self.in_loop = True, False
             inside = self._write(n.items[0])
-            n.weight = n.items[0].weight
+            self.in_look, self.in_loop = was
+            n.weight, n.shut = n.items[0].weight, n.items[0].shut
             return f"(?{'<' if n.behind else ''}{'!' if n.negative else '='}{inside})"
         if k == _REFERENCE:
             if n.state == _EMPTY:
                 return "(?:)"
             exact = f"(?P=g{n.group})"
-            return self._folded(exact, n.same, n.back) if n.same else exact
+            if not n.same:
+                return exact
+            # The comparison is a repetition of its own, over the text of the group, and closes groups for each
+            # character it compares.
+            self._keeps(8)
+            return self._folded(exact, n.same, n.back)
         return self._repeat(n)
+
+    def _keeps(self, groups: int) -> None:
+        """Counts what a repetition here makes a match of the regex package keep: ``groups`` groups closed for
+        each iteration, or for each character taken.
+
+        The engine keeps what a group held each time it closes, until the match ends, so a repetition over the text
+        keeps that many times the length of the text. A repetition inside a lookaround inside a repetition runs
+        over the rest of the text at every place of it, and keeps that many times the square of the length:
+        ``^(?:(?=(?:(a))*)\\1)*[bc]$`` took 400 MB in a second for a text of 100,000 characters. ``kept`` has
+        the groups for each such power, and a text has a limit of length from it (see ``_most_characters``)."""
+        if self.for_regex and groups:
+            power = self.power if self.in_loop else self.power + 1
+            self.kept[power] = self.kept.get(power, 0) + groups
 
     def _repeat(self, n: _Node) -> str:
         body = n.items[0]
@@ -2306,7 +2367,7 @@ class _Writer:
             if not lo:
                 return "(?:)"
             once = self._write(body)
-            n.weight = body.weight
+            n.weight, n.shut, n.deep = body.weight, body.shut, body.deep
             return once
         if lo >= _MAX_COUNT:
             if not _matches_nothing(body):
@@ -2314,7 +2375,14 @@ class _Writer:
                 return "(?!)"
             # That many iterations, of which all but a few match nothing, are beyond both engines.
             raise _TooLarge(f"it repeats what can match nothing at least {_MAX_COUNT:,} times")
+        # A repetition that may run more than a few times is one that a match keeps groups for (see _keeps).
+        loops = hi == -1 or hi > _FEW_TIMES
+        was = (self.in_loop, self.power)
+        if loops and not self.in_loop:
+            self.in_loop, self.power = True, self.power + 1
         text = self._write(body)
+        power = self.power
+        self.in_loop, self.power = was
         if self.for_regex and self._scanned(body) > _MAX_SCANNED and not _CALL_RE.fullmatch(text):
             # A lookahead and then any character: the same characters, and a step of the match for each.
             text = f"(?:(?={text}){_ANY})"
@@ -2329,6 +2397,7 @@ class _Writer:
             # character, escape or class needs no group.
             if body.kind == _SEQUENCE or not (text.startswith("(") or _ATOM_RE.fullmatch(text)):
                 text = f"(?:{text})"
+            self._kept_by(n, body, loops, power, 0)
             if self.counts and lo > 1 and self._scanned(body) >= 0:
                 n.weight = body.weight * 3
                 return self._counted(text, lo, hi, n.lazy, n.back)
@@ -2358,6 +2427,9 @@ class _Writer:
         if lo * len(one) > _MAX_TRANSLATED or (hi - lo) * len(more) > _MAX_TRANSLATED:
             raise _TooLarge()
         n.weight = body.weight * (lo + (1 if hi == -1 else hi - lo))
+        # Each iteration closes the groups that are reset, and the one that holds the rest of the text (which is in
+        # a lookaround).
+        self._kept_by(n, body, loops, power, (len(inside) if resets else 0) + (_IN_A_LOOKAROUND if more != one else 0))
         out = one * lo
         if hi == -1:
             rest = f"(?:{self.seen}{more}{self.seen})*{'?' if n.lazy else ''}"
@@ -2373,6 +2445,19 @@ class _Writer:
         if len(out) > _MAX_TRANSLATED:
             raise _TooLarge()
         return out
+
+    def _kept_by(self, n: _Node, body: _Node, loops: bool, power: int, more: int) -> None:
+        """What a repetition makes a match keep (see ``_keeps``), where an iteration closes ``more`` groups beside
+        those of its body. A repetition that runs a few times closes its groups that many times for one pass. One
+        that may run many times is counted for the text, at ``power``."""
+        each = body.shut + more
+        n.deep = body.deep
+        if not loops:
+            n.shut = each * max(n.max, 1)
+            return
+        n.shut = each * n.min
+        if self.for_regex and each + body.deep:
+            self.kept[power] = self.kept.get(power, 0) + each + body.deep
 
     def _counted(self, one: str, lo: int, hi: int, lazy: bool, back: bool) -> str:
         """``X{lo,hi}`` for one character or class X, without a minimum count. The regex package writes a minimum
@@ -2411,8 +2496,7 @@ class _Writer:
         if k == _SEQUENCE:
             return self._scanned(n.items[0]) if len(n.items) == 1 else -1
         if k == _GROUP:
-            captures = n.group in self.read or (n.group and not self.read)
-            return -1 if captures else self._scanned(n.items[0])
+            return -1 if n.group in self.read else self._scanned(n.items[0])
         if k == _ALTERNATION:
             costs = [self._scanned(x) for x in n.items]
             return -1 if min(costs) < 0 else sum(costs) + len(costs)
@@ -2435,13 +2519,31 @@ class _Writer:
         return q + "?" if lazy else q
 
 
+def _most_characters(kept: dict[int, int]) -> int | None:
+    """The most characters a text may have for a match of the regex package to keep ``_MAX_KEPT`` groups at most,
+    where ``kept`` has, for each power of the length of the text, how many groups a match closes (see
+    ``_Writer._keeps``). None: the pattern keeps nothing that grows with the text."""
+    if not kept:
+        return None
+    lo, hi = 0, _MAX_KEPT
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        if sum(groups * mid**power for power, groups in kept.items()) <= _MAX_KEPT:
+            lo = mid
+        else:
+            hi = mid - 1
+    return lo
+
+
 class _Translation:
     """A pattern as it is written for one of the engines."""
 
-    __slots__ = ("for_regex", "linear", "text", "wide")
+    __slots__ = ("for_regex", "linear", "most", "text", "wide")
 
-    def __init__(self, text: str, for_regex: bool, wide: bool, linear: bool) -> None:
+    def __init__(self, text: str, for_regex: bool, wide: bool, linear: bool, most: int | None = None) -> None:
         self.text = text
+        # For the regex package: the most characters a text may have (see _most_characters), or None.
+        self.most = most
         # Whether it is for the regex package (and so is compiled without the ASCII flag).
         self.for_regex = for_regex
         # Whether the pattern is one without the u flag for which a text is matched as its code units (see _units).
@@ -2487,7 +2589,7 @@ def _translate(pattern: str, unicode: bool, for_regex: bool) -> _Translation | N
                 f"its counts come to more than {MAX_COPIES:,} copies of what they repeat, which the regex package "
                 "writes out"
             )
-        return _Translation(text, True, t.wide, False)
+        return _Translation(text, True, t.wide, False, t.most)
     except (_Invalid, KeyError, ValueError, IndexError):
         return None
     except RecursionError:
@@ -2565,7 +2667,7 @@ _NEAR_THE_LIMIT = 0.9
 _MOST_LIMITS = 2.0
 
 
-def _limited(search: Matcher, limit: float, pattern: str) -> Matcher:
+def _limited(search: Matcher, limit: float, pattern: str, most: int | None = None) -> Matcher:
     """The search function of a pattern that the regex package runs, with the limit of a match, which is of time
     on the clock.
 
@@ -2586,7 +2688,17 @@ def _limited(search: Matcher, limit: float, pattern: str) -> Matcher:
             pass
         return _again(search, text, limit, pattern)
 
-    return limited
+    if most is None:
+        return limited
+
+    def limited_and_bounded(text: str) -> Any:
+        # The limit of time does not bound what a match keeps for the groups of this pattern: the engine fills
+        # hundreds of megabytes in a second. The length of the text does (see _most_characters).
+        if len(text) > most:
+            raise PatternMatchLimitError(pattern, limit, len(text), most)
+        return limited(text)
+
+    return limited_and_bounded
 
 
 def _again(search: Matcher, text: str, limit: float, pattern: str) -> Any:
@@ -2669,7 +2781,7 @@ def _search(pattern: str, unicode: bool, limit: float | None) -> tuple[Matcher, 
         ) from None
     except RecursionError:
         raise _TooLarge("it nests deeper than the stack that was left for compiling it") from None
-    return (search if limit is None else _limited(search, limit, pattern)), t.wide
+    return (search if limit is None else _limited(search, limit, pattern, t.most)), t.wide
 
 
 def _shown(pattern: str) -> str:
