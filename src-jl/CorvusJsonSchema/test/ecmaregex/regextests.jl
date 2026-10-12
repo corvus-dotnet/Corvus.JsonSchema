@@ -693,6 +693,24 @@ const GRINNING_FACE = "\U1F600"
         @test 0 < emitter.steps < 2000
     end
 
+    # Reading a pattern takes time in proportion to its length. A group name was compared with every group of the
+    # name before it, and each kept the alternatives around it, so 20,000 groups of one name inside 150 groups (a
+    # pattern of 160 KB, which PCRE2 does not hold) took a minute to be refused. A group is compared with the
+    # last group of its name, which decides it for all of them.
+    @testset "many groups of one name" begin
+        error, took = toolarge("(?:"^150 * "(?<n>a)|"^20_000 * "b" * ")"^150)
+        @test error isa E.TooLargeError && error.valid
+        @test took < 10
+        started = time()
+        @test isnotapattern("(?:"^150 * "(?<n>a)|"^20_000 * "(?<n>b)(?<n>c)" * ")"^150)
+        @test isnotapattern("(?:"^150 * "(?<n>a)|"^20_000 * "b" * ")"^150 * "(?<n>c)")
+        @test time() - started < 10
+        several = E.compile("(?:(?:(?<n>a)|(?<n>b)|(?<m>c))\\k<n>|(?<n>d)\\k<n>(?<m>e)|(?<m>f))\\k<m>\\k<n>-")
+        # The answers of V8 13.6.
+        @test [E.ismatch(several, text) for text in ("aaa-", "cc-", "ddeed-", "ff-", "aa-", "bb-", "ddee-", "ab-", "dde-", "c-", "f-")] ==
+              [true, true, true, true, false, false, false, false, false, false, false]
+    end
+
     # What a compiled pattern keeps is bounded. The compiled pattern, those of its lookbehinds and the one that
     # times a match are a megabyte together at most, and the JIT code of a pattern is 4 MiB at most: a part that
     # would pass that is run by the interpreter. A call of the class of \p{L} is 12 KB of JIT code, and a pattern

@@ -391,7 +391,10 @@ large (`\p{L}{1000000000}` is run). A repetition of what can match the empty str
 too large. With a minimum of one or more (`(?:(?:a*)+)+`) it is written twice still, and some twelve levels are too
 large. The JIT code of a pattern is at most 4 MiB, and nothing is refused for that: a pattern that would pass it,
 such as one of several hundred `\p{L}`, is run by PCRE2's interpreter. On the probe, a pattern of at most 1,000
-characters is translated and compiled in 0.4 seconds at most and keeps 2.5 MB at most. The patterns a process
+characters is translated and compiled in 0.4 seconds at most and keeps 2.5 MB at most. A pattern is read in time
+in proportion to its length: a group is compared with the last group of its name, where it was compared with every
+one, so 20,000 groups of one name inside 150 groups (160 KB, which PCRE2 does not hold) are refused in 27 ms, where
+they took a minute. The patterns a process
 has compiled are kept for the next schema that has them, up to 4,096 patterns and 32 MiB.
 
 **The formats.** A string that `format` asserts is a string of the instance. Every check reads its bytes with a

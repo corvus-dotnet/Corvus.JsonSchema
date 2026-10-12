@@ -124,12 +124,13 @@ mutable struct Parser
     groupcount::Int
     hasnames::Bool
     groups::Int
-    # For each group name, its groups: the number of each, then the alternatives that enclose it.
-    names::Dict{String,Vector{Vector{Int}}}
+    # For each group name: where the last group of the name is written (the position of the end of its name), then
+    # the numbers of its groups.
+    names::Dict{String,Vector{Int}}
     namedrefs::Vector{Node}
-    # The alternatives that enclose the current position, innermost last, as disjunction and alternative.
+    # The disjunctions that enclose the current position, innermost last: for each, where it starts and where its
+    # current alternative starts.
     path::Vector{Int}
-    disjunctions::Int
     # The modifiers in force, which only a group such as (?i:...) changes.
     ignorecase::Bool
     multiline::Bool
@@ -157,7 +158,7 @@ function Parser(pattern::String, unicode::Bool)
             push!(p, c)
         end
     end
-    return Parser(pattern, p, unicode, 0, 0, 0, false, 0, Dict{String,Vector{Vector{Int}}}(), Node[], Int[], 0, false,
+    return Parser(pattern, p, unicode, 0, 0, 0, false, 0, Dict{String,Vector{Int}}(), Node[], Int[], false,
         false, false, Int32[], nothing, 0)
 end
 
@@ -172,7 +173,7 @@ function parse!(P::Parser)
     for ref in P.namedrefs
         named = get(P.names, ref.name, nothing)
         named === nothing && syntaxerror(P, "reference to an unknown group name")
-        ref.groups = Int[other[1] for other in named]
+        ref.groups = named[2:end]
     end
     return root
 end
@@ -224,14 +225,13 @@ function disjunction(P::Parser)
     # Not a syntax error: nothing is wrong with the pattern, and nothing is known of the rest of it.
     P.depth > MAX_NESTING + 1 && throw(TooLargeError(P.pattern,
         string("its groups nest over the limit of ", MAX_NESTING, " deep"), false))
-    P.disjunctions += 1
-    push!(P.path, P.disjunctions, 0)
+    push!(P.path, P.i, P.i)
     level = length(P.path)
     result = alternative(P)
     if peekchar(P) == '|'
         alternatives = Node[result]
         while eat(P, '|')
-            P.path[level] += 1
+            P.path[level] = P.i
             push!(alternatives, alternative(P))
         end
         result = Node(ALT)
@@ -511,26 +511,30 @@ function group(P::Parser)
         end
         name = groupname(P)
         # Two groups may share a name only when they are in separate alternatives of one disjunction, so that no
-        # match can go through both.
+        # match can go through both. The group is compared with the last group of the name, which decides it for
+        # every group of the name: each was apart from the one before it, and a group that is apart from the last
+        # one is apart from those too. (Were it not apart from an earlier one, one alternative would hold the two,
+        # and the last one, which is written between them. The last one is apart from the group, so it is in
+        # another alternative of a disjunction inside that alternative, around the group. The earlier one is
+        # outside that disjunction, or it would be apart from the group as well, so it and the last one would be
+        # in the one alternative, and not apart.) Comparing with every group of the name took time in proportion
+        # to the square of their number.
         others = get(P.names, name, nothing)
         if others !== nothing
-            for other in others
-                separatealternatives(P, other) || syntaxerror(P, "duplicate group name")
-            end
+            separatealternatives(P, others[1]) || syntaxerror(P, "duplicate group name")
         end
         return capture(P, name)
     end
     syntaxerror(P, "invalid group")
 end
 
-# Whether a named group (its number, then the alternatives that enclose it) and the current position lie in
-# different alternatives of some disjunction.
-function separatealternatives(P::Parser, other::Vector{Int})
+# Whether the position `at`, which is before the current one, lies in a different alternative of some disjunction
+# than the current position does. The innermost disjunction around the current position that started at or before
+# `at` holds both. They are apart when its current alternative started after `at`.
+function separatealternatives(P::Parser, at::Int)
     path = P.path
-    k = 0
-    while 2k + 2 < length(other) && 2k < length(path) && other[2k + 2] == path[2k + 1]
-        other[2k + 3] != path[2k + 2] && return true
-        k += 1
+    for level in length(path):-2:2
+        path[level - 1] <= at && return path[level] > at
     end
     return false
 end
@@ -578,9 +582,10 @@ function capture(P::Parser, name::Union{Nothing,String})
     P.groups += 1
     node.group = P.groups
     if name !== nothing
-        named = Int[node.group]
-        append!(named, P.path)
-        push!(get!(() -> Vector{Int}[], P.names, name), named)
+        # The body of the group starts after this position, so the group is not in its own body.
+        named = get!(() -> Int[0], P.names, name)
+        named[1] = P.i - 1
+        push!(named, node.group)
     end
     node.subs = Node[disjunction(P)]
     closegroup(P)
