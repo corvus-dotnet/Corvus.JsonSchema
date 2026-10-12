@@ -22,6 +22,10 @@ A schema and an instance may both come from outside, so a pattern is now bounded
 
 - **A separated list with a `$` inside it.** The crate matches a pattern of the form `^item(separator item)*$`, such as `^([a-z]+)(\.[a-z]+)*$`, without a regular expression engine. It dropped a `$` at the end of the first item or of the repeated group, so `^x(,a$)*$` was matched as `^x(,a)*$`. A `$` holds only at the end of the string, so the group of `^x(,a$)*$` can match once at most. `CorvusJsonSchema.compile({ "pattern" => '^x(,a$)*$' }).valid?("x,a,a")` returned `true`, where the instance is not valid. `^x$(,a)*$` took `"x,a"`, and `^(a,$)*b$` took `"a,b"`. `valid?`, `valid_json?` and `evaluate` were all affected, and so was a pattern used for `patternProperties` or `propertyNames`. Such a pattern is now matched by a regular expression engine. An escaped `\$` is a literal character and is matched as before. No other form of pattern was affected. The extension's crate requirement names 0.1.7, so the copy of the crate vendored at build time cannot be an older one.
 
+### Notices
+
+- **The notice of the Unicode data is in the gem.** The Unicode tables of the `corvus-json-schema` crate are derived from the Unicode Character Database, which is under the Unicode License V3. That license asks that its notice goes with every copy of the data. `THIRD-PARTY-NOTICES.txt` has it, with the notice of the `regress` crate that the tables were first read from, and is now in the source gem and in every native gem. Versions 0.1.0 to 0.1.2 carried no such notice.
+
 ## V0.1.2
 
 V0.1.2 fixes a crash of the Ruby process for a schema whose `not` leads back to the schema it is in, by taking version 0.1.6 of the corvus-json-schema crate. There are no API changes. Versions 0.1.0 and 0.1.1 are affected.
