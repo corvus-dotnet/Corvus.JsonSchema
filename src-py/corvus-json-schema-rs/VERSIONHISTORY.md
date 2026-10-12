@@ -22,6 +22,10 @@ A schema and an instance may both come from outside, so a pattern is now bounded
 
 - **A separated list with a `$` inside it.** The crate matches a pattern of the form `^item(separator item)*$`, such as `^([a-z]+)(\.[a-z]+)*$`, without a regular expression engine. It dropped a `$` at the end of the first item or of the repeated group, so `^x(,a$)*$` was matched as `^x(,a)*$`. A `$` holds only at the end of the string, so the group of `^x(,a$)*$` can match once at most. `cjs.compile({"pattern": "^x(,a$)*$"})("x,a,a")` returned `True`, where the instance is not valid. `^x$(,a)*$` took `"x,a"`, and `^(a,$)*b$` took `"a,b"`. Calling the validator, `is_valid`, `is_valid_json` and `evaluate` were all affected, and so was a pattern used for `patternProperties` or `propertyNames`. Such a pattern is now matched by a regular expression engine. An escaped `\$` is a literal character and is matched as before. No other form of pattern was affected.
 
+### Notices
+
+- **The notice of the Unicode data is in the package.** The Unicode tables of the `corvus-json-schema` crate are derived from the Unicode Character Database, which is under the Unicode License V3. That license asks that its notice goes with every copy of the data. `THIRD-PARTY-NOTICES.txt` has it, with the notice of the `regress` crate that the tables were first read from. It is a license file of the project, so it is now in the source distribution and in every wheel (`dist-info/licenses`). Versions 0.1.0 to 0.1.3 carried no such notice.
+
 ## V0.1.3
 
 V0.1.3 fixes a crash of the Python process for a schema whose `not` leads back to the schema it is in, by taking version 0.1.6 of the `corvus-json-schema` crate. There are no API changes. Versions 0.1.0 to 0.1.2 are affected. The pure-Python `corvus-json-schema` package is not.

@@ -90,3 +90,12 @@ maturin build --release     # a wheel for this platform
 
 The Rust toolchain is pinned in `../rust-toolchain.toml`. The tests are `tests/test_binding.py` and, through
 `--impl corvus_json_schema_rs`, the pure package's suite and results tests.
+
+## License
+
+Apache 2.0.
+
+The package is built on the `corvus-json-schema` Rust crate, whose Unicode tables are derived from the Unicode
+Character Database, which is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has
+that notice, and the one of the `regress` crate that the tables were first read from. The file is in the source
+distribution and in every wheel, beside `LICENSE`.
