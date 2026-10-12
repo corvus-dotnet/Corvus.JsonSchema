@@ -142,7 +142,7 @@ jobs:
           # output.
           git rm -r -q --ignore-unmatch .
           (cd "../$SUBDIR" && git ls-files -z | xargs -0 cp --parents -t "$GITHUB_WORKSPACE/published")
-          for file in dune-project corvus-json-schema.opam README.md LICENSE VERSIONHISTORY.md \
+          for file in dune-project corvus-json-schema.opam README.md LICENSE THIRD-PARTY-NOTICES.txt VERSIONHISTORY.md \
               src/corvus_json_schema.mli; do
             test -f "$file" || { echo "::error::The package has no $file."; exit 1; }
           done

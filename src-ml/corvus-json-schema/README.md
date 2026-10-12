@@ -714,3 +714,8 @@ developed (`src-ml/corvus-json-schema`).
 ## License
 
 Apache 2.0.
+
+The tables of Unicode properties and of case (`ucd/tables.ml`) are derived from the Unicode Character Database, which
+is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice, and the one of
+the `regress` crate that the tables were read from. The file is in the published package, beside `LICENSE`, and opam
+installs it with the package's documents.

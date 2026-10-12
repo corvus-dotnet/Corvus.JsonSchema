@@ -18,7 +18,7 @@ The first release of the OCaml port of `Corvus.Text.Json.RuntimeEvaluator`.
 
 - **A backtracking matcher that does not go the long way round.** Before it takes a way the matcher looks at the next character of the string and takes no way that character rules out, as V8 does. And it remembers the places where every way has failed, when the pattern has no backreference, so a repetition inside a repetition (`(a*)*b`, `^(?:a+)+$`), alternatives that are prefixes of each other and repetitions that follow each other take time proportional to the pattern times the string, where a backtracking matcher takes time that doubles with each character. That memory is at most 8 MB and only a match that has made 64 steps for each position of its string takes it into use. A backreference inside nested repetitions, nested counted ranges and a search that reads the rest of a long string from every position still reach the limit of a match.
 
-- **The same results whichever compiler builds it.** The package reads Unicode properties and case mappings from its own Unicode 17 tables and never from anywhere else.
+- **The same results whichever compiler builds it.** The package reads Unicode properties and case mappings from its own Unicode 17 tables and never from anywhere else. The tables are derived from the Unicode Character Database, and `THIRD-PARTY-NOTICES.txt` has the notice of the Unicode License V3 that goes with them. The file is in the published package and is installed with it.
 
 - **Every array read is bounds checked.** The package is built with the compiler's bounds checks on and uses no unchecked read, no `Obj` and no C code.
 
