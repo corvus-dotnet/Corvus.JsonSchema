@@ -22,6 +22,10 @@ A schema and a value may both come from outside, so a pattern is now bounded in 
 
 - **A separated list with a `$` inside it.** The crate matches a pattern of the form `^item(separator item)*$`, such as `^([a-z]+)(\.[a-z]+)*$`, without a regular expression engine. It dropped a `$` at the end of the first item or of the repeated group, so `^x(,a$)*$` was matched as `^x(,a)*$`. A `$` holds only at the end of the string, so the group of `^x(,a$)*$` can match once at most. `Validator::compile(['pattern' => '^x(,a$)*$'])->isValid('x,a,a')` returned `true`, where the instance is not valid. `^x$(,a)*$` took `'x,a'`, and `^(a,$)*b$` took `'a,b'`. `isValid`, `isValidJson` and `evaluate` were all affected, and so was a pattern used for `patternProperties` or `propertyNames`. Such a pattern is now matched by a regular expression engine. An escaped `\$` is a literal character and is matched as before. No other form of pattern was affected. The publish workflow takes version 0.1.7 of the crate from crates.io for the package's repository, and waits for it, so the crate has to be published first.
 
+### Notices
+
+- **The notice of the Unicode data is in the package and in every build.** The Unicode tables of the `corvus-json-schema` crate are derived from the Unicode Character Database, which is under the Unicode License V3. That license asks that its notice goes with every copy of the data, and the extension holds the tables. `THIRD-PARTY-NOTICES.txt` has it, with the notice of the `regress` crate that the tables were first read from. It is now in the package's repository and, with `LICENSE`, in the archive of every build that PIE downloads. PIE installs the extension as before. On Windows it also copies the two files to the `extras` directory of the PHP installation. Versions 0.1.0 to 0.1.3 carried no such notice.
+
 ## V0.1.3
 
 V0.1.3 fixes a crash of the PHP process for a schema whose `not` leads back to the schema it is in, by taking version 0.1.6 of the corvus-json-schema crate. There are no API changes. Versions 0.1.0 to 0.1.2 are affected.

@@ -12,7 +12,12 @@ a release's assets:
   Windows          php_corvus_json_schema-<version>-<X.Y>-<ts|nts>-<compiler>-<arch>.zip, holding a DLL of the same
                    name
 
-and prints the archive's path.
+Each archive also holds LICENSE and THIRD-PARTY-NOTICES.txt, the notice of the Unicode data that the tables of the
+corvus-json-schema crate are derived from: the extension holds the tables, and the notice must go wherever it goes.
+PIE installs the extension from the archive by its name. On Windows it copies the other files to the extras directory
+of the PHP installation.
+
+The script prints the archive's path.
 
 On Windows, ext-php-rs needs a nightly Rust (for the vectorcall calling convention PHP uses) and the PHP SDK's
 development package, which its build script downloads for the PHP on the PATH.
@@ -124,6 +129,7 @@ try {
             $library = if ($osName -eq "darwin") { "libcorvus_json_schema.dylib" } else { "libcorvus_json_schema.so" }
             Copy-Item (Join-Path $built $library) (Join-Path $stage "corvus_json_schema.so")
         }
+        Copy-Item LICENSE, THIRD-PARTY-NOTICES.txt $stage
         $archive = Join-Path (Resolve-Path $OutDir) "$name.zip"
         Remove-Item $archive -ErrorAction SilentlyContinue
         Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $archive

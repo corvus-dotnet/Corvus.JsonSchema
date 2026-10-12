@@ -177,7 +177,9 @@ jobs:
               zts=$(php -r "echo PHP_ZTS ? \"-zts\" : \"\";")
               name="php_corvus_json_schema-${version}_php$(php -r "echo PHP_MAJOR_VERSION, \".\", PHP_MINOR_VERSION;")-$arch-linux-musl$zts"
               mkdir -p /tmp/stage && cp "$ext" /tmp/stage/corvus_json_schema.so
-              (cd /tmp/stage && zip -q "/w/dist/$name.zip" corvus_json_schema.so)
+              # With the license and the notice of the Unicode data the extension holds, as package.ps1 packages them.
+              cp LICENSE THIRD-PARTY-NOTICES.txt /tmp/stage
+              (cd /tmp/stage && zip -q "/w/dist/$name.zip" corvus_json_schema.so LICENSE THIRD-PARTY-NOTICES.txt)
               chown -R "$UID:$GID" /w/dist target
               echo "$name" > /w/dist/name.txt
             '
