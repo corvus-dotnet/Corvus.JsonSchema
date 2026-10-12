@@ -24,6 +24,10 @@ A schema and an instance may both come from outside, so a pattern is now bounded
 
 - **A separated list with a `$` inside it.** The crate matches a pattern of the form `^item(separator item)*$`, such as `^([a-z]+)(\.[a-z]+)*$`, without a regular expression engine. It dropped a `$` at the end of the first item or of the repeated group, so `^x(,a$)*$` was matched as `^x(,a)*$`. A `$` holds only at the end of the string, so the group of `^x(,a$)*$` can match once at most. For `{"pattern": "^x(,a$)*$"}` the functions that validate or evaluate set `*valid` to true for `"x,a,a"`, where the instance is not valid. `^x$(,a)*$` took `"x,a"`, and `^(a,$)*b$` took `"a,b"`. A pattern used for `patternProperties` or `propertyNames` was affected in the same way. Such a pattern is now matched by a regular expression engine. An escaped `\$` is a literal character and is matched as before. No other form of pattern was affected.
 
+### Notices
+
+- **The notice of the Unicode data is in every release archive.** The Unicode tables of the `corvus-json-schema` crate are derived from the Unicode Character Database, which is under the Unicode License V3. That license asks that its notice goes with every copy of the data, and the shared and static libraries hold the tables. `THIRD-PARTY-NOTICES.txt` has it, with the notice of the `regress` crate that the tables were first read from. It is now at the root of each platform package, beside `LICENSE`, and inside `CorvusJsonSchema.xcframework`, beside `Info.plist`, with a copy of `LICENSE`. Versions 0.1.0 to 0.1.3 carried no such notice.
+
 ## V0.1.3
 
 V0.1.3 fixes a stack overflow for a schema whose `not` leads back to the schema it is in, by taking version 0.1.6 of the `corvus-json-schema` crate. There are no API changes. Versions 0.1.0 to 0.1.2 are affected, and so is everything built on them, the C++ wrapper included.

@@ -13,6 +13,8 @@ Builds the shared and static libraries (cargo, release profile) for a Rust targe
                                  corvus_json_schema::corvus_json_schema_static, with a version file
   lib/pkgconfig/                 corvus-json-schema.pc
   LICENSE, DESIGN.md
+  THIRD-PARTY-NOTICES.txt        the notice of the Unicode data that the tables of the corvus-json-schema crate are
+                                 derived from, which the libraries hold and which must go wherever they go
 
 The static library needs the system libraries the Rust standard library uses; they are asked of the compiler
 (--print native-static-libs) and written into the CMake package and the pkg-config file.
@@ -143,7 +145,7 @@ try {
     New-Item -ItemType Directory -Force $cmakeDir, $pcDir | Out-Null
 
     Copy-Item include/corvus_json_schema.h, include/corvus_json_schema.hpp (Join-Path $root "include")
-    Copy-Item LICENSE, DESIGN.md $root
+    Copy-Item LICENSE, THIRD-PARTY-NOTICES.txt, DESIGN.md $root
 
     $importLibrary = ""
     if ($targetIsWindows) {

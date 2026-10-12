@@ -8,6 +8,8 @@ simulator (arm64 and x86_64), combines each platform's architectures with lipo, 
 
   CorvusJsonSchema.xcframework.zip         the XCFramework: per platform, libcorvus_json_schema.a and the headers,
                                            with a module map declaring the Clang module CCorvusJsonSchema
+                                           and, beside its Info.plist, LICENSE and THIRD-PARTY-NOTICES.txt (the
+                                           notice of the Unicode data that the libraries hold)
   CorvusJsonSchema.xcframework.zip.sha256  its SwiftPM checksum (swift package compute-checksum), which a
                                            Package.swift binaryTarget names with the archive's URL
 
@@ -78,6 +80,9 @@ try {
 
     $framework = Join-Path $work "CorvusJsonSchema.xcframework"
     Invoke-Native "xcodebuild" (@("-create-xcframework") + $arguments + @("-output", $framework)) | Out-Null
+    # The notices go inside the framework's directory, the one thing the archive holds at its root: the static
+    # libraries hold the Unicode tables of the corvus-json-schema crate, and their notice must go wherever they go.
+    Copy-Item LICENSE, THIRD-PARTY-NOTICES.txt $framework
 
     New-Item -ItemType Directory -Force $OutDir | Out-Null
     $archive = Join-Path (Resolve-Path $OutDir) "CorvusJsonSchema.xcframework.zip"
