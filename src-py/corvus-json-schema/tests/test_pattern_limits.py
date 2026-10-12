@@ -1176,6 +1176,10 @@ def test_a_plain_term_is_written_as_it_is() -> None:
         "^\\x00\\x09\\x7f\\x85\\xa0\\ud800\\Z",
         False,
     )
+    # A group that no reference reads is written as it is outside every repetition, where it closes once, and so
+    # that it does not capture inside one.
+    assert pattern_module.translate("^(a)(b)*(?:(c)|(d))+(?<n>e)$") == ("^(a)(?:b)*(?:(?:c)|(?:d))+(e)\\Z", False)
+    assert pattern_module.translate("(?<=x)(a)(b){2}(c)?") == ("(?<=x)(a)(?:b){2}(c)?", True)
     # More than one term under a quantifier keeps its group.
     assert pattern_module.translate("^(?:ab)?(?:a|b)*(a)+$") == ("^(?:ab)?(?:a|b)*(?:a)+\\Z", False)
 
@@ -1196,6 +1200,14 @@ _PLAIN = [
     ("^" + "." * 3000 + "$", "x" * 3000, "x" * 2999 + "\n"),
     ("^" + "." * 7000 + "$", "x" * 7000, "x" * 6999 + "\n"),
     ("(?<=^)" + "\\w\\s" * 3000 + "$", "a " * 3000, "a " * 2999 + "a_"),
+    # A group is written as the pattern has it outside every repetition, and inside one the two characters that keep
+    # it from capturing do not count.
+    ("^" + "(a)" * 10920 + "$", "a" * 10920, "a" * 10919),
+    ("(?<=^)" + "(a)" * 10920 + "$", "a" * 10920, "a" * 10919),
+    ("^(?:" + "(a)(b)" * 5450 + ")*$", "ab" * 5450, "ab" * 5449 + "a"),
+    ("(?<=^)(?:" + "(a)(b)" * 5450 + ")*$", "ab" * 5450, "ab" * 5449 + "a"),
+    # One character under a quantifier is no part of a literal, and has nothing after it.
+    ("(?<=x)" + "a?" * 16380, "x" + "a" * 16380, None),
 ]
 
 

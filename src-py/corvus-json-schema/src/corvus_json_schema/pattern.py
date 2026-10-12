@@ -2051,8 +2051,15 @@ class _Writer:
         self.power = 0
         self.in_loop = False
         self.in_look = False
+        # How many characters were added to groups so that they do not capture (see _write), which do not count
+        # towards the length either, how many repetitions the writer is inside, and whether it is writing one
+        # character that a quantifier follows (which is no part of a literal).
+        self.added = 0
+        self.repeated = 0
+        self.quantified = False
         if for_regex:
-            self.most += (_MAX_TRANSLATED // _MAX_LITERAL + 1) * len(_AFTER_A_CHARACTER)
+            # (What is built is bounded here. What counts is measured in write.)
+            self.most *= 2
         self.groups: dict[int, _Node] = {}
         self.refs: list[_Node] = []
         self.count = 0
@@ -2221,7 +2228,7 @@ class _Writer:
         if self.reset or self.seen:
             before = "(?P<z>)" if self.seen else ""
             out = before + "".join(f"(?P<g{g}>)" for g in sorted(self.reset)) + f"(?:{out})"
-        length = len(out) - self.parted * len(_AFTER_A_CHARACTER)
+        length = len(out) - self.parted * len(_AFTER_A_CHARACTER) - self.added
         if self.share:
             # The groups of the classes come first, so that they have the numbers they are called by.
             classes = "".join(f"({text})" for text in self.classes)
@@ -2322,6 +2329,8 @@ class _Writer:
                 if len(chars) == 1 and chars[0][0] == chars[0][1]:
                     # One character, which the engine makes a literal of with those around it, whatever groups
                     # that do not capture are between them.
+                    if self.quantified:
+                        return text
                     self.literals += 1
                     if self.literals % _MAX_LITERAL == 0:
                         self.parted += 1
@@ -2366,9 +2375,15 @@ class _Writer:
                 else:
                     n.deep += 1
                 return f"(?P<g{n.group}>{body})"
-            # A group that no reference reads does not capture. Both engines keep what a group held each time it
-            # closes, for as long as the match goes on, so 480 empty groups in a repetition took 740 MB for a text
-            # of 100,000 characters, in either engine.
+            # A group that no reference reads does not capture inside a repetition. Both engines keep what a group
+            # held each time it closes, for as long as the match goes on, so 480 empty groups in a repetition took
+            # 740 MB for a text of 100,000 characters, in either engine. Outside every repetition a group closes
+            # once, and is written as the pattern has it. (In a pattern with a reference that reads a group, a
+            # group that none reads never captured.)
+            if n.group and not self.read and not self.repeated:
+                return f"({body})"
+            if n.group:
+                self.added += 2
             return f"(?:{body})"
         if k == _LOOK:
             was = (self.in_look, self.in_loop)
@@ -2427,7 +2442,11 @@ class _Writer:
         was = (self.in_loop, self.power)
         if loops and not self.in_loop:
             self.in_loop, self.power = True, self.power + 1
+        self.repeated += hi != 1
+        self.quantified = body.kind == _TEXT and (lo, hi) != (1, 1)
         text = self._write(body)
+        self.quantified = False
+        self.repeated -= hi != 1
         power = self.power
         self.in_loop, self.power = was
         if self.for_regex and not _CALL_RE.fullmatch(text):
