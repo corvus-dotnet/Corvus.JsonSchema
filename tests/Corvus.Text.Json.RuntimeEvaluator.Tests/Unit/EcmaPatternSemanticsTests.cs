@@ -183,6 +183,15 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    public void PatternsWithTheSameTermTwiceAnswerAsV8(Engine engine)
+    {
+        AssertCases(EcmaPatternCases.TheSameTermTwice, engine);
+    }
+
+    [TestMethod]
+    [DataRow(Engine.CompiledRegex)]
+    [DataRow(Engine.InterpretedRegex)]
+    [DataRow(Engine.GeneratedCode)]
     public void PatternsWithTheScriptOfNoCharacterAnswerAsEcma262Says(Engine engine)
     {
         AssertCases(EcmaPatternCases.ScriptOfNoCharacter, engine);

@@ -252,6 +252,43 @@ public class EcmaRegexTranslatorDataTests
     [TestMethod]
     [DataRow(RegexOptions.Compiled)]
     [DataRow(RegexOptions.None)]
+    public void PatternsWithTheSameTermTwiceAnswerAsV8(RegexOptions engine)
+    {
+        AssertCases(EcmaPatternCases.TheSameTermTwice, engine);
+    }
+
+    /// <summary>
+    /// A sequence is written for where it matches something as one alternative for each term that can be the first
+    /// to match something. When two terms are the same, each can match the empty string wherever it stands, so can
+    /// every term between them, and no backreference reads a group of any of them, the alternative of the second
+    /// only matches again what the alternative of the first matched, and is left out: <c>(a|)(a|)</c> is
+    /// <c>a(?:a)?</c> and not <c>a(?:a)?|a</c>. The alternatives stay (the last five rows) where the terms differ,
+    /// where a group of them is read, and where a term between them holds an assertion.
+    /// </summary>
+    [TestMethod]
+    [DataRow(@"^((a|)(a|))\1$", @"^(?:(?<1>a(?:(?:a)?)))?(?(1)\1)\z")]
+    [DataRow(@"^(?:((a|)(a|))|b)*\1$", @"^(?:(?(1)(?<-1>))(?:(?<1>a(?:(?:a)?))|b))*(?(1)\1)\z")]
+    [DataRow(@"^((a|)(a|)(a|))\1x$", @"^(?:(?<1>a(?:(?:a)?)(?:(?:a)?)))?(?(1)\1)x\z")]
+    [DataRow(@"^(?:(a*a*)\1)*b$", @"^(?:(?(1)(?<-1>))(?:(?<1>a+a*)(?(1)\1)|(?:\1)))*b\z")]
+    [DataRow(@"^((a|b|)(a|b|))\1$", @"^(?:(?<1>(?:a|b)(?:a|b|)))?(?(1)\1)\z")]
+    [DataRow(@"^(?:((|a)(|a))|x)*\1$", @"^(?:(?(1)(?<-1>))(?:(?<1>a(?:(?:a)?))|x))*(?(1)\1)\z")]
+    [DataRow(@"^((a|)(b|)(a|))\1$", @"^(?:(?<1>a(?:(?:b)?)(?:(?:a)?)|b(?:(?:a)?)))?(?(1)\1)\z")]
+    [DataRow(@"^((a|)(a|)b?(a|))\1$", @"^(?:(?<1>a(?:(?:a)?)b?(?:(?:a)?)|b(?:(?:a)?)))?(?(1)\1)\z")]
+    [DataRow(@"^(a)((\1|)(\1|))\2$", @"^(?<1>a)(?:(?<2>(?:\1)(?:(?:(?(1)\1))?)))?(?(2)\2)\z")]
+    [DataRow(@"^((a|)(b|))\1$", @"^(?:(?<1>a(?:(?:b)?)|b))?(?(1)\1)\z")]
+    [DataRow(@"^((a|)(a|))\2\3$", @"^(?:(?:(?<2>a))?(?:(?<3>a))?)(?(2)\2)(?(3)\3)\z")]
+    [DataRow(@"^((a|)(?=a|$)(a|))\1$", @"^(?:(?<1>a(?=a|\z)(?:(?:a)?)|(?=(?=a|\z))a)|(?=a|\z))(?(1)\1)\z")]
+    [DataRow(@"^((a|)\b(a|))\1$", @"^(?:(?<1>a(?:(?<=[a-zA-Z0-9_])(?![a-zA-Z0-9_])|(?<![a-zA-Z0-9_])(?=[a-zA-Z0-9_]))(?:(?:a)?)|(?=(?:(?<=[a-zA-Z0-9_])(?![a-zA-Z0-9_])|(?<![a-zA-Z0-9_])(?=[a-zA-Z0-9_])))a)|(?:(?<=[a-zA-Z0-9_])(?![a-zA-Z0-9_])|(?<![a-zA-Z0-9_])(?=[a-zA-Z0-9_])))(?(1)\1)\z")]
+    [DataRow(@"^((a|)(aa|))\1$", @"^(?:(?<1>a(?:(?:aa)?)|(?:aa)))?(?(1)\1)\z")]
+    public void ATermThatIsTheSameAsAnEarlierOneIsNotTheFirstToMatchAgain(string pattern, string expected)
+    {
+        Assert.IsTrue(EcmaRegexTranslator.TryTranslate(pattern, out string translated, out string error), error);
+        Assert.AreEqual(expected, translated);
+    }
+
+    [TestMethod]
+    [DataRow(RegexOptions.Compiled)]
+    [DataRow(RegexOptions.None)]
     public void PatternsWithTheScriptOfNoCharacterAnswerAsEcma262Says(RegexOptions engine)
     {
         AssertCases(EcmaPatternCases.ScriptOfNoCharacter, engine);

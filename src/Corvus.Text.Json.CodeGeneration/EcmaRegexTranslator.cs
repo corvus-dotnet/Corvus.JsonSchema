@@ -2153,6 +2153,7 @@ internal static class EcmaRegexTranslator
                     // One alternative for each term that can be the first to match something.
                     List<EcmaRegexNode> alternatives = [];
                     List<EcmaRegexNode> before = [];
+                    List<int> firsts = [];
                     for (int k = 0; k < n.Subs.Length; k++)
                     {
                         if (this.NonEmpty(n.Subs[k], ref budget) is not EcmaRegexNode first)
@@ -2160,8 +2161,9 @@ internal static class EcmaRegexTranslator
                             return null;
                         }
 
-                        if (!IsNever(first))
+                        if (!IsNever(first) && !this.IsFirstAgain(n, firsts, k))
                         {
+                            firsts.Add(k);
                             List<EcmaRegexNode> terms = [];
                             if (before.Count > 0)
                             {
@@ -2243,6 +2245,89 @@ internal static class EcmaRegexTranslator
                     // The empty node and every assertion.
                     return NeverNode();
             }
+        }
+
+        /// <summary>
+        /// Whether the alternative of <see cref="NonEmpty"/> in which term <paramref name="k"/> of a sequence is the
+        /// first to match something only repeats paths of an alternative already written, so that it is left out.
+        /// <para>
+        /// It is so when an earlier term that has its alternative is the same term (<see cref="IsSameTerm"/>), every
+        /// term after that one up to this one matches the empty string wherever it stands, and no backreference
+        /// reads a group of any of them. The earlier alternative then matches the same text with its own term, lets
+        /// the terms up to this one match nothing, and goes on as this alternative would: at the same place, and with
+        /// no group set that anything can read. A path that ends where an earlier path ended, with the same
+        /// captures, fails as that one did, and a match was found if that one did not fail.
+        /// </para>
+        /// <para>
+        /// <c>(a|)(a|)</c> is so written <c>a(?:a)?</c> and not <c>a(?:a)?|a</c>, whose second alternative matches
+        /// one <c>a</c> a second time. .NET counts <c>(?:a)?(?:a)?</c> as <c>a{0,2}</c> and tries one <c>a</c>
+        /// once, and cannot do the same for the alternation. A repetition around the two makes the second way the
+        /// base of a power: (4/3) to the number of iterations.
+        /// </para>
+        /// </summary>
+        private bool IsFirstAgain(EcmaRegexNode cat, List<int> firsts, int k)
+        {
+            EcmaRegexNode term = cat.Subs[k];
+            for (int f = firsts.Count - 1; f >= 0; f--)
+            {
+                int j = firsts[f];
+                this.work.Spend(k - j);
+                bool passable = true;
+                for (int m = k; m >= j && passable; m--)
+                {
+                    passable = (m == j || this.EmptyAnywhere(cat.Subs[m])) && !this.AnyReferenced(cat.Subs[m]);
+                }
+
+                if (!passable)
+                {
+                    // A term between that cannot be passed over, or a group that is read: no earlier term will do.
+                    return false;
+                }
+
+                if (this.IsSameTerm(cat.Subs[j], term))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Whether two nodes are the same term: they match the same texts by the same paths wherever both stand at
+        /// the same place. The numbers of their groups are not compared, since the caller has seen that no
+        /// backreference reads one.
+        /// </summary>
+        private bool IsSameTerm(EcmaRegexNode a, EcmaRegexNode b)
+        {
+            this.work.Spend();
+            if (a.Kind != b.Kind
+                || a.Subs.Length != b.Subs.Length
+                || a.CodePoint != b.CodePoint
+                || a.Min != b.Min
+                || a.Max != b.Max
+                || a.Lazy != b.Lazy
+                || a.Fold != b.Fold
+                || a.ReferenceForm != b.ReferenceForm
+                || a.AsItStands != b.AsItStands
+                || a.Behind != b.Behind
+                || a.Negative != b.Negative
+                || !a.Set.AsSpan().SequenceEqual(b.Set)
+                || !a.Groups.AsSpan().SequenceEqual(b.Groups))
+            {
+                return false;
+            }
+
+            this.work.Spend(a.Set.Length + a.Groups.Length);
+            for (int i = 0; i < a.Subs.Length; i++)
+            {
+                if (!this.IsSameTerm(a.Subs[i], b.Subs[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
