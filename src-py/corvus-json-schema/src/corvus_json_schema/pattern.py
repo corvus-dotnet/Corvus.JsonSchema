@@ -133,6 +133,11 @@ _MAX_WRITTEN_FOR_RE = 262_144
 # _IN_A_LOOKAROUND groups. So this is 50 to 60 MB for the patterns that keep the most.
 _MAX_KEPT = 1 << 19
 _IN_A_LOOKAROUND = 16
+# The most characters of a text that a pattern is matched against by the regex package once the first try at the
+# match has been abandoned (see _again). The engine keeps 35 to 56 bytes for each iteration of a repetition of more
+# than one character or class until the match ends, and raises MemoryError itself at some 550 MB of that:
+# ^(?:ab)*$ did for a text of 16 million characters. So this is 59 MB.
+_MOST_TEXT = 1 << 20
 # A repetition that runs at most this many times is not one that a match keeps groups for in proportion to the text.
 _FEW_TIMES = 16
 # The most characters of a literal that the regex package is given in one piece. Before the first match of a
@@ -149,6 +154,10 @@ _AFTER_A_CHARACTER = "(?<=(?s:.))"
 # seconds. A class of more ranges than this is written under a repetition so that each character is a step (see
 # _Writer._repeat), which costs a tenth of a microsecond more for a character.
 _MAX_SCANNED = 24
+# A text of more characters than this is matched by the pattern as it is written with every repetition of one class
+# a step for each character (see _search). How late the timeout comes grows with the text as well as with the class:
+# for ten million letters and the 24 ranges that \\p{L} is written with, it came 15 seconds late, for each try.
+_LONG_TEXT = 32_768
 # The most nodes the tree of a pattern may have once its repetitions are written without the iterations that match
 # nothing (see _Plain). A pattern that would pass it is written as it is.
 _MAX_PLAIN = 20_000
@@ -1289,8 +1298,15 @@ class _Translator:
         plain: bool = True,
         share: bool = False,
         counts: bool = False,
+        steps: bool = False,
     ) -> None:
         self.p = pattern
+        # Whether every repetition of one class is written for the regex package with a step for each character,
+        # which is how a pattern is written for a long text (see _search).
+        self.steps = steps
+        # Set by translate for the regex package: whether the pattern has a repetition of one class that is not
+        # written so.
+        self.scans = False
         # Whether repetitions inside repetitions are written without the iterations that match nothing (_Plain).
         self.plain = plain
         # Whether a long class is written once for the regex package and called (see _Writer.write).
@@ -1329,7 +1345,7 @@ class _Translator:
         # Set by translate for the regex package: how many copies it writes out for the counts (see _copies), and
         # the most characters a text may have for what a match keeps for the groups (None: any number).
         self.copies = 0
-        self.most: int | None = None
+        self.most = _MOST_TEXT
         # How many groups the parser is inside.
         self.depth = 0
         # The length of the characters and classes read so far, as they are written (see _one).
@@ -1379,25 +1395,32 @@ class _Translator:
                 ref = _Node(_REFERENCE, group=group)
                 ref.icase = node.icase
                 node.items.append(ref)
-        writer = _Writer(root, not self.ascii_flag, self.u, self.share, self.counts)
+        writer = _Writer(root, not self.ascii_flag, self.u, self.share, self.counts, self.steps)
         self.wide = not self.u and _sees_code_units(root)
         if self.plain and _repeats_inside_repeats(root):
             plain = _plain(root, writer)
             if plain is not None:
-                writer = _Writer(plain, not self.ascii_flag, self.u, self.share, self.counts)
+                writer = _Writer(plain, not self.ascii_flag, self.u, self.share, self.counts, self.steps)
                 try:
                     text = writer.write()
                 except _TooLarge:
                     # Written that way it is too large. The tree has been changed, so the pattern is read again
                     # and written as it is.
                     again = _Translator(
-                        self.p, self.u, self.ascii_flag, plain=False, share=self.share, counts=self.counts
+                        self.p,
+                        self.u,
+                        self.ascii_flag,
+                        plain=False,
+                        share=self.share,
+                        counts=self.counts,
+                        steps=self.steps,
                     )
                     text = again.translate()
                     self.needs_regex = again.needs_regex
                     self.linear = again.linear
                     self.copies = again.copies
                     self.most = again.most
+                    self.scans = again.scans
                     return text
                 return self._written(writer, text)
         return self._written(writer, writer.write())
@@ -1410,6 +1433,7 @@ class _Translator:
             # What the counts add to the characters and references the pattern has as it is written.
             self.copies = writer.root.weight - writer.leaves
             self.most = _most_characters(writer.kept)
+            self.scans = writer.scans
         return text
 
     def _count_groups(self) -> None:
@@ -1992,12 +2016,22 @@ class _Writer:
     ``X{2,4}`` as ``XX(?:X(?:X|)|)`` and ``X{2,}`` as ``XX(?:X)*``."""
 
     def __init__(
-        self, root: _Node, for_regex: bool, unicode: bool = True, share: bool = False, counts: bool = False
+        self,
+        root: _Node,
+        for_regex: bool,
+        unicode: bool = True,
+        share: bool = False,
+        counts: bool = False,
+        steps: bool = False,
     ) -> None:
         self.root = root
         self.unicode = unicode
         self.for_regex = for_regex
         self.counts = counts and for_regex
+        # Whether every repetition of one class is written with a step for each character, and whether one was
+        # left as it is (see _repeat).
+        self.steps = steps and for_regex
+        self.scans = False
         # The long classes, each with how many times it is written. With ``share`` (for the regex package) each
         # is written once, as a group that is called, and this has the number of each one's group.
         self.share = share
@@ -2299,11 +2333,11 @@ class _Writer:
                 self.classes[text] = self.classes.get(text, 0) + 1
                 return text
             number = self.classes.setdefault(text, len(self.classes) + 1)
-            # A call closes the group it calls.
+            # A call closes the group it calls, and keeps more than twice what a group does.
             if self.in_look:
                 n.shut = _IN_A_LOOKAROUND
             else:
-                n.deep = 1
+                n.deep = 2
             # The engine matches a group that it calls forwards, also where it is matching backwards (in a
             # lookbehind). There the character is taken backwards, and the call is in a lookahead.
             return f"(?:(?=(?{number})){_ANY})" if n.back else f"(?{number})"
@@ -2396,9 +2430,13 @@ class _Writer:
         text = self._write(body)
         power = self.power
         self.in_loop, self.power = was
-        if self.for_regex and self._scanned(body) > _MAX_SCANNED and not _CALL_RE.fullmatch(text):
-            # A lookahead and then any character: the same characters, and a step of the match for each.
-            text = f"(?:(?={text}){_ANY})"
+        if self.for_regex and not _CALL_RE.fullmatch(text):
+            scanned = self._scanned(body)
+            if scanned > _MAX_SCANNED or (self.steps and scanned >= 0 and self._one_of_many(body)):
+                # A lookahead and then any character: the same characters, and a step of the match for each.
+                text = f"(?:(?={text}){_ANY})"
+            elif scanned >= 0 and self._one_of_many(body):
+                self.scans = True
         k = bisect_left(self.live, n.first)
         read = self.seen != "" and (
             n.first in self.forced
@@ -2458,6 +2496,16 @@ class _Writer:
         if len(out) > _MAX_TRANSLATED:
             raise _TooLarge()
         return out
+
+    def _one_of_many(self, n: _Node) -> bool:
+        """Whether a node that is one character or class (see ``_scanned``) is a class that the engine has to look
+        a character up in: anything but one character and the class of every character."""
+        if n.kind == _TEXT:
+            if n.text == _ANY:
+                return False
+            chars = n.chars
+            return n.others or chars is None or len(chars) != 1 or chars[0][0] != chars[0][1]
+        return len(n.items) != 1 or self._one_of_many(n.items[0])
 
     def _kept_by(self, n: _Node, body: _Node, loops: bool, power: int, more: int) -> None:
         """What a repetition makes a match keep (see ``_keeps``), where an iteration closes ``more`` groups beside
@@ -2532,13 +2580,13 @@ class _Writer:
         return q + "?" if lazy else q
 
 
-def _most_characters(kept: dict[int, int]) -> int | None:
+def _most_characters(kept: dict[int, int]) -> int:
     """The most characters a text may have for a match of the regex package to keep ``_MAX_KEPT`` groups at most,
     where ``kept`` has, for each power of the length of the text, how many groups a match closes (see
-    ``_Writer._keeps``). None: the pattern keeps nothing that grows with the text."""
+    ``_Writer._keeps``), and ``_MOST_TEXT`` characters at most."""
     if not kept:
-        return None
-    lo, hi = 0, _MAX_KEPT
+        return _MOST_TEXT
+    lo, hi = 0, _MOST_TEXT
     while lo < hi:
         mid = (lo + hi + 1) // 2
         if sum(groups * mid**power for power, groups in kept.items()) <= _MAX_KEPT:
@@ -2551,11 +2599,16 @@ def _most_characters(kept: dict[int, int]) -> int | None:
 class _Translation:
     """A pattern as it is written for one of the engines."""
 
-    __slots__ = ("for_regex", "linear", "most", "text", "wide")
+    __slots__ = ("for_regex", "linear", "most", "scans", "text", "wide")
 
-    def __init__(self, text: str, for_regex: bool, wide: bool, linear: bool, most: int | None = None) -> None:
+    def __init__(
+        self, text: str, for_regex: bool, wide: bool, linear: bool, most: int = _MOST_TEXT, scans: bool = False
+    ) -> None:
         self.text = text
-        # For the regex package: the most characters a text may have (see _most_characters), or None.
+        # For the regex package: whether the pattern has a repetition of one class that is one step of a match
+        # however much of the text it runs over (see _search).
+        self.scans = scans
+        # For the regex package: the most characters a text may have (see _most_characters).
         self.most = most
         # Whether it is for the regex package (and so is compiled without the ASCII flag).
         self.for_regex = for_regex
@@ -2565,7 +2618,7 @@ class _Translation:
         self.linear = linear
 
 
-def _translate(pattern: str, unicode: bool, for_regex: bool) -> _Translation | None:
+def _translate(pattern: str, unicode: bool, for_regex: bool, steps: bool = False) -> _Translation | None:
     """The pattern as it is written for the standard library's engine, or for the regex package when the pattern
     needs it or ``for_regex`` asks. None: the pattern is not valid in the grammar. A pattern over a limit of size
     raises _TooLarge."""
@@ -2584,25 +2637,25 @@ def _translate(pattern: str, unicode: bool, for_regex: bool) -> _Translation | N
                 t.needs_regex = True
             if not t.needs_regex:
                 return _Translation(text, False, t.wide, t.linear)
-        t = _Translator(pattern, unicode, False)
+        t = _Translator(pattern, unicode, False, steps=steps)
         try:
             text = t.translate()
         except _TooLarge as e:
             if not e.length:
                 raise
             # Again, with each long class written once and called.
-            t = _Translator(pattern, unicode, False, share=True)
+            t = _Translator(pattern, unicode, False, share=True, steps=steps)
             text = t.translate()
         if t.copies > MAX_COPIES:
             # Again, with the minimum counts of one character written without copies.
-            t = _Translator(pattern, unicode, False, share=t.share, counts=True)
+            t = _Translator(pattern, unicode, False, share=t.share, counts=True, steps=steps)
             text = t.translate()
         if t.copies > MAX_COPIES:
             raise _TooLarge(
                 f"its counts come to more than {MAX_COPIES:,} copies of what they repeat, which the regex package "
                 "writes out"
             )
-        return _Translation(text, True, t.wide, False, t.most)
+        return _Translation(text, True, t.wide, False, t.most, t.scans)
     except (_Invalid, KeyError, ValueError, IndexError):
         return None
     except RecursionError:
@@ -2680,7 +2733,7 @@ _NEAR_THE_LIMIT = 0.9
 _MOST_LIMITS = 2.0
 
 
-def _limited(search: Matcher, limit: float, pattern: str, most: int | None = None) -> Matcher:
+def _limited(search: Matcher, limit: float, pattern: str, most: int = _MOST_TEXT) -> Matcher:
     """The search function of a pattern that the regex package runs, with the limit of a match, which is of time
     on the clock.
 
@@ -2699,24 +2752,19 @@ def _limited(search: Matcher, limit: float, pattern: str, most: int | None = Non
             return search(text, timeout=first)  # type: ignore[call-arg]
         except TimeoutError:
             pass
-        return _again(search, text, limit, pattern)
+        return _again(search, text, limit, pattern, most)
 
-    if most is None:
-        return limited
-
-    def limited_and_bounded(text: str) -> Any:
-        # The limit of time does not bound what a match keeps for the groups of this pattern: the engine fills
-        # hundreds of megabytes in a second. The length of the text does (see _most_characters).
-        if len(text) > most:
-            raise PatternMatchLimitError(pattern, limit, len(text), most)
-        return limited(text)
-
-    return limited_and_bounded
+    return limited
 
 
-def _again(search: Matcher, text: str, limit: float, pattern: str) -> Any:
+def _again(search: Matcher, text: str, limit: float, pattern: str, most: int = _MOST_TEXT) -> Any:
     """The answer of a match whose first try was abandoned, or PatternMatchLimitError once the limit has passed on
-    the clock.
+    the clock, or at once for a text of more than ``most`` characters.
+
+    The limit of time does not bound what a match keeps: the engine fills hundreds of megabytes in a second, for
+    the groups it closes (see ``_most_characters``) and for the iterations of a repetition (see ``_MOST_TEXT``).
+    The length of the text does. The first try is not long enough to fill more than some tens of megabytes, so
+    nothing was asked of a text before it, and a match that answers in it is answered whatever the length.
 
     Each try starts the match again, with an allowance of the processor's time. The second try is a short one (a
     sixteenth of the limit), and the two times it took, on the processor and on the clock, say how fast the
@@ -2734,6 +2782,8 @@ def _again(search: Matcher, text: str, limit: float, pattern: str) -> Any:
     The error is raised when the tries from the second on have taken nine tenths of the limit on the clock, and
     never before. On a machine where the process does not get a processor to itself, a try takes longer on the clock
     than it was allowed, and the bound of twice the limit does not hold."""
+    if len(text) > most:
+        raise PatternMatchLimitError(pattern, limit, len(text), most)
     start = monotonic()
     allowance = limit * _SECOND_TRY
     while True:
@@ -2781,10 +2831,19 @@ def _search(pattern: str, unicode: bool, limit: float | None) -> tuple[Matcher, 
         t = _translate(pattern, unicode, True)
         if t is None:
             return None
+    search = _compile_for_regex(pattern, t)
+    if limit is None:
+        return search, t.wide
+    if t.scans:
+        search = _by_length(search, pattern, unicode)
+    return _limited(search, limit, pattern, t.most), t.wide
+
+
+def _compile_for_regex(pattern: str, t: _Translation) -> Matcher:
     import regex  # only patterns the standard library cannot run, or is not proved to run in linear time, need it
 
     try:
-        search = regex.compile(t.text, cache_pattern=False).search
+        search: Matcher = regex.compile(t.text, cache_pattern=False).search
     except regex.error as e:
         # The pattern is valid, and every property in it is one the engine has. A translation the engine does not
         # compile is a fault of the translator, and is not passed off as a pattern that is not valid.
@@ -2794,7 +2853,32 @@ def _search(pattern: str, unicode: bool, limit: float | None) -> tuple[Matcher, 
         ) from None
     except RecursionError:
         raise _TooLarge("it nests deeper than the stack that was left for compiling it") from None
-    return (search if limit is None else _limited(search, limit, pattern, t.most)), t.wide
+    return search
+
+
+def _by_length(short: Matcher, pattern: str, unicode: bool) -> Matcher:
+    """The search function of a pattern that the regex package runs and that has a repetition of one class, for a
+    text of any length.
+
+    The engine takes such a repetition as one step of a match, however much of the text it runs over, and looks at
+    its clock every 256 steps. So its timeout comes late by a time that grows with the text: a fifth of a second
+    for 100,000 letters and 15 seconds for ten million, for each try at the match. A text of more than
+    ``_LONG_TEXT`` characters is given to the pattern as it is written with a step for each character of such a
+    repetition, which is slower by a tenth of a microsecond for a character and has a timeout that comes when it
+    should. That one is compiled when the first long text comes."""
+    long: list[Matcher] = []
+
+    def by_length(text: str, timeout: float | None = None) -> Any:
+        if len(text) <= _LONG_TEXT:
+            return short(text, timeout=timeout)  # type: ignore[call-arg]
+        if not long:
+            t = _translate(pattern, unicode, True, True)
+            if t is None:  # (it was translated a moment ago)
+                raise RuntimeError(f"corvus-json-schema could not write {pattern!r} for a long text.")
+            long.append(_compile_for_regex(pattern, t))
+        return long[0](text, timeout=timeout)  # type: ignore[call-arg]
+
+    return by_length
 
 
 def _shown(pattern: str) -> str:

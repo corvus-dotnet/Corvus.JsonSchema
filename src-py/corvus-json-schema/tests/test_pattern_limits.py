@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import itertools
 import sys
 import threading
 import time
@@ -971,7 +972,7 @@ def test_a_match_that_would_keep_too_much_for_its_groups_reaches_the_limit_of_me
     # The longest text that the pattern is matched against takes megabytes and not hundreds of them (a quiet
     # machine: 2 to 54 MB), and ends in an answer or at the limit of time.
     translation = pattern_module._translate(pattern, True, False)
-    assert translation is not None and translation.for_regex and translation.most is not None
+    assert translation is not None and translation.for_regex
     assert 100 < translation.most < len(text)
     got, grew = _peak(pattern, text[: translation.most - 1] + text[-1])
     assert got in ("match", "no match", "time"), got
@@ -980,23 +981,33 @@ def test_a_match_that_would_keep_too_much_for_its_groups_reaches_the_limit_of_me
 
 def test_the_limit_of_memory_is_an_error_of_the_match_and_names_the_most_characters() -> None:
     v = cjs.compile({"pattern": "^(?:(a)|b)*\\1$"})
-    most = pattern_module._translate("^(?:(a)|b)*\\1$", True, False)
+    most = pattern_module._translate("^(?:(a)|b)*\\1$", True, True)
     assert most is not None and most.most == 262144
     assert v("ab" * 1000 + "aa") is True and v("ab" * 1000 + "ac") is False
     start = time.process_time()
     with pytest.raises(cjs.PatternMatchLimitError) as raised:
-        v("ab" * 200000)
-    assert time.process_time() - start < 1, "it is known from the length of the text, before the match"
+        v("ab" * 2000000)
+    assert time.process_time() - start < 2, "it is known from the length of the text, once the first try has ended"
     error = raised.value
     assert error.most_characters == 262144 and error.limit == 1.0 and error.pattern == "^(?:(a)|b)*\\1$"
-    assert "the text has 400,000 characters, and a match of more than 262,144 could keep more memory" in str(error)
+    assert "the text has 4,000,000 characters, and a match of more than 262,144 could keep more memory" in str(error)
     # The limit of time has none.
     assert cjs.PatternMatchLimitError("a", 1.0).most_characters is None
-    # A pattern with no group that a reference reads has no such limit, nor has one whose groups are read where
-    # nothing is repeated, and nor has any pattern when the limit of a match is off.
-    for pattern in ("(?<=x)(a)(b)*", "^(a)(b)\\1\\2$", "^(a+)\\1$", "^[a-z]+$"):
-        translation = pattern_module._translate(pattern, True, False)
-        assert translation is not None and translation.most is None, pattern
+    # A match that answers in its first try is answered, whatever the length of the text: nothing is asked of a
+    # text before that try, which is too short to fill more than tens of megabytes.
+    assert v("c" + "ab" * 2000000) is False
+    # A pattern that the regex package runs with no group that it keeps takes 1,048,576 characters, for what the
+    # engine keeps for each iteration of a repetition, and one that the standard library runs has no such limit.
+    for pattern in ("(?<=x)(a)(b)*", "(?<=^)(?:ab)*$", "^(a+)\\1$"):
+        translation = pattern_module._translate(pattern, True, True)
+        assert translation is not None and translation.most == pattern_module._MOST_TEXT == 1 << 20, pattern
+    got, grew = _peak("(?<=^)(?:ab)*$", "ab" * 8000000)
+    assert got == "memory" and grew < 150, (got, grew)
+    got, grew = _peak("(?<=^)(?:ab)*$", "ab" * 520000)
+    assert got == "match" and grew < 150, (got, grew)
+    got, grew = _peak("^(?:ab)*$", "ab" * 8000000)
+    assert got == "match", got
+    # With the limit of a match off there is none.
     trusting = cjs.compile({"pattern": "^(?:(a)|b)*\\1$"}, pattern_match_limit=None)
     assert trusting("ab" * 200000 + "ac") is False
 
@@ -1035,8 +1046,6 @@ def test_a_large_count_of_one_character_is_not_too_large(pattern: str, answers: 
 
 
 def test_a_count_that_is_not_written_out_means_what_the_count_does() -> None:
-    import itertools
-
     import regex
 
     # The regex package is given a minimum count of one character without copies only in a pattern that would be
@@ -1078,6 +1087,65 @@ def test_a_count_that_is_not_written_out_means_what_the_count_does() -> None:
     finally:
         tracemalloc.stop()
     assert peak < 4 * 1024 * 1024, peak
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# A long text
+
+
+def test_the_limit_is_not_late_by_the_length_of_a_text() -> None:
+    # The regex package takes a repetition of one class as one step of a match, however much of the text it runs
+    # over, and looks at its clock every 256 steps. For a text of ten million letters the error of a limit of one
+    # second came 51 seconds after the match started. A text of more than 32,768 characters is matched by the
+    # pattern written so that each character of such a repetition is a step.
+    assert pattern_module._LONG_TEXT == 32_768
+    for one, unit in (("\\p{L}", "\u00e9"), ("[a-z]", "a"), (".", "a"), ("\\w", "a"), ("[^\\s,]", "\u4e00")):
+        pattern = f"(?:{one}*1|{one}*2|{one}*3)"
+        # It is tried three times, and each try came seconds late: 9 to 12 seconds of the processor's time in all
+        # for the first of these. A quiet machine now takes 0.2 to 0.4.
+        assert _costly(0.1, pattern, unit * 2_000_000) < 4, one
+
+
+def test_a_long_text_has_the_answer_of_a_short_one() -> None:
+    import regex
+
+    # A pattern with a repetition of one class is written twice for the regex package: as it is for a text of up to
+    # 32,768 characters, and with each character of the repetition a step for a longer one. A pattern with no such
+    # repetition is written once.
+    for pattern in ("(?<=x)[a-c]+y", "(?<=^)\\p{L}*\\d{2,}$", "(?<=x).*?y", "(?<=x)(?:[ab]|\\s)+$"):
+        short = pattern_module._translate(pattern, True, True)
+        long = pattern_module._translate(pattern, True, True, True)
+        assert short is not None and long is not None and short.scans and short.text != long.text, pattern
+        assert "(?s:.)" in long.text and not long.scans
+    for pattern in ("(?<=x)a+y", "(?<=x)(?:ab)+y", "(?<=x)[^]*y", "(?<=x)[a-c]y"):
+        short = pattern_module._translate(pattern, True, True)
+        long = pattern_module._translate(pattern, True, True, True)
+        assert short is not None and long is not None and not short.scans and short.text == long.text, pattern
+    # The two give the same answers: for every text of up to six characters of four, each pattern as it is written
+    # for a short text and for a long one.
+    texts = ["".join(w) for k in range(7) for w in itertools.product("ab x", repeat=k)]
+    for pattern in (
+        "(?<=x)[a-c]+b",
+        "(?<=^)[ab]*x[^b]*$",
+        "(?<=x).*?b$",
+        "(?<=[ab]{2,}x)\\s",
+        "^(?:([ab])\\1*\\s?)+$",
+        "(?<!a[^a]*)b",
+        "(?<=^)(?:[ab]|\\s)*x.{0,2}$",
+        "(?i:(?<=A)[b-c]*X)",
+        "^(a|b)[ab ]*?\\1$",
+    ):
+        a, b = (pattern_module._translate(pattern, True, True, steps) for steps in (False, True))
+        assert a is not None and b is not None and a.text != b.text, pattern
+        short_search, long_search = regex.compile(a.text).search, regex.compile(b.text).search
+        for text in texts:
+            assert (short_search(text) is None) is (long_search(text) is None), (pattern, text)
+    # And through the package: a text on each side of the length.
+    matcher = compile_pattern("(?<=^)[ab]*x[^b]*$")
+    assert matcher is not None and _engine(matcher) == "regex"
+    for n in (100, 32_768, 32_769, 200_000):
+        assert matcher("ab" * (n // 2 - 1) + "xa") is not None, n
+        assert matcher("ab" * (n // 2 - 1) + "xb") is None, n
 
 
 # ---------------------------------------------------------------------------------------------------------------------

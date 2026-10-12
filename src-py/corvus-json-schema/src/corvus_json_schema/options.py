@@ -72,16 +72,17 @@ class PatternTooLargeError(SchemaCompilationError):
 class PatternMatchLimitError(Exception):
     """Raised when one match of a ``pattern`` or ``patternProperties`` regular expression reaches a limit: the limit
     of time (see the ``pattern_match_limit`` option of ``compile``), or the limit of memory, which is a limit on the
-    length of the text for a pattern with groups that the engine keeps for every repetition. The instance is then
-    neither valid nor not valid."""
+    length of the text for a match that does not answer in its first moment (1,048,576 characters, and fewer for a
+    pattern with groups that the engine keeps for every repetition). The instance is then neither valid nor not
+    valid."""
 
     def __init__(self, pattern: str, limit: float, characters: int | None = None, most: int | None = None) -> None:
         shown = pattern if len(pattern) <= 200 else f"{pattern[:200]}... ({len(pattern)} characters)"
         if most is not None:
             super().__init__(
                 f"A match of the regular expression '{shown}' was abandoned: the text has {characters:,} characters, "
-                f"and a match of more than {most:,} could keep more memory than the limit for the groups of the "
-                "pattern, which the engine keeps for every repetition."
+                f"and a match of more than {most:,} could keep more memory than the limit for the repetitions and "
+                "the groups of the pattern."
             )
         else:
             # The limit as corvus-json-schema-rs writes it: 1s, 250ms, 1.5s.
