@@ -41,12 +41,27 @@ formats and document resolvers are Python callables, called from Rust.
 
 What differs from the pure package:
 
-- A match of a `pattern` or `patternProperties` regular expression has a limit of time. `pattern_match_limit` is
-  the seconds one match against one string may take (default `1.0`, and `None` or `0` turns it off for a caller who
-  trusts both the schema and the instances). A validation whose match reaches it raises `PatternMatchLimitError`:
-  the instance is then neither valid nor not valid. A schema with a regular expression over a limit of size
-  (1,048,576 bytes, 1,000 levels of groups, or about 16,000 terms) raises `PatternTooLargeError`, which is a
-  `SchemaCompilationError`.
+- The limits on regular expressions. Both packages have `pattern_match_limit` (the seconds one match of a
+  `pattern` or `patternProperties` regular expression against one string may take, `1.0` unless given, and `None` or
+  `0` turns it off), `PatternMatchLimitError` (the instance is then neither valid nor not valid) and
+  `PatternTooLargeError` (a `SchemaCompilationError`). What is left between them:
+  - The limit error has its message and no attributes here. In the pure package it has `pattern`, `limit` and
+    `most_characters`.
+  - The memory of a match: here a match of any pattern is abandoned when its backtracking stack reaches 1,048,576
+    entries (24 MB). The pure package bounds the length of the text for a pattern that the `regex` package runs
+    (1,048,576 characters, and fewer for a pattern with groups that its engine keeps for every repetition). Both
+    raise `PatternMatchLimitError`.
+  - `compile` matches each pattern of `patternProperties` against the property names the schema declares, so it
+    can raise `PatternMatchLimitError` here. The pure package's `compile` runs no match.
+  - The limits of size are 1,048,576 bytes of pattern, 1,000 levels of groups and about 16,000 terms here. In the
+    pure package they are 32,768 characters of pattern, 100 levels, 32,768 characters of the pattern as it is
+    written for Python's engines, and 4,096 copies of what a count repeats.
+  - The time of a match is counted by the clock in both. Here the package's own engine runs every pattern and looks
+    at the clock every 4,096 steps. In the pure package a pattern that is proved to match in time proportional to
+    the text has no limit, and for any other the error comes between nine tenths of the limit and about twice the
+    limit.
+  - `format: regex` has one rule in both: a text over a limit of reading is not valid, and any other is valid or
+    not by the grammar, whatever it would cost to compile. The limits of reading are each package's own.
 - There is no generated source: no `Validator.source` and no `generate_module`.
 - `is_valid_json(text)` validates JSON text (`str` or `bytes`) without creating Python objects for it.
 - Subclasses of `dict`, `list`, `str`, `int` and `float` (an `OrderedDict`, a string enum) are read as their bases,
