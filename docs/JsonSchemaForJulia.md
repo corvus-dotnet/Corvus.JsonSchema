@@ -282,9 +282,17 @@ What the limit costs, and what it does not bound:
   `PatternMatchError` whose `limit` is `:memory`, with any limit on time or none: `^(?:ab|cd)*$` reaches it on a
   string of some 500,000 characters. A class of many ranges under `*` or `+` no longer needs that memory:
   `^\p{L}+$` threw on a string of 150,000 letters, and answers on a million.
-- **With no limit on time** a match has the 4,294,967,295 steps that are the most PCRE2 can be told to allow for
-  each place it is tried from, and a match that takes them is a `PatternMatchError` whose `limit` is `:steps`.
-  PCRE2 cannot be told to count none.
+- **With no limit on time a match still has a limit.** `pattern_match_limit=nothing` turns the clock off. It does
+  not make a match unlimited: PCRE2 counts the steps of a match, it cannot be told to count none, and
+  4,294,967,295 (2^32 - 1) for each place a match is tried from is the most it can be told to allow. A match that
+  takes them from one place is given up, and the validation throws a `PatternMatchError` whose `limit` is `:steps`
+  and whose `code` is -47, which is PCRE2's `PCRE2_ERROR_MATCHLIMIT`, from `isvalid` as from `validate` and
+  `evaluate`. Its `message` is "the match took the 4294967295 steps that are the most PCRE2 allows (PCRE2 error -47,
+  match limit exceeded)". It is never an answer. `^(?:a|a)+$` reaches it on forty `a` and a `b`, after 8 seconds
+  with Julia 1.13 and 9 with Julia 1.10. The number is not a bound on time: one step may read the whole string,
+  and a pattern that is not anchored has the steps again at each place it is tried from. The limit on memory
+  stands with the clock off too. So `nothing` is for schemas and instances that are trusted, and is not a way to
+  wait for every answer.
 - **A pattern too large to be timed.** PCRE2, as Julia builds it, holds a compiled pattern of at most 64 KiB, and
   the code that reads the clock is larger than the code that does not. A pattern PCRE2 holds only without it, such
   as an alternation of 3,000 words, is run, and its matches end in their first stage. One that does not is given

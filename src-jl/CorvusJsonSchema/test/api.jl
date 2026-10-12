@@ -550,6 +550,24 @@
             false)
         @test throws(() -> isvalid(compile_schema("""{ "pattern": "$(escape_string(slow))" }""";
             pattern_match_limit=0.001), mild), PatternMatchError)
+        # No limit on time is not no limit. PCRE2 cannot be told to count no steps, and 2^32 - 1 for each place a
+        # match is tried from is the most it can be told to allow. 2^40 ways are more: the match is given up after
+        # some ten seconds, and this is the error the caller sees, from each entry point. It is not an answer.
+        unlimited = compile_schema("""{ "pattern": "$(escape_string(slow))" }"""; pattern_match_limit=nothing)
+        error, took = given(() -> isvalid(unlimited, hostile))
+        @test error isa PatternMatchError
+        @test error.limit == :steps && error.code == -47 && error.pattern == slow
+        @test error.message ==
+              "the match took the 4294967295 steps that are the most PCRE2 allows (PCRE2 error -47, match limit exceeded)"
+        @test sprint(showerror, error) == "EcmaRegex.MatchError: matching the pattern " * repr(slow) * " failed: " *
+                                          error.message
+        @test CorvusJsonSchema.EcmaRegex.MOST_STEPS == 4294967295
+        # It took its steps, which is more than the second of the default limit.
+        @test took > 1
+        @test !(@atomic unlimited.busy)
+        collected, _ = given(() -> evaluate(unlimited, hostile, ResultsCollector(Basic)))
+        @test collected isa PatternMatchError && collected.limit == :steps && collected.message == error.message
+        @test expect_valid(unlimited, "\"aaaa\"", true)
         # A limit is a positive time. No time is not "no limit".
         @test throws(() -> compile_schema("{}"; pattern_match_limit=0), ArgumentError)
         @test throws(() -> compile_schema("{}"; pattern_match_limit=-1), ArgumentError)
