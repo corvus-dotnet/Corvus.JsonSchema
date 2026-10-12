@@ -273,7 +273,14 @@ ECMAScript:  ^(^|a)\1?b$
 
 ECMAScript:  ^(a?b?)\1?c$
 .NET:        ^(?:(?<1>ab?|b))?(?:\1)?c\z
+
+ECMAScript:  ^((a|)(a|))\1$
+.NET:        ^(?:(?<1>a(?:(?:a)?)))?(?(1)\1)\z
 ```
+
+The body of the third is one alternative for each term that can be the first to match something: `a` and then
+`b?`, or `b`. In the fourth the two terms are the same, and the alternative of the second, `a`, would match one `a`
+that the alternative of the first has matched already. It is left out (see [Repetitions](#repetitions)).
 
 ECMA-262 cannot tell a group that captured the empty string from a group that is unset: a backreference to either
 matches the empty string, and nothing else reads a group. .NET can tell them apart, and it is the only thing a
@@ -447,6 +454,13 @@ ECMAScript:  ^(a)\1{2,5}$         .NET:  ^(?<1>a)(?:(?(1)\1)){2,5}\z
 - Terms one after another match something when one of them is the first to. There is an alternative for each term
   that can be: the terms before it match nothing, it matches something, and the rest are as they were. In the third
   line `\1?x?` is `\1` and then `x?`, or `x`.
+- A term has no alternative when it is the same as an earlier term that has one, every term after that one up to
+  it matches the empty string wherever it stands, and no backreference reads a group of any of them. Its
+  alternative would only match again what the earlier one matches, by a second path: `(a|)(a|)` is `a(?:a)?` and
+  not `a(?:a)?|a`, and `(a|)(b|)(a|)` is `a(?:b)?(?:a)?|b(?:a)?`. A path that ends where an earlier one ended, with
+  the same captures, fails as that one did, so no answer changes. In a repetition the second path is the base of a
+  power: (4/3) to the number of iterations for `(a|)(a|)`. .NET makes the same saving by itself for
+  `(?:a)?(?:a)?`, which it counts as `a{0,2}`, and cannot make it for an alternation.
 - A repetition matches something when its iterations do.
 - A lone backreference with an iteration that must run is left as it was (the fourth line). When that iteration
   matches nothing .NET runs no other, and when it matches something so does every other.

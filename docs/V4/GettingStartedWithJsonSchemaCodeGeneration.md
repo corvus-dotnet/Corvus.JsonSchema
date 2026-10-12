@@ -1017,8 +1017,15 @@ A generated type then gives the answer a JavaScript engine gives. Three things f
   (`[GeneratedRegex(..., matchTimeoutMilliseconds: 1000)]`, or the `Regex` constructor where there is no regular
   expression generator). .NET's engine takes time exponential in the length of the text for some patterns, and
   does not return at all for a few. A match of a `pattern` or of a `patternProperties` name that runs for longer
-  throws `RegexMatchTimeoutException` from `Validate()`. It is not reported as an instance that is not valid. The
-  `format` checks that use a regular expression answer "not valid" on a timeout, as they did.
+  throws `RegexMatchTimeoutException` from `Validate()`. It is not reported as an instance that is not valid.
+- **The `format` checks take time in proportion to the string.** Those that are regular expressions in
+  `Corvus.Json.ExtendedTypes` (`email`, `idn-email`, `duration`, `uuid`, `uri-template`, `json-pointer`,
+  `relative-json-pointer` and part of `ipv4`) are written so that a match is linear, and have the same limit of 1
+  second, which a match of many megabytes can meet. It then throws `RegexMatchTimeoutException` too: `idn-email`
+  no longer answers "not valid" for it. Three checks were not linear and are now. `idn-email` refuses an address
+  with two at signs, or with a domain of more than 253 characters, before it looks for the domain and converts it.
+  `ipv6` finds a zone by its percent sign, where it searched again from every percent sign, and an address with a
+  zone that has a line end in it is no longer valid. `regex` finds the groups of a pattern through an index.
 
 Regenerate your types with this version of the generator to get all of these. Types generated before it keep the
 translation and the expressions they were generated with, and have no match timeout. That is so for four of the

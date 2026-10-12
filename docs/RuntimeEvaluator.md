@@ -271,8 +271,45 @@ catch (RegexMatchTimeoutException)
 }
 ```
 
-Generated types and generated standalone evaluators have the same 10 seconds, fixed in the generated code (see
+Generated types and generated standalone evaluators have the same 1 second, fixed in the generated code (see
 [StandaloneEvaluatorInternals.md](StandaloneEvaluatorInternals.md)).
+
+## Format checks
+
+A `format` that is asserted is checked by a scanner written for it (`JsonSchemaEvaluation.Match*`). No check is a
+.NET `Regex`, so none is under the match timeout, and none needs to be: each takes time in proportion to the
+string, and most read nothing of a string longer than the format allows. The interpreter, generated code
+(`CodeGeneration`) and the types of the code generators all run the same checks.
+
+| Format | How it is checked | What bounds it |
+|---|---|---|
+| `date` | `JsonElementHelpers.TryParseLocalDate` | A string of any other length than 10 bytes is refused unread. |
+| `date-time`, `time`, `duration` | `JsonElementHelpers.TryParseOffsetDateTime`, `TryParseOffsetTime`, `TryParsePeriod` | One pass over the string. |
+| `email`, `idn-email` | A scanner for the local part, then the check of `hostname` or `idn-hostname`, or of an address in brackets | A string over 320 bytes is refused unread (RFC 5321: 64 for the local part, 255 for the domain, and the at sign). |
+| `hostname`, `idn-hostname` | A scanner. A name with an `xn--` label, and every `idn-hostname`, is first decoded by the library's own `IdnMapping` into 256 bytes on the stack | A string over 253 bytes is refused unread. The bound is of bytes, so a name of fewer than 253 characters that are not ASCII can be over it. |
+| `ipv4`, `ipv6` | `IPAddressParser` | A string over 15 bytes, or over 65, is refused unread. |
+| `uri`, `uri-reference`, `iri`, `iri-reference` | `Utf8UriTools.Validate`, a port of the parser of `System.Uri` | A string of 65,520 bytes or more is refused unread, which is the limit of `System.Uri`. |
+| `uri-template` | `Utf8UriTemplate.Validate` | One pass over the string. |
+| `json-pointer`, `relative-json-pointer` | `Utf8JsonPointerTools` | One pass over the string. |
+| `uuid` | `Utf8Parser.TryParse` for a `Guid` | It reads the 36 bytes of a UUID and no more. |
+| `regex` | `JsonRegexValidator`, over the string as UTF-16 | Two passes over the string. Groups are found by number and by name through an index. |
+
+`regex` was the one check that was not linear. The validator read every group it had met for each new group and
+each backreference, so a pattern of groups took time in proportion to the square of its length: a million
+characters of `(a)` took 26 seconds, and a hundred thousand open parentheses 2.5. It now takes them under a tenth
+of a second (all measured with a load of 3 to 7 on the machine). It keeps nothing after it returns: its buffers
+are rented and given back, and it fills no cache.
+
+`regex` is checked by the parser of .NET's regular expressions with its ECMAScript option, and not by the parser
+of ECMA-262 that reads a `pattern`. The two differ. This check accepts `(?i)a`, `(?>a)`, `a(?#c)` and `^*`, which
+are not ECMA-262, and refuses `\p{Script=Greek}`, `\u{1F600}` and a backreference whose number begins with 8 or
+9 (`\8` after eight groups), which are. A string that passes it is not always a pattern the evaluator accepts in
+`pattern`.
+
+The checks were run on 313 texts written to be slow for them (runs of what a format repeats, near misses at the
+end, deep nesting of brackets and groups), each at 100,000 and at 1,000,000 characters, and on 248 of them at 6,000
+and 60,000, which is under the bound of the URI checks. None grew faster than its text, none threw, and none
+overflowed the stack.
 
 ## Runtime code generation
 

@@ -265,12 +265,18 @@ pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTable
 - **Time.** ECMA-262 does not say how long a match may take, and a backtracking engine can take very long. The
   evaluator's match limit (`JsonSchemaEvaluatorOptions.RegexMatchTimeout`, 1 second unless it is set) bounds it,
   and a match that reaches it throws `RegexMatchTimeoutException` and gives no answer. V8 answers every text of
-  the ECMA-262 regular expression test data in under 250,000 backtracks. Two of its 98,839 patterns reach the
-  limit here, in every configuration: `^a{2}?(((?!)|((|a){2,}(|a)\B|){2,3}?){2,3}.{3}a{2})\4`, whose hardest text
-  takes V8 238,314 backtracks, and a pattern of 190 characters with `(a|)(a|)` in a group that is read, three
-  repetitions deep, whose hardest text takes V8 113,530. Both repeat, several deep, a body that matches the empty
-  string in more than one way, and .NET goes through every way where V8 does too, at many times the cost of a
-  step. A translation gives V8's answer and not V8's time, in four ways.
+  the ECMA-262 regular expression test data in under 250,000 backtracks. One of its 98,839 patterns is at the
+  limit here: `^a{2}?(((?!)|((|a){2,}(|a)\B|){2,3}?){2,3}.{3}a{2})\4`, whose hardest text takes V8 238,314
+  backtracks. It repeats, several deep, a body that matches the empty string in more than one way, and .NET goes
+  through every way where V8 does too, at many times the cost of a step. The compiled engine takes about 0.7
+  seconds for that text and the interpreted one about 1.8 (with a load of 2 to 4 on the machine), most of it the
+  unsetting of a group when each iteration starts and the written-out `\B`. So the interpreted engine meets the
+  limit, and the compiled one meets it on a busy machine: in two runs of the test data with a load of 5 to 7 the
+  pattern met the limit in seven of the eight configurations. A second pattern, of 190 characters with `(a|)(a|)`
+  in a group that is read, three repetitions deep, whose hardest text takes V8 113,530 backtracks, is answered by
+  the compiled engine in about 0.05 seconds and by the interpreted one in about a third of a second (load 2). In
+  those two runs it was answered in every configuration but the interpreted one, where four matches at a time on
+  the busy machine took it past the limit. A translation gives V8's answer and not V8's time, in four ways.
   - A repetition whose body can match the empty string, with no backreference in it and no group that one reads
     (`(?:a?b?)*`), is written as it is. .NET takes an iteration that matched nothing and, when the rest fails, tries
     again without it, where ECMA-262 refuses the iteration. A search that passes twenty such repetitions is made

@@ -135,6 +135,12 @@ hold much memory. `EcmaRegexLimits` has the limits, and `docs/EcmaRegexTranslato
   fails when the group is unset, and a group that is read stays a group), and the rest-of-input check is the
   fallback. The check costs the length of the rest of the input in the interpreted engine for each iteration, so
   do not add it to shapes that ordinary patterns have.
+- **Do not write one text by two paths.** `NonEmpty` writes a sequence as one alternative for each term that can
+  be the first to match something, and leaves out the alternative of a term that is the same as an earlier one
+  (`IsFirstAgain`): `(a|)(a|)` is `a(?:a)?`, not `a(?:a)?|a`. A second path to the same text and the same captures
+  changes no answer, and inside repetitions it multiplies the search by a power of the number of iterations. .NET
+  merges `(?:a)?(?:a)?` into `a{0,2}` and cannot merge an alternation, so a rewrite that turns the first into the
+  second has to do the merging.
 - **A group that is read is set exactly when it captured something, wherever it can be written so**
   (`IsWrittenApart`): `(a|)` is `(?:(?<1>a))?`. ECMA-262 cannot tell an empty capture from an unset group, and .NET
   can only be asked whether a group is set. Never write a form that leaves such a group set to the empty string.

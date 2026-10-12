@@ -843,12 +843,12 @@ main-docs:
       - {index: 5, language: , lines: [173, 176]}
       - {index: 6, language: , lines: [241, 244]}
       - {index: 7, language: , lines: [256, 262]}
-      - {index: 8, language: , lines: [267, 276]}
-      - {index: 9, language: , lines: [334, 343]}
-      - {index: 10, language: , lines: [393, 398]}
-      - {index: 11, language: , lines: [408, 410]}
-      - {index: 12, language: , lines: [436, 441]}
-      - {index: 13, language: , lines: [467, 470]}
+      - {index: 8, language: , lines: [267, 279]}
+      - {index: 9, language: , lines: [341, 350]}
+      - {index: 10, language: , lines: [400, 405]}
+      - {index: 11, language: , lines: [415, 417]}
+      - {index: 12, language: , lines: [443, 448]}
+      - {index: 13, language: , lines: [481, 484]}
   - path: "docs/EcmaRegexTranslator.md"
     blocks:
       - {index: 0, language: csharp, lines: [44, 58], category: compilable, verified: false}
@@ -1514,8 +1514,8 @@ main-docs:
   - path: "docs/RuntimeEvaluator.md"
     blocks:
       - {index: 0, language: csharp, lines: [254, 272], category: compilable, verified: false}
-      - {index: 1, language: csharp, lines: [285, 297], category: compilable, verified: false}
-      - {index: 2, language: xml, lines: [384, 388]}
+      - {index: 1, language: csharp, lines: [322, 334], category: compilable, verified: false}
+      - {index: 2, language: xml, lines: [421, 425]}
   - path: "docs/SchemaEvaluator.md"
     blocks:
       - {index: 0, language: xml, lines: [19, 26]}
@@ -1692,57 +1692,57 @@ v4-docs:
       - {index: 56, language: csharp, lines: [964, 975], category: v4-before, verified: false}
       - {index: 57, language: , lines: [979, 982]}
       - {index: 58, language: , lines: [986, 990]}
-      - {index: 59, language: json, lines: [1035, 1039]}
-      - {index: 60, language: csharp, lines: [1049, 1054], category: v4-before, verified: false}
-      - {index: 61, language: , lines: [1060, 1063]}
-      - {index: 62, language: , lines: [1067, 1070]}
-      - {index: 63, language: csharp, lines: [1090, 1103], category: v4-before, verified: false}
-      - {index: 64, language: , lines: [1109, 1112]}
-      - {index: 65, language: , lines: [1116, 1119]}
-      - {index: 66, language: csharp, lines: [1131, 1141], category: v4-before, verified: false}
-      - {index: 67, language: , lines: [1155, 1158]}
-      - {index: 68, language: , lines: [1162, 1166]}
-      - {index: 69, language: csharp, lines: [1174, 1189], category: v4-before, verified: false}
-      - {index: 70, language: csharp, lines: [1195, 1201], category: v4-before, verified: false}
-      - {index: 71, language: , lines: [1205, 1208]}
-      - {index: 72, language: , lines: [1212, 1222]}
-      - {index: 73, language: csharp, lines: [1236, 1261], category: v4-before, verified: false}
-      - {index: 74, language: csharp, lines: [1269, 1281], category: v4-before, verified: false}
-      - {index: 75, language: , lines: [1287, 1290]}
-      - {index: 76, language: , lines: [1294, 1302]}
-      - {index: 77, language: csharp, lines: [1322, 1324], category: v4-before, verified: false}
-      - {index: 78, language: , lines: [1328, 1331]}
-      - {index: 79, language: , lines: [1335, 1344]}
-      - {index: 80, language: csharp, lines: [1354, 1373], category: v4-before, verified: false}
-      - {index: 81, language: csharp, lines: [1379, 1384], category: v4-before, verified: false}
-      - {index: 82, language: , lines: [1388, 1391]}
-      - {index: 83, language: , lines: [1395, 1398]}
-      - {index: 84, language: csharp, lines: [1418, 1430], category: v4-before, verified: false}
-      - {index: 85, language: csharp, lines: [1434, 1443], category: v4-before, verified: false}
-      - {index: 86, language: csharp, lines: [1447, 1449], category: v4-before, verified: false}
-      - {index: 87, language: csharp, lines: [1469, 1474], category: v4-before, verified: false}
-      - {index: 88, language: csharp, lines: [1478, 1488], category: v4-before, verified: false}
-      - {index: 89, language: csharp, lines: [1500, 1502], category: v4-before, verified: false}
-      - {index: 90, language: csharp, lines: [1509, 1512], category: v4-before, verified: false}
-      - {index: 91, language: csharp, lines: [1516, 1519], category: v4-before, verified: false}
-      - {index: 92, language: csharp, lines: [1523, 1526], category: v4-before, verified: false}
-      - {index: 93, language: csharp, lines: [1540, 1542], category: v4-before, verified: false}
-      - {index: 94, language: csharp, lines: [1548, 1556], category: v4-before, verified: false}
-      - {index: 95, language: csharp, lines: [1563, 1565], category: v4-before, verified: false}
-      - {index: 96, language: csharp, lines: [1570, 1576], category: v4-before, verified: false}
-      - {index: 97, language: csharp, lines: [1583, 1590], category: v4-before, verified: false}
-      - {index: 98, language: csharp, lines: [1601, 1605], category: v4-before, verified: false}
-      - {index: 99, language: json, lines: [1609, 1611]}
-      - {index: 100, language: csharp, lines: [1616, 1620], category: v4-before, verified: false}
-      - {index: 101, language: json, lines: [1624, 1630]}
-      - {index: 102, language: csharp, lines: [1642, 1661], category: v4-before, verified: false}
-      - {index: 103, language: csharp, lines: [1673, 1678], category: v4-before, verified: false}
-      - {index: 104, language: csharp, lines: [1682, 1687], category: v4-before, verified: false}
-      - {index: 105, language: csharp, lines: [1693, 1698], category: v4-before, verified: false}
-      - {index: 106, language: json, lines: [1708, 1715]}
-      - {index: 107, language: csharp, lines: [1725, 1735], category: v4-before, verified: false}
-      - {index: 108, language: csharp, lines: [1739, 1745], category: v4-before, verified: false}
-      - {index: 109, language: csharp, lines: [1753, 1758], category: v4-before, verified: false}
+      - {index: 59, language: json, lines: [1042, 1046]}
+      - {index: 60, language: csharp, lines: [1056, 1061], category: v4-before, verified: false}
+      - {index: 61, language: , lines: [1067, 1070]}
+      - {index: 62, language: , lines: [1074, 1077]}
+      - {index: 63, language: csharp, lines: [1097, 1110], category: v4-before, verified: false}
+      - {index: 64, language: , lines: [1116, 1119]}
+      - {index: 65, language: , lines: [1123, 1126]}
+      - {index: 66, language: csharp, lines: [1138, 1148], category: v4-before, verified: false}
+      - {index: 67, language: , lines: [1162, 1165]}
+      - {index: 68, language: , lines: [1169, 1173]}
+      - {index: 69, language: csharp, lines: [1181, 1196], category: v4-before, verified: false}
+      - {index: 70, language: csharp, lines: [1202, 1208], category: v4-before, verified: false}
+      - {index: 71, language: , lines: [1212, 1215]}
+      - {index: 72, language: , lines: [1219, 1229]}
+      - {index: 73, language: csharp, lines: [1243, 1268], category: v4-before, verified: false}
+      - {index: 74, language: csharp, lines: [1276, 1288], category: v4-before, verified: false}
+      - {index: 75, language: , lines: [1294, 1297]}
+      - {index: 76, language: , lines: [1301, 1309]}
+      - {index: 77, language: csharp, lines: [1329, 1331], category: v4-before, verified: false}
+      - {index: 78, language: , lines: [1335, 1338]}
+      - {index: 79, language: , lines: [1342, 1351]}
+      - {index: 80, language: csharp, lines: [1361, 1380], category: v4-before, verified: false}
+      - {index: 81, language: csharp, lines: [1386, 1391], category: v4-before, verified: false}
+      - {index: 82, language: , lines: [1395, 1398]}
+      - {index: 83, language: , lines: [1402, 1405]}
+      - {index: 84, language: csharp, lines: [1425, 1437], category: v4-before, verified: false}
+      - {index: 85, language: csharp, lines: [1441, 1450], category: v4-before, verified: false}
+      - {index: 86, language: csharp, lines: [1454, 1456], category: v4-before, verified: false}
+      - {index: 87, language: csharp, lines: [1476, 1481], category: v4-before, verified: false}
+      - {index: 88, language: csharp, lines: [1485, 1495], category: v4-before, verified: false}
+      - {index: 89, language: csharp, lines: [1507, 1509], category: v4-before, verified: false}
+      - {index: 90, language: csharp, lines: [1516, 1519], category: v4-before, verified: false}
+      - {index: 91, language: csharp, lines: [1523, 1526], category: v4-before, verified: false}
+      - {index: 92, language: csharp, lines: [1530, 1533], category: v4-before, verified: false}
+      - {index: 93, language: csharp, lines: [1547, 1549], category: v4-before, verified: false}
+      - {index: 94, language: csharp, lines: [1555, 1563], category: v4-before, verified: false}
+      - {index: 95, language: csharp, lines: [1570, 1572], category: v4-before, verified: false}
+      - {index: 96, language: csharp, lines: [1577, 1583], category: v4-before, verified: false}
+      - {index: 97, language: csharp, lines: [1590, 1597], category: v4-before, verified: false}
+      - {index: 98, language: csharp, lines: [1608, 1612], category: v4-before, verified: false}
+      - {index: 99, language: json, lines: [1616, 1618]}
+      - {index: 100, language: csharp, lines: [1623, 1627], category: v4-before, verified: false}
+      - {index: 101, language: json, lines: [1631, 1637]}
+      - {index: 102, language: csharp, lines: [1649, 1668], category: v4-before, verified: false}
+      - {index: 103, language: csharp, lines: [1680, 1685], category: v4-before, verified: false}
+      - {index: 104, language: csharp, lines: [1689, 1694], category: v4-before, verified: false}
+      - {index: 105, language: csharp, lines: [1700, 1705], category: v4-before, verified: false}
+      - {index: 106, language: json, lines: [1715, 1722]}
+      - {index: 107, language: csharp, lines: [1732, 1742], category: v4-before, verified: false}
+      - {index: 108, language: csharp, lines: [1746, 1752], category: v4-before, verified: false}
+      - {index: 109, language: csharp, lines: [1760, 1765], category: v4-before, verified: false}
 
 copilot-docs:
   - path: "docs/copilot/CopilotMigrationInstructions.md"
