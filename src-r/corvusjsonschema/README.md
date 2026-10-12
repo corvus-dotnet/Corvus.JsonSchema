@@ -171,3 +171,9 @@ The tests are plain R scripts in `tests/`. `test_suite.R` runs the JSON-Schema-T
 ## License
 
 Apache-2.0.
+
+The package is built on version 0.1.6 of the `corvus-json-schema` Rust crate, which matches some patterns with the
+`regress` crate. That crate holds tables derived from the Unicode Character Database, which is under the Unicode
+License V3. [inst/THIRD-PARTY-NOTICES.txt](inst/THIRD-PARTY-NOTICES.txt) has that notice and the one of `regress`. R
+installs the file with the package, so a binary package has it:
+`system.file("THIRD-PARTY-NOTICES.txt", package = "corvusjsonschema")`.
