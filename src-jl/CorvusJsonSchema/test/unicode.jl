@@ -52,4 +52,48 @@ format_bytes(text::String) = C.Bytes(Vector{UInt8}(text))
         # Only the letters A to Z are lowered when a URI is normalized.
         @test C.ascii_lower("HTTP://ÉXAMPLE.Com/İ") == "http://Éxample.com/İ"
     end
+    # A string of a million characters is not a host name, and is not read as if it could be one. Each of these
+    # took time in proportion to the square of its length: the first moved half the label for every character that
+    # Punycode decoding put in, the second looked through the label from each KATAKANA MIDDLE DOT for the kana or
+    # Han character at its end, the third passed over the label once for each of its distinct characters to encode
+    # it. At 300,000 characters they took from 1 second (the first) to more than 20 (the others). They are answered
+    # now from their length, so the answer takes no memory either.
+    @testset "a long string is not read as an internationalized host name" begin
+        n = 300_000
+        hostile = [
+            "xn--" * "a"^(n ÷ 2) * "-" * "a"^(n ÷ 2),
+            "\u30fb"^n * "\u6f22",
+            String([Char(0x4e00 + i % 20900) for i in 1:n]),
+            ("\u00e9."^(n ÷ 2)) * "a",
+            "a"^1013,
+            "\u00e9"^507,
+        ]
+        allocated(bytes) = @allocated C.is_idn_hostname(bytes)
+        allocatedemail(bytes) = @allocated C.is_email(bytes, true)
+        started = time()
+        for text in hostile
+            bytes = format_bytes(text)
+            address = format_bytes("a@" * text)
+            @test !C.is_idn_hostname(bytes)
+            @test !C.is_email(address, true)
+            @test allocated(bytes) == 0
+            @test allocatedemail(address) == 0
+        end
+        @test time() - started < 5
+        validator = compile_schema("""{"format": "idn-hostname"}"""; assert_format=true)
+        @test !isvalid(validator, "\"" * hostile[2] * "\"")
+        @test time() - started < 5
+        # The length is that of the longest host name there can be: 253 characters, of four bytes at most. A host
+        # name of fewer bytes is read as before, whatever its characters are.
+        @test C.MAX_IDN_HOSTNAME_BYTES == 1012
+        label = "a"^63
+        @test C.is_idn_hostname(format_bytes(join((label, label, label, "a"^61), '.')))
+        @test !C.is_idn_hostname(format_bytes(join((label, label, label, "a"^62), '.')))
+        letters = "\u00e9"^50
+        @test C.is_idn_hostname(format_bytes(join((letters, letters, letters, letters), '.')))
+        @test sizeof(join((letters, letters, letters, letters), '.')) == 403
+        @test !C.is_idn_hostname(format_bytes("\u00e9"^60))
+        @test C.is_email(format_bytes("a@" * join((letters, letters, letters, letters), '.')), true)
+        @test C.is_idn_hostname(format_bytes("\U00010D4A"^20 * ".example"))
+    end
 end

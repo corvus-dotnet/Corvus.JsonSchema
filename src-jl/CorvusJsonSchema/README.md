@@ -394,8 +394,21 @@ such as one of several hundred `\p{L}`, is run by PCRE2's interpreter. On the pr
 characters is translated and compiled in 0.4 seconds at most and keeps 2.5 MB at most. The patterns a process
 has compiled are kept for the next schema that has them, up to 4,096 patterns and 32 MiB.
 
-The `regex` format reads a string of the instance with the limits of length and of nesting, and a string over one
-is not a valid regular expression to it.
+**The formats.** A string that `format` asserts is a string of the instance. Every check reads its bytes with a
+scanner written for the package, and none is a regular expression, so none has a match to limit. A date, a time, a
+duration, a UUID, an IPv4 address, a URI, an IRI, a URI template, a JSON pointer and the local part of an e-mail
+address are read in one pass, or in a fixed number of passes. The checks that do more than read have a limit of
+length that no valid string passes, and a longer string is answered from its length: an IPv6 address is at most 64
+bytes, a host name (and the host of an e-mail address) at most 253, and an internationalized host name (and the host
+of an internationalized e-mail address) at most 1,012, which is 253 characters of four bytes. The `regex` format
+reads a string of at most 1,048,576 bytes with groups nested at most 200 deep, and a string over one of those is not
+a valid regular expression to it. It puts the group names of the string in order to find a name that is written
+twice, which takes time in proportion to n log n for n names. So the time of every check is in proportion to the
+length of the string, or to that and its logarithm. On a probe of 260 hostile strings of each length (long runs of
+what each format repeats, and near misses at their ends), the slowest check of a string of 100,000 characters took
+9 ms and of 1,000,000 characters 121 ms, which includes parsing the string. Before this, an internationalized
+host name of 1,000,000 characters took more than a minute, and so did a regular expression of 125,000 groups of one
+name.
 
 On the thirteen files of the
 [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data), 98,839 patterns

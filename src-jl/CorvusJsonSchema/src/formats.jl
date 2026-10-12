@@ -771,8 +771,18 @@ end
 # Full stop, ideographic full stop, fullwidth full stop, halfwidth ideographic full stop.
 is_label_separator(r::UInt32) = r == UInt32('.') || r == 0x3002 || r == 0xff0e || r == 0xff61
 
+# The most bytes of an internationalized host name. A host name is at most 253 characters when each of its labels is
+# written in ASCII (as it is, or as an A-label), and that form has a character at least for each character of the
+# label it stands for: Punycode writes each ASCII character as itself and one digit or more for each other one. So a
+# host name has at most 253 characters, of four bytes at most.
+const MAX_IDN_HOSTNAME_BYTES = 4 * 253
+
 function is_idn_hostname(s::Bytes)
     s.len == 0 && return false
+    # A longer string is no host name whatever it holds, and is not read. What follows decodes and encodes each
+    # label, and looks through a label for the characters a rule names, which takes time and memory that grow
+    # faster than the label: so they are of this length at most.
+    s.len > MAX_IDN_HOSTNAME_BYTES && return false
     # The labels, split at every label separator, keeping empty labels.
     labels = Vector{UInt32}[UInt32[]]
     for c in code_points(s)
