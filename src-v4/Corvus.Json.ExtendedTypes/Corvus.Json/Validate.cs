@@ -19,14 +19,24 @@ namespace Corvus.Json;
 public static partial class Validate
 {
     /// <summary>
+    /// The match limit of every regular expression of a format, in milliseconds: 1 second, which is the limit of the
+    /// regular expressions generated for <c>pattern</c> and <c>patternProperties</c>. Each expression is written
+    /// to take time in proportion to the text, so a match that meets the limit is of a text of many megabytes. It
+    /// throws <see cref="RegexMatchTimeoutException"/> to the caller of the validation.
+    /// </summary>
+    internal const int FormatMatchTimeoutMilliseconds = 1000;
+
+    /// <summary>
+    /// The most UTF-16 code units of a host name: 253 characters, each of at most two code units. A host name is
+    /// at most 255 octets as it is sent (RFC 1035 section 2.3.4), which is 253 characters written with dots, and a
+    /// name with characters outside ASCII is never shorter in its ASCII form than it is in characters.
+    /// </summary>
+    private const int MaxHostNameLength = 2 * 253;
+
+    /// <summary>
     /// Gets the pattern for ipv4.
     /// </summary>
     internal static readonly Regex IpV4Pattern = CreateIpV4Pattern();
-
-    /// <summary>
-    /// Gets the pattern for a ZoneId.
-    /// </summary>
-    internal static readonly Regex ZoneIdExpression = CreateZoneIdExpression();
 
     /// <summary>
     /// Gets the pattern for an email address.
@@ -94,6 +104,51 @@ public static partial class Validate
     internal static readonly IdnMapping IdnMapping = new() { AllowUnassigned = true, UseStd3AsciiRules = true };
 
     /// <summary>
+    /// Determines whether an IP address has a zone: a percent sign and what follows it.
+    /// </summary>
+    /// <param name="address">The address, which the framework has read as an IP address.</param>
+    /// <returns><see langword="true"/> if the address has a zone.</returns>
+    /// <remarks>
+    /// The <c>ipv6</c> format is the address of RFC 4291, and a zone is no part of one. The test is of one
+    /// character, and takes time in proportion to the address. It was a search for <c>%.*$</c>, which started again
+    /// at every percent sign and did not see a zone with a line end in it.
+    /// </remarks>
+    internal static bool HasZoneId(ReadOnlySpan<char> address) => address.IndexOf('%') >= 0;
+
+    /// <inheritdoc cref="HasZoneId(ReadOnlySpan{char})"/>
+    internal static bool HasZoneId(string address) => address.IndexOf('%') >= 0;
+
+    /// <summary>
+    /// Determines whether an idn-email value has one at sign, with a domain after it that is no longer than a host
+    /// name can be.
+    /// </summary>
+    /// <param name="email">The email address.</param>
+    /// <param name="lastAtIndex">The index of the last at sign of the address, or -1.</param>
+    /// <returns><see langword="true"/> if the domain of the address is to be read as a host name.</returns>
+    /// <remarks>
+    /// An address with no at sign or with two is not valid, and an address whose domain is longer than a host name
+    /// can be is not either. Saying so here keeps what follows in proportion to the address: the search for the
+    /// domain starts at each at sign and reads to the end of the line, and the conversion of the domain to ASCII
+    /// takes a long domain time in proportion to the square of its length. One line end after the domain is not
+    /// part of it, as the expressions that follow read it.
+    /// </remarks>
+    internal static bool HasOneHostDomain(string email, int lastAtIndex)
+    {
+        if (lastAtIndex < 0 || email.IndexOf('@') != lastAtIndex)
+        {
+            return false;
+        }
+
+        int domainLength = email.Length - lastAtIndex - 1;
+        if (domainLength > 0 && email[email.Length - 1] == '\n')
+        {
+            domainLength--;
+        }
+
+        return domainLength <= MaxHostNameLength;
+    }
+
+    /// <summary>
     /// Determines whether an idn-email value with an address-literal domain is valid.
     /// </summary>
     /// <param name="email">The email address to validate.</param>
@@ -126,7 +181,7 @@ public static partial class Validate
             string ipv6 = literal.Substring(5);
             return StandardIPAddress.IPAddressParser(ipv6, null, out IPAddress address) &&
                 address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 &&
-                !ZoneIdExpression.IsMatch(ipv6);
+                !HasZoneId(ipv6);
         }
 
         return IdnEmailAddressLiteralIpV4Pattern.IsMatch(literal);
@@ -1337,7 +1392,7 @@ public static partial class Validate
                 // RFC 6531 extends only the local part; RFC 5321 address-literals are unchanged.
                 isMatch = IsIdnEmailAddressLiteralMatch(email);
             }
-            else
+            else if (HasOneHostDomain(email, atIndex))
             {
                 // Normalize the domain
                 email = IdnEmailReplacePattern.Replace(email, DomainMapper);
@@ -1352,10 +1407,6 @@ public static partial class Validate
 
                 return match.Groups[1].Value + domainName;
             }
-        }
-        catch (RegexMatchTimeoutException)
-        {
-            isMatch = false;
         }
         catch (ArgumentException)
         {
@@ -4039,7 +4090,7 @@ public static partial class Validate
 
             if (StandardIPAddress.IPAddressParser(input, null, out IPAddress? address) &&
                 address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 &&
-                !ZoneIdExpression.IsMatch(input))
+                !HasZoneId(input))
             {
                 if (context.Level == ValidationLevel.Verbose)
                 {
@@ -4219,75 +4270,70 @@ public static partial class Validate
     }
 
 #if NET8_0_OR_GREATER
-    [GeneratedRegex("^(?:(?:^|\\.)(?:2(?:5[0-5]|[0-4]\\d)|1?\\d?\\d)){4}$", RegexOptions.Compiled)]
+    [GeneratedRegex("^(?:(?:^|\\.)(?:2(?:5[0-5]|[0-4]\\d)|1?\\d?\\d)){4}$", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateIpV4Pattern();
 
-    [GeneratedRegex("%.*$", RegexOptions.Compiled)]
-    private static partial Regex CreateZoneIdExpression();
-
-    [GeneratedRegex("^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[ \\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\\[(((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|IPv6:(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})))\\])$", RegexOptions.Compiled)]
+    [GeneratedRegex("^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[ \\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\\[(((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|IPv6:(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})))\\])$", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateEmailPattern();
 
-    [GeneratedRegex("^P((\\d+Y(\\d+M(\\d+D)?)?|\\d+M(\\d+D)?|\\d+D)(T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S))?|T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S)|\\d+W)$", RegexOptions.Compiled | RegexOptions.ECMAScript)]
+    [GeneratedRegex("^P((\\d+Y(\\d+M(\\d+D)?)?|\\d+M(\\d+D)?|\\d+D)(T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S))?|T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S)|\\d+W)$", RegexOptions.Compiled | RegexOptions.ECMAScript, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateDurationPattern();
 
-    [GeneratedRegex("^(?=.{1,255}$)((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?(\\.((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?)*\\.?$", RegexOptions.Compiled)]
+    [GeneratedRegex("^(?=.{1,255}$)((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?(\\.((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?)*\\.?$", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateHostnamePattern();
 
-    [GeneratedRegex("(^[\\p{Mn}\\p{Mc}\\p{Me}\\u302E\\u00b7])|.*\\u302E.*|.*[^l]\\u00b7.*|.*\\u00b7[^l].*|.*\\u00b7$|\\u0374$|\\u0375$|\\u0374[^\\p{IsGreekandCoptic}]|\\u0375[^\\p{IsGreekandCoptic}]|^\\u05F3|[^\\p{IsHebrew}]\\u05f3|^\\u05f4|[^\\p{IsHebrew}]\\u05f4|[\\u0660-\\u0669][\\u06F0-\\u06F9]|[\\u06F0-\\u06F9][\\u0660-\\u0669]|^\\u200D|[^\\uA953\\u094d\\u0acd\\u0c4d\\u0d3b\\u09cd\\u0a4d\\u0b4d\\u0bcd\\u0ccd\\u0d4d\\u1039\\u0d3c\\u0eba\\ua8f3\\ua8f4]\\u200D|^\\u30fb$|[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]\\u30fb|\\u30fb[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]|[\\u0640\\u07fa\\u3031\\u3032\\u3033\\u3034\\u3035\\u302e\\u302f\\u303b]|..--", RegexOptions.Compiled)]
+    [GeneratedRegex("(^[\\p{Mn}\\p{Mc}\\p{Me}\\u302E\\u00b7])|.*\\u302E.*|.*[^l]\\u00b7.*|.*\\u00b7[^l].*|.*\\u00b7$|\\u0374$|\\u0375$|\\u0374[^\\p{IsGreekandCoptic}]|\\u0375[^\\p{IsGreekandCoptic}]|^\\u05F3|[^\\p{IsHebrew}]\\u05f3|^\\u05f4|[^\\p{IsHebrew}]\\u05f4|[\\u0660-\\u0669][\\u06F0-\\u06F9]|[\\u06F0-\\u06F9][\\u0660-\\u0669]|^\\u200D|[^\\uA953\\u094d\\u0acd\\u0c4d\\u0d3b\\u09cd\\u0a4d\\u0b4d\\u0bcd\\u0ccd\\u0d4d\\u1039\\u0d3c\\u0eba\\ua8f3\\ua8f4]\\u200D|^\\u30fb$|[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]\\u30fb|\\u30fb[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]|[\\u0640\\u07fa\\u3031\\u3032\\u3033\\u3034\\u3035\\u302e\\u302f\\u303b]|..--", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateInvalidIdnHostNamePattern();
 
-    [GeneratedRegex("^([^\\x00-\\x20\\x7f\"'%<>\\\\^`{|}]|%[0-9A-Fa-f]{2}|{[+#./;?&=,!@|]?((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?)(,((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?))*})*$", RegexOptions.Compiled)]
+    [GeneratedRegex("^([^\\x00-\\x20\\x7f\"'%<>\\\\^`{|}]|%[0-9A-Fa-f]{2}|{[+#./;?&=,!@|]?((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?)(,((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?))*})*$", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateUriTemplatePattern();
 
-    [GeneratedRegex("[0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}", RegexOptions.Compiled)]
+    [GeneratedRegex("[0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateUuidTemplatePattern();
 
-    [GeneratedRegex("^((/(([^/~])|(~[01]))*))*$", RegexOptions.Compiled)]
+    [GeneratedRegex("^((/(([^/~])|(~[01]))*))*$", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateJsonPointerPattern();
 
-    [GeneratedRegex("^(0|[1-9][0-9]*)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled)]
+    [GeneratedRegex("^(0|[1-9][0-9]*)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateJsonRelativePointerPattern();
 
-    [GeneratedRegex("(@)(.+)$", RegexOptions.Compiled)]
+    [GeneratedRegex("(@)(.+)$", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateIdnEmailReplacePattern();
 
-    [GeneratedRegex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.Compiled)]
+    [GeneratedRegex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateIdnEmailMatchPattern();
 
-    [GeneratedRegex("^[^@\\s]+$", RegexOptions.Compiled)]
+    [GeneratedRegex("^[^@\\s]+$", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateIdnEmailLocalPartPattern();
 
-    [GeneratedRegex("^(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})(?:\\.(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})){3}$", RegexOptions.Compiled)]
+    [GeneratedRegex("^(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})(?:\\.(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})){3}$", RegexOptions.Compiled, matchTimeoutMilliseconds: FormatMatchTimeoutMilliseconds)]
     private static partial Regex CreateIdnEmailAddressLiteralIpV4Pattern();
 #else
-    private static Regex CreateIpV4Pattern() => new("^(?:(?:^|\\.)(?:2(?:5[0-5]|[0-4]\\d)|1?\\d?\\d)){4}$", RegexOptions.Compiled);
+    private static Regex CreateIpV4Pattern() => new("^(?:(?:^|\\.)(?:2(?:5[0-5]|[0-4]\\d)|1?\\d?\\d)){4}$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateZoneIdExpression() => new("%.*$", RegexOptions.Compiled);
+    private static Regex CreateEmailPattern() => new("^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[ \\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\\[(((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|IPv6:(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})))\\])$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateEmailPattern() => new("^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[ \\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\\[(((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|IPv6:(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})\\.){3,3}(25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})))\\])$", RegexOptions.Compiled);
+    private static Regex CreateDurationPattern() => new("^P((\\d+Y(\\d+M(\\d+D)?)?|\\d+M(\\d+D)?|\\d+D)(T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S))?|T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S)|\\d+W)$", RegexOptions.Compiled | RegexOptions.ECMAScript, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateDurationPattern() => new("^P((\\d+Y(\\d+M(\\d+D)?)?|\\d+M(\\d+D)?|\\d+D)(T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S))?|T(\\d+H(\\d+M(\\d+S)?)?|\\d+M(\\d+S)?|\\d+S)|\\d+W)$", RegexOptions.Compiled | RegexOptions.ECMAScript);
+    private static Regex CreateHostnamePattern() => new("^(?=.{1,255}$)((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?(\\.((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?)*\\.?$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateHostnamePattern() => new("^(?=.{1,255}$)((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?(\\.((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?)*\\.?$", RegexOptions.Compiled);
+    private static Regex CreateInvalidIdnHostNamePattern() => new("(^[\\p{Mn}\\p{Mc}\\p{Me}\\u302E\\u00b7])|.*\\u302E.*|.*[^l]\\u00b7.*|.*\\u00b7[^l].*|.*\\u00b7$|\\u0374$|\\u0375$|\\u0374[^\\p{IsGreekandCoptic}]|\\u0375[^\\p{IsGreekandCoptic}]|^\\u05F3|[^\\p{IsHebrew}]\\u05f3|^\\u05f4|[^\\p{IsHebrew}]\\u05f4|[\\u0660-\\u0669][\\u06F0-\\u06F9]|[\\u06F0-\\u06F9][\\u0660-\\u0669]|^\\u200D|[^\\uA953\\u094d\\u0acd\\u0c4d\\u0d3b\\u09cd\\u0a4d\\u0b4d\\u0bcd\\u0ccd\\u0d4d\\u1039\\u0d3c\\u0eba\\ua8f3\\ua8f4]\\u200D|^\\u30fb$|[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]\\u30fb|\\u30fb[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]|[\\u0640\\u07fa\\u3031\\u3032\\u3033\\u3034\\u3035\\u302e\\u302f\\u303b]|..--", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateInvalidIdnHostNamePattern() => new("(^[\\p{Mn}\\p{Mc}\\p{Me}\\u302E\\u00b7])|.*\\u302E.*|.*[^l]\\u00b7.*|.*\\u00b7[^l].*|.*\\u00b7$|\\u0374$|\\u0375$|\\u0374[^\\p{IsGreekandCoptic}]|\\u0375[^\\p{IsGreekandCoptic}]|^\\u05F3|[^\\p{IsHebrew}]\\u05f3|^\\u05f4|[^\\p{IsHebrew}]\\u05f4|[\\u0660-\\u0669][\\u06F0-\\u06F9]|[\\u06F0-\\u06F9][\\u0660-\\u0669]|^\\u200D|[^\\uA953\\u094d\\u0acd\\u0c4d\\u0d3b\\u09cd\\u0a4d\\u0b4d\\u0bcd\\u0ccd\\u0d4d\\u1039\\u0d3c\\u0eba\\ua8f3\\ua8f4]\\u200D|^\\u30fb$|[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]\\u30fb|\\u30fb[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]|[\\u0640\\u07fa\\u3031\\u3032\\u3033\\u3034\\u3035\\u302e\\u302f\\u303b]|..--", RegexOptions.Compiled);
+    private static Regex CreateUriTemplatePattern() => new("^([^\\x00-\\x20\\x7f\"'%<>\\\\^`{|}]|%[0-9A-Fa-f]{2}|{[+#./;?&=,!@|]?((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?)(,((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?))*})*$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateUriTemplatePattern() => new("^([^\\x00-\\x20\\x7f\"'%<>\\\\^`{|}]|%[0-9A-Fa-f]{2}|{[+#./;?&=,!@|]?((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?)(,((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?))*})*$", RegexOptions.Compiled);
+    private static Regex CreateUuidTemplatePattern() => new("[0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateUuidTemplatePattern() => new("[0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}", RegexOptions.Compiled);
+    private static Regex CreateJsonPointerPattern() => new("^((/(([^/~])|(~[01]))*))*$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateJsonPointerPattern() => new("^((/(([^/~])|(~[01]))*))*$", RegexOptions.Compiled);
+    private static Regex CreateJsonRelativePointerPattern() => new("^(0|[1-9][0-9]*)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateJsonRelativePointerPattern() => new("^(0|[1-9][0-9]*)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled);
+    private static Regex CreateIdnEmailReplacePattern() => new("(@)(.+)$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateIdnEmailReplacePattern() => new("(@)(.+)$", RegexOptions.Compiled);
+    private static Regex CreateIdnEmailMatchPattern() => new("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateIdnEmailMatchPattern() => new("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.Compiled);
+    private static Regex CreateIdnEmailLocalPartPattern() => new("^[^@\\s]+$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 
-    private static Regex CreateIdnEmailLocalPartPattern() => new("^[^@\\s]+$", RegexOptions.Compiled);
-
-    private static Regex CreateIdnEmailAddressLiteralIpV4Pattern() => new("^(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})(?:\\.(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})){3}$", RegexOptions.Compiled);
+    private static Regex CreateIdnEmailAddressLiteralIpV4Pattern() => new("^(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})(?:\\.(?:25[0-5]|2[0-4][0-9]|[01][0-9]{2}|[0-9]{1,2})){3}$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(FormatMatchTimeoutMilliseconds));
 #endif
 
 #if NET8_0_OR_GREATER

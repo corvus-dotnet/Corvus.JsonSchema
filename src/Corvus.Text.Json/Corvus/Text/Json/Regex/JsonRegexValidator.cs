@@ -6,6 +6,7 @@
 // The .NET Foundation licensed this code under the MIT license.
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -18,6 +19,12 @@ internal ref struct JsonRegexValidator
     private const int CapDefaultSize = 64;
 
     private const int EscapeMaxBufferSize = 256;
+
+    /// <summary>The fewest slots of an index of captures (see <see cref="FindCapture"/>), as a power of two.</summary>
+    private const int IndexMinBits = 7;
+
+    /// <summary>The prime the hash of a capture name is taken modulo: 2^31 - 1.</summary>
+    private const ulong NameHashModulus = 0x7FFFFFFF;
 
     private const int MaxValueDiv10 = int.MaxValue / 10;
 
@@ -40,6 +47,15 @@ internal ref struct JsonRegexValidator
     // stopper             $ ( ) . [ \ ^ |
     private const byte Z = 2;
 
+    /// <summary>
+    /// The odd multiplier that spreads a capture number, or the hash of a capture name, over the slots of an index.
+    /// It is drawn once for the process, so that no pattern can be written to put its captures in one slot.
+    /// </summary>
+    private static readonly ulong IndexMultiplier = CreateHashSeed() | 1;
+
+    /// <summary>The base of the polynomial that hashes a capture name, drawn once for the process.</summary>
+    private static readonly ulong NameHashBase = (CreateHashSeed() % (NameHashModulus - 2)) + 2;
+
     private readonly ReadOnlySpan<char> _pattern;
 
     private JsonRegexNode _alternation;
@@ -51,6 +67,21 @@ internal ref struct JsonRegexValidator
     private ValueListBuilder<CapNameToCapNumberRow> _capNames;
 
     private ValueListBuilder<CapToPos> _caps;
+
+    /// <summary>The hash of the name of each row of <see cref="_capNames"/>.</summary>
+    private ValueListBuilder<int> _capNameHashes;
+
+    /// <summary>For a slot, one more than the row of <see cref="_caps"/> whose capture number hashes to it, or zero.</summary>
+    private int[]? _capIndex;
+
+    /// <summary>The number of slots of <see cref="_capIndex"/> in use, as a power of two.</summary>
+    private int _capIndexBits;
+
+    /// <summary>For a slot, one more than the row of <see cref="_capNames"/> whose name hashes to it, or zero.</summary>
+    private int[]? _capNameIndex;
+
+    /// <summary>The number of slots of <see cref="_capNameIndex"/> in use, as a power of two.</summary>
+    private int _capNameIndexBits;
 
     private int _captop;
 
@@ -154,6 +185,19 @@ internal ref struct JsonRegexValidator
         _nodeDb.Dispose();
         _capNames.Dispose();
         _caps.Dispose();
+        _capNameHashes.Dispose();
+
+        if (_capIndex is int[] capIndex)
+        {
+            _capIndex = null;
+            ArrayPool<int>.Shared.Return(capIndex);
+        }
+
+        if (_capNameIndex is int[] capNameIndex)
+        {
+            _capNameIndex = null;
+            ArrayPool<int>.Shared.Return(capNameIndex);
+        }
     }
 
     /// <summary>
@@ -525,18 +569,22 @@ internal ref struct JsonRegexValidator
     /// <summary>Notes a used capture slot</summary>
     private void NoteCaptureName(int start, int end, int index)
     {
-        if (!TryGetCapNum(start, end, out _))
+        int hash = HashName(_pattern.Slice(start, end - start));
+        if (FindCaptureName(start, end, hash) < 0)
         {
             _capNames.Append(new CapNameToCapNumberRow(start, end, index));
+            _capNameHashes.Append(hash);
+            AddToIndex(ref _capNameIndex, ref _capNameIndexBits, hash, _capNames.Length, names: true);
         }
     }
 
     /// <summary>Notes a used capture slot</summary>
     private void NoteCaptureSlot(int i, int pos, bool isExplicit)
     {
-        if (!TryGetCapturePos(i, requireExplicit: false, out _))
+        if (FindCapture(i) < 0)
         {
             _caps.Append(new CapToPos(i, pos, isExplicit));
+            AddToIndex(ref _capIndex, ref _capIndexBits, i, _caps.Length, names: false);
             _capcount++;
 
             if (_captop <= i)
@@ -2054,20 +2102,11 @@ internal ref struct JsonRegexValidator
 
     private readonly bool TryGetCapNum(int capnameStart, int capnameEnd, out int capnum)
     {
-        for (int i = 0; i < _capNames.Length; i++)
+        int i = FindCaptureName(capnameStart, capnameEnd, HashName(_pattern.Slice(capnameStart, capnameEnd - capnameStart)));
+        if (i >= 0)
         {
-            CapNameToCapNumberRow row = _capNames[i];
-            if (row.Start == capnameStart && row.End == capnameEnd)
-            {
-                capnum = row.CapNum;
-                return true;
-            }
-
-            if (_pattern.Slice(row.Start, row.End - row.Start).SequenceEqual(_pattern.Slice(capnameStart, capnameEnd - capnameStart)))
-            {
-                capnum = row.CapNum;
-                return true;
-            }
+            capnum = _capNames[i].CapNum;
+            return true;
         }
 
         capnum = default;
@@ -2076,10 +2115,11 @@ internal ref struct JsonRegexValidator
 
     private readonly bool TryGetCapturePos(int capnum, bool requireExplicit, out int capturePos)
     {
-        for (int i = 0; i < _caps.Length; i++)
+        int i = FindCapture(capnum);
+        if (i >= 0)
         {
             CapToPos row = _caps[i];
-            if (row.CapNum == capnum && (row.IsExplicit || !requireExplicit))
+            if (row.IsExplicit || !requireExplicit)
             {
                 capturePos = row.Pos;
                 return true;
@@ -2088,6 +2128,147 @@ internal ref struct JsonRegexValidator
 
         capturePos = default;
         return false;
+    }
+
+    /// <summary>
+    /// Finds the row of <see cref="_caps"/> for a capture number, or -1. There is at most one.
+    /// </summary>
+    /// <remarks>
+    /// A pattern may hold as many groups as it has characters, and each group and each backreference asks for a
+    /// row. The rows were once read from the first to the one asked for, which took a pattern of groups time in
+    /// proportion to the square of its length. They are now found through an index: a table of slots, with the
+    /// slot of a number chosen by a multiplier the pattern cannot know, and the slots after it tried in turn.
+    /// </remarks>
+    private readonly int FindCapture(int capnum)
+    {
+        if (_capIndex is not int[] index)
+        {
+            return -1;
+        }
+
+        int mask = (1 << _capIndexBits) - 1;
+        for (int slot = SlotOf(capnum, _capIndexBits); ; slot = (slot + 1) & mask)
+        {
+            int row = index[slot] - 1;
+            if (row < 0)
+            {
+                return -1;
+            }
+
+            if (_caps[row].CapNum == capnum)
+            {
+                return row;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Finds the row of <see cref="_capNames"/> for a capture name, or -1. There is at most one.
+    /// </summary>
+    private readonly int FindCaptureName(int capnameStart, int capnameEnd, int hash)
+    {
+        if (_capNameIndex is not int[] index)
+        {
+            return -1;
+        }
+
+        ReadOnlySpan<char> name = _pattern.Slice(capnameStart, capnameEnd - capnameStart);
+        int mask = (1 << _capNameIndexBits) - 1;
+        for (int slot = SlotOf(hash, _capNameIndexBits); ; slot = (slot + 1) & mask)
+        {
+            int row = index[slot] - 1;
+            if (row < 0)
+            {
+                return -1;
+            }
+
+            if (_capNameHashes[row] == hash)
+            {
+                CapNameToCapNumberRow candidate = _capNames[row];
+                if ((candidate.Start == capnameStart && candidate.End == capnameEnd) ||
+                    _pattern.Slice(candidate.Start, candidate.End - candidate.Start).SequenceEqual(name))
+                {
+                    return row;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Hashes a capture name: a polynomial of its characters modulo a prime, at a base the pattern cannot know.
+    /// Two names of at most n characters then have the same hash with a chance of at most n in 2^31.
+    /// </summary>
+    private static int HashName(ReadOnlySpan<char> name)
+    {
+        ulong hash = (ulong)name.Length + 1;
+        foreach (char c in name)
+        {
+            hash = ((hash * NameHashBase) + c + 1) % NameHashModulus;
+        }
+
+        return (int)hash;
+    }
+
+    /// <summary>The first slot to try for a key, in an index of two to the power <paramref name="bits"/> slots.</summary>
+    private static int SlotOf(int key, int bits)
+    {
+        // The highest bits of the product, which every bit of the key and of the multiplier reaches.
+        return (int)(((uint)key * IndexMultiplier) >> (64 - bits));
+    }
+
+    /// <summary>
+    /// Adds the newest row to an index, and makes the index larger first when half its slots are in use.
+    /// </summary>
+    /// <param name="index">The index.</param>
+    /// <param name="bits">The number of its slots in use, as a power of two.</param>
+    /// <param name="key">The capture number of the row, or the hash of its name.</param>
+    /// <param name="rowCount">The number of rows there are now. The newest is the last.</param>
+    /// <param name="names">Whether the index is of <see cref="_capNames"/>, and not of <see cref="_caps"/>.</param>
+    private void AddToIndex(ref int[]? index, ref int bits, int key, int rowCount, bool names)
+    {
+        if (index is null || rowCount > (1 << (bits - 1)))
+        {
+            int newBits = index is null ? IndexMinBits : bits + 1;
+            int[] larger = ArrayPool<int>.Shared.Rent(1 << newBits);
+            Array.Clear(larger, 0, 1 << newBits);
+            for (int row = 0; row < rowCount - 1; row++)
+            {
+                Place(larger, newBits, names ? _capNameHashes[row] : _caps[row].CapNum, row);
+            }
+
+            if (index is not null)
+            {
+                ArrayPool<int>.Shared.Return(index);
+            }
+
+            index = larger;
+            bits = newBits;
+        }
+
+        Place(index, bits, key, rowCount - 1);
+    }
+
+    private static void Place(int[] index, int bits, int key, int row)
+    {
+        int mask = (1 << bits) - 1;
+        int slot = SlotOf(key, bits);
+        while (index[slot] != 0)
+        {
+            slot = (slot + 1) & mask;
+        }
+
+        index[slot] = row + 1;
+    }
+
+    private static ulong CreateHashSeed()
+    {
+        byte[] bytes = new byte[8];
+        using (System.Security.Cryptography.RandomNumberGenerator generator = System.Security.Cryptography.RandomNumberGenerator.Create())
+        {
+            generator.GetBytes(bytes);
+        }
+
+        return BitConverter.ToUInt64(bytes, 0);
     }
 
     /// <summary>Returns the node kind for zero-length assertions with a \ code.</summary>
