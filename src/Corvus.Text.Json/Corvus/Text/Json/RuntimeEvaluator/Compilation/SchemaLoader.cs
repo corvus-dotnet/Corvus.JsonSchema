@@ -212,7 +212,7 @@ internal sealed class SchemaLoader
 
         if (!this.metaschemaLoading.Add(normalized))
         {
-            return (this.options.DefaultDialect, JsonSchemaVocabularies.AllAnnotatingFormat);
+            return this.DefaultDialectInfo();
         }
 
         try
@@ -221,7 +221,7 @@ internal sealed class SchemaLoader
             {
                 if (!this.TryLoadDocument(normalized) || !this.resourcesByUri.TryGetValue(normalized, out metaResource))
                 {
-                    info = (this.options.DefaultDialect, JsonSchemaVocabularies.AllAnnotatingFormat);
+                    info = this.DefaultDialectInfo();
                     this.metaschemaInfo[normalized] = info;
                     return info;
                 }
@@ -322,7 +322,19 @@ internal sealed class SchemaLoader
             return this.GetDialectInfo(schema.GetString()!);
         }
 
-        return (this.options.DefaultDialect, JsonSchemaVocabularies.AllAnnotatingFormat);
+        return this.DefaultDialectInfo();
+    }
+
+    // The dialect of a resource that declares none. An OpenAPI Schema Object is draft 4 with additions, so it is
+    // compiled as draft 4 (which the ordered dialect tests rely on) and the additions travel as a vocabulary.
+    private (JsonSchemaDialect Dialect, JsonSchemaVocabularies Vocabularies) DefaultDialectInfo()
+    {
+        return this.options.DefaultDialect switch
+        {
+            JsonSchemaDialect.OpenApi20 => (JsonSchemaDialect.Draft4, JsonSchemaVocabularies.AllAnnotatingFormat | JsonSchemaVocabularies.OpenApi20),
+            JsonSchemaDialect.OpenApi30 => (JsonSchemaDialect.Draft4, JsonSchemaVocabularies.AllAnnotatingFormat | JsonSchemaVocabularies.OpenApi30),
+            JsonSchemaDialect dialect => (dialect, JsonSchemaVocabularies.AllAnnotatingFormat),
+        };
     }
 
     private SchemaResource CreateResource(SchemaDocument doc, int rootIndex, string uri, JsonSchemaDialect dialect, JsonSchemaVocabularies vocabularies)
