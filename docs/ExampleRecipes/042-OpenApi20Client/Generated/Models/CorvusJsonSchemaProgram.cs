@@ -47,7 +47,7 @@ internal static partial class CorvusJsonSchemaProgram
     {
         return new JsonSchemaEvaluatorOptions
         {
-            DefaultDialect = JsonSchemaDialect.Draft4,
+            DefaultDialect = JsonSchemaDialect.OpenApi20,
             AssertFormat = true,
             AssertFormatInLegacyDrafts = true,
             RegexProvider = GetRegex,
@@ -84,7 +84,7 @@ internal static partial class CorvusJsonSchemaProgram
 
     // Program image: 2468 bytes.
     private static ReadOnlySpan<byte> ImageBase64 =>
-        "Q0pTUAwAEgAYAACOAWNvcnZ1cy1zY2hlbWE6Ly8vcGV0c3RvcmUtMi4wLmpzb24jL3BhdGhzL34xcGV0cy9nZXQvcGFyYW1ldGVycy8xL2l0ZW1zBIIBY29y"u8 +
+        "Q0pTUA4AEgAYAACOAWNvcnZ1cy1zY2hlbWE6Ly8vcGV0c3RvcmUtMi4wLmpzb24jL3BhdGhzL34xcGV0cy9nZXQvcGFyYW1ldGVycy8xL2l0ZW1zBIIBY29y"u8 +
         "dnVzLXNjaGVtYTovLy9wZXRzdG9yZS0yLjAuanNvbiMvZGVmaW5pdGlvbnMvUGV0L3Byb3BlcnRpZXMvaWQGigFjb3J2dXMtc2NoZW1hOi8vL3BldHN0b3Jl"u8 +
         "LTIuMC5qc29uIy9kZWZpbml0aW9ucy9FcnJvci9wcm9wZXJ0aWVzL2NvZGUIUmNvcnZ1cy1zY2hlbWE6Ly8vMDAwMDAwMDUudmlydHVhbC9TY2hlbWEjClJj"u8 +
         "b3J2dXMtc2NoZW1hOi8vLzAwMDAwMDA2LnZpcnR1YWwvU2NoZW1hIwxSY29ydnVzLXNjaGVtYTovLy8wMDAwMDAwNy52aXJ0dWFsL1NjaGVtYSMOUmNvcnZ1"u8 +

@@ -450,7 +450,25 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "detailId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "releasedOn": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "retiredOn": {
+                      "type": "string",
+                      "format": "date",
+                      "nullable": true
+                    },
+                    "note": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }

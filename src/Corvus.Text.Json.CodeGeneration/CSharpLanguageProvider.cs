@@ -30,7 +30,7 @@ public delegate void NamedTypeEmitter(CodeGenerator generator, string typeName);
 /// <remarks>
 /// Initializes a new instance of the <see cref="CSharpLanguageProvider"/> class.
 /// </remarks>
-public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingLanguageProvider, ISchemaProgramUtf8LanguageProvider, IOrderingLanguageProvider
+public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingLanguageProvider, ISchemaProgramUtf8LanguageProvider, ISchemaProgramVocabularyLanguageProvider, IOrderingLanguageProvider
 {
     private readonly KeywordValidationHandlerRegistry validationHandlerRegistry = new();
     private readonly CodeFileBuilderRegistry codeFileBuilderRegistry = new();
@@ -48,6 +48,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
     private IReadOnlyList<KeyValuePair<string, string>> schemaDocuments = [];
     private IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>>? utf8SchemaDocuments;
     private string? fallbackVocabularyUri;
+    private IVocabulary? fallbackVocabulary;
     private readonly List<(string RootDocumentUri, string RootDocumentPointer)> programEntries = [];
     private readonly Dictionary<(string, string), int> programEntryIndex = new();
     private readonly Dictionary<string, List<TypeDeclaration>> namedTypesByFullyQualifiedName = new(StringComparer.Ordinal);
@@ -107,6 +108,12 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
     public void SetProgramRootTypes(IReadOnlyList<TypeDeclaration> rootTypes)
     {
         this.programRootTypes = rootTypes;
+    }
+
+    /// <inheritdoc/>
+    public void SetFallbackVocabulary(IVocabulary? fallbackVocabulary)
+    {
+        this.fallbackVocabulary = fallbackVocabulary;
     }
 
     /// <inheritdoc/>
@@ -460,7 +467,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
             }
 
             string rootDocumentKey = documents.Count > 0 ? documents[0].Key : keys[this.programEntries[0].RootDocumentUri];
-            string dialect = RuntimeProgramGenerator.DialectFor(this.fallbackVocabularyUri);
+            string dialect = this.fallbackVocabulary is IVocabulary vocabulary ? RuntimeProgramGenerator.DialectFor(vocabulary) : RuntimeProgramGenerator.DialectFor(this.fallbackVocabularyUri);
             List<KeyValuePair<string, string>> formatModes = options.FormatModeOverrides.OrderBy(m => m.Key, StringComparer.Ordinal).Select(m => new KeyValuePair<string, string>(m.Key, m.Value.ToString())).ToList();
             SchemaProgramImage? image = options.ProgramCompiler?.Invoke(
                 this.utf8SchemaDocuments is not null

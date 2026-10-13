@@ -1450,6 +1450,28 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
+    [DataRow("""{"detailId":"3fa85f64-5717-4562-b3fc-2c963f66afa6","releasedOn":"2020-02-29","retiredOn":"2021-03-01","note":"n"}""", true, DisplayName = "uuid and date values")]
+    [DataRow("""{"retiredOn":null}""", true, DisplayName = "null for a nullable date")]
+    [DataRow("""{"detailId":"not-a-uuid"}""", false, DisplayName = "a string that is not a uuid")]
+    [DataRow("""{"releasedOn":"29/02/2020"}""", false, DisplayName = "a string that is not a date")]
+    [DataRow("""{"retiredOn":"soon"}""", false, DisplayName = "a nullable date that is not a date")]
+    [DataRow("""{"releasedOn":null}""", false, DisplayName = "null for a date that is not nullable")]
+    [DataRow("""{"note":null}""", false, DisplayName = "null for a string that is not nullable")]
+    public async Task GetItemDetails_200_SchemaAssertsOpenApiFormatsAndNullable(string json, bool expectedValid)
+    {
+        // OpenAPI 3.0 schemas are draft 4 with more formats (uuid, date) and with nullable.
+        using var harness = new TestHarness(HttpStatusCode.OK, json);
+
+        await using GetItemDetailsResponse response = await harness.Transport
+            .SendAsync<GetItemDetailsRequest, GetItemDetailsResponse>(
+                new GetItemDetailsRequest(JsonString.ParseValue("\"abc\""u8)),
+                CancellationToken.None);
+
+        Assert.IsTrue(response.TryGetOk(out var body));
+        Assert.AreEqual(expectedValid, body.EvaluateSchema());
+    }
+
+    [TestMethod]
     public async Task GetItemDetails_MatchResult_DispatchesToOk()
     {
         using var harness = new TestHarness(HttpStatusCode.OK, """{"x":1}""");

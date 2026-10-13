@@ -23,6 +23,26 @@ public enum JsonSchemaDialect
 
     /// <summary>Draft 2020-12 (https://json-schema.org/draft/2020-12/schema).</summary>
     Draft202012,
+
+    /// <summary>
+    /// The OpenAPI 2.0 (Swagger) Schema Object: draft 4, with every format the evaluator knows, and
+    /// <c>x-nullable</c> or <c>nullable</c> adding <c>null</c> to the types a schema allows.
+    /// </summary>
+    /// <remarks>
+    /// A Schema Object never declares <c>$schema</c>, so this is only ever a
+    /// <see cref="JsonSchemaEvaluatorOptions.DefaultDialect"/>.
+    /// </remarks>
+    OpenApi20,
+
+    /// <summary>
+    /// The OpenAPI 3.0 Schema Object: draft 4, with every format the evaluator knows, and <c>nullable</c> adding
+    /// <c>null</c> to the types a schema allows.
+    /// </summary>
+    /// <remarks>
+    /// A Schema Object never declares <c>$schema</c>, so this is only ever a
+    /// <see cref="JsonSchemaEvaluatorOptions.DefaultDialect"/>.
+    /// </remarks>
+    OpenApi30,
 }
 
 /// <summary>
@@ -57,6 +77,12 @@ public enum JsonSchemaVocabularies
 
     /// <summary>The unevaluated vocabulary.</summary>
     Unevaluated = 1 << 7,
+
+    /// <summary>The OpenAPI 2.0 Schema Object's additions to draft 4 (see <see cref="JsonSchemaDialect.OpenApi20"/>).</summary>
+    OpenApi20 = 1 << 8,
+
+    /// <summary>The OpenAPI 3.0 Schema Object's additions to draft 4 (see <see cref="JsonSchemaDialect.OpenApi30"/>).</summary>
+    OpenApi30 = 1 << 9,
 
     /// <summary>All vocabularies, with format as annotation.</summary>
     AllAnnotatingFormat = Core | Applicator | Validation | MetaData | FormatAnnotation | Content | Unevaluated,
