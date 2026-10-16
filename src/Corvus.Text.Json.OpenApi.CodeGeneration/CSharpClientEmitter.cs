@@ -14,15 +14,14 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <summary>
 /// The C# client emitter: one emitter for every OpenAPI version, over the prepared operation model. Consolidated
 /// from the four spec-version generators' client emission (the 3.2 generator's code is the base, being the feature
-/// superset); the version-conditional branches it still carries are the drift items of the drift catalogue, each
-/// removed in its own change.
+/// superset). The drift items of the drift catalogue have each been removed in their own change, so it carries no
+/// version-conditional branches.
 /// </summary>
 public sealed class CSharpClientEmitter : IOpenApiClientEmitter
 {
     private readonly string rootNamespace;
     private readonly string? clientNamePrefix;
     private readonly IModelTypeMap typeMap;
-    private string specVersion = "3.2";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CSharpClientEmitter"/> class.
@@ -52,8 +51,6 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
     {
         List<OperationInfo> operations = [.. model.Operations];
         string? documentSelf = model.DocumentSelf;
-        this.specVersion = model.SpecVersion;
-
         SecuritySchemeInfo[] securitySchemes = model.SecuritySchemes;
         ServerInfo? rootServer = model.RootServer;
 
@@ -2686,11 +2683,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
             CodeEmitHelpers.EmitSecuritySchemeMetadata(w, securitySchemes);
         }
 
-        // Drift D5 (see the drift catalogue): the 2.0 generator never wrote the per-operation SecurityRequirements class.
-        if (this.specVersion != "2.0")
-        {
-            CodeEmitHelpers.EmitSecurityRequirements(w, operations, securitySchemes);
-        }
+        CodeEmitHelpers.EmitSecurityRequirements(w, operations, securitySchemes);
 
         for (int i = 0; i < operations.Count; i++)
         {
