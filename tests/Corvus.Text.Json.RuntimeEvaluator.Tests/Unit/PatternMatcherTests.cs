@@ -370,6 +370,49 @@ public class PatternMatcherTests
         Assert.AreEqual(compiled, matcher.UsesCompiledRegex);
     }
 
+    /// <summary>
+    /// A pattern valid only without the u flag (here by the identity escape <c>\&amp;</c>) is matched by UTF-16 code
+    /// unit. It needs the regular expression only where that can change an answer: a dot or negated class that is not
+    /// the body of a <c>*</c> or <c>+</c>, a set with some surrogates and not others, or a surrogate written in the
+    /// pattern (see EcmaRegexTranslator.CodeUnitsCanChangeTheAnswer).
+    /// </summary>
+    /// <param name="pattern">The pattern.</param>
+    /// <param name="usesRegex">Whether it needs the regular expression.</param>
+    [TestMethod]
+    [DataRow(@"^\/[^\*\?\&\%]*(\/\*)?$", false)]
+    [DataRow(@"^\&[^x]*$", false)]
+    [DataRow(@"^\&[^x]+$", false)]
+    [DataRow(@"^\&[a-z]+$", false)]
+    [DataRow(@"^\&.$", true)]
+    [DataRow(@"^\&.?$", true)]
+    [DataRow(@"^\&.{2,}$", true)]
+    [DataRow(@"^\&.{1,3}$", true)]
+    [DataRow(@"^\&\ud83d", true)]
+    [DataRow(@"^\&[\ud800-\udbff]*$", true)]
+    [DataRow(@"^\&(?:a.)*$", true)]
+    [DataRow(@"^\&[^\ud800-\udfff]+$", true)]
+    [DataRow(@"^\&[^\ud800-\udfff]{2}$", true)]
+    [DataRow(@"^\&[\ud800-\udfff]+$", true)]
+    [DataRow(@"^\&[\0-\uffff]+$", true)]
+    public void APatternValidOnlyWithoutTheUFlagNeedsARegularExpressionOnlyWhereCodeUnitsMatter(string pattern, bool usesRegex)
+    {
+        Assert.AreEqual(usesRegex, Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.CodeUnitsCanChangeTheAnswer(pattern), pattern);
+        if (!usesRegex)
+        {
+            // Whether a shape takes it is the matcher's business; the code units no longer force the expression.
+            return;
+        }
+
+        Assert.IsTrue(PatternMatcher.Create(pattern, new JsonSchemaEvaluatorOptions()).UsesRegex, pattern);
+    }
+
+    /// <summary>The pattern of the krakend corpus that is valid only without the u flag is matched by a shape again.</summary>
+    [TestMethod]
+    public void TheKrakendPatternValidOnlyWithoutTheUFlagIsMatchedByAShape()
+    {
+        Assert.IsFalse(PatternMatcher.Create(@"^\/[^\*\?\&\%]*(\/\*)?$", new JsonSchemaEvaluatorOptions()).UsesRegex);
+    }
+
     [TestMethod]
     public void OnlyPatternsOutsideTheSubsetNeedARegularExpression()
     {

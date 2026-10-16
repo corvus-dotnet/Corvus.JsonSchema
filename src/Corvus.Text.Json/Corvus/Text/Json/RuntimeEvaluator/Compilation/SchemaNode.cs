@@ -341,7 +341,10 @@ internal sealed class PatternMatcher
             throw new JsonSchemaCompilationException($"The pattern '{ecmaPattern}' is not a valid ECMA-262 regular expression. {error}");
         }
 
-        if (!unicode && CountsCodeUnits(ecmaPattern))
+        // A pattern that only the grammar with no u flag accepts is matched by UTF-16 code unit, and the matchers here
+        // match by code point. They give the same answers unless the pattern can tell a character beyond the Basic
+        // Multilingual Plane from two characters (see EcmaRegexTranslator.CodeUnitsCanChangeTheAnswer).
+        if (!unicode && Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.CodeUnitsCanChangeTheAnswer(ecmaPattern))
         {
             return CreateRegex(ecmaPattern, translation, options, patternIndex);
         }
@@ -444,35 +447,6 @@ internal sealed class PatternMatcher
         {
             return (null, false, tooLarge.Message, true);
         }
-    }
-
-    /// <summary>
-    /// Whether a pattern that only the grammar with no <c>u</c> flag accepts may tell a character beyond the Basic
-    /// Multilingual Plane from two characters. ECMA-262 matches such a pattern by UTF-16 code unit, and the matchers
-    /// here match by code point. They differ only where the pattern takes such a character: with the dot, a negated
-    /// class, <c>\D</c>, <c>\W</c> or <c>\S</c>, or by naming one.
-    /// </summary>
-    private static bool CountsCodeUnits(string pattern)
-    {
-        for (int i = 0; i < pattern.Length; i++)
-        {
-            char c = pattern[i];
-            if (c == '.' || char.IsSurrogate(c))
-            {
-                return true;
-            }
-
-            if (i + 1 < pattern.Length)
-            {
-                char next = pattern[i + 1];
-                if ((c == '[' && next == '^') || (c == '\\' && (next == 'D' || next == 'W' || next == 'S')))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     private static PatternMatcher CreateRegex(string ecmaPattern, string translated, JsonSchemaEvaluatorOptions options, int patternIndex)
