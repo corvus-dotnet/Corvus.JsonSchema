@@ -82,7 +82,28 @@ public sealed partial class IdnMapping
             return false;
         }
 
-        return IdnMapping.GetUnicodeInvariant(ascii, outputBuffer, index, count, out written);
+        return IdnMapping.GetUnicodeInvariant(ascii, outputBuffer, index, count, limitName: true, out written);
+    }
+
+    /// <summary>
+    /// Converts a host name to its Unicode form as <see cref="GetUnicode(ReadOnlySpan{byte}, Span{byte}, out int)"/>
+    /// does, with no limit on the length of the name. The limit of 255 that conversion keeps is on UTF-8 bytes, and
+    /// the format checks limit the name as A-labels (RFC 5890), whose Unicode form can have more bytes than that.
+    /// The limit of 63 characters on a label is kept.
+    /// </summary>
+    /// <param name="ascii">The host name, of A-labels, U-labels or both.</param>
+    /// <param name="outputBuffer">The buffer for the Unicode form.</param>
+    /// <param name="written">The number of bytes written.</param>
+    /// <returns><see langword="true"/> when the name was converted and the Unicode form fits the buffer.</returns>
+    internal static bool GetUnicodeOfAnyNameLength(ReadOnlySpan<byte> ascii, Span<byte> outputBuffer, out int written)
+    {
+        if (ascii.Length == 0 || ascii[^1] == 0)
+        {
+            written = 0;
+            return false;
+        }
+
+        return GetUnicodeInvariant(ascii, outputBuffer, 0, ascii.Length, limitName: false, out written);
     }
 
     internal static bool EqualAcePrefix(ReadOnlySpan<byte> readOnlySpan)
@@ -249,7 +270,7 @@ public sealed partial class IdnMapping
         return (-1, runeCount, 1);
     }
 
-    private static bool PunycodeDecode(ReadOnlySpan<byte> ascii, Span<byte> outputBuffer, out int written)
+    private static bool PunycodeDecode(ReadOnlySpan<byte> ascii, Span<byte> outputBuffer, bool limitName, out int written)
     {
         written = 0;
 
@@ -261,7 +282,7 @@ public sealed partial class IdnMapping
         }
 
         // Throw if we're too long
-        if (ascii.Length > c_defaultNameLimit - (LastCharacterIsDot(ascii) ? 0 : 1))
+        if (limitName && ascii.Length > c_defaultNameLimit - (LastCharacterIsDot(ascii) ? 0 : 1))
         {
             written = 0;
             return false;
@@ -548,7 +569,7 @@ public sealed partial class IdnMapping
         }
 
         // Throw if we're too long
-        if (written > c_defaultNameLimit - (IsDot(outputBuffer.Slice(written - 1)) ? 0 : 1))
+        if (limitName && written > c_defaultNameLimit - (IsDot(outputBuffer.Slice(written - 1)) ? 0 : 1))
         {
             written = 0;
             return false;
@@ -569,7 +590,7 @@ public sealed partial class IdnMapping
             (c == (byte)'-' && bNextToDot));
     }
 
-    private static bool GetUnicodeInvariant(ReadOnlySpan<byte> ascii, Span<byte> outputBuffer, int index, int count, out int written)
+    private static bool GetUnicodeInvariant(ReadOnlySpan<byte> ascii, Span<byte> outputBuffer, int index, int count, bool limitName, out int written)
     {
         if (index > 0 || count < ascii.Length)
         {
@@ -578,7 +599,7 @@ public sealed partial class IdnMapping
         }
 
         // Convert Punycode to Unicode
-        if (!PunycodeDecode(ascii, outputBuffer, out written))
+        if (!PunycodeDecode(ascii, outputBuffer, limitName, out written))
         {
             written = 0;
             return false;
