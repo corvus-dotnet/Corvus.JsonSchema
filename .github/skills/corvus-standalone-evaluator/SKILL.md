@@ -61,7 +61,8 @@ records every keyword and the annotations.
   `CodeGenerationExtensions.RegexMatchTimeoutMilliseconds`: on each `[GeneratedRegex]`, in the program's
   `RegexMatchTimeout` option, and on the expressions of the generated types. A match that exceeds it throws
   `RegexMatchTimeoutException` to the caller. The runtime evaluator's own default is
-  `JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout`.
+  `JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout`. A pattern `EcmaRegexTranslator.IsLinear` proves linear
+  has no timeout in any form (the program generator reads it from `SchemaProgramImage.EcmaPatterns`).
 - A `pattern` or `patternProperties` pattern that is not a valid ECMA-262 regular expression stops the generation
   (`ThrowIfAPatternIsNotValid` in `CodeGeneratorExtensions.JsonSchema.cs`), as `JsonSchemaEvaluator.Compile`
   refuses the schema with `JsonSchemaCompilationException`. See the `corvus-ecma-regex` skill.

@@ -223,7 +223,12 @@ ECMAScript engine does. The answers are tested against V8 on the
 - The evaluator matches many patterns itself (prefixes, length ranges, literal alternations, class sequences,
   separated lists). Every other pattern is translated to a .NET pattern with the same meaning and matched by a
   .NET `Regex`. [EcmaRegexTranslator.md](./EcmaRegexTranslator.md) describes the translation and its limits.
-  `JsonSchemaEvaluator.ToDotNetPattern` returns it.
+  `JsonSchemaEvaluator.ToDotNetPattern` returns it. A pattern that only the grammar with no `u` flag accepts goes to
+  `Regex` where matching by code unit can change an answer: a dot or negated class that is not the body of a `*` or
+  `+`, a set that holds some surrogates and not others, or a surrogate written in the pattern.
+- An instance string that holds the escape of half of a surrogate pair, such as `"\ud800"`, throws
+  `InvalidOperationException` when a pattern is matched against it. The other ports refuse such a document when they
+  parse it. [Patterns across the ports](PatternConformance.md) lists this and the other known differences.
 - Each distinct pattern is read and translated once in the life of the process, when the first schema that holds
   it is compiled. Nothing of that runs when an instance is evaluated. What the process keeps of patterns is
   bounded (4,096 patterns, 1,048,576 characters). Past the bound it is let go, and a pattern met again is read
@@ -243,6 +248,13 @@ So a match has a timeout. `JsonSchemaEvaluatorOptions.RegexMatchTimeout` sets it
   whether it matches. Call `Evaluate` inside `try` when the schema or the instance is not trusted.
 - The timeout is the same for the interpreter, for generated code (`CodeGeneration`), for an evaluator loaded from
   a program image and for an evaluator returned by `ForEntryPoint`.
+- **A pattern proved to match in time proportional to the text has no timeout,** whatever `RegexMatchTimeout` is. A
+  timeout makes .NET's engines check the clock as they match, which costs such a pattern up to half its time again
+  in the interpreted engine and a fifth in the compiled one, and bounds nothing a linear match does not. The proof
+  accepts a pattern with no backreference, lookaround or word boundary, whose repetitions each repeat one character
+  or set, and in which no repetition can give characters back to another that could take them. `^[a-z]+\.[a-z]+$`,
+  `^#[0-9a-fA-F]{6}$` and `(.*)` are proved linear. `^([a-z]+\.)*[a-z]+$` and `^[a-z]+[a-z0-9]+$` are not, and keep
+  the timeout. Code generated for a schema does the same.
 - A `Regex` supplied by `RegexProvider` keeps the timeout it was constructed with.
 - Set `RegexMatchTimeout = Regex.InfiniteMatchTimeout` to match with no timeout, which was the behaviour before
   the default was introduced.

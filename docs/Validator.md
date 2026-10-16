@@ -245,6 +245,7 @@ JsonSchema schema = JsonSchema.FromFile("./person-schema.json", options);
 
 - A match that runs for longer throws `RegexMatchTimeoutException` out of `Validate`. The document is not reported as invalid. Call `Validate` inside `try` when the schema or the document is not trusted.
 - `System.Text.RegularExpressions.Regex.InfiniteMatchTimeout` matches with no timeout. A value that is zero, negative, or longer than a `Regex` accepts throws `ArgumentOutOfRangeException` when the options are created.
+- A pattern proved to match in time proportional to the text, such as `^[a-z]+\.[a-z]+$`, has no timeout, because a timeout costs .NET's engines time on every match and bounds nothing for it.
 - The value is passed to the evaluator as `JsonSchemaEvaluatorOptions.RegexMatchTimeout`. The [runtime evaluator guide](./RuntimeEvaluator.md#regular-expression-match-timeout) says more about it.
 
 ## Invalid Patterns

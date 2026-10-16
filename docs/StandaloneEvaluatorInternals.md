@@ -42,6 +42,11 @@ emits one `CorvusJsonSchemaProgram` class in the default namespace:
   expressions a generated type holds for its own helpers (`[GeneratedRegex(pattern, RegexOptions.None,
   matchTimeoutMilliseconds: 1000)]`, or `new Regex(pattern, RegexOptions.Compiled, TimeSpan)` where there is no
   regex generator) have it too. A match that runs for longer throws `RegexMatchTimeoutException` to the caller.
+  A pattern that `EcmaRegexTranslator.IsLinear` proves to match in time proportional to the text has no timeout in
+  any of these forms (`matchTimeoutMilliseconds: global::System.Threading.Timeout.Infinite`, or
+  `Regex.InfiniteMatchTimeout`), as in the evaluator, which applies the same proof to the expressions it constructs.
+  The program generator reads the patterns for it from `SchemaProgramImage.EcmaPatterns`, and an image made without
+  them gives every pattern the timeout.
 - **Patterns.** Every pattern is the translation `EcmaRegexTranslator` writes for it
   ([EcmaRegexTranslator.md](EcmaRegexTranslator.md)), in the program and in the generated types alike. A pattern
   that is not a valid ECMA-262 regular expression stops the generation: the emitter reads every `pattern` and
