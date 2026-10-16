@@ -29,12 +29,15 @@ The 2.0 emitter lacks links and callback clients, which its own models never car
 | D1 | Drift | Client interface (`IApi*Client.cs`) | The 3.2 emitter writes a nested `SecuritySchemes` static class (name, type, HTTP scheme, API key name and location, OpenID Connect and OAuth2 URLs, available scopes) from `SecuritySchemeInfo`. The 2.0, 3.0 and 3.1 emitters write nothing, and until phase 0 step 1 their generators did not prepare the schemes at all | Upgrade: additive constants, patch-level. The consolidated emitter writes the class for every version whose document declares schemes |
 | D2 | Drift | Request struct `<remarks>` | The 3.2 emitter documents a request with `Description ?? Summary`; the others use `Summary` only | Upgrade: documentation only. Description first, summary as the fallback, everywhere |
 | D3 | Feature (2.0) | Request struct, `#warning` | The 2.0 emitter writes a `#warning` when a `collectionFormat` has no wire mapping at its location (`DegradedCollectionFormat`); the 3.x emitters do not know the field | Keep: the consolidated emitter writes it whenever the field is set, which only 2.0 preparation sets |
+| D5 | Drift | Client interface (`IApi*Client.cs`) | The 3.x emitters write a nested `SecurityRequirements` static class (per-operation scope arrays and their union per OAuth2 scheme); the 2.0 emitter never did. Missed by the cross-feed because the test-data covspec-2.0 declares no operation-level security; found by the byte-identity gate on the 2.0 runtime project's covspec-2.0, which does | Upgrade: additive constants, patch-level. The consolidated emitter writes the class for 2.0 documents too |
 | D4 | Feature (3.2) | Requests, responses, interfaces, implementations | Custom HTTP methods, `querystring` parameters, streaming item enumerators (SSE, NDJSON), multipart mixed bodies and responses, binary response parts, response summaries | Keep: the consolidated emitter is the 3.2 behaviour; older versions' records never carry these fields |
 
 No drift was found in the generated client implementations, request writers, response matchers, links or callback
-clients between any pair of emitters. The consolidation therefore starts from the 3.2 emitter's code, carries D1 and
-D2 as explicit `SpecVersion` branches while the family-by-family move is held byte-identical, and then removes those
-two branches in one commit each, regenerating the runtime test trees and recipes deliberately.
+clients between any pair of emitters. The consolidation therefore starts from the 3.2 emitter's code, carries D1, D2
+and D5 as explicit `SpecVersion` branches while the move is held byte-identical, and then removes those branches in
+one commit each, regenerating the runtime test trees and recipes deliberately. The harness's documents should grow
+to include the runtime projects' own (the canonicalization specifications and the runtime covspec-2.0), which is
+where D5 surfaced.
 
 ## Summary table
 
