@@ -1004,7 +1004,7 @@ internal static partial class CorvusJsonSchemaProgram
     }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-    [GeneratedRegex("^x-[a-zA-Z0-9_0-9.\\-_]+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^x-[a-zA-Z0-9_0-9.\\-_]+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: global::System.Threading.Timeout.Infinite)]
     private static partial Regex Regex0();
     [GeneratedRegex("^\\$message\\.(?:header|payload)#(?:/(?:(?:(?>[^/~\\uD800-\\uDFFF]|[\\uD800-\\uDBFF](?:[\\uDC00-\\uDFFF]|(?![\\uDC00-\\uDFFF]))|(?<![\\uD800-\\uDBFF])[\\uDC00-\\uDFFF]))|(?:~[01]))*)*", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Regex1();
