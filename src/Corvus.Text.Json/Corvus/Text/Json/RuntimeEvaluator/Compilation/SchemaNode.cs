@@ -230,7 +230,12 @@ internal sealed class PatternMatcher
 
     // Regex instances are immutable and thread-safe, so identical patterns are shared process-wide: repeated patterns
     // (metaschemas, many evaluators of similar schemas) compile once.
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(string Pattern, RegexOptions Options, TimeSpan Timeout), Regex> RegexCache = new();
+    //
+    // The keys and values of both caches are classes, so the dictionaries run the framework's shared code for
+    // reference types, which ReadyToRun has compiled. With a tuple of value types each method of the dictionary is
+    // compiled by the JIT when it is first used, which cost some 6 ms when the first schema with a pattern was
+    // compiled.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<RegexKey, Regex> RegexCache = new();
 
     // The translation of each pattern seen, or why it is not a valid ECMA-262 pattern, or that it is over a limit of
     // size. A pattern is read once per process, when the first schema that holds it is compiled.
@@ -238,7 +243,7 @@ internal sealed class PatternMatcher
     // Both caches are bounded, as a schema may come from outside and a process may compile schemas for as long as it
     // runs: when they hold more than MaxCachedPatterns patterns or MaxCachedCharacters characters they are emptied,
     // and a pattern met again is read again. What an evaluator holds is its own and is not affected.
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string? Translated, bool Unicode, string? Error, bool TooLarge)> TranslationCache = new();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Translation> TranslationCache = new();
     private static long cachedCharacters;
 
     private readonly Regex? regex;
@@ -330,7 +335,8 @@ internal sealed class PatternMatcher
         // A pattern that is not a valid ECMA-262 regular expression is refused here, when the schema is compiled,
         // whichever matcher would have taken it. So is a pattern over a limit of size, with its own message: it is
         // too large, and it is not reported as a pattern that is not valid.
-        (string? translation, bool unicode, string? error, bool tooLarge) = Translated(ecmaPattern);
+        Translation translated = Translated(ecmaPattern);
+        (string? translation, bool unicode, string? error, bool tooLarge) = (translated.Translated, translated.Unicode, translated.Error, translated.TooLarge);
         if (tooLarge)
         {
             throw new JsonSchemaCompilationException(error!);
@@ -394,14 +400,14 @@ internal sealed class PatternMatcher
     /// The translation of a pattern, from <see cref="TranslationCache"/> when the pattern has been seen. A pattern
     /// that is not valid or is too large is kept too, with its error, as it is as likely to be met again.
     /// </summary>
-    private static (string? Translated, bool Unicode, string? Error, bool TooLarge) Translated(string ecmaPattern)
+    private static Translation Translated(string ecmaPattern)
     {
-        if (TranslationCache.TryGetValue(ecmaPattern, out (string? Translated, bool Unicode, string? Error, bool TooLarge) known))
+        if (TranslationCache.TryGetValue(ecmaPattern, out Translation? known))
         {
             return known;
         }
 
-        (string? Translated, bool Unicode, string? Error, bool TooLarge) translated = Translate(ecmaPattern);
+        Translation translated = Translate(ecmaPattern);
         if (IsKept(ecmaPattern, translated.Translated) && TranslationCache.TryAdd(ecmaPattern, translated))
         {
             NoteKept(ecmaPattern.Length + (translated.Translated?.Length ?? 0));
@@ -435,17 +441,17 @@ internal sealed class PatternMatcher
     /// Translates a pattern for <see cref="TranslationCache"/>: its translation, or why it is not valid, or the
     /// message of the limit of size it is over (see <c>EcmaRegexLimits</c>).
     /// </summary>
-    private static (string? Translated, bool Unicode, string? Error, bool TooLarge) Translate(string ecmaPattern)
+    private static Translation Translate(string ecmaPattern)
     {
         try
         {
             return Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.TryTranslate(ecmaPattern, out string? translated, out bool unicode, out string? error)
-                ? (translated, unicode, null, false)
-                : (null, unicode, error, false);
+                ? new Translation(translated, unicode, null, false)
+                : new Translation(null, unicode, error, false);
         }
         catch (Corvus.Text.Json.CodeGeneration.EcmaRegexPatternTooLargeException tooLarge)
         {
-            return (null, false, tooLarge.Message, true);
+            return new Translation(null, false, tooLarge.Message, true);
         }
     }
 
@@ -474,7 +480,7 @@ internal sealed class PatternMatcher
             : options.RegexMatchTimeout;
 
         // An expression that is kept is shared by every evaluator of the pattern with these options (see RegexCache).
-        var key = (ecmaPattern, regexOptions, timeout);
+        var key = new RegexKey(ecmaPattern, regexOptions, timeout);
         if (!RegexCache.TryGetValue(key, out Regex? regex))
         {
             regex = new Regex(translated, regexOptions, timeout);
@@ -2560,6 +2566,45 @@ internal sealed class PatternMatcher
         }
 
         return int.TryParse(inner.Substring(0, comma), NumberStyles.Integer, CultureInfo.InvariantCulture, out min) && int.TryParse(inner.Substring(comma + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out max);
+    }
+
+    /// <summary>
+    /// The translation of a pattern, or why it is not a valid ECMA-262 pattern, or that it is over a limit of size
+    /// (see <see cref="TranslationCache"/>).
+    /// </summary>
+    private sealed class Translation(string? translated, bool unicode, string? error, bool tooLarge)
+    {
+        public string? Translated { get; } = translated;
+
+        public bool Unicode { get; } = unicode;
+
+        public string? Error { get; } = error;
+
+        public bool TooLarge { get; } = tooLarge;
+    }
+
+    /// <summary>The key of <see cref="RegexCache"/>: a pattern, the options and the timeout it is constructed with.</summary>
+    private sealed class RegexKey(string pattern, RegexOptions options, TimeSpan timeout) : IEquatable<RegexKey>
+    {
+        private readonly string pattern = pattern;
+        private readonly RegexOptions options = options;
+        private readonly TimeSpan timeout = timeout;
+
+        public bool Equals(RegexKey? other)
+        {
+            return other is not null
+                && this.options == other.options
+                && this.timeout == other.timeout
+                && string.Equals(this.pattern, other.pattern, StringComparison.Ordinal);
+        }
+
+        public override bool Equals(object? obj) => this.Equals(obj as RegexKey);
+
+        public override int GetHashCode()
+        {
+            // No generic helper, so nothing is compiled by the JIT for it (see RegexCache).
+            return unchecked((StringComparer.Ordinal.GetHashCode(this.pattern) * 31) + ((int)this.options * 17) + this.timeout.Ticks.GetHashCode());
+        }
     }
 }
 
