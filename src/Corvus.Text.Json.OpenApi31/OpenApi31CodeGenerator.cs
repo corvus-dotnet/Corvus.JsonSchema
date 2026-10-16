@@ -32,7 +32,7 @@ namespace Corvus.Text.Json.OpenApi31;
 /// to <see cref="CodeEmitHelpers"/> and <see cref="SchemaPointerBuilder"/>.
 /// </para>
 /// </remarks>
-public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
+public sealed class OpenApi31CodeGenerator
 {
     private readonly string rootNamespace;
     private readonly string? clientNamePrefix;
@@ -281,17 +281,6 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
         return [.. result];
     }
 
-    /// <inheritdoc/>
-    public string LanguageId => LanguageIds.CSharp;
-
-    /// <inheritdoc/>
-    public IReadOnlyList<GeneratedFile> EmitClient(in OpenApiClientModel model, IModelTypeMap types, ClientEmitOptions options)
-        => new OpenApi31CodeGenerator(options.Namespace, types, options.ClientName, this.ignoreEmptyFormUrlEncodedBody).EmitClientFiles(in model);
-
-    /// <inheritdoc/>
-    public IReadOnlyList<GeneratedFile> EmitCallbackClient(in OpenApiClientModel model, IModelTypeMap types, ClientEmitOptions options)
-        => new OpenApi31CodeGenerator(options.Namespace, types, options.ClientName, this.ignoreEmptyFormUrlEncodedBody).EmitCallbackClientFiles(in model);
-
     /// <summary>
     /// Prepares the operations of a specification for emission: the language-neutral operation model every client
     /// emitter consumes.
@@ -343,7 +332,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
     }
 
     private IReadOnlyList<GeneratedFile> EmitClientFiles(in OpenApiClientModel model)
-        => new CSharpClientEmitter(this.rootNamespace, this.typeMap, this.clientNamePrefix).EmitClient(in model, this.typeMap, new ClientEmitOptions(this.rootNamespace, this.clientNamePrefix));
+        => new CSharpClientEmitter().EmitClient(in model, this.typeMap, new ClientEmitOptions(this.rootNamespace, this.clientNamePrefix));
 
     /// <summary>
     /// Describes every operation for downstream generators: its identity, the generated
@@ -2146,12 +2135,6 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
         return resolved;
     }
 
-    private string GetParameterSourceTypeName(ParameterInfo param)
-    {
-        string resolved = this.ResolveSchemaTypeName(param.SchemaPointer);
-        return $"{resolved}.Source";
-    }
-
     private string ResolveSchemaTypeName(string? schemaPointer)
     {
         if (schemaPointer is not null
@@ -2178,20 +2161,6 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
         }
 
         return null;
-    }
-
-    // Whether the operation can also be offered as a closure-free, single-materialisation generic overload: it must
-    // have a body that is materialised from a Source (not a raw stream), and that body's type must be one the model
-    // generator gives a Source<TContext>.
-    private bool HasContextThreadedBody(OperationInfo op)
-    {
-        if (op.RequestBody is not { } requestBody || IsRawStreamRequestBody(requestBody))
-        {
-            return false;
-        }
-
-        return ResolveRequestBodySchemaPointer(requestBody) is { } pointer
-            && this.typeMap.HasBuilder(pointer);
     }
 
     private string ResolveRequestBodyTypeName(RequestBodyInfo requestBody)
@@ -2299,25 +2268,6 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
     }
 
     /// <summary>
-    /// Returns the per-property encoding overrides for the form-urlencoded or
-    /// multipart content entry, or <see langword="null"/> if none are defined.
-    /// </summary>
-    private static IReadOnlyDictionary<string, ContentEncodingInfo>? GetRequestBodyEncodings(
-        RequestBodyInfo requestBody,
-        Func<string, bool> mediaTypePredicate)
-    {
-        foreach (ContentInfo content in requestBody.Content)
-        {
-            if (mediaTypePredicate(content.MediaType))
-            {
-                return content.Encodings;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
     /// Returns <see langword="true"/> if the response's content is classified as
     /// <see cref="ContentCategory.OctetStream"/> (raw binary).
     /// </summary>
@@ -2405,17 +2355,6 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
         }
 
         return null;
-    }
-
-    /// <summary>
-    /// Returns the distinct content categories present in a response's content entries.
-    /// </summary>
-    private static ContentCategory[] GetDistinctContentCategories(ResponseInfo resp)
-    {
-        return resp.Content
-            .Select(c => CodeEmitHelpers.ClassifyMediaType(c.MediaType))
-            .Distinct()
-            .ToArray();
     }
 
     // ── Request struct emission ─────────────────────────────────────────
@@ -2526,7 +2465,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
     }
 
     private IReadOnlyList<GeneratedFile> EmitCallbackClientFiles(in OpenApiClientModel model)
-        => new CSharpClientEmitter(this.rootNamespace, this.typeMap, this.clientNamePrefix).EmitCallbackClient(in model, this.typeMap, new ClientEmitOptions(this.rootNamespace, this.clientNamePrefix));
+        => new CSharpClientEmitter().EmitCallbackClient(in model, this.typeMap, new ClientEmitOptions(this.rootNamespace, this.clientNamePrefix));
 
     /// <summary>
     /// Collects JSON Schema pointers from webhooks and callbacks in the specification.

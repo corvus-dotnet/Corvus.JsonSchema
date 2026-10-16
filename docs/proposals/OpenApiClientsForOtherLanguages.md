@@ -438,6 +438,24 @@ PR 0b, one C# emitter:
    patch, breaking is minor). If review size demands, steps 5 to 8 split as PR 0b (consolidation, identical output)
    and PR 0c (drift upgrades, changed output).
 
+Phase 0 code review (2026-10-16), after steps 1 to 8 were built. Confirmed defects and their disposition:
+
+| Finding | Disposition |
+|---|---|
+| Array and object parameter items, and object keys, ignored `allowReserved`; the 3.0 and 3.1 preparers never read it at all, and cookie items were encoded while cookie scalars were not | Fixed. `allowReserved` is read for query parameters (3.0, 3.1, 3.2) and threaded through every path, query and cookie writer. An allowReserved value is written with RFC 6570 reserved expansion (`Utf8Uri.TryEscapeUri`: unreserved and reserved characters pass, everything else is percent-encoded), no longer as raw bytes |
+| Formatted numbers and raw JSON text went to the URL unescaped, so a double such as `1E+21` carried a `+` that form decoders read as a space, and a nested item carried literal braces | Fixed. Every value goes through the escaper, including formatted numbers, with no change to the allocation profile |
+| Scalar values were escaped into a `stackalloc` sized by the value's length, and array header values into a fixed 512-byte stack buffer with unchecked copies | Fixed. URL values escape straight into the request writer's buffer; header values are built with `Utf8ValueBuilder`, a stack-first builder that grows into the array pool |
+| The fixture runner compared `Uri.PathAndQuery`, which System.Uri normalises (a literal pipe or space passes as `%7C` or `%20`, `%41` passes as `A`, dot segments collapse), so encoding cases could pass vacuously | Fixed. The runner compares the path and query exactly as the client wrote them |
+| Response header names were lower-cased by the adapter and looked up case-sensitively by the runner; `ok` cases without `case` and `error` cases without `error.contains` asserted nothing | Fixed. Case-insensitive lookup; an `ok` expectation without `case` asserts that no case matched; `error.contains` is required and the fifteen cases that lacked it got their substrings |
+| Dead private methods left by the consolidation, the four generators still implementing `IOpenApiClientEmitter` by constructing a `CSharpClientEmitter` per call, and the fixture adapter re-deriving the client type name | Removed and deduplicated. The CLI resolves the emitter by language through `OpenApiClientEmitters.Create`; the generators only prepare |
+
+Noted, not changed: `CSharpFixtureAdapterEmitter` is a test-only emitter shipped as a public type of the product
+assembly, and its output (`FixtureAdapter.cs`) is excluded from the byte-identity gate. Both stand until a second
+language's adapter shows the shape of a shared test-support package. `--emit-fixture-adapter` is honoured by
+`openapi-client` only, so callback operations have no fixtures yet. The adapter answers `unsupported` for a case
+that omits a required input, so missing-required behaviour cannot be fixture-tested against a typed client; the
+runner reports such a case as skipped, never as passed.
+
 ### Phase 1. The pilot pair, Go then TypeScript, each to full parity
 
 - Go: dependency 2 (public document accessors) as its own small PR on the Go port first, released as a module
@@ -520,6 +538,8 @@ How the improvement opportunities of the first draft were handled:
 
 ## Residual opportunities, not scheduled
 
+- Fixtures for callback and webhook operations: `--emit-fixture-adapter` on `openapi-callback-client`, and the
+  adapter moved out of the product assembly into a test-support package once a second language has one.
 - An idiomatic client wrapper over the C library for C and C++ consumers (decision 2).
 - Consolidating the four generators' server emission the same way, once a second language wants servers
   (opportunity 4 at the review gate).

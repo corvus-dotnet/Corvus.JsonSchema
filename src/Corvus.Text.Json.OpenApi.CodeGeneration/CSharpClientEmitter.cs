@@ -29,7 +29,16 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
     /// <param name="rootNamespace">The root namespace for generated types.</param>
     /// <param name="typeMap">The generated model types the client refers to, by schema pointer.</param>
     /// <param name="clientNamePrefix">The prefix for generated client type names, or <see langword="null"/> to use <c>Api</c>.</param>
-    public CSharpClientEmitter(string rootNamespace, IModelTypeMap typeMap, string? clientNamePrefix = null)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CSharpClientEmitter"/> class. The namespace, type map and
+    /// client name prefix of each emission come from its <see cref="ClientEmitOptions"/> and <see cref="IModelTypeMap"/>.
+    /// </summary>
+    public CSharpClientEmitter()
+        : this(string.Empty, EmptyTypeMap.Instance, null)
+    {
+    }
+
+    private CSharpClientEmitter(string rootNamespace, IModelTypeMap typeMap, string? clientNamePrefix)
     {
         this.rootNamespace = rootNamespace;
         this.typeMap = typeMap;
@@ -73,6 +82,21 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         return files;
     }
 
+    private sealed class EmptyTypeMap : IModelTypeMap
+    {
+        public static readonly EmptyTypeMap Instance = new();
+
+        public string FallbackTypeReference => "JsonElement";
+
+        public bool TryGetTypeReference(string schemaPointer, out string typeReference)
+        {
+            typeReference = string.Empty;
+            return false;
+        }
+
+        public bool HasBuilder(string schemaPointer) => false;
+    }
+
     private static Dictionary<string, List<OperationInfo>> GroupOperationsByTag(
         List<OperationInfo> operations)
     {
@@ -80,16 +104,9 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
 
         foreach (OperationInfo op in operations)
         {
-            if (op.Tags.Length == 0)
+            foreach (string tag in op.CSharpClientTags())
             {
-                AddToGroup(groups, "default", op);
-            }
-            else
-            {
-                foreach (string tag in op.Tags)
-                {
-                    AddToGroup(groups, tag, op);
-                }
+                AddToGroup(groups, tag, op);
             }
         }
 
@@ -110,12 +127,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         }
     }
 
-    private string GetClientName(string tag)
-    {
-        string prefix = this.clientNamePrefix ?? "Api";
-        string sanitized = CodeEmitHelpers.SanitizeIdentifier(tag);
-        return $"{prefix}{sanitized}";
-    }
+    private string GetClientName(string tag) => CSharpNamingExtensions.CSharpClientName(this.clientNamePrefix, tag);
 
     private string GetParameterTypeName(ParameterInfo param)
     {
@@ -249,59 +261,6 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> if the multipart/mixed request body carries at least
-    /// one binary part (a binary prefix part or binary repeating items).
-    /// </summary>
-    private static bool HasMixedBinaryParts(RequestBodyInfo requestBody)
-    {
-        if (requestBody.ItemPart is { IsBinary: true })
-        {
-            return true;
-        }
-
-        if (requestBody.PrefixParts is { } prefixParts)
-        {
-            foreach (MixedPartInfo part in prefixParts)
-            {
-                if (part.IsBinary)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Returns <see langword="true"/> when the mixed body's binary parts all trail its
-    /// non-binary parts in schema position. Mixed bodies are positional (the wire order
-    /// is the schema order), so this is the shape live streaming requires; other shapes
-    /// keep the buffered path.
-    /// </summary>
-    private static bool MixedBinaryPartsAreTailShaped(RequestBodyInfo requestBody)
-    {
-        bool seenBinary = false;
-        if (requestBody.PrefixParts is { } prefixParts)
-        {
-            foreach (MixedPartInfo part in prefixParts)
-            {
-                if (part.IsBinary)
-                {
-                    seenBinary = true;
-                }
-                else if (seenBinary)
-                {
-                    return false;
-                }
-            }
-        }
-
-        // Non-binary repeating items after binary prefix parts also interleave.
-        return requestBody.ItemPart is not { IsBinary: false } || !seenBinary;
-    }
-
-    /// <summary>
     /// Detects <c>multipart/mixed</c> content with <c>prefixEncoding</c> or <c>itemEncoding</c>.
     /// </summary>
     private static IReadOnlyDictionary<string, ContentEncodingInfo>? GetRequestBodyEncodings(
@@ -347,36 +306,6 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         return null;
     }
 
-    // The JSON response body's schema pointer (the key into the type map's builder set) — used to decide whether the body
-    // type carries a Source<TContext>, and so whether a closure-free Ok<TContext> overload can be emitted for it.
-    private string? ResolveResponseBodySchemaPointer(ResponseInfo resp)
-    {
-        foreach (ContentInfo content in resp.Content)
-        {
-            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
-            {
-                return content.SchemaPointer;
-            }
-        }
-
-        return null;
-    }
-
-    // The JSON-ish media type the response declares for its body, picked by the same rule that picked the body's
-    // schema so the two always describe the same content entry.
-    private static string DeclaredJsonMediaType(ResponseInfo resp)
-    {
-        foreach (ContentInfo content in resp.Content)
-        {
-            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
-            {
-                return content.MediaType;
-            }
-        }
-
-        return "application/json";
-    }
-
     private string? ResolveItemSchemaTypeName(ResponseInfo resp)
     {
         foreach (ContentInfo content in resp.Content)
@@ -388,50 +317,6 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         }
 
         return null;
-    }
-
-    private static List<ContentInfo> GetStreamingContent(ResponseInfo response)
-    {
-        List<ContentInfo> streamingContent = [];
-
-        foreach (ContentInfo content in response.Content)
-        {
-            if (content.ItemSchemaPointer is not null)
-            {
-                streamingContent.Add(content);
-            }
-        }
-
-        return streamingContent;
-    }
-
-    private static string GetStreamingFactoryName(string baseName, string mediaType, bool includeMediaTypeSuffix)
-    {
-        if (!includeMediaTypeSuffix)
-        {
-            return baseName;
-        }
-
-        if (mediaType.StartsWith("text/event-stream", StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{baseName}Sse";
-        }
-
-        if (mediaType.StartsWith("application/x-ndjson", StringComparison.OrdinalIgnoreCase))
-        {
-            return $"{baseName}Ndjson";
-        }
-
-        return $"{baseName}{CodeEmitHelpers.SanitizeIdentifier(mediaType)}";
-    }
-
-    private static string GetSimpleTypeIdentifier(string typeName)
-    {
-        int dotIndex = typeName.LastIndexOf('.');
-        string simpleName = dotIndex >= 0 ? typeName[(dotIndex + 1)..] : typeName;
-        int genericIndex = simpleName.IndexOf('<');
-
-        return genericIndex >= 0 ? simpleName[..genericIndex] : simpleName;
     }
 
     /// <summary>
@@ -478,26 +363,6 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> if any 2xx or default response of the operation carries a
-    /// raw binary (octet-stream) or text-only body, in which case the server result/endpoint emit
-    /// the binary response path mirroring the client's <see cref="System.IO.Stream"/> accessor.
-    /// </summary>
-    private static bool HasBinaryStyleResponse(OperationInfo op)
-    {
-        foreach (ResponseInfo resp in op.Responses)
-        {
-            bool eligible = resp.StatusCode == "default"
-                || (resp.StatusCode.Length > 0 && resp.StatusCode[0] == '2');
-            if (eligible && (IsOctetStreamResponse(resp) || IsTextOnlyResponse(resp)))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
     /// Returns <see langword="true"/> if the response declares <c>multipart/form-data</c>
     /// content with at least one <c>format: binary</c> property, in which case the server
     /// result carries a typed body plus <see cref="BinaryPartData"/> parts and the endpoint
@@ -506,25 +371,6 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
     private static bool IsMultipartResponseWithBinaryParts(ResponseInfo resp)
         => resp.BinaryParts.Length > 0
             && Array.IndexOf(GetDistinctContentCategories(resp), ContentCategory.Multipart) >= 0;
-
-    /// <summary>
-    /// Returns <see langword="true"/> if any 2xx or default response of the operation carries
-    /// a <c>multipart/form-data</c> body with binary parts.
-    /// </summary>
-    private static bool HasMultipartResponse(OperationInfo op)
-    {
-        foreach (ResponseInfo resp in op.Responses)
-        {
-            bool eligible = resp.StatusCode == "default"
-                || (resp.StatusCode.Length > 0 && resp.StatusCode[0] == '2');
-            if (eligible && IsMultipartResponseWithBinaryParts(resp))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     // ── Request struct emission ─────────────────────────────────────────
     private GeneratedFile EmitRequestStruct(OperationInfo op)
