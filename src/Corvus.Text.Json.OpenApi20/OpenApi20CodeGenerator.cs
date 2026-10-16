@@ -32,7 +32,7 @@ namespace Corvus.Text.Json.OpenApi20;
 /// to <see cref="CodeEmitHelpers"/> and <see cref="SchemaPointerBuilder"/>.
 /// </para>
 /// </remarks>
-public sealed class OpenApi20CodeGenerator : IOpenApiClientEmitter
+public sealed class OpenApi20CodeGenerator
 {
     private readonly string rootNamespace;
     private readonly string? clientNamePrefix;
@@ -346,17 +346,6 @@ public sealed class OpenApi20CodeGenerator : IOpenApiClientEmitter
         return [.. result];
     }
 
-    /// <inheritdoc/>
-    public string LanguageId => LanguageIds.CSharp;
-
-    /// <inheritdoc/>
-    public IReadOnlyList<GeneratedFile> EmitClient(in OpenApiClientModel model, IModelTypeMap types, ClientEmitOptions options)
-        => new OpenApi20CodeGenerator(options.Namespace, types, options.ClientName, this.ignoreEmptyFormUrlEncodedBody).EmitClientFiles(in model);
-
-    /// <inheritdoc/>
-    public IReadOnlyList<GeneratedFile> EmitCallbackClient(in OpenApiClientModel model, IModelTypeMap types, ClientEmitOptions options)
-        => throw new NotSupportedException("OpenAPI 2.0 documents declare no webhooks or callbacks.");
-
     /// <summary>
     /// Prepares the operations of a specification for emission: the language-neutral operation model every client
     /// emitter consumes.
@@ -408,7 +397,7 @@ public sealed class OpenApi20CodeGenerator : IOpenApiClientEmitter
     }
 
     private IReadOnlyList<GeneratedFile> EmitClientFiles(in OpenApiClientModel model)
-        => new CSharpClientEmitter(this.rootNamespace, this.typeMap, this.clientNamePrefix).EmitClient(in model, this.typeMap, new ClientEmitOptions(this.rootNamespace, this.clientNamePrefix));
+        => new CSharpClientEmitter().EmitClient(in model, this.typeMap, new ClientEmitOptions(this.rootNamespace, this.clientNamePrefix));
 
     // ═══════════════════════════════════════════════════════════════════
     // Schema pointer collection — walks typed model directly
@@ -1842,23 +1831,10 @@ public sealed class OpenApi20CodeGenerator : IOpenApiClientEmitter
         }
     }
 
-    private string GetClientName(string tag)
-    {
-        string prefix = this.clientNamePrefix ?? "Api";
-        string sanitized = CodeEmitHelpers.SanitizeIdentifier(tag);
-        return $"{prefix}{sanitized}";
-    }
-
     private string GetParameterTypeName(ParameterInfo param)
     {
         string resolved = this.ResolveSchemaTypeName(param.SchemaPointer);
         return resolved;
-    }
-
-    private string GetParameterSourceTypeName(ParameterInfo param)
-    {
-        string resolved = this.ResolveSchemaTypeName(param.SchemaPointer);
-        return $"{resolved}.Source";
     }
 
     private string ResolveSchemaTypeName(string? schemaPointer)
@@ -1903,18 +1879,6 @@ public sealed class OpenApi20CodeGenerator : IOpenApiClientEmitter
         }
 
         return null;
-    }
-
-    // Whether the operation can also be offered as a closure-free, single-materialisation generic overload.
-    private bool HasContextThreadedBody(OperationInfo op)
-    {
-        if (op.RequestBody is not { } requestBody || IsRawStreamRequestBody(requestBody))
-        {
-            return false;
-        }
-
-        return ResolveRequestBodySchemaPointer(requestBody) is { } pointer
-            && this.typeMap.HasBuilder(pointer);
     }
 
     private string ResolveRequestBodyTypeName(RequestBodyInfo requestBody)
@@ -2031,14 +1995,6 @@ public sealed class OpenApi20CodeGenerator : IOpenApiClientEmitter
         }
 
         return "application/json";
-    }
-
-    private static ContentCategory[] GetDistinctContentCategories(ResponseInfo resp)
-    {
-        return resp.Content
-            .Select(c => CodeEmitHelpers.ClassifyMediaType(c.MediaType))
-            .Distinct()
-            .ToArray();
     }
 
     // ── Request struct emission ─────────────────────────────────────────

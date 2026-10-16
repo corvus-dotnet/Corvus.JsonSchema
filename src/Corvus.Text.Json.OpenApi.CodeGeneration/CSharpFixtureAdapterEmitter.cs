@@ -101,8 +101,7 @@ public static class CSharpFixtureAdapterEmitter
 
     private static void EmitOperation(IndentedWriter w, in OperationInfo op, IModelTypeMap types, ClientEmitOptions options)
     {
-        string tag = op.Tags.Length > 0 ? op.Tags[0] : "default";
-        string clientType = $"{options.ClientName ?? "Api"}{CodeEmitHelpers.SanitizeIdentifier(tag)}Client";
+        string clientType = $"{CSharpNamingExtensions.CSharpClientName(options.ClientName, op.CSharpClientTags()[0])}Client";
         string responseType = $"{op.CSharpMethodName()}Response";
 
         w.WriteLine($"private static async ValueTask<string> {op.CSharpMethodName()}Async(JsonElement input, IApiTransport transport, CancellationToken cancellationToken)");

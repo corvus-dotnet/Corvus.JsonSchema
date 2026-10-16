@@ -46,6 +46,8 @@ internal sealed class OpenApiCallbackClientCommand : AsyncCommand<OpenApiGenerat
             return 1;
         }
 
+        IOpenApiClientEmitter emitter = OpenApiClientEmitters.Create(language);
+
         // Resolve the spec URL — explicit --spec-url takes priority, then lock file descriptionLocation
         string? specUrl = settings.SpecUrl;
         if (specUrl is null)
@@ -134,7 +136,7 @@ internal sealed class OpenApiCallbackClientCommand : AsyncCommand<OpenApiGenerat
                 settings.ClientName,
                 settings.IgnoreEmptyFormUrlEncodedBody);
             OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.WebhooksAndCallbacks, filter, referenceResolver);
-                files = generator.EmitCallbackClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), null, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
+                files = emitter.EmitCallbackClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), null, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
         }
         else if (specVersion is "3.1" or not "3.0")
         {
@@ -161,7 +163,7 @@ internal sealed class OpenApiCallbackClientCommand : AsyncCommand<OpenApiGenerat
                 settings.ClientName,
                 settings.IgnoreEmptyFormUrlEncodedBody);
             OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.WebhooksAndCallbacks, filter, referenceResolver);
-                files = generator.EmitCallbackClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), null, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
+                files = emitter.EmitCallbackClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), null, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
         }
         else
         {
@@ -188,7 +190,7 @@ internal sealed class OpenApiCallbackClientCommand : AsyncCommand<OpenApiGenerat
                 settings.ClientName,
                 settings.IgnoreEmptyFormUrlEncodedBody);
             OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.WebhooksAndCallbacks, filter, referenceResolver);
-                files = generator.EmitCallbackClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), null, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
+                files = emitter.EmitCallbackClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), null, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
         }
 
         AnsiConsole.MarkupLine($"[green]Callback client files:[/] {files.Count}");

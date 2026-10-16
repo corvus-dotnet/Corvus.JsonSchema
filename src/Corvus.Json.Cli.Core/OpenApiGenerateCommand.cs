@@ -40,6 +40,8 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             return 1;
         }
 
+        IOpenApiClientEmitter emitter = OpenApiClientEmitters.Create(language);
+
         // Resolve the spec URL — explicit --spec-url takes priority, then lock file descriptionLocation
         string? specUrl = settings.SpecUrl;
         if (specUrl is null)
@@ -152,7 +154,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
                 SchemaTypeMap typeMap = new(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement");
                 ClientEmitOptions emitOptions = new(rootNamespace, settings.ClientName);
-                files = generator.EmitClient(in model, typeMap, emitOptions);
+                files = emitter.EmitClient(in model, typeMap, emitOptions);
                 if (settings.EmitFixtureAdapter)
                 {
                     files = [.. files, CSharpFixtureAdapterEmitter.Emit(in model, typeMap, emitOptions)];
@@ -187,7 +189,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
                 SchemaTypeMap typeMap = new(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement");
                 ClientEmitOptions emitOptions = new(rootNamespace, settings.ClientName);
-                files = generator.EmitClient(in model, typeMap, emitOptions);
+                files = emitter.EmitClient(in model, typeMap, emitOptions);
                 if (settings.EmitFixtureAdapter)
                 {
                     files = [.. files, CSharpFixtureAdapterEmitter.Emit(in model, typeMap, emitOptions)];
@@ -222,7 +224,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
                 SchemaTypeMap typeMap = new(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement");
                 ClientEmitOptions emitOptions = new(rootNamespace, settings.ClientName);
-                files = generator.EmitClient(in model, typeMap, emitOptions);
+                files = emitter.EmitClient(in model, typeMap, emitOptions);
                 if (settings.EmitFixtureAdapter)
                 {
                     files = [.. files, CSharpFixtureAdapterEmitter.Emit(in model, typeMap, emitOptions)];
@@ -257,7 +259,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
                 SchemaTypeMap typeMap = new(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement");
                 ClientEmitOptions emitOptions = new(rootNamespace, settings.ClientName);
-                files = generator.EmitClient(in model, typeMap, emitOptions);
+                files = emitter.EmitClient(in model, typeMap, emitOptions);
                 if (settings.EmitFixtureAdapter)
                 {
                     files = [.. files, CSharpFixtureAdapterEmitter.Emit(in model, typeMap, emitOptions)];
