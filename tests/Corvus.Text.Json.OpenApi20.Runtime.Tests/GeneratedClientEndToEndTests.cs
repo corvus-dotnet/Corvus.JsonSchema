@@ -52,13 +52,12 @@ public class GeneratedClientEndToEndTests
 
         string uri = harness.CapturedRequest!.RequestUri!.OriginalString;
 
-        // The element value "a b" displays with its raw space in OriginalString; the
-        // property under test is the SEPARATOR between elements: comma for csv,
-        // %20 for ssv, %09 for tsv, and %7C for pipes.
-        StringAssert.Contains(uri, "csvTags=a b,c");
-        StringAssert.Contains(uri, "ssvTags=a b%20c");
-        StringAssert.Contains(uri, "tsvTags=a b%09c");
-        StringAssert.Contains(uri, "pipeTags=a b%7Cc");
+        // Each element is percent-encoded (the space in "a b" becomes %20); the property under test is the
+        // SEPARATOR between elements: comma for csv, %20 for ssv, %09 for tsv, and %7C for pipes.
+        StringAssert.Contains(uri, "csvTags=a%20b,c");
+        StringAssert.Contains(uri, "ssvTags=a%20b%20c");
+        StringAssert.Contains(uri, "tsvTags=a%20b%09c");
+        StringAssert.Contains(uri, "pipeTags=a%20b%7Cc");
     }
 
     [TestMethod]

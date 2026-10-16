@@ -110,9 +110,13 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
 
                 writer.Write("tags="u8);
                 totalWritten += 5;
-                byte[] elBytesTags = System.Text.Encoding.UTF8.GetBytes(itemTags.ToString());
-                writer.Write(elBytesTags);
-                totalWritten += elBytesTags.Length;
+                using UnescapedUtf8JsonString elTags = itemTags.GetUtf8String();
+                Span<byte> escTags = writer.GetSpan(elTags.Span.Length * 3);
+                if (Utf8Uri.TryEscapeDataString(elTags.Span, escTags, out int ewTags))
+                {
+                    writer.Advance(ewTags);
+                    totalWritten += ewTags;
+                }
                 first = false;
             }
         }
@@ -129,14 +133,31 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
 
                 writer.Write("filter%5B"u8);
                 totalWritten += 9;
-                byte[] keyBytesFilter = System.Text.Encoding.UTF8.GetBytes(propFilter.Name);
-                writer.Write(keyBytesFilter);
-                totalWritten += keyBytesFilter.Length;
+                using UnescapedUtf8JsonString keyFilter = propFilter.Utf8NameSpan;
+                Span<byte> kescFilter = writer.GetSpan(keyFilter.Span.Length * 3);
+                if (Utf8Uri.TryEscapeDataString(keyFilter.Span, kescFilter, out int kwFilter))
+                {
+                    writer.Advance(kwFilter);
+                    totalWritten += kwFilter;
+                }
                 writer.Write("%5D="u8);
                 totalWritten += 4;
-                byte[] elBytesFilter = System.Text.Encoding.UTF8.GetBytes(propFilter.Value.ToString());
-                writer.Write(elBytesFilter);
-                totalWritten += elBytesFilter.Length;
+                if (propFilter.Value.ValueKind == JsonValueKind.String)
+                {
+                    using UnescapedUtf8JsonString elFilter = propFilter.Value.GetUtf8String();
+                    Span<byte> escFilter = writer.GetSpan(elFilter.Span.Length * 3);
+                    if (Utf8Uri.TryEscapeDataString(elFilter.Span, escFilter, out int ewFilter))
+                    {
+                        writer.Advance(ewFilter);
+                        totalWritten += ewFilter;
+                    }
+                }
+                else
+                {
+                    using RawUtf8JsonString rawFilter = JsonMarshal.GetRawUtf8Value(propFilter.Value);
+                    writer.Write(rawFilter.Span);
+                    totalWritten += rawFilter.Span.Length;
+                }
                 first = false;
             }
         }

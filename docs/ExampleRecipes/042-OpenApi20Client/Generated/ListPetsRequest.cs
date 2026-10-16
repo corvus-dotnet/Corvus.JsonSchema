@@ -98,9 +98,13 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
                     totalWritten += 1;
                 }
 
-                byte[] elBytesTags = System.Text.Encoding.UTF8.GetBytes(itemTags.ToString());
-                writer.Write(elBytesTags);
-                totalWritten += elBytesTags.Length;
+                using UnescapedUtf8JsonString elTags = itemTags.GetUtf8String();
+                Span<byte> escTags = writer.GetSpan(elTags.Span.Length * 3);
+                if (Utf8Uri.TryEscapeDataString(elTags.Span, escTags, out int ewTags))
+                {
+                    writer.Advance(ewTags);
+                    totalWritten += ewTags;
+                }
                 firstItemTags = false;
             }
 

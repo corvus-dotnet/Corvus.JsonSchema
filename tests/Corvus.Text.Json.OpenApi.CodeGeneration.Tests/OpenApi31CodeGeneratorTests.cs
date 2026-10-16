@@ -9233,8 +9233,8 @@ public class OpenApi31CodeGeneratorTests
         GeneratedFile requestFile = GetFile(files, "GetItemRequest.cs");
 
         Assert.IsFalse(
-            requestFile.Content.Contains("GetUtf8String"),
-            "Expected no GetUtf8String() calls for $ref'd integer parameters");
+            requestFile.Content.Contains("this.Id).GetUtf8String") || requestFile.Content.Contains("this.Limit).GetUtf8String"),
+            "Expected no GetUtf8String() calls for $ref'd integer parameters (the string array's items take that path by design)");
         Assert.IsTrue(
             requestFile.Content.Contains("this.Id.TryFormat("),
             "Expected the int32 path param to be rendered with TryFormat");

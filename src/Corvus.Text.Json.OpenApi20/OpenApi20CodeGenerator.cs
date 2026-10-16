@@ -2309,8 +2309,9 @@ public sealed class OpenApi20CodeGenerator : IOpenApiClientEmitter
                 ?? ParameterSerializationKind.String;
             ParameterStyle style = matchingParam?.Style ?? ParameterStyle.Simple;
             bool explode = matchingParam?.Explode ?? false;
+            ParameterSerializationKind? pathElementKind = matchingParam?.ElementSerializationKind;
 
-            CodeEmitHelpers.EmitPathParamWrite(w, paramName, $"this.{fieldName}", fieldName, kind, style, explode);
+            CodeEmitHelpers.EmitPathParamWrite(w, paramName, $"this.{fieldName}", fieldName, kind, style, explode, elementKind: pathElementKind);
             remaining = remaining[(openBrace + 1 + closeBrace + 1)..];
         }
     }
@@ -2342,13 +2343,13 @@ public sealed class OpenApi20CodeGenerator : IOpenApiClientEmitter
             {
                 w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, elementKind: param.ElementSerializationKind);
                 w.CloseBrace();
                 w.WriteLine();
             }
             else
             {
-                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, elementKind: param.ElementSerializationKind);
                 w.WriteLine();
             }
         }
@@ -2389,13 +2390,13 @@ public sealed class OpenApi20CodeGenerator : IOpenApiClientEmitter
             {
                 w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, elementKind: param.ElementSerializationKind);
                 w.CloseBrace();
                 w.WriteLine();
             }
             else
             {
-                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, elementKind: param.ElementSerializationKind);
                 w.WriteLine();
             }
         }
@@ -4673,7 +4674,7 @@ public sealed class OpenApi20CodeGenerator : IOpenApiClientEmitter
                 w.WriteLine($"if (!this.{propertyName}.IsUndefined())");
                 w.OpenBrace();
                 w.WriteLine($"ReadOnlySpan<byte> nameUtf8{uid} = \"{header.HeaderName}\"u8;");
-                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{propertyName}", uid, header.SerializationKind, ParameterStyle.Simple, header.Explode);
+                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{propertyName}", uid, header.SerializationKind, ParameterStyle.Simple, header.Explode, elementKind: header.ElementSerializationKind);
                 w.CloseBrace();
                 w.WriteLine();
             }
