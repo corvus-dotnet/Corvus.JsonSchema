@@ -163,7 +163,10 @@ class PatternHeldLimitTest {
                 held[n] = Pattern.compile(translated);
             }
             long holds = heap() - before;
-            if (holds > counted + counted / 50) {
+            // Within 5%: a long run of literal text is an int[] large enough for G1 to give it regions of its own,
+            // and what it rounds up to depends on the size of the regions, which depends on the heap the machine
+            // gives the JVM. On a macOS runner with Java 25, 40,000 characters held 2.6% more than counted.
+            if (holds > counted + counted / 20) {
                 under.add(held[0].pattern().substring(0, 40) + " holds " + holds + " and is counted " + counted);
             }
         }

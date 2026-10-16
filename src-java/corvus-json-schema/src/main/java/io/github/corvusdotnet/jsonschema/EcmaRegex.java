@@ -248,7 +248,8 @@ final class EcmaRegex {
      * </ul>
      *
      * <p>The tests compare the count with the heap that compiled translations hold: it is the count, or less, to
-     * within 2%. With object pointers that are not compressed (a heap of 32 GB or more) the engine keeps more than
+     * within 5%, which is what G1 can round a long run of literal text up to, by the size of its regions. With
+     * object pointers that are not compressed (a heap of 32 GB or more) the engine keeps more than
      * is counted.
      */
     static long held(String translated) {
