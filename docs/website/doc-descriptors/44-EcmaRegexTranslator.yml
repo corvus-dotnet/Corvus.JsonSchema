@@ -1,0 +1,3 @@
+source: EcmaRegexTranslator.md
+navTitle: "ECMA-262 regex translator"
+description: "How the .NET evaluator and generators translate an ECMA-262 pattern to a .NET regular expression: the two grammars, what is refused, the limits of size and the known limits."

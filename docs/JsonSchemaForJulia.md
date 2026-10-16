@@ -158,7 +158,7 @@ found["/name"]["title"]["#/properties/name"]  # "Name"
 `pattern` and `patternProperties` have ECMA-262 semantics. The common shapes of pattern are matched with no regular
 expression engine. Any other pattern is translated into one that the PCRE2 library Julia bundles matches with the
 same meaning, with every character class written from the package's own Unicode 17 data. The answers are those of V8
-on every Julia version, with one exception for [Julia 1.10](#julia-110).
+on every Julia version, with one exception for [Julia 1.10](#the-long-term-support-release).
 
 What is exact:
 
@@ -362,7 +362,7 @@ case-insensitive backreference above, which are refused.
 A JSON string with the escape of a surrogate that is not half of a pair, such as `"\ud800"`, is not Unicode text. The
 parser refuses a document that has one, an instance or a schema, so a pattern is never matched against such a string.
 
-### Julia 1.10
+### The long-term support release
 
 Julia 1.10 bundles PCRE2 10.42, whose case folding is that of Unicode 14. A case-insensitive backreference there
 does not hold equivalent the two characters of each of the thirty pairs below, which Unicode 15.1 and 16 made
