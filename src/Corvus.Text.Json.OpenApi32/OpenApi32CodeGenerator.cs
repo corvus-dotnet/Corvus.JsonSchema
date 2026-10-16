@@ -217,8 +217,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
 
             bool hasBody = opRef.Operation.RequestBody.IsNotUndefined();
 
-            string methodName = GetMethodName(operationId, opRef.Method, path);
-
+            string methodName = CodeEmitHelpers.GetMethodName(operationId, opRef.Method, path);
             result.Add(new OperationSummary(
                 path,
                 opRef.Method,
@@ -409,14 +408,14 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
                 op.PathTemplate,
                 op.Method,
                 op.OperationId,
-                op.MethodName,
-                $"{this.rootNamespace}.{GeneratedClientTypeNaming.RequestTypeName(op.MethodName)}",
-                $"{this.rootNamespace}.{GeneratedClientTypeNaming.ResponseTypeName(op.MethodName)}",
+                op.CSharpMethodName(),
+                $"{this.rootNamespace}.{GeneratedClientTypeNaming.RequestTypeName(op.CSharpMethodName())}",
+                $"{this.rootNamespace}.{GeneratedClientTypeNaming.ResponseTypeName(op.CSharpMethodName())}",
                 parameters,
                 op.RequestBody is not null,
                 responses,
                 $"{this.rootNamespace}.{this.GetClientName(clientTag)}Client",
-                $"{op.MethodName}Async",
+                $"{op.CSharpMethodName()}Async",
                 requestBodyTypeName,
                 responseHeaders));
         }
@@ -1826,7 +1825,6 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
             : null;
         bool isDeprecated = opRef.Operation.Deprecated.ValueKind == JsonValueKind.True;
         string[] tags = ExtractTags(opRef.Operation);
-        string methodName = GetMethodName(operationId, opRef.Method, pathTemplate, opRef.CustomMethodName);
 
         ParameterInfo[] parameters = PrepareParameters(
             opRef.Operation, opRef.PathItem, pathNameUtf8, opRef.Method, referenceResolver, specRoot, opRef.CustomMethodName);
@@ -1846,7 +1844,6 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
             pathTemplate,
             opRef.Method,
             opRef.CustomMethodName,
-            methodName,
             operationId,
             summary,
             description,
@@ -2099,7 +2096,6 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
                     && formatEl.ValueEquals("binary"u8))
                 {
                     string propName = prop.Name;
-                    string paramName = CodeEmitHelpers.SanitizeParameterName(propName);
 
                     // Use contentType from encoding object if specified.
                     string? contentType = null;
@@ -2109,7 +2105,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
                         contentType = enc.ContentType;
                     }
 
-                    result.Add(new BinaryPropertyInfo(propName, paramName, contentType, requiredNames.Contains(propName)));
+                    result.Add(new BinaryPropertyInfo(propName, contentType, requiredNames.Contains(propName)));
                 }
             }
 
@@ -2492,41 +2488,6 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
         }
 
         return [.. result];
-    }
-
-    private static string GetMethodName(
-        string? operationId,
-        OperationMethod method,
-        string pathTemplate,
-        string? customMethodName = null)
-    {
-        if (operationId is not null)
-        {
-            return CodeEmitHelpers.ToPascalCase(operationId);
-        }
-
-        string methodPrefix = method switch
-        {
-            OperationMethod.Get => "get",
-            OperationMethod.Put => "put",
-            OperationMethod.Post => "post",
-            OperationMethod.Delete => "delete",
-            OperationMethod.Options => "options",
-            OperationMethod.Head => "head",
-            OperationMethod.Patch => "patch",
-            OperationMethod.Trace => "trace",
-            OperationMethod.Query => "query",
-            OperationMethod.Custom => customMethodName?.ToLowerInvariant() ?? "custom",
-            _ => throw new UnreachableException(),
-        };
-
-        string pathPart = pathTemplate
-            .Replace("/", " ", StringComparison.Ordinal)
-            .Replace("{", string.Empty, StringComparison.Ordinal)
-            .Replace("}", string.Empty, StringComparison.Ordinal)
-            .Trim();
-
-        return CodeEmitHelpers.ToPascalCase(methodPrefix + " " + pathPart);
     }
 
     // ── Server info extraction ───────────────────────────────────────────
@@ -3844,7 +3805,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
 
             bool hasBody = opRef.Operation.RequestBody.IsNotUndefined();
 
-            string methodName = GetMethodName(operationId, opRef.Method, path);
+            string methodName = CodeEmitHelpers.GetMethodName(operationId, opRef.Method, path);
 
             result.Add(new OperationSummary(
                 path,
@@ -3896,8 +3857,8 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
             }
 
             OperationInfo op = operations[i];
-            string paramsName = $"{op.MethodName}Params";
-            string resultName = $"{op.MethodName}Result";
+            string paramsName = $"{op.CSharpMethodName()}Params";
+            string resultName = $"{op.CSharpMethodName()}Result";
 
             w.WriteLine("/// <summary>");
             string httpMethod = op.Method.ToString().ToUpperInvariant();
@@ -3917,7 +3878,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
             }
 
             w.WriteLine(
-                $"ValueTask<{resultName}> Handle{op.MethodName}Async({paramsName} parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);");
+                $"ValueTask<{resultName}> Handle{op.CSharpMethodName()}Async({paramsName} parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);");
         }
 
         w.CloseBrace();
@@ -3927,7 +3888,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
 
     private GeneratedFile EmitServerOperationParams(OperationInfo op)
     {
-        string structName = $"{op.MethodName}Params";
+        string structName = $"{op.CSharpMethodName()}Params";
         IndentedWriter w = new();
 
         CodeEmitHelpers.EmitHeader(w);
@@ -3935,7 +3896,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
         w.WriteLine();
 
         w.WriteLine("/// <summary>");
-        w.WriteLine($"/// Parameters for the {op.MethodName} operation ({(op.CustomMethodName ?? op.Method.ToString()).ToUpperInvariant()} {op.PathTemplate}).");
+        w.WriteLine($"/// Parameters for the {op.CSharpMethodName()} operation ({(op.CustomMethodName ?? op.Method.ToString()).ToUpperInvariant()} {op.PathTemplate}).");
         w.WriteLine("/// </summary>");
 
         string? remarks = op.Description ?? op.Summary;
@@ -4054,7 +4015,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
 
     private GeneratedFile EmitServerOperationResult(OperationInfo op)
     {
-        string structName = $"{op.MethodName}Result";
+        string structName = $"{op.CSharpMethodName()}Result";
         IndentedWriter w = new();
 
         CodeEmitHelpers.EmitHeader(w);
@@ -4088,12 +4049,12 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
         bool hasStreamingResponses = op.Responses.Any(r => GetStreamingContent(r).Count > 0);
         bool hasBinaryResponse = HasBinaryStyleResponse(op);
         bool hasMultipartResponse = HasMultipartResponse(op);
-        string streamTypeName = $"{op.MethodName}Stream";
-        string streamWriterDelegateName = $"{op.MethodName}StreamWriter";
-        string streamWriterInvokerName = $"{op.MethodName}StreamWriterInvoker";
+        string streamTypeName = $"{op.CSharpMethodName()}Stream";
+        string streamWriterDelegateName = $"{op.CSharpMethodName()}StreamWriter";
+        string streamWriterInvokerName = $"{op.CSharpMethodName()}StreamWriterInvoker";
 
         w.WriteLine("/// <summary>");
-        w.WriteLine($"/// Result type for the {op.MethodName} operation.");
+        w.WriteLine($"/// Result type for the {op.CSharpMethodName()} operation.");
         w.WriteLine("/// </summary>");
         w.WriteLine($"public readonly struct {structName}");
         w.OpenBrace();
@@ -4487,7 +4448,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
 
         w.WriteLine();
         w.WriteLine("/// <summary>");
-        w.WriteLine($"/// Writes items for the {op.MethodName} streaming response.");
+        w.WriteLine($"/// Writes items for the {op.CSharpMethodName()} streaming response.");
         w.WriteLine("/// </summary>");
         w.WriteLine($"public readonly struct {streamTypeName}");
         w.OpenBrace();
@@ -5067,7 +5028,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
         {
             if (ContainsRuntimeExpression(op.PathTemplate))
             {
-                string routeParamName = CodeEmitHelpers.SanitizeParameterName(op.MethodName) + "Route";
+                string routeParamName = CodeEmitHelpers.SanitizeParameterName(op.CSharpMethodName()) + "Route";
                 if (!seenRouteParamNames.Add(routeParamName))
                 {
                     continue;
@@ -5171,8 +5132,8 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
                 }
 
                 string mapMethod = GetAspNetMapMethod(op.Method);
-                string paramsName = $"{op.MethodName}Params";
-                string resultName = $"{op.MethodName}Result";
+                string paramsName = $"{op.CSharpMethodName()}Params";
+                string resultName = $"{op.CSharpMethodName()}Result";
                 bool hasBody = op.RequestBody is not null;
                 bool opHasStreamingResponses = op.Responses.Any(r => GetStreamingContent(r).Count > 0);
 
@@ -5196,7 +5157,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
                 if (usesStreamingBody)
                 {
                     string nameLiterals = string.Join(", ", op.RequestBody!.Value.BinaryProperties.Select(p => CodeEmitHelpers.FormatStringLiteral(p.PropertyName)));
-                    w.WriteLine($"string[] __{op.MethodName}BinaryParts = new[] {{ {nameLiterals} }};");
+                    w.WriteLine($"string[] __{op.CSharpMethodName()}BinaryParts = new[] {{ {nameLiterals} }};");
                 }
 
                 // Determine the route string: use the parameter if this is a runtime expression path,
@@ -5213,7 +5174,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
 
                 // Capture the route builder so the per-endpoint configuration callback can be
                 // invoked against it after the route is mapped.
-                string endpointVar = $"__{op.MethodName}Endpoint";
+                string endpointVar = $"__{op.CSharpMethodName()}Endpoint";
                 string httpVerb = op.CustomMethodName ?? op.Method.ToString().ToUpperInvariant();
                 if (mapMethod == "MapMethods")
                 {
@@ -5381,7 +5342,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
                             // The non-binary parts are capped by MaxNonBinaryPartsLength.
                             w.WriteLine("try");
                             w.OpenBrace();
-                            w.WriteLine($"__streamingDriver = await MultipartStreamingDriver.BeginAsync(context.Request.Body, context.Request.ContentType, __{op.MethodName}BinaryParts, serverOptions, context.RequestAborted).ConfigureAwait(false);");
+                            w.WriteLine($"__streamingDriver = await MultipartStreamingDriver.BeginAsync(context.Request.Body, context.Request.ContentType, __{op.CSharpMethodName()}BinaryParts, serverOptions, context.RequestAborted).ConfigureAwait(false);");
                             w.WriteLine($"bodyDoc = ParsedJsonDocument<{bodyTypeName}>.Parse(__streamingDriver.ProjectionUtf8Json);");
                             w.CloseBrace();
                             EmitBodyParseFailureCatches(w, includeTooLarge: true);
@@ -5609,7 +5570,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
                 w.WriteLine();
 
                 // Call handler
-                w.WriteLine($"{resultName} result = await {paramName}.Handle{op.MethodName}Async(parameters, workspace, context.RequestAborted).ConfigureAwait(false);");
+                w.WriteLine($"{resultName} result = await {paramName}.Handle{op.CSharpMethodName()}Async(parameters, workspace, context.RequestAborted).ConfigureAwait(false);");
                 w.WriteLine();
 
                 // Validate the response body against the schema for the returned status code.
@@ -5792,7 +5753,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
         w.WriteLine("new EndpointDescriptor(");
         w.PushIndent();
         w.WriteLine($"operationId: {operationIdLiteral},");
-        w.WriteLine($"methodName: {CodeEmitHelpers.FormatStringLiteral(op.MethodName)},");
+        w.WriteLine($"methodName: {CodeEmitHelpers.FormatStringLiteral(op.CSharpMethodName())},");
         w.WriteLine($"httpMethod: {CodeEmitHelpers.FormatStringLiteral(httpVerb)},");
         w.WriteLine($"routeTemplate: {routeExpression},");
         w.WriteLine($"tags: {tagsLiteral},");
@@ -6411,7 +6372,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
         paramList.Append($"{bodyTypeName}.Source body, JsonWorkspace workspace");
         foreach (BinaryPropertyInfo part in binaryParts)
         {
-            paramList.Append($", BinaryPartData {part.ParameterName}");
+            paramList.Append($", BinaryPartData {part.CSharpParameterName()}");
         }
 
         foreach (var (_, typeName, fieldName, _) in respHeaders)
@@ -6428,7 +6389,7 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
         w.WriteLine("/// <param name=\"workspace\">The workspace for building the response value.</param>");
         foreach (BinaryPropertyInfo part in binaryParts)
         {
-            w.WriteLine($"/// <param name=\"{part.ParameterName}\">Binary data for the '{part.PropertyName}' part.</param>");
+            w.WriteLine($"/// <param name=\"{part.CSharpParameterName()}\">Binary data for the '{part.PropertyName}' part.</param>");
         }
 
         foreach (var (header, _, fieldName, _) in respHeaders)
@@ -6450,11 +6411,11 @@ public sealed class OpenApi32CodeGenerator : IOpenApiClientEmitter
             if (part.ContentType is { } specContentType)
             {
                 string contentTypeLiteral = CodeEmitHelpers.FormatStringLiteral(specContentType);
-                w.WriteLine($"[{propNameLiteral}] = {part.ParameterName}.ContentType is null ? {part.ParameterName} with {{ ContentType = {contentTypeLiteral} }} : {part.ParameterName},");
+                w.WriteLine($"[{propNameLiteral}] = {part.CSharpParameterName()}.ContentType is null ? {part.CSharpParameterName()} with {{ ContentType = {contentTypeLiteral} }} : {part.CSharpParameterName()},");
             }
             else
             {
-                w.WriteLine($"[{propNameLiteral}] = {part.ParameterName},");
+                w.WriteLine($"[{propNameLiteral}] = {part.CSharpParameterName()},");
             }
         }
 

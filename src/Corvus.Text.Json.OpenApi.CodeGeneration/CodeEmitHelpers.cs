@@ -2905,7 +2905,7 @@ public static class CodeEmitHelpers
                     }
 
                     string schemePropName = CodeEmitHelpers.SanitizeIdentifier(req.SchemeName);
-                    perOperationEntries.Add((op.MethodName, schemePropName, req.Scopes));
+                    perOperationEntries.Add((op.CSharpMethodName(), schemePropName, req.Scopes));
                 }
             }
         }
@@ -3023,5 +3023,40 @@ public static class CodeEmitHelpers
 
         w.PopIndent();
         w.WriteLine("};");
+    }
+
+    public static string GetMethodName(
+        string? operationId,
+        OperationMethod method,
+        string pathTemplate,
+        string? customMethodName = null)
+    {
+        if (operationId is not null)
+        {
+            return CodeEmitHelpers.ToPascalCase(operationId);
+        }
+
+        string methodPrefix = method switch
+        {
+            OperationMethod.Get => "get",
+            OperationMethod.Put => "put",
+            OperationMethod.Post => "post",
+            OperationMethod.Delete => "delete",
+            OperationMethod.Options => "options",
+            OperationMethod.Head => "head",
+            OperationMethod.Patch => "patch",
+            OperationMethod.Trace => "trace",
+            OperationMethod.Query => "query",
+            OperationMethod.Custom => customMethodName?.ToLowerInvariant() ?? "custom",
+            _ => throw new UnreachableException(),
+        };
+
+        string pathPart = pathTemplate
+            .Replace("/", " ", StringComparison.Ordinal)
+            .Replace("{", string.Empty, StringComparison.Ordinal)
+            .Replace("}", string.Empty, StringComparison.Ordinal)
+            .Trim();
+
+        return CodeEmitHelpers.ToPascalCase(methodPrefix + " " + pathPart);
     }
 }

@@ -420,7 +420,11 @@ PR 0a, seams:
 PR 0b, one C# emitter:
 
 5. The drift catalogue (seam 2), committed as a document beside this one, every difference classified and the
-   drift items each given a decision (upgrade the older versions, or keep the version branch with a reason).
+   drift items each given a decision (upgrade the older versions, or keep the version branch with a reason). As
+   built: three drift items (the 3.2-only SecuritySchemes constants, description-first request remarks, and the
+   per-operation SecurityRequirements class the 2.0 emitter never wrote; that last one surfaced from the gate on
+   the 2.0 runtime project's document, not from the cross-feed, whose document set should grow to include the
+   runtime projects' own).
 6. Consolidation family by family into `CSharpClientEmitter`, drift carried as explicit `SpecVersion` branches, a
    regeneration and the gate after each family. The four version generators lose their client `Emit*` methods and
    keep preparation, the document models and server emission.

@@ -8,7 +8,7 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration.Operations;
 
 /// <summary>
 /// An operation prepared for emission: everything a client or server emitter needs, resolved from the
-/// OpenAPI document, with no language-specific content except <see cref="MethodName"/>.
+/// OpenAPI document, with no language-specific content.
 /// </summary>
 /// <param name="PathTemplate">The path template as written in the document (for example <c>/pets/{petId}</c>).</param>
 /// <param name="Method">The HTTP method.</param>
@@ -16,7 +16,6 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration.Operations;
 /// For an OpenAPI 3.2 additional operation, the custom HTTP method name as written in the document; otherwise
 /// <see langword="null"/>.
 /// </param>
-/// <param name="MethodName">The generated C# method name (PascalCase, without the <c>Async</c> suffix).</param>
 /// <param name="OperationId">The <c>operationId</c>, or <see langword="null"/> when the document gives none.</param>
 /// <param name="Summary">The operation's <c>summary</c>, or <see langword="null"/>.</param>
 /// <param name="Description">The operation's <c>description</c>, or <see langword="null"/>.</param>
@@ -37,7 +36,6 @@ public readonly record struct OperationInfo(
     string PathTemplate,
     OperationMethod Method,
     string? CustomMethodName,
-    string MethodName,
     string? OperationId,
     string? Summary,
     string? Description,

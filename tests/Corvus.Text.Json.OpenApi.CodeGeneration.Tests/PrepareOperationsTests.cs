@@ -133,7 +133,7 @@ public class PrepareOperationsTests
             foreach (OperationInfo operation in model.Operations)
             {
                 Assert.IsFalse(string.IsNullOrEmpty(operation.PathTemplate), file);
-                Assert.IsFalse(string.IsNullOrEmpty(operation.MethodName), file);
+                Assert.IsFalse(string.IsNullOrEmpty(operation.CSharpMethodName()), file);
                 Assert.IsNotNull(operation.Parameters, file);
                 Assert.IsNotNull(operation.Responses, file);
             }

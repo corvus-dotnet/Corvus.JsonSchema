@@ -207,8 +207,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
 
             bool hasBody = opRef.Operation.RequestBody.IsNotUndefined();
 
-            string methodName = GetMethodName(operationId, opRef.Method, path);
-
+            string methodName = CodeEmitHelpers.GetMethodName(operationId, opRef.Method, path);
             result.Add(new OperationSummary(
                 path,
                 opRef.Method,
@@ -405,14 +404,14 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
                 op.PathTemplate,
                 op.Method,
                 op.OperationId,
-                op.MethodName,
-                $"{this.rootNamespace}.{GeneratedClientTypeNaming.RequestTypeName(op.MethodName)}",
-                $"{this.rootNamespace}.{GeneratedClientTypeNaming.ResponseTypeName(op.MethodName)}",
+                op.CSharpMethodName(),
+                $"{this.rootNamespace}.{GeneratedClientTypeNaming.RequestTypeName(op.CSharpMethodName())}",
+                $"{this.rootNamespace}.{GeneratedClientTypeNaming.ResponseTypeName(op.CSharpMethodName())}",
                 parameters,
                 op.RequestBody is not null,
                 responses,
                 $"{this.rootNamespace}.{this.GetClientName(clientTag)}Client",
-                $"{op.MethodName}Async",
+                $"{op.CSharpMethodName()}Async",
                 requestBodyTypeName,
                 responseHeaders));
         }
@@ -1331,7 +1330,6 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
             : null;
         bool isDeprecated = opRef.Operation.Deprecated.ValueKind == JsonValueKind.True;
         string[] tags = ExtractTags(opRef.Operation);
-        string methodName = GetMethodName(operationId, opRef.Method, pathTemplate);
 
         ParameterInfo[] parameters = PrepareParameters(
             opRef.Operation, opRef.PathItem, pathNameUtf8, opRef.Method, referenceResolver, specRoot);
@@ -1351,7 +1349,6 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
             pathTemplate,
             opRef.Method,
             null,
-            methodName,
             operationId,
             summary,
             description,
@@ -1625,7 +1622,6 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
                     && formatEl.ValueEquals("binary"u8))
                 {
                     string propName = prop.Name;
-                    string paramName = CodeEmitHelpers.SanitizeParameterName(propName);
 
                     // Use contentType from encoding object if specified.
                     string? contentType = null;
@@ -1635,7 +1631,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
                         contentType = enc.ContentType;
                     }
 
-                    result.Add(new BinaryPropertyInfo(propName, paramName, contentType));
+                    result.Add(new BinaryPropertyInfo(propName, contentType));
                 }
             }
 
@@ -2006,38 +2002,6 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
         }
 
         return [.. result];
-    }
-
-    private static string GetMethodName(
-        string? operationId,
-        OperationMethod method,
-        string pathTemplate)
-    {
-        if (operationId is not null)
-        {
-            return CodeEmitHelpers.ToPascalCase(operationId);
-        }
-
-        string methodPrefix = method switch
-        {
-            OperationMethod.Get => "get",
-            OperationMethod.Put => "put",
-            OperationMethod.Post => "post",
-            OperationMethod.Delete => "delete",
-            OperationMethod.Options => "options",
-            OperationMethod.Head => "head",
-            OperationMethod.Patch => "patch",
-            OperationMethod.Trace => "trace",
-            _ => throw new UnreachableException(),
-        };
-
-        string pathPart = pathTemplate
-            .Replace("/", " ", StringComparison.Ordinal)
-            .Replace("{", string.Empty, StringComparison.Ordinal)
-            .Replace("}", string.Empty, StringComparison.Ordinal)
-            .Trim();
-
-        return CodeEmitHelpers.ToPascalCase(methodPrefix + " " + pathPart);
     }
 
     // ── Server info extraction ───────────────────────────────────────────
@@ -2716,7 +2680,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
 
             bool hasBody = opRef.Operation.RequestBody.IsNotUndefined();
 
-            string methodName = GetMethodName(operationId, opRef.Method, path);
+            string methodName = CodeEmitHelpers.GetMethodName(operationId, opRef.Method, path);
 
             result.Add(new OperationSummary(
                 path,
@@ -2768,8 +2732,8 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
             }
 
             OperationInfo op = operations[i];
-            string paramsName = $"{op.MethodName}Params";
-            string resultName = $"{op.MethodName}Result";
+            string paramsName = $"{op.CSharpMethodName()}Params";
+            string resultName = $"{op.CSharpMethodName()}Result";
 
             w.WriteLine("/// <summary>");
             string httpMethod = op.Method.ToString().ToUpperInvariant();
@@ -2789,7 +2753,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
             }
 
             w.WriteLine(
-                $"ValueTask<{resultName}> Handle{op.MethodName}Async({paramsName} parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);");
+                $"ValueTask<{resultName}> Handle{op.CSharpMethodName()}Async({paramsName} parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);");
         }
 
         w.CloseBrace();
@@ -2799,7 +2763,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
 
     private GeneratedFile EmitServerOperationParams(OperationInfo op)
     {
-        string structName = $"{op.MethodName}Params";
+        string structName = $"{op.CSharpMethodName()}Params";
         IndentedWriter w = new();
 
         CodeEmitHelpers.EmitHeader(w);
@@ -2807,7 +2771,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
         w.WriteLine();
 
         w.WriteLine("/// <summary>");
-        w.WriteLine($"/// Parameters for the {op.MethodName} operation ({op.Method.ToString().ToUpperInvariant()} {op.PathTemplate}).");
+        w.WriteLine($"/// Parameters for the {op.CSharpMethodName()} operation ({op.Method.ToString().ToUpperInvariant()} {op.PathTemplate}).");
         w.WriteLine("/// </summary>");
 
         string? remarks = op.Description ?? op.Summary;
@@ -2864,7 +2828,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
 
     private GeneratedFile EmitServerOperationResult(OperationInfo op)
     {
-        string structName = $"{op.MethodName}Result";
+        string structName = $"{op.CSharpMethodName()}Result";
         IndentedWriter w = new();
 
         CodeEmitHelpers.EmitHeader(w);
@@ -2905,7 +2869,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
         bool hasOctetStreamResponse = op.Responses.Any(IsBinaryStyleResponse);
 
         w.WriteLine("/// <summary>");
-        w.WriteLine($"/// Result type for the {op.MethodName} operation.");
+        w.WriteLine($"/// Result type for the {op.CSharpMethodName()} operation.");
         w.WriteLine("/// </summary>");
         w.WriteLine($"public readonly struct {structName}");
         w.OpenBrace();
@@ -3395,7 +3359,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
         {
             if (ContainsRuntimeExpression(op.PathTemplate))
             {
-                string routeParamName = CodeEmitHelpers.SanitizeParameterName(op.MethodName) + "Route";
+                string routeParamName = CodeEmitHelpers.SanitizeParameterName(op.CSharpMethodName()) + "Route";
                 if (!seenRouteParamNames.Add(routeParamName))
                 {
                     continue;
@@ -3499,8 +3463,8 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
                 }
 
                 string mapMethod = GetAspNetMapMethod(op.Method);
-                string paramsName = $"{op.MethodName}Params";
-                string resultName = $"{op.MethodName}Result";
+                string paramsName = $"{op.CSharpMethodName()}Params";
+                string resultName = $"{op.CSharpMethodName()}Result";
                 bool hasBody = op.RequestBody is not null;
 
                 w.WriteLine();
@@ -3518,7 +3482,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
 
                 // Capture the route builder so the per-endpoint configuration callback can be
                 // invoked against it after the route is mapped.
-                string endpointVar = $"__{op.MethodName}Endpoint";
+                string endpointVar = $"__{op.CSharpMethodName()}Endpoint";
                 string httpVerb = op.Method.ToString().ToUpperInvariant();
                 if (mapMethod == "MapMethods")
                 {
@@ -3752,7 +3716,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
                 w.WriteLine();
 
                 // Call handler
-                w.WriteLine($"{resultName} result = await {paramName}.Handle{op.MethodName}Async(parameters, workspace, context.RequestAborted).ConfigureAwait(false);");
+                w.WriteLine($"{resultName} result = await {paramName}.Handle{op.CSharpMethodName()}Async(parameters, workspace, context.RequestAborted).ConfigureAwait(false);");
                 w.WriteLine();
 
                 // Validate the response body against the schema for the returned status code.
@@ -3876,7 +3840,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
         w.WriteLine("new EndpointDescriptor(");
         w.PushIndent();
         w.WriteLine($"operationId: {operationIdLiteral},");
-        w.WriteLine($"methodName: {CodeEmitHelpers.FormatStringLiteral(op.MethodName)},");
+        w.WriteLine($"methodName: {CodeEmitHelpers.FormatStringLiteral(op.CSharpMethodName())},");
         w.WriteLine($"httpMethod: {CodeEmitHelpers.FormatStringLiteral(httpVerb)},");
         w.WriteLine($"routeTemplate: {routeExpression},");
         w.WriteLine($"tags: {tagsLiteral},");
