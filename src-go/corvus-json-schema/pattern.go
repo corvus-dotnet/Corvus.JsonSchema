@@ -395,13 +395,14 @@ func compilePattern(source string) (*pattern, error) {
 }
 
 // count returns what the pattern is counted as in the cache of compiled patterns, in bytes: an estimate of what it
-// holds that is not below it. A text is counted as its length and an eighth, which is what the allocator can round
-// it up by, with the 16 bytes of a string. A member of a set of literals is counted with the 64 bytes a map has for
+// holds that is not below it. The pattern itself is counted as 512 bytes: it is 176, and a small one, ^.{1,2}$,
+// measured 342 with Go 1.27 on arm64, where 256 had been enough on amd64. A text is counted as its length and an
+// eighth, which is what the allocator can round it up by, with the 16 bytes of a string. A member of a set of literals is counted with the 64 bytes a map has for
 // it, an item of a class sequence as 48 bytes, and an engine as it counts itself (see ecmaregex.Regexp.Retained).
 // Measured, no pattern held more than its count (see TestAPatternIsCountedAsNoLessThanItHolds).
 func (p *pattern) count() int {
 	const (
-		fixedBytes  = 256
+		fixedBytes  = 512
 		stringBytes = 16
 		memberBytes = 64
 		itemBytes   = 48
