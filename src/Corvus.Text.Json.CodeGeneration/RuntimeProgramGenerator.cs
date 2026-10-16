@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Corvus.Json.CodeGeneration;
+using Corvus.Json.CodeGeneration.Keywords;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Text.Json.CodeGeneration;
@@ -787,6 +788,31 @@ internal static class RuntimeProgramGenerator
             "https://json-schema.org/draft/2019-09/schema" => "Draft201909",
             _ => "Draft202012",
         };
+    }
+
+    /// <summary>
+    /// Maps a fallback vocabulary to the <c>JsonSchemaDialect</c> member name.
+    /// </summary>
+    /// <param name="vocabulary">The vocabulary.</param>
+    /// <returns>The dialect member name.</returns>
+    /// <remarks>
+    /// The OpenAPI 2.0 and 3.0 Schema Object vocabularies share the draft 4 URI. Their nullable keywords tell them
+    /// from draft 4, and from each other: only 2.0 has <c>x-nullable</c>.
+    /// </remarks>
+    public static string DialectFor(IVocabulary vocabulary)
+    {
+        bool nullable = false;
+        foreach (IKeyword keyword in vocabulary.Keywords)
+        {
+            if (keyword is XNullableKeyword)
+            {
+                return "OpenApi20";
+            }
+
+            nullable |= keyword is NullableKeyword;
+        }
+
+        return nullable ? "OpenApi30" : DialectFor(vocabulary.Uri);
     }
 
     private static string Literal(string text)

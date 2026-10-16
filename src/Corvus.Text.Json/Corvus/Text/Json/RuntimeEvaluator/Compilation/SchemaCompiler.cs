@@ -2134,6 +2134,14 @@ internal sealed class SchemaCompiler
         bool formatAssert = this.options.AssertFormat ?? ((legacy && this.options.AssertFormatInLegacyDrafts) || (vocab & JsonSchemaVocabularies.FormatAssertion) != 0);
         bool formatAnnotate = legacy || (vocab & (JsonSchemaVocabularies.FormatAnnotation | JsonSchemaVocabularies.FormatAssertion)) != 0 || this.options.AssertFormat is not null;
 
+        // An OpenAPI Schema Object is draft 4 with additions: nullable (x-nullable too, in 2.0), and formats that
+        // draft 4 does not define (date, uuid, ...). Drafts 4, 6 and 7 let an implementation add formats, and
+        // generated models have always known every one, so the option they set brings the later formats in too.
+        bool openApi20 = (vocab & JsonSchemaVocabularies.OpenApi20) != 0;
+        bool openApi = openApi20 || (vocab & JsonSchemaVocabularies.OpenApi30) != 0;
+        bool everyFormat = openApi || (legacy && this.options.AssertFormatInLegacyDrafts);
+        bool nullable = false;
+
         Dictionary<string, PropertyEntry>? propertyEntries = null;
         List<AnnotationEntry>? annotations = null;
         List<DependencyEntry>? dependencies = null;
@@ -2294,7 +2302,7 @@ internal sealed class SchemaCompiler
                         if (value.ValueKind == JsonValueKind.String)
                         {
                             string formatName = value.GetString()!;
-                            node.Format = GetFormatKind(formatName, dialect);
+                            node.Format = GetFormatKind(formatName, everyFormat ? JsonSchemaDialect.Draft202012 : dialect);
                             JsonSchemaFormatMode? formatMode = this.ResolveFormatMode(formatName);
                             node.AssertFormat = formatMode switch
                             {
@@ -2419,6 +2427,15 @@ internal sealed class SchemaCompiler
                             Annotate(name, value);
                         }
                     }
+                    else if (name.SequenceEqual("nullable"u8))
+                    {
+                        if (!openApi)
+                        {
+                            goto default;
+                        }
+
+                        nullable |= validation && value.ValueKind == JsonValueKind.True;
+                    }
                     else if (!name.SequenceEqual("$comment"u8))
                     {
                         goto default;
@@ -2484,6 +2501,15 @@ internal sealed class SchemaCompiler
                         {
                             Annotate(name, value);
                         }
+                    }
+                    else if (name.SequenceEqual("x-nullable"u8))
+                    {
+                        if (!openApi20)
+                        {
+                            goto default;
+                        }
+
+                        nullable |= validation && value.ValueKind == JsonValueKind.True;
                     }
                     else
                     {
@@ -2776,6 +2802,15 @@ internal sealed class SchemaCompiler
 
                     continue;
             }
+        }
+
+        // OpenAPI's nullable adds null to the types the schema's own type keyword allows; without one it says nothing.
+        if (nullable && node.HasType && (node.Type & TypeMask.Null) == 0)
+        {
+            node.Type |= TypeMask.Null;
+#if !STJ
+            node.TypeMessage = TypeMessageFor(node.Type);
+#endif
         }
 
         // Numeric bounds (dialect-aware exclusive handling).

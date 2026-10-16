@@ -83,6 +83,12 @@ public sealed class JsonSchemaEvaluatorOptions
     /// written against draft 4, 6 or 7 treat <c>format</c> as an assertion. Those drafts left the choice to the
     /// implementation; generated models have always asserted, so the programs they emit set this.
     /// </summary>
+    /// <remarks>
+    /// Those drafts also let an implementation add formats of its own, and generated models have always known every
+    /// format. So with this set, a resource written against draft 4, 6 or 7 has the formats that later drafts
+    /// defined too (<c>date</c>, <c>time</c>, <c>uuid</c>, <c>duration</c> and the rest); without it, each draft
+    /// has only the formats it defines, and any other is an annotation.
+    /// </remarks>
     public bool AssertFormatInLegacyDrafts { get; set; }
 
     /// <summary>

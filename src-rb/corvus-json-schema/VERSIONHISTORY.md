@@ -2,9 +2,9 @@
 
 The version history of the `corvus_json_schema` Ruby gem. It is versioned independently of the Corvus NuGet packages and of the [corvus-json-schema](../../src-rs/corvus-json-schema/VERSIONHISTORY.md) Rust crate it is built on.
 
-## V0.1.3
+## V0.1.4
 
-V0.1.3 takes version 0.1.7 of the `corvus-json-schema` crate. That fixes wrong results for several forms of pattern and a validation that did not end, replaces the crate's regular expression engine, and gives every match of a pattern a limit of time. The functions and types that were there are unchanged, and there are additions for the limit. Versions 0.1.0 to 0.1.2 are affected.
+V0.1.4 takes version 0.1.7 of the `corvus-json-schema` crate. That fixes wrong results for several forms of pattern and a validation that did not end, replaces the crate's regular expression engine, and gives every match of a pattern a limit of time. The functions and types that were there are unchanged, and there are additions for the limit. Versions 0.1.0 to 0.1.3 are affected.
 
 ### The regular expression engine
 
@@ -24,7 +24,17 @@ A schema and an instance may both come from outside, so a pattern is now bounded
 
 ### Notices
 
-- **The notice of the Unicode data is in the gem.** The Unicode tables of the `corvus-json-schema` crate are derived from the Unicode Character Database, which is under the Unicode License V3. That license asks that its notice goes with every copy of the data. `THIRD-PARTY-NOTICES.txt` has it, with the notice of the `regress` crate that the tables were first read from, and is now in the source gem and in every native gem. Versions 0.1.0 to 0.1.2 carried no such notice.
+- **The notice of the Unicode data is in the gem.** The Unicode tables of the `corvus-json-schema` crate are derived from the Unicode Character Database, which is under the Unicode License V3. That license asks that its notice goes with every copy of the data. `THIRD-PARTY-NOTICES.txt` has it, with the notice of the `regress` crate that the tables were first read from, and is now in the source gem and in every native gem. Versions 0.1.0 to 0.1.3 carried no such notice.
+
+## V0.1.3
+
+V0.1.3 fixes `gem install corvus_json_schema` on Alpine Linux and other musl systems, where RubyGems before 4.0 could install the glibc gem, which does not load there. There are no API changes, and the extension is the one in 0.1.2. Versions 0.1.0 to 0.1.2 are affected.
+
+### Bug fixes
+
+- **`gem install` on a musl system with RubyGems before 4.0 (the RubyGems of Ruby 3.3 and 3.4).** The precompiled glibc gems had the platforms `x86_64-linux` and `aarch64-linux`. On a musl Ruby, those versions of RubyGems rank such a gem equal to the musl gem (`x86_64-linux-musl`) and install whichever comes last in their own ordering. Since 0.1.1 was published that has been the glibc gem, and `require "corvus_json_schema"` then failed with a `LoadError` naming `ld-linux-x86-64.so.2`. The glibc gems now have the platforms `x86_64-linux-gnu` and `aarch64-linux-gnu`, which RubyGems does not offer to a musl Ruby at all, so the musl gem is the one installed. Bundler was not affected, and neither was any glibc system, macOS or Windows.
+
+  The earlier versions stay as they are. On a musl system with RubyGems before 4.0, install 0.1.3 or later, or install an earlier version with Bundler.
 
 ## V0.1.2
 

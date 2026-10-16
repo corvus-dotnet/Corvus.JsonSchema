@@ -173,7 +173,7 @@ JsonSchema schema = JsonSchema.FromFile("person.json", options: options);
 |--------|---------|-------------|
 | `alwaysAssertFormat` | `true` | When `true`, the `format` keyword is enforced as a validation assertion. When `false`, it is treated as an annotation only (per the JSON Schema specification). |
 | `allowFileSystemAndHttpResolution` | `true` | Enable resolution of `$ref` references via `file://` and `http://`/`https://` URIs. Set to `false` to restrict resolution to pre-loaded schemas only. |
-| `defaultDialect` | `JsonSchemaDialect.Draft202012` | The JSON Schema dialect to use when the schema does not include a `$schema` keyword. |
+| `defaultDialect` | `JsonSchemaDialect.Draft202012` | The JSON Schema dialect to use when the schema does not include a `$schema` keyword. `JsonSchemaDialect.OpenApi30` and `JsonSchemaDialect.OpenApi20` are the OpenAPI Schema Object dialects: Draft 4, plus every format the validator knows (`date`, `uuid` and so on) and `nullable` (and `x-nullable` in 2.0). |
 | `additionalSchemaFiles` | `null` | Pre-load external schema files for `$ref` resolution. Each entry maps a canonical URI to a local file path; the file is also registered under its `$id` and its full path. |
 | `additionalDocumentResolver` | `null` | A `JsonSchemaDocumentResolver` delegate that supplies referenced documents from memory, consulted before the file system and HTTP. |
 | `codeGeneration` | `JsonSchemaCodeGeneration.Disabled` | Whether, and when, the schema is compiled to IL at run time. See [Runtime Code Generation](#runtime-code-generation). |

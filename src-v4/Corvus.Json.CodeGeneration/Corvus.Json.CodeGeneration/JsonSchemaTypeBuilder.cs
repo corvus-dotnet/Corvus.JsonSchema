@@ -215,6 +215,11 @@ public class JsonSchemaTypeBuilder(
         if (languageProvider is ISchemaProgramLanguageProvider programProvider)
         {
             programProvider.SetProgramRootTypes(rootTypeDeclarations);
+            if (programProvider is ISchemaProgramVocabularyLanguageProvider vocabularyProgramProvider)
+            {
+                vocabularyProgramProvider.SetFallbackVocabulary(this.lastFallbackVocabulary);
+            }
+
             if (programProvider is ISchemaProgramUtf8LanguageProvider utf8ProgramProvider)
             {
                 utf8ProgramProvider.SetSchemaDocuments(this.GetSchemaDocumentsUtf8(), this.lastFallbackVocabulary?.Uri);

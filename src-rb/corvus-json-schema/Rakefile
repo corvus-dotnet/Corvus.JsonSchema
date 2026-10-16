@@ -38,6 +38,15 @@ RbSys::ExtensionTask.new("corvus_json_schema", GEMSPEC) do |ext|
     spec.files.reject! { |f| f.start_with?("ext/", "Cargo.") }
     spec.extensions.clear
     spec.dependencies.reject! { |d| d.name == "rb_sys" }
+    # The glibc gems say so in their platform (x86_64-linux-gnu, not x86_64-linux). On a musl Ruby, RubyGems before
+    # 4.0 ranks a gem for plain x86_64-linux equal to the musl gem, and "gem install" can take it: it does not load
+    # there. A -gnu gem is never offered to a musl Ruby. RubyGems reads these platforms from 3.3.22.
+    if spec.platform.os == "linux" && spec.platform.version.nil?
+      spec.platform = Gem::Platform.new("#{spec.platform}-gnu")
+      # A gem's metadata takes its platform from the first one the specification was given, which was the plain one.
+      spec.original_platform = spec.platform.to_s
+      spec.required_rubygems_version = ">= 3.3.22"
+    end
   end
 end
 

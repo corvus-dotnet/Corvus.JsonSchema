@@ -47,7 +47,7 @@ internal static partial class CorvusJsonSchemaProgram
     {
         return new JsonSchemaEvaluatorOptions
         {
-            DefaultDialect = JsonSchemaDialect.Draft4,
+            DefaultDialect = JsonSchemaDialect.OpenApi20,
             AssertFormat = true,
             AssertFormatInLegacyDrafts = true,
             RegexProvider = GetRegex,
