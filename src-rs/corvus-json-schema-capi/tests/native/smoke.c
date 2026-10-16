@@ -167,13 +167,16 @@ int main(void) {
     cjs_options_free(limited);
     {
         /* 1,000 levels of groups are one too many. */
+        /* Written with memcpy: MSVC warns that sprintf is unsafe, and the build treats warnings as errors. */
         char deep[8192];
         size_t n = 0;
-        n += (size_t)sprintf(deep + n, "{\"pattern\": \"");
-        for (int i = 0; i < 1000; i++) n += (size_t)sprintf(deep + n, "(?:");
-        n += (size_t)sprintf(deep + n, "a");
-        for (int i = 0; i < 1000; i++) n += (size_t)sprintf(deep + n, ")");
-        n += (size_t)sprintf(deep + n, "\"}");
+        memcpy(deep + n, "{\"pattern\": \"", 13);
+        n += 13;
+        for (int i = 0; i < 1000; i++, n += 3) memcpy(deep + n, "(?:", 3);
+        deep[n++] = 'a';
+        for (int i = 0; i < 1000; i++) deep[n++] = ')';
+        memcpy(deep + n, "\"}", 2);
+        n += 2;
         cjs_validator *too_large = NULL;
         CHECK(cjs_compile(deep, n, NULL, &too_large) == CJS_PATTERN_TOO_LARGE && too_large == NULL);
         CHECK(contains(cjs_last_error_message(), "nest more than 1000 deep"));
