@@ -65,10 +65,10 @@ public readonly struct UploadPetPhotoRequest : IApiRequest<UploadPetPhotoRequest
     {
         writer.Write("/pets/"u8);
         using UnescapedUtf8JsonString utf8PetId = ((JsonElement)this.PetId).GetUtf8String();
-        Span<byte> escPetId = stackalloc byte[utf8PetId.Span.Length * 3];
+        Span<byte> escPetId = writer.GetSpan(utf8PetId.Span.Length * 3);
         if (Utf8Uri.TryEscapeDataString(utf8PetId.Span, escPetId, out int ewPetId))
         {
-            writer.Write(escPetId[..ewPetId]);
+            writer.Advance(ewPetId);
         }
         writer.Write("/photos"u8);
     }
@@ -102,10 +102,10 @@ public readonly struct UploadPetPhotoRequest : IApiRequest<UploadPetPhotoRequest
         writer.Write("session_token="u8);
         totalWritten += 14;
         using UnescapedUtf8JsonString utf8SessionToken = ((JsonElement)this.SessionToken).GetUtf8String();
-        Span<byte> escSessionToken = stackalloc byte[utf8SessionToken.Span.Length * 3];
+        Span<byte> escSessionToken = writer.GetSpan(utf8SessionToken.Span.Length * 3);
         if (Utf8Uri.TryEscapeDataString(utf8SessionToken.Span, escSessionToken, out int ewSessionToken))
         {
-            writer.Write(escSessionToken[..ewSessionToken]);
+            writer.Advance(ewSessionToken);
             totalWritten += ewSessionToken;
         }
 

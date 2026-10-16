@@ -58,10 +58,10 @@ public readonly struct DownloadPhotoRequest : IApiRequest<DownloadPhotoRequest>
     {
         writer.Write("/photos/"u8);
         using UnescapedUtf8JsonString utf8PhotoId = ((JsonElement)this.PhotoId).GetUtf8String();
-        Span<byte> escPhotoId = stackalloc byte[utf8PhotoId.Span.Length * 3];
+        Span<byte> escPhotoId = writer.GetSpan(utf8PhotoId.Span.Length * 3);
         if (Utf8Uri.TryEscapeDataString(utf8PhotoId.Span, escPhotoId, out int ewPhotoId))
         {
-            writer.Write(escPhotoId[..ewPhotoId]);
+            writer.Advance(ewPhotoId);
         }
     }
 

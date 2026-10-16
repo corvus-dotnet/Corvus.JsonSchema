@@ -92,8 +92,12 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
             totalWritten += 6;
             Span<byte> bufLimit = stackalloc byte[11];
             this.Limit.TryFormat(bufLimit, out int bwLimit, default, default);
-            writer.Write(bufLimit[..bwLimit]);
-            totalWritten += bwLimit;
+            Span<byte> escLimit = writer.GetSpan(bufLimit[..bwLimit].Length * 3);
+            if (Utf8Uri.TryEscapeDataString(bufLimit[..bwLimit], escLimit, out int ewLimit))
+            {
+                writer.Advance(ewLimit);
+                totalWritten += ewLimit;
+            }
 
             first = false;
         }
@@ -134,11 +138,11 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
                 writer.Write("filter%5B"u8);
                 totalWritten += 9;
                 using UnescapedUtf8JsonString keyFilter = propFilter.Utf8NameSpan;
-                Span<byte> kescFilter = writer.GetSpan(keyFilter.Span.Length * 3);
-                if (Utf8Uri.TryEscapeDataString(keyFilter.Span, kescFilter, out int kwFilter))
+                Span<byte> escKeyFilter = writer.GetSpan(keyFilter.Span.Length * 3);
+                if (Utf8Uri.TryEscapeDataString(keyFilter.Span, escKeyFilter, out int ewKeyFilter))
                 {
-                    writer.Advance(kwFilter);
-                    totalWritten += kwFilter;
+                    writer.Advance(ewKeyFilter);
+                    totalWritten += ewKeyFilter;
                 }
                 writer.Write("%5D="u8);
                 totalWritten += 4;
@@ -155,8 +159,12 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
                 else
                 {
                     using RawUtf8JsonString rawFilter = JsonMarshal.GetRawUtf8Value(propFilter.Value);
-                    writer.Write(rawFilter.Span);
-                    totalWritten += rawFilter.Span.Length;
+                    Span<byte> escFilter = writer.GetSpan(rawFilter.Span.Length * 3);
+                    if (Utf8Uri.TryEscapeDataString(rawFilter.Span, escFilter, out int ewFilter))
+                    {
+                        writer.Advance(ewFilter);
+                        totalWritten += ewFilter;
+                    }
                 }
                 first = false;
             }

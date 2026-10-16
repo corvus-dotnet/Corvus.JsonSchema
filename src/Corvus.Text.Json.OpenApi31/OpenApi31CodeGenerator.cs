@@ -1263,7 +1263,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
     }
 
     // ── Parameter trait parsing ──────────────────────────────────────────
-    private static (ParameterLocation Location, ParameterStyle Style, bool Explode) ParseParameterTraits(
+    private static (ParameterLocation Location, ParameterStyle Style, bool Explode, bool AllowReserved) ParseParameterTraits(
         OpenApiDocument.Parameter typed)
     {
         (ParameterLocation location, ParameterStyle style) = typed.In.Match<OpenApiDocument.Parameter, (ParameterLocation, ParameterStyle)>(
@@ -1275,7 +1275,16 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
             static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.From(p))));
 
         bool explode = typed.Explode.IsNotUndefined() ? (bool)typed.Explode : style == ParameterStyle.Form;
-        return (location, style, explode);
+
+        // allowReserved applies to query parameters only (OpenAPI 3.1 Parameter Object).
+        bool allowReserved = location == ParameterLocation.Query
+            && ParseQueryAllowReserved(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.From(typed));
+        return (location, style, explode, allowReserved);
+    }
+
+    private static bool ParseQueryAllowReserved(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity queryStyles)
+    {
+        return queryStyles.AllowReserved.IsNotUndefined() && (bool)queryStyles.AllowReserved;
     }
 
     private static ParameterStyle ParsePathStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity pathStyles)
@@ -1491,7 +1500,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
         {
             (OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel, string? _) = merged[i];
 
-            (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(param);
+            (ParameterLocation location, ParameterStyle style, bool explode, bool allowReserved) = ParseParameterTraits(param);
             bool required = param.Required;
             bool hasSchema = param.SchemaValue.IsNotUndefined();
             JsonElement schemaElement = hasSchema ? JsonElement.From(param.SchemaValue) : default;
@@ -1530,7 +1539,7 @@ public sealed class OpenApi31CodeGenerator : IOpenApiClientEmitter
             string name = param.Name.GetString()!;
 
             result[i] = new ParameterInfo(
-                name, location, required, style, explode, false,
+                name, location, required, style, explode, allowReserved,
                 serializationKind, elementKind, schemaPointer, deepNesting, defaultValueJson, defaultValueKind);
         }
 

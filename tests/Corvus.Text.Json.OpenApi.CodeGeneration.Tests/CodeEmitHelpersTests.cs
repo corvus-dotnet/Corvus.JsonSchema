@@ -631,12 +631,13 @@ public class CodeEmitHelpersTests
     }
 
     [TestMethod]
-    public void EmitPathScalarValue_String_AllowReserved_WritesDirectly()
+    public void EmitPathScalarValue_String_AllowReserved_UsesReservedExpansion()
     {
         IndentedWriter w = new();
         CodeEmitHelpers.EmitPathScalarValue(w, "value", "p0", ParameterSerializationKind.String, allowReserved: true);
         string output = w.ToString();
-        Assert.IsTrue(output.Contains("writer.Write(utf8p0.Span)"), "AllowReserved=true should write directly");
+        Assert.IsTrue(output.Contains("Utf8Uri.TryEscapeUri(utf8p0.Span"), "AllowReserved=true should pass the reserved set through and escape the rest");
+        Assert.IsFalse(output.Contains("TryEscapeDataString"), "AllowReserved=true must not fully encode");
     }
 
     [TestMethod]

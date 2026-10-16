@@ -812,13 +812,13 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
             {
                 w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, elementKind: param.ElementSerializationKind);
+                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, param.AllowReserved, elementKind: param.ElementSerializationKind);
                 w.CloseBrace();
                 w.WriteLine();
             }
             else
             {
-                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, elementKind: param.ElementSerializationKind);
+                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, param.AllowReserved, elementKind: param.ElementSerializationKind);
                 w.WriteLine();
             }
         }

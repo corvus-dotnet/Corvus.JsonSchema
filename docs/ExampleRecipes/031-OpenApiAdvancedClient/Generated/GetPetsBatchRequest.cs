@@ -66,7 +66,11 @@ public readonly struct GetPetsBatchRequest : IApiRequest<GetPetsBatchRequest>
             }
 
             using RawUtf8JsonString rawIds = JsonMarshal.GetRawUtf8Value(itemIds);
-            writer.Write(rawIds.Span);
+            Span<byte> escIds = writer.GetSpan(rawIds.Span.Length * 3);
+            if (Utf8Uri.TryEscapeDataString(rawIds.Span, escIds, out int ewIds))
+            {
+                writer.Advance(ewIds);
+            }
             firstItemIds = false;
         }
     }
