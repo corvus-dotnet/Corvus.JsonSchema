@@ -63,6 +63,9 @@ answers. Each is a decision recorded here, with an issue where there is work to 
   accept a pattern ECMA-262 refuses and refuse one ECMA-262 accepts ([#1027](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1027)).
 - **`idn-email` has a limit of 320 bytes on the whole address.** The Rust crate has no limit on the address as a
   whole. The host name of the address has the limit of 253 characters as A-labels in both ([#1029](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1029)).
+- **.NET Framework and a large count.** .NET Framework's `Regex` makes a string of the count of a repetition of one
+  character when it is constructed, so `^a{100000000}$` costs some 200 MB there, and a count no string can reach
+  is written as a part that never matches. .NET does neither.
 - **The V4 generated code** has the timeout on every pattern, and the four folders of V4 code generated before the
   change keep their old translations and have no timeout until they are generated again.
 

@@ -30,6 +30,24 @@ public class EcmaRegexTranslatorTranslationTests
     // Literal pass-through
     // ============================
 
+    /// <summary>
+    /// A repetition longer, at its least, than the longest .NET string (0x3FFFFFDF code units) never matches, and is
+    /// written as what never matches: .NET Framework's constructor would make a string of its count, and run out of
+    /// memory. One that a string can be long enough for is written as it is.
+    /// </summary>
+    /// <param name="ecma">The pattern.</param>
+    /// <param name="expected">The translation.</param>
+    [TestMethod]
+    [DataRow("a{2147483647,2147483648}", @"(?!\z|[\s\S])")]
+    [DataRow("a{99999999999999999998,99999999999999999999}", @"(?!\z|[\s\S])")]
+    [DataRow("^a{1073741792}$", @"(?!\z|[\s\S])")]
+    [DataRow("^x(?:a{2147483647})?y$", @"^xy\z")]
+    [DataRow("^a{1073741791}$", @"^a{1073741791}\z")]
+    public void ARepetitionLongerThanAnyStringNeverMatches(string ecma, string expected)
+    {
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
+    }
+
     [TestMethod]
     [DataRow("abc", "abc")]
     [DataRow("", "")]

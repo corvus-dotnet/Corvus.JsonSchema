@@ -1136,6 +1136,9 @@ internal static class EcmaRegexTranslator
 
     private sealed class Emitter
     {
+        /// <summary>The most UTF-16 code units a .NET string holds (<c>0x3FFFFFDF</c>), on .NET and on .NET Framework.</summary>
+        private const long LongestString = 0x3FFFFFDF;
+
         private const string WordClass = "[a-zA-Z0-9_]";
         private const string FoldWordClass = @"[a-zA-Z0-9_\u017F\u212A]";
         private const string LineTerminatorClass = @"[\n\r\u2028\u2029]";
@@ -1604,6 +1607,23 @@ internal static class EcmaRegexTranslator
                 if (this.MaxLength(body) == 0)
                 {
                     return body;
+                }
+
+                if (n.Min >= 5 && this.MinLength(n) > LongestString)
+                {
+                    // No .NET string is long enough for the repetition, whose least length is counted in characters
+                    // that each take one UTF-16 code unit at least, so it never matches. Written as it is, .NET
+                    // Framework's regular expression constructor makes a string of its count to search for, and
+                    // a{2147483646} runs out of memory. A least count of 2, 3 or 4 is left to RefuseManyCopies, as
+                    // .NET writes such a repetition out: one inside another, they are too large, and are refused.
+                    List<int> groups = [];
+                    this.CollectGroups(n, groups);
+                    foreach (int g in groups)
+                    {
+                        this.dead[g] = true;
+                    }
+
+                    return NeverNode();
                 }
             }
 
