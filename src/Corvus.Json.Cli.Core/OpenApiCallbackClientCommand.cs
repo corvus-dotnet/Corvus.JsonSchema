@@ -10,6 +10,7 @@ using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Internal;
 using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
+using Corvus.Text.Json.OpenApi.CodeGeneration.Operations;
 using Corvus.Text.Json.OpenApi30;
 using Corvus.Text.Json.OpenApi31;
 using Corvus.Text.Json.OpenApi32;
@@ -129,10 +130,11 @@ internal sealed class OpenApiCallbackClientCommand : AsyncCommand<OpenApiGenerat
 
             OpenApi32CodeGenerator generator = new(
                 rootNamespace,
-                schemaTypeMap ?? new Dictionary<string, string>(),
+                new Dictionary<string, string>(),
                 settings.ClientName,
                 settings.IgnoreEmptyFormUrlEncodedBody);
-            files = generator.GenerateCallbackClient(specRoot, filter, referenceResolver);
+            OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.WebhooksAndCallbacks, filter, referenceResolver);
+                files = generator.EmitCallbackClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), null, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
         }
         else if (specVersion is "3.1" or not "3.0")
         {
@@ -155,10 +157,11 @@ internal sealed class OpenApiCallbackClientCommand : AsyncCommand<OpenApiGenerat
 
             OpenApi31CodeGenerator generator = new(
                 rootNamespace,
-                schemaTypeMap ?? new Dictionary<string, string>(),
+                new Dictionary<string, string>(),
                 settings.ClientName,
                 settings.IgnoreEmptyFormUrlEncodedBody);
-            files = generator.GenerateCallbackClient(specRoot, filter, referenceResolver);
+            OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.WebhooksAndCallbacks, filter, referenceResolver);
+                files = generator.EmitCallbackClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), null, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
         }
         else
         {
@@ -181,10 +184,11 @@ internal sealed class OpenApiCallbackClientCommand : AsyncCommand<OpenApiGenerat
 
             OpenApi30CodeGenerator generator = new(
                 rootNamespace,
-                schemaTypeMap ?? new Dictionary<string, string>(),
+                new Dictionary<string, string>(),
                 settings.ClientName,
                 settings.IgnoreEmptyFormUrlEncodedBody);
-            files = generator.GenerateCallbackClient(specRoot, filter, referenceResolver);
+            OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.WebhooksAndCallbacks, filter, referenceResolver);
+                files = generator.EmitCallbackClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), null, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
         }
 
         AnsiConsole.MarkupLine($"[green]Callback client files:[/] {files.Count}");

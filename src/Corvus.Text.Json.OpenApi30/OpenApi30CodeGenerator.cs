@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using System.Text;
 using Corvus.Text.Json;
+using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
@@ -31,13 +32,12 @@ namespace Corvus.Text.Json.OpenApi30;
 /// to <see cref="CodeEmitHelpers"/> and <see cref="SchemaPointerBuilder"/>.
 /// </para>
 /// </remarks>
-public sealed class OpenApi30CodeGenerator
+public sealed class OpenApi30CodeGenerator : IOpenApiClientEmitter
 {
     private readonly string rootNamespace;
     private readonly string? clientNamePrefix;
     private readonly bool ignoreEmptyFormUrlEncodedBody;
-    private readonly IReadOnlyDictionary<string, string> schemaTypeMap;
-    private readonly IReadOnlySet<string> contextSourceBodyPointers;
+    private readonly IModelTypeMap typeMap;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OpenApi30CodeGenerator"/> class.
@@ -69,12 +69,27 @@ public sealed class OpenApi30CodeGenerator
         string? clientNamePrefix = null,
         bool ignoreEmptyFormUrlEncodedBody = false,
         IReadOnlySet<string>? contextSourceBodyPointers = null)
+        : this(rootNamespace, new SchemaTypeMap(schemaTypeMap, contextSourceBodyPointers, "JsonElement"), clientNamePrefix, ignoreEmptyFormUrlEncodedBody)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OpenApi30CodeGenerator"/> class over a model type map.
+    /// </summary>
+    /// <param name="rootNamespace">The root namespace for generated types.</param>
+    /// <param name="typeMap">The generated model types the client refers to, by schema pointer.</param>
+    /// <param name="clientNamePrefix">The prefix for generated client type names, or <see langword="null"/> to derive one from the API title.</param>
+    /// <param name="ignoreEmptyFormUrlEncodedBody">Whether a form-urlencoded request body whose schema defines no properties is treated as absent.</param>
+    public OpenApi30CodeGenerator(
+        string rootNamespace,
+        IModelTypeMap typeMap,
+        string? clientNamePrefix = null,
+        bool ignoreEmptyFormUrlEncodedBody = false)
     {
         this.rootNamespace = rootNamespace;
-        this.schemaTypeMap = schemaTypeMap;
+        this.typeMap = typeMap;
         this.clientNamePrefix = clientNamePrefix;
         this.ignoreEmptyFormUrlEncodedBody = ignoreEmptyFormUrlEncodedBody;
-        this.contextSourceBodyPointers = contextSourceBodyPointers ?? new HashSet<string>(StringComparer.Ordinal);
     }
 
     // ── Walk-phase reference (typed model objects, no strings extracted) ──
@@ -283,6 +298,17 @@ public sealed class OpenApi30CodeGenerator
         return [.. result];
     }
 
+    /// <inheritdoc/>
+    public string LanguageId => LanguageIds.CSharp;
+
+    /// <inheritdoc/>
+    public IReadOnlyList<GeneratedFile> EmitClient(in OpenApiClientModel model, IModelTypeMap types, ClientEmitOptions options)
+        => new OpenApi30CodeGenerator(options.Namespace, types, options.ClientName, this.ignoreEmptyFormUrlEncodedBody).EmitClientFiles(in model);
+
+    /// <inheritdoc/>
+    public IReadOnlyList<GeneratedFile> EmitCallbackClient(in OpenApiClientModel model, IModelTypeMap types, ClientEmitOptions options)
+        => new OpenApi30CodeGenerator(options.Namespace, types, options.ClientName, this.ignoreEmptyFormUrlEncodedBody).EmitCallbackClientFiles(in model);
+
     /// <summary>
     /// Prepares the operations of a specification for emission: the language-neutral operation model every client
     /// emitter consumes.
@@ -311,7 +337,7 @@ public sealed class OpenApi30CodeGenerator
         }
 
         SpecificationInfoReader.Read(specRoot, out string? title, out string? apiVersion);
-        return new OpenApiClientModel("3.0", title, apiVersion, rootServer, SecuritySchemeReader.ReadOpenApi3(specRoot), [.. operations]);
+        return new OpenApiClientModel("3.0", title, apiVersion, null, rootServer, SecuritySchemeReader.ReadOpenApi3(specRoot), [.. operations]);
     }
 
     /// <summary>
@@ -329,15 +355,14 @@ public sealed class OpenApi30CodeGenerator
         OperationFilter? filter = null,
         IOpenApiReferenceResolver? referenceResolver = null)
     {
-        referenceResolver ??= new LocalReferenceResolver(specRoot);
-        List<OperationInfo> operations = [];
-        ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
+        OpenApiClientModel model = this.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
+        return this.EmitClientFiles(in model);
+    }
 
-        foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter, referenceResolver))
-        {
-            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer, specRoot));
-        }
-
+    private IReadOnlyList<GeneratedFile> EmitClientFiles(in OpenApiClientModel model)
+    {
+        List<OperationInfo> operations = [.. model.Operations];
+        ServerInfo? rootServer = model.RootServer;
         List<GeneratedFile> files = [];
         Dictionary<string, List<OperationInfo>> groups = GroupOperationsByTag(operations);
 
@@ -2176,15 +2201,15 @@ public sealed class OpenApi30CodeGenerator
     private string ResolveSchemaTypeName(string? schemaPointer)
     {
         if (schemaPointer is not null
-            && this.schemaTypeMap.TryGetValue(schemaPointer, out string? typeName))
+            && this.typeMap.TryGetTypeReference(schemaPointer, out string? typeName))
         {
             return typeName;
         }
 
-        return "JsonElement";
+        return this.typeMap.FallbackTypeReference;
     }
 
-    // The request body's schema pointer (the key into contextSourceBodyPointers), picked by the same rule that picks its
+    // The request body's schema pointer (the key into the type map's builder set), picked by the same rule that picks its
     // type name so the two always describe the same content entry.
     private static string? ResolveRequestBodySchemaPointer(RequestBodyInfo requestBody)
     {
@@ -2212,7 +2237,7 @@ public sealed class OpenApi30CodeGenerator
         }
 
         return ResolveRequestBodySchemaPointer(requestBody) is { } pointer
-            && this.contextSourceBodyPointers.Contains(pointer);
+            && this.typeMap.HasBuilder(pointer);
     }
 
     private string ResolveRequestBodyTypeName(RequestBodyInfo requestBody)
@@ -2227,7 +2252,7 @@ public sealed class OpenApi30CodeGenerator
             }
         }
 
-        return "JsonElement";
+        return this.typeMap.FallbackTypeReference;
     }
 
     /// <summary>
@@ -2351,7 +2376,7 @@ public sealed class OpenApi30CodeGenerator
         return null;
     }
 
-    // The JSON response body's schema pointer (the key into contextSourceBodyPointers) — used to decide whether the body
+    // The JSON response body's schema pointer (the key into the type map's builder set) — used to decide whether the body
     // type carries a Source<TContext>, and so whether a closure-free Ok<TContext> overload can be emitted for it.
     private string? ResolveResponseBodySchemaPointer(ResponseInfo resp)
     {
@@ -5178,33 +5203,11 @@ public sealed class OpenApi30CodeGenerator
         OperationFilter? filter = null,
         IOpenApiReferenceResolver? referenceResolver = null)
     {
-        referenceResolver ??= new LocalReferenceResolver(specRoot);
-        List<OperationInfo> operations = [];
-        ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
-
-        foreach (OperationRef opRef in WalkCallbackOperationRefs(specRoot, filter, referenceResolver))
-        {
-            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer, specRoot));
-        }
-
-        List<GeneratedFile> files = [];
-        Dictionary<string, List<OperationInfo>> groups = GroupOperationsByTag(operations);
-
-        foreach (OperationInfo op in operations)
-        {
-            files.Add(this.EmitRequestStruct(op));
-            files.Add(this.EmitResponseStruct(op, operations));
-        }
-
-        foreach ((string tag, List<OperationInfo> tagOps) in groups)
-        {
-            string clientName = this.GetClientName(tag);
-            files.Add(this.EmitInterface(clientName, tagOps, rootServer));
-            files.Add(this.EmitImplementation(clientName, tagOps));
-        }
-
-        return files;
+        OpenApiClientModel model = this.PrepareOperations(specRoot, OperationScope.WebhooksAndCallbacks, filter, referenceResolver);
+        return this.EmitCallbackClientFiles(in model);
     }
+
+    private IReadOnlyList<GeneratedFile> EmitCallbackClientFiles(in OpenApiClientModel model) => this.EmitClientFiles(in model);
 
     /// <summary>
     /// Collects JSON Schema pointers from callbacks in the specification.
@@ -5846,7 +5849,7 @@ public sealed class OpenApi30CodeGenerator
         // only then can a closure-free, single-materialisation generic overload be emitted alongside the non-generic one.
         bool bodyHasContextSource = hasBody
             && this.ResolveResponseBodySchemaPointer(response) is { } bodySchemaPointer
-            && this.contextSourceBodyPointers.Contains(bodySchemaPointer);
+            && this.typeMap.HasBuilder(bodySchemaPointer);
 
         StringBuilder paramList = new();
         if (isDefault)
