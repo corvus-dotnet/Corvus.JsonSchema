@@ -10,6 +10,7 @@ using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Internal;
 using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
+using Corvus.Text.Json.OpenApi.CodeGeneration.Operations;
 using Corvus.Text.Json.OpenApi20;
 using Corvus.Text.Json.OpenApi30;
 using Corvus.Text.Json.OpenApi31;
@@ -145,11 +146,11 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
 
                 OpenApi20CodeGenerator generator = new(
                     rootNamespace,
-                    schemaTypeMap ?? new Dictionary<string, string>(),
+                    new Dictionary<string, string>(),
                     settings.ClientName,
-                    settings.IgnoreEmptyFormUrlEncodedBody,
-                    contextBodies);
-                files = generator.Generate(specRoot, filter, referenceResolver);
+                    settings.IgnoreEmptyFormUrlEncodedBody);
+                OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
+                files = generator.EmitClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
             }
             else if (specVersion is "3.2")
             {
@@ -174,11 +175,11 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
 
                 OpenApi32CodeGenerator generator = new(
                     rootNamespace,
-                    schemaTypeMap ?? new Dictionary<string, string>(),
+                    new Dictionary<string, string>(),
                     settings.ClientName,
-                    settings.IgnoreEmptyFormUrlEncodedBody,
-                    contextBodies);
-                files = generator.Generate(specRoot, filter, referenceResolver);
+                    settings.IgnoreEmptyFormUrlEncodedBody);
+                OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
+                files = generator.EmitClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
             }
             else if (specVersion is "3.1" or not "3.0")
             {
@@ -203,11 +204,11 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
 
                 OpenApi31CodeGenerator generator = new(
                     rootNamespace,
-                    schemaTypeMap ?? new Dictionary<string, string>(),
+                    new Dictionary<string, string>(),
                     settings.ClientName,
-                    settings.IgnoreEmptyFormUrlEncodedBody,
-                    contextBodies);
-                files = generator.Generate(specRoot, filter, referenceResolver);
+                    settings.IgnoreEmptyFormUrlEncodedBody);
+                OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
+                files = generator.EmitClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
             }
             else
             {
@@ -232,11 +233,11 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
 
                 OpenApi30CodeGenerator generator = new(
                     rootNamespace,
-                    schemaTypeMap ?? new Dictionary<string, string>(),
+                    new Dictionary<string, string>(),
                     settings.ClientName,
-                    settings.IgnoreEmptyFormUrlEncodedBody,
-                    contextBodies);
-                files = generator.Generate(specRoot, filter, referenceResolver);
+                    settings.IgnoreEmptyFormUrlEncodedBody);
+                OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
+                files = generator.EmitClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
             }
 
             AnsiConsole.MarkupLine($"[green]Files:[/] {files.Count}");
