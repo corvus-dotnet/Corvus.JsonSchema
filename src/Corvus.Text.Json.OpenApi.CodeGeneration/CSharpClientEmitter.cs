@@ -533,7 +533,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
     // ── Request struct emission ─────────────────────────────────────────
     private GeneratedFile EmitRequestStruct(OperationInfo op)
     {
-        string structName = $"{op.MethodName}{GeneratedClientTypeNaming.RequestSuffix}";
+        string structName = $"{op.CSharpMethodName()}{GeneratedClientTypeNaming.RequestSuffix}";
         IndentedWriter w = new();
 
         CodeEmitHelpers.EmitHeader(w);
@@ -547,7 +547,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         }
 
         w.WriteLine("/// <summary>");
-        w.WriteLine($"/// Request type for the {op.MethodName} operation.");
+        w.WriteLine($"/// Request type for the {op.CSharpMethodName()} operation.");
         w.WriteLine("/// </summary>");
 
         // Drift D2 (see the drift catalogue): only the 3.2 generator documented a request with its description.
@@ -1128,7 +1128,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
     // ── Response struct emission ────────────────────────────────────────
     private GeneratedFile EmitResponseStruct(OperationInfo op, List<OperationInfo> allOperations)
     {
-        string structName = $"{op.MethodName}{GeneratedClientTypeNaming.ResponseSuffix}";
+        string structName = $"{op.CSharpMethodName()}{GeneratedClientTypeNaming.ResponseSuffix}";
         IndentedWriter w = new();
 
         CodeEmitHelpers.EmitHeader(w);
@@ -1136,7 +1136,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         w.WriteLine();
 
         w.WriteLine("/// <summary>");
-        w.WriteLine($"/// Response type for the {op.MethodName} operation.");
+        w.WriteLine($"/// Response type for the {op.CSharpMethodName()} operation.");
         w.WriteLine("/// </summary>");
         w.WriteLine($"public struct {structName} : IApiResponse<{structName}>");
         w.OpenBrace();
@@ -1167,7 +1167,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         bool hasRequestBodyExprLinks = hasRequestExprLinks && HasRequestBodyExpressions(op);
         if (hasRequestExprLinks)
         {
-            w.WriteLine($"internal {op.MethodName}Request sourceRequest;");
+            w.WriteLine($"internal {op.CSharpMethodName()}Request sourceRequest;");
             w.WriteLine("internal JsonWorkspace sourceWorkspace;");
 
             if (hasRequestBodyExprLinks && op.RequestBody is not null)
@@ -1453,7 +1453,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
             }
 
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
-            string viewName = $"{op.MethodName}{accessorName}Multipart";
+            string viewName = $"{op.CSharpMethodName()}{accessorName}Multipart";
 
             w.WriteLine();
             string namesLiteral = string.Join(", ", resp.BinaryParts.Select(p => CodeEmitHelpers.FormatStringLiteral(p.PropertyName)));
@@ -1512,11 +1512,11 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
             }
 
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
-            string viewName = $"{op.MethodName}{accessorName}Multipart";
+            string viewName = $"{op.CSharpMethodName()}{accessorName}Multipart";
 
             w.WriteLine();
             w.WriteLine("/// <summary>");
-            w.WriteLine($"/// The {resp.StatusCode} multipart body of the {op.MethodName} operation: the typed body");
+            w.WriteLine($"/// The {resp.StatusCode} multipart body of the {op.CSharpMethodName()} operation: the typed body");
             w.WriteLine("/// plus a streaming handle per binary part. Open handles in wire order and consume");
             w.WriteLine("/// each before opening the next; they are valid until the response is disposed.");
             w.WriteLine("/// </summary>");
@@ -1616,8 +1616,8 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         }
 
         OperationInfo target = targetOp.Value;
-        string targetResponseType = $"{target.MethodName}{GeneratedClientTypeNaming.ResponseSuffix}";
-        string targetRequestType = $"{target.MethodName}{GeneratedClientTypeNaming.RequestSuffix}";
+        string targetResponseType = $"{target.CSharpMethodName()}{GeneratedClientTypeNaming.ResponseSuffix}";
+        string targetRequestType = $"{target.CSharpMethodName()}{GeneratedClientTypeNaming.RequestSuffix}";
 
         // Determine which target parameters are NOT satisfied by link bindings.
         HashSet<string> boundParams = new(StringComparer.OrdinalIgnoreCase);
@@ -2798,7 +2798,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
 
     private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op, bool contextThreaded = false, bool rawStreamAsWriter = false)
     {
-        string responseName = $"{op.MethodName}{GeneratedClientTypeNaming.ResponseSuffix}";
+        string responseName = $"{op.CSharpMethodName()}{GeneratedClientTypeNaming.ResponseSuffix}";
 
         EmitMethodDoc(w, op);
 
@@ -2810,7 +2810,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         List<string> paramParts = this.BuildParameterList(op, contextThreaded, rawStreamAsWriter);
         string generic = contextThreaded ? "<TContext>" : string.Empty;
         w.WriteLine(
-            $"ValueTask<{responseName}> {op.MethodName}Async{generic}({string.Join(", ", paramParts)})" +
+            $"ValueTask<{responseName}> {op.CSharpMethodName()}Async{generic}({string.Join(", ", paramParts)})" +
             (contextThreaded ? string.Empty : ";"));
 
         if (contextThreaded)
@@ -2933,8 +2933,8 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
 
     private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames, bool contextThreaded = false, bool rawStreamAsWriter = false)
     {
-        string requestName = $"{op.MethodName}{GeneratedClientTypeNaming.RequestSuffix}";
-        string responseName = $"{op.MethodName}{GeneratedClientTypeNaming.ResponseSuffix}";
+        string requestName = $"{op.CSharpMethodName()}{GeneratedClientTypeNaming.RequestSuffix}";
+        string responseName = $"{op.CSharpMethodName()}{GeneratedClientTypeNaming.ResponseSuffix}";
 
         EmitMethodDoc(w, op);
 
@@ -2951,7 +2951,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
 
         string generic = contextThreaded ? "<TContext>" : string.Empty;
         w.WriteLine(
-            $"public ValueTask<{responseName}> {op.MethodName}Async{generic}(" +
+            $"public ValueTask<{responseName}> {op.CSharpMethodName()}Async{generic}(" +
             $"{string.Join(", ", paramParts)})");
 
         if (contextThreaded)
@@ -3137,7 +3137,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         }
         else if (isFormUrlEncodedBody)
         {
-            string formEncodingsFieldName = encodingFieldNames.GetValueOrDefault(op.MethodName + "_Form", string.Empty);
+            string formEncodingsFieldName = encodingFieldNames.GetValueOrDefault(op.CSharpMethodName() + "_Form", string.Empty);
 
             if (formEncodingsFieldName.Length > 0)
             {
@@ -3196,7 +3196,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         }
         else if (isMultipartBody)
         {
-            string multipartEncodingsFieldName = encodingFieldNames.GetValueOrDefault(op.MethodName + "_Multipart", string.Empty);
+            string multipartEncodingsFieldName = encodingFieldNames.GetValueOrDefault(op.CSharpMethodName() + "_Multipart", string.Empty);
 
             BinaryPropertyInfo[] binaryProps = op.RequestBody!.Value.BinaryProperties;
             bool hasBinaryParts = binaryProps.Length > 0;
@@ -3365,8 +3365,8 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
 
                 if (encodings is { Count: > 0 })
                 {
-                    string fieldName = $"{op.MethodName}Encodings";
-                    fieldNames[op.MethodName + "_Form"] = fieldName;
+                    string fieldName = $"{op.CSharpMethodName()}Encodings";
+                    fieldNames[op.CSharpMethodName() + "_Form"] = fieldName;
                     w.WriteLine();
                     CodeEmitHelpers.EmitEncodingsField(w, fieldName, encodings);
                 }
@@ -3379,8 +3379,8 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
 
                 if (encodings is { Count: > 0 })
                 {
-                    string fieldName = $"{op.MethodName}MultipartEncodings";
-                    fieldNames[op.MethodName + "_Multipart"] = fieldName;
+                    string fieldName = $"{op.CSharpMethodName()}MultipartEncodings";
+                    fieldNames[op.CSharpMethodName() + "_Multipart"] = fieldName;
                     w.WriteLine();
                     CodeEmitHelpers.EmitEncodingsField(w, fieldName, encodings);
                 }
@@ -3406,11 +3406,11 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
                 // The spec declares a content type for this part: substitute it when the
                 // caller left BinaryPartData.ContentType unset.
                 string contentTypeLiteral = CodeEmitHelpers.FormatStringLiteral(specContentType);
-                w.WriteLine($"[{propNameLiteral}] = {prop.ParameterName}.ContentType is null ? {prop.ParameterName} with {{ ContentType = {contentTypeLiteral} }} : {prop.ParameterName},");
+                w.WriteLine($"[{propNameLiteral}] = {prop.CSharpParameterName()}.ContentType is null ? {prop.CSharpParameterName()} with {{ ContentType = {contentTypeLiteral} }} : {prop.CSharpParameterName()},");
             }
             else
             {
-                w.WriteLine($"[{propNameLiteral}] = {prop.ParameterName},");
+                w.WriteLine($"[{propNameLiteral}] = {prop.CSharpParameterName()},");
             }
         }
 
@@ -3450,7 +3450,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
 
             foreach (BinaryPropertyInfo binaryProp in rb.BinaryProperties)
             {
-                w.WriteLine($"/// <param name=\"{binaryProp.ParameterName}\">Binary data for the '{binaryProp.PropertyName}' part.</param>");
+                w.WriteLine($"/// <param name=\"{binaryProp.CSharpParameterName()}\">Binary data for the '{binaryProp.PropertyName}' part.</param>");
             }
         }
 
@@ -3543,7 +3543,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         {
             foreach (BinaryPropertyInfo binaryProp in rbForBinary.BinaryProperties)
             {
-                paramParts.Add($"BinaryPartData {binaryProp.ParameterName}");
+                paramParts.Add($"BinaryPartData {binaryProp.CSharpParameterName()}");
             }
         }
 

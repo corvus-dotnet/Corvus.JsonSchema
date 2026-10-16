@@ -57,7 +57,7 @@ public static class CSharpFixtureAdapterEmitter
         return new GeneratedFile(FileName, w.ToString());
     }
 
-    private static string OperationKey(in OperationInfo op) => op.OperationId ?? op.MethodName;
+    private static string OperationKey(in OperationInfo op) => op.OperationId ?? op.CSharpMethodName();
 
     private static void EmitInvoke(IndentedWriter w, OperationInfo[] operations)
     {
@@ -81,7 +81,7 @@ public static class CSharpFixtureAdapterEmitter
 
             w.WriteLine($"case {CodeEmitHelpers.FormatStringLiteral(key)}:");
             w.PushIndent();
-            w.WriteLine($"return await {op.MethodName}Async(input, transport, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine($"return await {op.CSharpMethodName()}Async(input, transport, cancellationToken).ConfigureAwait(false);");
             w.PopIndent();
         }
 
@@ -103,9 +103,9 @@ public static class CSharpFixtureAdapterEmitter
     {
         string tag = op.Tags.Length > 0 ? op.Tags[0] : "default";
         string clientType = $"{options.ClientName ?? "Api"}{CodeEmitHelpers.SanitizeIdentifier(tag)}Client";
-        string responseType = $"{op.MethodName}Response";
+        string responseType = $"{op.CSharpMethodName()}Response";
 
-        w.WriteLine($"private static async ValueTask<string> {op.MethodName}Async(JsonElement input, IApiTransport transport, CancellationToken cancellationToken)");
+        w.WriteLine($"private static async ValueTask<string> {op.CSharpMethodName()}Async(JsonElement input, IApiTransport transport, CancellationToken cancellationToken)");
         w.OpenBrace();
 
         string? unsupported = Unsupportable(in op, types);
@@ -194,7 +194,7 @@ public static class CSharpFixtureAdapterEmitter
         arguments.Add("responseValidationMode: responseValidationMode");
 
         w.WriteLine();
-        w.WriteLine($"await using {responseType} response = await client.{op.MethodName}Async({string.Join(", ", arguments)}).ConfigureAwait(false);");
+        w.WriteLine($"await using {responseType} response = await client.{op.CSharpMethodName()}Async({string.Join(", ", arguments)}).ConfigureAwait(false);");
         w.WriteLine();
         w.WriteLine("string? caseName = null;");
         w.WriteLine("string? bodyJson = null;");
