@@ -40,6 +40,22 @@ public class RegexMatchTimeoutEmissionTests
         }
         """;
 
+    // Both patterns are proved to match in time proportional to the text (EcmaRegexTranslator.IsLinear), and neither
+    // is one the emitter or the evaluator matches without a regular expression.
+    private const string LinearSchema =
+        """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "code": { "type": "string", "pattern": "^x[0-9]+?y$" }
+          },
+          "patternProperties": {
+            "^(ab|cd)[a-z]+?-$": { "type": "integer" }
+          }
+        }
+        """;
+
     [TestMethod]
     public async Task GeneratedTypes_EveryRegularExpressionForm_HasTheTimeout()
     {
@@ -75,6 +91,48 @@ public class RegexMatchTimeoutEmissionTests
         ];
 
         AssertLines(expected, lines);
+    }
+
+    /// <summary>
+    /// A pattern proved to match in time proportional to the text has no timeout, in the forms of a generated type
+    /// and in the program's expressions. The options keep the timeout, for the expressions the evaluator constructs,
+    /// to which the evaluator applies the same proof.
+    /// </summary>
+    [TestMethod]
+    public async Task GeneratedCode_ForALinearPattern_HasNoTimeout()
+    {
+        IReadOnlyList<GeneratedCodeFile> files = await GenerateAsync(withProgramImage: true, LinearSchema);
+
+        string[] expected =
+        [
+            """CorvusJsonSchemaProgram.cs: RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(1000),""",
+            """CorvusJsonSchemaProgram.cs: [GeneratedRegex("^(?:ab|cd)[a-z]+?-\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: global::System.Threading.Timeout.Infinite)]""",
+            """CorvusJsonSchemaProgram.cs: [GeneratedRegex("^x[0-9]+?y\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: global::System.Threading.Timeout.Infinite)]""",
+            """Root.JsonSchema.cs: [GeneratedRegex("^(?:ab|cd)[a-z]+?-\\z", RegexOptions.None, matchTimeoutMilliseconds: global::System.Threading.Timeout.Infinite)]""",
+            """Root.JsonSchema.cs: private static Regex CreatePatternProperties() => new("^(?:ab|cd)[a-z]+?-\\z", RegexOptions.Compiled, global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout);""",
+        ];
+
+        AssertLines(expected, RegexLines(files));
+
+        var context = new AssemblyLoadContext(nameof(GeneratedCode_ForALinearPattern_HasNoTimeout), isCollectible: true);
+        try
+        {
+            Assembly assembly = CompileAndLoad(files, context);
+            Regex[] expressions =
+            [
+                .. assembly.GetTypes()
+                    .SelectMany(t => t.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+                    .Where(f => f.FieldType == typeof(Regex))
+                    .Select(f => (Regex)f.GetValue(null)!)
+            ];
+
+            Assert.AreEqual(1, expressions.Length, "The expression of the pattern property.");
+            Assert.AreEqual(Regex.InfiniteMatchTimeout, expressions[0].MatchTimeout, expressions[0].ToString());
+        }
+        finally
+        {
+            context.Unload();
+        }
     }
 
     [TestMethod]
@@ -166,10 +224,10 @@ public class RegexMatchTimeoutEmissionTests
         }
     }
 
-    private static async Task<IReadOnlyList<GeneratedCodeFile>> GenerateAsync(bool withProgramImage)
+    private static async Task<IReadOnlyList<GeneratedCodeFile>> GenerateAsync(bool withProgramImage, string schema = Schema)
     {
         string path = Path.Combine(Path.GetTempPath(), $"regex-timeout-{Guid.NewGuid():N}.json");
-        await File.WriteAllTextAsync(path, Schema);
+        await File.WriteAllTextAsync(path, schema);
         using CompoundDocumentResolver resolver = new(new FileSystemDocumentResolver());
         try
         {

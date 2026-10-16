@@ -79,7 +79,7 @@ public class InvalidPatternGenerationTests
 
         string[] expected =
         [
-            """[GeneratedRegex("^a-b+\\{\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]""",
+            """[GeneratedRegex("^a-b+\\{\\z", RegexOptions.None, matchTimeoutMilliseconds: global::System.Threading.Timeout.Infinite)]""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))

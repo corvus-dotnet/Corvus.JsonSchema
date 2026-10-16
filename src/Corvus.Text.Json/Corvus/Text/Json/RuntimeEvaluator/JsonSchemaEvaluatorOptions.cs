@@ -50,6 +50,15 @@ public sealed class JsonSchemaEvaluatorOptions
     /// the evaluator did before this default.
     /// </para>
     /// <para>
+    /// A pattern the evaluator proves to match in time proportional to the length of the text has no timeout,
+    /// whatever <see cref="RegexMatchTimeout"/> is. A timeout makes .NET's engines check the clock as they match,
+    /// which costs such a pattern up to half its time again in the interpreted engine, and a fifth in the compiled
+    /// one. The proof accepts a pattern with no backreference, lookaround or word boundary, whose repetitions each
+    /// repeat one character or set, and in which no repetition can give characters back to another that could take
+    /// them: <c>^[a-z]+\.[a-z]+$</c>, <c>^#[0-9a-fA-F]{6}$</c> and <c>(.*)</c> are proved linear, and
+    /// <c>^([a-z]+\.)*[a-z]+$</c> and <c>^[a-z]+[a-z0-9]+$</c> are not. Code generated for a schema does the same.
+    /// </para>
+    /// <para>
     /// The timeout bounds the time of a match and not its memory. A match that backtracks keeps what it may have to
     /// come back to, and it can keep more for as long as it runs, so the timeout bounds that only as far as it
     /// bounds the time. Set a shorter timeout, or a limit on the memory of the process, where neither the schema

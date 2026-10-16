@@ -555,7 +555,8 @@ internal static class RuntimeProgramGenerator
     /// <c>[GeneratedRegex]</c> method per pattern, in the image's pattern-table order, on runtimes that have the
     /// generator; elsewhere the provider returns <see langword="null"/> and the evaluator constructs the expression.
     /// Each has the match timeout of <see cref="CodeGenerationExtensions.RegexMatchTimeoutMilliseconds"/>: the
-    /// attribute carries it, and the options the program is loaded with carry it for the evaluator's own.
+    /// attribute carries it, and the options the program is loaded with carry it for the evaluator's own. A pattern
+    /// proved linear (<see cref="EcmaRegexTranslator.IsLinear"/>) has none, in both.
     /// A program from a Roslyn source generator carries no patterns (generators do not chain, so the regex generator
     /// would never implement the methods) and the evaluator constructs every expression on first use.
     /// </summary>
@@ -607,7 +608,12 @@ internal static class RuntimeProgramGenerator
             {
                 if (!image.DotNetPatterns[i].StartsWith(EcmaRegexTranslator.InterpretedMarker, StringComparison.Ordinal))
                 {
-                    line($"    [GeneratedRegex({Literal(image.DotNetPatterns[i])}, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: {CodeGenerationExtensions.RegexMatchTimeoutMilliseconds})]");
+                    // A pattern proved to match in time proportional to the text has no timeout, as in the evaluator.
+                    bool linear = image.EcmaPatterns.Count == image.DotNetPatterns.Count && EcmaRegexTranslator.IsLinear(image.EcmaPatterns[i]);
+                    string timeout = linear
+                        ? "global::System.Threading.Timeout.Infinite"
+                        : CodeGenerationExtensions.RegexMatchTimeoutMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    line($"    [GeneratedRegex({Literal(image.DotNetPatterns[i])}, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: {timeout})]");
                     line($"    private static partial Regex Regex{i}();");
                 }
             }

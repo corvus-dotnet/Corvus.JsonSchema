@@ -43,13 +43,16 @@ internal static partial class CodeGenerationExtensions
     private const string MutableClassNameKey = "CSharp_JsonSchema_MutableClassNameKey";
 
     /// <summary>
-    /// The match timeout, in milliseconds, of every regular expression in generated code: 1 second.
+    /// The match timeout, in milliseconds, of every regular expression in generated code that is not proved to
+    /// match in time proportional to the text: 1 second.
     /// </summary>
     /// <remarks>
     /// There are patterns on which a match in .NET's regular expression engine never finishes. With a timeout the
     /// match throws <see cref="System.Text.RegularExpressions.RegexMatchTimeoutException"/> to the caller of the
     /// generated code. This is the one place the generator holds the value. The runtime evaluator has the same
     /// default for the expressions it constructs, in <c>JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout</c>.
+    /// A pattern that <c>EcmaRegexTranslator.IsLinear</c> proves linear has no timeout, in generated code and in
+    /// the evaluator.
     /// </remarks>
     internal const int RegexMatchTimeoutMilliseconds = 1_000;
 
@@ -331,8 +334,16 @@ internal static partial class CodeGenerationExtensions
 
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(CultureInfo.InvariantCulture));
 
-        // Every form carries the match timeout (see RegexMatchTimeoutMilliseconds).
-        string timeout = RegexMatchTimeoutMilliseconds.ToString(CultureInfo.InvariantCulture);
+        // Every form carries the match timeout (see RegexMatchTimeoutMilliseconds), but for a pattern proved to
+        // match in time proportional to the text, which has none (see EcmaRegexTranslator.IsLinear). The timeout
+        // makes .NET's engines check the clock as they match, which costs that pattern up to half its time again.
+        bool linear = EcmaRegexTranslator.IsLinear(value);
+        string timeout = linear
+            ? "global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout"
+            : "global::System.TimeSpan.FromMilliseconds(" + RegexMatchTimeoutMilliseconds.ToString(CultureInfo.InvariantCulture) + ")";
+        string generatedTimeout = linear
+            ? "global::System.Threading.Timeout.Infinite"
+            : RegexMatchTimeoutMilliseconds.ToString(CultureInfo.InvariantCulture);
 
 #if !BUILDING_SOURCE_GENERATOR
         if (translatedValue.StartsWith(EcmaRegexTranslator.InterpretedMarker, StringComparison.Ordinal))
@@ -346,9 +357,9 @@ internal static partial class CodeGenerationExtensions
                 .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
                 .Append(", ")
                 .Append(constructedOptions)
-                .Append(", global::System.TimeSpan.FromMilliseconds(")
+                .Append(", ")
                 .Append(timeout)
-                .AppendLine("));");
+                .AppendLine(");");
         }
 #endif
 
@@ -360,9 +371,9 @@ internal static partial class CodeGenerationExtensions
                 .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
                 .Append(", ")
                 .Append(constructedOptions)
-                .Append(", global::System.TimeSpan.FromMilliseconds(")
+                .Append(", ")
                 .Append(timeout)
-                .AppendLine("));");
+                .AppendLine(");");
 #else
                 .AppendLine("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD")
                 .AppendIndent("[GeneratedRegex(")
@@ -370,7 +381,7 @@ internal static partial class CodeGenerationExtensions
                 .Append(", ")
                 .Append(generatedOptions)
                 .Append(", matchTimeoutMilliseconds: ")
-                .Append(timeout)
+                .Append(generatedTimeout)
                 .AppendLine(")]")
                 .AppendIndent("private static partial Regex ")
                 .Append(memberName)
@@ -382,9 +393,9 @@ internal static partial class CodeGenerationExtensions
             .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
             .Append(", ")
             .Append(constructedOptions)
-            .Append(", global::System.TimeSpan.FromMilliseconds(")
+            .Append(", ")
             .Append(timeout)
-            .AppendLine("));")
+            .AppendLine(");")
             .AppendLine("#endif");
 #endif
     }

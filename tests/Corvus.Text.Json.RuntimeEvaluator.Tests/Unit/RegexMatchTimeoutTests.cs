@@ -147,6 +147,28 @@ public class RegexMatchTimeoutTests
         Assert.IsFalse(evaluator.Evaluate("\"ab-cd-1\""));
     }
 
+    /// <summary>
+    /// A pattern proved to match in time proportional to the text (EcmaRegexTranslator.IsLinear) has no timeout: a
+    /// match of a text of four million characters runs for longer than a timeout of a millisecond in the interpreted
+    /// engine, and returns its answer. (The compiled engine can finish this one within the millisecond, so only the
+    /// interpreted case would throw if the expression had the timeout.) The pattern is not one the evaluator matches
+    /// without a regular expression.
+    /// </summary>
+    /// <param name="compileRegularExpressions">Whether the expression is compiled.</param>
+    [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
+    public void ALinearPatternHasNoTimeout(bool compileRegularExpressions)
+    {
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(
+            """{"type": "string", "pattern": "^x[0-9]+?y$"}""",
+            new JsonSchemaEvaluatorOptions { CompileRegularExpressions = compileRegularExpressions, RegexMatchTimeout = TimeSpan.FromMilliseconds(1) });
+
+        string digits = new('0', 4_000_000);
+        Assert.IsTrue(evaluator.Evaluate("\"x" + digits + "y\""));
+        Assert.IsFalse(evaluator.Evaluate("\"x" + digits + "z\""));
+    }
+
     private static void AssertTimesOut(string schema, string instance, bool compileRegularExpressions, Route route)
     {
         var options = new JsonSchemaEvaluatorOptions

@@ -38,12 +38,13 @@ public class PatternPropertyRangeTests
             .ToArray();
 
         // ^.{3,5}$ is matched inline. ^.{٣,٥}$ is a regular expression: a pattern only the grammar with no u flag
-        // accepts, in which the braces and what is between them are themselves.
+        // accepts, in which the braces and what is between them are themselves. It has no repetition, so it is
+        // proved linear and has no match timeout.
         string[] expected =
         [
             "return JsonSchemaEvaluation.MatchRangeRegularExpression(propertyName, 3, 5);",
-            """[GeneratedRegex("^[^\\n\\r\\u2028\\u2029]\\{\\u0663,\\u0665\\}\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]""",
-            """private static Regex CreatePatternProperties2() => new("^[^\\n\\r\\u2028\\u2029]\\{\\u0663,\\u0665\\}\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));""",
+            """[GeneratedRegex("^[^\\n\\r\\u2028\\u2029]\\{\\u0663,\\u0665\\}\\z", RegexOptions.None, matchTimeoutMilliseconds: global::System.Threading.Timeout.Infinite)]""",
+            """private static Regex CreatePatternProperties2() => new("^[^\\n\\r\\u2028\\u2029]\\{\\u0663,\\u0665\\}\\z", RegexOptions.Compiled, global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout);""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))

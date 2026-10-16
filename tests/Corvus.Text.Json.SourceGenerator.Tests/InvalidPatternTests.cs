@@ -85,7 +85,7 @@ public class InvalidPatternTests
 
         string[] expected =
         [
-            """private static Regex CreatePatternProperties() => new("^a-b\\{\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));""",
+            """private static Regex CreatePatternProperties() => new("^a-b\\{\\z", RegexOptions.Compiled, global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout);""",
         ];
 
         if (!expected.SequenceEqual(lines, StringComparer.Ordinal))

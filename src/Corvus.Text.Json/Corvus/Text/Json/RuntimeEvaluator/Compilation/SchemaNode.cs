@@ -491,11 +491,19 @@ internal sealed class PatternMatcher
             regexOptions |= RegexOptions.Compiled;
         }
 
+        // A pattern proved to match in time proportional to the text has no timeout: the timeout makes .NET's
+        // engines check the clock as they match, which costs such a pattern up to half its time again, and bounds
+        // nothing a linear match does not bound (see EcmaRegexTranslator.IsLinear).
+        TimeSpan timeout = options.RegexMatchTimeout != Regex.InfiniteMatchTimeout
+            && Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.IsLinear(ecmaPattern)
+            ? Regex.InfiniteMatchTimeout
+            : options.RegexMatchTimeout;
+
         // An expression that is kept is shared by every evaluator of the pattern with these options (see RegexCache).
-        var key = (ecmaPattern, regexOptions, options.RegexMatchTimeout);
+        var key = (ecmaPattern, regexOptions, timeout);
         if (!RegexCache.TryGetValue(key, out Regex? regex))
         {
-            regex = new Regex(translated, regexOptions, options.RegexMatchTimeout);
+            regex = new Regex(translated, regexOptions, timeout);
             if (IsKept(ecmaPattern, translated))
             {
                 regex = RegexCache.GetOrAdd(key, regex);
