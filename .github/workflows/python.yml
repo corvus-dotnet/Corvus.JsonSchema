@@ -8,6 +8,8 @@ on:
     - 'src-rs/corvus-json-schema/**'
     - 'JSON-Schema-Test-Suite'
     - 'src/Corvus.Text.Json/metaschema/**'
+    - 'src-go/corvus-json-schema/internal/ucd/tables_gen.go'
+    - 'src-go/corvus-json-schema/internal/ecmaregex/fold.go'
     - '.github/workflows/python.yml'
     - '.github/workflows/python-wheels.yml'
     - 'LICENSE'
@@ -17,6 +19,8 @@ on:
     - 'src-rs/corvus-json-schema/**'
     - 'JSON-Schema-Test-Suite'
     - 'src/Corvus.Text.Json/metaschema/**'
+    - 'src-go/corvus-json-schema/internal/ucd/tables_gen.go'
+    - 'src-go/corvus-json-schema/internal/ecmaregex/fold.go'
     - '.github/workflows/python.yml'
     - '.github/workflows/python-wheels.yml'
     - 'LICENSE'
@@ -85,6 +89,8 @@ jobs:
           sparse-checkout: |
             src-py
             src/Corvus.Text.Json/metaschema
+            src-go/corvus-json-schema/internal/ucd
+            src-go/corvus-json-schema/internal/ecmaregex
       - name: Setup uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
@@ -96,6 +102,12 @@ jobs:
         run: |
           python scripts/embed_metaschemas.py
           git diff --exit-code -- src/corvus_json_schema/_metaschemas.py
+      - name: Check the embedded Unicode tables are current
+        # Both are generated from the Go module's tables, which every port reads, so that each has Unicode 17.
+        run: |
+          python scripts/embed_properties.py
+          python scripts/embed_casefold.py
+          git diff --exit-code -- src/corvus_json_schema/_properties.py src/corvus_json_schema/_casefold.py
       - name: Lint
         run: |
           ruff check src tests bench scripts
