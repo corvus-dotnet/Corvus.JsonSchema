@@ -1,0 +1,432 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "getItemTag",
+  "cases": [
+    {
+      "name": "200 parses the JSON object body",
+      "rows": [
+        33,
+        38
+      ],
+      "input": {
+        "path": {
+          "itemId": 1,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "tag": "important",
+          "weight": 5
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/items/1/tags/t",
+        "headers": {
+          "accept": "application/json"
+        },
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "tag": "important",
+          "weight": 5
+        }
+      }
+    },
+    {
+      "name": "two path parameters and an optional query parameter",
+      "rows": [
+        7,
+        11
+      ],
+      "input": {
+        "path": {
+          "itemId": 99,
+          "tagName": "my tag"
+        },
+        "query": {
+          "score": 7.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {}
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/items/99/tags/my%20tag?score=7.5"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "absent optional query parameter is omitted",
+      "rows": [
+        11
+      ],
+      "input": {
+        "path": {
+          "itemId": 99,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {}
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/items/99/tags/t"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "an undeclared status matches no response case",
+      "rows": [
+        33,
+        35
+      ],
+      "input": {
+        "path": {
+          "itemId": 1,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 403,
+        "body": {}
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 403
+      }
+    },
+    {
+      "name": "integer response header projects to a number",
+      "rows": [
+        39
+      ],
+      "input": {
+        "path": {
+          "itemId": 1,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "X-Total-Count": "42"
+        },
+        "body": {}
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "headers": {
+          "x-total-count": 42,
+          "x-request-id": null,
+          "x-tags": null,
+          "x-metadata": null,
+          "x-page-sizes": null,
+          "x-flags": null
+        }
+      }
+    },
+    {
+      "name": "string response header projects to a string",
+      "rows": [
+        39
+      ],
+      "input": {
+        "path": {
+          "itemId": 1,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "X-Request-Id": "req-abc-123"
+        },
+        "body": {}
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "headers": {
+          "x-request-id": "req-abc-123",
+          "x-total-count": null
+        }
+      }
+    },
+    {
+      "name": "absent response headers project to null",
+      "rows": [
+        39
+      ],
+      "input": {
+        "path": {
+          "itemId": 1,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {}
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "headers": {
+          "x-total-count": null,
+          "x-request-id": null,
+          "x-tags": null,
+          "x-metadata": null,
+          "x-page-sizes": null,
+          "x-flags": null
+        }
+      }
+    },
+    {
+      "name": "string array header is split on commas",
+      "rows": [
+        39
+      ],
+      "input": {
+        "path": {
+          "itemId": 1,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "X-Tags": "alpha, beta, gamma"
+        },
+        "body": {}
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "headers": {
+          "x-tags": [
+            "alpha",
+            "beta",
+            "gamma"
+          ]
+        }
+      }
+    },
+    {
+      "name": "single element array header projects to a one item array",
+      "rows": [
+        39
+      ],
+      "input": {
+        "path": {
+          "itemId": 1,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "X-Tags": "solo"
+        },
+        "body": {}
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "headers": {
+          "x-tags": [
+            "solo"
+          ]
+        }
+      }
+    },
+    {
+      "name": "object header is read as simple non-exploded key,value pairs",
+      "rows": [
+        39
+      ],
+      "input": {
+        "path": {
+          "itemId": 1,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "X-Metadata": "region,us-east,version,2"
+        },
+        "body": {}
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "headers": {
+          "x-metadata": {
+            "region": "us-east",
+            "version": "2"
+          }
+        }
+      }
+    },
+    {
+      "name": "integer array header projects to numbers",
+      "rows": [
+        39
+      ],
+      "input": {
+        "path": {
+          "itemId": 1,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "X-Page-Sizes": "10,25,50,100"
+        },
+        "body": {}
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "headers": {
+          "x-page-sizes": [
+            10,
+            25,
+            50,
+            100
+          ]
+        }
+      }
+    },
+    {
+      "name": "boolean array header projects to booleans",
+      "rows": [
+        39
+      ],
+      "input": {
+        "path": {
+          "itemId": 1,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "X-Flags": "true,false,true"
+        },
+        "body": {}
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "headers": {
+          "x-flags": [
+            true,
+            false,
+            true
+          ]
+        }
+      }
+    },
+    {
+      "name": "all typed response headers together",
+      "rows": [
+        39
+      ],
+      "input": {
+        "path": {
+          "itemId": 42,
+          "tagName": "myTag"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "X-Total-Count": "3",
+          "X-Tags": "a,b",
+          "X-Metadata": "region,us-east-1,version,2",
+          "X-Page-Sizes": "10,25",
+          "X-Flags": "true,false"
+        },
+        "body": {}
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "headers": {
+          "x-total-count": 3,
+          "x-tags": [
+            "a",
+            "b"
+          ],
+          "x-metadata": {
+            "region": "us-east-1",
+            "version": "2"
+          },
+          "x-page-sizes": [
+            10,
+            25
+          ],
+          "x-flags": [
+            true,
+            false
+          ]
+        }
+      }
+    },
+    {
+      "name": "headers are available on an unmatched status",
+      "rows": [
+        39
+      ],
+      "input": {
+        "path": {
+          "itemId": 1,
+          "tagName": "t"
+        }
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "X-Request-Id": "err-404"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 404,
+        "headers": {
+          "x-request-id": "err-404"
+        }
+      }
+    }
+  ]
+}

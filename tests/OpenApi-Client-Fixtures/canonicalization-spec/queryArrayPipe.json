@@ -1,0 +1,100 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "queryArrayPipe",
+  "cases": [
+    {
+      "name": "pipeDelimited array: two values",
+      "rows": [
+        14
+      ],
+      "input": {
+        "query": {
+          "colors": [
+            "a",
+            "b"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-array-pipe?colors=a%7Cb",
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "pipeDelimited array: single value",
+      "rows": [
+        14
+      ],
+      "input": {
+        "query": {
+          "colors": [
+            "a"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-array-pipe?colors=a"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "pipeDelimited array: reserved characters inside values are percent-encoded",
+      "rows": [
+        14,
+        11
+      ],
+      "input": {
+        "query": {
+          "colors": [
+            "a&b",
+            "c,d=e"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-array-pipe?colors=a%26b%7Cc%2Cd%3De"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      },
+      "skip": {
+        "csharp": "the client leaves reserved characters (& , = / ?) unencoded inside collection items; OpenAPI 3.1 (allowReserved false, RFC 6570 expansion) requires them percent-encoded"
+      }
+    }
+  ]
+}

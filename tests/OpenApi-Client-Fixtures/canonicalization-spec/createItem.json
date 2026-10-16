@@ -1,0 +1,79 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "createItem",
+  "cases": [
+    {
+      "name": "201 parses the Created body",
+      "rows": [33, 38],
+      "input": { "body": { "name": "Gadget", "price": 12.5 } },
+      "response": { "status": 201, "body": { "id": "new-1", "name": "Gadget" } },
+      "expect": { "kind": "ok", "status": 201, "case": "Created", "body": { "id": "new-1", "name": "Gadget" } }
+    },
+    {
+      "name": "request is a POST with the body sent as JSON",
+      "rows": [22, 56],
+      "input": { "body": { "name": "Test", "price": 5.0 } },
+      "response": { "status": 201, "body": { "id": "x", "name": "y" } },
+      "expectRequest": { "method": "POST", "path": "/items", "contentType": "application/json", "body": { "name": "Test", "price": 5.0 } },
+      "expect": { "kind": "ok", "status": 201, "case": "Created" }
+    },
+    {
+      "name": "Accept header is derived from the declared response media types",
+      "rows": [17],
+      "input": { "body": { "name": "Test" } },
+      "response": { "status": 201, "body": { "id": "x", "name": "y" } },
+      "expectRequest": { "method": "POST", "path": "/items", "headers": { "accept": "application/json" } },
+      "expect": { "kind": "ok", "status": 201, "case": "Created" }
+    },
+    {
+      "name": "422 matches UnprocessableEntity and parses its body",
+      "rows": [33, 38],
+      "input": { "body": { "name": "x" } },
+      "response": { "status": 422, "body": { "errors": ["name is required", "price must be positive"] } },
+      "expect": { "kind": "ok", "status": 422, "case": "UnprocessableEntity", "body": { "errors": ["name is required", "price must be positive"] } }
+    },
+    {
+      "name": "an undeclared status matches no response case",
+      "rows": [33, 35],
+      "input": { "body": { "name": "x" } },
+      "response": { "status": 500, "body": {} },
+      "expect": { "kind": "ok", "status": 500 }
+    },
+    {
+      "name": "basic validation rejects a body missing a required property",
+      "rows": [46, 47, 49],
+      "input": { "body": { "price": 5.0 }, "validation": "basic" },
+      "response": { "status": 201, "body": { "id": "x", "name": "y" } },
+      "expect": { "kind": "error" }
+    },
+    {
+      "name": "detailed validation rejects a body missing a required property",
+      "rows": [46, 47, 49],
+      "input": { "body": { "price": 5.0 }, "validation": "detailed" },
+      "response": { "status": 201, "body": { "id": "x", "name": "y" } },
+      "expect": { "kind": "error" }
+    },
+    {
+      "name": "validation off sends a body missing a required property",
+      "rows": [46, 47],
+      "input": { "body": { "price": 5.0 }, "validation": "none" },
+      "response": { "status": 201, "body": { "id": "x", "name": "y" } },
+      "expectRequest": { "method": "POST", "path": "/items", "body": { "price": 5.0 } },
+      "expect": { "kind": "ok", "status": 201, "case": "Created" }
+    },
+    {
+      "name": "response validation rejects a Created body missing a required property",
+      "rows": [48, 49],
+      "input": { "body": { "name": "x" }, "responseValidation": "basic" },
+      "response": { "status": 201, "body": { "name": "Gadget" } },
+      "expect": { "kind": "error" }
+    },
+    {
+      "name": "response validation rejects a 422 body missing a required property",
+      "rows": [48, 49],
+      "input": { "body": { "name": "x" }, "responseValidation": "basic" },
+      "response": { "status": 422, "body": { "detail": "something" } },
+      "expect": { "kind": "error" }
+    }
+  ]
+}

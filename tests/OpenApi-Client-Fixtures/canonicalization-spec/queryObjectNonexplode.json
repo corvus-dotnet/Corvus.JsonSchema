@@ -1,0 +1,96 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "queryObjectNonexplode",
+  "cases": [
+    {
+      "name": "form non-explode object: two properties",
+      "rows": [
+        11
+      ],
+      "input": {
+        "query": {
+          "dims": {
+            "width": 10,
+            "height": 20
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-object-nonexplode?dims=width,10,height,20",
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "form non-explode object: one property",
+      "rows": [
+        11
+      ],
+      "input": {
+        "query": {
+          "dims": {
+            "width": 5
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-object-nonexplode?dims=width,5"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "form non-explode object: negative and zero values",
+      "rows": [
+        11
+      ],
+      "input": {
+        "query": {
+          "dims": {
+            "width": -3,
+            "height": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-object-nonexplode?dims=width,-3,height,0"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    }
+  ]
+}

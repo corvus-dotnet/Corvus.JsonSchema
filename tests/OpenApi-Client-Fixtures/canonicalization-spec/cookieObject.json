@@ -1,0 +1,73 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "cookieObject",
+  "cases": [
+    {
+      "name": "cookie explode object: two values",
+      "rows": [
+        18
+      ],
+      "input": {
+        "cookie": {
+          "prefs": {
+            "width": 10,
+            "height": 20
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/cookie-object",
+        "headers": {
+          "cookie": "width=10; height=20"
+        },
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "cookie explode object: single value",
+      "rows": [
+        18
+      ],
+      "input": {
+        "cookie": {
+          "prefs": {
+            "width": 5
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/cookie-object",
+        "headers": {
+          "cookie": "width=5"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    }
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "updateOrder",
+  "cases": [
+    {
+      "name": "200 parses the Ok body",
+      "rows": [
+        20,
+        33
+      ],
+      "input": {
+        "path": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "header": {
+          "X-Trace-Id": "11111111-2222-3333-4444-555555555555"
+        },
+        "body": {
+          "status": "confirmed"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "confirmed",
+          "total": 100
+        }
+      },
+      "expectRequest": {
+        "method": "PUT",
+        "path": "/orders/550e8400-e29b-41d4-a716-446655440000",
+        "headers": {
+          "x-trace-id": "11111111-2222-3333-4444-555555555555",
+          "accept": "application/json"
+        },
+        "contentType": "application/json",
+        "body": {
+          "status": "confirmed"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "confirmed",
+          "total": 100
+        }
+      }
+    },
+    {
+      "name": "inherited uuid path parameter appears in the path",
+      "rows": [
+        7,
+        20
+      ],
+      "input": {
+        "path": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "header": {
+          "X-Trace-Id": "11111111-2222-3333-4444-555555555555"
+        },
+        "body": {
+          "status": "s",
+          "total": 1.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "s",
+          "total": 1.5
+        }
+      },
+      "expectRequest": {
+        "method": "PUT",
+        "path": "/orders/550e8400-e29b-41d4-a716-446655440000",
+        "body": {
+          "status": "s",
+          "total": 1.5
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "required header overrides the inherited optional header definition",
+      "rows": [
+        16,
+        20,
+        21
+      ],
+      "input": {
+        "path": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "header": {
+          "X-Trace-Id": "11111111-2222-3333-4444-555555555555"
+        },
+        "body": {
+          "status": "s"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "s",
+          "total": 0
+        }
+      },
+      "expectRequest": {
+        "method": "PUT",
+        "path": "/orders/550e8400-e29b-41d4-a716-446655440000",
+        "headers": {
+          "x-trace-id": "11111111-2222-3333-4444-555555555555"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "request validation rejects a body missing a required property",
+      "rows": [
+        45,
+        46
+      ],
+      "input": {
+        "path": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "header": {
+          "X-Trace-Id": "11111111-2222-3333-4444-555555555555"
+        },
+        "body": {
+          "total": 1
+        },
+        "validation": "basic"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "s",
+          "total": 0
+        }
+      },
+      "expect": {
+        "kind": "error"
+      }
+    },
+    {
+      "name": "request validation rejects a header that is not a uuid",
+      "rows": [
+        45,
+        46
+      ],
+      "input": {
+        "path": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "header": {
+          "X-Trace-Id": "nope"
+        },
+        "body": {
+          "status": "s"
+        },
+        "validation": "basic"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "s",
+          "total": 0
+        }
+      },
+      "expect": {
+        "kind": "error"
+      }
+    }
+  ]
+}

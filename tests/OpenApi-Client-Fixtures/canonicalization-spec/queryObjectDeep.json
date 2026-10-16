@@ -1,0 +1,96 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "queryObjectDeep",
+  "cases": [
+    {
+      "name": "deepObject object: two properties",
+      "rows": [
+        13
+      ],
+      "input": {
+        "query": {
+          "dims": {
+            "width": 10,
+            "height": 20
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-object-deep?dims%5Bwidth%5D=10&dims%5Bheight%5D=20",
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "deepObject object: one property",
+      "rows": [
+        13
+      ],
+      "input": {
+        "query": {
+          "dims": {
+            "width": 5
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-object-deep?dims%5Bwidth%5D=5"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "deepObject object: negative and zero values",
+      "rows": [
+        13
+      ],
+      "input": {
+        "query": {
+          "dims": {
+            "width": -3,
+            "height": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-object-deep?dims%5Bwidth%5D=-3&dims%5Bheight%5D=0"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    }
+  ]
+}

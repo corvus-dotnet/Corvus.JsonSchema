@@ -1,0 +1,246 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "getOrder",
+  "cases": [
+    {
+      "name": "200 parses the Ok body and sends uuid path, fields query and X-Trace-Id header",
+      "rows": [
+        7,
+        11,
+        16,
+        20,
+        33
+      ],
+      "input": {
+        "path": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "query": {
+          "fields": "status,total"
+        },
+        "header": {
+          "X-Trace-Id": "trace-99"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "shipped",
+          "total": 42.5
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/orders/550e8400-e29b-41d4-a716-446655440000?fields=status%2Ctotal",
+        "headers": {
+          "x-trace-id": "trace-99",
+          "accept": "application/json"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "shipped",
+          "total": 42.5
+        }
+      }
+    },
+    {
+      "name": "optional query and header omitted are absent from the request",
+      "rows": [
+        19,
+        20,
+        21
+      ],
+      "input": {
+        "path": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "shipped",
+          "total": 42.5
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/orders/550e8400-e29b-41d4-a716-446655440000",
+        "absentHeaders": [
+          "x-trace-id"
+        ],
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "shipped",
+          "total": 42.5
+        }
+      }
+    },
+    {
+      "name": "optional header sent without the optional query",
+      "rows": [
+        16,
+        21
+      ],
+      "input": {
+        "path": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "header": {
+          "X-Trace-Id": "t"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "shipped",
+          "total": 42.5
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/orders/550e8400-e29b-41d4-a716-446655440000",
+        "headers": {
+          "x-trace-id": "t"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "shipped",
+          "total": 42.5
+        }
+      }
+    },
+    {
+      "name": "optional query sent without the optional header",
+      "rows": [
+        21
+      ],
+      "input": {
+        "path": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "query": {
+          "fields": "a b&c=d"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "shipped",
+          "total": 42.5
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/orders/550e8400-e29b-41d4-a716-446655440000?fields=a%20b%26c%3Dd",
+        "absentHeaders": [
+          "x-trace-id"
+        ]
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "shipped",
+          "total": 42.5
+        }
+      }
+    },
+    {
+      "name": "a path parameter that is not a uuid fails request validation",
+      "rows": [
+        20,
+        45
+      ],
+      "input": {
+        "path": {
+          "orderId": "not-a-uuid"
+        },
+        "validation": "basic"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "shipped",
+          "total": 42.5
+        }
+      },
+      "expect": {
+        "kind": "error"
+      }
+    },
+    {
+      "name": "response validation rejects a body missing a required property",
+      "rows": [
+        48,
+        49
+      ],
+      "input": {
+        "path": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "responseValidation": "basic"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "pending"
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/orders/550e8400-e29b-41d4-a716-446655440000"
+      },
+      "expect": {
+        "kind": "error"
+      }
+    },
+    {
+      "name": "404 is not a declared response and matches no case",
+      "rows": [
+        33,
+        35
+      ],
+      "input": {
+        "path": {
+          "orderId": "550e8400-e29b-41d4-a716-446655440000"
+        }
+      },
+      "response": {
+        "status": 404,
+        "body": {}
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/orders/550e8400-e29b-41d4-a716-446655440000"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 404
+      }
+    }
+  ]
+}

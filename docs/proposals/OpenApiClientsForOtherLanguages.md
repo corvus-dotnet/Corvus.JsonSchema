@@ -403,14 +403,19 @@ PR 0a, seams:
    unchanged.
 3. Route C# through the interface in place (seam 2, move 1) for both the client and the callback client. Gate as
    above, now through the new path.
-4. A language-neutral conformance fixture set, `tests/OpenApi-Client-Fixtures/`: hand-authored, one or more cases per
-   checklist row over the covspec operations (about 100 cases, not a transcription of the 289 tests). Each case
+4. A language-neutral conformance fixture set, `tests/OpenApi-Client-Fixtures/<document>/<operationId>.json`, where
+   the documents are the ones the client runtime test projects generate from (the parallel canonicalization
+   specifications for 3.0, 3.1 and 3.2, and covspec-2.0): hand-authored, one or more cases per checklist row (about
+   100 cases, not a transcription of the 289 tests). Each case
    holds the inputs, the expected request line, headers and body bytes, the canned response, and the expected typed
    outcome, with stated normalisation rules (multipart boundaries, header order, chunking of streamed bodies). A C#
    runner, driving the generated C# fixture adapters over a capturing mock transport, proves the fixtures against
    the existing .NET client before any other language consumes them. This is the "same results everywhere"
    instrument the evaluator ports get from the JSON Schema Test Suite. It is the largest item in PR 0a and is a
-   different kind of change from the seams, so it may be split out as PR 0a2 if review size demands.
+   different kind of change from the seams, so it is PR 0a2. Where a case shows the .NET client contradicting the
+   specification, the case records the specification and skips C# with the reason, and the client fix is its own
+   change (PR 0a3) that removes the skips. The first such finding: array and object parameter items are written to
+   the path, query and cookie without percent-encoding, and through a per-item string allocation.
 
 PR 0b, one C# emitter:
 

@@ -21,10 +21,14 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi.Fixtures\Corvus.Text.Json.OpenApi.Fixtures.csproj" />
     <!-- Build-only dependency: ensures the CLI tool is compiled before our generation target runs.
          ReferenceOutputAssembly=false means we don't reference it at runtime. -->
     <ProjectReference Include="..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj"
                       ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\OpenApi-Client-Fixtures\covspec-2.0\*.json" Link="Fixtures\covspec-2.0\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
@@ -39,7 +43,7 @@
        is excluded from warnings-as-errors above for exactly that reason. -->
   <Target Name="GenerateOpenApiTypes" Condition="'$(TargetFramework)' != 'net481'" BeforeTargets="BeforeCompile;CoreCompile">
     <RemoveDir Directories="$(GeneratedCodeOutputPath)" />
-    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj&quot; -f net10.0 -c $(Configuration) --no-build -- openapi-client &quot;$(OpenApiSpecFile)&quot; --rootNamespace CanonTests20.Client --outputPath &quot;$(GeneratedCodeOutputPath)&quot;" />
+    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj&quot; -f net10.0 -c $(Configuration) --no-build -- openapi-client &quot;$(OpenApiSpecFile)&quot; --rootNamespace CanonTests20.Client --outputPath &quot;$(GeneratedCodeOutputPath)&quot; --emit-fixture-adapter" />
 
 
   </Target>

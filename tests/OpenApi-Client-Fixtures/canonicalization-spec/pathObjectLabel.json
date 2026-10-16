@@ -1,0 +1,96 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "pathObjectLabel",
+  "cases": [
+    {
+      "name": "label object: two properties",
+      "rows": [
+        8
+      ],
+      "input": {
+        "path": {
+          "dims": {
+            "width": 10,
+            "height": 20
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-object-label/.width,10,height,20",
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "label object: one property",
+      "rows": [
+        8
+      ],
+      "input": {
+        "path": {
+          "dims": {
+            "width": 5
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-object-label/.width,5"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "label object: negative and zero values",
+      "rows": [
+        8
+      ],
+      "input": {
+        "path": {
+          "dims": {
+            "width": -3,
+            "height": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-object-label/.width,-3,height,0"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    }
+  ]
+}

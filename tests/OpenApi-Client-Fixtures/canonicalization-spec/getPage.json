@@ -1,0 +1,145 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "getPage",
+  "cases": [
+    {
+      "name": "int32 path parameter and optional query",
+      "rows": [
+        7,
+        11,
+        21
+      ],
+      "input": {
+        "path": {
+          "pageNum": 42
+        },
+        "query": {
+          "offset": 100
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/pages/42?offset=100"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "optional query omitted is absent from the path",
+      "rows": [
+        19,
+        21
+      ],
+      "input": {
+        "path": {
+          "pageNum": 7
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/pages/7",
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "zero query value is sent, not treated as omitted",
+      "rows": [
+        19,
+        21
+      ],
+      "input": {
+        "path": {
+          "pageNum": 1
+        },
+        "query": {
+          "offset": 0
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/pages/1?offset=0"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "negative path value keeps its sign",
+      "rows": [
+        7
+      ],
+      "input": {
+        "path": {
+          "pageNum": -5
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/pages/-5"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "503 is not a declared response and matches no case",
+      "rows": [
+        33,
+        35
+      ],
+      "input": {
+        "path": {
+          "pageNum": 1
+        }
+      },
+      "response": {
+        "status": 503,
+        "body": {}
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/pages/1"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 503
+      }
+    }
+  ]
+}

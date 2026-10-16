@@ -1,0 +1,110 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "cookieArrayNonexplode",
+  "cases": [
+    {
+      "name": "cookie non-explode array: two values",
+      "rows": [
+        18
+      ],
+      "input": {
+        "cookie": {
+          "colors": [
+            "a",
+            "b"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/cookie-array-nonexplode",
+        "headers": {
+          "cookie": "colors=a,b"
+        },
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "cookie non-explode array: single value",
+      "rows": [
+        18
+      ],
+      "input": {
+        "cookie": {
+          "colors": [
+            "a"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/cookie-array-nonexplode",
+        "headers": {
+          "cookie": "colors=a"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "cookie non-explode array: reserved characters inside values are percent-encoded",
+      "rows": [
+        18,
+        11
+      ],
+      "input": {
+        "cookie": {
+          "colors": [
+            "a b",
+            "c&d",
+            "e,f"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/cookie-array-nonexplode",
+        "headers": {
+          "cookie": "colors=a%20b,c%26d,e%2Cf"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      },
+      "skip": {
+        "csharp": "the client leaves reserved characters (& , = / ?) unencoded inside collection items; OpenAPI 3.1 (allowReserved false, RFC 6570 expansion) requires them percent-encoded"
+      }
+    }
+  ]
+}

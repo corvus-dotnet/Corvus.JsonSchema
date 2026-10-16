@@ -1,0 +1,161 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "getSessionProfile",
+  "cases": [
+    {
+      "name": "all cookies are assembled into one Cookie header in document order",
+      "rows": [
+        18,
+        21
+      ],
+      "input": {
+        "cookie": {
+          "session_id": "sess-123",
+          "theme": "dark",
+          "debug": true,
+          "max_age": 3600
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/session/profile",
+        "headers": {
+          "cookie": "session_id=sess-123; theme=dark; debug=true; max_age=3600"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "only the required cookie is sent",
+      "rows": [
+        18,
+        19,
+        21
+      ],
+      "input": {
+        "cookie": {
+          "session_id": "sess-456"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/session/profile",
+        "headers": {
+          "cookie": "session_id=sess-456"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "omitted optional cookie leaves no gap in the Cookie header",
+      "rows": [
+        18,
+        19
+      ],
+      "input": {
+        "cookie": {
+          "session_id": "s",
+          "debug": false,
+          "max_age": 0
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/session/profile",
+        "headers": {
+          "cookie": "session_id=s; debug=false; max_age=0"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "reserved characters in a cookie value are percent-encoded",
+      "rows": [
+        18
+      ],
+      "input": {
+        "cookie": {
+          "session_id": "a b;c=d,e"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/session/profile",
+        "headers": {
+          "cookie": "session_id=a%20b%3Bc%3Dd%2Ce"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "200 parses the Ok body",
+      "rows": [
+        33,
+        38
+      ],
+      "input": {
+        "cookie": {
+          "session_id": "sess"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "user": "alice"
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/session/profile"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "user": "alice"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "deleteItem",
+  "cases": [
+    {
+      "name": "204 matches NoContent with no body",
+      "rows": [33],
+      "input": { "path": { "itemId": "del-1" } },
+      "response": { "status": 204 },
+      "expectRequest": { "method": "DELETE", "path": "/items/del-1", "noBody": true },
+      "expect": { "kind": "ok", "status": 204, "case": "NoContent" }
+    },
+    {
+      "name": "path parameter slash is percent-encoded",
+      "rows": [7],
+      "input": { "path": { "itemId": "abc/def" } },
+      "response": { "status": 204 },
+      "expectRequest": { "method": "DELETE", "path": "/items/abc%2Fdef" },
+      "expect": { "kind": "ok", "status": 204, "case": "NoContent" }
+    },
+    {
+      "name": "Accept header is derived from the declared error media type",
+      "rows": [17],
+      "input": { "path": { "itemId": "x" } },
+      "response": { "status": 204 },
+      "expectRequest": { "method": "DELETE", "path": "/items/x", "headers": { "accept": "application/json" } },
+      "expect": { "kind": "ok", "status": 204, "case": "NoContent" }
+    },
+    {
+      "name": "404 matches NotFound and parses its body",
+      "rows": [33, 35, 38],
+      "input": { "path": { "itemId": "x" } },
+      "response": { "status": 404, "body": { "code": 404, "message": "not found" } },
+      "expect": { "kind": "ok", "status": 404, "case": "NotFound", "body": { "code": 404, "message": "not found" } }
+    },
+    {
+      "name": "an undeclared status matches no response case",
+      "rows": [33, 35],
+      "input": { "path": { "itemId": "x" } },
+      "response": { "status": 500, "body": {} },
+      "expect": { "kind": "ok", "status": 500 }
+    },
+    {
+      "name": "response validation rejects a 404 body missing a required property",
+      "rows": [48, 49],
+      "input": { "path": { "itemId": "x" }, "responseValidation": "basic" },
+      "response": { "status": 404, "body": { "code": 404 } },
+      "expect": { "kind": "error" }
+    }
+  ]
+}

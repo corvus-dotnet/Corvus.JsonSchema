@@ -1,0 +1,104 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "queryArrayExplode",
+  "cases": [
+    {
+      "name": "form explode array: two values",
+      "rows": [
+        11,
+        12
+      ],
+      "input": {
+        "query": {
+          "colors": [
+            "a",
+            "b"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-array-explode?colors=a&colors=b",
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "form explode array: single value",
+      "rows": [
+        11,
+        12
+      ],
+      "input": {
+        "query": {
+          "colors": [
+            "a"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-array-explode?colors=a"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "form explode array: reserved characters inside values are percent-encoded",
+      "rows": [
+        11,
+        12,
+        11
+      ],
+      "input": {
+        "query": {
+          "colors": [
+            "a b",
+            "c&d",
+            "e,f"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/query-array-explode?colors=a%20b&colors=c%26d&colors=e%2Cf"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      },
+      "skip": {
+        "csharp": "the client leaves reserved characters (& , = / ?) unencoded inside collection items; OpenAPI 3.1 (allowReserved false, RFC 6570 expansion) requires them percent-encoded"
+      }
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "headerArray",
+  "cases": [
+    {
+      "name": "header array: two values",
+      "rows": [
+        16
+      ],
+      "input": {
+        "header": {
+          "X-Tags": [
+            "a",
+            "b"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/header-array",
+        "headers": {
+          "x-tags": "a,b"
+        },
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "header array: single value",
+      "rows": [
+        16
+      ],
+      "input": {
+        "header": {
+          "X-Tags": [
+            "a"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/header-array",
+        "headers": {
+          "x-tags": "a"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    }
+  ]
+}
