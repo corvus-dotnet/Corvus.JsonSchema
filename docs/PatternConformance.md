@@ -54,10 +54,11 @@ answers. Each is a decision recorded here, with an issue where there is work to 
   proportion to the text (no backreference, lookaround or word boundary, each repetition of one character or set, and
   no repetition that can give characters back to another that can take them) is matched with no timeout. See
   [the timeout](RuntimeEvaluator.md#regular-expression-match-timeout).
-- **A JSON string with a lone surrogate throws.** An instance string that holds the escape of half of a surrogate pair,
-  such as `"\ud800"`, throws `InvalidOperationException` when a `pattern` is matched against it. Every other port
-  refuses such a document when it parses it, or reports it as not valid. The 46,438 texts of the dataset's
-  `lone-surrogates.jsonl` all throw ([#1028](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1028)).
+- **A JSON string with a lone surrogate throws.** The parser accepts an instance string that holds the escape of half
+  of a surrogate pair, such as `"\ud800"`, and `pattern`, `minLength` and `maxLength` then throw
+  `InvalidOperationException` (in V4 generated code too). Every other port refuses such a document when it parses
+  it, or reports it as not valid. The 46,438 texts of the dataset's `lone-surrogates.jsonl` all throw
+  ([#1021](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021)).
 - **`format: regex` reads a pattern with .NET's parser,** not with the ECMA-262 parser that `pattern` uses, so it can
   accept a pattern ECMA-262 refuses and refuse one ECMA-262 accepts ([#1027](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1027)).
 - **`idn-email` has a limit of 320 bytes on the whole address.** The Rust crate has no limit on the address as a

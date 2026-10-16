@@ -1,5 +1,41 @@
 # Version History
 
+## V5.7.8
+
+V5.7.8 makes `pattern` and `patternProperties` answer as ECMA-262 does in the runtime evaluator, the Validator, V5 generated code and V4 generated code, and bounds what a pattern can cost. On the [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data), the runtime evaluator answers 3,810,219 texts and every answer is V8's. Two things a schema could do before now stop it: a pattern that is not valid ECMA-262 is refused when the schema is compiled or the code is generated, and a match that runs for longer than 1 second throws `RegexMatchTimeoutException`. Both are on by default. A pattern proved to match in linear time has no timeout.
+
+### New features
+
+- **A regular expression match has a limit of 1 second.** `JsonSchemaEvaluatorOptions.RegexMatchTimeout`, the Validator's `regexMatchTimeout` option and generated code give one match of a `pattern` or `patternProperties` expression 1 second (`DefaultRegexMatchTimeout`). A match that runs for longer throws `RegexMatchTimeoutException` out of the evaluation, and the instance is not reported as invalid. `Regex.InfiniteMatchTimeout` turns it off. A schema and an instance can both come from outside, and there are patterns on which .NET's engine backtracks for longer than anyone will wait.
+
+- **A pattern proved linear has no timeout.** The timeout makes .NET's engines check the clock as they match, which costs a pattern up to half its time in the interpreted engine. A pattern with no backreference, lookaround or word boundary, whose repetitions each repeat one character or set, and in which no repetition can give characters back to another that could take them, is matched with no timeout, in the evaluator and in generated code. `^[a-z]+\.[a-z]+$`, `^#[0-9a-fA-F]{6}$` and `(.*)` are such patterns.
+
+- **A pattern has limits of size.** A pattern over 1,048,576 characters, with groups nested more than 200 deep, or whose translation .NET could not construct in bounded time, is refused with a message that says it is too large and names the limit, never that it is not valid. The [translator guide](docs/EcmaRegexTranslator.md#limits-on-the-size-of-a-pattern) lists the limits.
+
+- **Patterns across the ports.** [A new page](docs/PatternConformance.md) says how each Corvus evaluator matches a pattern, what each refuses, how each limits a match, and the known differences that remain.
+
+### Bug fixes
+
+- **A pattern is translated from its syntax tree.** The translation to .NET is written from the parsed ECMA-262 pattern, so nothing depends on how .NET reads a construct differently. Among what changes: a repetition forgets the captures of its groups when an iteration starts; a backreference to a group that has not taken part matches the empty string; a case-insensitive backreference compares by ECMA-262's Canonicalize; `\k` in a class is not valid in a pattern with a named group; the counts of a quantifier are compared as written; `\p{sc=Hrkt}` is valid and matches nothing; and a repetition whose body can match nothing is written so that .NET runs it as ECMA-262 does.
+
+- **A pattern that is not valid ECMA-262 is refused.** Before, it was passed to .NET as it was, which accepted most such patterns with a meaning of its own. Now `JsonSchemaEvaluator.Compile` and the other compile methods throw `JsonSchemaCompilationException`, the source generator reports an error, and the CLI stops, each with a message that names the pattern and says what is wrong.
+
+- **A pattern valid only without the `u` flag is matched by UTF-16 code unit,** as ECMA-262 matches it, where that can change an answer: `^\-?.$` does not match one character beyond the Basic Multilingual Plane. Such a pattern still goes to the evaluator's own matchers where it cannot.
+
+- **Two pattern shapes gave wrong answers.** The runtime evaluator matches some patterns without a regular expression. A separated list whose final item can hold the separator's first character refused texts it matches (`^(a*,)+,$` refused `a,,`), and an anchor on one alternative of a group was given to every alternative (`(a|b$)` was matched as `(a|b)$`, so `ax` was refused). The first now goes to the regular expression, and the second keeps its matcher with the anchor where it stands.
+
+- **The C# generator read a pattern that ends in a line feed as a prefix or a range.** `^abd.*\n` was generated as a test that the property name starts with `abd`, and `^.{1,3}$\n` as a test of its length, where the patterns need the line feed.
+
+- **A translation .NET's compiled engine does not return from is interpreted,** and one too long to be worth compiling is interpreted too.
+
+- **`idn-hostname` is limited to 253 characters as A-labels, not 253 bytes of UTF-8.** It rejected valid names of U-labels longer than 253 bytes, accepted names whose A-label form is longer than 253 characters, and `hostname` rejected a valid name of A-labels whose Unicode form is longer than 254 bytes.
+
+- **Every format check takes time in proportion to the string.**
+
+### Known differences
+
+[Patterns across the ports](docs/PatternConformance.md#where-the-ports-differ) lists what remains: a pattern that backtracks without end is bounded only by the timeout ([#1025](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1025)), `format: regex` reads with .NET's parser ([#1027](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1027)), an instance string with a lone surrogate escape throws ([#1021](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021)), and `idn-email` has a limit of 320 bytes on the whole address ([#1029](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1029)). The four folders of V4 code generated before this release keep their old translations and have no timeout until they are generated again.
+
 ## V5.7.7
 
 V5.7.7 fixes validation in models generated from OpenAPI 3.0 and OpenAPI 2.0 documents, which since V5.6.0 ignored `nullable` and did not assert the formats that Draft 4 does not define, such as `date` and `uuid`. Models generated from Draft 4, 6 and 7 schemas assert those formats again too. The runtime evaluator and the Validator gain an OpenAPI 3.0 and an OpenAPI 2.0 dialect. There are no breaking changes. A document that was wrongly accepted may now be rejected.

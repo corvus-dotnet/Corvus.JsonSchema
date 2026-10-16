@@ -227,8 +227,9 @@ ECMAScript engine does. The answers are tested against V8 on the
   `Regex` where matching by code unit can change an answer: a dot or negated class that is not the body of a `*` or
   `+`, a set that holds some surrogates and not others, or a surrogate written in the pattern.
 - An instance string that holds the escape of half of a surrogate pair, such as `"\ud800"`, throws
-  `InvalidOperationException` when a pattern is matched against it. The other ports refuse such a document when they
-  parse it. [Patterns across the ports](PatternConformance.md) lists this and the other known differences.
+  `InvalidOperationException` when a pattern is matched against it, as `minLength` and `maxLength` do
+  ([#1021](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021)). The other ports refuse such a document
+  when they parse it. [Patterns across the ports](PatternConformance.md) lists this and the other known differences.
 - Each distinct pattern is read and translated once in the life of the process, when the first schema that holds
   it is compiled. Nothing of that runs when an instance is evaluated. What the process keeps of patterns is
   bounded (4,096 patterns, 1,048,576 characters). Past the bound it is let go, and a pattern met again is read
