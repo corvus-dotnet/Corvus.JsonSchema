@@ -95,9 +95,6 @@
         "kind": "ok",
         "status": 200,
         "case": "Ok"
-      },
-      "skip": {
-        "csharp": "the client leaves reserved characters (& , = / ?) unencoded inside collection items; OpenAPI 3.1 (allowReserved false, RFC 6570 expansion) requires them percent-encoded"
       }
     }
   ]

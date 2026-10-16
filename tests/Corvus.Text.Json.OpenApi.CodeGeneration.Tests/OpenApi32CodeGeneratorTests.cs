@@ -3805,8 +3805,8 @@ public class OpenApi32CodeGeneratorTests
         // generated request must NOT serialize the parameter via GetUtf8String(), which
         // throws at runtime for a JSON number.
         Assert.IsFalse(
-            requestFile.Content.Contains("GetUtf8String"),
-            "Expected no GetUtf8String() calls for $ref'd integer parameters");
+            requestFile.Content.Contains("this.Id).GetUtf8String") || requestFile.Content.Contains("this.Limit).GetUtf8String"),
+            "Expected no GetUtf8String() calls for $ref'd integer parameters (the string array's items take that path by design)");
 
         // The int32 path param is rendered via TryFormat (the non-String scalar path).
         Assert.IsTrue(

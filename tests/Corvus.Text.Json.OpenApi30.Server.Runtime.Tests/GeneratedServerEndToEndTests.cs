@@ -92,7 +92,7 @@ public class GeneratedServerEndToEndTests
         Assert.AreEqual("req-123", response.Headers.GetValues("X-Request-Id").Single());
         Assert.AreEqual("alpha,beta", response.Headers.GetValues("X-Tags").Single());
         Assert.AreEqual("10,25", response.Headers.GetValues("X-Page-Sizes").Single());
-        Assert.AreEqual("True,False", response.Headers.GetValues("X-Flags").Single());
+        Assert.AreEqual("true,false", response.Headers.GetValues("X-Flags").Single());
     }
 
     [TestMethod]

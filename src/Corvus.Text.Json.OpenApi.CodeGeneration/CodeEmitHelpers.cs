@@ -552,9 +552,10 @@ public static class CodeEmitHelpers
         string uid,
         ParameterSerializationKind kind,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
-        EmitPathParamWrite(w, paramName, valueExpr, uid, kind, style, explode, allowReserved: false);
+        EmitPathParamWrite(w, paramName, valueExpr, uid, kind, style, explode, allowReserved: false, elementKind);
     }
 
     /// <summary>
@@ -576,17 +577,18 @@ public static class CodeEmitHelpers
         ParameterSerializationKind kind,
         ParameterStyle style,
         bool explode,
-        bool allowReserved)
+        bool allowReserved,
+        ParameterSerializationKind? elementKind = null)
     {
         if (kind == ParameterSerializationKind.Array)
         {
-            EmitPathArrayWrite(w, paramName, valueExpr, uid, style, explode);
+            EmitPathArrayWrite(w, paramName, valueExpr, uid, style, explode, elementKind);
             return;
         }
 
         if (kind == ParameterSerializationKind.Object)
         {
-            EmitPathObjectWrite(w, paramName, valueExpr, uid, style, explode);
+            EmitPathObjectWrite(w, paramName, valueExpr, uid, style, explode, elementKind: null);
             return;
         }
 
@@ -612,17 +614,18 @@ public static class CodeEmitHelpers
         string uid,
         ParameterSerializationKind kind,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
         if (kind == ParameterSerializationKind.Array)
         {
-            EmitQueryArrayWrite(w, paramName, valueExpr, uid, style, explode);
+            EmitQueryArrayWrite(w, paramName, valueExpr, uid, style, explode, elementKind);
             return;
         }
 
         if (kind == ParameterSerializationKind.Object)
         {
-            EmitQueryObjectWrite(w, paramName, valueExpr, uid, style, explode);
+            EmitQueryObjectWrite(w, paramName, valueExpr, uid, style, explode, elementKind: null);
             return;
         }
 
@@ -658,17 +661,18 @@ public static class CodeEmitHelpers
         string uid,
         ParameterSerializationKind kind,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
         if (kind == ParameterSerializationKind.Array)
         {
-            EmitHeaderArrayWrite(w, valueExpr, uid, explode);
+            EmitHeaderArrayWrite(w, valueExpr, uid, explode, elementKind);
             return;
         }
 
         if (kind == ParameterSerializationKind.Object)
         {
-            EmitHeaderObjectWrite(w, valueExpr, uid, explode);
+            EmitHeaderObjectWrite(w, valueExpr, uid, explode, elementKind: null);
             return;
         }
 
@@ -693,9 +697,10 @@ public static class CodeEmitHelpers
         string uid,
         ParameterSerializationKind kind,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
-        EmitCookieParamWrite(w, paramName, valueExpr, uid, kind, style, explode, allowReserved: style == ParameterStyle.Cookie);
+        EmitCookieParamWrite(w, paramName, valueExpr, uid, kind, style, explode, allowReserved: style == ParameterStyle.Cookie, elementKind);
     }
 
     /// <summary>
@@ -717,17 +722,18 @@ public static class CodeEmitHelpers
         ParameterSerializationKind kind,
         ParameterStyle style,
         bool explode,
-        bool allowReserved)
+        bool allowReserved,
+        ParameterSerializationKind? elementKind = null)
     {
         if (kind == ParameterSerializationKind.Array)
         {
-            EmitCookieArrayWrite(w, paramName, valueExpr, uid, explode);
+            EmitCookieArrayWrite(w, paramName, valueExpr, uid, explode, elementKind);
             return;
         }
 
         if (kind == ParameterSerializationKind.Object)
         {
-            EmitCookieObjectWrite(w, paramName, valueExpr, uid, explode);
+            EmitCookieObjectWrite(w, paramName, valueExpr, uid, explode, elementKind: null);
             return;
         }
 
@@ -1063,7 +1069,8 @@ public static class CodeEmitHelpers
         string valueExpr,
         string uid,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
         // Determine prefix and separator based on style + explode.
         // simple: prefix=none, sep=","
@@ -1106,7 +1113,7 @@ public static class CodeEmitHelpers
         w.WriteLine($"writer.Write(\"{separator}\"u8);");
         w.CloseBrace();
         w.WriteLine();
-        EmitElementScalarWrite(w, $"item{uid}", uid);
+        EmitElementScalarWrite(w, $"item{uid}", uid, elementKind);
         w.WriteLine($"firstItem{uid} = false;");
         w.CloseBrace();
     }
@@ -1126,7 +1133,8 @@ public static class CodeEmitHelpers
         string valueExpr,
         string uid,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
         // For objects:
         // simple+!explode: key,value,key,value (sep=",", kvSep=",")
@@ -1165,9 +1173,9 @@ public static class CodeEmitHelpers
         w.WriteLine($"writer.Write(\"{separator}\"u8);");
         w.CloseBrace();
         w.WriteLine();
-        w.WriteLine($"writer.Write(System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name));");
+        EmitObjectKeyWrite(w, $"prop{uid}", uid, counted: false);
         w.WriteLine($"writer.Write(\"{kvSeparator}\"u8);");
-        EmitElementScalarWrite(w, $"prop{uid}.Value", uid);
+        EmitElementScalarWrite(w, $"prop{uid}.Value", uid, elementKind);
         w.WriteLine($"firstProp{uid} = false;");
         w.CloseBrace();
     }
@@ -1189,7 +1197,8 @@ public static class CodeEmitHelpers
         string valueExpr,
         string uid,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
         // form+!explode: name=val1,val2,val3
         // form+explode: name=val1&name=val2&name=val3
@@ -1209,7 +1218,7 @@ public static class CodeEmitHelpers
             w.WriteLine();
             w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
             w.WriteLine($"totalWritten += {paramName.Length + 1};");
-            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid, elementKind);
             w.WriteLine("first = false;");
             w.CloseBrace();
         }
@@ -1242,7 +1251,7 @@ public static class CodeEmitHelpers
             w.WriteLine($"totalWritten += {itemSep.Length};");
             w.CloseBrace();
             w.WriteLine();
-            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid, elementKind);
             w.WriteLine($"firstItem{uid} = false;");
             w.CloseBrace();
 
@@ -1266,7 +1275,8 @@ public static class CodeEmitHelpers
         string valueExpr,
         string uid,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
         if (style == ParameterStyle.DeepObject)
         {
@@ -1282,12 +1292,10 @@ public static class CodeEmitHelpers
             w.WriteLine();
             w.WriteLine($"writer.Write(\"{paramName}%5B\"u8);");
             w.WriteLine($"totalWritten += {paramName.Length + 3};");
-            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
-            w.WriteLine($"writer.Write(keyBytes{uid});");
-            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            EmitObjectKeyWrite(w, $"prop{uid}", uid, counted: true);
             w.WriteLine("writer.Write(\"%5D=\"u8);");
             w.WriteLine("totalWritten += 4;");
-            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid, elementKind);
             w.WriteLine("first = false;");
             w.CloseBrace();
         }
@@ -1303,12 +1311,10 @@ public static class CodeEmitHelpers
             w.WriteLine("totalWritten++;");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
-            w.WriteLine($"writer.Write(keyBytes{uid});");
-            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            EmitObjectKeyWrite(w, $"prop{uid}", uid, counted: true);
             w.WriteLine("writer.Write(\"=\"u8);");
             w.WriteLine("totalWritten++;");
-            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid, elementKind);
             w.WriteLine("first = false;");
             w.CloseBrace();
         }
@@ -1344,12 +1350,10 @@ public static class CodeEmitHelpers
             w.WriteLine($"totalWritten += {kvSep.Length};");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
-            w.WriteLine($"writer.Write(keyBytes{uid});");
-            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            EmitObjectKeyWrite(w, $"prop{uid}", uid, counted: true);
             w.WriteLine($"writer.Write(\"{kvSep}\"u8);");
             w.WriteLine($"totalWritten += {kvSep.Length};");
-            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid, elementKind);
             w.WriteLine($"firstProp{uid} = false;");
             w.CloseBrace();
 
@@ -1371,7 +1375,8 @@ public static class CodeEmitHelpers
         IndentedWriter w,
         string valueExpr,
         string uid,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
         // Headers always use simple style. simple+!explode = comma-separated, simple+explode = same.
         w.WriteLine("Span<byte> headerBuf = stackalloc byte[512];");
@@ -1384,7 +1389,7 @@ public static class CodeEmitHelpers
         w.WriteLine("headerBuf[headerLen++] = (byte)',';");
         w.CloseBrace();
         w.WriteLine();
-        EmitElementToHeaderBuffer(w, $"item{uid}", uid);
+        EmitElementToHeaderBuffer(w, $"item{uid}", uid, elementKind);
         w.WriteLine($"firstItem{uid} = false;");
         w.CloseBrace();
         w.WriteLine($"callback(nameUtf8{uid}, headerBuf[..headerLen], state);");
@@ -1401,7 +1406,8 @@ public static class CodeEmitHelpers
         IndentedWriter w,
         string valueExpr,
         string uid,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
         // simple+!explode: key,value,key,value
         // simple+explode: key=value,key=value
@@ -1417,10 +1423,9 @@ public static class CodeEmitHelpers
         w.WriteLine("headerBuf[headerLen++] = (byte)',';");
         w.CloseBrace();
         w.WriteLine();
-        w.WriteLine($"int keyLen{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name, headerBuf[headerLen..]);");
-        w.WriteLine($"headerLen += keyLen{uid};");
+        EmitObjectKeyToHeaderBuffer(w, $"prop{uid}", uid);
         w.WriteLine($"headerBuf[headerLen++] = (byte)'{kvSep}';");
-        EmitElementToHeaderBuffer(w, $"prop{uid}.Value", uid);
+        EmitElementToHeaderBuffer(w, $"prop{uid}.Value", uid, elementKind);
         w.WriteLine($"firstProp{uid} = false;");
         w.CloseBrace();
         w.WriteLine($"callback(nameUtf8{uid}, headerBuf[..headerLen], state);");
@@ -1441,7 +1446,8 @@ public static class CodeEmitHelpers
         string paramName,
         string valueExpr,
         string uid,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
         if (explode)
         {
@@ -1456,7 +1462,7 @@ public static class CodeEmitHelpers
             w.WriteLine();
             w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
             w.WriteLine($"totalWritten += {paramName.Length + 1};");
-            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid, elementKind);
             w.WriteLine("first = false;");
             w.CloseBrace();
         }
@@ -1481,7 +1487,7 @@ public static class CodeEmitHelpers
             w.WriteLine("totalWritten++;");
             w.CloseBrace();
             w.WriteLine();
-            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid, elementKind);
             w.WriteLine($"firstItem{uid} = false;");
             w.CloseBrace();
 
@@ -1503,7 +1509,8 @@ public static class CodeEmitHelpers
         string paramName,
         string valueExpr,
         string uid,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind? elementKind = null)
     {
         if (explode)
         {
@@ -1516,12 +1523,10 @@ public static class CodeEmitHelpers
             w.WriteLine("totalWritten += 2;");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
-            w.WriteLine($"writer.Write(keyBytes{uid});");
-            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            EmitObjectKeyWrite(w, $"prop{uid}", uid, counted: true);
             w.WriteLine("writer.Write(\"=\"u8);");
             w.WriteLine("totalWritten++;");
-            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid, elementKind);
             w.WriteLine("first = false;");
             w.CloseBrace();
         }
@@ -1546,12 +1551,10 @@ public static class CodeEmitHelpers
             w.WriteLine("totalWritten++;");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
-            w.WriteLine($"writer.Write(keyBytes{uid});");
-            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            EmitObjectKeyWrite(w, $"prop{uid}", uid, counted: true);
             w.WriteLine("writer.Write(\",\"u8);");
             w.WriteLine("totalWritten++;");
-            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid, elementKind);
             w.WriteLine($"firstProp{uid} = false;");
             w.CloseBrace();
 
@@ -1571,10 +1574,10 @@ public static class CodeEmitHelpers
     public static void EmitElementScalarWrite(
         IndentedWriter w,
         string itemExpr,
-        string uid)
+        string uid,
+        ParameterSerializationKind? elementKind = null)
     {
-        // Write the element's raw value as UTF-8 text.
-        w.WriteLine($"writer.Write(System.Text.Encoding.UTF8.GetBytes({itemExpr}.ToString()));");
+        EmitElementScalarWriteCore(w, itemExpr, uid, counted: false, elementKind);
     }
 
     /// <summary>
@@ -1586,11 +1589,10 @@ public static class CodeEmitHelpers
     public static void EmitElementScalarWriteCounted(
         IndentedWriter w,
         string itemExpr,
-        string uid)
+        string uid,
+        ParameterSerializationKind? elementKind = null)
     {
-        w.WriteLine($"byte[] elBytes{uid} = System.Text.Encoding.UTF8.GetBytes({itemExpr}.ToString());");
-        w.WriteLine($"writer.Write(elBytes{uid});");
-        w.WriteLine($"totalWritten += elBytes{uid}.Length;");
+        EmitElementScalarWriteCore(w, itemExpr, uid, counted: true, elementKind);
     }
 
     /// <summary>
@@ -1602,11 +1604,155 @@ public static class CodeEmitHelpers
     public static void EmitElementToHeaderBuffer(
         IndentedWriter w,
         string itemExpr,
+        string uid,
+        ParameterSerializationKind? elementKind = null)
+    {
+        // Header values are not percent-encoded; the element's bytes are copied as they are.
+        ElementShape shape = ShapeOf(elementKind);
+        if (shape != ElementShape.Raw)
+        {
+            if (shape == ElementShape.Either)
+            {
+                w.WriteLine($"if ({itemExpr}.ValueKind == JsonValueKind.String)");
+                w.OpenBrace();
+            }
+
+            w.WriteLine($"using UnescapedUtf8JsonString el{uid} = {itemExpr}.GetUtf8String();");
+            w.WriteLine($"el{uid}.Span.CopyTo(headerBuf[headerLen..]);");
+            w.WriteLine($"headerLen += el{uid}.Span.Length;");
+
+            if (shape == ElementShape.Either)
+            {
+                w.CloseBrace();
+                w.WriteLine("else");
+                w.OpenBrace();
+            }
+        }
+
+        if (shape != ElementShape.String)
+        {
+            w.WriteLine($"using RawUtf8JsonString raw{uid} = JsonMarshal.GetRawUtf8Value({itemExpr});");
+            w.WriteLine($"raw{uid}.Span.CopyTo(headerBuf[headerLen..]);");
+            w.WriteLine($"headerLen += raw{uid}.Span.Length;");
+
+            if (shape == ElementShape.Either)
+            {
+                w.CloseBrace();
+            }
+        }
+    }
+
+    // An object property's key in a path, query or cookie parameter: percent-encoded from its unescaped UTF-8 name,
+    // straight into the writer's buffer.
+    private static void EmitObjectKeyWrite(
+        IndentedWriter w,
+        string propExpr,
+        string uid,
+        bool counted)
+    {
+        w.WriteLine($"using UnescapedUtf8JsonString key{uid} = {propExpr}.Utf8NameSpan;");
+        w.WriteLine($"Span<byte> kesc{uid} = writer.GetSpan(key{uid}.Span.Length * 3);");
+        w.WriteLine($"if (Utf8Uri.TryEscapeDataString(key{uid}.Span, kesc{uid}, out int kw{uid}))");
+        w.OpenBrace();
+        w.WriteLine($"writer.Advance(kw{uid});");
+        if (counted)
+        {
+            w.WriteLine($"totalWritten += kw{uid};");
+        }
+
+        w.CloseBrace();
+    }
+
+    // An object property's key in a header parameter: copied as it is, since header values are not percent-encoded.
+    private static void EmitObjectKeyToHeaderBuffer(
+        IndentedWriter w,
+        string propExpr,
         string uid)
     {
-        w.WriteLine($"int elLen{uid} = System.Text.Encoding.UTF8.GetBytes({itemExpr}.ToString(), headerBuf[headerLen..]);");
-        w.WriteLine($"headerLen += elLen{uid};");
+        w.WriteLine($"using UnescapedUtf8JsonString key{uid} = {propExpr}.Utf8NameSpan;");
+        w.WriteLine($"key{uid}.Span.CopyTo(headerBuf[headerLen..]);");
+        w.WriteLine($"headerLen += key{uid}.Span.Length;");
     }
+
+    // An array item or object property value in a path, query or cookie parameter. A string element is percent-encoded
+    // from its unescaped UTF-8 (RFC 6570 expansion with allowReserved false), escaped straight into the writer's
+    // buffer so a loop of items neither stack-allocates per item nor materialises a string; any other scalar's raw
+    // JSON text (digits, true, false) is the wire text.
+    private static void EmitElementScalarWriteCore(
+        IndentedWriter w,
+        string itemExpr,
+        string uid,
+        bool counted,
+        ParameterSerializationKind? elementKind)
+    {
+        ElementShape shape = ShapeOf(elementKind);
+
+        if (shape != ElementShape.Raw)
+        {
+            if (shape == ElementShape.Either)
+            {
+                w.WriteLine($"if ({itemExpr}.ValueKind == JsonValueKind.String)");
+                w.OpenBrace();
+            }
+
+            w.WriteLine($"using UnescapedUtf8JsonString el{uid} = {itemExpr}.GetUtf8String();");
+            w.WriteLine($"Span<byte> esc{uid} = writer.GetSpan(el{uid}.Span.Length * 3);");
+            w.WriteLine($"if (Utf8Uri.TryEscapeDataString(el{uid}.Span, esc{uid}, out int ew{uid}))");
+            w.OpenBrace();
+            w.WriteLine($"writer.Advance(ew{uid});");
+            if (counted)
+            {
+                w.WriteLine($"totalWritten += ew{uid};");
+            }
+
+            w.CloseBrace();
+
+            if (shape == ElementShape.Either)
+            {
+                w.CloseBrace();
+                w.WriteLine("else");
+                w.OpenBrace();
+            }
+        }
+
+        if (shape != ElementShape.String)
+        {
+            w.WriteLine($"using RawUtf8JsonString raw{uid} = JsonMarshal.GetRawUtf8Value({itemExpr});");
+            w.WriteLine($"writer.Write(raw{uid}.Span);");
+            if (counted)
+            {
+                w.WriteLine($"totalWritten += raw{uid}.Span.Length;");
+            }
+
+            if (shape == ElementShape.Either)
+            {
+                w.CloseBrace();
+            }
+        }
+    }
+
+    private enum ElementShape
+    {
+        Either,
+        String,
+        Raw,
+    }
+
+    // What the schema says about an array's items (or an object's member values): a string kind takes the escaping
+    // path only, a number or boolean kind the raw-text path only, and anything else decides per element at run time.
+    private static ElementShape ShapeOf(ParameterSerializationKind? elementKind) => elementKind switch
+    {
+        null => ElementShape.Either,
+        ParameterSerializationKind.String => ElementShape.String,
+        ParameterSerializationKind.Boolean
+            or ParameterSerializationKind.Byte or ParameterSerializationKind.UInt16 or ParameterSerializationKind.UInt32
+            or ParameterSerializationKind.UInt64 or ParameterSerializationKind.UInt128 or ParameterSerializationKind.SByte
+            or ParameterSerializationKind.Int16 or ParameterSerializationKind.Int32 or ParameterSerializationKind.Int64
+            or ParameterSerializationKind.Int128 or ParameterSerializationKind.Half or ParameterSerializationKind.Single
+            or ParameterSerializationKind.Double or ParameterSerializationKind.Decimal
+            or ParameterSerializationKind.UnboundedNumber => ElementShape.Raw,
+        _ => ElementShape.Either,
+    };
 
     /// <summary>
     /// Emits the body of an async response body parse into a typed element.
