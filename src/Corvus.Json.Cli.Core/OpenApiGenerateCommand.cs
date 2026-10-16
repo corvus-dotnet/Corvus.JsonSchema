@@ -34,6 +34,11 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
     {
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SpecFile);
 
+        if (!OpenApiCommandHelpers.TryResolveLanguage(settings.Language, out string language))
+        {
+            return 1;
+        }
+
         // Resolve the spec URL — explicit --spec-url takes priority, then lock file descriptionLocation
         string? specUrl = settings.SpecUrl;
         if (specUrl is null)
@@ -89,7 +94,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         if (!settings.Force)
         {
             if (OpenApiLockFile.TryLoad(outputPath, out OpenApiLockFileModel existingLock)
-                && OpenApiLockFile.IsUpToDate(in existingLock, in specRoot, specVersion, rootNamespace, settings.ClientName, filter))
+                && OpenApiLockFile.IsUpToDate(in existingLock, in specRoot, specVersion, rootNamespace, settings.ClientName, filter, language))
             {
                 AnsiConsole.MarkupLine("[green]Up to date — skipping generation.[/] Use --force to regenerate.");
                 return 0;
@@ -261,7 +266,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             AnsiConsole.MarkupLine($"[green]Generated {generatedFileNames.Count} files ({files.Count} client + {modelFileNames?.Count ?? 0} model) in {outputPath}[/]");
 
             // Write lock file and clean up backup
-            OpenApiLockFileModel lockFile = OpenApiLockFile.Create(in specRoot, specVersion, rootNamespace, settings.ClientName, filter, generatedFileNames, specUrl);
+            OpenApiLockFileModel lockFile = OpenApiLockFile.Create(in specRoot, specVersion, rootNamespace, settings.ClientName, filter, generatedFileNames, specUrl, language);
             OpenApiLockFile.Save(in lockFile, outputPath);
             OpenApiLockFile.DeleteBackup(outputPath);
 

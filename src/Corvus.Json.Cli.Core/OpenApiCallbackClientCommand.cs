@@ -40,6 +40,11 @@ internal sealed class OpenApiCallbackClientCommand : AsyncCommand<OpenApiGenerat
     {
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SpecFile);
 
+        if (!OpenApiCommandHelpers.TryResolveLanguage(settings.Language, out string language))
+        {
+            return 1;
+        }
+
         // Resolve the spec URL — explicit --spec-url takes priority, then lock file descriptionLocation
         string? specUrl = settings.SpecUrl;
         if (specUrl is null)

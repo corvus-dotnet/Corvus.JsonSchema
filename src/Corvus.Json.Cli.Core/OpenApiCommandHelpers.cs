@@ -5,6 +5,7 @@
 #if NET10_0_OR_GREATER
 
 using Corvus.Text.Json;
+using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Spectre.Console;
 
@@ -150,6 +151,29 @@ internal static class OpenApiCommandHelpers
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Resolves the <c>--language</c> option to a language identifier, reporting an unknown or unsupported value.
+    /// </summary>
+    /// <param name="value">The option value, or <see langword="null"/> for the default.</param>
+    /// <param name="language">The resolved identifier.</param>
+    /// <returns><see langword="true"/> when the language is known and has an emitter.</returns>
+    public static bool TryResolveLanguage(string? value, out string language)
+    {
+        if (!LanguageIds.TryNormalize(value, out language))
+        {
+            AnsiConsole.MarkupLine($"[red]Error:[/] Unknown --language '{value}'. Known languages: {string.Join(", ", LanguageIds.All)}.");
+            return false;
+        }
+
+        if (Array.IndexOf(LanguageIds.Supported, language) < 0)
+        {
+            AnsiConsole.MarkupLine($"[red]Error:[/] --language {language} has no client emitter yet. Supported: {string.Join(", ", LanguageIds.Supported)}.");
+            return false;
+        }
+
+        return true;
     }
 }
 

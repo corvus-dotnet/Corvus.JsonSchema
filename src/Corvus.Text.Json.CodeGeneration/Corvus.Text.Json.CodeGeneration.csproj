@@ -62,6 +62,7 @@
     <Compile Include="Formatting.cs" />
     <Compile Include="FrameworkType.cs" />
     <Compile Include="GeneratedTypeAccessibility.cs" />
+    <Compile Include="LanguageIds.cs" />
     <Compile Include="INameCollisionResolver.cs" />
     <Compile Include="MethodParameter.cs" />
     <Compile Include="NameCollisionResolverRegistry.cs" />

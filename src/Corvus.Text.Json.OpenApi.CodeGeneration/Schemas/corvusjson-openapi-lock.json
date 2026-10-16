@@ -35,6 +35,10 @@
             "type": "string",
             "description": "The client name prefix, if specified."
         },
+        "language": {
+            "type": "string",
+            "description": "The target language of the generated client, as given to --language. Absent means csharp."
+        },
         "includePaths": {
             "type": "array",
             "items": { "type": "string" },

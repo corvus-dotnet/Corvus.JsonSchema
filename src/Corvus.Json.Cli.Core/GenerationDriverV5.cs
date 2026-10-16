@@ -39,6 +39,13 @@ public static class GenerationDriverV5
                 return (WriteValidationErrors(generatorConfig), generatedFiles);
             }
 
+            string language = generatorConfig.Language?.GetString() ?? LanguageIds.CSharp;
+            if (!string.Equals(language, LanguageIds.CSharp, StringComparison.Ordinal))
+            {
+                AnsiConsole.MarkupLine($"[red]Error:[/] --language {language} has no language provider yet. Supported: {LanguageIds.CSharp}.");
+                return (1, generatedFiles);
+            }
+
             CompoundDocumentResolver documentResolver;
 
             if (generatorConfig.SupportYaml ?? false)

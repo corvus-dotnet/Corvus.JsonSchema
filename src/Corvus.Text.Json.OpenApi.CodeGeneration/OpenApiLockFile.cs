@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Canonicalization;
+using Corvus.Text.Json.CodeGeneration;
 
 namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 
@@ -39,7 +40,8 @@ public static class OpenApiLockFile
         string? clientName,
         OperationFilter? filter,
         IReadOnlyList<string> generatedFiles,
-        string? descriptionLocation = null)
+        string? descriptionLocation = null,
+        string language = LanguageIds.CSharp)
     {
         string[] includePaths = filter?.IncludePaths is { Count: > 0 } inc ? [.. inc] : [];
         string[] excludePaths = filter?.ExcludePaths is { Count: > 0 } exc ? [.. exc] : [];
@@ -86,7 +88,8 @@ public static class OpenApiLockFile
                 specFileHash: ComputeCanonicalHash(in specRoot),
                 specVersion: specVersion,
                 clientName: clientName is not null ? (JsonString.Source)clientName : default,
-                descriptionLocation: descriptionLocation is not null ? (JsonUri.Source)descriptionLocation : default);
+                descriptionLocation: descriptionLocation is not null ? (JsonUri.Source)descriptionLocation : default,
+                language: language);
 
         return builder.RootElement.Clone();
     }
@@ -138,7 +141,8 @@ public static class OpenApiLockFile
         string specVersion,
         string rootNamespace,
         string? clientName,
-        OperationFilter? filter)
+        OperationFilter? filter,
+        string language = LanguageIds.CSharp)
     {
         if (lockFile.GeneratorVersion.GetString() != GetGeneratorVersion())
         {
@@ -182,7 +186,8 @@ public static class OpenApiLockFile
             return false;
         }
 
-        return true;
+        string existingLanguage = lockFile.Language.IsNotUndefined() ? lockFile.Language.GetString()! : LanguageIds.CSharp;
+        return string.Equals(existingLanguage, language, StringComparison.Ordinal);
     }
 
     /// <summary>
