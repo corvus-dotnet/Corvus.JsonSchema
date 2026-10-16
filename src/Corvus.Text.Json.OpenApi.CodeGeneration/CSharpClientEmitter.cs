@@ -549,8 +549,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         w.WriteLine($"/// Request type for the {op.CSharpMethodName()} operation.");
         w.WriteLine("/// </summary>");
 
-        // Drift D2 (see the drift catalogue): only the 3.2 generator documented a request with its description.
-        string? remarks = this.specVersion == "3.2" ? op.Description ?? op.Summary : op.Summary;
+        string? remarks = op.Description ?? op.Summary;
         if (remarks is not null)
         {
             w.WriteLine($"/// <remarks>{CodeEmitHelpers.EscapeXml(remarks)}</remarks>");
