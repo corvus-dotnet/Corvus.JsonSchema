@@ -8,6 +8,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
+using Corvus.Text.Json.OpenApi.CodeGeneration.Operations;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Text.Json.OpenApi20;
@@ -90,106 +91,6 @@ public sealed class OpenApi20CodeGenerator
         ("head"u8.ToArray(), OperationMethod.Head),
         ("patch"u8.ToArray(), OperationMethod.Patch),
     ];
-
-    // ── Emit-boundary record types (strings for C# code generation) ─────
-    private readonly record struct OperationInfo(
-        string PathTemplate,
-        OperationMethod Method,
-        string MethodName,
-        string? OperationId,
-        string? Summary,
-        string? Description,
-        bool IsDeprecated,
-        string[] Tags,
-        ParameterInfo[] Parameters,
-        RequestBodyInfo? RequestBody,
-        ResponseInfo[] Responses,
-        ServerInfo? EffectiveServer,
-        OperationSecurityRequirementSet[]? SecurityRequirements = null);
-
-    // One element of an OpenAPI `security` array (a "Security Requirement Object"): an alternative
-    // that, on its own, satisfies the operation's security. The schemes within it are AND'd; the
-    // alternatives across the array are OR'd. An empty object ({}) marks anonymous access as an
-    // accepted alternative.
-    private readonly record struct OperationSecurityRequirementSet(
-        OperationSecurityRequirement[] Requirements,
-        bool IsOptional);
-
-    private readonly record struct OperationSecurityRequirement(
-        string SchemeName,
-        string[] Scopes,
-        string? SchemeType = null);
-
-    private readonly record struct ServerInfo(
-        string UrlTemplate,
-        ServerVariableInfo[] Variables);
-
-    private readonly record struct ServerVariableInfo(
-        string Name,
-        string DefaultValue,
-        string[]? AllowedValues);
-
-    private readonly record struct ParameterInfo(
-        string Name,
-        ParameterLocation Location,
-        bool IsRequired,
-        ParameterStyle Style,
-        bool Explode,
-        ParameterSerializationKind SerializationKind,
-        ParameterSerializationKind ElementSerializationKind,
-        string? SchemaPointer,
-        bool HasDeepNesting,
-        string? DefaultValueJson,
-        JsonValueKind DefaultValueKind,
-        bool DegradedCollectionFormat = false);
-
-    private readonly record struct RequestBodyInfo(
-        string? Description,
-        bool IsRequired,
-        ContentInfo[] Content,
-        BinaryPropertyInfo[] BinaryProperties);
-
-    private readonly record struct BinaryPropertyInfo(
-        string PropertyName,
-        string ParameterName,
-        string? ContentType);
-
-    private readonly record struct ResponseInfo(
-        string StatusCode,
-        ContentInfo[] Content,
-        HeaderInfo[] Headers,
-        LinkInfo[] Links);
-
-    private readonly record struct ContentInfo(
-        string MediaType,
-        string? SchemaPointer,
-        IReadOnlyDictionary<string, EncodingInfo>? Encodings);
-
-    private readonly record struct EncodingInfo(
-        string? Style,
-        bool? Explode,
-        bool AllowReserved,
-        string? ContentType);
-
-    private readonly record struct HeaderInfo(
-        string HeaderName,
-        string? SchemaPointer,
-        bool Explode,
-        ParameterSerializationKind SerializationKind,
-        ParameterSerializationKind ElementSerializationKind,
-        bool HasDeepNesting);
-
-    private readonly record struct LinkInfo(
-        string LinkName,
-        string? TargetOperationId,
-        LinkParameterBinding[] ParameterBindings,
-        string? RequestBodyExpression,
-        string? Description,
-        string SourceStatusCode);
-
-    private readonly record struct LinkParameterBinding(
-        string ParameterName,
-        string Expression);
 
     /// <summary>
     /// Walks the OpenAPI 3.0 specification and collects all schema
@@ -429,6 +330,37 @@ public sealed class OpenApi20CodeGenerator
         }
 
         return [.. result];
+    }
+
+    /// <summary>
+    /// Prepares the operations of a specification for emission: the language-neutral operation model every client
+    /// emitter consumes.
+    /// </summary>
+    /// <param name="specRoot">The root element of the OpenAPI document.</param>
+    /// <param name="scope">Whether to prepare the <c>paths</c> operations or the webhook and callback operations.</param>
+    /// <param name="filter">An optional operation filter.</param>
+    /// <param name="referenceResolver">An optional reference resolver; defaults to a local resolver over <paramref name="specRoot"/>.</param>
+    /// <returns>The prepared model.</returns>
+    public OpenApiClientModel PrepareOperations(
+        JsonElement specRoot,
+        OperationScope scope,
+        OperationFilter? filter = null,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+        ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
+        List<OperationInfo> operations = [];
+        IEnumerable<OperationRef> operationRefs = scope == OperationScope.Paths
+            ? WalkOperationRefs(specRoot, filter, referenceResolver)
+            : [];
+
+        foreach (OperationRef opRef in operationRefs)
+        {
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer, specRoot));
+        }
+
+        SpecificationInfoReader.Read(specRoot, out string? title, out string? apiVersion);
+        return new OpenApiClientModel("2.0", title, apiVersion, rootServer, SecuritySchemeReader.ReadOpenApi2(specRoot), [.. operations]);
     }
 
     /// <summary>
@@ -1070,6 +1002,7 @@ public sealed class OpenApi20CodeGenerator
         return new OperationInfo(
             pathTemplate,
             opRef.Method,
+            null,
             methodName,
             operationId,
             summary,
@@ -1250,7 +1183,7 @@ public sealed class OpenApi20CodeGenerator
             string name = nameEl.GetString()!;
 
             result.Add(new ParameterInfo(
-                name, location, required, style, explode,
+                name, location, required, style, explode, false,
                 serializationKind, elementKind, schemaPointer, deepNesting, defaultValueJson, defaultValueKind,
                 degradedCollectionFormat));
         }
@@ -1454,7 +1387,7 @@ public sealed class OpenApi20CodeGenerator
         // Synthesize the form body from the formData parameters.
         bool anyFile = false;
         bool anyRequired = false;
-        Dictionary<string, EncodingInfo> encodings = new(StringComparer.Ordinal);
+        Dictionary<string, ContentEncodingInfo> encodings = new(StringComparer.Ordinal);
         List<BinaryPropertyInfo> binaryProperties = [];
 
         foreach ((OpenApiDocument.Parameter param, int _, bool _) in formDataParams)
@@ -1489,28 +1422,28 @@ public sealed class OpenApi20CodeGenerator
             {
                 if (cf.ValueEquals("multi"u8))
                 {
-                    encodings[name] = new EncodingInfo("form", true, false, null);
+                    encodings[name] = new ContentEncodingInfo("form", true, false, null);
                 }
                 else if (cf.ValueEquals("ssv"u8))
                 {
-                    encodings[name] = new EncodingInfo("spaceDelimited", false, false, null);
+                    encodings[name] = new ContentEncodingInfo("spaceDelimited", false, false, null);
                 }
                 else if (cf.ValueEquals("tsv"u8))
                 {
-                    encodings[name] = new EncodingInfo("tabDelimited", false, false, null);
+                    encodings[name] = new ContentEncodingInfo("tabDelimited", false, false, null);
                 }
                 else if (cf.ValueEquals("pipes"u8))
                 {
-                    encodings[name] = new EncodingInfo("pipeDelimited", false, false, null);
+                    encodings[name] = new ContentEncodingInfo("pipeDelimited", false, false, null);
                 }
                 else if (isArrayField)
                 {
-                    encodings[name] = new EncodingInfo("form", false, false, null);
+                    encodings[name] = new ContentEncodingInfo("form", false, false, null);
                 }
             }
             else if (isArrayField)
             {
-                encodings[name] = new EncodingInfo("form", false, false, null);
+                encodings[name] = new ContentEncodingInfo("form", false, false, null);
             }
         }
 
@@ -1541,7 +1474,7 @@ public sealed class OpenApi20CodeGenerator
         }
 
         string formBodyPointer = BuildFormBodyPositionalPointer(pathNameUtf8, method);
-        IReadOnlyDictionary<string, EncodingInfo>? encodingMap = encodings.Count > 0 ? encodings : null;
+        IReadOnlyDictionary<string, ContentEncodingInfo>? encodingMap = encodings.Count > 0 ? encodings : null;
 
         List<ContentInfo> formContent = [];
         if (wantsMultipart)
@@ -1711,7 +1644,7 @@ public sealed class OpenApi20CodeGenerator
                 HeaderInfo[] headers = PrepareResponseHeaders(
                     response.HeadersValue, pathNameUtf8, method, statusCodeUtf8.Span);
 
-                result.Add(new ResponseInfo(statusCode, content, headers, []));
+                result.Add(new ResponseInfo(statusCode, null, null, content, headers, [], []));
             }
         }
 
@@ -2084,7 +2017,7 @@ public sealed class OpenApi20CodeGenerator
     /// Returns the per-property encoding overrides for the form-urlencoded or
     /// multipart content entry, or <see langword="null"/> if none are defined.
     /// </summary>
-    private static IReadOnlyDictionary<string, EncodingInfo>? GetRequestBodyEncodings(
+    private static IReadOnlyDictionary<string, ContentEncodingInfo>? GetRequestBodyEncodings(
         RequestBodyInfo requestBody,
         Func<string, bool> mediaTypePredicate)
     {
@@ -3878,7 +3811,7 @@ public sealed class OpenApi20CodeGenerator
 
             if (isFormUrlEncoded)
             {
-                IReadOnlyDictionary<string, EncodingInfo>? encodings =
+                IReadOnlyDictionary<string, ContentEncodingInfo>? encodings =
                     GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
 
                 if (encodings is { Count: > 0 })
@@ -3892,7 +3825,7 @@ public sealed class OpenApi20CodeGenerator
 
             if (isMultipart)
             {
-                IReadOnlyDictionary<string, EncodingInfo>? encodings =
+                IReadOnlyDictionary<string, ContentEncodingInfo>? encodings =
                     GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsMultipartMediaType);
 
                 if (encodings is { Count: > 0 })
@@ -3911,16 +3844,16 @@ public sealed class OpenApi20CodeGenerator
     private static void EmitEncodingsField(
         IndentedWriter w,
         string fieldName,
-        IReadOnlyDictionary<string, EncodingInfo> encodings)
+        IReadOnlyDictionary<string, ContentEncodingInfo> encodings)
     {
         w.WriteLine($"private static readonly Dictionary<string, PropertyEncoding> {fieldName} = new(StringComparer.Ordinal)");
         w.WriteLine("{");
         w.PushIndent();
 
-        foreach (KeyValuePair<string, EncodingInfo> kvp in encodings)
+        foreach (KeyValuePair<string, ContentEncodingInfo> kvp in encodings)
         {
             string propNameLiteral = CodeEmitHelpers.FormatStringLiteral(kvp.Key);
-            EncodingInfo enc = kvp.Value;
+            ContentEncodingInfo enc = kvp.Value;
 
             List<string> args = [];
 
@@ -4924,7 +4857,7 @@ public sealed class OpenApi20CodeGenerator
                 continue;
             }
 
-            IReadOnlyDictionary<string, EncodingInfo>? formEncodings =
+            IReadOnlyDictionary<string, ContentEncodingInfo>? formEncodings =
                 GetRequestBodyEncodings(op.RequestBody.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
 
             if (formEncodings is { Count: > 0 })
@@ -5171,7 +5104,7 @@ public sealed class OpenApi20CodeGenerator
                     }
                     else if (IsFormUrlEncodedRequestBody(op.RequestBody!.Value))
                     {
-                        IReadOnlyDictionary<string, EncodingInfo>? formEncodings =
+                        IReadOnlyDictionary<string, ContentEncodingInfo>? formEncodings =
                             GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
                         string encodingsArg = formEncodings is { Count: > 0 } ? $"{op.MethodName}FormEncodings, " : "null, ";
 

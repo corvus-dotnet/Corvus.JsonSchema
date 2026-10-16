@@ -39,8 +39,9 @@ These are the facts the design rests on. All verified on `main` at `60bab583211`
   `EncodingInfo`, `ResponseInfo`, `HeaderInfo`, `LinkInfo`, `ServerInfo`, `OperationSecurityRequirementSet`), then
   `Emit*` methods write C#. The records are commented "emit-boundary record types" and hold schema pointers,
   serialisation kinds, styles, media types and security sets. They contain no C# type names. Two fields are
-  C#-derived identifiers: `OperationInfo.MethodName` (and 3.2's `CustomMethodName`) and
-  `BinaryPropertyInfo.ParameterName`.
+  C#-derived identifiers: `OperationInfo.MethodName` and `BinaryPropertyInfo.ParameterName`. (3.2's
+  `CustomMethodName` is the custom HTTP method of an additional operation, as written in the document, and is
+  neutral.)
 - **The records differ only by version features.** 3.0 and 3.1 differ in the `OperationRef` document type alone. 2.0
   adds `ParameterInfo.DegradedCollectionFormat`. 3.2 adds `ParameterInfo.AllowReserved`, `MixedPartInfo` prefix and
   item parts on `RequestBodyInfo`, `Summary`, `Description` and `BinaryParts` on `ResponseInfo`,
@@ -123,12 +124,13 @@ typed documents differ per version, and that code is where the 2.0 lowering and 
 returns the shared records, and exposes
 
 ```csharp
-public OpenApiClientModel PrepareOperations(JsonElement specRoot, OperationScope scope, PrepareOptions options, OperationFilter? filter, IOpenApiReferenceResolver resolver);
+public OpenApiClientModel PrepareOperations(JsonElement specRoot, OperationScope scope, OperationFilter? filter = null, IOpenApiReferenceResolver? resolver = null);
 ```
 
 where `OperationScope` is `Paths` or `WebhooksAndCallbacks` (the two walks the C# client and callback-client
-generation already use), `PrepareOptions` carries what preparation reads today from the generator's constructor
-(`IgnoreEmptyFormUrlEncodedBody`, which `PrepareRequestBody` consumes), and `OpenApiClientModel` is
+generation already use). In step 1 the method is an instance method, so what preparation reads from the
+generator's constructor today (`IgnoreEmptyFormUrlEncodedBody`, which `PrepareRequestBody` consumes) stays there;
+when preparation and emission split in step 3 it moves to a `PrepareOptions` argument. And `OpenApiClientModel` is
 `(SpecVersion, Title, ApiVersion, ServerInfo? RootServer, SecuritySchemeInfo[] SecuritySchemes,
 OperationInfo[] Operations)`. `SpecVersion` is the document's OpenAPI version, distinct from the API's own version,
 and is what the drift branches below test. `SecuritySchemeInfo` is populated by all four versions (today only 3.2
@@ -140,9 +142,8 @@ server path alone). Promotion therefore changes the types the server emitters re
 in PR 0b reaches server emission too. The gate covers both.
 
 The promotion itself is pure and is phase 0's first step. The two C#-derived identifier fields come off the records
-in PR 0b: `MethodName` and `CustomMethodName` are derived by the C# client and server emitters from `OperationId`,
-`Method`, `PathTemplate` and the `x-` extension exactly as `GetMethodName` derives them today, through one shared
-helper, and `BinaryPropertyInfo.ParameterName` from `PropertyName` through `SanitizeParameterName`. Other emitters
+in PR 0b: `MethodName` is derived by the C# client and server emitters from `OperationId`, `Method`,
+`PathTemplate` and `CustomMethodName` exactly as `GetMethodName` derives it today, through one shared helper, and `BinaryPropertyInfo.ParameterName` from `PropertyName` through `SanitizeParameterName`. Other emitters
 derive their own names from the same neutral fields.
 
 ### Seam 2. One client emitter interface
@@ -527,7 +528,7 @@ What the first draft claimed, what the code says, and what changed.
 
 | # | Claim attacked | Finding | Change |
 |---|---|---|---|
-| 1 | "The only C#-ism before the emit boundary is `MethodName`" | `BinaryPropertyInfo.ParameterName` is also a sanitised C# identifier; 3.2 adds `CustomMethodName` | Both fields come off the records in PR 0b, derived by the consolidated C# emitter with the same functions, so output stays identical |
+| 1 | "The only C#-ism before the emit boundary is `MethodName`" | `BinaryPropertyInfo.ParameterName` is also a sanitised C# identifier (3.2's `CustomMethodName` turned out to be the neutral custom HTTP method) | Both fields come off the records in PR 0b, derived by the consolidated C# emitter with the same functions, so output stays identical |
 | 2 | "Records are near-identical across versions" | Six field differences (2.0: 1; 3.2: 5), all additive | Shared record = union of fields, listed |
 | 3 | "One parse per response, model built from the port's document" | Go and Java documents expose no public navigation; Rust does via `Instance`; the others not checked beyond the docs | New section on the model-input fork; dependency 2; contract items 2 and 3 reworded; decision 1 |
 | 4 | Ports validate 2.0 and 3.0 models correctly | They lack the OpenAPI dialect semantics PR 1024 gave .NET | Dependency 1; 2.0/3.0 fixtures gated per language |
