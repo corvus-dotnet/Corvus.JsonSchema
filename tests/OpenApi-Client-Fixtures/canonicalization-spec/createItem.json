@@ -44,14 +44,14 @@
       "rows": [46, 47, 49],
       "input": { "body": { "price": 5.0 }, "validation": "basic" },
       "response": { "status": 201, "body": { "id": "x", "name": "y" } },
-      "expect": { "kind": "error" }
+      "expect": { "kind": "error", "error": { "contains": "The request body failed schema validation" } }
     },
     {
       "name": "detailed validation rejects a body missing a required property",
       "rows": [46, 47, 49],
       "input": { "body": { "price": 5.0 }, "validation": "detailed" },
       "response": { "status": 201, "body": { "id": "x", "name": "y" } },
-      "expect": { "kind": "error" }
+      "expect": { "kind": "error", "error": { "contains": "Required property not present" } }
     },
     {
       "name": "validation off sends a body missing a required property",
@@ -66,14 +66,14 @@
       "rows": [48, 49],
       "input": { "body": { "name": "x" }, "responseValidation": "basic" },
       "response": { "status": 201, "body": { "name": "Gadget" } },
-      "expect": { "kind": "error" }
+      "expect": { "kind": "error", "error": { "contains": "The response body for status code 201 failed schema validation" } }
     },
     {
       "name": "response validation rejects a 422 body missing a required property",
       "rows": [48, 49],
       "input": { "body": { "name": "x" }, "responseValidation": "basic" },
       "response": { "status": 422, "body": { "detail": "something" } },
-      "expect": { "kind": "error" }
+      "expect": { "kind": "error", "error": { "contains": "The response body for status code 422 failed schema validation" } }
     }
   ]
 }

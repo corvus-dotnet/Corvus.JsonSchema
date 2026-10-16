@@ -88,6 +88,8 @@
         "expect": {
             "type": "object",
             "required": [ "kind" ],
+            "if": { "properties": { "kind": { "const": "error" } } },
+            "then": { "required": [ "error" ], "properties": { "error": { "required": [ "contains" ] } } },
             "properties": {
                 "kind": { "type": "string", "enum": [ "ok", "error" ] },
                 "status": { "type": "integer" },

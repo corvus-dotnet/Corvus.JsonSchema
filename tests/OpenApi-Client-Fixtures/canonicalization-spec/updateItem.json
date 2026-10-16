@@ -29,14 +29,14 @@
       "rows": [46, 47, 49],
       "input": { "body": { "id": "x" }, "validation": "basic" },
       "response": { "status": 200, "body": { "id": "x", "name": "y" } },
-      "expect": { "kind": "error" }
+      "expect": { "kind": "error", "error": { "contains": "The request body failed schema validation" } }
     },
     {
       "name": "detailed validation rejects a body with a wrongly typed property",
       "rows": [46, 47, 49],
       "input": { "body": { "id": "x", "name": 5 }, "validation": "detailed" },
       "response": { "status": 200, "body": { "id": "x", "name": "y" } },
-      "expect": { "kind": "error" }
+      "expect": { "kind": "error", "error": { "contains": "The value was expected to be of type" } }
     },
     {
       "name": "validation off sends an invalid body",

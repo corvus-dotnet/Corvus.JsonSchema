@@ -54,7 +54,7 @@
       "rows": [48, 49],
       "input": { "path": { "itemId": "item-1" }, "responseValidation": "basic" },
       "response": { "status": 200, "body": { "id": "item-1", "price": 9.99 } },
-      "expect": { "kind": "error" }
+      "expect": { "kind": "error", "error": { "contains": "The response body for status code 200 failed schema validation" } }
     },
     {
       "name": "response validation off accepts a body missing a required property",

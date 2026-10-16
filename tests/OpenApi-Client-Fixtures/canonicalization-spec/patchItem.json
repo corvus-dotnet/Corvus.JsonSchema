@@ -22,7 +22,7 @@
       "rows": [46, 47, 49],
       "input": { "path": { "itemId": "i-1" }, "body": { "name": 5 }, "validation": "basic" },
       "response": { "status": 200, "body": { "id": "i-1", "name": "n" } },
-      "expect": { "kind": "error" }
+      "expect": { "kind": "error", "error": { "contains": "The request body failed schema validation" } }
     },
     {
       "name": "validation off sends a wrongly typed body property",
@@ -37,7 +37,7 @@
       "rows": [48, 49],
       "input": { "path": { "itemId": "i-1" }, "body": { "name": "n" }, "responseValidation": "basic" },
       "response": { "status": 200, "body": { "id": "i-1" } },
-      "expect": { "kind": "error" }
+      "expect": { "kind": "error", "error": { "contains": "The response body for status code 200 failed schema validation" } }
     }
   ]
 }

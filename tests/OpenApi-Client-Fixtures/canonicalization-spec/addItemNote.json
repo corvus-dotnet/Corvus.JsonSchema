@@ -31,7 +31,7 @@
       "rows": [46, 47, 49],
       "input": { "path": { "itemId": "n-1" }, "body": { "note": 5 }, "validation": "basic" },
       "response": { "status": 204 },
-      "expect": { "kind": "error" }
+      "expect": { "kind": "error", "error": { "contains": "The request body failed schema validation" } }
     },
     {
       "name": "validation off sends a wrongly typed body property",

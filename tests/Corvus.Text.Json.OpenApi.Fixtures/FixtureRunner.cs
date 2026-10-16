@@ -73,7 +73,7 @@ public static class FixtureRunner
             Equal("request method", method.GetString()!, request.Method.Method);
         }
 
-        string pathAndQuery = request.RequestUri!.PathAndQuery;
+        string pathAndQuery = SentPathAndQuery(request.RequestUri!);
         if (expected.TryGetProperty("path", out JsonElement path))
         {
             Equal("request path", path.GetString()!, pathAndQuery);
@@ -131,7 +131,7 @@ public static class FixtureRunner
         if (expected.TryGetProperty("body", out JsonElement body))
         {
             byte[] captured = transport.CapturedBody ?? throw new FixtureAssertionException("the client sent no body");
-            using ParsedJsonDocument<JsonElement> capturedDocument = ParsedJsonDocument<JsonElement>.Parse(captured);
+            using ParsedJsonDocument<JsonElement> capturedDocument = ParseJson(captured, "request body");
             Equal("request body (canonical JSON)", Canonical(body), Canonical(capturedDocument.RootElement));
         }
 
@@ -170,6 +170,10 @@ public static class FixtureRunner
         {
             Equal("matched case", caseName.GetString()!, result.TryGetProperty("case", out JsonElement actualCase) ? actualCase.GetString()! : "(none)");
         }
+        else if (expectedKind == "ok" && result.TryGetProperty("case", out JsonElement unexpectedCase))
+        {
+            throw new FixtureAssertionException($"no response case was expected to match, but '{unexpectedCase.GetString()}' did");
+        }
 
         if (expected.TryGetProperty("body", out JsonElement body))
         {
@@ -191,7 +195,8 @@ public static class FixtureRunner
             result.TryGetProperty("headers", out JsonElement actualHeaders);
             foreach (JsonProperty<JsonElement> header in headers.EnumerateObject())
             {
-                bool present = actualHeaders.ValueKind == JsonValueKind.Object && actualHeaders.TryGetProperty(header.Name, out JsonElement actual) && actual.ValueKind != JsonValueKind.Null;
+                string headerName = header.Name.ToLowerInvariant();
+                bool present = actualHeaders.ValueKind == JsonValueKind.Object && actualHeaders.TryGetProperty(headerName, out JsonElement actual) && actual.ValueKind != JsonValueKind.Null;
                 if (header.Value.ValueKind == JsonValueKind.Null)
                 {
                     if (present)
@@ -207,17 +212,53 @@ public static class FixtureRunner
                     throw new FixtureAssertionException($"response header '{header.Name}' is absent");
                 }
 
-                Equal($"response header '{header.Name}'", Canonical(header.Value), Canonical(actualHeaders.GetProperty(header.Name)));
+                Equal($"response header '{header.Name}'", Canonical(header.Value), Canonical(actualHeaders.GetProperty(headerName)));
             }
         }
 
-        if (expected.TryGetProperty("error", out JsonElement expectedError) && expectedError.TryGetProperty("contains", out JsonElement contains))
+        if (expectedKind == "error")
         {
             string message = result.TryGetProperty("error", out JsonElement actualError) ? actualError.GetString()! : string.Empty;
+            if (!expected.TryGetProperty("error", out JsonElement expectedError) || !expectedError.TryGetProperty("contains", out JsonElement contains))
+            {
+                throw new FixtureAssertionException($"an error case must give error.contains; the client reported '{message}'");
+            }
+
             if (!message.Contains(contains.GetString()!, StringComparison.Ordinal))
             {
                 throw new FixtureAssertionException($"error message '{message}' does not contain '{contains.GetString()}'");
             }
+        }
+    }
+
+    /// <summary>
+    /// The path and query exactly as the client wrote them. <see cref="Uri.PathAndQuery"/> is the
+    /// normalised form (it escapes characters such as '|' and ' ', decodes escaped unreserved
+    /// characters and collapses dot segments), which would let an over- or under-encoding client
+    /// pass; the original string is what went into the request.
+    /// </summary>
+    private static string SentPathAndQuery(Uri requestUri)
+    {
+        string original = requestUri.OriginalString;
+        if (!requestUri.IsAbsoluteUri)
+        {
+            return original;
+        }
+
+        int schemeEnd = original.IndexOf("://", StringComparison.Ordinal);
+        int pathStart = schemeEnd < 0 ? -1 : original.IndexOf('/', schemeEnd + 3);
+        return pathStart < 0 ? "/" : original[pathStart..];
+    }
+
+    private static ParsedJsonDocument<JsonElement> ParseJson(byte[] bytes, string what)
+    {
+        try
+        {
+            return ParsedJsonDocument<JsonElement>.Parse(bytes);
+        }
+        catch (JsonException ex)
+        {
+            throw new FixtureAssertionException($"{what} is not JSON ({ex.Message}): '{Encoding.UTF8.GetString(bytes)}'");
         }
     }
 

@@ -95,7 +95,9 @@ exactly; `bodyBase64` is compared byte for byte. A multipart body is `bodyMultip
 validation failure, a response validation failure, an unexpected status). For `ok`: `status`, `case` (the
 generated name of the matched response: `Ok`, `Created`, `NotFound`, `Default`, `Status2xx`, ...), `body` (JSON the
 typed body projects to), `bodyText`, and `headers` (each typed response header projected to JSON, `null` when
-absent). For `error`: `error.contains` is a substring the message must contain.
+absent). An `ok` expectation that omits `case` asserts that no response case matched. For `error`: `error.contains`
+is a substring the message must contain, and it is required, so an error case never passes on an unrelated
+exception.
 
 ### `skip`
 
@@ -104,6 +106,8 @@ A map of language identifier to reason. A language's runner reports a skipped ca
 ## Normalisation rules
 
 - Header names are compared case-insensitively; the file writes them lower-case.
+- The request path and query are compared as the client wrote them, before any URI normalisation by the
+  language's HTTP stack, so an over- or under-encoding client fails even where the wire form would coincide.
 - Query strings are compared as sent, in order; a case that admits more than one order lists `pathAnyOf`.
 - JSON bodies are compared canonically. Numbers compare by value in canonical form, so `1.0` and `1` differ, as
   the wire bytes do.

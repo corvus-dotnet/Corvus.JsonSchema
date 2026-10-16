@@ -156,7 +156,8 @@
         }
       },
       "expect": {
-        "kind": "error"
+        "kind": "error",
+        "error": { "contains": "The request body failed schema validation" }
       }
     },
     {
@@ -186,7 +187,8 @@
         }
       },
       "expect": {
-        "kind": "error"
+        "kind": "error",
+        "error": { "contains": "The request parameter 'X-Trace-Id' failed schema validation" }
       }
     }
   ]
