@@ -1,0 +1,96 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "pathObjectMatrixExplode",
+  "cases": [
+    {
+      "name": "matrix explode object: two properties",
+      "rows": [
+        9
+      ],
+      "input": {
+        "path": {
+          "dims": {
+            "width": 10,
+            "height": 20
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-object-matrix-explode/;width=10;height=20",
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "matrix explode object: one property",
+      "rows": [
+        9
+      ],
+      "input": {
+        "path": {
+          "dims": {
+            "width": 5
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-object-matrix-explode/;width=5"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "matrix explode object: negative and zero values",
+      "rows": [
+        9
+      ],
+      "input": {
+        "path": {
+          "dims": {
+            "width": -3,
+            "height": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-object-matrix-explode/;width=-3;height=0"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "getItem",
+  "cases": [
+    {
+      "name": "200 parses the Ok body",
+      "rows": [1, 3, 4, 7, 17, 33, 38],
+      "input": { "path": { "itemId": "item-1" } },
+      "response": { "status": 200, "body": { "id": "item-1", "name": "Widget", "price": 9.99 } },
+      "expectRequest": { "method": "GET", "path": "/items/item-1", "headers": { "accept": "application/json" }, "noBody": true },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok", "body": { "id": "item-1", "name": "Widget", "price": 9.99 } }
+    },
+    {
+      "name": "path parameter is percent-encoded",
+      "rows": [7],
+      "input": { "path": { "itemId": "hello world" } },
+      "response": { "status": 200, "body": { "id": "x", "name": "y" } },
+      "expectRequest": { "method": "GET", "path": "/items/hello%20world" },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok" }
+    },
+    {
+      "name": "query parameters are appended in document order and percent-encoded",
+      "rows": [11, 21],
+      "input": { "path": { "itemId": "id1" }, "query": { "filter": "a&b", "limit": 10, "verbose": true } },
+      "response": { "status": 200, "body": { "id": "x", "name": "y" } },
+      "expectRequest": { "method": "GET", "path": "/items/id1?filter=a%26b&limit=10&verbose=true" },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok" }
+    },
+    {
+      "name": "header parameter is forwarded",
+      "rows": [16],
+      "input": { "path": { "itemId": "id1" }, "header": { "X-Request-Id": "req-42" } },
+      "response": { "status": 200, "body": { "id": "x", "name": "y" } },
+      "expectRequest": { "method": "GET", "path": "/items/id1", "headers": { "x-request-id": "req-42" } },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok" }
+    },
+    {
+      "name": "404 matches NotFound and parses its body",
+      "rows": [33, 35, 38],
+      "input": { "path": { "itemId": "missing" } },
+      "response": { "status": 404, "body": { "code": 404, "message": "not found" } },
+      "expectRequest": { "method": "GET", "path": "/items/missing" },
+      "expect": { "kind": "ok", "status": 404, "case": "NotFound", "body": { "code": 404, "message": "not found" } }
+    },
+    {
+      "name": "500 falls through to the default response",
+      "rows": [33, 35],
+      "input": { "path": { "itemId": "id1" } },
+      "response": { "status": 500, "body": { "error": "internal error" } },
+      "expect": { "kind": "ok", "status": 500, "case": "Default", "body": { "error": "internal error" } }
+    },
+    {
+      "name": "response validation rejects a body missing a required property",
+      "rows": [48, 49],
+      "input": { "path": { "itemId": "item-1" }, "responseValidation": "basic" },
+      "response": { "status": 200, "body": { "id": "item-1", "price": 9.99 } },
+      "expect": { "kind": "error" }
+    },
+    {
+      "name": "response validation off accepts a body missing a required property",
+      "rows": [47, 48],
+      "input": { "path": { "itemId": "item-1" }, "responseValidation": "none" },
+      "response": { "status": 200, "body": { "id": "item-1", "price": 9.99 } },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok", "body": { "id": "item-1", "price": 9.99 } }
+    }
+  ]
+}

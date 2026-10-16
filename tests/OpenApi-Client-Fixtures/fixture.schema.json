@@ -1,0 +1,108 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "OpenApiClientFixture",
+    "description": "Conformance cases for one operation of an OpenAPI document, run by every language's generated client.",
+    "type": "object",
+    "required": [ "spec", "operationId", "cases" ],
+    "properties": {
+        "spec": { "type": "string", "description": "The document file name under tests/Corvus.Text.Json.OpenApi.CodeGeneration.Tests/TestData." },
+        "operationId": { "type": "string" },
+        "scope": { "type": "string", "enum": [ "paths", "webhooksAndCallbacks" ], "default": "paths" },
+        "cases": { "type": "array", "items": { "$ref": "#/$defs/case" } }
+    },
+    "additionalProperties": false,
+    "$defs": {
+        "case": {
+            "type": "object",
+            "required": [ "name", "response", "expect" ],
+            "properties": {
+                "name": { "type": "string" },
+                "rows": { "type": "array", "items": { "type": "integer" } },
+                "skip": { "type": "object", "additionalProperties": { "type": "string" } },
+                "input": { "$ref": "#/$defs/input" },
+                "response": { "$ref": "#/$defs/response" },
+                "expectRequest": { "$ref": "#/$defs/expectRequest" },
+                "expect": { "$ref": "#/$defs/expect" }
+            },
+            "additionalProperties": false
+        },
+        "jsonValues": { "type": "object", "additionalProperties": true },
+        "stringValues": { "type": "object", "additionalProperties": { "type": "string" } },
+        "input": {
+            "type": "object",
+            "properties": {
+                "path": { "$ref": "#/$defs/jsonValues" },
+                "query": { "$ref": "#/$defs/jsonValues" },
+                "header": { "$ref": "#/$defs/jsonValues" },
+                "cookie": { "$ref": "#/$defs/jsonValues" },
+                "body": true,
+                "bodyText": { "type": "string" },
+                "bodyBase64": { "type": "string", "contentEncoding": "base64" },
+                "validation": { "$ref": "#/$defs/validationMode" },
+                "responseValidation": { "$ref": "#/$defs/validationMode" }
+            },
+            "additionalProperties": false
+        },
+        "validationMode": { "type": "string", "enum": [ "none", "basic", "detailed" ] },
+        "response": {
+            "type": "object",
+            "required": [ "status" ],
+            "properties": {
+                "status": { "type": "integer" },
+                "headers": { "$ref": "#/$defs/stringValues" },
+                "body": true,
+                "bodyText": { "type": "string" },
+                "bodyBase64": { "type": "string", "contentEncoding": "base64" },
+                "chunks": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": false
+        },
+        "expectRequest": {
+            "type": "object",
+            "properties": {
+                "method": { "type": "string" },
+                "path": { "type": "string" },
+                "pathAnyOf": { "type": "array", "items": { "type": "string" } },
+                "headers": { "$ref": "#/$defs/stringValues" },
+                "absentHeaders": { "type": "array", "items": { "type": "string" } },
+                "contentType": { "type": "string" },
+                "body": true,
+                "bodyText": { "type": "string" },
+                "bodyForm": { "type": "string" },
+                "bodyBase64": { "type": "string", "contentEncoding": "base64" },
+                "bodyMultipart": { "type": "array", "items": { "$ref": "#/$defs/part" } },
+                "noBody": { "type": "boolean" }
+            },
+            "additionalProperties": false
+        },
+        "part": {
+            "type": "object",
+            "properties": {
+                "headers": { "$ref": "#/$defs/stringValues" },
+                "body": true,
+                "bodyText": { "type": "string" },
+                "bodyBase64": { "type": "string", "contentEncoding": "base64" }
+            },
+            "additionalProperties": false
+        },
+        "expect": {
+            "type": "object",
+            "required": [ "kind" ],
+            "properties": {
+                "kind": { "type": "string", "enum": [ "ok", "error" ] },
+                "status": { "type": "integer" },
+                "case": { "type": "string" },
+                "body": true,
+                "bodyText": { "type": "string" },
+                "headers": { "$ref": "#/$defs/jsonValues" },
+                "items": { "type": "array", "items": true },
+                "error": {
+                    "type": "object",
+                    "properties": { "contains": { "type": "string" } },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}

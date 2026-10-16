@@ -150,7 +150,13 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                     settings.ClientName,
                     settings.IgnoreEmptyFormUrlEncodedBody);
                 OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
-                files = generator.EmitClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
+                SchemaTypeMap typeMap = new(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement");
+                ClientEmitOptions emitOptions = new(rootNamespace, settings.ClientName);
+                files = generator.EmitClient(in model, typeMap, emitOptions);
+                if (settings.EmitFixtureAdapter)
+                {
+                    files = [.. files, CSharpFixtureAdapterEmitter.Emit(in model, typeMap, emitOptions)];
+                }
             }
             else if (specVersion is "3.2")
             {
@@ -179,7 +185,13 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                     settings.ClientName,
                     settings.IgnoreEmptyFormUrlEncodedBody);
                 OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
-                files = generator.EmitClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
+                SchemaTypeMap typeMap = new(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement");
+                ClientEmitOptions emitOptions = new(rootNamespace, settings.ClientName);
+                files = generator.EmitClient(in model, typeMap, emitOptions);
+                if (settings.EmitFixtureAdapter)
+                {
+                    files = [.. files, CSharpFixtureAdapterEmitter.Emit(in model, typeMap, emitOptions)];
+                }
             }
             else if (specVersion is "3.1" or not "3.0")
             {
@@ -208,7 +220,13 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                     settings.ClientName,
                     settings.IgnoreEmptyFormUrlEncodedBody);
                 OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
-                files = generator.EmitClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
+                SchemaTypeMap typeMap = new(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement");
+                ClientEmitOptions emitOptions = new(rootNamespace, settings.ClientName);
+                files = generator.EmitClient(in model, typeMap, emitOptions);
+                if (settings.EmitFixtureAdapter)
+                {
+                    files = [.. files, CSharpFixtureAdapterEmitter.Emit(in model, typeMap, emitOptions)];
+                }
             }
             else
             {
@@ -237,7 +255,13 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                     settings.ClientName,
                     settings.IgnoreEmptyFormUrlEncodedBody);
                 OpenApiClientModel model = generator.PrepareOperations(specRoot, OperationScope.Paths, filter, referenceResolver);
-                files = generator.EmitClient(in model, new SchemaTypeMap(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement"), new ClientEmitOptions(rootNamespace, settings.ClientName));
+                SchemaTypeMap typeMap = new(schemaTypeMap ?? new Dictionary<string, string>(), contextBodies, "JsonElement");
+                ClientEmitOptions emitOptions = new(rootNamespace, settings.ClientName);
+                files = generator.EmitClient(in model, typeMap, emitOptions);
+                if (settings.EmitFixtureAdapter)
+                {
+                    files = [.. files, CSharpFixtureAdapterEmitter.Emit(in model, typeMap, emitOptions)];
+                }
             }
 
             AnsiConsole.MarkupLine($"[green]Files:[/] {files.Count}");

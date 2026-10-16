@@ -1,0 +1,43 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "patchItem",
+  "cases": [
+    {
+      "name": "200 sends PATCH with a JSON body and parses the Ok body",
+      "rows": [22, 33, 56],
+      "input": { "path": { "itemId": "i-1" }, "body": { "name": "patched" } },
+      "response": { "status": 200, "body": { "id": "i-1", "name": "patched" } },
+      "expectRequest": { "method": "PATCH", "path": "/items/i-1", "contentType": "application/json", "headers": { "accept": "application/json" }, "body": { "name": "patched" } },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok", "body": { "id": "i-1", "name": "patched" } }
+    },
+    {
+      "name": "an undeclared status matches no response case",
+      "rows": [33, 35],
+      "input": { "path": { "itemId": "i-1" }, "body": { "name": "n" } },
+      "response": { "status": 409, "body": {} },
+      "expect": { "kind": "ok", "status": 409 }
+    },
+    {
+      "name": "basic validation rejects a wrongly typed body property",
+      "rows": [46, 47, 49],
+      "input": { "path": { "itemId": "i-1" }, "body": { "name": 5 }, "validation": "basic" },
+      "response": { "status": 200, "body": { "id": "i-1", "name": "n" } },
+      "expect": { "kind": "error" }
+    },
+    {
+      "name": "validation off sends a wrongly typed body property",
+      "rows": [46, 47],
+      "input": { "path": { "itemId": "i-1" }, "body": { "name": 5 }, "validation": "none" },
+      "response": { "status": 200, "body": { "id": "i-1", "name": "n" } },
+      "expectRequest": { "method": "PATCH", "path": "/items/i-1", "body": { "name": 5 } },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok" }
+    },
+    {
+      "name": "response validation rejects an Ok body missing required properties",
+      "rows": [48, 49],
+      "input": { "path": { "itemId": "i-1" }, "body": { "name": "n" }, "responseValidation": "basic" },
+      "response": { "status": 200, "body": { "id": "i-1" } },
+      "expect": { "kind": "error" }
+    }
+  ]
+}

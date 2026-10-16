@@ -1,0 +1,29 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "getItemDetails",
+  "cases": [
+    {
+      "name": "path with a trailing literal after the parameter",
+      "rows": [7, 17],
+      "input": { "path": { "itemId": "abc" } },
+      "response": { "status": 200, "body": { "detail": "some detail" } },
+      "expectRequest": { "method": "GET", "path": "/items/abc/details", "headers": { "accept": "application/json" }, "noBody": true },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok", "body": { "detail": "some detail" } }
+    },
+    {
+      "name": "path parameter is percent-encoded before the trailing literal",
+      "rows": [7],
+      "input": { "path": { "itemId": "a b/c" } },
+      "response": { "status": 200, "body": {} },
+      "expectRequest": { "method": "GET", "path": "/items/a%20b%2Fc/details" },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok" }
+    },
+    {
+      "name": "an undeclared status matches no response case",
+      "rows": [33, 35],
+      "input": { "path": { "itemId": "abc" } },
+      "response": { "status": 410, "body": {} },
+      "expect": { "kind": "ok", "status": 410 }
+    }
+  ]
+}

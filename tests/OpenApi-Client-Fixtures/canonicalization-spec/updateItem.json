@@ -1,0 +1,50 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "updateItem",
+  "cases": [
+    {
+      "name": "200 parses the Ok body",
+      "rows": [33, 38],
+      "input": { "body": { "id": "up-1", "name": "Updated" } },
+      "response": { "status": 200, "body": { "id": "up-1", "name": "Updated" } },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok", "body": { "id": "up-1", "name": "Updated" } }
+    },
+    {
+      "name": "request is a PUT with the body sent as JSON",
+      "rows": [22, 56],
+      "input": { "body": { "id": "x", "name": "y" } },
+      "response": { "status": 200, "body": { "id": "x", "name": "y" } },
+      "expectRequest": { "method": "PUT", "path": "/items", "contentType": "application/json", "headers": { "accept": "application/json" }, "body": { "id": "x", "name": "y" } },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok" }
+    },
+    {
+      "name": "an undeclared status matches no response case",
+      "rows": [33, 35],
+      "input": { "body": { "id": "x", "name": "y" } },
+      "response": { "status": 400, "body": {} },
+      "expect": { "kind": "ok", "status": 400 }
+    },
+    {
+      "name": "basic validation rejects a body missing a required property",
+      "rows": [46, 47, 49],
+      "input": { "body": { "id": "x" }, "validation": "basic" },
+      "response": { "status": 200, "body": { "id": "x", "name": "y" } },
+      "expect": { "kind": "error" }
+    },
+    {
+      "name": "detailed validation rejects a body with a wrongly typed property",
+      "rows": [46, 47, 49],
+      "input": { "body": { "id": "x", "name": 5 }, "validation": "detailed" },
+      "response": { "status": 200, "body": { "id": "x", "name": "y" } },
+      "expect": { "kind": "error" }
+    },
+    {
+      "name": "validation off sends an invalid body",
+      "rows": [46, 47],
+      "input": { "body": { "id": "x" }, "validation": "none" },
+      "response": { "status": 200, "body": { "id": "x", "name": "y" } },
+      "expectRequest": { "method": "PUT", "path": "/items", "body": { "id": "x" } },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok" }
+    }
+  ]
+}

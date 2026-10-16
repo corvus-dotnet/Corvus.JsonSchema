@@ -1,0 +1,281 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "getByFlag",
+  "cases": [
+    {
+      "name": "boolean true path parameter",
+      "rows": [
+        7
+      ],
+      "input": {
+        "path": {
+          "active": true
+        },
+        "header": {
+          "X-Trace-Id": "trace-1",
+          "X-Request-Count": 5
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/flags/true",
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "boolean false path parameter",
+      "rows": [
+        7
+      ],
+      "input": {
+        "path": {
+          "active": false
+        },
+        "header": {
+          "X-Trace-Id": "trace-2",
+          "X-Request-Count": 1
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/flags/false"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "required and optional headers are all sent as text",
+      "rows": [
+        16,
+        21
+      ],
+      "input": {
+        "path": {
+          "active": true
+        },
+        "header": {
+          "X-Trace-Id": "trace-abc",
+          "X-Request-Count": 42,
+          "X-Debug": true,
+          "X-Score": 3.14
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/flags/true",
+        "headers": {
+          "x-trace-id": "trace-abc",
+          "x-request-count": "42",
+          "x-debug": "true",
+          "x-score": "3.14"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "optional headers omitted are absent from the request",
+      "rows": [
+        16,
+        19,
+        21
+      ],
+      "input": {
+        "path": {
+          "active": true
+        },
+        "header": {
+          "X-Trace-Id": "trace",
+          "X-Request-Count": 1
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/flags/true",
+        "headers": {
+          "x-trace-id": "trace",
+          "x-request-count": "1"
+        },
+        "absentHeaders": [
+          "x-debug",
+          "x-score"
+        ]
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "optional boolean header false is sent, not omitted",
+      "rows": [
+        16,
+        19
+      ],
+      "input": {
+        "path": {
+          "active": true
+        },
+        "header": {
+          "X-Trace-Id": "t",
+          "X-Request-Count": 1,
+          "X-Debug": false
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/flags/true",
+        "headers": {
+          "x-debug": "false"
+        },
+        "absentHeaders": [
+          "x-score"
+        ]
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "negative integer and double headers keep their sign",
+      "rows": [
+        16
+      ],
+      "input": {
+        "path": {
+          "active": true
+        },
+        "header": {
+          "X-Trace-Id": "t",
+          "X-Request-Count": -7,
+          "X-Score": -0.5
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/flags/true",
+        "headers": {
+          "x-request-count": "-7",
+          "x-score": "-0.5"
+        }
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "200 parses the Ok body",
+      "rows": [
+        33,
+        38
+      ],
+      "input": {
+        "path": {
+          "active": true
+        },
+        "header": {
+          "X-Trace-Id": "t",
+          "X-Request-Count": 1
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "active": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/flags/true"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "active": true
+        }
+      }
+    },
+    {
+      "name": "503 is not a declared response and matches no case",
+      "rows": [
+        33,
+        35
+      ],
+      "input": {
+        "path": {
+          "active": true
+        },
+        "header": {
+          "X-Trace-Id": "t",
+          "X-Request-Count": 1
+        }
+      },
+      "response": {
+        "status": 503,
+        "body": {}
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/flags/true"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 503
+      }
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "addItemNote",
+  "cases": [
+    {
+      "name": "supplied optional body is sent as JSON",
+      "rows": [22, 23],
+      "input": { "path": { "itemId": "n-1" }, "body": { "note": "hello" } },
+      "response": { "status": 204 },
+      "expectRequest": { "method": "POST", "path": "/items/n-1/note", "contentType": "application/json", "body": { "note": "hello" } },
+      "expect": { "kind": "ok", "status": 204, "case": "NoContent" }
+    },
+    {
+      "name": "omitted optional body sends no body",
+      "rows": [23],
+      "input": { "path": { "itemId": "n-1" } },
+      "response": { "status": 204 },
+      "expectRequest": { "method": "POST", "path": "/items/n-1/note", "noBody": true },
+      "expect": { "kind": "ok", "status": 204, "case": "NoContent" }
+    },
+    {
+      "name": "no Accept header when the response declares no content",
+      "rows": [17],
+      "input": { "path": { "itemId": "n-1" } },
+      "response": { "status": 204 },
+      "expectRequest": { "method": "POST", "path": "/items/n-1/note", "absentHeaders": ["accept"] },
+      "expect": { "kind": "ok", "status": 204, "case": "NoContent" }
+    },
+    {
+      "name": "basic validation rejects a wrongly typed body property",
+      "rows": [46, 47, 49],
+      "input": { "path": { "itemId": "n-1" }, "body": { "note": 5 }, "validation": "basic" },
+      "response": { "status": 204 },
+      "expect": { "kind": "error" }
+    },
+    {
+      "name": "validation off sends a wrongly typed body property",
+      "rows": [46, 47],
+      "input": { "path": { "itemId": "n-1" }, "body": { "note": 5 }, "validation": "none" },
+      "response": { "status": 204 },
+      "expectRequest": { "method": "POST", "path": "/items/n-1/note", "body": { "note": 5 } },
+      "expect": { "kind": "ok", "status": 204, "case": "NoContent" }
+    },
+    {
+      "name": "an undeclared status matches no response case",
+      "rows": [33, 35],
+      "input": { "path": { "itemId": "n-1" } },
+      "response": { "status": 200 },
+      "expect": { "kind": "ok", "status": 200 }
+    }
+  ]
+}

@@ -26,6 +26,10 @@ internal sealed class OpenApiGenerateSettings : OpenApiSettings
     [Description("The target language of the generated client: csharp (the default). Other languages are accepted as their emitters land.")]
     public string? Language { get; init; }
 
+    [CommandOption("--emit-fixture-adapter", IsHidden = true)]
+    [Description("Test-only: also emit the fixture adapter that drives the generated client from tests/OpenApi-Client-Fixtures cases.")]
+    public bool EmitFixtureAdapter { get; init; }
+
     [CommandOption("--clientName")]
     [Description("The prefix for generated client type names. Defaults to the API title.")]
     public string? ClientName { get; init; }

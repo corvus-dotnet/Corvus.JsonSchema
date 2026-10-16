@@ -21,10 +21,16 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi.Fixtures\Corvus.Text.Json.OpenApi.Fixtures.csproj" />
     <!-- Build-only dependency: ensures the CLI tool is compiled before our generation target runs.
          ReferenceOutputAssembly=false means we don't reference it at runtime. -->
     <ProjectReference Include="..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj"
                       ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\OpenApi-Client-Fixtures\canonicalization-spec-3.2\*.json" Link="Fixtures\canonicalization-spec-3.2\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The canonicalization documents are parallel across 3.0, 3.1 and 3.2: the shared cases run here too. -->
+    <Content Include="..\OpenApi-Client-Fixtures\canonicalization-spec\*.json" Link="Fixtures\canonicalization-spec-3.2\shared-%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
@@ -37,7 +43,7 @@
        is already compiled. Generation itself takes <1s; no incremental skip needed. -->
   <Target Name="GenerateOpenApiTypes" Condition="'$(TargetFramework)' != 'net481'" BeforeTargets="BeforeCompile;CoreCompile">
     <RemoveDir Directories="$(GeneratedCodeOutputPath)" />
-    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj&quot; -f net10.0 -c $(Configuration) --no-build -- openapi-client &quot;$(OpenApiSpecFile)&quot; --rootNamespace CanonTests32.Client --outputPath &quot;$(GeneratedCodeOutputPath)&quot;" />
+    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj&quot; -f net10.0 -c $(Configuration) --no-build -- openapi-client &quot;$(OpenApiSpecFile)&quot; --rootNamespace CanonTests32.Client --outputPath &quot;$(GeneratedCodeOutputPath)&quot; --emit-fixture-adapter" />
   </Target>
 
   <!-- Include the generated files after generation. Runs after GenerateOpenApiTypes, picking up

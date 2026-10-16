@@ -1,0 +1,14 @@
+{
+  "spec": "covspec-2.0.json",
+  "operationId": "createWidget",
+  "cases": [
+    {
+      "name": "the body parameter is sent as JSON and 201 matches Created",
+      "rows": [22, 33, 91],
+      "input": { "body": { "id": "w1" } },
+      "response": { "status": 201, "body": { "id": "w1" } },
+      "expectRequest": { "method": "POST", "path": "/widgets", "contentType": "application/json", "body": { "id": "w1" } },
+      "expect": { "kind": "ok", "status": 201, "case": "Created", "body": { "id": "w1" } }
+    }
+  ]
+}

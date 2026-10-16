@@ -1,0 +1,134 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "pathArrayLabel",
+  "cases": [
+    {
+      "name": "label array: two values",
+      "rows": [
+        8
+      ],
+      "input": {
+        "path": {
+          "ids": [
+            "a",
+            "b"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-array-label/.a,b",
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "label array: single value",
+      "rows": [
+        8
+      ],
+      "input": {
+        "path": {
+          "ids": [
+            "a"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-array-label/.a"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "label array: space, ampersand and comma inside values are percent-encoded",
+      "rows": [
+        8,
+        7
+      ],
+      "input": {
+        "path": {
+          "ids": [
+            "a b",
+            "c&d",
+            "e,f"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-array-label/.a%20b,c%26d,e%2Cf"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      },
+      "skip": {
+        "csharp": "the client leaves reserved characters (& , = / ?) unencoded inside collection items; OpenAPI 3.1 (allowReserved false, RFC 6570 expansion) requires them percent-encoded"
+      }
+    },
+    {
+      "name": "label array: slash and question mark inside values are percent-encoded",
+      "rows": [
+        8,
+        7
+      ],
+      "input": {
+        "path": {
+          "ids": [
+            "a/b",
+            "c?d"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-array-label/.a%2Fb,c%3Fd"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      },
+      "skip": {
+        "csharp": "the client leaves reserved characters (& , = / ?) unencoded inside collection items; OpenAPI 3.1 (allowReserved false, RFC 6570 expansion) requires them percent-encoded"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "headItem",
+  "cases": [
+    {
+      "name": "200 sends HEAD and matches Ok with no body",
+      "rows": [33, 56],
+      "input": { "path": { "itemId": "h-1" } },
+      "response": { "status": 200 },
+      "expectRequest": { "method": "HEAD", "path": "/items/h-1", "noBody": true },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok" }
+    },
+    {
+      "name": "404 matches NotFound with no body",
+      "rows": [33],
+      "input": { "path": { "itemId": "h-2" } },
+      "response": { "status": 404 },
+      "expect": { "kind": "ok", "status": 404, "case": "NotFound" }
+    },
+    {
+      "name": "no Accept header when no response declares content",
+      "rows": [17],
+      "input": { "path": { "itemId": "h-1" } },
+      "response": { "status": 200 },
+      "expectRequest": { "method": "HEAD", "path": "/items/h-1", "absentHeaders": ["accept"] },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok" }
+    }
+  ]
+}

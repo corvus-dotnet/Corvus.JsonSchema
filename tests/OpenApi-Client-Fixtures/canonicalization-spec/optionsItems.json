@@ -1,0 +1,29 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "optionsItems",
+  "cases": [
+    {
+      "name": "204 sends OPTIONS and matches NoContent",
+      "rows": [33, 56],
+      "input": {},
+      "response": { "status": 204, "headers": { "Allow": "GET, POST, OPTIONS" } },
+      "expectRequest": { "method": "OPTIONS", "path": "/items", "noBody": true },
+      "expect": { "kind": "ok", "status": 204, "case": "NoContent" }
+    },
+    {
+      "name": "no Accept header when no response declares content",
+      "rows": [17],
+      "input": {},
+      "response": { "status": 204 },
+      "expectRequest": { "method": "OPTIONS", "path": "/items", "absentHeaders": ["accept"] },
+      "expect": { "kind": "ok", "status": 204, "case": "NoContent" }
+    },
+    {
+      "name": "an undeclared status matches no response case",
+      "rows": [33, 35],
+      "input": {},
+      "response": { "status": 200 },
+      "expect": { "kind": "ok", "status": 200 }
+    }
+  ]
+}

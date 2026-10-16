@@ -1,0 +1,99 @@
+{
+  "spec": "canonicalization-spec.json",
+  "operationId": "pathObjectSimple",
+  "cases": [
+    {
+      "name": "simple object: two properties",
+      "rows": [
+        7,
+        9
+      ],
+      "input": {
+        "path": {
+          "dims": {
+            "width": 10,
+            "height": 20
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-object-simple/width,10,height,20",
+        "noBody": true
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok",
+        "body": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "simple object: one property",
+      "rows": [
+        7,
+        9
+      ],
+      "input": {
+        "path": {
+          "dims": {
+            "width": 5
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-object-simple/width,5"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    },
+    {
+      "name": "simple object: negative and zero values",
+      "rows": [
+        7,
+        9
+      ],
+      "input": {
+        "path": {
+          "dims": {
+            "width": -3,
+            "height": 0
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "ok": true
+        }
+      },
+      "expectRequest": {
+        "method": "GET",
+        "path": "/complex/path-object-simple/width,-3,height,0"
+      },
+      "expect": {
+        "kind": "ok",
+        "status": 200,
+        "case": "Ok"
+      }
+    }
+  ]
+}
