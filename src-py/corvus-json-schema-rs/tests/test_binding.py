@@ -251,10 +251,12 @@ def test_a_match_that_reaches_its_limit_raises() -> None:
         lambda: v.evaluate(NEVER_ANSWERED),
         lambda: v.evaluate(NEVER_ANSWERED, cjs.JsonSchemaResultsCollector.create(cjs.ResultsLevel.BASIC)),
     ):
-        start = time.monotonic()
+        # perf_counter and not monotonic: on Windows monotonic moves in steps of some 15 ms, and a match stopped at
+        # its limit of 50 ms by the crate's clock could read as 47 ms.
+        start = time.perf_counter()
         with pytest.raises(cjs.PatternMatchLimitError) as raised:
             check()
-        took = time.monotonic() - start
+        took = time.perf_counter() - start
         assert NEVER_ANSWERS in str(raised.value) and "50ms" in str(raised.value)
         assert 0.05 <= took < 20
     assert not issubclass(cjs.PatternMatchLimitError, cjs.SchemaEvaluationDepthError)
@@ -266,10 +268,10 @@ def test_the_default_match_limit_is_one_second_and_can_be_turned_off() -> None:
 
     assert cjs.CompileOptions().pattern_match_limit == 1.0
     v = cjs.compile({"patternProperties": {NEVER_ANSWERS: {"type": "integer"}}})
-    start = time.monotonic()
+    start = time.perf_counter()
     with pytest.raises(cjs.PatternMatchLimitError, match="1s"):
         v({NEVER_ANSWERED: 1})
-    assert 1.0 <= time.monotonic() - start < 21
+    assert 1.0 <= time.perf_counter() - start < 21
     # Off: the match runs to its end. Fourteen characters take a moment, and the answer is no.
     for off in (None, 0, 0.0, -1):
         v = cjs.compile({"pattern": NEVER_ANSWERS}, pattern_match_limit=off)
