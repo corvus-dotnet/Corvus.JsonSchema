@@ -47,7 +47,8 @@ answers. Each is a decision recorded here, with an issue where there is work to 
 - **A pattern that backtracks without end is bounded only by the timeout.** .NET has no engine of its own for the
   patterns its matchers do not take, so a pattern such as `^(a|aa)+$` on a long run of `a` runs until
   `RegexMatchTimeout`. The ports with their own engine remember where a way has failed and finish such a match. A
-  C# port of that engine, used where the parse tree shows a pattern that can backtrack without end, is to follow.
+  C# port of that engine, used where the parse tree shows a pattern that can backtrack without end, is to follow
+  ([#1025](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1025)).
 - **A pattern proved linear has no timeout.** The timeout makes .NET's engines check the clock as they match, which
   costs up to half the time of a match in the interpreted engine. A pattern whose match is proved to take time in
   proportion to the text (no backreference, lookaround or word boundary, each repetition of one character or set, and
@@ -56,11 +57,11 @@ answers. Each is a decision recorded here, with an issue where there is work to 
 - **A JSON string with a lone surrogate throws.** An instance string that holds the escape of half of a surrogate pair,
   such as `"\ud800"`, throws `InvalidOperationException` when a `pattern` is matched against it. Every other port
   refuses such a document when it parses it, or reports it as not valid. The 46,438 texts of the dataset's
-  `lone-surrogates.jsonl` all throw.
+  `lone-surrogates.jsonl` all throw ([#1028](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1028)).
 - **`format: regex` reads a pattern with .NET's parser,** not with the ECMA-262 parser that `pattern` uses, so it can
-  accept a pattern ECMA-262 refuses and refuse one ECMA-262 accepts.
+  accept a pattern ECMA-262 refuses and refuse one ECMA-262 accepts ([#1027](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1027)).
 - **`idn-email` has a limit of 320 bytes on the whole address.** The Rust crate has no limit on the address as a
-  whole. The host name of the address has the limit of 253 characters as A-labels in both.
+  whole. The host name of the address has the limit of 253 characters as A-labels in both ([#1029](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1029)).
 - **The V4 generated code** has the timeout on every pattern, and the four folders of V4 code generated before the
   change keep their old translations and have no timeout until they are generated again.
 
@@ -86,4 +87,5 @@ answers. Each is a decision recorded here, with an issue where there is work to 
 
 - **No limit of a match.** A `RegExp` match cannot be interrupted, so a pattern that backtracks without end, on a
   text made for it, does not return. The answers are those of the host engine, which are V8's on Node and in Chrome.
-  A port of the ECMA-262 engine, which would give a limit and the same answers on every host, is to follow.
+  A port of the ECMA-262 engine, which would give a limit and the same answers on every host, is to follow
+  ([#1026](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1026)).
