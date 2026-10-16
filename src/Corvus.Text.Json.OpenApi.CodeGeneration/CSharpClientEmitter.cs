@@ -54,8 +54,7 @@ public sealed class CSharpClientEmitter : IOpenApiClientEmitter
         string? documentSelf = model.DocumentSelf;
         this.specVersion = model.SpecVersion;
 
-        // Drift D1 (see the drift catalogue): only the 3.2 generator wrote the SecuritySchemes constants.
-        SecuritySchemeInfo[] securitySchemes = model.SpecVersion == "3.2" ? model.SecuritySchemes : [];
+        SecuritySchemeInfo[] securitySchemes = model.SecuritySchemes;
         ServerInfo? rootServer = model.RootServer;
 
         List<GeneratedFile> files = [];
