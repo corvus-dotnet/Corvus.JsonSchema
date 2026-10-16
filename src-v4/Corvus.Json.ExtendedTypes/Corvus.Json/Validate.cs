@@ -1405,6 +1405,13 @@ public static partial class Validate
                 // Pull out and process domain name (throws ArgumentException on invalid)
                 string domainName = IdnMapping.GetAscii(match.Groups[2].Value);
 
+                // A host name is at most 253 characters as A-labels. .NET's conversion refuses a longer one, and .NET
+                // Framework's allows 254.
+                if (domainName.Length > 253)
+                {
+                    throw new ArgumentException("The domain is longer than 253 characters.");
+                }
+
                 return match.Groups[1].Value + domainName;
             }
         }
