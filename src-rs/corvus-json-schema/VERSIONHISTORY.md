@@ -81,6 +81,10 @@ The fixes below are for the patterns that went to `regress`, which answers some 
 - **Lone surrogates.** A JSON string with the escape of half of a surrogate pair (`"\ud800"`) is not a Rust string. `validate_json` and `serde_json` both refuse the document as not valid JSON.
 - **Unicode versions.** The tables are Unicode 17. V8 13.6 has Unicode 16. They agree on every character of Unicode 16, and the four scripts Unicode 17 adds (`Sidetic`, `Tolong_Siki`, `Beria_Erfe`, `Tai_Yo`) are scripts here.
 
+### Notices
+
+- **The notice of the Unicode data is in the crate.** The Unicode tables of the crate's ECMA-262 engine are derived from the Unicode Character Database, which is under the Unicode License V3. That license asks that its notice goes with every copy of the data. `THIRD-PARTY-NOTICES.txt` has it, with the notice of the `regress` crate that the tables were first read from, and the crate's package on crates.io now holds it. Versions 0.1.0 to 0.1.6 carried no such notice.
+
 ## V0.1.6
 
 V0.1.6 fixes a stack overflow, and a wrong `is_valid` result, for a schema whose `not` is part of a loop. There are no API changes. Versions 0.1.0 to 0.1.5 are affected.

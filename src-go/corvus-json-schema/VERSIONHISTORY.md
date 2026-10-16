@@ -46,6 +46,10 @@ V0.1.3 fixes wrong results for two kinds of pattern, and patterns that took the 
 
 - **A separated list with a `$` inside it.** The module matches a pattern of the form `^item(separator item)*$`, such as `^([a-z]+)(\.[a-z]+)*$`, without the pattern engine (and likewise the forms with `+`, and `^(item separator)*item$`). It read the first item and the repeated group as sequences of characters and classes, and a `$` at the end of either was read and then dropped. So `^x(,a$)*$` was matched as `^x(,a)*$`. A `$` holds only at the end of the string, so the group of `^x(,a$)*$` can match once at most, and only as the last thing in the string. `{"pattern": "^x(,a$)*$"}` was valid for `"x,a,a"`, where it is not. `^x$(,a)*$` was valid for `"x,a"`, and `^(a,$)*b$` for `"a,b"`. A pattern used for `patternProperties` or `propertyNames` was affected in the same way. A list with a `$` at the end of its first item or of its group is now matched by the pattern engine. An escaped `\$` is a literal character and such a list is matched as before. No other form of pattern was affected. A table of 101 patterns with an anchor, a word boundary or a lookaround inside one of the forms the module matches by itself, with answers from V8, is now part of the tests.
 
+### Notices
+
+- **The notice of the Unicode data is in the module.** The Unicode tables of the module's ECMA-262 engine are derived from the Unicode Character Database, which is under the Unicode License V3. That license asks that its notice goes with every copy of the data. `THIRD-PARTY-NOTICES.txt` has it, with the notice of the `regress` crate that the tables were first read from, and it is in the module's directory, so the module's source on the Go proxy holds it. Versions 0.1.0 to 0.1.2 carried no such notice.
+
 ## V0.1.2
 
 V0.1.2 fixes a stack overflow, and a wrong `IsValid` result, for a schema whose `not` is part of a loop. There are no API changes. Versions 0.1.0 and 0.1.1 are affected.
