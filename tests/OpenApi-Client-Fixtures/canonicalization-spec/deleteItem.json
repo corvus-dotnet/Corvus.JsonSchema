@@ -45,7 +45,7 @@
       "rows": [48, 49],
       "input": { "path": { "itemId": "x" }, "responseValidation": "basic" },
       "response": { "status": 404, "body": { "code": 404 } },
-      "expect": { "kind": "error" }
+      "expect": { "kind": "error", "error": { "contains": "The response body for status code 404 failed schema validation" } }
     }
   ]
 }
