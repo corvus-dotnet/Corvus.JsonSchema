@@ -591,6 +591,46 @@ public class OpenApiLockFileTests
         CollectionAssert.AreEqual(new[] { "B.cs" }, files.ToArray());
     }
 
+    [TestMethod]
+    public void Create_RecordsLanguage_AndIsUpToDateComparesIt()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
+        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
+            doc.RootElement, "3.1", "TestNs", "Client", filter: null, generatedFiles: ["A.cs"], language: "go");
+
+        Assert.AreEqual("go", lockFile.Language.GetString());
+        Assert.IsTrue(OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "TestNs", "Client", filter: null, language: "go"));
+        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "TestNs", "Client", filter: null));
+    }
+
+    [TestMethod]
+    public void IsUpToDate_LockWithoutLanguage_IsCSharp()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
+        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
+            doc.RootElement, "3.1", "TestNs", "Client", filter: null, generatedFiles: ["A.cs"]);
+        string json = $$"""
+            {
+              "specFileHash": "{{lockFile.SpecFileHash.GetString()}}",
+              "specVersion": "3.1",
+              "rootNamespace": "TestNs",
+              "clientName": "Client",
+              "includePaths": [],
+              "excludePaths": [],
+              "generatedFiles": ["A.cs"],
+              "generatedAt": "{{lockFile.GeneratedAt.GetString()}}",
+              "generatorVersion": "{{lockFile.GeneratorVersion.GetString()}}"
+            }
+            """;
+        OpenApiLockFileModel withoutLanguage = OpenApiLockFileModel.ParseValue(json);
+        Assert.IsTrue(withoutLanguage.Language.IsUndefined());
+
+        Assert.IsTrue(OpenApiLockFile.IsUpToDate(in withoutLanguage, doc.RootElement, "3.1", "TestNs", "Client", filter: null));
+        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in withoutLanguage, doc.RootElement, "3.1", "TestNs", "Client", filter: null, language: "typescript"));
+    }
+
     private static void AssertJsonStringArraysEqual(JsonElement expected, JsonElement actual)
     {
         List<string> expectedList = [];

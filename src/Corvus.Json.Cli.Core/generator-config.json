@@ -13,6 +13,10 @@
             "type": "boolean",
             "description": "If true, assert format specifications."
         },
+        "language": {
+            "type": "string",
+            "description": "The target language of the generated types: csharp (the default). Other languages are accepted as their language providers land."
+        },
         "formatMode": {
             "type": "object",
             "description": "Per-format assertion mode overrides. Keys are format names (e.g. 'date-time'); values are the assertion mode. An override takes precedence over assertFormat and the vocabulary's format-assertion behaviour.",

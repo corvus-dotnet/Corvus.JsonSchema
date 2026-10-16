@@ -15,6 +15,7 @@ using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGenerator;
 using Corvus.Text.Json.CodeGeneration;
 using Spectre.Console.Cli;
+using Spectre.Console;
 using static Corvus.Text.Json.CodeGenerator.GenerateWithDriverCommand;
 
 namespace Corvus.Text.Json.CodeGenerator;
@@ -134,6 +135,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [CommandOption("--engine")]
         public Engine? GenerationEngine { get; init; }
 
+        [CommandOption("--language")]
+        [Description("The target language of the generated types: csharp (the default). Other languages are accepted as their language providers land. V5 engine only.")]
+        public string? Language { get; init; }
+
         [Description("The code generation mode. TypeGeneration emits strongly-typed C# types (default). SchemaEvaluationOnly emits a standalone evaluator for validation and annotation collection. Both emits both.")]
         [CommandOption("--codeGenerationMode")]
         [DefaultValue(CodeGenerationMode.TypeGeneration)]
@@ -152,6 +157,18 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         ArgumentNullException.ThrowIfNullOrEmpty(settings.RootNamespace); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 
         Engine engine = settings.GenerationEngine ?? CliDefaults.DefaultEngine;
+
+        if (!LanguageIds.TryNormalize(settings.Language, out string language))
+        {
+            AnsiConsole.MarkupLine($"[red]Error:[/] Unknown --language '{settings.Language}'. Known languages: {string.Join(", ", LanguageIds.All)}.");
+            return Task.FromResult(1);
+        }
+
+        if (engine == Engine.V4 && language != LanguageIds.CSharp)
+        {
+            AnsiConsole.MarkupLine("[red]Error:[/] --language applies to the V5 engine only.");
+            return Task.FromResult(1);
+        }
 
         GeneratorConfig.GenerationSpecification generationSpecification =
             GeneratorConfig.GenerationSpecification.Create(
@@ -182,7 +199,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             useUnixLineEndings: settings.UseUnixLineEndings,
             supportYaml: settings.SupportYaml,
             addExplicitUsings: settings.AddExplicitUsings,
-            buildParametersThreshold: settings.BuildParametersThreshold.HasValue ? settings.BuildParametersThreshold.Value : default(long?));
+            buildParametersThreshold: settings.BuildParametersThreshold.HasValue ? settings.BuildParametersThreshold.Value : default(long?),
+            language: language);
 
         if (settings.DefaultAccessibility is CodeGeneration.GeneratedTypeAccessibility defaultAccessibility)
         {

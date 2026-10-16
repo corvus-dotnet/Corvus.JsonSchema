@@ -22,6 +22,10 @@ internal sealed class OpenApiGenerateSettings : OpenApiSettings
     [Description("The path to which to write the generated code.")]
     public string? OutputPath { get; init; }
 
+    [CommandOption("--language")]
+    [Description("The target language of the generated client: csharp (the default). Other languages are accepted as their emitters land.")]
+    public string? Language { get; init; }
+
     [CommandOption("--clientName")]
     [Description("The prefix for generated client type names. Defaults to the API title.")]
     public string? ClientName { get; init; }
