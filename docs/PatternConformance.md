@@ -73,6 +73,9 @@ answers. Each is a decision recorded here, with an issue where there is work to 
   is compiled, with a message that says so. See [Java](JsonSchemaForJava.md) and [Julia](JsonSchemaForJulia.md).
 - **Julia 1.10** bundles a PCRE2 whose case folding is that of Unicode 14, so thirty case pairs are not equivalent in
   a case-insensitive backreference there. Julia 1.13 answers exactly.
+- **Julia: nested repetitions are left to PCRE2.** A pattern such as `^(?:(?:(?:a*)*)*)*b$` is written as
+  `(?:(?:(?:a+)+)+)*`, which means the same, and PCRE2 backtracks through every way to divide a run among its
+  levels: such a match on sixteen characters reaches the limit of a match. The ports with their own engine finish it.
 - **Julia: a pattern too large to be timed.** A pattern that PCRE2 holds only without the code that reads the clock,
   such as an alternation of 3,000 words, is run without it, and its match ends in its first stage.
 
