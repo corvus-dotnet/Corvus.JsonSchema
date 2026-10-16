@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
+using Corvus.Text.Json.OpenApi.CodeGeneration.Operations;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Text.Json.OpenApi.CodeGeneration;
@@ -2758,5 +2759,269 @@ public static class CodeEmitHelpers
             ContentCategory.OctetStream => $"this.{accessorName}Stream is not null",
             _ => null, // JSON is the fallback — no condition needed.
         };
+    }
+
+    public static void EmitSecuritySchemeMetadata(IndentedWriter w, SecuritySchemeInfo[] schemes)
+    {
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Security scheme metadata from the specification.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public static class SecuritySchemes");
+        w.OpenBrace();
+
+        for (int i = 0; i < schemes.Length; i++)
+        {
+            if (i > 0)
+            {
+                w.WriteLine();
+            }
+
+            SecuritySchemeInfo scheme = schemes[i];
+            string propName = CodeEmitHelpers.SanitizeIdentifier(scheme.SchemeName);
+
+            EmitSecurityProperty(w, scheme, propName, "Name", scheme.SchemeName,
+                $"Gets the name of the <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c> security scheme.");
+
+            EmitSecurityProperty(w, scheme, propName, "Type", scheme.SchemeType,
+                $"Gets the type of the <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c> security scheme.");
+
+            if (scheme.HttpScheme is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "Scheme", scheme.HttpScheme,
+                    $"Gets the HTTP scheme for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.ApiKeyName is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "KeyName", scheme.ApiKeyName,
+                    $"Gets the API key parameter name for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.ApiKeyIn is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "KeyLocation", scheme.ApiKeyIn,
+                    $"Gets the API key location for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.OpenIdConnectUrl is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "OpenIdConnectUrl", scheme.OpenIdConnectUrl,
+                    $"Gets the OpenID Connect discovery URL for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.Oauth2MetadataUrl is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "Oauth2MetadataUrl", scheme.Oauth2MetadataUrl,
+                    $"Gets the OAuth2 metadata URL for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.DeviceAuthorizationUrl is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "DeviceAuthorizationUrl", scheme.DeviceAuthorizationUrl,
+                    $"Gets the device authorization URL for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.TokenUrl is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "TokenUrl", scheme.TokenUrl,
+                    $"Gets the token URL for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.AuthorizationUrl is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "AuthorizationUrl", scheme.AuthorizationUrl,
+                    $"Gets the authorization URL for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.AvailableScopes is { Length: > 0 })
+            {
+                w.WriteLine();
+                EmitDeprecatedAttribute(w, scheme);
+                w.WriteLine("/// <summary>");
+                w.WriteLine($"/// Gets all available scopes for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+                w.WriteLine("/// </summary>");
+                string scopeArray = string.Join(", ", scheme.AvailableScopes.Select(s => CodeEmitHelpers.FormatStringLiteral(s)));
+                w.WriteLine($"public static readonly string[] {propName}AvailableScopes = [{scopeArray}];");
+            }
+        }
+
+        w.CloseBrace();
+        w.WriteLine();
+    }
+
+    public static void EmitSecurityProperty(
+        IndentedWriter w,
+        SecuritySchemeInfo scheme,
+        string propName,
+        string suffix,
+        string value,
+        string docSummary)
+    {
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// {docSummary}");
+        w.WriteLine("/// </summary>");
+        if (scheme.IsDeprecated)
+        {
+            w.WriteLine("[Obsolete(\"This security scheme is deprecated.\")]");
+        }
+
+        w.WriteLine(
+            $"public static string {propName}{suffix} => {CodeEmitHelpers.FormatStringLiteral(value)};");
+    }
+
+    public static void EmitDeprecatedAttribute(IndentedWriter w, SecuritySchemeInfo scheme)
+    {
+        if (scheme.IsDeprecated)
+        {
+            w.WriteLine("[Obsolete(\"This security scheme is deprecated.\")]");
+        }
+    }
+
+    public static void EmitSecurityRequirements(
+        IndentedWriter w,
+        IReadOnlyList<OperationInfo> operations,
+        SecuritySchemeInfo[]? securitySchemes)
+    {
+        // Collect all operation security requirements into per-operation arrays
+        List<(string MethodName, string SchemePropName, string[] Scopes)> perOperationEntries = [];
+
+        foreach (OperationInfo op in operations)
+        {
+            if (op.SecurityRequirements is not { Length: > 0 })
+            {
+                continue;
+            }
+
+            // Scope constants are collected across every alternative; the OR/AND grouping does not
+            // affect which scopes the operation can request.
+            foreach (OperationSecurityRequirementSet set in op.SecurityRequirements)
+            {
+                foreach (OperationSecurityRequirement req in set.Requirements)
+                {
+                    if (req.Scopes.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    string schemePropName = CodeEmitHelpers.SanitizeIdentifier(req.SchemeName);
+                    perOperationEntries.Add((op.MethodName, schemePropName, req.Scopes));
+                }
+            }
+        }
+
+        if (perOperationEntries.Count == 0)
+        {
+            return;
+        }
+
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Per-operation security requirements from the specification.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public static class SecurityRequirements");
+        w.OpenBrace();
+
+        // Emit per-operation scope arrays
+        bool first = true;
+        foreach ((string methodName, string schemePropName, string[] scopes) in perOperationEntries)
+        {
+            if (!first)
+            {
+                w.WriteLine();
+            }
+
+            first = false;
+            string scopeArray = string.Join(", ", scopes.Select(s => CodeEmitHelpers.FormatStringLiteral(s)));
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Gets the scopes required by <c>{CodeEmitHelpers.EscapeXml(methodName)}</c> for the <c>{CodeEmitHelpers.EscapeXml(schemePropName)}</c> scheme.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine($"public static readonly string[] {methodName}{schemePropName}Scopes = [{scopeArray}];");
+        }
+
+        // Emit union scope arrays per scheme (deduplicated)
+        Dictionary<string, SortedSet<string>> unionByScheme = new(StringComparer.Ordinal);
+        foreach ((_, string schemePropName, string[] scopes) in perOperationEntries)
+        {
+            if (!unionByScheme.TryGetValue(schemePropName, out SortedSet<string>? unionScopes))
+            {
+                unionScopes = new SortedSet<string>(StringComparer.Ordinal);
+                unionByScheme[schemePropName] = unionScopes;
+            }
+
+            foreach (string scope in scopes)
+            {
+                unionScopes.Add(scope);
+            }
+        }
+
+        foreach ((string schemePropName, SortedSet<string> scopes) in unionByScheme)
+        {
+            w.WriteLine();
+            string allScopeArray = string.Join(", ", scopes.Select(s => CodeEmitHelpers.FormatStringLiteral(s)));
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Gets all scopes required by any operation for the <c>{CodeEmitHelpers.EscapeXml(schemePropName)}</c> scheme.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine($"public static readonly string[] All{schemePropName}Scopes = [{allScopeArray}];");
+        }
+
+        w.CloseBrace();
+        w.WriteLine();
+    }
+
+    public static string EscapeStringLiteral(string value)
+    {
+        return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    }
+
+    // The constraint that lets a caller thread a ref struct through as context, guarded because it is a C# 13 feature.
+    public static void EmitContextConstraint(IndentedWriter w)
+    {
+        w.WriteLine("#if NET9_0_OR_GREATER");
+        w.WriteLine("    where TContext : allows ref struct");
+        w.WriteLine("#endif");
+    }
+
+    public static void EmitEncodingsField(
+        IndentedWriter w,
+        string fieldName,
+        IReadOnlyDictionary<string, ContentEncodingInfo> encodings)
+    {
+        w.WriteLine($"private static readonly Dictionary<string, PropertyEncoding> {fieldName} = new(StringComparer.Ordinal)");
+        w.WriteLine("{");
+        w.PushIndent();
+
+        foreach (KeyValuePair<string, ContentEncodingInfo> kvp in encodings)
+        {
+            string propNameLiteral = CodeEmitHelpers.FormatStringLiteral(kvp.Key);
+            ContentEncodingInfo enc = kvp.Value;
+
+            List<string> args = [];
+
+            if (enc.Style is not null)
+            {
+                args.Add($"Style: {CodeEmitHelpers.FormatStringLiteral(enc.Style)}");
+            }
+
+            if (enc.Explode is not null)
+            {
+                args.Add($"Explode: {(enc.Explode.Value ? "true" : "false")}");
+            }
+
+            if (enc.AllowReserved)
+            {
+                args.Add("AllowReserved: true");
+            }
+
+            if (enc.ContentType is not null)
+            {
+                args.Add($"ContentType: {CodeEmitHelpers.FormatStringLiteral(enc.ContentType)}");
+            }
+
+            string ctor = $"new({string.Join(", ", args)})";
+            w.WriteLine($"[{propNameLiteral}] = {ctor},");
+        }
+
+        w.PopIndent();
+        w.WriteLine("};");
     }
 }
