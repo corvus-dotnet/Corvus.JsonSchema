@@ -5230,7 +5230,7 @@ public class OpenApi31CodeGeneratorTests
 
         GeneratedFile req = GetFile(files, "TestHeaderArrRequest.cs");
         Assert.IsTrue(req.Content.Contains("EnumerateArray", StringComparison.Ordinal), "Header array should emit EnumerateArray");
-        Assert.IsTrue(req.Content.Contains("headerBuf[headerLen++] = (byte)','", StringComparison.Ordinal), "Header array should use comma separator");
+        Assert.IsTrue(req.Content.Contains("headerValueXTags.Append((byte)',');", StringComparison.Ordinal), "Header array should use comma separator");
     }
 
     [TestMethod]
@@ -9275,6 +9275,92 @@ public class OpenApi31CodeGeneratorTests
         Assert.IsTrue(
             requestFile.Content.Contains("\"filter%5B\"u8"),
             "Expected deepObject bracketed keys (filter[...]) for the object param");
+    }
+
+    private const string ReservedParamSpecJson = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "Reserved", "version": "1.0.0" },
+          "paths": {
+            "/search": {
+              "get": {
+                "operationId": "search",
+                "parameters": [
+                  { "name": "paths", "in": "query", "allowReserved": true, "schema": { "$ref": "#/components/schemas/PathList" } },
+                  { "name": "filter", "in": "query", "allowReserved": true, "schema": { "$ref": "#/components/schemas/FilterObject" } },
+                  { "name": "q", "in": "query", "allowReserved": true, "schema": { "type": "string" } },
+                  { "name": "plain", "in": "query", "schema": { "$ref": "#/components/schemas/PathList" } },
+                  { "name": "score", "in": "query", "schema": { "type": "number", "format": "double" } }
+                ],
+                "responses": { "200": { "description": "ok" } }
+              }
+            }
+          },
+          "components": {
+            "schemas": {
+              "PathList": { "type": "array", "items": { "type": "string" } },
+              "FilterObject": { "type": "object", "properties": { "name": { "type": "string" } } }
+            }
+          }
+        }
+        """;
+
+    private static Dictionary<string, string> ReservedParamSchemaTypeMap() => new(StringComparer.Ordinal)
+    {
+        ["#/paths/~1search/get/parameters/0/schema"] = "Reserved.Client.PathList",
+        ["#/paths/~1search/get/parameters/1/schema"] = "Reserved.Client.FilterObject",
+        ["#/paths/~1search/get/parameters/3/schema"] = "Reserved.Client.PathList",
+    };
+
+    [TestMethod]
+    public void Generate_AllowReservedQueryParams_UseReservedExpansionForItemsKeysAndScalars()
+    {
+        JsonElement root = ParseSpec(ReservedParamSpecJson);
+        OpenApi31CodeGenerator generator = new("Reserved.Client", ReservedParamSchemaTypeMap());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        string content = GetFile(files, "SearchRequest.cs").Content;
+
+        // Array items, object keys and values, and the scalar of an allowReserved parameter pass the RFC 3986
+        // reserved set through (RFC 6570 reserved expansion); a parameter without allowReserved is fully encoded.
+        Assert.IsTrue(content.Contains("Utf8Uri.TryEscapeUri(elPaths.Span"), "allowReserved array items should use reserved expansion");
+        Assert.IsTrue(content.Contains("Utf8Uri.TryEscapeUri(keyFilter.Span"), "allowReserved object keys should use reserved expansion");
+        Assert.IsTrue(content.Contains("Utf8Uri.TryEscapeUri(elFilter.Span"), "allowReserved object values should use reserved expansion");
+        Assert.IsTrue(content.Contains("Utf8Uri.TryEscapeUri(utf8Q.Span"), "allowReserved scalar should use reserved expansion");
+        Assert.IsTrue(content.Contains("Utf8Uri.TryEscapeDataString(elPlain.Span"), "a parameter without allowReserved should be fully encoded");
+        Assert.IsFalse(content.Contains("TryEscapeDataString(elPaths.Span") || content.Contains("TryEscapeDataString(utf8Q.Span"), "allowReserved parameters must not be fully encoded");
+    }
+
+    [TestMethod]
+    public void Generate_NumericQueryParam_EscapesFormattedText()
+    {
+        JsonElement root = ParseSpec(ReservedParamSpecJson);
+        OpenApi31CodeGenerator generator = new("Reserved.Client", ReservedParamSchemaTypeMap());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        string content = GetFile(files, "SearchRequest.cs").Content;
+
+        // A formatted double can carry an exponent sign ("1E+21"), which a form decoder reads as a space, so the
+        // formatted text goes through the escaper like any other value and never straight to the writer.
+        Assert.IsTrue(content.Contains("Utf8Uri.TryEscapeDataString(bufScore[..bwScore]"), "the formatted number should be escaped");
+        Assert.IsFalse(content.Contains("writer.Write(bufScore[..bwScore])"), "the formatted number must not be written unescaped");
+    }
+
+    [TestMethod]
+    public void Generate_ArrayHeaderParam_BuildsTheValueInAGrowableBuffer()
+    {
+        JsonElement root = ParseSpec(ParamRefSpecJson.Replace("\"in\": \"query\", \"style\": \"form\", \"explode\": true", "\"in\": \"header\""));
+        OpenApi31CodeGenerator generator = new("ParamRef.Client", ParamRefSchemaTypeMap());
+        IReadOnlyList<GeneratedFile> files = generator.Generate(root);
+
+        string content = GetFile(files, "GetItemRequest.cs").Content;
+
+        // A header value built from array items is not bounded by a fixed stack buffer: it starts on the stack and
+        // grows into the pool when the items outgrow it.
+        Assert.IsTrue(content.Contains("using Utf8ValueBuilder headerValueTag = new(stackalloc byte[512]);"), "the header value should be built with Utf8ValueBuilder");
+        Assert.IsTrue(content.Contains("headerValueTag.Append(elTag.Span);"), "items should be appended to the builder");
+        Assert.IsTrue(content.Contains("callback(nameUtf8Tag, headerValueTag.WrittenSpan, state);"), "the callback should receive the builder's written span");
+        Assert.IsFalse(content.Contains("headerBuf"), "no fixed header buffer should remain");
     }
 
     [TestMethod]

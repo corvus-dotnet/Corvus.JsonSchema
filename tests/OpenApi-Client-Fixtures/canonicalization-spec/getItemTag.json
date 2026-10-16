@@ -427,6 +427,14 @@
           "x-request-id": "err-404"
         }
       }
+    },
+    {
+      "name": "a double query value with an exponent percent-encodes the plus sign",
+      "rows": [ 11, 14 ],
+      "input": { "path": { "itemId": 1, "tagName": "t" }, "query": { "score": 1e+21 } },
+      "response": { "status": 200, "body": { "tag": "important", "weight": 5 } },
+      "expectRequest": { "method": "GET", "path": "/items/1/tags/t?score=1e%2B21" },
+      "expect": { "kind": "ok", "status": 200, "case": "Ok" }
     }
   ]
 }

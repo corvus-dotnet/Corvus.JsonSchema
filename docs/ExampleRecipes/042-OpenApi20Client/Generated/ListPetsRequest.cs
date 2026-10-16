@@ -73,8 +73,12 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
             totalWritten += 6;
             Span<byte> bufLimit = stackalloc byte[11];
             this.Limit.TryFormat(bufLimit, out int bwLimit, default, default);
-            writer.Write(bufLimit[..bwLimit]);
-            totalWritten += bwLimit;
+            Span<byte> escLimit = writer.GetSpan(bufLimit[..bwLimit].Length * 3);
+            if (Utf8Uri.TryEscapeDataString(bufLimit[..bwLimit], escLimit, out int ewLimit))
+            {
+                writer.Advance(ewLimit);
+                totalWritten += ewLimit;
+            }
 
             first = false;
         }

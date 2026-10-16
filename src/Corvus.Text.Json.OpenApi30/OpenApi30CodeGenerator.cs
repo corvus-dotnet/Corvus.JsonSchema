@@ -1209,7 +1209,7 @@ public sealed class OpenApi30CodeGenerator : IOpenApiClientEmitter
     // ── Parameter trait parsing ──────────────────────────────────────────
     // In OpenAPI 3.0, the "in" and "style" properties are plain JSON strings
     // without const-string enum Match — we use ValueEquals with UTF-8 literals.
-    private static (ParameterLocation Location, ParameterStyle Style, bool Explode) ParseParameterTraits(
+    private static (ParameterLocation Location, ParameterStyle Style, bool Explode, bool AllowReserved) ParseParameterTraits(
         OpenApiDocument.Parameter typed)
     {
         ParameterLocation location;
@@ -1242,7 +1242,12 @@ public sealed class OpenApi30CodeGenerator : IOpenApiClientEmitter
         }
 
         bool explode = typed.Explode.IsNotUndefined() ? (bool)typed.Explode : style == ParameterStyle.Form;
-        return (location, style, explode);
+
+        // allowReserved applies to query parameters only (OpenAPI 3.0 Parameter Object).
+        bool allowReserved = location == ParameterLocation.Query
+            && typed.AllowReserved.IsNotUndefined()
+            && (bool)typed.AllowReserved;
+        return (location, style, explode, allowReserved);
     }
 
     private static ParameterStyle ParsePathStyle(OpenApiDocument.Parameter typed)
@@ -1486,7 +1491,7 @@ public sealed class OpenApi30CodeGenerator : IOpenApiClientEmitter
         {
             (OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel, string? _) = merged[i];
 
-            (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(param);
+            (ParameterLocation location, ParameterStyle style, bool explode, bool allowReserved) = ParseParameterTraits(param);
             bool required = param.Required;
             bool hasSchema = param.Schema.IsNotUndefined();
             JsonElement schemaElement = hasSchema ? JsonElement.From(param.Schema) : default;
@@ -1525,7 +1530,7 @@ public sealed class OpenApi30CodeGenerator : IOpenApiClientEmitter
             string name = param.Name.GetString()!;
 
             result[i] = new ParameterInfo(
-                name, location, required, style, explode, false,
+                name, location, required, style, explode, allowReserved,
                 serializationKind, elementKind, schemaPointer, deepNesting, defaultValueJson, defaultValueKind);
         }
 
