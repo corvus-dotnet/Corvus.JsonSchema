@@ -6,7 +6,7 @@
 # The workload runs only during precompilation. It leaves nothing behind but compiled code: the caches it filled
 # are emptied, since a compiled pattern of the engine holds memory of the process that made it.
 
-function precompile_workload()
+function precompile_workload(; pattern_match_limit::Float64=0.01)
     large = join(["\"p$i\": $i" for i in 0:79], ",")
     cases = Tuple{String,NamedTuple,Vector{String}}[
         ("""{
@@ -188,17 +188,21 @@ function precompile_workload()
     end
     isvalid(engine, "[1, 2")
     # A match that uses the steps it starts with, one that is timed and given up at its limit, the search of a long
-    # string in parts, and a pattern over a limit of size.
+    # string in parts, and a pattern over a limit of size. Each is timed, and whether one answers within the limit
+    # depends on the machine (under emulation the search of the long string takes longer than 10 ms), so each may end
+    # at the limit: an error here would fail the installation of the package.
     slow = compile_schema("""{"pattern": "^(?:a|a)+\$", "patternProperties": {"fo+|ba+r": true}}""";
-        pattern_match_limit=0.01)
-    isvalid(slow, "\"" * "a"^12 * "b\"")
-    try
-        isvalid(slow, "\"" * "a"^40 * "b\"")
-    catch err
-        err isa PatternMatchError || rethrow()
-        sprint(showerror, err)
-    end
-    isvalid(slow, "{\"" * "x"^20_000 * "\": 1}")
+        pattern_match_limit)
+    timed(f) =
+        try
+            f()
+        catch err
+            err isa PatternMatchError || rethrow()
+            sprint(showerror, err)
+        end
+    timed(() -> isvalid(slow, "\"" * "a"^12 * "b\""))
+    timed(() -> isvalid(slow, "\"" * "a"^40 * "b\""))
+    timed(() -> isvalid(slow, "{\"" * "x"^20_000 * "\": 1}"))
     try
         compile_schema("{\"pattern\": \"" * "("^300 * "\"}")
     catch err
