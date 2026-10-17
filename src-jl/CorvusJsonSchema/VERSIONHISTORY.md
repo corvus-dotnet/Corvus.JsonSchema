@@ -2,6 +2,14 @@
 
 The version history of `CorvusJsonSchema`, the Julia port of the Corvus.Text.Json V5 runtime evaluator. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.2
+
+V0.1.2 fixes the installation of the package on a slow machine. There are no API changes. Version 0.1.1 is affected, and 0.1.0 is not.
+
+### Bug fixes
+
+- **Precompilation on a slow machine.** Julia runs a workload while it writes the package's image, so that a process starts with the code compiled, and an error in it fails the installation. The workload of 0.1.1 sets a limit of 10 ms on a match, and expects two of its matches to answer within it: one against a string of a few characters, and the search of a string of 20,000 characters. Where they take longer, such as in a build of an image for another processor under emulation, the match reached its limit, the `PatternMatchError` was not caught, and `Pkg.add` or `Pkg.precompile` failed with "The following 1 package failed to precompile". Each timed match of the workload now ends at the limit without an error. No answer of the package changes.
+
 ## V0.1.1
 
 V0.1.1 gives patterns the answers of ECMA-262 on every file of the [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data), bounds what a pattern and a format can cost, and carries the notice of the Unicode data its tables are derived from. The functions that were there are unchanged. There is one new option and there are two new errors. Version 0.1.0 is affected by the bugs.
