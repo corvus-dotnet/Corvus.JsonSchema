@@ -1188,7 +1188,7 @@ main-docs:
     blocks:
       - {index: 0, language: r, lines: [16, 18]}
       - {index: 1, language: r, lines: [25, 37]}
-      - {index: 2, language: r, lines: [62, 76]}
+      - {index: 2, language: r, lines: [71, 85]}
   - path: "docs/JsonSchemaForRuby.md"
     blocks:
       - {index: 0, language: sh, lines: [17, 19]}

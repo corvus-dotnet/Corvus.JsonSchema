@@ -13,8 +13,8 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::{Arc, Mutex};
 
 use corvus::{
-    ArrayView, CompileOptions, Dialect, Instance, JsonSchemaResultsCollector, JsonValidationError, Kind, ObjectView,
-    ResultsLevel, View,
+    ArrayView, CompileOptions, Dialect, Instance, JsonSchemaResultsCollector, Kind, ObjectView, ResultsLevel,
+    SchemaCompilationErrorKind, SchemaEvaluationError, View,
 };
 use r::{R_xlen_t, SEXP};
 use serde_json::{Map, Number, Value as Json};
@@ -43,8 +43,17 @@ impl Failure {
         Failure::new("value", message)
     }
 
-    fn depth() -> Failure {
-        Failure::new("depth", corvus::SchemaEvaluationDepthError.to_string())
+    /// An evaluation that gave no answer: it recursed in place beyond the maximum depth, or a match of a regular
+    /// expression reached its limit. `index` is the element of a character vector of JSON texts, when it has several.
+    fn evaluation(e: SchemaEvaluationError, index: Option<R_xlen_t>) -> Failure {
+        match e {
+            SchemaEvaluationError::InvalidJson(e) => {
+                let at = index.map_or_else(String::new, |i| format!(" (element {})", i + 1));
+                Failure::new("invalid_json", format!("{e}{at}"))
+            }
+            SchemaEvaluationError::PatternMatchLimit(e) => Failure::new("pattern_match_limit", e.to_string()),
+            other => Failure::new("depth", other.to_string()),
+        }
     }
 }
 
@@ -626,6 +635,23 @@ fn logical_argument(v: SEXP, what: &str) -> Result<Option<bool>, Failure> {
     }
 }
 
+/// A number of seconds, or `NULL`: `NULL`, zero or less turns the limit off.
+fn seconds_argument(v: SEXP, what: &str) -> Result<Option<std::time::Duration>, Failure> {
+    if v == r::nil() {
+        return Ok(None);
+    }
+    // SAFETY: `v` is a live R value.
+    let seconds = unsafe {
+        match (r::TYPEOF(v), r::Rf_xlength(v)) {
+            (r::REALSXP, 1) if !r::REAL_ELT(v, 0).is_nan() => r::REAL_ELT(v, 0),
+            _ => return Err(Failure::value(format!("{what} must be a number of seconds or NULL"))),
+        }
+    };
+    Ok((seconds > 0.0)
+        .then(|| std::time::Duration::try_from_secs_f64(seconds).unwrap_or(std::time::Duration::MAX))
+        .filter(|limit| !limit.is_zero()))
+}
+
 fn optional_string(v: SEXP, what: &str) -> Result<Option<String>, Failure> {
     if v == r::nil() {
         return Ok(None);
@@ -645,16 +671,16 @@ fn level_argument(v: SEXP) -> Result<ResultsLevel, Failure> {
 /// Validates an R value: read in place, or converted when it holds something the reader does not.
 fn check(validator: &corvus::Validator, value: SEXP) -> Result<bool, Failure> {
     let ctx = Context { fallback: Cell::new(false) };
-    let result = validator.validate_instance(RInstance::root(value, &ctx));
+    let result = validator.try_validate_instance(RInstance::root(value, &ctx));
     if !ctx.fallback.get() {
         take_callback_error()?;
-        return result.map_err(|_| Failure::depth());
+        return result.map_err(|e| Failure::evaluation(e, None));
     }
     CALLBACK_ERROR.with(|e| e.borrow_mut().take());
     let json = to_json(value, 0)?;
-    let result = validator.validate(&json);
+    let result = validator.try_validate(&json);
     take_callback_error()?;
-    result.map_err(|_| Failure::depth())
+    result.map_err(|e| Failure::evaluation(e, None))
 }
 
 /// The results of an evaluation as an R list: whether the instance is valid, the columns of the rows, and the columns
@@ -763,6 +789,7 @@ pub unsafe extern "C" fn cjsr_compile(
     base_uri: SEXP,
     entry_point: SEXP,
     max_depth: SEXP,
+    pattern_match_limit: SEXP,
 ) -> SEXP {
     entry(|| {
         let schema: Json = match single_string(schema) {
@@ -790,6 +817,7 @@ pub unsafe extern "C" fn cjsr_compile(
             entry_point: optional_string(entry_point, "entry_point")?,
             max_depth: u32::try_from(integer_argument(max_depth, "max_depth")?)
                 .map_err(|_| Failure::value("max_depth must not be negative"))?,
+            pattern_match_limit: seconds_argument(pattern_match_limit, "pattern_match_limit")?,
             ..CompileOptions::default()
         };
         // SAFETY: the R layer passes a named list of functions (or NULL) and a function (or NULL).
@@ -848,7 +876,12 @@ pub unsafe extern "C" fn cjsr_compile(
                 Some(reason) => format!("{} ({reason})", e.message()),
                 None => e.message().to_owned(),
             };
-            Failure::new("compilation", message)
+            let kind = match e.kind() {
+                SchemaCompilationErrorKind::PatternTooLarge(_) => "pattern_too_large",
+                SchemaCompilationErrorKind::PatternMatchLimit(_) => "pattern_match_limit",
+                _ => "compilation",
+            };
+            Failure::new(kind, message)
         })?;
         // SAFETY: the callbacks live as long as the pointer, which protects the list holding them.
         unsafe {
@@ -877,16 +910,6 @@ pub unsafe extern "C" fn cjsr_is_valid(validator: SEXP, value: SEXP) -> SEXP {
         let valid = check(validator_of(validator)?, value)?;
         Ok(unsafe { r::Rf_ScalarLogical(c_int::from(valid)) })
     })
-}
-
-fn json_failure(e: JsonValidationError, index: Option<R_xlen_t>) -> Failure {
-    match e {
-        JsonValidationError::InvalidJson(e) => {
-            let at = index.map_or_else(String::new, |i| format!(" (element {})", i + 1));
-            Failure::new("invalid_json", format!("{e}{at}"))
-        }
-        JsonValidationError::DepthExceeded(_) => Failure::depth(),
-    }
 }
 
 /// Whether each JSON text of a character vector is valid (`NA` for an `NA` element).
@@ -925,7 +948,7 @@ pub unsafe extern "C" fn cjsr_is_valid_json(validator: SEXP, texts: SEXP) -> SEX
                         }
                     },
                 };
-                let result = validator.validate_json(json);
+                let result = validator.try_validate_json(json);
                 if let Err(e) = take_callback_error() {
                     failure = Some(e);
                     break;
@@ -933,7 +956,7 @@ pub unsafe extern "C" fn cjsr_is_valid_json(validator: SEXP, texts: SEXP) -> SEX
                 match result {
                     Ok(valid) => r::SET_LOGICAL_ELT(out, i, c_int::from(valid)),
                     Err(e) => {
-                        failure = Some(json_failure(e, (len > 1).then_some(i)));
+                        failure = Some(Failure::evaluation(e, (len > 1).then_some(i)));
                         break;
                     }
                 }
@@ -955,17 +978,17 @@ pub unsafe extern "C" fn cjsr_evaluate(validator: SEXP, value: SEXP, level: SEXP
         let level = level_argument(level)?;
         let mut collector = JsonSchemaResultsCollector::new(level);
         let ctx = Context { fallback: Cell::new(false) };
-        let result = validator.evaluate_instance(RInstance::root(value, &ctx), &mut collector);
+        let result = validator.try_evaluate_instance(RInstance::root(value, &ctx), &mut collector);
         let result = if ctx.fallback.get() {
             CALLBACK_ERROR.with(|e| e.borrow_mut().take());
             collector = JsonSchemaResultsCollector::new(level);
             let json = to_json(value, 0)?;
-            validator.evaluate(&json, &mut collector)
+            validator.try_evaluate(&json, &mut collector)
         } else {
             result
         };
         take_callback_error()?;
-        Ok(evaluation(result.map_err(|_| Failure::depth())?, &collector))
+        Ok(evaluation(result.map_err(|e| Failure::evaluation(e, None))?, &collector))
     })
 }
 
@@ -981,8 +1004,8 @@ pub unsafe extern "C" fn cjsr_evaluate_json(validator: SEXP, text: SEXP, level: 
         let text =
             single_string(text).ok_or_else(|| Failure::value("the JSON text must be one string, and not NA"))??;
         let mut collector = JsonSchemaResultsCollector::new(level);
-        let result = validator.evaluate_json(&text, &mut collector);
+        let result = validator.try_evaluate_json(&text, &mut collector);
         take_callback_error()?;
-        Ok(evaluation(result.map_err(|e| json_failure(e, None))?, &collector))
+        Ok(evaluation(result.map_err(|e| Failure::evaluation(e, None))?, &collector))
     })
 }

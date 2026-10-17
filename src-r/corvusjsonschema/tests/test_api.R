@@ -129,6 +129,64 @@ raises(is_valid_json(looping, "1"), "corvus_depth_error")
 raises(evaluate(looping, 1), "corvus_depth_error")
 
 # ---------------------------------------------------------------------------------------------------------------------
+# The limits of a regular expression
+
+# A pattern that backtracks without end on this string. A match that reaches its limit raises, and is never an answer.
+never_answers <- "^(?:(a+)\\1*)+$"
+never_answered <- paste0(strrep("a", 60L), "b")
+timed <- function(expr) {
+  start <- proc.time()[["elapsed"]]
+  force(expr)
+  proc.time()[["elapsed"]] - start
+}
+limited <- compile_schema(list(pattern = never_answers), pattern_match_limit = 0.05)
+for (check in list(function() is_valid(limited, never_answered),
+                   function() is_valid_json(limited, paste0('"', never_answered, '"')),
+                   function() evaluate(limited, never_answered),
+                   function() evaluate_json(limited, paste0('"', never_answered, '"')))) {
+  took <- timed(raises(check(), "corvus_pattern_match_limit_error", "50ms"))
+  stopifnot(took >= 0.04, took < 20)
+  e <- condition_of(check())
+  stopifnot(grepl(never_answers, conditionMessage(e), fixed = TRUE), !inherits(e, "corvus_depth_error"))
+}
+stopifnot(is_valid(limited, "aaaa"), !is_valid(limited, "b"))
+
+# The default is one second, and NULL, zero or less turns it off: the match runs to its end.
+by_default <- compile_schema(list(patternProperties = setNames(list(list(type = "integer")), never_answers)))
+took <- timed(raises(is_valid(by_default, setNames(list(1L), never_answered)), "corvus_pattern_match_limit_error",
+                     "1s"))
+stopifnot(took >= 0.9, took < 21)
+for (off in list(NULL, 0, 0L, -1)) {
+  stopifnot(!is_valid(compile_schema(list(pattern = never_answers), pattern_match_limit = off),
+                      paste0(strrep("a", 14L), "b")))
+}
+raises(compile_schema(list(pattern = "a"), pattern_match_limit = NaN), "error", "pattern_match_limit must be")
+raises(compile_schema(list(pattern = "a"), pattern_match_limit = "1"), "error", "pattern_match_limit must be")
+
+# A match whose backtracking reaches its memory limit raises the same condition.
+raises(is_valid(compile_schema(list(pattern = "(?:a?){2147483647}")), ""), "corvus_pattern_match_limit_error",
+       "1,048,576 backtracking entries")
+
+# A pattern over a limit of size is refused as too large, which is a compilation error, and not as not valid.
+nest <- function(depth) paste0(strrep("(?:", depth), "a", strrep(")", depth))
+for (limit in list(list(strrep("a", 16384L), strrep("a", 16385L),
+                        "the pattern has a size of more than 1048576 bytes when it is read"),
+                   list(nest(999L), nest(1000L), "the groups of the pattern nest more than 1000 deep"))) {
+  compile_schema(list(pattern = limit[[1L]]))
+  for (schema in list(list(pattern = limit[[2L]]), list(patternProperties = setNames(list(TRUE), limit[[2L]])))) {
+    e <- condition_of(compile_schema(schema))
+    raises(stop(e), "corvus_pattern_too_large_error")
+    stopifnot(inherits(e, "corvus_compilation_error"),
+              endsWith(conditionMessage(e),
+                       paste0("is too large to read as an ECMA-262 regular expression: ", limit[[3L]], ".")),
+              !grepl("invalid", tolower(conditionMessage(e))), nchar(conditionMessage(e)) < 400L)
+  }
+}
+e <- condition_of(compile_schema(list(pattern = "a**")))
+stopifnot(inherits(e, "corvus_compilation_error"), !inherits(e, "corvus_pattern_too_large_error"),
+          startsWith(conditionMessage(e), "Invalid regular expression"))
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Options
 
 stopifnot(is_valid(compile_schema('{"type": "integer"}', default_dialect = "draft7"), 1))

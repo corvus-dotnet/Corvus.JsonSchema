@@ -98,9 +98,11 @@ Every failure is a condition that inherits from `corvus_json_schema_error`:
 | Class | Raised when |
 | --- | --- |
 | `corvus_compilation_error` | A schema cannot be compiled (an unresolved reference, an invalid pattern) |
+| `corvus_pattern_too_large_error` | A regular expression of the schema is over a limit of size (a `corvus_compilation_error`) |
 | `corvus_invalid_json_error` | Schema or instance text is not JSON |
 | `corvus_value_error` | An R value is not a JSON value |
 | `corvus_depth_error` | A schema refers to itself more than `max_depth` times without moving through the value |
+| `corvus_pattern_match_limit_error` | A match of a regular expression took longer than `pattern_match_limit` |
 | `corvus_callback_error` | A custom format function signalled an error |
 
 ## Values
@@ -172,8 +174,8 @@ The tests are plain R scripts in `tests/`. `test_suite.R` runs the JSON-Schema-T
 
 Apache-2.0.
 
-The package is built on version 0.1.6 of the `corvus-json-schema` Rust crate, which matches some patterns with the
-`regress` crate. That crate holds tables derived from the Unicode Character Database, which is under the Unicode
-License V3. [inst/THIRD-PARTY-NOTICES.txt](inst/THIRD-PARTY-NOTICES.txt) has that notice and the one of `regress`. R
+The package is built on version 0.1.7 of the `corvus-json-schema` Rust crate, which holds tables derived from the
+Unicode Character Database, which is under the Unicode License V3. [inst/THIRD-PARTY-NOTICES.txt](inst/THIRD-PARTY-NOTICES.txt)
+has that notice, and the one of `regress`, from whose tables they were first written. R
 installs the file with the package, so a binary package has it:
 `system.file("THIRD-PARTY-NOTICES.txt", package = "corvusjsonschema")`.

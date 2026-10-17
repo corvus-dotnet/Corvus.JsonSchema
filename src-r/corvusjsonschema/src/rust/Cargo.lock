@@ -13,18 +13,17 @@ dependencies = [
 
 [[package]]
 name = "corvus-json-schema"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0507519b6c85db8b57ffc944d49080fa92637ded44e242ac1ca79ad2b4ce829a"
+checksum = "9968a51f5d07e417a31d94eb079420e95a1f5c16ac719a0ff39e1628623a5f6a"
 dependencies = [
  "regex",
- "regress",
  "serde_json",
 ]
 
 [[package]]
 name = "corvusjsonschema"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "corvus-json-schema",
  "serde_json",
@@ -110,15 +109,6 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
-
-[[package]]
-name = "regress"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32eef8b209c3c1c15dbad02c1f30f9539f00dc7253e0cbcdaae442a50a09d7c1"
-dependencies = [
- "memchr",
-]
 
 [[package]]
 name = "serde"

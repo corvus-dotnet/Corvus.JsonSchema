@@ -18,7 +18,9 @@ checked <- function(value, call = sys.call(-1L)) {
   }
   kind <- switch(value[[1L]],
     compilation = "corvus_compilation_error",
+    pattern_too_large = c("corvus_pattern_too_large_error", "corvus_compilation_error"),
     depth = "corvus_depth_error",
+    pattern_match_limit = "corvus_pattern_match_limit_error",
     invalid_json = "corvus_invalid_json_error",
     value = "corvus_value_error",
     callback = "corvus_callback_error",
@@ -51,7 +53,8 @@ one_of <- function(value, choices, what) {
 
 compile_schema <- function(schema, default_dialect = "draft2020-12", assert_format = NA,
                            assert_format_in_legacy_drafts = FALSE, assert_content = TRUE, formats = NULL,
-                           resolver = NULL, base_uri = NULL, entry_point = NULL, max_depth = 128L) {
+                           resolver = NULL, base_uri = NULL, entry_point = NULL, max_depth = 128L,
+                           pattern_match_limit = 1) {
   dialect <- one_of(default_dialect, dialects, "default_dialect")
   if (!is.null(formats)) {
     if (!is.list(formats) || is.null(names(formats)) || anyNA(names(formats)) || any(names(formats) == "") ||
@@ -66,10 +69,18 @@ compile_schema <- function(schema, default_dialect = "draft2020-12", assert_form
     }
     resolver <- guarded(resolver)
   }
+  if (!is.null(pattern_match_limit) && (!is.numeric(pattern_match_limit) || length(pattern_match_limit) != 1L ||
+                                          is.na(pattern_match_limit))) {
+    stop("pattern_match_limit must be a number of seconds or NULL", call. = FALSE)
+  }
+  if (!is.null(pattern_match_limit)) {
+    pattern_match_limit <- as.double(pattern_match_limit)
+  }
   # The validator is the external pointer itself, with a class: the native code checks that it is one of its own.
   structure(checked(.Call(
     native_cjsr_compile, schema, dialect, as.logical(assert_format), as.logical(assert_format_in_legacy_drafts),
-    as.logical(assert_content), formats, resolver, base_uri, entry_point, as.integer(max_depth)
+    as.logical(assert_content), formats, resolver, base_uri, entry_point, as.integer(max_depth),
+    pattern_match_limit
   )), class = "corvus_json_schema")
 }
 
