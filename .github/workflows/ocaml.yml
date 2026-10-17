@@ -244,7 +244,7 @@ jobs:
           git tag "v$version"
           opam lint .
           opam install --yes --with-test .
-          installed=$(opam show --field=installed-version corvus-json-schema)
+          installed=$(opam show --color=never --field=installed-version corvus-json-schema)
           if [ "$installed" != "$version" ]; then
             echo "::error::opam installed corvus-json-schema $installed, not $version."
             exit 1
