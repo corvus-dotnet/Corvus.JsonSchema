@@ -1161,7 +1161,7 @@ main-docs:
       - {index: 5, language: julia, lines: [122, 136]}
       - {index: 6, language: julia, lines: [142, 154]}
       - {index: 7, language: julia, lines: [239, 259]}
-  - path: "docs/JsonSchemaForOCaml.md"
+  - path: "docs/JsonSchemaForOcaml.md"
     blocks:
       - {index: 0, language: sh, lines: [32, 34]}
       - {index: 1, language: sh, lines: [38, 40]}
