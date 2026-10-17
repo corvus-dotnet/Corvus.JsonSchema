@@ -18,7 +18,7 @@ Add the package to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/corvus-dotnet/corvus-json-schema-swift", from: "0.1.0"),
+    .package(url: "https://github.com/corvus-dotnet/corvus-json-schema-swift", from: "0.1.3"),
 ],
 targets: [
     .target(name: "MyApp", dependencies: [.product(name: "CorvusJsonSchema", package: "corvus-json-schema-swift")]),
@@ -57,11 +57,21 @@ immutable and `Sendable`. To validate the same JSON more than once, parse it int
 | `baseURI` | `nil` | The schema's base URI, when it has no `$id`. |
 | `entryPoint` | `nil` | A subschema to validate against, such as `"#/$defs/item"`. |
 | `maxDepth` | `128` | The deepest the evaluator recurses in place before it throws `depthExceeded`. |
+| `patternMatchLimit` | `1` | The seconds one match of a regular expression against one string may take before the call throws `patternMatchLimit`. `nil` or `0` turns the limit off. |
 | `formats` | `[:]` | Custom formats: name to a closure that returns whether the string is valid. |
 | `resolver` | `nil` | A closure from an absolute URI to the document's JSON text, or `nil` when it has none. |
 
 Errors are `JSONSchemaError`: `invalidJSON` and `invalidUTF8` (with the byte offset), `compilationFailed`,
-`depthExceeded`, `invalidArgument` and `internalError`. An error a resolver throws is thrown by the compilation.
+`patternTooLarge`, `depthExceeded`, `patternMatchLimit`, `invalidArgument` and `internalError`. An error a resolver
+throws is thrown by the compilation.
+
+A schema and an instance may both come from outside, so a regular expression is bounded in what it costs. A match of
+a `pattern` or `patternProperties` regular expression that takes longer than `patternMatchLimit` is abandoned, and the
+call throws `patternMatchLimit`: the instance is then neither valid nor not valid. Compiling can throw it too, because
+a pattern of `patternProperties` is matched against the property names the schema declares. A schema with a regular
+expression longer than 1,048,576 bytes, nested more than 1,000 groups deep or of more than about 16,000 terms does not
+compile, and throws `patternTooLarge`. The limits and `patternTooLarge` came in 0.1.3, on version 0.1.4 of the C
+library.
 
 ## Results and annotations
 
