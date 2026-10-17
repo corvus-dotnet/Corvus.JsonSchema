@@ -84,6 +84,9 @@ $BuildWebsite = [Convert]::ToBoolean((property BUILDVAR_BuildWebsite $Website.To
 $IsPreviewDeployment = [Convert]::ToBoolean((property BUILDVAR_IsPreviewDeployment $false))
 $BasePathPrefix = property BUILDVAR_BasePathPrefix $BasePathPrefix
 $VellumDownloadToken = property VELLUM_DOWNLOAD_TOKEN ''
+# The website build compiles the libraries it documents itself when nothing has built them: the docs-only website job
+# of build.yml, which runs BuildWebsite alone. After a .NET build it reuses that build's binaries.
+$WebsiteBuildsDotNet = [Convert]::ToBoolean((property BUILDVAR_WebsiteBuildsDotNet $false))
 
 task . FullBuild
 
@@ -289,7 +292,7 @@ task PrePublish -If { !$SkipPublish } {
 task BuildWebsite {
     $websiteDir = Join-Path $here "docs\website"
 
-    $websiteBuildArgs = @{ SkipDotNetBuild = $true }
+    $websiteBuildArgs = @{ SkipDotNetBuild = !$WebsiteBuildsDotNet }
 
     if ($VellumDownloadToken) {
         $websiteBuildArgs += @{ VellumDownloadToken = (ConvertTo-SecureString $VellumDownloadToken -AsPlainText) }

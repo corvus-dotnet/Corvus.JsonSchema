@@ -45,7 +45,8 @@ jobs:
   # Whether the change touches anything the .NET build reads (.github/actions/dotnet-changes, which auto_release.yml
   # also uses). A pull request or a push to main that changes only the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal or OCaml packages (and their
   # own workflows) skips the .NET build: those have their own workflows (python.yml, rust.yml, typescript.yml, java.yml, go.yml, julia.yml, r.yml, pascal.yml, ocaml.yml).
-  # Release tag pushes and manual runs always build.
+  # One that changes only those or the documentation (docs) skips it too, and a change to docs builds the website alone
+  # (the website job). Release tag pushes and manual runs always build.
   changes:
     name: Detect .NET changes
     runs-on: ubuntu-latest
@@ -54,6 +55,7 @@ jobs:
       pull-requests: read
     outputs:
       dotnet: ${{ steps.detect.outputs.dotnet }}
+      website: ${{ steps.detect.outputs.website }}
     steps:
       - name: Checkout the shared actions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -196,6 +198,58 @@ jobs:
       postCompilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
 
+  # A change to the documentation alone builds the website without the .NET build, its test matrix and its packages:
+  # the code-sample catalog check that the .NET build runs first, then BuildWebsite with BUILDVAR_WebsiteBuildsDotNet,
+  # so that docs/website/build.ps1 compiles the libraries it documents itself. The website-output artifact is the one
+  # the build's Post-Compile job uploads, and deploy-preview deploys either. A change that also needs the .NET build
+  # builds the website there, as before. Only a pull request builds it: the production site is deployed from release
+  # tags alone (deploy-docs), so a push to main of a change to docs has nothing to deploy.
+  website:
+    name: Documentation website
+    needs:
+      - changes
+    if: >-
+      github.event_name == 'pull_request' && needs.changes.outputs.dotnet != 'true'
+      && needs.changes.outputs.website == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check the code-sample catalog is up to date
+        shell: pwsh
+        run: ./docs/update-code-sample-catalog.ps1 -Check
+      - name: Build the documentation website
+        uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@main
+        with:
+          displayName: Build Documentation Site
+          # As the build job: global.json pins the .NET 11 SDK, and the projects also target the earlier ones.
+          netSdkVersion: '11.0.100-rc.1.26425.128'
+          additionalNetSdkVersion: |
+            8.0.x
+            9.0.x
+            10.0.x
+          tasks: BuildWebsite
+          configuration: Release
+        env:
+          BUILDVAR_WebsiteBuildsDotNet: "true"
+          BUILDVAR_IsPreviewDeployment: "${{ github.event_name == 'pull_request' }}"
+          BUILDVAR_BasePathPrefix: "${{ github.event_name == 'pull_request' && format('/{0}/pr-preview/pr-{1}', github.event.repository.name, github.event.pull_request.number) || format('/{0}', github.event.repository.name) }}"
+          VELLUM_DOWNLOAD_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
+      - name: Upload the website
+        # A fork's pull request has no secrets, so the website build cannot download Vellum and skips itself; there is
+        # no output, and deploy-preview does not run for a fork.
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: website-output
+          path: docs/website/.output
+          if-no-files-found: warn
+
   integration-tests:
     name: Integration Tests (Docker)
     needs:
@@ -305,11 +359,15 @@ jobs:
     name: Deploy PR Preview
     needs:
       - build
+      - website
     # Fork PRs run without repository secrets, so the Post-Compile website build cannot
     # download the access-gated Vellum SSG and skips itself; no website-output artifact
     # exists to deploy. The fork PR's read-only GITHUB_TOKEN could not push to gh-pages
-    # anyway. Deploy previews for same-repo PRs only.
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    # anyway. Deploy previews for same-repo PRs only. The website comes from the build's
+    # Post-Compile job or from the website job, whichever ran: the other is skipped.
+    if: >-
+      always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+      && (needs.build.result == 'success' || needs.website.result == 'success')
     runs-on: ubuntu-latest
     concurrency: preview-${{ github.event.pull_request.number }}
     timeout-minutes: 45
@@ -339,12 +397,14 @@ jobs:
           ./.github/scripts/Set-PreviewComment.ps1 -PullRequest $env:PR -Body "The documentation preview for this pull request is at https://corvus-oss.org/Corvus.JsonSchema/pr-preview/pr-$($env:PR)/ (built from $($env:HEAD_SHA.Substring(0, 7))). GitHub Pages takes a minute or two to publish it."
 
   # The required status check for pull requests: it passes when the .NET build succeeded or was not needed, so a
-  # change outside .NET is not held up waiting for build jobs that were skipped.
+  # change outside .NET is not held up waiting for build jobs that were skipped, and when the documentation website
+  # alone was built, that it succeeded.
   dotnet-gate:
     name: .NET build gate
     needs:
       - changes
       - build
+      - website
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -353,12 +413,19 @@ jobs:
           CHANGES: ${{ needs.changes.result }}
           DOTNET: ${{ needs.changes.outputs.dotnet }}
           BUILD: ${{ needs.build.result }}
+          EVENT: ${{ github.event_name }}
+          WEBSITE: ${{ needs.changes.outputs.website }}
+          WEBSITE_BUILD: ${{ needs.website.result }}
         run: |
           if [ "$CHANGES" != success ]; then
             echo "::error::Detecting .NET changes failed ($CHANGES)."
             exit 1
           fi
           if [ "$DOTNET" != true ]; then
+            if [ "$EVENT" = pull_request ] && [ "$WEBSITE" = true ] && [ "$WEBSITE_BUILD" != success ]; then
+              echo "::error::The documentation website build did not succeed ($WEBSITE_BUILD)."
+              exit 1
+            fi
             echo "No .NET changes: the .NET build was not needed."
             exit 0
           fi

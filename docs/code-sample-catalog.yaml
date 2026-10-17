@@ -1487,11 +1487,11 @@ main-docs:
   - path: "docs/ReleaseProcess.md"
     blocks:
       - {index: 0, language: yaml, lines: [18, 36]}
-      - {index: 1, language: powershell, lines: [118, 126]}
-      - {index: 2, language: bash, lines: [193, 198]}
-      - {index: 3, language: sh, lines: [604, 606]}
-      - {index: 4, language: xml, lines: [642, 646]}
-      - {index: 5, language: xml, lines: [650, 652]}
+      - {index: 1, language: powershell, lines: [122, 130]}
+      - {index: 2, language: bash, lines: [197, 202]}
+      - {index: 3, language: sh, lines: [608, 610]}
+      - {index: 4, language: xml, lines: [646, 650]}
+      - {index: 5, language: xml, lines: [654, 656]}
   - path: "docs/RunningTests.md"
     blocks:
       - {index: 0, language: powershell, lines: [7, 10]}
