@@ -180,13 +180,19 @@ jobs:
             || { echo "::error::test/api_test.f90 does not check binding_version $version."; exit 1; }
           cmp ../../LICENSE LICENSE
       - name: Build (fpm)
-        # The library alone, with every warning an error.
+        # The library, with every warning an error (and the example, which fpm builds with it). On Windows the static
+        # library also needs the system libraries it uses.
         working-directory: ${{ env.SUBDIR }}
         env:
           FPM_FC: ${{ steps.fortran.outputs.fc }}
           FPM_CC: ${{ steps.fortran.outputs.cc }}
           FLAGS: ${{ matrix.flags }}
-        run: fpm build --flag "$FLAGS"
+        run: |
+          link=()
+          if [ "$RUNNER_OS" = Windows ]; then
+            link=(--link-flag "kernel32.lib ntdll.lib userenv.lib ws2_32.lib dbghelp.lib")
+          fi
+          fpm build --flag "$FLAGS" "${link[@]}"
       - name: Test (fpm)
         # The suite, the annotation suite and the API, and the example. On Windows the static library also needs
         # the system libraries it uses.
