@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="The Corvus JSON Schema evaluator for Python (corvus-json-schema, and corvus-json-schema-rs backed by Rust): install, validate, options, results and annotations." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="The Corvus JSON Schema evaluator for Python (corvus-json-schema, and corvus-json-schema-rs backed by Rust): install, validate, options, results and annotations." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="JSON Schema for Python - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="The Corvus JSON Schema evaluator for Python (corvus-json-schema, and corvus-json-schema-rs backed by Rust): install, validate, options, results and annotations." />
+    <meta property="og:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta property="og:title" content="JSON Schema for Python - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-python/" />
+    <title>JSON Schema for Python - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-python/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-python/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-path.html">JSONPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/open-api.html">OpenAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api.html">AsyncAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/standalone-evaluator-internals.html">Schema Evaluation Program Internals</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-precompilation.html">Runtime Evaluator Engineering Notes</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-measurements.html">Runtime Evaluator Measurements</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/other-languages.html">JSON Schema in other languages</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-javascript.html">JavaScript and TypeScript</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-rust.html">Rust</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/docs/json-schema-for-python.html">Python</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-c.html">C</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-cpp.html">C&#x2B;&#x2B;</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-swift.html">Swift</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ruby.html">Ruby</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-php.html">PHP</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-java.html">Java and Kotlin</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-go.html">Go</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-julia.html">Julia</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-r.html">R</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-pascal.html">Object Pascal</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ocaml.html">OCaml</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/pattern-conformance.html">Patterns across the ports</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translator.html">ECMA-262 regex translator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translations.html">ECMA-262 regex translations</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/clone-and-freeze.html">Clone, Freeze, and Builder Snapshots</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-path.html">Json Path</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-client.html">Open Api Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-server.html">Open Api Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">Open Api Advanced Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-server.html">Open Api Advanced Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-end-to-end.html">Open Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-server.html">Open Api Callback Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-client.html">Open Api Callback Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-producer.html">Async Api Producer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-consumer.html">Async Api Consumer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-end-to-end.html">Async Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-authentication.html">Async Api Authentication</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api20-client.html">Open Api20Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>JSON Schema for Python</h1>
+<p>The Corvus JSON Schema evaluator for Python comes in two packages with the same API, so either can be imported in
+place of the other. Both cover draft 4, 6, 7, 2019-09 and 2020-12, and give the same results and annotations as every
+other Corvus implementation.</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>What it is</th>
+<th>Choose it when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://pypi.org/project/corvus-json-schema/">corvus-json-schema</a></td>
+<td>Pure Python: it compiles a schema into specialised Python code. Its one dependency is <a href="https://pypi.org/project/regex/"><code>regex</code></a>.</td>
+<td>You want no native code, or a schema as a standalone Python module.</td>
+</tr>
+<tr>
+<td><a href="https://pypi.org/project/corvus-json-schema-rs/">corvus-json-schema-rs</a></td>
+<td>Backed by the <a href="/Corvus.JsonSchema/docs/json-schema-for-rust.html">Rust crate</a>, reading Python objects in place through CPython's C API.</td>
+<td>You want the fastest validation.</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Conformant.</strong> Both pass the whole JSON-Schema-Test-Suite (required, optional and <code>optional/format</code>, every draft),
+and all of its annotation tests. The pure package passes <code>draft4/optional/zeroTerminatedFloats.json</code> too, which the
+others exclude.</li>
+<li><strong>Fast.</strong> The pure package validates six times faster than fastjsonschema, the other generator of Python code. The
+Rust-backed package takes about a third of the pure package's time, and 0.72 of jsonschema-rs's.</li>
+<li><strong>Results and annotations.</strong> Basic, Detailed and Verbose results, and annotations.</li>
+<li>Python 3.10 or later, typed (<code>py.typed</code>). The Rust-backed package has wheels for Linux (x86_64 and aarch64, glibc
+and musl), macOS (Intel and Apple silicon) and Windows (x64 and arm64).</li>
+</ul>
+<h2 id="install">Install</h2>
+<pre><code class="language-sh">pip install corvus-json-schema      # pure Python
+pip install corvus-json-schema-rs   # backed by Rust
+</code></pre>
+<h2 id="validate">Validate</h2>
+<pre><code class="language-python">import corvus_json_schema as cjs  # or: import corvus_json_schema_rs as cjs
+
+validate = cjs.compile({
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {&quot;id&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 1}},
+    &quot;required&quot;: [&quot;id&quot;],
+})
+
+validate({&quot;id&quot;: 3})  # True
+validate({&quot;id&quot;: 0})  # False
+</code></pre>
+<p><code>compile</code> takes the schema as a parsed value or as JSON text. The validator is a function: call it with any value
+<code>json.loads</code> produces. The Rust-backed package also validates JSON text directly, without creating Python objects for
+it: <code>validate.is_valid_json('{&quot;id&quot;: 3}')</code>.</p>
+<h2 id="options">Options</h2>
+<p><code>compile</code> takes these options as keyword arguments, or as a <code>CompileOptions</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default_dialect</code></td>
+<td>The dialect of a schema without <code>$schema</code>: <code>Dialect.DRAFT4</code> to <code>Dialect.DRAFT202012</code> (the default).</td>
+</tr>
+<tr>
+<td><code>assert_format</code></td>
+<td><code>True</code> asserts <code>format</code>, <code>False</code> never does; <code>None</code> (the default) follows the schema's vocabularies.</td>
+</tr>
+<tr>
+<td><code>assert_format_in_legacy_drafts</code></td>
+<td>With <code>assert_format</code> unset, assert <code>format</code> in drafts 4 to 7 too.</td>
+</tr>
+<tr>
+<td><code>assert_content</code></td>
+<td>Assert <code>contentEncoding</code> and <code>contentMediaType</code> in draft 7 (default <code>True</code>).</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>Custom formats by name, such as <code>{&quot;even&quot;: lambda s: len(s) % 2 == 0}</code>.</td>
+</tr>
+<tr>
+<td><code>resolve_document</code></td>
+<td><code>(uri) -&gt; schema</code>, JSON text or <code>None</code>, for remote references. The standard metaschemas are built in.</td>
+</tr>
+<tr>
+<td><code>base_uri</code></td>
+<td>The base URI of the root document.</td>
+</tr>
+<tr>
+<td><code>entry_point</code></td>
+<td>A subschema to validate against, such as <code>#/$defs/item</code>.</td>
+</tr>
+<tr>
+<td><code>max_depth</code></td>
+<td>The deepest the evaluator recurses in place (default 128); beyond it, <code>SchemaEvaluationDepthError</code>.</td>
+</tr>
+<tr>
+<td><code>pattern_match_limit</code></td>
+<td>The seconds one match of a regular expression against one string may take, by the clock (default <code>1.0</code>). Beyond it, <code>PatternMatchLimitError</code>. <code>None</code> or <code>0</code> turns the limits of a match off.</td>
+</tr>
+</tbody>
+</table>
+<p>A reference that cannot be resolved, or an invalid pattern, raises <code>SchemaCompilationError</code> when the schema is
+compiled.</p>
+<p>In both packages a regular expression is bounded in what it costs, since a schema and an instance may both come
+from outside. A validation whose match reaches <code>pattern_match_limit</code>, or a limit of memory, raises
+<code>PatternMatchLimitError</code>, from the validator and from <code>evaluate</code>, and the instance is then neither valid nor not
+valid. A schema with a regular expression over a limit of size raises <code>PatternTooLargeError</code>, which is a
+<code>SchemaCompilationError</code> and is never raised for a pattern that is not valid. The limits are those of the engine
+underneath:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>corvus-json-schema</code></th>
+<th><code>corvus-json-schema-rs</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Length of a pattern</td>
+<td>32,768 characters</td>
+<td>1,048,576 bytes</td>
+</tr>
+<tr>
+<td>Groups inside each other</td>
+<td>100</td>
+<td>1,000</td>
+</tr>
+<tr>
+<td>What the pattern comes to</td>
+<td>32,768 characters as it is written for Python's engines, and 4,096 copies of what a count of more than one term repeats in a pattern that the <code>regex</code> package runs</td>
+<td>about 16,000 terms</td>
+</tr>
+<tr>
+<td>How the time of a match is counted</td>
+<td>By the clock, for a pattern that the <code>regex</code> package runs: the error comes between nine tenths of the limit and about twice the limit. None for a pattern that is proved to match in time proportional to the text, which <code>re</code> runs.</td>
+<td>By the clock, by the package's own engine, for every pattern, looked at every 4,096 steps</td>
+</tr>
+<tr>
+<td>The memory of a match</td>
+<td>A text of more than 1,048,576 characters is not matched once the first try at a match has been abandoned, and a pattern with groups that the engine keeps for every repetition takes fewer. A pattern that <code>re</code> runs has no such limit.</td>
+<td>A match is abandoned when its backtracking stack reaches 1,048,576 entries (24 MB)</td>
+</tr>
+<tr>
+<td>The limit error</td>
+<td>Has <code>pattern</code>, <code>limit</code> and <code>most_characters</code></td>
+<td>Has its message</td>
+</tr>
+<tr>
+<td>A limit error from <code>compile</code></td>
+<td>Never: compiling runs no match</td>
+<td>When a pattern of <code>patternProperties</code> reaches the limit on a property name the schema declares</td>
+</tr>
+<tr>
+<td><code>format: regex</code></td>
+<td>A text over a limit of reading (32,768 characters, 100 levels) is not valid. Any other is valid or not by the grammar.</td>
+<td>The same rule, with its limits of reading (1,048,576 bytes, 1,000 levels, about 16,000 terms)</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-python">import corvus_json_schema as cjs  # or corvus_json_schema_rs
+
+validate = cjs.compile({&quot;pattern&quot;: r&quot;^(?:(a+)\1*)+$&quot;}, pattern_match_limit=0.25)
+try:
+    validate(&quot;a&quot; * 60 + &quot;b&quot;)
+except cjs.PatternMatchLimitError:
+    ...  # no answer within a quarter of a second
+</code></pre>
+<h2 id="results-and-annotations">Results and annotations</h2>
+<pre><code class="language-python">collector = cjs.JsonSchemaResultsCollector.create(cjs.ResultsLevel.DETAILED)
+validate.evaluate({&quot;id&quot;: 0}, collector)  # False
+for r in collector.results:
+    ...  # r.is_match, r.message, r.evaluation_location, r.schema_evaluation_location, r.document_evaluation_location
+
+verbose = cjs.JsonSchemaResultsCollector.create(cjs.ResultsLevel.VERBOSE)
+validate.evaluate({&quot;id&quot;: 3}, verbose)
+cjs.collect_annotations(verbose)  # {&quot;&quot;: {&quot;title&quot;: {&quot;#&quot;: &quot;Person&quot;}}, ...}
+</code></pre>
+<p><code>BASIC</code> records the failures without messages, <code>DETAILED</code> adds the messages, and <code>VERBOSE</code> records every keyword,
+passing ones and annotations included. Validation without a collector runs the fast path, so collecting costs nothing
+when it is not used.</p>
+<h2 id="standalone-modules">Standalone modules</h2>
+<p>The pure package can write a schema out as a Python module that depends only on its small runtime:</p>
+<pre><code class="language-python">from pathlib import Path
+
+Path(&quot;person_validator.py&quot;).write_text(cjs.generate_module(schema))
+</code></pre>
+<h2 id="regular-expressions">Regular expressions</h2>
+<p><code>pattern</code>, <code>patternProperties</code> and the <code>regex</code> format follow ECMA-262, as JSON Schema specifies, with the grammar of
+ECMAScript 2025. This section is about the pure package, which translates a pattern for Python's engines: the
+standard library's <code>re</code>, and the <code>regex</code> package for what <code>re</code> cannot run or is not proved to run in time
+proportional to the text. A pattern is read with the <code>u</code> flag, and a
+pattern that is not valid with it is read as a pattern with no flag, which accepts what many schemas hold (<code>\&amp;</code>, a
+lone brace). The <code>regex</code> format accepts only the <code>u</code> flag grammar. Every answer the package gives for the 98,839
+patterns of the <a href="https://github.com/corvus-dotnet/ecma262-regex-test-data">ECMA-262 regular expression test data</a>
+is V8's, on CPython 3.10, 3.12 and 3.14. One of those patterns is over a limit of size, and nine or ten, by the
+version of Python and by what else the machine is doing, have a text whose match reaches the limit of one second.
+Both are set out below.</p>
+<ul>
+<li><code>\d</code>, <code>\w</code> and <code>\b</code> are ASCII, the dot excludes the four line terminators, and <code>$</code> holds only at the end.</li>
+<li>Modifier groups (<code>(?i:...)</code>, <code>(?m:...)</code>, <code>(?s:...)</code>, <code>(?i-s:...)</code>) ignore case, match at line terminators and let
+the dot match everything as ECMA-262 defines them. Case is ignored by the tables of Unicode 17 that the package
+carries, so the answer does not depend on the version of Python or of <code>regex</code>.</li>
+<li>A backreference reads what ECMA-262 says its group holds. A group that did not take part reads as the empty string.
+The groups of a repeated body are unset when an iteration starts, so <code>^(?:(a)|x)*\1$</code> takes &quot;ax&quot; and not &quot;axa&quot;,
+and an iteration that matched nothing leaves no group set.</li>
+<li>A lookbehind can be of any length and is matched backwards, so <code>(?&lt;=\1(a))b</code> takes &quot;aab&quot; and <code>(?&lt;=(a+))b\1</code>
+takes &quot;aabaa&quot;. A group that a lookahead sets on only some of the ways it can match, as in <code>(?=(a)?b)\1</code>, and a
+group of a lookaround that is read in the same repetition after a choice, as in
+<code>^(?:(?=([ab]))[ab](?:c|ca)\1)*$</code>, hold what they hold in ECMA-262.</li>
+<li>Inside a case-insensitive group a backreference compares by ECMA-262's Canonicalize, character by character:
+<code>^(?i:(.)\1)$</code> takes &quot;sſ&quot; and &quot;kK&quot; (U+017F, U+212A) and not &quot;iİ&quot; (U+0130). The comparison is written out
+in the translation, as neither engine compares that way. It costs a few microseconds for each character
+compared, and a group that can hold any character has a translation of about 54,000 characters, which takes
+about 0.2 seconds to compile and holds about 3 MB.</li>
+<li>A pattern that is valid only without the <code>u</code> flag is read and matched by UTF-16 code unit, as ECMA-262 says: in
+<code>^\-?.$</code> the dot takes half of a character beyond the Basic Multilingual Plane.</li>
+<li>A <code>\p{...}</code> takes the names that ECMA-262 has and no others: a value of General_Category (<code>\p{Lu}</code>,
+<code>\p{gc=Letter}</code>), a value of Script after <code>Script=</code>, <code>sc=</code>, <code>Script_Extensions=</code> or <code>scx=</code> (<code>\p{sc=Greek}</code>), or a
+binary property that ECMA-262 lists (<code>\p{Alphabetic}</code>), in the spelling of the Unicode Character Database. The
+names and the characters are those of Unicode 17, from tables that the package carries and that every port of
+the evaluator shares, whatever version of Unicode the <code>regex</code> package that is installed has (release 2026.9.29
+has Unicode 18) and whatever version CPython has. For the <code>regex</code> package a property is written as its own with
+the tens of ranges that are different, which is checked against the tables for every character, and for <code>re</code> as
+ranges. So <code>\p{sc=Sidetic}</code>, <code>\p{sc=Tolong_Siki}</code>, <code>\p{sc=Beria_Erfe}</code> and <code>\p{sc=Tai_Yo}</code> are names
+here, where V8 13.6 has Unicode 16 and reads such a pattern without the <code>u</code> flag. A name that only the <code>regex</code>
+package has, such as <code>\p{Greek}</code>, <code>\p{IsLatin}</code> or <code>\p{alpha}</code>, makes a pattern that is not valid with the <code>u</code>
+flag, and so one where <code>\p</code> is the letter <code>p</code>.</li>
+</ul>
+<p>No valid pattern is refused for what it means, and none is run with another meaning. What remains is the limits
+on what a regular expression may cost.</p>
+<h3 id="the-limits-and-which-engine-runs-a-pattern">The limits, and which engine runs a pattern</h3>
+<p>The standard library's <code>re</code> cannot be stopped once a match has started. It has no limit of its own and looks at
+signals in the main thread only. The <code>regex</code> package takes a timeout. So with <code>pattern_match_limit</code> in force,
+which is the default, a pattern goes to <code>re</code> only when the package proves that <code>re</code> matches it in time
+proportional to the text, whatever the text is. Such a pattern has no limit and needs none, and a match costs what
+it did before. Every other pattern goes to the <code>regex</code> package with the limit. With the limit
+turned off, <code>re</code> runs every pattern it can.</p>
+<p>The proof is that at every choice in the pattern (the alternatives of an alternation, one more iteration of a
+repetition or none) the next character of the text says which way to go, and that the body of a repetition takes a
+character. Beyond that it allows, each for a bounded cost, a pattern that takes a bounded number of characters and
+has few ways through it, a repetition that is left with a bounded rest of the pattern to try, an alternation of
+bounded alternatives that start alike, a bounded lookahead (and one with no bound at the start of a pattern that
+starts with <code>^</code>), and a pattern without <code>^</code> whose tries fail within a few characters.</p>
+<table>
+<thead>
+<tr>
+<th>Proved, and run by <code>re</code></th>
+<th>Not proved, and run by <code>regex</code> with the limit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>^[a-z0-9]+(?:-[a-z0-9]+)*$</code></td>
+<td><code>^(a+)+$</code>, where the time doubles with each character</td>
+</tr>
+<tr>
+<td><code>^[a-z]+@[a-z]+\.[a-z]{2,}$</code></td>
+<td><code>^([a-z0-9]+[._-]?)*$</code>, the same</td>
+</tr>
+<tr>
+<td><code>^(?=.*[a-z])(?=.*\d).{8,}$</code></td>
+<td><code>a*b</code> and <code>\{.*\}</code>, where it grows as the square</td>
+</tr>
+<tr>
+<td><code>^.*\.json$</code>, <code>^(http\|https)://</code>, <code>[a-z][a-z0-9]*</code></td>
+<td><code>^(?:[a-z]+,)*[a-z]+$</code>, which is linear and not proved</td>
+</tr>
+<tr>
+<td><code>^a{100000}$</code></td>
+<td>a pattern with a lookbehind or a backreference that reads a group</td>
+</tr>
+</tbody>
+</table>
+<p>Of the 124 patterns of the jsonschema-benchmark corpora that need a regular expression, 117 are proved.</p>
+<p>The limit is of time on the clock. The <code>regex</code> package's timeout counts the time of the whole process on the
+processor, and the package runs a match without the interpreter's lock, so with three other threads busy a timeout
+of 1 second came after 0.24 seconds. The package uses the timeout as an allowance of processor time and lets the
+clock decide. The first try at a match is allowed a thirty-second of the limit, with nothing measured around it, so
+a match that answers costs what it did. A match that does not answer in that is tried again from its start, with
+what should come to the limit on the clock at the rate the processor's time is passing. The error is not raised
+before nine tenths of the limit have passed, and no try is allowed more than is left of twice the limit, so a match
+is bounded at about twice the limit whatever the other threads do. With three or more other threads at work
+throughout, a try gets less than the limit on the clock (half of it with three). With a limit of 1 second the
+error came after 0.95 to 1.12 seconds with up to fifteen other threads at work.</p>
+<p>One step of a match can run over the whole text, and the engine looks at its clock every 256 steps, so its
+timeout can come late by a time that grows with the text. A repetition of one class is such a step. A class of
+more than 24 ranges under a repetition is written so that each character is a step, and a text of more than 32,768
+characters is matched by the pattern written so for every such repetition. In the adversarial probe (210
+patterns of at most 1,000 characters against texts of at most 100,000) the latest that an answer or the error
+came was 1.3 seconds after the match started.</p>
+<p>The memory of a match is bounded too. Both engines keep what a group held each time it closes, until the match
+ends, so a group that no backreference reads is written so that it does not capture inside a repetition. For the
+groups that are read, and for what the <code>regex</code> package keeps for each iteration of a repetition, a text has a limit
+of length in a pattern that the <code>regex</code> package runs, once the first try has been abandoned. It is 1,048,576
+characters, and fewer for a pattern with groups that are kept for every repetition (262,144 for <code>^(?:(a)|b)*\1$</code>).
+A longer text raises <code>PatternMatchLimitError</code>, whose <code>most_characters</code> is the number. The most that one match took
+at the longest text its pattern lets through is 90 MB, and that is also the most that a process took for a pattern
+of the probe. A pattern that <code>re</code> runs has no limit of time or of memory. Its time and its memory are in
+proportion to the text.</p>
+<p>The limits of size, each of which raises <code>PatternTooLargeError</code> when the schema is compiled:</p>
+<ul>
+<li>A pattern of more than 32,768 characters, or one whose groups nest more than 100 deep. Both engines and the
+translator read a pattern with code written in Python, by recursion.</li>
+<li>A translation of more than 32,768 characters. A plain term is as long translated as it was written, and a long
+class that the pattern has many times, such as a property, counts once. What makes a translation longer is a
+character in a case-insensitive group, which is the class of its forms, and a repetition around a group that a
+backreference reads, which is written out copy by copy, as in <code>^(?:(?:(a)|b){300}){300}\1$</code>.</li>
+<li>Counts that come to more than 4,096 copies in a pattern that the <code>regex</code> package runs. That package compiles
+<code>(?:ab){1000}</code> as a thousand and one copies of <code>ab</code>, so <code>(?:(?:ab){1000}){1000}</code> would take 125 MB, and
+<code>(?&lt;=b)(?:ab){4097}</code> is refused. A count of one character or class is written without copies where they would be
+over the limit, so <code>(?&lt;=b)a{1000000}</code> is compiled, in kilobytes. <code>re</code> keeps a count as a number, so
+<code>^a{100000}$</code>, which is proved linear, has no such limit.</li>
+<li>A minimum count of 2,147,483,647 or more over something that can match nothing.</li>
+</ul>
+<p>Within them, the longest compilation measured was 0.47 seconds (a literal of 32,760 characters beyond ASCII for
+the <code>regex</code> package, on CPython 3.14 with the machine under load), and the most kept for a compiled pattern 4.7 MB
+(10,920 groups, for the <code>regex</code> package). The package's cache holds the last 256 compiled patterns of
+1,024 characters at most, <code>re</code> is given translations of 1,024 characters at most to keep in its own cache of 512,
+and a longer one is compiled without being kept. The <code>regex</code> format reads a pattern and does not compile it. One
+that is too long or too deep to read is not valid, and any other is valid or not by the grammar, whatever it would
+cost to compile.</p>
+<p>Both engines backtrack, and neither has V8's short cuts. A repetition whose body can match nothing, inside another
+repetition or around one, is written with a body that cannot wherever no reference reads a group of it, and a
+repetition with no maximum of nothing but another one is written as the inner one, so that a text that does not
+match is answered as quickly as in V8. Where a reference reads a group inside such repetitions, the pattern is
+written as ECMA-262 runs it, and a match can reach the limit where V8 answers in milliseconds. Nine or ten patterns of
+the test data have such a text, nine of them in its <code>backreferences</code> file, and V8 answers each of those texts
+within 10,000 backtracks. One pattern of the test data is refused as too large: its translation is too long.</p>
+<p>Where V8 itself departs from ECMA-262, the package follows ECMA-262. With the <code>u</code> flag V8 13.6 also starts a match
+between the two surrogates of a character, and with the <code>i</code> and <code>u</code> flags it compares a backreference to a group of
+several characters by full case folding. It takes <code>\p{WSpace}</code>, which ECMA-262 does not list, and refuses the
+Script value <code>Katakana_Or_Hiragana</code>, which ECMA-262 has. The
+<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-py/corvus-json-schema#limitations-and-differences-from-the-c-evaluator">package's README</a>
+has an example of each.</p>
+<h2 id="performance">Performance</h2>
+<p>Measured with jsonschema-benchmark's corpora and protocol on CPython 3.12 (warm validation, geometric means):</p>
+<table>
+<thead>
+<tr>
+<th>Comparison</th>
+<th style="text-align: right;">Time ratio</th>
+<th style="text-align: right;">Faster on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>corvus-json-schema / fastjsonschema</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">34 of 35 corpora</td>
+</tr>
+<tr>
+<td>corvus-json-schema-rs / corvus-json-schema</td>
+<td style="text-align: right;">0.35</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr>
+<td>corvus-json-schema-rs / jsonschema-rs</td>
+<td style="text-align: right;">0.72</td>
+<td style="text-align: right;">34 of 35 corpora</td>
+</tr>
+</tbody>
+</table>
+<p>fastjsonschema supports drafts 4 to 7 only, and jsonschema-rs cannot run two of the 37 corpora. The
+<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-py/corvus-json-schema#performance-results">pure package's README</a>
+has the figures for each corpus.</p>
+<h2 id="links">Links</h2>
+<ul>
+<li>Packages: <a href="https://pypi.org/project/corvus-json-schema/">corvus-json-schema</a> and
+<a href="https://pypi.org/project/corvus-json-schema-rs/">corvus-json-schema-rs</a> on PyPI</li>
+<li>Source and READMEs: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-py">src-py</a></li>
+<li>The other languages: see <a href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

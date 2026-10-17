@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="What the .NET translation writes for each ECMA-262 construct whose meaning .NET reads differently, with examples." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="What the .NET translation writes for each ECMA-262 construct whose meaning .NET reads differently, with examples." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Translation Reference - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="What the .NET translation writes for each ECMA-262 construct whose meaning .NET reads differently, with examples." />
+    <meta property="og:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Translation Reference - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/ecma-regex-translations/" />
+    <title>Translation Reference - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/ecma-regex-translations/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/ecma-regex-translations/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-path.html">JSONPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/open-api.html">OpenAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api.html">AsyncAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/standalone-evaluator-internals.html">Schema Evaluation Program Internals</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-precompilation.html">Runtime Evaluator Engineering Notes</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-measurements.html">Runtime Evaluator Measurements</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/other-languages.html">JSON Schema in other languages</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-javascript.html">JavaScript and TypeScript</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-rust.html">Rust</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-python.html">Python</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-c.html">C</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-cpp.html">C&#x2B;&#x2B;</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-swift.html">Swift</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ruby.html">Ruby</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-php.html">PHP</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-java.html">Java and Kotlin</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-go.html">Go</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-julia.html">Julia</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-r.html">R</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-pascal.html">Object Pascal</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ocaml.html">OCaml</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/pattern-conformance.html">Patterns across the ports</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translator.html">ECMA-262 regex translator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/docs/ecma-regex-translations.html">ECMA-262 regex translations</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/clone-and-freeze.html">Clone, Freeze, and Builder Snapshots</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-path.html">Json Path</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-client.html">Open Api Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-server.html">Open Api Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">Open Api Advanced Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-server.html">Open Api Advanced Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-end-to-end.html">Open Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-server.html">Open Api Callback Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-client.html">Open Api Callback Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-producer.html">Async Api Producer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-consumer.html">Async Api Consumer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-end-to-end.html">Async Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-authentication.html">Async Api Authentication</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api20-client.html">Open Api20Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Translation Reference</h1>
+<p>What <code>EcmaRegexTranslator</code> writes for each construct of an ECMA-262 regular expression, and why.
+<a href="/Corvus.JsonSchema/docs/ecma-regex-translator.html">EcmaRegexTranslator.md</a> is the overview.</p>
+<p>The translator parses a pattern into a tree and writes the tree. A construct that means the same in .NET is written
+in its plain form. The examples below are the exact output for a pattern that is valid with the <code>u</code> flag, unless
+they say otherwise.</p>
+<h2 id="the-two-grammars">The Two Grammars</h2>
+<table>
+<thead>
+<tr>
+<th>Grammar</th>
+<th>When</th>
+<th>A character is</th>
+<th>Example of a pattern only it accepts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>u</code> flag</td>
+<td>Tried first. JSON Schema's <code>pattern</code> is specified with it.</td>
+<td>A code point</td>
+<td><code>\u{1F600}</code>, <code>\p{L}</code></td>
+</tr>
+<tr>
+<td>No flag (Annex B)</td>
+<td>When the <code>u</code> flag grammar refuses the pattern.</td>
+<td>A UTF-16 code unit</td>
+<td><code>\-</code>, <code>\@</code>, <code>a{</code>, <code>\1</code> with no group</td>
+</tr>
+</tbody>
+</table>
+<p>Without the flag an identity escape may escape any character, a lone <code>{</code>, <code>}</code> or <code>]</code> is itself, <code>\1</code> with no such
+group is an octal escape, <code>\p</code> is the letter <code>p</code>, and a lookahead may be quantified. A character beyond the Basic
+Multilingual Plane is then two characters to the dot and to a negated class.</p>
+<pre><code>ECMAScript:  ^a\-b{$          (valid only without the u flag)
+.NET:        ^a-b\{\z
+</code></pre>
+<h2 id="validity">Validity</h2>
+<p>A pattern neither grammar accepts is refused. <code>TryTranslate</code> returns <code>false</code> and an error that says what is wrong
+and the offset in the pattern. When the two grammars object to different things the error gives both.</p>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Error</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a{2,1}</code></td>
+<td><code>Numbers out of order in {} quantifier at offset 6.</code></td>
+</tr>
+<tr>
+<td><code>x\b+</code></td>
+<td><code>Nothing to repeat at offset 1.</code></td>
+</tr>
+<tr>
+<td><code>(?&lt;n&gt;a)(?&lt;n&gt;b)</code></td>
+<td><code>Duplicate group name 'n' at offset 12.</code></td>
+</tr>
+<tr>
+<td><code>[z-a]</code></td>
+<td><code>Range out of order in character class at offset 2.</code></td>
+</tr>
+<tr>
+<td><code>(</code></td>
+<td><code>Unterminated group at offset 1.</code></td>
+</tr>
+<tr>
+<td><code>\p{Nope}(</code></td>
+<td><code>Invalid property name at offset 3 (read without the u flag: Unterminated group at offset 9).</code></td>
+</tr>
+</tbody>
+</table>
+<p>Constructs that only .NET has are not ECMA-262 and are refused: <code>(?i)</code>, <code>(?#comment)</code>, <code>(?'name'a)</code>, <code>(?&gt;a)</code>.
+<code>\A</code>, <code>\Z</code> and <code>\z</code> are valid only without the <code>u</code> flag, where they are the letters <code>A</code>, <code>Z</code> and <code>z</code>.</p>
+<h2 id="literal-characters-and-escapes">Literal Characters and Escapes</h2>
+<p>A literal is written as the character it names, whatever way the pattern named it.</p>
+<table>
+<thead>
+<tr>
+<th>ECMAScript</th>
+<th>.NET</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a</code>, <code>\x61</code>, <code>\u0061</code>, <code>\u{61}</code></td>
+<td><code>a</code></td>
+<td>A printable ASCII character is itself.</td>
+</tr>
+<tr>
+<td><code>\.</code>, <code>\*</code>, <code>\(</code>, <code>\{</code>, <code>\/</code></td>
+<td><code>\.</code>, <code>\*</code>, <code>\(</code>, <code>\{</code>, <code>/</code></td>
+<td>Escaped where .NET needs it.</td>
+</tr>
+<tr>
+<td><code>\t</code>, <code>\n</code>, <code>\v</code>, <code>\f</code>, <code>\r</code></td>
+<td>the same</td>
+<td></td>
+</tr>
+<tr>
+<td><code>\0</code>, <code>\cA</code>, <code>\cJ</code></td>
+<td><code>\u0000</code>, <code>\u0001</code>, <code>\n</code></td>
+<td>A control escape is the character it names.</td>
+</tr>
+<tr>
+<td><code>é</code>, <code>\u00E9</code></td>
+<td><code>\u00E9</code></td>
+<td>A character outside printable ASCII is written by its number.</td>
+</tr>
+<tr>
+<td><code>\u{1F600}</code>, a literal U+1F600</td>
+<td><code>(?:\uD83D\uDE00)</code></td>
+<td>Both halves in a group, so that a quantifier applies to the character.</td>
+</tr>
+<tr>
+<td><code>\uD83D</code> (a lone surrogate)</td>
+<td><code>\uD83D(?![\uDC00-\uDFFF])</code></td>
+<td>It does not match half of a pair.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="character-shorthands">Character Shorthands</h2>
+<p>ECMA-262's <code>\d</code>, <code>\w</code> and <code>\s</code> are narrower than .NET's.</p>
+<table>
+<thead>
+<tr>
+<th>ECMAScript</th>
+<th>.NET</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>\d</code></td>
+<td><code>[0-9]</code></td>
+<td>.NET's <code>\d</code> is every Unicode decimal digit.</td>
+</tr>
+<tr>
+<td><code>\w</code></td>
+<td><code>[a-zA-Z0-9_]</code></td>
+<td>.NET's <code>\w</code> is every Unicode word character.</td>
+</tr>
+<tr>
+<td><code>\s</code></td>
+<td><code>[\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]</code></td>
+<td>ECMA-262 has U+FEFF and not U+0085.</td>
+</tr>
+<tr>
+<td><code>\D</code>, <code>\W</code>, <code>\S</code></td>
+<td>The complement, as a <a href="#sets-and-code-points">set that holds characters beyond the Basic Multilingual Plane</a>.</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Inside a case-insensitive group read with the <code>u</code> flag grammar, <code>\w</code> also holds U+017F and U+212A, which fold to
+<code>s</code> and <code>k</code>.</p>
+<h2 id="dot">Dot</h2>
+<p>The dot is every character but the four line terminators <code>\n</code>, <code>\r</code>, U+2028 and U+2029. .NET's dot leaves out only
+<code>\n</code>. With the <code>s</code> modifier the dot is every character.</p>
+<pre><code>ECMAScript:  ^.*$
+.NET:        ^[^\n\r\u2028\u2029]*\z
+
+ECMAScript:  a.b
+.NET:        a(?&gt;[^\n\r\u2028\u2029\uD800-\uDFFF]|[\uD800-\uDBFF](?:[\uDC00-\uDFFF]|(?![\uDC00-\uDFFF]))|(?&lt;![\uD800-\uDBFF])[\uDC00-\uDFFF])b
+</code></pre>
+<p>The second form is explained under <a href="#sets-and-code-points">Sets and Code Points</a>.</p>
+<h2 id="anchors">Anchors</h2>
+<table>
+<thead>
+<tr>
+<th>ECMAScript</th>
+<th>.NET</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>^</code></td>
+<td><code>^</code></td>
+<td>.NET is not given its multiline option, so <code>^</code> is the start of the input.</td>
+</tr>
+<tr>
+<td><code>$</code></td>
+<td><code>\z</code></td>
+<td>.NET's <code>$</code> also holds before a final <code>\n</code>.</td>
+</tr>
+<tr>
+<td><code>^</code> in <code>(?m:...)</code></td>
+<td><code>(?:^\|(?&lt;=[\n\r\u2028\u2029]))</code></td>
+<td>A line starts after any of the four line terminators. .NET's multiline <code>^</code> knows only <code>\n</code>.</td>
+</tr>
+<tr>
+<td><code>$</code> in <code>(?m:...)</code></td>
+<td><code>(?:\z\|(?=[\n\r\u2028\u2029]))</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="word-boundaries">Word Boundaries</h2>
+<p>A word character is one of the 63 ASCII ones. The positions before the start and after the end of the input count
+as not a word character.</p>
+<pre><code>ECMAScript:  \b
+.NET:        (?:(?&lt;=[a-zA-Z0-9_])(?![a-zA-Z0-9_])|(?&lt;![a-zA-Z0-9_])(?=[a-zA-Z0-9_]))
+
+ECMAScript:  x\B
+.NET:        x(?:(?&lt;=[a-zA-Z0-9_])(?=[a-zA-Z0-9_])|(?&lt;![a-zA-Z0-9_])(?![a-zA-Z0-9_]))
+</code></pre>
+<h2 id="sets-and-code-points">Sets and Code Points</h2>
+<p>With the <code>u</code> flag grammar a character is a code point, and .NET matches UTF-16 code units. A set (a class, a class
+escape, the dot, a property) is therefore written by what it holds:</p>
+<table>
+<thead>
+<tr>
+<th>The set holds</th>
+<th>Written as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Only characters of the Basic Multilingual Plane, no surrogate</td>
+<td>One .NET class: <code>[a-z]</code></td>
+</tr>
+<tr>
+<td>Characters beyond it as well</td>
+<td>An atomic alternation of the class and the surrogate pairs: <code>[a-z\u{1F600}-\u{1F64F}]</code> is <code>(?&gt;[a-z]\|\uD83D[\uDE00-\uDE4F])</code></td>
+</tr>
+<tr>
+<td>Every character beyond it and every surrogate (the dot, a negated class, <code>\D</code>, <code>\W</code>, <code>\S</code>)</td>
+<td><code>(?&gt;[...\uD800-\uDFFF excluded]\|[\uD800-\uDBFF](?:[\uDC00-\uDFFF]\|(?![\uDC00-\uDFFF]))\|(?&lt;![\uD800-\uDBFF])[\uDC00-\uDFFF])</code></td>
+</tr>
+</tbody>
+</table>
+<p>The last form reads: a code unit of the set that is not a surrogate, or a first half with its second half when
+there is one, or a second half with no first half before it. So a surrogate pair is always one character and is
+never split. The alternatives start with different code units, which is why the group can be atomic.</p>
+<p>A <strong>repetition</strong> of such a set is written so that a text with no character beyond the Basic Multilingual Plane is
+matched by a repetition of one class, at the cost it always had.</p>
+<p>With <strong>no upper bound</strong>, a set that holds every such character (the dot, a negated class) does not need the long
+form, because any run of the set's code units that does not start or end inside a surrogate pair is a run of its
+characters:</p>
+<pre><code>ECMAScript:  ^[^/]+/.*$
+.NET:        ^[^/]+/[^\n\r\u2028\u2029]*\z
+</code></pre>
+<p>Where what follows the repetition could match inside a pair, the repetition is followed by
+<code>(?!(?&lt;=[\uD800-\uDBFF])[\uDC00-\uDFFF])</code>, which holds everywhere but between the two halves of a pair. A whole
+translation starts with the same assertion when the pattern could otherwise match from inside a pair, because .NET
+tries a match at every code unit: <code>\B</code> becomes <code>(?!(?&lt;=[\uD800-\uDBFF])[\uDC00-\uDFFF])(?:...)</code>.</p>
+<p>With no upper bound, a set that holds some surrogate pairs is runs of the class with a pair between one run and the
+next:</p>
+<pre><code>ECMAScript:  ^[a-z\u{1F600}-\u{1F64F}]+$
+.NET:        ^(?&gt;[a-z]|\uD83D[\uDE00-\uDE4F])[a-z]*(?:\uD83D[\uDE00-\uDE4F][a-z]*)*\z
+</code></pre>
+<p>With <strong>an upper bound</strong>, the dot or a negated class counts characters, and a run of code units is a run of as many
+characters only when none is a surrogate. So the translation looks ahead as far as the highest count. When no
+surrogate is there it is the class repeated, and otherwise the long form:</p>
+<pre><code>ECMAScript:  ^.{2,5}$
+.NET:        ^(?(?=[^\uD800-\uDFFF]{5}|[^\uD800-\uDFFF]*\z)[^\n\r\u2028\u2029\uD800-\uDFFF]{2,5}|(?&gt;[^\n\r\u2028\u2029\uD800-\uDFFF]|[\uD800-\uDBFF](?:[\uDC00-\uDFFF]|(?![\uDC00-\uDFFF]))|(?&lt;![\uD800-\uDBFF])[\uDC00-\uDFFF]){2,5})\z
+</code></pre>
+<p>A set with more than two alternatives of surrogate pairs (<code>\p{Lu}</code>, <code>\p{L}</code>) has them behind a look at the next
+code unit, so that a character of the Basic Multilingual Plane that is not in the class fails without trying each:
+<code>(?&gt;\p{Lu}|(?=[\uD800-\uDFFF])(?:\uD801[...]|\uD803[...]|...))</code>. In a lookbehind, which .NET matches from right to
+left, the look is <code>(?&lt;=[\uD800-\uDFFF])</code> and stands after the alternatives.</p>
+<p>Without the <code>u</code> flag none of this applies. Every set is one .NET class of code units.</p>
+<h2 id="character-classes">Character Classes</h2>
+<p>A class is the set of its members. Members in the Basic Multilingual Plane are written in the order the pattern
+gave them. A class that needs another form is written from its set, in code point order.</p>
+<table>
+<thead>
+<tr>
+<th>ECMAScript</th>
+<th>.NET</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[a-zA-Z0-9_]</code></td>
+<td><code>[a-zA-Z0-9_]</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>[\w.+-]</code></td>
+<td><code>[a-zA-Z0-9_.+\-]</code></td>
+<td>A class escape is its members.</td>
+</tr>
+<tr>
+<td><code>[\b]</code></td>
+<td><code>[\u0008]</code></td>
+<td>In a class <code>\b</code> is backspace.</td>
+</tr>
+<tr>
+<td><code>[--a]</code></td>
+<td><code>[\u002D-a]</code></td>
+<td>.NET does not take an escaped hyphen as the start of a range.</td>
+</tr>
+<tr>
+<td><code>[^abc]</code></td>
+<td><code>(?&gt;[^abc\uD800-\uDFFF]\|...)</code></td>
+<td>Every other character, by code point.</td>
+</tr>
+<tr>
+<td><code>[\W]</code>, <code>[^\w]</code></td>
+<td>The same as <code>\W</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>[^\W]</code></td>
+<td><code>[a-zA-Z0-9_]</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>[^a\D]</code></td>
+<td><code>[0-9]</code></td>
+<td>The digits but <code>a</code>: the class is written from its set.</td>
+</tr>
+<tr>
+<td><code>[\d\D]</code>, <code>[^]</code></td>
+<td><code>(?&gt;[^\uD800-\uDFFF]\|...)</code></td>
+<td>Every character.</td>
+</tr>
+<tr>
+<td><code>[]</code>, <code>[^\d\D]</code></td>
+<td><code>(?!\z\|[\s\S])</code></td>
+<td>No character: an assertion that never holds.</td>
+</tr>
+</tbody>
+</table>
+<p><code>[]</code> is a class with no member and <code>[^]</code> is every character. A <code>]</code> closes a class wherever it stands, unlike in
+.NET, where a <code>]</code> first in a class is a member.</p>
+<p><code>(?!)</code> is not used for &quot;never&quot;, because .NET removes it and what depends on it from the pattern before it runs it,
+and its compiled engine then goes wrong on some patterns.</p>
+<h2 id="unicode-property-escapes">Unicode Property Escapes</h2>
+<p><code>\p{...}</code> and <code>\P{...}</code> take every property, value and alias ECMA-262 lists: the General_Category values
+(<code>\p{L}</code>, <code>\p{Letter}</code>, <code>\p{gc=L}</code>, <code>\p{General_Category=Letter}</code>), <code>Script</code> and <code>Script_Extensions</code> for every
+script, and the 53 binary properties. A name ECMA-262 does not define is an error with the <code>u</code> flag.</p>
+<table>
+<thead>
+<tr>
+<th>ECMAScript</th>
+<th>.NET</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>\p{Zs}</code></td>
+<td><code>\p{Zs}</code></td>
+<td>A General_Category value with no member beyond the Basic Multilingual Plane is .NET's class.</td>
+</tr>
+<tr>
+<td><code>\p{L}</code></td>
+<td><code>(?&gt;\p{L}\|(?=[\uD800-\uDFFF])(?:\uD800[\uDC00-\uDC0B...]\|\uD801[...]\|...))</code></td>
+<td>.NET's class, then the surrogate pairs of the letters beyond the Basic Multilingual Plane.</td>
+</tr>
+<tr>
+<td><code>\P{Zs}</code></td>
+<td><code>(?&gt;[^\p{Zs}\uD800-\uDFFF]\|...)</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>\p{LC}</code></td>
+<td><code>(?&gt;[\p{Lu}\p{Ll}\p{Lt}]\|...)</code></td>
+<td>.NET has no <code>LC</code>.</td>
+</tr>
+<tr>
+<td><code>\p{Script=Greek}</code></td>
+<td><code>(?&gt;[\u0370-\u0373\u0375-\u0377...]\|\uD800[\uDD40-\uDD8E\uDDA0]\|\uD834[\uDE00-\uDE45])</code></td>
+<td>The ranges of the script. .NET's <code>IsGreek</code> is a block, which is not the script.</td>
+</tr>
+<tr>
+<td><code>\p{ASCII}</code></td>
+<td><code>[\u0000-\u007F]</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>\p{White_Space}</code></td>
+<td><code>[\t-\r \u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]</code></td>
+<td>The Unicode property, which is not <code>\s</code>.</td>
+</tr>
+<tr>
+<td><code>\p{Any}</code></td>
+<td>Every character</td>
+<td></td>
+</tr>
+<tr>
+<td><code>\p{Cs}</code></td>
+<td><code>(?&gt;[\uD800-\uDBFF](?![\uDC00-\uDFFF])\|(?&lt;![\uD800-\uDBFF])[\uDC00-\uDFFF])</code></td>
+<td>A surrogate that is not half of a pair.</td>
+</tr>
+</tbody>
+</table>
+<p>.NET's <code>\p{L}</code> tests one code unit, so it never matches a letter beyond the Basic Multilingual Plane. That is why
+the pairs are written out, and why <code>\p{L}</code> is about 4,200 characters long.</p>
+<h2 id="modifier-groups">Modifier Groups</h2>
+<p><code>(?i:...)</code>, <code>(?m:...)</code>, <code>(?s:...)</code>, combinations such as <code>(?im:...)</code>, and negations such as <code>(?-i:...)</code> or
+<code>(?s-i:...)</code> change how their body is read. No .NET option is used for them.</p>
+<table>
+<thead>
+<tr>
+<th>Modifier</th>
+<th>Effect on the translation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>s</code></td>
+<td>The dot is every character.</td>
+</tr>
+<tr>
+<td><code>m</code></td>
+<td><code>^</code> and <code>$</code> are the line assertions shown under <a href="#anchors">Anchors</a>.</td>
+</tr>
+<tr>
+<td><code>i</code></td>
+<td>A literal or a class becomes the set of the characters ECMA-262's Canonicalize makes equal to it.</td>
+</tr>
+</tbody>
+</table>
+<pre><code>ECMAScript:  ^(?i:straße)$
+.NET:        ^(?:[Ss\u017F][Tt][Rr][Aa][\u00DF\u1E9E][Ee])\z
+</code></pre>
+<p>Canonicalize is Unicode simple case folding with the <code>u</code> flag grammar, and the uppercase mapping of one code unit
+without it, which never maps a character outside ASCII into ASCII. So <code>(?i:k)</code> matches the Kelvin sign U+212A only
+with the <code>u</code> flag grammar. .NET's own case-insensitive matching follows other tables and the current culture.</p>
+<h2 id="groups">Groups</h2>
+<p>A group is written without capture, <code>(?:...)</code>, unless a backreference reads it. A group that is read is written
+with its ECMA-262 number as its name, <code>(?&lt;1&gt;...)</code>. A named group is treated the same way, so a name may be any
+ECMA-262 identifier and two groups in separate alternatives may share one.</p>
+<pre><code>ECMAScript:  ^(a|b)(c)$
+.NET:        ^(?:a|b)(?:c)\z
+
+ECMAScript:  (?&lt;year&gt;\d{4})-\k&lt;year&gt;
+.NET:        (?&lt;1&gt;[0-9]{4})-(?(1)\1)
+</code></pre>
+<p>A group that is read and can capture the empty string is written apart: its body where that matches something, in
+the group, or else its body where that matches nothing, in no group.</p>
+<pre><code>ECMAScript:  ^(a|)\1?b$
+.NET:        ^(?:(?&lt;1&gt;a))?(?:\1)?b\z
+
+ECMAScript:  ^(^|a)\1?b$
+.NET:        ^(?:(?&lt;1&gt;a)|^)(?:\1)?b\z
+
+ECMAScript:  ^(a?b?)\1?c$
+.NET:        ^(?:(?&lt;1&gt;ab?|b))?(?:\1)?c\z
+
+ECMAScript:  ^((a|)(a|))\1$
+.NET:        ^(?:(?&lt;1&gt;a(?:(?:a)?)))?(?(1)\1)\z
+</code></pre>
+<p>The body of the third is one alternative for each term that can be the first to match something: <code>a</code> and then
+<code>b?</code>, or <code>b</code>. In the fourth the two terms are the same, and the alternative of the second, <code>a</code>, would match one <code>a</code>
+that the alternative of the first has matched already. It is left out (see <a href="#repetitions">Repetitions</a>).</p>
+<p>ECMA-262 cannot tell a group that captured the empty string from a group that is unset: a backreference to either
+matches the empty string, and nothing else reads a group. .NET can tell them apart, and it is the only thing a
+translation can ask .NET about a group. So the group is left unset where it would capture nothing, and is then
+set exactly when it captured something. A backreference that has to match something, or fail, can then be .NET's
+own with no test around it (see <a href="#repetitions">Repetitions</a>). The group stays whole in three places: in a
+lookaround whose captures a backreference reads, where the order of the paths counts and this changes it, where it
+holds another group that is read, and where it can only match the empty string (<code>()</code>), since nothing would define
+it.</p>
+<h2 id="backreferences">Backreferences</h2>
+<p>In ECMA-262 a backreference matches what its group captured when the group last took part, and the empty string
+when it has not taken part. A quantified term forgets the captures of the groups inside it when each iteration
+starts. .NET fails a backreference to a group that has not taken part, and keeps a capture from an earlier
+iteration.</p>
+<table>
+<thead>
+<tr>
+<th>ECMAScript</th>
+<th>.NET</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>(a)\1</code></td>
+<td><code>(?&lt;1&gt;a)(?(1)\1)</code></td>
+<td>The conditional matches nothing when the group is unset.</td>
+</tr>
+<tr>
+<td><code>^\1(a)</code></td>
+<td><code>^(?(1)\1)(?&lt;1&gt;a)</code></td>
+<td>A reference before its group matches the empty string.</td>
+</tr>
+<tr>
+<td><code>^(?:(a)\|b)*\1</code></td>
+<td><code>^(?:(?(1)(?&lt;-1&gt;))(?:(?&lt;1&gt;a)\|b))*(?(1)\1)</code></td>
+<td>Each iteration starts by unsetting group 1.</td>
+</tr>
+<tr>
+<td><code>^(a){0}\1</code></td>
+<td><code>^</code></td>
+<td>The group never takes part, so the reference is the empty string.</td>
+</tr>
+<tr>
+<td><code>^(a\1)+$</code></td>
+<td><code>^(?:a)+\z</code></td>
+<td>A reference inside the group it reads is the empty string. The group is not set until it closes, and the repetition unsets it when each iteration starts.</td>
+</tr>
+<tr>
+<td><code>^(?:(a)\|\1b)+$</code></td>
+<td><code>^(?:(?:a)\|b)+\z</code></td>
+<td>So is a reference to a group in another alternative of the alternation the group is in. One alternative runs at a time.</td>
+</tr>
+</tbody>
+</table>
+<p><code>(?(1)(?&lt;-1&gt;))</code> is a balancing group: it takes the capture of group 1 away when there is one, and .NET gives it
+back if the match backtracks out of the iteration.</p>
+<p>The last two rows are more than tidiness. With such a reference taken out, a body such as <code>(|\2|\1\2)</code> is seen
+to match only the empty string, and its repetition is written as the body once (see
+<a href="#repetitions">Repetitions</a>). Run as written, <code>((|\2|\1\2){3,}|[ax]){4}x$</code> tries every combination of the three
+ways through each iteration, 27 to the power of 4 of them at every place in the text. V8 takes a reference inside
+its own group for the empty string too, and answers such a pattern in a few hundred steps.</p>
+<h3 id="a-backreference-that-ignores-case">A Backreference That Ignores Case</h3>
+<p>Inside <code>(?i:...)</code> a backreference matches a text that is the text of its group character by character, where two
+characters are the same when Canonicalize gives one character for both: simple case folding with the <code>u</code> flag
+grammar, and the uppercase mapping of one code unit without it.</p>
+<p>.NET's own case-insensitive backreference is not that comparison. Measured on .NET 10 over every pair of
+characters, with the <code>u</code> flag grammar it fails 106 pairs of the Basic Multilingual Plane that ECMA-262 matches
+(among them <code>\u03C2</code> and <code>\u03C3</code>, the two small sigmas, <code>s</code> and <code>\u017F</code>, <code>\u00B5</code> and <code>\u03BC</code>) and all 614 pairs
+beyond it, because it compares code units. Without the <code>u</code> flag it differs on 166 pairs, in both directions
+(it matches <code>k</code> with <code>\u212A</code> and <code>\u00DF</code> with <code>\u1E9E</code>, which ECMA-262 does not). Its table also changes from
+one runtime to the next. So it is used only for a text that is ASCII with no <code>i</code>, <code>k</code> or <code>s</code>, the letters that have
+a case variant outside ASCII:</p>
+<table>
+<thead>
+<tr>
+<th>ECMAScript</th>
+<th>.NET</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>(?i:(a)\1)</code></td>
+<td><code>(?:(?&lt;1&gt;[Aa])(?(1)(?i:\1)))</code></td>
+<td>The group can only capture <code>a</code> or <code>A</code>.</td>
+</tr>
+<tr>
+<td><code>(?i:(\d+x)\1)</code></td>
+<td><code>(?:(?&lt;1&gt;[0-9]+[Xx])(?(1)(?i:\1)))</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>For any other group the comparison is written out. For <code>(?i:(k)\1)</code>, whose group can capture <code>k</code>, <code>K</code> or the
+Kelvin sign:</p>
+<pre><code>(?:(?&lt;1&gt;[Kk\u212A])(?(1)
+  (?&lt;=\A(?=[\s\S]*?(?=B\1B(?&lt;z1&gt;[\s\S]*))(?&lt;q1&gt;[\s\S]*))[\s\S]*)
+  (?&gt;(?:
+      (?=(?&lt;u1&gt;[\uD800-\uDBFF][\uDC00-\uDFFF]|[\s\S]))(?=[\s\S]*\z(?&lt;=(?=(?!\k&lt;z1&gt;\z)\k&lt;u1&gt;B(?&lt;q1&gt;[\s\S]*))\k&lt;q1&gt;))\k&lt;u1&gt;
+    | (?=[Kk\u212A])(?=[\s\S]*\z(?&lt;=(?=(?!\k&lt;z1&gt;\z)[Kk\u212A](?&lt;q1&gt;[\s\S]*))\k&lt;q1&gt;))[Kk\u212A]
+  )*)
+  (?=[\s\S]*\z(?&lt;=(?=\k&lt;z1&gt;\z)\k&lt;q1&gt;))
+))
+</code></pre>
+<p>It is shown on several lines, and <code>B</code> stands for <code>(?!(?&lt;=[\uD800-\uDBFF])[\uDC00-\uDFFF])</code>, which holds everywhere
+but between the two halves of a surrogate pair. It reads:</p>
+<ol>
+<li>The text of the group cannot be read where it stands in the pattern, but a copy of it stands somewhere in the
+input. The first line finds one from the start of the input, and captures the input from the copy to the end
+as <code>q1</code> and the input after the copy as <code>z1</code>. A group that holds the input from some place to the end names
+that place.</li>
+<li>Each turn of the repetition compares one character. It looks at the next character of the input, goes to the
+place <code>q1</code> names (to the end of the input, and back over the text of <code>q1</code>), tests the character there, moves
+<code>q1</code> past it, and takes the character of the input. The test is one of the alternatives: the same character
+(<code>\k&lt;u1&gt;</code>), or two members of one class of case variants (<code>[Kk\u212A]</code> at both places). A group that can
+capture one of the other ASCII letters gets one more alternative, which uses .NET's own comparison for those
+letters alone.</li>
+<li>The repetition is atomic, since each turn has one outcome. The last line holds when <code>q1</code> has reached <code>z1</code>, so
+that every character of the copy has been compared.</li>
+</ol>
+<p>In a lookbehind, which is matched from right to left, the same comparison runs forward from a place before the
+current one and has to end at the current one.</p>
+<p>There is one alternative for each class of case variants that has a member the group can capture, 32 at a time
+behind a look at the next character. See <a href="/Corvus.JsonSchema/docs/ecma-regex-translator.html#known-limits">Known Limits</a> for what that costs
+when the group can capture any letter.</p>
+<p>A group can hold the text of another group through a backreference inside it, and that group can read the first.
+So what each group can capture is worked out for all of them together: every set starts empty, and each is worked
+out from the others until none grows. <code>(?i:(?:(\2a)(\1b))+)</code> has two groups that can each capture <code>a</code> and <code>b</code> and
+nothing else, and both of its backreferences are left to .NET's comparison.</p>
+<h2 id="repetitions">Repetitions</h2>
+<p>A quantifier is written as it is, except in the cases below. They concern a body that can match the empty string,
+where ECMA-262 is exact and .NET's engines are not: ECMA-262 lets the iterations that must run match nothing, and
+refuses an iteration that matched nothing once they are done.</p>
+<table>
+<thead>
+<tr>
+<th>Case</th>
+<th>What is written</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>X{0}</code></td>
+<td>Nothing.</td>
+</tr>
+<tr>
+<td>A body that can only match the empty string (<code>(?:^)*</code>, <code>(?=a){3}</code>, <code>\b+</code> is not valid)</td>
+<td>Nothing when no iteration must run, and the body once when one must.</td>
+</tr>
+<tr>
+<td>A lazy repetition of anything but one code unit (<code>(?:a\|b)*?</code>, <code>(a\|){2,}?</code>)</td>
+<td>The greedy form. Whether a pattern matches does not depend on which path is tried first. .NET's lazy repetition of a group can fail to end, or throw.</td>
+</tr>
+<tr>
+<td>A body that matches the empty string wherever it stands, with a least count (<code>(a\|){2,3}</code>)</td>
+<td>The least count becomes 0: <code>(?:(?:a)?){0,3}</code>.</td>
+</tr>
+<tr>
+<td>A body with a group a backreference reads, which can match the empty string, with iterations that need not run (<code>(?:(a)\|b\|)*\1</code>)</td>
+<td>Those iterations are written apart as a body that cannot match the empty string, or made to fail when they matched nothing where there is no such body (below).</td>
+</tr>
+<tr>
+<td>A body with a backreference, which can match the empty string, with iterations that need not run (<code>(a)\1?</code>, <code>(?:\1\|b)*</code>)</td>
+<td>The same.</td>
+</tr>
+</tbody>
+</table>
+<p>The case of a body with a group that is read is about the answer. .NET would take an iteration that matched
+nothing and leave the repetition with the group unset, where ECMA-262 refuses the iteration and leaves the group as
+the last iteration that matched something set it. So the iterations that need not run are given a body that
+cannot match the empty string:</p>
+<pre><code>ECMAScript:  ^(?:(a)|)*\1             .NET:  ^(?:(?(1)(?&lt;-1&gt;))(?&lt;1&gt;a))*(?(1)\1)
+ECMAScript:  ^(?:(a)|b|)*\1$          .NET:  ^(?:(?(1)(?&lt;-1&gt;))(?:(?&lt;1&gt;a)|b))*(?(1)\1)\z
+ECMAScript:  ^(?:(a)|b|){2,4}\1$      .NET:  ^(?:(?(1)(?&lt;-1&gt;))(?:(?&lt;1&gt;a)|b|)){2}(?:(?(1)(?&lt;-1&gt;))(?:(?&lt;1&gt;a)|b)){0,2}(?(1)\1)\z
+ECMAScript:  ^((a|)\2)*$              .NET:  ^(?:(?(2)(?&lt;-2&gt;))(?:(?&lt;2&gt;a)(?(2)\2)|(?:\2)))*\z
+</code></pre>
+<p>In the third line the two iterations that must run have the body as it is, empty alternative and all, and the two
+that need not have it without. In the fourth the body is <code>(a|)</code> and then <code>\2</code>: either the group matches <code>a</code> and the
+backreference is as it was, or the group matches nothing, is left unset, and the backreference has to match
+something, which with the group unset it cannot. A group inside the body is still a group in the body that cannot
+match the empty string, around what it matches that is not the empty string.</p>
+<p>Where there is no such body the iteration is made to fail when it has matched nothing, for <code>^(?:(?=(a))|x)*\1</code>:</p>
+<pre><code>^(?:(?(1)(?&lt;-1&gt;))(?=(?&lt;e1&gt;[\s\S]*))(?:(?=(?&lt;1&gt;a))|x)(?!\k&lt;e1&gt;\z))*(?(1)\1)
+</code></pre>
+<p><code>(?=(?&lt;e1&gt;[\s\S]*))</code> captures the rest of the input when an iteration starts, and <code>(?!\k&lt;e1&gt;\z)</code> fails the
+iteration when the rest of the input is still that text. .NET's interpreted engine reads the rest of the input one
+character at a time to capture it, so a repetition with the check takes that engine time in proportion to the
+square of the length of the text: a pattern as plain as <code>^(a|)(?:\1|b)*$</code> took it 24 seconds on 100,000 characters
+when it had the check. The check is written only where there is no body that cannot match the empty string:</p>
+<ul>
+<li>inside a lookaround whose captures a backreference reads, where the order of the paths counts,</li>
+<li>where the body holds a repetition, with two or more iterations that must run, of a group that is read
+(<code>(?:(?:(a)|){2}c)*\1</code>): the last of those iterations may match nothing after one that matched something, and
+it leaves the group unset,</li>
+<li>where a group that is read would be left with nothing to define it, because it only ever matches the empty
+string and no iteration must run (<code>(?:(^)x?)*\1</code>),</li>
+<li>where the body holds a backreference that ignores case, which may be written as 160,000 characters (see
+<a href="#a-backreference-that-ignores-case">A Backreference That Ignores Case</a>) and would be written twice,</li>
+<li>and where the body is too large to write this way (256 nodes).</li>
+</ul>
+<p>The case of a body with a backreference is about time and not about the answer. A backreference matches nothing
+whenever its group is unset, so <code>\1?</code> and <code>(?:\1|b)*</code> have iterations that match nothing. .NET takes such an
+iteration and leaves the repetition, and when what follows fails it tries again without the iteration, from the
+same place and with the same groups. ECMA-262 refuses the iteration, and V8 searches once. Each such repetition a
+search passes doubles it, and one text of a pattern of the ECMA-262 regular expression test data that V8 answers in
+64,000 backtracks took .NET more than eight seconds. So the iterations that need not run are given a body that cannot
+match the empty string:</p>
+<pre><code>ECMAScript:  ^(a)\1?$             .NET:  ^(?&lt;1&gt;a)(?:\1)?\z
+ECMAScript:  ^(a)(?:\1|b)*$       .NET:  ^(?&lt;1&gt;a)(?:(?:\1)|b)*\z
+ECMAScript:  ^(a)(?:\1?x?)*$      .NET:  ^(?&lt;1&gt;a)(?:(?:\1)x?|x)*\z
+ECMAScript:  ^(a)\1{2,5}$         .NET:  ^(?&lt;1&gt;a)(?:(?(1)\1)){2,5}\z
+</code></pre>
+<ul>
+<li>A backreference to a group that cannot capture the empty string matches something exactly when the group is set.
+It is written with no test of the group around it, <code>(?:\1)</code>, which is .NET's own backreference: it fails when the
+group is unset. Where the body has to match nothing, a test that the group is unset is written,
+<code>(?(1)(?!\z|[\s\S]))</code>.</li>
+<li>Terms one after another match something when one of them is the first to. There is an alternative for each term
+that can be: the terms before it match nothing, it matches something, and the rest are as they were. In the third
+line <code>\1?x?</code> is <code>\1</code> and then <code>x?</code>, or <code>x</code>.</li>
+<li>A term has no alternative when it is the same as an earlier term that has one, every term after that one up to
+it matches the empty string wherever it stands, and no backreference reads a group of any of them. Its
+alternative would only match again what the earlier one matches, by a second path: <code>(a|)(a|)</code> is <code>a(?:a)?</code> and
+not <code>a(?:a)?|a</code>, and <code>(a|)(b|)(a|)</code> is <code>a(?:b)?(?:a)?|b(?:a)?</code>. A path that ends where an earlier one ended, with
+the same captures, fails as that one did, so no answer changes. In a repetition the second path is the base of a
+power: (4/3) to the number of iterations for <code>(a|)(a|)</code>. .NET makes the same saving by itself for
+<code>(?:a)?(?:a)?</code>, which it counts as <code>a{0,2}</code>, and cannot make it for an alternation.</li>
+<li>A repetition matches something when its iterations do.</li>
+<li>A lone backreference with an iteration that must run is left as it was (the fourth line). When that iteration
+matches nothing .NET runs no other, and when it matches something so does every other.</li>
+</ul>
+<p>A backreference to a group that can capture the empty string is written the same way where the group is written
+apart (see <a href="#groups">Groups</a>): <code>^(a|)\1?b$</code> is <code>^(?:(?&lt;1&gt;a))?(?:\1)?b\z</code>, and <code>^(a|)(?:\1|b)*$</code> is
+<code>^(?:(?&lt;1&gt;a))?(?:(?:\1)|b)*\z</code>. Where it is not, or the body is too large to write this way, the iteration is made
+to fail when it has matched nothing, with the check above. A repetition whose body
+can match the empty string and holds no backreference and no group that one reads (<code>(?:a?b?)*</code>) is written as it
+is. .NET searches it in the same doubled way (see <a href="/Corvus.JsonSchema/docs/ecma-regex-translator.html#known-limits">Known Limits</a>).</p>
+<p>Inside a lookaround whose captures a backreference reads, the order in which paths are tried decides what is
+captured. There a lazy repetition stays lazy, every iteration that need not run has the check above, and a lazy
+repetition of a group with a highest count is never left to .NET, whose compiled engine can throw on one that
+stands inside another repetition. With up to eight iterations left to choice it is written as optional groups one
+in another (<code>(?:ab){0,2}?</code> is <code>(?:(?:ab)(?:(?:ab))??)??</code>). With more, a group counts the iterations:</p>
+<pre><code>ECMAScript:  (?=((?:ab){0,12}?)c)\1
+.NET:        (?#interpreted)(?=(?&lt;1&gt;(?:(?&lt;c1&gt;)){12}(?:(?&lt;-c1&gt;)(?:ab))*?(?:(?(c1)(?&lt;-c1&gt;))){12})c)(?(1)\1)
+</code></pre>
+<p><code>(?:(?&lt;c1&gt;)){12}</code> gives the group <code>c1</code> twelve captures. Each iteration takes one away with <code>(?&lt;-c1&gt;)</code> and cannot
+start when none is left, and <code>(?:(?(c1)(?&lt;-c1&gt;))){12}</code> takes away what is left after the last.</p>
+<p>A translation that keeps a lazy repetition of a group in any of these forms starts with <code>(?#interpreted)</code>, a
+comment .NET skips: <code>(?=((?:ab){0,2}?)c)\1</code> is <code>(?#interpreted)(?=(?&lt;1&gt;(?:(?:ab)(?:(?:ab))??)??)c)(?(1)\1)</code>. It
+marks the translation for .NET's interpreted engine. The compiled engine does not always return from a match of
+such an expression. After a repetition whose iterations hold a lookbehind and can match nothing, it loops on a
+lazy repetition of a group in a lookbehind: <code>(?:x*\B){2}(?&lt;=((?:ab)*?)\1)$</code> never answers for <code>-a</code>, and neither
+does a pattern of the ECMA-262 regular expression test data. The interpreted engine answers both. No rewriting
+takes a lazy repetition with no highest count out of a pattern, so the engine is chosen instead
+(<code>EcmaRegexTranslator.IsForCompiledEngine</code>): the evaluator constructs a marked translation without
+<code>RegexOptions.Compiled</code> whatever its options say, and generated code gives it no <code>[GeneratedRegex]</code> form, because
+the regular expression generator writes the algorithm of the compiled engine.</p>
+<h2 id="lookarounds">Lookarounds</h2>
+<p><code>(?=...)</code>, <code>(?!...)</code>, <code>(?&lt;=...)</code> and <code>(?&lt;!...)</code> are written as they are. Both engines match a lookbehind from
+right to left, so captures and backreferences inside one behave alike. Inside a lookbehind the translator writes
+what must be matched first on the right.</p>
+<p>A negative lookaround whose body matches the empty string wherever it stands, such as <code>(?!)</code> or <code>(?&lt;!a*)</code>, never
+holds and is written <code>(?!\z|[\s\S])</code>.</p>
+<p>What never matches takes what depends on it out of the pattern, before anything is written. Terms one after
+another with such a part never match, so <code>a(?!)b</code> is <code>(?!\z|[\s\S])</code>. An alternative that never matches is no
+alternative, so <code>a(?!)b|c</code> is <code>c</code> and <code>^(?:x+|[]|){2}$</code> is <code>^(?:(?:x+)?){0,2}\z</code>. A repetition that need not run
+of what never matches is nothing, and so is a negative lookaround of it. This is for .NET. An alternative that
+never matches beside an empty one would be an optional group around <code>(?!\z|[\s\S])</code>, which .NET sees through, and
+it then runs <code>(?:x+|(?:(?!\z|[\s\S]))?){2}</code> as it runs <code>(?:x+|){2}</code>: as <code>(?:x+){2}</code> (see
+<a href="#alternatives">Alternatives</a>).</p>
+<p>Without the <code>u</code> flag a lookahead may be quantified. It is a body that can only match the empty string, so it is
+written once or not at all.</p>
+<h2 id="alternatives">Alternatives</h2>
+<p>Alternatives are written in order. An empty alternative beside one other is written as that other made optional:
+<code>(?:a+|)</code> is <code>(?:(?:a+)?)</code>, which is what .NET makes of it itself. It is written so because .NET's own rewrite goes
+wrong when the other alternative is a repetition with no highest count and a repetition encloses both. It runs
+<code>(?:a+|)+</code> as <code>a+</code>, which does not match the empty string.</p>
+<p>.NET also takes for empty an alternative that is written but matches nothing wherever it stands: a group no
+backreference reads around nothing (<code>()</code>), a lookaround of nothing (<code>(?=)</code>), a backreference to a group that never
+takes part. The translator reads each of those as the empty alternative it is, so <code>(?:x+|()){3}</code> is
+<code>(?:(?:x+)?){0,3}</code>, and writes none of them anywhere else: <code>a(?=)b</code> is <code>ab</code>.</p>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

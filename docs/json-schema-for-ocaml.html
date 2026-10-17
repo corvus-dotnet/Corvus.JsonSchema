@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="The Corvus JSON Schema evaluator for OCaml (4.14 and 5.x, with no dependencies): install, validate, JSON text, options, results and annotations, threads and domains." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="The Corvus JSON Schema evaluator for OCaml (4.14 and 5.x, with no dependencies): install, validate, JSON text, options, results and annotations, threads and domains." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="JSON Schema for OCaml - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="The Corvus JSON Schema evaluator for OCaml (4.14 and 5.x, with no dependencies): install, validate, JSON text, options, results and annotations, threads and domains." />
+    <meta property="og:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta property="og:title" content="JSON Schema for OCaml - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-ocaml/" />
+    <title>JSON Schema for OCaml - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-ocaml/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-ocaml/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-path.html">JSONPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/open-api.html">OpenAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api.html">AsyncAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/standalone-evaluator-internals.html">Schema Evaluation Program Internals</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-precompilation.html">Runtime Evaluator Engineering Notes</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-measurements.html">Runtime Evaluator Measurements</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/other-languages.html">JSON Schema in other languages</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-javascript.html">JavaScript and TypeScript</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-rust.html">Rust</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-python.html">Python</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-c.html">C</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-cpp.html">C&#x2B;&#x2B;</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-swift.html">Swift</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ruby.html">Ruby</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-php.html">PHP</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-java.html">Java and Kotlin</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-go.html">Go</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-julia.html">Julia</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-r.html">R</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-pascal.html">Object Pascal</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/docs/json-schema-for-ocaml.html">OCaml</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/pattern-conformance.html">Patterns across the ports</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translator.html">ECMA-262 regex translator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translations.html">ECMA-262 regex translations</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/clone-and-freeze.html">Clone, Freeze, and Builder Snapshots</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-path.html">Json Path</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-client.html">Open Api Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-server.html">Open Api Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">Open Api Advanced Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-server.html">Open Api Advanced Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-end-to-end.html">Open Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-server.html">Open Api Callback Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-client.html">Open Api Callback Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-producer.html">Async Api Producer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-consumer.html">Async Api Consumer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-end-to-end.html">Async Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-authentication.html">Async Api Authentication</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api20-client.html">Open Api20Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>JSON Schema for OCaml</h1>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-ml/corvus-json-schema">corvus-json-schema</a> is the
+Corvus JSON Schema evaluator for OCaml: draft 4, 6, 7, 2019-09 and 2020-12. It is a port of the .NET runtime
+evaluator (see <a href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>) by way of the <a href="/Corvus.JsonSchema/docs/json-schema-for-go.html">Go module</a>, and gives the
+same results and annotations. It has no dependencies outside the OCaml distribution (the standard library, and <code>unix</code>
+for one clock), and no C code.</p>
+<p>It needs OCaml 4.14 or later on a 64-bit platform, and is tested with OCaml 4.14 and 5.5.</p>
+<p>A schema is compiled once into a node graph and fail-fast plans: each plan holds only the checks its subschema needs,
+and an object's keywords are fused into one pass over its properties. Any number of instances can then be validated
+against it.</p>
+<ul>
+<li><strong>Conformant.</strong> Passes the whole JSON-Schema-Test-Suite (required, optional and <code>optional/format</code>, every draft) except
+<code>draft4/optional/zeroTerminatedFloats.json</code>, and all of its annotation tests.</li>
+<li><strong>Results and annotations.</strong> Basic, Detailed and Verbose results, and annotations, the same as every other Corvus
+implementation.</li>
+<li><strong>Allocation-free validation.</strong> In the steady state, validating a parsed document, or JSON text, allocates nothing
+on the OCaml heap. The package's README lists the exceptions, such as an asserted <code>regex</code>, <code>idn-hostname</code> or
+<code>idn-email</code> format, a custom format, and a <code>multipleOf</code> whose divisor has more than 17 significant digits.</li>
+<li><strong>Threads and domains.</strong> A validator is immutable once compiled, and is safe to share between system threads and
+between the domains of OCaml 5.</li>
+<li><strong>Every array read is checked.</strong> The package is built with the compiler's bounds checks on, and uses no unchecked
+read, no <code>Obj</code> and no C code.</li>
+</ul>
+<h2 id="install">Install</h2>
+<p>Until the package is in the opam repository, pin it from its own repository, which holds the package and nothing
+else, with a tag <code>v&lt;version&gt;</code> for each release:</p>
+<pre><code class="language-sh">opam pin add corvus-json-schema https://github.com/corvus-dotnet/corvus-json-schema-ocaml.git#v0.1.0
+</code></pre>
+<p>Once it is in the <a href="https://opam.ocaml.org/packages/corvus-json-schema/">opam repository</a>:</p>
+<pre><code class="language-sh">opam install corvus-json-schema
+</code></pre>
+<p>With dune, name the library <code>corvus-json-schema</code> in the <code>libraries</code> field. The one module a program uses is
+<code>Corvus_json_schema</code>.</p>
+<h2 id="validate">Validate</h2>
+<pre><code class="language-ocaml">open Corvus_json_schema
+
+let () =
+  match
+    Validator.compile_string
+      {|{
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {&quot;id&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 1}},
+          &quot;required&quot;: [&quot;id&quot;]
+        }|}
+  with
+  | Error e -&gt; prerr_endline (error_to_string e)
+  | Ok validator -&gt;
+      (* true *)
+      Printf.printf &quot;%b\n&quot; (Validator.is_valid_string validator {|{&quot;id&quot;: 3}|});
+      (* false *)
+      Printf.printf &quot;%b\n&quot; (Validator.is_valid_string validator {|{&quot;id&quot;: 0}|})
+</code></pre>
+<p>A validator is not modified by validation. No function of the package raises an exception for a schema or an
+instance that is wrong: the compile functions return a <code>result</code>, whose error is <code>Parse_error</code> for a schema that is
+not JSON and <code>Compile_error</code> for one that cannot be compiled (an unresolvable reference, an invalid pattern). The
+samples below use <code>Result.get_ok</code> for brevity.</p>
+<h2 id="json-text">JSON text</h2>
+<p><code>Validator.is_valid_string</code> and <code>is_valid_bytes</code> take JSON text. They parse it into buffers that are reused and
+validate it in place, so in the steady state they allocate nothing. To validate the same text more than once, parse
+it into a <code>Document.t</code>: the UTF-8 text and one flat array of values, with strings read in place where they have no
+escapes. A document is immutable and safe to share.</p>
+<pre><code class="language-ocaml">let () =
+  let validator = Result.get_ok (Validator.compile_string {|{&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;integer&quot;}}|}) in
+
+  (* Parse once, validate any number of times: true, then [1,2,3] *)
+  let document = Result.get_ok (Document.parse_string {|[1, 2, 3]|}) in
+  Printf.printf &quot;%b\n&quot; (Validator.is_valid_document validator document);
+  print_endline (Document.to_string document);
+
+  (* JSON text is copied and parsed into buffers that are reused: false *)
+  Printf.printf &quot;%b\n&quot; (Validator.is_valid_string validator {|[1, &quot;two&quot;]|});
+
+  (* Bytes are parsed where they are: true *)
+  let bytes = Bytes.of_string {|[4, 5]|} in
+  Printf.printf &quot;%b\n&quot; (Validator.is_valid_bytes validator bytes)
+</code></pre>
+<p>The <code>is_valid</code> functions report text that is not JSON as not valid. The <code>validate</code> functions return the reason
+instead: <code>Error (Parse_error e)</code> with the message and the byte offset, or <code>Error Depth_exceeded</code> when the schema
+recursed in place beyond the maximum depth. A match of a pattern that reached its limit is neither valid nor not
+valid: the <code>validate</code> functions return <code>Error (Pattern_match_limit _)</code> and the <code>is_valid</code> functions raise (see
+<a href="#limits-on-patterns">Limits on patterns</a>).</p>
+<pre><code class="language-ocaml">let () =
+  let validator = Result.get_ok (Validator.compile_string {|{&quot;type&quot;: &quot;object&quot;}|}) in
+
+  (* is_valid_string reports text that is not JSON as not valid: false *)
+  Printf.printf &quot;%b\n&quot; (Validator.is_valid_string validator {|{&quot;id&quot;: 3|});
+
+  (* validate_string gives the reason: 8: unexpected end of input *)
+  (match Validator.validate_string validator {|{&quot;id&quot;: 3|} with
+  | Ok valid -&gt; Printf.printf &quot;%b\n&quot; valid
+  | Error (Parse_error e) -&gt; Printf.printf &quot;%d: %s\n&quot; e.offset e.message
+  | Error e -&gt; print_endline (error_to_string e));
+
+  (* A schema that recurses without consuming the instance is stopped at the maximum depth. *)
+  let looping = Result.get_ok (Validator.compile_string {|{&quot;not&quot;: {&quot;$ref&quot;: &quot;#&quot;}}|}) in
+  match Validator.validate_string looping &quot;1&quot; with
+  | Ok valid -&gt; Printf.printf &quot;%b\n&quot; valid
+  | Error Depth_exceeded -&gt; print_endline &quot;the schema recursed beyond the maximum depth&quot;
+  | Error e -&gt; print_endline (error_to_string e)
+</code></pre>
+<h2 id="options">Options</h2>
+<p>The compile functions take <code>?options</code>, a record that the function <code>options</code> builds from optional arguments:</p>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default_dialect</code></td>
+<td>The dialect of a schema without <code>$schema</code> (default <code>Draft2020_12</code>).</td>
+</tr>
+<tr>
+<td><code>assert_format</code></td>
+<td><code>true</code> asserts <code>format</code>, <code>false</code> never does. Without it the schema's vocabularies decide.</td>
+</tr>
+<tr>
+<td><code>assert_format_in_legacy_drafts</code></td>
+<td>Without <code>assert_format</code>, assert <code>format</code> in drafts 4 to 7 too.</td>
+</tr>
+<tr>
+<td><code>assert_content</code></td>
+<td>Assert <code>contentEncoding</code> and <code>contentMediaType</code> in draft 7 (default <code>true</code>).</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>Custom formats by name: a function from the string (or a number's JSON text) to whether it is valid.</td>
+</tr>
+<tr>
+<td><code>resolver</code></td>
+<td>A function from an absolute URI to the document, for remote references. The standard metaschemas are built in.</td>
+</tr>
+<tr>
+<td><code>base_uri</code></td>
+<td>The base URI of the root document.</td>
+</tr>
+<tr>
+<td><code>entry_point</code></td>
+<td>A subschema to validate against, such as <code>#/$defs/item</code>.</td>
+</tr>
+<tr>
+<td><code>max_depth</code></td>
+<td>The deepest the evaluator recurses in place (default 128).</td>
+</tr>
+<tr>
+<td><code>pattern_match_limit</code></td>
+<td>The seconds one match of a <code>pattern</code> or <code>patternProperties</code> regular expression may take (default 1.0). <code>0.</code> or less turns the limit off. See <a href="#limits-on-patterns">Limits on patterns</a>.</td>
+</tr>
+<tr>
+<td><code>pattern_match_clock</code></td>
+<td>The clock that limit is counted on, a function that returns the time in seconds. Without it the clock is the time that passes, read from <code>Unix.gettimeofday</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>A custom format and a document resolver are plain functions.</p>
+<pre><code class="language-ocaml">let () =
+  let item = Result.get_ok (Document.parse_string {|{&quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;even-length&quot;}|}) in
+  let options =
+    options ~default_dialect:Draft2019_09 (* for schemas without $schema (the default is Draft2020_12) *)
+      ~assert_format:true (* true or false. Without it the vocabularies decide *)
+      ~formats:[ (&quot;even-length&quot;, fun value -&gt; String.length value mod 2 = 0) ]
+      ~resolver:(fun uri -&gt; if uri = &quot;https://example.com/item.json&quot; then Some item else None)
+      ~base_uri:&quot;https://example.com/root.json&quot; ~entry_point:&quot;#/$defs/item&quot; ~max_depth:128 ()
+  in
+  let validator = Result.get_ok (Validator.compile_string ~options {|{&quot;$defs&quot;: {&quot;item&quot;: {&quot;$ref&quot;: &quot;item.json&quot;}}}|}) in
+  (* true *)
+  Printf.printf &quot;%b\n&quot; (Validator.is_valid_string validator {|&quot;four&quot;|});
+  (* false *)
+  Printf.printf &quot;%b\n&quot; (Validator.is_valid_string validator {|&quot;three&quot;|})
+</code></pre>
+<h2 id="results-and-annotations">Results and annotations</h2>
+<pre><code class="language-ocaml">let () =
+  let validator =
+    Result.get_ok (Validator.compile_string {|{&quot;properties&quot;: {&quot;id&quot;: {&quot;type&quot;: &quot;integer&quot;}}, &quot;required&quot;: [&quot;name&quot;]}|})
+  in
+  let instance = Result.get_ok (Document.parse_string {|{&quot;id&quot;: &quot;seven&quot;}|}) in
+  let results = Results.create Results.Detailed in
+  (match Validator.evaluate validator ~results instance with
+  | Ok valid -&gt; Printf.printf &quot;%b\n&quot; valid
+  | Error e -&gt; print_endline (error_to_string e));
+  List.iter
+    (fun (row : Results.result) -&gt;
+      if row.evaluation_location &lt;&gt; &quot;&quot; &amp;&amp; row.message &lt;&gt; &quot;&quot; then
+        Printf.printf &quot;%s at %S: %s\n&quot; row.evaluation_location row.document_evaluation_location row.message)
+    (Results.results results)
+(* false *)
+(* /properties/id at &quot;/id&quot;: The value was expected to match the subschema. *)
+(* /properties/id/type at &quot;/id&quot;: The value was expected to be of type 'integer' *)
+(* /required at &quot;/name&quot;: Required property not present 'name' *)
+</code></pre>
+<p>Each row is a <code>Results.result</code> with <code>is_match</code>, <code>message</code>, <code>evaluation_location</code>, <code>schema_evaluation_location</code> and
+<code>document_evaluation_location</code>. <code>Results.Basic</code> records the failures without messages, <code>Results.Detailed</code> adds the
+messages, and <code>Results.Verbose</code> records every keyword, passing ones and annotations included.</p>
+<pre><code class="language-ocaml">let () =
+  let validator =
+    Result.get_ok
+      (Validator.compile_string
+         {|{
+             &quot;title&quot;: &quot;Person&quot;,
+             &quot;properties&quot;: {&quot;name&quot;: {&quot;title&quot;: &quot;Name&quot;, &quot;type&quot;: &quot;string&quot;}}
+           }|})
+  in
+  let results = Results.create Results.Verbose in
+  (match Validator.evaluate_string validator ~results {|{&quot;name&quot;: &quot;Ada&quot;}|} with
+  | Ok valid -&gt; Printf.printf &quot;%b\n&quot; valid
+  | Error e -&gt; print_endline (error_to_string e));
+
+  (* Instance location, then keyword, then schema location, then the value as JSON text. *)
+  List.iter
+    (fun (instance_location, keywords) -&gt;
+      List.iter
+        (fun (keyword, values) -&gt;
+          List.iter
+            (fun (schema_location, value) -&gt;
+              Printf.printf &quot;%S %s %s %s\n&quot; instance_location keyword schema_location value)
+            values)
+        keywords)
+    (Results.collect_annotations results);
+
+  (* The same annotations as a list, in the order of the results. *)
+  Printf.printf &quot;%d annotations\n&quot; (List.length (Results.annotations results));
+
+  (* A collector keeps its results until it is reset. *)
+  Results.reset results;
+  Printf.printf &quot;%d rows\n&quot; (List.length (Results.results results))
+(* true *)
+(* &quot;&quot; title # &quot;Person&quot; *)
+(* &quot;/name&quot; title #/properties/name &quot;Name&quot; *)
+(* 2 annotations *)
+(* 0 rows *)
+</code></pre>
+<h2 id="threads-and-domains">Threads and domains</h2>
+<p>A validator is shared between threads and domains without a lock. An evaluation needs working memory, which a
+validator keeps one set of. An evaluation that finds it in use makes its own, so every call is correct, but
+evaluations that overlap allocate. A caller that validates from several threads or domains at once gives each its
+own <code>Scratch.t</code> in the <code>?scratch</code> argument, and then none contends with another and none allocates. Build the option
+once and pass it as it is, since an option built at the call is an allocation.</p>
+<pre><code class="language-ocaml">let () =
+  let validator = Result.get_ok (Validator.compile_string {|{&quot;required&quot;: [&quot;id&quot;]}|}) in
+  let texts = [ {|{&quot;id&quot;: 1}|}; {|{&quot;id&quot;: 2}|}; {|{}|} ] in
+  let count_valid () =
+    (* One scratch for each thread, built once and passed as it is. *)
+    let scratch = Some (Scratch.create ()) in
+    List.fold_left
+      (fun count text -&gt; if Validator.is_valid_string ?scratch validator text then count + 1 else count)
+      0 texts
+  in
+  let counts = Array.make 4 0 in
+  let threads = List.init 4 (fun i -&gt; Thread.create (fun () -&gt; counts.(i) &lt;- count_valid ()) ()) in
+  List.iter Thread.join threads;
+  (* 2 2 2 2 *)
+  print_endline (String.concat &quot; &quot; (List.map string_of_int (Array.to_list counts)))
+</code></pre>
+<p>With domains the code is the same, with <code>Domain.spawn</code> and <code>Domain.join</code>.</p>
+<h2 id="patterns">Patterns</h2>
+<p><code>pattern</code> and <code>patternProperties</code> have ECMA-262 semantics. The common shapes of pattern are matched with no regular
+expression engine. Any other pattern runs on the package's own engine, which reads every character class from the
+package's own Unicode 17 data, so a pattern means the same whichever compiler built the program. The engine agrees
+with answers recorded from V8 on 61,694 patterns and 1,091,280 match answers, and on the 13 files of the ECMA-262
+regular expression test data (98,839 patterns and 4,268,313 answers).</p>
+<p>A pattern is read with the grammar of the <code>u</code> flag and matched by Unicode code point. A pattern that grammar refuses
+is read with the Annex B grammar of a pattern with no flag, which many schemas need (<code>\-</code> outside a class, <code>\_</code>, a
+lone <code>{</code>). Such a pattern is matched by UTF-16 code unit, as ECMA-262 matches a pattern with no <code>u</code> flag. The two
+differ only for a string with a character beyond the Basic Multilingual Plane, which is two code units. <code>^.$</code>
+matches <code>&quot;\ud801\udc00&quot;</code> (the one character U+10400), and <code>^\-?.$</code> does not, because the dot takes one unit of the
+two. A pattern that neither grammar accepts is a <code>Compile_error</code>.</p>
+<p>The answers are V8's except where V8 itself departs from ECMA-262, and there the package follows ECMA-262. A
+quantifier whose first count is greater than its second is an error whatever the size of the numbers, so
+<code>a{2147483648,2147483647}</code> is refused, which V8 takes. A group name used twice is an error unless the two groups
+are in separate alternatives of one disjunction, so <code>(?&lt;m&gt;a)(?:x|(?&lt;m&gt;b))</code> is refused, which V8 takes.
+<code>\p{WSpace}</code> is not a property name ECMA-262 lists, so the pattern is read with no flag, as the characters
+<code>p{WSpace}</code>, where V8 reads it as <code>\p{White_Space}</code>. <code>Katakana_Or_Hiragana</code> (<code>Hrkt</code>) is a Script value that no
+character has, so <code>\p{sc=Hrkt}</code> is valid and matches nothing, where V8 refuses it. And the properties are those of
+Unicode 17, so the scripts Sidetic, Tolong_Siki, Beria_Erfe and Tai_Yo are known, which V8 13.6 does not know.</p>
+<p>A JSON string can name half of a surrogate pair with an escape, as in <code>&quot;\ud800&quot;</code>. That is not Unicode text, and a
+document is UTF-8 and cannot hold it. Parsing such text is a <code>Parse_error</code>, and the <code>is_valid</code> functions report it
+as not valid, whatever the schema. So a pattern is never matched against such a string.</p>
+<p>A pattern with no lookaround, backreference, multiline anchor or word boundary gets an automaton that decides an
+ASCII text with one table read per byte, when the automaton is small enough. Every other pattern, and a text that
+is not ASCII, runs on a backtracking matcher. The Go module hands most patterns to Go's linear-time <code>regexp</code>
+package, which OCaml's standard library has no counterpart of. A backtracking matcher can take time that doubles
+with each character of a text it does not match, so a match is limited (see below), and the matcher does four
+things to keep a pattern from going the long way round. It looks at the next character before it takes a way, as
+V8 does, and takes no way that character rules out. It remembers the places where every way has failed, when the
+pattern has no backreference, so that a repetition inside a repetition (<code>(a*)*b</code>, <code>^(?:a+)+$</code>) and alternatives
+that are prefixes of each other (<code>^(?:a|aa)+$</code>) take time proportional to the pattern times the text. A repetition
+whose body cannot consume a character, such as <code>(?:\b|(?=a)|){4,5}</code>, is
+not such a case. Every iteration of it is empty, so the matcher runs the body once when the minimum is one or more
+and not at all when it is zero, which is what ECMA-262 says such a repetition matches. And a counted repetition is
+not tried at all at a place where the rest of the pattern, with the iterations the repetition has still to make,
+needs more of the string than is left.</p>
+<h2 id="limits-on-patterns">Limits on patterns</h2>
+<p>A schema may come from outside, and so may an instance. Neither is to make a validation run without end or hold
+memory out of proportion to what it was given. So one match has a limit, and one pattern has limits of size. A
+limit that is reached is an error of its own, never the answer &quot;valid&quot; or &quot;not valid&quot;, and never the error of a
+pattern that is not valid.</p>
+<table>
+<thead>
+<tr>
+<th>Limit</th>
+<th>Value</th>
+<th>When it is reached</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Time of one match of a pattern against one string</td>
+<td>1 second by default (the option <code>pattern_match_limit</code>, in seconds). <code>0.</code> or less turns it off.</td>
+<td><code>Error (Pattern_match_limit {pattern; limit; memory = false})</code> from the <code>validate</code> and <code>evaluate</code> functions. The <code>is_valid</code> functions, which return a <code>bool</code> alone, raise <code>Pattern_match_limit_reached</code> with the same fields.</td>
+</tr>
+<tr>
+<td>Backtracking memory of one match</td>
+<td>1,048,576 entries, which is 32 MB</td>
+<td>The same, with <code>memory = true</code>.</td>
+</tr>
+<tr>
+<td>Length of a pattern</td>
+<td>1,048,576 bytes</td>
+<td><code>Error (Pattern_too_large {pattern; keyword; limit = &quot;length&quot;; value})</code> from the compile functions.</td>
+</tr>
+<tr>
+<td>Nesting of the groups of a pattern</td>
+<td>1,000 deep</td>
+<td>The same, with <code>limit = &quot;nesting&quot;</code>.</td>
+</tr>
+<tr>
+<td>Size of a pattern</td>
+<td>1,048,576 as it is read: 64 for each term, 32 for each further alternative, 8 for each range of a class, and what case folding and groups of one name add</td>
+<td>The same, with <code>limit = &quot;size&quot;</code>.</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-ocaml">let () =
+  (* One match of a pattern may take a twentieth of a second. The default is one second, and 0. turns the limit off. *)
+  let options = options ~pattern_match_limit:0.05 () in
+  let validator = Result.get_ok (Validator.compile_string ~options {|{&quot;pattern&quot;: &quot;^(?:(a+)\\1*)+$&quot;}|}) in
+  let text = {|&quot;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab&quot;|} in
+
+  (* A match that reaches the limit is an error and never an answer: no answer within 0.05 s *)
+  (match Validator.validate_string validator text with
+  | Ok valid -&gt; Printf.printf &quot;%b\n&quot; valid
+  | Error (Pattern_match_limit { limit; _ }) -&gt; Printf.printf &quot;no answer within %g s\n&quot; limit
+  | Error e -&gt; print_endline (error_to_string e));
+
+  (* A function that returns a bool alone raises: abandoned *)
+  (match Validator.is_valid_string validator text with
+  | valid -&gt; Printf.printf &quot;%b\n&quot; valid
+  | exception Pattern_match_limit_reached _ -&gt; print_endline &quot;abandoned&quot;);
+
+  (* A pattern over a limit of size is refused when the schema is compiled: nesting, 1000 *)
+  let deep = String.concat &quot;&quot; (List.init 1000 (fun _ -&gt; &quot;(?:&quot;)) ^ &quot;a&quot; ^ String.make 1000 ')' in
+  match Validator.compile_string (Printf.sprintf {|{&quot;pattern&quot;: &quot;%s&quot;}|} deep) with
+  | Ok _ -&gt; print_endline &quot;compiled&quot;
+  | Error (Pattern_too_large { limit; value; _ }) -&gt; Printf.printf &quot;%s, %d\n&quot; limit value
+  | Error e -&gt; print_endline (error_to_string e)
+</code></pre>
+<p>The backtracking matcher counts its steps and reads the clock every 4,096 of them, which is every 23 to 74
+microseconds as measured, so a match is abandoned at the first reading after its limit and a match that ends before
+its first reading never reads the clock. The limit is on each match and not on the validation. It applies to
+<code>pattern</code> and to <code>patternProperties</code>, failing fast and collecting, and to the matches the compiler makes of a
+pattern against the property names the schema declares, for which the compile functions return the error. The
+evaluation is abandoned at the match and its working memory is given back.</p>
+<p>The clock is the time that passes, read from <code>Unix.gettimeofday</code> of the <code>unix</code> library that comes with the compiler.
+Reading it allocates nothing. It is the time of day and not a monotonic clock, which the OCaml distribution does not
+have: when the time of day is set forward during a match the match is abandoned early, and when it is set back the
+limit is counted again from the new time. A program that has a monotonic clock gives it in the option
+<code>pattern_match_clock</code>. The limit is not counted on <code>Sys.time</code>, the processor time of the whole process, which does
+not move while the process waits and runs several times faster in a program that computes on several domains.</p>
+<p>The automaton and the matchers for the common shapes of pattern take time proportional to the string and have no
+limit. With the limit turned off a match has no limit on its time or its memory.</p>
+<p>A pattern over a limit of size is not read past the limit, so the error says it is too large to read and nothing
+of whether it is valid. The Go module counts the same size for every pattern. The <code>regex</code> format reads a string of
+the instance with the same limits, and a string over one is not a valid regular expression to it.</p>
+<p>The memory of the places where a way has failed is at most 8 MB, is taken into use only by a match that has made
+64 steps for each position of its string, and stays in the working memory of the evaluation, so a match with it
+allocates nothing once it has grown.</p>
+<p>Some patterns still reach the limit on a long enough string: a backreference inside nested repetitions
+(<code>^(?:(a+)\1*)+$</code>), for which V8 takes time that doubles with each character too, nested counted ranges
+(<code>^(?:a{0,1000}){0,1000}$</code>), and a search that reads the rest of the string from every position of it, such as a
+lookaround that scans (<code>(?=.*c)b</code> on 100,000 characters).</p>
+<h2 id="performance">Performance</h2>
+<p>Figures are being measured.</p>
+<h2 id="links">Links</h2>
+<ul>
+<li>Package repository: <a href="https://github.com/corvus-dotnet/corvus-json-schema-ocaml">corvus-dotnet/corvus-json-schema-ocaml</a></li>
+<li>Source and README: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-ml/corvus-json-schema">src-ml/corvus-json-schema</a></li>
+<li>The other languages: see <a href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

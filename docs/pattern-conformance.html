@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="How each Corvus evaluator matches a JSON Schema pattern, what it refuses, how it limits a match, and where the ports still differ from ECMA-262." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="How each Corvus evaluator matches a JSON Schema pattern, what it refuses, how it limits a match, and where the ports still differ from ECMA-262." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Patterns Across The Ports - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="How each Corvus evaluator matches a JSON Schema pattern, what it refuses, how it limits a match, and where the ports still differ from ECMA-262." />
+    <meta property="og:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Patterns Across The Ports - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/pattern-conformance/" />
+    <title>Patterns Across The Ports - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/pattern-conformance/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/pattern-conformance/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-path.html">JSONPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/open-api.html">OpenAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api.html">AsyncAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/standalone-evaluator-internals.html">Schema Evaluation Program Internals</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-precompilation.html">Runtime Evaluator Engineering Notes</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-measurements.html">Runtime Evaluator Measurements</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/other-languages.html">JSON Schema in other languages</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-javascript.html">JavaScript and TypeScript</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-rust.html">Rust</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-python.html">Python</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-c.html">C</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-cpp.html">C&#x2B;&#x2B;</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-swift.html">Swift</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ruby.html">Ruby</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-php.html">PHP</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-java.html">Java and Kotlin</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-go.html">Go</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-julia.html">Julia</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-r.html">R</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-pascal.html">Object Pascal</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ocaml.html">OCaml</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/docs/pattern-conformance.html">Patterns across the ports</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translator.html">ECMA-262 regex translator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translations.html">ECMA-262 regex translations</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/clone-and-freeze.html">Clone, Freeze, and Builder Snapshots</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-path.html">Json Path</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-client.html">Open Api Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-server.html">Open Api Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">Open Api Advanced Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-server.html">Open Api Advanced Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-end-to-end.html">Open Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-server.html">Open Api Callback Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-client.html">Open Api Callback Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-producer.html">Async Api Producer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-consumer.html">Async Api Consumer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-end-to-end.html">Async Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-authentication.html">Async Api Authentication</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api20-client.html">Open Api20Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Patterns Across The Ports</h1>
+<p><code>pattern</code> and <code>patternProperties</code> are ECMA-262 regular expressions, and so is the <code>regex</code> format. Every Corvus
+evaluator answers them as an ECMAScript engine does. This page says how each port matches a pattern, what each
+refuses, how each limits a match, and where a port still differs from ECMA-262. Each port's own page has the detail.</p>
+<h2 id="what-every-port-does">What every port does</h2>
+<ul>
+<li><strong>Two grammars.</strong> A pattern is read with the grammar of the <code>u</code> flag and matched by code point. A pattern that
+grammar does not accept is read with the Annex B grammar of a pattern with no flag (which accepts <code>\-</code>, <code>\&amp;</code>, a
+lone <code>{</code> and other things many schemas hold) and matched by UTF-16 code unit, as ECMA-262 matches such a pattern.
+A pattern neither grammar accepts is refused when the schema is compiled.</li>
+<li><strong>One oracle.</strong> Every port is tested against the
+<a href="https://github.com/corvus-dotnet/ecma262-regex-test-data">ECMA-262 regular expression test data</a>: V8's answers for
+98,839 patterns and 4,322,391 texts. Where V8 departs from ECMA-262 the ports follow ECMA-262. A quantifier whose
+first count is greater than its second is an error whatever the size of the numbers. A group name used twice is an
+error unless the two groups are in separate alternatives. <code>\p{WSpace}</code> is not a property name ECMA-262 lists.
+<code>Katakana_Or_Hiragana</code> is a Script value that no character has. The properties are those of Unicode 17.</li>
+<li><strong>Limits.</strong> A schema and an instance can both come from outside, so a pattern has limits of size, refused as too
+large when the schema is compiled and never as not valid, and a match has a limit of time, 1 second by default.</li>
+</ul>
+<h2 id="the-ports">The ports</h2>
+<table>
+<thead>
+<tr>
+<th>Port</th>
+<th>How a pattern is matched</th>
+<th>What is refused that is valid ECMA-262</th>
+<th>The limit of a match</th>
+<th>Match-limit hits on the dataset</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET (V5)</td>
+<td>Its own matchers for common shapes, and .NET <code>Regex</code> for the rest, through a translation from the parse tree</td>
+<td>Nothing, apart from the limits of size</td>
+<td><code>RegexMatchTimeout</code>, 1 second, which throws <code>RegexMatchTimeoutException</code>. A pattern proved to match in linear time has none</td>
+<td>0 compiled, 2 interpreted</td>
+</tr>
+<tr>
+<td>.NET (V4 generated code)</td>
+<td>.NET <code>Regex</code>, through the same translation</td>
+<td>Nothing, apart from the limits of size</td>
+<td>A match timeout of 1 second in the generated code</td>
+<td>Not measured</td>
+</tr>
+<tr>
+<td>Rust, and the C library, C++, Python (Rust-backed), Ruby, PHP, R and Swift built on it</td>
+<td>Its own ECMA-262 engine, and the <code>regex</code> crate for patterns it proves linear</td>
+<td>Nothing, apart from the limits of size</td>
+<td>1 second, as an error</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Go</td>
+<td>Its own ECMA-262 engine, and the standard library's <code>regexp</code> for patterns it proves linear</td>
+<td>Nothing, apart from the limits of size</td>
+<td>1 second, as an error</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Object Pascal</td>
+<td>Its own ECMA-262 engine</td>
+<td>Nothing, apart from the limits of size</td>
+<td>1 second, as an exception</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Java and Kotlin</td>
+<td><code>java.util.regex</code>, through a translation</td>
+<td>A backreference to a group of a lookbehind that only matching backwards can tell (689 patterns of the dataset), and 4 over the limits of size</td>
+<td>1 second, and 8 MiB of what <code>java.util.regex</code> holds for one pattern</td>
+<td>6 to 7</td>
+</tr>
+<tr>
+<td>Julia</td>
+<td>PCRE2, through a translation</td>
+<td>A backreference into a lookbehind that PCRE2 cannot write with the same meaning (467 patterns of the dataset), and 139 corner cases of the grammar with no <code>u</code> flag</td>
+<td>1 second, and PCRE2's count of steps</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Python (pure)</td>
+<td><code>re</code> for patterns it proves linear, the <code>regex</code> package for the rest</td>
+<td>1 pattern of the dataset</td>
+<td>1 second by the clock</td>
+<td>9 to 10</td>
+</tr>
+<tr>
+<td>TypeScript and JavaScript</td>
+<td>The host's own <code>RegExp</code></td>
+<td>Nothing</td>
+<td>None</td>
+<td>Not applicable</td>
+</tr>
+</tbody>
+</table>
+<p>The counts of refusals and of match-limit hits are from runs over the 13 files of the dataset: .NET on 2026-10-16,
+the others on 2026-10-12. A match-limit hit is a match that reached the limit and so has no answer. It is never a
+wrong answer. No port gives a wrong answer on the dataset.</p>
+<h2 id="where-the-ports-differ">Where the ports differ</h2>
+<p>These are the known differences from ECMA-262, or between the ports, that the dataset does not count as wrong
+answers. Each is a decision recorded here, with an issue where there is work to follow.</p>
+<h3 id="net">.NET</h3>
+<ul>
+<li><strong>A pattern that backtracks without end is bounded only by the timeout.</strong> .NET has no engine of its own for the
+patterns its matchers do not take, so a pattern such as <code>^(a|aa)+$</code> on a long run of <code>a</code> runs until
+<code>RegexMatchTimeout</code>. The ports with their own engine remember where a way has failed and finish such a match. A
+C# port of that engine, used where the parse tree shows a pattern that can backtrack without end, is to follow
+(<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1025">#1025</a>).</li>
+<li><strong>A pattern proved linear has no timeout.</strong> The timeout makes .NET's engines check the clock as they match, which
+costs up to half the time of a match in the interpreted engine. A pattern whose match is proved to take time in
+proportion to the text (no backreference, lookaround or word boundary, each repetition of one character or set, and
+no repetition that can give characters back to another that can take them) is matched with no timeout. See
+<a href="/Corvus.JsonSchema/docs/runtime-evaluator.html#regular-expression-match-timeout">the timeout</a>.</li>
+<li><strong>A JSON string with a lone surrogate throws.</strong> The parser accepts an instance string that holds the escape of half
+of a surrogate pair, such as <code>&quot;\ud800&quot;</code>, and <code>pattern</code>, <code>minLength</code> and <code>maxLength</code> then throw
+<code>InvalidOperationException</code> (in V4 generated code too). Every other port refuses such a document when it parses
+it, or reports it as not valid. The 46,438 texts of the dataset's <code>lone-surrogates.jsonl</code> all throw
+(<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021">#1021</a>).</li>
+<li><strong><code>format: regex</code> reads a pattern with .NET's parser,</strong> not with the ECMA-262 parser that <code>pattern</code> uses, so it can
+accept a pattern ECMA-262 refuses and refuse one ECMA-262 accepts (<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1027">#1027</a>).</li>
+<li><strong><code>idn-email</code> has a limit of 320 bytes on the whole address.</strong> The Rust crate has no limit on the address as a
+whole. The host name of the address has the limit of 253 characters as A-labels in both (<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1029">#1029</a>).</li>
+<li><strong>.NET Framework and a large count.</strong> .NET Framework's <code>Regex</code> makes a string of the count of a repetition of one
+character when it is constructed, so <code>^a{100000000}$</code> costs some 200 MB there, and a count no string can reach
+is written as a part that never matches. .NET does neither.</li>
+<li><strong>The V4 generated code</strong> has the timeout on every pattern, and the four folders of V4 code generated before the
+change keep their old translations and have no timeout until they are generated again.</li>
+</ul>
+<h3 id="java-and-julia">Java and Julia</h3>
+<ul>
+<li><strong>Refused lookbehinds.</strong> <code>java.util.regex</code> and PCRE2 match a lookbehind forwards, and ECMA-262 matches it
+backwards. Where a backreference reads a group whose text depends on that, the pattern is refused when the schema
+is compiled, with a message that says so. See <a href="/Corvus.JsonSchema/docs/json-schema-for-java.html">Java</a> and <a href="/Corvus.JsonSchema/docs/json-schema-for-julia.html">Julia</a>.</li>
+<li><strong>Julia 1.10</strong> bundles a PCRE2 whose case folding is that of Unicode 14, so thirty case pairs are not equivalent in
+a case-insensitive backreference there. Julia 1.13 answers exactly.</li>
+<li><strong>Julia: nested repetitions are left to PCRE2.</strong> A pattern such as <code>^(?:(?:(?:a*)*)*)*b$</code> is written as
+<code>(?:(?:(?:a+)+)+)*</code>, which means the same, and PCRE2 backtracks through every way to divide a run among its
+levels: such a match on sixteen characters reaches the limit of a match. The ports with their own engine finish it.</li>
+<li><strong>Julia: a pattern too large to be timed.</strong> A pattern that PCRE2 holds only without the code that reads the clock,
+such as an alternation of 3,000 words, is run without it, and its match ends in its first stage.</li>
+</ul>
+<h3 id="python">Python</h3>
+<ul>
+<li>The limit is of time on the clock. The <code>regex</code> package's timeout counts the time of the process on the processor,
+so with three or more other threads busy a match can run for longer than the limit before it is stopped.</li>
+<li>A text of more than 1,048,576 characters is not matched by a pattern that is not proved linear, once the first try
+at a match has been abandoned.</li>
+<li><code>re</code> has no limit on the memory of a match. It runs only patterns proved linear.</li>
+</ul>
+<h3 id="typescript-and-javascript">TypeScript and JavaScript</h3>
+<ul>
+<li><strong>No limit of a match.</strong> A <code>RegExp</code> match cannot be interrupted, so a pattern that backtracks without end, on a
+text made for it, does not return. The answers are those of the host engine, which are V8's on Node and in Chrome.
+A port of the ECMA-262 engine, which would give a limit and the same answers on every host, is to follow
+(<a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1026">#1026</a>).</li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

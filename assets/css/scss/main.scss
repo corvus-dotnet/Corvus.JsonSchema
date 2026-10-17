@@ -1,0 +1,50 @@
+@charset 'UTF-8';
+
+// ==========================================================================
+// Corvus.Text.Json — Documentation Theme
+// Dark glassmorphism aesthetic matching corvus-oss.org
+// ==========================================================================
+
+// ---------------------------------------------------------------------------
+// Abstracts — Variables, mixins, functions (no CSS output)
+// ---------------------------------------------------------------------------
+@use 'abstracts/variables';
+@use 'abstracts/mixins';
+
+// ---------------------------------------------------------------------------
+// Vendor — Third-party resets and normalizations
+// ---------------------------------------------------------------------------
+@use 'vendor/sanitize';
+
+// ---------------------------------------------------------------------------
+// Base — Element-level defaults, fonts, resets
+// ---------------------------------------------------------------------------
+@use 'base/fonts';
+@use 'base/fouc';
+@use 'base/base';
+@use 'base/typography';
+
+// ---------------------------------------------------------------------------
+// Components — Reusable UI building blocks
+// ---------------------------------------------------------------------------
+@use 'components/button';
+@use 'components/cards';
+@use 'components/code';
+// _search.scss removed — global overlay search was never wired up.
+// API browser search styles live in pages/_api.scss.
+@use 'components/sidebar';
+
+// ---------------------------------------------------------------------------
+// Layout — Structural page regions
+// ---------------------------------------------------------------------------
+@use 'layout/header';
+@use 'layout/footer';
+@use 'layout/hero';
+@use 'layout/layout';
+
+// ---------------------------------------------------------------------------
+// Pages — Page-specific overrides
+// ---------------------------------------------------------------------------
+@use 'pages/home';
+@use 'pages/docs';
+@use 'pages/api';
