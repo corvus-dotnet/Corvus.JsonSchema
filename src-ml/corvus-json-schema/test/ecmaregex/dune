@@ -1,0 +1,54 @@
+; The tests of the ECMA-262 regular expression engine: ecmaregex_test.go, oracle_test.go and suite_test.go of the Go
+; module, as TestEcmaRegex.pas of the Object Pascal port has them. v8_oracle.json is the oracle of the Go package
+; (testdata/v8_oracle.json there, which testdata/gen_oracle.js writes), and v8_cases.json its cases
+; (testdata/v8_cases.json, which testdata/gen_cases.js writes).
+
+(library
+ (name test_ecmaregex_json)
+ (modules json)
+ (wrapped false))
+
+(test
+ (name test_ecmaregex)
+ (modules test_ecmaregex)
+ (deps v8_oracle.json v8_cases.json)
+ (libraries
+  test_ecmaregex_json
+  corvus-json-schema.ecmaregex
+  corvus-json-schema.ucd
+  threads.posix))
+
+; The limits of the engine: the limit on a match and the limits on the size of a pattern (match_limit_test.go,
+; size_limit_test.go and size_cases_test.go of the Go module). size_cases.json is the file of the Go package
+; (testdata/size_cases.json there), with the size the Go parser counts for each pattern. unix is for the time of the
+; wall, which the tests measure.
+
+(test
+ (name test_limits)
+ (modules test_limits)
+ (deps size_cases.json)
+ (libraries corvus-json-schema.ecmaregex test_ecmaregex_json unix))
+
+; One compiled pattern matched from several domains at once, and the limit of a match while other domains compute.
+; Domains need OCaml 5, so the source of the test is domains_5.ml there and a line that says so on OCaml 4. unix is for
+; the time of the wall, which the test measures.
+
+(rule
+ (enabled_if
+  (>= %{ocaml_version} 5.0))
+ (action
+  (copy domains_5.ml test_domains.ml)))
+
+(rule
+ (enabled_if
+  (< %{ocaml_version} 5.0))
+ (action
+  (with-stdout-to
+   test_domains.ml
+   (echo
+    "let () = print_endline \"ecmaregex domains: SKIPPED, domains need OCaml 5\"\n"))))
+
+(test
+ (name test_domains)
+ (modules test_domains)
+ (libraries corvus-json-schema.ecmaregex unix))

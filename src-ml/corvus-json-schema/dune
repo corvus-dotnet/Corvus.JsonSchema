@@ -1,0 +1,7 @@
+; The notice of the Unicode data that ucd/tables.ml is derived from goes wherever the package goes: opam installs it
+; beside LICENSE and README.md, which dune installs for a package without being asked.
+
+(install
+ (section doc)
+ (package corvus-json-schema)
+ (files THIRD-PARTY-NOTICES.txt))

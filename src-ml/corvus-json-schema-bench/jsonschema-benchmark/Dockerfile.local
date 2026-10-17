@@ -1,0 +1,25 @@
+# For local comparisons under https://github.com/sourcemeta-research/jsonschema-benchmark: the Corvus.JsonSchema
+# OCaml evaluator built from this checkout (staged by Build-Image.ps1: the library in corvus-json-schema, this
+# directory in bench). The library needs OCaml 4.14 or later. The image builds it with OCaml 5.5, with the compiler's
+# default flags (dune's release profile). The compiler of this image is not built with flambda, so -O3 and
+# -unboxed-types would change nothing and are not given.
+FROM ocaml/opam:debian-13-ocaml-5.5
+
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends time && rm -rf /var/lib/apt/lists/*
+USER opam
+
+RUN opam install -y -j 4 dune && opam clean -a -c -s
+
+# The library is a project of the workspace the program is built in, so dune builds it from source with the program.
+COPY --chown=opam bench /app
+COPY --chown=opam corvus-json-schema /app/corvus-json-schema
+WORKDIR /app
+
+RUN opam exec -- ocamlopt -config | grep '^flambda:' \
+ && opam exec -- dune build -j 4 --profile release ./corvus_ocaml_benchmark.exe \
+ && cp _build/default/corvus_ocaml_benchmark.exe /app/corvus_ocaml_benchmark \
+ && sed -n 's/^(version \(.*\))$/\1/p' corvus-json-schema/dune-project > /app/corvus-version
+
+ENTRYPOINT ["/app/memory-wrapper.sh", "/app/corvus_ocaml_benchmark"]
+CMD []

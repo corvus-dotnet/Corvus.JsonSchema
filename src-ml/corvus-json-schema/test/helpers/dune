@@ -1,0 +1,5 @@
+; What the tests of the evaluator share: reading the files of the JSON-Schema-Test-Suite.
+
+(library
+ (name corvus_json_schema_test_helpers)
+ (libraries corvus-json-schema))
