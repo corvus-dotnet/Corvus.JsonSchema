@@ -11,17 +11,16 @@ The attached notices are provided for information only.
 License notice for the Unicode Character Database
 -------------------------------
 
-The package is built on version 0.1.6 of the corvus-json-schema Rust crate,
-which matches some regular expressions with the regress crate, version 0.12.0
-(src/rust/Cargo.lock names both). The source package holds neither: cargo
-takes them from crates.io when the package is installed. An installed package,
-and a binary package, holds both compiled into its shared library.
-src/unicodetables.rs of regress holds tables derived from the data files of
-the Unicode Character Database, version 17.0.0
-(https://www.unicode.org/Public/17.0.0/ucd/). The data files are "© 2025
-Unicode®, Inc." and are licensed under the Unicode License V3
-(SPDX-License-Identifier: Unicode-3.0), as https://www.unicode.org/license.txt
-gives it:
+The package is built on version 0.1.7 of the corvus-json-schema Rust crate,
+which cargo takes from crates.io when the package is installed. An installed
+package, and a binary package, holds it compiled into its shared library.
+src/ecmaregex/tables_gen.rs of that crate holds tables derived from the data
+files of the Unicode Character Database, version 17.0.0
+(https://www.unicode.org/Public/17.0.0/ucd/): the General_Category values, the
+binary properties, the Script and Script_Extensions values, the simple case
+folding and the simple uppercase mapping. The data files are "© 2025 Unicode®,
+Inc." and are licensed under the Unicode License V3 (SPDX-License-Identifier:
+Unicode-3.0), as https://www.unicode.org/license.txt gives it:
 
 UNICODE LICENSE V3
 
@@ -66,9 +65,12 @@ authorization of the copyright holder.
 License notice for https://github.com/ridiculousfish/regress
 -------------------------------
 
-The package's shared library holds the regress crate, version 0.12.0,
-compiled, as the notice above says. regress is licensed under the MIT license
-or the Apache License, Version 2.0, at the user's option.
+The tables of src/ecmaregex/tables_gen.rs of the corvus-json-schema crate were
+written from the tables of the Corvus Go module, which were written from
+src/unicodetables.rs of regress 0.12.0. That crate generates the file from the
+Unicode Character Database. regress is licensed under the MIT license or the
+Apache License, Version 2.0, at the user's option. Neither the package nor the
+corvus-json-schema crate depends on it.
 
 MIT License
 

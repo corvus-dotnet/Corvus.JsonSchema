@@ -10,7 +10,7 @@ validator for every value: compiling does the work that makes validating fast.
 compile_schema(schema, default_dialect = "draft2020-12", assert_format = NA,
                assert_format_in_legacy_drafts = FALSE, assert_content = TRUE,
                formats = NULL, resolver = NULL, base_uri = NULL,
-               entry_point = NULL, max_depth = 128L)
+               entry_point = NULL, max_depth = 128L, pattern_match_limit = 1)
 }
 \arguments{
 \item{schema}{The schema: one string of JSON text, or R values (a list, or \code{TRUE} or \code{FALSE}) read as
@@ -32,6 +32,9 @@ compile_schema(schema, default_dialect = "draft2020-12", assert_format = NA,
   \code{"#/$defs/item"}.}
 \item{max_depth}{How many times a schema may refer to itself without moving through the value before evaluation is
   abandoned with an error.}
+\item{pattern_match_limit}{The seconds one match of a \code{pattern} or \code{patternProperties} regular expression
+  against one string may take. A match that takes longer is abandoned with an error, and is never an answer.
+  \code{NULL}, zero or less turns the limit off, for a schema and instances that are both trusted.}
 }
 \value{
 An object of class \code{corvus_json_schema}, for \code{\link{is_valid}}, \code{\link{is_valid_json}},
@@ -39,7 +42,11 @@ An object of class \code{corvus_json_schema}, for \code{\link{is_valid}}, \code{
 \code{\link{saveRDS}} or a saved workspace: compile the schema again in a new session.
 }
 \section{Conditions}{
-A schema that cannot be compiled raises a condition of class \code{corvus_compilation_error}; schema text that is not
+A schema that cannot be compiled raises a condition of class \code{corvus_compilation_error}, and one with a regular
+expression over a limit of size (longer than 1,048,576 bytes, nested more than 1,000 groups deep, or of more than about
+16,000 terms) raises \code{corvus_pattern_too_large_error}, which is a \code{corvus_compilation_error}. A match of a
+\code{patternProperties} regular expression against a property name the schema declares can raise
+\code{corvus_pattern_match_limit_error}. Schema text that is not
 JSON, \code{corvus_invalid_json_error}; and an R value that is not a JSON value, \code{corvus_value_error}. All
 inherit from \code{corvus_json_schema_error}.
 }

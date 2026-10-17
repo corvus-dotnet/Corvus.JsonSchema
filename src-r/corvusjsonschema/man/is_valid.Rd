@@ -43,7 +43,9 @@ An R string cannot hold a NUL character, so JSON text with one in a string can o
 \section{Conditions}{
 A value that is not a JSON value raises \code{corvus_value_error}; text that is not JSON,
 \code{corvus_invalid_json_error}; a schema that refers to itself more than \code{max_depth} times without moving
-through the value, \code{corvus_depth_error}; and an error in a custom format function,
+through the value, \code{corvus_depth_error}; a match of a regular expression that takes longer than the
+\code{pattern_match_limit} of \code{\link{compile_schema}}, \code{corvus_pattern_match_limit_error}, for which the
+value is neither valid nor not valid; and an error in a custom format function,
 \code{corvus_callback_error}. All inherit from \code{corvus_json_schema_error}.
 }
 \examples{
