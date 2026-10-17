@@ -163,6 +163,15 @@ let test_counts_beyond_an_int () =
         "{}",
         true,
         "Expected the property count to be less than or equal to '9223372036854775808'" );
+      (* The nearest double is 12345678901234567168, whose digits a printf of 17 significant digits does not keep. *)
+      ( {|{"maxItems": 12345678901234567890.0}|},
+        "[1]",
+        true,
+        "Expected the item count to be less than or equal to '12345678901234567168'" );
+      ( {|{"minItems": 4611686018427387904.0}|},
+        "[1]",
+        false,
+        "Expected the item count to be greater than or equal to '4611686018427387904'" );
       ( {|{"contains": true, "maxContains": 18446744073709551615, "minContains": 9223372036854775807}|},
         "[1]",
         false,

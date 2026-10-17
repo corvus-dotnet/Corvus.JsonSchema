@@ -90,14 +90,21 @@ let uint_value d n =
     end
   end
 
+(* uint64_text writes a whole number of [2^62, 2^64) in full, through an Int64 and not through the C runtime's
+   printf: the one OCaml has on Windows writes 17 significant digits of a float and zeros after them, so that
+   9223372036854775808.0 came out as 9223372036854775800. Below 2^63 the float is an Int64 exactly; at or above it,
+   the float less 2^63 is exact (both are multiples of 2^11) and is the Int64 whose unsigned value is the number. *)
+let uint64_text f =
+  if f < Numbers.two63 then Printf.sprintf "%Ld" (Int64.of_float f)
+  else Printf.sprintf "%Lu" (Int64.add (Int64.of_float (f -. Numbers.two63)) Int64.min_int)
+
 (* count_value is uint_value for a keyword of a node, which keeps the text of a value beyond an [int] for the
    messages: the digits Go writes for the uint64 it holds. *)
 let count_value (node : Node.t) d n keyword =
   let value = uint_value d n in
   if value = max_int then begin
     let text =
-      if Numbers.class_of (flags d n) = Numbers.num_float then Printf.sprintf "%.0f" (float_value d n)
-      else number_text d n
+      if Numbers.class_of (flags d n) = Numbers.num_float then uint64_text (float_value d n) else number_text d n
     in
     node.count_texts <- (keyword, text) :: node.count_texts
   end;
