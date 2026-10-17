@@ -47,17 +47,16 @@ contains
   subroutine list_json_files(directory, names)
     character(*), intent(in) :: directory
     character(256), allocatable, intent(out) :: names(:)
-    character(:), allocatable :: listing, command
+    character(*), parameter :: listing = "corvus_json_schema_listing.tmp"
     character(256) :: line
     character(256), allocatable :: grown(:)
     integer :: unit, status, count
-    listing = "corvus_json_schema_listing.tmp"
     if (slash() == "\") then
-      command = 'dir /b /on "' // directory // '\*.json" > ' // listing // ' 2> nul'
+      call execute_command_line('dir /b /on "' // directory // '\*.json" > ' // listing // ' 2> nul', exitstat=status)
     else
-      command = 'ls -1 "' // directory // '" 2> /dev/null | grep "\.json$" | LC_ALL=C sort > ' // listing
+      call execute_command_line('ls -1 "' // directory // '" 2> /dev/null | grep "\.json$" | LC_ALL=C sort > ' // &
+                                listing, exitstat=status)
     end if
-    call execute_command_line(command, exitstat=status)
     allocate (names(0))
     open (newunit=unit, file=listing, action="read", status="old", iostat=status)
     if (status /= 0) return
@@ -104,7 +103,7 @@ contains
     character(:), allocatable, intent(out) :: json
     logical, intent(out) :: found
     character(*), parameter :: prefix = "http://localhost:1234/"
-    character(:), allocatable :: path
+    character(len(uri)) :: path
     integer :: i
     found = .false.
     if (len(uri) <= len(prefix)) return
@@ -115,7 +114,7 @@ contains
         if (path(i:i) == "/") path(i:i) = "\"
       end do
     end if
-    call read_file(remotes // slash() // path, json)
+    call read_file(remotes // slash() // trim(path), json)
     found = allocated(json)
   end subroutine remote_resolver
 

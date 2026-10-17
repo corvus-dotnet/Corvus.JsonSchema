@@ -48,6 +48,9 @@ jobs:
             compiler: gcc
             version: '11'
             flags: -Wall -Wextra -std=f2018 -fimplicit-none -Werror -g -fcheck=all
+            # gfortran 11 warns falsely that deferred-length character variables of the tests may be used
+            # uninitialized; the library itself builds with every warning an error (the Build step).
+            test-flags: -Wno-maybe-uninitialized
           - os: ubuntu-latest
             compiler: gcc
             version: '14'
@@ -95,6 +98,7 @@ jobs:
         # makes it: the linker's path, the loader's path, pkg-config and CMake.
         env:
           GH_TOKEN: ${{ github.token }}
+          FC: ${{ steps.fortran.outputs.fc }}
         run: |
           tag=$(gh release list -R "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '[.[].tagName|select(startswith("capi-v"))][0]')
           version=${tag#capi-v}
@@ -117,11 +121,22 @@ jobs:
             echo "CMAKE_PREFIX_PATH=$prefix"
             echo "PKG_CONFIG_PATH=$prefix/lib/pkgconfig"
           } >> "$GITHUB_ENV"
+          # Added to the paths the compiler's set-up gave (Intel's oneAPI libraries are on LD_LIBRARY_PATH).
           case "$RUNNER_OS" in
             Linux)
-              { echo "LIBRARY_PATH=$prefix/lib"; echo "LD_LIBRARY_PATH=$prefix/lib"; } >> "$GITHUB_ENV" ;;
+              {
+                echo "LIBRARY_PATH=$prefix/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
+                echo "LD_LIBRARY_PATH=$prefix/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+              } >> "$GITHUB_ENV" ;;
             macOS)
-              { echo "LIBRARY_PATH=$prefix/lib"; echo "DYLD_LIBRARY_PATH=$prefix/lib"; } >> "$GITHUB_ENV" ;;
+              # DYLD_FALLBACK_LIBRARY_PATH, not DYLD_LIBRARY_PATH, so that it only fills in what a binary cannot find:
+              # the C library for the tests, and libgfortran for the fpm binary, which is linked against another
+              # Homebrew gcc's.
+              gfortran_lib=$(dirname "$("$FC" -print-file-name=libgfortran.5.dylib)")
+              {
+                echo "LIBRARY_PATH=$prefix/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
+                echo "DYLD_FALLBACK_LIBRARY_PATH=$prefix/lib:$gfortran_lib:/usr/local/lib:/usr/lib"
+              } >> "$GITHUB_ENV" ;;
             Windows)
               # ifx links the static library, built for the dynamic C runtime, with the system libraries it needs;
               # the tests run with the DLL on the path for the CMake build, which links the shared library.
@@ -129,6 +144,13 @@ jobs:
               printf 'LIB=%s\\lib;%s\n' "$winprefix" "${LIB:-}" >> "$GITHUB_ENV"
               printf '%s\\bin\n' "$winprefix" >> "$GITHUB_PATH" ;;
           esac
+      - name: MSVC's linker, not Git Bash's link
+        # In a bash step on Windows, coreutils' /usr/bin/link comes before MSVC's link.exe on the path, and ifx calls
+        # link to link.
+        if: runner.os == 'Windows'
+        run: |
+          if [ -e /usr/bin/link ]; then mv /usr/bin/link /usr/bin/link.coreutils; fi
+          command -v link
       - name: Compiler and fpm versions
         run: |
           "${{ steps.fortran.outputs.fc }}" --version 2>&1 | head -n 3 || true
@@ -149,6 +171,14 @@ jobs:
           grep -q "binding_version == \"$version\"" test/api_test.f90 \
             || { echo "::error::test/api_test.f90 does not check binding_version $version."; exit 1; }
           cmp ../../LICENSE LICENSE
+      - name: Build (fpm)
+        # The library alone, with every warning an error.
+        working-directory: ${{ env.SUBDIR }}
+        env:
+          FPM_FC: ${{ steps.fortran.outputs.fc }}
+          FPM_CC: ${{ steps.fortran.outputs.cc }}
+          FLAGS: ${{ matrix.flags }}
+        run: fpm build --flag "$FLAGS"
       - name: Test (fpm)
         # The suite, the annotation suite and the API, and the example. On Windows the static library also needs
         # the system libraries it uses.
@@ -156,7 +186,7 @@ jobs:
         env:
           FPM_FC: ${{ steps.fortran.outputs.fc }}
           FPM_CC: ${{ steps.fortran.outputs.cc }}
-          FLAGS: ${{ matrix.flags }}
+          FLAGS: ${{ matrix.flags }} ${{ matrix.test-flags }}
           JSON_SCHEMA_TEST_SUITE: ${{ github.workspace }}/JSON-Schema-Test-Suite
         run: |
           set -o pipefail
@@ -210,9 +240,10 @@ jobs:
         env:
           FPM_FC: ${{ steps.fortran.outputs.fc }}
         run: |
-          project="$RUNNER_TEMP/fpm-consumer"
+          # In the workspace, with the package as a relative path (fpm reads a path dependency as relative).
+          project="$GITHUB_WORKSPACE/fpm-consumer"
           mkdir -p "$project/app"
           cp "$SUBDIR/example/validate.f90" "$project/app/main.f90"
           printf '%s\n' 'name = "consumer"' '[dependencies]' \
-            "corvus-json-schema = { path = \"$GITHUB_WORKSPACE/$SUBDIR\" }" > "$project/fpm.toml"
+            "corvus-json-schema = { path = \"../$SUBDIR\" }" > "$project/fpm.toml"
           (cd "$project" && fpm run)

@@ -664,6 +664,8 @@ does the following.
    `v<version>`.
 4. It creates the release for that tag, with the version's history entry as its notes.
 5. It tags this repository's commit `fortran-v<version>`.
+6. It publishes the package's source as the image `ghcr.io/corvus-dotnet/corvus-json-schema-fortran:<version>`
+   (`release-image.yml`), which the Bowtie harness pins and Dependabot keeps up to date.
 
 Writing to the package's repository takes a token, the `FORTRAN_REPOSITORY_TOKEN` secret of the `fortran`
 environment. A run that fails part of the way can be run again: it skips the push when the tag is there, and the

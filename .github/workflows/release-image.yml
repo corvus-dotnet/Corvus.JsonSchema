@@ -2,11 +2,14 @@ name: release-image
 # Publishes a released package's files as a small container image, ghcr.io/corvus-dotnet/corvus-json-schema-<package>,
 # for linux/amd64 and linux/arm64, holding only those files, under /corvus-json-schema. A Dockerfile that copies the
 # library from it pins the version in an image tag, which Dependabot keeps up to date as it does any other image. The
-# Bowtie harnesses for C, C++, Object Pascal, PHP and R do so: none of these releases is in a registry Dependabot reads.
+# Bowtie harnesses for C, C++, Object Pascal, PHP, R and Fortran do so: none of these releases is in a registry
+# Dependabot reads.
 #
 #   c       the C library's Linux builds, from the capi-v<version> release, in linux-musl and linux-gnu; tagged
 #           <version>
 #   pascal  the source archive, from the pas-v<version> release, the same for both platforms; tagged <version>
+#   fortran the binding's source (src-fortran/corvus-json-schema at the fortran-v<version> tag), the same for both
+#           platforms; tagged <version>
 #   php     the extension's Linux builds, from the <version> release of corvus-dotnet/corvus-json-schema-php; tagged
 #           <version>
 #   r       the binary package for R <R_VERSION>, built here from the r-v<version> tag, natively on each platform, in
@@ -27,7 +30,7 @@ on:
     inputs:
       package:
         type: choice
-        options: [c, pascal, php, r]
+        options: [c, pascal, php, r, fortran]
         required: true
       version:
         description: The released version, without its tag's prefix (0.1.4, not capi-v0.1.4)
@@ -105,6 +108,14 @@ jobs:
         with:
           pattern: r-*
           path: r
+      - name: Checkout the Fortran binding
+        if: inputs.package == 'fortran'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: fortran-v${{ inputs.version }}
+          persist-credentials: false
+          path: fortran-source
+          sparse-checkout: src-fortran/corvus-json-schema
       - name: Collect the files for each platform
         # context/<platform>/corvus-json-schema is what the image for that platform holds.
         run: |
@@ -133,6 +144,13 @@ jobs:
               ;;
             r)
               for p in amd64 arm64; do mv "r/r-$p"/*.tar.gz "context/$p/corvus-json-schema/"; done
+              ;;
+            fortran)
+              # The files git tracks, as the package's repository has them: no build output.
+              for p in amd64 arm64; do
+                (cd fortran-source/src-fortran/corvus-json-schema \
+                  && git ls-files -z | xargs -0 cp --parents -t "$GITHUB_WORKSPACE/context/$p/corvus-json-schema")
+              done
               ;;
             *)
               echo "::error::No image for the package $PACKAGE." && exit 1

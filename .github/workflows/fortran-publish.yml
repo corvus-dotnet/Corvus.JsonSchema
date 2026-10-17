@@ -11,6 +11,8 @@ name: fortran-publish
 #   1. the contents of src-fortran/corvus-json-schema at the root (fpm.toml and CMakeLists.txt at the root),
 #      committed and tagged v<version>;
 #   2. a release for that tag, with the version's entry in VERSIONHISTORY.md as its notes.
+# It also publishes the package's source as the image ghcr.io/corvus-dotnet/corvus-json-schema-fortran:<version>
+# (release-image.yml), which the Bowtie harness pins.
 # `corvus-json-schema = { git = "https://github.com/corvus-dotnet/corvus-json-schema-fortran.git", tag = "v<version>" }`
 # in an fpm.toml installs from it. Changes are made here and never there.
 #
@@ -178,3 +180,15 @@ jobs:
           else
             gh api "repos/${{ github.repository }}/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA"
           fi
+
+  image:
+    name: Publish the release image
+    needs: [version, publish]
+    # The binding's source as an image that a Dockerfile can pin (see release-image.yml): the Bowtie harness does.
+    uses: ./.github/workflows/release-image.yml
+    permissions:
+      contents: read
+      packages: write  # push ghcr.io/corvus-dotnet/corvus-json-schema-fortran
+    with:
+      package: fortran
+      version: ${{ needs.version.outputs.version }}
