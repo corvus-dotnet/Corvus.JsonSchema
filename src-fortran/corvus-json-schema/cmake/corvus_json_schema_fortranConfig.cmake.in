@@ -1,0 +1,7 @@
+# The Fortran binding to the corvus-json-schema C library: the target corvus_json_schema::fortran. The C library's
+# own package (corvus_json_schema, 0.1.4 or later) must be findable too.
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(corvus_json_schema 0.1.4)
+include("${CMAKE_CURRENT_LIST_DIR}/corvus_json_schema_fortran_targets.cmake")
+check_required_components(corvus_json_schema_fortran)
