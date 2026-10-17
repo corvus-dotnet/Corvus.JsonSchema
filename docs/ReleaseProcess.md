@@ -60,11 +60,13 @@ The build workflow runs on every push and PR. It has three phases:
 2. **Test** — runs the test suite with `.NET 10.0` and `.NET Framework 4.8.1`
 3. **NuGet** — packages and publishes
 
-A PR, or a push to `main`, that changes only the documentation (`docs`) or the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal, OCaml or Fortran packages (`src-py`, `src-rs`, `src-ts`, `src-java`, `src-go`, `src-jl`, `src-rb`, `src-php`, `src-r`, `src-pas`, `src-ml`, `src-fortran`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. A change that skips them makes no NuGet release.
+A PR, or a push to `main`, that changes only the documentation (`docs`), the agent instructions (`.github/skills`, `.github/copilot-instructions.md`, `CLAUDE.md`) or the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal, OCaml or Fortran packages (`src-py`, `src-rs`, `src-ts`, `src-java`, `src-go`, `src-jl`, `src-rb`, `src-php`, `src-r`, `src-pas`, `src-ml`, `src-fortran`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. A change that skips them makes no NuGet release.
 
 A PR that changes `docs` without a .NET change builds the documentation website alone, in the `Documentation website` job. The job checks the code-sample catalog, and then runs `BuildWebsite` with `BUILDVAR_WebsiteBuildsDotNet`, so the website build compiles the libraries it documents itself. Its output gets the PR preview, as the build's own website does. That takes about 25 minutes, where the .NET build takes about three hours. The production site is deployed from stable release tags alone, so a change to `docs` reaches it at the next release, or when `build-website-only` is run by hand.
 
-Branch protection requires the `.NET build gate` job. It passes when the build succeeded or was not needed, and when the documentation website job succeeded where it ran.
+A PR that changes the agent instructions without a .NET change runs the `Code-sample catalog` job: the catalog check alone (the catalog covers their code samples), in a minute or two. The instructions take part in no build.
+
+Branch protection requires the `.NET build gate` job. It passes when the build succeeded or was not needed, and when the documentation website job and the code-sample catalog job succeeded where they ran.
 
 ### NuGet source selection
 

@@ -1493,11 +1493,11 @@ main-docs:
   - path: "docs/ReleaseProcess.md"
     blocks:
       - {index: 0, language: yaml, lines: [18, 36]}
-      - {index: 1, language: powershell, lines: [122, 130]}
-      - {index: 2, language: bash, lines: [197, 202]}
-      - {index: 3, language: sh, lines: [608, 610]}
-      - {index: 4, language: xml, lines: [698, 702]}
-      - {index: 5, language: xml, lines: [706, 708]}
+      - {index: 1, language: powershell, lines: [124, 132]}
+      - {index: 2, language: bash, lines: [199, 204]}
+      - {index: 3, language: sh, lines: [610, 612]}
+      - {index: 4, language: xml, lines: [700, 704]}
+      - {index: 5, language: xml, lines: [708, 710]}
   - path: "docs/RunningTests.md"
     blocks:
       - {index: 0, language: powershell, lines: [7, 10]}
