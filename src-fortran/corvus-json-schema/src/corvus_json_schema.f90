@@ -477,20 +477,18 @@ contains
     value = from_str(cjs_str(ptr, len))
   end function from_chars
 
-  ! Reports a status through stat and errmsg, or stops the program with the message when stat is absent.
-  subroutine report(status, stat, errmsg)
+  ! Reports a status through stat, and its message through message (empty for CJS_OK), or stops the program with the
+  ! message when stat is absent. The caller copies message to its errmsg: an optional deferred-length character
+  ! argument is never passed on to another procedure, which gfortran 11 does not do correctly.
+  subroutine report(status, stat, message)
     integer(c_int32_t), intent(in) :: status
     integer, intent(out), optional :: stat
-    character(:), allocatable, intent(out), optional :: errmsg
-    character(:), allocatable :: message
+    character(:), allocatable, intent(out) :: message
     if (present(stat)) stat = int(status)
-    if (status == CJS_OK) then
-      if (present(errmsg)) errmsg = ""
-      return
-    end if
+    message = ""
+    if (status == CJS_OK) return
     message = from_str(cjs_last_error_message())
     if (len(message) == 0) message = status_name(int(status))
-    if (present(errmsg)) errmsg = message
     if (.not. present(stat)) then
       write (error_unit, "(a)") "corvus_json_schema: " // message
       error stop 1
@@ -498,14 +496,14 @@ contains
   end subroutine report
 
   ! A failure the binding finds itself (a handle that is not ready), reported as CJS_INVALID_ARGUMENT.
-  subroutine report_misuse(message, stat, errmsg)
-    character(*), intent(in) :: message
+  subroutine report_misuse(what, stat, message)
+    character(*), intent(in) :: what
     integer, intent(out), optional :: stat
-    character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable, intent(out) :: message
     if (present(stat)) stat = CJS_INVALID_ARGUMENT
-    if (present(errmsg)) errmsg = message
+    message = what
     if (.not. present(stat)) then
-      write (error_unit, "(a)") "corvus_json_schema: " // message
+      write (error_unit, "(a)") "corvus_json_schema: " // what
       error stop 1
     end if
   end subroutine report_misuse
@@ -539,8 +537,10 @@ contains
     integer, intent(in) :: dialect
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     call self%ensure()
-    call report(cjs_options_set_default_dialect(self%handle, int(dialect, c_int32_t)), stat, errmsg)
+    call report(cjs_options_set_default_dialect(self%handle, int(dialect, c_int32_t)), stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine options_set_default_dialect
 
   !> Whether format is asserted. Without enabled, format follows the vocabularies again (the 2020-12
@@ -550,13 +550,15 @@ contains
     logical, intent(in), optional :: enabled
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     integer(c_int32_t) :: mode
     mode = tristate_default
     if (present(enabled)) then
       mode = merge(tristate_true, tristate_false, enabled)
     end if
     call self%ensure()
-    call report(cjs_options_set_assert_format(self%handle, mode), stat, errmsg)
+    call report(cjs_options_set_assert_format(self%handle, mode), stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine options_set_assert_format
 
   !> With format assertion left to the vocabularies, assert it in drafts 4 to 7 too.
@@ -565,8 +567,10 @@ contains
     logical, intent(in) :: enabled
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     call self%ensure()
-    call report(cjs_options_set_assert_format_in_legacy_drafts(self%handle, logical(enabled, c_bool)), stat, errmsg)
+    call report(cjs_options_set_assert_format_in_legacy_drafts(self%handle, logical(enabled, c_bool)), stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine options_set_assert_format_in_legacy_drafts
 
   !> Whether contentEncoding and contentMediaType are asserted in draft 7, the only draft that asserts them (by
@@ -576,8 +580,10 @@ contains
     logical, intent(in) :: enabled
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     call self%ensure()
-    call report(cjs_options_set_assert_content(self%handle, logical(enabled, c_bool)), stat, errmsg)
+    call report(cjs_options_set_assert_content(self%handle, logical(enabled, c_bool)), stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine options_set_assert_content
 
   !> The base URI of the root schema, when it has no $id (an empty string removes it).
@@ -586,8 +592,10 @@ contains
     character(*), intent(in) :: uri
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     call self%ensure()
-    call report(cjs_options_set_base_uri(self%handle, uri, len(uri, c_size_t)), stat, errmsg)
+    call report(cjs_options_set_base_uri(self%handle, uri, len(uri, c_size_t)), stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine options_set_base_uri
 
   !> A reference to the subschema to validate against, such as "#/$defs/item" (an empty string: the root).
@@ -596,8 +604,10 @@ contains
     character(*), intent(in) :: reference
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     call self%ensure()
-    call report(cjs_options_set_entry_point(self%handle, reference, len(reference, c_size_t)), stat, errmsg)
+    call report(cjs_options_set_entry_point(self%handle, reference, len(reference, c_size_t)), stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine options_set_entry_point
 
   !> The deepest the evaluator recurses in place on a cycle before it abandons the evaluation with
@@ -607,12 +617,15 @@ contains
     integer, intent(in) :: depth
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     call self%ensure()
     if (depth < 0) then
-      call report_misuse("the maximum depth is not a count", stat, errmsg)
+      call report_misuse("the maximum depth is not a count", stat, message)
+      if (present(errmsg)) errmsg = message
       return
     end if
-    call report(cjs_options_set_max_depth(self%handle, int(depth, c_int32_t)), stat, errmsg)
+    call report(cjs_options_set_max_depth(self%handle, int(depth, c_int32_t)), stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine options_set_max_depth
 
   !> The seconds one match of a pattern or patternProperties regular expression against one string may take (one by
@@ -625,6 +638,7 @@ contains
     real(real64), intent(in) :: seconds
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     integer(c_int64_t) :: milliseconds
     if (seconds > 0.0_real64) then
       if (seconds >= 9.0e15_real64) then
@@ -636,7 +650,8 @@ contains
       milliseconds = 0
     end if
     call self%ensure()
-    call report(cjs_options_set_pattern_match_limit_ms(self%handle, milliseconds), stat, errmsg)
+    call report(cjs_options_set_pattern_match_limit_ms(self%handle, milliseconds), stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine options_set_pattern_match_limit
 
   !> A custom format, taking precedence over the built-in one of that name.
@@ -646,6 +661,7 @@ contains
     procedure(format_procedure) :: format
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     type(format_box), pointer :: box
     integer(c_int32_t) :: status
     allocate (box)
@@ -654,7 +670,8 @@ contains
     status = cjs_options_add_format(self%handle, name, len(name, c_size_t), c_funloc(format_trampoline), c_loc(box), &
                                     c_funloc(free_format_box))
     if (status /= CJS_OK) deallocate (box)
-    call report(status, stat, errmsg)
+    call report(status, stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine options_add_format
 
   !> The resolver for documents other than the standard metaschemas, replacing any earlier one.
@@ -663,6 +680,7 @@ contains
     procedure(resolver_procedure) :: resolver
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     type(resolver_box), pointer :: box
     integer(c_int32_t) :: status
     allocate (box)
@@ -671,7 +689,8 @@ contains
     status = cjs_options_set_resolver(self%handle, c_funloc(resolver_trampoline), c_loc(box), &
                                       c_funloc(free_resolver_box))
     if (status /= CJS_OK) deallocate (box)
-    call report(status, stat, errmsg)
+    call report(status, stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine options_set_resolver
 
   subroutine options_assign(lhs, rhs)
@@ -739,13 +758,15 @@ contains
     type(options_t), intent(in), optional :: options
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     type(c_ptr) :: out
     integer(c_int32_t) :: status
     call cjs_validator_free(self%handle)
     self%handle = c_null_ptr
     status = cjs_compile(schema, len(schema, c_size_t), options_handle(options), out)
     if (status == CJS_OK) self%handle = out
-    call report(status, stat, errmsg)
+    call report(status, stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine validator_compile
 
   !> Compiles the schema document at an absolute URI, fetched through the options' resolver (or one of the standard
@@ -756,13 +777,15 @@ contains
     type(options_t), intent(in), optional :: options
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     type(c_ptr) :: out
     integer(c_int32_t) :: status
     call cjs_validator_free(self%handle)
     self%handle = c_null_ptr
     status = cjs_compile_uri(uri, len(uri, c_size_t), options_handle(options), out)
     if (status == CJS_OK) self%handle = out
-    call report(status, stat, errmsg)
+    call report(status, stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine validator_compile_uri
 
   function options_handle(options) result(handle)
@@ -787,17 +810,20 @@ contains
     character(*), intent(in) :: json
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     logical :: valid
     logical(c_bool) :: answer
     integer(c_int32_t) :: status
     valid = .false.
     if (.not. c_associated(self%handle)) then
-      call report_misuse("the validator has no compiled schema", stat, errmsg)
+      call report_misuse("the validator has no compiled schema", stat, message)
+      if (present(errmsg)) errmsg = message
       return
     end if
     status = cjs_validator_validate_json(self%handle, json, len(json, c_size_t), answer)
     if (status == CJS_OK) valid = answer
-    call report(status, stat, errmsg)
+    call report(status, stat, message)
+    if (present(errmsg)) errmsg = message
   end function validator_is_valid
 
   !> Whether the parsed document is valid.
@@ -806,21 +832,25 @@ contains
     type(document_t), intent(in) :: document
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     logical :: valid
     logical(c_bool) :: answer
     integer(c_int32_t) :: status
     valid = .false.
     if (.not. c_associated(self%handle)) then
-      call report_misuse("the validator has no compiled schema", stat, errmsg)
+      call report_misuse("the validator has no compiled schema", stat, message)
+      if (present(errmsg)) errmsg = message
       return
     end if
     if (.not. c_associated(document%handle)) then
-      call report_misuse("the document has not been parsed", stat, errmsg)
+      call report_misuse("the document has not been parsed", stat, message)
+      if (present(errmsg)) errmsg = message
       return
     end if
     status = cjs_validator_validate_document(self%handle, document%handle, answer)
     if (status == CJS_OK) valid = answer
-    call report(status, stat, errmsg)
+    call report(status, stat, message)
+    if (present(errmsg)) errmsg = message
   end function validator_is_valid_document
 
   !> Evaluates the JSON text, evaluating every keyword and replacing the collector's results with this evaluation's,
@@ -831,18 +861,21 @@ contains
     type(collector_t), intent(inout) :: collector
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     logical :: valid
     logical(c_bool) :: answer
     integer(c_int32_t) :: status
     valid = .false.
     if (.not. c_associated(self%handle)) then
-      call report_misuse("the validator has no compiled schema", stat, errmsg)
+      call report_misuse("the validator has no compiled schema", stat, message)
+      if (present(errmsg)) errmsg = message
       return
     end if
     call collector%ensure()
     status = cjs_validator_evaluate_json(self%handle, json, len(json, c_size_t), collector%handle, answer)
     if (status == CJS_OK) valid = answer
-    call report(status, stat, errmsg)
+    call report(status, stat, message)
+    if (present(errmsg)) errmsg = message
   end function validator_evaluate
 
   !> validator_t%evaluate for a parsed document.
@@ -852,22 +885,26 @@ contains
     type(collector_t), intent(inout) :: collector
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     logical :: valid
     logical(c_bool) :: answer
     integer(c_int32_t) :: status
     valid = .false.
     if (.not. c_associated(self%handle)) then
-      call report_misuse("the validator has no compiled schema", stat, errmsg)
+      call report_misuse("the validator has no compiled schema", stat, message)
+      if (present(errmsg)) errmsg = message
       return
     end if
     if (.not. c_associated(document%handle)) then
-      call report_misuse("the document has not been parsed", stat, errmsg)
+      call report_misuse("the document has not been parsed", stat, message)
+      if (present(errmsg)) errmsg = message
       return
     end if
     call collector%ensure()
     status = cjs_validator_evaluate_document(self%handle, document%handle, collector%handle, answer)
     if (status == CJS_OK) valid = answer
-    call report(status, stat, errmsg)
+    call report(status, stat, message)
+    if (present(errmsg)) errmsg = message
   end function validator_evaluate_document
 
   subroutine validator_assign(lhs, rhs)
@@ -893,13 +930,15 @@ contains
     character(*), intent(in) :: json
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     type(c_ptr) :: out
     integer(c_int32_t) :: status
     call cjs_document_free(self%handle)
     self%handle = c_null_ptr
     status = cjs_document_parse(json, len(json, c_size_t), out)
     if (status == CJS_OK) self%handle = out
-    call report(status, stat, errmsg)
+    call report(status, stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine document_parse
 
   !> Whether the document holds parsed JSON.
@@ -933,20 +972,24 @@ contains
     integer, intent(in) :: level
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     type(c_ptr) :: handle
     if (level /= BASIC .and. level /= DETAILED .and. level /= VERBOSE) then
-      call report_misuse("the level is not BASIC, DETAILED or VERBOSE", stat, errmsg)
+      call report_misuse("the level is not BASIC, DETAILED or VERBOSE", stat, message)
+      if (present(errmsg)) errmsg = message
       return
     end if
     handle = cjs_collector_new(int(level, c_int32_t))
     if (.not. c_associated(handle)) then
-      call report(int(CJS_PANIC, c_int32_t), stat, errmsg)
+      call report(int(CJS_PANIC, c_int32_t), stat, message)
+      if (present(errmsg)) errmsg = message
       return
     end if
     call cjs_collector_free(self%handle)
     self%handle = handle
     self%recorded = level
-    call report(int(CJS_OK, c_int32_t), stat, errmsg)
+    call report(int(CJS_OK, c_int32_t), stat, message)
+    if (present(errmsg)) errmsg = message
   end subroutine collector_init
 
   subroutine collector_ensure(self)
@@ -1031,6 +1074,7 @@ contains
     class(collector_t), intent(inout) :: self
     integer, intent(out), optional :: stat
     character(:), allocatable, intent(out), optional :: errmsg
+    character(:), allocatable :: message
     character(:), allocatable :: json
     type(cjs_str) :: out
     integer(c_int32_t) :: status
@@ -1038,7 +1082,8 @@ contains
     status = cjs_collector_annotations_json(self%handle, out)
     json = ""
     if (status == CJS_OK) json = from_str(out)
-    call report(status, stat, errmsg)
+    call report(status, stat, message)
+    if (present(errmsg)) errmsg = message
   end function collector_annotations_json
 
   subroutine collector_assign(lhs, rhs)
