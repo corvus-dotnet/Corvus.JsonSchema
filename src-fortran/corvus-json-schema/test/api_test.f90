@@ -201,8 +201,8 @@ contains
   subroutine test_limits()
     type(options_t) :: limited, unlimited
     type(validator_t) :: validator
-    integer :: stat
-    character(:), allocatable :: errmsg
+    integer :: stat, i
+    character(:), allocatable :: errmsg, schema
     logical :: valid
     ! A pattern that backtracks without end on a string that almost matches: the backreference turns off the
     ! matcher's memory of the places where it has failed.
@@ -216,7 +216,15 @@ contains
     call validator%compile('{"pattern": "^(?:(a+)\\1*)+$"}', unlimited)
     call check(.not. validator%is_valid('"' // repeat("a", 12) // 'b"'), "zero turns the limit off")
     call check(default_pattern_match_limit == 1.0_real64, "the default limit is one second")
-    call validator%compile('{"pattern": "' // repeat("a", 1048577) // '"}', stat=stat, errmsg=errmsg)
+    ! Built in an allocated string: as an expression, a temporary of over 1 MB overflows the default stack of 1 MB on
+    ! Windows (ifx puts temporaries on the stack).
+    allocate (character(1048577 + 15) :: schema)
+    schema(1:13) = '{"pattern": "'
+    do i = 14, len(schema) - 2
+      schema(i:i) = "a"
+    end do
+    schema(len(schema) - 1:) = '"}'
+    call validator%compile(schema, stat=stat, errmsg=errmsg)
     call check(stat == CJS_PATTERN_TOO_LARGE, "a pattern over the limit of size does not compile")
   end subroutine test_limits
 
