@@ -112,3 +112,15 @@ jobs:
             echo "Tagged $GITHUB_SHA as r-v$VERSION and moved $BRANCH to it."
             echo "R-universe builds it within the hour: https://corvus-dotnet.r-universe.dev/corvusjsonschema"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  image:
+    name: Publish the release image
+    needs: [version, release]
+    # The released files as an image that a Dockerfile can pin (see release-image.yml): the Bowtie harnesses do.
+    uses: ./.github/workflows/release-image.yml
+    permissions:
+      contents: read
+      packages: write  # push ghcr.io/corvus-dotnet/corvus-json-schema-r
+    with:
+      package: r
+      version: ${{ needs.version.outputs.version }}
