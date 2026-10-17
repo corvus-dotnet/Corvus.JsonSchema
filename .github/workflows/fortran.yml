@@ -145,12 +145,20 @@ jobs:
               printf '%s\\bin\n' "$winprefix" >> "$GITHUB_PATH" ;;
           esac
       - name: MSVC's linker, not Git Bash's link
-        # In a bash step on Windows, coreutils' /usr/bin/link comes before MSVC's link.exe on the path, and ifx calls
-        # link to link.
+        # In a bash step on Windows, coreutils' link comes before MSVC's link.exe on the path, and ifx calls link to
+        # link. setup-fortran moves /usr/bin/link to $RUNNER_TEMP, which setup-fpm then puts on the path (fpm is
+        # installed there), so it is moved out of the way in both places.
         if: runner.os == 'Windows'
         run: |
-          if [ -e /usr/bin/link ]; then mv /usr/bin/link /usr/bin/link.coreutils; fi
-          command -v link
+          for coreutils in /usr/bin/link "$RUNNER_TEMP/link"; do
+            if [ -e "$coreutils" ]; then mv "$coreutils" "$coreutils.coreutils"; fi
+          done
+          found=$(command -v link || true)
+          echo "link: $found"
+          case "$found" in
+            *[Mm]icrosoft*|*MSVC*) ;;
+            *) echo "::error::link is not MSVC's link.exe: $found"; exit 1 ;;
+          esac
       - name: Compiler and fpm versions
         run: |
           "${{ steps.fortran.outputs.fc }}" --version 2>&1 | head -n 3 || true
