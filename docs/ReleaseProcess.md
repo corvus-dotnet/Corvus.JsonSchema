@@ -617,13 +617,17 @@ Do this once, before merging the first version:
    fine-grained tokens, an owner approves it.
 3. **Create the GitHub environment.** In this repository's **Settings**, **Environments**, add an environment named
    `ocaml`, and add the token to it as the secret `OCAML_REPOSITORY_TOKEN`.
-4. **Fork the opam repository.** Fork [ocaml/opam-repository](https://github.com/ocaml/opam-repository) to a user
-   account (a fork owned by a user, and not by an organization, lets the opam repository's maintainers push a fix to
-   the pull request), and add the repository variable `OPAM_REPOSITORY_FORK` (**Settings**, **Secrets and
-   variables**, **Actions**, **Variables**) with the fork's `owner/name`, such as `someone/opam-repository`.
-5. **Create the opam repository token.** A **classic** personal access token of the fork's owner, with the
-   `public_repo` scope, added to the `ocaml` environment as the secret `OPAM_REPOSITORY_TOKEN`. A fine-grained token
-   cannot open a pull request on a repository outside its owner, so it cannot be one here.
+4. **Fork the opam repository.** The fork is
+   [corvus-dotnet/opam-repository](https://github.com/corvus-dotnet/opam-repository), a fork of
+   [ocaml/opam-repository](https://github.com/ocaml/opam-repository) owned by the organization, and the repository
+   variable `OPAM_REPOSITORY_FORK` (**Settings**, **Secrets and variables**, **Actions**, **Variables**) names it:
+   `corvus-dotnet/opam-repository`. GitHub does not let the maintainers of a repository push to a pull request from
+   a fork owned by an organization, so a change the opam repository's maintainers ask for is pushed by us, to the
+   pull request's branch in the fork.
+5. **Create the opam repository token.** A **classic** personal access token, with the `public_repo` scope, of a
+   member of the organization who can push to the fork, added to the `ocaml` environment as the secret
+   `OPAM_REPOSITORY_TOKEN`. The pull requests are opened as that account. A fine-grained token cannot open a pull
+   request on a repository outside its owner, so it cannot be one here.
 6. **Merge.** The workflow pushes the sources, tags them, creates the release and opens the opam repository's pull
    request.
 
