@@ -32,7 +32,7 @@ jobs:
     # Linux, and the current 5.x on macOS and Windows. The package takes no Unicode data and no regular expression
     # engine from the compiler or the system, so every one of them must give the same results. When an OCaml minor
     # version is released, move 5.5 to it here, in the lint job's note and in the benchmark harness's Dockerfile.local.
-    name: Build and test corvus-json-schema (OCaml ${{ matrix.ocaml }}, ${{ matrix.os }})
+    name: Build and test corvus-json-schema (OCaml ${{ matrix.ocaml }}${{ matrix.variant && format(' {0}', matrix.variant) || '' }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
@@ -47,6 +47,22 @@ jobs:
             ocaml: '5.5'
           - os: windows-latest
             ocaml: '5.5'
+          # Compilers configured as opam-repository's CI tests every package on. flambda unboxes floats where it
+          # inlines and boxes them where it does not, and -no-flat-float-array makes a float array an array of boxed
+          # floats, so code that allocates nothing on the default compiler can allocate on these, and the allocation
+          # tests fail there. Each builds the compiler from source.
+          - os: ubuntu-latest
+            ocaml: '4.14'
+            variant: flambda
+            compiler: ocaml-variants.4.14.4+options,ocaml-option-flambda
+          - os: ubuntu-latest
+            ocaml: '5.5'
+            variant: flambda
+            compiler: ocaml-variants.5.5.1+options,ocaml-option-flambda
+          - os: ubuntu-latest
+            ocaml: '5.5'
+            variant: no-flat-float-array
+            compiler: ocaml-variants.5.5.1+options,ocaml-option-no-flat-float-array
     defaults:
       run:
         shell: bash
@@ -85,7 +101,7 @@ jobs:
       - name: OCaml
         uses: ocaml/setup-ocaml@93303b622b2522e4411e295f9e77411a24912ac7 # v3.9.0
         with:
-          ocaml-compiler: ${{ matrix.ocaml }}
+          ocaml-compiler: ${{ matrix.compiler || matrix.ocaml }}
           # No cache: the package has no dependencies and builds in seconds, and the repository's Actions cache is
           # needed by the .NET build, whose state does not fit when other caches crowd it.
           dune-cache: false

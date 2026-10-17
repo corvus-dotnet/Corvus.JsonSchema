@@ -1,4 +1,4 @@
-let version = "0.1.0"
+let version = "0.1.1"
 
 type dialect = Dialect.t = Draft4 | Draft6 | Draft7 | Draft2019_09 | Draft2020_12
 

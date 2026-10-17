@@ -2,6 +2,14 @@
 
 The version history of `corvus-json-schema` for OCaml (`src-ml/corvus-json-schema`), the OCaml port of the Corvus.Text.Json V5 runtime evaluator. It is versioned independently of the Corvus NuGet packages, whose history is in the Corvus.JsonSchema repository's [VERSIONHISTORY.md](https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/VERSIONHISTORY.md).
 
+## V0.1.1
+
+V0.1.1 makes a match of a pattern with a limit allocate nothing on every configuration of the compiler. There are no API changes. Version 0.1.0 is affected.
+
+### Bug fixes
+
+- **A match with a limit allocates nothing on flambda and `-no-flat-float-array` compilers.** The backtracking matcher keeps the limit of a match and its deadline in an array of floats, and reads the clock every 4,096 steps. The array was a `float array`, which is an array of boxed floats on a compiler configured with `-no-flat-float-array`, so each write of a time allocated a block. And with flambda the reading of the clock was boxed, because it was the value of a match one of whose branches calls the clock of the caller, which returns a boxed float. A match against a pattern on the backtracking matcher, with the default limit of one second or any other, allocated at each check. It is now a `Float.Array.t`, which is flat whatever the configuration, and each branch writes its reading of the clock to it. No answer changes. The allocation tests failed on the five such compilers that opam-repository's CI builds packages with (4.14 with flambda, with flambda and frame pointers, and with `-no-flat-float-array`, and 5.5 with flambda and with `-no-flat-float-array`), and the package's CI now builds and tests with three of them.
+
 ## V0.1.0
 
 The first release of the OCaml port of `Corvus.Text.Json.RuntimeEvaluator`.
