@@ -573,28 +573,33 @@ To release it, bump `(version ...)` in its `dune-project` and `version` in `src/
    `v<version>`.
 4. It creates the release for that tag, with the version's history entry as its notes.
 5. It tags this repository's commit `ml-v<version>`.
+6. It submits the version to the opam repository (below).
 
 Writing to the package's repository takes a token, the `OCAML_REPOSITORY_TOKEN` secret of the `ocaml` environment. A
-run that fails part of the way can be run again: it skips the push when the tag is there, and the release when it
-is there.
+run that fails part of the way can be run again: it skips the push when the tag is there, the release when it is
+there, and the submission when the opam repository has the version or its pull request is open.
 
 Never push an `ml-v` tag here, or a version tag to the package's repository, by hand.
 
 ### Submitting a version to the opam repository
 
-The workflow does not do this. After it has succeeded, for each version:
+The workflow's `opam-repository` job does what `opam publish` does. It downloads the release's archive and writes
+`packages/corvus-json-schema/corvus-json-schema.<version>/opam`: the release's `corvus-json-schema.opam` without its
+`version` field (the directory names the version) and with a `url` section, the archive and its sha256 and sha512.
+It checks the file with `opam lint --strict`, brings a fork of
+[ocaml/opam-repository](https://github.com/ocaml/opam-repository) up to date, commits the file there on a branch
+`corvus-json-schema.<version>`, and opens a pull request titled `[new release] corvus-json-schema (<version>)`, with
+the version's history entry as its description.
 
-```sh
-opam install opam-publish
-opam publish https://github.com/corvus-dotnet/corvus-json-schema-ocaml/archive/refs/tags/v<version>.tar.gz
-```
+The opam repository's checks build and test the package on its platforms, and a maintainer merges the pull request.
+The tests that read the JSON-Schema-Test-Suite say that they were skipped there, since the published package does
+not hold the suite. A maintainer may ask for a change in the pull request: make it here, in `dune-project` or the
+opam template, for the next version, and push the fix to the pull request's branch in the fork for this one.
 
-`opam publish` reads `corvus-json-schema.opam` from the archive, adds the archive's URL and checksums, and opens a
-pull request to [ocaml/opam-repository](https://github.com/ocaml/opam-repository) from a fork under the account
-that runs it (it asks for a GitHub token the first time). The opam repository's checks build and test the package
-on its platforms, and a maintainer merges the pull request. The tests that read the JSON-Schema-Test-Suite say that
-they were skipped there, since the published package does not hold the suite. Until the pull request is merged, the
-version is installed with a pin:
+The job needs the repository variable `OPAM_REPOSITORY_FORK` (the fork, as `owner/name`) and the
+`OPAM_REPOSITORY_TOKEN` secret of the `ocaml` environment (set-up below). Without them it submits nothing and says so
+in the run's summary; set them and run the workflow again. Until the pull request is merged, the version is
+installed with a pin:
 
 ```sh
 opam pin add corvus-json-schema https://github.com/corvus-dotnet/corvus-json-schema-ocaml.git#v<version>
@@ -612,10 +617,17 @@ Do this once, before merging the first version:
    fine-grained tokens, an owner approves it.
 3. **Create the GitHub environment.** In this repository's **Settings**, **Environments**, add an environment named
    `ocaml`, and add the token to it as the secret `OCAML_REPOSITORY_TOKEN`.
-4. **Merge.** The workflow pushes the sources, tags them and creates the release.
-5. **Submit the version to the opam repository**, as above.
+4. **Fork the opam repository.** Fork [ocaml/opam-repository](https://github.com/ocaml/opam-repository) to a user
+   account (a fork owned by a user, and not by an organization, lets the opam repository's maintainers push a fix to
+   the pull request), and add the repository variable `OPAM_REPOSITORY_FORK` (**Settings**, **Secrets and
+   variables**, **Actions**, **Variables**) with the fork's `owner/name`, such as `someone/opam-repository`.
+5. **Create the opam repository token.** A **classic** personal access token of the fork's owner, with the
+   `public_repo` scope, added to the `ocaml` environment as the secret `OPAM_REPOSITORY_TOKEN`. A fine-grained token
+   cannot open a pull request on a repository outside its owner, so it cannot be one here.
+6. **Merge.** The workflow pushes the sources, tags them, creates the release and opens the opam repository's pull
+   request.
 
-The token expires: renew it, and update the secret, before it does.
+The tokens expire: renew them, and update the secrets, before they do.
 
 ## Pre-release testing
 

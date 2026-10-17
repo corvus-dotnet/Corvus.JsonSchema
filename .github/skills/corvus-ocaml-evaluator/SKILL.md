@@ -170,8 +170,8 @@ ECMA-262's answer where V8 departs from it.
 Versioned independently, with its history in `src-ml/corvus-json-schema/VERSIONHISTORY.md`. Bump `(version ...)`
 in `dune-project` and `version` in `src/corvus_json_schema.ml`, run `dune build`, add the history entry, and merge.
 `.github/workflows/ocaml-publish.yml` runs the tests, pushes the package's directory to
-`corvus-dotnet/corvus-json-schema-ocaml` tagged `v<version>`, and tags this repository `ml-v<version>`. Submitting
-the version to the opam repository is a manual step afterwards. See `docs/ReleaseProcess.md`, "The OCaml package".
+`corvus-dotnet/corvus-json-schema-ocaml` tagged `v<version>`, tags this repository `ml-v<version>`, and opens the
+pull request that submits the version to `ocaml/opam-repository`. See `docs/ReleaseProcess.md`, "The OCaml package".
 Never push either tag by hand.
 
 ## Integrations

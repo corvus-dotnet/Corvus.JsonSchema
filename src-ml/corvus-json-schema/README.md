@@ -702,10 +702,8 @@ the documentation of the interface.
 A release is made by the Corvus.JsonSchema repository's `ocaml-publish` workflow when the version in `dune-project`
 changes. It pushes this directory to
 [corvus-dotnet/corvus-json-schema-ocaml](https://github.com/corvus-dotnet/corvus-json-schema-ocaml) and tags it
-`v<version>`. Submitting a release to the opam repository is done by hand afterwards, with
-`opam publish https://github.com/corvus-dotnet/corvus-json-schema-ocaml/archive/refs/tags/v<version>.tar.gz` or a
-pull request to [ocaml/opam-repository](https://github.com/ocaml/opam-repository) that adds
-`packages/corvus-json-schema/corvus-json-schema.<version>/opam`.
+`v<version>`, and opens the pull request to [ocaml/opam-repository](https://github.com/ocaml/opam-repository) that
+adds `packages/corvus-json-schema/corvus-json-schema.<version>/opam`.
 
 Issues and pull requests belong in
 [corvus-dotnet/Corvus.JsonSchema](https://github.com/corvus-dotnet/Corvus.JsonSchema), where the source is

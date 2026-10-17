@@ -1489,10 +1489,9 @@ main-docs:
       - {index: 0, language: yaml, lines: [18, 36]}
       - {index: 1, language: powershell, lines: [118, 126]}
       - {index: 2, language: bash, lines: [193, 198]}
-      - {index: 3, language: sh, lines: [587, 590]}
-      - {index: 4, language: sh, lines: [599, 601]}
-      - {index: 5, language: xml, lines: [626, 630]}
-      - {index: 6, language: xml, lines: [634, 636]}
+      - {index: 3, language: sh, lines: [604, 606]}
+      - {index: 4, language: xml, lines: [638, 642]}
+      - {index: 5, language: xml, lines: [646, 648]}
   - path: "docs/RunningTests.md"
     blocks:
       - {index: 0, language: powershell, lines: [7, 10]}

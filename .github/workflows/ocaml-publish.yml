@@ -18,16 +18,16 @@ name: ocaml-publish
 # fine-grained personal access token for that repository alone, with Contents read and write. A run that fails part
 # of the way can be run again: it skips what is already there (docs/ReleaseProcess.md, "The OCaml package").
 #
-# Submitting the release to the opam repository is NOT done here. It is a manual step, after this workflow has
-# succeeded, for each version:
-#   1. opam publish https://github.com/corvus-dotnet/corvus-json-schema-ocaml/archive/refs/tags/v<version>.tar.gz
-#      (the opam-publish plugin: it reads corvus-json-schema.opam from the archive, adds the url and checksum, and
-#      opens a pull request to ocaml/opam-repository from a fork under the account that runs it);
-#      or, by hand, a pull request that adds packages/corvus-json-schema/corvus-json-schema.<version>/opam: the
-#      package's opam file with a url section (src: that archive, checksum: its sha256 and sha512).
-#   2. The opam repository's checks build and test the package on its platforms (the tests that need the
-#      JSON-Schema-Test-Suite say that they were skipped there), and a maintainer merges the pull request.
-#   3. Until it is merged, the pin above is how the version is installed.
+# The release is then submitted to the opam repository (the opam-repository job): a pull request to
+# ocaml/opam-repository that adds packages/corvus-json-schema/corvus-json-schema.<version>/opam, the package's opam
+# file without its version field (the directory names the version) and with a url section (src: the release's
+# archive, checksum: its sha256 and sha512), which is what opam publish writes. The pull request is made from a fork
+# of ocaml/opam-repository, the repository variable OPAM_REPOSITORY_FORK (owner/name), with the
+# OPAM_REPOSITORY_TOKEN secret of the "ocaml" environment: a classic personal access token with the public_repo
+# scope of an account that can push to the fork. (A fine-grained token cannot open a pull request on a repository
+# outside its owner.) Without the variable the job says so and submits nothing. The opam repository's checks build
+# and test the package on its platforms (the tests that need the JSON-Schema-Test-Suite say that they were skipped
+# there), and a maintainer merges the pull request. Until then the pin above is how the version is installed.
 #
 # It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. Its tag
 # filter ('[0-9]+.[0-9]+.[0-9]+*') has to match the whole tag name from a leading digit, so a tag that starts ml-v
@@ -179,12 +179,6 @@ jobs:
             echo '```sh'
             echo "opam pin add corvus-json-schema https://github.com/$OCAML_REPOSITORY.git#v$VERSION"
             echo '```'
-            echo
-            echo "Submitting it to the opam repository is a manual step (see the header of ocaml-publish.yml):"
-            echo
-            echo '```sh'
-            echo "opam publish https://github.com/$OCAML_REPOSITORY/archive/refs/tags/v$VERSION.tar.gz"
-            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Tag
         env:
@@ -196,3 +190,121 @@ jobs:
           else
             gh api "repos/${{ github.repository }}/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA"
           fi
+
+  opam-repository:
+    name: Submit corvus-json-schema (OCaml) to the opam repository
+    needs: [version, publish]
+    # After the release, and on a later run for a version that has its release already (publish then skips), so that
+    # a run that failed here can be run again.
+    if: ${{ always() && needs.version.result == 'success' && needs.version.outputs.version != '' && (needs.publish.result == 'success' || needs.publish.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ocaml
+    permissions:
+      contents: read
+    env:
+      UPSTREAM: ocaml/opam-repository
+      FORK: ${{ vars.OPAM_REPOSITORY_FORK }}
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: src-ml/corvus-json-schema
+      - name: Check for the fork
+        id: fork
+        env:
+          GH_TOKEN: ${{ secrets.OPAM_REPOSITORY_TOKEN }}
+        run: |
+          if [ -z "$FORK" ] || [ -z "$GH_TOKEN" ]; then
+            {
+              echo "### corvus-json-schema (OCaml) $VERSION was not submitted to the opam repository"
+              echo
+              echo "Set the repository variable OPAM_REPOSITORY_FORK and the OPAM_REPOSITORY_TOKEN secret of the"
+              echo "ocaml environment (docs/ReleaseProcess.md, \"The OCaml package\"), then run this workflow again."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::OPAM_REPOSITORY_FORK or OPAM_REPOSITORY_TOKEN is not set: nothing was submitted to $UPSTREAM."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - name: Write the opam repository's file
+        if: steps.fork.outputs.ready == 'true'
+        run: |
+          archive="https://github.com/$OCAML_REPOSITORY/archive/refs/tags/v$VERSION.tar.gz"
+          curl -sSfL --retry 5 -o release.tar.gz "$archive"
+          sha256=$(sha256sum release.tar.gz | cut -d ' ' -f 1)
+          sha512=$(sha512sum release.tar.gz | cut -d ' ' -f 1)
+          # The opam file of the release itself, from its archive, so that what is submitted is what was published.
+          tar -xzf release.tar.gz
+          # GitHub names the archive's directory after the repository and the tag without its v.
+          source=$(find . -mindepth 2 -maxdepth 2 -name corvus-json-schema.opam -print -quit)
+          test -n "$source" || { echo "::error::The release's archive has no corvus-json-schema.opam."; exit 1; }
+          mkdir -p submission
+          # The directory names the version, so the file has no version field (as opam publish writes it).
+          grep -v '^version: ' "$source" > submission/opam
+          {
+            echo
+            echo 'url {'
+            echo "  src: \"$archive\""
+            echo "  checksum: ["
+            echo "    \"sha256=$sha256\""
+            echo "    \"sha512=$sha512\""
+            echo "  ]"
+            echo '}'
+          } >> submission/opam
+          cat submission/opam
+      - name: opam lint
+        if: steps.fork.outputs.ready == 'true'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq opam > /dev/null
+          mkdir -p "lint/corvus-json-schema.$VERSION"
+          cp submission/opam "lint/corvus-json-schema.$VERSION/opam"
+          opam lint --strict "lint/corvus-json-schema.$VERSION/opam"
+      - name: Open the pull request
+        if: steps.fork.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.OPAM_REPOSITORY_TOKEN }}
+        run: |
+          path="packages/corvus-json-schema/corvus-json-schema.$VERSION/opam"
+          branch="corvus-json-schema.$VERSION"
+          title="[new release] corvus-json-schema ($VERSION)"
+          if gh api "repos/$UPSTREAM/contents/$path" --silent 2>/dev/null; then
+            echo "::notice::$UPSTREAM already has corvus-json-schema $VERSION."
+            exit 0
+          fi
+          existing=$(gh pr list -R "$UPSTREAM" --state open --head "$branch" --json url,headRepositoryOwner \
+            --jq "[.[] | select(.headRepositoryOwner.login == \"${FORK%%/*}\")][0].url // empty")
+          if [ -n "$existing" ]; then
+            echo "::notice::The pull request for corvus-json-schema $VERSION is open: $existing"
+            echo "$existing" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # The branch starts from the opam repository's master as it is now: the fork is brought up to date first.
+          base=$(gh api "repos/$UPSTREAM" --jq .default_branch)
+          gh api -X POST "repos/$FORK/merge-upstream" -f branch="$base" --silent
+          head=$(gh api "repos/$UPSTREAM/commits/$base" --jq .sha)
+          if gh api "repos/$FORK/git/ref/heads/$branch" --silent 2>/dev/null; then
+            gh api -X PATCH "repos/$FORK/git/refs/heads/$branch" -f sha="$head" -F force=true --silent
+          else
+            gh api -X POST "repos/$FORK/git/refs" -f ref="refs/heads/$branch" -f sha="$head" --silent
+          fi
+          gh api -X PUT "repos/$FORK/contents/$path" -f branch="$branch" \
+            -f message="[new release] corvus-json-schema ($VERSION)" -f content="$(base64 -w 0 submission/opam)" --silent
+          # The version's entry in VERSIONHISTORY.md, as the pull request's description.
+          {
+            echo "corvus-json-schema $VERSION: a JSON Schema evaluator (draft 4 to 2020-12) with no dependencies outside the OCaml distribution."
+            echo
+            echo "- Project page: https://github.com/corvus-dotnet/Corvus.JsonSchema"
+            echo "- Release: https://github.com/$OCAML_REPOSITORY/releases/tag/v$VERSION"
+            echo
+            echo "##### CHANGES:"
+            echo
+            awk -v v="## V$VERSION" '$0 == v { on = 1; next } on && /^## / { exit } on' "$SUBDIR/VERSIONHISTORY.md"
+          } > body.md
+          url=$(gh pr create -R "$UPSTREAM" --base "$base" --head "${FORK%%/*}:$branch" --title "$title" --body-file body.md)
+          {
+            echo "### corvus-json-schema (OCaml) $VERSION is submitted to the opam repository"
+            echo
+            echo "$url"
+          } >> "$GITHUB_STEP_SUMMARY"
