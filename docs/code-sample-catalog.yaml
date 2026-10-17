@@ -1217,7 +1217,7 @@ main-docs:
     blocks:
       - {index: 0, language: swift, lines: [19, 26]}
       - {index: 1, language: swift, lines: [35, 43]}
-      - {index: 2, language: swift, lines: [68, 78]}
+      - {index: 2, language: swift, lines: [78, 88]}
   - path: "docs/LocalNuGetTesting.md"
     blocks:
       - {index: 0, language: powershell, lines: [9, 11]}

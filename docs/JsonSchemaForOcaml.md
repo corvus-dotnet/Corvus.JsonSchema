@@ -30,7 +30,7 @@ Until the package is in the opam repository, pin it from its own repository, whi
 else, with a tag `v<version>` for each release:
 
 ```sh
-opam pin add corvus-json-schema https://github.com/corvus-dotnet/corvus-json-schema-ocaml.git#v0.1.0
+opam pin add corvus-json-schema https://github.com/corvus-dotnet/corvus-json-schema-ocaml.git#v0.1.1
 ```
 
 Once it is in the [opam repository](https://opam.ocaml.org/packages/corvus-json-schema/):
