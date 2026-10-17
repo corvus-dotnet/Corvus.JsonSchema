@@ -1,0 +1,3 @@
+source: JsonSchemaForFortran.md
+navTitle: "Fortran"
+description: "The Corvus JSON Schema evaluator for Fortran, a binding to the C library (gfortran 11+ and Intel ifx, fpm and CMake): install, validate, errors, options, results and annotations."

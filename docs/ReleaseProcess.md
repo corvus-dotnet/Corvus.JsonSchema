@@ -60,7 +60,7 @@ The build workflow runs on every push and PR. It has three phases:
 2. **Test** — runs the test suite with `.NET 10.0` and `.NET Framework 4.8.1`
 3. **NuGet** — packages and publishes
 
-A PR, or a push to `main`, that changes only the documentation (`docs`) or the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal or OCaml packages (`src-py`, `src-rs`, `src-ts`, `src-java`, `src-go`, `src-jl`, `src-rb`, `src-php`, `src-r`, `src-pas`, `src-ml`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. A change that skips them makes no NuGet release.
+A PR, or a push to `main`, that changes only the documentation (`docs`) or the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal, OCaml or Fortran packages (`src-py`, `src-rs`, `src-ts`, `src-java`, `src-go`, `src-jl`, `src-rb`, `src-php`, `src-r`, `src-pas`, `src-ml`, `src-fortran`) and their own workflows skips these phases: its first job, `Detect .NET changes`, finds nothing the .NET build reads (`.github/actions/dotnet-changes` holds the list). Any other change builds, and so does every release tag push and every manual run. A change that skips them makes no NuGet release.
 
 A PR that changes `docs` without a .NET change builds the documentation website alone, in the `Documentation website` job. The job checks the code-sample catalog, and then runs `BuildWebsite` with `BUILDVAR_WebsiteBuildsDotNet`, so the website build compiles the libraries it documents itself. Its output gets the PR preview, as the build's own website does. That takes about 25 minutes, where the .NET build takes about three hours. The production site is deployed from stable release tags alone, so a change to `docs` reaches it at the next release, or when `build-website-only` is run by hand.
 
@@ -636,6 +636,58 @@ Do this once, before merging the first version:
    request.
 
 The tokens expire: renew them, and update the secrets, before they do.
+
+## The Fortran binding
+
+`src-fortran/corvus-json-schema` is the fpm and CMake package `corvus-json-schema`, a binding to the C library,
+versioned independently of the NuGet packages and of the C library by the `version` in its `fpm.toml`. A release is
+the package's source, tagged. It needs the C library, which its users install from a `capi-v` release.
+
+An fpm git dependency clones the repository it is given and needs `fpm.toml` at its root, and this repository carries
+a very large `github-pages` branch and every other language's sources. The package's repository is therefore
+[corvus-dotnet/corvus-json-schema-fortran](https://github.com/corvus-dotnet/corvus-json-schema-fortran), which holds
+only what the publish workflow pushes there: changes are made here.
+
+To release it, bump `version` in its `fpm.toml`, `binding_version` in `src/corvus_json_schema.f90`, the project
+`VERSION` in `CMakeLists.txt` and the version `test/api_test.f90` checks, add the version's entry at the top of its
+`VERSIONHISTORY.md` (the workflows check all five), and merge to `main`. `.github/workflows/fortran-publish.yml` then
+does the following.
+
+1. It does nothing if the package's repository already has a release for that version, or if the merged PR is
+   labelled `no_release`.
+2. It runs `fortran.yml`: the tests with fpm, gfortran 11 and 14 on Linux, gfortran on macOS and Intel ifx on Linux
+   and Windows, against the latest C library; a CMake build, its tests, an install and a project that uses it; and
+   an fpm project that depends on the package.
+3. It replaces the package repository's files with `src-fortran/corvus-json-schema`, commits, and tags the commit
+   `v<version>`.
+4. It creates the release for that tag, with the version's history entry as its notes.
+5. It tags this repository's commit `fortran-v<version>`.
+
+Writing to the package's repository takes a token, the `FORTRAN_REPOSITORY_TOKEN` secret of the `fortran`
+environment. A run that fails part of the way can be run again: it skips the push when the tag is there, and the
+release when it is there.
+
+Never push a `fortran-v` tag here, or a version tag to the package's repository, by hand.
+
+A release of the C library needs no release of the binding: its users install the C library they want, 0.1.4 or
+later. A binding release is needed when the C library's API gains something the binding should expose, and then
+`required_library_version` in the module goes up with it.
+
+### The first release: repository set-up
+
+Do this once, before merging the first version:
+
+1. **Create the package's repository.** Create `corvus-dotnet/corvus-json-schema-fortran`, public, with a README (so
+   that it has a default branch, `main`). The publish workflow replaces its files.
+2. **Create the token.** In GitHub's **Settings**, **Developer settings**, **Personal access tokens**, **Fine-grained
+   tokens**, generate a token with the `corvus-dotnet` organization as its resource owner, access to that repository
+   only, and the repository permission **Contents: Read and write**. If the organization requires approval for
+   fine-grained tokens, an owner approves it.
+3. **Create the GitHub environment.** In this repository's **Settings**, **Environments**, add an environment named
+   `fortran`, and add the token to it as the secret `FORTRAN_REPOSITORY_TOKEN`.
+4. **Merge.** The workflow pushes the sources, tags them and creates the release.
+
+The token expires: renew it, and update the secret, before it does.
 
 ## Pre-release testing
 

@@ -1,8 +1,8 @@
 name: Detect .NET changes
 description: >-
   Whether a pull request, or a push to a branch, changes anything the .NET build reads. A change only to the Python,
-  Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal or OCaml packages (src-py, src-rs, src-ts, src-java,
-  src-go, src-jl, src-rb, src-php, src-r, src-pas, src-ml) and their own workflows, or to the documentation (docs), needs
+  Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal, OCaml or Fortran packages (src-py, src-rs, src-ts,
+  src-java, src-go, src-jl, src-rb, src-php, src-r, src-pas, src-ml, src-fortran) and their own workflows, or to the documentation (docs), needs
   no .NET build and makes no NuGet release. A change to docs builds the documentation website alone (the website output).
   Any other event (a tag push, a manual run) counts as a .NET change.
 inputs:
@@ -70,7 +70,7 @@ runs:
         # Paths the .NET build does not read. Anything else (shared files, workflows other than these) builds. docs is
         # read by the documentation website alone: the .NET build's only use of it is the code-sample catalog check,
         # which the website build runs too, and docs/ExampleRecipes and docs/playground are not in the solution.
-        others=$(printf '%s\n' "$files" | grep -v -E '^(src-py|src-rs|src-ts|src-java|src-go|src-jl|src-rb|src-php|src-r|src-pas|src-ml|docs)/|^\.github/workflows/(python|python-wheels|rust|typescript|capi|capi-publish|ruby|rubygems-build|rubygems-publish|php|php-build|php-publish|pypi-publish|crates-publish|npm-publish|java|maven-publish|go|go-publish|julia|julia-publish|r|r-publish|pascal|pascal-publish|ocaml|ocaml-publish)\.yml$' || true)
+        others=$(printf '%s\n' "$files" | grep -v -E '^(src-py|src-rs|src-ts|src-java|src-go|src-jl|src-rb|src-php|src-r|src-pas|src-ml|src-fortran|docs)/|^\.github/workflows/(python|python-wheels|rust|typescript|capi|capi-publish|ruby|rubygems-build|rubygems-publish|php|php-build|php-publish|pypi-publish|crates-publish|npm-publish|java|maven-publish|go|go-publish|julia|julia-publish|r|r-publish|pascal|pascal-publish|ocaml|ocaml-publish|fortran|fortran-publish)\.yml$' || true)
         if [ -n "$others" ]; then
           printf 'Changes the .NET build reads:\n%s\n' "$others" | head -n 20 || true
           build "Building."
@@ -82,4 +82,4 @@ runs:
         else
           echo "website=false" >> "$GITHUB_OUTPUT"
         fi
-        echo "Only the documentation, or the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal or OCaml packages, changed ($count files): skipping the .NET build."
+        echo "Only the documentation, or the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal, OCaml or Fortran packages, changed ($count files): skipping the .NET build."
