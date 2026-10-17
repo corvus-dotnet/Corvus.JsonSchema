@@ -96,7 +96,7 @@ jobs:
         run: opam install --yes dune
       - name: OCaml and dune versions
         run: |
-          opam exec -- ocamlfind ocamlopt -version
+          opam exec -- ocamlopt -version
           opam exec -- dune --version
       - name: Check the package's LICENSE matches the repository's
         run: cmp ../../LICENSE LICENSE
@@ -207,7 +207,7 @@ jobs:
         # runs.
         run: |
           version=$(sed -n 's/^version = \(.*\)$/\1/p' .ocamlformat)
-          opam install --yes dune "ocamlformat.$version" odoc
+          opam install --yes dune ocamlfind "ocamlformat.$version" odoc
       - name: Format
         run: |
           opam exec -- dune build @fmt
@@ -230,6 +230,8 @@ jobs:
         # that they were skipped, since the published package does not hold it. A program is then built against the
         # installed package with ocamlfind.
         run: |
+          # setup-ocaml makes a local switch in the workspace, which opam finds only from a directory under it.
+          export OPAMSWITCH="$GITHUB_WORKSPACE"
           version=$(sed -n 's/^(version \(.*\))$/\1/p' dune-project | head -n 1)
           published="$RUNNER_TEMP/corvus-json-schema-ocaml"
           mkdir -p "$published"
