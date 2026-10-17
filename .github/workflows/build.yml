@@ -248,6 +248,8 @@ jobs:
         with:
           name: website-output
           path: docs/website/.output
+          # The output is in a directory whose name starts with a dot, which upload-artifact leaves out by default.
+          include-hidden-files: true
           if-no-files-found: warn
 
   integration-tests:
