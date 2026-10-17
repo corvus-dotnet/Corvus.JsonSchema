@@ -53,18 +53,9 @@ gives a verdict for each element, so a column of JSON documents is validated in 
 | `base_uri` | `NULL` | The schema's base URI, when it has no `$id`. |
 | `entry_point` | `NULL` | A subschema to validate against, such as `"#/$defs/item"`. |
 | `max_depth` | `128` | The deepest the evaluator recurses in place before it raises `corvus_depth_error`. |
-| `pattern_match_limit` | `1` | The seconds one match of a regular expression against one string may take before the validation raises `corvus_pattern_match_limit_error`. `NULL` or `0` turns the limit off. |
 
 Failures are conditions that inherit from `corvus_json_schema_error`: `corvus_compilation_error`,
-`corvus_pattern_too_large_error` (which is a `corvus_compilation_error`), `corvus_invalid_json_error`,
-`corvus_value_error`, `corvus_depth_error`, `corvus_pattern_match_limit_error` and `corvus_callback_error`.
-
-A schema and an instance may both come from outside, so a regular expression is bounded in what it costs. A match of
-a `pattern` or `patternProperties` regular expression that takes longer than `pattern_match_limit` is abandoned, and
-`is_valid`, `is_valid_json`, `evaluate` and `evaluate_json` raise `corvus_pattern_match_limit_error`: the instance is
-then neither valid nor not valid. A schema with a regular expression longer than 1,048,576 bytes, nested more than
-1,000 groups deep or of more than about 16,000 terms does not compile, and `compile_schema` raises
-`corvus_pattern_too_large_error`.
+`corvus_invalid_json_error`, `corvus_value_error`, `corvus_depth_error` and `corvus_callback_error`.
 
 ## Results and annotations
 
