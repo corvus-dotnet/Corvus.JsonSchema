@@ -134,18 +134,19 @@ raises(evaluate(looping, 1), "corvus_depth_error")
 # A pattern that backtracks without end on this string. A match that reaches its limit raises, and is never an answer.
 never_answers <- "^(?:(a+)\\1*)+$"
 never_answered <- paste0(strrep("a", 60L), "b")
-# The time an expression takes, by both of R's clocks: the elapsed time of proc.time() and Sys.time().
+# The time an expression takes, by Sys.time(). (On Windows the elapsed time of proc.time() is counted in steps of
+# 10 ms, so a match abandoned at 50 ms can read as 40 ms by it.)
 timed <- function(expr) {
-  start <- c(proc.time()[["elapsed"]], as.double(Sys.time()))
+  start <- Sys.time()
   force(expr)
-  c(proc.time()[["elapsed"]], as.double(Sys.time())) - start
+  as.double(Sys.time()) - as.double(start)
 }
 took_at_least <- function(took, low, high) {
-  if (!all(took >= low & took < high)) {
-    stop(sprintf("took %.6f s by proc.time() and %.6f s by Sys.time(), outside [%g, %g)", took[[1L]], took[[2L]],
-                 low, high), call. = FALSE)
+  if (!(took >= low && took < high)) {
+    stop(sprintf("took %.6f s by Sys.time(), outside [%g, %g)", took, low, high), call. = FALSE)
   }
 }
+
 limited <- compile_schema(list(pattern = never_answers), pattern_match_limit = 0.05)
 for (check in list(function() is_valid(limited, never_answered),
                    function() is_valid_json(limited, paste0('"', never_answered, '"')),
