@@ -104,11 +104,13 @@ type state = {
   mutable units : bool;
       (** Says the program of the match in hand matches by UTF-16 code unit (see utf8.ml). It is set from the program
           when a match starts. *)
-  clock : float array;
-      (** Three times in seconds, in an array of floats so that none is a block of its own and reading the clock
-          allocates nothing. The first is the limit of a match, or zero for no limit: it belongs to the state and every
-          match with the state has it. The second is the deadline of the match in hand, set at its first check, and the
-          third the time of its last check. *)
+  clock : Float.Array.t;
+      (** Four times in seconds, in a flat array of floats so that none is a block of its own and reading the clock
+          allocates nothing. It is a [Float.Array.t] and not a [float array], which is an array of boxed floats where
+          the compiler is configured with [-no-flat-float-array]. The first is the limit of a match, or zero for no
+          limit: it belongs to the state and every match with the state has it. The second is the deadline of the match
+          in hand, set at its first check, the third the time of its last check, and the fourth the reading of the clock
+          in hand (see check). *)
   mutable timed : bool;  (** Says the deadline of the match in hand is set. *)
   mutable own_clock : (unit -> float) option;
       (** The clock the limit is counted on, in seconds, when the caller has given one. Without one it is
@@ -151,7 +153,7 @@ let new_state () =
     tmp = [||];
     counts = [||];
     units = false;
-    clock = [| 0.; 0.; 0. |];
+    clock = Float.Array.make 4 0.;
     timed = false;
     own_clock = None;
     steps = 0;
@@ -193,7 +195,7 @@ let set_failed st idx =
 
 (** [set_limit st seconds] sets the time every match with the state may take from now on. Zero or less, or a value that
     is not a number, is no limit. *)
-let set_limit st seconds = st.clock.(0) <- (if seconds > 0. then seconds else 0.)
+let set_limit st seconds = Float.Array.set st.clock 0 (if seconds > 0. then seconds else 0.)
 
 (** [set_clock st clock] sets the clock the limit of every match with the state is counted on from now on: a function
     that returns the time in seconds, or [None] for {!default_clock}. *)
@@ -204,7 +206,7 @@ let set_clock st clock = st.own_clock <- clock
 let[@inline] default_clock () = Unix.gettimeofday ()
 
 (** [limit st] is the limit of the state, or zero for none. *)
-let limit st = st.clock.(0)
+let limit st = Float.Array.get st.clock 0
 
 (* Without a clock of the caller's, the clock is the time that passes: the time of day, from Unix.gettimeofday of the
    unix library of the OCaml distribution, which returns an unboxed float and allocates nothing. The standard library
@@ -219,6 +221,10 @@ let limit st = st.clock.(0)
    than its limit after a change. A clock of the caller's is a closure that returns a float, which is a block of its
    own for each read.
 
+   Each branch writes its reading of the clock to the state, and the reading is read back from there, so that the float
+   is never the value of the match on the clock. That value would be boxed by flambda, whose default clock otherwise
+   allocates nothing, because one of the branches returns the boxed float of a closure.
+
    check is called every check_every steps. It reports whether the match may go on. The clock starts at the first
    check. *)
 let check st =
@@ -227,26 +233,31 @@ let check st =
     st.checks <- st.checks + 1;
     remember st
   end;
-  let limit = st.clock.(0) in
+  let limit = Float.Array.get st.clock 0 in
   if limit <= 0. then true
   else if st.sp > 4 * max_stack then begin
     st.stop <- stop_memory;
     false
   end
   else
-    let now = match st.own_clock with None -> default_clock () | Some clock -> clock () in
-    if (not st.timed) || now < st.clock.(2) then begin
+    let () =
+      match st.own_clock with
+      | None -> Float.Array.set st.clock 3 (default_clock ())
+      | Some clock -> Float.Array.set st.clock 3 (clock ())
+    in
+    let now = Float.Array.get st.clock 3 in
+    if (not st.timed) || now < Float.Array.get st.clock 2 then begin
       st.timed <- true;
-      st.clock.(1) <- now +. limit;
-      st.clock.(2) <- now;
+      Float.Array.set st.clock 1 (now +. limit);
+      Float.Array.set st.clock 2 now;
       true
     end
-    else if now > st.clock.(1) then begin
+    else if now > Float.Array.get st.clock 1 then begin
       st.stop <- stop_time;
       false
     end
     else begin
-      st.clock.(2) <- now;
+      Float.Array.set st.clock 2 now;
       true
     end
 
@@ -259,7 +270,7 @@ let grow st =
   let length = Array.length st.stack in
   let doubled = (2 * length) + 256 in
   let enough = 4 * (max_stack + check_every + (1 lsl 16)) in
-  let size = if st.clock.(0) > 0. && length < enough && doubled > enough then enough else doubled in
+  let size = if Float.Array.get st.clock 0 > 0. && length < enough && doubled > enough then enough else doubled in
   let grown = Array.make size 0 in
   Array.blit st.stack 0 grown 0 st.sp;
   st.stack <- grown
