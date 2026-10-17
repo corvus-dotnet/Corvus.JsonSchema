@@ -196,3 +196,15 @@ jobs:
           else
             gh api "repos/${{ github.repository }}/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA"
           fi
+
+  image:
+    name: Publish the release image
+    needs: [version, publish]
+    # The released files as an image that a Dockerfile can pin (see release-image.yml): the Bowtie harnesses do.
+    uses: ./.github/workflows/release-image.yml
+    permissions:
+      contents: read
+      packages: write  # push ghcr.io/corvus-dotnet/corvus-json-schema-php
+    with:
+      package: php
+      version: ${{ needs.version.outputs.version }}

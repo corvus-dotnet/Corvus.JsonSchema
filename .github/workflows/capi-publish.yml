@@ -102,3 +102,15 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "corvus-json-schema C library $VERSION" \
             --notes "The corvus-json-schema C library and its C++ wrapper, version $VERSION: headers, shared and static libraries, a CMake package and a pkg-config file for each platform, and CorvusJsonSchema.xcframework.zip (static libraries for macOS, iOS and the iOS simulator, for a Swift package's binaryTarget; SwiftPM checksum $(cat packages/CorvusJsonSchema.xcframework.zip.sha256)). See src-rs/corvus-json-schema-capi/VERSIONHISTORY.md and DESIGN.md."
+
+  image:
+    name: Publish the release image
+    needs: [version, release]
+    # The released files as an image that a Dockerfile can pin (see release-image.yml): the Bowtie harnesses do.
+    uses: ./.github/workflows/release-image.yml
+    permissions:
+      contents: read
+      packages: write  # push ghcr.io/corvus-dotnet/corvus-json-schema-c
+    with:
+      package: c
+      version: ${{ needs.version.outputs.version }}

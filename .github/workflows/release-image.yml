@@ -1,0 +1,164 @@
+name: release-image
+# Publishes a released package's files as a small container image, ghcr.io/corvus-dotnet/corvus-json-schema-<package>,
+# for linux/amd64 and linux/arm64, holding only those files, under /corvus-json-schema. A Dockerfile that copies the
+# library from it pins the version in an image tag, which Dependabot keeps up to date as it does any other image. The
+# Bowtie harnesses for C, C++, Object Pascal, PHP and R do so: none of these releases is in a registry Dependabot reads.
+#
+#   c       the C library's Linux builds, from the capi-v<version> release, in linux-musl and linux-gnu; tagged
+#           <version>
+#   pascal  the source archive, from the pas-v<version> release, the same for both platforms; tagged <version>
+#   php     the extension's Linux builds, from the <version> release of corvus-dotnet/corvus-json-schema-php; tagged
+#           <version>
+#   r       the binary package for R <R_VERSION>, built here from the r-v<version> tag, natively on each platform, in
+#           the rocker/r-ver image of that R; tagged <version>-r<R_VERSION>, as a binary package is for one R
+#
+# Paths in the image name no version, so a Dockerfile's COPY stays the same and Dependabot changes only the tag. The
+# publish workflows call it after each release. Run it by hand to publish the image of a release that has none.
+on:
+  workflow_call:
+    inputs:
+      package:
+        type: string
+        required: true
+      version:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      package:
+        type: choice
+        options: [c, pascal, php, r]
+        required: true
+      version:
+        description: The released version, without its tag's prefix (0.1.4, not capi-v0.1.4)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  R_VERSION: "4.6"
+
+jobs:
+  r:
+    name: Build the R package (${{ matrix.platform }})
+    if: inputs.package == 'r'
+    strategy:
+      matrix:
+        include:
+          - platform: amd64
+            runner: ubuntu-24.04
+          - platform: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: r-v${{ inputs.version }}
+          persist-credentials: false
+          sparse-checkout: src-r/corvusjsonschema
+      - name: Build the binary package
+        # The package's Rust code needs a toolchain to build, which stays in this container: the image holds only the
+        # built package, which installs without one.
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          mkdir out
+          docker run --rm -v "$PWD/src-r:/work" -v "$PWD/out:/out" -w /out "rocker/r-ver:$R_VERSION" bash -c '
+            set -eu
+            apt-get update -qq
+            apt-get install -y -qq --no-install-recommends build-essential ca-certificates curl > /dev/null
+            curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal -q
+            export PATH="$HOME/.cargo/bin:$PATH"
+            mkdir /tmp/library
+            R CMD INSTALL --build --library=/tmp/library /work/corvusjsonschema
+            Rscript -e "library(corvusjsonschema, lib.loc = \"/tmp/library\"); stopifnot(packageVersion(\"corvusjsonschema\") == commandArgs(TRUE), is_valid_json(compile_schema(\"true\"), \"1\"))" "'"$VERSION"'"'
+          ls -l out
+          set -- out/corvusjsonschema_*.tar.gz
+          [ "$#" -eq 1 ] && [ -f "$1" ]
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: r-${{ matrix.platform }}
+          path: out/corvusjsonschema_*.tar.gz
+          if-no-files-found: error
+
+  image:
+    name: Publish corvus-json-schema-${{ inputs.package }} ${{ inputs.version }}
+    needs: r
+    # The R builds run for the r package only, and are skipped otherwise.
+    if: ${{ !cancelled() && (needs.r.result == 'success' || needs.r.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write  # push the image to ghcr.io
+    env:
+      PACKAGE: ${{ inputs.package }}
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download the R packages
+        if: inputs.package == 'r'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: r-*
+          path: r
+      - name: Collect the files for each platform
+        # context/<platform>/corvus-json-schema is what the image for that platform holds.
+        run: |
+          set -eu
+          for p in amd64 arm64; do mkdir -p "context/$p/corvus-json-schema"; done
+          case "$PACKAGE" in
+            c)
+              gh release download "capi-v$VERSION" -R "$GITHUB_REPOSITORY" -D downloads -p '*-unknown-linux-*.tar.gz'
+              for archive in downloads/*.tar.gz; do
+                case "$archive" in *x86_64-*) p=amd64 ;; *aarch64-*) p=arm64 ;; *) continue ;; esac
+                case "$archive" in *-linux-musl.tar.gz) libc=linux-musl ;; *-linux-gnu.tar.gz) libc=linux-gnu ;; *) continue ;; esac
+                mkdir "context/$p/corvus-json-schema/$libc"
+                tar -xzf "$archive" -C "context/$p/corvus-json-schema/$libc" --strip-components=1
+              done
+              ;;
+            pascal)
+              gh release download "pas-v$VERSION" -R "$GITHUB_REPOSITORY" -D downloads -p '*.tar.gz'
+              for p in amd64 arm64; do
+                tar -xzf downloads/*.tar.gz -C "context/$p/corvus-json-schema" --strip-components=1
+              done
+              ;;
+            php)
+              gh release download "$VERSION" -R corvus-dotnet/corvus-json-schema-php -D downloads -p '*-linux-*.zip'
+              mv downloads/*-x86_64-linux-*.zip context/amd64/corvus-json-schema/
+              mv downloads/*-arm64-linux-*.zip context/arm64/corvus-json-schema/
+              ;;
+            r)
+              for p in amd64 arm64; do mv "r/r-$p"/*.tar.gz "context/$p/corvus-json-schema/"; done
+              ;;
+            *)
+              echo "::error::No image for the package $PACKAGE." && exit 1
+              ;;
+          esac
+          for p in amd64 arm64; do
+            [ -n "$(ls -A "context/$p/corvus-json-schema")" ] || { echo "::error::Nothing to publish for $p."; exit 1; }
+          done
+          find context -maxdepth 3 | sort
+      - name: Publish the image
+        run: |
+          set -eu
+          tag="$VERSION"
+          [ "$PACKAGE" = r ] && tag="$VERSION-r$R_VERSION"
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER}/corvus-json-schema-$PACKAGE"
+          # ${TARGETARCH} is the Dockerfile's, not the shell's.
+          # shellcheck disable=SC2016
+          printf 'FROM scratch\nARG TARGETARCH\nCOPY ${TARGETARCH}/corvus-json-schema /corvus-json-schema\n' > context/Dockerfile
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker buildx create --use > /dev/null
+          # Only files are copied, so the image for each platform is built without emulating it. The source label
+          # links the package to this repository, whose visibility it then shares.
+          docker buildx build context --platform linux/amd64,linux/arm64 --push \
+            --tag "$image:$tag" \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --annotation "index:org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.version=$tag" \
+            --label "org.opencontainers.image.description=corvus-json-schema $PACKAGE $VERSION, as released: only its files, under /corvus-json-schema"
+          echo "::notice::Published $image:$tag"
