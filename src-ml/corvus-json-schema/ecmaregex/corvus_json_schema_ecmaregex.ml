@@ -1,0 +1,241 @@
+(* The port of ecmaregex.go of the Go module, with the choice of back end of the Object Pascal port
+   (Corvus.JsonSchema.EcmaRegex.pas). The interface describes the engine as a whole.
+
+   charset.ml is charset.go and fold.go, parse.ml is parse.go, compile.ml is compile.go, vm.ml is vm.go and dfa.ml is
+   dfa.go. utf8.ml holds what the Go source takes from the unicode/utf8 package. *)
+
+type t = {
+  pattern : string;
+  unicode : bool;  (** Says the pattern was read with the u flag grammar. *)
+  regular : bool;
+  dfa : Dfa.t option;  (** The automaton over ASCII text, when the pattern has one. *)
+  prog : Compile.program;  (** The pattern compiled for the backtracking matcher. *)
+  slot : Vm.state;
+      (** Working memory of the backtracking matcher for the entry points that are given none. Only the match that holds
+          [busy] touches it. *)
+  busy : bool Atomic.t;
+}
+
+type engine = Dfa | Backtrack
+
+let engine_name = function Dfa -> "dfa" | Backtrack -> "backtrack"
+
+(* The largest count the regexp package of Go accepts in a counted quantifier, and the largest product of the counts
+   of nested ones. *)
+let max_regexp_repeat = 1000
+
+(* Reports whether a quantifier is one the Go package writes with braces for the regexp package: every one but *, +
+   and ?. *)
+let is_counted (n : Parse.node) =
+  not ((n.min = 0 && n.max = Parse.unbounded) || (n.min = 1 && n.max = Parse.unbounded) || (n.min = 0 && n.max = 1))
+
+(* Reports whether the counted quantifiers at and below n nest to a product of at most limit. It is the rule of the
+   same name in the regexp/syntax package of Go. *)
+let rec repeat_is_valid (n : Parse.node) limit =
+  let counted = n.kind = Parse.Repeat && is_counted n in
+  let m = if counted then if n.max < 0 then n.min else n.max else 1 in
+  if counted && n.max = 0 then true
+  else if counted && m > limit then false
+  else
+    let limit = if counted && m > 0 then limit / m else limit in
+    Array.for_all (fun sub -> repeat_is_valid sub limit) n.subs
+
+(* Reports whether every counted quantifier at and below n is one the regexp package of Go accepts. The Go package
+   runs a pattern on the backtracking matcher alone when the regexp package refuses its translation, which it does
+   for these quantifiers. The rule is kept here so that the same patterns are tried for an automaton, and because it
+   bounds the work of building one (see Dfa.build). The other limits of the regexp package, on the size and the depth
+   of a pattern, are not kept: a pattern beyond them is too large for an automaton in any case. *)
+let rec within_regexp_limits (n : Parse.node) =
+  (* The quantifier itself first, so that a nest of quantifiers that is too large is found at its outermost. *)
+  (not
+     (n.kind = Parse.Repeat && is_counted n
+     && (n.min > max_regexp_repeat || n.max > max_regexp_repeat
+        || ((n.min >= 2 || n.max >= 2) && not (repeat_is_valid n max_regexp_repeat)))))
+  && Array.for_all within_regexp_limits n.subs
+
+(* compile with a way to leave out the automaton, which the tests use to compare the back ends. *)
+type error = Parse.error = Invalid of string | Too_large of string * int
+
+let error_message = Parse.error_message
+let max_pattern_length = Parse.max_pattern_length
+let max_nesting = Parse.max_nesting
+let max_size = Parse.max_size
+
+(* Reads the pattern with the u flag grammar and, failing that, with the Annex B grammar. A pattern over a limit of
+   size under either is too large, whether or not it is valid. A pattern neither accepts has the error of the u flag
+   grammar. *)
+let parse_either pattern =
+  match Parse.parse pattern true with
+  | Ok (root, ps) -> Ok (root, ps, true)
+  | Error (Too_large _ as large) -> Error large
+  | Error invalid -> (
+      match Parse.parse pattern false with
+      | Ok (root, ps) -> Ok (root, ps, false)
+      | Error (Too_large _ as large) -> Error large
+      | Error _ -> Error invalid)
+
+let compile_with pattern force_backtrack =
+  match parse_either pattern with
+  | Error error -> Error error
+  | Ok (root, ps, unicode) ->
+      let regular = (not ps.needs_backtracking) && within_regexp_limits root in
+      let dfa = if regular && not force_backtrack then Dfa.build root else None in
+      let prog = Compile.compile_program root (max ps.groups ps.group_count) unicode in
+      Ok { pattern; unicode; regular; dfa; prog; slot = Vm.new_state (); busy = Atomic.make false }
+
+let compile pattern = compile_with pattern false
+let compile_backtrack pattern = compile_with pattern true
+let valid pattern = match Parse.parse pattern true with Ok _ -> true | Error _ -> false
+let check pattern = match parse_either pattern with Ok (_, _, unicode) -> Ok unicode | Error error -> Error error
+let check_range name length off len = if off < 0 || len < 0 || off > length - len then invalid_arg name
+
+type scratch = Vm.state
+
+let create_scratch = Vm.new_state
+
+exception Match_time = Vm.Match_time
+exception Match_memory = Vm.Match_memory
+
+let set_limit = Vm.set_limit
+let set_clock = Vm.set_clock
+let default_clock = Vm.default_clock
+let limit = Vm.limit
+let check_every = Vm.check_every
+let max_stack = Vm.max_stack
+
+let is_match_with scratch re text off len =
+  check_range "Corvus_json_schema_ecmaregex.is_match_with" (Bytes.length text) off len;
+  let answer = match re.dfa with Some d -> Dfa.match_bytes d text off (off + len) | None -> Dfa.undecided in
+  if answer <> Dfa.undecided then answer = Dfa.matched else Vm.match_bytes re.prog scratch text off (off + len)
+
+let is_match_sub_with scratch re text off len =
+  check_range "Corvus_json_schema_ecmaregex.is_match_sub_with" (String.length text) off len;
+  let answer = match re.dfa with Some d -> Dfa.match_string d text off (off + len) | None -> Dfa.undecided in
+  if answer <> Dfa.undecided then answer = Dfa.matched else Vm.match_string re.prog scratch text off (off + len)
+
+let is_match re text off len =
+  check_range "Corvus_json_schema_ecmaregex.is_match" (Bytes.length text) off len;
+  let answer = match re.dfa with Some d -> Dfa.match_bytes d text off (off + len) | None -> Dfa.undecided in
+  if answer <> Dfa.undecided then answer = Dfa.matched
+  else if Atomic.compare_and_set re.busy false true then (
+    match Vm.match_bytes re.prog re.slot text off (off + len) with
+    | matched ->
+        Atomic.set re.busy false;
+        matched
+    | exception e ->
+        Atomic.set re.busy false;
+        raise e)
+  else
+    (* Another thread or domain is matching with the memory of the pattern. This match makes its own. *)
+    Vm.match_bytes re.prog (Vm.new_state ()) text off (off + len)
+
+let is_match_sub re text off len =
+  check_range "Corvus_json_schema_ecmaregex.is_match_sub" (String.length text) off len;
+  let answer = match re.dfa with Some d -> Dfa.match_string d text off (off + len) | None -> Dfa.undecided in
+  if answer <> Dfa.undecided then answer = Dfa.matched
+  else if Atomic.compare_and_set re.busy false true then (
+    match Vm.match_string re.prog re.slot text off (off + len) with
+    | matched ->
+        Atomic.set re.busy false;
+        matched
+    | exception e ->
+        Atomic.set re.busy false;
+        raise e)
+  else Vm.match_string re.prog (Vm.new_state ()) text off (off + len)
+
+let is_match_string re text = is_match_sub re text 0 (String.length text)
+let engine re = match re.dfa with Some _ -> Dfa | None -> Backtrack
+let unicode re = re.unicode
+let pattern re = re.pattern
+let regular re = re.regular
+
+module Internal = struct
+  let automaton re text =
+    match re.dfa with
+    | None -> None
+    | Some d ->
+        let answer = Dfa.match_string d text 0 (String.length text) in
+        if answer = Dfa.undecided then None else Some (answer = Dfa.matched)
+
+  let canonicalize = Charset.canonicalize
+
+  let fold_classes unicode_mode =
+    let table = Charset.fold_classes unicode_mode in
+    (table.points, table.classes)
+
+  let property_resolves expr = Charset.property_set expr <> None
+  let property_pairs = Charset.property_pairs
+  let binary_names = Array.map fst Charset.binary_names
+  let category_names = Array.map fst Charset.category_names
+
+  let program_shape re =
+    ( re.prog.loops,
+      Array.fold_left (fun n (i : Compile.inst) -> if i.op = Compile.Op_backref then n + 1 else n) 0 re.prog.insts )
+
+  let needs re =
+    ( re.prog.need,
+      Array.of_list
+        (List.filter_map
+           (fun (i : Compile.inst) -> if i.op = Compile.Op_loop then Some i.need else None)
+           (Array.to_list re.prog.insts)) )
+
+  let iterations re =
+    Array.of_list
+      (List.filter_map
+         (fun (i : Compile.inst) -> if i.op = Compile.Op_loop then Some i.iter else None)
+         (Array.to_list re.prog.insts))
+
+  let no_match = Compile.no_match
+  let memo_from_the_start = Vm.memo_from_the_start
+
+  let memo_points re =
+    List.filter_map
+      (fun (i : Compile.inst) ->
+        if i.m = 0 then None
+        else
+          let name =
+            match i.op with
+            | Compile.Op_split -> "split"
+            | Compile.Op_loop -> "loop"
+            | Compile.Op_rep -> "rep"
+            | Compile.Op_rep_lazy -> "lazy"
+            | _ -> "?"
+          in
+          let loop l = if l >= 0 then " " ^ string_of_int l else "" in
+          Some (name ^ loop i.ml0 ^ loop i.ml1))
+      (Array.to_list re.prog.insts)
+
+  let point_count re = re.prog.points
+  let shown_quick (q : Compile.quick) = (Bytes.to_string q.ascii, q.other, q.mid, q.at_end)
+  let quick re = shown_quick re.prog.insts.(0).q
+
+  let quick_of_wild re =
+    List.filter_map
+      (fun (i : Compile.inst) ->
+        if i.op = Compile.Op_backref || i.op = Compile.Op_char_back then Some (shown_quick i.q) else None)
+      (Array.to_list re.prog.insts)
+
+  let memory_use points width checks =
+    let st = Vm.new_state () in
+    st.points <- points;
+    st.width <- width;
+    st.memo_off <- points = 0;
+    let k = ref 0 in
+    while !k < checks && (not st.memo_on) && not st.memo_off do
+      st.checks <- st.checks + 1;
+      Vm.remember st;
+      incr k
+    done;
+    (st.memo_on, st.memo_off, Bytes.length st.memo / 8)
+
+  let max_memo_words = Vm.max_memo_words
+  let need_passes re = re.prog.need_passes
+  let quick_passes re = re.prog.quick_passes
+  let prefix re = re.prog.prefix
+  let size pattern unicode = match Parse.parse pattern unicode with Ok (_, ps) -> ps.size | Error _ -> -1
+  let unpack packed = (Utf8.rune packed, Utf8.width packed)
+  let unit_at text at = unpack (Utf8.unit_at { b = Bytes.empty; s = text; is_string = true } 0 at (String.length text))
+
+  let unit_before text at =
+    unpack (Utf8.unit_before { b = Bytes.empty; s = text; is_string = true } 0 at (String.length text))
+end

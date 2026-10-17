@@ -1,0 +1,5 @@
+; The tests of the Unicode data: ucd_test.go of the Go module and TestUcd.pas of the Object Pascal port.
+
+(test
+ (name test_ucd)
+ (libraries corvus-json-schema.ucd))

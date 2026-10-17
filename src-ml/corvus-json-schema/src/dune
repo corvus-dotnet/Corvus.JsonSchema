@@ -1,0 +1,4 @@
+(library
+ (name corvus_json_schema)
+ (public_name corvus-json-schema)
+ (libraries corvus-json-schema.ecmaregex corvus-json-schema.ucd))

@@ -1,0 +1,10 @@
+; The jsonschema-benchmark protocol program for the OCaml evaluator. It takes the library from the workspace it is
+; built in (see README.md). The compiler's flags are dune's defaults for the release profile, with nothing added: no
+; -O3 and no -unboxed-types, which only a compiler built with flambda takes, and no -unsafe.
+
+(executable
+ (name corvus_ocaml_benchmark)
+ (foreign_stubs
+  (language c)
+  (names clock_stubs))
+ (libraries corvus-json-schema))

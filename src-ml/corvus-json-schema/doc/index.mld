@@ -1,0 +1,20 @@
+{0 corvus-json-schema}
+
+A JSON Schema evaluator for draft 4, 6, 7, 2019-09 and 2020-12, with no dependencies outside the OCaml distribution.
+A schema is compiled once into fail-fast plans, and any number of instances are then validated against it, as JSON text
+or as parsed documents.
+
+{1 The library}
+
+The package has one library for programs, [corvus-json-schema], with one module:
+
+- {!Corvus_json_schema}: documents, options, validators, results and annotations.
+
+{1 Internal libraries}
+
+The package is built from two more libraries. They are installed with it, and they are not a supported interface:
+either can change in any release.
+
+- {!Corvus_json_schema_ecmaregex} ([corvus-json-schema.ecmaregex]): the ECMA-262 regular expression engine behind
+  [pattern], [patternProperties] and the [regex] format.
+- {!Corvus_json_schema_ucd} ([corvus-json-schema.ucd]): the Unicode data the engine and the formats read.

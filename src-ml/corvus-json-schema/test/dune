@@ -1,0 +1,45 @@
+; The tests of the evaluator. Each is a plain executable that prints its counts and exits with a non-zero status when
+; a check fails. The tests of the regular expression engine and of the Unicode data are in ecmaregex and ucd.
+
+(tests
+ (names
+  allocations_test
+  differential_test
+  document_test
+  formats_test
+  limits_test
+  metaschemas_test
+  number_formats_test
+  pattern_test
+  plan_test
+  suite_test
+  version_test)
+ (modules :standard \ readme_test pattern_limits_test)
+ ; version_test reads the package's version history, and pattern_test the cases of the engine's tests.
+ (deps %{project_root}/VERSIONHISTORY.md ecmaregex/v8_cases.json)
+ (libraries
+  corvus-json-schema
+  corvus_json_schema_test_support
+  corvus_json_schema_test_helpers))
+
+; The limit on a match of a pattern and the limits on the size of a pattern. It needs unix for the time of the wall,
+; which the test measures.
+
+(test
+ (name pattern_limits_test)
+ (modules pattern_limits_test)
+ (libraries corvus-json-schema corvus_json_schema_test_support unix))
+
+; The samples of README.md and of the documentation page, compiled and run. The test reads README.md and its own
+; source to check that the samples in the two are the same. It needs unix to capture what a sample prints, and
+; threads for the sample that validates from several.
+
+(test
+ (name readme_test)
+ (modules readme_test)
+ (deps %{project_root}/README.md readme_test.ml)
+ (libraries
+  corvus-json-schema
+  corvus_json_schema_test_support
+  unix
+  threads.posix))
