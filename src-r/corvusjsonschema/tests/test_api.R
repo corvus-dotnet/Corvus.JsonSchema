@@ -134,10 +134,17 @@ raises(evaluate(looping, 1), "corvus_depth_error")
 # A pattern that backtracks without end on this string. A match that reaches its limit raises, and is never an answer.
 never_answers <- "^(?:(a+)\\1*)+$"
 never_answered <- paste0(strrep("a", 60L), "b")
+# The time an expression takes, by both of R's clocks: the elapsed time of proc.time() and Sys.time().
 timed <- function(expr) {
-  start <- proc.time()[["elapsed"]]
+  start <- c(proc.time()[["elapsed"]], as.double(Sys.time()))
   force(expr)
-  proc.time()[["elapsed"]] - start
+  c(proc.time()[["elapsed"]], as.double(Sys.time())) - start
+}
+took_at_least <- function(took, low, high) {
+  if (!all(took >= low & took < high)) {
+    stop(sprintf("took %.6f s by proc.time() and %.6f s by Sys.time(), outside [%g, %g)", took[[1L]], took[[2L]],
+                 low, high), call. = FALSE)
+  }
 }
 limited <- compile_schema(list(pattern = never_answers), pattern_match_limit = 0.05)
 for (check in list(function() is_valid(limited, never_answered),
@@ -145,7 +152,7 @@ for (check in list(function() is_valid(limited, never_answered),
                    function() evaluate(limited, never_answered),
                    function() evaluate_json(limited, paste0('"', never_answered, '"')))) {
   took <- timed(raises(check(), "corvus_pattern_match_limit_error", "50ms"))
-  stopifnot(took >= 0.04, took < 20)
+  took_at_least(took, 0.04, 20)
   e <- condition_of(check())
   stopifnot(grepl(never_answers, conditionMessage(e), fixed = TRUE), !inherits(e, "corvus_depth_error"))
 }
@@ -155,7 +162,7 @@ stopifnot(is_valid(limited, "aaaa"), !is_valid(limited, "b"))
 by_default <- compile_schema(list(patternProperties = setNames(list(list(type = "integer")), never_answers)))
 took <- timed(raises(is_valid(by_default, setNames(list(1L), never_answered)), "corvus_pattern_match_limit_error",
                      "1s"))
-stopifnot(took >= 0.9, took < 21)
+took_at_least(took, 0.9, 21)
 for (off in list(NULL, 0, 0L, -1)) {
   stopifnot(!is_valid(compile_schema(list(pattern = never_answers), pattern_match_limit = off),
                       paste0(strrep("a", 14L), "b")))
