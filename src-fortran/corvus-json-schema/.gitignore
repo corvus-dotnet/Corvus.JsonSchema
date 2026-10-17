@@ -1,0 +1,5 @@
+build/
+*.mod
+*.smod
+*.o
+corvus_json_schema_listing.tmp
