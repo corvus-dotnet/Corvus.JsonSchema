@@ -47,8 +47,16 @@ immutable and can be shared between threads.
 | `base_uri` | `nil` | The schema's base URI, when it has no `$id`. |
 | `entry_point` | `nil` | A subschema to validate against, such as `"#/$defs/item"`. |
 | `max_depth` | `128` | The deepest the evaluator recurses in place before it raises `DepthError`. |
+| `pattern_match_limit` | `1.0` | The seconds one match of a regular expression against one string may take before the validation raises `PatternMatchLimitError`. `nil` or `0` turns the limit off. |
 
-Errors are subclasses of `CorvusJsonSchema::Error`: `CompilationError`, `DepthError` and `InvalidJsonError`.
+Errors are subclasses of `CorvusJsonSchema::Error`: `CompilationError`, `DepthError`, `InvalidJsonError`,
+`PatternMatchLimitError` and `PatternTooLargeError`.
+
+A schema and an instance may both come from outside, so a regular expression is bounded in what it costs. A match of
+a `pattern` or `patternProperties` regular expression that takes longer than `pattern_match_limit` is abandoned, and
+`valid?`, `valid_json?` and `evaluate` raise `PatternMatchLimitError`: the instance is then neither valid nor not
+valid. A schema with a regular expression longer than 1,048,576 bytes, nested more than 1,000 groups deep or of more
+than about 16,000 terms does not compile, and `compile` raises `PatternTooLargeError`, which is a `CompilationError`.
 
 ## Results and annotations
 

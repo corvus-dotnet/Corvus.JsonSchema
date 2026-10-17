@@ -53,6 +53,7 @@ Its options:
 | `base_uri` | `nil` | The schema's base URI, when it has no `$id`. |
 | `entry_point` | `nil` | A reference to the subschema to validate against, such as `"#/$defs/item"`. |
 | `max_depth` | `128` | The deepest the evaluator recurses in place before it raises `DepthError`. |
+| `pattern_match_limit` | `1.0` | The seconds one match of a `pattern` or `patternProperties` regular expression against one string may take before the validation raises `PatternMatchLimitError`. `nil` or `0` turns the limit off, for a caller who trusts both the schema and the instances. |
 
 A `Validator` is immutable and can be shared between threads.
 
@@ -65,7 +66,10 @@ A `Validator` is immutable and can be shared between threads.
   schema location.
 
 Errors are subclasses of `CorvusJsonSchema::Error`: `CompilationError` (an invalid schema, or a reference that cannot
-be resolved), `DepthError` and `InvalidJsonError` (for `valid_json?`). An error raised by a format or resolver callable
+be resolved), `PatternTooLargeError` (a `CompilationError` for a regular expression over a limit of size: 1,048,576
+bytes, 1,000 levels of groups, or about 16,000 terms), `DepthError`, `PatternMatchLimitError` (a match of a regular
+expression reached its limit, so the instance is neither valid nor not valid) and `InvalidJsonError` (for
+`valid_json?`). An error raised by a format or resolver callable
 propagates.
 
 ## Values
@@ -109,3 +113,8 @@ repository's submodule (or `JSON_SCHEMA_TEST_SUITE`).
 ## License
 
 Apache-2.0
+
+The gem is built on the `corvus-json-schema` Rust crate, whose Unicode tables are derived from the Unicode Character
+Database, which is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice,
+and the one of the `regress` crate that the tables were first read from. The file is in the source gem and in every
+native gem, beside `LICENSE`.

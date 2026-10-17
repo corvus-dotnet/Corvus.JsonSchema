@@ -134,6 +134,7 @@ fmt.Println(validator.IsValidString(`"three"`)) // false
 | `WithBaseURI` | Base URI of the root document. |
 | `WithEntryPoint` | Evaluate from a subschema, for example `#/$defs/item`. |
 | `WithMaxDepth` | Depth limit for in-place recursion on a cycle (default 128). |
+| `WithPatternMatchLimit` | The time one match of a `pattern` or `patternProperties` regular expression may take (default one second, `NoPatternMatchLimit` for none). See [Limits on patterns](#limits-on-patterns). |
 
 ### Results and annotations
 
@@ -241,11 +242,152 @@ slower to compile a schema, and far slower on the first pass.
 
 [corvus-json-schema-bench](../corvus-json-schema-bench) has the harnesses and how to run them.
 
+## Patterns
+
+`pattern` and `patternProperties` have ECMA-262 semantics, and the answers are those of V8. A pattern is read with the
+grammar of the `u` flag and matched by Unicode code point. A pattern that grammar refuses is read with the Annex B
+grammar of a pattern with no flag, which many schemas need (`\-` outside a class, `\_`, a lone `{`). Such a pattern is
+matched by UTF-16 code unit, as ECMA-262 matches a pattern with no `u` flag. The two differ only for a string with a
+character beyond the Basic Multilingual Plane, which is two code units. `^.$` matches `"\ud801\udc00"` (the one
+character U+10400), and `^\-?.$` does not, because the dot takes one unit of the two. A pattern that neither
+grammar accepts is a `*CompileError`.
+
+The answers are V8's except where V8 itself departs from ECMA-262, and there the module follows ECMA-262. A
+quantifier whose first count is greater than its second is an error whatever the size of the numbers, so
+`a{2147483648,2147483647}` is refused, which V8 takes. A group name used twice is an error unless the two groups
+are in separate alternatives of one disjunction, so `(?<m>a)(?:x|(?<m>b))` is refused, which V8 takes.
+`\p{WSpace}` is not a property name ECMA-262 lists, so the pattern is read with no flag, as the characters
+`p{WSpace}`, where V8 reads it as `\p{White_Space}`. `Katakana_Or_Hiragana` (`Hrkt`) is a Script value that no
+character has, so `\p{sc=Hrkt}` is valid and matches nothing, where V8 refuses it. And the properties are those of
+Unicode 17, so the scripts Sidetic, Tolong_Siki, Beria_Erfe and Tai_Yo are known, which V8 13.6 does not know.
+
+A JSON string can name half of a surrogate pair with an escape, as in `"\ud800"`. That is not Unicode text, and a
+`Document` is UTF-8 and cannot hold it. `ParseDocument` returns a `*ParseError` for it, and `IsValidString` and
+`IsValidBytes` report it as not valid, whatever the schema. So a pattern is never matched against such a string.
+
+A pattern with a lookaround or a backreference runs on a backtracking matcher. A repetition whose body cannot
+consume a character, such as `(?:\b|(?=a)|){4,5}`, is run once when its minimum is one or more and not at all when it
+is zero, which is what ECMA-262 says it matches. A counted repetition is not tried at a place where the rest of the
+pattern, with the iterations the repetition still owes, needs more of the string than is left. The matcher looks at
+the next character before it takes one of two ways, as V8 does. And where a pattern has no backreference it remembers
+the places from which every way has failed, so a repetition inside a repetition such as `^(?=.)(a+)+$` takes time
+proportional to the pattern times the string, where a backtracking matcher takes time that doubles with each
+character.
+
+### Limits on patterns
+
+A schema and an instance may both come from outside. No pattern and no string is to make a validation run without
+end, or hold memory out of proportion to what it was given. So a match has a limit and a pattern has limits of size.
+
+**The limit of a match.** One match of a `pattern` or `patternProperties` regular expression against one string may
+take one second (`DefaultPatternMatchLimit`). `WithPatternMatchLimit` sets another time, and
+`WithPatternMatchLimit(jsonschema.NoPatternMatchLimit)` turns the limit off for a caller who trusts both the schema
+and the instances. A match that reaches the limit is abandoned, and the validation returns a
+`*PatternMatchLimitError`, which `errors.Is` matches with `ErrPatternMatchLimit`. It is never an answer.
+
+```go
+validator, err := jsonschema.CompileString(
+	`{"pattern": "^(?:(a+)\\1*)+$"}`,
+	jsonschema.WithPatternMatchLimit(50*time.Millisecond),
+)
+if err != nil {
+	fmt.Println(err)
+	return
+}
+_, err = validator.ValidateString(`"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"`)
+var limit *jsonschema.PatternMatchLimitError
+fmt.Println(errors.Is(err, jsonschema.ErrPatternMatchLimit), errors.As(err, &limit)) // true true
+fmt.Println(limit.Pattern, limit.Limit, limit.Memory)                                // ^(?:(a+)\1*)+$ 50ms false
+```
+
+| Entry point | A match that reached its limit |
+|---|---|
+| `Validate`, `ValidateBytes`, `ValidateString` | `false` and the `*PatternMatchLimitError`. |
+| `Evaluate`, `EvaluateBytes`, `EvaluateString` | `false` and the error, at every level. What the collector holds is not a report of the instance. |
+| `IsValid`, `IsValidBytes`, `IsValidString` | `false`. They return a `bool` alone and fail closed: a limit is never reported as valid. They also return `false` for `ErrDepthExceeded`. Use `Validate` where the two must be told from an instance that is not valid. |
+| `Compile`, `CompileString`, `CompileDocument`, `CompileURI` | The error, when the match was of a pattern against a property name the schema declares, which is done when the schema is compiled. |
+
+The limit is on each match and not on the validation. Only the backtracking matcher can take long. It counts its
+steps and reads a monotonic clock every 4,096 of them, which is every 17 to 35 microseconds as measured, so a match
+ends within that of its limit, and a match that ends before its first check never reads the clock. With the limit
+on, the matcher's stack of choices is capped at 1,048,576 entries (24 MB), and a match that reaches the cap is
+abandoned with the same error, its `Memory` field set. `(?:a?){2147483647}` on the empty string ends that way in
+under a tenth of a second, where it took 5.7 GB before the Go runtime ended the process. The memory of failed places
+is 8 MB at most. With the limit off neither cap applies.
+
+The other matchers take time proportional to the string and are not stopped. The standard library's `regexp` cannot
+be stopped at all, and takes time proportional to its program times the string (5 to 13 ns for each instruction and
+byte, as measured). So it is given no program estimated at more than 10,000 instructions, and with the limit on it
+is given a string only when the program times the string, at 16 ns each, is within the limit. Any other string goes
+to the backtracking matcher. Validation still allocates nothing in the steady state with the limit on.
+
+`regexp` also keeps the ranges of a class for every copy of it that a counted repetition writes out, so it is given
+no program estimated to hold more than 2 MiB. `^[\p{L}\p{N}_-]{1,450}$`, a pattern of 25 characters, held 10 MB
+there. It now runs on the backtracking matcher, which holds a class once, and holds 7 KB.
+
+**The limits of size.** A pattern over one of these is refused when the schema is compiled, with a
+`*PatternTooLargeError`, which `errors.Is` matches with `ErrPatternTooLarge` and which names the keyword, the limit
+and its value. It is not the error of a pattern that is not valid, which is a `*CompileError`. The pattern is not
+read past the limit, so the message says it is too large to read and nothing of whether it is valid.
+
+| Limit | Value | What is counted |
+|---|---|---|
+| `length` | 1,048,576 | The bytes of the pattern, as UTF-8. |
+| `nesting` | 1,000 | The depth of its groups. |
+| `size` | 1,048,576 | Bytes counted as the pattern is read. 64 for each term (a character, a class, a group, an assertion, with its quantifier) and 32 for each further alternative. 8 for each range of a class as its members are read, for each range that case folding or a negated property builds, and for each enclosing alternative and each group of the same name that a named group is compared with. 1 for each character with a case variant in a class that is folded. |
+
+The syntax tree, the compiled program and the time to make them are proportional to the size. The largest pattern of
+each of 24 kinds that the limits admit compiled in 110 ms at most and kept 4.7 MB, on a machine under load. A
+literal of 16,384 characters is the longest the size admits, and `\p{L}` can be written 16,384 times. The number of
+groups has no limit of its own, since each is a term. The `regex` format reads a string of the instance as a pattern
+with the same limits, and a string over one is not a valid regular expression to it.
+
+**The cache of compiled patterns.** Identical patterns share one matcher through a cache for the whole process. It
+holds 1,024 patterns at most, and 64 MiB at most in the bytes counted for them. Over either bound the patterns
+compiled first go, oldest first. A validator holds the patterns of its own schema, so a pattern that has left the
+cache is still matched by every validator that has it, and is compiled again only for a schema compiled later. A
+pattern counted as more than 2 MiB is not kept at all. A pattern is counted as an estimate of what it holds that is
+not below it: its source, its texts and class sequences, four times its size as it is read for the engine, and for
+a pattern on `regexp` the estimate of that package's program and 33 KB for its automaton over ASCII text. So a
+process that compiles schemas from outside for as long as it runs does not grow with the patterns it has seen: 6,000
+schemas with patterns of their own left the heap where the first 1,024 had (10 MB). Nothing reads the cache when an
+instance is evaluated.
+
+**The format checks.** The checks of the `format` keyword read strings of the instance and are not under the limit
+of a match, so each takes time proportional to the string. Dates, times, durations, UUIDs, IP addresses, host names
+and JSON pointers are read by scanners that pass over the string once. `uri`, `uri-reference`, `iri`,
+`iri-reference`, `uri-template` and the local part of `email` and `idn-email` are regular expressions on the
+standard library's `regexp`, which takes time proportional to the string. `regex` reads the string as a pattern,
+with the limits of size above. `hostname` reads nothing of a string over 253 bytes. `idn-hostname`, and the domain
+of an `idn-email`, read nothing of a string over 1,012 bytes: an internationalized host name has 253 characters at
+most, and its check decodes and encodes Punycode and walks around every joiner, which takes time that grows with
+the square of a label. Of 248 strings of a million characters made to be slow, across the 19 formats, the slowest
+took 169 ms (`iri-reference`, on a machine under load).
+
+**What still reaches the limit of a match.** These are answered by no backtracking matcher in reasonable time, and
+now end in the error after one second. V8 has no limit. It does not answer the first two kinds in 90 seconds either,
+and needs more than 268 million backtracks for the searches. It does answer the two lookaheads, in 100,002
+backtracks and in 4, because it looks further ahead than one character before it takes a way.
+
+- A repetition around a group that is read back, such as `^(?:(a+)\1*)+$` or `(a*)*\1b` on some thirty characters.
+  A backreference turns the memory of failed places off, since what a group holds changes what follows.
+- A repetition that counts to a bound around another, such as `^(?:a{0,1000}){0,1000}$` on 100,000 characters.
+- A lookahead that reads to the end of the string from every position, such as `(?=.*c)b` on 100,000 characters
+  with no `c`, or `(?!.*c)b$` on 100,000 characters that end in `c`.
+- A backreference to a group of tens of thousands of characters, such as `(.{0,50000})\1x` on 100,000 characters.
+- A sequence of tens of thousands of characters searched for at every position, such as `[a-z]{50000}[0-9]` or
+  `(?:[ab]{1000}){50}c` on 100,000 characters.
+- A body that can be empty repeated more times than the stack has entries, such as `(?:a?){2147483647}`, which ends
+  at the cap on memory.
+
+No pattern of the ECMA-262 regular expression test data (98,839 patterns, 4,268,313 answers) reaches a limit of
+either kind.
+
 ## Differences from the Rust crate
 
 - Instances are always `Document` values (the tape). There is no counterpart of the Rust `Instance` trait.
-- A pattern that is valid only without the ECMA-262 `u` flag is matched by code point, as the Java port does. The
-  Rust crate matches such a pattern by UTF-16 code unit.
+- A pattern that is valid only without the ECMA-262 `u` flag is matched by UTF-16 code unit, as ECMA-262 says and
+  as the Rust crate does. Here the engine is the module's own and reads the code units from the UTF-8 text.
 - A class sequence anchored at both ends with one variable item (`^[a-z]*a$`) is decided by the length of the
   string, where the Rust crate uses the `regex` crate.
 - Annotation values and the numbers in messages are written as the schema wrote them.
@@ -266,8 +408,9 @@ rules over Unicode properties and not for one version of Unicode, and the module
 is normalized by lowering the letters A to Z only, as RFC 3986 and RFC 3987 specify.
 
 The results are therefore the same with every Go release from 1.25, and they change only when the tables are
-generated again. `internal/ucd/gen_tables.ps1` writes them from the Unicode data of the `regress` crate, which the
-Rust port uses:
+generated again. `internal/ucd/gen_tables.ps1` writes them from `unicodetables.rs` of the `regress` crate, a file
+that crate generates from the Unicode Character Database. The crate is only where the data is read from, and no port
+depends on it (the Rust crate writes its own tables from the file this script writes):
 
 ```powershell
 pwsh internal/ucd/gen_tables.ps1 -RegressTables ~/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regress-0.12.0/src/unicodetables.rs
@@ -291,7 +434,9 @@ go test -p 4 ./...
   nothing in the steady state. It is skipped under the race detector, which makes `sync.Pool` drop values.
 - `pattern_test.go`, `document_test.go`, `plan_test.go`: the regex-free matchers against the engine, the parser
   against `encoding/json` and `strconv`, and the name lookup.
-- `internal/ecmaregex`: the engine against answers recorded from V8 (`testdata/v8_oracle.json`).
+- `internal/ecmaregex`: the engine against answers recorded from V8 (`testdata/v8_oracle.json`, and
+  `testdata/v8_cases.json` for matching by UTF-16 code unit, for repetitions that cannot consume a character and
+  for what is a pattern, with ECMA-262's answer where V8 departs from it).
 - `internal/ucd`: the Unicode tables. They are compared with the `unicode` package when the toolchain carries the
   same version of Unicode (Go 1.27).
 - `TestNoToolchainUnicodeData`: no file of the module but a test reads the toolchain's Unicode data.
@@ -303,3 +448,7 @@ go test -p 4 ./...
 ## License
 
 Apache 2.0.
+
+The Unicode tables of `internal/ucd` are derived from the Unicode Character Database, which is under the Unicode
+License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice, and the one of the `regress` crate
+that the tables were read from. The file is part of the module, beside `LICENSE`.

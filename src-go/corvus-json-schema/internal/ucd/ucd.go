@@ -203,11 +203,19 @@ func Binary(name string) *Table {
 	return binaryTable(name)
 }
 
+// katakanaOrHiragana is the table of the Script value Katakana_Or_Hiragana (Hrkt). PropertyValueAliases.txt lists the
+// value, and no code point has it, in Script or in Script_Extensions. Scripts.txt has no line for it, so the
+// generated tables do not have it.
+var katakanaOrHiragana Table
+
 // Script returns the table of a Script value by its long name or an alias, such as "Greek" or "Grek". It returns nil
 // for any other name.
 func Script(name string) *Table {
-	if name == "Unknown" || name == "Zzzz" {
+	switch name {
+	case "Unknown", "Zzzz":
 		return UnknownScript()
+	case "Katakana_Or_Hiragana", "Hrkt":
+		return &katakanaOrHiragana
 	}
 	return scriptTable(name)
 }
@@ -215,8 +223,11 @@ func Script(name string) *Table {
 // ScriptExtensions returns the table of a Script_Extensions value by the long name of the script or an alias. It
 // returns nil for any other name.
 func ScriptExtensions(name string) *Table {
-	if name == "Unknown" || name == "Zzzz" {
+	switch name {
+	case "Unknown", "Zzzz":
 		return UnknownScript()
+	case "Katakana_Or_Hiragana", "Hrkt":
+		return &katakanaOrHiragana
 	}
 	return scriptExtensionsTable(name)
 }

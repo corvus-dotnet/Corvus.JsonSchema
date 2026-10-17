@@ -60,6 +60,7 @@ options:
 | `baseUri` | none | The schema's base URI, when it has no `$id`. |
 | `entryPoint` | none | A reference to the subschema to validate against, such as `'#/$defs/item'`. |
 | `maxDepth` | `128` | The deepest the evaluator recurses in place before it throws `DepthException`. |
+| `patternMatchLimit` | `1` | The seconds (an `int` or a `float`) one match of a `pattern` or `patternProperties` regular expression against one string may take before the validation throws `PatternMatchLimitException`. `null` or `0` turns the limit off, for a caller who trusts both the schema and the values. |
 
 A `Validator` is immutable.
 
@@ -72,7 +73,10 @@ A `Validator` is immutable.
   instance location, keyword and schema location, and `clear()` empties it.
 
 Errors are exceptions extending `Corvus\JsonSchema\JsonSchemaException`: `CompilationException` (an invalid schema, or
-a reference that cannot be resolved), `DepthException` and `InvalidJsonException` (invalid JSON text). An exception
+a reference that cannot be resolved), `PatternTooLargeException` (a `CompilationException` for a regular expression
+over a limit of size: 1,048,576 bytes, 1,000 levels of groups, or about 16,000 terms), `DepthException`,
+`PatternMatchLimitException` (a match of a regular expression reached its limit, so the value is neither valid nor
+not valid) and `InvalidJsonException` (invalid JSON text). An exception
 thrown by a format validator or a resolver propagates. `Corvus\JsonSchema\crate_version()` returns the version of the
 crate the extension was built from.
 
@@ -128,3 +132,8 @@ holds a copy of this directory for each release; changes are made here.
 ## License
 
 Apache-2.0
+
+The extension is built on the `corvus-json-schema` Rust crate, whose Unicode tables are derived from the Unicode
+Character Database, which is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has
+that notice, and the one of the `regress` crate that the tables were first read from. The file is in the package's
+repository and in the archive of every build, beside `LICENSE`.

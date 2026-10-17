@@ -21,6 +21,7 @@ include("support.jl")
         EcmaRegex.pcreunicodeversion(), "), data Unicode ", EcmaRegex.UNICODE_VERSION, ", ", Threads.nthreads(),
         " threads")
     include("oracle.jl")
+    include("v8tests.jl")
     include("fuzz.jl")
     include("suite.jl")
     include("regextests.jl")

@@ -43,8 +43,11 @@ type engine struct {
 	prepare func(schema []byte, schemaFile string, lines [][]byte) (prepared, error)
 }
 
+// corvusOptions holds the limit of a pattern match when --match-limit-ms gives one.
+var corvusOptions []jsonschema.Option
+
 func prepareCorvus(schema []byte, _ string, lines [][]byte) (prepared, error) {
-	v, err := jsonschema.Compile(schema)
+	v, err := jsonschema.Compile(schema, corvusOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +173,11 @@ func main() {
 	only := flag.String("only", "", "the corpora to run, separated by commas (default: all)")
 	engineNames := flag.String("engines", "corvus,santhosh", "the engines to run, separated by commas, the first as the reference")
 	budgetMs := flag.Int("budget-ms", 1000, "the time each engine warms up for, and is then timed for, on each corpus")
+	matchLimitMs := flag.Int("match-limit-ms", -1, "the limit of a pattern match for the corvus engine: 0 for none, below 0 for the module's default")
 	flag.Parse()
+	if *matchLimitMs >= 0 {
+		corvusOptions = append(corvusOptions, jsonschema.WithPatternMatchLimit(time.Duration(*matchLimitMs)*time.Millisecond))
+	}
 	if flag.NArg() != 0 {
 		fmt.Fprintln(os.Stderr, "unknown argument", flag.Arg(0))
 		os.Exit(2)

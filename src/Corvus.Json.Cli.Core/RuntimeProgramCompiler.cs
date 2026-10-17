@@ -91,6 +91,6 @@ public static class RuntimeProgramCompiler
             dotNetPatterns[i] = JsonSchemaEvaluator.ToDotNetPattern(patterns[i]);
         }
 
-        return new SchemaProgramImage(image, dotNetPatterns);
+        return new SchemaProgramImage(image, dotNetPatterns, patterns);
     }
 }

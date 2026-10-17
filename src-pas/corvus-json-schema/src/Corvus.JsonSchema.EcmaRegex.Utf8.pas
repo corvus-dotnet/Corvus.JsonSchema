@@ -32,6 +32,38 @@ function DecodeLastRune(const P: TBytes; Start, Limit: Int32; out Width: Int32):
   surrogate. }
 function ValidRune(R: Int32): Boolean;
 
+{ Matching by UTF-16 code unit over UTF-8 text (units.go of the Go package).
+
+  ECMA-262 matches a pattern that has no u flag a code unit at a time. The engine reads a pattern without the u
+  flag only when the u flag grammar refuses it, and such a pattern is matched that way. A character of one, two or
+  three bytes of UTF-8 is one code unit. A character of four bytes is two, a high surrogate and a low one, so the
+  matcher has to be able to stand between them. That position is written as the index of the character's third
+  byte. Each half then spans two bytes, every position is still an index into the text, a group is still a pair of
+  indexes, and no UTF-16 copy of the text is made.
+
+  The third byte of a character is a continuation byte, which is no position at all when matching by code point,
+  so the two readings cannot be confused. Only a text with a character of four bytes differs between the two, and
+  the instructions that compare bytes (a literal run, a word boundary, a line terminator) need no change: none of
+  them can hold at the position between the halves, and all of them are right at every other. }
+
+{ HighSurrogate and LowSurrogate are the two UTF-16 code units of a code point beyond the Basic Multilingual
+  Plane. }
+function HighSurrogate(R: Int32): Int32;
+function LowSurrogate(R: Int32): Int32;
+
+{ HasSupplementary reports whether the bytes Lo to Hi - 1 of P have a character beyond the Basic Multilingual
+  Plane, which is the only kind of text that code units and code points read differently. Such a character starts
+  with a byte of $F0 or more. }
+function HasSupplementary(const P: TBytes; Lo, Hi: NativeInt): Boolean;
+
+{ UnitAt returns the code unit at the index At of the text, which is the bytes Lo to Hi - 1 of P, and the number of
+  bytes it spans. At is before Hi. }
+function UnitAt(const P: TBytes; Lo, At, Hi: Int32; out Width: Int32): Int32;
+
+{ UnitBefore returns the code unit that ends at the index At of the text, which is the bytes Lo to Hi - 1 of P,
+  and the number of bytes it spans. At is after Lo. }
+function UnitBefore(const P: TBytes; Lo, At, Hi: Int32; out Width: Int32): Int32;
+
 { AppendRune appends the UTF-8 encoding of a code point. A value that has none is written as U+FFFD. }
 procedure AppendRune(var Dst: TBytes; R: Int32);
 
@@ -133,6 +165,71 @@ end;
 function ValidRune(R: Int32): Boolean;
 begin
   Result := ((R >= 0) and (R < $D800)) or ((R > $DFFF) and (R <= $10FFFF));
+end;
+
+function HighSurrogate(R: Int32): Int32;
+begin
+  Result := $D800 + ((R - $10000) shr 10);
+end;
+
+function LowSurrogate(R: Int32): Int32;
+begin
+  Result := $DC00 + ((R - $10000) and $3FF);
+end;
+
+function HasSupplementary(const P: TBytes; Lo, Hi: NativeInt): Boolean;
+var
+  K: NativeInt;
+begin
+  for K := Lo to Hi - 1 do
+    if P[K] >= $F0 then
+      Exit(True);
+  Result := False;
+end;
+
+function UnitAt(const P: TBytes; Lo, At, Hi: Int32; out Width: Int32): Int32;
+var
+  C: UInt8;
+  R, W: Int32;
+begin
+  C := P[At];
+  if C >= $F0 then begin
+    R := DecodeRune(P, At, Hi, W);
+    if W = 4 then begin
+      Width := 2;
+      Exit(HighSurrogate(R));
+    end;
+    Width := 1;
+    Exit(RuneError);
+  end;
+  if (C >= $80) and (C < $C0) and (At - Lo >= 2) and (P[At - 2] >= $F0) then begin
+    // Between the halves of the character that starts two bytes back.
+    R := DecodeRune(P, At - 2, Hi, W);
+    if W = 4 then begin
+      Width := 2;
+      Exit(LowSurrogate(R));
+    end;
+  end;
+  Result := DecodeRune(P, At, Hi, Width);
+end;
+
+function UnitBefore(const P: TBytes; Lo, At, Hi: Int32; out Width: Int32): Int32;
+var
+  R, W: Int32;
+begin
+  Result := DecodeLastRune(P, Lo, At, Width);
+  if Width = 4 then begin
+    Width := 2;
+    Exit(LowSurrogate(Result));
+  end;
+  if (Width = 1) and (Result = RuneError) and (At - Lo >= 2) and (Hi - At >= 2) and (P[At - 2] >= $F0) then begin
+    // Between the halves of the character that starts two bytes back.
+    R := DecodeRune(P, At - 2, Hi, W);
+    if W = 4 then begin
+      Width := 2;
+      Exit(HighSurrogate(R));
+    end;
+  end;
 end;
 
 type

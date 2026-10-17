@@ -131,7 +131,8 @@ impl Harness {
                 }));
                 match outcome {
                     Ok(Ok(result)) => result,
-                    Ok(Err(_)) => errored("evaluation recursed beyond the maximum depth"),
+                    // The validation was abandoned at a limit, the maximum depth or the limit of a match.
+                    Ok(Err(e)) => errored(e.to_string()),
                     Err(p) => errored(panic_message(&*p)),
                 }
             })

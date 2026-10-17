@@ -187,6 +187,24 @@ function precompile_workload()
         sprint(showerror, err)
     end
     isvalid(engine, "[1, 2")
+    # A match that uses the steps it starts with, one that is timed and given up at its limit, the search of a long
+    # string in parts, and a pattern over a limit of size.
+    slow = compile_schema("""{"pattern": "^(?:a|a)+\$", "patternProperties": {"fo+|ba+r": true}}""";
+        pattern_match_limit=0.01)
+    isvalid(slow, "\"" * "a"^12 * "b\"")
+    try
+        isvalid(slow, "\"" * "a"^40 * "b\"")
+    catch err
+        err isa PatternMatchError || rethrow()
+        sprint(showerror, err)
+    end
+    isvalid(slow, "{\"" * "x"^20_000 * "\": 1}")
+    try
+        compile_schema("{\"pattern\": \"" * "("^300 * "\"}")
+    catch err
+        err isa PatternTooLargeError || rethrow()
+        sprint(showerror, err)
+    end
     for broken in ("""{"\$ref": "#/missing"}""", """{"pattern": "a("}""", """{"type": """)
         try
             compile_schema(broken)
@@ -196,7 +214,10 @@ function precompile_workload()
         end
     end
     # Nothing of the workload's is kept but the code it compiled.
-    lock(() -> empty!(PATTERN_CACHE), PATTERN_CACHE_LOCK)
+    lock(PATTERN_CACHE_LOCK) do
+        empty!(PATTERN_CACHE)
+        PATTERN_CACHE_BYTES[] = 0
+    end
     lock(PARSERS_LOCK)
     empty!(PARSERS)
     unlock(PARSERS_LOCK)

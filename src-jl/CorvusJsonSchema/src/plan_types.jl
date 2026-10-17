@@ -482,6 +482,8 @@ mutable struct Program
     entry::NodeId
     uses_dynamic_scope::Bool
     max_depth::Int
+    # The limit on the time of one match of a pattern on the engine.
+    pattern_match_limit::PatternMatchLimit
     # Custom format assertions: the names, and the validators (callables given by the user) at the same indexes.
     format_names::Vector{String}
     format_validators::Vector{Any}

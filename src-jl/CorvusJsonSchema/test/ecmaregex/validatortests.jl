@@ -70,6 +70,85 @@ end
         @test 10_000 < valid < 40_000
     end
 
+    # Group names. Two groups may share a name only in separate alternatives of one disjunction, and a named
+    # reference names a group that is written anywhere in the pattern.
+    @testset "group names" begin
+        for (pattern, valid) in [
+                ("(?<a>x)|(?<a>y)", true), ("(?<a>x)(?<a>y)", false), ("(?<a>x(?<a>y))", false),
+                ("(?<a>x|(?<a>y))", false), ("(?:(?<a>x)|(?<a>y))\\k<a>", true), ("(?:(?<a>x)|y)(?<a>z)", false),
+                ("(?:(?<a>x)|y)|(?<a>z)", true), ("(?:(?<a>x)|(?<a>y))|(?<a>z)", true),
+                ("(?<a>x)|(?:(?<a>y)|(?<a>z))", true), ("(?<a>x)|(?:(?<a>y)(?<a>z))", false),
+                ("(?<a>x)|(?:(?<b>y)|z)(?<a>w)", true), ("(?:(?<a>x)|(?<b>y))(?:(?<b>z)|(?<a>w))", false),
+                ("(?:(?<a>x)|(?<b>y))(?:(?<c>z)|(?<d>w))", true), ("(?=(?<a>x))|(?<!(?<a>y))", true),
+                ("(?=(?<a>x))(?<!(?<a>y))", false), ("(?<a>x)|(?<b>y)|(?<a>z)|(?<b>w)", true),
+                ("(?<a>x)|(?<b>y)(?<a>z)|(?<b>w)", true), ("(?<a>x)|(?<b>y(?<a>z)(?<b>w))", false),
+                ("(?<ab>x)(?<a>y)(?<abc>z)\\k<a>\\k<ab>\\k<abc>", true), ("(?<ab>x)(?<a>y)\\k<b>", false),
+                ("\\k<a>(?<a>x)", true), ("\\k<a>(?<b>x)", false), ("(?<a>x)\\k<aa>", false),
+                ("(?<\u03c0>a)|(?<\\u03c0>b)", true), ("(?<\u03c0>a)(?<\\u{3c0}>b)", false),
+                ("(?<b>(?<a>x)|(?<a>y))|(?<b>z)", true), ("((?<a>x)|(?<a>y))(?<a>z)", false),
+            ]
+            @test E.isvalidpattern(pattern) == valid
+            @test E.parsesunicode(pattern) == valid
+        end
+        # Patterns of groups with few names, alternatives and references, as the parser reads them.
+        tokens = ["(?<a>", "(?<b>", "(?<ab>", "(?:", "(?=", "(?<!", "(", ")", ")", ")", "|", "|", "x", "\\k<a>",
+            "\\k<b>", "\\k<ab>", "(?<\\u0061>"]
+        random = Xorshift(0x00000011)
+        patterns = String[]
+        for i in 1:100_000
+            n = 1 + nextbelow!(random, 14)
+            push!(patterns, join(tokens[nextbelow!(random, length(tokens)) + 1] for _ in 1:n))
+        end
+        @test disagreements(patterns) == String[]
+        valid = count(E.isvalidpattern, patterns)
+        println("[validator] ", valid, " of ", length(patterns), " generated patterns of group names are valid")
+        @test 1_000 < valid < 90_000
+    end
+
+    # The regex format reads a string of the instance, of a megabyte at most. Each group name was looked for among
+    # all those before it, and so was each named reference, so the time went with the square of their number, and
+    # the alternatives around each name were kept with it: 60,000 groups of one name in as many alternatives took
+    # some 40 seconds, and inside 150 groups they took minutes and hundreds of megabytes. The names are put in
+    # order now and each is compared with the one before it.
+    @testset "many group names" begin
+        started = time()
+        n = 60_000
+        m = 30_000
+        distinct = join("(?<n$i>a)" for i in 1:m)
+        references = join("\\k<n$i>" for i in 1:m)
+        apart = join(("(?<n$i>a)" for i in 1:n), "|")
+        long = "n"^200
+        longnames = join("(?<$long$i>a)" for i in 1:4_000)
+        escaped = join("(?<\\u{$(string(0x4e00 + i, base=16))}>a)" for i in 1:20_000)
+        cases = [
+            "(?<n>a)|"^n * "b" => true,
+            "(?<n>a)|"^n * "(?<n>b)(?<n>c)" => false,
+            "(?<n>a)(?<n>b)|" * "(?<n>a)|"^n => false,
+            "(?:"^150 * "(?<n>a)|"^n * "b" * ")"^150 => true,
+            "(?:"^150 * "(?<n>a)|"^n * "b" * ")"^150 * "(?<n>c)" => false,
+            distinct => true,
+            distinct * references => true,
+            references * distinct => true,
+            distinct * references * "\\k<n0>" => false,
+            distinct * "(?<n777>a)" => false,
+            apart * "|(?<n1>a)|(?<n$n>a)" => true,
+            apart * "|(?<n5>a)(?<n5>b)" => false,
+            longnames * "\\k<$(long)4000>" => true,
+            longnames * "\\k<$(long)4001>" => false,
+            escaped * "\\k<\u4e01>\\k<\u9999>" => true,
+            escaped * "(?<\u9999>a)" => false,
+        ]
+        # A pattern is not shown when a test fails: each is some hundreds of kilobytes.
+        @test all(c -> ncodeunits(first(c)) <= E.MAX_PATTERN_LENGTH, cases)
+        @test [E.isvalidpattern(first(c)) for c in cases] == [last(c) for c in cases]
+        @test time() - started < 10
+        # What a validator keeps from one pattern to the next does not grow with a pattern of many names.
+        for validator in E.VALIDATORS
+            @test sum(length, (validator.names, validator.opened, validator.places, validator.order, validator.refs)) <=
+                  5 * E.MAX_KEPT_NUMBERS
+        end
+    end
+
     # Text that is not UTF-8 is no pattern, to the validator and to the parser alike.
     @testset "a pattern is UTF-8" begin
         for bytes in (UInt8[0xFF], UInt8[0x61, 0x80], UInt8[0xC3], UInt8[0xC0, 0x80], UInt8[0xF5, 0x80, 0x80, 0x80],

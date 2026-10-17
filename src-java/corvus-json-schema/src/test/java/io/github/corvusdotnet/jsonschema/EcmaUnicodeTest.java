@@ -138,7 +138,14 @@ class EcmaUnicodeTest {
         assertNull(property("="));
         assertNull(property("sc="));
         assertNull(property("Lu="));
-        assertNull(property("scx=Hrkt"));
+        // Katakana_Or_Hiragana is a Script value of PropertyValueAliases.txt that no character has.
+        for (String name : new String[] {
+            "sc=Hrkt", "scx=Hrkt", "Script=Katakana_Or_Hiragana", "Script_Extensions=Katakana_Or_Hiragana",
+        }) {
+            assertEquals(0, property(name).length, name);
+        }
+        assertNull(property("Hrkt"));
+        assertNull(property("gc=Hrkt"));
         assertTrue(EcmaUnicode.isProperty("x\\p{scx=Grek}", 4, 12));
         assertFalse(EcmaUnicode.isProperty("x\\p{scx=Grek}", 4, 11));
     }

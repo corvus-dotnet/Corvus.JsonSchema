@@ -8,6 +8,7 @@ on:
     - 'src-rs/corvus-json-schema/**'
     - 'JSON-Schema-Test-Suite'
     - '.github/workflows/ruby.yml'
+    - '.github/workflows/rubygems-build.yml'
     - '.github/workflows/rubygems-publish.yml'
     - 'LICENSE'
   pull_request:
@@ -16,6 +17,7 @@ on:
     - 'src-rs/corvus-json-schema/**'
     - 'JSON-Schema-Test-Suite'
     - '.github/workflows/ruby.yml'
+    - '.github/workflows/rubygems-build.yml'
     - '.github/workflows/rubygems-publish.yml'
     - 'LICENSE'
   workflow_dispatch:

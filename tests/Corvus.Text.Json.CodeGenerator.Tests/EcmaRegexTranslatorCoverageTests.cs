@@ -215,13 +215,23 @@ public class EcmaRegexTranslatorCoverageTests
     // ================================================================
 
     [TestMethod]
-    public void TranslateOrFallback_InvalidPattern_ReturnsFallback()
+    [DataRow("a{2,1}")]
+    [DataRow("(")]
+    [DataRow(@"(?<n>a)(?<n>b)")]
+    public void TranslateOrFallback_InvalidPattern_ReturnsFallback(string invalid)
     {
-        // An invalid ECMAScript regex pattern (e.g., lone \p with no braces)
-        // should return the original pattern as fallback.
-        string invalid = @"\p{InvalidCategoryThatDoesNotExist}";
+        // A pattern that neither grammar of ECMA-262 accepts is returned as it is.
         string result = EcmaRegexTranslator.TranslateOrFallback(invalid);
         Assert.AreEqual(invalid, result);
+    }
+
+    [TestMethod]
+    public void TranslateOrFallback_PatternValidOnlyWithoutTheUFlag_IsTranslated()
+    {
+        // With the u flag \p needs a property name ECMA-262 defines. Without it \p is the letter p, and the braces
+        // are themselves.
+        string result = EcmaRegexTranslator.TranslateOrFallback(@"\p{InvalidCategoryThatDoesNotExist}");
+        Assert.AreEqual(@"p\{InvalidCategoryThatDoesNotExist\}", result);
     }
 
     // ================================================================

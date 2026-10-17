@@ -166,10 +166,10 @@ public readonly partial struct OpenApiDocument
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^/")]
+            [GeneratedRegex("^/", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
             private static partial Regex CreatePattern();
 #else
-            private static Regex CreatePattern() => new("^/", RegexOptions.Compiled);
+            private static Regex CreatePattern() => new("^/", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));
 #endif
         }
     }

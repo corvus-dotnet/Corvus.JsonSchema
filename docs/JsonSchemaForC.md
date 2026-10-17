@@ -88,9 +88,40 @@ text more than once, parse it with `cjs_document_parse` and validate the documen
 | `cjs_options_set_base_uri` | The base URI of the root document. |
 | `cjs_options_set_entry_point` | A subschema to validate against, such as `#/$defs/item`. |
 | `cjs_options_set_max_depth` | The deepest the evaluator recurses in place (default 128). |
+| `cjs_options_set_pattern_match_limit_ms` | The milliseconds one match of a regular expression against one string may take (default `CJS_DEFAULT_PATTERN_MATCH_LIMIT_MS`, 1000). 0 turns the limit off. |
 
 Callbacks run on whichever thread validates (format callbacks) or compiles (the resolver), and must not unwind into
 the library.
+
+### Limits on regular expressions
+
+A schema and an instance may both come from outside, so a regular expression is bounded in what it costs.
+
+- **A match has a limit of time.** One match of a `pattern` or `patternProperties` regular expression against one
+  string may take one second, or what `cjs_options_set_pattern_match_limit_ms` says. A call whose match reaches the
+  limit returns `CJS_PATTERN_MATCH_LIMIT`, and `*valid` is then not an answer: the instance is neither valid nor not
+  valid. `cjs_last_error_message` names the pattern and the limit. The limit is on each match, not on the
+  validation. Zero turns it off, for a caller who trusts both the schema and the instances.
+- **A pattern has limits of size.** A schema with a regular expression longer than 1,048,576 bytes, nested more than
+  1,000 groups deep or of more than about 16,000 terms does not compile, and `cjs_compile` returns
+  `CJS_PATTERN_TOO_LARGE`. A regular expression that is not valid is `CJS_COMPILATION_FAILED`.
+
+```c
+cjs_options *options = cjs_options_new();
+cjs_options_set_pattern_match_limit_ms(options, 50);
+cjs_validator *validator = NULL;
+cjs_compile(schema, strlen(schema), options, &validator);
+bool valid = false;
+switch (cjs_validator_validate_json(validator, json, strlen(json), &valid)) {
+case CJS_OK:
+    break; /* valid is the answer */
+case CJS_PATTERN_MATCH_LIMIT:
+    /* no answer: a match took longer than 50 ms */
+    break;
+default:
+    break; /* cjs_last_error_message() says why */
+}
+```
 
 ## Results and annotations
 

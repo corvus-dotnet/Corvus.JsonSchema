@@ -9,11 +9,20 @@
 // pattern that neither grammar accepts is an error. This is the choice the Rust and Java ports make. Valid, which
 // backs the regex format, accepts only the u flag grammar, as those ports do.
 //
-// Whichever grammar accepts the pattern, matching is by Unicode code point over the UTF-8 text. The dot, a class and a
+// A pattern the u flag grammar accepts is matched by Unicode code point over the UTF-8 text. The dot, a class and a
 // quantifier each see a character beyond the Basic Multilingual Plane as one character, and a surrogate pair written
-// as two \u escapes names one code point. The Java port does the same. The Rust port matches UTF-16 code units for a
-// pattern that only the Annex B grammar accepts, so the two can differ on such a pattern when the text has a
-// character beyond the Basic Multilingual Plane. Malformed UTF-8 in the text is read one byte at a time as U+FFFD.
+// as two \u escapes names one code point.
+//
+// A pattern that only the Annex B grammar accepts is matched by UTF-16 code unit, as ECMA-262 matches a pattern
+// with no u flag. A character beyond the Basic Multilingual Plane is then two characters, a high surrogate and a
+// low one, to the dot, a class, a quantifier, a group and a backreference. A match can start or end between the
+// two. Such a character in the pattern is two atoms, and a class range between two of them is an error. Case is
+// folded by the Canonicalize of a pattern with no u flag. The text stays UTF-8 and no UTF-16 copy of it is made
+// (see units.go). Only a text with a character beyond the Basic Multilingual Plane is read differently by the two.
+//
+// Malformed UTF-8 in the text is read one byte at a time as U+FFFD. The text is UTF-8, so it cannot hold half of a
+// surrogate pair, and a pattern that names one, such as \ud800, matches it only as half of a character and only
+// when the pattern has no u flag.
 //
 // JSON Schema gives a pattern no flags, so matching is case sensitive, ^ and $ match only at the ends of the text, and
 // the dot excludes the four line terminators. A pattern can change that for part of itself with a modifier group of
@@ -27,11 +36,27 @@
 // which decides an ASCII text with one table read per byte. The regexp package then only sees the texts that are
 // not ASCII. The translation spells out every literal and every class as code points, so
 // none of the places where RE2 and ECMA-262 read the same syntax differently (\d, \w, \s, the dot, $, Unicode
-// classes, case folding) can show through. Every other pattern, and any pattern whose translation regexp refuses (a repeat count
-// above its limit, for example), runs on a backtracking matcher in this package. That matcher keeps its choices on an
-// explicit pooled stack, so a long text cannot overflow the goroutine stack and a match does not allocate once the
-// stack has grown. It has no step budget, so a pattern with nested quantifiers and a lookaround or a backreference
-// can take exponential time, as it can in any backtracking engine.
+// classes, case folding) can show through. Every other pattern, and any pattern whose translation regexp refuses or
+// would compile to a large program (see maxRE2Cost and maxRE2Size), runs on a backtracking matcher in this package. So does a
+// pattern with no u flag on a text with a character beyond the Basic Multilingual Plane, since the regexp package
+// matches code points, and so does a text too long for the regexp package to answer within the limit of a match
+// (see MatchLimit), since a match there cannot be stopped.
+//
+// The backtracking matcher keeps its choices on an explicit pooled stack, so a long text cannot overflow the
+// goroutine stack and a match does not allocate once the stack has grown. Four things keep it from the time a
+// backtracking matcher can take. A repetition whose body cannot consume a character is run once, or not at all (see
+// simplify), as V8 runs it. A counted loop gives up at a position from which the rest of the pattern, with the
+// iterations the loop still owes, needs more text than is left (see setNeeds). A way the next character of the text
+// rules out is not taken (see setQuick), as in V8. And where a pattern has no backreference the matcher remembers
+// the places from which every way has failed (see memo in vm.go), so a repetition inside a repetition takes time
+// proportional to the pattern times the text. What is left, a group read back inside a repetition above all, can
+// still take time that doubles with each character, and is ended by the limit of the match.
+//
+// # Limits
+//
+// MatchLimit gives a match a limit of time, and with it a cap on the memory of its backtracking. Compile refuses a
+// pattern over a limit of size (MaxPatternLength, MaxNesting, MaxSize) with a *TooLargeError, so that reading and
+// compiling a pattern take bounded time and memory whatever the pattern holds.
 //
 // # Coverage and limits
 //
@@ -40,13 +65,16 @@
 // Unicode 17 data. The properties and the case folding come from the tables of the ucd package and never from the
 // unicode package of the Go toolchain, and the regexp package is given explicit ranges, so a pattern matches the same
 // texts whichever toolchain built the program. The v flag (set notation and properties of strings) does not apply, because a JSON Schema pattern
-// has no flags. Groups may nest 1000 deep.
+// has no flags.
 package ecmaregex
 
 import (
+	"errors"
 	"regexp"
+	"regexp/syntax"
 	"strings"
 	"sync"
+	"time"
 	"unsafe"
 )
 
@@ -63,7 +91,33 @@ type Regexp struct {
 	once sync.Once
 	root *node
 	dfa  *dfa
+	// For a pattern on the regexp package: the program of the backtracking matcher, built on the first text the
+	// regexp package is not given. That is a text with a character beyond the Basic Multilingual Plane when the
+	// pattern was read without the u flag, because the regexp package matches by code point and such a pattern
+	// matches by UTF-16 code unit. And it is a text too long for the regexp package to answer within the limit of
+	// the match (see reCost), because a match there cannot be stopped.
+	backOnce sync.Once
+	backProg *program
+	// reCost is the number of instructions of the program the regexp package runs.
+	reCost int
+	// size is the size the parser counted for the pattern (see MaxSize), and reSize what the regexp package is
+	// estimated to hold for it (see re2Size), or zero for a pattern on the backtracking matcher.
+	size, reSize int
 }
+
+const (
+	// maxRE2Cost is the largest program the regexp package is asked to compile, in the instructions estimated for
+	// it before it is written (see re2Cost). The package writes a counted repetition out, so a{1000} is a thousand
+	// instructions, and it takes time proportional to its program to compile and, for every character of a text,
+	// to match.
+	maxRE2Cost = 10000
+	// re2StepTime is the time the regexp package can take for one instruction of its program and one byte of the
+	// text, when every instruction has a thread on it. It was measured at 5 to 13 ns (the higher figure for a
+	// class of many ranges) on a machine under load, and is rounded up. A match on the regexp package cannot be
+	// stopped, so a match with a limit goes there only when the size of the program times the length of the text
+	// times this is within the limit. Any other goes to the backtracking matcher, which reads the clock.
+	re2StepTime = 16 * time.Nanosecond
+)
 
 // An Engine names the back end a pattern compiled to.
 type Engine uint8
@@ -84,7 +138,8 @@ func (e Engine) String() string {
 }
 
 // Compile compiles an ECMA-262 pattern with the semantics JSON Schema requires. It returns an error for a pattern
-// that is not valid.
+// that is not valid, and a *TooLargeError for a pattern over a limit of size (see MaxSize), whether or not it is
+// valid.
 func Compile(pattern string) (*Regexp, error) {
 	return compile(pattern, false)
 }
@@ -94,38 +149,92 @@ func compile(pattern string, forceBacktrack bool) (*Regexp, error) {
 	unicode := true
 	root, ps, err := parse(pattern, true)
 	if err != nil {
+		if tooLarge(err) {
+			return nil, err
+		}
 		var legacyErr error
 		unicode = false
 		if root, ps, legacyErr = parse(pattern, false); legacyErr != nil {
+			if tooLarge(legacyErr) {
+				return nil, legacyErr
+			}
 			return nil, err
 		}
 	}
-	r := &Regexp{pattern: pattern, unicode: unicode}
-	if !forceBacktrack && !ps.needsBacktracking {
-		var b strings.Builder
-		writeRE2(&b, root)
-		if re, err := regexp.Compile(b.String()); err == nil {
-			r.re, r.root = re, root
-			return r, nil
+	r := &Regexp{pattern: pattern, unicode: unicode, size: ps.size}
+	if !forceBacktrack && !ps.needsBacktracking && re2Cost(root) <= maxRE2Cost {
+		if size := re2Size(root); size <= maxRE2Size {
+			var b strings.Builder
+			writeRE2(&b, root)
+			if re, cost := compileRE2(b.String()); re != nil {
+				r.re, r.root, r.reCost, r.reSize = re, root, cost, size
+				return r, nil
+			}
 		}
 	}
 	r.prog = compileProgram(root, unicode)
 	return r, nil
 }
 
-// Match reports whether the pattern matches anywhere in the UTF-8 text (an unanchored search). It allocates nothing
-// in the steady state and is safe for concurrent use.
+// compileRE2 compiles a translation with the regexp package. It also returns the number of instructions of the
+// program the package runs, which the package does not tell, so the translation is compiled a second time by the
+// syntax package to count them. It returns nil when the package refuses the translation.
+func compileRE2(translation string) (*regexp.Regexp, int) {
+	re, err := regexp.Compile(translation)
+	if err != nil {
+		return nil, 0
+	}
+	tree, err := syntax.Parse(translation, syntax.Perl)
+	if err != nil {
+		return nil, 0
+	}
+	prog, err := syntax.Compile(tree.Simplify())
+	if err != nil {
+		return nil, 0
+	}
+	return re, len(prog.Inst)
+}
+
+func tooLarge(err error) bool {
+	var large *TooLargeError
+	return errors.As(err, &large)
+}
+
+// Match reports whether the pattern matches anywhere in the UTF-8 text (an unanchored search), with no limit on
+// the time or the memory the match takes. It allocates nothing in the steady state and is safe for concurrent use.
 func (r *Regexp) Match(utf8 []byte) bool {
+	matched, _ := r.MatchLimit(utf8, 0)
+	return matched
+}
+
+// MatchLimit is Match with a limit on the time the match may take, when limit is above zero. A match that reaches
+// the limit is abandoned and the error is ErrMatchTime. So is a match whose backtracking stack reaches maxStack
+// entries, and the error is ErrMatchMemory. The result is then not an answer. The clock is read every checkEvery
+// steps of the backtracking matcher, so a match can go past the limit by the time those take, which is some tens of
+// microseconds. The automaton and the regexp package take time proportional to the text and are not stopped: the
+// regexp package is given a text only when it can answer within the limit (see re2StepTime).
+func (r *Regexp) MatchLimit(utf8 []byte, limit time.Duration) (bool, error) {
 	if r.re != nil {
 		r.once.Do(r.buildDFA)
 		if r.dfa != nil {
 			if matched, ok := r.dfa.match(utf8); ok {
-				return matched
+				return matched, nil
 			}
 		}
-		return r.re.Match(utf8)
+		if (r.unicode || !hasSupplementary(utf8)) && (limit <= 0 || time.Duration(r.reCost)*time.Duration(len(utf8)) <= limit/re2StepTime) {
+			return r.re.Match(utf8), nil
+		}
+		r.backOnce.Do(r.buildBacktracking)
+		return r.backProg.match(utf8, limit)
 	}
-	return r.prog.match(utf8)
+	return r.prog.match(utf8, limit)
+}
+
+// buildBacktracking compiles the program of the backtracking matcher for a pattern on the regexp package. The
+// syntax tree was let go of when the pattern was compiled, so the pattern is read again, which cannot fail.
+func (r *Regexp) buildBacktracking() {
+	root, _, _ := parse(r.pattern, r.unicode)
+	r.backProg = compileProgram(root, r.unicode)
 }
 
 // buildDFA builds the automaton of a pattern on the regexp package, and lets go of the syntax tree.
@@ -147,6 +256,24 @@ func (r *Regexp) Engine() Engine {
 	return EngineBacktrack
 }
 
+// Retained estimates what the pattern holds in memory, in bytes, so that whoever keeps compiled patterns can bound
+// what they come to. It counts the source, four times the size the parser counted for the pattern, which the program
+// of the backtracking matcher is proportional to, and for a pattern on the regexp package what that package is
+// estimated to hold (see re2Size) and the automaton over ASCII text at its largest (see maxDFABytes). A pattern on
+// the regexp package is counted with the program of the backtracking matcher too, since it builds one for the texts
+// the package is not given. The count is an estimate from above: measured, no pattern held more than it (see
+// TestAPatternIsCountedAsNoLessThanItHolds).
+func (r *Regexp) Retained() int {
+	retained := len(r.pattern) + retainedFixed + 4*r.size
+	if r.re != nil {
+		retained += r.reSize + maxDFABytes
+	}
+	return retained
+}
+
+// retainedFixed is what a compiled pattern holds whatever the pattern is, in bytes.
+const retainedFixed = 512
+
 // Unicode reports whether the pattern is valid with the ECMA-262 u flag. When it is not, the pattern was read with
 // the Annex B grammar.
 func (r *Regexp) Unicode() bool { return r.unicode }
@@ -155,8 +282,27 @@ func (r *Regexp) Unicode() bool { return r.unicode }
 func (r *Regexp) String() string { return r.pattern }
 
 // Valid reports whether the pattern is a valid ECMA-262 pattern (for format: regex). It applies the grammar of the u
-// flag.
+// flag. A pattern over a limit of size is not read to its end and is reported as not valid.
 func Valid(pattern string) bool {
 	_, _, err := parse(pattern, true)
 	return err == nil
+}
+
+// Check reads the pattern without compiling it. It reports whether the pattern is valid with the u flag grammar,
+// and returns the error Compile would: nil for a pattern either grammar accepts, a *TooLargeError for a pattern over
+// a limit of size, and any other error for a pattern that is not valid.
+func Check(pattern string) (unicode bool, err error) {
+	if _, _, err = parse(pattern, true); err == nil {
+		return true, nil
+	}
+	if tooLarge(err) {
+		return false, err
+	}
+	if _, _, legacyErr := parse(pattern, false); legacyErr != nil {
+		if tooLarge(legacyErr) {
+			return false, legacyErr
+		}
+		return false, err
+	}
+	return false, nil
 }

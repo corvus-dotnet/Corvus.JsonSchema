@@ -12,21 +12,25 @@ mutable struct Validator
     n::Int
     groupcount::Int
     depth::Int
-    # Group names: for each, its range of the pattern, then the range of `paths` that holds its path.
+    # Group names: for each, its range of the pattern, then the place it stands at (see `places`).
     names::Vector{Int}
-    # The paths of the group names: the alternatives that enclose each, as disjunction and alternative.
-    paths::Vector{Int}
-    # The alternatives that enclose the current position, innermost last.
-    path::Vector{Int}
-    disjunctions::Int
+    # The disjunctions that enclose the current position, innermost last: for each, where it starts, where its
+    # current alternative starts, and the place that stands for the two, or 0 until a group name needs one.
+    opened::Vector{Int}
+    # The places group names stand at: for each, where a disjunction starts, where one of its alternatives starts,
+    # and the place of the alternative that encloses the disjunction, or 0. A place is made when a name first
+    # stands in its alternative, so a pattern has at most one for each of its alternatives and none without names.
+    places::Vector{Int}
+    # The group names by name, and names that are the same in the order they are written in.
+    order::Vector{Int}
     # Named references, as ranges of the pattern.
     refs::Vector{Int}
     # Where the character that `charat` or `namechar` last read ends.
     next::Int
 end
 
-Validator() = Validator("", 0, 0, 0, 0, sizehint!(Int[], 16), sizehint!(Int[], 16), sizehint!(Int[], 16), 0,
-    sizehint!(Int[], 8), 0)
+Validator() = Validator("", 0, 0, 0, 0, sizehint!(Int[], 16), sizehint!(Int[], 16), sizehint!(Int[], 16),
+    sizehint!(Int[], 8), sizehint!(Int[], 8), 0)
 
 invalid() = throw(InvalidPattern())
 
@@ -35,25 +39,36 @@ function validate(v::Validator, pattern::String)
     v.i = 0
     v.n = ncodeunits(pattern)
     v.depth = 0
-    v.disjunctions = 0
     empty!(v.names)
-    empty!(v.paths)
-    empty!(v.path)
+    empty!(v.opened)
+    empty!(v.places)
+    empty!(v.order)
     empty!(v.refs)
     try
         v.groupcount = countgroups(v)
         disjunction(v)
         v.i < v.n && return false
-        for r in 1:2:length(v.refs)
-            findname(v, v.refs[r], v.refs[r + 1], 0) < 0 && return false
-        end
-        return true
+        return namesvalid(v)
     catch e
         e isa InvalidPattern || rethrow()
         return false
     finally
         v.p = ""
+        release!(v)
     end
+end
+
+# The most numbers a buffer keeps from one pattern to the next. A pattern of a megabyte may need a few million.
+const MAX_KEPT_NUMBERS = 1 << 16
+
+function release!(v::Validator)
+    for buffer in (v.names, v.opened, v.places, v.order, v.refs)
+        if length(buffer) > MAX_KEPT_NUMBERS
+            empty!(buffer)
+            sizehint!(buffer, 16)
+        end
+    end
+    return nothing
 end
 
 # The byte at a position that counts from zero.
@@ -139,16 +154,17 @@ end
 
 function disjunction(v::Validator)
     v.depth += 1
-    v.depth > MAX_NESTING && invalid()
-    v.disjunctions += 1
-    push!(v.path, v.disjunctions, 0)
-    level = length(v.path)
+    v.depth > MAX_NESTING + 1 && invalid()
+    push!(v.opened, v.i, v.i, 0)
+    level = length(v.opened)
     alternative(v)
     while eat(v, '|')
-        v.path[level] += 1
+        # The next alternative starts here, and has no place yet.
+        v.opened[level - 1] = v.i
+        v.opened[level] = 0
         alternative(v)
     end
-    resize!(v.path, level - 2)
+    resize!(v.opened, level - 3)
     v.depth -= 1
     return nothing
 end
@@ -220,24 +236,39 @@ function number(v::Validator)
     return value
 end
 
+# Whether the decimal number at the bytes from `a` to before `aend` is greater than the one from `b` to before
+# `bend`, for numbers of any length.
+function greaternumber(v::Validator, a::Int, aend::Int, b::Int, bend::Int)
+    while a < aend - 1 && byteat(v, a) == UInt8('0')
+        a += 1
+    end
+    while b < bend - 1 && byteat(v, b) == UInt8('0')
+        b += 1
+    end
+    aend - a == bend - b || return aend - a > bend - b
+    for k in 0:(aend - a - 1)
+        x = byteat(v, a + k)
+        y = byteat(v, b + k)
+        x == y || return x > y
+    end
+    return false
+end
+
 function quantifier(v::Validator)
     if isat(v, '*') || isat(v, '+') || isat(v, '?')
         v.i += 1
     elseif isat(v, '{') && lookslikequantifier(v)
         v.i += 1
-        lo = number(v)
-        hi = lo
-        open = false
-        if eat(v, ',')
-            if isat(v, '}')
-                open = true
-            else
-                hi = number(v)
-            end
+        first = v.i
+        number(v)
+        firstend = v.i
+        if eat(v, ',') && !isat(v, '}')
+            second = v.i
+            number(v)
+            # The digits are compared, as the parser compares them.
+            greaternumber(v, first, firstend, second, v.i) && invalid()
         end
-        if !eat(v, '}') || (!open && hi < lo)
-            invalid()
-        end
+        eat(v, '}') || invalid()
     else
         return false
     end
@@ -269,15 +300,9 @@ function group(v::Validator)
         end
         start = v.i
         groupname(v)
-        stop = v.i - 1
-        # Two groups may share a name only in separate alternatives of one disjunction.
-        k = findname(v, start, stop, 0)
-        while k >= 0
-            separatealternatives(v, v.names[4k + 3], v.names[4k + 4]) || invalid()
-            k = findname(v, start, stop, k + 1)
-        end
-        push!(v.names, start, stop, length(v.paths), length(v.path))
-        append!(v.paths, v.path)
+        # Whether another group has the name, and may have it, is decided when the whole pattern is read (see
+        # `namesvalid`).
+        push!(v.names, start, v.i - 1, place(v))
         body(v)
         return true
     end
@@ -311,15 +336,123 @@ function modifiers(v::Validator)
     return nothing
 end
 
-# Whether a stored path (of `len` numbers at `offset` of `paths`) and the current position lie in different
-# alternatives of some disjunction.
-function separatealternatives(v::Validator, offset::Int, len::Int)
-    paths = v.paths
-    path = v.path
-    k = 1
-    while k < len && k < length(path) && paths[offset + k] == path[k]
-        paths[offset + k + 1] != path[k + 1] && return true
-        k += 2
+# The place of the current position: the innermost alternative that encloses it, with those that enclose that one.
+# The disjunctions that have no place yet are the innermost ones, as a place is made with those of every
+# disjunction around it and an alternative that starts has none.
+function place(v::Validator)
+    opened = v.opened
+    enclosing = 0
+    for level in 3:3:length(opened)
+        if opened[level] == 0
+            push!(v.places, opened[level - 2], opened[level - 1], enclosing)
+            opened[level] = length(v.places) ÷ 3
+        end
+        enclosing = opened[level]
+    end
+    return enclosing
+end
+
+# Whether the position `at`, which is before a place, lies in a different alternative of some disjunction than the
+# place does. The innermost disjunction around the place that started at or before `at` holds both. They are apart
+# when the alternative of the place started after `at`.
+function separatealternatives(v::Validator, at::Int, place::Int)
+    places = v.places
+    while place != 0
+        places[3place - 2] <= at && return places[3place - 1] > at
+        place = places[3place]
+    end
+    return false
+end
+
+# Whether the group names of the pattern may stand together, and every named reference names a group.
+#
+# Two groups may share a name only in separate alternatives of one disjunction. The names are put in order (by name,
+# and those that are the same in the order they are written in), which takes a number of comparisons in proportion
+# to n log n for n names, where looking for each name among those before it took n squared. Of the groups of one
+# name only each and the one written before it are compared. That decides every pair: when a group is apart from
+# the one before it, and that one from an earlier one, the group is apart from the earlier one too. (Were it not,
+# one alternative would hold the group and the earlier one. It would hold the one between them, which is written
+# between them. The one between is apart from the group, so it is in another alternative of a disjunction inside
+# that alternative, around the group. The earlier one is outside that disjunction, or it would be apart from the
+# group as well, so it and the one between are in the one alternative and not apart.)
+function namesvalid(v::Validator)
+    names = v.names
+    count = length(names) ÷ 3
+    count == 0 && return isempty(v.refs)
+    order = v.order
+    resize!(order, count)
+    for k in 1:count
+        order[k] = k - 1
+    end
+    count > 1 && sortnames!(v)
+    for k in 2:count
+        a = order[k - 1]
+        b = order[k]
+        if comparenames(v, names[3a + 1], names[3a + 2], names[3b + 1], names[3b + 2]) == 0
+            separatealternatives(v, names[3a + 1], names[3b + 3]) || return false
+        end
+    end
+    for r in 1:2:length(v.refs)
+        hasname(v, v.refs[r], v.refs[r + 1]) || return false
+    end
+    return true
+end
+
+# Whether the group `a` goes before the group `b` in the order of the names.
+function namebefore(v::Validator, a::Int, b::Int)
+    names = v.names
+    c = comparenames(v, names[3a + 1], names[3a + 2], names[3b + 1], names[3b + 2])
+    return c < 0 || (c == 0 && a < b)
+end
+
+# Puts `order` in the order of the names. It is a heap sort, which moves the numbers where they are and takes a
+# number of comparisons in proportion to n log n whatever the names are.
+function sortnames!(v::Validator)
+    order = v.order
+    count = length(order)
+    for root in (count ÷ 2):-1:1
+        sift!(v, root, count)
+    end
+    for last in count:-1:2
+        order[1], order[last] = order[last], order[1]
+        sift!(v, 1, last - 1)
+    end
+    return nothing
+end
+
+function sift!(v::Validator, root::Int, last::Int)
+    order = v.order
+    moved = order[root]
+    while true
+        child = 2root
+        child > last && break
+        if child < last && namebefore(v, order[child], order[child + 1])
+            child += 1
+        end
+        namebefore(v, moved, order[child]) || break
+        order[root] = order[child]
+        root = child
+    end
+    order[root] = moved
+    return nothing
+end
+
+# Whether a group has the name written at p[start, stop), by halving the names in their order.
+function hasname(v::Validator, start::Int, stop::Int)
+    names = v.names
+    order = v.order
+    low = 1
+    high = length(order)
+    while low <= high
+        middle = (low + high) >>> 1
+        k = order[middle]
+        c = comparenames(v, names[3k + 1], names[3k + 2], start, stop)
+        c == 0 && return true
+        if c < 0
+            low = middle + 1
+        else
+            high = middle - 1
+        end
     end
     return false
 end
@@ -405,24 +538,18 @@ function namechar(v::Validator, from::Int)
     return Int32(u)
 end
 
-# The index, from `from` on, of a group whose name is the one written at p[start, stop), or -1.
-function findname(v::Validator, start::Int, stop::Int, from::Int)
-    for k in from:(length(v.names) ÷ 4 - 1)
-        samename(v, v.names[4k + 1], v.names[4k + 2], start, stop) && return k
-    end
-    return -1
-end
-
-# Whether two valid group names of the pattern are the same name, however their characters are written.
-function samename(v::Validator, a::Int, astop::Int, b::Int, bstop::Int)
+# How two valid group names of the pattern compare, however their characters are written: less than 0 when the one
+# at p[a, astop) is the lesser, 0 when they are the same name, more than 0 otherwise. A name that another starts
+# with is the lesser.
+function comparenames(v::Validator, a::Int, astop::Int, b::Int, bstop::Int)
     while a < astop && b < bstop
         ca = namechar(v, a)
         a = v.next
         cb = namechar(v, b)
         b = v.next
-        ca != cb && return false
+        ca != cb && return ca < cb ? -1 : 1
     end
-    return a == astop && b == bstop
+    return (a < astop) - (b < bstop)
 end
 
 # An escape outside a class. Returns whether it may be quantified.

@@ -166,7 +166,13 @@ Control the generator's behaviour with MSBuild properties in your `.csproj`:
 For each `[JsonSchemaTypeGenerator]` attribute, the generator produces a complete implementation of the partial struct:
 
 - **Type-safe property accessors** for every property defined in the schema
-- **Validation** via `EvaluateSchema()` with full draft 2020-12 (or earlier draft) support
+- **Validation** via `EvaluateSchema()` with full draft 2020-12 (or earlier draft) support. A `pattern` whose match
+  runs for longer than 1 second throws `RegexMatchTimeoutException` (see
+  [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated)). A `pattern` or `patternProperties` pattern that is
+  not a valid ECMA-262 regular expression is reported as an error of the generator (`CRV1001`) and nothing is
+  generated for the schema (see [EcmaRegexTranslator.md](EcmaRegexTranslator.md#where-an-invalid-pattern-is-refused)).
+  A pattern over a limit of size is reported as `CRV1003`, which says that the pattern is too large and names the
+  limit (see [EcmaRegexTranslator.md](EcmaRegexTranslator.md#limits-on-the-size-of-a-pattern))
 - **Parsing** from strings, byte arrays, streams, and sequences via `ParsedJsonDocument<T>`
 - **Serialization** via `WriteTo(Utf8JsonWriter)` and `ToString()`
 - **Implicit conversions** to and from .NET primitive types

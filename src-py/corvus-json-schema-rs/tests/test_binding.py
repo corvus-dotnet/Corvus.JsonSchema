@@ -198,6 +198,26 @@ def test_not_on_an_in_place_cycle_stops_at_max_depth() -> None:
                     v.evaluate(instance, cjs.JsonSchemaResultsCollector.create(level))
 
 
+def test_a_separated_list_keeps_an_anchor_inside_it() -> None:
+    # The crate before 0.1.7 dropped a "$" at the end of the repeated group of a separated list, and after its first
+    # item, so the first two patterns were matched as ^x(,a)*$ and the third as ^(a,)*b$. The answers are V8's.
+    v = cjs.compile({"pattern": "^x(,a$)*$"})
+    assert v("x") is True
+    assert v("x,a") is True
+    assert v("x,a,a") is False
+    assert v.is_valid_json(json.dumps("x,a,a")) is False
+    v = cjs.compile({"pattern": "^x$(,a)*$"})
+    assert v("x") is True
+    assert v("x,a") is False
+    v = cjs.compile({"pattern": "^(a,$)*b$"})
+    assert v("b") is True
+    assert v("a,b") is False
+    # An escaped "$" is a literal character.
+    v = cjs.compile({"pattern": "^x(,a\\$)*$"})
+    assert v("x,a$,a$") is True
+    assert v("x,a,a") is False
+
+
 def test_results_and_annotations() -> None:
     schema = {"title": "Person", **PERSON}
     v = cjs.compile(schema)
@@ -210,3 +230,83 @@ def test_results_and_annotations() -> None:
     assert v.evaluate({}, c) is False
     assert any(r.message == "Required property not present 'name'" for r in c.results)
     assert cjs.schema_location_fragment("/properties/a b") == "#/properties/a%20b"
+
+
+# The limits on a regular expression. A schema and an instance may both come from outside, so a match of a pattern
+# has a limit of time (one second unless pattern_match_limit says otherwise), and a pattern has limits of size.
+# Reaching either raises an exception of its own, and is never an answer.
+
+NEVER_ANSWERS = r"^(?:(a+)\1*)+$"
+NEVER_ANSWERED = "a" * 60 + "b"
+
+
+def test_a_match_that_reaches_its_limit_raises() -> None:
+    import time
+
+    v = cjs.compile({"pattern": NEVER_ANSWERS}, pattern_match_limit=0.05)
+    for check in (
+        lambda: v(NEVER_ANSWERED),
+        lambda: v.is_valid(NEVER_ANSWERED),
+        lambda: v.is_valid_json(json.dumps(NEVER_ANSWERED)),
+        lambda: v.evaluate(NEVER_ANSWERED),
+        lambda: v.evaluate(NEVER_ANSWERED, cjs.JsonSchemaResultsCollector.create(cjs.ResultsLevel.BASIC)),
+    ):
+        # perf_counter and not monotonic: on Windows monotonic moves in steps of some 15 ms, and a match stopped at
+        # its limit of 50 ms by the crate's clock could read as 47 ms.
+        start = time.perf_counter()
+        with pytest.raises(cjs.PatternMatchLimitError) as raised:
+            check()
+        took = time.perf_counter() - start
+        assert NEVER_ANSWERS in str(raised.value) and "50ms" in str(raised.value)
+        assert 0.05 <= took < 20
+    assert not issubclass(cjs.PatternMatchLimitError, cjs.SchemaEvaluationDepthError)
+    assert v("aaaa") is True and v("b") is False
+
+
+def test_the_default_match_limit_is_one_second_and_can_be_turned_off() -> None:
+    import time
+
+    assert cjs.CompileOptions().pattern_match_limit == 1.0
+    v = cjs.compile({"patternProperties": {NEVER_ANSWERS: {"type": "integer"}}})
+    start = time.perf_counter()
+    with pytest.raises(cjs.PatternMatchLimitError, match="1s"):
+        v({NEVER_ANSWERED: 1})
+    assert 1.0 <= time.perf_counter() - start < 21
+    # Off: the match runs to its end. Fourteen characters take a moment, and the answer is no.
+    for off in (None, 0, 0.0, -1):
+        v = cjs.compile({"pattern": NEVER_ANSWERS}, pattern_match_limit=off)
+        assert v("a" * 14 + "b") is False
+    v = cjs.compile({"pattern": NEVER_ANSWERS}, cjs.CompileOptions(pattern_match_limit=None))
+    assert v("a" * 14 + "b") is False
+    with pytest.raises(ValueError):
+        cjs.compile({"pattern": "a"}, pattern_match_limit=float("nan"))
+
+
+def test_a_match_that_reaches_its_memory_limit_raises() -> None:
+    v = cjs.compile({"pattern": "(?:a?){2147483647}"})
+    with pytest.raises(cjs.PatternMatchLimitError, match="1,048,576 backtracking entries"):
+        v("")
+
+
+def test_a_pattern_over_a_limit_of_size_is_not_an_invalid_pattern() -> None:
+    def nest(depth: int) -> str:
+        return "(?:" * depth + "a" + ")" * depth
+
+    for at, over, reason in (
+        ("a" * 16384, "a" * 16385, "the pattern has a size of more than 1048576 bytes when it is read"),
+        (nest(999), nest(1000), "the groups of the pattern nest more than 1000 deep"),
+    ):
+        cjs.compile({"pattern": at})
+        for schema in ({"pattern": over}, {"patternProperties": {over: True}}):
+            with pytest.raises(cjs.PatternTooLargeError) as raised:
+                cjs.compile(schema)
+            message = str(raised.value)
+            assert message.endswith(f"is too large to read as an ECMA-262 regular expression: {reason}.")
+            assert "invalid" not in message.lower() and len(message) < 400
+    with pytest.raises(cjs.PatternTooLargeError, match="longer than 1048576 bytes"):
+        cjs.compile({"pattern": "a" * (2**20 + 1)})
+    # It is a compilation error, so code that catches those still catches it.
+    assert issubclass(cjs.PatternTooLargeError, cjs.SchemaCompilationError)
+    with pytest.raises(cjs.SchemaCompilationError, match="^Invalid regular expression") as raised:
+        cjs.compile({"pattern": "a**"})
+    assert not isinstance(raised.value, cjs.PatternTooLargeError)

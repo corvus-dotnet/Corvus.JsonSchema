@@ -30,9 +30,9 @@ function allowed_tests(m::MergedTests, d::Document, v::Int)
     return UInt64(0)
 end
 
-function test_holds(t::ValueTest, d::Document, v::Int)
+function test_holds(t::ValueTest, d::Document, v::Int, limit::PatternMatchLimit)
     if t.is_pattern
-        kind(d, v) == KIND_STRING && return pattern_match(t.pattern, str(d, v), str_ascii(d, v))
+        kind(d, v) == KIND_STRING && return pattern_match(t.pattern, str(d, v), str_ascii(d, v), limit)
         return !t.requires_string
     end
     for a in t.allowed
@@ -445,7 +445,7 @@ function try_fuse(p::Program, id::NodeId, same_resource::Bool, child_of)
     # A known name matching an absent pattern fails its condition whatever its value: no constant is allowed.
     for (e, name) in enumerate(known)
         for a in absent
-            if match_string(a.pattern, name)
+            if match_string(a.pattern, name, p.pattern_match_limit)
                 push!(tests[e], ValueTest(a.condition, false, ValueRef[], NO_PATTERN, false))
             end
         end
@@ -466,7 +466,7 @@ function try_fuse(p::Program, id::NodeId, same_resource::Bool, child_of)
                 end
             end
             for pp in b.pattern_properties
-                if match_string(pp.pattern, name)
+                if match_string(pp.pattern, name, p.pattern_match_limit)
                     matched = true
                     push!(apps, CollectedApp(UInt16(c - 1), app_child(pp.node), target(p, pp.node)))
                 end
@@ -661,7 +661,7 @@ function resolve_unknown(e::Evaluator, c::FusedContributor, name::Bytes, ascii::
     patterns = c.patterns
     for i in eachindex(patterns)
         fp = patterns[i]
-        if pattern_match(fp.pattern, name, ascii)
+        if pattern_match(fp.pattern, name, ascii, e.p.pattern_match_limit)
             matched = true
             (!fp.child.set || @run_child(e, e.d, fp.child.child, v)) || return false, false
         end
@@ -687,7 +687,7 @@ function fused_entry(e::Evaluator, f::FusedObject, index::Int, v::Int, pass::Fus
         for t in eachindex(tests)
             test = tests[t]
             bit = UInt64(1) << (t - 1)
-            holds = (keyed & bit) != 0 ? (allowed & bit) != 0 : test_holds(test, d, v)
+            holds = (keyed & bit) != 0 ? (allowed & bit) != 0 : test_holds(test, d, v, e.p.pattern_match_limit)
             if !holds
                 pass.failed |= UInt64(1) << test.condition
             end
@@ -717,7 +717,7 @@ function fused_unknown(e::Evaluator, f::FusedObject, name::Bytes, ascii::Bool, v
     f.resolves_unknown || return 0x00
     for a in f.absent
         bit = UInt64(1) << a.condition
-        if (pass.failed & bit) == 0 && pattern_match(a.pattern, name, ascii)
+        if (pass.failed & bit) == 0 && pattern_match(a.pattern, name, ascii, e.p.pattern_match_limit)
             pass.failed |= bit
         end
     end

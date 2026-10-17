@@ -231,11 +231,11 @@ impl<'o> SchemaLoader<'o> {
         if self.documents_by_uri.contains_key(absolute_uri) {
             return Ok(true);
         }
-        if let Some(resolver) = &self.options.resolve_document {
-            if let Some(doc) = resolver(absolute_uri) {
-                self.add_document(absolute_uri.to_string(), doc)?;
-                return Ok(true);
-            }
+        if let Some(resolver) = &self.options.resolve_document
+            && let Some(doc) = resolver(absolute_uri)
+        {
+            self.add_document(absolute_uri.to_string(), doc)?;
+            return Ok(true);
         }
         if let Some(text) = metaschema(absolute_uri) {
             let doc: Value = serde_json::from_str(text).expect("embedded metaschemas are valid JSON");
@@ -304,10 +304,8 @@ impl<'o> SchemaLoader<'o> {
             let r = &self.resources[resource as usize];
             (r.dialect, r.vocabularies)
         };
-        if !is_resource_root {
-            if let Some(Value::String(s)) = map.get("$schema") {
-                (dialect, vocabularies) = self.get_dialect_info(s)?;
-            }
+        if !is_resource_root && let Some(Value::String(s)) = map.get("$schema") {
+            (dialect, vocabularies) = self.get_dialect_info(s)?;
         }
 
         let legacy_ref_overrides_siblings = dialect.is_legacy() && matches!(map.get("$ref"), Some(Value::String(_)));
@@ -335,19 +333,19 @@ impl<'o> SchemaLoader<'o> {
                     }
                 }
             }
-            if dialect >= Dialect::Draft201909 {
-                if let Some(Value::String(a)) = map.get("$anchor") {
-                    self.add_anchor(resource, a, &pointer);
-                }
+            if dialect >= Dialect::Draft201909
+                && let Some(Value::String(a)) = map.get("$anchor")
+            {
+                self.add_anchor(resource, a, &pointer);
             }
-            if dialect >= Dialect::Draft202012 {
-                if let Some(Value::String(name)) = map.get("$dynamicAnchor") {
-                    self.resources[resource as usize]
-                        .dynamic_anchors
-                        .entry(name.clone())
-                        .or_insert_with(|| pointer.clone());
-                    self.add_anchor(resource, name, &pointer);
-                }
+            if dialect >= Dialect::Draft202012
+                && let Some(Value::String(name)) = map.get("$dynamicAnchor")
+            {
+                self.resources[resource as usize]
+                    .dynamic_anchors
+                    .entry(name.clone())
+                    .or_insert_with(|| pointer.clone());
+                self.add_anchor(resource, name, &pointer);
             }
             if dialect == Dialect::Draft201909
                 && is_resource_root

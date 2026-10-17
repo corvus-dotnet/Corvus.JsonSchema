@@ -256,7 +256,8 @@ end;
 procedure TestTheDataIsUnicode17;
 const
   Pairs: array[0..3, 0..1] of Int32 = (($10D50, $10D70), ($16EA0, $16EBB), ($A7CB, $264), ($1C89, $1C8A));
-  NoNames: array[0..5] of UTF8String = ('Nope', '', 'l', 'Latn=', 'Any', 'ASCII');
+  NoNames: array[0..7] of UTF8String = ('Nope', '', 'l', 'Latn=', 'Any', 'ASCII', 'hrkt', 'Katakana_or_Hiragana');
+  NoCharacter: array[0..1] of UTF8String = ('Katakana_Or_Hiragana', 'Hrkt');
 var
   K: Int32;
 begin
@@ -279,6 +280,13 @@ begin
   for K := 0 to High(Pairs) do begin
     CheckFold(Pairs[K][0], Pairs[K][1]);
     CheckToUpper(Pairs[K][1], Pairs[K][0]);
+  end;
+  // Katakana_Or_Hiragana is a Script value of PropertyValueAliases.txt that no code point has.
+  for K := 0 to High(NoCharacter) do begin
+    CheckContains(UcdScript(NoCharacter[K]), $3042, False, NoCharacter[K] + ' is a script with no code point');
+    CheckContains(UcdScript(NoCharacter[K]), $30FC, False, NoCharacter[K] + ' is a script with no code point');
+    CheckContains(UcdScriptExtensions(NoCharacter[K]), $3042, False, NoCharacter[K] + ' is a script with no code point');
+    CheckContains(UcdScriptExtensions(NoCharacter[K]), $30FC, False, NoCharacter[K] + ' is a script with no code point');
   end;
   for K := 0 to High(NoNames) do
     if (UcdCategory(NoNames[K]) <> nil) or (UcdScript(NoNames[K]) <> nil) or

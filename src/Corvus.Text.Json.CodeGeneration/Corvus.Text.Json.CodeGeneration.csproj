@@ -26,8 +26,12 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="THIRD-PARTY-NOTICES.txt" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EcmaRegexParser.cs" />
+    <Compile Include="EcmaRegexUnicode.cs" />
+    <Compile Include="EcmaRegexUnicodeData.cs" />
     <Compile Include="EcmaRegexTranslator.cs" />
     <Compile Include="RuntimeProgramGenerator.cs" />
     <Compile Include="SchemaProgramCompiler.cs" />

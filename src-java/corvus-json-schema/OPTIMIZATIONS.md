@@ -28,15 +28,16 @@ technique; this is the checklist.
 - **Arrays.** Length read once; `prefixItems` guarded by length and skipped when `true`; `items: false` as a length
   check and `items: true` as nothing; `contains` skipped when it cannot fail and stopped at `minContains` when there is
   no maximum; `uniqueItems` only above one item, pairwise up to 16, otherwise sorted by hash in reused scratch.
-- **Strings.** Code points counted only for non-ASCII strings; patterns compiled once per process; pattern shapes
-  decided without a regex engine over the UTF-8 bytes: everything (`.*` …), has-content (`.`, `.+`), line length
-  (`^.{m,n}$`), `^X.*` reduced to `^X`, anchored literals and anchored class sequences (greedy where exact); everything
-  else translated to `java.util.regex` with a matcher reused per evaluator.
+- **Strings.** Code points counted only for non-ASCII strings; identical patterns shared through a bounded cache of
+  the process; pattern shapes decided without a regex engine over the UTF-8 bytes: everything (`.*` …), has-content
+  (`.`, `.+`), line length (`^.{m,n}$`), `^X.*` reduced to `^X`, anchored literals and anchored class sequences
+  (greedy where exact); everything else translated to `java.util.regex` with a matcher reused per evaluator, at a
+  place of its own schema.
 - **Numbers.** Exact comparison across long, unsigned long and double; bounds digested at compile time; integer
   `multipleOf` by `%`; other `multipleOf` exactly on the decimal digits of the text with long arithmetic.
 - **Formats and content.** Format kind and assertion decided at compile time per dialect; all formats over the UTF-8
   view without allocation (hand-written dates, times, UUIDs, IP addresses, host names, IDNA with reused buffers, the
-  regex format by an allocation-free reader; regex-based URI formats with reused matchers); content checked without
+  regex format by an allocation-free reader; the URI, IRI, template, pointer and duration formats by readers of their grammars, with no regex engine); content checked without
   decoding (base64) or with a reused validate-only parser (JSON).
 - **Enum and const.** String const compared as bytes; string enums compared as bytes (up to 8) or by a hashed lookup;
   other values by JSON equality with prefilters (kind first, objects position by position).
@@ -94,6 +95,6 @@ technique; this is the checklist.
 - **Stack allocation, SkipLocalsInit, ArrayPool, inline/no-inline attributes** (C#/Rust): the JVM has no equivalents;
   the arena and per-evaluator scratch play their part, and the JIT decides inlining.
 - **Program image, ReadyToRun, MIBC profiles** (C#): the AOT cache is the JVM's counterpart.
-- **Linear-time `regex` crate translation and `regress`** (Rust), **compiled IL regex** (C#): `java.util.regex` is the
-  JVM's engine; the shapes avoid it where they can.
+- **Linear-time `regex` crate translation and the crate's own ECMA-262 engine** (Rust), **compiled IL regex** (C#):
+  `java.util.regex` is the JVM's engine; the shapes avoid it where they can.
 - **Vectorised search start** (C#'s `IndexOfAny`): no portable vector API on Java 17.

@@ -67,10 +67,10 @@ public readonly partial struct AsyncApiDocument
                 }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                [GeneratedRegex("^\\$ref$")]
+                [GeneratedRegex("^\\$ref\\z", RegexOptions.None, matchTimeoutMilliseconds: global::System.Threading.Timeout.Infinite)]
                 private static partial Regex CreatePatternProperties();
 #else
-                private static Regex CreatePatternProperties() => new("^\\$ref$", RegexOptions.Compiled);
+                private static Regex CreatePatternProperties() => new("^\\$ref\\z", RegexOptions.Compiled, global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout);
 #endif
             }
         }

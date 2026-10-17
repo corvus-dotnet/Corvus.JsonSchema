@@ -33,6 +33,9 @@ JavaScript and TypeScript, Rust, Java and Kotlin, Go, Julia, Object Pascal, Pyth
   path, schema location, instance location and message, in the same order). Annotations come grouped the same way
   everywhere: instance location, then keyword, then schema location, then value (in R, as the columns of a data
   frame). Results from any of them can be consumed the same way.
+- **The same patterns.** `pattern`, `patternProperties` and the `regex` format are ECMA-262 regular expressions in
+  every port, tested against V8's answers. How each port matches them, what it refuses and how it limits a match are
+  in [Patterns across the ports](PatternConformance.md).
 - **The same options.** The default dialect, format and content assertion, custom formats, a document resolver for
   remote references, a base URI, an entry point and a recursion limit, each named in its language's idiom.
 - **Fast validation.** Each validates without collecting anything unless asked; results collection is a separate path

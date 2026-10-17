@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Corvus\JsonSchema\{Collector, CompilationException, DepthException, Dialect, InvalidJsonException,
-    JsonSchemaException, ResultsLevel, Validator};
+    JsonSchemaException, PatternMatchLimitException, PatternTooLargeException, ResultsLevel, Validator};
 
 $checks = 0;
 $failures = [];
@@ -136,7 +136,91 @@ check('a class member outside ASCII: C', true, $excluded->isValid('C1'));
 check('a class member outside ASCII: )', true, $excluded->isValid(')a'));
 check('a class member outside ASCII: the member', false, $excluded->isValid('é1'));
 check('a class member outside ASCII: the member, JSON text', false, $excluded->isValidJson('"é1"'));
+// The crate before 0.1.7 dropped a "$" at the end of the repeated group of a separated list, and after its first item, so
+// the first two patterns were matched as ^x(,a)*$ and the third as ^(a,)*b$. The answers are V8's.
+$anchored = Validator::compile(['pattern' => '^x(,a$)*$']);
+check('a list with an anchor in its group: no repeat', true, $anchored->isValid('x'));
+check('a list with an anchor in its group: one repeat', true, $anchored->isValid('x,a'));
+check('a list with an anchor in its group: two repeats', false, $anchored->isValid('x,a,a'));
+check('a list with an anchor in its group: two repeats, JSON text', false, $anchored->isValidJson('"x,a,a"'));
+$anchored = Validator::compile(['pattern' => '^x$(,a)*$']);
+check('a list with an anchor after its first item: no repeat', true, $anchored->isValid('x'));
+check('a list with an anchor after its first item: one repeat', false, $anchored->isValid('x,a'));
+$anchored = Validator::compile(['pattern' => '^(a,$)*b$']);
+check('a list with an anchor before its last item: no repeat', true, $anchored->isValid('b'));
+check('a list with an anchor before its last item: one repeat', false, $anchored->isValid('a,b'));
+// An escaped "$" is a literal character.
+$escaped = Validator::compile(['pattern' => '^x(,a\$)*$']);
+check('a list with an escaped anchor: two repeats', true, $escaped->isValid('x,a$,a$'));
+check('a list with an escaped anchor: no "$" in the text', false, $escaped->isValid('x,a,a'));
 check('exceptions share a base', true, is_subclass_of(CompilationException::class, JsonSchemaException::class));
+
+// The limits on a regular expression. A schema and a value may both come from outside, so a match of a pattern has a
+// limit of time (one second unless patternMatchLimit says otherwise) and a pattern has limits of size. Reaching either
+// throws an exception of its own, and is never an answer.
+$neverAnswers = '^(?:(a+)\\1*)+$';
+$neverAnswered = str_repeat('a', 60) . 'b';
+$limited = Validator::compile(['pattern' => $neverAnswers], ['patternMatchLimit' => 0.05]);
+foreach ([
+    'isValid' => fn () => $limited->isValid($neverAnswered),
+    'isValidJson' => fn () => $limited->isValidJson(json_encode($neverAnswered)),
+    'evaluate' => fn () => $limited->evaluate($neverAnswered, new Collector(ResultsLevel::Basic)),
+] as $what => $f) {
+    $start = microtime(true);
+    try {
+        $f();
+        check("the match limit, $what: nothing was thrown", true, false);
+    } catch (PatternMatchLimitException $e) {
+        $took = microtime(true) - $start;
+        check("the match limit, $what: the message names the pattern", true, str_contains($e->getMessage(), $neverAnswers));
+        check("the match limit, $what: the message names the limit", true, str_contains($e->getMessage(), '50ms'));
+        check("the match limit, $what: abandoned at the limit", true, $took >= 0.05 && $took < 20);
+    }
+}
+check('a string that matches, with a limit', true, $limited->isValid('aaaa'));
+check('a string that does not match, with a limit', false, $limited->isValid('b'));
+check('the match limit is not the depth', false, is_subclass_of(PatternMatchLimitException::class, DepthException::class));
+check('the match limit shares the base', true, is_subclass_of(PatternMatchLimitException::class, JsonSchemaException::class));
+// The default is one second.
+$default = Validator::compile(['patternProperties' => [$neverAnswers => ['type' => 'integer']]]);
+$start = microtime(true);
+throws('the default match limit', PatternMatchLimitException::class, fn () => $default->isValid([$neverAnswered => 1]));
+$took = microtime(true) - $start;
+check('the default match limit is one second', true, $took >= 1.0 && $took < 21);
+// Off: the match runs to its end. Fourteen characters take a moment, and the answer is no.
+foreach ([null, 0, 0.0, -1] as $off) {
+    $unlimited = Validator::compile(['pattern' => $neverAnswers], ['patternMatchLimit' => $off]);
+    check('the match limit turned off with ' . var_export($off, true), false, $unlimited->isValid(str_repeat('a', 14) . 'b'));
+}
+throws('a match limit that is not a number', TypeError::class, fn () => Validator::compile([], ['patternMatchLimit' => 'soon']));
+throws('the memory of a match', PatternMatchLimitException::class,
+    fn () => Validator::compile(['pattern' => '(?:a?){2147483647}'])->isValid(''));
+// A pattern over a limit of size.
+$nest = fn (int $depth) => str_repeat('(?:', $depth) . 'a' . str_repeat(')', $depth);
+foreach ([
+    [str_repeat('a', 16384), str_repeat('a', 16385), 'the pattern has a size of more than 1048576 bytes when it is read'],
+    [$nest(999), $nest(1000), 'the groups of the pattern nest more than 1000 deep'],
+] as [$at, $over, $reason]) {
+    check("a pattern at the limit compiles ($reason)", true, Validator::compile(['pattern' => $at]) instanceof Validator);
+    foreach ([['pattern' => $over], ['patternProperties' => [$over => true]]] as $schema) {
+        try {
+            Validator::compile($schema);
+            check("a pattern over the limit: nothing was thrown ($reason)", true, false);
+        } catch (PatternTooLargeException $e) {
+            check("a pattern over the limit: the message ($reason)", true,
+                str_ends_with($e->getMessage(), "is too large to read as an ECMA-262 regular expression: $reason."));
+            check('a pattern over the limit is not said to be invalid', false, str_contains(strtolower($e->getMessage()), 'invalid'));
+        }
+    }
+}
+check('too large is a compilation exception', true, is_subclass_of(PatternTooLargeException::class, CompilationException::class));
+try {
+    Validator::compile(['pattern' => 'a**']);
+    check('a pattern that is not valid: nothing was thrown', true, false);
+} catch (CompilationException $e) {
+    check('a pattern that is not valid is not too large', false, $e instanceof PatternTooLargeException);
+    check('a pattern that is not valid: the message', true, str_starts_with($e->getMessage(), 'Invalid regular expression'));
+}
 
 // Errors.
 throws('invalid JSON text', InvalidJsonException::class, fn () => $person->isValidJson('{'));

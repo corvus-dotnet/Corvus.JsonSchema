@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using Corvus.Text.Json.RuntimeEvaluator;
 
 namespace Corvus.Text.Json.Validator;
@@ -257,10 +258,14 @@ public readonly struct JsonSchema
 
     private static string BuildCacheKey(string uri, Options options)
     {
-        // An evaluator is created with its code generation setting, so each setting has its own cached evaluator.
-        return options.CodeGeneration == JsonSchemaCodeGeneration.Disabled
+        // An evaluator is created with its code generation setting and its regular expression match timeout, so
+        // each setting has its own cached evaluator.
+        string key = options.CodeGeneration == JsonSchemaCodeGeneration.Disabled
             ? $"{uri}__{options.AlwaysAssertFormat}"
             : $"{uri}__{options.AlwaysAssertFormat}__{options.CodeGeneration}";
+        return options.RegexMatchTimeout == JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout
+            ? key
+            : $"{key}__{options.RegexMatchTimeout.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
     }
 
     private static JsonSchemaEvaluatorOptions BuildEvaluatorOptions(Options options, PrepopulatedDocuments documents)
@@ -272,6 +277,7 @@ public readonly struct JsonSchema
             DocumentResolver = documents.Resolve,
             FallbackDocumentResolver = options.AllowFileSystemAndHttpResolution ? ResolveFromFileSystemOrHttp : null,
             CodeGeneration = options.CodeGeneration,
+            RegexMatchTimeout = options.RegexMatchTimeout,
         };
     }
 
@@ -369,20 +375,61 @@ public readonly struct JsonSchema
         /// that collect no results (defaults to <see cref="JsonSchemaCodeGeneration.Disabled"/>). Code is generated
         /// only by the .NET builds of the library, where the runtime can compile code at run time. Elsewhere (.NET
         /// Framework, native AOT) the setting is accepted and the schema is interpreted.</param>
+        /// <param name="regexMatchTimeout">How long one regular expression match of a <c>pattern</c> or
+        /// <c>patternProperties</c> keyword may run before it throws <see cref="RegexMatchTimeoutException"/> out of
+        /// the validation (defaults to <see cref="JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout"/>, 1
+        /// second). <see cref="Regex.InfiniteMatchTimeout"/> matches with no timeout.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="regexMatchTimeout"/> is zero, negative and
+        /// not <see cref="Regex.InfiniteMatchTimeout"/>, or longer than a regular expression accepts.</exception>
         public Options(
             IReadOnlyList<AdditionalSchemaFile>? additionalSchemaFiles = null,
             bool allowFileSystemAndHttpResolution = true,
             JsonSchemaDialect defaultDialect = JsonSchemaDialect.Draft202012,
             bool alwaysAssertFormat = true,
             JsonSchemaDocumentResolver? additionalDocumentResolver = null,
-            JsonSchemaCodeGeneration codeGeneration = JsonSchemaCodeGeneration.Disabled)
+            JsonSchemaCodeGeneration codeGeneration = JsonSchemaCodeGeneration.Disabled,
+            TimeSpan? regexMatchTimeout = null)
         {
+            TimeSpan timeout = regexMatchTimeout ?? JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout;
+
+            // The limits of the Regex constructor, which would otherwise refuse the value when a schema is compiled.
+            if (timeout != Regex.InfiniteMatchTimeout && (timeout <= TimeSpan.Zero || timeout.TotalMilliseconds > int.MaxValue - 1))
+            {
+                throw new ArgumentOutOfRangeException(nameof(regexMatchTimeout));
+            }
+
             this.AdditionalSchemaFiles = additionalSchemaFiles;
             this.AllowFileSystemAndHttpResolution = allowFileSystemAndHttpResolution;
             this.DefaultDialect = defaultDialect;
             this.AlwaysAssertFormat = alwaysAssertFormat;
             this.AdditionalDocumentResolver = additionalDocumentResolver;
             this.CodeGeneration = codeGeneration;
+            this.RegexMatchTimeout = timeout;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Options"/> class.
+        /// </summary>
+        /// <param name="additionalSchemaFiles">Additional schema files to preload into the document resolver.</param>
+        /// <param name="allowFileSystemAndHttpResolution">If <see langword="true"/> then referenced documents may be retrieved from the file system and over HTTP.</param>
+        /// <param name="defaultDialect">The dialect applied to schemas that do not declare <c>$schema</c>.</param>
+        /// <param name="alwaysAssertFormat">If <see langword="true"/>, <c>format</c> will always be asserted, even for dialects that usually annotate.</param>
+        /// <param name="additionalDocumentResolver">An additional document resolver for in-memory schema resolution.</param>
+        /// <param name="codeGeneration">Whether, and when, the schema is compiled to IL at run time.</param>
+        /// <remarks>
+        /// The constructor as it was before the regular expression match timeout setting, kept so that assemblies
+        /// compiled against it still bind. New code binds to the constructor that takes the setting.
+        /// </remarks>
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        public Options(
+            IReadOnlyList<AdditionalSchemaFile>? additionalSchemaFiles,
+            bool allowFileSystemAndHttpResolution,
+            JsonSchemaDialect defaultDialect,
+            bool alwaysAssertFormat,
+            JsonSchemaDocumentResolver? additionalDocumentResolver,
+            JsonSchemaCodeGeneration codeGeneration)
+            : this(additionalSchemaFiles, allowFileSystemAndHttpResolution, defaultDialect, alwaysAssertFormat, additionalDocumentResolver, codeGeneration, null)
+        {
         }
 
         /// <summary>
@@ -404,7 +451,7 @@ public readonly struct JsonSchema
             JsonSchemaDialect defaultDialect,
             bool alwaysAssertFormat,
             JsonSchemaDocumentResolver? additionalDocumentResolver)
-            : this(additionalSchemaFiles, allowFileSystemAndHttpResolution, defaultDialect, alwaysAssertFormat, additionalDocumentResolver, JsonSchemaCodeGeneration.Disabled)
+            : this(additionalSchemaFiles, allowFileSystemAndHttpResolution, defaultDialect, alwaysAssertFormat, additionalDocumentResolver, JsonSchemaCodeGeneration.Disabled, null)
         {
         }
 
@@ -442,6 +489,13 @@ public readonly struct JsonSchema
         /// Gets a value that says whether, and when, the schema is compiled to IL at run time.
         /// </summary>
         public JsonSchemaCodeGeneration CodeGeneration { get; }
+
+        /// <summary>
+        /// Gets how long one regular expression match of a <c>pattern</c> or <c>patternProperties</c> keyword may run
+        /// before it throws <see cref="RegexMatchTimeoutException"/> out of the validation.
+        /// <see cref="Regex.InfiniteMatchTimeout"/> is no timeout.
+        /// </summary>
+        public TimeSpan RegexMatchTimeout { get; }
     }
 
     /// <summary>

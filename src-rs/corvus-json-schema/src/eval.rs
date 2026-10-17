@@ -4,7 +4,7 @@
 //! the C# collecting mode (keyword order, paths, messages, which subschema results are committed or discarded).
 
 use std::collections::HashMap;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
 use serde_json::{Number, Value};
 
@@ -14,7 +14,8 @@ use crate::formats::FormatKind;
 use crate::instance::{ArrayView, Instance, Kind, ObjectView, View};
 use crate::node::*;
 use crate::numbers::{Num, cmp, multiple_of, num_eq, number_text};
-use crate::options::FormatValidator;
+use crate::options::{FormatValidator, SchemaEvaluationDepthError, SchemaEvaluationError};
+use crate::pattern::{PatternBudget, PatternLimit};
 use crate::results::{JsonSchemaResultsCollector, Message, encode_pointer_segment};
 use crate::uri::resolve_pointer;
 
@@ -36,6 +37,11 @@ pub(crate) struct Program {
     pub annotation_sources: Vec<Option<AnnotationSource>>,
     pub annotations: OnceLock<Vec<Option<Vec<AnnotationEntry>>>>,
     pub assert_format_set: bool,
+    /// The limit of a match of a pattern, which every evaluation gives its matches.
+    pub pattern_limit: PatternLimit,
+    /// The budget of the matches made while the plans are compiled (a pattern against the property names the
+    /// schema declares). It is not used once the program is made.
+    pub compile_budget: Mutex<PatternBudget>,
     /// Fail-fast plans (with a dynamic scope kept, bodies push their resource on entry).
     plans: Vec<plan::Plan>,
 }
@@ -53,6 +59,7 @@ impl Program {
         documents: Vec<Box<Value>>,
         annotation_sources: Vec<Option<AnnotationSource>>,
         assert_format_set: bool,
+        pattern_limit: PatternLimit,
     ) -> Program {
         let fast_target = (0..nodes.len() as NodeId)
             .map(|id| {
@@ -98,6 +105,8 @@ impl Program {
             annotation_sources,
             annotations: OnceLock::new(),
             assert_format_set,
+            pattern_limit,
+            compile_budget: Mutex::new(PatternBudget::new(pattern_limit)),
             plans: Vec::new(),
         };
         program.plans = plan::compile_plans(&program);
@@ -313,9 +322,8 @@ fn str_hash(s: &str) -> u64 {
     const K: u64 = 0x9e37_79b9_7f4a_7c15;
     let b = s.as_bytes();
     let mut h = (b.len() as u64).wrapping_mul(K);
-    let mut chunks = b.chunks_exact(8);
-    for c in &mut chunks {
-        h = (h.rotate_left(5) ^ u64::from_le_bytes(c.try_into().unwrap())).wrapping_mul(K);
+    for c in b.as_chunks::<8>().0 {
+        h = (h.rotate_left(5) ^ u64::from_le_bytes(*c)).wrapping_mul(K);
     }
     // The tail as one word without copying it out: the last eight bytes when there are that many (overlapping the
     // chunks already hashed), else the overlapping first and last four, else the bytes themselves.
@@ -390,7 +398,7 @@ fn code_points(s: &str) -> u64 {
 
 fn base64_decode(s: &str) -> Option<Vec<u8>> {
     let b = s.as_bytes();
-    if b.len() % 4 != 0 {
+    if !b.len().is_multiple_of(4) {
         return None;
     }
     let val = |c: u8| -> Option<u32> {
@@ -548,6 +556,8 @@ pub(crate) struct Evaluator<'p, 'c> {
     scope: Vec<u32>,
     depth: u32,
     pub depth_exceeded: bool,
+    /// What every match of a pattern in this evaluation has, and the first match that reached a limit.
+    pub(crate) budget: PatternBudget,
     /// A string reused to evaluate property names against propertyNames (a `String`, not a `Value`: dropping a
     /// `Value` is an out-of-line call, which every evaluation paid).
     name_buffer: String,
@@ -581,7 +591,16 @@ macro_rules! and {
 impl<'p, 'c> Evaluator<'p, 'c> {
     pub fn new(p: &'p Program, c: Option<&'c mut JsonSchemaResultsCollector>) -> Self {
         let annotations: &'p [Option<Vec<AnnotationEntry>>] = if c.is_some() { p.annotations() } else { &[] };
-        Evaluator { p, annotations, c, scope: Vec::new(), depth: 0, depth_exceeded: false, name_buffer: String::new() }
+        Evaluator {
+            p,
+            annotations,
+            c,
+            scope: Vec::new(),
+            depth: 0,
+            depth_exceeded: false,
+            budget: PatternBudget::new(p.pattern_limit),
+            name_buffer: String::new(),
+        }
     }
 
     #[inline(always)]
@@ -598,8 +617,21 @@ impl<'p, 'c> Evaluator<'p, 'c> {
     pub fn validate<'x, I: Instance<'x>>(&mut self, x: I) -> bool {
         let root = self.p.fast_target[self.p.root as usize];
         // An evaluation that recursed in place beyond the maximum depth is not valid, whatever it came to: the
-        // branch that was abandoned counts as false, which a not above it turns into true.
-        self.fast(root, x) && !self.depth_exceeded
+        // branch that was abandoned counts as false, which a not above it turns into true. The same holds for a
+        // match of a pattern that reached its limit.
+        self.fast(root, x) && !self.depth_exceeded && !self.budget.failed()
+    }
+
+    /// What an evaluation that came to `ok` reports: no answer, and why, when a match of a pattern reached its
+    /// limit or the schema recursed in place beyond the maximum depth.
+    pub fn outcome(&mut self, ok: bool) -> Result<bool, SchemaEvaluationError> {
+        if let Some(e) = self.budget.take_failure() {
+            return Err(SchemaEvaluationError::PatternMatchLimit(e));
+        }
+        if self.depth_exceeded {
+            return Err(SchemaEvaluationError::DepthExceeded(SchemaEvaluationDepthError));
+        }
+        Ok(ok)
     }
 
     /// Fail-fast evaluation of a node, through its plan when there are plans.
@@ -723,15 +755,15 @@ impl<'p, 'c> Evaluator<'p, 'c> {
             }
             _ => {}
         }
-        if M::COLLECT {
-            if let Some(list) = &self.annotations[id as usize] {
-                for a in list {
-                    if a.strings_only && x.kind() != Kind::String {
-                        continue;
-                    }
-                    let v = &a.value;
-                    self.col().ignored_keyword(Message::Lazy(&|| v.to_string()), &a.keyword);
+        if M::COLLECT
+            && let Some(list) = &self.annotations[id as usize]
+        {
+            for a in list {
+                if a.strings_only && x.kind() != Kind::String {
+                    continue;
                 }
+                let v = &a.value;
+                self.col().ignored_keyword(Message::Lazy(&|| v.to_string()), &a.keyword);
             }
         }
         ok
@@ -742,24 +774,25 @@ impl<'p, 'c> Evaluator<'p, 'c> {
 
     fn eval_number<M: Mode>(&mut self, n: &'p SchemaNode, x: &Number) -> bool {
         let mut ok = true;
-        if n.assert_format && n.format_kind.is_numeric() {
-            if let Some(f) = &n.format {
-                let m = match self.p.formats.get(f) {
-                    Some(custom) => custom(&x.to_string()),
-                    None => n.format_kind.check_number(x),
-                };
-                let kind = n.format_kind.name();
-                check!(
-                    self,
-                    M,
-                    ok,
-                    m,
-                    Message::Lazy(&|| format!(
-                        "The value was expected to be in a supported format, and within bounds for '{kind}'"
-                    )),
-                    "format"
-                );
-            }
+        if n.assert_format
+            && n.format_kind.is_numeric()
+            && let Some(f) = &n.format
+        {
+            let m = match self.p.formats.get(f) {
+                Some(custom) => custom(&x.to_string()),
+                None => n.format_kind.check_number(x),
+            };
+            let kind = n.format_kind.name();
+            check!(
+                self,
+                M,
+                ok,
+                m,
+                Message::Lazy(&|| format!(
+                    "The value was expected to be in a supported format, and within bounds for '{kind}'"
+                )),
+                "format"
+            );
         }
         let xv = Num::of(x);
         use std::cmp::Ordering::*;
@@ -856,23 +889,24 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 self,
                 M,
                 ok,
-                p.is_match(s),
+                p.is_match(s, &mut self.budget),
                 Message::Lazy(&|| format!("Expected the value to match the regular expression{}", q(&p.source))),
                 "pattern"
             );
         }
-        if n.assert_format && !n.format_kind.is_numeric() {
-            if let Some(f) = &n.format {
-                let (m, message): (bool, Message) = match self.p.formats.get(f) {
-                    Some(custom) => (custom(s), Message::Lazy(&|| format!("Expected a string in the '{f}' format."))),
-                    None if n.format_kind == FormatKind::Unknown => (true, Message::None),
-                    None => (
-                        n.format_kind.check_string(s, n.dialect <= Dialect::Draft6),
-                        n.format_kind.message().map_or(Message::None, Message::Static),
-                    ),
-                };
-                check!(self, M, ok, m, message, "format");
-            }
+        if n.assert_format
+            && !n.format_kind.is_numeric()
+            && let Some(f) = &n.format
+        {
+            let (m, message): (bool, Message) = match self.p.formats.get(f) {
+                Some(custom) => (custom(s), Message::Lazy(&|| format!("Expected a string in the '{f}' format."))),
+                None if n.format_kind == FormatKind::Unknown => (true, Message::None),
+                None => (
+                    n.format_kind.check_string(s, n.dialect <= Dialect::Draft6),
+                    n.format_kind.message().map_or(Message::None, Message::Static),
+                ),
+            };
+            check!(self, M, ok, m, message, "format");
         }
         if n.assert_content {
             let m = content_ok(s, n.content);
@@ -963,7 +997,7 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 }
                 if let Some(pps) = &n.pattern_properties {
                     for pp in pps {
-                        if !pp.pattern.is_match(k) {
+                        if !pp.pattern.is_match(k, &mut self.budget) {
                             continue;
                         }
                         matched = true;
@@ -983,19 +1017,19 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                         );
                     }
                 }
-                if let Some(ap) = n.additional_properties {
-                    if !matched {
-                        if let Some(b) = bits.as_deref_mut() {
-                            b.set(i);
-                        }
-                        and!(
-                            M,
-                            ok,
-                            self.eval_at::<M, I>(ap, &|| "additionalProperties".to_string(), v, &|| {
-                                encode_pointer_segment(k).into_owned()
-                            })
-                        );
+                if let Some(ap) = n.additional_properties
+                    && !matched
+                {
+                    if let Some(b) = bits.as_deref_mut() {
+                        b.set(i);
                     }
+                    and!(
+                        M,
+                        ok,
+                        self.eval_at::<M, I>(ap, &|| "additionalProperties".to_string(), v, &|| {
+                            encode_pointer_segment(k).into_owned()
+                        })
+                    );
                 }
                 if let Some(pn) = n.property_names {
                     let name = Value::String(k.to_string());
@@ -1185,10 +1219,10 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                 };
                 if matched {
                     count += 1;
-                    if n.contains_marks_evaluated {
-                        if let Some(b) = bits.as_deref_mut() {
-                            b.set(i);
-                        }
+                    if n.contains_marks_evaluated
+                        && let Some(b) = bits.as_deref_mut()
+                    {
+                        b.set(i);
                     }
                 }
             }
@@ -1296,10 +1330,8 @@ impl<'p, 'c> Evaluator<'p, 'c> {
         if guarded {
             self.depth -= 1;
         }
-        if ok {
-            if let (Some(s), Some(b)) = (&scratch, bits) {
-                b.merge(s);
-            }
+        if ok && let (Some(s), Some(b)) = (&scratch, bits) {
+            b.merge(s);
         }
         (ok, scratch)
     }
@@ -1402,10 +1434,10 @@ impl<'p, 'c> Evaluator<'p, 'c> {
                     }
                 }
             }
-            if matched == 1 {
-                if let (Some(b), Some(o)) = (bits.as_deref_mut(), &only) {
-                    b.merge(o);
-                }
+            if matched == 1
+                && let (Some(b), Some(o)) = (bits.as_deref_mut(), &only)
+            {
+                b.merge(o);
             }
             let message = match matched {
                 0 => MATCHED_NO_SCHEMA,

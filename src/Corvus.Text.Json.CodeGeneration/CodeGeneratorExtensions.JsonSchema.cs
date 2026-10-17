@@ -42,11 +42,27 @@ internal static partial class CodeGenerationExtensions
     private const string MutableClassBaseName = "Mutable";
     private const string MutableClassNameKey = "CSharp_JsonSchema_MutableClassNameKey";
 
+    /// <summary>
+    /// The match timeout, in milliseconds, of every regular expression in generated code that is not proved to
+    /// match in time proportional to the text: 1 second.
+    /// </summary>
+    /// <remarks>
+    /// There are patterns on which a match in .NET's regular expression engine never finishes. With a timeout the
+    /// match throws <see cref="System.Text.RegularExpressions.RegexMatchTimeoutException"/> to the caller of the
+    /// generated code. This is the one place the generator holds the value. The runtime evaluator has the same
+    /// default for the expressions it constructs, in <c>JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout</c>.
+    /// A pattern that <c>EcmaRegexTranslator.IsLinear</c> proves linear has no timeout, in generated code and in
+    /// the evaluator.
+    /// </remarks>
+    internal const int RegexMatchTimeoutMilliseconds = 1_000;
+
+    // Both end in \z and not in $, which in .NET also holds before a final line feed. A pattern that ends in a
+    // line feed (^abc\n) is neither of these.
     private static readonly System.Text.RegularExpressions.Regex PrefixPattern =
-        new(@"^\^([a-zA-Z0-9\-_/@]+)(\.\*)?$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        new(@"^\^([a-zA-Z0-9\-_/@]+)(\.\*)?\z", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     private static readonly System.Text.RegularExpressions.Regex RangePattern =
-        new(@"^\^\.\{([0-9]+),([0-9]+)\}\$$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        new(@"^\^\.\{([0-9]+),([0-9]+)\}\$\z", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     /// <summary>
     /// Classifies a regular expression pattern for potential inline code generation
@@ -78,7 +94,12 @@ internal static partial class CodeGenerationExtensions
             return RegexPatternCategory.Prefix;
         }
 
-        if (RangePattern.IsMatch(pattern))
+        // A bound too large for an int is still a valid quantifier, which the regular expression takes. Bounds out of
+        // order are not a valid pattern, which the translation of a regular expression refuses.
+        if (RangePattern.Match(pattern) is { Success: true } range
+            && int.TryParse(range.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out int min)
+            && int.TryParse(range.Groups[2].Value, NumberStyles.None, CultureInfo.InvariantCulture, out int max)
+            && min <= max)
         {
             return RegexPatternCategory.Range;
         }
@@ -152,8 +173,11 @@ internal static partial class CodeGenerationExtensions
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
+    /// <exception cref="InvalidOperationException">A <c>pattern</c> or <c>patternProperties</c> pattern of the type is
+    /// not a valid ECMA-262 regular expression.</exception>
     public static CodeGenerator AppendPatternPropertyRegexFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
+        ThrowIfAPatternIsNotValid(typeDeclaration);
         return generator.AppendPatternPropertyRegexMembers(typeDeclaration, static (g, keyword, index, _) => g.AppendRegexValidationField(keyword, index));
     }
 
@@ -166,6 +190,49 @@ internal static partial class CodeGenerationExtensions
     public static CodeGenerator AppendPatternPropertyRegexFactoryMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         return generator.AppendPatternPropertyRegexMembers(typeDeclaration, static (g, keyword, index, value) => g.AppendRegexValidationFactoryMethod(keyword, index, value));
+    }
+
+    /// <summary>
+    /// Reads every pattern of the type, of the <c>pattern</c> keyword and of <c>patternProperties</c> alike, and
+    /// stops the generation at one that is not a valid ECMA-262 regular expression. The runtime evaluator refuses
+    /// such a schema when it compiles it, which for a generated type with no program image is when the type first
+    /// validates. Generated code is not to fail there for something the generator can see.
+    /// </summary>
+    private static void ThrowIfAPatternIsNotValid(TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ValidationRegularExpressions() is IReadOnlyDictionary<IValidationRegexProviderKeyword, IReadOnlyList<string>> regexes)
+        {
+            foreach (KeyValuePair<IValidationRegexProviderKeyword, IReadOnlyList<string>> regex in regexes)
+            {
+                foreach (string value in regex.Value)
+                {
+                    if (!TryTranslatePattern(regex.Key.Keyword, value, out _, out string? error))
+                    {
+                        throw new InvalidOperationException($"The pattern '{value}' of the keyword '{regex.Key.Keyword}' is not a valid ECMA-262 regular expression. {error}");
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Translates a pattern of a keyword. A pattern over a limit of size (see <see cref="EcmaRegexLimits"/>) stops
+    /// the generation with <see cref="EcmaRegexPatternTooLargeException"/>, whose message names the keyword and the
+    /// limit and says that the pattern is too large. It is not the message of a pattern that is not valid.
+    /// </summary>
+    private static bool TryTranslatePattern(string keyword, string value, out string? translation, out string? error)
+    {
+        try
+        {
+            return EcmaRegexTranslator.TryTranslate(value, out translation, out error);
+        }
+        catch (EcmaRegexPatternTooLargeException tooLarge)
+        {
+            throw new EcmaRegexPatternTooLargeException(
+                EcmaRegexTranslator.TooLargeMessage(value.AsSpan(), keyword, tooLarge.Limit, tooLarge.Read),
+                tooLarge.Limit,
+                tooLarge.Read);
+        }
     }
 
     private static CodeGenerator AppendPatternPropertyRegexMembers(this CodeGenerator generator, TypeDeclaration typeDeclaration, Func<CodeGenerator, IKeyword, int?, string, CodeGenerator> append)
@@ -246,8 +313,55 @@ internal static partial class CodeGenerationExtensions
             return generator;
         }
 
-        string translatedValue = EcmaRegexTranslator.TranslateOrFallback(value);
+        // An invalid pattern has stopped the generation before this (see ThrowIfAPatternIsNotValid).
+        if (!TryTranslatePattern(keyword.Keyword, value, out string? translation, out string? error))
+        {
+            throw new InvalidOperationException($"The pattern '{value}' of the keyword '{keyword.Keyword}' is not a valid ECMA-262 regular expression. {error}");
+        }
+
+        string translatedValue = translation!;
+
+        // A case-insensitive backreference is the one construct the translation leaves to .NET's own case
+        // comparison, which follows the current culture unless the options say otherwise.
+        bool ignoresCase = translatedValue.Contains("(?i:");
+        string generatedOptions = ignoresCase ? "RegexOptions.CultureInvariant" : "RegexOptions.None";
+        string constructedOptions = ignoresCase ? "RegexOptions.Compiled | RegexOptions.CultureInvariant" : "RegexOptions.Compiled";
+        if (!EcmaRegexTranslator.IsForCompiledEngine(translatedValue))
+        {
+            // Too long to be worth compiling when the type first validates, or marked for the interpreted engine.
+            constructedOptions = generatedOptions;
+        }
+
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(CultureInfo.InvariantCulture));
+
+        // Every form carries the match timeout (see RegexMatchTimeoutMilliseconds), but for a pattern proved to
+        // match in time proportional to the text, which has none (see EcmaRegexTranslator.IsLinear). The timeout
+        // makes .NET's engines check the clock as they match, which costs that pattern up to half its time again.
+        bool linear = EcmaRegexTranslator.IsLinear(value);
+        string timeout = linear
+            ? "global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout"
+            : "global::System.TimeSpan.FromMilliseconds(" + RegexMatchTimeoutMilliseconds.ToString(CultureInfo.InvariantCulture) + ")";
+        string generatedTimeout = linear
+            ? "global::System.Threading.Timeout.Infinite"
+            : RegexMatchTimeoutMilliseconds.ToString(CultureInfo.InvariantCulture);
+
+#if !BUILDING_SOURCE_GENERATOR
+        if (translatedValue.StartsWith(EcmaRegexTranslator.InterpretedMarker, StringComparison.Ordinal))
+        {
+            // .NET's compiled engine does not always return from this expression, and the code the regular
+            // expression generator writes is the same algorithm. So there is no [GeneratedRegex] form of it.
+            return generator
+                .AppendIndent("private static Regex ")
+                .Append(memberName)
+                .Append("() => new(")
+                .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
+                .Append(", ")
+                .Append(constructedOptions)
+                .Append(", ")
+                .Append(timeout)
+                .AppendLine(");");
+        }
+#endif
 
         return generator
 #if BUILDING_SOURCE_GENERATOR
@@ -255,11 +369,19 @@ internal static partial class CodeGenerationExtensions
                 .Append(memberName)
                 .Append("() => new(")
                 .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
-                .AppendLine(", RegexOptions.Compiled);");
+                .Append(", ")
+                .Append(constructedOptions)
+                .Append(", ")
+                .Append(timeout)
+                .AppendLine(");");
 #else
                 .AppendLine("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD")
                 .AppendIndent("[GeneratedRegex(")
                 .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
+                .Append(", ")
+                .Append(generatedOptions)
+                .Append(", matchTimeoutMilliseconds: ")
+                .Append(generatedTimeout)
                 .AppendLine(")]")
                 .AppendIndent("private static partial Regex ")
                 .Append(memberName)
@@ -269,7 +391,11 @@ internal static partial class CodeGenerationExtensions
             .Append(memberName)
             .Append("() => new(")
             .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
-            .AppendLine(", RegexOptions.Compiled);")
+            .Append(", ")
+            .Append(constructedOptions)
+            .Append(", ")
+            .Append(timeout)
+            .AppendLine(");")
             .AppendLine("#endif");
 #endif
     }

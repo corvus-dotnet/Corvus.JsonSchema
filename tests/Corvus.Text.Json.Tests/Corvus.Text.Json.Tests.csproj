@@ -214,6 +214,7 @@
     <Compile Include="JsonSchemaAdditionalTests\draft2020-12\typeAndFormat.cs" />
     <Compile Include="FormatAssertionModeTests.cs" />
     <Compile Include="JsonSchemaCodeGeneratorTests.cs" />
+    <Compile Include="JsonRegexValidatorCaptureTests.cs" />
     <Compile Include="JsonRegexValidatorTests.cs" />
     <Compile Include="JsonSchemaContextTests.cs" />
     <Compile Include="IPAddressValidationCoverageTests.cs" />

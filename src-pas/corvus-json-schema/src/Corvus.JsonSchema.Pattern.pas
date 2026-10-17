@@ -136,7 +136,30 @@ type
     Alts: TAlternativeArray;
     Chars: TCharSet;
     Engine: TEcmaRegex;
+    { Units says the pattern has a faster matcher and is valid only without the u flag. ECMA-262 matches such a
+      pattern by UTF-16 code unit, and the faster matchers read code points, so Engine answers for a text with a
+      character beyond the Basic Multilingual Plane. }
+    Units: Boolean;
   end;
+
+  PPattern = ^TPattern;
+
+  { A TPatternLimit names the limit of size a pattern is over, and gives its value (the TEcmaRegexLimit of the
+    engine). }
+  TPatternLimit = TEcmaRegexLimit;
+
+  { A TPatternBudget is what one evaluation, or the compilation of one schema, gives every match of a pattern: the
+    time each may take. It notes the first match that reached a limit, after which every match is abandoned at
+    once. (The patternBudget of pattern_engine.go.) }
+  TPatternBudget = record
+    { LimitMs is the time one match may take, in milliseconds, or zero for no limit. }
+    LimitMs: Int64;
+    { Stop is EcmaRegexStopTime or EcmaRegexStopMemory once a match has reached a limit, and Failed is the pattern
+      of that match. }
+    Stop: UInt8;
+    Failed: PPattern;
+  end;
+  PPatternBudget = ^TPatternBudget;
 
 const
   { The count of an item that is not bounded. }
@@ -154,16 +177,28 @@ const
   address (see Corvus.JsonSchema.Checked). }
 function SequenceItemAt(const A: TSequenceItemArray; I: NativeInt): PSequenceItem; inline;
 
-{ CompilePattern compiles a pattern. False when it is not a valid ECMA-262 regular expression. }
-function CompilePattern(const Source: UTF8String; out P: TPattern): Boolean;
+{ CompilePattern compiles a pattern. False when it is not a valid ECMA-262 regular expression, and when it is over
+  a limit of size, which Limit then names, with what the engine says of it in Reason. (Limit.Name is empty for a
+  pattern that is not valid.) }
+function CompilePattern(const Source: UTF8String; out P: TPattern; out Limit: TPatternLimit;
+  out Reason: UTF8String): Boolean; overload;
+{ CompilePattern without the limit: false for a pattern that is not valid and for one that is too large. }
+function CompilePattern(const Source: UTF8String; out P: TPattern): Boolean; overload;
 { ValidRegex reports whether a string is a valid ECMA-262 regular expression with the u flag (the regex format, and
   the patterns the engine reads without falling back). }
 function ValidRegex(const Source: UTF8String): Boolean;
+{ NewPatternBudget is the budget of an evaluation whose matches may each take LimitMs milliseconds (zero for no
+  limit). }
+function NewPatternBudget(LimitMs: Int64): TPatternBudget; inline;
 { PatternMatch reports whether the pattern matches somewhere in S[Start .. Start+Len-1], Ascii saying whether those
-  bytes are known to be ASCII (a document knows that of its strings). }
-function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; Ascii: Boolean): Boolean;
+  bytes are known to be ASCII (a document knows that of its strings). The engine matches within the budget. When a
+  limit is reached the answer is False, and it is not an answer: the budget says so, and the caller of the
+  evaluation gets the error. Every other matcher reads the text once, or a bounded number of times, and has no
+  limit. }
+function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; Ascii: Boolean;
+  var Budget: TPatternBudget): Boolean;
 { PatternMatchString is PatternMatch for a string that is not known to be ASCII. }
-function PatternMatchString(const P: TPattern; const S: UTF8String): Boolean;
+function PatternMatchString(const P: TPattern; const S: UTF8String; var Budget: TPatternBudget): Boolean;
 { IsASCII says whether every byte of S[Start .. Stop-1] is ASCII. }
 function IsASCII(const S: TBytes; Start, Stop: NativeInt): Boolean;
 
@@ -175,6 +210,9 @@ uses
 const
   { At most this many alternatives after expanding groups. }
   MaxAlternatives = 64;
+  { The widest class sequence, in characters, and the longest literal, in bytes, that is searched for at every
+    position of a text. The search takes the text times this. }
+  MaxAnywhereWidth = 64;
   { At most this many alternatives when any is a class sequence: beyond it, trying each in turn is slower than one
     pass of the engine. }
   MaxSequenceAlternatives = 4;
@@ -666,6 +704,21 @@ end;
 { --------------------------------------------------------------------------------------------------------------------
   Class sequences }
 
+{ FinalStopsAt reports whether the final sequence of a list cannot read past the separator that follows an item:
+  no item of it holds a character the first item of the separator holds. Tried at the start of an item, it then
+  fails at that separator at the latest, so trying it after every item reads the text a bounded number of times.
+  A final sequence that can read through separators would read to the end of the text from every item. }
+function FinalStopsAt(const Final: TSequence; const Separator: TCharSet): Boolean;
+var
+  I: Int32;
+begin
+  Result := False;
+  for I := 0 to Length(Final.Items) - 1 do
+    if not SetDisjoint(Final.Items[I].Chars, Separator) then
+      Exit;
+  Result := True;
+end;
+
 { GreedyBefore reports whether greedy matching is exact when Next can follow the items Items[From .. Stop-1]:
   every variable item is disjoint from the items that can directly follow it (up to the first that cannot match
   nothing), Next included. }
@@ -899,14 +952,6 @@ begin
   Result := not Q.ToEnd or (At = Stop);
 end;
 
-function MatchSeq(const Q: TSequence; const S: TBytes; At, Stop: NativeInt): Boolean;
-begin
-  if IsASCII(S, At, Stop) then
-    Result := MatchASCII(Q, S, At, Stop)
-  else
-    Result := MatchChars(Q, S, At, Stop);
-end;
-
 { Consume greedily matches the items at the start of S[At .. Stop-1] (ignoring ToEnd): the bytes taken, or -1. }
 function Consume(const Q: TSequence; const S: TBytes; At, Stop: NativeInt): NativeInt;
 var
@@ -938,9 +983,14 @@ function ListMatch(const L: TSeparatedList; const S: TBytes; At, Stop: NativeInt
 var
   Repeats: UInt32;
   N, M: NativeInt;
+  Ascii, Matched: Boolean;
 begin
   Result := False;
   Repeats := 0;
+  { Whether the text is ASCII is worked out once, for the whole of it. The final sequence is tried after every
+    item, and reading what is left of the text each time to see whether it is ASCII made the match take time
+    quadratic in the number of items. }
+  Ascii := L.HasFirst or IsASCII(S, At, Stop);
   if L.HasFirst then begin
     N := Consume(L.First, S, At, Stop);
     if N < 0 then
@@ -963,9 +1013,15 @@ begin
     end;
   end;
   while True do begin
-    if (Repeats >= L.MinRepeats) and MatchSeq(L.Final, S, At, Stop) then begin
-      Result := True;
-      Exit;
+    if Repeats >= L.MinRepeats then begin
+      if Ascii then
+        Matched := MatchASCII(L.Final, S, At, Stop)
+      else
+        Matched := MatchChars(L.Final, S, At, Stop);
+      if Matched then begin
+        Result := True;
+        Exit;
+      end;
     end;
     N := Consume(L.Repeated, S, At, Stop);
     if N < 0 then
@@ -1149,7 +1205,11 @@ begin
     Exit;
   Before := Slice(Body, 0, GOpen);
   After := Slice(Body, GClose + 2, Length(Body));
+  { A part of a list is a class sequence that does not end in "$". The "$" is not an item, and the list has no place
+    for it: "^x(,a$)*$" is not "^x(,a)*$". A pattern with such a part is not a list. }
   if not ParseSequence('^' + Inner, Seq) then
+    Exit;
+  if Seq.ToEnd then
     Exit;
   GroupItems := Seq.Items;
   Count := Length(GroupItems);
@@ -1160,6 +1220,8 @@ begin
     if not UnwrapGroup(Before, Unwrapped) then
       Exit;
     if not ParseSequence('^' + Unwrapped, First) then
+      Exit;
+    if First.ToEnd then
       Exit;
     for K := 1 to Count - 1 do
       { The separator is the first K items and what is repeated the rest. }
@@ -1179,9 +1241,16 @@ begin
       Exit;
     if not ParseSequence('^' + Unwrapped + '$', Final) then
       Exit;
+    { The final sequence is tried after every item, against all that is left of the text. A sequence matched by
+      the length of the text reads that length each time. Neither it nor any other is to read far, or the match
+      takes time quadratic in the number of items: so a pattern is a list only when the final sequence is not one
+      matched by length (see FinalStopsAt below for the rest of the rule). }
+    if Final.Pinned >= 0 then
+      Exit;
     for K := 1 to Count - 1 do
       { What is repeated is the first K items and the separator the rest. }
-      if FixedItems(GroupItems, K, Count) and GreedyBefore(GroupItems, 0, K, GroupItems[K].Chars) then begin
+      if FixedItems(GroupItems, K, Count) and GreedyBefore(GroupItems, 0, K, GroupItems[K].Chars)
+        and FinalStopsAt(Final, GroupItems[K].Chars) then begin
         L.Repeated := GreedySequence(GroupItems, 0, K);
         L.Separator := GreedySequence(GroupItems, K, Count);
         L.Final := Final;
@@ -1399,23 +1468,44 @@ end;
 function ExpandAlternatives(const C: UTF8String; I: Int32; out Parts: TTextArray; out Next: Int32): Boolean;
 var
   All, Branch, Inner, Repeated, Multiplied: TTextArray;
-  InnerNext, Close, Start: Int32;
+  InnerNext, Close, Start, Run: Int32;
   N: UInt32;
+
+  { The characters that are copied are added to the branches a run at a time, when something else follows the run.
+    Adding them one at a time copies the branch for each, which takes time quadratic in its length. Run is where
+    the run that has not been added starts, or -1. }
+  procedure Flush(Stop: Int32);
+  begin
+    if Run >= 0 then begin
+      AppendAll(Branch, Slice(C, Run, Stop));
+      Run := -1;
+    end;
+  end;
+
+  procedure Copied(From: Int32);
+  begin
+    if Run < 0 then
+      Run := From;
+  end;
+
 begin
   Result := False;
   Parts := nil;
   Next := 0;
   All := nil;
   Branch := OneEmpty;
+  Run := -1;
   while I < Length(C) do begin
     case ByteAt(C, I) of
       Ord('|'): begin
+        Flush(I);
         AppendList(All, Branch);
         Branch := OneEmpty;
         Inc(I);
       end;
       Ord(')'): Break;
       Ord('('): begin
+        Flush(I);
         Inc(I);
         if ByteOr(C, I) = Ord('?') then begin
           if ByteOr(C, I + 1) <> Ord(':') then
@@ -1476,21 +1566,22 @@ begin
           Inc(I);
         end;
         Inc(I);
-        AppendAll(Branch, Slice(C, Start, I));
+        Copied(Start);
       end;
       Ord('\'): begin
         if I + 2 > Length(C) then
           Exit;
-        AppendAll(Branch, Slice(C, I, I + 2));
+        Copied(I);
         Inc(I, 2);
       end;
     else
-      AppendAll(Branch, Slice(C, I, I + 1));
+      Copied(I);
       Inc(I);
     end;
     if Length(All) + Length(Branch) > MaxAlternatives then
       Exit;
   end;
+  Flush(I);
   AppendList(All, Branch);
   Parts := All;
   Next := I;
@@ -1534,6 +1625,11 @@ begin
       AtEnd := True;
     end;
     if LiteralText(Body, Text) then begin
+      { A literal that is anchored at neither end is searched for at every position of the text. }
+      if (not AtStart) and (not AtEnd) and (Length(Text) > MaxAnywhereWidth) then begin
+        Alts := nil;
+        Exit;
+      end;
       Alts[Count].Text := BytesOf(Text);
       Alts[Count].AtStart := AtStart;
       Alts[Count].AtEnd := AtEnd;
@@ -1567,8 +1663,16 @@ begin
       Width := High(Int32);
     if AtEnd then
       Alts[Count].Kind := AltEnd
-    else
+    else begin
+      { A sequence that is not anchored is tried at every position of the text, and reads its width at each. A
+        wide one would take the width times the text, so it is left to the engine, which has the limit of a
+        match. }
+      if Width > MaxAnywhereWidth then begin
+        Alts := nil;
+        Exit;
+      end;
       Alts[Count].Kind := AltAnywhere;
+    end;
     Alts[Count].Width := Int32(Width);
     Inc(Count);
   end;
@@ -1743,24 +1847,49 @@ end;
 
 function CompilePattern(const Source: UTF8String; out P: TPattern): Boolean;
 var
-  Chosen: Boolean;
+  Limit: TPatternLimit;
+  Reason: UTF8String;
+begin
+  Result := CompilePattern(Source, P, Limit, Reason);
+end;
+
+function CompilePattern(const Source: UTF8String; out P: TPattern; out Limit: TPatternLimit;
+  out Reason: UTF8String): Boolean;
+var
+  Chosen, Unicode: Boolean;
   Engine: TEcmaRegex;
   Error: UTF8String;
 begin
+  { The limits of size come first: nothing below reads a pattern that is over one. }
+  Reason := '';
+  if not EcmaRegexCheck(Source, Unicode, Error, Limit) then begin
+    if Limit.Name <> '' then
+      Reason := Error;
+    ClearPattern(P);
+    Result := False;
+    Exit;
+  end;
   { Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it. A pattern
-    with a faster matcher that is valid with the u flag needs no engine at all. The engine reads a pattern that is
-    valid only without the u flag by code point too, so the faster matchers decide those the same way. }
+    with a faster matcher that is valid with the u flag needs no engine at all. A pattern that is valid only
+    without the u flag is matched by UTF-16 code unit. The faster matchers read code points, which is the same
+    thing unless the text has a character beyond the Basic Multilingual Plane, so such a pattern keeps its engine
+    for those texts. When the pattern itself has such a character it is two atoms, which no faster matcher reads,
+    and the engine takes every text. }
   Chosen := ChoosePattern(Source, P);
-  if not Chosen or not ValidRegex(Source) then begin
+  if not Chosen or not Unicode then begin
     { The engine compiles the pattern with the u flag, or failing that without it, as many schemas need. }
     if not EcmaRegexCompile(Source, Engine, Error) then begin
       ClearPattern(P);
       Result := False;
       Exit;
     end;
-    if not Chosen then begin
+    if (not Chosen) or HasSupplementary(BytesOf(Source), 0, Length(Source)) then begin
+      ClearPattern(P);
       P.Kind := MatchEngine;
       P.Engine := Engine;
+    end else begin
+      P.Engine := Engine;
+      P.Units := True;
     end;
   end;
   P.Source := Source;
@@ -1880,13 +2009,40 @@ begin
   Result := False;
 end;
 
-function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; Ascii: Boolean): Boolean;
+function NewPatternBudget(LimitMs: Int64): TPatternBudget; inline;
+begin
+  Result.LimitMs := LimitMs;
+  Result.Stop := EcmaRegexStopNone;
+  Result.Failed := nil;
+end;
+
+{ EngineMatch matches the text on the engine within the budget. }
+function EngineMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; var Budget: TPatternBudget): Boolean;
+var
+  Stop: UInt8;
+begin
+  if Budget.Stop <> EcmaRegexStopNone then
+    Exit(False);
+  Result := EcmaRegexIsMatchLimit(P.Engine, S, Start, Len, Budget.LimitMs, Stop);
+  if Stop <> EcmaRegexStopNone then begin
+    Budget.Stop := Stop;
+    Budget.Failed := @P;
+    Result := False;
+  end;
+end;
+
+function PatternMatch(const P: TPattern; const S: TBytes; Start, Len: NativeInt; Ascii: Boolean;
+  var Budget: TPatternBudget): Boolean;
 var
   Stop, I, N: NativeInt;
   C, Size: Int32;
   Word: Boolean;
 begin
   Stop := Start + Len;
+  if P.Units and (not Ascii) and HasSupplementary(S, Start, Stop) then begin
+    Result := EngineMatch(P, S, Start, Len, Budget);
+    Exit;
+  end;
   case P.Kind of
     MatchEverything: Result := True;
     MatchLiteral:
@@ -1955,16 +2111,16 @@ begin
       Result := Word;
     end;
   else
-    Result := EcmaRegexIsMatch(P.Engine, S, Start, Len);
+    Result := EngineMatch(P, S, Start, Len, Budget);
   end;
 end;
 
-function PatternMatchString(const P: TPattern; const S: UTF8String): Boolean;
+function PatternMatchString(const P: TPattern; const S: UTF8String; var Budget: TPatternBudget): Boolean;
 var
   B: TBytes;
 begin
   B := BytesOf(S);
-  Result := PatternMatch(P, B, 0, Length(B), IsASCII(B, 0, Length(B)));
+  Result := PatternMatch(P, B, 0, Length(B), IsASCII(B, 0, Length(B)), Budget);
 end;
 
 initialization

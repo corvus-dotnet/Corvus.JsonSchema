@@ -56,6 +56,13 @@ end
             write(schema, """{"\$ref": "#/nowhere"}""")
             code, out, err = run_program([main, schema, instances])
             @test code == 2 && out == "" && occursin("CompileError", err)
+
+            # A match of a pattern that is given up at its limit is a mistake too, and not an instance that is not
+            # valid: the pattern tries 2^40 ways on the string, and the limit of a match is one second.
+            write(schema, """{"pattern": "^(?:a|a)+\$"}""")
+            write(instances, "\"" * "a"^40 * "b\"\n")
+            code, out, err = run_program([main, schema, instances])
+            @test code == 2 && out == "" && occursin("the limit on its time", err)
         end
     end
 

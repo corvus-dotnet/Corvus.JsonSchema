@@ -88,3 +88,57 @@ fn validate_json_allocates_nothing_in_the_steady_state() {
          meanwhile)"
     );
 }
+
+/// Validating against patterns the regular expression engine matches allocates nothing in the steady state, with
+/// the limit of a match on, with a longer one and with it off: the working memory of a match belongs to the thread
+/// and is reused, and the limit is a count of steps and a look at the clock. (The Go module's
+/// `TestValidationWithAMatchLimitAllocatesNothing`.)
+#[test]
+fn validation_with_a_match_limit_allocates_nothing() {
+    use corvus_json_schema::CompileOptions;
+    use std::time::Duration;
+
+    let long = "ab".repeat(2000);
+    let schema = json!({
+        "type": "object",
+        "properties": {
+            "look": { "pattern": "^(?=.)(?:a|b)*c?$" },
+            "back": { "pattern": "^(?:(a|b)\\1?)+$" },
+            "wide": { "pattern": "^[ab\u{e9}]{0,60000}c?$" },
+            "units": { "pattern": "^\\-?(?:.)+$" }
+        },
+        "patternProperties": { "^(?=x)(?:x|-)+$": { "type": "integer" } }
+    });
+    let texts = [
+        format!(
+            r#"{{"look": "{long}", "back": "{long}", "wide": "\u00e9{long}", "units": "\ud83d\ude00{long}", "x-x--x": 1}}"#
+        ),
+        format!(r#"{{"look": "{long}d", "back": "{long}c", "wide": "\u00e9{long}d", "units": "", "x-x--x": "no"}}"#),
+    ];
+    let mut measured = 0;
+    for limit in [Some(Duration::from_secs(1)), Some(Duration::from_secs(60)), None] {
+        let options = CompileOptions { pattern_match_limit: limit, ..CompileOptions::default() };
+        let v = corvus_json_schema::compile_with(&schema, &options).unwrap();
+        // The first validations size the buffers and the working memory of the matcher.
+        for t in &texts {
+            for _ in 0..3 {
+                v.try_validate_json(t).unwrap();
+            }
+        }
+        assert_eq!(v.try_validate_json(&texts[0]), Ok(true));
+        assert_eq!(v.try_validate_json(&texts[1]), Ok(false));
+        let before = ALLOCATIONS.load(Ordering::Relaxed);
+        MEASURED.set(true);
+        for _ in 0..50 {
+            for t in &texts {
+                std::hint::black_box(v.try_validate_json(t).unwrap());
+                std::hint::black_box(v.validate_json(t).unwrap());
+            }
+        }
+        MEASURED.set(false);
+        let allocations = ALLOCATIONS.load(Ordering::Relaxed) - before;
+        assert_eq!(allocations, 0, "allocations in 200 validations with the limit {limit:?}");
+        measured += 1;
+    }
+    assert_eq!(measured, 3);
+}

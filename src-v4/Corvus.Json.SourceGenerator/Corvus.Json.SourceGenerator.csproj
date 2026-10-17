@@ -64,6 +64,9 @@
     <Compile Remove="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\**\FileSystemDocumentResolver.cs" />
     <Compile Remove="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration\CSharp\**\NullableAttributes.cs" />
     <Compile Remove="..\Corvus.Json.JsonReference\Corvus.Json\**\NullableAttributes.cs" />
+    <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexParser.cs" Link="EcmaRegexParser.cs" />
+    <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexUnicode.cs" Link="EcmaRegexUnicode.cs" />
+    <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexUnicodeData.cs" Link="EcmaRegexUnicodeData.cs" />
     <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexTranslator.cs" Link="EcmaRegexTranslator.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -140,5 +143,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\src\Corvus.Text.Json.CodeGeneration\THIRD-PARTY-NOTICES.txt" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 </Project>

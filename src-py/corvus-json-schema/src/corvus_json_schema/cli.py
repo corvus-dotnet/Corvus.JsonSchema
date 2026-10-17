@@ -4,7 +4,11 @@
     corvus-json-schema validate <schema.json> <instance.json>... [options]
 
 Options: --default-dialect <4|6|7|2019-09|2020-12>, --assert-format, --base-uri <uri>, --entry-point <ref>,
---schema-dir <dir> (resolve remote $refs from local files named after the URI's last path segment).
+--schema-dir <dir> (resolve remote $refs from local files named after the URI's last path segment),
+--pattern-match-limit <seconds> (the time one match of a regular expression may take: 1 unless given, 0 for none).
+
+validate prints "valid" or "invalid" for each instance and exits with 1 when one is invalid. An instance whose
+validation reaches the limit of a match has no answer: it is reported as such, and the exit code is 2.
 """
 
 from __future__ import annotations
@@ -16,7 +20,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
 
-from . import Dialect, compile, generate_module
+from . import Dialect, PatternMatchLimitError, compile, generate_module
 
 DIALECTS = {
     "4": Dialect.DRAFT4,
@@ -46,6 +50,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--base-uri", help="base URI of the root schema")
     parser.add_argument("--entry-point", help="evaluate from a subschema, e.g. #/$defs/item")
     parser.add_argument("--schema-dir", help="resolve referenced documents from files in this directory")
+    parser.add_argument(
+        "--pattern-match-limit",
+        type=float,
+        metavar="SECONDS",
+        help="the time one match of a regular expression may take (default 1, 0 for no limit)",
+    )
     args = parser.parse_args(argv)
 
     options: dict[str, Any] = {}
@@ -60,6 +70,8 @@ def main(argv: list[str] | None = None) -> int:
         options["base_uri"] = args.base_uri
     if args.entry_point is not None:
         options["entry_point"] = args.entry_point
+    if args.pattern_match_limit is not None:
+        options["pattern_match_limit"] = args.pattern_match_limit
     if args.schema_dir is not None:
         directory = Path(args.schema_dir)
 
@@ -82,13 +94,18 @@ def main(argv: list[str] | None = None) -> int:
     if len(args.files) < 2:
         parser.error("validate takes a schema file and at least one instance file")
     validate = compile(_read_json(args.files[0]), **options)
-    failed = 0
+    failed = unanswered = 0
     for file in args.files[1:]:
-        valid = validate(_read_json(file))
+        try:
+            valid = validate(_read_json(file))
+        except PatternMatchLimitError as e:
+            unanswered += 1
+            print(f"{file}: no answer. {e}")
+            continue
         if not valid:
             failed += 1
         print(f"{file}: {'valid' if valid else 'invalid'}")
-    return 0 if failed == 0 else 1
+    return 2 if unanswered else 0 if failed == 0 else 1
 
 
 if __name__ == "__main__":

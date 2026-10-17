@@ -136,11 +136,20 @@ with the reason.
   (`Frame`, `threadframe`), and the text is matched where it lies through a pointer held under `GC.@preserve`
   (`ismatch`, `unsafe_ismatch`). Every class, property and case-insensitive set is written from Unicode data the
   package carries, so nothing depends on the PCRE2 version's tables. A lookbehind of no fixed length runs as a
-  PCRE2 callout that searches for its body (`callout`, `lookbehind` in `emitter.jl`). A match that reaches PCRE2's
-  step or memory limit, or the module's own limit on the steps of lookbehind searches (`STEP_LIMIT`), throws a
-  `MatchError` and is never reported as no match. A pattern that cannot be written with the same meaning is refused
-  when the schema is compiled (the `REFUSED_` constants, which are the backreference cases, more than 253
-  lookbehinds of no fixed length, and anything PCRE2 does not compile). PCRE2 is told not to work out where a match
+  PCRE2 callout that searches for its body (`callout`, `lookbehind` in `emitter.jl`). A match has a limit
+  on its time, which PCRE2 cannot keep by itself, as it has no clock and its count of steps does not bound time. A
+  match of a short text runs with the steps the match context of the thread is left with (`QUICK_STEPS`), so it
+  sets nothing, works nothing out and reads no clock. A longer one, or one that used those steps, is given the
+  steps of its first stage (`freesteps`, from `stepcost` of the translation), and one that uses them is run again
+  by code compiled with automatic callouts that read the clock (`timedcode`, `timedmatch`, `callout`). The search
+  of a long text for a pattern that is not anchored is run in parts, with the clock read between them
+  (`searchinparts`). A match that reaches the limit on its time or on the interpreter's memory throws a
+  `MatchError` and is never reported as no match. A text that a
+  pattern without the `u` flag reads as code units is written into a buffer that is kept (`UNIT_BUFFERS`,
+  `matchunits`). A pattern that cannot be written with the same meaning is refused
+  when the schema is compiled (the `REFUSED_` constants, which are the backreference cases), and a pattern
+  over a limit of size is a `TooLargeError` there (its length, nesting and terms as it is read, the bytes and the
+  steps of its translation, and what PCRE2 holds). PCRE2 is told not to work out where a match
   can start (`PCRE2_NO_START_OPTIMIZE`), because both PCRE2 versions the module was written against answer wrongly
   with it for some patterns. That costs the skip of positions in a search, and nothing for a pattern anchored
   with `^`.
@@ -320,8 +329,8 @@ Each has to be measured before it is kept.
   code generator). They work around metadata rows of varying size and numbers kept as text. Here every value is two
   words, a container's children are consecutive, and a number's value is in the tape.
 - **Translation to RE2 with an automaton and a backtracking matcher** (Go), **translation to `java.util.regex`
-  with reused matchers** (Java), **the `regex` and `regress` crates** (Rust), **compiled IL regular expressions**
-  (C#). `EcmaRegex` over PCRE2 is this port's engine. The automaton alone is Todo 12.
+  with reused matchers** (Java), **the `regex` crate and a port of the Go engine** (Rust), **compiled IL regular
+  expressions** (C#). `EcmaRegex` over PCRE2 is this port's engine. The automaton alone is Todo 12.
 - **A vectorised search API** (`SearchValues` and `IndexOfAny` in C#). The source has no `@simd` loop and no
   vector API. Todo 4 would use the search `Base` has.
 - **Release profile settings** (the Rust crate's `lto` and `codegen-units`). The optimisation level belongs to the

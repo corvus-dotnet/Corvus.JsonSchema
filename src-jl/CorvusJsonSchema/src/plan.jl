@@ -447,7 +447,7 @@ function plan_object(p::Program, n::SchemaNode, child_of)
     for name in known
         matched = UInt16[]
         for (j, pp) in enumerate(n.pattern_properties)
-            match_string(pp.pattern, name) && push!(matched, UInt16(j - 1))
+            match_string(pp.pattern, name, p.pattern_match_limit) && push!(matched, UInt16(j - 1))
         end
         push!(o.name_patterns, matched)
     end
@@ -975,7 +975,7 @@ function visit_pattern(e::Evaluator, pl::ObjectPlan, x::Int)::Bool
     k = first(d, x)
     stop = k + 2 * count(d, x)
     while k < stop
-        if pattern_match(p.pattern, str(d, k), str_ascii(d, k))
+        if pattern_match(p.pattern, str(d, k), str_ascii(d, k), e.p.pattern_match_limit)
             @run_child(e, d, p.child, k + 1) || return false
         elseif pl.has_additional && !@run_child(e, d, pl.additional, k + 1)
             return false
@@ -1010,7 +1010,7 @@ function visit_general(e::Evaluator, pl::ObjectPlan, x::Int)::Tuple{UInt64,Bool}
             end
         else
             for j in eachindex(patterns)
-                if pattern_match(patterns[j].pattern, name, str_ascii(d, k))
+                if pattern_match(patterns[j].pattern, name, str_ascii(d, k), e.p.pattern_match_limit)
                     matched = true
                     @run_child(e, d, patterns[j].child, k + 1) || return UInt64(0), false
                 end
@@ -1176,7 +1176,7 @@ function run_string(e::Evaluator, ops::Vector{StringOp}, x::Int)::Bool
         ok = if k == STRING_LENGTH
             length_ok(d, x, o.min, o.max)
         elseif k == STRING_PATTERN
-            pattern_match(o.pattern, str(d, x), str_ascii(d, x))
+            pattern_match(o.pattern, str(d, x), str_ascii(d, x), e.p.pattern_match_limit)
         elseif k == STRING_FORMAT
             check_format_string(e, o.format, str(d, x))
         else

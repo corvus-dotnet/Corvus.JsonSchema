@@ -1525,6 +1525,7 @@ public static partial class JsonSchemaEvaluation
         bool labelHasEuropeanDigit = false;
         bool domainIsBidi = false;
         bool bidiViolation = false;
+        int nameLength = 0;
         while (i < value.Length)
         {
             // Increment the rune count to make it 1-based
@@ -1605,11 +1606,14 @@ public static partial class JsonSchemaEvaluation
                         return false;
                     }
 
-                    if (labelHasNonAscii && ExceedsALabelLength(value.Slice(labelStart, i - bytesConsumed - labelStart)))
+                    if (!AddALabelLength(value.Slice(labelStart, i - bytesConsumed - labelStart), labelHasNonAscii, ref nameLength))
                     {
                         // The A-label form of this U-label exceeds the 63-octet label limit (RFC 5890)
                         return false;
                     }
+
+                    // The dot, which is one character as A-labels whichever of the four dots it is.
+                    nameLength++;
 
                     if (labelFirstSet)
                     {
@@ -1757,9 +1761,15 @@ public static partial class JsonSchemaEvaluation
             return false;
         }
 
-        if (labelHasNonAscii && ExceedsALabelLength(value.Slice(labelStart)))
+        if (!AddALabelLength(value.Slice(labelStart), labelHasNonAscii, ref nameLength))
         {
             // The A-label form of this U-label exceeds the 63-octet label limit (RFC 5890)
+            return false;
+        }
+
+        if (nameLength > MaxHostnameLength)
+        {
+            // The name as A-labels is longer than 253 characters (RFC 5890 and RFC 1034)
             return false;
         }
 
@@ -1898,6 +1908,25 @@ public static partial class JsonSchemaEvaluation
     }
 
     /// <summary>
+    /// The most characters a host name has as A-labels, not counting a final dot (RFC 1034 and RFC 5890).
+    /// </summary>
+    private const int MaxHostnameLength = 253;
+
+    /// <summary>
+    /// The most characters a label has as an A-label (RFC 5890).
+    /// </summary>
+    private const int MaxLabelLength = 63;
+
+    /// <summary>
+    /// The most UTF-8 bytes a host name has in any form. A name is <see cref="MaxHostnameLength"/> characters at most
+    /// as A-labels, and no label is shorter as an A-label than it has characters: an ASCII letter is itself there,
+    /// any other character is a digit or more, and <c>xn--</c> comes before them. So a name has 253 characters at
+    /// most, each of four bytes at most, in its Unicode form, in its A-label form or in a mix of the two. A longer
+    /// string is not a host name, and is not read.
+    /// </summary>
+    private const int MaxHostnameBytes = 4 * MaxHostnameLength;
+
+    /// <summary>
     /// Validates that a string value is a valid hostname format.
     /// </summary>
     /// <param name="value">The UTF-8 encoded string value to validate.</param>
@@ -1905,12 +1934,13 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool MatchHostname(ReadOnlySpan<byte> value)
     {
-        if (value.Length > 253)
+        if (value.Length > MaxHostnameLength)
         {
             return false;
         }
 
-        Span<byte> decoded = stackalloc byte[256];
+        // The A-labels of the name decode to its Unicode form, which can be longer (see MaxHostnameBytes).
+        Span<byte> decoded = stackalloc byte[MaxHostnameBytes];
         int i = 0;
         int characterCount = 0;
         byte lastAscii = 0;
@@ -1962,7 +1992,7 @@ public static partial class JsonSchemaEvaluation
 
         if (decodePunicode)
         {
-            if (!IdnMapping.Default.GetUnicode(value, decoded, out int written))
+            if (!IdnMapping.GetUnicodeOfAnyNameLength(value, decoded, out int written))
             {
                 return false;
             }
@@ -2040,14 +2070,16 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool MatchIdnHostname(ReadOnlySpan<byte> value)
     {
-        if (value.Length > 253)
+        // The limit of 253 is on the name as A-labels, which MatchDecodedHostname counts. A name of U-labels can have
+        // more UTF-8 bytes than that, and fewer.
+        if (value.Length > MaxHostnameBytes)
         {
             return false;
         }
 
-        Span<byte> decoded = stackalloc byte[256];
+        Span<byte> decoded = stackalloc byte[MaxHostnameBytes];
 
-        if (!IdnMapping.Default.GetUnicode(value, decoded, out int written))
+        if (!IdnMapping.GetUnicodeOfAnyNameLength(value, decoded, out int written))
         {
             return false;
         }
@@ -2373,11 +2405,24 @@ public static partial class JsonSchemaEvaluation
             (labelHasArabicIndicDigits && labelHasEuropeanDigit);
     }
 
-    private static bool ExceedsALabelLength(ReadOnlySpan<byte> label)
+    /// <summary>
+    /// Adds the length of a label as an A-label to the length of the name, and says whether the label is within the
+    /// limit of 63 characters of an A-label (RFC 5890). An ASCII label is its own A-label.
+    /// </summary>
+    private static bool AddALabelLength(ReadOnlySpan<byte> label, bool hasNonAscii, ref int nameLength)
     {
-        // Determines whether the A-label (Punycode) form of this U-label exceeds the RFC 5890
-        // 63-octet label limit, by running the RFC 3492 encoding algorithm counting output
-        // octets without producing the encoded form.
+        int length = hasNonAscii ? ALabelLength(label) : label.Length;
+        nameLength += length;
+        return !hasNonAscii || length <= MaxLabelLength;
+    }
+
+    /// <summary>
+    /// The length of the A-label (Punycode) form of a U-label, or <see cref="MaxLabelLength"/> + 1 when it is longer
+    /// than the 63 characters RFC 5890 allows, found by running the RFC 3492 encoding algorithm and counting what it
+    /// writes, without writing it.
+    /// </summary>
+    private static int ALabelLength(ReadOnlySpan<byte> label)
+    {
         Span<int> codePoints = stackalloc int[63];
         int count = 0;
         int basicCount = 0;
@@ -2391,7 +2436,7 @@ public static partial class JsonSchemaEvaluation
             if (count == codePoints.Length)
             {
                 // More than 63 code points cannot fit in 63 octets once encoded.
-                return true;
+                return MaxLabelLength + 1;
             }
 
             codePoints[count++] = rune.Value;
@@ -2405,9 +2450,9 @@ public static partial class JsonSchemaEvaluation
         // "xn--", the copied basic characters, and the delimiter if there are any.
         int length = 4 + basicCount + (basicCount > 0 ? 1 : 0);
 
-        if (length > 63)
+        if (length > MaxLabelLength)
         {
-            return true;
+            return MaxLabelLength + 1;
         }
 
         int handled = basicCount;
@@ -2452,17 +2497,17 @@ public static partial class JsonSchemaEvaluation
                             break;
                         }
 
-                        if (++length > 63)
+                        if (++length > MaxLabelLength)
                         {
-                            return true;
+                            return MaxLabelLength + 1;
                         }
 
                         q = (q - t) / (36 - t);
                     }
 
-                    if (++length > 63)
+                    if (++length > MaxLabelLength)
                     {
-                        return true;
+                        return MaxLabelLength + 1;
                     }
 
                     bias = PunycodeAdapt(delta, handled + 1, firstTime);
@@ -2476,7 +2521,7 @@ public static partial class JsonSchemaEvaluation
             n++;
         }
 
-        return false;
+        return length;
     }
 
     private static int PunycodeAdapt(int delta, int numPoints, bool firstTime)

@@ -425,6 +425,10 @@ mutable struct Pattern
     const alts::Vector{Alternative}
     const set::CharSet
     const engine::Union{Nothing,EnginePattern}
+    # The pattern is valid only without the u flag, and has a faster matcher beside the engine. ECMA-262 matches such
+    # a pattern by UTF-16 code unit. The faster matchers go by character, which is the same for a string within the
+    # Basic Multilingual Plane, so they decide those, and the engine decides the others.
+    const units::Bool
 end
 
 function Pattern(kind::UInt8; source::String="", text::Vector{UInt8}=EMPTY_BYTES, whole::Bool=false,
@@ -432,22 +436,41 @@ function Pattern(kind::UInt8; source::String="", text::Vector{UInt8}=EMPTY_BYTES
     list::Union{Nothing,SeparatedList}=nothing, few::Vector{Vector{UInt8}}=Vector{UInt8}[],
     many::Union{Nothing,Names}=nothing, alts::Vector{Alternative}=Alternative[], set::CharSet=CharSet(),
     engine::Union{Nothing,EnginePattern}=nothing)
-    return Pattern(source, kind, text, whole, flag, min, max, seq, list, few, many, alts, set, engine)
+    return Pattern(source, kind, text, whole, flag, min, max, seq, list, few, many, alts, set, engine, false)
 end
 
 with_source(p::Pattern, source::String) = Pattern(source, p.kind, p.text, p.whole, p.flag, p.min, p.max, p.seq,
-    p.list, p.few, p.many, p.alts, p.set, p.engine)
+    p.list, p.few, p.many, p.alts, p.set, p.engine, p.units)
+
+# A pattern with a faster matcher that is valid only without the u flag: the engine decides a string with a character
+# beyond the Basic Multilingual Plane.
+with_units(p::Pattern, engine::EnginePattern) = Pattern(p.source, p.kind, p.text, p.whole, p.flag, p.min, p.max,
+    p.seq, p.list, p.few, p.many, p.alts, p.set, engine, true)
+
+# Whether a string has a character beyond the Basic Multilingual Plane, which is one of four bytes of UTF-8.
+function beyond_bmp(s::Bytes)
+    i = 0
+    while i < s.len
+        at(s, i) >= 0xf0 && return true
+        i += 1
+    end
+    return false
+end
 
 # match for a string that is not known to be ASCII.
-function match_string(p::Pattern, s::String)
+function match_string(p::Pattern, s::String, limit::PatternMatchLimit)
     b = Bytes(Vector{UInt8}(codeunits(s)))
-    return pattern_match(p, b, is_ascii(b))
+    return pattern_match(p, b, is_ascii(b), limit)
 end
 
 # Reports whether the pattern matches somewhere in s, ascii saying whether s is known to be ASCII (a document knows
-# that of its strings).
-function pattern_match(p::Pattern, s::Bytes, ascii::Bool)::Bool
+# that of its strings). The limit is on the time of a match by the engine. The faster matchers read the string a
+# bounded number of times and have none.
+function pattern_match(p::Pattern, s::Bytes, ascii::Bool, limit::PatternMatchLimit)::Bool
     k = p.kind
+    if p.units && !ascii && beyond_bmp(s)
+        return engine_match(p.engine::EnginePattern, s, limit)
+    end
     if k == MATCH_EVERYTHING
         return true
     elseif k == MATCH_LITERAL
@@ -504,7 +527,7 @@ function pattern_match(p::Pattern, s::Bytes, ascii::Bool)::Bool
         end
         return word
     end
-    return engine_match(p.engine::EnginePattern, s)
+    return engine_match(p.engine::EnginePattern, s, limit)
 end
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -528,6 +551,29 @@ end
 
 const PATTERN_CACHE = Dict{String,Pattern}()
 const PATTERN_CACHE_LOCK = ReentrantLock()
+# What the cache may hold: so many patterns, and so many bytes of their text and of what the engine keeps for them
+# as they are compiled. A schema may come from outside, and each has patterns of its own, so a cache with no bound
+# would keep every pattern a process has ever seen. A pattern that would take it past either bound empties it
+# first. The validators that hold the patterns it held keep them.
+const MAX_CACHED_PATTERNS = 4096
+const MAX_CACHED_PATTERN_BYTES = 32 << 20
+const PATTERN_CACHE_BYTES = Ref(0)
+
+# Puts a compiled pattern in the cache, and returns the one that is there for its text.
+function cache_pattern(source::String, p::Pattern)
+    return lock(PATTERN_CACHE_LOCK) do
+        cached = get(PATTERN_CACHE, source, nothing)
+        cached === nothing || return cached
+        bytes = ncodeunits(source) + (p.engine === nothing ? 0 : engine_bytes(p.engine::EnginePattern))
+        if length(PATTERN_CACHE) >= MAX_CACHED_PATTERNS || PATTERN_CACHE_BYTES[] + bytes > MAX_CACHED_PATTERN_BYTES
+            empty!(PATTERN_CACHE)
+            PATTERN_CACHE_BYTES[] = 0
+        end
+        PATTERN_CACHE[source] = p
+        PATTERN_CACHE_BYTES[] += bytes
+        return p
+    end
+end
 
 # Compiles (or fetches from the process-wide cache) a pattern, or returns nothing when it is not a valid ECMA-262
 # regular expression.
@@ -535,18 +581,29 @@ function compile_pattern(source::String)
     cached = lock(() -> get(PATTERN_CACHE, source, nothing), PATTERN_CACHE_LOCK)
     cached === nothing || return cached
     # Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it. A pattern
-    # with a faster matcher that is valid with the u flag needs no engine at all. The engine reads a pattern that is
-    # valid only without the u flag by code point too, so the faster matchers decide those the same way.
+    # with a faster matcher that is valid with the u flag needs no engine at all. One that is valid only without
+    # the u flag matches UTF-16 code units, which the engine does and the faster matchers do not. A faster matcher
+    # is kept for the strings within the Basic Multilingual Plane, where the two are the same, unless the pattern
+    # itself names a character beyond it or has a \u escape, which the faster matchers would read by character.
     p = choose_pattern(source)
     if p === nothing || !valid_regex(source)
         engine = compile_engine(source)
         engine === nothing && return nothing
-        if p === nothing
+        if p === nothing || names_code_units(source)
             p = Pattern(MATCH_ENGINE; engine=engine)
+        else
+            p = with_units(p, engine)
         end
     end
-    p = with_source(p, source)
-    return lock(() -> get!(PATTERN_CACHE, source, p), PATTERN_CACHE_LOCK)
+    return cache_pattern(source, with_source(p, source))
+end
+
+# Whether a pattern has a character beyond the Basic Multilingual Plane (a byte of 0xF0 or more) or a \u escape.
+function names_code_units(p::String)
+    for b in codeunits(p)
+        b >= 0xf0 && return true
+    end
+    return occursin("\\u", p)
 end
 
 function choose_pattern(p::String)::Union{Nothing,Pattern}
@@ -780,8 +837,17 @@ function expand_alternatives(c::Vector{Char}, i::Int)
     all = String[]
     branch = [""]
     n = length(c)
+    # The characters that are copied are added to the branches a run at a time, when something else follows the
+    # run. Adding them one at a time would copy the branch for each, which takes time that grows with the square of
+    # its length. run is where the run that has not been added starts, or -1.
+    run = -1
     while i < n
         ch = c[i+1]
+        if run >= 0 && (ch == '|' || ch == ')' || ch == '(')
+            text = rune_text(c, run, i)
+            branch = [b * text for b in branch]
+            run = -1
+        end
         if ch == '|'
             append!(all, branch)
             branch = [""]
@@ -848,18 +914,20 @@ function expand_alternatives(c::Vector{Char}, i::Int)
                 i += 1
             end
             i += 1
-            text = rune_text(c, start, i)
-            branch = [b * text for b in branch]
+            run < 0 && (run = start)
         elseif ch == '\\'
             i + 2 > n && return nothing
-            text = rune_text(c, i, i + 2)
-            branch = [b * text for b in branch]
+            run < 0 && (run = i)
             i += 2
         else
-            branch = [b * string(ch) for b in branch]
+            run < 0 && (run = i)
             i += 1
         end
         length(all) + length(branch) > MAX_ALTERNATIVES && return nothing
+    end
+    if run >= 0
+        text = rune_text(c, run, i)
+        branch = [b * text for b in branch]
     end
     append!(all, branch)
     return all, i
@@ -991,7 +1059,9 @@ function parse_separated_list(p::String)
     inner = strip_group(bsub(body, gopen, gclose + 1))
     inner === nothing && return nothing
     before, after = bsub(body, 0, gopen), bsub(body, gclose + 2)
-    items_of(t::String) = (seq = parse_sequence("^" * t); seq === nothing ? nothing : seq.items)
+    # The items of a text that is a class sequence. A "$" at the end of the text is not an item, and the list has no
+    # place for it: "^x(,a$)*$" is not "^x(,a)*$". Such a text is not a part of a list.
+    items_of(t::String) = (seq = parse_sequence("^" * t); seq === nothing || seq.to_end ? nothing : seq.items)
     fixed(items) = !isempty(items) && all(item -> item.min == item.max && item.min != 0, items)
     group_items = items_of(inner)
     group_items === nothing && return nothing

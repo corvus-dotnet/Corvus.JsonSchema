@@ -37,7 +37,10 @@ library, and a static library for each), built as `cdylib` and `staticlib`.
 - **Errors.** Every fallible function returns `cjs_status`: `CJS_OK` (0), `CJS_INVALID_ARGUMENT` (a NULL handle,
   an out-of-range value), `CJS_INVALID_UTF8`, `CJS_INVALID_JSON`, `CJS_COMPILATION_FAILED` (an unresolvable
   reference, an invalid pattern), `CJS_DEPTH_EXCEEDED` (a schema that recurses in place beyond the maximum depth),
-  `CJS_PANIC` (a bug in the library). The message, and for invalid UTF-8 or JSON the byte offset, are in
+  `CJS_PANIC` (a bug in the library), `CJS_PATTERN_MATCH_LIMIT` (a match of a regular expression reached its limit,
+  so there is no answer) and `CJS_PATTERN_TOO_LARGE` (a regular expression of the schema is over a limit of size,
+  which is not the status of one that is not valid). The last two were added in 0.1.4, with the next free values,
+  7 and 8: a status that is there keeps its value. The message, and for invalid UTF-8 or JSON the byte offset, are in
   thread-local storage until the thread's next failure: `cjs_last_error_message()`, `cjs_last_error_offset()`.
 - **Enumerations are integers.** `cjs_status`, `cjs_dialect`, `cjs_tristate` and `cjs_results_level` are `uint32_t`
   typedefs with `#define`d values (the dialects are `CJS_DRAFT4`, `CJS_DRAFT6`, `CJS_DRAFT7`, `CJS_DRAFT201909` and
@@ -73,6 +76,7 @@ cjs_status cjs_options_set_assert_content(cjs_options *, bool);
 cjs_status cjs_options_set_base_uri(cjs_options *, const char *, size_t);
 cjs_status cjs_options_set_entry_point(cjs_options *, const char *, size_t);
 cjs_status cjs_options_set_max_depth(cjs_options *, uint32_t);
+cjs_status cjs_options_set_pattern_match_limit_ms(cjs_options *, uint64_t milliseconds); /* 0: no limit */
 cjs_status cjs_options_add_format(cjs_options *, const char *name, size_t name_len,
                                   cjs_format_fn, void *user_data, cjs_free_fn free_user_data);
 cjs_status cjs_options_set_resolver(cjs_options *, cjs_resolve_fn, void *user_data, cjs_free_fn free_user_data);

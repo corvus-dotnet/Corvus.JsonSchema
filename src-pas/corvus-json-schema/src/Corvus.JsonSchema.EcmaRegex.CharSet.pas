@@ -106,8 +106,9 @@ function Canonicalize(R: Int32; UnicodeMode: Boolean): Int32;
   case-insensitive group reaches. }
 function FoldClasses(UnicodeMode: Boolean): PFoldTable;
 
-{ FoldClosure returns the set of every character equivalent to some member of the set. }
-function FoldClosure(const CharSet: TCharSet; UnicodeMode: Boolean): TCharSet;
+{ FoldClosure returns the set of every character equivalent to some member of the set. Variants is the number of
+  characters with a case variant that the set holds, which is the work it did. }
+function FoldClosure(const CharSet: TCharSet; UnicodeMode: Boolean; out Variants: Int32): TCharSet;
 
 function IsFoldWordRune(R: Int32): Boolean;
 
@@ -558,12 +559,13 @@ begin
   Result := Publish(LegacyFoldTable, NewFoldTable(Pairs, $10000));
 end;
 
-function FoldClosure(const CharSet: TCharSet; UnicodeMode: Boolean): TCharSet;
+function FoldClosure(const CharSet: TCharSet; UnicodeMode: Boolean; out Variants: Int32): TCharSet;
 var
   Table: PFoldTable;
   Extra: TRunes;
   I, K, M, N, Lo, Hi, First, Limit, Mid, Member: Int32;
 begin
+  Variants := 0;
   Table := FoldClasses(UnicodeMode);
   Extra := nil;
   N := 0;
@@ -583,6 +585,7 @@ begin
     end;
     K := First;
     while (K < Length(Table^.Points)) and (Table^.Points[K] <= Hi) do begin
+      Inc(Variants);
       for M := 0 to High(Table^.Classes[K]) do begin
         Member := Table^.Classes[K][M];
         if not CharSet.Contains(Member) then begin

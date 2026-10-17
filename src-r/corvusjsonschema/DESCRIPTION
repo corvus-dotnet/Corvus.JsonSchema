@@ -10,6 +10,9 @@ Description: Validates R values and 'JSON' text against 'JSON Schema' drafts 4, 
     parses 'JSON' text itself. The evaluator is the 'corvus-json-schema' 'Rust'
     crate, which passes the whole 'JSON-Schema-Test-Suite'.
 License: Apache License (>= 2)
+Copyright: The installed package holds Unicode data and third-party code
+    compiled from Rust crates. See the file inst/THIRD-PARTY-NOTICES.txt for
+    their notices.
 URL: https://github.com/corvus-dotnet/Corvus.JsonSchema
 BugReports: https://github.com/corvus-dotnet/Corvus.JsonSchema/issues
 Depends: R (>= 4.2)

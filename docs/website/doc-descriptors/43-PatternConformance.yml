@@ -1,0 +1,3 @@
+source: PatternConformance.md
+navTitle: "Patterns across the ports"
+description: "How each Corvus evaluator matches a JSON Schema pattern, what it refuses, how it limits a match, and where the ports still differ from ECMA-262."

@@ -109,8 +109,8 @@ jobs:
           git archive --format=zip --prefix="corvus-json-schema-$VERSION/" \
             -o "$RUNNER_TEMP/release/$name.zip" "HEAD:$SUBDIR"
           tar -tzf "$RUNNER_TEMP/release/$name.tar.gz" > "$RUNNER_TEMP/files.txt"
-          for file in README.md LICENSE VERSIONHISTORY.md src/Corvus.JsonSchema.pas src/corvus.inc \
-              tests/run-tests.ps1; do
+          for file in README.md LICENSE THIRD-PARTY-NOTICES.txt VERSIONHISTORY.md src/Corvus.JsonSchema.pas \
+              src/corvus.inc tests/run-tests.ps1; do
             grep -qxF "corvus-json-schema-$VERSION/$file" "$RUNNER_TEMP/files.txt" \
               || { echo "::error::The archive has no $file."; exit 1; }
           done

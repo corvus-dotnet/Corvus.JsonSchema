@@ -31,6 +31,10 @@ const (
 	maxDFASteps  = 400000
 )
 
+// maxDFABytes is the most an automaton holds, in bytes: a row for each state with a column for each ASCII character,
+// the classes of the 256 bytes, and a flag for each state.
+const maxDFABytes = maxDFAStates*128 + 256 + maxDFAStates
+
 type nfaKind uint8
 
 const (

@@ -802,10 +802,10 @@ main-docs:
       - {index: 8, language: bash, lines: [219, 221]}
       - {index: 9, language: bash, lines: [227, 229]}
       - {index: 10, language: json, lines: [261, 271]}
-      - {index: 11, language: ini, lines: [291, 298]}
-      - {index: 12, language: bash, lines: [331, 336]}
-      - {index: 13, language: json, lines: [356, 365]}
-      - {index: 14, language: bash, lines: [394, 406]}
+      - {index: 11, language: ini, lines: [297, 304]}
+      - {index: 12, language: bash, lines: [337, 342]}
+      - {index: 13, language: json, lines: [362, 371]}
+      - {index: 14, language: bash, lines: [400, 412]}
   - path: "docs/CodeSampleCatalog.md"
     blocks:
       - {index: 0, language: powershell, lines: [13, 26]}
@@ -835,27 +835,25 @@ main-docs:
       - {index: 5, language: powershell, lines: [167, 177]}
   - path: "docs/EcmaRegexTranslations.md"
     blocks:
-      - {index: 0, language: , lines: [40, 43]}
-      - {index: 1, language: , lines: [127, 133]}
-      - {index: 2, language: , lines: [143, 146]}
-      - {index: 3, language: , lines: [150, 153]}
-      - {index: 4, language: , lines: [157, 160]}
-      - {index: 5, language: , lines: [164, 167]}
-      - {index: 6, language: , lines: [188, 194]}
-      - {index: 7, language: , lines: [200, 206]}
-      - {index: 8, language: , lines: [270, 273]}
-      - {index: 9, language: , lines: [277, 280]}
-      - {index: 10, language: , lines: [319, 325]}
-      - {index: 11, language: , lines: [354, 357]}
-      - {index: 12, language: , lines: [384, 391]}
-      - {index: 13, language: , lines: [407, 410]}
-      - {index: 14, language: , lines: [418, 421]}
-      - {index: 15, language: , lines: [425, 428]}
+      - {index: 0, language: , lines: [42, 45]}
+      - {index: 1, language: , lines: [97, 103]}
+      - {index: 2, language: , lines: [121, 127]}
+      - {index: 3, language: , lines: [151, 154]}
+      - {index: 4, language: , lines: [164, 167]}
+      - {index: 5, language: , lines: [173, 176]}
+      - {index: 6, language: , lines: [241, 244]}
+      - {index: 7, language: , lines: [256, 262]}
+      - {index: 8, language: , lines: [267, 279]}
+      - {index: 9, language: , lines: [341, 350]}
+      - {index: 10, language: , lines: [400, 405]}
+      - {index: 11, language: , lines: [415, 417]}
+      - {index: 12, language: , lines: [443, 448]}
+      - {index: 13, language: , lines: [481, 484]}
   - path: "docs/EcmaRegexTranslator.md"
     blocks:
-      - {index: 0, language: csharp, lines: [19, 27], category: compilable, verified: false}
-      - {index: 1, language: csharp, lines: [33, 67], category: fragment, verified: false}
-      - {index: 2, language: csharp, lines: [85, 103], category: compilable, verified: false}
+      - {index: 0, language: csharp, lines: [44, 58], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [65, 98], category: fragment, verified: false}
+      - {index: 2, language: powershell, lines: [231, 233]}
   - path: "docs/ImplementingNatsJetStreamAndAzureServiceBus.md"
     blocks:
       - {index: 0, language: , lines: [14, 33]}
@@ -1118,13 +1116,14 @@ main-docs:
       - {index: 0, language: cmake, lines: [31, 34]}
       - {index: 1, language: sh, lines: [38, 40]}
       - {index: 2, language: c, lines: [44, 69]}
-      - {index: 3, language: c, lines: [97, 107]}
+      - {index: 3, language: c, lines: [109, 124]}
+      - {index: 4, language: c, lines: [128, 138]}
   - path: "docs/JsonSchemaForCpp.md"
     blocks:
       - {index: 0, language: cmake, lines: [20, 23]}
       - {index: 1, language: cpp, lines: [27, 43]}
       - {index: 2, language: cpp, lines: [52, 61]}
-      - {index: 3, language: cpp, lines: [69, 80]}
+      - {index: 3, language: cpp, lines: [75, 86]}
   - path: "docs/JsonSchemaForGo.md"
     blocks:
       - {index: 0, language: sh, lines: [23, 25]}
@@ -1132,9 +1131,10 @@ main-docs:
       - {index: 2, language: go, lines: [35, 47]}
       - {index: 3, language: go, lines: [58, 74]}
       - {index: 4, language: go, lines: [80, 91]}
-      - {index: 5, language: go, lines: [109, 136]}
-      - {index: 6, language: go, lines: [140, 162]}
-      - {index: 7, language: go, lines: [168, 185]}
+      - {index: 5, language: go, lines: [110, 137]}
+      - {index: 6, language: go, lines: [141, 163]}
+      - {index: 7, language: go, lines: [169, 186]}
+      - {index: 8, language: go, lines: [231, 244]}
   - path: "docs/JsonSchemaForJava.md"
     blocks:
       - {index: 0, language: xml, lines: [22, 28]}
@@ -1142,7 +1142,8 @@ main-docs:
       - {index: 2, language: java, lines: [38, 49]}
       - {index: 3, language: kotlin, lines: [53, 56]}
       - {index: 4, language: java, lines: [67, 70]}
-      - {index: 5, language: java, lines: [93, 103]}
+      - {index: 5, language: java, lines: [94, 104]}
+      - {index: 6, language: java, lines: [181, 191]}
   - path: "docs/JsonSchemaForJavascript.md"
     blocks:
       - {index: 0, language: sh, lines: [23, 25]}
@@ -1156,30 +1157,33 @@ main-docs:
       - {index: 1, language: julia, lines: [32, 43]}
       - {index: 2, language: julia, lines: [56, 66]}
       - {index: 3, language: julia, lines: [71, 83]}
-      - {index: 4, language: julia, lines: [103, 116]}
-      - {index: 5, language: julia, lines: [120, 134]}
-      - {index: 6, language: julia, lines: [140, 152]}
+      - {index: 4, language: julia, lines: [104, 118]}
+      - {index: 5, language: julia, lines: [122, 136]}
+      - {index: 6, language: julia, lines: [142, 154]}
+      - {index: 7, language: julia, lines: [239, 259]}
   - path: "docs/JsonSchemaForPascal.md"
     blocks:
       - {index: 0, language: sh, lines: [31, 33]}
       - {index: 1, language: pascal, lines: [40, 52]}
-      - {index: 2, language: pascal, lines: [65, 82]}
-      - {index: 3, language: pascal, lines: [87, 106]}
-      - {index: 4, language: pascal, lines: [127, 165]}
-      - {index: 5, language: pascal, lines: [169, 190]}
-      - {index: 6, language: pascal, lines: [196, 217]}
-      - {index: 7, language: pascal, lines: [226, 242]}
+      - {index: 2, language: pascal, lines: [67, 84]}
+      - {index: 3, language: pascal, lines: [89, 108]}
+      - {index: 4, language: pascal, lines: [130, 168]}
+      - {index: 5, language: pascal, lines: [172, 193]}
+      - {index: 6, language: pascal, lines: [199, 220]}
+      - {index: 7, language: pascal, lines: [229, 245]}
+      - {index: 8, language: pascal, lines: [330, 365]}
   - path: "docs/JsonSchemaForPhp.md"
     blocks:
       - {index: 0, language: sh, lines: [18, 20]}
       - {index: 1, language: php, lines: [26, 37]}
-      - {index: 2, language: php, lines: [62, 75]}
+      - {index: 2, language: php, lines: [70, 83]}
   - path: "docs/JsonSchemaForPython.md"
     blocks:
       - {index: 0, language: sh, lines: [23, 26]}
       - {index: 1, language: python, lines: [30, 41]}
-      - {index: 2, language: python, lines: [68, 77]}
-      - {index: 3, language: python, lines: [87, 91]}
+      - {index: 2, language: python, lines: [85, 93]}
+      - {index: 3, language: python, lines: [97, 106]}
+      - {index: 4, language: python, lines: [116, 120]}
   - path: "docs/JsonSchemaForR.md"
     blocks:
       - {index: 0, language: r, lines: [16, 18]}
@@ -1189,13 +1193,14 @@ main-docs:
     blocks:
       - {index: 0, language: sh, lines: [17, 19]}
       - {index: 1, language: ruby, lines: [23, 32]}
-      - {index: 2, language: ruby, lines: [55, 66]}
+      - {index: 2, language: ruby, lines: [63, 74]}
   - path: "docs/JsonSchemaForRust.md"
     blocks:
       - {index: 0, language: sh, lines: [21, 23]}
       - {index: 1, language: rust, lines: [27, 38]}
       - {index: 2, language: rust, lines: [47, 54]}
-      - {index: 3, language: rust, lines: [74, 86]}
+      - {index: 3, language: rust, lines: [75, 87]}
+      - {index: 4, language: rust, lines: [141, 166]}
   - path: "docs/JsonSchemaForSwift.md"
     blocks:
       - {index: 0, language: swift, lines: [19, 26]}
@@ -1508,17 +1513,18 @@ main-docs:
       - {index: 29, language: powershell, lines: [415, 421]}
   - path: "docs/RuntimeEvaluator.md"
     blocks:
-      - {index: 0, language: csharp, lines: [210, 222], category: compilable, verified: false}
-      - {index: 1, language: xml, lines: [309, 313]}
+      - {index: 0, language: csharp, lines: [267, 285], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [335, 347], category: compilable, verified: false}
+      - {index: 2, language: xml, lines: [434, 438]}
   - path: "docs/SchemaEvaluator.md"
     blocks:
       - {index: 0, language: xml, lines: [19, 26]}
       - {index: 1, language: csharp, lines: [30, 33], category: compilable, verified: false}
       - {index: 2, language: bash, lines: [41, 53]}
-      - {index: 3, language: csharp, lines: [89, 117], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [125, 151], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [157, 165], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [171, 177], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [96, 124], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [132, 158], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [164, 172], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [178, 184], category: compilable, verified: false}
   - path: "docs/SourceGenerator.md"
     blocks:
       - {index: 0, language: xml, lines: [15, 21]}
@@ -1531,13 +1537,13 @@ main-docs:
       - {index: 7, language: xml, lines: [114, 123]}
       - {index: 8, language: xml, lines: [127, 131]}
       - {index: 9, language: xml, lines: [139, 146]}
-      - {index: 10, language: xml, lines: [186, 190]}
-      - {index: 11, language: , lines: [194, 199]}
-      - {index: 12, language: ini, lines: [218, 225]}
-      - {index: 13, language: ini, lines: [227, 234]}
+      - {index: 10, language: xml, lines: [192, 196]}
+      - {index: 11, language: , lines: [200, 205]}
+      - {index: 12, language: ini, lines: [224, 231]}
+      - {index: 13, language: ini, lines: [233, 240]}
   - path: "docs/StandaloneEvaluatorInternals.md"
     blocks:
-      - {index: 0, language: csharp, lines: [46, 53], category: compilable, verified: false}
+      - {index: 0, language: csharp, lines: [65, 72], category: compilable, verified: false}
   - path: "docs/Toon.md"
     blocks:
       - {index: 0, language: json, lines: [23, 25]}
@@ -1591,10 +1597,11 @@ main-docs:
       - {index: 7, language: csharp, lines: [101, 115], category: compilable, verified: false}
       - {index: 8, language: csharp, lines: [123, 139], category: compilable, verified: false}
       - {index: 9, language: csharp, lines: [155, 168], category: compilable, verified: false}
-      - {index: 10, language: csharp, lines: [185, 198], category: compilable, verified: false}
-      - {index: 11, language: csharp, lines: [206, 215], category: compilable, verified: false}
-      - {index: 12, language: csharp, lines: [235, 241], category: fragment, verified: false}
-      - {index: 13, language: csharp, lines: [245, 247], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [186, 199], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [207, 216], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [236, 244], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [261, 267], category: fragment, verified: false}
+      - {index: 14, language: csharp, lines: [271, 273], category: compilable, verified: false}
   - path: "docs/Yaml.md"
     blocks:
       - {index: 0, language: bash, lines: [26, 32]}
@@ -1685,57 +1692,57 @@ v4-docs:
       - {index: 56, language: csharp, lines: [964, 975], category: v4-before, verified: false}
       - {index: 57, language: , lines: [979, 982]}
       - {index: 58, language: , lines: [986, 990]}
-      - {index: 59, language: json, lines: [1002, 1006]}
-      - {index: 60, language: csharp, lines: [1016, 1021], category: v4-before, verified: false}
-      - {index: 61, language: , lines: [1027, 1030]}
-      - {index: 62, language: , lines: [1034, 1037]}
-      - {index: 63, language: csharp, lines: [1057, 1070], category: v4-before, verified: false}
-      - {index: 64, language: , lines: [1076, 1079]}
-      - {index: 65, language: , lines: [1083, 1086]}
-      - {index: 66, language: csharp, lines: [1098, 1108], category: v4-before, verified: false}
-      - {index: 67, language: , lines: [1122, 1125]}
-      - {index: 68, language: , lines: [1129, 1133]}
-      - {index: 69, language: csharp, lines: [1141, 1156], category: v4-before, verified: false}
-      - {index: 70, language: csharp, lines: [1162, 1168], category: v4-before, verified: false}
-      - {index: 71, language: , lines: [1172, 1175]}
-      - {index: 72, language: , lines: [1179, 1189]}
-      - {index: 73, language: csharp, lines: [1203, 1228], category: v4-before, verified: false}
-      - {index: 74, language: csharp, lines: [1236, 1248], category: v4-before, verified: false}
-      - {index: 75, language: , lines: [1254, 1257]}
-      - {index: 76, language: , lines: [1261, 1269]}
-      - {index: 77, language: csharp, lines: [1289, 1291], category: v4-before, verified: false}
-      - {index: 78, language: , lines: [1295, 1298]}
-      - {index: 79, language: , lines: [1302, 1311]}
-      - {index: 80, language: csharp, lines: [1321, 1340], category: v4-before, verified: false}
-      - {index: 81, language: csharp, lines: [1346, 1351], category: v4-before, verified: false}
-      - {index: 82, language: , lines: [1355, 1358]}
-      - {index: 83, language: , lines: [1362, 1365]}
-      - {index: 84, language: csharp, lines: [1385, 1397], category: v4-before, verified: false}
-      - {index: 85, language: csharp, lines: [1401, 1410], category: v4-before, verified: false}
-      - {index: 86, language: csharp, lines: [1414, 1416], category: v4-before, verified: false}
-      - {index: 87, language: csharp, lines: [1436, 1441], category: v4-before, verified: false}
-      - {index: 88, language: csharp, lines: [1445, 1455], category: v4-before, verified: false}
-      - {index: 89, language: csharp, lines: [1467, 1469], category: v4-before, verified: false}
-      - {index: 90, language: csharp, lines: [1476, 1479], category: v4-before, verified: false}
-      - {index: 91, language: csharp, lines: [1483, 1486], category: v4-before, verified: false}
-      - {index: 92, language: csharp, lines: [1490, 1493], category: v4-before, verified: false}
-      - {index: 93, language: csharp, lines: [1507, 1509], category: v4-before, verified: false}
-      - {index: 94, language: csharp, lines: [1515, 1523], category: v4-before, verified: false}
-      - {index: 95, language: csharp, lines: [1530, 1532], category: v4-before, verified: false}
-      - {index: 96, language: csharp, lines: [1537, 1543], category: v4-before, verified: false}
-      - {index: 97, language: csharp, lines: [1550, 1557], category: v4-before, verified: false}
-      - {index: 98, language: csharp, lines: [1568, 1572], category: v4-before, verified: false}
-      - {index: 99, language: json, lines: [1576, 1578]}
-      - {index: 100, language: csharp, lines: [1583, 1587], category: v4-before, verified: false}
-      - {index: 101, language: json, lines: [1591, 1597]}
-      - {index: 102, language: csharp, lines: [1609, 1628], category: v4-before, verified: false}
-      - {index: 103, language: csharp, lines: [1640, 1645], category: v4-before, verified: false}
-      - {index: 104, language: csharp, lines: [1649, 1654], category: v4-before, verified: false}
-      - {index: 105, language: csharp, lines: [1660, 1665], category: v4-before, verified: false}
-      - {index: 106, language: json, lines: [1675, 1682]}
-      - {index: 107, language: csharp, lines: [1692, 1702], category: v4-before, verified: false}
-      - {index: 108, language: csharp, lines: [1706, 1712], category: v4-before, verified: false}
-      - {index: 109, language: csharp, lines: [1720, 1725], category: v4-before, verified: false}
+      - {index: 59, language: json, lines: [1042, 1046]}
+      - {index: 60, language: csharp, lines: [1056, 1061], category: v4-before, verified: false}
+      - {index: 61, language: , lines: [1067, 1070]}
+      - {index: 62, language: , lines: [1074, 1077]}
+      - {index: 63, language: csharp, lines: [1097, 1110], category: v4-before, verified: false}
+      - {index: 64, language: , lines: [1116, 1119]}
+      - {index: 65, language: , lines: [1123, 1126]}
+      - {index: 66, language: csharp, lines: [1138, 1148], category: v4-before, verified: false}
+      - {index: 67, language: , lines: [1162, 1165]}
+      - {index: 68, language: , lines: [1169, 1173]}
+      - {index: 69, language: csharp, lines: [1181, 1196], category: v4-before, verified: false}
+      - {index: 70, language: csharp, lines: [1202, 1208], category: v4-before, verified: false}
+      - {index: 71, language: , lines: [1212, 1215]}
+      - {index: 72, language: , lines: [1219, 1229]}
+      - {index: 73, language: csharp, lines: [1243, 1268], category: v4-before, verified: false}
+      - {index: 74, language: csharp, lines: [1276, 1288], category: v4-before, verified: false}
+      - {index: 75, language: , lines: [1294, 1297]}
+      - {index: 76, language: , lines: [1301, 1309]}
+      - {index: 77, language: csharp, lines: [1329, 1331], category: v4-before, verified: false}
+      - {index: 78, language: , lines: [1335, 1338]}
+      - {index: 79, language: , lines: [1342, 1351]}
+      - {index: 80, language: csharp, lines: [1361, 1380], category: v4-before, verified: false}
+      - {index: 81, language: csharp, lines: [1386, 1391], category: v4-before, verified: false}
+      - {index: 82, language: , lines: [1395, 1398]}
+      - {index: 83, language: , lines: [1402, 1405]}
+      - {index: 84, language: csharp, lines: [1425, 1437], category: v4-before, verified: false}
+      - {index: 85, language: csharp, lines: [1441, 1450], category: v4-before, verified: false}
+      - {index: 86, language: csharp, lines: [1454, 1456], category: v4-before, verified: false}
+      - {index: 87, language: csharp, lines: [1476, 1481], category: v4-before, verified: false}
+      - {index: 88, language: csharp, lines: [1485, 1495], category: v4-before, verified: false}
+      - {index: 89, language: csharp, lines: [1507, 1509], category: v4-before, verified: false}
+      - {index: 90, language: csharp, lines: [1516, 1519], category: v4-before, verified: false}
+      - {index: 91, language: csharp, lines: [1523, 1526], category: v4-before, verified: false}
+      - {index: 92, language: csharp, lines: [1530, 1533], category: v4-before, verified: false}
+      - {index: 93, language: csharp, lines: [1547, 1549], category: v4-before, verified: false}
+      - {index: 94, language: csharp, lines: [1555, 1563], category: v4-before, verified: false}
+      - {index: 95, language: csharp, lines: [1570, 1572], category: v4-before, verified: false}
+      - {index: 96, language: csharp, lines: [1577, 1583], category: v4-before, verified: false}
+      - {index: 97, language: csharp, lines: [1590, 1597], category: v4-before, verified: false}
+      - {index: 98, language: csharp, lines: [1608, 1612], category: v4-before, verified: false}
+      - {index: 99, language: json, lines: [1616, 1618]}
+      - {index: 100, language: csharp, lines: [1623, 1627], category: v4-before, verified: false}
+      - {index: 101, language: json, lines: [1631, 1637]}
+      - {index: 102, language: csharp, lines: [1649, 1668], category: v4-before, verified: false}
+      - {index: 103, language: csharp, lines: [1680, 1685], category: v4-before, verified: false}
+      - {index: 104, language: csharp, lines: [1689, 1694], category: v4-before, verified: false}
+      - {index: 105, language: csharp, lines: [1700, 1705], category: v4-before, verified: false}
+      - {index: 106, language: json, lines: [1715, 1722]}
+      - {index: 107, language: csharp, lines: [1732, 1742], category: v4-before, verified: false}
+      - {index: 108, language: csharp, lines: [1746, 1752], category: v4-before, verified: false}
+      - {index: 109, language: csharp, lines: [1760, 1765], category: v4-before, verified: false}
 
 copilot-docs:
   - path: "docs/copilot/CopilotMigrationInstructions.md"
@@ -1902,11 +1909,11 @@ skills:
       - {index: 2, language: powershell, lines: [96, 105]}
   - path: ".github/skills/corvus-ecma-regex/SKILL.md"
     blocks:
-      - {index: 0, language: csharp, lines: [20, 30], category: compilable, verified: false}
+      - {index: 0, language: csharp, lines: [35, 48], category: fragment, verified: false}
   - path: ".github/skills/corvus-go-evaluator/SKILL.md"
     blocks:
       - {index: 0, language: bash, lines: [42, 48]}
-      - {index: 1, language: powershell, lines: [82, 84]}
+      - {index: 1, language: powershell, lines: [84, 86]}
   - path: ".github/skills/corvus-java-evaluator/SKILL.md"
     blocks:
       - {index: 0, language: bash, lines: [32, 36]}

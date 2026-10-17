@@ -1253,6 +1253,16 @@ begin
   Result := (R = Ord('.')) or (R = $3002) or (R = $FF0E) or (R = $FF61);
 end;
 
+// MaxIDNHostnameBytes is the most bytes an internationalized host name has. A name is 253 characters at most as
+// A-labels, and no label is shorter as an A-label than it has characters: a letter of ASCII is itself there, any other
+// character is a digit or more, and "xn--" comes before them. So a name has 253 characters at most, each of four
+// bytes at most.
+const
+  MaxIDNHostnameBytes = 4 * 253;
+
+// IDNHostnameOK checks an internationalized host name. A string over MaxIDNHostnameBytes is not one, and is not
+// read: the check decodes and encodes Punycode and walks around every joiner and every katakana middle dot, which
+// take time that grows with the square of a label, so it must not be given a label of any length.
 function IDNHostnameOK(const S: TBytes; From, Stop: Int32): Boolean;
 var
   LabelFrom, LabelStop: array of Int32;
@@ -1276,7 +1286,7 @@ var
 
 begin
   Result := False;
-  if From >= Stop then Exit;
+  if (From >= Stop) or (Stop - From > MaxIDNHostnameBytes) then Exit;
   // The labels: the host name split at every label separator, keeping empty labels.
   LabelFrom := nil;
   LabelStop := nil;

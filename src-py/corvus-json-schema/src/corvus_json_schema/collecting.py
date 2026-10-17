@@ -31,7 +31,7 @@ from .node import (
     SchemaNode,
 )
 from .options import SchemaEvaluationDepthError
-from .pattern import compile_pattern
+from .pattern import DEFAULT_MATCH_LIMIT, compile_pattern
 from .results import JsonSchemaResultsCollector, Message, encode_pointer_segment
 from .runtime import content, equal, includes, multiple_of
 
@@ -46,6 +46,8 @@ class CollectingProgram:
     max_depth: int
     formats: Mapping[str, Callable[[str], bool]] | None = None
     """Custom format assertions by name (in-memory programs only)."""
+    pattern_match_limit: float | None = DEFAULT_MATCH_LIMIT
+    """The time one match of a pattern may take, in seconds (None: no limit)."""
 
 
 # Messages (Corvus.Text.Json Strings.resx).
@@ -178,8 +180,8 @@ def _json_text(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
-def _search(pattern: str, s: str) -> bool:
-    m = compile_pattern(pattern)
+def _search(pattern: str, s: str, limit: float | None) -> bool:
+    m = compile_pattern(pattern, limit)
     return m is not None and m(s) is not None
 
 
@@ -358,7 +360,7 @@ class _CollectingEvaluator:
             ok = ok and m
         if n.pattern is not None:
             pattern = n.pattern
-            m = _search(pattern, x)
+            m = _search(pattern, x, self.program.pattern_match_limit)
             c.evaluated_keyword(
                 m, lambda: "Expected the value to match the regular expression" + _q(pattern), "pattern"
             )
@@ -437,7 +439,7 @@ class _CollectingEvaluator:
                         bits.add(k)
                     ok = self.eval_at(p, "properties/" + encode_pointer_segment(k), v, doc) and ok
                 for pp in n.pattern_properties or ():
-                    if not _search(pp.pattern, k):
+                    if not _search(pp.pattern, k, self.program.pattern_match_limit):
                         continue
                     matched = True
                     if bits is not None:
@@ -712,6 +714,7 @@ def serialize_program(program: CollectingProgram) -> str:
         "root": program.root,
         "usesDynamicScope": program.uses_dynamic_scope,
         "maxDepth": program.max_depth,
+        "patternMatchLimit": program.pattern_match_limit,
         "nodes": nodes,
     }
     return json.dumps(image, ensure_ascii=False, separators=(",", ":"))
@@ -740,4 +743,11 @@ def load_program(image: str) -> CollectingProgram:
                 v = [AnnotationEntry(kw, value, strings_only) for kw, value, strings_only in v]
             setattr(n, k, v)
         nodes.append(n)
-    return CollectingProgram(nodes, data["root"], data["usesDynamicScope"], data["maxDepth"])
+    return CollectingProgram(
+        nodes,
+        data["root"],
+        data["usesDynamicScope"],
+        data["maxDepth"],
+        # An image written before the limit existed has the default.
+        pattern_match_limit=data.get("patternMatchLimit", DEFAULT_MATCH_LIMIT),
+    )

@@ -34,6 +34,25 @@ emits one `CorvusJsonSchemaProgram` class in the default namespace:
   to the common directory of all file documents, so no build-machine path reaches the generated code;
   documents with an absolute `$id` are keyed by that `$id`. Relative `$ref`s between documents resolve
   within the same scheme, so the keys are consistent.
+- **Regular expression match timeout.** Every expression has a match timeout of 1 second
+  (`CodeGenerationExtensions.RegexMatchTimeoutMilliseconds`, the one place the generator holds the value). Each
+  `[GeneratedRegex]` of the program carries `matchTimeoutMilliseconds: 1000`, and the options the program is
+  loaded with set `RegexMatchTimeout` to the same value, for the expressions the evaluator constructs (all of
+  them where there is no regex generator, and all of them in a program from the Roslyn source generator). The
+  expressions a generated type holds for its own helpers (`[GeneratedRegex(pattern, RegexOptions.None,
+  matchTimeoutMilliseconds: 1000)]`, or `new Regex(pattern, RegexOptions.Compiled, TimeSpan)` where there is no
+  regex generator) have it too. A match that runs for longer throws `RegexMatchTimeoutException` to the caller.
+  A pattern that `EcmaRegexTranslator.IsLinear` proves to match in time proportional to the text has no timeout in
+  any of these forms (`matchTimeoutMilliseconds: global::System.Threading.Timeout.Infinite`, or
+  `Regex.InfiniteMatchTimeout`), as in the evaluator, which applies the same proof to the expressions it constructs.
+  The program generator reads the patterns for it from `SchemaProgramImage.EcmaPatterns`, and an image made without
+  them gives every pattern the timeout.
+- **Patterns.** Every pattern is the translation `EcmaRegexTranslator` writes for it
+  ([EcmaRegexTranslator.md](EcmaRegexTranslator.md)), in the program and in the generated types alike. A pattern
+  that is not a valid ECMA-262 regular expression stops the generation: the emitter reads every `pattern` and
+  `patternProperties` pattern of a type (`ThrowIfAPatternIsNotValid`), and compiling the program image refuses the
+  schema too. An expression of a generated type is constructed with `RegexOptions.CultureInvariant` when its
+  translation holds a case-insensitive backreference, the one construct that uses .NET's own case comparison.
 - **Entry points.** One `ForEntryPoint("<document key>#<pointer>")` per generated type (its
   `SchemaDocument` and `SchemaLocation`, which are still emitted as constants) and per standalone
   evaluator root. Entry points share one compiled program, so each subschema is compiled once even when

@@ -40,7 +40,7 @@ public final class BowtieHarness {
 
     private static String version() {
         String v = Validator.class.getPackage().getImplementationVersion();
-        return v != null ? v : "0.1.2";
+        return v != null ? v : "0.1.3";
     }
 
     public static void main(String[] args) throws IOException {
@@ -180,7 +180,10 @@ public final class BowtieHarness {
             results.append(i == 0 ? "" : ",");
             try {
                 if (!annotations) {
-                    results.append("{\"valid\":").append(validator.validate(instance)).append('}');
+                    // The answer is worked out before anything of it is written: an evaluation that throws (the
+                    // depth of a recursion, the limit on a match of a pattern) is an error and no verdict.
+                    boolean valid = validator.validate(instance);
+                    results.append("{\"valid\":").append(valid).append('}');
                     continue;
                 }
                 JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.create(ResultsLevel.VERBOSE);

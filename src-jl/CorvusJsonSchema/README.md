@@ -92,7 +92,8 @@ validator = compile_schema(raw"""{"$defs": {"item": {"$ref": "item.json"}}}""";
     resolver=uri -> uri == "https://example.com/item.json" ? item : nothing,
     base_uri="https://example.com/root.json",
     entry_point=raw"#/$defs/item",
-    max_depth=128)
+    max_depth=128,
+    pattern_match_limit=1)        # seconds for one match of a pattern. With nothing there is no limit
 
 isvalid(validator, "\"four\"")  # true
 isvalid(validator, "\"three\"")  # false
@@ -109,6 +110,7 @@ isvalid(validator, "\"three\"")  # false
 | `base_uri` | Base URI of the root document. |
 | `entry_point` | Evaluate from a subschema, for example `#/$defs/item`. |
 | `max_depth` | Depth limit for in-place recursion on a cycle (default 128). |
+| `pattern_match_limit` | The limit on the time of one match of a `pattern` or `patternProperties` regular expression, in seconds (default 1). `nothing` turns it off. A match that reaches it throws a `PatternMatchError`. See [Limits](#limits). |
 
 ### Results and annotations
 
@@ -196,6 +198,9 @@ keyword paths it lists to zero bytes. These allocate:
   the first 19;
 - an object schema with more than 32,768 property names, for each name looked up;
 - JSON text whose parsed form is larger than a few megabytes, which is parsed into buffers that are not kept;
+- a string with a character beyond the Basic Multilingual Plane that is more than 4 MiB when it is written as
+  UTF-16 code units, matched by a pattern that is valid only without the `u` flag (see [Patterns](#patterns)). It
+  is written into a buffer that is not kept;
 - validations of one validator that overlap, on several tasks, until each has an evaluation state in the
   validator's pool.
 
@@ -203,20 +208,228 @@ Compiling a schema, parsing with `parse_document`, and evaluating with a results
 
 ## Patterns
 
-`pattern` and `patternProperties` have ECMA-262 semantics, on every Julia version. A pattern outside the common
-shapes is translated by the `EcmaRegex` submodule into a pattern that PCRE2 matches with the same meaning.
+`pattern` and `patternProperties` have ECMA-262 semantics. A pattern outside the common shapes is translated by the
+`EcmaRegex` submodule into a pattern that PCRE2 matches with the same meaning. The answers are those of V8, on every
+Julia version, with one exception for Julia 1.10 that is listed [below](#julia-110).
 
+- **Backreferences and repetitions.** A backreference matches the text its group captured when the group last took
+  part, and the empty string when it has not. The groups of a repeated body stop having taken part when an iteration
+  starts, and an iteration that matches the empty string is refused once the minimum count is met. PCRE2 does none of
+  that by itself, so the translator writes it out. `^(?:(a)|x)*\1-$` matches `ax-`, and `^(?:(?:a|)*x)*$` is answered
+  at once on a long text.
+- **Lookbehinds.** ECMA-262 matches a lookbehind backwards, and its groups hold what that captures. The translator
+  writes a lookbehind whose groups are read after it in a form that captures the same: a lookbehind of a fixed
+  length, a group at a fixed distance from the end of one (`(?<=a*(x))-\1`), and a lookbehind that is a term of the
+  pattern itself and starts with a repetition of a body of a fixed length (`(?<=([abc])+)x\1`) or with alternatives
+  of fixed lengths (`(?<=(ab|a)x)-\1`). The last is a search back from the lookbehind, which takes time that grows
+  with the length of the text before it.
+- **Case-insensitive backreferences.** `(.)(?i:\1)` compares its text as PCRE2 compares, by Unicode simple case
+  folding, which is what ECMA-262 does with the `u` flag. A pattern that is valid with the `u` flag is never refused
+  for one. With Julia 1.13 the answers are those of V8 13.6 for every pair of characters. With Julia 1.10 they are
+  not for thirty pairs of characters (see [Julia 1.10](#julia-110)). The comparison is one character at a time, as
+  ECMA-262's Canonicalize is. V8 13.6 compares the whole text by full case folding where the `i` and `u` flags are
+  both set, so it says that `^(..)\1$` matches U+00DF, `S`, `s`, U+1E9E. The package says that it does not.
+- **Patterns valid only without the `u` flag.** A pattern that is not valid with the `u` flag (one with an identity
+  escape such as `\-` or `\&`) is read with the Annex B grammar, and ECMA-262 then matches it against the UTF-16
+  code units of the string. A character beyond the Basic Multilingual Plane is two code units. So `^\-?.$` does not
+  match U+10400, which `^.$` matches. In such a pattern a quantifier after such a character repeats its second
+  half, a class holds each half, `\u{...}` is the letter `u` counted, and a class range from one such character to
+  another is an error, as it runs from a low surrogate down to a high one. A string with no such character is
+  matched as it is. One that has one is written again as code units for the match, into a buffer that the package
+  keeps and uses again, so in the steady state the match allocates nothing. The name of a group is read by
+  character in both grammars.
+- **Names, counts and `\k`.** What is a pattern is what ECMA-262 says, which is V8's verdict but in three places.
+  The Script value `Katakana_Or_Hiragana`, or `Hrkt`, is in the alias file of Unicode, so `\p{sc=Hrkt}` is a
+  pattern. No character has the value, so it matches nothing and `\P{sc=Hrkt}` matches any character. V8 13.6
+  does not know the name. A count whose first number is the greater is an error however large the numbers are,
+  so `a{2147483648,2147483647}` is one, which V8 13.6 takes. And the package's tables are those of Unicode 17,
+  so the scripts it added (`Sidetic`, `Tolong_Siki`, `Beria_Erfe` and `Tai_Yo`) are names here, and are not in
+  V8 13.6, whose data is Unicode 16. Like V8, the package takes `\k` in a class as the letter `k` only in a
+  pattern with no named group that is not valid with the `u` flag: `(?<n>a)[\k]` is an error.
+- **Counts.** A count of one character or class is run whatever the count: `a{1000000000}` and
+  `^\p{L}{1,300000}$` are patterns like another. PCRE2 counts to 65,535, so a larger count is written as blocks of
+  the character that the pattern calls, which match the same texts and try the numbers of times in the same
+  order.
+- **Lookbehinds of no fixed length.** PCRE2 takes a lookbehind only when its length is fixed. Any other is a search
+  for where its body starts. The body is held to the place the lookbehind stands at, the starts are tried from
+  that place backwards, and none is tried where the character before the lookbehind is not one the body can end
+  with. `(?<=(?:[ax]+){2,})$` is answered at once on forty characters, where a body that ran on past the
+  lookbehind reached the limit on the steps of a match.
 - **What is refused.** A pattern that is valid ECMA-262 and that the translator cannot write with exactly the same
   meaning is not run with another meaning. Compiling the schema throws a `CompileError` that names the construct.
-  These are backreferences in the positions where PCRE2 and ECMA-262 capture differently (inside a lookbehind, to a
-  group inside a lookbehind, to a group of a repetition that can skip it or match nothing, to a group of a
-  lookaround that may not have matched), a case-insensitive backreference to text that PCRE2 compares differently,
-  more than 253 lookbehinds of no fixed length in one pattern, and anything PCRE2 does not compile. No pattern of the
-  JSON-Schema-Test-Suite or of the jsonschema-benchmark corpora is refused.
-- **A match that reaches a limit throws.** PCRE2 backtracks, and it limits the steps and the memory of one match.
-  A match that reaches a limit throws `CorvusJsonSchema.EcmaRegex.MatchError`, from `isvalid` as from `validate`
-  and `evaluate`. It is never reported as a string that does not match. A schema whose patterns are not trusted
-  should be validated inside `try`.
+  These are:
+  - a backreference inside a lookbehind to a group that the lookbehind matches before it, where the group is not in
+    an end of the lookbehind of a fixed length (`(?<=\1(a+))`);
+  - a backreference to a group inside a lookbehind of no fixed length, where the lookbehind is not a term of the
+    pattern itself (`(?:(?<=(a)+)x\1)+`), or where the group holds what depends on the order in which ECMA-262 tries
+    the ways through the lookbehind from its end (`(?<=(a*)(x+))-\1`);
+  - a case-insensitive backreference in a pattern that is only valid without the `u` flag (one with an Annex B form
+    such as `\&`), where the group can hold a character that ECMA-262 compares differently there than PCRE2 does:
+    `k`, `s`, U+212A, U+017F and 74 other characters of the Basic Multilingual Plane, and every character beyond it
+    that has a case variant. `^(.)(?i:\1)\&?$` is refused, and `^([a-j]+)(?i:\1)\&?$` is run. No pattern that is
+    valid with the `u` flag is refused for this;
+  - a pattern PCRE2 does not compile for a reason that is not its size, which no pattern is known to be. (A
+    pattern that is valid and too large is not refused in this way. See the limits below.)
+
+  No pattern of the JSON-Schema-Test-Suite or of the jsonschema-benchmark corpora is refused.
+- **The lookbehind exception.** A pattern that is valid with the `u` flag is run, and answers as V8 does, with one
+  named exception. Two uses of a lookbehind need it to be matched backwards, as ECMA-262 matches it, which PCRE2 cannot
+  do, and they are refused with an error that says which:
+  - a group captured inside a lookbehind of no fixed length and read after it, outside the forms that are written,
+    such as `(?<=(a*)(x+))-\1` ("a backreference to a group inside a lookbehind of no fixed length, where the group holds
+    what only matching the lookbehind backwards can tell");
+  - a backreference inside a lookbehind to a group of it that is not in an end of it of a fixed length, such as
+    `(?<=\1(a+))x` ("a backreference inside a lookbehind to a group that the lookbehind matches before it").
+
+  A lookbehind with no group that a backreference reads is never refused for this. A pattern over a limit of size
+  is the only other such pattern that does not compile, and its error is one of its own.
+- **A pattern and a match have limits.** See [Limits](#limits) below.
+- **Surrogates.** A JSON string with the escape of a surrogate that is not half of a pair, such as `"\ud800"`, is
+  not a string of Unicode text, and the parser refuses the document ("lone leading surrogate in hex escape"), in an
+  instance and in a schema. So no instance holds one, and a pattern is never matched against one. A pattern may
+  name one by its own escape (`\ud800` in the pattern, which is `"\\ud800"` in JSON). With the `u` flag it matches
+  nothing, as no string has one. Without it, it matches that half of a character beyond the Basic Multilingual
+  Plane.
+
+### Limits
+
+A schema and an instance may both come from outside, so a pattern and a match of it have limits. A pattern or a
+match over one is an error of its own, which names the limit and its value. It is never an answer.
+
+**The limit on a match.** One match of a `pattern` or `patternProperties` regular expression against one string is
+limited to one second. The keyword `pattern_match_limit` of `compile_schema` sets the limit, in seconds, and
+`nothing` turns it off, for schemas and instances that are trusted. A match that reaches the limit is given up and
+the validation throws a `PatternMatchError`, from `isvalid` as from `validate` and `evaluate`, with a collector or
+without one, and from `compile_schema` when the match was of a pattern against a property name the schema
+declares. It is never reported as a string that matches or does not. Validate inside `try` when the schema or the
+instance is not trusted. The field `limit` of the error says which limit was reached.
+
+| `limit` | What was reached | Value |
+|---|---|---|
+| `:time` | The time of a match | `pattern_match_limit`, 1 second unless it is set |
+| `:memory` | The memory of a match, in PCRE2's interpreter | 64 MiB |
+| `:steps` | The steps of a match that could not be timed | See below |
+
+```julia
+validator = compile_schema(raw"""{"pattern": "^(?:a|a)+$"}"""; pattern_match_limit=0.05)
+isvalid(validator, "\"aaaa\"")  # true
+
+# Each a is matched two ways, so there are 2^40 ways to find that this string does not match.
+hostile = "\"" * "a"^40 * "b\""
+outcome = try
+    isvalid(validator, hostile)
+catch error
+    error isa PatternMatchError ? error.limit : rethrow()
+end
+outcome  # time
+
+# A pattern over a limit of size does not compile. It is not said to be invalid.
+too_large = try
+    compile_schema(raw"""{"pattern": "(?:(?:a{1000}){1000}){1000}"}""")
+catch error
+    error isa PatternTooLargeError ? error.valid : rethrow()
+end
+too_large  # true
+```
+
+PCRE2 has no clock. It counts steps, and its count does not bound time: it counts the steps of each place a match
+is tried from apart, and one step may read the whole string. So a match is run in two stages. The first is the code
+PCRE2 compiles, with a number of steps worked out from the pattern and the length of the string so that it cannot
+take long (a twentieth to a half of the limit at worst, and microseconds for a match that is not hostile). Nearly
+every match ends there, at the cost it had. A match that uses those steps is run again from the start by code that
+PCRE2 calls back from before every item of the pattern, which reads the clock, so the match ends with its answer
+or at the limit. That code was measured 8 to 30 times slower on patterns that repeat a group, which is why it is
+not the code of every match. On the probe of hostile patterns the package keeps (257 patterns of at most 1,000
+characters on strings of at most 100,000), a match that was given up took 1.13 seconds at most with the limit at one
+second, where 25 of them did not end in a minute before.
+
+What the limit costs, and what it does not bound:
+
+- **A long string and a pattern that repeats a group.** The steps of the first stage are fewer the longer the
+  string, so a string of some tens of thousands of characters matched by a pattern that repeats a group, such as
+  `^(?:[a-z0-9]+\.)*[a-z0-9]+$`, or searched for a pattern that is not anchored, is run by the slower code. It
+  answers as it did, some 5 to 30 times slower on such strings. A class or a character under `*` or `+`
+  (`^[a-z]+$`, `^\p{L}+$`) is not slower, on a string of any length. `pattern_match_limit=nothing` runs every match
+  as before.
+- **Memory.** A repeated group needs memory for each time it has matched. PCRE2's JIT code has a stack of 1 MiB,
+  and a match that fills it is run by PCRE2's interpreter, which may take 64 MiB. Past that the match is a
+  `PatternMatchError` whose `limit` is `:memory`, with any limit on time or none: `^(?:ab|cd)*$` reaches it on a
+  string of some 500,000 characters. A class of many ranges under `*` or `+` no longer needs that memory:
+  `^\p{L}+$` threw on a string of 150,000 letters, and answers on a million.
+- **With no limit on time a match still has a limit.** `pattern_match_limit=nothing` turns the clock off. It does
+  not make a match unlimited: PCRE2 counts the steps of a match, it cannot be told to count none, and
+  4,294,967,295 (2^32 - 1) for each place a match is tried from is the most it can be told to allow. A match that
+  takes them from one place is given up, and the validation throws a `PatternMatchError` whose `limit` is `:steps`
+  and whose `code` is -47, which is PCRE2's `PCRE2_ERROR_MATCHLIMIT`, from `isvalid` as from `validate` and
+  `evaluate`. Its `message` is "the match took the 4294967295 steps that are the most PCRE2 allows (PCRE2 error -47,
+  match limit exceeded)". It is never an answer. `^(?:a|a)+$` reaches it on forty `a` and a `b`, after 8 seconds
+  with Julia 1.13 and 9 with Julia 1.10. The number is not a bound on time: one step may read the whole string,
+  and a pattern that is not anchored has the steps again at each place it is tried from. The limit on memory
+  stands with the clock off too. So `nothing` is for schemas and instances that are trusted, and is not a way to
+  wait for every answer.
+- **A pattern too large to be timed.** PCRE2, as Julia builds it, holds a compiled pattern of at most 64 KiB, and
+  the code that reads the clock is larger than the code that does not. A pattern PCRE2 holds only without it, such
+  as an alternation of 3,000 words, is run, and its matches end in their first stage. One that does not is given
+  up there, sooner than its limit, with `limit` at `:steps`.
+- **The faster matchers.** A pattern the package matches without PCRE2 (a literal, an anchored class sequence, a
+  list of alternatives) reads the string a bounded number of times and has no limit.
+
+**The limits on the size of a pattern.** A pattern over one of these does not compile. The error is a
+`PatternTooLargeError`, and never the `CompileError` of a pattern that is not valid. Its field `valid` says whether
+the whole pattern was read before the limit was met. The message is then "is a valid ECMA-262 regular expression,
+and is too large", and otherwise "is too large to read", as nothing is known of the rest of the pattern.
+
+| Limit | Value | The message ends |
+|---|---|---|
+| The length of the pattern | 1,048,576 bytes of UTF-8 | "its length is over the limit of 1048576 bytes" |
+| The nesting of its groups | 200 | "its groups nest over the limit of 200 deep" |
+| Its terms and alternatives | 131,072 | "it has over the limit of 131072 terms and alternatives" |
+| The translation PCRE2 is given | 1,048,576 bytes | "its translation is over the limit of 1048576 bytes" |
+| The steps to write the translation | 524,288 | "its translation takes over the limit of 524288 steps to write" |
+| A repetition that is written out twice | 65,536 bytes | "a repetition that is written out is over the limit of 65536 bytes" |
+| Lookbehinds of no fixed length | 252 | "it has over the limit of 252 lookbehinds of no fixed length" |
+| What PCRE2 holds | 64 KiB compiled, 250 nested parentheses, 65,535 groups | "PCRE2 does not hold it, and says ..." |
+| The compiled pattern and those of its lookbehinds | 1,048,576 bytes together | "PCRE2 does not hold it, and says ..." |
+
+The limit a pattern of a few hundred characters meets is PCRE2's 64 KiB. PCRE2 writes a counted group out once for
+each time, so a large count of a group of several characters passes it: `(?:ab){6552}` is run and `(?:ab){6553}` is
+not, `(?:a{1000}){1000}` is run and `(?:(?:a{1000}){1000}){1000}` is not. A counted character or class is never too
+large (`\p{L}{1000000000}` is run). A repetition of what can match the empty string inside another, such as
+`(?:(?:a*)*)*`, was written twice at each level and is written once, so a hundred levels are run where twelve were
+too large. With a minimum of one or more (`(?:(?:a*)+)+`) it is written twice still, and some twelve levels are too
+large. The JIT code of a pattern is at most 4 MiB, and nothing is refused for that: a pattern that would pass it,
+such as one of several hundred `\p{L}`, is run by PCRE2's interpreter. On the probe, a pattern of at most 1,000
+characters is translated and compiled in 0.4 seconds at most and keeps 2.5 MB at most. A pattern is read in time
+in proportion to its length: a group is compared with the last group of its name, where it was compared with every
+one, so 20,000 groups of one name inside 150 groups (160 KB, which PCRE2 does not hold) are refused in 27 ms, where
+they took a minute. The patterns a process
+has compiled are kept for the next schema that has them, up to 4,096 patterns and 32 MiB.
+
+**The formats.** A string that `format` asserts is a string of the instance. Every check reads its bytes with a
+scanner written for the package, and none is a regular expression, so none has a match to limit. A date, a time, a
+duration, a UUID, an IPv4 address, a URI, an IRI, a URI template, a JSON pointer and the local part of an e-mail
+address are read in one pass, or in a fixed number of passes. The checks that do more than read have a limit of
+length that no valid string passes, and a longer string is answered from its length: an IPv6 address is at most 64
+bytes, a host name (and the host of an e-mail address) at most 253, and an internationalized host name (and the host
+of an internationalized e-mail address) at most 1,012, which is 253 characters of four bytes. The `regex` format
+reads a string of at most 1,048,576 bytes with groups nested at most 200 deep, and a string over one of those is not
+a valid regular expression to it. It puts the group names of the string in order to find a name that is written
+twice, which takes time in proportion to n log n for n names. So the time of every check is in proportion to the
+length of the string, or to that and its logarithm. On a probe of 260 hostile strings of each length (long runs of
+what each format repeats, and near misses at their ends), the slowest check of a string of 100,000 characters took
+9 ms and of 1,000,000 characters 121 ms, which includes parsing the string. Before this, an internationalized
+host name of 1,000,000 characters took more than a minute, and so did a regular expression of 125,000 groups of one
+name.
+
+On the thirteen files of the
+[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data), 98,839 patterns
+and 4.2 million answers, no pattern is over a limit of size, and with the limit at one second two patterns reach it
+with Julia 1.13 and four with Julia 1.10, on one or a few strings each. All are patterns of nested repetitions of
+what can match the empty string, such as `^a{2}?(((?!)|((|a){2,}(|a)\B|){2,3}?){2,3}.{3}a{2})\4`. V8 refuses an
+empty iteration and answers them at once, where PCRE2 tries each, which is more steps than the first stage of a
+match has (157 million for one of them) and more than the code that reads the clock runs in a second. They answer
+as V8 does with `pattern_match_limit=nothing`. Every other answer is V8's, but for the two lookbehind uses and the
+case-insensitive backreference above, which are refused.
 
 ## Performance
 
@@ -266,7 +479,49 @@ properties ECMA-262 lists and simple case folding. `pattern` and `patternPropert
 asked what a character is. The `hostname`, `idn-hostname` and `idn-email` formats read the same data. A URI is
 normalized by lowering the letters A to Z only, as RFC 3986 and RFC 3987 specify.
 
-The results are therefore the same with every Julia release from 1.10.
+The results are therefore the same with every Julia release from 1.10, with one exception.
+
+### Julia 1.10
+
+One thing is left to PCRE2, which is the comparison of a case-insensitive backreference such as `(.)(?i:\1)`. PCRE2
+compares by Unicode simple case folding, as ECMA-262 does with the `u` flag, in the Unicode version it was built
+with.
+
+Julia 1.10 bundles PCRE2 10.42, whose case folding is that of Unicode 14. A case-insensitive backreference there
+does not hold equivalent the two characters of each of the thirty pairs below, which Unicode 15.1 and 16 made
+equivalent and which V8 and Julia 1.13 hold equivalent. So `^(.)(?i:\1)$` matches `ƛꟜ` with Julia 1.13 and
+does not with Julia 1.10. Nothing else differs between the two: a literal, a class and every other construct read the
+package's own tables on every Julia. The package does not work around this. The fix is to update to Julia 1.13, where
+the answers are exact.
+
+These thirty are every pair. The tests try each character that has a case variant against each other (`what PCRE2
+holds equivalent`), and expect exactly these with Julia 1.10. Of the thirteen files of the
+[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data),
+Julia 1.10 differs from V8 on 1,026 answers, in twenty patterns of the case-folding file, and every one of them is a
+text of two characters that are one of these pairs. The tests hold those twenty patterns too.
+
+| Code points | Characters | Code points | Characters |
+|---|---|---|---|
+| U+019B, U+A7DC | ƛ Ƛ | U+0264, U+A7CB | ɤ Ɤ |
+| U+0390, U+1FD3 | ΐ ΐ | U+03B0, U+1FE3 | ΰ ΰ |
+| U+1C89, U+1C8A | Ᲊ ᲊ | U+A7CC, U+A7CD | Ꟍ ꟍ |
+| U+A7DA, U+A7DB | Ꟛ ꟛ | U+FB05, U+FB06 | ﬅ ﬆ |
+| U+10D50, U+10D70 | 𐵐 𐵰 | U+10D51, U+10D71 | 𐵑 𐵱 |
+| U+10D52, U+10D72 | 𐵒 𐵲 | U+10D53, U+10D73 | 𐵓 𐵳 |
+| U+10D54, U+10D74 | 𐵔 𐵴 | U+10D55, U+10D75 | 𐵕 𐵵 |
+| U+10D56, U+10D76 | 𐵖 𐵶 | U+10D57, U+10D77 | 𐵗 𐵷 |
+| U+10D58, U+10D78 | 𐵘 𐵸 | U+10D59, U+10D79 | 𐵙 𐵹 |
+| U+10D5A, U+10D7A | 𐵚 𐵺 | U+10D5B, U+10D7B | 𐵛 𐵻 |
+| U+10D5C, U+10D7C | 𐵜 𐵼 | U+10D5D, U+10D7D | 𐵝 𐵽 |
+| U+10D5E, U+10D7E | 𐵞 𐵾 | U+10D5F, U+10D7F | 𐵟 𐵿 |
+| U+10D60, U+10D80 | 𐵠 𐶀 | U+10D61, U+10D81 | 𐵡 𐶁 |
+| U+10D62, U+10D82 | 𐵢 𐶂 | U+10D63, U+10D83 | 𐵣 𐶃 |
+| U+10D64, U+10D84 | 𐵤 𐶄 | U+10D65, U+10D85 | 𐵥 𐶅 |
+
+The package's own tables hold Unicode 17, which added 28 pairs more: U+A7CE and U+A7CF, U+A7D2 and U+A7D3, U+A7D4
+and U+A7D5, and U+16EA0 to U+16EB8 each with the character 27 places on (U+16EBB to U+16ED3). A case-insensitive
+literal or class holds them equivalent on every Julia. A case-insensitive backreference does not, with Julia 1.10 or
+1.13, and neither does V8 13.6, whose data is Unicode 16.
 
 ## Tests
 
@@ -286,8 +541,10 @@ julia --project=. -t 4 test/runtests.jl
 - `pattern.jl`, `document.jl`, `plan.jl`, `unicode.jl`, `api.jl`: the regex-free matchers against the engine, the
   parser, the name lookup, the Unicode tables of the formats, and the public functions.
 - `ecmaregex/`: the pattern engine against answers recorded from V8 (`v8_oracle.json`, `v8_fuzz.json`), the patterns
-  of the suite, the translator, the validator of the `regex` format, the Unicode data, and that a match allocates
-  nothing. It reads the suite from `CORVUS_JSON_SCHEMA_TEST_SUITE` when the submodule is elsewhere.
+  of the suite, the translator, the validator of the `regex` format, the Unicode data, that a match allocates
+  nothing, the limits of a match and the limits of size. `v8tests.jl` has tables of V8's answers for each class of pattern the
+  translation once differed on. It reads the suite from `CORVUS_JSON_SCHEMA_TEST_SUITE` when the submodule is
+  elsewhere.
 - `metaschemas.jl`: the embedded metaschemas match `src/Corvus.Text.Json/metaschema`.
 - `differential.jl`: the plans against the general evaluator on the jsonschema-benchmark corpora and on mutations
   of their instances. It runs when `JSONSCHEMA_BENCHMARK` names a checkout.
@@ -296,3 +553,8 @@ julia --project=. -t 4 test/runtests.jl
 ## License
 
 Apache 2.0.
+
+The tables of Unicode properties and of case (`src/ecmaregex/unicode_data.jl`) are derived from the Unicode Character
+Database, which is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice,
+and the one of the `regress` crate that the tables were read from. The file is at the root of the package, beside
+`LICENSE`, so it is in the package as Julia's package manager installs it.

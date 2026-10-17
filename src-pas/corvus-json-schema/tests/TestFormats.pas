@@ -595,6 +595,76 @@ begin
     U([$3B4, $3BF, $3BA, $3B9, $3BC, $3AE]) + '.' + Japanese + '@' + Sample + '.example', False), True);
 end;
 
+// Times returns the text written count times over.
+function Times(const S: UTF8String; Count: Int32): UTF8String;
+var
+  I, At: Int32;
+begin
+  Result := '';
+  SetLength(Result, Length(S) * Count);
+  At := 1;
+  for I := 1 to Count do begin
+    Move(S[1], Result[At], Length(S));
+    Inc(At, Length(S));
+  end;
+end;
+
+// TestALongStringIsNotAnInternationalizedHostName of formats_bounds_test.go. The check of an internationalized host
+// name decodes and encodes Punycode, looks for a kana for every katakana middle dot and walks the neighbours of every
+// joiner, each of which takes time that grows with the square of a label. It did so for a label of any length: a
+// host name of 100,000 katakana middle dots after one kana took seconds to refuse. A string over the bound is now
+// refused at once and not read. The time allowed here is generous.
+procedure TestALongStringIsNotAnInternationalizedHostName;
+const
+  N = 1000000;
+var
+  Texts: array[0..5] of UTF8String;
+  Names: array[0..5] of UTF8String;
+  Distinct: UTF8String;
+  I: Int32;
+  Start: QWord;
+  Valid: Boolean;
+begin
+  Distinct := '';
+  for I := 0 to N - 1 do AppendRune(Distinct, $4E00 + I mod 20000);
+  Names[0] := 'katakana middle dots after a kana';
+  Texts[0] := U([$30A2]) + Times(U([$30FB]), N);
+  Names[1] := 'different letters';
+  Texts[1] := Distinct;
+  Names[2] := 'one letter';
+  Texts[2] := Times(U([$E9]), N);
+  Names[3] := 'joiners';
+  Texts[3] := U([$628]) + Times(U([$64B, $200C]), N div 2) + U([$628]);
+  Names[4] := 'a long A-label';
+  Texts[4] := 'xn--' + Times('a', N div 2) + '-' + Times('b9', N div 4);
+  Names[5] := 'labels';
+  Texts[5] := Times('a.', N div 2) + 'a';
+  for I := 0 to High(Texts) do begin
+    Start := GetTickCount64;
+    Valid := CheckKind(FormatKindIDNHostname, Texts[I], False);
+    Check('idn-hostname of ' + Names[I] + ', a million characters, is not valid', Valid, False);
+    Check('idn-hostname of ' + Names[I] + ' answers at once', GetTickCount64 - Start <= 2000, True);
+    Start := GetTickCount64;
+    Valid := CheckKind(FormatKindIDNEmail, 'a@' + Texts[I], False);
+    Check('idn-email with a domain of ' + Names[I] + ', a million characters, is not valid', Valid, False);
+    Check('idn-email with a domain of ' + Names[I] + ' answers at once', GetTickCount64 - Start <= 2000, True);
+  end;
+end;
+
+// TestNoInternationalizedHostNameIsOverTheBound of formats_bounds_test.go, for the names at the bound: the longest
+// names there are have 253 characters, and one more character is one too many.
+procedure TestTheLongestHostNames;
+var
+  Name: UTF8String;
+begin
+  Name := Times('a', 63) + '.' + Times('a', 63) + '.' + Times('a', 63) + '.' + Times('a', 61);
+  Check('idn-hostname of 253 characters', CheckKind(FormatKindIDNHostname, Name, False), True);
+  Check('idn-hostname of 254 characters', CheckKind(FormatKindIDNHostname, Name + 'a', False), False);
+  // A name of letters of four bytes: 28 labels of one letter each are 252 characters as A-labels.
+  Name := Times(U([$20000]) + '.', 27) + U([$20000]);
+  Check('idn-hostname of 28 labels of one letter of four bytes', CheckKind(FormatKindIDNHostname, Name, False), True);
+end;
+
 // TestFormatIsAnAnnotationByDefaultAndAssertedOnRequest of api_test.go, as far as the checks go.
 procedure TestIPv4Cases;
 begin
@@ -874,6 +944,8 @@ begin
   TestNumbers;
   TestUnicodeFormatsUseUnicode17;
   TestUnicodeFormatStrings;
+  TestALongStringIsNotAnInternationalizedHostName;
+  TestTheLongestHostNames;
   if Length(VectorsPath) <> 0 then RunVectors(VectorsPath);
   if Length(NumbersPath) <> 0 then RunNumbers(NumbersPath);
 

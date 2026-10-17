@@ -101,7 +101,8 @@ with the reason.
   to `^X`, anchored literals, whole literal sets, anchored class sequences matched greedily where that is exact and
   by length where one item is variable (`matchPinned`), alternatives of literals and sequences once groups are
   multiplied out, separated lists, and the excluded class with a word lookahead. A sequence has a byte-per-character
-  path for a string the document knows is ASCII (`matchASCII`). Patterns compile once per process (`patternCache`).
+  path for a string the document knows is ASCII (`matchASCII`). Identical patterns share one matcher through a cache
+  for the process, bounded at 1,024 patterns and 64 MiB counted (`patternCache`).
 - **The regular expression engine** (`internal/ecmaregex`). A pattern in the subset that RE2 reads the same way is
   translated to the standard library's `regexp` and matched in linear time. Such a pattern with no word boundary
   also gets a deterministic automaton over ASCII text (`dfa.go`), of at most 256 states, built on the first match:
@@ -212,8 +213,8 @@ with the reason.
 - **Stack allocation, `SkipLocalsInit`, `ArrayPool` and thread-static buffers** (C#), **per-thread buffers** (Rust
   and Java). Go has no thread-local storage. The evaluator stays on the stack by escape analysis, and the scratch
   comes from a `sync.Pool`.
-- **Translation to `java.util.regex` with reused matchers** (Java), **the `regex` and `regress` crates** (Rust),
-  **compiled IL regular expressions** (C#). `internal/ecmaregex` is this port's engine.
+- **Translation to `java.util.regex` with reused matchers** (Java), **the `regex` crate** (Rust, beside a port of
+  this module's engine), **compiled IL regular expressions** (C#). `internal/ecmaregex` is this port's engine.
 - **A vectorised search API** (`SearchValues` and `IndexOfAny` in C#). The standard library has no portable SIMD
   API. `bytes.IndexByte` and `bytes.Index` are vectorised in the runtime, and Todo 4 uses them.
 - **Release profile settings** (the Rust crate's `lto` and `codegen-units`). The Go compiler has no counterpart.

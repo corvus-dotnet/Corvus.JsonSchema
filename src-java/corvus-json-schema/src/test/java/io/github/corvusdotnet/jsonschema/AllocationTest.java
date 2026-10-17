@@ -51,6 +51,15 @@ class AllocationTest {
                 "{\"id\": \"abc_1\", \"code\": \"abcde\", \"line\": \"short\", \"x-a\": \"s\", \"a123\": 1, \"q\": true}",
                 "{\"code\": \"éabcde\", \"line\": \"café\"}", "{\"id\": \"1abc\"}", "{\"code\": \"abx\"}",
                 "{\"q\": 1}", "{\"a-very-long-property-name\": true}"));
+        // Patterns that the regular expression engine runs, each with a matcher at its own place in the evaluator:
+        // a lookahead, a backreference, one read by UTF-16 code unit, a lookbehind, and one for property names.
+        c.add(new Case("patterns of the engine", """
+                {"properties": {"a": {"pattern": "^(?=[a-z])[a-z0-9]+$"}, "b": {"pattern": "^(ab|c)\\\\1$"},
+                 "c": {"pattern": "^\\\\-?..$"}, "d": {"pattern": "(?<=x)y$"}, "e": {"pattern": "^(?=[a-z])[a-z0-9]+$"}},
+                 "patternProperties": {"^(?!x)[a-z]{2}$": {"type": "string"}}}""", DEFAULT,
+                "{\"a\": \"abc1\", \"b\": \"abab\", \"c\": \"-é中\", \"d\": \"axy\", \"e\": \"z9\", \"qq\": \"s\"}",
+                "{\"c\": \"𐐀\"}", "{\"a\": \"1abc\"}", "{\"b\": \"abc\"}", "{\"d\": \"ay\"}", "{\"qq\": 1}",
+                "{\"e\": \"É\"}"));
         c.add(new Case("enum and const", """
                 {"properties": {"few": {"enum": ["a", "b", "c"]}, "many": {"enum": ["a", "b", "c", "d", "e", "f",
                  "g", "h", "i", "j", "k"]}, "mixed": {"enum": [1, "x", null, true, {"a": [1]}]},
@@ -105,6 +114,15 @@ class AllocationTest {
                         + " \"ptr\": \"/a/b\", \"re\": \"^a+$\", \"tpl\": \"http://example.com/{id}\","
                         + " \"iri\": \"http://éxample.com\", \"rel\": \"0/a\", \"idnHost\": \"실례.테스트\","
                         + " \"idnEmail\": \"실례@실례.테스트\", \"unknown\": \"x\"}",
+                // What the readers of the grammars take: a quoted local part, an IP literal, a query and a fragment,
+                // an operator and a prefix in a template, named groups that share a name, and an A-label.
+                "{\"email\": \"\\\"joe \\\\\\\"x\\\"@[IPv6:::1]\", \"uri\": \"http://u:p@[2001:db8::1.2.3.4]:80/a%20b?q=1#f\","
+                        + " \"uriRef\": \"//h/p?q#f\", \"dur\": \"P1Y2M3DT4H5M6S\", \"ptr\": \"/a~0b/~1\","
+                        + " \"re\": \"(?:(?<a>x)|(?<a>y))\\\\k<a>(?<b>z)\", \"tpl\": \"/{+a,b:3}{?c*}\","
+                        + " \"iri\": \"http://éxample.com/é?\\ue000#é\", \"rel\": \"12#\","
+                        + " \"idnHost\": \"xn--bcher-kva.example\", \"idnEmail\": \"\\\"é\\\"@é.example\"}",
+                "{\"uri\": \"http://[::1\"}", "{\"tpl\": \"{a\"}", "{\"dur\": \"P1Y1D\"}", "{\"ptr\": \"/~2\"}",
+                "{\"re\": \"(?<a>x)(?<a>y)\"}", "{\"idnHost\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}", "{\"email\": \"a..b@c.d\"}",
                 "{\"date\": \"2021-02-29\"}", "{\"dt\": \"1963-06-19 08:30:06Z\"}", "{\"email\": \"joe\"}",
                 "{\"ipv4\": \"256.1.1.1\"}", "{\"uri\": \"//example.com\"}", "{\"host\": \"-a.com\"}",
                 "{\"re\": \"(\"}", "{\"idnHost\": \"〮실례.테스트\"}"));

@@ -40,6 +40,23 @@ end
 # The text of a class for a set, as the emitter writes it.
 classtext(set::E.CodeSet) = sprint(E.writeset, set)
 
+# The ordered pairs of characters with a case variant that the pattern ^(.)(?i:\1)$ does not match and the data holds
+# equivalent, and those it matches and the data does not. `bytes` is each of the characters as text.
+function comparedpairs(pattern::E.Pattern, folding::E.Folding, bytes::Vector{Vector{UInt8}})
+    lacking = Tuple{Int,Int}[]
+    added = Tuple{Int,Int}[]
+    text = UInt8[]
+    for (i, c) in enumerate(folding.points), (j, d) in enumerate(folding.points)
+        i == j && continue
+        empty!(text)
+        append!(text, bytes[i])
+        append!(text, bytes[j])
+        equivalent = d in folding.classes[i]
+        E.ismatch(pattern, text) == equivalent || push!(equivalent ? lacking : added, (Int(c), Int(d)))
+    end
+    return lacking, added
+end
+
 @testset "Unicode data" begin
     # Every table is a sorted list of ranges that neither overlap nor touch.
     @testset "every set is well formed" begin
@@ -98,7 +115,7 @@ classtext(set::E.CodeSet) = sprint(E.writeset, set)
         @test E.property("L") === E.property("gc=Letter")
         @test E.property("sc=Grek") === E.property("Script=Greek")
         # Names are matched exactly, and a name of one kind is not a name of another.
-        for bad in ["lu", "Greek", "sc=Lu", "gc=Greek", "gc=Alphabetic", "Script", "", "=", "sc=", "Lu=", "scx=Hrkt"]
+        for bad in ["lu", "Greek", "sc=Lu", "gc=Greek", "gc=Alphabetic", "Script", "", "=", "sc=", "Lu=", "scx=Hrk"]
             @test E.property(bad) === nothing
             @test !E.isproperty(bad)
         end
@@ -359,54 +376,33 @@ classtext(set::E.CodeSet) = sprint(E.writeset, set)
         @test !E.isnamepart(0x1F600)
     end
 
-    # What the module leaves to PCRE2 of case-insensitive matching is the comparison of a backreference, for text
-    # whose only characters with a case variant are ASCII letters (with U+017F and U+212A under the u flag grammar).
-    # That rests on two things about the PCRE2 in use, which are checked here. A character with no case variant in
-    # the data has none in PCRE2, and PCRE2 holds an ASCII letter equivalent to what the u flag grammar does.
+    # What the module leaves to PCRE2 of case-insensitive matching is the comparison of a backreference. PCRE2
+    # compares by Unicode simple case folding, as ECMA-262 does with the u flag, in the Unicode version it was built
+    # with. Every pair of characters with a case variant is tried here. PCRE2 holds no pair equivalent that the data
+    # does not, and the pairs of the data it lacks are exactly those Unicode has added since its version.
     @testset "what PCRE2 holds equivalent" begin
-        # Unicode never takes a case pair away, so a PCRE2 whose Unicode version is no later than the data's has no
-        # pair the data lacks. The emitter relies on PCRE2 only then.
-        @test E.pcrefoldingisknown()
-        @test VersionNumber(E.pcreunicodeversion()) <= VersionNumber(E.UNICODE_VERSION)
-        # As a check of that, PCRE2 holds no character with no case variant in the data equivalent to one that has
-        # a variant.
-        bad = String[]
+        engine = VersionNumber(E.pcreunicodeversion())
+        @test engine <= VersionNumber(E.UNICODE_VERSION)
+        # PCRE2 holds no character with no case variant in the data equivalent to one that has a variant.
         caseless = E.complement(E.setunion(E.cased(true), E.SURROGATE_SET))
-        matchedset(rawpattern("(?i:" * classtext(caseless) * ")")) == astext(caseless) || push!(bad, "caseless")
-        # PCRE2 holds an ASCII letter equivalent to what the u flag grammar does, as a literal and in a
-        # backreference. Each line of the text is a letter and one other character, for every other character.
-        lines = IOBuffer()
-        for c in 0:0x10FFFF
-            (0xD800 <= c <= 0xDFFF) || c == 0x0A || print(lines, '\n', 'a', Char(c))
+        @test matchedset(rawpattern("(?i:" * classtext(caseless) * ")")) == astext(caseless)
+        folding = E.folding(true)
+        pattern = E.compile("^(.)(?i:\\1)\$")
+        bytes = [Vector{UInt8}(string(Char(c))) for c in folding.points]
+        lacking, added = comparedpairs(pattern, folding, bytes)
+        @test isempty(added)
+        expected = Tuple{Int,Int}[]
+        for (a, b) in vcat(engine < v"17" ? PAIRS_OF_UNICODE_17 : [], engine < v"15" ? PAIRS_SINCE_UNICODE_14 : [])
+            push!(expected, (a, b), (b, a))
         end
-        print(lines, '\n')
-        text = take!(lines)
-        starts = findall(==(0x0A), text)[1:(end - 1)] .+ 1
-        matchdata = ccall((:pcre2_match_data_create_8, E.PCRE_LIB), Ptr{Cvoid}, (UInt32, Ptr{Cvoid}), 2, C_NULL)
-        ovector = ccall((:pcre2_get_ovector_pointer_8, E.PCRE_LIB), Ptr{Csize_t}, (Ptr{Cvoid},), matchdata)
-        for letter in vcat(collect('a':'z'), collect('A':'Z'), ['\u017f', '\u212a'])
-            expected = E.foldclosure(Int32[letter, letter], true)
-            literal = rawpattern("(?i:" * sprint(E.literal, Int32(letter)) * ")")
-            matchedset(literal) == expected || push!(bad, "literal $letter")
-            isascii(letter) || continue
-            text[starts] .= UInt8(letter)
-            reference = rawpattern("\\n($letter)(?i:\\g{1})(?=\\n)")
-            others = Int32[]
-            at = 0
-            while true
-                rc = ccall((:pcre2_match_8, E.PCRE_LIB), Cint,
-                    (Ptr{Cvoid}, Ptr{UInt8}, Csize_t, Csize_t, UInt32, Ptr{Cvoid}, Ptr{Cvoid}),
-                    reference.code, text, length(text), at, 0, matchdata, C_NULL)
-                rc == -1 && break
-                rc >= 0 || error("PCRE2 error $rc")
-                start = Int(unsafe_load(ovector, 1))
-                at = Int(unsafe_load(ovector, 2))
-                other = first(String(text[(start + 3):at]))
-                push!(others, Int32(UInt32(other)), Int32(UInt32(other)))
-            end
-            E.setof(others) == expected || push!(bad, "backreference $letter")
+        if engine >= v"16" || engine < v"15"
+            @test sort(lacking) == sort(expected)
+        else
+            # A PCRE2 with the data of Unicode 15, which no Julia this was run on has, lacks some of the thirty.
+            @test issubset(expected, lacking)
+            @test all(p -> minmax(p...) in vcat(PAIRS_OF_UNICODE_17, PAIRS_SINCE_UNICODE_14), lacking)
         end
-        ccall((:pcre2_match_data_free_8, E.PCRE_LIB), Cvoid, (Ptr{Cvoid},), matchdata)
-        @test isempty(bad)
+        # Every character is equivalent to itself.
+        @test all(b -> E.ismatch(pattern, vcat(b, b)), bytes)
     end
 end

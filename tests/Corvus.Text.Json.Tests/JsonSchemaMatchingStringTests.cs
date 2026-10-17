@@ -221,6 +221,74 @@ public class JsonSchemaMatchingStringTests
         context.Dispose();
     }
 
+    /// <summary>
+    /// The limit of 253 is on the name as A-labels (RFC 5890), not on its UTF-8 bytes. A label of fifty <c>é</c> is
+    /// 100 bytes of UTF-8 and 56 characters as the A-label <c>xn--9caa...a</c>; a label of one <c>é</c> is 2 bytes
+    /// and 7 characters (<c>xn--9ca</c>).
+    /// </summary>
+    /// <param name="name">What the name is made of.</param>
+    /// <param name="expected">Whether it is a host name.</param>
+    [TestMethod]
+    [DataRow("four labels of fifty é: 403 bytes, 227 as A-labels", true)]
+    [DataRow("four labels of fifty é and 25 a: 429 bytes, 253 as A-labels", true)]
+    [DataRow("four labels of fifty é and 26 a: 430 bytes, 254 as A-labels", false)]
+    [DataRow("forty labels of one é: 119 bytes, 319 as A-labels", false)]
+    public void MatchIdnHostname_LimitsTheNameAsALabels(string name, bool expected)
+    {
+        string value = Name(name);
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        Assert.AreEqual(expected, JsonSchemaEvaluation.MatchIdnHostname(Encoding.UTF8.GetBytes(value), "dummy"u8, ref context), "idn-hostname");
+
+        // An address whose domain is not a host name is not an address. (An address that is valid by its domain can
+        // still be over the limit of 320 bytes the idn-email check keeps on the whole address.)
+        if (!expected)
+        {
+            Assert.IsFalse(JsonSchemaEvaluation.MatchIdnEmail(Encoding.UTF8.GetBytes("a@" + value), "dummy"u8, ref context), "idn-email");
+        }
+
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    /// <summary>
+    /// A host name of A-labels is limited to 253 characters, whatever the length of the Unicode form it decodes to:
+    /// four A-labels of fifty <c>é</c> are 227 characters, and decode to 403 bytes of UTF-8.
+    /// </summary>
+    /// <param name="name">What the name is made of.</param>
+    /// <param name="expected">Whether it is a host name.</param>
+    [TestMethod]
+    [DataRow("four labels of fifty é: 403 bytes, 227 as A-labels", true)]
+    [DataRow("four labels of fifty é and 25 a: 429 bytes, 253 as A-labels", true)]
+    [DataRow("four labels of fifty é and 26 a: 430 bytes, 254 as A-labels", false)]
+    public void MatchHostname_LimitsTheNameAsALabels(string name, bool expected)
+    {
+        string value = Name(name).Replace(new string('\u00e9', 50), "xn--9ca" + new string('a', 49));
+        foreach (char c in value)
+        {
+            Assert.IsTrue(c < 0x80, value);
+        }
+
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        Assert.AreEqual(expected, JsonSchemaEvaluation.MatchHostname(Encoding.UTF8.GetBytes(value), "dummy"u8, ref context));
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    private static string Name(string name)
+    {
+        string fifty = new('\u00e9', 50);
+        return name switch
+        {
+            "four labels of fifty é: 403 bytes, 227 as A-labels" => string.Join(".", fifty, fifty, fifty, fifty),
+            "four labels of fifty é and 25 a: 429 bytes, 253 as A-labels" => string.Join(".", fifty, fifty, fifty, fifty, new string('a', 25)),
+            "four labels of fifty é and 26 a: 430 bytes, 254 as A-labels" => string.Join(".", fifty, fifty, fifty, fifty, new string('a', 26)),
+            "forty labels of one é: 119 bytes, 319 as A-labels" => new string('\u00e9', 40).Replace("\u00e9", "\u00e9.").TrimEnd('.'),
+            _ => throw new ArgumentException(name),
+        };
+    }
+
     [TestMethod]
     [DataRow("192.168.0.1", true)]
     [DataRow("127.0.0.0.1", false)]

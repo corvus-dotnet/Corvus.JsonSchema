@@ -100,7 +100,7 @@ var
   TotalRequests, TotalValidations: Int64;
   Sink: Boolean;
 
-function Number(V: Int32): UTF8String;
+function Number(V: Int64): UTF8String;
 begin
   Result := UTF8String(IntToStr(V));
 end;
@@ -124,8 +124,8 @@ procedure AllocationCases;
 var
   Large, Unique: UTF8String;
   I: Int32;
-  Formats: TJsonSchemaOptions;
-  Eacute, Uuml: UTF8String;
+  Formats, Limits: TJsonSchemaOptions;
+  Eacute, Uuml, Long: UTF8String;
 begin
   Large := '';
   for I := 0 to 299 do begin
@@ -243,6 +243,44 @@ begin
       + '"P4DT12H30M5S", "time": "08:30:06.283185+01:00", "v4": "1.2.3.4"}',
     '{"n": 1e30}',
     '{"json": "bm90IGpzb24="}']);
+  { Patterns that run on the backtracking matcher, with the default limit of a match, a limit of their own and
+    none, on strings long enough for the matcher to read the clock. The limit and the deadline are in the memory
+    the thread keeps for its matches. }
+  Long := '';
+  for I := 1 to 2000 do
+    Long := Long + 'ab';
+  for I := 0 to 2 do begin
+    Limits := DefaultJsonSchemaOptions;
+    case I of
+      1: WithPatternMatchLimit(Limits, 60000);
+      2: WithPatternMatchLimit(Limits, NoPatternMatchLimit);
+    end;
+    AddCase('patterns on the backtracking matcher, limit ' + Number(Limits.PatternMatchLimit) + ' ms', '{'
+      + '"type": "object",'
+      + '"properties": {'
+      + '"look": { "pattern": "^(?=.)(?:a|b)*c?$" },'
+      + '"back": { "pattern": "^(?:(a|b)\\1?)+$" },'
+      + '"wide": { "pattern": "^[ab' + Eacute + ']{0,60000}c?$" }'
+      + '},'
+      + '"patternProperties": { "^(?=x)(?:x|-)+$": { "type": "integer" } }'
+      + '}', Limits, [
+      '{"look": "' + Long + '", "back": "' + Long + '", "wide": "' + Eacute + Long + '", "x-x--x": 1}',
+      '{"look": "' + Long + 'd", "back": "' + Long + 'c", "wide": "' + Eacute + Long + 'd", "x-x--x": "no"}']);
+  end;
+  { Patterns of repetitions inside repetitions, on strings that fail at their end. The matcher takes its memory of
+    failed places into use for these (without it they do not end), and that memory is kept by the thread with the
+    rest. The second is a plain pattern on a string that is not ASCII, which has no automaton. }
+  Long := '';
+  for I := 1 to 1000 do
+    Long := Long + 'a';
+  AddCase('patterns that use the memory of failed places', '{'
+    + '"properties": {'
+    + '"look": { "pattern": "^(?=.)(?:a|aa)+$" },'
+    + '"plain": { "pattern": "^(?:' + Eacute + '|a+)+$" }'
+    + '}'
+    + '}', DefaultJsonSchemaOptions, [
+    '{"look": "' + Long + 'b", "plain": "' + Eacute + Long + '"}',
+    '{"look": "' + Long + '", "plain": "' + Eacute + Long + 'b"}']);
 end;
 
 { Report records the requests for memory of one form of validation: Runs passes over the instances of a case. }

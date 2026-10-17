@@ -41,7 +41,7 @@ uses
 
 const
   { JsonSchemaVersion is the version of this package. }
-  JsonSchemaVersion = '0.1.0';
+  JsonSchemaVersion = '0.1.1';
 
 type
   { EJsonSchemaError is the ancestor of the exceptions this unit raises. Utf8Message is the message as UTF-8. }
@@ -68,6 +68,45 @@ type
   { EJsonSchemaDepthError reports that evaluation recursed in place beyond the maximum depth (a schema that loops
     without consuming the instance). }
   EJsonSchemaDepthError = class(EJsonSchemaError);
+
+  { EJsonSchemaPatternMatchLimit reports a validation that was abandoned because one match of a pattern or
+    patternProperties regular expression reached its limit (see WithPatternMatchLimit). The instance is then
+    neither valid nor not valid. Compiling a schema raises it too, when the match was of a pattern against a
+    property name the schema declares. }
+  EJsonSchemaPatternMatchLimit = class(EJsonSchemaError)
+  private
+    FPattern: UTF8String;
+    FLimit: Int64;
+    FMemory: Boolean;
+  public
+    { Pattern is the regular expression. }
+    property Pattern: UTF8String read FPattern;
+    { Limit is the time the match was allowed, in milliseconds. }
+    property Limit: Int64 read FLimit;
+    { Memory says the match was abandoned for the memory of its backtracking, not for its time: it held
+      1,048,576 choices, which is 16 MB. }
+    property Memory: Boolean read FMemory;
+  end;
+
+  { EJsonSchemaPatternTooLarge reports a schema that was not compiled because one of its regular expressions is
+    over a limit of size. It is not the error of a regular expression that is not valid, which is
+    EJsonSchemaCompileError: the pattern was not read to its end, so nothing is known of whether it is valid. }
+  EJsonSchemaPatternTooLarge = class(EJsonSchemaError)
+  private
+    FPattern: UTF8String;
+    FKeyword: UTF8String;
+    FLimit: UTF8String;
+    FValue: Int32;
+  public
+    { Pattern is the regular expression. }
+    property Pattern: UTF8String read FPattern;
+    { Keyword is the keyword that holds it, pattern or patternProperties. }
+    property Keyword: UTF8String read FKeyword;
+    { Limit names the limit: length (the bytes of the pattern), nesting (the depth of its groups) or size (the
+      bytes counted for it as it is read). Value is the value of that limit. }
+    property Limit: UTF8String read FLimit;
+    property Value: Int32 read FValue;
+  end;
 
   { TJsonDocument is JSON text parsed for evaluation: parse once, validate any number of times. It is a value that
     needs no Free, is not changed once parsed, and is safe to read from several threads. }
@@ -117,6 +156,12 @@ const
   { Verbose records every evaluation, passing and failing, with message text, including annotations. }
   Verbose = Corvus.JsonSchema.Results.Verbose;
 
+  { DefaultPatternMatchLimit is the time one match of a pattern or patternProperties regular expression against
+    one string may take, in milliseconds, unless WithPatternMatchLimit says otherwise: one second. }
+  DefaultPatternMatchLimit = Corvus.JsonSchema.Options.DefaultPatternMatchLimit;
+  { NoPatternMatchLimit, given to WithPatternMatchLimit, turns the limit on a match off. }
+  NoPatternMatchLimit = Corvus.JsonSchema.Options.NoPatternMatchLimit;
+
 type
   { IJsonSchemaValidator is a compiled schema. It is immutable and safe for concurrent use.
 
@@ -127,25 +172,30 @@ type
   IJsonSchemaValidator = interface
     ['{6E1B6C0B-52D5-4C59-9E0C-0F3B4D0A7C31}']
     { IsValid reports whether an instance is valid. An evaluation that recursed in place beyond the maximum depth is
-      reported as not valid, whatever it came to. Use TryIsValid to tell the two apart. }
+      reported as not valid, whatever it came to. Use TryIsValid to tell the two apart. It raises
+      EJsonSchemaPatternMatchLimit when a match of a regular expression reached its limit (see
+      WithPatternMatchLimit): a limit is never reported as not valid. }
     function IsValid(const Instance: TJsonDocument): Boolean; overload;
     { IsValid reports whether JSON text is a valid instance. The text is parsed into buffers the calling thread
       reuses, so a validation allocates nothing in the steady state. It raises EJsonParseError when the text is not
-      JSON. }
+      JSON, and EJsonSchemaPatternMatchLimit when a match of a regular expression reached its limit. }
     function IsValid(const Json: UTF8String): Boolean; overload;
     { IsValid for the UTF-8 JSON text Json[Start .. Start+Len-1]. }
     function IsValid(const Json: TBytes; Start, Len: Int32): Boolean; overload;
 
     { TryIsValid reports whether an instance is valid, and raises nothing. Error is the reason when the instance
-      could not be evaluated: text that is not JSON, or a schema that recursed in place beyond the maximum depth.
-      It is empty otherwise. }
+      could not be evaluated: text that is not JSON, a schema that recursed in place beyond the maximum depth, or a
+      match of a regular expression that reached its limit (the message of EJsonSchemaPatternMatchLimit, which
+      starts with "A match of the regular expression"). The result is then False and is not an answer. Error is
+      empty otherwise. }
     function TryIsValid(const Instance: TJsonDocument; out Error: UTF8String): Boolean; overload;
     function TryIsValid(const Json: UTF8String; out Error: UTF8String): Boolean; overload;
     function TryIsValid(const Json: TBytes; Start, Len: Int32; out Error: UTF8String): Boolean; overload;
 
     { Evaluate evaluates an instance exhaustively, reporting to the collector, and reports whether the instance is
-      valid. It raises EJsonSchemaDepthError when evaluation recursed in place beyond the maximum depth, and
-      EJsonParseError when the text is not JSON. }
+      valid. It raises EJsonSchemaDepthError when evaluation recursed in place beyond the maximum depth,
+      EJsonSchemaPatternMatchLimit when a match of a regular expression reached its limit, and EJsonParseError when
+      the text is not JSON. What the collector holds when it raises is not a report of the instance. }
     function Evaluate(const Instance: TJsonDocument; var Results: TJsonSchemaResults): Boolean; overload;
     function Evaluate(const Json: UTF8String; var Results: TJsonSchemaResults): Boolean; overload;
     function Evaluate(const Json: TBytes; Start, Len: Int32; var Results: TJsonSchemaResults): Boolean; overload;
@@ -163,7 +213,10 @@ type
   end;
 
 { Compiling. Each function raises EJsonParseError when schema text is not JSON, and EJsonSchemaCompileError when
-  the schema cannot be compiled. }
+  the schema cannot be compiled. Each raises EJsonSchemaPatternTooLarge when a regular expression of the schema is
+  over a limit of size (1,048,576 bytes of length, groups 1,000 deep, or a size of 1,048,576 bytes as it is read),
+  and EJsonSchemaPatternMatchLimit when matching a regular expression of the
+  schema against a property name the schema declares reached the limit of a match (see WithPatternMatchLimit). }
 
 { CompileJsonSchema compiles a schema given as JSON text. }
 function CompileJsonSchema(const Schema: UTF8String): IJsonSchemaValidator; overload;
@@ -226,6 +279,13 @@ procedure WithEntryPoint(var O: TJsonSchemaOptions; const Reference: UTF8String)
 { WithMaxDepth sets the maximum depth of in-place recursion on a cycle before evaluation is abandoned. The default
   is 128. Values below 1 are ignored. }
 procedure WithMaxDepth(var O: TJsonSchemaOptions; Depth: Int32);
+{ WithPatternMatchLimit sets the time one match of a pattern or patternProperties regular expression against one
+  string may take, in milliseconds. The default is DefaultPatternMatchLimit, one second. A match that takes longer
+  is abandoned, and the validation it belongs to raises EJsonSchemaPatternMatchLimit (the Try forms return the
+  reason). Zero (NoPatternMatchLimit) or less turns the limit off, for a caller who trusts both the schema and the
+  instances. Without the limit a match also has no limit on its memory. The limit is on each match, not on the
+  validation. }
+procedure WithPatternMatchLimit(var O: TJsonSchemaOptions; Milliseconds: Int64);
 
 { Results. }
 
@@ -258,33 +318,47 @@ implementation
 
 uses
   Corvus.JsonSchema.EcmaRegex,
+  Corvus.JsonSchema.Pattern,
   Corvus.JsonSchema.Compiler,
   Corvus.JsonSchema.Eval;
 
 type
   PParseError = ^TParseError;
 
-  { How a validation of JSON text ended. }
-  TTextStatus = (TextEvaluated, TextNotJson, TextDepthExceeded);
+  { How a validation of JSON text ended. TextMatchLimit says a match of a regular expression reached its limit, and
+    the budget of the evaluation says which. }
+  TTextStatus = (TextEvaluated, TextNotJson, TextDepthExceeded, TextMatchLimit);
+
+  { How an evaluation ended, when it did not come to an answer. }
+  TOutcome = record
+    DepthExceeded: Boolean;
+    { Budget.Stop says a match reached its limit. }
+    Budget: TPatternBudget;
+  end;
+  POutcome = ^TOutcome;
 
   TJsonSchemaValidator = class(TInterfacedObject, IJsonSchemaValidator)
   private
     FProgram: TProgram;
     { Held while the annotation keywords are digested, on the first evaluation with a collector. }
     FLock: TCriticalSection;
-    function Run(Instance: PDocument; S: PScratch; out DepthExceeded: Boolean): Boolean;
+    function Run(Instance: PDocument; S: PScratch; out Outcome: TOutcome): Boolean;
     function RunParsed(S: PScratch; const B: TBytes; Len: NativeInt; out Status: TTextStatus;
-      Error: PParseError): Boolean;
-    function RunNested(const B: TBytes; out Status: TTextStatus; Error: PParseError): Boolean;
+      Error: PParseError; out Outcome: TOutcome): Boolean;
+    function RunNested(const B: TBytes; out Status: TTextStatus; Error: PParseError;
+      out Outcome: TOutcome): Boolean;
     function RunNestedBytes(const Json: TBytes; Start, Len: Int32; out Status: TTextStatus;
-      Error: PParseError): Boolean;
-    function RunNestedString(const Json: UTF8String; out Status: TTextStatus; Error: PParseError): Boolean;
-    function RunBytes(const Json: TBytes; Start, Len: Int32; out Status: TTextStatus; Error: PParseError): Boolean;
-    function RunString(const Json: UTF8String; out Status: TTextStatus; Error: PParseError): Boolean;
+      Error: PParseError; out Outcome: TOutcome): Boolean;
+    function RunNestedString(const Json: UTF8String; out Status: TTextStatus; Error: PParseError;
+      out Outcome: TOutcome): Boolean;
+    function RunBytes(const Json: TBytes; Start, Len: Int32; out Status: TTextStatus; Error: PParseError;
+      out Outcome: TOutcome): Boolean;
+    function RunString(const Json: UTF8String; out Status: TTextStatus; Error: PParseError;
+      out Outcome: TOutcome): Boolean;
     procedure RaiseStringNotJson(const Json: UTF8String);
     procedure RaiseBytesNotJson(const Json: TBytes; Start, Len: Int32);
     function Collect(const Instance: TJsonDocument; var Results: TJsonSchemaResults;
-      out DepthExceeded: Boolean): Boolean;
+      out Outcome: TOutcome): Boolean;
   public
     constructor Create(const Compiled: TCompiledSchema; const Options: TCompileOptions);
     destructor Destroy; override;
@@ -329,6 +403,25 @@ begin
   raise EJsonSchemaDepthError.CreateUtf8(ErrDepthExceeded);
 end;
 
+{ MatchLimitText is the message of the match that reached its limit in a budget. }
+function MatchLimitText(const Budget: TPatternBudget): UTF8String;
+begin
+  Result := PatternMatchLimitMessage(Budget.Failed^.Source, Budget.LimitMs, Budget.Stop = EcmaRegexStopMemory);
+end;
+
+{ RaiseMatchLimit raises the error of the match that reached its limit in a budget. It is apart from its callers
+  so that they hold no string. }
+procedure RaiseMatchLimit(const Budget: TPatternBudget);
+var
+  E: EJsonSchemaPatternMatchLimit;
+begin
+  E := EJsonSchemaPatternMatchLimit.CreateUtf8(MatchLimitText(Budget));
+  E.FPattern := Budget.Failed^.Source;
+  E.FLimit := Budget.LimitMs;
+  E.FMemory := Budget.Stop = EcmaRegexStopMemory;
+  raise E;
+end;
+
 { Slice is a copy of the bytes Json[Start .. Start+Len-1]. A range that is not within the array is cut to it, so
   that it reads no other memory: the text that is left is then not JSON, or is what the caller meant. }
 function Slice(const Json: TBytes; Start, Len: Int32): TBytes;
@@ -346,10 +439,16 @@ end;
   The validator }
 
 constructor TJsonSchemaValidator.Create(const Compiled: TCompiledSchema; const Options: TCompileOptions);
+var
+  Budget: TPatternBudget;
 begin
   inherited Create;
   FLock := TCriticalSection.Create;
-  NewProgram(Compiled, Options, FProgram);
+  NewProgram(Compiled, Options, FProgram, Budget);
+  { The plans match each pattern against the property names the schema declares, within the limit of a match. (An
+    exception in a constructor frees the object.) }
+  if Budget.Stop <> EcmaRegexStopNone then
+    RaiseMatchLimit(Budget);
 end;
 
 destructor TJsonSchemaValidator.Destroy;
@@ -363,10 +462,11 @@ begin
   Result := @FProgram;
 end;
 
-{ Run validates a document, failing fast. It reports the result and whether evaluation recursed in place beyond the
-  maximum depth. An evaluation that did is not valid, whatever it came to: the branch that was abandoned counts as
-  false, which a not above it turns into true. }
-function TJsonSchemaValidator.Run(Instance: PDocument; S: PScratch; out DepthExceeded: Boolean): Boolean;
+{ Run validates a document, failing fast. It reports the result, whether evaluation recursed in place beyond the
+  maximum depth, and whether a match of a regular expression reached its limit. An evaluation that ended in either
+  is not valid, whatever it came to: the branch that was abandoned counts as false, which a not above it turns into
+  true. }
+function TJsonSchemaValidator.Run(Instance: PDocument; S: PScratch; out Outcome: TOutcome): Boolean;
 var
   E: TEvaluator;
 begin
@@ -375,16 +475,27 @@ begin
   FinishEvaluator(E);
   if (S = nil) and (E.S <> nil) then
     ReleaseScratch(E.S);
-  DepthExceeded := E.DepthExceeded;
-  Result := Result and not DepthExceeded;
+  Outcome.DepthExceeded := E.DepthExceeded;
+  Outcome.Budget := E.Budget;
+  Result := Result and not E.DepthExceeded and (E.Budget.Stop = EcmaRegexStopNone);
+end;
+
+{ StatusOf is how an evaluation that ran ended. A limit of a match comes before the maximum depth, as in Go. }
+function StatusOf(const Outcome: TOutcome): TTextStatus; inline;
+begin
+  if Outcome.Budget.Stop <> EcmaRegexStopNone then
+    Result := TextMatchLimit
+  else if Outcome.DepthExceeded then
+    Result := TextDepthExceeded
+  else
+    Result := TextEvaluated;
 end;
 
 { RunParsed parses B[0 .. Len-1] into the thread's reused document and validates it. The result is False for text
-  that is not JSON and for an evaluation that went beyond the maximum depth, and the status says which. }
+  that is not JSON, for an evaluation that went beyond the maximum depth and for one in which a match reached its
+  limit, and the status says which. }
 function TJsonSchemaValidator.RunParsed(S: PScratch; const B: TBytes; Len: NativeInt; out Status: TTextStatus;
-  Error: PParseError): Boolean;
-var
-  Exceeded: Boolean;
+  Error: PParseError; out Outcome: TOutcome): Boolean;
 begin
   Result := False;
   S^.TextBusy := True;
@@ -393,21 +504,19 @@ begin
     if Error <> nil then
       Error^ := ParserError(S^.Parser);
   end else begin
-    Result := Run(@S^.Text, S, Exceeded);
-    Status := TextEvaluated;
-    if Exceeded then
-      Status := TextDepthExceeded;
+    Result := Run(@S^.Text, S, Outcome);
+    Status := StatusOf(Outcome);
   end;
   ReleaseText(S);
 end;
 
 { RunNested validates JSON text while a validation of JSON text is running on this thread (from a format
   validator): the text is parsed into a document of its own. }
-function TJsonSchemaValidator.RunNested(const B: TBytes; out Status: TTextStatus; Error: PParseError): Boolean;
+function TJsonSchemaValidator.RunNested(const B: TBytes; out Status: TTextStatus; Error: PParseError;
+  out Outcome: TOutcome): Boolean;
 var
   Doc: TDocument;
   ParseError: TParseError;
-  Exceeded: Boolean;
 begin
   Result := False;
   if not ParseDocument(B, Doc, ParseError) then begin
@@ -416,36 +525,34 @@ begin
       Error^ := ParseError;
     Exit;
   end;
-  Result := Run(@Doc, nil, Exceeded);
-  Status := TextEvaluated;
-  if Exceeded then
-    Status := TextDepthExceeded;
+  Result := Run(@Doc, nil, Outcome);
+  Status := StatusOf(Outcome);
 end;
 
 { RunNestedBytes and RunNestedString are apart from their callers so that the usual path holds no copy of the
   text. }
 function TJsonSchemaValidator.RunNestedBytes(const Json: TBytes; Start, Len: Int32; out Status: TTextStatus;
-  Error: PParseError): Boolean;
+  Error: PParseError; out Outcome: TOutcome): Boolean;
 begin
-  Result := RunNested(Slice(Json, Start, Len), Status, Error);
+  Result := RunNested(Slice(Json, Start, Len), Status, Error, Outcome);
 end;
 
 function TJsonSchemaValidator.RunNestedString(const Json: UTF8String; out Status: TTextStatus;
-  Error: PParseError): Boolean;
+  Error: PParseError; out Outcome: TOutcome): Boolean;
 begin
-  Result := RunNested(BytesOf(Json), Status, Error);
+  Result := RunNested(BytesOf(Json), Status, Error, Outcome);
 end;
 
 function TJsonSchemaValidator.RunBytes(const Json: TBytes; Start, Len: Int32; out Status: TTextStatus;
-  Error: PParseError): Boolean;
+  Error: PParseError; out Outcome: TOutcome): Boolean;
 var
   S: PScratch;
 begin
   S := AcquireScratch;
   if S^.TextBusy then
-    Exit(RunNestedBytes(Json, Start, Len, Status, Error));
+    Exit(RunNestedBytes(Json, Start, Len, Status, Error, Outcome));
   if (Start = 0) and (Len = Length(Json)) then
-    Exit(RunParsed(S, Json, Len, Status, Error));
+    Exit(RunParsed(S, Json, Len, Status, Error, Outcome));
   { A document reads its text from the start of an array to a byte that ends the last value: text that is part of
     an array is copied to the thread's buffer, with a byte after it that is no part of a value. }
   if (Start < 0) or (Len < 0) or (Start >= Length(Json)) then
@@ -457,18 +564,18 @@ begin
   if Len > 0 then
     Move(Json[Start], S^.TextBuf[0], Len);
   S^.TextBuf[Len] := 0;
-  Result := RunParsed(S, S^.TextBuf, Len, Status, Error);
+  Result := RunParsed(S, S^.TextBuf, Len, Status, Error, Outcome);
 end;
 
 function TJsonSchemaValidator.RunString(const Json: UTF8String; out Status: TTextStatus;
-  Error: PParseError): Boolean;
+  Error: PParseError; out Outcome: TOutcome): Boolean;
 var
   S: PScratch;
   Len: NativeInt;
 begin
   S := AcquireScratch;
   if S^.TextBusy then
-    Exit(RunNestedString(Json, Status, Error));
+    Exit(RunNestedString(Json, Status, Error, Outcome));
   { A string is not an array of bytes: its text is copied to the thread's buffer, which the parser reads, with a
     byte after it that is no part of a value. Text beyond the size of a document is not copied: the parser refuses
     it by its length. }
@@ -480,14 +587,16 @@ begin
       Move(Json[1], S^.TextBuf[0], Len);
     S^.TextBuf[Len] := 0;
   end;
-  Result := RunParsed(S, S^.TextBuf, Len, Status, Error);
+  Result := RunParsed(S, S^.TextBuf, Len, Status, Error, Outcome);
 end;
 
 function TJsonSchemaValidator.IsValid(const Instance: TJsonDocument): Boolean;
 var
-  Exceeded: Boolean;
+  Outcome: TOutcome;
 begin
-  Result := Run(@Instance, nil, Exceeded);
+  Result := Run(@Instance, nil, Outcome);
+  if Outcome.Budget.Stop <> EcmaRegexStopNone then
+    RaiseMatchLimit(Outcome.Budget);
 end;
 
 { RaiseStringNotJson and RaiseBytesNotJson raise the EJsonParseError of text that IsValid found is not JSON. The
@@ -497,8 +606,9 @@ procedure TJsonSchemaValidator.RaiseStringNotJson(const Json: UTF8String);
 var
   Status: TTextStatus;
   Error: TParseError;
+  Outcome: TOutcome;
 begin
-  RunString(Json, Status, @Error);
+  RunString(Json, Status, @Error, Outcome);
   RaiseParseError(Error);
 end;
 
@@ -506,38 +616,46 @@ procedure TJsonSchemaValidator.RaiseBytesNotJson(const Json: TBytes; Start, Len:
 var
   Status: TTextStatus;
   Error: TParseError;
+  Outcome: TOutcome;
 begin
-  RunBytes(Json, Start, Len, Status, @Error);
+  RunBytes(Json, Start, Len, Status, @Error, Outcome);
   RaiseParseError(Error);
 end;
 
 function TJsonSchemaValidator.IsValid(const Json: UTF8String): Boolean;
 var
   Status: TTextStatus;
+  Outcome: TOutcome;
 begin
-  Result := RunString(Json, Status, nil);
+  Result := RunString(Json, Status, nil, Outcome);
   if Status = TextNotJson then
-    RaiseStringNotJson(Json);
+    RaiseStringNotJson(Json)
+  else if Status = TextMatchLimit then
+    RaiseMatchLimit(Outcome.Budget);
 end;
 
 function TJsonSchemaValidator.IsValid(const Json: TBytes; Start, Len: Int32): Boolean;
 var
   Status: TTextStatus;
+  Outcome: TOutcome;
 begin
-  Result := RunBytes(Json, Start, Len, Status, nil);
+  Result := RunBytes(Json, Start, Len, Status, nil, Outcome);
   if Status = TextNotJson then
-    RaiseBytesNotJson(Json, Start, Len);
+    RaiseBytesNotJson(Json, Start, Len)
+  else if Status = TextMatchLimit then
+    RaiseMatchLimit(Outcome.Budget);
 end;
 
 function TJsonSchemaValidator.TryIsValid(const Instance: TJsonDocument; out Error: UTF8String): Boolean;
 var
-  Exceeded: Boolean;
+  Outcome: TOutcome;
 begin
   Error := '';
-  Result := Run(@Instance, nil, Exceeded);
-  if Exceeded then begin
-    Error := ErrDepthExceeded;
-    Result := False;
+  Result := Run(@Instance, nil, Outcome);
+  case StatusOf(Outcome) of
+    TextMatchLimit: Error := MatchLimitText(Outcome.Budget);
+    TextDepthExceeded: Error := ErrDepthExceeded;
+  else
   end;
 end;
 
@@ -545,15 +663,14 @@ function TJsonSchemaValidator.TryIsValid(const Json: UTF8String; out Error: UTF8
 var
   Status: TTextStatus;
   ParseError: TParseError;
+  Outcome: TOutcome;
 begin
   Error := '';
-  Result := RunString(Json, Status, @ParseError);
+  Result := RunString(Json, Status, @ParseError, Outcome);
   case Status of
     TextNotJson: Error := ParseErrorText(ParseError);
-    TextDepthExceeded: begin
-      Error := ErrDepthExceeded;
-      Result := False;
-    end;
+    TextDepthExceeded: Error := ErrDepthExceeded;
+    TextMatchLimit: Error := MatchLimitText(Outcome.Budget);
   else
   end;
 end;
@@ -562,22 +679,22 @@ function TJsonSchemaValidator.TryIsValid(const Json: TBytes; Start, Len: Int32; 
 var
   Status: TTextStatus;
   ParseError: TParseError;
+  Outcome: TOutcome;
 begin
   Error := '';
-  Result := RunBytes(Json, Start, Len, Status, @ParseError);
+  Result := RunBytes(Json, Start, Len, Status, @ParseError, Outcome);
   case Status of
     TextNotJson: Error := ParseErrorText(ParseError);
-    TextDepthExceeded: begin
-      Error := ErrDepthExceeded;
-      Result := False;
-    end;
+    TextDepthExceeded: Error := ErrDepthExceeded;
+    TextMatchLimit: Error := MatchLimitText(Outcome.Budget);
   else
   end;
 end;
 
-{ Collect evaluates an instance exhaustively, reporting to the collector. }
+{ Collect evaluates an instance exhaustively, reporting to the collector. The result is False when the evaluation
+  went beyond the maximum depth or a match reached its limit, and the outcome says which. }
 function TJsonSchemaValidator.Collect(const Instance: TJsonDocument; var Results: TJsonSchemaResults;
-  out DepthExceeded: Boolean): Boolean;
+  out Outcome: TOutcome): Boolean;
 var
   E: TEvaluator;
 begin
@@ -593,18 +710,22 @@ begin
   FinishEvaluator(E);
   if E.S <> nil then
     ReleaseScratch(E.S);
-  DepthExceeded := E.DepthExceeded;
-  if DepthExceeded then
+  Outcome.DepthExceeded := E.DepthExceeded;
+  Outcome.Budget := E.Budget;
+  if E.DepthExceeded or (E.Budget.Stop <> EcmaRegexStopNone) then
     Result := False;
 end;
 
 function TJsonSchemaValidator.Evaluate(const Instance: TJsonDocument; var Results: TJsonSchemaResults): Boolean;
 var
-  Exceeded: Boolean;
+  Outcome: TOutcome;
 begin
-  Result := Collect(Instance, Results, Exceeded);
-  if Exceeded then
-    RaiseDepthError;
+  Result := Collect(Instance, Results, Outcome);
+  case StatusOf(Outcome) of
+    TextMatchLimit: RaiseMatchLimit(Outcome.Budget);
+    TextDepthExceeded: RaiseDepthError;
+  else
+  end;
 end;
 
 function TJsonSchemaValidator.Evaluate(const Json: UTF8String; var Results: TJsonSchemaResults): Boolean;
@@ -624,12 +745,15 @@ end;
 function TJsonSchemaValidator.TryEvaluate(const Instance: TJsonDocument; var Results: TJsonSchemaResults;
   out Error: UTF8String): Boolean;
 var
-  Exceeded: Boolean;
+  Outcome: TOutcome;
 begin
   Error := '';
-  Result := Collect(Instance, Results, Exceeded);
-  if Exceeded then
-    Error := ErrDepthExceeded;
+  Result := Collect(Instance, Results, Outcome);
+  case StatusOf(Outcome) of
+    TextMatchLimit: Error := MatchLimitText(Outcome.Budget);
+    TextDepthExceeded: Error := ErrDepthExceeded;
+  else
+  end;
 end;
 
 function TJsonSchemaValidator.TryEvaluate(const Json: UTF8String; var Results: TJsonSchemaResults;
@@ -662,6 +786,21 @@ end;
 { ---------------------------------------------------------------------------------------------------------------------
   Compiling }
 
+{ RaiseCompileError raises the error of a schema that was not compiled. }
+procedure RaiseCompileError(const Compiled: TCompiledSchema; const Error: UTF8String);
+var
+  E: EJsonSchemaPatternTooLarge;
+begin
+  if Compiled.TooLarge.Limit = '' then
+    raise EJsonSchemaCompileError.CreateUtf8(Error);
+  E := EJsonSchemaPatternTooLarge.CreateUtf8(Error);
+  E.FPattern := Compiled.TooLarge.Pattern;
+  E.FKeyword := Compiled.TooLarge.Keyword;
+  E.FLimit := Compiled.TooLarge.Limit;
+  E.FValue := Compiled.TooLarge.Value;
+  raise E;
+end;
+
 function NewValidator(const Compiled: TCompiledSchema; const Options: TCompileOptions): IJsonSchemaValidator;
 begin
   Result := TJsonSchemaValidator.Create(Compiled, Options);
@@ -673,7 +812,7 @@ var
   Error: UTF8String;
 begin
   if not CompileDocument(Schema, Options, Compiled, Error) then
-    raise EJsonSchemaCompileError.CreateUtf8(Error);
+    RaiseCompileError(Compiled, Error);
   Result := NewValidator(Compiled, Options);
 end;
 
@@ -708,7 +847,7 @@ var
   Error: UTF8String;
 begin
   if not CompileFromURI(Uri, Options, Compiled, Error) then
-    raise EJsonSchemaCompileError.CreateUtf8(Error);
+    RaiseCompileError(Compiled, Error);
   Result := NewValidator(Compiled, Options);
 end;
 
@@ -809,6 +948,11 @@ end;
 procedure WithMaxDepth(var O: TJsonSchemaOptions; Depth: Int32);
 begin
   Corvus.JsonSchema.Options.WithMaxDepth(O, Depth);
+end;
+
+procedure WithPatternMatchLimit(var O: TJsonSchemaOptions; Milliseconds: Int64);
+begin
+  Corvus.JsonSchema.Options.WithPatternMatchLimit(O, Milliseconds);
 end;
 
 { ---------------------------------------------------------------------------------------------------------------------

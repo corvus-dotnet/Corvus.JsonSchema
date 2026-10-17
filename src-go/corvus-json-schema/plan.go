@@ -841,7 +841,7 @@ func planObject(p *program, n *schemaNode, childOf func(nodeID) child) *objectPl
 	o.namePatterns = make([][]uint16, len(known))
 	for i, name := range known {
 		for j, pp := range n.patternProperties {
-			if pp.pattern.matchString(name) {
+			if pp.pattern.matchString(name, &p.budget) {
 				o.namePatterns[i] = append(o.namePatterns[i], uint16(j))
 			}
 		}
@@ -1489,7 +1489,7 @@ func (e *evaluator) visitPattern(pl *objectPlan, x int) bool {
 	p := &pl.patterns[0]
 	k := d.first(x)
 	for end := k + 2*d.count(x); k < end; k += 2 {
-		if p.pattern.match(d.str(k), d.strASCII(k)) {
+		if p.pattern.match(d.str(k), d.strASCII(k), &e.budget) {
 			if !e.runChild(p.child, k+1) {
 				return false
 			}
@@ -1533,7 +1533,7 @@ func (e *evaluator) visitGeneral(pl *objectPlan, x int) (uint64, bool) {
 			}
 		} else {
 			for j := range pl.patterns {
-				if pl.patterns[j].pattern.match(name, d.strASCII(k)) {
+				if pl.patterns[j].pattern.match(name, d.strASCII(k), &e.budget) {
 					matched = true
 					if !e.runChild(pl.patterns[j].child, k+1) {
 						return 0, false
@@ -1705,7 +1705,7 @@ func (e *evaluator) runString(ops []stringOp, x int) bool {
 		case stringLength:
 			ok = lengthOK(d, x, o.min, o.max)
 		case stringPattern:
-			ok = o.pattern.match(d.str(x), d.strASCII(x))
+			ok = o.pattern.match(d.str(x), d.strASCII(x), &e.budget)
 		case stringFormat:
 			ok = o.format.checkString(d.str(x))
 		default:

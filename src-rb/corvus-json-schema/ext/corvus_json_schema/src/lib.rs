@@ -401,8 +401,14 @@ struct Validator {
     ruby_formats: bool,
 }
 
-fn depth_error(ruby: &Ruby, e: corvus::SchemaEvaluationDepthError) -> Error {
-    raise(ruby, "DepthError", e.to_string())
+/// The exception for an evaluation that gave no answer: it recursed in place beyond the maximum depth, or a match
+/// of a regular expression reached its limit.
+fn evaluation_error(ruby: &Ruby, e: corvus::SchemaEvaluationError) -> Error {
+    match e {
+        corvus::SchemaEvaluationError::InvalidJson(e) => raise(ruby, "InvalidJsonError", e.to_string()),
+        corvus::SchemaEvaluationError::PatternMatchLimit(e) => raise(ruby, "PatternMatchLimitError", e.to_string()),
+        other => raise(ruby, "DepthError", other.to_string()),
+    }
 }
 
 impl Validator {
@@ -411,15 +417,15 @@ impl Validator {
     fn check(&self, ruby: &Ruby, value: Value) -> Result<bool, Error> {
         if !self.ruby_formats {
             let ctx = Context::new();
-            let result = self.inner.validate_instance(RbInstance::root(value, &ctx));
+            let result = self.inner.try_validate_instance(RbInstance::root(value, &ctx));
             if !ctx.fallback.get() {
-                return result.map_err(|e| depth_error(ruby, e));
+                return result.map_err(|e| evaluation_error(ruby, e));
             }
         }
         let json = to_json(ruby, value, 0)?;
-        let result = self.inner.validate(&json);
+        let result = self.inner.try_validate(&json);
         take_callback_error()?;
-        result.map_err(|e| depth_error(ruby, e))
+        result.map_err(|e| evaluation_error(ruby, e))
     }
 
     fn valid(ruby: &Ruby, rb_self: &Self, value: Value) -> Result<bool, Error> {
@@ -435,13 +441,9 @@ impl Validator {
         } else {
             str_of(text).ok_or_else(|| raise(ruby, "InvalidJsonError", "the JSON text is not valid UTF-8"))?
         };
-        let result = rb_self.inner.validate_json(json);
+        let result = rb_self.inner.try_validate_json(json);
         take_callback_error()?;
-        match result {
-            Ok(valid) => Ok(valid),
-            Err(corvus::JsonValidationError::InvalidJson(e)) => Err(raise(ruby, "InvalidJsonError", e.to_string())),
-            Err(corvus::JsonValidationError::DepthExceeded(e)) => Err(depth_error(ruby, e)),
-        }
+        result.map_err(|e| evaluation_error(ruby, e))
     }
 
     /// Evaluates into the collector (replacing its results), reporting every keyword at its level.
@@ -449,18 +451,18 @@ impl Validator {
         let mut c = JsonSchemaResultsCollector::new(collector.level);
         if !rb_self.ruby_formats {
             let ctx = Context::new();
-            let result = rb_self.inner.evaluate_instance(RbInstance::root(value, &ctx), &mut c);
+            let result = rb_self.inner.try_evaluate_instance(RbInstance::root(value, &ctx), &mut c);
             if !ctx.fallback.get() {
                 *collector.inner.borrow_mut() = c;
-                return result.map_err(|e| depth_error(ruby, e));
+                return result.map_err(|e| evaluation_error(ruby, e));
             }
             c = JsonSchemaResultsCollector::new(collector.level);
         }
         let json = to_json(ruby, value, 0)?;
-        let result = rb_self.inner.evaluate(&json, &mut c);
+        let result = rb_self.inner.try_evaluate(&json, &mut c);
         take_callback_error()?;
         *collector.inner.borrow_mut() = c;
-        result.map_err(|e| depth_error(ruby, e))
+        result.map_err(|e| evaluation_error(ruby, e))
     }
 }
 
@@ -478,6 +480,7 @@ fn compile(
     base_uri: Option<String>,
     entry_point: Option<String>,
     max_depth: u32,
+    pattern_match_limit: Option<f64>,
 ) -> Result<Validator, Error> {
     let schema: Json = match RString::from_value(schema) {
         Some(text) => serde_json::from_str(&text.to_string()?)
@@ -499,6 +502,17 @@ fn compile(
         base_uri,
         entry_point,
         max_depth,
+        // In seconds. nil, zero or less turns the limit off.
+        pattern_match_limit: match pattern_match_limit {
+            Some(seconds) if seconds.is_nan() => {
+                return Err(Error::new(ruby.exception_arg_error(), "pattern_match_limit is not a number of seconds"));
+            }
+            Some(seconds) if seconds > 0.0 => {
+                Some(std::time::Duration::try_from_secs_f64(seconds).unwrap_or(std::time::Duration::MAX))
+                    .filter(|limit| !limit.is_zero())
+            }
+            _ => None,
+        },
         ..CompileOptions::default()
     };
     let mut ruby_formats = false;
@@ -560,7 +574,12 @@ fn compile(
                 Some(r) => format!("{} ({r})", e.message()),
                 None => e.message().to_owned(),
             };
-            Err(raise(ruby, "CompilationError", message))
+            let class = match e.kind() {
+                corvus::SchemaCompilationErrorKind::PatternTooLarge(_) => "PatternTooLargeError",
+                corvus::SchemaCompilationErrorKind::PatternMatchLimit(_) => "PatternMatchLimitError",
+                _ => "CompilationError",
+            };
+            Err(raise(ruby, class, message))
         }
     }
 }
@@ -621,12 +640,16 @@ impl Collector {
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("CorvusJsonSchema")?;
     let error = module.define_error("Error", ruby.exception_standard_error())?;
-    module.define_error("CompilationError", error)?;
+    let compilation = module.define_error("CompilationError", error)?;
+    // A regular expression over a limit of size. It is a CompilationError, so code that rescues those still does.
+    module.define_error("PatternTooLargeError", compilation)?;
     module.define_error("DepthError", error)?;
+    // A match of a regular expression that reached its limit: the instance is neither valid nor not valid.
+    module.define_error("PatternMatchLimitError", error)?;
     module.define_error("InvalidJsonError", error)?;
 
     let native = module.define_module("Native")?;
-    native.define_singleton_method("compile", function!(compile, 10))?;
+    native.define_singleton_method("compile", function!(compile, 11))?;
     native.define_singleton_method("crate_version", function!(|| corvus::VERSION, 0))?;
 
     let validator = module.define_class("Validator", ruby.class_object())?;

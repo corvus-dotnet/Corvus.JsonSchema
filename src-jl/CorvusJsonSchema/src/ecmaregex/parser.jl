@@ -1,8 +1,13 @@
 # Reads an ECMA-262 pattern by recursive descent into a tree. The grammar is that of ECMAScript 2025. With `unicode`
 # the parser applies the grammar of the u flag, and without it the Annex B grammar of a pattern with no flag.
 
-# Groups may nest this deep. It bounds the recursion of the readers.
+# Groups may nest this deep. It bounds the recursion of the readers, which count the pattern itself as one more.
 const MAX_NESTING = 200
+# A pattern may have this many terms and alternatives, which bounds the tree it is read into. A term is some 300
+# bytes of tree while the pattern is compiled, so a pattern of a megabyte of single characters was read into 450 MB
+# before it was found to be more than PCRE2 holds. PCRE2, as Julia builds it, holds a compiled pattern of at most
+# 64 KiB, which is at most 65,536 terms, so no pattern it takes has more than these.
+const MAX_PATTERN_TERMS = 1 << 17
 
 # The classes ECMA-262 defines, as sets. \d and \w are ASCII only, \s is WhiteSpace and LineTerminator, and the dot
 # is everything but the four line terminators.
@@ -45,10 +50,10 @@ const UNBOUNDED = -1
 # The largest bound of a counted quantifier. No string reaches a larger count.
 const MAX_COUNT = Int(typemax(Int32)) - 1
 
-# What is known, where a backreference stands, of whether a group it names has taken part.
+# What is known, where a backreference stands, of whether a group it names has taken part: it never has, or it can
+# have.
 const NEVER = 0
-const MAYBE = 1
-const DEFINITE = 2
+const LIVE = 1
 
 # One element of the syntax tree of a pattern.
 mutable struct Node
@@ -63,14 +68,20 @@ mutable struct Node
     min::Int
     max::Int
     lazy::Bool
-    # Marks a REPEAT whose last iteration is written apart from the ones before it.
-    lastapart::Bool
+    # Marks a REPEAT or a lookbehind with a group inside that a backreference outside it reads.
+    exports::Bool
+    # Marks a lookbehind that holds a backreference to a group that can have taken part.
+    haslive::Bool
+    # Marks a lookbehind that was written again as a fixed end and a lookbehind for the rest (see `split!`).
+    split::Bool
+    # Marks a lookbehind that is written as a search with the rest of the pattern inside it (see `continuation`).
+    continued::Bool
     # The number of the capturing group of a GROUP, counted from 1 as ECMA-262 does, or 0.
     group::Int
     # The groups a BACKREF names. A name can belong to several groups in separate alternatives, of which at most one
     # has taken part at any time.
     groups::Vector{Int}
-    # For each of the groups, what is known of whether it has taken part (NEVER, MAYBE or DEFINITE).
+    # For each of the groups, whether it can have taken part where the reference stands (NEVER or LIVE).
     statuses::Vector{Int}
     # For each of the groups, whether PCRE2 is to compare its text ignoring case.
     ignorecase::Vector{Bool}
@@ -93,8 +104,8 @@ const NO_NODES = Node[]
 const NO_INTS = Int[]
 const NO_BOOLS = Bool[]
 
-Node(kind::Int) = Node(kind, Int32(0), NO_CHARACTERS, NO_NODES, 0, 0, false, false, 0, NO_INTS, NO_INTS, NO_BOOLS, "",
-    false, false, false, 0, 0, Int64(-1), Int64(0))
+Node(kind::Int) = Node(kind, Int32(0), NO_CHARACTERS, NO_NODES, 0, 0, false, false, false, false, false, 0, NO_INTS,
+    NO_INTS, NO_BOOLS, "", false, false, false, 0, 0, Int64(-1), Int64(0))
 
 # What peek answers at the end of the pattern. It is not a code point.
 const END_OF_PATTERN = Char(0x110000)
@@ -113,12 +124,13 @@ mutable struct Parser
     groupcount::Int
     hasnames::Bool
     groups::Int
-    # For each group name, its groups: the number of each, then the alternatives that enclose it.
-    names::Dict{String,Vector{Vector{Int}}}
+    # For each group name: where the last group of the name is written (the position of the end of its name), then
+    # the numbers of its groups.
+    names::Dict{String,Vector{Int}}
     namedrefs::Vector{Node}
-    # The alternatives that enclose the current position, innermost last, as disjunction and alternative.
+    # The disjunctions that enclose the current position, innermost last: for each, where it starts and where its
+    # current alternative starts.
     path::Vector{Int}
-    disjunctions::Int
     # The modifiers in force, which only a group such as (?i:...) changes.
     ignorecase::Bool
     multiline::Bool
@@ -127,6 +139,8 @@ mutable struct Parser
     pairs::Vector{Int32}
     # The set of the class atom `classatom` last read, when it was a class escape, and nothing otherwise.
     atomset::Union{Nothing,CodeSet}
+    # The terms and the alternatives read so far.
+    terms::Int
 end
 
 function Parser(pattern::String, unicode::Bool)
@@ -135,10 +149,17 @@ function Parser(pattern::String, unicode::Bool)
         if Base.ismalformed(c) || Base.isoverlong(c) || UInt32(c) > 0x10FFFF
             throw(PatternError(pattern, "it is not UTF-8", false))
         end
-        push!(p, c)
+        if !unicode && UInt32(c) > 0xFFFF
+            # Without the u flag a pattern is a sequence of UTF-16 code units, each an atom of its own.
+            v = UInt32(c) - 0x10000
+            push!(p, Char(0xD800 + (v >> 10)))
+            push!(p, Char(0xDC00 + (v & 0x3FF)))
+        else
+            push!(p, c)
+        end
     end
-    return Parser(pattern, p, unicode, 0, 0, 0, false, 0, Dict{String,Vector{Vector{Int}}}(), Node[], Int[], 0, false,
-        false, false, Int32[], nothing)
+    return Parser(pattern, p, unicode, 0, 0, 0, false, 0, Dict{String,Vector{Int}}(), Node[], Int[], false,
+        false, false, Int32[], nothing, 0)
 end
 
 syntaxerror(P::Parser, message::String) = throw(PatternError(P.pattern, string(message, " at ", P.i), false))
@@ -152,7 +173,7 @@ function parse!(P::Parser)
     for ref in P.namedrefs
         named = get(P.names, ref.name, nothing)
         named === nothing && syntaxerror(P, "reference to an unknown group name")
-        ref.groups = Int[other[1] for other in named]
+        ref.groups = named[2:end]
     end
     return root
 end
@@ -201,15 +222,16 @@ end
 
 function disjunction(P::Parser)
     P.depth += 1
-    P.depth > MAX_NESTING && syntaxerror(P, "groups nested too deeply")
-    P.disjunctions += 1
-    push!(P.path, P.disjunctions, 0)
+    # Not a syntax error: nothing is wrong with the pattern, and nothing is known of the rest of it.
+    P.depth > MAX_NESTING + 1 && throw(TooLargeError(P.pattern,
+        string("its groups nest over the limit of ", MAX_NESTING, " deep"), false))
+    push!(P.path, P.i, P.i)
     level = length(P.path)
     result = alternative(P)
     if peekchar(P) == '|'
         alternatives = Node[result]
         while eat(P, '|')
-            P.path[level] += 1
+            P.path[level] = P.i
             push!(alternatives, alternative(P))
         end
         result = Node(ALT)
@@ -220,10 +242,20 @@ function disjunction(P::Parser)
     return result
 end
 
+# Counts a term or an alternative. Past the limit the pattern is too large to read, which is not a syntax error.
+function counted!(P::Parser)
+    P.terms += 1
+    P.terms > MAX_PATTERN_TERMS && throw(TooLargeError(P.pattern,
+        string("it has over the limit of ", MAX_PATTERN_TERMS, " terms and alternatives"), false))
+    return nothing
+end
+
 function alternative(P::Parser)
     terms = Node[]
+    counted!(P)
     while more(P) && peekchar(P) != '|' && peekchar(P) != ')'
         push!(terms, term(P))
+        counted!(P)
     end
     isempty(terms) && return Node(EMPTY)
     length(terms) == 1 && return terms[1]
@@ -232,11 +264,50 @@ function alternative(P::Parser)
     return node
 end
 
+# Where the translation of a pattern without the u flag keeps the surrogates: the code unit U+D800 + n is the
+# character U+F0000 + n, in the pattern and in the text (see `codeunits!` in EcmaRegex.jl).
+const UNIT_BASE = Int32(0xF0000)
+const SURROGATES = Int32[0xD800, 0xDFFF]
+const UNITS = Int32[UNIT_BASE, UNIT_BASE + 0x7FF]
+
+# The set of a pattern without the u flag as the translation holds it. Such a pattern matches UTF-16 code units, and
+# the text it is matched against has each half of a surrogate pair written as one character from UNIT_BASE. So the
+# surrogates of the set go there. What the set holds of the other characters beyond the Basic Multilingual Plane is
+# left as it is: the text has none of them. A set with every surrogate and every unit, or with none of either, is
+# not touched, so a pattern that names no surrogate is written as it was.
+function unitset(set::CodeSet)
+    surrogates = covered(set, SURROGATES)
+    if surrogates == covered(set, UNITS) && surrogates != SOME
+        return set
+    end
+    moved = Int32[c - Int32(0xD800) + UNIT_BASE for c in intersection(set, SURROGATES)]
+    return setunion(difference(set, UNITS), moved)
+end
+
+const NONE = 0
+const SOME = 1
+const EVERY = 2
+
+# How much of one range a set holds: none of it, some of it or every character of it.
+function covered(set::CodeSet, range::CodeSet)
+    lo = range[1]
+    hi = range[2]
+    for k in 1:2:length(set)
+        (set[k+1] < lo || set[k] > hi) && continue
+        return set[k] <= lo && set[k+1] >= hi ? EVERY : SOME
+    end
+    return NONE
+end
+
+# A node for a set as the translation holds it.
 function setnode(set::CodeSet)
     node = Node(SET)
     node.set = set
     return node
 end
+
+# A node for a set the parser read.
+setnode(P::Parser, set::CodeSet) = setnode(P.unicode ? set : unitset(set))
 
 # The node for one literal character. Inside a case-insensitive group that is the set of the characters equivalent
 # to it.
@@ -245,11 +316,11 @@ function charnode(P::Parser, c::Char)
     if P.ignorecase
         set = foldclosure(Int32[cp, cp], P.unicode)
         if length(set) != 2 || set[1] != set[2]
-            return setnode(set)
+            return setnode(P, set)
         end
     end
     node = Node(CHAR)
-    node.codepoint = cp
+    node.codepoint = !P.unicode && cp >= 0xD800 && cp <= 0xDFFF ? cp - Int32(0xD800) + UNIT_BASE : cp
     return node
 end
 
@@ -276,7 +347,7 @@ function term(P::Parser)
         quantifiable = atom.kind != LOOK || (!P.unicode && !atom.behind)
     elseif c == '.'
         P.i += 1
-        atom = setnode(P.dotall ? ANY_SET : DOT_SET)
+        atom = setnode(P, P.dotall ? ANY_SET : DOT_SET)
     elseif c == '['
         atom = characterclass(P)
     elseif c == '\\'
@@ -347,6 +418,24 @@ function number(P::Parser)
     return v
 end
 
+# Whether the decimal number at the positions from `a` to before `aend` is greater than the one from `b` to before
+# `bend`, for numbers of any length.
+function greaternumber(P::Parser, a::Int, aend::Int, b::Int, bend::Int)
+    while a < aend - 1 && charat(P, a) == '0'
+        a += 1
+    end
+    while b < bend - 1 && charat(P, b) == '0'
+        b += 1
+    end
+    aend - a == bend - b || return aend - a > bend - b
+    for k in 0:(aend - a - 1)
+        x = charat(P, a + k)
+        y = charat(P, b + k)
+        x == y || return x > y
+    end
+    return false
+end
+
 # Reads a quantifier as a REPEAT with no child yet, or returns nothing when there is none.
 function quantifier(P::Parser)
     c = peekchar(P)
@@ -363,15 +452,21 @@ function quantifier(P::Parser)
         rep.max = 1
     elseif c == '{' && lookslikequantifier(P)
         P.i += 1
+        first = P.i
         rep.min = number(P)
+        firstend = P.i
         rep.max = rep.min
-        if eat(P, ',')
-            rep.max = peekchar(P) == '}' ? UNBOUNDED : number(P)
+        if eat(P, ',') && peekchar(P) == '}'
+            rep.max = UNBOUNDED
+        elseif P.i > firstend
+            second = P.i
+            rep.max = number(P)
+            # The digits are compared, as a count is kept only up to MAX_COUNT: a{2147483648,2147483647} is an error.
+            if greaternumber(P, first, firstend, second, P.i)
+                syntaxerror(P, "numbers out of order in quantifier")
+            end
         end
         eat(P, '}') || syntaxerror(P, "malformed quantifier")
-        if rep.max != UNBOUNDED && rep.max < rep.min
-            syntaxerror(P, "numbers out of order in quantifier")
-        end
     else
         return nothing
     end
@@ -416,26 +511,30 @@ function group(P::Parser)
         end
         name = groupname(P)
         # Two groups may share a name only when they are in separate alternatives of one disjunction, so that no
-        # match can go through both.
+        # match can go through both. The group is compared with the last group of the name, which decides it for
+        # every group of the name: each was apart from the one before it, and a group that is apart from the last
+        # one is apart from those too. (Were it not apart from an earlier one, one alternative would hold the two,
+        # and the last one, which is written between them. The last one is apart from the group, so it is in
+        # another alternative of a disjunction inside that alternative, around the group. The earlier one is
+        # outside that disjunction, or it would be apart from the group as well, so it and the last one would be
+        # in the one alternative, and not apart.) Comparing with every group of the name took time in proportion
+        # to the square of their number.
         others = get(P.names, name, nothing)
         if others !== nothing
-            for other in others
-                separatealternatives(P, other) || syntaxerror(P, "duplicate group name")
-            end
+            separatealternatives(P, others[1]) || syntaxerror(P, "duplicate group name")
         end
         return capture(P, name)
     end
     syntaxerror(P, "invalid group")
 end
 
-# Whether a named group (its number, then the alternatives that enclose it) and the current position lie in
-# different alternatives of some disjunction.
-function separatealternatives(P::Parser, other::Vector{Int})
+# Whether the position `at`, which is before the current one, lies in a different alternative of some disjunction
+# than the current position does. The innermost disjunction around the current position that started at or before
+# `at` holds both. They are apart when its current alternative started after `at`.
+function separatealternatives(P::Parser, at::Int)
     path = P.path
-    k = 0
-    while 2k + 2 < length(other) && 2k < length(path) && other[2k + 2] == path[2k + 1]
-        other[2k + 3] != path[2k + 2] && return true
-        k += 1
+    for level in length(path):-2:2
+        path[level - 1] <= at && return path[level] > at
     end
     return false
 end
@@ -483,9 +582,10 @@ function capture(P::Parser, name::Union{Nothing,String})
     P.groups += 1
     node.group = P.groups
     if name !== nothing
-        named = Int[node.group]
-        append!(named, P.path)
-        push!(get!(() -> Vector{Int}[], P.names, name), named)
+        # The body of the group starts after this position, so the group is not in its own body.
+        named = get!(() -> Int[0], P.names, name)
+        named[1] = P.i - 1
+        push!(named, node.group)
     end
     node.subs = Node[disjunction(P)]
     closegroup(P)
@@ -502,8 +602,13 @@ function groupname(P::Parser)
         P.i += 1
         if c == Int32('\\')
             eat(P, 'u') || syntaxerror(P, "invalid group name")
-            c = unicodeescape(P, true)
+            c = unicodeescape(P, true, true)
             c < 0 && syntaxerror(P, "invalid group name")
+        elseif !P.unicode && c >= 0xD800 && c <= 0xDBFF && more(P) && cpof(peekchar(P)) >= 0xDC00 &&
+               cpof(peekchar(P)) <= 0xDFFF
+            # A name is read by character in both grammars.
+            c = Int32(0x10000) + ((c - Int32(0xD800)) << 10) + (cpof(peekchar(P)) - Int32(0xDC00))
+            P.i += 1
         end
         if count == 0 ? !isnamestart(c) : !isnamepart(c)
             syntaxerror(P, "invalid group name")
@@ -555,7 +660,7 @@ function atomescape(P::Parser)
         return charnode(P, Char(UInt32(legacyoctal(P))))
     end
     set = classescape(P, c)
-    set === nothing || return setnode(folded(P, set))
+    set === nothing || return setnode(P, folded(P, set))
     return charnode(P, Char(UInt32(characterescape(P, false))))
 end
 
@@ -685,7 +790,7 @@ function characterescape(P::Parser, inclass::Bool)
         end
         return h
     elseif c == 'u'
-        u = unicodeescape(P, P.unicode)
+        u = unicodeescape(P, P.unicode, P.unicode)
         if u < 0
             P.unicode && syntaxerror(P, "invalid \\u escape")
             return Int32('u')
@@ -697,17 +802,21 @@ function characterescape(P::Parser, inclass::Bool)
         return legacyoctal(P)
     end
     # Identity escapes. The u flag allows only the syntax characters and '/', and '-' in a class. Annex B allows any
-    # character.
+    # character, but for k in a pattern with a named group, where \k is a reference to one and nothing else. So
+    # `(?<n>a)[\k]` is an error, and `(a)[\k]` is a class of the letter k.
     if P.unicode && !(c in SYNTAX_CHARACTERS) && !(inclass && c == '-')
+        syntaxerror(P, "invalid escape")
+    end
+    if c == 'k' && P.hasnames
         syntaxerror(P, "invalid escape")
     end
     return cpof(c)
 end
 
 # Reads what follows the u of a Unicode escape and returns the code point, or -1, reading nothing, when it is not a
-# well-formed escape. With `braces` it accepts the form with braces. A surrogate pair written as two escapes is one
-# code point.
-function unicodeescape(P::Parser, braces::Bool)
+# well-formed escape. With `braces` it accepts the form with braces. With `pairs` a surrogate pair written as two
+# escapes is one code point. Without the u flag it is that in a group name only, and two code units anywhere else.
+function unicodeescape(P::Parser, braces::Bool, pairs::Bool)
     start = P.i
     if braces && eat(P, '{')
         digits = P.i
@@ -726,7 +835,7 @@ function unicodeescape(P::Parser, braces::Bool)
     end
     u = hex(P, 4)
     u < 0 && return Int32(-1)
-    if u >= 0xD800 && u <= 0xDBFF && P.i + 6 <= length(P.p) && charat(P, P.i) == '\\' && charat(P, P.i + 1) == 'u'
+    if pairs && u >= 0xD800 && u <= 0xDBFF && P.i + 6 <= length(P.p) && charat(P, P.i) == '\\' && charat(P, P.i + 1) == 'u'
         save = P.i
         P.i += 2
         low = hex(P, 4)
@@ -778,7 +887,7 @@ function characterclass(P::Parser)
     # Inside a case-insensitive group a character matches the class when it is equivalent to a member, and a
     # negated class excludes exactly those characters.
     set = folded(P, setof(P.pairs))
-    return setnode(negated ? complement(set) : set)
+    return setnode(P, negated ? complement(set) : set)
 end
 
 # Reads one member of a class. Returns its code point, or sets `atomset` for a class escape.

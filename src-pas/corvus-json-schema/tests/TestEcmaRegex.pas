@@ -34,9 +34,14 @@ uses
   SysUtils,
   Classes,
   Corvus.JsonSchema.Ucd,
+  // (Before the units of the engine: both have a TCharSet, and the engine's is the one meant here.)
+  Corvus.JsonSchema.Pattern,
   Corvus.JsonSchema.EcmaRegex.Utf8,
   Corvus.JsonSchema.EcmaRegex.CharSet,
   Corvus.JsonSchema.EcmaRegex.Dfa,
+  Corvus.JsonSchema.EcmaRegex.Parse,
+  Corvus.JsonSchema.EcmaRegex.Compile,
+  Corvus.JsonSchema.EcmaRegex.Vm,
   Corvus.JsonSchema.EcmaRegex;
 
 type
@@ -50,6 +55,8 @@ var
   OracleVerdictsAgreed: Int64 = 0;
   OracleAnswers: Int64 = 0;
   OracleAnswersAgreed: Int64 = 0;
+  { The budget of a match that has no limit. }
+  NoBudget: TPatternBudget;
   OraclePath: UTF8String = '../../src-go/corvus-json-schema/internal/ecmaregex/testdata/v8_oracle.json';
   SuitePath: UTF8String = '';
 
@@ -1168,24 +1175,6 @@ begin
   Result := ((Digit shr (3 - K mod 4)) and 1) = 1;
 end;
 
-{ BeyondBMP reports whether the text has a character beyond the Basic Multilingual Plane. V8 matches a pattern with
-  no flag by UTF-16 code unit and this package matches by code point, so the oracle is not asked about such a text
-  for a pattern that is valid only with no flag. }
-function BeyondBMP(const S: UTF8String): Boolean;
-var
-  Text: TBytes;
-  At, Width: Int32;
-begin
-  Text := ToBytes(S);
-  At := 0;
-  while At < Length(Text) do begin
-    if DecodeRune(Text, At, Length(Text), Width) > $FFFF then
-      Exit(True);
-    Inc(At, Width);
-  end;
-  Result := False;
-end;
-
 { V8ModifierBug reports whether a pattern is one for which V8 13.6 answers a case-insensitive modifier group
   differently from the same pattern with the i flag. ECMA-262 gives the two the same meaning. Only the validity of
   these patterns is taken from the oracle. TestOracleFlags checks the behaviour of each through the i flag, where V8
@@ -1247,18 +1236,19 @@ begin
   Result := True;
 end;
 
-{ CheckAnswers compares the answers of both back ends with the oracle's on every text. It adds to Answers the number
-  of answers compared and to Matched the number of those that are a match. }
+{ CheckAnswers compares the answers of both back ends with the oracle's on every text, the texts with a character
+  beyond the Basic Multilingual Plane among them: a pattern that is valid only with no flag is matched by UTF-16
+  code unit, as V8 matches it. It adds to Answers the number of answers compared and to Matched the number of those
+  that are a match. }
 procedure CheckAnswers(const P: UTF8String; const Re, Backtrack: TEcmaRegex; const Inputs: TTexts;
   const Bits: UTF8String; var Answers, Matched: Int64);
 var
   I: Int32;
   Want, Got: Boolean;
   Text: TBytes;
+  Stop: UInt8;
 begin
   for I := 0 to High(Inputs) do begin
-    if (not Re.Unicode) and BeyondBMP(Inputs[I]) then
-      Continue;
     Want := Bit(Bits, I);
     Inc(Answers);
     if Want then
@@ -1277,6 +1267,12 @@ begin
         Bool(Want))
     else
       Inc(OracleAnswersAgreed);
+    // The same match with a limit. A match that reaches the limit is abandoned and says nothing. Any other gives
+    // the answer it gives without one.
+    Got := EcmaRegexIsMatchLimit(Backtrack, Text, 0, Length(Text), 1, Stop);
+    if (Stop = EcmaRegexStopNone) and (Got <> Want) then
+      Fail(Quote(P) + ' on ' + Quote(Inputs[I]) + ' (forced backtrack, with a limit): got ' + Bool(Got) +
+        ', V8 says ' + Bool(Want));
   end;
 end;
 
@@ -1698,11 +1694,87 @@ begin
   Alloc('(\w)(?i:\1)', False);
   Alloc('(?m:^)\w+(?m:$)', False);
   Alloc('(?i:\bCAF\b)', False);
+  // Valid only with no flag, so matched by UTF-16 code unit.
+  Alloc('^\-?[^\d]+$', True);
+  Alloc('\-?\W{2} na.+\W{2}$', True);
+  Alloc('\-{0}(\W)\1 ', False);
+  Alloc('\-{0}(?<=\W{2}) (?i:CAF\W)(?= (.)(.)$)', False);
   WriteLn('TestAllocations: ', Patterns, ' patterns, each matched 200 times on ', Length(Texts), ' texts');
 end;
 {$ELSE}
 begin
   WriteLn('TestAllocations: SKIPPED, the count of allocations is taken from the memory manager of Free Pascal');
+end;
+{$ENDIF}
+
+{ TestALimitedMatchAllocatesNothing checks the steady state with a limit on the match, on patterns that reach the
+  first check of the clock and on one that is abandoned there. The limit and the deadline are in the memory the
+  thread keeps for its matches, and a match that is abandoned says so with a number. }
+procedure TestALimitedMatchAllocatesNothing;
+{$IFDEF FPC}
+var
+  Counting: TMemoryManager;
+  Long: UTF8String;
+  K: Int32;
+
+  procedure Alloc(const Pattern, Text: UTF8String; LimitMs: Int64; WantStop: UInt8);
+  var
+    Re: TEcmaRegex;
+    Bytes: TBytes;
+    Run: Int32;
+    Before: Int64;
+    Stop: UInt8;
+  begin
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Bytes := ToBytes(Text);
+    // The first matches grow the memory of the thread to what the text needs.
+    for Run := 1 to 3 do begin
+      EcmaRegexIsMatchLimit(Re, Bytes, 0, Length(Bytes), LimitMs, Stop);
+      if Stop <> WantStop then
+        Fail(Quote(Pattern) + ' with a limit of ' + Num(LimitMs) + ' ms: stop ' + Num(Stop) + ', want ' +
+          Num(WantStop));
+    end;
+    SetMemoryManager(Counting);
+    Before := Allocations;
+    for Run := 1 to 20 do
+      EcmaRegexIsMatchLimit(Re, Bytes, 0, Length(Bytes), LimitMs, Stop);
+    Before := Allocations - Before;
+    SetMemoryManager(SystemManager);
+    if Before <> 0 then
+      Fail(Quote(Pattern) + ' with a limit of ' + Num(LimitMs) + ' ms: ' + Num(Before) + ' allocations in 20 matches');
+  end;
+
+begin
+  GetMemoryManager(SystemManager);
+  Counting := SystemManager;
+  Counting.GetMem := @CountingGetMem;
+  Counting.AllocMem := @CountingAllocMem;
+  Counting.ReAllocMem := @CountingReAllocMem;
+  Long := '';
+  for K := 1 to 20000 do
+    Long := Long + 'ab';
+  Alloc('^(?=.)(?:a|b)*c$', Long, 60000, EcmaRegexStopNone);
+  Alloc('^(?:(a|b)\1?)+$', Copy(Long, 1, 4000), 60000, EcmaRegexStopNone);
+  Alloc('^[ab\u00e9]{0,60000}c$', U($E9) + Long, 60000, EcmaRegexStopNone);
+  Alloc('^(?=.)(?:a|b)*c$', Long, 0, EcmaRegexStopNone);
+  Alloc('^(?:(a+)\1*)+$', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab', 2, EcmaRegexStopTime);
+  // Matches that take the memory of failed places into use, which the thread keeps with the rest.
+  Long := '';
+  for K := 1 to 1000 do
+    Long := Long + 'a';
+  Alloc('^(?=.)(?:a|aa)+$', Long + 'b', 60000, EcmaRegexStopNone);
+  Alloc('^(?:\u00e9|a|aa)+$', U($E9) + Long + 'b', 60000, EcmaRegexStopNone);
+  Long := '';
+  for K := 1 to 20000 do
+    Long := Long + 'ab';
+  Alloc('(?=.)(?:a|b)*c', Long, 0, EcmaRegexStopNone);
+  WriteLn('TestALimitedMatchAllocatesNothing: 8 patterns, each matched 20 times');
+end;
+{$ELSE}
+begin
+  WriteLn('TestALimitedMatchAllocatesNothing: SKIPPED, the count of allocations is taken from the memory manager of '
+    + 'Free Pascal');
 end;
 {$ENDIF}
 
@@ -2105,6 +2177,1271 @@ begin
   WriteLn('TestSlices: done');
 end;
 
+{ The cases of testdata/v8_cases.json of the Go package, which gen_cases.js beside it writes: patterns with what V8
+  says of each, whether it is valid with the u flag and with no flag, and whether it matches each text. The file is
+  beside the oracle. }
+{ ---------------------------------------------------------------------------------------------------------------------
+  The limits on the size of one pattern. A schema may come from outside, so no pattern may take long or much memory
+  to read and to compile. Ported from size_cases_test.go and size_limit_test.go of the Go package. }
+
+function Times(const S: UTF8String; N: Int32): UTF8String;
+var
+  K, L: Int32;
+begin
+  L := Length(S);
+  SetLength(Result, L * N);
+  for K := 0 to N - 1 do
+    Move(S[1], Result[K * L + 1], L);
+end;
+
+(* TestTheSizeOfAPattern checks the size the parser counts for each pattern of testdata/size_cases.json of the Go
+  package, under the u flag grammar and under the Annex B grammar (-1 where that grammar does not accept the
+  pattern). The size of a pattern decides whether it is refused as too large, so this engine and the Go package
+  must count the same figure for every pattern, or a schema one compiles would be refused by the other. The file is
+  written by the Go tests and is not to be changed to suit this port. *)
+procedure TestTheSizeOfAPattern;
+var
+  Json: TJson;
+  Root, Item, Valid, Legacy, Invalid, Count, WantU, WantL, GotU, GotL: Int32;
+  P: UTF8String;
+begin
+  if not LoadJson(UTF8String(ExtractFilePath(String(OraclePath))) + 'size_cases.json', Json, Root) then begin
+    Fail('TestTheSizeOfAPattern: cannot read size_cases.json beside ' + OraclePath);
+    Exit;
+  end;
+  Valid := 0;
+  Legacy := 0;
+  Invalid := 0;
+  Count := 0;
+  Item := Json.Nodes[Root].First;
+  while Item >= 0 do begin
+    Inc(Count);
+    P := Json.Text(Item, 'p');
+    WantU := Round(Json.Nodes[Json.Member(Item, 'u')].Number);
+    WantL := Round(Json.Nodes[Json.Member(Item, 'l')].Number);
+    GotU := EcmaRegexSize(P, True);
+    GotL := EcmaRegexSize(P, False);
+    if (GotU <> WantU) or (GotL <> WantL) then
+      Fail(Quote(P) + ': size ' + Num(GotU) + ' with the u flag and ' + Num(GotL) + ' without, the file says ' +
+        Num(WantU) + ' and ' + Num(WantL));
+    if WantU >= 0 then
+      Inc(Valid)
+    else if WantL >= 0 then
+      Inc(Legacy)
+    else
+      Inc(Invalid);
+    Item := Json.Nodes[Item].Next;
+  end;
+  WriteLn('TestTheSizeOfAPattern: ', Count, ' patterns: ', Valid, ' valid with the u flag, ', Legacy,
+    ' only without it, ', Invalid, ' not valid');
+  if (Count <> 122) or (Valid < 90) or (Legacy < 10) or (Invalid < 5) then
+    Fail('TestTheSizeOfAPattern: the cases are not the ones this test is about');
+end;
+
+function Nest(const Open, Body, Close: UTF8String; Depth: Int32): UTF8String;
+begin
+  Result := Times(Open, Depth) + Body + Times(Close, Depth);
+end;
+
+(* TestAPatternOverALimitOfSizeIsTooLarge checks each limit: the pattern at the limit compiles and the pattern over
+  it is refused as too large, with the name of the limit and its value, in both grammars and by EcmaRegexCheck, and
+  a pattern that is over a limit and also not valid is refused for its size. *)
+procedure TestAPatternOverALimitOfSizeIsTooLarge;
+const
+  Terms = MaxSize div (2 * NodeSize);
+
+  procedure Limit(const Name, AtLimit, Over, LimitName: UTF8String; Value: Int32);
+  var
+    Re: TEcmaRegex;
+    Error: UTF8String;
+    Got: TEcmaRegexLimit;
+    Unicode: Boolean;
+  begin
+    if not EcmaRegexCompile(AtLimit, Re, Error, Got) then
+      Fail(Name + ': the pattern at the limit (' + Num(Length(AtLimit)) + ' bytes): ' + Error);
+    if not EcmaRegexCheck(AtLimit, Unicode, Error, Got) then
+      Fail(Name + ': EcmaRegexCheck of the pattern at the limit: ' + Error);
+    if EcmaRegexCompile(Over, Re, Error, Got) or (Got.Name <> LimitName) or (Got.Value <> Value) then
+      Fail(Name + ': the pattern over the limit (' + Num(Length(Over)) + ' bytes): limit ' + Quote(Got.Name) +
+        ' of ' + Num(Got.Value) + ', want ' + LimitName + ' of ' + Num(Value));
+    if Pos('ecmaregex:', Error) > 0 then
+      Fail(Name + ': the message of the pattern over the limit is that of a pattern that is not valid: ' +
+        Copy(Error, 1, 100));
+    if EcmaRegexCheck(Over, Unicode, Error, Got) or (Got.Name <> LimitName) or (Got.Value <> Value) then
+      Fail(Name + ': EcmaRegexCheck of the pattern over the limit: limit ' + Quote(Got.Name) + ' of ' +
+        Num(Got.Value));
+    if EcmaRegexValid(Over) then
+      Fail(Name + ': EcmaRegexValid of the pattern over the limit: true');
+    if EcmaRegexCompile(Over, Re, Error) then
+      Fail(Name + ': the pattern over the limit compiles when the limit is not asked for');
+  end;
+
+  procedure NotValid(const Pattern: UTF8String);
+  var
+    Re: TEcmaRegex;
+    Error: UTF8String;
+    Got: TEcmaRegexLimit;
+    Ok: Boolean;
+  begin
+    Ok := EcmaRegexCompile(Pattern, Re, Error, Got);
+    if Ok or (Got.Name <> '') or (Pos('ecmaregex:', Error) <> 1) then
+      Fail('Compile(' + Quote(Copy(Pattern, 1, 20)) + '): limit ' + Quote(Got.Name) + ' and the message ' +
+        Copy(Error, 1, 80) + ', want the error of a pattern that is not valid');
+  end;
+
+begin
+  Limit('length', '\u{' + Times('0', MaxPatternLength - 6) + '41}', '\u{' + Times('0', MaxPatternLength - 5) + '41}',
+    LimitLength, MaxPatternLength);
+  Limit('nesting', Nest('(?:', 'a', ')', MaxNesting - 1), Nest('(?:', 'a', ')', MaxNesting), LimitNesting,
+    MaxNesting);
+  Limit('size of terms', Times('a', Terms), Times('a', Terms + 1), LimitSize, MaxSize);
+  Limit('size of classes', '[' + Times('ĀĂ', 60000) + ']', '[' + Times('ĀĂ', 70000) + ']',
+    LimitSize, MaxSize);
+  Limit('size without the u flag', Times('\-', Terms), Times('\-', Terms + 1), LimitSize, MaxSize);
+  Limit('nesting without the u flag', '\-' + Nest('(?:', 'a', ')', MaxNesting - 1),
+    '\-' + Nest('(?:', 'a', ')', MaxNesting), LimitNesting, MaxNesting);
+  Limit('nesting, and not valid', Nest('(?:', 'a', ')', MaxNesting - 1) + 'x',
+    Nest('(?:', 'a', ')', MaxNesting) + '*+)', LimitNesting, MaxNesting);
+  Limit('size, and not valid', Times('a', Terms), Times('a', Terms + 1) + '(', LimitSize, MaxSize);
+  // A pattern that is not valid and under every limit is not too large.
+  NotValid('(');
+  NotValid('a**');
+  NotValid('(?<n>a)\k<m>');
+  NotValid('[b-a]');
+  NotValid(Nest('(?:', 'a', ')', MaxNesting - 1) + ')');
+  WriteLn('TestAPatternOverALimitOfSizeIsTooLarge: done');
+end;
+
+{$IFDEF FPC}
+{ The memory manager is wrapped to follow the memory in use while a pattern compiles: Live is the bytes in use now,
+  beyond what was in use when the tracking started, and LivePeak the most that was. }
+var
+  TrackedManager: TMemoryManager;
+  Live, LivePeak: Int64;
+
+procedure Tracked(Delta: Int64); inline;
+begin
+  Inc(Live, Delta);
+  if Live > LivePeak then
+    LivePeak := Live;
+end;
+
+function TrackingGetMem(Size: PtrUInt): Pointer;
+begin
+  Result := TrackedManager.GetMem(Size);
+  Tracked(TrackedManager.MemSize(Result));
+end;
+
+function TrackingAllocMem(Size: PtrUInt): Pointer;
+begin
+  Result := TrackedManager.AllocMem(Size);
+  Tracked(TrackedManager.MemSize(Result));
+end;
+
+function TrackingReAllocMem(var P: Pointer; Size: PtrUInt): Pointer;
+begin
+  if P <> nil then
+    Tracked(-Int64(TrackedManager.MemSize(P)));
+  Result := TrackedManager.ReAllocMem(P, Size);
+  if Result <> nil then
+    Tracked(TrackedManager.MemSize(Result));
+end;
+
+function TrackingFreeMem(P: Pointer): PtrUInt;
+begin
+  if P <> nil then
+    Tracked(-Int64(TrackedManager.MemSize(P)));
+  Result := TrackedManager.FreeMem(P);
+end;
+
+function TrackingFreeMemSize(P: Pointer; Size: PtrUInt): PtrUInt;
+begin
+  if P <> nil then
+    Tracked(-Int64(TrackedManager.MemSize(P)));
+  Result := TrackedManager.FreeMemSize(P, Size);
+end;
+{$ENDIF}
+
+procedure StartTracking;
+{$IFDEF FPC}
+var
+  Tracking: TMemoryManager;
+begin
+  GetMemoryManager(TrackedManager);
+  Tracking := TrackedManager;
+  Tracking.GetMem := @TrackingGetMem;
+  Tracking.AllocMem := @TrackingAllocMem;
+  Tracking.ReAllocMem := @TrackingReAllocMem;
+  Tracking.FreeMem := @TrackingFreeMem;
+  Tracking.FreeMemSize := @TrackingFreeMemSize;
+  Live := 0;
+  LivePeak := 0;
+  SetMemoryManager(Tracking);
+end;
+{$ELSE}
+begin
+end;
+{$ENDIF}
+
+{ StopTracking ends the tracking. Peak is the most memory that was in use since it started, and Kept what is still
+  in use, both beyond what was in use at the start. }
+procedure StopTracking(out Peak, Kept: Int64);
+begin
+  {$IFDEF FPC}
+  SetMemoryManager(TrackedManager);
+  Peak := LivePeak;
+  Kept := Live;
+  {$ELSE}
+  Peak := 0;
+  Kept := 0;
+  {$ENDIF}
+end;
+
+(* TestManyGroupNamesAreReadInTimeProportionalToTheirNumber compiles patterns with as many group names as the limit
+  of size admits, and with references to them. The parser looked for a name by going through every name it had, for
+  each group and for each reference, so 8,000 names of 40 characters took 1.4 to 2 seconds to read (load 7 to 15).
+  A pattern that the limits admit must compile in well under a second, and so must a string of the instance that
+  the regex format reads as a pattern. The names are now found through a hash table, and the same pattern takes
+  40 to 60 ms. The bound asserted is half a second. *)
+procedure TestManyGroupNamesAreReadInTimeProportionalToTheirNumber;
+const
+  Bound = 500;
+var
+  Names, Long, Refs: UTF8String;
+  K: Int32;
+
+  procedure Quick(const Name, Pattern: UTF8String; Valid: Boolean);
+  var
+    Re: TEcmaRegex;
+    Error: UTF8String;
+    Limit: TEcmaRegexLimit;
+    Start, Took: Int64;
+    Compiled: Boolean;
+  begin
+    Re := Default(TEcmaRegex);
+    Error := '';
+    Start := Int64(GetTickCount64);
+    Compiled := EcmaRegexCompile(Pattern, Re, Error, Limit);
+    Took := Int64(GetTickCount64) - Start;
+    WriteLn('TestManyGroupNamesAreReadInTimeProportionalToTheirNumber: ', Name, ', ', Length(Pattern), ' bytes: ',
+      Took, ' ms');
+    if Compiled and not Valid then
+      Fail(Name + ' compiled')
+    else if Valid and not Compiled then
+      Fail(Name + ' did not compile: ' + Copy(Error, 1, 100));
+    if Took > Bound then
+      Fail(Name + ' took ' + Num(Took) + ' ms to read');
+  end;
+
+begin
+  Names := '';
+  Long := '';
+  Refs := '';
+  // A group with no body is counted as two terms, so the limit of size admits 8,191 of them.
+  for K := 1 to 8000 do
+    Names := Names + '(?<n' + Num(K) + '>)';
+  for K := 1 to 8000 do
+    Long := Long + '(?<' + Times('n', 40) + Num(K) + '>)';
+  for K := 1 to 5000 do
+    Refs := Refs + '(?<n' + Num(K) + '>)';
+  for K := 1 to 5000 do
+    Refs := Refs + '\k<n' + Num(K) + '>';
+  Quick('8,000 names', Names, True);
+  Quick('8,000 names of 40 characters', Long, True);
+  Quick('5,000 names and a reference to each', Refs, True);
+  Quick('a reference to a name that is not there, after 5,000', Refs + '\k<m>', False);
+  // The same name twice in one alternative is still an error, wherever the first one is, and is not one in another.
+  Quick('the first name again, after 8,000', Names + '(?<n1>)', False);
+  Quick('the last name again, after 8,000', Names + '(?<n8000>)', False);
+  Quick('a name again in another alternative, after 8,000', Names + '|(?<n1>)', True);
+  Long := '';
+  for K := 1 to 3000 do
+    Long := Long + '(?<' + Times('n', 40) + Num(K) + '>)';
+  Quick('3,000 names of 40 characters, each again in another alternative', Long + '|' + Long, True);
+end;
+
+(* TestAPatternAtTheLimitOfSizeIsCheap compiles patterns of each kind that costs something to read or to compile,
+  each a little under MaxSize, and matches each once. The limit of size is what bounds the time and the memory of
+  compiling, so the largest pattern of every kind must take little of both. The bounds asserted are generous. The
+  figures measured are written. *)
+procedure TestAPatternAtTheLimitOfSizeIsCheap;
+const
+  Generous = 20000;
+var
+  LRanges, K: Int32;
+  L: TCharSet;
+  Named: UTF8String;
+
+  function Fit(Each: Int32): Int32;
+  begin
+    Result := (MaxSize - 4096) div Each;
+  end;
+
+  procedure Cheap(const Name, Pattern: UTF8String);
+  var
+    Re: TEcmaRegex;
+    Error: UTF8String;
+    Limit: TEcmaRegexLimit;
+    Text: TBytes;
+    Stop: UInt8;
+    Start, Compile, Match, Peak, Kept: Int64;
+  begin
+    EcmaRegexReleaseThreadScratch;
+    Re := Default(TEcmaRegex);
+    Error := '';
+    StartTracking;
+    Start := Int64(GetTickCount64);
+    if not EcmaRegexCompile(Pattern, Re, Error, Limit) then begin
+      StopTracking(Peak, Kept);
+      Fail(Name + ' (' + Num(Length(Pattern)) + ' bytes): ' + Copy(Error, 1, 100));
+      Exit;
+    end;
+    Compile := Int64(GetTickCount64) - Start;
+    StopTracking(Peak, Kept);
+    // The match may reach a limit, which is an outcome. What matters here is the first match.
+    Text := ToBytes('abc');
+    Start := Int64(GetTickCount64);
+    EcmaRegexIsMatchLimit(Re, Text, 0, Length(Text), 60000, Stop);
+    Match := Int64(GetTickCount64) - Start;
+    WriteLn('TestAPatternAtTheLimitOfSizeIsCheap: ', Name, ', ', Length(Pattern), ' bytes: compile ', Compile,
+      ' ms with ', Peak shr 10, ' KB at the most and ', Kept shr 10, ' KB kept, first match ', Match, ' ms (stop ',
+      Stop, ')');
+    if (Compile > Generous) or (Match > Generous) then
+      Fail(Name + ' took ' + Num(Compile) + ' ms to compile and ' + Num(Match) + ' ms for its first match');
+    if (Peak > 256 shl 20) or (Kept > 32 shl 20) then
+      Fail(Name + ' held ' + Num(Peak shr 20) + ' MB while it compiled and keeps ' + Num(Kept shr 20) + ' MB');
+  end;
+
+begin
+  if not PropertySet('L', L) then begin
+    Fail('TestAPatternAtTheLimitOfSizeIsCheap: no property L');
+    Exit;
+  end;
+  LRanges := Length(L.Ranges) div 2;
+  // Groups of one name: each is charged for the groups before it, so 400 of them cost most of the limit.
+  Named := '(?<n>0)';
+  for K := 1 to 399 do
+    Named := Named + '|(?<n>' + Num(K) + ')';
+  Cheap('literal', Times('a', Fit(2 * NodeSize)));
+  Cheap('alternatives', Times('a|', Fit(3 * NodeSize) - 1) + 'a');
+  Cheap('groups', Times('(a)', Fit(4 * NodeSize)));
+  Cheap('groups read back', Times('(a)', 4000) + Times('\1', 4000) + Times('\4000', 300));
+  Cheap('nested groups', Nest('(', Times('a', Fit(2 * NodeSize) - 2 * MaxNesting), ')', MaxNesting - 1));
+  Cheap('nested counted loops', Nest('(?:', Times('a?b', 2000), '){2,3}', MaxNesting - 1));
+  Cheap('nested lookbehinds', Nest('(?<=', Times('a', 2000), ')', MaxNesting - 1));
+  Cheap('counted loops', Times('(?:a|){2}', Fit(7 * NodeSize)));
+  Cheap('lazy loops', Times('(?:a|b)*?', Fit(7 * NodeSize)));
+  Cheap('properties', Times('\p{L}', Fit(2 * NodeSize)));
+  Cheap('negated properties', Times('\P{L}', Fit(2 * NodeSize + RangeSize * (LRanges + 1))));
+  Cheap('classes of properties', Times('[\p{L}\p{N}]', Fit(2 * NodeSize + RangeSize * (LRanges + 200))));
+  Cheap('folded negated classes', '(?i:' + Times('[^a]', Fit(2 * NodeSize + 32)) + ')');
+  Cheap('folded dots', '(?i:' + Times('.', Fit(2 * NodeSize)) + ')');
+  Cheap('folded wide classes', '(?i:' + Times('[\u0000-\u{10FFFF}]', Fit(3200)) + ')');
+  Cheap('folded wide negations', '(?i:' + Times('[^Ā-\u{10FFFF}]', Fit(3300)) + ')');
+  Cheap('folded properties', '(?i:' + Times('\p{L}', Fit(8600)) + ')');
+  Cheap('folded literal', '(?i:' + Times('k', Fit(2 * NodeSize)) + ')');
+  Cheap('one large class', '[' + Times('ĀĂ', Fit(2 * RangeSize)) + ']');
+  Cheap('groups of one name', Named);
+  Cheap('named groups, nested', Nest('(?:x|', Times('(?<a>b)|(?<c>d)', 40), ')', 600));
+  Cheap('counted, for regexp', Times('(?:a?){1000}', Fit(4 * NodeSize)));
+  Cheap('quantified everything', Times('a{2,5}?', Fit(2 * NodeSize)));
+  Cheap('long escapes', Times('\u{0000000000000000000000000000000000000000000041}', Fit(2 * NodeSize)));
+  // What the Go package looks names up in a map for, and this port reads a list for.
+  Cheap('names read back', Times('(?<a>b)', 1) + Times('\k<a>', Fit(2 * NodeSize) - 4));
+  EcmaRegexReleaseThreadScratch;
+end;
+
+var
+  { The limit CheckCases gives each match of a set of the engine, in milliseconds, or 0 for none. A match that
+    reaches it fails the test. The sets whose patterns do not end when the matcher lacks what they are about have
+    one, so that the test fails and does not hang. }
+  CaseLimitMs: Int64 = 0;
+
+function CasesPath: UTF8String;
+begin
+  Result := UTF8String(ExtractFilePath(String(OraclePath))) + 'v8_cases.json';
+end;
+
+{ CheckCases compares one set of the cases with V8. For a set of the engine it compares the validity of each
+  pattern and the answers of both back ends. For the set of the faster matchers (Fast) it compiles each pattern as a
+  schema does, and counts in Legacy the patterns that have a faster matcher. }
+procedure CheckCases(const Name: UTF8String; Fast: Boolean; out Patterns, Answers, Matched, Legacy, Invalid: Int32);
+var
+  Json: TJson;
+  Root, Item, Test: Int32;
+  P, T: UTF8String;
+  Want, Got: Boolean;
+  Re, Backtrack: TEcmaRegex;
+  Compiled: TPattern;
+  Text: TBytes;
+  Stop: UInt8;
+begin
+  Patterns := 0;
+  Answers := 0;
+  Matched := 0;
+  Legacy := 0;
+  Invalid := 0;
+  Compiled := Default(TPattern);
+  Re := Default(TEcmaRegex);
+  Backtrack := Default(TEcmaRegex);
+  if not LoadJson(CasesPath, Json, Root) then begin
+    Fail('the cases cannot be read at ' + CasesPath);
+    Exit;
+  end;
+  Item := Json.Nodes[Json.Member(Root, Name)].First;
+  while Item >= 0 do begin
+    Inc(Patterns);
+    P := Json.Text(Item, 'p');
+    if Fast then begin
+      if not CompilePattern(P, Compiled) then begin
+        Fail(Quote(P) + ' is not a valid pattern');
+        Item := Json.Nodes[Item].Next;
+        Continue;
+      end;
+      if Compiled.Kind <> MatchEngine then begin
+        Inc(Legacy);
+        if Compiled.Units = Json.Flag(Item, 'u') then
+          Fail(Quote(P) + ': valid with the u flag is ' + Bool(Json.Flag(Item, 'u')) +
+            ', and the engine for code units is kept: ' + Bool(Compiled.Units));
+      end;
+    end else begin
+      if not CheckVerdict(P, Json.Flag(Item, 'u'), Json.Flag(Item, 'l'), Re, Backtrack) then begin
+        Inc(Invalid);
+        Item := Json.Nodes[Item].Next;
+        Continue;
+      end;
+      if not Json.Flag(Item, 'u') then
+        Inc(Legacy);
+    end;
+    Test := Json.Nodes[Json.Member(Item, 'tests')].First;
+    while Test >= 0 do begin
+      T := Json.Text(Test, 't');
+      Want := Json.Flag(Test, 'want');
+      Inc(Answers);
+      if Want then
+        Inc(Matched);
+      if Fast then begin
+        if PatternMatchString(Compiled, T, NoBudget) <> Want then
+          Fail(Quote(P) + ' on ' + Quote(T) + ': ' + Bool(not Want) + ', V8 says ' + Bool(Want));
+      end else begin
+        Text := ToBytes(T);
+        Inc(OracleAnswers, 2);
+        Got := EcmaRegexIsMatchLimit(Re, Text, 0, Length(Text), CaseLimitMs, Stop);
+        if Stop <> EcmaRegexStopNone then
+          Fail(Quote(P) + ' on ' + Quote(T) + ' (as compiled): no answer in ' + Num(CaseLimitMs) + ' ms')
+        else if Got <> Want then
+          Fail(Quote(P) + ' on ' + Quote(T) + ' (as compiled, automaton ' + Bool(Re.HasDfa) + '): got ' + Bool(Got) +
+            ', V8 says ' + Bool(Want))
+        else
+          Inc(OracleAnswersAgreed);
+        Got := EcmaRegexIsMatchLimit(Backtrack, Text, 0, Length(Text), CaseLimitMs, Stop);
+        if Stop <> EcmaRegexStopNone then
+          Fail(Quote(P) + ' on ' + Quote(T) + ' (forced backtrack): no answer in ' + Num(CaseLimitMs) + ' ms')
+        else if Got <> Want then
+          Fail(Quote(P) + ' on ' + Quote(T) + ' (forced backtrack): got ' + Bool(Got) + ', V8 says ' + Bool(Want))
+        else
+          Inc(OracleAnswersAgreed);
+      end;
+      Test := Json.Nodes[Test].Next;
+    end;
+    Item := Json.Nodes[Item].Next;
+  end;
+end;
+
+{ TestCodeUnits checks matching by UTF-16 code unit against V8. A pattern that is valid only with no flag is matched
+  a code unit at a time. A character beyond the Basic Multilingual Plane is two units to the dot, to a class, to a
+  quantifier, to a group and to a backreference, a match can start and end between them, and such a character in
+  the pattern is two atoms. A class range between two of them is an error in both grammars. }
+procedure TestCodeUnits;
+var
+  Patterns, Answers, Matched, Legacy, Invalid: Int32;
+begin
+  CheckCases('units', False, Patterns, Answers, Matched, Legacy, Invalid);
+  WriteLn('TestCodeUnits: ', Patterns, ' patterns (', Legacy, ' valid only with no flag, ', Invalid, ' not valid), ',
+    Answers, ' answers per back end (', Matched, ' of them a match)');
+  if (Legacy < 90) or (Invalid < 3) or (Matched < 500) then
+    Fail('the cases of TestCodeUnits are not the ones the test is about');
+end;
+
+{ TestFastMatchersMatchCodeUnits checks, against V8, patterns of the shapes the faster matchers of the Pattern unit
+  take that are valid only without the u flag. The faster matchers read code points, and hand a text with a
+  character beyond the Basic Multilingual Plane to the engine. (In Go this test is in pattern_test.go of the
+  module.) }
+procedure TestFastMatchersMatchCodeUnits;
+var
+  Patterns, Answers, Matched, Faster, Invalid: Int32;
+begin
+  CheckCases('fast', True, Patterns, Answers, Matched, Faster, Invalid);
+  WriteLn('TestFastMatchersMatchCodeUnits: ', Patterns, ' patterns, ', Faster, ' of them with a faster matcher, ',
+    Answers, ' answers');
+  if Faster < Patterns div 2 then
+    Fail('only ' + Num(Faster) + ' of ' + Num(Patterns) + ' patterns have a faster matcher');
+end;
+
+var
+  { Set by TestSimplify when the rewrites are in place. }
+  Simplifies: Boolean = False;
+
+(* TestSimplify checks the two rewrites of Simplify on the compiled program: a repetition whose body cannot consume
+  a character is the body once, or nothing, and a backreference inside the group it names is the empty string. *)
+procedure TestSimplify;
+var
+  Count: Int32;
+
+  procedure Expect(const Pattern: UTF8String; Loops, Backrefs: Int32);
+  var
+    Re: TEcmaRegex;
+    K, Found: Int32;
+  begin
+    Inc(Count);
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Found := 0;
+    for K := 0 to High(Re.Prog.Insts) do
+      if Re.Prog.Insts[K].Op = OpBackref then
+        Inc(Found);
+    if (Re.Prog.Loops <> Loops) or (Found <> Backrefs) then begin
+      Fail(Quote(Pattern) + ': ' + Num(Re.Prog.Loops) + ' counted loops and ' + Num(Found) +
+        ' backreferences, want ' + Num(Loops) + ' and ' + Num(Backrefs));
+      Simplifies := False;
+    end;
+  end;
+
+begin
+  Count := 0;
+  Simplifies := True;
+  Expect('(?:\b|(?=a)|){4,5}', 0, 0);
+  Expect('(?:(?=(a))|){2}\1', 0, 1);
+  Expect('(?:(?=a))*b', 0, 0);
+  Expect('(?:a|(?=b)){2,3}', 1, 0);
+  Expect('(a\1)+', 0, 0);
+  Expect('(?:(a)|b\1){2}', 1, 1);
+  Expect('((\1|\2|)){3}', 0, 0);
+  Expect('(?<n>a\k<n>)', 0, 0);
+  Expect('(?:(?<n>a)|(?<n>b\k<n>)){2}', 1, 2);
+  Expect('(?:(\1){3}|(?!a)){2,}(?<=b)', 0, 0);
+  Expect('(?:\1(a)){2}', 1, 1);
+  WriteLn('TestSimplify: ', Count, ' patterns');
+end;
+
+{ TestRepetitionsThatCannotConsume checks, against V8, repetitions whose body can match only the empty string and
+  backreferences inside the group they name. Run as written, the first patterns of the set take time exponential
+  in their counts and the program would not end, so the test fails without running them when TestSimplify has
+  found the rewrites missing. The other patterns pin what the groups of such a body hold afterwards. }
+procedure TestRepetitionsThatCannotConsume;
+var
+  Patterns, Answers, Matched, Legacy, Invalid: Int32;
+begin
+  if not Simplifies then begin
+    Fail('TestRepetitionsThatCannotConsume: not run, because the rewrites of Simplify are missing and its ' +
+      'patterns would not finish');
+    Exit;
+  end;
+  CheckCases('loops', False, Patterns, Answers, Matched, Legacy, Invalid);
+  WriteLn('TestRepetitionsThatCannotConsume: ', Patterns, ' patterns, ', Answers, ' answers per back end (', Matched,
+    ' of them a match)');
+  if (Patterns < 50) or (Matched < 300) then
+    Fail('the cases of TestRepetitionsThatCannotConsume are not the ones the test is about');
+end;
+
+var
+  { Set by TestNeeds when the needs are in place. }
+  NeedsWork: Boolean = False;
+
+(* TestNeeds checks the least number of bytes a match consumes, which SetNeeds works out for a program and for each
+  of its counted loops, and the least one iteration of each loop consumes. The figures are lower bounds. The need of
+  a loop counts what follows it and none of its iterations, which the matcher adds from the count it has reached.
+  The need of the program counts the least number of iterations of every loop it must go through. *)
+procedure TestNeeds;
+const
+  NoMatch = 1 shl 30;
+var
+  Count: Int32;
+
+  procedure Expect(const Pattern: UTF8String; Need: Int32; const Loops, Iters: array of Int32);
+  var
+    Re: TEcmaRegex;
+    K, Found: Int32;
+    Same: Boolean;
+  begin
+    Inc(Count);
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Found := 0;
+    Same := (Re.Prog.Need = Need) and (Length(Loops) = Length(Iters));
+    for K := 0 to High(Re.Prog.Insts) do
+      if Re.Prog.Insts[K].Op = OpLoop then begin
+        Same := Same and (Found <= High(Loops)) and (Re.Prog.Insts[K].Need = Loops[Found])
+          and (Re.Prog.Insts[K].Iter = Iters[Found]);
+        Inc(Found);
+      end;
+    if not (Same and (Found = Length(Loops))) then begin
+      Fail(Quote(Pattern) + ': the need of the program is ' + Num(Re.Prog.Need) + ' and it has ' + Num(Found) +
+        ' counted loops, want ' + Num(Need) + ' and ' + Num(Length(Loops)) +
+        ', or a loop has another need or another least iteration');
+      NeedsWork := False;
+    end;
+  end;
+
+begin
+  Count := 0;
+  NeedsWork := True;
+  Expect('abc', 3, [], []);
+  Expect('a+b{2,}c?', 3, [], []);
+  Expect('(?:a|bc)d', 2, [], []);
+  Expect('(?=abc)a', 1, [], []);
+  Expect('(?<=abc)d', 1, [], []);
+  Expect('é{2}\u{10400}', 3, [], []);
+  Expect('(?:a|){3}xy$', 2, [2], [0]);
+  Expect('(?:a|){3}', 0, [0], [0]);
+  Expect('(?:(?:a|){2}b){2}c', 3, [1, 2], [1, 0]);
+  Expect('(?=(?:a|){2}xyz)(?:b|){2}c', 1, [3, 1], [0, 0]);
+  Expect('(?<=(?:ab|){2}c)(?:d|){2}ef', 2, [0, 2], [0, 0]);
+  Expect('(?!(?:a|){2}xx)(?:(x)|){2}\1y', 1, [2, 1], [0, 0]);
+  Expect('(?:a|){2}[]', NoMatch, [NoMatch], [0]);
+  Expect('(?:(?:a|){2}|bcd)e', 1, [1], [0]);
+  // The least count of a loop times the least of its body.
+  Expect('(?:a|b){5}c', 6, [1], [1]);
+  Expect('(?:ab|cde){3,}?x', 7, [1], [2]);
+  Expect('(?:a{1000}){1000}', 1000000, [0], [1000]);
+  Expect('(?:é|xyz){2}', 4, [0], [2]);
+  Expect('(?:a|b){2147483647}c', NoMatch, [1], [1]);
+  Expect('(?:(?:a|bc){2}d){3}', 9, [0, 1], [3, 1]);
+  // The body of a lookbehind is matched backwards and counts nothing.
+  Expect('(?<=(?:ab|c){2}d)e', 1, [0], [0]);
+  Expect('(?:a|(?=(?:b|c){3}))x{2}', 2, [0], [1]);
+  // A loop that cannot be left for a match, and whose iterations alone are beyond any text.
+  Expect('(?:ab){2147483647}[]', NoMatch, [NoMatch], [2]);
+  WriteLn('TestNeeds: ', Count, ' patterns');
+end;
+
+(* TestALoopGivesUpWhenItsIterationsCannotFit checks the matcher uses the least count of a counted loop: a pattern
+  that needs a million characters, or two thousand million, answers a text of a hundred thousand at once. Without
+  the count in the need, the matcher runs each loop as far as the text goes from every position of the text, which
+  did not answer in 20 seconds for any of these. The limit of the match here is a small part of that, so a match
+  that does the work is abandoned and the test fails on that. *)
+procedure TestALoopGivesUpWhenItsIterationsCannotFit;
+var
+  Text: TBytes;
+  K: Int32;
+  Re: TEcmaRegex;
+  Stop: UInt8;
+  Matched: Boolean;
+
+  procedure AtOnce(const Pattern: UTF8String);
+  begin
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Re := Backtracking(Re);
+    Matched := EcmaRegexIsMatchLimit(Re, Text, 0, Length(Text), 200, Stop);
+    if (Stop <> EcmaRegexStopNone) or Matched then
+      Fail(Quote(Pattern) + ' on 100,000 characters: stop ' + Num(Stop) + ', matched ' + Bool(Matched) +
+        ', want an answer of false');
+  end;
+
+begin
+  SetLength(Text, 100000);
+  for K := 0 to High(Text) do
+    Text[K] := Ord('a');
+  AtOnce('(?:a{1000}){1000}');
+  AtOnce('(?:a|b){2147483647}c');
+  AtOnce('(?=.)(?:(?:ab|a){500}){500}');
+  AtOnce('x?(?:[ab]c?){100001}$');
+  // A text that is long enough still matches.
+  if Compiled('^(?:a{10}){100}$', Re) then begin
+    Re := Backtracking(Re);
+    Matched := EcmaRegexIsMatchLimit(Re, Text, 0, 1000, 60000, Stop);
+    if (Stop <> EcmaRegexStopNone) or not Matched then
+      Fail('^(?:a{10}){100}$ on a thousand characters: stop ' + Num(Stop) + ', want true');
+    Matched := EcmaRegexIsMatchLimit(Re, Text, 0, 999, 60000, Stop);
+    if (Stop <> EcmaRegexStopNone) or Matched then
+      Fail('^(?:a{10}){100}$ on 999 characters: stop ' + Num(Stop) + ', want false');
+  end;
+  WriteLn('TestALoopGivesUpWhenItsIterationsCannotFit: done');
+end;
+
+{ TestLoopsGiveUpWhenTheRestCannotFit checks, against V8, counted loops whose iterations can be empty, before a rest
+  of the pattern that needs more text than is left. The matcher gives up at such a loop (see SetNeeds). Without
+  that, the first three patterns of the set do not finish, so the test fails without running them when TestNeeds
+  has found the needs missing. The other patterns have such loops inside and around lookaheads and lookbehinds,
+  where a wrong count of what is left would give a wrong answer. }
+procedure TestLoopsGiveUpWhenTheRestCannotFit;
+var
+  Patterns, Answers, Matched, Legacy, Invalid: Int32;
+begin
+  if not NeedsWork then begin
+    Fail('TestLoopsGiveUpWhenTheRestCannotFit: not run, because the needs of SetNeeds are missing and its ' +
+      'patterns would not finish');
+    Exit;
+  end;
+  CheckCases('needs', False, Patterns, Answers, Matched, Legacy, Invalid);
+  WriteLn('TestLoopsGiveUpWhenTheRestCannotFit: ', Patterns, ' patterns, ', Answers, ' answers per back end (',
+    Matched, ' of them a match)');
+  if (Patterns < 20) or (Matched < 100) then
+    Fail('the cases of TestLoopsGiveUpWhenTheRestCannotFit are not the ones the test is about');
+end;
+
+(* TestTheNextCharacterRulesOutAWay checks the patterns of the quick set against V8 on both back ends. They have a
+  choice, a loop or a lookaround where the next character of the text rules a way out, with everything a way can
+  end with or go through without a character, which is where ruling a way out wrongly would show. The first three
+  are from a fuzz set and took the matcher seconds for their texts before it looked at the next character. A match
+  has ten seconds here. *)
+procedure TestTheNextCharacterRulesOutAWay;
+var
+  Patterns, Answers, Matched, Legacy, Invalid: Int32;
+begin
+  CaseLimitMs := 10000;
+  CheckCases('quick', False, Patterns, Answers, Matched, Legacy, Invalid);
+  CaseLimitMs := 0;
+  WriteLn('TestTheNextCharacterRulesOutAWay: ', Patterns, ' patterns (', Legacy, ' valid only with no flag), ',
+    Answers, ' answers per back end (', Matched, ' of them a match)');
+  if (Patterns < 75) or (Matched < 2000) then
+    Fail('the cases of TestTheNextCharacterRulesOutAWay are not the ones the test is about');
+end;
+
+(* TestQuick checks what SetQuick works out for the first instruction of a program: the ASCII characters a match can
+  start with, whether it can start with one that is not ASCII, and whether it can end without one while text is
+  left and at the end of the text. *)
+procedure TestQuick;
+var
+  Count: Int32;
+
+  procedure Expect(const Pattern, Ascii: UTF8String; Other, Mid, AtEnd: Boolean);
+  var
+    Re: TEcmaRegex;
+    Q: TQuick;
+    K: Int32;
+    Ok: Boolean;
+    B: UInt8;
+  begin
+    Inc(Count);
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Q := Re.Prog.Quick[0];
+    Ok := (Q.Other = Other) and (Q.Mid = Mid) and (Q.AtEnd = AtEnd);
+    for K := 1 to Length(Ascii) do begin
+      B := Ord(Ascii[K]);
+      Ok := Ok and (((Q.Ascii[B shr 6] shr (B and 63)) and 1) <> 0);
+    end;
+    // A character the pattern cannot start with: none of the cases starts with a digit.
+    Ok := Ok and ((((Q.Ascii[0] shr Ord('0')) and 1) <> 0) = (Pattern = '[^a]'));
+    if not Ok then
+      Fail(Quote(Pattern) + ': the quick of the program is not ' + Quote(Ascii) + ', other ' + Bool(Other) +
+        ', mid ' + Bool(Mid) + ', end ' + Bool(AtEnd));
+  end;
+
+  procedure AllowsAll(const Pattern: UTF8String; Op: TOpcode);
+  var
+    Re: TEcmaRegex;
+    K: Int32;
+    Found: Boolean;
+    Q: TQuick;
+  begin
+    Inc(Count);
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Found := False;
+    for K := 0 to High(Re.Prog.Insts) do
+      if Re.Prog.Insts[K].Op = Op then begin
+        Found := True;
+        Q := Re.Prog.Quick[K];
+        if (Q.Ascii[0] <> High(UInt64)) or (Q.Ascii[1] <> High(UInt64)) or not (Q.Other and Q.Mid and Q.AtEnd) then
+          Fail(Quote(Pattern) + ': instruction ' + Num(K) + ' does not allow everything');
+      end;
+    if not Found then
+      Fail(Quote(Pattern) + ' has no instruction this is about');
+  end;
+
+begin
+  Count := 0;
+  Expect('abc', 'a', False, False, False);
+  Expect('[a-c]x', 'abc', False, False, False);
+  Expect('a|b|\u00e9', 'ab', True, False, False);
+  Expect('a?b', 'ab', False, False, False);
+  Expect('a*$', 'a', False, False, True);
+  Expect('(?:a|)b', 'ab', False, False, False);
+  Expect('$', '', False, False, True);
+  Expect('(?:a|$)b', 'a', False, False, False);
+  Expect('(?=a)[a-c]', 'a', False, False, False);
+  Expect('(?=[ab])(?:b|x)', 'b', False, False, False);
+  Expect('(?!a)[a-c]', 'abc', False, False, False);
+  Expect('(?=a|$)(?:a|)$', 'a', False, False, True);
+  Expect('(?<=a)b', 'b', False, False, False);
+  Expect('(?<=a|b)$', '', False, False, True);
+  Expect('\bx', 'x', False, False, False);
+  Expect('^a', 'a', False, False, False);
+  Expect('(?:a|b)*c', 'abc', False, False, False);
+  Expect('(?:a?b?)*c', 'abc', False, False, False);
+  Expect('(?:a|){2}x', 'ax', False, False, False);
+  Expect('[^a]', 'bcd', True, False, False);
+  Expect('(?=)a', 'a', False, False, False);
+  Expect('[]|a', 'a', False, False, False);
+  Expect('(?!)[]', '', False, False, False);
+  // A backreference and the body of a lookbehind allow anything.
+  AllowsAll('(a)\1x', OpBackref);
+  AllowsAll('(?<=ab)', OpCharBack);
+  WriteLn('TestQuick: ', Count, ' patterns');
+end;
+
+(* TestFailedPlacesAreRemembered checks the patterns of the memo set against V8, with the memory of failed places in
+  use from the first step and as it comes into use by itself. Then it checks every other set and the hand-written
+  patterns of the oracle the same way: remembering a failure must change no answer. *)
+procedure TestFailedPlacesAreRemembered;
+var
+  Patterns, Answers, Matched, Legacy, Invalid, K, WithPoints, Root, Item: Int32;
+  Total, Unused: Int64;
+  Json: TJson;
+  Re, Backtrack: TEcmaRegex;
+  Error: UTF8String;
+  Sets: array[0..4] of UTF8String;
+begin
+  Re := Default(TEcmaRegex);
+  CaseLimitMs := 10000;
+  CheckCases('memo', False, Patterns, Answers, Matched, Legacy, Invalid);
+  WithPoints := 0;
+  if LoadJson(CasesPath, Json, Root) then begin
+    Item := Json.Nodes[Json.Member(Root, 'memo')].First;
+    while Item >= 0 do begin
+      if EcmaRegexCompile(Json.Text(Item, 'p'), Re, Error) and (Length(Re.Prog.Points) > 0) then
+        Inc(WithPoints);
+      Item := Json.Nodes[Item].Next;
+    end;
+  end;
+  WriteLn('TestFailedPlacesAreRemembered: ', Patterns, ' patterns (', WithPoints, ' with memo points), ', Answers,
+    ' answers per back end (', Matched, ' of them a match)');
+  if (Patterns < 50) or (WithPoints < 45) or (Matched < 500) then
+    Fail('the cases of TestFailedPlacesAreRemembered are not the ones the test is about');
+  MemoFromTheStart := True;
+  CaseLimitMs := 30000;
+  Total := 0;
+  Sets[0] := 'memo';
+  Sets[1] := 'quick';
+  Sets[2] := 'loops';
+  Sets[3] := 'needs';
+  Sets[4] := 'units';
+  for K := 0 to High(Sets) do begin
+    CheckCases(Sets[K], False, Patterns, Answers, Matched, Legacy, Invalid);
+    Inc(Total, Answers);
+  end;
+  CaseLimitMs := 0;
+  if LoadOracle then
+    for K := 0 to High(Oracle.Hand) do begin
+      if not CheckVerdict(Oracle.Hand[K].P, Oracle.Hand[K].U, Oracle.Hand[K].L, Re, Backtrack) then
+        Continue;
+      if V8ModifierBug(Oracle.Hand[K].P) then
+        Continue;
+      CheckAnswers(Oracle.Hand[K].P, Re, Backtrack, Oracle.Inputs, Oracle.Hand[K].M, Total, Unused);
+    end;
+  MemoFromTheStart := False;
+  WriteLn('TestFailedPlacesAreRemembered: ', Total, ' answers per back end with the memory in use from the first step');
+end;
+
+(* TestARepetitionInARepetitionIsAnswered runs patterns that a backtracking matcher with no memory takes time that
+  doubles with each character for, on texts of 40 to 100,000 characters, with no backreference. With the memory
+  each takes milliseconds. The limit of the match is ten seconds, so a match that goes the long way round is
+  abandoned and fails the test. The first eleven are the patterns of the Go test, which a lookaround, a multiline
+  anchor or a case-insensitive word boundary keeps on the backtracking matcher there. Here every text that is not
+  ASCII is on that matcher, whatever the pattern, so the last are plain patterns on such texts. *)
+procedure TestARepetitionInARepetitionIsAnswered;
+var
+  A: UTF8String;
+  Count: Int32;
+
+  procedure Answer(const Pattern, Text: UTF8String; Want: Boolean);
+  var
+    Re: TEcmaRegex;
+    Bytes: TBytes;
+    Stop: UInt8;
+    Got: Boolean;
+    Pass: Int32;
+    Limit: Int64;
+  begin
+    Inc(Count);
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Re := Backtracking(Re);
+    if Length(Re.Prog.Points) = 0 then begin
+      Fail(Quote(Pattern) + ' has no memo points');
+      Exit;
+    end;
+    Bytes := ToBytes(Text);
+    for Pass := 0 to 1 do begin
+      Limit := 10000;
+      // With no limit only after it has answered with one: a match that does not end would hang the test.
+      if Pass = 1 then
+        Limit := 0;
+      Got := EcmaRegexIsMatchLimit(Re, Bytes, 0, Length(Bytes), Limit, Stop);
+      if (Stop <> EcmaRegexStopNone) or (Got <> Want) then begin
+        Fail(Quote(Pattern) + ' on ' + Num(Length(Bytes)) + ' bytes with a limit of ' + Num(Limit) + ' ms: stop ' +
+          Num(Stop) + ', matched ' + Bool(Got) + ', want ' + Bool(Want));
+        Exit;
+      end;
+    end;
+  end;
+
+begin
+  Count := 0;
+  A := Times('a', 60);
+  Answer('(?=a)(a*)*b', A, False);
+  Answer('(?=a)(a*)*b', A + 'b', True);
+  Answer('^(?=.)(?:a+)+$', A + 'x', False);
+  Answer('^(?=.)(?:a+)+$', A, True);
+  Answer('^(?=.)(?:a|aa)+$', A + 'b', False);
+  Answer('^(?=.)(?:a|aa)+$', A, True);
+  Answer('^(?=.)(?:a?b?)*x', Times('ab', 30), False);
+  Answer('^(?=.)(?:a?b?)*x', Times('ab', 30) + 'x', True);
+  Answer('^(?=.)(?:(?:a?b?)*x?)*$', Times('ab', 30) + '!', False);
+  Answer('^(?=.)(?:(?:a*)+b?)+$', A + '!', False);
+  Answer('^(?=.)(?:(?:a*)+b?)+$', A + 'b', True);
+  Answer('^(?=.)(?:(?:a?)+?b?)*?x', A, False);
+  Answer('(?=.)(?:a*?b*?)*?x$', A + 'b', False);
+  Answer('(?i:\b(?:\w+\W?)+\b!)', Times('ab ', 40), False);
+  Answer('(?i:\b(?:\w+\W?)+\b!)', Times('ab ', 40) + 'ab!', True);
+  Answer('(?m:^(?:\w+\s?)+$)', Times('a ', 30) + '!', False);
+  Answer('^(?!(?:a+)+x)a*b', A + 'b', True);
+  Answer('^(?!(?:a+)+x)a*b', A, False);
+  Answer('(?<!(?:a|aa)+b)x$', A + 'x', True);
+  Answer('(?=.).*.*.*x', Times('a', 3000), False);
+  Answer('(?=.)a*?a*?a*?b', Times('a', 3000), False);
+  // A choice for every character of the text, from every position of it: the failures of one start serve the next.
+  Answer('(?=.)(?:a|b)*c', Times('ab', 50000), False);
+  Answer('(?=.)(?:a|\u00e9)*c', Times('a' + U($E9), 30000), False);
+  // Plain patterns on a text that is not ASCII, which has no automaton.
+  Answer('(a*)*b', U($E9) + A, False);
+  Answer('(a*)*b', U($E9) + A + 'b', True);
+  Answer('^(?:\u00e9+)+$', Times(U($E9), 40) + 'x', False);
+  Answer('^(?:\u00e9+)+$', Times(U($E9), 40), True);
+  Answer('^(?:a|aa|aaa|aaaa)+$', U($E9) + A, False);
+  Answer('^\u00e9(?:a|aa|aaa|aaaa)+$', U($E9) + A + 'b', False);
+  Answer('^(?:[a-z]+\s?)+$', Times('ab ', 40) + U($E9) + '!', False);
+  Answer('(?:\u4e00|\u4e01|\u4e02)*z', Times(U($4E00) + U($4E01), 30000), False);
+  WriteLn('TestARepetitionInARepetitionIsAnswered: ', Count, ' patterns and texts');
+end;
+
+(* TestABackreferenceTurnsTheMemoryOff checks a pattern that reads a group back has no memo points: what a group
+  holds changes what follows a place, so a failure there says nothing of the next time. Such a pattern is still
+  abandoned at its limit. *)
+procedure TestABackreferenceTurnsTheMemoryOff;
+var
+  Re: TEcmaRegex;
+  Text: TBytes;
+  Stop: UInt8;
+
+  procedure None(const Pattern: UTF8String);
+  begin
+    if Compiled(Pattern, Re) and (Length(Re.Prog.Points) <> 0) then
+      Fail(Quote(Pattern) + ' has ' + Num(Length(Re.Prog.Points)) + ' memo points');
+  end;
+
+begin
+  None('(a*)*\1b');
+  None('^(?:(a+)\1*)+$');
+  None('(a)(?:b|c)*\1');
+  None('(?<n>a)(?:b+)+\k<n>');
+  if Compiled('(a*)*\1b', Re) then begin
+    Text := ToBytes(Times('a', 60));
+    EcmaRegexIsMatchLimit(Backtracking(Re), Text, 0, Length(Text), 50, Stop);
+    if Stop <> EcmaRegexStopTime then
+      Fail('a nested repetition before a backreference: stop ' + Num(Stop) + ', want the time limit');
+  end;
+  WriteLn('TestABackreferenceTurnsTheMemoryOff: done');
+end;
+
+(* TestMemoPoints checks where a program has memo points and which loops each tells apart. A split, a loop with no
+  upper bound and a least count of zero or one, and a single character loop have one, unless they are inside a loop
+  that counts to a bound or inside more than two loops. A lookaround starts afresh: what its body does depends on
+  nothing outside it. Each point is given as the instruction's operation and its loops. *)
+procedure TestMemoPoints;
+var
+  Count: Int32;
+
+  procedure Expect(const Pattern, Want: UTF8String);
+  var
+    Re: TEcmaRegex;
+    K, L: Int32;
+    Got: UTF8String;
+  begin
+    Inc(Count);
+    if not Compiled(Pattern, Re) then
+      Exit;
+    Got := '';
+    for K := 0 to High(Re.Prog.Insts) do
+      if Re.Prog.Insts[K].M <> 0 then begin
+        if Got <> '' then
+          Got := Got + ', ';
+        case Re.Prog.Insts[K].Op of
+          OpSplit: Got := Got + 'split';
+          OpLoop: Got := Got + 'loop';
+          OpRep: Got := Got + 'rep';
+          OpRepLazy: Got := Got + 'lazy';
+        else
+          Got := Got + '?';
+        end;
+        for L := 0 to MaxMemoLoops - 1 do
+          if Re.Prog.Points[Re.Prog.Insts[K].M - 1].Loops[L] >= 0 then
+            Got := Got + ' ' + Num(Re.Prog.Points[Re.Prog.Insts[K].M - 1].Loops[L]);
+      end;
+    if Got <> Want then
+      Fail(Quote(Pattern) + ': memo points ' + Quote(Got) + ', want ' + Quote(Want));
+  end;
+
+begin
+  Count := 0;
+  Expect('(?:a|b)*c', 'split, split');
+  Expect('(?:a?b?)*c', 'loop, rep 0, rep 0');
+  Expect('(?:(?:a?)*b)*', 'split, loop, rep 0');
+  Expect('(?:(?:a?)+b?)+x', 'loop, loop 0, rep 0 1, rep 0');
+  // The innermost a? is inside three loops and has no point.
+  Expect('(?:(?:(?:a?)*b?)*x?)*', 'loop, loop 0, loop 0 1, rep 0 1, rep 0');
+  // A loop that counts to a bound has no point, and neither has anything in it.
+  Expect('(?:a|){2,3}(?:b|c)', 'split');
+  Expect('(?:(?:a|b){2}x?)*', 'split, rep');
+  Expect('(?:(?:a?b?)*?(?:c|d)){3}', '');
+  // The body of a lookaround starts afresh.
+  Expect('(?:a?(?=(?:b|c)*x))*', 'loop, rep 0, split, split');
+  Expect('(?:(?:a|){2}(?=b|c))*', 'loop, split');
+  Expect('(?<=(?:a?b?)*)x', 'loop, split 0, split 0');
+  Expect('(?:a?(?=(?:b?c?)*x)d?)*', 'loop, rep 0, loop, rep 1, rep 1, rep 0');
+  Expect('a*b*?c{2,3}', 'rep, lazy, rep');
+  Expect('(?:a+)+$', 'rep, split');
+  Expect('(a)\1(?:b|c)', '');
+  WriteLn('TestMemoPoints: ', Count, ' patterns');
+end;
+
+(* TestTheMemoryIsBounded checks when a match takes the memory into use: not before it has made as many steps as the
+  memory has words and 64 more for each position of the text, and never when the memory would be more than
+  MaxMemoWords. *)
+procedure TestTheMemoryIsBounded;
+
+  procedure Expect(Points, Width, Checks: Int32; WantOn, WantNever: Boolean);
+  var
+    Taken, Never: Boolean;
+    Words, K: Int32;
+  begin
+    Taken := False;
+    Never := Points = 0;
+    K := 0;
+    while (K < Checks) and not Taken and not Never do begin
+      Inc(K);
+      Taken := MemoWouldBeTaken(Points, Width, K, Never, Words);
+    end;
+    if (Taken <> WantOn) or (Never <> WantNever) then
+      Fail(Num(Points) + ' points, ' + Num(Width) + ' positions, ' + Num(Checks) + ' checks: in use ' + Bool(Taken) +
+        ', never ' + Bool(Never) + ', want ' + Bool(WantOn) + ' and ' + Bool(WantNever));
+    if Taken and (Words <> (Int64(Points) * Width * 4 + 63) div 64) then
+      Fail(Num(Points) + ' points, ' + Num(Width) + ' positions: a memory of ' + Num(Words) + ' words');
+  end;
+
+var
+  Re: TEcmaRegex;
+  Pattern: UTF8String;
+  K: Int32;
+  Text: TBytes;
+  Stop: UInt8;
+begin
+  Expect(0, 100, 1000, False, True);
+  // 19 words and 6,400 steps for the positions: the second check.
+  Expect(3, 100, 1, False, False);
+  Expect(3, 100, 2, True, False);
+  // 18,751 words and 6,400,064 steps: the check after 6,418,815 steps.
+  Expect(3, 100001, 1567, False, False);
+  Expect(3, 100001, 1568, True, False);
+  Expect(1000, 100001, 1 shl 20, False, True);
+  Expect(167, 100001, 1 shl 20, True, False);
+  Expect(168, 100001, 1 shl 20, False, True);
+  // A match too large for the memory still has its limit.
+  Pattern := '^(?=.)(?:';
+  for K := 0 to 399 do begin
+    if K > 0 then
+      Pattern := Pattern + '|';
+    Pattern := Pattern + 'a' + Times('b', K mod 7);
+  end;
+  Pattern := Pattern + ')+$';
+  if Compiled(Pattern, Re) then begin
+    Text := ToBytes(Times('ab', 50000) + 'x');
+    EcmaRegexIsMatchLimit(Backtracking(Re), Text, 0, Length(Text), 100, Stop);
+    if Stop = EcmaRegexStopMemory then
+      Fail('a match too large for the memory: stop ' + Num(Stop));
+  end;
+  WriteLn('TestTheMemoryIsBounded: done');
+end;
+
+(* TestTheNeedsSettleInFewPasses checks the number of passes over a program that work out its needs and what can
+  come next from each instruction. The jump at the end of the body of a loop goes back, so a pass that took what
+  the head of the loop had after the pass before settled one loop of a nest each time: 999 passes for loops 999
+  deep, which made that pattern the slowest of any at the limit of size to compile. The needs take two passes and
+  the next characters three, whatever the depth. *)
+procedure TestTheNeedsSettleInFewPasses;
+var
+  Count: Int32;
+
+  procedure Few(const Pattern: UTF8String);
+  var
+    Re: TEcmaRegex;
+  begin
+    Inc(Count);
+    if not Compiled(Pattern, Re) then
+      Exit;
+    if (Re.Prog.NeedPasses > 2) or (Re.Prog.QuickPasses > 3) then
+      Fail(Quote(Copy(Pattern, 1, 30)) + ' (' + Num(Length(Re.Prog.Insts)) + ' instructions): ' +
+        Num(Re.Prog.NeedPasses) + ' passes for the needs and ' + Num(Re.Prog.QuickPasses) +
+        ' for the next characters, want 2 and 3 at most');
+  end;
+
+begin
+  Count := 0;
+  Few('abc');
+  Few('(?:a|b)*c');
+  Few('(?:a?b?)*c');
+  Few('(?:(?:a+)+b?)*');
+  Few(Nest('(?:', 'a?b', '){2,3}', 999));
+  Few(Nest('(?:', 'a?b', ')*', 999));
+  Few(Nest('(?:', 'a?b?', ')*', 999));
+  Few(Nest('(?:', 'a?b', ')+?', 999));
+  Few(Nest('(?:x|', 'a?b', ')*y?', 500));
+  Few(Nest('(?:(?=', 'a', ')b?)*', 400));
+  Few(Nest('(?:', 'a|b', '){0,5}?c', 999));
+  WriteLn('TestTheNeedsSettleInFewPasses: ', Count, ' patterns');
+end;
+
+{ CheckSyntax checks one of the sets of what is a pattern: which patterns are valid, in each grammar, and what the
+  valid ones match. The expectations are V8's, and ECMA-262's where V8 13.6 departs from it, which gen_cases.js of
+  the Go package works out and marks with the name of the departure. Departures counts the marked patterns. }
+procedure CheckSyntax(const Test, Name: UTF8String; out Patterns, Invalid, Departures: Int32);
+var
+  Json: TJson;
+  Root, Item, Answers, Matched, Legacy: Int32;
+begin
+  CheckCases(Name, False, Patterns, Answers, Matched, Legacy, Invalid);
+  Departures := 0;
+  if LoadJson(CasesPath, Json, Root) then begin
+    Item := Json.Nodes[Json.Member(Root, Name)].First;
+    while Item >= 0 do begin
+      if Json.Member(Item, 'ecma262') >= 0 then
+        Inc(Departures);
+      Item := Json.Nodes[Item].Next;
+    end;
+  end;
+  WriteLn(Test, ': ', Patterns, ' patterns (', Legacy, ' valid only with no flag, ', Invalid, ' not valid), ', Answers,
+    ' answers per back end (', Matched, ' of them a match), ', Departures, ' where V8 departs from ECMA-262');
+end;
+
+{ TestEscapedKInAClass checks \k in a class. In a pattern with no named group and no u flag it is the letter k. In a
+  pattern with a named group it is an error, in a class as outside one: the identity escapes of Annex B leave k out
+  when the pattern has a group name, and \k is a reference only outside a class. }
+procedure TestEscapedKInAClass;
+var
+  Patterns, Invalid, Departures: Int32;
+begin
+  CheckSyntax('TestEscapedKInAClass', 'classK', Patterns, Invalid, Departures);
+  if (Patterns < 30) or (Invalid < 9) then
+    Fail('the cases of TestEscapedKInAClass are not the ones the test is about');
+end;
+
+(* TestCountsAreComparedAsWritten checks the two counts of a quantifier. A first count greater than the second is an
+  error whatever the size of the numbers. V8 13.6 keeps a count as a number that stops at 2^31 - 1 and so takes
+  a{2147483648,2147483647}. Those cases have ECMA-262's answer. *)
+procedure TestCountsAreComparedAsWritten;
+var
+  Patterns, Invalid, Departures: Int32;
+begin
+  CheckSyntax('TestCountsAreComparedAsWritten', 'counts', Patterns, Invalid, Departures);
+  if (Invalid < 20) or (Departures < 10) then
+    Fail('the cases of TestCountsAreComparedAsWritten are not the ones the test is about');
+end;
+
+(* TestPropertyNamesAndValues checks the names and values of \p{...} where V8 13.6 departs from ECMA-262. WSpace is
+  not a name ECMA-262 lists, so \p{WSpace} is an error with the u flag and is read with no flag, as the characters
+  p{WSpace}. Katakana_Or_Hiragana (Hrkt) is a Script value, which no character has, so \p{sc=Hrkt} matches nothing
+  and \P{sc=Hrkt} matches any character. *)
+procedure TestPropertyNamesAndValues;
+var
+  Patterns, Invalid, Departures: Int32;
+begin
+  CheckSyntax('TestPropertyNamesAndValues', 'properties', Patterns, Invalid, Departures);
+  if (Patterns < 30) or (Departures < 24) then
+    Fail('the cases of TestPropertyNamesAndValues are not the ones the test is about');
+end;
+
+{ TestAGroupNameUsedTwice checks a name on two groups. It is valid only when the groups are in separate alternatives
+  of one disjunction, so that no match goes through both. V8 13.6 takes some patterns where both can take part,
+  such as (?<m>a)(?:x|(?<m>b)). Those cases have ECMA-262's answer. }
+procedure TestAGroupNameUsedTwice;
+var
+  Patterns, Invalid, Departures: Int32;
+begin
+  CheckSyntax('TestAGroupNameUsedTwice', 'names', Patterns, Invalid, Departures);
+  if (Invalid < 15) or (Departures < 4) then
+    Fail('the cases of TestAGroupNameUsedTwice are not the ones the test is about');
+end;
+
+{ TestCodeUnitPositions checks the two readers of a code unit on every position of a text, forwards and
+  backwards. }
+procedure TestCodeUnitPositions;
+const
+  Want: array[0..7] of Int32 = (Ord('a'), $E9, $20AC, $D801, $DC00, $DBFF, $DFFF, Ord('z'));
+var
+  Text, Bad: TBytes;
+  Ends: array[0..7] of Int32;
+  Pos, K, R, W, B: Int32;
+  Bads: array[0..4] of UTF8String;
+begin
+  Text := ToBytes('a' + U($E9) + U($20AC) + U($10400) + U($10FFFF) + 'z');
+  // The text is read from the middle of a longer array, as a string of a document is.
+  SetLength(Bad, Length(Text) + 4);
+  for K := 0 to High(Text) do
+    Bad[K + 2] := Text[K];
+  Bad[0] := $F0;
+  Bad[1] := $90;
+  Bad[Length(Text) + 2] := $80;
+  Bad[Length(Text) + 3] := $80;
+  Text := Bad;
+  Pos := 2;
+  for K := 0 to High(Want) do begin
+    R := UnitAt(Text, 2, Pos, Length(Text) - 2, W);
+    if R <> Want[K] then
+      Fail('UnitAt(' + Num(Pos) + ') = ' + Num(R) + ', want ' + Num(Want[K]));
+    Inc(Pos, W);
+    Ends[K] := Pos;
+  end;
+  if Pos <> Length(Text) - 2 then
+    Fail('the units end at ' + Num(Pos) + ' of ' + Num(Length(Text) - 2) + ' bytes');
+  for K := High(Want) downto 0 do begin
+    R := UnitBefore(Text, 2, Ends[K], Length(Text) - 2, W);
+    if R <> Want[K] then
+      Fail('UnitBefore(' + Num(Ends[K]) + ') = ' + Num(R) + ', want ' + Num(Want[K]));
+    if (K > 0) and (Ends[K] - W <> Ends[K - 1]) then
+      Fail('UnitBefore(' + Num(Ends[K]) + ') spans ' + Num(W) + ' bytes');
+  end;
+  if (not HasSupplementary(Text, 2, Length(Text) - 2)) or
+    HasSupplementary(ToBytes('a' + U($E9) + U($20AC) + U($FFFF)), 0, 9) then
+    Fail('HasSupplementary is wrong');
+  // Text that is not UTF-8 is read a byte at a time, as it is when matching by code point.
+  Bads[0] := HexBytes('f09f');
+  Bads[1] := HexBytes('f09f98');
+  Bads[2] := HexBytes('808080');
+  Bads[3] := HexBytes('f0618080');
+  Bads[4] := HexBytes('f888808080');
+  for B := 0 to High(Bads) do begin
+    Bad := ToBytes(Bads[B]);
+    Pos := 0;
+    while Pos < Length(Bad) do begin
+      R := UnitAt(Bad, 0, Pos, Length(Bad), W);
+      if (W <> 1) or ((R <> RuneError) and (R <> Bad[Pos])) then
+        Fail('UnitAt on text that is not UTF-8 (' + Num(B) + ', ' + Num(Pos) + ') = ' + Num(R) + ', ' + Num(W));
+      Inc(Pos);
+    end;
+    Pos := Length(Bad);
+    while Pos > 0 do begin
+      R := UnitBefore(Bad, 0, Pos, Length(Bad), W);
+      if (W <> 1) or ((R <> RuneError) and (R <> Bad[Pos - 1])) then
+        Fail('UnitBefore on text that is not UTF-8 (' + Num(B) + ', ' + Num(Pos) + ') = ' + Num(R) + ', ' + Num(W));
+      Dec(Pos);
+    end;
+  end;
+  WriteLn('TestCodeUnitPositions: done');
+end;
+
 begin
   if ParamCount >= 1 then
     OraclePath := UTF8String(ParamStr(1));
@@ -2117,6 +3454,7 @@ begin
   TestBacktrackingSemantics;
   TestLongInput;
   TestAllocations;
+  TestALimitedMatchAllocatesNothing;
   TestConcurrentUse;
   TestFoldTables;
   TestModifiers;
@@ -2127,11 +3465,35 @@ begin
   TestOracleHandWritten;
   TestOracleFlags;
   TestOracleGenerated;
+  TestCodeUnits;
+  TestFastMatchersMatchCodeUnits;
+  TestSimplify;
+  TestRepetitionsThatCannotConsume;
+  TestNeeds;
+  TestLoopsGiveUpWhenTheRestCannotFit;
+  TestALoopGivesUpWhenItsIterationsCannotFit;
+  TestQuick;
+  TestTheNextCharacterRulesOutAWay;
+  TestMemoPoints;
+  TestTheMemoryIsBounded;
+  TestFailedPlacesAreRemembered;
+  TestARepetitionInARepetitionIsAnswered;
+  TestABackreferenceTurnsTheMemoryOff;
+  TestTheNeedsSettleInFewPasses;
+  TestCodeUnitPositions;
+  TestEscapedKInAClass;
+  TestCountsAreComparedAsWritten;
+  TestPropertyNamesAndValues;
+  TestAGroupNameUsedTwice;
+  TestTheSizeOfAPattern;
+  TestAPatternOverALimitOfSizeIsTooLarge;
+  TestAPatternAtTheLimitOfSizeIsCheap;
+  TestManyGroupNamesAreReadInTimeProportionalToTheirNumber;
   WriteLn('V8 oracle: ', OracleVerdicts, ' verdicts on validity compared, ', OracleVerdictsAgreed, ' agreed. ',
     OracleAnswers, ' answers on a match compared (each text on both back ends), ', OracleAnswersAgreed, ' agreed.');
   if Failures <> 0 then begin
     WriteLn('FAILED: ', Failures, ' failures');
     Halt(1);
   end;
-  WriteLn('PASS: 17 tests, 0 failures');
+  WriteLn('PASS: 41 tests, 0 failures');
 end.

@@ -51,6 +51,7 @@ internal static partial class CorvusJsonSchemaProgram
             AssertFormat = true,
             AssertFormatInLegacyDrafts = true,
             RegexProvider = GetRegex,
+            RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(1000),
         };
     }
 

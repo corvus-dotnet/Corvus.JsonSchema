@@ -25,9 +25,16 @@ from enum import IntEnum
 from typing import Any
 
 from . import _native
-from ._native import SchemaCompilationError, SchemaEvaluationDepthError, SchemaResult, Validator
+from ._native import (
+    PatternMatchLimitError,
+    PatternTooLargeError,
+    SchemaCompilationError,
+    SchemaEvaluationDepthError,
+    SchemaResult,
+    Validator,
+)
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 __all__ = [
     "Annotation",
@@ -36,6 +43,8 @@ __all__ = [
     "DocumentResolver",
     "FormatValidator",
     "JsonSchemaResultsCollector",
+    "PatternMatchLimitError",
+    "PatternTooLargeError",
     "ResultsLevel",
     "SchemaCompilationError",
     "SchemaEvaluationDepthError",
@@ -89,6 +98,10 @@ class CompileOptions:
     base_uri: str | None = None
     entry_point: str | None = None
     max_depth: int = 128
+    pattern_match_limit: float | None = 1.0
+    """The time one match of a ``pattern`` or ``patternProperties`` regular expression against one string may take,
+    in seconds. A match that takes longer is abandoned and the validation raises ``PatternMatchLimitError``. ``None``
+    or zero turns the limit off, for a caller who trusts both the schema and the instances."""
 
 
 class JsonSchemaResultsCollector(_native.JsonSchemaResultsCollector):
@@ -108,7 +121,11 @@ def compile(schema: Any, options: CompileOptions | None = None, **kwargs: Any) -
     """Compiles a schema (a parsed JSON value, or JSON text) into a validator.
 
     Options are given as a ``CompileOptions`` or as its fields by keyword (``default_dialect``, ``assert_format``,
-    ``formats``, ``resolve_document``, ``base_uri``, ``entry_point``, ``max_depth`` and so on).
+    ``formats``, ``resolve_document``, ``base_uri``, ``entry_point``, ``max_depth``, ``pattern_match_limit`` and so
+    on).
+
+    A schema with a regular expression that is not valid raises ``SchemaCompilationError``, and one with a regular
+    expression over a limit of size raises ``PatternTooLargeError``, which is a ``SchemaCompilationError``.
     """
     fields = asdict(options) if options is not None else {}
     fields.update(kwargs)

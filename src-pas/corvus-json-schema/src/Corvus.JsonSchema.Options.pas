@@ -50,9 +50,21 @@ type
     EntryPoint: UTF8String;
     HasEntryPoint: Boolean;
     MaxDepth: Int32;
+    { The time one match of a pattern or patternProperties regular expression against one string may take, in
+      milliseconds. Zero is no limit. }
+    PatternMatchLimit: Int64;
   end;
 
 const
+  { DefaultPatternMatchLimit is the time one match of a pattern or patternProperties regular expression against
+    one string may take, in milliseconds, unless WithPatternMatchLimit says otherwise: one second. }
+  DefaultPatternMatchLimit = 1000;
+  { NoPatternMatchLimit, given to WithPatternMatchLimit, turns the limit on a match off. }
+  NoPatternMatchLimit = 0;
+  { PatternMatchStackLimit is the number of entries the backtracking of one match may hold when the match has a
+    limit (16 bytes each). }
+  PatternMatchStackLimit = 1048576;
+
   { ErrDepthExceeded reports that evaluation recursed in place beyond the maximum depth (a schema that loops
     without consuming the instance). }
   ErrDepthExceeded: UTF8String = 'the schema recursed in place beyond the maximum depth';
@@ -85,6 +97,23 @@ procedure WithEntryPoint(var O: TCompileOptions; const Reference: UTF8String);
   is 128. Values below 1 are ignored. }
 procedure WithMaxDepth(var O: TCompileOptions; Depth: Int32);
 
+{ WithPatternMatchLimit sets the time one match of a pattern or patternProperties regular expression against one
+  string may take, in milliseconds. The default is DefaultPatternMatchLimit, one second. A match that takes longer
+  is abandoned, and the validation it belongs to raises EJsonSchemaPatternMatchLimit (the Try forms return the
+  reason). Zero (NoPatternMatchLimit) or less turns the limit off, for a caller who trusts both the schema and the
+  instances. Without the limit a match also has no limit on its memory.
+
+  The limit is on each match, not on the validation. Only the backtracking matcher can take long, and it reads the
+  clock every 4,096 steps, so a match is abandoned within a millisecond or two of the limit. The matchers that take
+  time proportional to the text are not stopped. }
+procedure WithPatternMatchLimit(var O: TCompileOptions; Milliseconds: Int64);
+
+{ PatternMatchLimitMessage is the message of a match that was abandoned: for its time when Memory is false, with
+  the limit it had, and for the memory of its backtracking when Memory is true. }
+function PatternMatchLimitMessage(const Pattern: UTF8String; LimitMs: Int64; Memory: Boolean): UTF8String;
+{ ShownPattern quotes a pattern for a message, or its first 120 bytes and its length when it is longer. }
+function ShownPattern(const Pattern: UTF8String): UTF8String;
+
 { CustomFormat is the custom format assertion of a name, or nil when the options have none. }
 function CustomFormat(const O: TCompileOptions; const Name: UTF8String): TFormatValidator;
 
@@ -103,6 +132,7 @@ begin
   Result.EntryPoint := '';
   Result.HasEntryPoint := False;
   Result.MaxDepth := 128;
+  Result.PatternMatchLimit := DefaultPatternMatchLimit;
 end;
 
 procedure WithDefaultDialect(var O: TCompileOptions; Dialect: TDialect);
@@ -166,6 +196,60 @@ procedure WithMaxDepth(var O: TCompileOptions; Depth: Int32);
 begin
   if Depth >= 1 then
     O.MaxDepth := Depth;
+end;
+
+procedure WithPatternMatchLimit(var O: TCompileOptions; Milliseconds: Int64);
+begin
+  if Milliseconds < 0 then
+    Milliseconds := 0;
+  O.PatternMatchLimit := Milliseconds;
+end;
+
+function ShownPattern(const Pattern: UTF8String): UTF8String;
+const
+  Shown = 120;
+var
+  Cut: Int32;
+begin
+  if Length(Pattern) <= Shown then
+    Exit('''' + Pattern + '''');
+  { Not in the middle of a character: the byte after the cut is not a continuation byte. }
+  Cut := Shown;
+  while (Cut > 0) and ((Ord(Pattern[Cut + 1]) and $C0) = $80) do
+    Dec(Cut);
+  Result := '''' + Copy(Pattern, 1, Cut) + '...'' (' + UTF8String(IntToStr(Length(Pattern))) + ' bytes)';
+end;
+
+{ DurationText writes a number of milliseconds as Go writes a duration: 1s, 50ms, 1m0s, 1h0m0s, 1.5s. }
+function DurationText(Ms: Int64): UTF8String;
+var
+  Seconds: UTF8String;
+  Frac: Int64;
+begin
+  if Ms < 1000 then
+    Exit(UTF8String(IntToStr(Ms)) + 'ms');
+  Seconds := UTF8String(IntToStr((Ms div 1000) mod 60));
+  Frac := Ms mod 1000;
+  if Frac <> 0 then begin
+    Seconds := Seconds + '.' + UTF8String(Format('%.3d', [Frac]));
+    while Seconds[Length(Seconds)] = '0' do
+      SetLength(Seconds, Length(Seconds) - 1);
+  end;
+  Result := Seconds + 's';
+  if Ms >= 60000 then
+    Result := UTF8String(IntToStr((Ms div 60000) mod 60)) + 'm' + Result;
+  if Ms >= 3600000 then
+    Result := UTF8String(IntToStr(Ms div 3600000)) + 'h' + Result;
+end;
+
+function PatternMatchLimitMessage(const Pattern: UTF8String; LimitMs: Int64; Memory: Boolean): UTF8String;
+begin
+  if Memory then
+    Result := 'A match of the regular expression ' + ShownPattern(Pattern)
+      + ' was abandoned: it needed more than the limit of 1,048,576 backtracking entries.'
+  else
+    Result := 'A match of the regular expression ' + ShownPattern(Pattern)
+      + ' was abandoned: it took longer than the limit of ' + DurationText(LimitMs) + '.';
 end;
 
 function CustomFormat(const O: TCompileOptions; const Name: UTF8String): TFormatValidator;

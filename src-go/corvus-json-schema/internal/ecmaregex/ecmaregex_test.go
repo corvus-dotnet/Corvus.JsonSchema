@@ -105,6 +105,8 @@ func differentialInputs(n int) []string {
 // TestDifferential proves the translation to the regexp package exact on the patterns at hand. Every pattern that
 // takes that back end is also run on the backtracking matcher, and the two must agree on every text. So must the
 // automaton over ASCII text, which answers for the pattern where it has one, and the regexp package asked directly.
+// The regexp package matches code points, so it is not asked directly about a text with a character beyond the
+// Basic Multilingual Plane for a pattern that is valid only with no flag, which is matched by UTF-16 code unit.
 func TestDifferential(t *testing.T) {
 	patterns := map[string]bool{}
 	o := loadOracle(t)
@@ -145,7 +147,11 @@ func TestDifferential(t *testing.T) {
 		}
 		for _, s := range inputs {
 			answers++
-			a, direct, b := re.MatchString(s), re.re.MatchString(s), backtrack.MatchString(s)
+			a, b := re.MatchString(s), backtrack.MatchString(s)
+			direct := b
+			if re.Unicode() || !hasSupplementary([]byte(s)) {
+				direct = re.re.MatchString(s)
+			}
 			if a != b || direct != b {
 				t.Errorf("%q on %q: %v says %v (the regexp package itself %v), %v says %v", p, s, EngineRE2, a, direct,
 					EngineBacktrack, b)
@@ -269,6 +275,10 @@ func TestAllocations(t *testing.T) {
 		`(?<=@)\w+(?:\.\w+)+$`: EngineBacktrack, `^(?:(\w)(?!\1)|\W){3,}?$`: EngineBacktrack,
 		`(?<n>[a-z])\k<n>`: EngineBacktrack, `café(?= )`: EngineBacktrack, `(?i:QUICK|ÉCOLE)`: EngineRE2,
 		`(\w)(?i:\1)`: EngineBacktrack, `(?m:^)\w+(?m:$)`: EngineBacktrack, `(?i:\bCAF\b)`: EngineBacktrack,
+		// Valid only with no flag, so matched by UTF-16 code unit. The text with a character beyond the Basic
+		// Multilingual Plane goes to the backtracking matcher on either back end.
+		`^\-?[^\d]+$`: EngineRE2, `\-?\W{2} na.+\W{2}$`: EngineRE2, `\-{0}(\W)\1 `: EngineBacktrack,
+		`\-{0}(?<=\W{2}) (?i:CAF\W)(?= (.)(.)$)`: EngineBacktrack,
 	} {
 		re, err := Compile(p)
 		if err != nil {

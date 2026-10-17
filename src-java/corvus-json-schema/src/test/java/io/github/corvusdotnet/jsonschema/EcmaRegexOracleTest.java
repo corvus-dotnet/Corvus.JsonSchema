@@ -33,8 +33,9 @@ import org.junit.jupiter.api.Test;
  *       same behaviour is checked through the patterns that V8 matched with the flag set.
  * </ul>
  *
- * <p>V8 matches a pattern that is valid only with no flag by UTF-16 code unit, and this library matches every pattern
- * by code point, so such a pattern is not asked about a text with a character beyond the Basic Multilingual Plane.
+ * <p>V8 matches a pattern that is valid only with no flag by UTF-16 code unit, and so does this library. The
+ * translation of such a pattern is for the text as {@link EcmaRegex#codeUnits} writes it, so it is asked through the
+ * compiled pattern, which does that.
  */
 class EcmaRegexOracleTest {
     /** The patterns of the file that V8 answers inconsistently (see the class comment). */
@@ -148,15 +149,12 @@ class EcmaRegexOracleTest {
         SchemaPattern compiled = SchemaPattern.compile(p);
         PatternShapes.Matcher shape = compiled.shape;
         for (int i = 0; i < texts.length; i++) {
-            if (!validUnicode && beyondBmp(texts[i])) {
-                continue;
-            }
             boolean want = bit(bits, i);
             tally.answers++;
             if (want) {
                 tally.matched++;
             }
-            if (regex.matcher(texts[i]).find() != want) {
+            if ((validUnicode || !beyondBmp(texts[i])) && regex.matcher(texts[i]).find() != want) {
                 tally.fail(show(p) + " on " + show(texts[i]) + ": got " + !want + ", V8 says " + want + "  [" + translated
                         + "]");
             }
@@ -262,6 +260,175 @@ class EcmaRegexOracleTest {
         assertEquals(EXPECTED_UNSUPPORTED_GENERATED, tally.unsupported);
     }
 
+    /**
+     * Patterns that fuzzing against V8 found this translator to refuse or to answer wrongly, each with the texts V8
+     * matches, every one preceded by "|". The texts are every string of up to four of a, b and c, and
+     * {@link #MORE_FOUND_BY_FUZZING}. The answers were written by Node 24 as {@code new RegExp(pattern, "u").test(text)}.
+     */
+    private static final String[][] FOUND_BY_FUZZING = {
+            // A lookbehind that starts with a repetition whose body holds a counted group with alternatives.
+            {"(?<=(?:(a|b)(?:c|b){2})+)\\1", "|abba|abca|acba|acca|bbbb|bbcb|bcbb|bccb|acbccb|abcabc|aabbaa|ababcab"},
+            {"(?<=(?:(?:c|b){2}(a))+)\\1$", "|bbaa|bcaa|cbaa|ccaa|aabbaa"},
+            // A case-insensitive backreference in a lookbehind to a group that ends after the place it is tried at.
+            {"(?i:^(b*)(?<=\\1)c$)", "|c|bc|bbc|bbbc|bBc|Bbc"},
+            {
+                "(?i:(.+)(?<=\\1\\1)c)",
+                "|aac|bbc|ccc|aaac|aaca|aacb|aacc|abbc|accc|baac|bbbc|bbca|bbcb|bbcc|bccc|caac"
+                        + "|cbbc|ccca|cccb|cccc|ababcab|bBc|Bbc|aAaAc|aaAAc",
+            },
+            {"(?i:^(?:(a+)b(?<=\\1b))+$)", "|ab|aab|aaab|abab"},
+            // A lookahead that sets a group on some of its ways only, and one whose first match java.util.regex
+            // finds in another order (a repetition that can take an empty iteration).
+            {
+                "(?=(a)?b)\\1",
+                "|b|ab|ba|bb|bc|cb|aab|aba|abb|abc|acb|baa|bab|bac|bba|bbb|bbc|bca|bcb|bcc|cab"
+                        + "|cba|cbb|cbc|ccb|aaab|aaba|aabb|aabc|aacb|abaa|abab|abac|abba|abbb|abbc|abca"
+                        + "|abcb|abcc|acab|acba|acbb|acbc|accb|baaa|baab|baac|baba|babb|babc|baca|bacb"
+                        + "|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb"
+                        + "|bcbc|bcca|bccb|bccc|caab|caba|cabb|cabc|cacb|cbaa|cbab|cbac|cbba|cbbb|cbbc"
+                        + "|cbca|cbcb|cbcc|ccab|ccba|ccbb|ccbc|cccb|acbcb|acbccb|abcabc|aabbaa|acacab"
+                        + "|bcbcab|abababa|ababcab|axbba|abxba|bBc|Bbc",
+            },
+            {
+                "^(?=(?:b|bc)*(c)?)\\1",
+                "||a|b|c|aa|ab|ac|ba|bb|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab|aaac|aaba|aabb|aabc"
+                        + "|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb|abcc|acaa|acab|acac"
+                        + "|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc"
+                        + "|bbaa|bbab|bbac|bbba|bbbb|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa"
+                        + "|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca"
+                        + "|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|abababa|ababcab|axbba|abxba"
+                        + "|bBc|Bbc|aAaAc|aaAAc",
+            },
+            {"^(?=((?:c??)?))\\1$", "||c"},
+            {
+                "^(?=(a)?(?:(b)|c)*?\\1)\\2",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|abb|abc|aca|acb|acc|baa|bab|bac"
+                        + "|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab|aaac"
+                        + "|aaba|aabb|aabc|aaca|aacb|aacc|abbb|abbc|abca|abcb|abcc|acaa|acab|acac|acbb"
+                        + "|acbc|acca|accb|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab"
+                        + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
+                        + "|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa|cbab|cbac|cbba|cbbb"
+                        + "|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|acaca|acbcb"
+                        + "|acbccb|abcabc|aabbaa|acacab|bcbcab|axbba|abxba|bBc|Bbc|aAaAc|aaAAc",
+            },
+            {
+                "^(?=(?:((?:a|ab)*)c)*\\1(b)?)\\2.",
+                "|a|c|aa|ab|ac|ba|bb|bc|ca|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab|bac"
+                        + "|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cca|ccc|aaaa|aaab|aaac|aaba|aabb|aabc"
+                        + "|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb|abcc|acaa|acac|acba"
+                        + "|acbb|acbc|acca|accc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab"
+                        + "|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb"
+                        + "|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|ccaa|ccab|ccac|ccca|cccc"
+                        + "|acaca|acbcb|acbccb|abcabc|aabbaa|bcbcab|abababa|ababcab|axbba|abxba|bBc|Bbc"
+                        + "|aAaAc|aaAAc",
+            },
+            {
+                "^(?=(?:(a)|b)*?(?:c|(b))\\1)\\2a",
+                "|ba|abc|aca|baa|bab|bac|aabc|aaca|abca|abcb|abcc|acaa|acab|acac|baaa|baab|baac"
+                        + "|baba|babb|babc|baca|bacb|bacc|acaca|abcabc|acacab",
+            },
+            {
+                "^(?=(?:(?:(c)|(b[bc]))|(?:([bc])|(?:[^a]|ba)))(a)?)\\1\\2\\3\\4",
+                "|b|c|ba|bb|bc|ca|cb|cc|baa|bab|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb"
+                        + "|cbc|cca|ccb|ccc|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac"
+                        + "|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc"
+                        + "|caaa|caab|caac|caba|cabb|cabc|caca|cacb|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc"
+                        + "|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|bcbcab|bBc|Bbc",
+            },
+            {
+                "a(?=((?:a|cc))*?\\1(ab|a))\\1\\2\\1",
+                "|aa|aaa|aab|aac|baa|caa|aaaa|aaab|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|acaa"
+                        + "|baaa|baab|baac|bbaa|bcaa|caaa|caab|caac|cbaa|ccaa|aabbaa|aaAAc",
+            },
+            {"^(?=(?:((?:ba?)?){0,2}|((?:.[ab]|b))??(a)(|a))((c{0,2}?)?))\\5$", "||c"},
+            // A group of an iteration of a loop in a lookahead, read by what follows the loop.
+            {
+                "^(?=(?:(a)*(?:c|cb))*\\1b)\\1",
+                "|b|ba|bb|bc|cb|baa|bab|bac|bba|bbb|bbc|bca|bcb|bcc|cba|cbb|cbc|ccb|acab|accb"
+                        + "|baaa|baab|baac|baba|babb|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc"
+                        + "|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|cbaa|cbab|cbac"
+                        + "|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccba|ccbb|ccbc|cccb|acbcb|acbccb|acacab|bcbcab"
+                        + "|bBc",
+            },
+            // A group of a lookaround read in the same iteration of a loop, where the match can come back to before
+            // the reference after a later iteration has run the lookaround again.
+            {"^(?:(?=([ab]))[ab](?:c|ca)\\1)*$", "||aca|bcb|acaa|bcab"},
+            {"^(?:(?=([ab]))[ab](?:c\\1|ca\\1))*$", "||aca|bcb|acaa|bcab"},
+            {
+                "^(?:(?=([ab]+?))(?:\\1.)*?b)+$",
+                "|b|bb|aab|abb|acb|bab|bbb|bcb|aabb|abbb|acbb|baab|babb|bacb|bbab|bbbb|bbcb"
+                        + "|bcbb",
+            },
+            {"^(?:(?=(a*))(?:b\\1(?<=\\1b?))*?)*$", "||b|bb|bbb|bbbb"},
+            {"^(?:(?<=(.))(?:a\\1c?)?\\1|b)*$", "||b|bb|bbb|babb|bbbb"},
+            {
+                "^(?:[bc]?(?:.(?=([ab]c?))(?:c\\1)*\\1)*?b?)*$",
+                "||b|c|aa|ab|ba|bb|bc|ca|cb|cc|aab|aac|abb|abc|baa|bab|bac|bba|bbb|bbc|bca|bcb"
+                        + "|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab|aaba|aabb|aabc|aacb|aacc"
+                        + "|abaa|abab|abba|abbb|abbc|abcb|abcc|baaa|baab|baac|baba|babb|babc|bacb|bacc"
+                        + "|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab|bcac|bcba|bcbb|bcbc"
+                        + "|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|cacb|cacc|cbaa|cbab|cbac|cbba"
+                        + "|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb|ccbc|ccca|cccb|cccc|abcabc"
+                        + "|aabbaa|bcbcab|ababcab|Bbc",
+            },
+            {"(?i:^(?:(?=(a|))c\\1)*$)", "||c|cc|ccc|cccc"},
+            {
+                "^(?=(?:(?:((?:a|ab)*)\\1c)*b)*)\\1",
+                "||a|b|c|aa|ab|ac|ba|bb|bc|ca|cb|cc|aaa|aab|aac|aba|abb|abc|aca|acb|acc|baa|bab"
+                        + "|bac|bba|bbb|bbc|bca|bcb|bcc|caa|cab|cac|cba|cbb|cbc|cca|ccb|ccc|aaaa|aaab"
+                        + "|aaac|aaba|aabb|aabc|aaca|aacb|aacc|abaa|abab|abac|abba|abbb|abbc|abca|abcb"
+                        + "|abcc|acaa|acab|acac|acba|acbb|acbc|acca|accb|accc|baaa|baab|baac|baba|babb"
+                        + "|babc|baca|bacb|bacc|bbaa|bbab|bbac|bbba|bbbb|bbbc|bbca|bbcb|bbcc|bcaa|bcab"
+                        + "|bcac|bcba|bcbb|bcbc|bcca|bccb|bccc|caaa|caab|caac|caba|cabb|cabc|caca|cacb"
+                        + "|cacc|cbaa|cbab|cbac|cbba|cbbb|cbbc|cbca|cbcb|cbcc|ccaa|ccab|ccac|ccba|ccbb"
+                        + "|ccbc|ccca|cccb|cccc|acaca|acbcb|acbccb|abcabc|aabbaa|acacab|bcbcab|abababa"
+                        + "|ababcab|axbba|abxba|bBc|Bbc|aAaAc|aaAAc",
+            },
+    };
+
+    private static final String[] MORE_FOUND_BY_FUZZING = {
+        "acaca", "acbcb", "acbccb", "abcabc", "aabbaa", "acacab", "bcbcab", "abababa", "ababcab", "axbba", "abxba",
+        "bBc", "Bbc", "aAaAc", "aaAAc"
+    };
+
+    /** The patterns found by fuzzing are translated, and answer as V8 does on every text. */
+    @Test
+    void patternsFoundByFuzzing() {
+        List<String> texts = new ArrayList<>(List.of(""));
+        for (int length = 0, from = 0; length < 4; length++) {
+            int end = texts.size();
+            for (int k = from; k < end; k++) {
+                for (String c : new String[] {"a", "b", "c"}) {
+                    texts.add(texts.get(k) + c);
+                }
+            }
+            from = end;
+        }
+        texts.addAll(List.of(MORE_FOUND_BY_FUZZING));
+        List<String> wrong = new ArrayList<>();
+        for (String[] c : FOUND_BY_FUZZING) {
+            Set<String> expected = c[1].isEmpty() ? Set.of() : Set.of(c[1].substring(1).split("\\|", -1));
+            String translated = EcmaRegex.translate(c[0]);
+            if (translated == null) {
+                wrong.add(show(c[0]) + " is refused: " + EcmaRegex.unsupported(c[0]));
+                continue;
+            }
+            Pattern regex = Pattern.compile(translated);
+            SchemaPattern compiled = SchemaPattern.compile(c[0]);
+            for (String text : texts) {
+                boolean want = expected.contains(text);
+                if (regex.matcher(text).find() != want) {
+                    wrong.add(show(c[0]) + " on " + show(text) + ": got " + !want + ", V8 says " + want);
+                }
+                if (compiled.find(text) != want) {
+                    wrong.add(show(c[0]) + " on " + show(text) + ": the compiled pattern says " + !want);
+                }
+            }
+        }
+        assertEquals(List.of(), wrong);
+    }
+
     /** One step of xorshift32, as an unsigned value. */
     private static long next(int[] seed) {
         int s = seed[0];
@@ -272,14 +439,9 @@ class EcmaRegexOracleTest {
         return s & 0xffffffffL;
     }
 
-    // The patterns the translator refuses, by reason. EcmaRegex says what each reason means.
-    private static final Map<String, Integer> EXPECTED_UNSUPPORTED_HAND = Map.of(
-            EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND, 6,
-            EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND, 3,
-            EcmaRegex.REFUSED_GROUP_IN_LOOKAROUND, 2,
-            EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE, 9);
-    private static final Map<String, Integer> EXPECTED_UNSUPPORTED_FLAGGED = Map.of(
-            EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND, 8,
-            EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE, 16);
+    // The patterns the translator refuses, by reason. EcmaRegex says what each reason means. It refuses none of the
+    // patterns of the file.
+    private static final Map<String, Integer> EXPECTED_UNSUPPORTED_HAND = Map.of();
+    private static final Map<String, Integer> EXPECTED_UNSUPPORTED_FLAGGED = Map.of();
     private static final Map<String, Integer> EXPECTED_UNSUPPORTED_GENERATED = Map.of();
 }

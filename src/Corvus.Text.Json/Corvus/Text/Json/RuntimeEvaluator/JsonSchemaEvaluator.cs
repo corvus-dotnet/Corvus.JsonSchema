@@ -205,9 +205,18 @@ public sealed class JsonSchemaEvaluator : IDisposable
     /// </summary>
     /// <param name="ecmaPattern">The pattern as written in the schema.</param>
     /// <returns>The .NET pattern.</returns>
+    /// <exception cref="JsonSchemaCompilationException">The pattern is over a limit of size, as it is when a schema
+    /// that holds it is compiled. The message names the limit.</exception>
     public static string ToDotNetPattern(string ecmaPattern)
     {
-        return Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.TranslateOrFallback(ecmaPattern);
+        try
+        {
+            return Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.TranslateOrFallback(ecmaPattern);
+        }
+        catch (Corvus.Text.Json.CodeGeneration.EcmaRegexPatternTooLargeException tooLarge)
+        {
+            throw new JsonSchemaCompilationException(tooLarge.Message);
+        }
     }
 
     /// <summary>

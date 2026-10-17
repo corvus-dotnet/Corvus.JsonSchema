@@ -154,6 +154,25 @@ end
         @test B.main(IOBuffer("\n{\"cmd\":\"start\",\"version\":1}\n\n"), IOBuffer()) == 0
     end
 
+    # A match of a pattern that is given up at its limit is an error of that test, and never a verdict. The pattern
+    # tries 2^40 ways on the first string, and the limit of a match is one second.
+    @testset "a match that reaches its limit is an errored test" begin
+        requests = "{\"cmd\":\"start\",\"version\":1}\n" *
+            "{\"cmd\":\"dialect\",\"dialect\":\"https://json-schema.org/draft/2020-12/schema\"}\n" *
+            run_request(7, "", "a slow pattern", "{\"pattern\":\"^(?:a|a)+\$\"}", "{}",
+                ["{\"description\":\"slow\",\"instance\":\"" * "a"^40 * "b\"}",
+                    "{\"description\":\"quick\",\"instance\":\"aaa\"}"]) * "\n"
+        output = IOBuffer()
+        @test B.main(IOBuffer(requests), output) == 0
+        response = Vector{UInt8}(last(split(chomp(String(take!(output))), '\n')))
+        results = results_of(response, B.whole_value(response), 7)
+        @test length(results) == 2
+        slow = B.raw(response, results[1])
+        @test occursin("\"errored\":true", slow) && occursin("the limit on its time", slow)
+        @test !occursin("\"valid\"", slow)
+        @test B.raw(response, results[2]) == "{\"valid\":true}"
+    end
+
     @testset "the required suite over IHOP" begin
         root = suite_root()
         remotes = registry(root)

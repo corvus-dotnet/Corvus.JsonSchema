@@ -12,8 +12,10 @@
 #   with the i flag, which ECMA-262 does not allow. Only their validity is taken from the file. The same behaviour is
 #   checked through the patterns that V8 matched with the flag set.
 #
-# V8 matches a pattern that is valid only with no flag by UTF-16 code unit, and this library matches every pattern by
-# code point, so such a pattern is not asked about a text with a character beyond the Basic Multilingual Plane.
+# A pattern that is valid only with no flag is not asked about a text with a character beyond the Basic Multilingual
+# Plane: the file was written for a library that matched such a pattern by code point, and does not hold V8's
+# answers for those ("{" on a text with U+10428 and "{" is recorded as no match). V8 matches such a pattern by UTF-16
+# code unit, and so does this library. The tables of v8tests.jl hold V8's answers for that.
 
 # The patterns of the file that V8 answers inconsistently.
 const V8_MODIFIER_BUGS = Set(["^(?i:\\u212a)\$", "^(?i:\\u017f)\$", "^(?i:\\u1e9e)\$", "^(?i:\\u03bc)\$",
@@ -70,8 +72,11 @@ function check!(tally::Tally, p::String, validunicode::Bool, validlegacy::Bool, 
     try
         compiled = EcmaRegex.compile(p)
     catch e
-        e isa EcmaRegex.PatternError || rethrow()
-        if e.unsupported
+        e isa Union{EcmaRegex.PatternError,EcmaRegex.TooLargeError} || rethrow()
+        if e isa EcmaRegex.TooLargeError
+            # Valid, and over a limit of size, which is counted with what is refused.
+            reason = "too large"
+        elseif e.unsupported
             reason = reasonof(e)
         else
             invalid = e.reason
@@ -121,14 +126,9 @@ end
 
 # The patterns the translator refuses, by reason. emitter.jl says what each reason means.
 const EXPECTED_UNSUPPORTED_HAND = Dict(
-    EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND => 6,
-    EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND => 3,
-    EcmaRegex.REFUSED_GROUP_IN_LOOKAROUND => 2,
-    EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE => 8,
-    EcmaRegex.REFUSED_BY_ENGINE => 3)
+    EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE => 3)
 const EXPECTED_UNSUPPORTED_FLAGGED = Dict(
-    EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND => 8,
-    EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE => 14)
+    EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE => 8)
 const EXPECTED_UNSUPPORTED_GENERATED = Dict{String,Int}()
 
 @testset "V8 oracle" begin

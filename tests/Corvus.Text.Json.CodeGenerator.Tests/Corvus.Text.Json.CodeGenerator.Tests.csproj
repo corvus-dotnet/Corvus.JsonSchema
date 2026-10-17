@@ -26,6 +26,11 @@
     <ProjectReference Include="..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
+    <!-- The patterns with V8's answers, which the runtime evaluator's tests run through the evaluator and the tests
+         here run through the translator alone. -->
+    <Compile Include="..\Corvus.Text.Json.RuntimeEvaluator.Tests\Unit\EcmaPatternCases.cs" Link="EcmaPatternCases.cs" />
+  </ItemGroup>
   <ItemGroup>
     <None Update="TestFixtures\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

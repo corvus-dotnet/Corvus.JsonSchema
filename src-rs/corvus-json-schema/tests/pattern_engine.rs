@@ -1,0 +1,857 @@
+//! Patterns that an engine answered differently from ECMA-262 at some point, with V8's answers. The patterns no
+//! other matcher takes are matched by the crate's own engine (`src/ecmaregex`), which answers each as it is
+//! written. Until 0.1.7 they were matched by the `regress` crate, which this file's classes are from:
+//!
+//! - A repetition inside a repetition. That engine lost the iteration count of the inner one when it came back into
+//!   it by backtracking. It then gave wrong answers, and for a body that can match nothing it did not end:
+//!   `{"pattern": "^(?!-)(?:(?:a*)*)*x"}` on `"a"` took memory until the process was stopped (0.1.0 to 0.1.6).
+//! - A reference to a group from inside that group, which read a value the group does not have yet.
+//! - Two groups with one name, where a reference to the name matched nothing.
+//! - A quantifier on a word boundary, which is not valid and was accepted.
+//! - A case-insensitive group in a pattern that is valid only without the `u` flag, and `\W` in a class of one
+//!   with it.
+//! - A pattern that is valid only without the `u` flag, which matches UTF-16 code units. Before 0.1.7 it was
+//!   matched by character, so `^\-?.$` matched a character beyond the Basic Multilingual Plane.
+//! - A case-insensitive reference in such a pattern, which that engine compared by a folding of its own.
+//!
+//! One class is not that engine's: `\B` beside a character of several bytes, which the `regex` crate answered.
+//!
+//! Every answer is asked through `try_validate`, so a match that reaches its limit fails a test here and is not
+//! taken for an answer.
+
+use corvus_json_schema::{CompileOptions, SchemaEvaluationError, Validator, compile, compile_with};
+use serde_json::json;
+use std::time::Duration;
+
+/// Whether the text matches the pattern of the validator. A match that reaches its limit is not an answer, and
+/// fails the test.
+fn answer(v: &Validator, text: &str) -> bool {
+    v.try_validate(&json!(text)).unwrap_or_else(|e| panic!("{text:?}: {e}"))
+}
+
+/// Every text of up to three characters over `a`, `x` and `-`, and seven longer ones: 47 texts.
+fn texts() -> Vec<String> {
+    let mut all = vec![String::new()];
+    let mut last = all.clone();
+    for _ in 0..3 {
+        last = last.iter().flat_map(|t| ["a", "x", "-"].map(|c| format!("{t}{c}"))).collect();
+        all.extend(last.iter().cloned());
+    }
+    all.extend(["aaaa", "xaxa", "aaax", "xxxa", "a-a-", "ax-ax-", "aa-xx-a"].map(String::from));
+    all
+}
+
+/// Checks each pattern against its answers, one `T` or `F` for each of [`texts`]: V8's
+/// `new RegExp(pattern, "u").test(text)`, or without the flag for a pattern that is valid only without it.
+fn check(cases: &[(&str, &str)]) {
+    let texts = texts();
+    let mut wrong = Vec::new();
+    for &(pattern, answers) in cases {
+        assert_eq!(answers.len(), texts.len(), "{pattern}");
+        let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
+        for (text, want) in texts.iter().zip(answers.chars()) {
+            if answer(&v, text) != (want == 'T') {
+                wrong.push(format!("{pattern} on {text:?}: want {want}"));
+            }
+        }
+    }
+    assert!(wrong.is_empty(), "{} wrong:\n{}", wrong.len(), wrong.join("\n"));
+}
+
+/// A repetition inside a repetition, where the inner one can be come back into: its body has an alternation or a
+/// repetition of its own. Before 0.1.7 the first three, and the patterns from `(((?=x)|){3}){2}x$` to
+/// `((?:x|(?<!^)){4,5}|x){2}$`, did not end on some text here, and the others gave a wrong answer on one.
+#[rustfmt::skip]
+const REPETITIONS: &[(&str, &str)] = &[
+    ("^(?!-)(?:(?:a*)*)*x", "FFTFFTFTTTFFFFTFTTTFFFTTTTTTTTTFFFFFFFFFFTTTFTF"),
+    ("^(?!-)(?:(?:a|)?){2}x", "FFTFFTFTTTFFFFTFTTTFFFTTTTTTTTTFFFFFFFFFFTFTFTF"),
+    ("^(?!-)(?:(?:a?)?){3}$", "TTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    ("^(?!-)(?:(?:(?:a){1,}){1}){3}$", "FFFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFFFF"),
+    ("^(?!-)(?:(?:a|x){1,2}-)+$", "FFFFFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFTTF"),
+    ("^(?!-)(?:(?:a|x){1,3}?-)+$", "FFFFFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFTTF"),
+    ("^(?!-)(?:(?:a|x-?){2}-)*$", "TFFFFFFFFFFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFFTF"),
+    ("^(?!-)(?:(?:a|x)+-)+$", "FFFFFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFTTF"),
+    ("^(?!-)(?:(?:a|^)+x)+$", "FFTFFTFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFFTFFFF"),
+    (r#"^(?!-)(?:(?:a|\b){2,}x)+$"#, "FFTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFF"),
+    (r#"^(?!-)(?:(?:a|\b){2,}?x)+$"#, "FFTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFF"),
+    ("^(?!-)(?:a(?:x[ax]{1,2})?-?)+$", "FTFFTFTFFFFFFTFTTTFTFFFFFFFFFFFFFFFFFFFFTFFFTFF"),
+    ("(((?=x)|){3}){2}x$", "FFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFFTFFFF"),
+    (r#"((?:\1|(a|)|.)*|a())*x"#, "FFTFFTFTTTFTFFTFTTTFTFTTTTTTTTTFTFTTTFTFFTTTFTT"),
+    (r#"^(?:(|\B\1){2}|){3,5}$"#, "TFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    ("(?:(-|){1}?|(?!$)){1,}?x$", "FFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFFTFFFF"),
+    (r#"(\b([ax]?){3}|x|\1)*?x$"#, "FFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFFTFFFF"),
+    (r#"^(|(a|$|\1(?:))+())+a"#, "FTFFTTTFFFFFFTTTTTTTTTFFFFFFFFFFFFFFFFFFTFTFTTT"),
+    (r#"^((x|()|\2){0,}|){4}?x"#, "FFTFFFFTTTFFFFFFFFFFFFTTTTTTTTTFFFFFFFFFFTFTFFF"),
+    ("^(?:|((?<!x)|){4,5})+x$", "FFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    ("((?:x|(?<!^)){4,5}|x){2}$", "FTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"),
+    (r#"(?:a|){3}(^(?:(?:|[^a])+(?<![^a]\1)|[ax]){1}?|x)+$"#, "TTTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFTFFFTFFFF"),
+    (r#"([^a][^a]|.(?:\1\1|a?[ax]){2}){4}a$"#, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFT"),
+    (r#"^(\b([^a]|\2){1,}){4}?a$"#, "FTFFFFFTFFFFFFFFFFFFFFFFFTFFTFFFFFFFFFFFFFFTFFF"),
+    (r#"^(a|(?:(?<=a)\1|){3}?){2}a$"#, "FTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+];
+
+/// A reference from outside a repetition to a group inside it reads the last iteration that ran, and from inside
+/// it, the group of its own iteration. Before 0.1.7 the first three did not end on some text here. regress
+/// answers the others as they are written, and they are here for what a reference reads once the repetition is
+/// written as copies.
+#[rustfmt::skip]
+const REFERENCES_TO_A_REPETITION: &[(&str, &str)] = &[
+    (r#"^(?:(?:(a)|x|){1,2}\1-)+$"#, "FFFTFFFFFTFFTFFTFFTFFFFFFFFTFFTFFFFFTFFTFFFFFTF"),
+    (r#"^(?:(?:(a)|x|)+\1-)+$"#, "FFFTFFFFFTFFTFFTFFTFFFFFFFFTFFTFFFFFTFFTFFFFFTF"),
+    (r#"^(?:(?:(a)|x?){2,}\1-)+$"#, "FFFTFFTFFTFFTFFTFFTFFTFFFFFTFFTFFTFFTFFTFFFFTTF"),
+    (r#"^(?:(?:(a)|x){1,2}\1-)+$"#, "FFFFFFFFFTFFFFFTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF"),
+    (r#"^(?:(?:(a)|(x))+\1\2-)*$"#, "TFFFFFFFFFFFFFFTFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFF"),
+    (r#"^(?:(?:(a)|x|-){0,2}?\1x)+$"#, "FFTFFFFFTFFTFFTFFTFFTFFFFFTFFTFFFFFTFFTFFFTFFFF"),
+    (r#"^(?:(?:(a)|x){2,}\1-)+$"#, "FFFFFFFFFFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF"),
+    (r#"^(?:(?:(?:(a)|x){1,2}-){1,2}\1)+$"#, "FFFFFFFFFTFFFFFFFFTTFFFFFFFTFFFFFFFFFFFFFFFFFTF"),
+];
+
+/// The same inside a lookbehind, which matches from its end: the iterations run from the last one written. Before
+/// 0.1.7 the first five did not end on some text here, and the next three gave a wrong answer on one.
+#[rustfmt::skip]
+const REPETITIONS_IN_A_LOOKBEHIND: &[(&str, &str)] = &[
+    ("(?<=^(?:(?:a|){1,2}){3})-", "FFFTFFTFFFTTTFFTFFFTTTFFFFFFFFFTTTTTTTTTFFFFTFT"),
+    ("(?<=^(?:x(?:a*x?){1,2})+)-", "FFFFFFFFFTFFFFFFFFFFFFFFTFFTTTTFFFFFFFFFFFFFFFF"),
+    ("(?<=^(?:(?:a|)+){3})-", "FFFTFFTFFFTTTFFTFFFTTTFFFFFFFFFTTTTTTTTTFFFFTFT"),
+    ("(?<=^(?:x(?:(a)|x|){1,2})+)-", "FFFFFFFFFTFFFFFFFFFFFFFFTFFTTTTFFFFFFFFFFFFFFFF"),
+    ("(?<=^(?:x(?:a?x?){2})+)-", "FFFFFFFFFTFFFFFFFFFFFFFFTFFTTTTFFFFFFFFFFFFFFFF"),
+    ("(?<=^(?:(?:a+){1,2}-?){2})x", "FFFFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFT"),
+    ("(?<=^(?:(?:a+){1}-?){2})x", "FFFFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFT"),
+    ("(?<=^(?:(?:(?:a){1,}){1}){3})x", "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFF"),
+    ("(?<=^(?:(?:a|)*-?)*x)-", "FFFFFFFFFTFFFFFFFFTFFFFFFFFFTTTFFFFFTFFFFFFFFTF"),
+    (r#"(?<=(?:(?:(a)|x){1,2}\1)+)-"#, "FFFFFFTFFTFFFFFTFFTTTTFFTFFTTTTFFTFFTFFFFFFFTTT"),
+    (r#"(?<=^(?:\1(?:(a)|x){1,2}-)+)x"#, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFTFFFFFFFFFFFFFFFFT"),
+    ("(?<=^(?:(?:a|x){1,2}?-)+)a", "FFFFFFFFFFFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFTTT"),
+];
+
+/// Patterns that are valid only without the `u` flag (`\-` is not an escape with it). Before 0.1.7 the first two
+/// did not end on some text here.
+#[rustfmt::skip]
+const REPETITIONS_WITHOUT_THE_U_FLAG: &[(&str, &str)] = &[
+    (r#"^(?:\-|(?:a|){1,2}x)+$"#, "FFTTFTFFTTFTTFTFFTTFFFFTFFTTFTTFTFFTTFTTFFFFFTF"),
+    (r#"^(?:\-|(?:(a)|x|){1,2}\1x)+$"#, "FFTTFFFFTTFTTFTFFTFFFFFFFFTTFTTFFFFTTFTTFFTFFFF"),
+    (r#"^(?:\-)?(?:(?:a|)+x)+$"#, "FFTFFTFFTFFTFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFTFFFF"),
+    (r#"^(?:\-|(?:(a)|x){1,2}\1)+$"#, "FFTTTTFFTTFTTTTTFTTFFFTTFFTTFTTTTFFTTFTTTFTFFTF"),
+];
+
+/// A reference to a group from inside the group matches nothing: the group has no value until it closes.
+#[rustfmt::skip]
+const REFERENCES_FROM_INSIDE_THE_GROUP: &[(&str, &str)] = &[
+    (r#"(x|\1)x"#, "FFTFFTFTTTFTFFTFTTTFTFTTTTTTTTTFTFTTTFTFFTTTFTT"),
+    (r#"^(a|\1a)$"#, "FTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    (r#"(a?\1)a"#, "FTFFTTTTFFTFFTTTTTTTTTTTTTFFTFFTTTTFFTFFTTTTTTT"),
+    (r#"()([x]|\2)x"#, "FFTFFTFTTTFTFFTFTTTFTFTTTTTTTTTFTFTTTFTFFTTTFTT"),
+    (r#"^(?:(a)|(x\2))+$"#, "FTTFTTFTTFFFFTTFTTFFFFTTFTTFFFFFFFFFFFFFTTTTFFF"),
+    (r#"^(?:(a|x\1)-)+$"#, "FFFFFFTFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFTFF"),
+    (r#"(?<=(\1x|a))-"#, "FFFFFFTFFTFFFFFTFFTTTTFFTFFTTTTFFTFFTFFFFFFFTTT"),
+];
+
+/// Two groups with one name, in separate alternatives. A reference to the name reads the one that matched.
+#[rustfmt::skip]
+const GROUPS_WITH_ONE_NAME: &[(&str, &str)] = &[
+    (r#"^(?:(?<n>a)|(?<n>x))\k<n>$"#, "FFFFTFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+    (r#"^(?:(?<n>a)|(?<n>x))+\k<n>$"#, "FFFFTFFFTFFFFTFFFTFFFFTFFFTFFFFFFFFFFFFFTFFFFFF"),
+    (r#"(?:(?<n>a)|(?<n>x)){2}\k<n>"#, "FFFFFFFFFFFFFTFFFTFFFFTFFFTFFFFFFFFFFFFFTFTTFFF"),
+    (r#"^(?:(?<n>a)|(?<n>x)|-)*\k<n>$"#, "TFFTTFTFTTFFTTFTFTTFFTTFTFTTFFTTFTFTTFFTTFFFTTF"),
+    (r#"^(?:(?<m>a)|(?<m>x))(?:(?<n>a)|(?<n>x))\k<m>\k<n>$"#, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFTTFFFFF"),
+];
+
+#[test]
+fn a_repetition_inside_a_repetition_keeps_its_count() {
+    check(REPETITIONS);
+}
+
+#[test]
+fn a_reference_to_a_group_of_a_repetition_reads_the_last_iteration() {
+    check(REFERENCES_TO_A_REPETITION);
+}
+
+#[test]
+fn a_repetition_inside_a_repetition_in_a_lookbehind() {
+    check(REPETITIONS_IN_A_LOOKBEHIND);
+}
+
+#[test]
+fn a_repetition_inside_a_repetition_without_the_u_flag() {
+    check(REPETITIONS_WITHOUT_THE_U_FLAG);
+}
+
+#[test]
+fn a_reference_from_inside_its_group_matches_nothing() {
+    check(REFERENCES_FROM_INSIDE_THE_GROUP);
+}
+
+#[test]
+fn a_reference_to_a_name_of_two_groups_reads_the_one_that_matched() {
+    check(GROUPS_WITH_ONE_NAME);
+}
+
+/// The patterns of `patternProperties` and `propertyNames` go the same way.
+#[test]
+fn a_repetition_inside_a_repetition_in_a_pattern_of_property_names() {
+    let v = compile(&json!({ "patternProperties": { "^(?!-)(?:(?:a*)*)*x": false } })).unwrap();
+    assert!(v.is_valid(&json!({ "a": 1, "-x": 1 })));
+    assert!(!v.is_valid(&json!({ "aax": 1 })));
+    let v = compile(&json!({ "propertyNames": { "pattern": r"^(?:(?:(a)|x){1,2}\1-)+$" } })).unwrap();
+    assert!(v.is_valid(&json!({ "xaa-": 1, "x-": 1 })));
+    assert!(!v.is_valid(&json!({ "xa-": 1 })));
+}
+
+/// An assertion takes no quantifier. regress allows one on `\b` and `\B`.
+#[test]
+fn a_quantifier_on_a_word_boundary_is_not_valid() {
+    let format = CompileOptions { assert_format: Some(true), ..CompileOptions::default() };
+    let format = compile_with(&json!({ "format": "regex" }), &format).unwrap();
+    for pattern in [r"\b+", r"\B*", r"a\b?", r"^\b{2}a", r"\B{1,}?x", r"(a\b*)", r"[a]\b+\&", r"(?=a\B+)"] {
+        let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
+        assert_eq!(e.message(), format!("Invalid regular expression '{pattern}' in pattern."));
+        assert!(compile(&json!({ "patternProperties": { pattern: true } })).is_err(), "{pattern}");
+        assert!(!format.is_valid(&json!(pattern)), "{pattern}");
+    }
+    // A quantifier on a group that holds one, an escaped backslash before a `b`, and a backspace in a class.
+    for (pattern, text) in [(r"(?:\b)+a", "a"), (r"\\b+", r"\bb"), (r"[\b+]", "+"), (r"a\b", "a"), (r"\b{", "a{")] {
+        let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
+        assert!(v.is_valid(&json!(text)), "{pattern} on {text:?}");
+    }
+    for pattern in [r"(?:\b)+a", r"\\b+", r"[\b+]", r"a\b"] {
+        assert!(format.is_valid(&json!(pattern)), "{pattern}");
+    }
+}
+
+/// Each pattern has a case-insensitive group, the texts it matches and the texts it does not. The answers are V8's
+/// for the same pattern with the group taken off and the `i` flag set, which ECMA-262 gives the same meaning. (V8
+/// 13.6 itself answers some of these groups differently from the flag.) The patterns with `\&` are valid only
+/// without the `u` flag, where two characters are equal when the uppercase forms of their UTF-16 code units are:
+/// `s` is not U+017F there, and `k` is not U+212A. With the flag, `\W` does not hold the characters that fold to a
+/// word character.
+#[rustfmt::skip]
+const CASE_INSENSITIVE: &[(&str, &[&str], &[&str])] = &[
+    (r"^(?i:s)$\&?", &["s", "S"], &["\u{17f}", "k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:\u017f)$\&?", &["\u{17f}"], &["s", "S", "k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:[a-z])$\&?", &["s", "S", "k", "K", "i", "I", "a"], &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "0", "_", ""]),
+    (r"^(?i:[^a-z])$\&?", &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "0", "_"], &["s", "S", "k", "K", "i", "I", "a", ""]),
+    (r"^(?i:\w)$\&?", &["s", "S", "k", "K", "i", "I", "a", "0", "_"], &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", ""]),
+    (r"^(?i:\W)$\&?", &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-"], &["s", "S", "k", "K", "i", "I", "a", "0", "_", ""]),
+    (r"^(?i:[\W])$\&?", &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-"], &["s", "S", "k", "K", "i", "I", "a", "0", "_", ""]),
+    (r"^(?i:[^\W])$\&?", &["s", "S", "k", "K", "i", "I", "a", "0", "_"], &["\u{17f}", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", ""]),
+    (r"^(?i:\u0131)$\&?", &["\u{131}"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:i)$\&?", &["i", "I"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:\u1f80)$\&?", &["\u{1f80}"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:\u00b5)$\&?", &["\u{b5}", "\u{3bc}", "\u{39c}"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:[k-s])$\&?", &["s", "S", "k", "K"], &["\u{17f}", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:[\u212a])$\&?", &["\u{212a}"], &["s", "S", "\u{17f}", "k", "K", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"(?i:\Bs)\&?", &[], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:[\W])$", &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "0", "_", ""]),
+    (r"^(?i:[^\W])$", &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "0", "_"], &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", ""]),
+    (r"^(?i:[^\W\d]+)$", &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "_"], &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "0", ""]),
+    (r"^(?i:[\W_])$", &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "_"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "0", ""]),
+    (r"^(?i:s)$", &["s", "S", "\u{17f}"], &["k", "K", "\u{212a}", "i", "I", "\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", "a", "0", "_", ""]),
+    (r"^(?i:\W)$", &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-"], &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "0", "_", ""]),
+    (r"^(?i:[\w])$", &["s", "S", "\u{17f}", "k", "K", "\u{212a}", "i", "I", "a", "0", "_"], &["\u{131}", "\u{b5}", "\u{3bc}", "\u{39c}", "\u{1f80}", "\u{1f88}", "-", ""]),
+];
+
+/// Checks each pattern against the texts it matches and the texts it does not.
+fn check_texts(cases: &[(&str, &[&str], &[&str])]) {
+    let mut wrong = Vec::new();
+    for &(pattern, matches, fails) in cases {
+        let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
+        for (texts, want) in [(matches, true), (fails, false)] {
+            for &text in texts {
+                if answer(&v, text) != want {
+                    wrong.push(format!("{pattern} on {text:?}: want {want}"));
+                }
+            }
+        }
+    }
+    assert!(wrong.is_empty(), "{} wrong:\n{}", wrong.len(), wrong.join("\n"));
+}
+
+#[test]
+fn a_case_insensitive_group_compares_as_its_grammar_says() {
+    check_texts(CASE_INSENSITIVE);
+}
+
+/// Patterns that are valid only without the `u` flag (each has an identity escape the flag does not allow), with
+/// the texts V8 matches without the flag and the texts it does not. Such a pattern is its UTF-16 code units, and
+/// so is the text: a character beyond the Basic Multilingual Plane is two, a dot takes one of them, a quantifier
+/// after such a character repeats its second code unit, and a class holds each of the two. `\u{3}` is `u` three
+/// times, and the escape of a surrogate is that code unit. Before 0.1.7 the pattern and the text were read by
+/// character.
+#[rustfmt::skip]
+const BY_CODE_UNIT: &[(&str, &[&str], &[&str])] = &[
+    ("^\\-?.$", &["a", "u", "0", "{", "-"], &["", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "uuu", "ab"]),
+    ("^\\-?..$", &["\u{10400}", "\u{10428}", "\u{1f600}", "ab"], &["", "a", "\u{10400}\u{10400}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "-"]),
+    ("^\\-?\u{10400}*$", &["\u{10400}"], &["", "a", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\u{10400}+$", &["\u{10400}"], &["", "a", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\u{10400}?$", &["\u{10400}"], &["", "a", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\u{10400}{2}$", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\u{1f600}]$", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\u{1f600}]{2}$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[^\u{1f600}]$", &["a", "u", "0", "{", "-"], &["", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "uuu", "ab"]),
+    ("^\\-?[^\u{1f600}]+$", &["a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "u", "uuu", "0", "{", "ab", "-"], &["", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a"]),
+    ("^\\-?[a-\u{10400}]+$", &["a", "\u{10400}", "\u{10400}\u{10400}", "u", "uuu", "{", "ab"], &["", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "0", "-"]),
+    ("^\\-?\\ud83d\\ude00$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\\ud83d+\\ude00$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\\ud83d\\ude00+$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\\ud83d\\ude00]$", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\\ud83d\\ude00]{2}$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\\ud800-\\udbff][\\udc00-\\udfff]$", &["\u{10400}", "\u{10428}", "\u{1f600}"], &["", "a", "\u{10400}\u{10400}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\\ud801\\ud83d$", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[\\ud801\\ud83d]\\ude00$", &["\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\\u{3}$", &["uuu"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "0", "{", "ab", "-"]),
+    ("^\\-?[\\u{3}]$", &["u", "{"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "uuu", "0", "ab", "-"]),
+    ("^\\-?[\\u{10400}]+$", &["u", "uuu", "0", "{"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "ab", "-"]),
+    ("(?<=\\ud83d)\\ude00\\-?$", &["\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("(?<!\\ud83d)\\ude00\\-?", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?\\S\\B", &["\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "\u{1f600}a", "uuu", "{", "ab", "-"], &["", "a", "a\u{1f600}", "u", "0"]),
+    ("^\\-?\\W{2}$", &["\u{10400}", "\u{10428}", "\u{1f600}"], &["", "a", "\u{10400}\u{10400}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?(.)\\1$", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?(?:.{2})+$", &["\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "ab"], &["", "a", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "-"]),
+    ("^\\-?\\S{1,3}$", &["a", "\u{10400}", "\u{10428}", "\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"], &["", "\u{10400}\u{10400}", "\u{1f600}\u{1f600}"]),
+    ("a\\&?.$", &["ab"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "-"]),
+    ("\\ud83d\\-?", &["\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "u", "uuu", "0", "{", "ab", "-"]),
+    ("\\ude00\\-?$", &["\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}"], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("^\\-?[^a]{2,3}$", &["\u{10400}", "\u{10428}", "\u{1f600}", "uuu"], &["", "a", "\u{10400}\u{10400}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "0", "{", "ab", "-"]),
+    ("(?i:^\\-?\u{10400}$)", &["\u{10400}"], &["", "a", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("(?i:^\\-?[\u{10400}]{2}$)", &["\u{10400}"], &["", "a", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+    ("(?i:^\\-?.A$)", &[], &["", "a", "\u{10400}", "\u{10400}\u{10400}", "\u{10428}", "\u{1f600}", "\u{1f600}\u{1f600}", "a\u{1f600}", "\u{1f600}a", "u", "uuu", "0", "{", "ab", "-"]),
+];
+
+#[test]
+fn a_pattern_without_the_u_flag_matches_utf16_code_units() {
+    check_texts(BY_CODE_UNIT);
+}
+
+/// A group name with a character beyond the Basic Multilingual Plane, in patterns that are valid only without the
+/// `u` flag. The name is read by character there too. Before 0.1.7 such a pattern was matched by character, and
+/// the first cut of code units refused it.
+#[rustfmt::skip]
+const GROUP_NAMES_BEYOND_THE_BMP: &[(&str, &[&str], &[&str])] = &[
+    ("^\\-?(?<\u{10400}>.)\\k<\u{10400}>$", &["aa"], &["", "a", "ab", "\u{10400}", "\u{10400}\u{10400}", "a\u{10400}"]),
+    ("^\\-?(?<n\u{10400}>a)\u{10400}*$", &["a\u{10400}"], &["", "a", "aa", "ab", "\u{10400}", "\u{10400}\u{10400}"]),
+    ("^\\-?(?<\u{10400}>.)(?<b>.)\\k<b>\\k<\u{10400}>$", &[], &["", "a", "aa", "ab", "\u{10400}", "\u{10400}\u{10400}", "a\u{10400}"]),
+];
+
+#[test]
+fn a_group_name_beyond_the_bmp_without_the_u_flag() {
+    check_texts(GROUP_NAMES_BEYOND_THE_BMP);
+}
+
+/// The escape of a surrogate that is not half of a pair, in patterns that are valid with the `u` flag. No string
+/// of characters has one, so it matches nothing, and a quantifier that allows none of it matches. Before 0.1.7
+/// the engine lost the quantifier: `^\ud801*$` did not match the empty string.
+#[rustfmt::skip]
+const LONE_SURROGATE_ESCAPES: &[(&str, &[&str], &[&str])] = &[
+    ("^\\ud801*$", &[""], &["a", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^\\ud801?a$", &["a"], &["", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^(?:\\ud801)*$", &[""], &["a", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^\\udc00*?a", &["a", "aa", "a\u{10400}"], &["", "\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^[\\ud801]*$", &[""], &["a", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("a\\ud801{0,2}$", &["a", "aa", "\u{10400}a"], &["", "\u{10400}", "a\u{10400}", "\u{10428}"]),
+    ("^\\ud801+$", &[], &["", "a", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^\\ud801|a$", &["a", "aa", "\u{10400}a"], &["", "\u{10400}", "a\u{10400}", "\u{10428}"]),
+    ("^\\u{d801}*a$", &["a"], &["", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^\\ud801*\\ud801\\udc00$", &["\u{10400}"], &["", "a", "aa", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+    ("^\\udc00?.$", &["a", "\u{10400}", "\u{10428}"], &["", "aa", "a\u{10400}", "\u{10400}a"]),
+    ("^(?i:\\ud801*a)$", &["a"], &["", "aa", "\u{10400}", "a\u{10400}", "\u{10400}a", "\u{10428}"]),
+];
+
+#[test]
+fn the_escape_of_a_lone_surrogate_with_the_u_flag() {
+    check_texts(LONE_SURROGATE_ESCAPES);
+}
+
+/// Case-insensitive references, with V8's answers for the pattern with the `i` flag in place of the group. The
+/// patterns with `\&` are valid only without the `u` flag. There two code units are equal when their uppercase
+/// forms are: `s` is not U+017F, `i` is not U+0131, and U+1F80 is not U+1F88, each of which regress's own
+/// comparison takes for equal (before 0.1.7 that comparison was the answer). The last five have the flag, where
+/// the comparison is by simple case folding and regress has it.
+#[rustfmt::skip]
+const CASE_INSENSITIVE_REFERENCES: &[(&str, &[&str], &[&str])] = &[
+    ("(?i:^(.)\\1$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(\\w)\\1$\\&?)", &["ss", "sS", "Ss", "ii", "iI", "kk", "kK", "aa", "aA", "11"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "ab", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(\\W)\\1$\\&?)", &["\u{17f}\u{17f}", "\u{131}\u{131}", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "--"], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "Ss", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "aa", "aA", "ab", "11", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^([a-z])\\1$\\&?)", &["ss", "sS", "Ss", "ii", "iI", "kk", "kK", "aa", "aA"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "ab", "11", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^([^s])\\1$\\&?)", &["\u{17f}\u{17f}", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "Ss", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(\\d)\\1$\\&?)", &["11"], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(..)\\1$\\&?)", &["isis", "\u{131}S\u{131}s", "SISI", "sIsi", "x\u{131}X\u{131}"], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "is\u{131}s", "\u{131}sIS", "\u{17f}is\u{131}", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(.+)\\1$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--", "isis", "\u{131}S\u{131}s", "SISI", "sIsi", "is\u{1f80}IS\u{1f80}", "x\u{131}X\u{131}"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "is\u{131}s", "\u{131}sIS", "\u{17f}is\u{131}", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f88}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(.+?)\\1+$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--", "isis", "\u{131}S\u{131}s", "SISI", "sIsi", "sss", "\u{17f}\u{17f}\u{17f}", "iii", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "x\u{131}X\u{131}"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "is\u{131}s", "\u{131}sIS", "\u{17f}is\u{131}", "s\u{17f}s", "i\u{131}i", "is\u{1f80}IS\u{1f88}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(.)(.)\\2\\1$\\&?)", &[], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(?:(.)\\1)+$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(.)\\1{2}$\\&?)", &["sss", "\u{17f}\u{17f}\u{17f}", "iii", "aAa", "kKk"], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "s\u{17f}s", "i\u{131}i", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(\\u0131)\\1$\\&?)", &["\u{131}\u{131}"], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(\\u017f)\\1+$\\&?)", &["\u{17f}\u{17f}", "\u{17f}\u{17f}\u{17f}"], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "Ss", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(i)\\1$\\&?)", &["ii", "iI"], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(s)\\1+$\\&?)", &["ss", "sS", "Ss", "sss"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(?<n>.)\\k<n>$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(.{1,2}?)\\1$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--", "isis", "\u{131}S\u{131}s", "SISI", "sIsi", "x\u{131}X\u{131}"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "is\u{131}s", "\u{131}sIS", "\u{17f}is\u{131}", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^..(?<=\\1(.))$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^.+(?<=\\1(..))$\\&?)", &["isis", "\u{131}S\u{131}s", "SISI", "sIsi", "x\u{131}X\u{131}"], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "is\u{131}s", "\u{131}sIS", "\u{17f}is\u{131}", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^.(?<=(.))\\1$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(?=(.)).\\1$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(?:(.)|x)+\\1$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--", "sss", "\u{17f}\u{17f}\u{17f}", "iii", "aAa", "kKk"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "s\u{17f}s", "i\u{131}i", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(.)(?!\\1).$\\&?)", &["s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a"], &["", "ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:(.)\\1\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--", "sss", "\u{17f}\u{17f}\u{17f}", "iii", "aAa", "kKk"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "s\u{17f}s", "i\u{131}i", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(?:(.)(?:\\1|-))+$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^([is\\u0131\\u017f]+)\\1$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "isis", "\u{131}S\u{131}s", "SISI", "sIsi"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "is\u{131}s", "\u{131}sIS", "\u{17f}is\u{131}", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(\\S\\S\\S)\\1$\\&?)", &["is\u{1f80}IS\u{1f80}"], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(.*?)(.)\\2\\1$\\&?)", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("^(.)(?i:\\1)$\\&?", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("^(.+)(?i:\\1)$\\&?", &["ss", "sS", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--", "isis", "\u{131}S\u{131}s", "SISI", "sIsi", "is\u{1f80}IS\u{1f80}", "x\u{131}X\u{131}"], &["", "s\u{17f}", "\u{17f}s", "\u{17f}S", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "k\u{212a}", "\u{212a}k", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{df}\u{1e9e}", "ab", "1a", "is\u{131}s", "\u{131}sIS", "\u{17f}is\u{131}", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f88}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("^(..)(?i:\\1)$\\&?", &["isis", "\u{131}S\u{131}s", "SISI", "sIsi", "x\u{131}X\u{131}"], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "is\u{131}s", "\u{131}sIS", "\u{17f}is\u{131}", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("^.(?<=(?i:\\1)(.))$\\&?", &[], &["", "ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "ab", "11", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(.)\\1$)", &["ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(\\w)\\1$)", &["ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "aa", "aA", "11"], &["", "i\u{131}", "\u{131}i", "\u{131}I", "\u{131}\u{131}", "I\u{130}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "ab", "1a", "--", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^(?:(.)\\1)+$)", &["ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:^..(?<=\\1(.))$)", &["ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--"], &["", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "i\u{131}i", "aAa", "kKk", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+    ("(?i:(.)\\1)", &["ss", "sS", "s\u{17f}", "\u{17f}s", "\u{17f}S", "\u{17f}\u{17f}", "Ss", "ii", "iI", "\u{131}\u{131}", "kk", "kK", "k\u{212a}", "\u{212a}k", "\u{212a}\u{212a}", "\u{1f80}\u{1f80}", "\u{1f80}\u{1f88}", "\u{1f88}\u{1f80}", "\u{1f88}\u{1f88}", "\u{df}\u{df}", "\u{df}\u{1e9e}", "\u{b5}\u{3bc}", "\u{b5}\u{39c}", "\u{3bc}\u{39c}", "aa", "aA", "11", "--", "sss", "s\u{17f}s", "\u{17f}\u{17f}\u{17f}", "iii", "aAa", "kKk"], &["", "i\u{131}", "\u{131}i", "\u{131}I", "I\u{130}", "ab", "1a", "isis", "is\u{131}s", "\u{131}sIS", "\u{131}S\u{131}s", "\u{17f}is\u{131}", "SISI", "sIsi", "i\u{131}i", "is\u{1f80}IS\u{1f80}", "is\u{1f80}IS\u{1f88}", "x\u{131}X\u{131}", "x\u{131}Xi", "xiX\u{131}"]),
+];
+
+#[test]
+fn a_case_insensitive_reference_compares_as_its_grammar_says() {
+    check_texts(CASE_INSENSITIVE_REFERENCES);
+}
+
+/// `\B` in patterns the `regex` crate would otherwise match. Its `(?-u:\B)` also holds between the bytes of a
+/// character that takes several, and `is_match` then said no where there is a match: `s*?\B|.{2}.$` on
+/// `k\u{17f}k` (before 0.1.7). The answers are V8's with the `u` flag.
+#[rustfmt::skip]
+const NOT_A_WORD_BOUNDARY: &[(&str, &[&str], &[&str])] = &[
+    ("s*?\\B|.{2}.$", &["", "k\u{17f}k", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"], &["a"]),
+    ("s*?\\B|.{2}.{1,2}$", &["", "k\u{17f}k", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"], &["a"]),
+    ("\\B", &["", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "ab", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "abc", "\u{e9}\u{e9}a", "-", "a-"], &["k\u{17f}k", "a", "a b", "k k", "a\u{e9}b"]),
+    ("a\\B", &["ab", "abc"], &["", "k\u{17f}k", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "a", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"]),
+    ("\\B\u{e9}", &["\u{e9}", "\u{e9}a", "\u{e9}\u{e9}a"], &["", "k\u{17f}k", "\u{17f}", "a\u{e9}", "a", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "-", "a-"]),
+    ("^\\B", &["", "\u{17f}", "\u{e9}", "\u{e9}a", "\u{17f}\u{17f}", "\u{1f600}", "\u{1f600}\u{1f600}", "\u{e9}\u{e9}a", "-"], &["k\u{17f}k", "a\u{e9}", "a", "ab", "a b", "a\u{1f600}", "k k", "abc", "a\u{e9}b", "a-"]),
+    ("\u{e9}\\B$", &["\u{e9}", "a\u{e9}"], &["", "k\u{17f}k", "\u{17f}", "\u{e9}a", "a", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"]),
+    ("k\\B|\u{17f}$", &["\u{17f}", "\u{17f}\u{17f}"], &["", "k\u{17f}k", "\u{e9}", "a\u{e9}", "\u{e9}a", "a", "ab", "a b", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"]),
+    ("x*\\B.", &["\u{17f}", "\u{e9}", "\u{e9}a", "ab", "\u{17f}\u{17f}", "\u{1f600}", "\u{1f600}\u{1f600}", "abc", "\u{e9}\u{e9}a", "-"], &["", "k\u{17f}k", "a\u{e9}", "a", "a b", "a\u{1f600}", "k k", "a\u{e9}b", "a-"]),
+    ("^.\\B.$", &["ab", "\u{17f}\u{17f}", "\u{1f600}\u{1f600}"], &["", "k\u{17f}k", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "a", "a b", "\u{1f600}", "a\u{1f600}", "k k", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"]),
+    ("\\B|a$", &["", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "a", "ab", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "abc", "\u{e9}\u{e9}a", "-", "a-"], &["k\u{17f}k", "a b", "k k", "a\u{e9}b"]),
+    ("[^a]\\B|b$", &["\u{17f}", "\u{e9}", "a\u{e9}", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "abc", "a\u{e9}b", "\u{e9}\u{e9}a", "-", "a-"], &["", "k\u{17f}k", "\u{e9}a", "a", "k k"]),
+    ("\\Ba\\B|\u{e9}{2}", &["\u{e9}\u{e9}a"], &["", "k\u{17f}k", "\u{17f}", "\u{e9}", "a\u{e9}", "\u{e9}a", "a", "ab", "a b", "\u{17f}\u{17f}", "\u{1f600}", "a\u{1f600}", "\u{1f600}\u{1f600}", "k k", "abc", "a\u{e9}b", "-", "a-"]),
+];
+
+#[test]
+fn not_a_word_boundary_beside_a_character_of_several_bytes() {
+    check_texts(NOT_A_WORD_BOUNDARY);
+}
+
+/// Patterns that another engine of this family answered wrongly at some point: a reference to a group of a
+/// repetition, of a lookahead and of a lookbehind, an iteration that matches nothing inside a lookahead, and a
+/// negated class of a property and its complement. The crate answers them all as V8 does, before 0.1.7 too. They
+/// are here so that it stays so.
+#[rustfmt::skip]
+const ANSWERED_WRONGLY_ELSEWHERE: &[(&str, &[&str], &[&str])] = &[
+    ("^(?:x(.)){1,2}\\1", &["xxxb", "xxxx"], &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "\u{e9}", "1", "-"]),
+    ("(a(){1})?\\2a", &["a", "ab", "ax", "xa", "ax-", "axa", "acab", "acaab", "acb", "aca", "bab", "aba", "abxb", "abxa", "bax", "aax"], &["", "b", "c", "x", "xxxb", "xxb", "xb", "bb", "bx", "cc", "xxxx", "\u{e9}", "1", "-"]),
+    ("(?=(a)?b)\\1", &["b", "ab", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax"], &["", "a", "c", "x", "ax", "xa", "ax-", "axa", "aca", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^(?:(?=([ab]))[ab](?:c|ca)\\1)*$", &["", "aca"], &["a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^(?:(?=([ab]))[ab](?:c\\1|ca\\1))*$", &["", "aca"], &["a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^(?:(?=([ab]+?))(?:\\1.)*?b)+$", &["b", "acaab", "acb", "bab", "bb"], &["", "a", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "aca", "aba", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^(?=((?:|a)*))\\1$", &["", "a"], &["b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^(?=((?:c??)?))\\1$", &["", "c"], &["a", "b", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("(?<=(x*?)a*)\\1", &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"], &[]),
+    ("(?<=\\1a*(b))x", &[], &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("(?<=([abc])+)x\\1", &["axa", "abxa"], &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("(?<=(?:(a)|.)+)x\\1", &["axa", "xxxb", "xxb", "abxa", "bx", "bax", "xxxx"], &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "cc", "aax", "\u{e9}", "1", "-"]),
+    ("[^\\p{L}\\P{L}]", &[], &["", "a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("^[^\\p{L}\\P{L}]*$", &[""], &["a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"]),
+    ("[\\p{L}\\P{L}]", &["a", "b", "c", "x", "ab", "ax", "xa", "ax-", "axa", "xxxb", "xxb", "xb", "acab", "acaab", "acb", "aca", "bab", "aba", "bb", "abxb", "abxa", "bx", "bax", "cc", "aax", "xxxx", "\u{e9}", "1", "-"], &[""]),
+];
+
+#[test]
+fn patterns_another_engine_answered_wrongly() {
+    check_texts(ANSWERED_WRONGLY_ELSEWHERE);
+}
+
+/// A pattern ECMA-262 refuses in both grammars is refused, and one it accepts only without the `u` flag is not.
+#[test]
+fn a_pattern_that_is_not_valid_is_refused() {
+    for pattern in
+        [r"a{2,1}", r"(?i)a", r"\b+", r"a\B{2}", r"(?<\u>a)", r"(?<n>a)(?<n>b)", r"[b-a]", r"(?<=a)+", r"\k<n>(?<m>a)"]
+    {
+        assert!(compile(&json!({ "pattern": pattern })).is_err(), "{pattern}");
+    }
+    for pattern in [r"^\u{110000}\-?$", r"^\u{3}\-?$", r"\k<n>\-", r"(?=a)+\-?", r"a{,2}", r"\c", r"[\c]", r"\8", r"]"]
+    {
+        assert!(compile(&json!({ "pattern": pattern })).is_ok(), "{pattern}");
+    }
+}
+
+/// Ten texts for the repetitions with a count of 300.
+fn long_texts() -> Vec<String> {
+    let r = |s: &str, n: usize| s.repeat(n);
+    vec![
+        r("a", 300) + "-",
+        r("a", 301) + "-",
+        r("ax", 150) + "-" + &r("x", 300) + "-",
+        r("ax", 150) + "-" + &r("x", 301) + "-",
+        r("a-", 400),
+        r("a-", 400) + "a",
+        r("ax-", 200) + &r("a", 299) + "x-",
+        r("a", 600) + "-",
+        r("x", 299) + "--",
+        format!("-{}-", r("a", 10)),
+    ]
+}
+
+/// A repetition inside a repetition is written out as copies, and each optional copy is a group inside the one
+/// before. The engine reads 256 levels of groups, so more optional copies than that are written in chunks, one
+/// after another, and the count stays exact. 0.1.6 gave these to the engine as they are written, and so did the
+/// first cut of 0.1.7, with a count the engine can lose. The answers are V8's, on [`texts`] and then on
+/// [`long_texts`].
+#[rustfmt::skip]
+const TOO_LARGE_TO_WRITE_OUT: &[(&str, &str, &str)] = &[
+    ("^(?!-)(?:(?:a|x){1,300}-)+$", "FFFFFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFTTF", "TFTFTFTFFF"),
+    ("^(?!-)(?:(?:a|x){1,300}?-)+$", "FFFFFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFTTF", "TFTFTFTFFF"),
+    ("^(?!-)(?:(?:a|x-?){2,300}-)*$", "TFFFFFFFFFFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFFTF", "TFTFFFTFTF"),
+    ("(?<=^(?:(?:a|x){1,300}?-)+)a", "FFFFFFFFFFFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFTTT", "FFFFTTTFFF"),
+    (r#"^(?!-)(?:(?:(a)|x){1,300}\1-)+$"#, "FFFFFFFFFTFFFFFTFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF", "TTTFFFTFFF"),
+    // A reference outside a repetition whose body can be empty reads the last iteration that ran.
+    (r#"^(?!-)(?:(?:(a)|){1,300}\1-)+$"#, "FFFFFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", "TTFFFFFFFF"),
+    // The rest of the pattern is still written for the engine: the reference from inside its group, and the
+    // small repetition whose body can be empty.
+    (r#"^(?!-)(?:(?:a|x){1,300}-)+(x|\1)x$"#, "FFFFFFFFFFFFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFF", "FFFFFFFFFF"),
+    ("^(?!-)(?:(?:a|x){2,300}-|(?:a|){1,2}x)+$", "FFTFFTFFTFFFFFTTFTTFFFFTTFTTFFFFFFFFFFFFFFFFFTF", "TFTTFFTFFF"),
+    // A repetition inside the one that is too large is written out, whether or not its body can be empty.
+    ("^(?!-)(?:(?:(?:a|)*x){1,300}-)+$", "FFFFFFFFFTFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF", "FFTFFFTFFF"),
+];
+
+/// The same on [`texts`] alone: V8 takes minutes over some of the long ones for these.
+#[rustfmt::skip]
+const TOO_LARGE_TO_WRITE_OUT_ON_SHORT_TEXTS: &[(&str, &str)] = &[
+    ("^(?!-)(?:(?:(?:a|x){1,3}-?){1,300}-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF"),
+    ("^(?!-)(?:(?:(?:a|x){1,2}-){1,300}x?)+$", "FFFFFFTFFTFFFFFTFFTFTFFFTFFTFTFFFFFFFFFFFFFFTTF"),
+    ("^(?!-)(?:(?:(?:a|x){2}-?){1,300}a)+$", "FFFFFFFFFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFFFFFFT"),
+    // The outer repetition, whose body can be empty, is written out around the inner one.
+    ("^(?!-)(?:(?:(?:a|x){1,300}-|a?){3}x)+$", "FFTFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFTFFFF"),
+];
+
+#[test]
+fn a_repetition_too_deep_to_write_in_one_keeps_its_count() {
+    check(TOO_LARGE_TO_WRITE_OUT_ON_SHORT_TEXTS);
+    let short: Vec<(&str, &str)> =
+        TOO_LARGE_TO_WRITE_OUT.iter().map(|&(pattern, answers, _)| (pattern, answers)).collect();
+    check(&short);
+    let texts = long_texts();
+    for &(pattern, _, answers) in TOO_LARGE_TO_WRITE_OUT {
+        let v = compile(&json!({ "pattern": pattern })).unwrap();
+        let got: String = texts.iter().map(|text| if answer(&v, text) { 'T' } else { 'F' }).collect();
+        assert_eq!(got, answers, "{pattern}");
+    }
+}
+
+/// The same for a repetition whose body can match the empty string, which is the one the engine does not end on
+/// when it has it as written. Each copy after the minimum is made to take a character, which is what ECMA-262
+/// says of an iteration after the minimum. The answers are V8's on [`texts`]. V8 takes minutes over the long
+/// texts for all but the last two.
+#[rustfmt::skip]
+const TOO_LARGE_TO_WRITE_OUT_WITH_A_BODY_THAT_CAN_BE_EMPTY: &[(&str, &str)] = &[
+    ("^(?!-)(?:(?:a|){1,300}-)+$", "FFFFFFTFFFFFFFFTFFFFFTFFFFFFFFFFFFFFFFFFFFFFTFF"),
+    ("^(?!-)(?:(?:a*x*){2,300}?-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF"),
+    ("(?<=(?:(?:a|){1,300}-)+)x", "FFFFFFFFFFFTFFFFFFFFTFFFFFFFFTFFFFTTTFTFFFFFFFT"),
+    (r#"^(?!-)(?:(?:(a)\1|){1,300}-)+$"#, "FFFFFFFFFFFFFFFTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+];
+
+/// The last two of them on [`long_texts`].
+const TOO_LARGE_WITH_A_BODY_THAT_CAN_BE_EMPTY_ON_LONG_TEXTS: &[(&str, &str)] =
+    &[("(?<=(?:(?:a|){1,300}-)+)x", "FFTTFFFFFF"), (r"^(?!-)(?:(?:(a)\1|){1,300}-)+$", "TFFFFFFTFF")];
+
+#[test]
+fn a_repetition_too_deep_to_write_in_one_whose_body_can_be_empty_keeps_its_count() {
+    check(TOO_LARGE_TO_WRITE_OUT_WITH_A_BODY_THAT_CAN_BE_EMPTY);
+    let texts = long_texts();
+    for &(pattern, answers) in TOO_LARGE_WITH_A_BODY_THAT_CAN_BE_EMPTY_ON_LONG_TEXTS {
+        let v = compile(&json!({ "pattern": pattern })).unwrap();
+        let got: String = texts.iter().map(|text| if answer(&v, text) { 'T' } else { 'F' }).collect();
+        assert_eq!(got, answers, "{pattern}");
+    }
+}
+
+/// The count the engine loses. 0.1.6 and the first cut of 0.1.7 gave the engine a repetition of 300 as it is
+/// written, and it then ran more iterations than the maximum: `^(?!-)(?:(?:a|ax){0,300}){2}$` matched `ax` and
+/// 600 times `a`, which is 601 iterations for two repetitions of 300. The answers are V8's on [`count_texts`].
+#[rustfmt::skip]
+const COUNTS: &[(&str, &str)] = &[
+    (r#"^(?!-)(?:(?:a|ax){0,300}){2}$"#, "TFFFFFFFFFFFFFFFFFTT"),
+    (r#"^(?!-)(?:(?:a|a-a|b){0,300}-)+$"#, "FFFTTFTTFTFFFTTTFFFF"),
+    (r#"^(?!-)(?:(?:a|a-a|b){2,300}?-)+$"#, "FFFTTFTTFTFFFTTTFFFF"),
+    (r#"^(?!-)(?:(?:a|a-a|b){64,300}-)+$"#, "FFFTTFTTFTFFFTTTFFFF"),
+    (r#"^(?!-)(?:(?:(a)|){1,300}\1-)+$"#, "FFFFFFTTTTTFFTFFFFFF"),
+    (r#"^(?!-)(?:(?:(a)|b|a-a){0,300}\1-)+$"#, "FFFTTFTTTTTFFTTTFFFF"),
+    (r#"(?<=^(?:(?:a|a-a|b){0,300}-)+)$"#, "FFFTTFTTFTFFFTTTFFFF"),
+    (r#"^(?!-)(?:(?:a|ab|){0,300}b?-)+$"#, "FFFFFFTTFTFTFTFFFFFF"),
+    // A group of a lookahead that is read outside it has what the first way through the lookahead gave it: the
+    // copies are tried in the order the iterations are.
+    (r#"^(?=((?:(?:a|ab){1,300}?b?-?)+))\1$"#, "FFFFFFTTTTTTTTFFFFTT"),
+    (r#"^(?=(?:(?:a|a-a|b){0,300}(b?)-)+)[^]*\1$"#, "FFFTTFTTFTTFFTTTTFFF"),
+];
+
+/// Twenty texts around a count of 300.
+fn count_texts() -> Vec<String> {
+    let r = |s: &str, n: usize| s.repeat(n);
+    vec![
+        format!("ax{}", r("a", 599)),
+        format!("ax{}", r("a", 600)),
+        format!("ax{}", r("a", 601)),
+        format!("a-a{}-", r("b", 298)),
+        format!("a-a{}-", r("b", 299)),
+        format!("a-a{}-", r("b", 300)),
+        r("a", 299) + "-",
+        r("a", 300) + "-",
+        r("a", 301) + "-",
+        r("a", 300) + "-" + &r("a", 300) + "-",
+        r("a", 300) + "-" + &r("a", 301) + "-",
+        r("ab", 300) + "-",
+        r("ab", 301) + "-",
+        r("a", 64) + "-",
+        r("a", 65) + "-" + &r("b", 129) + "-",
+        r("a", 150) + "-a-a" + &r("b", 150) + "-",
+        format!("a-a{}a-", r("b", 300)),
+        r("b", 300) + "a-a-",
+        r("a", 300),
+        r("a", 301),
+    ]
+}
+
+#[test]
+fn a_repetition_of_three_hundred_inside_a_repetition_keeps_its_count() {
+    let texts = count_texts();
+    for &(pattern, answers) in COUNTS {
+        let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
+        let got: String = texts.iter().map(|text| if answer(&v, text) { 'T' } else { 'F' }).collect();
+        assert_eq!(got, answers, "{pattern}");
+    }
+}
+
+/// Many iterations of a character that may be left out, as `(?:a|){1,300}`, are up to as many of the character,
+/// which the engine keeps the count of, so they are not copies and any count compiles. The answers are V8's on
+/// [`texts`], and for the last three on [`long_texts`] too. V8 does not answer the long texts for the others in
+/// minutes, nor any text for `(?:a|){100000}`: its answers there are those of `a{0,100000}` in its place, which
+/// matches the same texts (each iteration takes the character or nothing).
+#[rustfmt::skip]
+const A_CHARACTER_THAT_MAY_BE_LEFT_OUT: &[(&str, &str, &str)] = &[
+    ("^(?!-)(?:(?:[ax]?){2,300}-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF", ""),
+    ("^(?!-)(?:(?:[ax]?){17}-)+$", "FFFFFFTFFTFFFFFTFFTFFTFFTFFTFFTFFFFFFFFFFFFFTTF", ""),
+    ("^(?!-)(?:(?:a|){20}x)+$", "FFTFFTFFTFFFFFTFFTFFFFFTFFTFFFFFFFFFFFFFFFTFFFF", ""),
+    ("^(?!-)(?:(?:(?:a|){1,300}x){1,300}-)+$", "FFFFFFFFFTFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF", ""),
+    ("^(?!-)(?:(?:(?:a|){1,300}x){1,3}-)+$", "FFFFFFFFFTFFFFFFFFTFFFFFFFFTFFFFFFFFFFFFFFFFFTF", "FFFFFFTFFF"),
+    ("(?<=^(?:(?:a|){300}-)+)a", "FFFFFFFFFFTFFFFFFFFTFFFFFFFFFFFTTTFFFTFFFFFFTFF", "FFFFTTFFFT"),
+    ("^(?!-)(?:(?:a|){100000}-)+$", "FFFFFFTFFFFFFFFTFFFFFTFFFFFFFFFFFFFFFFFFFFFFTFF", "TTFFTFFTFF"),
+];
+
+/// A hundred thousand iterations that may each match nothing are a search no engine finishes on a text that does
+/// not match, V8 among them. The answers of the table for this pattern are those of `a{0,100000}` in its place,
+/// which matches the same texts. The crate's engine gives that answer where it comes to one, and where it does not
+/// the match ends at its limit with an error. (0.1.7's first cuts gave the engine of the time `a{0,100000}` for
+/// this shape, and so answered every text.)
+const NO_ENGINE_FINISHES: &str = "^(?!-)(?:(?:a|){100000}-)+$";
+
+#[test]
+fn many_iterations_of_a_character_that_may_be_left_out_keep_their_count() {
+    let short: Vec<(&str, &str)> = A_CHARACTER_THAT_MAY_BE_LEFT_OUT
+        .iter()
+        .filter(|case| case.0 != NO_ENGINE_FINISHES)
+        .map(|&(pattern, answers, _)| (pattern, answers))
+        .collect();
+    check(&short);
+    let long = long_texts();
+    for &(pattern, _, answers) in A_CHARACTER_THAT_MAY_BE_LEFT_OUT.iter().filter(|case| !case.2.is_empty()) {
+        if pattern == NO_ENGINE_FINISHES {
+            continue;
+        }
+        let v = compile(&json!({ "pattern": pattern })).unwrap();
+        let got: String = long.iter().map(|text| if answer(&v, text) { 'T' } else { 'F' }).collect();
+        assert_eq!(got, answers, "{pattern}");
+    }
+    // The pattern no engine finishes: the right answer, or the error of the limit, and never a wrong answer.
+    let &(pattern, short_answers, long_answers) =
+        A_CHARACTER_THAT_MAY_BE_LEFT_OUT.iter().find(|case| case.0 == NO_ENGINE_FINISHES).unwrap();
+    let limit = CompileOptions { pattern_match_limit: Some(Duration::from_millis(100)), ..CompileOptions::default() };
+    let v = compile_with(&json!({ "pattern": pattern }), &limit).unwrap();
+    let (mut answered, mut abandoned) = (0, 0);
+    for (text, want) in texts().iter().zip(short_answers.chars()).chain(long.iter().zip(long_answers.chars())) {
+        match v.try_validate(&json!(text)) {
+            Ok(got) => {
+                assert_eq!(got, want == 'T', "{pattern} on {text:?}");
+                answered += 1;
+            }
+            Err(SchemaEvaluationError::PatternMatchLimit(e)) => {
+                // The time, or the memory of the backtracking, whichever the match reached first.
+                assert_eq!((e.pattern(), e.limit()), (pattern, Duration::from_millis(100)));
+                assert!(!v.is_valid(&json!(text)), "is_valid is true for a match that reached its limit");
+                abandoned += 1;
+            }
+            Err(e) => panic!("{pattern} on {text:?}: {e}"),
+        }
+    }
+    assert!(answered > 0 && abandoned > 0, "{answered} answered, {abandoned} abandoned");
+}
+
+/// A pattern is never refused for what it would come to written another way: these six were refused by 0.1.7's
+/// first cuts as "valid, but too large to compile", when repetitions inside repetitions were written out as copies
+/// for the engine of the time. They compile. A count beyond the text there is cannot match, and the matcher says so
+/// at once (the rest of the pattern needs more text than is left). Where the count can be met by iterations that
+/// match nothing, the match is a search no engine finishes, V8 among them, and it ends at the limit of a match
+/// with an error, never with an answer.
+#[test]
+fn a_large_repetition_inside_a_repetition_compiles() {
+    let limit = CompileOptions { pattern_match_limit: Some(Duration::from_millis(200)), ..CompileOptions::default() };
+    for (pattern, text, want) in [
+        (r"^(?!-)(?:(?:a|x){4294967295}-)+$", "ax-", Some(false)),
+        (r"^(?!-)(?:(?:(?:a|x){200}-|a){200}x)+$", "ax-", Some(false)),
+        (r"^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$", "ax-xxa-", Some(true)),
+        (r"^(?!-)(?:(?:(?:a|x){1,300}|){1,300}-)+$", "ax-xxa", Some(false)),
+        (r"^(?!-)(?:(?:a|x|){4294967295}-)+$", "ax-", None),
+        (r"^(?!-)(?:(?:(?:a|x|){200}-|a?){200}x)+$", "ax-", None),
+        (r"^(?!-)(?:(?:a|x|){100000}-)+$", "ax-", None),
+    ] {
+        let v = compile_with(&json!({ "pattern": pattern }), &limit).unwrap_or_else(|e| panic!("{pattern}: {e}"));
+        match (v.try_validate(&json!(text)), want) {
+            (Ok(got), Some(want)) => assert_eq!(got, want, "{pattern} on {text:?}"),
+            // Whatever the engine comes to within the limit is an answer, and the limit is an error that names
+            // the pattern.
+            (Ok(_), None) => {}
+            (Err(SchemaEvaluationError::PatternMatchLimit(e)), None) => {
+                assert_eq!(e.pattern(), pattern);
+                assert!(!v.is_valid(&json!(text)), "{pattern}: is_valid is true for a match that reached its limit");
+            }
+            (Err(e), _) => panic!("{pattern} on {text:?}: {e}"),
+        }
+    }
+    // A count as large on a body that cannot be come back into.
+    for (pattern, text) in [
+        (r"^(?!-)(?:[ax]{1,300}-)+$", "ax-xxa-"),
+        (r"^(?!-)(?:(?:ax){300}-)+$", &format!("{}-", "ax".repeat(300))),
+        (r"^(?!-)(?:(?:a|x){1,200}-)+$", "ax-xxa-"),
+    ] {
+        let v = compile(&json!({ "pattern": pattern })).unwrap_or_else(|e| panic!("{pattern}: {e:?}"));
+        assert!(answer(&v, text), "{pattern}");
+        assert!(!answer(&v, "ax-xxa"), "{pattern}");
+    }
+}
+
+/// `\k` in a class is the letter in a pattern with no named group, and is not valid in one with a named group,
+/// with the `u` flag or without it. The engine took it as the letter in both. V8 says the same of each of these.
+#[test]
+fn k_in_a_class_is_not_valid_in_a_pattern_with_a_named_group() {
+    for pattern in [
+        r"(?<n>a)[\k]",
+        r"[\k](?<n>a)",
+        r"(?<n>a)[\k<a>]",
+        r"[\k<a>](?<n>a)",
+        r"(?<n>a)^[\k<a>]$",
+        r"^[\k<a>]$(?<n>a)",
+        r"(?<a>x)[\k]",
+        r"(?<a>x)[\k<a>]",
+        r"(?<n>a)[^\k]",
+        r"(?<n>a)[a-\k]",
+        r"(?<n>a)[\cK\k]",
+        r"(?<n>a)\[\k]",
+    ] {
+        let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
+        assert_eq!(e.message(), format!("Invalid regular expression '{pattern}' in pattern."));
+    }
+    check_texts(&[
+        (r"^[\k]$", &["k"], &["", "\\", "kk", "a"]),
+        (r"^[\k<a>]+$", &["k", "<a>", "ka"], &["", "\\", "n"]),
+        // The backslash is the member, and the `k` after it another.
+        (r"^(?<n>a)[\\k]$", &["ak", "a\\"], &["a", "k", "aa"]),
+        // No named group: the class holds the text of one.
+        (r"^[(?<n>]\k$", &["nk", "(k", "<k"], &["k", "n", "ak"]),
+    ]);
+}
+
+/// The two numbers of a count are compared as they are written, however long. The engine reads a number of more
+/// than ten digits as its largest, and then took `a{99999999999999999999,99999999999999999998}`. V8 takes it
+/// too, and `a{2147483648,2147483647}`: ECMA-262 says a first number greater than the second is a syntax error,
+/// and that is the answer here.
+#[test]
+fn the_numbers_of_a_count_are_compared_as_they_are_written() {
+    for pattern in [
+        r"a{99999999999999999999,99999999999999999998}",
+        r"a{2147483648,2147483647}",
+        r"a{4294967296,4294967295}",
+        r"a{00000000000000000000000002,1}",
+        r"a{010,9}",
+        r"a{3,2}\-",
+        r"x{1,2}{99999999999999999999,99999999999999999998}",
+        r"^{99999999999999999999,99999999999999999998}",
+        r"(?:a|b{99999999999999999999,99999999999999999998})",
+        r"(?<=a{99999999999999999999,99999999999999999998})",
+        r"\-{99999999999999999999,99999999999999999998}",
+    ] {
+        let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
+        assert_eq!(e.message(), format!("Invalid regular expression '{pattern}' in pattern."));
+    }
+    check_texts(&[
+        (r"^a{9,010}$", &["aaaaaaaaa", "aaaaaaaaaa"], &["aaaaaaaa", "aaaaaaaaaaa"]),
+        (r"^a{00000000000000000000000001,2}$", &["a", "aa"], &["", "aaa"]),
+        (r"^a{99999999999999999998,99999999999999999999}$", &[], &["", "a", "aaaa"]),
+        (r"^a{0,99999999999999999999}$", &["", "a", "aaaa"], &["b"]),
+        // In a class, after a backslash and without its closing brace it is no count.
+        (r"^[{99999999999999999999,99999999999999999998}]+$", &["{9,8}", "9"], &["", "a"]),
+        (r"^\{3,2}$", &["{3,2}"], &["", "{{{"]),
+        (r"^a{3,2$", &["a{3,2"], &["", "aaa"]),
+    ]);
+}
+
+/// The Script value `Hrkt` (`Katakana_Or_Hiragana`) is in Unicode's list of property value aliases, so
+/// ECMA-262 takes it, for `Script` and for `Script_Extensions`. No character has it, so it matches nothing and
+/// its negation matches every character. V8 13.6 and the engine do not take it. The pattern was then read without
+/// the `u` flag, as the letter and the text in braces.
+#[test]
+fn the_script_no_character_has() {
+    for name in ["Script", "sc", "Script_Extensions", "scx"] {
+        for value in ["Hrkt", "Katakana_Or_Hiragana"] {
+            let all = ["\u{3042}", "\u{30ab}", "\u{30fc}", "a", "\u{1F600}"];
+            let pattern = |text: &str| text.replace("NAME", name).replace("VALUE", value);
+            check_texts(&[
+                (&pattern(r"^\p{NAME=VALUE}$"), &[], &all),
+                (&pattern(r"^\P{NAME=VALUE}$"), &all, &["", "aa"]),
+                (&pattern(r"^[\p{NAME=VALUE}a]$"), &["a"], &["\u{3042}", "\u{30ab}", ""]),
+                (&pattern(r"^[^\p{NAME=VALUE}a]$"), &["\u{3042}", "\u{30ab}", "b"], &["a", ""]),
+                (&pattern(r"^[\P{NAME=VALUE}]+$"), &["\u{3042}a\u{30ab}"], &[""]),
+                (&pattern(r"^[^\P{NAME=VALUE}]$"), &[], &all),
+                (&pattern(r"^(?i:\P{NAME=VALUE})\p{NAME=VALUE}*$"), &all, &["", "aa"]),
+                // After a backslash that is a character it is text, and the pattern is valid only without the
+                // flag.
+                (&pattern(r"^\\p{NAME=VALUE}$"), &[&pattern(r"\p{NAME=VALUE}")], &["", "a"]),
+            ]);
+        }
+    }
+    // A name or a value that is not in the list is not valid with the flag, and is the text without it.
+    check_texts(&[
+        (r"^\p{sc=hrkt}$", &["p{sc=hrkt}"], &["", "a", "\u{3042}"]),
+        (r"^\p{gc=Hrkt}$", &["p{gc=Hrkt}"], &["", "a", "\u{3042}"]),
+        (r"^\p{Hrkt}$", &["p{Hrkt}"], &["", "a", "\u{3042}"]),
+    ]);
+}
+
+/// Where V8 13.6 and ECMA-262 differ in what is a pattern, the answer is ECMA-262's. `\p{WSpace}` is not in
+/// ECMA-262's list of binary properties (V8 takes it). A name of two groups that can both take part in a match is
+/// not valid (V8 takes `(|((?<m>))(?<m>|))`). The four scripts of Unicode 17 are scripts (V8 13.6 has Unicode
+/// 16).
+#[test]
+fn what_is_a_pattern_is_what_ecma_262_says() {
+    check_texts(&[
+        (r"^\p{WSpace}$", &["p{WSpace}"], &[" ", "", "\t"]),
+        (r"^\p{White_Space}$", &[" ", "\t"], &["p{White_Space}", ""]),
+        (r"^\p{space}$", &[" ", "\t"], &["p{space}", ""]),
+        (r"^(?:(?<m>a)|(?<m>b))\k<m>$", &["aa", "bb"], &["ab", "a", ""]),
+        (r"^\p{sc=Sidt}$", &["\u{10940}"], &["a", "p{sc=Sidt}"]),
+        (r"^\p{Script=Sidetic}$", &["\u{10940}"], &["a", ""]),
+        (r"^\p{sc=Tols}+$", &["\u{11DB0}\u{11DB1}"], &["a", ""]),
+        (r"^\p{scx=Tolong_Siki}$", &["\u{11DB0}"], &["a", ""]),
+        (r"^\p{sc=Berf}$", &["\u{16EA0}"], &["a", ""]),
+        (r"^[\p{Script_Extensions=Beria_Erfe}]$", &["\u{16EA0}"], &["a", ""]),
+        (r"^\p{sc=Tayo}$", &["\u{1E6C0}"], &["a", ""]),
+        (r"^\P{sc=Tai_Yo}$", &["a", "\u{10940}"], &["\u{1E6C0}", ""]),
+    ]);
+    for pattern in [r"(|((?<m>))(?<m>|))", r"(?<m>a)(?<m>b)", r"(?:(?<m>a)|b)(?<m>c)", r"((?<m>a)|b)+(?<m>c)"] {
+        let e = compile(&json!({ "pattern": pattern })).expect_err(pattern);
+        assert_eq!(e.message(), format!("Invalid regular expression '{pattern}' in pattern."));
+    }
+}

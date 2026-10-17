@@ -117,9 +117,21 @@ public sealed class SchemaProgramImage
     /// <param name="dotNetPatterns">The regular-expression patterns the image needs, translated to .NET syntax, in
     /// the index order the evaluator asks for them.</param>
     public SchemaProgramImage(byte[] image, IReadOnlyList<string> dotNetPatterns)
+        : this(image, dotNetPatterns, [])
+    {
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="SchemaProgramImage"/> class.</summary>
+    /// <param name="image">The image bytes.</param>
+    /// <param name="dotNetPatterns">The regular-expression patterns the image needs, translated to .NET syntax, in
+    /// the index order the evaluator asks for them.</param>
+    /// <param name="ecmaPatterns">The same patterns as the schema has them (ECMA-262), in the same order, or an
+    /// empty list.</param>
+    public SchemaProgramImage(byte[] image, IReadOnlyList<string> dotNetPatterns, IReadOnlyList<string> ecmaPatterns)
     {
         this.Image = image;
         this.DotNetPatterns = dotNetPatterns;
+        this.EcmaPatterns = ecmaPatterns;
     }
 
     /// <summary>Gets the image bytes.</summary>
@@ -127,4 +139,11 @@ public sealed class SchemaProgramImage
 
     /// <summary>Gets the regular-expression patterns in .NET syntax, in pattern-table order.</summary>
     public IReadOnlyList<string> DotNetPatterns { get; }
+
+    /// <summary>
+    /// Gets the regular-expression patterns as the schema has them (ECMA-262), in pattern-table order, or an empty
+    /// list when the image was made without them. The generator uses them to give a pattern proved to match in time
+    /// proportional to the text no match timeout. Without them every pattern has the timeout.
+    /// </summary>
+    public IReadOnlyList<string> EcmaPatterns { get; }
 }

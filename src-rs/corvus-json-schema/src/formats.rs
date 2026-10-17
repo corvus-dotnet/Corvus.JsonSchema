@@ -264,7 +264,7 @@ impl FormatKind {
 }
 
 fn is_leap_year(y: u32) -> bool {
-    y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)
+    y.is_multiple_of(4) && (!y.is_multiple_of(100) || y.is_multiple_of(400))
 }
 
 fn digits(s: &[u8]) -> Option<u32> {
@@ -773,7 +773,20 @@ fn idn_label_ok(label: &str) -> bool {
     true
 }
 
+/// The most bytes an internationalized host name has. A name is 253 characters at most as A-labels, and no label
+/// is shorter as an A-label than it has characters: a letter of ASCII is itself there, any other character is a
+/// digit or more, and `xn--` comes before them. So a name has 253 characters at most, each of four bytes at most.
+const MAX_IDN_HOSTNAME_BYTES: usize = 4 * 253;
+
+/// Checks an internationalized host name. A string over [`MAX_IDN_HOSTNAME_BYTES`] is not one, and is not read: the
+/// check decodes and encodes Punycode and walks around every joiner and every katakana middle dot, which take time
+/// that grows with the square of a label, so it must not be given a label of any length.
 pub(crate) fn idn_hostname(s: &str) -> bool {
+    s.len() <= MAX_IDN_HOSTNAME_BYTES && idn_hostname_of_any_length(s)
+}
+
+/// The check itself, for a string of any length.
+fn idn_hostname_of_any_length(s: &str) -> bool {
     if s.is_empty() {
         return false;
     }
@@ -930,6 +943,87 @@ mod tests {
         assert!(idn_hostname("실례.테스트") && !idn_hostname("〮실례.테스트"));
         assert!(URI_RE.is_match("http://example.com/a?b#c") && !URI_RE.is_match("//example.com"));
         assert!(DURATION_RE.is_match("P4DT12H30M5S") && !DURATION_RE.is_match("PT1D"));
+    }
+
+    /// The check of an internationalized host name decodes and encodes Punycode, looks for a kana for every katakana
+    /// middle dot and walks the neighbours of every joiner, each of which takes time that grows with the square of a
+    /// label. It did so for a label of any length: a host name of 100,000 different letters took 4 seconds to
+    /// refuse. A string over the bound is refused at once and not read. The time allowed here is generous.
+    #[test]
+    fn a_long_string_is_not_an_internationalized_host_name() {
+        const N: usize = 1_000_000;
+        let distinct: String = (0..N).map(|i| char::from_u32(0x4e00 + (i % 20000) as u32).unwrap()).collect();
+        for (name, text) in [
+            ("katakana middle dots after a kana", format!("\u{30a2}{}", "\u{30fb}".repeat(N))),
+            ("different letters", distinct),
+            ("one letter", "\u{e9}".repeat(N)),
+            ("joiners", format!("\u{628}{}\u{628}", "\u{64b}\u{200c}".repeat(N / 2))),
+            ("a long A-label", format!("xn--{}-{}", "a".repeat(N / 2), "b9".repeat(N / 4))),
+            ("labels", format!("{}a", "a.".repeat(N / 2))),
+        ] {
+            for (format, text) in [(FormatKind::IdnHostname, text.clone()), (FormatKind::IdnEmail, format!("a@{text}"))]
+            {
+                let start = std::time::Instant::now();
+                let valid = format.check_string(&text, false);
+                let took = start.elapsed();
+                assert!(
+                    !valid && took < std::time::Duration::from_secs(2),
+                    "{format:?}, {name}: valid {valid} in {took:?}"
+                );
+            }
+        }
+    }
+
+    /// What the bound rests on: every host name the check accepts has 253 characters at most, so 1,012 bytes at
+    /// most. Names are built from labels of letters that take one to four bytes, on both sides of the bound, and
+    /// the check is compared with the check that has no bound.
+    #[test]
+    fn no_internationalized_host_name_is_over_the_bound() {
+        // A small generator of its own, so that the test needs no crate: the numbers only have to be spread.
+        let mut state = 20261011u64;
+        let mut next = |below: usize| {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            ((state >> 33) as usize) % below
+        };
+        let letters =
+            ['a', 'z', '0', '\u{e9}', '\u{3b1}', '\u{4e00}', '\u{30a2}', '\u{20000}', '\u{2a700}', '\u{10428}'];
+        let (mut accepted, mut longest, mut over) = (0, 0, 0);
+        for round in 0..20000 {
+            let mut name = String::new();
+            // A label of one letter of four bytes is the most bytes a name can have for its length as an A-label,
+            // so every fourth name is made of those.
+            let wide = round % 4 == 0;
+            let labels = 1 + next(1 + round % 500);
+            for label in 0..labels {
+                if wide {
+                    name.push(letters[7 + next(2)]);
+                } else {
+                    for _ in 0..1 + next(3) {
+                        name.push(letters[next(letters.len())]);
+                    }
+                }
+                if label + 1 < labels {
+                    name.push('.');
+                }
+            }
+            let (bounded, unbounded) = (idn_hostname(&name), idn_hostname_of_any_length(&name));
+            assert_eq!(bounded, unbounded, "{name} ({} bytes)", name.len());
+            if unbounded {
+                accepted += 1;
+                longest = longest.max(name.len());
+            }
+            if name.len() > MAX_IDN_HOSTNAME_BYTES {
+                over += 1;
+            }
+        }
+        assert!(
+            accepted >= 1000 && over >= 1000 && (100..=MAX_IDN_HOSTNAME_BYTES).contains(&longest),
+            "{accepted} names accepted, the longest of {longest} bytes, {over} over the bound"
+        );
+        // The longest names there are: 253 ASCII characters, and a name over that by one.
+        let label = "a".repeat(63);
+        let at = format!("{label}.{label}.{label}.{}", "a".repeat(61));
+        assert!(at.len() == 253 && idn_hostname(&at) && !idn_hostname(&format!("{at}a")));
     }
 
     /// The straightforward (allocating) readings of the IP address formats.

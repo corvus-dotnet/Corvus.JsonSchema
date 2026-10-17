@@ -103,6 +103,85 @@
         @test throws(() -> compile_schema("""{ "type": """), ParseError)
     end
 
+    # A pattern has limits of size, and a schema with a pattern over one does not compile. The error is a
+    # PatternTooLargeError, which names the limit, and never the CompileError of a pattern that is not valid.
+    @testset "a pattern over a limit of size is too large, and not invalid" begin
+        function compiling(schema)
+            started = time()
+            error = try
+                compile_schema(schema)
+                nothing
+            catch e
+                e
+            end
+            return error, time() - started
+        end
+        megabyte = "a"^1_048_577
+        for (pattern, valid, limit) in [
+                (megabyte, false, "its length is over the limit of 1048576 bytes"),
+                ("(?=a)" * "a"^140_000, false, "it has over the limit of 131072 terms and alternatives"),
+                ("("^201 * "a" * ")"^201, false, "its groups nest over the limit of 200 deep"),
+                ("(?:(?:a{1000}){1000}){1000}", true, "PCRE2 does not hold it"),
+                ("^(a|)" * "(?:"^60 * "\\\\1" * "|b){1,2}"^60 * "\$", true, "steps to write"),
+                ("(?:a|){2147483648}", true, "a count over the limit of 2147483646")],
+            schema in ("""{ "pattern": "$pattern" }""", """{ "patternProperties": { "$pattern": true } }""",
+                """{ "items": { "anyOf": [{ "type": "null" }, { "pattern": "$pattern" }] } }""")
+            error, took = compiling(schema)
+            @test error isa PatternTooLargeError
+            @test !(error isa CompileError)
+            @test error isa PatternTooLargeError && error.valid == valid
+            @test error isa PatternTooLargeError && occursin(limit, error.limit)
+            message = sprint(showerror, error)
+            @test occursin(valid ? "is a valid ECMA-262 regular expression, and is too large: " : "is too large to read: ",
+                message)
+            @test !occursin("nvalid", message) && !occursin("not an ECMA-262", message)
+            @test ncodeunits(message) < 600
+            @test took < 30
+        end
+        # A pattern that is not valid is a CompileError still, whatever its size is under the limits.
+        error, _ = compiling("""{ "pattern": "a(" }""")
+        @test error isa CompileError && occursin("Invalid regular expression", error.message)
+        error, _ = compiling("""{ "pattern": "$("(?:"^150)a$(")"^149)" }""")
+        @test error isa CompileError
+        # A pattern of ordinary size is not touched by the limits, and neither is a large one that is within them.
+        words = join(("word$k" for k in 1:3000), "|")
+        v = compile_schema("""{ "pattern": "^(?:$words)\$", "patternProperties": { "^(?:[a-z]{2,8}-){0,40}[a-z]+\$": true } }""")
+        @test expect_valid(v, "\"word2999\"", true)
+        @test expect_valid(v, "\"word3001\"", false)
+        @test expect_valid(v, """{"ab-cd-ef": 1}""", true)
+        # The regex format reads a string of the instance as a pattern with the limits of length and of nesting,
+        # and a string over one is not a valid regular expression to it.
+        format = compile_schema("""{ "format": "regex" }"""; assert_format=true)
+        @test expect_valid(format, "\"" * "("^200 * "a" * ")"^200 * "\"", true)
+        @test expect_valid(format, "\"" * "("^201 * "a" * ")"^201 * "\"", false)
+        @test expect_valid(format, "\"" * "a"^1_048_576 * "\"", true)
+        @test expect_valid(format, "\"" * megabyte * "\"", false)
+        # (It does not read a pattern into a tree, so it has no limit on terms.)
+    end
+
+    # The patterns a process has compiled are kept, for the next schema that has them, up to 4,096 patterns and
+    # 32 MiB. A schema may come from outside, and each has patterns of its own.
+    @testset "the cache of compiled patterns is bounded" begin
+        C = CorvusJsonSchema
+        @test C.MAX_CACHED_PATTERNS == 4096 && C.MAX_CACHED_PATTERN_BYTES == 32 << 20
+        for k in 1:5000
+            compile_schema("""{ "pattern": "^cached\\\\d{$k}x+\$" }""")
+        end
+        @test 0 < length(C.PATTERN_CACHE) <= C.MAX_CACHED_PATTERNS
+        @test 0 < C.PATTERN_CACHE_BYTES[] <= C.MAX_CACHED_PATTERN_BYTES
+        # A pattern that is still in the cache is the one a second schema gets.
+        first = compile_schema("""{ "pattern": "^kept\\\\d+x*\$" }""")
+        second = compile_schema("""{ "pattern": "^kept\\\\d+x*\$" }""")
+        pattern_of(v) = only(n.pattern for n in v.program.nodes if n.pattern !== nothing)
+        @test pattern_of(first) === pattern_of(second)
+        # A pattern counts as the bytes of its text and what the engine keeps for it.
+        before = C.PATTERN_CACHE_BYTES[]
+        source = "^" * "\\p{L}"^50 * "y{7}\$"
+        compiled = C.compile_pattern(source)
+        @test C.PATTERN_CACHE_BYTES[] - before == ncodeunits(source) + C.engine_bytes(compiled.engine)
+        @test C.engine_bytes(compiled.engine) > 5_000
+    end
+
     # A not whose subschema leads back to the schema it is in recurses in place like any other applicator. It stops
     # at the maximum depth: the validation is an error, and isvalid reports the instance as invalid. (Evaluating not
     # went around the depth guard, so the first of these schemas overflowed the stack, and for the others the not
@@ -416,6 +495,100 @@
         @test throws(() -> evaluate(v, "[\"boom\"]", ResultsCollector(Basic)), ErrorException)
         @test !(@atomic v.busy)
         @test expect_valid(v, "[\"a\", 1]", true)
+    end
+
+    # One match of a pattern is limited in time, to one second unless pattern_match_limit says another time. A
+    # match that reaches the limit is an error from every entry point, and never "valid" or "invalid". The pattern
+    # tries 2^40 ways on the string before it finds no match, which no machine does in the time the tests allow.
+    @testset "a match of a pattern is limited in time" begin
+        slow = "^(?:a|a)+\$"
+        hostile = "\"" * "a"^40 * "b\""
+        function given(f)
+            started = time()
+            error = try
+                f()
+            catch e
+                e
+            end
+            return error, time() - started
+        end
+        v = compile_schema("""{ "pattern": "$(escape_string(slow))" }""")
+        @test expect_valid(v, "\"aaaa\"", true)
+        error, took = given(() -> isvalid(v, hostile))
+        @test error isa PatternMatchError
+        @test error.limit == :time && error.pattern == slow
+        @test occursin("which is 1 second", sprint(showerror, error))
+        @test 0.9 < took < 20
+        @test !(@atomic v.busy)
+        # The option, for each entry point, failing fast and collecting, for pattern and for patternProperties.
+        for schema in ["""{ "pattern": "$(escape_string(slow))" }""",
+                """{ "items": { "type": "string", "pattern": "$(escape_string(slow))" } }""",
+                """{ "patternProperties": { "$(escape_string(slow))": true }, "additionalProperties": false }""",
+                """{ "propertyNames": { "pattern": "$(escape_string(slow))" } }""",
+                """{ "unevaluatedProperties": false, "patternProperties": { "$(escape_string(slow))": true } }"""]
+            v = compile_schema(schema; pattern_match_limit=0.05)
+            instance = occursin("ropert", schema) ? "{" * hostile * ": 1}" :
+                occursin("items", schema) ? "[" * hostile * "]" : hostile
+            for check in [() -> isvalid(v, instance), () -> validate(v, instance),
+                    () -> isvalid(v, parse_document(instance)), () -> validate(v, parse_document(instance)),
+                    () -> isvalid(v, Vector{UInt8}(instance)), () -> evaluate(v, instance),
+                    () -> evaluate(v, instance, ResultsCollector(Basic)),
+                    () -> evaluate(v, parse_document(instance), ResultsCollector(Verbose))]
+                error, took = given(check)
+                @test error isa PatternMatchError && error.limit == :time
+                @test error isa PatternMatchError && occursin("which is 0.05 seconds", error.message)
+                @test took < 5
+                # The validator is fit for the next validation.
+                @test !(@atomic v.busy)
+            end
+            @test isvalid(v, replace(instance, "b\"" => "\""))
+        end
+        # A limit that leaves the match its time, and no limit: 2^22 ways are tried in less than two minutes.
+        mild = "\"" * "a"^22 * "b\""
+        @test expect_valid(compile_schema("""{ "pattern": "$(escape_string(slow))" }"""; pattern_match_limit=120), mild, false)
+        @test expect_valid(compile_schema("""{ "pattern": "$(escape_string(slow))" }"""; pattern_match_limit=nothing), mild,
+            false)
+        @test throws(() -> isvalid(compile_schema("""{ "pattern": "$(escape_string(slow))" }""";
+            pattern_match_limit=0.001), mild), PatternMatchError)
+        # No limit on time is not no limit. PCRE2 cannot be told to count no steps, and 2^32 - 1 for each place a
+        # match is tried from is the most it can be told to allow. 2^40 ways are more: the match is given up after
+        # some ten seconds, and this is the error the caller sees, from each entry point. It is not an answer.
+        unlimited = compile_schema("""{ "pattern": "$(escape_string(slow))" }"""; pattern_match_limit=nothing)
+        error, took = given(() -> isvalid(unlimited, hostile))
+        @test error isa PatternMatchError
+        @test error.limit == :steps && error.code == -47 && error.pattern == slow
+        @test error.message ==
+              "the match took the 4294967295 steps that are the most PCRE2 allows (PCRE2 error -47, match limit exceeded)"
+        @test sprint(showerror, error) == "EcmaRegex.MatchError: matching the pattern " * repr(slow) * " failed: " *
+                                          error.message
+        @test CorvusJsonSchema.EcmaRegex.MOST_STEPS == 4294967295
+        # It took its steps, which is more than the second of the default limit.
+        @test took > 1
+        @test !(@atomic unlimited.busy)
+        collected, _ = given(() -> evaluate(unlimited, hostile, ResultsCollector(Basic)))
+        @test collected isa PatternMatchError && collected.limit == :steps && collected.message == error.message
+        @test expect_valid(unlimited, "\"aaaa\"", true)
+        # A limit is a positive time. No time is not "no limit".
+        @test throws(() -> compile_schema("{}"; pattern_match_limit=0), ArgumentError)
+        @test throws(() -> compile_schema("{}"; pattern_match_limit=-1), ArgumentError)
+        # A pattern with a faster matcher that is valid only without the u flag is decided by the engine for a
+        # string beyond the Basic Multilingual Plane, and the validator is fit after its error too.
+        units = compile_schema("""{ "pattern": "^[a-z]+\\\\-\$" }""")
+        @test units.program.may_throw
+        @test expect_valid(units, "\"ab-\"", true)
+        @test expect_valid(units, "\"\U0001F600-\"", false)
+        # Two validators of one pattern have each their own limit.
+        quick = compile_schema("""{ "pattern": "$(escape_string(slow))" }"""; pattern_match_limit=0.001)
+        patient = compile_schema("""{ "pattern": "$(escape_string(slow))" }"""; pattern_match_limit=120)
+        @test throws(() -> isvalid(quick, mild), PatternMatchError)
+        @test expect_valid(patient, mild, false)
+        @test throws(() -> isvalid(quick, mild), PatternMatchError)
+        # A property name the schema declares is matched against its patterns when the schema is compiled, with the
+        # same limit, so compile_schema throws the error.
+        declared = """{ "properties": { "$("a"^40)b": true }, "patternProperties": { "$(escape_string(slow))": true } }"""
+        error, took = given(() -> compile_schema(declared; pattern_match_limit=0.05))
+        @test error isa PatternMatchError && error.limit == :time
+        @test took < 5
     end
 
     # A number in a schema and the same number in an instance are the same Float64, however it is written.

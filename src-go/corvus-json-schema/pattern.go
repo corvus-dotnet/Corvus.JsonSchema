@@ -8,7 +8,8 @@ import (
 	"unicode/utf8"
 )
 
-// pattern and patternProperties matching with ECMA-262 semantics (the u flag), as JSON Schema specifies.
+// pattern and patternProperties matching with ECMA-262 semantics (the u flag, or no flag for a pattern that is
+// valid only without it), as JSON Schema specifies.
 //
 // A pattern gets the cheapest matcher that decides it exactly:
 //
@@ -19,7 +20,8 @@ import (
 //     and separated lists ("^([a-z]+)(\.[a-z]+)*$");
 //   - anything else by the regular expression engine (see pattern_engine.go).
 //
-// Patterns compile once per process (a pattern is immutable, so identical patterns share one matcher).
+// A pattern is immutable, so identical patterns share one matcher, through a cache for the process that is bounded
+// in number and in size (see patternStore).
 
 type matcherKind uint8
 
@@ -62,17 +64,27 @@ type pattern struct {
 	alts     []alternative
 	set      charSet
 	engine   patternEngine
+	// units is the engine of a pattern that has a faster matcher and is valid only without the u flag. ECMA-262
+	// matches such a pattern by UTF-16 code unit, and the faster matchers read code points, so the engine answers
+	// for a text with a character beyond the Basic Multilingual Plane. Nil for every other pattern.
+	units patternEngine
+	// retained is what the pattern is counted as in the cache of compiled patterns, in bytes (see count).
+	retained int
 }
 
 // matchString is match for a string that is not known to be ASCII.
-func (p *pattern) matchString(s string) bool {
+func (p *pattern) matchString(s string, budget *patternBudget) bool {
 	b := []byte(s)
-	return p.match(b, isASCII(b))
+	return p.match(b, isASCII(b), budget)
 }
 
 // match reports whether the pattern matches somewhere in s, ascii saying whether s is known to be ASCII (a document
-// knows that of its strings).
-func (p *pattern) match(s []byte, ascii bool) bool {
+// knows that of its strings). The engine matches within the budget. Every other matcher reads the text once, or a
+// bounded number of times, and has no limit.
+func (p *pattern) match(s []byte, ascii bool, budget *patternBudget) bool {
+	if p.units != nil && !ascii && hasSupplementary(s) {
+		return budget.engineMatch(p.units, p.source, s)
+	}
 	switch p.kind {
 	case matchEverything:
 		return true
@@ -150,7 +162,7 @@ func (p *pattern) match(s []byte, ascii bool) bool {
 		}
 		return word
 	default:
-		return p.engine.Match(s)
+		return budget.engineMatch(p.engine, p.source, s)
 	}
 }
 
@@ -160,6 +172,17 @@ func decodeRune(s []byte, i int) (rune, int) {
 		return rune(c), 1
 	}
 	return utf8.DecodeRune(s[i:])
+}
+
+// hasSupplementary reports whether the text has a character beyond the Basic Multilingual Plane (four bytes of
+// UTF-8, the first of them 0xF0 or more).
+func hasSupplementary(s []byte) bool {
+	for _, c := range s {
+		if c >= 0xF0 {
+			return true
+		}
+	}
+	return false
 }
 
 func isASCII(s []byte) bool {
@@ -275,30 +298,144 @@ func indexString(s []byte, text string) int {
 	return -1
 }
 
-var patternCache sync.Map
+const (
+	// maxCachedPatterns is the most patterns the process-wide cache holds.
+	maxCachedPatterns = 1024
+	// maxCachedBytes is the most the patterns of the cache come to, in the bytes counted for each (see
+	// pattern.count): 64 MiB.
+	maxCachedBytes = 64 << 20
+	// maxCachedPatternBytes is the most a pattern of the cache is counted as. A larger one is compiled for the
+	// schema that has it and not kept.
+	maxCachedPatternBytes = maxCachedBytes / 32
+)
 
-// compilePattern compiles (or fetches from the process-wide cache) a pattern. Not ok when it is not a valid
-// ECMA-262 regular expression.
-func compilePattern(source string) (*pattern, bool) {
-	if p, ok := patternCache.Load(source); ok {
-		return p.(*pattern), true
+// patternStore holds the compiled patterns of the process, so that identical patterns share one matcher. It is
+// bounded in number and in size, since the patterns of a schema may come from outside: when it is over either bound
+// the patterns that were compiled first go, oldest first. A validator holds the patterns of its schema itself, so a
+// pattern that has left the cache is still matched by the validators that have it, and is compiled again only for
+// a schema compiled later. Nothing reads the cache when an instance is evaluated.
+type patternStore struct {
+	mu       sync.RWMutex
+	patterns map[string]*pattern
+	// order holds the sources of the patterns in the order they were compiled, as a ring: count of them from first.
+	order        [maxCachedPatterns + 1]string
+	first, count int
+	// bytes is the sum of what the patterns are counted as.
+	bytes int
+}
+
+var patternCache = patternStore{patterns: map[string]*pattern{}}
+
+// get returns the pattern kept for a source, or nil.
+func (c *patternStore) get(source string) *pattern {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.patterns[source]
+}
+
+// keep keeps a pattern, and returns the one to use: the pattern itself, or the one another goroutine kept for the
+// same source meanwhile.
+func (c *patternStore) keep(p *pattern) *pattern {
+	if p.retained > maxCachedPatternBytes {
+		return p
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if kept, ok := c.patterns[p.source]; ok {
+		return kept
+	}
+	c.patterns[p.source] = p
+	c.order[(c.first+c.count)%len(c.order)] = p.source
+	c.count++
+	c.bytes += p.retained
+	for c.count > maxCachedPatterns || c.bytes > maxCachedBytes {
+		oldest := c.order[c.first]
+		c.order[c.first] = ""
+		c.first = (c.first + 1) % len(c.order)
+		c.count--
+		c.bytes -= c.patterns[oldest].retained
+		delete(c.patterns, oldest)
+	}
+	return p
+}
+
+// compilePattern compiles (or fetches from the process-wide cache) a pattern. The error is errInvalidPattern when
+// it is not a valid ECMA-262 regular expression, and a *patternSizeError when it is over a limit of size.
+func compilePattern(source string) (*pattern, error) {
+	if p := patternCache.get(source); p != nil {
+		return p, nil
+	}
+	// The limits of size come first: nothing below reads a pattern that is over one.
+	unicode, err := checkRegex(source)
+	if err != nil {
+		return nil, err
 	}
 	// Validity is ECMA-262's: a pattern the engine rejects is an error, whichever matcher would run it. A pattern
-	// with a faster matcher that is valid with the u flag needs no engine at all. The engine reads a pattern that
-	// is valid only without the u flag by code point too, so the faster matchers decide those the same way.
+	// with a faster matcher that is valid with the u flag needs no engine at all. A pattern that is valid only
+	// without the u flag is matched by UTF-16 code unit. The faster matchers read code points, which is the same
+	// thing unless the text has a character beyond the Basic Multilingual Plane, so such a pattern keeps its engine
+	// for those texts. When the pattern itself has such a character it is two atoms, which no faster matcher
+	// reads, and the engine takes every text.
 	p := choosePattern(source)
-	if p == nil || !validRegex(source) {
-		engine, ok := compileEngine(source)
-		if !ok {
-			return nil, false
+	if p == nil || !unicode {
+		engine, err := compileEngine(source)
+		if err != nil {
+			return nil, errInvalidPattern
 		}
-		if p == nil {
+		switch {
+		case p == nil || hasSupplementary([]byte(source)):
 			p = &pattern{kind: matchEngine, engine: engine}
+		default:
+			p.units = engine
 		}
 	}
 	p.source = source
-	actual, _ := patternCache.LoadOrStore(source, p)
-	return actual.(*pattern), true
+	p.retained = p.count()
+	return patternCache.keep(p), nil
+}
+
+// count returns what the pattern is counted as in the cache of compiled patterns, in bytes: an estimate of what it
+// holds that is not below it. The pattern itself is counted as 512 bytes: it is 176, and a small one, ^.{1,2}$,
+// measured 342 with Go 1.27 on arm64, where 256 had been enough on amd64. A text is counted as its length and an
+// eighth, which is what the allocator can round it up by, with the 16 bytes of a string. A member of a set of literals is counted with the 64 bytes a map has for
+// it, an item of a class sequence as 48 bytes, and an engine as it counts itself (see ecmaregex.Regexp.Retained).
+// Measured, no pattern held more than its count (see TestAPatternIsCountedAsNoLessThanItHolds).
+func (p *pattern) count() int {
+	const (
+		fixedBytes  = 512
+		stringBytes = 16
+		memberBytes = 64
+		itemBytes   = 48
+	)
+	text := func(s string) int {
+		return stringBytes + len(s) + len(s)/8
+	}
+	sequence := func(s *sequence) int {
+		if s == nil {
+			return 0
+		}
+		return fixedBytes + itemBytes*len(s.items)
+	}
+	n := fixedBytes + text(p.source) + text(p.text) + sequence(p.seq)
+	if p.list != nil {
+		n += fixedBytes + sequence(p.list.first) + sequence(p.list.repeated) + sequence(p.list.separator) + sequence(p.list.final)
+	}
+	for _, member := range p.few {
+		n += text(member)
+	}
+	for member := range p.many {
+		n += memberBytes + text(member)
+	}
+	for i := range p.alts {
+		n += memberBytes + text(p.alts[i].text) + sequence(p.alts[i].seq)
+	}
+	if p.engine != nil {
+		n += p.engine.Retained()
+	}
+	if p.units != nil {
+		n += p.units.Retained()
+	}
+	return n
 }
 
 func choosePattern(p string) *pattern {
@@ -329,7 +466,9 @@ func choosePattern(p string) *pattern {
 		if len(texts) <= 8 {
 			m.few = texts
 		} else {
-			m.many = make(map[string]struct{}, len(texts))
+			// The map grows as its members are added. The alternatives may repeat one text thousands of times, and a
+			// map made for their number would hold room for them all.
+			m.many = make(map[string]struct{})
 			for _, t := range texts {
 				m.many[t] = struct{}{}
 			}
@@ -476,6 +615,11 @@ const maxAlternatives = 64
 // pass of the engine.
 const maxSequenceAlternatives = 4
 
+// maxAnywhereWidth is the widest class sequence, in characters, and the longest literal, in bytes, that is searched
+// for at every position of a text. The search takes the text times this, and these matchers have no limit, so a
+// wider one is left to the engine, which has the limit of a match.
+const maxAnywhereWidth = 64
+
 // parseAlternatives reads two or more alternatives once groups of alternatives (and optional groups) are expanded
 // into whole alternatives ("^a|b|c$", "^([a|A]uto)|([n|N]one)$", "^[Ee][Ss]2015(\.([Cc]ore|[Pp]roxy))?$"), each a
 // literal or a class sequence anchored where its own "^" and "$" say.
@@ -495,6 +639,10 @@ func parseAlternatives(p string) []alternative {
 			body, end = r, true
 		}
 		if text, ok := literalText(body); ok {
+			// A literal that is anchored at neither end is searched for at every position of the text.
+			if !start && !end && len(text) > maxAnywhereWidth {
+				return nil
+			}
 			alts = append(alts, alternative{kind: altLiteral, text: text, start: start, end: end})
 			continue
 		}
@@ -521,6 +669,9 @@ func parseAlternatives(p string) []alternative {
 		kind := altAnywhere
 		if end {
 			kind = altEnd
+		} else if width > maxAnywhereWidth {
+			// A sequence that is not anchored is tried at every position of the text, and reads its width at each.
+			return nil
 		}
 		alts = append(alts, alternative{kind: kind, seq: seq, width: width})
 	}
@@ -566,21 +717,36 @@ func product(a, b []string) ([]string, bool) {
 func expandAlternatives(c []rune, i int) ([]string, int, bool) {
 	var all []string
 	branch := []string{""}
-	appendAll := func(text string) {
-		for b := range branch {
-			branch[b] += text
+	// The characters that are copied are added to the branches a run at a time, when something else follows the
+	// run. Adding them one at a time would copy the branch for each, which takes time quadratic in its length. run
+	// is where the run that has not been added starts, or -1.
+	run := -1
+	flush := func(end int) {
+		if run >= 0 {
+			text := string(c[run:end])
+			for b := range branch {
+				branch[b] += text
+			}
+			run = -1
+		}
+	}
+	copied := func(from int) {
+		if run < 0 {
+			run = from
 		}
 	}
 loop:
 	for i < len(c) {
 		switch c[i] {
 		case '|':
+			flush(i)
 			all = append(all, branch...)
 			branch = []string{""}
 			i++
 		case ')':
 			break loop
 		case '(':
+			flush(i)
 			i++
 			if runeAt(c, i) == '?' {
 				if runeAt(c, i+1) != ':' {
@@ -652,21 +818,22 @@ loop:
 				i++
 			}
 			i++
-			appendAll(string(c[start:i]))
+			copied(start)
 		case '\\':
 			if i+2 > len(c) {
 				return nil, 0, false
 			}
-			appendAll(string(c[i : i+2]))
+			copied(i)
 			i += 2
 		default:
-			appendAll(string(c[i]))
+			copied(i)
 			i++
 		}
 		if len(all)+len(branch) > maxAlternatives {
 			return nil, 0, false
 		}
 	}
+	flush(i)
 	return append(all, branch...), i, true
 }
 
@@ -1035,6 +1202,10 @@ type separatedList struct {
 func (l *separatedList) match(s []byte) bool {
 	rest := s
 	repeats := uint32(0)
+	// Whether the text is ASCII is worked out once, for the whole of it. The final sequence is tried after every
+	// item, and reading what is left of the text each time to see whether it is ASCII made the match take time
+	// quadratic in the number of items.
+	ascii := l.final != nil && isASCII(s)
 	if l.first != nil {
 		n := l.first.consume(rest)
 		if n < 0 {
@@ -1057,8 +1228,10 @@ func (l *separatedList) match(s []byte) bool {
 		}
 	}
 	for {
-		if repeats >= l.minRepeats && l.final.match(rest) {
-			return true
+		if repeats >= l.minRepeats {
+			if ascii && l.final.matchASCII(rest) || !ascii && l.final.matchChars(rest) {
+				return true
+			}
 		}
 		n := l.repeated.consume(rest)
 		if n < 0 {
@@ -1126,11 +1299,13 @@ func parseSeparatedList(p string) *separatedList {
 		return nil
 	}
 	before, after := body[:g.open], body[g.close+2:]
-	items := func(t string) []sequenceItem {
-		if seq := parseSequence("^" + t); seq != nil {
-			return seq.items
+	// The items of a text that is a class sequence, and whether it is one. A "$" at the end of the text is not an
+	// item, and the list has no place for it: "^x(,a$)*$" is not "^x(,a)*$". Such a text is not a part of a list.
+	items := func(t string) ([]sequenceItem, bool) {
+		if seq := parseSequence("^" + t); seq != nil && !seq.toEnd {
+			return seq.items, true
 		}
-		return nil
+		return nil, false
 	}
 	greedySequence := func(items []sequenceItem) *sequence { return &sequence{items: items, pinned: -1} }
 	fixed := func(items []sequenceItem) bool {
@@ -1141,8 +1316,8 @@ func parseSeparatedList(p string) *separatedList {
 		}
 		return len(items) != 0
 	}
-	groupItems := items(inner)
-	if groupItems == nil {
+	groupItems, ok := items(inner)
+	if !ok {
 		return nil
 	}
 	switch {
@@ -1152,8 +1327,8 @@ func parseSeparatedList(p string) *separatedList {
 		if !ok {
 			return nil
 		}
-		first := items(unwrapped)
-		if first == nil && parseSequence("^"+unwrapped) == nil {
+		first, ok := items(unwrapped)
+		if !ok {
 			return nil
 		}
 		for k := 1; k < len(groupItems); k++ {
@@ -1173,12 +1348,14 @@ func parseSeparatedList(p string) *separatedList {
 			return nil
 		}
 		final := parseSequence("^" + unwrapped + "$")
-		if final == nil {
+		// The final sequence is tried after every item, against all that is left of the text. A sequence matched by
+		// the length of the text reads that length each time, so a pattern with one is not a list.
+		if final == nil || final.pinned >= 0 {
 			return nil
 		}
 		for k := 1; k < len(groupItems); k++ {
 			repeated, separator := groupItems[:k], groupItems[k:]
-			if fixed(separator) && greedyBefore(repeated, separator[0].set) {
+			if fixed(separator) && greedyBefore(repeated, separator[0].set) && finalStopsAt(final, separator[0].set) {
 				return &separatedList{
 					repeated: greedySequence(repeated), separator: greedySequence(separator),
 					final: final, minRepeats: minRepeats,
@@ -1187,6 +1364,19 @@ func parseSeparatedList(p string) *separatedList {
 		}
 	}
 	return nil
+}
+
+// finalStopsAt reports whether the final sequence of a list cannot read past the separator that follows an item: no
+// item of it holds a character the first item of the separator holds. Tried at the start of an item, it then fails
+// at that separator at the latest, so trying it after every item reads the text a bounded number of times. A final
+// sequence that can read through separators would read to the end of the text from every item.
+func finalStopsAt(final *sequence, separator charSet) bool {
+	for i := range final.items {
+		if !final.items[i].set.disjoint(separator) {
+			return false
+		}
+	}
+	return true
 }
 
 // stripGroup is the inside of "(...)" or "(?:...)". Not ok for other groups.

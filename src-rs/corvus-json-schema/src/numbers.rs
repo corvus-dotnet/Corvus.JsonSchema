@@ -140,7 +140,7 @@ fn divides_scaled(m: u128, shift: u32, d: u128) -> bool {
     let mut rest = d / gcd(m, d);
     for f in [2u128, 5] {
         let mut count = 0u32;
-        while rest % f == 0 {
+        while rest.is_multiple_of(f) {
             rest /= f;
             count += 1;
         }

@@ -993,6 +993,46 @@ What that tells us is that we cannot implicitly convert the missing `PersonName`
 
 What can we do about that?
 
+### Regular expressions in `pattern` and `patternProperties`
+
+JSON Schema says that a `pattern` is an [ECMA-262](https://tc39.es/ecma262/#sec-patterns) regular expression, read
+with the `u` flag. .NET's regular expressions are another dialect, so the generator translates each pattern for
+.NET, with the translator the V5 generator and evaluator use (see
+[EcmaRegexTranslator.md](../EcmaRegexTranslator.md) and [EcmaRegexTranslations.md](../EcmaRegexTranslations.md)).
+A generated type then gives the answer a JavaScript engine gives. Three things follow.
+
+- **A character is a code point.** `^.$` matches one emoji, and `\p{L}` matches a letter beyond the Basic
+  Multilingual Plane. A pattern that is valid only without the `u` flag (`\-`, a lone `{`) is read by that grammar,
+  as a JavaScript engine reads it, and is matched by UTF-16 code unit.
+- **A pattern that is not a valid ECMA-262 regular expression stops the generation.** That includes constructs only
+  .NET has, such as `(?i)` or `(?>a)`. The error names the pattern and the keyword and says what is wrong and where:
+  `The pattern 'a{2,1}' of the keyword 'pattern' is not a valid ECMA-262 regular expression. Numbers out of order in {} quantifier at offset 6.`
+  The source generator reports it as its `CRV1001` diagnostic. An earlier generator emitted such a pattern as
+  it was, and the generated type threw when it first validated.
+- **A pattern over a limit of size stops the generation too**, with an error of its own that says the pattern is
+  too large and names the limit, for example more than 200 groups one inside another, or a translation longer than
+  1,048,576 characters. The source generator reports it as `CRV1003`. The limits are those of the V5 translator
+  (see [the translator guide](../EcmaRegexTranslator.md#limits-on-the-size-of-a-pattern)).
+- **A match has a timeout of 1 second.** Every regular expression a generated type holds is constructed with it
+  (`[GeneratedRegex(..., matchTimeoutMilliseconds: 1000)]`, or the `Regex` constructor where there is no regular
+  expression generator). .NET's engine takes time exponential in the length of the text for some patterns, and
+  does not return at all for a few. A match of a `pattern` or of a `patternProperties` name that runs for longer
+  throws `RegexMatchTimeoutException` from `Validate()`. It is not reported as an instance that is not valid.
+- **The `format` checks take time in proportion to the string.** Those that are regular expressions in
+  `Corvus.Json.ExtendedTypes` (`email`, `idn-email`, `duration`, `uuid`, `uri-template`, `json-pointer`,
+  `relative-json-pointer` and part of `ipv4`) are written so that a match is linear, and have the same limit of 1
+  second, which a match of many megabytes can meet. It then throws `RegexMatchTimeoutException` too: `idn-email`
+  no longer answers "not valid" for it. Three checks were not linear and are now. `idn-email` refuses an address
+  with two at signs, or with a domain of more than 253 characters, before it looks for the domain and converts it.
+  `ipv6` finds a zone by its percent sign, where it searched again from every percent sign, and an address with a
+  zone that has a line end in it is no longer valid. `regex` finds the groups of a pattern through an index.
+
+Regenerate your types with this version of the generator to get all of these. Types generated before it keep the
+translation and the expressions they were generated with, and have no match timeout. That is so for four of the
+models this repository ships: `Corvus.Json.JsonSchema.Draft201909`, `Corvus.Json.JsonSchema.Draft202012`,
+`Corvus.Json.JsonSchema.OpenApi30` and `Corvus.Json.JsonSchema.OpenApi31` have not been regenerated, and a match
+of one of their patterns has no limit. `Corvus.Json.JsonSchema.OpenApi20` has been, and has the limit of 1 second.
+
 ## Values, Null, and Undefined
 
 Let's remind ourselves about the characteristics of JSON data.

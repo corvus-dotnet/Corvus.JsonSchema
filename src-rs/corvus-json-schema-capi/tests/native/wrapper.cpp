@@ -2,6 +2,7 @@
 // exceptions and try_validate, documents, collectors, and threads sharing validators.
 
 #include <atomic>
+#include <chrono>
 #include <cstdio>
 #include <memory>
 #include <string>
@@ -130,6 +131,20 @@ int main() {
         th.join();
     }
     CHECK(wrong.load() == 0);
+
+    // The limit of a match of a regular expression, and the limits of size of a pattern.
+    {
+        cjs::options limited;
+        limited.pattern_match_limit(std::chrono::milliseconds(20));
+        auto slow = cjs::validator::compile(R"({"pattern": "^(?:(a+)\\1*)+$"})", limited);
+        std::string never = "\"" + std::string(60, 'a') + "b\"";
+        CHECK(throws(CJS_PATTERN_MATCH_LIMIT, [&] { slow.is_valid(never); }, "20ms"));
+        bool answer = false;
+        CHECK(slow.try_validate(never, answer) == CJS_PATTERN_MATCH_LIMIT);
+        CHECK(slow.is_valid(R"("aaaa")"));
+        std::string long_pattern = R"({"pattern": ")" + std::string(16385, 'a') + R"("})";
+        CHECK(throws(CJS_PATTERN_TOO_LARGE, [&] { cjs::validator::compile(long_pattern); }, "too large"));
+    }
 
     if (failures == 0) {
         std::printf("C++: all checks passed (corvus_json_schema %.*s)\n", static_cast<int>(cjs::version().size()),

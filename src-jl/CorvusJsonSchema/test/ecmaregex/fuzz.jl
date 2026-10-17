@@ -2,16 +2,14 @@
 # which says what the patterns are. Every pattern is valid with the u flag. Each must be valid here, and each that is
 # not refused must answer as V8 does on every text. The refused ones are counted by reason, as in oracle.jl.
 #
-# One pattern is given up on. It holds lookbehinds of no fixed length inside lazy repetitions whose bodies can match
-# nothing, and the searches for the lookbehinds run past the limit on their steps (a MatchError) on texts of a few
-# characters. V8 answers it at once, as ECMA-262 refuses an iteration that matches nothing where PCRE2 tries it.
+# One pattern may be given up on. It holds lookbehinds of no fixed length inside lazy repetitions whose bodies can
+# match nothing, and the searches for the lookbehinds take long on texts of a few characters, where V8 answers at
+# once, as ECMA-262 refuses an iteration that matches nothing where PCRE2 tries it. With the limit on the time of a
+# match it answers as V8 does when the machine leaves it the time, and reaches the limit (a MatchError) otherwise.
 
 const EXPECTED_UNSUPPORTED_FUZZ = Dict(
-    EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND => 67,
-    EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND => 45,
-    EcmaRegex.REFUSED_GROUP_IN_LOOKAROUND => 17,
-    EcmaRegex.REFUSED_GROUP_IN_EMPTY_REPETITION => 37,
-    EcmaRegex.REFUSED_CASE_INSENSITIVE_BACKREFERENCE => 78)
+    EcmaRegex.REFUSED_BACKREFERENCE_IN_LOOKBEHIND => 18,
+    EcmaRegex.REFUSED_GROUP_IN_LOOKBEHIND => 32)
 const EXPECTED_LIMITED_FUZZ = 1
 
 @testset "V8 on patterns built from a grammar" begin
@@ -26,7 +24,7 @@ const EXPECTED_LIMITED_FUZZ = 1
     report(tally, "built from a grammar")
     @test tally.patterns == 6000
     @test tally.unsupported == EXPECTED_UNSUPPORTED_FUZZ
-    @test length(tally.limited) == EXPECTED_LIMITED_FUZZ
+    @test length(tally.limited) <= EXPECTED_LIMITED_FUZZ
     @test all(p -> occursin("(?<", p), tally.limited)
     haskey(ENV, "ECMAREGEX_SHOW_REFUSED") && foreach(p -> println("  refused ", repr(p)), tally.refused)
 

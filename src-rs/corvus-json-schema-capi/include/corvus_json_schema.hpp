@@ -13,6 +13,7 @@
 #ifndef CORVUS_JSON_SCHEMA_HPP
 #define CORVUS_JSON_SCHEMA_HPP
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -171,6 +172,15 @@ public:
     /// The maximum depth of in-place recursion on a cycle (default 128).
     options& max_depth(std::uint32_t depth) {
         detail::check(cjs_options_set_max_depth(handle_.get(), depth));
+        return *this;
+    }
+
+    /// The time one match of a pattern or patternProperties regular expression against one string may take
+    /// (default one second). A match that takes longer is abandoned, and the call throws an error whose status is
+    /// CJS_PATTERN_MATCH_LIMIT. Zero turns the limit off, for a caller who trusts the schema and the instances.
+    options& pattern_match_limit(std::chrono::milliseconds limit) {
+        detail::check(cjs_options_set_pattern_match_limit_ms(
+            handle_.get(), limit.count() > 0 ? static_cast<std::uint64_t>(limit.count()) : 0));
         return *this;
     }
 

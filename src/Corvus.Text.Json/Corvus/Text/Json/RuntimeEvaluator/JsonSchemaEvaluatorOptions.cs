@@ -31,6 +31,43 @@ public delegate Regex? JsonSchemaRegexProvider(int index, string ecmaPattern);
 public sealed class JsonSchemaEvaluatorOptions
 {
     /// <summary>
+    /// The default of <see cref="RegexMatchTimeout"/>: 1 second.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A <c>pattern</c> or <c>patternProperties</c> keyword is matched by .NET's regular expression engine when the
+    /// evaluator has no matcher of its own for the pattern. That engine backtracks. There are patterns on which a
+    /// match never finishes, in the interpreted engine, the compiled engine or both, and patterns that take time
+    /// exponential in the length of the text. Without a timeout an evaluation of such a pattern does not return.
+    /// </para>
+    /// <para>
+    /// A match that runs for longer than the timeout throws <see cref="RegexMatchTimeoutException"/>. The exception
+    /// leaves the evaluation and reaches the caller. It is not reported as an instance that is not valid, because
+    /// the evaluator does not know whether the instance matches.
+    /// </para>
+    /// <para>
+    /// Set <see cref="RegexMatchTimeout"/> to <see cref="Regex.InfiniteMatchTimeout"/> to match with no timeout, as
+    /// the evaluator did before this default.
+    /// </para>
+    /// <para>
+    /// A pattern the evaluator proves to match in time proportional to the length of the text has no timeout,
+    /// whatever <see cref="RegexMatchTimeout"/> is. A timeout makes .NET's engines check the clock as they match,
+    /// which costs such a pattern up to half its time again in the interpreted engine, and a fifth in the compiled
+    /// one. The proof accepts a pattern with no backreference, lookaround or word boundary, whose repetitions each
+    /// repeat one character or set, and in which no repetition can give characters back to another that could take
+    /// them: <c>^[a-z]+\.[a-z]+$</c>, <c>^#[0-9a-fA-F]{6}$</c> and <c>(.*)</c> are proved linear, and
+    /// <c>^([a-z]+\.)*[a-z]+$</c> and <c>^[a-z]+[a-z0-9]+$</c> are not. Code generated for a schema does the same.
+    /// </para>
+    /// <para>
+    /// The timeout bounds the time of a match and not its memory. A match that backtracks keeps what it may have to
+    /// come back to, and it can keep more for as long as it runs, so the timeout bounds that only as far as it
+    /// bounds the time. Set a shorter timeout, or a limit on the memory of the process, where neither the schema
+    /// nor the instance is trusted.
+    /// </para>
+    /// </remarks>
+    public static readonly TimeSpan DefaultRegexMatchTimeout = TimeSpan.FromSeconds(1);
+
+    /// <summary>
     /// Gets the default options.
     /// </summary>
     public static JsonSchemaEvaluatorOptions Default { get; } = new();
@@ -86,9 +123,22 @@ public sealed class JsonSchemaEvaluatorOptions
     public bool CompileRegularExpressions { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets the match timeout for regular expressions.
+    /// Gets or sets the match timeout for the regular expressions the evaluator constructs. Defaults to
+    /// <see cref="DefaultRegexMatchTimeout"/> (1 second).
     /// </summary>
-    public TimeSpan RegexMatchTimeout { get; set; } = Regex.InfiniteMatchTimeout;
+    /// <remarks>
+    /// <para>
+    /// A single match of a <c>pattern</c> or <c>patternProperties</c> keyword that runs for longer than this throws
+    /// <see cref="RegexMatchTimeoutException"/> out of the evaluation. See <see cref="DefaultRegexMatchTimeout"/> for
+    /// why there is a default. Set <see cref="Regex.InfiniteMatchTimeout"/> to match with no timeout.
+    /// </para>
+    /// <para>
+    /// The timeout applies to the interpreter and to generated code alike (see <see cref="CodeGeneration"/>), and to
+    /// an evaluator loaded from a program image. A <see cref="Regex"/> supplied by <see cref="RegexProvider"/> keeps
+    /// the timeout it was constructed with.
+    /// </para>
+    /// </remarks>
+    public TimeSpan RegexMatchTimeout { get; set; } = DefaultRegexMatchTimeout;
 
     /// <summary>
     /// Gets or sets the provider consulted before a regular expression is constructed. Only patterns that need a

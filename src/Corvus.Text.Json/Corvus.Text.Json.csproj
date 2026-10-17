@@ -37,6 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\Corvus.Text.Json.CodeGeneration\THIRD-PARTY-NOTICES.txt" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
   <!-- The static optimisation profile for native AOT (see buildTransitive/Corvus.Text.Json.targets). The build's
        GenerateAotProfile task (CI's compile phase, or on request) records it from this code into obj/profiles, which
@@ -89,6 +90,9 @@
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Polyfills\NetStandardExtensions.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Polyfills\SkipLocalsInitAttribute.cs" />
     <!-- Shared source: the ECMA-262 to .NET regex translator from the code generator. -->
+    <Compile Include="..\Corvus.Text.Json.CodeGeneration\EcmaRegexParser.cs" Link="Corvus\Text\Json\RuntimeEvaluator\Shared\EcmaRegexParser.cs" />
+    <Compile Include="..\Corvus.Text.Json.CodeGeneration\EcmaRegexUnicode.cs" Link="Corvus\Text\Json\RuntimeEvaluator\Shared\EcmaRegexUnicode.cs" />
+    <Compile Include="..\Corvus.Text.Json.CodeGeneration\EcmaRegexUnicodeData.cs" Link="Corvus\Text\Json\RuntimeEvaluator\Shared\EcmaRegexUnicodeData.cs" />
     <Compile Include="..\Corvus.Text.Json.CodeGeneration\EcmaRegexTranslator.cs" Link="Corvus\Text\Json\RuntimeEvaluator\Shared\EcmaRegexTranslator.cs" />
   </ItemGroup>
   <ItemGroup Label="Embedded metaschemas for the runtime evaluator">

@@ -962,7 +962,7 @@ public static partial class ValidateWithoutCoreType
                 // RFC 6531 extends only the local part; RFC 5321 address-literals are unchanged.
                 isMatch = Validate.IsIdnEmailAddressLiteralMatch(email);
             }
-            else
+            else if (Validate.HasOneHostDomain(email, atIndex))
             {
                 // Normalize the domain
                 email = Validate.IdnEmailReplacePattern.Replace(email, DomainMapper);
@@ -975,12 +975,15 @@ public static partial class ValidateWithoutCoreType
                 // Pull out and process domain name (throws ArgumentException on invalid)
                 string domainName = Validate.IdnMapping.GetAscii(match.Groups[2].Value);
 
+                // A host name is at most 253 characters as A-labels. .NET's conversion refuses a longer one, and .NET
+                // Framework's allows 254.
+                if (domainName.Length > 253)
+                {
+                    throw new ArgumentException("The domain is longer than 253 characters.");
+                }
+
                 return match.Groups[1].Value + domainName;
             }
-        }
-        catch (RegexMatchTimeoutException)
-        {
-            isMatch = false;
         }
         catch (ArgumentException)
         {
@@ -1998,7 +2001,7 @@ public static partial class ValidateWithoutCoreType
 
             if (StandardIPAddress.IPAddressParser(input, null, out IPAddress? address) &&
                 address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 &&
-                !Validate.ZoneIdExpression.IsMatch(input))
+                !Validate.HasZoneId(input))
             {
                 if (context.Level == ValidationLevel.Verbose)
                 {

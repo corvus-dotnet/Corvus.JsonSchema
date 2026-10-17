@@ -14,6 +14,10 @@ final class Program {
     final int root;
     final boolean usesDynamicScope;
     final int maxDepth;
+    /** The limit on the time of one match of a pattern, in nanoseconds, or 0 for none. */
+    final long patternMatchLimitNanos;
+    /** How many of the schema's patterns the engine runs: the length of an evaluator's array of matchers. */
+    final int matcherSlots;
     final Map<String, Predicate<String>> formats;
     final boolean assertFormatSet;
     /** For fail-fast evaluation: each node's target after following pure $ref hops and one-branch allOf forwards. */
@@ -45,6 +49,8 @@ final class Program {
         root = c.root;
         usesDynamicScope = c.usesDynamicScope;
         maxDepth = options.maxDepth;
+        patternMatchLimitNanos = options.patternMatchLimitNanos;
+        matcherSlots = c.matcherSlots;
         formats = options.formats;
         assertFormatSet = options.assertFormat != null;
         documents = c.documents;

@@ -10,8 +10,8 @@
     writes Go replaced by a part that writes Pascal. It reads the same source and makes the same choices, so the two
     sets of tables hold the same data.
 
-    The data comes from unicodetables.rs of the regress crate, which the Rust port of the evaluator depends on and
-    which is generated from the Unicode Character Database. The script copies the General_Category values, the
+    The data comes from unicodetables.rs of the regress crate, which that crate generates from the Unicode Character
+    Database. The crate is only where the data is read from: no port of the evaluator depends on it. The script copies the General_Category values, the
     binary properties, the Script values, the Script_Extensions ranges of the scripts whose extensions differ from
     their Script ranges, the simple case folding and the simple uppercase mapping.
 

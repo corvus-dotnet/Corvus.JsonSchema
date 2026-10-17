@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 // The oracle holds what V8 answers for a set of patterns and texts. testdata/gen_oracle.js writes it.
@@ -55,18 +56,6 @@ func bit(hex string, k int) bool {
 	return digit>>(3-uint(k)%4)&1 == 1
 }
 
-// beyondBMP reports whether the text has a character beyond the Basic Multilingual Plane. V8 matches a pattern with
-// no flag by UTF-16 code unit and this package matches by code point, so the oracle is not asked about such a text
-// for a pattern that is valid only with no flag.
-func beyondBMP(s string) bool {
-	for _, r := range s {
-		if r > 0xFFFF {
-			return true
-		}
-	}
-	return false
-}
-
 // v8ModifierBugs lists the patterns for which V8 13.6 answers a case-insensitive modifier group differently from the
 // same pattern with the i flag. ECMA-262 gives the two the same meaning. Only the validity of these patterns is taken
 // from the oracle. TestOracleFlags checks the behaviour of each through the i flag, where V8 agrees with this package.
@@ -100,14 +89,12 @@ func checkVerdict(t *testing.T, p string, validUnicode, validLegacy bool) (re, b
 	return re, backtrack
 }
 
-// checkAnswers compares the answers of both back ends with the oracle's on every text. It returns the number of
-// answers compared and the number of those that are a match.
+// checkAnswers compares the answers of both back ends with the oracle's on every text, the texts with a character
+// beyond the Basic Multilingual Plane among them: a pattern that is valid only with no flag is matched by UTF-16
+// code unit, as V8 matches it. It returns the number of answers compared and the number of those that are a match.
 func checkAnswers(t *testing.T, p string, re, backtrack *Regexp, inputs []string, bits string) (answers, matched int) {
 	t.Helper()
 	for i, s := range inputs {
-		if !re.Unicode() && beyondBMP(s) {
-			continue
-		}
 		want := bit(bits, i)
 		answers++
 		if want {
@@ -118,6 +105,12 @@ func checkAnswers(t *testing.T, p string, re, backtrack *Regexp, inputs []string
 		}
 		if got := backtrack.Match([]byte(s)); got != want {
 			t.Errorf("%q on %q (forced backtrack): got %v, V8 says %v", p, s, got, want)
+		}
+		// With a limit, the regexp package is given a text only when it can answer within the limit. A limit of a
+		// nanosecond gives it none, so this is the path of a match with a limit for a pattern on that package. A
+		// match that reaches its first check is abandoned and says nothing.
+		if got, err := re.MatchLimit([]byte(s), time.Nanosecond); err == nil && got != want {
+			t.Errorf("%q on %q (%v, with a limit): got %v, V8 says %v", p, s, re.Engine(), got, want)
 		}
 	}
 	return answers, matched

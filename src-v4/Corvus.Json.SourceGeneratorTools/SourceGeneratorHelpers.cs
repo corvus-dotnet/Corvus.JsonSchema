@@ -36,6 +36,15 @@ public static class SourceGeneratorHelpers
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
+    private static readonly DiagnosticDescriptor Crv1003PatternTooLarge =
+        new(
+            id: "CRV1003",
+            title: "JSON Schema pattern too large",
+            messageFormat: "{0}",
+            category: "JsonSchemaCodeGenerator",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
+
     /// <summary>
     /// Generate code into a source production context.
     /// </summary>
@@ -120,6 +129,17 @@ public static class SourceGeneratorHelpers
                     languageProvider,
                     typeDeclarationsToGenerate,
                     context.CancellationToken);
+        }
+        catch (Corvus.Text.Json.CodeGeneration.EcmaRegexPatternTooLargeException ex)
+        {
+            // A pattern over a limit of size is not a pattern that is not valid, and has a diagnostic of its own.
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    Crv1003PatternTooLarge,
+                    Location.None,
+                    ex.Message));
+
+            return [];
         }
         catch (Exception ex)
         {

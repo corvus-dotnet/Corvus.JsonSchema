@@ -46,11 +46,24 @@ type
   end;
   TAnnotationSourceArray = array of TAnnotationSource;
 
-  PPattern = ^TPattern;
+  PPattern = Corvus.JsonSchema.Pattern.PPattern;
   TPatternArray = array of TPattern;
 
   { TCompiledSchema is the compiled program: the node graph, its entry node and whether it keeps a dynamic scope. }
+  { A TPatternTooLarge says a schema was not compiled because one of its regular expressions is over a limit of
+    size: the pattern, the keyword that holds it (pattern or patternProperties), the name of the limit and its
+    value. Limit is empty when that is not why. }
+  TPatternTooLarge = record
+    Pattern: UTF8String;
+    Keyword: UTF8String;
+    Limit: UTF8String;
+    Value: Int32;
+  end;
+
   TCompiledSchema = record
+    { Why the schema was not compiled, when the reason is a regular expression over a limit of size. It is set in
+      what CompileDocument and CompileFromURI give back when they return False. }
+    TooLarge: TPatternTooLarge;
     Nodes: TSchemaNodeArray;
     Root: TNodeID;
     UsesDynamicScope: Boolean;
@@ -62,7 +75,7 @@ type
   end;
 
 { CompileDocument compiles a schema document. False, with the reason, when the schema cannot be compiled (an
-  unresolvable reference, an invalid pattern). }
+  unresolvable reference, an invalid pattern, a pattern over a limit of size, which Compiled.TooLarge then says). }
 function CompileDocument(const Schema: TDocument; const Options: TCompileOptions; out Compiled: TCompiledSchema;
   out Error: UTF8String): Boolean;
 { CompileFromURI compiles the schema document at a URI, fetched through the document resolver of the options (or
@@ -163,6 +176,8 @@ type
     PatternIndex: TStringTable;
     { Why the function that has just returned False failed. }
     Error: UTF8String;
+    { Set with Error when the reason is a regular expression over a limit of size. }
+    TooLarge: TPatternTooLarge;
   end;
 
   TValueClass = record
@@ -339,12 +354,16 @@ begin
   Result := True;
 end;
 
-{ CompilerPattern compiles a pattern, or fetches it when the schema has had it before: its index in the compiled
-  schema's Patterns. False when it is not a valid ECMA-262 regular expression. }
-function CompilerPattern(var C: TSchemaCompiler; const Source: UTF8String; out Index: Int32): Boolean;
+{ CompilerPattern compiles a pattern of a keyword, or fetches it when the schema has had it before: its index in
+  the compiled schema's Patterns. False, with the error of the compiler set, when it is not a valid ECMA-262
+  regular expression or is over a limit of size. The two errors are apart: a pattern over a limit was not read to
+  its end, so the message says it is too large to read and nothing of whether it is valid. }
+function CompilerPattern(var C: TSchemaCompiler; const Source, Keyword: UTF8String; out Index: Int32): Boolean;
 var
   At: Int32;
   P: TPattern;
+  Limit: TPatternLimit;
+  Reason: UTF8String;
 begin
   At := StringTableFind(C.PatternIndex, Source);
   if At >= 0 then begin
@@ -353,9 +372,19 @@ begin
     Exit;
   end;
   Index := -1;
-  Result := CompilePattern(Source, P);
-  if not Result then
+  Result := CompilePattern(Source, P, Limit, Reason);
+  if not Result then begin
+    if Limit.Name <> '' then begin
+      C.TooLarge.Pattern := Source;
+      C.TooLarge.Keyword := Keyword;
+      C.TooLarge.Limit := Limit.Name;
+      C.TooLarge.Value := Limit.Value;
+      Fail(C, 'The regular expression ' + ShownPattern(Source) + ' in ' + Keyword
+        + ' is too large to read as an ECMA-262 regular expression: ' + Reason + '.');
+    end else
+      Fail(C, 'Invalid regular expression ''' + Source + ''' in ' + Keyword + '.');
     Exit;
+  end;
   if C.PatternsLen = Length(C.Patterns) then
     SetLength(C.Patterns, C.PatternsLen * 2 + 8);
   Index := C.PatternsLen;
@@ -637,10 +666,8 @@ begin
       SetLength(N.PatternProperties, DocCount(D, V));
       for I := 0 to DocCount(D, V) - 1 do begin
         Source := DocStrCopy(D, K + 2 * I);
-        if not CompilerPattern(C, Source, J) then begin
-          Fail(C, 'Invalid regular expression ''' + Source + ''' in patternProperties.');
+        if not CompilerPattern(C, Source, 'patternProperties', J) then
           Exit;
-        end;
         Node := Child(C, Target, K + 2 * I + 1, '/patternProperties/' + EscapePointerToken(Source));
         N.PatternProperties[I].Pattern := J;
         N.PatternProperties[I].Node := Node;
@@ -748,10 +775,8 @@ begin
     N.MinLength := UIntValue(D, Get('minLength'));
     N.MaxLength := UIntValue(D, Get('maxLength'));
     if StringValue(D, Get('pattern'), Source) then begin
-      if not CompilerPattern(C, Source, J) then begin
-        Fail(C, 'Invalid regular expression ''' + Source + ''' in pattern.');
+      if not CompilerPattern(C, Source, 'pattern', J) then
         Exit;
-      end;
       N.Pattern := J;
     end;
     N.MultipleOf := Num('multipleOf');
@@ -1545,8 +1570,10 @@ begin
     Exit;
   end;
   Result := CompileLoaded(C, Root, Compiled);
-  if not Result then
+  if not Result then begin
     Error := C.Error;
+    Compiled.TooLarge := C.TooLarge;
+  end;
 end;
 
 function CompileFromURI(const Uri: UTF8String; const Options: TCompileOptions; out Compiled: TCompiledSchema;
@@ -1564,8 +1591,10 @@ begin
     Exit;
   end;
   Result := CompileLoaded(C, Root, Compiled);
-  if not Result then
+  if not Result then begin
     Error := C.Error;
+    Compiled.TooLarge := C.TooLarge;
+  end;
 end;
 
 { ValueJson is the value N of D as JSON text. }

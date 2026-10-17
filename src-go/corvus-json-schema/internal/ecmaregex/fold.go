@@ -110,13 +110,16 @@ func foldClasses(unicodeMode bool) *foldTable {
 }
 
 // foldClosure returns the set of every character equivalent to some member of the set.
-func foldClosure(set *charSet, unicodeMode bool) *charSet {
+//
+// It also returns the number of characters with a case variant that the set holds, which is the work it did.
+func foldClosure(set *charSet, unicodeMode bool) (closed *charSet, variants int) {
 	table := foldClasses(unicodeMode)
 	var extra []rune
 	for i := 0; i < len(set.ranges); i += 2 {
 		lo, hi := set.ranges[i], set.ranges[i+1]
 		k := sort.Search(len(table.points), func(k int) bool { return table.points[k] >= lo })
 		for ; k < len(table.points) && table.points[k] <= hi; k++ {
+			variants++
 			for _, member := range table.classes[k] {
 				if !set.contains(member) {
 					extra = append(extra, member, member)
@@ -125,9 +128,9 @@ func foldClosure(set *charSet, unicodeMode bool) *charSet {
 		}
 	}
 	if len(extra) == 0 {
-		return set
+		return set, variants
 	}
-	return newCharSet(append(extra, set.ranges...), false)
+	return newCharSet(append(extra, set.ranges...), false), variants
 }
 
 // With the u flag and case-insensitive matching, \w and \b also count the two characters that fold to an ASCII

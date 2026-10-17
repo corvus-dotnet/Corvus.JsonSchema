@@ -8,9 +8,9 @@
     to the next. ECMA-262 follows the latest Unicode version. So the package carries its own tables, and a pattern
     means the same on every Julia.
 
-    The data comes from unicodetables.rs of the regress crate, which the Rust port of the evaluator depends on and
-    which is generated from the Unicode Character Database. The tables of the Java and Go ports come from the same
-    file, and this script is the Java port's gen-ecma-unicode-data.ps1 with another writer at the end. The script
+    The data comes from unicodetables.rs of the regress crate, which that crate generates from the Unicode Character
+    Database. The crate is only where the data is read from: no port of the evaluator depends on it. The tables of
+    the Java and Go ports come from the same file, and this script is the Java port's gen-ecma-unicode-data.ps1 with another writer at the end. The script
     copies:
 
     - the thirty General_Category values that are not unions of others, and the names of all of them;

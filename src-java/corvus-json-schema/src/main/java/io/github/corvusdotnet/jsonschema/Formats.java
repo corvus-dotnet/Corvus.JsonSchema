@@ -1,7 +1,5 @@
 package io.github.corvusdotnet.jsonschema;
 
-import java.util.regex.Pattern;
-
 /**
  * Format assertions, applied only when {@code format} is asserted (the format-assertion vocabulary or
  * {@link CompileOptions.Builder#assertFormat(Boolean)}). A port of the Rust and TypeScript ports' format checks, which
@@ -144,7 +142,7 @@ final class Formats {
         }
 
         /**
-         * Asserts a string format over a reusable view of the string, with the evaluator's matchers and scratch:
+         * Asserts a string format over a reusable view of the string, with the evaluator's readers and scratch:
          * allocates nothing.
          */
         boolean check(Context c, CharSequence s, boolean legacyHostname) {
@@ -157,7 +155,7 @@ final class Formats {
                 case DATE_TIME:
                     return n > 11 && (s.charAt(10) == 'T' || s.charAt(10) == 't') && date(s, 0, 10) && time(s, 11, n);
                 case DURATION:
-                    return c.matcher(DURATION_RE, 0).reset(s).matches();
+                    return duration(s);
                 case UUID:
                     return uuid(s);
                 case IPV4:
@@ -175,19 +173,19 @@ final class Formats {
                 case REGEX:
                     return c.regex.isValid(s);
                 case URI:
-                    return c.matcher(URI_RE, 1).reset(s).matches();
+                    return uri(s, false, false);
                 case URI_REFERENCE:
-                    return c.matcher(URI_REF_RE, 2).reset(s).matches();
+                    return uri(s, false, true);
                 case IRI:
-                    return c.matcher(IRI_RE, 3).reset(s).matches();
+                    return uri(s, true, false);
                 case IRI_REFERENCE:
-                    return c.matcher(IRI_REF_RE, 4).reset(s).matches();
+                    return uri(s, true, true);
                 case URI_TEMPLATE:
-                    return c.matcher(URI_TEMPLATE_RE, 5).reset(s).matches();
+                    return uriTemplate(s);
                 case JSON_POINTER:
-                    return c.matcher(JSON_POINTER_RE, 6).reset(s).matches();
+                    return jsonPointer(s, 0, n);
                 case RELATIVE_JSON_POINTER:
-                    return c.matcher(RELATIVE_JSON_POINTER_RE, 7).reset(s).matches();
+                    return relativeJsonPointer(s);
                 default:
                     return true;
             }
@@ -273,21 +271,11 @@ final class Formats {
         }
     }
 
-    /** An evaluator's reusable state for format checks: regular expression matchers and scratch. */
+    /** An evaluator's reusable state for format checks: scratch, and the readers that keep buffers. */
     static final class Context {
-        private final java.util.regex.Matcher[] matchers = new java.util.regex.Matcher[10];
         final char[] scratch = new char[72];
         final Idna idna = new Idna();
         final EcmaRegex.Validator regex = new EcmaRegex.Validator();
-
-        java.util.regex.Matcher matcher(Pattern p, int slot) {
-            java.util.regex.Matcher m = matchers[slot];
-            if (m == null) {
-                m = p.matcher("");
-                matchers[slot] = m;
-            }
-            return m;
-        }
     }
 
     // ----------------------------------------------------------------------------------------------------------------
@@ -581,9 +569,7 @@ final class Formats {
         if (at <= 0) {
             return false;
         }
-        java.util.regex.Matcher m = (idn ? c.matcher(IDN_EMAIL_LOCAL_RE, 9) : c.matcher(EMAIL_LOCAL_RE, 8)).reset(s);
-        m.region(0, at);
-        if (!m.matches()) {
+        if (!emailLocalPart(s, at, idn)) {
             return false;
         }
         int d = at + 1;
@@ -605,10 +591,6 @@ final class Formats {
 
     private static final int[] DAYS = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-    private static final String DURATION_TIME = "(?:[0-9]+H(?:[0-9]+M(?:[0-9]+S)?)?|[0-9]+M(?:[0-9]+S)?|[0-9]+S)";
-    static final Pattern DURATION_RE = Pattern.compile("P(?:[0-9]+W|(?:[0-9]+Y(?:[0-9]+M(?:[0-9]+D)?)?|[0-9]+M"
-            + "(?:[0-9]+D)?|[0-9]+D)(?:T" + DURATION_TIME + ")?|T" + DURATION_TIME + ")");
-
     private static boolean isHex(char c) {
         return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
     }
@@ -618,67 +600,513 @@ final class Formats {
     }
 
     // ----------------------------------------------------------------------------------------------------------------
-    // Email
+    // Durations, email local parts, URIs, IRIs, templates and pointers
+    //
+    // Each is read once from left to right, with no regular expression engine: the time is linear in the text and
+    // nothing is kept on the stack for it. java.util.regex matched these by recursion, a level for each character of
+    // a repetition of alternatives, and a string of some thousands of characters overflowed the stack of the thread.
 
-    private static final Pattern EMAIL_LOCAL_RE = Pattern.compile(
-            "(?:[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[^\"\\\\\\r\\n]|\\\\.)*\")");
-    private static final Pattern IDN_EMAIL_LOCAL_RE = Pattern.compile("(?:[\\p{L}\\p{M}\\p{N}!#$%&'*+/=?^_`{|}~-]+"
-            + "(?:\\.[\\p{L}\\p{M}\\p{N}!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[^\"\\\\\\r\\n]|\\\\.)*\")");
-
-    // ----------------------------------------------------------------------------------------------------------------
-    // URIs, IRIs, templates and pointers (RFC 3986 and RFC 3987 grammars)
-
-    private static Pattern uriRegex(boolean iri, boolean reference) {
-        String hex = "[0-9A-Fa-f]";
-        String pct = "%" + hex + "{2}";
-        String sub = "[!$&'()*+,;=]";
-        String unreservedAscii = "[A-Za-z0-9\\-._~]";
-        String ucschar = "[\\x{A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}\\x{10000}-\\x{EFFFD}]";
-        String unreserved = iri ? "(?:" + unreservedAscii + "|" + ucschar + ")" : unreservedAscii;
-        String pchar = "(?:" + unreserved + "|" + pct + "|" + sub + "|[:@])";
-        String query = iri
-                ? "(?:" + pchar + "|[/?]|[\\x{E000}-\\x{F8FF}\\x{F0000}-\\x{FFFFD}\\x{100000}-\\x{10FFFD}])*"
-                : "(?:" + pchar + "|[/?])*";
-        String fragment = "(?:" + pchar + "|[/?])*";
-        String decOctet = "(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])";
-        String ipv4 = decOctet + "(?:\\." + decOctet + "){3}";
-        String h16 = hex + "{1,4}";
-        String ls32 = "(?:" + h16 + ":" + h16 + "|" + ipv4 + ")";
-        String ipv6 = "(?:(?:" + h16 + ":){6}" + ls32
-                + "|::(?:" + h16 + ":){5}" + ls32
-                + "|(?:" + h16 + ")?::(?:" + h16 + ":){4}" + ls32
-                + "|(?:(?:" + h16 + ":){0,1}" + h16 + ")?::(?:" + h16 + ":){3}" + ls32
-                + "|(?:(?:" + h16 + ":){0,2}" + h16 + ")?::(?:" + h16 + ":){2}" + ls32
-                + "|(?:(?:" + h16 + ":){0,3}" + h16 + ")?::" + h16 + ":" + ls32
-                + "|(?:(?:" + h16 + ":){0,4}" + h16 + ")?::" + ls32
-                + "|(?:(?:" + h16 + ":){0,5}" + h16 + ")?::" + h16
-                + "|(?:(?:" + h16 + ":){0,6}" + h16 + ")?::)";
-        String ipLiteral = "\\[(?:" + ipv6 + "|v" + hex + "+\\.(?:" + unreservedAscii + "|" + sub + "|:)+)\\]";
-        String regName = "(?:" + unreserved + "|" + pct + "|" + sub + ")*";
-        String authority = "(?:(?:" + unreserved + "|" + pct + "|" + sub + "|:)*@)?(?:" + ipLiteral + "|" + ipv4 + "|"
-                + regName + ")(?::[0-9]*)?";
-        String segment = pchar + "*";
-        String segmentNz = pchar + "+";
-        String segmentNzNc = "(?:" + unreserved + "|" + pct + "|" + sub + "|@)+";
-        String hierPart = "(?://" + authority + "(?:/" + segment + ")*|/(?:" + segmentNz + "(?:/" + segment + ")*)?|"
-                + segmentNz + "(?:/" + segment + ")*|)";
-        String relativePart = "(?://" + authority + "(?:/" + segment + ")*|/(?:" + segmentNz + "(?:/" + segment
-                + ")*)?|" + segmentNzNc + "(?:/" + segment + ")*|)";
-        String scheme = "[A-Za-z][A-Za-z0-9+\\-.]*";
-        String absolute = scheme + ":" + hierPart + "(?:\\?" + query + ")?(?:#" + fragment + ")?";
-        String relative = relativePart + "(?:\\?" + query + ")?(?:#" + fragment + ")?";
-        return Pattern.compile(reference ? "(?:" + absolute + "|" + relative + ")" : absolute);
+    /**
+     * Reads the components of the date or of the time of a duration from {@code i}: one or more of a run of digits
+     * and a designator, the designators being consecutive ones of {@code a}, {@code b}, {@code c} in that order.
+     * Returns where they end, or -1 when there is none or one is not well formed.
+     */
+    private static int durationComponents(CharSequence s, int i, int n, char a, char b, char c) {
+        int last = -1;
+        while (true) {
+            int d = i;
+            while (d < n && s.charAt(d) >= '0' && s.charAt(d) <= '9') {
+                d++;
+            }
+            if (d == i) {
+                return last < 0 ? -1 : i;
+            }
+            if (d == n) {
+                return -1;
+            }
+            char u = s.charAt(d);
+            int unit = u == a ? 0 : u == b ? 1 : u == c ? 2 : -1;
+            if (unit < 0 || (last >= 0 && unit != last + 1)) {
+                return -1;
+            }
+            last = unit;
+            i = d + 1;
+        }
     }
 
-    static final Pattern URI_RE = uriRegex(false, false);
-    static final Pattern URI_REF_RE = uriRegex(false, true);
-    static final Pattern IRI_RE = uriRegex(true, false);
-    static final Pattern IRI_REF_RE = uriRegex(true, true);
+    /**
+     * An ISO 8601 duration as RFC 3339 Appendix A writes it: {@code P} and a number of weeks, or the date
+     * components, the time components after {@code T}, or both. The components present are consecutive: years,
+     * months and days, and hours, minutes and seconds.
+     */
+    static boolean duration(CharSequence s) {
+        int n = s.length();
+        if (n < 3 || s.charAt(0) != 'P') {
+            return false;
+        }
+        int i = 1;
+        if (s.charAt(1) != 'T') {
+            int d = 1;
+            while (d < n && s.charAt(d) >= '0' && s.charAt(d) <= '9') {
+                d++;
+            }
+            if (d > 1 && d == n - 1 && s.charAt(d) == 'W') {
+                return true;
+            }
+            i = durationComponents(s, 1, n, 'Y', 'M', 'D');
+            if (i < 0) {
+                return false;
+            }
+            if (i == n) {
+                return true;
+            }
+            if (s.charAt(i) != 'T') {
+                return false;
+            }
+        }
+        return durationComponents(s, i + 1, n, 'H', 'M', 'S') == n;
+    }
 
-    private static final String TEMPLATE_VAR =
-            "(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})(?:\\.?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2}))*(?::[1-9][0-9]{0,3}|\\*)?";
-    static final Pattern URI_TEMPLATE_RE = Pattern.compile("(?:[^\\x00-\\x20\"'<>\\\\^`{|}]|\\{[+#./;?&=,!@|]?"
-            + TEMPLATE_VAR + "(?:," + TEMPLATE_VAR + ")*\\})*");
-    static final Pattern JSON_POINTER_RE = Pattern.compile("(?:/(?:[^~/]|~[01])*)*");
-    static final Pattern RELATIVE_JSON_POINTER_RE = Pattern.compile("(?:0|[1-9][0-9]*)(?:#|(?:/(?:[^~/]|~[01])*)*)");
+    /** The characters RFC 5322 allows in an atom, other than letters and digits. */
+    private static final String ATEXT_SPECIALS = "!#$%&'*+/=?^_`{|}~-";
+
+    private static boolean isAtext(int c, boolean idn) {
+        if (c < 0x80) {
+            return isAsciiAlnum((char) c) || ATEXT_SPECIALS.indexOf(c) >= 0;
+        }
+        if (!idn) {
+            return false;
+        }
+        // Letters, marks and numbers (the general categories L, M and N).
+        switch (Character.getType(c)) {
+            case Character.UPPERCASE_LETTER:
+            case Character.LOWERCASE_LETTER:
+            case Character.TITLECASE_LETTER:
+            case Character.MODIFIER_LETTER:
+            case Character.OTHER_LETTER:
+            case Character.NON_SPACING_MARK:
+            case Character.ENCLOSING_MARK:
+            case Character.COMBINING_SPACING_MARK:
+            case Character.DECIMAL_DIGIT_NUMBER:
+            case Character.LETTER_NUMBER:
+            case Character.OTHER_NUMBER:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * The local part of an email address, s[0, to): atoms separated by single dots, or a quoted string, in which a
+     * backslash takes the character after it (which is not a line terminator) and no quote, backslash, carriage
+     * return or line feed stands by itself.
+     */
+    static boolean emailLocalPart(CharSequence s, int to, boolean idn) {
+        if (to == 0) {
+            return false;
+        }
+        if (s.charAt(0) == '"') {
+            int i = 1;
+            while (i < to) {
+                char c = s.charAt(i);
+                if (c == '"') {
+                    return i == to - 1;
+                }
+                if (c == '\\') {
+                    if (i + 1 >= to) {
+                        return false;
+                    }
+                    char e = s.charAt(i + 1);
+                    if (e == '\n' || e == '\r' || e == 0x85 || e == 0x2028 || e == 0x2029) {
+                        return false;
+                    }
+                    i += 2;
+                } else if (c == '\r' || c == '\n') {
+                    return false;
+                } else {
+                    i++;
+                }
+            }
+            return false;
+        }
+        boolean atom = false;
+        for (int i = 0; i < to; ) {
+            int c = Character.codePointAt(s, i);
+            if (c == '.') {
+                if (!atom) {
+                    return false;
+                }
+                atom = false;
+                i++;
+            } else if (isAtext(c, idn)) {
+                atom = true;
+                i += Character.charCount(c);
+            } else {
+                return false;
+            }
+        }
+        return atom;
+    }
+
+    // What an ASCII character may be in a URI (RFC 3986), as bits of URI_CLASS.
+    private static final int UNRESERVED = 1;
+    private static final int SUB_DELIM = 2;
+    private static final int HEX = 4;
+    private static final int SCHEME = 8;
+    private static final int COLON = 16;
+    private static final int AT = 32;
+    private static final int SLASH = 64;
+    private static final int QUESTION = 128;
+    /** A character of a segment of a path, less the percent-encoded ones. */
+    private static final int PCHAR = UNRESERVED | SUB_DELIM | COLON | AT;
+    private static final byte[] URI_CLASS = new byte[128];
+
+    static {
+        for (int c = 0; c < 128; c++) {
+            int bits = 0;
+            boolean alpha = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+            boolean digit = c >= '0' && c <= '9';
+            if (alpha || digit || c == '-' || c == '.' || c == '_' || c == '~') {
+                bits |= UNRESERVED;
+            }
+            if ("!$&'()*+,;=".indexOf(c) >= 0) {
+                bits |= SUB_DELIM;
+            }
+            if (digit || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+                bits |= HEX;
+            }
+            if (alpha || digit || c == '+' || c == '-' || c == '.') {
+                bits |= SCHEME;
+            }
+            bits |= c == ':' ? COLON : c == '@' ? AT : c == '/' ? SLASH : c == '?' ? QUESTION : 0;
+            URI_CLASS[c] = (byte) bits;
+        }
+    }
+
+    private static boolean is(char c, int bits) {
+        return c < 128 && (URI_CLASS[c] & bits) != 0;
+    }
+
+    /** The characters beyond ASCII that RFC 3987 allows where a URI has an unreserved character (ucschar). */
+    private static boolean isUcsChar(int c) {
+        return (c >= 0xa0 && c <= 0xd7ff) || (c >= 0xf900 && c <= 0xfdcf) || (c >= 0xfdf0 && c <= 0xffef)
+                || (c >= 0x10000 && c <= 0xefffd);
+    }
+
+    /** The private-use characters RFC 3987 allows in a query (iprivate). */
+    private static boolean isPrivate(int c) {
+        return (c >= 0xe000 && c <= 0xf8ff) || (c >= 0xf0000 && c <= 0xffffd) || (c >= 0x100000 && c <= 0x10fffd);
+    }
+
+    /**
+     * Reads characters of s[i, to) that are of the ASCII classes {@code bits}, percent-encoded, or for an IRI
+     * beyond ASCII and allowed (in a query, the private-use ones too). Returns where the first other character
+     * stands, or {@code to}; -1 for a percent sign that two hexadecimal digits do not follow.
+     */
+    private static int uriRun(CharSequence s, int i, int to, int bits, boolean iri, boolean query) {
+        while (i < to) {
+            char c = s.charAt(i);
+            if (c < 128) {
+                if ((URI_CLASS[c] & bits) != 0) {
+                    i++;
+                } else if (c == '%') {
+                    if (i + 2 >= to || !is(s.charAt(i + 1), HEX) || !is(s.charAt(i + 2), HEX)) {
+                        return -1;
+                    }
+                    i += 3;
+                } else {
+                    return i;
+                }
+            } else {
+                if (!iri) {
+                    return i;
+                }
+                int cp = Character.codePointAt(s, i);
+                if (!isUcsChar(cp) && !(query && isPrivate(cp))) {
+                    return i;
+                }
+                i += Character.charCount(cp);
+            }
+        }
+        return to;
+    }
+
+    /**
+     * The IPv6address of RFC 3986 over s[from, to): groups of one to four hexadecimal digits, with the last two
+     * written as an IPv4 address or not; eight groups in all, or fewer around one "::".
+     */
+    private static boolean uriIpv6(CharSequence s, int from, int to) {
+        int i = from;
+        int groups = 0;
+        boolean compressed = false;
+        if (i + 1 < to && s.charAt(i) == ':' && s.charAt(i + 1) == ':') {
+            compressed = true;
+            i += 2;
+        }
+        while (i < to) {
+            int j = i;
+            while (j < to && j - i < 4 && is(s.charAt(j), HEX)) {
+                j++;
+            }
+            if (j < to && s.charAt(j) == '.') {
+                if (!ipv4(s, i, to)) {
+                    return false;
+                }
+                groups += 2;
+                i = to;
+                break;
+            }
+            if (j == i) {
+                return false;
+            }
+            groups++;
+            if (j == to) {
+                i = j;
+                break;
+            }
+            if (s.charAt(j) != ':') {
+                return false;
+            }
+            if (j + 1 < to && s.charAt(j + 1) == ':') {
+                if (compressed) {
+                    return false;
+                }
+                compressed = true;
+                i = j + 2;
+            } else {
+                i = j + 1;
+                if (i == to) {
+                    return false;
+                }
+            }
+        }
+        return compressed ? groups <= 7 : groups == 8;
+    }
+
+    /** The IPvFuture of RFC 3986 over s[from, to): v, hexadecimal digits, a dot, and one or more characters. */
+    private static boolean uriIpvFuture(CharSequence s, int from, int to) {
+        if (from >= to || s.charAt(from) != 'v') {
+            return false;
+        }
+        int i = from + 1;
+        while (i < to && is(s.charAt(i), HEX)) {
+            i++;
+        }
+        if (i == from + 1 || i >= to || s.charAt(i) != '.' || i + 1 == to) {
+            return false;
+        }
+        for (i++; i < to; i++) {
+            if (!is(s.charAt(i), UNRESERVED | SUB_DELIM | COLON)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The authority of a URI over s[from, to), which holds no slash, question mark or number sign: user
+     * information and an at sign or neither, a host (an IP literal in brackets, or a registered name, which an IPv4
+     * address is one of), and a colon and a port or neither.
+     */
+    private static boolean uriAuthority(CharSequence s, int from, int to, boolean iri) {
+        int host = from;
+        int i = uriRun(s, from, to, UNRESERVED | SUB_DELIM | COLON, iri, false);
+        if (i < 0) {
+            return false;
+        }
+        if (i < to && s.charAt(i) == '@') {
+            host = i + 1;
+        }
+        if (host < to && s.charAt(host) == '[') {
+            int close = host + 1;
+            while (close < to && s.charAt(close) != ']') {
+                close++;
+            }
+            if (close == to || !(uriIpv6(s, host + 1, close) || uriIpvFuture(s, host + 1, close))) {
+                return false;
+            }
+            i = close + 1;
+        } else {
+            i = uriRun(s, host, to, UNRESERVED | SUB_DELIM, iri, false);
+            if (i < 0) {
+                return false;
+            }
+        }
+        if (i < to && s.charAt(i) == ':') {
+            for (i++; i < to && s.charAt(i) >= '0' && s.charAt(i) <= '9'; i++) {
+            }
+        }
+        return i == to;
+    }
+
+    /**
+     * What follows the scheme of a URI, or a relative reference, over s[from, n): an authority after two slashes
+     * or none, a path, a query after a question mark or none, and a fragment after a number sign or none. The
+     * first segment of the path of a relative reference with no authority holds no colon.
+     */
+    private static boolean uriAfterScheme(CharSequence s, int from, int n, boolean iri, boolean relative) {
+        int i = from;
+        if (i + 1 < n && s.charAt(i) == '/' && s.charAt(i + 1) == '/') {
+            int end = i + 2;
+            while (end < n && s.charAt(end) != '/' && s.charAt(end) != '?' && s.charAt(end) != '#') {
+                end++;
+            }
+            if (!uriAuthority(s, i + 2, end, iri)) {
+                return false;
+            }
+            i = end;
+        } else if (relative) {
+            for (int k = i; k < n; k++) {
+                char c = s.charAt(k);
+                if (c == '/' || c == '?' || c == '#') {
+                    break;
+                }
+                if (c == ':') {
+                    return false;
+                }
+            }
+        }
+        i = uriRun(s, i, n, PCHAR | SLASH, iri, false);
+        if (i >= 0 && i < n && s.charAt(i) == '?') {
+            i = uriRun(s, i + 1, n, PCHAR | SLASH | QUESTION, iri, true);
+        }
+        if (i >= 0 && i < n && s.charAt(i) == '#') {
+            i = uriRun(s, i + 1, n, PCHAR | SLASH | QUESTION, iri, false);
+        }
+        return i == n;
+    }
+
+    /**
+     * A URI (RFC 3986) or an IRI (RFC 3987): a scheme, a colon and what follows; for a reference, that or a
+     * relative reference.
+     */
+    static boolean uri(CharSequence s, boolean iri, boolean reference) {
+        int n = s.length();
+        int colon = 0;
+        while (colon < n && is(s.charAt(colon), SCHEME)) {
+            colon++;
+        }
+        if (colon > 0 && colon < n && s.charAt(colon) == ':' && isAsciiAlpha(s.charAt(0))
+                && uriAfterScheme(s, colon + 1, n, iri, false)) {
+            return true;
+        }
+        return reference && uriAfterScheme(s, 0, n, iri, true);
+    }
+
+    private static boolean isAsciiAlpha(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    }
+
+    /**
+     * Reads a variable of a URI template expression (RFC 6570) from {@code i}: letters, digits, underscores and
+     * percent-encoded characters with single dots between them, then a colon and a length of one to four digits
+     * that does not start with zero, an asterisk, or neither. Returns where it ends, or -1.
+     */
+    private static int templateVariable(CharSequence s, int i, int n) {
+        boolean character = false;
+        while (i < n) {
+            char c = s.charAt(i);
+            if (isAsciiAlnum(c) || c == '_') {
+                i++;
+            } else if (c == '%') {
+                if (i + 2 >= n || !is(s.charAt(i + 1), HEX) || !is(s.charAt(i + 2), HEX)) {
+                    return -1;
+                }
+                i += 3;
+            } else if (c == '.' && character) {
+                character = false;
+                i++;
+                continue;
+            } else {
+                break;
+            }
+            character = true;
+        }
+        if (!character) {
+            return -1;
+        }
+        if (i < n && s.charAt(i) == '*') {
+            return i + 1;
+        }
+        if (i < n && s.charAt(i) == ':') {
+            int d = i + 1;
+            if (d >= n || s.charAt(d) < '1' || s.charAt(d) > '9') {
+                return -1;
+            }
+            for (d++; d < n && d < i + 5 && s.charAt(d) >= '0' && s.charAt(d) <= '9'; d++) {
+            }
+            return d;
+        }
+        return i;
+    }
+
+    /** A URI template (RFC 6570): literal characters, and expressions in braces. */
+    static boolean uriTemplate(CharSequence s) {
+        int n = s.length();
+        int i = 0;
+        while (i < n) {
+            char c = s.charAt(i++);
+            if (c == '{') {
+                if (i < n && "+#./;?&=,!@|".indexOf(s.charAt(i)) >= 0) {
+                    i++;
+                }
+                while (true) {
+                    i = templateVariable(s, i, n);
+                    if (i < 0 || i >= n) {
+                        return false;
+                    }
+                    char e = s.charAt(i++);
+                    if (e == '}') {
+                        break;
+                    }
+                    if (e != ',') {
+                        return false;
+                    }
+                }
+            } else if (c <= 0x20 || "\"'<>\\^`|}".indexOf(c) >= 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** A JSON Pointer (RFC 6901) over s[from, to): tokens that each follow a slash, with ~ only as ~0 or ~1. */
+    static boolean jsonPointer(CharSequence s, int from, int to) {
+        if (from == to) {
+            return true;
+        }
+        if (s.charAt(from) != '/') {
+            return false;
+        }
+        for (int i = from + 1; i < to; i++) {
+            if (s.charAt(i) == '~') {
+                if (++i == to || (s.charAt(i) != '0' && s.charAt(i) != '1')) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /** A relative JSON Pointer: a number with no zero before it, then a number sign or a JSON Pointer. */
+    static boolean relativeJsonPointer(CharSequence s) {
+        int n = s.length();
+        if (n == 0) {
+            return false;
+        }
+        int i = 0;
+        char c = s.charAt(0);
+        if (c == '0') {
+            i = 1;
+        } else if (c >= '1' && c <= '9') {
+            for (i = 1; i < n && s.charAt(i) >= '0' && s.charAt(i) <= '9'; i++) {
+            }
+        } else {
+            return false;
+        }
+        if (i < n && s.charAt(i) == '#') {
+            return i + 1 == n;
+        }
+        return jsonPointer(s, i, n);
+    }
 }

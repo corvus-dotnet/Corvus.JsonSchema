@@ -17,8 +17,10 @@ Gem::Specification.new do |spec|
     "bug_tracker_uri" => "https://github.com/corvus-dotnet/Corvus.JsonSchema/issues",
     "rubygems_mfa_required" => "true"
   }
+  # THIRD-PARTY-NOTICES.txt has the notice of the Unicode data that the crate's tables are derived from. It is at the
+  # root of the gem, so the native gems have it too: they hold the compiled crate, and nothing under ext/.
   spec.files = Dir["lib/**/*.rb", "Cargo.{toml,lock}", "ext/**/*.{rs,toml,rb}", "ext/**/vendor/**/*", "README.md", "LICENSE",
-                   "VERSIONHISTORY.md"]
+                   "THIRD-PARTY-NOTICES.txt", "VERSIONHISTORY.md"]
   spec.require_paths = ["lib"]
   spec.extensions = ["ext/corvus_json_schema/extconf.rb"]
   spec.add_dependency "rb_sys", "~> 0.9.130"

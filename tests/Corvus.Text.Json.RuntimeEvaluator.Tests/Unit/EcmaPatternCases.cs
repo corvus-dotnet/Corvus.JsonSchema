@@ -1,0 +1,779 @@
+// <copyright file="EcmaPatternCases.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+namespace Corvus.Text.Json.Tests.EcmaPatterns;
+
+/// <summary>
+/// ECMA-262 patterns with the texts each matches and the texts it does not. The answers are those of V8 13.6 (Node
+/// 24.11.0), <c>new RegExp(pattern, "u").test(text)</c> when the pattern is valid with the <c>u</c> flag and
+/// <c>new RegExp(pattern).test(text)</c> when it is valid only without it, as recorded in the ECMA-262 regular
+/// expression test data (https://github.com/corvus-dotnet/ecma262-regex-test-data). The patterns of
+/// <see cref="EngineFaults"/> and <see cref="CaseInsensitiveBackreferences"/> are not in that data. The first were
+/// found by comparing random patterns with the same V8, and the second were written for the pairs of characters
+/// on which .NET and ECMA-262 differ, with the <c>i</c> of each given to V8 as a flag. So were the first patterns
+/// of <see cref="CaseInsensitiveBackreferencesToTheirOwnGroup"/>, and all but the last two of
+/// <see cref="BackreferencesToGroupsThatAreNotSet"/> and all but the last two of
+/// <see cref="RepeatedBackreferences"/> were written for those tables, and so were all of
+/// <see cref="GroupsThatCaptureTheEmptyString"/> and of <see cref="TheSameTermTwice"/>. Every pattern here was answered
+/// wrongly, refused, or not answered at all before the change its table is named for, or pins what that change
+/// must not alter.
+/// </summary>
+internal static class EcmaPatternCases
+{
+    /// <summary>
+    /// Patterns the translator got wrong while it rewrote the text of a pattern piece by piece: a modifier group, the
+    /// empty classes <c>[]</c> and <c>[^]</c>, a class escape or a property next to other members, a character
+    /// beyond the Basic Multilingual Plane, case-insensitive matching, and a pattern that is valid only without the
+    /// <c>u</c> flag.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] WrittenFromTheTree =
+    [
+        ("(?:\\1){3,5}a$", [], ["-xa", "-x", "axx"]),
+        ("(?:x(?<![ax]\\B||[^a]?)|\\1){0,}x$", ["xxx", "xax", "--x"], ["a-", "-aa", "axa"]),
+        ("^(?:(?:(?=x)||\\1)*\\1){2}", [], ["axx", "-a-", "xax"]),
+        ("^(?:(?:\\B){3}?\\1|)*x", ["xaa-a", "xa", "xxxa"], ["", "ax-", "aa-"]),
+        ("^(?:(?<=a)|(?:(?<!^|\\1[^a])a|){1}){0}?a$", ["a"], ["aa", "a-", "-x"]),
+        ("^(?:\\1[ax]??|\\B){1,}?$", [""], ["x-", "-aa", "xa"]),
+        ("^(?:\\1|(?=aa|[ax]?)){1}x", ["x-a", "x-", "x"], ["-ax-", "-xa", "aaaa"]),
+        ("^(?:||\\1){4,}$", [""], ["xax", "xaa", "-x-"]),
+        ("(?i:^[^]$)", ["\uD83D\uDE00", "\uD83D\uDE0E", "\uD801\uDC00", "\uD801\uDC28", "\u00B5", "\u0131", "A"], ["b\u000Da", "\u03BC\u000D\u212A\u000D", "Au", "[aa\u3006a#SNo"]),
+        ("(?ims:$[^]^)", ["\u000A", "\u2028", "\u000D", "\u2029", "a\u000Ab", "\u00B5\u000D\u01F0\u0130-", "w\u1F80\u2029\u01C6", "\u3006a,}a\u000Abxms\uFB06k"], ["(5\u03C2\u0130", "\u212AES", "%"]),
+        ("(?ims:\\u{1F600}|\\u{10400})", ["\uD801\uDC28", "!\uD83D\uDE0E\u01C4\u0009L\uD801\uDC28", "\u0130/\u00C9\uD801\uDC285\u03C3", "\uD801\uDC28%{{", "I.%\uD801\uDC28\u1FD3a,", "\uD83D\uDE00.8", "bar\uD801\uDC28_\u01C42$Zc", "\u0008\u0009}/\u00E9ES\uD801\uDC00_"], ["y\u03A3-", "2015KCo\u03C3", "ee\u0000\u1FD3\u000A)\u03BC\u2029"]),
+        ("(?ims:^[^]$)", ["\uD83D\uDE00", "\uD83D\uDE0E", "\uD801\uDC00", "\uD801\uDC28", "b\u000Da", "\u1E9E\u000Abard", "\u000A", "\u00C9"], [" \u03BC", "Co\uD801\uDC00", "\\ab,"]),
+        ("(?ims:^\\S+$)", ["b\u000Da", "}\u20292015a-ab,\u00FFd", "=\u2029\u0390i\uD801\uDC00Nos(", "w\u1F80\u2029\u01C6", "\u2028\\)", "I.%\uD801\uDC28\u1FD3a,", "c", "\u1FD3\u00DFKK\uD801\uDC00>.\u0390"], [" \u03BC", "\u00A0", ""]),
+        ("(?ims:^\\ufb05$)", ["\uFB06", "\uFB05"], ["\u03C3", "a\u000Abb\u000DaxKK\u01C4_Z", "\u03A3"]),
+        ("(?m:$[^]^)", ["\u000A", "\u2028", "\u000D", "\u2029", "a\u000Ab", "\u03C2\u0130k\u3006aab\u000Da", "ES2015\u000Ab\u01C5", "^15\u01C62b\u000Da="], ["\uD801\uDC28\uD83D\uDE0E", "p", "&"]),
+        ("(?m:\\Bs\\&?)", ["NomsS[", "ms\u03BC\u1FD3\u03C3\u0008neS22", "\uD83D\uDE0Ebar\u017F2\uFB00Les\u01C6"], ["e\u1F80sIy\u000Aaa", "\u1F80sL", "\u03B1S|\u00B5b", "c", "\u01C5a\u000Ab-", "5"]),
+        ("(?m:^(.)\\1$)", ["a\u000Abb\u000DaxKK\u01C4_Z", "aa", "KK", "22"], ["ES\u017F \u0008yKKL", "\u03BC0ab,", "%"]),
+        ("(?m:^[^\\W]$)", ["b\u000Da", "a\u000Abb\u000DaxKK\u01C4_Z", "*b\u000Da\u000D\u1FD3\uD83D\uDE0015", "5\u000D\u00E9x", "p", "1", "s"], ["\u017F", "es", "-Aubar\u1E9E\uFB00\u01C5", ">"]),
+        ("(?m:^[^]$)", ["\uD83D\uDE00", "\uD83D\uDE0E", "\uD801\uDC00", "\uD801\uDC28", "b\u000Da", "\u1FD3", "1\u20281\u01F0)\u1F80", "$"], ["\u01F0\u03B1\u000A", "\u0000^\u1F80", "\uFB05\u0008b"]),
+        ("(?m:^\\u1e9e$)", ["\u1E9E\u000Abard", "\u212A\u0000,es\u2028\u1E9E", "\u1E9E"], ["ms", "LES,\u1F80b)Co\\", "\u00DFKKZab,\u03A3\u2029\u0663\uD801\uDC00"]),
+        ("(?m:^\\w$)", ["b\u000Da", "a\u000Abb\u000DaxKK\u01C4_Z", "*b\u000Da\u000D\u1FD3\uD83D\uDE0015", "5\u000D\u00E9x", "\u03C2\u0130k\u3006aab\u000Da", "9", "1\u20281\u01F0)\u1F80"], ["\u017F", "\u01C6\u00B5\u00DF\uD801\uDC00ies", "\u1E9EX+Co", "\u212A"]),
+        ("(?m:^a\\&?)", ["b\u000Da", "\u2028,_x-b\u000Da\u1E9E\u01F0\u212A", "^15\u01C62b\u000Da=", "*b\u000Da\u000D\u1FD3\uD83D\uDE0015", "\u03C2\u0130k\u3006aab\u000Da", "a\u000Ab", "ato8", "\u1F80\u00FF\u000Aaa\u1F88"], ["\u1FD3", "\u0390", "\uFB06"]),
+        ("(?s:\\Bs\\&?)", ["ms", "psK\u017F\uFB06L(", "ces\u1E9E9x-1:5"], ["e\u1F80sIy\u000Aaa", "\u1F80sL", "\u03B1S|\u00B5b", "No .15\u0390", "\u1FD3\u00DFKK\uD801\uDC00>.\u0390", "\u0390\u00B5"]),
+        ("(?s:^.+$)", ["b\u000Da", "}\u20292015a-ab,\u00FFd", "=\u2029\u0390i\uD801\uDC00Nos(", "w\u1F80\u2029\u01C6", "\u2028\\)", "\u0663", "\u03C2\u0130k\u3006aab\u000Da", "2"], [""]),
+        ("(?s:^[\\W]$)", ["\uD83D\uDE00", "\uD83D\uDE0E", "\u017F", "\uD801\uDC00", "\uD801\uDC28", ".", "-", "\u00DF"], ["20\uFB052015\u0663\u00002]", "\u0130/\u00C9\uD801\uDC285\u03C3", "u"]),
+        ("(?s:^[^]$)", ["\uD83D\uDE00", "\uD83D\uDE0E", "\uD801\uDC00", "\uD801\uDC28", "\u1E9E", "Z", "\u212A"], ["b\u000Da", "\u3006a,}a\u000Abxms\uFB06k", "20", "200Co"]),
+        ("(?s:^[^a-z]$)", ["\uD83D\uDE00", "\uD83D\uDE0E", "\u017F", "\uD801\uDC00", "\uD801\uDC28", "\u03B1", "^", "\u0390"], ["\u0000^\u1F80", ">txt", "\u0008\u0009}/\u00E9ES\uD801\uDC00_"]),
+        ("(?s:^\\p{L}$)", ["\uD801\uDC00", "\uD801\uDC28", "s", "\u01F0", "\u03A9"], ["b\u000Da", "w\u1F80\u2029\u01C6", "\u00B5\u000D\u01F0\u0130-", "ms", "\u01F0\u0130", "\u01C5Z15"]),
+        ("L>-?.\\p", [], ["_", "a\u000Ab", "-"]),
+        ("\\c?xL", [], ["d1", "\u00A0", "a"]),
+        ("\\p\\bdb", [], ["ms", "1", "a\\b"]),
+        ("\\u\\p?", ["pu", "Au"], ["re", "Z", "1"]),
+        ("cx\\c0b$c", [], ["ab", "x1", "15"]),
+        ("|\\L]k^!", ["b1", "_", "<a>"], []),
+        ("(?<\\ud835\\udcd1>a)", ["\u1E9E\u000Abard", "#ab,b\u000Da", "Auaa,\u03C3"], ["w+1\u03A9^\uFB05#", "-", "*x"]),
+        ("(?<\\u{1d4d1}>a)", ["\u01C4bar/ES", "bar", "*b\u000Da\u000D\u1FD3\uD83D\uDE0015"], ["i", "\u2028\\)", "|"]),
+        ("(?<a>a)\\k<\\u0061>", ["\u1F80\u00FF\u000Aaa\u1F88", "aane\u0000", "\u03C2\u0130k\u3006aab\u000Da"], ["\u03A9yL$]", "\u0663", "\u0000@\u1E9EKKZ"]),
+        ("[\\ud83d\\ude00-\\ud83d\\ude4f]", ["\uD83D\uDE0E]%8+", "\uD801\uDC28\uD83D\uDE0E", "abd\uD83D\uDE0E\u03C3\u03C2\u03C3"], ["psK\u017F\uFB06L(", "k", "No .15\u0390"]),
+        ("[]]", [], ["]", "20\uFB052015\u0663\u00002]", "\u03A9yL$]", "\u00002015\u00B5a]1\u03C3", "c]z\u01C6", "\uFB05A%aa\u1F880No", "\\#\u03BC&]\u03A3&", "\u01F0?\u00A0to,+("]),
+        ("[^]]", ["c]z\u01C6", "\u03A9yL$]", "\u00002015\u00B5a]1\u03C3"], ["a", "b", "c", "d", "z", "!8", ",", "Co\uD801\uDC00"]),
+        ("\\377", ["ES\u03B1\u03A3Z&20\u00FF\u0009", "\uFB06\u00FFaa", "\u1F80\u00FF\u000Aaa\u1F88"], ["No .15\u0390", "\u00C9", "2015KCo\u03C3"]),
+        ("\\777", [], ["2015", "x\u03C3\u00A0\u1FD3\u2028\u000D", "\u03B1S|\u00B5b"]),
+        ("\\8", ["8", "ato8", "\uD83D\uDE00.8"], ["=", "d", "Z"]),
+        ("\\9", ["Nos\u03A3uab9", "9a2a\u03BC\u03A9", "\u01C49"], ["c]z\u01C6", "\\#\u03BC&]\u03A3&", "Kab,foob\u03A9"]),
+        ("\\h", [], ["\u03A9*", "[", "w"]),
+        ("\\i", ["i\u01C4\u3006\u0000", "=\u2029\u0390i\uD801\uDC00Nos(", "\u01C6\u00B5\u00DF\uD801\uDC00ies"], ["re", "*b\u000Da\u000D\u1FD3\uD83D\uDE0015", "p"]),
+        ("\\p{Bidi_M}", ["\u03A9yL$]", "c]z\u01C6", "\\#\u03BC&]\u03A3&"], ["\u00B5", "\u3006", "x"]),
+        ("\\p{Lu}{2}", ["=\u2029\u0390i\uD801\uDC00Nos(", "2015KCo\u03C3", "$.-S\u01C4\u0009", "\u0000@\u1E9EKKZ"], ["\u00002015\u00B5a]1\u03C3", "\u03A9", "0\uFB00)"]),
+        ("\\p{Nope}", [], ["ne/k2015\u0000", "Kab,foob\u03A9", "Co\uD801\uDC00"]),
+        ("\\p{sc=Grek}", ["\u1F80", "\u1F88", "\u1FD3", "e\u1F80sIy\u000Aaa", "w\u1F80\u2029\u01C6", "\u1F80\u00FF\u000Aaa\u1F88", "\u03A3", "ms\u03BC\u1FD3\u03C3\u0008neS22"], ["re", "%)", "\u212A1Co2to^X"]),
+        ("\\p{sc=L}", [], ["-Aubar\u1E9E\uFB00\u01C5", "\u03BC", "\u00DF\u00A0Co\u00B5K&"]),
+        ("\\p{}", [], ["ces\u1E9E9x-1:5", "y[KKK_", ",a-5\u00DF>@\u03A9"]),
+        ("\\u004", [], ["}", "\uFB00", "pES&"]),
+        ("\\ude00", [], ["\uD83D\uDE00", "\uD83D\uDE00\uFB06 >", "\uD83D\uDE00,", "*b\u000Da\u000D\u1FD3\uD83D\uDE0015", "\uD83D\uDE00.8", "\uD801\uDC28", "\u00DFKKZab,\u03A3\u2029\u0663\uD801\uDC00", "\u0009"]),
+        ("\\x", ["x-", ">txt", "xxi\u0000K|"], ["\u03BC\u000D\u212A\u000D", "]", "\u0663"]),
+        ("\\x4", [], ["&sb\u2028\u0390rexxy", "\u03A3", "z"]),
+        ("^(?:(?:a|b)(?=.))*.$", ["\uD83D\uDE00", "\uD83D\uDE0E", "\uD801\uDC00", "\uD801\uDC28", "\u3006", "%", "u"], ["ES\u017F \u0008yKKL", "i\u01C4\u3006\u0000", "to"]),
+        ("^(?:[ab]{2}|.){1,3}?$", ["\uD83D\uDE00.8", "Co\uD801\uDC00", "\uD801\uDC28\uD83D\uDE0E", "_", "5", "-"], ["-Aubar\u1E9E\uFB00\u01C5", "ee\u0000\u1FD3\u000A)\u03BC\u2029", "=\u2029\u0390i\uD801\uDC00Nos("]),
+        ("^(?i:[^\\W])$", ["\u017F", "s", "w", "d"], ["Au", "ces\u1E9E9x-1:5", "aa"]),
+        ("^(?i:[^])$", ["\uD83D\uDE00", "\uD83D\uDE0E", "\uD801\uDC00", "\uD801\uDC28", "|", "\u0663", "\u00E9"], ["\u017Fa\u000AbNobaray", "\u0000^\u1F80", "es"]),
+        ("^(?i:\\W)$", ["\uD83D\uDE00", "\uD83D\uDE0E", "\uD801\uDC00", "\uD801\uDC28", "\u03B1", "{", "\uFB06"], ["\u017F", "y", "\u0130/\u00C9\uD801\uDC285\u03C3", "\u03BC\u000D\u212A\u000D"]),
+        ("^(?i:\\p{Ll})+$", ["\uD801\uDC00", "\uD801\uDC28", "\u01C6\u00B5\u00DF\uD801\uDC00ies", "Co\uD801\uDC00", "a", "I", "p"], ["\u0130", "[", "x-", "\u01C4bar/ES"]),
+        ("^(?i:\\p{Lu})+$", ["\uD801\uDC00", "\uD801\uDC28", "re", "L", "toes"], ["\u0131", "\u1F80", "\u1F88", "\u212A\u0000,es\u2028\u1E9E", "(", "\u20298\u000A@"]),
+        ("^(?i:\\w)$", ["\u017F", "w", "b", "0"], ["\u0000", "uyaa\\foo{", "es"]),
+        ("^(?i:\u00B5)\\&?$", ["\u03BC", "\u00B5"], ["\u01F0\u0130", "bar", "#ab,b\u000Da"]),
+        ("^(?i:\u03C2)\\&?$", ["\u03C3", "\u03A3", "\u03C2"], ["!8", "\u0000@\u1E9EKKZ", "aefooA\u0663\u03C3"]),
+        ("^(?s:.)$", ["\u000A", "\uD83D\uDE00", "\uD83D\uDE0E", "\u2028", "\u000D", ":", "\u212A", "\u03BC"], ["22", "?ab,a,Zmsy1", "pES&"]),
+        ("^[\\ud83d\\ude00]$", ["\uD83D\uDE00"], ["No .15\u0390", "L<", "a"]),
+        ("^[^\\%]{1,3}$", ["\u01C5", "\u03B1", "to"], ["\uD83D\uDE00.8", "Co\uD801\uDC00", "\uD801\uDC28\uD83D\uDE0E", "aefooA\u0663\u03C3", "\u01F0?\u00A0to,+(", "%)"]),
+        ("^[^\\p{L}]+$", ["+\u0008!<%", "$", "\uD83D\uDE00"], ["\uD801\uDC00", "\uD801\uDC28", "\uD801\uDC28%{{", "\uD801\uDC28\uD83D\uDE0E", "y\u03A3-", "\uD83D\uDE0Ebar\u017F2\uFB00Les\u01C6", "ab,"]),
+        ("^[^]$", ["\uD83D\uDE00", "\uD83D\uDE0E", "\uD801\uDC00", "\uD801\uDC28", "\u00E9", "s", "@"], ["\u0000^\u1F80", "5\u000D\u00E9x", "}\u03A32\u0008\u2028"]),
+        ("^\\P{L}+$", ["<", "!", ":"], ["\uD801\uDC00", "\uD801\uDC28", "\uD801\uDC28%{{", "\uD801\uDC28\uD83D\uDE0E", "\u01C5(\u03C3\u1F80\u03A3@", "e\u1F80sIy\u000Aaa", "I.%\uD801\uDC28\u1FD3a,"]),
+        ("^\\p{Lowercase}+$", ["\uD801\uDC28", "\u00E9", "\uFB06", "z"], ["*x", "\u000A", "?ab,a,Zmsy1"]),
+        ("a{0,2147483648}", ["\u00A0", "\u0130\u1F80L=#", "0\uFB00)"], []),
+        ("(?m:$)(?=\\n)", ["\u000A", "\u000A\u000A", "a\u000A", "\u000Aa", "abc\u000A", "\u000D\u000Aa", "abc\u000A\u000D", "abc\u000Aabc"], ["abc\u2029\u2029", "\u2028abc", "\u2028a"]),
+        ("(?m:^)(?m:$)\\D(?m:^)$", ["\u000A", "\u000A\u000A", "abc\u000A\u000A", "abd\u000A\u000A", "\u000D", "\u2029\u000A", "abd\u000D\u000D", "\u000D\u000Aabd\u000D\u000A"], ["\u2029abc", "\u000D\u000Aa", "abc\u00A0"]),
+        ("(?m:^)[^a]{1,3}[^]$$", ["abc\u000D\u000A\u000A", "\u000D\u000D", "\u2028a", "\u2029a"], ["abcabc", "a \u2028", "abc\u2028"]),
+        ("(?m:^)\\s+$", ["abc\u000D\u000D", "abd\u000D\u000D", "a\u000D\u000A", "abc\u000D\u000A", "\u000D\u000Aabc\u000D\u000A", "\u2028\u2028", "abc\u000A\u000A", "\u2028"], ["a\u000A", "\u000D\u000Aa", "abd\u2029"]),
+        ("(?s:.)\u000A[^\\n]$", ["\u000D\u000Aa", "\u2028\u000A\u000A\u2028", "  \u000A ", "a\u000Ab\u000Ac", "\u000Aabd\u000Aa"], ["a", "abc\u000A", "abd\u000A"]),
+        ("[^][^a]", ["abc\u000D\u000Aabc\u000D\u000A", "abd\u000A\u000A", "abc\u000A\u000A"], [" ", "\u0009", "\u0085", "\u000A", "\u000Aa", "", "\u2029", "\u000D"]),
+        ("\\cM[^a]*a(?s:.*)$", ["\u000Dabc\u000D", "\u000Dabd\u000D", "\u000D\u000Aabc\u000D\u000A", "\u000D\u000Aabd\u000D\u000A", "abc\u000D\u000Aabc\u000D\u000A", "\u000Dabc", "\u000D\u000Aabc", "abc\u000D\u000Aabc"], ["\u000Aa", "a", "a\u000Ab\u000Ac"]),
+        ("\\r\\n(?s:.*)(?:.|\\n)$", ["\u000D\u000A\u000D\u000A", "abc\u000D\u000A\u000D\u000A", "\u000D\u000Aabc\u000D\u000A", "abd\u000D\u000A\u000D\u000A", "\u000D\u000Aabd\u000D\u000A", "abc\u000D\u000A\u000A", "\u000D\u000Aabc", "abd\u000D\u000Aabd"], ["abd\u2028abd", "\u2028abc", "\u000A\u000D"]),
+        ("^(?<!\\n)\\r\\n(?s:.)", ["\u000D\u000A\u000D\u000A", "\u000D\u000Aabd", "\u000D\u000Aabc", "\u000D\u000Aabc\u000D\u000A"], ["abc\u000A\u000A", "\u2029\u2029", "\u000A"]),
+        ("^(?=\\u2028)(?s:.)(?!$).{1,3}$", ["\u2028a", "\u2028abc", "\u2028abd"], ["abc\u2028\u2028", "abd\u000Aabd\u2028", "\u000Aabc\u000A"]),
+        ("^(?s:.).*.{3}$", ["\u000Aabc", "\u000Aabd", "\u000Dabc", "\u000Dabd", "\u2028abc", "\u2029abd", "abc\u0009", "abc\u000B"], [" \u000A", "abc\u000D", " "]),
+        ("^(?s:.*)(?s:.)(?<!\\n)[^a]{1,3}$", ["\u000Aabc", "\u000Aabc\u000A", "abc\u000Aabc", "\u000Aabd", "\u000Aabd\u000A", "abd\u2029abd", "\u000D\u000A", "a\u000A"], ["\u0085", "", "\u000Da"]),
+        ("^[^\\n](?m:$)\\x0d", ["\u000D\u000D", "a\u000D", "a\u000D\u000A"], ["abc\u2029\u2029", "abc", "abd"]),
+        ("^[^\\n][^](?m:^)", ["\u000D\u000D", "a\u000D", "a\u000D\u000A", "\u2028\u2028", "a\u2028", "a\u000A", "\u000D\u000A\u000D\u000A", "a\u000Ab\u000Ac"], ["\u000A", "\u2029abd", "abd"]),
+        ("^[^](?s:.)", ["\u000A\u000A", "a\u000A", "\u000D\u000D", "a\u000D", "\u000D\u000A", "\u000Aa", "abc\u000A\u000D", "abc\u000D\u000A\u000A"], ["", "\u000D", "\u2028"]),
+        ("^[^][^a]", ["abc", "abd", "ab", "abcd", "abd\u2029abd", "a\u000D\u000A", "abc\u000A\u000A"], [" ", "\u2029abc", "\u2029", "\u000Dabc\u000D"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a backreference to a group that has not taken part, that comes later, that encloses the
+    /// backreference, or that an earlier iteration of a repetition set.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] Backreferences =
+    [
+        ("((?:(?:a){4,4}(?:(?<!^)|(?:))+?|((?<=)(?<!x)){0})+?(?<=a)|\\2[^a]){1,3}a$", ["--a", "xxxa", "xaa"], ["aax", "x-x", "-ax"]),
+        ("((?:\\1|(?<!^)()){4,}(?:\\b)*?|^|){3,}x$", ["-xx", "axx", "x-x"], ["-a", "xxxa", "xa"]),
+        ("(-(x\\B|\\2(?<=a)){2}?|[ax]\\1){4,5}?", ["aaaa", "xaxa", "aaax", "xxxa"], ["ax", "axa", "x-x"]),
+        ("(?:((?:(?:)\\b){1,3}|.\\1){4,}){3}?a", ["xxa", "xxxa", "xa", "-ax"], ["-x-", "xx-", "x--"]),
+        ("(?:[^a]|(?:(?:()\\1){3,4}?|x(?:a){2,3}){0,}(?:|\\1-){0,}?){3}$", ["xxxa", "ax", "-x"], []),
+        ("(?:\\B|\\1[^a]){2}(?:(?<=(?:(?!$)()){2,3}|.?|.)){4,6}?$", ["x-x", "-x", "-"], ["axa", "x-a", "x"]),
+        ("(?:a|(?:((|)()){3}||(?:|a){3}?){0}|\\3(?<=||))+?$", ["--x", "x-", "xxx"], []),
+        ("(a\\1){3,5}(\\ba|(?:(?<!^)|(?=(a|))|){0}|){4}x$", ["aaax"], ["xxa", "x", ""]),
+        ("^((?!$)(?=x|^)|a(?:|(?!\\1)-){1,}){2,3}?a$", ["aaa", "aaaa", "aa"], ["aa-a", "a-x", "-aa", "xxx"]),
+        ("^((?:(?<=a)|(|)a)*|\\b(x||^){1,2}){2}(|(?!\\3|[ax])[^a]){3,}$", ["xaa", "x", "xx-"], ["xa-", "-ax", "-aa", "--"]),
+        ("^((\\1.|\\b){2}?(|\\ba){3,}|\\1){0,}?((?<!a)[ax]|(?:)){1,1}a$", ["xaxa", "xax-a", "xaa-a", "xaa", "aaaa", "-aa"], ["-x", "a--", "-x-"]),
+        ("^(?:()|(a)){3,}\\2$", ["a", "aaaa", "aaa", ""], ["-a", "a-a", "--"]),
+        ("^(?:()|(a)){3}\\2$", ["a", "aaa", "aaaa", "aa"], ["-a", "axa", "-x"]),
+        ("^(?:(a)?\\1)*?x$", ["aax", "x"], ["aaax", "axa", "xaa-a", "xaa"]),
+        ("^(?:(a)?\\1)*x$", ["x", "aax"], ["aaax", "a-", "-ax-", "-xx"]),
+        ("^(?:(a)?\\1){1,2}x$", ["x", "aax"], ["aaax", "-ax-", "xaa-a", "axa"]),
+        ("^(?:(a)?\\1){2}x$", ["x", "aax"], ["aaax", "", "xax-a", "x-x"]),
+        ("^(?:(a)?\\1){3,4}x$", ["x", "aax"], ["aaax", "aa-", "-a-", "xx-"]),
+        ("^(?:(a)|()){2,3}?\\1\\2$", ["a", "aaaa", "", "aa"], ["--x", "xxxa", "xaxa"]),
+        ("^(?:(a)|()){2,}\\1\\2$", ["a", "aa", "", "aaa"], ["-x-", "-a", "x-x"]),
+        ("^(?:(a)|()){4}\\1\\2$", ["a", "aa", "", "aaaa"], ["-a-", "-a", "aa-"]),
+        ("^(?:(|x.){1,}?|(x\\1|){1,1}?){3,}x", ["xaa-a", "xax", "xxx"], ["aaaa", "-aa", ""]),
+        ("^(?:\\1(a))+$", ["aa", "aaaa", "a", "aaa"], ["aa-", "x-a", "xaxa"]),
+        ("^(?:\\1(a)){0,2}$", ["aa", "", "a"], ["aaa", "-a", "axx", "-"]),
+        ("^(?:\\1(a)){2}$", ["aa"], ["aaa", "xa", "ax", "aaax"]),
+        ("^(?:\\1(a)){2}?$", ["aa"], ["aaa", "xax", "-a-", "-xa"]),
+        ("^(?:\\1(a)){3,4}$", ["aaa", "aaaa"], ["-a-", "x-", "aa-a"]),
+        ("^(?:\\1(a)){4}$", ["aaaa"], ["a-a", "a", "x-x"]),
+        ("^(?:\\1|([^a]|(?=ax*)){1,}?(?:a){1,}){3,}(|){4,}$", ["aa-a", "-a", "aa"], ["xax", "-a-", "a-a-", "aaax", "axx", "aa-"]),
+        ("^(?:a|((?<!a)|\\1-??|(?!$))+?){3,4}", ["-xa", "-ax-", "a-a"], []),
+        ("^(?:|\\1(?:x[^a]|a|((?<=x)){0,2}?)+?)*($-??|-x){2,4}x", [], ["aa-a", "xx-", "-aa"]),
+        ("^([^a](?!$)|\\1\\B){1,}(?:x(?<!^)|)+$", ["-xx", "", "xxx"], ["--", "x--", "---", "axx", "-xa", "a--"]),
+        ("^(\\1|((?:a.)*?){4}?(?:\\1x|()(?!$)){1,1}){2,}?$", ["aax", "x", "a-x"], ["aaaa", "a-a-", "xxxa", "-", "axa"]),
+        ("^(a|(x(?!$)|\\2){4,6}){2,2}(?:){3,}?$", ["a", "xxa", "aa"], ["xx", "axx", "xxx", "--", "-x-", "a-"]),
+        ("^(x\\1)*$", ["xx", "", "xxx", "x"], ["---", "x--", "ax"]),
+        ("^(x\\1){1,3}x$", ["xxx", "xx"], ["x--", "-x", "ax"]),
+        ("^(x\\1){3,}?a$", ["xxxa"], ["aaaa", "x--", "aa"]),
+        ("^(?:(?=(a)))?\\1b", ["b", "b\u000Da", "bar\uD801\uDC28_\u01C42$Zc"], ["ab,", "ab", "abd\uD83D\uDE0E\u03C3\u03C2\u03C3", "ab,\u1F80", "ab,\u00FFA%", "\uFB05\u0008b", "aa", "\u01C5a\u000Ab-"]),
+        ("^(?:(a)|b)*\\1$", ["ab", "", "b", "aa"], ["b\u000Da", "\u2028,_x-b\u000Da\u1E9E\u01F0\u212A", "\\"]),
+        ("^(?:(a)|b){2}\\1$", ["ab"], ["\u000D,\u2028\u1F88", "\u00002015\u00B5a]1\u03C3", "&"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a repetition whose body can match the empty string, and with an empty alternative in a
+    /// repetition, which .NET runs differently from ECMA-262 or does not run to an end.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] EmptyIterations =
+    [
+        ("($|(|(\\b){0,2}){0,}?x){2,}?x", ["xxxa", "xxx"], ["xx", "axx", "xxa", "xx-", "-xx", "-ax", "x-x", "-aa"]),
+        ("(($(?:)|[^a]??|(a|))+?){2,}x$", ["xx", "-ax", "--x"], ["xaa", "a-a", "xax-a"]),
+        ("((?:(?<!\\1(|a))(?!)|x|){1,}?|){0,}?a", ["-ax", "--a", "aa"], ["x-x", "--x", ""]),
+        ("((?:(?<!a)|[^a]*)+?\\1|(|)\\B){0,}a", ["aa", "ax", "a--"], ["xx", "xxx", "x-x"]),
+        ("((?:(?=x)(){1}|\\B|(.|x*?)*){4,4}?-){0,}((?!$)|a(([ax]){1,}?){2,2}){2,}?x", ["axx", "x--", "aax--"], ["---", "a-a-", "-aa"]),
+        ("((?:-|x*?)*?|(?:)){1,}?((?:(?<!^)x|(|))+\\B|)*$", ["a-a-", "aa", "--"], []),
+        ("((?=\\1(?!$)|\\1).|((?!(?<!a)[^a])|(?:){3}?)+?(?<=a)|[ax].){4,4}x$", ["axx", "a-x", "aaax", "-ax", "aax"], ["x", "xx-", "x-x"]),
+        ("(([^a]|x|($\\b)?)*?(?<=|(?<=aa|^)|.)|){1}x$", ["axx", "-x", "-xx"], ["x-", "-a", "aa-"]),
+        ("((a*(?!$)|(?:)*x|a*?){3}?|x){1,}(?:(?:(|-){1,3}()|(?<!a)(?!$)|(?:\\1|[ax](?!$)){3})+?\\1|(?:$|a[^a])?){2,}", ["axx", "-ax-", "aax--"], []),
+        ("((a*x|a|(?:\\b|\\1)?){4,}?\\B|){4}?x", ["-ax-", "x", "x-a"], ["a-a-", "a-a", "aaa"]),
+        ("(?:(?:)|((a|)|(?!$)a)*((a|(?:)\\b){0,}|){0,}?){3}?$", ["-", "aaa", "a"], []),
+        ("(?:(?:)|(?:a(?!$)|(?!$))*?)?a$", ["axa", "x-a", "aa-a"], ["-a-", "", "--x"]),
+        ("(?:(?:a|(?<!a))*?|-){2,}?$", ["--", "xaa-a", "-"], []),
+        ("(?:(?:x[ax]|x*?()){1,}?(?:(a){4,4}()|){2}){2,}a$", ["a", "xaa-a", "xxxa"], ["--", "", "xx-"]),
+        ("(?:(?=x)|^)+?$", [""], ["axa", "xa-", "---"]),
+        ("(?:(a|(?<!^)){2,3}(?<!a)|\\B|(?<!a)([^a](?:[ax]){3}|x?(?=x)){4,4})+?((|)|(|)(?:([^a]){3,3}(?:)|\\6){3,}?){2,}$", ["--x", "x--", "xax"], ["xxa", "xax-a", "--a"]),
+        ("(?:(a|)|){4}(?:$|$\\1|(?<=a)){0,}?x$", ["x", "-x", "-ax"], ["-a-", "a-", "axa"]),
+        ("(?:[^a]|(?:[^a]*?-||){1,}?-|\\b(|.*){4,}?){3,}(?:(?:||(|a)(?:|(?=x)){0}?){2}?x?|(?:){4})?$", ["-ax", "aax", "xa"], ["-", "--", ""]),
+        ("(?:\\1a|(?:|[^a]){1,}?(\\b|\\1(?<!\\1)){1,}?|(?:x*(?<![^a]a)|[ax]|(?<!a|x*?(?<=^))){1,}?^)*a$", ["xxa", "xaa-a", "aa-a"], ["xa-", "-xx", "x-"]),
+        ("(?<=(?:a+|)+)x", ["x", "xa", "xx", "x-", "-x", "xxx", "x-a", "-ax-"], ["---", "aaa", "-aa"]),
+        ("(?<=(?:a+|){1,2})x", ["x", "xa", "xx", "x-", "-x", "xaa", "xaxa", "xax"], ["---", "a-", "aa-a"]),
+        ("(?<=(?:a+|){1,})x", ["x", "xa", "xx", "x-", "-x", "xaxa", "xaa", "aax"], ["aaa", "a-a-", "--a"]),
+        ("(?<=(?:a+|){2,3})x", ["x", "ax", "xa", "xx", "x-", "xaa", "-ax-", "--x"], ["---", "a-", ""]),
+        ("(?<=(?:a+|){2,4})x", ["x", "ax", "xa", "xx", "x-", "xaa-a", "-ax-", "xax"], ["a", "---", "-a-"]),
+        ("(?<=(?:a+|){2,})x", ["x", "ax", "xa", "xx", "x-", "x-x", "xxa", "aax--"], ["-", "--", "aaaa"]),
+        ("(?<=(?:a+|){2})x", ["x", "ax", "xa", "xx", "x-", "a-x", "xxa", "axa"], ["--", "---", "a"]),
+        ("(?<=(?:a+|){3,4})x", ["x", "ax", "xa", "xx", "x-", "xaxa", "xaa-a", "-ax-"], ["--", "aaaa", "a"]),
+        ("(?<=(?:a+|){3,})x", ["x", "ax", "xa", "xx", "x-", "xaxa", "x-x", "axa"], ["---", "-aa", "-"]),
+        ("(?<=(?:a+|){3})x", ["x", "ax", "xa", "xx", "x-", "xaa", "xax-a", "ax-"], ["a-a-", "a-", "aa-"]),
+        ("(?<=(?:a+|){4,5})x", ["x", "ax", "xa", "xx", "x-", "-ax", "xax", "axx"], ["aa-a", "-a-", "--"]),
+        ("(?<=(?:a+|){4})x", ["x", "ax", "xa", "xx", "x-", "-xa", "x--", "xax-a"], ["aa", "-a-", ""]),
+        ("(\\B){0}(?:\\1|(?=x)(?<!a)|){1,}?x", ["-x-", "x-", "xx-"], ["-a-", "---", "-a"]),
+        ("(a|((?<=x)a|(?<!x.))+?|(?!\\b||(|))){4,5}", ["-ax", "xxxa", "x-a"], []),
+        ("(x(a|)|\\1){2}(?:\\1){3,}?x", ["axx", "xxa", "-xa"], ["aa-", "-a-", "aa"]),
+        ("(|((?:.){4}|\\2){3,}?|(?:(\\1){2,4}?[^a]|()()?){2,}a){1,}?$", ["xaa-a", "axx", "-x-"], []),
+        ("(|a[^a]??){0,}(?:\\B|\\B){0,}?$", ["x-x", "axa", "x-a"], []),
+        ("^(((){0,}(?<=a)|(?=a)|){1}|-a|[^a](?:x-||x(|))+?){0,}?(|){4,}?x$", ["x", "-xx", "xx"], ["xxxa", "a-x", "aa-a"]),
+        ("^(?:x*?|-|-(a|((?<=x)|[^a])*?|a){4,}){2,}?a", ["xxa", "xax-a", "a--"], ["-xx", "--x", "---"]),
+        ("^(?:||(?<=(-(|a)|){0,0}|(?:|\\1){2,}?)(-(){4,}|(?<!a|$(?!$)))*?)+((x??^|(?<=a))+$|^(?<=a)|(?:a?){2,})+?$", ["aa", "--", "-"], ["xaa", "-xa", "xxa"]),
+        ("^(a(a|)|(?:(?!$)(?=x)){3}(?:\\B|(^\\b){1,2}|(?:)){1,}?){4,5}(\\4)*a$", [], ["a-", "aax", "xaa"]),
+    ];
+
+    /// <summary>
+    /// Patterns on which a match threw from inside .NET's engine, did not return, or took the wrong one of two
+    /// paths, once the translation was right in every other respect: a lazy repetition of a group, and a
+    /// repetition inside a lookaround whose captures a backreference reads.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] EngineFaults =
+    [
+        ("((a){0,2}?(\\2?)x|){3}((x))", ["x", "ax", "xa", "xx", "aax", "axa", "xax", "ax-", "x1"], ["", "a", "aa", "aaa", "a-a", "-", "aaaa", "1", "91"]),
+        ("(?:(?=((?:(a)){0,12}?x)?)\\1\\2?){3}x", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "aaaaaaaaa", "aaaaaaaaaaax", "aaaaaaaaaaaaa", "ababababababababababx", "xaaaaaaaaaaaaaa", "aaaaaaaaac", "aaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac"]),
+        ("(?:(?=((?:(a)|x){2,11}?(?:a|ab){1,2}?)$)x\\1)?$", ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "aaaaaaaaa", "aaaaaaaaaaax", "aaaaaaaaaaaaa", "ababababababababababx", "xaaaaaaaaaaaaaa", "aaaaaaaaac", "aaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac"], []),
+        ("(?:(?=((?:ab?)*?(?:ab?){1,2}?)$)\\1x){2}$", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "aaaaaaaaa", "aaaaaaaaaaax", "aaaaaaaaaaaaa", "ababababababababababx", "xaaaaaaaaaaaaaa", "aaaaaaaaac", "aaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac"]),
+        ("(?:(?=((?:ab?){0,9}?(?:ab?){1,2}?)$)\\1x){2}$", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "aaaaaaaaa", "aaaaaaaaaaax", "aaaaaaaaaaaaa", "ababababababababababx", "xaaaaaaaaaaaaaa", "aaaaaaaaac", "aaaaaaaaaac", "aaaaaaaaacaaaaaaaaac", "aaaaaaaaacaaaaaaaaaac"]),
+        ("(?=((((x)+|())){3}))\\1", ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "xxx", "xy", "xyxy"], []),
+        ("(?=((?:(?:a|))+?)a)(?:\\1|a)$", ["a", "aa", "xa", "axa", "aaa", "a-a", "aaaa"], ["", "x", "ax", "xx", "aax", "xax", "-", "ax-", "1", "x1", "91"]),
+        ("(|()((?!)()9)){2}((?<!(|\\B)()\\9{3})((1))?)", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        (".*(?=((?:(?:(a)?)*(?:(?:(?=x)|(?:a|)))+?)|x)a)\\1a$", ["a", "aa", "xa", "axa", "aaa", "a-a", "aaaa"], ["", "x", "ax", "xx", "aax", "xax", "-", "ax-", "1", "x1", "91"]),
+        (".*(?=((?:(?:(|a)(?:x)*?(?!$)))+?(?:a)+)$)x\\1", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        (".*(?=((a*)(?:.?)+?)x)(?:\\1|a)$", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("^(?:(?:xy)+|(?=)){3}$", ["", "xy", "xyxy"], ["a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "xxx"]),
+        ("^(?<=((?:(?:a|))*\\b(?:(x|))+?|.?))\\1+$", [""], ["a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("^(?=((?:(?:(?:(?:x)??(|a)))*|\\b)(?:a)??|[ax]))x\\1", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("^(?=((?:(?:(|a)(?:(?:(?:(a|)){1,3}?(?:.?)??))*?(?:.?)+))*[ax]))\\1$", ["a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "aaaa"], ["", "-", "ax-", "1", "x1", "91"]),
+        ("^(a){0}(?:x+|\\1){3}$", ["", "x", "xx", "xxx"], ["a", "aa", "ax", "xa", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91", "xy", "xyxy"]),
+        ("a(?<=((?:^)*(?:(a|))+?(?:(a|)){2,}?|$))\\1a$", ["aaa"], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("a(?=((?:(?:(?:(?:(|a))+?))+)))\\1a$", [], ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("a(?=((?:(?:(?:(a*))+(?:(?:)(?:(?:a|))??)(?:\\b)*))+?(?:a|))$)\\1", ["a", "aa", "xa", "axa", "aaa", "a-a", "aaaa"], ["", "x", "ax", "xx", "aax", "xax", "-", "ax-", "1", "x1", "91"]),
+        ("x?(?<=((?:(?:a|))+?(?:(x|))+(a)?))\\1$", ["", "aa", "xx", "-", "ax-", "aaaa", "1", "x1", "91"], ["a", "x", "ax", "xa", "aax", "axa", "xax", "aaa", "a-a"]),
+        ("x?(?<=((?:(a)?)+?[ax]|(a|)))\\1", ["", "a", "x", "aa", "ax", "xa", "xx", "aax", "axa", "xax", "aaa", "a-a", "-", "ax-", "aaaa", "1", "x1", "91"], []),
+        ("x?(?<=((?:(|a))+))\\1a$", ["a", "xa", "axa", "aaa", "a-a"], ["", "x", "aa", "ax", "xx", "aax", "xax", "-", "ax-", "aaaa", "1", "x1", "91"]),
+        ("x?(?<=((?:[ax]){1,3}?(?:(a)?)+?))\\1", ["aa", "xx", "aax", "aaa", "aaaa"], ["", "a", "x", "ax", "xa", "axa", "xax", "a-a", "-", "ax-", "1", "x1", "91"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a backreference that ignores case, to a group that can capture a character with a case variant.
+    /// ECMA-262 compares by Canonicalize, and .NET's own case-insensitive backreference does not. The last five are
+    /// valid only without the <c>u</c> flag, where Canonicalize is another function.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] CaseInsensitiveBackreferences =
+    [
+        ("(?i:^(.)[^](?<=\\1)$)", ["aa", "aA", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u00B5\u03BC", "\u03BC\u039C", "\u0432\u1C80", "\u1C80\u0412", "iI", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00"], ["ab", "\u03C2\u03B1", "\u00B5\u03B1", "i\u0130", "\u0131I", "\uD801\uDC00\uD801\uDC29", "", "a"]),
+        ("(?i:^(.)\\1$)", ["aa", "aA", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u00B5\u03BC", "\u03BC\u039C", "\u0432\u1C80", "\u1C80\u0412", "iI", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00"], ["ab", "\u03C2\u03B1", "\u00B5\u03B1", "i\u0130", "\u0131I", "\uD801\uDC00\uD801\uDC29", "", "a"]),
+        ("(?i:^(.)\\1$\\&?)", ["aa", "aA", "kK", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u00B5\u03BC", "\u03BC\u039C", "\u0432\u1C80", "\u1C80\u0412", "iI"], ["ab", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "\u03C2\u03B1", "\u00B5\u03B1", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a"]),
+        ("(?i:^(.+)\\1$)", ["aa", "aA", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u00B5\u03BC", "\u03BC\u039C", "\u0432\u1C80", "\u1C80\u0412", "iI", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "abAB", "abAb", "\u03C3\u03C2\u03A3\u03C3", "sk\u017F\u212A", "SK\u017F\u212A", "\uD801\uDC00a\uD801\uDC28A", "ss\u017F\u017F", "a\u03C2A\u03C3", "xyXY"], ["ab", "\u03C2\u03B1", "\u00B5\u03B1", "i\u0130", "\u0131I", "\uD801\uDC00\uD801\uDC29", "", "a", "\uD801\uDC00a\uD801\uDC28b", "a\u03C2-A\u03C3", "xyXz"]),
+        ("(?i:^(.+)\\1$\\&?)", ["aa", "aA", "kK", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u00B5\u03BC", "\u03BC\u039C", "\u0432\u1C80", "\u1C80\u0412", "iI", "\uD83D\uDE00\uD83D\uDE00", "abAB", "abAb", "\u03C3\u03C2\u03A3\u03C3", "a\u03C2A\u03C3", "xyXY"], ["ab", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "\u03C2\u03B1", "\u00B5\u03B1", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "", "a", "sk\u017F\u212A", "SK\u017F\u212A", "\uD801\uDC00a\uD801\uDC28A", "\uD801\uDC00a\uD801\uDC28b", "ss\u017F\u017F", "a\u03C2-A\u03C3", "xyXz"]),
+        ("(?i:^(?:(s)|(k))+\\1\\2$)", ["kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "ss\u017F\u017F"], ["aa", "aA", "ab", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u03C2\u03B1", "\u00B5\u03BC", "\u03BC\u039C", "\u00B5\u03B1", "\u0432\u1C80", "\u1C80\u0412", "iI", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a", "abAB", "abAb", "\u03C3\u03C2\u03A3\u03C3", "sk\u017F\u212A", "SK\u017F\u212A", "\uD801\uDC00a\uD801\uDC28A", "\uD801\uDC00a\uD801\uDC28b", "a\u03C2-A\u03C3", "a\u03C2A\u03C3", "xyXY", "xyXz"]),
+        ("(?i:^([\\u03B8\\u1F80\\u00DF])\\1\\-?$)", [], ["aa", "aA", "ab", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u03C2\u03B1", "\u00B5\u03BC", "\u03BC\u039C", "\u00B5\u03B1", "\u0432\u1C80", "\u1C80\u0412", "iI", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a"]),
+        ("(?i:^([\\u03C2\\u03C3])\\1$)", ["\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2"], ["aa", "aA", "ab", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03B1", "\u00B5\u03BC", "\u03BC\u039C", "\u00B5\u03B1", "\u0432\u1C80", "\u1C80\u0412", "iI", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a"]),
+        ("(?i:^([^])[^](?<=\\1)$\\&?)", ["aa", "aA", "kK", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u00B5\u03BC", "\u03BC\u039C", "\u0432\u1C80", "\u1C80\u0412", "iI"], ["ab", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "\u03C2\u03B1", "\u00B5\u03B1", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a"]),
+        ("(?i:^([^])\\1$)", ["aa", "aA", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u00B5\u03BC", "\u03BC\u039C", "\u0432\u1C80", "\u1C80\u0412", "iI", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00"], ["ab", "\u03C2\u03B1", "\u00B5\u03B1", "i\u0130", "\u0131I", "\uD801\uDC00\uD801\uDC29", "", "a"]),
+        ("(?i:^([a-z\\u03C2]+)-?\\1$)", ["aa", "aA", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "iI", "abAB", "abAb", "\u03C3\u03C2\u03A3\u03C3", "sk\u017F\u212A", "SK\u017F\u212A", "ss\u017F\u017F", "a\u03C2-A\u03C3", "a\u03C2A\u03C3", "xyXY"], ["ab", "\u03C2\u03B1", "\u00B5\u03BC", "\u03BC\u039C", "\u00B5\u03B1", "\u0432\u1C80", "\u1C80\u0412", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a", "\uD801\uDC00a\uD801\uDC28A", "\uD801\uDC00a\uD801\uDC28b", "xyXz"]),
+        ("(?i:^([a-z])\\1$)", ["aa", "aA", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "iI"], ["ab", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u03C2\u03B1", "\u00B5\u03BC", "\u03BC\u039C", "\u00B5\u03B1", "\u0432\u1C80", "\u1C80\u0412", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a"]),
+        ("(?i:^([a-z])\\1\\-?$)", ["aa", "aA", "kK", "sS", "iI"], ["ab", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u03C2\u03B1", "\u00B5\u03BC", "\u03BC\u039C", "\u00B5\u03B1", "\u0432\u1C80", "\u1C80\u0412", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a"]),
+        ("(?i:^(\\p{L})\\1$)", ["aa", "aA", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u00B5\u03BC", "\u03BC\u039C", "\u0432\u1C80", "\u1C80\u0412", "iI", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD83A\uDD00\uD83A\uDD22"], ["ab", "\u03C2\u03B1", "\u00B5\u03B1", "i\u0130", "\u0131I", "\uD801\uDC00\uD801\uDC29", "\uD83D\uDE00\uD83D\uDE00", "", "a"]),
+        ("(?i:^(\\p{L}+)-?[^]+(?<=\\1)$)", ["aa", "aA", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u00B5\u03BC", "\u03BC\u039C", "\u0432\u1C80", "\u1C80\u0412", "iI", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD83A\uDD00\uD83A\uDD22", "abAB", "abAb", "\u03C3\u03C2\u03A3\u03C3", "sk\u017F\u212A", "SK\u017F\u212A", "\uD801\uDC00a\uD801\uDC28A", "ss\u017F\u017F", "a\u03C2-A\u03C3", "a\u03C2A\u03C3", "xyXY"], ["ab", "\u03C2\u03B1", "\u00B5\u03B1", "i\u0130", "\u0131I", "\uD801\uDC00\uD801\uDC29", "\uD83D\uDE00\uD83D\uDE00", "", "a", "\uD801\uDC00a\uD801\uDC28b", "xyXz"]),
+        ("(?i:^(\\u{10400})\\1$)", ["\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00"], ["aa", "aA", "ab", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u03C2\u03B1", "\u00B5\u03BC", "\u03BC\u039C", "\u00B5\u03B1", "\u0432\u1C80", "\u1C80\u0412", "iI", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a"]),
+        ("(?i:^(\\w)\\1$)", ["aa", "aA", "kK", "k\u212A", "\u212AK", "s\u017F", "\u017FS", "sS", "iI"], ["ab", "\u03C2\u03C3", "\u03C3\u03A3", "\u03A3\u03C2", "\u03C2\u03B1", "\u00B5\u03BC", "\u03BC\u039C", "\u00B5\u03B1", "\u0432\u1C80", "\u1C80\u0412", "i\u0130", "\u0131I", "\u00DF\u1E9E", "\u1E9E\u00DF", "\u03B8\u03F4", "\u03F4\u03D1", "\u2126\u03C9", "\u1F80\u1F88", "\u212B\u00E5", "\uFB05\uFB06", "\uD801\uDC00\uD801\uDC28", "\uD801\uDC28\uD801\uDC00", "\uD801\uDC00\uD801\uDC29", "\uD83A\uDD00\uD83A\uDD22", "\uD83D\uDE00\uD83D\uDE00", "", "a"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a backreference that ignores case inside the group it reads, or to a group that reads it back.
+    /// The translator did not finish translating one whose group refers to itself twice. 11 of them were written for
+    /// this, with the <c>i</c> of each given to V8 as a flag, and 9 are from the case-folding family of the test
+    /// data. The last 5 are valid only without the <c>u</c> flag.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] CaseInsensitiveBackreferencesToTheirOwnGroup =
+    [
+        ("(?i:^(\\1\\1a)$)", ["a", "A"], ["", "aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(\\1a)+$)", ["a", "A", "aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "aaA"], ["", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "bab"]),
+        ("(?i:^(\\1\\1[as])\\1$)", ["aa", "aA", "Aa", "ss", "s\u017F", "\u017FS"], ["", "a", "A", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(?:(\\1\\1.)\\1)+$)", ["aa", "aA", "Aa", "aaaa", "ss", "s\u017F", "\u017FS", "k\u212A", "\u03C3\u03C2", "\uD801\uDC00\uD801\uDC28"], ["", "a", "A", "aaa", "aAa", "AAA", "ab", "aba", "abab", "abAB", "aBAb", "s", "sS\u017F", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(?:(\\2a)(\\1\\1b))+$)", [], ["", "a", "A", "aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(?:\\2(.)|\\1(s))+$)", ["a", "A", "aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"], [""]),
+        ("(?i:^(?<n>\\k<n>\\k<n>[a-z])\\k<n>$)", ["aa", "aA", "Aa", "ss", "s\u017F", "\u017FS", "k\u212A"], ["", "a", "A", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "sS\u017F", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(?:(\\1\\1.))+(?<=\\1\\1)$)", ["aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA"], ["", "a", "A", "ab", "aba", "abab", "abAB", "aBAb", "s", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "bab"]),
+        ("(?i:^((\\1\\2|\\2\\1|[ab])+)\\1$)", ["", "aa", "aA", "Aa", "aaaa", "abab", "abAB", "aBAb"], ["a", "A", "aaa", "aAa", "AAA", "ab", "aba", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^\\b(\\1?[^k]\\1)?\u0130$)", [], ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"]),
+        ("(?i:^[^a](\\1\\1?)?|\\b$)", ["s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5", "\u01C4"], ["", "A\uAB70A\u13A0\u03B8"]),
+        ("(?i:^((\\2+I\\2)[^a])??$)", ["", "I\u03A3"], ["s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5", "\u01C4"]),
+        ("(?i:^\u03B8\uD83A\uDD22(.(\\1\\u0131\\B)*\\2)??$)", [], ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"]),
+        ("(?i:^\\u017f(?<n0>\\k<n0>?\u00DF\\1+)\\1{2})", [], ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"]),
+        ("(?i:(?![\\u03b1-\\u03c9])(\\1+\\1?\\1?)+?\u03C3)", [], ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"]),
+        ("(?i:^(\\1\\1a)\\1$\\&?)", ["aa", "aA", "Aa"], ["", "a", "A", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:^(?:(\\2s)(\\1\\1.))+\\2$\\&?)", [], ["", "a", "A", "aa", "aA", "Aa", "aaa", "aAa", "AAA", "aaaa", "ab", "aba", "abab", "abAB", "aBAb", "s", "ss", "s\u017F", "\u017FS", "sS\u017F", "k\u212A", "\u03C3\u03C2", "\u03C3\u03C2\u03A3", "ba", "bA", "aab", "aAB", "ssb", "s\u017Fb", "\uD801\uDC00\uD801\uDC28", "abb", "aBb", "aaA", "bab"]),
+        ("(?i:\\-{0}(\\1\\1?\\b)$)", ["s", "S", "k", "K", "i", "I", "a", "A", "0", "a\u01C5\u01C4I", "\u212As\u212AS", "\u00E5kK", "\u01C5\u03BCI", "\u03C2\uD801\uDC00S\u03C3\uD801\uDC28S"], ["", "\u017F", "\u212A", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5", "\u01C4", "\u01C6", "\u1F80", "\u1F88", "\u03C3", "\u03C2"]),
+        ("(?i:\\-{0}(\\1?\\1){2}\\1?)", ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"], []),
+        ("(?i:\\-{0}^(?:\u1F88(?<n0>\\1\\1(\\2+)*?)*)$)", ["\u1F88"], ["", "s", "S", "\u017F", "k", "K", "\u212A", "i", "I", "\u0131", "\u0130", "\u00DF", "\u1E9E", "\u01C5"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a backreference to a group that cannot be set where the reference stands: inside the group
+    /// itself, or in another alternative of the alternation the group is in. Such a reference is the empty string.
+    /// With it written as a reference, a body that can only match the empty string was not seen for one, and the
+    /// first two patterns and the two before the last were searched through every combination of the ways through
+    /// every iteration. V8 answers them in a few hundred steps. The last two are from the empty-loops and
+    /// backreferences families of the test data.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] BackreferencesToGroupsThatAreNotSet =
+    [
+        ("^((|\\2|\\1\\2){3,}|[ax]){6}x$", ["x", "ax", "xx", "aax", "xax", "axax"], ["", "aa", "a-a", "xxxxa", "b"]),
+        ("((?:)(|\\2|\\1\\2){3,}|[ax]){4}x$", ["x", "ax", "xx", "aax", "xax", "axax"], ["", "aa", "a-a", "xxxxa", "b"]),
+        ("^(a\\1)+$", ["a", "aa", "aaa", "aaaa", "aaaaa", "aaaaaa"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "ab", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "abab", "xaxa", "axax", "xxxxa", "axaxax", "bb", "abb", "b", "c", "bc", "abc"]),
+        ("^(\\1a|\\1\\1b)+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax", "c", "bc", "abc"]),
+        ("^(?<n>\\k<n>a|b\\k<n>{2})+\\k<n>$", ["aa", "aaa", "aaaa", "aaaaa", "aaaaaa", "bb", "abb"], ["", "a", "x", "-", "ax", "xa", "xx", "a-", "-a", "ab", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "abab", "xaxa", "axax", "xxxxa", "axaxax", "b", "c", "bc", "abc"]),
+        ("^(a(?<=\\1a))+$", ["a", "aa", "aaa", "aaaa", "aaaaa", "aaaaaa"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "ab", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "abab", "xaxa", "axax", "xxxxa", "axaxax", "bb", "abb", "b", "c", "bc", "abc"]),
+        ("^(?:(a\\1*){2,}|b)+$", ["aa", "aaa", "aaaa", "aaaaa", "aaaaaa", "bb", "b"], ["", "a", "x", "-", "ax", "xa", "xx", "a-", "-a", "ab", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "abab", "xaxa", "axax", "xxxxa", "axaxax", "abb", "c", "bc", "abc"]),
+        ("^((a)|\\1\\2|b)+$", ["", "a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b"], ["x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax", "c", "bc", "abc"]),
+        ("^(?:(a)|\\1b)+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax", "c", "bc", "abc"]),
+        ("^(?:(a)|b\\1){2,}\\1$", ["ab", "aaa", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb"], ["", "a", "x", "-", "aa", "ax", "xa", "xx", "a-", "-a", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "xaxa", "axax", "xxxxa", "axaxax", "b", "c", "bc", "abc"]),
+        ("^(?:(?<n>a)|(?<n>b)\\k<n>|c\\k<n>*)+$", ["a", "aa", "aaa", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "c"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "ab", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "abab", "xaxa", "axax", "xxxxa", "axaxax", "b", "bc", "abc"]),
+        ("^(?:(a)|(b)|\\1\\2c)+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b", "c", "bc", "abc"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax"]),
+        ("^(?:(?:(a)|\\1|\\1\\1){3}){4}b$", ["b", "aaab", "aaaab", "ab"], ["", "x", "ax", "xx", "aa", "aax", "xax", "a-a", "axax", "xxxxa"]),
+        ("^(?:(a)|(?=\\1b)b|(?<=\\1b)c)+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b", "bc", "abc"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax", "c"]),
+        ("^(?:(a)|(?:(b)|\\1\\2c)\\1)+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b", "c", "bc", "abc"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax"]),
+        ("^(?:(a)|b)+\\1$", ["aa", "ab", "aaa", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b"], ["", "a", "x", "-", "ax", "xa", "xx", "a-", "-a", "ba", "aax", "axa", "xax", "xxa", "a-a", "ax-", "aba", "xaxa", "axax", "xxxxa", "axaxax", "c", "bc", "abc"]),
+        ("^(?:(a)|b(?:\\1|c))+$", ["a", "aa", "ab", "ba", "aaa", "aba", "abab", "aaaa", "aaaaa", "aaaaaa", "bb", "abb", "b", "bc", "abc"], ["", "x", "-", "ax", "xa", "xx", "a-", "-a", "aax", "axa", "xax", "xxa", "a-a", "ax-", "xaxa", "axax", "xxxxa", "axaxax", "c"]),
+        ("(?:-??-*?){1,}((?:(\\2){4}(?=x)|(|\\1){2,}){4,}(\\3x|-*?){0,}|($-*?|\\2\\b){2,3}?(?<=a)){1,2}a$", ["a", "aa", "xa", "-a", "aaa", "axa", "a-a", "xaa", "xxa", "x-a", "-aa", "-xa", "--a"], ["", "x", "-", "ax", "a-", "xx", "x-", "-x", "--", "aax", "aa-", "axx", "ax-", "a-x", "a--", "xax", "xa-", "xxx", "xx-", "x-x", "x--", "-ax", "-a-", "-xx", "-x-", "--x", "---"]),
+        ("^(?:(?<n0>(a|-){0,0})|(?<n0>(\\k<n0>*\\4?|\\2{2}){3,3})){3,5}\\k<n0>a", ["a", "aa", "ax", "a-", "aaa", "aax", "aa-", "axa", "axx", "ax-", "a-a", "a-x", "a--"], ["", "x", "-", "xa", "xx", "x-", "-a", "-x", "--", "xaa", "xax", "xa-", "xxa", "xxx", "xx-", "x-a", "x-x", "x--", "-aa", "-ax", "-a-", "-xa", "-xx", "-x-", "--a", "--x", "---"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a repetition that need not run, of a backreference or of a body that holds one and can match
+    /// the empty string. ECMA-262 refuses an iteration that matched nothing once the iterations that must run are
+    /// done. .NET takes it, and then tries again without it from the same place, so a pattern with several such
+    /// repetitions was searched many times over. The last three are from the backreferences family of the test
+    /// data, each with the texts .NET took longest over, and the first and the third of them are valid only without
+    /// the <c>u</c> flag. V8 answers every text of the three in under 250,000 backtracks.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] RepeatedBackreferences =
+    [
+        ("^(a)\\1?\\1*$", ["a", "aa", "aaa", "aaaa", "aaaaa"], ["", "b", "ab", "ba", "bb", "aab", "aba", "abb", "baa", "bab", "bd", "ad", "aaab", "abab", "aabb", "aaaab", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(a)\\1{0,2}b$", ["ab", "aab", "aaab"], ["", "a", "b", "aa", "ba", "bb", "aaa", "aba", "abb", "baa", "bab", "bd", "ad", "aaaa", "abab", "aabb", "aaaaa", "aaaab", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(a|)\\1?b$", ["b", "ab", "aab"], ["", "a", "aa", "ba", "bb", "aaa", "aba", "abb", "baa", "bab", "bd", "ad", "aaaa", "aaab", "abab", "aabb", "aaaaa", "aaaab", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(?:(a)|b)+\\1?$", ["a", "b", "aa", "ab", "ba", "bb", "aaa", "aab", "aba", "abb", "baa", "bab", "aaaa", "aaab", "abab", "aabb", "aaaaa", "aaaab"], ["", "bd", "ad", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(a)(?:\\1?x?)*$", ["a", "aa", "aaa", "aaaa", "aaaaa", "ax", "axa", "aax", "aaxa"], ["", "b", "ab", "ba", "bb", "aab", "aba", "abb", "baa", "bab", "bd", "ad", "aaab", "abab", "aabb", "aaaab", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(?<n>a)(?:\\k<n>*b)+$", ["ab", "aab", "abb", "aaab", "abab", "aabb", "aaaab"], ["", "a", "b", "aa", "ba", "bb", "aaa", "aba", "baa", "bab", "bd", "ad", "aaaa", "aaaaa", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("(?<=(a)\\1?)b", ["ab", "aab", "aba", "abb", "bab", "aaab", "abab", "aabb", "aaaab"], ["", "a", "b", "aa", "ba", "bb", "aaa", "baa", "bd", "ad", "aaaa", "aaaaa", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(a)(?:\\1|b)*?$", ["a", "aa", "ab", "aaa", "aab", "aba", "abb", "aaaa", "aaab", "abab", "aabb", "aaaaa", "aaaab"], ["", "b", "ba", "bb", "baa", "bab", "bd", "ad", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(a+)\\1*?b$", ["ab", "aab", "aaab", "aaaab"], ["", "a", "b", "aa", "ba", "bb", "aaa", "aba", "abb", "baa", "bab", "bd", "ad", "aaaa", "abab", "aabb", "aaaaa", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(?:(a)|(b))(?:\\1\\2)*c?$", ["a", "b", "aa", "bb", "aaa", "aaaa", "aaaaa", "bc", "ac", "aac", "aaac"], ["", "ab", "ba", "aab", "aba", "abb", "baa", "bab", "bd", "ad", "aaab", "abab", "aabb", "aaaab", "ax", "axa", "aax", "aaxa", "xa", "c"]),
+        ("^(?:(a)\\1{0,3}?b?)+$", ["a", "aa", "ab", "aaa", "aab", "aba", "aaaa", "aaab", "abab", "aaaaa", "aaaab"], ["", "b", "ba", "bb", "abb", "baa", "bab", "bd", "ad", "aabb", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(a)?(?:\\1?b){2,}$", ["bb", "abb", "abab", "aabb"], ["", "a", "b", "aa", "ab", "ba", "aaa", "aab", "aba", "baa", "bab", "bd", "ad", "aaaa", "aaab", "aaaaa", "aaaab", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(?:(?<n>a)|(?<n>b))\\k<n>*c?$", ["a", "b", "aa", "bb", "aaa", "aaaa", "aaaaa", "bc", "ac", "aac", "aaac"], ["", "ab", "ba", "aab", "aba", "abb", "baa", "bab", "bd", "ad", "aaab", "abab", "aabb", "aaaab", "ax", "axa", "aax", "aaxa", "xa", "c"]),
+        ("^(a)(?=\\1*b)\\1?", ["ab", "aab", "aba", "abb", "aaab", "abab", "aabb", "aaaab"], ["", "a", "b", "aa", "ba", "bb", "aaa", "baa", "bab", "bd", "ad", "aaaa", "aaaaa", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(ab?)(?:\\1{2,3})?$", ["a", "ab", "aaa", "aaaa"], ["", "b", "aa", "ba", "bb", "aab", "aba", "abb", "baa", "bab", "bd", "ad", "aaab", "abab", "aabb", "aaaaa", "aaaab", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(?:(a)|b)(?:\\1?){24}c$", ["bc", "ac", "aac", "aaac"], ["", "a", "b", "aa", "ab", "ba", "bb", "aaa", "aab", "aba", "abb", "baa", "bab", "bd", "ad", "aaaa", "aaab", "abab", "aabb", "aaaaa", "aaaab", "ax", "axa", "aax", "aaxa", "xa", "c"]),
+        ("^(?:(a)|b)(?:\\1*x?){12}c$", ["bc", "ac", "aac", "aaac"], ["", "a", "b", "aa", "ab", "ba", "bb", "aaa", "aab", "aba", "abb", "baa", "bab", "bd", "ad", "aaaa", "aaab", "abab", "aabb", "aaaaa", "aaaab", "ax", "axa", "aax", "aaxa", "xa", "c"]),
+        ("^(a)\\1?0$", [], ["", "a", "b", "aa", "ab", "ba", "bb", "aaa", "aab", "aba", "abb", "baa", "bab", "bd", "ad", "aaaa", "aaab", "abab", "aabb", "aaaaa", "aaaab", "ax", "axa", "aax", "aaxa", "xa", "c", "bc", "ac", "aac", "aaac"]),
+        ("^(?:(a)|b)\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?\\1?c$", ["bc", "ac", "aac", "aaaaaaaaaaaaaaaaaaaaaaaaaaac"], ["bd", "ad", "b", "aaad", "c", "bcc"]),
+        ("^(?:(a)|b)(?:(?:\\1|x)*y){1,26}z$", ["byyyyyyyyyyyyyyyyyyyyyyyyyyz", "aayayayayayayayayayayayayz", "byz", "ayz", "aaxayz"], ["byyyyyyyyyyyyyyyyyyyyyyyyyyw", "ayyyyyyyyyyyyyyyyyyyyyyyyyyw", "aayayayayayayayayayayayayw", "bz", "z"]),
+        ("(?:\\-|)(?:((?:[ax]x\\1|\\2)?(-|\\2{2}){3,}){1,}|(?<n0>(ax){3,4}|\\4){0,0}?){3}-$", ["-", "a-", "x-", "--", "aa-", "ax-", "a--", "xa-", "xx-", "x--", "-a-", "-x-", "---", "aaa-", "aax-", "aa--", "axa-", "axx-", "ax--", "a-a-", "a-x-", "a---", "xaa-", "xax-", "xa--", "xxa-", "xxx-", "xx--", "x-a-", "x-x-", "x---", "-aa-", "-ax-", "-a--", "-xa-", "-xx-", "-x--", "--a-", "--x-", "----", "ax-ax-", "xaxa-"], ["", "a", "x", "aa", "ax", "xa", "xx", "-a", "-x", "aaa", "aax", "axa", "axx", "a-a", "a-x", "xaa", "xax", "xxa", "xxx", "x-a", "x-x", "-aa", "-ax", "-xa", "-xx", "--a", "--x", "aaaa", "aaax", "aaxa", "aaxx", "aa-a", "aa-x", "axaa", "axax", "axxa", "axxx", "ax-a", "ax-x", "a-aa", "a-ax", "a-xa", "a-xx", "a--a", "a--x", "xaaa", "xaax", "xaxa", "xaxx", "xa-a", "xa-x", "xxaa", "xxax", "xxxa", "xxxx", "xx-a", "xx-x", "x-aa", "x-ax", "x-xa", "x-xx", "x--a", "x--x", "-aaa", "-aax", "-axa", "-axx", "-a-a", "-a-x", "-xaa", "-xax", "-xxa", "-xxx", "-x-a", "-x-x", "--aa", "--ax", "--xa", "--xx", "---a", "---x", "xxxb", "ab", "b", "aab", "xb", "xaxbb", "xxxxb", "aaaaa", "xaxax", "a-a-a"]),
+        ("^(?:\\1((\\1[^a]|\\1*){0,2}|x{1,2}\\1{2}){2}\\1*){3}\\1(?:\\1|(\\1*(-[^a][^a])*|.){2,3}-\\3{2}|x*?a){2,}-$", ["-", "a-", "x-", "--", "aa-", "a--", "xa-", "xx-", "x--", "-a-", "-x-", "---"], ["", "a", "x", "aa", "ax", "xa", "xx", "-a", "-x", "aaa", "aax", "axa", "axx", "ax-", "a-a", "a-x", "xaa", "xax", "xxa", "xxx", "x-a", "x-x", "-aa", "-ax", "-xa", "-xx", "--a", "--x"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a part that never matches: an empty class, a negative lookaround of nothing. The first three
+    /// have such a part as an alternative beside an empty one, inside a repetition whose group a backreference
+    /// reads. It was written as an optional group around an assertion that never holds, which .NET sees through,
+    /// and .NET then ran the repetition as if it had no empty alternative. The first was found by comparing random
+    /// patterns with V8. The others pin what the parts taken out must not change.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] PartsThatNeverMatch =
+    [
+        ("(?=((?:(x)+|(?:(?<!)|()){3}(?:()){2}?){2}))\\1$", ["", "a", "x", "xx", "ax", "xa", "b", "bb", "ab", "c", "xxx", "aa", "xb"], []),
+        ("(?=((?:x+|(?:[]|)){2}))\\1$", ["", "a", "x", "xx", "ax", "xa", "b", "bb", "ab", "c", "xxx", "aa", "xb"], []),
+        ("^(?=((?:x+|(?:(?<!)|())){2}b))\\1$", ["b", "xb"], ["", "a", "x", "xx", "ax", "xa", "bb", "ab", "c", "xxx", "aa"]),
+        ("^((?:x+|(?:[]|)){2})\\1$", ["", "xx"], ["a", "x", "ax", "xa", "b", "bb", "ab", "c", "xxx", "aa", "xb"]),
+        ("^(?:x+|(?<!)|){2}$", ["", "x", "xx", "xxx"], ["a", "ax", "xa", "b", "bb", "ab", "c", "aa", "xb"]),
+        ("^(?:x+|[]|){2}$", ["", "x", "xx", "xxx"], ["a", "ax", "xa", "b", "bb", "ab", "c", "aa", "xb"]),
+        ("^(?:x+|(?:(?<!)|())){2}$", ["", "x", "xx", "xxx"], ["a", "ax", "xa", "b", "bb", "ab", "c", "aa", "xb"]),
+        ("^(?:a|[])+$", ["a", "aa"], ["", "x", "xx", "ax", "xa", "b", "bb", "ab", "c", "xxx", "xb"]),
+        ("^(?:[])*b$", ["b"], ["", "a", "x", "xx", "ax", "xa", "bb", "ab", "c", "xxx", "aa", "xb"]),
+        ("^(?:(a[])|b)\\1$", ["b"], ["", "a", "x", "xx", "ax", "xa", "bb", "ab", "c", "xxx", "aa", "xb"]),
+        ("^(?!(?:[]))a$", ["a"], ["", "x", "xx", "ax", "xa", "b", "bb", "ab", "c", "xxx", "aa", "xb"]),
+        ("^(?:a[]|(b)(?=[])|c)$", ["c"], ["", "a", "x", "xx", "ax", "xa", "b", "bb", "ab", "xxx", "aa", "xb"]),
+        ("^(?:x+|(?:[]|)){3}b?$", ["", "x", "xx", "b", "xxx", "xb"], ["a", "ax", "xa", "bb", "ab", "c", "aa"]),
+        ("^(?:(?:x+|(?<!)|())\\1){2}$", ["", "x", "xx", "xxx"], ["a", "ax", "xa", "b", "bb", "ab", "c", "aa", "xb"]),
+        ("^(?:x|(?=[])x|)+a$", ["a", "xa"], ["", "x", "xx", "ax", "b", "bb", "ab", "c", "xxx", "aa", "xb"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a backreference to a group that can capture the empty string, and patterns with a repetition
+    /// whose body can match the empty string and holds a group that a backreference reads. ECMA-262 cannot tell a
+    /// group that captured the empty string from a group that is unset, and the translation leaves such a group
+    /// unset where it can, so that an iteration that need not run is written as a body that cannot match nothing
+    /// and no check reads the rest of the input. All were written for this table. They pin the answers of the forms
+    /// that changed and of the ones that keep the check: a repetition in a lookaround whose captures are read, a
+    /// repetition inside with two or more iterations that must run, and a group that only ever matches nothing.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] GroupsThatCaptureTheEmptyString =
+    [
+        ("^(a|)(?:\\1|b)*$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(a|)\\1?b$", ["b", "ab", "aab"], ["", "a", "x", "aa", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(a?)(?:\\1|b)+$", ["", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["a", "x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(a*)(?:\\1|b)*$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(a|b|)(?:\\1|x)*$", ["", "a", "b", "x", "aa", "bb", "ax", "xx", "bx", "aaa", "aax", "axa", "aaaa", "aaax", "axax", "aaaaa"], ["ab", "ba", "xa", "aab", "aba", "abb", "baa", "bab", "bba", "xax", "abx", "bax", "abab", "aabb", "abba", "aaaab", "abaab", "ababa"]),
+        ("^(^|a)(?:\\1|b)*$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(a|)(?:\\1{2}|b)*$", ["", "a", "b", "ab", "bb", "aaa", "abb", "aaaaa", "abaab"], ["x", "aa", "ba", "ax", "xa", "xx", "bx", "aab", "aba", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaab", "ababa"]),
+        ("^(a|)(?:b|\\1)*?$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(a|)(?:\\1|b){1,3}$", ["", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba"], ["a", "x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(a|)(?:\\1|b){2,}x?$", ["", "b", "x", "bb", "bx", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaax", "aaaaa", "aaaab", "abaab", "ababa"], ["a", "aa", "ab", "ba", "ax", "xa", "xx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "axax"]),
+        ("^(a|)(b|)(?:\\1\\2|x)*$", ["", "a", "b", "x", "aa", "ab", "bb", "ax", "xx", "bx", "aaa", "aax", "axa", "abx", "aaaa", "abab", "aaax", "axax", "aaaaa"], ["ba", "xa", "aab", "aba", "abb", "baa", "bab", "bba", "xax", "bax", "aabb", "abba", "aaaab", "abaab", "ababa"]),
+        ("^(a|)(?:\\1|(b|)\\2x?)*$", ["", "a", "x", "aa", "bb", "ax", "xx", "aaa", "abb", "aax", "axa", "aaaa", "aabb", "abba", "aaax", "axax", "aaaaa"], ["b", "ab", "ba", "xa", "bx", "aab", "aba", "baa", "bab", "bba", "xax", "abx", "bax", "abab", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a|)x)*\\1$", ["", "x", "xx", "axa"], ["a", "b", "aa", "ab", "ba", "bb", "ax", "xa", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?<n>a|)(?:\\k<n>|b)*$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"], ["x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"]),
+        ("^(?:(?<n>a|)|(?<n>b))\\k<n>*x?$", ["", "a", "b", "x", "aa", "bb", "ax", "bx", "aaa", "aax", "aaaa", "aaax", "aaaaa"], ["ab", "ba", "xa", "xx", "aab", "aba", "abb", "baa", "bab", "bba", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "axax", "aaaab", "abaab", "ababa"]),
+        ("(?<=(a|)(?:\\1|b)*)x", ["x", "ax", "xa", "xx", "bx", "aax", "axa", "xax", "abx", "bax", "aaax", "axax"], ["", "a", "b", "aa", "ab", "ba", "bb", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(a|)(?:(?!\\1b)\\1|b)*$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aba", "abb", "aaaa", "abba", "aaaaa"], ["x", "ba", "ax", "xa", "xx", "bx", "aab", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "aaax", "axax", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a)|b|)*\\1$", ["", "b", "aa", "ab", "bb", "aaa", "aab", "abb", "baa", "bab", "aaaa", "abab", "aabb", "aaaaa", "aaaab", "abaab"], ["a", "x", "ba", "ax", "xa", "xx", "bx", "aba", "bba", "aax", "axa", "xax", "abx", "bax", "abba", "aaax", "axax", "ababa"]),
+        ("^(?:(a)|b|)+\\1$", ["", "b", "aa", "ab", "bb", "aaa", "aab", "abb", "baa", "bab", "aaaa", "abab", "aabb", "aaaaa", "aaaab", "abaab"], ["a", "x", "ba", "ax", "xa", "xx", "bx", "aba", "bba", "aax", "axa", "xax", "abx", "bax", "abba", "aaax", "axax", "ababa"]),
+        ("^(?:(a)|b|){2,4}\\1$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "abb", "baa", "bab", "aaaa", "abab", "aabb", "aaaaa"], ["x", "ba", "ax", "xa", "xx", "bx", "aba", "bba", "aax", "axa", "xax", "abx", "bax", "abba", "aaax", "axax", "aaaab", "abaab", "ababa"]),
+        ("^((a|)\\2)*$", ["", "aa", "aaaa"], ["a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a*)\\1)*b$", ["b", "aab", "aaaab"], ["", "a", "x", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "abaab", "ababa"]),
+        ("^(?:(|a)\\1)+$", ["", "aa", "aaaa"], ["a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a)?(b)?\\1\\2)*$", ["", "aa", "bb", "aaaa", "abab", "aabb"], ["a", "b", "x", "ab", "ba", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(?:(a)|b|)*x?)*\\1$", ["", "b", "x", "aa", "ab", "bb", "ax", "xx", "bx", "aaa", "aab", "abb", "baa", "bab", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "aaax", "axax", "aaaaa", "aaaab", "abaab"], ["a", "ba", "xa", "aba", "bba", "abba", "ababa"]),
+        ("^(?:(?:(a)|){2}x?)*\\1$", ["", "a", "x", "aa", "ax", "xa", "xx", "aaa", "aax", "axa", "xax", "aaaa", "aaax", "axax", "aaaaa"], ["b", "ab", "ba", "bb", "bx", "aab", "aba", "abb", "baa", "bab", "bba", "abx", "bax", "abab", "aabb", "abba", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a)|(b)|\\1\\2x){0,3}$", ["", "a", "b", "x", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax"], ["aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a)|\\1?b|)*x$", ["x", "ax", "bx", "aax", "abx", "bax", "aaax"], ["", "a", "b", "aa", "ab", "ba", "bb", "xa", "xx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "axa", "xax", "aaaa", "abab", "aabb", "abba", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("(?<=(?:(a)|b|)*)\\1x", ["x", "xa", "xx", "bx", "aax", "xax", "bax", "aaax"], ["", "a", "b", "aa", "ab", "ba", "bb", "ax", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "axa", "abx", "aaaa", "abab", "aabb", "abba", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(?=(a))|x)*\\1", ["", "a", "b", "x", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"], []),
+        ("^()\\1(?:\\1|a)*$", ["", "a", "aa", "aaa", "aaaa", "aaaaa"], ["b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaab", "abaab", "ababa"]),
+        ("^(?:(^)a?)*\\1b?$", ["", "a", "b", "ab"], ["x", "aa", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:(a|)(b|)\\1\\2)*$", ["", "aa", "bb", "aaaa", "abab", "aabb"], ["a", "b", "x", "ab", "ba", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa"]),
+        ("^(?:((a)|b)|\\2x|)*\\1$", ["", "x", "aa", "bb", "ax", "xx", "bx", "aaa", "abb", "baa", "aax", "xax", "abx", "bax", "aaaa", "aabb", "aaax", "axax", "aaaaa"], ["a", "b", "ab", "ba", "xa", "aab", "aba", "bab", "bba", "axa", "abab", "abba", "aaaab", "abaab", "ababa"]),
+        ("^(a|)(?:\\1|b)*(x|)(?:\\2|y)*$", ["", "a", "b", "x", "aa", "ab", "bb", "ax", "xx", "bx", "aaa", "aab", "aba", "abb", "aax", "abx", "aaaa", "abab", "aabb", "abba", "aaax", "aaaaa", "aaaab", "abaab", "ababa"], ["ba", "xa", "baa", "bab", "bba", "axa", "xax", "bax", "axax"]),
+    ];
+
+    /// <summary>
+    /// Patterns with a group that a backreference reads and whose body is a sequence that holds the same term
+    /// twice, each able to match the empty string: <c>(a|)(a|)</c>. The body is written for where it matches
+    /// something as one alternative for each term that can be the first to, and the alternative of the second
+    /// <c>(a|)</c> matched one <c>a</c> that the alternative of the first had already matched. It is left out. All
+    /// were written for this table. They pin the answers of the forms that changed and of the ones that keep both
+    /// alternatives: terms that differ, a term between that cannot be passed over, and groups that are read.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] TheSameTermTwice =
+    [
+        ("^((a|)(a|))\\1$", ["", "aa", "aaaa"], ["a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((a|)(a|))\\1x$", ["x", "aax"], ["", "a", "b", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^(?:((a|)(a|))|b)*\\1$", ["", "b", "aa", "ab", "bb", "aaa", "aab", "abb", "baa", "bab", "aaaa", "abab", "aabb", "aaaaa", "aaaab", "abaab", "aaaaaa", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa"], ["a", "x", "ba", "ax", "xa", "xx", "bx", "aba", "bba", "aax", "axa", "xax", "abx", "bax", "abba", "aaax", "axax", "ababa", "aaaaaax", "aaaaaaaaaaaax"]),
+        ("^((a|)(a|)(a|))\\1x$", ["x", "aax", "aaaaaax"], ["", "a", "b", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^(?:(a?a?)\\1)*b$", ["b", "aab", "aaaab", "aaaaaaaab"], ["", "a", "x", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((a|b|)(a|b|))\\1$", ["", "aa", "bb", "aaaa", "abab"], ["a", "b", "x", "ab", "ba", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^(?:((|a)(|a))|x)*\\1$", ["", "x", "aa", "ax", "xx", "aaa", "aax", "xax", "aaaa", "aaax", "axax", "aaaaa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaaaaaa", "aaaaaaaaaaaax"], ["a", "b", "ab", "ba", "bb", "xa", "bx", "aab", "aba", "abb", "baa", "bab", "bba", "axa", "abx", "bax", "abab", "aabb", "abba", "aaaab", "abaab", "ababa", "aaaaaaaab"]),
+        ("^((a|)(b|)(a|))\\1$", ["", "aa", "bb", "aaaa", "abab"], ["a", "b", "x", "ab", "ba", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((a|)(a|))\\2\\3$", ["", "aa", "aaaa"], ["a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((a|)(?=a|$)(a|))\\1$", ["", "aa", "aaaa"], ["a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((a|)\\b(a|))\\1$", ["aa"], ["", "a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^(a)((\\1|)(\\1|))\\2$", ["a", "aaa", "aaaaa"], ["", "b", "x", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^(?:(a*a*)\\1)*b$", ["b", "aab", "aaaab", "aaaaaaaab"], ["", "a", "x", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((?:a|)(?:a|)){2,}\\1$", ["", "a", "aa", "aaa", "aaaa", "aaaaa", "aaaaaa", "aaaaaaaa", "aaaaaaaaaaaa"], ["b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaab", "abaab", "ababa", "aaaaaax", "aaaaaaaab", "aaaaaaaaaaaax"]),
+        ("^(?:(?<n>(a|)(a|))|(?<n>(|a)xx)){3,4}\\k<n>$", ["", "a", "aa", "xx", "aaa", "aaaa", "aaaaa", "aaaaaa", "aaaaaaaa"], ["b", "x", "ab", "ba", "bb", "ax", "xa", "bx", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaab", "abaab", "ababa", "aaaaaax", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^(((a|)(a|))|((a|)(a|)))\\1$", ["", "aa", "aaaa"], ["a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((?i:(a|)(A|)))\\1$", ["", "aa", "aaaa"], ["a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((a|)(b|))\\1$", ["", "aa", "bb", "abab"], ["a", "b", "x", "ab", "ba", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((a|){2}(a|))\\1$", ["", "aa", "aaaa", "aaaaaa"], ["a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((a|)(a|)b?(a|))\\1$", ["", "aa", "bb", "aaaa", "abab", "aaaaaa"], ["a", "b", "x", "ab", "ba", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^(?:((a|)(a|))\\1)*x$", ["x", "aax", "aaaaaax", "aaaaaaaaaaaax"], ["", "a", "b", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "axa", "xax", "abx", "bax", "aaaa", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa"]),
+        ("^((a|)(a|))(?:\\1|b)*$", ["", "a", "b", "aa", "ab", "bb", "aaa", "aab", "aba", "abb", "aaaa", "abab", "aabb", "abba", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa"], ["x", "ba", "ax", "xa", "xx", "bx", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaax", "axax", "aaaaaax", "aaaaaaaaaaaax"]),
+        ("^((ab|)(ab|))\\1$", ["", "abab"], ["a", "b", "x", "aa", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((a|)(aa|))\\1$", ["", "aa", "aaaa", "aaaaaa"], ["a", "b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^((a|)(?:b(a|))?)\\1$", ["", "aa", "bb", "abab"], ["a", "b", "x", "ab", "ba", "ax", "xa", "xx", "bx", "aaa", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "aaaa", "aabb", "abba", "aaax", "axax", "aaaaa", "aaaab", "abaab", "ababa", "aaaaaa", "aaaaaax", "aaaaaaaa", "aaaaaaaab", "aaaaaaaaaaaa", "aaaaaaaaaaaax"]),
+        ("^(?=((a|)(a|)))\\1a*$", ["", "a", "aa", "aaa", "aaaa", "aaaaa", "aaaaaa", "aaaaaaaa", "aaaaaaaaaaaa"], ["b", "x", "ab", "ba", "bb", "ax", "xa", "xx", "bx", "aab", "aba", "abb", "baa", "bab", "bba", "aax", "axa", "xax", "abx", "bax", "abab", "aabb", "abba", "aaax", "axax", "aaaab", "abaab", "ababa", "aaaaaax", "aaaaaaaab", "aaaaaaaaaaaax"]),
+    ];
+
+    /// <summary>
+    /// Patterns whose validity is ECMA-262's where V8 13.6 says otherwise. The counts of a quantifier are numbers,
+    /// and the first may not be the greater. V8 keeps a count past 2,147,483,647 as that number, so it accepts
+    /// <c>a{2147483648,2147483647}</c>, and any two counts past it in either order. The Script value
+    /// Katakana_Or_Hiragana, or Hrkt, is in PropertyValueAliases.txt and so in ECMA-262, and V8 refuses it. WSpace
+    /// is not a name ECMA-262 lists for White_Space, and V8 takes it.
+    /// </summary>
+    public static readonly (string Pattern, bool ValidWithU, bool ValidWithoutU)[] ValidityWhereV8DepartsFromEcma262 =
+    [
+        ("a{2147483648,2147483647}", false, false),
+        ("(?<n>a)a{2147483648,2147483647}", false, false),
+        ("a{4294967296,4294967295}", false, false),
+        ("a{99999999999999999999,99999999999999999998}", false, false),
+        ("a{2147483647,2147483648}", true, true),
+        ("a{99999999999999999998,99999999999999999999}", true, true),
+        ("a{0,2147483648}", true, true),
+        ("a{9,010}", true, true),
+        ("a{010,9}", false, false),
+        ("a{00,0}", true, true),
+        ("\\p{sc=Hrkt}", true, true),
+        ("\\P{Script=Katakana_Or_Hiragana}", true, true),
+        ("[\\p{scx=Hrkt}]", true, true),
+        ("\\p{Script_Extensions=Katakana_Or_Hiragana}", true, true),
+        ("\\p{Hrkt}", false, true),
+        ("\\p{gc=Hrkt}", false, true),
+        ("\\p{sc=Hrkt}{2,1}", false, false),
+        ("\\p{WSpace}", false, true),
+    ];
+
+    /// <summary>
+    /// Patterns with the Script value Katakana_Or_Hiragana (Hrkt), which ECMA-262 has and V8 13.6 refuses. No
+    /// character has it, so <c>\p{sc=Hrkt}</c> matches nothing and <c>\P{sc=Hrkt}</c> any character. The answers are
+    /// V8's for the same patterns with <c>\P{Any}</c> and <c>\p{Any}</c> in their place.
+    /// </summary>
+    public static readonly (string Pattern, string[] Matches, string[] Fails)[] ScriptOfNoCharacter =
+    [
+        ("^\\p{sc=Hrkt}$", [], ["", "a", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "ab", "\u3042\u30A2", "p{sc=Hrkt}", "\u000A"]),
+        ("^\\P{sc=Hrkt}$", ["a", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "\u000A"], ["", "ab", "\u3042\u30A2", "p{sc=Hrkt}"]),
+        ("^[\\p{Script=Katakana_Or_Hiragana}a]+$", ["a"], ["", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "ab", "\u3042\u30A2", "p{sc=Hrkt}", "\u000A"]),
+        ("^[^\\p{scx=Hrkt}a]$", ["Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "\u000A"], ["", "a", "ab", "\u3042\u30A2", "p{sc=Hrkt}"]),
+        ("^[\\P{Script_Extensions=Katakana_Or_Hiragana}]$", ["a", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "\u000A"], ["", "ab", "\u3042\u30A2", "p{sc=Hrkt}"]),
+        ("^[^\\P{scx=Hrkt}]$", [], ["", "a", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "ab", "\u3042\u30A2", "p{sc=Hrkt}", "\u000A"]),
+        ("^(?:\\p{sc=Hrkt}|a)+$", ["a"], ["", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "ab", "\u3042\u30A2", "p{sc=Hrkt}", "\u000A"]),
+        ("\\p{scx=Katakana_Or_Hiragana}", [], ["", "a", "Z", "\u3042", "\u30A2", "\u30FC", "\uFF70", "\u3099", "-", " ", "\uD82C\uDC01", "ab", "\u3042\u30A2", "p{sc=Hrkt}", "\u000A"]),
+    ];
+
+    /// <summary>
+    /// Patterns with whether V8 accepts each with the <c>u</c> flag and with no flag. A pattern neither accepts is
+    /// not a valid ECMA-262 regular expression. The rows of <see cref="ValidityWhereV8DepartsFromEcma262"/> are
+    /// tested with these.
+    /// </summary>
+    public static readonly (string Pattern, bool ValidWithU, bool ValidWithoutU)[] Validity =
+    [
+        .. ValidityWhereV8DepartsFromEcma262,
+        ("$+", false, false),
+        ("(?<a>x)[\\k]", false, false),
+        ("(?<n>a)[\\k<a>]", false, false),
+        ("(?<n>a)[\\k]", false, false),
+        ("(?<n>a)[\\\\k]", true, true),
+        ("(?<n>a)[k]", true, true),
+        ("(?<n>a)\\k<n>", true, true),
+        ("(a)[\\k]", false, true),
+        ("[\\k<a>](?<n>a)", false, false),
+        ("[\\k](?<n>a)", false, false),
+        ("(()", false, false),
+        ("())", false, false),
+        ("(*)", false, false),
+        ("(?#c)", false, false),
+        ("(?'n'a)", false, false),
+        ("(?-:a)", false, false),
+        ("(?-i-s:a)", false, false),
+        ("(?:(?<a>x)|(?<b>y))(?<a>z)", false, false),
+        ("(?:(?<a>x)|b)(?:(?<a>y)|c)", false, false),
+        ("(?:+)", false, false),
+        ("(?:a", false, false),
+        ("(?:a))", false, false),
+        ("(?<!a)*", false, false),
+        ("(?<1a>a)", false, false),
+        ("(?<=a)+", false, false),
+        ("(?<>a)", false, false),
+        ("(?<\\u0030>a)", false, false),
+        ("(?<\\u>a)", false, false),
+        ("(?<\\u{}>a)", false, false),
+        ("(?<\\x61>a)", false, false),
+        ("(?<a", false, false),
+        ("(?<a b>a)", false, false),
+        ("(?<a-b>a)", false, false),
+        ("(?<a.b>a)", false, false),
+        ("(?<a>(?<a>x))", false, false),
+        ("(?<a>)\\k<b>", false, false),
+        ("(?<a>a)\\k", false, false),
+        ("(?<a>a)\\k<>", false, false),
+        ("(?<a>a)\\k<a", false, false),
+        ("(?<a>a)\\k<b>", false, false),
+        ("(?<a>a)\\ka", false, false),
+        ("(?<a>x)(?<a>y)", false, false),
+        ("(?<a>x)|((?<a>y)(?<a>z))", false, false),
+        ("(?<a>x|(?<a>y))", false, false),
+        ("(?<a\\u0020>a)", false, false),
+        ("(?<n>a)(?<n>b)", false, false),
+        ("(?<\u200D>a)", false, false),
+        ("(?<\uD83D\uDE00>a)", false, false),
+        ("(?>a)", false, false),
+        ("(?P<n>a)", false, false),
+        ("(?a)", false, false),
+        ("(?i", false, false),
+        ("(?i)a", false, false),
+        ("(?i-i:a)", false, false),
+        ("(?i:", false, false),
+        ("(?i:a", false, false),
+        ("(?ii:a)", false, false),
+        ("(?x:a)", false, false),
+        ("(a", false, false),
+        ("*a", false, false),
+        ("[", false, false),
+        ("[a", false, false),
+        ("[a--]", false, false),
+        ("[z-a]", false, false),
+        ("\\b+", false, false),
+        ("^*", false, false),
+        ("a)", false, false),
+        ("a**", false, false),
+        ("a*+", false, false),
+        ("a++", false, false),
+        ("a?+", false, false),
+        ("a\\", false, false),
+        ("a{1,2}{3}", false, false),
+        ("a{2}??", false, false),
+        ("a{3,2}", false, false),
+        ("a|*", false, false),
+        ("a|{1}", false, false),
+        ("x{1}{2}", false, false),
+        ("{1}", false, false),
+        ("((?=x$)x|^*?a,)$", false, false),
+        ("(?:ab|a|-\\B+?|^{0,2}a\\.b)+,a", false, false),
+        ("(^?x|b^|\\^\\b)+?", false, false),
+        ("(a\\.b|$x-(?!\\.)|\\b?,a(?<=\\b))*x$", false, false),
+        ("(x-|a,|$\\$^+)*$", false, false),
+        ("\\B{2}(?<=x),a(?!$)$", false, false),
+        ("^($x^*)$(.[ab]){2,3}?$", false, false),
+        ("^(?<=$)*?([a-z]+(?!b)[,.-]^)+?[ab]", false, false),
+        ("^(?<=\\.){2,3}?b\\b[ab]", false, false),
+        ("^(x(?<!,a){1,3})(?!\\b)(?:.[ab])+", false, false),
+        ("^*?^^\\$\\w+", false, false),
+        ("^[^,]+($(-a(?<=a))(?<=x)){2,3}?^{2}$", false, false),
+        ("^[^,]+(?=,a)(?:(?!x),[ab]^+)*$", false, false),
+        ("^\\ba${1,3}[ab]", false, false),
+        ("^a+(?=(?<!-){2,}(-[a-z]+)*?\\b)(?:.a)*?$", false, false),
+        ("a{2}${2,3}?b$$", false, false),
+        ("!$*$w|$", false, false),
+        ("!<|cx$*", false, false),
+        ("!|$*0?", false, false),
+        ("$$??c::1", false, false),
+        ("$*!", false, false),
+        ("$*.x<", false, false),
+        ("$?c}", false, false),
+        ("<^*!a", false, false),
+        ("<w*k^*", false, false),
+        ("=^$k^?!", false, false),
+        ("=^s^?", false, false),
+        ("L{{\\|^+", false, false),
+        ("^*!b\\!<.", false, false),
+        ("^+-", false, false),
+        ("^?\\d+", false, false),
+        ("b00\\w$+", false, false),
+        ("b^+>!", false, false),
+        ("bc,$*bb!", false, false),
+        ("c$w^?bb1", false, false),
+        ("p^+}k+b", false, false),
+        ("u^?=-+", false, false),
+        ("w^+1", false, false),
+        ("x,x1\\b?p", false, false),
+        ("}b}^*>s", false, false),
+        ("$?s++|1", false, false),
+        (")x.{|=", false, false),
+        ("*L\\?}}", false, false),
+        (",L{(cx", false, false),
+        (",p1:(", false, false),
+        ("0)!xu", false, false),
+        ("1(>*!", false, false),
+        (">aL)-", false, false),
+        ("?(=:\\kLk", false, false),
+        ("?}L$", false, false),
+        ("]s^!\\", false, false),
+        ("^-*1\\b)", false, false),
+        ("b?\\0(", false, false),
+        ("d}d])", false, false),
+        ("k=|?aka!", false, false),
+        ("w-<(", false, false),
+        ("(?:(?<a>x)|(?<a>y))\\k<a>\\&?", false, true),
+        ("(?i:\\b)\\u212a\\&?", false, true),
+        ("(?i:\\bk\\b)\\&?", false, true),
+        ("(?m:^a$)\\&?", false, true),
+        ("[\\d-z]", false, true),
+        ("[\\k]", false, true),
+        ("[\\w-a]", false, true),
+        ("[\\x]", false, true),
+        ("[^]]", false, true),
+        ("\\01", false, true),
+        ("\\18", false, true),
+        ("\\_", false, true),
+        ("\\a", false, true),
+        ("\\h", false, true),
+        ("\\k<", false, true),
+        ("\\p{", false, true),
+        ("\\p{L=x}", false, true),
+        ("\\p{gc=Greek}", false, true),
+        ("\\u{}", false, true),
+        ("\\x", false, true),
+        ("\\x1g", false, true),
+        ("\\z", false, true),
+        ("\\\u00E9", false, true),
+        ("^(.)(?i:\\1)\\&?$", false, true),
+        ("^(?i:[^a-z])\\&?$", false, true),
+        ("^(?i:\\u1e9e)\\&?$", false, true),
+        ("^(?i:s)\\&?$", false, true),
+        ("^(?i:\u00E9)\\&?$", false, true),
+        ("^(?i:\u0131)\\&?$", false, true),
+        ("^(?i:\u01F0)\\&?$", false, true),
+        ("^(?i:\u03C3)\\&?$", false, true),
+        ("^(?i:\u1F88)\\&?$", false, true),
+        ("^(?i:\uFB00)\\&?$", false, true),
+        ("^(\u00DF)(?i:\\1)\\&?$", false, true),
+        ("^[\\&\\@\\_]+$", false, true),
+        ("^[^\\%]{1,3}$", false, true),
+        ("a{,2}", false, true),
+        ("x{ 1}", false, true),
+        ("x{1,a}", false, true),
+        ("{", false, true),
+        ("!\\1\\|ca", false, true),
+        ("-L\\xs", false, true),
+        ("<$|x\\1<x", false, true),
+        ("\\1", false, true),
+        ("\\1.]", false, true),
+        ("\\?p]\\\\\\k", false, true),
+        ("\\c.{w", false, true),
+        ("\\ukk,]^s", false, true),
+        ("\\x!*$=!", false, true),
+        ("\\xu", false, true),
+        ("]w\\L", false, true),
+        ("a0}\\psux", false, true),
+        ("bL,\\L==c", false, true),
+        ("cd}^\\u", false, true),
+        ("kap+!\\L", false, true),
+        ("s.a0b\\1", false, true),
+        ("sk]{\\u{a", false, true),
+        ("su]\\pL,}", false, true),
+        ("u=0a^\\pp", false, true),
+        ("x<bk\\c", false, true),
+        ("xbL=\\s\\p", false, true),
+        ("{+0\\xd{+", false, true),
+        ("|-.\\Lw", false, true),
+        ("|]=:\\L?^", false, true),
+        ("(?:\\1|(?<=(?<!^)a)(?<=(?:^)+)|){2,}a$", false, true),
+        ("(?:\\1|){2,}$", false, true),
+        ("(?:\\1|xx){1,}a$", false, true),
+        ("(?:\\1||){1}a", false, true),
+        ("(?:a|\\1\\B){3}a", false, true),
+        ("^(?:\\1|x){1,2}x$", false, true),
+        ("[\\ud83d\\ude00-\\ud83d\\ude4f]", true, false),
+        ("^(?i:[\uD801\uDC00-\uD801\uDC27])$", true, false),
+        ("^[\\ud83d\\ude00-\\ud83d\\ude4f]+$", true, false),
+        ("^[\uD83D\uDE00-\uD83D\uDE0E]$", true, false),
+        ("$^", true, true),
+        ("(?:a)", true, true),
+        ("(?<!(?<=b)a)a", true, true),
+        ("(?<=(?:ab)+)x", true, true),
+        ("(?<=(?i:\\1)(.))x", true, true),
+        ("(?<n>a)\\k<n>", true, true),
+        ("(?i:(?-i:a)b)", true, true),
+        ("(?i:a(?-i:b)c)", true, true),
+        ("(?m:^a)", true, true),
+        ("\\p{LC}", true, true),
+        ("\\p{L}", true, true),
+        ("\\p{Script=Zyyy}", true, true),
+        ("^(?:(?!\uD83D\uDE00).)*$", true, true),
+        ("^(?:[a-z]+\\d)+$", true, true),
+        ("^(?:a+?b*?)+?c", true, true),
+        ("^(?<n>.)\\k<n>$", true, true),
+        ("^(?i:(a))\\1$", true, true),
+        ("^(?i:\uD801\uDC28)$", true, true),
+        ("^\\p{Lu}", true, true),
+        ("^\\p{Script_Extensions=Latin}+$", true, true),
+        (",0-", true, true),
+        ("0!b*", true, true),
+        ("0.|.1s", true, true),
+        ("00L*|", true, true),
+        (":xbp^!|s", true, true),
+        ("<\\*", true, true),
+        ("=*w", true, true),
+        (">dp", true, true),
+        ("b^>,", true, true),
+        ("p=pbs+", true, true),
+    ];
+}

@@ -2,6 +2,30 @@
 
 The version history of `corvus-json-schema-rs`, the Python package backed by the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.4
+
+V0.1.4 takes version 0.1.7 of the `corvus-json-schema` crate. That fixes wrong results for several forms of pattern and a validation that did not end, replaces the crate's regular expression engine, and gives every match of a pattern a limit of time. The functions and types that were there are unchanged, and there are additions for the limit. Versions 0.1.0 to 0.1.3 are affected. The pure-Python `corvus-json-schema` package is not.
+
+### The regular expression engine
+
+The crate no longer uses the `regress` crate for the patterns with a lookaround, a backreference or a modifier group. It matches them with an engine of its own, a port of the ECMA-262 engine of the Corvus Go module, and matches every pattern as it is written. The crate's [version history](../../src-rs/corvus-json-schema/VERSIONHISTORY.md) lists the patterns that were answered wrongly before (a repetition inside a repetition that lost its count or did not end, a backreference from inside its group, two groups with one name, case-insensitive matching without the `u` flag, a pattern that is valid only without the `u` flag and a character beyond the Basic Multilingual Plane, `\B` beside a character of several bytes, and others), and what was measured: V8's answer for all 4,268,313 texts of the ECMA-262 regular expression test data that can be asked.
+
+### Limits on regular expressions
+
+A schema and an instance may both come from outside, so a pattern is now bounded in what it costs. Nothing that was there has changed. There is one new option and there are two new exceptions.
+
+- **A match has a limit of one second.** `pattern_match_limit`, a keyword of `compile` and a field of `CompileOptions`, is the seconds one match of a `pattern` or `patternProperties` regular expression against one string may take. The default is `1.0`. `None` or `0` turns the limit off for a caller who trusts both the schema and the instances. The limit is on each match, not on the validation.
+- **`PatternMatchLimitError`** is raised by a validation (calling the validator, `is_valid`, `is_valid_json` and `evaluate`) when a match reached the limit, or when its backtracking held 1,048,576 entries. The instance is then neither valid nor not valid. The message names the pattern and the limit. `compile` can raise it too, because a pattern of `patternProperties` is matched against the property names the schema declares.
+- **`PatternTooLargeError`** is raised by `compile` for a schema with a regular expression over a limit of size: 1,048,576 bytes of pattern, 1,000 levels of groups, or 1,048,576 counted for it as it is read (a pattern of plain characters can be 16,384 characters long). It is a `SchemaCompilationError`, so code that catches those still catches it. A regular expression that is not valid raises `SchemaCompilationError` itself, as before.
+
+### Bug fixes
+
+- **A separated list with a `$` inside it.** The crate matches a pattern of the form `^item(separator item)*$`, such as `^([a-z]+)(\.[a-z]+)*$`, without a regular expression engine. It dropped a `$` at the end of the first item or of the repeated group, so `^x(,a$)*$` was matched as `^x(,a)*$`. A `$` holds only at the end of the string, so the group of `^x(,a$)*$` can match once at most. `cjs.compile({"pattern": "^x(,a$)*$"})("x,a,a")` returned `True`, where the instance is not valid. `^x$(,a)*$` took `"x,a"`, and `^(a,$)*b$` took `"a,b"`. Calling the validator, `is_valid`, `is_valid_json` and `evaluate` were all affected, and so was a pattern used for `patternProperties` or `propertyNames`. Such a pattern is now matched by a regular expression engine. An escaped `\$` is a literal character and is matched as before. No other form of pattern was affected.
+
+### Notices
+
+- **The notice of the Unicode data is in the package.** The Unicode tables of the `corvus-json-schema` crate are derived from the Unicode Character Database, which is under the Unicode License V3. That license asks that its notice goes with every copy of the data. `THIRD-PARTY-NOTICES.txt` has it, with the notice of the `regress` crate that the tables were first read from. It is a license file of the project, so it is now in the source distribution and in every wheel (`dist-info/licenses`). Versions 0.1.0 to 0.1.3 carried no such notice.
+
 ## V0.1.3
 
 V0.1.3 fixes a crash of the Python process for a schema whose `not` leads back to the schema it is in, by taking version 0.1.6 of the `corvus-json-schema` crate. There are no API changes. Versions 0.1.0 to 0.1.2 are affected. The pure-Python `corvus-json-schema` package is not.

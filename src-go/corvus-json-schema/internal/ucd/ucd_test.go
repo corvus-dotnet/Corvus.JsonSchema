@@ -168,7 +168,15 @@ func TestTheDataIsUnicode17(t *testing.T) {
 			t.Errorf("ToUpper(U+%04X) = U+%04X, want U+%04X", c[1], got, c[0])
 		}
 	}
-	for _, name := range []string{"Nope", "", "l", "Latn=", "Any", "ASCII"} {
+	// Katakana_Or_Hiragana is a Script value of PropertyValueAliases.txt that no code point has.
+	for _, name := range []string{"Katakana_Or_Hiragana", "Hrkt"} {
+		for _, table := range []*Table{Script(name), ScriptExtensions(name)} {
+			if table == nil || len(table.AppendRanges(nil)) != 0 || table.Contains(0x3042) || table.Contains(0x30FC) {
+				t.Errorf("%q is not a script with no code point", name)
+			}
+		}
+	}
+	for _, name := range []string{"Nope", "", "l", "Latn=", "Any", "ASCII", "hrkt", "Katakana_or_Hiragana"} {
 		if Category(name) != nil || Script(name) != nil || ScriptExtensions(name) != nil || Binary(name) != nil {
 			t.Errorf("%q names a table", name)
 		}

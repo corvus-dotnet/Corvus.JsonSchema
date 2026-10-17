@@ -26,6 +26,7 @@ module CorvusJsonSchema
 
 export Validator, compile_schema, compile_schema_uri, validate, evaluate
 export Document, parse_document, ParseError, CompileError, DepthExceededError, PatternMatchError, MAX_DEPTH
+export PatternTooLargeError
 export Dialect, Draft4, Draft6, Draft7, Draft201909, Draft202012
 export ResultsCollector, ResultsLevel, Basic, Detailed, Verbose, SchemaResult, results
 export Annotation, annotations, collect_annotations, schema_location_fragment
@@ -36,9 +37,9 @@ include("values.jl")
 include("names.jl")
 include("uri.jl")
 include("dialect.jl")
+include("pattern_engine.jl")
 include("options.jl")
 include("metaschemas.jl")
-include("pattern_engine.jl")
 include("unicode.jl")
 include("pattern.jl")
 include("formats.jl")

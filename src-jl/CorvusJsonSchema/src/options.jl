@@ -15,11 +15,14 @@ struct CompileOptions
     entry_point::String
     has_entry_point::Bool
     max_depth::Int
+    # The limit on the time of one match of a pattern.
+    pattern_match_limit::PatternMatchLimit
 end
 
 function CompileOptions(; default_dialect::Dialect=Draft202012, assert_format::Union{Nothing,Bool}=nothing,
     assert_format_in_legacy_drafts::Bool=false, assert_content::Bool=true, formats=nothing, resolver=nothing,
-    base_uri::AbstractString="", entry_point::Union{Nothing,AbstractString}=nothing, max_depth::Integer=128)
+    base_uri::AbstractString="", entry_point::Union{Nothing,AbstractString}=nothing, max_depth::Integer=128,
+    pattern_match_limit::Union{Nothing,Real}=1)
     custom = Dict{String,Any}()
     if formats !== nothing
         for (name, validator) in formats
@@ -29,7 +32,7 @@ function CompileOptions(; default_dialect::Dialect=Draft202012, assert_format::U
     return CompileOptions(default_dialect, assert_format === nothing ? Int8(0) : (assert_format ? Int8(1) : Int8(-1)),
         assert_format_in_legacy_drafts, assert_content, custom, resolver, String(base_uri),
         entry_point === nothing ? "" : String(entry_point), entry_point !== nothing,
-        max_depth >= 1 ? Int(max_depth) : 128)
+        max_depth >= 1 ? Int(max_depth) : 128, PatternMatchLimit(pattern_match_limit))
 end
 
 """

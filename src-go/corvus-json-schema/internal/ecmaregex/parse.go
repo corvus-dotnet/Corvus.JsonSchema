@@ -34,8 +34,48 @@ const unbounded = -1
 // maxCount caps the bounds of a counted quantifier. No text that fits in memory reaches a larger count.
 const maxCount = math.MaxInt32
 
-// maxNesting caps the depth of groups, which bounds the recursion of the parser and of the compilers.
-const maxNesting = 1000
+// The limits on the size of one pattern. A pattern may come from outside, so reading and compiling one must take
+// bounded time and memory whatever it holds. A pattern over a limit is refused with a *TooLargeError, which is not
+// the error of a pattern that is not valid.
+const (
+	// MaxPatternLength is the longest pattern that is read, in bytes of UTF-8.
+	MaxPatternLength = 1 << 20
+	// MaxNesting caps the depth of groups, which bounds the recursion of the parser and of the compilers.
+	MaxNesting = 1000
+	// MaxSize is the largest size a pattern may have, in the bytes the parser counts for it: nodeSize for each node
+	// of its syntax tree, and rangeSize for each range of a class as its members are read, for each range a case
+	// insensitive group or a negated property adds, for each alternative that encloses a named group and for each
+	// group that shares its name. The tree, the program compiled from it and the time to make both are proportional
+	// to that size, so it bounds them all: a pattern at the limit takes a few milliseconds and a few megabytes.
+	MaxSize   = 1 << 20
+	nodeSize  = 32
+	rangeSize = 8
+)
+
+// A TooLargeError reports a pattern over one of the limits of size. Limit names the limit and Value is its value.
+// The pattern was not read to its end, so the error says nothing of whether it is valid.
+type TooLargeError struct {
+	Limit string
+	Value int
+}
+
+// The names of the limits a TooLargeError carries.
+const (
+	LimitLength  = "length"
+	LimitNesting = "nesting"
+	LimitSize    = "size"
+)
+
+// Error implements the error interface.
+func (e *TooLargeError) Error() string {
+	switch e.Limit {
+	case LimitLength:
+		return fmt.Sprintf("the pattern is longer than %d bytes", e.Value)
+	case LimitNesting:
+		return fmt.Sprintf("the groups of the pattern nest more than %d deep", e.Value)
+	}
+	return fmt.Sprintf("the pattern has a size of more than %d bytes when it is read", e.Value)
+}
 
 // A node is one element of the syntax tree of a pattern.
 type node struct {
@@ -65,6 +105,7 @@ type node struct {
 // A parser reads a pattern by recursive descent. With unicode set it applies the grammar of the u flag. Without it,
 // it applies the Annex B grammar of patterns with no flag.
 type parser struct {
+	// p holds the pattern as code points with the u flag, and as UTF-16 code units without it (see codeUnits).
 	p       []rune
 	i       int
 	unicode bool
@@ -83,6 +124,16 @@ type parser struct {
 	icase, multiline, dotAll bool
 	// needsBacktracking records that the pattern has a construct only the backtracking matcher can run.
 	needsBacktracking bool
+	// size is the size of what has been read so far (see MaxSize).
+	size int
+}
+
+// charge adds to the size of the pattern, and stops the parser when the size is over its limit.
+func (p *parser) charge(bytes int) {
+	p.size += bytes
+	if p.size > MaxSize {
+		panic(&TooLargeError{Limit: LimitSize, Value: MaxSize})
+	}
 }
 
 // A branch names one alternative of one disjunction.
@@ -106,11 +157,22 @@ func (p *parser) fail(msg string) {
 	panic(parseError{msg, p.i})
 }
 
-// parse reads the pattern. It returns an error for a pattern that is not valid under the chosen grammar.
+// parse reads the pattern. It returns an error for a pattern that is not valid under the chosen grammar, and a
+// *TooLargeError for a pattern over a limit of size, which it stops reading at the limit.
 func parse(pattern string, unicode bool) (root *node, ps *parser, err error) {
+	if len(pattern) > MaxPatternLength {
+		return nil, nil, &TooLargeError{Limit: LimitLength, Value: MaxPatternLength}
+	}
 	ps = &parser{p: []rune(pattern), unicode: unicode}
+	if !unicode {
+		ps.p = codeUnits(ps.p)
+	}
 	defer func() {
 		if r := recover(); r != nil {
+			if large, ok := r.(*TooLargeError); ok {
+				root, err = nil, large
+				return
+			}
 			pe, ok := r.(parseError)
 			if !ok {
 				panic(r)
@@ -137,6 +199,36 @@ func parse(pattern string, unicode bool) (root *node, ps *parser, err error) {
 	}
 	return root, ps, nil
 }
+
+// codeUnits returns the UTF-16 code units of a pattern. Without the u flag ECMA-262 reads a pattern, and matches a
+// text, a code unit at a time. A character beyond the Basic Multilingual Plane is then two atoms, a quantifier after
+// it repeats the second, and in a class it is two members, so a range between two such characters runs from a low
+// surrogate to a high one and is an error.
+func codeUnits(p []rune) []rune {
+	n := 0
+	for _, c := range p {
+		if c > 0xFFFF {
+			n++
+		}
+	}
+	if n == 0 {
+		return p
+	}
+	units := make([]rune, 0, len(p)+n)
+	for _, c := range p {
+		if c > 0xFFFF {
+			units = append(units, highSurrogate(c), lowSurrogate(c))
+		} else {
+			units = append(units, c)
+		}
+	}
+	return units
+}
+
+// highSurrogate and lowSurrogate are the two UTF-16 code units of a code point beyond the Basic Multilingual Plane.
+func highSurrogate(c rune) rune { return 0xD800 + (c-0x10000)>>10 }
+
+func lowSurrogate(c rune) rune { return 0xDC00 + (c-0x10000)&0x3FF }
 
 // scanGroups counts the capturing groups of the pattern and notes whether any is named.
 func (p *parser) scanGroups() {
@@ -180,8 +272,8 @@ func (p *parser) eat(c rune) bool {
 
 func (p *parser) disjunction() *node {
 	p.depth++
-	if p.depth > maxNesting {
-		p.fail("groups nested too deeply")
+	if p.depth > MaxNesting {
+		panic(&TooLargeError{Limit: LimitNesting, Value: MaxNesting})
 	}
 	p.disjunctions++
 	p.path = append(p.path, branch{disjunction: p.disjunctions})
@@ -194,6 +286,7 @@ func (p *parser) disjunction() *node {
 	}
 	alt := &node{kind: nAlt, subs: []*node{first}}
 	for p.eat('|') {
+		p.charge(nodeSize)
 		p.path[last].alternative++
 		alt.subs = append(alt.subs, p.alternative())
 	}
@@ -220,7 +313,7 @@ func (p *parser) alternative() *node {
 // characters equivalent to it.
 func (p *parser) charNode(c rune) *node {
 	if p.icase {
-		if set := foldClosure(newCharSet([]rune{c, c}, false), p.unicode); len(set.ranges) != 2 || set.ranges[0] != set.ranges[1] {
+		if set, _ := foldClosure(newCharSet([]rune{c, c}, false), p.unicode); len(set.ranges) != 2 || set.ranges[0] != set.ranges[1] {
 			return &node{kind: nSet, set: set}
 		}
 	}
@@ -231,14 +324,24 @@ func (p *parser) charNode(c rune) *node {
 // equivalent to one of its members.
 func (p *parser) setNode(set *charSet) *node {
 	if p.icase {
-		set = foldClosure(set, p.unicode)
+		set = p.fold(set)
 	}
 	return &node{kind: nSet, set: set}
+}
+
+// fold returns the set with every character equivalent to one of its members, and charges the pattern for the work
+// and for the set: a byte for each character with a case variant that the set holds, and its ranges.
+func (p *parser) fold(set *charSet) *charSet {
+	closed, variants := foldClosure(set, p.unicode)
+	p.charge(variants + rangeSize*len(closed.ranges)/2)
+	return closed
 }
 
 var anySet = newCharSet([]rune{0, maxRune}, false)
 
 func (p *parser) term() *node {
+	// The atom, and the repetition or the group around it.
+	p.charge(2 * nodeSize)
 	c := p.peek()
 	quantifiable := true
 	var atom *node
@@ -321,6 +424,26 @@ func (p *parser) looksLikeQuantifier() bool {
 	return k < len(s) && s[k] == '}'
 }
 
+// greaterAsWritten reports whether the first of two runs of decimal digits is the greater number. The runs are
+// compared as written, because a count has no limit of size in the grammar and number stops at maxCount.
+func greaterAsWritten(a, b []rune) bool {
+	for len(a) > 0 && a[0] == '0' {
+		a = a[1:]
+	}
+	for len(b) > 0 && b[0] == '0' {
+		b = b[1:]
+	}
+	if len(a) != len(b) {
+		return len(a) > len(b)
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return a[i] > b[i]
+		}
+	}
+	return false
+}
+
 // number reads a run of decimal digits, saturating at maxCount.
 func (p *parser) number() int {
 	start := p.i
@@ -353,20 +476,23 @@ func (p *parser) quantifier() (min, max int, lazy, ok bool) {
 		min, max = 0, 1
 	case c == '{' && p.looksLikeQuantifier():
 		p.i++
+		first := p.i
 		min = p.number()
 		max = min
-		if p.eat(',') {
+		if firstEnd := p.i; p.eat(',') {
 			if p.peek() == '}' {
 				max = unbounded
 			} else {
+				second := p.i
 				max = p.number()
+				// Both counts stop at maxCount, so the numbers are compared as they are written.
+				if greaterAsWritten(p.p[first:firstEnd], p.p[second:p.i]) {
+					p.fail("numbers out of order in quantifier")
+				}
 			}
 		}
 		if !p.eat('}') {
 			p.fail("malformed quantifier")
-		}
-		if max != unbounded && max < min {
-			p.fail("numbers out of order in quantifier")
 		}
 	default:
 		return 0, 0, false, false
@@ -476,6 +602,8 @@ func (p *parser) capture(name string) *node {
 		if p.names == nil {
 			p.names = map[string][]namedGroup{}
 		}
+		// The path is kept, and every group of the same name is compared with it.
+		p.charge(rangeSize * (len(p.path) + len(p.names[name])))
 		p.names[name] = append(p.names[name], namedGroup{group: g.group, path: append([]branch(nil), p.path...)})
 	}
 	g.subs = []*node{p.disjunction()}
@@ -506,6 +634,10 @@ func (p *parser) groupName() string {
 			if c < 0 {
 				p.fail("invalid group name")
 			}
+		} else if c >= 0xD800 && c <= 0xDBFF && p.peek() >= 0xDC00 && p.peek() <= 0xDFFF {
+			// Without the u flag the pattern is code units, and a name still takes a surrogate pair as one character.
+			c = 0x10000 + (c-0xD800)<<10 + (p.peek() - 0xDC00)
+			p.i++
 		}
 		if len(name) == 0 {
 			if !(c == '$' || c == '_' || idStart.Contains(c)) {
@@ -659,6 +791,7 @@ func (p *parser) classEscape(c rune) *charSet {
 			p.fail("invalid property name")
 		}
 		if c == 'P' {
+			p.charge(rangeSize * len(set.ranges) / 2)
 			return newCharSet(set.ranges, true)
 		}
 		return set
@@ -770,19 +903,24 @@ func (p *parser) characterEscape(inClass bool) rune {
 		return p.legacyOctal()
 	}
 	// Identity escapes. The u flag allows only the syntax characters and '/', and '-' in a class. Annex B allows
-	// any character.
+	// any character, except k in a pattern with a named group. Outside a class atomEscape reads \k before this is
+	// reached, so here the \k of such a pattern is in a class, where it is not a reference either.
 	if p.unicode && !syntaxCharacter(c) && !(inClass && c == '-') {
+		p.fail("invalid escape")
+	}
+	if c == 'k' && p.hasNames {
 		p.fail("invalid escape")
 	}
 	return c
 }
 
 // unicodeEscape reads what follows a \u and returns the code point, or -1, consuming nothing, when it is not a
-// well-formed escape. With braces set it accepts the \u{...} form. A surrogate pair written as two escapes is one code
-// point.
-func (p *parser) unicodeEscape(braces bool) rune {
+// well-formed escape. With unicodeMode set, as it is with the u flag and always in a group name, it accepts the
+// \u{...} form and reads a surrogate pair written as two escapes as one code point. Without it each escape is one
+// code unit.
+func (p *parser) unicodeEscape(unicodeMode bool) rune {
 	start := p.i
-	if braces && p.eat('{') {
+	if unicodeMode && p.eat('{') {
 		digits := p.i
 		v := rune(0)
 		for p.more() && hexValue(p.peek()) >= 0 {
@@ -801,7 +939,7 @@ func (p *parser) unicodeEscape(braces bool) rune {
 	if u < 0 {
 		return -1
 	}
-	if u >= 0xD800 && u <= 0xDBFF && p.i+6 <= len(p.p) && p.p[p.i] == '\\' && p.p[p.i+1] == 'u' {
+	if unicodeMode && u >= 0xD800 && u <= 0xDBFF && p.i+6 <= len(p.p) && p.p[p.i] == '\\' && p.p[p.i+1] == 'u' {
 		save := p.i
 		p.i += 2
 		if low := p.hex(4); low >= 0xDC00 && low <= 0xDFFF {
@@ -817,6 +955,8 @@ func (p *parser) class() *node {
 	p.i++
 	negated := p.eat('^')
 	var pairs []rune
+	// The ranges read so far that the size of the pattern has been charged for.
+	charged := 0
 	for {
 		if !p.more() {
 			p.fail("unterminated character class")
@@ -824,6 +964,8 @@ func (p *parser) class() *node {
 		if p.eat(']') {
 			break
 		}
+		p.charge(rangeSize * (len(pairs)/2 - charged))
+		charged = len(pairs) / 2
 		first, firstSet := p.classAtom()
 		if p.peek() == '-' && p.i+1 < len(p.p) && p.p[p.i+1] != ']' {
 			p.i++
@@ -848,9 +990,10 @@ func (p *parser) class() *node {
 	}
 	// Inside a case-insensitive group a character matches the class when it is equivalent to a member, and a
 	// negated class excludes exactly those characters.
+	p.charge(rangeSize * (len(pairs)/2 - charged))
 	set := newCharSet(pairs, false)
 	if p.icase {
-		set = foldClosure(set, p.unicode)
+		set = p.fold(set)
 	}
 	if negated {
 		set = newCharSet(set.ranges, true)

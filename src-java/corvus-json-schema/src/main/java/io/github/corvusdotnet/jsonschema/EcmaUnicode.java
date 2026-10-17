@@ -1,8 +1,10 @@
 package io.github.corvusdotnet.jsonschema;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.IntPredicate;
 
@@ -201,6 +203,13 @@ final class EcmaUnicode {
     private static final int BINARY = 2 << 16;
     private static final int SCRIPT = 3 << 16;
     private static final int SCRIPT_EXTENSIONS = 4 << 16;
+    /**
+     * The Script value Katakana_Or_Hiragana (Hrkt). PropertyValueAliases.txt has it, so ECMA-262 does, for Script and
+     * for Script_Extensions. No character has it: Scripts.txt gives it to none, and ScriptExtensions.txt names the
+     * two scripts apart. So its set is empty and it has no table.
+     */
+    private static final int NO_CHARACTER_SCRIPT = 5 << 16;
+    private static final int[] NO_CHARACTERS = new int[0];
 
     /**
      * Resolves the expression p[start, end) between the braces of {@code \p{...}}, as ECMA-262 does: a name and a
@@ -227,13 +236,13 @@ final class EcmaUnicode {
             int category = find(EcmaUnicodeData.CATEGORY_NAMES, p, eq + 1, end);
             return category >= 0 ? CATEGORY | category : NONE;
         }
-        if (is("Script", p, start, eq) || is("sc", p, start, eq)) {
-            int script = find(EcmaUnicodeData.SCRIPT_NAMES, p, eq + 1, end);
-            return script >= 0 ? SCRIPT | script : NONE;
-        }
-        if (is("Script_Extensions", p, start, eq) || is("scx", p, start, eq)) {
-            int script = find(EcmaUnicodeData.SCRIPT_NAMES, p, eq + 1, end);
-            return script >= 0 ? SCRIPT_EXTENSIONS | script : NONE;
+        boolean script = is("Script", p, start, eq) || is("sc", p, start, eq);
+        if (script || is("Script_Extensions", p, start, eq) || is("scx", p, start, eq)) {
+            int value = find(EcmaUnicodeData.SCRIPT_NAMES, p, eq + 1, end);
+            if (value >= 0) {
+                return (script ? SCRIPT : SCRIPT_EXTENSIONS) | value;
+            }
+            return is("Katakana_Or_Hiragana", p, eq + 1, end) || is("Hrkt", p, eq + 1, end) ? NO_CHARACTER_SCRIPT : NONE;
         }
         return NONE;
     }
@@ -267,6 +276,8 @@ final class EcmaUnicode {
             }
             case SCRIPT:
                 return table(EcmaUnicodeData.SCRIPT_TABLES[index]);
+            case NO_CHARACTER_SCRIPT:
+                return NO_CHARACTERS;
             default:
                 return table(EcmaUnicodeData.SCRIPT_EXTENSION_TABLES[index]);
         }
@@ -413,6 +424,32 @@ final class EcmaUnicode {
             ENGINE_CLASSES.put(set, result);
             return result;
         }
+    }
+
+    /** The names of the classes of {@link #engineClass}, and for each the length of {@link #referenceLength}. */
+    private static final String[] REFERENCE_NAMES = {
+        "Lu", "Ll", "Lt", "Lm", "Lo", "Mn", "Mc", "Me", "Nd", "Nl", "No", "Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po", "Sm",
+        "Sc", "Sk", "So", "Zs", "Zl", "Zp", "Cc", "Cf", "Cs", "Co", "Cn", "LC", "L", "M", "N", "P", "S", "Z", "C",
+        "IsAlphabetic", "IsLowercase", "IsUppercase",
+    };
+    private static final int[] REFERENCE_LENGTHS = {
+        489, 659, 8, 545, 2158, 1381, 495, 8, 392, 52, 52, 8, 49, 63, 63, 8, 8, 402, 80, 48, 45, 1457, 8, 8, 8, 8, 65, 8,
+        8, 5754, 762, 3079, 1353, 429, 411, 1510, 7, 5753, 3261, 789, 498,
+    };
+
+    /**
+     * The length of what is written for the set of a property with the engine class of this name, alone in a class,
+     * on JDK 17: the class and what corrects it for Unicode 13. On a later JDK, which knows a later Unicode version,
+     * less corrects it and the text is shorter. The limit on the size of a translation counts a set at this length
+     * on every JDK, so that it refuses the same patterns on each (see {@link EcmaRegex#translation}).
+     */
+    static int referenceLength(String engineName) {
+        for (int k = 0; k < REFERENCE_NAMES.length; k++) {
+            if (engineName.length() == REFERENCE_NAMES[k].length() + 4 && engineName.startsWith(REFERENCE_NAMES[k], 3)) {
+                return REFERENCE_LENGTHS[k];
+            }
+        }
+        throw new IllegalStateException(engineName);
     }
 
     /** The code points of {@code a} that are not in {@code b}. */
@@ -680,6 +717,28 @@ final class EcmaUnicode {
             return set;
         }
         return union(set, Arrays.copyOf(extra, m));
+    }
+
+    /**
+     * The classes of equivalent characters, under the Canonicalize of a grammar, that have a member in the set. Each
+     * class is given once, with all its members.
+     */
+    static int[][] foldClasses(int[] set, boolean unicode) {
+        Folding f = folding(unicode);
+        Map<int[], Boolean> seen = new IdentityHashMap<>();
+        List<int[]> classes = new ArrayList<>();
+        for (int i = 0; i < set.length; i += 2) {
+            int k = Arrays.binarySearch(f.points, set[i]);
+            if (k < 0) {
+                k = -k - 1;
+            }
+            for (; k < f.points.length && f.points[k] <= set[i + 1]; k++) {
+                if (seen.put(f.classes[k], Boolean.TRUE) == null) {
+                    classes.add(f.classes[k]);
+                }
+            }
+        }
+        return classes.toArray(new int[0][]);
     }
 
     /** The characters that are equivalent to some other character under the Canonicalize of a grammar. */
