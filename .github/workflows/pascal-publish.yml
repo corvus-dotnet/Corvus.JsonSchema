@@ -145,3 +145,15 @@ jobs:
             echo "Tagged $GITHUB_SHA as pas-v$VERSION."
             echo "https://github.com/$GITHUB_REPOSITORY/releases/tag/pas-v$VERSION"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  image:
+    name: Publish the release image
+    needs: [version, release]
+    # The released files as an image that a Dockerfile can pin (see release-image.yml): the Bowtie harnesses do.
+    uses: ./.github/workflows/release-image.yml
+    permissions:
+      contents: read
+      packages: write  # push ghcr.io/corvus-dotnet/corvus-json-schema-pascal
+    with:
+      package: pascal
+      version: ${{ needs.version.outputs.version }}
