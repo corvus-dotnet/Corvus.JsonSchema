@@ -121,6 +121,7 @@ In CI, the website build runs as a **post-compile** job, in parallel with tests 
 - **Compile phase** (`build.ps1`) — sets `BUILDVAR_BuildWebsite=false` to skip the website build during the main compile.
 - **Post-compile phase** (`build-website.ps1`) — restores the compile cache and runs `docs/website/build.ps1 -SkipDotNetBuild`, using pre-built assemblies and XML docs from the compile phase. Reads `BUILDVAR_BasePathPrefix` and `BUILDVAR_IsPreviewDeployment` from environment variables.
 - **Deploy jobs** — download the website output artifact produced by the post-compile job.
+- **Docs-only pull requests** — a PR that changes `docs` and nothing the .NET build reads skips the .NET build. The `Documentation website` job of `build.yml` checks the code-sample catalog and runs `BuildWebsite` with `BUILDVAR_WebsiteBuildsDotNet=true`, so `docs/website/build.ps1` compiles the libraries it documents itself (no `-SkipDotNetBuild`). It uploads the same `website-output` artifact, and the PR preview deploys it. `.github/actions/dotnet-changes` decides which path a change takes.
 
 The parallel structure is enabled by the `postCompileScript` input in the reusable workflow (`endjin/Endjin.RecommendedPractices.GitHubActions`).
 

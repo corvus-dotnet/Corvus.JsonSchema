@@ -394,17 +394,21 @@ if ($SkipDotNetBuild) {
             continue
         }
         Write-Host "  [$projIndex/$($v5Projects.Count)] Building $proj..." -ForegroundColor Gray
-        & dotnet build $projPath -c Release -f net10.0 /p:GenerateDocumentationFile=true --no-incremental -v q
+        # No /p:GenerateDocumentationFile=true: the libraries write their XML documentation in a Release build as
+        # they are (the -SkipDotNetBuild path reads the same files from the .NET build), and a global property reaches
+        # every project referenced too, such as Corvus.Text.Json.SourceGenerator, which turns it off because the
+        # sources it shares with Corvus.Text.Json have cref attributes it cannot resolve (CS1574).
+        & dotnet build $projPath -c Release -f net10.0 --no-incremental -v q
         if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (net10.0)" }
         # netstandard builds — skip if the project doesn't target them
         $projXml = [xml](Get-Content $projPath)
         $tfms = ($projXml.Project.PropertyGroup | ForEach-Object { $_.TargetFrameworks; $_.TargetFramework }) -join ';'
         if ($tfms -match 'netstandard2\.0') {
-            & dotnet build $projPath -c Release -f netstandard2.0 /p:GenerateDocumentationFile=true --no-incremental -v q
+            & dotnet build $projPath -c Release -f netstandard2.0 --no-incremental -v q
             if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (netstandard2.0)" }
         }
         if ($tfms -match 'netstandard2\.1') {
-            & dotnet build $projPath -c Release -f netstandard2.1 /p:GenerateDocumentationFile=true --no-incremental -v q
+            & dotnet build $projPath -c Release -f netstandard2.1 --no-incremental -v q
             if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (netstandard2.1)" }
         }
     }
