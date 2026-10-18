@@ -146,8 +146,8 @@ jobs:
             commit --quiet --allow-empty -m "corvus-json-schema $VERSION" \
             -m "From corvus-dotnet/Corvus.JsonSchema@$GITHUB_SHA ($SUBDIR)."
           git tag "v$VERSION"
-          # main by name: the first push to the empty repository leaves the clone on git's default branch, which
-          # need not be main, and the first branch pushed there becomes its default.
+          # main by name, because our default branch is always main. A clone of the empty repository is left on
+          # git's default branch, which need not be main, and the first branch pushed there becomes its default.
           git push --quiet origin HEAD:refs/heads/main "refs/tags/v$VERSION"
       - name: Release
         env:

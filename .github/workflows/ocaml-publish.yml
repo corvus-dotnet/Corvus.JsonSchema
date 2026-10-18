@@ -156,7 +156,7 @@ jobs:
             commit --quiet --allow-empty -m "corvus-json-schema $VERSION" \
             -m "From corvus-dotnet/Corvus.JsonSchema@$GITHUB_SHA ($SUBDIR)."
           git tag "v$VERSION"
-          git push --quiet origin HEAD "refs/tags/v$VERSION"
+          git push --quiet origin HEAD:refs/heads/main "refs/tags/v$VERSION"
       - name: Release
         env:
           GH_TOKEN: ${{ secrets.OCAML_REPOSITORY_TOKEN }}

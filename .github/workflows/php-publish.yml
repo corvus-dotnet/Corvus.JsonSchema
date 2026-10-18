@@ -167,7 +167,7 @@ jobs:
             commit --quiet -m "corvus_json_schema $VERSION" \
             -m "From corvus-dotnet/Corvus.JsonSchema@$GITHUB_SHA (src-php/corvus-json-schema)."
           git tag "$VERSION"
-          git push --quiet origin HEAD "refs/tags/$VERSION"
+          git push --quiet origin HEAD:refs/heads/main "refs/tags/$VERSION"
       - name: Release
         env:
           GH_TOKEN: ${{ secrets.PHP_REPOSITORY_TOKEN }}
