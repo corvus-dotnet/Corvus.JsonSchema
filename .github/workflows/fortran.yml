@@ -1,0 +1,263 @@
+name: fortran
+# The Fortran binding (src-fortran/corvus-json-schema) to the corvus-json-schema C library: built and tested with fpm
+# against the latest capi-v release of the C library, with gfortran (the oldest version supported, 11, and a recent
+# one) on Linux and macOS, and with Intel ifx on Linux and Windows; built, tested and installed with CMake, and used
+# by an fpm project that depends on it. fortran-publish.yml calls this workflow before it publishes.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-fortran/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'docs/JsonSchemaForFortran.md'
+    - '.github/workflows/fortran.yml'
+    - '.github/workflows/fortran-publish.yml'
+    - 'LICENSE'
+  pull_request:
+    paths:
+    - 'src-fortran/**'
+    - 'JSON-Schema-Test-Suite'
+    - 'docs/JsonSchemaForFortran.md'
+    - '.github/workflows/fortran.yml'
+    - '.github/workflows/fortran-publish.yml'
+    - 'LICENSE'
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  SUBDIR: src-fortran/corvus-json-schema
+
+jobs:
+  test:
+    name: Build and test corvus-json-schema (${{ matrix.compiler }} ${{ matrix.version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            version: '11'
+            flags: -Wall -Wextra -std=f2018 -fimplicit-none -Werror -g -fcheck=all
+            # gfortran 11 warns falsely that deferred-length character variables of the tests may be used
+            # uninitialized; the library itself builds with every warning an error (the Build step).
+            test-flags: -Wno-maybe-uninitialized
+          - os: ubuntu-latest
+            compiler: gcc
+            version: '14'
+            flags: -Wall -Wextra -std=f2018 -fimplicit-none -Werror -g -fcheck=all
+          - os: macos-latest
+            compiler: gcc
+            version: '14'
+            flags: -Wall -Wextra -std=f2018 -fimplicit-none -Werror -g -fcheck=all
+          - os: ubuntu-latest
+            compiler: intel
+            version: '2025.3'
+            flags: -warn all -stand f18 -check all -g
+          - os: windows-latest
+            compiler: intel
+            version: '2025.3'
+            flags: /warn:all /stand:f18 /check:all
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /LICENSE
+            /src-fortran/
+            /JSON-Schema-Test-Suite
+      - name: Checkout JSON-Schema-Test-Suite
+        run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
+      - name: Fortran compiler
+        id: fortran
+        uses: fortran-lang/setup-fortran@be037f0a45b1160f139d4ccd0b96f9e9bfd6a682 # v1.10.0
+        with:
+          compiler: ${{ matrix.compiler }}
+          version: ${{ matrix.version }}
+      - name: fpm
+        uses: fortran-lang/setup-fpm@a03b5f81f16417c937a31b745eeb866c5a26a7a0 # v10
+        with:
+          github-token: ${{ github.token }}
+          fpm-version: v0.13.0
+      - name: The C library
+        # The latest capi-v release, unpacked under $RUNNER_TEMP/capi, and made findable as a user of the binding
+        # makes it: the linker's path, the loader's path, pkg-config and CMake.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FC: ${{ steps.fortran.outputs.fc }}
+        run: |
+          tag=$(gh release list -R "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '[.[].tagName|select(startswith("capi-v"))][0]')
+          version=${tag#capi-v}
+          case "$RUNNER_OS" in
+            Linux) asset="corvus-json-schema-$version-x86_64-unknown-linux-gnu.tar.gz" ;;
+            macOS) asset="corvus-json-schema-$version-universal2-apple-darwin.tar.gz" ;;
+            Windows) asset="corvus-json-schema-$version-x86_64-pc-windows-msvc.zip" ;;
+          esac
+          gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "$asset" -D "$RUNNER_TEMP"
+          mkdir -p "$RUNNER_TEMP/capi"
+          case "$asset" in
+            *.zip) unzip -q "$RUNNER_TEMP/$asset" -d "$RUNNER_TEMP/capi-unpacked" ;;
+            *) mkdir -p "$RUNNER_TEMP/capi-unpacked" && tar -xzf "$RUNNER_TEMP/$asset" -C "$RUNNER_TEMP/capi-unpacked" ;;
+          esac
+          prefix="$RUNNER_TEMP/capi-unpacked/${asset%.*}"
+          prefix="${prefix%.tar}"
+          echo "C library $version at $prefix"
+          {
+            echo "CAPI_PREFIX=$prefix"
+            echo "CMAKE_PREFIX_PATH=$prefix"
+            echo "PKG_CONFIG_PATH=$prefix/lib/pkgconfig"
+          } >> "$GITHUB_ENV"
+          # Added to the paths the compiler's set-up gave (Intel's oneAPI libraries are on LD_LIBRARY_PATH).
+          case "$RUNNER_OS" in
+            Linux)
+              {
+                echo "LIBRARY_PATH=$prefix/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
+                echo "LD_LIBRARY_PATH=$prefix/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+              } >> "$GITHUB_ENV" ;;
+            macOS)
+              # DYLD_FALLBACK_LIBRARY_PATH, not DYLD_LIBRARY_PATH, so that it only fills in what a binary cannot find:
+              # the C library for the tests, and libgfortran for the fpm binary, which is linked against another
+              # Homebrew gcc's.
+              gfortran_lib=$(dirname "$("$FC" -print-file-name=libgfortran.5.dylib)")
+              {
+                echo "LIBRARY_PATH=$prefix/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
+                echo "DYLD_FALLBACK_LIBRARY_PATH=$prefix/lib:$gfortran_lib:/usr/local/lib:/usr/lib"
+              } >> "$GITHUB_ENV" ;;
+            Windows)
+              # ifx links the static library, built for the dynamic C runtime, with the system libraries it needs;
+              # the tests run with the DLL on the path for the CMake build, which links the shared library.
+              winprefix=$(cygpath -w "$prefix")
+              printf 'LIB=%s\\lib;%s\n' "$winprefix" "${LIB:-}" >> "$GITHUB_ENV"
+              printf '%s\\bin\n' "$winprefix" >> "$GITHUB_PATH" ;;
+          esac
+      - name: MSVC's linker, not Git Bash's link
+        # In a bash step on Windows, coreutils' link comes before MSVC's link.exe on the path, and ifx calls link to
+        # link. setup-fortran moves /usr/bin/link to $RUNNER_TEMP, which setup-fpm then puts on the path (fpm is
+        # installed there), so it is moved out of the way in both places.
+        if: runner.os == 'Windows'
+        run: |
+          for coreutils in /usr/bin/link "$RUNNER_TEMP/link"; do
+            if [ -e "$coreutils" ]; then mv "$coreutils" "$coreutils.coreutils"; fi
+          done
+          found=$(command -v link || true)
+          echo "link: $found"
+          case "$found" in
+            *[Mm]icrosoft*|*MSVC*) ;;
+            *) echo "::error::link is not MSVC's link.exe: $found"; exit 1 ;;
+          esac
+      - name: Compiler and fpm versions
+        run: |
+          "${{ steps.fortran.outputs.fc }}" --version 2>&1 | head -n 3 || true
+          fpm --version
+      - name: Check the version is the same everywhere and has an entry in VERSIONHISTORY.md
+        working-directory: ${{ env.SUBDIR }}
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' fpm.toml | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No version in fpm.toml."
+            exit 1
+          fi
+          grep -q "binding_version = \"$version\"" src/corvus_json_schema.f90 \
+            || { echo "::error::src/corvus_json_schema.f90 does not say binding_version $version."; exit 1; }
+          grep -q "^project(corvus_json_schema_fortran VERSION $version " CMakeLists.txt \
+            || { echo "::error::CMakeLists.txt does not say VERSION $version."; exit 1; }
+          grep -q "^## V$version$" VERSIONHISTORY.md || { echo "::error::VERSIONHISTORY.md has no V$version section."; exit 1; }
+          grep -q "binding_version == \"$version\"" test/api_test.f90 \
+            || { echo "::error::test/api_test.f90 does not check binding_version $version."; exit 1; }
+          cmp ../../LICENSE LICENSE
+      - name: Build (fpm)
+        # The library, with every warning an error (and the example, which fpm builds with it). On Windows the static
+        # library also needs the system libraries it uses.
+        working-directory: ${{ env.SUBDIR }}
+        env:
+          FPM_FC: ${{ steps.fortran.outputs.fc }}
+          FPM_CC: ${{ steps.fortran.outputs.cc }}
+          FLAGS: ${{ matrix.flags }}
+        run: |
+          link=()
+          if [ "$RUNNER_OS" = Windows ]; then
+            link=(--link-flag "kernel32.lib ntdll.lib userenv.lib ws2_32.lib dbghelp.lib")
+          fi
+          fpm build --flag "$FLAGS" "${link[@]}"
+      - name: Test (fpm)
+        # The suite, the annotation suite and the API, and the example. On Windows the static library also needs
+        # the system libraries it uses.
+        working-directory: ${{ env.SUBDIR }}
+        env:
+          FPM_FC: ${{ steps.fortran.outputs.fc }}
+          FPM_CC: ${{ steps.fortran.outputs.cc }}
+          FLAGS: ${{ matrix.flags }} ${{ matrix.test-flags }}
+          JSON_SCHEMA_TEST_SUITE: ${{ github.workspace }}/JSON-Schema-Test-Suite
+        run: |
+          set -o pipefail
+          link=()
+          if [ "$RUNNER_OS" = Windows ]; then
+            link=(--link-flag "kernel32.lib ntdll.lib userenv.lib ws2_32.lib dbghelp.lib")
+          fi
+          fpm test --flag "$FLAGS" "${link[@]}" 2>&1 | tee "$RUNNER_TEMP/fortran-tests.log"
+          fpm run --example validate --flag "$FLAGS" "${link[@]}"
+      - name: Check what ran
+        run: |
+          log="$RUNNER_TEMP/fortran-tests.log"
+          grep -E "^JSON-Schema-Test-Suite: ([0-9]+)/\1 passed" "$log" \
+            || { echo "::error::The JSON-Schema-Test-Suite did not run, or did not pass."; exit 1; }
+          grep -E "^([1-9][0-9]*)/\1 annotation assertions passed" "$log" \
+            || { echo "::error::The annotation suite did not run, or did not pass."; exit 1; }
+          grep -E "^api: [1-9][0-9]* passed, 0 failed" "$log" || { echo "::error::The API test did not pass."; exit 1; }
+          if grep -q "SKIPPED" "$log"; then
+            echo "::error::A test was skipped."
+            exit 1
+          fi
+      - name: Test (CMake)
+        # The shared library, through the C library's CMake package; then an installed package used by a project of
+        # its own.
+        working-directory: ${{ env.SUBDIR }}
+        env:
+          FC: ${{ steps.fortran.outputs.fc }}
+          JSON_SCHEMA_TEST_SUITE: ${{ github.workspace }}/JSON-Schema-Test-Suite
+        run: |
+          generator=()
+          if [ "$RUNNER_OS" = Windows ]; then
+            command -v ninja >/dev/null || choco install ninja --no-progress -y
+            generator=(-G Ninja)
+          fi
+          cmake -S . -B "$RUNNER_TEMP/build" "${generator[@]}" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/build"
+          ctest --test-dir "$RUNNER_TEMP/build" --output-on-failure
+          cmake --install "$RUNNER_TEMP/build" --prefix "$RUNNER_TEMP/installed"
+          consumer="$RUNNER_TEMP/consumer"
+          mkdir -p "$consumer"
+          cp example/validate.f90 "$consumer/"
+          printf '%s\n' 'cmake_minimum_required(VERSION 3.16)' 'project(consumer LANGUAGES Fortran)' \
+            'find_package(corvus_json_schema_fortran 0.1 REQUIRED)' 'add_executable(app validate.f90)' \
+            'target_link_libraries(app PRIVATE corvus_json_schema::fortran)' > "$consumer/CMakeLists.txt"
+          cmake -S "$consumer" -B "$consumer/build" "${generator[@]}" -DCMAKE_BUILD_TYPE=Release \
+            "-DCMAKE_PREFIX_PATH=$RUNNER_TEMP/installed;$CAPI_PREFIX"
+          cmake --build "$consumer/build"
+          if [ "$RUNNER_OS" = Windows ]; then "$consumer/build/app.exe"; else "$consumer/build/app"; fi
+      - name: An fpm project that depends on the package
+        if: runner.os != 'Windows'
+        env:
+          FPM_FC: ${{ steps.fortran.outputs.fc }}
+        run: |
+          # In the workspace, with the package as a relative path (fpm reads a path dependency as relative).
+          project="$GITHUB_WORKSPACE/fpm-consumer"
+          mkdir -p "$project/app"
+          cp "$SUBDIR/example/validate.f90" "$project/app/main.f90"
+          printf '%s\n' 'name = "consumer"' '[dependencies]' \
+            "corvus-json-schema = { path = \"../$SUBDIR\" }" > "$project/fpm.toml"
+          (cd "$project" && fpm run)

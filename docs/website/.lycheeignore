@@ -35,11 +35,15 @@ https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/src-jl
 https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/src-r
 https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/src-pas
 https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/src-ml
+https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/src-fortran
 
 # The OCaml package's own repository, which exists only once it is created for the first release, and its page in
 # the opam repository, which exists only once the package's first version is merged there.
 https://github\.com/corvus-dotnet/corvus-json-schema-ocaml
 https://opam\.ocaml\.org/packages/corvus-json-schema
+
+# The Fortran package's own repository, which exists only once it is created for the first release.
+https://github\.com/corvus-dotnet/corvus-json-schema-fortran
 
 # The Go module's page, which pkg.go.dev serves only once the module's first version is tagged.
 https://pkg\.go\.dev/github\.com/corvus-dotnet/Corvus\.JsonSchema/src-go

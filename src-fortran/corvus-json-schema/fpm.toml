@@ -1,0 +1,25 @@
+name = "corvus-json-schema"
+version = "0.1.0"
+license = "Apache-2.0"
+author = "endjin limited"
+maintainer = "corvus-dotnet"
+copyright = "Copyright (c) endjin limited"
+description = "JSON Schema validation (draft 4, 6, 7, 2019-09 and 2020-12) for Fortran: a binding to the corvus-json-schema C library"
+homepage = "https://github.com/corvus-dotnet/corvus-json-schema-fortran"
+keywords = ["json", "json-schema", "validation"]
+
+[build]
+# The corvus-json-schema C library (a capi-v<version> release of Corvus.JsonSchema, 0.1.4 or later): its lib
+# directory on the linker's path, or LDFLAGS="-L<lib>".
+link = ["corvus_json_schema"]
+auto-executables = false
+auto-examples = true
+auto-tests = true
+
+[fortran]
+implicit-typing = false
+implicit-external = false
+source-form = "free"
+
+[library]
+source-dir = "src"

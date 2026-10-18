@@ -43,10 +43,12 @@ permissions:
 
 jobs:
   # Whether the change touches anything the .NET build reads (.github/actions/dotnet-changes, which auto_release.yml
-  # also uses). A pull request or a push to main that changes only the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal or OCaml packages (and their
-  # own workflows) skips the .NET build: those have their own workflows (python.yml, rust.yml, typescript.yml, java.yml, go.yml, julia.yml, r.yml, pascal.yml, ocaml.yml).
-  # One that changes only those or the documentation (docs) skips it too, and a change to docs builds the website alone
-  # (the website job). Release tag pushes and manual runs always build.
+  # also uses). A pull request or a push to main that changes only the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal, OCaml or Fortran packages (and their
+  # own workflows) skips the .NET build: those have their own workflows (python.yml, rust.yml, typescript.yml, java.yml, go.yml, julia.yml, r.yml, pascal.yml, ocaml.yml, fortran.yml).
+  # One that changes only those, the documentation (docs) or the agent instructions (.github/skills,
+  # .github/copilot-instructions.md, CLAUDE.md) skips it too: a change to docs builds the website alone (the website
+  # job), and a change to the instructions checks the code-sample catalog alone (the catalog job). Release tag pushes
+  # and manual runs always build.
   changes:
     name: Detect .NET changes
     runs-on: ubuntu-latest
@@ -56,6 +58,7 @@ jobs:
     outputs:
       dotnet: ${{ steps.detect.outputs.dotnet }}
       website: ${{ steps.detect.outputs.website }}
+      instructions: ${{ steps.detect.outputs.instructions }}
     steps:
       - name: Checkout the shared actions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -252,6 +255,26 @@ jobs:
           include-hidden-files: true
           if-no-files-found: warn
 
+  # A change to the agent instructions (skills, copilot-instructions.md) without a .NET change: the code-sample catalog
+  # check, which the .NET build runs first and the website job runs too, since the catalog covers their code samples.
+  catalog:
+    name: Code-sample catalog
+    needs:
+      - changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.dotnet != 'true' && needs.changes.outputs.instructions == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Check the code-sample catalog is up to date
+        shell: pwsh
+        run: ./docs/update-code-sample-catalog.ps1 -Check
+
   integration-tests:
     name: Integration Tests (Docker)
     needs:
@@ -399,14 +422,15 @@ jobs:
           ./.github/scripts/Set-PreviewComment.ps1 -PullRequest $env:PR -Body "The documentation preview for this pull request is at https://corvus-oss.org/Corvus.JsonSchema/pr-preview/pr-$($env:PR)/ (built from $($env:HEAD_SHA.Substring(0, 7))). GitHub Pages takes a minute or two to publish it."
 
   # The required status check for pull requests: it passes when the .NET build succeeded or was not needed, so a
-  # change outside .NET is not held up waiting for build jobs that were skipped, and when the documentation website
-  # alone was built, that it succeeded.
+  # change outside .NET is not held up waiting for build jobs that were skipped, and when the documentation website or
+  # the code-sample catalog alone was checked, that it succeeded.
   dotnet-gate:
     name: .NET build gate
     needs:
       - changes
       - build
       - website
+      - catalog
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -418,6 +442,8 @@ jobs:
           EVENT: ${{ github.event_name }}
           WEBSITE: ${{ needs.changes.outputs.website }}
           WEBSITE_BUILD: ${{ needs.website.result }}
+          INSTRUCTIONS: ${{ needs.changes.outputs.instructions }}
+          CATALOG: ${{ needs.catalog.result }}
         run: |
           if [ "$CHANGES" != success ]; then
             echo "::error::Detecting .NET changes failed ($CHANGES)."
@@ -426,6 +452,10 @@ jobs:
           if [ "$DOTNET" != true ]; then
             if [ "$EVENT" = pull_request ] && [ "$WEBSITE" = true ] && [ "$WEBSITE_BUILD" != success ]; then
               echo "::error::The documentation website build did not succeed ($WEBSITE_BUILD)."
+              exit 1
+            fi
+            if [ "$EVENT" = pull_request ] && [ "$INSTRUCTIONS" = true ] && [ "$CATALOG" != success ]; then
+              echo "::error::The code-sample catalog check did not succeed ($CATALOG)."
               exit 1
             fi
             echo "No .NET changes: the .NET build was not needed."

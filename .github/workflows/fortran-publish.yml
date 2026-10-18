@@ -1,0 +1,196 @@
+name: fortran-publish
+# Publishes the Fortran binding (src-fortran/corvus-json-schema) when the version in its fpm.toml has no release yet,
+# then tags this repository's commit fortran-v<version>. To release, bump the version in fpm.toml, binding_version in
+# src/corvus_json_schema.f90, the project VERSION in CMakeLists.txt and the check in test/api_test.f90, add the version
+# to the package's VERSIONHISTORY.md, and merge. A merged pull request labelled no_release publishes nothing
+# (.github/actions/no-release-label).
+#
+# An fpm git dependency clones the repository it is given and needs fpm.toml at its root, and this repository carries
+# a very large github-pages branch and every other language's sources. So the package is published through a
+# repository of its own, corvus-dotnet/corvus-json-schema-fortran, which holds only what this workflow pushes there:
+#   1. the contents of src-fortran/corvus-json-schema at the root (fpm.toml and CMakeLists.txt at the root),
+#      committed and tagged v<version>;
+#   2. a release for that tag, with the version's entry in VERSIONHISTORY.md as its notes.
+# It also publishes the package's source as the image ghcr.io/corvus-dotnet/corvus-json-schema-fortran:<version>
+# (release-image.yml), which the Bowtie harness pins.
+# `corvus-json-schema = { git = "https://github.com/corvus-dotnet/corvus-json-schema-fortran.git", tag = "v<version>" }`
+# in an fpm.toml installs from it. Changes are made here and never there.
+#
+# Writing to the other repository takes a token: the FORTRAN_REPOSITORY_TOKEN secret of the "fortran" environment, a
+# fine-grained personal access token for that repository alone, with Contents read and write. A run that fails part
+# of the way can be run again: it skips what is already there (docs/ReleaseProcess.md, "The Fortran binding").
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. Its tag
+# filter ('[0-9]+.[0-9]+.[0-9]+*') has to match the whole tag name from a leading digit, so a tag that starts
+# fortran-v cannot start it. The fortran-v tag is also pushed with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-fortran/corvus-json-schema/fpm.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fortran-publish
+  cancel-in-progress: false
+
+env:
+  SUBDIR: src-fortran/corvus-json-schema
+  FORTRAN_REPOSITORY: corvus-dotnet/corvus-json-schema-fortran
+
+jobs:
+  version:
+    name: Version to publish
+    permissions:
+      contents: read
+      pull-requests: read  # the merged pull request's labels (no_release)
+    # A manual run from another branch must not publish that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            src-fortran/corvus-json-schema
+            .github/actions
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
+      - name: Check whether this version has a release
+        id: check
+        # A merged pull request labelled no_release publishes nothing (the test and publish jobs need this output).
+        if: steps.label.outputs.no-release != 'true'
+        working-directory: ${{ env.SUBDIR }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' fpm.toml | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::No version in fpm.toml."
+            exit 1
+          fi
+          grep -q "binding_version = \"$version\"" src/corvus_json_schema.f90 \
+            || { echo "::error::src/corvus_json_schema.f90 does not say binding_version $version."; exit 1; }
+          grep -q "^project(corvus_json_schema_fortran VERSION $version " CMakeLists.txt \
+            || { echo "::error::CMakeLists.txt does not say VERSION $version."; exit 1; }
+          grep -q "^## V$version$" VERSIONHISTORY.md || { echo "::error::VERSIONHISTORY.md has no V$version section."; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if ! gh api "repos/$FORTRAN_REPOSITORY" --silent; then
+            echo "::error::$FORTRAN_REPOSITORY is not there (docs/ReleaseProcess.md, \"The Fortran binding\")."
+            exit 1
+          fi
+          if gh api "repos/$FORTRAN_REPOSITORY/releases/tags/v$version" --silent 2>/dev/null; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::$FORTRAN_REPOSITORY already has a release for v$version; nothing to publish."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    name: Test
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    uses: ./.github/workflows/fortran.yml
+
+  publish:
+    name: Publish corvus-json-schema (Fortran)
+    needs: [version, test]
+    runs-on: ubuntu-latest
+    environment:
+      name: fortran
+      url: https://github.com/${{ env.FORTRAN_REPOSITORY }}/releases/tag/v${{ needs.version.outputs.version }}
+    permissions:
+      contents: write  # push the fortran-v<version> tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: src-fortran/corvus-json-schema
+      - name: Push the release's sources
+        env:
+          TOKEN: ${{ secrets.FORTRAN_REPOSITORY_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          git clone --quiet "https://x-access-token:$TOKEN@github.com/$FORTRAN_REPOSITORY.git" published
+          cd published
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null; then
+            echo "::notice::$FORTRAN_REPOSITORY already has the tag v$VERSION."
+            exit 0
+          fi
+          # Everything but the history is replaced by the package's sources: the files git tracks, so no build
+          # output.
+          git rm -r -q --ignore-unmatch .
+          (cd "../$SUBDIR" && git ls-files -z | xargs -0 cp --parents -t "$GITHUB_WORKSPACE/published")
+          for file in fpm.toml CMakeLists.txt README.md LICENSE VERSIONHISTORY.md src/corvus_json_schema.f90; do
+            test -f "$file" || { echo "::error::The package has no $file."; exit 1; }
+          done
+          if [ -e build ]; then
+            echo "::error::The package has build output in it."
+            exit 1
+          fi
+          git add -A
+          # --allow-empty: a run that pushed the commit and failed before the tag makes the same tree again.
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet --allow-empty -m "corvus-json-schema $VERSION" \
+            -m "From corvus-dotnet/Corvus.JsonSchema@$GITHUB_SHA ($SUBDIR)."
+          git tag "v$VERSION"
+          # main by name, because our default branch is always main. A clone of the empty repository is left on
+          # git's default branch, which need not be main, and the first branch pushed there becomes its default.
+          git push --quiet origin HEAD:refs/heads/main "refs/tags/v$VERSION"
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.FORTRAN_REPOSITORY_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          # The version's entry in VERSIONHISTORY.md, as the release notes.
+          awk -v v="## V$VERSION" '$0 == v { on = 1; next } on && /^## / { exit } on' \
+            "$SUBDIR/VERSIONHISTORY.md" > notes.md
+          if ! gh release view "v$VERSION" -R "$FORTRAN_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "v$VERSION" -R "$FORTRAN_REPOSITORY" --verify-tag \
+              --title "corvus-json-schema for Fortran $VERSION" --notes-file notes.md
+          fi
+          {
+            echo "### corvus-json-schema (Fortran) $VERSION is published"
+            echo
+            echo "https://github.com/$FORTRAN_REPOSITORY/releases/tag/v$VERSION"
+            echo
+            echo "Use it from an fpm.toml with:"
+            echo
+            echo '```toml'
+            echo "corvus-json-schema = { git = \"https://github.com/$FORTRAN_REPOSITORY.git\", tag = \"v$VERSION\" }"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: fortran-v${{ needs.version.outputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "::notice::$TAG already exists."
+          else
+            gh api "repos/${{ github.repository }}/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA"
+          fi
+
+  image:
+    name: Publish the release image
+    needs: [version, publish]
+    # The binding's source as an image that a Dockerfile can pin (see release-image.yml): the Bowtie harness does.
+    uses: ./.github/workflows/release-image.yml
+    permissions:
+      contents: read
+      packages: write  # push ghcr.io/corvus-dotnet/corvus-json-schema-fortran
+    with:
+      package: fortran
+      version: ${{ needs.version.outputs.version }}
