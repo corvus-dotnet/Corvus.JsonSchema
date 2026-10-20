@@ -111,10 +111,70 @@ sub encode_json {
 
 package JSON::Schema::Corvus::Validator;
 
+use Scalar::Util ();
+use Symbol ();
+
+my $PACKAGES = 0;
+
 sub _new {
   my ($class, $program) = @_;
-  return bless { program => $program, collecting => undef }, $class;
+  my $self = bless { program => $program, collecting => undef }, $class;
+  $self->_generate;
+  return $self;
 }
+
+# Generates the validator's Perl and compiles it into a package of its own, which DESTROY deletes.
+sub _generate {
+  my ($self) = @_;
+  require JSON::Schema::Corvus::CodeGen;
+  require JSON::Schema::Corvus::Runtime;
+  my $g = JSON::Schema::Corvus::CodeGen->new($self->{program})->generate;
+  my $package = 'JSON::Schema::Corvus::Generated::G' . ++$PACKAGES;
+  my $source = $self->{source} = assemble($g, $package);
+  my $validate = do {
+    no strict;
+    no warnings;
+    local $@;
+    my $code = eval $source;
+    die JSON::Schema::Corvus::Error::Compilation->_new("The schema produced invalid code: $@") unless $code;
+    $code;
+  };
+  {
+    no strict 'refs';
+    ${"${package}::F"} = $g->{custom_formats};
+  }
+  $self->{package} = $package;
+  $self->{validate} = $validate;
+}
+
+# The package's source: its subs, the constants (after the subs, as a dispatch table names them), and the sub that
+# validates, which keeps the dynamic scope and the depth count of one evaluation when the program has them.
+sub assemble {
+  my ($g, $package) = @_;
+  my @s = ("package $package;", 'use strict;', 'no warnings;', 'our ($F, @DS, $depth, $MAXDEPTH);');
+  push @s, 'our (' . join(', ', map { $_->[0] } @{ $g->{constants} }) . ');' if @{ $g->{constants} };
+  push @s, map { $_->[1] } @{ $g->{functions} };
+  push @s, "$_->[0] = $_->[1];" for @{ $g->{constants} };
+  push @s, "\$MAXDEPTH = $g->{max_depth};" if $g->{uses_depth};
+  if ($g->{uses_dynamic_scope} || $g->{uses_depth}) {
+    push @s, 'sub validate {';
+    push @s, "  local \@DS = ($g->{root_resource});" if $g->{uses_dynamic_scope};
+    push @s, '  local $depth = 0;' if $g->{uses_depth};
+    push @s, "  return $g->{root}(\$_[0]);", '}', '\&validate;';
+  }
+  else {
+    push @s, "\\&$g->{root};";
+  }
+  return join "\n", @s, '';
+}
+
+sub DESTROY {
+  my ($self) = @_;
+  Symbol::delete_package($self->{package}) if $self->{package};
+}
+
+# The generated Perl of the validator.
+sub source { $_[0]{source} }
 
 # The program for evaluation with a collector, with its annotations (built on first use).
 sub _collecting {
@@ -133,24 +193,31 @@ sub _collecting {
   };
 }
 
+sub _self {
+  JSON::Schema::Corvus::Error->throw_usage('expected a JSON::Schema::Corvus::Validator')
+    unless Scalar::Util::blessed($_[0]) && $_[0]->isa('JSON::Schema::Corvus::Validator');
+}
+
 sub _validate {
   my ($self, $value) = @_;
-  return JSON::Schema::Corvus::Collecting::evaluate_with_collector($self->_collecting, $value,
-    JSON::Schema::Corvus::NullCollector->new) ? 1 : '';
+  return $self->{validate}->($value) ? 1 : '';
 }
 
 sub is_valid_json {
   my ($self, $json) = @_;
+  _self($self);
   return $self->_validate(JSON::Schema::Corvus::Json::decode($json));
 }
 
 sub is_valid {
   my ($self, $data) = @_;
+  _self($self);
   return $self->_validate(JSON::Schema::Corvus::Json::from_data($data));
 }
 
 sub is_valid_document {
   my ($self, $document) = @_;
+  _self($self);
   return $self->_validate($document->{value});
 }
 
@@ -189,17 +256,5 @@ sub from_data {
   my ($class, $data) = @_;
   return bless { value => JSON::Schema::Corvus::Json::from_data($data) }, $class;
 }
-
-package JSON::Schema::Corvus::NullCollector;
-
-# A collector that records nothing: validation through the collecting evaluator, until the code generator is done.
-sub new { bless {}, $_[0] }
-sub begin_child_context { }
-sub commit_child_context { }
-sub pop_child_context { }
-sub evaluated_keyword { }
-sub evaluated_keyword_for_property { }
-sub ignored_keyword { }
-sub evaluated_boolean_schema { }
 
 1;

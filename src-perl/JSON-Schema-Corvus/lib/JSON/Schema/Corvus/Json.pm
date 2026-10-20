@@ -206,8 +206,20 @@ sub _number {
     return $n if "$n" eq $integer && $n == int($n) && B::svref_2object(\$n)->FLAGS & B::SVf_IOK;
     return Math::BigInt->new($integer);
   }
-  my $text = $integer . $rest;
-  return unpack('d', pack('d', $text));
+  return to_double($integer . $rest);
+}
+
+# A decimal number's text as the nearest double, created as a floating point number. Perl reads decimal text correctly
+# rounded from 5.30; before that, a long mantissa can come back as a neighbouring double, so the C library's strtod
+# reads it there (Perl keeps the numeric locale of C for it outside 'use locale').
+BEGIN {
+  if ($] >= 5.030) {
+    *to_double = sub { unpack('d', pack('d', $_[0])) };
+  }
+  else {
+    require POSIX;
+    *to_double = sub { (POSIX::strtod($_[0]))[0] };
+  }
 }
 
 sub _string {
@@ -283,7 +295,10 @@ sub from_data {
     no warnings;
     return $data ? $TRUE : $FALSE if builtin::is_bool($data);
   }
-  if (_created_as_number($data)) {
+  # A number by JSON::PP's rule: a scalar with a number and no string, by its flags (builtin::created_as_number says
+  # number for a number that has since been used as a string, which JSON::PP writes as a string).
+  my $flags = B::svref_2object(\$data)->FLAGS;
+  if (($flags & (B::SVp_IOK | B::SVp_NOK)) && !($flags & B::SVp_POK)) {
     my $copy = $data;
     Carp::croak('JSON::Schema::Corvus: ' . ($copy != $copy ? 'NaN' : 'an infinite number') . ' has no JSON form')
       if $copy != $copy || ($copy == $copy * 2 && $copy != 0);
@@ -298,7 +313,7 @@ sub _from_decimal {
   my ($text) = @_;
   return Math::BigInt->new($text) if $text =~ /\A-?[0-9]+\z/ && length($text) >= 19;
   return 0 + $text if $text =~ /\A-?[0-9]+\z/;
-  return unpack('d', pack('d', $text));
+  return to_double($text);
 }
 
 # --- Writing JSON text ---
@@ -326,7 +341,7 @@ sub number_text {
   return 'null' if $n != $n || ($n == $n * 2 && $n != 0);
   for my $precision (15 .. 17) {
     my $text = sprintf("%.${precision}g", $n);
-    return _tidy($text) if $text + 0 == $n;
+    return _tidy($text) if to_double($text) == $n;
   }
   return _tidy(sprintf('%.17g', $n));
 }
