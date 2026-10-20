@@ -10,7 +10,6 @@ on:
   push:
     branches:
     - main
-    - feature/perl  # TEMPORARY: CI on the branch before its pull request; removed before the pull request.
     paths:
     - 'src-perl/**'
     - 'JSON-Schema-Test-Suite'
