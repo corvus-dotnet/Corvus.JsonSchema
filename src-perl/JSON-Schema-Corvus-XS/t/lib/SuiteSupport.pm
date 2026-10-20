@@ -11,14 +11,16 @@ use JSON::PP ();
 
 our @EXPORT_OK = qw(suite_root read_cases remote_resolver read_text);
 
-# The suite's directory: JSON_SCHEMA_TEST_SUITE, or the repository's submodule. undef when it is not there.
+# The suite's directory: JSON_SCHEMA_TEST_SUITE, or the repository's submodule. undef when it is not there, and a
+# failure when JSON_SCHEMA_TEST_SUITE names a directory that is not the suite (CI sets it, so the suite must run).
 sub suite_root {
-  my @candidates = grep { defined } $ENV{JSON_SCHEMA_TEST_SUITE},
-    File::Spec->catdir(qw(.. .. JSON-Schema-Test-Suite));
-  for my $root (@candidates) {
-    return $root if -f File::Spec->catfile($root, qw(tests draft2020-12 type.json));
+  my $probe = sub { -f File::Spec->catfile($_[0], qw(tests draft2020-12 type.json)) };
+  if (defined $ENV{JSON_SCHEMA_TEST_SUITE}) {
+    return $ENV{JSON_SCHEMA_TEST_SUITE} if $probe->($ENV{JSON_SCHEMA_TEST_SUITE});
+    die "JSON_SCHEMA_TEST_SUITE is $ENV{JSON_SCHEMA_TEST_SUITE}, which is not the JSON-Schema-Test-Suite\n";
   }
-  return undef;
+  my $submodule = File::Spec->catdir(qw(.. .. JSON-Schema-Test-Suite));
+  return $probe->($submodule) ? $submodule : undef;
 }
 
 sub read_text {
