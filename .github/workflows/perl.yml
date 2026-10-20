@@ -50,9 +50,6 @@ jobs:
           - { os: ubuntu-24.04-arm, perl: '5.42' }
           - { os: macos-latest, perl: '5.42' }
           - { os: windows-latest, perl: '5.42', distribution: strawberry }
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Checkout
         # Only what the distributions need: the whole tree has paths too long for Windows.
@@ -73,26 +70,19 @@ jobs:
           multi-thread: ${{ matrix.threads || false }}
           distribution: ${{ matrix.distribution || 'default' }}
       - name: Versions
-        run: |
-          perl -V:version -V:useithreads -V:archname -V:cc
-          echo "MAKE=$(perl -MConfig -e 'print $Config{make}')" >> "$GITHUB_ENV"
+        run: perl -V:version -V:useithreads -V:archname -V:cc -V:make
       - name: Install the build tools
         run: cpanm --notest --quiet Alien::Build Alien::Build::MM Test2::V0 Test::Alien PkgConfig
       - name: Test and install Alien::CorvusJsonSchema from its tarball
-        run: src-perl/ci.sh dist-install src-perl/Alien-CorvusJsonSchema
+        run: perl src-perl/ci.pl dist-install src-perl/Alien-CorvusJsonSchema
       - name: Test JSON::Schema::Corvus::XS with the JSON-Schema-Test-Suite
         env:
           JSON_SCHEMA_TEST_SUITE: ${{ github.workspace }}/JSON-Schema-Test-Suite
-        run: src-perl/ci.sh test src-perl/JSON-Schema-Corvus-XS
+        run: perl src-perl/ci.pl test src-perl/JSON-Schema-Corvus-XS
       - name: Test and install JSON::Schema::Corvus::XS from its tarball
-        run: src-perl/ci.sh dist-install src-perl/JSON-Schema-Corvus-XS
+        run: perl src-perl/ci.pl dist-install src-perl/JSON-Schema-Corvus-XS
       - name: Use the installed module
-        run: |
-          perl -MJSON::Schema::Corvus::XS -e '
-            my $v = JSON::Schema::Corvus::XS->compile(q({"type": "integer"}));
-            die "wrong answer\n" unless $v->is_valid_json("3") && !$v->is_valid_json(q("3"));
-            print "JSON::Schema::Corvus::XS $JSON::Schema::Corvus::XS::VERSION on C library ",
-              JSON::Schema::Corvus::XS::library_version_string(), "\n";'
+        run: perl src-perl/ci.pl smoke
 
   alpine:
     name: Perl (Alpine 3.22, musl), ubuntu-latest
@@ -115,11 +105,12 @@ jobs:
         # runs in one.
         run: |
           docker run --rm -v "$GITHUB_WORKSPACE:/w" -w /w -e JSON_SCHEMA_TEST_SUITE=/w/JSON-Schema-Test-Suite \
-            -e MAKE=make docker.io/library/alpine:3.22 sh -c '
+            docker.io/library/alpine:3.22 sh -c '
               set -e
-              apk add --no-cache build-base bash pkgconf perl perl-dev perl-app-cpanminus perl-io-socket-ssl perl-net-ssleay
+              apk add --no-cache build-base pkgconf perl perl-dev perl-app-cpanminus perl-io-socket-ssl perl-net-ssleay
               perl -V:version -V:archname
               cpanm --notest --quiet Alien::Build Alien::Build::MM Test2::V0 Test::Alien PkgConfig
-              src-perl/ci.sh dist-install src-perl/Alien-CorvusJsonSchema
-              src-perl/ci.sh test src-perl/JSON-Schema-Corvus-XS
-              src-perl/ci.sh dist-install src-perl/JSON-Schema-Corvus-XS'
+              perl src-perl/ci.pl dist-install src-perl/Alien-CorvusJsonSchema
+              perl src-perl/ci.pl test src-perl/JSON-Schema-Corvus-XS
+              perl src-perl/ci.pl dist-install src-perl/JSON-Schema-Corvus-XS
+              perl src-perl/ci.pl smoke'
