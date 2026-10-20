@@ -403,6 +403,13 @@ function compliance(info) {
   const bad = (c.wrong || 0) + (c.acceptedInvalid || 0);
   return bad ? { short: `${n("wrong")} wrong`, long, cls: "comp-wrong" } : { short: "✓ ECMA-262", long, cls: "comp-ok" };
 }
+// Fully compliant: the oracle, or counts with nothing wrong, refused or accepted that should not be.
+function fullyCompliant(info) {
+  const c = info && info.compliance;
+  if (typeof c === "string") return /oracle/i.test(c);
+  return !!c && typeof c === "object" && !(c.wrong || 0) && !(c.refused || 0) && !(c.acceptedInvalid || 0);
+}
+const HAS_COMPLIANCE = DATA.impls.some(i => i.compliance != null && i.compliance !== "");
 function implLabel(id) { const i = IMPL.get(id); return i ? i.name : id; }
 function baseLabel() { return state.baseline === "best" ? `the fastest selected ${V.impl} on each ${V.schema}` : implLabel(state.baseline); }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -826,7 +833,9 @@ function init() {
   document.getElementById("schema-pick").setAttribute("aria-label", V.Schema);
   document.getElementById("h2h-a").setAttribute("aria-label", `First ${V.impl}`);
   document.getElementById("h2h-b").setAttribute("aria-label", `Second ${V.impl}`);
-  document.getElementById("pick-complete").textContent = `Only those that complete every ${V.schema}`;
+  // Where the data carries compliance, the quick pick is the fully compliant implementations; otherwise those that
+  // complete every workload.
+  document.getElementById("pick-complete").textContent = HAS_COMPLIANCE ? "Only those 100% compliant" : `Only those that complete every ${V.schema}`;
   document.getElementById("repo").textContent = meta.repo.replace("/", " / ");
   // The run's time, as the data gives it: a day alone is printed as a day, never with an invented midnight.
   if (meta.date) bits.push(`<div><span>Run</span> ${esc(/^\d{4}-\d{2}-\d{2}$/.test(meta.date) ? new Date(meta.date + "T00:00:00Z").toUTCString().replace(/ \d\d:\d\d:\d\d GMT$/, "") : new Date(meta.date).toUTCString().replace(/:\d\d GMT$/, " UTC"))}</div>`);
@@ -871,7 +880,7 @@ function init() {
     const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.pick === "all") state.selected = new Set(ALL);
     if (b.dataset.pick === "none") state.selected = new Set(state.baseline === "best" ? [] : [state.baseline]);
-    if (b.dataset.pick === "complete") state.selected = new Set(ALL.filter(id => DATA.schemas.every(s => measure(id, s.name).state === "ok")));
+    if (b.dataset.pick === "complete") state.selected = new Set(ALL.filter(id => HAS_COMPLIANCE ? fullyCompliant(IMPL.get(id)) : DATA.schemas.every(s => measure(id, s.name).state === "ok")));
     if (state.baseline !== "best" && !state.selected.has(state.baseline)) state.baseline = "best";
     render();
   });
