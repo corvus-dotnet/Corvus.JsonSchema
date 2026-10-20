@@ -247,7 +247,7 @@ const ALL = DATA.impls.map(i => i.id);
 const NS = DATA.schemas.length;
 
 const state = {
-  metric: "warm",
+  metric: DATA.meta && DATA.meta.defaultMeasure && METRICS[DATA.meta.defaultMeasure] ? DATA.meta.defaultMeasure : Object.keys(METRICS)[0],
   baseline: "best",
   selected: new Set(ALL),
   sort: "name",
@@ -455,6 +455,7 @@ function ratioTicks(lo, hi) {
 }
 function valueTicksLog(lo, hi) {
   const out = [];
+  if (!(lo > 0) || !(hi > lo)) return [hi > 0 ? hi : 1];
   for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) {
     for (const m of (Math.log10(hi / lo) < 2.5 ? [1, 2, 5] : [1])) {
       const v = m * Math.pow(10, e);
@@ -464,6 +465,7 @@ function valueTicksLog(lo, hi) {
   return out;
 }
 function valueTicksLinear(hi) {
+  if (!(hi > 0)) return [0];
   const raw = hi / 5, p = Math.pow(10, Math.floor(Math.log10(raw)));
   const step = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw);
   const out = [];
@@ -640,7 +642,8 @@ function renderSchema() {
   } else {
     const minV = Math.min(...ok.map(o => o.m.min)), maxV = Math.max(...ok.map(o => o.m.max));
     let x, ticks, origin;
-    if (state.scale === "log") {
+    if (state.scale === "log" && minV > 0) {
+      // A value of 0 (nothing allocated) has no logarithm: such a measure draws on the linear scale whatever is picked.
       const lo = Math.pow(10, Math.floor(Math.log10(minV))), hi = Math.pow(10, Math.ceil(Math.log10(maxV)));
       x = logScale(lo, hi === lo ? lo * 10 : hi, x0, x1); ticks = valueTicksLog(lo, hi === lo ? lo * 10 : hi); origin = lo;
     } else {
