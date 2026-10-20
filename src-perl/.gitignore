@@ -10,3 +10,4 @@ MANIFEST.bak
 *.o
 *.bs
 /JSON-Schema-Corvus-XS/XS.c
+/JSON-Schema-Corvus-XS/XS.def

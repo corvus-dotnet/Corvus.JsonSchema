@@ -4,5 +4,5 @@
 ^MYMETA\.
 ^pm_to_blib$
 ^MANIFEST\.bak$
-^XS\.(c|o|bs)$
+^XS\.(c|o|bs|def)$
 ^JSON-Schema-Corvus-XS-
