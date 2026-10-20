@@ -1,0 +1,864 @@
+<title>Benchmark results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a dark run-header band, one sticky control row that drives every view, then stacked full-width sections. */
+:root {
+  --page: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #0f1621;
+  --ink-2: #4a5464;
+  --muted: #7d8696;
+  --grid: #e4e7ec;
+  --axis: #c5cad3;
+  --line: rgba(15, 22, 33, 0.10);
+  --accent: #6250d6;
+  --accent-ink: #ffffff;
+  --bar: #9aa4b4;
+  --faster: #1c5cab;
+  --slower: #b8322f;
+  --neutral: #eef0f2;
+  --series-a: #2a78d6;
+  --series-b: #eb6834;
+  --fail-a: #e4e7ec;
+  --fail-b: #f7f8fa;
+  --band: #121b2b;
+  --band-ink: #eef1f6;
+  --band-muted: #9aa6ba;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0c1018; --surface: #141a24; --ink: #eef1f6; --ink-2: #b7bfcc; --muted: #828b9b; --grid: #232b37;
+    --axis: #364051; --line: rgba(255, 255, 255, 0.10); --accent: #9085e9; --accent-ink: #0c1018; --bar: #5d6778;
+    --faster: #4b93ea; --slower: #e66767; --neutral: #2a313c; --series-a: #3987e5; --series-b: #d95926;
+    --fail-a: #232b37; --fail-b: #181e28; --band: #060910; --band-ink: #eef1f6; --band-muted: #8d98ab;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0c1018; --surface: #141a24; --ink: #eef1f6; --ink-2: #b7bfcc; --muted: #828b9b; --grid: #232b37;
+  --axis: #364051; --line: rgba(255, 255, 255, 0.10); --accent: #9085e9; --accent-ink: #0c1018; --bar: #5d6778;
+  --faster: #4b93ea; --slower: #e66767; --neutral: #2a313c; --series-a: #3987e5; --series-b: #d95926;
+  --fail-a: #232b37; --fail-b: #181e28; --band: #060910; --band-ink: #eef1f6; --band-muted: #8d98ab;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0;  background: var(--page); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+a { color: var(--accent); }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1240px; margin: 0 auto; }
+
+/* Run header */
+.band { background: var(--band); color: var(--band-ink); padding-block: 28px 24px; }
+.band .wrap { display: grid; gap: 10px; }
+.eyebrow { font-family: var(--font-data); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--band-muted); }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; }
+.lede { margin: 0; max-width: 68ch; color: var(--band-muted); }
+.runmeta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 6px; font-family: var(--font-data); font-size: 13px; color: var(--band-ink); }
+.runmeta span { color: var(--band-muted); }
+.runmeta a { color: var(--band-ink); }
+
+/* Controls */
+.controls { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); padding-block: 10px; }
+.controls .wrap { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.ctl { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ctl > label, .ctl-label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 5px 10px; cursor: pointer; font-size: 13px; color: var(--ink-2); border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.seg button:hover:not([aria-pressed="true"]) { background: var(--neutral); }
+select { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font-size: 13px; max-width: 100%; }
+
+.picker { position: static; }
+.picker > summary { list-style: none; cursor: pointer; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font-size: 13px; white-space: nowrap; }
+.picker > summary::-webkit-details-marker { display: none; }
+.picker > summary::after { content: " ▾"; color: var(--muted); }
+.picker[open] > summary { background: var(--neutral); }
+.picker-panel { position: absolute; left: 0; top: calc(100% + 6px); width: min(720px, 100%); max-height: min(70vh, 560px); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); padding: 14px; display: grid; gap: 12px; }
+.picker-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.picker-actions button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 3px 10px; font-size: 13px; cursor: pointer; }
+.picker-actions button:hover { background: var(--neutral); }
+.langs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 18px; }
+.lang h3 { margin: 0 0 4px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.lang label { display: flex; align-items: baseline; gap: 6px; font-size: 14px; padding: 2px 0; cursor: pointer; }
+.lang label small { color: var(--muted); font-family: var(--font-data); font-size: 11px; }
+
+/* Sections */
+main { padding-block: 8px 48px; }
+section { padding-block: 28px 8px; border-bottom: 1px solid var(--line); display: grid; gap: 12px; min-width: 0; }
+section:last-of-type { border-bottom: 0; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 24px; margin: 0; text-wrap: balance; }
+.note { margin: 0; color: var(--ink-2); max-width: 75ch; }
+.note b { color: var(--ink); font-weight: 600; }
+.chart { width: 100%; min-width: 0; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--font-body); }
+.tick { fill: var(--muted); font-size: 11px; font-family: var(--font-data) !important; font-variant-numeric: tabular-nums; }
+.lab { fill: var(--ink); font-size: 13px; }
+.lab-sub { fill: var(--muted); font-size: 11px; }
+.val { fill: var(--ink-2); font-size: 12px; font-family: var(--font-data) !important; font-variant-numeric: tabular-nums; }
+.row-hit { fill: transparent; cursor: default; }
+.row-hit:hover, .row-hit.hl { fill: var(--neutral); }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 12px; color: var(--ink-2); }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+.ramp { display: inline-flex; align-items: center; gap: 8px; }
+.ramp i { display: block; width: 180px; height: 10px; border-radius: 3px; }
+.ramp span { font-family: var(--font-data); font-size: 11px; color: var(--muted); }
+
+/* Matrix */
+.matrix-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table.matrix { border-collapse: separate; border-spacing: 2px; font-family: var(--font-data); font-size: 11px; font-variant-numeric: tabular-nums; }
+.matrix th { font-weight: 500; color: var(--ink-2); }
+.matrix thead th { vertical-align: bottom; padding: 6px 0 4px; height: 150px; }
+.matrix thead th div { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; font-family: var(--font-body); font-size: 12px; margin: 0 auto; }
+.matrix thead th.base div { color: var(--accent); font-weight: 600; }
+.matrix tbody th { position: sticky; left: 0; z-index: 1; background: var(--surface); text-align: left; padding: 0 10px 0 8px; white-space: nowrap; font-family: var(--font-body); font-size: 13px; cursor: pointer; }
+.matrix tbody th:hover { color: var(--accent); }
+.matrix tbody th small { color: var(--muted); font-family: var(--font-data); font-size: 10px; margin-left: 6px; }
+.matrix thead th.corner { position: sticky; left: 0; z-index: 2; background: var(--surface); text-align: left; padding-left: 8px; font-family: var(--font-body); font-size: 12px; color: var(--muted); }
+.matrix td { min-width: 40px; height: 24px; text-align: center; border-radius: 3px; padding: 0 3px; cursor: default; }
+.matrix td.fail { background: repeating-linear-gradient(45deg, var(--fail-a) 0 3px, var(--fail-b) 3px 6px); color: var(--muted); }
+.matrix td.miss { color: var(--muted); }
+.matrix tr.current th { color: var(--accent); }
+
+.pair { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pair .vs { color: var(--muted); font-size: 13px; }
+.dot-a { background: var(--series-a); }
+.dot-b { background: var(--series-b); }
+.schema-meta { display: flex; flex-wrap: wrap; gap: 4px 20px; font-family: var(--font-data); font-size: 13px; color: var(--ink-2); }
+.schema-meta b { color: var(--ink); font-weight: 500; }
+.method { columns: 2 320px; column-gap: 32px; color: var(--ink-2); }
+.method p { margin: 0 0 10px; break-inside: avoid; }
+.method b { color: var(--ink); font-weight: 600; }
+
+#tip { position: fixed; z-index: 50; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); padding: 8px 10px; font-size: 13px; max-width: 300px; }
+#tip .t-h { font-weight: 600; }
+#tip .t-s { color: var(--muted); font-size: 12px; }
+#tip .t-r { display: flex; justify-content: space-between; gap: 14px; font-family: var(--font-data); font-size: 12px; font-variant-numeric: tabular-nums; }
+#tip .t-r span:first-child { color: var(--ink-2); font-family: var(--font-body); }
+@media (prefers-reduced-motion: no-preference) { .seg button, .row-hit { transition: background-color 0.12s, fill 0.12s; } }
+</style>
+
+<header class="band gutter">
+  <div class="wrap">
+    <div class="eyebrow" id="repo"></div>
+    <h1 id="title">Benchmark results</h1>
+    <p class="lede" id="lede"></p>
+    <div class="runmeta" id="runmeta"></div>
+  </div>
+</header>
+
+<div class="controls gutter">
+  <div class="wrap">
+    <div class="ctl"><span class="ctl-label">Measure</span><div class="seg" id="metric" role="group" aria-label="Measure"></div></div>
+    <div class="ctl"><label for="baseline">Compare with</label><select id="baseline"></select></div>
+    <details class="picker ctl" id="picker">
+      <summary id="picker-sum"></summary>
+      <div class="picker-panel">
+        <div class="picker-actions">
+          <button type="button" data-pick="all">Select all</button>
+          <button type="button" data-pick="none">Clear</button>
+          <button type="button" data-pick="complete" id="pick-complete"></button>
+        </div>
+        <div class="langs" id="langs"></div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<main class="gutter">
+  <div class="wrap">
+    <section id="overall">
+      <div class="sec-head"><h2>Overall</h2><div class="legend" id="board-legend"></div></div>
+      <p class="note" id="board-note"></p>
+      <div class="chart" id="board"></div>
+    </section>
+
+    <section id="by-schema">
+      <div class="sec-head">
+        <h2 id="by-schema-title"></h2>
+        <div class="pair">
+          <div class="ctl"><label for="sort">Order</label><select id="sort">
+            <option value="name">Name</option><option value="spread">Spread</option>
+          </select></div>
+          <div class="ctl"><span class="ctl-label">Cells</span><div class="seg" id="cells" role="group" aria-label="Cell text">
+            <button type="button" data-cell="ratio" aria-pressed="true">Ratio</button><button type="button" data-cell="value" aria-pressed="false">Median</button>
+          </div></div>
+        </div>
+      </div>
+      <div class="legend" id="matrix-legend"></div>
+      <div class="matrix-wrap"><table class="matrix" id="matrix"></table></div>
+    </section>
+
+    <section id="schema">
+      <div class="sec-head">
+        <h2><span id="schema-title"></span> <select id="schema-pick"></select></h2>
+        <div class="ctl"><span class="ctl-label">Scale</span><div class="seg" id="scale" role="group" aria-label="Scale">
+          <button type="button" data-scale="log" aria-pressed="true">Log</button><button type="button" data-scale="linear" aria-pressed="false">Linear</button>
+        </div></div>
+      </div>
+      <div class="schema-meta" id="schema-meta"></div>
+      <div class="legend" id="schema-legend"></div>
+      <div class="chart" id="schema-chart"></div>
+    </section>
+
+    <section id="head-to-head">
+      <div class="sec-head">
+        <h2>Head to head</h2>
+        <div class="pair">
+          <span class="sw dot-a"></span><select id="h2h-a"></select>
+          <span class="vs">vs</span>
+          <span class="sw dot-b"></span><select id="h2h-b"></select>
+        </div>
+      </div>
+      <p class="note" id="h2h-note"></p>
+      <div class="chart" id="h2h-chart"></div>
+    </section>
+
+    <section id="method">
+      <h2>How to read this</h2>
+      <div class="method" id="method-text"></div>
+    </section>
+  </div>
+</main>
+
+<div id="tip" role="tooltip" hidden></div>
+
+<script>
+"use strict";
+const DATA = /*BENCHMARK_DATA*/null;
+
+const METRICS = DATA.measures;
+const V = DATA.vocab;
+
+const IMPL = new Map(DATA.impls.map(i => [i.id, i]));
+const SCHEMA = new Map(DATA.schemas.map(s => [s.name, s]));
+const ALL = DATA.impls.map(i => i.id);
+const NS = DATA.schemas.length;
+
+const state = {
+  metric: "warm",
+  baseline: "best",
+  selected: new Set(ALL),
+  sort: "name",
+  cells: "ratio",
+  scale: "log",
+  schema: DATA.schemas[0] ? DATA.schemas[0].name : "",
+  a: "",
+  b: "",
+};
+
+/* ---------- state in the address (#m=warm&b=blaze&i=a,b) ---------- */
+function readHash() {
+  try {
+    const h = location.hash.slice(1);
+    if (!h.includes("=")) return;
+    const p = new URLSearchParams(h);
+    if (METRICS[p.get("m")]) state.metric = p.get("m");
+    if (p.get("b") === "best" || IMPL.has(p.get("b"))) state.baseline = p.get("b");
+    if (p.has("i")) state.selected = new Set(p.get("i").split(",").filter(id => IMPL.has(id)));
+    if (SCHEMA.has(p.get("s"))) state.schema = p.get("s");
+    if (IMPL.has(p.get("a"))) state.a = p.get("a");
+    if (IMPL.has(p.get("vs"))) state.b = p.get("vs");
+  } catch (e) { /* an unreadable address keeps the defaults */ }
+}
+function writeHash() {
+  try {
+    const p = new URLSearchParams();
+    p.set("m", state.metric); p.set("b", state.baseline);
+    if (state.selected.size !== ALL.length) p.set("i", [...state.selected].join(","));
+    p.set("s", state.schema); p.set("a", state.a); p.set("vs", state.b);
+    history.replaceState(null, "", "#" + p.toString());
+  } catch (e) { /* framed pages may refuse history updates */ }
+}
+
+/* ---------- measurements ---------- */
+const cache = new Map();
+function measure(impl, schema, metric = state.metric) {
+  const key = impl + "\u0000" + schema + "\u0000" + metric;
+  if (cache.has(key)) return cache.get(key);
+  const r = DATA.results[impl] ? DATA.results[impl][schema] : undefined;
+  let out;
+  if (r === undefined) out = { state: "missing" };
+  else if (r === null) out = { state: "failed" };
+  else {
+    // A part is either the runs of a measurement (an array) or its summary ({median, min, max}); parts are summed.
+    const parts = METRICS[metric].parts;
+    if (parts.some(p => r[p] === undefined || r[p] === null)) out = { state: "missing" };
+    else if (parts.every(p => Array.isArray(r[p]))) {
+      const runs = r[parts[0]].map((_, i) => parts.reduce((s, p) => s + r[p][i], 0)).sort((x, y) => x - y);
+      const n = runs.length, mid = n >> 1;
+      const median = n % 2 ? runs[mid] : (runs[mid - 1] + runs[mid]) / 2;
+      out = median > 0 ? { state: "ok", median, min: runs[0], max: runs[n - 1], runs } : { state: "failed" };
+    } else {
+      const sum = k => parts.reduce((s, p) => s + (Array.isArray(r[p]) ? r[p].reduce((a, b) => a + b, 0) / r[p].length : r[p][k]), 0);
+      const median = sum("median"), min = sum("min"), max = sum("max");
+      out = median > 0 ? { state: "ok", median, min, max, runs: null } : { state: "failed" };
+    }
+  }
+  cache.set(key, out);
+  return out;
+}
+function baseValue(schema) {
+  if (state.baseline !== "best") {
+    const m = measure(state.baseline, schema);
+    return m.state === "ok" ? m.median : NaN;
+  }
+  let best = Infinity;
+  for (const id of state.selected) {
+    const m = measure(id, schema);
+    if (m.state === "ok" && m.median < best) best = m.median;
+  }
+  return best === Infinity ? NaN : best;
+}
+function ratio(impl, schema) {
+  const m = measure(impl, schema);
+  const b = baseValue(schema);
+  return m.state === "ok" && b > 0 ? m.median / b : NaN;
+}
+function geomean(xs) {
+  return xs.length ? Math.exp(xs.reduce((s, x) => s + Math.log(x), 0) / xs.length) : NaN;
+}
+function summarise(impl) {
+  const rs = [];
+  let failed = 0, missing = 0, best = 0;
+  for (const s of DATA.schemas) {
+    const m = measure(impl, s.name);
+    if (m.state === "failed") failed++;
+    else if (m.state === "missing") missing++;
+    const r = ratio(impl, s.name);
+    if (Number.isFinite(r)) rs.push(r);
+    if (m.state === "ok") {
+      let lowest = true;
+      for (const o of state.selected) {
+        const om = measure(o, s.name);
+        if (o !== impl && om.state === "ok" && om.median < m.median) { lowest = false; break; }
+      }
+      if (lowest && state.selected.has(impl)) best++;
+    }
+  }
+  return { impl, g: geomean(rs), n: rs.length, failed, missing, best };
+}
+function ranked() {
+  return [...state.selected].map(summarise).sort((x, y) =>
+    (Number.isFinite(x.g) ? x.g : Infinity) - (Number.isFinite(y.g) ? y.g : Infinity) || IMPL.get(x.impl).name.localeCompare(IMPL.get(y.impl).name));
+}
+
+/* ---------- formatting ---------- */
+const isKb = () => !!METRICS[state.metric].kb || !!METRICS[state.metric].bytes;
+function sig(x) { return x >= 100 ? x.toFixed(0) : x >= 10 ? x.toFixed(1) : x.toFixed(2); }
+function fmtValue(v, kb = isKb()) {
+  if (!Number.isFinite(v)) return "–";
+  if (METRICS[state.metric].bytes) return v < 1024 ? sig(v) + " B" : v < 1048576 ? sig(v / 1024) + " KB" : sig(v / 1048576) + " MB";
+  if (kb) return v < 1024 ? sig(v) + " KB" : v < 1048576 ? sig(v / 1024) + " MB" : sig(v / 1048576) + " GB";
+  if (v < 1e3) return sig(v) + " ns";
+  if (v < 1e6) return sig(v / 1e3) + " µs";
+  if (v < 1e9) return sig(v / 1e6) + " ms";
+  return sig(v / 1e9) + " s";
+}
+function fmtRatioShort(r) { return Number.isFinite(r) ? sig(r) : "–"; }
+const better = () => (isKb() ? "lower" : "faster");
+const worse = () => (isKb() ? "higher" : "slower");
+function fmtRatio(r, versus = state.baseline !== "best") {
+  if (!Number.isFinite(r)) return "–";
+  if (!versus) return Math.abs(r - 1) < 0.005 ? "fastest" : sig(r) + "× the fastest";
+  if (Math.abs(r - 1) < 0.005) return "level";
+  return r < 1 ? sig(1 / r) + "× " + better() : sig(r) + "× " + worse();
+}
+function implLabel(id) { const i = IMPL.get(id); return i ? i.name : id; }
+function baseLabel() { return state.baseline === "best" ? `the fastest selected ${V.impl} on each ${V.schema}` : implLabel(state.baseline); }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* ---------- colour ---------- */
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function hexToRgb(h) { h = h.replace("#", ""); if (h.length === 3) h = [...h].map(c => c + c).join(""); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+const toLin = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+const fromLin = c => Math.round(255 * Math.min(1, Math.max(0, c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055)));
+function toOklab(hex) {
+  const [r, g, b] = hexToRgb(hex).map(toLin);
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s];
+}
+function fromOklab([L, A, B]) {
+  const l = Math.pow(L + 0.3963377774 * A + 0.2158037573 * B, 3);
+  const m = Math.pow(L - 0.1055613458 * A - 0.0638541728 * B, 3);
+  const s = Math.pow(L - 0.0894841775 * A - 1.291485548 * B, 3);
+  const rgb = [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s];
+  return { css: "rgb(" + rgb.map(fromLin).join(",") + ")", L };
+}
+let palette;
+function readPalette() {
+  palette = { neutral: toOklab(css("--neutral")), faster: toOklab(css("--faster")), slower: toOklab(css("--slower")) };
+}
+function mix(a, b, t) { return fromOklab(a.map((v, i) => v + (b[i] - v) * t)); }
+// Ratios are coloured on a log scale: 16× either way saturates against an implementation, 64× against the best.
+function ratioColour(r) {
+  const span = state.baseline === "best" ? 6 : 4;
+  const t = Math.max(-1, Math.min(1, Math.log2(r) / span));
+  return t < 0 ? mix(palette.neutral, palette.faster, -t) : mix(palette.neutral, palette.slower, t);
+}
+
+/* ---------- tooltip ---------- */
+const tip = document.getElementById("tip");
+function showTip(ev, html) {
+  tip.innerHTML = html;
+  tip.hidden = false;
+  const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = ev.clientX + pad, y = ev.clientY + pad;
+  if (x + w > innerWidth - 8) x = ev.clientX - w - pad;
+  if (y + h > innerHeight - 8) y = ev.clientY - h - pad;
+  tip.style.left = Math.max(8, x) + "px";
+  tip.style.top = Math.max(8, y) + "px";
+}
+function hideTip() { tip.hidden = true; }
+function tipRows(rows) { return rows.map(([k, v]) => `<div class="t-r"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join(""); }
+function wireTips(root, build) {
+  root.addEventListener("pointermove", ev => {
+    const el = ev.target.closest("[data-tip]");
+    if (!el) { hideTip(); return; }
+    showTip(ev, build(el.dataset.tip, el));
+  });
+  root.addEventListener("pointerleave", hideTip);
+}
+
+/* ---------- scales and svg ---------- */
+const SVGNS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attrs, text) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function logScale(lo, hi, x0, x1) {
+  const a = Math.log(lo), b = Math.log(hi);
+  return v => x0 + ((Math.log(v) - a) / (b - a)) * (x1 - x0);
+}
+function ratioTicks(lo, hi) {
+  let k0 = Math.floor(Math.log2(lo)), k1 = Math.ceil(Math.log2(hi));
+  let step = 1;
+  while ((k1 - k0) / step > 8) step *= 2;
+  const out = [];
+  for (let k = Math.ceil(k0 / step) * step; k <= k1; k += step) out.push(Math.pow(2, k));
+  return out;
+}
+function valueTicksLog(lo, hi) {
+  const out = [];
+  for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) {
+    for (const m of (Math.log10(hi / lo) < 2.5 ? [1, 2, 5] : [1])) {
+      const v = m * Math.pow(10, e);
+      if (v >= lo * 0.999 && v <= hi * 1.001) out.push(v);
+    }
+  }
+  return out;
+}
+function valueTicksLinear(hi) {
+  const raw = hi / 5, p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw);
+  const out = [];
+  for (let v = 0; v <= hi * 1.0001; v += step) out.push(v);
+  return out;
+}
+// Drops ticks that would sit closer than gap pixels to the last one kept, so labels never collide on narrow screens.
+function thin(ticks, x, gap = 64) {
+  const out = [];
+  for (const t of ticks) if (!out.length || x(t) - x(out[out.length - 1]) >= gap) out.push(t);
+  return out;
+}
+function ratioTickLabel(t) { return t >= 1 ? sig(t) + "×" : "1/" + sig(1 / t); }
+function width(el) { return Math.max(320, Math.floor(el.clientWidth)); }
+
+/* ---------- overall ---------- */
+function renderBoard() {
+  const host = document.getElementById("board");
+  const rows = ranked();
+  const versus = state.baseline !== "best";
+  const W = width(host), rowH = 30, top = 26, narrow = W < 640;
+  const labelW = narrow ? Math.min(150, W * 0.38) : 230, covW = narrow ? 0 : 56, valW = narrow ? 70 : 104;
+  const finite = rows.filter(r => Number.isFinite(r.g)).map(r => r.g);
+  let lo = Math.min(1, ...finite), hi = Math.max(1, ...finite);
+  lo = Math.pow(2, Math.floor(Math.log2(lo))); hi = Math.pow(2, Math.ceil(Math.log2(hi)));
+  if (lo === hi) hi = lo * 2;
+  const x0 = labelW + (versus && lo < 1 ? valW : 8), x1 = W - covW - valW;
+  const x = logScale(lo, hi, x0, x1);
+  const H = top + rows.length * rowH + 8;
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `Geometric mean ${METRICS[state.metric].long} relative to ${baseLabel()}` });
+  for (const t of thin(ratioTicks(lo, hi), x, 48)) {
+    svg.append(svgEl("line", { x1: x(t), x2: x(t), y1: top - 6, y2: H - 4, stroke: t === 1 ? css("--axis") : css("--grid"), "stroke-width": t === 1 ? 1.5 : 1 }));
+    svg.append(svgEl("text", { x: x(t), y: top - 12, "text-anchor": "middle", class: "tick" }, ratioTickLabel(t)));
+  }
+  if (covW) svg.append(svgEl("text", { x: W - 4, y: top - 12, "text-anchor": "end", class: "tick" }, V.schemas));
+  rows.forEach((r, i) => {
+    const y = top + i * rowH, cy = y + rowH / 2, info = IMPL.get(r.impl);
+    svg.append(svgEl("rect", { x: 0, y, width: W, height: rowH, class: "row-hit", "data-tip": r.impl }));
+    const name = svgEl("text", { x: 0, y: cy + 4, class: "lab" }, info.name);
+    if (r.impl === state.baseline) name.setAttribute("style", "fill: var(--accent); font-weight: 600");
+    svg.append(name);
+    if (!narrow && info.group) svg.append(svgEl("text", { x: labelW - 12, y: cy + 4, "text-anchor": "end", class: "lab-sub" }, info.group));
+    if (Number.isFinite(r.g)) {
+      const xa = x(Math.max(lo, Math.min(1, r.g))), xb = x(Math.max(1, r.g));
+      const wbar = Math.max(2, xb - xa);
+      const fill = r.impl === state.baseline ? css("--accent") : r.g < 1 ? css("--faster") : r.g > 1 ? css("--slower") : css("--axis");
+      svg.append(svgEl("rect", { x: Math.abs(r.g - 1) < 1e-9 ? x(1) - 1 : xa, y: cy - 8, width: Math.abs(r.g - 1) < 1e-9 ? 2 : wbar, height: 16, rx: 3, fill, "pointer-events": "none" }));
+      const left = r.g < 1;
+      svg.append(svgEl("text", { x: left ? xa - 6 : xb + 6, y: cy + 4, "text-anchor": left ? "end" : "start", class: "val", "pointer-events": "none" },
+        r.impl === state.baseline ? "baseline" : narrow ? sig(r.g < 1 ? 1 / r.g : r.g) + "×" : versus ? fmtRatio(r.g) : sig(r.g) + "×" + (r.best ? `, fastest on ${r.best}` : "")));
+    } else {
+      svg.append(svgEl("text", { x: x0, y: cy + 4, class: "val", "pointer-events": "none" }, `no ${V.schema} completed`));
+    }
+    if (covW) {
+      const cov = svgEl("text", { x: W - 4, y: cy + 4, "text-anchor": "end", class: "val", "pointer-events": "none" }, `${NS - r.failed - r.missing}/${NS}`);
+      if (r.failed) cov.setAttribute("style", "fill: var(--slower)");
+      svg.append(cov);
+    }
+  });
+  host.replaceChildren(svg);
+
+  const m = METRICS[state.metric].long;
+  // Implementations fastest on every schema they complete sit at 1×; say so, or say why even the leader is above it.
+  const sweep = rows.filter(r => r.n > 0 && r.best === r.n);
+  let lead;
+  if (state.selected.size === 1) lead = `Only one ${V.impl} is selected, so it sits at 1×.`;
+  else if (!sweep.length) lead = `No selected ${V.impl} is fastest on every ${V.schema}, so even the leader sits above 1×; the bar label says how many ${V.schemas} each one is fastest on.`;
+  else lead = sweep.map(r => r.n === NS
+    ? `${esc(implLabel(r.impl))} is fastest on every ${V.schema}, so it sits at 1×.`
+    : `${esc(implLabel(r.impl))} is fastest on every ${V.schema} it completes (${r.n} of ${NS}), so it sits at 1×; check its failures before reading it as the leader.`).join(" ");
+  document.getElementById("board-note").innerHTML = versus
+    ? `Geometric mean of each implementation's <b>${esc(m)}</b> relative to <b>${esc(baseLabel())}</b>, over the ${V.schemas} both complete. Bars to the left are ${better()}, to the right ${worse()}.`
+    : `Each implementation's <b>${esc(m)}</b> as a multiple of the fastest selected implementation <b>on each ${V.schema}</b>, averaged over the ${V.schemas} it completes (geometric mean). 1× would mean fastest on every ${V.schema}. ${lead}`;
+  document.getElementById("board-legend").innerHTML = versus
+    ? `<span><i class="sw" style="background:var(--faster)"></i>${better()} than ${esc(baseLabel())}</span><span><i class="sw" style="background:var(--slower)"></i>${worse()}</span>`
+    : `<span><i class="sw" style="background:var(--slower)"></i>multiple of the fastest on each ${V.schema}</span>`;
+}
+
+function boardTip(id) {
+  const s = summarise(id), info = IMPL.get(id);
+  return `<div class="t-h">${esc(info.name)}</div><div class="t-s">${esc([info.group, (info.version || "").split(" ")[0]].filter(Boolean).join(" · "))}</div>` +
+    tipRows([
+      ["Geometric mean", fmtRatio(s.g)],
+      [`${V.Schemas} compared`, `${s.n} of ${NS}`],
+      ["Fastest on", `${s.best} ${s.best === 1 ? V.schema : V.schemas}`],
+      ["Failed", String(s.failed)],
+    ].concat(s.missing ? [["Not run", String(s.missing)]] : []));
+}
+
+/* ---------- matrix ---------- */
+function schemaOrder() {
+  const list = DATA.schemas.slice();
+  const by = {
+    name: (a, b) => a.name.localeCompare(b.name),
+    spread: (a, b) => spread(b.name) - spread(a.name),
+  }[state.sort];
+  return list.sort(by);
+}
+function spread(schema) {
+  const v = [...state.selected].map(id => measure(id, schema)).filter(m => m.state === "ok").map(m => m.median);
+  return v.length > 1 ? Math.max(...v) / Math.min(...v) : 0;
+}
+function renderMatrix() {
+  const cols = ranked().map(r => r.impl);
+  const table = document.getElementById("matrix");
+  let head = `<thead><tr><th class="corner" scope="col">${esc(V.Schema)}</th>`;
+  for (const id of cols) head += `<th scope="col" class="${id === state.baseline ? "base" : ""}"><div>${esc(implLabel(id))}</div></th>`;
+  head += `</tr></thead>`;
+  let body = "<tbody>";
+  for (const s of schemaOrder()) {
+    body += `<tr class="${s.name === state.schema ? "current" : ""}"><th scope="row" data-schema="${esc(s.name)}">${esc(s.name)}${s.note ? `<small>${esc(s.note)}</small>` : ""}</th>`;
+    for (const id of cols) {
+      const m = measure(id, s.name), key = esc(id + "|" + s.name);
+      if (m.state === "failed") { body += `<td class="fail" data-tip="${key}">✕</td>`; continue; }
+      if (m.state === "missing") { body += `<td class="miss" data-tip="${key}">·</td>`; continue; }
+      const r = ratio(id, s.name);
+      const c = Number.isFinite(r) ? ratioColour(r) : { css: "transparent", L: 1 };
+      const txt = state.cells === "value" ? fmtValue(m.median).replace(" ", " ") : fmtRatioShort(r);
+      body += `<td data-tip="${key}" style="background:${c.css};color:${c.L < 0.62 ? "#fff" : "#0f1621"}">${txt}</td>`;
+    }
+    body += "</tr>";
+  }
+  table.innerHTML = head + body + "</tbody>";
+
+  const span = state.baseline === "best" ? 64 : 16;
+  const g = state.baseline === "best"
+    ? [ratioColour(1), ratioColour(8), ratioColour(64)]
+    : [ratioColour(1 / 16), ratioColour(1), ratioColour(16)];
+  const leftLab = state.baseline === "best" ? "fastest" : `${span}× ${better()}`;
+  const midLab = state.baseline === "best" ? "8× the fastest" : `level with ${esc(implLabel(state.baseline))}`;
+  document.getElementById("matrix-legend").innerHTML =
+    `<span class="ramp"><span>${leftLab}</span><i style="background:linear-gradient(90deg,${g.map(c => c.css).join(",")})"></i><span>${state.baseline === "best" ? "64×+" : span + "× " + worse()}</span></span>` +
+    `<span>middle: ${midLab}</span>` +
+    `<span><i class="sw" style="background:repeating-linear-gradient(45deg,var(--fail-a) 0 3px,var(--fail-b) 3px 6px);border:1px solid var(--line)"></i>failed</span>` +
+    `<span>· not run</span><span>Click a ${V.schema} for its detail.</span>`;
+}
+function matrixTip(key) {
+  const [id, schema] = key.split("|");
+  const m = measure(id, schema), info = IMPL.get(id);
+  let rows;
+  if (m.state === "failed") rows = [["Result", V.failed]];
+  else if (m.state === "missing") rows = [["Result", "not run"]];
+  else rows = [
+    [V.centre, fmtValue(m.median)],
+    [V.spread, `${fmtValue(m.min)} – ${fmtValue(m.max)}`],
+    [state.baseline === "best" ? "Against the fastest" : "Against " + implLabel(state.baseline), fmtRatio(ratio(id, schema))],
+  ];
+  return `<div class="t-h">${esc(info.name)}</div><div class="t-s">${esc(schema)} · ${esc(METRICS[state.metric].long)}</div>` + tipRows(rows);
+}
+
+/* ---------- one schema ---------- */
+function renderSchema() {
+  const s = SCHEMA.get(state.schema);
+  const meta = (s.meta || []).map(([k, v]) => `<span><b>${esc(v)}</b> ${esc(k)}</span>`);
+  if (s.url) meta.push(`<span><a href="${esc(s.url)}">${esc(s.urlLabel || "source")}</a></span>`);
+  document.getElementById("schema-meta").innerHTML = meta.join("");
+
+  const host = document.getElementById("schema-chart");
+  const ok = [], bad = [];
+  for (const id of state.selected) {
+    const m = measure(id, s.name);
+    (m.state === "ok" ? ok : bad).push({ id, m });
+  }
+  ok.sort((a, b) => a.m.median - b.m.median);
+  bad.sort((a, b) => implLabel(a.id).localeCompare(implLabel(b.id)));
+  const rows = ok.concat(bad);
+  const W = width(host), rowH = 28, top = 26, narrow = W < 640;
+  const labelW = narrow ? Math.min(150, W * 0.38) : 230, valW = narrow ? 74 : 150;
+  const x0 = labelW, x1 = W - valW;
+  const H = top + Math.max(1, rows.length) * rowH + 8;
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${METRICS[state.metric].long} on ${s.name}` });
+  if (!ok.length) {
+    svg.append(svgEl("text", { x: 0, y: top + 16, class: "val" }, `No selected ${V.impl} completes this ${V.schema}.`));
+  } else {
+    const minV = Math.min(...ok.map(o => o.m.min)), maxV = Math.max(...ok.map(o => o.m.max));
+    let x, ticks, origin;
+    if (state.scale === "log") {
+      const lo = Math.pow(10, Math.floor(Math.log10(minV))), hi = Math.pow(10, Math.ceil(Math.log10(maxV)));
+      x = logScale(lo, hi === lo ? lo * 10 : hi, x0, x1); ticks = valueTicksLog(lo, hi === lo ? lo * 10 : hi); origin = lo;
+    } else {
+      ticks = valueTicksLinear(maxV); const hi = ticks[ticks.length - 1] || maxV;
+      x = v => x0 + (v / hi) * (x1 - x0); origin = 0;
+    }
+    for (const t of thin(ticks, x)) {
+      svg.append(svgEl("line", { x1: x(t), x2: x(t), y1: top - 6, y2: H - 4, stroke: t === origin ? css("--axis") : css("--grid") }));
+      svg.append(svgEl("text", { x: x(t), y: top - 12, "text-anchor": "middle", class: "tick" }, fmtValue(t).replace(/\.00? /, " ")));
+    }
+    const ref = state.baseline === "best" ? ok[0].id : state.baseline;
+    rows.forEach((o, i) => {
+      const y = top + i * rowH, cy = y + rowH / 2;
+      svg.append(svgEl("rect", { x: 0, y, width: W, height: rowH, class: "row-hit", "data-tip": o.id }));
+      const lab = svgEl("text", { x: 0, y: cy + 4, class: "lab" }, implLabel(o.id));
+      if (o.id === ref) lab.setAttribute("style", "fill: var(--accent); font-weight: 600");
+      svg.append(lab);
+      if (o.m.state !== "ok") {
+        svg.append(svgEl("text", { x: x0 + 4, y: cy + 4, class: "val", style: "fill: var(--muted)", "pointer-events": "none" }, o.m.state === "failed" ? V.failed : "not run"));
+        return;
+      }
+      const xo = x(origin), xm = x(o.m.median);
+      svg.append(svgEl("rect", { x: xo, y: cy - 7, width: Math.max(2, xm - xo), height: 14, rx: 3, fill: o.id === ref ? css("--accent") : css("--bar"), "pointer-events": "none" }));
+      if (o.m.max > o.m.min) {
+        const a = x(o.m.min), b = x(o.m.max);
+        svg.append(svgEl("line", { x1: a, x2: b, y1: cy, y2: cy, stroke: css("--ink"), "stroke-width": 1.5, "pointer-events": "none" }));
+        svg.append(svgEl("line", { x1: a, x2: a, y1: cy - 4, y2: cy + 4, stroke: css("--ink"), "stroke-width": 1.5, "pointer-events": "none" }));
+        svg.append(svgEl("line", { x1: b, x2: b, y1: cy - 4, y2: cy + 4, stroke: css("--ink"), "stroke-width": 1.5, "pointer-events": "none" }));
+      }
+      const r = ratio(o.id, s.name);
+      const t = svgEl("text", { x: Math.max(xm, x(o.m.max)) + 8, y: cy + 4, class: "val", "pointer-events": "none" }, fmtValue(o.m.median));
+      if (!narrow && o.id !== ref && Number.isFinite(r)) t.append(svgEl("tspan", { style: "fill: var(--muted)" }, "  " + sig(r) + "×"));
+      svg.append(t);
+    });
+  }
+  host.replaceChildren(svg);
+  document.getElementById("schema-legend").innerHTML =
+    `<span><i class="sw" style="background:var(--accent)"></i>${state.baseline === "best" ? "fastest selected" : esc(implLabel(state.baseline))}</span>` +
+    `<span><i class="sw" style="background:var(--bar)"></i>${esc(V.barLegend)}</span><span>${esc(V.whiskerLegend)} · ×: multiple of the highlighted bar</span>`;
+}
+function schemaTip(id) {
+  const m = measure(id, state.schema);
+  const rows = m.state === "ok"
+    ? [[V.centre, fmtValue(m.median)], m.runs ? ["Runs", m.runs.map(v => fmtValue(v)).join(", ")] : [V.spread, `${fmtValue(m.min)} – ${fmtValue(m.max)}`], [state.baseline === "best" ? "Against the fastest" : "Against " + implLabel(state.baseline), fmtRatio(ratio(id, state.schema))]]
+    : [["Result", m.state === "failed" ? V.failed : "not run"]];
+  return `<div class="t-h">${esc(implLabel(id))}</div><div class="t-s">${esc(state.schema)} · ${esc(METRICS[state.metric].long)}</div>` + tipRows(rows);
+}
+
+/* ---------- head to head ---------- */
+function renderH2H() {
+  const A = state.a, B = state.b, host = document.getElementById("h2h-chart");
+  const pts = [];
+  let failA = 0, failB = 0;
+  for (const s of DATA.schemas) {
+    const ma = measure(A, s.name), mb = measure(B, s.name);
+    if (ma.state !== "ok") failA++;
+    if (mb.state !== "ok") failB++;
+    if (ma.state === "ok" && mb.state === "ok") pts.push({ s: s.name, r: ma.median / mb.median, a: ma.median, b: mb.median });
+  }
+  pts.sort((p, q) => p.r - q.r);
+  const winsA = pts.filter(p => p.r < 1).length, g = geomean(pts.map(p => p.r));
+  const nameA = esc(implLabel(A)), nameB = esc(implLabel(B));
+  document.getElementById("h2h-note").innerHTML = pts.length
+    ? `On <b>${esc(METRICS[state.metric].long)}</b>, ${nameA} is ${better()} on <b>${winsA}</b> of the <b>${pts.length}</b> ${V.schemas} both complete, and ${nameB} on <b>${pts.length - winsA}</b>. Geometric mean: ${nameA} is <b>${g < 1 ? sig(1 / g) + "× " + better() : sig(g) + "× " + worse()}</b>.` +
+      (failA || failB ? ` Left out: ${failA ? `${failA} ${failA === 1 ? V.schema : V.schemas} ${nameA} fails` : ""}${failA && failB ? ", " : ""}${failB ? `${failB} ${nameB} fails` : ""}.` : "")
+    : `${nameA} and ${nameB} have no ${V.schema} in common to compare.`;
+
+  const W = width(host), rowH = 20, top = 26, narrow = W < 640, labelW = narrow ? 120 : 190;
+  const H = top + Math.max(1, pts.length) * rowH + 8;
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${implLabel(A)} relative to ${implLabel(B)} per schema` });
+  if (pts.length) {
+    let lo = Math.min(1, ...pts.map(p => p.r)), hi = Math.max(1, ...pts.map(p => p.r));
+    lo = Math.pow(2, Math.floor(Math.log2(lo))); hi = Math.pow(2, Math.ceil(Math.log2(hi)));
+    if (lo === hi) { lo /= 2; hi *= 2; }
+    const x = logScale(lo, hi, labelW + 8, W - 16);
+    for (const t of thin(ratioTicks(lo, hi), x, 48)) {
+      svg.append(svgEl("line", { x1: x(t), x2: x(t), y1: top - 6, y2: H - 4, stroke: t === 1 ? css("--axis") : css("--grid"), "stroke-width": t === 1 ? 1.5 : 1 }));
+      svg.append(svgEl("text", { x: x(t), y: top - 12, "text-anchor": "middle", class: "tick" }, ratioTickLabel(t)));
+    }
+    const ca = css("--series-a"), cb = css("--series-b"), ring = css("--surface");
+    pts.forEach((p, i) => {
+      const y = top + i * rowH, cy = y + rowH / 2, col = p.r < 1 ? ca : cb;
+      svg.append(svgEl("rect", { x: 0, y, width: W, height: rowH, class: "row-hit", "data-tip": p.s }));
+      svg.append(svgEl("text", { x: labelW, y: cy + 4, "text-anchor": "end", class: "lab", style: "font-size:12px", "pointer-events": "none" }, p.s));
+      svg.append(svgEl("line", { x1: x(1), x2: x(p.r), y1: cy, y2: cy, stroke: col, "stroke-width": 2, "pointer-events": "none" }));
+      svg.append(svgEl("circle", { cx: x(p.r), cy, r: 5, fill: col, stroke: ring, "stroke-width": 2, "pointer-events": "none" }));
+    });
+    svg.append(svgEl("text", { x: labelW + 8, y: H - 0, class: "tick", "text-anchor": "start" }, `← ${implLabel(A)} ${better()}`));
+    svg.append(svgEl("text", { x: W - 16, y: H - 0, class: "tick", "text-anchor": "end" }, `${implLabel(B)} ${better()} →`));
+    svg.setAttribute("viewBox", `0 0 ${W} ${H + 12}`);
+  }
+  host.replaceChildren(svg);
+}
+function h2hTip(schema) {
+  const ma = measure(state.a, schema), mb = measure(state.b, schema), r = ma.median / mb.median;
+  return `<div class="t-h">${esc(schema)}</div><div class="t-s">${esc(METRICS[state.metric].long)}</div>` +
+    tipRows([[implLabel(state.a), fmtValue(ma.median)], [implLabel(state.b), fmtValue(mb.median)],
+      ["", r < 1 ? `${implLabel(state.a)} ${sig(1 / r)}× ${better()}` : `${implLabel(state.b)} ${sig(r)}× ${better()}`]]);
+}
+
+/* ---------- controls ---------- */
+function implOptions(sel, includeBest) {
+  const opts = (includeBest ? [`<option value="best">Fastest on each ${esc(V.schema)}</option>`] : [])
+    .concat(DATA.impls.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`));
+  sel.innerHTML = opts.join("");
+}
+function renderControls() {
+  document.querySelectorAll("#metric button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.metric === state.metric)));
+  document.querySelectorAll("#cells button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.cell === state.cells)));
+  document.querySelectorAll("#scale button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.scale === state.scale)));
+  document.getElementById("baseline").value = state.baseline;
+  document.getElementById("sort").value = state.sort;
+  document.getElementById("schema-pick").value = state.schema;
+  document.getElementById("h2h-a").value = state.a;
+  document.getElementById("h2h-b").value = state.b;
+  document.getElementById("picker-sum").textContent = `${V.Impls} · ${state.selected.size} of ${ALL.length}`;
+  document.querySelectorAll("#langs input").forEach(i => { i.checked = state.selected.has(i.value); });
+}
+function render() {
+  cache.clear();
+  readPalette();
+  renderControls();
+  renderBoard();
+  renderMatrix();
+  renderSchema();
+  renderH2H();
+  writeHash();
+}
+
+function init() {
+  readHash();
+  if (!state.a || !state.b) {
+    const order = ranked().map(r => r.impl);
+    state.a = state.a || order[0] || ALL[0];
+    state.b = state.b || order.find(id => id !== state.a) || ALL[0];
+  }
+
+  const meta = DATA.meta, bits = [];
+  document.title = meta.title;
+  document.getElementById("title").textContent = meta.title;
+  document.getElementById("lede").textContent = meta.lede || "";
+  document.getElementById("method-text").innerHTML = meta.method || "";
+  document.getElementById("by-schema-title").textContent = `By ${V.schema}`;
+  document.getElementById("schema-title").textContent = V.Schema;
+  document.getElementById("schema-pick").setAttribute("aria-label", V.Schema);
+  document.getElementById("h2h-a").setAttribute("aria-label", `First ${V.impl}`);
+  document.getElementById("h2h-b").setAttribute("aria-label", `Second ${V.impl}`);
+  document.getElementById("pick-complete").textContent = `Only those that complete every ${V.schema}`;
+  document.getElementById("repo").textContent = meta.repo.replace("/", " / ");
+  if (meta.date) bits.push(`<div><span>Generated</span> ${esc(new Date(meta.date).toUTCString().replace(/:\d\d GMT/, " UTC"))}</div>`);
+  if (meta.commit) bits.push(`<div><span>Commit</span> <a href="https://github.com/${esc(meta.repo)}/commit/${esc(meta.commit)}">${esc(meta.commit.slice(0, 10))}</a></div>`);
+  if (meta.runUrl) bits.push(`<div><a href="${esc(meta.runUrl)}">Workflow run</a></div>`);
+  if (meta.runner) bits.push(`<div><span>Runner</span> ${esc(meta.runner)}</div>`);
+  for (const [k, v] of (meta.facts || [])) bits.push(`<div><span>${esc(k)}</span> ${esc(v)}</div>`);
+  bits.push(`<div><span>${esc(V.Impls)}</span> ${ALL.length}</div><div><span>${esc(V.Schemas)}</span> ${NS}</div>`);
+  if (meta.runs) bits.push(`<div><span>Runs each</span> ${meta.runs}</div>`);
+  document.getElementById("runmeta").innerHTML = bits.join("");
+
+  const metricHost = document.getElementById("metric");
+  metricHost.innerHTML = Object.entries(METRICS).map(([k, m]) => `<button type="button" data-metric="${k}">${esc(m.label)}</button>`).join("");
+  metricHost.addEventListener("click", e => { const b = e.target.closest("button"); if (b) { state.metric = b.dataset.metric; render(); } });
+  document.getElementById("cells").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { state.cells = b.dataset.cell; render(); } });
+  document.getElementById("scale").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { state.scale = b.dataset.scale; render(); } });
+
+  implOptions(document.getElementById("baseline"), true);
+  implOptions(document.getElementById("h2h-a"), false);
+  implOptions(document.getElementById("h2h-b"), false);
+  document.getElementById("schema-pick").innerHTML = DATA.schemas.map(s => `<option>${esc(s.name)}</option>`).join("");
+  document.getElementById("baseline").addEventListener("change", e => { state.baseline = e.target.value; if (state.baseline !== "best") state.selected.add(state.baseline); render(); });
+  document.getElementById("sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
+  document.getElementById("schema-pick").addEventListener("change", e => { state.schema = e.target.value; render(); });
+  document.getElementById("h2h-a").addEventListener("change", e => { state.a = e.target.value; render(); });
+  document.getElementById("h2h-b").addEventListener("change", e => { state.b = e.target.value; render(); });
+
+  const byLang = new Map();
+  for (const i of DATA.impls) { const k = i.group || "Other"; if (!byLang.has(k)) byLang.set(k, []); byLang.get(k).push(i); }
+  document.getElementById("langs").innerHTML = [...byLang.keys()].sort((a, b) => a.localeCompare(b)).map(lang =>
+    `<div class="lang"><h3>${esc(lang)}</h3>` + byLang.get(lang).map(i =>
+      `<label title="${esc(i.version || "")}"><input type="checkbox" id="pick-${esc(i.id)}" value="${esc(i.id)}"> ${esc(i.name)} <small>${esc((i.version || "").split(" ")[0])}</small></label>`).join("") + `</div>`).join("");
+  document.getElementById("langs").addEventListener("change", e => {
+    const id = e.target.value;
+    if (e.target.checked) state.selected.add(id); else state.selected.delete(id);
+    if (!state.selected.has(state.baseline) && state.baseline !== "best") state.baseline = "best";
+    render();
+  });
+  document.querySelector(".picker-actions").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.pick === "all") state.selected = new Set(ALL);
+    if (b.dataset.pick === "none") state.selected = new Set(state.baseline === "best" ? [] : [state.baseline]);
+    if (b.dataset.pick === "complete") state.selected = new Set(ALL.filter(id => DATA.schemas.every(s => measure(id, s.name).state === "ok")));
+    if (state.baseline !== "best" && !state.selected.has(state.baseline)) state.baseline = "best";
+    render();
+  });
+  const picker = document.getElementById("picker");
+  document.addEventListener("click", e => { if (picker.open && !picker.contains(e.target)) picker.open = false; });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") picker.open = false; });
+
+  document.getElementById("matrix").addEventListener("click", e => {
+    const th = e.target.closest("th[data-schema]");
+    if (!th) return;
+    state.schema = th.dataset.schema; render();
+    document.getElementById("schema").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  });
+  wireTips(document.getElementById("board"), boardTip);
+  wireTips(document.getElementById("matrix"), matrixTip);
+  wireTips(document.getElementById("schema-chart"), schemaTip);
+  wireTips(document.getElementById("h2h-chart"), h2hTip);
+
+  let pending = 0, lastW = 0;
+  new ResizeObserver(entries => {
+    const w = Math.round(entries[0].contentRect.width);
+    if (w === lastW) return;
+    lastW = w;
+    cancelAnimationFrame(pending); pending = requestAnimationFrame(render);
+  }).observe(document.querySelector("main .wrap"));
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  render();
+}
+init();
+</script>

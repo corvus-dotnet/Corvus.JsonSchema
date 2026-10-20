@@ -40,6 +40,7 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 | `corvus-yaml` | YAML ↔ JSON conversion |
 | `corvus-analyzers` | Roslyn analyzers (CTJ001-CTJ010) |
 | `corvus-benchmarks` | BenchmarkDotNet execution, B/C baseline convention |
+| `corvus-benchmark-results-page` | The standard presentation of a benchmark run: one interactive HTML page generated from a committed JSON data file |
 | `corvus-docs-website` | Documentation site build pipeline and playgrounds |
 | `corvus-bowtie-testing` | Bowtie conformance testing against JSON Schema Test Suite |
 | `corvus-test-suite-regeneration` | Regenerating test classes from the submodule |
