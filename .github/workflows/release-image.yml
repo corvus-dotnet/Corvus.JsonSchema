@@ -2,8 +2,8 @@ name: release-image
 # Publishes a released package's files as a small container image, ghcr.io/corvus-dotnet/corvus-json-schema-<package>,
 # for linux/amd64 and linux/arm64, holding only those files, under /corvus-json-schema. A Dockerfile that copies the
 # library from it pins the version in an image tag, which Dependabot keeps up to date as it does any other image. The
-# Bowtie harnesses for C, C++, Object Pascal, PHP, R, Fortran and OCaml do so: none of these releases is in a registry
-# Dependabot reads.
+# Bowtie harnesses for C, C++, Object Pascal, PHP, R, Fortran, OCaml and Perl do so: none of these releases is in a
+# registry Dependabot reads.
 #
 #   c       the C library's Linux builds, from the capi-v<version> release, in linux-musl and linux-gnu; tagged
 #           <version>
@@ -12,6 +12,10 @@ name: release-image
 #           platforms; tagged <version>
 #   ocaml   the package's source (src-ml/corvus-json-schema at the ml-v<version> tag), the same for both platforms;
 #           tagged <version>
+#   perl    JSON::Schema::Corvus's CPAN tarball, from the perl-v<version> release, the same for both platforms; tagged
+#           <version> (cpanm /corvus-json-schema/*.tar.gz installs it)
+#   perl-xs JSON::Schema::Corvus::XS's CPAN tarball and that of the Alien::CorvusJsonSchema it needs, from the
+#           perl-xs-v<version> release, the same for both platforms; tagged <version>
 #   php     the extension's Linux builds, from the <version> release of corvus-dotnet/corvus-json-schema-php; tagged
 #           <version>
 #   r       the binary package for R <R_VERSION>, built here from the r-v<version> tag, natively on each platform, in
@@ -32,7 +36,7 @@ on:
     inputs:
       package:
         type: choice
-        options: [c, pascal, php, r, fortran, ocaml]
+        options: [c, pascal, php, r, fortran, ocaml, perl, perl-xs]
         required: true
       version:
         description: The released version, without its tag's prefix (0.1.4, not capi-v0.1.4)
@@ -168,6 +172,11 @@ jobs:
                 (cd ocaml-source/src-ml/corvus-json-schema \
                   && git ls-files -z | xargs -0 cp --parents -t "$GITHUB_WORKSPACE/context/$p/corvus-json-schema")
               done
+              ;;
+            perl | perl-xs)
+              # The tarballs as they were uploaded to CPAN.
+              gh release download "$PACKAGE-v$VERSION" -R "$GITHUB_REPOSITORY" -D downloads -p '*.tar.gz'
+              for p in amd64 arm64; do cp downloads/*.tar.gz "context/$p/corvus-json-schema/"; done
               ;;
             *)
               echo "::error::No image for the package $PACKAGE." && exit 1

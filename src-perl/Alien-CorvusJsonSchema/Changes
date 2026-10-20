@@ -1,0 +1,5 @@
+Revision history for Alien-CorvusJsonSchema
+
+v0.1.0  2026-10-20
+  - First release: finds the corvus-json-schema C library with pkg-config, or installs the release package of
+    C library 0.1.4 for Linux (x86_64, aarch64; glibc, musl), macOS and Windows (x64, arm64; Strawberry Perl).

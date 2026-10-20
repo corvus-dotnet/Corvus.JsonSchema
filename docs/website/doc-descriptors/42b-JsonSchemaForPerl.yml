@@ -1,0 +1,3 @@
+source: JsonSchemaForPerl.md
+navTitle: "Perl"
+description: "The Corvus JSON Schema evaluator for Perl, in pure Perl (JSON::Schema::Corvus) and on the C library (JSON::Schema::Corvus::XS): install, validate, errors, options, results and annotations."

@@ -43,8 +43,8 @@ permissions:
 
 jobs:
   # Whether the change touches anything the .NET build reads (.github/actions/dotnet-changes, which auto_release.yml
-  # also uses). A pull request or a push to main that changes only the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal, OCaml or Fortran packages (and their
-  # own workflows) skips the .NET build: those have their own workflows (python.yml, rust.yml, typescript.yml, java.yml, go.yml, julia.yml, r.yml, pascal.yml, ocaml.yml, fortran.yml).
+  # also uses). A pull request or a push to main that changes only the Python, Rust, TypeScript, Java, Go, Julia, Ruby, PHP, R, Object Pascal, OCaml, Fortran or Perl packages (and their
+  # own workflows) skips the .NET build: those have their own workflows (python.yml, rust.yml, typescript.yml, java.yml, go.yml, julia.yml, r.yml, pascal.yml, ocaml.yml, fortran.yml, perl.yml).
   # One that changes only those, the documentation (docs) or the agent instructions (.github/skills,
   # .github/copilot-instructions.md, CLAUDE.md) skips it too: a change to docs builds the website alone (the website
   # job), and a change to the instructions checks the code-sample catalog alone (the catalog job). Release tag pushes
