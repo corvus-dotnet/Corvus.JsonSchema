@@ -81,7 +81,7 @@ runs:
         # agent instructions take part in no build: their code samples are checked by the catalog check, which the
         # Code-sample catalog job runs.
         instructions='^\.github/skills/|^\.github/copilot-instructions\.md$|^CLAUDE\.md$'
-        others=$(printf '%s\n' "$files" | grep -v -E "$instructions" | grep -v -E '^(src-py|src-rs|src-ts|src-java|src-go|src-jl|src-rb|src-php|src-r|src-pas|src-ml|src-fortran|src-perl|docs)/|^\.github/workflows/(python|python-wheels|rust|typescript|capi|capi-publish|ruby|rubygems-build|rubygems-publish|php|php-build|php-publish|pypi-publish|crates-publish|npm-publish|java|maven-publish|go|go-publish|julia|julia-publish|r|r-publish|pascal|pascal-publish|ocaml|ocaml-publish|fortran|fortran-publish|perl|perl-publish)\.yml$' || true)
+        others=$(printf '%s\n' "$files" | grep -v -E "$instructions" | grep -v -E '^(src-py|src-rs|src-ts|src-java|src-go|src-jl|src-rb|src-php|src-r|src-pas|src-ml|src-fortran|src-perl|docs)/|^\.github/workflows/(python|python-wheels|rust|typescript|capi|capi-publish|ruby|rubygems-build|rubygems-publish|php|php-build|php-publish|pypi-publish|crates-publish|npm-publish|java|maven-publish|go|go-publish|julia|julia-publish|r|r-publish|pascal|pascal-publish|ocaml|ocaml-publish|fortran|fortran-publish|perl|perl-publish|release-image)\.yml$' || true)
         if [ -n "$others" ]; then
           printf 'Changes the .NET build reads:\n%s\n' "$others" | head -n 20 || true
           build "Building."

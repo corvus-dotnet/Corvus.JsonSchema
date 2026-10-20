@@ -111,7 +111,7 @@ It has no history on purpose. Every job of the build fetches every branch, and w
 
 A PR that changes only the Python, Rust, TypeScript, Java, Go, Julia, Ruby or PHP packages makes no NuGet release; nothing needs adding.
 
-Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI, npm, Maven Central, Go module, Julia registry, RubyGems and PHP publishes that a version change in `src-rs`, `src-py`, `src-ts`, `src-java`, `src-go`, `src-jl`, `src-rb` or `src-php` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
+Add the `no_release` label to a PR before merging to stop every release its merge would otherwise make: the NuGet release tag, and the crates.io, PyPI, npm, Maven Central, Go module, Julia registry, RubyGems, PHP and CPAN publishes that a version change in `src-rs`, `src-py`, `src-ts`, `src-java`, `src-go`, `src-jl`, `src-rb`, `src-php` or `src-perl` triggers (`.github/actions/no-release-label` reads the label). This is useful for documentation-only changes, internal refactoring, or a version change to be released later. The `NO_RELEASE:` prefix some PR titles carry is for readers only: the label is what counts. A manual run of a publish workflow ignores the label.
 
 ### Batched Dependabot releases
 
@@ -692,6 +692,49 @@ Do this once, before merging the first version:
 4. **Merge.** The workflow pushes the sources, tags them and creates the release.
 
 The token expires: renew it, and update the secret, before it does.
+
+## The Perl distributions
+
+`src-perl` holds three CPAN distributions, each versioned independently of the NuGet packages and of the others by the
+`$VERSION` of its main module:
+
+- `JSON-Schema-Corvus`, the pure-Perl validator (`lib/JSON/Schema/Corvus.pm`), tagged `perl-v<version>`;
+- `JSON-Schema-Corvus-XS`, the binding to the C library (`lib/JSON/Schema/Corvus/XS.pm`), tagged `perl-xs-v<version>`;
+- `Alien-CorvusJsonSchema`, which finds or installs the C library for it (`lib/Alien/CorvusJsonSchema.pm`), tagged
+  `perl-alien-v<version>`. It records the C library version it downloads, and the SHA-256 digest of each platform's
+  release package, in its `alienfile`.
+
+To release one, bump its `$VERSION` (a version string such as `'v0.1.1'`), add the version's entry at the top of its
+`Changes`, and merge to `main`. `.github/workflows/perl-publish.yml` then does the following.
+
+1. It does nothing for a distribution whose version is already tagged, or if the merged PR is labelled `no_release`.
+2. It runs `perl.yml`: each distribution's tests, and an install from the tarball CPAN would get, on Linux (x86_64
+   and arm64) with Perl 5.26, the latest Perl and a threaded Perl, on Alpine, on macOS and on Windows with
+   Strawberry Perl; and the JSON-Schema-Test-Suite with both validators.
+3. It builds each tarball (`make dist`) and uploads it to PAUSE with `cpan-upload`, the Alien first, as the binding
+   needs it. A tarball whose version CPAN already has is not uploaded again.
+4. It creates a GitHub release for each tag with its tarball (the binding's with the Alien's too), not marked as the
+   repository's latest, which tags the commit.
+5. It publishes the images `ghcr.io/corvus-dotnet/corvus-json-schema-perl:<version>` (the pure distribution) and
+   `ghcr.io/corvus-dotnet/corvus-json-schema-perl-xs:<version>` (the binding's and the Alien's tarballs)
+   (`release-image.yml`), which the Bowtie harnesses pin and Dependabot keeps up to date.
+
+A run that fails part of the way can be run again. Never push a `perl-` tag by hand.
+
+A release of the C library needs a release of the Alien only when the binding should use the new version: update the
+version and the digests in its `alienfile` (the digests of the release's `corvus-json-schema-<version>-<target>`
+packages) and bump the Alien's `$VERSION`.
+
+### The first release: PAUSE set-up
+
+Do this once, before merging the first version:
+
+1. **Get a PAUSE account.** Apply at [pause.perl.org](https://pause.perl.org/pause/query?ACTION=request_id). A person
+   approves new accounts by hand, which can take some days.
+2. **Create the GitHub environment.** In this repository's **Settings**, **Environments**, add an environment named
+   `perl`, with the account's name as the secret `PAUSE_USERNAME` and its password as `PAUSE_PASSWORD`. PAUSE has no
+   tokens, so the workflow uploads with the password.
+3. **Merge.** The first upload of each distribution makes the account the owner of its modules' names.
 
 ## Pre-release testing
 

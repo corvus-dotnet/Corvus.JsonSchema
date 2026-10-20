@@ -1,0 +1,207 @@
+name: perl-publish
+# Publishes the Perl distributions of src-perl to CPAN when the version of one has no tag yet:
+#   JSON-Schema-Corvus         ($VERSION in lib/JSON/Schema/Corvus.pm), tagged perl-v<version>
+#   JSON-Schema-Corvus-XS      ($VERSION in lib/JSON/Schema/Corvus/XS.pm), tagged perl-xs-v<version>
+#   Alien-CorvusJsonSchema     ($VERSION in lib/Alien/CorvusJsonSchema.pm), tagged perl-alien-v<version>
+# To release one, bump its $VERSION, add the version to its Changes, and merge. A merged pull request labelled
+# no_release publishes nothing (.github/actions/no-release-label); a manual run ignores the label.
+#
+# Each distribution is built as the tarball CPAN gets (make dist) and uploaded to PAUSE with cpan-upload, the Alien
+# first, as the binding needs it. PAUSE has no tokens: the upload takes the PAUSE account's name and password, the
+# PAUSE_USERNAME and PAUSE_PASSWORD secrets of the "perl" environment. A tarball CPAN already has is not uploaded again,
+# so a run that fails part of the way can be run again. Each tag gets a GitHub release with its tarball (the XS one
+# with the Alien's too), not marked as the repository's latest, and the release images (release-image.yml): perl for
+# JSON-Schema-Corvus and perl-xs for JSON-Schema-Corvus-XS, which the Bowtie harnesses pin.
+#
+# It is deliberately not triggered by tags: build.yml publishes NuGet packages for the tags that trigger it. Its tag
+# filter ('[0-9]+.[0-9]+.[0-9]+*') has to match the whole tag name from a leading digit, so a tag that starts perl-
+# cannot start it. The tags are also created with GITHUB_TOKEN, which does not start other workflows.
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src-perl/JSON-Schema-Corvus/Changes'
+    - 'src-perl/JSON-Schema-Corvus-XS/Changes'
+    - 'src-perl/Alien-CorvusJsonSchema/Changes'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: perl-publish
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Versions to publish
+    permissions:
+      contents: read
+      pull-requests: read  # the merged pull request's labels (no_release)
+    # A manual run from another branch must not publish that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      # The version of each distribution to publish, or empty when it has nothing to publish.
+      pure: ${{ steps.check.outputs.pure }}
+      xs: ${{ steps.check.outputs.xs }}
+      alien: ${{ steps.check.outputs.alien }}
+      any: ${{ steps.check.outputs.any }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            src-perl
+            .github/actions
+      - name: Check for the no_release label
+        id: label
+        uses: ./.github/actions/no-release-label
+        with:
+          token: ${{ github.token }}
+          event-name: ${{ github.event_name }}
+          sha: ${{ github.sha }}
+      - name: Check which versions are tagged
+        id: check
+        # A merged pull request labelled no_release publishes nothing (the other jobs need this step's output).
+        if: steps.label.outputs.no-release != 'true'
+        run: |
+          any=false
+          while read -r key dist module prefix; do
+            version=$(sed -n "s/^our \$VERSION = 'v\([0-9.]*\)';$/\1/p" "src-perl/$dist/$module" | head -n 1)
+            if [ -z "$version" ]; then
+              echo "::error::No \$VERSION = 'v...' in src-perl/$dist/$module."
+              exit 1
+            fi
+            grep -q "^v$version " "src-perl/$dist/Changes" \
+              || { echo "::error::src-perl/$dist/Changes has no v$version entry."; exit 1; }
+            # ls-remote exits 2 when the remote has no such ref, and anything else is a failure to ask.
+            status=0
+            git ls-remote --exit-code --tags origin "refs/tags/$prefix-v$version" > /dev/null || status=$?
+            case "$status" in
+              0) echo "::notice::$dist $version is tagged $prefix-v$version; nothing to do." ;;
+              2) echo "$key=$version" >> "$GITHUB_OUTPUT"
+                 any=true ;;
+              *) echo "::error::Could not list the repository's tags."
+                 exit 1 ;;
+            esac
+          done <<'DISTRIBUTIONS'
+          pure JSON-Schema-Corvus lib/JSON/Schema/Corvus.pm perl
+          xs JSON-Schema-Corvus-XS lib/JSON/Schema/Corvus/XS.pm perl-xs
+          alien Alien-CorvusJsonSchema lib/Alien/CorvusJsonSchema.pm perl-alien
+          DISTRIBUTIONS
+          echo "any=$any" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Test
+    needs: version
+    if: needs.version.outputs.any == 'true'
+    uses: ./.github/workflows/perl.yml
+
+  publish:
+    name: Publish to CPAN
+    needs: [version, test]
+    runs-on: ubuntu-latest
+    environment:
+      name: perl
+      url: https://metacpan.org/dist/JSON-Schema-Corvus
+    permissions:
+      contents: write  # create the releases and their tags
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /LICENSE
+            /src-perl/
+      - name: Set up Perl
+        uses: shogo82148/actions-setup-perl@8b574cdc2dffdae49f803204a4f2b716a2fa1db7 # v1.44.2
+        with:
+          perl-version: '5.42'
+      - name: Install the tools
+        run: cpanm --notest --quiet Alien::Build Alien::Build::MM CPAN::Uploader
+      - name: Build, upload and release
+        env:
+          PAUSE_USERNAME: ${{ secrets.PAUSE_USERNAME }}
+          PAUSE_PASSWORD: ${{ secrets.PAUSE_PASSWORD }}
+          GH_TOKEN: ${{ github.token }}
+          PURE: ${{ needs.version.outputs.pure }}
+          XS: ${{ needs.version.outputs.xs }}
+          ALIEN: ${{ needs.version.outputs.alien }}
+        run: |
+          set -eu
+          mkdir -p "$RUNNER_TEMP/dist"
+          # The tarball of a distribution, as CPAN gets it.
+          build() {
+            (cd "src-perl/$1" && perl Makefile.PL > /dev/null && make dist > /dev/null && mv ./*.tar.gz "$RUNNER_TEMP/dist/")
+            ls "$RUNNER_TEMP/dist/$1-v$2.tar.gz"
+          }
+          # Uploads a tarball unless CPAN already has that version of the module.
+          upload() {
+            if curl -fsS "https://fastapi.metacpan.org/v1/download_url/$2?version===v$3" > /dev/null 2>&1; then
+              echo "::notice::CPAN already has $2 v$3."
+            else
+              cpan-upload -u "$PAUSE_USERNAME" -p "$PAUSE_PASSWORD" "$1"
+            fi
+          }
+          # A GitHub release of a tag, with tarballs, its notes the version's entry in Changes.
+          release() {
+            tag=$1 dist=$2 version=$3 title=$4
+            shift 4
+            if gh release view "$tag" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+              echo "::notice::$tag is released."
+              return
+            fi
+            awk -v v="v$version" '$1 == v { on = 1; next } on && /^v[0-9]/ { exit } on' "src-perl/$dist/Changes" \
+              > "$RUNNER_TEMP/notes.md"
+            gh release create "$tag" "$@" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$title" \
+              --notes-file "$RUNNER_TEMP/notes.md" --latest=false
+            echo "- $title: https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"
+          }
+          echo "### Perl distributions published" >> "$GITHUB_STEP_SUMMARY"
+          # The Alien first: building the binding's tarball and installing the binding need it.
+          alien_version=$(sed -n "s/^our \$VERSION = 'v\([0-9.]*\)';$/\1/p" src-perl/Alien-CorvusJsonSchema/lib/Alien/CorvusJsonSchema.pm)
+          alien=$(build Alien-CorvusJsonSchema "$alien_version")
+          if [ -n "$ALIEN" ]; then
+            upload "$alien" Alien::CorvusJsonSchema "$ALIEN"
+            release "perl-alien-v$ALIEN" Alien-CorvusJsonSchema "$ALIEN" "Alien::CorvusJsonSchema $ALIEN" "$alien"
+          fi
+          if [ -n "$XS" ]; then
+            cpanm --notest --quiet "$alien"
+            xs=$(build JSON-Schema-Corvus-XS "$XS")
+            upload "$xs" JSON::Schema::Corvus::XS "$XS"
+            release "perl-xs-v$XS" JSON-Schema-Corvus-XS "$XS" "JSON::Schema::Corvus::XS $XS" "$xs" "$alien"
+          fi
+          if [ -n "$PURE" ]; then
+            pure=$(build JSON-Schema-Corvus "$PURE")
+            upload "$pure" JSON::Schema::Corvus "$PURE"
+            release "perl-v$PURE" JSON-Schema-Corvus "$PURE" "JSON::Schema::Corvus $PURE" "$pure"
+          fi
+
+  image-pure:
+    name: Publish the perl release image
+    needs: [version, publish]
+    if: needs.version.outputs.pure != ''
+    # The released tarball as an image that a Dockerfile can pin (see release-image.yml): the Bowtie harness does.
+    uses: ./.github/workflows/release-image.yml
+    permissions:
+      contents: read
+      packages: write  # push ghcr.io/corvus-dotnet/corvus-json-schema-perl
+    with:
+      package: perl
+      version: ${{ needs.version.outputs.pure }}
+
+  image-xs:
+    name: Publish the perl-xs release image
+    needs: [version, publish]
+    if: needs.version.outputs.xs != ''
+    uses: ./.github/workflows/release-image.yml
+    permissions:
+      contents: read
+      packages: write  # push ghcr.io/corvus-dotnet/corvus-json-schema-perl-xs
+    with:
+      package: perl-xs
+      version: ${{ needs.version.outputs.xs }}

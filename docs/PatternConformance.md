@@ -25,16 +25,17 @@ refuses, how each limits a match, and where a port still differs from ECMA-262. 
 |---|---|---|---|---|
 | .NET (V5) | Its own matchers for common shapes, and .NET `Regex` for the rest, through a translation from the parse tree | Nothing, apart from the limits of size | `RegexMatchTimeout`, 1 second, which throws `RegexMatchTimeoutException`. A pattern proved to match in linear time has none | 0 compiled, 2 interpreted |
 | .NET (V4 generated code) | .NET `Regex`, through the same translation | Nothing, apart from the limits of size | A match timeout of 1 second in the generated code | Not measured |
-| Rust, and the C library, C++, Python (Rust-backed), Ruby, PHP, R and Swift built on it | Its own ECMA-262 engine, and the `regex` crate for patterns it proves linear | Nothing, apart from the limits of size | 1 second, as an error | 0 |
+| Rust, and the C library, C++, Python (Rust-backed), Ruby, PHP, R, Swift, Fortran and Perl (XS) built on it | Its own ECMA-262 engine, and the `regex` crate for patterns it proves linear | Nothing, apart from the limits of size | 1 second, as an error | 0 |
 | Go | Its own ECMA-262 engine, and the standard library's `regexp` for patterns it proves linear | Nothing, apart from the limits of size | 1 second, as an error | 0 |
 | Object Pascal | Its own ECMA-262 engine | Nothing, apart from the limits of size | 1 second, as an exception | 0 |
 | Java and Kotlin | `java.util.regex`, through a translation | A backreference to a group of a lookbehind that only matching backwards can tell (689 patterns of the dataset), and 4 over the limits of size | 1 second, and 8 MiB of what `java.util.regex` holds for one pattern | 6 to 7 |
 | Julia | PCRE2, through a translation | A backreference into a lookbehind that PCRE2 cannot write with the same meaning (467 patterns of the dataset), and 139 corner cases of the grammar with no `u` flag | 1 second, and PCRE2's count of steps | 2 |
 | Python (pure) | `re` for patterns it proves linear, the `regex` package for the rest | 1 pattern of the dataset | 1 second by the clock | 9 to 10 |
+| Perl (pure) | Its own ECMA-262 engine, a port of the Go module's, and Perl's own engine for patterns it proves linear | Nothing, apart from the limits of size | 1 second by the clock, as an exception | 34 |
 | TypeScript and JavaScript | The host's own `RegExp` | Nothing | None | Not applicable |
 
 The counts of refusals and of match-limit hits are from runs over the 13 files of the dataset: .NET on 2026-10-16,
-the others on 2026-10-12. A match-limit hit is a match that reached the limit and so has no answer. It is never a
+pure Perl on 2026-10-20, the others on 2026-10-12. A match-limit hit is a match that reached the limit and so has no answer. It is never a
 wrong answer. No port gives a wrong answer on the dataset.
 
 ## Where the ports differ
@@ -89,6 +90,15 @@ answers. Each is a decision recorded here, with an issue where there is work to 
 - A text of more than 1,048,576 characters is not matched by a pattern that is not proved linear, once the first try
   at a match has been abandoned.
 - `re` has no limit on the memory of a match. It runs only patterns proved linear.
+
+### Perl
+
+- The engine of its own is written in Perl, so it takes many times longer than the Go module's for a pattern that
+  backtracks: the 34 texts of the dataset that reach the limit of one second all get V8's answer with a limit of 30
+  seconds. Perl's own engine runs the patterns proved linear, and they need no limit.
+- Perl 5.40 compiles a class whose members are one case folding set, such as `[\x{1f80}\x{1f88}]`, to a node that
+  compares with full case folding, which matches neither member of that class. The package never writes such a
+  class for Perl's engine, and its own engine tests a small class without one.
 
 ### TypeScript and JavaScript
 

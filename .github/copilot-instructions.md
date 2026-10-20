@@ -28,6 +28,7 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 | `corvus-julia-evaluator` | The Julia port of the standalone evaluator (`src-jl/`), its suites, allocation and type stability tests, benchmarks, Bowtie harness and General registry release |
 | `corvus-ocaml-evaluator` | The OCaml port of the standalone evaluator (`src-ml/`), its suites, allocation tests, README samples test, benchmark harness and opam release |
 | `corvus-fortran-binding` | The Fortran binding to the C library (`src-fortran/`), its suite, annotation and API tests, CMake build and release through its publication repository |
+| `corvus-perl-packages` | The Perl distributions (`src-perl/`): the pure-Perl port (code generator, regex engine), the XS binding to the C library and its Alien, their tests, the regex dataset gate and the CPAN release |
 | `corvus-parsed-documents-and-memory` | Parsing, IJsonElement, memory model, UTF-8 transcoding |
 | `corvus-mutable-documents` | JsonWorkspace, JsonDocumentBuilder, mutation, JSON Patch |
 | `corvus-buffer-and-pooling` | stackalloc/ArrayPool/ThreadStatic pooling patterns |

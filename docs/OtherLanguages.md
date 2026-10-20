@@ -2,7 +2,7 @@
 
 The Corvus JSON Schema evaluator is not only for .NET. The same evaluator, with the same behaviour, is available for
 JavaScript and TypeScript, Rust, Java and Kotlin, Go, Julia, Object Pascal, OCaml, Python, C, C++, Swift, Fortran, Ruby,
-PHP and R.
+PHP, R and Perl.
 
 | Language | Package | Install |
 |---|---|---|
@@ -22,13 +22,14 @@ PHP and R.
 | [Ruby](JsonSchemaForRuby.md) | [corvus_json_schema](https://rubygems.org/gems/corvus_json_schema) | `gem install corvus_json_schema` |
 | [PHP](JsonSchemaForPhp.md) | [corvus-dotnet/corvus-json-schema](https://packagist.org/packages/corvus-dotnet/corvus-json-schema) | `pie install corvus-dotnet/corvus-json-schema` |
 | [R](JsonSchemaForR.md) | [corvusjsonschema](https://corvus-dotnet.r-universe.dev/corvusjsonschema) | `install.packages("corvusjsonschema", repos = "https://corvus-dotnet.r-universe.dev")` |
+| [Perl](JsonSchemaForPerl.md) | [JSON::Schema::Corvus](https://metacpan.org/dist/JSON-Schema-Corvus), [JSON::Schema::Corvus::XS](https://metacpan.org/dist/JSON-Schema-Corvus-XS) | `cpanm JSON::Schema::Corvus::XS` |
 
 ## What they share
 
 - **The same evaluator.** Each is a port of, or built on a port of, the .NET runtime evaluator. The Rust crate is the
   engine behind the Python (Rust-backed), Ruby, PHP and R packages and the C library, and the C library is the engine
-  behind the C++ wrapper and the Swift and Fortran packages. The JavaScript and pure-Python packages compile schemas into their own
-  languages' code, and the Java library compiles them into JVM bytecode. The Go module is a port of the Rust crate's
+  behind the C++ wrapper and the Swift, Fortran and Perl (XS) packages. The JavaScript, pure-Python and pure-Perl
+  packages compile schemas into their own languages' code, and the Java library compiles them into JVM bytecode. The Go module is a port of the Rust crate's
   plans to Go, with no native code, and the Julia package, the Object Pascal package and the OCaml package are each a port
   of the Go module.
 - **The same results.** Every implementation evaluates drafts 4, 6, 7, 2019-09 and 2020-12, passes the
