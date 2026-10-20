@@ -40,9 +40,11 @@ never "faster"; every list follows the filters; the geometric mean is over the w
 
 
 **Compliance beside each implementation.** An implementation may carry `compliance`: an object of counts
-(`{"right": N, "wrong": N, "refused": N, "acceptedInvalid": N}`) from a conformance suite, or a string such as
-`"not ECMA-262"` or `"the oracle"`. The page shows it as a badge beside the name in the leaderboard and the picker
-(the counts in the tooltip); an implementation without the field shows nothing. Publish it whenever the benchmark
+(`{"right": N, "wrong": N, "refused": N, "acceptedInvalid": N, "limited": N}`, `limited` being cases left
+unanswered) from a conformance suite, or a string such as `"not ECMA-262"` or `"the oracle"`. The page shows it as a
+badge beside the name in the leaderboard and the picker: the share right over everything judged, rounded down (the
+counts in the tooltip); the picker's quick pick selects the fully compliant implementations. An implementation
+without the field shows nothing. Compare figures only between runners that judge the same way. Publish it whenever the benchmark
 compares implementations of a standard, so a reader sees what a fast implementation is fast at.
 
 **Facts come from the run.** `meta.facts`, `meta.date` and `meta.runUrl` are read from the harness's own record of

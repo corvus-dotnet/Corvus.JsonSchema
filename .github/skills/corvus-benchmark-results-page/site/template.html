@@ -398,16 +398,21 @@ function compliance(info) {
   if (c == null || c === "") return null;
   if (typeof c === "string") return /oracle/i.test(c) ? { short: "the oracle", long: c, cls: "comp-ok" } : { short: c, long: c, cls: "" };
   const n = k => Number(c[k] || 0).toLocaleString("en");
-  const extra = [["refused", "refused"], ["acceptedInvalid", "accepted invalid"]].filter(([k]) => c[k]).map(([k, w]) => `, ${n(k)} ${w}`).join("");
-  const long = `ECMA-262: ${n("right")} right, ${n("wrong")} wrong${extra}`;
-  const bad = (c.wrong || 0) + (c.acceptedInvalid || 0);
-  return bad ? { short: `${n("wrong")} wrong`, long, cls: "comp-wrong" } : { short: "✓ ECMA-262", long, cls: "comp-ok" };
+  // The share of the test data answered as the oracle answers: right over every answer judged. Rounded down, so one
+  // failure never reads as 100%; the counts are in the tooltip.
+  const bad = (c.wrong || 0) + (c.refused || 0) + (c.acceptedInvalid || 0) + (c.limited || 0);
+  const total = (c.right || 0) + bad;
+  const pct = total ? Math.floor(((c.right || 0) / total) * 10000) / 100 : 0;
+  const share = bad ? `${pct.toFixed(2)}%` : "100%";
+  const extra = [["refused", "refused"], ["acceptedInvalid", "accepted invalid"], ["limited", "unanswered"]].filter(([k]) => c[k]).map(([k, w]) => `, ${n(k)} ${w}`).join("");
+  const long = `ECMA-262 test data: ${share} (${n("right")} right, ${n("wrong")} wrong${extra}, of ${total.toLocaleString("en")} answers)`;
+  return bad ? { short: `${share} ECMA-262`, long, cls: "comp-wrong" } : { short: "✓ 100% ECMA-262", long, cls: "comp-ok" };
 }
 // Fully compliant: the oracle, or counts with nothing wrong, refused or accepted that should not be.
 function fullyCompliant(info) {
   const c = info && info.compliance;
   if (typeof c === "string") return /oracle/i.test(c);
-  return !!c && typeof c === "object" && !(c.wrong || 0) && !(c.refused || 0) && !(c.acceptedInvalid || 0);
+  return !!c && typeof c === "object" && !(c.wrong || 0) && !(c.refused || 0) && !(c.acceptedInvalid || 0) && !(c.limited || 0);
 }
 const HAS_COMPLIANCE = DATA.impls.some(i => i.compliance != null && i.compliance !== "");
 function implLabel(id) { const i = IMPL.get(id); return i ? i.name : id; }
