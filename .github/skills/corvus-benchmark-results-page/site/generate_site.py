@@ -8,6 +8,8 @@ from GitHub Pages or copied to a bucket as it is. The data file (JSON):
         "title": "...", "lede": "one paragraph under the title", "repo": "owner/name",
         "commit": "sha", "date": "ISO 8601", "runUrl": "", "runs": 0 or the runs each measurement has,
         "facts": [["Host", "..."], ["Commit", "..."]],            # shown in the run header, in order
+        "links": [{"label": "...", "url": "..."}],                 # optional: related pages, in the run header
+        "icon": "favicon.svg", "runner": "...", "defaultMeasure": "time",  # optional
         "method": "<p>...</p><p>...</p>"                           # the 'How to read this' section, as HTML
       },
       "vocab": {                                                    # the words the page uses for its two axes
@@ -20,7 +22,12 @@ from GitHub Pages or copied to a bucket as it is. The data file (JSON):
         "time": { "label": "Time", "long": "time per operation", "parts": ["time"] },
         "allocated": { "label": "Allocated", "long": "bytes allocated", "parts": ["allocated"], "bytes": true }
       },
-      "impls": [{ "id": "...", "name": "...", "group": "...", "version": "..." }],
+      "impls": [{ "id": "...", "name": "...", "group": "...", "version": "...",
+                  "compliance": {"right": n, "wrong": n, "refused": n, "acceptedInvalid": n}
+                                | "not ECMA-262" | "the oracle of the test data" }],
+                                                                    # compliance is optional: shown beside the name in
+                                                                    # the Overall rows and the picker; a phrase with
+                                                                    # "oracle" reads "the oracle", any other as it is
       "schemas": [{ "name": "...", "note": "...", "meta": [["instances", "333"]], "url": "", "urlLabel": "" }],
       "results": { "<impl id>": { "<schema name>": null | { "<part>": [runs...] | {"median": n, "min": n, "max": n} } } }
     }

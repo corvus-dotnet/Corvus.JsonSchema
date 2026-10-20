@@ -38,6 +38,16 @@ Conventions the page keeps (do not re-decide them): the default comparison is "f
 leader's label says "1.07×, fastest on 21" so a leader above 1× is explained; a lower memory figure is "lower",
 never "faster"; every list follows the filters; the geometric mean is over the workloads both sides complete.
 
+
+**Compliance beside each implementation.** An implementation may carry `compliance`: an object of counts
+(`{"right": N, "wrong": N, "refused": N, "acceptedInvalid": N}`) from a conformance suite, or a string such as
+`"not ECMA-262"` or `"the oracle"`. The page shows it as a badge beside the name in the leaderboard and the picker
+(the counts in the tooltip); an implementation without the field shows nothing. Publish it whenever the benchmark
+compares implementations of a standard, so a reader sees what a fast implementation is fast at.
+
+**Facts come from the run.** `meta.facts`, `meta.date` and `meta.runUrl` are read from the harness's own record of
+the run (the benchmark tool's report header, the run's end time, the CI run's URL), never typed in.
+
 ## Files
 
 - `site/template.html` — the page: styles, markup and the chart code (hand-rolled SVG, no dependencies but the

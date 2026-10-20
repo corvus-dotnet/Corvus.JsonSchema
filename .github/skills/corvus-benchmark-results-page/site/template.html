@@ -91,6 +91,9 @@ select { background: var(--surface); border: 1px solid var(--line); border-radiu
 .lang h3 { margin: 0 0 4px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
 .lang label { display: flex; align-items: baseline; gap: 6px; font-size: 14px; padding: 2px 0; cursor: pointer; }
 .lang label small { color: var(--muted); font-family: var(--font-data); font-size: 11px; }
+.comp { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; white-space: nowrap; }
+.comp-ok { color: var(--faster); border-color: currentColor; }
+.comp-wrong { color: var(--slower); border-color: currentColor; }
 
 /* Sections */
 main { padding-block: 8px 48px; }
@@ -377,6 +380,19 @@ function fmtRatio(r, versus = state.baseline !== "best") {
   if (Math.abs(r - 1) < 0.005) return "level";
   return r < 1 ? sig(1 / r) + "× " + better() : sig(r) + "× " + worse();
 }
+// An implementation's compliance (impl.compliance), when the data gives one: the counts on the ECMA-262 test data
+// ({right, wrong, refused, acceptedInvalid}), or a phrase such as "not ECMA-262" or "the oracle of the test data".
+// Absent, nothing is shown. Returns { short, long, cls } or null.
+function compliance(info) {
+  const c = info && info.compliance;
+  if (c == null || c === "") return null;
+  if (typeof c === "string") return /oracle/i.test(c) ? { short: "the oracle", long: c, cls: "comp-ok" } : { short: c, long: c, cls: "" };
+  const n = k => Number(c[k] || 0).toLocaleString("en");
+  const extra = [["refused", "refused"], ["acceptedInvalid", "accepted invalid"]].filter(([k]) => c[k]).map(([k, w]) => `, ${n(k)} ${w}`).join("");
+  const long = `ECMA-262: ${n("right")} right, ${n("wrong")} wrong${extra}`;
+  const bad = (c.wrong || 0) + (c.acceptedInvalid || 0);
+  return bad ? { short: `${n("wrong")} wrong`, long, cls: "comp-wrong" } : { short: "✓ ECMA-262", long, cls: "comp-ok" };
+}
 function implLabel(id) { const i = IMPL.get(id); return i ? i.name : id; }
 function baseLabel() { return state.baseline === "best" ? `the fastest selected ${V.impl} on each ${V.schema}` : implLabel(state.baseline); }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -489,7 +505,8 @@ function renderBoard() {
   const rows = ranked();
   const versus = state.baseline !== "best";
   const W = width(host), rowH = 30, top = 26, narrow = W < 640;
-  const labelW = narrow ? Math.min(150, W * 0.38) : 230, covW = narrow ? 0 : 56, valW = narrow ? 70 : 104;
+  const withComp = DATA.impls.some(i => compliance(i));
+  const labelW = narrow ? Math.min(150, W * 0.38) : withComp ? 330 : 230, covW = narrow ? 0 : 56, valW = narrow ? 70 : 104;
   const finite = rows.filter(r => Number.isFinite(r.g)).map(r => r.g);
   let lo = Math.min(1, ...finite), hi = Math.max(1, ...finite);
   lo = Math.pow(2, Math.floor(Math.log2(lo))); hi = Math.pow(2, Math.ceil(Math.log2(hi)));
@@ -508,6 +525,12 @@ function renderBoard() {
     svg.append(svgEl("rect", { x: 0, y, width: W, height: rowH, class: "row-hit", "data-tip": r.impl }));
     const name = svgEl("text", { x: 0, y: cy + 4, class: "lab" }, info.name);
     if (r.impl === state.baseline) name.setAttribute("style", "fill: var(--accent); font-weight: 600");
+    const comp = narrow ? null : compliance(info);
+    if (comp) {
+      const t = svgEl("tspan", { dx: 8, class: "lab-sub", style: `font-weight: 400; fill: var(${comp.cls === "comp-ok" ? "--faster" : comp.cls === "comp-wrong" ? "--slower" : "--muted"})` }, comp.short);
+      t.append(svgEl("title", {}, comp.long));
+      name.append(t);
+    }
     svg.append(name);
     if (!narrow && info.group) svg.append(svgEl("text", { x: labelW - 12, y: cy + 4, "text-anchor": "end", class: "lab-sub" }, info.group));
     if (Number.isFinite(r.g)) {
@@ -554,7 +577,7 @@ function boardTip(id) {
       [`${V.Schemas} compared`, `${s.n} of ${NS}`],
       ["Fastest on", `${s.best} ${s.best === 1 ? V.schema : V.schemas}`],
       ["Failed", String(s.failed)],
-    ].concat(s.missing ? [["Not run", String(s.missing)]] : []));
+    ].concat(s.missing ? [["Not run", String(s.missing)]] : [], compliance(info) ? [["Compliance", compliance(info).long]] : []));
 }
 
 /* ---------- matrix ---------- */
@@ -799,6 +822,8 @@ function init() {
   if (meta.date) bits.push(`<div><span>Run</span> ${esc(/^\d{4}-\d{2}-\d{2}$/.test(meta.date) ? new Date(meta.date + "T00:00:00Z").toUTCString().replace(/ \d\d:\d\d:\d\d GMT$/, "") : new Date(meta.date).toUTCString().replace(/:\d\d GMT$/, " UTC"))}</div>`);
   if (meta.commit) bits.push(`<div><span>Commit</span> <a href="https://github.com/${esc(meta.repo)}/commit/${esc(meta.commit)}">${esc(meta.commit.slice(0, 10))}</a></div>`);
   if (meta.runUrl) bits.push(`<div><a href="${esc(meta.runUrl)}">Workflow run</a></div>`);
+  // Related pages the data names (meta.links: [{label, url}]), such as the pinned record from the daily run and back.
+  for (const l of meta.links || []) if (l && l.url && l.label) bits.push(`<div><a href="${esc(l.url)}">${esc(l.label)}</a></div>`);
   if (meta.runner) bits.push(`<div><span>Runner</span> ${esc(meta.runner)}</div>`);
   for (const [k, v] of (meta.facts || [])) bits.push(`<div><span>${esc(k)}</span> ${esc(v)}</div>`);
   bits.push(`<div><span>${esc(V.Impls)}</span> ${ALL.length}</div><div><span>${esc(V.Schemas)}</span> ${NS}</div>`);
@@ -825,7 +850,7 @@ function init() {
   for (const i of DATA.impls) { const k = i.group || "Other"; if (!byLang.has(k)) byLang.set(k, []); byLang.get(k).push(i); }
   document.getElementById("langs").innerHTML = [...byLang.keys()].sort((a, b) => a.localeCompare(b)).map(lang =>
     `<div class="lang"><h3>${esc(lang)}</h3>` + byLang.get(lang).map(i =>
-      `<label title="${esc(i.version || "")}"><input type="checkbox" id="pick-${esc(i.id)}" value="${esc(i.id)}"> ${esc(i.name)} <small>${esc((i.version || "").split(" ")[0])}</small></label>`).join("") + `</div>`).join("");
+      `<label title="${esc(i.version || "")}"><input type="checkbox" id="pick-${esc(i.id)}" value="${esc(i.id)}"> ${esc(i.name)} <small>${esc((i.version || "").split(" ")[0])}</small>${compliance(i) ? ` <span class="comp ${compliance(i).cls}" title="${esc(compliance(i).long)}">${esc(compliance(i).short)}</span>` : ""}</label>`).join("") + `</div>`).join("");
   document.getElementById("langs").addEventListener("change", e => {
     const id = e.target.value;
     if (e.target.checked) state.selected.add(id); else state.selected.delete(id);
