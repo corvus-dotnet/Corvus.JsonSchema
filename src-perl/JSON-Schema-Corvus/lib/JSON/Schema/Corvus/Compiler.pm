@@ -13,6 +13,7 @@ use JSON::Schema::Corvus::Formats ();
 use JSON::Schema::Corvus::Json;
 use JSON::Schema::Corvus::Loader;
 use JSON::Schema::Corvus::Node qw(:all);
+use JSON::Schema::Corvus::Pattern ();
 use JSON::Schema::Corvus::Uri;
 
 # Keywords CompileNode handles itself; anything else is an unknown keyword (an annotation from 2019-09).
@@ -212,6 +213,7 @@ sub _compile_node {
     }
     my $pattern_props = $e->{patternProperties};
     if (ref $pattern_props eq 'HASH') {
+      $self->_check_pattern($_) for JSON::Schema::Corvus::Json::names($pattern_props);
       $node->{pattern_properties} = [ map {
         { pattern => $_, node => $self->_child($target, $pattern_props->{$_},
           '/patternProperties/' . JSON::Schema::Corvus::Uri::escape_pointer_token($_)) }
@@ -281,7 +283,10 @@ sub _compile_node {
     $node->{unique_items} = _is_true($e->{uniqueItems}) ? 1 : 0;
     $node->{min_length} = _get_int($e->{minLength}, -1);
     $node->{max_length} = _get_int($e->{maxLength}, -1);
-    $node->{pattern} = $e->{pattern} if _is_string($e->{pattern});
+    if (_is_string($e->{pattern})) {
+      $node->{pattern} = $e->{pattern};
+      $self->_check_pattern($e->{pattern});
+    }
     $node->{multiple_of} = $e->{multipleOf} if _is_number($e->{multipleOf});
 
     if ($dialect == DRAFT4) {
@@ -321,6 +326,14 @@ sub _compile_node {
   $node->{dependencies} = $dependencies;
   $self->{annotation_sources}[ $node->{id} ] = { e => $e, dialect => $dialect, vocab => $vocab, legacy => $legacy,
     content => $content };
+}
+
+# A regular expression that is not valid does not compile, and one over a limit of size dies with a PatternTooLarge
+# error.
+sub _check_pattern {
+  my ($self, $pattern) = @_;
+  JSON::Schema::Corvus::Pattern::compile_pattern($pattern, $self->{options}{pattern_match_limit})
+    or die JSON::Schema::Corvus::Error::Compilation->_new("Invalid regular expression '$pattern'.");
 }
 
 sub _compile_draft4_bounds {
