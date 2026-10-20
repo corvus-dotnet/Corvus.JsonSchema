@@ -34,7 +34,7 @@ Usage:
 """
 
 import argparse
-import json
+import html, json
 import os
 
 TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "template.html")
@@ -57,6 +57,13 @@ def main():
     payload = json.dumps(data, separators=(",", ":")).replace("</", "<\\/")
     with open(TEMPLATE, encoding="utf-8") as f:
         page = f.read().replace("/*BENCHMARK_DATA*/null", payload)
+    # The page's title is the run's, and an icon when the data names one (meta.icon, a path the host serves):
+    # without a link the browser asks for /favicon.ico and logs a 404 on a host that has none.
+    meta = data.get("meta", {})
+    head_tags = "<title>" + html.escape(meta.get("title") or "Benchmark results") + "</title>"
+    if meta.get("icon"):
+        head_tags += '\n<link rel="icon" href="' + html.escape(meta["icon"], quote=True) + '">'
+    page = page.replace("<title>Benchmark results</title>", head_tags, 1)
     if not args.fragment:
         head, body = page.split("<header", 1)
         page = (

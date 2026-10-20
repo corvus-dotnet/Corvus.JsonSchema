@@ -299,11 +299,11 @@ function measure(impl, schema, metric = state.metric) {
       const runs = r[parts[0]].map((_, i) => parts.reduce((s, p) => s + r[p][i], 0)).sort((x, y) => x - y);
       const n = runs.length, mid = n >> 1;
       const median = n % 2 ? runs[mid] : (runs[mid - 1] + runs[mid]) / 2;
-      out = median > 0 ? { state: "ok", median, min: runs[0], max: runs[n - 1], runs } : { state: "failed" };
+      out = median > 0 || METRICS[metric].bytes ? { state: "ok", median, min: runs[0], max: runs[n - 1], runs } : { state: "failed" };
     } else {
       const sum = k => parts.reduce((s, p) => s + (Array.isArray(r[p]) ? r[p].reduce((a, b) => a + b, 0) / r[p].length : r[p][k]), 0);
       const median = sum("median"), min = sum("min"), max = sum("max");
-      out = median > 0 ? { state: "ok", median, min, max, runs: null } : { state: "failed" };
+      out = median > 0 || METRICS[metric].bytes ? { state: "ok", median, min, max, runs: null } : { state: "failed" };
     }
   }
   cache.set(key, out);
@@ -321,10 +321,12 @@ function baseValue(schema) {
   }
   return best === Infinity ? NaN : best;
 }
+/* A ratio of two values, where a bytes measure may be 0 on both sides (nothing allocated: level) or on one (beyond any scale). */
+function div(v, b) { return b > 0 ? v / b : v === 0 ? 1 : Infinity; }
 function ratio(impl, schema) {
   const m = measure(impl, schema);
   const b = baseValue(schema);
-  return m.state === "ok" && b > 0 ? m.median / b : NaN;
+  return m.state === "ok" && !Number.isNaN(b) ? div(m.median, b) : NaN;
 }
 function geomean(xs) {
   return xs.length ? Math.exp(xs.reduce((s, x) => s + Math.log(x), 0) / xs.length) : NaN;
@@ -648,7 +650,7 @@ function renderSchema() {
       x = logScale(lo, hi === lo ? lo * 10 : hi, x0, x1); ticks = valueTicksLog(lo, hi === lo ? lo * 10 : hi); origin = lo;
     } else {
       ticks = valueTicksLinear(maxV); const hi = ticks[ticks.length - 1] || maxV;
-      x = v => x0 + (v / hi) * (x1 - x0); origin = 0;
+      x = v => hi > 0 ? x0 + (v / hi) * (x1 - x0) : x0; origin = 0;
     }
     for (const t of thin(ticks, x)) {
       svg.append(svgEl("line", { x1: x(t), x2: x(t), y1: top - 6, y2: H - 4, stroke: t === origin ? css("--axis") : css("--grid") }));
@@ -701,7 +703,7 @@ function renderH2H() {
     const ma = measure(A, s.name), mb = measure(B, s.name);
     if (ma.state !== "ok") failA++;
     if (mb.state !== "ok") failB++;
-    if (ma.state === "ok" && mb.state === "ok") pts.push({ s: s.name, r: ma.median / mb.median, a: ma.median, b: mb.median });
+    if (ma.state === "ok" && mb.state === "ok") pts.push({ s: s.name, r: div(ma.median, mb.median), a: ma.median, b: mb.median });
   }
   pts.sort((p, q) => p.r - q.r);
   const winsA = pts.filter(p => p.r < 1).length, g = geomean(pts.map(p => p.r));
@@ -738,7 +740,7 @@ function renderH2H() {
   host.replaceChildren(svg);
 }
 function h2hTip(schema) {
-  const ma = measure(state.a, schema), mb = measure(state.b, schema), r = ma.median / mb.median;
+  const ma = measure(state.a, schema), mb = measure(state.b, schema), r = div(ma.median, mb.median);
   return `<div class="t-h">${esc(schema)}</div><div class="t-s">${esc(METRICS[state.metric].long)}</div>` +
     tipRows([[implLabel(state.a), fmtValue(ma.median)], [implLabel(state.b), fmtValue(mb.median)],
       ["", r < 1 ? `${implLabel(state.a)} ${sig(1 / r)}× ${better()}` : `${implLabel(state.b)} ${sig(r)}× ${better()}`]]);
