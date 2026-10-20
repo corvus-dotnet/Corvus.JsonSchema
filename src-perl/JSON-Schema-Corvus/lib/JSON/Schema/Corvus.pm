@@ -299,9 +299,9 @@ the checks the schema needs. L<JSON::Schema::Corvus::XS> is the same evaluator o
 with the same API, and is faster still.
 
 JSON text is parsed by the package's own parser, which keeps numbers exactly as the text says: an integer of any size
-is an integer, and a number with a fraction or an exponent is a floating point number even when it is whole (so draft
-4 can tell C<1.0> from C<1>). Parsing is in Perl, so for an instance validated more than once, parse it once into a
-L</Documents> document.
+is an integer, and a number with a fraction or an exponent is a floating point number. A whole number is an integer in
+every draft, C<1.0> included, as it is in the XS package. Parsing is in Perl, so for an instance validated more than
+once, parse it once into a L</Documents> document.
 
 Perl data is accepted too, by the rules L<JSON::PP> follows: a scalar that has a number and has never been used as a
 string is a number, and any other defined scalar is a string; C<undef> is null; L<JSON::PP::Boolean> objects, Perl's

@@ -15,6 +15,7 @@ package JSON::Schema::Corvus::CodeGen;
 use 5.026;
 use strict;
 use warnings;
+use B ();
 use List::Util ();
 use JSON::Schema::Corvus::Dialect qw(DRAFT4 DRAFT6);
 use JSON::Schema::Corvus::Error;
@@ -95,7 +96,7 @@ sub perl_string {
 sub perl_number {
   my ($self, $v) = @_;
   return $self->constant('Math::BigInt->new(' . perl_string("$v") . ')') if ref $v;
-  if (JSON::Schema::Corvus::Json::is_integer($v, 1)) {
+  if (JSON::Schema::Corvus::Json::is_integer($v) && B::svref_2object(\$v)->FLAGS & B::SVf_IOK) {
     my $copy = $v;
     my $text = "$copy";
     return $text if $text =~ /\A-?[0-9]+\z/;
@@ -257,11 +258,9 @@ sub kind_test {
   return "($t eq '' && defined($v) && !$CAN($v))";
 }
 
-# A test that a number (known to be one) is an integer: a whole number from draft 6; in draft 4, one written without
-# a fraction or an exponent.
+# A test that a number (known to be one) is an integer: a whole number, in every draft (see Json::is_integer).
 sub _integer_test {
   my ($self, $v, $dialect) = @_;
-  return "JSON::Schema::Corvus::Json::is_integer($v, 1)" if $dialect == DRAFT4;
   return "(ref($v) || $v == int($v))";
 }
 

@@ -11,7 +11,8 @@ package JSON::Schema::Corvus::Collecting;
 use 5.026;
 use strict;
 use warnings;
-use JSON::Schema::Corvus::Dialect qw(DRAFT4 DRAFT6);
+use B ();
+use JSON::Schema::Corvus::Dialect qw(DRAFT6);
 use JSON::Schema::Corvus::Error;
 use JSON::Schema::Corvus::Formats ();
 use JSON::Schema::Corvus::Json ();
@@ -82,7 +83,7 @@ sub number_text {
   my ($n) = @_;
   return "$n" if ref $n;
   my $copy = $n;
-  return "$copy" if JSON::Schema::Corvus::Json::is_integer($n, 1);
+  return "$copy" if JSON::Schema::Corvus::Json::is_integer($n) && B::svref_2object(\$n)->FLAGS & B::SVf_IOK;
   return 'NaN' if $n != $n;
   return $n > 0 ? 'Infinity' : '-Infinity' if $n == $n * 2 && $n != 0;
   my $text = JSON::Schema::Corvus::Json::number_text($n);
@@ -112,7 +113,7 @@ sub _matches_type {
   if ($type eq 'number') {
     return 1 if $mask & T_NUMBER;
     return 0 unless $mask & T_INTEGER;
-    return JSON::Schema::Corvus::Json::is_integer($x, $dialect == DRAFT4) ? 1 : 0;
+    return JSON::Schema::Corvus::Json::is_integer($x) ? 1 : 0;
   }
   return ($mask & T_BOOLEAN) ? 1 : 0 if $type eq 'boolean';
   return ($mask & T_NULL) ? 1 : 0 if $type eq 'null';

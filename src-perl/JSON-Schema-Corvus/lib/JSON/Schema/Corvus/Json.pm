@@ -8,8 +8,8 @@ package JSON::Schema::Corvus::Json;
 #   object   an unblessed hash reference
 #   array    an unblessed array reference
 #   number   a scalar created as a number and never used as a string (an integer from an integer literal, a floating
-#            point number, created as one, from any other: 1.0 stays apart from 1, as Python's json keeps them), or
-#            a Math::BigInt for an integer beyond 64 bits
+#            point number, created as one, from any other, so that writing it again gives 1.0 for 1.0), or a
+#            Math::BigInt for an integer beyond 64 bits
 #   string   a scalar created as a string
 # So a number is told from a string by how the scalar was created (is_number), never by what the text looks like.
 #
@@ -62,16 +62,14 @@ sub is_string {
 
 sub is_bool { ref $_[0] eq 'JSON::PP::Boolean' }
 
-# Whether a number is an integer: any whole number from draft 6, and in draft 4 one written without a fraction or an
-# exponent (an integer literal, or a Math::BigInt).
+# Whether a number is an integer: a whole number, in every draft. (Draft 4 says an integer has no fraction or exponent
+# in its text, but Perl's numeric operations change the flags that would tell 1.0 from 1, so a parsed document could
+# answer differently the second time; the C library, and so JSON::Schema::Corvus::XS, takes 1.0 as an integer in every
+# draft too.)
 sub is_integer {
-  my ($v, $draft4) = @_;
+  my ($v) = @_;
   return 1 if ref $v eq 'Math::BigInt';
   return '' unless defined $v && !ref $v && _created_as_number($v);
-  if ($draft4) {
-    my $flags = B::svref_2object(\$v)->FLAGS;
-    return ($flags & B::SVf_IOK) ? 1 : '';
-  }
   return $v == int($v) && $v - $v == 0 ? 1 : '';
 }
 
@@ -302,7 +300,9 @@ sub from_data {
     my $copy = $data;
     Carp::croak('JSON::Schema::Corvus: ' . ($copy != $copy ? 'NaN' : 'an infinite number') . ' has no JSON form')
       if $copy != $copy || ($copy == $copy * 2 && $copy != 0);
-    return $copy + 0;
+    # A plain copy, which keeps how the number was created (arithmetic would make a whole floating point number an
+    # integer).
+    return $copy;
   }
   return "$data";
 }
@@ -329,7 +329,13 @@ sub encode {
   return '[' . join(',', map { encode($_) } @$v) . ']' if $r eq 'ARRAY';
   return $v ? 'true' : 'false' if $r eq 'JSON::PP::Boolean';
   return "$v" if $r eq 'Math::BigInt';
-  return number_text($v) if _created_as_number($v);
+  if (_created_as_number($v)) {
+    my $text = number_text($v);
+    # A floating point number that is whole keeps a fraction, so that reading the text again gives a floating point
+    # number (as Python's json writes it).
+    $text .= '.0' if $text =~ /\A-?[0-9]+\z/ && !(B::svref_2object(\$v)->FLAGS & B::SVf_IOK);
+    return $text;
+  }
   return _quote($v);
 }
 
