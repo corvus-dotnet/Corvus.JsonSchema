@@ -795,7 +795,8 @@ function init() {
   document.getElementById("h2h-b").setAttribute("aria-label", `Second ${V.impl}`);
   document.getElementById("pick-complete").textContent = `Only those that complete every ${V.schema}`;
   document.getElementById("repo").textContent = meta.repo.replace("/", " / ");
-  if (meta.date) bits.push(`<div><span>Generated</span> ${esc(new Date(meta.date).toUTCString().replace(/:\d\d GMT/, " UTC"))}</div>`);
+  // The run's time, as the data gives it: a day alone is printed as a day, never with an invented midnight.
+  if (meta.date) bits.push(`<div><span>Run</span> ${esc(/^\d{4}-\d{2}-\d{2}$/.test(meta.date) ? new Date(meta.date + "T00:00:00Z").toUTCString().replace(/ \d\d:\d\d:\d\d GMT$/, "") : new Date(meta.date).toUTCString().replace(/:\d\d GMT$/, " UTC"))}</div>`);
   if (meta.commit) bits.push(`<div><span>Commit</span> <a href="https://github.com/${esc(meta.repo)}/commit/${esc(meta.commit)}">${esc(meta.commit.slice(0, 10))}</a></div>`);
   if (meta.runUrl) bits.push(`<div><a href="${esc(meta.runUrl)}">Workflow run</a></div>`);
   if (meta.runner) bits.push(`<div><span>Runner</span> ${esc(meta.runner)}</div>`);
