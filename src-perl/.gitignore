@@ -1,0 +1,12 @@
+# Build output of the Perl distributions (ExtUtils::MakeMaker and Alien::Build).
+_alien/
+blib/
+Makefile
+Makefile.old
+MYMETA.*
+pm_to_blib
+MANIFEST.bak
+*.tar.gz
+*.o
+*.bs
+/JSON-Schema-Corvus-XS/XS.c

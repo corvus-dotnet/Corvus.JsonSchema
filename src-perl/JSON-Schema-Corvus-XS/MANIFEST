@@ -1,0 +1,13 @@
+Changes
+lib/JSON/Schema/Corvus/XS.pm
+LICENSE
+Makefile.PL
+MANIFEST			This list of files
+MANIFEST.SKIP
+README.md
+t/00-load.t
+t/annotations.t
+t/api.t
+t/lib/SuiteSupport.pm
+t/suite.t
+XS.xs

@@ -1,0 +1,109 @@
+use alienfile;
+use Config;
+
+# The corvus-json-schema C library (src-rs/corvus-json-schema-capi), version 0.1.4 or later in the 0.1 series.
+#
+# An installed library that pkg-config finds as corvus-json-schema is used as it is (the "system" install, linked
+# dynamically). Otherwise the release package for this platform is downloaded from the C library's GitHub release,
+# checked against the SHA-256 digest recorded here, and installed into this distribution's share directory (the
+# "share" install). There the static library is linked, so JSON::Schema::Corvus::XS has nothing to find at run time,
+# except on Windows, where the C library is a DLL that Alien::CorvusJsonSchema->dynamic_libs names.
+
+my $version = '0.1.4';
+
+my %digest = (
+  'aarch64-pc-windows-msvc'    => '799c0ee0eb12d69fe00c7494506dc9e36a80a0b90fc13d762da00073ab8daf5d',
+  'aarch64-unknown-linux-gnu'  => '7430ef7abce8c749f2ab8c0655b7e88fa0887969b7e5cad900028f2604ab7c1d',
+  'aarch64-unknown-linux-musl' => '00a86affa290a62f217d5ad8cc988d3d37bfa67ee82679d3fbcbfb4ab9a66af6',
+  'universal2-apple-darwin'    => '731376f471831da584c182efe59cc9f4d521c141c52f3333a2dfe5bb35bac443',
+  'x86_64-pc-windows-msvc'     => 'f62a7ba731de58566df62bb134a71f2fe970a638de2ea938e6501ac2a6348d1b',
+  'x86_64-unknown-linux-gnu'   => '8583f6ef7e6bcfa9cb2223f12fe03aff9a15f143ed5c7c9efac25481bf4de469',
+  'x86_64-unknown-linux-musl'  => 'e582938aabb21b5c06b2c0d43591fa8cddd92b17fa0a57efb283c5a1e728e871',
+);
+
+# The release package's target for this Perl, or undef when the release has none.
+sub target {
+  my $arch = $Config{archname};
+  my $cpu = $arch =~ /^(?:x86_64|amd64|x64)/i || $arch =~ /-x64-/i ? 'x86_64'
+          : $arch =~ /^(?:aarch64|arm64)/i || $arch =~ /-arm64-/i ? 'aarch64'
+          : undef;
+  return 'universal2-apple-darwin' if $^O eq 'darwin';
+  return undef unless defined $cpu;
+  return "$cpu-unknown-linux-" . ($Config{gnulibc_version} ? 'gnu' : 'musl') if $^O eq 'linux';
+  return "$cpu-pc-windows-msvc" if $^O eq 'MSWin32';
+  return undef;
+}
+
+configure {
+  requires 'Alien::Build::Plugin::Digest::SHA' => 0;
+};
+
+plugin 'PkgConfig' => (
+  pkg_name        => 'corvus-json-schema',
+  minimum_version => $version,
+);
+
+share {
+  my $target = target();
+  unless (defined $target) {
+    die "There is no release package of the corvus-json-schema C library for $^O ($Config{archname}). Build it from "
+      . "src-rs/corvus-json-schema-capi (https://github.com/corvus-dotnet/Corvus.JsonSchema), install it where "
+      . "pkg-config finds corvus-json-schema.pc, and install this distribution again.\n";
+  }
+  if ($^O eq 'MSWin32' && $Config{cc} !~ /gcc/i) {
+    die "On Windows this distribution needs a Perl built with gcc (Strawberry Perl), which links the C library's DLL. "
+      . "Install the C library where pkg-config finds it instead.\n";
+  }
+  my $extension = $^O eq 'MSWin32' ? 'zip' : 'tar.gz';
+  my $name = "corvus-json-schema-$version-$target";
+
+  start_url "https://github.com/corvus-dotnet/Corvus.JsonSchema/releases/download/capi-v$version/$name.$extension";
+  plugin 'Download';
+  plugin 'Digest' => [ SHA256 => $digest{$target} ];
+  plugin 'Extract' => $extension;
+
+  # The package is prebuilt: installing it is copying it. Only the static library is kept on Linux and macOS, so that
+  # -lcorvus_json_schema links it rather than the shared one. On Windows the DLL is kept, with an import library
+  # under the name gcc's linker looks for.
+  build sub {
+    my ($build) = @_;
+    require File::Copy;
+    require File::Path;
+    my $prefix = $build->install_prop->{stage};
+    File::Path::mkpath([ "$prefix/include", "$prefix/lib" ]);
+    for my $file (qw(corvus_json_schema.h corvus_json_schema.hpp)) {
+      File::Copy::copy("include/$file", "$prefix/include/$file") or die "copy include/$file: $!";
+    }
+    for my $file (qw(LICENSE THIRD-PARTY-NOTICES.txt)) {
+      File::Copy::copy($file, "$prefix/$file") or die "copy $file: $!";
+    }
+    if ($^O eq 'MSWin32') {
+      File::Path::mkpath(["$prefix/bin"]);
+      File::Copy::copy('bin/corvus_json_schema.dll', "$prefix/bin/corvus_json_schema.dll") or die "copy the DLL: $!";
+      File::Copy::copy('lib/corvus_json_schema.dll.lib', "$prefix/lib/libcorvus_json_schema.dll.a")
+        or die "copy the import library: $!";
+    }
+    else {
+      File::Copy::copy('lib/libcorvus_json_schema.a', "$prefix/lib/libcorvus_json_schema.a")
+        or die "copy the static library: $!";
+    }
+  };
+
+  # The PkgConfig plugin registers a gather hook for share installs too, which would read a .pc file from the staged
+  # package. This package has none (the release's names the shared library, and the share install links the static
+  # one), so the share install's properties are set here instead, and that hook is not run.
+  meta->around_hook(gather_share => sub {
+    my (undef, $build) = @_;
+    my $prefix = $build->runtime_prop->{prefix};
+    my $private = $^O eq 'linux'
+      ? ($target =~ /musl$/ ? '-lgcc_s -lc' : '-lgcc_s -lutil -lrt -lpthread -lm -ldl -lc')
+      : $^O eq 'darwin' ? '-lSystem -lc -lm'
+      : '';
+    $build->runtime_prop->{version} = $version;
+    $build->runtime_prop->{cflags} = "-I$prefix/include";
+    $build->runtime_prop->{cflags_static} = "-I$prefix/include";
+    $build->runtime_prop->{libs} = "-L$prefix/lib -lcorvus_json_schema $private";
+    $build->runtime_prop->{libs_static} = "-L$prefix/lib -lcorvus_json_schema $private";
+    $build->runtime_prop->{capi_target} = $target;
+  });
+};

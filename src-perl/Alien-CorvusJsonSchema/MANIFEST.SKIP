@@ -1,0 +1,8 @@
+^blib/
+^_alien/
+^Makefile$
+^Makefile\.old$
+^MYMETA\.
+^pm_to_blib$
+^MANIFEST\.bak$
+^Alien-CorvusJsonSchema-
