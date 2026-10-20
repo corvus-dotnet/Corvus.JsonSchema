@@ -133,6 +133,16 @@ table.matrix { border-collapse: separate; border-spacing: 2px; font-family: var(
 .matrix td.fail { background: repeating-linear-gradient(45deg, var(--fail-a) 0 3px, var(--fail-b) 3px 6px); color: var(--muted); }
 .matrix td.miss { color: var(--muted); }
 .matrix tr.current th { color: var(--accent); }
+/* Phones: the workload column is capped (the full name is the row's title) so the cells sit beside it rather than
+   off-screen, the rotated headers are shorter, and a section header's picker takes the line's width. */
+@media (max-width: 640px) {
+  .matrix tbody th { max-width: 8.5rem; overflow: hidden; text-overflow: ellipsis; font-size: 12px; padding: 0 6px 0 6px; }
+  .matrix thead th { height: 112px; }
+  .matrix thead th div { font-size: 11px; }
+  .matrix td { min-width: 32px; }
+  .sec-head > h2 { flex: 1 1 100%; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+  .sec-head select { min-width: 0; width: 100%; }
+}
 
 .pair { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .pair .vs { color: var(--muted); font-size: 13px; }
@@ -601,7 +611,7 @@ function renderMatrix() {
   head += `</tr></thead>`;
   let body = "<tbody>";
   for (const s of schemaOrder()) {
-    body += `<tr class="${s.name === state.schema ? "current" : ""}"><th scope="row" data-schema="${esc(s.name)}">${esc(s.name)}${s.note ? `<small>${esc(s.note)}</small>` : ""}</th>`;
+    body += `<tr class="${s.name === state.schema ? "current" : ""}"><th scope="row" data-schema="${esc(s.name)}" title="${esc(s.name)}">${esc(s.name)}${s.note ? `<small>${esc(s.note)}</small>` : ""}</th>`;
     for (const id of cols) {
       const m = measure(id, s.name), key = esc(id + "|" + s.name);
       if (m.state === "failed") { body += `<td class="fail" data-tip="${key}">✕</td>`; continue; }
