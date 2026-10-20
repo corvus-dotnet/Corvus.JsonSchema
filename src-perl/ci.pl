@@ -5,7 +5,7 @@
 #   perl src-perl/ci.pl test <directory>          perl Makefile.PL, make, make test, in the source tree
 #   perl src-perl/ci.pl dist-install <directory>  checks the MANIFEST, makes the tarball CPAN would get, and installs
 #                                                 it with cpanm (which runs its tests)
-#   perl src-perl/ci.pl smoke                     uses the installed JSON::Schema::Corvus::XS
+#   perl src-perl/ci.pl smoke                     uses the installed JSON::Schema::Corvus::XS and JSON::Schema::Corvus
 use strict;
 use warnings;
 use Config;
@@ -21,10 +21,13 @@ sub run {
 
 if ($command eq 'smoke') {
   require JSON::Schema::Corvus::XS;
-  my $v = JSON::Schema::Corvus::XS->compile('{"type": "integer"}');
-  die "wrong answer\n" unless $v->is_valid_json('3') && !$v->is_valid_json('"3"');
+  require JSON::Schema::Corvus;
+  for my $class (qw(JSON::Schema::Corvus::XS JSON::Schema::Corvus)) {
+    my $v = $class->compile('{"type": "integer"}');
+    die "$class: wrong answer\n" unless $v->is_valid_json('3') && !$v->is_valid_json('"3"');
+  }
   print "JSON::Schema::Corvus::XS $JSON::Schema::Corvus::XS::VERSION on C library ",
-    JSON::Schema::Corvus::XS::library_version_string(), "\n";
+    JSON::Schema::Corvus::XS::library_version_string(), ", JSON::Schema::Corvus $JSON::Schema::Corvus::VERSION\n";
   exit 0;
 }
 

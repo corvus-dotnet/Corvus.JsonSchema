@@ -1,0 +1,7 @@
+Revision history for JSON-Schema-Corvus
+
+v0.1.0  2026-10-20
+  - First release: JSON Schema validation (draft 4, 6, 7, 2019-09 and 2020-12) in pure Perl, with no dependency
+    beyond Perl's core. Schemas compile to Perl; results at the basic, detailed and verbose levels, with annotations;
+    custom formats, a document resolver, and an ECMA-262 regular expression engine of its own with a limit of time on
+    each match.

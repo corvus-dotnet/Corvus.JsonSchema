@@ -258,3 +258,249 @@ sub from_data {
 }
 
 1;
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+JSON::Schema::Corvus - Fast JSON Schema validation (draft 4 to 2020-12) in pure Perl
+
+=head1 SYNOPSIS
+
+  use JSON::Schema::Corvus;
+
+  my $validator = JSON::Schema::Corvus->compile(<<'JSON');
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": { "id": { "type": "integer", "minimum": 1 } },
+    "required": ["id"]
+  }
+  JSON
+
+  $validator->is_valid_json('{"id": 3}');   # true
+  $validator->is_valid_json('{"id": 0}');   # false
+  $validator->is_valid({ id => 3 });        # Perl data: true
+
+  my $collector = JSON::Schema::Corvus::ResultsCollector->new('detailed');
+  $validator->evaluate_json('{"id": "3"}', $collector);
+  for my $row (@{ $collector->results }) {
+    print "$row->{document_evaluation_location}: $row->{message}\n" unless $row->{is_match};
+  }
+
+=head1 DESCRIPTION
+
+A JSON Schema validator for draft 4, 6, 7, 2019-09 and 2020-12, which passes the whole of the
+JSON-Schema-Test-Suite, with results and annotations. It is pure Perl, with no dependency beyond Perl's core: a port of
+the Corvus.Text.Json evaluator by way of its Python port. A schema is compiled into Perl, which validates with exactly
+the checks the schema needs. L<JSON::Schema::Corvus::XS> is the same evaluator on the corvus-json-schema C library,
+with the same API, and is faster still.
+
+JSON text is parsed by the package's own parser, which keeps numbers exactly as the text says: an integer of any size
+is an integer, and a number with a fraction or an exponent is a floating point number even when it is whole (so draft
+4 can tell C<1.0> from C<1>). Parsing is in Perl, so for an instance validated more than once, parse it once into a
+L</Documents> document.
+
+Perl data is accepted too, by the rules L<JSON::PP> follows: a scalar that has a number and has never been used as a
+string is a number, and any other defined scalar is a string; C<undef> is null; L<JSON::PP::Boolean> objects, Perl's
+own booleans (5.36 and later), C<\1> and C<\0> are booleans; a L<Math::BigInt> is an integer, exactly; a
+L<Math::BigFloat> is an integer when it is whole and otherwise the nearest floating point number; an object with a
+C<TO_JSON> method is what that returns. The data is copied before it is validated.
+
+A string of JSON text is read as UTF-8: a string with Perl's UTF8 flag on gives its characters, and one without gives
+its bytes.
+
+=head2 Regular expressions
+
+C<pattern>, C<patternProperties> and C<format: regex> are ECMA-262 regular expressions, run with ECMA-262's meaning
+(Unicode 17, whatever version of Unicode the Perl has). A pattern is read with the grammar of the C<u> flag, and one that
+only that grammar refuses with the Annex B grammar of a pattern with no flag. Perl's own engine runs a pattern that is
+proved to match in time proportional to the text, written out so that none of Perl's own meanings applies; every other
+pattern (a backreference, a lookbehind, or anything the proof does not prove) runs on the package's own matcher, with
+the limit of a match (C<pattern_match_limit>). That matcher is in Perl, so a deliberately difficult pattern can reach the
+limit of one second where the XS package answers: raise the limit, or turn it off, for such patterns from a source you
+trust.
+
+=head1 METHODS
+
+=head2 compile
+
+  my $validator = JSON::Schema::Corvus->compile($schema, %options);
+
+Compiles a schema, given as JSON text or as Perl data (a reference, or a boolean). The options:
+
+=over
+
+=item default_dialect
+
+The dialect of a schema without C<$schema>: C<draft4>, C<draft6>, C<draft7>, C<draft2019-09> or C<draft2020-12>
+(the default).
+
+=item assert_format
+
+True asserts C<format>, false never does; left out (or C<undef>), it follows the vocabularies (the 2020-12
+format-assertion vocabulary asserts, everything else annotates).
+
+=item assert_format_in_legacy_drafts
+
+With C<assert_format> left out, assert C<format> in drafts 4 to 7 too.
+
+=item assert_content
+
+Assert C<contentEncoding> and C<contentMediaType> in draft 7, the only draft that asserts them (default true).
+
+=item formats
+
+Custom format assertions, by name: C<< { even => sub { length($_[0]) % 2 == 0 } } >>. Each is called with the
+string (for a number, its JSON text) and returns whether it is valid. One takes precedence over the built-in format
+of its name.
+
+=item resolve_document
+
+C<< sub ($uri) >> for documents a C<$ref> names: it returns the document as JSON text or as Perl data, or C<undef>
+for a document it does not know. The standard metaschemas are built in.
+
+=item base_uri
+
+The base URI of the root document.
+
+=item entry_point
+
+A reference, relative to the root, to evaluate from, such as C<#/$defs/item>.
+
+=item max_depth
+
+The depth of in-place recursion on a cycle at which evaluation is abandoned (default 128).
+
+=item pattern_match_limit
+
+The seconds one match of a C<pattern> or C<patternProperties> regular expression against one string may take
+(default 1). C<undef> or 0 turns the limit off, for a caller who trusts both the schema and the instances.
+
+=back
+
+An exception a custom format or the resolver throws goes up through the call that ran it.
+
+=head2 compile_uri
+
+  my $validator = JSON::Schema::Corvus->compile_uri($uri, %options);
+
+Compiles the schema at an absolute URI, fetched through C<resolve_document> (or one of the standard metaschemas).
+
+=head2 Validators
+
+=over
+
+=item is_valid_json($text)
+
+Whether the JSON text is valid.
+
+=item is_valid($data)
+
+Whether the Perl data is valid.
+
+=item is_valid_document($document)
+
+Whether a L</Documents> document is valid.
+
+=item evaluate_json($text, $collector), evaluate($data, $collector), evaluate_document($document, $collector)
+
+Evaluates every keyword, replacing the collector's results with this evaluation's, and returns whether the instance
+is valid.
+
+=item source
+
+The Perl the schema was compiled into.
+
+=back
+
+A validator may be used any number of times, and in more than one thread.
+
+=head2 Documents
+
+  my $document = JSON::Schema::Corvus::Document->parse($text);
+  my $document = JSON::Schema::Corvus::Document->from_data($data);
+
+JSON parsed once, for an instance validated more than once.
+
+=head2 Results
+
+  my $collector = JSON::Schema::Corvus::ResultsCollector->new($level);
+
+A results collector at the C<basic> level (failures, without messages), C<detailed> (failures, with messages, the
+default) or C<verbose> (every evaluation, passing and failing, with annotations). Its rows are those of the other
+Corvus evaluators: the same locations, messages and order. Its methods:
+
+=over
+
+=item results
+
+The rows of the last evaluation, as an array of hashes with C<is_match>, C<message>, C<evaluation_location> (the
+keywords from the root schema), C<schema_evaluation_location> (the schema or keyword within its document) and
+C<document_evaluation_location> (the JSON pointer of the evaluated value).
+
+=item annotations, annotations_json
+
+The annotations of a verbose evaluation, grouped by instance location, keyword and schema location:
+C<< { "/name" => { title => { "#/properties/name" => "Name" } } } >>, as Perl data or as JSON text.
+
+=item count, clear
+
+The number of rows, and removing them.
+
+=back
+
+=head2 Other functions
+
+C<< JSON::Schema::Corvus::encode_json($data) >> returns the JSON text (UTF-8 bytes) of the JSON value that Perl data is
+validated as.
+
+=head1 ERRORS
+
+Failures are thrown as objects of these classes, which stringify to their message:
+
+=over
+
+=item JSON::Schema::Corvus::Error
+
+The base class, with C<message>. Thrown itself for a bad argument or option.
+
+=item JSON::Schema::Corvus::Error::InvalidJson
+
+Text that is not JSON, or not UTF-8. C<offset> is the byte offset at which it was found to be invalid.
+
+=item JSON::Schema::Corvus::Error::Compilation
+
+A schema that does not compile: a reference that does not resolve, or a regular expression that is not valid.
+
+=item JSON::Schema::Corvus::Error::PatternTooLarge
+
+A C<Compilation> error for a regular expression over a limit of size: 1,048,576 bytes of pattern, 1,000 levels of
+groups, or 1,048,576 bytes counted for it as it is read.
+
+=item JSON::Schema::Corvus::Error::Depth
+
+Evaluation recursed in place beyond C<max_depth>.
+
+=item JSON::Schema::Corvus::Error::PatternMatchLimit
+
+A match of a regular expression reached C<pattern_match_limit>: the instance is neither valid nor not valid. It has
+the C<pattern> and the C<limit>.
+
+=back
+
+Perl data that has no JSON form (a code reference, an object with no C<TO_JSON>, a number that is not finite, or a
+structure nested more than 512 deep) dies with a message.
+
+=head1 SEE ALSO
+
+L<JSON::Schema::Corvus::XS>, L<https://github.com/corvus-dotnet/Corvus.JsonSchema>.
+
+=head1 LICENSE
+
+Apache License 2.0. The package holds tables derived from the Unicode Character Database, whose notice is in
+F<THIRD-PARTY-NOTICES.txt>.
+
+=cut
