@@ -3,6 +3,16 @@ on:
   pull_request:
     types: [closed]
 
+# The workflow token reads the repository and its pull requests, and removes 'pending_release' from a
+# merged PR that carries 'no_release' or changes nothing the .NET build reads. Tagging and the
+# release-time label removal use the endjin bot's token. The organisation's default workflow
+# permissions are read-only, so without this block the label removals fail with 403. The label
+# endpoints are listed under both Issues and Pull requests, so both get write.
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   lookup_default_branch:
     runs-on: ubuntu-latest
