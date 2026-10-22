@@ -1,0 +1,425 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* ── Theme: CSS custom properties ── */
+:root,
+[data-theme="dark"] {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #252526;
+    --bg-tertiary: #3c3c3c;
+    --bg-hover: #2a2d2e;
+    --fg-primary: #d4d4d4;
+    --fg-secondary: #e0e0e0;
+    --fg-muted: #808080;
+    --border-color: #3c3c3c;
+    --accent-color: #007acc;
+    --accent-hover: #1177bb;
+    --btn-primary-bg: #0e639c;
+    --btn-primary-bg-hover: #1177bb;
+    --btn-primary-fg: #fff;
+    --btn-secondary-bg: #3c3c3c;
+    --btn-secondary-bg-hover: #505050;
+    --btn-secondary-fg: #d4d4d4;
+    --btn-secondary-border: #555;
+    --btn-disabled-bg: #3c3c3c;
+    --btn-disabled-fg: #888;
+    --console-error: #f48771;
+    --console-success: #89d185;
+    --status-bar-bg: #007acc;
+    --status-bar-fg: #fff;
+    --status-error-bg: #c72e2e;
+    --modal-overlay-bg: rgba(0, 0, 0, 0.6);
+    --modal-bg: #1e1e2e;
+    --modal-border: #444;
+    --modal-shadow: rgba(0, 0, 0, 0.5);
+    --modal-heading-color: #f0c040;
+    --modal-text-color: #b0b0c0;
+}
+
+[data-theme="light"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f3f3f3;
+    --bg-tertiary: #e0e0e0;
+    --bg-hover: #e8e8e8;
+    --fg-primary: #1e1e1e;
+    --fg-secondary: #333333;
+    --fg-muted: #666666;
+    --border-color: #d4d4d4;
+    --accent-color: #0066b8;
+    --accent-hover: #005a9e;
+    --btn-primary-bg: #0066b8;
+    --btn-primary-bg-hover: #005a9e;
+    --btn-primary-fg: #fff;
+    --btn-secondary-bg: #e0e0e0;
+    --btn-secondary-bg-hover: #d0d0d0;
+    --btn-secondary-fg: #333;
+    --btn-secondary-border: #bbb;
+    --btn-disabled-bg: #e0e0e0;
+    --btn-disabled-fg: #999;
+    --console-error: #d32f2f;
+    --console-success: #2e7d32;
+    --status-bar-bg: #007acc;
+    --status-bar-fg: #fff;
+    --status-error-bg: #c72e2e;
+    --modal-overlay-bg: rgba(0, 0, 0, 0.35);
+    --modal-bg: #ffffff;
+    --modal-border: #d4d4d4;
+    --modal-shadow: rgba(0, 0, 0, 0.15);
+    --modal-heading-color: #b8860b;
+    --modal-text-color: #555;
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f3f3f3;
+        --bg-tertiary: #e0e0e0;
+        --bg-hover: #e8e8e8;
+        --fg-primary: #1e1e1e;
+        --fg-secondary: #333333;
+        --fg-muted: #666666;
+        --border-color: #d4d4d4;
+        --accent-color: #0066b8;
+        --accent-hover: #005a9e;
+        --btn-primary-bg: #0066b8;
+        --btn-primary-bg-hover: #005a9e;
+        --btn-primary-fg: #fff;
+        --btn-secondary-bg: #e0e0e0;
+        --btn-secondary-bg-hover: #d0d0d0;
+        --btn-secondary-fg: #333;
+        --btn-secondary-border: #bbb;
+        --btn-disabled-bg: #e0e0e0;
+        --btn-disabled-fg: #999;
+        --console-error: #d32f2f;
+        --console-success: #2e7d32;
+        --status-bar-bg: #007acc;
+        --status-bar-fg: #fff;
+        --status-error-bg: #c72e2e;
+        --modal-overlay-bg: rgba(0, 0, 0, 0.35);
+        --modal-bg: #ffffff;
+        --modal-border: #d4d4d4;
+        --modal-shadow: rgba(0, 0, 0, 0.15);
+        --modal-heading-color: #b8860b;
+        --modal-text-color: #555;
+    }
+}
+
+/* ── Base ── */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    color: var(--fg-primary);
+    background: var(--bg-primary);
+    overflow: hidden;
+}
+
+#app {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Toolbar ── */
+.playground-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    height: 40px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.playground-toolbar h1 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap;
+    color: var(--fg-secondary);
+}
+
+.spacer {
+    flex: 1;
+}
+
+.toolbar-select {
+    font-size: 12px;
+    padding: 3px 6px;
+    border: 1px solid var(--btn-secondary-border);
+    border-radius: 3px;
+    background: var(--btn-secondary-bg);
+    color: var(--btn-secondary-fg);
+    cursor: pointer;
+    max-width: 200px;
+}
+
+.toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.1s;
+}
+
+.toolbar-btn.primary {
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-fg);
+}
+
+.toolbar-btn.primary:hover:not(:disabled) {
+    background: var(--btn-primary-bg-hover);
+}
+
+.toolbar-btn.secondary {
+    background: var(--btn-secondary-bg);
+    color: var(--btn-secondary-fg);
+    border-color: var(--btn-secondary-border);
+}
+
+.toolbar-btn.secondary:hover:not(:disabled) {
+    background: var(--btn-secondary-bg-hover);
+}
+
+.toolbar-btn:disabled {
+    background: var(--btn-disabled-bg);
+    color: var(--btn-disabled-fg);
+    cursor: default;
+}
+
+.theme-toggle-btn {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    line-height: 1;
+}
+
+.theme-toggle-btn:hover {
+    background: var(--bg-hover);
+}
+
+/* ── Grid layout ── */
+.jsonpath-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0;
+    overflow: hidden;
+}
+
+/* Left column: data (top-left), functions (bottom-left) */
+.panel-data {
+    grid-row: 1;
+    grid-column: 1;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.panel-functions {
+    grid-row: 2;
+    grid-column: 1;
+    border-right: 1px solid var(--border-color);
+}
+
+/* Top-right: expression */
+.panel-expression {
+    grid-row: 1;
+    grid-column: 2;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Bottom-right: output */
+.panel-output {
+    grid-row: 2;
+    grid-column: 2;
+}
+
+/* ── Panel ── */
+.playground-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    height: 28px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--fg-muted);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.panel-body {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+}
+
+/* BlazorMonaco editor containers must fill their parent */
+.panel-body .monaco-editor-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* ── Error display ── */
+.error-output {
+    padding: 12px;
+    font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+    font-size: 13px;
+    color: var(--console-error);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: auto;
+    height: 100%;
+    background: var(--bg-primary);
+}
+
+.functions-error-indicator {
+    color: var(--console-error);
+    margin-left: 8px;
+    cursor: help;
+    font-size: 14px;
+}
+
+.functions-status-error {
+    color: #ffcc00;
+}
+
+/* ── Status bar ── */
+.status-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 12px;
+    height: 22px;
+    font-size: 11px;
+    background: var(--status-bar-bg);
+    color: var(--status-bar-fg);
+    flex-shrink: 0;
+}
+
+.status-bar.error {
+    background: var(--status-error-bg);
+}
+
+.status-bar .spacer {
+    flex: 1;
+}
+
+/* ── Shortcut hint ── */
+.shortcut-hint {
+    opacity: 0.7;
+    font-size: 10px;
+}
+
+/* ── Panel copy/maximize buttons ── */
+.panel-copy-btn, .panel-maximize-btn {
+    background: none;
+    border: none;
+    color: var(--fg-muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.panel-copy-btn:hover, .panel-maximize-btn:hover {
+    color: var(--fg-secondary);
+}
+
+/* ── Maximize/minimize panels ── */
+.jsonpath-grid.has-maximized {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+}
+
+.playground-panel.maximized {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+}
+
+.playground-panel.hidden {
+    display: none;
+}
+
+/* ── Dirty confirmation modal ── */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--modal-overlay-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-dialog {
+    background: var(--modal-bg);
+    border: 1px solid var(--modal-border);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 420px;
+    width: 90%;
+    color: var(--fg-secondary);
+    box-shadow: 0 8px 32px var(--modal-shadow);
+}
+
+.modal-dialog h3 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    color: var(--modal-heading-color);
+}
+
+.modal-dialog p {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--modal-text-color);
+}
+
+.dirty-file-list {
+    margin: 8px 0 16px;
+    padding-left: 20px;
+    font-size: 13px;
+    color: var(--fg-secondary);
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+}
+
+.dirty-file-list li {
+    margin: 4px 0;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}

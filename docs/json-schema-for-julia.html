@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="The Corvus JSON Schema evaluator for Julia (CorvusJsonSchema): install, validate, JSON text, options, results and annotations." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="The Corvus JSON Schema evaluator for Julia (CorvusJsonSchema): install, validate, JSON text, options, results and annotations." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="JSON Schema for Julia - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="The Corvus JSON Schema evaluator for Julia (CorvusJsonSchema): install, validate, JSON text, options, results and annotations." />
+    <meta property="og:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta property="og:title" content="JSON Schema for Julia - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-julia/" />
+    <title>JSON Schema for Julia - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-julia/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-julia/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-path.html">JSONPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/open-api.html">OpenAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api.html">AsyncAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/standalone-evaluator-internals.html">Schema Evaluation Program Internals</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-precompilation.html">Runtime Evaluator Engineering Notes</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-measurements.html">Runtime Evaluator Measurements</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/other-languages.html">JSON Schema in other languages</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-javascript.html">JavaScript and TypeScript</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-rust.html">Rust</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-python.html">Python</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-c.html">C</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-cpp.html">C&#x2B;&#x2B;</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-swift.html">Swift</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ruby.html">Ruby</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-php.html">PHP</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-java.html">Java and Kotlin</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-go.html">Go</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/docs/json-schema-for-julia.html">Julia</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-r.html">R</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-pascal.html">Object Pascal</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ocaml.html">OCaml</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-fortran.html">Fortran</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/pattern-conformance.html">Patterns across the ports</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translator.html">ECMA-262 regex translator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translations.html">ECMA-262 regex translations</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/clone-and-freeze.html">Clone, Freeze, and Builder Snapshots</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-path.html">Json Path</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-client.html">Open Api Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-server.html">Open Api Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">Open Api Advanced Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-server.html">Open Api Advanced Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-end-to-end.html">Open Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-server.html">Open Api Callback Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-client.html">Open Api Callback Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-producer.html">Async Api Producer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-consumer.html">Async Api Consumer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-end-to-end.html">Async Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-authentication.html">Async Api Authentication</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api20-client.html">Open Api20Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>JSON Schema for Julia</h1>
+<p><a href="https://github.com/JuliaRegistries/General/tree/master/C/CorvusJsonSchema">CorvusJsonSchema</a> is the Corvus JSON Schema evaluator for
+Julia: draft 4, 6, 7, 2019-09 and 2020-12. It is a port of the .NET runtime evaluator (see
+<a href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>), and gives the same results and annotations. It needs Julia 1.10 or later
+and has no dependencies.</p>
+<p>A schema is compiled once into a node graph and fail-fast plans: each plan holds only the checks its subschema needs,
+and an object's keywords are fused into one pass over its properties. Any number of instances can then be validated
+against it.</p>
+<ul>
+<li><strong>Conformant.</strong> Passes the whole JSON-Schema-Test-Suite (required, optional and <code>optional/format</code>, every draft) except
+<code>draft4/optional/zeroTerminatedFloats.json</code>, and all of its annotation tests.</li>
+<li><strong>Fast.</strong> See <a href="#performance">Performance</a>.</li>
+<li><strong>Results and annotations.</strong> Basic, Detailed and Verbose results, and annotations, the same as every other Corvus
+implementation.</li>
+<li><strong>Allocation-free validation.</strong> In the steady state, validating a parsed document, or JSON text, allocates nothing.
+The exceptions are an asserted <code>regex</code>, <code>idn-hostname</code> or <code>idn-email</code> format, a <code>hostname</code> or <code>email</code> with an <code>xn--</code>
+label, a custom format (which is given a copy of the string), and a <code>multipleOf</code> whose divisor has more than 18
+significant digits.</li>
+<li><strong>Ready when loaded.</strong> The evaluator is compiled into the package image, so the first validation in a process does
+not wait for Julia's compiler.</li>
+</ul>
+<h2 id="install">Install</h2>
+<pre><code class="language-julia-repl">pkg&gt; add CorvusJsonSchema
+</code></pre>
+<h2 id="validate">Validate</h2>
+<pre><code class="language-julia">using CorvusJsonSchema
+
+validator = compile_schema(&quot;&quot;&quot;{
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {&quot;id&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 1}},
+    &quot;required&quot;: [&quot;id&quot;]
+}&quot;&quot;&quot;)
+
+isvalid(validator, &quot;&quot;&quot;{&quot;id&quot;: 3}&quot;&quot;&quot;)  # true
+isvalid(validator, &quot;&quot;&quot;{&quot;id&quot;: 0}&quot;&quot;&quot;)  # false
+</code></pre>
+<p>A <code>Validator</code> is not modified by validation and is safe to use from several tasks at once. A schema that is not JSON
+throws a <code>ParseError</code>, and one that cannot be compiled (an unresolvable reference, an invalid pattern, a pattern that
+is <a href="#patterns">refused</a>) throws a <code>CompileError</code>.</p>
+<h2 id="json-text">JSON text</h2>
+<p><code>isvalid</code> takes JSON text as a string or as a vector of UTF-8 bytes. It parses the text into buffers the validator
+reuses and validates it in place, so in the steady state it allocates nothing. To validate the same text more than
+once, parse it into a <code>Document</code>: the UTF-8 text and one flat array of values, with strings read in place where they
+have no escapes.</p>
+<pre><code class="language-julia">validator = compile_schema(&quot;&quot;&quot;{&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;integer&quot;}}&quot;&quot;&quot;)
+
+# Parse once, validate any number of times.
+document = parse_document(&quot;[1, 2, 3]&quot;)
+isvalid(validator, document)  # true
+
+# JSON text is parsed into buffers the validator reuses.
+isvalid(validator, &quot;&quot;&quot;[1, &quot;two&quot;]&quot;&quot;&quot;)  # false
+isvalid(validator, Vector{UInt8}(&quot;[4, 5]&quot;))  # true
+</code></pre>
+<p><code>isvalid</code> reports text that is not JSON, and a schema that recursed in place beyond the maximum depth, as invalid.
+<code>validate</code> throws for those instead: a <code>ParseError</code>, or a <code>DepthExceededError</code>.</p>
+<pre><code class="language-julia">validator = compile_schema(&quot;&quot;&quot;{&quot;type&quot;: &quot;object&quot;}&quot;&quot;&quot;)
+
+try
+    validate(validator, &quot;&quot;&quot;{&quot;id&quot;: 3&quot;&quot;&quot;)
+catch err
+    println(sprint(showerror, err))
+end
+# invalid JSON at offset 8: unexpected end of input
+
+# isvalid reports text that is not JSON as invalid.
+isvalid(validator, &quot;&quot;&quot;{&quot;id&quot;: 3&quot;&quot;&quot;)  # false
+</code></pre>
+<h2 id="options">Options</h2>
+<p><code>compile_schema</code> and <code>compile_schema_uri</code> take keyword arguments after the schema:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default_dialect</code></td>
+<td>The dialect of a schema without <code>$schema</code> (default <code>Draft202012</code>).</td>
+</tr>
+<tr>
+<td><code>assert_format</code></td>
+<td><code>true</code> asserts <code>format</code>, <code>false</code> never does. With <code>nothing</code>, the default, the schema's vocabularies decide.</td>
+</tr>
+<tr>
+<td><code>assert_format_in_legacy_drafts</code></td>
+<td>With <code>assert_format</code> at <code>nothing</code>, assert <code>format</code> in drafts 4 to 7 too.</td>
+</tr>
+<tr>
+<td><code>assert_content</code></td>
+<td>Assert <code>contentEncoding</code> and <code>contentMediaType</code> in draft 7 (default <code>true</code>).</td>
+</tr>
+<tr>
+<td><code>formats</code></td>
+<td>Custom formats, as a dictionary from the name to a function from the string (or a number's JSON text) to whether it is valid.</td>
+</tr>
+<tr>
+<td><code>resolver</code></td>
+<td>A function from an absolute URI to the document (a <code>Document</code>, JSON text, or <code>nothing</code>), for remote references. The standard metaschemas are built in.</td>
+</tr>
+<tr>
+<td><code>base_uri</code></td>
+<td>The base URI of the root document.</td>
+</tr>
+<tr>
+<td><code>entry_point</code></td>
+<td>A subschema to validate against, such as <code>#/$defs/item</code>.</td>
+</tr>
+<tr>
+<td><code>max_depth</code></td>
+<td>The deepest the evaluator recurses in place (default 128).</td>
+</tr>
+<tr>
+<td><code>pattern_match_limit</code></td>
+<td>The limit on the time of one match of a <code>pattern</code> or <code>patternProperties</code> regular expression, in seconds (default 1). <code>nothing</code> turns it off. A match that reaches it throws a <code>PatternMatchError</code>. See <a href="#limits">Limits</a>.</td>
+</tr>
+</tbody>
+</table>
+<p>A schema that has a <code>$</code> in it is easiest to write as a <code>raw</code> string.</p>
+<pre><code class="language-julia">item = parse_document(&quot;&quot;&quot;{&quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;even&quot;}&quot;&quot;&quot;)
+validator = compile_schema(raw&quot;&quot;&quot;{&quot;$defs&quot;: {&quot;item&quot;: {&quot;$ref&quot;: &quot;item.json&quot;}}}&quot;&quot;&quot;;
+    default_dialect=Draft201909,  # for schemas without $schema (default Draft202012)
+    assert_format=true,           # true or false. With nothing the vocabularies decide
+    formats=Dict(&quot;even&quot; =&gt; value -&gt; iseven(length(value))),
+    resolver=uri -&gt; uri == &quot;https://example.com/item.json&quot; ? item : nothing,
+    base_uri=&quot;https://example.com/root.json&quot;,
+    entry_point=raw&quot;#/$defs/item&quot;,
+    max_depth=128,
+    pattern_match_limit=1)        # seconds for one match of a pattern. With nothing there is no limit
+
+isvalid(validator, &quot;\&quot;four\&quot;&quot;)  # true
+isvalid(validator, &quot;\&quot;three\&quot;&quot;)  # false
+</code></pre>
+<h2 id="results-and-annotations">Results and annotations</h2>
+<pre><code class="language-julia">validator = compile_schema(&quot;&quot;&quot;{&quot;properties&quot;: {&quot;id&quot;: {&quot;type&quot;: &quot;integer&quot;}}, &quot;required&quot;: [&quot;name&quot;]}&quot;&quot;&quot;)
+instance = parse_document(&quot;&quot;&quot;{&quot;id&quot;: &quot;seven&quot;}&quot;&quot;&quot;)
+collector = ResultsCollector(Detailed)
+evaluate(validator, instance, collector)  # false
+
+for r in results(collector)
+    if r.evaluation_location != &quot;&quot; &amp;&amp; r.message != &quot;&quot;
+        println(r.evaluation_location, &quot; at \&quot;&quot;, r.document_evaluation_location, &quot;\&quot;: &quot;, r.message)
+    end
+end
+# /properties/id at &quot;/id&quot;: The value was expected to match the subschema.
+# /properties/id/type at &quot;/id&quot;: The value was expected to be of type 'integer'
+# /required at &quot;/name&quot;: Required property not present 'name'
+</code></pre>
+<p>Each row is a <code>SchemaResult</code> with <code>is_match</code>, <code>message</code>, <code>evaluation_location</code>, <code>schema_evaluation_location</code> and
+<code>document_evaluation_location</code>. <code>Basic</code> records the failures without messages, <code>Detailed</code> adds the messages, and
+<code>Verbose</code> records every keyword, passing ones and annotations included.</p>
+<pre><code class="language-julia">validator = compile_schema(&quot;&quot;&quot;{
+    &quot;title&quot;: &quot;Person&quot;,
+    &quot;properties&quot;: {&quot;name&quot;: {&quot;title&quot;: &quot;Name&quot;, &quot;type&quot;: &quot;string&quot;}}
+}&quot;&quot;&quot;)
+collector = ResultsCollector(Verbose)
+evaluate(validator, &quot;&quot;&quot;{&quot;name&quot;: &quot;Ada&quot;}&quot;&quot;&quot;, collector)  # true
+
+# Instance location, then keyword, then schema location, then the value as JSON text.
+found = collect_annotations(collector)
+found[&quot;&quot;][&quot;title&quot;][&quot;#&quot;]  # &quot;Person&quot;
+found[&quot;/name&quot;][&quot;title&quot;][&quot;#/properties/name&quot;]  # &quot;Name&quot;
+</code></pre>
+<h2 id="patterns">Patterns</h2>
+<p><code>pattern</code> and <code>patternProperties</code> have ECMA-262 semantics. The common shapes of pattern are matched with no regular
+expression engine. Any other pattern is translated into one that the PCRE2 library Julia bundles matches with the
+same meaning, with every character class written from the package's own Unicode 17 data. The answers are those of V8
+on every Julia version, with one exception for <a href="#the-long-term-support-release">Julia 1.10</a>.</p>
+<p>What is exact:</p>
+<ul>
+<li>Every construct but the two below, for every pattern, whether it is valid with the <code>u</code> flag or only without it.
+That includes a backreference to a group that has not taken part, the groups of a repeated body, an iteration that
+matches the empty string, and a backreference inside a lookbehind to a group at its end.</li>
+<li>A pattern that is valid only without the <code>u</code> flag (one with an identity escape such as <code>\-</code> or <code>\&amp;</code>) matches the
+UTF-16 code units of the string, as ECMA-262 says. A character beyond the Basic Multilingual Plane is two code
+units, so <code>^\-?.$</code> does not match U+10400, which <code>^.$</code> matches. A quantifier after such a character in the pattern
+repeats its second half, <code>\u{...}</code> is the letter <code>u</code> counted, and a class range from one such character to
+another is an error. A string with such a character is written again as code units for the match, into a buffer
+the package keeps, so the match allocates nothing in the steady state.</li>
+<li>A count of one character or class, whatever the count. <code>a{1000000000}</code> and <code>^\p{L}{1,300000}$</code> are run. PCRE2
+counts to 65,535, and a larger count is written as blocks of the character that the pattern calls.</li>
+<li>What is a pattern, which is what ECMA-262 says. That is V8's verdict but in three places. <code>\p{sc=Hrkt}</code> (the
+Script value <code>Katakana_Or_Hiragana</code>, which Unicode lists and no character has) is a pattern that matches nothing,
+and V8 13.6 does not know the name. A count whose first number is the greater is an error however large the
+numbers, so <code>a{2147483648,2147483647}</code> is one, which V8 13.6 takes. The four scripts Unicode 17 added (<code>Sidetic</code>,
+<code>Tolong_Siki</code>, <code>Beria_Erfe</code>, <code>Tai_Yo</code>) are names here and not in V8 13.6. <code>\k</code> in a class is an error in a
+pattern with a named group, as in V8: <code>(?&lt;n&gt;a)[\k]</code>.</li>
+<li>A case-insensitive backreference such as <code>(.)(?i:\1)</code>, in every pattern that is valid with the <code>u</code> flag, with
+Julia 1.13. PCRE2 makes the comparison, by Unicode simple case folding, as ECMA-262 does with the <code>u</code> flag. It
+compares one character at a time. V8 13.6 compares the whole text by full case folding there, and says that
+<code>^(..)\1$</code> with the <code>i</code> flag matches U+00DF, <code>S</code>, <code>s</code>, U+1E9E. The package follows ECMA-262 and says that it does
+not.</li>
+<li>A backreference to a group of a lookbehind, where the lookbehind has a fixed length, where the group is at a
+fixed distance from its end (<code>(?&lt;=a*(x))-\1</code>), and where the lookbehind is a term of the pattern itself and starts
+with a repetition of a body of a fixed length (<code>(?&lt;=([abc])+)x\1</code>) or with alternatives of fixed lengths
+(<code>(?&lt;=(ab|a)x)-\1</code>).</li>
+</ul>
+<p>A pattern that is valid ECMA-262 and cannot be written for PCRE2 with exactly the same meaning is refused: compiling
+the schema throws a <code>CompileError</code> that names the construct. It is never run with another meaning. These are:</p>
+<ul>
+<li>A case-insensitive backreference in a pattern that is only valid without the <code>u</code> flag (one with an Annex B form
+such as <code>\&amp;</code>), where the group can hold a character that ECMA-262 compares differently there than PCRE2 does,
+such as <code>k</code>, <code>s</code>, or a character beyond the Basic Multilingual Plane that has a case variant. <code>^(.)(?i:\1)\&amp;?$</code>
+is refused. No pattern that is valid with the <code>u</code> flag is refused for this.</li>
+<li>A backreference to a group inside a lookbehind of no fixed length, where the lookbehind is not a term of the
+pattern itself (<code>(?:(?&lt;=(a)+)x\1)+</code>), or where the group holds what depends on the order in which ECMA-262 tries
+the ways through the lookbehind from its end (<code>(?&lt;=(a*)(x+))-\1</code>).</li>
+<li>A backreference inside a lookbehind to a group that the lookbehind matches before it, where the group is not in
+an end of the lookbehind of a fixed length (<code>(?&lt;=\1(a+))</code>).</li>
+<li>A pattern PCRE2 does not compile for a reason that is not its size, which no pattern is known to be. (A pattern
+that is valid and too large is not refused in this way. See <a href="#limits">Limits</a>.)</li>
+</ul>
+<p><strong>The lookbehind exception.</strong> A pattern that is valid with the <code>u</code> flag is run, and answers as V8 does, with one
+named exception. Two uses of a lookbehind need it to be matched backwards, as ECMA-262 matches it, which PCRE2 cannot
+do, and they are refused with an error that says which:</p>
+<ul>
+<li>a group captured inside a lookbehind of no fixed length and read after it, outside the forms that are written,
+such as <code>(?&lt;=(a*)(x+))-\1</code> (&quot;a backreference to a group inside a lookbehind of no fixed length, where the group holds
+what only matching the lookbehind backwards can tell&quot;);</li>
+<li>a backreference inside a lookbehind to a group of it that is not in an end of it of a fixed length, such as
+<code>(?&lt;=\1(a+))x</code> (&quot;a backreference inside a lookbehind to a group that the lookbehind matches before it&quot;).</li>
+</ul>
+<p>A lookbehind with no group that a backreference reads is never refused for this. A pattern over a limit of size is
+the only other such pattern that does not compile, and its error is one of its own.</p>
+<h3 id="limits">Limits</h3>
+<p>A schema and an instance may both come from outside, so a pattern and a match of it have limits. A pattern or a
+match over one is an error of its own, which names the limit and its value. It is never an answer.</p>
+<p><strong>The limit on a match.</strong> One match of a <code>pattern</code> or <code>patternProperties</code> regular expression against one string is
+limited to one second. The keyword <code>pattern_match_limit</code> of <code>compile_schema</code> sets the limit, in seconds, and
+<code>nothing</code> turns it off, for schemas and instances that are trusted. A match that reaches the limit is given up and
+the validation throws a <code>PatternMatchError</code>, from <code>isvalid</code> as from <code>validate</code> and <code>evaluate</code>, with a collector or
+without one, and from <code>compile_schema</code> when the match was of a pattern against a property name the schema
+declares. It is never reported as a string that matches or does not. Validate inside <code>try</code> when the schema or the
+instance is not trusted. The field <code>limit</code> of the error says which limit was reached.</p>
+<table>
+<thead>
+<tr>
+<th><code>limit</code></th>
+<th>What was reached</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>:time</code></td>
+<td>The time of a match</td>
+<td><code>pattern_match_limit</code>, 1 second unless it is set</td>
+</tr>
+<tr>
+<td><code>:memory</code></td>
+<td>The memory of a match, in PCRE2's interpreter</td>
+<td>64 MiB</td>
+</tr>
+<tr>
+<td><code>:steps</code></td>
+<td>The steps of a match that could not be timed</td>
+<td>See below</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-julia">validator = compile_schema(raw&quot;&quot;&quot;{&quot;pattern&quot;: &quot;^(?:a|a)+$&quot;}&quot;&quot;&quot;; pattern_match_limit=0.05)
+isvalid(validator, &quot;\&quot;aaaa\&quot;&quot;)  # true
+
+# Each a is matched two ways, so there are 2^40 ways to find that this string does not match.
+hostile = &quot;\&quot;&quot; * &quot;a&quot;^40 * &quot;b\&quot;&quot;
+outcome = try
+    isvalid(validator, hostile)
+catch error
+    error isa PatternMatchError ? error.limit : rethrow()
+end
+outcome  # time
+
+# A pattern over a limit of size does not compile. It is not said to be invalid.
+too_large = try
+    compile_schema(raw&quot;&quot;&quot;{&quot;pattern&quot;: &quot;(?:(?:a{1000}){1000}){1000}&quot;}&quot;&quot;&quot;)
+catch error
+    error isa PatternTooLargeError ? error.valid : rethrow()
+end
+too_large  # true
+</code></pre>
+<p>PCRE2 has no clock. It counts steps, and its count does not bound time: it counts the steps of each place a match
+is tried from apart, and one step may read the whole string. So a match is run in two stages. The first is the code
+PCRE2 compiles, with a number of steps worked out from the pattern and the length of the string so that it cannot
+take long (a twentieth to a half of the limit at worst, and microseconds for a match that is not hostile). Nearly
+every match ends there, at the cost it had. A match that uses those steps is run again from the start by code that
+PCRE2 calls back from before every item of the pattern, which reads the clock, so the match ends with its answer
+or at the limit. That code was measured 8 to 30 times slower on patterns that repeat a group, which is why it is
+not the code of every match. On the probe of hostile patterns the package keeps (257 patterns of at most 1,000
+characters on strings of at most 100,000), a match that was given up took 1.13 seconds at most with the limit at one
+second, where 25 of them did not end in a minute before.</p>
+<p>What the limit costs, and what it does not bound:</p>
+<ul>
+<li><strong>A long string and a pattern that repeats a group.</strong> The steps of the first stage are fewer the longer the
+string, so a string of some tens of thousands of characters matched by a pattern that repeats a group, such as
+<code>^(?:[a-z0-9]+\.)*[a-z0-9]+$</code>, or searched for a pattern that is not anchored, is run by the slower code. It
+answers as it did, some 5 to 30 times slower on such strings. A class or a character under <code>*</code> or <code>+</code>
+(<code>^[a-z]+$</code>, <code>^\p{L}+$</code>) is not slower, on a string of any length. <code>pattern_match_limit=nothing</code> runs every match
+as before.</li>
+<li><strong>Memory.</strong> A repeated group needs memory for each time it has matched. PCRE2's JIT code has a stack of 1 MiB,
+and a match that fills it is run by PCRE2's interpreter, which may take 64 MiB. Past that the match is a
+<code>PatternMatchError</code> whose <code>limit</code> is <code>:memory</code>, with any limit on time or none: <code>^(?:ab|cd)*$</code> reaches it on a
+string of some 500,000 characters. A class of many ranges under <code>*</code> or <code>+</code> no longer needs that memory:
+<code>^\p{L}+$</code> threw on a string of 150,000 letters, and answers on a million.</li>
+<li><strong>With no limit on time a match still has a limit.</strong> <code>pattern_match_limit=nothing</code> turns the clock off. It does
+not make a match unlimited: PCRE2 counts the steps of a match, it cannot be told to count none, and
+4,294,967,295 (2^32 - 1) for each place a match is tried from is the most it can be told to allow. A match that
+takes them from one place is given up, and the validation throws a <code>PatternMatchError</code> whose <code>limit</code> is <code>:steps</code>
+and whose <code>code</code> is -47, which is PCRE2's <code>PCRE2_ERROR_MATCHLIMIT</code>, from <code>isvalid</code> as from <code>validate</code> and
+<code>evaluate</code>. Its <code>message</code> is &quot;the match took the 4294967295 steps that are the most PCRE2 allows (PCRE2 error -47,
+match limit exceeded)&quot;. It is never an answer. <code>^(?:a|a)+$</code> reaches it on forty <code>a</code> and a <code>b</code>, after 8 seconds
+with Julia 1.13 and 9 with Julia 1.10. The number is not a bound on time: one step may read the whole string,
+and a pattern that is not anchored has the steps again at each place it is tried from. The limit on memory
+stands with the clock off too. So <code>nothing</code> is for schemas and instances that are trusted, and is not a way to
+wait for every answer.</li>
+<li><strong>A pattern too large to be timed.</strong> PCRE2, as Julia builds it, holds a compiled pattern of at most 64 KiB, and
+the code that reads the clock is larger than the code that does not. A pattern PCRE2 holds only without it, such
+as an alternation of 3,000 words, is run, and its matches end in their first stage. One that does not is given
+up there, sooner than its limit, with <code>limit</code> at <code>:steps</code>.</li>
+<li><strong>The faster matchers.</strong> A pattern the package matches without PCRE2 (a literal, an anchored class sequence, a
+list of alternatives) reads the string a bounded number of times and has no limit.</li>
+</ul>
+<p><strong>The limits on the size of a pattern.</strong> A pattern over one of these does not compile. The error is a
+<code>PatternTooLargeError</code>, and never the <code>CompileError</code> of a pattern that is not valid. Its field <code>valid</code> says whether
+the whole pattern was read before the limit was met. The message is then &quot;is a valid ECMA-262 regular expression,
+and is too large&quot;, and otherwise &quot;is too large to read&quot;, as nothing is known of the rest of the pattern.</p>
+<table>
+<thead>
+<tr>
+<th>Limit</th>
+<th>Value</th>
+<th>The message ends</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The length of the pattern</td>
+<td>1,048,576 bytes of UTF-8</td>
+<td>&quot;its length is over the limit of 1048576 bytes&quot;</td>
+</tr>
+<tr>
+<td>The nesting of its groups</td>
+<td>200</td>
+<td>&quot;its groups nest over the limit of 200 deep&quot;</td>
+</tr>
+<tr>
+<td>Its terms and alternatives</td>
+<td>131,072</td>
+<td>&quot;it has over the limit of 131072 terms and alternatives&quot;</td>
+</tr>
+<tr>
+<td>The translation PCRE2 is given</td>
+<td>1,048,576 bytes</td>
+<td>&quot;its translation is over the limit of 1048576 bytes&quot;</td>
+</tr>
+<tr>
+<td>The steps to write the translation</td>
+<td>524,288</td>
+<td>&quot;its translation takes over the limit of 524288 steps to write&quot;</td>
+</tr>
+<tr>
+<td>A repetition that is written out twice</td>
+<td>65,536 bytes</td>
+<td>&quot;a repetition that is written out is over the limit of 65536 bytes&quot;</td>
+</tr>
+<tr>
+<td>Lookbehinds of no fixed length</td>
+<td>252</td>
+<td>&quot;it has over the limit of 252 lookbehinds of no fixed length&quot;</td>
+</tr>
+<tr>
+<td>What PCRE2 holds</td>
+<td>64 KiB compiled, 250 nested parentheses, 65,535 groups</td>
+<td>&quot;PCRE2 does not hold it, and says ...&quot;</td>
+</tr>
+<tr>
+<td>The compiled pattern and those of its lookbehinds</td>
+<td>1,048,576 bytes together</td>
+<td>&quot;PCRE2 does not hold it, and says ...&quot;</td>
+</tr>
+</tbody>
+</table>
+<p>The limit a pattern of a few hundred characters meets is PCRE2's 64 KiB. PCRE2 writes a counted group out once for
+each time, so a large count of a group of several characters passes it: <code>(?:ab){6552}</code> is run and <code>(?:ab){6553}</code> is
+not, <code>(?:a{1000}){1000}</code> is run and <code>(?:(?:a{1000}){1000}){1000}</code> is not. A counted character or class is never too
+large (<code>\p{L}{1000000000}</code> is run). A repetition of what can match the empty string inside another, such as
+<code>(?:(?:a*)*)*</code>, was written twice at each level and is written once, so a hundred levels are run where twelve were
+too large. With a minimum of one or more (<code>(?:(?:a*)+)+</code>) it is written twice still, and some twelve levels are too
+large. The JIT code of a pattern is at most 4 MiB, and nothing is refused for that: a pattern that would pass it,
+such as one of several hundred <code>\p{L}</code>, is run by PCRE2's interpreter. On the probe, a pattern of at most 1,000
+characters is translated and compiled in 0.4 seconds at most and keeps 2.5 MB at most. A pattern is read in time
+in proportion to its length: a group is compared with the last group of its name, where it was compared with every
+one, so 20,000 groups of one name inside 150 groups (160 KB, which PCRE2 does not hold) are refused in 27 ms, where
+they took a minute. The patterns a process
+has compiled are kept for the next schema that has them, up to 4,096 patterns and 32 MiB.</p>
+<p><strong>The formats.</strong> A string that <code>format</code> asserts is a string of the instance. Every check reads its bytes with a
+scanner written for the package, and none is a regular expression, so none has a match to limit. A date, a time, a
+duration, a UUID, an IPv4 address, a URI, an IRI, a URI template, a JSON pointer and the local part of an e-mail
+address are read in one pass, or in a fixed number of passes. The checks that do more than read have a limit of
+length that no valid string passes, and a longer string is answered from its length: an IPv6 address is at most 64
+bytes, a host name (and the host of an e-mail address) at most 253, and an internationalized host name (and the host
+of an internationalized e-mail address) at most 1,012, which is 253 characters of four bytes. The <code>regex</code> format
+reads a string of at most 1,048,576 bytes with groups nested at most 200 deep, and a string over one of those is not
+a valid regular expression to it. It puts the group names of the string in order to find a name that is written
+twice, which takes time in proportion to n log n for n names. So the time of every check is in proportion to the
+length of the string, or to that and its logarithm. On a probe of 260 hostile strings of each length (long runs of
+what each format repeats, and near misses at their ends), the slowest check of a string of 100,000 characters took
+9 ms and of 1,000,000 characters 121 ms, which includes parsing the string. Before this, an internationalized
+host name of 1,000,000 characters took more than a minute, and so did a regular expression of 125,000 groups of one
+name.</p>
+<p>On the thirteen files of the
+<a href="https://github.com/corvus-dotnet/ecma262-regex-test-data">ECMA-262 regular expression test data</a>, 98,839 patterns
+and 4.2 million answers, no pattern is over a limit of size, and with the limit at one second two patterns reach it
+with Julia 1.13 and four with Julia 1.10, on one or a few strings each. All are patterns of nested repetitions of
+what can match the empty string, such as <code>^a{2}?(((?!)|((|a){2,}(|a)\B|){2,3}?){2,3}.{3}a{2})\4</code>. V8 refuses an
+empty iteration and answers them at once, where PCRE2 tries each, which is more steps than the first stage of a
+match has (157 million for one of them) and more than the code that reads the clock runs in a second. They answer
+as V8 does with <code>pattern_match_limit=nothing</code>. Every other answer is V8's, but for the two lookbehind uses and the
+case-insensitive backreference above, which are refused.</p>
+<h3 id="surrogates">Surrogates</h3>
+<p>A JSON string with the escape of a surrogate that is not half of a pair, such as <code>&quot;\ud800&quot;</code>, is not Unicode text. The
+parser refuses a document that has one, an instance or a schema, so a pattern is never matched against such a string.</p>
+<h3 id="the-long-term-support-release">The long-term support release</h3>
+<p>Julia 1.10 bundles PCRE2 10.42, whose case folding is that of Unicode 14. A case-insensitive backreference there
+does not hold equivalent the two characters of each of the thirty pairs below, which Unicode 15.1 and 16 made
+equivalent and which V8 and Julia 1.13 hold equivalent. So <code>^(.)(?i:\1)$</code> matches <code>ƛꟜ</code> with Julia 1.13 and
+does not with Julia 1.10. Nothing else differs between the two: a literal, a class and every other construct read the
+package's own tables on every Julia. The package does not work around this. The fix is to update to Julia 1.13, where
+the answers are exact.</p>
+<p>These thirty are every pair: the package's tests try each character that has a case variant against each other. Of the
+thirteen files of the
+<a href="https://github.com/corvus-dotnet/ecma262-regex-test-data">ECMA-262 regular expression test data</a>,
+Julia 1.10 differs from V8 on 1,026 answers, in twenty patterns of the case-folding file, and each of them is a text
+of two characters that are one of these pairs.</p>
+<table>
+<thead>
+<tr>
+<th>Code points</th>
+<th>Characters</th>
+<th>Code points</th>
+<th>Characters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>U+019B, U+A7DC</td>
+<td>ƛ Ƛ</td>
+<td>U+0264, U+A7CB</td>
+<td>ɤ Ɤ</td>
+</tr>
+<tr>
+<td>U+0390, U+1FD3</td>
+<td>ΐ ΐ</td>
+<td>U+03B0, U+1FE3</td>
+<td>ΰ ΰ</td>
+</tr>
+<tr>
+<td>U+1C89, U+1C8A</td>
+<td>Ᲊ ᲊ</td>
+<td>U+A7CC, U+A7CD</td>
+<td>Ꟍ ꟍ</td>
+</tr>
+<tr>
+<td>U+A7DA, U+A7DB</td>
+<td>Ꟛ ꟛ</td>
+<td>U+FB05, U+FB06</td>
+<td>ﬅ ﬆ</td>
+</tr>
+<tr>
+<td>U+10D50, U+10D70</td>
+<td>𐵐 𐵰</td>
+<td>U+10D51, U+10D71</td>
+<td>𐵑 𐵱</td>
+</tr>
+<tr>
+<td>U+10D52, U+10D72</td>
+<td>𐵒 𐵲</td>
+<td>U+10D53, U+10D73</td>
+<td>𐵓 𐵳</td>
+</tr>
+<tr>
+<td>U+10D54, U+10D74</td>
+<td>𐵔 𐵴</td>
+<td>U+10D55, U+10D75</td>
+<td>𐵕 𐵵</td>
+</tr>
+<tr>
+<td>U+10D56, U+10D76</td>
+<td>𐵖 𐵶</td>
+<td>U+10D57, U+10D77</td>
+<td>𐵗 𐵷</td>
+</tr>
+<tr>
+<td>U+10D58, U+10D78</td>
+<td>𐵘 𐵸</td>
+<td>U+10D59, U+10D79</td>
+<td>𐵙 𐵹</td>
+</tr>
+<tr>
+<td>U+10D5A, U+10D7A</td>
+<td>𐵚 𐵺</td>
+<td>U+10D5B, U+10D7B</td>
+<td>𐵛 𐵻</td>
+</tr>
+<tr>
+<td>U+10D5C, U+10D7C</td>
+<td>𐵜 𐵼</td>
+<td>U+10D5D, U+10D7D</td>
+<td>𐵝 𐵽</td>
+</tr>
+<tr>
+<td>U+10D5E, U+10D7E</td>
+<td>𐵞 𐵾</td>
+<td>U+10D5F, U+10D7F</td>
+<td>𐵟 𐵿</td>
+</tr>
+<tr>
+<td>U+10D60, U+10D80</td>
+<td>𐵠 𐶀</td>
+<td>U+10D61, U+10D81</td>
+<td>𐵡 𐶁</td>
+</tr>
+<tr>
+<td>U+10D62, U+10D82</td>
+<td>𐵢 𐶂</td>
+<td>U+10D63, U+10D83</td>
+<td>𐵣 𐶃</td>
+</tr>
+<tr>
+<td>U+10D64, U+10D84</td>
+<td>𐵤 𐶄</td>
+<td>U+10D65, U+10D85</td>
+<td>𐵥 𐶅</td>
+</tr>
+</tbody>
+</table>
+<p>The package's own tables hold Unicode 17, which added 28 pairs more: U+A7CE and U+A7CF, U+A7D2 and U+A7D3, U+A7D4
+and U+A7D5, and U+16EA0 to U+16EB8 each with the character 27 places on (U+16EBB to U+16ED3). A case-insensitive
+literal or class holds them equivalent on every Julia. A case-insensitive backreference does not, with Julia 1.10 or
+1.13, and neither does V8 13.6, whose data is Unicode 16.</p>
+<h2 id="performance">Performance</h2>
+<p>Measured with <a href="https://github.com/sourcemeta-research/jsonschema-benchmark">jsonschema-benchmark</a>'s 37 corpora, each
+implementation in its own container pinned to the same 8 CPUs, the median of 3 runs. The Julia, Go, Java and .NET JIT
+harnesses warm up for 2 seconds (at least 100 passes) and report the last warm-up pass. The others are the
+benchmark's own harnesses. Each figure is the geometric mean of Julia's time over the other's (below 1 means Julia is
+faster), with how many corpora Julia is faster on.</p>
+<table>
+<thead>
+<tr>
+<th>Julia 1.13 over</th>
+<th>Warm validation</th>
+<th>Cold validation</th>
+<th>Compile</th>
+<th>Parse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/sourcemeta/blaze">Blaze</a></td>
+<td>0.80 (28 of 37)</td>
+<td>0.83 (26 of 37)</td>
+<td>0.27 (37 of 37)</td>
+<td>0.43 (37 of 37)</td>
+</tr>
+<tr>
+<td>Corvus Go</td>
+<td>1.15 (2 of 37)</td>
+<td>1.33 (3 of 37)</td>
+<td>1.80 (0 of 37)</td>
+<td>1.21 (4 of 37)</td>
+</tr>
+<tr>
+<td>Corvus Rust</td>
+<td>1.47 (3 of 37)</td>
+<td>1.58 (0 of 37)</td>
+<td>1.17 (8 of 37)</td>
+<td>1.19 (2 of 37)</td>
+</tr>
+<tr>
+<td>Corvus .NET, native AOT, interpreting the schema</td>
+<td>1.29 (2 of 37)</td>
+<td>1.36 (2 of 37)</td>
+<td>1.27 (5 of 37)</td>
+<td>1.04 (13 of 37)</td>
+</tr>
+<tr>
+<td>Corvus .NET, the JIT with <a href="/Corvus.JsonSchema/docs/runtime-evaluator.html#runtime-code-generation">runtime code generation</a></td>
+<td>2.45 (0 of 37)</td>
+<td>0.006 (37 of 37)</td>
+<td>0.030 (37 of 37)</td>
+<td>0.20 (37 of 37)</td>
+</tr>
+<tr>
+<td>Corvus Java</td>
+<td>2.17 (2 of 37)</td>
+<td>0.023 (37 of 37)</td>
+<td>0.015 (37 of 37)</td>
+<td>0.23 (37 of 37)</td>
+</tr>
+</tbody>
+</table>
+<p>Against <a href="https://github.com/JuliaIO/JSONSchema.jl">JSONSchema.jl</a>, which jsonschema-benchmark does not have, the
+two were run in one process with their timed passes interleaved, on the corpora whose drafts JSONSchema.jl
+implements (4, 6 and 7). A warm pass with CorvusJsonSchema takes 0.4% to 4.2% of JSONSchema.jl's time on 34 of them,
+1.6% at the geometric mean. On the thirty-fifth, ui5, JSONSchema.jl takes about seven minutes a pass.</p>
+<p>A schema is interpreted from compiled plans, as in the Rust crate and the Go module, and not turned into generated
+code, as it is in Java and in .NET on the JIT. Julia compiles each generated function through LLVM before its first
+run, which made compiling a schema take tens of seconds for a large one. The interpreter is compiled into the package
+image instead, so a process that loads the package compiles nothing to validate.</p>
+<h2 id="links">Links</h2>
+<ul>
+<li>Package: <a href="https://github.com/JuliaRegistries/General/tree/master/C/CorvusJsonSchema">the General registry</a></li>
+<li>Source and README: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-jl/CorvusJsonSchema">src-jl/CorvusJsonSchema</a></li>
+<li>The other languages: see <a href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

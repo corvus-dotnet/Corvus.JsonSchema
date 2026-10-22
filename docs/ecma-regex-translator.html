@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="How the .NET evaluator and generators translate an ECMA-262 pattern to a .NET regular expression: the two grammars, what is refused, the limits of size and the known limits." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="How the .NET evaluator and generators translate an ECMA-262 pattern to a .NET regular expression: the two grammars, what is refused, the limits of size and the known limits." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="ECMAScript Regex Translator - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="How the .NET evaluator and generators translate an ECMA-262 pattern to a .NET regular expression: the two grammars, what is refused, the limits of size and the known limits." />
+    <meta property="og:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta property="og:title" content="ECMAScript Regex Translator - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/ecma-regex-translator/" />
+    <title>ECMAScript Regex Translator - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/ecma-regex-translator/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/ecma-regex-translator/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-path.html">JSONPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/open-api.html">OpenAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api.html">AsyncAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/standalone-evaluator-internals.html">Schema Evaluation Program Internals</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-precompilation.html">Runtime Evaluator Engineering Notes</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-measurements.html">Runtime Evaluator Measurements</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/other-languages.html">JSON Schema in other languages</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-javascript.html">JavaScript and TypeScript</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-rust.html">Rust</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-python.html">Python</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-c.html">C</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-cpp.html">C&#x2B;&#x2B;</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-swift.html">Swift</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ruby.html">Ruby</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-php.html">PHP</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-java.html">Java and Kotlin</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-go.html">Go</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-julia.html">Julia</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-r.html">R</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-pascal.html">Object Pascal</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ocaml.html">OCaml</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-fortran.html">Fortran</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/pattern-conformance.html">Patterns across the ports</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/docs/ecma-regex-translator.html">ECMA-262 regex translator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translations.html">ECMA-262 regex translations</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/clone-and-freeze.html">Clone, Freeze, and Builder Snapshots</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-path.html">Json Path</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-client.html">Open Api Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-server.html">Open Api Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">Open Api Advanced Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-server.html">Open Api Advanced Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-end-to-end.html">Open Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-server.html">Open Api Callback Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-client.html">Open Api Callback Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-producer.html">Async Api Producer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-consumer.html">Async Api Consumer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-end-to-end.html">Async Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-authentication.html">Async Api Authentication</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api20-client.html">Open Api20Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>ECMAScript Regex Translator</h1>
+<p>Translation of ECMA-262 regular expressions to .NET regular expression patterns with the same meaning, and the
+check that a pattern is a valid ECMA-262 regular expression at all.</p>
+<p>JSON Schema's <code>pattern</code> and <code>patternProperties</code> keywords are ECMA-262 regular expressions. .NET's
+<code>System.Text.RegularExpressions</code> reads much of the same syntax and gives a good deal of it another meaning. The
+translator is used by the runtime evaluator when it compiles a schema, by the V5 code generator for the regular
+expressions of generated types, and by the generator of baked schema evaluation programs. All three therefore agree
+on what a pattern means and on which patterns are valid.</p>
+<p>The answers are tested against V8. The
+<a href="https://github.com/corvus-dotnet/ecma262-regex-test-data">ECMA-262 regular expression test data</a> records what V8
+says about 79,221 patterns and 2,066,549 texts, and the translation gives V8's answer for every one of them in
+.NET's compiled and interpreted engines.</p>
+<h2 id="what-it-does">What It Does</h2>
+<ul>
+<li><strong>Two grammars.</strong> A pattern is read first with the grammar of the <code>u</code> flag, as JSON Schema specifies, and is then
+matched by code point. A pattern that is not valid with it is read with the Annex B grammar of a pattern with no
+flag, because many schemas hold such patterns (identity escapes such as <code>\-</code> or <code>\@</code>, a lone <code>{</code>), and is then
+matched by UTF-16 code unit, as ECMA-262 matches a pattern with no flag. A pattern neither grammar accepts is not
+valid.</li>
+<li><strong>Validity.</strong> The translator refuses what ECMA-262 refuses: a quantified assertion such as <code>\b+</code> or <code>^*</code>, a
+duplicate group name, bounds out of order, a <code>.NET</code>-only construct such as <code>(?i)</code> or <code>(?&gt;a)</code>, and so on. The error
+says what is wrong and where.</li>
+<li><strong>A tree, not a rewrite of the text.</strong> The pattern is parsed into a tree and the tree is written for .NET, so
+nothing depends on how .NET reads a construct ECMA-262 reads differently.</li>
+<li><strong>Code points.</strong> With the <code>u</code> flag grammar a character beyond the Basic Multilingual Plane is one character to a
+class, to the dot and to a quantifier, although .NET matches UTF-16 code units.</li>
+<li><strong>Unicode properties.</strong> Every <code>\p{...}</code> property, value and alias ECMA-262 lists, from the Unicode data the
+translator carries (<code>EcmaRegexUnicodeData.cs</code>), so a pattern means the same on every runtime.</li>
+<li><strong>Modifier groups.</strong> <code>(?i:...)</code>, <code>(?m:...)</code>, <code>(?s:...)</code> and their negations (ECMAScript 2025) are applied while
+the pattern is read. Case-insensitive matching follows the Canonicalize of ECMA-262 and not .NET's rules.</li>
+<li><strong>Backreferences.</strong> A backreference to a group that has not taken part matches the empty string, and a quantified
+group forgets its captures when an iteration starts, as ECMA-262 specifies.</li>
+<li><strong>Repetitions that can match nothing.</strong> A repetition whose body can match the empty string is written so that
+.NET's engines run it to ECMA-262's answer, and to an answer at all.</li>
+</ul>
+<p><a href="/Corvus.JsonSchema/docs/ecma-regex-translations.html">EcmaRegexTranslations.md</a> describes each translation.</p>
+<h2 id="quick-start">Quick Start</h2>
+<pre><code class="language-csharp">using Corvus.Text.Json.CodeGeneration;
+using System.Text.RegularExpressions;
+
+// Either grammar: the form the evaluator and the generators use.
+if (EcmaRegexTranslator.TryTranslate(@&quot;^\d{4}-\d{2}$&quot;, out string? dotNetPattern, out string? error))
+{
+    Regex regex = new(dotNetPattern!, RegexOptions.CultureInvariant);
+    bool isMatch = regex.IsMatch(&quot;2026-10&quot;); // true
+}
+else
+{
+    // error is, for example, &quot;Numbers out of order in {} quantifier at offset 6.&quot;
+}
+</code></pre>
+<p><code>EcmaRegexTranslator</code> is internal. Outside the library, <code>JsonSchemaEvaluator.ToDotNetPattern</code> gives the translation
+the evaluator constructs for a pattern.</p>
+<h2 id="api-reference">API Reference</h2>
+<pre><code class="language-csharp">internal static class EcmaRegexTranslator
+{
+    // Every method throws EcmaRegexPatternTooLargeException (an InvalidOperationException) for a pattern over a
+    // limit of size. It is never the answer or the exception of a pattern that is not valid.
+
+    // Either grammar. False, with what is wrong, when the pattern is not a valid ECMA-262 pattern.
+    public static bool TryTranslate(string ecmaPattern, out string? translated, out string? error);
+
+    // The same, and whether the grammar of the u flag accepted the pattern (it is then matched by code point).
+    public static bool TryTranslate(string ecmaPattern, out string? translated, out bool unicode, out string? error);
+
+    // Either grammar. The pattern itself when it is not valid.
+    internal static string TranslateOrFallback(string ecmaPattern);
+
+    // The grammar of the u flag only. Throws ArgumentException for a pattern it does not accept.
+    public static string Translate(ReadOnlySpan&lt;char&gt; ecmaPattern);
+
+    // The grammar of the u flag only, into a caller's buffer.
+    public static OperationStatus TryTranslate(
+        ReadOnlySpan&lt;char&gt; ecmaPattern,
+        Span&lt;char&gt; destination,
+        out int charsWritten);
+
+    // The length of the translation, for sizing that buffer.
+    public static int GetMaxTranslatedLength(ReadOnlySpan&lt;char&gt; ecmaPattern);
+
+    // What a translation costs .NET to construct, as the limit on it counts it.
+    internal static long ConstructionCost(string dotNetPattern);
+
+    // The steps a pattern takes to read and to write, as the limit on them counts them.
+    internal static long StepsToTranslate(string ecmaPattern);
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th><code>OperationStatus</code></th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Done</code></td>
+<td>Translation succeeded.</td>
+</tr>
+<tr>
+<td><code>DestinationTooSmall</code></td>
+<td>The destination buffer is too small. Use <code>GetMaxTranslatedLength</code> to size it.</td>
+</tr>
+<tr>
+<td><code>InvalidData</code></td>
+<td>The pattern is not valid with the <code>u</code> flag grammar.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="where-an-invalid-pattern-is-refused">Where An Invalid Pattern Is Refused</h2>
+<table>
+<thead>
+<tr>
+<th>Consumer</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Runtime evaluator (<code>JsonSchemaEvaluator.Compile</code>, <code>CompileFromUri</code>, <code>ForEntryPoint</code>, <code>FromProgramImage</code>)</td>
+<td><code>JsonSchemaCompilationException</code> when the schema is compiled. The message names the pattern and says what is wrong and where.</td>
+</tr>
+<tr>
+<td><code>Corvus.Text.Json.Validator</code></td>
+<td>The same exception, from the <code>JsonSchema.From*</code> method that compiles the schema.</td>
+</tr>
+<tr>
+<td>CLI code generator and Roslyn source generator</td>
+<td>Generation stops with <code>InvalidOperationException</code> (the source generator reports it as its <code>CRV1001</code> diagnostic). No code is emitted that would fail when it first validates.</td>
+</tr>
+<tr>
+<td>V4 code generator (<code>--engine V4</code>, <code>Corvus.Json.SourceGenerator</code>, <code>Corvus.Json.Validator</code>)</td>
+<td>The same as the V5 generators. It uses the same translator, so generation stops with <code>InvalidOperationException</code>, which its source generator reports as <code>CRV1001</code>. Before, it emitted such a pattern as it was, and the generated type failed when it first validated.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="limits-on-the-size-of-a-pattern">Limits On The Size Of A Pattern</h2>
+<p>A schema may come from outside, and so may its patterns. No pattern is to make the translator, or .NET when it
+constructs a regular expression from the translation, run for long or hold much memory. So a pattern has limits of
+size (<code>EcmaRegexLimits</code>), and a pattern over one of them is refused when the schema is compiled or the code is
+generated. The limits are fixed. None of them is an option.</p>
+<table>
+<thead>
+<tr>
+<th>Limit</th>
+<th>Value</th>
+<th>What it bounds</th>
+<th>The message ends</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Length of the pattern</td>
+<td>1,048,576 characters</td>
+<td>Reading it.</td>
+<td><code>It is longer than 1,048,576 characters.</code></td>
+</tr>
+<tr>
+<td>Nesting of groups</td>
+<td>200 deep</td>
+<td>The recursion of the reader and of the writer, and of .NET when it reads the translation.</td>
+<td><code>Its groups nest more than 200 deep.</code></td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>2,000,000</td>
+<td>The time and the memory of reading and writing. A step is one character read or one node of the tree visited, and the work on the ranges of a set is counted in the same measure (two ranges sorted are a step, sixteen copied are one). Steps are counted, and no clock is read, so the same pattern is refused or accepted on every machine.</td>
+<td><code>It takes more than 2,000,000 steps to translate.</code></td>
+</tr>
+<tr>
+<td>Length of the translation</td>
+<td>1,048,576 characters</td>
+<td>What is written, and what a regular expression keeps of it. It is looked at as the translation is written, so a pattern that would be written as gigabytes is refused after the first megabyte.</td>
+<td><code>What is written for .NET from it is longer than 1,048,576 characters.</code></td>
+</tr>
+<tr>
+<td>Copies</td>
+<td>65,536 beyond four times the size of the pattern</td>
+<td>.NET writes out a repetition with a least count of 2, 3 or 4, one inside another too, to find the text every match starts with, and keeps what it wrote. Twenty-four counts of 2 one inside another take it 220 ms and 100 MB, and thirty do not fit in memory.</td>
+<td><code>Its repetitions with a least count of 2, 3 or 4, one inside another, come to more than 65,536 copies of what they repeat, beyond four times its size.</code></td>
+</tr>
+<tr>
+<td>Cost of construction</td>
+<td>100,000,000</td>
+<td>.NET joins the pieces of literal text of a sequence one at a time and copies what it has joined each time, moves the terms that follow a plain group to put the group's terms in their place, and goes through the alternatives of an alternation once for each. The cost is the pieces of text of each sequence times the length of that text, its plain groups times its terms, and a quarter of the square of the alternatives of each alternation (<code>EcmaRegexTranslator.ConstructionCost</code>).</td>
+<td><code>Its sequences and alternations are longer than .NET constructs a regular expression from in bounded time: by the count of the translator, a cost of more than 100,000,000.</code></td>
+</tr>
+</tbody>
+</table>
+<p>The number of groups has no limit of its own. The steps bound it: every group is a node, and what is worked out
+for each group against each other group is counted.</p>
+<p><strong>The error is not the error of a pattern that is not valid.</strong> The message starts with the pattern, or with its
+first 120 characters and its length, and says one of two things. When the whole pattern was read before the limit
+was met, it is <code>The pattern '...' is a valid ECMA-262 regular expression, and is too large.</code> When the limit was met
+while reading (the length, the nesting, the steps of reading), the rest of the pattern has not been read, so the
+message is <code>The pattern '...' is too large to read as an ECMA-262 regular expression.</code> and says nothing of whether
+it is valid. A pattern that nests too deep and is also not valid is refused as too large.</p>
+<table>
+<thead>
+<tr>
+<th>Consumer</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Runtime evaluator (<code>JsonSchemaEvaluator.Compile</code>, <code>CompileFromUri</code>, <code>ForEntryPoint</code>, <code>FromProgramImage</code>, <code>ToDotNetPattern</code>)</td>
+<td><code>JsonSchemaCompilationException</code> when the schema is compiled, with that message.</td>
+</tr>
+<tr>
+<td><code>Corvus.Text.Json.Validator</code></td>
+<td>The same exception, from the <code>JsonSchema.From*</code> method that compiles the schema.</td>
+</tr>
+<tr>
+<td>CLI code generator</td>
+<td>Generation stops with an exception whose message names the keyword too: <code>The pattern '...' of the keyword 'pattern' is a valid ECMA-262 regular expression, and is too large. ...</code>. Its type derives from <code>InvalidOperationException</code>, the type of the error of a pattern that is not valid.</td>
+</tr>
+<tr>
+<td>Roslyn source generator</td>
+<td>The diagnostic <code>CRV1003</code>, with that message. A pattern that is not valid is <code>CRV1001</code>.</td>
+</tr>
+<tr>
+<td>V4 code generator (<code>--engine V4</code>, <code>Corvus.Json.SourceGenerator</code>)</td>
+<td>The same as the V5 generators: the exception, and <code>CRV1003</code> from its source generator.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="what-an-ordinary-pattern-can-meet">What an ordinary pattern can meet</h3>
+<p>A pattern of a few hundred characters meets a limit only where what is written for it, or what .NET does with it,
+grows much faster than the pattern.</p>
+<ul>
+<li><strong>Seven or more case-insensitive backreferences to a group that can hold any letter</strong> (<code>(?i:(.)\1\1\1\1\1\1\1)</code>).
+Each is written as a comparison of about 157,000 characters with the <code>u</code> flag grammar and about 117,000 without
+(see <a href="#known-limits">Known Limits</a>), so six are under the limit on the translation and seven are over it. A
+backreference to a group of ASCII letters is a few hundred characters, and hundreds of those are under it.</li>
+<li><strong>Repetitions written more than once, one inside another.</strong> A repetition whose iterations that need not run are
+made to fail by the check that reads the rest of the input is written as its body twice (see
+<a href="/Corvus.JsonSchema/docs/ecma-regex-translations.html#repetitions">the translations</a> for where the check is kept). So is a lazy repetition
+with a highest count inside a lookaround whose captures are read, up to eight times. Fourteen of the first one
+inside another, in such a lookaround, or six of the second, are over the limit on the translation. Outside such
+a lookaround a repetition of a body that holds a group a backreference reads is written without the check, and
+sixty one inside another are under the limit.</li>
+<li><strong>Counts of 2, 3 or 4 one inside another</strong>, from about twelve counts of 2 or eight counts of 4
+(<code>(?:(?:(?:a{4}){4}){4}...</code>). A count of 5 or more is not written out by .NET, and neither is a count of 1 or a
+range from 0, so <code>(?:(?:a{1000}){1000}){1000}</code> is under the limit.</li>
+<li><strong>A dot written eight thousand times.</strong> With the <code>u</code> flag grammar one dot is 126 characters (see
+<a href="/Corvus.JsonSchema/docs/ecma-regex-translations.html">the translations</a>). <code>.{8000}</code> is one dot and a count.</li>
+<li><strong>One sequence of more than about ten thousand characters that are written as escapes</strong>: characters outside
+ASCII, which are written <code>\uXXXX</code>, and escaped punctuation such as <code>\.</code>. For characters beyond the Basic
+Multilingual Plane it is about six thousand. Text of letters and digits is one piece however long it is, and the
+alternatives of an alternation are sequences of their own, so a list of ten thousand words is under the limit.</li>
+<li><strong>An alternation of more than twenty thousand alternatives</strong>, or a pattern of more than about 285,000 letters,
+which is 2,000,000 steps.</li>
+<li><strong>More than about ten thousand groups that no backreference reads, one after another in one sequence</strong>
+(<code>(a)(b)(c)...</code>), which are written as plain groups.</li>
+</ul>
+<h3 id="what-the-limits-were-measured-against">What the limits were measured against</h3>
+<p>A probe gives the translator and both of .NET's engines 119 shapes built to cost as much as they can: 111 patterns
+of at most 1,000 characters against texts of at most 100,000, and 8 patterns of up to 700,000 characters. They are
+repetitions of what can match nothing, one inside another, backreferences in repetitions, counts large and one
+inside another, 10,000 open parentheses, long alternations, lookbehinds over a long text, case-insensitive
+backreferences to groups that hold any character, and classes of large properties. Before the limits, and with the
+match limit at 10 seconds, ten of its runs were stopped when the process passed 3 GB, five of them in the
+translator and five in .NET's <code>Regex</code> constructor, and one pattern of 610 characters was translated to 49 million
+characters and kept 453 MB.</p>
+<p>With the limits, on a machine with a load of 7 to 8 from other work, every run ends in an answer, in the error of
+a pattern that is too large, or in <code>RegexMatchTimeoutException</code>:</p>
+<table>
+<thead>
+<tr>
+<th>For a pattern of at most 1,000 characters</th>
+<th>The most measured</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Time to translate it or to refuse it</td>
+<td>110 ms</td>
+</tr>
+<tr>
+<td>Time for .NET to construct the regular expression</td>
+<td>43 ms</td>
+</tr>
+<tr>
+<td>Memory kept for it, the translation and the regular expression</td>
+<td>3.5 MB</td>
+</tr>
+<tr>
+<td>Time of one match, which is the match limit</td>
+<td>1.01 s</td>
+</tr>
+<tr>
+<td>Memory of the process while it matched</td>
+<td>195 MB</td>
+</tr>
+</tbody>
+</table>
+<p>The eight larger patterns, and forty more of up to a megabyte, are translated or refused in at most 0.31 seconds,
+and what is accepted of the eight is constructed in at most 45 ms and keeps at most 6.8 MB. At the limits themselves, .NET keeps about 11 bytes for each character
+of a translation it interprets, so a translation of 1,048,576 characters keeps about 11 MB for as long as an
+evaluator holds it.</p>
+<p>A pattern that is over no limit is translated in the steps it takes. The most that a pattern of the
+<a href="https://github.com/corvus-dotnet/ecma262-regex-test-data">ECMA-262 regular expression test data</a> takes is 180,606
+steps and a translation of 946,581 characters, for a pattern with six case-insensitive backreferences. None of its
+98,839 patterns is over a limit.</p>
+<h2 id="costs">Costs</h2>
+<p>The translation runs once for each distinct pattern, when a schema is compiled or code is generated. Nothing of it
+runs when an instance is matched. The runtime evaluator keeps each pattern's translation and regular expression for
+the life of the process, so a pattern that many schemas share is read once. What it keeps is bounded, as a process
+may compile schemas from outside for as long as it runs: at most 4,096 patterns and 1,048,576 characters of patterns
+and translations, with no pattern or translation longer than 32,768 characters among them. Past either bound
+everything kept is let go, and a pattern met again is read again. An evaluator keeps its own regular expressions
+for as long as it lives, whatever is let go.</p>
+<p>A translation is usually a little longer than the pattern. It is much longer for a <code>\p{...}</code> property with members
+beyond the Basic Multilingual Plane, which are written out as surrogate pairs (<code>\p{L}</code> is about 4,200 characters).</p>
+<h2 id="regenerating-the-unicode-data">Regenerating The Unicode Data</h2>
+<p><code>EcmaRegexUnicodeData.cs</code> is written by <code>src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1</code> from
+<code>src/unicodetables.rs</code> of the <code>regress</code> crate, which that crate generates from the Unicode Character Database. The
+crate is only where the data is read from. No port of the evaluator depends on it, and the Rust crate carries a port
+of the project's own ECMA-262 engine. The tables of the Go and Java ports were read from the same file:</p>
+<pre><code class="language-powershell">pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTables ~/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regress-0.12.0/src/unicodetables.rs
+</code></pre>
+<h2 id="known-limits">Known Limits</h2>
+<ul>
+<li><strong>A case-insensitive backreference</strong> (<code>\1</code> inside <code>(?i:...)</code>) is exact, and can be costly. .NET's own
+case-insensitive backreference does not compare by ECMA-262's Canonicalize, so the comparison is written out
+(see <a href="/Corvus.JsonSchema/docs/ecma-regex-translations.html#a-backreference-that-ignores-case">the translations</a>). The translation holds one
+alternative for each class of case variants the group can capture. For a group such as <code>([a-z]+)</code> that is three
+and the translation is under a thousand characters. For a group that can capture any letter (<code>(.)</code>, <code>(\p{L}+)</code>)
+it is every class there is, and the translation is about 160,000 characters. .NET's compiled engine would take
+one to three seconds to compile that at the first match, so a translation longer than 32,768 characters
+(<code>EcmaRegexTranslator.LongestCompiledTranslation</code>) is interpreted, by the evaluator whatever
+<code>CompileRegularExpressions</code> says and by generated types where they construct the expression. .NET constructs it
+for the interpreter in 10 to 50 milliseconds. Each character compared costs a walk to the end of the input and
+back.</li>
+<li><strong>The engine.</strong> Two kinds of translation are run by .NET's interpreted engine whatever
+<code>CompileRegularExpressions</code> says, and have no compiled form in generated code: one longer than 32,768 characters
+(above), and one that keeps a lazy repetition of a group, which starts with <code>(?#interpreted)</code>. The compiled engine
+does not always return from a match of the second kind
+(see <a href="/Corvus.JsonSchema/docs/ecma-regex-translations.html#repetitions">the translations</a>). Only a pattern with a lazy repetition of a group
+inside a lookaround whose captures a backreference reads has such a translation.</li>
+<li><strong>Memory while a match runs.</strong> The match limit bounds the time of a match and not its memory. A backtracking
+engine keeps what it may have to come back to, and a match that runs to the limit can keep more for as long as
+it runs. The most the probe above provoked in the second a match is given is 195 MB for the whole process, 160 MB
+of it the match: a repetition over 110 groups that a backreference reads, on 80,000 characters, in the
+interpreted engine. .NET has no limit on the memory of a match. Where neither the schema nor the instance is
+trusted, set a shorter <code>RegexMatchTimeout</code>, bound the length of the instance, or give the process a memory limit.</li>
+<li><strong>Code that was generated before the match limit has none.</strong> The limit is written into generated code when it
+is generated. Of the code checked in to this repository, the V4 models of Draft 2019-09, Draft 2020-12, OpenAPI
+3.0 and OpenAPI 3.1 (<code>src-v4/Corvus.Json.JsonSchema.Draft201909</code>, <code>Draft202012</code>, <code>OpenApi30</code> and <code>OpenApi31</code>)
+have not been regenerated. Their regular expressions are the ones they were generated with, and have no match
+limit.</li>
+<li><strong>Time.</strong> ECMA-262 does not say how long a match may take, and a backtracking engine can take very long. The
+evaluator's match limit (<code>JsonSchemaEvaluatorOptions.RegexMatchTimeout</code>, 1 second unless it is set) bounds it,
+and a match that reaches it throws <code>RegexMatchTimeoutException</code> and gives no answer. V8 answers every text of
+the ECMA-262 regular expression test data in under 250,000 backtracks. One of its 98,839 patterns is at the
+limit here: <code>^a{2}?(((?!)|((|a){2,}(|a)\B|){2,3}?){2,3}.{3}a{2})\4</code>, whose hardest text takes V8 238,314
+backtracks. It repeats, several deep, a body that matches the empty string in more than one way, and .NET goes
+through every way where V8 does too, at many times the cost of a step. The compiled engine takes about 0.7
+seconds for that text and the interpreted one about 1.8 (with a load of 2 to 4 on the machine), most of it the
+unsetting of a group when each iteration starts and the written-out <code>\B</code>. So the interpreted engine meets the
+limit, and the compiled one meets it on a busy machine: in two runs of the test data with a load of 5 to 7 the
+pattern met the limit in seven of the eight configurations. A second pattern, of 190 characters with <code>(a|)(a|)</code>
+in a group that is read, three repetitions deep, whose hardest text takes V8 113,530 backtracks, is answered by
+the compiled engine in about 0.05 seconds and by the interpreted one in about a third of a second (load 2). In
+those two runs it was answered in every configuration but the interpreted one, where four matches at a time on
+the busy machine took it past the limit. A translation gives V8's answer and not V8's time, in four ways.
+<ul>
+<li>A repetition whose body can match the empty string, with no backreference in it and no group that one reads
+(<code>(?:a?b?)*</code>), is written as it is. .NET takes an iteration that matched nothing and, when the rest fails, tries
+again without it, where ECMA-262 refuses the iteration. A search that passes twenty such repetitions is made
+two to the power of twenty times: <code>^(?:(?:a?b?)*c){1,22}d$</code> against twenty <code>c</code> and an <code>e</code> is 42 backtracks in
+V8 and about a million paths in .NET. The same pattern costs the same with no translation at all.</li>
+<li>A lazy repetition of anything but one code unit is written greedy, and an empty alternative before another
+(<code>(|a)</code>) as an optional group. The answer does not depend on the order of the paths, and the time to find a
+match does: .NET can search long before it reaches the path V8 takes first.</li>
+<li>Unsetting groups when an iteration starts and refusing an iteration that matched nothing are written with
+conditionals, balancing groups and lookarounds, so a step of such a search costs more in .NET than in V8.</li>
+<li>Where an iteration that need not run is made to fail by the check that reads the rest of the input
+(see <a href="/Corvus.JsonSchema/docs/ecma-regex-translations.html#repetitions">the translations</a> for the five places), .NET's interpreted engine
+takes time in proportion to the square of the length of the text. The compiled engine does not.</li>
+</ul>
+</li>
+<li><strong>Where V8 is not ECMA-262.</strong> The answers are tested against V8 13.6, and the translator follows ECMA-262 where
+that V8 departs from it. The Script value <code>Katakana_Or_Hiragana</code> (<code>Hrkt</code>) is accepted, and matches no character,
+since none has it: V8 refuses it. <code>\p{WSpace}</code> is refused, since ECMA-262 lists <code>White_Space</code> and <code>space</code> only:
+V8 takes it. <code>a{2147483648,2147483647}</code> is refused, since the first count is the greater: V8 keeps both as one
+number. A backreference that ignores case compares character by character through Canonicalize, where V8 with
+the <code>i</code> and <code>u</code> flags compares the whole text by full case folding. The scripts Unicode 17 added (<code>Sidetic</code>,
+<code>Tolong_Siki</code>, <code>Beria_Erfe</code>, <code>Tai_Yo</code>) are accepted, and V8 13.6 has Unicode 16.</li>
+<li><strong>Unicode version.</strong> The data is Unicode 17.0.0. The Basic Multilingual Plane part of a General_Category value
+uses .NET's own class, which follows the runtime's Unicode version.</li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

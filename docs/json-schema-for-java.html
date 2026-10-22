@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="The Corvus JSON Schema evaluator for Java and Kotlin (io.github.corvus-dotnet:corvus-json-schema): install, validate, JSON text, options, results and annotations." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="The Corvus JSON Schema evaluator for Java and Kotlin (io.github.corvus-dotnet:corvus-json-schema): install, validate, JSON text, options, results and annotations." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="JSON Schema for Java and Kotlin - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="The Corvus JSON Schema evaluator for Java and Kotlin (io.github.corvus-dotnet:corvus-json-schema): install, validate, JSON text, options, results and annotations." />
+    <meta property="og:image" content="/Corvus.JsonSchema/assets/images/og-corvus.png" />
+    <meta property="og:title" content="JSON Schema for Java and Kotlin - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-java/" />
+    <title>JSON Schema for Java and Kotlin - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-java/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/json-schema-for-java/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-path.html">JSONPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/open-api.html">OpenAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api.html">AsyncAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/standalone-evaluator-internals.html">Schema Evaluation Program Internals</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-precompilation.html">Runtime Evaluator Engineering Notes</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-measurements.html">Runtime Evaluator Measurements</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/other-languages.html">JSON Schema in other languages</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-javascript.html">JavaScript and TypeScript</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-rust.html">Rust</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-python.html">Python</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-c.html">C</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-cpp.html">C&#x2B;&#x2B;</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-swift.html">Swift</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ruby.html">Ruby</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-php.html">PHP</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/docs/json-schema-for-java.html">Java and Kotlin</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-go.html">Go</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-julia.html">Julia</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-r.html">R</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-pascal.html">Object Pascal</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-ocaml.html">OCaml</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/json-schema-for-fortran.html">Fortran</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/pattern-conformance.html">Patterns across the ports</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translator.html">ECMA-262 regex translator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/ecma-regex-translations.html">ECMA-262 regex translations</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/clone-and-freeze.html">Clone, Freeze, and Builder Snapshots</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/json-path.html">Json Path</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-client.html">Open Api Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-server.html">Open Api Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-client.html">Open Api Advanced Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-advanced-server.html">Open Api Advanced Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-end-to-end.html">Open Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-server.html">Open Api Callback Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api-callback-client.html">Open Api Callback Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-producer.html">Async Api Producer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-consumer.html">Async Api Consumer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-end-to-end.html">Async Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/async-api-authentication.html">Async Api Authentication</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/toon.html">TOON Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api20-client.html">Open Api20Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>JSON Schema for Java and Kotlin</h1>
+<p><a href="https://central.sonatype.com/artifact/io.github.corvus-dotnet/corvus-json-schema">corvus-json-schema</a> is the Corvus
+JSON Schema evaluator for Java and Kotlin: draft 4, 6, 7, 2019-09 and 2020-12. It is a port of the .NET runtime
+evaluator (see <a href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>), and gives the same results and annotations. It runs on Java 17
+or later and is one jar with no dependencies.</p>
+<p>A schema is compiled once into JVM bytecode: one method per subschema, holding only the checks that subschema needs,
+which the JIT then optimises as it would hand-written code. Any number of instances can then be validated against it.</p>
+<ul>
+<li><strong>Conformant.</strong> Passes the whole JSON-Schema-Test-Suite (required, optional and <code>optional/format</code>, every draft) except
+<code>draft4/optional/zeroTerminatedFloats.json</code>, and all of its annotation tests.</li>
+<li><strong>Fast.</strong> See <a href="#performance">Performance</a>.</li>
+<li><strong>Results and annotations.</strong> Basic, Detailed and Verbose results, and annotations, the same as every other Corvus
+implementation.</li>
+<li><strong>Allocation-free validation.</strong> In the steady state, validating a parsed document, or JSON text, allocates nothing.</li>
+</ul>
+<h2 id="install">Install</h2>
+<p>Maven:</p>
+<pre><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.corvus-dotnet&lt;/groupId&gt;
+  &lt;artifactId&gt;corvus-json-schema&lt;/artifactId&gt;
+  &lt;version&gt;0.1.3&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<p>Gradle (Kotlin DSL):</p>
+<pre><code class="language-kotlin">implementation(&quot;io.github.corvus-dotnet:corvus-json-schema:0.1.3&quot;)
+</code></pre>
+<h2 id="validate">Validate</h2>
+<pre><code class="language-java">import io.github.corvusdotnet.jsonschema.Validator;
+
+Validator validator = Validator.compile(&quot;&quot;&quot;
+    {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: { &quot;id&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 1 } },
+      &quot;required&quot;: [&quot;id&quot;]
+    }&quot;&quot;&quot;);
+validator.isValid(&quot;{\&quot;id\&quot;: 3}&quot;); // true
+validator.isValid(&quot;{\&quot;id\&quot;: 0}&quot;); // false
+</code></pre>
+<p>From Kotlin:</p>
+<pre><code class="language-kotlin">val validator = Validator.compile(&quot;&quot;&quot;{&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;}}&quot;&quot;&quot;)
+validator.isValid(&quot;&quot;&quot;[&quot;a&quot;, &quot;b&quot;]&quot;&quot;&quot;) // true
+</code></pre>
+<p>A <code>Validator</code> is immutable and safe to share between threads.</p>
+<h2 id="json-text">JSON text</h2>
+<p><code>isValid(String)</code> and <code>isValid(byte[])</code> parse the text into buffers the validator reuses on the calling thread and
+validate it in place, so in the steady state they allocate nothing. To validate the same text more than once, parse it
+into a <code>JsonDocument</code>: the UTF-8 text and one flat array of values, with strings read in place where they have no
+escapes.</p>
+<pre><code class="language-java">JsonDocument document = JsonDocument.parse(bytes);
+boolean valid = validator.isValid(document);
+</code></pre>
+<p><code>isValid</code> reports a schema that recursed in place beyond the maximum depth as invalid; <code>validate</code> throws a
+<code>SchemaEvaluationDepthException</code> instead. Text that is not JSON throws a <code>JsonParseException</code>.</p>
+<h2 id="options">Options</h2>
+<p><code>Validator.compile(schema, options)</code> takes a <code>CompileOptions</code>, built with <code>CompileOptions.builder()</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>defaultDialect</code></td>
+<td>The dialect of a schema without <code>$schema</code> (default <code>Dialect.DRAFT202012</code>).</td>
+</tr>
+<tr>
+<td><code>assertFormat</code></td>
+<td><code>true</code> asserts <code>format</code>, <code>false</code> never does; <code>null</code> (the default) follows the schema's vocabularies.</td>
+</tr>
+<tr>
+<td><code>assertFormatInLegacyDrafts</code></td>
+<td>With <code>assertFormat</code> unset, assert <code>format</code> in drafts 4 to 7 too.</td>
+</tr>
+<tr>
+<td><code>assertContent</code></td>
+<td>Assert <code>contentEncoding</code> and <code>contentMediaType</code> in draft 7 (default <code>true</code>).</td>
+</tr>
+<tr>
+<td><code>format</code></td>
+<td>A custom format by name: a predicate on the string (or a number's JSON text).</td>
+</tr>
+<tr>
+<td><code>documentResolver</code></td>
+<td>A function from an absolute URI to the document, for remote references. The standard metaschemas are built in.</td>
+</tr>
+<tr>
+<td><code>baseUri</code></td>
+<td>The base URI of the root document.</td>
+</tr>
+<tr>
+<td><code>entryPoint</code></td>
+<td>A subschema to validate against, such as <code>#/$defs/item</code>.</td>
+</tr>
+<tr>
+<td><code>maxDepth</code></td>
+<td>The deepest the evaluator recurses in place (default 128).</td>
+</tr>
+<tr>
+<td><code>patternMatchLimit</code></td>
+<td>The longest one match of a <code>pattern</code> or <code>patternProperties</code> regular expression may take (default 1 second). <code>noPatternMatchLimit()</code> turns the limit off. See <a href="#regular-expressions">Regular expressions</a>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="results-and-annotations">Results and annotations</h2>
+<pre><code class="language-java">JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.create(ResultsLevel.DETAILED);
+validator.evaluate(JsonDocument.parse(&quot;{\&quot;id\&quot;: 0}&quot;), collector);
+for (SchemaResult r : collector.results()) {
+    // r.isMatch(), r.message(), r.evaluationLocation(), r.schemaEvaluationLocation(), r.documentEvaluationLocation()
+}
+
+JsonSchemaResultsCollector verbose = JsonSchemaResultsCollector.create(ResultsLevel.VERBOSE);
+validator.evaluate(JsonDocument.parse(&quot;{\&quot;id\&quot;: 3}&quot;), verbose);
+verbose.collectAnnotations(); // instance location -&gt; keyword -&gt; schema location -&gt; value (JSON text)
+</code></pre>
+<p><code>BASIC</code> records the failures without messages, <code>DETAILED</code> adds the messages, and <code>VERBOSE</code> records every keyword,
+passing ones and annotations included.</p>
+<h2 id="regular-expressions">Regular expressions</h2>
+<p><code>pattern</code>, <code>patternProperties</code> and the <code>regex</code> format follow ECMA-262, as JSON Schema specifies, with the grammar of
+ECMAScript 2025. A pattern is read with the <code>u</code> flag, and a pattern that is not valid with it is read as a pattern
+with no flag, which accepts what many schemas hold (<code>\&amp;</code>, a lone brace). The <code>regex</code> format accepts only the <code>u</code>
+flag grammar.</p>
+<p>A pattern that is valid with the <code>u</code> flag matches characters. A pattern that is valid only without it matches UTF-16
+code units, as ECMA-262 says, and a character beyond the Basic Multilingual Plane is two of them. So <code>^\-?.$</code> does
+not take &quot;𐐀&quot; (U+10400), and <code>^\-?..$</code> does. Such a character written in the pattern is two atoms: a
+quantifier after it repeats its second half, a class holds each half, and a class range from one such character to
+another is not valid. Without the flag <code>\u{...}</code> is not an escape, and the escapes of the two halves of a pair are
+two atoms. A group name is read by character in both grammars.</p>
+<p>A JSON string cannot hold a surrogate that is not half of a pair. The parser refuses the escape of one, such as
+<code>&quot;\ud800&quot;</code>, in a schema and in an instance, with a <code>JsonParseException</code>. So no pattern is matched against one.</p>
+<ul>
+<li><code>\p{...}</code> covers every property, value and alias ECMA-262 lists: General_Category, Script, Script_Extensions and
+the 53 binary properties. The data is Unicode 17 on every JDK. It does not depend on the Unicode version of the JDK
+the library runs on.</li>
+<li>Modifier groups (<code>(?i:...)</code>, <code>(?m:...)</code>, <code>(?s:...)</code>, <code>(?i-s:...)</code>) ignore case, match at line terminators and let
+the dot match everything as ECMA-262 defines them. Group names can be any ECMAScript identifier, can be written
+with <code>\u</code> escapes, and can be shared by groups in separate alternatives.</li>
+<li>A lookbehind can be of any length. One that <code>java.util.regex</code> cannot bound is run by a search whose time grows with
+the square of the length of the string. The search is held to the place the lookbehind stands at, so a repetition
+inside a repetition, as in <code>(?&lt;=(?:[ax]+){2,})$</code>, does not try the ways to split the text after that place.</li>
+<li>An iteration of a counted repetition that matches nothing does not end the repetition while iterations are still
+due, so <code>(^|x){2}a</code> matches &quot;xa&quot; as ECMA-262 defines, where <code>java.util.regex</code> does not. Such a repetition is
+written with a copy of its body for each iteration it must run. A body with one way to match, such as a
+backreference, needs no copies: when one iteration of it matches nothing, so do the ones after it.</li>
+<li>A backreference reads what ECMA-262 says its group holds, where <code>java.util.regex</code> reads something else. A group
+that did not take part reads as the empty string. The groups of a repeated body are unset when an iteration
+starts, so <code>^(?:(a)|x)*\1$</code> takes &quot;ax&quot; and not &quot;axa&quot;, and an iteration that matched nothing leaves no group set. A
+lookbehind captures as if run backwards, so <code>(?&lt;=\1(a))b</code> takes &quot;aab&quot;. A lookahead takes the first way its body
+matches, so after <code>(?=(a)?b)</code> the group holds &quot;a&quot; before &quot;ab&quot; and nothing before &quot;b&quot;. A group of a lookaround is
+the one its own iteration set, so <code>^(?:(?=([ab]))[ab](?:c|ca)\1)*$</code> takes &quot;acaa&quot; and not &quot;acab&quot;. Inside a
+case-insensitive group a backreference compares by ECMA-262's case folding, the same on every JDK:
+<code>^(?i:(.)\1)$</code> takes &quot;sſ&quot; and &quot;kK&quot; (U+017F, U+212A) and not &quot;iİ&quot; (U+0130). A reference to a group of several
+characters is compared one character at a time, as ECMA-262 says: <code>^(?i:(..)\1)$</code> does not take &quot;ßSsẞ&quot; (U+00DF,
+U+1E9E), which V8 13.6 takes, as it compares the two texts by full case folding. <code>java.util.regex</code> compares the
+characters for which its own case-insensitive comparison is that of ECMA-262, and the others are compared by
+classes of equivalent characters written into the translation. Which characters those are is found by asking the
+engine of the JVM the library runs on, once. Java 17 fails on a character beyond the Basic Multilingual Plane,
+Java 21 lacks the pairs that Unicode 15.1 and 16 added, and every JDK equates &quot;i&quot; with U+0130 and U+0131. So the
+answers are the same on every JDK, and the text is not: <code>^(?i:(.)\1)$</code> is 1,370 characters on Java 25, 2,139 on
+Java 21 and 5,751 on Java 17.</li>
+</ul>
+<p>The patterns are run by <code>java.util.regex</code>, after translation. A pattern that is valid with the <code>u</code> flag is run
+with the meaning ECMA-262 gives it. There is one exception, and there are limits: of size, and on the time of a
+match. A pattern that falls under the exception is refused. Compiling a schema with it throws
+<code>SchemaCompilationException</code> with a message that starts &quot;Unsupported regular expression&quot; and names the reason. It is
+never run with another meaning. The <code>regex</code> format still accepts it, as it is a valid pattern.</p>
+<p><strong>The exception is a group of a lookbehind that only matching backwards can tell.</strong> ECMA-262 matches a lookbehind
+backwards, from its last term to its first, and <code>java.util.regex</code> matches forwards. The library writes a lookbehind
+whose groups are read, in it or after it, when what the backward match captures can be told while matching
+forwards. That covers groups at a fixed distance from the end of the lookbehind, alternatives, and a repetition of a
+body of fixed length that stands first, such as <code>(?&lt;=([abc])+)x\1</code>. Any other is refused, with one of two reasons.</p>
+<ul>
+<li>&quot;a backreference to a group inside a lookbehind whose text depends on the lookbehind being matched backwards&quot;, as
+for <code>(?&lt;=(x*?)a*)\1</code>, <code>(?&lt;=(a)+b*)x\1</code> and <code>(?&lt;=(a|ab)c*)\1</code>;</li>
+<li>&quot;a backreference inside a lookbehind to a group of that lookbehind that is not at a fixed distance from it&quot;, as
+for <code>(?&lt;=\1a*(b))x</code> and <code>(?&lt;=\1(a)*)x</code>.</li>
+</ul>
+<p>A lookbehind none of whose groups is read is not affected, whatever its body.</p>
+<p><strong>The limit on a match.</strong> A schema and an instance that come from outside can make a backtracking engine run for
+as long as they like: <code>^(?:(a+)\1*)+$</code> takes time that doubles with each &quot;a&quot; of a string that ends in &quot;b&quot;. So one
+match of a <code>pattern</code> or <code>patternProperties</code> regular expression against one string is limited to 1 second, unless the
+options say otherwise.</p>
+<pre><code class="language-java">CompileOptions options = CompileOptions.builder()
+        .patternMatchLimit(Duration.ofMillis(100)) // or .noPatternMatchLimit()
+        .build();
+Validator validator = Validator.compile(schema, options);
+try {
+    validator.isValid(instance);
+} catch (PatternMatchLimitException e) {
+    // Neither valid nor invalid. e.pattern(), e.limit() and e.isStackLimit() say what happened.
+}
+</code></pre>
+<p>A match that goes over the limit is abandoned, and the method that was validating throws
+<code>PatternMatchLimitException</code>. That is so for <code>isValid</code>, <code>validate</code> and <code>evaluate</code>, for compiled code and for the
+interpreter, and whether results are collected or not. None of them answers <code>false</code> for it. The validator is as it
+was, and answers the next instance. <code>noPatternMatchLimit()</code> turns the limit off, for a caller that trusts both the
+schema and the instances.</p>
+<p><code>java.util.regex</code> has no limit of its own, so the library counts what the engine does to the string: each character
+it reads, and each time it asks for the length, which it does at every lookahead, word boundary and end anchor. The
+clock is read once every 4,096 of those for a translation of up to 1,024 characters, and more often for a longer
+one. So a match ends a little after the limit and not at it, and a match that reads the string fewer times than that
+reads no clock at all. Where the engine could go on for long without reading, as in a choice between two ways to
+match nothing at the end of the string, the translation holds an empty lookahead, which is counted. Nothing is
+allocated for the limit. The matchers the library has for the common shapes of pattern use no regular expression
+engine, read a string a bounded number of times, and have no limit.</p>
+<p><code>java.util.regex</code> matches by recursion, and a repetition of a group takes a level or more of the stack for each
+iteration. A match that runs out of stack throws the same <code>PatternMatchLimitException</code>, with <code>isStackLimit()</code> true,
+and not a <code>StackOverflowError</code>. The library writes the common forms so that they do not recurse. Alternatives that
+are each one character, as in <code>^(a|b)*$</code>, are one class. A repetition whose body has one way to match, and that what
+follows cannot start inside, as in <code>^&quot;(?:[^&quot;\\]|\\.)*&quot;$</code> and <code>^[a-z]+(?:\.[a-z]+)*@</code>, is written possessive. Any
+other repetition of a group of alternatives or of varying length, such as <code>^(?:\w+\s?)*$</code>, still recurses, and on a
+thread with a stack of 1 MB runs out after some thousands of iterations.</p>
+<p><strong>The limits of size.</strong> A pattern that comes from outside must not take long to compile or keep much memory. So a
+pattern has limits of size. One over a limit is refused when the schema is compiled, with
+<code>PatternTooLargeException</code>. That is a <code>SchemaCompilationException</code>, so code that catches the one catches the other.
+Its message names the limit and its value. It says &quot;It is a valid ECMA-262 regular expression, and is too large&quot;,
+or, for a limit that is met before the pattern is read to its end, &quot;It is too large to be read&quot;, and then that
+whether it is valid is not known. It never says the pattern is invalid. The limits are fixed, and none is an option.</p>
+<table>
+<thead>
+<tr>
+<th>Limit</th>
+<th>Value</th>
+<th>The message ends</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Characters of the pattern</td>
+<td>1,048,576</td>
+<td>it has more than 1,048,576 characters</td>
+</tr>
+<tr>
+<td>Groups, one inside another</td>
+<td>200</td>
+<td>its groups are nested more than 200 deep</td>
+</tr>
+<tr>
+<td>Capturing groups</td>
+<td>32,768</td>
+<td>it has more than 32,768 capturing groups</td>
+</tr>
+<tr>
+<td>Ranges of characters in its classes</td>
+<td>524,288</td>
+<td>its classes hold more than 524,288 ranges of characters</td>
+</tr>
+<tr>
+<td>Characters of the translation</td>
+<td>1,048,576</td>
+<td>what is written for java.util.regex to run it is more than 1,048,576 characters</td>
+</tr>
+<tr>
+<td>Ways through one part of the pattern</td>
+<td>8,192</td>
+<td>it is written once for each way through the groups its backreferences read, and one part of it has more than 8,192 ways</td>
+</tr>
+<tr>
+<td>Characters written on the way to the translation</td>
+<td>16,777,216</td>
+<td>writing it for java.util.regex takes more than 16,777,216 characters of text</td>
+</tr>
+<tr>
+<td>Copies of the body of a repetition</td>
+<td>200</td>
+<td>it needs more than 200 copies of the body of a repetition</td>
+</tr>
+<tr>
+<td>Groups times parts, for a pattern written by its ways</td>
+<td>268,435,456</td>
+<td>the number of its groups times the number of its parts is more than 268,435,456</td>
+</tr>
+<tr>
+<td>What <code>java.util.regex</code> keeps for it, as the library counts</td>
+<td>8,388,608 bytes</td>
+<td>java.util.regex would keep more than 8,388,608 bytes for it, as the library counts them</td>
+</tr>
+<tr>
+<td>What <code>java.util.regex</code> compiles</td>
+<td>the stack of the thread</td>
+<td>java.util.regex needs more of the thread's stack to compile it than there is</td>
+</tr>
+</tbody>
+</table>
+<p>The first four are read off the pattern. The others are about what the library writes for <code>java.util.regex</code>:</p>
+<ul>
+<li>A pattern with a backreference that <code>java.util.regex</code> would read wrongly is written once for each way through
+the choices that decide what the groups it reads hold. Thirteen groups that may each be set or not, all of them
+read, are 8,192 ways: <code>(?:(a)?(b)?...(m)?\1\2...\13)*</code> is written, in 499,547 characters. Fourteen are refused.</li>
+<li>A repetition that must run two or more times, over a body that matches the empty string in some places only and
+has more than one way to match, is written with a copy of the body for each iteration: <code>(^|x){200}</code> is written
+and <code>(^|x){201}</code> is refused. So is a lookahead whose group is read after it, over a counted repetition whose body
+has a group that can be empty: <code>(?=((?:a|(?:)){0,200}?)a)\1a$</code> is written and a count of 201 is refused.</li>
+<li>The limit on the translation counts the same length on every JDK. Two things are written with what the engine
+of the JVM knows, and are shorter on a later JDK: the comparison of a case-insensitive backreference, and the
+class of a property the engine has a class for, with what corrects it. The limits are applied to the translation
+for Java 17, which is the longest, and the pattern is then translated for the engine that runs it. So a pattern
+is refused on every JDK or on none. <code>\p{L}</code> counts 3,103 characters, and is 3,079 on Java 17, 1,472 on Java 21
+and 771 on Java 25: 300 of them in one pattern are accepted and 400 are refused.</li>
+<li><code>java.util.regex</code> keeps 5 bytes for a character of literal text, and much more for the other things a
+translation is written with: 320 bytes for a class of one Latin-1 character, which is eight characters of
+translation, and 66 for an optional character, which is two. So the limit on the length of a translation did not
+bound what a compiled pattern keeps: 131,070 classes of one character, in a pattern of 393,226 characters, held
+42 MB. The library counts what the engine keeps for a translation: a byte for each character, 36 bytes and 4 a
+character for a run of literal text, 48 for a group, 72 for a lookahead, 104 for a lookbehind, 84 for the first
+alternative after another and 12 for each one after, 72 for a repetition of a group and 32 for any other, 16 for
+an anchor, 24 for a backreference, and for a class 8, 48 for each range, 40 for each character beyond Latin-1 that
+stands by itself, and 312 when a Latin-1 character does, for the table of 256 bytes the engine keeps then. A
+pattern counted over 8,388,608 bytes is refused. Over 60 shapes of translation on Java 17, 21 and 25, and the
+largest translations of the test data, what a compiled translation held was never more than 1% over its count,
+with compressed object pointers. <code>[a]</code> 25,572 times is accepted and holds 8.2 MB, and no pattern the limits accept
+was found to hold more than 8.4 MB, where the most was 42 MB. A translation of 1,048,576 characters of literal text
+is counted 5.2 MB. Like the limit on the translation, this one is applied to the translation for Java 17, so a
+pattern is refused on every JDK or on none: <code>^(?i:(.)\1)$</code> with the group and its reference 50 times is accepted
+and 60 times is refused.</li>
+<li>The compiler of <code>java.util.regex</code> recurses along a pattern. On a stack of 1 MB it compiled 4,096 classes in a
+row and not 16,384, which are refused as too large. This limit is the one that depends on where the library is
+called: the stack size of the thread, and how deep the caller already is.</li>
+</ul>
+<p>A pattern of a few hundred characters meets a limit only where what is written for it multiplies. Of the 98,839
+patterns of the <a href="https://github.com/corvus-dotnet/ecma262-regex-test-data">ECMA-262 regular expression test data</a>,
+four are over a limit, the same ones on Java 17, 21 and 25: two would be written in more than 1,048,576
+characters and two take more than 16,777,216 on the way. Each has a lookahead with several repetitions whose groups
+are read after it, inside a repetition.</p>
+<p>The translator keeps one more reason, &quot;a backreference to a group of a lookaround, in a repetition that can go back
+to before the backreference&quot;, for a reference it could not give a run of the lookaround of its own. No pattern is
+known that it refuses: none of 215,803 generated patterns does.</p>
+<p><strong>What the limits were measured against.</strong> A probe of 287 adversarial cases, each a pattern of at most
+1,000 characters against a string of at most 100,000 (and eight larger shapes), run each in a JVM of its own: nested
+repetitions of what can match nothing, backreferences inside nested loops, counts inside counts, deep nesting, long
+alternations, lookbehinds over a long string, case-insensitive backreferences to wide groups, large property
+classes, choices that read no character, and repetitions that recurse. Before the limits, with a heap of 1 GB,
+93 of them had not answered after 20 seconds, 64 threw <code>StackOverflowError</code>, and one took
+the whole heap while the schema was compiled. With the limits, on Java 21, with a heap of 256 MB, on a machine with a
+load of 5 to 18 from other work:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Compiled</th>
+<th>Interpreter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cases that end in an answer</td>
+<td>134</td>
+<td>134</td>
+</tr>
+<tr>
+<td>Cases that end in <code>PatternMatchLimitException</code></td>
+<td>132</td>
+<td>132</td>
+</tr>
+<tr>
+<td>Cases refused as too large when the schema is compiled</td>
+<td>19</td>
+<td>19</td>
+</tr>
+<tr>
+<td>Cases refused for another reason (not valid, or the lookbehind exception)</td>
+<td>2</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Longest translation of a pattern, and compilation by <code>java.util.regex</code></td>
+<td>464 ms, 27 ms</td>
+<td>501 ms, 37 ms</td>
+</tr>
+<tr>
+<td>Longest match, which is the limit and what it overran by</td>
+<td>1,046 ms</td>
+<td>1,043 ms</td>
+</tr>
+<tr>
+<td>Most memory the process held</td>
+<td>266 MB</td>
+<td>263 MB</td>
+</tr>
+</tbody>
+</table>
+<p>No case ran longer, threw anything else, or ran out of memory.</p>
+<p><strong>The formats.</strong> The text a <code>format</code> is asserted on comes from outside as well. No format is checked by a
+regular expression engine. Each is read once from left to right by a reader of its own, in time that grows with
+the length of the text and with nothing kept on the stack for it. So no format is under the limit on a match, and
+none needs to be.</p>
+<ul>
+<li><code>date</code>, <code>time</code>, <code>date-time</code>, <code>uuid</code>, <code>ipv4</code>, <code>ipv6</code> and <code>hostname</code> read a bounded number of characters, or stop at
+the first that does not fit.</li>
+<li><code>duration</code>, <code>uri</code>, <code>uri-reference</code>, <code>iri</code>, <code>iri-reference</code>, <code>uri-template</code>, <code>json-pointer</code>,
+<code>relative-json-pointer</code>, and the local part of <code>email</code> and <code>idn-email</code>, are read by the grammar of their RFC.
+Until 0.1.3 they were regular expressions run by <code>java.util.regex</code>, which matches a repetition of alternatives by
+recursion: a text of some thousands of characters threw <code>StackOverflowError</code> from the validator.</li>
+<li><code>idn-hostname</code>, and the domain of <code>idn-email</code>, stop at a label of more than 63 code points and at the 128th
+label, which no valid name has. Decoding and encoding a label takes time that grows with the square of its
+length, which is 63 at most.</li>
+<li><code>regex</code> reads the text with the grammar of the <code>u</code> flag and compiles nothing. Group names are kept in a hash
+table, with a hash that is seeded for each evaluator, and the alternatives that hold a named group in a tree.
+Groups nested more than 200 deep are answered as not a regular expression.</li>
+</ul>
+<p>Measured with 544 texts written to be costly, of 100,000 and of 1,000,000 characters, each in a process of its
+own: long runs of the characters each format repeats, texts that fail at their last character, and deep nesting.
+Every one is answered. The longest check of a text of 1,000,000 characters took 25 ms (<code>regex</code>, for 124,000 groups
+of one name in alternatives nested 150 deep), and the longest for any other format 13 ms, on a machine with a load
+of 2. Before, 184 of the 496 of them that were tried threw <code>StackOverflowError</code>, and 4 had not answered after 60
+seconds.</p>
+<p><strong>The cache of compiled patterns.</strong> A pattern is immutable, so schemas with the same pattern share what was
+compiled for it, through a cache of the process. A schema may come from outside, so the cache is bounded. It holds
+1,024 patterns at most, counted as 64 MiB at most. Over either bound the patterns compiled first go, oldest first. A
+pattern counted as more than 2 MiB is not kept in it. These are the bounds of the Go module and the Rust crate. A
+validator holds the patterns of its own schema, so a pattern that has left the cache is still matched, and is
+compiled again only for a schema compiled later. The cache is read when a schema is compiled and never when an
+instance is validated.</p>
+<p>A pattern is counted as an estimate of what it holds that is not below it: 512 bytes, 2 for each character of its
+source, and 130 for each character of its translation. <code>java.util.regex</code> keeps a class of Latin-1 characters as a
+table of 256 bytes however short the class is written, which the 130 allows for. Of 59 shapes of pattern compiled on
+Java 17, 21 and 25, none held more than a third of what it was counted as. So a pattern whose translation is over
+16,131 characters is not kept in the cache, and 64 MiB counted is about 20 MB on the heap or less.</p>
+<p>An evaluator keeps a matcher of <code>java.util.regex</code> for each pattern of its schema that the engine runs, at a place
+the compiler of the schema gives the pattern. So the array of matchers of an evaluator is as long as its own schema
+has such patterns, and none for a schema whose patterns the library matches by itself.</p>
+<p>A process that compiled 60,000 schemas one after another on one thread, each with two patterns of its own, validated
+with each and dropped it, ran in a heap of 96 MB. At each tenth of the way the heap in use after a collection was
+between 3 and 7 MB with compiled code and between 6 and 10 MB with the interpreter. Before the cache was bounded it
+was 91 MB after 42,000 schemas with compiled code and 81 MB after 30,000 with the interpreter, and both ran out of
+heap before the next tenth.</p>
+<p><strong>What is not bounded.</strong></p>
+<ul>
+<li><strong>The stack.</strong> <code>java.util.regex</code> recurses to compile a pattern and to match it, and has no limit of depth but the
+stack of the thread. The library does not make that impossible. It makes the outcome one of its two errors:
+<code>PatternTooLargeException</code> when the schema is compiled, <code>PatternMatchLimitException</code> when an instance is
+validated. The <code>StackOverflowError</code> of a match is caught at the one place the library calls the engine to match,
+where the frames that are unwound are the engine's own and hold no lock and no state but the matcher's, which the
+next match resets. It is thrown as <code>PatternMatchLimitException</code> with <code>isStackLimit()</code> true, and never as an
+answer. How long a string a recursing pattern takes depends on the stack size of the thread (<code>-Xss</code>, or the size
+given to the <code>Thread</code>).</li>
+<li><strong>The memory of a match.</strong> The limit bounds the time of a match and not what it keeps. <code>java.util.regex</code> keeps
+its state on the stack, and for some repetitions the places they failed at, one number for each place of the
+string. In the probe no process held more than the figure above.</li>
+<li><strong>What a compiled pattern keeps with object pointers that are not compressed.</strong> The limit on what
+<code>java.util.regex</code> keeps for a pattern counts what it was measured to keep with compressed object pointers, which a
+JVM uses for a heap under 32 GB. With a larger heap an object takes more, and a pattern at the limit keeps more
+than the 8 MB it is counted as. The cache of the process is bounded (see above), and a validator keeps the
+patterns of its own schema for as long as it lives.</li>
+<li><strong>The start of a match.</strong> The clock is first read after the first 4,096 reads (fewer for a long translation),
+and the limit runs from there.</li>
+</ul>
+<p><strong>Slow patterns.</strong> <code>java.util.regex</code> matches by backtracking, and the translation finds some places by search, so
+a pattern that is deliberately hard can take a second where V8 answers in milliseconds. Of the 98,839 patterns of the
+test data, six go over the limit of 1 second for some of their texts, on every JDK and in both modes.
+Each nests repetitions whose bodies can match nothing around groups that are read, or holds a lookbehind that is
+searched for, and each gave V8's answers when it was run with no limit:</p>
+<ul>
+<li><code>^(?=((?:(?:(|a)(?:(?:(?:(a|)){1,3}?(?:.?)??))*?(?:.?)+))*[ax]))\1$</code> (<code>engine-faults</code>)</li>
+<li><code>((?!\Bx??|)-??|-(?:a|(?:a*|[ax]){2,}?){2}|(.(?&lt;!a)|\B|($){3,}(\B|(?!$)){2,}?){4,}a*?){4}x</code> (<code>empty-loops</code>)</li>
+<li><code>^((?&lt;n0&gt;\k&lt;n0&gt;?|(?:\1?(|a)\k&lt;n0&gt;|()(x)*){0,2}){1,2}?((?:a){0,0}?^x{1,2})?|(a|)){1,}?\4\3-$</code> (<code>backreferences</code>)</li>
+<li><code>^S|^((?:(?!.[\w\u017f\u212a\u0130]|\u{10400})(..ǆ)*?(?&lt;n0&gt;\2?.|-\k&lt;n0&gt;+\u1fd3)??)*)+(?:\u01c5.)+?$</code> (<code>case-folding</code>)</li>
+<li><code>^(?:((?!|-$)|(?=).|(?&lt;=[^a])){2}){0}(?:\1|(?:(?&lt;!^)(?:[^a]*\b|[^a]){2,3}|[^a]){3,4}(?:(|)|)*){3}a$</code> (<code>empty-loops</code>)</li>
+<li><code>^(x){0}\1(?&lt;n0&gt;(\3{2}){0,2}\2(?:(?!$)(\k&lt;n0&gt;\1)?){3,}|(?:(?&lt;n1&gt;(?&lt;=x)[^a])|(?&lt;n1&gt;\6+?)){2,}(?:(?&lt;n2&gt;\2(?:(?&lt;n3&gt;a(x)*)|(?&lt;n3&gt;\7?a)){3,}?\3{2})|(?&lt;n2&gt;[^a]-))+|(?:(?:x){2,4}|\11*){1,3}\11{2}x){3,}?x$</code> (<code>backreferences</code>)</li>
+</ul>
+<p>One more went over the limit in some of the four runs and not in others, on a busy machine, as a time
+limit will have it. Earlier versions of this page listed ten slow patterns. One of them, which is in two of the
+files, is now fast, and so is <code>^(?:(?:a|)*?x)*?$</code>, which read a string of 41 characters nine million times: a
+repetition that can run no times is written without the empty alternatives of its body, which ECMA-262 never takes
+there. Another of the ten is now over a limit of size.</p>
+<h2 id="performance">Performance</h2>
+<p>Measured with <a href="https://github.com/sourcemeta-research/jsonschema-benchmark">jsonschema-benchmark</a>'s 37 corpora, each
+implementation in its own container pinned to the same 8 CPUs, the median of 3 runs. Every harness warms up for 2
+seconds (at least 100 passes) and reports its last warm-up pass, so each runtime is measured after its JIT has
+settled. Figures are the geometric mean of Java's time over the other's (below 1 means Java is faster), and how many
+corpora Java is faster on.</p>
+<table>
+<thead>
+<tr>
+<th>Java (JDK 25) over</th>
+<th>Warm validation</th>
+<th>Parse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/sourcemeta/blaze">Blaze</a></td>
+<td>0.42 (35 of 37)</td>
+<td>2.7 (5 of 37)</td>
+</tr>
+<tr>
+<td>Corvus Rust</td>
+<td>0.76 (32 of 37)</td>
+<td>7.7 (0 of 37)</td>
+</tr>
+</tbody>
+</table>
+<p>Against Corvus .NET 5.7.6 the same protocol was run with each engine as a process on the host (JDK 25 with an AOT
+cache, .NET 10 compiled ReadyToRun, both pinned to the same 12 CPUs, the median of 5 runs).</p>
+<table>
+<thead>
+<tr>
+<th>Java (JDK 25) over</th>
+<th>Warm validation</th>
+<th>Parse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Corvus .NET, interpreting the schema</td>
+<td>0.57 (33 of 37)</td>
+<td>1.3 (5 of 37)</td>
+</tr>
+<tr>
+<td>Corvus .NET, with <a href="/Corvus.JsonSchema/docs/runtime-evaluator.html#runtime-code-generation">runtime code generation</a></td>
+<td>1.13 (15 of 37)</td>
+<td>1.3 (6 of 37)</td>
+</tr>
+</tbody>
+</table>
+<p>Once warm, validation is faster than Blaze, the Rust crate and the .NET interpreter on most corpora, and a little
+slower than the code .NET generates. Start-up is the JVM's weak point: compiling a schema takes tens of milliseconds and the
+first validation runs before the JIT has compiled the generated code, so a process that validates a few documents and
+exits is better served by a native implementation.</p>
+<h2 id="links">Links</h2>
+<ul>
+<li>Package: <a href="https://central.sonatype.com/artifact/io.github.corvus-dotnet/corvus-json-schema">Maven Central</a></li>
+<li>Source and README: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-java/corvus-json-schema">src-java/corvus-json-schema</a></li>
+<li>The other languages: see <a href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/docs/other-languages.html">Other languages</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

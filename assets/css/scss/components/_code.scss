@@ -1,0 +1,174 @@
+// ==========================================================================
+// Code — Block & inline code, syntax highlighting
+// ==========================================================================
+
+// ---- Inline code ----
+
+code,
+kbd,
+samp {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.875em;
+}
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  background: var(--color-bg-inline-code);
+  color: var(--color-brand);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+// ---- Code blocks ----
+
+pre {
+  margin: 0 0 var(--space-md);
+  padding: var(--space-md);
+  overflow-x: auto;
+  background: var(--color-bg-code);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  line-height: var(--line-height-regular);
+  -webkit-overflow-scrolling: touch;
+
+  code {
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--syntax-plain);
+    font-size: var(--font-size-sm);
+  }
+}
+
+// ---- Code block wrapper (copy button support) ----
+
+.code-block {
+  position: relative;
+
+  &__language {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    font-size: 0.75rem;
+    color: var(--color-gray-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    pointer-events: none;
+  }
+
+  // Copy button — always visible, top-right outside the pre
+  &__copy {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem;
+    background: var(--color-bg-code);
+    border: 1px solid var(--color-border);
+    border-radius: 0 var(--radius-md) 0 var(--radius-sm);
+    color: var(--color-gray-dark);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity var(--transition-fast), color var(--transition-fast);
+    z-index: 1;
+
+    &:hover {
+      opacity: 1;
+      color: var(--color-white);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-brand);
+      outline-offset: -2px;
+    }
+
+    svg {
+      display: block;
+    }
+  }
+
+  pre {
+    // Remove top-right radius so button nestles against the corner
+    border-top-right-radius: var(--radius-md);
+  }
+}
+
+// ---- Syntax highlighting tokens (Tomorrow Night–inspired) ----
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-deletion {
+  color: var(--syntax-keyword);
+}
+
+.hljs-string,
+.hljs-addition {
+  color: var(--syntax-string);
+}
+
+.hljs-number,
+.hljs-literal {
+  color: var(--syntax-number);
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-title.function_ {
+  color: var(--syntax-function);
+}
+
+.hljs-type,
+.hljs-built_in,
+.hljs-title.class_ {
+  color: var(--syntax-type);
+}
+
+.hljs-attr,
+.hljs-attribute {
+  color: var(--syntax-attr);
+}
+
+.hljs-name,
+.hljs-tag {
+  color: var(--syntax-tag);
+}
+
+.hljs-operator,
+.hljs-punctuation {
+  color: var(--syntax-operator);
+}
+
+.hljs-variable,
+.hljs-template-variable {
+  color: var(--syntax-tag);
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--syntax-number);
+}
+
+.hljs-meta {
+  color: var(--syntax-function);
+}
+
+.hljs-selector-class,
+.hljs-selector-id {
+  color: var(--syntax-type);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: var(--font-weight-medium);
+}
