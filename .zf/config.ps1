@@ -254,6 +254,13 @@ task CheckGeneratedCodeAnalyzerConfig {
     exec { & pwsh -File (Join-Path $here "update-generated-code-analyzer-config.ps1") -Check }
 }
 task PostBuild CheckGeneratedCodeAnalyzerConfig, GenerateAotProfile, BuildWebSiteLocal
+# Synopsis: Restore the solution before packaging. In CI the Package job does not build, so nothing restores on its
+# runner, and 'dotnet pack --no-build --no-restore' still resolves each project's framework references. Where the
+# runner's .NET install lacks a targeting pack that the Compile job's runner had, pack fails with NETSDK1127 (as it did
+# for the net8.0, net9.0 and net10.0 projects on the ubuntu-24.04 image of 18 October 2026); the restore fetches the
+# missing packs. In a full build RestorePackages has already run, and it does not run twice.
+task PrePackage RestorePackages
+
 task PreTest {
     # Turn down logging when running Specs to suppress ReqnRoll Given/When/Then output
     $script:LogLevelBackup = $LogLevel
