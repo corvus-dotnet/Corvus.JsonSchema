@@ -359,6 +359,41 @@ fn options_apply() {
     assert_eq!(validate(&compile(date, Some(&asserting)).unwrap(), "\"nope\""), Ok(false));
 }
 
+#[test]
+fn the_edition_and_the_unicode_version_of_patterns_apply() {
+    // 2020-12 reads the grammar of ECMAScript 2020, which has no modifier groups; draft 7 reads today's.
+    let modifier = r#"{"$schema": "https://json-schema.org/draft/2020-12/schema", "pattern": "^(?i:a)$"}"#;
+    assert_eq!(compile(modifier, None).err().map(|e| e.0), Some(CJS_COMPILATION_FAILED));
+    let current = Options::new();
+    assert_eq!(unsafe { cjs_options_set_regex_edition(current.0, CJS_REGEX_EDITION_CURRENT) }, CJS_OK);
+    let v = compile(modifier, Some(&current)).unwrap();
+    assert_eq!(validate(&v, "\"A\""), Ok(true));
+    let draft7 = r#"{"$schema": "http://json-schema.org/draft-07/schema#", "pattern": "^(?i:a)$"}"#;
+    assert!(compile(draft7, None).is_ok());
+    let es2020 = Options::new();
+    assert_eq!(unsafe { cjs_options_set_regex_edition(es2020.0, CJS_REGEX_EDITION_ES2020) }, CJS_OK);
+    assert_eq!(compile(draft7, Some(&es2020)).err().map(|e| e.0), Some(CJS_COMPILATION_FAILED));
+    // Sidetic is a script from Unicode 17: a pattern that names it is a regular expression under 17, not under 13.
+    // (Under 2020-12 it is not one at all, since the tables of ECMAScript 2020 do not have it.)
+    let regex = r#"{"$schema": "http://json-schema.org/draft-07/schema#", "format": "regex"}"#;
+    let sidetic = r#""\\p{Script=Sidetic}""#;
+    for (version, valid) in
+        [(CJS_REGEX_UNICODE_DEFAULT, true), (CJS_REGEX_UNICODE_17, true), (CJS_REGEX_UNICODE_13, false)]
+    {
+        let options = Options::new();
+        unsafe {
+            assert_eq!(cjs_options_set_assert_format(options.0, CJS_TRUE), CJS_OK);
+            assert_eq!(cjs_options_set_regex_unicode_version(options.0, version), CJS_OK);
+        }
+        assert_eq!(validate(&compile(regex, Some(&options)).unwrap(), sidetic), Ok(valid), "Unicode {version}");
+    }
+    let options = Options::new();
+    unsafe {
+        assert_eq!(cjs_options_set_regex_edition(options.0, 2019), CJS_INVALID_ARGUMENT);
+        assert_eq!(cjs_options_set_regex_unicode_version(options.0, 16), CJS_INVALID_ARGUMENT);
+    }
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Callbacks
 

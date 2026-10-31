@@ -114,7 +114,7 @@ repository's submodule (or `JSON_SCHEMA_TEST_SUITE`).
 
 Apache-2.0
 
-The gem is built on the `corvus-json-schema` Rust crate, whose Unicode tables are derived from the Unicode Character
-Database, which is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice,
-and the one of the `regress` crate that the tables were first read from. The file is in the source gem and in every
-native gem, beside `LICENSE`.
+The gem is built on the `corvus-json-schema` Rust crate, which matches patterns with the `corvus-regex-ecma262` crate,
+whose Unicode tables are derived from the Unicode Character Database, which is under the Unicode License V3.
+[THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice, and the one of the `regress` crate, from whose
+tables those were written. The file is in the source gem and in every native gem, beside `LICENSE`.

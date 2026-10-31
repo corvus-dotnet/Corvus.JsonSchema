@@ -15,8 +15,8 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::{Arc, Mutex};
 
 use corvus::{
-    CompileOptions, Dialect, JsonDocument, JsonSchemaResultsCollector, ResultsLevel, SchemaCompilationErrorKind,
-    SchemaEvaluationError, Validator,
+    CompileOptions, Dialect, JsonDocument, JsonSchemaResultsCollector, RegexEdition, RegexUnicodeVersion, ResultsLevel,
+    SchemaCompilationErrorKind, SchemaEvaluationError, Validator,
 };
 use serde_json::Value;
 
@@ -62,6 +62,30 @@ pub const CJS_DRAFT7: cjs_dialect = 7;
 pub const CJS_DRAFT201909: cjs_dialect = 2019;
 pub const CJS_DRAFT202012: cjs_dialect = 2020;
 
+/// The edition of ECMA-262 whose grammar `pattern`, `patternProperties` and the `regex` format are read with.
+pub type cjs_regex_edition = u32;
+/// The dialect's: ECMAScript 2020 for 2019-09 and 2020-12, which name it, and today's for the drafts before them (the
+/// default).
+pub const CJS_REGEX_EDITION_DIALECT: cjs_regex_edition = 0;
+/// Today's grammar, ECMAScript 2025, for every dialect.
+pub const CJS_REGEX_EDITION_CURRENT: cjs_regex_edition = 1;
+/// The grammar of ECMAScript 2020 (ECMA-262, 11th edition), for every dialect.
+pub const CJS_REGEX_EDITION_ES2020: cjs_regex_edition = 2020;
+
+/// The version of Unicode patterns are read with: the members of each `\p{...}`, the characters of a group name and
+/// the case folding of the `i` flag.
+pub type cjs_regex_unicode_version = u32;
+/// The version of the V8 the answers are held to, Unicode 17 today (the default).
+pub const CJS_REGEX_UNICODE_DEFAULT: cjs_regex_unicode_version = 0;
+/// The latest version the library carries, Unicode 18 today.
+pub const CJS_REGEX_UNICODE_LATEST: cjs_regex_unicode_version = 1;
+/// Unicode 13.0, the version of the year of ECMAScript 2020.
+pub const CJS_REGEX_UNICODE_13: cjs_regex_unicode_version = 13;
+/// Unicode 17.0.
+pub const CJS_REGEX_UNICODE_17: cjs_regex_unicode_version = 17;
+/// Unicode 18.0.
+pub const CJS_REGEX_UNICODE_18: cjs_regex_unicode_version = 18;
+
 /// An option left to its default, or set on or off.
 pub type cjs_tristate = u32;
 pub const CJS_DEFAULT: cjs_tristate = 0;
@@ -80,7 +104,7 @@ pub const CJS_VERBOSE: cjs_results_level = 2;
 /// The header's version: compare with `cjs_version()`, the library's.
 pub const CJS_VERSION_MAJOR: u32 = 0;
 pub const CJS_VERSION_MINOR: u32 = 1;
-pub const CJS_VERSION_PATCH: u32 = 4;
+pub const CJS_VERSION_PATCH: u32 = 5;
 
 /// A UTF-8 string the library owns: `len` bytes from `ptr`, not NUL-terminated. Each function returning one says how
 /// long it stays valid.
@@ -507,6 +531,49 @@ pub unsafe extern "C" fn cjs_options_set_pattern_match_limit_ms(
     unsafe {
         with_options(options, |o| {
             o.inner.pattern_match_limit = (milliseconds > 0).then(|| std::time::Duration::from_millis(milliseconds));
+            Ok(())
+        })
+    }
+}
+
+/// The edition of ECMA-262 whose grammar patterns are read with (`CJS_REGEX_EDITION_DIALECT`, the default,
+/// `CJS_REGEX_EDITION_CURRENT` or `CJS_REGEX_EDITION_ES2020`). Under ECMAScript 2020 a pattern that uses what later
+/// editions added, such as a modifier group `(?i:...)`, is not valid, and a schema that holds one does not compile.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn cjs_options_set_regex_edition(
+    options: *mut cjs_options,
+    edition: cjs_regex_edition,
+) -> cjs_status {
+    unsafe {
+        with_options(options, |o| {
+            o.inner.regex_edition = match edition {
+                CJS_REGEX_EDITION_DIALECT => None,
+                CJS_REGEX_EDITION_CURRENT => Some(RegexEdition::Current),
+                CJS_REGEX_EDITION_ES2020 => Some(RegexEdition::Es2020),
+                e => return Err(Failure::argument(format!("{e} is not a cjs_regex_edition"))),
+            };
+            Ok(())
+        })
+    }
+}
+
+/// The version of Unicode patterns are read with (`CJS_REGEX_UNICODE_DEFAULT`, the default,
+/// `CJS_REGEX_UNICODE_LATEST`, `CJS_REGEX_UNICODE_13`, `CJS_REGEX_UNICODE_17` or `CJS_REGEX_UNICODE_18`).
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn cjs_options_set_regex_unicode_version(
+    options: *mut cjs_options,
+    version: cjs_regex_unicode_version,
+) -> cjs_status {
+    unsafe {
+        with_options(options, |o| {
+            o.inner.regex_unicode_version = match version {
+                CJS_REGEX_UNICODE_DEFAULT => RegexUnicodeVersion::Default,
+                CJS_REGEX_UNICODE_LATEST => RegexUnicodeVersion::Latest,
+                CJS_REGEX_UNICODE_13 => RegexUnicodeVersion::V13,
+                CJS_REGEX_UNICODE_17 => RegexUnicodeVersion::V17,
+                CJS_REGEX_UNICODE_18 => RegexUnicodeVersion::V18,
+                v => return Err(Failure::argument(format!("{v} is not a cjs_regex_unicode_version"))),
+            };
             Ok(())
         })
     }

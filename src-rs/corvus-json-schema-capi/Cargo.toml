@@ -1,6 +1,6 @@
 [package]
 name = "corvus-json-schema-capi"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
 rust-version = "1.89"
 description = "The C library (and its C++ wrapper) over the corvus-json-schema crate."

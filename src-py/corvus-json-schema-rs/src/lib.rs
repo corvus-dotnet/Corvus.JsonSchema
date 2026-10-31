@@ -14,8 +14,8 @@ use std::time::Duration;
 
 use corvus_json_schema::{
     ArrayView, CompileOptions, Dialect, DocumentResolver, FormatValidator, Instance, JsonDocument, JsonParseError,
-    JsonSchemaResultsCollector, Kind, ObjectView, ResultsLevel, SchemaCompilationErrorKind, SchemaResult, Validator,
-    View,
+    JsonSchemaResultsCollector, Kind, ObjectView, RegexEdition, RegexUnicodeVersion, ResultsLevel,
+    SchemaCompilationErrorKind, SchemaResult, Validator, View,
 };
 use pyo3::create_exception;
 use pyo3::exceptions::{PyException, PyTypeError, PyValueError};
@@ -576,6 +576,8 @@ impl PyValidator {
     entry_point = None,
     max_depth = 128,
     pattern_match_limit = Some(1.0),
+    regex_edition = "dialect",
+    regex_unicode_version = "default",
 ))]
 #[allow(clippy::too_many_arguments)]
 fn compile(
@@ -590,6 +592,8 @@ fn compile(
     entry_point: Option<String>,
     max_depth: u32,
     pattern_match_limit: Option<f64>,
+    regex_edition: &str,
+    regex_unicode_version: &str,
 ) -> PyResult<PyValidator> {
     let value = to_value(schema, 0)?;
     // The limit of a match in seconds. None, zero or less turns it off.
@@ -611,6 +615,28 @@ fn compile(
         entry_point,
         max_depth,
         pattern_match_limit,
+        regex_edition: match regex_edition {
+            "dialect" => None,
+            "current" => Some(RegexEdition::Current),
+            "es2020" => Some(RegexEdition::Es2020),
+            e => {
+                return Err(PyValueError::new_err(format!(
+                    "regex_edition is \"dialect\", \"current\" or \"es2020\", not {e:?}."
+                )));
+            }
+        },
+        regex_unicode_version: match regex_unicode_version {
+            "default" => RegexUnicodeVersion::Default,
+            "latest" => RegexUnicodeVersion::Latest,
+            "13" => RegexUnicodeVersion::V13,
+            "17" => RegexUnicodeVersion::V17,
+            "18" => RegexUnicodeVersion::V18,
+            v => {
+                return Err(PyValueError::new_err(format!(
+                    "regex_unicode_version is \"default\", \"latest\", \"13\", \"17\" or \"18\", not {v:?}."
+                )));
+            }
+        },
         ..CompileOptions::default()
     };
     for (name, f) in formats.unwrap_or_default() {

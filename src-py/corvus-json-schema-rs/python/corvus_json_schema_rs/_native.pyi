@@ -51,5 +51,7 @@ def compile(
     entry_point: str | None = None,
     max_depth: int = 128,
     pattern_match_limit: float | None = 1.0,
+    regex_edition: str = "dialect",
+    regex_unicode_version: str = "default",
 ) -> Validator: ...
 def schema_location_fragment(schema_location: str) -> str: ...

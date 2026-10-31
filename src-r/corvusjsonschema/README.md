@@ -174,8 +174,8 @@ The tests are plain R scripts in `tests/`. `test_suite.R` runs the JSON-Schema-T
 
 Apache-2.0.
 
-The package is built on version 0.1.7 of the `corvus-json-schema` Rust crate, which holds tables derived from the
-Unicode Character Database, which is under the Unicode License V3. [inst/THIRD-PARTY-NOTICES.txt](inst/THIRD-PARTY-NOTICES.txt)
-has that notice, and the one of `regress`, from whose tables they were first written. R
-installs the file with the package, so a binary package has it:
+The package is built on version 0.2.0 of the `corvus-json-schema` Rust crate, which matches patterns with the
+`corvus-regex-ecma262` crate, whose Unicode tables are derived from the Unicode Character Database, which is under the
+Unicode License V3. [inst/THIRD-PARTY-NOTICES.txt](inst/THIRD-PARTY-NOTICES.txt) has that notice, and the one of the
+`regress` crate, from whose tables those were written. R installs the file with the package, so a binary package has it:
 `system.file("THIRD-PARTY-NOTICES.txt", package = "corvusjsonschema")`.

@@ -60,6 +60,13 @@ int main() {
                  "x.json"));
     CHECK(throws(CJS_INVALID_ARGUMENT, [] { cjs::options().default_dialect(static_cast<cjs::dialect>(99)); }));
 
+    // 2020-12 reads patterns in the grammar of ECMAScript 2020, which has no modifier groups; today's grammar does.
+    const char* modifier = R"({"$schema": "https://json-schema.org/draft/2020-12/schema", "pattern": "^(?i:a)$"})";
+    CHECK(throws(CJS_COMPILATION_FAILED, [modifier] { cjs::validator::compile(modifier); }));
+    CHECK(cjs::validator::compile(modifier, cjs::options().regex_edition(cjs::regex_edition::current)).is_valid("\"A\""));
+    CHECK(throws(CJS_INVALID_ARGUMENT,
+                 [] { cjs::options().regex_unicode_version(static_cast<cjs::regex_unicode_version>(16)); }));
+
     // Options: a format (one that throws rejects), and a resolver (one that throws fails the compilation).
     auto calls = std::make_shared<std::atomic<int>>(0);
     cjs::options options;

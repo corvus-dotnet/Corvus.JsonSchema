@@ -60,6 +60,8 @@ it: `validate.is_valid_json('{"id": 3}')`.
 | `entry_point` | A subschema to validate against, such as `#/$defs/item`. |
 | `max_depth` | The deepest the evaluator recurses in place (default 128); beyond it, `SchemaEvaluationDepthError`. |
 | `pattern_match_limit` | The seconds one match of a regular expression against one string may take, by the clock (default `1.0`). Beyond it, `PatternMatchLimitError`. `None` or `0` turns the limits of a match off. |
+| `regex_edition` | `corvus-json-schema-rs` only. The edition of ECMA-262 patterns are read with: `RegexEdition.DIALECT` (the default: ECMAScript 2020 for 2019-09 and 2020-12, which name it, today's for the drafts before them), `CURRENT` or `ES2020`. Under ECMAScript 2020 a modifier group such as `(?i:...)` is not valid. |
+| `regex_unicode_version` | `corvus-json-schema-rs` only. The version of Unicode patterns are read with: `RegexUnicodeVersion.DEFAULT` (the version of the V8 the answers are held to, 17 today), `LATEST`, `V13`, `V17` or `V18`. |
 
 A reference that cannot be resolved, or an invalid pattern, raises `SchemaCompilationError` when the schema is
 compiled.
@@ -76,7 +78,7 @@ underneath:
 | Length of a pattern | 32,768 characters | 1,048,576 bytes |
 | Groups inside each other | 100 | 1,000 |
 | What the pattern comes to | 32,768 characters as it is written for Python's engines, and 4,096 copies of what a count of more than one term repeats in a pattern that the `regex` package runs | about 16,000 terms |
-| How the time of a match is counted | By the clock, for a pattern that the `regex` package runs: the error comes between nine tenths of the limit and about twice the limit. None for a pattern that is proved to match in time proportional to the text, which `re` runs. | By the clock, by the package's own engine, for every pattern, looked at every 4,096 steps |
+| How the time of a match is counted | By the clock, for a pattern that the `regex` package runs: the error comes between nine tenths of the limit and about twice the limit. None for a pattern that is proved to match in time proportional to the text, which `re` runs. | By the clock, by the engine, for every pattern it is given |
 | The memory of a match | A text of more than 1,048,576 characters is not matched once the first try at a match has been abandoned, and a pattern with groups that the engine keeps for every repetition takes fewer. A pattern that `re` runs has no such limit. | A match is abandoned when its backtracking stack reaches 1,048,576 entries (24 MB) |
 | The limit error | Has `pattern`, `limit` and `most_characters` | Has its message |
 | A limit error from `compile` | Never: compiling runs no match | When a pattern of `patternProperties` reaches the limit on a property name the schema declares |

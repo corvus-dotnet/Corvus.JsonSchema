@@ -310,3 +310,25 @@ def test_a_pattern_over_a_limit_of_size_is_not_an_invalid_pattern() -> None:
     with pytest.raises(cjs.SchemaCompilationError, match="^Invalid regular expression") as raised:
         cjs.compile({"pattern": "a**"})
     assert not isinstance(raised.value, cjs.PatternTooLargeError)
+
+
+def test_patterns_are_read_in_the_edition_and_unicode_version_asked_for() -> None:
+    # 2020-12 reads the grammar of ECMAScript 2020, which has no modifier groups; draft 7 reads today's.
+    modifier = {"$schema": "https://json-schema.org/draft/2020-12/schema", "pattern": "^(?i:a)$"}
+    with pytest.raises(cjs.SchemaCompilationError):
+        cjs.compile(modifier)
+    assert cjs.compile(modifier, regex_edition=cjs.RegexEdition.CURRENT).is_valid("A")
+    assert cjs.compile(modifier, cjs.CompileOptions(regex_edition=cjs.RegexEdition.CURRENT)).is_valid("A")
+    draft7 = {"$schema": "http://json-schema.org/draft-07/schema#", "pattern": "^(?i:a)$"}
+    assert cjs.compile(draft7).is_valid("A")
+    with pytest.raises(cjs.SchemaCompilationError):
+        cjs.compile(draft7, regex_edition="es2020")
+    # Sidetic is a script from Unicode 17: naming it is a regular expression under 17, not under 13.
+    regex = {"$schema": "http://json-schema.org/draft-07/schema#", "format": "regex"}
+    for version, valid in [("default", True), (cjs.RegexUnicodeVersion.V17, True), (cjs.RegexUnicodeVersion.V13, False)]:
+        v = cjs.compile(regex, assert_format=True, regex_unicode_version=version)
+        assert v.is_valid("\\p{Script=Sidetic}") is valid, version
+    with pytest.raises(ValueError, match="regex_edition"):
+        cjs.compile({}, regex_edition="es2019")
+    with pytest.raises(ValueError, match="regex_unicode_version"):
+        cjs.compile({}, regex_unicode_version="16")

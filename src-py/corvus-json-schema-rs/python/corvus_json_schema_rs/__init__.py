@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import asdict, dataclass, field
-from enum import IntEnum
+from enum import Enum, IntEnum
 from typing import Any
 
 from . import _native
@@ -45,6 +45,8 @@ __all__ = [
     "JsonSchemaResultsCollector",
     "PatternMatchLimitError",
     "PatternTooLargeError",
+    "RegexEdition",
+    "RegexUnicodeVersion",
     "ResultsLevel",
     "SchemaCompilationError",
     "SchemaEvaluationDepthError",
@@ -65,6 +67,30 @@ class Dialect(IntEnum):
     DRAFT7 = 2
     DRAFT201909 = 3
     DRAFT202012 = 4
+
+
+class RegexEdition(str, Enum):
+    """The edition of ECMA-262 whose grammar ``pattern``, ``patternProperties`` and the ``regex`` format are read with."""
+
+    DIALECT = "dialect"
+    """The dialect's: ECMAScript 2020 for 2019-09 and 2020-12, which name it, and today's for the drafts before them."""
+    CURRENT = "current"
+    """Today's grammar, for every dialect."""
+    ES2020 = "es2020"
+    """The grammar of ECMAScript 2020 (ECMA-262, 11th edition), for every dialect."""
+
+
+class RegexUnicodeVersion(str, Enum):
+    """The version of Unicode patterns are read with: the members of each ``\\p{...}``, the characters of a group name
+    and the case folding of the ``i`` flag."""
+
+    DEFAULT = "default"
+    """The version of the V8 the answers are held to, Unicode 17 today."""
+    LATEST = "latest"
+    """The latest version the engine carries, Unicode 18 today."""
+    V13 = "13"
+    V17 = "17"
+    V18 = "18"
 
 
 class ResultsLevel(IntEnum):
@@ -102,6 +128,11 @@ class CompileOptions:
     """The time one match of a ``pattern`` or ``patternProperties`` regular expression against one string may take,
     in seconds. A match that takes longer is abandoned and the validation raises ``PatternMatchLimitError``. ``None``
     or zero turns the limit off, for a caller who trusts both the schema and the instances."""
+    regex_edition: RegexEdition = RegexEdition.DIALECT
+    """The edition of ECMA-262 patterns are read with. Under ECMAScript 2020, the default for 2019-09 and 2020-12, a
+    pattern that uses what later editions added, such as a modifier group ``(?i:...)``, is not valid."""
+    regex_unicode_version: RegexUnicodeVersion = RegexUnicodeVersion.DEFAULT
+    """The version of Unicode patterns are read with."""
 
 
 class JsonSchemaResultsCollector(_native.JsonSchemaResultsCollector):
@@ -135,6 +166,9 @@ def compile(schema: Any, options: CompileOptions | None = None, **kwargs: Any) -
         fields["default_dialect"] = int(fields["default_dialect"])
     if "formats" in fields:
         fields["formats"] = dict(fields["formats"]) if fields["formats"] else None
+    for name in ("regex_edition", "regex_unicode_version"):
+        if name in fields:
+            fields[name] = str(fields[name].value if isinstance(fields[name], Enum) else fields[name])
     return _native.compile(schema, **fields)
 
 

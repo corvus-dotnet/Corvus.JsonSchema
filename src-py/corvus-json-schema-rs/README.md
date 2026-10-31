@@ -35,7 +35,9 @@ validate.is_valid_json('{"id": "3"}')  # False: JSON text, parsed in Rust
 
 `compile` takes the same options as the pure package (`default_dialect`, `assert_format`, `formats`,
 `resolve_document`, `base_uri`, `entry_point`, `max_depth` and the rest, as keywords or a `CompileOptions`), and
-one more, `pattern_match_limit` (below), and
+three more: `pattern_match_limit` (below), and `regex_edition` and `regex_unicode_version`, the edition of ECMA-262 and
+the version of Unicode patterns are read with (by default ECMAScript 2020 for 2019-09 and 2020-12, which name it,
+today's for the drafts before them, and Unicode 17). And
 `evaluate`, `JsonSchemaResultsCollector`, `ResultsLevel` and `collect_annotations` work as they do there. Custom
 formats and document resolvers are Python callables, called from Rust.
 
@@ -56,8 +58,8 @@ What differs from the pure package:
   - The limits of size are 1,048,576 bytes of pattern, 1,000 levels of groups and about 16,000 terms here. In the
     pure package they are 32,768 characters of pattern, 100 levels, 32,768 characters of the pattern as it is
     written for Python's engines, and 4,096 copies of what a count repeats.
-  - The time of a match is counted by the clock in both. Here the package's own engine runs every pattern and looks
-    at the clock every 4,096 steps. In the pure package a pattern that is proved to match in time proportional to
+  - The time of a match is counted by the clock in both. Here the engine runs every pattern it is given and looks at
+    the clock as it goes. In the pure package a pattern that is proved to match in time proportional to
     the text has no limit, and for any other the error comes between nine tenths of the limit and about twice the
     limit.
   - `format: regex` has one rule in both: a text over a limit of reading is not valid, and any other is valid or
@@ -95,7 +97,7 @@ The Rust toolchain is pinned in `../rust-toolchain.toml`. The tests are `tests/t
 
 Apache 2.0.
 
-The package is built on the `corvus-json-schema` Rust crate, whose Unicode tables are derived from the Unicode
-Character Database, which is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has
-that notice, and the one of the `regress` crate that the tables were first read from. The file is in the source
-distribution and in every wheel, beside `LICENSE`.
+The package is built on the `corvus-json-schema` Rust crate, which matches patterns with the `corvus-regex-ecma262`
+crate, whose Unicode tables are derived from the Unicode Character Database, which is under the Unicode License V3.
+[THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice, and the one of the `regress` crate, from whose
+tables those were written. The file is in the source distribution and in every wheel, beside `LICENSE`.
