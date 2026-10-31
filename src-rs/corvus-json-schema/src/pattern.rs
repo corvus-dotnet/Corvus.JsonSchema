@@ -474,15 +474,22 @@ pub(crate) fn compile(pattern: &str, grammar: Grammar) -> Result<Arc<Pattern>, P
     if let Some(p) = cache().get(pattern, grammar) {
         return Ok(p);
     }
-    // The limits of size come first: nothing below reads a pattern that is over one. Validity is ECMA-262's: a
-    // pattern the engine refuses is an error, whichever matcher would run it. A pattern is read with the u flag, and
-    // failing that with no flag, whose grammar (Annex B) many schemas need.
-    let (engine, unicode) = match grammar.build(pattern, true) {
-        Ok(engine) => (engine, true),
-        Err(corvus_regex_ecma262::Error::TooLarge(large)) => return Err(PatternError::TooLarge(large)),
-        Err(_) => (grammar.build(pattern, false)?, false),
+    // Validity is ECMA-262's: a pattern the engine refuses is an error, whichever matcher would run it. A pattern is
+    // read with the u flag, and failing that with no flag, whose grammar (Annex B) many schemas need. A pattern valid
+    // with the flag that a dedicated matcher takes is read and never built: building the engine's program and
+    // automata costs far more than reading. The engine is built only for the patterns it matches, and for those over
+    // a limit of size, which it refuses (the reading refuses them too, without saying why).
+    let matcher = match grammar.is_valid_unicode(pattern).then(|| choose(pattern, true, grammar)).flatten() {
+        Some(shape) => shape,
+        None => match grammar.build(pattern, true) {
+            Ok(engine) => Matcher::Engine(Box::new(engine)),
+            Err(corvus_regex_ecma262::Error::TooLarge(large)) => return Err(PatternError::TooLarge(large)),
+            Err(_) => {
+                let engine = grammar.build(pattern, false)?;
+                choose(pattern, false, grammar).unwrap_or_else(|| Matcher::Engine(Box::new(engine)))
+            }
+        },
     };
-    let matcher = choose(pattern, unicode, grammar).unwrap_or_else(|| Matcher::Engine(Box::new(engine)));
     // What the cache counts for the pattern (see `MAX_CACHED_BYTES`): its source, and for the engine an estimate of
     // its program and automata, which grow with the pattern.
     let mut retained = pattern.len() + 256;
