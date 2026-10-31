@@ -17,8 +17,9 @@ namespace Corvus.Text.Json.Validator.Tests;
 public class RegexMatchTimeoutTests
 {
     // On SlowText the pattern backtracks through every way to divide the run of "a" into "a" and "aa", some five
-    // thousand million of them, in a few megabytes.
-    private const string Schema = """{"type": "string", "pattern": "^(a|aa)+$"}""";
+    // thousand million of them, and for each tries the group again. The backreference keeps it from the memo of the
+    // places that failed, which makes a pattern without one linear in the text: ^(a|aa)+$ answers at once.
+    private const string Schema = """{"type": "string", "pattern": "^(a|aa)+\\1$"}""";
 
     private static readonly string SlowText = "\"" + new string('a', 48) + "#\"";
 

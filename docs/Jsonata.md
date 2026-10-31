@@ -20,7 +20,7 @@ The source generator and CLI tool produce optimized static C# that eliminates de
 
 > **Choosing between JSONata and JsonLogic:** JSONata is ideal for **querying, reshaping, and transforming** JSON data — path navigation, filtering, object construction, and string manipulation. If you need **declarative business rules** — branching logic, predicates, and simple calculations expressed as JSON — see [JsonLogic](JsonLogic.md) instead.
 
-**Requirements:** The runtime packages target `net9.0`, `net10.0`, `netstandard2.0`, and `netstandard2.1`. The source generator is an analyzer package and does not impose additional runtime requirements.
+**Requirements:** The runtime packages target `net10.0`, `netstandard2.0`, and `netstandard2.1`. The source generator is an analyzer package and does not impose additional runtime requirements.
 
 ## Conformance
 
@@ -814,7 +814,7 @@ The Corvus JSONata implementation is designed for high-throughput scenarios wher
 | Memory model | Pooled (`JsonWorkspace`, `ArrayPool`) | GC-allocated |
 | Zero-allocation hot path | Yes (with workspace) | No |
 | Conformance (official suite) | 1,665 / 1,665 (100%) | 1,370 passed, 287 skipped ([badge](https://github.com/mikhail-barg/jsonata.net.native)) |
-| .NET Framework support | net9.0+, netstandard2.0/2.1 | net6.0+ |
+| .NET Framework support | net10.0+, netstandard2.0/2.1 | net6.0+ |
 | Variable bindings | Supported | Supported |
 | Custom function bindings | `JsonataBinding.FromFunction()` (interpreted) | Via API |
 | Custom functions (code-gen) | Via `.jfn` files | N/A |

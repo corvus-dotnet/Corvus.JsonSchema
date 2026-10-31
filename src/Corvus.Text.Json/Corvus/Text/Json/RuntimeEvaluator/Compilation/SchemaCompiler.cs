@@ -2341,7 +2341,7 @@ internal sealed class SchemaCompiler
                     {
                         if (validation && value.ValueKind == JsonValueKind.String)
                         {
-                            node.Pattern = PatternMatcher.Create(value.GetString()!, this.options);
+                            node.Pattern = PatternMatcher.Create(value.GetString()!, this.options, dialect);
                             node.HasStringKeywords = true;
                         }
                     }
@@ -2723,7 +2723,7 @@ internal sealed class SchemaCompiler
                                 list.Add(new PatternPropertyEntry
                                 {
                                     Name = pn.ToArray(),
-                                    Matcher = PatternMatcher.Create(p.Name, this.options),
+                                    Matcher = PatternMatcher.Create(p.Name, this.options, dialect),
                                     Schema = this.Child(target, p.Value, Segment("patternProperties", pn)),
                                 });
                             }

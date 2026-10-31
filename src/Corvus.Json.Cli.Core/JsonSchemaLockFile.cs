@@ -55,6 +55,11 @@ public static class JsonSchemaLockFile
         ["buildParametersThreshold"] = new JsonInteger(32).AsAny,
         ["defaultAccessibility"] = new JsonString("Public").AsAny,
         ["useSchema"] = new JsonString("Draft202012").AsAny,
+        ["regexUnicodeVersion"] = new JsonString("Default").AsAny,
+
+        // regexEngine has no entry, deliberately: a folder generated before the option existed has .NET's regular
+        // expressions, so a run with the default (Ecma262) differs from it, and is told so rather than changing the
+        // generated types' fields silently. --force takes the new default; --regexEngine DotNet keeps what was there.
     };
 
     /// <summary>

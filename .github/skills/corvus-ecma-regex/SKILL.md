@@ -13,9 +13,20 @@ description: >
 
 # ECMAScript Regex Translation
 
-JSON Schema's `pattern` and `patternProperties` are ECMA-262 regular expressions. The translator turns one into a
-.NET pattern that gives the same answer, or says why the pattern is not valid. Full reference:
-`docs/EcmaRegexTranslator.md` (overview) and `docs/EcmaRegexTranslations.md` (every translation).
+JSON Schema's `pattern` and `patternProperties` are ECMA-262 regular expressions. Corvus.Regex.Ecma262 matches them:
+the runtime evaluator constructs the library's `Regex`, and generated code (the default, `--regexEngine Ecma262`)
+carries the library's compiled matchers in `CorvusJsonSchemaRegularExpressions`. Which patterns are valid is the
+library's answer (`RegexEmitter.TryValidate` from `Corvus.Regex.Ecma262.CodeGeneration.Sources`), read with the u
+flag and failing that with none, in the edition and version of Unicode of the dialect or the options.
+
+The translator described here turns a pattern into a .NET pattern that gives the same answer. It is used where .NET's
+`Regex` is still wanted:
+
+- generated code under `--regexEngine DotNet` (`CorvusTextJsonRegexEngine=DotNet`), whose fields stay .NET's `Regex`;
+- `JsonSchemaEvaluator.ToDotNetPattern`, and the .NET pattern table of a program generated for the DotNet engine;
+- the V4 generators, until V4 adopts the library.
+
+Full reference: `docs/EcmaRegexTranslator.md` (overview) and `docs/EcmaRegexTranslations.md` (every translation).
 
 ## Files
 
@@ -54,14 +65,15 @@ limit of size. A caller must not report that as a pattern that is not valid.
 
 | Caller | Invalid pattern | Pattern over a limit of size |
 |---|---|---|
-| `PatternMatcher.Create` in `RuntimeEvaluator/Compilation/SchemaNode.cs` | `JsonSchemaCompilationException` when the schema is compiled. It runs before the regex-free matchers. | `JsonSchemaCompilationException` with the message of the limit (`... is a valid ECMA-262 regular expression, and is too large. ...`) |
-| `CodeGeneratorExtensions.JsonSchema.cs` (`ThrowIfAPatternIsNotValid`) | `InvalidOperationException` stops the generation of the type | `EcmaRegexPatternTooLargeException`, with the keyword in its message. The source generators report it as `CRV1003` |
+| `PatternMatcher.Create` in `RuntimeEvaluator/Compilation/SchemaNode.cs` | The library's answer: `JsonSchemaCompilationException` when the schema is compiled, before any matcher is chosen | `JsonSchemaCompilationException` with the message of the library's limit |
+| `CodeGeneratorExtensions.JsonSchema.cs` (`ThrowIfAPatternIsNotValid`), Ecma262 engine | `TryReadEcmaPattern` (the library): `InvalidOperationException` stops the generation of the type | `EcmaRegexPatternTooLargeException`, with the keyword in its message. The source generators report it as `CRV1003` |
+| The same, DotNet engine | The translator: `InvalidOperationException` | `EcmaRegexPatternTooLargeException` from the translator's limits |
 | `RuntimeProgramCompiler` (baked programs) | Compiles the schema with the runtime evaluator, so the same exception | The same |
 
 ## Limits Of Size
 
 A schema may come from outside, so no pattern may make the translator or .NET's `Regex` constructor run long or
-hold much memory. `EcmaRegexLimits` has the limits, and `docs/EcmaRegexTranslator.md` explains each:
+hold much memory. (The library has limits of its own, which apply to the Ecma262 engine.) `EcmaRegexLimits` has the limits, and `docs/EcmaRegexTranslator.md` explains each:
 
 | Limit | Value | Where it is met |
 |---|---|---|
@@ -158,12 +170,14 @@ hold much memory. `EcmaRegexLimits` has the limits, and `docs/EcmaRegexTranslato
 | `NonEmpty` | `.+`, `.` | Some character that is not a line terminator |
 | `Prefix` | `^foo` | `StartsWith("foo")` |
 | `Range` | `^.{1,256}$`, `^.*$`, `^.+$` | No line terminator, and a length in range |
-| `FullRegex` | Everything else | The translated regex |
+| `FullRegex` | Everything else | The library's `Regex` (or, under the DotNet engine, the translated regex) |
 
-The runtime matcher has more shapes (class sequences, separated lists, literal alternations). They read the raw
-pattern with their own small parsers, so each must decline what it does not fully understand. A pattern valid only
-without the u flag that could take a character beyond the Basic Multilingual Plane (a dot, a negated class, `\D`,
-`\W`, `\S`) skips them, because they count code points.
+The runtime matcher keeps only the shapes it matches faster than the library (`KeepsShape` in `SchemaNode.cs`):
+prefixes, ranges, the always-true and non-empty shapes, excluded classes with words, anchored literals, class
+sequences of at most two alternatives and literal alternations of at most four. Everything else, separated lists
+included, goes to the library. They read the raw pattern with their own small parsers, so each must decline what it
+does not fully understand. A pattern valid only without the u flag that could take a character beyond the Basic
+Multilingual Plane (a dot, a negated class, `\D`, `\W`, `\S`) skips them, because they count code points.
 
 ## Testing Against V8
 
@@ -177,5 +191,5 @@ without the u flag that could take a character beyond the Basic Multilingual Pla
   pattern with V8's answers to the tests first.
 
 ## Cross-References
-- For the evaluator that uses translated patterns, see `corvus-standalone-evaluator`
+- For the evaluator and how it matches patterns, see `corvus-standalone-evaluator`
 - For the keyword that drives pattern validation, see `corvus-keywords-and-validation`

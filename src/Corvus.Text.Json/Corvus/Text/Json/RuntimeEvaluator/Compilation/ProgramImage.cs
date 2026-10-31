@@ -116,7 +116,28 @@ internal static class ProgramImage
 
 #if !STJ
     /// <summary>Reads a program from an image.</summary>
-    public static CompiledSchema Read(ReadOnlyMemory<byte> image, JsonSchemaEvaluatorOptions options)
+    public static CompiledSchema Read(ReadOnlyMemory<byte> image, JsonSchemaEvaluatorOptions options) => Read(image, options, out _);
+
+    /// <summary>
+    /// Reads the regular expressions a program from an image matches its patterns with under the options given: one
+    /// for each pattern of the table and each edition it is read with that no matcher of the evaluator's own takes.
+    /// </summary>
+    public static List<JsonSchemaImageRegularExpression> ReadRegularExpressions(ReadOnlyMemory<byte> image, JsonSchemaEvaluatorOptions options)
+    {
+        Read(image, options, out PatternMatcher?[] matchers);
+        var result = new List<JsonSchemaImageRegularExpression>();
+        for (int slot = 0; slot < matchers.Length; slot++)
+        {
+            if (matchers[slot] is { UsesRegex: true, EcmaExpression: Corvus.Ecma262.RegularExpressions.Regex regex })
+            {
+                result.Add(new JsonSchemaImageRegularExpression(slot / 2, regex.Pattern, regex.Flags, regex.Edition, regex.UnicodeVersion));
+            }
+        }
+
+        return result;
+    }
+
+    private static CompiledSchema Read(ReadOnlyMemory<byte> image, JsonSchemaEvaluatorOptions options, out PatternMatcher?[] matchers)
     {
         var r = new ImageReader(image.Span);
         int version = ReadHeader(ref r);
@@ -143,7 +164,9 @@ internal static class ProgramImage
         }
 
         string[] patterns = ReadPatternTable(ref r);
-        var matchers = new PatternMatcher?[patterns.Length];
+
+        // A matcher for each pattern and each edition of the grammar it is read with (see ReadPattern).
+        matchers = new PatternMatcher?[2 * patterns.Length];
 
         int tableCount = r.ReadInt();
         var table = new byte[tableCount][];
@@ -248,7 +271,12 @@ internal static class ProgramImage
     }
 
 #if !STJ
-    private static PatternMatcher? ReadPattern(ref ImageReader r, string[] patterns, PatternMatcher?[] matchers, JsonSchemaEvaluatorOptions options)
+    /// <summary>
+    /// Reads a pattern of a node of a dialect. The dialect decides the edition of the grammar the pattern is read with
+    /// (<see cref="PatternMatcher.EditionFor"/>), so a pattern the table holds once can be read with two, and the
+    /// matchers of a loaded program are shared for each pattern and edition.
+    /// </summary>
+    private static PatternMatcher? ReadPattern(ref ImageReader r, string[] patterns, PatternMatcher?[] matchers, JsonSchemaEvaluatorOptions options, JsonSchemaDialect dialect)
     {
         int index = r.ReadInt();
         if (index == -2)
@@ -258,10 +286,11 @@ internal static class ProgramImage
 
         if (index == -1)
         {
-            return PatternMatcher.Create(r.ReadString()!, options);
+            return PatternMatcher.Create(r.ReadString()!, options, dialect);
         }
 
-        return matchers[index] ??= PatternMatcher.Create(patterns[index], options, index);
+        int slot = (2 * index) + (PatternMatcher.EditionFor(options, dialect) == Corvus.Ecma262.RegularExpressions.RegexEdition.Es2020 ? 1 : 0);
+        return matchers[slot] ??= PatternMatcher.Create(patterns[index], options, dialect, index);
     }
 #endif
 
@@ -667,7 +696,7 @@ internal static class ProgramImage
         {
             n.MinLength = r.ReadInt();
             n.MaxLength = r.ReadInt();
-            n.Pattern = ReadPattern(ref r, patterns, matchers, options);
+            n.Pattern = ReadPattern(ref r, patterns, matchers, options, n.Dialect);
             n.Format = (FormatKind)r.ReadByte();
             n.ElidedTarget = r.ReadInt();
             n.Content = (ContentKind)r.ReadByte();
@@ -716,7 +745,7 @@ internal static class ProgramImage
             var patternProperties = new PatternPropertyEntry[patternPropertyCount];
             for (int i = 0; i < patternPropertyCount; i++)
             {
-                var p = new PatternPropertyEntry { Matcher = ReadPattern(ref r, patterns, matchers, options)! };
+                var p = new PatternPropertyEntry { Matcher = ReadPattern(ref r, patterns, matchers, options, n.Dialect)! };
                 p.Schema = ReadChildRef(ref r);
                 p.Name = r.ReadBytes()!;
                 patternProperties[i] = p;

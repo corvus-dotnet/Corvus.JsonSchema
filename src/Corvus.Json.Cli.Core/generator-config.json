@@ -90,6 +90,18 @@
         "nativeEnums": {
             "$ref": "#/$defs/nativeEnums",
             "description": "Controls emission of native C# enums on generated types (V5 engine only). StringEnums emits a nested enum for pure string-enum schemas; FlagsObjects emits a nested [Flags] enum for objects whose declared properties are all boolean; All (the default) emits both; None emits neither."
+        },
+        "regexEngine": {
+            "$ref": "#/$defs/regexEngine",
+            "description": "The engine the regular expressions of generated code are written for (V5 engine only). Ecma262 (the default) writes Corvus.Regex.Ecma262's compiled matchers, with the compiled regular expression as data; DotNet writes .NET's System.Text.RegularExpressions, as earlier versions did, for code that depends on the generated fields being .NET's Regex."
+        },
+        "regexEdition": {
+            "$ref": "#/$defs/regexEdition",
+            "description": "The edition of ECMA-262 whose grammar every pattern is read with (V5 engine, Ecma262 regular expressions only). By default, each dialect's: Es2020 for draft 2019-09 and draft 2020-12, Current for the others."
+        },
+        "regexUnicodeVersion": {
+            "$ref": "#/$defs/regexUnicodeVersion",
+            "description": "The version of Unicode every pattern is read with (V5 engine, Ecma262 regular expressions only). Default is the version V8 uses (17)."
         }
     },
     "$defs": {
@@ -160,6 +172,20 @@
             "type": "string",
             "enum": [ "None", "StringEnums", "FlagsObjects", "All" ],
             "default": "All"
+        },
+        "regexEngine": {
+            "type": "string",
+            "enum": [ "Ecma262", "DotNet" ],
+            "default": "Ecma262"
+        },
+        "regexEdition": {
+            "type": "string",
+            "enum": [ "Current", "Es2020" ]
+        },
+        "regexUnicodeVersion": {
+            "type": "string",
+            "enum": [ "Default", "V13", "V17", "V18", "Latest" ],
+            "default": "Default"
         },
         "useSchema": {
             "type": "string",

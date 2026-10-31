@@ -45,7 +45,7 @@ V5 is a ground-up rewrite. The generated types are still readonly structs backed
 | **Parsing** | `MyType.Parse(json)` or `ParsedValue<MyType>.Parse(json)` | `ParsedJsonDocument<MyType>.Parse(json)` returning a disposable document, **or** `MyType.ParseValue(json)` for a self-owned copy |
 | **Validation** | `entity.Validate(ValidationContext, ValidationLevel)` | `entity.EvaluateSchema()` returning `bool`, or `entity.EvaluateSchema(collector)` for detailed results |
 | **Code generation** | `Corvus.Json.CodeGeneration` / `generatejsonschematypes` | `Corvus.Text.Json.CodeGeneration` / `corvusjson jsonschema` (or legacy `generatejsonschematypes --engine V5`) |
-| **Target frameworks** | net8.0, netstandard2.0 | net9.0, net10.0, netstandard2.0, netstandard2.1 |
+| **Target frameworks** | net8.0, netstandard2.0 | net10.0, netstandard2.0, netstandard2.1 |
 
 ---
 

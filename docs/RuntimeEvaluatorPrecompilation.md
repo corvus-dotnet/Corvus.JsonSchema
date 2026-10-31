@@ -5,13 +5,17 @@ measurements come from `ProgramImage` (in `Corvus.Text.Json.RuntimeEvaluator`), 
 runtime-evaluator benchmark harness, the `write`/`image` modes of the cold-start harness, and a throw-away "spike"
 console project that compiled emitted C# against the evaluator.
 
+Revised 2026-10-30: the regular expressions a program carries are Corvus.Regex.Ecma262's compiled matchers, for the
+CLI and the source generator alike; .NET's `[GeneratedRegex]` table is written only for `--regexEngine DotNet`.
+
 ## Where Stage 0 leaves us
 
 After Stage 0 a generated assembly carries, per compilation, one `CorvusJsonSchemaProgram` with the schema documents
 as UTF-8 data and lazily compiled entry points. At first use the runtime evaluator parses the documents, resolves
 references, reads any custom metaschema's `$vocabulary`, builds the node graph, and constructs the regular expressions.
-Stage 2 moves everything except regular-expression construction to generation time, and hands regular expressions to
-`[GeneratedRegex]`.
+Stage 2 moves all of it to generation time: the program is compiled ahead of time, and each pattern the evaluator
+matches with a regular expression is written as Corvus.Regex.Ecma262's compiled matcher, with the compiled regular
+expression as data.
 
 What Stage 2 cannot remove is JIT of the evaluation engine itself, measured earlier at roughly 40 ms floor for the
 first evaluation in a cold process and about half that with ReadyToRun. That is a consumer publish setting, not
@@ -66,9 +70,10 @@ Process-cold, first schema in a fresh process (three runs each):
 | Compile, cql2 (regex-heavy) | 35 to 39 ms | 2.5 to 2.8 ms |
 | Image, cql2 | 33 to 38 ms | 0.4 ms |
 
-The cql2 row is the regular-expression cost: with `CompileRegularExpressions` on (the default) the first construction
-of each `Regex` compiles it to IL, and that dominates the image load. `[GeneratedRegex]` moves exactly that cost to
-build time, so it is the case Stage 2 must handle, not a limit of the image.
+The cql2 row is the regular-expression cost, measured when the evaluator matched patterns with .NET's engine: the first
+construction of each `Regex` compiled it to IL, and that dominated the image load. A program now carries a compiled
+matcher for each pattern, read from data with nothing parsed or built, so it is the case Stage 2 had to handle, not a
+limit of the image.
 
 Image size (version 4) is about two thirds of the schema text: 1.05 MB against 1.66 MB over the corpora, down from
 2.16 MB in version 2. Three changes account for it. Byte payloads (path segments, property names, keywords, number
@@ -130,7 +135,8 @@ compiles the V4 analysis core and selected Corvus.Text.Json files in as sources)
 
 Pre-compiling in the CLI is straightforward: it can reference the evaluator package and call the compiler. Pre-compiling
 in the source generator needs the schema compiler and the document model it reads with (`ParsedJsonDocument`,
-`JsonElement`, `JsonElementHelpers`, `UnescapedUtf8JsonString`, `EcmaRegexTranslator`) compiled into the generator.
+`JsonElement`, `JsonElementHelpers`, `UnescapedUtf8JsonString`, and Corvus.Regex.Ecma262's reader and emitter from its
+source package) compiled into the generator.
 Both `Corvus.Text.Json` and the evaluator already target netstandard2.0, so this is a matter of linking sources the
 way the generator links the V4 core, and of the generator's build-time cost. The alternative is for the source
 generator to keep emitting the Stage 0 form while the CLI emits pre-compiled programs; that leaves two shapes in the
@@ -142,9 +148,11 @@ field and is not recommended.
    needs a `Regex` (prefix, length-range and trivial patterns are matched without one), in first-seen node order, and
    nodes reference patterns by index. `JsonSchemaEvaluatorOptions.RegexProvider` is asked for `(index, pattern)`
    before a regular expression is constructed, with index -1 when compiling from text; a `null` answer falls back to
-   construction. `JsonSchemaEvaluator.GetImagePatterns` reads the table so an emitter can write one `[GeneratedRegex]`
-   method per entry, and `ToDotNetPattern` gives the translated pattern the evaluator itself would construct, so the
-   generated instance matches exactly. The emitted table belongs to the image-emission step.
+   construction. `JsonSchemaEvaluatorOptions.EcmaRegexProvider` is asked the same for Corvus.Regex.Ecma262's compiled
+   matchers, and one is used when it is the pattern compiled as the evaluator would compile it (the same flags,
+   edition and version of Unicode). `JsonSchemaEvaluator.GetImageRegularExpressions` lists, for an image and the
+   options it is loaded with, the patterns the evaluator matches with the library, so a generator writes a matcher for
+   exactly those. `GetImagePatterns` and `ToDotNetPattern` serve the `[GeneratedRegex]` table of the DotNet engine.
 2. **Constants.** The image carries the values as one JSON array parsed at load. Emitting them as statically
    constructed values instead requires `const`/`enum` deep equality to work against standalone values rather than a
    document and index; the load-time parse measured under 0.1 ms for every corpus, so this is an optimisation to do
@@ -163,20 +171,23 @@ field and is not recommended.
 Emit **program images**, not static initialisers. The image loads in a fifth of the compile time warm, a quarter of
 it process-cold, halves compile-time allocation, needs no schema text, keeps the node model internal, and is already
 conformance-clean. The emitted C# per compilation shrinks to a shim: the image as UTF-8 data, the entry-point table,
-the options, and a `[GeneratedRegex]` method per pattern wired in through the regular-expression provider.
+the options, and a compiled matcher per pattern that needs one, wired in through the regular-expression provider.
 
 Order of work:
 
-1. Regular-expression provider on `FromProgramImage`, and the emitted `[GeneratedRegex]` table (the cql2 row above
+1. Regular-expression provider on `FromProgramImage`, and the emitted table of compiled matchers (the cql2 row above
    is what this buys).
 2. `RuntimeProgramGenerator` emits the image and the shim instead of the schema documents; the CLI drives it first
    because it can reference the evaluator directly. Done: `CSharpLanguageProvider.Options.ProgramCompiler` takes a
    `SchemaProgramCompiler` delegate (the generator library keeps no evaluator dependency); the CLI supplies
    `RuntimeProgramCompiler.Compile`, which compiles the program exactly as the emitted code would, registers every
-   entry point, and returns the image and its patterns translated to .NET syntax. The emitted class is then partial,
-   carries the image as base64 UTF-8 literals decoded on first use, loads it with `FromProgramImage`, and wires one
-   `[GeneratedRegex]` method per pattern through `RegexProvider` under the same framework guard the old generator
-   used; the schema documents are not embedded. Without a compiler the Stage 0 form is emitted.
+   entry point, and returns the image and the regular expressions its evaluator matches with the library. The emitted
+   class is then partial, carries the image as base64 UTF-8 literals decoded on first use, loads it with
+   `FromProgramImage`, and gives the evaluator a compiled matcher for each of those patterns through
+   `EcmaRegexProvider` (the matchers are written once for the whole generation, in
+   `CorvusJsonSchemaRegularExpressions`); the schema documents are not embedded. With the DotNet engine it wires one
+   `[GeneratedRegex]` method per pattern through `RegexProvider` instead. Without a compiler the Stage 0 form is
+   emitted.
 3. Link the compiler into the source generator, so both producers emit the same shape. Done; see the next section.
 4. String table in the image (size only; done, image version 4), then constants as static values if the load-time
    parse ever shows up.
@@ -217,11 +228,12 @@ metaschema table looks up. Because the generator applies the repository's analyz
 analyzer-banned-API rules) to linked files, the evaluator sources follow the `src` conventions (no trailing
 newline, no environment reads on the generator path: the A/B switches are constants under `STJ`).
 
-One difference from the CLI's output: the generator's program carries no `[GeneratedRegex]` table. Roslyn does not
-chain source generators, so the regular-expression generator never sees code another generator produced and the
-partial methods would have no implementation. The generator's shim therefore returns no provider and the evaluator
-constructs each expression from the image's pattern table on first use, as it does on runtimes without the regex
-generator. The image itself is identical.
+The generator's program carries the same table of compiled matchers as the CLI's: Corvus.Regex.Ecma262's emitter writes
+each matcher whole, so nothing waits on another generator. The generator's build of the evaluator decides which
+patterns need one as the library's build does (`JsonSchemaEvaluator.GetProgramRegularExpressions`). With the DotNet
+engine the generator's program carries no table: Roslyn does not chain source generators, so .NET's regular
+expression generator would never implement `[GeneratedRegex]` methods in generated code, and the evaluator compiles
+each pattern on first use. The image itself is identical.
 
 Version coupling is the same as today's source generator to `Corvus.Text.Json` pairing: the generator emits the image
 version of the files it was built from, and `FromProgramImage` rejects any other version at type initialisation

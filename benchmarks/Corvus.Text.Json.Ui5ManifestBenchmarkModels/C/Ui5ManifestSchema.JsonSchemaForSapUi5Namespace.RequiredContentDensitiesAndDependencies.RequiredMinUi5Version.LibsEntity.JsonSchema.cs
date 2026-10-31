@@ -29,7 +29,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// <summary>
                         /// A regular expression for the <c>patternProperties</c> keyword.
                         /// </summary>
-                        public static readonly Regex PatternProperties = CreatePatternProperties();
+                        public static readonly global::Corvus.Ecma262.RegularExpressions.Regex PatternProperties = global::Corvus.Ui5ManifestBenchmark.Current.CorvusJsonSchemaRegularExpressions.Regex12;
 
                         /// <summary>
                         /// Gets a provider for the schema location from which this type was generated.
@@ -69,13 +69,6 @@ public readonly partial struct Ui5ManifestSchema
                         {
                             return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
                         }
-
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                        [GeneratedRegex("^([a-z][a-z0-9]{0,39})(\\.[a-z][a-z0-9]{0,39})*\\z")]
-                        private static partial Regex CreatePatternProperties();
-#else
-                        private static Regex CreatePatternProperties() => new("^([a-z][a-z0-9]{0,39})(\\.[a-z][a-z0-9]{0,39})*\\z", RegexOptions.Compiled);
-#endif
                     }
                 }
             }

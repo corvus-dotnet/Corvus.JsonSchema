@@ -52,6 +52,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
     private readonly List<(string RootDocumentUri, string RootDocumentPointer)> programEntries = [];
     private readonly Dictionary<(string, string), int> programEntryIndex = new();
     private readonly Dictionary<string, List<TypeDeclaration>> namedTypesByFullyQualifiedName = new(StringComparer.Ordinal);
+    private SharedRegularExpressions? sharedRegularExpressions;
     private IEnumerable<TypeDeclaration>? namedTypesPass;
 
     private CSharpLanguageProvider(Options? options = null)
@@ -102,6 +103,9 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
     internal const string ProgramClassName = "CorvusJsonSchemaProgram";
 
     /// <summary>Gets the fully qualified reference to the program class for use in generated code.</summary>
+    /// <summary>Gets the regular expressions of this generation, each written once (see <see cref="SharedRegularExpressions"/>).</summary>
+    internal SharedRegularExpressions SharedRegularExpressions => this.sharedRegularExpressions ??= new(options.DefaultNamespace);
+
     internal string ProgramClassReference => options.DefaultNamespace.Length == 0 ? "global::" + ProgramClassName : "global::" + options.DefaultNamespace + "." + ProgramClassName;
 
     /// <inheritdoc/>
@@ -469,8 +473,10 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
             string rootDocumentKey = documents.Count > 0 ? documents[0].Key : keys[this.programEntries[0].RootDocumentUri];
             string dialect = this.fallbackVocabulary is IVocabulary vocabulary ? RuntimeProgramGenerator.DialectFor(vocabulary) : RuntimeProgramGenerator.DialectFor(this.fallbackVocabularyUri);
             List<KeyValuePair<string, string>> formatModes = options.FormatModeOverrides.OrderBy(m => m.Key, StringComparer.Ordinal).Select(m => new KeyValuePair<string, string>(m.Key, m.Value.ToString())).ToList();
-            SchemaProgramImage? image = options.ProgramCompiler?.Invoke(
-                this.utf8SchemaDocuments is not null
+            SchemaProgramImage? image = null;
+            if (options.ProgramCompiler is SchemaProgramCompiler compiler)
+            {
+                SchemaProgramSource source = this.utf8SchemaDocuments is not null
                     ? SchemaProgramSource.FromUtf8(
                         documents.Select(d => new KeyValuePair<string, ReadOnlyMemory<byte>>(d.Key, d.Utf8Json)).ToList(),
                         rootDocumentKey,
@@ -484,7 +490,13 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
                         entryPoints,
                         dialect,
                         options.AlwaysAssertFormat,
-                        formatModes));
+                        formatModes);
+                source.RegexEngine = options.RegexEngine;
+                source.RegexEdition = options.RegexEdition;
+                source.RegexUnicodeVersion = options.RegexUnicodeVersion;
+                image = compiler(source);
+            }
+
             sink.Add(RuntimeProgramGenerator.Generate(
                 options.DefaultNamespace,
                 ProgramClassName,
@@ -496,7 +508,16 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
                 formatModes,
                 options.FileExtension,
                 options.LineEndSequence,
-                image));
+                image,
+                options.RegexEngine == GeneratedRegexEngine.Ecma262 ? options.RegexEdition : null,
+                options.RegexEngine == GeneratedRegexEngine.Ecma262 ? options.RegexUnicodeVersion : GeneratedRegexUnicodeVersion.Default,
+                regex => this.SharedRegularExpressions.Reference(regex.Pattern, regex.Unicode, regex.Edition, regex.UnicodeVersion)));
+        }
+
+        // Last, as the types and the program have now asked for every regular expression they refer to.
+        if (this.sharedRegularExpressions?.Generate(options.FileExtension, options.LineEndSequence) is GeneratedCodeFile regularExpressions)
+        {
+            sink.Add(regularExpressions);
         }
     }
 
@@ -1117,6 +1138,9 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
     /// <param name="emitUnions">If true (the default), a type whose schema is a <c>oneOf</c> or <c>anyOf</c> composition is also a C# union: <c>switch</c> and <c>is</c> patterns over its branch types work with the C# 15 compiler (the .NET 11 SDK).</param>
     /// <param name="emitNativeStringEnums">If true (the default), a pure string-enum schema additionally generates a nested native C# enum with conversions.</param>
     /// <param name="emitNativeFlagsEnums">If true (the default), an object schema whose declared properties are all boolean additionally generates a nested native C# <c>[Flags]</c> enum with conversions.</param>
+    /// <param name="regexEngine">The engine the regular expressions of generated code are written for (see <see cref="GeneratedRegexEngine"/>). Defaults to <see cref="GeneratedRegexEngine.Ecma262"/>.</param>
+    /// <param name="regexEdition">The edition of the grammar every pattern is read with, or <see langword="null"/> (the default) for the dialect's: ECMAScript 2020 for draft 2019-09 and draft 2020-12, today's for the others. For <see cref="GeneratedRegexEngine.Ecma262"/> only.</param>
+    /// <param name="regexUnicodeVersion">The version of Unicode every pattern is read with. For <see cref="GeneratedRegexEngine.Ecma262"/> only.</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -1138,9 +1162,21 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
         bool emitNativeFlagsEnums = true,
         SchemaProgramCompiler? programCompiler = null,
         bool emitUnions = true,
-        bool storeFilesAsStrings = false)
+        bool storeFilesAsStrings = false,
+        GeneratedRegexEngine regexEngine = GeneratedRegexEngine.Ecma262,
+        GeneratedRegexEdition? regexEdition = null,
+        GeneratedRegexUnicodeVersion regexUnicodeVersion = GeneratedRegexUnicodeVersion.Default)
     {
         internal bool EmitUnions { get; } = emitUnions;
+
+        /// <summary>Gets the engine the regular expressions of generated code are written for.</summary>
+        internal GeneratedRegexEngine RegexEngine { get; } = regexEngine;
+
+        /// <summary>Gets the edition every pattern is read with, or <see langword="null"/> for the dialect's.</summary>
+        internal GeneratedRegexEdition? RegexEdition { get; } = regexEdition;
+
+        /// <summary>Gets the version of Unicode every pattern is read with.</summary>
+        internal GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; } = regexUnicodeVersion;
 
         /// <summary>
         /// Gets a value indicating whether each generated file is captured as one string rather than as chunks below

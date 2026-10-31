@@ -63,6 +63,9 @@ corvusjson jsonschema <schemaFile> [OPTIONS]
 | `--optionalAsNullable` | `None` | How to handle optional properties: `None` or `NullOrUndefined` |
 | `--useImplicitOperatorString` | `false` | Use implicit (vs explicit) conversion to `string` |
 | `--unions` | `true` | Make each `oneOf`/`anyOf` type a C# union as well as giving it `Match`: with the C# 15 compiler (the .NET 11 SDK or later, any target framework except .NET Framework) `switch` and `is` patterns over the branch types work. Pass `--unions false` to leave the union members out. |
+| `--regexEngine` | `Ecma262` | The engine the generated regular expressions are written for. `Ecma262` writes [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/)'s compiled matchers, with the compiled regular expression as data, so nothing is parsed or built when one is first used; a pattern-property field is that library's `Regex`. `DotNet` writes .NET's `System.Text.RegularExpressions`, as earlier versions did, for code that depends on those fields being .NET's `Regex`. |
+| `--regexEdition` | each dialect's | The edition of ECMA-262 whose grammar every pattern is read with: `Current` or `Es2020`. By default draft 2019-09 and draft 2020-12 (and OpenAPI 3.1) read patterns with the grammar of ECMAScript 2020, which they cite, and the other dialects with today's. `Ecma262` only. |
+| `--regexUnicodeVersion` | `Default` | The version of Unicode every pattern is read with: `Default` (V8's, 17), `V13`, `V17`, `V18` or `Latest`. `Ecma262` only. |
 | `--disableOptionalNamingHeuristics` | `false` | Disable all optional naming heuristics at once (see [Naming Heuristics](#naming-heuristics)) |
 | `--disableNamingHeuristic` | — | Disable a specific naming heuristic by name (repeatable; see [Naming Heuristics](#naming-heuristics)) |
 | `--useUnixLineEndings` | `false` | Use Unix line endings (`\n`) instead of Windows (`\r\n`) in generated files |
@@ -277,14 +280,14 @@ The tool generates:
   longer than 1 second throws `RegexMatchTimeoutException` (see
   [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated)). A `pattern` or `patternProperties` pattern that is
   not a valid ECMA-262 regular expression stops the generation with an error that names it (see
-  [EcmaRegexTranslator.md](EcmaRegexTranslator.md#where-an-invalid-pattern-is-refused)). A pattern over a limit of
-  size stops it with an error of its own, which says that the pattern is too large (see
-  [EcmaRegexTranslator.md](EcmaRegexTranslator.md#limits-on-the-size-of-a-pattern)). All three hold for the V4 engine too: its types throw the exception from `Validate()`
+  [RuntimeEvaluator.md](RuntimeEvaluator.md#patterns)). A pattern over a limit of size stops it with an error of its
+  own, which says that the pattern is too large. All three hold for the V4 engine too: its types throw the exception from `Validate()`
 - **Implicit conversions**: `(string)person.Name` extracts the .NET value
 - **Mutable builder**: `person.CreateBuilder(workspace)` creates a mutable copy
 - **Immutable document factory**: `Person.Create(...)` builds a self-contained `ParsedJsonDocument<Person>` in a single pass, with no workspace and no serialization round trip
 - **Pattern matching**: `Match()` methods for `oneOf`/`anyOf` discriminated unions, plus `MatchEvery()` on `anyOf` compositions to visit every matching subschema, threading an accumulator through the calls
 - **C# unions** (.NET 11 SDK or later, any target framework except .NET Framework): a `oneOf`/`anyOf` type is also a C# union, so `shape switch { Shape.Circle c => ..., Shape.Square s => ..., null => ... }` and `shape is Shape.Circle c` work, exhaustively and without boxing. Turn it off with `--unions false` (CLI), `<CorvusTextJsonUnions>false</CorvusTextJsonUnions>` (source generator) or `"unions": false` (config file)
+- **Regular expressions**: a pattern the runtime evaluator matches with a regular expression, and a `patternProperties` name a type's helpers match, use [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/), which answers as ECMAScript does over UTF-8 with no transcoding. The generator writes each distinct regular expression once, as the library's compiled matcher with the compiled regular expression as data, in `CorvusJsonSchemaRegularExpressions.cs` beside the program, so none is parsed or built at run time. A folder generated before the option existed is told so when regenerated: pass `--force` to take the new default, or `--regexEngine DotNet` (CLI), `<CorvusTextJsonRegexEngine>DotNet</CorvusTextJsonRegexEngine>` (source generator) or `"regexEngine": "DotNet"` (config file) to keep .NET's
 - **Serialization**: `WriteTo(Utf8JsonWriter)` for zero-allocation output
 - **Schema provenance**: `Person.JsonSchema.SchemaDocument` is the schema document the type was generated from, relative to the generation base (for example `person.json`), and `Person.JsonSchema.SchemaLocation` is the JSON Pointer to the schema within that document (for example `/$defs/person`). Together they form the reference `person.json#/$defs/person`. A schema inside a `$id` sub-resource still reports the containing document and the pointer from its root. Validation results and annotations report the same pointer shape.
 

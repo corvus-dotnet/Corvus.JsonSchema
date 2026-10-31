@@ -53,7 +53,7 @@ string description = shape.Match(
 pattern over the branch types is exhaustive without a fallback arm, and it does not box. A value that matches
 no branch has a `null` union value, so add a `null` arm when the input is untrusted, or test `HasValue` through
 the type's `IUnionMembers` interface. The requirement is the C# 15 compiler in the .NET 11 SDK; the project can
-still target net9.0 or net10.0. Older compilers ignore the union members and `Match` keeps working.
+still target net10.0. Older compilers ignore the union members and `Match` keeps working.
 
 ```csharp
 string description = shape switch

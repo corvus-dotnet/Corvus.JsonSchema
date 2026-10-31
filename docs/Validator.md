@@ -245,14 +245,14 @@ JsonSchema schema = JsonSchema.FromFile("./person-schema.json", options);
 
 - A match that runs for longer throws `RegexMatchTimeoutException` out of `Validate`. The document is not reported as invalid. Call `Validate` inside `try` when the schema or the document is not trusted.
 - `System.Text.RegularExpressions.Regex.InfiniteMatchTimeout` matches with no timeout. A value that is zero, negative, or longer than a `Regex` accepts throws `ArgumentOutOfRangeException` when the options are created.
-- A pattern proved to match in time proportional to the text, such as `^[a-z]+\.[a-z]+$`, has no timeout, because a timeout costs .NET's engines time on every match and bounds nothing for it.
+- Patterns are matched with Corvus.Regex.Ecma262, which matches a pattern with no backreference in time proportional to the pattern's size times the text, so the timeout matters only for a pattern with a backreference, such as `^(a|aa)+\1$`.
 - The value is passed to the evaluator as `JsonSchemaEvaluatorOptions.RegexMatchTimeout`. The [runtime evaluator guide](./RuntimeEvaluator.md#regular-expression-match-timeout) says more about it.
 
 ## Invalid Patterns
 
 A `pattern` or `patternProperties` pattern that is not a valid ECMA-262 regular expression is refused when the schema is compiled: the `JsonSchema.From*` method throws `JsonSchemaCompilationException`, whose message names the pattern and says what is wrong and where. See [Patterns](./RuntimeEvaluator.md#patterns) in the runtime evaluator guide.
 
-A pattern over a limit of size is refused in the same place with the same exception, and its message says that the pattern is too large and names the limit. It does not say that the pattern is not valid. The limits bound the time and the memory one pattern of a schema can take when the schema is compiled, and are listed in [the translator guide](./EcmaRegexTranslator.md#limits-on-the-size-of-a-pattern).
+A pattern over a limit of size is refused in the same place with the same exception, and its message says that the pattern is too large and names the limit. It does not say that the pattern is not valid. The limits are Corvus.Regex.Ecma262's, and bound the time and the memory one pattern of a schema can take when the schema is compiled.
 
 ## Schema Caching
 

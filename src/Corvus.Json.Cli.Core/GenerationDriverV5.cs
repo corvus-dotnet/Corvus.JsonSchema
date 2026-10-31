@@ -269,6 +269,13 @@ public static class GenerationDriverV5
         bool excludeNonNullDefaulted = optionalAsNullableMode.Equals(GeneratorConfig.OptionalAsNullable.EnumValues.NullOrUndefinedExceptNonNullDefaulted);
         bool optionalAsNullable = excludeNonNullDefaulted || optionalAsNullableMode.Equals(GeneratorConfig.OptionalAsNullable.EnumValues.NullOrUndefined);
 
+        GeneratorConfig.RegexEngine regexEngineMode = generatorConfig.RegexEngineValue ?? GeneratorConfig.RegexEngine.DefaultInstance;
+        GeneratedRegexEngine regexEngine = regexEngineMode.Equals(GeneratorConfig.RegexEngine.EnumValues.DotNet) ? GeneratedRegexEngine.DotNet : GeneratedRegexEngine.Ecma262;
+        GeneratedRegexEdition? regexEdition = generatorConfig.RegexEditionValue is GeneratorConfig.RegexEdition edition && !edition.IsUndefined()
+            ? (edition.Equals(GeneratorConfig.RegexEdition.EnumValues.Es2020) ? GeneratedRegexEdition.Es2020 : GeneratedRegexEdition.Current)
+            : null;
+        GeneratorConfig.RegexUnicodeVersion regexUnicodeVersionMode = generatorConfig.RegexUnicodeVersionValue ?? GeneratorConfig.RegexUnicodeVersion.DefaultInstance;
+        GeneratedRegexUnicodeVersion regexUnicodeVersion = (GeneratedRegexUnicodeVersion)Enum.Parse(typeof(GeneratedRegexUnicodeVersion), (string)regexUnicodeVersionMode);
         GeneratorConfig.NativeEnums nativeEnumsMode = generatorConfig.NativeEnumsValue ?? GeneratorConfig.NativeEnums.DefaultInstance;
         bool emitNativeStringEnums = nativeEnumsMode.Equals(GeneratorConfig.NativeEnums.EnumValues.All) || nativeEnumsMode.Equals(GeneratorConfig.NativeEnums.EnumValues.StringEnums);
         bool emitNativeFlagsEnums = nativeEnumsMode.Equals(GeneratorConfig.NativeEnums.EnumValues.All) || nativeEnumsMode.Equals(GeneratorConfig.NativeEnums.EnumValues.FlagsObjects);
@@ -294,7 +301,10 @@ public static class GenerationDriverV5
             emitNativeStringEnums: emitNativeStringEnums,
             emitNativeFlagsEnums: emitNativeFlagsEnums,
             programCompiler: RuntimeProgramCompiler.Compile,
-            emitUnions: generatorConfig.Unions ?? true);
+            emitUnions: generatorConfig.Unions ?? true,
+            regexEngine: regexEngine,
+            regexEdition: regexEdition,
+            regexUnicodeVersion: regexUnicodeVersion);
     }
 
     private static IReadOnlyDictionary<string, FormatAssertionMode>? GetFormatModeOverrides(in GeneratorConfig generatorConfig)

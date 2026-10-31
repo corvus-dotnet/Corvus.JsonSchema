@@ -156,6 +156,9 @@ Control the generator's behaviour with MSBuild properties in your `.csproj`:
 | `CorvusTextJsonUseOptionalNameHeuristics` | `true` | When `true`, applies naming heuristics to infer idiomatic C# names from JSON Schema property names and definitions. |
 | `CorvusTextJsonNativeEnums` | `All` | Controls emission of native C# enums on generated types. `StringEnums` emits a nested `KnownValues` enum (with conversions) for pure string-enum schemas; `FlagsObjects` emits a nested `[Flags]` enum (with conversions) for objects whose declared properties are all boolean; `All` emits both; `None` emits neither. |
 | `CorvusTextJsonUnions` | `true` | When `true`, a generated `oneOf`/`anyOf` type is also a C# union: with the C# 15 compiler (the .NET 11 SDK or later, any target framework except .NET Framework) `switch` and `is` patterns over its branch types work, exhaustively and without boxing. The generator also emits an internal `UnionAttribute` polyfill for target frameworks before .NET 11; define `CORVUS_TEXT_JSON_NO_UNION_ATTRIBUTE_POLYFILL` if the project already has one. Set to `false` to leave the union members out. |
+| `CorvusTextJsonRegexEngine` | `Ecma262` | The engine the generated regular expressions are written for. `Ecma262` writes [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/)'s compiled matchers, with the compiled regular expression as data (once each, in `CorvusJsonSchemaRegularExpressions`), for the program and for pattern-property fields, which are that library's `Regex`; the generator compiles them into the program, so the evaluator compiles none at run time. `DotNet` writes .NET's `System.Text.RegularExpressions`, as earlier versions did. |
+| `CorvusTextJsonRegexEdition` | each dialect's | The edition of ECMA-262 whose grammar every pattern is read with: `Current` or `Es2020`. By default draft 2019-09 and draft 2020-12 read patterns with the grammar of ECMAScript 2020, which they cite, and the other dialects with today's. `Ecma262` only. |
+| `CorvusTextJsonRegexUnicodeVersion` | `Default` | The version of Unicode every pattern is read with: `Default` (V8's, 17), `13`, `17`, `18` or `Latest`. `Ecma262` only. |
 | `CorvusTextJsonDisabledNamingHeuristics` | `DocumentationNameHeuristic` | Semicolon-separated list of specific naming heuristics to disable (e.g., `DocumentationNameHeuristic;PathNameHeuristic`). |
 | `CorvusTextJsonSuppressAnalyzerDiagnosticsInGeneratedCode` | `true` | When `true`, analyzer diagnostics located in the generated code are not reported (see [Analyzers and generated code](#analyzers-and-generated-code)). Compiler diagnostics are unaffected. Set to `false` to have them reported. |
 
@@ -170,9 +173,8 @@ For each `[JsonSchemaTypeGenerator]` attribute, the generator produces a complet
   runs for longer than 1 second throws `RegexMatchTimeoutException` (see
   [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated)). A `pattern` or `patternProperties` pattern that is
   not a valid ECMA-262 regular expression is reported as an error of the generator (`CRV1001`) and nothing is
-  generated for the schema (see [EcmaRegexTranslator.md](EcmaRegexTranslator.md#where-an-invalid-pattern-is-refused)).
-  A pattern over a limit of size is reported as `CRV1003`, which says that the pattern is too large and names the
-  limit (see [EcmaRegexTranslator.md](EcmaRegexTranslator.md#limits-on-the-size-of-a-pattern))
+  generated for the schema (see [RuntimeEvaluator.md](RuntimeEvaluator.md#patterns)). A pattern over a limit of size
+  is reported as `CRV1003`, which says that the pattern is too large and names the limit
 - **Parsing** from strings, byte arrays, streams, and sequences via `ParsedJsonDocument<T>`
 - **Serialization** via `WriteTo(Utf8JsonWriter)` and `ToString()`
 - **Implicit conversions** to and from .NET primitive types

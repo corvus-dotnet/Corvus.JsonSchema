@@ -246,7 +246,7 @@ Note that simple types may be reduced to global types like `JsonString` or `Json
 ## With the .NET 11 SDK: a plain `switch`
 
 The generated `oneOf` type is also a C# union. When the project is compiled with the C# 15 compiler (the .NET 11 SDK
-or later; the project can still target net9.0 or net10.0), a `switch` or `is` pattern over the branch types works,
+or later; the project can still target net10.0), a `switch` or `is` pattern over the branch types works,
 is exhaustive over the branches without a fallback arm, and does not box:
 
 ```csharp

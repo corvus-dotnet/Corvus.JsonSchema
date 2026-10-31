@@ -83,6 +83,15 @@ public sealed class SchemaProgramSource
     /// <summary>Gets the per-format assertion modes, as <c>JsonSchemaFormatMode</c> member names.</summary>
     public IReadOnlyList<KeyValuePair<string, string>> FormatModes { get; }
 
+    /// <summary>Gets the engine the program's regular expressions are written for.</summary>
+    public GeneratedRegexEngine RegexEngine { get; internal set; } = GeneratedRegexEngine.Ecma262;
+
+    /// <summary>Gets the edition every pattern is read with, or <see langword="null"/> for each dialect's.</summary>
+    public GeneratedRegexEdition? RegexEdition { get; internal set; }
+
+    /// <summary>Gets the version of Unicode every pattern is read with.</summary>
+    public GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; internal set; }
+
     private static List<KeyValuePair<string, string>> Decode(IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> utf8Documents)
     {
         List<KeyValuePair<string, string>> result = new(utf8Documents.Count);
@@ -128,10 +137,24 @@ public sealed class SchemaProgramImage
     /// <param name="ecmaPatterns">The same patterns as the schema has them (ECMA-262), in the same order, or an
     /// empty list.</param>
     public SchemaProgramImage(byte[] image, IReadOnlyList<string> dotNetPatterns, IReadOnlyList<string> ecmaPatterns)
+        : this(image, dotNetPatterns, ecmaPatterns, [])
+    {
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="SchemaProgramImage"/> class.</summary>
+    /// <param name="image">The image bytes.</param>
+    /// <param name="dotNetPatterns">The regular-expression patterns the image needs, translated to .NET syntax, in
+    /// the index order the evaluator asks for them, or an empty list.</param>
+    /// <param name="ecmaPatterns">The same patterns as the schema has them (ECMA-262), in the same order, or an
+    /// empty list.</param>
+    /// <param name="ecmaRegularExpressions">The Corvus.Regex.Ecma262 regular expressions the evaluator matches the
+    /// image's patterns with, for which the generator writes compiled matchers, or an empty list.</param>
+    public SchemaProgramImage(byte[] image, IReadOnlyList<string> dotNetPatterns, IReadOnlyList<string> ecmaPatterns, IReadOnlyList<SchemaProgramRegularExpression> ecmaRegularExpressions)
     {
         this.Image = image;
         this.DotNetPatterns = dotNetPatterns;
         this.EcmaPatterns = ecmaPatterns;
+        this.EcmaRegularExpressions = ecmaRegularExpressions;
     }
 
     /// <summary>Gets the image bytes.</summary>
@@ -146,4 +169,38 @@ public sealed class SchemaProgramImage
     /// proportional to the text no match timeout. Without them every pattern has the timeout.
     /// </summary>
     public IReadOnlyList<string> EcmaPatterns { get; }
+
+    /// <summary>
+    /// Gets the Corvus.Regex.Ecma262 regular expressions the evaluator matches the image's patterns with, in
+    /// pattern-table order, or an empty list. The generator writes a compiled matcher for each, which the program
+    /// gives the evaluator through a <c>JsonSchemaEcmaRegexProvider</c>.
+    /// </summary>
+    public IReadOnlyList<SchemaProgramRegularExpression> EcmaRegularExpressions { get; }
+}
+
+/// <summary>
+/// A Corvus.Regex.Ecma262 regular expression a program's evaluator matches a pattern of its table with: the pattern's
+/// index, and the grammar, edition and version of Unicode it is compiled with.
+/// </summary>
+/// <param name="index">The index of the pattern in the image's table.</param>
+/// <param name="pattern">The pattern, as the schema has it.</param>
+/// <param name="unicode">Whether it is compiled with the u flag (otherwise with none).</param>
+/// <param name="edition">The edition of the grammar it is read with.</param>
+/// <param name="unicodeVersion">The version of Unicode it is read with.</param>
+public sealed class SchemaProgramRegularExpression(int index, string pattern, bool unicode, GeneratedRegexEdition edition, GeneratedRegexUnicodeVersion unicodeVersion)
+{
+    /// <summary>Gets the index of the pattern in the image's table.</summary>
+    public int Index { get; } = index;
+
+    /// <summary>Gets the pattern, as the schema has it.</summary>
+    public string Pattern { get; } = pattern;
+
+    /// <summary>Gets a value indicating whether the pattern is compiled with the u flag (otherwise with none).</summary>
+    public bool Unicode { get; } = unicode;
+
+    /// <summary>Gets the edition of the grammar the pattern is read with.</summary>
+    public GeneratedRegexEdition Edition { get; } = edition;
+
+    /// <summary>Gets the version of Unicode the pattern is read with.</summary>
+    public GeneratedRegexUnicodeVersion UnicodeVersion { get; } = unicodeVersion;
 }

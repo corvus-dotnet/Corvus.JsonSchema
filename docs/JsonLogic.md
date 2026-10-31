@@ -20,7 +20,7 @@ Three evaluation modes are available:
 
 The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch and can constant-fold literal expressions. Benchmarks show generated code is typically **70–98% faster** than JsonEverything across 19 scenarios, with zero or near-zero allocations (see [benchmark summary](#benchmark-summary)).
 
-**Requirements:** The runtime packages target `net9.0`, `net10.0`, `netstandard2.0`, and `netstandard2.1`. The source generator is an analyzer package and does not impose additional runtime requirements.
+**Requirements:** The runtime packages target `net10.0`, `netstandard2.0`, and `netstandard2.1`. The source generator is an analyzer package and does not impose additional runtime requirements.
 
 ## Quick start
 

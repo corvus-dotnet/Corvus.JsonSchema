@@ -1,13 +1,17 @@
 # ECMAScript Regex Translator
 
+> **Scope.** Since V5 matches patterns with Corvus.Regex.Ecma262, the translator is used only where .NET's `Regex`
+> is still wanted: generated code under `--regexEngine DotNet` (MSBuild `CorvusTextJsonRegexEngine=DotNet`),
+> `JsonSchemaEvaluator.ToDotNetPattern`, and the V4 generators. The runtime evaluator and the default generated code
+> take their answers, validity included, from the library; see [RuntimeEvaluator.md](./RuntimeEvaluator.md#patterns).
+
 Translation of ECMA-262 regular expressions to .NET regular expression patterns with the same meaning, and the
 check that a pattern is a valid ECMA-262 regular expression at all.
 
 JSON Schema's `pattern` and `patternProperties` keywords are ECMA-262 regular expressions. .NET's
 `System.Text.RegularExpressions` reads much of the same syntax and gives a good deal of it another meaning. The
-translator is used by the runtime evaluator when it compiles a schema, by the V5 code generator for the regular
-expressions of generated types, and by the generator of baked schema evaluation programs. All three therefore agree
-on what a pattern means and on which patterns are valid.
+translator writes a .NET pattern with the ECMA-262 meaning for the code that still matches with .NET's `Regex` (see
+the scope note above).
 
 The answers are tested against V8. The
 [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) records what V8

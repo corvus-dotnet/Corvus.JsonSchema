@@ -23,7 +23,7 @@ public readonly partial struct Ui5ManifestSchema
             {
                 public readonly partial struct I18nEntity
                 {
-                    public readonly partial struct RequiredBundleUrl
+                    public readonly partial struct RequiredBundleName
                     {
                         public readonly partial struct RepresentsTerminologiesWithAdditionalPropertiesFiles
                             : IJsonElement<RepresentsTerminologiesWithAdditionalPropertiesFiles>
@@ -33,22 +33,22 @@ public readonly partial struct Ui5ManifestSchema
                                 /// <summary>
                                 /// A regular expression for the <c>patternProperties</c> keyword.
                                 /// </summary>
-                                public static readonly Regex PatternProperties = CreatePatternProperties();
+                                public static readonly global::Corvus.Ecma262.RegularExpressions.Regex PatternProperties = global::Corvus.Ui5ManifestBenchmark.Current.CorvusJsonSchemaRegularExpressions.Regex2;
 
                                 /// <summary>
                                 /// Gets a provider for the schema location from which this type was generated.
                                 /// </summary>
-                                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/properties/sap.ui5/allOf/0/properties/library/properties/i18n/oneOf/2/properties/terminologies"u8, buffer, out written);
+                                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/properties/sap.ui5/allOf/0/properties/library/properties/i18n/oneOf/3/properties/terminologies"u8, buffer, out written);
 
                                 /// <summary>
                                 /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                                 /// </summary>
-                                public const string SchemaLocation = "/properties/sap.ui5/allOf/0/properties/library/properties/i18n/oneOf/2/properties/terminologies";
+                                public const string SchemaLocation = "/properties/sap.ui5/allOf/0/properties/library/properties/i18n/oneOf/3/properties/terminologies";
 
                                 /// <summary>
                                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                                 /// </summary>
-                                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/sap.ui5/allOf/0/properties/library/properties/i18n/oneOf/2/properties/terminologies"u8;
+                                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/sap.ui5/allOf/0/properties/library/properties/i18n/oneOf/3/properties/terminologies"u8;
 
                                 /// <summary>
                                 /// Gets the schema document from which this type was generated, relative to the base location for generation.
@@ -64,7 +64,7 @@ public readonly partial struct Ui5ManifestSchema
                                 /// </summary>
                                 public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "ui5-manifest-schema.json"u8;
 
-                                private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Ui5ManifestBenchmark.Current.CorvusJsonSchemaProgram.Entry(813);
+                                private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Ui5ManifestBenchmark.Current.CorvusJsonSchemaProgram.Entry(816);
 
                                 internal static bool Evaluate(
                                     IJsonDocument parentDocument,
@@ -73,13 +73,6 @@ public readonly partial struct Ui5ManifestSchema
                                 {
                                     return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
                                 }
-
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                                [GeneratedRegex("^[a-zA-Z0-9_\\-]*\\z")]
-                                private static partial Regex CreatePatternProperties();
-#else
-                                private static Regex CreatePatternProperties() => new("^[a-zA-Z0-9_\\-]*\\z", RegexOptions.Compiled);
-#endif
                             }
                         }
                     }

@@ -25,6 +25,20 @@ public delegate bool JsonSchemaDocumentResolver(string uri, out ReadOnlyMemory<b
 /// <returns>The regular expression to use, or <see langword="null"/> to let the evaluator construct one.</returns>
 public delegate Regex? JsonSchemaRegexProvider(int index, string ecmaPattern);
 
+#if !STJ
+/// <summary>
+/// Supplies a ready-made ECMA-262 regular expression for a schema pattern, so that a program emitted ahead of time can
+/// wire in the code generated for its patterns instead of compiling them at load.
+/// </summary>
+/// <param name="index">The pattern's position in the program image's pattern table (see
+/// <see cref="JsonSchemaEvaluator.GetImagePatterns"/>), or -1 when the schema is being compiled from text.</param>
+/// <param name="ecmaPattern">The pattern as written in the schema (ECMA-262 syntax).</param>
+/// <returns>The regular expression to use, or <see langword="null"/> to let the evaluator compile one. One whose
+/// pattern, flags, edition or version of Unicode is not what the evaluator would compile is not used.</returns>
+[CLSCompliant(false)]
+public delegate Corvus.Ecma262.RegularExpressions.Regex? JsonSchemaEcmaRegexProvider(int index, string ecmaPattern);
+#endif
+
 /// <summary>
 /// Options controlling schema compilation and evaluation.
 /// </summary>
@@ -147,6 +161,42 @@ public sealed class JsonSchemaEvaluatorOptions
     /// <see cref="CompileRegularExpressions"/> and <see cref="RegexMatchTimeout"/>.
     /// </summary>
     public JsonSchemaRegexProvider? RegexProvider { get; set; }
+
+#if !STJ
+    /// <summary>
+    /// Gets or sets the provider of ready-made ECMA-262 regular expressions, consulted before the evaluator compiles
+    /// a pattern itself. A regular expression from <see cref="RegexProvider"/> is used in its place.
+    /// </summary>
+    [CLSCompliant(false)]
+    public JsonSchemaEcmaRegexProvider? EcmaRegexProvider { get; set; }
+
+    /// <summary>
+    /// Gets or sets the edition of ECMA-262 whose grammar a <c>pattern</c>, a <c>patternProperties</c> name and a
+    /// <c>format: regex</c> value are read with, for every dialect. <see langword="null"/> (the default) reads them
+    /// with the grammar of ECMAScript 2020 under draft 2019-09 and draft 2020-12, which cite it, and with today's
+    /// grammar under the earlier drafts and OpenAPI.
+    /// </summary>
+    /// <remarks>
+    /// The grammar of ECMAScript 2020 refuses what later editions added to it: modifier groups (<c>(?i:...)</c>),
+    /// duplicate group names and the names of Unicode properties added since. Either way a pattern is read with the
+    /// <c>u</c> flag, and one that only the grammar with no flag accepts is read with that grammar.
+    /// </remarks>
+    [CLSCompliant(false)]
+    public Corvus.Ecma262.RegularExpressions.RegexEdition? RegexEdition { get; set; }
+
+    /// <summary>
+    /// Gets or sets the version of Unicode whose character database a pattern is read with, for every dialect.
+    /// <see langword="null"/> (the default) is V8's version (<see cref="Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion.Default"/>).
+    /// </summary>
+    [CLSCompliant(false)]
+    public Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion? RegexUnicodeVersion { get; set; }
+#else
+    /// <summary>Gets or sets the edition of ECMA-262 whose grammar a pattern is read with, for every dialect (the source generator's build).</summary>
+    internal Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEdition? RegexEdition { get; set; }
+
+    /// <summary>Gets or sets the version of Unicode whose character database a pattern is read with, for every dialect (the source generator's build).</summary>
+    internal Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexUnicodeVersion? RegexUnicodeVersion { get; set; }
+#endif
 
     /// <summary>
     /// Gets or sets the resolver used to load documents referenced by <c>$ref</c> that are not already known.

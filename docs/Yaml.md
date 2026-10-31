@@ -13,7 +13,7 @@ Two packages are available:
 | **`Corvus.Text.Json.Yaml`** | `Corvus.Text.Json` | You need `ParsedJsonDocument<T>` and the full Corvus document model |
 | **`Corvus.Yaml.SystemTextJson`** | `System.Text.Json` only | You need a lightweight `JsonDocument` without Corvus dependencies |
 
-Both packages share the same tokenizer and converter implementation via conditional compilation. They target `net9.0`, `net10.0`, `netstandard2.0`, and `netstandard2.1`.
+Both packages share the same tokenizer and converter implementation via conditional compilation. They target `net10.0`, `netstandard2.0`, and `netstandard2.1`.
 
 ## Conformance
 
@@ -597,7 +597,7 @@ The following benchmarks compare JSON→YAML conversion across four paths: **Yam
 | **Performance** | ✅ 7–66× faster, near-zero allocation | ⚠️ Higher allocation, string-based processing |
 | **`System.Text.Json` integration** | ✅ Direct `JsonDocument` / `ParsedJsonDocument` output | ❌ Separate ecosystem |
 | **Corvus document model** | ✅ `ParsedJsonDocument<T>`, JSON Schema validation | ❌ |
-| **Target frameworks** | net9.0, net10.0, netstandard2.0/2.1 | net8.0, net10.0, net47, netstandard2.0/2.1 |
+| **Target frameworks** | net10.0, netstandard2.0/2.1 | net8.0, net10.0, net47, netstandard2.0/2.1 |
 | **Unity support** | ❌ | ✅ Unity Asset Store package |
 | **License** | Apache 2.0 | MIT |
 

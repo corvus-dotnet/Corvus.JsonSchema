@@ -51,6 +51,8 @@ internal static partial class CorvusJsonSchemaProgram
             AssertFormat = true,
             AssertFormatInLegacyDrafts = true,
             RegexProvider = GetRegex,
+            EcmaRegexProvider = GetEcmaRegex,
+            RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(1000),
             FormatModes = new global::System.Collections.Generic.Dictionary<string, JsonSchemaFormatMode>(global::System.StringComparer.Ordinal)
             {
                 ["*"] = JsonSchemaFormatMode.Disable,
@@ -499,23 +501,17 @@ internal static partial class CorvusJsonSchemaProgram
 
     private static Regex? GetRegex(int index, string pattern)
     {
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-        switch (index)
-        {
-            case 0:
-                return Regex0();
-            default:
-                return null;
-        }
-#else
         return null;
-#endif
     }
 
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-    [GeneratedRegex("^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?\\z", RegexOptions.CultureInvariant)]
-    private static partial Regex Regex0();
-#endif
+    private static global::Corvus.Ecma262.RegularExpressions.Regex? GetEcmaRegex(int index, string pattern)
+    {
+        return index switch
+        {
+            0 => global::Corvus.Ui5Benchmark.Current.CorvusJsonSchemaRegularExpressions.Regex0,
+            _ => null,
+        };
+    }
 
     // Program image: 80491 bytes.
     private static ReadOnlySpan<byte> ImageBase64 =>

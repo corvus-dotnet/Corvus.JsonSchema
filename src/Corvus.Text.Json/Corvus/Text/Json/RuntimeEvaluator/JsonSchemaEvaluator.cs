@@ -186,6 +186,76 @@ public sealed class JsonSchemaEvaluator : IDisposable
     }
 #endif
 
+#if !STJ
+    /// <summary>
+    /// Gets the regular expressions a program image's evaluator matches its patterns with, when loaded with the options
+    /// given: for each pattern of the table and each edition it is read with that no matcher of the evaluator's own
+    /// takes, the flags, edition and version of Unicode it is compiled with. A code generator writes a compiled
+    /// matcher for each into the program, for a <see cref="JsonSchemaEcmaRegexProvider"/> to give the evaluator, which
+    /// then compiles none of them.
+    /// </summary>
+    /// <param name="image">The image bytes.</param>
+    /// <param name="options">The options the program is loaded with.</param>
+    /// <returns>The regular expressions, in pattern-table order.</returns>
+    /// <exception cref="JsonSchemaCompilationException">The data is not a program image this evaluator reads.</exception>
+    [CLSCompliant(false)]
+    public static IReadOnlyList<JsonSchemaImageRegularExpression> GetImageRegularExpressions(ReadOnlyMemory<byte> image, JsonSchemaEvaluatorOptions options)
+    {
+        return ProgramImage.ReadRegularExpressions(image, options);
+    }
+#endif
+
+#if STJ
+    /// <summary>
+    /// Gets, for the source generator's build, the patterns of a program image's table that its matchers match with a
+    /// regular expression: for each pattern and each edition it is read with, its index in the table, whether it is
+    /// read with the u flag, the edition and the version of Unicode. This build decides as the library's does (see
+    /// <c>PatternMatcher.Create</c>), so these are the regular expressions the runtime evaluator would compile, and
+    /// the generator writes a compiled matcher for each.
+    /// </summary>
+    /// <param name="tablePatterns">The image's pattern table (see <see cref="GetImagePatterns"/>).</param>
+    /// <param name="options">The options the program is compiled and loaded with.</param>
+    /// <returns>The regular expressions, in the order their nodes are met.</returns>
+    internal List<(int Index, string Pattern, bool Unicode, int Edition, int UnicodeVersion)> GetProgramRegularExpressions(IReadOnlyList<string> tablePatterns, JsonSchemaEvaluatorOptions options)
+    {
+        var indexOf = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (int i = 0; i < tablePatterns.Count; i++)
+        {
+            indexOf[tablePatterns[i]] = i;
+        }
+
+        var seen = new HashSet<(int, int)>();
+        var result = new List<(int Index, string Pattern, bool Unicode, int Edition, int UnicodeVersion)>();
+        foreach (SchemaNode node in this.program.Nodes)
+        {
+            Add(node.Pattern, node.Dialect);
+            if (node.PatternProperties is PatternPropertyEntry[] entries)
+            {
+                foreach (PatternPropertyEntry entry in entries)
+                {
+                    Add(entry.Matcher, node.Dialect);
+                }
+            }
+        }
+
+        return result;
+
+        void Add(PatternMatcher? matcher, JsonSchemaDialect dialect)
+        {
+            if (matcher is { UsesRegex: true } && indexOf.TryGetValue(matcher.Source, out int index))
+            {
+                Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEdition edition = PatternMatcher.EditionFor(options, dialect);
+                Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexUnicodeVersion version = options.RegexUnicodeVersion ?? Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexUnicodeVersion.Default;
+                if (seen.Add((index, (int)edition)))
+                {
+                    bool unicode = Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEmitter.TryValidate(matcher.Source, Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexFlags.Unicode, edition, version, out _, out _);
+                    result.Add((index, matcher.Source, unicode, (int)edition, (int)version));
+                }
+            }
+        }
+    }
+#endif
+
     /// <summary>
     /// Gets the pattern table of a program image: every pattern that needs a regular expression, in the index order
     /// a <see cref="JsonSchemaRegexProvider"/> is asked for them. Patterns are in ECMA-262 syntax as written in the
@@ -495,6 +565,11 @@ public sealed class JsonSchemaEvaluator : IDisposable
             CompileRegularExpressions = source.CompileRegularExpressions,
             RegexMatchTimeout = source.RegexMatchTimeout,
             RegexProvider = source.RegexProvider,
+#if !STJ
+            EcmaRegexProvider = source.EcmaRegexProvider,
+            RegexEdition = source.RegexEdition,
+            RegexUnicodeVersion = source.RegexUnicodeVersion,
+#endif
             DocumentResolver = source.DocumentResolver,
             FallbackDocumentResolver = source.FallbackDocumentResolver,
             BaseUri = source.BaseUri,

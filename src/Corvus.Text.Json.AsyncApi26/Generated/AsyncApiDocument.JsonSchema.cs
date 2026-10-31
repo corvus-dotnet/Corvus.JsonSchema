@@ -20,7 +20,7 @@ public readonly partial struct AsyncApiDocument
         /// <summary>
         /// A regular expression for the <c>patternProperties</c> keyword.
         /// </summary>
-        public static readonly Regex PatternProperties = CreatePatternProperties();
+        public static readonly global::Corvus.Ecma262.RegularExpressions.Regex PatternProperties = global::Corvus.Text.Json.AsyncApi26.CorvusJsonSchemaRegularExpressions.Regex0;
 
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
@@ -60,12 +60,5 @@ public readonly partial struct AsyncApiDocument
         {
             return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
         }
-
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-        [GeneratedRegex("^x-[a-zA-Z0-9_0-9.\\-_]+\\z", RegexOptions.None, matchTimeoutMilliseconds: global::System.Threading.Timeout.Infinite)]
-        private static partial Regex CreatePatternProperties();
-#else
-        private static Regex CreatePatternProperties() => new("^x-[a-zA-Z0-9_0-9.\\-_]+\\z", RegexOptions.Compiled, global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout);
-#endif
     }
 }

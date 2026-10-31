@@ -27,7 +27,7 @@ public readonly partial struct StylecopSchema
                     /// <summary>
                     /// A regular expression for the <c>patternProperties</c> keyword.
                     /// </summary>
-                    public static readonly Regex PatternProperties = CreatePatternProperties();
+                    public static readonly global::Corvus.Ecma262.RegularExpressions.Regex PatternProperties = global::Corvus.StylecopBenchmark.Current.CorvusJsonSchemaRegularExpressions.Regex0;
 
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
@@ -67,13 +67,6 @@ public readonly partial struct StylecopSchema
                     {
                         return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
                     }
-
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                    [GeneratedRegex("^[a-zA-Z0-9]+\\z")]
-                    private static partial Regex CreatePatternProperties();
-#else
-                    private static Regex CreatePatternProperties() => new("^[a-zA-Z0-9]+\\z", RegexOptions.Compiled);
-#endif
                 }
             }
         }

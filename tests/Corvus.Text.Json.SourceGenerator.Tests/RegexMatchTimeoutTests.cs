@@ -56,9 +56,11 @@ public class RegexMatchTimeoutTests
             references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
+        // The translation to .NET's regular expressions, as the DotNet engine writes it.
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [new IncrementalSourceGenerator().AsSourceGenerator()],
-            additionalTexts: [new InMemoryAdditionalText(Path.Combine(TestDirectory, SchemaFileName), Schema)]);
+            additionalTexts: [new InMemoryAdditionalText(Path.Combine(TestDirectory, SchemaFileName), Schema)],
+            optionsProvider: RegexEngineOptions.For("DotNet"));
 
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out ImmutableArray<Diagnostic> _);
         GeneratorRunResult result = driver.GetRunResult().Results[0];
