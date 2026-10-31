@@ -22,7 +22,7 @@ dependencies = [
 
 [[package]]
 name = "corvus-json-schema-py"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "corvus-json-schema",
  "pyo3",
