@@ -66,6 +66,15 @@ public sealed class BuiltInStringTypeNameHeuristic : IBuiltInTypeNameHeuristic
                 // If we have a format and are asserting format, then set the built in type.
                 // otherwise fall through to code gen so we get the formatted conversions etc
                 // but we do not assert the format.
+                // The built-in JsonRegex reads the regex format in today's grammar with the default version of Unicode,
+                // which is not every dialect's: a type of a dialect that reads patterns otherwise (ECMAScript 2020 for
+                // draft 2019-09 and draft 2020-12) is generated, and asserts the format in its own grammar.
+                if (assertFormat && format == "regex" &&
+                    (typeDeclaration.RegexEdition() != GeneratedRegexEdition.Current || typeDeclaration.RegexUnicodeVersion() != GeneratedRegexUnicodeVersion.Default))
+                {
+                    return false;
+                }
+
                 if (assertFormat)
                 {
                     typeDeclaration.SetDotnetNamespace("Corvus.Json");

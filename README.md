@@ -144,7 +144,7 @@ For the source generator, add as an analyzer reference:
 - .NET 10.0, 9.0, 8.0
 - .NET Standard 2.0, 2.1
 
-> **Note:** .NET 8.0 and .NET 9.0 are not supported on the V5 engine (.NET 9.0 support ended in May 2026). The V4 engine will drop .NET 8.0 support in November 2026 when it reaches end-of-life.
+> **Note:** .NET 8.0 and .NET 9.0 are not supported (.NET 9.0 support ended in May 2026, and .NET 8.0 support ends in November 2026). The V4 and V5 engines target .NET 10, `netstandard2.0` and (for the V4 runtime and V5) `netstandard2.1`.
 
 ## Documentation
 
@@ -360,7 +360,7 @@ It now works with .NET 4.8.1 and later by providing `netstandard2.0` packages.
 ### .NET 10.0 (Windows, Linux, MacOs)
 The V5 engine provides `net10.0` packages. These are supported on Windows, Linux, and MacOS.
 
-> **Note:** .NET 8.0 and .NET 9.0 are not supported on the V5 engine (.NET 9.0 support ended in May 2026). If you need .NET 8.0, use the V4 engine (which will retain .NET 8.0 support until its end-of-life in November 2026).
+> **Note:** .NET 8.0 and .NET 9.0 are not supported by either engine (.NET 9.0 support ended in May 2026, and .NET 8.0 support ends in November 2026). A project on .NET 8 can still take the `netstandard2.0` packages.
 
 Note that if you are building libraries using `Corvus.JsonSchema`, you should ensure
 that you target *both* `netstandard2.0` *and* `net10.0` (or later) to ensure that your library can be consumed

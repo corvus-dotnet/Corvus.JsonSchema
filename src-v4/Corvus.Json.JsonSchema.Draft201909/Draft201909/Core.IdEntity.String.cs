@@ -26,12 +26,7 @@ public readonly partial struct Core
     /// Generated from JSON Schema.
     /// </summary>
     public readonly partial struct IdEntity
-#if NET8_0_OR_GREATER
-        : IJsonString<Corvus.Json.JsonSchema.Draft201909.Core.IdEntity>,
-          ISpanFormattable
-#else
         : IJsonString<Corvus.Json.JsonSchema.Draft201909.Core.IdEntity>
-#endif
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="IdEntity"/> struct.
@@ -530,68 +525,5 @@ public readonly partial struct Core
             result = StandardUri.EmptyUri;
             return false;
         }
-
-#if NET8_0_OR_GREATER
-        /// <inheritdoc/>
-        public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
-        {
-            if ((this.backing & Backing.String) != 0)
-            {
-                int length = Math.Min(destination.Length, this.stringBacking.Length);
-                this.stringBacking.AsSpan(0, length).CopyTo(destination);
-                charsWritten = length;
-                return true;
-            }
-
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
-                {
-                    char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
-                    try
-                    {
-                        bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new CorvusOutput(buffer, destination.Length), out charsWritten);
-                        if (result)
-                        {
-                            buffer.AsSpan(0, charsWritten).CopyTo(destination);
-                        }
-
-                        return result;
-                    }
-                    finally
-                    {
-                        ArrayPool<char>.Shared.Return(buffer);
-                    }
-                }
-                else
-                {
-                    string value = this.jsonElementBacking.GetRawText();
-                    int length = Math.Min(destination.Length, this.stringBacking.Length);
-                    this.stringBacking.AsSpan(0, length).CopyTo(destination);
-                    charsWritten = length;
-                    return true;
-                }
-            }
-
-            // We return true from here because we have done our best to format it, and written no characters.
-            charsWritten = 0;
-            return true;
-
-            static bool FormatSpan(ReadOnlySpan<char> source, in CorvusOutput output, out int charsWritten)
-            {
-                int length = Math.Min(output.Length, source.Length);
-                source[..length].CopyTo(output.Destination);
-                charsWritten = length;
-                return true;
-            }
-        }
-
-        /// <inheritdoc/>
-        public string ToString(string? format, IFormatProvider? formatProvider)
-        {
-            // There is no formatting for the string
-            return this.ToString();
-        }
-#endif
     }
 }

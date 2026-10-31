@@ -35,7 +35,7 @@ public readonly partial struct Format
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/meta/format");
+            result = result.PushSchemaLocation("meta/format");
         }
 
         JsonValueKind valueKind = this.ValueKind;

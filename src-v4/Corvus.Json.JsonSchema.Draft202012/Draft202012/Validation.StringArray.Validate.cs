@@ -51,7 +51,7 @@ public readonly partial struct Validation
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/validation#/$defs/stringArray");
+                result = result.PushSchemaLocation("meta/validation#/$defs/stringArray");
             }
 
             JsonValueKind valueKind = this.ValueKind;

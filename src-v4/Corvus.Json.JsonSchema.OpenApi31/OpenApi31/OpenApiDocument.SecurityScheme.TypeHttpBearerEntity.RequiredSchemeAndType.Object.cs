@@ -223,7 +223,11 @@ public readonly partial struct OpenApiDocument
                 public static RequiredSchemeAndType Create(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity.RequiredSchemeAndType.SchemeEntity scheme)
                 {
                     var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-                    builder.Add(JsonPropertyNames.Scheme, scheme.AsAny);
+
+                    if (scheme.IsNotUndefined())
+                    {
+                        builder.Add(JsonPropertyNames.Scheme, scheme.AsAny);
+                    }
                     builder.Add(JsonPropertyNames.Type, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity.RequiredSchemeAndType.TypeEntity.ConstInstance.AsAny);
 
                     return new(builder.ToImmutable());
@@ -344,7 +348,7 @@ public readonly partial struct OpenApiDocument
                 /// <returns>The instance with the property set.</returns>
                 public RequiredSchemeAndType WithScheme(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity.RequiredSchemeAndType.SchemeEntity value)
                 {
-                    return this.SetProperty(JsonPropertyNames.Scheme, value);
+                    return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Scheme, value) : this.RemoveProperty(JsonPropertyNames.Scheme);
                 }
 
                 /// <summary>
@@ -354,7 +358,7 @@ public readonly partial struct OpenApiDocument
                 /// <returns>The instance with the property set.</returns>
                 public RequiredSchemeAndType WithType(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeHttpBearerEntity.RequiredSchemeAndType.TypeEntity value)
                 {
-                    return this.SetProperty(JsonPropertyNames.Type, value);
+                    return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Type, value) : this.RemoveProperty(JsonPropertyNames.Type);
                 }
 
                 /// <summary>
@@ -863,6 +867,26 @@ public readonly partial struct OpenApiDocument
                         if ((that.backing & Backing.JsonElement) != 0)
                         {
                             return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+                    /// </summary>
+                    /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+                    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                    public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in RequiredSchemeAndType that)
+                    {
+                        if ((that.backing & Backing.Object) != 0)
+                        {
+                            return that.objectBacking.ToBuilder();
+                        }
+
+                        if ((that.backing & Backing.JsonElement) != 0)
+                        {
+                            return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                         }
 
                         throw new InvalidOperationException();

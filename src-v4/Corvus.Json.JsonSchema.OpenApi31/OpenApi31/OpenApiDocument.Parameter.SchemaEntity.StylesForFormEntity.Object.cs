@@ -149,7 +149,7 @@ public readonly partial struct OpenApiDocument
                             }
                         }
 
-                        return default;
+                        return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity.DefaultValueFalse.DefaultInstance;
                     }
                 }
 
@@ -182,7 +182,7 @@ public readonly partial struct OpenApiDocument
                 {
                     var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-                    if (explode is not null)
+                    if (explode is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity.DefaultValueFalse explodeNotNull && explodeNotNull.IsNotUndefined())
                     {
                         builder.Add(JsonPropertyNames.Explode, explode.Value.AsAny);
                     }
@@ -305,7 +305,7 @@ public readonly partial struct OpenApiDocument
                 /// <returns>The instance with the property set.</returns>
                 public StylesForFormEntity WithExplode(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForFormEntity.ElseEntity.DefaultValueFalse value)
                 {
-                    return this.SetProperty(JsonPropertyNames.Explode, value);
+                    return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Explode, value) : this.RemoveProperty(JsonPropertyNames.Explode);
                 }
 
                 /// <summary>
@@ -804,6 +804,26 @@ public readonly partial struct OpenApiDocument
                         if ((that.backing & Backing.JsonElement) != 0)
                         {
                             return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+                    /// </summary>
+                    /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+                    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                    public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in StylesForFormEntity that)
+                    {
+                        if ((that.backing & Backing.Object) != 0)
+                        {
+                            return that.objectBacking.ToBuilder();
+                        }
+
+                        if ((that.backing & Backing.JsonElement) != 0)
+                        {
+                            return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                         }
 
                         throw new InvalidOperationException();

@@ -851,9 +851,9 @@ main-docs:
       - {index: 13, language: , lines: [485, 488]}
   - path: "docs/EcmaRegexTranslator.md"
     blocks:
-      - {index: 0, language: csharp, lines: [48, 62], category: compilable, verified: false}
-      - {index: 1, language: csharp, lines: [69, 102], category: fragment, verified: false}
-      - {index: 2, language: powershell, lines: [235, 237]}
+      - {index: 0, language: csharp, lines: [50, 64], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [71, 104], category: fragment, verified: false}
+      - {index: 2, language: powershell, lines: [237, 239]}
   - path: "docs/ImplementingNatsJetStreamAndAzureServiceBus.md"
     blocks:
       - {index: 0, language: , lines: [14, 33]}

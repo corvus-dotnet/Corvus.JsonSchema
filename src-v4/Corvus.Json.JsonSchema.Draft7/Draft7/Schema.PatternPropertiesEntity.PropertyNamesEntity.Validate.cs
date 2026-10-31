@@ -119,7 +119,7 @@ public readonly partial struct Schema
                         return validationContext;
                     }
 
-                    return Corvus.Json.ValidateWithoutCoreType.TypeRegex(value, validationContext, level, "format");
+                    return Corvus.Json.ValidateWithoutCoreType.TypeRegex(value, validationContext, level, global::Corvus.Ecma262.RegularExpressions.RegexEdition.Current, global::Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion.Default, "format");
                 }
             }
         }

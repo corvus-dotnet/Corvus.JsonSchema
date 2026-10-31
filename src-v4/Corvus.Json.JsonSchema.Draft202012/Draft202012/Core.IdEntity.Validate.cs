@@ -42,7 +42,7 @@ public readonly partial struct Core
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/core#/properties/$id");
+                result = result.PushSchemaLocation("meta/core#/properties/$id");
             }
 
             JsonValueKind valueKind = this.ValueKind;
@@ -77,7 +77,7 @@ public readonly partial struct Core
             /// <summary>
             /// A regular expression for the <c>pattern</c> keyword.
             /// </summary>
-            public static readonly Regex Pattern = CreatePattern();
+            public static readonly global::Corvus.Ecma262.RegularExpressions.Regex Pattern = global::Corvus.Json.JsonSchema.Draft202012.CorvusJsonSchemaRegularExpressions.Regex1;
 
             /// <summary>
             /// String validation.
@@ -116,7 +116,7 @@ public readonly partial struct Core
                 {
                     result = context.Context;
 
-                    if (Pattern.IsMatch(input))
+                    if (Corvus.Json.Validate.MatchesPattern(Pattern, input))
                     {
                         if (context.Level == ValidationLevel.Verbose)
                         {
@@ -187,13 +187,6 @@ public readonly partial struct Core
 
                 return result;
             }
-
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^[^#]*#?$")]
-            private static partial Regex CreatePattern();
-#else
-            private static Regex CreatePattern() => new("^[^#]*#?$", RegexOptions.Compiled);
-#endif
         }
     }
 }

@@ -12,6 +12,10 @@
 using global::System.Buffers;
 using global::System.Collections.Immutable;
 using global::System.Runtime.CompilerServices;
+
+#if NET8_0_OR_GREATER
+using global::System.Text;
+#endif
 using global::System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
@@ -33,9 +37,16 @@ namespace Corvus.Json.JsonSchema.Draft4;
 /// </example>
 /// </para>
 /// </remarks>
+[global::System.Diagnostics.DebuggerDisplay("{__CorvusDebuggerDisplay,nq}")]
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<Schema>))]
 public readonly partial struct Schema
-
+#if NET8_0_OR_GREATER
+    : IFormattable,
+      ISpanFormattable,
+      IUtf8SpanFormattable
+#else
+    : IFormattable
+#endif
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
@@ -76,7 +87,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "https://json-schema.org/draft-04/schema";
+    public static string SchemaLocation { get; } = "schema";
 
     /// <summary>
     /// Gets a Null instance.
@@ -91,8 +102,9 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the default instance.
     /// </summary>
+    #pragma warning disable CS0618 // Type or member is obsolete
     public static Schema DefaultInstance { get; } = Schema.ParseValue("{}"u8);
-
+    #pragma warning restore CS0618
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -677,8 +689,78 @@ public readonly partial struct Schema
     }
 
     /// <inheritdoc/>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        if (!string.IsNullOrEmpty(format))
+        {
+            if (this.ValueKind == JsonValueKind.Number)
+            {
+                return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.ToString(format, formatProvider);
+            }
+        }
+
+        return this.ToString();
+    }
+
+#if NET8_0_OR_GREATER
+    /// <inheritdoc/>
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        if (format.IsEmpty)
+        {
+            return LowAllocJsonUtils.TryFormatJsonValue(destination, this, out charsWritten);
+        }
+
+        if (this.ValueKind == JsonValueKind.Number)
+        {
+            return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.TryFormat(destination, out charsWritten, format, provider);
+        }
+
+        string formatted = this.ToString(format.IsEmpty ? null : format.ToString(), provider);
+        if (formatted.Length > destination.Length)
+        {
+            charsWritten = 0;
+            return false;
+        }
+
+        formatted.AsSpan().CopyTo(destination);
+        charsWritten = formatted.Length;
+        return true;
+    }
+
+    /// <inheritdoc/>
+    public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        if (format.IsEmpty)
+        {
+            return LowAllocJsonUtils.TryFormatJsonValue(utf8Destination, this, out bytesWritten);
+        }
+
+        if (this.ValueKind == JsonValueKind.Number)
+        {
+            return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.TryFormat(utf8Destination, out bytesWritten, format, provider);
+        }
+
+        string formatted = this.ToString(format.IsEmpty ? null : format.ToString(), provider);
+        int requiredLength = global::System.Text.Encoding.UTF8.GetByteCount(formatted);
+        if (requiredLength > utf8Destination.Length)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        bytesWritten = global::System.Text.Encoding.UTF8.GetBytes(formatted.AsSpan(), utf8Destination);
+        return true;
+    }
+#endif
+
+
+    /// <inheritdoc/>
     public override string ToString()
     {
         return this.Serialize();
     }
+
+    [global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+    private string __CorvusDebuggerDisplay => $"Schema: ValueKind = {ValueKind} : \"{ToString()}\"";
 }

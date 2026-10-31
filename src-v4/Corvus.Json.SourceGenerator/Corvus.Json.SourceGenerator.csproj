@@ -75,6 +75,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" PrivateAssets="all" />
+    <!-- The Corvus.Regex.Ecma262 emitter, as source compiled into the generator (see Corvus.Json.CodeGeneration.CSharp). -->
+    <PackageReference Include="Corvus.Regex.Ecma262.CodeGeneration.Sources" Version="1.0.12" PrivateAssets="all" />
     <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.4" PrivateAssets="all" GeneratePathProperty="true" />
   </ItemGroup>

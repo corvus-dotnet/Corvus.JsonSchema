@@ -517,6 +517,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.JsonReference": "[1.0.0, )",
+          "Corvus.Regex.Ecma262": "[1.0.12, )",
           "Corvus.UriTemplates": "[2.3.2, )",
           "Microsoft.Bcl.Memory": "[10.0.7, )",
           "NodaTime": "[3.3.1, )",
@@ -554,6 +555,15 @@
           "IndexRange": "1.0.3",
           "System.Buffers": "4.5.1",
           "System.Memory": "4.5.5"
+        }
+      },
+      "Corvus.Regex.Ecma262": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.12, )",
+        "resolved": "1.0.12",
+        "contentHash": "0ErVXFzGlUEgEVvk//BZqf0hbsM+zGo0utwyEqc9hc5eub886A6Qudn3M29BoLsFEdOVHo3HSEbJkA4zuvIhVQ==",
+        "dependencies": {
+          "System.Memory": "4.6.3"
         }
       },
       "Corvus.UriTemplates": {
@@ -1096,6 +1106,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.JsonReference": "[1.0.0, )",
+          "Corvus.Regex.Ecma262": "[1.0.12, )",
           "Corvus.UriTemplates": "[2.3.2, )",
           "NodaTime": "[3.3.1, )"
         }
@@ -1120,6 +1131,12 @@
         "requested": "[1.0.4, )",
         "resolved": "1.0.4",
         "contentHash": "ZSGaQQA3TosSth7bJd/pqMr+LipUiqT1/c0gxli1tI9Rn3JyxHvobnkaBLT42Mwmc49J5HEIogCn+B0+ee4k2w=="
+      },
+      "Corvus.Regex.Ecma262": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.12, )",
+        "resolved": "1.0.12",
+        "contentHash": "0ErVXFzGlUEgEVvk//BZqf0hbsM+zGo0utwyEqc9hc5eub886A6Qudn3M29BoLsFEdOVHo3HSEbJkA4zuvIhVQ=="
       },
       "Corvus.UriTemplates": {
         "type": "CentralTransitive",

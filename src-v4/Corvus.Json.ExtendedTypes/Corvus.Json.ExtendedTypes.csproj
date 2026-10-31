@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -29,6 +29,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Corvus.Regex.Ecma262" />
     <PackageReference Include="Corvus.UriTemplates" />
     <PackageReference Include="NodaTime" />
     <PackageReference Include="System.Collections.Immutable" />
@@ -42,21 +43,11 @@
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <!-- V5 ECMA-262 regex validator (linked source) -->
   <PropertyGroup>
-    <RegexSourceDir>..\..\src\Corvus.Text.Json\Corvus\Text\Json\Regex\</RegexSourceDir>
     <CoreLibSharedDir>..\..\System.Private.CoreLib\src\</CoreLibSharedDir>
     <CommonPath>..\..\Common\src\</CommonPath>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(RegexSourceDir)JsonRegexValidator.cs" Link="Regex\JsonRegexValidator.cs" />
-    <Compile Include="$(RegexSourceDir)JsonRegexNode.cs" Link="Regex\JsonRegexNode.cs" />
-    <Compile Include="$(RegexSourceDir)JsonRegexNodeKind.cs" Link="Regex\JsonRegexNodeKind.cs" />
-    <Compile Include="$(RegexSourceDir)JsonRegexOpCode.cs" Link="Regex\JsonRegexOpCode.cs" />
-    <Compile Include="$(RegexSourceDir)JsonRegexOptions.cs" Link="Regex\JsonRegexOptions.cs" />
-    <Compile Include="$(RegexSourceDir)JsonRegexCharClass.cs" Link="Regex\JsonRegexCharClass.cs" />
-    <Compile Include="$(RegexSourceDir)JsonRegexCaseBehavior.cs" Link="Regex\JsonRegexCaseBehavior.cs" />
-    <Compile Include="$(RegexSourceDir)JsonRegexReplacement.cs" Link="Regex\JsonRegexReplacement.cs" />
     <Compile Include="$(CommonPath)System\HexConverter.cs" Link="Common\System\HexConverter.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.cs" Link="Common\System\Collections\Generic\ValueListBuilder.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Common\System\Collections\Generic\ValueListBuilder.Pop.cs" />

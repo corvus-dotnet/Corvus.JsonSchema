@@ -46,7 +46,7 @@ public readonly partial struct OpenApiDocument
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fcorvus-dotnet%2FCorvus.JsonSchema%2FSolutions%2FCorvus.Json.JsonSchema.OpenApi31%2FOpenApi31.json#/$defs/media-type/properties/encoding");
+                result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=%2Fhome%2Fmwa%2Fsrc%2Fworktrees%2Fphase-6-dotnet%2Fsrc-v4%2FCorvus.Json.JsonSchema.OpenApi31%2FOpenApi31.json#/$defs/media-type/properties/encoding");
             }
 
             JsonValueKind valueKind = this.ValueKind;

@@ -56,7 +56,7 @@ public readonly partial struct Applicator
                         result = result.UsingStack();
                     }
 
-                    result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/applicator#/properties/patternProperties/propertyNames");
+                    result = result.PushSchemaLocation("meta/applicator#/properties/patternProperties/propertyNames");
                 }
 
                 JsonValueKind valueKind = this.ValueKind;
@@ -109,7 +109,7 @@ public readonly partial struct Applicator
                         return validationContext;
                     }
 
-                    return Corvus.Json.ValidateWithoutCoreType.TypeRegex(value, validationContext, level, "format");
+                    return Corvus.Json.ValidateWithoutCoreType.TypeRegex(value, validationContext, level, global::Corvus.Ecma262.RegularExpressions.RegexEdition.Es2020, global::Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion.Default, "format");
                 }
             }
         }

@@ -12,6 +12,10 @@
 using global::System.Buffers;
 using global::System.Collections.Immutable;
 using global::System.Runtime.CompilerServices;
+
+#if NET8_0_OR_GREATER
+using global::System.Text;
+#endif
 using global::System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
@@ -26,9 +30,18 @@ public readonly partial struct Validation
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    [global::System.Diagnostics.DebuggerDisplay("{__CorvusDebuggerDisplay,nq}")]
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<TypeEntity>))]
     public readonly partial struct TypeEntity
-        : IJsonValue<Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity>
+#if NET8_0_OR_GREATER
+        : IJsonValue<Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity>,
+          IFormattable,
+          ISpanFormattable,
+          IUtf8SpanFormattable
+#else
+        : IJsonValue<Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity>,
+          IFormattable
+#endif
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
@@ -85,7 +98,7 @@ public readonly partial struct Validation
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "https://json-schema.org/draft/2019-09/meta/validation#/properties/type";
+        public static string SchemaLocation { get; } = "meta/validation#/properties/type";
 
         /// <summary>
         /// Gets a Null instance.
@@ -829,10 +842,80 @@ public readonly partial struct Validation
         }
 
         /// <inheritdoc/>
+        public string ToString(string? format, IFormatProvider? formatProvider)
+        {
+            if (!string.IsNullOrEmpty(format))
+            {
+                if (this.ValueKind == JsonValueKind.Number)
+                {
+                    return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.ToString(format, formatProvider);
+                }
+            }
+
+            return this.ToString();
+        }
+
+#if NET8_0_OR_GREATER
+        /// <inheritdoc/>
+        public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            if (format.IsEmpty)
+            {
+                return LowAllocJsonUtils.TryFormatJsonValue(destination, this, out charsWritten);
+            }
+
+            if (this.ValueKind == JsonValueKind.Number)
+            {
+                return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.TryFormat(destination, out charsWritten, format, provider);
+            }
+
+            string formatted = this.ToString(format.IsEmpty ? null : format.ToString(), provider);
+            if (formatted.Length > destination.Length)
+            {
+                charsWritten = 0;
+                return false;
+            }
+
+            formatted.AsSpan().CopyTo(destination);
+            charsWritten = formatted.Length;
+            return true;
+        }
+
+        /// <inheritdoc/>
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            if (format.IsEmpty)
+            {
+                return LowAllocJsonUtils.TryFormatJsonValue(utf8Destination, this, out bytesWritten);
+            }
+
+            if (this.ValueKind == JsonValueKind.Number)
+            {
+                return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.TryFormat(utf8Destination, out bytesWritten, format, provider);
+            }
+
+            string formatted = this.ToString(format.IsEmpty ? null : format.ToString(), provider);
+            int requiredLength = global::System.Text.Encoding.UTF8.GetByteCount(formatted);
+            if (requiredLength > utf8Destination.Length)
+            {
+                bytesWritten = 0;
+                return false;
+            }
+
+            bytesWritten = global::System.Text.Encoding.UTF8.GetBytes(formatted.AsSpan(), utf8Destination);
+            return true;
+        }
+#endif
+
+
+        /// <inheritdoc/>
         public override string ToString()
         {
             return this.Serialize();
         }
+
+        [global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+        private string __CorvusDebuggerDisplay => $"TypeEntity: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         /// <summary>
         /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
@@ -891,6 +974,40 @@ public readonly partial struct Validation
             }
 
             return defaultMatch(this);
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+        /// </summary>
+        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+        /// <param name="matchSimpleTypes">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes"/>.</param>
+        /// <param name="matchSimpleTypesArray">Match a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray"/>.</param>
+        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+        /// <returns>The accumulator returned by the last match function called.</returns>
+        public TAccumulator MatchEvery<TAccumulator>(
+            TAccumulator accumulator,
+            Matcher<Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes, TAccumulator, TAccumulator> matchSimpleTypes,
+            Matcher<Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray, TAccumulator, TAccumulator> matchSimpleTypesArray,
+            Matcher<Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity, TAccumulator, TAccumulator> defaultMatch)
+        {
+            bool matched = false;
+
+            Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes matchSimpleTypesValue = this.As<Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes>();
+            if (matchSimpleTypesValue.IsValid())
+            {
+                matched = true;
+                accumulator = matchSimpleTypes(matchSimpleTypesValue, accumulator);
+            }
+
+            Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray matchSimpleTypesArrayValue = this.As<Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray>();
+            if (matchSimpleTypesArrayValue.IsValid())
+            {
+                matched = true;
+                accumulator = matchSimpleTypesArray(matchSimpleTypesArrayValue, accumulator);
+            }
+
+            return matched ? accumulator : defaultMatch(this, accumulator);
         }
 
         /// <summary>

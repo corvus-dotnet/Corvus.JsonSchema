@@ -35,7 +35,7 @@ public readonly partial struct Validation
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/meta/validation");
+            result = result.PushSchemaLocation("meta/validation");
         }
 
         JsonValueKind valueKind = this.ValueKind;
@@ -503,7 +503,7 @@ public readonly partial struct Validation
                         result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/pattern"), JsonPropertyNames.Pattern);
                     }
 
-                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonRegex>().Validate(result.CreateChildContext(), level);
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonSchema.Draft201909.Validation.PatternEntity>().Validate(result.CreateChildContext(), level);
                     if (level == ValidationLevel.Flag && !propertyResult.IsValid)
                     {
                         return propertyResult;

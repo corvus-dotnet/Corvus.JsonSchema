@@ -6,6 +6,10 @@ using System.Diagnostics;
 using System.Text.Json;
 using Corvus.Text.Json.CodeGeneration;
 using Microsoft.CodeAnalysis.CSharp;
+using EcmaRegexEdition = Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEdition;
+using EcmaRegexEmitter = Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEmitter;
+using EcmaRegexFlags = Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexFlags;
+using EcmaRegexUnicodeVersion = Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexUnicodeVersion;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -89,14 +93,14 @@ public static partial class ValidationCodeGeneratorExtensions
                     generator.AppendSeparatorLine();
                     if (constant.Value.Count == 1)
                     {
-                        generator.AppendRegexValidationField(constant.Key, null);
+                        generator.AppendRegexValidationField(typeDeclaration, constant.Key, null, constant.Value[0]);
                     }
                     else
                     {
                         int i = 1;
                         foreach (string value in constant.Value)
                         {
-                            generator.AppendRegexValidationField(constant.Key, i);
+                            generator.AppendRegexValidationField(typeDeclaration, constant.Key, i, value);
                             i++;
                         }
                     }
@@ -111,6 +115,12 @@ public static partial class ValidationCodeGeneratorExtensions
     {
         if (generator.IsCancellationRequested)
         {
+            return generator;
+        }
+
+        if (typeDeclaration.RegexEngine() == GeneratedRegexEngine.Ecma262)
+        {
+            // The fields refer to Corvus.Regex.Ecma262's compiled matchers, written once for the generation.
             return generator;
         }
 
@@ -357,7 +367,7 @@ public static partial class ValidationCodeGeneratorExtensions
         return generator;
     }
 
-    private static CodeGenerator AppendRegexValidationField(this CodeGenerator generator, IKeyword keyword, int? index)
+    private static CodeGenerator AppendRegexValidationField(this CodeGenerator generator, TypeDeclaration typeDeclaration, IKeyword keyword, int? index, string value)
     {
         if (generator.IsCancellationRequested)
         {
@@ -366,6 +376,35 @@ public static partial class ValidationCodeGeneratorExtensions
 
         string? suffix = index?.ToString(System.Globalization.CultureInfo.InvariantCulture);
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: suffix);
+        if (typeDeclaration.RegexEngine() == GeneratedRegexEngine.Ecma262)
+        {
+            // A pattern that is not a valid ECMA-262 regular expression stops the generation here, read as V5 reads
+            // it: with the u flag, and failing that with none, in the edition and version of Unicode of the type. A
+            // pattern over a limit of size stops it too, with its own exception and a message that says it is too
+            // large.
+            if (!TryReadEcmaPattern(typeDeclaration, value, out EcmaRegexFlags flags, out string? error, out bool tooLarge))
+            {
+                throw tooLarge
+                    ? new EcmaRegexPatternTooLargeException($"The pattern of the keyword '{keyword.Keyword}' is too large. {error}", string.Empty, true)
+                    : new InvalidOperationException($"The pattern '{value}' of the keyword '{keyword.Keyword}' is not a valid ECMA-262 regular expression. {error}");
+            }
+
+            string reference = SharedRegularExpressions.For(generator, ((CSharpLanguageProvider)generator.LanguageProvider).DefaultNamespace).Reference(
+                value,
+                flags == EcmaRegexFlags.Unicode,
+                typeDeclaration.RegexEdition(),
+                typeDeclaration.RegexUnicodeVersion());
+            return generator
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// A regular expression for the <c>", keyword.Keyword, "</c> keyword.")
+                .AppendLineIndent("/// </summary>")
+                .AppendIndent("public static readonly global::Corvus.Ecma262.RegularExpressions.Regex ")
+                .Append(memberName)
+                .Append(" = ")
+                .Append(reference)
+                .AppendLine(";");
+        }
+
         string methodName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: suffix);
 
         generator
@@ -379,6 +418,24 @@ public static partial class ValidationCodeGeneratorExtensions
             .AppendLine("();");
 
         return generator;
+    }
+
+    /// <summary>
+    /// Reads a pattern as V5 reads it, in the edition and version of Unicode of the type: in the grammar of the u
+    /// flag, or failing that in the grammar of no flag.
+    /// </summary>
+    private static bool TryReadEcmaPattern(TypeDeclaration typeDeclaration, string pattern, out EcmaRegexFlags flags, out string? error, out bool tooLarge)
+    {
+        EcmaRegexEdition edition = (EcmaRegexEdition)(int)typeDeclaration.RegexEdition();
+        EcmaRegexUnicodeVersion version = (EcmaRegexUnicodeVersion)(int)typeDeclaration.RegexUnicodeVersion();
+        if (EcmaRegexEmitter.TryValidate(pattern, EcmaRegexFlags.Unicode, edition, version, out error, out tooLarge))
+        {
+            flags = EcmaRegexFlags.Unicode;
+            return true;
+        }
+
+        flags = EcmaRegexFlags.None;
+        return !tooLarge && EcmaRegexEmitter.TryValidate(pattern, EcmaRegexFlags.None, edition, version, out error, out tooLarge);
     }
 
     private static CodeGenerator AppendRegexValidationFactoryMethod(this CodeGenerator generator, IKeyword keyword, int? index, string value)

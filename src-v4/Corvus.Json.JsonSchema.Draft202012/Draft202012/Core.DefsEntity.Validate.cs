@@ -41,7 +41,7 @@ public readonly partial struct Core
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/core#/properties/$defs");
+                result = result.PushSchemaLocation("meta/core#/properties/$defs");
             }
 
             JsonValueKind valueKind = this.ValueKind;

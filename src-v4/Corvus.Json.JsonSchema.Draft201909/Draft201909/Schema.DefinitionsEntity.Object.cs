@@ -1000,6 +1000,26 @@ DefinitionsEntity IJsonObject<DefinitionsEntity>.SetProperty<TValue>(in JsonProp
             }
 
             /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+            /// </summary>
+            /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in DefinitionsEntity that)
+            {
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.ToBuilder();
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
             /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, with the given property.</returns>

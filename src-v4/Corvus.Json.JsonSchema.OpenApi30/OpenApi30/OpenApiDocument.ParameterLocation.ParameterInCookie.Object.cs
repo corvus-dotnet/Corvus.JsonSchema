@@ -186,7 +186,7 @@ public readonly partial struct OpenApiDocument
                         }
                     }
 
-                    return default;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie.StyleEntity.DefaultInstance;
                 }
             }
 
@@ -219,12 +219,12 @@ public readonly partial struct OpenApiDocument
             {
                 var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-                if (inValue is not null)
+                if (inValue is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie.InEntity inValueNotNull && inValueNotNull.IsNotUndefined())
                 {
                     builder.Add(JsonPropertyNames.In, inValue.Value.AsAny);
                 }
 
-                if (style is not null)
+                if (style is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie.StyleEntity styleNotNull && styleNotNull.IsNotUndefined())
                 {
                     builder.Add(JsonPropertyNames.Style, style.Value.AsAny);
                 }
@@ -347,7 +347,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The instance with the property set.</returns>
             public ParameterInCookie WithIn(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie.InEntity value)
             {
-                return this.SetProperty(JsonPropertyNames.In, value);
+                return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.In, value) : this.RemoveProperty(JsonPropertyNames.In);
             }
 
             /// <summary>
@@ -357,7 +357,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The instance with the property set.</returns>
             public ParameterInCookie WithStyle(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie.StyleEntity value)
             {
-                return this.SetProperty(JsonPropertyNames.Style, value);
+                return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Style, value) : this.RemoveProperty(JsonPropertyNames.Style);
             }
 
             /// <summary>
@@ -866,6 +866,26 @@ public readonly partial struct OpenApiDocument
                     if ((that.backing & Backing.JsonElement) != 0)
                     {
                         return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                    }
+
+                    throw new InvalidOperationException();
+                }
+
+                /// <summary>
+                /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+                /// </summary>
+                /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+                /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in ParameterInCookie that)
+                {
+                    if ((that.backing & Backing.Object) != 0)
+                    {
+                        return that.objectBacking.ToBuilder();
+                    }
+
+                    if ((that.backing & Backing.JsonElement) != 0)
+                    {
+                        return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                     }
 
                     throw new InvalidOperationException();

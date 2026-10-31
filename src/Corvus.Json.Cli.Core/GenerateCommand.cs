@@ -107,16 +107,16 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public bool Unions { get; init; }
 
         [CommandOption("--regexEngine <VALUE>")]
-        [Description("The engine the regular expressions of generated code are written for (V5 engine only). Ecma262 (the default) writes Corvus.Regex.Ecma262's compiled matchers, with the compiled regular expression as data; DotNet writes .NET's System.Text.RegularExpressions, as earlier versions did, for code that depends on the generated fields being .NET's Regex.")]
+        [Description("The engine the regular expressions of generated code are written for (V4 and V5 engines). Ecma262 (the default) writes Corvus.Regex.Ecma262's compiled matchers, with the compiled regular expression as data; DotNet writes .NET's System.Text.RegularExpressions, as earlier versions did, for code that depends on the generated fields being .NET's Regex.")]
         [DefaultValue(GeneratedRegexEngine.Ecma262)]
         public GeneratedRegexEngine RegexEngine { get; init; }
 
         [CommandOption("--regexEdition <VALUE>")]
-        [Description("The edition of ECMA-262 whose grammar every pattern is read with (V5 engine, Ecma262 regular expressions only): Current or Es2020. By default, each dialect's: Es2020 for draft 2019-09 and draft 2020-12, Current for the others.")]
+        [Description("The edition of ECMA-262 whose grammar every pattern is read with (Ecma262 regular expressions only): Current or Es2020. By default, each dialect's: Es2020 for draft 2019-09 and draft 2020-12, Current for the others.")]
         public GeneratedRegexEdition? RegexEdition { get; init; }
 
         [CommandOption("--regexUnicodeVersion <VALUE>")]
-        [Description("The version of Unicode every pattern is read with (V5 engine, Ecma262 regular expressions only): Default (the version V8 uses, 17), V13, V17, V18 or Latest.")]
+        [Description("The version of Unicode every pattern is read with (Ecma262 regular expressions only): Default (the version V8 uses, 17), V13, V17, V18 or Latest.")]
         [DefaultValue(GeneratedRegexUnicodeVersion.Default)]
         public GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; init; }
 

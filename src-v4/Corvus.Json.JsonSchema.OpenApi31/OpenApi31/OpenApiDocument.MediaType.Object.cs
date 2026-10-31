@@ -272,22 +272,22 @@ public readonly partial struct OpenApiDocument
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-            if (encoding is not null)
+            if (encoding is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType.EncodingEntity encodingNotNull && encodingNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Encoding, encoding.Value.AsAny);
             }
 
-            if (example is not null)
+            if (example is Corvus.Json.JsonAny exampleNotNull && exampleNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Example, example.Value.AsAny);
             }
 
-            if (examples is not null)
+            if (examples is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity examplesNotNull && examplesNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.ExamplesValue, examples.Value.AsAny);
             }
 
-            if (schema is not null)
+            if (schema is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema schemaNotNull && schemaNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.SchemaValue, schema.Value.AsAny);
             }
@@ -410,7 +410,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public MediaType WithEncoding(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MediaType.EncodingEntity value)
         {
-            return this.SetProperty(JsonPropertyNames.Encoding, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Encoding, value) : this.RemoveProperty(JsonPropertyNames.Encoding);
         }
 
         /// <summary>
@@ -420,7 +420,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public MediaType WithExample(in Corvus.Json.JsonAny value)
         {
-            return this.SetProperty(JsonPropertyNames.Example, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Example, value) : this.RemoveProperty(JsonPropertyNames.Example);
         }
 
         /// <summary>
@@ -430,7 +430,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public MediaType WithExamplesValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity value)
         {
-            return this.SetProperty(JsonPropertyNames.ExamplesValue, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ExamplesValue, value) : this.RemoveProperty(JsonPropertyNames.ExamplesValue);
         }
 
         /// <summary>
@@ -440,7 +440,61 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public MediaType WithSchemaValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema value)
         {
-            return this.SetProperty(JsonPropertyNames.SchemaValue, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.SchemaValue, value) : this.RemoveProperty(JsonPropertyNames.SchemaValue);
+        }
+
+        /// <summary>
+        /// Applies a composed value.
+        /// </summary>
+        /// <remarks>
+        /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+        /// </remarks>
+        /// <param name="value">The composed value to apply.</param>
+        /// <returns>A new instance with the composed value applied.</returns>
+        public MediaType WithApplied(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions value)
+        {
+            if (!value.HasProperties())
+            {
+                return this;
+            }
+
+            ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+            foreach (JsonObjectProperty property in value.EnumerateObject())
+            {
+                if (property.Value.IsNotUndefined())
+                {
+                    builder.SetItem(property.Name, property.Value);
+                }
+            }
+
+            return new(builder.ToImmutable());
+        }
+
+        /// <summary>
+        /// Applies a composed value.
+        /// </summary>
+        /// <remarks>
+        /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+        /// </remarks>
+        /// <param name="value">The composed value to apply.</param>
+        /// <returns>A new instance with the composed value applied.</returns>
+        public MediaType WithApplied(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples value)
+        {
+            if (!value.HasProperties())
+            {
+                return this;
+            }
+
+            ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+            foreach (JsonObjectProperty property in value.EnumerateObject())
+            {
+                if (property.Value.IsNotUndefined())
+                {
+                    builder.SetItem(property.Name, property.Value);
+                }
+            }
+
+            return new(builder.ToImmutable());
         }
 
         /// <summary>
@@ -969,6 +1023,26 @@ public readonly partial struct OpenApiDocument
                 if ((that.backing & Backing.JsonElement) != 0)
                 {
                     return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+            /// </summary>
+            /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in MediaType that)
+            {
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.ToBuilder();
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                 }
 
                 throw new InvalidOperationException();

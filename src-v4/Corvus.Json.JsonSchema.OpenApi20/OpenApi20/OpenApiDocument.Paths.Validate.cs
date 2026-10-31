@@ -86,11 +86,11 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// A regular expression for the <c>patternProperties</c> keyword.
             /// </summary>
-            public static readonly Regex PatternProperties1 = CreatePatternProperties1();
+            public static readonly global::Corvus.Ecma262.RegularExpressions.Regex PatternProperties1 = global::Corvus.Json.JsonSchema.OpenApi20.CorvusJsonSchemaRegularExpressions.Regex1;
             /// <summary>
             /// A regular expression for the <c>patternProperties</c> keyword.
             /// </summary>
-            public static readonly Regex PatternProperties2 = CreatePatternProperties2();
+            public static readonly global::Corvus.Ecma262.RegularExpressions.Regex PatternProperties2 = global::Corvus.Json.JsonSchema.OpenApi20.CorvusJsonSchemaRegularExpressions.Regex0;
 
             /// <summary>
             /// Core type validation.
@@ -216,19 +216,6 @@ public readonly partial struct OpenApiDocument
 
                 return result;
             }
-
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^/", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
-            private static partial Regex CreatePatternProperties1();
-#else
-            private static Regex CreatePatternProperties1() => new("^/", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));
-#endif
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^x-", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
-            private static partial Regex CreatePatternProperties2();
-#else
-            private static Regex CreatePatternProperties2() => new("^x-", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));
-#endif
         }
     }
 }

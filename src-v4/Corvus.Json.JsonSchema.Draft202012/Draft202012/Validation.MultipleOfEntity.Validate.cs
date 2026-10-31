@@ -41,7 +41,7 @@ public readonly partial struct Validation
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/validation#/properties/multipleOf");
+                result = result.PushSchemaLocation("meta/validation#/properties/multipleOf");
             }
 
             JsonValueKind valueKind = this.ValueKind;

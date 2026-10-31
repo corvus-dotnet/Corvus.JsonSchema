@@ -45,7 +45,7 @@ public readonly partial struct Schema
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("https://json-schema.org/draft-07/schema");
+            result = result.PushSchemaLocation("schema");
         }
 
         JsonValueKind valueKind = this.ValueKind;

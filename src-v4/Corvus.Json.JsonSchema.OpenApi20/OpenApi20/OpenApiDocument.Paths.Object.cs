@@ -41,14 +41,14 @@ public readonly partial struct OpenApiDocument
         /// for the pattern property producing the type
         /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension"/>.
         /// </summary>
-        public static Regex PatternPropertyVendorExtension => CorvusValidation.PatternProperties1;
+        public static global::Corvus.Ecma262.RegularExpressions.Regex PatternPropertyVendorExtension => CorvusValidation.PatternProperties1;
 
         /// <summary>
         /// The pattern matching '^x-'
         /// for the pattern property producing the type
         /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem"/>.
         /// </summary>
-        public static Regex PatternPropertyPathItem => CorvusValidation.PatternProperties2;
+        public static global::Corvus.Ecma262.RegularExpressions.Regex PatternPropertyPathItem => CorvusValidation.PatternProperties2;
 
         /// <summary>
         /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.

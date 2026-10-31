@@ -38,7 +38,7 @@ public readonly partial struct OpenApiDocument
         /// for the pattern property producing the type
         /// <see cref="Corvus.Json.JsonAny"/>.
         /// </summary>
-        public static Regex PatternPropertyJsonAny => CorvusValidation.PatternProperties;
+        public static global::Corvus.Ecma262.RegularExpressions.Regex PatternPropertyJsonAny => CorvusValidation.PatternProperties;
 
         /// <summary>
         /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
@@ -147,7 +147,7 @@ public readonly partial struct OpenApiDocument
                     }
                 }
 
-                return default;
+                return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.AttributeEntity.DefaultInstance;
             }
         }
 
@@ -275,7 +275,7 @@ public readonly partial struct OpenApiDocument
                     }
                 }
 
-                return default;
+                return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.WrappedEntity.DefaultInstance;
             }
         }
 
@@ -313,27 +313,27 @@ public readonly partial struct OpenApiDocument
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-            if (attribute is not null)
+            if (attribute is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.AttributeEntity attributeNotNull && attributeNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Attribute, attribute.Value.AsAny);
             }
 
-            if (name is not null)
+            if (name is Corvus.Json.JsonString nameNotNull && nameNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Name, name.Value.AsAny);
             }
 
-            if (namespaceValue is not null)
+            if (namespaceValue is Corvus.Json.JsonUri namespaceValueNotNull && namespaceValueNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Namespace, namespaceValue.Value.AsAny);
             }
 
-            if (prefix is not null)
+            if (prefix is Corvus.Json.JsonString prefixNotNull && prefixNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Prefix, prefix.Value.AsAny);
             }
 
-            if (wrapped is not null)
+            if (wrapped is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.WrappedEntity wrappedNotNull && wrappedNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Wrapped, wrapped.Value.AsAny);
             }
@@ -456,7 +456,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Xml WithAttribute(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.AttributeEntity value)
         {
-            return this.SetProperty(JsonPropertyNames.Attribute, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Attribute, value) : this.RemoveProperty(JsonPropertyNames.Attribute);
         }
 
         /// <summary>
@@ -466,7 +466,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Xml WithName(in Corvus.Json.JsonString value)
         {
-            return this.SetProperty(JsonPropertyNames.Name, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Name, value) : this.RemoveProperty(JsonPropertyNames.Name);
         }
 
         /// <summary>
@@ -476,7 +476,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Xml WithNamespace(in Corvus.Json.JsonUri value)
         {
-            return this.SetProperty(JsonPropertyNames.Namespace, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Namespace, value) : this.RemoveProperty(JsonPropertyNames.Namespace);
         }
 
         /// <summary>
@@ -486,7 +486,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Xml WithPrefix(in Corvus.Json.JsonString value)
         {
-            return this.SetProperty(JsonPropertyNames.Prefix, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Prefix, value) : this.RemoveProperty(JsonPropertyNames.Prefix);
         }
 
         /// <summary>
@@ -496,7 +496,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Xml WithWrapped(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml.WrappedEntity value)
         {
-            return this.SetProperty(JsonPropertyNames.Wrapped, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Wrapped, value) : this.RemoveProperty(JsonPropertyNames.Wrapped);
         }
 
         /// <summary>
@@ -907,6 +907,68 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Visits properties matched by generated pattern property helpers.
+        /// </summary>
+        /// <typeparam name="TState">The visitor state type.</typeparam>
+        public interface IPatternPropertyVisitor<TState>
+        {
+            /// <summary>
+            /// Visits a property matching '^x-'.
+            /// </summary>
+            bool VisitPatternJsonAny(in JsonPropertyName name, in Corvus.Json.JsonAny value, ref TState state);
+
+            /// <summary>
+            /// Visits a property that did not match any generated pattern property.
+            /// </summary>
+            bool VisitUnmatched(in JsonPropertyName name, in JsonAny value, ref TState state);
+        }
+
+        /// <summary>
+        /// Matches each property against the generated pattern properties and dispatches to a visitor.
+        /// </summary>
+        /// <typeparam name="TState">The visitor state type.</typeparam>
+        /// <typeparam name="TVisitor">The visitor type.</typeparam>
+        /// <param name="state">The visitor state.</param>
+        /// <param name="visitor">The visitor to call for each matched or unmatched property.</param>
+        /// <param name="shortCircuit">If <see langword="true"/>, only the first matching pattern is visited for each property.</param>
+        /// <returns><see langword="true"/> if every visitor call returned <see langword="true"/>, otherwise <see langword="false"/>.</returns>
+        public bool MatchPatternProperties<TState, TVisitor>(ref TState state, TVisitor visitor, bool shortCircuit = false)
+            where TVisitor : IPatternPropertyVisitor<TState>
+        {
+            foreach (JsonObjectProperty property in EnumerateObject())
+            {
+                JsonPropertyName propertyName = property.Name;
+                bool matched = false;
+
+                if (MatchesPatternJsonAny(in property))
+                {
+                    matched = true;
+                    Corvus.Json.JsonAny typedValue = property.Value.As<Corvus.Json.JsonAny>();
+                    if (!visitor.VisitPatternJsonAny(in propertyName, in typedValue, ref state))
+                    {
+                        return false;
+                    }
+
+                    if (shortCircuit)
+                    {
+                        continue;
+                    }
+                }
+
+                if (!matched)
+                {
+                    JsonAny unmatchedValue = property.Value;
+                    if (!visitor.VisitUnmatched(in propertyName, in unmatchedValue, ref state))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Provides UTF8 and string versions of the JSON property names on the object.
         /// </summary>
         public static class JsonPropertyNames
@@ -1059,6 +1121,26 @@ public readonly partial struct OpenApiDocument
                 if ((that.backing & Backing.JsonElement) != 0)
                 {
                     return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+            /// </summary>
+            /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in Xml that)
+            {
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.ToBuilder();
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                 }
 
                 throw new InvalidOperationException();

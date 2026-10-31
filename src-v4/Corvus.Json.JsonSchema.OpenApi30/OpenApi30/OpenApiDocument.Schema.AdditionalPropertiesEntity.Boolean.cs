@@ -46,7 +46,9 @@ public readonly partial struct OpenApiDocument
         /// </para>
         /// </remarks>
         public readonly partial struct AdditionalPropertiesEntity
+#if !NET8_0_OR_GREATER
             : IJsonBoolean<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AdditionalPropertiesEntity>
+#endif
         {
             /// <summary>
             /// Conversion from <see cref="bool"/>.
@@ -87,7 +89,7 @@ public readonly partial struct OpenApiDocument
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
-            public static implicit operator bool(AdditionalPropertiesEntity value)
+            public static explicit operator bool(AdditionalPropertiesEntity value)
             {
                 return value.GetBoolean() ?? throw new InvalidOperationException();
             }

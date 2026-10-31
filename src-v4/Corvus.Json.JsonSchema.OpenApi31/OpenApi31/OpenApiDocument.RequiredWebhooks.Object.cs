@@ -176,7 +176,11 @@ public readonly partial struct OpenApiDocument
         public static RequiredWebhooks Create(in Corvus.Json.JsonAny webhooks)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-            builder.Add(JsonPropertyNames.Webhooks, webhooks.AsAny);
+
+            if (webhooks.IsNotUndefined())
+            {
+                builder.Add(JsonPropertyNames.Webhooks, webhooks.AsAny);
+            }
 
             return new(builder.ToImmutable());
         }
@@ -296,7 +300,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public RequiredWebhooks WithWebhooks(in Corvus.Json.JsonAny value)
         {
-            return this.SetProperty(JsonPropertyNames.Webhooks, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Webhooks, value) : this.RemoveProperty(JsonPropertyNames.Webhooks);
         }
 
         /// <summary>
@@ -795,6 +799,26 @@ public readonly partial struct OpenApiDocument
                 if ((that.backing & Backing.JsonElement) != 0)
                 {
                     return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+            /// </summary>
+            /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in RequiredWebhooks that)
+            {
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.ToBuilder();
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                 }
 
                 throw new InvalidOperationException();

@@ -228,17 +228,17 @@ public readonly partial struct Content
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-        if (contentEncoding is not null)
+        if (contentEncoding is Corvus.Json.JsonString contentEncodingNotNull && contentEncodingNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ContentEncoding, contentEncoding.Value.AsAny);
         }
 
-        if (contentMediaType is not null)
+        if (contentMediaType is Corvus.Json.JsonString contentMediaTypeNotNull && contentMediaTypeNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ContentMediaType, contentMediaType.Value.AsAny);
         }
 
-        if (contentSchema is not null)
+        if (contentSchema is Corvus.Json.JsonSchema.Draft201909.Schema contentSchemaNotNull && contentSchemaNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ContentSchema, contentSchema.Value.AsAny);
         }
@@ -361,7 +361,7 @@ public readonly partial struct Content
     /// <returns>The instance with the property set.</returns>
     public Content WithContentEncoding(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.ContentEncoding, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ContentEncoding, value) : this.RemoveProperty(JsonPropertyNames.ContentEncoding);
     }
 
     /// <summary>
@@ -371,7 +371,7 @@ public readonly partial struct Content
     /// <returns>The instance with the property set.</returns>
     public Content WithContentMediaType(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.ContentMediaType, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ContentMediaType, value) : this.RemoveProperty(JsonPropertyNames.ContentMediaType);
     }
 
     /// <summary>
@@ -381,7 +381,7 @@ public readonly partial struct Content
     /// <returns>The instance with the property set.</returns>
     public Content WithContentSchema(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.ContentSchema, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ContentSchema, value) : this.RemoveProperty(JsonPropertyNames.ContentSchema);
     }
 
     /// <summary>
@@ -900,6 +900,26 @@ public readonly partial struct Content
             if ((that.backing & Backing.JsonElement) != 0)
             {
                 return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+        /// </summary>
+        /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in Content that)
+        {
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.ToBuilder();
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
             }
 
             throw new InvalidOperationException();

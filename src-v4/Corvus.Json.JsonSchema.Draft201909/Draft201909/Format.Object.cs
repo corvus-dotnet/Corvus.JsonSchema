@@ -161,7 +161,7 @@ public readonly partial struct Format
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-        if (format is not null)
+        if (format is Corvus.Json.JsonString formatNotNull && formatNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.FormatValue, format.Value.AsAny);
         }
@@ -284,7 +284,7 @@ public readonly partial struct Format
     /// <returns>The instance with the property set.</returns>
     public Format WithFormatValue(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.FormatValue, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.FormatValue, value) : this.RemoveProperty(JsonPropertyNames.FormatValue);
     }
 
     /// <summary>
@@ -783,6 +783,26 @@ public readonly partial struct Format
             if ((that.backing & Backing.JsonElement) != 0)
             {
                 return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+        /// </summary>
+        /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in Format that)
+        {
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.ToBuilder();
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
             }
 
             throw new InvalidOperationException();

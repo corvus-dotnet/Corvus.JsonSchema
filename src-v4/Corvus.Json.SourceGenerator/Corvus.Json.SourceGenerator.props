@@ -9,6 +9,9 @@
       <CompilerVisibleProperty Include="CorvusJsonSchemaDefaultAccessibility" />
       <CompilerVisibleProperty Include="CorvusJsonSchemaAddExplicitUsings" />
       <CompilerVisibleProperty Include="CorvusJsonSchemaUseImplicitOperatorString" />
+      <CompilerVisibleProperty Include="CorvusJsonSchemaRegexEngine" />
+      <CompilerVisibleProperty Include="CorvusJsonSchemaRegexEdition" />
+      <CompilerVisibleProperty Include="CorvusJsonSchemaRegexUnicodeVersion" />
     </ItemGroup>
 
     <PropertyGroup>

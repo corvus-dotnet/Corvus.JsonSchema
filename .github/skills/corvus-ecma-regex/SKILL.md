@@ -22,9 +22,9 @@ flag and failing that with none, in the edition and version of Unicode of the di
 The translator described here turns a pattern into a .NET pattern that gives the same answer. It is used where .NET's
 `Regex` is still wanted:
 
-- generated code under `--regexEngine DotNet` (`CorvusTextJsonRegexEngine=DotNet`), whose fields stay .NET's `Regex`;
-- `JsonSchemaEvaluator.ToDotNetPattern`, and the .NET pattern table of a program generated for the DotNet engine;
-- the V4 generators, until V4 adopts the library.
+- V5 and V4 generated code under `--regexEngine DotNet` (`CorvusTextJsonRegexEngine=DotNet`, or
+  `CorvusJsonSchemaRegexEngine=DotNet` for V4), whose fields stay .NET's `Regex`;
+- `JsonSchemaEvaluator.ToDotNetPattern`, and the .NET pattern table of a program generated for the DotNet engine.
 
 Full reference: `docs/EcmaRegexTranslator.md` (overview) and `docs/EcmaRegexTranslations.md` (every translation).
 

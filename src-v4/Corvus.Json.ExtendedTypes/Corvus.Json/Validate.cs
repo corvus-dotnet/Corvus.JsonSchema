@@ -9,7 +9,14 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Corvus.Json.Internal;
-using Corvus.Text.Json.Internal;
+
+#if BUILDING_SOURCE_GENERATOR
+using EcmaRegexEdition = Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEdition;
+using EcmaRegexUnicodeVersion = Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexUnicodeVersion;
+#else
+using EcmaRegexEdition = Corvus.Ecma262.RegularExpressions.RegexEdition;
+using EcmaRegexUnicodeVersion = Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion;
+#endif
 
 namespace Corvus.Json;
 
@@ -3544,7 +3551,8 @@ public static partial class Validate
     }
 
     /// <summary>
-    /// Validates the format regex.
+    /// Validates the format regex, in the grammar of the <c>u</c> flag of today's ECMAScript (the overload that
+    /// takes an edition is the one generated code calls, with its dialect's).
     /// </summary>
     /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
     /// <param name="instance">The instance to validate.</param>
@@ -3554,6 +3562,26 @@ public static partial class Validate
     /// <param name="formatKeyword">The format keyword.</param>
     /// <returns>The updated validation context.</returns>
     public static ValidationContext TypeRegex<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? typeKeyword = null, string? formatKeyword = null)
+        where T : struct, IJsonValue<T>
+        => TypeRegex(instance, validationContext, level, EcmaRegexEdition.Current, EcmaRegexUnicodeVersion.Default, typeKeyword, formatKeyword);
+
+    /// <summary>
+    /// Validates the format regex, in the grammar of the <c>u</c> flag of the edition and version of Unicode given.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <param name="edition">The edition of ECMA-262 whose grammar the pattern is read with.</param>
+    /// <param name="unicodeVersion">The version of Unicode the pattern is read with.</param>
+    /// <param name="typeKeyword">The type keyword.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
+    /// <returns>The updated validation context.</returns>
+#if BUILDING_SOURCE_GENERATOR
+    internal static ValidationContext TypeRegex<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, EcmaRegexEdition edition, EcmaRegexUnicodeVersion unicodeVersion, string? typeKeyword = null, string? formatKeyword = null)
+#else
+    public static ValidationContext TypeRegex<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, EcmaRegexEdition edition, EcmaRegexUnicodeVersion unicodeVersion, string? typeKeyword = null, string? formatKeyword = null)
+#endif
         where T : struct, IJsonValue<T>
     {
         JsonValueKind valueKind = instance.ValueKind;
@@ -3585,7 +3613,7 @@ public static partial class Validate
             result = validationContext;
         }
 
-        instance.AsString.TryGetValue(RegexValidator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
+        instance.AsString.TryGetValue(RegexValidator, new RegexFormatContext(result, level, formatKeyword, edition, unicodeVersion), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -3594,11 +3622,11 @@ public static partial class Validate
 
         return result;
 
-        static bool RegexValidator(ReadOnlySpan<char> input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
+        static bool RegexValidator(ReadOnlySpan<char> input, in RegexFormatContext context, out ValidationContext result)
         {
             result = context.Context;
 
-            if (!JsonRegexValidator.Validate(input, JsonRegexOptions.ECMAScript))
+            if (!EcmaRegexFormat.IsValid(input, context.Edition, context.UnicodeVersion))
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
@@ -4444,4 +4472,18 @@ public static partial class Validate
         public Regex? Pattern { get; }
     }
 #endif
+
+    /// <summary>The state of the <c>regex</c> format's check: the context, and the grammar to read with.</summary>
+    private readonly struct RegexFormatContext(in ValidationContext context, ValidationLevel level, string? formatKeyword, EcmaRegexEdition edition, EcmaRegexUnicodeVersion unicodeVersion)
+    {
+        public ValidationContext Context { get; } = context;
+
+        public ValidationLevel Level { get; } = level;
+
+        public string? FormatKeyword { get; } = formatKeyword;
+
+        public EcmaRegexEdition Edition { get; } = edition;
+
+        public EcmaRegexUnicodeVersion UnicodeVersion { get; } = unicodeVersion;
+    }
 }

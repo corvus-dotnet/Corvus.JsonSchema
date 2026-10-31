@@ -234,7 +234,7 @@ public readonly partial struct OpenApiDocument
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.JsonSchemaDialectEntity.DefaultInstance;
         }
     }
 
@@ -367,7 +367,7 @@ public readonly partial struct OpenApiDocument
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ServerArray.DefaultInstance;
         }
     }
 
@@ -473,45 +473,53 @@ public readonly partial struct OpenApiDocument
         in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.WebhooksEntity? webhooks = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-        builder.Add(JsonPropertyNames.InfoValue, info.AsAny);
-        builder.Add(JsonPropertyNames.Openapi, openapi.AsAny);
 
-        if (components is not null)
+        if (info.IsNotUndefined())
+        {
+            builder.Add(JsonPropertyNames.InfoValue, info.AsAny);
+        }
+
+        if (openapi.IsNotUndefined())
+        {
+            builder.Add(JsonPropertyNames.Openapi, openapi.AsAny);
+        }
+
+        if (components is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components componentsNotNull && componentsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ComponentsValue, components.Value.AsAny);
         }
 
-        if (externalDocs is not null)
+        if (externalDocs is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ExternalDocumentation externalDocsNotNull && externalDocsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ExternalDocs, externalDocs.Value.AsAny);
         }
 
-        if (jsonSchemaDialect is not null)
+        if (jsonSchemaDialect is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.JsonSchemaDialectEntity jsonSchemaDialectNotNull && jsonSchemaDialectNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.JsonSchemaDialect, jsonSchemaDialect.Value.AsAny);
         }
 
-        if (paths is not null)
+        if (paths is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Paths pathsNotNull && pathsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.PathsValue, paths.Value.AsAny);
         }
 
-        if (security is not null)
+        if (security is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityRequirementArray securityNotNull && securityNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Security, security.Value.AsAny);
         }
 
-        if (servers is not null)
+        if (servers is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ServerArray serversNotNull && serversNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Servers, servers.Value.AsAny);
         }
 
-        if (tags is not null)
+        if (tags is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.TagArray tagsNotNull && tagsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Tags, tags.Value.AsAny);
         }
 
-        if (webhooks is not null)
+        if (webhooks is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.WebhooksEntity webhooksNotNull && webhooksNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Webhooks, webhooks.Value.AsAny);
         }
@@ -634,7 +642,7 @@ public readonly partial struct OpenApiDocument
     /// <returns>The instance with the property set.</returns>
     public OpenApiDocument WithComponentsValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components value)
     {
-        return this.SetProperty(JsonPropertyNames.ComponentsValue, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ComponentsValue, value) : this.RemoveProperty(JsonPropertyNames.ComponentsValue);
     }
 
     /// <summary>
@@ -644,7 +652,7 @@ public readonly partial struct OpenApiDocument
     /// <returns>The instance with the property set.</returns>
     public OpenApiDocument WithExternalDocs(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ExternalDocumentation value)
     {
-        return this.SetProperty(JsonPropertyNames.ExternalDocs, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ExternalDocs, value) : this.RemoveProperty(JsonPropertyNames.ExternalDocs);
     }
 
     /// <summary>
@@ -654,7 +662,7 @@ public readonly partial struct OpenApiDocument
     /// <returns>The instance with the property set.</returns>
     public OpenApiDocument WithInfoValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Info value)
     {
-        return this.SetProperty(JsonPropertyNames.InfoValue, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.InfoValue, value) : this.RemoveProperty(JsonPropertyNames.InfoValue);
     }
 
     /// <summary>
@@ -664,7 +672,7 @@ public readonly partial struct OpenApiDocument
     /// <returns>The instance with the property set.</returns>
     public OpenApiDocument WithJsonSchemaDialect(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.JsonSchemaDialectEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.JsonSchemaDialect, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.JsonSchemaDialect, value) : this.RemoveProperty(JsonPropertyNames.JsonSchemaDialect);
     }
 
     /// <summary>
@@ -674,7 +682,7 @@ public readonly partial struct OpenApiDocument
     /// <returns>The instance with the property set.</returns>
     public OpenApiDocument WithOpenapi(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenapiEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Openapi, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Openapi, value) : this.RemoveProperty(JsonPropertyNames.Openapi);
     }
 
     /// <summary>
@@ -684,7 +692,7 @@ public readonly partial struct OpenApiDocument
     /// <returns>The instance with the property set.</returns>
     public OpenApiDocument WithPathsValue(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Paths value)
     {
-        return this.SetProperty(JsonPropertyNames.PathsValue, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.PathsValue, value) : this.RemoveProperty(JsonPropertyNames.PathsValue);
     }
 
     /// <summary>
@@ -694,7 +702,7 @@ public readonly partial struct OpenApiDocument
     /// <returns>The instance with the property set.</returns>
     public OpenApiDocument WithSecurity(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityRequirementArray value)
     {
-        return this.SetProperty(JsonPropertyNames.Security, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Security, value) : this.RemoveProperty(JsonPropertyNames.Security);
     }
 
     /// <summary>
@@ -704,7 +712,7 @@ public readonly partial struct OpenApiDocument
     /// <returns>The instance with the property set.</returns>
     public OpenApiDocument WithServers(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ServerArray value)
     {
-        return this.SetProperty(JsonPropertyNames.Servers, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Servers, value) : this.RemoveProperty(JsonPropertyNames.Servers);
     }
 
     /// <summary>
@@ -714,7 +722,7 @@ public readonly partial struct OpenApiDocument
     /// <returns>The instance with the property set.</returns>
     public OpenApiDocument WithTags(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.TagArray value)
     {
-        return this.SetProperty(JsonPropertyNames.Tags, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Tags, value) : this.RemoveProperty(JsonPropertyNames.Tags);
     }
 
     /// <summary>
@@ -724,7 +732,115 @@ public readonly partial struct OpenApiDocument
     /// <returns>The instance with the property set.</returns>
     public OpenApiDocument WithWebhooks(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.WebhooksEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Webhooks, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Webhooks, value) : this.RemoveProperty(JsonPropertyNames.Webhooks);
+    }
+
+    /// <summary>
+    /// Applies a composed value.
+    /// </summary>
+    /// <remarks>
+    /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+    /// </remarks>
+    /// <param name="value">The composed value to apply.</param>
+    /// <returns>A new instance with the composed value applied.</returns>
+    public OpenApiDocument WithApplied(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions value)
+    {
+        if (!value.HasProperties())
+        {
+            return this;
+        }
+
+        ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+        foreach (JsonObjectProperty property in value.EnumerateObject())
+        {
+            if (property.Value.IsNotUndefined())
+            {
+                builder.SetItem(property.Name, property.Value);
+            }
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Applies a composed value.
+    /// </summary>
+    /// <remarks>
+    /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+    /// </remarks>
+    /// <param name="value">The composed value to apply.</param>
+    /// <returns>A new instance with the composed value applied.</returns>
+    public OpenApiDocument WithApplied(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredPaths value)
+    {
+        if (!value.HasProperties())
+        {
+            return this;
+        }
+
+        ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+        foreach (JsonObjectProperty property in value.EnumerateObject())
+        {
+            if (property.Value.IsNotUndefined())
+            {
+                builder.SetItem(property.Name, property.Value);
+            }
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Applies a composed value.
+    /// </summary>
+    /// <remarks>
+    /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+    /// </remarks>
+    /// <param name="value">The composed value to apply.</param>
+    /// <returns>A new instance with the composed value applied.</returns>
+    public OpenApiDocument WithApplied(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredComponents value)
+    {
+        if (!value.HasProperties())
+        {
+            return this;
+        }
+
+        ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+        foreach (JsonObjectProperty property in value.EnumerateObject())
+        {
+            if (property.Value.IsNotUndefined())
+            {
+                builder.SetItem(property.Name, property.Value);
+            }
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Applies a composed value.
+    /// </summary>
+    /// <remarks>
+    /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+    /// </remarks>
+    /// <param name="value">The composed value to apply.</param>
+    /// <returns>A new instance with the composed value applied.</returns>
+    public OpenApiDocument WithApplied(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredWebhooks value)
+    {
+        if (!value.HasProperties())
+        {
+            return this;
+        }
+
+        ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+        foreach (JsonObjectProperty property in value.EnumerateObject())
+        {
+            if (property.Value.IsNotUndefined())
+            {
+                builder.SetItem(property.Name, property.Value);
+            }
+        }
+
+        return new(builder.ToImmutable());
     }
 
     /// <summary>
@@ -1313,6 +1429,26 @@ public readonly partial struct OpenApiDocument
             if ((that.backing & Backing.JsonElement) != 0)
             {
                 return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+        /// </summary>
+        /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in OpenApiDocument that)
+        {
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.ToBuilder();
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
             }
 
             throw new InvalidOperationException();

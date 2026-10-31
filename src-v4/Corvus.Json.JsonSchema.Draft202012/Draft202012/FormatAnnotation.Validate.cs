@@ -35,7 +35,7 @@ public readonly partial struct FormatAnnotation
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/format-annotation");
+            result = result.PushSchemaLocation("meta/format-annotation");
         }
 
         JsonValueKind valueKind = this.ValueKind;

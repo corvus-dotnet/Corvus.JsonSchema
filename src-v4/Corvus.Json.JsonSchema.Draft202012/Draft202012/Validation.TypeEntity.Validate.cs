@@ -41,7 +41,7 @@ public readonly partial struct Validation
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/validation#/properties/type");
+                result = result.PushSchemaLocation("meta/validation#/properties/type");
             }
 
             result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);

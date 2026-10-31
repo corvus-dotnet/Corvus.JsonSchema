@@ -587,13 +587,13 @@ public readonly partial struct Schema
             }
 
             /// <inheritdoc/>
-            SimpleTypesArray IJsonArray<SimpleTypesArray>.RemoveAt(int index)
+            public SimpleTypesArray RemoveAt(int index)
             {
                 return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, 1));
             }
 
             /// <inheritdoc/>
-            SimpleTypesArray IJsonArray<SimpleTypesArray>.RemoveRange(int index, int count)
+            public SimpleTypesArray RemoveRange(int index, int count)
             {
                 return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, count));
             }

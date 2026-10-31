@@ -51,7 +51,7 @@ public readonly partial struct Applicator
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/applicator#/properties/patternProperties");
+                result = result.PushSchemaLocation("meta/applicator#/properties/patternProperties");
             }
 
             JsonValueKind valueKind = this.ValueKind;

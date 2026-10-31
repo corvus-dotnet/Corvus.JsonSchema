@@ -87,7 +87,7 @@ public readonly partial struct OpenApiDocument
                 /// <summary>
                 /// A regular expression for the <c>patternProperties</c> keyword.
                 /// </summary>
-                public static readonly Regex PatternProperties = CreatePatternProperties();
+                public static readonly global::Corvus.Ecma262.RegularExpressions.Regex PatternProperties = global::Corvus.Json.JsonSchema.OpenApi30.CorvusJsonSchemaRegularExpressions.Regex1;
 
                 /// <summary>
                 /// Core type validation.
@@ -139,14 +139,13 @@ public readonly partial struct OpenApiDocument
                     {
                         string? propertyNameAsString = null;
 
-                        propertyNameAsString ??= property.Name.GetString();
-
-                        if (PatternProperties.IsMatch(propertyNameAsString))
+                        if (property.Name.IsMatch(PatternProperties))
                         {
                             result = result.WithLocalProperty(propertyCount);
                             if (level > ValidationLevel.Basic)
                             {
-                                result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/patternProperties"), propertyNameAsString);
+                                propertyNameAsString ??= property.Name.GetString();
+                                result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/patternProperties/^[a-zA-Z0-9\\.\\-_]+$"), propertyNameAsString);
                             }
 
                             result = property.Value.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Components.RequestBodiesEntity.AZaZ09Entity>().Validate(result, level);
@@ -167,13 +166,6 @@ public readonly partial struct OpenApiDocument
 
                     return result;
                 }
-
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                [GeneratedRegex("^[a-zA-Z0-9\\.\\-_]+$")]
-                private static partial Regex CreatePatternProperties();
-#else
-                private static Regex CreatePatternProperties() => new("^[a-zA-Z0-9\\.\\-_]+$", RegexOptions.Compiled);
-#endif
             }
         }
     }

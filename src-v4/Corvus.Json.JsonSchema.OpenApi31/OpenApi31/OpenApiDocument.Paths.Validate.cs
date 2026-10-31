@@ -93,7 +93,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// A regular expression for the <c>patternProperties</c> keyword.
             /// </summary>
-            public static readonly Regex PatternProperties = CreatePatternProperties();
+            public static readonly global::Corvus.Ecma262.RegularExpressions.Regex PatternProperties = global::Corvus.Json.JsonSchema.OpenApi31.CorvusJsonSchemaRegularExpressions.Regex3;
 
             /// <summary>
             /// Core type validation.
@@ -190,14 +190,13 @@ public readonly partial struct OpenApiDocument
                 {
                     string? propertyNameAsString = null;
 
-                    propertyNameAsString ??= property.Name.GetString();
-
-                    if (PatternProperties.IsMatch(propertyNameAsString))
+                    if (property.Name.IsMatch(PatternProperties))
                     {
                         result = result.WithLocalProperty(propertyCount);
                         if (level > ValidationLevel.Basic)
                         {
-                            result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/patternProperties/$ref"), propertyNameAsString);
+                            propertyNameAsString ??= property.Name.GetString();
+                            result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/patternProperties/^~1/$ref"), propertyNameAsString);
                         }
 
                         result = property.Value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem>().Validate(result, level);
@@ -242,13 +241,6 @@ public readonly partial struct OpenApiDocument
 
                 return result;
             }
-
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^/")]
-            private static partial Regex CreatePatternProperties();
-#else
-            private static Regex CreatePatternProperties() => new("^/", RegexOptions.Compiled);
-#endif
         }
     }
 }

@@ -74,7 +74,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// A regular expression for the <c>patternProperties</c> keyword.
             /// </summary>
-            public static readonly Regex PatternProperties = CreatePatternProperties();
+            public static readonly global::Corvus.Ecma262.RegularExpressions.Regex PatternProperties = global::Corvus.Json.JsonSchema.OpenApi20.CorvusJsonSchemaRegularExpressions.Regex0;
 
             /// <summary>
             /// Object validation.
@@ -634,13 +634,6 @@ public readonly partial struct OpenApiDocument
 
                 return result;
             }
-
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^x-", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
-            private static partial Regex CreatePatternProperties();
-#else
-            private static Regex CreatePatternProperties() => new("^x-", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));
-#endif
         }
     }
 }

@@ -240,6 +240,14 @@ public static class GenerationDriverV4
         bool excludeNonNullDefaulted = optionalAsNullableMode.Equals(GeneratorConfig.OptionalAsNullable.EnumValues.NullOrUndefinedExceptNonNullDefaulted);
         bool optionalAsNullable = excludeNonNullDefaulted || optionalAsNullableMode.Equals(GeneratorConfig.OptionalAsNullable.EnumValues.NullOrUndefined);
 
+        GeneratorConfig.RegexEngine regexEngineMode = generatorConfig.RegexEngineValue ?? GeneratorConfig.RegexEngine.DefaultInstance;
+        GeneratedRegexEngine regexEngine = regexEngineMode.Equals(GeneratorConfig.RegexEngine.EnumValues.DotNet) ? GeneratedRegexEngine.DotNet : GeneratedRegexEngine.Ecma262;
+        GeneratedRegexEdition? regexEdition = generatorConfig.RegexEditionValue is GeneratorConfig.RegexEdition edition && !edition.IsUndefined()
+            ? (edition.Equals(GeneratorConfig.RegexEdition.EnumValues.Es2020) ? GeneratedRegexEdition.Es2020 : GeneratedRegexEdition.Current)
+            : null;
+        GeneratorConfig.RegexUnicodeVersion regexUnicodeVersionMode = generatorConfig.RegexUnicodeVersionValue ?? GeneratorConfig.RegexUnicodeVersion.DefaultInstance;
+        GeneratedRegexUnicodeVersion regexUnicodeVersion = (GeneratedRegexUnicodeVersion)Enum.Parse(typeof(GeneratedRegexUnicodeVersion), (string)regexUnicodeVersionMode);
+
         return new CSharpLanguageProvider.Options(
             (string)generatorConfig.RootNamespace,
             namedTypes: namedTypes.Select(n => new CSharpLanguageProvider.NamedType(new((string)n.Reference), (string)n.DotnetTypeName, n.DotnetNamespace?.GetString(), GetAccessibility(n) ?? defaultAccessibility)).ToArray(),
@@ -253,7 +261,10 @@ public static class GenerationDriverV4
             addExplicitUsings: generatorConfig.AddExplicitUsings ?? false,
             defaultAccessibility: defaultAccessibility,
             excludeNonNullDefaulted: excludeNonNullDefaulted,
-            formatModeOverrides: GetFormatModeOverrides(generatorConfig));
+            formatModeOverrides: GetFormatModeOverrides(generatorConfig),
+            regexEngine: regexEngine,
+            regexEdition: regexEdition,
+            regexUnicodeVersion: regexUnicodeVersion);
     }
 
     private static IReadOnlyDictionary<string, FormatAssertionMode>? GetFormatModeOverrides(in GeneratorConfig generatorConfig)

@@ -84,6 +84,12 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     public bool IsCancellationRequested => this.cancellationToken.IsCancellationRequested;
 
     /// <summary>
+    /// Gets the type declaration whose code is being written, between <see cref="TryBeginTypeDeclaration"/> and
+    /// <see cref="EndTypeDeclaration"/>, or <see langword="null"/> outside one.
+    /// </summary>
+    public TypeDeclaration? CurrentTypeDeclaration => this.currentTypeDeclaration;
+
+    /// <summary>
     /// Gets the current scope type.
     /// </summary>
     public int ScopeType => this.scope.Count > 0 ? this.scope.Peek().Type : CodeGeneration.ScopeType.Unknown;

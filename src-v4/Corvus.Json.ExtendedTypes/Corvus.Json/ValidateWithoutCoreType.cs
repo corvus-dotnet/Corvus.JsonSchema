@@ -6,7 +6,14 @@ using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Corvus.Json.Internal;
-using Corvus.Text.Json.Internal;
+
+#if BUILDING_SOURCE_GENERATOR
+using EcmaRegexEdition = Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEdition;
+using EcmaRegexUnicodeVersion = Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexUnicodeVersion;
+#else
+using EcmaRegexEdition = Corvus.Ecma262.RegularExpressions.RegexEdition;
+using EcmaRegexUnicodeVersion = Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion;
+#endif
 
 namespace Corvus.Json;
 
@@ -1621,8 +1628,27 @@ public static partial class ValidateWithoutCoreType
     /// <returns>The updated validation context.</returns>
     public static ValidationContext TypeRegex<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
+        => TypeRegex(instance, validationContext, level, EcmaRegexEdition.Current, EcmaRegexUnicodeVersion.Default, formatKeyword);
+
+    /// <summary>
+    /// Validates the format regex.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <param name="edition">The edition of ECMA-262 whose grammar the pattern is read with.</param>
+    /// <param name="unicodeVersion">The version of Unicode the pattern is read with.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
+    /// <returns>The updated validation context.</returns>
+#if BUILDING_SOURCE_GENERATOR
+    internal static ValidationContext TypeRegex<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, EcmaRegexEdition edition, EcmaRegexUnicodeVersion unicodeVersion, string? formatKeyword = null)
+#else
+    public static ValidationContext TypeRegex<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, EcmaRegexEdition edition, EcmaRegexUnicodeVersion unicodeVersion, string? formatKeyword = null)
+#endif
+        where T : struct, IJsonValue<T>
     {
-        instance.AsString.TryGetValue(RegexValidator, new Validate.ValidationContextWrapperWithFormatKeyword(validationContext, level, formatKeyword), out ValidationContext result);
+        instance.AsString.TryGetValue(RegexValidator, new RegexFormatContext(validationContext, level, formatKeyword, edition, unicodeVersion), out ValidationContext result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1631,11 +1657,11 @@ public static partial class ValidateWithoutCoreType
 
         return result;
 
-        static bool RegexValidator(ReadOnlySpan<char> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
+        static bool RegexValidator(ReadOnlySpan<char> input, in RegexFormatContext context, out ValidationContext result)
         {
             result = context.Context;
 
-            if (!JsonRegexValidator.Validate(input, JsonRegexOptions.ECMAScript))
+            if (!EcmaRegexFormat.IsValid(input, context.Edition, context.UnicodeVersion))
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
@@ -2139,5 +2165,19 @@ public static partial class ValidateWithoutCoreType
         }
 
         return validationContext;
+    }
+
+    /// <summary>The state of the <c>regex</c> format's check: the context, and the grammar to read with.</summary>
+    private readonly struct RegexFormatContext(in ValidationContext context, ValidationLevel level, string? formatKeyword, EcmaRegexEdition edition, EcmaRegexUnicodeVersion unicodeVersion)
+    {
+        public ValidationContext Context { get; } = context;
+
+        public ValidationLevel Level { get; } = level;
+
+        public string? FormatKeyword { get; } = formatKeyword;
+
+        public EcmaRegexEdition Edition { get; } = edition;
+
+        public EcmaRegexUnicodeVersion UnicodeVersion { get; } = unicodeVersion;
     }
 }

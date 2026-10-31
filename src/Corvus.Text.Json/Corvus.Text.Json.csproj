@@ -339,14 +339,6 @@
     <Compile Include="Corvus\Text\Json\JsonSchema\JsonSchemaResultsCollector.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\JsonSchemaResultsLevel.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Matcher.cs" />
-    <Compile Include="Corvus\Text\Json\Regex\JsonRegexCaseBehavior.cs" />
-    <Compile Include="Corvus\Text\Json\Regex\JsonRegexCharClass.cs" />
-    <Compile Include="Corvus\Text\Json\Regex\JsonRegexNode.cs" />
-    <Compile Include="Corvus\Text\Json\Regex\JsonRegexNodeKind.cs" />
-    <Compile Include="Corvus\Text\Json\Regex\JsonRegexOpCode.cs" />
-    <Compile Include="Corvus\Text\Json\Regex\JsonRegexOptions.cs" />
-    <Compile Include="Corvus\Text\Json\Regex\JsonRegexValidator.cs" />
-    <Compile Include="Corvus\Text\Json\Regex\JsonRegexReplacement.cs" />
     <Compile Include="Corvus\Text\Json\UnescapedUtf8JsonString.cs" />
     <Compile Include="Corvus\Text\Json\UnescapedUtf16JsonString.cs" />
     <Compile Include="Corvus\Text\Json\RawUtf8JsonString.cs" />

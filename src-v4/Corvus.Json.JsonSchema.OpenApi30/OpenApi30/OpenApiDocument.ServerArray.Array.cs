@@ -574,13 +574,13 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        ServerArray IJsonArray<ServerArray>.RemoveAt(int index)
+        public ServerArray RemoveAt(int index)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, 1));
         }
 
         /// <inheritdoc/>
-        ServerArray IJsonArray<ServerArray>.RemoveRange(int index, int count)
+        public ServerArray RemoveRange(int index, int count)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, count));
         }

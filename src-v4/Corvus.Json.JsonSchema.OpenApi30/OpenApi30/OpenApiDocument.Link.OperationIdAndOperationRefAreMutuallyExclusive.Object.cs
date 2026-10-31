@@ -223,8 +223,16 @@ public readonly partial struct OpenApiDocument
             public static OperationIdAndOperationRefAreMutuallyExclusive Create(in Corvus.Json.JsonAny operationId, in Corvus.Json.JsonAny operationRef)
             {
                 var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-                builder.Add(JsonPropertyNames.OperationId, operationId.AsAny);
-                builder.Add(JsonPropertyNames.OperationRef, operationRef.AsAny);
+
+                if (operationId.IsNotUndefined())
+                {
+                    builder.Add(JsonPropertyNames.OperationId, operationId.AsAny);
+                }
+
+                if (operationRef.IsNotUndefined())
+                {
+                    builder.Add(JsonPropertyNames.OperationRef, operationRef.AsAny);
+                }
 
                 return new(builder.ToImmutable());
             }
@@ -344,7 +352,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The instance with the property set.</returns>
             public OperationIdAndOperationRefAreMutuallyExclusive WithOperationId(in Corvus.Json.JsonAny value)
             {
-                return this.SetProperty(JsonPropertyNames.OperationId, value);
+                return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.OperationId, value) : this.RemoveProperty(JsonPropertyNames.OperationId);
             }
 
             /// <summary>
@@ -354,7 +362,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The instance with the property set.</returns>
             public OperationIdAndOperationRefAreMutuallyExclusive WithOperationRef(in Corvus.Json.JsonAny value)
             {
-                return this.SetProperty(JsonPropertyNames.OperationRef, value);
+                return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.OperationRef, value) : this.RemoveProperty(JsonPropertyNames.OperationRef);
             }
 
             /// <summary>
@@ -863,6 +871,26 @@ public readonly partial struct OpenApiDocument
                     if ((that.backing & Backing.JsonElement) != 0)
                     {
                         return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                    }
+
+                    throw new InvalidOperationException();
+                }
+
+                /// <summary>
+                /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+                /// </summary>
+                /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+                /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in OperationIdAndOperationRefAreMutuallyExclusive that)
+                {
+                    if ((that.backing & Backing.Object) != 0)
+                    {
+                        return that.objectBacking.ToBuilder();
+                    }
+
+                    if ((that.backing & Backing.JsonElement) != 0)
+                    {
+                        return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                     }
 
                     throw new InvalidOperationException();

@@ -29,6 +29,9 @@ public static class TypeDeclarationExtensions
     private const string AddExplicitUsingsKey = "CSharp_LanguageProvider_AddExplicitUsings";
     private const string DefaultAccessibilityKey = "CSharp_LanguageProvider_DefaultAccessibilityKey";
     private const string AccessibilityKey = "CSharp_LanguageProvider_AccessibilityKey";
+    private const string RegexEngineKey = "CSharp_LanguageProvider_RegexEngine";
+    private const string RegexEditionKey = "CSharp_LanguageProvider_RegexEdition";
+    private const string RegexUnicodeVersionKey = "CSharp_LanguageProvider_RegexUnicodeVersion";
 
     /// <summary>
     /// Sets the relevant metadata from the <see cref="CSharpLanguageProvider.Options"/>.
@@ -44,6 +47,52 @@ public static class TypeDeclarationExtensions
         typeDeclaration.SetMetadata(UseImplicitOperatorStringKey, options.UseImplicitOperatorString);
         typeDeclaration.SetMetadata(AddExplicitUsingsKey, options.AddExplicitUsings);
         typeDeclaration.SetMetadata(DefaultAccessibilityKey, options.DefaultAccessibility);
+        typeDeclaration.SetMetadata(RegexEngineKey, options.RegexEngine);
+        typeDeclaration.SetMetadata(RegexEditionKey, options.RegexEdition);
+        typeDeclaration.SetMetadata(RegexUnicodeVersionKey, options.RegexUnicodeVersion);
+    }
+
+    /// <summary>Gets the engine the type's regular expressions are written for.</summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The engine.</returns>
+    public static GeneratedRegexEngine RegexEngine(this TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.TryGetMetadata(RegexEngineKey, out GeneratedRegexEngine? engine) && engine is GeneratedRegexEngine value
+            ? value
+            : GeneratedRegexEngine.Ecma262;
+    }
+
+    /// <summary>
+    /// Gets the edition of the grammar the type's patterns are read with: the one the options give, or by default
+    /// ECMAScript 2020 for draft 2019-09 and draft 2020-12 (and OpenAPI 3.1), which cite it, and today's for drafts
+    /// 4, 6 and 7 and OpenAPI 2.0 and 3.0, as V5 reads them.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The edition.</returns>
+    public static GeneratedRegexEdition RegexEdition(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(RegexEditionKey, out GeneratedRegexEdition? edition) && edition is GeneratedRegexEdition value)
+        {
+            return value;
+        }
+
+        return typeDeclaration.LocatedSchema.Vocabulary.Uri switch
+        {
+            "http://json-schema.org/draft-04/schema" or "http://json-schema.org/draft-04/schema#"
+                or "http://json-schema.org/draft-06/schema" or "http://json-schema.org/draft-06/schema#"
+                or "http://json-schema.org/draft-07/schema" or "http://json-schema.org/draft-07/schema#" => GeneratedRegexEdition.Current,
+            _ => GeneratedRegexEdition.Es2020,
+        };
+    }
+
+    /// <summary>Gets the version of Unicode the type's patterns are read with.</summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The version.</returns>
+    public static GeneratedRegexUnicodeVersion RegexUnicodeVersion(this TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.TryGetMetadata(RegexUnicodeVersionKey, out GeneratedRegexUnicodeVersion? version) && version is GeneratedRegexUnicodeVersion value
+            ? value
+            : GeneratedRegexUnicodeVersion.Default;
     }
 
     /// <summary>

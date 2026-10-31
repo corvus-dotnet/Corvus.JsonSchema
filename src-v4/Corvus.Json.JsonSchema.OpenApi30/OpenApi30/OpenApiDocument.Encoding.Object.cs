@@ -139,7 +139,7 @@ public readonly partial struct OpenApiDocument
                     }
                 }
 
-                return default;
+                return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.AllowReservedEntity.DefaultInstance;
             }
         }
 
@@ -305,27 +305,27 @@ public readonly partial struct OpenApiDocument
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-            if (allowReserved is not null)
+            if (allowReserved is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.AllowReservedEntity allowReservedNotNull && allowReservedNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.AllowReserved, allowReserved.Value.AsAny);
             }
 
-            if (contentType is not null)
+            if (contentType is Corvus.Json.JsonString contentTypeNotNull && contentTypeNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.ContentType, contentType.Value.AsAny);
             }
 
-            if (explode is not null)
+            if (explode is Corvus.Json.JsonBoolean explodeNotNull && explodeNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Explode, explode.Value.AsAny);
             }
 
-            if (headers is not null)
+            if (headers is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.HeadersEntity headersNotNull && headersNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Headers, headers.Value.AsAny);
             }
 
-            if (style is not null)
+            if (style is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.StyleEntity styleNotNull && styleNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Style, style.Value.AsAny);
             }
@@ -448,7 +448,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Encoding WithAllowReserved(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.AllowReservedEntity value)
         {
-            return this.SetProperty(JsonPropertyNames.AllowReserved, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.AllowReserved, value) : this.RemoveProperty(JsonPropertyNames.AllowReserved);
         }
 
         /// <summary>
@@ -458,7 +458,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Encoding WithContentType(in Corvus.Json.JsonString value)
         {
-            return this.SetProperty(JsonPropertyNames.ContentType, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ContentType, value) : this.RemoveProperty(JsonPropertyNames.ContentType);
         }
 
         /// <summary>
@@ -468,7 +468,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Encoding WithExplode(in Corvus.Json.JsonBoolean value)
         {
-            return this.SetProperty(JsonPropertyNames.Explode, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Explode, value) : this.RemoveProperty(JsonPropertyNames.Explode);
         }
 
         /// <summary>
@@ -478,7 +478,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Encoding WithHeaders(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.HeadersEntity value)
         {
-            return this.SetProperty(JsonPropertyNames.Headers, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Headers, value) : this.RemoveProperty(JsonPropertyNames.Headers);
         }
 
         /// <summary>
@@ -488,7 +488,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Encoding WithStyle(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Encoding.StyleEntity value)
         {
-            return this.SetProperty(JsonPropertyNames.Style, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Style, value) : this.RemoveProperty(JsonPropertyNames.Style);
         }
 
         /// <summary>
@@ -1027,6 +1027,26 @@ public readonly partial struct OpenApiDocument
                 if ((that.backing & Backing.JsonElement) != 0)
                 {
                     return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+            /// </summary>
+            /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in Encoding that)
+            {
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.ToBuilder();
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                 }
 
                 throw new InvalidOperationException();
