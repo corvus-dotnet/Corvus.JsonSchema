@@ -69,6 +69,8 @@
     <PackageReference Include="Roslynator.Analyzers" Version="4.13.1" PrivateAssets="All" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.11" PrivateAssets="All" />
     <PackageReference Include="NodaTime" Version="3.2.1" PrivateAssets="All" />
+    <!-- The Corvus.Regex.Ecma262 emitter, as source compiled into the generator (see Corvus.Text.Json.CodeGeneration). -->
+    <PackageReference Include="Corvus.Regex.Ecma262.CodeGeneration.Sources" Version="1.0.12" PrivateAssets="all" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup>
@@ -220,6 +222,8 @@
     <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)Polyfills\NetStandardExtensions.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator\Polyfills" />
     <Compile Include="..\Corvus.Json.Cli.Core\RuntimeProgramCompiler.cs" LinkBase="Corvus.Json.Cli.Core" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGenerationMode.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonCodeGenerationPath)GeneratedRegularExpressions.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonCodeGenerationPath)SharedRegularExpressions.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)RegexPatternCategory.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)FrameworkType.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)GeneratedTypeAccessibility.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />

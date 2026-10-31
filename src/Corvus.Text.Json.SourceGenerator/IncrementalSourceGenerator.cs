@@ -169,6 +169,43 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             };
         }
 
+        Text.Json.CodeGeneration.GeneratedRegexEngine regexEngine = Text.Json.CodeGeneration.GeneratedRegexEngine.Ecma262;
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonRegexEngine", out string? regexEngineName))
+        {
+            regexEngine = regexEngineName.ToLowerInvariant() switch
+            {
+                "ecma262" or "" => Text.Json.CodeGeneration.GeneratedRegexEngine.Ecma262,
+                "dotnet" => Text.Json.CodeGeneration.GeneratedRegexEngine.DotNet,
+                _ => throw new InvalidOperationException($"Invalid build property value for 'CorvusTextJsonRegexEngine': '{regexEngineName}'. Try 'Ecma262' or 'DotNet'."),
+            };
+        }
+
+        Text.Json.CodeGeneration.GeneratedRegexEdition? regexEdition = null;
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonRegexEdition", out string? regexEditionName))
+        {
+            regexEdition = regexEditionName.ToLowerInvariant() switch
+            {
+                "" => null,
+                "current" => Text.Json.CodeGeneration.GeneratedRegexEdition.Current,
+                "es2020" => Text.Json.CodeGeneration.GeneratedRegexEdition.Es2020,
+                _ => throw new InvalidOperationException($"Invalid build property value for 'CorvusTextJsonRegexEdition': '{regexEditionName}'. Try 'Current' or 'Es2020', or leave it empty for each dialect's."),
+            };
+        }
+
+        Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion regexUnicodeVersion = Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion.Default;
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonRegexUnicodeVersion", out string? regexUnicodeVersionName))
+        {
+            regexUnicodeVersion = regexUnicodeVersionName.ToLowerInvariant() switch
+            {
+                "" or "default" => Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion.Default,
+                "13" or "v13" => Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion.V13,
+                "17" or "v17" => Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion.V17,
+                "18" or "v18" => Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion.V18,
+                "latest" => Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion.Latest,
+                _ => throw new InvalidOperationException($"Invalid build property value for 'CorvusTextJsonRegexUnicodeVersion': '{regexUnicodeVersionName}'. Try '13', '17', '18' or 'Latest', or leave it empty for the default."),
+            };
+        }
+
         bool addExplicitUsings = true;
 
         if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonAddExplicitUsings", out string? addExplicitUsingsName))
@@ -267,7 +304,10 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             formatModeOverrides,
             emitNativeStringEnums,
             emitNativeFlagsEnums,
-            emitUnions);
+            emitUnions,
+            regexEngine,
+            regexEdition,
+            regexUnicodeVersion);
     }
 
     private static void EmitGeneratorAttribute(IncrementalGeneratorInitializationContext initializationContext)
@@ -337,7 +377,10 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides,
         bool emitNativeStringEnums,
         bool emitNativeFlagsEnums,
-        bool emitUnions) : IGlobalOptions, IEquatable<GlobalOptions>
+        bool emitUnions,
+        Text.Json.CodeGeneration.GeneratedRegexEngine regexEngine,
+        Text.Json.CodeGeneration.GeneratedRegexEdition? regexEdition,
+        Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion regexUnicodeVersion) : IGlobalOptions, IEquatable<GlobalOptions>
     {
         public IVocabulary FallbackVocabulary { get; } = fallbackVocabulary;
 
@@ -366,6 +409,12 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public bool EmitNativeFlagsEnums { get; } = emitNativeFlagsEnums;
 
         public bool EmitUnions { get; } = emitUnions;
+
+        public Text.Json.CodeGeneration.GeneratedRegexEngine RegexEngine { get; } = regexEngine;
+
+        public Text.Json.CodeGeneration.GeneratedRegexEdition? RegexEdition { get; } = regexEdition;
+
+        public Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; } = regexUnicodeVersion;
 
         public ILanguageProvider CreateLanguageProvider(string? defaultNamespace, IReadOnlyList<NamedTypeSpecification> namedTypes, bool emitEvaluator)
         {
@@ -399,7 +448,10 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 FormatModeOverridesEqual(FormatModeOverrides, other.FormatModeOverrides) &&
                 EmitNativeStringEnums == other.EmitNativeStringEnums &&
                 EmitNativeFlagsEnums == other.EmitNativeFlagsEnums &&
-                EmitUnions == other.EmitUnions;
+                EmitUnions == other.EmitUnions &&
+                RegexEngine == other.RegexEngine &&
+                RegexEdition == other.RegexEdition &&
+                RegexUnicodeVersion == other.RegexUnicodeVersion;
         }
 
         public override bool Equals(object? obj) => obj is GlobalOptions other && Equals(other);
@@ -421,6 +473,9 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             hash.Add(EmitNativeStringEnums);
             hash.Add(EmitNativeFlagsEnums);
             hash.Add(EmitUnions);
+            hash.Add(RegexEngine);
+            hash.Add(RegexEdition);
+            hash.Add(RegexUnicodeVersion);
             return hash.ToHashCode();
         }
 
@@ -460,6 +515,9 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         private CSharpLanguageProvider.Options MapOptions(string? defaultNamespace, CSharpLanguageProvider.NamedType[] namedTypes, bool emitEvaluator)
         {
+            // Generators do not chain, so .NET's regular expression generator would never implement [GeneratedRegex]
+            // methods in generated code: a program for .NET's engine carries no table. Corvus.Regex.Ecma262's matchers
+            // are written whole, so a program for the library carries one.
             CSharpLanguageProvider.Options options = new(
                 defaultNamespace ?? "GeneratedTypes",
                 namedTypes,
@@ -475,9 +533,14 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 formatModeOverrides: FormatModeOverrides,
                 emitNativeStringEnums: EmitNativeStringEnums,
                 emitNativeFlagsEnums: EmitNativeFlagsEnums,
-                programCompiler: global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.CompileWithoutRegexTable,
+                programCompiler: RegexEngine == Text.Json.CodeGeneration.GeneratedRegexEngine.Ecma262
+                    ? global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.Compile
+                    : global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.CompileWithoutRegexTable,
                 emitUnions: EmitUnions,
-                storeFilesAsStrings: true);
+                storeFilesAsStrings: true,
+                regexEngine: RegexEngine,
+                regexEdition: RegexEdition,
+                regexUnicodeVersion: RegexUnicodeVersion);
 
             return options;
         }

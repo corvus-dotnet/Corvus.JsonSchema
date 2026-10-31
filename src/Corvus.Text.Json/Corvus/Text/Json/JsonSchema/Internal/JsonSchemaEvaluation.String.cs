@@ -1,4 +1,4 @@
-// <copyright file="JsonSchemaEvaluation.String.cs" company="Endjin Limited">
+﻿// <copyright file="JsonSchemaEvaluation.String.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 // <licensing>
@@ -8,6 +8,7 @@
 // </licensing>
 using System.Buffers;
 using System.Buffers.Text;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Corvus.Globalization;
@@ -253,6 +254,62 @@ public static partial class JsonSchemaEvaluation
         // from Span<char>
         return regularExpression.IsMatch(JsonReaderHelper.GetTextFromUtf8(value));
 #endif
+    }
+
+    /// <summary>
+    /// Validates that a string matches an ECMA-262 regular expression, recording the result.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate, matched as it is.</param>
+    /// <param name="regularExpression">The regular expression.</param>
+    /// <param name="originalExpressionString">The pattern as written in the schema, for diagnostics.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns><see langword="true"/> if the value matches; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="RegexMatchTimeoutException">The match ran for longer than the expression's match timeout.</exception>
+    /// <exception cref="ArgumentException">The value is not UTF-8.</exception>
+    [CLSCompliant(false)]
+    public static bool MatchRegularExpression(ReadOnlySpan<byte> value, Corvus.Ecma262.RegularExpressions.Regex regularExpression, string originalExpressionString, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchRegularExpression(value, regularExpression))
+        {
+            context.EvaluatedKeyword(false, originalExpressionString, messageProvider: ExpectedStringMatchesRegularExpression, keyword);
+            return false;
+        }
+
+        context.EvaluatedKeyword(true, originalExpressionString, ExpectedStringMatchesRegularExpression, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Whether a string matches an ECMA-262 regular expression. The UTF-8 value is matched as it is, with no
+    /// transcoding.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value.</param>
+    /// <param name="regularExpression">The regular expression.</param>
+    /// <returns><see langword="true"/> if the value matches; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="RegexMatchTimeoutException">The match ran for longer than the expression's match timeout, or
+    /// needed more backtracking memory than a match may hold. It is the exception of .NET's engine, as a match by a
+    /// <see cref="Regex"/> would throw, so a caller that catches it sees the same.</exception>
+    /// <exception cref="ArgumentException">The value is not UTF-8.</exception>
+    [CLSCompliant(false)]
+    public static bool MatchRegularExpression(ReadOnlySpan<byte> value, Corvus.Ecma262.RegularExpressions.Regex regularExpression)
+    {
+        try
+        {
+            return regularExpression.IsMatch(value);
+        }
+        catch (Corvus.Ecma262.RegularExpressions.RegexMatchTimeoutException)
+        {
+            ThrowRegexMatchTimeout(value, regularExpression);
+            return false;
+        }
+    }
+
+    [DoesNotReturn]
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowRegexMatchTimeout(ReadOnlySpan<byte> value, Corvus.Ecma262.RegularExpressions.Regex regularExpression)
+    {
+        throw new RegexMatchTimeoutException(JsonReaderHelper.GetTextFromUtf8(value), regularExpression.Pattern, regularExpression.MatchTimeout);
     }
 
     /// <summary>
@@ -808,7 +865,7 @@ public static partial class JsonSchemaEvaluation
     }
 
     /// <summary>
-    /// Validates that a string value is a valid ECMAScript regular expression format.
+    /// Validates that a string value is a valid ECMA-262 regular expression, read with today's grammar.
     /// </summary>
     /// <param name="value">The UTF-8 encoded string value to validate.</param>
     /// <param name="keyword">The keyword being evaluated.</param>
@@ -818,6 +875,29 @@ public static partial class JsonSchemaEvaluation
     public static bool MatchRegex(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
     {
         if (!MatchRegex(value))
+        {
+            context.EvaluatedKeyword(false, messageProvider: ExpectedRegex, keyword);
+            return false;
+        }
+
+        context.EvaluatedKeyword(true, ExpectedRegex, keyword);
+        return true;
+    }
+
+    /// <summary>
+    /// Validates that a string value is a valid ECMA-262 regular expression in the grammar of the <c>u</c> flag, of
+    /// an edition and under a version of Unicode.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="edition">The edition of the grammar.</param>
+    /// <param name="unicodeVersion">The version of Unicode.</param>
+    /// <param name="keyword">The keyword being evaluated.</param>
+    /// <param name="context">The JSON schema validation context.</param>
+    /// <returns><see langword="true"/> if the value is a valid regex; otherwise, <see langword="false"/>.</returns>
+    [CLSCompliant(false)]
+    public static bool MatchRegex(ReadOnlySpan<byte> value, Corvus.Ecma262.RegularExpressions.RegexEdition edition, Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion unicodeVersion, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
+    {
+        if (!MatchRegex(value, edition, unicodeVersion))
         {
             context.EvaluatedKeyword(false, messageProvider: ExpectedRegex, keyword);
             return false;
@@ -2175,40 +2255,30 @@ public static partial class JsonSchemaEvaluation
     }
 
     /// <summary>
-    /// Validates that a string value is a valid ECMAScript regular expression format.
+    /// Validates that a string value is a valid ECMA-262 regular expression, read with today's grammar.
     /// </summary>
     /// <param name="value">The UTF-8 encoded string value to validate.</param>
     /// <returns><see langword="true"/> if the value is a valid regex; otherwise, <see langword="false"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool MatchRegex(ReadOnlySpan<byte> value)
     {
-        char[]? charBuffer = null;
-        int length = Encoding.UTF8.GetMaxCharCount(value.Length);
+        return MatchRegex(value, Corvus.Ecma262.RegularExpressions.RegexEdition.Current, Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion.Default);
+    }
 
-        Span<char> buffer = length < JsonConstants.StackallocNonRecursiveCharThreshold ? stackalloc char[length]
-            : (charBuffer = ArrayPool<char>.Shared.Rent(length)).AsSpan();
-
-        int written = 0;
-
-        try
-        {
-            written = JsonReaderHelper.TranscodeHelper(value, buffer);
-
-            return JsonRegexValidator.Validate(buffer.Slice(0, written), JsonRegexOptions.ECMAScript);
-        }
-        finally
-        {
-            if (charBuffer is not null)
-            {
-                if (written > 0)
-                {
-                    // Clear the buffer to avoid leaking sensitive information.
-                    Array.Clear(charBuffer, 0, written);
-                }
-
-                ArrayPool<char>.Shared.Return(charBuffer);
-            }
-        }
+    /// <summary>
+    /// Validates that a string value is a valid ECMA-262 regular expression in the grammar of the <c>u</c> flag, as
+    /// the JSON Schema Test Suite reads <c>format: regex</c> (<c>\a</c>, which only the grammar of no flag accepts, is
+    /// not one). A <c>pattern</c> is read with the grammar of no flag when the u flag's refuses it, so a value can be
+    /// a pattern a schema accepts and not this format. The format is the grammar alone: a pattern over one of the
+    /// engine's limits of size is valid, though a schema that held it as a <c>pattern</c> would be refused. Nothing is
+    /// allocated.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded string value to validate.</param>
+    /// <param name="edition">The edition of the grammar.</param>
+    /// <param name="unicodeVersion">The version of Unicode.</param>
+    /// <returns><see langword="true"/> if the value is a valid regex; otherwise, <see langword="false"/>.</returns>
+    internal static bool MatchRegex(ReadOnlySpan<byte> value, Corvus.Ecma262.RegularExpressions.RegexEdition edition, Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion unicodeVersion)
+    {
+        return Corvus.Ecma262.RegularExpressions.Regex.IsValidPattern(value, Corvus.Ecma262.RegularExpressions.RegexFlags.Unicode, edition, unicodeVersion);
     }
 
     /// <summary>

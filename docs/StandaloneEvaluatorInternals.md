@@ -25,34 +25,35 @@ emits one `CorvusJsonSchemaProgram` class in the default namespace:
 
 - **Program image or documents.** When the generator host can compile ahead of time (the CLI, through
   `CSharpLanguageProvider.Options.ProgramCompiler`), the class carries the compiled program image as base64
-  UTF-8 literals, decoded and loaded with `JsonSchemaEvaluator.FromProgramImage` on first use, plus one
-  `[GeneratedRegex]` method per pattern the image needs, wired in through `RegexProvider` (on .NET 8 and
-  later; elsewhere the evaluator constructs the expression). The Roslyn source generator emits the same
-  shape: it links the evaluator's compiler and image writer in as source, built over `System.Text.Json`. A
+  UTF-8 literals, decoded and loaded with `JsonSchemaEvaluator.FromProgramImage` on first use, plus a provider
+  (`EcmaRegexProvider`) that gives the evaluator Corvus.Regex.Ecma262's compiled matcher for each pattern it matches
+  with a regular expression, so it compiles none. The Roslyn source generator emits the same shape: it links the
+  evaluator's compiler and image writer in as source, built over `System.Text.Json`, and Corvus.Regex.Ecma262's
+  reader and emitter from the library's source package. With `--regexEngine DotNet` the program wires one
+  `[GeneratedRegex]` method per pattern through `RegexProvider` instead (the CLI only; on .NET 8 and later). A
   host without a program compiler emits the documents instead: every root schema document the type builder loaded,
   as UTF-8 static data (`"..."u8`). File-system documents are keyed under the synthetic `corvus-schema:///` scheme, relative
   to the common directory of all file documents, so no build-machine path reaches the generated code;
   documents with an absolute `$id` are keyed by that `$id`. Relative `$ref`s between documents resolve
   within the same scheme, so the keys are consistent.
+- **Regular expressions, written once.** Each distinct regular expression of a generation (a pattern with its
+  grammar, edition and version of Unicode) is written once, in `CorvusJsonSchemaRegularExpressions` beside the
+  program: Corvus.Regex.Ecma262's compiled matcher, written by the library's emitter with the compiled regular
+  expression as data, behind an internal property so that each is built when first used. The program's provider and
+  a generated type's pattern-property fields refer to those properties. A pattern every type of a specification
+  carries is one matcher, not one for each type.
 - **Regular expression match timeout.** Every expression has a match timeout of 1 second
-  (`CodeGenerationExtensions.RegexMatchTimeoutMilliseconds`, the one place the generator holds the value). Each
-  `[GeneratedRegex]` of the program carries `matchTimeoutMilliseconds: 1000`, and the options the program is
-  loaded with set `RegexMatchTimeout` to the same value, for the expressions the evaluator constructs (all of
-  them where there is no regex generator, and all of them in a program from the Roslyn source generator). The
-  expressions a generated type holds for its own helpers (`[GeneratedRegex(pattern, RegexOptions.None,
-  matchTimeoutMilliseconds: 1000)]`, or `new Regex(pattern, RegexOptions.Compiled, TimeSpan)` where there is no
-  regex generator) have it too. A match that runs for longer throws `RegexMatchTimeoutException` to the caller.
-  A pattern that `EcmaRegexTranslator.IsLinear` proves to match in time proportional to the text has no timeout in
-  any of these forms (`matchTimeoutMilliseconds: global::System.Threading.Timeout.Infinite`, or
-  `Regex.InfiniteMatchTimeout`), as in the evaluator, which applies the same proof to the expressions it constructs.
-  The program generator reads the patterns for it from `SchemaProgramImage.EcmaPatterns`, and an image made without
-  them gives every pattern the timeout.
-- **Patterns.** Every pattern is the translation `EcmaRegexTranslator` writes for it
-  ([EcmaRegexTranslator.md](EcmaRegexTranslator.md)), in the program and in the generated types alike. A pattern
-  that is not a valid ECMA-262 regular expression stops the generation: the emitter reads every `pattern` and
-  `patternProperties` pattern of a type (`ThrowIfAPatternIsNotValid`), and compiling the program image refuses the
-  schema too. An expression of a generated type is constructed with `RegexOptions.CultureInvariant` when its
-  translation holds a case-insensitive backreference, the one construct that uses .NET's own case comparison.
+  (`CodeGenerationExtensions.RegexMatchTimeoutMilliseconds`, the one place the generator holds the value): each
+  compiled matcher carries it, and the options the program is loaded with set `RegexMatchTimeout` to the same
+  value, for a pattern the evaluator compiles itself. A match that runs for longer throws
+  `RegexMatchTimeoutException` to the caller. With the DotNet engine each `[GeneratedRegex]` carries the timeout
+  too, except for a pattern `EcmaRegexTranslator.IsLinear` proves linear.
+- **Patterns.** Every pattern is read as the runtime evaluator reads it: with the grammar of the `u` flag, or failing
+  that with none, in the edition of the type's dialect (ECMAScript 2020 for draft 2019-09 and draft 2020-12) unless
+  `--regexEdition` says otherwise. A pattern that is not a valid ECMA-262 regular expression stops the generation:
+  the emitter reads every `pattern` and `patternProperties` pattern of a type (`ThrowIfAPatternIsNotValid`), and
+  compiling the program image refuses the schema too. With the DotNet engine every pattern is the translation
+  `EcmaRegexTranslator` writes for it ([EcmaRegexTranslator.md](EcmaRegexTranslator.md)), as before.
 - **Entry points.** One `ForEntryPoint("<document key>#<pointer>")` per generated type (its
   `SchemaDocument` and `SchemaLocation`, which are still emitted as constants) and per standalone
   evaluator root. Entry points share one compiled program, so each subschema is compiled once even when

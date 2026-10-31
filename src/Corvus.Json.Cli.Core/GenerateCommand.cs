@@ -106,6 +106,20 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [DefaultValue(true)]
         public bool Unions { get; init; }
 
+        [CommandOption("--regexEngine <VALUE>")]
+        [Description("The engine the regular expressions of generated code are written for (V5 engine only). Ecma262 (the default) writes Corvus.Regex.Ecma262's compiled matchers, with the compiled regular expression as data; DotNet writes .NET's System.Text.RegularExpressions, as earlier versions did, for code that depends on the generated fields being .NET's Regex.")]
+        [DefaultValue(GeneratedRegexEngine.Ecma262)]
+        public GeneratedRegexEngine RegexEngine { get; init; }
+
+        [CommandOption("--regexEdition <VALUE>")]
+        [Description("The edition of ECMA-262 whose grammar every pattern is read with (V5 engine, Ecma262 regular expressions only): Current or Es2020. By default, each dialect's: Es2020 for draft 2019-09 and draft 2020-12, Current for the others.")]
+        public GeneratedRegexEdition? RegexEdition { get; init; }
+
+        [CommandOption("--regexUnicodeVersion <VALUE>")]
+        [Description("The version of Unicode every pattern is read with (V5 engine, Ecma262 regular expressions only): Default (the version V8 uses, 17), V13, V17, V18 or Latest.")]
+        [DefaultValue(GeneratedRegexUnicodeVersion.Default)]
+        public GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; init; }
+
         [CommandOption("--useImplicitOperatorString")]
         [Description("If true, conversion operators to string are implicit, rather than explicit.")]
         [DefaultValue(false)]
@@ -175,6 +189,9 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             optionalAsNullable: settings.OptionalAsNullable.ToString(),
             nativeEnums: settings.NativeEnums.ToString(),
             unions: settings.Unions,
+            regexEngine: settings.RegexEngine.ToString(),
+            regexEdition: settings.RegexEdition is GeneratedRegexEdition regexEdition ? (GeneratorConfig.RegexEdition)regexEdition.ToString() : default(GeneratorConfig.RegexEdition?),
+            regexUnicodeVersion: settings.RegexUnicodeVersion.ToString(),
             outputMapFile: settings.OutputMapFile.AsNullableJsonString(),
             outputPath: settings.OutputPath.AsNullableJsonString(),
             useSchema: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),

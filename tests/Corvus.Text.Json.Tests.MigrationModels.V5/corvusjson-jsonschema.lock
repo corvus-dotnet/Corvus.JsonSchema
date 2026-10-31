@@ -1,6 +1,6 @@
 {
-  "generatorVersion": "1.0.0\u002B7e053461fe111c8b5824bc4f7160808f85d7fcf6",
-  "generatedAt": "2026-10-16T12:23:41.2038575\u002B00:00",
+  "generatorVersion": "1.0.0\u002B7b34359f0fa95ecd5d37f23490daaa9a0c913a63",
+  "generatedAt": "2026-10-31T09:00:00.9756631\u002B00:00",
   "engine": "V5",
   "codeGenerationMode": "TypeGeneration",
   "specification": {
@@ -62,6 +62,8 @@
     "disableOptionalNameHeuristics": false,
     "nativeEnums": "All",
     "optionalAsNullable": "None",
+    "regexEngine": "Ecma262",
+    "regexUnicodeVersion": "Default",
     "supportYaml": false,
     "unions": true,
     "useImplicitOperatorString": false,

@@ -169,7 +169,43 @@ public class InvalidPatternGenerationTests
         }
     }
 
-    private static async Task<IReadOnlyList<GeneratedCodeFile>> GenerateAsync(string schema, bool withProgramImage)
+    // The tests above read patterns with the translation to .NET's regular expressions, as the DotNet engine does;
+    // the ones that follow read them with Corvus.Regex.Ecma262, as the default engine does.
+    [TestMethod]
+    public async Task GenerateCode_WithTheLibrary_ForASchemaWithAnInvalidPattern_SaysWhatIsWrong()
+    {
+        InvalidOperationException thrown = await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            () => GenerateAsync("""{"type": "string", "pattern": "^[a-z]{3,1}$"}""", withProgramImage: true, GeneratedRegexEngine.Ecma262));
+        StringAssert.StartsWith(thrown.Message, "The pattern '^[a-z]{3,1}$' of the keyword 'pattern' is not a valid ECMA-262 regular expression.");
+    }
+
+    [TestMethod]
+    [DataRow("pattern")]
+    [DataRow("patternProperties")]
+    public async Task GenerateCode_WithTheLibrary_ForAPatternOverItsLimits_StopsAndSaysItIsTooLarge(string keyword)
+    {
+        // Nested past the 200 groups the library compiles.
+        string pattern = new string('(', 201) + "a" + new string(')', 201);
+        string schema = keyword == "pattern"
+            ? "{\"type\": \"string\", \"pattern\": \"" + pattern + "\"}"
+            : "{\"type\": \"object\", \"patternProperties\": {\"" + pattern + "\": {\"type\": \"integer\"}}}";
+
+        EcmaRegexPatternTooLargeException thrown = await Assert.ThrowsExactlyAsync<EcmaRegexPatternTooLargeException>(() => GenerateAsync(schema, withProgramImage: false, GeneratedRegexEngine.Ecma262));
+        StringAssert.StartsWith(thrown.Message, $"The pattern of the keyword '{keyword}' is too large.");
+        Assert.IsInstanceOfType<InvalidOperationException>(thrown);
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_WithTheLibrary_APatternOverTheTranslationsLimitIsGenerated()
+    {
+        // Too large for the translation (its nested counted repetitions), not for the library, which matches it.
+        const string Pattern = "(?:(?:(?:(?:(?:(?:(?:(?:(?:ab){4}){4}){4}){4}){4}){4}){4}){4}){4}";
+        IReadOnlyList<GeneratedCodeFile> files = await GenerateAsync("{\"type\": \"object\", \"patternProperties\": {\"" + Pattern + "\": {\"type\": \"integer\"}}}", withProgramImage: true, GeneratedRegexEngine.Ecma262);
+        string code = string.Concat(files.Select(f => f.FileContent));
+        StringAssert.Contains(code, "public static readonly global::Corvus.Ecma262.RegularExpressions.Regex PatternProperties = global::TestGenerated.CorvusJsonSchemaRegularExpressions.Regex0;");
+    }
+
+    private static async Task<IReadOnlyList<GeneratedCodeFile>> GenerateAsync(string schema, bool withProgramImage, GeneratedRegexEngine engine = GeneratedRegexEngine.DotNet)
     {
         string path = Path.Combine(Path.GetTempPath(), $"invalid-pattern-{Guid.NewGuid():N}.json");
         await File.WriteAllTextAsync(path, schema);
@@ -186,7 +222,8 @@ public class InvalidPatternGenerationTests
             CSharpLanguageProvider.Options options = new(
                 "TestGenerated",
                 namedTypes: [new CSharpLanguageProvider.NamedType(rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location, "Root")],
-                programCompiler: withProgramImage ? Corvus.Json.CodeGenerator.RuntimeProgramCompiler.Compile : null);
+                programCompiler: withProgramImage ? Corvus.Json.CodeGenerator.RuntimeProgramCompiler.Compile : null,
+                regexEngine: engine);
             CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
             return [.. typeBuilder.GenerateCodeUsing(languageProvider, [rootType], CancellationToken.None).OrderBy(f => f.FileName, StringComparer.Ordinal)];
         }

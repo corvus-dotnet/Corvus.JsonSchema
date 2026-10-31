@@ -75,6 +75,19 @@ public static class RuntimeProgramCompiler
             },
         };
 
+        // The settings the generated program loads with, so that its patterns are read here as they will be read
+        // there, and the regular expressions listed below are the ones its evaluator compiles.
+        if (source.RegexEngine == GeneratedRegexEngine.Ecma262)
+        {
+#if STJ
+            options.RegexEdition = source.RegexEdition is GeneratedRegexEdition edition ? (Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEdition)(int)edition : null;
+            options.RegexUnicodeVersion = source.RegexUnicodeVersion == GeneratedRegexUnicodeVersion.Default ? null : (Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexUnicodeVersion)(int)source.RegexUnicodeVersion;
+#else
+            options.RegexEdition = source.RegexEdition is GeneratedRegexEdition edition ? (Corvus.Ecma262.RegularExpressions.RegexEdition)(int)edition : null;
+            options.RegexUnicodeVersion = source.RegexUnicodeVersion == GeneratedRegexUnicodeVersion.Default ? null : (Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion)(int)source.RegexUnicodeVersion;
+#endif
+        }
+
         using JsonSchemaEvaluator root = JsonSchemaEvaluator.CompileFromUri(source.RootDocumentKey, options);
         root.RegisterEntryPoints(source.EntryPoints);
 
@@ -85,6 +98,39 @@ public static class RuntimeProgramCompiler
         }
 
         IReadOnlyList<string> patterns = JsonSchemaEvaluator.GetImagePatterns(image);
+#if !STJ
+        if (source.RegexEngine == GeneratedRegexEngine.Ecma262)
+        {
+            // A compiled matcher for each pattern the evaluator matches with Corvus.Regex.Ecma262, which then compiles
+            // none of them.
+            var regularExpressions = new List<SchemaProgramRegularExpression>();
+            foreach (JsonSchemaImageRegularExpression regex in JsonSchemaEvaluator.GetImageRegularExpressions(image, options))
+            {
+                regularExpressions.Add(new SchemaProgramRegularExpression(
+                    regex.Index,
+                    regex.Pattern,
+                    (regex.Flags & Corvus.Ecma262.RegularExpressions.RegexFlags.Unicode) != 0,
+                    (GeneratedRegexEdition)(int)regex.Edition,
+                    (GeneratedRegexUnicodeVersion)(int)regex.UnicodeVersion));
+            }
+
+            return new SchemaProgramImage(image, [], patterns, regularExpressions);
+        }
+#else
+        if (source.RegexEngine == GeneratedRegexEngine.Ecma262)
+        {
+            // The source generator's build cannot load the image with the library, so its own matchers say which
+            // patterns need a regular expression; it decides as the library's build does.
+            var regularExpressions = new List<SchemaProgramRegularExpression>();
+            foreach ((int index, string pattern, bool unicode, int edition, int version) in root.GetProgramRegularExpressions(patterns, options))
+            {
+                regularExpressions.Add(new SchemaProgramRegularExpression(index, pattern, unicode, (GeneratedRegexEdition)edition, (GeneratedRegexUnicodeVersion)version));
+            }
+
+            return new SchemaProgramImage(image, [], patterns, regularExpressions);
+        }
+
+#endif
         var dotNetPatterns = new string[patterns.Count];
         for (int i = 0; i < patterns.Count; i++)
         {

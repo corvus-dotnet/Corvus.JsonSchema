@@ -48,43 +48,35 @@ public class PatternSizeLimitTests
     [DataRow(Configuration.GeneratedCode, true)]
     public void ASchemaWithAPatternOverALimitIsRefusedAsTooLarge(Configuration configuration, bool asPropertyName)
     {
+        string pattern = Nested("(", "a", ")", 201);
         string schema = asPropertyName
-            ? "{\"type\": \"object\", \"patternProperties\": {" + Json(NestedCounts) + ": {\"type\": \"integer\"}}}"
-            : "{\"type\": \"string\", \"pattern\": " + Json(NestedCounts) + "}";
+            ? "{\"type\": \"object\", \"patternProperties\": {" + Json(pattern) + ": {\"type\": \"integer\"}}}"
+            : "{\"type\": \"string\", \"pattern\": " + Json(pattern) + "}";
+        string expected = TooLarge(pattern);
 
         // Twice, as the second time the pattern is one the process has seen.
         for (int time = 0; time < 2; time++)
         {
             JsonSchemaCompilationException thrown = Assert.ThrowsExactly<JsonSchemaCompilationException>(
                 () => JsonSchemaEvaluator.Compile(schema, Options(configuration)));
-            Assert.AreEqual(NestedCountsMessage, thrown.Message);
+            Assert.AreEqual(expected, thrown.Message);
         }
     }
 
-    /// <summary>One pattern for each limit, with what the message ends in.</summary>
+    /// <summary>One pattern for each of the library's limits, refused with its message in bounded time.</summary>
     [TestMethod]
-    [DataRow("length", "It is longer than 1,048,576 characters.")]
-    [DataRow("nesting", "Its groups nest more than 200 deep.")]
-    [DataRow("unclosed", "Its groups nest more than 200 deep.")]
-    [DataRow("written", "What is written for .NET from it is longer than 1,048,576 characters.")]
-    [DataRow("doubling", "What is written for .NET from it is longer than 1,048,576 characters.")]
-    [DataRow("steps", "It takes more than 2,000,000 steps to translate.")]
-    [DataRow("copies", "Its repetitions with a least count of 2, 3 or 4, one inside another, come to more than 65,536 copies of what they repeat, beyond four times its size.")]
-    [DataRow("pieces", "Its sequences and alternations are longer than .NET constructs a regular expression from in bounded time: by the count of the translator, a cost of more than 100,000,000.")]
-    [DataRow("alternatives", "Its sequences and alternations are longer than .NET constructs a regular expression from in bounded time: by the count of the translator, a cost of more than 100,000,000.")]
-    public void EachLimitIsNamedInTheMessageAndMetInBoundedTime(string which, string limit)
+    [DataRow("length")]
+    [DataRow("nesting")]
+    [DataRow("unclosed")]
+    [DataRow("steps")]
+    public void EachLimitIsNamedInTheMessageAndMetInBoundedTime(string which)
     {
         string pattern = which switch
         {
             "length" => new string('a', 1_048_577),
             "nesting" => Nested("(", "a", ")", 10_000),
             "unclosed" => new string('(', 10_000),
-            "written" => @"(?i:^(.)\1\1\1\1\1\1\1$)",
-            "doubling" => "^" + Nested("(?:", "(a)", "|){1,2}", 70) + @"\1$",
-            "steps" => string.Concat(Enumerable.Repeat("(?<n>a)|", 4000)) + "b",
-            "copies" => Nested("(?:", "a", "){2}", 140),
-            "pieces" => string.Concat(Enumerable.Repeat(@"\.", 12_000)),
-            "alternatives" => string.Join("|", Enumerable.Range(0, 25_000).Select(k => "w" + k)),
+            "steps" => string.Concat(Enumerable.Repeat("(?<n>a)|", 400_000)) + "b",
             _ => throw new ArgumentException(which),
         };
 
@@ -93,12 +85,41 @@ public class PatternSizeLimitTests
             () => JsonSchemaEvaluator.Compile("{\"pattern\": " + Json(pattern) + "}"));
         Assert.IsTrue(elapsed.Elapsed < Generous, $"{elapsed.Elapsed} to refuse the pattern.");
 
-        StringAssert.EndsWith(thrown.Message, limit);
+        Assert.AreEqual(TooLarge(pattern), thrown.Message);
         StringAssert.Contains(thrown.Message, "too large");
         Assert.IsTrue(thrown.Message.IndexOf("not a valid", StringComparison.Ordinal) < 0, thrown.Message);
 
         // A pattern over a limit may be megabytes long. The message has its start.
         Assert.IsTrue(thrown.Message.Length < 600, thrown.Message.Length.ToString());
+    }
+
+    /// <summary>
+    /// Patterns the translator to .NET's syntax refused for limits of its own (what .NET writes out for nested
+    /// counts, the length of the translation, what .NET takes to construct) are compiled, in bounded time, and
+    /// answer.
+    /// </summary>
+    [TestMethod]
+    [DataRow("copies")]
+    [DataRow("written")]
+    [DataRow("pieces")]
+    [DataRow("alternatives")]
+    public void PatternsOverTheTranslatorsOwnLimitsAreCompiled(string which)
+    {
+        (string pattern, string matches, string fails) = which switch
+        {
+            "copies" => (NestedCounts, string.Concat(Enumerable.Repeat("ab", 262_144)), "ab"),
+            "written" => (@"(?i:^(.)\1\1\1\1\1\1\1$)", "kK\u212AkK\u212AkK", "kK\u212AkK\u212Akj"),
+            "pieces" => (string.Concat(Enumerable.Repeat(@"\.", 12_000)), new string('.', 12_000), new string('.', 11_999)),
+            "alternatives" => ("^(?:" + string.Join("|", Enumerable.Range(0, 25_000).Select(k => "w" + k)) + ")$", "w24999", "w25000"),
+            _ => throw new ArgumentException(which),
+        };
+
+        var options = new JsonSchemaEvaluatorOptions { RegexEdition = Corvus.Ecma262.RegularExpressions.RegexEdition.Current };
+        var elapsed = Stopwatch.StartNew();
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile("{\"pattern\": " + Json(pattern) + "}", options);
+        Assert.IsTrue(evaluator.Evaluate(Json(matches)));
+        Assert.IsFalse(evaluator.Evaluate(Json(fails)));
+        Assert.IsTrue(elapsed.Elapsed < Generous, $"{elapsed.Elapsed} to compile and match the pattern.");
     }
 
     /// <summary>
@@ -121,9 +142,11 @@ public class PatternSizeLimitTests
         Assert.IsTrue(ordinary.Evaluate("\"" + string.Concat(Enumerable.Repeat("ab", 16)) + "-0123abcd\""));
         Assert.IsFalse(ordinary.Evaluate("\"" + string.Concat(Enumerable.Repeat("ab", 15)) + "-0123abcd\""));
 
-        // Six case-insensitive backreferences to a group that holds any character are just under the limit on what
-        // is written (some 945,000 characters), and the schema compiles and answers.
-        using JsonSchemaEvaluator large = JsonSchemaEvaluator.Compile("""{"pattern": "(?i:^(.)\\1\\1\\1\\1\\1\\1$)"}""", Options(configuration));
+        // Six case-insensitive backreferences to a group that holds any character (a modifier group, so today's
+        // grammar) compile and answer.
+        JsonSchemaEvaluatorOptions current = Options(configuration);
+        current.RegexEdition = Corvus.Ecma262.RegularExpressions.RegexEdition.Current;
+        using JsonSchemaEvaluator large = JsonSchemaEvaluator.Compile("""{"pattern": "(?i:^(.)\\1\\1\\1\\1\\1\\1$)"}""", current);
         Assert.IsTrue(large.Evaluate("\"kK\u212AkK\u212Ak\""));
         Assert.IsFalse(large.Evaluate("\"kK\u212AkK\u212Aj\""));
     }
@@ -163,6 +186,17 @@ public class PatternSizeLimitTests
         using JsonSchemaEvaluator again = JsonSchemaEvaluator.Compile("{\"pattern\": \"^(?:a|b)+" + unique + "0$\"}", options);
         Assert.IsTrue(again.Evaluate("\"ab" + unique + "0\""));
         Assert.IsFalse(again.Evaluate("\"ab" + unique + "1\""));
+    }
+
+    /// <summary>The message of a pattern over one of the library's limits, with the library's own words for it.</summary>
+    private static string TooLarge(string pattern)
+    {
+        Corvus.Ecma262.RegularExpressions.RegexPatternTooLargeException limit =
+            Assert.ThrowsExactly<Corvus.Ecma262.RegularExpressions.RegexPatternTooLargeException>(() => new Corvus.Ecma262.RegularExpressions.Regex(pattern, Corvus.Ecma262.RegularExpressions.RegexFlags.Unicode));
+        string shown = pattern.Length <= 120
+            ? "'" + pattern + "'"
+            : "'" + pattern.Substring(0, 120) + "...' (" + pattern.Length.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + " characters)";
+        return "The pattern " + shown + " is too large to compile as an ECMA-262 regular expression. " + limit.Message;
     }
 
     private static JsonSchemaEvaluatorOptions Options(Configuration configuration)

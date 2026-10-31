@@ -3006,7 +3006,7 @@ internal static partial class Evaluator
 
         if (node.AssertFormat && node.Format != FormatKind.None && !FormatKinds.IsNumeric(node.Format))
         {
-            bool m = MatchesFormat(node.Format, value, ref state);
+            bool m = MatchesFormat(node.Format, node.Dialect, value, ref state);
             if (node.WarnFormat)
             {
                 if (default(TMode).Collecting)
@@ -3070,7 +3070,7 @@ internal static partial class Evaluator
         return ok;
     }
 
-    private static bool MatchesFormat(FormatKind format, scoped ReadOnlySpan<byte> value, ref EvaluationState state)
+    private static bool MatchesFormat(FormatKind format, JsonSchemaDialect dialect, scoped ReadOnlySpan<byte> value, ref EvaluationState state)
     {
         if (FormatKinds.IsNumeric(format))
         {
@@ -3099,7 +3099,12 @@ internal static partial class Evaluator
             FormatKind.UriTemplate => JsonSchemaEvaluation.MatchUriTemplate(value, keyword, ref scratch),
             FormatKind.JsonPointer => JsonSchemaEvaluation.MatchJsonPointer(value, keyword, ref scratch),
             FormatKind.RelativeJsonPointer => JsonSchemaEvaluation.MatchRelativeJsonPointer(value, keyword, ref scratch),
-            FormatKind.Regex => JsonSchemaEvaluation.MatchRegex(value, keyword, ref scratch),
+            FormatKind.Regex => JsonSchemaEvaluation.MatchRegex(
+                value,
+                PatternMatcher.EditionFor(state.Program.Options, dialect),
+                state.Program.Options.RegexUnicodeVersion ?? Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion.Default,
+                keyword,
+                ref scratch),
             _ => true,
         };
     }

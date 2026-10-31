@@ -20,7 +20,7 @@ The source generator and CLI tool produce optimized static C# that eliminates de
 
 > **Choosing between JMESPath and JSONata:** JMESPath is ideal for **querying and extracting** data from JSON — projections, filtering, slicing, and reshaping with a concise, standardized syntax. If you need **arithmetic, string concatenation, user-defined functions, or complex transformations**, see [JSONata](Jsonata.md) instead. JMESPath is a pure query language with no side effects and no arithmetic operators.
 
-**Requirements:** The runtime packages target `net9.0`, `net10.0`, `netstandard2.0`, and `netstandard2.1`. The source generator is an analyzer package and does not impose additional runtime requirements.
+**Requirements:** The runtime packages target `net10.0`, `netstandard2.0`, and `netstandard2.1`. The source generator is an analyzer package and does not impose additional runtime requirements.
 
 ## Conformance
 
@@ -652,4 +652,4 @@ Console.WriteLine(result.GetRawText()); // safe
 | Memory model | Pooled (`JsonWorkspace`, `ArrayPool`) | GC-allocated |
 | Zero-allocation hot path | Yes (with workspace) | No |
 | Conformance (official suite) | 100% | 100% |
-| Supported frameworks | net9.0+, netstandard2.0/2.1 | net45, net6.0+, netstandard2.0/2.1 |
+| Supported frameworks | net10.0+, netstandard2.0/2.1 | net45, net6.0+, netstandard2.0/2.1 |

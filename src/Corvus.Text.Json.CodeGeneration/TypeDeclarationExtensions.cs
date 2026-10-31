@@ -73,6 +73,9 @@ public static class TypeDeclarationExtensions
     private const string EmitNativeStringEnumsKey = "CSharp_LanguageProvider_EmitNativeStringEnums";
     private const string EmitNativeFlagsEnumsKey = "CSharp_LanguageProvider_EmitNativeFlagsEnums";
     private const string EmitUnionsKey = "CSharp_LanguageProvider_EmitUnions";
+    private const string RegexEngineKey = "CSharp_LanguageProvider_RegexEngine";
+    private const string RegexEditionKey = "CSharp_LanguageProvider_RegexEdition";
+    private const string RegexUnicodeVersionKey = "CSharp_LanguageProvider_RegexUnicodeVersion";
     private const string UnionCaseTypesKey = "CSharp_LanguageProvider_UnionCaseTypes";
     private const string BuildParametersThresholdKey = "CSharp_LanguageProvider_BuildParametersThreshold";
     private const string ParentKey = "CSharp_LanguageProvider_Parent";
@@ -611,6 +614,45 @@ public static class TypeDeclarationExtensions
         return false;
     }
 
+    /// <summary>Gets the engine the type's regular expressions are written for.</summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The engine.</returns>
+    public static GeneratedRegexEngine RegexEngine(this TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.TryGetMetadata(RegexEngineKey, out GeneratedRegexEngine? engine) && engine is GeneratedRegexEngine value
+            ? value
+            : GeneratedRegexEngine.Ecma262;
+    }
+
+    /// <summary>
+    /// Gets the edition of the grammar the type's patterns are read with: the one the options give, or by default
+    /// ECMAScript 2020 for draft 2019-09 and draft 2020-12, which cite it, and today's for the other dialects, as the
+    /// runtime evaluator reads them.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The edition.</returns>
+    public static GeneratedRegexEdition RegexEdition(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(RegexEditionKey, out GeneratedRegexEdition? edition) && edition is GeneratedRegexEdition value)
+        {
+            return value;
+        }
+
+        return RuntimeProgramGenerator.DialectFor(typeDeclaration.LocatedSchema.Vocabulary) is "Draft201909" or "Draft202012"
+            ? GeneratedRegexEdition.Es2020
+            : GeneratedRegexEdition.Current;
+    }
+
+    /// <summary>Gets the version of Unicode the type's patterns are read with.</summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The version.</returns>
+    public static GeneratedRegexUnicodeVersion RegexUnicodeVersion(this TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.TryGetMetadata(RegexUnicodeVersionKey, out GeneratedRegexUnicodeVersion? version) && version is GeneratedRegexUnicodeVersion value
+            ? value
+            : GeneratedRegexUnicodeVersion.Default;
+    }
+
     /// <summary>
     /// Gets a value indicating whether the generated type is a C# union when its schema is a <c>oneOf</c> or
     /// <c>anyOf</c> composition (see <see cref="UnionCaseTypes(TypeDeclaration)"/>).
@@ -968,6 +1010,9 @@ public static class TypeDeclarationExtensions
         typeDeclaration.SetMetadata(EmitNativeStringEnumsKey, options.EmitNativeStringEnums);
         typeDeclaration.SetMetadata(EmitNativeFlagsEnumsKey, options.EmitNativeFlagsEnums);
         typeDeclaration.SetMetadata(EmitUnionsKey, options.EmitUnions);
+        typeDeclaration.SetMetadata(RegexEngineKey, options.RegexEngine);
+        typeDeclaration.SetMetadata(RegexEditionKey, options.RegexEdition);
+        typeDeclaration.SetMetadata(RegexUnicodeVersionKey, options.RegexUnicodeVersion);
         typeDeclaration.SetMetadata(BuildParametersThresholdKey, options.BuildParametersThreshold);
         typeDeclaration.SetMetadata(UseImplicitOperatorStringKey, options.UseImplicitOperatorString);
         typeDeclaration.SetMetadata(AddExplicitUsingsKey, options.AddExplicitUsings);

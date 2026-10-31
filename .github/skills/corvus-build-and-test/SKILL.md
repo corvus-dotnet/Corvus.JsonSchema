@@ -2,7 +2,7 @@
 name: corvus-build-and-test
 description: >
   Build, test, and run the Corvus.JsonSchema solution correctly. Covers multi-targeting
-  (net9.0/net10.0/net481/netstandard2.0), mandatory test category filters, solution file
+  (net10.0/net481/netstandard2.0), mandatory test category filters, solution file
   selection, running specific test classes or methods, writing new tests, and diagnosing
   common build/test failures. USE FOR: building the solution, running tests, writing new
   test files, diagnosing test failures, understanding TFM targeting, finding the right
@@ -158,7 +158,7 @@ Plus 6 supporting model/utility projects that generate types consumed by other t
 
 ## Target Frameworks
 
-- **Libraries**: `net9.0;net10.0;netstandard2.0;netstandard2.1`
+- **Libraries**: `net10.0;netstandard2.0;netstandard2.1`
 - **Tests**: `net10.0;net481` (all projects). `CodeGenerator.Tests` is an empty assembly on net481.
 - Run a specific TFM: `dotnet test -f net10.0 ...`
 

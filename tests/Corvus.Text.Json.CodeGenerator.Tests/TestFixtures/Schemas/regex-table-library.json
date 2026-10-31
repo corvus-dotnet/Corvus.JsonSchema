@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "stage": { "type": "string", "pattern": "^(alpha|beta|gamma|delta)-[0-9]+$" },
+    "duration": { "type": "string", "pattern": "^[0-9]+(ns|ms|us|s|m|h)$" }
+  },
+  "patternProperties": {
+    "^x-[a-z]+[0-9]*$": { "type": "number" }
+  }
+}

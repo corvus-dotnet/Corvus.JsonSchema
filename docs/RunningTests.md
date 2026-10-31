@@ -51,12 +51,12 @@ The solution contains twenty-one runnable test projects and six supporting model
 
 | Project | Frameworks | Description |
 |---------|-----------|-------------|
-| `Corvus.Text.Json.Tests` | net9.0, net10.0, net481 | Core library tests — parsing, writing, schema validation, mutable documents, migration equivalence |
-| `Corvus.Text.Json.Validator.Tests` | net9.0, net10.0, net481 | Dynamic schema validator (runtime compilation) |
+| `Corvus.Text.Json.Tests` | net10.0, net481 | Core library tests — parsing, writing, schema validation, mutable documents, migration equivalence |
+| `Corvus.Text.Json.Validator.Tests` | net10.0, net481 | Dynamic schema validator (runtime compilation) |
 | `Corvus.Text.Json.CodeGenerator.Tests` | net10.0 | CLI code generator |
 | `Corvus.Text.Json.Migration.Analyzers.Tests` | net10.0 | V4→V5 migration Roslyn analyzers and code fixes |
 | `Corvus.Text.Json.Analyzers.Tests` | net10.0 | Roslyn analyzers for UTF-8 strings, unnecessary conversions, property naming |
-| `Corvus.Numerics.Tests` | net9.0, net10.0, net481 | `BigNumber` / `BigInteger` arithmetic |
+| `Corvus.Numerics.Tests` | net10.0, net481 | `BigNumber` / `BigInteger` arithmetic |
 | `Corvus.Text.Json.Patch.Tests` | net10.0, net481 | RFC 6902 JSON Patch operations — official test suite |
 | `Corvus.Text.Json.Yaml.Tests` | net10.0, net481 | YAML ↔ JSON conversion, `Utf8YamlWriter`, event parsing, YAML test suite conformance (Corvus.Text.Json variant) |
 | `Corvus.Yaml.SystemTextJson.Tests` | net10.0, net481 | YAML ↔ JSON conversion — YAML test suite conformance (System.Text.Json-only variant) |
@@ -297,7 +297,7 @@ If CI time becomes a concern, these are the available levers (in order of impact
 
 ## Target framework selection
 
-The main test projects multi-target `net9.0`, `net10.0`, and `net481`. To run against a specific framework:
+The main test projects multi-target `net10.0` and `net481`. To run against a specific framework:
 
 ```powershell
 dotnet test --project tests\Corvus.Text.Json.Tests -f net10.0 --filter "TestCategory!=failing&TestCategory!=outerloop"

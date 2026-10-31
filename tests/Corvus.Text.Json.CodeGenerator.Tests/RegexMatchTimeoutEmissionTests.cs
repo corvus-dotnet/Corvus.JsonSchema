@@ -40,6 +40,24 @@ public class RegexMatchTimeoutEmissionTests
         }
         """;
 
+    // As Schema, but the property's pattern ends in a backreference. The evaluator matches the patterns of a program
+    // with Corvus.Regex.Ecma262 when the program has no [GeneratedRegex] table to give it (as when it is compiled at
+    // run time), and the library's memo of the places that failed makes a pattern with no backreference linear in the
+    // text: ^(a|aa)+$ answers at once. The backreference keeps the pattern from the memo, so it backtracks as before.
+    private const string SlowSchema =
+        """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "code": { "type": "string", "pattern": "^(a|aa)+\\1$" }
+          },
+          "patternProperties": {
+            "^(a|aa)+-$": { "type": "integer" }
+          }
+        }
+        """;
+
     // Both patterns are proved to match in time proportional to the text (EcmaRegexTranslator.IsLinear), and neither
     // is one the emitter or the evaluator matches without a regular expression.
     private const string LinearSchema =
@@ -158,7 +176,7 @@ public class RegexMatchTimeoutEmissionTests
     [TestMethod]
     public async Task GeneratedCode_OnAMatchThatDoesNotFinish_ThrowsAtTheTimeout()
     {
-        IReadOnlyList<GeneratedCodeFile> files = await GenerateAsync(withProgramImage: true);
+        IReadOnlyList<GeneratedCodeFile> files = await GenerateAsync(withProgramImage: true, SlowSchema);
 
         var context = new AssemblyLoadContext(nameof(RegexMatchTimeoutEmissionTests), isCollectible: true);
         try
@@ -224,7 +242,25 @@ public class RegexMatchTimeoutEmissionTests
         }
     }
 
-    private static async Task<IReadOnlyList<GeneratedCodeFile>> GenerateAsync(bool withProgramImage, string schema = Schema)
+    [TestMethod]
+    public async Task WithTheLibrary_EveryCompiledMatcherAndTheProgram_HaveTheTimeout()
+    {
+        IReadOnlyList<GeneratedCodeFile> files = await GenerateAsync(withProgramImage: true, engine: GeneratedRegexEngine.Ecma262);
+        string code = string.Concat(files.Select(f => f.FileContent));
+
+        // Each holder's regular expression carries the timeout, and so do the options the program loads with (for any
+        // pattern the evaluator compiles itself).
+        string[] constructions = [.. code.Split('\n').Where(l => l.Contains("internal static readonly global::Corvus.Ecma262.RegularExpressions.Regex Instance = new(", StringComparison.Ordinal))];
+        Assert.IsTrue(constructions.Length > 0, "There are compiled matchers.");
+        foreach (string construction in constructions)
+        {
+            StringAssert.Contains(construction, "global::System.TimeSpan.FromMilliseconds(1000)");
+        }
+
+        StringAssert.Contains(code, "RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds(1000),");
+    }
+
+    private static async Task<IReadOnlyList<GeneratedCodeFile>> GenerateAsync(bool withProgramImage, string schema = Schema, GeneratedRegexEngine engine = GeneratedRegexEngine.DotNet)
     {
         string path = Path.Combine(Path.GetTempPath(), $"regex-timeout-{Guid.NewGuid():N}.json");
         await File.WriteAllTextAsync(path, schema);
@@ -241,7 +277,8 @@ public class RegexMatchTimeoutEmissionTests
             CSharpLanguageProvider.Options options = new(
                 "TestGenerated",
                 namedTypes: [new CSharpLanguageProvider.NamedType(rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location, "Root")],
-                programCompiler: withProgramImage ? Corvus.Json.CodeGenerator.RuntimeProgramCompiler.Compile : null);
+                programCompiler: withProgramImage ? Corvus.Json.CodeGenerator.RuntimeProgramCompiler.Compile : null,
+                regexEngine: engine);
             CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
             return [.. typeBuilder.GenerateCodeUsing(languageProvider, [rootType], CancellationToken.None).OrderBy(f => f.FileName, StringComparer.Ordinal)];
         }

@@ -18,14 +18,14 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Tests.Unit;
 public class RegexMatchTimeoutTests
 {
     // On SlowText this pattern backtracks through every way to divide the run of "a" into "a" and "aa", some five
-    // thousand million of them, in a few megabytes, in both engines of .NET. (A group is translated without capture,
-    // and .NET then runs ^(a+)+$ as ^a+$, which does not backtrack.)
-    private const string BacktracksWithoutEnd = "^(a|aa)+$";
+    // thousand million of them, and for each tries the group again. The backreference keeps it from the memo of the
+    // places that failed, which makes a pattern without one linear in the text: ^(a|aa)+$ answers at once.
+    private const string BacktracksWithoutEnd = "^(a|aa)+\\1$";
 
     private static readonly string SlowText = "\"" + new string('a', 48) + "#\"";
 
-    // A run of "a" on which the interpreted engine takes several seconds to try every division (some sixty million
-    // of them) and then answers. Each "a" more multiplies the time by 1.6.
+    // A run of "a" on which the pattern takes several seconds to try every division (some sixty million of them) and
+    // then answers. Each "a" more multiplies the time by 1.6.
     private const int LongerThanTheDefaultRun = 38;
 
     private static readonly TimeSpan ShortTimeout = TimeSpan.FromMilliseconds(250);
@@ -121,7 +121,7 @@ public class RegexMatchTimeoutTests
     [TestMethod]
     public void WithTheTimeoutTurnedOffAMatchLongerThanTheDefaultTimeoutGivesItsAnswer()
     {
-        const string schema = """{"type": "string", "pattern": "^(a|aa)+$"}""";
+        string schema = """{"type": "string", "pattern": """ + Quote(BacktracksWithoutEnd) + "}";
         string text = "\"" + new string('a', LongerThanTheDefaultRun) + "#\"";
 
         using JsonSchemaEvaluator limited = JsonSchemaEvaluator.Compile(schema, new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false });
@@ -131,6 +131,21 @@ public class RegexMatchTimeoutTests
             schema,
             new JsonSchemaEvaluatorOptions { CompileRegularExpressions = false, RegexMatchTimeout = Regex.InfiniteMatchTimeout });
         Assert.IsFalse(unlimited.Evaluate(text));
+    }
+
+    /// <summary>
+    /// A pattern with no backreference is matched in time proportional to the text, however it backtracks: the
+    /// division of the run of "a" that .NET's engines tried without end is answered under a short timeout.
+    /// </summary>
+    [TestMethod]
+    public void ABacktrackingPatternWithNoBackreferenceAnswersUnderAShortTimeout()
+    {
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(
+            """{"type": "string", "pattern": "^(a|aa)+$"}""",
+            new JsonSchemaEvaluatorOptions { RegexMatchTimeout = ShortTimeout });
+
+        Assert.IsFalse(evaluator.Evaluate(SlowText));
+        Assert.IsTrue(evaluator.Evaluate("\"" + new string('a', 48) + "\""));
     }
 
     /// <summary>

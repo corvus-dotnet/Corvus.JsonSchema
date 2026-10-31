@@ -123,8 +123,11 @@ public class PatternValidityTests
 
     private static JsonSchemaEvaluatorOptions Options(bool generateCode)
     {
+        // Validity is V8's, so the patterns are read with today's grammar, which V8 reads them with, and not the 2020
+        // grammar a 2020-12 schema reads them with by default.
         return new JsonSchemaEvaluatorOptions
         {
+            RegexEdition = Corvus.Ecma262.RegularExpressions.RegexEdition.Current,
             CodeGeneration = generateCode && GeneratedCodeIsSupported
                 ? JsonSchemaCodeGeneration.Eager
                 : JsonSchemaCodeGeneration.Disabled,

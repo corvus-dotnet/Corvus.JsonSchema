@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Json.CodeGeneration;
+using Corvus.Text.Json.CodeGeneration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.CodeGenerator.Tests;
@@ -29,7 +30,8 @@ public class PatternPropertyRangeTests
             }
             """;
 
-        IReadOnlyCollection<GeneratedCodeFile> files = await InProcessGenerationTests.GenerateInProcessFromContent(schema);
+        // The translation to .NET's regular expressions, as the DotNet engine writes it.
+        IReadOnlyCollection<GeneratedCodeFile> files = await InProcessGenerationTests.GenerateInProcessFromContent(schema, new CSharpLanguageProvider.Options(defaultNamespace: "Test", regexEngine: GeneratedRegexEngine.DotNet));
 
         string[] lines = files
             .SelectMany(f => f.FileContent.Split('\n'))

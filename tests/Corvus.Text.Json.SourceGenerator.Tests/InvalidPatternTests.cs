@@ -94,7 +94,54 @@ public class InvalidPatternTests
         }
     }
 
-    private static GeneratorRunResult Run(string schema)
+    // The tests above read patterns with the translation to .NET's regular expressions, as the DotNet engine does;
+    // the ones that follow read them with Corvus.Regex.Ecma262, as the default engine does.
+    [TestMethod]
+    [DataRow("""{"type": "string", "pattern": "^[a-z]{3,1}$"}""", "pattern", "^[a-z]{3,1}$")]
+    [DataRow("""{"type": "object", "patternProperties": {"^x\\b+": {"type": "integer"}}}""", "patternProperties", "^x\\b+")]
+    public void WithTheLibrary_ASchemaWithAnInvalidPattern_IsAnErrorThatNamesThePattern(string schema, string keyword, string pattern)
+    {
+        GeneratorRunResult result = Run(schema, "Ecma262");
+
+        Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
+        Diagnostic[] errors = [.. result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)];
+        Assert.AreEqual(1, errors.Length, string.Join("\n", result.Diagnostics));
+        Assert.AreEqual("CRV1001", errors[0].Id);
+        StringAssert.StartsWith(errors[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture), $"Error generating C# code: The pattern '{pattern}' of the keyword '{keyword}' is not a valid ECMA-262 regular expression.");
+    }
+
+    [TestMethod]
+    [DataRow("pattern")]
+    [DataRow("patternProperties")]
+    public void WithTheLibrary_ASchemaWithAPatternOverItsLimits_IsAnErrorOfItsOwn(string keyword)
+    {
+        // Nested past the 200 groups the library compiles.
+        string pattern = new string('(', 201) + "a" + new string(')', 201);
+        string schema = keyword == "pattern"
+            ? "{\"type\": \"string\", \"pattern\": \"" + pattern + "\"}"
+            : "{\"type\": \"object\", \"patternProperties\": {\"" + pattern + "\": {\"type\": \"integer\"}}}";
+        GeneratorRunResult result = Run(schema, "Ecma262");
+
+        Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
+        Diagnostic[] errors = [.. result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)];
+        Assert.AreEqual(1, errors.Length, string.Join("\n", result.Diagnostics));
+        Assert.AreEqual("CRV1003", errors[0].Id);
+        StringAssert.Contains(errors[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture), "too large");
+    }
+
+    [TestMethod]
+    public void WithTheLibrary_ASchemaWithAPatternValidOnlyWithoutTheUFlag_IsGeneratedWithNoFlag()
+    {
+        GeneratorRunResult result = Run("""{"type": "object", "patternProperties": {"^a\\-b{$": {"type": "integer"}}}""", "Ecma262");
+
+        Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
+        Assert.AreEqual(0, result.Diagnostics.Count(d => d.Severity == DiagnosticSeverity.Error), string.Join("\n", result.Diagnostics));
+        string code = string.Concat(result.GeneratedSources.Select(s => s.SourceText.ToString()));
+        StringAssert.Contains(code, "public static readonly global::Corvus.Ecma262.RegularExpressions.Regex PatternProperties = global::InvalidPatternTests.CorvusJsonSchemaRegularExpressions.Regex0;");
+        StringAssert.Contains(code, "(global::Corvus.Ecma262.RegularExpressions.RegexFlags)0,");
+    }
+
+    private static GeneratorRunResult Run(string schema, string engine = "DotNet")
     {
         IEnumerable<MetadataReference> references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
             .Split(Path.PathSeparator)
@@ -109,7 +156,8 @@ public class InvalidPatternTests
 
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [new IncrementalSourceGenerator().AsSourceGenerator()],
-            additionalTexts: [new InMemoryAdditionalText(Path.Combine(TestDirectory, SchemaFileName), schema)]);
+            additionalTexts: [new InMemoryAdditionalText(Path.Combine(TestDirectory, SchemaFileName), schema)],
+            optionsProvider: RegexEngineOptions.For(engine));
 
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out ImmutableArray<Diagnostic> _);
         return driver.GetRunResult().Results[0];

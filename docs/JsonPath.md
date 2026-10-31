@@ -20,7 +20,7 @@ The source generator and CLI tool produce optimized static C# that eliminates pl
 
 > **Choosing between JSONPath and JMESPath:** JSONPath follows the IETF-standardized [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535) syntax (`$.store.book[*].author`) and focuses on **node selection** — it returns the actual matched nodes from the document. JMESPath uses its own syntax and focuses on **data extraction and reshaping** — projections, multiselect, and pipe expressions. If you need an IETF standard or `$..` recursive descent, use JSONPath. If you need projections, aggregations, or result reshaping, see [JMESPath](JMESPath.md) or [JSONata](Jsonata.md).
 
-**Requirements:** The runtime packages target `net9.0`, `net10.0`, `netstandard2.0`, and `netstandard2.1`. The source generator is an analyzer package and does not impose additional runtime requirements.
+**Requirements:** The runtime packages target `net10.0`, `netstandard2.0`, and `netstandard2.1`. The source generator is an analyzer package and does not impose additional runtime requirements.
 
 ## Conformance
 
@@ -607,4 +607,4 @@ using JsonPathResult result = evaluator.QueryNodes(expression, data);
 | Memory model | Pooled (`ArrayPool`, stack-allocated buffers) | GC-allocated |
 | Zero-allocation hot path | Yes (with `QueryNodes` + pooled buffer) | No |
 | Recursive descent | Flat metadata DB scan (no recursion) | Recursive tree walk |
-| Supported frameworks | net9.0+, netstandard2.0/2.1 | net8.0+ |
+| Supported frameworks | net10.0+, netstandard2.0/2.1 | net8.0+ |

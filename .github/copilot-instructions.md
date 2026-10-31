@@ -170,7 +170,7 @@ Do **not** invent or hallucinate option names. If unsure, read the source files 
 
 ### netstandard2.0 compatibility
 
-The main library targets `net9.0;net10.0;netstandard2.0;netstandard2.1`. On `netstandard2.0`, polyfill source files are linked directly from `System.Private.CoreLib/src/` (nullable attributes, `CallerArgumentExpressionAttribute`, `Index`/`Range`, etc.). Conditional `<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'>` blocks in the `.csproj` control this. Do not add package polyfills for things already covered by these linked files.
+The main library targets `net10.0;netstandard2.0;netstandard2.1`. On `netstandard2.0`, polyfill source files are linked directly from `System.Private.CoreLib/src/` (nullable attributes, `CallerArgumentExpressionAttribute`, `Index`/`Range`, etc.). Conditional `<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'>` blocks in the `.csproj` control this. Do not add package polyfills for things already covered by these linked files.
 
 ## Converting UTF-8 bytes to strings in tests
 
@@ -197,7 +197,7 @@ Assert.AreEqual(expected, result);
 | `bool TryTranscode(ReadOnlySpan<byte>, Span<char>, out int)` | Non-throwing variant; returns `false` if the destination is too small |
 | `int TranscodeHelper(ReadOnlySpan<char>, Span<byte>)` | Reverse direction: `char` → UTF-8 bytes |
 
-On `net9.0`+ these delegate to `Encoding.UTF8.GetString(ReadOnlySpan<byte>)` and related span APIs. On `netstandard2.0` / `net481` they fall back to `unsafe fixed`-pointer overloads. Invalid UTF-8 always throws `InvalidOperationException` (wrapping `DecoderFallbackException`) rather than letting the raw codec exception escape.
+On `net10.0` these delegate to `Encoding.UTF8.GetString(ReadOnlySpan<byte>)` and related span APIs. On `netstandard2.0` / `net481` they fall back to `unsafe fixed`-pointer overloads. Invalid UTF-8 always throws `InvalidOperationException` (wrapping `DecoderFallbackException`) rather than letting the raw codec exception escape.
 
 ## stackalloc / ArrayPool rent pattern
 

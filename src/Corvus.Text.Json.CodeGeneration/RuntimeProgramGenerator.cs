@@ -383,6 +383,10 @@ internal static class RuntimeProgramGenerator
     /// <param name="lineEnd">The line ending sequence.</param>
     /// <param name="image">The program compiled ahead of time, or <see langword="null"/> to embed the documents and
     /// compile at first use.</param>
+    /// <param name="regexEdition">The edition every pattern is read with, or <see langword="null"/> for each dialect's.</param>
+    /// <param name="regexUnicodeVersion">The version of Unicode every pattern is read with.</param>
+    /// <param name="sharedRegularExpression">Gives the reference to the shared compiled matcher of a regular
+    /// expression of the table, or <see langword="null"/> to write each in the program.</param>
     /// <returns>The generated file.</returns>
     public static GeneratedCodeFile Generate(
         string ns,
@@ -395,7 +399,10 @@ internal static class RuntimeProgramGenerator
         IReadOnlyList<KeyValuePair<string, string>> formatModes,
         string fileExtension,
         string lineEnd,
-        SchemaProgramImage? image = null)
+        SchemaProgramImage? image = null,
+        GeneratedRegexEdition? regexEdition = null,
+        GeneratedRegexUnicodeVersion regexUnicodeVersion = GeneratedRegexUnicodeVersion.Default,
+        Func<SchemaProgramRegularExpression, string>? sharedRegularExpression = null)
     {
         var sb = new StringBuilder();
         void Line(string text = "")
@@ -478,6 +485,22 @@ internal static class RuntimeProgramGenerator
         Line($"            AssertFormat = {(alwaysAssertFormat ? "true" : "null")},");
         Line("            AssertFormatInLegacyDrafts = true,");
         Line(image is null ? "            DocumentResolver = TryGetDocument," : "            RegexProvider = GetRegex,");
+        if (image is { EcmaRegularExpressions.Count: > 0 })
+        {
+            Line("            EcmaRegexProvider = GetEcmaRegex,");
+        }
+
+        // The settings the patterns were compiled with ahead of time, when they are not each dialect's, so that the
+        // evaluator reads them the same way.
+        if (regexEdition is GeneratedRegexEdition edition)
+        {
+            Line($"            RegexEdition = global::Corvus.Ecma262.RegularExpressions.RegexEdition.{edition},");
+        }
+
+        if (regexUnicodeVersion != GeneratedRegexUnicodeVersion.Default)
+        {
+            Line($"            RegexUnicodeVersion = global::Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion.{regexUnicodeVersion},");
+        }
 
         // The expressions the evaluator constructs itself (every one of them when there is no [GeneratedRegex] table,
         // or no regex generator to implement it) have the timeout the table's expressions have.
@@ -514,7 +537,7 @@ internal static class RuntimeProgramGenerator
         Line();
         if (image is not null)
         {
-            EmitImage(Line, image);
+            EmitImage(Line, image, sharedRegularExpression);
             Line("}");
             return new GeneratedCodeFile(className + fileExtension, sb.ToString());
         }
@@ -560,7 +583,7 @@ internal static class RuntimeProgramGenerator
     /// A program from a Roslyn source generator carries no patterns (generators do not chain, so the regex generator
     /// would never implement the methods) and the evaluator constructs every expression on first use.
     /// </summary>
-    private static void EmitImage(Action<string> line, SchemaProgramImage image)
+    private static void EmitImage(Action<string> line, SchemaProgramImage image, Func<SchemaProgramRegularExpression, string>? sharedRegularExpression)
     {
         line("    private static byte[] LoadImage()");
         line("    {");
@@ -621,6 +644,7 @@ internal static class RuntimeProgramGenerator
             line("#endif");
         }
 
+        EmitEcmaRegularExpressions(line, image.EcmaRegularExpressions, sharedRegularExpression);
         line(string.Empty);
         string base64 = Convert.ToBase64String(image.Image);
         line($"    // Program image: {image.Image.Length} bytes.");
@@ -819,6 +843,81 @@ internal static class RuntimeProgramGenerator
         }
 
         return nullable ? "OpenApi30" : DialectFor(vocabulary.Uri);
+    }
+
+    /// <summary>
+    /// Emits Corvus.Regex.Ecma262's compiled matcher for each regular expression the evaluator matches a pattern of
+    /// the table with (written by the library's emitter, with the compiled regular expression as data, in the flags,
+    /// edition and version of Unicode the evaluator compiles the pattern with), and the provider that gives the
+    /// evaluator each by its index. The evaluator uses one only when it is the pattern compiled as it would compile
+    /// it. A pattern read with two editions (by dialects that read patterns differently) has a matcher for the first.
+    /// </summary>
+    private static void EmitEcmaRegularExpressions(Action<string> line, IReadOnlyList<SchemaProgramRegularExpression> regularExpressions, Func<SchemaProgramRegularExpression, string>? sharedRegularExpression)
+    {
+        if (regularExpressions.Count == 0)
+        {
+            return;
+        }
+
+        var emitted = new List<SchemaProgramRegularExpression>();
+        var indices = new HashSet<int>();
+        foreach (SchemaProgramRegularExpression regex in regularExpressions)
+        {
+            if (indices.Add(regex.Index))
+            {
+                emitted.Add(regex);
+            }
+        }
+
+        line(string.Empty);
+        line("    private static global::Corvus.Ecma262.RegularExpressions.Regex? GetEcmaRegex(int index, string pattern)");
+        line("    {");
+        line("        return index switch");
+        line("        {");
+        foreach (SchemaProgramRegularExpression regex in emitted)
+        {
+            string target = sharedRegularExpression is not null
+                ? sharedRegularExpression(regex)
+                : "EcmaRegex" + regex.Index.ToString(System.Globalization.CultureInfo.InvariantCulture) + ".Instance";
+            line($"            {regex.Index.ToString(System.Globalization.CultureInfo.InvariantCulture)} => {target},");
+        }
+
+        line("            _ => null,");
+        line("        };");
+        line("    }");
+        if (sharedRegularExpression is not null)
+        {
+            return;
+        }
+
+        foreach (SchemaProgramRegularExpression regex in emitted)
+        {
+            string holder = "EcmaRegex" + regex.Index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            if (!Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEmitter.TryEmit(
+                regex.Pattern,
+                regex.Unicode ? Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexFlags.Unicode : Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexFlags.None,
+                CodeGenerationExtensions.RegexMatchTimeoutMilliseconds,
+                (Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEdition)(int)regex.Edition,
+                (Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexUnicodeVersion)(int)regex.UnicodeVersion,
+                holder,
+                out string? source,
+                out string? error))
+            {
+                throw new InvalidOperationException($"The pattern '{regex.Pattern}' could not be written. {error}");
+            }
+
+            // The matcher is straight-line code with labels and locals for every way through the pattern, some of
+            // which a given pattern does not take; the compiler's warnings about them are not the program's.
+            line(string.Empty);
+            line("#pragma warning disable");
+            foreach (string text in source!.Split('\n'))
+            {
+                string trimmed = text.TrimEnd('\r');
+                line(trimmed.Length == 0 ? string.Empty : "    " + trimmed);
+            }
+
+            line("#pragma warning restore");
+        }
     }
 
     private static string Literal(string text)

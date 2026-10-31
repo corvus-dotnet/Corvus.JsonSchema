@@ -16,9 +16,10 @@ the existing `JsonSchemaResultsCollector` / `JsonSchemaAnnotationProducer`.
 | `tests/...Tests/Unit` | Focused tests for references, keywords, results collection. |
 | `benchmarks/...Benchmarks` | BenchmarkDotNet: the 37 Sourcemeta cases (generated model vs runtime evaluator) and cold start. |
 
-The library links the ECMA-262 regular expression translator (`EcmaRegexTranslator.cs` and the three
-`EcmaRegex*.cs` files beside it) from `Corvus.Text.Json.CodeGeneration` as shared source and embeds the standard
-metaschemas from its `metaschema` folder.
+Patterns are matched by [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/), a package dependency.
+The library also links the translator of ECMA-262 patterns to .NET's (`EcmaRegexTranslator.cs` and the three
+`EcmaRegex*.cs` files beside it) from `Corvus.Text.Json.CodeGeneration` as shared source, for
+`JsonSchemaEvaluator.ToDotNetPattern`, and embeds the standard metaschemas from its `metaschema` folder.
 
 ## Compilation (cold start)
 
@@ -187,9 +188,8 @@ replaced; the Validator is now a facade over this evaluator (see `docs/Validator
 * Evaluation paths in collecting mode use plain keyword segments (`properties/foo`, `$ref`, `allOf/0`) rather than
   the generated evaluator's `#/$ref/0/...` convention; annotation output (schema location, instance location,
   keyword, value) is identical.
-* Regexes are compiled to IL by default (decision 2026-09-09: evaluation throughput over cold start);
-  `CompileRegularExpressions = false` (or `CORVUS_RT_REGEX_INTERPRETED=1` for experiments) restores interpreted
-  regexes for faster compilation.
+* `CompileRegularExpressions` has no effect on patterns, which Corvus.Regex.Ecma262 matches; it remains for the
+  regular expressions of .NET's a `RegexProvider` may still supply.
 * The document layer no longer dominates profiles of property-heavy cases (raw access took cmake-presets, draft-04
   and openapi from 0.76 to 0.79 down to 0.68 to 0.81 on a loaded machine, and the object micro case from 0.50 to
   0.26). Remaining per-node overhead is interpretive dispatch in `EvalCore`/`Eval` (a CPU profile of the strict-tree
@@ -203,66 +203,70 @@ replaced; the Validator is now a facade over this evaluator (see `docs/Validator
 ## Patterns
 
 `pattern` and `patternProperties` are ECMA-262 regular expressions, and the evaluator answers them as an
-ECMAScript engine does. The answers are tested against V8 on the
+ECMAScript engine does: it matches them with [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/),
+over the instance's UTF-8 with no transcoding. The answers are tested against V8 on the
 [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data).
 
 - A pattern is read with the grammar of the `u` flag, and is then matched by code point: a character beyond the
   Basic Multilingual Plane is one character to the dot, to a class and to a quantifier. A pattern that grammar does
   not accept is read with the grammar of a pattern with no flag, which many schemas need (`\-`, `\@`, a lone `{`),
   and is then matched by UTF-16 code unit, as ECMA-262 matches such a pattern.
+- **The edition of the grammar follows the dialect.** Draft 2019-09 and draft 2020-12 (and OpenAPI 3.1, which is
+  2020-12) cite ECMAScript 2020, so their patterns are read with its grammar, which refuses what later editions
+  added: modifier groups (`(?i:...)`), duplicate group names and the names of Unicode properties added since.
+  Drafts 4, 6 and 7 and OpenAPI 2.0 and 3.0 read patterns with today's grammar. Unicode is V8's version (17) for
+  every dialect. `JsonSchemaEvaluatorOptions.RegexEdition` and `RegexUnicodeVersion` set either for every dialect.
 - **A pattern neither grammar accepts is refused when the schema is compiled.** `Compile`, `CompileFromUri`,
   `ForEntryPoint` and `FromProgramImage` throw `JsonSchemaCompilationException`, whose message names the pattern and
   says what is wrong and where, for example `The pattern '^[a-z]{3,1}$' is not a valid ECMA-262 regular expression.
-  Numbers out of order in {} quantifier at offset 11.` Before this, such a pattern was passed to .NET as it was,
-  which accepted most of them with a meaning of its own.
-- **A pattern over a limit of size is refused when the schema is compiled**, with the same exception and a message
-  of its own: `The pattern '...' is a valid ECMA-262 regular expression, and is too large.` and then the limit, for
-  example `Its groups nest more than 200 deep.` It is never the message of a pattern that is not valid. The limits
-  bound the time and the memory one pattern can take when a schema is compiled, whatever the pattern, and
-  [the translator guide](EcmaRegexTranslator.md#limits-on-the-size-of-a-pattern) lists them.
-- The evaluator matches many patterns itself (prefixes, length ranges, literal alternations, class sequences,
-  separated lists). Every other pattern is translated to a .NET pattern with the same meaning and matched by a
-  .NET `Regex`. [EcmaRegexTranslator.md](./EcmaRegexTranslator.md) describes the translation and its limits.
-  `JsonSchemaEvaluator.ToDotNetPattern` returns it. A pattern that only the grammar with no `u` flag accepts goes to
-  `Regex` where matching by code unit can change an answer: a dot or negated class that is not the body of a `*` or
-  `+`, a set that holds some surrogates and not others, or a surrogate written in the pattern.
+  Numbers out of order in {} quantifier at offset 11.`
+- **A pattern over one of the library's limits of size is refused when the schema is compiled**, with the same
+  exception and a message that says the pattern is too large and names the limit (its groups nest more than 200
+  deep, say). The limits bound the time and the memory one pattern can take when a schema is compiled.
+- The evaluator matches some patterns itself where that is faster than the library, measured pattern by pattern on
+  the jsonschema-benchmark corpora: an empty or any-character pattern, a prefix, a length range, a set of up to four
+  literals (or of literals with anchors of their own), a sequence of classes with one or two alternatives, and a
+  class with a word character required. Every
+  other pattern goes to the library, as does one that only the grammar with no `u` flag accepts where matching by
+  code unit can change an answer. `JsonSchemaEvaluator.ToDotNetPattern` still returns the translation to a .NET
+  pattern, for code written for .NET's engine.
+- `format: regex` asks whether the value is a pattern in the grammar of the `u` flag, of the edition the dialect
+  reads patterns with, and allocates nothing. The format is the grammar alone: a pattern over one of the limits of
+  size is valid, though a schema that held it as a `pattern` would be refused.
 - An instance string that holds the escape of half of a surrogate pair, such as `"\ud800"`, throws
   `InvalidOperationException` when a pattern is matched against it, as `minLength` and `maxLength` do
   ([#1021](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021)). The other ports refuse such a document
   when they parse it. [Patterns across the ports](PatternConformance.md) lists this and the other known differences.
-- Each distinct pattern is read and translated once in the life of the process, when the first schema that holds
-  it is compiled. Nothing of that runs when an instance is evaluated. What the process keeps of patterns is
-  bounded (4,096 patterns, 1,048,576 characters). Past the bound it is let go, and a pattern met again is read
-  again.
+- Each distinct pattern is compiled once in the life of the process for each edition, version of Unicode and
+  timeout, when the first schema that holds it is compiled. Nothing of that runs when an instance is evaluated. What
+  the process keeps of patterns is bounded (4,096 patterns, 1,048,576 characters). Past the bound it is let go, and
+  a pattern met again is compiled again.
+- A program generated ahead of time gives the evaluator a compiled matcher for each of its patterns through
+  `JsonSchemaEvaluatorOptions.EcmaRegexProvider`, and the evaluator uses one when it is the pattern compiled as it
+  would compile it, so it compiles none. `JsonSchemaEvaluator.GetImageRegularExpressions` lists them for a code
+  generator. A `Regex` of .NET's from `RegexProvider` (a program generated by an earlier version) is used as before.
 
 ## Regular expression match timeout
 
-.NET's regular expression engine backtracks, and there are patterns on which a match takes time exponential in the
-length of the text (`^(a|aa)+$` on a long run of `a` that ends in another character). The translation avoids the
-forms on which .NET's engines are known not to finish at all, but it cannot make a match fast.
+Corvus.Regex.Ecma262 remembers the places in the text where a part of a pattern has failed, which makes a match of a
+pattern with no backreference take time in proportion to the pattern's size times the text: `^(a|aa)+$` answers at
+once on a long run of `a` that ends in another character. A backreference keeps a pattern from that memo, and
+`^(a|aa)+\1$` on the same text backtracks for as long as it is let.
 
 So a match has a timeout. `JsonSchemaEvaluatorOptions.RegexMatchTimeout` sets it, and its default is
 `JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout`, 1 second.
 
-- A single match that runs for longer than the timeout throws `RegexMatchTimeoutException`. The exception leaves
-  `Evaluate` and reaches the caller. The instance is not reported as invalid, because the evaluator does not know
-  whether it matches. Call `Evaluate` inside `try` when the schema or the instance is not trusted.
+- A single match that runs for longer than the timeout throws `RegexMatchTimeoutException`
+  (`System.Text.RegularExpressions`). The exception leaves `Evaluate` and reaches the caller. The instance is not
+  reported as invalid, because the evaluator does not know whether it matches. Call `Evaluate` inside `try` when the
+  schema or the instance is not trusted.
+- A match also stops, with the same exception, when its backtracking reaches the library's cap on memory, so a match
+  with a timeout is bounded in memory as well as time.
 - The timeout is the same for the interpreter, for generated code (`CodeGeneration`), for an evaluator loaded from
   a program image and for an evaluator returned by `ForEntryPoint`.
-- **A pattern proved to match in time proportional to the text has no timeout,** whatever `RegexMatchTimeout` is. A
-  timeout makes .NET's engines check the clock as they match, which costs such a pattern up to half its time again
-  in the interpreted engine and a fifth in the compiled one, and bounds nothing a linear match does not. The proof
-  accepts a pattern with no backreference, lookaround or word boundary, whose repetitions each repeat one character
-  or set, and in which no repetition can give characters back to another that could take them. `^[a-z]+\.[a-z]+$`,
-  `^#[0-9a-fA-F]{6}$` and `(.*)` are proved linear. `^([a-z]+\.)*[a-z]+$` and `^[a-z]+[a-z0-9]+$` are not, and keep
-  the timeout. Code generated for a schema does the same.
-- A `Regex` supplied by `RegexProvider` keeps the timeout it was constructed with.
-- Set `RegexMatchTimeout = Regex.InfiniteMatchTimeout` to match with no timeout, which was the behaviour before
-  the default was introduced.
-- The timeout limits time and not memory. A match that runs for long can grow the engine's backtracking stack as
-  it goes: the most measured in the second of the default, over patterns built for it, is 160 MB for one match
-  (see [the translator guide](EcmaRegexTranslator.md#known-limits)). Choose a shorter timeout, or a memory limit
-  for the process, where neither the schema nor the instance is trusted.
+- A compiled matcher from `EcmaRegexProvider`, and a `Regex` from `RegexProvider`, keep the timeout they were made
+  with. Generated programs give theirs the same 1 second.
+- Set `RegexMatchTimeout = Regex.InfiniteMatchTimeout` to match with no timeout.
 
 ```csharp
 using System.Text.RegularExpressions;

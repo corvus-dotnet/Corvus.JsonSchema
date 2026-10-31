@@ -164,9 +164,11 @@ public class EcmaPatternSemanticsTests
             Assert.Inconclusive("Dynamic code is not supported here.");
         }
 
-        // The options have the default limit: none is set.
+        // The options have the default limit: none is set. The answers are V8's, so the patterns are read with
+        // today's grammar, which V8 reads them with, not the 2020 grammar a 2020-12 schema reads them with by default.
         var options = new JsonSchemaEvaluatorOptions
         {
+            RegexEdition = Corvus.Ecma262.RegularExpressions.RegexEdition.Current,
             CompileRegularExpressions = engine != Engine.InterpretedRegex,
             CodeGeneration = engine == Engine.GeneratedCode ? JsonSchemaCodeGeneration.Eager : JsonSchemaCodeGeneration.Disabled,
         };
@@ -236,9 +238,11 @@ public class EcmaPatternSemanticsTests
             Assert.Inconclusive("Dynamic code is not supported here.");
         }
 
-        // A match that does not return is a failure here and not a test run that never ends.
+        // A match that does not return is a failure here and not a test run that never ends. The answers are V8's,
+        // so the patterns are read with today's grammar (see the other test of answers).
         var options = new JsonSchemaEvaluatorOptions
         {
+            RegexEdition = Corvus.Ecma262.RegularExpressions.RegexEdition.Current,
             CompileRegularExpressions = engine != Engine.InterpretedRegex,
             CodeGeneration = engine == Engine.GeneratedCode ? JsonSchemaCodeGeneration.Eager : JsonSchemaCodeGeneration.Disabled,
             RegexMatchTimeout = TimeSpan.FromSeconds(5),

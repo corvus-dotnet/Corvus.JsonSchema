@@ -41,7 +41,7 @@ That removes repeated property names without losing the row/field structure.
 | **`Corvus.Text.Json.Toon`** | `Corvus.Text.Json` | You want `ParsedJsonDocument<T>` and the Corvus document model. |
 | **`Corvus.Toon.SystemTextJson`** | `System.Text.Json` only | You want TOON conversion without a dependency on `Corvus.Text.Json`. |
 
-Both packages use the same converter implementation via conditional compilation. They target `net9.0`, `net10.0`, `netstandard2.0`, and `netstandard2.1`.
+Both packages use the same converter implementation via conditional compilation. They target `net10.0`, `netstandard2.0`, and `netstandard2.1`.
 
 ## Related resources
 

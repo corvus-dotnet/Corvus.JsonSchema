@@ -334,14 +334,14 @@ public class GenerateCommandTests : IDisposable
     }
 
     [TestMethod]
-    public async Task Generate_EmitsPrecompiledProgramImageWithGeneratedRegexTable()
+    public async Task Generate_WithTheDotNetRegexEngine_EmitsPrecompiledProgramImageWithGeneratedRegexTable()
     {
         // A schema whose patterns need a regular expression (a variable atom before another, or a variable tail after
         // a fixed one): anchored ASCII class sequences are matched without one and would leave the table empty.
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "regex-table.json");
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
-            $"jsonschema \"{schema}\" --rootNamespace T --outputPath \"{_outputDir}\"");
+            $"jsonschema \"{schema}\" --rootNamespace T --outputPath \"{_outputDir}\" --regexEngine DotNet");
 
         Assert.AreEqual(0, result.ExitCode, result.StandardError);
         string code = ReadAllGeneratedCode(_outputDir);
@@ -354,6 +354,46 @@ public class GenerateCommandTests : IDisposable
         StringAssert.Contains(code, "private static ReadOnlySpan<byte> ImageBase64 =>");
         Assert.IsFalse(code.Contains("TryGetDocument"), "The schema documents must not be embedded alongside the image.");
         Assert.IsFalse(code.Contains("CompileFromUri"), "Nothing should compile at first use.");
+    }
+
+    [TestMethod]
+    public async Task Generate_EmitsPrecompiledProgramImageWithCompiledMatcherTable()
+    {
+        // Patterns of four and six alternatives, which the evaluator matches with the library rather than a matcher of
+        // its own.
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "regex-table-library.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace T --outputPath \"{_outputDir}\"");
+
+        Assert.AreEqual(0, result.ExitCode, result.StandardError);
+        string code = ReadAllGeneratedCode(_outputDir);
+
+        // By default the program carries Corvus.Regex.Ecma262's compiled matcher for each pattern its evaluator matches
+        // with a regular expression, with the compiled regular expression as data, and gives them to the evaluator.
+        StringAssert.Contains(code, "JsonSchemaEvaluator.FromProgramImage(LoadImage(), CreateOptions())");
+        StringAssert.Contains(code, "EcmaRegexProvider = GetEcmaRegex,");
+        StringAssert.Contains(code, "private static global::Corvus.Ecma262.RegularExpressions.Regex? GetEcmaRegex(int index, string pattern)");
+        StringAssert.Contains(code, "=> global::T.CorvusJsonSchemaRegularExpressions.Regex");
+        StringAssert.Contains(code, "internal static class CorvusJsonSchemaRegularExpressions");
+        StringAssert.Contains(code, "internal static global::System.ReadOnlySpan<byte> Compiled => new byte[]");
+        Assert.IsFalse(code.Contains("[GeneratedRegex("), ".NET's regular expressions are written only for the DotNet engine.");
+        Assert.IsFalse(code.Contains("RegexEdition ="), "Each dialect's edition is the evaluator's own default.");
+    }
+
+    [TestMethod]
+    public async Task Generate_WithARegexEditionAndUnicodeVersion_LoadsTheProgramWithThem()
+    {
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "regex-table-library.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace T --outputPath \"{_outputDir}\" --regexEdition Current --regexUnicodeVersion V13");
+
+        Assert.AreEqual(0, result.ExitCode, result.StandardError);
+        string code = ReadAllGeneratedCode(_outputDir);
+        StringAssert.Contains(code, "RegexEdition = global::Corvus.Ecma262.RegularExpressions.RegexEdition.Current,");
+        StringAssert.Contains(code, "RegexUnicodeVersion = global::Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion.V13,");
+        StringAssert.Contains(code, "(global::Corvus.Ecma262.RegularExpressions.RegexEdition)0, (global::Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion)13,");
     }
 
     [TestMethod]

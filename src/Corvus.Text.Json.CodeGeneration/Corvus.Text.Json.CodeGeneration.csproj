@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
   <PropertyGroup>
-    <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- For this project, we want warnings if there are public APIs/types without properly formatted XML comments. -->
     <SkipIntellisenseNoWarnCS1591>true</SkipIntellisenseNoWarnCS1591>
@@ -36,6 +36,8 @@
     <Compile Include="RuntimeProgramGenerator.cs" />
     <Compile Include="SchemaProgramCompiler.cs" />
     <Compile Include="CodeGenerationMode.cs" />
+    <Compile Include="GeneratedRegularExpressions.cs" />
+    <Compile Include="SharedRegularExpressions.cs" />
     <Compile Include="RegexPatternCategory.cs" />
     <Compile Include="CodeFileBuilders\JsonSchemaPartial.cs" />
     <Compile Include="CodeFileBuilders\MutableCorePartial.cs" />
@@ -111,6 +113,8 @@
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
     <PackageReference Include="Microsoft.Bcl.Memory" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <!-- The Corvus.Regex.Ecma262 emitter, as source compiled into the generator, so that generated code carries each pattern's matcher and its compiled image with no assembly loaded beside a source generator. -->
+    <PackageReference Include="Corvus.Regex.Ecma262.CodeGeneration.Sources" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="System" />
